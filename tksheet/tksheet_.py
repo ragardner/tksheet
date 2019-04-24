@@ -4471,7 +4471,7 @@ class MainTable(tk.Canvas):
         if set_data_ref_on_destroy:
             if r is None and c is None and destroy_tup:
                 r, c = destroy_tup[0], destroy_tup[1]
-            self.undo_storage[(c, r)] = [[self.data_ref[r][c]]]
+            self.undo_storage.append(zlib.compress(pickle.dumps({(r, c): f"{self.data_ref[r][c]}"})))
             self.data_ref[r][c] = self.text_editor_value
             self.RI.set_row_height(r)
             self.CH.set_col_width(c, only_set_if_too_small = True)
