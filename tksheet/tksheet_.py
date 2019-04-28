@@ -1337,6 +1337,7 @@ class ColumnHeaders(tk.Canvas):
                 for colsel in newcolidxs:
                     self.MT.selected_cols.add(colsel)
                     self.selected_cells[colsel] += 1
+                self.MT.undo_storage = deque(maxlen = 20)
                 self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
         self.dragged_col = None
         self.currently_resizing_width = False
@@ -1801,7 +1802,6 @@ class ColumnHeaders(tk.Canvas):
         pass
 
 
-
 class RowIndexes(tk.Canvas):
     def __init__(self,
                  parentframe = None,
@@ -2196,7 +2196,7 @@ class RowIndexes(tk.Canvas):
                 for rowsel in newrowidxs:
                     self.MT.selected_rows.add(rowsel)
                     self.selected_cells[rowsel] += 1
-                
+                self.MT.undo_storage = deque(maxlen = 20)
                 self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
         self.dragged_row = None
         self.currently_resizing_width = False
@@ -2680,14 +2680,14 @@ class MainTable(tk.Canvas):
 
     def bind_cell_edit(self, enable = True):
         if enable:
-            for c in """qazwsxedcrfvtgbyhnujmikolpQAZWSXEDCRFVTGBYHNUJMIKOLP""":
+            for c in """abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ""":
                 self.bind(f"<{c}>", self.edit_cell_)
             for c in "1234567890":
                 self.bind(c, self.edit_cell_)
             self.bind("<F2>", self.edit_cell_)
             self.bind("<Double-Button-1>", self.edit_cell_)
         else:
-            for c in """qazwsxedcrfvtgbyhnujmikolpQAZWSXEDCRFVTGBYHNUJMIKOLP""":
+            for c in """abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ""":
                 self.unbind(f"<{c}>")
             for c in "1234567890":
                 self.unbind(c)
@@ -3697,6 +3697,7 @@ class MainTable(tk.Canvas):
     def data_reference(self, newdataref = None, total_cols = None, total_rows = None, reset_col_positions = True, reset_row_positions = True, redraw = False):
         if isinstance(newdataref, (list, tuple)):
             self.data_ref = newdataref
+            self.undo_storage = deque(maxlen = 20)
             if total_cols is None and self.all_columns_displayed:
                 try:
                     self.total_cols = len(max(newdataref, key = len))
@@ -5300,6 +5301,9 @@ class Sheet(tk.Frame):
         
     def row_index(self, newindex = None, index = None):
         return self.MT.row_index(newindex,index)
+
+    def reset_undos(self):
+        self.MT.undo_storage = deque(maxlen = 20)
 
     def enable_bindings(self, bindings):
         self.MT.enable_bindings(bindings)
