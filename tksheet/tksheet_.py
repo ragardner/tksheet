@@ -4645,8 +4645,8 @@ class Sheet(tk.Frame):
                                    foreground = top_left_foreground)
         if theme != "normal":
             self.change_theme(theme)
-        self.yscroll = tk.Scrollbar(self, command = self.MT.set_yviews, orient = "vertical")
-        self.xscroll = tk.Scrollbar(self, command = self.MT.set_xviews, orient = "horizontal")
+        self.yscroll = ttk.Scrollbar(self, command = self.MT.set_yviews, orient = "vertical")
+        self.xscroll = ttk.Scrollbar(self, command = self.MT.set_xviews, orient = "horizontal")
         self.MT["xscrollcommand"] = self.xscroll.set
         self.MT["yscrollcommand"] = self.yscroll.set
         self.CH["xscrollcommand"] = self.xscroll.set
