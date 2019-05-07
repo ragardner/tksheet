@@ -2,16 +2,15 @@ from distutils.core import setup
 setup(
   name = 'tksheet',
   packages = ['tksheet'],
-  version = '1.8',
+  version = '1.9',
   license='MIT',
   description = 'Tkinter table / sheet widget',
   author = 'ragardner',
   author_email = 'ragardner@protonmail.com',
   url = 'https://github.com/ragardner/tksheet',
-  download_url = 'https://github.com/ragardner/tksheet/archive/1.8.tar.gz',
+  download_url = 'https://github.com/ragardner/tksheet/archive/1.9.tar.gz',
   keywords = ['tkinter', 'table', 'widget'],
   install_requires=[],
-  include_package_data=True,
   classifiers=[
     'Development Status :: 5 - Production/Stable',
     'Intended Audience :: Developers',
