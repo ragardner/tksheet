@@ -1394,52 +1394,53 @@ class ColumnHeaders(tk.Canvas):
         if self.selection_binding_func is not None and run_binding_func:
             self.selection_binding_func(("column", c))
 
-    def set_col_width(self, col, only_set_if_too_small = False):
+    def set_col_width(self, col, width = None, only_set_if_too_small = False):
         if col < 0:
             return
-        if self.MT.all_columns_displayed:
-            try:
-                hw = self.MT.GetHdrTextWidth(self.GetLargestWidth(self.MT.my_hdrs[col])) + 10
-            except:
-                hw = self.MT.GetHdrTextWidth(str(col)) + 10
-            x1, y1, x2, y2 = self.MT.get_canvas_visible_area()
-            start_row, end_row = self.MT.get_visible_rows(y1, y2)
-            dtw = 0
-            for r in islice(self.MT.data_ref, start_row, end_row):
+        if width is None:
+            if self.MT.all_columns_displayed:
                 try:
-                    w = self.MT.GetTextWidth(self.GetLargestWidth(r[col]))
-                    if w > dtw:
-                        dtw = w
+                    hw = self.MT.GetHdrTextWidth(self.GetLargestWidth(self.MT.my_hdrs[col])) + 10
                 except:
-                    pass
-        else:
-            try:
-                hw = self.MT.GetHdrTextWidth(self.GetLargestWidth(self.MT.my_hdrs[self.MT.displayed_columns[col]])) + 10 
-            except:
-                hw = self.MT.GetHdrTextWidth(str(col)) + 10
-            x1, y1, x2, y2 = self.MT.get_canvas_visible_area()
-            start_row,end_row = self.MT.get_visible_rows(y1, y2)
-            dtw = 0
-            for r in islice(self.MT.data_ref, start_row,end_row):
+                    hw = self.MT.GetHdrTextWidth(str(col)) + 10
+                x1, y1, x2, y2 = self.MT.get_canvas_visible_area()
+                start_row, end_row = self.MT.get_visible_rows(y1, y2)
+                dtw = 0
+                for r in islice(self.MT.data_ref, start_row, end_row):
+                    try:
+                        w = self.MT.GetTextWidth(self.GetLargestWidth(r[col]))
+                        if w > dtw:
+                            dtw = w
+                    except:
+                        pass
+            else:
                 try:
-                    w = self.MT.GetTextWidth(self.GetLargestWidth(r[self.MT.displayed_columns[col]]))
-                    if w > dtw:
-                        dtw = w
+                    hw = self.MT.GetHdrTextWidth(self.GetLargestWidth(self.MT.my_hdrs[self.MT.displayed_columns[col]])) + 10 
                 except:
-                    pass 
-        dtw += 10
-        if dtw > hw:
-            new_width = dtw
-        else:
-            new_width = hw
-        if new_width <= self.MT.min_cw:
-            new_width = int(self.MT.min_cw)
-        elif new_width > self.max_colwidth:
-            new_width = int(self.max_colwidth)
+                    hw = self.MT.GetHdrTextWidth(str(col)) + 10
+                x1, y1, x2, y2 = self.MT.get_canvas_visible_area()
+                start_row,end_row = self.MT.get_visible_rows(y1, y2)
+                dtw = 0
+                for r in islice(self.MT.data_ref, start_row,end_row):
+                    try:
+                        w = self.MT.GetTextWidth(self.GetLargestWidth(r[self.MT.displayed_columns[col]]))
+                        if w > dtw:
+                            dtw = w
+                    except:
+                        pass
+            dtw += 10
+            if dtw > hw:
+                width = dtw
+            else:
+                width = hw
+        if width <= self.MT.min_cw:
+            width = int(self.MT.min_cw)
+        elif width > self.max_colwidth:
+            width = int(self.max_colwidth)
         if only_set_if_too_small:
-            if new_width <= self.MT.col_positions[col + 1] - self.MT.col_positions[col]:
+            if width <= self.MT.col_positions[col + 1] - self.MT.col_positions[col]:
                 return
-        new_col_pos = self.MT.col_positions[col] + new_width
+        new_col_pos = self.MT.col_positions[col] + width
         increment = new_col_pos - self.MT.col_positions[col + 1]
         self.MT.col_positions[col + 2:] = [e + increment for e in islice(self.MT.col_positions, col + 2, len(self.MT.col_positions))]
         self.MT.col_positions[col + 1] = new_col_pos
