@@ -1427,7 +1427,7 @@ class ColumnHeaders(tk.Canvas):
                         if w > dtw:
                             dtw = w
                     except:
-                        pass
+                        pass 
             dtw += 10
             if dtw > hw:
                 width = dtw
