@@ -4837,7 +4837,7 @@ class Sheet(tk.Frame):
             return [int(n) for n in self.MT.row_positions]
         return [int(b - a) for a, b in zip(self.MT.row_positions, islice(self.MT.row_positions, 1, len(self.MT.row_positions)))]
 
-    def set_column_width(self, column = None, width = None, redraw = True):
+    def column_width(self, column = None, width = None, only_set_if_too_small = False, redraw = True):
         if column == "all":
             if width == "default":
                 self.MT.reset_col_positions()
@@ -4846,9 +4846,10 @@ class Sheet(tk.Frame):
                 sc,ec = self.MT.get_visible_columns(self.MT.canvasx(0), self.MT.canvasx(self.winfo_width()))
                 for c in range(sc, ec - 1):
                     self.CH.set_col_width(c)
-        else:
-            if width is not None:
-                self.MT.col_positions[column + 1] = width
+        elif width is not None and column is not None:
+            self.CH.set_col_width(col = column, width = width, only_set_if_too_small = only_set_if_too_small)
+        elif column is not None:
+            return int(self.MT.col_positions[column + 1] - self.MT.col_positions[column])
         if redraw:
             self.refresh()
 
