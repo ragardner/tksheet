@@ -5,7 +5,7 @@ Python 3.6+ tkinter sheet / table widget for displaying data
 pip install tksheet
 ```
 
-Display and modify tabular data using Python 3.6+ and tkinter.
+Display and modify tabular data using Python 3.6+ and tkinter. Stores its display data as a Python list of lists, sublists being rows.
 
 # Basic Demo:
 
