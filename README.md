@@ -1,9 +1,11 @@
 # tksheet
-Python 3 tkinter sheet / table widget for displaying data
+Python 3.6+ tkinter sheet / table widget for displaying data
 
 ```
 pip install tksheet
 ```
+
+Display and modify tabular data using Python 3.6+ and tkinter.
 
 # Basic Demo:
 
