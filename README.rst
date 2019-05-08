@@ -7,7 +7,7 @@ pip install tksheet
 
 # Basic Demo:
 
-```
+```python
 class demo(tk.Tk):
         def __init__(self):
             tk.Tk.__init__(self)
