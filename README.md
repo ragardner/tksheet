@@ -56,4 +56,4 @@ app = demo()
 app.mainloop()
 ```
 
-![alt text](https://imgur.com/PyukzmG)
+![alt text](https://i.imgur.com/PyukzmG.jpg)
