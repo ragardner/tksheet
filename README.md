@@ -47,6 +47,6 @@ class demo(tk.Tk):
             self.mainloop()
 
 
-    app = demo()
-    app.mainloop()
+app = demo()
+app.mainloop()
 ```
