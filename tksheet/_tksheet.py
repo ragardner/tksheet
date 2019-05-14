@@ -1973,13 +1973,14 @@ class RowIndexes(tk.Canvas):
                 else:
                     self.rsz_h = None
             if self.width_resizing_enabled and not mouse_over_resize:
-                x1, y1, x2, y2 = self.row_width_resize_bbox[0], self.row_width_resize_bbox[1], self.row_width_resize_bbox[2], self.row_width_resize_bbox[3]
-                if x >= x1 and y >= y1 and x <= x2 and y <= y2:
-                    self.config(cursor = "sb_h_double_arrow")
-                    self.rsz_w = True
-                    mouse_over_resize = True
-                else:
-                    self.rsz_w = None
+                if len(self.row_width_resize_bbox) == 4:
+                    x1, y1, x2, y2 = self.row_width_resize_bbox[0], self.row_width_resize_bbox[1], self.row_width_resize_bbox[2], self.row_width_resize_bbox[3]
+                    if x >= x1 and y >= y1 and x <= x2 and y <= y2:
+                        self.config(cursor = "sb_h_double_arrow")
+                        self.rsz_w = True
+                        mouse_over_resize = True
+                    else:
+                        self.rsz_w = None
             if not mouse_over_resize:
                 self.MT.reset_mouse_motion_creations()
         if self.extra_motion_func is not None:
@@ -3300,19 +3301,21 @@ class MainTable(tk.Canvas):
             x = self.canvasx(event.x)
             y = self.canvasy(event.y)
             if self.RI.width_resizing_enabled and not mouse_over_resize:
-                x1, y1, x2, y2 = self.row_width_resize_bbox[0], self.row_width_resize_bbox[1], self.row_width_resize_bbox[2], self.row_width_resize_bbox[3]
-                if x >= x1 and y >= y1 and x <= x2 and y <= y2:
-                    self.config(cursor = "sb_h_double_arrow")
-                    self.RI.config(cursor = "sb_h_double_arrow")
-                    self.RI.rsz_w = True
-                    mouse_over_resize = True
+                if len(self.row_width_resize_bbox) == 4:
+                    x1, y1, x2, y2 = self.row_width_resize_bbox[0], self.row_width_resize_bbox[1], self.row_width_resize_bbox[2], self.row_width_resize_bbox[3]
+                    if x >= x1 and y >= y1 and x <= x2 and y <= y2:
+                        self.config(cursor = "sb_h_double_arrow")
+                        self.RI.config(cursor = "sb_h_double_arrow")
+                        self.RI.rsz_w = True
+                        mouse_over_resize = True
             if self.CH.height_resizing_enabled and not mouse_over_resize:
-                x1, y1, x2, y2 = self.header_height_resize_bbox[0], self.header_height_resize_bbox[1], self.header_height_resize_bbox[2], self.header_height_resize_bbox[3]
-                if x >= x1 and y >= y1 and x <= x2 and y <= y2:
-                    self.config(cursor = "sb_v_double_arrow")
-                    self.CH.config(cursor = "sb_v_double_arrow")
-                    self.CH.rsz_h = True
-                    mouse_over_resize = True
+                if len(self.header_height_resize_bbox) == 4:
+                    x1, y1, x2, y2 = self.header_height_resize_bbox[0], self.header_height_resize_bbox[1], self.header_height_resize_bbox[2], self.header_height_resize_bbox[3]
+                    if x >= x1 and y >= y1 and x <= x2 and y <= y2:
+                        self.config(cursor = "sb_v_double_arrow")
+                        self.CH.config(cursor = "sb_v_double_arrow")
+                        self.CH.rsz_h = True
+                        mouse_over_resize = True
             if not mouse_over_resize:
                 self.reset_mouse_motion_creations()
         if self.extra_motion_func is not None:
