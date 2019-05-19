@@ -1066,13 +1066,34 @@ class ColumnHeaders(tk.Canvas):
         return ov
 
     def shift_b1_press(self, event):
-        if self.drag_and_drop_enabled and self.rsz_h is None and self.rsz_w is None:
-            x = event.x
-            c = self.MT.identify_col(x = x)
+        x = event.x
+        c = self.MT.identify_col(x = x)
+        if self.drag_and_drop_enabled or self.col_selection_enabled and self.rsz_h is None and self.rsz_w is None:
             if c < len(self.MT.col_positions) - 1:
-                if not self.MT.selected_cols:
-                    self.select_col(c, redraw = True)
-                self.dragged_col = c
+                if c not in self.MT.selected_cols and self.col_selection_enabled:
+                    c = int(c)
+                    if self.MT.currently_selected and self.MT.currently_selected[0] == "column":
+                        min_c = int(self.MT.currently_selected[1])
+                        self.selected_cells = defaultdict(int)
+                        self.RI.selected_cells = defaultdict(int)
+                        self.MT.selected_cols = set()
+                        self.MT.selected_rows = set()
+                        self.MT.selected_cells = set()
+                        if c > min_c:
+                            for i in range(min_c, c + 1):
+                                self.selected_cells[i] += 1
+                                self.MT.selected_cols.add(i)
+                        elif c < min_c:
+                            for i in range(c, min_c + 1):
+                                self.selected_cells[i] += 1
+                                self.MT.selected_cols.add(i)
+                    else:
+                        self.select_col(c)
+                    self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
+                    if self.selection_binding_func is not None:
+                        self.selection_binding_func(("column", c))
+                elif c in self.MT.selected_cols:
+                    self.dragged_col = c
 
     def mouse_motion(self, event):
         if not self.currently_resizing_height and not self.currently_resizing_width:
@@ -1949,13 +1970,34 @@ class RowIndexes(tk.Canvas):
         return ov
 
     def shift_b1_press(self, event):
-        if self.drag_and_drop_enabled and self.row_selection_enabled and self.rsz_h is None and self.rsz_w is None:
-            y = event.y
-            r = self.MT.identify_row(y = y)
-            if not self.MT.selected_rows:
-                self.select_row(r, redraw = True)
+        y = event.y
+        r = self.MT.identify_row(y = y)
+        if self.drag_and_drop_enabled or self.row_selection_enabled and self.rsz_h is None and self.rsz_w is None:
             if r < len(self.MT.row_positions) - 1:
-                self.dragged_row = r
+                if r not in self.MT.selected_rows and self.row_selection_enabled:
+                    r = int(r)
+                    if self.MT.currently_selected and self.MT.currently_selected[0] == "row":
+                        min_r = int(self.MT.currently_selected[1])
+                        self.selected_cells = defaultdict(int)
+                        self.CH.selected_cells = defaultdict(int)
+                        self.MT.selected_cols = set()
+                        self.MT.selected_rows = set()
+                        self.MT.selected_cells = set()
+                        if r > min_r:
+                            for i in range(min_r, r + 1):
+                                self.selected_cells[i] += 1
+                                self.MT.selected_rows.add(i)
+                        elif r < min_r:
+                            for i in range(r, min_r + 1):
+                                self.selected_cells[i] += 1
+                                self.MT.selected_rows.add(i)
+                    else:
+                        self.select_row(r)
+                    self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
+                    if self.selection_binding_func is not None:
+                        self.selection_binding_func(("row", r))
+                elif r in self.MT.selected_rows:
+                    self.dragged_row = r
 
     def mouse_motion(self, event):
         if not self.currently_resizing_height and not self.currently_resizing_width:
@@ -2609,6 +2651,7 @@ class MainTable(tk.Canvas):
         self.undo_storage = deque(maxlen = 20)
 
         self.bind("<Motion>", self.mouse_motion)
+        self.bind("<Shift-ButtonPress-1>",self.shift_b1_press)
         self.bind("<ButtonPress-1>", self.b1_press)
         self.bind("<B1-Motion>", self.b1_motion)
         self.bind("<ButtonRelease-1>", self.b1_release)
@@ -2618,6 +2661,49 @@ class MainTable(tk.Canvas):
 
     def refresh(self, event = None):
         self.main_table_redraw_grid_and_text(True, True)
+
+    def shift_b1_press(self, event = None):
+        if self.drag_selection_enabled and all(v is None for v in (self.RI.rsz_h, self.RI.rsz_w, self.CH.rsz_h, self.CH.rsz_w)):
+            rowsel = int(self.identify_row(y = event.y))
+            colsel = int(self.identify_col(x = event.x))
+            if rowsel < len(self.row_positions) - 1 and colsel < len(self.col_positions) - 1 and (rowsel, colsel) not in self.selected_cells:
+                if self.currently_selected and isinstance(self.currently_selected[0], int):
+                    min_r = self.currently_selected[0]
+                    min_c = self.currently_selected[1]
+                    self.selected_cells = set()
+                    self.CH.selected_cells = defaultdict(int)
+                    self.RI.selected_cells = defaultdict(int)
+                    self.selected_cols = set()
+                    self.selected_rows = set()
+                    if rowsel > min_r and colsel > min_c:
+                        for r in range(min_r, rowsel + 1):
+                            for c in range(min_c, colsel + 1):
+                                self.selected_cells.add((r, c))
+                                self.RI.selected_cells[r] += 1
+                                self.CH.selected_cells[c] += 1
+                    elif rowsel > min_r and min_c > colsel:
+                        for r in range(min_r, rowsel + 1):
+                            for c in range(colsel, min_c + 1):
+                                self.selected_cells.add((r, c))
+                                self.RI.selected_cells[r] += 1
+                                self.CH.selected_cells[c] += 1
+                    elif min_r > rowsel and colsel > min_c:
+                        for r in range(rowsel, min_r + 1):
+                            for c in range(min_c, colsel + 1):
+                                self.selected_cells.add((r, c))
+                                self.RI.selected_cells[r] += 1
+                                self.CH.selected_cells[c] += 1
+                    elif min_r > rowsel and min_c > colsel:
+                        for r in range(rowsel, min_r + 1):
+                            for c in range(colsel, min_c + 1):
+                                self.selected_cells.add((r, c))
+                                self.RI.selected_cells[r] += 1
+                                self.CH.selected_cells[c] += 1
+                else:
+                    self.select_cell(rowsel, colsel, redraw = False)
+                self.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
+                if self.selection_binding_func is not None:
+                    self.selection_binding_func(("cell", ) + tuple(self.currently_selected))
 
     def basic_bindings(self, onoff = "enable"):
         if onoff == "enable":
