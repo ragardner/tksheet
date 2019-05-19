@@ -1345,12 +1345,15 @@ class ColumnHeaders(tk.Canvas):
                         c_ += 1
                         sels_start = c_ - len(colsiter)
                     else:
-                        if c_ > endins:
-                            c_ += 1
-                        if c_ == endins:
-                            c_ -= 1
-                        if c_ < 0:
-                            c_ = 0
+                        if c_ == endins and len(colsiter) == 1:
+                            pass
+                        else:
+                            if c_ > endins:
+                                c_ += 1
+                            if c_ == endins:
+                                c_ -= 1
+                            if c_ < 0:
+                                c_ = 0
                         sels_start = c_
                     newcolidxs = tuple(range(sels_start, sels_start + len(colsiter)))
                 self.MT.selected_rows = set()
@@ -2232,12 +2235,15 @@ class RowIndexes(tk.Canvas):
                         r_ += 1
                         sels_start = r_ - len(rowsiter)
                     else:
-                        if r_ > endins:
-                            r_ += 1
-                        if r_ == endins:
-                            r_ -= 1
-                        if r_ < 0:
-                            r_ = 0
+                        if r_ == endins and len(rowsiter) == 1:
+                            pass
+                        else:
+                            if r_ > endins:
+                                r_ += 1
+                            if r_ == endins:
+                                r_ -= 1
+                            if r_ < 0:
+                                r_ = 0
                         sels_start = r_
                     newrowidxs = tuple(range(sels_start, sels_start + len(rowsiter)))
                 self.MT.selected_rows = set()
