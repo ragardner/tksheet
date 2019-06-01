@@ -2681,25 +2681,25 @@ class MainTable(tk.Canvas):
                     self.RI.selected_cells = defaultdict(int)
                     self.selected_cols = set()
                     self.selected_rows = set()
-                    if rowsel > min_r and colsel > min_c:
+                    if rowsel >= min_r and colsel >= min_c:
                         for r in range(min_r, rowsel + 1):
                             for c in range(min_c, colsel + 1):
                                 self.selected_cells.add((r, c))
                                 self.RI.selected_cells[r] += 1
                                 self.CH.selected_cells[c] += 1
-                    elif rowsel > min_r and min_c > colsel:
+                    elif rowsel >= min_r and min_c >= colsel:
                         for r in range(min_r, rowsel + 1):
                             for c in range(colsel, min_c + 1):
                                 self.selected_cells.add((r, c))
                                 self.RI.selected_cells[r] += 1
                                 self.CH.selected_cells[c] += 1
-                    elif min_r > rowsel and colsel > min_c:
+                    elif min_r >= rowsel and colsel >= min_c:
                         for r in range(rowsel, min_r + 1):
                             for c in range(min_c, colsel + 1):
                                 self.selected_cells.add((r, c))
                                 self.RI.selected_cells[r] += 1
                                 self.CH.selected_cells[c] += 1
-                    elif min_r > rowsel and min_c > colsel:
+                    elif min_r >= rowsel and min_c >= colsel:
                         for r in range(rowsel, min_r + 1):
                             for c in range(colsel, min_c + 1):
                                 self.selected_cells.add((r, c))
