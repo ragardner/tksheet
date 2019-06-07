@@ -1,5 +1,5 @@
 # tksheet
-Python 3.6+ tkinter sheet / table widget for displaying data
+Python 3.6+ tkinter table widget for displaying data
 
 ```
 pip install tksheet
