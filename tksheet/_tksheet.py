@@ -5485,7 +5485,6 @@ if __name__ == '__main__':
             self.sdem.highlight_cells(row = 0, column = 0, bg = "orange", fg = "blue")
             self.sdem.highlight_cells(row = 0, bg = "orange", fg = "blue", canvas = "row_index")
             self.sdem.highlight_cells(column = 0, bg = "orange", fg = "blue", canvas = "header")
-            self.mainloop()
 
 
     app = demo()
