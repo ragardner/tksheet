@@ -9,6 +9,8 @@ import pickle
 import re
 import tkinter as tk
 import zlib
+# for mac bindings
+from platform import system as get_os
 
 
 Color_Map_ = {
@@ -795,7 +797,10 @@ class TextEditor_(tk.Text):
         self.rc_popup_menu.add_command(label = "Paste (Ctrl-v)",
                                        command = self.paste)
         self.bind("<1>", lambda event: self.focus_set())
-        self.bind("<3>", self.rc)
+        if str(get_os()) == "Darwin":
+            self.bind("<2>", self.rc)
+        else:
+            self.bind("<3>", self.rc)
         #self.bind("<Alt-Return>", self.add_newline)
         
     def add_newline(self, event):
