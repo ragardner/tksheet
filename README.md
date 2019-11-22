@@ -8,6 +8,8 @@ pip install tksheet
 
 Display and modify tabular data using Python 3.6+ and tkinter. Stores its display data as a Python list of lists, sublists being rows.
 
+Documentation coming soon (hopefully before 2020)
+
 # Basic Demo:
 
 ```python
