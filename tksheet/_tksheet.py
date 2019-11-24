@@ -2670,6 +2670,22 @@ class MainTable(tk.Canvas):
         self.bind("<Configure>", self.refresh)
         self.bind("<MouseWheel>", self.mousewheel)
 
+        self.rc_popup_menu = tk.Menu(self, tearoff = 0)
+        self.rc_popup_menu.add_command(label = "Select all (Ctrl-a)",
+                                       command = self.select_all)
+        self.rc_popup_menu.add_separator()
+        self.rc_popup_menu.add_command(label = "Cut (Ctrl-x)",
+                                       command = self.ctrl_x)
+        self.rc_popup_menu.add_separator()
+        self.rc_popup_menu.add_command(label = "Copy (Ctrl-c)",
+                                       command = self.ctrl_c)
+        self.rc_popup_menu.add_separator()
+        self.rc_popup_menu.add_command(label = "Paste (Ctrl-v)",
+                                       command = self.ctrl_v)
+        self.rc_popup_menu.add_separator()
+        self.rc_popup_menu.add_command(label = "Delete (Del)",
+                                       command = self.delete_key)
+
     def refresh(self, event = None):
         self.main_table_redraw_grid_and_text(True, True)
 
@@ -2733,7 +2749,7 @@ class MainTable(tk.Canvas):
             self.unbind("<MouseWheel>")
 
     def edit_bindings(self, onoff = "enable"):
-        if onoff == "enable":
+        if onoff.lower() == "enable":
             self.bind("<Control-c>", self.ctrl_c)
             self.bind("<Control-C>", self.ctrl_c)
             self.bind("<Control-x>", self.ctrl_x)
@@ -2743,6 +2759,10 @@ class MainTable(tk.Canvas):
             self.bind("<Control-z>", self.ctrl_z)
             self.bind("<Control-Z>", self.ctrl_z)
             self.bind("<Delete>", self.delete_key)
+            if str(get_os()) == "Darwin":
+                self.bind("<2>", self.rc)
+            else:
+                self.bind("<3>", self.rc)
             self.bind_cell_edit(True)
             self.RI.bind("<Control-c>", self.ctrl_c)
             self.RI.bind("<Control-C>", self.ctrl_c)
@@ -2762,7 +2782,7 @@ class MainTable(tk.Canvas):
             self.CH.bind("<Control-z>", self.ctrl_z)
             self.CH.bind("<Control-Z>", self.ctrl_z)
             self.CH.bind("<Delete>", self.delete_key)
-        elif onoff == "disable":
+        elif onoff.lower() == "disable":
             self.unbind("<Control-c>")
             self.unbind("<Control-C>")
             self.unbind("<Control-x>")
@@ -2770,6 +2790,10 @@ class MainTable(tk.Canvas):
             self.unbind("<Control-v>")
             self.unbind("<Control-V>")
             self.unbind("<Delete>")
+            if str(get_os()) == "Darwin":
+                self.unbind("<2>")
+            else:
+                self.unbind("<3>")
             self.bind_cell_edit(False)
             self.RI.unbind("<Control-c>")
             self.RI.unbind("<Control-C>")
@@ -3214,13 +3238,15 @@ class MainTable(tk.Canvas):
                 else:
                     self.RI.select_row(r - 1)
                     self.see(r - 1, 0, keep_xscroll = True, check_cell_visibility = False)
-        elif self.currently_selected[0] == "column":
-            pass
         elif isinstance(self.currently_selected[0],int):
             r = self.currently_selected[0]
             c = self.currently_selected[1]
             if r == 0 and self.CH.col_selection_enabled:
-                pass # SELECT APPROPRIATE COLUMN, DESELECT CELL
+                if self.cell_is_completely_visible(r = r, c = 0):
+                    self.CH.select_col(c, redraw = True)
+                else:
+                    self.CH.select_col(c)
+                    self.see(r, c, keep_xscroll = True, check_cell_visibility = False)
             elif r != 0 and (self.single_selection_enabled or self.multiple_selection_enabled):
                 if self.cell_is_completely_visible(r = r - 1, c = c):
                     self.select_cell(r - 1, c, redraw = True)
@@ -3240,7 +3266,13 @@ class MainTable(tk.Canvas):
                     self.select_cell(r, 0)
                     self.see(r, 0, keep_yscroll = True, bottom_right_corner = True, check_cell_visibility = False)
         elif self.currently_selected[0] == "column":
-            pass # WORK NEEDED HERE
+            c = self.currently_selected[1]
+            if c < self.total_cols - 1 and self.CH.col_selection_enabled:
+                if self.cell_is_completely_visible(r = 0, c = c + 1):
+                    self.CH.select_col(c + 1, redraw = True)
+                else:
+                    self.CH.select_col(c + 1)
+                    self.see(0, c + 1, keep_yscroll = True, bottom_right_corner = True, check_cell_visibility = False)
         elif isinstance(self.currently_selected[0], int):
             r = self.currently_selected[0]
             c = self.currently_selected[1]
@@ -3263,7 +3295,13 @@ class MainTable(tk.Canvas):
                     self.RI.select_row(r + 1)
                     self.see(r + 1, 0, keep_xscroll = True, bottom_right_corner = True, check_cell_visibility = False)
         elif self.currently_selected[0] == "column":
-            pass # WORK NEEDED HERE
+            c = self.currently_selected[1]
+            if self.single_selection_enabled or self.multiple_selection_enabled:
+                if self.cell_is_completely_visible(r = 0, c = c):
+                    self.select_cell(0, c, redraw = True)
+                else:
+                    self.select_cell(0, c)
+                    self.see(0, c, keep_xscroll = True, bottom_right_corner = True, check_cell_visibility = False)
         elif isinstance(self.currently_selected[0],int):
             r = self.currently_selected[0]
             c = self.currently_selected[1]
@@ -3278,7 +3316,13 @@ class MainTable(tk.Canvas):
         if not self.currently_selected or not self.arrowkeys_enabled:
             return
         if self.currently_selected[0] == "column":
-            pass # WORK NEEDED HERE
+            c = self.currently_selected[1]
+            if c != 0 and self.CH.col_selection_enabled:
+                if self.cell_is_completely_visible(r = 0, c = c - 1):
+                    self.CH.select_col(c - 1, redraw = True)
+                else:
+                    self.CH.select_col(c - 1)
+                    self.see(0, c - 1, keep_yscroll = True, bottom_right_corner = True, check_cell_visibility = False)
         elif isinstance(self.currently_selected[0], int):
             r = self.currently_selected[0]
             c = self.currently_selected[1]
@@ -3426,6 +3470,63 @@ class MainTable(tk.Canvas):
                 self.reset_mouse_motion_creations()
         if self.extra_motion_func is not None:
             self.extra_motion_func(event)
+
+    def rc(self, event = None):
+        self.focus_set()
+        if self.identify_col(x = event.x, allow_end = False) is None or self.identify_row(y = event.y, allow_end = False) is None:
+            self.deselect("all")
+        elif self.single_selection_enabled and all(v is None for v in (self.RI.rsz_h, self.RI.rsz_w, self.CH.rsz_h, self.CH.rsz_w)):
+            r = self.identify_row(y = event.y)
+            c = self.identify_col(x = event.x)
+            if r < len(self.row_positions) - 1 and c < len(self.col_positions) - 1:
+                cols_selected = self.anything_selected(exclude_rows = True, exclude_cells = True)
+                rows_selected = self.anything_selected(exclude_columns = True, exclude_cells = True)
+                if rows_selected and not cols_selected:
+                    x1 = 0
+                    x2 = len(self.col_positions) - 1
+                    y1 = self.get_min_selected_cell_y()
+                    y2 = self.get_max_selected_cell_y()
+                elif cols_selected and not rows_selected:
+                    x1 = self.get_min_selected_cell_x()
+                    x2 = self.get_max_selected_cell_x()
+                    y1 = 0
+                    y2 = len(self.row_positions) - 1
+                else:
+                    x1 = self.get_min_selected_cell_x()
+                    x2 = self.get_max_selected_cell_x()
+                    y1 = self.get_min_selected_cell_y()
+                    y2 = self.get_max_selected_cell_y()
+                if all(e is not None for e in (x1, x2, y1, y2)) and r >= y1 and c >= x1 and r <= y2 and c <= x2:
+                    self.rc_popup_menu.tk_popup(event.x_root, event.y_root)
+                else:
+                    self.select_cell(r, c, redraw = True)
+                    self.rc_popup_menu.tk_popup(event.x_root, event.y_root)
+        elif self.multiple_selection_enabled and all(v is None for v in (self.RI.rsz_h, self.RI.rsz_w, self.CH.rsz_h, self.CH.rsz_w)):
+            r = self.identify_row(y = event.y)
+            c = self.identify_col(x = event.x)
+            if r < len(self.row_positions) - 1 and c < len(self.col_positions) - 1:
+                cols_selected = self.anything_selected(exclude_rows = True, exclude_cells = True)
+                rows_selected = self.anything_selected(exclude_columns = True, exclude_cells = True)
+                if rows_selected and not cols_selected:
+                    x1 = 0
+                    x2 = len(self.col_positions) - 1
+                    y1 = self.get_min_selected_cell_y()
+                    y2 = self.get_max_selected_cell_y()
+                elif cols_selected and not rows_selected:
+                    x1 = self.get_min_selected_cell_x()
+                    x2 = self.get_max_selected_cell_x()
+                    y1 = 0
+                    y2 = len(self.row_positions) - 1
+                else:
+                    x1 = self.get_min_selected_cell_x()
+                    x2 = self.get_max_selected_cell_x()
+                    y1 = self.get_min_selected_cell_y()
+                    y2 = self.get_max_selected_cell_y()
+                if all(e is not None for e in (x1, x2, y1, y2)) and r >= y1 and c >= x1 and r <= y2 and c <= x2:
+                    self.rc_popup_menu.tk_popup(event.x_root, event.y_root)
+                else:
+                    self.add_selection(r, c, redraw = True)
+                    self.rc_popup_menu.tk_popup(event.x_root, event.y_root)
 
     def b1_press(self, event = None):
         self.focus_set()
@@ -3808,7 +3909,6 @@ class MainTable(tk.Canvas):
         self.set_min_cw()
         self.CH.set_height(self.GetHdrLinesHeight(self.default_hh))
 
-    #               REDRAWING AFTER SCROLL EVENT REQUIRES REFERENCE TO DATA SOURCE
     #               QUERY OR SET DATA REFERENCE
     def data_reference(self, newdataref = None, total_cols = None, total_rows = None, reset_col_positions = True, reset_row_positions = True, redraw = False):
         if isinstance(newdataref, (list, tuple)):
@@ -4497,14 +4597,28 @@ class MainTable(tk.Canvas):
             return sorted(set([cll[0] for cll in self.selected_cells] + list(self.selected_cols)))
         return sorted(self.selected_cols)
 
-    def anything_selected(self, exclude_columns = False, exclude_rows = False):
-        if exclude_columns and exclude_rows:
+    def anything_selected(self, exclude_columns = False, exclude_rows = False, exclude_cells = False):
+        if exclude_columns and exclude_rows and not exclude_cells:
             if self.selected_cells:
                 return True
-        elif exclude_columns and not exclude_rows:
+        elif exclude_columns and exclude_cells and not exclude_rows:
+            if self.selected_rows:
+                return True
+        elif exclude_rows and exclude_cells and not exclude_columns:
+            if self.selected_cols:
+                return True
+            
+        elif exclude_columns and not exclude_rows and not exclude_cells:
             if self.selected_rows or self.selected_cells:
                 return True
-        elif not exclude_columns and not exclude_rows:
+        elif exclude_rows and not exclude_columns and not exclude_cells:
+            if self.selected_cols or self.selected_cells:
+                return True
+        elif exclude_cells and not exclude_columns and not exclude_rows:
+            if self.selected_cols or self.selected_rows:
+                return True
+            
+        elif not exclude_columns and not exclude_rows and not exclude_cells:
             if self.selected_cols or self.selected_rows or self.selected_cells:
                 return True
         return False
@@ -4658,7 +4772,7 @@ class TableDropdown(ttk.Combobox):
 class Sheet(tk.Frame):
     def __init__(self,
                  C,
-                 show = False,
+                 show = True,
                  width = None,
                  height = None,
                  headers = None,
@@ -4687,7 +4801,7 @@ class Sheet(tk.Frame):
                  top_left_background = "white",
                  top_left_foreground = "gray85",
                  font = ("TkDefaultFont", 10, "normal"),
-                 header_font=("TkHeadingFont", 11, "bold"),
+                 header_font = ("TkHeadingFont", 11, "bold"),
                  align = "w",
                  header_align = "center",
                  row_index_align = "center",
@@ -4770,14 +4884,14 @@ class Sheet(tk.Frame):
         self.MT["yscrollcommand"] = self.yscroll.set
         self.CH["xscrollcommand"] = self.xscroll.set
         self.RI["yscrollcommand"] = self.yscroll.set
-        self.TL.grid(row = 0, column = 0)
-        self.RI.grid(row = 1, column = 0, sticky = "nswe")
-        self.CH.grid(row = 0, column = 1, sticky = "nswe")
-        self.MT.grid(row = 1, column = 1, sticky = "nswe")
-        self.yscroll.grid(row = 1, column = 2, sticky = "nswe")
-        self.xscroll.grid(row = 2, column = 1, columnspan = 2, sticky = "nswe")
         if show:
-            self.show()
+            self.TL.grid(row = 0, column = 0)
+            self.RI.grid(row = 1, column = 0, sticky = "nswe")
+            self.CH.grid(row = 0, column = 1, sticky = "nswe")
+            self.MT.grid(row = 1, column = 1, sticky = "nswe")
+            self.yscroll.grid(row = 1, column = 2, sticky = "nswe")
+            self.xscroll.grid(row = 2, column = 1, columnspan = 2, sticky = "nswe")
+            self.MT.update()
 
     def focus_set(self, canvas = "table"):
         if canvas == "table":
@@ -4900,7 +5014,7 @@ class Sheet(tk.Frame):
         self.MT.bind_cell_edit(enable)
 
     def identify_region(self, event):
-        # UNFINISHED ================ SEPARATOR?
+        # UNFINISHED, ADD SEPARATOR?
         if event.widget == self.MT:
             return "table"
         elif event.widget == self.RI:
@@ -4962,7 +5076,7 @@ class Sheet(tk.Frame):
                 self.MT.reset_col_positions()
         elif column == "displayed":
             if width == "text":
-                sc,ec = self.MT.get_visible_columns(self.MT.canvasx(0), self.MT.canvasx(self.winfo_width()))
+                sc, ec = self.MT.get_visible_columns(self.MT.canvasx(0), self.MT.canvasx(self.winfo_width()))
                 for c in range(sc, ec - 1):
                     self.CH.set_col_width(c)
         elif width is not None and column is not None:
@@ -5139,8 +5253,8 @@ class Sheet(tk.Frame):
     def get_selected_cells(self, get_rows = False, get_cols = False):
         return self.MT.get_selected_cells(get_rows = get_rows, get_cols = get_cols)
 
-    def anything_selected(self, exclude_columns = False, exclude_rows = False):
-        return self.MT.anything_selected(exclude_columns = exclude_columns, exclude_rows = exclude_rows)
+    def anything_selected(self, exclude_columns = False, exclude_rows = False, exclude_cells = False):
+        return self.MT.anything_selected(exclude_columns = exclude_columns, exclude_rows = exclude_rows, exclude_cells = exclude_cells)
 
     def highlight_cells(self, row = 0, column = 0, cells = [], canvas = "table", bg = None, fg = None, redraw = False):
         if canvas == "table":
@@ -5427,30 +5541,39 @@ class Sheet(tk.Frame):
 
     def enable_bindings(self, bindings):
         self.MT.enable_bindings(bindings)
-        
+
     def disable_bindings(self, bindings):
         self.MT.disable_bindings(bindings)
-        
-    def show(self, regrid = False):
-        if regrid:
+
+    def show(self, canvas = "all"):
+        if canvas == "all":
             self.TL.grid(row = 0, column = 0)
             self.RI.grid(row = 1, column = 0, sticky = "nswe")
             self.CH.grid(row = 0, column = 1, sticky = "nswe")
             self.MT.grid(row = 1, column = 1, sticky = "nswe")
             self.yscroll.grid(row = 0, column = 2, rowspan = 3, sticky = "nswe")
             self.xscroll.grid(row = 2, column = 1, sticky = "nswe")
+        elif canvas == "row_index":
+            self.RI.grid(row = 1, column = 0, sticky = "nswe")
+        elif canvas == "header":
+            self.CH.grid(row = 0, column = 1, sticky = "nswe")
         self.MT.update()
+
+    def hide(self, canvas = "all"):
+        if canvas.lower() == "all":
+            self.TL.grid_forget()
+            self.RI.grid_forget()
+            self.CH.grid_forget()
+            self.MT.grid_forget()
+            self.yscroll.grid_forget()
+            self.xscroll.grid_forget()
+        elif canvas == "row_index":
+            self.RI.grid_forget()
+        elif canvas == "header":
+            self.CH.grid_forget()
 
     def refresh(self, redraw_header = True, redraw_row_index = True):
         self.MT.main_table_redraw_grid_and_text(redraw_header = redraw_header, redraw_row_index = redraw_row_index)
-        
-    def hide(self):
-        self.TL.grid_forget()
-        self.RI.grid_forget()
-        self.CH.grid_forget()
-        self.MT.grid_forget()
-        self.yscroll.grid_forget()
-        self.xscroll.grid_forget()
 
 
 if __name__ == '__main__':
@@ -5467,7 +5590,6 @@ if __name__ == '__main__':
                               align = "w",
                               header_align = "center",
                               row_index_align = "center",
-                              show = True,
                               column_width = 180,
                               row_index_width = 50,
                               data_reference = self.data,
