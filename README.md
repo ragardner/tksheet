@@ -1,4 +1,7 @@
-# tksheet 2.6
+# tksheet 2.7
+
+## WARNING - READ RELEASES FOR INFO ON CHANGED FUNCTIONS
+https://github.com/ragardner/tksheet/releases
 
 Python 3.6+ tkinter table widget for displaying data
 
