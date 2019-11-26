@@ -1,13 +1,13 @@
-# tksheet 2.7
+# tksheet 2.7 
+
+```
+pip install tksheet
+```
 
 ## WARNING - READ RELEASES FOR INFO ON CHANGED FUNCTIONS
 https://github.com/ragardner/tksheet/releases
 
 Python 3.6+ tkinter table widget for displaying data
-
-```
-pip install tksheet
-```
 
 Display and modify tabular data using Python 3.6+ and tkinter. Stores its display data as a Python list of lists, sublists being rows.
 
