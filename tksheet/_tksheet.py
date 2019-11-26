@@ -5172,32 +5172,81 @@ class Sheet(tk.Frame):
     def get_dropdown_value(self, current = False, destroy = True):
         return self.MT.get_dropdown_value(current = current, destroy = destroy)
 
-    def delete_row(self, idx, deselect_all = False, preserve_other_selections = False):
-        self.MT.del_row_position(idx=idx,
-                                 deselect_all=deselect_all,
-                                 preserve_other_selections=preserve_other_selections)
+    def delete_row_position(self, idx, deselect_all = False, preserve_other_selections = False):
+        self.MT.del_row_position(idx = idx,
+                                 deselect_all = deselect_all,
+                                 preserve_other_selections = preserve_other_selections)
 
-    def insert_row(self, idx, height = None, deselect_all = False, preserve_other_selections = False):
+    def delete_row(self, idx = -1, deselect_all = False, preserve_other_selections = False):
+        del self.MT.data_ref[idx]
+        self.MT.del_row_position(idx = idx,
+                                 deselect_all = deselect_all,
+                                 preserve_other_selections = preserve_other_selections)
+
+    def insert_row_position(self, idx, height = None, deselect_all = False, preserve_other_selections = False):
         self.MT.insert_row_position(idx = idx, height = height,
                                     deselect_all = deselect_all,
                                     preserve_other_selections = preserve_other_selections)
 
-    def move_row(self, row, moveto):
-        self.MT.move_row_position(row,moveto)
+    def insert_row(self, row = None, idx = "end", height = None, deselect_all = False, preserve_other_selections = False):
+        self.MT.insert_row_position(idx = idx, height = height,
+                                    deselect_all = deselect_all,
+                                    preserve_other_selections = preserve_other_selections)
+        if idx.lower() == "end":
+            if isinstance(row, list):
+                self.MT.data_ref.append(row if row else list(repeat("", len(self.MT.col_positions) - 1)))
+            else:
+                self.MT.data_ref.append([e for e in row])
+        else:
+            if isinstance(row, list):
+                self.MT.data_ref.insert(idx, row if row else list(repeat("", len(self.MT.col_positions) - 1)))
+            else:
+                self.MT.data_ref.insert(idx, [e for e in row])
 
-    def delete_column(self, idx, deselect_all = False, preserve_other_selections = False):
+    def move_row_position(self, row, moveto):
+        self.MT.move_row_position(row, moveto)
+
+    def move_row(self, row, moveto):
+        self.MT.move_row_position(row, moveto)
+        self.MT.data_ref.insert(moveto, self.MT.data_ref.pop(row))
+
+    def delete_column_position(self, idx, deselect_all = False, preserve_other_selections = False):
         self.MT.del_col_position(idx,
                                  deselect_all = deselect_all,
                                  preserve_other_selections = preserve_other_selections)
 
-    def insert_column(self, idx, width = None, deselect_all = False, preserve_other_selections = False):
+    def delete_column(self, idx = -1, deselect_all = False, preserve_other_selections = False):
+        for rn in range(len(self.MT.data_ref)):
+            del self.MT.data_ref[rn][idx] 
+        self.MT.del_col_position(idx,
+                                 deselect_all = deselect_all,
+                                 preserve_other_selections = preserve_other_selections)
+
+    def insert_column_position(self, idx, width = None, deselect_all = False, preserve_other_selections = False):
         self.MT.insert_col_position(idx = idx,
                                     width = width,
                                     deselect_all = deselect_all,
                                     preserve_other_selections = preserve_other_selections)
 
+    def insert_column(self, column = None, idx = "end", width = None, deselect_all = False, preserve_other_selections = False):
+        self.MT.insert_col_position(idx = idx,
+                                    width = width,
+                                    deselect_all = deselect_all,
+                                    preserve_other_selections = preserve_other_selections)
+        if idx.lower() == "end":
+            for rn, col_value in zip(range(len(self.MT.data_ref)), column):
+                self.MT.data_ref[rn].append(col_value)
+        else:
+            for rn, col_value in zip(range(len(self.MT.data_ref)), column):
+                self.MT.data_ref[rn].insert(idx, col_value)
+
+    def move_column_position(self, column, moveto):
+        self.MT.move_col_position(column, moveto)
+
     def move_column(self, column, moveto):
         self.MT.move_col_position(column, moveto)
+        for rn in range(len(self.MT.data_ref)):
+            self.MT.data_ref[rn].insert(moveto, self.MT.data_ref[rn].pop(column))
 
     def create_text_editor(self, row = 0, column = 0, text = None, state = "normal", see = True, set_data_ref_on_destroy = False):
         self.MT.create_text_editor(r = row, c = column, text = text, state = state, see = see, set_data_ref_on_destroy = set_data_ref_on_destroy)
