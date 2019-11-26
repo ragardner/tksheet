@@ -5192,7 +5192,7 @@ class Sheet(tk.Frame):
         self.MT.insert_row_position(idx = idx, height = height,
                                     deselect_all = deselect_all,
                                     preserve_other_selections = preserve_other_selections)
-        if idx.lower() == "end":
+        if isinstance(idx, str) and idx.lower() == "end":
             if isinstance(row, list):
                 self.MT.data_ref.append(row if row else list(repeat("", len(self.MT.col_positions) - 1)))
             else:
@@ -5233,7 +5233,7 @@ class Sheet(tk.Frame):
                                     width = width,
                                     deselect_all = deselect_all,
                                     preserve_other_selections = preserve_other_selections)
-        if idx.lower() == "end":
+        if isinstance(idx, str) and idx.lower() == "end":
             for rn, col_value in zip(range(len(self.MT.data_ref)), column):
                 self.MT.data_ref[rn].append(col_value)
         else:
@@ -5633,34 +5633,35 @@ if __name__ == '__main__':
             self.grid_columnconfigure(0, weight = 1)
             self.grid_rowconfigure(0, weight = 1)
             self.data = [[f"Row {r} Column {c}" for c in range(100)] for r in range(5000)]
-            self.sdem = Sheet(self,
-                              width = 1000,
-                              height = 700,
-                              align = "w",
-                              header_align = "center",
-                              row_index_align = "center",
-                              column_width = 180,
-                              row_index_width = 50,
-                              data_reference = self.data,
-                              headers=[f"Header {c}" for c in range(100)])
-            self.sdem.enable_bindings(("single",
-                                       "drag_select",
-                                       "column_drag_and_drop",
-                                       "row_drag_and_drop",
-                                       "column_select",
-                                       "row_select",
-                                       "column_width_resize",
-                                       "double_click_column_resize",
-                                       "row_width_resize",
-                                       "column_height_resize",
-                                       "arrowkeys",
-                                       "row_height_resize",
-                                       "double_click_row_resize"))
-            self.sdem.edit_bindings(True)
-            self.sdem.grid(row = 0, column = 0, sticky = "nswe")
-            self.sdem.highlight_cells(row = 0, column = 0, bg = "orange", fg = "blue")
-            self.sdem.highlight_cells(row = 0, bg = "orange", fg = "blue", canvas = "row_index")
-            self.sdem.highlight_cells(column = 0, bg = "orange", fg = "blue", canvas = "header")
+            self.sheet_demo = Sheet(self,
+                                    width = 1000,
+                                    height = 700,
+                                    align = "w",
+                                    header_align = "center",
+                                    row_index_align = "center",
+                                    column_width = 180,
+                                    row_index_width = 50,
+                                    data_reference = self.data,
+                                    headers=[f"Header {c}" for c in range(100)])
+            self.sheet_demo.enable_bindings(("single",
+                                             "drag_select",
+                                             "column_drag_and_drop",
+                                             "row_drag_and_drop",
+                                             "column_select",
+                                             "row_select",
+                                             "column_width_resize",
+                                             "double_click_column_resize",
+                                             "row_width_resize",
+                                             "column_height_resize",
+                                             "arrowkeys",
+                                             "row_height_resize",
+                                             "double_click_row_resize"))
+            self.sheet_demo.edit_bindings(True)
+            self.sheet_demo.grid(row = 0, column = 0, sticky = "nswe")
+            self.sheet_demo.highlight_cells(row = 0, column = 0, bg = "orange", fg = "blue")
+            self.sheet_demo.highlight_cells(row = 0, bg = "orange", fg = "blue", canvas = "row_index")
+            self.sheet_demo.highlight_cells(column = 0, bg = "orange", fg = "blue", canvas = "header")
+            
 
 
     app = demo()
