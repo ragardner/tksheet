@@ -1,4 +1,4 @@
-# tksheet 2.7
+# tksheet 2.8
 
 Python tkinter table widget for displaying tabular data
 
