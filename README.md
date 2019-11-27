@@ -1,4 +1,4 @@
-# tksheet 2.8
+# tksheet 2.9
 
 Python tkinter table widget for displaying tabular data
 
@@ -6,11 +6,9 @@ Python tkinter table widget for displaying tabular data
 pip install tksheet
 ```
 
-#### WARNING - READ [RELEASES](https://github.com/ragardner/tksheet/releases) FOR INFO ON FUNCTIONS CHANGED SINCE 2.6
-
 Display and modify tabular data using Python 3.6+ and tkinter. Stores its display data as a Python list of lists, sublists being rows.
 
-Until I have finished improving the library and documentation is written you can find all the usable commands/functions toward the bottom of the _tksheet.py file starting [here](https://github.com/ragardner/tksheet/blob/08fc3232db882785b24499f93adb4140d3a26265/tksheet/_tksheet.py#L4772)
+[Version release notes](https://github.com/ragardner/tksheet/blob/master/RELEASE_NOTES.md)
 
 # Basic Demo:
 
@@ -24,40 +22,54 @@ class demo(tk.Tk):
         self.state("zoomed")
         self.grid_columnconfigure(0, weight = 1)
         self.grid_rowconfigure(0, weight = 1)
-        self.data = [[f"Row {r} Column {c}" for c in range(100)] for r in range(5000)]
-        self.sdem = Sheet(self,
-                          width = 1000,
-                          height = 700,
-                          align = "w",
-                          header_align = "center",
-                          row_index_align = "center",
-                          show = True,
-                          column_width = 180,
-                          row_index_width = 50,
-                          data_reference = self.data,
-                          headers=[f"Header {c}" for c in range(100)])
-        self.sdem.enable_bindings(("single",
-                                   "drag_select",
-                                   "column_drag_and_drop",
-                                   "row_drag_and_drop",
-                                   "column_select",
-                                   "row_select",
-                                   "column_width_resize",
-                                   "double_click_column_resize",
-                                   "row_width_resize",
-                                   "column_height_resize",
-                                   "arrowkeys",
-                                   "row_height_resize",
-                                   "double_click_row_resize"))
-        self.sdem.edit_bindings(True)
-        self.sdem.grid(row = 0, column = 0, sticky = "nswe")
-        self.sdem.highlight_cells(row = 0, column = 0, bg = "orange", fg = "blue")
-        self.sdem.highlight_cells(row = 0, bg = "orange", fg = "blue", canvas = "row_index")
-        self.sdem.highlight_cells(column = 0, bg = "orange", fg = "blue", canvas = "header")
+        
+        self.sheet_demo = Sheet(self,
+                                width = 1000,
+                                height = 700,
+                                align = "w",
+                                header_align = "center",
+                                row_index_align = "center",
+                                column_width = 180,
+                                row_index_width = 50,
+                                total_rows = 5000,
+                                total_columns = 100,
+                                headers = [f"Header {c}" for c in range(100)])
+        self.sheet_demo.enable_bindings(("single",
+                                         "drag_select",
+                                         "column_drag_and_drop",
+                                         "row_drag_and_drop",
+                                         "column_select",
+                                         "row_select",
+                                         "column_width_resize",
+                                         "double_click_column_resize",
+                                         "row_width_resize",
+                                         "column_height_resize",
+                                         "arrowkeys",
+                                         "row_height_resize",
+                                         "double_click_row_resize",
+                                         "edit_bindings"))
+        self.sheet_demo.grid(row = 0, column = 0, sticky = "nswe")
+        self.sheet_demo.highlight_cells(row = 0, column = 0, bg = "orange", fg = "blue")
+        self.sheet_demo.highlight_cells(row = 0, bg = "orange", fg = "blue", canvas = "row_index")
+        self.sheet_demo.highlight_cells(column = 0, bg = "orange", fg = "blue", canvas = "header")
 
+        """_________________________ EXAMPLES _________________________ """
+        """_____________________________________________________________"""
 
+        # __________ SETTING OR RESETTING TABLE DATA __________
+        
+        #self.data = [[f"Row {r} Column {c}" for c in range(100)] for r in range(5000)]
+        #self.sheet_demo.data_reference(self.data)
+
+        # __________ SETTING HEADERS __________
+
+        #self.headers = [f"Header {c}" for c in range(100)]
+        #self.sheet_demo.headers(self.headers)
+
+        
 app = demo()
 app.mainloop()
+
 ```
 
 ![alt text](https://i.imgur.com/PyukzmG.jpg)
