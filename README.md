@@ -62,6 +62,3 @@ app.mainloop()
 
 ![alt text](https://i.imgur.com/PyukzmG.jpg)
 
-----
-
-![alt text](https://i.imgur.com/RJ1hcLC.jpg)
