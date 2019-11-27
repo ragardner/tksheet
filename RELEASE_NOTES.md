@@ -7,7 +7,7 @@
  - `"edit_bindings"` has been added as an input for the function `enable_bindings()`
  - `show()` and `hide()` have been reworked to allow hiding of the header and/or row index
 
-### Version 2.6 - 2.9
+### Version 2.6 - 2.9:
 
  - delete_row() is now delete_row_position()
  - insert_row() is now insert_row_position()
