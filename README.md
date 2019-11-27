@@ -10,7 +10,7 @@ pip install tksheet
 
 Display and modify tabular data using Python 3.6+ and tkinter. Stores its display data as a Python list of lists, sublists being rows.
 
-Documentation coming soon (hopefully before 2020) until then you can find all the usable commands/functions toward the bottom of the _tksheet.py file starting here https://github.com/ragardner/tksheet/blob/a818aec39586b804fc37b8633c72277cf5b93e17/tksheet/_tksheet.py#L4658
+Documentation coming soon (hopefully before 2020) until then you can find all the usable commands/functions toward the bottom of the _tksheet.py file starting [here](https://github.com/ragardner/tksheet/blob/08fc3232db882785b24499f93adb4140d3a26265/tksheet/_tksheet.py#L4772)
 
 # Basic Demo:
 
