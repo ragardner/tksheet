@@ -2545,6 +2545,8 @@ class MainTable(tk.Canvas):
                  header_height = None,
                  row_height = None,
                  data_reference = None,
+                 total_cols = None,
+                 total_rows = None,
                  row_index = None,
                  font = None,
                  header_font = None,
@@ -2598,12 +2600,19 @@ class MainTable(tk.Canvas):
         self.total_rows = 0
         self.total_cols = 0
         self.data_ref = data_reference
-        if self.data_ref:
+        if isinstance(self.data_ref, list):
+            self.data_ref = data_reference
+        else:
+            self.data_ref = []
+        if self.data_ref and total_rows is None:
             self.total_rows = len(self.data_ref)
-        if self.data_ref and all_columns_displayed:
+        if self.data_ref and total_cols is None:
             self.total_cols = len(max(self.data_ref, key = len))
-        elif self.data_ref and not all_columns_displayed:
-            self.total_cols = len(displayed_columns)
+        if not self.data_ref:
+            if isinstance(total_rows, int) and isinstance(total_cols, int) and total_rows > 0 and total_cols > 0:
+                self.data_ref = [["" for c in range(total_cols)] for r in range(total_rows)]
+                self.total_rows = total_rows
+                self.total_cols = total_cols
         self.displayed_columns = displayed_columns
         self.all_columns_displayed = all_columns_displayed
 
@@ -2633,13 +2642,11 @@ class MainTable(tk.Canvas):
         self.set_fnt_help()
         self.set_hdr_fnt_help()
         
-        # headers, default is range of numbers
         if headers:
             self.my_hdrs = headers
         else:
             self.my_hdrs = []
-                
-        # row indexes, default is range of numbers
+        
         if isinstance(row_index, int):
             self.my_row_index = row_index
         else:
@@ -3124,7 +3131,6 @@ class MainTable(tk.Canvas):
             return True
         return False
 
-    #               EXTERNAL USE ADD ANY SELECTION
     def select(self, r, c, cell,redraw = True):
         if cell is not None:
             r, c = cell[0], cell[1]
@@ -3142,7 +3148,6 @@ class MainTable(tk.Canvas):
         if redraw:
             self.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
 
-    #               INTERNAL DESELECT EVERYTHING ELSE, SELECT SINGLE CELL
     def select_cell(self, r, c, redraw = False):
         r = int(r)
         c = int(c)
@@ -3169,7 +3174,6 @@ class MainTable(tk.Canvas):
         if redraw:
             self.main_table_redraw_grid_and_text()
 
-    #               INTERNAL ADD SELECTION CELL
     def add_selection(self, r, c, redraw = False, run_binding_func = True):
         r = int(r)
         c = int(c)
@@ -3267,7 +3271,7 @@ class MainTable(tk.Canvas):
                     self.see(r, 0, keep_yscroll = True, bottom_right_corner = True, check_cell_visibility = False)
         elif self.currently_selected[0] == "column":
             c = self.currently_selected[1]
-            if c < self.total_cols - 1 and self.CH.col_selection_enabled:
+            if c < len(self.col_positions) - 2 and self.CH.col_selection_enabled:
                 if self.cell_is_completely_visible(r = 0, c = c + 1):
                     self.CH.select_col(c + 1, redraw = True)
                 else:
@@ -3276,7 +3280,7 @@ class MainTable(tk.Canvas):
         elif isinstance(self.currently_selected[0], int):
             r = self.currently_selected[0]
             c = self.currently_selected[1]
-            if c < self.total_cols - 1 and (self.single_selection_enabled or self.multiple_selection_enabled):
+            if c < len(self.col_positions) - 2 and (self.single_selection_enabled or self.multiple_selection_enabled):
                 if self.cell_is_completely_visible(r = r, c = c + 1):
                     self.select_cell(r, c + 1, redraw =True)
                 else:
@@ -3288,7 +3292,7 @@ class MainTable(tk.Canvas):
             return
         if self.currently_selected[0] == "row":
             r = self.currently_selected[1]
-            if r < self.total_rows - 1 and self.RI.row_selection_enabled:
+            if r < len(self.row_positions) - 2 and self.RI.row_selection_enabled:
                 if self.cell_is_completely_visible(r = r + 1, c = 0):
                     self.RI.select_row(r + 1, redraw = True)
                 else:
@@ -3305,7 +3309,7 @@ class MainTable(tk.Canvas):
         elif isinstance(self.currently_selected[0],int):
             r = self.currently_selected[0]
             c = self.currently_selected[1]
-            if r < self.total_rows - 1 and (self.single_selection_enabled or self.multiple_selection_enabled):
+            if r < len(self.row_positions) - 2 and (self.single_selection_enabled or self.multiple_selection_enabled):
                 if self.cell_is_completely_visible(r = r + 1, c = c):
                     self.select_cell(r + 1, c, redraw = True)
                 else:
@@ -3383,6 +3387,8 @@ class MainTable(tk.Canvas):
             self.RI.enable_bindings("drag_and_drop")
         elif binding == "arrowkeys":
             self.bind_arrowkeys()
+        elif binding == "edit_bindings":
+            self.edit_bindings("enable")
         
     def disable_bindings(self, bindings):
         if isinstance(bindings,(list, tuple)):
@@ -3426,6 +3432,8 @@ class MainTable(tk.Canvas):
             self.RI.disable_bindings("drag_and_drop")
         elif binding == "arrowkeys":
             self.unbind_arrowkeys()
+        elif binding == "edit_bindings":
+            self.edit_bindings("disable")
 
     def reset_mouse_motion_creations(self, event = None):
         self.config(cursor = "")
@@ -3846,8 +3854,7 @@ class MainTable(tk.Canvas):
             self.CH.max_colwidth = self.min_cw * 2
         if self.min_cw > self.default_cw:
             self.default_cw = self.min_cw * 2
-                 
-    #               QUERY OR SET FONT ("FONT",SIZE)
+
     def font(self, newfont = None):
         if newfont:
             if (
@@ -3877,7 +3884,6 @@ class MainTable(tk.Canvas):
             self.min_rh = 12
         self.set_min_cw()
         
-    #               QUERY OR SET HEADER FONT ("FONT",SIZE)
     def header_font(self, newfont = None):
         if newfont:
             if (
@@ -3909,23 +3915,21 @@ class MainTable(tk.Canvas):
         self.set_min_cw()
         self.CH.set_height(self.GetHdrLinesHeight(self.default_hh))
 
-    #               QUERY OR SET DATA REFERENCE
     def data_reference(self, newdataref = None, total_cols = None, total_rows = None, reset_col_positions = True, reset_row_positions = True, redraw = False):
         if isinstance(newdataref, (list, tuple)):
             self.data_ref = newdataref
             self.undo_storage = deque(maxlen = 20)
-            if total_cols is None and self.all_columns_displayed:
+            if total_cols is None:
                 try:
                     self.total_cols = len(max(newdataref, key = len))
                 except:
                     self.total_cols = 0
-            elif isinstance(total_cols, int) and self.all_columns_displayed:
-                self.total_cols = total_cols
-            if total_rows is not None:
-                self.total_rows = total_rows
+            elif isinstance(total_cols, int):
+                self.total_cols = int(total_cols)
+            if isinstance(total_rows, int):
+                self.total_rows = int(total_rows)
             else:
                 self.total_rows = len(newdataref)
-            # total cols parameter here is ignored if not all_columns_displayed
             if reset_col_positions:
                 self.reset_col_positions()
             if reset_row_positions:
@@ -3937,7 +3941,10 @@ class MainTable(tk.Canvas):
 
     def reset_col_positions(self):
         colpos = int(self.default_cw)
-        self.col_positions = [0] + list(accumulate(colpos for c in range(self.total_cols)))
+        if self.all_columns_displayed:
+            self.col_positions = [0] + list(accumulate(colpos for c in range(self.total_cols)))
+        else:
+            self.col_positions = [0] + list(accumulate(colpos for c in range(len(self.col_positions) - 1)))
 
     def del_col_position(self, idx, deselect_all = False, preserve_other_selections = False):
         # WORK NEEDED FOR PRESERVE SELECTIONS ?
@@ -3950,7 +3957,6 @@ class MainTable(tk.Canvas):
             idx += 1
             del self.col_positions[idx]
             self.col_positions[idx:] = [e - w for e in islice(self.col_positions, idx, len(self.col_positions))]
-        self.total_cols -= 1
 
     def insert_col_position(self, idx, width = None, deselect_all = False, preserve_other_selections = False):
         # WORK NEEDED FOR PRESERVE SELECTIONS ?
@@ -3967,7 +3973,6 @@ class MainTable(tk.Canvas):
             self.col_positions.insert(idx,self.col_positions[idx - 1] + w)
             idx += 1
             self.col_positions[idx:] = [e + w for e in islice(self.col_positions, idx, len(self.col_positions))]
-        self.total_cols += 1
 
     def reset_row_positions(self):
         rowpos = self.GetLinesHeight(self.default_rh)
@@ -3984,11 +3989,9 @@ class MainTable(tk.Canvas):
             idx += 1
             del self.row_positions[idx]
             self.row_positions[idx:] = [e - w for e in islice(self.row_positions, idx, len(self.row_positions))]
-        self.total_rows -= 1
 
     def insert_row_position(self, idx, height = None, deselect_all = False, preserve_other_selections = False):
         # WORK NEEDED FOR PRESERVE SELECTIONS ?
-        #here
         if deselect_all:
             self.deselect("all", redraw = False)
         if height is None:
@@ -4002,7 +4005,6 @@ class MainTable(tk.Canvas):
             self.row_positions.insert(idx, self.row_positions[idx - 1] + h)
             idx += 1
             self.row_positions[idx:] = [e + h for e in islice(self.row_positions, idx, len(self.row_positions))]
-        self.total_rows += 1
 
     def move_row_position(self, idx1, idx2):
         if not len(self.row_positions) <= 2:
@@ -4056,30 +4058,20 @@ class MainTable(tk.Canvas):
             y = int(self.hdr_min_rh)
         return y
 
-    #               QUERY OR SET DISPLAYED COLUMNS
-    def display_columns(self, indexes = None, enable = None, reset_col_positions = True, number_of_columns = None, deselect_all = True):
+    def display_columns(self, indexes = None, enable = None, reset_col_positions = True, deselect_all = True):
         if deselect_all:
             self.deselect("all")
         if indexes is None and enable is None:
             return tuple(self.displayed_columns)
         if indexes is not None:
             self.displayed_columns = indexes
-            if enable is None:
-                if not self.all_columns_displayed:
-                    self.total_cols = len(self.displayed_columns)
         if enable == True:
             self.all_columns_displayed = False
-            self.total_cols = len(self.displayed_columns)
         if enable == False:
             self.all_columns_displayed = True
-            if number_of_columns is not None:
-                self.total_cols = number_of_columns
-            else:
-                self.total_cols = len(max(self.data_ref, key = len))
         if reset_col_positions:
             self.reset_col_positions()
                 
-    #               QUERY OR SET HEADER OR HEADERS
     def headers(self, newheaders = None, index = None):
         if newheaders is not None:
             if isinstance(newheaders, (list, tuple)):
@@ -4090,8 +4082,6 @@ class MainTable(tk.Canvas):
                     self.my_hdrs[index] = f"{newheaders}"
                 else:
                     self.my_hdrs = newheaders
-                    if self.all_columns_displayed:
-                        self.total_cols = len(self.my_hdrs)
             elif isinstance(newheaders, int):
                 self.my_hdrs = newheaders
         else:
@@ -4101,7 +4091,6 @@ class MainTable(tk.Canvas):
             else:
                 return self.my_hdrs
 
-    #               QUERY OR SET ROW INDEX OR ROW INDEXES
     def row_index(self, newindex = None, index = None):
         if isinstance(newindex, int):
             self.my_row_index = newindex
@@ -4115,11 +4104,9 @@ class MainTable(tk.Canvas):
                 else:
                     return self.my_row_index
 
-    #               RETURN TUPLE OF CANVAS VISIBLE COORDS
     def get_canvas_visible_area(self):
         return self.canvasx(0), self.canvasy(0), self.canvasx(self.winfo_width()), self.canvasy(self.winfo_height())
 
-    #               RETURN TUPLE OF VISIBLE ROW INDEXES
     def get_visible_rows(self, y1, y2):
         start_row = bisect.bisect_left(self.row_positions, y1)
         end_row = bisect.bisect_right(self.row_positions, y2)
@@ -4127,7 +4114,6 @@ class MainTable(tk.Canvas):
             end_row += 1
         return start_row, end_row
 
-    #               RETURN TUPLE OF VISIBLE COLUMN INDEXES
     def get_visible_columns(self, x1, x2):
         start_col = bisect.bisect_left(self.col_positions, x1)
         end_col = bisect.bisect_right(self.col_positions, x2)
@@ -4135,8 +4121,6 @@ class MainTable(tk.Canvas):
             end_col += 1
         return start_col, end_col
 
-    #               USE OF FUNCTIONS HAS BEEN MOSTLY AVOIDED HERE TO INCREASE SPEED AND AVOID REPEATED INDEX LOOKUPS
-    #               IF REFRESH SPEED IS LIGHTNING QUICK THERE'S NO NEED FOR DRAWING TEXT IN SPECIFIC CELLS
     def main_table_redraw_grid_and_text(self, redraw_header = False, redraw_row_index = False):
         try:
             last_col_line_pos = self.col_positions[-1] + 1
@@ -4629,12 +4613,12 @@ class MainTable(tk.Canvas):
         if get_cols:
             if self.selected_cols:
                 for c in self.selected_cols:
-                    for r in range(self.total_rows):
+                    for r in range(len(self.row_positions) - 1):
                         res.append((r, c))
         if get_rows:
             if self.selected_rows:
                 for r in self.selected_rows:
-                    for c in range(self.total_cols):
+                    for c in range(len(self.col_positions) - 1):
                         res.append((r, c))
         return res + list(self.selected_cells)
 
@@ -4767,8 +4751,12 @@ class TableDropdown(ttk.Combobox):
     
     def set_my_value(self, value, event = None):
         self.displayed.set(value)
-        
-        
+
+
+# _________________ MAIN SHEET FUNCTIONS ________________________________________________________________________________
+# _________________ MAIN SHEET FUNCTIONS ________________________________________________________________________________
+
+
 class Sheet(tk.Frame):
     def __init__(self,
                  C,
@@ -4783,6 +4771,8 @@ class Sheet(tk.Frame):
                  header_select_background = "#707070",
                  header_select_foreground = "white",
                  data_reference = None,
+                 total_columns = None,
+                 total_rows = None,
                  column_width = 200,
                  header_height = "1",
                  max_colwidth = "inf",
@@ -4859,6 +4849,8 @@ class Sheet(tk.Frame):
                             headers = headers,
                             header_height = header_height,
                             data_reference = data_reference,
+                            total_cols = total_columns,
+                            total_rows = total_rows,
                             row_index = row_index,
                             font = font,
                             header_font = header_font,
@@ -4996,6 +4988,12 @@ class Sheet(tk.Frame):
             self.RI.unbind(binding)
             self.TL.unbind(binding)
 
+    def enable_bindings(self, bindings):
+        self.MT.enable_bindings(bindings)
+
+    def disable_bindings(self, bindings):
+        self.MT.disable_bindings(bindings)
+
     def basic_bindings(self, enable = False):
         if enable:
             for canvas in (self.MT, self.CH, self.RI, self.TL):
@@ -5052,13 +5050,13 @@ class Sheet(tk.Frame):
         colpos = int(self.MT.default_cw)
         if total_cols is not None:
             return [0] + list(accumulate(colpos for c in range(total_cols)))
-        return [0] + list(accumulate(colpos for c in range(self.MT.total_cols)))
+        return [0] + list(accumulate(colpos for c in range(len(self.MT.col_positions) - 1)))
 
     def get_example_canvas_row_heights(self, total_rows = None):
         rowpos = self.MT.GetLinesHeight(self.MT.default_rh)
         if total_rows is not None:
             return [0] + list(accumulate(rowpos for c in range(total_rows)))
-        return [0] + list(accumulate(rowpos for c in range(self.MT.total_rows)))
+        return [0] + list(accumulate(rowpos for c in range(len(self.MT.row_positions) - 1)))
 
     def get_column_widths(self, canvas_positions = False):
         if canvas_positions:
@@ -5182,26 +5180,80 @@ class Sheet(tk.Frame):
         self.MT.del_row_position(idx = idx,
                                  deselect_all = deselect_all,
                                  preserve_other_selections = preserve_other_selections)
+        self.MT.total_rows -= 1
 
     def insert_row_position(self, idx, height = None, deselect_all = False, preserve_other_selections = False):
         self.MT.insert_row_position(idx = idx, height = height,
                                     deselect_all = deselect_all,
                                     preserve_other_selections = preserve_other_selections)
 
-    def insert_row(self, row = None, idx = "end", height = None, deselect_all = False, preserve_other_selections = False):
+    def insert_row(self, row = None, idx = "end", height = None, increase_numcols = True, deselect_all = False, preserve_other_selections = False):
         self.MT.insert_row_position(idx = idx, height = height,
                                     deselect_all = deselect_all,
                                     preserve_other_selections = preserve_other_selections)
         if isinstance(idx, str) and idx.lower() == "end":
             if isinstance(row, list):
                 self.MT.data_ref.append(row if row else list(repeat("", len(self.MT.col_positions) - 1)))
-            else:
+            elif row is not None:
                 self.MT.data_ref.append([e for e in row])
+            elif row is None:
+                self.MT.data_ref.append(list(repeat("", len(self.MT.col_positions) - 1)))
         else:
             if isinstance(row, list):
                 self.MT.data_ref.insert(idx, row if row else list(repeat("", len(self.MT.col_positions) - 1)))
-            else:
+            elif row is not None:
                 self.MT.data_ref.insert(idx, [e for e in row])
+            elif row is None:
+                self.MT.data_ref.append(list(repeat("", len(self.MT.col_positions) - 1)))
+        self.MT.total_rows += 1
+
+    def total_rows(self, number = None, mod_positions = True, mod_data = False):
+        if number is None:
+            return int(self.MT.total_rows)
+        if not isinstance(number, int) or number < 0:
+            raise ValueError("number argument must be integer and > 0")
+        total_cols = int(self.MT.total_cols)
+        if number > len(self.MT.data_ref):
+            if mod_positions:
+                height = self.MT.GetLinesHeight(self.MT.default_rh)
+                for r in range(number - len(self.MT.data_ref)):
+                    self.MT.data_ref.append(list(repeat("", total_cols)))
+                    self.MT.insert_row_position("end", height)
+            else:
+                self.MT.data_ref.extend([list(repeat("", total_cols)) for r in range(number - len(self.MT.data_ref))])
+        elif number < len(self.MT.data_ref):
+            #here work needed if display subset of rows is implemented
+            if mod_data:
+                self.MT.data_ref[number:] = []
+            self.MT.row_positions[number + 1:] = []
+        self.MT.total_rows = len(self.MT.data_ref)  
+
+    def total_columns(self, number = None, mod_positions = True, mod_data = False):
+        if number is None:
+            return int(self.MT.total_cols)
+        if not isinstance(number, int) or number < 0:
+            raise ValueError("number argument must be integer and > 0")
+        total_cols = int(self.MT.total_cols)
+        if number > total_cols:
+            if mod_positions:
+                width = self.MT.default_cw
+                for c in range(number - total_cols):
+                    self.MT.insert_col_position("end", width)
+                    for r in range(len(self.MT.data_ref)):
+                        self.MT.data_ref[r].extend(list(repeat("", number - total_cols)))
+            else:
+                self.MT.data_ref.extend([list(repeat("", total_cols)) for r in range(number - len(self.MT.data_ref))])
+        elif number < total_cols:
+            if not self.MT.all_columns_displayed:
+                self.MT.display_columns(enable = False, reset_col_positions = False, deselect_all = True)
+            if mod_data:
+                for r in range(len(self.MT.data_ref)):
+                    try:
+                        self.MT.data_ref[r][number:] = []
+                    except:
+                        continue
+            self.MT.col_positions[number + 1:] = []
+        self.MT.total_cols = int(number)
 
     def move_row_position(self, row, moveto):
         self.MT.move_row_position(row, moveto)
@@ -5221,6 +5273,7 @@ class Sheet(tk.Frame):
         self.MT.del_col_position(idx,
                                  deselect_all = deselect_all,
                                  preserve_other_selections = preserve_other_selections)
+        self.MT.total_cols -= 1
 
     def insert_column_position(self, idx, width = None, deselect_all = False, preserve_other_selections = False):
         self.MT.insert_col_position(idx = idx,
@@ -5234,11 +5287,20 @@ class Sheet(tk.Frame):
                                     deselect_all = deselect_all,
                                     preserve_other_selections = preserve_other_selections)
         if isinstance(idx, str) and idx.lower() == "end":
-            for rn, col_value in zip(range(len(self.MT.data_ref)), column):
-                self.MT.data_ref[rn].append(col_value)
+            if column is None:
+                for rn in range(len(self.MT.data_ref)):
+                    self.MT.data_ref[rn].append("")
+            else:
+                for rn, col_value in zip(range(len(self.MT.data_ref)), column):
+                    self.MT.data_ref[rn].append(col_value)
         else:
-            for rn, col_value in zip(range(len(self.MT.data_ref)), column):
-                self.MT.data_ref[rn].insert(idx, col_value)
+            if column is None:
+                for rn in range(len(self.MT.data_ref)):
+                    self.MT.data_ref[rn].insert(idx, "")
+            else:
+                for rn, col_value in zip(range(len(self.MT.data_ref)), column):
+                    self.MT.data_ref[rn].insert(idx, col_value)
+        self.MT.total_cols += 1
 
     def move_column_position(self, column, moveto):
         self.MT.move_col_position(column, moveto)
@@ -5406,7 +5468,7 @@ class Sheet(tk.Frame):
         if redraw:
             self.refresh()
 
-    def font(self,newfont=None):
+    def font(self, newfont = None):
         self.MT.font(newfont)
 
     def header_font(self, newfont = None):
@@ -5554,11 +5616,15 @@ class Sheet(tk.Frame):
                                       reset_row_positions,
                                       redraw)
 
-    def display_columns(self, indexes = None, enable = None, reset_col_positions = True, number_of_columns = None, refresh = False, deselect_all = True):
+    def display_subset_of_columns(self,
+                                  indexes = None,
+                                  enable = None,
+                                  reset_col_positions = True,
+                                  refresh = False,
+                                  deselect_all = True):
         res = self.MT.display_columns(indexes = indexes,
                                       enable = enable,
                                       reset_col_positions = reset_col_positions,
-                                      number_of_columns = number_of_columns,
                                       deselect_all = deselect_all)
         if refresh:
             self.refresh()
@@ -5587,12 +5653,6 @@ class Sheet(tk.Frame):
 
     def reset_undos(self):
         self.MT.undo_storage = deque(maxlen = 20)
-
-    def enable_bindings(self, bindings):
-        self.MT.enable_bindings(bindings)
-
-    def disable_bindings(self, bindings):
-        self.MT.disable_bindings(bindings)
 
     def show(self, canvas = "all"):
         if canvas == "all":
@@ -5632,7 +5692,7 @@ if __name__ == '__main__':
             self.state("zoomed")
             self.grid_columnconfigure(0, weight = 1)
             self.grid_rowconfigure(0, weight = 1)
-            self.data = [[f"Row {r} Column {c}" for c in range(100)] for r in range(5000)]
+            
             self.sheet_demo = Sheet(self,
                                     width = 1000,
                                     height = 700,
@@ -5641,8 +5701,9 @@ if __name__ == '__main__':
                                     row_index_align = "center",
                                     column_width = 180,
                                     row_index_width = 50,
-                                    data_reference = self.data,
-                                    headers=[f"Header {c}" for c in range(100)])
+                                    total_rows = 5000,
+                                    total_columns = 100,
+                                    headers = [f"Header {c}" for c in range(100)])
             self.sheet_demo.enable_bindings(("single",
                                              "drag_select",
                                              "column_drag_and_drop",
@@ -5655,15 +5716,27 @@ if __name__ == '__main__':
                                              "column_height_resize",
                                              "arrowkeys",
                                              "row_height_resize",
-                                             "double_click_row_resize"))
-            self.sheet_demo.edit_bindings(True)
+                                             "double_click_row_resize",
+                                             "edit_bindings"))
             self.sheet_demo.grid(row = 0, column = 0, sticky = "nswe")
             self.sheet_demo.highlight_cells(row = 0, column = 0, bg = "orange", fg = "blue")
             self.sheet_demo.highlight_cells(row = 0, bg = "orange", fg = "blue", canvas = "row_index")
             self.sheet_demo.highlight_cells(column = 0, bg = "orange", fg = "blue", canvas = "header")
+
+            """_________________________ EXAMPLES _________________________ """
+            """_____________________________________________________________"""
+
+            # __________ SETTING OR RESETTING TABLE DATA __________
             
+            #self.data = [[f"Row {r} Column {c}" for c in range(100)] for r in range(5000)]
+            #self.sheet_demo.data_reference(self.data)
 
+            # __________ SETTING HEADERS __________
 
+            #self.headers = [f"Header {c}" for c in range(100)]
+            #self.sheet_demo.headers(self.headers)
+
+            
     app = demo()
     app.mainloop()
 
