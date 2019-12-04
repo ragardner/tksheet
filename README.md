@@ -20,6 +20,9 @@ pip install tksheet
  - Copes with cell elements not being strings
  
 Work on this repository is ongoing, improvements in usability, functionality and finally documentation
+
+### Known bugs
+ - In version 2.7+ `display_subset_of_columns()` does not function, will fix soon
  
 [Version release notes](https://github.com/ragardner/tksheet/blob/master/RELEASE_NOTES.md)
 
