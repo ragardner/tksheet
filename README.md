@@ -19,6 +19,8 @@ pip install tksheet
  - Left or Centre text alignment
  - Copes with cell elements not being strings
  
+Work on this repository is ongoing, improvements in usability, functionality and finally documentation
+ 
 [Version release notes](https://github.com/ragardner/tksheet/blob/master/RELEASE_NOTES.md)
 
 # Basic Demo:
