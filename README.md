@@ -7,8 +7,8 @@ pip install tksheet
 ```
 
 ### Features
- - Display and modify tabular data. 
- - Stores its display data as a Python list of lists, sublists being rows.
+ - Display and modify tabular data
+ - Stores its display data as a Python list of lists, sublists being rows
  - Runs smoothly even with millions of rows/columns
  - Edit cells directly
  - Drag and drop columns and rows
