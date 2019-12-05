@@ -1,4 +1,4 @@
-# tksheet 2.9
+# tksheet 3.0
 
 Python 3.6+ tkinter table widget for displaying tabular data
 
@@ -20,9 +20,6 @@ pip install tksheet
  - Copes with cell elements not being strings
  
 Work on this repository is ongoing, improvements in usability, functionality and finally documentation
-
-### Known bugs
- - In version 2.7+ `display_subset_of_columns()` does not function, will fix soon
  
 [Version release notes](https://github.com/ragardner/tksheet/blob/master/RELEASE_NOTES.md)
 
@@ -63,7 +60,11 @@ class demo(tk.Tk):
                                          "arrowkeys",
                                          "row_height_resize",
                                          "double_click_row_resize",
-                                         "edit_bindings"))
+                                         "edit_bindings",
+                                         "rc_insert_column",
+                                         "rc_delete_column",
+                                         "rc_insert_row",
+                                         "rc_delete_row"))
         self.sheet_demo.grid(row = 0, column = 0, sticky = "nswe")
         self.sheet_demo.highlight_cells(row = 0, column = 0, bg = "orange", fg = "blue")
         self.sheet_demo.highlight_cells(row = 0, bg = "orange", fg = "blue", canvas = "row_index")
@@ -72,15 +73,40 @@ class demo(tk.Tk):
         """_________________________ EXAMPLES _________________________ """
         """_____________________________________________________________"""
 
+        # __________ CHANGING THEME __________
+
+        self.sheet_demo.change_theme("dark")
+
         # __________ SETTING OR RESETTING TABLE DATA __________
         
-        #self.data = [[f"Row {r} Column {c}" for c in range(100)] for r in range(5000)]
-        #self.sheet_demo.data_reference(self.data)
+        self.data = [[f"Row {r} Column {c}" for c in range(100)] for r in range(5000)]
+        self.sheet_demo.data_reference(self.data)
+
+        # __________ DISPLAY SUBSET OF COLUMNS __________
+
+        #self.sheet_demo.display_subset_of_columns(indexes = [5, 7, 9, 11], enable = True)
 
         # __________ SETTING HEADERS __________
 
         #self.headers = [f"Header {c}" for c in range(100)]
         #self.sheet_demo.headers(self.headers)
+
+        # __________ INSERTING A ROW __________
+
+        #self.sheet_demo.insert_row(row = (f"my new row here {c}" for c in range(100)), idx = 0) # a filled row at the start
+        #self.sheet_demo.insert_row() # an empty row at the end
+
+        # __________ INSERTING A COLUMN __________
+
+        #self.sheet_demo.insert_column(column = (f"my new col here {r}" for r in range(5000)), idx = 0) # a filled column at the start
+        #self.sheet_demo.insert_column() # an empty column at the end
+
+        # __________ HIDING THE ROW INDEX AND HEADERS __________
+
+        #self.sheet_demo.hide("row_index")
+        #self.sheet_demo.hide("top_left")
+        #self.sheet_demo.hide("header")
+        
 
         
 app = demo()
@@ -88,5 +114,15 @@ app.mainloop()
 
 ```
 
+### Light Theme
+
 ![alt text](https://i.imgur.com/PyukzmG.jpg)
+
+----
+
+### Dark Theme
+
+![alt text](https://i.imgur.com/vcTRbkX.jpg)
+
+----
 
