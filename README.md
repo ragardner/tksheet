@@ -114,11 +114,12 @@ app.mainloop()
 
 ```
 
+----
+
 ### Light Theme
 
 ![alt text](https://i.imgur.com/PyukzmG.jpg)
 
-----
 
 ### Dark Theme
 
