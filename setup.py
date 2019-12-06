@@ -1,7 +1,13 @@
 from distutils.core import setup
 setup(
   name = 'tksheet',
-  packages = ['tksheet'],
+  packages = ['tksheet',
+              'tksheet._tksheet_column_headers',
+              'tksheet._tksheet_main_table',
+              'tksheet._tksheet_other_classes',
+              'tksheet._tksheet_row_index',
+              'tksheet._tksheet_top_left_rectangle',
+              'tksheet._tksheet_vars'],
   version = '3.1',
   license='MIT',
   description = 'Tkinter table / sheet widget',
