@@ -1,3 +1,17 @@
+### Version 3.1:
+ - Added undo for right click delete/insert rows and columns
+ - Added `frame_background` parameter to `Sheet()` startup and `change_color()` function
+ - Added more keys to edit cell binding
+ - Separated `edit_bindings` for the function `enable_bindings()` into the following:
+	- `"cut"`
+	- `"copy"`
+	- `"paste"`
+	- `"delete"`
+	- `"edit_cell"`
+	- `"undo"`
+	Note that the argument `"edit_bindings"` still works
+ - Separated the tksheet classes and variables into different files
+
 ### Version 3.0:
  - Fixed bug with function `display_subset_of_columns()`
  - Fixed issues with row heights and column widths adjusting too small
