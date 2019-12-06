@@ -1,4 +1,4 @@
-# tksheet 3.0 [![PyPI version shields.io](https://img.shields.io/pypi/v/tksheet.svg)](https://pypi.python.org/pypi/tksheet/)[![License: MIT](https://img.shields.io/badge/License-MIT%20v3-blue.svg)](https://github.com/ragardner/tksheet/blob/master/LICENSE.txt)
+# tksheet [![PyPI version shields.io](https://img.shields.io/pypi/v/tksheet.svg)](https://pypi.python.org/pypi/tksheet/)[![License: MIT](https://img.shields.io/badge/License-MIT%20v3-blue.svg)](https://github.com/ragardner/tksheet/blob/master/LICENSE.txt)
 
 Python 3.6+ tkinter table widget for displaying tabular data
 
