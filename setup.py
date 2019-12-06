@@ -1,20 +1,14 @@
 from distutils.core import setup
 setup(
   name = 'tksheet',
-  packages = ['tksheet',
-              'tksheet._tksheet_column_headers',
-              'tksheet._tksheet_main_table',
-              'tksheet._tksheet_other_classes',
-              'tksheet._tksheet_row_index',
-              'tksheet._tksheet_top_left_rectangle',
-              'tksheet._tksheet_vars'],
-  version = '3.2',
+  packages = find_packages(where = 'src'),
+  version = '3.3',
   license='MIT',
   description = 'Tkinter table / sheet widget',
   author = 'ragardner',
   author_email = 'ragardner@protonmail.com',
   url = 'https://github.com/ragardner/tksheet',
-  download_url = 'https://github.com/ragardner/tksheet/archive/3.2.tar.gz',
+  download_url = 'https://github.com/ragardner/tksheet/archive/3.3.tar.gz',
   keywords = ['tkinter', 'table', 'widget'],
   install_requires=[],
   classifiers=[
