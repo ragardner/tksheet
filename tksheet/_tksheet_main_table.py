@@ -1,5 +1,5 @@
-from _tksheet_vars import *
-from _tksheet_other_classes import *
+from ._tksheet_vars import *
+from ._tksheet_other_classes import *
 
 from collections import defaultdict, deque
 from itertools import islice, repeat, accumulate, chain

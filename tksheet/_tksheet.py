@@ -1,9 +1,9 @@
-from _tksheet_vars import *
-from _tksheet_other_classes import *
-from _tksheet_top_left_rectangle import *
-from _tksheet_column_headers import *
-from _tksheet_row_index import *
-from _tksheet_main_table import *
+from ._tksheet_vars import *
+from ._tksheet_other_classes import *
+from ._tksheet_top_left_rectangle import *
+from ._tksheet_column_headers import *
+from ._tksheet_row_index import *
+from ._tksheet_main_table import *
 
 from collections import defaultdict, deque
 from itertools import islice, repeat, accumulate, chain
