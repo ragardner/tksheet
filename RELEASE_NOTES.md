@@ -1,3 +1,6 @@
+### Version 3.1 - 4.0.1
+ - Fixed import errors
+
 ### Version 3.1:
  - Added undo for right click delete/insert rows and columns
  - Added `frame_background` parameter to `Sheet()` startup and `change_color()` function
