@@ -2,7 +2,6 @@
  - Fixed import errors
 
 ### Version 3.1:
- - Added undo for right click delete/insert rows and columns
  - Added `frame_background` parameter to `Sheet()` startup and `change_color()` function
  - Added more keys to edit cell binding
  - Separated `edit_bindings` for the function `enable_bindings()` into the following:
