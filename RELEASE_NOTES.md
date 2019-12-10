@@ -1,3 +1,16 @@
+### Version 4.1.0
+ - Added undo to insert row/column and delete rows/columns
+ - Changed the default looks
+ - Deprecated function `select()` and added `toggle_select_cell()`, `toggle_select_row()` and `toggle_select_column()`
+ - Added functions `is_cell_selected()`, `is_row_selected()`, `is_column_selected()`,
+   `get_cell_data()`, `get_row_data()` and `get_column_data()`
+ - Changed behavior of `deselect()` function slightly to now accept a cell from arguments `row = ` and `column = ` as well as `cell = `
+ - Added cell selection borders and start up option `selected_cells_border_color` as well as to the function `change_color()`
+ - Removed the main table variable `selected_cells` and reduced memory use
+ - Fixed a bug with editing a cell while displaying a subset of columns
+ - Renamed `RowIndexes` class to `RowIndex`
+ - Added separate test file
+
 ### Version 3.1 - 4.0.1
  - Fixed import errors
 

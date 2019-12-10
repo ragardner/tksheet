@@ -26,27 +26,24 @@ Work on this repository is ongoing, improvements in usability, functionality and
 # Basic Demo:
 
 ```python
-import tkinter as tk
 from tksheet import Sheet
+import tkinter as tk
+
 
 class demo(tk.Tk):
     def __init__(self):
         tk.Tk.__init__(self)
-        self.state("zoomed")
         self.grid_columnconfigure(0, weight = 1)
         self.grid_rowconfigure(0, weight = 1)
-        
         self.sheet_demo = Sheet(self,
                                 width = 1000,
                                 height = 700,
                                 align = "w",
                                 header_align = "center",
                                 row_index_align = "center",
-                                column_width = 180,
                                 row_index_width = 50,
-                                total_rows = 5000,
-                                total_columns = 100,
-                                headers = [f"Header {c}" for c in range(100)])
+                                total_rows = 10000,
+                                total_columns = 100)
         self.sheet_demo.enable_bindings(("single",
                                          "drag_select",
                                          "column_drag_and_drop",
@@ -60,31 +57,40 @@ class demo(tk.Tk):
                                          "arrowkeys",
                                          "row_height_resize",
                                          "double_click_row_resize",
-                                         "edit_bindings",
+                                         "copy",
+                                         "cut",
+                                         "paste",
+                                         "delete",
+                                         "undo",
+                                         "edit_cell",
                                          "rc_insert_column",
                                          "rc_delete_column",
                                          "rc_insert_row",
                                          "rc_delete_row"))
         self.sheet_demo.grid(row = 0, column = 0, sticky = "nswe")
-        self.sheet_demo.highlight_cells(row = 0, column = 0, bg = "orange", fg = "blue")
-        self.sheet_demo.highlight_cells(row = 0, bg = "orange", fg = "blue", canvas = "row_index")
-        self.sheet_demo.highlight_cells(column = 0, bg = "orange", fg = "blue", canvas = "header")
+        
 
         """_________________________ EXAMPLES _________________________ """
         """_____________________________________________________________"""
 
         # __________ CHANGING THEME __________
 
-        self.sheet_demo.change_theme("dark")
+        #self.sheet_demo.change_theme("dark")
+
+        # __________ HIGHLIGHT / DEHIGHLIGHT CELLS __________
+
+        self.sheet_demo.highlight_cells(row = 0, column = 0, bg = "#ed4337", fg = "white")
+        self.sheet_demo.highlight_cells(row = 0, bg = "#ed4337", fg = "white", canvas = "row_index")
+        self.sheet_demo.highlight_cells(column = 0, bg = "#ed4337", fg = "white", canvas = "header")
 
         # __________ SETTING OR RESETTING TABLE DATA __________
         
-        self.data = [[f"Row {r} Column {c}" for c in range(100)] for r in range(5000)]
+        self.data = [[f"Row {r} Column {c}" for c in range(100)] for r in range(10000)]
         self.sheet_demo.data_reference(self.data)
 
         # __________ DISPLAY SUBSET OF COLUMNS __________
 
-        #self.sheet_demo.display_subset_of_columns(indexes = [5, 7, 9, 11], enable = True)
+        #self.sheet_demo.display_subset_of_columns(indexes = [5, 7, 9, 1], enable = True)
 
         # __________ SETTING HEADERS __________
 
@@ -118,12 +124,12 @@ app.mainloop()
 
 ### Light Theme
 
-![alt text](https://i.imgur.com/PyukzmG.jpg)
+![alt text](https://i.imgur.com/yoa6K6T.jpg)
 
 
 ### Dark Theme
 
-![alt text](https://i.imgur.com/gU3rJgw.jpg)
+![alt text](https://i.imgur.com/JrZD5Lf.jpg)
 
 ----
 
