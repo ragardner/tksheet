@@ -12,6 +12,7 @@ import zlib
 # for mac bindings
 from platform import system as get_os
 
+
 class TextEditor_(tk.Text):
     def __init__(self,
                  parent,
@@ -27,6 +28,7 @@ class TextEditor_(tk.Text):
                          undo = True)
         if text is not None:
             self.insert(1.0, text)
+        self.yview_moveto(1)
         self.rc_popup_menu = tk.Menu(self, tearoff = 0)
         self.rc_popup_menu.add_command(label = "Select all (Ctrl-a)",
                                        command = self.select_all)
@@ -78,11 +80,16 @@ class TextEditor(tk.Frame):
                  text = None,
                  state = "normal",
                  width = None,
-                 height = None):
+                 height = None,
+                 border_color = "black"):
         tk.Frame.__init__(self,
                           parent,
                           height = height,
-                          width = width)
+                          width = width,
+                          highlightbackground = border_color,
+                          highlightcolor = border_color,
+                          highlightthickness = 2,
+                          bd = 0)
         self.textedit = TextEditor_(self,
                                     font = font,
                                     text = text,
@@ -97,6 +104,9 @@ class TextEditor(tk.Frame):
         
     def get(self):
         return self.textedit.get("1.0", "end").rstrip()
+
+    def scroll_to_bottom(self):
+        self.textedit.yview_moveto(1)
 
 
 class TableDropdown(ttk.Combobox):
@@ -122,4 +132,12 @@ class TableDropdown(ttk.Combobox):
     def set_my_value(self, value, event = None):
         self.displayed.set(value)
 
+
+def num2alpha(n):
+    s = ""
+    n += 1
+    while n > 0:
+        n, r = divmod(n - 1, 26)
+        s = chr(65 + r) + s
+    return s
         

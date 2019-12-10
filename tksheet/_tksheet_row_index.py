@@ -16,7 +16,7 @@ import zlib
 from platform import system as get_os
 
 
-class RowIndexes(tk.Canvas):
+class RowIndex(tk.Canvas):
     def __init__(self,
                  parentframe = None,
                  main_canvas = None,
@@ -68,7 +68,6 @@ class RowIndexes(tk.Canvas):
         self.drag_and_drop_color = drag_and_drop_color
         self.resizing_line_color = resizing_line_color
         self.align = row_index_align
-        self.selected_cells = defaultdict(int)
         self.highlighted_cells = {}
         self.drag_and_drop_enabled = False
         self.dragged_row = None
@@ -178,18 +177,15 @@ class RowIndexes(tk.Canvas):
                     r = int(r)
                     if self.MT.currently_selected and self.MT.currently_selected[0] == "row":
                         min_r = int(self.MT.currently_selected[1])
-                        self.selected_cells = defaultdict(int)
-                        self.CH.selected_cells = defaultdict(int)
                         self.MT.selected_cols = set()
                         self.MT.selected_rows = set()
-                        self.MT.selected_cells = set()
+                        self.MT.sel_R = defaultdict(int)
+                        self.MT.sel_C = defaultdict(int)
                         if r > min_r:
                             for i in range(min_r, r + 1):
-                                self.selected_cells[i] += 1
                                 self.MT.selected_rows.add(i)
                         elif r < min_r:
                             for i in range(r, min_r + 1):
-                                self.selected_cells[i] += 1
                                 self.MT.selected_rows.add(i)
                     else:
                         self.select_row(r)
@@ -356,16 +352,13 @@ class RowIndexes(tk.Canvas):
                     start_row = self.MT.currently_selected[1]
                     self.MT.selected_cols = set()
                     self.MT.selected_rows = set()
-                    self.MT.selected_cells = set()
-                    self.CH.selected_cells = defaultdict(int)
-                    self.selected_cells = defaultdict(int)
+                    self.MT.sel_R = defaultdict(int)
+                    self.MT.sel_C = defaultdict(int)
                     if end_row >= start_row:
                         for r in range(start_row, end_row + 1):
-                            self.selected_cells[r] += 1
                             self.MT.selected_rows.add(r)
                     elif end_row < start_row:
                         for r in range(end_row, start_row + 1):
-                            self.selected_cells[r] += 1
                             self.MT.selected_rows.add(r)
                     if self.drag_selection_binding_func is not None:
                         self.drag_selection_binding_func(("rows", sorted([start_row, end_row])))
@@ -469,14 +462,12 @@ class RowIndexes(tk.Canvas):
                                 r_ = 0
                         sels_start = r_
                     newrowidxs = tuple(range(sels_start, sels_start + len(rowsiter)))
-                self.MT.selected_rows = set()
-                self.MT.selected_cells = set()
-                self.selected_cells = defaultdict(int)
-                self.CH.selected_cells = defaultdict(int)
                 self.MT.selected_cols = set()
+                self.MT.selected_rows = set()
+                self.MT.sel_R = defaultdict(int)
+                self.MT.sel_C = defaultdict(int)
                 for rowsel in newrowidxs:
                     self.MT.selected_rows.add(rowsel)
-                    self.selected_cells[rowsel] += 1
                 self.MT.undo_storage = deque(maxlen = 20)
                 self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
         self.dragged_row = None
@@ -546,25 +537,35 @@ class RowIndexes(tk.Canvas):
         if redraw:
             self.MT.main_table_redraw_grid_and_text(False, True)
 
-    def add_selection(self, r, redraw = False, run_binding_func = True):
+    def add_selection(self, r, redraw = False, run_binding_func = True, set_as_current = True):
         r = int(r)
-        self.MT.currently_selected = ("row", r)
-        self.selected_cells[r] += 1
+        if set_as_current:
+            self.MT.currently_selected = ("row", r)
         self.MT.selected_rows.add(r)
+        self.MT.selected_cols = set()
+        self.MT.selection_boxes = set()
+        self.MT.sel_R = defaultdict(int)
+        self.MT.sel_C = defaultdict(int)
         if redraw:
             self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
         if self.selection_binding_func is not None and run_binding_func:
             self.selection_binding_func(("row", r))
 
-    def select_row(self, r, redraw = False):
+    def select_row(self, r, redraw = False, keep_other_selections = False):
         r = int(r)
-        self.selected_cells = defaultdict(int)
-        self.selected_cells[r] += 1
-        self.CH.selected_cells = defaultdict(int)
+        ignore_keep = False
+        if keep_other_selections:
+            if r in self.MT.selected_rows:
+                self.MT.currently_selected = ("row", r)
+            else:
+                ignore_keep = True
+        if ignore_keep or not keep_other_selections:
+            self.MT.currently_selected = ("row", r)
+            self.MT.selected_rows = {r}
         self.MT.selected_cols = set()
-        self.MT.selected_rows = {r}
-        self.MT.selected_cells = set()
-        self.MT.currently_selected = ("row", r)
+        self.MT.selection_boxes = set()
+        self.MT.sel_R = defaultdict(int)
+        self.MT.sel_C = defaultdict(int)
         if redraw:
             self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
         if self.selection_binding_func is not None:
@@ -598,7 +599,7 @@ class RowIndexes(tk.Canvas):
                     sr = self.MT.row_positions[r+1]
                     if sr > sb:
                         sr = sb
-                    if r in self.highlighted_cells and (r in self.selected_cells or r in self.MT.selected_rows):
+                    if r in self.highlighted_cells and (r in self.MT.sel_R or r in self.MT.selected_rows):
                         c_1 = self.highlighted_cells[r][0] if self.highlighted_cells[r][0].startswith("#") else Color_Map_[self.highlighted_cells[r][0]]
                         self.create_rectangle(0,
                                               fr + 1,
@@ -610,7 +611,7 @@ class RowIndexes(tk.Canvas):
                                               outline = "",
                                               tag = "s")
                         tf = self.selected_cells_foreground if self.highlighted_cells[r][1] is None else self.highlighted_cells[r][1]
-                    elif r in (self.selected_cells or self.MT.selected_rows):
+                    elif (r in self.MT.sel_R or r in self.MT.selected_rows):
                         self.create_rectangle(0, fr + 1, self.current_width - 1, sr, fill = self.selected_cells_background, outline = "", tag = "s")
                         tf = self.selected_cells_foreground
                     elif r in self.highlighted_cells:
@@ -683,7 +684,7 @@ class RowIndexes(tk.Canvas):
                     sr = self.MT.row_positions[r + 1]
                     if sr > sb:
                         sr = sb
-                    if r in self.highlighted_cells and (r in self.selected_cells or r in self.MT.selected_rows):
+                    if r in self.highlighted_cells and (r in self.MT.sel_R or r in self.MT.selected_rows):
                         c_1 = self.highlighted_cells[r][0] if self.highlighted_cells[r][0].startswith("#") else Color_Map_[self.highlighted_cells[r][0]]
                         self.create_rectangle(0,
                                               fr + 1,
@@ -695,7 +696,7 @@ class RowIndexes(tk.Canvas):
                                               outline = "",
                                               tag = "s")
                         tf = self.selected_cells_foreground if self.highlighted_cells[r][1] is None else self.highlighted_cells[r][1]
-                    elif r in (self.selected_cells or self.MT.selected_rows):
+                    elif (r in self.MT.sel_R or r in self.MT.selected_rows):
                         self.create_rectangle(0, fr + 1, self.current_width - 1, sr, fill = self.selected_cells_background, outline = "", tag = "s")
                         tf = self.selected_cells_foreground
                     elif r in self.highlighted_cells:

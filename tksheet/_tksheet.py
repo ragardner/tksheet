@@ -27,16 +27,17 @@ class Sheet(tk.Frame):
                  width = None,
                  height = None,
                  headers = None,
-                 header_background = "white",
+                 default_header = "letters", #letters or numbers
+                 header_background = "#f8f9fa",
                  header_border_color = "#ababab",
                  header_grid_color = "#ababab",
                  header_foreground = "black",
-                 header_select_background = "#707070",
-                 header_select_foreground = "white",
+                 header_select_background = "#e8eaed",
+                 header_select_foreground = "black",
                  data_reference = None,
                  total_columns = None,
                  total_rows = None,
-                 column_width = 200,
+                 column_width = 140,
                  header_height = "1",
                  max_colwidth = "inf",
                  max_rh = "inf",
@@ -45,16 +46,16 @@ class Sheet(tk.Frame):
                  row_index = None,
                  row_index_width = 100,
                  row_height = "1",
-                 row_index_background = "white",
+                 row_index_background = "#f8f9fa",
                  row_index_border_color = "#ababab",
                  row_index_grid_color = "#ababab",
                  row_index_foreground = "black",
-                 row_index_select_background = "#707070",
-                 row_index_select_foreground = "white",
+                 row_index_select_background = "#e8eaed",
+                 row_index_select_foreground = "black",
                  top_left_background = "white",
                  top_left_foreground = "gray85",
-                 font = ("TkDefaultFont", 10, "normal"),
-                 header_font = ("TkHeadingFont", 11, "bold"),
+                 font = ("Arial", 10, "normal"),
+                 header_font = ("Arial", 10, "normal"),
                  align = "w",
                  header_align = "center",
                  row_index_align = "center",
@@ -62,15 +63,16 @@ class Sheet(tk.Frame):
                  table_background = "white",
                  grid_color = "#d4d4d4",
                  text_color = "black",
-                 selected_cells_background = "#707070",
-                 selected_cells_foreground = "white",
+                 selected_cells_border_color = "#1a73e8",
+                 selected_cells_background = "#e7f0fd",
+                 selected_cells_foreground = "black",
                  resizing_line_color = "black",
                  drag_and_drop_color = "turquoise1",
                  displayed_columns = [],
                  all_columns_displayed = True,
                  outline_thickness = 0,
                  outline_color = "gray2",
-                 theme = "normal"):
+                 theme = "light"):
         tk.Frame.__init__(self,
                           C,
                           background = frame_background,
@@ -81,22 +83,23 @@ class Sheet(tk.Frame):
         self.C = C
         self.grid_columnconfigure(1, weight = 1)
         self.grid_rowconfigure(1, weight = 1)
-        self.RI = RowIndexes(self,
-                             max_rh = max_rh,
-                             max_row_width = max_row_width,
-                             row_index_width = row_index_width,
-                             row_index_align = row_index_align,
-                             row_index_background = row_index_background,
-                             row_index_border_color = row_index_border_color,
-                             row_index_grid_color = row_index_grid_color,
-                             row_index_foreground = row_index_foreground,
-                             row_index_select_background = row_index_select_background,
-                             row_index_select_foreground = row_index_select_foreground,
-                             drag_and_drop_color = drag_and_drop_color,
-                             resizing_line_color = resizing_line_color)
+        self.RI = RowIndex(self,
+                           max_rh = max_rh,
+                           max_row_width = max_row_width,
+                           row_index_width = row_index_width,
+                           row_index_align = row_index_align,
+                           row_index_background = row_index_background,
+                           row_index_border_color = row_index_border_color,
+                           row_index_grid_color = row_index_grid_color,
+                           row_index_foreground = row_index_foreground,
+                           row_index_select_background = row_index_select_background,
+                           row_index_select_foreground = row_index_select_foreground,
+                           drag_and_drop_color = drag_and_drop_color,
+                           resizing_line_color = resizing_line_color)
         self.CH = ColumnHeaders(self,
                                 max_colwidth = max_colwidth,
                                 max_header_height = max_header_height,
+                                default_header = default_header,
                                 header_align = header_align,
                                 header_background = header_background,
                                 header_border_color = header_border_color,
@@ -123,6 +126,7 @@ class Sheet(tk.Frame):
                             table_background = table_background,
                             grid_color = grid_color,
                             text_color= text_color,
+                            selected_cells_border_color = selected_cells_border_color,
                             selected_cells_background = selected_cells_background,
                             selected_cells_foreground = selected_cells_foreground,
                             displayed_columns = displayed_columns,
@@ -133,7 +137,7 @@ class Sheet(tk.Frame):
                                    header_canvas = self.CH,
                                    background = top_left_background,
                                    foreground = top_left_foreground)
-        if theme != "normal":
+        if theme != "light":
             self.change_theme(theme)
         self.yscroll = ttk.Scrollbar(self, command = self.MT.set_yviews, orient = "vertical")
         self.xscroll = ttk.Scrollbar(self, command = self.MT.set_xviews, orient = "horizontal")
@@ -188,6 +192,8 @@ class Sheet(tk.Frame):
                 self.RI.selection_binding_func = func
             if binding == "column_select":
                 self.CH.selection_binding_func = func
+            if binding == "cell_deselect":
+                self.MT.deselection_binding_func = func
 
     def bind(self, binding, func):
         if binding == "<ButtonPress-1>":
@@ -588,17 +594,50 @@ class Sheet(tk.Frame):
     def select_cell(self, row, column, redraw = True):
         self.MT.select_cell(row, column, redraw = redraw)
 
-    def add_cell_selection(self, r, c, redraw = True, run_binding_func = True):
-        self.MT.add_selection(r = r, c = c, redraw = redraw, run_binding_func = run_binding_func)
+    def add_cell_selection(self, row, column, redraw = True, run_binding_func = True, set_as_current = True):
+        self.MT.add_selection(r = row, c = column, redraw = redraw, run_binding_func = run_binding_func, set_as_current = set_as_current)
 
-    def add_row_selection(self, r, redraw = True, run_binding_func = True):
-        self.RI.add_selection(r = r, redraw = redraw, run_binding_func = run_binding_func)
+    def add_row_selection(self, row, redraw = True, run_binding_func = True, set_as_current = True):
+        self.RI.add_selection(r = row, redraw = redraw, run_binding_func = run_binding_func, set_as_current = set_as_current)
 
-    def add_column_selection(self, c, redraw = True, run_binding_func = True):
-        self.CH.add_selection(c = c, redraw = redraw, run_binding_func = run_binding_func)
+    def add_column_selection(self, column, redraw = True, run_binding_func = True, set_as_current = True):
+        self.CH.add_selection(c = column, redraw = redraw, run_binding_func = run_binding_func, set_as_current = set_as_current)
 
-    def select(self, row = None, column = None, cell = None, redraw = True):
-        self.MT.select(r = row, c = column, cell = cell, redraw = redraw)
+    def toggle_select_cell(self, row, column, add_selection = True, redraw = True, run_binding_func = True, set_as_current = True):
+        if add_selection:
+            if row in self.MT.sel_R and column in self.MT.sel_C:
+                self.MT.deselect(r = row, c = column, cell = cell, redraw = redraw)
+            else:
+                self.MT.add_selection(r = row, c = column, redraw = redraw, run_binding_func = run_binding_func, set_as_current = set_as_current)
+        else:
+            if row in self.MT.sel_R and column in self.MT.sel_C:
+                self.MT.deselect(r = row, c = column, redraw = redraw)
+            else:
+                self.MT.select_cell(row, column, redraw = redraw)
+
+    def toggle_select_row(self, row, add_selection = True, redraw = True, run_binding_func = True, set_as_current = True):
+        if add_selection:
+            if row in self.MT.selected_rows:
+                self.MT.deselect(r = row, redraw = redraw)
+            else:
+                self.RI.add_selection(r = row, redraw = redraw, run_binding_func = run_binding_func, set_as_current = set_as_current)
+        else:
+            if row in self.MT.selected_rows:
+                self.MT.deselect(r = row, redraw = redraw)
+            else:
+                self.RI.select_row(row, redraw = redraw)
+
+    def toggle_select_column(self, column, add_selection = True, redraw = True, run_binding_func = True, set_as_current = True):
+        if add_selection:
+            if column in self.MT.selected_cols:
+                self.MT.deselect(c = column, redraw = redraw)
+            else:
+                self.CH.add_selection(c = column, redraw = redraw, run_binding_func = run_binding_func, set_as_current = set_as_current)
+        else:
+            if row in self.MT.selected_rows:
+                self.MT.deselect(c = column, redraw = redraw)
+            else:
+                self.CH.select_col(column, redraw = redraw)
 
     def deselect(self, row = None, column = None, cell = None, redraw = True):
         self.MT.deselect(r = row, c = column, cell = cell, redraw = redraw)
@@ -611,6 +650,21 @@ class Sheet(tk.Frame):
 
     def get_selected_cells(self, get_rows = False, get_cols = False):
         return self.MT.get_selected_cells(get_rows = get_rows, get_cols = get_cols)
+
+    def is_cell_selected(self, r, c):
+        if r in self.MT.sel_R and c in self.MT.sel_C:
+            return True
+        return False
+
+    def is_row_selected(self, r):
+        if r in self.MT.selected_rows:
+            return True
+        return False
+
+    def is_column_selected(self, c):
+        if c in self.MT.selected_cols:
+            return True
+        return False
 
     def anything_selected(self, exclude_columns = False, exclude_rows = False, exclude_cells = False):
         return self.MT.anything_selected(exclude_columns = exclude_columns, exclude_rows = exclude_rows, exclude_cells = exclude_cells)
@@ -741,6 +795,7 @@ class Sheet(tk.Frame):
                      table_background = None,
                      grid_color = None,
                      text_color = None,
+                     selected_cells_border_color = None,
                      selected_cells_background = None,
                      selected_cells_foreground = None,
                      resizing_line_color = None,
@@ -786,6 +841,8 @@ class Sheet(tk.Frame):
             self.MT.grid_color = grid_color
         if text_color is not None:
             self.MT.text_color = text_color
+        if selected_cells_border_color is not None:
+            self.MT.selected_cells_border_color = selected_cells_border_color
         if selected_cells_background is not None:
             self.MT.selected_cells_background = selected_cells_background
         if selected_cells_foreground is not None:
@@ -805,49 +862,51 @@ class Sheet(tk.Frame):
 
     def change_theme(self, theme = "light"):
         if theme == "light":
-            self.change_color(header_background = "white",
+            self.change_color(header_background = "#f8f9fa",
                                 header_border_color = "#ababab",
                                 header_grid_color = "#ababab",
                                 header_foreground = "black",
-                                header_select_background = "#707070",
-                                header_select_foreground = "white",
-                                row_index_background = "white",
+                                header_select_background = "#e8eaed",
+                                header_select_foreground = "black",
+                                row_index_background = "#f8f9fa",
                                 row_index_border_color = "#ababab",
                                 row_index_grid_color = "#ababab",
                                 row_index_foreground = "black",
-                                row_index_select_background = "#707070",
-                                row_index_select_foreground = "white",
+                                row_index_select_background = "#e8eaed",
+                                row_index_select_foreground = "black",
                                 top_left_background = "white",
                                 top_left_foreground = "gray85",
                                 table_background = "white",
                                 grid_color = "#d4d4d4",
                                 text_color = "black",
-                                selected_cells_background = "#707070",
-                                selected_cells_foreground = "white",
+                              selected_cells_border_color = "#1a73e8",
+                                selected_cells_background = "#e7f0fd",
+                                selected_cells_foreground = "black",
                                 resizing_line_color = "black",
                                 drag_and_drop_color = "turquoise1",
                                 outline_color = "gray2",
                                 redraw = True)
             self.config(bg = "white")
         elif theme == "dark":
-            self.change_color(header_background = "#222222",
+            self.change_color(header_background = "black",
                                 header_border_color = "#353a41",
                                 header_grid_color = "#353a41",
                                 header_foreground = "gray95",
-                                header_select_background = "white",
+                                header_select_background = "gray95",
                                 header_select_foreground = "black",
-                                row_index_background = "#222222",
+                                row_index_background = "black",
                                 row_index_border_color = "#353a41",
                                 row_index_grid_color = "#353a41",
                                 row_index_foreground = "gray95",
-                                row_index_select_background = "white",
+                                row_index_select_background = "gray95",
                                 row_index_select_foreground = "black",
                                 top_left_background = "#353a41",
                                 top_left_foreground = "#222222",
                                 table_background = "#222222",
                                 grid_color = "#353a41",
                                 text_color = "gray95",
-                                selected_cells_background = "white",
+                              selected_cells_border_color = "#1a73e8",
+                                selected_cells_background = "gray95",
                                 selected_cells_foreground = "black",
                                 resizing_line_color = "red",
                                 drag_and_drop_color = "#9acd32",
@@ -869,6 +928,47 @@ class Sheet(tk.Frame):
                                       reset_row_positions,
                                       redraw)
 
+    def get_cell_data(self, r, c, return_copy = True):
+        if return_copy:
+            try:
+                return f"{self.MT.data_reference[r][c]}"
+            except:
+                return None
+        else:
+            try:
+                return self.MT.data_reference[r][c]
+            except:
+                return None
+
+    def get_row_data(self, r, return_copy = True):
+        if return_copy:
+            try:
+                return tuple(f"{e}" for e in self.MT.data_ref[r])
+            except:
+                return None
+        else:
+            try:
+                self.MT.data_ref[r]
+            except:
+                return None
+
+    def get_column_data(self, c, return_copy = True):
+        res = []
+        if return_copy:
+            for r in self.MT.data_ref:
+                try:
+                    res.append(f"{r[c]}")
+                except:
+                    continue
+            return tuple(res)
+        else:
+            for r in self.MT.data_ref:
+                try:
+                    res.append(r[c])
+                except:
+                    continue
+            return res
+        
     def display_subset_of_columns(self,
                                   indexes = None,
                                   enable = None,
@@ -883,20 +983,20 @@ class Sheet(tk.Frame):
             self.refresh()
         return res
 
-    def show_ctrl_outline(self, t = "cut", canvas = "table", start_cell = (0, 0), end_cell = (1, 1)):
-        self.MT.show_ctrl_outline(t = t, canvas = canvas, start_cell = start_cell, end_cell = end_cell)
+    def show_ctrl_outline(self, canvas = "table", start_cell = (0, 0), end_cell = (1, 1)):
+        self.MT.show_ctrl_outline(canvas = canvas, start_cell = start_cell, end_cell = end_cell)
 
-    def get_max_selected_cell_x(self):
-        return self.MT.get_max_selected_cell_x()
+    def get_max_selected_cell_x(self, get_columns = True):
+        return self.MT.get_max_selected_cell_x(get_cols = get_columns)
 
-    def get_max_selected_cell_y(self):
-        return self.MT.get_max_selected_cell_y()
+    def get_max_selected_cell_y(self, get_rows = True):
+        return self.MT.get_max_selected_cell_y(get_rows = get_rows)
 
-    def get_min_selected_cell_y(self):
-        return self.MT.get_min_selected_cell_y()
+    def get_min_selected_cell_y(self, get_rows = True):
+        return self.MT.get_min_selected_cell_y(get_rows = get_rows)
 
-    def get_min_selected_cell_x(self):
-        return self.MT.get_min_selected_cell_x()
+    def get_min_selected_cell_x(self, get_columns = True):
+        return self.MT.get_min_selected_cell_x(get_cols = get_columns)
         
     def headers(self, newheaders = None, index = None):
         return self.MT.headers(newheaders, index)
@@ -942,94 +1042,7 @@ class Sheet(tk.Frame):
         self.MT.main_table_redraw_grid_and_text(redraw_header = redraw_header, redraw_row_index = redraw_row_index)
 
 
-if __name__ == '__main__':
-    class demo(tk.Tk):
-        def __init__(self):
-            tk.Tk.__init__(self)
-            self.state("zoomed")
-            self.grid_columnconfigure(0, weight = 1)
-            self.grid_rowconfigure(0, weight = 1)
-            
-            self.sheet_demo = Sheet(self,
-                                    width = 1000,
-                                    height = 700,
-                                    align = "w",
-                                    header_align = "center",
-                                    row_index_align = "center",
-                                    column_width = 180,
-                                    row_index_width = 50,
-                                    total_rows = 5000,
-                                    total_columns = 100,
-                                    headers = [f"Header {c}" for c in range(100)])
-            self.sheet_demo.enable_bindings(("single",
-                                             "drag_select",
-                                             "column_drag_and_drop",
-                                             "row_drag_and_drop",
-                                             "column_select",
-                                             "row_select",
-                                             "column_width_resize",
-                                             "double_click_column_resize",
-                                             "row_width_resize",
-                                             "column_height_resize",
-                                             "arrowkeys",
-                                             "row_height_resize",
-                                             "double_click_row_resize",
-                                             "copy",
-                                             "cut",
-                                             "paste",
-                                             "delete",
-                                             "undo",
-                                             "edit_cell",
-                                             "rc_insert_column",
-                                             "rc_delete_column",
-                                             "rc_insert_row",
-                                             "rc_delete_row"))
-            self.sheet_demo.grid(row = 0, column = 0, sticky = "nswe")
-            self.sheet_demo.highlight_cells(row = 0, column = 0, bg = "orange", fg = "blue")
-            self.sheet_demo.highlight_cells(row = 0, bg = "orange", fg = "blue", canvas = "row_index")
-            self.sheet_demo.highlight_cells(column = 0, bg = "orange", fg = "blue", canvas = "header")
 
-            """_________________________ EXAMPLES _________________________ """
-            """_____________________________________________________________"""
-
-            # __________ CHANGING THEME __________
-
-            self.sheet_demo.change_theme("dark")
-
-            # __________ SETTING OR RESETTING TABLE DATA __________
-            
-            self.data = [[f"Row {r} Column {c}" for c in range(100)] for r in range(5000)]
-            self.sheet_demo.data_reference(self.data)
-
-            # __________ DISPLAY SUBSET OF COLUMNS __________
-
-            #self.sheet_demo.display_subset_of_columns(indexes = [5, 7, 9, 11], enable = True)
-
-            # __________ SETTING HEADERS __________
-
-            #self.headers = [f"Header {c}" for c in range(100)]
-            #self.sheet_demo.headers(self.headers)
-
-            # __________ INSERTING A ROW __________
-
-            #self.sheet_demo.insert_row(row = (f"my new row here {c}" for c in range(100)), idx = 0) # a filled row at the start
-            #self.sheet_demo.insert_row() # an empty row at the end
-
-            # __________ INSERTING A COLUMN __________
-
-            #self.sheet_demo.insert_column(column = (f"my new col here {r}" for r in range(5000)), idx = 0) # a filled column at the start
-            #self.sheet_demo.insert_column() # an empty column at the end
-
-            # __________ HIDING THE ROW INDEX AND HEADERS __________
-
-            #self.sheet_demo.hide("row_index")
-            #self.sheet_demo.hide("top_left")
-            #self.sheet_demo.hide("header")
-            
-
-            
-    app = demo()
-    app.mainloop()
 
 
 
