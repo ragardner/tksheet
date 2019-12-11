@@ -21,7 +21,7 @@ pip install tksheet
  
 Work on this repository is ongoing, improvements in usability, functionality and finally documentation
  
-[Version release notes](https://github.com/ragardner/tksheet/blob/master/RELEASE_NOTES.md)
+### [Version release notes](https://github.com/ragardner/tksheet/blob/master/RELEASE_NOTES.md)
 
 # Basic Demo:
 
