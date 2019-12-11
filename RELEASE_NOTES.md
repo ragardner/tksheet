@@ -1,3 +1,10 @@
+### Version 4.1.1
+ - Improve select all speed by 20x
+ - Shrink cell size slightly
+ - Added options to hide row index and header at start up
+ - Change looks of ctrl x border
+ - Fix minor issue where two borders would draw in the same place
+
 ### Version 4.1.0
  - Added undo to insert row/column and delete rows/columns
  - Changed the default looks
