@@ -24,6 +24,9 @@ class Sheet(tk.Frame):
     def __init__(self,
                  C,
                  show = True,
+                 show_top_left = True,
+                 show_row_index = True,
+                 show_header = True,
                  width = None,
                  height = None,
                  headers = None,
@@ -37,7 +40,7 @@ class Sheet(tk.Frame):
                  data_reference = None,
                  total_columns = None,
                  total_rows = None,
-                 column_width = 140,
+                 column_width = 120,
                  header_height = "1",
                  max_colwidth = "inf",
                  max_rh = "inf",
@@ -145,14 +148,17 @@ class Sheet(tk.Frame):
         self.MT["yscrollcommand"] = self.yscroll.set
         self.CH["xscrollcommand"] = self.xscroll.set
         self.RI["yscrollcommand"] = self.yscroll.set
-        if show:
+        if show_top_left:
             self.TL.grid(row = 0, column = 0)
+        if show_row_index:
             self.RI.grid(row = 1, column = 0, sticky = "nswe")
+        if show_header:
             self.CH.grid(row = 0, column = 1, sticky = "nswe")
+        if show:
             self.MT.grid(row = 1, column = 1, sticky = "nswe")
             self.yscroll.grid(row = 1, column = 2, sticky = "nswe")
             self.xscroll.grid(row = 2, column = 1, columnspan = 2, sticky = "nswe")
-            self.MT.update()
+        self.MT.update()
 
     def focus_set(self, canvas = "table"):
         if canvas == "table":

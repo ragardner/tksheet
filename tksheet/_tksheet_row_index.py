@@ -518,14 +518,11 @@ class RowIndex(tk.Canvas):
         return len(cll.split("\n"))
 
     def GetLinesHeight(self, cll):
-        lns = cll.split("\n")
-        if len(lns) > 1:
-            y = self.MT.fl_ins
-            for i in range(len(lns)):
-                y += self.MT.xtra_lines_increment
+        lnslen = len(cll.split("\n"))
+        if lnslen > 1:
+            return int(self.MT.fl_ins) + (self.MT.xtra_lines_increment * lnslen) - 2
         else:
-            y = int(self.MT.min_rh)
-        return y
+            return int(self.MT.min_rh)
 
     def highlight_cells(self, r = 0, cells = tuple(), bg = None, fg = None, redraw = False):
         if bg is None and fg is None:

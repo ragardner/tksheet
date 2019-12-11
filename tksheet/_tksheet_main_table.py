@@ -302,8 +302,8 @@ class MainTable(tk.Canvas):
                               self.col_positions[end_cell[0]],
                               self.row_positions[end_cell[1]],
                               fill = "",
-                              dash = (10, 5),
-                              width = 4,
+                              dash = (25, 5),
+                              width = 2,
                               outline = self.selected_cells_border_col,
                               tag = "ctrl")
         self.tag_raise("ctrl")
@@ -736,11 +736,8 @@ class MainTable(tk.Canvas):
         self.deselect("all")
         if len(self.row_positions) > 1 and len(self.col_positions) > 1:
             self.currently_selected = (0, 0)
-            cols = tuple(range(len(self.col_positions) - 1))
-            for r in range(len(self.row_positions) - 1):
-                for c in cols:
-                    self.sel_C[c] += 1
-                    self.sel_R[r] += 1
+            self.sel_C = defaultdict(int, {i: len(self.row_positions) - 1 for i in range(len(self.col_positions) - 1)})
+            self.sel_R = defaultdict(int, {i: len(self.col_positions) - 1 for i in range(len(self.row_positions) - 1)})
             self.selection_boxes = {(0, 0, len(self.row_positions) - 1, len(self.col_positions) - 1)}
         if redraw:
             self.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
@@ -1676,11 +1673,11 @@ class MainTable(tk.Canvas):
             return self.my_font
 
     def set_fnt_help(self):
-        self.txt_h = self.GetTextHeight("|ZX*'^")
+        self.txt_h = self.GetTextHeight("|Zj*'^")
         self.half_txt_h = ceil(self.txt_h / 2)
-        self.fl_ins = self.half_txt_h + 3
+        self.fl_ins = self.half_txt_h + 1
         self.xtra_lines_increment = int(self.txt_h)
-        self.min_rh = self.txt_h + 6
+        self.min_rh = self.txt_h + 4
         if self.min_rh < 12:
             self.min_rh = 12
         self.set_min_cw()
@@ -1708,11 +1705,11 @@ class MainTable(tk.Canvas):
             return self.my_hdr_font
 
     def set_hdr_fnt_help(self):
-        self.hdr_txt_h = self.GetHdrTextHeight("|ZX*'^")
+        self.hdr_txt_h = self.GetHdrTextHeight("|Zj*'^")
         self.hdr_half_txt_h = ceil(self.hdr_txt_h / 2)
-        self.hdr_fl_ins = self.hdr_half_txt_h + 5
+        self.hdr_fl_ins = self.hdr_half_txt_h + 2
         self.hdr_xtra_lines_increment = self.hdr_txt_h
-        self.hdr_min_rh = self.hdr_txt_h + 10
+        self.hdr_min_rh = self.hdr_txt_h + 5
         self.set_min_cw()
         self.CH.set_height(self.GetHdrLinesHeight(self.default_hh))
 
@@ -2044,27 +2041,17 @@ class MainTable(tk.Canvas):
                     self.col_positions[i] += width
                 self.col_positions[idx2 + 1] = self.col_positions[idx2] + width
 
-    def GetLinesHeight(self, n):
-        y = int(self.fl_ins)
+    def GetLinesHeight(self, n): 
         if n == 1:
-            y += 6
+            return int(self.min_rh)
         else:
-            for i in range(n):
-                y += self.xtra_lines_increment
-        if y < self.min_rh:
-            y = int(self.min_rh)
-        return y
+            return int(self.fl_ins) + (self.xtra_lines_increment * n) - 2
 
     def GetHdrLinesHeight(self, n):
-        y = int(self.hdr_fl_ins)
         if n == 1:
-            y + 10
+            return int(self.hdr_min_rh)
         else:
-            for i in range(n):
-                y += self.hdr_xtra_lines_increment
-        if y < self.hdr_min_rh:
-            y = int(self.hdr_min_rh)
-        return y
+            return int(self.hdr_fl_ins) + (self.hdr_xtra_lines_increment * n) - 2
 
     def display_columns(self, indexes = None, enable = None, reset_col_positions = True, deselect_all = True):
         if deselect_all:
@@ -2254,11 +2241,11 @@ class MainTable(tk.Canvas):
                                     if wd > mw:
                                         #nl = int(mw * (len(fl) / wd)) - 1
                                         nl = int(len(fl) * (mw / wd)) - 1
-                                        self.itemconfig(t,text=fl[:nl])
+                                        self.itemconfig(t, text = fl[:nl])
                                         wd = self.bbox(t)
                                         while wd[2] - wd[0] > mw:
                                             nl -= 1
-                                            self.dchars(t,nl)
+                                            self.dchars(t, nl)
                                             wd = self.bbox(t)
                                 if len(lns) > 1:
                                     stl = int((y1 - y) / self.xtra_lines_increment) - 1
@@ -2274,11 +2261,11 @@ class MainTable(tk.Canvas):
                                             if wd > mw:
                                                 #nl = int(mw * (len(txt) / wd)) - 1
                                                 nl = int(len(txt) * (mw / wd)) - 1
-                                                self.itemconfig(t,text=txt[:nl])
+                                                self.itemconfig(t, text = txt[:nl])
                                                 wd = self.bbox(t)
                                                 while wd[2] - wd[0] > mw:
                                                     nl -= 1
-                                                    self.dchars(t,nl)
+                                                    self.dchars(t, nl)
                                                     wd = self.bbox(t)
                                             y += self.xtra_lines_increment
                                             if y + self.half_txt_h > sr:
@@ -2450,11 +2437,11 @@ class MainTable(tk.Canvas):
                                             wd = wd[2] - wd[0]
                                             if wd > mw:
                                                 nl = int(len(txt) * (mw / wd)) - 1
-                                                self.itemconfig(t,text=txt[:nl])
+                                                self.itemconfig(t, text = txt[:nl])
                                                 wd = self.bbox(t)
                                                 while wd[2] - wd[0] > mw:
                                                     nl -= 1
-                                                    self.dchars(t,nl)
+                                                    self.dchars(t, nl)
                                                     wd = self.bbox(t)
                                             y += self.xtra_lines_increment
                                             if y + self.half_txt_h > sr:
@@ -2557,17 +2544,18 @@ class MainTable(tk.Canvas):
                             except:
                                 continue
             for _y1, _x1, _y2, _x2 in self.selection_boxes:
-                if (
-                    start_row <= _y1 or
-                    end_row + 1 >= _y1 or
-                    start_col <= _x1 or
-                    end_col + 1 >= x1 or
-                    start_row <= _y2 or
-                    end_row + 1 >= _y2 or
-                    start_col <= _x2 or
-                    end_col + 1 >= x2
-                    ):
-                    cr_(self.col_positions[_x1], self.row_positions[_y1], self.col_positions[_x2], self.row_positions[_y2], fill = "", outline = self.selected_cells_border_col) 
+                if _y2 - _y1 > 1 and _x2 - _x1 > 1:
+                    if (
+                        start_row <= _y1 or
+                        end_row + 1 >= _y1 or
+                        start_col <= _x1 or
+                        end_col + 1 >= x1 or
+                        start_row <= _y2 or
+                        end_row + 1 >= _y2 or
+                        start_col <= _x2 or
+                        end_col + 1 >= x2
+                        ):
+                        cr_(self.col_positions[_x1], self.row_positions[_y1], self.col_positions[_x2], self.row_positions[_y2], fill = "", outline = self.selected_cells_border_col)
         except:
             return
         if redraw_header:
@@ -2676,8 +2664,8 @@ class MainTable(tk.Canvas):
             self.see(r = r, c = c, check_cell_visibility = True)
         x = self.col_positions[c]
         y = self.row_positions[r]
-        w = self.col_positions[c + 1] - x
-        h = self.row_positions[r + 1] - y + 5
+        w = self.col_positions[c + 1] - x + 1
+        h = self.row_positions[r + 1] - y + 6
         if text is None:
             text = ""
         self.delete("curr")
