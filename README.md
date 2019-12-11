@@ -42,7 +42,7 @@ class demo(tk.Tk):
                                 header_align = "center",
                                 row_index_align = "center",
                                 row_index_width = 50,
-                                total_rows = 10000,
+                                total_rows = 2000,
                                 total_columns = 100)
         self.sheet_demo.enable_bindings(("single",
                                          "drag_select",
@@ -85,7 +85,7 @@ class demo(tk.Tk):
 
         # __________ SETTING OR RESETTING TABLE DATA __________
         
-        self.data = [[f"Row {r} Column {c}" for c in range(100)] for r in range(10000)]
+        self.data = [[f"Row {r} Column {c}" for c in range(100)] for r in range(2000)]
         self.sheet_demo.data_reference(self.data)
 
         # __________ DISPLAY SUBSET OF COLUMNS __________
@@ -117,6 +117,7 @@ class demo(tk.Tk):
         
 app = demo()
 app.mainloop()
+
 
 ```
 
