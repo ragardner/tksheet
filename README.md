@@ -23,7 +23,7 @@ Work on this repository is ongoing, improvements in usability, functionality and
  
 ### [Version release notes](https://github.com/ragardner/tksheet/blob/master/RELEASE_NOTES.md)
 
-# Basic Demo:
+## Basic Demo:
 
 ```python
 from tksheet import Sheet
