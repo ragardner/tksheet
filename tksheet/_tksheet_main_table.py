@@ -1431,28 +1431,28 @@ class MainTable(tk.Canvas):
                     self.sel_R = defaultdict(int)
                     self.selection_boxes = set()
                     if end_row >= start_row and end_col >= start_col:
-                        for c in range(start_col, end_col + 1):
-                            for r in range(start_row, end_row + 1):
-                                self.sel_R[r] += 1
-                                self.sel_C[c] += 1
+                        numcols = end_col + 1 - start_col
+                        numrows = end_row + 1 - start_row
+                        self.sel_C = defaultdict(int, {i: numrows for i in range(start_col, end_col + 1)})
+                        self.sel_R = defaultdict(int, {i: numcols for i in range(start_row, end_row + 1)})
                         self.selection_boxes = {(start_row, start_col, end_row + 1, end_col + 1)}
                     elif end_row >= start_row and end_col < start_col:
-                        for c in range(end_col, start_col + 1):
-                            for r in range(start_row, end_row + 1):
-                                self.sel_R[r] += 1
-                                self.sel_C[c] += 1
+                        numcols = start_col + 1 - end_col
+                        numrows = end_row + 1 - start_row
+                        self.sel_C = defaultdict(int, {i: numrows for i in range(end_col, start_col + 1)})
+                        self.sel_R = defaultdict(int, {i: numcols for i in range(start_row, end_row + 1)})
                         self.selection_boxes = {(start_row, end_col, end_row + 1, start_col + 1)}
                     elif end_row < start_row and end_col >= start_col:
-                        for c in range(start_col, end_col + 1):
-                            for r in range(end_row, start_row + 1):
-                                self.sel_R[r] += 1
-                                self.sel_C[c] += 1
+                        numcols = end_col + 1 - start_col
+                        numrows = start_row + 1 - end_row
+                        self.sel_C = defaultdict(int, {i: numrows for i in range(start_col, end_col + 1)})
+                        self.sel_R = defaultdict(int, {i: numcols for i in range(end_row, start_row + 1)})
                         self.selection_boxes = {(end_row, start_col, start_row + 1, end_col + 1)}
                     elif end_row < start_row and end_col < start_col:
-                        for c in range(end_col, start_col + 1):
-                            for r in range(end_row, start_row + 1):
-                                self.sel_R[r] += 1
-                                self.sel_C[c] += 1
+                        numcols = start_col + 1 - end_col
+                        numrows = start_row + 1 - end_row
+                        self.sel_C = defaultdict(int, {i: numrows for i in range(end_col, start_col + 1)})
+                        self.sel_R = defaultdict(int, {i: numcols for i in range(end_row, start_row + 1)})
                         self.selection_boxes = {(end_row, end_col, start_row + 1, start_col + 1)}
                     if self.drag_selection_binding_func is not None:
                         self.drag_selection_binding_func(sorted([start_row, end_row]) + sorted([start_col, end_col]))
@@ -1673,9 +1673,12 @@ class MainTable(tk.Canvas):
             return self.my_font
 
     def set_fnt_help(self):
-        self.txt_h = self.GetTextHeight("|Zj*'^")
+        self.txt_h = self.GetTextHeight("|ZXj*'^")
         self.half_txt_h = ceil(self.txt_h / 2)
-        self.fl_ins = self.half_txt_h + 1
+        if self.half_txt_h % 2 == 0:
+            self.fl_ins = self.half_txt_h + 2
+        else:
+            self.fl_ins = self.half_txt_h + 1
         self.xtra_lines_increment = int(self.txt_h)
         self.min_rh = self.txt_h + 4
         if self.min_rh < 12:
@@ -1705,11 +1708,14 @@ class MainTable(tk.Canvas):
             return self.my_hdr_font
 
     def set_hdr_fnt_help(self):
-        self.hdr_txt_h = self.GetHdrTextHeight("|Zj*'^")
+        self.hdr_txt_h = self.GetHdrTextHeight("|ZXj*'^")
         self.hdr_half_txt_h = ceil(self.hdr_txt_h / 2)
-        self.hdr_fl_ins = self.hdr_half_txt_h + 2
+        if self.hdr_half_txt_h % 2 == 0:
+            self.hdr_fl_ins = self.hdr_half_txt_h + 2
+        else:
+            self.hdr_fl_ins = self.hdr_half_txt_h + 1
         self.hdr_xtra_lines_increment = self.hdr_txt_h
-        self.hdr_min_rh = self.hdr_txt_h + 5
+        self.hdr_min_rh = self.hdr_txt_h + 4
         self.set_min_cw()
         self.CH.set_height(self.GetHdrLinesHeight(self.default_hh))
 
@@ -2544,7 +2550,7 @@ class MainTable(tk.Canvas):
                             except:
                                 continue
             for _y1, _x1, _y2, _x2 in self.selection_boxes:
-                if _y2 - _y1 > 1 and _x2 - _x1 > 1:
+                if _y2 - _y1 > 1 or _x2 - _x1 > 1:
                     if (
                         start_row <= _y1 or
                         end_row + 1 >= _y1 or
