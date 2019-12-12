@@ -1,3 +1,8 @@
+### Version 4.1.2
+ - Move text up slightly inside cells
+ - Fix selected cells border not showing sometimes
+ - Replace some unnessecary loops
+
 ### Version 4.1.1
  - Improve select all speed by 20x
  - Shrink cell size slightly
