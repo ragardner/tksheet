@@ -1,3 +1,12 @@
+### Version 4.1.3
+ - Improve speed of `get_selected_cells()`
+ - Add function `get_selection_boxes()`
+ - Remove more unnessecary loops
+ - Added argument `show_selected_cells_border` to start up
+ - Added function `set_options()`
+ - Added undo to drag and drop rows/columns
+ - Fixed bug with drag and drop columns when displaying a subset of columns
+
 ### Version 4.1.2
  - Move text up slightly inside cells
  - Fix selected cells border not showing sometimes
