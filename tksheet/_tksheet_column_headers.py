@@ -185,11 +185,9 @@ class ColumnHeaders(tk.Canvas):
                         self.MT.selected_cols = set()
                         self.MT.selected_rows = set()
                         if c > min_c:
-                            for i in range(min_c, c + 1):
-                                self.MT.selected_cols.add(i)
+                            self.MT.selected_cols = set(range(min_c, c + 1))
                         elif c < min_c:
-                            for i in range(c, min_c + 1):
-                                self.MT.selected_cols.add(i)
+                            self.MT.selected_cols = set(range(c, min_c + 1))
                     else:
                         self.select_col(c)
                     self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
@@ -328,12 +326,9 @@ class ColumnHeaders(tk.Canvas):
                     self.MT.sel_R = defaultdict(int)
                     self.MT.sel_C = defaultdict(int)
                     if end_col >= start_col:
-                        for c in range(start_col, end_col + 1):
-                            self.MT.selected_cols.add(c)
+                        self.MT.selected_cols = set(range(start_col, end_col + 1))
                     elif end_col < start_col:
-                        for c in range(end_col, start_col + 1):
-                            self.MT.selected_cols.add(c)
-                                
+                        self.MT.selected_cols = set(range(end_col, start_col + 1))     
                     if self.drag_selection_binding_func is not None:
                         self.drag_selection_binding_func(("columns", sorted([start_col, end_col])))
                 if event.x > self.winfo_width():
@@ -379,23 +374,39 @@ class ColumnHeaders(tk.Canvas):
             x = event.x
             c = self.MT.identify_col(x = x)
             if c != self.dragged_col and c is not None and c not in self.MT.selected_cols and len(self.MT.selected_cols) != (len(self.MT.col_positions) - 1):
+                orig_selected_cols = sorted(self.MT.selected_cols)
+                if len(orig_selected_cols) > 1:
+                    orig_min = orig_selected_cols[0]
+                    orig_max = orig_selected_cols[1]
+                    start_idx = bisect.bisect_left(orig_selected_cols, self.dragged_col)
+                    forward_gap = get_index_of_gap_in_sorted_integer_seq_forward(orig_selected_cols, start_idx)
+                    reverse_gap = get_index_of_gap_in_sorted_integer_seq_reverse(orig_selected_cols, start_idx)
+                    if forward_gap is not None:
+                        orig_selected_cols[:] = orig_selected_cols[:forward_gap]
+                    if reverse_gap is not None:
+                        orig_selected_cols[:] = orig_selected_cols[reverse_gap:]
+                    if forward_gap is not None or reverse_gap is not None:
+                        self.MT.selected_cols = set(orig_selected_cols)
                 colsiter = list(self.MT.selected_cols)
                 colsiter.sort()
                 stins = colsiter[0]
                 endins = colsiter[-1] + 1
                 if self.dragged_col < c and c >= len(self.MT.col_positions) - 1:
                     c -= 1
+                if self.ch_extra_drag_drop_func is not None:
+                    self.ch_extra_drag_drop_func(self.MT.selected_cols, int(c))
                 c_ = int(c)
                 if c >= endins:
                     c += 1
-                if self.ch_extra_drag_drop_func is not None:
-                    self.ch_extra_drag_drop_func(self.MT.selected_cols, int(c_))
-                else:
+                if self.ch_extra_drag_drop_func is None:
                     if self.MT.all_columns_displayed:
                         if stins > c:
                             for rn in range(len(self.MT.data_ref)):
-                                self.MT.data_ref[rn][c:c] = self.MT.data_ref[rn][stins:endins]
-                                self.MT.data_ref[rn][stins + len(colsiter):endins + len(colsiter)] = []
+                                try:
+                                    self.MT.data_ref[rn][c:c] = self.MT.data_ref[rn][stins:endins]
+                                    self.MT.data_ref[rn][stins + len(colsiter):endins + len(colsiter)] = []
+                                except:
+                                    continue
                             if not isinstance(self.MT.my_hdrs, int) and self.MT.my_hdrs:
                                 try:
                                     self.MT.my_hdrs[c:c] = self.MT.my_hdrs[stins:endins]
@@ -404,8 +415,11 @@ class ColumnHeaders(tk.Canvas):
                                     pass
                         else:
                             for rn in range(len(self.MT.data_ref)):
-                                self.MT.data_ref[rn][c:c] = self.MT.data_ref[rn][stins:endins]
-                                self.MT.data_ref[rn][stins:endins] = []
+                                try:
+                                    self.MT.data_ref[rn][c:c] = self.MT.data_ref[rn][stins:endins]
+                                    self.MT.data_ref[rn][stins:endins] = []
+                                except:
+                                    continue
                             if not isinstance(self.MT.my_hdrs, int) and self.MT.my_hdrs:
                                 try:
                                     self.MT.my_hdrs[c:c] = self.MT.my_hdrs[stins:endins]
@@ -413,38 +427,23 @@ class ColumnHeaders(tk.Canvas):
                                 except:
                                     pass
                     else:
-                        c_ = int(c)
-                        if c >= endins:
-                            c += 1
                         if stins > c:
                             self.MT.displayed_columns[c:c] = self.MT.displayed_columns[stins:endins]
                             self.MT.displayed_columns[stins + len(colsiter):endins + len(colsiter)] = []
-                            if not isinstance(self.MT.my_hdrs, int) and self.MT.my_hdrs:
-                                try:
-                                    self.MT.my_hdrs[c:c] = self.MT.my_hdrs[stins:endins]
-                                    self.MT.my_hdrs[stins + len(colsiter):endins + len(colsiter)] = []
-                                except:
-                                    pass
                         else:
                             self.MT.displayed_columns[c:c] = self.MT.displayed_columns[stins:endins]
-                            self.MT.displayed_columns[stins + len(colsiter):endins + len(colsiter)] = []
-                            if not isinstance(self.MT.my_hdrs, int) and self.MT.my_hdrs:
-                                try:
-                                    self.MT.my_hdrs[c:c] = self.MT.my_hdrs[stins:endins]
-                                    self.MT.my_hdrs[stins:endins] = []
-                                except:
-                                    pass
-                cws = self.MT.parentframe.get_column_widths()
+                            self.MT.displayed_columns[stins:endins] = []
+                cws = [int(b - a) for a, b in zip(self.MT.col_positions, islice(self.MT.col_positions, 1, len(self.MT.col_positions)))]
                 if stins > c:
                     cws[c:c] = cws[stins:endins]
                     cws[stins + len(colsiter):endins + len(colsiter)] = []
                 else:
                     cws[c:c] = cws[stins:endins]
                     cws[stins:endins] = []
-                self.MT.parentframe.set_column_widths(cws)
+                self.MT.col_positions = [0] + list(accumulate(width for width in cws))
                 if (c_ - 1) + len(colsiter) > len(self.MT.col_positions) - 1:
                     sels_start = len(self.MT.col_positions) - 1 - len(colsiter)
-                    newcolidxs = tuple(range(sels_start, len(self.MT.col_positions) - 1))
+                    self.MT.selected_cols = set(range(sels_start, len(self.MT.col_positions) - 1))
                 else:
                     if c_ > endins:
                         c_ += 1
@@ -460,14 +459,12 @@ class ColumnHeaders(tk.Canvas):
                             if c_ < 0:
                                 c_ = 0
                         sels_start = c_
-                    newcolidxs = tuple(range(sels_start, sels_start + len(colsiter)))
+                    self.MT.selected_cols = set(range(sels_start, sels_start + len(colsiter)))
+                if self.MT.undo_enabled:
+                    self.MT.undo_storage.append(zlib.compress(pickle.dumps(("move_cols", min(orig_selected_cols), (min(self.MT.selected_cols), max(self.MT.selected_cols))))))
                 self.MT.selected_rows = set()
-                self.MT.selected_cols = set()
                 self.MT.sel_R = defaultdict(int)
                 self.MT.sel_C = defaultdict(int)
-                for colsel in newcolidxs:
-                    self.MT.selected_cols.add(colsel)
-                self.MT.undo_storage = deque(maxlen = 20)
                 self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
         self.dragged_col = None
         self.currently_resizing_width = False

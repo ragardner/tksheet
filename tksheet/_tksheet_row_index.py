@@ -182,11 +182,9 @@ class RowIndex(tk.Canvas):
                         self.MT.sel_R = defaultdict(int)
                         self.MT.sel_C = defaultdict(int)
                         if r > min_r:
-                            for i in range(min_r, r + 1):
-                                self.MT.selected_rows.add(i)
+                            self.MT.selected_rows = set(range(min_r, r + 1))
                         elif r < min_r:
-                            for i in range(r, min_r + 1):
-                                self.MT.selected_rows.add(i)
+                            self.MT.selected_rows = set(range(r, min_r + 1))
                     else:
                         self.select_row(r)
                     self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
@@ -355,11 +353,9 @@ class RowIndex(tk.Canvas):
                     self.MT.sel_R = defaultdict(int)
                     self.MT.sel_C = defaultdict(int)
                     if end_row >= start_row:
-                        for r in range(start_row, end_row + 1):
-                            self.MT.selected_rows.add(r)
+                        self.MT.selected_rows = set(range(start_row, end_row + 1))
                     elif end_row < start_row:
-                        for r in range(end_row, start_row + 1):
-                            self.MT.selected_rows.add(r)
+                        self.MT.selected_rows = set(range(end_row, start_row + 1))
                     if self.drag_selection_binding_func is not None:
                         self.drag_selection_binding_func(("rows", sorted([start_row, end_row])))
             if event.y > self.winfo_height():
@@ -405,18 +401,33 @@ class RowIndex(tk.Canvas):
             y = event.y
             r = self.MT.identify_row(y = y)
             if r != self.dragged_row and r is not None and len(self.MT.selected_rows) != (len(self.MT.row_positions) - 1):
+                orig_selected_rows = sorted(self.MT.selected_rows)
+                if len(orig_selected_rows) > 1:
+                    orig_min = orig_selected_rows[0]
+                    orig_max = orig_selected_rows[1]
+                    start_idx = bisect.bisect_left(orig_selected_rows, self.dragged_row)
+                    forward_gap = get_index_of_gap_in_sorted_integer_seq_forward(orig_selected_rows, start_idx)
+                    reverse_gap = get_index_of_gap_in_sorted_integer_seq_reverse(orig_selected_rows, start_idx)
+                    if forward_gap is not None:
+                        orig_selected_rows[:] = orig_selected_rows[:forward_gap]
+                    if reverse_gap is not None:
+                        orig_selected_rows[:] = orig_selected_rows[reverse_gap:]
+                    if forward_gap is not None or reverse_gap is not None:
+                        self.MT.selected_rows = set(orig_selected_rows)
                 rowsiter = list(self.MT.selected_rows)
                 rowsiter.sort()
                 stins = rowsiter[0]
                 endins = rowsiter[-1] + 1
                 if self.dragged_row < r and r >= len(self.MT.row_positions) - 1:
                     r -= 1
+                if self.ri_extra_drag_drop_func is not None:
+                    self.ri_extra_drag_drop_func(self.MT.selected_rows, int(r))
+                if self.MT.undo_enabled:
+                    self.MT.undo_storage.append(zlib.compress(pickle.dumps(("move_rows", self.MT.selected_rows, int(r)))))
                 r_ = int(r)
                 if r >= endins:
                     r += 1
-                if self.ri_extra_drag_drop_func is not None:
-                    self.ri_extra_drag_drop_func(self.MT.selected_rows, int(r_))
-                else:
+                if self.ri_extra_drag_drop_func is None:
                     if stins > r:
                         self.MT.data_ref[r:r] = self.MT.data_ref[stins:endins]
                         self.MT.data_ref[stins + len(rowsiter):endins + len(rowsiter)] = []
@@ -435,17 +446,17 @@ class RowIndex(tk.Canvas):
                                 self.MT.my_row_index[stins:endins] = []
                             except:
                                 pass
-                rhs = self.MT.parentframe.get_row_heights()
+                rhs = [int(b - a) for a, b in zip(self.MT.row_positions, islice(self.MT.row_positions, 1, len(self.MT.row_positions)))]
                 if stins > r:
                     rhs[r:r] = rhs[stins:endins]
                     rhs[stins + len(rowsiter):endins + len(rowsiter)] = []
                 else:
                     rhs[r:r] = rhs[stins:endins]
                     rhs[stins:endins] = []
-                self.MT.parentframe.set_row_heights(rhs)
+                self.MT.row_positions = [0] + list(accumulate(height for height in rhs))
                 if (r_ - 1) + len(rowsiter) > len(self.MT.row_positions) - 1:
                     sels_start = len(self.MT.row_positions) - 1 - len(rowsiter)
-                    newrowidxs = tuple(range(sels_start, len(self.MT.row_positions) - 1))
+                    self.MT.selected_rows = set(range(sels_start, len(self.MT.row_positions) - 1))
                 else:
                     if r_ > endins:
                         r_ += 1
@@ -461,14 +472,12 @@ class RowIndex(tk.Canvas):
                             if r_ < 0:
                                 r_ = 0
                         sels_start = r_
-                    newrowidxs = tuple(range(sels_start, sels_start + len(rowsiter)))
+                    self.MT.selected_rows = set(range(sels_start, sels_start + len(rowsiter)))
+                if self.MT.undo_enabled:
+                    self.MT.undo_storage.append(zlib.compress(pickle.dumps(("move_rows", min(orig_selected_rows), (min(self.MT.selected_rows), max(self.MT.selected_rows))))))
                 self.MT.selected_cols = set()
-                self.MT.selected_rows = set()
                 self.MT.sel_R = defaultdict(int)
                 self.MT.sel_C = defaultdict(int)
-                for rowsel in newrowidxs:
-                    self.MT.selected_rows.add(rowsel)
-                self.MT.undo_storage = deque(maxlen = 20)
                 self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
         self.dragged_row = None
         self.currently_resizing_width = False

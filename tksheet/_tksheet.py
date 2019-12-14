@@ -66,6 +66,7 @@ class Sheet(tk.Frame):
                  table_background = "white",
                  grid_color = "#d4d4d4",
                  text_color = "black",
+                 show_selected_cells_border = True,
                  selected_cells_border_color = "#1a73e8",
                  selected_cells_background = "#e7f0fd",
                  selected_cells_foreground = "black",
@@ -129,6 +130,7 @@ class Sheet(tk.Frame):
                             table_background = table_background,
                             grid_color = grid_color,
                             text_color= text_color,
+                            show_selected_cells_border = show_selected_cells_border,
                             selected_cells_border_color = selected_cells_border_color,
                             selected_cells_background = selected_cells_background,
                             selected_cells_foreground = selected_cells_foreground,
@@ -338,7 +340,7 @@ class Sheet(tk.Frame):
     def get_column_widths(self, canvas_positions = False):
         if canvas_positions:
             return [int(n) for n in self.MT.col_positions]
-        return [int(b - a) for a,b in zip(self.MT.col_positions, islice(self.MT.col_positions, 1, len(self.MT.col_positions)))]
+        return [int(b - a) for a, b in zip(self.MT.col_positions, islice(self.MT.col_positions, 1, len(self.MT.col_positions)))]
     
     def get_row_heights(self, canvas_positions = False):
         if canvas_positions:
@@ -657,6 +659,11 @@ class Sheet(tk.Frame):
     def get_selected_cells(self, get_rows = False, get_cols = False):
         return self.MT.get_selected_cells(get_rows = get_rows, get_cols = get_cols)
 
+    def get_selection_boxes(self, get_copy = True):
+        if get_copy:
+            return tuple(self.MT.selection_boxes)
+        return self.MT.selection_boxes
+
     def is_cell_selected(self, r, c):
         if r in self.MT.sel_R and c in self.MT.sel_C:
             return True
@@ -781,6 +788,117 @@ class Sheet(tk.Frame):
 
     def header_font(self, newfont = None):
         self.MT.header_font(newfont)
+
+    def set_options(self,
+                    font = None,
+                    default_header = "letters",
+                    header_font = None,
+                    show_selected_cells_border = None,
+                    theme = None,
+                    max_colwidth = None,
+                    max_row_height = None,
+                    max_header_height = None,
+                    max_row_width = None,
+                    header_background = None,
+                    header_border_color = None,
+                    header_grid_color = None,
+                    header_foreground = None,
+                    header_select_background = None,
+                    header_select_foreground = None,
+                    row_index_background = None,
+                    row_index_border_color = None,
+                    row_index_grid_color = None,
+                    row_index_foreground = None,
+                    row_index_select_background = None,
+                    row_index_select_foreground = None,
+                    top_left_background = None,
+                    top_left_foreground = None,
+                    frame_background = None,
+                    table_background = None,
+                    grid_color = None,
+                    text_color = None,
+                    selected_cells_border_color = None,
+                    selected_cells_background = None,
+                    selected_cells_foreground = None,
+                    resizing_line_color = None,
+                    drag_and_drop_color = None,
+                    outline_thickness = None,
+                    outline_color = None,
+                    redraw = True):
+        if default_header is not None:
+            self.CH.default_hdr = 1 if default_header.lower() == "letters" else 0
+        if max_colwidth is not None:
+            self.CH.max_cw = float(max_colwidth)
+        if max_row_height is not None:
+            self.RI.max_rh = float(max_row_height)
+        if max_header_height is not None:
+            self.CH.max_header_height = float(max_header_height)
+        if max_row_width is not None:
+            self.RI.max_row_width = float(max_row_width)
+        if font is not None:
+            self.MT.font(newfont)
+        if header_font is not None:
+            self.MT.header_font(newfont)
+        if theme is not None:
+            self.change_theme(theme)
+        if show_selected_cells_border is not None:
+            self.MT.show_selected_cells_border = show_selected_cells_border
+        if header_background is not None:
+            self.CH.config(background = header_background)
+        if header_border_color is not None:
+            self.CH.header_border_color = header_border_color
+        if header_grid_color is not None:
+            self.CH.grid_color = header_grid_color
+        if header_foreground is not None:
+            self.CH.text_color = header_foreground
+        if header_select_background is not None:
+            self.CH.selected_cells_background = header_select_background
+        if header_select_foreground is not None:
+            self.CH.selected_cells_foreground = header_select_foreground
+        if row_index_background is not None:
+            self.RI.config(background=row_index_background)
+        if row_index_border_color is not None:
+            self.RI.row_index_border_color = row_index_border_color
+        if row_index_grid_color is not None:
+            self.RI.grid_color = row_index_grid_color
+        if row_index_foreground is not None:
+            self.RI.text_color = row_index_foreground
+        if row_index_select_background is not None:
+            self.RI.selected_cells_background = row_index_select_background
+        if row_index_select_foreground is not None:
+            self.RI.selected_cells_foreground = row_index_select_foreground
+        if top_left_background is not None:
+            self.TL.config(background=top_left_background)
+        if top_left_foreground is not None:
+            self.TL.rectangle_foreground = top_left_foreground
+            self.TL.itemconfig("rw", fill = top_left_foreground)
+            self.TL.itemconfig("rh", fill = top_left_foreground)
+        if frame_background is not None:
+            self.config(background = frame_background)
+        if table_background is not None:
+            self.MT.config(background = table_background)
+        if grid_color is not None:
+            self.MT.grid_color = grid_color
+        if text_color is not None:
+            self.MT.text_color = text_color
+        if selected_cells_border_color is not None:
+            self.MT.selected_cells_border_color = selected_cells_border_color
+        if selected_cells_background is not None:
+            self.MT.selected_cells_background = selected_cells_background
+        if selected_cells_foreground is not None:
+            self.MT.selected_cells_foreground = selected_cells_foreground
+        if resizing_line_color is not None:
+            self.CH.resizing_line_color = resizing_line_color
+            self.RI.resizing_line_color = resizing_line_color
+        if drag_and_drop_color is not None:
+            self.CH.drag_and_drop_color = drag_and_drop_color
+            self.RI.drag_and_drop_color = drag_and_drop_color
+        if outline_thickness is not None:
+            self.config(highlightthickness = outline_thickness)
+        if outline_color is not None:
+            self.config(highlightbackground = outline_color)
+        if redraw:
+            self.refresh()
 
     def change_color(self,
                      header_background = None,

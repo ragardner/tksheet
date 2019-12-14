@@ -2,7 +2,7 @@ from ._tksheet_vars import *
 from ._tksheet_other_classes import *
 
 from collections import defaultdict, deque
-from itertools import islice, repeat, accumulate, chain
+from itertools import islice, repeat, accumulate, chain, product
 from math import floor, ceil
 from tkinter import ttk
 import bisect
@@ -37,6 +37,7 @@ class MainTable(tk.Canvas):
                  table_background = "white",
                  grid_color = "gray15",
                  text_color = "black",
+                 show_selected_cells_border = True,
                  selected_cells_border_color = "#1a73e8",
                  selected_cells_background = "gray85",
                  selected_cells_foreground = "white",
@@ -69,6 +70,7 @@ class MainTable(tk.Canvas):
         self.multiple_selection_enabled = False
         self.arrowkeys_enabled = False
         self.undo_enabled = False
+        self.show_selected_cells_border = show_selected_cells_border
         self.new_row_width = 0
         self.new_header_height = 0
         self.parentframe = parentframe
@@ -94,7 +96,7 @@ class MainTable(tk.Canvas):
             self.total_cols = len(max(self.data_ref, key = len))
         if not self.data_ref:
             if isinstance(total_rows, int) and isinstance(total_cols, int) and total_rows > 0 and total_cols > 0:
-                self.data_ref = [["" for c in range(total_cols)] for r in range(total_rows)]
+                self.data_ref = [list(repeat("", total_cols)) for r in range(total_rows)]
                 self.total_rows = total_rows
                 self.total_cols = total_cols
         self.displayed_columns = displayed_columns
@@ -236,49 +238,6 @@ class MainTable(tk.Canvas):
         
     def refresh(self, event = None):
         self.main_table_redraw_grid_and_text(True, True)
-
-    def shift_b1_press(self, event = None):
-        if self.drag_selection_enabled and all(v is None for v in (self.RI.rsz_h, self.RI.rsz_w, self.CH.rsz_h, self.CH.rsz_w)):
-            rowsel = int(self.identify_row(y = event.y))
-            colsel = int(self.identify_col(x = event.x))
-            if rowsel < len(self.row_positions) - 1 and colsel < len(self.col_positions) - 1:
-                if self.currently_selected and isinstance(self.currently_selected[0], int):
-                    min_r = self.currently_selected[0]
-                    min_c = self.currently_selected[1]
-                    self.sel_C = defaultdict(int)
-                    self.sel_R = defaultdict(int)
-                    self.selected_cols = set()
-                    self.selected_rows = set()
-                    self.selection_boxes = set()
-                    if rowsel >= min_r and colsel >= min_c:
-                        for r in range(min_r, rowsel + 1):
-                            for c in range(min_c, colsel + 1):
-                                self.sel_R[r] += 1
-                                self.sel_C[c] += 1
-                        self.selection_boxes = {(min_r, min_c, rowsel + 1, colsel + 1)}
-                    elif rowsel >= min_r and min_c >= colsel:
-                        for r in range(min_r, rowsel + 1):
-                            for c in range(colsel, min_c + 1):
-                                self.sel_R[r] += 1
-                                self.sel_C[c] += 1
-                        self.selection_boxes = {(min_r, colsel, rowsel + 1, min_c + 1)}
-                    elif min_r >= rowsel and colsel >= min_c:
-                        for r in range(rowsel, min_r + 1):
-                            for c in range(min_c, colsel + 1):
-                                self.sel_R[r] += 1
-                                self.sel_C[c] += 1
-                        self.selection_boxes = {(rowsel, min_c, min_r + 1, colsel + 1)}
-                    elif min_r >= rowsel and min_c >= colsel:
-                        for r in range(rowsel, min_r + 1):
-                            for c in range(colsel, min_c + 1):
-                                self.sel_R[r] += 1
-                                self.sel_C[c] += 1
-                        self.selection_boxes = {(rowsel, colsel, min_r + 1, min_c + 1)}
-                else:
-                    self.select_cell(rowsel, colsel, redraw = False)
-                self.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
-                if self.selection_binding_func is not None:
-                    self.selection_binding_func(("cell", ) + tuple(self.currently_selected))
 
     def basic_bindings(self, onoff = "enable"):
         if onoff == "enable":
@@ -505,21 +464,113 @@ class MainTable(tk.Canvas):
                     start_col = undo_storage[2][1]
                     end_row = undo_storage[2][2]
                     end_col = undo_storage[2][3]
-                    for r in range(start_row, end_row):
-                        for c in range(start_col, end_col):
-                            self.sel_C[c] += 1
-                            self.sel_R[r] += 1
+                    self.sel_C = defaultdict(int, {i: end_row - start_row for i in range(start_col, end_col)})
+                    self.sel_R = defaultdict(int, {i: end_col - start_col for i in range(start_row, end_row)})
                     self.selection_boxes = {(start_row, start_col, end_row, end_col)}
                 else:
                     self.selection_boxes = {(start_row, start_col, end_row + 1, end_col + 1)}
                 self.select_cell(start_row, start_col, redraw = False, keep_other_selections = True)
                 self.see(r = start_row, c = start_col, keep_yscroll = False, keep_xscroll = False, bottom_right_corner = False, check_cell_visibility = True, redraw = False)
             elif undo_storage[0] == "move_rows":
-                pass
-
+                rhs = [int(b - a) for a, b in zip(self.row_positions, islice(self.row_positions, 1, len(self.row_positions)))]
+                ins_row = undo_storage[1]
+                orig_ins_row = int(ins_row)
+                rm1start = undo_storage[2][0]
+                rm1end = undo_storage[2][1] + 1
+                rm2start = rm1start + (rm1end - rm1start)
+                rm2end = rm1end + (rm1end - rm1start)
+                totalrows = rm1end - rm1start
+                self.selected_rows = set(range(ins_row, ins_row + totalrows))
+                self.currently_selected = ("row", int(ins_row))
+                if rm1start < ins_row:
+                    ins_row += totalrows
+                if rm1start > ins_row:
+                    try:
+                        self.data_ref[ins_row:ins_row] = self.data_ref[rm1start:rm1end]
+                        self.data_ref[rm2start:rm2end] = []
+                    except:
+                        pass
+                    if self.my_row_index:
+                        try:
+                            self.my_row_index[ins_row:ins_row] = self.my_row_index[rm1start:rm1end]
+                            self.my_row_index[rm2start:rm2end] = []
+                        except:
+                            pass
+                else:
+                    try:
+                        self.data_ref[ins_row:ins_row] = self.data_ref[rm1start:rm1end]
+                        self.data_ref[rm1start:rm1end] = []
+                    except:
+                        pass
+                    if self.my_row_index:
+                        try:
+                            self.my_row_index[ins_row:ins_row] = self.my_row_index[rm1start:rm1end]
+                            self.my_row_index[rm1start:rm1end] = []
+                        except:
+                            pass
+                if rm1start > ins_row:
+                    rhs[ins_row:ins_row] = rhs[rm1start:rm1end]
+                    rhs[rm2start:rm2end] = []
+                else:
+                    rhs[ins_row:ins_row] = rhs[rm1start:rm1end]
+                    rhs[rm1start:rm1end] = []
+                self.row_positions = [0] + list(accumulate(height for height in rhs))
+                self.see(r = orig_ins_row, c = 0, keep_yscroll = False, keep_xscroll = True, bottom_right_corner = False, check_cell_visibility = True, redraw = False)
             elif undo_storage[0] == "move_cols":
-                pass
-
+                cws = [int(b - a) for a, b in zip(self.col_positions, islice(self.col_positions, 1, len(self.col_positions)))]
+                ins_col = undo_storage[1]
+                orig_ins_col = int(ins_col)
+                rm1start = undo_storage[2][0]
+                rm1end = undo_storage[2][1] + 1
+                rm2start = rm1start + (rm1end - rm1start)
+                rm2end = rm1end + (rm1end - rm1start)
+                totalcols = rm1end - rm1start
+                self.selected_cols = set(range(ins_col, ins_col + totalcols))
+                self.currently_selected = ("column", int(ins_col))
+                if rm1start < ins_col:
+                    ins_col += totalcols
+                if self.all_columns_displayed:
+                    if rm1start > ins_col:
+                        for rn in range(len(self.data_ref)):
+                            try:
+                                self.data_ref[rn][ins_col:ins_col] = self.data_ref[rn][rm1start:rm1end]
+                                self.data_ref[rn][rm2start:rm2end] = []
+                            except:
+                                continue
+                        if self.my_hdrs:
+                            try:
+                                self.my_hdrs[ins_col:ins_col] = self.my_hdrs[rm1start:rm1end]
+                                self.my_hdrs[rm2start:rm2end] = []
+                            except:
+                                pass
+                    else:
+                        for rn in range(len(self.data_ref)):
+                            try:
+                                self.data_ref[rn][ins_col:ins_col] = self.data_ref[rn][rm1start:rm1end]
+                                self.data_ref[rn][rm1start:rm1end] = []
+                            except:
+                                continue
+                        if self.my_hdrs:
+                            try:
+                                self.my_hdrs[ins_col:ins_col] = self.my_hdrs[rm1start:rm1end]
+                                self.my_hdrs[rm1start:rm1end] = []
+                            except:
+                                pass
+                else:
+                    if rm1start > ins_col:
+                        self.displayed_columns[ins_col:ins_col] = self.displayed_columns[rm1start:rm1end]
+                        self.displayed_columns[rm2start:rm2end] = []
+                    else:
+                        self.displayed_columns[ins_col:ins_col] = self.displayed_columns[rm1start:rm1end]
+                        self.displayed_columns[rm1start:rm1end] = []
+                if rm1start > ins_col:
+                    cws[ins_col:ins_col] = cws[rm1start:rm1end]
+                    cws[rm2start:rm2end] = []
+                else:
+                    cws[ins_col:ins_col] = cws[rm1start:rm1end]
+                    cws[rm1start:rm1end] = []
+                self.col_positions = [0] + list(accumulate(width for width in cws))
+                self.see(r = 0, c = orig_ins_col, keep_yscroll = True, keep_xscroll = False, bottom_right_corner = False, check_cell_visibility = True, redraw = False)
             elif undo_storage[0] == "insert_row":
                 del self.data_ref[undo_storage[1]['data_row_num']]
                 try:
@@ -1415,6 +1466,49 @@ class MainTable(tk.Canvas):
             if self.sel_C:
                 return min(self.sel_C)
         return None
+
+    def shift_b1_press(self, event = None):
+        if self.drag_selection_enabled and all(v is None for v in (self.RI.rsz_h, self.RI.rsz_w, self.CH.rsz_h, self.CH.rsz_w)):
+            rowsel = int(self.identify_row(y = event.y))
+            colsel = int(self.identify_col(x = event.x))
+            if rowsel < len(self.row_positions) - 1 and colsel < len(self.col_positions) - 1:
+                if self.currently_selected and isinstance(self.currently_selected[0], int):
+                    min_r = self.currently_selected[0]
+                    min_c = self.currently_selected[1]
+                    self.sel_C = defaultdict(int)
+                    self.sel_R = defaultdict(int)
+                    self.selected_cols = set()
+                    self.selected_rows = set()
+                    self.selection_boxes = set()
+                    if rowsel >= min_r and colsel >= min_c:
+                        numcols = colsel + 1 - min_c
+                        numrows = rowsel + 1 - min_r
+                        self.sel_C = defaultdict(int, {i: numrows for i in range(min_c, colsel + 1)})
+                        self.sel_R = defaultdict(int, {i: numcols for i in range(min_r, rowsel + 1)})
+                        self.selection_boxes = {(min_r, min_c, rowsel + 1, colsel + 1)}
+                    elif rowsel >= min_r and min_c >= colsel:
+                        numcols = min_c + 1 - colsel
+                        numrows = rowsel + 1 - min_r
+                        self.sel_C = defaultdict(int, {i: numrows for i in range(colsel, min_c + 1)})
+                        self.sel_R = defaultdict(int, {i: numcols for i in range(min_r, rowsel + 1)})
+                        self.selection_boxes = {(min_r, colsel, rowsel + 1, min_c + 1)}
+                    elif min_r >= rowsel and colsel >= min_c:
+                        numcols = colsel + 1 - min_c
+                        numrows = min_r + 1 - rowsel
+                        self.sel_C = defaultdict(int, {i: numrows for i in range(min_c, colsel + 1)})
+                        self.sel_R = defaultdict(int, {i: numcols for i in range(rowsel, min_r + 1)})
+                        self.selection_boxes = {(rowsel, min_c, min_r + 1, colsel + 1)}
+                    elif min_r >= rowsel and min_c >= colsel:
+                        numcols = colsel + 1 - min_c
+                        numrows = rowsel + 1 - min_r
+                        self.sel_C = defaultdict(int, {i: numrows for i in range(colsel, min_c + 1)})
+                        self.sel_R = defaultdict(int, {i: numcols for i in range(rowsel, min_r + 1)})
+                        self.selection_boxes = {(rowsel, colsel, min_r + 1, min_c + 1)}
+                else:
+                    self.select_cell(rowsel, colsel, redraw = False)
+                self.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
+                if self.selection_binding_func is not None:
+                    self.selection_binding_func(("cell", ) + tuple(self.currently_selected))
         
     def b1_motion(self, event):
         x1, y1, x2, y2 = self.get_canvas_visible_area()
@@ -2549,19 +2643,20 @@ class MainTable(tk.Canvas):
                                                 break
                             except:
                                 continue
-            for _y1, _x1, _y2, _x2 in self.selection_boxes:
-                if _y2 - _y1 > 1 or _x2 - _x1 > 1:
-                    if (
-                        start_row <= _y1 or
-                        end_row + 1 >= _y1 or
-                        start_col <= _x1 or
-                        end_col + 1 >= x1 or
-                        start_row <= _y2 or
-                        end_row + 1 >= _y2 or
-                        start_col <= _x2 or
-                        end_col + 1 >= x2
-                        ):
-                        cr_(self.col_positions[_x1], self.row_positions[_y1], self.col_positions[_x2], self.row_positions[_y2], fill = "", outline = self.selected_cells_border_col)
+            if self.show_selected_cells_border:
+                for _y1, _x1, _y2, _x2 in self.selection_boxes:
+                    if _y2 - _y1 > 1 or _x2 - _x1 > 1:
+                        if (
+                            start_row <= _y1 or
+                            end_row + 1 >= _y1 or
+                            start_col <= _x1 or
+                            end_col + 1 >= x1 or
+                            start_row <= _y2 or
+                            end_row + 1 >= _y2 or
+                            start_col <= _x2 or
+                            end_col + 1 >= x2
+                            ):
+                            cr_(self.col_positions[_x1], self.row_positions[_y1], self.col_positions[_x2], self.row_positions[_y2], fill = "", outline = self.selected_cells_border_col)
         except:
             return
         if redraw_header:
@@ -2633,19 +2728,11 @@ class MainTable(tk.Canvas):
         return False
 
     def get_selected_cells(self, get_rows = False, get_cols = False):
-        res = []
-        # IMPROVE SPEED
         if get_cols:
-            if self.selected_cols:
-                for c in self.selected_cols:
-                    for r in range(len(self.row_positions) - 1):
-                        res.append((r, c))
+            return tuple((r, c) for c in self.selected_cols for r in range(len(self.row_positions) - 1))
         if get_rows:
-            if self.selected_rows:
-                for r in self.selected_rows:
-                    for c in range(len(self.col_positions) - 1):
-                        res.append((r, c))
-        return res + [(r, c) for r in self.sel_R for c in self.sel_C]
+            return tuple((r, c) for r in self.selected_rows for c in range(len(self.col_positions) - 1))
+        return tuple(product(self.sel_R, self.sel_C))
 
     def edit_cell_(self, event = None):
         if not self.anything_selected():

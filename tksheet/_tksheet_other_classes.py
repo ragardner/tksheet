@@ -140,4 +140,20 @@ def num2alpha(n):
         n, r = divmod(n - 1, 26)
         s = chr(65 + r) + s
     return s
+
+def get_index_of_gap_in_sorted_integer_seq_forward(seq, start = 0):
+    prevn = seq[start]
+    for idx, n in enumerate(islice(seq, start + 1, None), start + 1):
+        if n != prevn + 1:
+            return idx
+        prevn = n
+    return None
+
+def get_index_of_gap_in_sorted_integer_seq_reverse(seq, start = 0):
+    prevn = seq[start]
+    for idx, n in zip(range(start, -1, -1), reversed(seq[:start])):
+        if n != prevn - 1:
+            return idx
+        prevn = n
+    return None
         
