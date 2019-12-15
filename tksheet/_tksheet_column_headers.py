@@ -44,6 +44,7 @@ class ColumnHeaders(tk.Canvas):
         self.extra_double_b1_func = None
         self.ch_extra_drag_drop_func = None
         self.selection_binding_func = None
+        self.shift_selection_binding_func = None
         self.drag_selection_binding_func = None
         self.default_hdr = 1 if default_header.lower() == "letters" else 0
         self.max_cw = float(max_colwidth)
@@ -169,7 +170,6 @@ class ColumnHeaders(tk.Canvas):
                 else:
                     self.select_col(c, redraw = True)
                     self.ch_rc_popup_menu.tk_popup(event.x_root, event.y_root)
-        
 
     def shift_b1_press(self, event):
         x = event.x
@@ -186,13 +186,15 @@ class ColumnHeaders(tk.Canvas):
                         self.MT.selected_rows = set()
                         if c > min_c:
                             self.MT.selected_cols = set(range(min_c, c + 1))
+                            self.MT.selection_boxes = {(0, min_c, len(self.MT.row_positions) - 1, c + 1)}
                         elif c < min_c:
                             self.MT.selected_cols = set(range(c, min_c + 1))
+                            self.MT.selection_boxes = {(0, c, len(self.MT.row_positions) - 1, min_c + 1)}
                     else:
                         self.select_col(c)
                     self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
-                    if self.selection_binding_func is not None:
-                        self.selection_binding_func(("column", c))
+                    if self.shift_selection_binding_func is not None:
+                        self.shift_selection_binding_func(("shift_select_columns", tuple(sorted(self.MT.selected_cols))))
                 elif c in self.MT.selected_cols:
                     self.dragged_col = c
 
@@ -327,10 +329,12 @@ class ColumnHeaders(tk.Canvas):
                     self.MT.sel_C = defaultdict(int)
                     if end_col >= start_col:
                         self.MT.selected_cols = set(range(start_col, end_col + 1))
+                        self.MT.selection_boxes = {(0, start_col, len(self.MT.row_positions) - 1, end_col + 1)}
                     elif end_col < start_col:
-                        self.MT.selected_cols = set(range(end_col, start_col + 1))     
+                        self.MT.selected_cols = set(range(end_col, start_col + 1))
+                        self.MT.selection_boxes = {(0, end_col, len(self.MT.row_positions) - 1, start_col + 1)}
                     if self.drag_selection_binding_func is not None:
-                        self.drag_selection_binding_func(("columns", sorted([start_col, end_col])))
+                        self.drag_selection_binding_func(("drag_select_columns", tuple(sorted(self.MT.selected_cols))))
                 if event.x > self.winfo_width():
                     try:
                         self.MT.xview_scroll(1, "units")
@@ -445,11 +449,14 @@ class ColumnHeaders(tk.Canvas):
                 self.MT.col_positions = [0] + list(accumulate(width for width in cws))
                 if (c_ - 1) + totalcols > len(self.MT.col_positions) - 1:
                     self.MT.selected_cols = set(range(len(self.MT.col_positions) - 1 - totalcols, len(self.MT.col_positions) - 1))
+                    self.MT.selection_boxes = {(0, len(self.MT.col_positions) - 1 - totalcols, len(self.MT.row_positions) - 1, len(self.MT.col_positions) - 1)}
                 else:
                     if rm1start > c:
                         self.MT.selected_cols = set(range(c_, c_ + totalcols))
+                        self.MT.selection_boxes = {(0, c_, len(self.MT.row_positions) - 1, c_ + totalcols)}
                     else:
-                        self.MT.selected_cols = set(range(c_ + 1 - totalcols, c_ + 1 - totalcols + totalcols))
+                        self.MT.selected_cols = set(range(c_ + 1 - totalcols, c_ + 1))
+                        self.MT.selection_boxes = {(0, c_ + 1 - totalcols, len(self.MT.row_positions) - 1, c_ + 1)}
                 if self.MT.undo_enabled:
                     self.MT.undo_storage.append(zlib.compress(pickle.dumps(("move_cols", min(orig_selected_cols), (min(self.MT.selected_cols), max(self.MT.selected_cols))))))
                 self.MT.selected_rows = set()
@@ -501,25 +508,40 @@ class ColumnHeaders(tk.Canvas):
         self.MT.sel_R = defaultdict(int)
         self.MT.sel_C = defaultdict(int)
         self.MT.selected_rows = set()
-        self.MT.selection_boxes = set()
+        self.MT.selection_boxes = {(0, c, len(self.MT.row_positions) - 1, c + 1)}
         if redraw:
             self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
         if self.selection_binding_func is not None:
-            self.selection_binding_func(("column", c))
+            self.selection_binding_func(("select_column", int(c)))
 
-    def add_selection(self, c, redraw = False, run_binding_func = True, set_as_current = True):
+    def add_selection(self, c, redraw = False, run_binding_func = True, set_as_current = True, mod_selection_boxes = True):
         c = int(c)
         if set_as_current:
             self.MT.currently_selected = ("column", c)
         self.MT.selected_rows = set()
         self.MT.sel_R = defaultdict(int)
         self.MT.sel_C = defaultdict(int)
-        self.MT.selection_boxes = set()
+        if mod_selection_boxes:
+            for y1, x1, y2, x2 in tuple(self.selection_boxes):
+                if x2 - x1 == 1 and y2 - y1 == 1:
+                    if r == y1 - 1 or r == y2:
+                        if c == x1 - 1 or c == x2:
+                            self.selection_boxes.discard((y1, x1, y2, x2))
+                            if r == y1 - 1:
+                                self.selection_boxes.add((y1 - 1, x1, y2, x2))
+                            elif r == y2:
+                                self.selection_boxes.add((y1, x1, y2 + 1, x2))
+                            elif c == x1 - 1:
+                                self.selection_boxes.add((y1, x1 - 1, y2, x2))
+                            elif c == x2:
+                                self.selection_boxes.add((y1, x1, y2, x2 + 1))
+                            break
+        self.MT.selection_boxes = {(0, c, len(self.MT.row_positions) - 1, c + 1)}
         self.MT.selected_cols.add(c)
         if redraw:
             self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
         if self.selection_binding_func is not None and run_binding_func:
-            self.selection_binding_func(("column", c))
+            self.selection_binding_func(("select_column", int(c)))
 
     def set_col_width(self, col, width = None, only_set_if_too_small = False):
         if col < 0:

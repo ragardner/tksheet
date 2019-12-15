@@ -44,6 +44,7 @@ class RowIndex(tk.Canvas):
         self.extra_b1_motion_func = None
         self.extra_b1_release_func = None
         self.selection_binding_func = None
+        self.shift_selection_binding_func = None
         self.drag_selection_binding_func = None
         self.ri_extra_drag_drop_func = None
         self.extra_double_b1_func = None
@@ -183,13 +184,15 @@ class RowIndex(tk.Canvas):
                         self.MT.sel_C = defaultdict(int)
                         if r > min_r:
                             self.MT.selected_rows = set(range(min_r, r + 1))
+                            self.MT.selection_boxes = {(min_r, 0, r + 1, len(self.MT.col_positions) - 1)}
                         elif r < min_r:
                             self.MT.selected_rows = set(range(r, min_r + 1))
+                            self.MT.selection_boxes = {(r, 0, min_r + 1, len(self.MT.col_positions) - 1)}
                     else:
                         self.select_row(r)
                     self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
-                    if self.selection_binding_func is not None:
-                        self.selection_binding_func(("row", r))
+                    if self.shift_selection_binding_func is not None:
+                        self.shift_selection_binding_func(("shift_select_rows", tuple(sorted(self.MT.selected_rows))))
                 elif r in self.MT.selected_rows:
                     self.dragged_row = r
 
@@ -354,10 +357,12 @@ class RowIndex(tk.Canvas):
                     self.MT.sel_C = defaultdict(int)
                     if end_row >= start_row:
                         self.MT.selected_rows = set(range(start_row, end_row + 1))
+                        self.MT.selection_boxes = {(start_row, 0, end_row + 1, len(self.MT.col_positions) - 1)}
                     elif end_row < start_row:
                         self.MT.selected_rows = set(range(end_row, start_row + 1))
+                        self.MT.selection_boxes = {(end_row, 0, start_row + 1, len(self.MT.col_positions) - 1)}
                     if self.drag_selection_binding_func is not None:
-                        self.drag_selection_binding_func(("rows", sorted([start_row, end_row])))
+                        self.drag_selection_binding_func(("drag_select_rows", tuple(sorted(self.MT.selected_rows))))
             if event.y > self.winfo_height():
                 try:
                     self.MT.yview_scroll(1, "units")
@@ -456,11 +461,14 @@ class RowIndex(tk.Canvas):
                 self.MT.row_positions = [0] + list(accumulate(height for height in rhs))
                 if (r_ - 1) + totalrows > len(self.MT.row_positions) - 1:
                     self.MT.selected_rows = set(range(len(self.MT.row_positions) - 1 - totalrows, len(self.MT.row_positions) - 1))
+                    self.MT.selection_boxes = {(len(self.MT.row_positions) - 1 - totalrows, 0, len(self.MT.row_positions) - 1, len(self.MT.col_positions) - 1)}
                 else:
                     if rm1start > r:
                         self.MT.selected_rows = set(range(r_, r_ + totalrows))
+                        self.MT.selection_boxes = {(r_, 0, r_ + totalrows, len(self.MT.col_positions) - 1)}
                     else:
-                        self.MT.selected_rows = set(range(r_ + 1 - totalrows, r_ + 1 - totalrows + totalrows))
+                        self.MT.selected_rows = set(range(r_ + 1 - totalrows, r_ + 1))
+                        self.MT.selection_boxes = {(r_ + 1 - totalrows, 0, r_ + 1, len(self.MT.col_positions) - 1)}
                 if self.MT.undo_enabled:
                     self.MT.undo_storage.append(zlib.compress(pickle.dumps(("move_rows", min(orig_selected_rows), (min(self.MT.selected_rows), max(self.MT.selected_rows))))))
                 self.MT.selected_cols = set()
@@ -537,13 +545,13 @@ class RowIndex(tk.Canvas):
             self.MT.currently_selected = ("row", r)
         self.MT.selected_rows.add(r)
         self.MT.selected_cols = set()
-        self.MT.selection_boxes = set()
+        self.MT.selection_boxes = {(r, 0, r + 1, len(self.MT.col_positions) - 1)}
         self.MT.sel_R = defaultdict(int)
         self.MT.sel_C = defaultdict(int)
         if redraw:
             self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
         if self.selection_binding_func is not None and run_binding_func:
-            self.selection_binding_func(("row", r))
+            self.selection_binding_func(("select_row", int(r)))
 
     def select_row(self, r, redraw = False, keep_other_selections = False):
         r = int(r)
@@ -551,19 +559,20 @@ class RowIndex(tk.Canvas):
         if keep_other_selections:
             if r in self.MT.selected_rows:
                 self.MT.currently_selected = ("row", r)
+                # work on selection_boxes
             else:
                 ignore_keep = True
         if ignore_keep or not keep_other_selections:
             self.MT.currently_selected = ("row", r)
             self.MT.selected_rows = {r}
+            self.MT.selection_boxes = {(r, 0, r + 1, len(self.MT.col_positions) - 1)}
         self.MT.selected_cols = set()
-        self.MT.selection_boxes = set()
         self.MT.sel_R = defaultdict(int)
         self.MT.sel_C = defaultdict(int)
         if redraw:
             self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
         if self.selection_binding_func is not None:
-            self.selection_binding_func(("row", r))
+            self.selection_binding_func(("select_row", int(r)))
 
     def redraw_grid_and_text(self, last_row_line_pos, y1, y_stop, start_row, end_row, y2, x1, x_stop):
         try:

@@ -64,13 +64,15 @@ class MainTable(tk.Canvas):
         self.extra_edit_cell_func = None
         self.selection_binding_func = None # function to run when a spreadsheet selection event occurs
         self.deselection_binding_func = None # function to run when a spreadsheet deselection event occurs
-        self.drag_selection_binding_func = None
+        self.drag_selection_binding_func = None # function to run when a spreadsheet mouse drag selection event occurs
+        self.shift_selection_binding_func = None # function to run when a spreadsheet shift click selection event occurs
+        self.select_all_binding_func = None
         self.single_selection_enabled = False
         self.drag_selection_enabled = False
-        self.multiple_selection_enabled = False
+        self.multiple_selection_enabled = False # with this mode every left click adds the cell to selected cells, work ongoing with this...
         self.arrowkeys_enabled = False
         self.undo_enabled = False
-        self.show_selected_cells_border = show_selected_cells_border
+        self.show_selected_cells_border = show_selected_cells_border # probably best to turn off if using multiple_selection_enabled
         self.new_row_width = 0
         self.new_header_height = 0
         self.parentframe = parentframe
@@ -527,6 +529,7 @@ class MainTable(tk.Canvas):
                 totalcols = rm1end - rm1start
                 self.selected_cols = set(range(ins_col, ins_col + totalcols))
                 self.currently_selected = ("column", int(ins_col))
+                self.selection_boxes = {(0, ins_col, len(self.row_positions) - 1, ins_col + totalcols)}
                 if rm1start < ins_col:
                     ins_col += totalcols
                 if self.all_columns_displayed:
@@ -781,7 +784,7 @@ class MainTable(tk.Canvas):
         if redraw:
             self.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
         if self.selection_binding_func is not None and run_binding_func:
-            self.selection_binding_func(("cell", ) + tuple(self.currently_selected))
+            self.selection_binding_func(("select_cell", ) + tuple((r, c)))
 
     def select_all(self, redraw = True, run_binding_func = True):
         self.deselect("all")
@@ -792,8 +795,8 @@ class MainTable(tk.Canvas):
             self.selection_boxes = {(0, 0, len(self.row_positions) - 1, len(self.col_positions) - 1)}
         if redraw:
             self.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
-        if self.selection_binding_func is not None and run_binding_func:
-            self.selection_binding_func("all")
+        if self.select_all_binding_func is not None and run_binding_func:
+            self.select_all_binding_func(("select_all_cells", ) + tuple(self.selection_boxes))
 
     def select_cell(self, r, c, redraw = False, keep_other_selections = False):
         r = int(r)
@@ -816,7 +819,7 @@ class MainTable(tk.Canvas):
         if redraw:
             self.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
         if self.selection_binding_func is not None:
-            self.selection_binding_func(("cell", ) + tuple(self.currently_selected))
+            self.selection_binding_func(("select_cell", ) + tuple((r, c)))
 
     def highlight_cells(self, r = 0, c = 0, cells = tuple(), bg = None, fg = None, redraw = False):
         if bg is None and fg is None:
@@ -837,13 +840,13 @@ class MainTable(tk.Canvas):
             self.selected_rows = set()
             self.currently_selected = tuple()
             self.selection_boxes = set()
-            deselected = ("all", )
+            deselected = ("deselect_all", )
         elif r != "all" and r is not None and c is None and cell is None:
             self.selected_rows.discard(r)
-            deselected = ("row", int(r))
+            deselected = ("deselect_row", int(r))
         elif c is not None and r is None and cell is None:
             self.selected_cols.discard(c)
-            deselected = ("column", int(c))
+            deselected = ("deselect_column", int(c))
         elif (r is not None and c is not None and cell is None) or cell is not None: #deselecting a cell
             if cell is not None:
                 r, c = cell[0], cell[1]
@@ -856,7 +859,7 @@ class MainTable(tk.Canvas):
                     del self.sel_C[c]
             if cell == self.currently_selected:
                 self.currently_selected = tuple()
-            deselected = ("cell", int(r), int(c))
+            deselected = ("deselect_cell", int(r), int(c))
         if redraw:
             self.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
         if self.deselection_binding_func is not None:
@@ -1507,8 +1510,8 @@ class MainTable(tk.Canvas):
                 else:
                     self.select_cell(rowsel, colsel, redraw = False)
                 self.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
-                if self.selection_binding_func is not None:
-                    self.selection_binding_func(("cell", ) + tuple(self.currently_selected))
+                if self.shift_selection_binding_func is not None:
+                    self.shift_selection_binding_func(("shift_select_cells", ) + tuple(self.selection_boxes))
         
     def b1_motion(self, event):
         x1, y1, x2, y2 = self.get_canvas_visible_area()
@@ -1549,7 +1552,7 @@ class MainTable(tk.Canvas):
                         self.sel_R = defaultdict(int, {i: numcols for i in range(end_row, start_row + 1)})
                         self.selection_boxes = {(end_row, end_col, start_row + 1, start_col + 1)}
                     if self.drag_selection_binding_func is not None:
-                        self.drag_selection_binding_func(sorted([start_row, end_row]) + sorted([start_col, end_col]))
+                        self.drag_selection_binding_func(("drag_select_cells", ) + tuple(self.selection_boxes))
             if event.x > self.winfo_width():
                 try:
                     self.xview_scroll(1, "units")
@@ -2701,6 +2704,13 @@ class MainTable(tk.Canvas):
             return sorted(set(list(self.sel_C) + list(self.selected_cols)))
         return sorted(self.selected_cols)
 
+    def get_selected_cells(self, get_rows = False, get_cols = False):
+        if get_cols:
+            return tuple((r, c) for c in self.selected_cols for r in range(len(self.row_positions) - 1))
+        if get_rows:
+            return tuple((r, c) for r in self.selected_rows for c in range(len(self.col_positions) - 1))
+        return tuple(product(self.sel_R, self.sel_C))
+
     def anything_selected(self, exclude_columns = False, exclude_rows = False, exclude_cells = False):
         if exclude_columns and exclude_rows and not exclude_cells:
             if self.sel_R and self.sel_C:
@@ -2726,13 +2736,6 @@ class MainTable(tk.Canvas):
             if self.selected_cols or self.selected_rows or (self.sel_R and self.sel_C):
                 return True
         return False
-
-    def get_selected_cells(self, get_rows = False, get_cols = False):
-        if get_cols:
-            return tuple((r, c) for c in self.selected_cols for r in range(len(self.row_positions) - 1))
-        if get_rows:
-            return tuple((r, c) for r in self.selected_rows for c in range(len(self.col_positions) - 1))
-        return tuple(product(self.sel_R, self.sel_C))
 
     def edit_cell_(self, event = None):
         if not self.anything_selected():

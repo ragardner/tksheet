@@ -192,15 +192,25 @@ class Sheet(tk.Frame):
                 self.CH.ch_extra_drag_drop_func = func
             if binding == "cell_select":
                 self.MT.selection_binding_func = func
-            if binding == "drag_select":
-                self.MT.drag_selection_binding_func = func
-                self.RI.drag_selection_binding_func = func
-                self.CH.drag_selection_binding_func = func
+            if binding == "ctrl_a":
+                self.MT.select_all_binding_func = func
             if binding == "row_select":
                 self.RI.selection_binding_func = func
             if binding == "column_select":
                 self.CH.selection_binding_func = func
-            if binding == "cell_deselect":
+            if binding == "drag_select_cells":
+                self.MT.drag_selection_binding_func = func
+            if binding == "drag_select_rows":
+                self.RI.drag_selection_binding_func = func
+            if binding == "drag_select_columns":
+                self.CH.drag_selection_binding_func = func
+            if binding == "shift_cell_select":
+                self.MT.shift_selection_binding_func = func
+            if binding == "shift_row_select":
+                self.RI.shift_selection_binding_func = func
+            if binding == "shift_column_select":
+                self.CH.shift_selection_binding_func = func
+            if binding == "deselect":
                 self.MT.deselection_binding_func = func
 
     def bind(self, binding, func):
