@@ -1,3 +1,7 @@
+### Version 4.1.4
+ - Fix bugs with drag and drop rows/columns
+ - Clean up drag and drop code
+
 ### Version 4.1.3
  - Improve speed of `get_selected_cells()`
  - Add function `get_selection_boxes()`
