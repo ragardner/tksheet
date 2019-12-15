@@ -84,8 +84,52 @@ class demo(tk.Tk):
         #self.sheet_demo.hide("row_index")
         #self.sheet_demo.hide("top_left")
         #self.sheet_demo.hide("header")
-        
 
+        # __________ BINDING A FUNCTION TO USER SELECTS CELL __________
+
+        self.sheet_demo.extra_bindings([
+                                        ("cell_select", self.cell_select),
+                                        ("shift_cell_select", self.shift_select_cells),
+                                        ("drag_select_cells", self.drag_select_cells),
+                                        ("ctrl_a", self.ctrl_a),
+                                        ("row_select", self.row_select),
+                                        ("shift_row_select", self.shift_select_rows),
+                                        ("drag_select_rows", self.drag_select_rows),
+                                        ("column_select", self.column_select),
+                                        ("shift_column_select", self.shift_select_columns),
+                                        ("drag_select_columns", self.drag_select_columns),
+                                        ]
+                                       )
+        
+    def cell_select(self, response):
+        print (response)
+
+    def shift_select_cells(self, response):
+        print (response)
+
+    def drag_select_cells(self, response):
+        print (response)
+
+    def ctrl_a(self, response):
+        print (response)
+
+    def row_select(self, response):
+        print (response)
+
+    def shift_select_rows(self, response):
+        print (response)
+
+    def drag_select_rows(self, response):
+        print (response)
+        
+    def column_select(self, response):
+        print (response)
+
+    def shift_select_columns(self, response):
+        print (response)
+
+    def drag_select_columns(self, response):
+        print (response)
         
 app = demo()
 app.mainloop()
