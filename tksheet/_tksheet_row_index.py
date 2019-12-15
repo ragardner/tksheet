@@ -414,65 +414,53 @@ class RowIndex(tk.Canvas):
                         orig_selected_rows[:] = orig_selected_rows[reverse_gap:]
                     if forward_gap is not None or reverse_gap is not None:
                         self.MT.selected_rows = set(orig_selected_rows)
-                rowsiter = list(self.MT.selected_rows)
-                rowsiter.sort()
-                stins = rowsiter[0]
-                endins = rowsiter[-1] + 1
+                rowsiter = sorted(self.MT.selected_rows)
+                rm1start = rowsiter[0]
+                rm1end = rowsiter[-1] + 1
+                rm2start = rm1start + (rm1end - rm1start)
+                rm2end = rm1end + (rm1end - rm1start)
+                totalrows = len(rowsiter)
                 if self.dragged_row < r and r >= len(self.MT.row_positions) - 1:
                     r -= 1
                 if self.ri_extra_drag_drop_func is not None:
                     self.ri_extra_drag_drop_func(self.MT.selected_rows, int(r))
-                if self.MT.undo_enabled:
-                    self.MT.undo_storage.append(zlib.compress(pickle.dumps(("move_rows", self.MT.selected_rows, int(r)))))
                 r_ = int(r)
-                if r >= endins:
+                if rm1end < r:
                     r += 1
                 if self.ri_extra_drag_drop_func is None:
-                    if stins > r:
-                        self.MT.data_ref[r:r] = self.MT.data_ref[stins:endins]
-                        self.MT.data_ref[stins + len(rowsiter):endins + len(rowsiter)] = []
+                    if rm1start > r:
+                        self.MT.data_ref[r:r] = self.MT.data_ref[rm1start:rm1end]
+                        self.MT.data_ref[rm2start:rm2end] = []
                         if not isinstance(self.MT.my_row_index, int) and self.MT.my_row_index:
                             try:
-                                self.MT.my_row_index[r:r] = self.MT.my_row_index[stins:endins]
-                                self.MT.my_row_index[stins + len(rowsiter):endins + len(rowsiter)] = []
+                                self.MT.my_row_index[r:r] = self.MT.my_row_index[rm1start:rm1end]
+                                self.MT.my_row_index[rm2start:rm2end] = []
                             except:
                                 pass
                     else:
-                        self.MT.data_ref[r:r] = self.MT.data_ref[stins:endins]
-                        self.MT.data_ref[stins:endins] = []
+                        self.MT.data_ref[r:r] = self.MT.data_ref[rm1start:rm1end]
+                        self.MT.data_ref[rm1start:rm1end] = []
                         if not isinstance(self.MT.my_row_index, int) and self.MT.my_row_index:
                             try:
-                                self.MT.my_row_index[r:r] = self.MT.my_row_index[stins:endins]
-                                self.MT.my_row_index[stins:endins] = []
+                                self.MT.my_row_index[r:r] = self.MT.my_row_index[rm1start:rm1end]
+                                self.MT.my_row_index[rm1start:rm1end] = []
                             except:
                                 pass
                 rhs = [int(b - a) for a, b in zip(self.MT.row_positions, islice(self.MT.row_positions, 1, len(self.MT.row_positions)))]
-                if stins > r:
-                    rhs[r:r] = rhs[stins:endins]
-                    rhs[stins + len(rowsiter):endins + len(rowsiter)] = []
+                if rm1start > r:
+                    rhs[r:r] = rhs[rm1start:rm1end]
+                    rhs[rm2start:rm2end] = []
                 else:
-                    rhs[r:r] = rhs[stins:endins]
-                    rhs[stins:endins] = []
+                    rhs[r:r] = rhs[rm1start:rm1end]
+                    rhs[rm1start:rm1end] = []
                 self.MT.row_positions = [0] + list(accumulate(height for height in rhs))
-                if (r_ - 1) + len(rowsiter) > len(self.MT.row_positions) - 1:
-                    sels_start = len(self.MT.row_positions) - 1 - len(rowsiter)
-                    self.MT.selected_rows = set(range(sels_start, len(self.MT.row_positions) - 1))
+                if (r_ - 1) + totalrows > len(self.MT.row_positions) - 1:
+                    self.MT.selected_rows = set(range(len(self.MT.row_positions) - 1 - totalrows, len(self.MT.row_positions) - 1))
                 else:
-                    if r_ > endins:
-                        r_ += 1
-                        sels_start = r_ - len(rowsiter)
+                    if rm1start > r:
+                        self.MT.selected_rows = set(range(r_, r_ + totalrows))
                     else:
-                        if r_ == endins and len(rowsiter) == 1:
-                            pass
-                        else:
-                            if r_ > endins:
-                                r_ += 1
-                            if r_ == endins:
-                                r_ -= 1
-                            if r_ < 0:
-                                r_ = 0
-                        sels_start = r_
-                    self.MT.selected_rows = set(range(sels_start, sels_start + len(rowsiter)))
+                        self.MT.selected_rows = set(range(r_ + 1 - totalrows, r_ + 1 - totalrows + totalrows))
                 if self.MT.undo_enabled:
                     self.MT.undo_storage.append(zlib.compress(pickle.dumps(("move_rows", min(orig_selected_rows), (min(self.MT.selected_rows), max(self.MT.selected_rows))))))
                 self.MT.selected_cols = set()

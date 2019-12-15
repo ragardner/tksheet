@@ -387,79 +387,69 @@ class ColumnHeaders(tk.Canvas):
                         orig_selected_cols[:] = orig_selected_cols[reverse_gap:]
                     if forward_gap is not None or reverse_gap is not None:
                         self.MT.selected_cols = set(orig_selected_cols)
-                colsiter = list(self.MT.selected_cols)
-                colsiter.sort()
-                stins = colsiter[0]
-                endins = colsiter[-1] + 1
+                colsiter = sorted(self.MT.selected_cols)
+                rm1start = colsiter[0]
+                rm1end = colsiter[-1] + 1
+                rm2start = rm1start + (rm1end - rm1start)
+                rm2end = rm1end + (rm1end - rm1start)
+                totalcols = len(colsiter)
                 if self.dragged_col < c and c >= len(self.MT.col_positions) - 1:
                     c -= 1
                 if self.ch_extra_drag_drop_func is not None:
                     self.ch_extra_drag_drop_func(self.MT.selected_cols, int(c))
                 c_ = int(c)
-                if c >= endins:
+                if rm1end < c:
                     c += 1
                 if self.ch_extra_drag_drop_func is None:
                     if self.MT.all_columns_displayed:
-                        if stins > c:
+                        if rm1start > c:
                             for rn in range(len(self.MT.data_ref)):
                                 try:
-                                    self.MT.data_ref[rn][c:c] = self.MT.data_ref[rn][stins:endins]
-                                    self.MT.data_ref[rn][stins + len(colsiter):endins + len(colsiter)] = []
+                                    self.MT.data_ref[rn][c:c] = self.MT.data_ref[rn][rm1start:rm1end]
+                                    self.MT.data_ref[rn][rm2start:rm2end] = []
                                 except:
                                     continue
                             if not isinstance(self.MT.my_hdrs, int) and self.MT.my_hdrs:
                                 try:
-                                    self.MT.my_hdrs[c:c] = self.MT.my_hdrs[stins:endins]
-                                    self.MT.my_hdrs[stins + len(colsiter):endins + len(colsiter)] = []
+                                    self.MT.my_hdrs[c:c] = self.MT.my_hdrs[rm1start:rm1end]
+                                    self.MT.my_hdrs[rm2start:rm2end] = []
                                 except:
                                     pass
                         else:
                             for rn in range(len(self.MT.data_ref)):
                                 try:
-                                    self.MT.data_ref[rn][c:c] = self.MT.data_ref[rn][stins:endins]
-                                    self.MT.data_ref[rn][stins:endins] = []
+                                    self.MT.data_ref[rn][c:c] = self.MT.data_ref[rn][rm1start:rm1end]
+                                    self.MT.data_ref[rn][rm1start:rm1end] = []
                                 except:
                                     continue
                             if not isinstance(self.MT.my_hdrs, int) and self.MT.my_hdrs:
                                 try:
-                                    self.MT.my_hdrs[c:c] = self.MT.my_hdrs[stins:endins]
-                                    self.MT.my_hdrs[stins:endins] = []
+                                    self.MT.my_hdrs[c:c] = self.MT.my_hdrs[rm1start:rm1end]
+                                    self.MT.my_hdrs[rm1start:rm1end] = []
                                 except:
                                     pass
                     else:
-                        if stins > c:
-                            self.MT.displayed_columns[c:c] = self.MT.displayed_columns[stins:endins]
-                            self.MT.displayed_columns[stins + len(colsiter):endins + len(colsiter)] = []
+                        if rm1start > c:
+                            self.MT.displayed_columns[c:c] = self.MT.displayed_columns[rm1start:rm1end]
+                            self.MT.displayed_columns[rm2start:rm2end] = []
                         else:
-                            self.MT.displayed_columns[c:c] = self.MT.displayed_columns[stins:endins]
-                            self.MT.displayed_columns[stins:endins] = []
+                            self.MT.displayed_columns[c:c] = self.MT.displayed_columns[rm1start:rm1end]
+                            self.MT.displayed_columns[rm1start:rm1end] = []
                 cws = [int(b - a) for a, b in zip(self.MT.col_positions, islice(self.MT.col_positions, 1, len(self.MT.col_positions)))]
-                if stins > c:
-                    cws[c:c] = cws[stins:endins]
-                    cws[stins + len(colsiter):endins + len(colsiter)] = []
+                if rm1start > c:
+                    cws[c:c] = cws[rm1start:rm1end]
+                    cws[rm2start:rm2end] = []
                 else:
-                    cws[c:c] = cws[stins:endins]
-                    cws[stins:endins] = []
+                    cws[c:c] = cws[rm1start:rm1end]
+                    cws[rm1start:rm1end] = []
                 self.MT.col_positions = [0] + list(accumulate(width for width in cws))
-                if (c_ - 1) + len(colsiter) > len(self.MT.col_positions) - 1:
-                    sels_start = len(self.MT.col_positions) - 1 - len(colsiter)
-                    self.MT.selected_cols = set(range(sels_start, len(self.MT.col_positions) - 1))
+                if (c_ - 1) + totalcols > len(self.MT.col_positions) - 1:
+                    self.MT.selected_cols = set(range(len(self.MT.col_positions) - 1 - totalcols, len(self.MT.col_positions) - 1))
                 else:
-                    if c_ > endins:
-                        c_ += 1
-                        sels_start = c_ - len(colsiter)
+                    if rm1start > c:
+                        self.MT.selected_cols = set(range(c_, c_ + totalcols))
                     else:
-                        if c_ == endins and len(colsiter) == 1:
-                            pass
-                        else:
-                            if c_ > endins:
-                                c_ += 1
-                            if c_ == endins:
-                                c_ -= 1
-                            if c_ < 0:
-                                c_ = 0
-                        sels_start = c_
-                    self.MT.selected_cols = set(range(sels_start, sels_start + len(colsiter)))
+                        self.MT.selected_cols = set(range(c_ + 1 - totalcols, c_ + 1 - totalcols + totalcols))
                 if self.MT.undo_enabled:
                     self.MT.undo_storage.append(zlib.compress(pickle.dumps(("move_cols", min(orig_selected_cols), (min(self.MT.selected_cols), max(self.MT.selected_cols))))))
                 self.MT.selected_rows = set()
