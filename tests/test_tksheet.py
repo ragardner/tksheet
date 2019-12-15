@@ -108,7 +108,8 @@ class demo(tk.Tk):
         print (response)
 
     def drag_select_cells(self, response):
-        print (response)
+        pass
+        #print (response)
 
     def ctrl_a(self, response):
         print (response)
@@ -120,7 +121,8 @@ class demo(tk.Tk):
         print (response)
 
     def drag_select_rows(self, response):
-        print (response)
+        pass
+        #print (response)
         
     def column_select(self, response):
         print (response)
@@ -129,7 +131,8 @@ class demo(tk.Tk):
         print (response)
 
     def drag_select_columns(self, response):
-        print (response)
+        pass
+        #print (response)
         
 app = demo()
 app.mainloop()
