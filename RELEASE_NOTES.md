@@ -1,3 +1,9 @@
+### Version 4.1.5
+ - Separate drag selection `extra_bindings()` into cells, rows and columns
+ - Add shift select and separate it from left click and right click in `extra_bindings()`
+ - Changed and hopefully made better all responses to `extra_bindings()` functions
+ - Added selection box to selected rows/columns
+
 ### Version 4.1.4
  - Fix bugs with drag and drop rows/columns
  - Clean up drag and drop code
