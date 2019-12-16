@@ -32,6 +32,9 @@ Planned future changes:
  - Editing row index/header
  - Display subset of rows
  - More builtin functionality on right click
+ 
+Known issues:
+ - Issues around non consecutive cell selections and multiple selection mode, will be addressed in a later version
 
 ### Basic Demo:
 
