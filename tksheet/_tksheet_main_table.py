@@ -948,7 +948,7 @@ class MainTable(tk.Canvas):
                     self.select_cell(r, c + 1)
                     self.see(r, c + 1, keep_yscroll = True, bottom_right_corner = True, check_cell_visibility = False)
 
-    def arrowkey_DOWN(self, event = None, keep_other_selections = False):
+    def arrowkey_DOWN(self, event = None):
         if not self.currently_selected or not self.arrowkeys_enabled:
             return
         if self.currently_selected[0] == "row":
@@ -971,18 +971,11 @@ class MainTable(tk.Canvas):
             r = self.currently_selected[0]
             c = self.currently_selected[1]
             if r < len(self.row_positions) - 2 and (self.single_selection_enabled or self.multiple_selection_enabled):
-                if keep_other_selections and r in self.sel_R and c in self.sel_C:
-                    if self.cell_is_completely_visible(r = r + 1, c = c):
-                        self.select_cell(r = r + 1, c = c, keep_other_selections = True, redraw = True)
-                    else:
-                        self.select_cell(r = r + 1, c = c, keep_other_selections = True)
-                        self.see(r = r + 1, c = c, keep_xscroll = True, bottom_right_corner = True, check_cell_visibility = False)
+                if self.cell_is_completely_visible(r = r + 1, c = c):
+                    self.select_cell(r + 1, c, redraw = True)
                 else:
-                    if self.cell_is_completely_visible(r = r + 1, c = c):
-                        self.select_cell(r + 1, c, redraw = True)
-                    else:
-                        self.select_cell(r + 1, c)
-                        self.see(r + 1, c, keep_xscroll = True, bottom_right_corner = True, check_cell_visibility = False)
+                    self.select_cell(r + 1, c)
+                    self.see(r + 1, c, keep_xscroll = True, bottom_right_corner = True, check_cell_visibility = False)
                     
     def arrowkey_LEFT(self, event = None):
         if not self.currently_selected or not self.arrowkeys_enabled:
@@ -2816,7 +2809,18 @@ class MainTable(tk.Canvas):
             if self.extra_edit_cell_func is not None:
                 self.extra_edit_cell_func((r, c))
         if move_down:
-            self.arrowkey_DOWN(keep_other_selections = True)
+            if r is None and c is None and destroy_tup:
+                r, c = destroy_tup[0], destroy_tup[1]
+            if r is not None and c is not None:
+                if (
+                    self.currently_selected and
+                    r == self.currently_selected[0] and
+                    c == self.currently_selected[1] and
+                    r < len(self.row_positions) - 2 and
+                    (self.single_selection_enabled or self.multiple_selection_enabled)
+                    ):
+                    self.select_cell(r + 1, c)
+                    self.see(r + 1, c, keep_xscroll = True, bottom_right_corner = True, check_cell_visibility = True)
         self.refresh()
         self.focus_set()
         return self.text_editor_value
