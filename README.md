@@ -26,6 +26,7 @@ Work on this repository is ongoing, improvements in usability, functionality and
 Upcoming changes in 4.1.7 - 4.1.8:
  - Changes to multiple_selection mode, renaming it to toggle_selection and reworking it
  - Writing full documentation
+ 
 Planned future changes:
  - Ctrl + click selection
  - Editing row index/header
