@@ -23,6 +23,9 @@ pip install tksheet
 
 Work on this repository is ongoing, improvements in usability, functionality and finally documentation
 
+Upcoming changes in v4.1.7:
+ - Changes to multiple_selection mode, renaming it to toggle_selection and reworking it
+
 ### Basic Demo:
 
 ```python
