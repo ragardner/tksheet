@@ -1,3 +1,6 @@
+### Version 4.1.6
+ - Fix cell selection after editing cell ending with mouse click
+
 ### Version 4.1.5
  - Separate drag selection `extra_bindings()` into cells, rows and columns
  - Add shift select and separate it from left click and right click in `extra_bindings()`
