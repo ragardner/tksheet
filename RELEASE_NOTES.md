@@ -1,3 +1,8 @@
+### Version 4.1.7
+ - Fix typo in `get_cell_data()`
+ - Add function `height_and_width()`
+ - Fix height and width in widget startup
+
 ### Version 4.1.6
  - Fix cell selection after editing cell ending with mouse click
 
