@@ -23,7 +23,8 @@ pip install tksheet
 
 Work on this repository is ongoing, improvements in usability, functionality and finally documentation
 
-Upcoming changes in 4.1.7 - 4.1.8:
+Upcoming changes:
+ - Overhauling how tksheet keeps track of cell selections, currently only works with consecutive selections
  - Changes to multiple_selection mode, renaming it to toggle_selection and reworking it
  - Writing full documentation
  
