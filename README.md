@@ -33,6 +33,7 @@ Planned future changes:
  - Editing row index/header
  - Display subset of rows
  - More builtin functionality on right click
+ - Better functions to access and manipulate table data
  
 Known issues:
  - Issues around non consecutive cell selections and multiple selection mode, there will need to be a bit of an overhaul of how tksheet keeps track of selections in the next version
