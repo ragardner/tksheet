@@ -34,7 +34,7 @@ Planned future changes:
  - More builtin functionality on right click
  
 Known issues:
- - Issues around non consecutive cell selections and multiple selection mode, will be addressed in a later version
+ - Issues around non consecutive cell selections and multiple selection mode, there will need to be a bit of an overhaul of how tksheet keeps track of selections in the next version
 
 ### Basic Demo:
 
