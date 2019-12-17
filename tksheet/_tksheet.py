@@ -85,6 +85,12 @@ class Sheet(tk.Frame):
                           highlightthickness = outline_thickness,
                           highlightbackground = outline_color)
         self.C = C
+        if width is not None or height is not None:
+            self.grid_propagate(0)
+        if width is not None:
+            self.config(width = width)
+        if height is not None:
+            self.config(height = height)
         self.grid_columnconfigure(1, weight = 1)
         self.grid_rowconfigure(1, weight = 1)
         self.RI = RowIndex(self,
@@ -161,6 +167,16 @@ class Sheet(tk.Frame):
             self.yscroll.grid(row = 1, column = 2, sticky = "nswe")
             self.xscroll.grid(row = 2, column = 1, columnspan = 2, sticky = "nswe")
         self.MT.update()
+
+    def height_and_width(self, height = None, width = None):
+        if width is not None or height is not None:
+            self.grid_propagate(0)
+        elif width is None and height is None:
+            self.grid_propagate(1)
+        if width is not None:
+            self.config(width = width)
+        if height is not None:
+            self.config(height = height)
 
     def focus_set(self, canvas = "table"):
         if canvas == "table":
@@ -1065,12 +1081,12 @@ class Sheet(tk.Frame):
     def get_cell_data(self, r, c, return_copy = True):
         if return_copy:
             try:
-                return f"{self.MT.data_reference[r][c]}"
+                return f"{self.MT.data_ref[r][c]}"
             except:
                 return None
         else:
             try:
-                return self.MT.data_reference[r][c]
+                return self.MT.data_ref[r][c]
             except:
                 return None
 
