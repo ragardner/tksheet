@@ -80,8 +80,6 @@ class Sheet(tk.Frame):
         tk.Frame.__init__(self,
                           C,
                           background = frame_background,
-                          width = width,
-                          height = height,
                           highlightthickness = outline_thickness,
                           highlightbackground = outline_color)
         self.C = C
@@ -509,7 +507,7 @@ class Sheet(tk.Frame):
                            deselect_all = deselect_all,
                            preserve_other_selections = preserve_other_selections)
 
-    def total_rows(self, number = None, mod_positions = True, mod_data = False):
+    def total_rows(self, number = None, mod_positions = True, mod_data = True):
         if number is None:
             return int(self.MT.total_rows)
         if not isinstance(number, int) or number < 0:
@@ -517,10 +515,15 @@ class Sheet(tk.Frame):
         total_cols = int(self.MT.total_cols)
         if number > len(self.MT.data_ref):
             if mod_positions:
-                height = self.MT.GetLinesHeight(self.MT.default_rh)
-                for r in range(number - len(self.MT.data_ref)):
-                    self.MT.data_ref.append(list(repeat("", total_cols)))
-                    self.MT.insert_row_position("end", height)
+                if mod_data:
+                    height = self.MT.GetLinesHeight(self.MT.default_rh)
+                    for r in range(number - len(self.MT.data_ref)):
+                        self.MT.data_ref.append(list(repeat("", total_cols)))
+                        self.MT.insert_row_position("end", height)
+                else:
+                    height = self.MT.GetLinesHeight(self.MT.default_rh)
+                    for r in range(number - len(self.MT.data_ref)):
+                        self.MT.insert_row_position("end", height)
             else:
                 self.MT.data_ref.extend([list(repeat("", total_cols)) for r in range(number - len(self.MT.data_ref))])
         elif number < len(self.MT.data_ref):
@@ -530,7 +533,7 @@ class Sheet(tk.Frame):
             self.MT.row_positions[number + 1:] = []
         self.MT.total_rows = len(self.MT.data_ref)  
 
-    def total_columns(self, number = None, mod_positions = True, mod_data = False):
+    def total_columns(self, number = None, mod_positions = True, mod_data = True):
         if number is None:
             return int(self.MT.total_cols)
         if not isinstance(number, int) or number < 0:
@@ -541,6 +544,7 @@ class Sheet(tk.Frame):
                 width = self.MT.default_cw
                 for c in range(number - total_cols):
                     self.MT.insert_col_position("end", width)
+                if mod_data:
                     for r in range(len(self.MT.data_ref)):
                         self.MT.data_ref[r].extend(list(repeat("", number - total_cols)))
             else:
@@ -638,40 +642,13 @@ class Sheet(tk.Frame):
         self.CH.add_selection(c = column, redraw = redraw, run_binding_func = run_binding_func, set_as_current = set_as_current)
 
     def toggle_select_cell(self, row, column, add_selection = True, redraw = True, run_binding_func = True, set_as_current = True):
-        if add_selection:
-            if row in self.MT.sel_R and column in self.MT.sel_C:
-                self.MT.deselect(r = row, c = column, cell = cell, redraw = redraw)
-            else:
-                self.MT.add_selection(r = row, c = column, redraw = redraw, run_binding_func = run_binding_func, set_as_current = set_as_current)
-        else:
-            if row in self.MT.sel_R and column in self.MT.sel_C:
-                self.MT.deselect(r = row, c = column, redraw = redraw)
-            else:
-                self.MT.select_cell(row, column, redraw = redraw)
+        self.MT.toggle_select_cell(row = row, column = column, add_selection = add_selection, redraw = redraw, run_binding_func = run_binding_func, set_as_current = set_as_current)
 
     def toggle_select_row(self, row, add_selection = True, redraw = True, run_binding_func = True, set_as_current = True):
-        if add_selection:
-            if row in self.MT.selected_rows:
-                self.MT.deselect(r = row, redraw = redraw)
-            else:
-                self.RI.add_selection(r = row, redraw = redraw, run_binding_func = run_binding_func, set_as_current = set_as_current)
-        else:
-            if row in self.MT.selected_rows:
-                self.MT.deselect(r = row, redraw = redraw)
-            else:
-                self.RI.select_row(row, redraw = redraw)
+        self.RI.toggle_select_row(row = row, add_selection = add_selection, redraw = redraw, run_binding_func = run_binding_func, set_as_current = set_as_current)
 
     def toggle_select_column(self, column, add_selection = True, redraw = True, run_binding_func = True, set_as_current = True):
-        if add_selection:
-            if column in self.MT.selected_cols:
-                self.MT.deselect(c = column, redraw = redraw)
-            else:
-                self.CH.add_selection(c = column, redraw = redraw, run_binding_func = run_binding_func, set_as_current = set_as_current)
-        else:
-            if row in self.MT.selected_rows:
-                self.MT.deselect(c = column, redraw = redraw)
-            else:
-                self.CH.select_col(column, redraw = redraw)
+        self.CH.toggle_select_col(column = column, add_selection = add_selection, redraw = redraw, run_binding_func = run_binding_func, set_as_current = set_as_current)
 
     def deselect(self, row = None, column = None, cell = None, redraw = True):
         self.MT.deselect(r = row, c = column, cell = cell, redraw = redraw)
@@ -685,25 +662,17 @@ class Sheet(tk.Frame):
     def get_selected_cells(self, get_rows = False, get_cols = False):
         return self.MT.get_selected_cells(get_rows = get_rows, get_cols = get_cols)
 
-    def get_selection_boxes(self, get_copy = True):
-        if get_copy:
-            return tuple(self.MT.selection_boxes)
-        return self.MT.selection_boxes
+    def get_all_selection_boxes(self):
+        return self.MT.get_all_selection_boxes()
 
     def is_cell_selected(self, r, c):
-        if r in self.MT.sel_R and c in self.MT.sel_C:
-            return True
-        return False
+        return self.MT.is_cell_selected(r, c)
 
     def is_row_selected(self, r):
-        if r in self.MT.selected_rows:
-            return True
-        return False
+        return self.MT.is_row_selected(r)
 
     def is_column_selected(self, c):
-        if c in self.MT.selected_cols:
-            return True
-        return False
+        return self.MT.is_col_selected(c)
 
     def anything_selected(self, exclude_columns = False, exclude_rows = False, exclude_cells = False):
         return self.MT.anything_selected(exclude_columns = exclude_columns, exclude_rows = exclude_rows, exclude_cells = exclude_cells)
@@ -771,7 +740,11 @@ class Sheet(tk.Frame):
 
     def get_highlighted_cells(self, canvas = "table"):
         if canvas == "table":
-            return dict(tuple(tup) for tup in self.MT.highlighted_cells)
+            return self.MT.highlighted_cells
+        elif canvas == "row_index":
+            return self.RI.highlighted_cells
+        elif canvas == "header":
+            return self.CH.highlighted_cells
         
     def get_frame_y(self, y):
         return y + self.CH.current_height
@@ -1118,7 +1091,44 @@ class Sheet(tk.Frame):
                 except:
                     continue
             return res
-        
+
+    def set_cell_data(self, r, c, value = ""):
+        self.MT.data_ref[r][c] = f"{value}"
+
+    def set_row_data(self, r, values = tuple(), extend_row = True):
+        if len(self.MT.data_ref) - 1 < r:
+            raise Exception("Row number is out of range")
+        if extend_row:
+            maxidx = len(self.MT.data_ref[r]) - 1
+            for c, v in enumerate(values):
+                if c > maxidx:
+                    self.MT.data_ref[r].append(v)
+                else:
+                    self.MT.data_ref[r][c] = v
+            if c + 1 > self.MT.total_cols:
+                new_total = c + 1
+                self.total_columns(new_total)
+        else:
+            for c, v in enumerate(values):
+                if c > maxidx:
+                    self.MT.data_ref[r].append(v)
+                else:
+                    self.MT.data_ref[r][c] = v
+
+    def set_column_data(self, c, values = tuple(), extend_column = True):
+        if c > self.MT.total_cols - 1:
+            raise Exception("Column number is out of range")
+        if extend_column:
+            maxidx = int(self.MT.total_rows) - 1
+            for rn, v in enumerate(values):
+                if rn > maxidx:
+                    self.insert_row()
+                    maxidx = int(self.MT.total_rows) - 1
+                self.MT.data_ref[rn][c] = v
+        else:
+            for rn, v in enumerate(values):
+                self.MT.data_ref[rn][c] = v
+                    
     def display_subset_of_columns(self,
                                   indexes = None,
                                   enable = None,
@@ -1136,17 +1146,8 @@ class Sheet(tk.Frame):
     def show_ctrl_outline(self, canvas = "table", start_cell = (0, 0), end_cell = (1, 1)):
         self.MT.show_ctrl_outline(canvas = canvas, start_cell = start_cell, end_cell = end_cell)
 
-    def get_max_selected_cell_x(self, get_columns = True):
-        return self.MT.get_max_selected_cell_x(get_cols = get_columns)
-
-    def get_max_selected_cell_y(self, get_rows = True):
-        return self.MT.get_max_selected_cell_y(get_rows = get_rows)
-
-    def get_min_selected_cell_y(self, get_rows = True):
-        return self.MT.get_min_selected_cell_y(get_rows = get_rows)
-
-    def get_min_selected_cell_x(self, get_columns = True):
-        return self.MT.get_min_selected_cell_x(get_cols = get_columns)
+    def get_selected_min_max(self): # returns (min_y, min_x, max_y, max_x) of any selections including rows/columns
+        return self.MT.get_selected_min_max()
         
     def headers(self, newheaders = None, index = None):
         return self.MT.headers(newheaders, index)
