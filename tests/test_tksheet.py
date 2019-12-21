@@ -15,7 +15,7 @@ class demo(tk.Tk):
                                 row_index_align = "center",
                                 row_index_width = 50,
                                 total_rows = 2000,
-                                total_columns = 10)
+                                total_columns = 100)
         self.sheet_demo.enable_bindings(("single",
                                          "drag_select",
                                          "column_drag_and_drop",
@@ -57,7 +57,7 @@ class demo(tk.Tk):
 
         # __________ SETTING OR RESETTING TABLE DATA __________
         
-        self.data = [[f"Row {r} Column {c}" for c in range(10)] for r in range(2000)]
+        self.data = [[f"Row {r} Column {c}" for c in range(30)] for r in range(200)]
         self.sheet_demo.data_reference(self.data)
 
         # __________ DISPLAY SUBSET OF COLUMNS __________
@@ -78,6 +78,20 @@ class demo(tk.Tk):
 
         #self.sheet_demo.insert_column(column = (f"my new col here {r}" for r in range(5000)), idx = 0) # a filled column at the start
         #self.sheet_demo.insert_column() # an empty column at the end
+
+        # __________ SETTING A COLUMNS DATA __________
+
+        # any iterable works
+        #self.sheet_demo.set_column_data(0, values = (0 for i in range(220)))
+
+        # __________ SETTING A ROWS DATA __________
+
+        # any iterable works
+        #self.sheet_demo.set_row_data(0, values = (0 for i in range(35)))
+
+        # __________ SETTING A CELLS DATA __________
+
+        #self.sheet_demo.set_cell_data(1, 2, "NEW VALUE")
 
         # __________ HIDING THE ROW INDEX AND HEADERS __________
 
