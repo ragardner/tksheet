@@ -1,3 +1,12 @@
+### Version 4.1.8
+ - Overhaul internal selections variables and workings
+ - Replace functions `get_min`/`get_max` `selected` `x` and `y` with `get_selected_min_max()`
+ - Fix bugs with functions `total_columns()` and `total_rows()` and set default argument `mod_data` to `True`
+ - Change drag and drop so that it modifies data with or without an extra binding set
+ - Add functions `set_cell_data()`, `set_row_data()`, `set_column_data()`
+ - Remove bloat in `get_highlighted_cells()`
+ - Prepare many functions for implementation of control + click
+
 ### Version 4.1.7
  - Fix typo in `get_cell_data()`
  - Add function `height_and_width()`
