@@ -1,3 +1,7 @@
+### Version 4.2.0
+ - Fix extra selection box drawing in certain circumstances
+ - Remove some unnessecary code
+
 ### Version 4.1.9
  - Fix bugs introduced with 4.1.8
 
