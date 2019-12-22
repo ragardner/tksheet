@@ -127,6 +127,8 @@ class MainTable(tk.Canvas):
         self.table_dropdown = None
         self.table_dropdown_id = None
         self.table_dropdown_value = None
+        self.text_editor = None
+        self.text_editor_id = None
         self.default_cw = column_width
         self.default_rh = int(row_height)
         self.default_hh = int(header_height)
@@ -363,7 +365,7 @@ class MainTable(tk.Canvas):
                                     sx = f"{self.data_ref[data_ref_rn][c]}"
                                     row.append(sx)
                                     if self.undo_enabled:
-                                        undo_storage[(r, c)] = sx
+                                        undo_storage[(data_ref_rn, c)] = sx
                                     self.data_ref[data_ref_rn][c] = ""
                                 except:
                                     row.append("")
@@ -378,7 +380,7 @@ class MainTable(tk.Canvas):
                                     sx = f"{self.data_ref[data_ref_rn][self.displayed_columns[c]]}"
                                     row.append(sx)
                                     if self.undo_enabled:
-                                        undo_storage[(r, self.displayed_columns[c])] = sx
+                                        undo_storage[(data_ref_rn, self.displayed_columns[c])] = sx
                                     self.data_ref[data_ref_rn][self.displayed_columns[c]] = ""
                                 except:
                                     row.append("")
@@ -396,7 +398,7 @@ class MainTable(tk.Canvas):
                                     sx = f"{self.data_ref[data_ref_rn][c]}"
                                     row.append(sx)
                                     if self.undo_enabled:
-                                        undo_storage[(r, c)] = sx
+                                        undo_storage[(data_ref_rn, c)] = sx
                                     self.data_ref[data_ref_rn][c] = ""
                                 except:
                                     row.append("")
@@ -411,30 +413,29 @@ class MainTable(tk.Canvas):
                                     sx = f"{self.data_ref[data_ref_rn][self.displayed_columns[c]]}"
                                     row.append(sx)
                                     if self.undo_enabled:
-                                        undo_storage[(r, self.displayed_columns[c])] = sx
+                                        undo_storage[(data_ref_rn, self.displayed_columns[c])] = sx
                                     self.data_ref[data_ref_rn][self.displayed_columns[c]] = ""
                                 except:
                                     row.append("")
                             writer.writerow(row)
-            for r1, c1, r2, c2 in boxes:
-                self.show_ctrl_outline(canvas = "table", start_cell = (c1, r1), end_cell = (c2, r2))
             if self.undo_enabled:
-                boxes = []
+                boxes2 = []
                 for item in chain(self.find_withtag("CellSelectFill"), self.find_withtag("ColSelectFill"), self.find_withtag("RowSelectFill")):
                     alltags = self.gettags(item)
                     if alltags[0] == "CellSelectFill":
-                        boxes.append((tuple(int(e) for e in alltags[1].split("_") if e), "cells"))
+                        boxes2.append((tuple(int(e) for e in alltags[1].split("_") if e), "cells"))
                     elif alltags[0] == "ColSelectFill":
-                        boxes.append((tuple(int(e) for e in alltags[1].split("_") if e), "cols"))
+                        boxes2.append((tuple(int(e) for e in alltags[1].split("_") if e), "cols"))
                     elif alltags[0] == "RowSelectFill":
-                        boxes.append((tuple(int(e) for e in alltags[1].split("_") if e), "rows"))
-                self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells", undo_storage, tuple(boxes), currently_selected))))
+                        boxes2.append((tuple(int(e) for e in alltags[1].split("_") if e), "rows"))
+                self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells", undo_storage, boxes2, currently_selected))))
             self.clipboard_clear()
             s = s.getvalue().rstrip()
             self.clipboard_append(s)
             self.update()
             self.refresh()
-            self.show_ctrl_outline(canvas = "table", start_cell = (x1, y1), end_cell = (x2, y2))
+            for r1, c1, r2, c2 in boxes:
+                self.show_ctrl_outline(canvas = "table", start_cell = (c1, r1), end_cell = (c2, r2))
             if self.extra_ctrl_x_func is not None:
                 self.extra_ctrl_x_func()
 
@@ -494,8 +495,7 @@ class MainTable(tk.Canvas):
                             undo_storage[(r, self.displayed_columns[c])] = s
                         self.data_ref[r][self.displayed_columns[c]] = data[ndr][ndc]
             if self.undo_enabled:
-                self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells", undo_storage, ((y1, x1, y1 + numrows + 1, x1 + numcols + 1), "cells"), currently_selected))))
-            self.currently_selected = (y1, x1)
+                self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells", undo_storage, (((y1, x1, y1 + numrows, x1 + numcols), "cells"), ), currently_selected))))
             self.create_current(y1, x1, type_ = "cell", inside = True if numrows > 1 or numcols > 1 else False)
             self.create_selected(y1, x1, y1 + numrows, x1 + numcols)
             self.see(r = y1, c = x1, keep_yscroll = False, keep_xscroll = False, bottom_right_corner = False, check_cell_visibility = True, redraw = False)
@@ -3090,7 +3090,7 @@ class MainTable(tk.Canvas):
             self.itemconfig(item, state = "normal")
 
     def edit_cell_(self, event = None):
-        if not self.anything_selected(exclude_columns = True, exclude_rows = True):
+        if not self.anything_selected(exclude_columns = True, exclude_rows = True) or self.text_editor_id is not None:
             return
         currently_selected = self.currently_selected()
         y1 = int(currently_selected[0])
@@ -3143,6 +3143,7 @@ class MainTable(tk.Canvas):
         self.text_editor.config(height = self.text_editor.winfo_height() + self.xtra_lines_increment)
 
     def get_text_editor_value(self, destroy_tup = None, r = None, c = None, set_data_ref_on_destroy = True, event = None, destroy = True, move_down = True):
+        self.show_current()
         if self.text_editor is not None:
             self.text_editor_value = self.text_editor.get()
         if destroy:
@@ -3153,12 +3154,11 @@ class MainTable(tk.Canvas):
             except:
                 pass
             self.text_editor = None
-        self.show_current()
         if set_data_ref_on_destroy:
             if r is None and c is None and destroy_tup:
                 r, c = destroy_tup[0], destroy_tup[1]
             if self.undo_enabled:
-                self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells", {(r, c): f"{self.data_ref[r][c]}"}, (r, c, r + 1, c + 1)))))
+                self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells", {(r, c): f"{self.data_ref[r][c]}"}, (((r, c, r + 1, c + 1), "cells"), ), self.currently_selected()))))
             if self.all_columns_displayed:
                 self.data_ref[r][c] = self.text_editor_value
             else:
