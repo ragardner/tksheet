@@ -1,3 +1,8 @@
+### Version 4.2.1
+ - Fix resize row height bug
+ - Fix deselect bug
+ - Improve and fix many bugs with toggle select mode
+
 ### Version 4.2.0
  - Fix extra selection box drawing in certain circumstances
  - Fix bug in Paste

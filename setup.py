@@ -3,13 +3,13 @@ from setuptools import setup, find_packages
 setup(
   name = 'tksheet',
   packages = ['tksheet'],
-  version = '4.2.0',
+  version = '4.2.1',
   license='MIT',
   description = 'Tkinter table / sheet widget',
   author = 'ragardner',
   author_email = 'ragardner@protonmail.com',
   url = 'https://github.com/ragardner/tksheet',
-  download_url = 'https://github.com/ragardner/tksheet/archive/4.2.0.tar.gz',
+  download_url = 'https://github.com/ragardner/tksheet/archive/4.2.1.tar.gz',
   keywords = ['tkinter', 'table', 'widget'],
   install_requires=[],
   classifiers=[
