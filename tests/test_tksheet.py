@@ -16,7 +16,7 @@ class demo(tk.Tk):
                                 row_index_width = 50,
                                 total_rows = 2000,
                                 total_columns = 100)
-        self.sheet_demo.enable_bindings(("single",
+        self.sheet_demo.enable_bindings(("toggle",
                                          "drag_select",
                                          "column_drag_and_drop",
                                          "row_drag_and_drop",
