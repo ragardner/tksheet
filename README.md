@@ -2,8 +2,6 @@
 
 Python 3.6+ tkinter table widget for displaying tabular data
 
-## WARNING - MANY THINGS ARE BROKEN IN 4.1.8, I WILL UPDATE SOON WITH FIXES, USE 4.1.7 `pip install tksheet==4.1.7`
-
 ```
 pip install tksheet
 ```
