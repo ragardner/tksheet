@@ -525,12 +525,18 @@ class ColumnHeaders(tk.Canvas):
             else:
                 self.select_col(column, redraw = redraw)
 
-    def add_selection(self, c, redraw = False, run_binding_func = True, set_as_current = True, mod_selection_boxes = True):
+    def add_selection(self, c, redraw = False, run_binding_func = True, set_as_current = True):
         c = int(c)
         if set_as_current:
+            create_new_sel = False
+            current = self.MT.get_tags_of_current()
+            if current:
+                if current[0] == "Current_Outside":
+                    create_new_sel = True
             self.MT.create_current(0, c, type_ = "col", inside = True)
-        if mod_selection_boxes:
-            pass
+            if create_new_sel:
+                r1, c1, r2, c2 = tuple(int(e) for e in current[1].split("_") if e)
+                self.MT.create_selected(r1, c1, r2, c2, current[2] + "s")
         self.MT.create_selected(0, c, len(self.MT.row_positions) - 1, c + 1, "cols")
         if redraw:
             self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)

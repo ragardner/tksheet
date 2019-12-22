@@ -536,12 +536,18 @@ class RowIndex(tk.Canvas):
             else:
                 self.select_row(row, redraw = redraw)
 
-    def add_selection(self, r, redraw = False, run_binding_func = True, set_as_current = True, mod_selection_boxes = True):
+    def add_selection(self, r, redraw = False, run_binding_func = True, set_as_current = True):
         r = int(r)
         if set_as_current:
+            create_new_sel = False
+            current = self.MT.get_tags_of_current()
+            if current:
+                if current[0] == "Current_Outside":
+                    create_new_sel = True
             self.MT.create_current(r, 0, type_ = "row", inside = True)
-        if mod_selection_boxes:
-            pass
+            if create_new_sel:
+                r1, c1, r2, c2 = tuple(int(e) for e in current[1].split("_") if e)
+                self.MT.create_selected(r1, c1, r2, c2, current[2] + "s")
         self.MT.create_selected(r, 0, r + 1, len(self.MT.col_positions) - 1, "rows")
         if redraw:
             self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)

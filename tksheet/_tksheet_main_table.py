@@ -276,18 +276,13 @@ class MainTable(tk.Canvas):
             s = io.StringIO()
             writer = csv_module.writer(s, dialect = csv_module.excel_tab, lineterminator = "\n")
             if isinstance(currently_selected[0], int) or currently_selected[0] == "column":
-                if isinstance(currently_selected[0], int):
-                    boxes = tuple(tuple(int(e) for e in self.gettags(item)[1].split("_") if e) for item in self.find_withtag("CellSelectFill"))
-                elif currently_selected[0] == "column":
-                    boxes = tuple(tuple(int(e) for e in self.gettags(item)[1].split("_") if e) for item in self.find_withtag("ColSelectFill"))
-                maxrows = 0
-                for r1, c1, r2, c2 in boxes:
-                    if r2 - r1 > maxrows:
-                        maxrows = r2 - r1
+                boxes, maxrows = self.get_ctrl_x_c_boxes()
                 if self.all_columns_displayed:
                     for rn in range(maxrows):
                         row = []
                         for r1, c1, r2, c2 in boxes:
+                            if r2 - r1 < maxrows:
+                                continue
                             data_ref_rn = r1 + rn
                             for c in range(c1, c2):
                                 try:
@@ -299,6 +294,8 @@ class MainTable(tk.Canvas):
                     for rn in range(maxrows):
                         row = []
                         for r1, c1, r2, c2 in boxes:
+                            if r2 - r1 < maxrows:
+                                continue
                             data_ref_rn = r1 + rn
                             for c in range(c1, c2):
                                 try:
@@ -307,7 +304,7 @@ class MainTable(tk.Canvas):
                                     row.append("")
                         writer.writerow(row)
             elif currently_selected[0] == "row":
-                boxes = tuple(tuple(int(e) for e in self.gettags(item)[1].split("_") if e) for item in self.find_withtag("RowSelectFill"))
+                boxes = self.get_ctrl_x_c_boxes()
                 if self.all_columns_displayed:
                     for r1, c1, r2, c2 in boxes:
                         for rn in range(r2 - r1):
@@ -338,6 +335,29 @@ class MainTable(tk.Canvas):
                 self.extra_ctrl_c_func(s)
             self.clipboard_append(s)
             self.update()
+
+    def get_ctrl_x_c_boxes(self):
+        currently_selected = self.currently_selected()
+        boxes = {}
+        if isinstance(currently_selected[0], int) or currently_selected[0] == "column":
+            for item in chain(self.find_withtag("CellSelectFill"), self.find_withtag("Current_Outside"), self.find_withtag("ColSelectFill")):
+                alltags = self.gettags(item)
+                if alltags[0] == "CellSelectFill" or alltags[0] == "Current_Outside":
+                    boxes[tuple(int(e) for e in alltags[1].split("_") if e)] = "cells"
+                elif alltags[0] == "ColSelectFill":
+                    boxes[tuple(int(e) for e in alltags[1].split("_") if e)] = "cols"
+            maxrows = 0
+            for r1, c1, r2, c2 in boxes:
+                if r2 - r1 > maxrows:
+                    maxrows = r2 - r1
+            for r1, c1, r2, c2 in tuple(boxes):
+                if r2 - r1 < maxrows:
+                    del boxes[(r1, c1, r2, c2)]
+            return boxes, maxrows
+        elif currently_selected[0] == "row":
+            for item in self.find_withtag("RowSelectFill"):
+                boxes[tuple(int(e) for e in self.gettags(item)[1].split("_") if e)] = "rows"
+            return boxes
             
     def ctrl_x(self, event = None):
         if self.anything_selected():
@@ -345,20 +365,15 @@ class MainTable(tk.Canvas):
                 undo_storage = {}
             s = io.StringIO()
             writer = csv_module.writer(s, dialect = csv_module.excel_tab, lineterminator = "\n")
-            currently_selected = self.currently_selected()
+            currently_selected = self.currently_selected()         
             if isinstance(currently_selected[0], int) or currently_selected[0] == "column":
-                if isinstance(currently_selected[0], int):
-                    boxes = tuple(tuple(int(e) for e in self.gettags(item)[1].split("_") if e) for item in self.find_withtag("CellSelectFill"))
-                elif currently_selected[0] == "column":
-                    boxes = tuple(tuple(int(e) for e in self.gettags(item)[1].split("_") if e) for item in self.find_withtag("ColSelectFill"))
-                maxrows = 0
-                for r1, c1, r2, c2 in boxes:
-                    if r2 - r1 > maxrows:
-                        maxrows = r2 - r1
+                boxes, maxrows = self.get_ctrl_x_c_boxes()
                 if self.all_columns_displayed:
                     for rn in range(maxrows):
                         row = []
                         for r1, c1, r2, c2 in boxes:
+                            if r2 - r1 < maxrows:
+                                continue
                             data_ref_rn = r1 + rn
                             for c in range(c1, c2):
                                 try:
@@ -374,6 +389,8 @@ class MainTable(tk.Canvas):
                     for rn in range(maxrows):
                         row = []
                         for r1, c1, r2, c2 in boxes:
+                            if r2 - r1 < maxrows:
+                                continue
                             data_ref_rn = r1 + rn
                             for c in range(c1, c2):
                                 try:
@@ -387,7 +404,7 @@ class MainTable(tk.Canvas):
                         writer.writerow(row)
 
             elif currently_selected[0] == "row":
-                boxes = tuple(tuple(int(e) for e in self.gettags(item)[1].split("_") if e) for item in self.find_withtag("RowSelectFill"))
+                boxes = self.get_ctrl_x_c_boxes()
                 if self.all_columns_displayed:
                     for r1, c1, r2, c2 in boxes:
                         for rn in range(r2 - r1):
@@ -419,16 +436,7 @@ class MainTable(tk.Canvas):
                                     row.append("")
                             writer.writerow(row)
             if self.undo_enabled:
-                boxes2 = []
-                for item in chain(self.find_withtag("CellSelectFill"), self.find_withtag("ColSelectFill"), self.find_withtag("RowSelectFill")):
-                    alltags = self.gettags(item)
-                    if alltags[0] == "CellSelectFill":
-                        boxes2.append((tuple(int(e) for e in alltags[1].split("_") if e), "cells"))
-                    elif alltags[0] == "ColSelectFill":
-                        boxes2.append((tuple(int(e) for e in alltags[1].split("_") if e), "cols"))
-                    elif alltags[0] == "RowSelectFill":
-                        boxes2.append((tuple(int(e) for e in alltags[1].split("_") if e), "rows"))
-                self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells", undo_storage, boxes2, currently_selected))))
+                self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells", undo_storage, tuple(boxes.items()), currently_selected))))
             self.clipboard_clear()
             s = s.getvalue().rstrip()
             self.clipboard_append(s)
@@ -506,7 +514,7 @@ class MainTable(tk.Canvas):
                 undo_storage = {}
                 boxes = []
             if self.all_columns_displayed:    
-                for item in chain(self.find_withtag("CellSelectFill"), self.find_withtag("RowSelectFill"), self.find_withtag("ColSelectFill")):
+                for item in chain(self.find_withtag("CellSelectFill"), self.find_withtag("RowSelectFill"), self.find_withtag("ColSelectFill"), self.find_withtag("Current_Outside")):
                     alltags = self.gettags(item)
                     box = tuple(int(e) for e in alltags[1].split("_") if e)
                     if self.undo_enabled:
@@ -523,7 +531,7 @@ class MainTable(tk.Canvas):
                                 undo_storage[(r, c)] = f"{self.data_ref[r][c]}"
                             self.data_ref[r][c] = ""
             else:
-                for item in chain(self.find_withtag("CellSelectFill"), self.find_withtag("RowSelectFill"), self.find_withtag("ColSelectFill")):
+                for item in chain(self.find_withtag("CellSelectFill"), self.find_withtag("RowSelectFill"), self.find_withtag("ColSelectFill"), self.find_withtag("Current_Outside")):
                     alltags = self.gettags(item)
                     box = tuple(int(e) for e in alltags[1].split("_") if e)
                     if self.undo_enabled:
@@ -838,7 +846,7 @@ class MainTable(tk.Canvas):
         if self.selection_binding_func is not None:
             self.selection_binding_func(("select_cell", ) + tuple((r, c)))
 
-    def add_selection(self, r, c, redraw = False, run_binding_func = True, set_as_current = False, mod_selection_boxes = True):
+    def add_selection(self, r, c, redraw = False, run_binding_func = True, set_as_current = False):
         r = int(r)
         c = int(c)
         if set_as_current:
@@ -852,13 +860,11 @@ class MainTable(tk.Canvas):
                     add_sel = tuple()
             else:
                 add_sel = tuple()
-            self.create_current(r, c, type_ = "cell", inside = True if is_cell_selected(r, c) else False)
+            self.create_current(r, c, type_ = "cell", inside = True if self.is_cell_selected(r, c) else False)
             if add_sel:
-                self.add_selection(add_sel[0], add_sel[1], redraw = False, run_binding_func = False, set_as_current = False, mod_selection_boxes = False)
+                self.add_selection(add_sel[0], add_sel[1], redraw = False, run_binding_func = False, set_as_current = False)
         else:
             self.create_selected(r, c, r + 1, c + 1)
-        if mod_selection_boxes:
-            pass
         if redraw:
             self.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
         if self.selection_binding_func is not None and run_binding_func:
@@ -866,12 +872,12 @@ class MainTable(tk.Canvas):
 
     def toggle_select_cell(self, row, column, add_selection = True, redraw = True, run_binding_func = True, set_as_current = True):
         if add_selection:
-            if is_cell_selected(row, column):
+            if self.is_cell_selected(row, column, inc_rows = True, inc_cols = True):
                 self.deselect(r = row, c = column, redraw = redraw)
             else:
                 self.add_selection(r = row, c = column, redraw = redraw, run_binding_func = run_binding_func, set_as_current = set_as_current)
         else:
-            if is_cell_selected(row, column):
+            if self.is_cell_selected(row, column, inc_rows = True, inc_cols = True):
                 self.deselect(r = row, c = column, redraw = redraw)
             else:
                 self.select_cell(row, column, redraw = redraw)
@@ -888,73 +894,104 @@ class MainTable(tk.Canvas):
 
     def deselect(self, r = None, c = None, cell = None, redraw = True):
         deselected = tuple()
-        if r == "all" and cell is None:
-            self.delete_selection_rects()
-            deselected = ("deselect_all", )
-        elif r != "all" and r is not None and c is None and cell is None:
-            for item in self.find_withtags("RowSelectFill"):
-                r1, c1, r2, c2 = tuple(int(e) for e in self.gettags(item)[1].split("_") if e)
-                if r >= r1 and r < r2:
-                    self.delete(f"{r1}_{c1}_{r2}_{c2}")
-                    self.RI.delete(f"{r1}_{c1}_{r2}_{c2}")
-                    self.CH.delete(f"{r1}_{c1}_{r2}_{c2}")
-                    if r1 < r or r2 - 1 > r:
-                        if r1 < r:
-                            self.create_selected(r1, c1, r, c2, "rows")
-                        if r2 - 1 > r:
-                            self.create_selected(r + 1, c1, r2, c2, "rows")
-            for item in chain(self.find_withtags("Current_Inside"), self.find_withtags("Current_Outside")):
+        deleted_boxes = {}
+        if r == "all":
+            deselected = ("deselect_all", tuple(self.delete_selection_rects().items()))
+        elif r is not None and c is None and cell is None:
+            current = self.find_withtag("Current_Inside") + self.find_withtag("Current_Outside")
+            current_tags = self.gettags(current[0]) if current else tuple()
+            if current:
+                curr_r1, curr_c1, curr_r2, curr_c2 = tuple(int(e) for e in current_tags[1].split("_") if e)
+            reset_current = False
+            for item in self.find_withtag("RowSelectFill"):
                 alltags = self.gettags(item)
-                r1, c1, r2, c2 = tuple(int(e) for e in alltags[1].split("_") if e)
-                if alltags[2] == "row" and r >= r1 and r < r2:
-                    self.delete_current()
-                    selected_rows = sorted(self.get_selected_rows())
-                    if selected_rows:
-                        self.create_current(selected_rows[0], 0, type_ = "row", inside = True)
-                    break
-            deselected = ("deselect_row", int(r))
+                if alltags:
+                    r1, c1, r2, c2 = tuple(int(e) for e in alltags[1].split("_") if e)
+                    if r >= r1 and r < r2:
+                        self.delete(f"{r1}_{c1}_{r2}_{c2}")
+                        self.RI.delete(f"{r1}_{c1}_{r2}_{c2}")
+                        self.CH.delete(f"{r1}_{c1}_{r2}_{c2}")
+                    if not reset_current and current and curr_r1 >= r1 and curr_r1 < r2:
+                        reset_current = True
+                        deleted_boxes[curr_r1, curr_c1, curr_r2, curr_c2] = "cell"
+                    deleted_boxes[r1, c1, r2, c2] = "rows"
+            if reset_current:
+                self.delete_current()
+                self.set_current_to_last()
+            deselected = ("deselect_row", tuple(deleted_boxes.items()))
         elif c is not None and r is None and cell is None:
-            for item in self.find_withtags("ColSelectFill"):
-                r1, c1, r2, c2 = tuple(int(e) for e in self.gettags(item)[1].split("_") if e)
-                if c >= c1 and c < c2:
-                    self.delete(f"{r1}_{c1}_{r2}_{c2}")
-                    self.RI.delete(f"{r1}_{c1}_{r2}_{c2}")
-                    self.CH.delete(f"{r1}_{c1}_{r2}_{c2}")
-                    if c1 < c or c2 - 1 > c:
-                        if c1 < c:
-                            self.create_selected(r1, c1, r2, c, "cols")
-                        if c2 - 1 > c:
-                            self.create_selected(r1, c + 1, r2, c2, "cols")
-            for item in chain(self.find_withtags("Current_Inside"), self.find_withtags("Current_Outside")):
+            current = self.find_withtag("Current_Inside") + self.find_withtag("Current_Outside")
+            current_tags = self.gettags(current[0]) if current else tuple()
+            if current:
+                curr_r1, curr_c1, curr_r2, curr_c2 = tuple(int(e) for e in current_tags[1].split("_") if e)
+            reset_current = False
+            for item in self.find_withtag("ColSelectFill"):
                 alltags = self.gettags(item)
-                r1, c1, r2, c2 = tuple(int(e) for e in alltags[1].split("_") if e)
-                if alltags[2] == "col" and c >= c1 and c < c2:
-                    self.delete_current()
-                    selected_cols = sorted(self.get_selected_cols())
-                    if selected_cols:
-                        self.create_current(0, selected_cols[0], type_ = "col", inside = True)
-                    break
-            deselected = ("deselect_column", int(c))
+                if alltags:
+                    r1, c1, r2, c2 = tuple(int(e) for e in alltags[1].split("_") if e)
+                    if c >= c1 and c < c2:
+                        self.delete(f"{r1}_{c1}_{r2}_{c2}")
+                        self.RI.delete(f"{r1}_{c1}_{r2}_{c2}")
+                        self.CH.delete(f"{r1}_{c1}_{r2}_{c2}")
+                    if not reset_current and current and curr_c1 >= c1 and curr_c1 < c2:
+                        reset_current = True
+                        deleted_boxes[curr_r1, curr_c1, curr_r2, curr_c2] = "cell"
+                    deleted_boxes[r1, c1, r2, c2] = "cols"
+            if reset_current:
+                self.delete_current()
+                self.set_current_to_last()
+            deselected = ("deselect_column", tuple(deleted_boxes.items()))
         elif (r is not None and c is not None and cell is None) or cell is not None:
+            set_curr = False
             if cell is not None:
                 r, c = cell[0], cell[1]
-            for item in self.find_withtags("CellSelectFill"):
-                r1, c1, r2, c2 = tuple(int(e) for e in self.gettags(item)[1].split("_") if e)
-                if (r >= r1 and
-                    c >= c1 and
-                    r < r2 and
-                    c < c2):
-                    self.delete(f"{r1}_{c1}_{r2}_{c2}")
-                    self.RI.delete(f"{r1}_{c1}_{r2}_{c2}")
-                    self.CH.delete(f"{r1}_{c1}_{r2}_{c2}")
-            if cell == self.currently_selected():
+            for item in chain(self.find_withtag("CellSelectFill"),
+                              self.find_withtag("RowSelectFill"),
+                              self.find_withtag("ColSelectFill"),
+                              self.find_withtag("Current_Outside"),
+                              self.find_withtag("Current_Inside")):
+                alltags = self.gettags(item)
+                if alltags:
+                    r1, c1, r2, c2 = tuple(int(e) for e in alltags[1].split("_") if e)
+                    if (r >= r1 and
+                        c >= c1 and
+                        r < r2 and
+                        c < c2):
+                        current = self.currently_selected()
+                        if (not set_curr and
+                            current and
+                            r2 - r1 == 1 and
+                            c2 - c1 == 1 and
+                            r == current[0] and
+                            c == current[1]):
+                            set_curr = True
+                        if current and not set_curr:
+                            if isinstance(current[0], int):
+                                if (current[0] >= r1 and
+                                    current[0] < r2 and
+                                    current[1] >= c1 and
+                                    current[1] < c2):
+                                    set_curr = True
+                            elif current[0] == "column":
+                                if (current[1] >= c1 and
+                                    current[1] < c2):
+                                    set_curr = True
+                            elif current[0] == "row":
+                                if (current[1] >= r1 and
+                                    current[1] < r2):
+                                    set_curr = True
+                        self.delete(f"{r1}_{c1}_{r2}_{c2}")
+                        self.RI.delete(f"{r1}_{c1}_{r2}_{c2}")
+                        self.CH.delete(f"{r1}_{c1}_{r2}_{c2}")
+                        deleted_boxes[(r1, c1, r2, c2)] = "cells"
+            if set_curr:
+                try:
+                    deleted_boxes[tuple(int(e) for e in self.get_tags_of_current()[1].split("_") if e)] = "cells"
+                except:
+                    pass
                 self.delete_current()
-                selected_cells = self.get_selected_cells()
-                if selected_cells:
-                    highest_cell = min(selected_cells, key = lambda t: t[0])
-                    highest_selected = self.is_cell_selected(highest_cell[0], highest_cell[1])
-                    self.create_current(highest_cell[0], highest_cell[1], type_ = "cell", inside = True if highest_selected else False)
-            deselected = ("deselect_cell", int(r), int(c))
+                self.set_current_to_last()
+            deselected = ("deselect_cell", tuple(deleted_boxes.items()))
         if redraw:
             self.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
         if self.deselection_binding_func is not None:
@@ -2590,37 +2627,60 @@ class MainTable(tk.Canvas):
             self.tag_raise("ColSelectBorder")
 
     def delete_selection_rects(self, cells = True, rows = True, cols = True, delete_current = True):
+        deleted_boxes = {}
         if cells:
+            for item in self.find_withtag("CellSelectFill"):
+                alltags = self.gettags(item)
+                if alltags:
+                    deleted_boxes[tuple(int(e) for e in alltags[1].split("_") if e)] = "cells"
             self.delete("CellSelectFill", "CellSelectBorder")
             self.RI.delete("CellSelectFill", "CellSelectBorder")
             self.CH.delete("CellSelectFill", "CellSelectBorder")
         if rows:
+            for item in self.find_withtag("RowSelectFill"):
+                alltags = self.gettags(item)
+                if alltags:
+                    deleted_boxes[tuple(int(e) for e in alltags[1].split("_") if e)] = "rows"
             self.delete("RowSelectFill", "RowSelectBorder")
             self.RI.delete("RowSelectFill", "RowSelectBorder")
             self.CH.delete("RowSelectFill", "RowSelectBorder")
         if cols:
+            for item in self.find_withtag("ColSelectFill"):
+                alltags = self.gettags(item)
+                if alltags:
+                    deleted_boxes[tuple(int(e) for e in alltags[1].split("_") if e)] = "cols"
             self.delete("ColSelectFill", "ColSelectBorder")
             self.RI.delete("ColSelectFill", "ColSelectBorder")
             self.CH.delete("ColSelectFill", "ColSelectBorder")
         if delete_current:
+            for item in chain(self.find_withtag("Current_Inside"), self.find_withtag("Current_Outside")):
+                alltags = self.gettags(item)
+                if alltags:
+                    deleted_boxes[tuple(int(e) for e in alltags[1].split("_") if e)] = "cells"
             self.delete("Current_Inside", "Current_Outside")
             self.RI.delete("Current_Inside", "Current_Outside")
             self.CH.delete("Current_Inside", "Current_Outside")
+        return deleted_boxes
 
     def currently_selected(self):
         items = self.find_withtag("Current_Inside") + self.find_withtag("Current_Outside")
         if not items:
             return tuple()
         alltags = self.gettags(items[0])
+        box = tuple(int(e) for e in alltags[1].split("_") if e)
         if alltags[2] == "cell":
-            box = tuple(int(e) for e in alltags[1].split("_") if e)
             return (box[0], box[1])
         elif alltags[2] == "col":
-            box = tuple(int(e) for e in alltags[1].split("_") if e)
             return ("column", box[1])
         elif alltags[2] == "row":
-            box = tuple(int(e) for e in alltags[1].split("_") if e)
             return ("row", box[0])
+
+    def get_tags_of_current(self):
+        items = self.find_withtag("Current_Inside") + self.find_withtag("Current_Outside")
+        if items:
+            return self.gettags(items[0])
+        else:
+            return tuple()
 
     def create_current(self, r, c, type_ = "cell", inside = False): # cell, col or row
         r1, c1, r2, c2 = r, c, r + 1, c + 1
@@ -2657,6 +2717,19 @@ class MainTable(tk.Canvas):
             self.CH.tag_lower(f"{r1}_{c1}_{r2}_{c2}")
         return b
 
+    def set_current_to_last(self):
+        items = self.find_withtag("CellSelectFill") + self.find_withtag("RowSelectFill") + self.find_withtag("ColSelectFill")
+        if items:
+            last = self.gettags(items[-1])
+            r1, c1, r2, c2 = tuple(int(e) for e in last[1].split("_") if e)
+            if last[0] == "CellSelectFill":
+                return self.gettags(self.create_current(r1, c1, "cell", inside = True))
+            elif last[0] == "RowSelectFill":
+                return self.gettags(self.create_current(r1, c1, "row", inside = True))
+            elif last[0] == "ColSelectFill":
+                return self.gettags(self.create_current(r1, c1, "col", inside = True))
+        return tuple()
+   
     def delete_current(self):
         self.delete("Current_Inside", "Current_Outside")
         self.RI.delete("Current_Inside", "Current_Outside")
@@ -2714,22 +2787,23 @@ class MainTable(tk.Canvas):
                           self.find_withtag("Current_Inside"),
                           self.find_withtag("Current_Outside")):
             full_tags = self.gettags(item)
-            type_ = full_tags[0]
-            r1, c1, r2, c2 = tuple(int(e) for e in full_tags[1].split("_") if e)
-            self.delete(f"{r1}_{c1}_{r2}_{c2}")
-            self.RI.delete(f"{r1}_{c1}_{r2}_{c2}")
-            self.CH.delete(f"{r1}_{c1}_{r2}_{c2}")
-            if type_.startswith("CellSelect"):
-                self.create_selected(r1, c1, r2, c2, "cells")
-            elif type_.startswith("RowSelect"):
-                self.create_selected(r1, c1, r2, c2, "rows")
-            elif type_.startswith("ColSelect"):
-                self.create_selected(r1, c1, r2, c2, "cols")
-            elif type_.startswith("Current"):
-                if type_ == "Current_Inside":
-                    self.create_current(r1, c1, full_tags[2], inside = True)
-                elif type_ == "Current_Outside":
-                    self.create_current(r1, c1, full_tags[2], inside = False)
+            if full_tags:
+                type_ = full_tags[0]
+                r1, c1, r2, c2 = tuple(int(e) for e in full_tags[1].split("_") if e)
+                self.delete(f"{r1}_{c1}_{r2}_{c2}")
+                self.RI.delete(f"{r1}_{c1}_{r2}_{c2}")
+                self.CH.delete(f"{r1}_{c1}_{r2}_{c2}")
+                if type_.startswith("CellSelect"):
+                    self.create_selected(r1, c1, r2, c2, "cells")
+                elif type_.startswith("RowSelect"):
+                    self.create_selected(r1, c1, r2, c2, "rows")
+                elif type_.startswith("ColSelect"):
+                    self.create_selected(r1, c1, r2, c2, "cols")
+                elif type_.startswith("Current"):
+                    if type_ == "Current_Inside":
+                        self.create_current(r1, c1, full_tags[2], inside = True)
+                    elif type_ == "Current_Outside":
+                        self.create_current(r1, c1, full_tags[2], inside = False)
         self.tag_lower("CellSelectFill")
         self.RI.tag_lower("CellSelectFill")
         self.CH.tag_lower("CellSelectFill")
@@ -3032,8 +3106,16 @@ class MainTable(tk.Canvas):
                                                                                                     self.find_withtag("ColSelectFill"),
                                                                                                     self.find_withtag("Current_Outside")))
     
-    def is_cell_selected(self, r, c):
-        for item in chain(self.find_withtag("CellSelectFill"), self.find_withtag("Current_Outside")):
+    def is_cell_selected(self, r, c, inc_cols = False, inc_rows = False):
+        if not inc_cols and not inc_rows:
+            iterable = chain(self.find_withtag("CellSelectFill"), self.find_withtag("Current_Inside"), self.find_withtag("Current_Outside"))
+        elif inc_cols and not inc_rows:
+            iterable = chain(self.find_withtag("CellSelectFill"), self.find_withtag("Current_Inside"), self.find_withtag("Current_Outside"), self.find_withtag("ColSelectFill"))
+        elif not inc_cols and inc_rows:
+            iterable = chain(self.find_withtag("CellSelectFill"), self.find_withtag("Current_Inside"), self.find_withtag("Current_Outside"), self.find_withtag("RowSelectFill"))
+        elif inc_cols and inc_rows:
+            iterable = chain(self.find_withtag("CellSelectFill"), self.find_withtag("Current_Inside"), self.find_withtag("Current_Outside"), self.find_withtag("RowSelectFill"), self.find_withtag("ColSelectFill"))
+        for item in iterable:
             r1, c1, r2, c2 = tuple(int(e) for e in self.gettags(item)[1].split("_") if e)
             if r1 <= r and c1 <= c and r2 > r and c2 > c:
                 return True
