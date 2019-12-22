@@ -1,5 +1,6 @@
 ### Version 4.2.0
  - Fix extra selection box drawing in certain circumstances
+ - Fix bug in Paste
  - Remove some unnessecary code
 
 ### Version 4.1.9
