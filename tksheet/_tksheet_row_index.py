@@ -708,7 +708,6 @@ class RowIndex(tk.Canvas):
                                               tags = "s")
                         tf = self.selected_cells_foreground if self.highlighted_cells[r][1] is None else self.highlighted_cells[r][1]
                     elif r in selected_rows or selected_cols:
-                        self.create_rectangle(0, fr + 1, self.current_width - 1, sr, fill = self.selected_cells_background, outline = "", tags = "s")
                         tf = self.selected_cells_foreground
                     elif r in self.highlighted_cells:
                         self.create_rectangle(0, fr + 1, self.current_width - 1, sr, fill = self.highlighted_cells[r][0], outline = "", tags = "s")

@@ -463,7 +463,7 @@ class MainTable(tk.Canvas):
             if self.undo_enabled:
                 undo_storage = {}
             if currently_selected[0] == "column":
-                x1 = self.currently_selected[1]
+                x1 = currently_selected[1]
                 y1 = 0
             elif currently_selected[0] == "row":
                 y1 = currently_selected[1]
@@ -475,29 +475,25 @@ class MainTable(tk.Canvas):
                 numcols = len(self.col_positions) - 1 - x1
             if y1 + numrows > len(self.row_positions) - 1:
                 numrows = len(self.row_positions) - 1 - y1
-            self.deselect("all")
             if self.all_columns_displayed:
                 for ndr, r in enumerate(range(y1, y1 + numrows)):
-                    l_ = []
                     for ndc, c in enumerate(range(x1, x1 + numcols)):
                         s = f"{self.data_ref[r][c]}"
-                        l_.append(s)
                         if self.undo_enabled:
                             undo_storage[(r, c)] = s
                         self.data_ref[r][c] = data[ndr][ndc]
             else:
                 for ndr, r in enumerate(range(y1, y1 + numrows)):
-                    l_ = []
                     for ndc, c in enumerate(range(x1, x1 + numcols)):
                         s = f"{self.data_ref[r][self.displayed_columns[c]]}"
-                        l_.append(s)
                         if self.undo_enabled:
                             undo_storage[(r, self.displayed_columns[c])] = s
                         self.data_ref[r][self.displayed_columns[c]] = data[ndr][ndc]
+            self.deselect("all")
             if self.undo_enabled:
                 self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells", undo_storage, (((y1, x1, y1 + numrows, x1 + numcols), "cells"), ), currently_selected))))
+            self.create_selected(y1, x1, y1 + numrows, x1 + numcols, "cells")
             self.create_current(y1, x1, type_ = "cell", inside = True if numrows > 1 or numcols > 1 else False)
-            self.create_selected(y1, x1, y1 + numrows, x1 + numcols)
             self.see(r = y1, c = x1, keep_yscroll = False, keep_xscroll = False, bottom_right_corner = False, check_cell_visibility = True, redraw = False)
             self.refresh()
             if self.extra_ctrl_v_func is not None:
@@ -565,7 +561,12 @@ class MainTable(tk.Canvas):
                         start_row = r1
                     if c1 < start_col:
                         start_col = c1
-                self.select_cell(start_row, start_col, redraw = False, keep_other_selections = True)
+                if isinstance(undo_storage[3][0], int):
+                    self.create_current(undo_storage[3][0], undo_storage[3][1], type_ = "cell", inside = True if self.is_cell_selected(undo_storage[3][0], undo_storage[3][1]) else False)
+                elif undo_storage[3][0] == "column":
+                    self.create_current(0, undo_storage[3][1], type_ = "col", inside = True)
+                elif undo_storage[3][0] == "row":
+                    self.create_current(undo_storage[3][1], 0, type_ = "row", inside = True)
                 self.see(r = start_row, c = start_col, keep_yscroll = False, keep_xscroll = False, bottom_right_corner = False, check_cell_visibility = True, redraw = False)
             elif undo_storage[0] == "move_rows":
                 rhs = [int(b - a) for a, b in zip(self.row_positions, islice(self.row_positions, 1, len(self.row_positions)))]
@@ -2429,7 +2430,6 @@ class MainTable(tk.Canvas):
                                     outline = "", tags = "hi")
                                 tf = self.selected_cells_foreground if self.highlighted_cells[(r, self.displayed_columns[c])][1] is None else self.highlighted_cells[(r, self.displayed_columns[c])][1]
                             elif (r, c) in selected_cells:
-                                cr_(fc + 1, fr + 1, sc, sr, fill = self.selected_cells_background, outline = "")
                                 tf = self.selected_cells_foreground
                             elif (r, self.displayed_columns[c]) in self.highlighted_cells and r not in selected_rows and c not in selected_cols:
                                 cr_(fc + 1, fr + 1, sc, sr, fill = self.highlighted_cells[(r, self.displayed_columns[c])][0], outline = "")
@@ -2622,7 +2622,7 @@ class MainTable(tk.Canvas):
             box = tuple(int(e) for e in alltags[1].split("_") if e)
             return ("row", box[0])
 
-    def create_current(self, r, c, type_ = "cell", inside = False):
+    def create_current(self, r, c, type_ = "cell", inside = False): # cell, col or row
         r1, c1, r2, c2 = r, c, r + 1, c + 1
         self.delete("Current_Inside", "Current_Outside")
         self.RI.delete("Current_Inside", "Current_Outside")
