@@ -1,3 +1,6 @@
+### Version 4.1.9
+ - Fix bugs introduced with 4.1.8
+
 ### Version 4.1.8
  - Overhaul internal selections variables and workings
  - Replace functions `get_min`/`get_max` `selected` `x` and `y` with `get_selected_min_max()`
