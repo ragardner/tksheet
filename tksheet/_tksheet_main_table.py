@@ -2283,7 +2283,7 @@ class MainTable(tk.Canvas):
                             sr = self.row_positions[r + 1]
                             if sr > sb:
                                 sr = sb
-                            if (r, c) in self.highlighted_cells and ((r, c) in selected_cells or r in selected_rows or c in selected_cols):
+                            if (r, c) in self.highlighted_cells and ((r, c) in selected_cells or r in actual_selected_rows or c in actual_selected_cols):
                                 c_1 = self.highlighted_cells[(r, c)][0] if self.highlighted_cells[(r, c)][0].startswith("#") else Color_Map_[self.highlighted_cells[(r, c)][0]]
                                 cr_(fc + 1,
                                     fr + 1,
@@ -2296,7 +2296,7 @@ class MainTable(tk.Canvas):
                                 tf = self.selected_cells_foreground if self.highlighted_cells[(r, c)][1] is None else self.highlighted_cells[(r, c)][1]
                             elif (r, c) in selected_cells:
                                 tf = self.selected_cells_foreground
-                            elif (r, c) in self.highlighted_cells and r not in selected_rows and c not in selected_cols:
+                            elif (r, c) in self.highlighted_cells and r not in actual_selected_rows and c not in actual_selected_cols:
                                 cr_(fc + 1, fr + 1, sc, sr, fill = self.highlighted_cells[(r, c)][0], outline = "", tags = "hi")
                                 tf = self.text_color if self.highlighted_cells[(r, c)][1] is None else self.highlighted_cells[(r, c)][1]
                             elif r in selected_rows or c in selected_cols:
@@ -2363,7 +2363,7 @@ class MainTable(tk.Canvas):
                             sr = self.row_positions[r + 1]
                             if sr > sb:
                                 sr = sb
-                            if (r, c) in self.highlighted_cells and ((r, c) in selected_cells or r in selected_rows or c in selected_cols):
+                            if (r, c) in self.highlighted_cells and ((r, c) in selected_cells or r in actual_selected_rows or c in actual_selected_cols):
                                 c_1 = self.highlighted_cells[(r, c)][0] if self.highlighted_cells[(r, c)][0].startswith("#") else Color_Map_[self.highlighted_cells[(r, c)][0]]
                                 cr_(fc + 1,
                                     fr + 1,
@@ -2376,7 +2376,7 @@ class MainTable(tk.Canvas):
                                 tf = self.selected_cells_foreground if self.highlighted_cells[(r, c)][1] is None else self.highlighted_cells[(r, c)][1]
                             elif (r, c) in selected_cells:
                                 tf = self.selected_cells_foreground
-                            elif (r, c) in self.highlighted_cells and r not in selected_rows and c not in selected_cols:
+                            elif (r, c) in self.highlighted_cells and r not in actual_selected_rows and c not in actual_selected_cols:
                                 cr_(fc + 1, fr + 1, sc, sr, fill = self.highlighted_cells[(r, c)][0], outline = "", tags = "hi")
                                 tf = self.text_color if self.highlighted_cells[(r, c)][1] is None else self.highlighted_cells[(r, c)][1]
                             elif r in selected_rows or c in selected_cols:
@@ -2455,7 +2455,7 @@ class MainTable(tk.Canvas):
                             sr = self.row_positions[r + 1]
                             if sr > sb:
                                 sr = sb
-                            if (r, self.displayed_columns[c]) in self.highlighted_cells and ((r, c) in selected_cells or r in selected_rows or c in selected_cols):
+                            if (r, self.displayed_columns[c]) in self.highlighted_cells and ((r, c) in selected_cells or r in actual_selected_rows or c in actual_selected_cols):
                                 c_1 = self.highlighted_cells[(r, self.displayed_columns[c])][0] if self.highlighted_cells[(r, self.displayed_columns[c])][0].startswith("#") else Color_Map_[self.highlighted_cells[(r, self.displayed_columns[c])][0]]
                                 cr_(fc + 1,
                                     fr + 1,
@@ -2468,7 +2468,7 @@ class MainTable(tk.Canvas):
                                 tf = self.selected_cells_foreground if self.highlighted_cells[(r, self.displayed_columns[c])][1] is None else self.highlighted_cells[(r, self.displayed_columns[c])][1]
                             elif (r, c) in selected_cells:
                                 tf = self.selected_cells_foreground
-                            elif (r, self.displayed_columns[c]) in self.highlighted_cells and r not in selected_rows and c not in selected_cols:
+                            elif (r, self.displayed_columns[c]) in self.highlighted_cells and r not in actual_selected_rows and c not in actual_selected_cols:
                                 cr_(fc + 1, fr + 1, sc, sr, fill = self.highlighted_cells[(r, self.displayed_columns[c])][0], outline = "")
                                 tf = self.text_color if self.highlighted_cells[(r, self.displayed_columns[c])][1] is None else self.highlighted_cells[(r, self.displayed_columns[c])][1]
                             elif r in selected_rows or c in selected_cols:
@@ -2533,7 +2533,7 @@ class MainTable(tk.Canvas):
                             sr = self.row_positions[r + 1]
                             if sr > sb:
                                 sr = sb
-                            if (r, self.displayed_columns[c]) in self.highlighted_cells and ((r, c) in selected_cells or r in selected_rows or c in selected_cols):
+                            if (r, self.displayed_columns[c]) in self.highlighted_cells and ((r, c) in selected_cells or r in actual_selected_rows or c in actual_selected_cols):
                                 c_1 = self.highlighted_cells[(r, self.displayed_columns[c])][0] if self.highlighted_cells[(r, self.displayed_columns[c])][0].startswith("#") else Color_Map_[self.highlighted_cells[(r, self.displayed_columns[c])][0]]
                                 cr_(fc + 1,
                                     fr + 1,
@@ -2544,9 +2544,9 @@ class MainTable(tk.Canvas):
                                             f"{int((int(c_1[5:], 16) + c_2_[2]) / 2):02X}"),
                                     outline = "")
                                 tf = self.selected_cells_foreground if self.highlighted_cells[(r, self.displayed_columns[c])][1] is None else self.highlighted_cells[(r, self.displayed_columns[c])][1]
-                            elif (r, c) in self.selected_cells:
+                            elif (r, c) in selected_cells:
                                 tf = self.selected_cells_foreground
-                            elif (r, self.displayed_columns[c]) in self.highlighted_cells and r not in selected_rows and c not in selected_cols:
+                            elif (r, self.displayed_columns[c]) in self.highlighted_cells and r not in actual_selected_rows and c not in actual_selected_cols:
                                 cr_(fc + 1, fr + 1, sc, sr, fill = self.highlighted_cells[(r, self.displayed_columns[c])][0], outline = "")
                                 tf = self.text_color if self.highlighted_cells[(r, self.displayed_columns[c])][1] is None else self.highlighted_cells[(r, self.displayed_columns[c])][1]
                             elif (r, c) in selected_cells:
@@ -2718,7 +2718,7 @@ class MainTable(tk.Canvas):
         return b
 
     def set_current_to_last(self):
-        items = self.find_withtag("CellSelectFill") + self.find_withtag("RowSelectFill") + self.find_withtag("ColSelectFill")
+        items = sorted(self.find_withtag("CellSelectFill") + self.find_withtag("RowSelectFill") + self.find_withtag("ColSelectFill"))
         if items:
             last = self.gettags(items[-1])
             r1, c1, r2, c2 = tuple(int(e) for e in last[1].split("_") if e)
