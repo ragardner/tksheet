@@ -1,3 +1,7 @@
+### Version 4.2.2
+ - Fix bug with center alignment and display subset of columns
+ - Fix bug with highlighted cells showing as selected when they're not
+
 ### Version 4.2.1
  - Fix resize row height bug
  - Fix deselect bug
