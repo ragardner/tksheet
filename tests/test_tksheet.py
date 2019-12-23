@@ -16,7 +16,7 @@ class demo(tk.Tk):
                                 row_index_width = 50,
                                 total_rows = 2000,
                                 total_columns = 100)
-        self.sheet_demo.enable_bindings(("toggle",
+        self.sheet_demo.enable_bindings(("single",
                                          "drag_select",
                                          "column_drag_and_drop",
                                          "row_drag_and_drop",
@@ -51,8 +51,10 @@ class demo(tk.Tk):
 
         # __________ HIGHLIGHT / DEHIGHLIGHT CELLS __________
 
-        self.sheet_demo.highlight_cells(row = 0, column = 0, bg = "#ed4337", fg = "white")
-        self.sheet_demo.highlight_cells(row = 0, bg = "#ed4337", fg = "white", canvas = "row_index")
+        self.sheet_demo.highlight_cells(row = 5, column = 0, bg = "#ed4337", fg = "white")
+        self.sheet_demo.highlight_cells(row = 5, column = 5, bg = "#ed4337", fg = "white")
+        self.sheet_demo.highlight_cells(row = 5, column = 1, bg = "#ed4337", fg = "white")
+        self.sheet_demo.highlight_cells(row = 5, bg = "#ed4337", fg = "white", canvas = "row_index")
         self.sheet_demo.highlight_cells(column = 0, bg = "#ed4337", fg = "white", canvas = "header")
 
         # __________ SETTING OR RESETTING TABLE DATA __________
