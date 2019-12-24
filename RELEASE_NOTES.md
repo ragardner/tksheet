@@ -1,3 +1,8 @@
+### Version 4.2.3
+ - Fix bug with right click delete columns and undo
+ - Right click in main table when over selected columns/rows now brings up column/row menu
+ - Add internal cut, copy, paste, delete and undo to usable `Sheet()` functions
+
 ### Version 4.2.2
  - Fix bug with center alignment and display subset of columns
  - Fix bug with highlighted cells showing as selected when they're not
