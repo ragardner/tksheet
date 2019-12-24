@@ -1,3 +1,6 @@
+### Version 4.2.4
+ - Fix PyPi release version
+
 ### Version 4.2.3
  - Fix bug with right click delete columns and undo
  - Right click in main table when over selected columns/rows now brings up column/row menu
