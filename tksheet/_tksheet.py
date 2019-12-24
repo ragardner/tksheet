@@ -482,6 +482,21 @@ class Sheet(tk.Frame):
     def get_dropdown_value(self, current = False, destroy = True):
         return self.MT.get_dropdown_value(current = current, destroy = destroy)
 
+    def cut(self, event = None):
+        self.MT.ctrl_x()
+
+    def copy(self, event = None):
+        self.MT.ctrl_c()
+
+    def paste(self, event = None):
+        self.MT.ctrl_v()
+
+    def delete(self, event = None):
+        self.MT.delete_key()
+
+    def undo(self, event = None):
+        self.MT.ctrl_z()
+
     def delete_row_position(self, idx, deselect_all = False, preserve_other_selections = False):
         self.MT.del_row_position(idx = idx,
                                  deselect_all = deselect_all,
