@@ -31,6 +31,8 @@ class RowIndex(tk.Canvas):
                  row_index_foreground = None,
                  row_index_select_background = None,
                  row_index_select_foreground = None,
+                 row_index_select_row_bg = "#5f6368",
+                 row_index_select_row_fg = "white",
                  drag_and_drop_color = None,
                  resizing_line_color = None):
         tk.Canvas.__init__(self,
@@ -67,6 +69,8 @@ class RowIndex(tk.Canvas):
         self.row_index_border_color = row_index_border_color
         self.selected_cells_background = row_index_select_background
         self.selected_cells_foreground = row_index_select_foreground
+        self.selected_rows_bg = row_index_select_row_bg
+        self.selected_rows_fg = row_index_select_row_fg
         self.row_index_background = row_index_background
         self.drag_and_drop_color = drag_and_drop_color
         self.resizing_line_color = resizing_line_color
@@ -589,7 +593,7 @@ class RowIndex(tk.Canvas):
         else:
             return int(self.MT.min_rh)
 
-    def redraw_grid_and_text(self, last_row_line_pos, y1, y_stop, start_row, end_row, y2, x1, x_stop, selected_rows, selected_cols):
+    def redraw_grid_and_text(self, last_row_line_pos, y1, y_stop, start_row, end_row, y2, x1, x_stop, selected_rows, selected_cols, actual_selected_rows):
         try:
             self.configure(scrollregion = (0, 0, self.current_width, last_row_line_pos + 100))
             self.delete("fh", "h", "v", "t", "s") #first horizontal, horizontal, vertical, text, highlights
@@ -609,6 +613,7 @@ class RowIndex(tk.Canvas):
                     self.create_line(0, y, self.current_width, y, fill = self.grid_color, width = 1, tags = ("h", f"{r}"))
             sb = y2 + 2
             c_2 = self.selected_cells_background if self.selected_cells_background.startswith("#") else Color_Map_[self.selected_cells_background]
+            c_3 = self.selected_rows_bg if self.selected_rows_bg.startswith("#") else Color_Map_[self.selected_rows_bg]
             if self.align == "center":
                 mw = self.current_width - 7
                 x = floor(mw / 2)
@@ -617,7 +622,19 @@ class RowIndex(tk.Canvas):
                     sr = self.MT.row_positions[r+1]
                     if sr > sb:
                         sr = sb
-                    if r in self.highlighted_cells and (r in selected_rows or selected_cols):
+                    if r in self.highlighted_cells and r in actual_selected_rows:
+                        c_1 = self.highlighted_cells[r][0] if self.highlighted_cells[r][0].startswith("#") else Color_Map_[self.highlighted_cells[r][0]]
+                        self.create_rectangle(0,
+                                              fr + 1,
+                                              self.current_width - 1,
+                                              sr,
+                                              fill = (f"#{int((int(c_1[1:3], 16) + int(c_3[1:3], 16)) / 2):02X}" +
+                                                      f"{int((int(c_1[3:5], 16) + int(c_3[3:5], 16)) / 2):02X}" +
+                                                      f"{int((int(c_1[5:], 16) + int(c_3[5:], 16)) / 2):02X}"),
+                                              outline = "",
+                                              tags = "s")
+                        tf = self.selected_rows_fg if self.highlighted_cells[r][1] is None else self.highlighted_cells[r][1]
+                    elif r in self.highlighted_cells and (r in selected_rows or selected_cols):
                         c_1 = self.highlighted_cells[r][0] if self.highlighted_cells[r][0].startswith("#") else Color_Map_[self.highlighted_cells[r][0]]
                         self.create_rectangle(0,
                                               fr + 1,
@@ -629,6 +646,8 @@ class RowIndex(tk.Canvas):
                                               outline = "",
                                               tags = "s")
                         tf = self.selected_cells_foreground if self.highlighted_cells[r][1] is None else self.highlighted_cells[r][1]
+                    elif r in actual_selected_rows:
+                        tf = self.selected_rows_fg
                     elif r in selected_rows or selected_cols:
                         tf = self.selected_cells_foreground
                     elif r in self.highlighted_cells:
@@ -701,7 +720,19 @@ class RowIndex(tk.Canvas):
                     sr = self.MT.row_positions[r + 1]
                     if sr > sb:
                         sr = sb
-                    if r in self.highlighted_cells and (r in selected_rows or selected_cols):
+                    if r in self.highlighted_cells and r in actual_selected_rows:
+                        c_1 = self.highlighted_cells[r][0] if self.highlighted_cells[r][0].startswith("#") else Color_Map_[self.highlighted_cells[r][0]]
+                        self.create_rectangle(0,
+                                              fr + 1,
+                                              self.current_width - 1,
+                                              sr,
+                                              fill = (f"#{int((int(c_1[1:3], 16) + int(c_3[1:3], 16)) / 2):02X}" +
+                                                      f"{int((int(c_1[3:5], 16) + int(c_3[3:5], 16)) / 2):02X}" +
+                                                      f"{int((int(c_1[5:], 16) + int(c_3[5:], 16)) / 2):02X}"),
+                                              outline = "",
+                                              tags = "s")
+                        tf = self.selected_rows_fg if self.highlighted_cells[r][1] is None else self.highlighted_cells[r][1]
+                    elif r in self.highlighted_cells and (r in selected_rows or selected_cols):
                         c_1 = self.highlighted_cells[r][0] if self.highlighted_cells[r][0].startswith("#") else Color_Map_[self.highlighted_cells[r][0]]
                         self.create_rectangle(0,
                                               fr + 1,
@@ -713,6 +744,8 @@ class RowIndex(tk.Canvas):
                                               outline = "",
                                               tags = "s")
                         tf = self.selected_cells_foreground if self.highlighted_cells[r][1] is None else self.highlighted_cells[r][1]
+                    elif r in actual_selected_rows:
+                        tf = self.selected_rows_fg
                     elif r in selected_rows or selected_cols:
                         tf = self.selected_cells_foreground
                     elif r in self.highlighted_cells:

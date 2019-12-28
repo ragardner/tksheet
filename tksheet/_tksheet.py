@@ -37,6 +37,8 @@ class Sheet(tk.Frame):
                  header_foreground = "black",
                  header_select_background = "#e8eaed",
                  header_select_foreground = "black",
+                 header_select_column_bg = "#5f6368",
+                 header_select_column_fg = "white",
                  data_reference = None,
                  total_columns = None,
                  total_rows = None,
@@ -55,6 +57,8 @@ class Sheet(tk.Frame):
                  row_index_foreground = "black",
                  row_index_select_background = "#e8eaed",
                  row_index_select_foreground = "black",
+                 row_index_select_row_bg = "#5f6368",
+                 row_index_select_row_fg = "white",
                  top_left_background = "white",
                  top_left_foreground = "gray85",
                  font = ("Arial", 10, "normal"),
@@ -70,6 +74,12 @@ class Sheet(tk.Frame):
                  selected_cells_border_color = "#1a73e8",
                  selected_cells_background = "#e7f0fd",
                  selected_cells_foreground = "black",
+                 selected_rows_border_color = "#1a73e8",
+                 selected_rows_background = "#e7f0fd",
+                 selected_rows_foreground = "black",
+                 selected_columns_border_color = "#1a73e8",
+                 selected_columns_background = "#e7f0fd",
+                 selected_columns_foreground = "black",
                  resizing_line_color = "black",
                  drag_and_drop_color = "turquoise1",
                  displayed_columns = [],
@@ -102,6 +112,8 @@ class Sheet(tk.Frame):
                            row_index_foreground = row_index_foreground,
                            row_index_select_background = row_index_select_background,
                            row_index_select_foreground = row_index_select_foreground,
+                           row_index_select_row_bg = row_index_select_row_bg,
+                           row_index_select_row_fg = row_index_select_row_fg,
                            drag_and_drop_color = drag_and_drop_color,
                            resizing_line_color = resizing_line_color)
         self.CH = ColumnHeaders(self,
@@ -115,6 +127,8 @@ class Sheet(tk.Frame):
                                 header_foreground = header_foreground,
                                 header_select_background = header_select_background,
                                 header_select_foreground = header_select_foreground,
+                                header_select_column_bg = header_select_column_bg,
+                                header_select_column_fg = header_select_column_fg,
                                 drag_and_drop_color = drag_and_drop_color,
                                 resizing_line_color = resizing_line_color)
         self.MT = MainTable(self,
@@ -138,6 +152,12 @@ class Sheet(tk.Frame):
                             selected_cells_border_color = selected_cells_border_color,
                             selected_cells_background = selected_cells_background,
                             selected_cells_foreground = selected_cells_foreground,
+                            selected_rows_border_color = selected_rows_border_color,
+                            selected_rows_background = selected_rows_background,
+                            selected_rows_foreground = selected_rows_foreground,
+                            selected_columns_border_color = selected_columns_border_color,
+                            selected_columns_background = selected_columns_background,
+                            selected_columns_foreground = selected_columns_foreground,
                             displayed_columns = displayed_columns,
                             all_columns_displayed = all_columns_displayed)
         self.TL = TopLeftRectangle(parentframe = self,
@@ -838,7 +858,37 @@ class Sheet(tk.Frame):
                     drag_and_drop_color = None,
                     outline_thickness = None,
                     outline_color = None,
+                    header_select_column_bg = None,
+                    header_select_column_fg = None,
+                    row_index_select_row_bg = None,
+                    row_index_select_row_fg = None,
+                    selected_rows_border_color = None,
+                    selected_rows_background = None,
+                    selected_rows_foreground = None,
+                    selected_columns_border_color = None,
+                    selected_columns_background = None,
+                    selected_columns_foreground = None,
                     redraw = True):
+        if header_select_column_bg is not None:
+            self.CH.selected_cols_bg = header_select_column_bg
+        if header_select_column_fg is not None:
+            self.CH.selected_cols_fg = header_select_column_fg
+        if row_index_select_row_bg is not None:
+            self.RI.selected_rows_bg = row_index_select_row_bg
+        if row_index_select_row_fg is not None:
+            self.RI.selected_rows_fg = row_index_select_row_fg
+        if selected_rows_border_color is not None:
+            self.MT.selected_rows_border_color = selected_rows_border_color
+        if selected_rows_background is not None:
+            self.MT.selected_rows_bg = selected_rows_background
+        if selected_rows_foreground is not None:
+            self.MT.selected_rows_fg = selected_rows_foreground
+        if selected_columns_border_color is not None:
+            self.MT.selected_cols_border_color = selected_columns_border_color
+        if selected_columns_background is not None:
+            self.MT.selected_cols_bg = selected_columns_background
+        if selected_columns_foreground is not None:
+            self.MT.selected_cols_fg = selected_columns_foreground 
         if default_header is not None:
             self.CH.default_hdr = 1 if default_header.lower() == "letters" else 0
         if max_colwidth is not None:
@@ -940,7 +990,37 @@ class Sheet(tk.Frame):
                      drag_and_drop_color = None,
                      outline_thickness = None,
                      outline_color = None,
+                     header_select_column_bg = None,
+                     header_select_column_fg = None,
+                     row_index_select_row_bg = None,
+                     row_index_select_row_fg = None,
+                     selected_rows_border_color = None,
+                     selected_rows_background = None,
+                     selected_rows_foreground = None,
+                     selected_columns_border_color = None,
+                     selected_columns_background = None,
+                     selected_columns_foreground = None,
                      redraw = False):
+        if header_select_column_bg is not None:
+            self.CH.selected_cols_bg = header_select_column_bg
+        if header_select_column_fg is not None:
+            self.CH.selected_cols_fg = header_select_column_fg
+        if row_index_select_row_bg is not None:
+            self.RI.selected_rows_bg = row_index_select_row_bg
+        if row_index_select_row_fg is not None:
+            self.RI.selected_rows_fg = row_index_select_row_fg
+        if selected_rows_border_color is not None:
+            self.MT.selected_rows_border_color = selected_rows_border_color
+        if selected_rows_background is not None:
+            self.MT.selected_rows_bg = selected_rows_background
+        if selected_rows_foreground is not None:
+            self.MT.selected_rows_fg = selected_rows_foreground
+        if selected_columns_border_color is not None:
+            self.MT.selected_cols_border_color = selected_columns_border_color
+        if selected_columns_background is not None:
+            self.MT.selected_cols_bg = selected_columns_background
+        if selected_columns_foreground is not None:
+            self.MT.selected_cols_fg = selected_columns_foreground
         if header_background is not None:
             self.CH.config(background = header_background)
         if header_border_color is not None:
@@ -954,7 +1034,7 @@ class Sheet(tk.Frame):
         if header_select_foreground is not None:
             self.CH.selected_cells_foreground = header_select_foreground
         if row_index_background is not None:
-            self.RI.config(background=row_index_background)
+            self.RI.config(background = row_index_background)
         if row_index_border_color is not None:
             self.RI.row_index_border_color = row_index_border_color
         if row_index_grid_color is not None:
@@ -966,7 +1046,7 @@ class Sheet(tk.Frame):
         if row_index_select_foreground is not None:
             self.RI.selected_cells_foreground = row_index_select_foreground
         if top_left_background is not None:
-            self.TL.config(background=top_left_background)
+            self.TL.config(background = top_left_background)
         if top_left_foreground is not None:
             self.TL.rectangle_foreground = top_left_foreground
             self.TL.itemconfig("rw", fill = top_left_foreground)
@@ -980,7 +1060,7 @@ class Sheet(tk.Frame):
         if text_color is not None:
             self.MT.text_color = text_color
         if selected_cells_border_color is not None:
-            self.MT.selected_cells_border_color = selected_cells_border_color
+            self.MT.selected_cells_border_col = selected_cells_border_color
         if selected_cells_background is not None:
             self.MT.selected_cells_background = selected_cells_background
         if selected_cells_foreground is not None:
@@ -1001,55 +1081,75 @@ class Sheet(tk.Frame):
     def change_theme(self, theme = "light"):
         if theme == "light":
             self.change_color(header_background = "#f8f9fa",
-                                header_border_color = "#ababab",
-                                header_grid_color = "#ababab",
-                                header_foreground = "black",
-                                header_select_background = "#e8eaed",
-                                header_select_foreground = "black",
-                                row_index_background = "#f8f9fa",
-                                row_index_border_color = "#ababab",
-                                row_index_grid_color = "#ababab",
-                                row_index_foreground = "black",
-                                row_index_select_background = "#e8eaed",
-                                row_index_select_foreground = "black",
-                                top_left_background = "white",
-                                top_left_foreground = "gray85",
-                                table_background = "white",
-                                grid_color = "#d4d4d4",
-                                text_color = "black",
+                              header_border_color = "#ababab",
+                              header_grid_color = "#ababab",
+                              header_foreground = "black",
+                              header_select_background = "#e8eaed",
+                              header_select_foreground = "black",
+                              row_index_background = "#f8f9fa",
+                              row_index_border_color = "#ababab",
+                              row_index_grid_color = "#ababab",
+                              row_index_foreground = "black",
+                              row_index_select_background = "#e8eaed",
+                              row_index_select_foreground = "black",
+                              top_left_background = "white",
+                              top_left_foreground = "gray85",
+                              table_background = "white",
+                              grid_color = "#d4d4d4",
+                              text_color = "black",
                               selected_cells_border_color = "#1a73e8",
-                                selected_cells_background = "#e7f0fd",
-                                selected_cells_foreground = "black",
-                                resizing_line_color = "black",
-                                drag_and_drop_color = "turquoise1",
-                                outline_color = "gray2",
-                                redraw = True)
+                              selected_cells_background = "#e7f0fd",
+                              selected_cells_foreground = "black",
+                              resizing_line_color = "black",
+                              drag_and_drop_color = "turquoise1",
+                              outline_color = "gray2",
+                              header_select_column_bg = "#5f6368",
+                              header_select_column_fg = "white",
+                              row_index_select_row_bg = "#5f6368",
+                              row_index_select_row_fg = "white",
+                              selected_rows_border_color = "#1a73e8",
+                              selected_rows_background = "#e7f0fd",
+                              selected_rows_foreground = "black",
+                              selected_columns_border_color = "#1a73e8",
+                              selected_columns_background = "#e7f0fd",
+                              selected_columns_foreground = "black",
+                              redraw = True)
             self.config(bg = "white")
         elif theme == "dark":
             self.change_color(header_background = "black",
-                                header_border_color = "#353a41",
-                                header_grid_color = "#353a41",
-                                header_foreground = "gray95",
-                                header_select_background = "gray95",
-                                header_select_foreground = "black",
-                                row_index_background = "black",
-                                row_index_border_color = "#353a41",
-                                row_index_grid_color = "#353a41",
-                                row_index_foreground = "gray95",
-                                row_index_select_background = "gray95",
-                                row_index_select_foreground = "black",
-                                top_left_background = "#353a41",
-                                top_left_foreground = "#222222",
-                                table_background = "#222222",
-                                grid_color = "#353a41",
-                                text_color = "gray95",
+                              header_border_color = "#353a41",
+                              header_grid_color = "#353a41",
+                              header_foreground = "gray95",
+                              header_select_background = "#444444",
+                              header_select_foreground = "white",
+                              row_index_background = "black",
+                              row_index_border_color = "#353a41",
+                              row_index_grid_color = "#353a41",
+                              row_index_foreground = "gray95",
+                              row_index_select_background = "#444444",
+                              row_index_select_foreground = "white",
+                              top_left_background = "#353a41",
+                              top_left_foreground = "#1f1f1f",
+                              table_background = "#1f1f1f",
+                              grid_color = "#353a41",
+                              text_color = "gray95",
                               selected_cells_border_color = "#1a73e8",
-                                selected_cells_background = "gray95",
-                                selected_cells_foreground = "black",
-                                resizing_line_color = "red",
-                                drag_and_drop_color = "#9acd32",
-                                outline_color = "gray2",
-                                redraw = True)
+                              selected_cells_background = "gray70",
+                              selected_cells_foreground = "black",
+                              resizing_line_color = "red",
+                              drag_and_drop_color = "#9acd32",
+                              outline_color = "gray95",
+                              header_select_column_bg = "gray95",
+                              header_select_column_fg = "black",
+                              row_index_select_row_bg = "gray95",
+                              row_index_select_row_fg = "black",
+                              selected_rows_border_color = "#1a73e8",
+                              selected_rows_background = "gray70",
+                              selected_rows_foreground = "black",
+                              selected_columns_border_color = "#1a73e8",
+                              selected_columns_background = "gray70",
+                              selected_columns_foreground = "black",
+                              redraw = True)
             self.config(bg = "#222222")
             
     def data_reference(self,

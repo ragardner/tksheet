@@ -81,14 +81,15 @@ class TextEditor(tk.Frame):
                  state = "normal",
                  width = None,
                  height = None,
-                 border_color = "black"):
+                 border_color = "black",
+                 show_border = True):
         tk.Frame.__init__(self,
                           parent,
                           height = height,
                           width = width,
                           highlightbackground = border_color,
                           highlightcolor = border_color,
-                          highlightthickness = 2,
+                          highlightthickness = 2 if show_border else 0,
                           bd = 0)
         self.textedit = TextEditor_(self,
                                     font = font,

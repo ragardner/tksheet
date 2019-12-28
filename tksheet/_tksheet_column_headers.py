@@ -31,6 +31,8 @@ class ColumnHeaders(tk.Canvas):
                  header_foreground = None,
                  header_select_background = None,
                  header_select_foreground = None,
+                 header_select_column_bg = "#5f6368",
+                 header_select_column_fg = "white",
                  drag_and_drop_color = None,
                  resizing_line_color = None):
         tk.Canvas.__init__(self,parentframe,
@@ -60,6 +62,8 @@ class ColumnHeaders(tk.Canvas):
         self.header_border_color = header_border_color
         self.selected_cells_background = header_select_background
         self.selected_cells_foreground = header_select_foreground
+        self.selected_cols_bg = header_select_column_bg
+        self.selected_cols_fg = header_select_column_fg
         self.drag_and_drop_color = drag_and_drop_color
         self.resizing_line_color = resizing_line_color
         self.align = header_align
@@ -598,7 +602,7 @@ class ColumnHeaders(tk.Canvas):
     def GetLargestWidth(self, cell):
         return max(cell.split("\n"), key = self.MT.GetTextWidth)
 
-    def redraw_grid_and_text(self, last_col_line_pos, x1, x_stop, start_col, end_col, selected_cols, selected_rows):
+    def redraw_grid_and_text(self, last_col_line_pos, x1, x_stop, start_col, end_col, selected_cols, selected_rows, actual_selected_cols):
         try:
             self.configure(scrollregion = (0, 0, last_col_line_pos + 150, self.current_height))
             self.delete("h", "v", "t", "s", "fv")
@@ -622,12 +626,25 @@ class ColumnHeaders(tk.Canvas):
             else:
                 incfl = False
             c_2 = self.selected_cells_background if self.selected_cells_background.startswith("#") else Color_Map_[self.selected_cells_background]
+            c_3 = self.selected_cols_bg if self.selected_cols_bg.startswith("#") else Color_Map_[self.selected_cols_bg]
             if self.MT.all_columns_displayed:
                 if self.align == "center":
                     for c in range(start_col, end_col - 1):
                         fc = self.MT.col_positions[c]
                         sc = self.MT.col_positions[c + 1]
-                        if c in self.highlighted_cells and (c in selected_cols or selected_rows):
+                        if c in self.highlighted_cells and c in actual_selected_cols:
+                            c_1 = self.highlighted_cells[c][0] if self.highlighted_cells[c][0].startswith("#") else Color_Map_[self.highlighted_cells[c][0]]
+                            self.create_rectangle(fc + 1,
+                                                  0,
+                                                  sc,
+                                                  self.current_height - 1,
+                                                  fill = (f"#{int((int(c_1[1:3], 16) + int(c_3[1:3], 16)) / 2):02X}" +
+                                                          f"{int((int(c_1[3:5], 16) + int(c_3[3:5], 16)) / 2):02X}" +
+                                                          f"{int((int(c_1[5:], 16) + int(c_3[5:], 16)) / 2):02X}"),
+                                                  outline = "",
+                                                  tag = "s")
+                            tf = self.selected_cols_fg if self.highlighted_cells[c][1] is None else self.highlighted_cells[c][1]
+                        elif c in self.highlighted_cells and (c in selected_cols or selected_rows):
                             c_1 = self.highlighted_cells[c][0] if self.highlighted_cells[c][0].startswith("#") else Color_Map_[self.highlighted_cells[c][0]]
                             self.create_rectangle(fc + 1,
                                                   0,
@@ -639,6 +656,8 @@ class ColumnHeaders(tk.Canvas):
                                                   outline = "",
                                                   tag = "s")
                             tf = self.selected_cells_foreground if self.highlighted_cells[c][1] is None else self.highlighted_cells[c][1]
+                        elif c in actual_selected_cols:
+                            tf = self.selected_cols_fg
                         elif c in selected_cols or selected_rows:
                             tf = self.selected_cells_foreground
                         elif c in self.highlighted_cells:
@@ -714,7 +733,19 @@ class ColumnHeaders(tk.Canvas):
                     for c in range(start_col, end_col - 1):
                         fc = self.MT.col_positions[c]
                         sc = self.MT.col_positions[c + 1]
-                        if c in self.highlighted_cells and (c in selected_cols or selected_rows):
+                        if c in self.highlighted_cells and c in actual_selected_cols:
+                            c_1 = self.highlighted_cells[c][0] if self.highlighted_cells[c][0].startswith("#") else Color_Map_[self.highlighted_cells[c][0]]
+                            self.create_rectangle(fc + 1,
+                                                  0,
+                                                  sc,
+                                                  self.current_height - 1,
+                                                  fill = (f"#{int((int(c_1[1:3], 16) + int(c_3[1:3], 16)) / 2):02X}" +
+                                                          f"{int((int(c_1[3:5], 16) + int(c_3[3:5], 16)) / 2):02X}" +
+                                                          f"{int((int(c_1[5:], 16) + int(c_3[5:], 16)) / 2):02X}"),
+                                                  outline = "",
+                                                  tag = "s")
+                            tf = self.selected_cols_fg if self.highlighted_cells[c][1] is None else self.highlighted_cells[c][1]
+                        elif c in self.highlighted_cells and (c in selected_cols or selected_rows):
                             c_1 = self.highlighted_cells[c][0] if self.highlighted_cells[c][0].startswith("#") else Color_Map_[self.highlighted_cells[c][0]]
                             self.create_rectangle(fc + 1,
                                                   0,
@@ -726,6 +757,8 @@ class ColumnHeaders(tk.Canvas):
                                                   outline = "",
                                                   tag = "s")
                             tf = self.selected_cells_foreground if self.highlighted_cells[c][1] is None else self.highlighted_cells[c][1]
+                        elif c in actual_selected_cols:
+                            tf = self.selected_cols_fg
                         elif c in selected_cols or selected_rows:
                             tf = self.selected_cells_foreground
                         elif c in self.highlighted_cells:
@@ -788,7 +821,19 @@ class ColumnHeaders(tk.Canvas):
                     for c in range(start_col, end_col - 1):
                         fc = self.MT.col_positions[c]
                         sc = self.MT.col_positions[c + 1]
-                        if self.MT.displayed_columns[c] in self.highlighted_cells and (c in selected_cols or selected_rows):
+                        if self.MT.displayed_columns[c] in self.highlighted_cells and c in actual_selected_cols:
+                            c_1 = self.highlighted_cells[self.MT.displayed_columns[c]][0] if self.highlighted_cells[self.MT.displayed_columns[c]][0].startswith("#") else Color_Map_[self.highlighted_cells[self.MT.displayed_columns[c]][0]]
+                            self.create_rectangle(fc + 1,
+                                                  0,
+                                                  sc,
+                                                  self.current_height - 1,
+                                                  fill = (f"#{int((int(c_1[1:3], 16) + int(c_3[1:3], 16)) / 2):02X}" +
+                                                          f"{int((int(c_1[3:5], 16) + int(c_3[3:5], 16)) / 2):02X}" +
+                                                          f"{int((int(c_1[5:], 16) + int(c_3[5:], 16)) / 2):02X}"),
+                                                  outline = "",
+                                                  tag = "s")
+                            tf = self.selected_cols_fg if self.highlighted_cells[self.MT.displayed_columns[c]][1] is None else self.highlighted_cells[self.MT.displayed_columns[c]][1]
+                        elif self.MT.displayed_columns[c] in self.highlighted_cells and (c in selected_cols or selected_rows):
                             c_1 = self.highlighted_cells[self.MT.displayed_columns[c]][0] if self.highlighted_cells[self.MT.displayed_columns[c]][0].startswith("#") else Color_Map_[self.highlighted_cells[self.MT.displayed_columns[c]][0]]
                             self.create_rectangle(fc + 1,
                                                   0,
@@ -799,7 +844,9 @@ class ColumnHeaders(tk.Canvas):
                                                           f"{int((int(c_1[5:], 16) + int(c_2[5:], 16)) / 2):02X}"),
                                                   outline = "",
                                                   tag = "s")
-                            tf = self.selected_cells_foreground if self.highlighted_cells[c][1] is None else self.highlighted_cells[c][1]
+                            tf = self.selected_cells_foreground if self.highlighted_cells[self.MT.displayed_columns[c]][1] is None else self.highlighted_cells[self.MT.displayed_columns[c]][1]
+                        elif c in actual_selected_cols:
+                            tf = self.selected_cols_fg
                         elif c in selected_cols or selected_rows:
                             tf = self.selected_cells_foreground
                         elif self.MT.displayed_columns[c] in self.highlighted_cells:
@@ -875,7 +922,19 @@ class ColumnHeaders(tk.Canvas):
                     for c in range(start_col, end_col - 1):
                         fc = self.MT.col_positions[c]
                         sc = self.MT.col_positions[c + 1]
-                        if self.MT.displayed_columns[c] in self.highlighted_cells and (c in selected_cols or selected_rows):
+                        if self.MT.displayed_columns[c] in self.highlighted_cells and c in actual_selected_cols:
+                            c_1 = self.highlighted_cells[self.MT.displayed_columns[c]][0] if self.highlighted_cells[self.MT.displayed_columns[c]][0].startswith("#") else Color_Map_[self.highlighted_cells[self.MT.displayed_columns[c]][0]]
+                            self.create_rectangle(fc + 1,
+                                                  0,
+                                                  sc,
+                                                  self.current_height - 1,
+                                                  fill = (f"#{int((int(c_1[1:3], 16) + int(c_3[1:3], 16)) / 2):02X}" +
+                                                          f"{int((int(c_1[3:5], 16) + int(c_3[3:5], 16)) / 2):02X}" +
+                                                          f"{int((int(c_1[5:], 16) + int(c_3[5:], 16)) / 2):02X}"),
+                                                  outline = "",
+                                                  tag = "s")
+                            tf = self.selected_cols_fg if self.highlighted_cells[self.MT.displayed_columns[c]][1] is None else self.highlighted_cells[self.MT.displayed_columns[c]][1]
+                        elif self.MT.displayed_columns[c] in self.highlighted_cells and (c in selected_cols or selected_rows):
                             c_1 = self.highlighted_cells[self.MT.displayed_columns[c]][0] if self.highlighted_cells[self.MT.displayed_columns[c]][0].startswith("#") else Color_Map_[self.highlighted_cells[self.MT.displayed_columns[c]][0]]
                             self.create_rectangle(fc + 1,
                                                   0,
@@ -886,7 +945,9 @@ class ColumnHeaders(tk.Canvas):
                                                           f"{int((int(c_1[5:], 16) + int(c_2[5:], 16)) / 2):02X}"),
                                                   outline = "",
                                                   tag = "s")
-                            tf = self.selected_cells_foreground if self.highlighted_cells[c][1] is None else self.highlighted_cells[c][1]
+                            tf = self.selected_cells_foreground if self.highlighted_cells[self.MT.displayed_columns[c]][1] is None else self.highlighted_cells[self.MT.displayed_columns[c]][1]
+                        elif c in actual_selected_cols:
+                            tf = self.selected_cols_fg
                         elif c in selected_cols or selected_rows:
                             tf = self.selected_cells_foreground
                         elif self.MT.displayed_columns[c] in self.highlighted_cells:
