@@ -1,8 +1,10 @@
 # tksheet [![PyPI version shields.io](https://img.shields.io/pypi/v/tksheet.svg)](https://pypi.python.org/pypi/tksheet/) [![License: MIT](https://img.shields.io/badge/License-MIT%20-blue.svg)](https://github.com/ragardner/tksheet/blob/master/LICENSE.txt) [![GitHub Release Date](https://img.shields.io/github/release-date-pre/ragardner/tksheet.svg)](https://github.com/ragardner/tksheet/releases)
 
-Python 3.6+ tkinter table widget for displaying tabular data, please upgrade to the latest version it has many bug fixes over the last few versions
+Python 3.6+ tkinter table widget for displaying tabular data
 
-`pip install tksheet` / `pip install tksheet --upgrade`
+```
+pip install tksheet
+```
 
 ### Features
  - Display and modify tabular data
@@ -41,14 +43,15 @@ class demo(tk.Tk):
         self.grid_columnconfigure(0, weight = 1)
         self.grid_rowconfigure(0, weight = 1)
         self.sheet_demo = Sheet(self,
+                                show_selected_cells_border = True,
                                 width = 1000,
                                 height = 700,
                                 align = "w",
                                 header_align = "center",
                                 row_index_align = "center",
                                 row_index_width = 50,
-                                total_rows = 2000,
-                                total_columns = 100)
+                                total_rows = 200,
+                                total_columns = 30)
         self.sheet_demo.enable_bindings(("single",
                                          "drag_select",
                                          "column_drag_and_drop",
@@ -84,8 +87,10 @@ class demo(tk.Tk):
 
         # __________ HIGHLIGHT / DEHIGHLIGHT CELLS __________
 
-        self.sheet_demo.highlight_cells(row = 0, column = 0, bg = "#ed4337", fg = "white")
-        self.sheet_demo.highlight_cells(row = 0, bg = "#ed4337", fg = "white", canvas = "row_index")
+        self.sheet_demo.highlight_cells(row = 5, column = 0, bg = "#ed4337", fg = "white")
+        self.sheet_demo.highlight_cells(row = 5, column = 5, bg = "#ed4337", fg = "white")
+        self.sheet_demo.highlight_cells(row = 5, column = 1, bg = "#ed4337", fg = "white")
+        self.sheet_demo.highlight_cells(row = 5, bg = "#ed4337", fg = "white", canvas = "row_index")
         self.sheet_demo.highlight_cells(column = 0, bg = "#ed4337", fg = "white", canvas = "header")
 
         # __________ SETTING OR RESETTING TABLE DATA __________
@@ -95,11 +100,11 @@ class demo(tk.Tk):
 
         # __________ DISPLAY SUBSET OF COLUMNS __________
 
-        #self.sheet_demo.display_subset_of_columns(indexes = [5, 7, 9, 1], enable = True)
+        #self.sheet_demo.display_subset_of_columns(indexes = [3, 7, 9, 0], enable = True)
 
         # __________ SETTING HEADERS __________
 
-        #self.headers = [f"Header {c}" for c in range(100)]
+        #self.headers = [f"Header {c}" for c in range(30)]
         #self.sheet_demo.headers(self.headers)
 
         # __________ INSERTING A ROW __________
@@ -183,7 +188,6 @@ class demo(tk.Tk):
         
 app = demo()
 app.mainloop()
-
 
 ```
 

@@ -1,3 +1,22 @@
+### Version 4.2.5
+ - Fix bug where highlighted background or foreground might not be in the correct column when displaying a subset of columns
+ - Change colors of selected rows and columns
+ - Add color options: 
+```python
+header_select_column_bg
+header_select_column_fg
+row_index_select_row_bg
+row_index_select_row_fg
+selected_rows_border_color
+selected_rows_background
+selected_rows_foreground
+selected_columns_border_color
+selected_columns_background
+selected_columns_foreground
+```
+ - Fix various issues with displaying correct colors in certain circumstances
+ - Change dark theme colors slightly
+                              
 ### Version 4.2.4
  - Fix PyPi release version
 
