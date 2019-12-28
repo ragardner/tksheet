@@ -8,14 +8,15 @@ class demo(tk.Tk):
         self.grid_columnconfigure(0, weight = 1)
         self.grid_rowconfigure(0, weight = 1)
         self.sheet_demo = Sheet(self,
+                                show_selected_cells_border = True,
                                 width = 1000,
                                 height = 700,
                                 align = "w",
                                 header_align = "center",
                                 row_index_align = "center",
                                 row_index_width = 50,
-                                total_rows = 2000,
-                                total_columns = 100)
+                                total_rows = 200,
+                                total_columns = 30)
         self.sheet_demo.enable_bindings(("single",
                                          "drag_select",
                                          "column_drag_and_drop",
@@ -64,11 +65,11 @@ class demo(tk.Tk):
 
         # __________ DISPLAY SUBSET OF COLUMNS __________
 
-        #self.sheet_demo.display_subset_of_columns(indexes = [5, 7, 9, 1], enable = True)
+        #self.sheet_demo.display_subset_of_columns(indexes = [3, 7, 9, 0], enable = True)
 
         # __________ SETTING HEADERS __________
 
-        #self.headers = [f"Header {c}" for c in range(100)]
+        #self.headers = [f"Header {c}" for c in range(30)]
         #self.sheet_demo.headers(self.headers)
 
         # __________ INSERTING A ROW __________
