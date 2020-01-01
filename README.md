@@ -17,7 +17,7 @@ pip install tksheet
  - Change fonts and font size
  - Change any colors in the sheet
  - Left or Centre text alignment
- - Copes with cell elements being strings/ints/floats
+ - Cell elements can be any class with a `str` method
  
 ### [Version release notes](https://github.com/ragardner/tksheet/blob/master/RELEASE_NOTES.md)
 
