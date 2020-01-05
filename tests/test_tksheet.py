@@ -8,15 +8,8 @@ class demo(tk.Tk):
         self.grid_columnconfigure(0, weight = 1)
         self.grid_rowconfigure(0, weight = 1)
         self.sheet_demo = Sheet(self,
-                                show_selected_cells_border = True,
-                                width = 1000,
-                                height = 700,
-                                align = "w",
-                                header_align = "center",
-                                row_index_align = "center",
-                                row_index_width = 50,
-                                total_rows = 200,
-                                total_columns = 30)
+                                height = 500,
+                                width = 700) #for full startup options see DOCUMENTATION.md
         self.sheet_demo.enable_bindings(("single",
                                          "drag_select",
                                          "column_drag_and_drop",
@@ -30,16 +23,18 @@ class demo(tk.Tk):
                                          "arrowkeys",
                                          "row_height_resize",
                                          "double_click_row_resize",
+                                         "right_click_popup_menu",
+                                         "rc_insert_column",
+                                         "rc_delete_column",
+                                         "rc_insert_row",
+                                         "rc_delete_row",
                                          "copy",
                                          "cut",
                                          "paste",
                                          "delete",
                                          "undo",
-                                         "edit_cell",
-                                         "rc_insert_column",
-                                         "rc_delete_column",
-                                         "rc_insert_row",
-                                         "rc_delete_row"))
+                                         "edit_cell"))
+        #self.sheet_demo.disable_bindings() #uses the same strings
         self.sheet_demo.grid(row = 0, column = 0, sticky = "nswe")
         
 
@@ -60,8 +55,29 @@ class demo(tk.Tk):
 
         # __________ SETTING OR RESETTING TABLE DATA __________
         
-        self.data = [[f"Row {r} Column {c}" for c in range(30)] for r in range(200)]
+        self.data = [[f"Row {r} Column {c}" for c in range(30)] for r in range(1000)]
         self.sheet_demo.data_reference(self.data)
+
+        # __________ BINDING A FUNCTION TO USER SELECTS CELL __________
+
+        self.sheet_demo.extra_bindings([
+                                        ("cell_select", self.cell_select),
+                                        ("shift_cell_select", self.shift_select_cells),
+                                        ("drag_select_cells", self.drag_select_cells),
+                                        ("ctrl_a", self.ctrl_a),
+                                        ("row_select", self.row_select),
+                                        ("shift_row_select", self.shift_select_rows),
+                                        ("drag_select_rows", self.drag_select_rows),
+                                        ("column_select", self.column_select),
+                                        ("shift_column_select", self.shift_select_columns),
+                                        ("drag_select_columns", self.drag_select_columns),
+                                        ]
+                                       )
+        #self.sheet_demo.extra_bindings([("cell_select", None)]) #unbind cell select
+
+        # __________ BINDING NEW RIGHT CLICK FUNCTION __________
+    
+        self.sheet_demo.bind("<3>", self.rc)
 
         # __________ DISPLAY SUBSET OF COLUMNS __________
 
@@ -96,27 +112,30 @@ class demo(tk.Tk):
 
         #self.sheet_demo.set_cell_data(1, 2, "NEW VALUE")
 
+        # __________ GETTING FULL SHEET DATA __________
+
+        #self.all_data = self.sheet_demo.get_sheet_data()
+
+        # __________ GETTING CELL DATA __________
+
+        #print (self.sheet_demo.get_cell_data(0, 0))
+
+        # __________ GETTING ROW DATA __________
+
+        #print (self.sheet_demo.get_row_data(0)) # only accessible by index
+
+        # __________ GETTING COLUMN DATA __________
+
+        #print (self.sheet_demo.get_column_data(0)) # only accessible by index
+
         # __________ HIDING THE ROW INDEX AND HEADERS __________
 
         #self.sheet_demo.hide("row_index")
         #self.sheet_demo.hide("top_left")
         #self.sheet_demo.hide("header")
 
-        # __________ BINDING A FUNCTION TO USER SELECTS CELL __________
-
-        self.sheet_demo.extra_bindings([
-                                        ("cell_select", self.cell_select),
-                                        ("shift_cell_select", self.shift_select_cells),
-                                        ("drag_select_cells", self.drag_select_cells),
-                                        ("ctrl_a", self.ctrl_a),
-                                        ("row_select", self.row_select),
-                                        ("shift_row_select", self.shift_select_rows),
-                                        ("drag_select_rows", self.drag_select_rows),
-                                        ("column_select", self.column_select),
-                                        ("shift_column_select", self.shift_select_columns),
-                                        ("drag_select_columns", self.drag_select_columns),
-                                        ]
-                                       )
+    def rc(self, event):
+        print (event)
         
     def cell_select(self, response):
         print (response)
