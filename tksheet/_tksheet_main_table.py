@@ -31,6 +31,11 @@ class MainTable(tk.Canvas):
                  row_index = None,
                  font = None,
                  header_font = None,
+                 popup_menu_font = ("Arial", 11, "normal"),
+                 popup_menu_fg = "gray10",
+                 popup_menu_bg = "white",
+                 popup_menu_highlight_bg = "#f1f3f4",
+                 popup_menu_highlight_fg = "gray10",
                  align = None,
                  width = None,
                  height = None,
@@ -48,7 +53,8 @@ class MainTable(tk.Canvas):
                  selected_columns_background = "#e7f0fd",
                  selected_columns_foreground = "black",
                  displayed_columns = [],
-                 all_columns_displayed = True):
+                 all_columns_displayed = True,
+                 max_undos = 20):
         tk.Canvas.__init__(self,
                            parentframe,
                            width = width,
@@ -64,6 +70,7 @@ class MainTable(tk.Canvas):
         self.extra_b1_motion_func = None
         self.extra_b1_release_func = None
         self.extra_double_b1_func = None
+        self.extra_rc_func = None
         self.extra_ctrl_c_func = None
         self.extra_ctrl_x_func = None
         self.extra_ctrl_v_func = None
@@ -80,6 +87,15 @@ class MainTable(tk.Canvas):
         self.toggle_selection_enabled = False # with this mode every left click adds the cell to selected cells, work ongoing with this...
         self.arrowkeys_enabled = False
         self.undo_enabled = False
+        self.cut_enabled = False
+        self.copy_enabled = False
+        self.paste_enabled = False
+        self.delete_key_enabled = False
+        self.rc_delete_column_enabled = False
+        self.rc_insert_column_enabled = False
+        self.rc_delete_row_enabled = False
+        self.rc_insert_row_enabled = False
+        self.rc_popup_menus_enabled = False
         self.show_selected_cells_border = show_selected_cells_border # probably best to turn off if using toggle_selection_enabled
         self.new_row_width = 0
         self.new_header_height = 0
@@ -146,6 +162,12 @@ class MainTable(tk.Canvas):
         self.default_hh = int(header_height)
         self.set_fnt_help()
         self.set_hdr_fnt_help()
+
+        self.popup_menu_font = popup_menu_font
+        self.popup_menu_fg = popup_menu_fg
+        self.popup_menu_bg = popup_menu_bg
+        self.popup_menu_highlight_bg = popup_menu_highlight_bg
+        self.popup_menu_highlight_fg = popup_menu_highlight_fg
         
         if headers:
             self.my_hdrs = headers
@@ -166,7 +188,7 @@ class MainTable(tk.Canvas):
         self.reset_row_positions()
 
         self.highlighted_cells = {}
-        self.undo_storage = deque(maxlen = 20)
+        self.undo_storage = deque(maxlen = max_undos)
 
         self.bind("<Motion>", self.mouse_motion)
         self.bind("<Shift-ButtonPress-1>",self.shift_b1_press)
@@ -176,95 +198,31 @@ class MainTable(tk.Canvas):
         self.bind("<Double-Button-1>", self.double_b1)
         self.bind("<Configure>", self.refresh)
         self.bind("<MouseWheel>", self.mousewheel)
-
-        self.rc_popup_menu = tk.Menu(self, tearoff = 0)
-        self.rc_popup_menu.add_command(label = "Select all (Ctrl-a)",
-                                       command = self.select_all)
-        self.rc_popup_menu.add_separator()
-        self.rc_popup_menu.add_command(label = "Cut (Ctrl-x)",
-                                       command = self.ctrl_x,
-                                       state = "disabled")
-        self.rc_popup_menu.add_separator()
-        self.rc_popup_menu.add_command(label = "Copy (Ctrl-c)",
-                                       command = self.ctrl_c,
-                                       state = "disabled")
-        self.rc_popup_menu.add_separator()
-        self.rc_popup_menu.add_command(label = "Paste (Ctrl-v)",
-                                       command = self.ctrl_v,
-                                       state = "disabled")
-        self.rc_popup_menu.add_separator()
-        self.rc_popup_menu.add_command(label = "Delete (Del)",
-                                       command = self.delete_key,
-                                       state = "disabled")
-
-        self.CH.ch_rc_popup_menu = tk.Menu(self.CH, tearoff = 0)
-        self.CH.ch_rc_popup_menu.add_command(label = "Cut Contents (Ctrl-x)",
-                                               command = self.ctrl_x,
-                                       state = "disabled")
-        self.CH.ch_rc_popup_menu.add_separator()
-        self.CH.ch_rc_popup_menu.add_command(label = "Copy Contents (Ctrl-c)",
-                                               command = self.ctrl_c,
-                                       state = "disabled")
-        self.CH.ch_rc_popup_menu.add_separator()
-        self.CH.ch_rc_popup_menu.add_command(label = "Paste (Ctrl-v)",
-                                               command = self.ctrl_v,
-                                       state = "disabled")
-        self.CH.ch_rc_popup_menu.add_separator()
-        self.CH.ch_rc_popup_menu.add_command(label = "Clear Contents (Del)",
-                                               command = self.delete_key,
-                                       state = "disabled")
-        self.CH.ch_rc_popup_menu.add_separator()
-        self.CH.ch_rc_popup_menu.add_command(label = "Delete Columns",
-                                           command = self.del_cols_rc,
-                                           state = "disabled")
-        self.CH.ch_rc_popup_menu.add_separator()
-        self.CH.ch_rc_popup_menu.add_command(label = "Insert Column",
-                                               command = self.insert_col_rc,
-                                               state = "disabled")
-        
-        self.RI.ri_rc_popup_menu = tk.Menu(self.RI, tearoff = 0)
-        self.RI.ri_rc_popup_menu.add_command(label = "Cut Contents (Ctrl-x)",
-                                               command = self.ctrl_x,
-                                       state = "disabled")
-        self.RI.ri_rc_popup_menu.add_separator()
-        self.RI.ri_rc_popup_menu.add_command(label = "Copy Contents (Ctrl-c)",
-                                               command = self.ctrl_c,
-                                       state = "disabled")
-        self.RI.ri_rc_popup_menu.add_separator()
-        self.RI.ri_rc_popup_menu.add_command(label = "Paste (Ctrl-v)",
-                                               command = self.ctrl_v,
-                                       state = "disabled")
-        self.RI.ri_rc_popup_menu.add_separator()
-        self.RI.ri_rc_popup_menu.add_command(label = "Clear Contents (Del)",
-                                               command = self.delete_key,
-                                       state = "disabled")
-        self.RI.ri_rc_popup_menu.add_separator()
-        self.RI.ri_rc_popup_menu.add_command(label = "Delete Rows",
-                                           command = self.del_rows_rc,
-                                           state = "disabled")
-        self.RI.ri_rc_popup_menu.add_separator()
-        self.RI.ri_rc_popup_menu.add_command(label = "Insert Row",
-                                               command = self.insert_row_rc,
-                                               state = "disabled")
+        self.bind(get_rc_binding(), self.rc)
+        self.CH.bind(get_rc_binding(), self.CH.rc)
+        self.RI.bind(get_rc_binding(), self.RI.rc)
+        self.create_rc_menus()
         
     def refresh(self, event = None):
         self.main_table_redraw_grid_and_text(True, True)
 
-    def basic_bindings(self, onoff = "enable"):
-        if onoff == "enable":
+    def basic_bindings(self, enable = True):
+        if enable:
             self.bind("<Motion>", self.mouse_motion)
             self.bind("<ButtonPress-1>", self.b1_press)
             self.bind("<B1-Motion>", self.b1_motion)
             self.bind("<ButtonRelease-1>", self.b1_release)
             self.bind("<Double-Button-1>", self.double_b1)
             self.bind("<MouseWheel>", self.mousewheel)
-        elif onoff == "disable":
+            self.bind(get_rc_binding(), self.rc)
+        else:
             self.unbind("<Motion>")
             self.unbind("<ButtonPress-1>")
             self.unbind("<B1-Motion>")
             self.unbind("<ButtonRelease-1>")
             self.unbind("<Double-Button-1>")
             self.unbind("<MouseWheel>")
+            self.unbind(get_rc_binding())
 
     def show_ctrl_outline(self, canvas = "table", start_cell = (0, 0), end_cell = (0, 0)):
         self.create_rectangle(self.col_positions[start_cell[0]] + 1,
@@ -1214,9 +1172,7 @@ class MainTable(tk.Canvas):
                 self.RI.bind("<Control-C>", self.ctrl_c)
                 self.CH.bind("<Control-c>", self.ctrl_c)
                 self.CH.bind("<Control-C>", self.ctrl_c)
-                self.rc_popup_menu.entryconfig("Copy (Ctrl-c)", state = "normal")
-                self.CH.ch_rc_popup_menu.entryconfig("Copy Contents (Ctrl-c)", state = "normal")
-                self.RI.ri_rc_popup_menu.entryconfig("Copy Contents (Ctrl-c)", state = "normal")
+                self.copy_enabled = True
             else:
                 self.unbind("<Control-c>")
                 self.unbind("<Control-C>")
@@ -1224,9 +1180,7 @@ class MainTable(tk.Canvas):
                 self.RI.unbind("<Control-C>")
                 self.CH.unbind("<Control-c>")
                 self.CH.unbind("<Control-C>")
-                self.rc_popup_menu.entryconfig("Copy (Ctrl-c)", state = "disabled")
-                self.CH.ch_rc_popup_menu.entryconfig("Copy Contents (Ctrl-c)", state = "disabled")
-                self.RI.ri_rc_popup_menu.entryconfig("Copy Contents (Ctrl-c)", state = "disabled")
+                self.copy_enabled = False
         if key is None or key == "cut":
             if enable:
                 self.bind("<Control-x>", self.ctrl_x)
@@ -1235,9 +1189,7 @@ class MainTable(tk.Canvas):
                 self.RI.bind("<Control-X>", self.ctrl_x)
                 self.CH.bind("<Control-x>", self.ctrl_x)
                 self.CH.bind("<Control-X>", self.ctrl_x)
-                self.rc_popup_menu.entryconfig("Cut (Ctrl-x)", state = "normal")
-                self.CH.ch_rc_popup_menu.entryconfig("Cut Contents (Ctrl-x)", state = "normal")
-                self.RI.ri_rc_popup_menu.entryconfig("Cut Contents (Ctrl-x)", state = "normal")
+                self.cut_enabled = True
             else:
                 self.unbind("<Control-x>")
                 self.unbind("<Control-X>")
@@ -1245,9 +1197,7 @@ class MainTable(tk.Canvas):
                 self.RI.unbind("<Control-X>")
                 self.CH.unbind("<Control-x>")
                 self.CH.unbind("<Control-X>")
-                self.rc_popup_menu.entryconfig("Cut (Ctrl-x)", state = "disabled")
-                self.CH.ch_rc_popup_menu.entryconfig("Cut Contents (Ctrl-x)", state = "disabled")
-                self.RI.ri_rc_popup_menu.entryconfig("Cut Contents (Ctrl-x)", state = "disabled")
+                self.cut_enabled = False
         if key is None or key == "paste":
             if enable:
                 self.bind("<Control-v>", self.ctrl_v)
@@ -1256,9 +1206,7 @@ class MainTable(tk.Canvas):
                 self.RI.bind("<Control-V>", self.ctrl_v)
                 self.CH.bind("<Control-v>", self.ctrl_v)
                 self.CH.bind("<Control-V>", self.ctrl_v)
-                self.rc_popup_menu.entryconfig("Paste (Ctrl-v)", state = "normal")
-                self.CH.ch_rc_popup_menu.entryconfig("Paste (Ctrl-v)", state = "normal")
-                self.RI.ri_rc_popup_menu.entryconfig("Paste (Ctrl-v)", state = "normal")
+                self.paste_enabled = True
             else:
                 self.unbind("<Control-v>")
                 self.unbind("<Control-V>")
@@ -1266,9 +1214,7 @@ class MainTable(tk.Canvas):
                 self.RI.unbind("<Control-V>")
                 self.CH.unbind("<Control-v>")
                 self.CH.unbind("<Control-V>")
-                self.rc_popup_menu.entryconfig("Paste (Ctrl-v)", state = "disabled")
-                self.CH.ch_rc_popup_menu.entryconfig("Paste (Ctrl-v)", state = "disabled")
-                self.RI.ri_rc_popup_menu.entryconfig("Paste (Ctrl-v)", state = "disabled")
+                self.paste_enabled = False
         if key is None or key == "undo":
             if enable:
                 self.undo_enabled = True
@@ -1291,43 +1237,155 @@ class MainTable(tk.Canvas):
                 self.bind("<Delete>", self.delete_key)
                 self.RI.bind("<Delete>", self.delete_key)
                 self.CH.bind("<Delete>", self.delete_key)
-                self.rc_popup_menu.entryconfig("Delete (Del)", state = "normal")
-                self.RI.ri_rc_popup_menu.entryconfig("Clear Contents (Del)", state = "normal")
-                self.CH.ch_rc_popup_menu.entryconfig("Clear Contents (Del)", state = "normal")
+                self.delete_key_enabled = True
             else:
                 self.unbind("<Delete>")
                 self.RI.unbind("<Delete>")
                 self.CH.unbind("<Delete>")
-                self.rc_popup_menu.entryconfig("Delete (Del)", state = "disabled")
-                self.RI.ri_rc_popup_menu.entryconfig("Clear Contents (Del)", state = "disabled")
-                self.CH.ch_rc_popup_menu.entryconfig("Clear Contents (Del)", state = "disabled")
-        if key is None or key == "rc":
-            self.bind_rc(enable)
+                self.delete_key_enabled = False
         if key is None or key == "edit_cell":
             if enable:
                 self.bind_cell_edit(True)
             else:
                 self.bind_cell_edit(False)
 
-    def bind_rc(self, enable = True):
-        if enable:
-            if str(get_os()) == "Darwin":
-                self.bind("<2>", self.rc)
-                self.RI.bind("<2>", self.RI.rc)
-                self.CH.bind("<2>", self.CH.rc)
-            else:
-                self.bind("<3>", self.rc)
-                self.RI.bind("<3>", self.RI.rc)
-                self.CH.bind("<3>", self.CH.rc)
-        else:
-            if str(get_os()) == "Darwin":
-                self.unbind("<2>")
-                self.RI.unbind("<2>")
-                self.CH.unbind("<2>")
-            else:
-                self.unbind("<3>")
-                self.RI.unbind("<3>")
-                self.CH.unbind("<3>")
+    def create_rc_menus(self):
+        self.rc_popup_menu = tk.Menu(self, tearoff = 0, background = self.popup_menu_bg)
+        self.CH.ch_rc_popup_menu = tk.Menu(self.CH, tearoff = 0, background = self.popup_menu_bg)
+        self.RI.ri_rc_popup_menu = tk.Menu(self.RI, tearoff = 0, background = self.popup_menu_bg)
+        if self.cut_enabled:
+            self.rc_popup_menu.add_command(label = "Cut Ctrl+X",
+                                           font = self.popup_menu_font,
+                                           foreground = self.popup_menu_fg,
+                                           background = self.popup_menu_bg,
+                                           activebackground = self.popup_menu_highlight_bg,
+                                           activeforeground = self.popup_menu_highlight_fg,
+                                           command = self.ctrl_x)
+            #self.rc_popup_menu.add_separator()
+            self.CH.ch_rc_popup_menu.add_command(label = "Cut Contents Ctrl+X)",
+                                           font = self.popup_menu_font,
+                                           foreground = self.popup_menu_fg,
+                                           background = self.popup_menu_bg,
+                                           activebackground = self.popup_menu_highlight_bg,
+                                           activeforeground = self.popup_menu_highlight_fg,
+                                               command = self.ctrl_x)
+            #self.CH.ch_rc_popup_menu.add_separator()
+            self.RI.ri_rc_popup_menu.add_command(label = "Cut Contents Ctrl+X",
+                                           font = self.popup_menu_font,
+                                           foreground = self.popup_menu_fg,
+                                           background = self.popup_menu_bg,
+                                           activebackground = self.popup_menu_highlight_bg,
+                                           activeforeground = self.popup_menu_highlight_fg,
+                                                 command = self.ctrl_x)
+            #self.RI.ri_rc_popup_menu.add_separator()
+        if self.copy_enabled:
+            self.rc_popup_menu.add_command(label = "Copy Ctrl+C",
+                                           font = self.popup_menu_font,
+                                           foreground = self.popup_menu_fg,
+                                           background = self.popup_menu_bg,
+                                           activebackground = self.popup_menu_highlight_bg,
+                                           activeforeground = self.popup_menu_highlight_fg,
+                                           command = self.ctrl_c)
+            #self.rc_popup_menu.add_separator()
+            self.CH.ch_rc_popup_menu.add_command(label = "Copy Contents Ctrl+C",
+                                           font = self.popup_menu_font,
+                                           foreground = self.popup_menu_fg,
+                                           background = self.popup_menu_bg,
+                                           activebackground = self.popup_menu_highlight_bg,
+                                           activeforeground = self.popup_menu_highlight_fg,
+                                                 command = self.ctrl_c)
+            #self.CH.ch_rc_popup_menu.add_separator()
+            self.RI.ri_rc_popup_menu.add_command(label = "Copy Contents Ctrl+C",
+                                           font = self.popup_menu_font,
+                                           foreground = self.popup_menu_fg,
+                                           background = self.popup_menu_bg,
+                                           activebackground = self.popup_menu_highlight_bg,
+                                           activeforeground = self.popup_menu_highlight_fg,
+                                                 command = self.ctrl_c)
+            #self.RI.ri_rc_popup_menu.add_separator()
+        if self.paste_enabled:
+            self.rc_popup_menu.add_command(label = "Paste Ctrl+V",
+                                           font = self.popup_menu_font,
+                                           foreground = self.popup_menu_fg,
+                                           background = self.popup_menu_bg,
+                                           activebackground = self.popup_menu_highlight_bg,
+                                           activeforeground = self.popup_menu_highlight_fg,
+                                           command = self.ctrl_v)
+            #self.rc_popup_menu.add_separator()
+            self.CH.ch_rc_popup_menu.add_command(label = "Paste Ctrl+V",
+                                           font = self.popup_menu_font,
+                                           foreground = self.popup_menu_fg,
+                                           background = self.popup_menu_bg,
+                                           activebackground = self.popup_menu_highlight_bg,
+                                           activeforeground = self.popup_menu_highlight_fg,
+                                                 command = self.ctrl_v)
+            #self.CH.ch_rc_popup_menu.add_separator()
+            self.RI.ri_rc_popup_menu.add_command(label = "Paste Ctrl+V",
+                                           font = self.popup_menu_font,
+                                           foreground = self.popup_menu_fg,
+                                           background = self.popup_menu_bg,
+                                           activebackground = self.popup_menu_highlight_bg,
+                                           activeforeground = self.popup_menu_highlight_fg,
+                                                 command = self.ctrl_v)
+            #self.RI.ri_rc_popup_menu.add_separator()
+        if self.delete_key_enabled:
+            self.rc_popup_menu.add_command(label = "Delete",
+                                           font = self.popup_menu_font,
+                                           foreground = self.popup_menu_fg,
+                                           background = self.popup_menu_bg,
+                                           activebackground = self.popup_menu_highlight_bg,
+                                           activeforeground = self.popup_menu_highlight_fg,
+                                           command = self.delete_key)
+            self.CH.ch_rc_popup_menu.add_command(label = "Clear Contents",
+                                           font = self.popup_menu_font,
+                                           foreground = self.popup_menu_fg,
+                                           background = self.popup_menu_bg,
+                                           activebackground = self.popup_menu_highlight_bg,
+                                           activeforeground = self.popup_menu_highlight_fg,
+                                                 command = self.delete_key)
+            #self.CH.ch_rc_popup_menu.add_separator()
+            self.RI.ri_rc_popup_menu.add_command(label = "Clear Contents",
+                                           font = self.popup_menu_font,
+                                           foreground = self.popup_menu_fg,
+                                           background = self.popup_menu_bg,
+                                           activebackground = self.popup_menu_highlight_bg,
+                                           activeforeground = self.popup_menu_highlight_fg,
+                                               command = self.delete_key)
+            #self.RI.ri_rc_popup_menu.add_separator()
+        if self.rc_delete_column_enabled:
+            self.CH.ch_rc_popup_menu.add_command(label = "Delete Columns",
+                                           font = self.popup_menu_font,
+                                           foreground = self.popup_menu_fg,
+                                           background = self.popup_menu_bg,
+                                           activebackground = self.popup_menu_highlight_bg,
+                                           activeforeground = self.popup_menu_highlight_fg,
+                                                 command = self.del_cols_rc)
+            #self.CH.ch_rc_popup_menu.add_separator()
+        if self.rc_insert_column_enabled:
+            self.CH.ch_rc_popup_menu.add_command(label = "Insert Column",
+                                           font = self.popup_menu_font,
+                                           foreground = self.popup_menu_fg,
+                                           background = self.popup_menu_bg,
+                                           activebackground = self.popup_menu_highlight_bg,
+                                           activeforeground = self.popup_menu_highlight_fg,
+                                                 command = self.insert_col_rc)
+        if self.rc_delete_row_enabled:
+            self.RI.ri_rc_popup_menu.add_command(label = "Delete Rows",
+                                           font = self.popup_menu_font,
+                                           foreground = self.popup_menu_fg,
+                                           background = self.popup_menu_bg,
+                                           activebackground = self.popup_menu_highlight_bg,
+                                           activeforeground = self.popup_menu_highlight_fg,
+                                                 command = self.del_rows_rc)
+            #self.RI.ri_rc_popup_menu.add_separator()
+        if self.rc_insert_row_enabled:
+            self.RI.ri_rc_popup_menu.add_command(label = "Insert Row",
+                                           font = self.popup_menu_font,
+                                           foreground = self.popup_menu_fg,
+                                           background = self.popup_menu_bg,
+                                           activebackground = self.popup_menu_highlight_bg,
+                                           activeforeground = self.popup_menu_highlight_fg,
+                                                 command = self.insert_row_rc)
 
     def bind_cell_edit(self, enable = True):
         if enable:
@@ -1394,17 +1452,17 @@ class MainTable(tk.Canvas):
         elif binding == "edit_bindings":
             self.edit_bindings(True)
         elif binding == "rc_delete_column":
-            self.CH.enable_bindings("rc_delete_column")
-            self.bind_rc(True)
+            self.rc_delete_column_enabled = True
+            self.rc_popup_menus_enabled = True
         elif binding == "rc_delete_row":
-            self.RI.enable_bindings("rc_delete_row")
-            self.bind_rc(True)
+            self.rc_delete_row_enabled = True
+            self.rc_popup_menus_enabled = True
         elif binding == "rc_insert_column":
-            self.CH.enable_bindings("rc_insert_column")
-            self.bind_rc(True)
+            self.rc_insert_column_enabled = True
+            self.rc_popup_menus_enabled = True
         elif binding == "rc_insert_row":
-            self.RI.enable_bindings("rc_insert_row")
-            self.bind_rc(True)
+            self.rc_insert_row_enabled = True
+            self.rc_popup_menus_enabled = True
         elif binding == "copy":
             self.edit_bindings(True, "copy")
         elif binding == "cut":
@@ -1413,12 +1471,13 @@ class MainTable(tk.Canvas):
             self.edit_bindings(True, "paste")
         elif binding == "delete":
             self.edit_bindings(True, "delete")
-        elif binding == "rc":
-            self.edit_bindings(True, "rc")
+        elif binding == "right_click_popup_menu":
+            self.rc_popup_menus_enabled = True
         elif binding == "undo":
             self.edit_bindings(True, "undo")
         elif binding == "edit_cell":
             self.edit_bindings(True, "edit_cell")
+        self.create_rc_menus()
         
     def disable_bindings(self, bindings):
         if isinstance(bindings,(list, tuple)):
@@ -1463,17 +1522,13 @@ class MainTable(tk.Canvas):
         elif binding == "arrowkeys":
             self.unbind_arrowkeys()
         elif binding == "rc_delete_column":
-            self.CH.disable_bindings("rc_delete_column")
-            self.bind_rc(False)
+            self.rc_delete_column_enabled = False
         elif binding == "rc_delete_row":
-            self.RI.disable_bindings("rc_delete_row")
-            self.bind_rc(False)
+            self.rc_delete_row_enabled = False
         elif binding == "rc_insert_column":
-            self.CH.disable_bindings("rc_insert_column")
-            self.bind_rc(False)
+            self.rc_insert_column_enabled = False
         elif binding == "rc_insert_row":
-            self.RI.disable_bindings("rc_insert_row")
-            self.bind_rc(False)
+            self.rc_insert_row_enabled = False
         elif binding == "edit_bindings":
             self.edit_bindings(False)
         elif binding == "copy":
@@ -1484,12 +1539,13 @@ class MainTable(tk.Canvas):
             self.edit_bindings(False, "paste")
         elif binding == "delete":
             self.edit_bindings(False, "delete")
-        elif binding == "rc":
-            self.edit_bindings(False, "rc")
+        elif binding == "right_click_popup_menu":
+            self.rc_popup_menus_enabled = False
         elif binding == "undo":
             self.edit_bindings(False, "undo")
         elif binding == "edit_cell":
             self.edit_bindings(False, "edit_cell")
+        self.create_rc_menus()
 
     def reset_mouse_motion_creations(self, event = None):
         self.config(cursor = "")
@@ -1543,28 +1599,32 @@ class MainTable(tk.Canvas):
             r = self.identify_row(y = event.y)
             c = self.identify_col(x = event.x)
             if r < len(self.row_positions) - 1 and c < len(self.col_positions) - 1:
-                if self.is_cell_selected(r, c):
-                    self.rc_popup_menu.tk_popup(event.x_root, event.y_root)
-                elif self.is_col_selected(c):
+                if self.is_col_selected(c) and self.rc_popup_menus_enabled:
                     self.CH.ch_rc_popup_menu.tk_popup(event.x_root, event.y_root)
-                elif self.is_row_selected(r):
+                elif self.is_row_selected(r) and self.rc_popup_menus_enabled:
                     self.RI.ri_rc_popup_menu.tk_popup(event.x_root, event.y_root)
+                elif self.is_cell_selected(r, c) and self.rc_popup_menus_enabled:
+                    self.rc_popup_menu.tk_popup(event.x_root, event.y_root)
                 else:
                     self.select_cell(r, c, redraw = True)
-                    self.rc_popup_menu.tk_popup(event.x_root, event.y_root)
+                    if self.rc_popup_menus_enabled:
+                        self.rc_popup_menu.tk_popup(event.x_root, event.y_root)
         elif self.toggle_selection_enabled and all(v is None for v in (self.RI.rsz_h, self.RI.rsz_w, self.CH.rsz_h, self.CH.rsz_w)):
             r = self.identify_row(y = event.y)
             c = self.identify_col(x = event.x)
             if r < len(self.row_positions) - 1 and c < len(self.col_positions) - 1:
-                if self.is_cell_selected(r, c):
-                    self.rc_popup_menu.tk_popup(event.x_root, event.y_root)
-                elif self.is_col_selected(c):
+                if self.is_col_selected(c) and self.rc_popup_menus_enabled:
                     self.CH.ch_rc_popup_menu.tk_popup(event.x_root, event.y_root)
-                elif self.is_row_selected(r):
+                elif self.is_row_selected(r) and self.rc_popup_menus_enabled:
                     self.RI.ri_rc_popup_menu.tk_popup(event.x_root, event.y_root)
+                elif self.is_cell_selected(r, c) and self.rc_popup_menus_enabled:
+                    self.rc_popup_menu.tk_popup(event.x_root, event.y_root)
                 else:
                     self.toggle_select_cell(r, c, redraw = True)
-                    self.rc_popup_menu.tk_popup(event.x_root, event.y_root)
+                    if self.rc_popup_menus_enabled:
+                        self.rc_popup_menu.tk_popup(event.x_root, event.y_root)
+        if self.extra_rc_func is not None:
+            self.extra_rc_func(event)
 
     def b1_press(self, event = None):
         self.focus_set()
@@ -1996,7 +2056,7 @@ class MainTable(tk.Canvas):
         self.refresh()
 
     def insert_row_rc(self, event = None): #subset of rows
-        if self.anything_selected(exclude_cols = True, exclude_cells = True):
+        if self.anything_selected(exclude_columns = True, exclude_cells = True):
             stidx = min(self.get_selected_rows())
             posidx = int(stidx)
         else:
@@ -3325,11 +3385,11 @@ class MainTable(tk.Canvas):
         if not inc_cols and not inc_rows:
             iterable = chain(self.find_withtag("CellSelectFill"), self.find_withtag("Current_Inside"), self.find_withtag("Current_Outside"))
         elif inc_cols and not inc_rows:
-            iterable = chain(self.find_withtag("CellSelectFill"), self.find_withtag("Current_Inside"), self.find_withtag("Current_Outside"), self.find_withtag("ColSelectFill"))
+            iterable = chain(self.find_withtag("ColSelectFill"), self.find_withtag("CellSelectFill"), self.find_withtag("Current_Inside"), self.find_withtag("Current_Outside"))
         elif not inc_cols and inc_rows:
-            iterable = chain(self.find_withtag("CellSelectFill"), self.find_withtag("Current_Inside"), self.find_withtag("Current_Outside"), self.find_withtag("RowSelectFill"))
+            iterable = chain(self.find_withtag("RowSelectFill"), self.find_withtag("CellSelectFill"), self.find_withtag("Current_Inside"), self.find_withtag("Current_Outside"))
         elif inc_cols and inc_rows:
-            iterable = chain(self.find_withtag("CellSelectFill"), self.find_withtag("Current_Inside"), self.find_withtag("Current_Outside"), self.find_withtag("RowSelectFill"), self.find_withtag("ColSelectFill"))
+            iterable = chain(self.find_withtag("RowSelectFill"), self.find_withtag("ColSelectFill"), self.find_withtag("CellSelectFill"), self.find_withtag("Current_Inside"), self.find_withtag("Current_Outside"))
         for item in iterable:
             r1, c1, r2, c2 = tuple(int(e) for e in self.gettags(item)[1].split("_") if e)
             if r1 <= r and c1 <= c and r2 > r and c2 > c:

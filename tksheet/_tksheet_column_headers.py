@@ -47,6 +47,7 @@ class ColumnHeaders(tk.Canvas):
         self.extra_b1_release_func = None
         self.extra_double_b1_func = None
         self.ch_extra_drag_drop_func = None
+        self.extra_rc_func = None
         self.selection_binding_func = None
         self.shift_selection_binding_func = None
         self.drag_selection_binding_func = None
@@ -90,25 +91,31 @@ class ColumnHeaders(tk.Canvas):
         self.bind("<ButtonRelease-1>", self.b1_release)
         self.bind("<Double-Button-1>", self.double_b1)
         
-    def basic_bindings(self, onoff = "enable"):
-        if onoff == "enable":
+    def basic_bindings(self, enable = True):
+        if enable:
             self.bind("<Motion>", self.mouse_motion)
             self.bind("<ButtonPress-1>", self.b1_press)
             self.bind("<B1-Motion>", self.b1_motion)
             self.bind("<ButtonRelease-1>", self.b1_release)
             self.bind("<Double-Button-1>", self.double_b1)
-        elif onoff == "disable":
+            self.bind(self.MT.get_rc_binding(), self.rc)
+        else:
             self.unbind("<Motion>")
             self.unbind("<ButtonPress-1>")
             self.unbind("<B1-Motion>")
             self.unbind("<ButtonRelease-1>")
             self.unbind("<Double-Button-1>")
+            self.unbind(self.MT.get_rc_binding())
 
     def set_height(self, new_height,set_TL = False):
         self.current_height = new_height
         self.config(height = new_height)
         if set_TL:
             self.TL.set_dimensions(new_h = new_height)
+        try:
+            self.MT.recreate_all_selection_boxes()
+        except:
+            pass
 
     def enable_bindings(self, binding):
         if binding == "column_width_resize":
@@ -121,12 +128,6 @@ class ColumnHeaders(tk.Canvas):
             self.col_selection_enabled = True
         if binding == "drag_and_drop":
             self.drag_and_drop_enabled = True
-        if binding == "rc_delete_column":
-            self.rc_delete_col_enabled = True
-            self.ch_rc_popup_menu.entryconfig("Delete Columns", state = "normal")
-        if binding == "rc_insert_column":
-            self.rc_insert_col_enabled = True
-            self.ch_rc_popup_menu.entryconfig("Insert Column", state = "normal")
 
     def disable_bindings(self, binding):
         if binding == "column_width_resize":
@@ -139,12 +140,6 @@ class ColumnHeaders(tk.Canvas):
             self.col_selection_enabled = False
         if binding == "drag_and_drop":
             self.drag_and_drop_enabled = False
-        if binding == "rc_delete_column":
-            self.rc_delete_col_enabled = False
-            self.ch_rc_popup_menu.entryconfig("Delete Columns", state = "disabled")
-        if binding == "rc_insert_column":
-            self.rc_insert_col_enabled = False
-            self.ch_rc_popup_menu.entryconfig("Insert Column", state = "disabled")
 
     def check_mouse_position_width_resizers(self, event):
         x = self.canvasx(event.x)
@@ -164,14 +159,17 @@ class ColumnHeaders(tk.Canvas):
         elif self.col_selection_enabled and all(v is None for v in (self.RI.rsz_h, self.RI.rsz_w, self.rsz_h, self.rsz_w)):
             c = self.MT.identify_col(x = event.x)
             if c < len(self.MT.col_positions) - 1:
-                if self.MT.is_col_selected(c):
+                if self.MT.is_col_selected(c) and self.MT.rc_popup_menus_enabled:
                     self.ch_rc_popup_menu.tk_popup(event.x_root, event.y_root)
                 else:
                     if self.MT.single_selection_enabled:
                         self.select_col(c, redraw = True)
                     elif self.MT.toggle_selection_enabled:
                         self.toggle_select_col(c, redraw = True)
-                    self.ch_rc_popup_menu.tk_popup(event.x_root, event.y_root)
+                    if self.MT.rc_popup_menus_enabled:
+                        self.ch_rc_popup_menu.tk_popup(event.x_root, event.y_root)
+        if self.extra_rc_func is not None:
+            self.extra_rc_func(event)
 
     def shift_b1_press(self, event):
         x = event.x

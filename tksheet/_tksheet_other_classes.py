@@ -157,4 +157,11 @@ def get_index_of_gap_in_sorted_integer_seq_reverse(seq, start = 0):
             return idx
         prevn = n
     return None
+
+def get_rc_binding():
+        if f"{get_os()}" == "Darwin":
+            return "<2>"
+        else:
+            return "<3>"
+
         

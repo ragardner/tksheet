@@ -34,7 +34,8 @@ class RowIndex(tk.Canvas):
                  row_index_select_row_bg = "#5f6368",
                  row_index_select_row_fg = "white",
                  drag_and_drop_color = None,
-                 resizing_line_color = None):
+                 resizing_line_color = None,
+                 auto_resize_width = True):
         tk.Canvas.__init__(self,
                            parentframe,
                            height = None,
@@ -47,6 +48,7 @@ class RowIndex(tk.Canvas):
         self.extra_b1_press_func = None
         self.extra_b1_motion_func = None
         self.extra_b1_release_func = None
+        self.extra_rc_func = None
         self.selection_binding_func = None
         self.shift_selection_binding_func = None
         self.drag_selection_binding_func = None
@@ -90,6 +92,7 @@ class RowIndex(tk.Canvas):
         self.rsz_h = None
         self.currently_resizing_width = False
         self.currently_resizing_height = False
+        self.auto_resize_width = auto_resize_width
         self.bind("<Motion>", self.mouse_motion)
         self.bind("<ButtonPress-1>", self.b1_press)
         self.bind("<Shift-ButtonPress-1>",self.shift_b1_press)
@@ -98,21 +101,23 @@ class RowIndex(tk.Canvas):
         self.bind("<Double-Button-1>", self.double_b1)
         self.bind("<MouseWheel>", self.mousewheel)
 
-    def basic_bindings(self, onoff = "enable"):
-        if onoff == "enable":
+    def basic_bindings(self, enable = True):
+        if enable:
             self.bind("<Motion>", self.mouse_motion)
             self.bind("<ButtonPress-1>", self.b1_press)
             self.bind("<B1-Motion>", self.b1_motion)
             self.bind("<ButtonRelease-1>", self.b1_release)
             self.bind("<Double-Button-1>", self.double_b1)
             self.bind("<MouseWheel>", self.mousewheel)
-        elif onoff == "disable":
+            self.bind(self.MT.get_rc_binding(), self.rc)
+        else:
             self.unbind("<Motion>")
             self.unbind("<ButtonPress-1>")
             self.unbind("<B1-Motion>")
             self.unbind("<ButtonRelease-1>")
             self.unbind("<Double-Button-1>")
             self.unbind("<MouseWheel>")
+            self.unbind(self.MT.get_rc_binding())
 
     def mousewheel(self, event = None):
         if event.num == 5 or event.delta == -120:
@@ -130,6 +135,10 @@ class RowIndex(tk.Canvas):
         self.config(width = new_width)
         if set_TL:
             self.TL.set_dimensions(new_w = new_width)
+        try:
+            self.MT.recreate_all_selection_boxes()
+        except:
+            pass
 
     def enable_bindings(self, binding):
         if binding == "row_width_resize":
@@ -179,18 +188,22 @@ class RowIndex(tk.Canvas):
         self.focus_set()
         if self.MT.identify_row(y = event.y, allow_end = False) is None:
             self.MT.deselect("all")
-            self.ri_rc_popup_menu.tk_popup(event.x_root, event.y_root)
+            if self.MT.rc_popup_menus_enabled:
+                self.ri_rc_popup_menu.tk_popup(event.x_root, event.y_root)
         elif self.row_selection_enabled and all(v is None for v in (self.CH.rsz_h, self.CH.rsz_w, self.rsz_h, self.rsz_w)):
             r = self.MT.identify_row(y = event.y)
             if r < len(self.MT.row_positions) - 1:
-                if self.MT.is_row_selected(r):
+                if self.MT.is_row_selected(r) and self.MT.rc_popup_menus_enabled:
                     self.ri_rc_popup_menu.tk_popup(event.x_root, event.y_root)
                 else:
                     if self.MT.single_selection_enabled:
                         self.select_row(r, redraw = True)
                     elif self.MT.toggle_selection_enabled:
                         self.toggle_select_row(r, redraw = True)
-                    self.ri_rc_popup_menu.tk_popup(event.x_root, event.y_root)
+                    if self.MT.rc_popup_menus_enabled:
+                        self.ri_rc_popup_menu.tk_popup(event.x_root, event.y_root)
+        if self.extra_rc_func is not None:
+            self.extra_rc_func(event)
 
     def shift_b1_press(self, event):
         y = event.y
@@ -603,23 +616,27 @@ class RowIndex(tk.Canvas):
             xend = self.current_width - 6
             self.row_width_resize_bbox = (self.current_width - 5, y1, self.current_width, y2)
             if self.height_resizing_enabled:
-                for r in range(start_row + 1,end_row):
+                for r in range(start_row + 1, end_row):
                     y = self.MT.row_positions[r]
                     self.visible_row_dividers.append((1, y - 4, xend, y + 4))
                     self.create_line(0, y, self.current_width, y, fill = self.grid_color, width = 1, tags = ("h", f"{r}"))
             else:
-                for r in range(start_row + 1,end_row):
+                for r in range(start_row + 1, end_row):
                     y = self.MT.row_positions[r]
                     self.create_line(0, y, self.current_width, y, fill = self.grid_color, width = 1, tags = ("h", f"{r}"))
             sb = y2 + 2
             c_2 = self.selected_cells_background if self.selected_cells_background.startswith("#") else Color_Map_[self.selected_cells_background]
             c_3 = self.selected_rows_bg if self.selected_rows_bg.startswith("#") else Color_Map_[self.selected_rows_bg]
+            if not self.MT.my_row_index and not isinstance(self.MT.my_row_index, int) and self.auto_resize_width:
+                new_w = self.MT.GetTextWidth(f"{end_row}") + 14
+                if self.current_width != new_w:
+                    self.set_width(new_w, set_TL = True)
             if self.align == "center":
                 mw = self.current_width - 7
                 x = floor(mw / 2)
                 for r in range(start_row, end_row - 1):
                     fr = self.MT.row_positions[r]
-                    sr = self.MT.row_positions[r+1]
+                    sr = self.MT.row_positions[r + 1]
                     if sr > sb:
                         sr = sb
                     if r in self.highlighted_cells and r in actual_selected_rows:
@@ -689,7 +706,7 @@ class RowIndex(tk.Canvas):
                             stl = 1
                         y += (stl * self.MT.xtra_lines_increment)
                         if y + self.MT.half_txt_h < sr:
-                            for i in range(stl,len(lns)):
+                            for i in range(stl, len(lns)):
                                 txt = lns[i]
                                 t = self.create_text(x, y, text = txt, fill = tf, font = self.MT.my_font, anchor = "center", tags = "t")
                                 wd = self.bbox(t)
@@ -715,7 +732,7 @@ class RowIndex(tk.Canvas):
             elif self.align == "w":
                 mw = self.current_width - 7
                 x = 7
-                for r in range(start_row,end_row - 1):
+                for r in range(start_row, end_row - 1):
                     fr = self.MT.row_positions[r]
                     sr = self.MT.row_positions[r + 1]
                     if sr > sb:
