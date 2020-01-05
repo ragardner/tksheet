@@ -1,3 +1,18 @@
+### Version 4.2.6
+ - Fix bug with insert row
+ - Deprecate `change_color()` use `set_options()` instead
+ - Fix display bug where resizing row index width or header height would result in small selection boxes
+ - Rework popup menus, use `enable_bindings()` with `"right_click_popup_menu"` to make them work again
+ - Allow additional binding of right click to a function alongside `Sheet()` popup menus
+ - Add function `get_sheet_data()`
+ - Add `x_scrollbar` and `y_scrollbar` to `show()`, `hide()` and `Sheet()` startup
+ - Removed `show` argument from startup, added `show_table`, default is `True`
+ - Add option to automatically resize row index width when user has not set new indexes, default is `True`
+ - Rework the top left rectangle and add select all on left click if drag selection is enabled
+ - Change appearance of popup menus
+ - Change popup menu color for dark theme
+ - Fix wrong popup menu on right click with selected rows/columns
+
 ### Version 4.2.5
  - Fix bug where highlighted background or foreground might not be in the correct column when displaying a subset of columns
  - Change colors of selected rows and columns
