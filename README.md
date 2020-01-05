@@ -6,6 +6,9 @@ Python 3.6+ tkinter table widget for displaying tabular data
 pip install tksheet
 ```
 
+### [Version release notes](https://github.com/ragardner/tksheet/blob/master/RELEASE_NOTES.md)
+### [Documentation](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md) (unfinished)
+
 ### Features
  - Display and modify tabular data
  - Stores its display data as a Python list of lists, sublists being rows
@@ -18,8 +21,6 @@ pip install tksheet
  - Change any colors in the sheet
  - Left or Centre text alignment
  - Cell elements can be any class with a `str` method
-
-### [Documentation](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md) ### [Version release notes](https://github.com/ragardner/tksheet/blob/master/RELEASE_NOTES.md)
 
 Work on this repository is ongoing, improvements in usability, functionality and finally documentation
 
