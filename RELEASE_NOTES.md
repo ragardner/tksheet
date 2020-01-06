@@ -1,3 +1,6 @@
+### Version 4.2.9
+ - Fix typo in popup menu
+
 ### Version 4.2.8
  - Improve performance of drag selection
  - Improve `row_index()` and `headers()` functions, add examples
