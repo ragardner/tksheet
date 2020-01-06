@@ -80,7 +80,7 @@ outline_color = "gray2",
 theme = "light")
 ```
 
-You can change these settings after initialization using the `set_options()` function, except for `max_undos` which can only be set at init
+You can change these settings after initialization using the `set_options()` function or other functions contained within `_tksheet.py`, except for `max_undos` which can only be set at init
 
 Documentation not finished...
 
