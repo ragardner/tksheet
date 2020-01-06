@@ -1265,7 +1265,7 @@ class MainTable(tk.Canvas):
                                            activeforeground = self.popup_menu_highlight_fg,
                                            command = self.ctrl_x)
             #self.rc_popup_menu.add_separator()
-            self.CH.ch_rc_popup_menu.add_command(label = "Cut Contents Ctrl+X)",
+            self.CH.ch_rc_popup_menu.add_command(label = "Cut Contents Ctrl+X",
                                            font = self.popup_menu_font,
                                            foreground = self.popup_menu_fg,
                                            background = self.popup_menu_bg,
