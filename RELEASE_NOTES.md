@@ -1,3 +1,6 @@
+### Version 4.2.7
+ - Fix bug with undo deletion
+
 ### Version 4.2.6
  - Fix bug with insert row
  - Deprecate `change_color()` use `set_options()` instead
