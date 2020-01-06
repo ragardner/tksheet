@@ -46,8 +46,8 @@ class demo(tk.Tk):
         self.sheet_demo = Sheet(self,
                                 height = 500,
                                 width = 700) #for full startup options see DOCUMENTATION.md
-        self.sheet_demo.enable_bindings(("single",
-                                         "drag_select",
+        self.sheet_demo.enable_bindings(("single_select", #"single_select" or "toggle_select"
+                                         "drag_select",   #enables shift click selection as well
                                          "column_drag_and_drop",
                                          "row_drag_and_drop",
                                          "column_select",
@@ -91,7 +91,7 @@ class demo(tk.Tk):
 
         # __________ SETTING OR RESETTING TABLE DATA __________
         
-        self.data = [[f"Row {r} Column {c}" for c in range(30)] for r in range(1000)]
+        self.data = [[f"Row {r} Column {c}" for c in range(30)] for r in range(200)]
         self.sheet_demo.data_reference(self.data)
 
         # __________ BINDING A FUNCTION TO USER SELECTS CELL __________
@@ -121,8 +121,17 @@ class demo(tk.Tk):
 
         # __________ SETTING HEADERS __________
 
-        #self.headers = [f"Header {c}" for c in range(30)]
-        #self.sheet_demo.headers(self.headers)
+        #self.sheet_demo.headers((f"Header {c}" for c in range(30))) #any iterable works
+        #self.sheet_demo.headers("Change header example", 2)
+        #print (self.sheet_demo.headers())
+        #print (self.sheet_demo.headers(index = 2))
+
+        # __________ SETTING ROW INDEX __________
+
+        #self.sheet_demo.row_index((f"Row {r}" for r in range(200))) #any iterable works
+        #self.sheet_demo.row_index("Change index example", 2)
+        #print (self.sheet_demo.row_index())
+        #print (self.sheet_demo.row_index(index = 2))
 
         # __________ INSERTING A ROW __________
 
@@ -208,6 +217,7 @@ class demo(tk.Tk):
         
 app = demo()
 app.mainloop()
+
 
 ```
 

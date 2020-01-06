@@ -1,3 +1,8 @@
+### Version 4.2.8
+ - Improve performance of drag selection
+ - Improve `row_index()` and `headers()` functions, add examples
+ - Add `"single_select"` and `"toggle_select"` to `enable_bindings()`
+
 ### Version 4.2.7
  - Fix bug with undo deletion
 
