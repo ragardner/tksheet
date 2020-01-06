@@ -760,6 +760,7 @@ class MainTable(tk.Canvas):
 
     def see(self, r = None, c = None, keep_yscroll = False, keep_xscroll = False, bottom_right_corner = False, check_cell_visibility = True,
             redraw = True):
+        need_redraw = False
         if check_cell_visibility:
             visible = self.cell_is_completely_visible(r = r, c = c)
         else:
@@ -772,27 +773,29 @@ class MainTable(tk.Canvas):
                     self.yview(*args)
                     self.RI.yview(*args)
                     if redraw:
-                        self.main_table_redraw_grid_and_text(redraw_row_index = True)
+                        need_redraw = True
                 if c is not None and not keep_xscroll:
                     x = self.col_positions[c + 1] + 1 - self.winfo_width()
                     args = ("moveto",x / (self.col_positions[-1] + 150))
                     self.xview(*args)
                     self.CH.xview(*args)
                     if redraw:
-                        self.main_table_redraw_grid_and_text(redraw_header = True)
+                        need_redraw = True
             else:
                 if r is not None and not keep_yscroll:
                     args = ("moveto", self.row_positions[r] / (self.row_positions[-1] + 100))
                     self.yview(*args)
                     self.RI.yview(*args)
                     if redraw:
-                        self.main_table_redraw_grid_and_text(redraw_row_index = True)
+                        need_redraw = True
                 if c is not None and not keep_xscroll:
                     args = ("moveto", self.col_positions[c] / (self.col_positions[-1] + 150))
                     self.xview(*args)
                     self.CH.xview(*args)
                     if redraw:
-                        self.main_table_redraw_grid_and_text(redraw_header = True)
+                        need_redraw = True
+        if redraw and need_redraw:
+            self.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
 
     def cell_is_completely_visible(self, r = 0, c = 0, cell_coords = None):
         cx1, cy1, cx2, cy2 = self.get_canvas_visible_area()
@@ -1413,10 +1416,10 @@ class MainTable(tk.Canvas):
             self.enable_bindings_internal(bindings.lower())
 
     def enable_bindings_internal(self, binding):
-        if binding == "single" or binding == "single_selection_mode":
+        if binding in ("single", "single_selection_mode", "single_select"):
             self.single_selection_enabled = True
             self.toggle_selection_enabled = False
-        elif binding == "toggle" or binding == "toggle_selection_mode":
+        elif binding in ("toggle", "toggle_selection_mode", "toggle_select"):
             self.toggle_selection_enabled = True
             self.single_selection_enabled = False
         elif binding == "drag_select":
@@ -1680,7 +1683,8 @@ class MainTable(tk.Canvas):
         
     def b1_motion(self, event):
         x1, y1, x2, y2 = self.get_canvas_visible_area()
-        if self.drag_selection_enabled and all(v is None for v in (self.RI.rsz_h, self.RI.rsz_w, self.CH.rsz_h, self.CH.rsz_w)): 
+        if self.drag_selection_enabled and all(v is None for v in (self.RI.rsz_h, self.RI.rsz_w, self.CH.rsz_h, self.CH.rsz_w)):
+            redraw = False
             end_row = self.identify_row(y = event.y)
             end_col = self.identify_col(x = event.x)
             currently_selected = self.currently_selected()
@@ -1702,27 +1706,32 @@ class MainTable(tk.Canvas):
                 try:
                     self.xview_scroll(1, "units")
                     self.CH.xview_scroll(1, "units")
+                    redraw = True
                 except:
                     pass
             elif event.x < 0:
                 try:
                     self.xview_scroll(-1, "units")
                     self.CH.xview_scroll(-1, "units")
+                    redraw = True
                 except:
                     pass
             if event.y > self.winfo_height():
                 try:
                     self.yview_scroll(1, "units")
                     self.RI.yview_scroll(1, "units")
+                    redraw = True
                 except:
                     pass
             elif event.y < 0:
                 try:
                     self.yview_scroll(-1, "units")
                     self.RI.yview_scroll(-1, "units")
+                    redraw = True
                 except:
                     pass
-            self.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
+            if redraw:
+                self.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
         elif self.RI.width_resizing_enabled and self.RI.rsz_w is not None and self.RI.currently_resizing_width:
             self.RI.delete("rwl")
             self.delete("rwl")
@@ -2356,6 +2365,11 @@ class MainTable(tk.Canvas):
                 self.my_hdrs = newheaders
             elif isinstance(index, int):
                 self.my_hdrs[index] = f"{newheaders}"
+            elif not isinstance(newheaders, (list, tuple, int)) and index is None:
+                try:
+                    self.my_hdrs = list(newheaders)
+                except:
+                    raise ValueError("New header must be iterable or int (use int to use a row as the header")
         else:
             if index is not None:
                 if isinstance(index, int):
@@ -2364,17 +2378,24 @@ class MainTable(tk.Canvas):
                 return self.my_hdrs
 
     def row_index(self, newindex = None, index = None):
-        if isinstance(newindex, int):
-            self.my_row_index = newindex
-        else:
+        if newindex is not None:
             if isinstance(newindex, (list, tuple)):
-                self.my_row_index = newindex
+                self.my_row_index = list(newindex) if isinstance(newindex, tuple) else newindex
+            elif isinstance(newindex, int):
+                self.my_row_index = index
+            elif isinstance(index, int):
+                self.my_row_index[index] = f"{newindex}"
+            elif not isinstance(newindex, (list, tuple, int)) and index is None:
+                try:
+                    self.my_row_index = list(newindex)
+                except:
+                    raise ValueError("New index must be iterable or int (use int to use a column as the index")
+        else:
+            if index is not None:
+                if isinstance(index, int):
+                    return self.my_row_index[index]
             else:
-                if index is not None:
-                    if isinstance(index, int):
-                        return self.my_row_index[index]
-                else:
-                    return self.my_row_index
+                return self.my_row_index
 
     def get_canvas_visible_area(self):
         return self.canvasx(0), self.canvasy(0), self.canvasx(self.winfo_width()), self.canvasy(self.winfo_height())

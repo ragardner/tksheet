@@ -1216,7 +1216,7 @@ class Sheet(tk.Frame):
         return self.MT.headers(newheaders, index)
         
     def row_index(self, newindex = None, index = None):
-        return self.MT.row_index(newindex,index)
+        return self.MT.row_index(newindex, index)
 
     def reset_undos(self):
         self.MT.undo_storage = deque(maxlen = 20)
