@@ -515,7 +515,7 @@ class MainTable(tk.Canvas):
                     alltags = self.gettags(item)
                     box = tuple(int(e) for e in alltags[1].split("_") if e)
                     if self.undo_enabled:
-                        if alltags[0] == "CellSelectFill":
+                        if alltags[0] in ("CellSelectFill", "Current_Outside"):
                             boxes.append((box, "cells"))
                         elif alltags[0] == "ColSelectFill":
                             boxes.append((box, "cols"))
@@ -532,7 +532,7 @@ class MainTable(tk.Canvas):
                     alltags = self.gettags(item)
                     box = tuple(int(e) for e in alltags[1].split("_") if e)
                     if self.undo_enabled:
-                        if alltags[0] == "CellSelectFill":
+                        if alltags[0] in ("CellSelectFill", "Current_Outside"):
                             boxes.append((box, "cells"))
                         elif alltags[0] == "ColSelectFill":
                             boxes.append((box, "cols"))
@@ -545,7 +545,7 @@ class MainTable(tk.Canvas):
                                 undo_storage[(r, self.displayed_columns[c])] = f"{self.data_ref[r][self.displayed_columns[c]]}"
                             self.data_ref[r][self.displayed_columns[c]] = ""
             if self.undo_enabled:
-                self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells", undo_storage, tuple(boxes), currently_selected))))
+                self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells", undo_storage, boxes, currently_selected))))
             self.refresh()
             if self.extra_delete_key_func is not None:
                 self.extra_delete_key_func()
