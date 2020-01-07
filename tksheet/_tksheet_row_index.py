@@ -109,7 +109,7 @@ class RowIndex(tk.Canvas):
             self.bind("<ButtonRelease-1>", self.b1_release)
             self.bind("<Double-Button-1>", self.double_b1)
             self.bind("<MouseWheel>", self.mousewheel)
-            self.bind(self.MT.get_rc_binding(), self.rc)
+            self.bind(get_rc_binding(), self.rc)
         else:
             self.unbind("<Motion>")
             self.unbind("<ButtonPress-1>")
@@ -117,7 +117,7 @@ class RowIndex(tk.Canvas):
             self.unbind("<ButtonRelease-1>")
             self.unbind("<Double-Button-1>")
             self.unbind("<MouseWheel>")
-            self.unbind(self.MT.get_rc_binding())
+            self.unbind(get_rc_binding())
 
     def mousewheel(self, event = None):
         if event.num == 5 or event.delta == -120:
