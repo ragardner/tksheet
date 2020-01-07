@@ -1,3 +1,6 @@
+### Version 4.3.1
+ - Fix highlighted cells not blending with drag selection
+
 ### Version 4.3.0
  - Fix basic bindings bug
 
