@@ -8,8 +8,9 @@ class demo(tk.Tk):
         self.grid_columnconfigure(0, weight = 1)
         self.grid_rowconfigure(0, weight = 1)
         self.sheet_demo = Sheet(self,
+                                #data = [[f"Row {r} Column {c}" for c in range(30)] for r in range(200)], #to set sheet data at startup
                                 height = 500,
-                                width = 700) #for full startup options see DOCUMENTATION.md
+                                width = 700) #For full startup arguments/parameters see DOCUMENTATION.md
         self.sheet_demo.enable_bindings(("single_select", #"single_select" or "toggle_select"
                                          "drag_select",   #enables shift click selection as well
                                          "column_drag_and_drop",
@@ -53,10 +54,11 @@ class demo(tk.Tk):
         self.sheet_demo.highlight_cells(column = 0, bg = "#ed4337", fg = "white", canvas = "header")
 
         # __________ SETTING OR RESETTING TABLE DATA __________
-        
-        self.data = [[f"Row {r} Column {c}" for c in range(30)] for r in range(200)]
-        self.sheet_demo.data_reference(self.data)
 
+        #.set_sheet_data() function returns the object you use as argument
+        #verify checks if your data is a list of lists, raises error if not
+        self.data = self.sheet_demo.set_sheet_data([[f"Row {r} Column {c}" for c in range(30)] for r in range(200)], verify = False)
+        
         # __________ BINDING A FUNCTION TO USER SELECTS CELL __________
 
         self.sheet_demo.extra_bindings([
