@@ -1684,7 +1684,6 @@ class MainTable(tk.Canvas):
     def b1_motion(self, event):
         x1, y1, x2, y2 = self.get_canvas_visible_area()
         if self.drag_selection_enabled and all(v is None for v in (self.RI.rsz_h, self.RI.rsz_w, self.CH.rsz_h, self.CH.rsz_w)):
-            redraw = False
             end_row = self.identify_row(y = event.y)
             end_col = self.identify_col(x = event.x)
             currently_selected = self.currently_selected()
@@ -1706,32 +1705,27 @@ class MainTable(tk.Canvas):
                 try:
                     self.xview_scroll(1, "units")
                     self.CH.xview_scroll(1, "units")
-                    redraw = True
                 except:
                     pass
             elif event.x < 0:
                 try:
                     self.xview_scroll(-1, "units")
                     self.CH.xview_scroll(-1, "units")
-                    redraw = True
                 except:
                     pass
             if event.y > self.winfo_height():
                 try:
                     self.yview_scroll(1, "units")
                     self.RI.yview_scroll(1, "units")
-                    redraw = True
                 except:
                     pass
             elif event.y < 0:
                 try:
                     self.yview_scroll(-1, "units")
                     self.RI.yview_scroll(-1, "units")
-                    redraw = True
                 except:
                     pass
-            if redraw:
-                self.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
+            self.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
         elif self.RI.width_resizing_enabled and self.RI.rsz_w is not None and self.RI.currently_resizing_width:
             self.RI.delete("rwl")
             self.delete("rwl")
@@ -1758,7 +1752,6 @@ class MainTable(tk.Canvas):
                     y = int(self.hdr_min_rh)
                 self.new_header_height = y
                 self.CH.create_line(x1, y, x2, y, width = 1, fill = self.RI.resizing_line_color, tags = "rhl")
-        
         if self.extra_b1_motion_func is not None:
             self.extra_b1_motion_func(event)
         
