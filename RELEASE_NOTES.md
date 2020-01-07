@@ -1,3 +1,8 @@
+### Version 4.3.3
+ - Add function `set_sheet_data()` use argument `verify = False` to prevent verification of types
+ - Add startup arguments `row_drag_and_drop_perform` and `column_drag_and_drop_perform` and add to `set_options()`
+ - Fix double selection with drag and drop rows
+
 ### Version 4.3.2
  - Fix some highlighted cells not being reset when displaying subset of columns
 
