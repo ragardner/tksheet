@@ -233,7 +233,7 @@ class MainTable(tk.Canvas):
                               dash = (25, 5),
                               width = 2,
                               outline = self.selected_cells_border_col,
-                              tags = "ctrl")
+                              tag = "ctrl")
         self.tag_raise("ctrl")
         self.after(1000, self.del_ctrl_outline)
 
@@ -1648,12 +1648,12 @@ class MainTable(tk.Canvas):
             self.RI.currently_resizing_width = True
             self.new_row_width = self.RI.current_width + event.x
             x = self.canvasx(event.x)
-            self.create_line(x, y1, x, y2, width = 1, fill = self.RI.resizing_line_color, tags = "rwl")
+            self.create_line(x, y1, x, y2, width = 1, fill = self.RI.resizing_line_color, tag = "rwl")
         elif self.CH.height_resizing_enabled and self.CH.rsz_w is None and self.CH.rsz_h == True:
             self.CH.currently_resizing_height = True
             self.new_header_height = self.CH.current_height + event.y
             y = self.canvasy(event.y)
-            self.create_line(x1, y, x2, y, width = 1, fill = self.RI.resizing_line_color, tags = "rhl")
+            self.create_line(x1, y, x2, y, width = 1, fill = self.RI.resizing_line_color, tag = "rhl")
         if self.extra_b1_press_func is not None:
             self.extra_b1_press_func(event)
 
@@ -1732,26 +1732,26 @@ class MainTable(tk.Canvas):
             if event.x >= 0:
                 x = self.canvasx(event.x)
                 self.new_row_width = self.RI.current_width + event.x
-                self.create_line(x, y1, x, y2, width = 1, fill = self.RI.resizing_line_color, tags = "rwl")
+                self.create_line(x, y1, x, y2, width = 1, fill = self.RI.resizing_line_color, tag = "rwl")
             else:
                 x = self.RI.current_width + event.x
                 if x < self.min_cw:
                     x = int(self.min_cw)
                 self.new_row_width = x
-                self.RI.create_line(x, y1, x, y2, width = 1, fill = self.RI.resizing_line_color, tags = "rwl")
+                self.RI.create_line(x, y1, x, y2, width = 1, fill = self.RI.resizing_line_color, tag = "rwl")
         elif self.CH.height_resizing_enabled and self.CH.rsz_h is not None and self.CH.currently_resizing_height:
             self.CH.delete("rhl")
             self.delete("rhl")
             if event.y >= 0:
                 y = self.canvasy(event.y)
                 self.new_header_height = self.CH.current_height + event.y
-                self.create_line(x1, y, x2, y, width = 1, fill = self.RI.resizing_line_color, tags = "rhl")
+                self.create_line(x1, y, x2, y, width = 1, fill = self.RI.resizing_line_color, tag = "rhl")
             else:
                 y = self.CH.current_height + event.y
                 if y < self.hdr_min_rh:
                     y = int(self.hdr_min_rh)
                 self.new_header_height = y
-                self.CH.create_line(x1, y, x2, y, width = 1, fill = self.RI.resizing_line_color, tags = "rhl")
+                self.CH.create_line(x1, y, x2, y, width = 1, fill = self.RI.resizing_line_color, tag = "rhl")
         if self.extra_b1_motion_func is not None:
             self.extra_b1_motion_func(event)
         
@@ -2440,10 +2440,10 @@ class MainTable(tk.Canvas):
             sb = y2 + 2
             for r in range(start_row - 1, end_row):
                 y = self.row_positions[r]
-                self.create_line(x1, y, x_stop, y, fill= self.grid_color, width = 1, tags = "g")
+                self.create_line(x1, y, x_stop, y, fill= self.grid_color, width = 1, tag = "g")
             for c in range(start_col - 1, end_col):
                 x = self.col_positions[c]
-                self.create_line(x, y1, x, y_stop, fill = self.grid_color, width = 1, tags = "g")
+                self.create_line(x, y1, x, y_stop, fill = self.grid_color, width = 1, tag = "g")
             if start_row > 0:
                 start_row -= 1
             if start_col > 0:
@@ -2478,7 +2478,7 @@ class MainTable(tk.Canvas):
                                     fill = (f"#{int((int(c_1[1:3], 16) + c_3_[0]) / 2):02X}" +
                                             f"{int((int(c_1[3:5], 16) + c_3_[1]) / 2):02X}" +
                                             f"{int((int(c_1[5:], 16) + c_3_[2]) / 2):02X}"),
-                                    outline = "", tags = "hi")
+                                    outline = "", tag = "hi")
                                 tf = self.selected_cols_fg if self.highlighted_cells[(r, c)][1] is None else self.highlighted_cells[(r, c)][1]
                             elif (r, c) in self.highlighted_cells and r in actual_selected_rows:
                                 c_1 = self.highlighted_cells[(r, c)][0] if self.highlighted_cells[(r, c)][0].startswith("#") else Color_Map_[self.highlighted_cells[(r, c)][0]]
@@ -2489,7 +2489,7 @@ class MainTable(tk.Canvas):
                                     fill = (f"#{int((int(c_1[1:3], 16) + c_4_[0]) / 2):02X}" +
                                             f"{int((int(c_1[3:5], 16) + c_4_[1]) / 2):02X}" +
                                             f"{int((int(c_1[5:], 16) + c_4_[2]) / 2):02X}"),
-                                    outline = "", tags = "hi")
+                                    outline = "", tag = "hi")
                                 tf = self.selected_rows_fg if self.highlighted_cells[(r, c)][1] is None else self.highlighted_cells[(r, c)][1]
                             elif (r, c) in self.highlighted_cells and (r, c) in selected_cells:
                                 c_1 = self.highlighted_cells[(r, c)][0] if self.highlighted_cells[(r, c)][0].startswith("#") else Color_Map_[self.highlighted_cells[(r, c)][0]]
@@ -2500,7 +2500,7 @@ class MainTable(tk.Canvas):
                                     fill = (f"#{int((int(c_1[1:3], 16) + c_2_[0]) / 2):02X}" +
                                             f"{int((int(c_1[3:5], 16) + c_2_[1]) / 2):02X}" +
                                             f"{int((int(c_1[5:], 16) + c_2_[2]) / 2):02X}"),
-                                    outline = "", tags = "hi")
+                                    outline = "", tag = "hi")
                                 tf = self.selected_cells_foreground if self.highlighted_cells[(r, c)][1] is None else self.highlighted_cells[(r, c)][1]
                             elif c in actual_selected_cols:
                                 tf = self.selected_cols_fg
@@ -2509,7 +2509,7 @@ class MainTable(tk.Canvas):
                             elif (r, c) in selected_cells:
                                 tf = self.selected_cells_foreground
                             elif (r, c) in self.highlighted_cells and r not in actual_selected_rows and c not in actual_selected_cols:
-                                cr_(fc + 1, fr + 1, sc, sr, fill = self.highlighted_cells[(r, c)][0], outline = "", tags = "hi")
+                                cr_(fc + 1, fr + 1, sc, sr, fill = self.highlighted_cells[(r, c)][0], outline = "", tag = "hi")
                                 tf = self.text_color if self.highlighted_cells[(r, c)][1] is None else self.highlighted_cells[(r, c)][1]
                             else:
                                 tf = self.text_color
@@ -2524,7 +2524,7 @@ class MainTable(tk.Canvas):
                                 y = fr + self.fl_ins
                                 if y + self.half_txt_h > y1:
                                     fl = lns[0]
-                                    t = ct_(x, y, text = fl, fill = tf, font = self.my_font, anchor = "w", tags = "t")
+                                    t = ct_(x, y, text = fl, fill = tf, font = self.my_font, anchor = "w", tag = "t")
                                     wd = self.bbox(t)
                                     wd = wd[2] - wd[0]
                                     if wd > mw:
@@ -2544,7 +2544,7 @@ class MainTable(tk.Canvas):
                                     if y + self.half_txt_h < sr:
                                         for i in range(stl, len(lns)):
                                             txt = lns[i]
-                                            t = ct_(x, y, text = txt, fill = tf, font = self.my_font, anchor = "w", tags = "t")
+                                            t = ct_(x, y, text = txt, fill = tf, font = self.my_font, anchor = "w", tag = "t")
                                             wd = self.bbox(t)
                                             wd = wd[2] - wd[0]
                                             if wd > mw:
@@ -2582,7 +2582,7 @@ class MainTable(tk.Canvas):
                                     fill = (f"#{int((int(c_1[1:3], 16) + c_3_[0]) / 2):02X}" +
                                             f"{int((int(c_1[3:5], 16) + c_3_[1]) / 2):02X}" +
                                             f"{int((int(c_1[5:], 16) + c_3_[2]) / 2):02X}"),
-                                    outline = "", tags = "hi")
+                                    outline = "", tag = "hi")
                                 tf = self.selected_cols_fg if self.highlighted_cells[(r, c)][1] is None else self.highlighted_cells[(r, c)][1]
                             elif (r, c) in self.highlighted_cells and r in actual_selected_rows:
                                 c_1 = self.highlighted_cells[(r, c)][0] if self.highlighted_cells[(r, c)][0].startswith("#") else Color_Map_[self.highlighted_cells[(r, c)][0]]
@@ -2593,7 +2593,7 @@ class MainTable(tk.Canvas):
                                     fill = (f"#{int((int(c_1[1:3], 16) + c_4_[0]) / 2):02X}" +
                                             f"{int((int(c_1[3:5], 16) + c_4_[1]) / 2):02X}" +
                                             f"{int((int(c_1[5:], 16) + c_4_[2]) / 2):02X}"),
-                                    outline = "", tags = "hi")
+                                    outline = "", tag = "hi")
                                 tf = self.selected_rows_fg if self.highlighted_cells[(r, c)][1] is None else self.highlighted_cells[(r, c)][1]
                             elif (r, c) in self.highlighted_cells and (r, c) in selected_cells:
                                 c_1 = self.highlighted_cells[(r, c)][0] if self.highlighted_cells[(r, c)][0].startswith("#") else Color_Map_[self.highlighted_cells[(r, c)][0]]
@@ -2604,7 +2604,7 @@ class MainTable(tk.Canvas):
                                     fill = (f"#{int((int(c_1[1:3], 16) + c_2_[0]) / 2):02X}" +
                                             f"{int((int(c_1[3:5], 16) + c_2_[1]) / 2):02X}" +
                                             f"{int((int(c_1[5:], 16) + c_2_[2]) / 2):02X}"),
-                                    outline = "", tags = "hi")
+                                    outline = "", tag = "hi")
                                 tf = self.selected_cells_foreground if self.highlighted_cells[(r, c)][1] is None else self.highlighted_cells[(r, c)][1]
                             elif c in actual_selected_cols:
                                 tf = self.selected_cols_fg
@@ -2613,7 +2613,7 @@ class MainTable(tk.Canvas):
                             elif (r, c) in selected_cells:
                                 tf = self.selected_cells_foreground
                             elif (r, c) in self.highlighted_cells and r not in actual_selected_rows and c not in actual_selected_cols:
-                                cr_(fc + 1, fr + 1, sc, sr, fill = self.highlighted_cells[(r, c)][0], outline = "", tags = "hi")
+                                cr_(fc + 1, fr + 1, sc, sr, fill = self.highlighted_cells[(r, c)][0], outline = "", tag = "hi")
                                 tf = self.text_color if self.highlighted_cells[(r, c)][1] is None else self.highlighted_cells[(r, c)][1]
                             else:
                                 tf = self.text_color
@@ -2628,7 +2628,7 @@ class MainTable(tk.Canvas):
                                 fl = lns[0]
                                 y = fr + self.fl_ins
                                 if y + self.half_txt_h > y1:
-                                    t = ct_(x, y, text = fl, fill = tf, font = self.my_font, anchor = "center", tags = "t")
+                                    t = ct_(x, y, text = fl, fill = tf, font = self.my_font, anchor = "center", tag = "t")
                                     wd = self.bbox(t)
                                     wd = wd[2] - wd[0]
                                     if wd > mw:
@@ -2654,7 +2654,7 @@ class MainTable(tk.Canvas):
                                     if y + self.half_txt_h < sr:
                                         for i in range(stl,len(lns)):
                                             txt = lns[i]
-                                            t = ct_(x, y, text = txt, fill = tf, font = self.my_font, anchor = "center", tags = "t")
+                                            t = ct_(x, y, text = txt, fill = tf, font = self.my_font, anchor = "center", tag = "t")
                                             wd = self.bbox(t)
                                             wd = wd[2] - wd[0]
                                             if wd > mw:
@@ -2698,7 +2698,7 @@ class MainTable(tk.Canvas):
                                     fill = (f"#{int((int(c_1[1:3], 16) + c_3_[0]) / 2):02X}" +
                                             f"{int((int(c_1[3:5], 16) + c_3_[1]) / 2):02X}" +
                                             f"{int((int(c_1[5:], 16) + c_3_[2]) / 2):02X}"),
-                                    outline = "", tags = "hi")
+                                    outline = "", tag = "hi")
                                 tf = self.selected_cols_fg if self.highlighted_cells[(r, self.displayed_columns[c])][1] is None else self.highlighted_cells[(r, self.displayed_columns[c])][1]
                             elif (r, self.displayed_columns[c]) in self.highlighted_cells and r in actual_selected_rows:
                                 c_1 = self.highlighted_cells[(r, self.displayed_columns[c])][0] if self.highlighted_cells[(r, self.displayed_columns[c])][0].startswith("#") else Color_Map_[self.highlighted_cells[(r, self.displayed_columns[c])][0]]
@@ -2709,7 +2709,7 @@ class MainTable(tk.Canvas):
                                     fill = (f"#{int((int(c_1[1:3], 16) + c_4_[0]) / 2):02X}" +
                                             f"{int((int(c_1[3:5], 16) + c_4_[1]) / 2):02X}" +
                                             f"{int((int(c_1[5:], 16) + c_4_[2]) / 2):02X}"),
-                                    outline = "", tags = "hi")
+                                    outline = "", tag = "hi")
                                 tf = self.selected_rows_fg if self.highlighted_cells[(r, self.displayed_columns[c])][1] is None else self.highlighted_cells[(r, self.displayed_columns[c])][1]
                             elif (r, self.displayed_columns[c]) in self.highlighted_cells and (r, c) in selected_cells:
                                 c_1 = self.highlighted_cells[(r, self.displayed_columns[c])][0] if self.highlighted_cells[(r, self.displayed_columns[c])][0].startswith("#") else Color_Map_[self.highlighted_cells[(r, self.displayed_columns[c])][0]]
@@ -2720,7 +2720,7 @@ class MainTable(tk.Canvas):
                                     fill = (f"#{int((int(c_1[1:3], 16) + c_2_[0]) / 2):02X}" +
                                             f"{int((int(c_1[3:5], 16) + c_2_[1]) / 2):02X}" +
                                             f"{int((int(c_1[5:], 16) + c_2_[2]) / 2):02X}"),
-                                    outline = "", tags = "hi")
+                                    outline = "", tag = "hi")
                                 tf = self.selected_cells_foreground if self.highlighted_cells[(r, self.displayed_columns[c])][1] is None else self.highlighted_cells[(r, self.displayed_columns[c])][1]
                             elif c in actual_selected_cols:
                                 tf = self.selected_cols_fg
@@ -2729,7 +2729,7 @@ class MainTable(tk.Canvas):
                             elif (r, c) in selected_cells:
                                 tf = self.selected_cells_foreground
                             elif (r, self.displayed_columns[c]) in self.highlighted_cells and r not in actual_selected_rows and c not in actual_selected_cols:
-                                cr_(fc + 1, fr + 1, sc, sr, fill = self.highlighted_cells[(r, self.displayed_columns[c])][0], outline = "")
+                                cr_(fc + 1, fr + 1, sc, sr, fill = self.highlighted_cells[(r, self.displayed_columns[c])][0], outline = "", tag = "hi")
                                 tf = self.text_color if self.highlighted_cells[(r, self.displayed_columns[c])][1] is None else self.highlighted_cells[(r, self.displayed_columns[c])][1]
                             else:
                                 tf = self.text_color
@@ -2744,7 +2744,7 @@ class MainTable(tk.Canvas):
                                 y = fr + self.fl_ins
                                 if y + self.half_txt_h > y1:
                                     fl = lns[0]
-                                    t = ct_(x, y, text = fl, fill = tf, font = self.my_font, anchor = "w", tags = "t")
+                                    t = ct_(x, y, text = fl, fill = tf, font = self.my_font, anchor = "w", tag = "t")
                                     wd = self.bbox(t)
                                     wd = wd[2] - wd[0]
                                     if wd > mw:
@@ -2763,7 +2763,7 @@ class MainTable(tk.Canvas):
                                     if y + self.half_txt_h < sr:
                                         for i in range(stl, len(lns)):
                                             txt = lns[i]
-                                            t = ct_(x, y, text = txt, fill = tf, font = self.my_font, anchor = "w", tags = "t")
+                                            t = ct_(x, y, text = txt, fill = tf, font = self.my_font, anchor = "w", tag = "t")
                                             wd = self.bbox(t)
                                             wd = wd[2] - wd[0]
                                             if wd > mw:
@@ -2800,7 +2800,7 @@ class MainTable(tk.Canvas):
                                     fill = (f"#{int((int(c_1[1:3], 16) + c_3_[0]) / 2):02X}" +
                                             f"{int((int(c_1[3:5], 16) + c_3_[1]) / 2):02X}" +
                                             f"{int((int(c_1[5:], 16) + c_3_[2]) / 2):02X}"),
-                                    outline = "", tags = "hi")
+                                    outline = "", tag = "hi")
                                 tf = self.selected_cols_fg if self.highlighted_cells[(r, self.displayed_columns[c])][1] is None else self.highlighted_cells[(r, self.displayed_columns[c])][1]
                             elif (r, self.displayed_columns[c]) in self.highlighted_cells and r in actual_selected_rows:
                                 c_1 = self.highlighted_cells[(r, self.displayed_columns[c])][0] if self.highlighted_cells[(r, self.displayed_columns[c])][0].startswith("#") else Color_Map_[self.highlighted_cells[(r, self.displayed_columns[c])][0]]
@@ -2811,7 +2811,7 @@ class MainTable(tk.Canvas):
                                     fill = (f"#{int((int(c_1[1:3], 16) + c_4_[0]) / 2):02X}" +
                                             f"{int((int(c_1[3:5], 16) + c_4_[1]) / 2):02X}" +
                                             f"{int((int(c_1[5:], 16) + c_4_[2]) / 2):02X}"),
-                                    outline = "", tags = "hi")
+                                    outline = "", tag = "hi")
                                 tf = self.selected_rows_fg if self.highlighted_cells[(r, self.displayed_columns[c])][1] is None else self.highlighted_cells[(r, self.displayed_columns[c])][1]
                             elif (r, self.displayed_columns[c]) in self.highlighted_cells and (r, c) in selected_cells:
                                 c_1 = self.highlighted_cells[(r, self.displayed_columns[c])][0] if self.highlighted_cells[(r, self.displayed_columns[c])][0].startswith("#") else Color_Map_[self.highlighted_cells[(r, self.displayed_columns[c])][0]]
@@ -2822,7 +2822,7 @@ class MainTable(tk.Canvas):
                                     fill = (f"#{int((int(c_1[1:3], 16) + c_2_[0]) / 2):02X}" +
                                             f"{int((int(c_1[3:5], 16) + c_2_[1]) / 2):02X}" +
                                             f"{int((int(c_1[5:], 16) + c_2_[2]) / 2):02X}"),
-                                    outline = "", tags = "hi")
+                                    outline = "", tag = "hi")
                                 tf = self.selected_cells_foreground if self.highlighted_cells[(r, self.displayed_columns[c])][1] is None else self.highlighted_cells[(r, self.displayed_columns[c])][1]
                             elif c in actual_selected_cols:
                                 tf = self.selected_cols_fg
@@ -2831,7 +2831,7 @@ class MainTable(tk.Canvas):
                             elif (r, c) in selected_cells:
                                 tf = self.selected_cells_foreground
                             elif (r, self.displayed_columns[c]) in self.highlighted_cells and r not in actual_selected_rows and c not in actual_selected_cols:
-                                cr_(fc + 1, fr + 1, sc, sr, fill = self.highlighted_cells[(r, self.displayed_columns[c])][0], outline = "")
+                                cr_(fc + 1, fr + 1, sc, sr, fill = self.highlighted_cells[(r, self.displayed_columns[c])][0], outline = "", tag = "hi")
                                 tf = self.text_color if self.highlighted_cells[(r, self.displayed_columns[c])][1] is None else self.highlighted_cells[(r, self.displayed_columns[c])][1]
                             else:
                                 tf = self.text_color
@@ -2846,7 +2846,7 @@ class MainTable(tk.Canvas):
                                 fl = lns[0]
                                 y = fr + self.fl_ins
                                 if y + self.half_txt_h > y1:
-                                    t = ct_(x, y, text = fl, fill = tf, font = self.my_font, anchor = "center", tags = "t")
+                                    t = ct_(x, y, text = fl, fill = tf, font = self.my_font, anchor = "center", tag = "t")
                                     wd = self.bbox(t)
                                     wd = wd[2] - wd[0]
                                     if wd > mw:
@@ -2872,7 +2872,7 @@ class MainTable(tk.Canvas):
                                     if y + self.half_txt_h < sr:
                                         for i in range(stl, len(lns)):
                                             txt = lns[i]
-                                            t = ct_(x, y, text = txt, fill = tf, font = self.my_font, anchor = "center", tags = "t")
+                                            t = ct_(x, y, text = txt, fill = tf, font = self.my_font, anchor = "center", tag = "t")
                                             wd = self.bbox(t)
                                             wd = wd[2] - wd[0]
                                             if wd > mw:
