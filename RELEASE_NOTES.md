@@ -1,3 +1,6 @@
+### Version 4.3.0
+ - Fix basic bindings bug
+
 ### Version 4.2.9
  - Fix typo in popup menu
 
