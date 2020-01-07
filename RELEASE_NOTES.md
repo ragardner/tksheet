@@ -1,3 +1,6 @@
+### Version 4.3.2
+ - Fix some highlighted cells not being reset when displaying subset of columns
+
 ### Version 4.3.1
  - Fix highlighted cells not blending with drag selection
 
