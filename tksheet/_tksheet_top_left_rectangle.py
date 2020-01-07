@@ -79,14 +79,14 @@ class TopLeftRectangle(tk.Canvas):
             self.bind("<B1-Motion>", self.b1_motion)
             self.bind("<ButtonRelease-1>", self.b1_release)
             self.bind("<Double-Button-1>", self.double_b1)
-            self.bind(self.MT.get_rc_binding(), self.rc)
+            self.bind(get_rc_binding(), self.rc)
         else:
             self.unbind("<Motion>")
             self.unbind("<ButtonPress-1>")
             self.unbind("<B1-Motion>")
             self.unbind("<ButtonRelease-1>")
             self.unbind("<Double-Button-1>")
-            self.unbind(self.MT.get_rc_binding())
+            self.unbind(get_rc_binding())
 
     def set_dimensions(self, new_w = None, new_h = None):
         if new_w:
