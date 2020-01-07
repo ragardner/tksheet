@@ -1963,7 +1963,7 @@ class MainTable(tk.Canvas):
         self.set_min_cw()
         self.CH.set_height(self.GetHdrLinesHeight(self.default_hh))
 
-    def data_reference(self, newdataref = None, total_cols = None, total_rows = None, reset_col_positions = True, reset_row_positions = True, redraw = False):
+    def data_reference(self, newdataref = None, total_cols = None, total_rows = None, reset_col_positions = True, reset_row_positions = True, redraw = False, return_id = True):
         if isinstance(newdataref, (list, tuple)):
             self.data_ref = newdataref
             self.undo_storage = deque(maxlen = 20)
@@ -1984,8 +1984,10 @@ class MainTable(tk.Canvas):
                 self.reset_row_positions()
             if redraw:
                 self.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
-        else:
+        if return_id:
             return id(self.data_ref)
+        else:
+            return self.data_ref
 
     def reset_col_positions(self):
         colpos = int(self.default_cw)
@@ -2528,7 +2530,6 @@ class MainTable(tk.Canvas):
                                     wd = self.bbox(t)
                                     wd = wd[2] - wd[0]
                                     if wd > mw:
-                                        #nl = int(mw * (len(fl) / wd)) - 1
                                         nl = int(len(fl) * (mw / wd)) - 1
                                         self.itemconfig(t, text = fl[:nl])
                                         wd = self.bbox(t)
@@ -2548,7 +2549,6 @@ class MainTable(tk.Canvas):
                                             wd = self.bbox(t)
                                             wd = wd[2] - wd[0]
                                             if wd > mw:
-                                                #nl = int(mw * (len(txt) / wd)) - 1
                                                 nl = int(len(txt) * (mw / wd)) - 1
                                                 self.itemconfig(t, text = txt[:nl])
                                                 wd = self.bbox(t)

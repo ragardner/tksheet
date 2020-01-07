@@ -35,6 +35,7 @@ class RowIndex(tk.Canvas):
                  row_index_select_row_fg = "white",
                  drag_and_drop_color = None,
                  resizing_line_color = None,
+                 row_drag_and_drop_perform = True,
                  auto_resize_width = True):
         tk.Canvas.__init__(self,
                            parentframe,
@@ -42,6 +43,7 @@ class RowIndex(tk.Canvas):
                            background = row_index_background,
                            highlightthickness = 0)
         self.parentframe = parentframe
+        self.row_drag_and_drop_perform = row_drag_and_drop_perform
         self.beingDrawnSelRect = None
         self.beingDrawnSelBorder = None
         self.extra_motion_func = None
@@ -444,27 +446,28 @@ class RowIndex(tk.Canvas):
                     r -= 1
                 if self.ri_extra_drag_drop_func is not None:
                     self.ri_extra_drag_drop_func(tuple(orig_selected_rows), int(r))
-                r_ = int(r)
-                if rm1end < r:
-                    r += 1
-                if rm1start > r:
-                    self.MT.data_ref[r:r] = self.MT.data_ref[rm1start:rm1end]
-                    self.MT.data_ref[rm2start:rm2end] = []
-                    if not isinstance(self.MT.my_row_index, int) and self.MT.my_row_index:
-                        try:
-                            self.MT.my_row_index[r:r] = self.MT.my_row_index[rm1start:rm1end]
-                            self.MT.my_row_index[rm2start:rm2end] = []
-                        except:
-                            pass
-                else:
-                    self.MT.data_ref[r:r] = self.MT.data_ref[rm1start:rm1end]
-                    self.MT.data_ref[rm1start:rm1end] = []
-                    if not isinstance(self.MT.my_row_index, int) and self.MT.my_row_index:
-                        try:
-                            self.MT.my_row_index[r:r] = self.MT.my_row_index[rm1start:rm1end]
-                            self.MT.my_row_index[rm1start:rm1end] = []
-                        except:
-                            pass
+                if self.row_drag_and_drop_perform:
+                    r_ = int(r)
+                    if rm1end < r:
+                        r += 1
+                    if rm1start > r:
+                        self.MT.data_ref[r:r] = self.MT.data_ref[rm1start:rm1end]
+                        self.MT.data_ref[rm2start:rm2end] = []
+                        if not isinstance(self.MT.my_row_index, int) and self.MT.my_row_index:
+                            try:
+                                self.MT.my_row_index[r:r] = self.MT.my_row_index[rm1start:rm1end]
+                                self.MT.my_row_index[rm2start:rm2end] = []
+                            except:
+                                pass
+                    else:
+                        self.MT.data_ref[r:r] = self.MT.data_ref[rm1start:rm1end]
+                        self.MT.data_ref[rm1start:rm1end] = []
+                        if not isinstance(self.MT.my_row_index, int) and self.MT.my_row_index:
+                            try:
+                                self.MT.my_row_index[r:r] = self.MT.my_row_index[rm1start:rm1end]
+                                self.MT.my_row_index[rm1start:rm1end] = []
+                            except:
+                                pass
                 rhs = [int(b - a) for a, b in zip(self.MT.row_positions, islice(self.MT.row_positions, 1, len(self.MT.row_positions)))]
                 if rm1start > r:
                     rhs[r:r] = rhs[rm1start:rm1end]
@@ -473,6 +476,7 @@ class RowIndex(tk.Canvas):
                     rhs[r:r] = rhs[rm1start:rm1end]
                     rhs[rm1start:rm1end] = []
                 self.MT.row_positions = [0] + list(accumulate(height for height in rhs))
+                self.MT.deselect("all")
                 if (r_ - 1) + totalrows > len(self.MT.row_positions) - 1:
                     new_selected = tuple(range(len(self.MT.row_positions) - 1 - totalrows, len(self.MT.row_positions) - 1))
                     self.MT.create_selected(len(self.MT.row_positions) - 1 - totalrows, 0, len(self.MT.row_positions) - 1, len(self.MT.col_positions) - 1, "rows")

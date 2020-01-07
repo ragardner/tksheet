@@ -96,6 +96,8 @@ class Sheet(tk.Frame):
                  max_undos = 20,
                  outline_thickness = 0,
                  outline_color = "gray2",
+                 column_drag_and_drop_perform = True,
+                 row_drag_and_drop_perform = True,
                  theme = "light"):
         tk.Frame.__init__(self,
                           C,
@@ -126,6 +128,7 @@ class Sheet(tk.Frame):
                            row_index_select_row_fg = row_index_select_row_fg,
                            drag_and_drop_color = drag_and_drop_color,
                            resizing_line_color = resizing_line_color,
+                           row_drag_and_drop_perform = row_drag_and_drop_perform,
                            auto_resize_width = auto_resize_numerical_row_index)
         self.CH = ColumnHeaders(self,
                                 max_colwidth = max_colwidth,
@@ -141,6 +144,7 @@ class Sheet(tk.Frame):
                                 header_select_column_bg = header_select_column_bg,
                                 header_select_column_fg = header_select_column_fg,
                                 drag_and_drop_color = drag_and_drop_color,
+                                column_drag_and_drop_perform = column_drag_and_drop_perform,
                                 resizing_line_color = resizing_line_color)
         self.MT = MainTable(self,
                             column_width = column_width,
@@ -901,7 +905,13 @@ class Sheet(tk.Frame):
                     popup_menu_bg = None,
                     popup_menu_highlight_bg = None,
                     popup_menu_highlight_fg = None,
+                    row_drag_and_drop_perform = None,
+                    column_drag_and_drop_perform = None,
                     redraw = True):
+        if row_drag_and_drop_perform is not None:
+            self.RI.row_drag_and_drop_perform = row_drag_and_drop_perform
+        if column_drag_and_drop_perform is not None:
+            self.CH.column_drag_and_drop_perform = column_drag_and_drop_perform
         if popup_menu_font is not None:
             self.MT.popup_menu_font = popup_menu_font
         if popup_menu_fg is not None:
@@ -1107,6 +1117,25 @@ class Sheet(tk.Frame):
                                       reset_col_positions,
                                       reset_row_positions,
                                       redraw)
+
+    def set_sheet_data(self,
+                       data = [[]],
+                       total_cols = None,
+                       total_rows = None,
+                       reset_col_positions = True,
+                       reset_row_positions = True,
+                       redraw = False,
+                       verify = True):
+        if verify:
+            if not isinstance(data, list) or not all(isinstance(row, list) for row in data):
+                raise ValueError("data argument must be a list of lists, sublists being rows")
+        return self.MT.data_reference(data,
+                                      total_cols,
+                                      total_rows,
+                                      reset_col_positions,
+                                      reset_row_positions,
+                                      redraw,
+                                      return_id = False)
 
     def get_sheet_data(self, return_copy = False):
         if return_copy:

@@ -34,11 +34,13 @@ class ColumnHeaders(tk.Canvas):
                  header_select_column_bg = "#5f6368",
                  header_select_column_fg = "white",
                  drag_and_drop_color = None,
+                 column_drag_and_drop_perform = True,
                  resizing_line_color = None):
         tk.Canvas.__init__(self,parentframe,
                            background = header_background,
                            highlightthickness = 0)
         self.parentframe = parentframe
+        self.column_drag_and_drop_perform = column_drag_and_drop_perform
         self.beingDrawnSelRect = None
         self.beingDrawnSelBorder = None
         self.extra_motion_func = None
@@ -400,43 +402,44 @@ class ColumnHeaders(tk.Canvas):
                     c -= 1
                 if self.ch_extra_drag_drop_func is not None:
                     self.ch_extra_drag_drop_func(tuple(orig_selected_cols), int(c))
-                c_ = int(c)
-                if rm1end < c:
-                    c += 1
-                if self.MT.all_columns_displayed:
-                    if rm1start > c:
-                        for rn in range(len(self.MT.data_ref)):
-                            try:
-                                self.MT.data_ref[rn][c:c] = self.MT.data_ref[rn][rm1start:rm1end]
-                                self.MT.data_ref[rn][rm2start:rm2end] = []
-                            except:
-                                continue
-                        if not isinstance(self.MT.my_hdrs, int) and self.MT.my_hdrs:
-                            try:
-                                self.MT.my_hdrs[c:c] = self.MT.my_hdrs[rm1start:rm1end]
-                                self.MT.my_hdrs[rm2start:rm2end] = []
-                            except:
-                                pass
+                if self.column_drag_and_drop_perform:
+                    c_ = int(c)
+                    if rm1end < c:
+                        c += 1
+                    if self.MT.all_columns_displayed:
+                        if rm1start > c:
+                            for rn in range(len(self.MT.data_ref)):
+                                try:
+                                    self.MT.data_ref[rn][c:c] = self.MT.data_ref[rn][rm1start:rm1end]
+                                    self.MT.data_ref[rn][rm2start:rm2end] = []
+                                except:
+                                    continue
+                            if not isinstance(self.MT.my_hdrs, int) and self.MT.my_hdrs:
+                                try:
+                                    self.MT.my_hdrs[c:c] = self.MT.my_hdrs[rm1start:rm1end]
+                                    self.MT.my_hdrs[rm2start:rm2end] = []
+                                except:
+                                    pass
+                        else:
+                            for rn in range(len(self.MT.data_ref)):
+                                try:
+                                    self.MT.data_ref[rn][c:c] = self.MT.data_ref[rn][rm1start:rm1end]
+                                    self.MT.data_ref[rn][rm1start:rm1end] = []
+                                except:
+                                    continue
+                            if not isinstance(self.MT.my_hdrs, int) and self.MT.my_hdrs:
+                                try:
+                                    self.MT.my_hdrs[c:c] = self.MT.my_hdrs[rm1start:rm1end]
+                                    self.MT.my_hdrs[rm1start:rm1end] = []
+                                except:
+                                    pass
                     else:
-                        for rn in range(len(self.MT.data_ref)):
-                            try:
-                                self.MT.data_ref[rn][c:c] = self.MT.data_ref[rn][rm1start:rm1end]
-                                self.MT.data_ref[rn][rm1start:rm1end] = []
-                            except:
-                                continue
-                        if not isinstance(self.MT.my_hdrs, int) and self.MT.my_hdrs:
-                            try:
-                                self.MT.my_hdrs[c:c] = self.MT.my_hdrs[rm1start:rm1end]
-                                self.MT.my_hdrs[rm1start:rm1end] = []
-                            except:
-                                pass
-                else:
-                    if rm1start > c:
-                        self.MT.displayed_columns[c:c] = self.MT.displayed_columns[rm1start:rm1end]
-                        self.MT.displayed_columns[rm2start:rm2end] = []
-                    else:
-                        self.MT.displayed_columns[c:c] = self.MT.displayed_columns[rm1start:rm1end]
-                        self.MT.displayed_columns[rm1start:rm1end] = []
+                        if rm1start > c:
+                            self.MT.displayed_columns[c:c] = self.MT.displayed_columns[rm1start:rm1end]
+                            self.MT.displayed_columns[rm2start:rm2end] = []
+                        else:
+                            self.MT.displayed_columns[c:c] = self.MT.displayed_columns[rm1start:rm1end]
+                            self.MT.displayed_columns[rm1start:rm1end] = []
                 cws = [int(b - a) for a, b in zip(self.MT.col_positions, islice(self.MT.col_positions, 1, len(self.MT.col_positions)))]
                 if rm1start > c:
                     cws[c:c] = cws[rm1start:rm1end]
@@ -445,7 +448,7 @@ class ColumnHeaders(tk.Canvas):
                     cws[c:c] = cws[rm1start:rm1end]
                     cws[rm1start:rm1end] = []
                 self.MT.col_positions = [0] + list(accumulate(width for width in cws))
-                self.MT.delete_selection_rects()
+                self.MT.deselect("all")
                 if (c_ - 1) + totalcols > len(self.MT.col_positions) - 1:
                     new_selected = tuple(range(len(self.MT.col_positions) - 1 - totalcols, len(self.MT.col_positions) - 1))
                     self.MT.create_selected(0, len(self.MT.col_positions) - 1 - totalcols, len(self.MT.row_positions) - 1, len(self.MT.col_positions) - 1, "cols")
