@@ -46,8 +46,7 @@ class demo(tk.Tk):
         #self.sheet_demo.change_theme("dark")
 
         # __________ HIGHLIGHT / DEHIGHLIGHT CELLS __________
-
-        self.sheet_demo.highlight_cells(row = 5, column = 0, bg = "#ed4337", fg = "white")
+        
         self.sheet_demo.highlight_cells(row = 5, column = 5, bg = "#ed4337", fg = "white")
         self.sheet_demo.highlight_cells(row = 5, column = 1, bg = "#ed4337", fg = "white")
         self.sheet_demo.highlight_cells(row = 5, bg = "#ed4337", fg = "white", canvas = "row_index")
@@ -71,6 +70,7 @@ class demo(tk.Tk):
                                         ("column_select", self.column_select),
                                         ("shift_column_select", self.shift_select_columns),
                                         ("drag_select_columns", self.drag_select_columns),
+                                        ("deselect", self.deselect)
                                         ]
                                        )
         #self.sheet_demo.extra_bindings([("cell_select", None)]) #unbind cell select
@@ -142,6 +142,9 @@ class demo(tk.Tk):
         #self.sheet_demo.hide("row_index")
         #self.sheet_demo.hide("top_left")
         #self.sheet_demo.hide("header")
+
+    def deselect(self, event):
+        print (event, self.sheet_demo.get_selected_cells())
 
     def rc(self, event):
         print (event)
