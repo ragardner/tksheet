@@ -1,3 +1,7 @@
+### Version 4.3.5
+ - Fix bug with `row_index()` function
+ - Fix `headers` set to `int` at start up not working if `headers` is `0`
+
 ### Version 4.3.4
  - Fix bug if `row_drag_and_drop_perform` or `column_drag_and_drop_perform` is False
  - Fix display issue with undo drag and drop rows/columns
