@@ -35,6 +35,7 @@ class demo(tk.Tk):
                                          "delete",
                                          "undo",
                                          "edit_cell"))
+        #self.sheet_demo.enable_bindings("enable_all")
         #self.sheet_demo.disable_bindings() #uses the same strings
         self.sheet_demo.grid(row = 0, column = 0, sticky = "nswe")
         
@@ -75,7 +76,9 @@ class demo(tk.Tk):
                                         ("deselect", self.deselect)
                                         ]
                                        )
+        
         #self.sheet_demo.extra_bindings([("cell_select", None)]) #unbind cell select
+        #self.sheet_demo.extra_bindings("unbind_all") #remove all functions set by extra_bindings()
 
         # __________ BINDING NEW RIGHT CLICK FUNCTION __________
     
