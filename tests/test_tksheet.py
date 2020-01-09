@@ -9,6 +9,8 @@ class demo(tk.Tk):
         self.grid_rowconfigure(0, weight = 1)
         self.sheet_demo = Sheet(self,
                                 #data = [[f"Row {r} Column {c}" for c in range(30)] for r in range(200)], #to set sheet data at startup
+                                #headers = 0, #to set headers as first row at startup
+                                #row_index = 0, #to set row_index as first column at startup
                                 height = 500,
                                 width = 700) #For full startup arguments/parameters see DOCUMENTATION.md
         self.sheet_demo.enable_bindings(("single_select", #"single_select" or "toggle_select"
