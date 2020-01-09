@@ -45,6 +45,8 @@ class demo(tk.Tk):
         self.grid_rowconfigure(0, weight = 1)
         self.sheet_demo = Sheet(self,
                                 #data = [[f"Row {r} Column {c}" for c in range(30)] for r in range(200)], #to set sheet data at startup
+                                #headers = 0, #to set headers as first row at startup
+                                #row_index = 0, #to set row_index as first column at startup
                                 height = 500,
                                 width = 700) #For full startup arguments/parameters see DOCUMENTATION.md
         self.sheet_demo.enable_bindings(("single_select", #"single_select" or "toggle_select"
@@ -71,6 +73,7 @@ class demo(tk.Tk):
                                          "delete",
                                          "undo",
                                          "edit_cell"))
+        #self.sheet_demo.enable_bindings("enable_all")
         #self.sheet_demo.disable_bindings() #uses the same strings
         self.sheet_demo.grid(row = 0, column = 0, sticky = "nswe")
         
@@ -111,7 +114,9 @@ class demo(tk.Tk):
                                         ("deselect", self.deselect)
                                         ]
                                        )
+        
         #self.sheet_demo.extra_bindings([("cell_select", None)]) #unbind cell select
+        #self.sheet_demo.extra_bindings("unbind_all") #remove all functions set by extra_bindings()
 
         # __________ BINDING NEW RIGHT CLICK FUNCTION __________
     
