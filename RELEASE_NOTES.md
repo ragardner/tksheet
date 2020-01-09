@@ -1,3 +1,10 @@
+### Version 4.3.4
+ - Fix bug if `row_drag_and_drop_perform` or `column_drag_and_drop_perform` is False
+ - Fix display issue with undo drag and drop rows/columns
+ - Add `"unbind_all"` as possible argument for function `extra_bindings()`
+ - Add `"enable_all"` as possible argument for function `enable_bindings()`
+ - Add `"disable_all"` as possible argument for function `disable_bindings()`
+
 ### Version 4.3.3
  - Add function `set_sheet_data()` use argument `verify = False` to prevent verification of types
  - Add startup arguments `row_drag_and_drop_perform` and `column_drag_and_drop_perform` and add to `set_options()`
