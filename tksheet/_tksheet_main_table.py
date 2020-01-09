@@ -170,11 +170,14 @@ class MainTable(tk.Canvas):
         self.popup_menu_bg = popup_menu_bg
         self.popup_menu_highlight_bg = popup_menu_highlight_bg
         self.popup_menu_highlight_fg = popup_menu_highlight_fg
-        
-        if headers:
+
+        if isinstance(headers, int):
             self.my_hdrs = headers
         else:
-            self.my_hdrs = []
+            if headers:
+                self.my_hdrs = headers
+            else:
+                self.my_hdrs = []
         
         if isinstance(row_index, int):
             self.my_row_index = row_index
@@ -2423,7 +2426,7 @@ class MainTable(tk.Canvas):
             if isinstance(newheaders, (list, tuple)):
                 self.my_hdrs = list(newheaders) if isinstance(newheaders, tuple) else newheaders
             elif isinstance(newheaders, int):
-                self.my_hdrs = newheaders
+                self.my_hdrs = int(newheaders)
             elif isinstance(index, int):
                 self.my_hdrs[index] = f"{newheaders}"
             elif not isinstance(newheaders, (list, tuple, int)) and index is None:
@@ -2443,7 +2446,7 @@ class MainTable(tk.Canvas):
             if isinstance(newindex, (list, tuple)):
                 self.my_row_index = list(newindex) if isinstance(newindex, tuple) else newindex
             elif isinstance(newindex, int):
-                self.my_row_index = index
+                self.my_row_index = int(newindex)
             elif isinstance(index, int):
                 self.my_row_index[index] = f"{newindex}"
             elif not isinstance(newindex, (list, tuple, int)) and index is None:
