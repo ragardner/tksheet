@@ -402,8 +402,8 @@ class ColumnHeaders(tk.Canvas):
                     c -= 1
                 if self.ch_extra_drag_drop_func is not None:
                     self.ch_extra_drag_drop_func(tuple(orig_selected_cols), int(c))
+                c_ = int(c)
                 if self.column_drag_and_drop_perform:
-                    c_ = int(c)
                     if rm1end < c:
                         c += 1
                     if self.MT.all_columns_displayed:

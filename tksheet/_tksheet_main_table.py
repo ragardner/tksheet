@@ -77,6 +77,8 @@ class MainTable(tk.Canvas):
         self.extra_ctrl_z_func = None
         self.extra_delete_key_func = None
         self.extra_edit_cell_func = None
+        self.extra_del_rows_rc_func = None
+        self.extra_del_cols_rc_func = None
         self.selection_binding_func = None # function to run when a spreadsheet selection event occurs
         self.deselection_binding_func = None # function to run when a spreadsheet deselection event occurs
         self.drag_selection_binding_func = None # function to run when a spreadsheet mouse drag selection event occurs
@@ -582,8 +584,6 @@ class MainTable(tk.Canvas):
                 rm2start = rm1start + (rm1end - rm1start)
                 rm2end = rm1end + (rm1end - rm1start)
                 totalrows = rm1end - rm1start
-                self.create_current(ins_row, 0, type_ = "row", inside = True)
-                self.create_selected(ins_row, 0, ins_row + totalrows, len(self.col_positions) - 1, "rows")
                 if rm1start < ins_row:
                     ins_row += totalrows
                 if rm1start > ins_row:
@@ -613,10 +613,15 @@ class MainTable(tk.Canvas):
                 if rm1start > ins_row:
                     rhs[ins_row:ins_row] = rhs[rm1start:rm1end]
                     rhs[rm2start:rm2end] = []
+                    self.row_positions = [0] + list(accumulate(height for height in rhs))
+                    self.create_current(ins_row, 0, type_ = "row", inside = True)
+                    self.create_selected(ins_row, 0, ins_row + totalrows, len(self.col_positions) - 1, "rows")
                 else:
                     rhs[ins_row:ins_row] = rhs[rm1start:rm1end]
                     rhs[rm1start:rm1end] = []
-                self.row_positions = [0] + list(accumulate(height for height in rhs))
+                    self.row_positions = [0] + list(accumulate(height for height in rhs))
+                    self.create_current(ins_row - totalrows, 0, type_ = "row", inside = True)
+                    self.create_selected(ins_row - totalrows, 0, ins_row, len(self.col_positions) - 1, "rows")
                 self.see(r = orig_ins_row, c = 0, keep_yscroll = False, keep_xscroll = True, bottom_right_corner = False, check_cell_visibility = True, redraw = False)
             elif undo_storage[0] == "move_cols":
                 cws = [int(b - a) for a, b in zip(self.col_positions, islice(self.col_positions, 1, len(self.col_positions)))]
@@ -627,8 +632,6 @@ class MainTable(tk.Canvas):
                 rm2start = rm1start + (rm1end - rm1start)
                 rm2end = rm1end + (rm1end - rm1start)
                 totalcols = rm1end - rm1start
-                self.create_current(0, ins_col, type_ = "col", inside = True)
-                self.create_selected(0, ins_col, len(self.row_positions) - 1, ins_col + totalcols, "cols")
                 if rm1start < ins_col:
                     ins_col += totalcols
                 if self.all_columns_displayed:
@@ -668,10 +671,15 @@ class MainTable(tk.Canvas):
                 if rm1start > ins_col:
                     cws[ins_col:ins_col] = cws[rm1start:rm1end]
                     cws[rm2start:rm2end] = []
+                    self.col_positions = [0] + list(accumulate(width for width in cws))
+                    self.create_current(0, ins_col, type_ = "col", inside = True)
+                    self.create_selected(0, ins_col, len(self.row_positions) - 1, ins_col + totalcols, "cols")
                 else:
                     cws[ins_col:ins_col] = cws[rm1start:rm1end]
                     cws[rm1start:rm1end] = []
-                self.col_positions = [0] + list(accumulate(width for width in cws))
+                    self.col_positions = [0] + list(accumulate(width for width in cws))
+                    self.create_current(0, ins_col - totalcols, type_ = "col", inside = True)
+                    self.create_selected(0, ins_col - totalcols, len(self.row_positions) - 1, ins_col, "cols")
                 self.see(r = 0, c = orig_ins_col, keep_yscroll = True, keep_xscroll = False, bottom_right_corner = False, check_cell_visibility = True, redraw = False)
             elif undo_storage[0] == "insert_row":
                 del self.data_ref[undo_storage[1]['data_row_num']]
@@ -1416,7 +1424,34 @@ class MainTable(tk.Canvas):
             self.enable_bindings_internal(bindings.lower())
 
     def enable_bindings_internal(self, binding):
-        if binding in ("single", "single_selection_mode", "single_select"):
+        if binding == "enable_all":
+            self.single_selection_enabled = True
+            self.toggle_selection_enabled = False
+            self.drag_selection_enabled = True
+            self.bind("<Control-a>", self.select_all)
+            self.bind("<Control-A>", self.select_all)
+            self.RI.bind("<Control-a>", self.select_all)
+            self.RI.bind("<Control-A>", self.select_all)
+            self.CH.bind("<Control-a>", self.select_all)
+            self.CH.bind("<Control-A>", self.select_all)
+            self.CH.enable_bindings("column_width_resize")
+            self.CH.enable_bindings("column_select")
+            self.CH.enable_bindings("column_height_resize")
+            self.CH.enable_bindings("drag_and_drop")
+            self.CH.enable_bindings("double_click_column_resize")
+            self.RI.enable_bindings("row_height_resize")
+            self.RI.enable_bindings("double_click_row_resize")
+            self.RI.enable_bindings("row_width_resize")
+            self.RI.enable_bindings("row_select")
+            self.RI.enable_bindings("drag_and_drop")
+            self.bind_arrowkeys()
+            self.edit_bindings(True)
+            self.rc_delete_column_enabled = True
+            self.rc_delete_row_enabled = True
+            self.rc_insert_column_enabled = True
+            self.rc_insert_row_enabled = True
+            self.rc_popup_menus_enabled = True
+        elif binding in ("single", "single_selection_mode", "single_select"):
             self.single_selection_enabled = True
             self.toggle_selection_enabled = False
         elif binding in ("toggle", "toggle_selection_mode", "toggle_select"):
@@ -1490,9 +1525,36 @@ class MainTable(tk.Canvas):
             self.disable_bindings_internal(bindings)
 
     def disable_bindings_internal(self, binding):
-        if binding == "single":
+        if binding == "disable_all":
             self.single_selection_enabled = False
-        elif binding == "toggle":
+            self.toggle_selection_enabled = False
+            self.drag_selection_enabled = False
+            self.unbind("<Control-a>")
+            self.unbind("<Control-A>")
+            self.RI.unbind("<Control-a>")
+            self.RI.unbind("<Control-A>")
+            self.CH.unbind("<Control-a>")
+            self.CH.unbind("<Control-A>")
+            self.CH.disable_bindings("column_width_resize")
+            self.CH.disable_bindings("column_select")
+            self.CH.disable_bindings("column_height_resize")
+            self.CH.disable_bindings("drag_and_drop")
+            self.CH.disable_bindings("double_click_column_resize")
+            self.RI.disable_bindings("row_height_resize")
+            self.RI.disable_bindings("double_click_row_resize")
+            self.RI.disable_bindings("row_width_resize")
+            self.RI.disable_bindings("row_select")
+            self.RI.disable_bindings("drag_and_drop")
+            self.unbind_arrowkeys()
+            self.edit_bindings(False)
+            self.rc_delete_column_enabled = False
+            self.rc_delete_row_enabled = False
+            self.rc_insert_column_enabled = False
+            self.rc_insert_row_enabled = False
+            self.rc_popup_menus_enabled = False
+        elif binding in ("single", "single_selection_mode", "single_select"):
+            self.single_selection_enabled = False
+        elif binding in ("toggle", "toggle_selection_mode", "toggle_select"):
             self.toggle_selection_enabled = False
         elif binding == "drag_select":
             self.drag_selection_enabled = False
@@ -2155,6 +2217,8 @@ class MainTable(tk.Canvas):
             self.deselect("allcols", redraw = False)
             self.set_current_to_last()
             self.refresh()
+            if self.extra_del_cols_rc_func is not None:
+                self.extra_del_cols_rc_func(tuple(seld_cols))
 
     def get_all_selection_items(self):
         return sorted(self.find_withtag("CellSelectFill") + self.find_withtag("RowSelectFill") + self.find_withtag("ColSelectFill") + self.find_withtag("Current_Inside") + self.find_withtag("Current_Outside"))
@@ -2222,6 +2286,8 @@ class MainTable(tk.Canvas):
             self.deselect("allrows", redraw = False)
             self.set_current_to_last()
             self.refresh()
+            if self.extra_del_rows_rc_func is not None:
+                self.extra_del_rows_rc_func(tuple(seld_rows))
 
     def insert_col(self, column = None, idx = "end", width = None, deselect_all = False, preserve_other_selections = False):
         self.insert_col_position(idx = idx,

@@ -446,8 +446,8 @@ class RowIndex(tk.Canvas):
                     r -= 1
                 if self.ri_extra_drag_drop_func is not None:
                     self.ri_extra_drag_drop_func(tuple(orig_selected_rows), int(r))
+                r_ = int(r)
                 if self.row_drag_and_drop_perform:
-                    r_ = int(r)
                     if rm1end < r:
                         r += 1
                     if rm1start > r:

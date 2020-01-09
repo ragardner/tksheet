@@ -232,45 +232,72 @@ class Sheet(tk.Frame):
             self.TL.focus_set()
 
     def extra_bindings(self, bindings):
-        for binding, func in bindings:
-            if binding == "ctrl_c":
-                self.MT.extra_ctrl_c_func = func
-            if binding == "ctrl_x":
-                self.MT.extra_ctrl_x_func = func
-            if binding == "ctrl_v":
-                self.MT.extra_ctrl_v_func = func
-            if binding == "ctrl_z":
-                self.MT.extra_ctrl_z_func = func
-            if binding == "delete_key":
-                self.MT.extra_delete_key_func = func
-            if binding == "edit_cell":
-                self.MT.extra_edit_cell_func = func
-            if binding == "row_index_drag_drop":
-                self.RI.ri_extra_drag_drop_func = func
-            if binding == "column_header_drag_drop":
-                self.CH.ch_extra_drag_drop_func = func
-            if binding == "cell_select":
-                self.MT.selection_binding_func = func
-            if binding == "ctrl_a":
-                self.MT.select_all_binding_func = func
-            if binding == "row_select":
-                self.RI.selection_binding_func = func
-            if binding == "column_select":
-                self.CH.selection_binding_func = func
-            if binding == "drag_select_cells":
-                self.MT.drag_selection_binding_func = func
-            if binding == "drag_select_rows":
-                self.RI.drag_selection_binding_func = func
-            if binding == "drag_select_columns":
-                self.CH.drag_selection_binding_func = func
-            if binding == "shift_cell_select":
-                self.MT.shift_selection_binding_func = func
-            if binding == "shift_row_select":
-                self.RI.shift_selection_binding_func = func
-            if binding == "shift_column_select":
-                self.CH.shift_selection_binding_func = func
-            if binding == "deselect":
-                self.MT.deselection_binding_func = func
+        if bindings == "unbind_all":
+            self.MT.extra_ctrl_c_func = None
+            self.MT.extra_ctrl_x_func = None
+            self.MT.extra_ctrl_v_func = None
+            self.MT.extra_ctrl_z_func = None
+            self.MT.extra_delete_key_func = None
+            self.MT.extra_edit_cell_func = None
+            self.RI.ri_extra_drag_drop_func = None
+            self.CH.ch_extra_drag_drop_func = None
+            self.MT.selection_binding_func = None
+            self.MT.select_all_binding_func = None
+            self.RI.selection_binding_func = None
+            self.CH.selection_binding_func = None
+            self.MT.drag_selection_binding_func = None
+            self.RI.drag_selection_binding_func = None
+            self.CH.drag_selection_binding_func = None
+            self.MT.shift_selection_binding_func = None
+            self.RI.shift_selection_binding_func = None
+            self.CH.shift_selection_binding_func = None
+            self.MT.deselection_binding_func = None
+            self.MT.extra_del_rows_rc_func = None
+            self.MT.extra_del_cols_rc_func = None
+        else:
+            for binding, func in bindings:
+                if binding == "ctrl_c":
+                    self.MT.extra_ctrl_c_func = func
+                if binding == "ctrl_x":
+                    self.MT.extra_ctrl_x_func = func
+                if binding == "ctrl_v":
+                    self.MT.extra_ctrl_v_func = func
+                if binding == "ctrl_z":
+                    self.MT.extra_ctrl_z_func = func
+                if binding == "delete_key":
+                    self.MT.extra_delete_key_func = func
+                if binding == "edit_cell":
+                    self.MT.extra_edit_cell_func = func
+                if binding == "row_index_drag_drop":
+                    self.RI.ri_extra_drag_drop_func = func
+                if binding == "column_header_drag_drop":
+                    self.CH.ch_extra_drag_drop_func = func
+                if binding == "cell_select":
+                    self.MT.selection_binding_func = func
+                if binding in ("select_all", "ctrl_a"):
+                    self.MT.select_all_binding_func = func
+                if binding == "row_select":
+                    self.RI.selection_binding_func = func
+                if binding == "column_select":
+                    self.CH.selection_binding_func = func
+                if binding == "drag_select_cells":
+                    self.MT.drag_selection_binding_func = func
+                if binding == "drag_select_rows":
+                    self.RI.drag_selection_binding_func = func
+                if binding == "drag_select_columns":
+                    self.CH.drag_selection_binding_func = func
+                if binding == "shift_cell_select":
+                    self.MT.shift_selection_binding_func = func
+                if binding == "shift_row_select":
+                    self.RI.shift_selection_binding_func = func
+                if binding == "shift_column_select":
+                    self.CH.shift_selection_binding_func = func
+                if binding == "deselect":
+                    self.MT.deselection_binding_func = func
+                if binding == "rc_delete_row":
+                    self.MT.extra_del_rows_rc_func = func
+                if binding == "rc_delete_column":
+                    self.MT.extra_del_cols_rc_func = func
 
     def bind(self, binding, func):
         if binding == "<ButtonPress-1>":
@@ -1125,7 +1152,7 @@ class Sheet(tk.Frame):
                        total_rows = None,
                        reset_col_positions = True,
                        reset_row_positions = True,
-                       redraw = False,
+                       redraw = True,
                        verify = True):
         if verify:
             if not isinstance(data, list) or not all(isinstance(row, list) for row in data):
