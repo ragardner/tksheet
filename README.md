@@ -44,7 +44,8 @@ class demo(tk.Tk):
         self.grid_columnconfigure(0, weight = 1)
         self.grid_rowconfigure(0, weight = 1)
         self.sheet_demo = Sheet(self,
-                                #data = [[f"Row {r} Column {c}" for c in range(30)] for r in range(200)], #to set sheet data at startup
+                                #data = [[f"Row {r} Column {c}" for c in range(30)] for r in range(2000)], #to set sheet data at startup
+                                #set_all_heights_and_widths = True, #to fit all cell sizes to text at start up
                                 #headers = 0, #to set headers as first row at startup
                                 #row_index = 0, #to set row_index as first column at startup
                                 height = 500,
@@ -92,11 +93,27 @@ class demo(tk.Tk):
         self.sheet_demo.highlight_cells(row = 5, bg = "#ed4337", fg = "white", canvas = "row_index")
         self.sheet_demo.highlight_cells(column = 0, bg = "#ed4337", fg = "white", canvas = "header")
 
+        # __________ DISPLAY SUBSET OF COLUMNS __________
+
+        #self.sheet_demo.display_subset_of_columns(indexes = [3, 7, 9, 1, 0], enable = True)
+
         # __________ SETTING OR RESETTING TABLE DATA __________
 
         #.set_sheet_data() function returns the object you use as argument
         #verify checks if your data is a list of lists, raises error if not
-        self.data = self.sheet_demo.set_sheet_data([[f"Row {r} Column {c}" for c in range(30)] for r in range(200)], verify = False)
+        self.data = self.sheet_demo.set_sheet_data([[f"Row {r} Column {c}" for c in range(30)] for r in range(2000)], verify = False)
+
+        # __________ SETTING ROW HEIGHTS AND COLUMN WIDTHS __________
+
+        #self.sheet_demo.set_cell_data(0, 0, "lots\nof\nlines\nhere")
+        #self.sheet_demo.set_column_data(1, ("" for i in range(2000)))
+        #self.sheet_demo.column_width(column = 0, width = 300)
+        #self.sheet_demo.row_height(row = 0, height = 60)
+        #self.sheet_demo.set_column_widths([120 for c in range(30)])
+        #self.sheet_demo.set_row_heights([30 for r in range(2000)])
+        #self.sheet_demo.set_all_column_widths()
+        #self.sheet_demo.set_all_row_heights()
+        #self.sheet_demo.set_all_cell_sizes_to_text()
         
         # __________ BINDING A FUNCTION TO USER SELECTS CELL __________
 
@@ -121,10 +138,6 @@ class demo(tk.Tk):
         # __________ BINDING NEW RIGHT CLICK FUNCTION __________
     
         self.sheet_demo.bind("<3>", self.rc)
-
-        # __________ DISPLAY SUBSET OF COLUMNS __________
-
-        #self.sheet_demo.display_subset_of_columns(indexes = [3, 7, 9, 0], enable = True)
 
         # __________ SETTING HEADERS __________
 

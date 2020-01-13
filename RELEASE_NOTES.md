@@ -1,3 +1,10 @@
+### Version 4.3.6
+ - Add function `get_currently_selected()`
+ - Add functions `self.sheet_demo.set_all_column_widths()`, `self.sheet_demo.set_all_row_heights()`, `self.sheet_demo.set_all_cell_sizes_to_text()`
+ - Add argument `set_all_heights_and_widths` to startup, use `True` or `False`
+ - Improve performance of all resizing functions
+ - Make resizing detect text dimensions for full row/column, not just what is displayed
+
 ### Version 4.3.5
  - Fix bug with `row_index()` function
  - Fix `headers` set to `int` at start up not working if `headers` is `0`
