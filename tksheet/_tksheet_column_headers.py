@@ -548,57 +548,82 @@ class ColumnHeaders(tk.Canvas):
         if self.selection_binding_func is not None and run_binding_func:
             self.selection_binding_func(("select_column", int(c)))
 
-    def set_col_width(self, col, width = None, only_set_if_too_small = False):
+    def set_col_width(self, col, width = None, only_set_if_too_small = False, displayed_only = False, recreate = True, return_new_width = False):
         if col < 0:
             return
         if width is None:
-            if self.MT.all_columns_displayed:
-                try:
-                    hw = self.MT.GetHdrTextWidth(self.GetLargestWidth(self.MT.my_hdrs[col])) + 10
-                except:
-                    hw = self.MT.GetHdrTextWidth(str(col)) + 10
+            x = self.MT.txt_measure_canvas.create_text(0, 0, text = "", font = self.MT.my_font)
+            itmcon = self.MT.txt_measure_canvas.itemconfig
+            itmbbx = self.MT.txt_measure_canvas.bbox
+            w = self.MT.min_cw
+            if displayed_only:
                 x1, y1, x2, y2 = self.MT.get_canvas_visible_area()
                 start_row, end_row = self.MT.get_visible_rows(y1, y2)
-                dtw = 0
-                for r in islice(self.MT.data_ref, start_row, end_row):
-                    try:
-                        w = self.MT.GetTextWidth(self.GetLargestWidth(r[col]))
-                        if w > dtw:
-                            dtw = w
-                    except:
-                        pass
             else:
+                start_row, end_row = 0, None
+            if self.MT.all_columns_displayed:
+                data_col = col
+            else:
+                data_col = self.MT.displayed_columns[col]
+            try:
+                hw = self.MT.GetHdrTextWidth(self.GetLargestWidth(self.MT.my_hdrs[data_col])) + 10
+            except:
+                if self.default_hdr:
+                    hw = self.MT.GetHdrTextWidth(f"{num2alpha(data_col)}") + 10
+                else:
+                    hw = self.MT.GetHdrTextWidth(f"{data_col}") + 10
+            for r in islice(self.MT.data_ref, start_row, end_row):
                 try:
-                    hw = self.MT.GetHdrTextWidth(self.GetLargestWidth(self.MT.my_hdrs[self.MT.displayed_columns[col]])) + 10 
+                    if isinstance(r[data_col], str):
+                        txt = r[data_col]
+                    else:
+                        txt = f"{r[data_col]}"
                 except:
-                    hw = self.MT.GetHdrTextWidth(str(col)) + 10
-                x1, y1, x2, y2 = self.MT.get_canvas_visible_area()
-                start_row,end_row = self.MT.get_visible_rows(y1, y2)
-                dtw = 0
-                for r in islice(self.MT.data_ref, start_row,end_row):
-                    try:
-                        w = self.MT.GetTextWidth(self.GetLargestWidth(r[self.MT.displayed_columns[col]]))
-                        if w > dtw:
-                            dtw = w
-                    except:
-                        pass 
-            dtw += 10
-            if dtw > hw:
-                width = dtw
+                    txt = ""
+                if txt:
+                    itmcon(x, text = txt)
+                    b = itmbbx(x)
+                    tw = b[2] - b[0] + 5
+                    if tw > w:
+                        w = tw
+            if w > hw:
+                new_width = w
             else:
-                width = hw
-        if width <= self.MT.min_cw:
-            width = int(self.MT.min_cw)
-        elif width > self.max_cw:
-            width = int(self.max_cw)
+                new_width = hw
+            self.MT.txt_measure_canvas.delete(x)
+        else:
+            new_width = int(width)
+        if new_width <= self.MT.min_cw:
+            new_width = int(self.MT.min_cw)
+        elif new_width > self.max_cw:
+            new_width = int(self.max_cw)
         if only_set_if_too_small:
             if width <= self.MT.col_positions[col + 1] - self.MT.col_positions[col]:
-                return
-        new_col_pos = self.MT.col_positions[col] + width
-        increment = new_col_pos - self.MT.col_positions[col + 1]
-        self.MT.col_positions[col + 2:] = [e + increment for e in islice(self.MT.col_positions, col + 2, len(self.MT.col_positions))]
-        self.MT.col_positions[col + 1] = new_col_pos
-        self.MT.recreate_all_selection_boxes()
+                return self.MT.col_positions[col + 1] - self.MT.col_positions[col]
+        if return_new_width:
+            return new_width
+        else:
+            new_col_pos = self.MT.col_positions[col] + new_width
+            increment = new_col_pos - self.MT.col_positions[col + 1]
+            self.MT.col_positions[col + 2:] = [e + increment for e in islice(self.MT.col_positions, col + 2, len(self.MT.col_positions))]
+            self.MT.col_positions[col + 1] = new_col_pos
+            if recreate:
+                self.MT.recreate_all_selection_boxes()
+
+    def set_width_of_all_cols(self, width = None, only_set_if_too_small = False, recreate = True):
+        if width is None:
+            if self.MT.all_columns_displayed:
+                iterable = range(self.MT.total_cols)
+            else:
+                iterable = range(len(self.MT.displayed_columns))
+            self.MT.col_positions = [0] + list(accumulate(self.set_col_width(cn, only_set_if_too_small = only_set_if_too_small, recreate = False, return_new_width = True) for cn in iterable))
+        elif width is not None:
+            if self.MT.all_columns_displayed:
+                self.MT.col_positions = [0] + list(accumulate(width for cn in range(self.MT.total_cols)))
+            else:
+                self.MT.col_positions = [0] + list(accumulate(width for cn in range(len(self.MT.displayed_columns))))
+        if recreate:
+            self.MT.recreate_all_selection_boxes()
 
     def GetLargestWidth(self, cell):
         return max(cell.split("\n"), key = self.MT.GetTextWidth)

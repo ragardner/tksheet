@@ -575,28 +575,67 @@ class RowIndex(tk.Canvas):
         if self.selection_binding_func is not None and run_binding_func:
             self.selection_binding_func(("select_row", int(r)))
 
-    def set_row_height(self, row, new_height = None, only_set_if_too_small = False, recreate = True):
+    def set_row_height(self, row, height = None, only_set_if_too_small = False, recreate = True, return_new_height = False):
         r_norm = row + 1
         r_extra = row + 2
-        if new_height is None:
-            try:
-                new_height = self.GetLinesHeight(max((cll for cll in self.MT.data_ref[row]), key = self.GetNumLines))
-            except:
-                new_height = int(self.MT.min_rh)
-        if new_height < self.MT.min_rh:
-            new_height = int(self.MT.min_rh)
+        min_rh = self.MT.min_rh
+        if height is None:
+            x = self.MT.txt_measure_canvas.create_text(0, 0, text = "", font = self.MT.my_font)
+            itmcon = self.MT.txt_measure_canvas.itemconfig
+            itmbbx = self.MT.txt_measure_canvas.bbox
+            if self.MT.all_columns_displayed:
+                iterable = range(len(self.MT.data_ref[row]))
+            else:
+                iterable = self.MT.displayed_columns
+            new_height = int(min_rh)
+            for cn in iterable:
+                try:
+                    if isinstance(self.MT.data_ref[row][cn], str):
+                        txt = self.MT.data_ref[row][cn]
+                    else:
+                        txt = f"{self.MT.data_ref[row][cn]}"
+                except:
+                    txt = ""
+                if txt:
+                    itmcon(x, text = txt)
+                    b = itmbbx(x)
+                    h = b[3] - b[1] + 5
+                else:
+                    h = min_rh
+                if h < min_rh:
+                    h = int(min_rh)
+                elif h > self.max_rh:
+                    h = int(self.max_rh)
+                if h > new_height:
+                    new_height = h
+            self.MT.txt_measure_canvas.delete(x)
+        else:
+            new_height = int(height)
+        if new_height < min_rh:
+            new_height = int(min_rh)
         elif new_height > self.max_rh:
             new_height = int(self.max_rh)
         if only_set_if_too_small:
             if new_height <= self.MT.row_positions[row + 1] - self.MT.row_positions[row]:
-                return
-        new_row_pos = self.MT.row_positions[row] + new_height
-        increment = new_row_pos - self.MT.row_positions[r_norm]
-        self.MT.row_positions[r_extra:] = [e + increment for e in islice(self.MT.row_positions, r_extra, len(self.MT.row_positions))]
-        self.MT.row_positions[r_norm] = new_row_pos
+                return self.MT.row_positions[row + 1] - self.MT.row_positions[row]
+        if return_new_height:
+            return new_height
+        else:
+            new_row_pos = self.MT.row_positions[row] + new_height
+            increment = new_row_pos - self.MT.row_positions[r_norm]
+            self.MT.row_positions[r_extra:] = [e + increment for e in islice(self.MT.row_positions, r_extra, len(self.MT.row_positions))]
+            self.MT.row_positions[r_norm] = new_row_pos
+            if recreate:
+                self.MT.recreate_all_selection_boxes()
+
+    def set_height_of_all_rows(self, height = None, only_set_if_too_small = False, recreate = True):
+        if height is None:
+            self.MT.row_positions = [0] + list(accumulate(self.set_row_height(rn, only_set_if_too_small = only_set_if_too_small, recreate = False, return_new_height = True) for rn in range(len(self.MT.data_ref))))
+        else:
+            self.MT.row_positions = [0] + list(accumulate(height for r in range(len(self.MT.data_ref))))
         if recreate:
             self.MT.recreate_all_selection_boxes()
-
+        
     def GetNumLines(self, cell):
         if isinstance(cell, str):
             return len(cell.split("\n"))

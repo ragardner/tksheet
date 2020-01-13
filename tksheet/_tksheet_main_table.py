@@ -2054,6 +2054,77 @@ class MainTable(tk.Canvas):
         else:
             return self.data_ref
 
+    def GetNumLines(self, cell):
+        if isinstance(cell, str):
+            return len(cell.split("\n"))
+        else:
+            return 1
+
+    def GetLinesHeight(self, cell):
+        numlines = self.GetNumLines(cell)
+        if numlines > 1:
+            return int(self.MT.fl_ins) + (self.MT.xtra_lines_increment * numlines) - 2
+        else:
+            return int(self.MT.min_rh)
+
+    def GetLargestWidth(self, cell):
+        return max(cell.split("\n"), key = self.MT.GetTextWidth)
+
+    def set_all_cell_sizes_to_text(self):
+        min_cw = self.min_cw
+        min_rh = self.min_rh
+        rhs = defaultdict(lambda: int(min_rh))
+        cws = []
+        x = self.txt_measure_canvas.create_text(0, 0, text = "", font = self.my_font)
+        itmcon = self.txt_measure_canvas.itemconfig
+        itmbbx = self.txt_measure_canvas.bbox
+        if self.all_columns_displayed:
+            iterable = range(self.total_cols)
+        else:
+            iterable = self.displayed_columns
+        for cn in iterable:
+            try:
+                w = self.GetHdrTextWidth(self.GetLargestWidth(self.my_hdrs[cn])) + 10
+            except:
+                if self.CH.default_hdr:
+                    w = self.GetHdrTextWidth(f"{num2alpha(cn)}") + 10
+                else:
+                    w = self.GetHdrTextWidth(f"{cn}") + 10
+            for rn, r in enumerate(self.data_ref):
+                try:
+                    if isinstance(r[cn], str):
+                        txt = r[cn]
+                    else:
+                        txt = f"{r[cn]}"
+                except:
+                    txt = ""
+                if txt:
+                    itmcon(x, text = txt)
+                    b = itmbbx(x)
+                    tw = b[2] - b[0]
+                    if tw > w:
+                        w = tw
+                    h = b[3] - b[1] + 5
+                else:
+                    w = min_cw
+                    h = min_rh
+                if h < min_rh:
+                    h = int(min_rh)
+                elif h > self.RI.max_rh:
+                    h = int(self.RI.max_rh)
+                if h > rhs[rn]:
+                    rhs[rn] = h
+            w += 5
+            if w <= min_cw:
+                w = int(min_cw)
+            elif w > self.CH.max_cw:
+                w = int(self.CH.max_cw)
+            cws.append(w)
+        self.txt_measure_canvas.delete(x)
+        self.row_positions = [0] + list(accumulate(height for height in rhs.values()))
+        self.col_positions = [0] + list(accumulate(width for width in cws))
+        self.recreate_all_selection_boxes()
+
     def reset_col_positions(self):
         colpos = int(self.default_cw)
         if self.all_columns_displayed:
@@ -3463,6 +3534,19 @@ class MainTable(tk.Canvas):
                                                                                                     self.find_withtag("RowSelectFill"),
                                                                                                     self.find_withtag("ColSelectFill"),
                                                                                                     self.find_withtag("Current_Outside")))
+
+    def get_all_selection_boxes_with_types(self):
+        boxes = []
+        for item in sorted(self.find_withtag("CellSelectFill") + self.find_withtag("RowSelectFill") + self.find_withtag("ColSelectFill") + self.find_withtag("Current_Outside")):
+            tags = self.gettags(item)
+            if tags:
+                if tags[0].startswith(("Cell", "Current")):
+                    boxes.append((tuple(int(e) for e in tags[1].split("_") if e), "cells"))
+                elif tags[0].startswith("Row"):
+                    boxes.append((tuple(int(e) for e in tags[1].split("_") if e), "rows"))
+                elif tags[0].startswith("Col"):
+                    boxes.append((tuple(int(e) for e in tags[1].split("_") if e), "cols"))
+        return boxes
     
     def is_cell_selected(self, r, c, inc_cols = False, inc_rows = False):
         if not inc_cols and not inc_rows:

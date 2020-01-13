@@ -54,6 +54,7 @@ class Sheet(tk.Frame):
                  row_index = None,
                  row_index_width = 100,
                  auto_resize_numerical_row_index = True,
+                 set_all_heights_and_widths = False,
                  row_height = "1",
                  row_index_background = "#f8f9fa",
                  row_index_border_color = "#ababab",
@@ -209,6 +210,8 @@ class Sheet(tk.Frame):
             self.yscroll.grid(row = 1, column = 2, sticky = "nswe")
         if show_y_scrollbar:
             self.xscroll.grid(row = 2, column = 1, columnspan = 2, sticky = "nswe")
+        if set_all_heights_and_widths:
+            self.set_all_cell_sizes_to_text()
         self.MT.update()
 
     def height_and_width(self, height = None, width = None):
@@ -449,6 +452,16 @@ class Sheet(tk.Frame):
             return [int(n) for n in self.MT.row_positions]
         return [int(b - a) for a, b in zip(self.MT.row_positions, islice(self.MT.row_positions, 1, len(self.MT.row_positions)))]
 
+    def set_all_cell_sizes_to_text(self, redraw = True):
+        self.MT.set_all_cell_sizes_to_text()
+        if redraw:
+            self.refresh()
+
+    def set_all_column_widths(self, width = None, only_set_if_too_small = False, redraw = True, recreate_selection_boxes = True):
+        self.CH.set_width_of_all_cols(width = width, only_set_if_too_small = only_set_if_too_small, recreate = recreate_selection_boxes)
+        if redraw:
+            self.refresh()
+
     def column_width(self, column = None, width = None, only_set_if_too_small = False, redraw = True):
         if column == "all":
             if width == "default":
@@ -478,7 +491,12 @@ class Sheet(tk.Frame):
             else:
                 self.MT.col_positions = [0] + list(accumulate(width for width in column_widths))
         return cwx
-            
+
+    def set_all_row_heights(self, height = None, only_set_if_too_small = False, redraw = True, recreate_selection_boxes = True):
+        self.RI.set_height_of_all_rows(height = height, only_set_if_too_small = only_set_if_too_small, recreate = recreate_selection_boxes)
+        if redraw:
+            self.refresh()
+
     def row_height(self, row = None, height = None, only_set_if_too_small = False, redraw = True):
         if row == "all":
             if height == "default":
@@ -746,6 +764,28 @@ class Sheet(tk.Frame):
     def deselect(self, row = None, column = None, cell = None, redraw = True):
         self.MT.deselect(r = row, c = column, cell = cell, redraw = redraw)
 
+    def get_currently_selected(self, get_coords = False, return_nones_if_not = False):
+        curr = self.MT.currently_selected()
+        if get_coords:
+            if curr:
+                if curr[0] == "row":
+                    return curr[1], 0
+                elif curr[0] == "column":
+                    return 0, curr[1]
+                else:
+                    return curr
+            elif not curr and return_nones_if_not:
+                return (None, None)
+            else:
+                return curr
+        else:
+            if curr:
+                return curr
+            elif not curr and return_nones_if_not:
+                return (None, None)
+            else:
+                return curr
+
     def get_selected_rows(self, get_cells = False):
         return self.MT.get_selected_rows(get_cells = get_cells)
 
@@ -757,6 +797,12 @@ class Sheet(tk.Frame):
 
     def get_all_selection_boxes(self):
         return self.MT.get_all_selection_boxes()
+
+    def get_all_selection_boxes_with_types(self):
+        return self.MT.get_all_selection_boxes_with_types()
+
+    def create_selection_box(self, r1, c1, r2, c2, type_ = "cells"):
+        return self.MT.create_selected(r1, c1, r2, c2, type_)
 
     def is_cell_selected(self, r, c):
         return self.MT.is_cell_selected(r, c)
