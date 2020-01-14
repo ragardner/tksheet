@@ -2054,22 +2054,6 @@ class MainTable(tk.Canvas):
         else:
             return self.data_ref
 
-    def GetNumLines(self, cell):
-        if isinstance(cell, str):
-            return len(cell.split("\n"))
-        else:
-            return 1
-
-    def GetLinesHeight(self, cell):
-        numlines = self.GetNumLines(cell)
-        if numlines > 1:
-            return int(self.MT.fl_ins) + (self.MT.xtra_lines_increment * numlines) - 2
-        else:
-            return int(self.MT.min_rh)
-
-    def GetLargestWidth(self, cell):
-        return max(cell.split("\n"), key = self.MT.GetTextWidth)
-
     def set_all_cell_sizes_to_text(self):
         min_cw = self.min_cw
         min_rh = self.min_rh
@@ -2082,9 +2066,30 @@ class MainTable(tk.Canvas):
             iterable = range(self.total_cols)
         else:
             iterable = self.displayed_columns
+        if isinstance(self.my_row_index, list):
+            for rn in range(len(self.data_ref)):
+                try:
+                    if isinstance(self.my_row_index[rn], str):
+                        txt = self.my_row_index[rn]
+                    else:
+                        txt = f"{self.my_row_index[rn]}"
+                except:
+                    txt = ""
+                if txt:
+                    itmcon(x, text = txt)
+                    b = itmbbx(x)
+                    h = b[3] - b[1] + 5
+                else:
+                    h = min_rh
+                if h < min_rh:
+                    h = int(min_rh)
+                elif h > self.RI.max_rh:
+                    h = int(self.RI.max_rh)
+                if h > rhs[rn]:
+                    rhs[rn] = h
         for cn in iterable:
             try:
-                w = self.GetHdrTextWidth(self.GetLargestWidth(self.my_hdrs[cn])) + 10
+                w = self.GetHdrTextWidth(self.CH.GetLargestWidth(self.my_hdrs[cn])) + 10
             except:
                 if self.CH.default_hdr:
                     w = self.GetHdrTextWidth(f"{num2alpha(cn)}") + 10
@@ -2101,21 +2106,20 @@ class MainTable(tk.Canvas):
                 if txt:
                     itmcon(x, text = txt)
                     b = itmbbx(x)
-                    tw = b[2] - b[0]
-                    if tw > w:
-                        w = tw
+                    tw = b[2] - b[0] + 5
                     h = b[3] - b[1] + 5
                 else:
-                    w = min_cw
+                    tw = min_cw
                     h = min_rh
+                if tw > w:
+                    w = tw
                 if h < min_rh:
                     h = int(min_rh)
                 elif h > self.RI.max_rh:
                     h = int(self.RI.max_rh)
                 if h > rhs[rn]:
                     rhs[rn] = h
-            w += 5
-            if w <= min_cw:
+            if w < min_cw:
                 w = int(min_cw)
             elif w > self.CH.max_cw:
                 w = int(self.CH.max_cw)

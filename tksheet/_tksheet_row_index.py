@@ -588,6 +588,25 @@ class RowIndex(tk.Canvas):
             else:
                 iterable = self.MT.displayed_columns
             new_height = int(min_rh)
+            try:
+                if isinstance(self.MT.my_row_index[row], str):
+                    txt = self.MT.my_row_index[row]
+                else:
+                    txt = f"{self.MT.my_row_index[row]}"
+            except:
+                txt = ""
+            if txt:
+                itmcon(x, text = txt)
+                b = itmbbx(x)
+                h = b[3] - b[1] + 5
+            else:
+                h = min_rh
+            if h < min_rh:
+                h = int(min_rh)
+            elif h > self.max_rh:
+                h = int(self.max_rh)
+            if h > new_height:
+                new_height = h
             for cn in iterable:
                 try:
                     if isinstance(self.MT.data_ref[row][cn], str):
