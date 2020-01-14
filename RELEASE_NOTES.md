@@ -1,3 +1,8 @@
+### Version 4.3.7
+ - Make row height resize to text include row index values
+ - Fix bug with function `.set_all_cell_sizes_to_text()` where empty cells would result in minimum sizes
+ - Fix typo error in function `.set_all_cell_sizes_to_text()`
+
 ### Version 4.3.6
  - Add function `get_currently_selected()`
  - Add functions `self.sheet_demo.set_all_column_widths()`, `self.sheet_demo.set_all_row_heights()`, `self.sheet_demo.set_all_cell_sizes_to_text()`
