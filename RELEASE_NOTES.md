@@ -1,3 +1,11 @@
+### Version 4.3.8
+ - Add function `set_currently_selected()`
+ - Make `get_selected_min_max()` return `(None, None, None, None)` if nothing selected to prevent error with tuple unpacking e.g `r1, c1, r2, c2 = get_selected...`
+ - Fix potential issue with internal function `set_col_width()` if `only_set...` argument is `True`
+ - Fix typo in function `create_selection_box()`
+ - Add `right_click_select` and `rc_select` to function `enable_bindings()`, is enabled as well if other right click functionality is enabled
+ - Add `"all_select_events"` as option in function `extra_bindings()` to quickly bind all selection events in the table, including deselection to a single function
+
 ### Version 4.3.7
  - Make row height resize to text include row index values
  - Fix bug with function `.set_all_cell_sizes_to_text()` where empty cells would result in minimum sizes
