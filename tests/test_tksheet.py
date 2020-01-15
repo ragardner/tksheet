@@ -8,8 +8,8 @@ class demo(tk.Tk):
         self.grid_columnconfigure(0, weight = 1)
         self.grid_rowconfigure(0, weight = 1)
         self.sheet_demo = Sheet(self,
-                                #data = [[f"Row {r} Column {c}" for c in range(30)] for r in range(2000)], #to set sheet data at startup
-                                #set_all_heights_and_widths = True, #to fit all cell sizes to text at start up
+                                data = [[f"Row {r} Column {c}" for c in range(30)] for r in range(2000)], #to set sheet data at startup
+                                set_all_heights_and_widths = True, #to fit all cell sizes to text at start up
                                 #headers = 0, #to set headers as first row at startup
                                 #row_index = 0, #to set row_index as first column at startup
                                 height = 500,
@@ -28,6 +28,7 @@ class demo(tk.Tk):
                                          "row_height_resize",
                                          "double_click_row_resize",
                                          "right_click_popup_menu",
+                                         "rc_select",
                                          "rc_insert_column",
                                          "rc_delete_column",
                                          "rc_insert_row",
@@ -42,7 +43,6 @@ class demo(tk.Tk):
         #self.sheet_demo.disable_bindings() #uses the same strings
         self.sheet_demo.grid(row = 0, column = 0, sticky = "nswe")
         
-
         """_________________________ EXAMPLES _________________________ """
         """_____________________________________________________________"""
 
@@ -65,12 +65,14 @@ class demo(tk.Tk):
 
         #.set_sheet_data() function returns the object you use as argument
         #verify checks if your data is a list of lists, raises error if not
-        self.data = self.sheet_demo.set_sheet_data([[f"Row {r} Column {c}" for c in range(30)] for r in range(2000)], verify = False)
+        #self.data = self.sheet_demo.set_sheet_data([[f"Row {r} Column {c}" for c in range(30)] for r in range(2000)], verify = False)
 
         # __________ SETTING ROW HEIGHTS AND COLUMN WIDTHS __________
 
-        #self.sheet_demo.set_cell_data(0, 0, "lots\nof\nlines\nhere")
+        #self.sheet_demo.set_cell_data(0, 0, "\n".join([f"Line {x}" for x in range(500)]))
         #self.sheet_demo.set_column_data(1, ("" for i in range(2000)))
+        #self.sheet_demo.row_index((f"Row {r}" for r in range(2000))) #any iterable works
+        #self.sheet_demo.row_index("\n".join([f"Line {x}" for x in range(500)]), 2)
         #self.sheet_demo.column_width(column = 0, width = 300)
         #self.sheet_demo.row_height(row = 0, height = 60)
         #self.sheet_demo.set_column_widths([120 for c in range(30)])
