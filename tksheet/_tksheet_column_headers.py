@@ -164,9 +164,9 @@ class ColumnHeaders(tk.Canvas):
                 if self.MT.is_col_selected(c) and self.MT.rc_popup_menus_enabled:
                     self.ch_rc_popup_menu.tk_popup(event.x_root, event.y_root)
                 else:
-                    if self.MT.single_selection_enabled:
+                    if self.MT.single_selection_enabled and self.MT.rc_select_enabled:
                         self.select_col(c, redraw = True)
-                    elif self.MT.toggle_selection_enabled:
+                    elif self.MT.toggle_selection_enabled and self.MT.rc_select_enabled:
                         self.toggle_select_col(c, redraw = True)
                     if self.MT.rc_popup_menus_enabled:
                         self.ch_rc_popup_menu.tk_popup(event.x_root, event.y_root)
@@ -598,7 +598,7 @@ class ColumnHeaders(tk.Canvas):
         elif new_width > self.max_cw:
             new_width = int(self.max_cw)
         if only_set_if_too_small:
-            if width <= self.MT.col_positions[col + 1] - self.MT.col_positions[col]:
+            if new_width <= self.MT.col_positions[col + 1] - self.MT.col_positions[col]:
                 return self.MT.col_positions[col + 1] - self.MT.col_positions[col]
         if return_new_width:
             return new_width

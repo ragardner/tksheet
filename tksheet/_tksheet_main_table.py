@@ -93,6 +93,7 @@ class MainTable(tk.Canvas):
         self.copy_enabled = False
         self.paste_enabled = False
         self.delete_key_enabled = False
+        self.rc_select_enabled = False
         self.rc_delete_column_enabled = False
         self.rc_insert_column_enabled = False
         self.rc_delete_row_enabled = False
@@ -1454,6 +1455,7 @@ class MainTable(tk.Canvas):
             self.rc_insert_column_enabled = True
             self.rc_insert_row_enabled = True
             self.rc_popup_menus_enabled = True
+            self.rc_select_enabled = True
         elif binding in ("single", "single_selection_mode", "single_select"):
             self.single_selection_enabled = True
             self.toggle_selection_enabled = False
@@ -1495,15 +1497,19 @@ class MainTable(tk.Canvas):
         elif binding == "rc_delete_column":
             self.rc_delete_column_enabled = True
             self.rc_popup_menus_enabled = True
+            self.rc_select_enabled = True
         elif binding == "rc_delete_row":
             self.rc_delete_row_enabled = True
             self.rc_popup_menus_enabled = True
+            self.rc_select_enabled = True
         elif binding == "rc_insert_column":
             self.rc_insert_column_enabled = True
             self.rc_popup_menus_enabled = True
+            self.rc_select_enabled = True
         elif binding == "rc_insert_row":
             self.rc_insert_row_enabled = True
             self.rc_popup_menus_enabled = True
+            self.rc_select_enabled = True
         elif binding == "copy":
             self.edit_bindings(True, "copy")
         elif binding == "cut":
@@ -1512,8 +1518,11 @@ class MainTable(tk.Canvas):
             self.edit_bindings(True, "paste")
         elif binding == "delete":
             self.edit_bindings(True, "delete")
-        elif binding == "right_click_popup_menu":
+        elif binding in ("right_click_popup_menu", "rc_popup_menu"):
             self.rc_popup_menus_enabled = True
+            self.rc_select_enabled = True
+        elif binding in ("right_click_select", "rc_select"):
+            self.rc_select_enabled = True
         elif binding == "undo":
             self.edit_bindings(True, "undo")
         elif binding == "edit_cell":
@@ -1555,6 +1564,7 @@ class MainTable(tk.Canvas):
             self.rc_insert_column_enabled = False
             self.rc_insert_row_enabled = False
             self.rc_popup_menus_enabled = False
+            self.rc_select_enabled = False
         elif binding in ("single", "single_selection_mode", "single_select"):
             self.single_selection_enabled = False
         elif binding in ("toggle", "toggle_selection_mode", "toggle_select"):
@@ -1607,8 +1617,10 @@ class MainTable(tk.Canvas):
             self.edit_bindings(False, "paste")
         elif binding == "delete":
             self.edit_bindings(False, "delete")
-        elif binding == "right_click_popup_menu":
+        elif binding in ("right_click_popup_menu", "rc_popup_menu"):
             self.rc_popup_menus_enabled = False
+        elif binding in ("right_click_select", "rc_select"):
+            self.rc_select_enabled = False
         elif binding == "undo":
             self.edit_bindings(False, "undo")
         elif binding == "edit_cell":
@@ -1674,7 +1686,8 @@ class MainTable(tk.Canvas):
                 elif self.is_cell_selected(r, c) and self.rc_popup_menus_enabled:
                     self.rc_popup_menu.tk_popup(event.x_root, event.y_root)
                 else:
-                    self.select_cell(r, c, redraw = True)
+                    if self.rc_select_enabled:
+                        self.select_cell(r, c, redraw = True)
                     if self.rc_popup_menus_enabled:
                         self.rc_popup_menu.tk_popup(event.x_root, event.y_root)
         elif self.toggle_selection_enabled and all(v is None for v in (self.RI.rsz_h, self.RI.rsz_w, self.CH.rsz_h, self.CH.rsz_w)):
@@ -1688,7 +1701,8 @@ class MainTable(tk.Canvas):
                 elif self.is_cell_selected(r, c) and self.rc_popup_menus_enabled:
                     self.rc_popup_menu.tk_popup(event.x_root, event.y_root)
                 else:
-                    self.toggle_select_cell(r, c, redraw = True)
+                    if self.rc_select_enabled:
+                        self.toggle_select_cell(r, c, redraw = True)
                     if self.rc_popup_menus_enabled:
                         self.rc_popup_menu.tk_popup(event.x_root, event.y_root)
         if self.extra_rc_func is not None:
@@ -3193,13 +3207,13 @@ class MainTable(tk.Canvas):
                                   outline = "",
                                   tags = tagr)
         self.RI.create_rectangle(0, self.row_positions[r1], self.RI.current_width - 1, self.row_positions[r2],
-                                  fill = self.RI.selected_rows_bg if type_ == "rows" else self.RI.selected_cells_background,
-                                  outline = "",
-                                  tags = tagr)
+                                 fill = self.RI.selected_rows_bg if type_ == "rows" else self.RI.selected_cells_background,
+                                 outline = "",
+                                 tags = tagr)
         self.CH.create_rectangle(self.col_positions[c1], 0, self.col_positions[c2], self.CH.current_height - 1,
-                                  fill = self.CH.selected_cols_bg if type_ == "cols" else self.CH.selected_cells_background,
-                                  outline = "",
-                                  tags = tagr)
+                                 fill = self.CH.selected_cols_bg if type_ == "cols" else self.CH.selected_cells_background,
+                                 outline = "",
+                                 tags = tagr)
         if self.show_selected_cells_border:
             b = self.create_rectangle(self.col_positions[c1], self.row_positions[r1], self.col_positions[c2], self.row_positions[r2],
                                       fill = "",
@@ -3210,7 +3224,13 @@ class MainTable(tk.Canvas):
         if taglower:
             self.tag_lower(taglower)
             self.RI.tag_lower(taglower)
+            self.RI.tag_lower("Current_Inside")
+            self.RI.tag_lower("Current_Outside")
+            self.RI.tag_lower("CellSelectFill")
             self.CH.tag_lower(taglower)
+            self.CH.tag_lower("Current_Inside")
+            self.CH.tag_lower("Current_Outside")
+            self.CH.tag_lower("CellSelectFill")
         return r, b
 
     def recreate_all_selection_boxes(self):
@@ -3396,7 +3416,7 @@ class MainTable(tk.Canvas):
         if min_x != float("inf") and min_y != float("inf") and max_x > 0 and max_y > 0:
             return min_y, min_x, max_y, max_x
         else:
-            return None
+            return None, None, None, None
 
     def get_selected_rows(self, get_cells = False, within_range = None):
         s = set()

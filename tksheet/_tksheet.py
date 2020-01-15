@@ -281,7 +281,7 @@ class Sheet(tk.Frame):
                     self.MT.select_all_binding_func = func
                 if binding == "row_select":
                     self.RI.selection_binding_func = func
-                if binding == "column_select":
+                if binding in ("col_select", "column_select"):
                     self.CH.selection_binding_func = func
                 if binding == "drag_select_cells":
                     self.MT.drag_selection_binding_func = func
@@ -301,6 +301,18 @@ class Sheet(tk.Frame):
                     self.MT.extra_del_rows_rc_func = func
                 if binding == "rc_delete_column":
                     self.MT.extra_del_cols_rc_func = func
+                if binding == "all_select_events":
+                    self.MT.selection_binding_func = func
+                    self.MT.select_all_binding_func = func
+                    self.RI.selection_binding_func = func
+                    self.CH.selection_binding_func = func
+                    self.MT.drag_selection_binding_func = func
+                    self.RI.drag_selection_binding_func = func
+                    self.CH.drag_selection_binding_func = func
+                    self.MT.shift_selection_binding_func = func
+                    self.RI.shift_selection_binding_func = func
+                    self.CH.shift_selection_binding_func = func
+                    self.MT.deselection_binding_func = func
 
     def bind(self, binding, func):
         if binding == "<ButtonPress-1>":
@@ -786,6 +798,23 @@ class Sheet(tk.Frame):
             else:
                 return curr
 
+    def set_currently_selected(self, current_tuple_0 = 0, current_tuple_1 = 0):
+        if isinstance(current_tuple_0, int) and isinstance(current_tuple_1, int):
+            self.MT.create_current(r = current_tuple_0,
+                                   c = current_tuple_1,
+                                   type_ = "cell",
+                                   inside = True if self.MT.is_cell_selected(current_tuple_0, current_tuple_1) else False)
+        elif current_tuple_0 == "row" and isinstance(current_tuple_1, int):
+            self.MT.create_current(r = current_tuple_1,
+                                   c = 0,
+                                   type_ = "row",
+                                   inside = True if self.MT.is_cell_selected(current_tuple_1, 0) else False)
+        elif current_tuple_0 in ("col", "column") and isinstance(current_tuple_1, int):
+            self.MT.create_current(r = 0,
+                                   c = current_tuple_1,
+                                   type_ = "col",
+                                   inside = True if self.MT.is_cell_selected(0, current_tuple_1) else False)
+
     def get_selected_rows(self, get_cells = False):
         return self.MT.get_selected_rows(get_cells = get_cells)
 
@@ -802,7 +831,7 @@ class Sheet(tk.Frame):
         return self.MT.get_all_selection_boxes_with_types()
 
     def create_selection_box(self, r1, c1, r2, c2, type_ = "cells"):
-        return self.MT.create_selected(r1, c1, r2, c2, type_)
+        return self.MT.create_selected(r1 = r1, c1 = c1, r2 = r2, c2 = c2, type_ = type_)
 
     def is_cell_selected(self, r, c):
         return self.MT.is_cell_selected(r, c)

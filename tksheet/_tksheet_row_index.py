@@ -198,9 +198,9 @@ class RowIndex(tk.Canvas):
                 if self.MT.is_row_selected(r) and self.MT.rc_popup_menus_enabled:
                     self.ri_rc_popup_menu.tk_popup(event.x_root, event.y_root)
                 else:
-                    if self.MT.single_selection_enabled:
+                    if self.MT.single_selection_enabled and self.MT.rc_select_enabled:
                         self.select_row(r, redraw = True)
-                    elif self.MT.toggle_selection_enabled:
+                    elif self.MT.toggle_selection_enabled and self.MT.rc_select_enabled:
                         self.toggle_select_row(r, redraw = True)
                     if self.MT.rc_popup_menus_enabled:
                         self.ri_rc_popup_menu.tk_popup(event.x_root, event.y_root)
