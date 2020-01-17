@@ -257,6 +257,8 @@ class Sheet(tk.Frame):
             self.MT.deselection_binding_func = None
             self.MT.extra_del_rows_rc_func = None
             self.MT.extra_del_cols_rc_func = None
+            self.MT.extra_insert_cols_rc_func = None
+            self.MT.extra_insert_rows_rc_func = None
         else:
             for binding, func in bindings:
                 if binding == "ctrl_c":
@@ -301,6 +303,10 @@ class Sheet(tk.Frame):
                     self.MT.extra_del_rows_rc_func = func
                 if binding == "rc_delete_column":
                     self.MT.extra_del_cols_rc_func = func
+                if binding == "rc_insert_column":
+                    self.MT.extra_insert_cols_rc_func = func
+                if binding == "rc_insert_row":
+                    self.MT.extra_insert_rows_rc_func = func
                 if binding == "all_select_events":
                     self.MT.selection_binding_func = func
                     self.MT.select_all_binding_func = func
@@ -815,14 +821,23 @@ class Sheet(tk.Frame):
                                    type_ = "col",
                                    inside = True if self.MT.is_cell_selected(0, current_tuple_1) else False)
 
-    def get_selected_rows(self, get_cells = False):
-        return self.MT.get_selected_rows(get_cells = get_cells)
+    def get_selected_rows(self, get_cells = False, get_cells_as_rows = False, return_tuple = False):
+        if return_tuple:
+            return tuple(self.MT.get_selected_rows(get_cells = get_cells, get_cells_as_rows = get_cells_as_rows))
+        else:
+            return self.MT.get_selected_rows(get_cells = get_cells, get_cells_as_rows = get_cells_as_rows)
 
-    def get_selected_columns(self, get_cells = False):
-        return self.MT.get_selected_cols(get_cells = get_cells)
+    def get_selected_columns(self, get_cells = False, get_cells_as_columns = False, return_tuple = False):
+        if return_tuple:
+            return tuple(self.MT.get_selected_cols(get_cells = get_cells, get_cells_as_cols = get_cells_as_columns))
+        else:
+            return self.MT.get_selected_cols(get_cells = get_cells, get_cells_as_cols = get_cells_as_columns)
 
-    def get_selected_cells(self, get_rows = False, get_cols = False):
-        return self.MT.get_selected_cells(get_rows = get_rows, get_cols = get_cols)
+    def get_selected_cells(self, get_rows = False, get_cols = False, return_tuple = False):
+        if return_tuple:
+            return tuple(self.MT.get_selected_cells(get_rows = get_rows, get_cols = get_cols))
+        else:
+            return self.MT.get_selected_cells(get_rows = get_rows, get_cols = get_cols)
 
     def get_all_selection_boxes(self):
         return self.MT.get_all_selection_boxes()

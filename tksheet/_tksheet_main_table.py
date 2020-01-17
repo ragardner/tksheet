@@ -79,6 +79,8 @@ class MainTable(tk.Canvas):
         self.extra_edit_cell_func = None
         self.extra_del_rows_rc_func = None
         self.extra_del_cols_rc_func = None
+        self.extra_insert_cols_rc_func = None
+        self.extra_insert_rows_rc_func = None
         self.selection_binding_func = None # function to run when a spreadsheet selection event occurs
         self.deselection_binding_func = None # function to run when a spreadsheet deselection event occurs
         self.drag_selection_binding_func = None # function to run when a spreadsheet mouse drag selection event occurs
@@ -834,10 +836,10 @@ class MainTable(tk.Canvas):
         if len(self.row_positions) > 1 and len(self.col_positions) > 1:
             self.create_current(0, 0, type_ = "cell", inside = True)
             self.create_selected(0, 0, len(self.row_positions) - 1, len(self.col_positions) - 1)
-        if redraw:
-            self.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
-        if self.select_all_binding_func is not None and run_binding_func:
-            self.select_all_binding_func(("select_all_cells", ) + (0, 0, len(self.row_positions) - 1, len(self.col_positions) - 1))
+            if redraw:
+                self.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
+            if self.select_all_binding_func is not None and run_binding_func:
+                self.select_all_binding_func(("select_all_cells", ) + (0, 0, len(self.row_positions) - 1, len(self.col_positions) - 1))
 
     def select_cell(self, r, c, redraw = False, keep_other_selections = False):
         r = int(r)
@@ -1713,7 +1715,7 @@ class MainTable(tk.Canvas):
         x1, y1, x2, y2 = self.get_canvas_visible_area()
         if self.identify_col(x = event.x, allow_end = False) is None or self.identify_row(y = event.y, allow_end = False) is None:
             self.deselect("all")
-        elif self.single_selection_enabled and all(v is None for v in (self.RI.rsz_h, self.RI.rsz_w, self.CH.rsz_h, self.CH.rsz_w)):
+        if self.single_selection_enabled and all(v is None for v in (self.RI.rsz_h, self.RI.rsz_w, self.CH.rsz_h, self.CH.rsz_w)):
             r = self.identify_row(y = event.y)
             c = self.identify_col(x = event.x)
             if r < len(self.row_positions) - 1 and c < len(self.col_positions) - 1:
@@ -2204,6 +2206,13 @@ class MainTable(tk.Canvas):
                 self.my_hdrs.insert(stidx, "")
             except:
                 pass
+        if self.row_positions == [0] and not self.data_ref:
+            self.insert_row_position(idx = 0,
+                                     height = int(self.min_rh),
+                                     deselect_all = False,
+                                     preserve_other_selections = False)
+            self.data_ref.insert(0, [])
+            self.total_rows += 1
         for rn in range(len(self.data_ref)):
             self.data_ref[rn].insert(stidx, "")
         self.CH.select_col(c = posidx)
@@ -2212,6 +2221,8 @@ class MainTable(tk.Canvas):
             self.undo_storage.append(zlib.compress(pickle.dumps(("insert_col", {"data_col_num": stidx,
                                                                                 "sheet_col_num": posidx}))))
         self.refresh()
+        if self.extra_insert_cols_rc_func is not None:
+            self.extra_insert_cols_rc_func((stidx, posidx))
 
     def insert_row_rc(self, event = None): #subset of rows
         if self.anything_selected(exclude_columns = True, exclude_cells = True):
@@ -2229,6 +2240,12 @@ class MainTable(tk.Canvas):
                 self.my_row_index.insert(stidx, "")
             except:
                 pass
+        if self.col_positions == [0] and not self.data_ref:
+            self.insert_col_position(idx = 0,
+                                     width = int(self.min_rh),
+                                     deselect_all = False,
+                                     preserve_other_selections = False)
+            self.total_cols += 1
         self.data_ref.insert(stidx, list(repeat("", self.total_cols)))
         self.RI.select_row(r = posidx)
         self.total_rows += 1
@@ -2236,7 +2253,9 @@ class MainTable(tk.Canvas):
             self.undo_storage.append(zlib.compress(pickle.dumps(("insert_row", {"data_row_num": stidx,
                                                                                 "sheet_row_num": posidx}))))
         self.refresh()
-
+        if self.extra_insert_rows_rc_func is not None:
+            self.extra_insert_rows_rc_func((stidx, posidx))
+            
     def del_cols_rc(self, event = None):
         seld_cols = sorted(self.get_selected_cols())
         if seld_cols:
@@ -3127,6 +3146,12 @@ class MainTable(tk.Canvas):
         self.delete("Current_Inside", "Current_Outside")
         self.RI.delete("Current_Inside", "Current_Outside")
         self.CH.delete("Current_Inside", "Current_Outside")
+        if self.col_positions == [0]:
+            c1 = 0
+            c2 = 0
+        if self.row_positions == [0]:
+            r1 = 0
+            r2 = 0
         if inside:
             tagr = ("Current_Inside", f"{r1}_{c1}_{r2}_{c2}", type_)
         else:
@@ -3418,7 +3443,7 @@ class MainTable(tk.Canvas):
         else:
             return None, None, None, None
 
-    def get_selected_rows(self, get_cells = False, within_range = None):
+    def get_selected_rows(self, get_cells = False, within_range = None, get_cells_as_rows = False):
         s = set()
         if within_range is not None:
             within_r1 = within_range[0]
@@ -3428,6 +3453,8 @@ class MainTable(tk.Canvas):
                 for item in self.find_withtag("RowSelectFill"):
                     r1, c1, r2, c2 = tuple(int(e) for e in self.gettags(item)[1].split("_") if e)
                     s.update(set(product(range(r1, r2), range(0, len(self.col_positions) - 1))))
+                if get_cells_as_rows:
+                    s.update(self.get_selected_cells())
             else:
                 for item in self.find_withtag("RowSelectFill"):
                     r1, c1, r2, c2 = tuple(int(e) for e in self.gettags(item)[1].split("_") if e)
@@ -3442,11 +3469,15 @@ class MainTable(tk.Canvas):
                         else:
                             end_row = within_r2
                         s.update(set(product(range(start_row, end_row), range(0, len(self.col_positions) - 1))))
+                if get_cells_as_rows:
+                    s.update(self.get_selected_cells(within_range = (within_r1, 0, within_r2, len(self.col_positions) - 1)))
         else:
             if within_range is None:
                 for item in self.find_withtag("RowSelectFill"):
                     r1, c1, r2, c2 = tuple(int(e) for e in self.gettags(item)[1].split("_") if e)
                     s.update(set(range(r1, r2)))
+                if get_cells_as_rows:
+                    s.update(set(tup[0] for tup in self.get_selected_cells()))
             else:
                 for item in self.find_withtag("RowSelectFill"):
                     r1, c1, r2, c2 = tuple(int(e) for e in self.gettags(item)[1].split("_") if e)
@@ -3461,9 +3492,11 @@ class MainTable(tk.Canvas):
                         else:
                             end_row = within_r2
                         s.update(set(range(start_row, end_row)))
+                if get_cells_as_rows:
+                    s.update(set(tup[0] for tup in self.get_selected_cells(within_range = (within_r1, 0, within_r2, len(self.col_positions) - 1))))
         return s
 
-    def get_selected_cols(self, get_cells = False, within_range = None):
+    def get_selected_cols(self, get_cells = False, within_range = None, get_cells_as_cols = False):
         s = set()
         if within_range is not None:
             within_c1 = within_range[0]
@@ -3473,6 +3506,8 @@ class MainTable(tk.Canvas):
                 for item in self.find_withtag("ColSelectFill"):
                     r1, c1, r2, c2 = tuple(int(e) for e in self.gettags(item)[1].split("_") if e)
                     s.update(set(product(range(c1, c2), range(0, len(self.row_positions) - 1))))
+                if get_cells_as_cols:
+                    s.update(self.get_selected_cells())
             else:
                 for item in self.find_withtag("ColSelectFill"):
                     r1, c1, r2, c2 = tuple(int(e) for e in self.gettags(item)[1].split("_") if e)
@@ -3487,11 +3522,15 @@ class MainTable(tk.Canvas):
                         else:
                             end_col = within_c2
                         s.update(set(product(range(start_col, end_col), range(0, len(self.row_positions) - 1))))
+                if get_cells_as_cols:
+                    s.update(self.get_selected_cells(within_range = (0, within_c1, len(self.row_positions) - 1, within_c2)))
         else:
             if within_range is None:
                 for item in self.find_withtag("ColSelectFill"):
                     r1, c1, r2, c2 = tuple(int(e) for e in self.gettags(item)[1].split("_") if e)
                     s.update(set(range(c1, c2)))
+                if get_cells_as_cols:
+                    s.update(set(tup[1] for tup in self.get_selected_cells()))
             else:
                 for item in self.find_withtag("ColSelectFill"):
                     r1, c1, r2, c2 = tuple(int(e) for e in self.gettags(item)[1].split("_") if e)
@@ -3506,6 +3545,8 @@ class MainTable(tk.Canvas):
                         else:
                             end_col = within_c2
                         s.update(set(range(start_col, end_col)))
+                if get_cells_as_cols:
+                    s.update(set(tup[0] for tup in self.get_selected_cells(within_range = (0, within_c1, len(self.row_positions) - 1, within_c2))))
         return s
 
     def get_selected_cells(self, get_rows = False, get_cols = False, within_range = None):
