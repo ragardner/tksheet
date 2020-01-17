@@ -8,11 +8,11 @@ class demo(tk.Tk):
         self.grid_columnconfigure(0, weight = 1)
         self.grid_rowconfigure(0, weight = 1)
         self.sheet_demo = Sheet(self,
-                                data = [[f"Row {r} Column {c}" for c in range(30)] for r in range(2000)], #to set sheet data at startup
-                                set_all_heights_and_widths = True, #to fit all cell sizes to text at start up
+                                #data = [[f"Row {r} Column {c}" for c in range(30)] for r in range(2000)], #to set sheet data at startup
+                                #set_all_heights_and_widths = True, #to fit all cell sizes to text at start up
                                 #headers = 0, #to set headers as first row at startup
                                 #row_index = 0, #to set row_index as first column at startup
-                                height = 500,
+                                height = 500, #height and width arguments are optional
                                 width = 700) #For full startup arguments/parameters see DOCUMENTATION.md
         self.sheet_demo.enable_bindings(("single_select", #"single_select" or "toggle_select"
                                          "drag_select",   #enables shift click selection as well
@@ -65,7 +65,7 @@ class demo(tk.Tk):
 
         #.set_sheet_data() function returns the object you use as argument
         #verify checks if your data is a list of lists, raises error if not
-        #self.data = self.sheet_demo.set_sheet_data([[f"Row {r} Column {c}" for c in range(30)] for r in range(2000)], verify = False)
+        self.data = self.sheet_demo.set_sheet_data([[f"Row {r} Column {c}" for c in range(30)] for r in range(2000)], verify = False)
 
         # __________ SETTING ROW HEIGHTS AND COLUMN WIDTHS __________
 
@@ -79,7 +79,7 @@ class demo(tk.Tk):
         #self.sheet_demo.set_row_heights([30 for r in range(2000)])
         #self.sheet_demo.set_all_column_widths()
         #self.sheet_demo.set_all_row_heights()
-        #self.sheet_demo.set_all_cell_sizes_to_text()
+        self.sheet_demo.set_all_cell_sizes_to_text()
         
         # __________ BINDING A FUNCTION TO USER SELECTS CELL __________
 
@@ -95,8 +95,7 @@ class demo(tk.Tk):
                                         ("shift_column_select", self.shift_select_columns),
                                         ("drag_select_columns", self.drag_select_columns),
                                         ("deselect", self.deselect)
-                                        ]
-                                       )
+                                        ])
         
         #self.sheet_demo.extra_bindings([("cell_select", None)]) #unbind cell select
         #self.sheet_demo.extra_bindings("unbind_all") #remove all functions set by extra_bindings()
@@ -159,11 +158,42 @@ class demo(tk.Tk):
 
         #print (self.sheet_demo.get_column_data(0)) # only accessible by index
 
+        # __________ GETTING SELECTED __________
+
+        #print (self.sheet_demo.get_currently_selected
+        #print (self.sheet_demo.get_selected_cells())
+        #print (self.sheet_demo.get_selected_rows())
+        #print (self.sheet_demo.get_selected_columns())
+        #print (self.sheet_demo.get_selection_boxes())
+        #print (self.sheet_demo.get_selection_boxes_with_types())
+
+        # __________ SETTING SELECTED __________
+
+        #self.sheet_demo.deselect("all")
+        #self.sheet_demo.create_selection_box(0, 0, 2, 2, type_ = "cells") #type here is "cells", "cols" or "rows"
+        #self.sheet_demo.set_currently_selected(0, 0)
+        #self.sheet_demo.set_currently_selected("row", 0)
+        #self.sheet_demo.set_currently_selected("column", 0)
+
+        # __________ CHECKING SELECTED __________
+
+        #print (self.sheet_demo.is_cell_selected(0, 0))
+        #print (self.sheet_demo.is_row_selected(0))
+        #print (self.sheet_demo.is_column_selected(0))
+        #print (self.sheet_demo.anything_selected())
+
         # __________ HIDING THE ROW INDEX AND HEADERS __________
 
         #self.sheet_demo.hide("row_index")
         #self.sheet_demo.hide("top_left")
         #self.sheet_demo.hide("header")
+
+    """
+
+    UNTIL DOCUMENTATION IS COMPLETE, PLEASE BROWSE THE FILE
+    _tksheet.py FOR A FULL LIST OF FUNCTIONS AND THEIR PARAMETERS
+
+    """
 
     def deselect(self, event):
         print (event, self.sheet_demo.get_selected_cells())
