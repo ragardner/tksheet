@@ -1,3 +1,13 @@
+### Version 4.3.9
+ - Add `rc_insert_column` and `rc_insert_row` strings to extra bindings
+ - Fix errors with insert column/row that occur if data is empty list
+ - Fix resizing row index width/header height sometimes not working
+ - Fix select all creating event when sheet is empty
+ - Fix `create_current()` internal error if there are columns but no rows or rows but no columns
+ - Add argument `get_cells_as_rows` to function `get_selected_rows()` to return selected cells as if they were selected rows
+ - Add argument `get_cells_as_columns` to function `get_selected_columns()` to return selected cells as if they were selected columns
+ - Add argument `return_tuple` to functions `get_selected_rows()`, `get_selected_columns()`, `get_selected_cells()`
+
 ### Version 4.3.8
  - Add function `set_currently_selected()`
  - Make `get_selected_min_max()` return `(None, None, None, None)` if nothing selected to prevent error with tuple unpacking e.g `r1, c1, r2, c2 = get_selected...`
