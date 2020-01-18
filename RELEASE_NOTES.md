@@ -1,3 +1,6 @@
+### Version 4.4.1
+ - Potential fix for functions `headers()` and `row_index()` when `show...if_not_sheet` arguments are utilized
+
 ### Version 4.4.0
  - Add argument `reset_col_positions` to function `headers()` default is `False`
  - Add argument `reset_row_positions` to function `row_index()` default is `False`
