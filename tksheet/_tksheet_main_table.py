@@ -2572,12 +2572,13 @@ class MainTable(tk.Canvas):
                     raise ValueError("New header must be iterable or int (use int to use a row as the header")
             if reset_col_positions:
                 self.reset_col_positions()
-            elif show_headers_if_not_sheet and not isinstance(self.my_hdrs, int) and (self.col_positions == [0] or not self.col_positions):
+            elif show_headers_if_not_sheet and isinstance(self.my_hdrs, list) and (self.col_positions == [0] or not self.col_positions):
                 colpos = int(self.default_cw)
                 if self.all_columns_displayed:
                     self.col_positions = list(accumulate(chain([0], (colpos for c in range(len(self.my_hdrs))))))
                 else:
                     self.col_positions = list(accumulate(chain([0], (colpos for c in range(len(self.displayed_columns))))))
+                self.total_cols = len(self.my_hdrs)
         else:
             if index is not None:
                 if isinstance(index, int):
@@ -2600,9 +2601,10 @@ class MainTable(tk.Canvas):
                     raise ValueError("New index must be iterable or int (use int to use a column as the index")
             if reset_row_positions:
                 self.reset_row_positions()
-            elif show_index_if_not_sheet and not isinstance(self.my_row_index, int) and (self.row_positions == [0] or not self.row_positions):
+            elif show_index_if_not_sheet and isinstance(self.my_row_index, list) and (self.row_positions == [0] or not self.row_positions):
                 rowpos = self.GetLinesHeight(self.default_rh)
                 self.row_positions = list(accumulate(chain([0], (rowpos for c in range(len(self.my_row_index))))))
+                self.total_rows = len(self.my_row_index)
         else:
             if index is not None:
                 if isinstance(index, int):
