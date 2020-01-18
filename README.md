@@ -115,7 +115,7 @@ class demo(tk.Tk):
         #self.sheet_demo.set_row_heights([30 for r in range(2000)])
         #self.sheet_demo.set_all_column_widths()
         #self.sheet_demo.set_all_row_heights()
-        self.sheet_demo.set_all_cell_sizes_to_text()
+        #self.sheet_demo.set_all_cell_sizes_to_text()
         
         # __________ BINDING A FUNCTION TO USER SELECTS CELL __________
 
@@ -196,7 +196,7 @@ class demo(tk.Tk):
 
         # __________ GETTING SELECTED __________
 
-        #print (self.sheet_demo.get_currently_selected
+        #print (self.sheet_demo.get_currently_selected())
         #print (self.sheet_demo.get_selected_cells())
         #print (self.sheet_demo.get_selected_rows())
         #print (self.sheet_demo.get_selected_columns())
@@ -226,7 +226,7 @@ class demo(tk.Tk):
 
     """
 
-    UNTIL DOCUMENTATION IS COMPLETE, PLEASE BROWSE THE FILE 
+    UNTIL DOCUMENTATION IS COMPLETE, PLEASE BROWSE THE FILE
     _tksheet.py FOR A FULL LIST OF FUNCTIONS AND THEIR PARAMETERS
 
     """

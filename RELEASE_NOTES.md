@@ -1,3 +1,11 @@
+### Version 4.4.0
+ - Add argument `reset_col_positions` to function `headers()` default is `False`
+ - Add argument `reset_row_positions` to function `row_index()` default is `False`
+ - Add argument `show_headers_if_not_sheet` to function `headers()` default is `True`
+ - Add argument `show_index_if_not_sheet` to function `row_index()` default is `True`
+ - Adjust most `center` text draw positions slightly, `center` alignment should now actually be center
+ - Improve header resizing accuracy for set to text size
+
 ### Version 4.3.9
  - Add `rc_insert_column` and `rc_insert_row` strings to extra bindings
  - Fix errors with insert column/row that occur if data is empty list
