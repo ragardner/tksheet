@@ -619,13 +619,13 @@ class MainTable(tk.Canvas):
                 if rm1start > ins_row:
                     rhs[ins_row:ins_row] = rhs[rm1start:rm1end]
                     rhs[rm2start:rm2end] = []
-                    self.row_positions = [0] + list(accumulate(height for height in rhs))
+                    self.row_positions = list(accumulate(chain([0], (height for height in rhs))))
                     self.create_current(ins_row, 0, type_ = "row", inside = True)
                     self.create_selected(ins_row, 0, ins_row + totalrows, len(self.col_positions) - 1, "rows")
                 else:
                     rhs[ins_row:ins_row] = rhs[rm1start:rm1end]
                     rhs[rm1start:rm1end] = []
-                    self.row_positions = [0] + list(accumulate(height for height in rhs))
+                    self.row_positions = list(accumulate(chain([0], (height for height in rhs))))
                     self.create_current(ins_row - totalrows, 0, type_ = "row", inside = True)
                     self.create_selected(ins_row - totalrows, 0, ins_row, len(self.col_positions) - 1, "rows")
                 self.see(r = orig_ins_row, c = 0, keep_yscroll = False, keep_xscroll = True, bottom_right_corner = False, check_cell_visibility = True, redraw = False)
@@ -677,13 +677,13 @@ class MainTable(tk.Canvas):
                 if rm1start > ins_col:
                     cws[ins_col:ins_col] = cws[rm1start:rm1end]
                     cws[rm2start:rm2end] = []
-                    self.col_positions = [0] + list(accumulate(width for width in cws))
+                    self.col_positions = list(accumulate(chain([0], (width for width in cws))))
                     self.create_current(0, ins_col, type_ = "col", inside = True)
                     self.create_selected(0, ins_col, len(self.row_positions) - 1, ins_col + totalcols, "cols")
                 else:
                     cws[ins_col:ins_col] = cws[rm1start:rm1end]
                     cws[rm1start:rm1end] = []
-                    self.col_positions = [0] + list(accumulate(width for width in cws))
+                    self.col_positions = list(accumulate(chain([0], (width for width in cws))))
                     self.create_current(0, ins_col - totalcols, type_ = "col", inside = True)
                     self.create_selected(0, ins_col - totalcols, len(self.row_positions) - 1, ins_col, "cols")
                 self.see(r = 0, c = orig_ins_col, keep_yscroll = True, keep_xscroll = False, bottom_right_corner = False, check_cell_visibility = True, redraw = False)
@@ -2076,6 +2076,7 @@ class MainTable(tk.Canvas):
         rhs = defaultdict(lambda: int(min_rh))
         cws = []
         x = self.txt_measure_canvas.create_text(0, 0, text = "", font = self.my_font)
+        x2 = self.txt_measure_canvas.create_text(0, 0, text = "", font = self.my_hdr_font)
         itmcon = self.txt_measure_canvas.itemconfig
         itmbbx = self.txt_measure_canvas.bbox
         if self.all_columns_displayed:
@@ -2105,12 +2106,20 @@ class MainTable(tk.Canvas):
                     rhs[rn] = h
         for cn in iterable:
             try:
-                w = self.GetHdrTextWidth(self.CH.GetLargestWidth(self.my_hdrs[cn])) + 10
+                txt = self.my_hdrs[cn]
+                if txt:
+                    itmcon(x2, text = txt)
+                    b = itmbbx(x2)
+                    w = b[2] - b[0] + 5
+                else:
+                    w = self.min_cw
             except:
                 if self.CH.default_hdr:
-                    w = self.GetHdrTextWidth(f"{num2alpha(cn)}") + 10
+                    itmcon(x2, text = f"{num2alpha(cn)}")
                 else:
-                    w = self.GetHdrTextWidth(f"{cn}") + 10
+                    itmcon(x2, text = f"{cn}")
+                b = itmbbx(x2)
+                w = b[2] - b[0] + 5
             for rn, r in enumerate(self.data_ref):
                 try:
                     if isinstance(r[cn], str):
@@ -2141,16 +2150,17 @@ class MainTable(tk.Canvas):
                 w = int(self.CH.max_cw)
             cws.append(w)
         self.txt_measure_canvas.delete(x)
-        self.row_positions = [0] + list(accumulate(height for height in rhs.values()))
-        self.col_positions = [0] + list(accumulate(width for width in cws))
+        self.txt_measure_canvas.delete(x2)
+        self.row_positions = list(accumulate(chain([0], (height for height in rhs.values()))))
+        self.col_positions = list(accumulate(chain([0], (width for width in cws))))
         self.recreate_all_selection_boxes()
 
     def reset_col_positions(self):
         colpos = int(self.default_cw)
         if self.all_columns_displayed:
-            self.col_positions = [0] + list(accumulate(colpos for c in range(self.total_cols)))
+            self.col_positions = list(accumulate(chain([0], (colpos for c in range(self.total_cols)))))
         else:
-            self.col_positions = [0] + list(accumulate(colpos for c in range(len(self.displayed_columns))))
+            self.col_positions = list(accumulate(chain([0], (colpos for c in range(len(self.displayed_columns))))))
 
     def del_col_position(self, idx, deselect_all = False, preserve_other_selections = False):
         # WORK NEEDED FOR PRESERVE SELECTIONS ?
@@ -2423,7 +2433,7 @@ class MainTable(tk.Canvas):
 
     def reset_row_positions(self):
         rowpos = self.GetLinesHeight(self.default_rh)
-        self.row_positions = [0] + list(accumulate(rowpos for r in range(self.total_rows)))
+        self.row_positions = list(accumulate(chain([0], (rowpos for r in range(self.total_rows)))))
 
     def del_row_position(self, idx, deselect_all = False, preserve_other_selections = False):
         # WORK NEEDED FOR PRESERVE SELECTIONS ?
@@ -2503,17 +2513,35 @@ class MainTable(tk.Canvas):
                     self.col_positions[i] += width
                 self.col_positions[idx2 + 1] = self.col_positions[idx2] + width
 
-    def GetLinesHeight(self, n): 
-        if n == 1:
-            return int(self.min_rh)
+    def GetLinesHeight(self, n, old_method = False):
+        if old_method:
+            if n == 1:
+                return int(self.min_rh)
+            else:
+                return int(self.fl_ins) + (self.xtra_lines_increment * n) - 2
         else:
-            return int(self.fl_ins) + (self.xtra_lines_increment * n) - 2
+            x = self.txt_measure_canvas.create_text(0, 0,
+                                                    text = "\n".join(["j^|" for lines in range(n)]) if n > 1 else "j^|",
+                                                    font = self.my_font)
+            b = self.txt_measure_canvas.bbox(x)
+            h = b[3] - b[1] + 5
+            self.txt_measure_canvas.delete(x)
+            return h
 
-    def GetHdrLinesHeight(self, n):
-        if n == 1:
-            return int(self.hdr_min_rh)
+    def GetHdrLinesHeight(self, n, old_method = False):
+        if old_method:
+            if n == 1:
+                return int(self.hdr_min_rh)
+            else:
+                return int(self.hdr_fl_ins) + (self.hdr_xtra_lines_increment * n) - 2
         else:
-            return int(self.hdr_fl_ins) + (self.hdr_xtra_lines_increment * n) - 2
+            x = self.txt_measure_canvas.create_text(0, 0,
+                                                    text = "\n".join(["j^|" for lines in range(n)]) if n > 1 else "j^|",
+                                                    font = self.my_hdr_font)
+            b = self.txt_measure_canvas.bbox(x)
+            h = b[3] - b[1] + 5
+            self.txt_measure_canvas.delete(x)
+            return h
 
     def display_columns(self, indexes = None, enable = None, reset_col_positions = True, deselect_all = True):
         if deselect_all:
@@ -2529,7 +2557,7 @@ class MainTable(tk.Canvas):
         if reset_col_positions:
             self.reset_col_positions()
                 
-    def headers(self, newheaders = None, index = None):
+    def headers(self, newheaders = None, index = None, reset_col_positions = False, show_headers_if_not_sheet = True):
         if newheaders is not None:
             if isinstance(newheaders, (list, tuple)):
                 self.my_hdrs = list(newheaders) if isinstance(newheaders, tuple) else newheaders
@@ -2542,6 +2570,14 @@ class MainTable(tk.Canvas):
                     self.my_hdrs = list(newheaders)
                 except:
                     raise ValueError("New header must be iterable or int (use int to use a row as the header")
+            if reset_col_positions:
+                self.reset_col_positions()
+            elif show_headers_if_not_sheet and not isinstance(self.my_hdrs, int) and (self.col_positions == [0] or not self.col_positions):
+                colpos = int(self.default_cw)
+                if self.all_columns_displayed:
+                    self.col_positions = list(accumulate(chain([0], (colpos for c in range(len(self.my_hdrs))))))
+                else:
+                    self.col_positions = list(accumulate(chain([0], (colpos for c in range(len(self.displayed_columns))))))
         else:
             if index is not None:
                 if isinstance(index, int):
@@ -2549,7 +2585,7 @@ class MainTable(tk.Canvas):
             else:
                 return self.my_hdrs
 
-    def row_index(self, newindex = None, index = None):
+    def row_index(self, newindex = None, index = None, reset_row_positions = False, show_index_if_not_sheet = True):
         if newindex is not None:
             if isinstance(newindex, (list, tuple)):
                 self.my_row_index = list(newindex) if isinstance(newindex, tuple) else newindex
@@ -2562,6 +2598,11 @@ class MainTable(tk.Canvas):
                     self.my_row_index = list(newindex)
                 except:
                     raise ValueError("New index must be iterable or int (use int to use a column as the index")
+            if reset_row_positions:
+                self.reset_row_positions()
+            elif show_index_if_not_sheet and not isinstance(self.my_row_index, int) and (self.row_positions == [0] or not self.row_positions):
+                rowpos = self.GetLinesHeight(self.default_rh)
+                self.row_positions = list(accumulate(chain([0], (rowpos for c in range(len(self.my_row_index))))))
         else:
             if index is not None:
                 if isinstance(index, int):
@@ -2744,7 +2785,7 @@ class MainTable(tk.Canvas):
                         stop = fc + 5
                         sc = self.col_positions[c + 1]
                         mw = sc - fc - 5
-                        x = fc + floor(mw / 2)
+                        x = fc + floor((sc - fc) / 2)
                         for r in rows_:
                             fr = self.row_positions[r]
                             sr = self.row_positions[r + 1]
@@ -2962,7 +3003,7 @@ class MainTable(tk.Canvas):
                         stop = fc + 5
                         sc = self.col_positions[c + 1]
                         mw = sc - fc - 5
-                        x = fc + floor(mw / 2)
+                        x = fc + floor((sc - fc) / 2)
                         for r in rows_:
                             fr = self.row_positions[r]
                             sr = self.row_positions[r + 1]

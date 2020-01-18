@@ -36,6 +36,7 @@ class RowIndex(tk.Canvas):
                  drag_and_drop_color = None,
                  resizing_line_color = None,
                  row_drag_and_drop_perform = True,
+                 measure_subset_index = True,
                  auto_resize_width = True):
         tk.Canvas.__init__(self,
                            parentframe,
@@ -94,6 +95,7 @@ class RowIndex(tk.Canvas):
         self.rsz_h = None
         self.currently_resizing_width = False
         self.currently_resizing_height = False
+        self.measure_subset_index = measure_subset_index
         self.auto_resize_width = auto_resize_width
         self.bind("<Motion>", self.mouse_motion)
         self.bind("<ButtonPress-1>", self.b1_press)
@@ -475,7 +477,7 @@ class RowIndex(tk.Canvas):
                 else:
                     rhs[r:r] = rhs[rm1start:rm1end]
                     rhs[rm1start:rm1end] = []
-                self.MT.row_positions = [0] + list(accumulate(height for height in rhs))
+                self.MT.row_positions = list(accumulate(chain([0], (height for height in rhs))))
                 self.MT.deselect("all")
                 if (r_ - 1) + totalrows > len(self.MT.row_positions) - 1:
                     new_selected = tuple(range(len(self.MT.row_positions) - 1 - totalrows, len(self.MT.row_positions) - 1))
@@ -649,9 +651,9 @@ class RowIndex(tk.Canvas):
 
     def set_height_of_all_rows(self, height = None, only_set_if_too_small = False, recreate = True):
         if height is None:
-            self.MT.row_positions = [0] + list(accumulate(self.set_row_height(rn, only_set_if_too_small = only_set_if_too_small, recreate = False, return_new_height = True) for rn in range(len(self.MT.data_ref))))
+            self.MT.row_positions = list(accumulate(chain([0], (self.set_row_height(rn, only_set_if_too_small = only_set_if_too_small, recreate = False, return_new_height = True) for rn in range(len(self.MT.data_ref))))))
         else:
-            self.MT.row_positions = [0] + list(accumulate(height for r in range(len(self.MT.data_ref))))
+            self.MT.row_positions = list(accumulate(chain([0], (height for r in range(len(self.MT.data_ref))))))
         if recreate:
             self.MT.recreate_all_selection_boxes()
         
@@ -694,8 +696,8 @@ class RowIndex(tk.Canvas):
                 if self.current_width != new_w:
                     self.set_width(new_w, set_TL = True)
             if self.align == "center":
-                mw = self.current_width - 7
-                x = floor(mw / 2)
+                mw = self.current_width - 5
+                x = floor(self.current_width / 2)
                 for r in range(start_row, end_row - 1):
                     fr = self.MT.row_positions[r]
                     sr = self.MT.row_positions[r + 1]
@@ -792,8 +794,8 @@ class RowIndex(tk.Canvas):
                                 if y + self.MT.half_txt_h > sr:
                                     break
             elif self.align == "w":
-                mw = self.current_width - 7
-                x = 7
+                mw = self.current_width - 5
+                x = 5
                 for r in range(start_row, end_row - 1):
                     fr = self.MT.row_positions[r]
                     sr = self.MT.row_positions[r + 1]

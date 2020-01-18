@@ -32,6 +32,7 @@ class Sheet(tk.Frame):
                  width = None,
                  height = None,
                  headers = None,
+                 measure_subset_header = True,
                  default_header = "letters", #letters or numbers
                  header_background = "#f8f9fa",
                  header_border_color = "#ababab",
@@ -52,6 +53,7 @@ class Sheet(tk.Frame):
                  max_header_height = "inf",
                  max_row_width = "inf",
                  row_index = None,
+                 measure_subset_index = True,
                  row_index_width = 100,
                  auto_resize_numerical_row_index = True,
                  set_all_heights_and_widths = False,
@@ -131,6 +133,7 @@ class Sheet(tk.Frame):
                            drag_and_drop_color = drag_and_drop_color,
                            resizing_line_color = resizing_line_color,
                            row_drag_and_drop_perform = row_drag_and_drop_perform,
+                           measure_subset_index = measure_subset_index,
                            auto_resize_width = auto_resize_numerical_row_index)
         self.CH = ColumnHeaders(self,
                                 max_colwidth = max_colwidth,
@@ -147,6 +150,7 @@ class Sheet(tk.Frame):
                                 header_select_column_fg = header_select_column_fg,
                                 drag_and_drop_color = drag_and_drop_color,
                                 column_drag_and_drop_perform = column_drag_and_drop_perform,
+                                measure_subset_header = measure_subset_header,
                                 resizing_line_color = resizing_line_color)
         self.MT = MainTable(self,
                             column_width = column_width,
@@ -451,14 +455,14 @@ class Sheet(tk.Frame):
     def get_example_canvas_column_widths(self, total_cols = None):
         colpos = int(self.MT.default_cw)
         if total_cols is not None:
-            return [0] + list(accumulate(colpos for c in range(total_cols)))
-        return [0] + list(accumulate(colpos for c in range(len(self.MT.col_positions) - 1)))
+            return list(accumulate(chain([0], (colpos for c in range(total_cols)))))
+        return list(accumulate(chain([0], (colpos for c in range(len(self.MT.col_positions) - 1)))))
 
     def get_example_canvas_row_heights(self, total_rows = None):
         rowpos = self.MT.GetLinesHeight(self.MT.default_rh)
         if total_rows is not None:
-            return [0] + list(accumulate(rowpos for c in range(total_rows)))
-        return [0] + list(accumulate(rowpos for c in range(len(self.MT.row_positions) - 1)))
+            return list(accumulate(chain([0], (rowpos for c in range(total_rows)))))
+        return list(accumulate(chain([0], (rowpos for c in range(len(self.MT.row_positions) - 1)))))
 
     def get_column_widths(self, canvas_positions = False):
         if canvas_positions:
@@ -507,7 +511,7 @@ class Sheet(tk.Frame):
             if canvas_positions:
                 self.MT.col_positions = column_widths
             else:
-                self.MT.col_positions = [0] + list(accumulate(width for width in column_widths))
+                self.MT.col_positions = list(accumulate(chain([0], (width for width in column_widths))))
         return cwx
 
     def set_all_row_heights(self, height = None, only_set_if_too_small = False, redraw = True, recreate_selection_boxes = True):
@@ -542,7 +546,7 @@ class Sheet(tk.Frame):
             if canvas_positions:
                 self.MT.row_positions = row_heights
             else:
-                self.MT.row_positions = [0] + list(accumulate(height for height in row_heights))
+                self.MT.row_positions = list(accumulate(chain([0], (height for height in row_heights))))
         return rhx
 
     def verify_row_heights(self, row_heights, canvas_positions = False):
@@ -1025,7 +1029,13 @@ class Sheet(tk.Frame):
                     popup_menu_highlight_fg = None,
                     row_drag_and_drop_perform = None,
                     column_drag_and_drop_perform = None,
+                    measure_subset_index = None,
+                    measure_subset_header = None,
                     redraw = True):
+        if measure_subset_index is not None:
+            self.RI.measure_subset_index = measure_subset_index
+        if measure_subset_header is not None:
+            self.CH.measure_subset_hdr = measure_subset_header
         if row_drag_and_drop_perform is not None:
             self.RI.row_drag_and_drop_perform = row_drag_and_drop_perform
         if column_drag_and_drop_perform is not None:
@@ -1359,11 +1369,11 @@ class Sheet(tk.Frame):
     def get_selected_min_max(self): # returns (min_y, min_x, max_y, max_x) of any selections including rows/columns
         return self.MT.get_selected_min_max()
         
-    def headers(self, newheaders = None, index = None):
-        return self.MT.headers(newheaders, index)
+    def headers(self, newheaders = None, index = None, reset_col_positions = False, show_headers_if_not_sheet = True):
+        return self.MT.headers(newheaders, index, reset_col_positions = reset_col_positions, show_headers_if_not_sheet = show_headers_if_not_sheet)
         
-    def row_index(self, newindex = None, index = None):
-        return self.MT.row_index(newindex, index)
+    def row_index(self, newindex = None, index = None, reset_row_positions = False, show_index_if_not_sheet = True):
+        return self.MT.row_index(newindex, index, reset_row_positions = reset_row_positions, show_index_if_not_sheet = show_index_if_not_sheet)
 
     def reset_undos(self):
         self.MT.undo_storage = deque(maxlen = 20)

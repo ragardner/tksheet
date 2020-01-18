@@ -35,6 +35,7 @@ class ColumnHeaders(tk.Canvas):
                  header_select_column_fg = "white",
                  drag_and_drop_color = None,
                  column_drag_and_drop_perform = True,
+                 measure_subset_header = True,
                  resizing_line_color = None):
         tk.Canvas.__init__(self,parentframe,
                            background = header_background,
@@ -77,6 +78,7 @@ class ColumnHeaders(tk.Canvas):
         self.drag_and_drop_enabled = False
         self.rc_delete_col_enabled = False
         self.rc_insert_col_enabled = False
+        self.measure_subset_hdr = measure_subset_header
         self.dragged_col = None
         self.visible_col_dividers = []
         self.col_height_resize_bbox = tuple()
@@ -447,7 +449,7 @@ class ColumnHeaders(tk.Canvas):
                 else:
                     cws[c:c] = cws[rm1start:rm1end]
                     cws[rm1start:rm1end] = []
-                self.MT.col_positions = [0] + list(accumulate(width for width in cws))
+                self.MT.col_positions = list(accumulate(chain([0], (width for width in cws))))
                 self.MT.deselect("all")
                 if (c_ - 1) + totalcols > len(self.MT.col_positions) - 1:
                     new_selected = tuple(range(len(self.MT.col_positions) - 1 - totalcols, len(self.MT.col_positions) - 1))
@@ -553,6 +555,7 @@ class ColumnHeaders(tk.Canvas):
             return
         if width is None:
             x = self.MT.txt_measure_canvas.create_text(0, 0, text = "", font = self.MT.my_font)
+            x2 = self.MT.txt_measure_canvas.create_text(0, 0, text = "", font = self.MT.my_hdr_font)
             itmcon = self.MT.txt_measure_canvas.itemconfig
             itmbbx = self.MT.txt_measure_canvas.bbox
             w = self.MT.min_cw
@@ -566,12 +569,20 @@ class ColumnHeaders(tk.Canvas):
             else:
                 data_col = self.MT.displayed_columns[col]
             try:
-                hw = self.MT.GetHdrTextWidth(self.GetLargestWidth(self.MT.my_hdrs[data_col])) + 10
+                txt = self.MT.my_hdrs[data_col if self.measure_subset_hdr else col]
+                if txt:
+                    itmcon(x2, text = txt)
+                    b = itmbbx(x2)
+                    hw = b[2] - b[0] + 5
+                else:
+                    hw = self.MT.min_cw
             except:
                 if self.default_hdr:
-                    hw = self.MT.GetHdrTextWidth(f"{num2alpha(data_col)}") + 10
+                    itmcon(x2, text = f"{num2alpha(data_col)}")
                 else:
-                    hw = self.MT.GetHdrTextWidth(f"{data_col}") + 10
+                    itmcon(x2, text = f"{data_col}")
+                b = itmbbx(x2)
+                hw = b[2] - b[0] + 5
             for r in islice(self.MT.data_ref, start_row, end_row):
                 try:
                     if isinstance(r[data_col], str):
@@ -591,6 +602,7 @@ class ColumnHeaders(tk.Canvas):
             else:
                 new_width = hw
             self.MT.txt_measure_canvas.delete(x)
+            self.MT.txt_measure_canvas.delete(x2)
         else:
             new_width = int(width)
         if new_width <= self.MT.min_cw:
@@ -616,12 +628,12 @@ class ColumnHeaders(tk.Canvas):
                 iterable = range(self.MT.total_cols)
             else:
                 iterable = range(len(self.MT.displayed_columns))
-            self.MT.col_positions = [0] + list(accumulate(self.set_col_width(cn, only_set_if_too_small = only_set_if_too_small, recreate = False, return_new_width = True) for cn in iterable))
+            self.MT.col_positions = list(accumulate(chain([0], (self.set_col_width(cn, only_set_if_too_small = only_set_if_too_small, recreate = False, return_new_width = True) for cn in iterable))))
         elif width is not None:
             if self.MT.all_columns_displayed:
-                self.MT.col_positions = [0] + list(accumulate(width for cn in range(self.MT.total_cols)))
+                self.MT.col_positions = list(accumulate(chain([0], (width for cn in range(self.MT.total_cols)))))
             else:
-                self.MT.col_positions = [0] + list(accumulate(width for cn in range(len(self.MT.displayed_columns))))
+                self.MT.col_positions = list(accumulate(chain([0], (width for cn in range(len(self.MT.displayed_columns))))))
         if recreate:
             self.MT.recreate_all_selection_boxes()
 
@@ -694,7 +706,7 @@ class ColumnHeaders(tk.Canvas):
                         if fc + 7 > x_stop:
                             continue
                         mw = sc - fc - 5
-                        x = fc + floor(mw / 2)
+                        x = fc + floor((sc - fc) / 2)
                         if isinstance(self.MT.my_hdrs, int):
                             try:
                                 lns = self.MT.data_ref[self.MT.my_hdrs][c].split("\n")
@@ -793,7 +805,7 @@ class ColumnHeaders(tk.Canvas):
                         else:
                             tf = self.text_color
                         mw = sc - fc - 5
-                        x = fc + 7
+                        x = fc + 5
                         if x > x_stop:
                             continue
                         if isinstance(self.MT.my_hdrs, int):
@@ -883,7 +895,7 @@ class ColumnHeaders(tk.Canvas):
                         if fc + 7 > x_stop:
                             continue
                         mw = sc - fc - 5
-                        x = fc + floor(mw / 2)
+                        x = fc + floor((sc - fc) / 2)
                         if isinstance(self.MT.my_hdrs, int):
                             try:
                                 lns = self.MT.data_ref[self.MT.my_hdrs][c].split("\n")
@@ -982,7 +994,7 @@ class ColumnHeaders(tk.Canvas):
                         else:
                             tf = self.text_color
                         mw = sc - fc - 5
-                        x = fc + 7
+                        x = fc + 5
                         if x > x_stop:
                             continue
                         if isinstance(self.MT.my_hdrs, int):
