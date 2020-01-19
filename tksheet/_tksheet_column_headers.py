@@ -625,13 +625,13 @@ class ColumnHeaders(tk.Canvas):
     def set_width_of_all_cols(self, width = None, only_set_if_too_small = False, recreate = True):
         if width is None:
             if self.MT.all_columns_displayed:
-                iterable = range(self.MT.total_cols)
+                iterable = range(self.MT.total_data_cols())
             else:
                 iterable = range(len(self.MT.displayed_columns))
             self.MT.col_positions = list(accumulate(chain([0], (self.set_col_width(cn, only_set_if_too_small = only_set_if_too_small, recreate = False, return_new_width = True) for cn in iterable))))
         elif width is not None:
             if self.MT.all_columns_displayed:
-                self.MT.col_positions = list(accumulate(chain([0], (width for cn in range(self.MT.total_cols)))))
+                self.MT.col_positions = list(accumulate(chain([0], (width for cn in range(self.MT.total_data_cols())))))
             else:
                 self.MT.col_positions = list(accumulate(chain([0], (width for cn in range(len(self.MT.displayed_columns))))))
         if recreate:

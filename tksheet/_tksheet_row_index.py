@@ -692,7 +692,7 @@ class RowIndex(tk.Canvas):
             c_2 = self.selected_cells_background if self.selected_cells_background.startswith("#") else Color_Map_[self.selected_cells_background]
             c_3 = self.selected_rows_bg if self.selected_rows_bg.startswith("#") else Color_Map_[self.selected_rows_bg]
             if not self.MT.my_row_index and not isinstance(self.MT.my_row_index, int) and self.auto_resize_width:
-                new_w = self.MT.GetTextWidth(f"{end_row}") + 14
+                new_w = self.MT.GetTextWidth(f"{end_row}") + 11
                 if self.current_width != new_w:
                     self.set_width(new_w, set_TL = True)
             if self.align == "center":
