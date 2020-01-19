@@ -32,7 +32,7 @@ Planned future changes:
  - Better functions to access and manipulate table data
  - Better behavior from some functions e.g. maintaining correct selections when inserting columns
  - If it's popular enough or someone is willing to pay for my time I will integrate pandas dataframe
-   to save memory is user is using a dataframe to store their data
+   to save memory if user is using a dataframe to store their data
 
 ### Basic Demo:
 
