@@ -8,10 +8,12 @@ class demo(tk.Tk):
         self.grid_columnconfigure(0, weight = 1)
         self.grid_rowconfigure(0, weight = 1)
         self.sheet_demo = Sheet(self,
-                                #data = [[f"Row {r} Column {c}" for c in range(30)] for r in range(2000)], #to set sheet data at startup
+                                data = [[f"Row {r} Column {c}" for c in range(30)] for r in range(2000)], #to set sheet data at startup
                                 #set_all_heights_and_widths = True, #to fit all cell sizes to text at start up
                                 #headers = 0, #to set headers as first row at startup
                                 #row_index = 0, #to set row_index as first column at startup
+                                #total_rows = 2000, #if you want to set empty sheet dimensions at startup
+                                #total_columns = 30, #if you want to set empty sheet dimensions at startup
                                 height = 500, #height and width arguments are optional
                                 width = 700) #For full startup arguments/parameters see DOCUMENTATION.md
         self.sheet_demo.enable_bindings(("single_select", #"single_select" or "toggle_select"
@@ -61,11 +63,19 @@ class demo(tk.Tk):
 
         #self.sheet_demo.display_subset_of_columns(indexes = [3, 7, 9, 1, 0], enable = True)
 
+        # __________ DATA AND DISPLAY DIMENSIONS __________
+
+        #self.sheet_demo.total_rows(4) #will delete rows if set to less than current data rows
+        #self.sheet_demo.total_columns(2) #will delete columns if set to less than current data columns
+        #self.sheet_demo.sheet_data_dimensions(total_rows = 4, total_columns = 2)
+        #self.sheet_demo.sheet_display_dimensions(total_rows = 4, total_columns = 6) #currently resets widths and heights
+        #self.sheet_demo.set_sheet_data_and_display_dimensions(total_rows = 4, total_columns = 2) #currently resets widths and heights
+
         # __________ SETTING OR RESETTING TABLE DATA __________
 
         #.set_sheet_data() function returns the object you use as argument
         #verify checks if your data is a list of lists, raises error if not
-        self.data = self.sheet_demo.set_sheet_data([[f"Row {r} Column {c}" for c in range(30)] for r in range(2000)], verify = False)
+        #self.data = self.sheet_demo.set_sheet_data([[f"Row {r} Column {c}" for c in range(30)] for r in range(2000)], verify = False)
 
         # __________ SETTING ROW HEIGHTS AND COLUMN WIDTHS __________
 
@@ -113,25 +123,25 @@ class demo(tk.Tk):
 
         # __________ SETTING ROW INDEX __________
 
-        #self.sheet_demo.row_index((f"Row {r}" for r in range(200))) #any iterable works
+        #self.sheet_demo.row_index((f"Row {r}" for r in range(2000))) #any iterable works
         #self.sheet_demo.row_index("Change index example", 2)
         #print (self.sheet_demo.row_index())
         #print (self.sheet_demo.row_index(index = 2))
 
         # __________ INSERTING A ROW __________
 
-        #self.sheet_demo.insert_row(row = (f"my new row here {c}" for c in range(100)), idx = 0) # a filled row at the start
+        #self.sheet_demo.insert_row(values = (f"my new row here {c}" for c in range(30)), idx = 0) # a filled row at the start
         #self.sheet_demo.insert_row() # an empty row at the end
 
         # __________ INSERTING A COLUMN __________
 
-        #self.sheet_demo.insert_column(column = (f"my new col here {r}" for r in range(5000)), idx = 0) # a filled column at the start
+        #self.sheet_demo.insert_column(values = (f"my new col here {r}" for r in range(2050)), idx = 0) # a filled column at the start
         #self.sheet_demo.insert_column() # an empty column at the end
 
         # __________ SETTING A COLUMNS DATA __________
 
         # any iterable works
-        #self.sheet_demo.set_column_data(0, values = (0 for i in range(220)))
+        #self.sheet_demo.set_column_data(0, values = (0 for i in range(2050)))
 
         # __________ SETTING A ROWS DATA __________
 
