@@ -1,3 +1,18 @@
+### Version 4.4.2
+ - Removed internal `total_rows` and `total_cols` variables, replaced with functions for better maintainability but at the cost of performance in some cases
+ - Added `fix_data` argument to function `total_columns()` to even up all row lengths in sheet data
+ - Removed `total_rows` and `total_cols` arguments from functions `data_reference()` and `set_sheet_data()`
+ - Fix issues with function `total_columns()`
+ - Redo functions `insert_column()` and `insert_row()`, hopefully they work better
+ - Add argument `equalize_data_row_lengths` to function `insert_column()` default is `True`
+ - Add arguments `get_index` and `get_header` to function `get_sheet_data()` defaults are `False`
+ - Change some argument names for functions involving inserting/setting rows and columns
+ - `display_subset_of_columns()` now tries to maintain some existing column widths
+ - Add functions `sheet_data_dimensions()`, `sheet_display_dimensions()`, `set_sheet_data_and_display_dimensions()`
+ - Fix bug with undo edit cell if displaying subset of columns
+ - Fix max undos issue
+ - `display_subset_of_columns()` now resets undo storage
+
 ### Version 4.4.1
  - Potential fix for functions `headers()` and `row_index()` when `show...if_not_sheet` arguments are utilized
 
