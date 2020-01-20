@@ -2197,13 +2197,14 @@ class MainTable(tk.Canvas):
             except:
                 pass
         if self.row_positions == [0] and not self.data_ref:
-            self.insert_row_position(idx = 0,
+            self.insert_row_position(idx = "end",
                                      height = int(self.min_rh),
                                      deselect_all = False,
                                      preserve_other_selections = False)
-            self.data_ref.insert(0, [])
-        for rn in range(len(self.data_ref)):
-            self.data_ref[rn].insert(stidx, "")
+            self.data_ref.append([""])
+        else:
+            for rn in range(len(self.data_ref)):
+                self.data_ref[rn].insert(stidx, "")
         self.CH.select_col(c = posidx)
         if self.undo_enabled:
             self.undo_storage.append(zlib.compress(pickle.dumps(("insert_col", {"data_col_num": stidx,
@@ -2229,11 +2230,13 @@ class MainTable(tk.Canvas):
             except:
                 pass
         if self.col_positions == [0] and not self.data_ref:
-            self.insert_col_position(idx = 0,
-                                     width = int(self.min_rh),
+            self.insert_col_position(idx = "end",
+                                     width = int(self.default_cw),
                                      deselect_all = False,
                                      preserve_other_selections = False)
-        self.data_ref.insert(stidx, list(repeat("", self.total_data_cols())))
+            self.data_ref.append([""])
+        else:
+            self.data_ref.insert(stidx, list(repeat("", self.total_data_cols())))
         self.RI.select_row(r = posidx)
         if self.undo_enabled:
             self.undo_storage.append(zlib.compress(pickle.dumps(("insert_row", {"data_row_num": stidx,
@@ -3716,7 +3719,7 @@ class MainTable(tk.Canvas):
         self.RI.set_row_height(y1, only_set_if_too_small = True)
         self.CH.set_col_width(x1, only_set_if_too_small = True)
         self.refresh()
-        self.create_text_editor(r = y1, c = x1, text = text, set_data_ref_on_destroy = True)   
+        self.create_text_editor(r = y1, c = x1, text = text, set_data_ref_on_destroy = True)
         
     def create_text_editor(self, r = 0, c = 0, text = None, state = "normal", see = True, set_data_ref_on_destroy = False):
         if see:
@@ -3728,6 +3731,8 @@ class MainTable(tk.Canvas):
         if text is None:
             text = ""
         self.hide_current()
+        if self.text_editor_id is not None:
+            self.destroy_text_editor()
         self.text_editor = TextEditor(self, text = text, font = self.my_font, state = state, width = w, height = h, border_color = self.selected_cells_border_col, show_border = self.show_selected_cells_border)
         self.text_editor_id = self.create_window((x, y), window = self.text_editor, anchor = "nw")
         self.text_editor.textedit.bind("<Alt-Return>", self.text_editor_newline_binding)
@@ -3745,30 +3750,37 @@ class MainTable(tk.Canvas):
     def destroy_text_editor(self):
         try:
             self.delete(self.text_editor_id)
+        except:
+            pass
+        try:
             self.text_editor.destroy()
+        except:
+            pass
+        try:
             self.text_editor_id = None
         except:
             pass
-        self.text_editor = None
+        try:
+            self.text_editor = None
+        except:
+            pass
 
     def text_editor_newline_binding(self, event = None):
         self.text_editor.config(height = self.text_editor.winfo_height() + self.xtra_lines_increment)
 
-    def get_text_editor_value(self, destroy_tup = None, r = None, c = None, set_data_ref_on_destroy = True, event = None, destroy = True, move_down = True):
+    def get_text_editor_value(self, destroy_tup = None, r = None, c = None, set_data_ref_on_destroy = True, event = None, destroy = True, move_down = True, redraw = True, recreate = True):
         self.show_current()
         if self.text_editor is not None:
             self.text_editor_value = self.text_editor.get()
         if destroy:
-            try:
-                self.delete(self.text_editor_id)
-                self.text_editor.destroy()
-                self.text_editor_id = None
-            except:
-                pass
-            self.text_editor = None
+            self.destroy_text_editor()
         if set_data_ref_on_destroy:
             if r is None and c is None and destroy_tup:
                 r, c = destroy_tup[0], destroy_tup[1]
+            if r > len(self.data_ref) - 1:
+                self.data_ref.extend([list(repeat("", c + 1)) for r in range((r + 1) - len(self.data_ref))])
+            elif c > len(self.data_ref[r]) - 1:
+                self.data_ref[r].extend(list(repeat("", (c + 1) - len(self.data_ref[r]))))
             if self.undo_enabled:
                 if self.all_columns_displayed:
                     self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells", {(r, c): f"{self.data_ref[r][c]}"}, (((r, c, r + 1, c + 1), "cells"), ), self.currently_selected()))))
@@ -3799,8 +3811,10 @@ class MainTable(tk.Canvas):
                     ):
                     self.select_cell(r + 1, c)
                     self.see(r + 1, c, keep_xscroll = True, bottom_right_corner = True, check_cell_visibility = True)
-        self.refresh()
-        self.recreate_all_selection_boxes()
+        if redraw:
+            self.refresh()
+        if recreate:
+            self.recreate_all_selection_boxes()
         self.focus_set()
         return self.text_editor_value
 

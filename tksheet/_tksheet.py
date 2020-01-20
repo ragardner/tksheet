@@ -722,6 +722,20 @@ class Sheet(tk.Frame):
     def create_text_editor(self, row = 0, column = 0, text = None, state = "normal", see = True, set_data_ref_on_destroy = False):
         self.MT.create_text_editor(r = row, c = column, text = text, state = state, see = see, set_data_ref_on_destroy = set_data_ref_on_destroy)
 
+    def bind_text_editor_set(self, func, row, column):
+        self.MT.bind_text_editor_destroy(func, row, column)
+
+    def get_text_editor_value(self, destroy_tup = None, r = None, c = None, set_data_ref_on_destroy = True, event = None, destroy = True, move_down = True, redraw = True, recreate = True):
+        return self.MT.get_text_editor_value(destroy_tup = destroy_tup,
+                                             r = r,
+                                             c = c,
+                                             set_data_ref_on_destroy = set_data_ref_on_destroy,
+                                             event = event,
+                                             destroy = destroy,
+                                             move_down = move_down,
+                                             redraw = redraw,
+                                             recreate = recreate)
+
     def get_xview(self):
         return self.MT.xview()
 
@@ -835,6 +849,9 @@ class Sheet(tk.Frame):
 
     def create_selection_box(self, r1, c1, r2, c2, type_ = "cells"):
         return self.MT.create_selected(r1 = r1, c1 = c1, r2 = r2, c2 = c2, type_ = type_)
+
+    def recreate_all_selection_boxes(self):
+        self.MT.recreate_all_selection_boxes()
 
     def is_cell_selected(self, r, c):
         return self.MT.is_cell_selected(r, c)
