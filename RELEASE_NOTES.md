@@ -1,3 +1,10 @@
+### Version 4.4.3
+ - Fix some issues with right click insert column/row
+ - Fix error that occurs if row is too short on edit cell or not enough rows
+ - Add function `recreate_all_selection_boxes()`
+ - Add function `bind_text_editor_set()`
+ - Add function `get_text_editor_value()`
+
 ### Version 4.4.2
  - Removed internal `total_rows` and `total_cols` variables, replaced with functions for better maintainability but at the cost of performance in some cases
  - Added `fix_data` argument to function `total_columns()` to even up all row lengths in sheet data
