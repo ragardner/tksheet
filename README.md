@@ -100,7 +100,7 @@ class demo(tk.Tk):
 
         # __________ DISPLAY SUBSET OF COLUMNS __________
 
-        self.sheet_demo.display_subset_of_columns(indexes = [3, 1, 2], enable = True) #any order
+        #self.sheet_demo.display_subset_of_columns(indexes = [3, 1, 2], enable = True) #any order
 
         # __________ DATA AND DISPLAY DIMENSIONS __________
 
