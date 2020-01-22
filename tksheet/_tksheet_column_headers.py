@@ -714,7 +714,7 @@ class ColumnHeaders(tk.Canvas):
                                 else:
                                     lns = (f"{self.MT.data_ref[self.MT.my_hdrs][c]}", )
                             else:
-                                if isinstance(self.MT.data_ref[self.MT.my_hdrs][c], str):
+                                if isinstance(self.MT.my_hdrs[c], str):
                                     lns = self.MT.my_hdrs[c].split("\n")
                                 else:
                                     lns = (f"{self.MT.my_hdrs[c]}", )
@@ -818,7 +818,7 @@ class ColumnHeaders(tk.Canvas):
                                 else:
                                     lns = (f"{self.MT.data_ref[self.MT.my_hdrs][c]}", )
                             else:
-                                if isinstance(self.MT.data_ref[self.MT.my_hdrs][c], str):
+                                if isinstance(self.MT.my_hdrs[c], str):
                                     lns = self.MT.my_hdrs[c].split("\n")
                                 else:
                                     lns = (f"{self.MT.my_hdrs[c]}", )
@@ -909,7 +909,7 @@ class ColumnHeaders(tk.Canvas):
                                 else:
                                     lns = (f"{self.MT.data_ref[self.MT.my_hdrs][self.MT.displayed_columns[c]]}", )
                             else:
-                                if isinstance(self.MT.data_ref[self.MT.my_hdrs][self.MT.displayed_columns[c]], str):
+                                if isinstance(self.MT.my_hdrs[self.MT.displayed_columns[c]], str):
                                     lns = self.MT.my_hdrs[self.MT.displayed_columns[c]].split("\n")
                                 else:
                                     lns = (f"{self.MT.my_hdrs[self.MT.displayed_columns[c]]}", )
@@ -1013,7 +1013,7 @@ class ColumnHeaders(tk.Canvas):
                                 else:
                                     lns = (f"{self.MT.data_ref[self.MT.my_hdrs][self.MT.displayed_columns[c]]}", )
                             else:
-                                if isinstance(self.MT.data_ref[self.MT.my_hdrs][self.MT.displayed_columns[c]], str):
+                                if isinstance(self.MT.my_hdrs[self.MT.displayed_columns[c]], str):
                                     lns = self.MT.my_hdrs[self.MT.displayed_columns[c]].split("\n")
                                 else:
                                     lns = (f"{self.MT.my_hdrs[self.MT.displayed_columns[c]]}", )
