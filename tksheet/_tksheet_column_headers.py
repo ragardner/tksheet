@@ -703,20 +703,23 @@ class ColumnHeaders(tk.Canvas):
                             tf = self.text_color if self.highlighted_cells[c][1] is None else self.highlighted_cells[c][1]
                         else:
                             tf = self.text_color
-                        if fc + 7 > x_stop:
+                        if fc + 5 > x_stop:
                             continue
                         mw = sc - fc - 5
                         x = fc + floor((sc - fc) / 2)
-                        if isinstance(self.MT.my_hdrs, int):
-                            try:
-                                lns = self.MT.data_ref[self.MT.my_hdrs][c].split("\n")
-                            except:
-                                lns = (num2alpha(c), ) if self.default_hdr else (f"{c + 1}", )
-                        else:
-                            try:
-                                lns = self.MT.my_hdrs[c].split("\n")
-                            except:
-                                lns = (num2alpha(c), ) if self.default_hdr else (f"{c + 1}", )
+                        try:
+                            if isinstance(self.MT.my_hdrs, int):
+                                if isinstance(self.MT.data_ref[self.MT.my_hdrs][c], str):
+                                    lns = self.MT.data_ref[self.MT.my_hdrs][c].split("\n")
+                                else:
+                                    lns = (f"{self.MT.data_ref[self.MT.my_hdrs][c]}", )
+                            else:
+                                if isinstance(self.MT.data_ref[self.MT.my_hdrs][c], str):
+                                    lns = self.MT.my_hdrs[c].split("\n")
+                                else:
+                                    lns = (f"{self.MT.my_hdrs[c]}", )
+                        except:
+                            lns = (num2alpha(c), ) if self.default_hdr else (f"{c + 1}", )
                         y = self.MT.hdr_fl_ins
                         if incfl:
                             fl = lns[0]
@@ -808,16 +811,19 @@ class ColumnHeaders(tk.Canvas):
                         x = fc + 5
                         if x > x_stop:
                             continue
-                        if isinstance(self.MT.my_hdrs, int):
-                            try:
-                                lns = self.MT.data_ref[self.MT.my_hdrs][c].split("\n")
-                            except:
-                                lns = (num2alpha(c), ) if self.default_hdr else (f"{c + 1}", )
-                        else:
-                            try:
-                                lns = self.MT.my_hdrs[c].split("\n")
-                            except:
-                                lns = (num2alpha(c), ) if self.default_hdr else (f"{c + 1}", )
+                        try:
+                            if isinstance(self.MT.my_hdrs, int):
+                                if isinstance(self.MT.data_ref[self.MT.my_hdrs][c], str):
+                                    lns = self.MT.data_ref[self.MT.my_hdrs][c].split("\n")
+                                else:
+                                    lns = (f"{self.MT.data_ref[self.MT.my_hdrs][c]}", )
+                            else:
+                                if isinstance(self.MT.data_ref[self.MT.my_hdrs][c], str):
+                                    lns = self.MT.my_hdrs[c].split("\n")
+                                else:
+                                    lns = (f"{self.MT.my_hdrs[c]}", )
+                        except:
+                            lns = (num2alpha(c), ) if self.default_hdr else (f"{c + 1}", )
                         y = self.MT.hdr_fl_ins
                         if incfl:
                             fl = lns[0]
@@ -892,20 +898,23 @@ class ColumnHeaders(tk.Canvas):
                             tf = self.text_color if self.highlighted_cells[self.MT.displayed_columns[c]][1] is None else self.highlighted_cells[self.MT.displayed_columns[c]][1]
                         else:
                             tf = self.text_color
-                        if fc + 7 > x_stop:
+                        if fc + 5 > x_stop:
                             continue
                         mw = sc - fc - 5
                         x = fc + floor((sc - fc) / 2)
-                        if isinstance(self.MT.my_hdrs, int):
-                            try:
-                                lns = self.MT.data_ref[self.MT.my_hdrs][c].split("\n")
-                            except:
-                                lns = (num2alpha(c), ) if self.default_hdr else (f"{c + 1}", )
-                        else:
-                            try:
-                                lns = self.MT.my_hdrs[self.MT.displayed_columns[c]].split("\n")
-                            except:
-                                lns = (num2alpha(c), ) if self.default_hdr else (f"{c + 1}", )
+                        try:
+                            if isinstance(self.MT.my_hdrs, int):
+                                if isinstance(self.MT.data_ref[self.MT.my_hdrs][self.MT.displayed_columns[c]], str):
+                                    lns = self.MT.data_ref[self.MT.my_hdrs][self.MT.displayed_columns[c]].split("\n")
+                                else:
+                                    lns = (f"{self.MT.data_ref[self.MT.my_hdrs][self.MT.displayed_columns[c]]}", )
+                            else:
+                                if isinstance(self.MT.data_ref[self.MT.my_hdrs][self.MT.displayed_columns[c]], str):
+                                    lns = self.MT.my_hdrs[self.MT.displayed_columns[c]].split("\n")
+                                else:
+                                    lns = (f"{self.MT.my_hdrs[self.MT.displayed_columns[c]]}", )
+                        except:
+                            lns = (num2alpha(c), ) if self.default_hdr else (f"{c + 1}", )
                         y = self.MT.hdr_fl_ins
                         if incfl:
                             fl = lns[0]
@@ -997,16 +1006,19 @@ class ColumnHeaders(tk.Canvas):
                         x = fc + 5
                         if x > x_stop:
                             continue
-                        if isinstance(self.MT.my_hdrs, int):
-                            try:
-                                lns = self.MT.data_ref[self.MT.my_hdrs][c].split("\n")
-                            except:
-                                lns = (num2alpha(c), ) if self.default_hdr else (f"{c + 1}", )
-                        else:
-                            try:
-                                lns = self.MT.my_hdrs[self.MT.displayed_columns[c]].split("\n")
-                            except:
-                                lns = (num2alpha(c), ) if self.default_hdr else (f"{c + 1}", )
+                        try:
+                            if isinstance(self.MT.my_hdrs, int):
+                                if isinstance(self.MT.data_ref[self.MT.my_hdrs][self.MT.displayed_columns[c]], str):
+                                    lns = self.MT.data_ref[self.MT.my_hdrs][self.MT.displayed_columns[c]].split("\n")
+                                else:
+                                    lns = (f"{self.MT.data_ref[self.MT.my_hdrs][self.MT.displayed_columns[c]]}", )
+                            else:
+                                if isinstance(self.MT.data_ref[self.MT.my_hdrs][self.MT.displayed_columns[c]], str):
+                                    lns = self.MT.my_hdrs[self.MT.displayed_columns[c]].split("\n")
+                                else:
+                                    lns = (f"{self.MT.my_hdrs[self.MT.displayed_columns[c]]}", )
+                        except:
+                            lns = (num2alpha(c), ) if self.default_hdr else (f"{c + 1}", )
                         y = self.MT.hdr_fl_ins
                         if incfl:
                             fl = lns[0]

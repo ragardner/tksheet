@@ -736,13 +736,19 @@ class RowIndex(tk.Canvas):
                         tf = self.text_color if self.highlighted_cells[r][1] is None else self.highlighted_cells[r][1]
                     else:
                         tf = self.text_color
-                    if isinstance(self.MT.my_row_index, int):
-                        lns = self.MT.data_ref[r][self.MT.my_row_index].split("\n")
-                    else:
-                        try:
-                            lns = self.MT.my_row_index[r].split("\n")
-                        except:
-                            lns = (f"{r + 1}", )
+                    try:
+                        if isinstance(self.MT.my_row_index, int):
+                            if isinstance(self.MT.data_ref[r][self.MT.my_row_index], str):
+                                lns = self.MT.data_ref[r][self.MT.my_row_index].split("\n")
+                            else:
+                                lns = (f"{self.MT.data_ref[r][self.MT.my_row_index]}", )
+                        else:
+                            if isinstance(self.MT.my_row_index[r], str):
+                                lns = self.MT.my_row_index[r].split("\n")
+                            else:
+                                lns = (f"{self.MT.my_row_index[r]}", )
+                    except:
+                        lns = (f"{r + 1}", )
                     fl = lns[0]
                     y = fr + self.MT.fl_ins
                     if y + self.MT.half_txt_h > y1:
@@ -834,13 +840,19 @@ class RowIndex(tk.Canvas):
                         tf = self.text_color if self.highlighted_cells[r][1] is None else self.highlighted_cells[r][1]
                     else:
                         tf = self.text_color
-                    if isinstance(self.MT.my_row_index, int):
-                        lns = self.MT.data_ref[r][self.MT.my_row_index].split("\n")
-                    else:
-                        try:
-                            lns = self.MT.my_row_index[r].split("\n")
-                        except:
-                            lns = (f"{r + 1}", )
+                    try:
+                        if isinstance(self.MT.my_row_index, int):
+                            if isinstance(self.MT.data_ref[r][self.MT.my_row_index], str):
+                                lns = self.MT.data_ref[r][self.MT.my_row_index].split("\n")
+                            else:
+                                lns = (f"{self.MT.data_ref[r][self.MT.my_row_index]}", )
+                        else:
+                            if isinstance(self.MT.my_row_index[r], str):
+                                lns = self.MT.my_row_index[r].split("\n")
+                            else:
+                                lns = (f"{self.MT.my_row_index[r]}", )
+                    except:
+                        lns = (f"{r + 1}", )
                     y = fr + self.MT.fl_ins
                     if y + self.MT.half_txt_h > y1:
                         fl = lns[0]
