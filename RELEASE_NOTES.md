@@ -1,3 +1,6 @@
+### Version 4.4.5
+ - Fix typo in header code
+
 ### Version 4.4.4
  - Fix some issues with header and index not showing when values aren't string
  - Fix row index width when starting with default index and then switching later
