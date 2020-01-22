@@ -47,7 +47,7 @@ class demo(tk.Tk):
         self.grid_columnconfigure(0, weight = 1)
         self.grid_rowconfigure(0, weight = 1)
         self.sheet_demo = Sheet(self,
-                                data = [[f"Row {r} Column {c}" for c in range(30)] for r in range(2000)], #to set sheet data at startup
+                                data = [[f"{r}, {c}" for c in range(30)] for r in range(2000)], #to set sheet data at startup
                                 #set_all_heights_and_widths = True, #to fit all cell sizes to text at start up
                                 #headers = 0, #to set headers as first row at startup
                                 #row_index = 0, #to set row_index as first column at startup
@@ -100,7 +100,7 @@ class demo(tk.Tk):
 
         # __________ DISPLAY SUBSET OF COLUMNS __________
 
-        #self.sheet_demo.display_subset_of_columns(indexes = [3, 7, 9, 1, 0], enable = True)
+        self.sheet_demo.display_subset_of_columns(indexes = [3, 1, 2], enable = True) #any order
 
         # __________ DATA AND DISPLAY DIMENSIONS __________
 
