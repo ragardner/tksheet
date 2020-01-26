@@ -1,3 +1,6 @@
+### Version 4.4.6
+ - Fix Python version required
+
 ### Version 4.4.5
  - Fix typo in header code
 
