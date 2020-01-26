@@ -1,3 +1,6 @@
+### Version 4.4.7
+ - Fix readme python versions
+
 ### Version 4.4.6
  - Fix Python version required
 
