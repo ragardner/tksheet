@@ -1,3 +1,8 @@
+### Version 4.4.9
+ - Add `header_height` argument to `set_options()`
+ - Make `header_height` arguments accept integer representing pixels as well as string representing number of lines
+ - Make top left header height resize bar use `header_height` and not minimum height
+
 ### Version 4.4.8
  - Fix readme python versions
 
