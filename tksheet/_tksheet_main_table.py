@@ -156,7 +156,7 @@ class MainTable(tk.Canvas):
         self.text_editor_id = None
         self.default_cw = column_width
         self.default_rh = int(row_height)
-        self.default_hh = int(header_height)
+        self.default_hh = header_height if isinstance(header_height, int) else self.GetHdrLinesHeight(int(header_height))
         self.set_fnt_help()
         self.set_hdr_fnt_help()
 
@@ -2033,7 +2033,7 @@ class MainTable(tk.Canvas):
         self.hdr_xtra_lines_increment = self.hdr_txt_h
         self.hdr_min_rh = self.hdr_txt_h + 5
         self.set_min_cw()
-        self.CH.set_height(self.GetHdrLinesHeight(self.default_hh))
+        self.CH.set_height(self.default_hh)
 
     def data_reference(self, newdataref = None, reset_col_positions = True, reset_row_positions = True, redraw = False, return_id = True):
         if isinstance(newdataref, (list, tuple)):

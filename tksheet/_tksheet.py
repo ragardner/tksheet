@@ -988,6 +988,7 @@ class Sheet(tk.Frame):
                     max_row_height = None,
                     max_header_height = None,
                     max_row_width = None,
+                    header_height = None,
                     header_background = None,
                     header_border_color = None,
                     header_grid_color = None,
@@ -1033,6 +1034,8 @@ class Sheet(tk.Frame):
                     measure_subset_index = None,
                     measure_subset_header = None,
                     redraw = True):
+        if header_height is not None:
+            self.MT.default_hh = header_height if isinstance(header_height, int) else self.MT.GetHdrLinesHeight(int(header_height))
         if measure_subset_index is not None:
             self.RI.measure_subset_index = measure_subset_index
         if measure_subset_header is not None:
