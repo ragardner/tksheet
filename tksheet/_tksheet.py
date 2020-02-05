@@ -109,7 +109,7 @@ class Sheet(tk.Frame):
                           highlightthickness = outline_thickness,
                           highlightbackground = outline_color)
         self.C = C
-        if width is not None or height is not None:
+        if width is not None and height is not None:
             self.grid_propagate(0)
         if width is not None:
             self.config(width = width)
@@ -211,9 +211,9 @@ class Sheet(tk.Frame):
         if show_header:
             self.CH.grid(row = 0, column = 1, sticky = "nswe")
         if show_x_scrollbar:
-            self.yscroll.grid(row = 1, column = 2, sticky = "nswe")
-        if show_y_scrollbar:
             self.xscroll.grid(row = 2, column = 1, columnspan = 2, sticky = "nswe")
+        if show_y_scrollbar:
+            self.yscroll.grid(row = 1, column = 2, sticky = "nswe")
         if set_all_heights_and_widths:
             self.set_all_cell_sizes_to_text()
         self.MT.update()
@@ -1282,6 +1282,8 @@ class Sheet(tk.Frame):
             elif get_index and not get_header:
                 index_limit = len(self.MT.my_row_index)
                 return [[self.MT.my_row_index[rn]] + r if rn < index_limit else [""] + r for rn, r in enumerate(self.MT.data_ref)]
+            elif not get_index and not get_header:
+                return self.MT.data_ref
 
     def get_cell_data(self, r, c, return_copy = True):
         if return_copy:
