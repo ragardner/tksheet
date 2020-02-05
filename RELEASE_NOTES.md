@@ -1,3 +1,7 @@
+### Version 4.5.2
+ - Fix resize not taking into account header if header is set to a row in the sheet
+ - Fix bugs with `display_subset_of_columns()`, argument `set_col_positions` does nothing until reworked or removed
+
 ### Version 4.5.1
  - Improve center alignment and auto resize widths issues
 
