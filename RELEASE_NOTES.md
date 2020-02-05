@@ -1,3 +1,8 @@
+### Version 4.5.0
+ - Make `grid_propagate()` only occur internally if both `height` and `width` arguments are used, instead of just one
+ - Fix bug in `get_sheet_data()`
+ - Fix mismatch with scrollbars in `show` scrollbar options
+
 ### Version 4.4.9
  - Add `header_height` argument to `set_options()`
  - Make `header_height` arguments accept integer representing pixels as well as string representing number of lines
