@@ -696,7 +696,7 @@ class RowIndex(tk.Canvas):
                 if self.current_width != new_w:
                     self.set_width(new_w, set_TL = True)
             if self.align == "center":
-                mw = self.current_width - 5
+                mw = self.current_width - 1
                 x = floor(self.current_width / 2)
                 for r in range(start_row, end_row - 1):
                     fr = self.MT.row_positions[r]

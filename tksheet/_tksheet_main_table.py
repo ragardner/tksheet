@@ -2740,7 +2740,7 @@ class MainTable(tk.Canvas):
                         fc = self.col_positions[c]
                         stop = fc + 5
                         sc = self.col_positions[c + 1]
-                        mw = sc - fc - 5
+                        mw = sc - fc - 1
                         x = fc + floor((sc - fc) / 2)
                         for r in rows_:
                             fr = self.row_positions[r]
@@ -2958,7 +2958,7 @@ class MainTable(tk.Canvas):
                         fc = self.col_positions[c]
                         stop = fc + 5
                         sc = self.col_positions[c + 1]
-                        mw = sc - fc - 5
+                        mw = sc - fc - 1
                         x = fc + floor((sc - fc) / 2)
                         for r in rows_:
                             fr = self.row_positions[r]

@@ -705,7 +705,7 @@ class ColumnHeaders(tk.Canvas):
                             tf = self.text_color
                         if fc + 5 > x_stop:
                             continue
-                        mw = sc - fc - 5
+                        mw = sc - fc - 1
                         x = fc + floor((sc - fc) / 2)
                         try:
                             if isinstance(self.MT.my_hdrs, int):
@@ -900,7 +900,7 @@ class ColumnHeaders(tk.Canvas):
                             tf = self.text_color
                         if fc + 5 > x_stop:
                             continue
-                        mw = sc - fc - 5
+                        mw = sc - fc - 1
                         x = fc + floor((sc - fc) / 2)
                         try:
                             if isinstance(self.MT.my_hdrs, int):
