@@ -2086,7 +2086,10 @@ class MainTable(tk.Canvas):
                     rhs[rn] = h
         for cn in iterable:
             try:
-                txt = self.my_hdrs[cn]
+                if isinstance(self.my_hdrs, int):
+                    txt = self.data_ref[self.my_hdrs][cn]
+                else:
+                    txt = self.my_hdrs[cn]
                 if txt:
                     itmcon(x2, text = txt)
                     b = itmbbx(x2)
@@ -2453,23 +2456,15 @@ class MainTable(tk.Canvas):
             self.deselect("all")
         if indexes is None and enable is None:
             return tuple(self.displayed_columns)
-        if indexes is not None and indexes != self.displayed_columns:
+        if indexes != self.displayed_columns:
             self.undo_storage = deque(maxlen = self.max_undos)
         if indexes is not None:
-            self.displayed_columns = indexes
-        used_to_be_enabled = bool(not self.all_columns_displayed)
-        if enable != used_to_be_enabled:
-            self.undo_storage = deque(maxlen = self.max_undos)  
+            self.displayed_columns = indexes 
         if enable:
             self.all_columns_displayed = False
         else:
             self.all_columns_displayed = True
-        if enable and set_col_positions:
-            if indexes and len(self.col_positions) > max(indexes) and not used_to_be_enabled:
-                self.col_positions = list(accumulate(chain([0], (self.col_positions[c + 1] - self.col_positions[c] for c in indexes))))
-            elif reset_col_positions: #doesnt have existing col widths to maintain
-                self.reset_col_positions()
-        elif enable and reset_col_positions:
+        if reset_col_positions:
             self.reset_col_positions()
                 
     def headers(self, newheaders = None, index = None, reset_col_positions = False, show_headers_if_not_sheet = True):

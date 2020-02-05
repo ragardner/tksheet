@@ -569,7 +569,10 @@ class ColumnHeaders(tk.Canvas):
             else:
                 data_col = self.MT.displayed_columns[col]
             try:
-                txt = self.MT.my_hdrs[data_col if self.measure_subset_hdr else col]
+                if isinstance(self.MT.my_hdrs, int):
+                    txt = self.MT.data_ref[self.MT.my_hdrs][data_col]
+                else:
+                    txt = self.MT.my_hdrs[data_col if self.measure_subset_hdr else col]
                 if txt:
                     itmcon(x2, text = txt)
                     b = itmbbx(x2)
