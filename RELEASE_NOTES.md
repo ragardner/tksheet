@@ -1,3 +1,6 @@
+### Version 4.5.1
+ - Improve center alignment and auto resize widths issues
+
 ### Version 4.5.0
  - Make `grid_propagate()` only occur internally if both `height` and `width` arguments are used, instead of just one
  - Fix bug in `get_sheet_data()`
