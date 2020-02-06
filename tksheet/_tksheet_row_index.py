@@ -43,7 +43,7 @@ class RowIndex(tk.Canvas):
                            height = None,
                            background = row_index_background,
                            highlightthickness = 0)
-        self.centre_alignment_text_mod_indexes = (0, -1)
+        self.centre_alignment_text_mod_indexes = (slice(1, None), slice(None, -1))
         self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
         self.parentframe = parentframe
         self.row_drag_and_drop_perform = row_drag_and_drop_perform
