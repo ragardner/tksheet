@@ -2,7 +2,7 @@
 This is a full list of all the start up parameters, the only required parameter is `C` which is the sheets parent, everything else has default arguments
 
 ```python
-my_sheet(
+Sheet(
 C,
 show_table = True,
 show_top_left = True,
