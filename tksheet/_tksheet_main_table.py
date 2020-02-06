@@ -2,7 +2,7 @@ from ._tksheet_vars import *
 from ._tksheet_other_classes import *
 
 from collections import defaultdict, deque
-from itertools import islice, repeat, accumulate, chain, product
+from itertools import islice, repeat, accumulate, chain, product, cycle
 from math import floor, ceil
 from tkinter import ttk
 import bisect
@@ -61,6 +61,8 @@ class MainTable(tk.Canvas):
                            height = height,
                            background = table_background,
                            highlightthickness = 0)
+        self.centre_alignment_text_mod_indexes = (slice(1, None), slice(None, -1))
+        self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
         self.min_rh = 0
         self.hdr_min_rh = 0
         self.beingDrawnSelRect = None
@@ -155,8 +157,8 @@ class MainTable(tk.Canvas):
         self.text_editor = None
         self.text_editor_id = None
         self.default_cw = column_width
-        self.default_rh = int(row_height)
-        self.default_hh = header_height if isinstance(header_height, int) else self.GetHdrLinesHeight(int(header_height))
+        self.default_rh = (row_height if isinstance(row_height, str) else "pixels", row_height if isinstance(row_height, int) else self.GetLinesHeight(int(row_height)))
+        self.default_hh = (header_height if isinstance(header_height, str) else "pixels", header_height if isinstance(header_height, int) else self.GetHdrLinesHeight(int(header_height)))
         self.set_fnt_help()
         self.set_hdr_fnt_help()
 
@@ -1999,6 +2001,9 @@ class MainTable(tk.Canvas):
         self.min_rh = self.txt_h + 5
         if self.min_rh < 12:
             self.min_rh = 12
+        if self.default_rh[0] != "pixels":
+            self.default_rh = (self.default_rh[0] if self.default_rh[0] != "pixels" else "pixels",
+                               self.GetLinesHeight(int(self.default_rh[0])) if self.default_rh[0] != "pixels" else self.default_rh[1])
         self.set_min_cw()
         
     def header_font(self, newfont = None):
@@ -2032,8 +2037,11 @@ class MainTable(tk.Canvas):
             self.hdr_fl_ins = self.hdr_half_txt_h + 3
         self.hdr_xtra_lines_increment = self.hdr_txt_h
         self.hdr_min_rh = self.hdr_txt_h + 5
+        if self.default_hh[0] != "pixels":
+            self.default_hh = (self.default_hh[0] if self.default_hh[0] != "pixels" else "pixels",
+                               self.GetHdrLinesHeight(int(self.default_hh[0])) if self.default_hh[0] != "pixels" else self.default_hh[1])
         self.set_min_cw()
-        self.CH.set_height(self.default_hh)
+        self.CH.set_height(self.default_hh[1])
 
     def data_reference(self, newdataref = None, reset_col_positions = True, reset_row_positions = True, redraw = False, return_id = True):
         if isinstance(newdataref, (list, tuple)):
@@ -2224,7 +2232,7 @@ class MainTable(tk.Canvas):
             stidx = self.total_data_rows()
             posidx = len(self.row_positions) - 1
         self.insert_row_position(idx = posidx,
-                                 height = self.GetLinesHeight(self.default_rh),
+                                 height = self.default_rh[1],
                                  deselect_all = True,
                                  preserve_other_selections = False)
         if self.my_row_index and isinstance(self.my_row_index, list):
@@ -2360,7 +2368,7 @@ class MainTable(tk.Canvas):
                 self.extra_del_rows_rc_func(tuple(seld_rows))
 
     def reset_row_positions(self):
-        rowpos = self.GetLinesHeight(self.default_rh)
+        rowpos = self.default_rh[1]
         self.row_positions = list(accumulate(chain([0], (rowpos for r in range(self.total_data_rows())))))
 
     def del_row_position(self, idx, deselect_all = False, preserve_other_selections = False):
@@ -2380,7 +2388,7 @@ class MainTable(tk.Canvas):
         if deselect_all:
             self.deselect("all", redraw = False)
         if height is None:
-            h = self.GetLinesHeight(self.default_rh)
+            h = self.default_rh[1]
         else:
             h = height
         if idx == "end" or len(self.row_positions) == idx + 1:
@@ -2513,7 +2521,7 @@ class MainTable(tk.Canvas):
             if reset_row_positions:
                 self.reset_row_positions()
             elif show_index_if_not_sheet and isinstance(self.my_row_index, list) and (self.row_positions == [0] or not self.row_positions):
-                rowpos = self.GetLinesHeight(self.default_rh)
+                rowpos = self.default_rh[1]
                 self.row_positions = list(accumulate(chain([0], (rowpos for c in range(len(self.my_row_index))))))
         else:
             if index is not None:
@@ -2693,14 +2701,14 @@ class MainTable(tk.Canvas):
                                 else:
                                     lns = (f"{lns}",)
                                 y = fr + self.fl_ins
-                                if y + self.half_txt_h > y1:
-                                    fl = lns[0]
-                                    t = ct_(x, y, text = fl, fill = tf, font = self.my_font, anchor = "w", tag = "t")
+                                if y + self.half_txt_h - 1 > y1:
+                                    txt = lns[0]
+                                    t = ct_(x, y, text = txt, fill = tf, font = self.my_font, anchor = "w", tag = "t")
                                     wd = self.bbox(t)
                                     wd = wd[2] - wd[0]
                                     if wd > mw:
-                                        nl = int(len(fl) * (mw / wd)) - 1
-                                        self.itemconfig(t, text = fl[:nl])
+                                        nl = int(len(txt) * (mw / wd))
+                                        self.itemconfig(t, text = txt[:nl])
                                         wd = self.bbox(t)
                                         while wd[2] - wd[0] > mw:
                                             nl -= 1
@@ -2711,14 +2719,14 @@ class MainTable(tk.Canvas):
                                     if stl < 1:
                                         stl = 1
                                     y += (stl * self.xtra_lines_increment)
-                                    if y + self.half_txt_h < sr:
+                                    if y + self.half_txt_h - 1 < sr:
                                         for i in range(stl, len(lns)):
                                             txt = lns[i]
                                             t = ct_(x, y, text = txt, fill = tf, font = self.my_font, anchor = "w", tag = "t")
                                             wd = self.bbox(t)
                                             wd = wd[2] - wd[0]
                                             if wd > mw:
-                                                nl = int(len(txt) * (mw / wd)) - 1
+                                                nl = int(len(txt) * (mw / wd))
                                                 self.itemconfig(t, text = txt[:nl])
                                                 wd = self.bbox(t)
                                                 while wd[2] - wd[0] > mw:
@@ -2726,7 +2734,7 @@ class MainTable(tk.Canvas):
                                                     self.dchars(t, nl)
                                                     wd = self.bbox(t)
                                             y += self.xtra_lines_increment
-                                            if y + self.half_txt_h > sr:
+                                            if y + self.half_txt_h - 1 > sr:
                                                 break
                             except:
                                 continue
@@ -2794,55 +2802,49 @@ class MainTable(tk.Canvas):
                                     lns = lns.split("\n")
                                 else:
                                     lns = (f"{lns}", )
-                                fl = lns[0]
+                                txt = lns[0]
                                 y = fr + self.fl_ins
-                                if y + self.half_txt_h > y1:
-                                    t = ct_(x, y, text = fl, fill = tf, font = self.my_font, anchor = "center", tag = "t")
+                                if y + self.half_txt_h - 1 > y1:
+                                    t = ct_(x, y, text = txt, fill = tf, font = self.my_font, anchor = "center", tag = "t")
                                     wd = self.bbox(t)
                                     wd = wd[2] - wd[0]
                                     if wd > mw:
-                                        tl = len(fl)
-                                        slce = tl - floor(tl * (mw / wd))
-                                        if slce % 2:
-                                            slce += 1
-                                        else:
-                                            slce += 2
-                                        slce = int(slce / 2)
-                                        fl = fl[slce:tl - slce]
-                                        self.itemconfig(t, text = fl)
+                                        tl = len(txt)
+                                        tmod = ceil((tl - int(tl * (mw / wd))) / 2)
+                                        txt = txt[tmod - 1:-tmod]
+                                        self.itemconfig(t, text = txt)
                                         wd = self.bbox(t)
+                                        self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
                                         while wd[2] - wd[0] > mw:
-                                            fl = fl[1: - 1]
-                                            self.itemconfig(t, text = fl)
+                                            txt = txt[next(self.c_align_cyc)]
+                                            self.itemconfig(t, text = txt)
                                             wd = self.bbox(t)
+                                        self.coords(t, x, y)
                                 if len(lns) > 1:
                                     stl = int((y1 - y) / self.xtra_lines_increment) - 1
                                     if stl < 1:
                                         stl = 1
                                     y += (stl * self.xtra_lines_increment)
-                                    if y + self.half_txt_h < sr:
-                                        for i in range(stl,len(lns)):
+                                    if y + self.half_txt_h - 1 < sr:
+                                        for i in range(stl, len(lns)):
                                             txt = lns[i]
                                             t = ct_(x, y, text = txt, fill = tf, font = self.my_font, anchor = "center", tag = "t")
                                             wd = self.bbox(t)
                                             wd = wd[2] - wd[0]
                                             if wd > mw:
                                                 tl = len(txt)
-                                                slce = tl - floor(tl * (mw / wd))
-                                                if slce % 2:
-                                                    slce += 1
-                                                else:
-                                                    slce += 2
-                                                slce = int(slce / 2)
-                                                txt = txt[slce:tl - slce]
+                                                tmod = ceil((tl - int(tl * (mw / wd))) / 2)
+                                                txt = txt[tmod - 1:-tmod]
                                                 self.itemconfig(t, text = txt)
                                                 wd = self.bbox(t)
+                                                self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
                                                 while wd[2] - wd[0] > mw:
-                                                    txt = txt[1: - 1]
+                                                    txt = txt[next(self.c_align_cyc)]
                                                     self.itemconfig(t, text = txt)
                                                     wd = self.bbox(t)
+                                                self.coords(t, x, y)
                                             y += self.xtra_lines_increment
-                                            if y + self.half_txt_h > sr:
+                                            if y + self.half_txt_h - 1 > sr:
                                                 break
                             except:
                                 continue
@@ -2911,14 +2913,14 @@ class MainTable(tk.Canvas):
                                 else:
                                     lns = (f"{lns}", )
                                 y = fr + self.fl_ins
-                                if y + self.half_txt_h > y1:
-                                    fl = lns[0]
-                                    t = ct_(x, y, text = fl, fill = tf, font = self.my_font, anchor = "w", tag = "t")
+                                if y + self.half_txt_h - 1 > y1:
+                                    txt = lns[0]
+                                    t = ct_(x, y, text = txt, fill = tf, font = self.my_font, anchor = "w", tag = "t")
                                     wd = self.bbox(t)
                                     wd = wd[2] - wd[0]
                                     if wd > mw:
-                                        nl = int(len(fl) * (mw / wd)) - 1
-                                        self.itemconfig(t, text = fl[:nl])
+                                        nl = int(len(txt) * (mw / wd))
+                                        self.itemconfig(t, text = txt[:nl])
                                         wd = self.bbox(t)
                                         while wd[2] - wd[0] > mw:
                                             nl -= 1
@@ -2929,14 +2931,14 @@ class MainTable(tk.Canvas):
                                     if stl < 1:
                                         stl = 1
                                     y += (stl * self.xtra_lines_increment)
-                                    if y + self.half_txt_h < sr:
+                                    if y + self.half_txt_h - 1 < sr:
                                         for i in range(stl, len(lns)):
                                             txt = lns[i]
                                             t = ct_(x, y, text = txt, fill = tf, font = self.my_font, anchor = "w", tag = "t")
                                             wd = self.bbox(t)
                                             wd = wd[2] - wd[0]
                                             if wd > mw:
-                                                nl = int(len(txt) * (mw / wd)) - 1
+                                                nl = int(len(txt) * (mw / wd))
                                                 self.itemconfig(t, text = txt[:nl])
                                                 wd = self.bbox(t)
                                                 while wd[2] - wd[0] > mw:
@@ -2944,7 +2946,7 @@ class MainTable(tk.Canvas):
                                                     self.dchars(t, nl)
                                                     wd = self.bbox(t)
                                             y += self.xtra_lines_increment
-                                            if y + self.half_txt_h > sr:
+                                            if y + self.half_txt_h - 1 > sr:
                                                 break
                             except:
                                 continue
@@ -3012,33 +3014,30 @@ class MainTable(tk.Canvas):
                                     lns = lns.split("\n")
                                 else:
                                     lns = (f"{lns}", )
-                                fl = lns[0]
+                                txt = lns[0]
                                 y = fr + self.fl_ins
-                                if y + self.half_txt_h > y1:
-                                    t = ct_(x, y, text = fl, fill = tf, font = self.my_font, anchor = "center", tag = "t")
+                                if y + self.half_txt_h - 1 > y1:
+                                    t = ct_(x, y, text = txt, fill = tf, font = self.my_font, anchor = "center", tag = "t")
                                     wd = self.bbox(t)
                                     wd = wd[2] - wd[0]
                                     if wd > mw:
-                                        tl = len(fl)
-                                        slce = tl - floor(tl * (mw / wd))
-                                        if slce % 2:
-                                            slce += 1
-                                        else:
-                                            slce += 2
-                                        slce = int(slce / 2)
-                                        fl = fl[slce:tl - slce]
-                                        self.itemconfig(t, text = fl)
+                                        tl = len(txt)
+                                        tmod = ceil((tl - int(tl * (mw / wd))) / 2)
+                                        txt = txt[tmod - 1:-tmod]
+                                        self.itemconfig(t, text = txt)
                                         wd = self.bbox(t)
+                                        self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
                                         while wd[2] - wd[0] > mw:
-                                            fl = fl[1:-1]
-                                            self.itemconfig(t, text = fl)
+                                            txt = txt[next(self.c_align_cyc)]
+                                            self.itemconfig(t, text = txt)
                                             wd = self.bbox(t)
+                                        self.coords(t, x, y)
                                 if len(lns) > 1:
                                     stl = int((y1 - y) / self.xtra_lines_increment) - 1
                                     if stl < 1:
                                         stl = 1
                                     y += (stl * self.xtra_lines_increment)
-                                    if y + self.half_txt_h < sr:
+                                    if y + self.half_txt_h - 1 < sr:
                                         for i in range(stl, len(lns)):
                                             txt = lns[i]
                                             t = ct_(x, y, text = txt, fill = tf, font = self.my_font, anchor = "center", tag = "t")
@@ -3046,21 +3045,18 @@ class MainTable(tk.Canvas):
                                             wd = wd[2] - wd[0]
                                             if wd > mw:
                                                 tl = len(txt)
-                                                slce = tl - floor(tl * (mw / wd))
-                                                if slce % 2:
-                                                    slce += 1
-                                                else:
-                                                    slce += 2
-                                                slce = int(slce / 2)
-                                                txt = txt[slce:tl - slce]
+                                                tmod = ceil((tl - int(tl * (mw / wd))) / 2)
+                                                txt = txt[tmod - 1:-tmod]
                                                 self.itemconfig(t, text = txt)
                                                 wd = self.bbox(t)
+                                                self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
                                                 while wd[2] - wd[0] > mw:
-                                                    txt = txt[1:-1]
+                                                    txt = txt[next(self.c_align_cyc)]
                                                     self.itemconfig(t, text = txt)
                                                     wd = self.bbox(t)
+                                                self.coords(t, x, y)
                                             y += self.xtra_lines_increment
-                                            if y + self.half_txt_h > sr:
+                                            if y + self.half_txt_h - 1 > sr:
                                                 break
                             except:
                                 continue

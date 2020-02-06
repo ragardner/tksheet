@@ -2,7 +2,7 @@ from ._tksheet_vars import *
 from ._tksheet_other_classes import *
 
 from collections import defaultdict, deque
-from itertools import islice, repeat, accumulate, chain
+from itertools import islice, repeat, accumulate, chain, product, cycle
 from math import floor, ceil
 from tkinter import ttk
 import bisect
@@ -43,6 +43,8 @@ class RowIndex(tk.Canvas):
                            height = None,
                            background = row_index_background,
                            highlightthickness = 0)
+        self.centre_alignment_text_mod_indexes = (0, -1)
+        self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
         self.parentframe = parentframe
         self.row_drag_and_drop_perform = row_drag_and_drop_perform
         self.beingDrawnSelRect = None
@@ -749,33 +751,30 @@ class RowIndex(tk.Canvas):
                                 lns = (f"{self.MT.my_row_index[r]}", )
                     except:
                         lns = (f"{r + 1}", )
-                    fl = lns[0]
+                    txt = lns[0]
                     y = fr + self.MT.fl_ins
-                    if y + self.MT.half_txt_h > y1:
-                        t = self.create_text(x, y, text = fl, fill = tf, font = self.MT.my_font, anchor = "center", tags = "t")
+                    if y + self.MT.half_txt_h - 1 > y1:
+                        t = self.create_text(x, y, text = txt, fill = tf, font = self.MT.my_font, anchor = "center", tags = "t")
                         wd = self.bbox(t)
                         wd = wd[2] - wd[0]
                         if wd > mw:
-                            tl = len(fl)
-                            slce = tl - floor(tl * (mw / wd))
-                            if slce % 2:
-                                slce += 1
-                            else:
-                                slce += 2
-                            slce = int(slce / 2)
-                            fl = fl[slce:tl - slce]
-                            self.itemconfig(t, text = fl)
+                            tl = len(txt)
+                            tmod = ceil((tl - int(tl * (mw / wd))) / 2)
+                            txt = txt[tmod - 1:-tmod]
+                            self.itemconfig(t, text = txt)
                             wd = self.bbox(t)
+                            self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
                             while wd[2] - wd[0] > mw:
-                                fl = fl[1: - 1]
-                                self.itemconfig(t, text = fl)
+                                txt = txt[next(self.c_align_cyc)]
+                                self.itemconfig(t, text = txt)
                                 wd = self.bbox(t)
+                            self.coords(t, x, y)
                     if len(lns) > 1:
                         stl = int((y1 - y) / self.MT.xtra_lines_increment) - 1
                         if stl < 1:
                             stl = 1
                         y += (stl * self.MT.xtra_lines_increment)
-                        if y + self.MT.half_txt_h < sr:
+                        if y + self.MT.half_txt_h - 1 < sr:
                             for i in range(stl, len(lns)):
                                 txt = lns[i]
                                 t = self.create_text(x, y, text = txt, fill = tf, font = self.MT.my_font, anchor = "center", tags = "t")
@@ -783,21 +782,18 @@ class RowIndex(tk.Canvas):
                                 wd = wd[2] - wd[0]
                                 if wd > mw:
                                     tl = len(txt)
-                                    slce = tl - floor(tl * (mw / wd))
-                                    if slce % 2:
-                                        slce += 1
-                                    else:
-                                        slce += 2
-                                    slce = int(slce / 2)
-                                    txt = txt[slce:tl - slce]
+                                    tmod = ceil((tl - int(tl * (mw / wd))) / 2)
+                                    txt = txt[tmod - 1:-tmod]
                                     self.itemconfig(t, text = txt)
                                     wd = self.bbox(t)
+                                    self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
                                     while wd[2] - wd[0] > mw:
-                                        txt = txt[1: - 1]
+                                        txt = txt[next(self.c_align_cyc)]
                                         self.itemconfig(t, text = txt)
                                         wd = self.bbox(t)
+                                    self.coords(t, x, y)
                                 y += self.MT.xtra_lines_increment
-                                if y + self.MT.half_txt_h > sr:
+                                if y + self.MT.half_txt_h - 1 > sr:
                                     break
             elif self.align == "w":
                 mw = self.current_width - 5
@@ -854,14 +850,14 @@ class RowIndex(tk.Canvas):
                     except:
                         lns = (f"{r + 1}", )
                     y = fr + self.MT.fl_ins
-                    if y + self.MT.half_txt_h > y1:
-                        fl = lns[0]
-                        t = self.create_text(x, y, text = fl, fill = tf, font = self.MT.my_font, anchor = "w", tags = "t")
+                    if y + self.MT.half_txt_h - 1 > y1:
+                        txt = lns[0]
+                        t = self.create_text(x, y, text = txt, fill = tf, font = self.MT.my_font, anchor = "w", tags = "t")
                         wd = self.bbox(t)
                         wd = wd[2] - wd[0]
                         if wd > mw:
-                            nl = int(len(fl) * (mw / wd)) - 1
-                            self.itemconfig(t, text = fl[:nl])
+                            nl = int(len(txt) * (mw / wd))
+                            self.itemconfig(t, text = txt[:nl])
                             wd = self.bbox(t)
                             while wd[2] - wd[0] > mw:
                                 nl -= 1
@@ -872,14 +868,14 @@ class RowIndex(tk.Canvas):
                         if stl < 1:
                             stl = 1
                         y += (stl * self.MT.xtra_lines_increment)
-                        if y + self.MT.half_txt_h < sr:
+                        if y + self.MT.half_txt_h - 1 < sr:
                             for i in range(stl, len(lns)):
                                 txt = lns[i]
                                 t = self.create_text(x, y, text = txt, fill = tf, font = self.MT.my_font, anchor = "w", tags = "t")
                                 wd = self.bbox(t)
                                 wd = wd[2] - wd[0]
                                 if wd > mw:
-                                    nl = int(len(txt) * (mw / wd)) - 1
+                                    nl = int(len(txt) * (mw / wd))
                                     self.itemconfig(t, text = txt[:nl])
                                     wd = self.bbox(t)
                                     while wd[2] - wd[0] > mw:
@@ -887,7 +883,7 @@ class RowIndex(tk.Canvas):
                                         self.dchars(t, nl)
                                         wd = self.bbox(t)
                                 y += self.MT.xtra_lines_increment
-                                if y + self.MT.half_txt_h > sr:
+                                if y + self.MT.half_txt_h - 1 > sr:
                                     break
             self.create_line(self.current_width - 1, y1, self.current_width - 1, y_stop, fill = self.row_index_border_color, width = 1, tags = "v")
         except:

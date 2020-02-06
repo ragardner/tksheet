@@ -1,5 +1,5 @@
 from collections import defaultdict, deque
-from itertools import islice, repeat, accumulate, chain
+from itertools import islice, repeat, accumulate, chain, product, cycle
 from math import floor, ceil
 from tkinter import ttk
 import bisect

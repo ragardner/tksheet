@@ -6,7 +6,7 @@ from ._tksheet_row_index import *
 from ._tksheet_main_table import *
 
 from collections import defaultdict, deque
-from itertools import islice, repeat, accumulate, chain
+from itertools import islice, repeat, accumulate, chain, product, cycle
 from math import floor, ceil
 from tkinter import ttk
 import bisect
@@ -459,7 +459,7 @@ class Sheet(tk.Frame):
         return list(accumulate(chain([0], (colpos for c in range(len(self.MT.col_positions) - 1)))))
 
     def get_example_canvas_row_heights(self, total_rows = None):
-        rowpos = self.MT.GetLinesHeight(self.MT.default_rh)
+        rowpos = self.MT.default_rh[1]
         if total_rows is not None:
             return list(accumulate(chain([0], (rowpos for c in range(total_rows)))))
         return list(accumulate(chain([0], (rowpos for c in range(len(self.MT.row_positions) - 1)))))
@@ -574,16 +574,16 @@ class Sheet(tk.Frame):
             if any(z < self.MT.min_cw or not isinstance(z, int) or isinstance(z, bool) for z in column_widths):
                 return False
         return True
-                
+            
     def default_row_height(self, height = None):
         if height is not None:
-            self.MT.default_rh = int(height)
-        return self.MT.default_rh
+            self.MT.default_rh = (height if isinstance(height, str) else "pixels", height if isinstance(height, int) else self.MT.GetLinesHeight(int(height)))
+        return self.MT.default_rh[1]
 
     def default_header_height(self, height = None):
         if height is not None:
-            self.MT.default_hh = int(height)
-        return self.MT.default_hh
+            self.MT.default_hh = (height if isinstance(height, str) else "pixels", height if isinstance(height, int) else self.MT.GetHdrLinesHeight(int(height)))
+        return self.MT.default_hh[1]
 
     def create_dropdown(self,
                         r = 0,
@@ -989,6 +989,7 @@ class Sheet(tk.Frame):
                     max_header_height = None,
                     max_row_width = None,
                     header_height = None,
+                    row_height = None,
                     header_background = None,
                     header_border_color = None,
                     header_grid_color = None,
@@ -1034,8 +1035,10 @@ class Sheet(tk.Frame):
                     measure_subset_index = None,
                     measure_subset_header = None,
                     redraw = True):
+        if row_height is not None:
+            self.MT.default_rh = (row_height if isinstance(row_height, str) else "pixels", row_height if isinstance(row_height, int) else self.MT.GetLinesHeight(int(row_height)))
         if header_height is not None:
-            self.MT.default_hh = header_height if isinstance(header_height, int) else self.MT.GetHdrLinesHeight(int(header_height))
+            self.MT.default_hh = (header_height if isinstance(header_height, str) else "pixels", header_height if isinstance(header_height, int) else self.MT.GetHdrLinesHeight(int(header_height)))
         if measure_subset_index is not None:
             self.RI.measure_subset_index = measure_subset_index
         if measure_subset_header is not None:
@@ -1333,7 +1336,7 @@ class Sheet(tk.Frame):
         if add_rows:
             maxidx = len(self.MT.data_ref) - 1
             total_cols = None
-            height = self.MT.GetLinesHeight(self.MT.default_rh)
+            height = self.MT.default_rh[1]
             for rn, v in enumerate(values):
                 if rn > maxidx:
                     if total_cols is None:
@@ -1361,7 +1364,7 @@ class Sheet(tk.Frame):
             old_total = self.MT.total_data_cols()
         maxidx = len(self.MT.data_ref) - 1
         if add_rows:
-            height = self.MT.GetLinesHeight(self.MT.default_rh)
+            height = self.MT.default_rh[1]
             if idx == "end":
                 for rn, v in enumerate(values):
                     if rn > maxidx:

@@ -2,7 +2,7 @@ from ._tksheet_vars import *
 from ._tksheet_other_classes import *
 
 from collections import defaultdict, deque
-from itertools import islice, repeat, accumulate, chain
+from itertools import islice, repeat, accumulate, chain, product, cycle
 from math import floor, ceil
 from tkinter import ttk
 import bisect
@@ -40,6 +40,8 @@ class ColumnHeaders(tk.Canvas):
         tk.Canvas.__init__(self,parentframe,
                            background = header_background,
                            highlightthickness = 0)
+        self.centre_alignment_text_mod_indexes = (slice(1, None), slice(None, -1))
+        self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
         self.parentframe = parentframe
         self.column_drag_and_drop_perform = column_drag_and_drop_perform
         self.beingDrawnSelRect = None
@@ -111,7 +113,7 @@ class ColumnHeaders(tk.Canvas):
             self.unbind("<Double-Button-1>")
             self.unbind(get_rc_binding())
 
-    def set_height(self, new_height,set_TL = False):
+    def set_height(self, new_height, set_TL = False):
         self.current_height = new_height
         self.config(height = new_height)
         if set_TL:
@@ -662,7 +664,7 @@ class ColumnHeaders(tk.Canvas):
                     x = self.MT.col_positions[c]
                     self.create_line(x, 0, x, self.current_height, fill = self.grid_color, width = 1, tag = ("v", f"{c}"))
             top = self.canvasy(0)
-            if self.MT.hdr_fl_ins + self.MT.hdr_half_txt_h > top:
+            if self.MT.hdr_fl_ins + self.MT.hdr_half_txt_h - 1 > top:
                 incfl = True
             else:
                 incfl = False
@@ -725,31 +727,28 @@ class ColumnHeaders(tk.Canvas):
                             lns = (num2alpha(c), ) if self.default_hdr else (f"{c + 1}", )
                         y = self.MT.hdr_fl_ins
                         if incfl:
-                            fl = lns[0]
-                            t = self.create_text(x, y, text = fl, fill = tf, font = self.MT.my_hdr_font, anchor = "center", tag = "t")
+                            txt = lns[0]
+                            t = self.create_text(x, y, text = txt, fill = tf, font = self.MT.my_hdr_font, anchor = "center", tag = "t")
                             wd = self.bbox(t)
                             wd = wd[2] - wd[0]
                             if wd > mw:
-                                tl = len(fl)
-                                slce = tl - floor(tl * (mw / wd))
-                                if slce % 2:
-                                    slce += 1
-                                else:
-                                    slce += 2
-                                slce = int(slce / 2)
-                                fl = fl[slce:tl - slce]
-                                self.itemconfig(t, text = fl)
+                                tl = len(txt)
+                                tmod = ceil((tl - int(tl * (mw / wd))) / 2)
+                                txt = txt[tmod - 1:-tmod]
+                                self.itemconfig(t, text = txt)
                                 wd = self.bbox(t)
+                                self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
                                 while wd[2] - wd[0] > mw:
-                                    fl = fl[1: - 1]
-                                    self.itemconfig(t, text = fl)
+                                    txt = txt[next(self.c_align_cyc)]
+                                    self.itemconfig(t, text = txt)
                                     wd = self.bbox(t)
+                                self.coords(t, x, y)
                         if len(lns) > 1:
                             stl = int((top - y) / self.MT.hdr_xtra_lines_increment) - 1
                             if stl < 1:
                                 stl = 1
                             y += (stl * self.MT.hdr_xtra_lines_increment)
-                            if y + self.MT.hdr_half_txt_h < self.current_height:
+                            if y + self.MT.hdr_half_txt_h - 1 < self.current_height:
                                 for i in range(stl, len(lns)):
                                     txt = lns[i]
                                     t = self.create_text(x, y, text = txt, fill = tf, font = self.MT.my_hdr_font, anchor = "center", tag = "t")
@@ -757,21 +756,18 @@ class ColumnHeaders(tk.Canvas):
                                     wd = wd[2] - wd[0]
                                     if wd > mw:
                                         tl = len(txt)
-                                        slce = tl - floor(tl * (mw / wd))
-                                        if slce % 2:
-                                            slce += 1
-                                        else:
-                                            slce += 2
-                                        slce = int(slce / 2)
-                                        txt = txt[slce:tl - slce]
+                                        tmod = ceil((tl - int(tl * (mw / wd))) / 2)
+                                        txt = txt[tmod - 1:-tmod]
                                         self.itemconfig(t, text = txt)
                                         wd = self.bbox(t)
+                                        self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
                                         while wd[2] - wd[0] > mw:
-                                            txt = txt[1: - 1]
+                                            txt = txt[next(self.c_align_cyc)]
                                             self.itemconfig(t, text = txt)
                                             wd = self.bbox(t)
+                                        self.coords(t, x, y)
                                     y += self.MT.hdr_xtra_lines_increment
-                                    if y + self.MT.hdr_half_txt_h > self.current_height:
+                                    if y + self.MT.hdr_half_txt_h - 1 > self.current_height:
                                         break
                 elif self.align == "w":
                     for c in range(start_col, end_col - 1):
@@ -829,13 +825,13 @@ class ColumnHeaders(tk.Canvas):
                             lns = (num2alpha(c), ) if self.default_hdr else (f"{c + 1}", )
                         y = self.MT.hdr_fl_ins
                         if incfl:
-                            fl = lns[0]
-                            t = self.create_text(x, y, text = fl, fill = tf, font = self.MT.my_hdr_font, anchor = "w", tag = "t")
+                            txt = lns[0]
+                            t = self.create_text(x, y, text = txt, fill = tf, font = self.MT.my_hdr_font, anchor = "w", tag = "t")
                             wd = self.bbox(t)
                             wd = wd[2] - wd[0]
                             if wd > mw:
-                                nl = int(len(fl) * (mw / wd)) - 1
-                                self.itemconfig(t, text = fl[:nl])
+                                nl = int(len(txt) * (mw / wd))
+                                self.itemconfig(t, text = txt[:nl])
                                 wd = self.bbox(t)
                                 while wd[2] - wd[0] > mw:
                                     nl -= 1
@@ -846,14 +842,14 @@ class ColumnHeaders(tk.Canvas):
                             if stl < 1:
                                 stl = 1
                             y += (stl * self.MT.hdr_xtra_lines_increment)
-                            if y + self.MT.hdr_half_txt_h < self.current_height:
+                            if y + self.MT.hdr_half_txt_h - 1 < self.current_height:
                                 for i in range(stl, len(lns)):
                                     txt = lns[i]
                                     t = self.create_text(x, y, text = txt, fill = tf, font = self.MT.my_hdr_font, anchor = "w", tag = "t")
                                     wd = self.bbox(t)
                                     wd = wd[2] - wd[0]
                                     if wd > mw:
-                                        nl = int(len(txt) * (mw / wd)) - 1
+                                        nl = int(len(txt) * (mw / wd))
                                         self.itemconfig(t, text = txt[:nl])
                                         wd = self.bbox(t)
                                         while wd[2] - wd[0] > mw:
@@ -861,7 +857,7 @@ class ColumnHeaders(tk.Canvas):
                                             self.dchars(t, nl)
                                             wd = self.bbox(t)
                                     y += self.MT.hdr_xtra_lines_increment
-                                    if y + self.MT.hdr_half_txt_h > self.current_height:
+                                    if y + self.MT.hdr_half_txt_h - 1 > self.current_height:
                                         break
             else:
                 if self.align == "center":
@@ -920,31 +916,28 @@ class ColumnHeaders(tk.Canvas):
                             lns = (num2alpha(c), ) if self.default_hdr else (f"{c + 1}", )
                         y = self.MT.hdr_fl_ins
                         if incfl:
-                            fl = lns[0]
-                            t = self.create_text(x, y, text = fl, fill = tf, font = self.MT.my_hdr_font, anchor = "center", tag = "t")
+                            txt = lns[0]
+                            t = self.create_text(x, y, text = txt, fill = tf, font = self.MT.my_hdr_font, anchor = "center", tag = "t")
                             wd = self.bbox(t)
                             wd = wd[2] - wd[0]
                             if wd > mw:
-                                tl = len(fl)
-                                slce = tl - floor(tl * (mw / wd))
-                                if slce % 2:
-                                    slce += 1
-                                else:
-                                    slce += 2
-                                slce = int(slce / 2)
-                                fl = fl[slce:tl - slce]
-                                self.itemconfig(t, text = fl)
+                                tl = len(txt)
+                                tmod = ceil((tl - int(tl * (mw / wd))) / 2)
+                                txt = txt[tmod - 1:-tmod]
+                                self.itemconfig(t, text = txt)
                                 wd = self.bbox(t)
+                                self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
                                 while wd[2] - wd[0] > mw:
-                                    fl = fl[1: - 1]
-                                    self.itemconfig(t, text = fl)
+                                    txt = txt[next(self.c_align_cyc)]
+                                    self.itemconfig(t, text = txt)
                                     wd = self.bbox(t)
+                                self.coords(t, x, y)
                         if len(lns) > 1:
                             stl = int((top - y) / self.MT.hdr_xtra_lines_increment) - 1
                             if stl < 1:
                                 stl = 1
                             y += (stl * self.MT.hdr_xtra_lines_increment)
-                            if y + self.MT.hdr_half_txt_h < self.current_height:
+                            if y + self.MT.hdr_half_txt_h - 1 < self.current_height:
                                 for i in range(stl, len(lns)):
                                     txt = lns[i]
                                     t = self.create_text(x, y, text = txt, fill = tf, font = self.MT.my_hdr_font, anchor = "center", tag = "t")
@@ -952,21 +945,18 @@ class ColumnHeaders(tk.Canvas):
                                     wd = wd[2] - wd[0]
                                     if wd > mw:
                                         tl = len(txt)
-                                        slce = tl - floor(tl * (mw / wd))
-                                        if slce % 2:
-                                            slce += 1
-                                        else:
-                                            slce += 2
-                                        slce = int(slce / 2)
-                                        txt = txt[slce:tl - slce]
+                                        tmod = ceil((tl - int(tl * (mw / wd))) / 2)
+                                        txt = txt[tmod - 1:-tmod]
                                         self.itemconfig(t, text = txt)
                                         wd = self.bbox(t)
+                                        self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
                                         while wd[2] - wd[0] > mw:
-                                            txt = txt[1: - 1]
+                                            txt = txt[next(self.c_align_cyc)]
                                             self.itemconfig(t, text = txt)
                                             wd = self.bbox(t)
+                                        self.coords(t, x, y)
                                     y += self.MT.hdr_xtra_lines_increment
-                                    if y + self.MT.hdr_half_txt_h > self.current_height:
+                                    if y + self.MT.hdr_half_txt_h - 1 > self.current_height:
                                         break
                 elif self.align == "w":
                     for c in range(start_col, end_col - 1):
@@ -1024,13 +1014,13 @@ class ColumnHeaders(tk.Canvas):
                             lns = (num2alpha(c), ) if self.default_hdr else (f"{c + 1}", )
                         y = self.MT.hdr_fl_ins
                         if incfl:
-                            fl = lns[0]
-                            t = self.create_text(x, y, text = fl, fill = tf, font = self.MT.my_hdr_font, anchor = "w", tag = "t")
+                            txt = lns[0]
+                            t = self.create_text(x, y, text = txt, fill = tf, font = self.MT.my_hdr_font, anchor = "w", tag = "t")
                             wd = self.bbox(t)
                             wd = wd[2] - wd[0]
                             if wd > mw:
-                                nl = int(len(fl) * (mw / wd)) - 1
-                                self.itemconfig(t, text = fl[:nl])
+                                nl = int(len(txt) * (mw / wd))
+                                self.itemconfig(t, text = txt[:nl])
                                 wd = self.bbox(t)
                                 while wd[2] - wd[0] > mw:
                                     nl -= 1
@@ -1041,14 +1031,14 @@ class ColumnHeaders(tk.Canvas):
                             if stl < 1:
                                 stl = 1
                             y += (stl * self.MT.hdr_xtra_lines_increment)
-                            if y + self.MT.hdr_half_txt_h < self.current_height:
+                            if y + self.MT.hdr_half_txt_h - 1 < self.current_height:
                                 for i in range(stl, len(lns)):
                                     txt = lns[i]
                                     t = self.create_text(x, y, text = txt, fill = tf, font = self.MT.my_hdr_font, anchor = "w", tag = "t")
                                     wd = self.bbox(t)
                                     wd = wd[2] - wd[0]
                                     if wd > mw:
-                                        nl = int(len(txt) * (mw / wd)) - 1
+                                        nl = int(len(txt) * (mw / wd))
                                         self.itemconfig(t, text = txt[:nl])
                                         wd = self.bbox(t)
                                         while wd[2] - wd[0] > mw:
@@ -1056,7 +1046,7 @@ class ColumnHeaders(tk.Canvas):
                                             self.dchars(t, nl)
                                             wd = self.bbox(t)
                                     y += self.MT.hdr_xtra_lines_increment
-                                    if y + self.MT.hdr_half_txt_h > self.current_height:
+                                    if y + self.MT.hdr_half_txt_h - 1 > self.current_height:
                                         break
             self.create_line(x1, self.current_height - 1, x_stop, self.current_height - 1, fill = self.header_border_color, width = 1, tag = "h")
         except:
