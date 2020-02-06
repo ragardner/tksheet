@@ -1,3 +1,7 @@
+### Version 4.5.3
+ - Improve text redraw slicing and positioning when cell size too small, especially for center alignments, very slight performance cost
+ - If a number of lines has been set by using a string e.g. "1" for default row or header heights then the heights will be updated when changing fonts
+
 ### Version 4.5.2
  - Fix resize not taking into account header if header is set to a row in the sheet
  - Fix bugs with `display_subset_of_columns()`, argument `set_col_positions` does nothing until reworked or removed

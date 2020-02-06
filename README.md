@@ -48,14 +48,22 @@ class demo(tk.Tk):
         self.grid_columnconfigure(0, weight = 1)
         self.grid_rowconfigure(0, weight = 1)
         self.sheet_demo = Sheet(self,
-                                data = [[f"{r}, {c}" for c in range(30)] for r in range(2000)], #to set sheet data at startup
+                                #auto_resize_numerical_row_index = False,
+                                #header_height = "3",
+                                #row_index_width = 100,
+                                #align = "center",
+                                #header_align = "w",
+                                #row_index_align = "w",
+                                data = [[f"Row {r}, Column {c}\nnewline1\nnewline2" for c in range(30)] for r in range(2000)], #to set sheet data at startup
+                                #headers = [f"Column {c}\nnewline1\nnewline2" for c in range(30)],
+                                #row_index = [f"Row {r}\nnewline1\nnewline2" for r in range(2000)],
                                 #set_all_heights_and_widths = True, #to fit all cell sizes to text at start up
                                 #headers = 0, #to set headers as first row at startup
                                 #row_index = 0, #to set row_index as first column at startup
                                 #total_rows = 2000, #if you want to set empty sheet dimensions at startup
                                 #total_columns = 30, #if you want to set empty sheet dimensions at startup
                                 height = 500, #height and width arguments are optional
-                                width = 700) #For full startup arguments/parameters see DOCUMENTATION.md
+                                width = 1200) #For full startup arguments see DOCUMENTATION.md
         self.sheet_demo.enable_bindings(("single_select", #"single_select" or "toggle_select"
                                          "drag_select",   #enables shift click selection as well
                                          "column_drag_and_drop",
@@ -64,8 +72,8 @@ class demo(tk.Tk):
                                          "row_select",
                                          "column_width_resize",
                                          "double_click_column_resize",
-                                         "row_width_resize",
-                                         "column_height_resize",
+                                         #"row_width_resize",
+                                         #"column_height_resize",
                                          "arrowkeys",
                                          "row_height_resize",
                                          "double_click_row_resize",
@@ -287,7 +295,6 @@ class demo(tk.Tk):
 app = demo()
 app.mainloop()
 
-
 ```
 
 ----
@@ -302,4 +309,3 @@ app.mainloop()
 ![alt text](https://i.imgur.com/JrZD5Lf.jpg)
 
 ----
-
