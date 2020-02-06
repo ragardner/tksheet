@@ -1,3 +1,6 @@
+### Version 4.5.4
+ - Fix typo in row index code leading to text not slicing properly with center alignment
+
 ### Version 4.5.3
  - Improve text redraw slicing and positioning when cell size too small, especially for center alignments, very slight performance cost
  - If a number of lines has been set by using a string e.g. "1" for default row or header heights then the heights will be updated when changing fonts
