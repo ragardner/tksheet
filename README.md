@@ -246,12 +246,22 @@ class demo(tk.Tk):
         #self.sheet_demo.hide("top_left")
         #self.sheet_demo.hide("header")
 
+        # __________ ADDITIONAL BINDINGS __________
+
+        #self.sheet_demo.bind("<Motion>", self.mouse_motion)
+
     """
 
     UNTIL DOCUMENTATION IS COMPLETE, PLEASE BROWSE THE FILE
-    _tksheet.py FOR A FULL LIST OF FUNCTIONS AND THEIR PARAMETERS
+    _tksheet.py FOR A FULL LIST OF FUNCTIONS
 
     """
+
+    def mouse_motion(self, event):
+        region = self.sheet_demo.identify_region(event)
+        row = self.sheet_demo.identify_row(event, allow_end = False)
+        column = self.sheet_demo.identify_column(event, allow_end = False)
+        print (region, row, column)
 
     def deselect(self, event):
         print (event, self.sheet_demo.get_selected_cells())
