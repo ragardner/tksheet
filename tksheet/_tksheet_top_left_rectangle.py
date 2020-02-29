@@ -103,7 +103,7 @@ class TopLeftRectangle(tk.Canvas):
     def mouse_motion(self, event = None):
         self.MT.reset_mouse_motion_creations()
         if self.extra_motion_func is not None:
-            self.extra_motion_func()
+            self.extra_motion_func(event)
 
     def b1_press(self, event = None):
         self.focus_set()

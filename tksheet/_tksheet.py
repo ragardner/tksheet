@@ -418,7 +418,6 @@ class Sheet(tk.Frame):
         self.MT.bind_cell_edit(enable)
 
     def identify_region(self, event):
-        # UNFINISHED, ADD SEPARATOR?
         if event.widget == self.MT:
             return "table"
         elif event.widget == self.RI:
