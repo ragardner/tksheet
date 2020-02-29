@@ -1,3 +1,7 @@
+### Version 4.5.5
+ - Fix mouse motion binding in top left code not returning event object
+ - Add some extra demonstration code to `test_tksheet.py`
+
 ### Version 4.5.4
  - Fix typo in row index code leading to text not slicing properly with center alignment
 
