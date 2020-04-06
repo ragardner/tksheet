@@ -277,6 +277,8 @@ class Sheet(tk.Frame):
                     self.MT.extra_delete_key_func = func
                 if binding == "edit_cell":
                     self.MT.extra_edit_cell_func = func
+                if binding == "begin_edit_cell":
+                    self.MT.extra_begin_edit_cell_func = func
                 if binding == "row_index_drag_drop":
                     self.RI.ri_extra_drag_drop_func = func
                 if binding == "column_header_drag_drop":
