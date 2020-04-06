@@ -3704,13 +3704,12 @@ class MainTable(tk.Canvas):
         currently_selected = self.currently_selected()
         y1 = int(currently_selected[0])
         x1 = int(currently_selected[1])
-        
+        if self.extra_begin_edit_cell_func is not None:
+            self.extra_begin_edit_cell_func((y1, x1, event.char))
         if event.char in all_chars:
             text = event.char
         else:
             text = self.data_ref[y1][x1]
-        if self.extra_begin_edit_cell_func is not None:
-            self.extra_begin_edit_cell_func((y1, x1, event.char))
         self.select_cell(r = y1, c = x1, keep_other_selections = True)
         self.see(r = y1, c = x1, keep_yscroll = False, keep_xscroll = False, bottom_right_corner = False, check_cell_visibility = True)
         self.RI.set_row_height(y1, only_set_if_too_small = True)
