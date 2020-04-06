@@ -25,21 +25,23 @@ class TextEditor_(tk.Text):
                          state = state,
                          spacing1 = 2,
                          spacing2 = 2,
+                         bd = 0,
+                         highlightthickness = 0,
                          undo = True)
         if text is not None:
             self.insert(1.0, text)
         self.yview_moveto(1)
         self.rc_popup_menu = tk.Menu(self, tearoff = 0)
-        self.rc_popup_menu.add_command(label = "Select all (Ctrl-a)",
+        self.rc_popup_menu.add_command(label = "Select all Ctrl+A",
                                        command = self.select_all)
         self.rc_popup_menu.add_separator()
-        self.rc_popup_menu.add_command(label = "Cut (Ctrl-x)",
+        self.rc_popup_menu.add_command(label = "Cut Ctrl+X",
                                        command = self.cut)
         self.rc_popup_menu.add_separator()
-        self.rc_popup_menu.add_command(label = "Copy (Ctrl-c)",
+        self.rc_popup_menu.add_command(label = "Copy Ctrl+C",
                                        command = self.copy)
         self.rc_popup_menu.add_separator()
-        self.rc_popup_menu.add_command(label = "Paste (Ctrl-v)",
+        self.rc_popup_menu.add_command(label = "Paste Ctrl+V",
                                        command = self.paste)
         self.bind("<1>", lambda event: self.focus_set())
         if str(get_os()) == "Darwin":
