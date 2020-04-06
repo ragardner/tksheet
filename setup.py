@@ -8,7 +8,7 @@ with open(path.join(this_directory, 'README.md'), encoding = 'utf-8') as f:
 setup(
   name = 'tksheet',
   packages = ['tksheet'],
-  version = '4.5.5',
+  version = '4.5.6',
   python_requires = '>=3.6',
   license = 'MIT',
   description = 'Tkinter table / sheet widget',

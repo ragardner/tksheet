@@ -1,3 +1,6 @@
+### Version 4.5.6
+ - Add `"begin_edit_cell"` to function `extra_bindings()`
+
 ### Version 4.5.5
  - Fix mouse motion binding in top left code not returning event object
  - Add some extra demonstration code to `test_tksheet.py`
