@@ -1,3 +1,6 @@
+### Version 4.5.9
+ - Attempt made to remove cell editor window internal border, showing up on some platforms
+
 ### Version 4.5.8
  - Add function `set_text_editor_value()`
  - Moved internal `begin_cell_edit` code slightly
