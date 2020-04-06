@@ -7,7 +7,10 @@ class demo(tk.Tk):
         tk.Tk.__init__(self)
         self.grid_columnconfigure(0, weight = 1)
         self.grid_rowconfigure(0, weight = 1)
-        self.sheet_demo = Sheet(self,
+        self.frame = tk.Frame(self)
+        self.frame.grid_columnconfigure(0, weight = 1)
+        self.frame.grid_rowconfigure(0, weight = 1)
+        self.sheet_demo = Sheet(self.frame,
                                 #auto_resize_numerical_row_index = False,
                                 #header_height = "3",
                                 #row_index_width = 100,
@@ -22,8 +25,9 @@ class demo(tk.Tk):
                                 #row_index = 0, #to set row_index as first column at startup
                                 #total_rows = 2000, #if you want to set empty sheet dimensions at startup
                                 #total_columns = 30, #if you want to set empty sheet dimensions at startup
-                                height = 500, #height and width arguments are optional
-                                width = 1200) #For full startup arguments see DOCUMENTATION.md
+                                #height = 500, #height and width arguments are optional
+                                #width = 1200 #For full startup arguments see DOCUMENTATION.md
+                                )
         self.sheet_demo.enable_bindings(("single_select", #"single_select" or "toggle_select"
                                          "drag_select",   #enables shift click selection as well
                                          "column_drag_and_drop",
@@ -51,6 +55,8 @@ class demo(tk.Tk):
                                          "edit_cell"))
         #self.sheet_demo.enable_bindings("enable_all")
         #self.sheet_demo.disable_bindings() #uses the same strings
+        #self.bind("<Configure>", self.window_resized)
+        self.frame.grid(row = 0, column = 0, sticky = "nswe")
         self.sheet_demo.grid(row = 0, column = 0, sticky = "nswe")
         
         """_________________________ EXAMPLES _________________________ """
@@ -103,6 +109,7 @@ class demo(tk.Tk):
 
         self.sheet_demo.extra_bindings([
                                         ("cell_select", self.cell_select),
+                                        ("begin_edit_cell", self.begin_edit_cell),
                                         ("shift_cell_select", self.shift_select_cells),
                                         ("drag_select_cells", self.drag_select_cells),
                                         ("ctrl_a", self.ctrl_a),
@@ -216,6 +223,12 @@ class demo(tk.Tk):
     _tksheet.py FOR A FULL LIST OF FUNCTIONS AND THEIR PARAMETERS
 
     """
+
+    def window_resized(self, event):
+        print (event)
+
+    def begin_edit_cell(self, event):
+        print (event)
 
     def mouse_motion(self, event):
         region = self.sheet_demo.identify_region(event)
