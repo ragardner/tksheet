@@ -1407,6 +1407,7 @@ class MainTable(tk.Canvas):
             self.bind("<F2>", self.edit_cell_)
             self.bind("<Double-Button-1>", self.edit_cell_)
             self.bind("<Return>", self.edit_cell_)
+            self.bind("<BackSpace>", self.edit_cell_)
         else:
             for c in chain(lowercase_letters, uppercase_letters):
                 self.unbind(f"<{c}>")
@@ -1415,6 +1416,7 @@ class MainTable(tk.Canvas):
             self.unbind("<F2>")
             self.unbind("<Double-Button-1>")
             self.unbind("<Return>")
+            self.unbind("<BackSpace>")
 
     def enable_bindings(self, bindings):
         if isinstance(bindings,(list, tuple)):
@@ -3704,12 +3706,15 @@ class MainTable(tk.Canvas):
         currently_selected = self.currently_selected()
         y1 = int(currently_selected[0])
         x1 = int(currently_selected[1])
+        self.text_editor_loc = (y1, x1)
         if self.extra_begin_edit_cell_func is not None:
             self.extra_begin_edit_cell_func((y1, x1, event.char))
-        if event.char in all_chars:
-            text = event.char
-        else:
             text = self.data_ref[y1][x1]
+        else:
+            if event.char in all_chars:
+                text = event.char
+            else:
+                text = self.data_ref[y1][x1]
         self.select_cell(r = y1, c = x1, keep_other_selections = True)
         self.see(r = y1, c = x1, keep_yscroll = False, keep_xscroll = False, bottom_right_corner = False, check_cell_visibility = True)
         self.RI.set_row_height(y1, only_set_if_too_small = True)
@@ -3720,6 +3725,7 @@ class MainTable(tk.Canvas):
     def create_text_editor(self, r = 0, c = 0, text = None, state = "normal", see = True, set_data_ref_on_destroy = False):
         if see:
             self.see(r = r, c = c, check_cell_visibility = True)
+        self.text_editor_loc = (r, c)
         x = self.col_positions[c]
         y = self.row_positions[r]
         w = self.col_positions[c + 1] - x + 1
@@ -3744,6 +3750,7 @@ class MainTable(tk.Canvas):
         self.text_editor.textedit.focus_set()
 
     def destroy_text_editor(self):
+        self.text_editor_loc = None
         try:
             self.delete(self.text_editor_id)
         except:
@@ -3762,7 +3769,8 @@ class MainTable(tk.Canvas):
             pass
 
     def text_editor_newline_binding(self, event = None):
-        self.text_editor.config(height = self.text_editor.winfo_height() + self.xtra_lines_increment)
+        if self.GetLinesHeight(self.text_editor.get_num_lines() + 1) > self.text_editor.winfo_height():
+            self.text_editor.config(height = self.text_editor.winfo_height() + self.xtra_lines_increment)
 
     def get_text_editor_value(self, destroy_tup = None, r = None, c = None, set_data_ref_on_destroy = True, event = None, destroy = True, move_down = True, redraw = True, recreate = True):
         self.show_current()

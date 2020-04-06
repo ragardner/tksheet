@@ -106,6 +106,13 @@ class TextEditor(tk.Frame):
     def get(self):
         return self.textedit.get("1.0", "end").rstrip()
 
+    def get_num_lines(self):
+        return int(self.textedit.index('end-1c').split('.')[0])
+
+    def set_text(self, text):
+        self.textedit.delete(1.0, "end")
+        self.textedit.insert(1.0, text)
+
     def scroll_to_bottom(self):
         self.textedit.yview_moveto(1)
 

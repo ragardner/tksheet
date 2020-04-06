@@ -723,6 +723,12 @@ class Sheet(tk.Frame):
     def create_text_editor(self, row = 0, column = 0, text = None, state = "normal", see = True, set_data_ref_on_destroy = False):
         self.MT.create_text_editor(r = row, c = column, text = text, state = state, see = see, set_data_ref_on_destroy = set_data_ref_on_destroy)
 
+    def set_text_editor_value(self, text = "", r = None, c = None):
+        if self.MT.text_editor is not None and r is None and c is None:
+            self.MT.text_editor.set_text(value)
+        elif self.MT.text_editor is not None and self.MT.text_editor_loc == (r, c):
+            self.MT.text_editor.set_text(value)
+
     def bind_text_editor_set(self, func, row, column):
         self.MT.bind_text_editor_destroy(func, row, column)
 
