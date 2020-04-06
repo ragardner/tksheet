@@ -1,3 +1,8 @@
+### Version 4.5.8
+ - Add function `set_text_editor_value()`
+ - Moved internal `begin_cell_edit` code slightly
+ - Make Alt-Return on text editor only increase text window height if too small
+
 ### Version 4.5.7
  - Fix download url in `setup.py`
 
