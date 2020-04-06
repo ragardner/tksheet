@@ -1,3 +1,6 @@
+### Version 4.5.7
+ - Fix download url in `setup.py`
+
 ### Version 4.5.6
  - Add `"begin_edit_cell"` to function `extra_bindings()`
 
