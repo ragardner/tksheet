@@ -402,55 +402,70 @@ class ColumnHeaders(tk.Canvas):
                 rm2start = rm1start + (rm1end - rm1start)
                 rm2end = rm1end + (rm1end - rm1start)
                 totalcols = len(colsiter)
-                if self.dragged_col < c and c >= len(self.MT.col_positions) - 1:
+                if c >= len(self.MT.col_positions) - 1:
                     c -= 1
                 if self.ch_extra_drag_drop_func is not None:
                     self.ch_extra_drag_drop_func(tuple(orig_selected_cols), int(c))
                 c_ = int(c)
                 if self.column_drag_and_drop_perform:
-                    if rm1end < c:
-                        c += 1
                     if self.MT.all_columns_displayed:
                         if rm1start > c:
                             for rn in range(len(self.MT.data_ref)):
                                 try:
-                                    self.MT.data_ref[rn][c:c] = self.MT.data_ref[rn][rm1start:rm1end]
-                                    self.MT.data_ref[rn][rm2start:rm2end] = []
+                                    self.MT.data_ref[rn] = (self.MT.data_ref[rn][:c] +
+                                                            self.MT.data_ref[rn][rm1start:rm1start + totalcols] +
+                                                            self.MT.data_ref[rn][c:rm1start] +
+                                                            self.MT.data_ref[rn][rm1start + totalcols:])
                                 except:
                                     continue
                             if not isinstance(self.MT.my_hdrs, int) and self.MT.my_hdrs:
                                 try:
-                                    self.MT.my_hdrs[c:c] = self.MT.my_hdrs[rm1start:rm1end]
-                                    self.MT.my_hdrs[rm2start:rm2end] = []
+                                    self.MT.my_hdrs = (self.MT.my_hdrs[:c] +
+                                                       self.MT.my_hdrs[rm1start:rm1start + totalcols] +
+                                                       self.MT.my_hdrs[c:rm1start] +
+                                                       self.MT.my_hdrs[rm1start + totalcols:])
                                 except:
                                     pass
                         else:
                             for rn in range(len(self.MT.data_ref)):
                                 try:
-                                    self.MT.data_ref[rn][c:c] = self.MT.data_ref[rn][rm1start:rm1end]
-                                    self.MT.data_ref[rn][rm1start:rm1end] = []
+                                    self.MT.data_ref[rn] = (self.MT.data_ref[rn][:rm1start] +
+                                                            self.MT.data_ref[rn][rm1start + totalcols:c + 1] +
+                                                            self.MT.data_ref[rn][rm1start:rm1start + totalcols] +
+                                                            self.MT.data_ref[rn][c + 1:])
                                 except:
                                     continue
                             if not isinstance(self.MT.my_hdrs, int) and self.MT.my_hdrs:
                                 try:
-                                    self.MT.my_hdrs[c:c] = self.MT.my_hdrs[rm1start:rm1end]
-                                    self.MT.my_hdrs[rm1start:rm1end] = []
+                                    
+                                    self.MT.my_hdrs = (self.MT.my_hdrs[:rm1start] +
+                                                       self.MT.my_hdrs[rm1start + totalcols:c + 1] +
+                                                       self.MT.my_hdrs[rm1start:rm1start + totalcols] +
+                                                       self.MT.my_hdrs[c + 1:])
                                 except:
                                     pass
                     else:
                         if rm1start > c:
-                            self.MT.displayed_columns[c:c] = self.MT.displayed_columns[rm1start:rm1end]
-                            self.MT.displayed_columns[rm2start:rm2end] = []
+                            self.MT.displayed_columns = (self.MT.displayed_columns[:c] +
+                                                         self.MT.displayed_columns[rm1start:rm1start + totalcols] +
+                                                         self.MT.displayed_columns[c:rm1start] +
+                                                         self.MT.displayed_columns[rm1start + totalcols:])
                         else:
-                            self.MT.displayed_columns[c:c] = self.MT.displayed_columns[rm1start:rm1end]
-                            self.MT.displayed_columns[rm1start:rm1end] = []
+                            self.MT.displayed_columns = (self.MT.displayed_columns[:rm1start] +
+                                                         self.MT.displayed_columns[rm1start + totalcols:c + 1] +
+                                                         self.MT.displayed_columns[rm1start:rm1start + totalcols] +
+                                                         self.MT.displayed_columns[c + 1:])
                 cws = [int(b - a) for a, b in zip(self.MT.col_positions, islice(self.MT.col_positions, 1, len(self.MT.col_positions)))]
                 if rm1start > c:
-                    cws[c:c] = cws[rm1start:rm1end]
-                    cws[rm2start:rm2end] = []
+                    cws = (cws[:c] +
+                           cws[rm1start:rm1start + totalcols] +
+                           cws[c:rm1start] +
+                           cws[rm1start + totalcols:])
                 else:
-                    cws[c:c] = cws[rm1start:rm1end]
-                    cws[rm1start:rm1end] = []
+                    cws = (cws[:rm1start] +
+                           cws[rm1start + totalcols:c + 1] +
+                           cws[rm1start:rm1start + totalcols] +
+                           cws[c + 1:])
                 self.MT.col_positions = list(accumulate(chain([0], (width for width in cws))))
                 self.MT.deselect("all")
                 if (c_ - 1) + totalcols > len(self.MT.col_positions) - 1:

@@ -446,39 +446,49 @@ class RowIndex(tk.Canvas):
                 rm2start = rm1start + (rm1end - rm1start)
                 rm2end = rm1end + (rm1end - rm1start)
                 totalrows = len(rowsiter)
-                if self.dragged_row < r and r >= len(self.MT.row_positions) - 1:
+                if r >= len(self.MT.row_positions) - 1:
                     r -= 1
                 if self.ri_extra_drag_drop_func is not None:
                     self.ri_extra_drag_drop_func(tuple(orig_selected_rows), int(r))
                 r_ = int(r)
                 if self.row_drag_and_drop_perform:
-                    if rm1end < r:
-                        r += 1
                     if rm1start > r:
-                        self.MT.data_ref[r:r] = self.MT.data_ref[rm1start:rm1end]
-                        self.MT.data_ref[rm2start:rm2end] = []
+                        self.MT.data_ref = (self.MT.data_ref[:r] +
+                                            self.MT.data_ref[rm1start:rm1start + totalrows] +
+                                            self.MT.data_ref[r:rm1start] +
+                                            self.MT.data_ref[rm1start + totalrows:])
                         if not isinstance(self.MT.my_row_index, int) and self.MT.my_row_index:
                             try:
-                                self.MT.my_row_index[r:r] = self.MT.my_row_index[rm1start:rm1end]
-                                self.MT.my_row_index[rm2start:rm2end] = []
+                                self.MT.my_row_index = (self.MT.my_row_index[:r] +
+                                                        self.MT.my_row_index[rm1start:rm1start + totalrows] +
+                                                        self.MT.my_row_index[r:rm1start] +
+                                                        self.MT.my_row_index[rm1start + totalrows:])
                             except:
                                 pass
                     else:
-                        self.MT.data_ref[r:r] = self.MT.data_ref[rm1start:rm1end]
-                        self.MT.data_ref[rm1start:rm1end] = []
+                        self.MT.data_ref = (self.MT.data_ref[:rm1start] +
+                                            self.MT.data_ref[rm1start + totalrows:r + 1] +
+                                            self.MT.data_ref[rm1start:rm1start + totalrows] +
+                                            self.MT.data_ref[r + 1:])
                         if not isinstance(self.MT.my_row_index, int) and self.MT.my_row_index:
                             try:
-                                self.MT.my_row_index[r:r] = self.MT.my_row_index[rm1start:rm1end]
-                                self.MT.my_row_index[rm1start:rm1end] = []
+                                self.MT.my_row_index = (self.MT.my_row_index[:rm1start] +
+                                                        self.MT.my_row_index[rm1start + totalrows:r + 1] +
+                                                        self.MT.my_row_index[rm1start:rm1start + totalrows] +
+                                                        self.MT.my_row_index[r + 1:])
                             except:
                                 pass
                 rhs = [int(b - a) for a, b in zip(self.MT.row_positions, islice(self.MT.row_positions, 1, len(self.MT.row_positions)))]
                 if rm1start > r:
-                    rhs[r:r] = rhs[rm1start:rm1end]
-                    rhs[rm2start:rm2end] = []
+                    rhs = (rhs[:r] +
+                           rhs[rm1start:rm1start + totalrows] +
+                           rhs[r:rm1start] +
+                           rhs[rm1start + totalrows:])
                 else:
-                    rhs[r:r] = rhs[rm1start:rm1end]
-                    rhs[rm1start:rm1end] = []
+                    rhs = (rhs[:rm1start] +
+                           rhs[rm1start + totalrows:r + 1] +
+                           rhs[rm1start:rm1start + totalrows] +
+                           rhs[r + 1:])
                 self.MT.row_positions = list(accumulate(chain([0], (height for height in rhs))))
                 self.MT.deselect("all")
                 if (r_ - 1) + totalrows > len(self.MT.row_positions) - 1:
