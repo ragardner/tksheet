@@ -1,3 +1,6 @@
+### Version 4.6.0
+ - Fix bug with column drag and drop and row index drag and drop
+
 ### Version 4.5.9
  - Attempt made to remove cell editor window internal border, showing up on some platforms
 
