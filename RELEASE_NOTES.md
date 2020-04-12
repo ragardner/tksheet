@@ -1,3 +1,7 @@
+### Version 4.6.1
+ - Clean up menus
+ - Improve Dark theme
+
 ### Version 4.6.0
  - Fix bug with column drag and drop and row index drag and drop
 
