@@ -325,11 +325,11 @@ app.mainloop()
 
 ### Light Theme
 
-![alt text](https://i.imgur.com/yoa6K6T.jpg)
+![alt text](https://i.imgur.com/PWJSPxf.jpg)
 
 
 ### Dark Theme
 
-![alt text](https://i.imgur.com/JrZD5Lf.jpg)
+![alt text](https://i.imgur.com/OOqAARe.jpg)
 
 ----
