@@ -448,9 +448,9 @@ class RowIndex(tk.Canvas):
                 totalrows = len(rowsiter)
                 if r >= len(self.MT.row_positions) - 1:
                     r -= 1
+                r_ = int(r)
                 if self.ri_extra_drag_drop_func is not None:
                     self.ri_extra_drag_drop_func(tuple(orig_selected_rows), int(r))
-                r_ = int(r)
                 if self.row_drag_and_drop_perform:
                     if rm1start > r:
                         self.MT.data_ref = (self.MT.data_ref[:r] +

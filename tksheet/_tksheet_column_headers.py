@@ -404,9 +404,9 @@ class ColumnHeaders(tk.Canvas):
                 totalcols = len(colsiter)
                 if c >= len(self.MT.col_positions) - 1:
                     c -= 1
+                c_ = int(c)
                 if self.ch_extra_drag_drop_func is not None:
                     self.ch_extra_drag_drop_func(tuple(orig_selected_cols), int(c))
-                c_ = int(c)
                 if self.column_drag_and_drop_perform:
                     if self.MT.all_columns_displayed:
                         if rm1start > c:
@@ -437,7 +437,6 @@ class ColumnHeaders(tk.Canvas):
                                     continue
                             if not isinstance(self.MT.my_hdrs, int) and self.MT.my_hdrs:
                                 try:
-                                    
                                     self.MT.my_hdrs = (self.MT.my_hdrs[:rm1start] +
                                                        self.MT.my_hdrs[rm1start + totalcols:c + 1] +
                                                        self.MT.my_hdrs[rm1start:rm1start + totalcols] +

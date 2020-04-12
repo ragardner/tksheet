@@ -27,22 +27,56 @@ class TextEditor_(tk.Text):
                          spacing2 = 2,
                          bd = 0,
                          highlightthickness = 0,
-                         undo = True)
+                         undo = True,
+                         maxundo = 20,
+                         background = parent.parent.table_background,
+                         foreground = parent.parent.text_color,
+                         insertbackground = parent.parent.text_color)
+        self.parent = parent
         if text is not None:
             self.insert(1.0, text)
         self.yview_moveto(1)
         self.rc_popup_menu = tk.Menu(self, tearoff = 0)
-        self.rc_popup_menu.add_command(label = "Select all Ctrl+A",
+        self.rc_popup_menu.add_command(label = "Select all",
+                                       accelerator = "Ctrl+A",
+                                       font = self.parent.parent.popup_menu_font,
+                                       foreground = self.parent.parent.popup_menu_fg,
+                                       background = self.parent.parent.popup_menu_bg,
+                                       activebackground = self.parent.parent.popup_menu_highlight_bg,
+                                       activeforeground = self.parent.parent.popup_menu_highlight_fg,
                                        command = self.select_all)
-        self.rc_popup_menu.add_separator()
-        self.rc_popup_menu.add_command(label = "Cut Ctrl+X",
+        self.rc_popup_menu.add_command(label = "Cut",
+                                       accelerator = "Ctrl+X",
+                                       font = self.parent.parent.popup_menu_font,
+                                       foreground = self.parent.parent.popup_menu_fg,
+                                       background = self.parent.parent.popup_menu_bg,
+                                       activebackground = self.parent.parent.popup_menu_highlight_bg,
+                                       activeforeground = self.parent.parent.popup_menu_highlight_fg,
                                        command = self.cut)
-        self.rc_popup_menu.add_separator()
-        self.rc_popup_menu.add_command(label = "Copy Ctrl+C",
+        self.rc_popup_menu.add_command(label = "Copy",
+                                       accelerator = "Ctrl+C",
+                                       font = self.parent.parent.popup_menu_font,
+                                       foreground = self.parent.parent.popup_menu_fg,
+                                       background = self.parent.parent.popup_menu_bg,
+                                       activebackground = self.parent.parent.popup_menu_highlight_bg,
+                                       activeforeground = self.parent.parent.popup_menu_highlight_fg,
                                        command = self.copy)
-        self.rc_popup_menu.add_separator()
-        self.rc_popup_menu.add_command(label = "Paste Ctrl+V",
+        self.rc_popup_menu.add_command(label = "Paste",
+                                       accelerator = "Ctrl+V",
+                                       font = self.parent.parent.popup_menu_font,
+                                       foreground = self.parent.parent.popup_menu_fg,
+                                       background = self.parent.parent.popup_menu_bg,
+                                       activebackground = self.parent.parent.popup_menu_highlight_bg,
+                                       activeforeground = self.parent.parent.popup_menu_highlight_fg,
                                        command = self.paste)
+        self.rc_popup_menu.add_command(label = "Undo",
+                                       accelerator = "Ctrl+Z",
+                                       font = self.parent.parent.popup_menu_font,
+                                       foreground = self.parent.parent.popup_menu_fg,
+                                       background = self.parent.parent.popup_menu_bg,
+                                       activebackground = self.parent.parent.popup_menu_highlight_bg,
+                                       activeforeground = self.parent.parent.popup_menu_highlight_fg,
+                                       command = self.undo)
         self.bind("<1>", lambda event: self.focus_set())
         if str(get_os()) == "Darwin":
             self.bind("<2>", self.rc)
@@ -74,6 +108,10 @@ class TextEditor_(tk.Text):
         self.event_generate("<Control-v>")
         return "break"
 
+    def undo(self, event = None):
+        self.event_generate("<Control-z>")
+        return "break"
+
 
 class TextEditor(tk.Frame):
     def __init__(self,
@@ -93,6 +131,7 @@ class TextEditor(tk.Frame):
                           highlightcolor = border_color,
                           highlightthickness = 2 if show_border else 0,
                           bd = 0)
+        self.parent = parent
         self.textedit = TextEditor_(self,
                                     font = font,
                                     text = text,

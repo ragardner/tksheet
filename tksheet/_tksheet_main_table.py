@@ -1265,7 +1265,8 @@ class MainTable(tk.Canvas):
         self.CH.ch_rc_popup_menu = tk.Menu(self.CH, tearoff = 0, background = self.popup_menu_bg)
         self.RI.ri_rc_popup_menu = tk.Menu(self.RI, tearoff = 0, background = self.popup_menu_bg)
         if self.cut_enabled:
-            self.rc_popup_menu.add_command(label = "Cut Ctrl+X",
+            self.rc_popup_menu.add_command(label = "Cut",
+                                           accelerator = "Ctrl+X",
                                            font = self.popup_menu_font,
                                            foreground = self.popup_menu_fg,
                                            background = self.popup_menu_bg,
@@ -1273,7 +1274,8 @@ class MainTable(tk.Canvas):
                                            activeforeground = self.popup_menu_highlight_fg,
                                            command = self.ctrl_x)
             #self.rc_popup_menu.add_separator()
-            self.CH.ch_rc_popup_menu.add_command(label = "Cut Contents Ctrl+X",
+            self.CH.ch_rc_popup_menu.add_command(label = "Cut Contents",
+                                           accelerator = "Ctrl+X",
                                            font = self.popup_menu_font,
                                            foreground = self.popup_menu_fg,
                                            background = self.popup_menu_bg,
@@ -1281,7 +1283,8 @@ class MainTable(tk.Canvas):
                                            activeforeground = self.popup_menu_highlight_fg,
                                                command = self.ctrl_x)
             #self.CH.ch_rc_popup_menu.add_separator()
-            self.RI.ri_rc_popup_menu.add_command(label = "Cut Contents Ctrl+X",
+            self.RI.ri_rc_popup_menu.add_command(label = "Cut Contents",
+                                           accelerator = "Ctrl+X",
                                            font = self.popup_menu_font,
                                            foreground = self.popup_menu_fg,
                                            background = self.popup_menu_bg,
@@ -1290,7 +1293,8 @@ class MainTable(tk.Canvas):
                                                  command = self.ctrl_x)
             #self.RI.ri_rc_popup_menu.add_separator()
         if self.copy_enabled:
-            self.rc_popup_menu.add_command(label = "Copy Ctrl+C",
+            self.rc_popup_menu.add_command(label = "Copy",
+                                           accelerator = "Ctrl+C",
                                            font = self.popup_menu_font,
                                            foreground = self.popup_menu_fg,
                                            background = self.popup_menu_bg,
@@ -1298,7 +1302,8 @@ class MainTable(tk.Canvas):
                                            activeforeground = self.popup_menu_highlight_fg,
                                            command = self.ctrl_c)
             #self.rc_popup_menu.add_separator()
-            self.CH.ch_rc_popup_menu.add_command(label = "Copy Contents Ctrl+C",
+            self.CH.ch_rc_popup_menu.add_command(label = "Copy Contents",
+                                                 accelerator = "Ctrl+C",
                                            font = self.popup_menu_font,
                                            foreground = self.popup_menu_fg,
                                            background = self.popup_menu_bg,
@@ -1306,7 +1311,8 @@ class MainTable(tk.Canvas):
                                            activeforeground = self.popup_menu_highlight_fg,
                                                  command = self.ctrl_c)
             #self.CH.ch_rc_popup_menu.add_separator()
-            self.RI.ri_rc_popup_menu.add_command(label = "Copy Contents Ctrl+C",
+            self.RI.ri_rc_popup_menu.add_command(label = "Copy Contents",
+                                                 accelerator = "Ctrl+C",
                                            font = self.popup_menu_font,
                                            foreground = self.popup_menu_fg,
                                            background = self.popup_menu_bg,
@@ -1315,7 +1321,8 @@ class MainTable(tk.Canvas):
                                                  command = self.ctrl_c)
             #self.RI.ri_rc_popup_menu.add_separator()
         if self.paste_enabled:
-            self.rc_popup_menu.add_command(label = "Paste Ctrl+V",
+            self.rc_popup_menu.add_command(label = "Paste",
+                                           accelerator = "Ctrl+V",
                                            font = self.popup_menu_font,
                                            foreground = self.popup_menu_fg,
                                            background = self.popup_menu_bg,
@@ -1323,7 +1330,8 @@ class MainTable(tk.Canvas):
                                            activeforeground = self.popup_menu_highlight_fg,
                                            command = self.ctrl_v)
             #self.rc_popup_menu.add_separator()
-            self.CH.ch_rc_popup_menu.add_command(label = "Paste Ctrl+V",
+            self.CH.ch_rc_popup_menu.add_command(label = "Paste",
+                                                 accelerator = "Ctrl+V",
                                            font = self.popup_menu_font,
                                            foreground = self.popup_menu_fg,
                                            background = self.popup_menu_bg,
@@ -1331,7 +1339,8 @@ class MainTable(tk.Canvas):
                                            activeforeground = self.popup_menu_highlight_fg,
                                                  command = self.ctrl_v)
             #self.CH.ch_rc_popup_menu.add_separator()
-            self.RI.ri_rc_popup_menu.add_command(label = "Paste Ctrl+V",
+            self.RI.ri_rc_popup_menu.add_command(label = "Paste",
+                                                 accelerator = "Ctrl+V",
                                            font = self.popup_menu_font,
                                            foreground = self.popup_menu_fg,
                                            background = self.popup_menu_bg,
@@ -1341,6 +1350,7 @@ class MainTable(tk.Canvas):
             #self.RI.ri_rc_popup_menu.add_separator()
         if self.delete_key_enabled:
             self.rc_popup_menu.add_command(label = "Delete",
+                                           accelerator = "Del",
                                            font = self.popup_menu_font,
                                            foreground = self.popup_menu_fg,
                                            background = self.popup_menu_bg,
@@ -1348,6 +1358,7 @@ class MainTable(tk.Canvas):
                                            activeforeground = self.popup_menu_highlight_fg,
                                            command = self.delete_key)
             self.CH.ch_rc_popup_menu.add_command(label = "Clear Contents",
+                                                 accelerator = "Del",
                                            font = self.popup_menu_font,
                                            foreground = self.popup_menu_fg,
                                            background = self.popup_menu_bg,
@@ -1356,6 +1367,7 @@ class MainTable(tk.Canvas):
                                                  command = self.delete_key)
             #self.CH.ch_rc_popup_menu.add_separator()
             self.RI.ri_rc_popup_menu.add_command(label = "Clear Contents",
+                                                 accelerator = "Del",
                                            font = self.popup_menu_font,
                                            foreground = self.popup_menu_fg,
                                            background = self.popup_menu_bg,
@@ -3691,13 +3703,11 @@ class MainTable(tk.Canvas):
         return False
 
     def hide_current(self):
-        items = self.find_withtag("Current_Inside") + self.find_withtag("Current_Outside")
-        for item in items:
+        for item in chain(self.find_withtag("Current_Inside"), self.find_withtag("Current_Outside")):
             self.itemconfig(item, state = "hidden")
 
     def show_current(self):
-        items = self.find_withtag("Current_Inside") + self.find_withtag("Current_Outside")
-        for item in items:
+        for item in chain(self.find_withtag("Current_Inside"), self.find_withtag("Current_Outside")):
             self.itemconfig(item, state = "normal")
 
     def edit_cell_(self, event = None):
@@ -3711,7 +3721,9 @@ class MainTable(tk.Canvas):
             self.extra_begin_edit_cell_func((y1, x1, event.char))
             text = self.data_ref[y1][x1]
         else:
-            if event.char in all_chars:
+            if f"{event.keysym}".lower() == "backspace":
+                text = ""
+            elif event.char in all_chars:
                 text = event.char
             else:
                 text = self.data_ref[y1][x1]
@@ -3787,7 +3799,10 @@ class MainTable(tk.Canvas):
                 self.data_ref[r].extend(list(repeat("", (c + 1) - len(self.data_ref[r]))))
             if self.undo_enabled:
                 if self.all_columns_displayed:
-                    self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells", {(r, c): f"{self.data_ref[r][c]}"}, (((r, c, r + 1, c + 1), "cells"), ), self.currently_selected()))))
+                    self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells",
+                                                                         {(r, c): f"{self.data_ref[r][c]}"},
+                                                                         (((r, c, r + 1, c + 1), "cells"), ),
+                                                                         self.currently_selected()))))
                 else:
                     self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells",
                                                                          {(r, self.displayed_columns[c]): f"{self.data_ref[r][self.displayed_columns[c]]}"},

@@ -194,8 +194,6 @@ class Sheet(tk.Frame):
                                    background = top_left_background,
                                    foreground = top_left_foreground,
                                    foreground_highlight = top_left_foreground_highlight)
-        if theme != "light":
-            self.change_theme(theme)
         self.yscroll = ttk.Scrollbar(self, command = self.MT.set_yviews, orient = "vertical")
         self.xscroll = ttk.Scrollbar(self, command = self.MT.set_xviews, orient = "horizontal")
         self.MT["xscrollcommand"] = self.xscroll.set
@@ -214,6 +212,8 @@ class Sheet(tk.Frame):
             self.xscroll.grid(row = 2, column = 1, columnspan = 2, sticky = "nswe")
         if show_y_scrollbar:
             self.yscroll.grid(row = 1, column = 2, sticky = "nswe")
+        if theme != "light":
+            self.change_theme(theme)
         if set_all_heights_and_widths:
             self.set_all_cell_sizes_to_text()
         self.MT.update()
@@ -1140,6 +1140,7 @@ class Sheet(tk.Frame):
             self.config(background = frame_background)
         if table_background is not None:
             self.MT.config(background = table_background)
+            self.MT.table_background = table_background
         if grid_color is not None:
             self.MT.grid_color = grid_color
         if text_color is not None:
@@ -1206,26 +1207,26 @@ class Sheet(tk.Frame):
                               redraw = True)
             self.config(bg = "white")
         elif theme == "dark":
-            self.set_options(header_background = "black",
+            self.set_options(header_background = "#1a1919",
                               header_border_color = "#353a41",
-                              header_grid_color = "#353a41",
-                              header_foreground = "gray95",
-                              header_select_background = "#444444",
+                              header_grid_color = "#3f444b",
+                              header_foreground = "gray88",
+                              header_select_background = "#464655",
                               header_select_foreground = "white",
-                              row_index_background = "black",
+                              row_index_background = "#1a1919",
                               row_index_border_color = "#353a41",
-                              row_index_grid_color = "#353a41",
-                              row_index_foreground = "gray95",
-                              row_index_select_background = "#444444",
+                              row_index_grid_color = "#3f444b",
+                              row_index_foreground = "gray88",
+                              row_index_select_background = "#464655",
                               row_index_select_foreground = "white",
-                              top_left_background = "#353a41",
-                              top_left_foreground = "#1f1f1f",
-                              table_background = "#1f1f1f",
+                              top_left_background = "#1a1919",
+                              top_left_foreground = "#52504e",
+                              table_background = "#1a1919",
                               grid_color = "#353a41",
-                              text_color = "gray95",
+                              text_color = "gray88",
                               selected_cells_border_color = "#1a73e8",
-                              selected_cells_background = "gray70",
-                              selected_cells_foreground = "black",
+                              selected_cells_background = "#32323c",
+                              selected_cells_foreground = "white",
                               resizing_line_color = "red",
                               drag_and_drop_color = "#9acd32",
                               outline_color = "gray95",
@@ -1234,15 +1235,15 @@ class Sheet(tk.Frame):
                               row_index_select_row_bg = "gray95",
                               row_index_select_row_fg = "black",
                               selected_rows_border_color = "#1a73e8",
-                              selected_rows_background = "gray70",
-                              selected_rows_foreground = "black",
+                              selected_rows_background = "#32323c",
+                              selected_rows_foreground = "white",
                               selected_columns_border_color = "#1a73e8",
-                              selected_columns_background = "gray70",
-                              selected_columns_foreground = "black",
-                              popup_menu_fg = "gray70",
-                              popup_menu_bg = "black",
-                              popup_menu_highlight_bg = "gray70",
-                              popup_menu_highlight_fg = "black",
+                              selected_columns_background = "#32323c",
+                              selected_columns_foreground = "white",
+                              popup_menu_fg = "gray88",
+                              popup_menu_bg = "#1a1919",
+                              popup_menu_highlight_bg = "#52504e",
+                              popup_menu_highlight_fg = "gray95",
                               redraw = True)
             self.config(bg = "#222222")
             
