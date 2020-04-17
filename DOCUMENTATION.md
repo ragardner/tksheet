@@ -1,9 +1,9 @@
-#### Sheet startup parameters
-This is a full list of all the start up parameters, the only required parameter is `C` which is the sheets parent, everything else has default arguments
+#### Sheet startup arguments
+This is a full list of all the start up arguments, the only required argument is the sheets parent, everything else has default arguments
 
 ```python
 Sheet(
-C,
+parent,
 show_table = True,
 show_top_left = True,
 show_row_index = True,
@@ -83,10 +83,16 @@ outline_thickness = 0,
 outline_color = "gray2",
 column_drag_and_drop_perform = True,
 row_drag_and_drop_perform = True,
+empty_horizontal = 150,
+empty_vertical = 100,
+show_vertical_grid = True,
+show_horizontal_grid = True,
 theme = "light")
 ```
 
-You can change these settings after initialization using the `set_options()` function or other functions contained within `_tksheet.py`, except for `max_undos` which can only be set at init
+You can change these settings after initialization using the `set_options()` function or other functions contained within `_tksheet.py`
+
+Take a look inside the `tests` folder for demonstrations
 
 Documentation not finished...
 

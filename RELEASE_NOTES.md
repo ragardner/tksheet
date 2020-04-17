@@ -1,3 +1,15 @@
+### Version 4.6.2
+ - Add startup and `set_options()` arguments:
+```
+empty_horizontal #empty space on the x axis in pixels
+empty_vertical #empty space on the y axis in pixels
+show_horizontal_grid #grid lines for main table
+show_vertical_grid #grid lines for main table
+```
+ - Fix scrollbar issues if hiding index or header
+ - Change `C` in startup arguments to `parent` for clarity
+ - Add Listbox using `Sheet()` recipe to tests
+
 ### Version 4.6.1
  - Clean up menus
  - Improve Dark theme
