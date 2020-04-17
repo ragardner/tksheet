@@ -22,7 +22,7 @@ from platform import system as get_os
 
 class Sheet(tk.Frame):
     def __init__(self,
-                 C,
+                 parent,
                  show_table = True,
                  show_top_left = True,
                  show_row_index = True,
@@ -102,13 +102,17 @@ class Sheet(tk.Frame):
                  outline_color = "gray2",
                  column_drag_and_drop_perform = True,
                  row_drag_and_drop_perform = True,
+                 empty_horizontal = 150,
+                 empty_vertical = 100,
+                 show_vertical_grid = True,
+                 show_horizontal_grid = True,
                  theme = "light"):
         tk.Frame.__init__(self,
-                          C,
+                          parent,
                           background = frame_background,
                           highlightthickness = outline_thickness,
                           highlightbackground = outline_color)
-        self.C = C
+        self.C = parent
         if width is not None and height is not None:
             self.grid_propagate(0)
         if width is not None:
@@ -153,6 +157,8 @@ class Sheet(tk.Frame):
                                 measure_subset_header = measure_subset_header,
                                 resizing_line_color = resizing_line_color)
         self.MT = MainTable(self,
+                            show_vertical_grid = show_vertical_grid,
+                            show_horizontal_grid = show_horizontal_grid,
                             column_width = column_width,
                             row_height = row_height,
                             column_headers_canvas = self.CH,
@@ -186,6 +192,8 @@ class Sheet(tk.Frame):
                             selected_columns_foreground = selected_columns_foreground,
                             displayed_columns = displayed_columns,
                             all_columns_displayed = all_columns_displayed,
+                            empty_horizontal = empty_horizontal,
+                            empty_vertical = empty_vertical,
                             max_undos = max_undos)
         self.TL = TopLeftRectangle(parentframe = self,
                                    main_canvas = self.MT,
@@ -196,18 +204,18 @@ class Sheet(tk.Frame):
                                    foreground_highlight = top_left_foreground_highlight)
         self.yscroll = ttk.Scrollbar(self, command = self.MT.set_yviews, orient = "vertical")
         self.xscroll = ttk.Scrollbar(self, command = self.MT.set_xviews, orient = "horizontal")
-        self.MT["xscrollcommand"] = self.xscroll.set
-        self.MT["yscrollcommand"] = self.yscroll.set
-        self.CH["xscrollcommand"] = self.xscroll.set
-        self.RI["yscrollcommand"] = self.yscroll.set
         if show_table:
             self.MT.grid(row = 1, column = 1, sticky = "nswe")
+            self.MT["xscrollcommand"] = self.xscroll.set
+            self.MT["yscrollcommand"] = self.yscroll.set
         if show_top_left:
             self.TL.grid(row = 0, column = 0)
         if show_row_index:
             self.RI.grid(row = 1, column = 0, sticky = "nswe")
+            self.RI["yscrollcommand"] = self.yscroll.set
         if show_header:
             self.CH.grid(row = 0, column = 1, sticky = "nswe")
+            self.CH["xscrollcommand"] = self.xscroll.set
         if show_x_scrollbar:
             self.xscroll.grid(row = 2, column = 1, columnspan = 2, sticky = "nswe")
         if show_y_scrollbar:
@@ -217,6 +225,60 @@ class Sheet(tk.Frame):
         if set_all_heights_and_widths:
             self.set_all_cell_sizes_to_text()
         self.MT.update()
+
+    def show(self, canvas = "all"):
+        if canvas == "all":
+            self.hide()
+            self.TL.grid(row = 0, column = 0)
+            self.RI.grid(row = 1, column = 0, sticky = "nswe")
+            self.CH.grid(row = 0, column = 1, sticky = "nswe")
+            self.MT.grid(row = 1, column = 1, sticky = "nswe")
+            self.yscroll.grid(row = 0, column = 2, rowspan = 3, sticky = "nswe")
+            self.xscroll.grid(row = 2, column = 1, sticky = "nswe")
+            self.MT["xscrollcommand"] = self.xscroll.set
+            self.CH["xscrollcommand"] = self.xscroll.set
+            self.MT["yscrollcommand"] = self.yscroll.set
+            self.RI["yscrollcommand"] = self.yscroll.set
+        elif canvas == "row_index":
+            self.RI.grid(row = 1, column = 0, sticky = "nswe")
+            self.MT["yscrollcommand"] = self.yscroll.set
+            self.RI["yscrollcommand"] = self.yscroll.set
+            self.MT.show_index = True
+        elif canvas == "header":
+            self.CH.grid(row = 0, column = 1, sticky = "nswe")
+            self.MT["xscrollcommand"] = self.xscroll.set
+            self.CH["xscrollcommand"] = self.xscroll.set
+            self.MT.show_header = True
+        elif canvas == "top_left":
+            self.TL.grid(row = 0, column = 0)
+        elif canvas == "x_scrollbar":
+            self.xscroll.grid(row = 2, column = 1, columnspan = 2, sticky = "nswe")
+        elif canvas == "y_scrollbar":
+            self.yscroll.grid(row = 1, column = 2, sticky = "nswe")
+        self.MT.update()
+
+    def hide(self, canvas = "all"):
+        if canvas.lower() == "all":
+            self.TL.grid_forget()
+            self.RI.grid_forget()
+            self.CH.grid_forget()
+            self.MT.grid_forget()
+            self.yscroll.grid_forget()
+            self.xscroll.grid_forget()
+        elif canvas == "row_index":
+            self.RI.grid_forget()
+            self.RI["yscrollcommand"] = 0
+            self.MT.show_index = False
+        elif canvas == "header":
+            self.CH.grid_forget()
+            self.CH["xscrollcommand"] = 0
+            self.MT.show_header = False
+        elif canvas == "top_left":
+            self.TL.grid_forget()
+        elif canvas == "x_scrollbar":
+            self.xscroll.grid_forget()
+        elif canvas == "y_scrollbar":
+            self.yscroll.grid_forget()
 
     def height_and_width(self, height = None, width = None):
         if width is not None or height is not None:
@@ -984,6 +1046,10 @@ class Sheet(tk.Frame):
         self.MT.header_font(newfont)
 
     def set_options(self,
+                    empty_horizontal = None,
+                    empty_vertical = None,
+                    show_horizontal_grid = None,
+                    show_vertical_grid = None,
                     top_left_foreground_highlight = None,
                     auto_resize_default_row_index = None,
                     font = None,
@@ -1042,6 +1108,14 @@ class Sheet(tk.Frame):
                     measure_subset_index = None,
                     measure_subset_header = None,
                     redraw = True):
+        if show_horizontal_grid is not None:
+            self.MT.show_horizontal_grid = show_horizontal_grid
+        if show_vertical_grid is not None:
+            self.MT.show_vertical_grid = show_vertical_grid
+        if empty_horizontal is not None:
+            self.MT.empty_horizontal = empty_horizontal
+        if empty_vertical is not None:
+            self.MT.empty_vertical = empty_vertical
         if row_height is not None:
             self.MT.default_rh = (row_height if isinstance(row_height, str) else "pixels", row_height if isinstance(row_height, int) else self.MT.GetLinesHeight(int(row_height)))
         if header_height is not None:
@@ -1485,46 +1559,6 @@ class Sheet(tk.Frame):
 
     def reset_undos(self):
         self.MT.undo_storage = deque(maxlen = self.MT.max_undos)
-
-    def show(self, canvas = "all"):
-        if canvas == "all":
-            self.hide()
-            self.TL.grid(row = 0, column = 0)
-            self.RI.grid(row = 1, column = 0, sticky = "nswe")
-            self.CH.grid(row = 0, column = 1, sticky = "nswe")
-            self.MT.grid(row = 1, column = 1, sticky = "nswe")
-            self.yscroll.grid(row = 0, column = 2, rowspan = 3, sticky = "nswe")
-            self.xscroll.grid(row = 2, column = 1, sticky = "nswe")
-        elif canvas == "row_index":
-            self.RI.grid(row = 1, column = 0, sticky = "nswe")
-        elif canvas == "header":
-            self.CH.grid(row = 0, column = 1, sticky = "nswe")
-        elif canvas == "top_left":
-            self.TL.grid(row = 0, column = 0)
-        elif canvas == "x_scrollbar":
-            self.xscroll.grid(row = 2, column = 1, columnspan = 2, sticky = "nswe")
-        elif canvas == "y_scrollbar":
-            self.yscroll.grid(row = 1, column = 2, sticky = "nswe")
-        self.MT.update()
-
-    def hide(self, canvas = "all"):
-        if canvas.lower() == "all":
-            self.TL.grid_forget()
-            self.RI.grid_forget()
-            self.CH.grid_forget()
-            self.MT.grid_forget()
-            self.yscroll.grid_forget()
-            self.xscroll.grid_forget()
-        elif canvas == "row_index":
-            self.RI.grid_forget()
-        elif canvas == "header":
-            self.CH.grid_forget()
-        elif canvas == "top_left":
-            self.TL.grid_forget()
-        elif canvas == "x_scrollbar":
-            self.xscroll.grid_forget()
-        elif canvas == "y_scrollbar":
-            self.yscroll.grid_forget()
 
     def refresh(self, redraw_header = True, redraw_row_index = True):
         self.MT.main_table_redraw_grid_and_text(redraw_header = redraw_header, redraw_row_index = redraw_row_index)

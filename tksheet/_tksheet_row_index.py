@@ -684,7 +684,10 @@ class RowIndex(tk.Canvas):
 
     def redraw_grid_and_text(self, last_row_line_pos, y1, y_stop, start_row, end_row, y2, x1, x_stop, selected_rows, selected_cols, actual_selected_rows):
         try:
-            self.configure(scrollregion = (0, 0, self.current_width, last_row_line_pos + 100))
+            self.configure(scrollregion = (0,
+                                           0,
+                                           self.current_width,
+                                           last_row_line_pos + self.MT.empty_vertical))
             self.delete("fh", "h", "v", "t", "s") #first horizontal, horizontal, vertical, text, highlights
             self.visible_row_dividers = []
             y = self.MT.row_positions[start_row]

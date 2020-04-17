@@ -661,7 +661,10 @@ class ColumnHeaders(tk.Canvas):
 
     def redraw_grid_and_text(self, last_col_line_pos, x1, x_stop, start_col, end_col, selected_cols, selected_rows, actual_selected_cols):
         try:
-            self.configure(scrollregion = (0, 0, last_col_line_pos + 150, self.current_height))
+            self.configure(scrollregion = (0,
+                                           0,
+                                           last_col_line_pos + self.MT.empty_horizontal,
+                                           self.current_height))
             self.delete("h", "v", "t", "s", "fv")
             self.visible_col_dividers = []
             x = self.MT.col_positions[start_col]

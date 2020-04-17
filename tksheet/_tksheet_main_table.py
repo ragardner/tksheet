@@ -54,6 +54,12 @@ class MainTable(tk.Canvas):
                  selected_columns_foreground = "black",
                  displayed_columns = [],
                  all_columns_displayed = True,
+                 show_vertical_grid = True,
+                 show_horizontal_grid = True,
+                 show_index = True,
+                 show_header = True,
+                 empty_horizontal = 150,
+                 empty_vertical = 100,
                  max_undos = 20):
         tk.Canvas.__init__(self,
                            parentframe,
@@ -63,6 +69,12 @@ class MainTable(tk.Canvas):
                            highlightthickness = 0)
         self.centre_alignment_text_mod_indexes = (slice(1, None), slice(None, -1))
         self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
+        self.show_index = show_index
+        self.show_header = show_header
+        self.empty_horizontal = empty_horizontal
+        self.empty_vertical = empty_vertical
+        self.show_vertical_grid = show_vertical_grid
+        self.show_horizontal_grid = show_horizontal_grid
         self.min_rh = 0
         self.hdr_min_rh = 0
         self.beingDrawnSelRect = None
@@ -1908,7 +1920,6 @@ class MainTable(tk.Canvas):
         return c
 
     def GetCellCoords(self, event = None, r = None, c = None, sel = False):
-        # event takes priority as parameter
         if event is not None:
             r = self.identify_row(event)
             c = self.identify_col(event)
@@ -1920,20 +1931,25 @@ class MainTable(tk.Canvas):
 
     def set_xviews(self, *args):
         self.xview(*args)
-        self.CH.xview(*args)
-        self.main_table_redraw_grid_and_text(redraw_header = True)
+        if self.show_header:
+            self.CH.xview(*args)
+        self.main_table_redraw_grid_and_text(redraw_header = True if self.show_header else False)
 
     def set_yviews(self, *args):
         self.yview(*args)
-        self.RI.yview(*args)
-        self.main_table_redraw_grid_and_text(redraw_row_index = True)
+        if self.show_index:
+            self.RI.yview(*args)
+        self.main_table_redraw_grid_and_text(redraw_row_index = True if self.show_index else False)
 
     def set_view(self, x_args, y_args):
         self.xview(*x_args)
-        self.CH.xview(*x_args)
+        if self.show_header:
+            self.CH.xview(*x_args)
         self.yview(*y_args)
-        self.RI.yview(*y_args)
-        self.main_table_redraw_grid_and_text(redraw_row_index = True, redraw_header = True)
+        if self.show_index:
+            self.RI.yview(*y_args)
+        self.main_table_redraw_grid_and_text(redraw_row_index = True if self.show_index else False,
+                                             redraw_header = True if self.show_header else False)
 
     def mousewheel(self, event = None):
         if event.num == 5 or event.delta == -120:
@@ -2605,7 +2621,10 @@ class MainTable(tk.Canvas):
         try:
             last_col_line_pos = self.col_positions[-1] + 1
             last_row_line_pos = self.row_positions[-1] + 1
-            self.configure(scrollregion=(0, 0, last_col_line_pos + 150, last_row_line_pos + 100))
+            self.configure(scrollregion=(0,
+                                         0,
+                                         last_col_line_pos + self.empty_horizontal,
+                                         last_row_line_pos + self.empty_vertical))
             self.delete("t", "g", "hi")
             x1 = self.canvasx(0)
             y1 = self.canvasy(0)
@@ -2632,12 +2651,14 @@ class MainTable(tk.Canvas):
             cr_ = self.create_rectangle
             ct_ = self.create_text
             sb = y2 + 2
-            for r in range(start_row - 1, end_row):
-                y = self.row_positions[r]
-                self.create_line(x1, y, x_stop, y, fill= self.grid_color, width = 1, tag = "g")
-            for c in range(start_col - 1, end_col):
-                x = self.col_positions[c]
-                self.create_line(x, y1, x, y_stop, fill = self.grid_color, width = 1, tag = "g")
+            if self.show_vertical_grid:
+                for r in range(start_row - 1, end_row):
+                    y = self.row_positions[r]
+                    self.create_line(x1, y, x_stop, y, fill= self.grid_color, width = 1, tag = "g")
+            if self.show_horizontal_grid:
+                for c in range(start_col - 1, end_col):
+                    x = self.col_positions[c]
+                    self.create_line(x, y1, x, y_stop, fill = self.grid_color, width = 1, tag = "g")
             if start_row > 0:
                 start_row -= 1
             if start_col > 0:
@@ -3077,9 +3098,9 @@ class MainTable(tk.Canvas):
                                 continue
         except:
             return
-        if redraw_header:
+        if redraw_header and self.show_header:
             self.CH.redraw_grid_and_text(last_col_line_pos, x1, x_stop, start_col, end_col, selected_cols, actual_selected_rows, actual_selected_cols)
-        if redraw_row_index:
+        if redraw_row_index and self.show_index:
             self.RI.redraw_grid_and_text(last_row_line_pos, y1, y_stop, start_row, end_row + 1, y2, x1, x_stop, selected_rows, actual_selected_cols, actual_selected_rows)
         if self.show_selected_cells_border:
             self.tag_raise("CellSelectBorder")
