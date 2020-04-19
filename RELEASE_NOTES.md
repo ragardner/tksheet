@@ -1,3 +1,6 @@
+### Version 4.6.4
+ - Fix `create_dropdown()` issues
+
 ### Version 4.6.3
  - Fix github release
 
