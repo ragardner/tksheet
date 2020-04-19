@@ -252,8 +252,9 @@ class demo(tk.Tk):
         print (event)
         
     def cell_select(self, response):
-        pass
         #print (response)
+        #self.sheet.create_dropdown(response[1], response[2], values=[f"{i}" for i in range(200)], set_value="100")
+        pass
 
     def shift_select_cells(self, response):
         print (response)
