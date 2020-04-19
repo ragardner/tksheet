@@ -656,9 +656,23 @@ class Sheet(tk.Frame):
                         state = "readonly",
                         see = True,
                         destroy_on_select = True,
-                        current = False):
-        self.MT.create_dropdown(r = r, c = c, values = values, set_value = set_value, state = state, see = see,
-                                destroy_on_select = destroy_on_select, current = current)
+                        current = False,
+                        openbox = True,
+                        set_cell_on_select = True,
+                        redraw = True,
+                        recreate_selection_boxes = True):
+        self.MT.create_dropdown(r = r,
+                                c = c,
+                                values = values,
+                                set_value = set_value,
+                                state = state,
+                                see = see,
+                                destroy_on_select = destroy_on_select,
+                                current = current,
+                                openbox = openbox,
+                                set_cell_on_select = set_cell_on_select,
+                                redraw = redraw,
+                                recreate = recreate_selection_boxes)
 
     def get_dropdown_value(self, current = False, destroy = True):
         return self.MT.get_dropdown_value(current = current, destroy = destroy)

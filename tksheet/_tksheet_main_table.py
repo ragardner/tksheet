@@ -3756,6 +3756,7 @@ class MainTable(tk.Canvas):
         self.create_text_editor(r = y1, c = x1, text = text, set_data_ref_on_destroy = True)
         
     def create_text_editor(self, r = 0, c = 0, text = None, state = "normal", see = True, set_data_ref_on_destroy = False):
+        self.destroy_text_editor()
         if see:
             self.see(r = r, c = c, check_cell_visibility = True)
         self.text_editor_loc = (r, c)
@@ -3766,8 +3767,6 @@ class MainTable(tk.Canvas):
         if text is None:
             text = ""
         self.hide_current()
-        if self.text_editor_id is not None:
-            self.destroy_text_editor()
         self.text_editor = TextEditor(self, text = text, font = self.my_font, state = state, width = w, height = h, border_color = self.selected_cells_border_col, show_border = self.show_selected_cells_border)
         self.text_editor_id = self.create_window((x, y), window = self.text_editor, anchor = "nw")
         self.text_editor.textedit.bind("<Alt-Return>", self.text_editor_newline_binding)
@@ -3814,25 +3813,7 @@ class MainTable(tk.Canvas):
         if set_data_ref_on_destroy:
             if r is None and c is None and destroy_tup:
                 r, c = destroy_tup[0], destroy_tup[1]
-            if r > len(self.data_ref) - 1:
-                self.data_ref.extend([list(repeat("", c + 1)) for r in range((r + 1) - len(self.data_ref))])
-            elif c > len(self.data_ref[r]) - 1:
-                self.data_ref[r].extend(list(repeat("", (c + 1) - len(self.data_ref[r]))))
-            if self.undo_enabled:
-                if self.all_columns_displayed:
-                    self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells",
-                                                                         {(r, c): f"{self.data_ref[r][c]}"},
-                                                                         (((r, c, r + 1, c + 1), "cells"), ),
-                                                                         self.currently_selected()))))
-                else:
-                    self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells",
-                                                                         {(r, self.displayed_columns[c]): f"{self.data_ref[r][self.displayed_columns[c]]}"},
-                                                                         (((r, c, r + 1, c + 1), "cells"), ),
-                                                                         self.currently_selected()))))
-            if self.all_columns_displayed:
-                self.data_ref[r][c] = self.text_editor_value
-            else:
-                self.data_ref[r][self.displayed_columns[c]] = self.text_editor_value
+            self.set_cell_data(r, c, self.text_editor_value)
             self.RI.set_row_height(r, recreate = False)
             self.CH.set_col_width(c, only_set_if_too_small = True)
             if self.extra_edit_cell_func is not None:
@@ -3858,31 +3839,87 @@ class MainTable(tk.Canvas):
         self.focus_set()
         return self.text_editor_value
 
-    def create_dropdown(self, r = 0, c = 0, values = [], set_value = None, state = "readonly", see = True, destroy_on_select = True, current = False):
+    def set_cell_data(self, r = 0, c = 0, value = "", undo = True):
+        if r > len(self.data_ref) - 1:
+            self.data_ref.extend([list(repeat("", c + 1)) for r in range((r + 1) - len(self.data_ref))])
+        elif c > len(self.data_ref[r]) - 1:
+            self.data_ref[r].extend(list(repeat("", (c + 1) - len(self.data_ref[r]))))
+        if self.undo_enabled and undo:
+            if self.all_columns_displayed:
+                self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells",
+                                                                     {(r, c): f"{self.data_ref[r][c]}"},
+                                                                     (((r, c, r + 1, c + 1), "cells"), ),
+                                                                     self.currently_selected()))))
+            else:
+                self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells",
+                                                                     {(r, self.displayed_columns[c]): f"{self.data_ref[r][self.displayed_columns[c]]}"},
+                                                                     (((r, c, r + 1, c + 1), "cells"), ),
+                                                                     self.currently_selected()))))
+        if self.all_columns_displayed:
+            self.data_ref[r][c] = value
+        else:
+            self.data_ref[r][self.displayed_columns[c]] = value
+        self.RI.set_row_height(r, recreate = False)
+        self.CH.set_col_width(c, only_set_if_too_small = True)
+
+    def create_dropdown(self, r = 0, c = 0, values = [], set_value = None, state = "readonly", see = True, destroy_on_select = True, current = False,
+                        openbox = True, set_cell_on_select = True, redraw = True, recreate = True):
+        self.destroy_dropdown()
         if see:
-            if not self.cell_is_completely_visible(r = r, c = c):
-                self.see(r = r, c = c, check_cell_visibility = False)
+            self.see(r = r, c = c)
+        self.table_dropdown_loc = (r, c)
         x = self.col_positions[c]
         y = self.row_positions[r]
-        w = self.GetWidthChars(self.col_positions[c + 1] - x)
-        self.table_dropdown = TableDropdown(self, font = self.my_font, state = state, values = values, set_value = set_value, width = w)
+        w = self.col_positions[c + 1] - self.col_positions[c] + 1
+        h = self.row_positions[r + 1] - self.row_positions[r] + 1
+        self.table_dropdown = TableDropdown(self,
+                                            font = self.my_font,
+                                            state = state,
+                                            values = values,
+                                            set_value = set_value,
+                                            width = w,
+                                            height = h)
         self.table_dropdown_id = self.create_window((x, y), window = self.table_dropdown, anchor = "nw")
         if destroy_on_select:
-            self.table_dropdown.bind("<<ComboboxSelected>>", lambda event: self.get_dropdown_value(current = current))
+            self.table_dropdown.dropdown.bind("<<ComboboxSelected>>", lambda event: self.get_dropdown_value(current = current,
+                                                                                                            set_cell_on_select = set_cell_on_select,
+                                                                                                            redraw = redraw,
+                                                                                                            recreate = recreate))
+        if openbox:
+            self.table_dropdown.dropdown.event_generate("<Button-1>")
 
-    def get_dropdown_value(self, event = None, current = False, destroy = True):
+    def get_dropdown_value(self, event = None, current = False, destroy = True, set_cell_on_select = True, redraw = True, recreate = True):
         if self.table_dropdown is not None:
             if current:
                 self.table_dropdown_value = self.table_dropdown.current()
             else:
                 self.table_dropdown_value = self.table_dropdown.get_my_value()
+        if set_cell_on_select:
+            r, c = self.table_dropdown_loc[0], self.table_dropdown_loc[1]
+            self.set_cell_data(r, c, self.table_dropdown_value)
+            self.RI.set_row_height(r, recreate = False)
+            self.CH.set_col_width(c, only_set_if_too_small = True)
+            if self.extra_edit_cell_func is not None:
+                self.extra_edit_cell_func((r, c))
         if destroy:
-            try:
-                self.delete(self.table_dropdown_id)
-                self.table_dropdown.destroy()
-            except:
-                pass
-            self.table_dropdown = None
+            self.destroy_dropdown()
+        if redraw:
+            self.refresh()
+        if recreate:
+            self.recreate_all_selection_boxes()
         return self.table_dropdown_value
+
+    def destroy_dropdown(self):
+        try:
+            self.delete(self.table_dropdown_id)
+        except:
+            pass
+        try:
+            self.table_dropdown.destroy()
+        except:
+            pass
+        self.table_dropdown = None
+        self.table_dropdown_id = None
+        self.table_dropdown_loc = None
     
 

@@ -82,11 +82,6 @@ class TextEditor_(tk.Text):
             self.bind("<2>", self.rc)
         else:
             self.bind("<3>", self.rc)
-        #self.bind("<Alt-Return>", self.add_newline)
-        
-    def add_newline(self, event):
-        #self.insert("end", "\n")
-        pass
     
     def rc(self,event):
         self.focus_set()
@@ -158,18 +153,59 @@ class TextEditor(tk.Frame):
         self.textedit.yview_moveto(1)
 
 
-class TableDropdown(ttk.Combobox):
-    def __init__(self, parent, font, state, values = [], set_value = None, width = None):
+class TableDropdown(tk.Frame):
+    def __init__(self,
+                 parent,
+                 font,
+                 state,
+                 values = [],
+                 set_value = None,
+                 width = None,
+                 height = None):
+        tk.Frame.__init__(self,
+                          parent)
+        if width:
+            self.config(width = width)
+        if height:
+            self.config(height = height)
+        self.parent = parent
+        self.grid_columnconfigure(0, weight = 1)
+        self.grid_rowconfigure(0, weight = 1)
+        self.dropdown = TableDropdown_(self,
+                                       font,
+                                       state,
+                                       values = values,
+                                       set_value = set_value)
+        self.dropdown.grid(row = 0,
+                           column = 0,
+                           sticky = "nswe")
+        self.grid_propagate(False)
+        self.dropdown.focus_set()
+        
+    def get_my_value(self, event = None):
+        return self.dropdown.displayed.get()
+    
+    def set_displayed(self, value, event = None):
+        self.dropdown.displayed.set(value)
+
+    def set_my_values(self, values = []):
+        self.dropdown['values'] = values
+
+
+class TableDropdown_(ttk.Combobox):
+    def __init__(self,
+                 parent,
+                 font,
+                 state,
+                 values = [],
+                 set_value = None):
         self.displayed = tk.StringVar()
         ttk.Combobox.__init__(self,
                               parent,
                               font = font,
                               state = state,
                               values = values,
-                              set_value = set_value,
                               textvariable = self.displayed)
-        if width:
-            self.config(width = width)
         if set_value is not None:
             self.displayed.set(set_value)
         elif values:
@@ -180,6 +216,9 @@ class TableDropdown(ttk.Combobox):
     
     def set_my_value(self, value, event = None):
         self.displayed.set(value)
+
+    def set_my_values(self, values = []):
+        self['values'] = values
 
 
 def num2alpha(n):
