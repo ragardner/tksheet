@@ -164,9 +164,6 @@ class MainTable(tk.Canvas):
         self.hdr_fnt_wgt = header_font[2]
 
         self.txt_measure_canvas = tk.Canvas(self)
-        self.table_dropdown = None
-        self.table_dropdown_id = None
-        self.table_dropdown_value = None
         self.text_editor = None
         self.text_editor_id = None
         self.default_cw = column_width
@@ -205,6 +202,7 @@ class MainTable(tk.Canvas):
         self.highlighted_cells = {}
         self.max_undos = max_undos
         self.undo_storage = deque(maxlen = max_undos)
+        self.dropdowns = {}
 
         self.bind("<Motion>", self.mouse_motion)
         self.bind("<Shift-ButtonPress-1>",self.shift_b1_press)
@@ -3814,8 +3812,6 @@ class MainTable(tk.Canvas):
             if r is None and c is None and destroy_tup:
                 r, c = destroy_tup[0], destroy_tup[1]
             self.set_cell_data(r, c, self.text_editor_value)
-            self.RI.set_row_height(r, recreate = False)
-            self.CH.set_col_width(c, only_set_if_too_small = True)
             if self.extra_edit_cell_func is not None:
                 self.extra_edit_cell_func((r, c))
         if move_down:
@@ -3839,7 +3835,7 @@ class MainTable(tk.Canvas):
         self.focus_set()
         return self.text_editor_value
 
-    def set_cell_data(self, r = 0, c = 0, value = "", undo = True):
+    def set_cell_data(self, r = 0, c = 0, value = "", undo = True, cell_resize = True):
         if r > len(self.data_ref) - 1:
             self.data_ref.extend([list(repeat("", c + 1)) for r in range((r + 1) - len(self.data_ref))])
         elif c > len(self.data_ref[r]) - 1:
@@ -3859,67 +3855,62 @@ class MainTable(tk.Canvas):
             self.data_ref[r][c] = value
         else:
             self.data_ref[r][self.displayed_columns[c]] = value
-        self.RI.set_row_height(r, recreate = False)
-        self.CH.set_col_width(c, only_set_if_too_small = True)
+        if cell_resize:
+            self.RI.set_row_height(r, recreate = False)
+            self.CH.set_col_width(c, only_set_if_too_small = True)
 
     def create_dropdown(self, r = 0, c = 0, values = [], set_value = None, state = "readonly", see = True, destroy_on_select = True, current = False,
-                        openbox = True, set_cell_on_select = True, redraw = True, recreate = True):
-        self.destroy_dropdown()
+                        set_cell_on_select = True, redraw = True, recreate = True):
         if see:
             self.see(r = r, c = c)
-        self.table_dropdown_loc = (r, c)
+        if (r, c) in self.dropdowns:
+            self.destroy_dropdown(r, c)
         x = self.col_positions[c]
         y = self.row_positions[r]
         w = self.col_positions[c + 1] - self.col_positions[c] + 1
         h = self.row_positions[r + 1] - self.row_positions[r] + 1
-        self.table_dropdown = TableDropdown(self,
-                                            font = self.my_font,
-                                            state = state,
-                                            values = values,
-                                            set_value = set_value,
-                                            width = w,
-                                            height = h)
-        self.table_dropdown_id = self.create_window((x, y), window = self.table_dropdown, anchor = "nw")
-        if destroy_on_select:
-            self.table_dropdown.dropdown.bind("<<ComboboxSelected>>", lambda event: self.get_dropdown_value(current = current,
-                                                                                                            set_cell_on_select = set_cell_on_select,
-                                                                                                            redraw = redraw,
-                                                                                                            recreate = recreate))
-        if openbox:
-            self.table_dropdown.dropdown.event_generate("<Button-1>")
+        self.dropdowns[(r, c)] = {}
+        self.dropdowns[(r, c)]['widget'] = TableDropdown(self,
+                                                        font = self.my_font,
+                                                        state = state,
+                                                        values = values,
+                                                        set_value = set_value,
+                                                        width = w,
+                                                        height = h)
+        if values:
+            self.set_cell_data(r, c, set_value if set_value is not None else values[0], cell_resize = False)
+        self.dropdowns[(r, c)]['id'] = self.create_window((x, y),
+                                                          window = self.dropdowns[(r, c)]['widget'],
+                                                          anchor = "nw")
+        self.dropdowns[(r, c)]['widget'].dropdown.bind("<<ComboboxSelected>>",
+                                                       lambda event: self.get_dropdown_value(r = r,
+                                                                                             c = c,
+                                                                                             current = current,
+                                                                                             destroy = destroy_on_select,
+                                                                                             set_cell_on_select = set_cell_on_select,
+                                                                                             redraw = redraw,
+                                                                                             recreate = recreate))
 
-    def get_dropdown_value(self, event = None, current = False, destroy = True, set_cell_on_select = True, redraw = True, recreate = True):
-        if self.table_dropdown is not None:
-            if current:
-                self.table_dropdown_value = self.table_dropdown.current()
-            else:
-                self.table_dropdown_value = self.table_dropdown.get_my_value()
+    def get_dropdown_value(self, event = None, r = 0, c = 0, current = False, destroy = True, set_cell_on_select = True, redraw = True, recreate = True):
+        if current:
+            self.table_dropdown_value = self.dropdowns[(r, c)]['widget'].dropdown.current()
+        else:
+            self.table_dropdown_value = self.dropdowns[(r, c)]['widget'].get_my_value()
         if set_cell_on_select:
-            r, c = self.table_dropdown_loc[0], self.table_dropdown_loc[1]
-            self.set_cell_data(r, c, self.table_dropdown_value)
-            self.RI.set_row_height(r, recreate = False)
-            self.CH.set_col_width(c, only_set_if_too_small = True)
+            self.set_cell_data(r, c, self.table_dropdown_value, cell_resize = True if destroy else False)
             if self.extra_edit_cell_func is not None:
                 self.extra_edit_cell_func((r, c))
         if destroy:
-            self.destroy_dropdown()
-        if redraw:
-            self.refresh()
+            self.destroy_dropdown(r, c)
         if recreate:
             self.recreate_all_selection_boxes()
+        if redraw:
+            self.refresh()
         return self.table_dropdown_value
 
-    def destroy_dropdown(self):
-        try:
-            self.delete(self.table_dropdown_id)
-        except:
-            pass
-        try:
-            self.table_dropdown.destroy()
-        except:
-            pass
-        self.table_dropdown = None
-        self.table_dropdown_id = None
-        self.table_dropdown_loc = None
+    def destroy_dropdown(self, r, c):
+        self.delete(self.dropdowns[(r, c)]['id'])
+        self.dropdowns[(r, c)]['widget'].destroy()
+        del self.dropdowns[(r, c)]
     
 

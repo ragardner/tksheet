@@ -657,7 +657,6 @@ class Sheet(tk.Frame):
                         see = True,
                         destroy_on_select = True,
                         current = False,
-                        openbox = True,
                         set_cell_on_select = True,
                         redraw = True,
                         recreate_selection_boxes = True):
@@ -669,13 +668,23 @@ class Sheet(tk.Frame):
                                 see = see,
                                 destroy_on_select = destroy_on_select,
                                 current = current,
-                                openbox = openbox,
                                 set_cell_on_select = set_cell_on_select,
                                 redraw = redraw,
                                 recreate = recreate_selection_boxes)
 
-    def get_dropdown_value(self, current = False, destroy = True):
-        return self.MT.get_dropdown_value(current = current, destroy = destroy)
+    def get_dropdown_value(self, current = False, destroy = True, set_cell_on_select = True, redraw = True, recreate = True):
+        return self.MT.get_dropdown_value(current = current, destroy = destroy,
+                                          set_cell_on_select = set_cell_on_select, redraw = redraw, recreate = recreate)
+
+    def delete_dropdown(self, r = 0, c = 0):
+        if r == "all":
+            for k in tuple(self.MT.dropdowns):
+                self.MT.destroy_dropdown(k[0], k[1])
+        else:
+            self.MT.destroy_dropdown(r, c)
+
+    def get_dropdowns(self):
+        return self.MT.dropdowns
 
     def cut(self, event = None):
         self.MT.ctrl_x()
