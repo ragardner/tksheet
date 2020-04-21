@@ -1,3 +1,8 @@
+### Version 4.6.5
+ - Begin process of adding code to maintain multiple persistent dropdown boxes
+ - Add function `delete_dropdown()` (use argument `"all"` for all dropdown boxes)
+ - Add function `get_dropdowns()` to return locations and info for all boxes
+
 ### Version 4.6.4
  - Fix `create_dropdown()` issues
 
