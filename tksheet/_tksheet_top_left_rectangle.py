@@ -61,10 +61,12 @@ class TopLeftRectangle(tk.Canvas):
         self.bind(get_rc_binding(), self.rc)
 
     def rw_enter(self, event = None):
-        self.itemconfig("rw", fill = self.resizers_highlight)
+        if self.RI.width_resizing_enabled:
+            self.itemconfig("rw", fill = self.resizers_highlight)
 
     def rh_enter(self, event = None):
-        self.itemconfig("rh", fill = self.resizers_highlight)
+        if self.CH.height_resizing_enabled:
+            self.itemconfig("rh", fill = self.resizers_highlight)
 
     def rw_leave(self, event = None):
         self.itemconfig("rw", fill = self.rectangle_foreground)
@@ -99,6 +101,7 @@ class TopLeftRectangle(tk.Canvas):
             h = new_h - 1
         self.coords("rw", 0, h - 5, w - 5, h)
         self.coords("rh", w - 5, 0, w, h)
+        self.MT.recreate_all_selection_boxes()
 
     def mouse_motion(self, event = None):
         self.MT.reset_mouse_motion_creations()

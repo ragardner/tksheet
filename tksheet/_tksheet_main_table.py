@@ -45,6 +45,7 @@ class MainTable(tk.Canvas):
                  show_selected_cells_border = True,
                  selected_cells_border_color = "#1a73e8",
                  selected_cells_background = "#e7f0fd",
+                 display_selected_fg_over_highlights = False,
                  selected_cells_foreground = "black",
                  selected_rows_border_color = "#1a73e8",
                  selected_rows_background = "#e7f0fd",
@@ -67,6 +68,7 @@ class MainTable(tk.Canvas):
                            height = height,
                            background = table_background,
                            highlightthickness = 0)
+        self.display_selected_fg_over_highlights = display_selected_fg_over_highlights
         self.centre_alignment_text_mod_indexes = (slice(1, None), slice(None, -1))
         self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
         self.show_index = show_index
@@ -581,7 +583,7 @@ class MainTable(tk.Canvas):
                     if c1 < start_col:
                         start_col = c1
                 if isinstance(undo_storage[3][0], int):
-                    self.create_current(undo_storage[3][0], undo_storage[3][1], type_ = "cell", inside = True if self.is_cell_selected(undo_storage[3][0], undo_storage[3][1]) else False)
+                    self.create_current(undo_storage[3][0], undo_storage[3][1], type_ = "cell", inside = True if self.cell_selected(undo_storage[3][0], undo_storage[3][1]) else False)
                 elif undo_storage[3][0] == "column":
                     self.create_current(0, undo_storage[3][1], type_ = "col", inside = True)
                 elif undo_storage[3][0] == "row":
@@ -788,6 +790,8 @@ class MainTable(tk.Canvas):
                 if r is not None and not keep_yscroll:
                     y = self.row_positions[r + 1] + 1 - self.winfo_height()
                     args = ("moveto", y / (self.row_positions[-1] + 100))
+                    if args[1] > 1:
+                        args[1] = args[1] - 1
                     self.yview(*args)
                     self.RI.yview(*args)
                     if redraw:
@@ -802,6 +806,8 @@ class MainTable(tk.Canvas):
             else:
                 if r is not None and not keep_yscroll:
                     args = ("moveto", self.row_positions[r] / (self.row_positions[-1] + 100))
+                    if args[1] > 1:
+                        args[1] = args[1] - 1
                     self.yview(*args)
                     self.RI.yview(*args)
                     if redraw:
@@ -850,7 +856,7 @@ class MainTable(tk.Canvas):
         c = int(c)
         ignore_keep = False
         if keep_other_selections:
-            if self.is_cell_selected(r, c):
+            if self.cell_selected(r, c):
                 self.create_current(r, c, type_ = "cell", inside = True)
             else:
                 ignore_keep = True
@@ -876,7 +882,7 @@ class MainTable(tk.Canvas):
                     add_sel = tuple()
             else:
                 add_sel = tuple()
-            self.create_current(r, c, type_ = "cell", inside = True if self.is_cell_selected(r, c) else False)
+            self.create_current(r, c, type_ = "cell", inside = True if self.cell_selected(r, c) else False)
             if add_sel:
                 self.add_selection(add_sel[0], add_sel[1], redraw = False, run_binding_func = False, set_as_current = False)
         else:
@@ -888,12 +894,12 @@ class MainTable(tk.Canvas):
 
     def toggle_select_cell(self, row, column, add_selection = True, redraw = True, run_binding_func = True, set_as_current = True):
         if add_selection:
-            if self.is_cell_selected(row, column, inc_rows = True, inc_cols = True):
+            if self.cell_selected(row, column, inc_rows = True, inc_cols = True):
                 self.deselect(r = row, c = column, redraw = redraw)
             else:
                 self.add_selection(r = row, c = column, redraw = redraw, run_binding_func = run_binding_func, set_as_current = set_as_current)
         else:
-            if self.is_cell_selected(row, column, inc_rows = True, inc_cols = True):
+            if self.cell_selected(row, column, inc_rows = True, inc_cols = True):
                 self.deselect(r = row, c = column, redraw = redraw)
             else:
                 self.select_cell(row, column, redraw = redraw)
@@ -1699,12 +1705,15 @@ class MainTable(tk.Canvas):
             r = self.identify_row(y = event.y)
             c = self.identify_col(x = event.x)
             if r < len(self.row_positions) - 1 and c < len(self.col_positions) - 1:
-                if self.is_col_selected(c) and self.rc_popup_menus_enabled:
-                    self.CH.ch_rc_popup_menu.tk_popup(event.x_root, event.y_root)
-                elif self.is_row_selected(r) and self.rc_popup_menus_enabled:
-                    self.RI.ri_rc_popup_menu.tk_popup(event.x_root, event.y_root)
-                elif self.is_cell_selected(r, c) and self.rc_popup_menus_enabled:
-                    self.rc_popup_menu.tk_popup(event.x_root, event.y_root)
+                if self.col_selected(c):
+                    if self.rc_popup_menus_enabled:
+                        self.CH.ch_rc_popup_menu.tk_popup(event.x_root, event.y_root)
+                elif self.row_selected(r):
+                    if self.rc_popup_menus_enabled:
+                        self.RI.ri_rc_popup_menu.tk_popup(event.x_root, event.y_root)
+                elif self.cell_selected(r, c):
+                    if self.rc_popup_menus_enabled:
+                        self.rc_popup_menu.tk_popup(event.x_root, event.y_root)
                 else:
                     if self.rc_select_enabled:
                         self.select_cell(r, c, redraw = True)
@@ -1714,12 +1723,15 @@ class MainTable(tk.Canvas):
             r = self.identify_row(y = event.y)
             c = self.identify_col(x = event.x)
             if r < len(self.row_positions) - 1 and c < len(self.col_positions) - 1:
-                if self.is_col_selected(c) and self.rc_popup_menus_enabled:
-                    self.CH.ch_rc_popup_menu.tk_popup(event.x_root, event.y_root)
-                elif self.is_row_selected(r) and self.rc_popup_menus_enabled:
-                    self.RI.ri_rc_popup_menu.tk_popup(event.x_root, event.y_root)
-                elif self.is_cell_selected(r, c) and self.rc_popup_menus_enabled:
-                    self.rc_popup_menu.tk_popup(event.x_root, event.y_root)
+                if self.col_selected(c):
+                    if self.rc_popup_menus_enabled:
+                        self.CH.ch_rc_popup_menu.tk_popup(event.x_root, event.y_root)
+                elif self.row_selected(r):
+                    if self.rc_popup_menus_enabled:
+                        self.RI.ri_rc_popup_menu.tk_popup(event.x_root, event.y_root)
+                elif self.cell_selected(r, c):
+                    if self.rc_popup_menus_enabled:
+                        self.rc_popup_menu.tk_popup(event.x_root, event.y_root)
                 else:
                     if self.rc_select_enabled:
                         self.toggle_select_cell(r, c, redraw = True)
@@ -1888,6 +1900,8 @@ class MainTable(tk.Canvas):
             c = self.identify_col(x = event.x)
             if r < len(self.row_positions) - 1 and c < len(self.col_positions) - 1:
                 self.toggle_select_cell(r, c, redraw = True)
+        elif self.RI.width_resizing_enabled and self.RI.rsz_h is None and self.RI.rsz_w == True:
+            self.RI.set_width_of_index_to_text()
         if self.extra_double_b1_func is not None:
             self.extra_double_b1_func(event)
 
@@ -2087,7 +2101,7 @@ class MainTable(tk.Canvas):
         else:
             return self.data_ref
 
-    def set_all_cell_sizes_to_text(self):
+    def set_all_cell_sizes_to_text(self, include_index = False):
         min_cw = self.min_cw
         min_rh = self.min_rh
         rhs = defaultdict(lambda: int(min_rh))
@@ -2174,6 +2188,7 @@ class MainTable(tk.Canvas):
         self.row_positions = list(accumulate(chain([0], (height for height in rhs.values()))))
         self.col_positions = list(accumulate(chain([0], (width for width in cws))))
         self.recreate_all_selection_boxes()
+        self.resize_dropdowns()
 
     def reset_col_positions(self):
         colpos = int(self.default_cw)
@@ -2183,7 +2198,6 @@ class MainTable(tk.Canvas):
             self.col_positions = list(accumulate(chain([0], (colpos for c in range(len(self.displayed_columns))))))
 
     def del_col_position(self, idx, deselect_all = False, preserve_other_selections = False):
-        # WORK NEEDED FOR PRESERVE SELECTIONS ?
         if deselect_all:
             self.deselect("all", redraw = False)
         if idx == "end" or len(self.col_positions) <= idx + 1:
@@ -2194,8 +2208,7 @@ class MainTable(tk.Canvas):
             del self.col_positions[idx]
             self.col_positions[idx:] = [e - w for e in islice(self.col_positions, idx, len(self.col_positions))]
 
-    def insert_col_position(self, idx, width = None, deselect_all = False, preserve_other_selections = False):
-        # WORK NEEDED FOR PRESERVE SELECTIONS ?
+    def insert_col_position(self, idx = "end", width = None, deselect_all = False, preserve_other_selections = False):
         if deselect_all:
             self.deselect("all", redraw = False)
         if width is None:
@@ -2209,6 +2222,27 @@ class MainTable(tk.Canvas):
             self.col_positions.insert(idx, self.col_positions[idx - 1] + w)
             idx += 1
             self.col_positions[idx:] = [e + w for e in islice(self.col_positions, idx, len(self.col_positions))]
+
+    def insert_col_positions(self, idx = "end", widths = None, deselect_all = False, preserve_other_selections = False):
+        if deselect_all:
+            self.deselect("all", redraw = False)
+        if widths is None:
+            w = [self.default_cw]
+        else:
+            w = widths
+        if idx == "end" or len(self.col_positions) == idx + 1:
+            self.col_positions += list(accumulate(w, initial = self.col_positions[-1]))
+        else:
+            if len(widths) > 1:
+                cws = [int(b - a) for a, b in zip(self.col_positions, islice(self.col_positions, 1, len(self.col_positions)))]
+                cws[idx:idx] = widths
+                self.col_positions = list(accumulate(chain([0], (width for width in cws))))
+            else:
+                w = w[0]
+                idx += 1
+                self.col_positions.insert(idx, self.col_positions[idx - 1] + w)
+                idx += 1
+                self.col_positions[idx:] = [e + w for e in islice(self.col_positions, idx, len(self.col_positions))]
 
     def insert_col_rc(self, event = None):
         if self.anything_selected(exclude_rows = True, exclude_cells = True):
@@ -2428,6 +2462,29 @@ class MainTable(tk.Canvas):
             idx += 1
             self.row_positions[idx:] = [e + h for e in islice(self.row_positions, idx, len(self.row_positions))]
 
+    def insert_row_positions(self, idx = "end", heights = None, deselect_all = False, preserve_other_selections = False):
+        if deselect_all:
+            self.deselect("all", redraw = False)
+        if heights is None:
+            h = [self.default_rh[1]]
+        elif isinstance(heights, int):
+            h = list(repeat(self.default_rh[1], heights))
+        else:
+            h = heights
+        if idx == "end" or len(self.row_positions) == idx + 1:
+            self.row_positions += list(accumulate(h, initial = self.row_positions[-1]))
+        else:
+            if len(h) > 1:
+                rhs = [int(b - a) for a, b in zip(self.row_positions, islice(self.row_positions, 1, len(self.row_positions)))]
+                rhs[idx:idx] = h
+                self.row_positions = list(accumulate(chain([0], (height for height in rhs))))
+            else:
+                h = h[0]
+                idx += 1
+                self.row_positions.insert(idx, self.row_positions[idx - 1] + h)
+                idx += 1
+                self.row_positions[idx:] = [e + h for e in islice(self.row_positions, idx, len(self.row_positions))]
+
     def move_row_position(self, idx1, idx2):
         if not len(self.row_positions) <= 2:
             if idx1 < idx2:
@@ -2628,8 +2685,8 @@ class MainTable(tk.Canvas):
             y1 = self.canvasy(0)
             x2 = self.canvasx(self.winfo_width())
             y2 = self.canvasy(self.winfo_height())
-            self.row_width_resize_bbox = (x1, y1, x1 + 5, y2)
-            self.header_height_resize_bbox = (x1 + 6, y1, x2, y1 + 3)
+            self.row_width_resize_bbox = (x1, y1, x1 + 2, y2)
+            self.header_height_resize_bbox = (x1 + 6, y1, x2, y1 + 2)
             start_row = bisect.bisect_left(self.row_positions, y1)
             end_row = bisect.bisect_right(self.row_positions, y2)
             if not y2 >= self.row_positions[-1]:
@@ -2692,7 +2749,7 @@ class MainTable(tk.Canvas):
                                             f"{int((int(c_1[3:5], 16) + c_3_[1]) / 2):02X}" +
                                             f"{int((int(c_1[5:], 16) + c_3_[2]) / 2):02X}"),
                                     outline = "", tag = "hi")
-                                tf = self.selected_cols_fg if self.highlighted_cells[(r, c)][1] is None else self.highlighted_cells[(r, c)][1]
+                                tf = self.selected_cols_fg if self.highlighted_cells[(r, c)][1] is None or self.display_selected_fg_over_highlights else self.highlighted_cells[(r, c)][1]
                             elif (r, c) in self.highlighted_cells and r in actual_selected_rows:
                                 c_1 = self.highlighted_cells[(r, c)][0] if self.highlighted_cells[(r, c)][0].startswith("#") else Color_Map_[self.highlighted_cells[(r, c)][0]]
                                 cr_(fc + 1,
@@ -2703,7 +2760,7 @@ class MainTable(tk.Canvas):
                                             f"{int((int(c_1[3:5], 16) + c_4_[1]) / 2):02X}" +
                                             f"{int((int(c_1[5:], 16) + c_4_[2]) / 2):02X}"),
                                     outline = "", tag = "hi")
-                                tf = self.selected_rows_fg if self.highlighted_cells[(r, c)][1] is None else self.highlighted_cells[(r, c)][1]
+                                tf = self.selected_rows_fg if self.highlighted_cells[(r, c)][1] is None or self.display_selected_fg_over_highlights else self.highlighted_cells[(r, c)][1]
                             elif (r, c) in self.highlighted_cells and (r, c) in selected_cells:
                                 c_1 = self.highlighted_cells[(r, c)][0] if self.highlighted_cells[(r, c)][0].startswith("#") else Color_Map_[self.highlighted_cells[(r, c)][0]]
                                 cr_(fc + 1,
@@ -2714,7 +2771,7 @@ class MainTable(tk.Canvas):
                                             f"{int((int(c_1[3:5], 16) + c_2_[1]) / 2):02X}" +
                                             f"{int((int(c_1[5:], 16) + c_2_[2]) / 2):02X}"),
                                     outline = "", tag = "hi")
-                                tf = self.selected_cells_foreground if self.highlighted_cells[(r, c)][1] is None else self.highlighted_cells[(r, c)][1]
+                                tf = self.selected_cells_foreground if self.highlighted_cells[(r, c)][1] is None or self.display_selected_fg_over_highlights else self.highlighted_cells[(r, c)][1]
                             elif c in actual_selected_cols:
                                 tf = self.selected_cols_fg
                             elif r in actual_selected_rows:
@@ -2794,7 +2851,7 @@ class MainTable(tk.Canvas):
                                             f"{int((int(c_1[3:5], 16) + c_3_[1]) / 2):02X}" +
                                             f"{int((int(c_1[5:], 16) + c_3_[2]) / 2):02X}"),
                                     outline = "", tag = "hi")
-                                tf = self.selected_cols_fg if self.highlighted_cells[(r, c)][1] is None else self.highlighted_cells[(r, c)][1]
+                                tf = self.selected_cols_fg if self.highlighted_cells[(r, c)][1] is None or self.display_selected_fg_over_highlights else self.highlighted_cells[(r, c)][1]
                             elif (r, c) in self.highlighted_cells and r in actual_selected_rows:
                                 c_1 = self.highlighted_cells[(r, c)][0] if self.highlighted_cells[(r, c)][0].startswith("#") else Color_Map_[self.highlighted_cells[(r, c)][0]]
                                 cr_(fc + 1,
@@ -2805,7 +2862,7 @@ class MainTable(tk.Canvas):
                                             f"{int((int(c_1[3:5], 16) + c_4_[1]) / 2):02X}" +
                                             f"{int((int(c_1[5:], 16) + c_4_[2]) / 2):02X}"),
                                     outline = "", tag = "hi")
-                                tf = self.selected_rows_fg if self.highlighted_cells[(r, c)][1] is None else self.highlighted_cells[(r, c)][1]
+                                tf = self.selected_rows_fg if self.highlighted_cells[(r, c)][1] is None or self.display_selected_fg_over_highlights else self.highlighted_cells[(r, c)][1]
                             elif (r, c) in self.highlighted_cells and (r, c) in selected_cells:
                                 c_1 = self.highlighted_cells[(r, c)][0] if self.highlighted_cells[(r, c)][0].startswith("#") else Color_Map_[self.highlighted_cells[(r, c)][0]]
                                 cr_(fc + 1,
@@ -2816,7 +2873,7 @@ class MainTable(tk.Canvas):
                                             f"{int((int(c_1[3:5], 16) + c_2_[1]) / 2):02X}" +
                                             f"{int((int(c_1[5:], 16) + c_2_[2]) / 2):02X}"),
                                     outline = "", tag = "hi")
-                                tf = self.selected_cells_foreground if self.highlighted_cells[(r, c)][1] is None else self.highlighted_cells[(r, c)][1]
+                                tf = self.selected_cells_foreground if self.highlighted_cells[(r, c)][1] is None or self.display_selected_fg_over_highlights else self.highlighted_cells[(r, c)][1]
                             elif c in actual_selected_cols:
                                 tf = self.selected_cols_fg
                             elif r in actual_selected_rows:
@@ -2904,7 +2961,7 @@ class MainTable(tk.Canvas):
                                             f"{int((int(c_1[3:5], 16) + c_3_[1]) / 2):02X}" +
                                             f"{int((int(c_1[5:], 16) + c_3_[2]) / 2):02X}"),
                                     outline = "", tag = "hi")
-                                tf = self.selected_cols_fg if self.highlighted_cells[(r, self.displayed_columns[c])][1] is None else self.highlighted_cells[(r, self.displayed_columns[c])][1]
+                                tf = self.selected_cols_fg if self.highlighted_cells[(r, self.displayed_columns[c])][1] is None or self.display_selected_fg_over_highlights else self.highlighted_cells[(r, self.displayed_columns[c])][1]
                             elif (r, self.displayed_columns[c]) in self.highlighted_cells and r in actual_selected_rows:
                                 c_1 = self.highlighted_cells[(r, self.displayed_columns[c])][0] if self.highlighted_cells[(r, self.displayed_columns[c])][0].startswith("#") else Color_Map_[self.highlighted_cells[(r, self.displayed_columns[c])][0]]
                                 cr_(fc + 1,
@@ -2915,7 +2972,7 @@ class MainTable(tk.Canvas):
                                             f"{int((int(c_1[3:5], 16) + c_4_[1]) / 2):02X}" +
                                             f"{int((int(c_1[5:], 16) + c_4_[2]) / 2):02X}"),
                                     outline = "", tag = "hi")
-                                tf = self.selected_rows_fg if self.highlighted_cells[(r, self.displayed_columns[c])][1] is None else self.highlighted_cells[(r, self.displayed_columns[c])][1]
+                                tf = self.selected_rows_fg if self.highlighted_cells[(r, self.displayed_columns[c])][1] is None or self.display_selected_fg_over_highlights else self.highlighted_cells[(r, self.displayed_columns[c])][1]
                             elif (r, self.displayed_columns[c]) in self.highlighted_cells and (r, c) in selected_cells:
                                 c_1 = self.highlighted_cells[(r, self.displayed_columns[c])][0] if self.highlighted_cells[(r, self.displayed_columns[c])][0].startswith("#") else Color_Map_[self.highlighted_cells[(r, self.displayed_columns[c])][0]]
                                 cr_(fc + 1,
@@ -2926,7 +2983,7 @@ class MainTable(tk.Canvas):
                                             f"{int((int(c_1[3:5], 16) + c_2_[1]) / 2):02X}" +
                                             f"{int((int(c_1[5:], 16) + c_2_[2]) / 2):02X}"),
                                     outline = "", tag = "hi")
-                                tf = self.selected_cells_foreground if self.highlighted_cells[(r, self.displayed_columns[c])][1] is None else self.highlighted_cells[(r, self.displayed_columns[c])][1]
+                                tf = self.selected_cells_foreground if self.highlighted_cells[(r, self.displayed_columns[c])][1] is None or self.display_selected_fg_over_highlights else self.highlighted_cells[(r, self.displayed_columns[c])][1]
                             elif c in actual_selected_cols:
                                 tf = self.selected_cols_fg
                             elif r in actual_selected_rows:
@@ -3006,7 +3063,7 @@ class MainTable(tk.Canvas):
                                             f"{int((int(c_1[3:5], 16) + c_3_[1]) / 2):02X}" +
                                             f"{int((int(c_1[5:], 16) + c_3_[2]) / 2):02X}"),
                                     outline = "", tag = "hi")
-                                tf = self.selected_cols_fg if self.highlighted_cells[(r, self.displayed_columns[c])][1] is None else self.highlighted_cells[(r, self.displayed_columns[c])][1]
+                                tf = self.selected_cols_fg if self.highlighted_cells[(r, self.displayed_columns[c])][1] is None or self.display_selected_fg_over_highlights else self.highlighted_cells[(r, self.displayed_columns[c])][1]
                             elif (r, self.displayed_columns[c]) in self.highlighted_cells and r in actual_selected_rows:
                                 c_1 = self.highlighted_cells[(r, self.displayed_columns[c])][0] if self.highlighted_cells[(r, self.displayed_columns[c])][0].startswith("#") else Color_Map_[self.highlighted_cells[(r, self.displayed_columns[c])][0]]
                                 cr_(fc + 1,
@@ -3017,7 +3074,7 @@ class MainTable(tk.Canvas):
                                             f"{int((int(c_1[3:5], 16) + c_4_[1]) / 2):02X}" +
                                             f"{int((int(c_1[5:], 16) + c_4_[2]) / 2):02X}"),
                                     outline = "", tag = "hi")
-                                tf = self.selected_rows_fg if self.highlighted_cells[(r, self.displayed_columns[c])][1] is None else self.highlighted_cells[(r, self.displayed_columns[c])][1]
+                                tf = self.selected_rows_fg if self.highlighted_cells[(r, self.displayed_columns[c])][1] is None or self.display_selected_fg_over_highlights else self.highlighted_cells[(r, self.displayed_columns[c])][1]
                             elif (r, self.displayed_columns[c]) in self.highlighted_cells and (r, c) in selected_cells:
                                 c_1 = self.highlighted_cells[(r, self.displayed_columns[c])][0] if self.highlighted_cells[(r, self.displayed_columns[c])][0].startswith("#") else Color_Map_[self.highlighted_cells[(r, self.displayed_columns[c])][0]]
                                 cr_(fc + 1,
@@ -3028,7 +3085,7 @@ class MainTable(tk.Canvas):
                                             f"{int((int(c_1[3:5], 16) + c_2_[1]) / 2):02X}" +
                                             f"{int((int(c_1[5:], 16) + c_2_[2]) / 2):02X}"),
                                     outline = "", tag = "hi")
-                                tf = self.selected_cells_foreground if self.highlighted_cells[(r, self.displayed_columns[c])][1] is None else self.highlighted_cells[(r, self.displayed_columns[c])][1]
+                                tf = self.selected_cells_foreground if self.highlighted_cells[(r, self.displayed_columns[c])][1] is None or self.display_selected_fg_over_highlights else self.highlighted_cells[(r, self.displayed_columns[c])][1]
                             elif c in actual_selected_cols:
                                 tf = self.selected_cols_fg
                             elif r in actual_selected_rows:
@@ -3666,7 +3723,7 @@ class MainTable(tk.Canvas):
                     boxes.append((tuple(int(e) for e in tags[1].split("_") if e), "cols"))
         return boxes
     
-    def is_cell_selected(self, r, c, inc_cols = False, inc_rows = False):
+    def cell_selected(self, r, c, inc_cols = False, inc_rows = False):
         if not inc_cols and not inc_rows:
             iterable = chain(self.find_withtag("CellSelectFill"), self.find_withtag("Current_Inside"), self.find_withtag("Current_Outside"))
         elif inc_cols and not inc_rows:
@@ -3681,14 +3738,14 @@ class MainTable(tk.Canvas):
                 return True
         return False
 
-    def is_col_selected(self, c):
+    def col_selected(self, c):
         for item in self.find_withtag("ColSelectFill"):
             r1, c1, r2, c2 = tuple(int(e) for e in self.gettags(item)[1].split("_") if e)
             if c1 <= c and c2 > c:
                 return True
         return False
 
-    def is_row_selected(self, r):
+    def row_selected(self, r):
         for item in self.find_withtag("RowSelectFill"):
             r1, c1, r2, c2 = tuple(int(e) for e in self.gettags(item)[1].split("_") if e)
             if r1 <= r and r2 > r:
@@ -3768,6 +3825,7 @@ class MainTable(tk.Canvas):
         self.text_editor = TextEditor(self, text = text, font = self.my_font, state = state, width = w, height = h, border_color = self.selected_cells_border_col, show_border = self.show_selected_cells_border)
         self.text_editor_id = self.create_window((x, y), window = self.text_editor, anchor = "nw")
         self.text_editor.textedit.bind("<Alt-Return>", self.text_editor_newline_binding)
+        self.text_editor.textedit.bind("<Escape>", self.destroy_text_editor)
         if set_data_ref_on_destroy:
             self.text_editor.textedit.bind("<Return>", lambda x: self.get_text_editor_value((r, c)))
             self.text_editor.textedit.bind("<FocusOut>", lambda x: self.get_text_editor_value((r, c)))
@@ -3775,11 +3833,12 @@ class MainTable(tk.Canvas):
         self.text_editor.scroll_to_bottom()
 
     def bind_text_editor_destroy(self, binding, r, c):
-        self.text_editor.textedit.bind("<Return>", lambda x: binding((r, c)))
-        self.text_editor.textedit.bind("<FocusOut>", lambda x: binding((r, c)))
+        self.text_editor.textedit.bind("<Return>", lambda x: binding((r, c, "Return")))
+        self.text_editor.textedit.bind("<FocusOut>", lambda x: binding((r, c, "FocusOut")))
+        self.text_editor.textedit.bind("<Escape>", lambda x: binding((r, c, "Escape")))
         self.text_editor.textedit.focus_set()
 
-    def destroy_text_editor(self):
+    def destroy_text_editor(self, event = None):
         self.text_editor_loc = None
         try:
             self.delete(self.text_editor_id)
@@ -3832,6 +3891,7 @@ class MainTable(tk.Canvas):
             self.refresh()
         if recreate:
             self.recreate_all_selection_boxes()
+            self.resize_dropdowns()
         self.focus_set()
         return self.text_editor_value
 
@@ -3859,7 +3919,7 @@ class MainTable(tk.Canvas):
             self.RI.set_row_height(r, recreate = False)
             self.CH.set_col_width(c, only_set_if_too_small = True)
 
-    def create_dropdown(self, r = 0, c = 0, values = [], set_value = None, state = "readonly", see = True, destroy_on_select = True, current = False,
+    def create_dropdown(self, r = 0, c = 0, values = [], set_value = None, state = "readonly", see = True, destroy_on_leave = True, destroy_on_select = True, current = False,
                         set_cell_on_select = True, redraw = True, recreate = True):
         if see:
             self.see(r = r, c = c)
@@ -3890,6 +3950,16 @@ class MainTable(tk.Canvas):
                                                                                              set_cell_on_select = set_cell_on_select,
                                                                                              redraw = redraw,
                                                                                              recreate = recreate))
+        if destroy_on_leave:
+            self.dropdowns[(r, c)]['widget'].dropdown.bind("<FocusOut>",
+                                                           lambda event: self.get_dropdown_value(r = r,
+                                                                                                 c = c,
+                                                                                                 current = current,
+                                                                                                 destroy = True,
+                                                                                                 set_cell_on_select = set_cell_on_select,
+                                                                                                 redraw = redraw,
+                                                                                                 recreate = recreate))
+            self.dropdowns[(r, c)]['widget'].dropdown.focus_set()
 
     def get_dropdown_value(self, event = None, r = 0, c = 0, current = False, destroy = True, set_cell_on_select = True, redraw = True, recreate = True):
         if current:
@@ -3900,10 +3970,12 @@ class MainTable(tk.Canvas):
             self.set_cell_data(r, c, self.table_dropdown_value, cell_resize = True if destroy else False)
             if self.extra_edit_cell_func is not None:
                 self.extra_edit_cell_func((r, c))
+            self.focus_set()
         if destroy:
             self.destroy_dropdown(r, c)
         if recreate:
             self.recreate_all_selection_boxes()
+            self.resize_dropdowns()
         if redraw:
             self.refresh()
         return self.table_dropdown_value
@@ -3912,5 +3984,20 @@ class MainTable(tk.Canvas):
         self.delete(self.dropdowns[(r, c)]['id'])
         self.dropdowns[(r, c)]['widget'].destroy()
         del self.dropdowns[(r, c)]
-    
+
+    def resize_dropdowns(self, dropdowns = []):
+        for r, c in dropdowns if dropdowns else self.dropdowns:
+            x = self.col_positions[c]
+            y = self.row_positions[r]
+            w = self.col_positions[c + 1] - self.col_positions[c] + 1
+            h = self.row_positions[r + 1] - self.row_positions[r] + 1
+            self.coords(self.dropdowns[(r, c)]['id'], x, y)
+            self.itemconfig(self.dropdowns[(r, c)]['id'], width = w, height = h)
+            
+                
+
+
+
+
+                
 

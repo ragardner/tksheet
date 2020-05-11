@@ -141,10 +141,6 @@ class RowIndex(tk.Canvas):
         self.config(width = new_width)
         if set_TL:
             self.TL.set_dimensions(new_w = new_width)
-        try:
-            self.MT.recreate_all_selection_boxes()
-        except:
-            pass
 
     def enable_bindings(self, binding):
         if binding == "row_width_resize":
@@ -199,8 +195,9 @@ class RowIndex(tk.Canvas):
         elif self.row_selection_enabled and all(v is None for v in (self.CH.rsz_h, self.CH.rsz_w, self.rsz_h, self.rsz_w)):
             r = self.MT.identify_row(y = event.y)
             if r < len(self.MT.row_positions) - 1:
-                if self.MT.is_row_selected(r) and self.MT.rc_popup_menus_enabled:
-                    self.ri_rc_popup_menu.tk_popup(event.x_root, event.y_root)
+                if self.MT.row_selected(r):
+                    if self.MT.rc_popup_menus_enabled:
+                        self.ri_rc_popup_menu.tk_popup(event.x_root, event.y_root)
                 else:
                     if self.MT.single_selection_enabled and self.MT.rc_select_enabled:
                         self.select_row(r, redraw = True)
@@ -216,7 +213,7 @@ class RowIndex(tk.Canvas):
         r = self.MT.identify_row(y = y)
         if self.drag_and_drop_enabled or self.row_selection_enabled and self.rsz_h is None and self.rsz_w is None:
             if r < len(self.MT.row_positions) - 1:
-                r_selected = self.MT.is_row_selected(r)
+                r_selected = self.MT.row_selected(r)
                 if not r_selected and self.row_selection_enabled:
                     r = int(r)
                     currently_selected = self.MT.currently_selected()
@@ -269,6 +266,26 @@ class RowIndex(tk.Canvas):
                 self.MT.reset_mouse_motion_creations()
         if self.extra_motion_func is not None:
             self.extra_motion_func(event)
+
+    def double_b1(self, event = None):
+        self.focus_set()
+        if self.double_click_resizing_enabled and self.height_resizing_enabled and self.rsz_h is not None and not self.currently_resizing_height:
+            row = self.rsz_h - 1
+            self.set_row_height(row)
+            self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
+        elif self.width_resizing_enabled and self.rsz_h is None and self.rsz_w == True:
+            self.set_width_of_index_to_text()
+        elif self.row_selection_enabled and self.rsz_h is None and self.rsz_w is None:
+            r = self.MT.identify_row(y = event.y)
+            if r < len(self.MT.row_positions) - 1:
+                if self.MT.single_selection_enabled:
+                    self.select_row(r, redraw = True)
+                elif self.MT.toggle_selection_enabled:
+                    self.toggle_select_row(r, redraw = True)
+        self.mouse_motion(event)
+        self.rsz_h = None
+        if self.extra_double_b1_func is not None:
+            self.extra_double_b1_func(event)
         
     def b1_press(self, event = None):
         self.focus_set()
@@ -416,6 +433,7 @@ class RowIndex(tk.Canvas):
             self.MT.row_positions[self.rsz_h + 1:] = [e + increment for e in islice(self.MT.row_positions, self.rsz_h + 1, len(self.MT.row_positions))]
             self.MT.row_positions[self.rsz_h] = new_row_pos
             self.MT.recreate_all_selection_boxes()
+            self.MT.resize_dropdowns()
             self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
         elif self.width_resizing_enabled and self.rsz_w is not None and self.currently_resizing_width:
             self.currently_resizing_width = False
@@ -514,24 +532,6 @@ class RowIndex(tk.Canvas):
         if self.extra_b1_release_func is not None:
             self.extra_b1_release_func(event)
 
-    def double_b1(self, event = None):
-        self.focus_set()
-        if self.double_click_resizing_enabled and self.height_resizing_enabled and self.rsz_h is not None and not self.currently_resizing_height:
-            row = self.rsz_h - 1
-            self.set_row_height(row)
-            self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
-        elif self.row_selection_enabled and self.rsz_h is None and self.rsz_w is None:
-            r = self.MT.identify_row(y = event.y)
-            if r < len(self.MT.row_positions) - 1:
-                if self.MT.single_selection_enabled:
-                    self.select_row(r, redraw = True)
-                elif self.MT.toggle_selection_enabled:
-                    self.toggle_select_row(r, redraw = True)
-        self.mouse_motion(event)
-        self.rsz_h = None
-        if self.extra_double_b1_func is not None:
-            self.extra_double_b1_func(event)
-
     def highlight_cells(self, r = 0, cells = tuple(), bg = None, fg = None, redraw = False):
         if bg is None and fg is None:
             return
@@ -546,7 +546,7 @@ class RowIndex(tk.Canvas):
         r = int(r)
         ignore_keep = False
         if keep_other_selections:
-            if self.MT.is_row_selected(r):
+            if self.MT.row_selected(r):
                 self.MT.create_current(r, 0, type_ = "row", inside = True)
             else:
                 ignore_keep = True
@@ -561,12 +561,12 @@ class RowIndex(tk.Canvas):
 
     def toggle_select_row(self, row, add_selection = True, redraw = True, run_binding_func = True, set_as_current = True):
         if add_selection:
-            if self.MT.is_row_selected(row):
+            if self.MT.row_selected(row):
                 self.MT.deselect(r = row, redraw = redraw)
             else:
                 self.add_selection(r = row, redraw = redraw, run_binding_func = run_binding_func, set_as_current = set_as_current)
         else:
-            if self.MT.is_row_selected(row):
+            if self.MT.row_selected(row):
                 self.MT.deselect(r = row, redraw = redraw)
             else:
                 self.select_row(row, redraw = redraw)
@@ -660,6 +660,63 @@ class RowIndex(tk.Canvas):
             self.MT.row_positions[r_norm] = new_row_pos
             if recreate:
                 self.MT.recreate_all_selection_boxes()
+                self.MT.resize_dropdowns()
+
+    def set_width_of_index_to_text(self, recreate = True):
+        if not self.MT.my_row_index and isinstance(self.MT.my_row_index, list):
+            return
+        x = self.MT.txt_measure_canvas.create_text(0, 0, text = "", font = self.MT.my_font)
+        itmcon = self.MT.txt_measure_canvas.itemconfig
+        itmbbx = self.MT.txt_measure_canvas.bbox
+        new_width = int(self.MT.min_cw)
+        if isinstance(self.MT.my_row_index, list):
+            for row in self.MT.my_row_index:
+                try:
+                    if isinstance(row, str):
+                        txt = row
+                    else:
+                        txt = f"{row}"
+                except:
+                    txt = ""
+                if txt:
+                    itmcon(x, text = txt)
+                    b = itmbbx(x)
+                    w = b[2] - b[0] + 10
+                else:
+                    w = self.default_width
+                if w < self.MT.min_cw:
+                    w = int(self.MT.min_cw)
+                elif w > self.max_row_width:
+                    h = int(self.max_row_width)
+                if w > new_width:
+                    new_width = w
+        elif isinstance(self.MT.my_row_index, int):
+            c = self.MT.my_row_index
+            for row in self.MT.data_ref:
+                try:
+                    if isinstance(row[c], str):
+                        txt = row[c]
+                    else:
+                        txt = f"{row[c]}"
+                except:
+                    txt = ""
+                if txt:
+                    itmcon(x, text = txt)
+                    b = itmbbx(x)
+                    w = b[2] - b[0] + 10
+                else:
+                    w = self.default_width
+                if w < self.MT.min_cw:
+                    w = int(self.MT.min_cw)
+                elif w > self.max_row_width:
+                    h = int(self.max_row_width)
+                if w > new_width:
+                    new_width = w
+        self.MT.txt_measure_canvas.delete(x)
+        self.set_width(new_width, set_TL = True)
+        self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
+        if recreate:
+            self.MT.recreate_all_selection_boxes()
 
     def set_height_of_all_rows(self, height = None, only_set_if_too_small = False, recreate = True):
         if height is None:
@@ -668,6 +725,7 @@ class RowIndex(tk.Canvas):
             self.MT.row_positions = list(accumulate(chain([0], (height for r in range(len(self.MT.data_ref))))))
         if recreate:
             self.MT.recreate_all_selection_boxes()
+            self.MT.resize_dropdowns()
         
     def GetNumLines(self, cell):
         if isinstance(cell, str):
@@ -693,11 +751,11 @@ class RowIndex(tk.Canvas):
             y = self.MT.row_positions[start_row]
             self.create_line(0, y, self.current_width, y, fill = self.grid_color, width = 1, tags = "fh")
             xend = self.current_width - 6
-            self.row_width_resize_bbox = (self.current_width - 5, y1, self.current_width, y2)
+            self.row_width_resize_bbox = (self.current_width - 2, y1, self.current_width, y2)
             if self.height_resizing_enabled:
                 for r in range(start_row + 1, end_row):
                     y = self.MT.row_positions[r]
-                    self.visible_row_dividers.append((1, y - 4, xend, y + 4))
+                    self.visible_row_dividers.append((1, y - 2, xend, y + 2))
                     self.create_line(0, y, self.current_width, y, fill = self.grid_color, width = 1, tags = ("h", f"{r}"))
             else:
                 for r in range(start_row + 1, end_row):
@@ -710,6 +768,7 @@ class RowIndex(tk.Canvas):
                 new_w = self.MT.GetTextWidth(f"{end_row}") + 11
                 if self.current_width != new_w:
                     self.set_width(new_w, set_TL = True)
+                    self.MT.recreate_all_selection_boxes()
             if self.align == "center":
                 mw = self.current_width - 1
                 x = floor(self.current_width / 2)
@@ -729,7 +788,7 @@ class RowIndex(tk.Canvas):
                                                       f"{int((int(c_1[5:], 16) + int(c_3[5:], 16)) / 2):02X}"),
                                               outline = "",
                                               tags = "s")
-                        tf = self.selected_rows_fg if self.highlighted_cells[r][1] is None else self.highlighted_cells[r][1]
+                        tf = self.selected_rows_fg if self.highlighted_cells[r][1] is None or self.MT.display_selected_fg_over_highlights else self.highlighted_cells[r][1]
                     elif r in self.highlighted_cells and (r in selected_rows or selected_cols):
                         c_1 = self.highlighted_cells[r][0] if self.highlighted_cells[r][0].startswith("#") else Color_Map_[self.highlighted_cells[r][0]]
                         self.create_rectangle(0,
@@ -741,7 +800,7 @@ class RowIndex(tk.Canvas):
                                                       f"{int((int(c_1[5:], 16) + int(c_2[5:], 16)) / 2):02X}"),
                                               outline = "",
                                               tags = "s")
-                        tf = self.selected_cells_foreground if self.highlighted_cells[r][1] is None else self.highlighted_cells[r][1]
+                        tf = self.selected_cells_foreground if self.highlighted_cells[r][1] is None or self.MT.display_selected_fg_over_highlights else self.highlighted_cells[r][1]
                     elif r in actual_selected_rows:
                         tf = self.selected_rows_fg
                     elif r in selected_rows or selected_cols:
@@ -827,7 +886,7 @@ class RowIndex(tk.Canvas):
                                                       f"{int((int(c_1[5:], 16) + int(c_3[5:], 16)) / 2):02X}"),
                                               outline = "",
                                               tags = "s")
-                        tf = self.selected_rows_fg if self.highlighted_cells[r][1] is None else self.highlighted_cells[r][1]
+                        tf = self.selected_rows_fg if self.highlighted_cells[r][1] is None or self.MT.display_selected_fg_over_highlights else self.highlighted_cells[r][1]
                     elif r in self.highlighted_cells and (r in selected_rows or selected_cols):
                         c_1 = self.highlighted_cells[r][0] if self.highlighted_cells[r][0].startswith("#") else Color_Map_[self.highlighted_cells[r][0]]
                         self.create_rectangle(0,
@@ -839,7 +898,7 @@ class RowIndex(tk.Canvas):
                                                       f"{int((int(c_1[5:], 16) + int(c_2[5:], 16)) / 2):02X}"),
                                               outline = "",
                                               tags = "s")
-                        tf = self.selected_cells_foreground if self.highlighted_cells[r][1] is None else self.highlighted_cells[r][1]
+                        tf = self.selected_cells_foreground if self.highlighted_cells[r][1] is None or self.MT.display_selected_fg_over_highlights else self.highlighted_cells[r][1]
                     elif r in actual_selected_rows:
                         tf = self.selected_rows_fg
                     elif r in selected_rows or selected_cols:

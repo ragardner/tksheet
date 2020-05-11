@@ -67,15 +67,15 @@ class Sheet(tk.Frame):
                  row_index_select_row_bg = "#5f6368",
                  row_index_select_row_fg = "white",
                  top_left_background = "white",
-                 top_left_foreground = "gray85",
+                 top_left_foreground = "#c2c9cf",
                  top_left_foreground_highlight = "#5f6368",
                  font = ("Arial", 10, "normal"),
                  header_font = ("Arial", 10, "normal"),
                  popup_menu_font = ("Arial", 11, "normal"),
-                 popup_menu_fg = "gray10",
-                 popup_menu_bg = "white",
-                 popup_menu_highlight_bg = "#f1f3f4",
-                 popup_menu_highlight_fg = "gray10",
+                 popup_menu_fg = "gray2",
+                 popup_menu_bg = "#f2f2f2",
+                 popup_menu_highlight_bg = "#91c9f7",
+                 popup_menu_highlight_fg = "black",
                  align = "w",
                  header_align = "center",
                  row_index_align = "center",
@@ -86,6 +86,7 @@ class Sheet(tk.Frame):
                  show_selected_cells_border = True,
                  selected_cells_border_color = "#1a73e8",
                  selected_cells_background = "#e7f0fd",
+                 display_selected_fg_over_highlights = False,
                  selected_cells_foreground = "black",
                  selected_rows_border_color = "#1a73e8",
                  selected_rows_background = "#e7f0fd",
@@ -157,6 +158,7 @@ class Sheet(tk.Frame):
                                 measure_subset_header = measure_subset_header,
                                 resizing_line_color = resizing_line_color)
         self.MT = MainTable(self,
+                            display_selected_fg_over_highlights = display_selected_fg_over_highlights,
                             show_vertical_grid = show_vertical_grid,
                             show_horizontal_grid = show_horizontal_grid,
                             column_width = column_width,
@@ -221,7 +223,82 @@ class Sheet(tk.Frame):
         if show_y_scrollbar:
             self.yscroll.grid(row = 1, column = 2, sticky = "nswe")
         if theme != "light":
-            self.change_theme(theme)
+            self.MT.display_selected_fg_over_highlights = True
+            if header_background == "#f8f9fa":
+                self.set_options(header_background = "#2d2d2d", redraw = False)
+            if header_border_color == "#ababab":
+                self.set_options(header_border_color = "#4a4e51", redraw = False)
+            if header_grid_color == "#ababab":
+                self.set_options(header_grid_color = "#4a4e51", redraw = False)
+            if header_foreground == "black":
+                self.set_options(header_foreground = "#c2c9cf", redraw = False)
+            if header_select_background == "#e8eaed":
+                self.set_options(header_select_background = "#00385a", redraw = False)
+            if header_select_foreground == "black":
+                self.set_options(header_select_foreground = "white", redraw = False)
+            if row_index_background == "#f8f9fa":
+                self.set_options(row_index_background = "#2d2d2d", redraw = False)
+            if row_index_border_color == "#ababab":
+                self.set_options(row_index_border_color = "#4a4e51", redraw = False)
+            if row_index_grid_color == "#ababab":
+                self.set_options(row_index_grid_color = "#4a4e51", redraw = False)
+            if row_index_foreground == "black":
+                self.set_options(row_index_foreground = "#c2c9cf", redraw = False)
+            if row_index_select_background == "#e8eaed":
+                self.set_options(row_index_select_background = "#00385a", redraw = False)
+            if row_index_select_foreground == "black":
+                self.set_options(row_index_select_foreground = "white", redraw = False)
+            if top_left_background == "white":
+                self.set_options(top_left_background = "#3d3d3d", redraw = False)
+            if top_left_foreground == "#c2c9cf":
+                self.set_options(top_left_foreground = "#4a4e51", redraw = False)
+            if table_background == "white":
+                self.set_options(table_background = "#3d3d3d", redraw = False)
+                self.config(bg = "#3d3d3d")
+            if grid_color == "#d4d4d4":
+                self.set_options(grid_color = "#4a4e51", redraw = False)
+            if text_color == "black":
+                self.set_options(text_color = "#ecf0f2", redraw = False)
+            #if selected_cells_border_color == "#1a73e8":
+            #    self.set_options(selected_cells_border_color = "#1a73e8", redraw = False)
+            if selected_cells_background == "#e7f0fd":
+                self.set_options(selected_cells_background = "#004567", redraw = False)
+            if selected_cells_foreground == "black":
+                self.set_options(selected_cells_foreground = "white", redraw = False)
+            if resizing_line_color == "black":
+                self.set_options(resizing_line_color = "white", redraw = False)
+            if drag_and_drop_color == "turquoise1":
+                self.set_options(drag_and_drop_color = "#004567", redraw = False)
+            if outline_color == "gray2":
+                self.set_options(outline_color = "gray95", redraw = False)
+            if header_select_column_bg == "#5f6368":
+                self.set_options(header_select_column_bg = "#c2c9cf", redraw = False)
+            if header_select_column_fg == "white":
+                self.set_options(header_select_column_fg = "#2d2d2d", redraw = False)
+            if row_index_select_row_bg == "#5f6368":
+                self.set_options(row_index_select_row_bg = "#c2c9cf", redraw = False)
+            if row_index_select_row_fg == "white":
+                self.set_options(row_index_select_row_fg = "#2d2d2d", redraw = False)
+            #if selected_rows_border_color == "#1a73e8":
+            #    self.set_options(selected_rows_border_color = "#1a73e8", redraw = False)
+            if selected_rows_background == "#e7f0fd":
+                self.set_options(selected_rows_background = "#004567", redraw = False)
+            if selected_rows_foreground == "black":
+                self.set_options(selected_rows_foreground = "white", redraw = False)
+            #if selected_columns_border_color == "#1a73e8":
+            #    self.set_options(selected_columns_border_color = "#1a73e8", redraw = False)
+            if selected_columns_background == "#e7f0fd":
+                self.set_options(selected_columns_background = "#004567", redraw = False)
+            if selected_columns_foreground == "black":
+                self.set_options(selected_columns_foreground = "white", redraw = False)
+            #if popup_menu_fg == "gray10":
+            #    self.set_options(popup_menu_fg = "white", redraw = False)
+            #if popup_menu_bg == "white":
+            #    self.set_options(popup_menu_bg = "#646464", redraw = False)
+            #if popup_menu_highlight_bg == "#f1f3f4":
+            #    self.set_options(popup_menu_highlight_bg = "#737378", redraw = False)
+            #if popup_menu_highlight_fg == "gray10":
+            #    self.set_options(popup_menu_highlight_fg = "white", redraw = False)
         if set_all_heights_and_widths:
             self.set_all_cell_sizes_to_text()
         self.MT.update()
@@ -582,6 +659,9 @@ class Sheet(tk.Frame):
         if redraw:
             self.refresh()
 
+    def set_width_of_index_to_text(self, recreate = True):
+        self.RI.set_width_of_index_to_text(recreate = recreate)
+
     def row_height(self, row = None, height = None, only_set_if_too_small = False, redraw = True):
         if row == "all":
             if height == "default":
@@ -655,6 +735,7 @@ class Sheet(tk.Frame):
                         set_value = None,
                         state = "readonly",
                         see = True,
+                        destroy_on_leave = False,
                         destroy_on_select = True,
                         current = False,
                         set_cell_on_select = True,
@@ -666,6 +747,7 @@ class Sheet(tk.Frame):
                                 set_value = set_value,
                                 state = state,
                                 see = see,
+                                destroy_on_leave = destroy_on_leave,
                                 destroy_on_select = destroy_on_select,
                                 current = current,
                                 set_cell_on_select = set_cell_on_select,
@@ -685,6 +767,13 @@ class Sheet(tk.Frame):
 
     def get_dropdowns(self):
         return self.MT.dropdowns
+
+    def resize_dropdowns(self, dropdowns = []):
+        self.MT.resize_dropdowns(dropdowns = dropdowns)
+
+    def set_all_dropdown_values_to_sheet(self):
+        for r, c in self.MT.dropdowns:
+            self.MT.dropdowns[(r, c)]['widget'].set_displayed(self.MT.data_ref[r][c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]])
 
     def cut(self, event = None):
         self.MT.ctrl_x()
@@ -712,11 +801,17 @@ class Sheet(tk.Frame):
                                  deselect_all = deselect_all,
                                  preserve_other_selections = preserve_other_selections)
 
-    def insert_row_position(self, idx, height = None, deselect_all = False, preserve_other_selections = False):
+    def insert_row_position(self, idx = "end", height = None, deselect_all = False, preserve_other_selections = False):
         self.MT.insert_row_position(idx = idx,
                                     height = height,
                                     deselect_all = deselect_all,
                                     preserve_other_selections = preserve_other_selections)
+
+    def insert_row_positions(self, idx = "end", heights = None, deselect_all = False, preserve_other_selections = False):
+        self.MT.insert_row_positions(idx = idx,
+                                     heights = heights,
+                                     deselect_all = deselect_all,
+                                     preserve_other_selections = preserve_other_selections)
 
     def insert_row(self, row = None, idx = "end", height = None, deselect_all = False, preserve_other_selections = False):
         self.MT.insert_row(row = row,
@@ -791,11 +886,17 @@ class Sheet(tk.Frame):
                                  deselect_all = deselect_all,
                                  preserve_other_selections = preserve_other_selections)
 
-    def insert_column_position(self, idx, width = None, deselect_all = False, preserve_other_selections = False):
+    def insert_column_position(self, idx = "end", width = None, deselect_all = False, preserve_other_selections = False):
         self.MT.insert_col_position(idx = idx,
                                     width = width,
                                     deselect_all = deselect_all,
                                     preserve_other_selections = preserve_other_selections)
+
+    def insert_column_positions(self, idx = "end", widths = None, deselect_all = False, preserve_other_selections = False):
+        self.MT.insert_col_positions(idx = idx,
+                                     widths = widths,
+                                     deselect_all = deselect_all,
+                                     preserve_other_selections = preserve_other_selections)
 
     def move_column_position(self, column, moveto):
         self.MT.move_col_position(column, moveto)
@@ -903,17 +1004,17 @@ class Sheet(tk.Frame):
             self.MT.create_current(r = current_tuple_0,
                                    c = current_tuple_1,
                                    type_ = "cell",
-                                   inside = True if self.MT.is_cell_selected(current_tuple_0, current_tuple_1) else False)
+                                   inside = True if self.MT.cell_selected(current_tuple_0, current_tuple_1) else False)
         elif current_tuple_0 == "row" and isinstance(current_tuple_1, int):
             self.MT.create_current(r = current_tuple_1,
                                    c = 0,
                                    type_ = "row",
-                                   inside = True if self.MT.is_cell_selected(current_tuple_1, 0) else False)
+                                   inside = True if self.MT.cell_selected(current_tuple_1, 0) else False)
         elif current_tuple_0 in ("col", "column") and isinstance(current_tuple_1, int):
             self.MT.create_current(r = 0,
                                    c = current_tuple_1,
                                    type_ = "col",
-                                   inside = True if self.MT.is_cell_selected(0, current_tuple_1) else False)
+                                   inside = True if self.MT.cell_selected(0, current_tuple_1) else False)
 
     def get_selected_rows(self, get_cells = False, get_cells_as_rows = False, return_tuple = False):
         if return_tuple:
@@ -927,11 +1028,13 @@ class Sheet(tk.Frame):
         else:
             return self.MT.get_selected_cols(get_cells = get_cells, get_cells_as_cols = get_cells_as_columns)
 
-    def get_selected_cells(self, get_rows = False, get_cols = False, return_tuple = False):
-        if return_tuple:
-            return tuple(self.MT.get_selected_cells(get_rows = get_rows, get_cols = get_cols))
+    def get_selected_cells(self, get_rows = False, get_columns = False, sort_by_row = False, sort_by_column = False):
+        if sort_by_row:
+            return sorted(self.MT.get_selected_cells(get_rows = get_rows, get_cols = get_columns), key=lambda t: t[0])
+        elif sort_by_column:
+            return sorted(self.MT.get_selected_cells(get_rows = get_rows, get_cols = get_columns), key=lambda t: t[1])
         else:
-            return self.MT.get_selected_cells(get_rows = get_rows, get_cols = get_cols)
+            return self.MT.get_selected_cells(get_rows = get_rows, get_cols = get_columns)
 
     def get_all_selection_boxes(self):
         return self.MT.get_all_selection_boxes()
@@ -945,17 +1048,34 @@ class Sheet(tk.Frame):
     def recreate_all_selection_boxes(self):
         self.MT.recreate_all_selection_boxes()
 
+    def cell_selected(self, r, c):
+        return self.MT.cell_selected(r, c)
+
+    def row_selected(self, r):
+        return self.MT.row_selected(r)
+
+    def column_selected(self, c):
+        return self.MT.col_selected(c)
+
+#___ WILL REMOVE THESE FUNCTIONS IN A LATER VERSION ___
     def is_cell_selected(self, r, c):
-        return self.MT.is_cell_selected(r, c)
+        return self.MT.cell_selected(r, c)
 
     def is_row_selected(self, r):
-        return self.MT.is_row_selected(r)
+        return self.MT.row_selected(r)
 
     def is_column_selected(self, c):
-        return self.MT.is_col_selected(c)
-
+        return self.MT.col_selected(c)
+#___ _______________________________________________ ___
+    
     def anything_selected(self, exclude_columns = False, exclude_rows = False, exclude_cells = False):
         return self.MT.anything_selected(exclude_columns = exclude_columns, exclude_rows = exclude_rows, exclude_cells = exclude_cells)
+
+    def all_selected(self):
+        for r1, c1, r2, c2 in self.MT.get_all_selection_boxes():
+            if not r1 and not c1 and r2 == len(self.MT.row_positions) - 1 and c2 == len(self.MT.col_positions) - 1:
+                return True
+        return False
 
     def highlight_cells(self, row = 0, column = 0, cells = [], canvas = "table", bg = None, fg = None, redraw = False):
         if canvas == "table":
@@ -979,6 +1099,12 @@ class Sheet(tk.Frame):
                                     redraw = redraw)
 
     def dehighlight_cells(self, row = 0, column = 0, cells = [], canvas = "table", all_ = False, redraw = True):
+        if row == "all" and canvas == "table":
+            self.MT.highlighted_cells = {}
+        elif row == "all" and canvas == "row_index":
+            self.RI.highlighted_cells = {}
+        elif row == "all" and canvas == "header":
+            self.CH.highlighted_cells = {}
         if canvas == "table":
             if cells and not all_:
                 for t in cells:
@@ -1069,6 +1195,7 @@ class Sheet(tk.Frame):
         self.MT.header_font(newfont)
 
     def set_options(self,
+                    display_selected_fg_over_highlights = None,
                     empty_horizontal = None,
                     empty_vertical = None,
                     show_horizontal_grid = None,
@@ -1131,6 +1258,8 @@ class Sheet(tk.Frame):
                     measure_subset_index = None,
                     measure_subset_header = None,
                     redraw = True):
+        if display_selected_fg_over_highlights is not None:
+            self.MT.display_selected_fg_over_highlights = display_selected_fg_over_highlights
         if show_horizontal_grid is not None:
             self.MT.show_horizontal_grid = show_horizontal_grid
         if show_vertical_grid is not None:
@@ -1264,6 +1393,7 @@ class Sheet(tk.Frame):
 
     def change_theme(self, theme = "light"):
         if theme == "light":
+            self.MT.display_selected_fg_over_highlights = False
             self.set_options(header_background = "#f8f9fa",
                               header_border_color = "#ababab",
                               header_grid_color = "#ababab",
@@ -1277,7 +1407,7 @@ class Sheet(tk.Frame):
                               row_index_select_background = "#e8eaed",
                               row_index_select_foreground = "black",
                               top_left_background = "white",
-                              top_left_foreground = "gray85",
+                              top_left_foreground = "#c2c9cf",
                               table_background = "white",
                               grid_color = "#d4d4d4",
                               text_color = "black",
@@ -1297,52 +1427,46 @@ class Sheet(tk.Frame):
                               selected_columns_border_color = "#1a73e8",
                               selected_columns_background = "#e7f0fd",
                               selected_columns_foreground = "black",
-                              popup_menu_fg = "gray10",
-                              popup_menu_bg = "white",
-                              popup_menu_highlight_bg = "#f1f3f4",
-                              popup_menu_highlight_fg = "gray10",
                               redraw = True)
             self.config(bg = "white")
         elif theme == "dark":
-            self.set_options(header_background = "#1a1919",
-                              header_border_color = "#353a41",
-                              header_grid_color = "#3f444b",
-                              header_foreground = "gray88",
-                              header_select_background = "#464655",
+            self.MT.display_selected_fg_over_highlights = True
+            self.set_options(header_background = "#2d2d2d",
+                              header_border_color = "#4a4e51",
+                              header_grid_color = "#4a4e51",
+                              header_foreground = "#c2c9cf",
+                              header_select_background = "#00385a",
                               header_select_foreground = "white",
-                              row_index_background = "#1a1919",
-                              row_index_border_color = "#353a41",
-                              row_index_grid_color = "#3f444b",
-                              row_index_foreground = "gray88",
-                              row_index_select_background = "#464655",
+                              row_index_background = "#2d2d2d",
+                              row_index_border_color = "#4a4e51",
+                              row_index_grid_color = "#4a4e51",
+                              row_index_foreground = "#c2c9cf",
+                              row_index_select_background = "#00385a",
                               row_index_select_foreground = "white",
-                              top_left_background = "#1a1919",
-                              top_left_foreground = "#52504e",
-                              table_background = "#1a1919",
-                              grid_color = "#353a41",
-                              text_color = "gray88",
+                              top_left_background = "#3d3d3d",
+                              top_left_foreground = "#4a4e51",
+                              table_background = "#3d3d3d",
+                              grid_color = "#4a4e51",
+                              text_color = "#ecf0f2",
                               selected_cells_border_color = "#1a73e8",
-                              selected_cells_background = "#32323c",
+                              selected_cells_background = "#004567",
                               selected_cells_foreground = "white",
-                              resizing_line_color = "red",
-                              drag_and_drop_color = "#9acd32",
+                              resizing_line_color = "white",
+                              drag_and_drop_color = "#004567",
                               outline_color = "gray95",
-                              header_select_column_bg = "gray95",
-                              header_select_column_fg = "black",
-                              row_index_select_row_bg = "gray95",
-                              row_index_select_row_fg = "black",
+                              header_select_column_bg = "#c2c9cf",
+                              header_select_column_fg = "#2d2d2d",
+                              row_index_select_row_bg = "#c2c9cf",
+                              row_index_select_row_fg = "#2d2d2d",
                               selected_rows_border_color = "#1a73e8",
-                              selected_rows_background = "#32323c",
+                              selected_rows_background = "#004567",
                               selected_rows_foreground = "white",
                               selected_columns_border_color = "#1a73e8",
-                              selected_columns_background = "#32323c",
+                              selected_columns_background = "#004567",
                               selected_columns_foreground = "white",
-                              popup_menu_fg = "gray88",
-                              popup_menu_bg = "#1a1919",
-                              popup_menu_highlight_bg = "#52504e",
-                              popup_menu_highlight_fg = "gray95",
                               redraw = True)
-            self.config(bg = "#222222")
+            self.config(bg = "#3d3d3d")
+        self.MT.recreate_all_selection_boxes()
             
     def data_reference(self,
                        newdataref = None,
@@ -1570,6 +1694,9 @@ class Sheet(tk.Frame):
 
     def show_ctrl_outline(self, canvas = "table", start_cell = (0, 0), end_cell = (1, 1)):
         self.MT.show_ctrl_outline(canvas = canvas, start_cell = start_cell, end_cell = end_cell)
+
+    def get_ctrl_x_c_boxes(self):
+        return self.MT.get_ctrl_x_c_boxes()
 
     def get_selected_min_max(self): # returns (min_y, min_x, max_y, max_x) of any selections including rows/columns
         return self.MT.get_selected_min_max()
