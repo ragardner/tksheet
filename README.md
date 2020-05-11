@@ -340,6 +340,6 @@ app.mainloop()
 
 ### Dark Theme
 
-![alt text](https://i.imgur.com/OOqAARe.jpg)
+![alt text](https://i.imgur.com/5GwEna3.jpg)
 
 ----
