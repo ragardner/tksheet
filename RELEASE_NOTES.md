@@ -1,3 +1,10 @@
+### Version 4.6.6
+ - Added multiple new functions
+ - Many minor improvements
+ - Decreased size of area that resize cursors will show
+ - Much improved dark theme
+ - Resizing cells will now resize dropdown boxes, still have to add support for moving rows/columns
+
 ### Version 4.6.5
  - Begin process of adding code to maintain multiple persistent dropdown boxes
  - Add function `delete_dropdown()` (use argument `"all"` for all dropdown boxes)
