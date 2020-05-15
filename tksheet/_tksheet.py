@@ -813,13 +813,6 @@ class Sheet(tk.Frame):
                                      deselect_all = deselect_all,
                                      preserve_other_selections = preserve_other_selections)
 
-    def insert_row(self, row = None, idx = "end", height = None, deselect_all = False, preserve_other_selections = False):
-        self.MT.insert_row(row = row,
-                           idx = idx,
-                           height = height,
-                           deselect_all = deselect_all,
-                           preserve_other_selections = preserve_other_selections)
-
     def total_rows(self, number = None, mod_positions = True, mod_data = True):
         if number is None:
             return int(self.MT.total_data_rows())
@@ -1072,10 +1065,7 @@ class Sheet(tk.Frame):
         return self.MT.anything_selected(exclude_columns = exclude_columns, exclude_rows = exclude_rows, exclude_cells = exclude_cells)
 
     def all_selected(self):
-        for r1, c1, r2, c2 in self.MT.get_all_selection_boxes():
-            if not r1 and not c1 and r2 == len(self.MT.row_positions) - 1 and c2 == len(self.MT.col_positions) - 1:
-                return True
-        return False
+        return self.MT.all_selected()
 
     def highlight_cells(self, row = 0, column = 0, cells = [], canvas = "table", bg = None, fg = None, redraw = False):
         if canvas == "table":
@@ -1558,8 +1548,8 @@ class Sheet(tk.Frame):
                     continue
             return res
 
-    def set_cell_data(self, r, c, value = ""):
-        self.MT.data_ref[r][c] = f"{value}"
+    def set_cell_data(self, r, c, value = "", set_copy = True):
+        self.MT.data_ref[r][c] = f"{value}" if set_copy else value
 
     def set_column_data(self, c, values = tuple(), add_rows = True):
         if add_rows:
@@ -1672,6 +1662,9 @@ class Sheet(tk.Frame):
 
     def sheet_data_dimensions(self, total_rows = None, total_columns = None):
         self.MT.data_dimensions(total_rows, total_columns)
+
+    def get_total_rows(self):
+        return len(self.MT.data_ref)
 
     def equalize_data_row_lengths(self):
         return self.MT.equalize_data_row_lengths()

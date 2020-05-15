@@ -778,14 +778,20 @@ class MainTable(tk.Canvas):
             canvas.unbind("<Prior>")
             canvas.unbind("<Next>")
 
-    def see(self, r = None, c = None, keep_yscroll = False, keep_xscroll = False, bottom_right_corner = False, check_cell_visibility = True,
+    def see(self,
+            r = None,
+            c = None,
+            keep_yscroll = False,
+            keep_xscroll = False,
+            bottom_right_corner = False,
+            check_cell_visibility = True,
             redraw = True):
         need_redraw = False
         if check_cell_visibility:
-            visible = self.cell_is_completely_visible(r = r, c = c)
+            yvis, xvis = self.cell_is_completely_visible(r = r, c = c, separate_axes = True)
         else:
-            visible = False
-        if not visible:
+            yvis, xvis = False, False
+        if not yvis:
             if bottom_right_corner:
                 if r is not None and not keep_yscroll:
                     y = self.row_positions[r + 1] + 1 - self.winfo_height()
@@ -794,13 +800,6 @@ class MainTable(tk.Canvas):
                         args[1] = args[1] - 1
                     self.yview(*args)
                     self.RI.yview(*args)
-                    if redraw:
-                        need_redraw = True
-                if c is not None and not keep_xscroll:
-                    x = self.col_positions[c + 1] + 1 - self.winfo_width()
-                    args = ("moveto",x / (self.col_positions[-1] + 150))
-                    self.xview(*args)
-                    self.CH.xview(*args)
                     if redraw:
                         need_redraw = True
             else:
@@ -812,6 +811,16 @@ class MainTable(tk.Canvas):
                     self.RI.yview(*args)
                     if redraw:
                         need_redraw = True
+        if not xvis:
+            if bottom_right_corner:
+                if c is not None and not keep_xscroll:
+                    x = self.col_positions[c + 1] + 1 - self.winfo_width()
+                    args = ("moveto",x / (self.col_positions[-1] + 150))
+                    self.xview(*args)
+                    self.CH.xview(*args)
+                    if redraw:
+                        need_redraw = True
+            else:
                 if c is not None and not keep_xscroll:
                     args = ("moveto", self.col_positions[c] / (self.col_positions[-1] + 150))
                     self.xview(*args)
@@ -821,15 +830,22 @@ class MainTable(tk.Canvas):
         if redraw and need_redraw:
             self.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
 
-    def cell_is_completely_visible(self, r = 0, c = 0, cell_coords = None):
+    def cell_is_completely_visible(self, r = 0, c = 0, cell_coords = None, separate_axes = False):
         cx1, cy1, cx2, cy2 = self.get_canvas_visible_area()
         if cell_coords is None:
             x1, y1, x2, y2 = self.GetCellCoords(r = r, c = c, sel = True)
         else:
             x1, y1, x2, y2 = cell_coords
-        if cx1 > x1 or cy1 > y1 or cx2 < x2 or cy2 < y2:
-            return False
-        return True
+        x_vis = True
+        y_vis = True
+        if cx1 > x1 or cx2 < x2:
+            x_vis = False
+        if cy1 > y1  or cy2 < y2:
+            y_vis = False
+        if separate_axes:
+            return y_vis, x_vis
+        else:
+            return False if not y_vis or not x_vis else True
 
     def cell_is_visible(self,r = 0, c = 0, cell_coords = None):
         cx1, cy1, cx2, cy2 = self.get_canvas_visible_area()
@@ -1812,30 +1828,31 @@ class MainTable(tk.Canvas):
                     self.create_selected(end_row, end_col, start_row + 1, start_col + 1)
                 if self.drag_selection_binding_func is not None:
                     self.drag_selection_binding_func(("drag_select_cells", ) + tuple(int(e) for e in self.gettags(self.find_withtag("CellSelectFill"))[1].split("_") if e))
-            if event.x > self.winfo_width():
-                try:
-                    self.xview_scroll(1, "units")
-                    self.CH.xview_scroll(1, "units")
-                except:
-                    pass
-            elif event.x < 0:
-                try:
-                    self.xview_scroll(-1, "units")
-                    self.CH.xview_scroll(-1, "units")
-                except:
-                    pass
-            if event.y > self.winfo_height():
-                try:
-                    self.yview_scroll(1, "units")
-                    self.RI.yview_scroll(1, "units")
-                except:
-                    pass
-            elif event.y < 0:
-                try:
-                    self.yview_scroll(-1, "units")
-                    self.RI.yview_scroll(-1, "units")
-                except:
-                    pass
+            if self.data_ref:
+                if event.x > self.winfo_width():
+                    try:
+                        self.xview_scroll(1, "units")
+                        self.CH.xview_scroll(1, "units")
+                    except:
+                        pass
+                elif event.x < 0:
+                    try:
+                        self.xview_scroll(-1, "units")
+                        self.CH.xview_scroll(-1, "units")
+                    except:
+                        pass
+                if event.y > self.winfo_height():
+                    try:
+                        self.yview_scroll(1, "units")
+                        self.RI.yview_scroll(1, "units")
+                    except:
+                        pass
+                elif event.y < 0:
+                    try:
+                        self.yview_scroll(-1, "units")
+                        self.RI.yview_scroll(-1, "units")
+                    except:
+                        pass
             self.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
         elif self.RI.width_resizing_enabled and self.RI.rsz_w is not None and self.RI.currently_resizing_width:
             self.RI.delete("rwl")
@@ -2467,16 +2484,14 @@ class MainTable(tk.Canvas):
             self.deselect("all", redraw = False)
         if heights is None:
             h = [self.default_rh[1]]
-        elif isinstance(heights, int):
-            h = list(repeat(self.default_rh[1], heights))
         else:
             h = heights
         if idx == "end" or len(self.row_positions) == idx + 1:
             self.row_positions += list(accumulate(h, initial = self.row_positions[-1]))
         else:
-            if len(h) > 1:
+            if len(heights) > 1:
                 rhs = [int(b - a) for a, b in zip(self.row_positions, islice(self.row_positions, 1, len(self.row_positions)))]
-                rhs[idx:idx] = h
+                rhs[idx:idx] = heights
                 self.row_positions = list(accumulate(chain([0], (height for height in rhs))))
             else:
                 h = h[0]
@@ -3722,6 +3737,12 @@ class MainTable(tk.Canvas):
                 elif tags[0].startswith("Col"):
                     boxes.append((tuple(int(e) for e in tags[1].split("_") if e), "cols"))
         return boxes
+
+    def all_selected(self):
+        for r1, c1, r2, c2 in self.get_all_selection_boxes():
+            if not r1 and not c1 and r2 == len(self.row_positions) - 1 and c2 == len(self.col_positions) - 1:
+                return True
+        return False
     
     def cell_selected(self, r, c, inc_cols = False, inc_rows = False):
         if not inc_cols and not inc_rows:
