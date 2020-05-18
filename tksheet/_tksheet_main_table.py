@@ -501,16 +501,18 @@ class MainTable(tk.Canvas):
             if self.all_columns_displayed:
                 for ndr, r in enumerate(range(y1, y1 + numrows)):
                     for ndc, c in enumerate(range(x1, x1 + numcols)):
-                        s = f"{self.data_ref[r][c]}"
+                        if r > len(self.data_ref) - 1:
+                            self.data_ref.extend([list(repeat("", c + 1)) for r in range((r + 1) - len(self.data_ref))])
+                        elif c > len(self.data_ref[r]) - 1:
+                            self.data_ref[r].extend(list(repeat("", (c + 1) - len(self.data_ref[r]))))
                         if self.undo_enabled:
-                            undo_storage[(r, c)] = s
+                            undo_storage[(r, c)] = f"{self.data_ref[r][c]}"
                         self.data_ref[r][c] = data[ndr][ndc]
             else:
                 for ndr, r in enumerate(range(y1, y1 + numrows)):
                     for ndc, c in enumerate(range(x1, x1 + numcols)):
-                        s = f"{self.data_ref[r][self.displayed_columns[c]]}"
                         if self.undo_enabled:
-                            undo_storage[(r, self.displayed_columns[c])] = s
+                            undo_storage[(r, self.displayed_columns[c])] = f"{self.data_ref[r][self.displayed_columns[c]]}"
                         self.data_ref[r][self.displayed_columns[c]] = data[ndr][ndc]
             self.deselect("all")
             if self.undo_enabled:
@@ -542,9 +544,12 @@ class MainTable(tk.Canvas):
                     r1, c1, r2, c2 = box
                     for r in range(r1, r2):
                         for c in range(c1, c2):
-                            if self.undo_enabled:
-                                undo_storage[(r, c)] = f"{self.data_ref[r][c]}"
-                            self.data_ref[r][c] = ""
+                            try:
+                                if self.undo_enabled:
+                                    undo_storage[(r, c)] = f"{self.data_ref[r][c]}"
+                                self.data_ref[r][c] = ""
+                            except:
+                                continue
             else:
                 for item in chain(self.find_withtag("CellSelectFill"), self.find_withtag("RowSelectFill"), self.find_withtag("ColSelectFill"), self.find_withtag("Current_Outside")):
                     alltags = self.gettags(item)
@@ -559,9 +564,12 @@ class MainTable(tk.Canvas):
                     r1, c1, r2, c2 = box
                     for r in range(r1, r2):
                         for c in range(c1, c2):
-                            if self.undo_enabled:
-                                undo_storage[(r, self.displayed_columns[c])] = f"{self.data_ref[r][self.displayed_columns[c]]}"
-                            self.data_ref[r][self.displayed_columns[c]] = ""
+                            try:
+                                if self.undo_enabled:
+                                    undo_storage[(r, self.displayed_columns[c])] = f"{self.data_ref[r][self.displayed_columns[c]]}"
+                                self.data_ref[r][self.displayed_columns[c]] = ""
+                            except:
+                                continue
             if self.undo_enabled:
                 self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells", undo_storage, boxes, currently_selected))))
             self.refresh()

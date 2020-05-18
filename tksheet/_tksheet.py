@@ -921,9 +921,9 @@ class Sheet(tk.Frame):
 
     def set_text_editor_value(self, text = "", r = None, c = None):
         if self.MT.text_editor is not None and r is None and c is None:
-            self.MT.text_editor.set_text(value)
+            self.MT.text_editor.set_text(text)
         elif self.MT.text_editor is not None and self.MT.text_editor_loc == (r, c):
-            self.MT.text_editor.set_text(value)
+            self.MT.text_editor.set_text(text)
 
     def bind_text_editor_set(self, func, row, column):
         self.MT.bind_text_editor_destroy(func, row, column)
@@ -1347,9 +1347,9 @@ class Sheet(tk.Frame):
         if max_row_width is not None:
             self.RI.max_row_width = float(max_row_width)
         if font is not None:
-            self.MT.font(newfont)
+            self.MT.font(font)
         if header_font is not None:
-            self.MT.header_font(newfont)
+            self.MT.header_font(header_font)
         if theme is not None:
             self.change_theme(theme)
         if show_selected_cells_border is not None:
@@ -1645,8 +1645,8 @@ class Sheet(tk.Frame):
     def set_row_data(self, r, values = tuple(), add_columns = True):
         if len(self.MT.data_ref) - 1 < r:
             raise Exception("Row number is out of range")
+        maxidx = len(self.MT.data_ref[r]) - 1
         if add_columns:
-            maxidx = len(self.MT.data_ref[r]) - 1
             for c, v in enumerate(values):
                 if c > maxidx:
                     self.MT.data_ref[r].append(v)
