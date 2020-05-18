@@ -1,3 +1,11 @@
+### Version 4.6.8
+ - Fix button-1-motion scrolling issues
+ - Many minor improvements
+
+### Version 4.6.7
+ - Some minor improvements
+ - Fix minor display issue where sheet is empty and user clicks and drags upwards
+
 ### Version 4.6.6
  - Added multiple new functions
  - Many minor improvements
