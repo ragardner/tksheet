@@ -95,7 +95,7 @@ class Sheet(tk.Frame):
                  selected_columns_background = "#e7f0fd",
                  selected_columns_foreground = "black",
                  resizing_line_color = "black",
-                 drag_and_drop_color = "turquoise1",
+                 drag_and_drop_color = "#1a73e8",
                  displayed_columns = [],
                  all_columns_displayed = True,
                  max_undos = 20,
@@ -267,8 +267,8 @@ class Sheet(tk.Frame):
                 self.set_options(selected_cells_foreground = "white", redraw = False)
             if resizing_line_color == "black":
                 self.set_options(resizing_line_color = "white", redraw = False)
-            if drag_and_drop_color == "turquoise1":
-                self.set_options(drag_and_drop_color = "#004567", redraw = False)
+            #if drag_and_drop_color == "#1a73e8":
+            #    self.set_options(drag_and_drop_color = "#1a73e8", redraw = False)
             if outline_color == "gray2":
                 self.set_options(outline_color = "gray95", redraw = False)
             if header_select_column_bg == "#5f6368":
@@ -1437,7 +1437,7 @@ class Sheet(tk.Frame):
                               selected_cells_background = "#e7f0fd",
                               selected_cells_foreground = "black",
                               resizing_line_color = "black",
-                              drag_and_drop_color = "turquoise1",
+                              drag_and_drop_color = "#1a73e8",
                               outline_color = "gray2",
                               header_select_column_bg = "#5f6368",
                               header_select_column_fg = "white",
@@ -1474,7 +1474,7 @@ class Sheet(tk.Frame):
                               selected_cells_background = "#004567",
                               selected_cells_foreground = "white",
                               resizing_line_color = "white",
-                              drag_and_drop_color = "#004567",
+                              drag_and_drop_color = "#1a73e8",
                               outline_color = "gray95",
                               header_select_column_bg = "#c2c9cf",
                               header_select_column_fg = "#2d2d2d",

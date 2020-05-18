@@ -308,7 +308,7 @@ class ColumnHeaders(tk.Canvas):
                     self.check_xview()
                     self.MT.main_table_redraw_grid_and_text(redraw_header = True)
                 elif x <= 0 and len(xcheck) > 1 and xcheck[0] > 0:
-                    if x <= -40:
+                    if x >= -15:
                         self.MT.xview_scroll(-1, "units")
                         self.xview_scroll(-1, "units")
                     else:

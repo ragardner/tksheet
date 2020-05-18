@@ -368,7 +368,7 @@ class RowIndex(tk.Canvas):
                     self.check_yview()
                     self.MT.main_table_redraw_grid_and_text(redraw_row_index = True)
                 elif y <= 0 and len(ycheck) > 1 and ycheck[0] > 0:
-                    if y <= -40:
+                    if y >= -15:
                         self.MT.yview_scroll(-1, "units")
                         self.yview_scroll(-1, "units")
                     else:
