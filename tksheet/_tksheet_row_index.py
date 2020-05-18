@@ -357,26 +357,25 @@ class RowIndex(tk.Canvas):
             if y > 0 and y < self.MT.row_positions[-1]:
                 y = event.y
                 hend = self.winfo_height()
-                if y >= hend - 0:
-                    end_row = bisect.bisect_right(self.MT.row_positions, self.canvasy(hend))
-                    end_row -= 1
-                    if not end_row == len(self.MT.row_positions) - 1:
-                        try:
-                            self.MT.see(r = end_row, c = 0, keep_yscroll = False, keep_xscroll = True, bottom_right_corner = False, check_cell_visibility = True)
-                        except:
-                            pass
-                elif y <= 0:
-                    start_row = bisect.bisect_left(self.MT.row_positions, self.canvasy(0))
-                    if y <= -40:
-                        start_row -= 3
+                ycheck = self.yview()
+                if y >= hend - 0 and len(ycheck) > 1 and ycheck[1] < 1:
+                    if y >= hend + 15:
+                        self.MT.yview_scroll(2, "units")
+                        self.yview_scroll(2, "units")
                     else:
-                        start_row -= 2
-                    if start_row <= 0:
-                        start_row = 0
-                    try:
-                        self.MT.see(r = start_row, c = 0, keep_yscroll = False, keep_xscroll = True, bottom_right_corner = False, check_cell_visibility = True)
-                    except:
-                        pass
+                        self.MT.yview_scroll(1, "units")
+                        self.yview_scroll(1, "units")
+                    self.check_yview()
+                    self.MT.main_table_redraw_grid_and_text(redraw_row_index = True)
+                elif y <= 0 and len(ycheck) > 1 and ycheck[0] > 0:
+                    if y <= -40:
+                        self.MT.yview_scroll(-1, "units")
+                        self.yview_scroll(-1, "units")
+                    else:
+                        self.MT.yview_scroll(-2, "units")
+                        self.yview_scroll(-2, "units")
+                    self.check_yview()
+                    self.MT.main_table_redraw_grid_and_text(redraw_row_index = True)
                 selected_rows = sorted(self.MT.get_selected_rows())
                 rectw = self.MT.row_positions[selected_rows[-1] + 1] - self.MT.row_positions[selected_rows[0]]
                 start = self.canvasy(event.y - int(rectw / 2))
