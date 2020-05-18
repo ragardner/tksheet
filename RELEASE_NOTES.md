@@ -1,3 +1,6 @@
+### Version 4.6.9
+ - Minor fixes when using in-built ctrl functions
+
 ### Version 4.6.8
  - Fix button-1-motion scrolling issues
  - Many minor improvements
