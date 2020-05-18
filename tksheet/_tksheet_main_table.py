@@ -94,6 +94,8 @@ class MainTable(tk.Canvas):
         self.extra_delete_key_func = None
         self.extra_edit_cell_func = None
         self.extra_begin_edit_cell_func = None
+        self.extra_begin_edit_cell_keypress_func = None # use when you want to use keypress as cell edit start text
+        self.extra_escape_edit_cell_func = None
         self.extra_del_rows_rc_func = None
         self.extra_del_cols_rc_func = None
         self.extra_insert_cols_rc_func = None
@@ -883,6 +885,17 @@ class MainTable(tk.Canvas):
             self.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
         if self.selection_binding_func is not None:
             self.selection_binding_func(("select_cell", ) + tuple((r, c)))
+
+    def move_down(self):
+        currently_selected = self.currently_selected(get_coords = True)
+        if currently_selected:
+            r, c = currently_selected
+            if (
+                r < len(self.row_positions) - 2 and
+                (self.single_selection_enabled or self.toggle_selection_enabled)
+                ):
+                self.select_cell(r + 1, c)
+                self.see(r + 1, c, keep_xscroll = True, bottom_right_corner = True, check_cell_visibility = True)
 
     def add_selection(self, r, c, redraw = False, run_binding_func = True, set_as_current = False):
         r = int(r)
@@ -1829,30 +1842,33 @@ class MainTable(tk.Canvas):
                 if self.drag_selection_binding_func is not None:
                     self.drag_selection_binding_func(("drag_select_cells", ) + tuple(int(e) for e in self.gettags(self.find_withtag("CellSelectFill"))[1].split("_") if e))
             if self.data_ref:
-                if event.x > self.winfo_width():
-                    try:
-                        self.xview_scroll(1, "units")
-                        self.CH.xview_scroll(1, "units")
-                    except:
-                        pass
-                elif event.x < 0:
+                xcheck = self.xview()
+                ycheck = self.yview()
+                if len(xcheck) > 1 and xcheck[0] > 0 and event.x < 0:
                     try:
                         self.xview_scroll(-1, "units")
                         self.CH.xview_scroll(-1, "units")
                     except:
                         pass
-                if event.y > self.winfo_height():
-                    try:
-                        self.yview_scroll(1, "units")
-                        self.RI.yview_scroll(1, "units")
-                    except:
-                        pass
-                elif event.y < 0:
+                if len(ycheck) > 1 and ycheck[0] > 0 and event.y < 0:
                     try:
                         self.yview_scroll(-1, "units")
                         self.RI.yview_scroll(-1, "units")
                     except:
                         pass
+                if len(xcheck) > 1 and xcheck[1] < 1 and event.x > self.winfo_width():
+                    try:
+                        self.xview_scroll(1, "units")
+                        self.CH.xview_scroll(1, "units")
+                    except:
+                        pass
+                if len(ycheck) > 1 and ycheck[1] < 1 and event.y > self.winfo_height():
+                    try:
+                        self.yview_scroll(1, "units")
+                        self.RI.yview_scroll(1, "units")
+                    except:
+                        pass
+            self.check_views()
             self.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
         elif self.RI.width_resizing_enabled and self.RI.rsz_w is not None and self.RI.currently_resizing_width:
             self.RI.delete("rwl")
@@ -1882,6 +1898,18 @@ class MainTable(tk.Canvas):
                 self.CH.create_line(x1, y, x2, y, width = 1, fill = self.RI.resizing_line_color, tag = "rhl")
         if self.extra_b1_motion_func is not None:
             self.extra_b1_motion_func(event)
+
+    def check_views(self):
+        xcheck = self.xview()
+        ycheck = self.yview()
+        if xcheck and xcheck[0] < 0:
+            self.set_xviews("moveto", 0)
+        if ycheck and ycheck[0] < 0:
+            self.set_yviews("moveto", 0)
+        if len(xcheck) > 1 and xcheck[1] > 1:
+            self.set_xviews("moveto", 1)
+        if len(ycheck) > 1 and ycheck[1] > 1:
+            self.set_yviews("moveto", 1)
         
     def b1_release(self, event = None):
         if self.RI.width_resizing_enabled and self.RI.rsz_w is not None and self.RI.currently_resizing_width:
@@ -3246,7 +3274,7 @@ class MainTable(tk.Canvas):
             self.CH.delete("Current_Inside", "Current_Outside")
         return deleted_boxes
 
-    def currently_selected(self):
+    def currently_selected(self, get_coords = False):
         items = self.find_withtag("Current_Inside") + self.find_withtag("Current_Outside")
         if not items:
             return tuple()
@@ -3255,9 +3283,9 @@ class MainTable(tk.Canvas):
         if alltags[2] == "cell":
             return (box[0], box[1])
         elif alltags[2] == "col":
-            return ("column", box[1])
+            return ("column", box[1]) if not get_coords else (box[1], 0)
         elif alltags[2] == "row":
-            return ("row", box[0])
+            return ("row", box[0]) if not get_coords else (box[1], 0)
 
     def get_tags_of_current(self):
         items = self.find_withtag("Current_Inside") + self.find_withtag("Current_Outside")
@@ -3811,13 +3839,17 @@ class MainTable(tk.Canvas):
         if not self.anything_selected(exclude_columns = True, exclude_rows = True) or self.text_editor_id is not None:
             return
         currently_selected = self.currently_selected()
+        if not currently_selected:
+            return
         y1 = int(currently_selected[0])
         x1 = int(currently_selected[1])
         self.text_editor_loc = (y1, x1)
-        if self.extra_begin_edit_cell_func is not None:
+        if self.extra_begin_edit_cell_func is not None and self.extra_begin_edit_cell_keypress_func is None:
             self.extra_begin_edit_cell_func((y1, x1, event.char))
             text = self.data_ref[y1][x1]
         else:
+            if self.extra_begin_edit_cell_keypress_func is not None:
+                self.extra_begin_edit_cell_keypress_func((y1, x1, event.char))
             if f"{event.keysym}".lower() == "backspace":
                 text = ""
             elif event.char in all_chars:
@@ -3831,7 +3863,7 @@ class MainTable(tk.Canvas):
         self.refresh()
         self.create_text_editor(r = y1, c = x1, text = text, set_data_ref_on_destroy = True)
         
-    def create_text_editor(self, r = 0, c = 0, text = None, state = "normal", see = True, set_data_ref_on_destroy = False):
+    def create_text_editor(self, r = 0, c = 0, text = None, state = "normal", see = True, set_data_ref_on_destroy = False, binding = None):
         self.destroy_text_editor()
         if see:
             self.see(r = r, c = c, check_cell_visibility = True)
@@ -3846,11 +3878,17 @@ class MainTable(tk.Canvas):
         self.text_editor = TextEditor(self, text = text, font = self.my_font, state = state, width = w, height = h, border_color = self.selected_cells_border_col, show_border = self.show_selected_cells_border)
         self.text_editor_id = self.create_window((x, y), window = self.text_editor, anchor = "nw")
         self.text_editor.textedit.bind("<Alt-Return>", self.text_editor_newline_binding)
-        self.text_editor.textedit.bind("<Escape>", self.destroy_text_editor)
-        if set_data_ref_on_destroy:
-            self.text_editor.textedit.bind("<Return>", lambda x: self.get_text_editor_value((r, c)))
-            self.text_editor.textedit.bind("<FocusOut>", lambda x: self.get_text_editor_value((r, c)))
-            self.text_editor.textedit.focus_set()
+        if binding is not None:
+            self.text_editor.textedit.bind("<Return>", lambda x: binding((r, c, "Return")))
+            self.text_editor.textedit.bind("<FocusOut>", lambda x: binding((r, c, "FocusOut")))
+            self.text_editor.textedit.bind("<Escape>", lambda x: binding((r, c, "Escape")))
+        elif binding is None and set_data_ref_on_destroy:
+            self.text_editor.textedit.bind("<Return>", lambda x: self.get_text_editor_value((r, c, "Return")))
+            self.text_editor.textedit.bind("<FocusOut>", lambda x: self.get_text_editor_value((r, c, "FocusOut")))
+            self.text_editor.textedit.bind("<Escape>", lambda x: self.get_text_editor_value((r, c, "Escape")))
+        else:
+            self.text_editor.textedit.bind("<Escape>", lambda x: self.destroy_text_editor("Escape"))
+        self.text_editor.textedit.focus_set()
         self.text_editor.scroll_to_bottom()
 
     def bind_text_editor_destroy(self, binding, r, c):
@@ -3860,6 +3898,8 @@ class MainTable(tk.Canvas):
         self.text_editor.textedit.focus_set()
 
     def destroy_text_editor(self, event = None):
+        if event is not None and self.extra_escape_edit_cell_func is not None:
+            self.extra_escape_edit_cell_func(self.text_editor_loc)
         self.text_editor_loc = None
         try:
             self.delete(self.text_editor_id)
@@ -3877,13 +3917,16 @@ class MainTable(tk.Canvas):
             self.text_editor = None
         except:
             pass
+        self.show_current()
 
     def text_editor_newline_binding(self, event = None):
         if self.GetLinesHeight(self.text_editor.get_num_lines() + 1) > self.text_editor.winfo_height():
             self.text_editor.config(height = self.text_editor.winfo_height() + self.xtra_lines_increment)
 
     def get_text_editor_value(self, destroy_tup = None, r = None, c = None, set_data_ref_on_destroy = True, event = None, destroy = True, move_down = True, redraw = True, recreate = True):
-        self.show_current()
+        if destroy_tup is not None and len(destroy_tup) >= 3 and destroy_tup[2] == "Escape":
+            self.destroy_text_editor("Escape")
+            return
         if self.text_editor is not None:
             self.text_editor_value = self.text_editor.get()
         if destroy:
@@ -3903,16 +3946,15 @@ class MainTable(tk.Canvas):
                     currently_selected and
                     r == currently_selected[0] and
                     c == currently_selected[1] and
-                    r < len(self.row_positions) - 2 and
                     (self.single_selection_enabled or self.toggle_selection_enabled)
                     ):
-                    self.select_cell(r + 1, c)
-                    self.see(r + 1, c, keep_xscroll = True, bottom_right_corner = True, check_cell_visibility = True)
-        if redraw:
-            self.refresh()
+                    self.select_cell(r + 1 if r < len(self.row_positions) - 2 else r, c)
+                    self.see(r + 1 if r < len(self.row_positions) - 2 else r, c, keep_xscroll = True, bottom_right_corner = True, check_cell_visibility = True)
         if recreate:
             self.recreate_all_selection_boxes()
             self.resize_dropdowns()
+        if redraw:
+            self.refresh()
         self.focus_set()
         return self.text_editor_value
 

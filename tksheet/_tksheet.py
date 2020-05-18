@@ -377,7 +377,7 @@ class Sheet(tk.Frame):
         elif canvas == "topleft":
             self.TL.focus_set()
 
-    def extra_bindings(self, bindings):
+    def extra_bindings(self, bindings, func = "None"):
         if bindings == "unbind_all":
             self.MT.extra_ctrl_c_func = None
             self.MT.extra_ctrl_x_func = None
@@ -385,6 +385,9 @@ class Sheet(tk.Frame):
             self.MT.extra_ctrl_z_func = None
             self.MT.extra_delete_key_func = None
             self.MT.extra_edit_cell_func = None
+            self.MT.extra_begin_edit_cell_func = None
+            self.MT.extra_begin_edit_cell_keypress_func = None
+            self.MT.extra_escape_edit_cell_func = None
             self.RI.ri_extra_drag_drop_func = None
             self.CH.ch_extra_drag_drop_func = None
             self.MT.selection_binding_func = None
@@ -402,68 +405,77 @@ class Sheet(tk.Frame):
             self.MT.extra_del_cols_rc_func = None
             self.MT.extra_insert_cols_rc_func = None
             self.MT.extra_insert_rows_rc_func = None
+        elif isinstance(bindings[0], str) and func == "None":
+            iterable = [bindings]
+        elif isinstance(bindings, str) and func != "None":
+            iterable = [(bindings, func)]
         else:
-            for binding, func in bindings:
-                if binding == "ctrl_c":
-                    self.MT.extra_ctrl_c_func = func
-                if binding == "ctrl_x":
-                    self.MT.extra_ctrl_x_func = func
-                if binding == "ctrl_v":
-                    self.MT.extra_ctrl_v_func = func
-                if binding == "ctrl_z":
-                    self.MT.extra_ctrl_z_func = func
-                if binding == "delete_key":
-                    self.MT.extra_delete_key_func = func
-                if binding == "edit_cell":
-                    self.MT.extra_edit_cell_func = func
-                if binding == "begin_edit_cell":
-                    self.MT.extra_begin_edit_cell_func = func
-                if binding == "row_index_drag_drop":
-                    self.RI.ri_extra_drag_drop_func = func
-                if binding == "column_header_drag_drop":
-                    self.CH.ch_extra_drag_drop_func = func
-                if binding == "cell_select":
-                    self.MT.selection_binding_func = func
-                if binding in ("select_all", "ctrl_a"):
-                    self.MT.select_all_binding_func = func
-                if binding == "row_select":
-                    self.RI.selection_binding_func = func
-                if binding in ("col_select", "column_select"):
-                    self.CH.selection_binding_func = func
-                if binding == "drag_select_cells":
-                    self.MT.drag_selection_binding_func = func
-                if binding == "drag_select_rows":
-                    self.RI.drag_selection_binding_func = func
-                if binding == "drag_select_columns":
-                    self.CH.drag_selection_binding_func = func
-                if binding == "shift_cell_select":
-                    self.MT.shift_selection_binding_func = func
-                if binding == "shift_row_select":
-                    self.RI.shift_selection_binding_func = func
-                if binding == "shift_column_select":
-                    self.CH.shift_selection_binding_func = func
-                if binding == "deselect":
-                    self.MT.deselection_binding_func = func
-                if binding == "rc_delete_row":
-                    self.MT.extra_del_rows_rc_func = func
-                if binding == "rc_delete_column":
-                    self.MT.extra_del_cols_rc_func = func
-                if binding == "rc_insert_column":
-                    self.MT.extra_insert_cols_rc_func = func
-                if binding == "rc_insert_row":
-                    self.MT.extra_insert_rows_rc_func = func
-                if binding == "all_select_events":
-                    self.MT.selection_binding_func = func
-                    self.MT.select_all_binding_func = func
-                    self.RI.selection_binding_func = func
-                    self.CH.selection_binding_func = func
-                    self.MT.drag_selection_binding_func = func
-                    self.RI.drag_selection_binding_func = func
-                    self.CH.drag_selection_binding_func = func
-                    self.MT.shift_selection_binding_func = func
-                    self.RI.shift_selection_binding_func = func
-                    self.CH.shift_selection_binding_func = func
-                    self.MT.deselection_binding_func = func
+            iterable = bindings
+        for binding, func in iterable:
+            if binding == "ctrl_c":
+                self.MT.extra_ctrl_c_func = func
+            if binding == "ctrl_x":
+                self.MT.extra_ctrl_x_func = func
+            if binding == "ctrl_v":
+                self.MT.extra_ctrl_v_func = func
+            if binding == "ctrl_z":
+                self.MT.extra_ctrl_z_func = func
+            if binding == "delete_key":
+                self.MT.extra_delete_key_func = func
+            if binding == "edit_cell":
+                self.MT.extra_edit_cell_func = func
+            if binding == "begin_edit_cell":
+                self.MT.extra_begin_edit_cell_func = func
+            if binding == "begin_edit_cell_use_keypress":
+                self.MT.extra_begin_edit_cell_keypress_func = func
+            if binding == "escape_edit_cell":
+                self.MT.extra_escape_edit_cell_func = func
+            if binding == "row_index_drag_drop":
+                self.RI.ri_extra_drag_drop_func = func
+            if binding == "column_header_drag_drop":
+                self.CH.ch_extra_drag_drop_func = func
+            if binding == "cell_select":
+                self.MT.selection_binding_func = func
+            if binding in ("select_all", "ctrl_a"):
+                self.MT.select_all_binding_func = func
+            if binding == "row_select":
+                self.RI.selection_binding_func = func
+            if binding in ("col_select", "column_select"):
+                self.CH.selection_binding_func = func
+            if binding == "drag_select_cells":
+                self.MT.drag_selection_binding_func = func
+            if binding == "drag_select_rows":
+                self.RI.drag_selection_binding_func = func
+            if binding == "drag_select_columns":
+                self.CH.drag_selection_binding_func = func
+            if binding == "shift_cell_select":
+                self.MT.shift_selection_binding_func = func
+            if binding == "shift_row_select":
+                self.RI.shift_selection_binding_func = func
+            if binding == "shift_column_select":
+                self.CH.shift_selection_binding_func = func
+            if binding == "deselect":
+                self.MT.deselection_binding_func = func
+            if binding == "rc_delete_row":
+                self.MT.extra_del_rows_rc_func = func
+            if binding == "rc_delete_column":
+                self.MT.extra_del_cols_rc_func = func
+            if binding == "rc_insert_column":
+                self.MT.extra_insert_cols_rc_func = func
+            if binding == "rc_insert_row":
+                self.MT.extra_insert_rows_rc_func = func
+            if binding == "all_select_events":
+                self.MT.selection_binding_func = func
+                self.MT.select_all_binding_func = func
+                self.RI.selection_binding_func = func
+                self.CH.selection_binding_func = func
+                self.MT.drag_selection_binding_func = func
+                self.RI.drag_selection_binding_func = func
+                self.CH.drag_selection_binding_func = func
+                self.MT.shift_selection_binding_func = func
+                self.RI.shift_selection_binding_func = func
+                self.CH.shift_selection_binding_func = func
+                self.MT.deselection_binding_func = func
 
     def bind(self, binding, func):
         if binding == "<ButtonPress-1>":
@@ -623,6 +635,9 @@ class Sheet(tk.Frame):
         self.CH.set_width_of_all_cols(width = width, only_set_if_too_small = only_set_if_too_small, recreate = recreate_selection_boxes)
         if redraw:
             self.refresh()
+
+    def set_all_row_heights(self, height = None, only_set_if_too_small = False, recreate = True):
+        self.RI.set_height_of_all_rows(height = height, only_set_if_too_small = only_set_if_too_small, recreate = recreate)
 
     def column_width(self, column = None, width = None, only_set_if_too_small = False, redraw = True):
         if column == "all":
@@ -899,8 +914,10 @@ class Sheet(tk.Frame):
         for rn in range(len(self.MT.data_ref)):
             self.MT.data_ref[rn].insert(moveto, self.MT.data_ref[rn].pop(column))
 
-    def create_text_editor(self, row = 0, column = 0, text = None, state = "normal", see = True, set_data_ref_on_destroy = False):
-        self.MT.create_text_editor(r = row, c = column, text = text, state = state, see = see, set_data_ref_on_destroy = set_data_ref_on_destroy)
+    def create_text_editor(self, row = 0, column = 0, text = None, state = "normal", see = True, set_data_ref_on_destroy = False,
+                           binding = None):
+        self.MT.create_text_editor(r = row, c = column, text = text, state = state, see = see, set_data_ref_on_destroy = set_data_ref_on_destroy,
+                                   binding = binding)
 
     def set_text_editor_value(self, text = "", r = None, c = None):
         if self.MT.text_editor is not None and r is None and c is None:
@@ -922,6 +939,9 @@ class Sheet(tk.Frame):
                                              redraw = redraw,
                                              recreate = recreate)
 
+    def destroy_text_editor(self, event = None):
+        self.MT.destroy_text_editor(event = event)
+
     def get_xview(self):
         return self.MT.xview()
 
@@ -931,7 +951,7 @@ class Sheet(tk.Frame):
     def set_xview(self, position, option = "moveto"):
         self.MT.set_xviews(option, position)
 
-    def set_yview(self,position,option = "moveto"):
+    def set_yview(self,position, option = "moveto"):
         self.MT.set_yviews(option, position)
 
     def set_view(self, x_args, y_args):
@@ -948,6 +968,9 @@ class Sheet(tk.Frame):
 
     def select_cell(self, row, column, redraw = True):
         self.MT.select_cell(row, column, redraw = redraw)
+
+    def move_down(self):
+        self.MT.move_down()
 
     def add_cell_selection(self, row, column, redraw = True, run_binding_func = True, set_as_current = True):
         self.MT.add_selection(r = row, c = column, redraw = redraw, run_binding_func = run_binding_func, set_as_current = set_as_current)
@@ -992,7 +1015,7 @@ class Sheet(tk.Frame):
             else:
                 return curr
 
-    def set_currently_selected(self, current_tuple_0 = 0, current_tuple_1 = 0):
+    def set_currently_selected(self, current_tuple_0 = 0, current_tuple_1 = 0, selection_binding = True):
         if isinstance(current_tuple_0, int) and isinstance(current_tuple_1, int):
             self.MT.create_current(r = current_tuple_0,
                                    c = current_tuple_1,
@@ -1008,6 +1031,8 @@ class Sheet(tk.Frame):
                                    c = current_tuple_1,
                                    type_ = "col",
                                    inside = True if self.MT.cell_selected(0, current_tuple_1) else False)
+        if selection_binding and self.MT.selection_binding_func is not None:
+            self.MT.selection_binding_func(("select_cell", ) + tuple((current_tuple_0, current_tuple_1)))
 
     def get_selected_rows(self, get_cells = False, get_cells_as_rows = False, return_tuple = False):
         if return_tuple:
@@ -1022,10 +1047,17 @@ class Sheet(tk.Frame):
             return self.MT.get_selected_cols(get_cells = get_cells, get_cells_as_cols = get_cells_as_columns)
 
     def get_selected_cells(self, get_rows = False, get_columns = False, sort_by_row = False, sort_by_column = False):
-        if sort_by_row:
-            return sorted(self.MT.get_selected_cells(get_rows = get_rows, get_cols = get_columns), key=lambda t: t[0])
+        if sort_by_row and sort_by_column:
+            sels = sorted(self.MT.get_selected_cells(get_rows = get_rows, get_cols = get_columns),
+                          key = lambda t: t[1])
+            return sorted(sels,
+                          key = lambda t: t[0])
+        elif sort_by_row:
+            return sorted(self.MT.get_selected_cells(get_rows = get_rows, get_cols = get_columns),
+                          key = lambda t: t[0])
         elif sort_by_column:
-            return sorted(self.MT.get_selected_cells(get_rows = get_rows, get_cols = get_columns), key=lambda t: t[1])
+            return sorted(self.MT.get_selected_cells(get_rows = get_rows, get_cols = get_columns),
+                          key = lambda t: t[1])
         else:
             return self.MT.get_selected_cells(get_rows = get_rows, get_cols = get_columns)
 

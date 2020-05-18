@@ -401,21 +401,31 @@ class RowIndex(tk.Canvas):
                         self.MT.create_selected(end_row, 0, start_row + 1, len(self.MT.col_positions) - 1, "rows")
                     if self.drag_selection_binding_func is not None:
                         self.drag_selection_binding_func(("drag_select_rows", func_event))
-            if event.y > self.winfo_height():
+            ycheck = self.yview()
+            if event.y > self.winfo_height() and len(ycheck) > 1 and ycheck[1] < 1:
                 try:
                     self.MT.yview_scroll(1, "units")
                     self.yview_scroll(1, "units")
                 except:
                     pass
-            elif event.y < 0 and self.canvasy(self.winfo_height()) > 0:
+                self.check_yview()
+            elif event.y < 0 and self.canvasy(self.winfo_height()) > 0 and ycheck and ycheck[0] > 0:
                 try:
                     self.yview_scroll(-1, "units")
                     self.MT.yview_scroll(-1, "units")
                 except:
                     pass
+                self.check_yview()
             self.MT.main_table_redraw_grid_and_text(redraw_header = False, redraw_row_index = True)
         if self.extra_b1_motion_func is not None:
             self.extra_b1_motion_func(event)
+
+    def check_yview(self):
+        ycheck = self.yview()
+        if ycheck and ycheck[0] < 0:
+            self.MT.set_yviews("moveto", 0)
+        if len(ycheck) > 1 and ycheck[1] > 1:
+            self.MT.set_yviews("moveto", 1)
             
     def b1_release(self, event = None):
         self.MT.bind("<MouseWheel>", self.MT.mousewheel)
@@ -714,9 +724,9 @@ class RowIndex(tk.Canvas):
                     new_width = w
         self.MT.txt_measure_canvas.delete(x)
         self.set_width(new_width, set_TL = True)
-        self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
         if recreate:
             self.MT.recreate_all_selection_boxes()
+        self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
 
     def set_height_of_all_rows(self, height = None, only_set_if_too_small = False, recreate = True):
         if height is None:

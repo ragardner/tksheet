@@ -297,21 +297,24 @@ class ColumnHeaders(tk.Canvas):
             if x > 0 and x < self.MT.col_positions[-1]:
                 x = event.x
                 wend = self.winfo_width()
-                if x >= wend - 0:
+                xcheck = self.xview()
+                if x >= wend - 0 and len(xcheck) > 1 and xcheck[1] < 1:
                     if x >= wend + 15:
                         self.MT.xview_scroll(2, "units")
                         self.xview_scroll(2, "units")
                     else:
                         self.MT.xview_scroll(1, "units")
                         self.xview_scroll(1, "units")
+                    self.check_xview()
                     self.MT.main_table_redraw_grid_and_text(redraw_header = True)
-                elif x <= 0:
+                elif x <= 0 and len(xcheck) > 1 and xcheck[0] > 1:
                     if x >= -40:
                         self.MT.xview_scroll(-1, "units")
                         self.xview_scroll(-1, "units")
                     else:
                         self.MT.xview_scroll(-2, "units")
                         self.xview_scroll(-2, "units")
+                    self.check_xview()
                     self.MT.main_table_redraw_grid_and_text(redraw_header = True)
                 selected_cols = sorted(self.MT.get_selected_cols())
                 rectw = self.MT.col_positions[selected_cols[-1] + 1] - self.MT.col_positions[selected_cols[0]]
@@ -337,21 +340,31 @@ class ColumnHeaders(tk.Canvas):
                         func_event = tuple(range(end_col, start_col + 1))
                     if self.drag_selection_binding_func is not None:
                         self.drag_selection_binding_func(("drag_select_columns", func_event))
-                if event.x > self.winfo_width():
+                xcheck = self.xview()
+                if event.x > self.winfo_width() and len(xcheck) > 1 and xcheck[1] < 1:
                     try:
                         self.MT.xview_scroll(1, "units")
                         self.xview_scroll(1, "units")
                     except:
                         pass
-                elif event.x < 0 and self.canvasx(self.winfo_width()) > 0:
+                    self.check_xview()
+                elif event.x < 0 and self.canvasx(self.winfo_width()) > 0 and xcheck and xcheck[0] > 0:
                     try:
                         self.xview_scroll(-1, "units")
                         self.MT.xview_scroll(-1, "units")
                     except:
                         pass
+                    self.check_xview()
             self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = False)
         if self.extra_b1_motion_func is not None:
             self.extra_b1_motion_func(event)
+
+    def check_xview(self):
+        xcheck = self.xview()
+        if xcheck and xcheck[0] < 0:
+            self.MT.set_xviews("moveto", 0)
+        elif len(xcheck) > 1 and xcheck[1] > 1:
+            self.MT.set_xviews("moveto", 1)
             
     def b1_release(self, event = None):
         self.MT.bind("<MouseWheel>", self.MT.mousewheel)
