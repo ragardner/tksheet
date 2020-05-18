@@ -511,6 +511,10 @@ class MainTable(tk.Canvas):
             else:
                 for ndr, r in enumerate(range(y1, y1 + numrows)):
                     for ndc, c in enumerate(range(x1, x1 + numcols)):
+                        if r > len(self.data_ref) - 1:
+                            self.data_ref.extend([list(repeat("", c + 1)) for r in range((r + 1) - len(self.data_ref))])
+                        elif c > len(self.data_ref[r]) - 1:
+                            self.data_ref[r].extend(list(repeat("", (c + 1) - len(self.data_ref[r]))))
                         if self.undo_enabled:
                             undo_storage[(r, self.displayed_columns[c])] = f"{self.data_ref[r][self.displayed_columns[c]]}"
                         self.data_ref[r][self.displayed_columns[c]] = data[ndr][ndc]
