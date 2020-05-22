@@ -1,3 +1,7 @@
+### Version 4.7.1
+ - Rename themes to "light blue", "light green", "dark blue", "dark green"
+- Clean up theme and color settings code
+
 ### Version 4.7.0
  - Add green theme
  - Change font to calibri
