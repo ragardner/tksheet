@@ -1,3 +1,4 @@
+from ._tksheet_vars import *
 from collections import defaultdict, deque
 from itertools import islice, repeat, accumulate, chain, product, cycle
 from math import floor, ceil
@@ -16,7 +17,7 @@ from platform import system as get_os
 class TextEditor_(tk.Text):
     def __init__(self,
                  parent,
-                 font = ("TkHeadingFont", 10),
+                 font = get_font(),
                  text = None,
                  state = "normal"):
         tk.Text.__init__(self,
@@ -111,7 +112,7 @@ class TextEditor_(tk.Text):
 class TextEditor(tk.Frame):
     def __init__(self,
                  parent,
-                 font = ("TkHeadingFont", 10),
+                 font = get_font(),
                  text = None,
                  state = "normal",
                  width = None,
@@ -250,5 +251,4 @@ def get_rc_binding():
             return "<2>"
         else:
             return "<3>"
-
         

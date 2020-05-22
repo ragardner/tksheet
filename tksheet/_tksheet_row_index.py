@@ -749,226 +749,195 @@ class RowIndex(tk.Canvas):
         else:
             return int(self.MT.min_rh)
 
+    def redraw_highlight_get_text_fg(self, fr, sr, r, c_2, c_3, selected_rows, selected_cols, actual_selected_rows):
+        if r in self.highlighted_cells and r in actual_selected_rows:
+            c_1 = self.highlighted_cells[r][0] if self.highlighted_cells[r][0].startswith("#") else Color_Map_[self.highlighted_cells[r][0]]
+            self.create_rectangle(0,
+                                  fr + 1,
+                                  self.current_width - 1,
+                                  sr,
+                                  fill = (f"#{int((int(c_1[1:3], 16) + int(c_3[1:3], 16)) / 2):02X}" +
+                                          f"{int((int(c_1[3:5], 16) + int(c_3[3:5], 16)) / 2):02X}" +
+                                          f"{int((int(c_1[5:], 16) + int(c_3[5:], 16)) / 2):02X}"),
+                                  outline = "",
+                                  tags = "s")
+            tf = self.selected_rows_fg if self.highlighted_cells[r][1] is None or self.MT.display_selected_fg_over_highlights else self.highlighted_cells[r][1]
+        elif r in self.highlighted_cells and (r in selected_rows or selected_cols):
+            c_1 = self.highlighted_cells[r][0] if self.highlighted_cells[r][0].startswith("#") else Color_Map_[self.highlighted_cells[r][0]]
+            self.create_rectangle(0,
+                                  fr + 1,
+                                  self.current_width - 1,
+                                  sr,
+                                  fill = (f"#{int((int(c_1[1:3], 16) + int(c_2[1:3], 16)) / 2):02X}" +
+                                          f"{int((int(c_1[3:5], 16) + int(c_2[3:5], 16)) / 2):02X}" +
+                                          f"{int((int(c_1[5:], 16) + int(c_2[5:], 16)) / 2):02X}"),
+                                  outline = "",
+                                  tags = "s")
+            tf = self.selected_cells_foreground if self.highlighted_cells[r][1] is None or self.MT.display_selected_fg_over_highlights else self.highlighted_cells[r][1]
+        elif r in actual_selected_rows:
+            tf = self.selected_rows_fg
+        elif r in selected_rows or selected_cols:
+            tf = self.selected_cells_foreground
+        elif r in self.highlighted_cells:
+            self.create_rectangle(0, fr + 1, self.current_width - 1, sr, fill = self.highlighted_cells[r][0], outline = "", tags = "s")
+            tf = self.text_color if self.highlighted_cells[r][1] is None else self.highlighted_cells[r][1]
+        else:
+            tf = self.text_color
+        return tf, self.MT.my_font
+
     def redraw_grid_and_text(self, last_row_line_pos, y1, y_stop, start_row, end_row, y2, x1, x_stop, selected_rows, selected_cols, actual_selected_rows):
-        try:
-            self.configure(scrollregion = (0,
-                                           0,
-                                           self.current_width,
-                                           last_row_line_pos + self.MT.empty_vertical))
-            self.delete("fh", "h", "v", "t", "s") #first horizontal, horizontal, vertical, text, highlights
-            self.visible_row_dividers = []
-            y = self.MT.row_positions[start_row]
-            self.create_line(0, y, self.current_width, y, fill = self.grid_color, width = 1, tags = "fh")
-            xend = self.current_width - 6
-            self.row_width_resize_bbox = (self.current_width - 2, y1, self.current_width, y2)
-            if self.height_resizing_enabled:
-                for r in range(start_row + 1, end_row):
-                    y = self.MT.row_positions[r]
-                    self.visible_row_dividers.append((1, y - 2, xend, y + 2))
-                    self.create_line(0, y, self.current_width, y, fill = self.grid_color, width = 1, tags = ("h", f"{r}"))
-            else:
-                for r in range(start_row + 1, end_row):
-                    y = self.MT.row_positions[r]
-                    self.create_line(0, y, self.current_width, y, fill = self.grid_color, width = 1, tags = ("h", f"{r}"))
-            sb = y2 + 2
-            c_2 = self.selected_cells_background if self.selected_cells_background.startswith("#") else Color_Map_[self.selected_cells_background]
-            c_3 = self.selected_rows_bg if self.selected_rows_bg.startswith("#") else Color_Map_[self.selected_rows_bg]
-            if not self.MT.my_row_index and not isinstance(self.MT.my_row_index, int) and self.auto_resize_width:
-                new_w = self.MT.GetTextWidth(f"{end_row}") + 11
-                if self.current_width != new_w:
-                    self.set_width(new_w, set_TL = True)
-                    self.MT.recreate_all_selection_boxes()
-            if self.align == "center":
-                mw = self.current_width - 1
-                x = floor(self.current_width / 2)
-                for r in range(start_row, end_row - 1):
-                    fr = self.MT.row_positions[r]
-                    sr = self.MT.row_positions[r + 1]
-                    if sr > sb:
-                        sr = sb
-                    if r in self.highlighted_cells and r in actual_selected_rows:
-                        c_1 = self.highlighted_cells[r][0] if self.highlighted_cells[r][0].startswith("#") else Color_Map_[self.highlighted_cells[r][0]]
-                        self.create_rectangle(0,
-                                              fr + 1,
-                                              self.current_width - 1,
-                                              sr,
-                                              fill = (f"#{int((int(c_1[1:3], 16) + int(c_3[1:3], 16)) / 2):02X}" +
-                                                      f"{int((int(c_1[3:5], 16) + int(c_3[3:5], 16)) / 2):02X}" +
-                                                      f"{int((int(c_1[5:], 16) + int(c_3[5:], 16)) / 2):02X}"),
-                                              outline = "",
-                                              tags = "s")
-                        tf = self.selected_rows_fg if self.highlighted_cells[r][1] is None or self.MT.display_selected_fg_over_highlights else self.highlighted_cells[r][1]
-                    elif r in self.highlighted_cells and (r in selected_rows or selected_cols):
-                        c_1 = self.highlighted_cells[r][0] if self.highlighted_cells[r][0].startswith("#") else Color_Map_[self.highlighted_cells[r][0]]
-                        self.create_rectangle(0,
-                                              fr + 1,
-                                              self.current_width - 1,
-                                              sr,
-                                              fill = (f"#{int((int(c_1[1:3], 16) + int(c_2[1:3], 16)) / 2):02X}" +
-                                                      f"{int((int(c_1[3:5], 16) + int(c_2[3:5], 16)) / 2):02X}" +
-                                                      f"{int((int(c_1[5:], 16) + int(c_2[5:], 16)) / 2):02X}"),
-                                              outline = "",
-                                              tags = "s")
-                        tf = self.selected_cells_foreground if self.highlighted_cells[r][1] is None or self.MT.display_selected_fg_over_highlights else self.highlighted_cells[r][1]
-                    elif r in actual_selected_rows:
-                        tf = self.selected_rows_fg
-                    elif r in selected_rows or selected_cols:
-                        tf = self.selected_cells_foreground
-                    elif r in self.highlighted_cells:
-                        self.create_rectangle(0, fr + 1, self.current_width - 1, sr, fill = self.highlighted_cells[r][0], outline = "", tags = "s")
-                        tf = self.text_color if self.highlighted_cells[r][1] is None else self.highlighted_cells[r][1]
-                    else:
-                        tf = self.text_color
-                    try:
-                        if isinstance(self.MT.my_row_index, int):
-                            if isinstance(self.MT.data_ref[r][self.MT.my_row_index], str):
-                                lns = self.MT.data_ref[r][self.MT.my_row_index].split("\n")
-                            else:
-                                lns = (f"{self.MT.data_ref[r][self.MT.my_row_index]}", )
+        self.configure(scrollregion = (0,
+                                       0,
+                                       self.current_width,
+                                       last_row_line_pos + self.MT.empty_vertical))
+        self.delete("fh", "h", "v", "t", "s") #first horizontal, horizontal, vertical, text, highlights
+        self.visible_row_dividers = []
+        y = self.MT.row_positions[start_row]
+        self.create_line(0, y, self.current_width, y, fill = self.grid_color, width = 1, tags = "fh")
+        xend = self.current_width - 6
+        self.row_width_resize_bbox = (self.current_width - 2, y1, self.current_width, y2)
+        if self.height_resizing_enabled:
+            for r in range(start_row + 1, end_row):
+                y = self.MT.row_positions[r]
+                self.visible_row_dividers.append((1, y - 2, xend, y + 2))
+                self.create_line(0, y, self.current_width, y, fill = self.grid_color, width = 1, tags = ("h", f"{r}"))
+        else:
+            for r in range(start_row + 1, end_row):
+                y = self.MT.row_positions[r]
+                self.create_line(0, y, self.current_width, y, fill = self.grid_color, width = 1, tags = ("h", f"{r}"))
+        sb = y2 + 2
+        c_2 = self.selected_cells_background if self.selected_cells_background.startswith("#") else Color_Map_[self.selected_cells_background]
+        c_3 = self.selected_rows_bg if self.selected_rows_bg.startswith("#") else Color_Map_[self.selected_rows_bg]
+        if not self.MT.my_row_index and not isinstance(self.MT.my_row_index, int) and self.auto_resize_width:
+            new_w = self.MT.GetTextWidth(f"{end_row}") + 11
+            if self.current_width != new_w:
+                self.set_width(new_w, set_TL = True)
+                self.MT.recreate_all_selection_boxes()
+        if self.align == "center":
+            mw = self.current_width - 1
+            x = floor(self.current_width / 2)
+            for r in range(start_row, end_row - 1):
+                fr = self.MT.row_positions[r]
+                sr = self.MT.row_positions[r + 1]
+                if sr > sb:
+                    sr = sb
+                tf, font = self.redraw_highlight_get_text_fg(fr, sr, r, c_2, c_3, selected_rows, selected_cols, actual_selected_rows)
+                try:
+                    if isinstance(self.MT.my_row_index, int):
+                        if isinstance(self.MT.data_ref[r][self.MT.my_row_index], str):
+                            lns = self.MT.data_ref[r][self.MT.my_row_index].split("\n")
                         else:
-                            if isinstance(self.MT.my_row_index[r], str):
-                                lns = self.MT.my_row_index[r].split("\n")
-                            else:
-                                lns = (f"{self.MT.my_row_index[r]}", )
-                    except:
-                        lns = (f"{r + 1}", )
-                    txt = lns[0]
-                    y = fr + self.MT.fl_ins
-                    if y + self.MT.half_txt_h - 1 > y1:
-                        t = self.create_text(x, y, text = txt, fill = tf, font = self.MT.my_font, anchor = "center", tags = "t")
+                            lns = (f"{self.MT.data_ref[r][self.MT.my_row_index]}", )
+                    else:
+                        if isinstance(self.MT.my_row_index[r], str):
+                            lns = self.MT.my_row_index[r].split("\n")
+                        else:
+                            lns = (f"{self.MT.my_row_index[r]}", )
+                except:
+                    lns = (f"{r + 1}", )
+                txt = lns[0]
+                y = fr + self.MT.fl_ins
+                if y + self.MT.half_txt_h - 1 > y1:
+                    t = self.create_text(x, y, text = txt, fill = tf, font = font, anchor = "center", tags = "t")
+                    wd = self.bbox(t)
+                    wd = wd[2] - wd[0]
+                    if wd > mw:
+                        tl = len(txt)
+                        tmod = ceil((tl - int(tl * (mw / wd))) / 2)
+                        txt = txt[tmod - 1:-tmod]
+                        self.itemconfig(t, text = txt)
                         wd = self.bbox(t)
-                        wd = wd[2] - wd[0]
-                        if wd > mw:
-                            tl = len(txt)
-                            tmod = ceil((tl - int(tl * (mw / wd))) / 2)
-                            txt = txt[tmod - 1:-tmod]
+                        self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
+                        while wd[2] - wd[0] > mw:
+                            txt = txt[next(self.c_align_cyc)]
                             self.itemconfig(t, text = txt)
                             wd = self.bbox(t)
-                            self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
-                            while wd[2] - wd[0] > mw:
-                                txt = txt[next(self.c_align_cyc)]
+                        self.coords(t, x, y)
+                if len(lns) > 1:
+                    stl = int((y1 - y) / self.MT.xtra_lines_increment) - 1
+                    if stl < 1:
+                        stl = 1
+                    y += (stl * self.MT.xtra_lines_increment)
+                    if y + self.MT.half_txt_h - 1 < sr:
+                        for i in range(stl, len(lns)):
+                            txt = lns[i]
+                            t = self.create_text(x, y, text = txt, fill = tf, font = font, anchor = "center", tags = "t")
+                            wd = self.bbox(t)
+                            wd = wd[2] - wd[0]
+                            if wd > mw:
+                                tl = len(txt)
+                                tmod = ceil((tl - int(tl * (mw / wd))) / 2)
+                                txt = txt[tmod - 1:-tmod]
                                 self.itemconfig(t, text = txt)
                                 wd = self.bbox(t)
-                            self.coords(t, x, y)
-                    if len(lns) > 1:
-                        stl = int((y1 - y) / self.MT.xtra_lines_increment) - 1
-                        if stl < 1:
-                            stl = 1
-                        y += (stl * self.MT.xtra_lines_increment)
-                        if y + self.MT.half_txt_h - 1 < sr:
-                            for i in range(stl, len(lns)):
-                                txt = lns[i]
-                                t = self.create_text(x, y, text = txt, fill = tf, font = self.MT.my_font, anchor = "center", tags = "t")
-                                wd = self.bbox(t)
-                                wd = wd[2] - wd[0]
-                                if wd > mw:
-                                    tl = len(txt)
-                                    tmod = ceil((tl - int(tl * (mw / wd))) / 2)
-                                    txt = txt[tmod - 1:-tmod]
+                                self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
+                                while wd[2] - wd[0] > mw:
+                                    txt = txt[next(self.c_align_cyc)]
                                     self.itemconfig(t, text = txt)
                                     wd = self.bbox(t)
-                                    self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
-                                    while wd[2] - wd[0] > mw:
-                                        txt = txt[next(self.c_align_cyc)]
-                                        self.itemconfig(t, text = txt)
-                                        wd = self.bbox(t)
-                                    self.coords(t, x, y)
-                                y += self.MT.xtra_lines_increment
-                                if y + self.MT.half_txt_h - 1 > sr:
-                                    break
-            elif self.align == "w":
-                mw = self.current_width - 5
-                x = 5
-                for r in range(start_row, end_row - 1):
-                    fr = self.MT.row_positions[r]
-                    sr = self.MT.row_positions[r + 1]
-                    if sr > sb:
-                        sr = sb
-                    if r in self.highlighted_cells and r in actual_selected_rows:
-                        c_1 = self.highlighted_cells[r][0] if self.highlighted_cells[r][0].startswith("#") else Color_Map_[self.highlighted_cells[r][0]]
-                        self.create_rectangle(0,
-                                              fr + 1,
-                                              self.current_width - 1,
-                                              sr,
-                                              fill = (f"#{int((int(c_1[1:3], 16) + int(c_3[1:3], 16)) / 2):02X}" +
-                                                      f"{int((int(c_1[3:5], 16) + int(c_3[3:5], 16)) / 2):02X}" +
-                                                      f"{int((int(c_1[5:], 16) + int(c_3[5:], 16)) / 2):02X}"),
-                                              outline = "",
-                                              tags = "s")
-                        tf = self.selected_rows_fg if self.highlighted_cells[r][1] is None or self.MT.display_selected_fg_over_highlights else self.highlighted_cells[r][1]
-                    elif r in self.highlighted_cells and (r in selected_rows or selected_cols):
-                        c_1 = self.highlighted_cells[r][0] if self.highlighted_cells[r][0].startswith("#") else Color_Map_[self.highlighted_cells[r][0]]
-                        self.create_rectangle(0,
-                                              fr + 1,
-                                              self.current_width - 1,
-                                              sr,
-                                              fill = (f"#{int((int(c_1[1:3], 16) + int(c_2[1:3], 16)) / 2):02X}" +
-                                                      f"{int((int(c_1[3:5], 16) + int(c_2[3:5], 16)) / 2):02X}" +
-                                                      f"{int((int(c_1[5:], 16) + int(c_2[5:], 16)) / 2):02X}"),
-                                              outline = "",
-                                              tags = "s")
-                        tf = self.selected_cells_foreground if self.highlighted_cells[r][1] is None or self.MT.display_selected_fg_over_highlights else self.highlighted_cells[r][1]
-                    elif r in actual_selected_rows:
-                        tf = self.selected_rows_fg
-                    elif r in selected_rows or selected_cols:
-                        tf = self.selected_cells_foreground
-                    elif r in self.highlighted_cells:
-                        self.create_rectangle(0, fr + 1, self.current_width - 1, sr, fill = self.highlighted_cells[r][0], outline = "", tags = "s")
-                        tf = self.text_color if self.highlighted_cells[r][1] is None else self.highlighted_cells[r][1]
-                    else:
-                        tf = self.text_color
-                    try:
-                        if isinstance(self.MT.my_row_index, int):
-                            if isinstance(self.MT.data_ref[r][self.MT.my_row_index], str):
-                                lns = self.MT.data_ref[r][self.MT.my_row_index].split("\n")
-                            else:
-                                lns = (f"{self.MT.data_ref[r][self.MT.my_row_index]}", )
+                                self.coords(t, x, y)
+                            y += self.MT.xtra_lines_increment
+                            if y + self.MT.half_txt_h - 1 > sr:
+                                break
+        elif self.align == "w":
+            mw = self.current_width - 5
+            x = 5
+            for r in range(start_row, end_row - 1):
+                fr = self.MT.row_positions[r]
+                sr = self.MT.row_positions[r + 1]
+                if sr > sb:
+                    sr = sb
+                tf, font = self.redraw_highlight_get_text_fg(fr, sr, r, c_2, c_3, selected_rows, selected_cols, actual_selected_rows)
+                try:
+                    if isinstance(self.MT.my_row_index, int):
+                        if isinstance(self.MT.data_ref[r][self.MT.my_row_index], str):
+                            lns = self.MT.data_ref[r][self.MT.my_row_index].split("\n")
                         else:
-                            if isinstance(self.MT.my_row_index[r], str):
-                                lns = self.MT.my_row_index[r].split("\n")
-                            else:
-                                lns = (f"{self.MT.my_row_index[r]}", )
-                    except:
-                        lns = (f"{r + 1}", )
-                    y = fr + self.MT.fl_ins
-                    if y + self.MT.half_txt_h - 1 > y1:
-                        txt = lns[0]
-                        t = self.create_text(x, y, text = txt, fill = tf, font = self.MT.my_font, anchor = "w", tags = "t")
+                            lns = (f"{self.MT.data_ref[r][self.MT.my_row_index]}", )
+                    else:
+                        if isinstance(self.MT.my_row_index[r], str):
+                            lns = self.MT.my_row_index[r].split("\n")
+                        else:
+                            lns = (f"{self.MT.my_row_index[r]}", )
+                except:
+                    lns = (f"{r + 1}", )
+                y = fr + self.MT.fl_ins
+                if y + self.MT.half_txt_h - 1 > y1:
+                    txt = lns[0]
+                    t = self.create_text(x, y, text = txt, fill = tf, font = font, anchor = "w", tags = "t")
+                    wd = self.bbox(t)
+                    wd = wd[2] - wd[0]
+                    if wd > mw:
+                        nl = int(len(txt) * (mw / wd))
+                        self.itemconfig(t, text = txt[:nl])
                         wd = self.bbox(t)
-                        wd = wd[2] - wd[0]
-                        if wd > mw:
-                            nl = int(len(txt) * (mw / wd))
-                            self.itemconfig(t, text = txt[:nl])
+                        while wd[2] - wd[0] > mw:
+                            nl -= 1
+                            self.dchars(t, nl)
                             wd = self.bbox(t)
-                            while wd[2] - wd[0] > mw:
-                                nl -= 1
-                                self.dchars(t, nl)
+                if len(lns) > 1:
+                    stl = int((y1 - y) / self.MT.xtra_lines_increment) - 1
+                    if stl < 1:
+                        stl = 1
+                    y += (stl * self.MT.xtra_lines_increment)
+                    if y + self.MT.half_txt_h - 1 < sr:
+                        for i in range(stl, len(lns)):
+                            txt = lns[i]
+                            t = self.create_text(x, y, text = txt, fill = tf, font = font, anchor = "w", tags = "t")
+                            wd = self.bbox(t)
+                            wd = wd[2] - wd[0]
+                            if wd > mw:
+                                nl = int(len(txt) * (mw / wd))
+                                self.itemconfig(t, text = txt[:nl])
                                 wd = self.bbox(t)
-                    if len(lns) > 1:
-                        stl = int((y1 - y) / self.MT.xtra_lines_increment) - 1
-                        if stl < 1:
-                            stl = 1
-                        y += (stl * self.MT.xtra_lines_increment)
-                        if y + self.MT.half_txt_h - 1 < sr:
-                            for i in range(stl, len(lns)):
-                                txt = lns[i]
-                                t = self.create_text(x, y, text = txt, fill = tf, font = self.MT.my_font, anchor = "w", tags = "t")
-                                wd = self.bbox(t)
-                                wd = wd[2] - wd[0]
-                                if wd > mw:
-                                    nl = int(len(txt) * (mw / wd))
-                                    self.itemconfig(t, text = txt[:nl])
+                                while wd[2] - wd[0] > mw:
+                                    nl -= 1
+                                    self.dchars(t, nl)
                                     wd = self.bbox(t)
-                                    while wd[2] - wd[0] > mw:
-                                        nl -= 1
-                                        self.dchars(t, nl)
-                                        wd = self.bbox(t)
-                                y += self.MT.xtra_lines_increment
-                                if y + self.MT.half_txt_h - 1 > sr:
-                                    break
-            self.create_line(self.current_width - 1, y1, self.current_width - 1, y_stop, fill = self.row_index_border_color, width = 1, tags = "v")
-        except:
-            return
+                            y += self.MT.xtra_lines_increment
+                            if y + self.MT.half_txt_h - 1 > sr:
+                                break
+        self.create_line(self.current_width - 1, y1, self.current_width - 1, y_stop, fill = self.row_index_border_color, width = 1, tags = "v")
 
     def GetCellCoords(self, event = None, r = None, c = None):
         pass

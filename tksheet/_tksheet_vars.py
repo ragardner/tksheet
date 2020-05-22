@@ -6,6 +6,21 @@ all_chars = set(lowercase_letters + uppercase_letters + numbers + symbols + " " 
 other_symbols = {"<space>": " ",
                  "less": "<"}
 
+#calibri_font = ("Calibri", 11, "normal")
+#calibri_heading_font = ("Calibri", 10, "normal")
+
+#carlito_font = ("Carlito", 11, "normal")
+#carlito_heading_font = ("Carlito", 10, "normal")
+
+#arial_font = ("Carlito", 11, "normal")
+#arial_heading_font = ("Carlito", 10, "normal")
+
+def get_font():
+    return ("Calibri", 11, "normal")
+
+def get_heading_font():
+    return ("Arial", 10, "normal")
+
 Color_Map_ = {
     'alice blue': '#F0F8FF',
     'AliceBlue': '#F0F8FF',
