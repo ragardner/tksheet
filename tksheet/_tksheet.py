@@ -34,14 +34,14 @@ class Sheet(tk.Frame):
                  headers = None,
                  measure_subset_header = True,
                  default_header = "letters", #letters or numbers
-                 header_background = "#f8f9fa",
-                 header_border_color = "#ababab",
-                 header_grid_color = "#ababab",
-                 header_foreground = "#373737",
-                 header_select_background = "#e8eaed",
-                 header_select_foreground = "black",
-                 header_select_column_bg = "#5f6368",
-                 header_select_column_fg = "white",
+                 header_background = theme_light_blue['header_background'],
+                 header_border_color = theme_light_blue['header_border_color'],
+                 header_grid_color = theme_light_blue['header_grid_color'],
+                 header_foreground = theme_light_blue['header_foreground'],
+                 header_select_background = theme_light_blue['header_select_background'],
+                 header_select_foreground = theme_light_blue['header_select_foreground'],
+                 header_select_column_bg = theme_light_blue['header_select_column_bg'],
+                 header_select_column_fg = theme_light_blue['header_select_column_fg'],
                  data_reference = None,
                  data = None,
                  total_columns = None,
@@ -58,17 +58,17 @@ class Sheet(tk.Frame):
                  auto_resize_numerical_row_index = True,
                  set_all_heights_and_widths = False,
                  row_height = "1",
-                 row_index_background = "#f8f9fa",
-                 row_index_border_color = "#ababab",
-                 row_index_grid_color = "#ababab",
-                 row_index_foreground = "#373737",
-                 row_index_select_background = "#e8eaed",
-                 row_index_select_foreground = "black",
-                 row_index_select_row_bg = "#5f6368",
-                 row_index_select_row_fg = "white",
-                 top_left_background = "white",
-                 top_left_foreground = "#c2c9cf",
-                 top_left_foreground_highlight = "#5f6368",
+                 row_index_background = theme_light_blue['row_index_background'],
+                 row_index_border_color = theme_light_blue['row_index_border_color'],
+                 row_index_grid_color = theme_light_blue['row_index_grid_color'],
+                 row_index_foreground = theme_light_blue['row_index_foreground'],
+                 row_index_select_background = theme_light_blue['row_index_select_background'],
+                 row_index_select_foreground = theme_light_blue['row_index_select_foreground'],
+                 row_index_select_row_bg = theme_light_blue['row_index_select_row_bg'],
+                 row_index_select_row_fg = theme_light_blue['row_index_select_row_fg'],
+                 top_left_background = theme_light_blue['top_left_background'],
+                 top_left_foreground = theme_light_blue['top_left_foreground'],
+                 top_left_foreground_highlight = theme_light_blue['top_left_foreground_highlight'],
                  font = get_font(),
                  header_font = get_heading_font(),
                  popup_menu_font = get_font(),
@@ -79,35 +79,35 @@ class Sheet(tk.Frame):
                  align = "w",
                  header_align = "center",
                  row_index_align = "center",
-                 frame_background = "white",
-                 table_background = "white",
-                 grid_color = "#d4d4d4",
-                 text_color = "black",
+                 frame_background = theme_light_blue['table_background'],
+                 table_background = theme_light_blue['table_background'],
+                 grid_color = theme_light_blue['grid_color'],
+                 text_color = theme_light_blue['text_color'],
                  show_selected_cells_border = True,
-                 selected_cells_border_color = "#1a73e8",
-                 selected_cells_background = "#e7f0fd",
+                 selected_cells_border_color = theme_light_blue['selected_cells_border_color'],
+                 selected_cells_background = theme_light_blue['selected_cells_background'],
                  display_selected_fg_over_highlights = False,
-                 selected_cells_foreground = "black",
-                 selected_rows_border_color = "#1a73e8",
-                 selected_rows_background = "#e7f0fd",
-                 selected_rows_foreground = "black",
-                 selected_columns_border_color = "#1a73e8",
-                 selected_columns_background = "#e7f0fd",
-                 selected_columns_foreground = "black",
-                 resizing_line_color = "black",
-                 drag_and_drop_color = "#1a73e8",
+                 selected_cells_foreground = theme_light_blue['selected_cells_foreground'],
+                 selected_rows_border_color = theme_light_blue['selected_rows_border_color'],
+                 selected_rows_background = theme_light_blue['selected_rows_background'],
+                 selected_rows_foreground = theme_light_blue['selected_rows_foreground'],
+                 selected_columns_border_color = theme_light_blue['selected_columns_border_color'],
+                 selected_columns_background = theme_light_blue['selected_columns_background'],
+                 selected_columns_foreground = theme_light_blue['selected_columns_foreground'],
+                 resizing_line_color = theme_light_blue['resizing_line_color'],
+                 drag_and_drop_color = theme_light_blue['drag_and_drop_color'],
                  displayed_columns = [],
                  all_columns_displayed = True,
                  max_undos = 20,
                  outline_thickness = 0,
-                 outline_color = "gray2",
+                 outline_color = theme_light_blue['outline_color'],
                  column_drag_and_drop_perform = True,
                  row_drag_and_drop_perform = True,
                  empty_horizontal = 150,
                  empty_vertical = 100,
                  show_vertical_grid = True,
                  show_horizontal_grid = True,
-                 theme = "light"):
+                 theme = "light blue"):
         tk.Frame.__init__(self,
                           parent,
                           background = frame_background,
@@ -222,182 +222,12 @@ class Sheet(tk.Frame):
             self.xscroll.grid(row = 2, column = 1, columnspan = 2, sticky = "nswe")
         if show_y_scrollbar:
             self.yscroll.grid(row = 1, column = 2, sticky = "nswe")
-        if theme == "dark":
+        if theme != "light blue":
             self.MT.display_selected_fg_over_highlights = True
-            if header_background == "#f8f9fa":
-                self.set_options(header_background = "#2d2d2d", redraw = False)
-                
-            if header_border_color == "#ababab":
-                self.set_options(header_border_color = "#4a4e51", redraw = False)
-                
-            if header_grid_color == "#ababab":
-                self.set_options(header_grid_color = "#4a4e51", redraw = False)
-                
-            if header_foreground == "#373737":
-                self.set_options(header_foreground = "#c2c9cf", redraw = False)
-                
-            if header_select_background == "#e8eaed":
-                self.set_options(header_select_background = "#00385a", redraw = False)
-                
-            if header_select_foreground == "black":
-                self.set_options(header_select_foreground = "white", redraw = False)
-                
-            if row_index_background == "#f8f9fa":
-                self.set_options(row_index_background = "#2d2d2d", redraw = False)
-                
-            if row_index_border_color == "#ababab":
-                self.set_options(row_index_border_color = "#4a4e51", redraw = False)
-                
-            if row_index_grid_color == "#ababab":
-                self.set_options(row_index_grid_color = "#4a4e51", redraw = False)
-                
-            if row_index_foreground == "#373737":
-                self.set_options(row_index_foreground = "#c2c9cf", redraw = False)
-                
-            if row_index_select_background == "#e8eaed":
-                self.set_options(row_index_select_background = "#00385a", redraw = False)
-                
-            if row_index_select_foreground == "black":
-                self.set_options(row_index_select_foreground = "white", redraw = False)
-                
-            if top_left_background == "white":
-                self.set_options(top_left_background = "#3d3d3d", redraw = False)
-                
-            if top_left_foreground == "#c2c9cf":
-                self.set_options(top_left_foreground = "#4a4e51", redraw = False)
-                
-            if table_background == "white":
-                self.set_options(table_background = "#3d3d3d", redraw = False)
-                self.config(bg = "#3d3d3d")
-            if grid_color == "#d4d4d4":
-                self.set_options(grid_color = "#4a4e51", redraw = False)
-                
-            if text_color == "black":
-                self.set_options(text_color = "#ecf0f2", redraw = False)
-                
-            if selected_cells_background == "#e7f0fd":
-                self.set_options(selected_cells_background = "#004567", redraw = False)
-                
-            if selected_cells_foreground == "black":
-                self.set_options(selected_cells_foreground = "white", redraw = False)
-                
-            if resizing_line_color == "black":
-                self.set_options(resizing_line_color = "white", redraw = False)
-                
-            if outline_color == "gray2":
-                self.set_options(outline_color = "gray95", redraw = False)
-                
-            if header_select_column_bg == "#5f6368":
-                self.set_options(header_select_column_bg = "#c2c9cf", redraw = False)
-                
-            if header_select_column_fg == "white":
-                self.set_options(header_select_column_fg = "#2d2d2d", redraw = False)
-                
-            if row_index_select_row_bg == "#5f6368":
-                self.set_options(row_index_select_row_bg = "#c2c9cf", redraw = False)
-                
-            if row_index_select_row_fg == "white":
-                self.set_options(row_index_select_row_fg = "#2d2d2d", redraw = False)
-                
-            if selected_rows_background == "#e7f0fd":
-                self.set_options(selected_rows_background = "#004567", redraw = False)
-                
-            if selected_rows_foreground == "black":
-                self.set_options(selected_rows_foreground = "white", redraw = False)
-                
-            if selected_columns_background == "#e7f0fd":
-                self.set_options(selected_columns_background = "#004567", redraw = False)
-                
-            if selected_columns_foreground == "black":
-                self.set_options(selected_columns_foreground = "white", redraw = False)
-
-        elif theme == "green":
-            self.MT.display_selected_fg_over_highlights = True
-                
-            if header_background == "#f8f9fa":
-                self.set_options(header_background = "#edebe9", redraw = False)
-                
-            if header_border_color == "#ababab":
-                self.set_options(header_border_color = "#bfbfbf", redraw = False)
-                
-            if header_grid_color == "#ababab":
-                self.set_options(header_grid_color = "#bfbfbf", redraw = False)
-                
-            if header_select_background == "#e8eaed":
-                self.set_options(header_select_background = "#dad8d6", redraw = False)
-                
-            if header_select_foreground == "black":
-                self.set_options(header_select_foreground = "#217346", redraw = False)
-                
-            if row_index_background == "#f8f9fa":
-                self.set_options(row_index_background = "#edebe9", redraw = False)
-                
-            if row_index_border_color == "#ababab":
-                self.set_options(row_index_border_color = "#bfbfbf", redraw = False)
-                
-            if row_index_grid_color == "#ababab":
-                self.set_options(row_index_grid_color = "#bfbfbf", redraw = False)
-                
-            if row_index_select_background == "#e8eaed":
-                self.set_options(row_index_select_background = "#dad8d6", redraw = False)
-                
-            if row_index_select_foreground == "black":
-                self.set_options(row_index_select_foreground = "#217346", redraw = False)
-                
-            if top_left_background == "white":
-                self.set_options(top_left_background = "#edebe9", redraw = False)
-                
-            if top_left_foreground == "#c2c9cf":
-                self.set_options(top_left_foreground = "#b7b7b7", redraw = False)
-
-            if top_left_foreground_highlight == "#5f6368":
-                self.set_options(top_left_foreground_highlight = "#2d2d2d", redraw = False)
-                
-            if grid_color == "#d4d4d4":
-                self.set_options(grid_color = "#bfbfbf", redraw = False)
-                
-            if text_color == "black":
-                self.set_options(text_color = "#373737", redraw = False)
-                
-            if selected_cells_border_color == "#1a73e8":
-                self.set_options(selected_cells_border_color = "#217346", redraw = False)
-                
-            if selected_cells_background == "#e7f0fd":
-                self.set_options(selected_cells_background = "#ebedeb", redraw = False)
-                
-            if selected_cells_foreground == "black":
-                self.set_options(selected_cells_foreground = "#0a0a0a", redraw = False)
-                
-            if header_select_column_bg == "#5f6368":
-                self.set_options(header_select_column_bg = "#d3f0e0", redraw = False)
-                
-            if header_select_column_fg == "white":
-                self.set_options(header_select_column_fg = "#217346", redraw = False)
-                
-            if row_index_select_row_bg == "#5f6368":
-                self.set_options(row_index_select_row_bg = "#d3f0e0", redraw = False)
-                
-            if row_index_select_row_fg == "white":
-                self.set_options(row_index_select_row_fg = "#217346", redraw = False)
-                
-            if selected_rows_border_color == "#1a73e8":
-                self.set_options(selected_rows_border_color = "#217346", redraw = False)
-                
-            if selected_rows_background == "#e7f0fd":
-                self.set_options(selected_rows_background = "#ebedeb", redraw = False)
-                
-            if selected_rows_foreground == "black":
-                self.set_options(selected_rows_foreground = "#333333", redraw = False)
-                
-            if selected_columns_border_color == "#1a73e8":
-                self.set_options(selected_columns_border_color = "#217346", redraw = False)
-                
-            if selected_columns_background == "#e7f0fd":
-                self.set_options(selected_columns_background = "#ebedeb", redraw = False)
-                
-            if selected_columns_foreground == "black":
-                self.set_options(selected_columns_foreground = "#333333", redraw = False)
-                
+            self.change_theme(theme)
+            for k, v in locals().items():
+                if k in theme_light_blue and v != theme_light_blue[k]:
+                    self.set_options(**{k: v})
         if set_all_heights_and_widths:
             self.set_all_cell_sizes_to_text()
         self.MT.update()
@@ -1518,118 +1348,26 @@ class Sheet(tk.Frame):
             self.refresh()
 
     def change_theme(self, theme = "light"):
-        if theme == "light":
+        if theme == "light blue":
             self.MT.display_selected_fg_over_highlights = False
-            self.set_options(header_background = "#f8f9fa",
-                              header_border_color = "#ababab",
-                              header_grid_color = "#ababab",
-                              header_foreground = "#373737",
-                              header_select_background = "#e8eaed",
-                              header_select_foreground = "black",
-                              row_index_background = "#f8f9fa",
-                              row_index_border_color = "#ababab",
-                              row_index_grid_color = "#ababab",
-                              row_index_foreground = "black",
-                              row_index_select_background = "#e8eaed",
-                              row_index_select_foreground = "black",
-                              top_left_background = "white",
-                              top_left_foreground = "#c2c9cf",
-                              table_background = "white",
-                              grid_color = "#d4d4d4",
-                              text_color = "black",
-                              selected_cells_border_color = "#1a73e8",
-                              selected_cells_background = "#e7f0fd",
-                              selected_cells_foreground = "black",
-                              resizing_line_color = "black",
-                              drag_and_drop_color = "#1a73e8",
-                              outline_color = "gray2",
-                              header_select_column_bg = "#5f6368",
-                              header_select_column_fg = "white",
-                              row_index_select_row_bg = "#5f6368",
-                              row_index_select_row_fg = "white",
-                              selected_rows_border_color = "#1a73e8",
-                              selected_rows_background = "#e7f0fd",
-                              selected_rows_foreground = "black",
-                              selected_columns_border_color = "#1a73e8",
-                              selected_columns_background = "#e7f0fd",
-                              selected_columns_foreground = "black",
+            self.set_options(**theme_light_blue,
                               redraw = True)
-            self.config(bg = "white")
-
-        elif theme == "green":
+            self.config(bg = theme_light_blue['table_background'])
+        elif theme == "light green":
             self.MT.display_selected_fg_over_highlights = True
-            self.set_options(header_background = "#edebe9",
-                              header_border_color = "#bfbfbf",
-                              header_grid_color = "#bfbfbf",
-                              header_foreground = "#373737",
-                              header_select_background = "#dad8d6",
-                              header_select_foreground = "#217346",
-                              row_index_background = "#edebe9",
-                              row_index_border_color = "#bfbfbf",
-                              row_index_grid_color = "#bfbfbf",
-                              row_index_foreground = "black",
-                              row_index_select_background = "#dad8d6",
-                              row_index_select_foreground = "#217346",
-                              top_left_background = "#edebe9",
-                              top_left_foreground = "#b7b7b7",
-                              table_background = "white",
-                              grid_color = "#bfbfbf",
-                              text_color = "#373737",
-                              selected_cells_border_color = "#217346",
-                              selected_cells_background = "#ebedeb",
-                              selected_cells_foreground = "#0a0a0a",
-                              resizing_line_color = "black",
-                              drag_and_drop_color = "#1a73e8",
-                              outline_color = "gray2",
-                              header_select_column_bg = "#d3f0e0",
-                              header_select_column_fg = "#217346",
-                              row_index_select_row_bg = "#d3f0e0",
-                              row_index_select_row_fg = "#217346",
-                              selected_rows_border_color = "#217346",
-                              selected_rows_background = "#ebedeb",
-                              selected_rows_foreground = "#333333",
-                              selected_columns_border_color = "#217346",
-                              selected_columns_background = "#ebedeb",
-                              selected_columns_foreground = "#333333",
+            self.set_options(**theme_light_green,
                               redraw = True)
-            self.config(bg = "white")
-        elif theme == "dark":
+            self.config(bg = theme_light_green['table_background'])
+        elif theme == "dark blue":
             self.MT.display_selected_fg_over_highlights = True
-            self.set_options(header_background = "#2d2d2d",
-                              header_border_color = "#4a4e51",
-                              header_grid_color = "#4a4e51",
-                              header_foreground = "#c2c9cf",
-                              header_select_background = "#00385a",
-                              header_select_foreground = "white",
-                              row_index_background = "#2d2d2d",
-                              row_index_border_color = "#4a4e51",
-                              row_index_grid_color = "#4a4e51",
-                              row_index_foreground = "#c2c9cf",
-                              row_index_select_background = "#00385a",
-                              row_index_select_foreground = "white",
-                              top_left_background = "#3d3d3d",
-                              top_left_foreground = "#4a4e51",
-                              table_background = "#3d3d3d",
-                              grid_color = "#4a4e51",
-                              text_color = "#ecf0f2",
-                              selected_cells_border_color = "#1a73e8",
-                              selected_cells_background = "#004567",
-                              selected_cells_foreground = "white",
-                              resizing_line_color = "white",
-                              drag_and_drop_color = "#1a73e8",
-                              outline_color = "gray95",
-                              header_select_column_bg = "#c2c9cf",
-                              header_select_column_fg = "#2d2d2d",
-                              row_index_select_row_bg = "#c2c9cf",
-                              row_index_select_row_fg = "#2d2d2d",
-                              selected_rows_border_color = "#1a73e8",
-                              selected_rows_background = "#004567",
-                              selected_rows_foreground = "white",
-                              selected_columns_border_color = "#1a73e8",
-                              selected_columns_background = "#004567",
-                              selected_columns_foreground = "white",
+            self.set_options(**theme_dark_blue,
                               redraw = True)
-            self.config(bg = "#3d3d3d")
+            self.config(bg = theme_dark_blue['table_background'])
+        elif theme == "dark green":
+            self.MT.display_selected_fg_over_highlights = True
+            self.set_options(**theme_dark_green,
+                              redraw = True)
+            self.config(bg = theme_dark_green['table_background'])
         self.MT.recreate_all_selection_boxes()
             
     def data_reference(self,
