@@ -21,13 +21,16 @@ class demo(tk.Tk):
                            #align = "center",
                            #header_align = "w",
                             #row_index_align = "w",
-                            #theme = "dark",
-                            data = [[f"Row {r}, Column {c}\nnewline1\nnewline2" for c in range(30)] for r in range(2000)], #to set sheet data at startup
+                            #theme = "green",
+                            data = [[f"Row {r}, Column {c}\nnewline1\nnewline2" for c in range(30)] for r in range(100)], #to set sheet data at startup
+                           #data = [[1,2,3,4,5], [1,2,3]],
                             #headers = [f"Column {c}\nnewline1\nnewline2" for c in range(30)],
                             #row_index = [f"Row {r}\nnewline1\nnewline2" for r in range(2000)],
                             #set_all_heights_and_widths = True, #to fit all cell sizes to text at start up
                             #headers = 0, #to set headers as first row at startup
-                            headers = [f"Column {c}\nnewline1\nnewline2" for c in range(30)],
+                            #headers = [f"Column {c}\nnewline1\nnewline2" for c in range(30)],
+                           theme = "dark green",
+                           #header_background = "black",
                             #row_index = 0, #to set row_index as first column at startup
                             #total_rows = 2000, #if you want to set empty sheet dimensions at startup
                             #total_columns = 30, #if you want to set empty sheet dimensions at startup
@@ -65,6 +68,7 @@ class demo(tk.Tk):
         #self.sheet.enable_bindings("enable_all")
         #self.sheet.disable_bindings() #uses the same strings
         #self.bind("<Configure>", self.window_resized)
+        self.sheet.set_all_cell_sizes_to_text()
         self.frame.grid(row = 0, column = 0, sticky = "nswe")
         self.sheet.grid(row = 0, column = 0, sticky = "nswe")
         
@@ -84,7 +88,7 @@ class demo(tk.Tk):
 
         # __________ DISPLAY SUBSET OF COLUMNS __________
 
-        #self.sheet.display_subset_of_columns(indexes = [3, 1, 2], enable = True) #any order
+        #self.sheet.display_subset_of_columns(indexes = [1, 0, 2], enable = True) #any order
 
         # __________ DATA AND DISPLAY DIMENSIONS __________
 
@@ -253,7 +257,6 @@ class demo(tk.Tk):
         
     def cell_select(self, response):
         #print (response)
-        #self.sheet.create_dropdown(response[1], response[2], values=[f"{i}" for i in range(200)], set_value="100")
         pass
 
     def shift_select_cells(self, response):
@@ -278,6 +281,11 @@ class demo(tk.Tk):
         
     def column_select(self, response):
         print (response)
+        #for i in range(50):
+        #    self.sheet.create_dropdown(i, response[1], values=[f"{i}" for i in range(200)], set_value="100",
+        #                               destroy_on_select = False, destroy_on_leave = False, see = False)
+        #print (self.sheet.get_cell_data(0, 0))
+        #self.sheet.refresh()
 
     def shift_select_columns(self, response):
         print (response)
