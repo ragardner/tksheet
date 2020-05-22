@@ -1,3 +1,7 @@
+### Version 4.7.0
+ - Add green theme
+ - Change font to calibri
+
 ### Version 4.6.9
  - Minor fixes when using in-built ctrl functions
 
