@@ -2915,6 +2915,7 @@ class MainTable(tk.Canvas):
                     if stop > x2:
                         continue
                     try:
+                        lns = self.data_ref[r][dcol]
                         if isinstance(lns, str):
                             lns = lns.split("\n")
                         else:
