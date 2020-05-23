@@ -674,11 +674,7 @@ class ColumnHeaders(tk.Canvas):
     def GetLargestWidth(self, cell):
         return max(cell.split("\n"), key = self.MT.GetTextWidth)
 
-    def redraw_highlight_get_text_fg(self, fc, sc, c, c_2, c_3, selected_cols, selected_rows, actual_selected_cols, all_displayed = False):
-        if all_displayed:
-            hlcol = c
-        else:
-            hlcol = self.MT.displayed_columns[c]
+    def redraw_highlight_get_text_fg(self, fc, sc, c, c_2, c_3, selected_cols, selected_rows, actual_selected_cols, hlcol):
         if hlcol in self.highlighted_cells and c in actual_selected_cols:
             c_1 = self.highlighted_cells[hlcol][0] if self.highlighted_cells[hlcol][0].startswith("#") else Color_Map_[self.highlighted_cells[hlcol][0]]
             self.create_rectangle(fc + 1,
@@ -741,256 +737,138 @@ class ColumnHeaders(tk.Canvas):
             incfl = False
         c_2 = self.selected_cells_background if self.selected_cells_background.startswith("#") else Color_Map_[self.selected_cells_background]
         c_3 = self.selected_cols_bg if self.selected_cols_bg.startswith("#") else Color_Map_[self.selected_cols_bg]
-        if self.MT.all_columns_displayed:
-            if self.align == "center":
-                for c in range(start_col, end_col - 1):
-                    fc = self.MT.col_positions[c]
-                    sc = self.MT.col_positions[c + 1]
-                    tf, font = self.redraw_highlight_get_text_fg(fc, sc, c, c_2, c_3, selected_cols, selected_rows, actual_selected_cols, all_displayed = True)
-                    if fc + 5 > x_stop:
-                        continue
-                    mw = sc - fc - 1
-                    x = fc + floor((sc - fc) / 2)
-                    try:
-                        if isinstance(self.MT.my_hdrs, int):
-                            if isinstance(self.MT.data_ref[self.MT.my_hdrs][c], str):
-                                lns = self.MT.data_ref[self.MT.my_hdrs][c].split("\n")
-                            else:
-                                lns = (f"{self.MT.data_ref[self.MT.my_hdrs][c]}", )
+        if self.align == "center":
+            for c in range(start_col, end_col - 1):
+                fc = self.MT.col_positions[c]
+                sc = self.MT.col_positions[c + 1]
+                if self.MT.all_columns_displayed:
+                    dcol = c
+                else:
+                    dcol = self.MT.displayed_columns[c]
+                tf, font = self.redraw_highlight_get_text_fg(fc, sc, c, c_2, c_3, selected_cols, selected_rows, actual_selected_cols, dcol)
+                if fc + 5 > x_stop:
+                    continue
+                mw = sc - fc - 1
+                x = fc + floor((sc - fc) / 2)
+                try:
+                    if isinstance(self.MT.my_hdrs, int):
+                        if isinstance(self.MT.data_ref[self.MT.my_hdrs][dcol], str):
+                            lns = self.MT.data_ref[self.MT.my_hdrs][dcol].split("\n")
                         else:
-                            if isinstance(self.MT.my_hdrs[c], str):
-                                lns = self.MT.my_hdrs[c].split("\n")
-                            else:
-                                lns = (f"{self.MT.my_hdrs[c]}", )
-                    except:
-                        lns = (num2alpha(c), ) if self.default_hdr else (f"{c + 1}", )
-                    y = self.MT.hdr_fl_ins
-                    if incfl:
-                        txt = lns[0]
-                        t = self.create_text(x, y, text = txt, fill = tf, font = font, anchor = "center", tag = "t")
+                            lns = (f"{self.MT.data_ref[self.MT.my_hdrs][dcol]}", )
+                    else:
+                        if isinstance(self.MT.my_hdrs[dcol], str):
+                            lns = self.MT.my_hdrs[dcol].split("\n")
+                        else:
+                            lns = (f"{self.MT.my_hdrs[dcol]}", )
+                except:
+                    lns = (num2alpha(c), ) if self.default_hdr else (f"{c + 1}", )
+                y = self.MT.hdr_fl_ins
+                if incfl:
+                    txt = lns[0]
+                    t = self.create_text(x, y, text = txt, fill = tf, font = font, anchor = "center", tag = "t")
+                    wd = self.bbox(t)
+                    wd = wd[2] - wd[0]
+                    if wd > mw:
+                        tl = len(txt)
+                        tmod = ceil((tl - int(tl * (mw / wd))) / 2)
+                        txt = txt[tmod - 1:-tmod]
+                        self.itemconfig(t, text = txt)
                         wd = self.bbox(t)
-                        wd = wd[2] - wd[0]
-                        if wd > mw:
-                            tl = len(txt)
-                            tmod = ceil((tl - int(tl * (mw / wd))) / 2)
-                            txt = txt[tmod - 1:-tmod]
+                        self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
+                        while wd[2] - wd[0] > mw:
+                            txt = txt[next(self.c_align_cyc)]
                             self.itemconfig(t, text = txt)
                             wd = self.bbox(t)
-                            self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
-                            while wd[2] - wd[0] > mw:
-                                txt = txt[next(self.c_align_cyc)]
+                        self.coords(t, x, y)
+                if len(lns) > 1:
+                    stl = int((top - y) / self.MT.hdr_xtra_lines_increment) - 1
+                    if stl < 1:
+                        stl = 1
+                    y += (stl * self.MT.hdr_xtra_lines_increment)
+                    if y + self.MT.hdr_half_txt_h - 1 < self.current_height:
+                        for i in range(stl, len(lns)):
+                            txt = lns[i]
+                            t = self.create_text(x, y, text = txt, fill = tf, font = font, anchor = "center", tag = "t")
+                            wd = self.bbox(t)
+                            wd = wd[2] - wd[0]
+                            if wd > mw:
+                                tl = len(txt)
+                                tmod = ceil((tl - int(tl * (mw / wd))) / 2)
+                                txt = txt[tmod - 1:-tmod]
                                 self.itemconfig(t, text = txt)
                                 wd = self.bbox(t)
-                            self.coords(t, x, y)
-                    if len(lns) > 1:
-                        stl = int((top - y) / self.MT.hdr_xtra_lines_increment) - 1
-                        if stl < 1:
-                            stl = 1
-                        y += (stl * self.MT.hdr_xtra_lines_increment)
-                        if y + self.MT.hdr_half_txt_h - 1 < self.current_height:
-                            for i in range(stl, len(lns)):
-                                txt = lns[i]
-                                t = self.create_text(x, y, text = txt, fill = tf, font = font, anchor = "center", tag = "t")
-                                wd = self.bbox(t)
-                                wd = wd[2] - wd[0]
-                                if wd > mw:
-                                    tl = len(txt)
-                                    tmod = ceil((tl - int(tl * (mw / wd))) / 2)
-                                    txt = txt[tmod - 1:-tmod]
+                                self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
+                                while wd[2] - wd[0] > mw:
+                                    txt = txt[next(self.c_align_cyc)]
                                     self.itemconfig(t, text = txt)
                                     wd = self.bbox(t)
-                                    self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
-                                    while wd[2] - wd[0] > mw:
-                                        txt = txt[next(self.c_align_cyc)]
-                                        self.itemconfig(t, text = txt)
-                                        wd = self.bbox(t)
-                                    self.coords(t, x, y)
-                                y += self.MT.hdr_xtra_lines_increment
-                                if y + self.MT.hdr_half_txt_h - 1 > self.current_height:
-                                    break
-            elif self.align == "w":
-                for c in range(start_col, end_col - 1):
-                    fc = self.MT.col_positions[c]
-                    sc = self.MT.col_positions[c + 1]
-                    tf, font = self.redraw_highlight_get_text_fg(fc, sc, c, c_2, c_3, selected_cols, selected_rows, actual_selected_cols, all_displayed = True)
-                    mw = sc - fc - 5
-                    x = fc + 5
-                    if x > x_stop:
-                        continue
-                    try:
-                        if isinstance(self.MT.my_hdrs, int):
-                            if isinstance(self.MT.data_ref[self.MT.my_hdrs][c], str):
-                                lns = self.MT.data_ref[self.MT.my_hdrs][c].split("\n")
-                            else:
-                                lns = (f"{self.MT.data_ref[self.MT.my_hdrs][c]}", )
+                                self.coords(t, x, y)
+                            y += self.MT.hdr_xtra_lines_increment
+                            if y + self.MT.hdr_half_txt_h - 1 > self.current_height:
+                                break
+        elif self.align == "w":
+            for c in range(start_col, end_col - 1):
+                fc = self.MT.col_positions[c]
+                sc = self.MT.col_positions[c + 1]
+                if self.MT.all_columns_displayed:
+                    dcol = c
+                else:
+                    dcol = self.MT.displayed_columns[c]
+                tf, font = self.redraw_highlight_get_text_fg(fc, sc, c, c_2, c_3, selected_cols, selected_rows, actual_selected_cols, dcol)
+                mw = sc - fc - 5
+                x = fc + 5
+                if x > x_stop:
+                    continue
+                try:
+                    if isinstance(self.MT.my_hdrs, int):
+                        if isinstance(self.MT.data_ref[self.MT.my_hdrs][dcol], str):
+                            lns = self.MT.data_ref[self.MT.my_hdrs][dcol].split("\n")
                         else:
-                            if isinstance(self.MT.my_hdrs[c], str):
-                                lns = self.MT.my_hdrs[c].split("\n")
-                            else:
-                                lns = (f"{self.MT.my_hdrs[c]}", )
-                    except:
-                        lns = (num2alpha(c), ) if self.default_hdr else (f"{c + 1}", )
-                    y = self.MT.hdr_fl_ins
-                    if incfl:
-                        txt = lns[0]
-                        t = self.create_text(x, y, text = txt, fill = tf, font = font, anchor = "w", tag = "t")
-                        wd = self.bbox(t)
-                        wd = wd[2] - wd[0]
-                        if wd > mw:
-                            nl = int(len(txt) * (mw / wd))
-                            self.itemconfig(t, text = txt[:nl])
-                            wd = self.bbox(t)
-                            while wd[2] - wd[0] > mw:
-                                nl -= 1
-                                self.dchars(t, nl)
-                                wd = self.bbox(t)
-                    if len(lns) > 1:
-                        stl = int((top - y) / self.MT.hdr_xtra_lines_increment) - 1
-                        if stl < 1:
-                            stl = 1
-                        y += (stl * self.MT.hdr_xtra_lines_increment)
-                        if y + self.MT.hdr_half_txt_h - 1 < self.current_height:
-                            for i in range(stl, len(lns)):
-                                txt = lns[i]
-                                t = self.create_text(x, y, text = txt, fill = tf, font = font, anchor = "w", tag = "t")
-                                wd = self.bbox(t)
-                                wd = wd[2] - wd[0]
-                                if wd > mw:
-                                    nl = int(len(txt) * (mw / wd))
-                                    self.itemconfig(t, text = txt[:nl])
-                                    wd = self.bbox(t)
-                                    while wd[2] - wd[0] > mw:
-                                        nl -= 1
-                                        self.dchars(t, nl)
-                                        wd = self.bbox(t)
-                                y += self.MT.hdr_xtra_lines_increment
-                                if y + self.MT.hdr_half_txt_h - 1 > self.current_height:
-                                    break
-        else:
-            if self.align == "center":
-                for c in range(start_col, end_col - 1):
-                    fc = self.MT.col_positions[c]
-                    sc = self.MT.col_positions[c + 1]
-                    tf, font = self.redraw_highlight_get_text_fg(fc, sc, c, c_2, c_3, selected_cols, selected_rows, actual_selected_cols, all_displayed = False)
-                    if fc + 5 > x_stop:
-                        continue
-                    mw = sc - fc - 1
-                    x = fc + floor((sc - fc) / 2)
-                    try:
-                        if isinstance(self.MT.my_hdrs, int):
-                            if isinstance(self.MT.data_ref[self.MT.my_hdrs][self.MT.displayed_columns[c]], str):
-                                lns = self.MT.data_ref[self.MT.my_hdrs][self.MT.displayed_columns[c]].split("\n")
-                            else:
-                                lns = (f"{self.MT.data_ref[self.MT.my_hdrs][self.MT.displayed_columns[c]]}", )
+                            lns = (f"{self.MT.data_ref[self.MT.my_hdrs][dcol]}", )
+                    else:
+                        if isinstance(self.MT.my_hdrs[dcol], str):
+                            lns = self.MT.my_hdrs[dcol].split("\n")
                         else:
-                            if isinstance(self.MT.my_hdrs[self.MT.displayed_columns[c]], str):
-                                lns = self.MT.my_hdrs[self.MT.displayed_columns[c]].split("\n")
-                            else:
-                                lns = (f"{self.MT.my_hdrs[self.MT.displayed_columns[c]]}", )
-                    except:
-                        lns = (num2alpha(c), ) if self.default_hdr else (f"{c + 1}", )
-                    y = self.MT.hdr_fl_ins
-                    if incfl:
-                        txt = lns[0]
-                        t = self.create_text(x, y, text = txt, fill = tf, font = font, anchor = "center", tag = "t")
+                            lns = (f"{self.MT.my_hdrs[dcol]}", )
+                except:
+                    lns = (num2alpha(c), ) if self.default_hdr else (f"{c + 1}", )
+                y = self.MT.hdr_fl_ins
+                if incfl:
+                    txt = lns[0]
+                    t = self.create_text(x, y, text = txt, fill = tf, font = font, anchor = "w", tag = "t")
+                    wd = self.bbox(t)
+                    wd = wd[2] - wd[0]
+                    if wd > mw:
+                        nl = int(len(txt) * (mw / wd))
+                        self.itemconfig(t, text = txt[:nl])
                         wd = self.bbox(t)
-                        wd = wd[2] - wd[0]
-                        if wd > mw:
-                            tl = len(txt)
-                            tmod = ceil((tl - int(tl * (mw / wd))) / 2)
-                            txt = txt[tmod - 1:-tmod]
-                            self.itemconfig(t, text = txt)
+                        while wd[2] - wd[0] > mw:
+                            nl -= 1
+                            self.dchars(t, nl)
                             wd = self.bbox(t)
-                            self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
-                            while wd[2] - wd[0] > mw:
-                                txt = txt[next(self.c_align_cyc)]
-                                self.itemconfig(t, text = txt)
-                                wd = self.bbox(t)
-                            self.coords(t, x, y)
-                    if len(lns) > 1:
-                        stl = int((top - y) / self.MT.hdr_xtra_lines_increment) - 1
-                        if stl < 1:
-                            stl = 1
-                        y += (stl * self.MT.hdr_xtra_lines_increment)
-                        if y + self.MT.hdr_half_txt_h - 1 < self.current_height:
-                            for i in range(stl, len(lns)):
-                                txt = lns[i]
-                                t = self.create_text(x, y, text = txt, fill = tf, font = font, anchor = "center", tag = "t")
-                                wd = self.bbox(t)
-                                wd = wd[2] - wd[0]
-                                if wd > mw:
-                                    tl = len(txt)
-                                    tmod = ceil((tl - int(tl * (mw / wd))) / 2)
-                                    txt = txt[tmod - 1:-tmod]
-                                    self.itemconfig(t, text = txt)
-                                    wd = self.bbox(t)
-                                    self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
-                                    while wd[2] - wd[0] > mw:
-                                        txt = txt[next(self.c_align_cyc)]
-                                        self.itemconfig(t, text = txt)
-                                        wd = self.bbox(t)
-                                    self.coords(t, x, y)
-                                y += self.MT.hdr_xtra_lines_increment
-                                if y + self.MT.hdr_half_txt_h - 1 > self.current_height:
-                                    break
-            elif self.align == "w":
-                for c in range(start_col, end_col - 1):
-                    fc = self.MT.col_positions[c]
-                    sc = self.MT.col_positions[c + 1]
-                    tf, font = self.redraw_highlight_get_text_fg(fc, sc, c, c_2, c_3, selected_cols, selected_rows, actual_selected_cols, all_displayed = False)
-                    mw = sc - fc - 5
-                    x = fc + 5
-                    if x > x_stop:
-                        continue
-                    try:
-                        if isinstance(self.MT.my_hdrs, int):
-                            if isinstance(self.MT.data_ref[self.MT.my_hdrs][self.MT.displayed_columns[c]], str):
-                                lns = self.MT.data_ref[self.MT.my_hdrs][self.MT.displayed_columns[c]].split("\n")
-                            else:
-                                lns = (f"{self.MT.data_ref[self.MT.my_hdrs][self.MT.displayed_columns[c]]}", )
-                        else:
-                            if isinstance(self.MT.my_hdrs[self.MT.displayed_columns[c]], str):
-                                lns = self.MT.my_hdrs[self.MT.displayed_columns[c]].split("\n")
-                            else:
-                                lns = (f"{self.MT.my_hdrs[self.MT.displayed_columns[c]]}", )
-                    except:
-                        lns = (num2alpha(c), ) if self.default_hdr else (f"{c + 1}", )
-                    y = self.MT.hdr_fl_ins
-                    if incfl:
-                        txt = lns[0]
-                        t = self.create_text(x, y, text = txt, fill = tf, font = font, anchor = "w", tag = "t")
-                        wd = self.bbox(t)
-                        wd = wd[2] - wd[0]
-                        if wd > mw:
-                            nl = int(len(txt) * (mw / wd))
-                            self.itemconfig(t, text = txt[:nl])
+                if len(lns) > 1:
+                    stl = int((top - y) / self.MT.hdr_xtra_lines_increment) - 1
+                    if stl < 1:
+                        stl = 1
+                    y += (stl * self.MT.hdr_xtra_lines_increment)
+                    if y + self.MT.hdr_half_txt_h - 1 < self.current_height:
+                        for i in range(stl, len(lns)):
+                            txt = lns[i]
+                            t = self.create_text(x, y, text = txt, fill = tf, font = font, anchor = "w", tag = "t")
                             wd = self.bbox(t)
-                            while wd[2] - wd[0] > mw:
-                                nl -= 1
-                                self.dchars(t, nl)
+                            wd = wd[2] - wd[0]
+                            if wd > mw:
+                                nl = int(len(txt) * (mw / wd))
+                                self.itemconfig(t, text = txt[:nl])
                                 wd = self.bbox(t)
-                    if len(lns) > 1:
-                        stl = int((top - y) / self.MT.hdr_xtra_lines_increment) - 1
-                        if stl < 1:
-                            stl = 1
-                        y += (stl * self.MT.hdr_xtra_lines_increment)
-                        if y + self.MT.hdr_half_txt_h - 1 < self.current_height:
-                            for i in range(stl, len(lns)):
-                                txt = lns[i]
-                                t = self.create_text(x, y, text = txt, fill = tf, font = font, anchor = "w", tag = "t")
-                                wd = self.bbox(t)
-                                wd = wd[2] - wd[0]
-                                if wd > mw:
-                                    nl = int(len(txt) * (mw / wd))
-                                    self.itemconfig(t, text = txt[:nl])
+                                while wd[2] - wd[0] > mw:
+                                    nl -= 1
+                                    self.dchars(t, nl)
                                     wd = self.bbox(t)
-                                    while wd[2] - wd[0] > mw:
-                                        nl -= 1
-                                        self.dchars(t, nl)
-                                        wd = self.bbox(t)
-                                y += self.MT.hdr_xtra_lines_increment
-                                if y + self.MT.hdr_half_txt_h - 1 > self.current_height:
-                                    break
+                            y += self.MT.hdr_xtra_lines_increment
+                            if y + self.MT.hdr_half_txt_h - 1 > self.current_height:
+                                break
         self.create_line(x1, self.current_height - 1, x_stop, self.current_height - 1, fill = self.header_border_color, width = 1, tag = "h")
         
     def GetCellCoords(self, event = None, r = None, c = None):

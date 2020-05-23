@@ -2727,11 +2727,7 @@ class MainTable(tk.Canvas):
             end_col += 1
         return start_col, end_col
 
-    def redraw_highlight_get_text_fg(self, r, c, fc, fr, sc, sr, c_2_, c_3_, c_4_, selected_cells, actual_selected_rows, actual_selected_cols):
-        if self.all_columns_displayed:
-            hlcol = c
-        else:
-            hlcol = self.displayed_columns[c]
+    def redraw_highlight_get_text_fg(self, r, c, fc, fr, sc, sr, c_2_, c_3_, c_4_, selected_cells, actual_selected_rows, actual_selected_cols, hlcol):
         if (r, hlcol) in self.highlighted_cells and c in actual_selected_cols:
             c_1 = self.highlighted_cells[(r, hlcol)][0] if self.highlighted_cells[(r, hlcol)][0].startswith("#") else Color_Map_[self.highlighted_cells[(r, hlcol)][0]]
             self.create_rectangle(fc + 1,
@@ -2835,258 +2831,140 @@ class MainTable(tk.Canvas):
         c_4_ = (int(c_4[1:3], 16), int(c_4[3:5], 16), int(c_4[5:], 16))
         rows_ = tuple(range(start_row, end_row))
         selected_cells, selected_rows, selected_cols, actual_selected_rows, actual_selected_cols = self.get_redraw_selections((start_row, start_col, end_row, end_col - 1))
-        if self.all_columns_displayed:
-            if self.align == "w":
-                for c in range(start_col, end_col - 1):
-                    fc = self.col_positions[c]
-                    sc = self.col_positions[c + 1]
-                    x = fc + 5
-                    mw = sc - fc - 5
-                    for r in rows_:
-                        fr = self.row_positions[r]
-                        sr = self.row_positions[r + 1]
-                        if sr > sb:
-                            sr = sb
-                        tf = self.redraw_highlight_get_text_fg(r, c, fc, fr, sc, sr, c_2_, c_3_, c_4_, selected_cells, actual_selected_rows, actual_selected_cols)
-                        if x > x2:
-                            continue
-                        try:
-                            lns = self.data_ref[r][c]
-                            if isinstance(lns, str):
-                                lns = lns.split("\n")
-                            else:
-                                lns = (f"{lns}",)
-                            y = fr + self.fl_ins
-                            if y + self.half_txt_h - 1 > y1:
-                                txt = lns[0]
-                                t = ct_(x, y, text = txt, fill = tf, font = self.my_font, anchor = "w", tag = "t")
-                                wd = self.bbox(t)
-                                wd = wd[2] - wd[0]
-                                if wd > mw:
-                                    nl = int(len(txt) * (mw / wd))
-                                    self.itemconfig(t, text = txt[:nl])
-                                    wd = self.bbox(t)
-                                    while wd[2] - wd[0] > mw:
-                                        nl -= 1
-                                        self.dchars(t, nl)
-                                        wd = self.bbox(t)
-                            if len(lns) > 1:
-                                stl = int((y1 - y) / self.xtra_lines_increment) - 1
-                                if stl < 1:
-                                    stl = 1
-                                y += (stl * self.xtra_lines_increment)
-                                if y + self.half_txt_h - 1 < sr:
-                                    for i in range(stl, len(lns)):
-                                        txt = lns[i]
-                                        t = ct_(x, y, text = txt, fill = tf, font = self.my_font, anchor = "w", tag = "t")
-                                        wd = self.bbox(t)
-                                        wd = wd[2] - wd[0]
-                                        if wd > mw:
-                                            nl = int(len(txt) * (mw / wd))
-                                            self.itemconfig(t, text = txt[:nl])
-                                            wd = self.bbox(t)
-                                            while wd[2] - wd[0] > mw:
-                                                nl -= 1
-                                                self.dchars(t, nl)
-                                                wd = self.bbox(t)
-                                        y += self.xtra_lines_increment
-                                        if y + self.half_txt_h - 1 > sr:
-                                            break
-                        except:
-                            continue
-            elif self.align == "center":
-                for c in range(start_col, end_col - 1):
-                    fc = self.col_positions[c]
-                    stop = fc + 5
-                    sc = self.col_positions[c + 1]
-                    mw = sc - fc - 1
-                    x = fc + floor((sc - fc) / 2)
-                    for r in rows_:
-                        fr = self.row_positions[r]
-                        sr = self.row_positions[r + 1]
-                        if sr > sb:
-                            sr = sb
-                        tf = self.redraw_highlight_get_text_fg(r, c, fc, fr, sc, sr, c_2_, c_3_, c_4_, selected_cells, actual_selected_rows, actual_selected_cols)
-                        if stop > x2:
-                            continue
-                        try:
-                            lns = self.data_ref[r][c]
-                            if isinstance(lns, str):
-                                lns = lns.split("\n")
-                            else:
-                                lns = (f"{lns}", )
+        if self.align == "w":
+            for c in range(start_col, end_col - 1):
+                fc = self.col_positions[c]
+                sc = self.col_positions[c + 1]
+                x = fc + 5
+                mw = sc - fc - 5
+                for r in rows_:
+                    fr = self.row_positions[r]
+                    sr = self.row_positions[r + 1]
+                    if sr > sb:
+                        sr = sb
+                    if self.all_columns_displayed:
+                        dcol = c
+                    else:
+                        dcol = self.displayed_columns[c]
+                    tf = self.redraw_highlight_get_text_fg(r, c, fc, fr, sc, sr, c_2_, c_3_, c_4_,
+                                                           selected_cells, actual_selected_rows, actual_selected_cols, dcol)
+                    if x > x2:
+                        continue
+                    try:
+                        lns = self.data_ref[r][dcol]
+                        if isinstance(lns, str):
+                            lns = lns.split("\n")
+                        else:
+                            lns = (f"{lns}", )
+                        y = fr + self.fl_ins
+                        if y + self.half_txt_h - 1 > y1:
                             txt = lns[0]
-                            y = fr + self.fl_ins
-                            if y + self.half_txt_h - 1 > y1:
-                                t = ct_(x, y, text = txt, fill = tf, font = self.my_font, anchor = "center", tag = "t")
+                            t = ct_(x, y, text = txt, fill = tf, font = self.my_font, anchor = "w", tag = "t")
+                            wd = self.bbox(t)
+                            wd = wd[2] - wd[0]
+                            if wd > mw:
+                                nl = int(len(txt) * (mw / wd))
+                                self.itemconfig(t, text = txt[:nl])
                                 wd = self.bbox(t)
-                                wd = wd[2] - wd[0]
-                                if wd > mw:
-                                    tl = len(txt)
-                                    tmod = ceil((tl - int(tl * (mw / wd))) / 2)
-                                    txt = txt[tmod - 1:-tmod]
+                                while wd[2] - wd[0] > mw:
+                                    nl -= 1
+                                    self.dchars(t, nl)
+                                    wd = self.bbox(t)
+                        if len(lns) > 1:
+                            stl = int((y1 - y) / self.xtra_lines_increment) - 1
+                            if stl < 1:
+                                stl = 1
+                            y += (stl * self.xtra_lines_increment)
+                            if y + self.half_txt_h - 1 < sr:
+                                for i in range(stl, len(lns)):
+                                    txt = lns[i]
+                                    t = ct_(x, y, text = txt, fill = tf, font = self.my_font, anchor = "w", tag = "t")
+                                    wd = self.bbox(t)
+                                    wd = wd[2] - wd[0]
+                                    if wd > mw:
+                                        nl = int(len(txt) * (mw / wd))
+                                        self.itemconfig(t, text = txt[:nl])
+                                        wd = self.bbox(t)
+                                        while wd[2] - wd[0] > mw:
+                                            nl -= 1
+                                            self.dchars(t, nl)
+                                            wd = self.bbox(t)
+                                    y += self.xtra_lines_increment
+                                    if y + self.half_txt_h - 1 > sr:
+                                        break
+                    except:
+                        continue
+        elif self.align == "center":
+            for c in range(start_col, end_col - 1):
+                fc = self.col_positions[c]
+                stop = fc + 5
+                sc = self.col_positions[c + 1]
+                mw = sc - fc - 1
+                x = fc + floor((sc - fc) / 2)
+                for r in rows_:
+                    fr = self.row_positions[r]
+                    sr = self.row_positions[r + 1]
+                    if sr > sb:
+                        sr = sb
+                    if self.all_columns_displayed:
+                        dcol = c
+                    else:
+                        dcol = self.displayed_columns[c]
+                    tf = self.redraw_highlight_get_text_fg(r, c, fc, fr, sc, sr, c_2_, c_3_, c_4_,
+                                                           selected_cells, actual_selected_rows, actual_selected_cols, dcol)
+                    if stop > x2:
+                        continue
+                    try:
+                        if isinstance(lns, str):
+                            lns = lns.split("\n")
+                        else:
+                            lns = (f"{lns}", )
+                        txt = lns[0]
+                        y = fr + self.fl_ins
+                        if y + self.half_txt_h - 1 > y1:
+                            t = ct_(x, y, text = txt, fill = tf, font = self.my_font, anchor = "center", tag = "t")
+                            wd = self.bbox(t)
+                            wd = wd[2] - wd[0]
+                            if wd > mw:
+                                tl = len(txt)
+                                tmod = ceil((tl - int(tl * (mw / wd))) / 2)
+                                txt = txt[tmod - 1:-tmod]
+                                self.itemconfig(t, text = txt)
+                                wd = self.bbox(t)
+                                self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
+                                while wd[2] - wd[0] > mw:
+                                    txt = txt[next(self.c_align_cyc)]
                                     self.itemconfig(t, text = txt)
                                     wd = self.bbox(t)
-                                    self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
-                                    while wd[2] - wd[0] > mw:
-                                        txt = txt[next(self.c_align_cyc)]
+                                self.coords(t, x, y)
+                        if len(lns) > 1:
+                            stl = int((y1 - y) / self.xtra_lines_increment) - 1
+                            if stl < 1:
+                                stl = 1
+                            y += (stl * self.xtra_lines_increment)
+                            if y + self.half_txt_h - 1 < sr:
+                                for i in range(stl, len(lns)):
+                                    txt = lns[i]
+                                    t = ct_(x, y, text = txt, fill = tf, font = self.my_font, anchor = "center", tag = "t")
+                                    wd = self.bbox(t)
+                                    wd = wd[2] - wd[0]
+                                    if wd > mw:
+                                        tl = len(txt)
+                                        tmod = ceil((tl - int(tl * (mw / wd))) / 2)
+                                        txt = txt[tmod - 1:-tmod]
                                         self.itemconfig(t, text = txt)
                                         wd = self.bbox(t)
-                                    self.coords(t, x, y)
-                            if len(lns) > 1:
-                                stl = int((y1 - y) / self.xtra_lines_increment) - 1
-                                if stl < 1:
-                                    stl = 1
-                                y += (stl * self.xtra_lines_increment)
-                                if y + self.half_txt_h - 1 < sr:
-                                    for i in range(stl, len(lns)):
-                                        txt = lns[i]
-                                        t = ct_(x, y, text = txt, fill = tf, font = self.my_font, anchor = "center", tag = "t")
-                                        wd = self.bbox(t)
-                                        wd = wd[2] - wd[0]
-                                        if wd > mw:
-                                            tl = len(txt)
-                                            tmod = ceil((tl - int(tl * (mw / wd))) / 2)
-                                            txt = txt[tmod - 1:-tmod]
+                                        self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
+                                        while wd[2] - wd[0] > mw:
+                                            txt = txt[next(self.c_align_cyc)]
                                             self.itemconfig(t, text = txt)
                                             wd = self.bbox(t)
-                                            self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
-                                            while wd[2] - wd[0] > mw:
-                                                txt = txt[next(self.c_align_cyc)]
-                                                self.itemconfig(t, text = txt)
-                                                wd = self.bbox(t)
-                                            self.coords(t, x, y)
-                                        y += self.xtra_lines_increment
-                                        if y + self.half_txt_h - 1 > sr:
-                                            break
-                        except:
-                            continue
-        else:
-            if self.align == "w":
-                for c in range(start_col, end_col - 1):
-                    fc = self.col_positions[c]
-                    sc = self.col_positions[c + 1]
-                    x = fc + 5
-                    mw = sc - fc - 5
-                    for r in rows_:
-                        fr = self.row_positions[r]
-                        sr = self.row_positions[r + 1]
-                        if sr > sb:
-                            sr = sb
-                        tf = self.redraw_highlight_get_text_fg(r, c, fc, fr, sc, sr, c_2_, c_3_, c_4_, selected_cells, actual_selected_rows, actual_selected_cols)
-                        if x > x2:
-                            continue
-                        try:
-                            lns = self.data_ref[r][self.displayed_columns[c]]
-                            if isinstance(lns, str):
-                                lns = lns.split("\n")
-                            else:
-                                lns = (f"{lns}", )
-                            y = fr + self.fl_ins
-                            if y + self.half_txt_h - 1 > y1:
-                                txt = lns[0]
-                                t = ct_(x, y, text = txt, fill = tf, font = self.my_font, anchor = "w", tag = "t")
-                                wd = self.bbox(t)
-                                wd = wd[2] - wd[0]
-                                if wd > mw:
-                                    nl = int(len(txt) * (mw / wd))
-                                    self.itemconfig(t, text = txt[:nl])
-                                    wd = self.bbox(t)
-                                    while wd[2] - wd[0] > mw:
-                                        nl -= 1
-                                        self.dchars(t, nl)
-                                        wd = self.bbox(t)
-                            if len(lns) > 1:
-                                stl = int((y1 - y) / self.xtra_lines_increment) - 1
-                                if stl < 1:
-                                    stl = 1
-                                y += (stl * self.xtra_lines_increment)
-                                if y + self.half_txt_h - 1 < sr:
-                                    for i in range(stl, len(lns)):
-                                        txt = lns[i]
-                                        t = ct_(x, y, text = txt, fill = tf, font = self.my_font, anchor = "w", tag = "t")
-                                        wd = self.bbox(t)
-                                        wd = wd[2] - wd[0]
-                                        if wd > mw:
-                                            nl = int(len(txt) * (mw / wd))
-                                            self.itemconfig(t, text = txt[:nl])
-                                            wd = self.bbox(t)
-                                            while wd[2] - wd[0] > mw:
-                                                nl -= 1
-                                                self.dchars(t, nl)
-                                                wd = self.bbox(t)
-                                        y += self.xtra_lines_increment
-                                        if y + self.half_txt_h - 1 > sr:
-                                            break
-                        except:
-                            continue
-            elif self.align == "center":
-                for c in range(start_col, end_col - 1):
-                    fc = self.col_positions[c]
-                    stop = fc + 5
-                    sc = self.col_positions[c + 1]
-                    mw = sc - fc - 1
-                    x = fc + floor((sc - fc) / 2)
-                    for r in rows_:
-                        fr = self.row_positions[r]
-                        sr = self.row_positions[r + 1]
-                        if sr > sb:
-                            sr = sb
-                        tf = self.redraw_highlight_get_text_fg(r, c, fc, fr, sc, sr, c_2_, c_3_, c_4_, selected_cells, actual_selected_rows, actual_selected_cols)
-                        if stop > x2:
-                            continue
-                        try:
-                            lns = self.data_ref[r][self.displayed_columns[c]]
-                            if isinstance(lns, str):
-                                lns = lns.split("\n")
-                            else:
-                                lns = (f"{lns}", )
-                            txt = lns[0]
-                            y = fr + self.fl_ins
-                            if y + self.half_txt_h - 1 > y1:
-                                t = ct_(x, y, text = txt, fill = tf, font = self.my_font, anchor = "center", tag = "t")
-                                wd = self.bbox(t)
-                                wd = wd[2] - wd[0]
-                                if wd > mw:
-                                    tl = len(txt)
-                                    tmod = ceil((tl - int(tl * (mw / wd))) / 2)
-                                    txt = txt[tmod - 1:-tmod]
-                                    self.itemconfig(t, text = txt)
-                                    wd = self.bbox(t)
-                                    self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
-                                    while wd[2] - wd[0] > mw:
-                                        txt = txt[next(self.c_align_cyc)]
-                                        self.itemconfig(t, text = txt)
-                                        wd = self.bbox(t)
-                                    self.coords(t, x, y)
-                            if len(lns) > 1:
-                                stl = int((y1 - y) / self.xtra_lines_increment) - 1
-                                if stl < 1:
-                                    stl = 1
-                                y += (stl * self.xtra_lines_increment)
-                                if y + self.half_txt_h - 1 < sr:
-                                    for i in range(stl, len(lns)):
-                                        txt = lns[i]
-                                        t = ct_(x, y, text = txt, fill = tf, font = self.my_font, anchor = "center", tag = "t")
-                                        wd = self.bbox(t)
-                                        wd = wd[2] - wd[0]
-                                        if wd > mw:
-                                            tl = len(txt)
-                                            tmod = ceil((tl - int(tl * (mw / wd))) / 2)
-                                            txt = txt[tmod - 1:-tmod]
-                                            self.itemconfig(t, text = txt)
-                                            wd = self.bbox(t)
-                                            self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
-                                            while wd[2] - wd[0] > mw:
-                                                txt = txt[next(self.c_align_cyc)]
-                                                self.itemconfig(t, text = txt)
-                                                wd = self.bbox(t)
-                                            self.coords(t, x, y)
-                                        y += self.xtra_lines_increment
-                                        if y + self.half_txt_h - 1 > sr:
-                                            break
-                        except:
-                            continue
+                                        self.coords(t, x, y)
+                                    y += self.xtra_lines_increment
+                                    if y + self.half_txt_h - 1 > sr:
+                                        break
+                    except:
+                        continue
         try:
             if redraw_header and self.show_header:
                 self.CH.redraw_grid_and_text(last_col_line_pos, x1, x_stop, start_col, end_col, selected_cols, actual_selected_rows, actual_selected_cols)
