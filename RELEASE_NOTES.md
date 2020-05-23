@@ -1,3 +1,7 @@
+### Version 4.7.2
+ - Adjustment to dark theme colors
+ - Clean up repetitions of code which had virtually no performance gain anyway
+
 ### Version 4.7.1
  - Rename themes to "light blue", "light green", "dark blue", "dark green"
  - Clean up theme and color settings code
