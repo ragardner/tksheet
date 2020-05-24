@@ -5,6 +5,7 @@
  - Fixed issue where clicking outside of cell edit window and Sheet would return focus to the Sheet widget anyway
  - Fixed issues where row/column select highlight would be lower in canvas than cell selections
  - Hopefully simplified cell edit code a bit
+ - Fix undo delete columns error for python versions < 3.8
 
 ### Version 4.7.2
  - Adjustment to dark theme colors
