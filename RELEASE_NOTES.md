@@ -1,5 +1,5 @@
 ### Version 4.7.3
- - Make `"begin_edit_cell"` and `"end_edit_cell"` the only two edit cell bindings for use with `extra_bindings()` function
+ - Make `"begin_edit_cell"` and `"end_edit_cell"` the only two edit cell bindings for use with `extra_bindings()` function (although `"edit_cell"` still works and is the equivalent of `"end_edit_cell"`)
  - Make it so if `"begin_edit_cell"` binding returns anything other than `None` the text in the cell edit window will be that return value otherwise it will be the relevant keypress
  - Prevent auto resize from firing two redraw commands in one go
  - Fixed issue where clicking outside of cell edit window and Sheet would return focus to the Sheet widget anyway
