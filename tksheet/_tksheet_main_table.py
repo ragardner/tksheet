@@ -841,6 +841,9 @@ class MainTable(tk.Canvas):
                         need_redraw = True
         if redraw and need_redraw:
             self.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
+            return True
+        else:
+            return False
 
     def cell_is_completely_visible(self, r = 0, c = 0, cell_coords = None, separate_axes = False):
         cx1, cy1, cx2, cy2 = self.get_canvas_visible_area()
@@ -1467,23 +1470,25 @@ class MainTable(tk.Canvas):
 
     def bind_cell_edit(self, enable = True):
         if enable:
-            for c in chain(lowercase_letters, uppercase_letters):
-                self.bind(f"<{c}>", self.edit_cell_)
-            for c in chain(numbers, symbols, other_symbols):
-                self.bind(c, self.edit_cell_)
-            self.bind("<F2>", self.edit_cell_)
-            self.bind("<Double-Button-1>", self.edit_cell_)
-            self.bind("<Return>", self.edit_cell_)
-            self.bind("<BackSpace>", self.edit_cell_)
+            for w in (self, self.RI, self.CH):
+                for c in chain(lowercase_letters, uppercase_letters):
+                    w.bind(f"<{c}>", self.edit_cell_)
+                for c in chain(numbers, symbols, other_symbols):
+                    w.bind(c, self.edit_cell_)
+                w.bind("<F2>", self.edit_cell_)
+                w.bind("<Double-Button-1>", self.edit_cell_)
+                w.bind("<Return>", self.edit_cell_)
+                w.bind("<BackSpace>", self.edit_cell_)
         else:
-            for c in chain(lowercase_letters, uppercase_letters):
-                self.unbind(f"<{c}>")
-            for c in chain(numbers, symbols, other_symbols):
-                self.unbind(c)
-            self.unbind("<F2>")
-            self.unbind("<Double-Button-1>")
-            self.unbind("<Return>")
-            self.unbind("<BackSpace>")
+            for w in (self, self.RI, self.CH):
+                for c in chain(lowercase_letters, uppercase_letters):
+                    w.unbind(f"<{c}>")
+                for c in chain(numbers, symbols, other_symbols):
+                    w.unbind(c)
+                w.unbind("<F2>")
+                w.unbind("<Double-Button-1>")
+                w.unbind("<Return>")
+                w.unbind("<BackSpace>")
 
     def enable_bindings(self, bindings):
         if isinstance(bindings,(list, tuple)):
@@ -2772,7 +2777,7 @@ class MainTable(tk.Canvas):
             tf = self.text_color
         return tf
 
-    def main_table_redraw_grid_and_text(self, redraw_header = False, redraw_row_index = False):
+    def main_table_redraw_grid_and_text(self, redraw_header = False, redraw_row_index = False, redraw_table = True):
         last_col_line_pos = self.col_positions[-1] + 1
         last_row_line_pos = self.row_positions[-1] + 1
         try:
@@ -2782,16 +2787,16 @@ class MainTable(tk.Canvas):
                                          last_row_line_pos + self.empty_vertical))
         except:
             return
-        x1 = self.canvasx(0)
-        y1 = self.canvasy(0)
-        x2 = self.canvasx(self.winfo_width())
         y2 = self.canvasy(self.winfo_height())
-        start_row = bisect.bisect_left(self.row_positions, y1)
         end_row = bisect.bisect_right(self.row_positions, y2)
         if not y2 >= self.row_positions[-1]:
             end_row += 1
         if redraw_row_index and self.show_index and self.RI.auto_set_index_width(end_row - 1):
             return
+        x1 = self.canvasx(0)
+        y1 = self.canvasy(0)
+        x2 = self.canvasx(self.winfo_width())
+        start_row = bisect.bisect_left(self.row_positions, y1)
         self.row_width_resize_bbox = (x1, y1, x1 + 2, y2)
         self.header_height_resize_bbox = (x1 + 6, y1, x2, y1 + 2)
         self.delete("t", "g", "hi")
@@ -2807,7 +2812,6 @@ class MainTable(tk.Canvas):
             y_stop = y2
         else:
             y_stop = last_row_line_pos
-        cr_ = self.create_rectangle
         ct_ = self.create_text
         sb = y2 + 2
         if self.show_vertical_grid:
@@ -2831,7 +2835,7 @@ class MainTable(tk.Canvas):
         c_4_ = (int(c_4[1:3], 16), int(c_4[3:5], 16), int(c_4[5:], 16))
         rows_ = tuple(range(start_row, end_row))
         selected_cells, selected_rows, selected_cols, actual_selected_rows, actual_selected_cols = self.get_redraw_selections((start_row, start_col, end_row, end_col - 1))
-        if self.align == "w":
+        if redraw_table and self.align == "w":
             for c in range(start_col, end_col - 1):
                 fc = self.col_positions[c]
                 sc = self.col_positions[c + 1]
@@ -2894,7 +2898,7 @@ class MainTable(tk.Canvas):
                                         break
                     except:
                         continue
-        elif self.align == "center":
+        elif redraw_table and self.align == "center":
             for c in range(start_col, end_col - 1):
                 fc = self.col_positions[c]
                 stop = fc + 5
@@ -3056,9 +3060,9 @@ class MainTable(tk.Canvas):
         if alltags[2] == "cell":
             return (box[0], box[1])
         elif alltags[2] == "col":
-            return ("column", box[1]) if not get_coords else (box[1], 0)
+            return ("column", box[1]) if not get_coords else (0, box[1])
         elif alltags[2] == "row":
-            return ("row", box[0]) if not get_coords else (box[1], 0)
+            return ("row", box[0]) if not get_coords else (box[0], 0)
 
     def get_tags_of_current(self):
         items = self.find_withtag("Current_Inside") + self.find_withtag("Current_Outside")
@@ -3274,7 +3278,7 @@ class MainTable(tk.Canvas):
                     end_row = within_r2
                 srows.update(set(range(start_row, end_row)))
                 ac_srows.update(set(range(start_row, end_row)))
-        for item in self.find_withtag("Current_Outside"):
+        for item in chain(self.find_withtag("Current_Outside"), self.find_withtag("Current_Inside")):
             r1, c1, r2, c2 = tuple(int(e) for e in self.gettags(item)[1].split("_") if e)
             if (r1 >= within_r1 or
                 r2 <= within_r2):
@@ -3612,9 +3616,9 @@ class MainTable(tk.Canvas):
             self.itemconfig(item, state = "normal")
 
     def edit_cell_(self, event = None):
-        if not self.anything_selected(exclude_columns = True, exclude_rows = True) or self.text_editor_id is not None:
+        if not self.anything_selected() or self.text_editor_id is not None:
             return
-        currently_selected = self.currently_selected()
+        currently_selected = self.currently_selected(get_coords = True)
         if not currently_selected:
             return
         y1 = int(currently_selected[0])
@@ -3622,7 +3626,7 @@ class MainTable(tk.Canvas):
         self.text_editor_loc = (y1, x1)
         text = None
         if self.extra_begin_edit_cell_func is not None:
-            text = self.extra_begin_edit_cell_func((y1, x1, event.char))
+            text = f"{self.extra_begin_edit_cell_func((y1, x1, event.char))}"
         if self.extra_begin_edit_cell_func is None or text is None:
             if f"{event.keysym}".lower() == "backspace":
                 text = ""
@@ -3633,14 +3637,14 @@ class MainTable(tk.Canvas):
         self.RI.set_row_height(y1, only_set_if_too_small = True)
         self.CH.set_col_width(x1, only_set_if_too_small = True)
         self.select_cell(r = y1, c = x1, keep_other_selections = True)
-        self.see(r = y1, c = x1, keep_yscroll = False, keep_xscroll = False, bottom_right_corner = False, check_cell_visibility = True)
-        self.refresh()
         self.create_text_editor(r = y1, c = x1, text = text, set_data_ref_on_destroy = True)
         
     def create_text_editor(self, r = 0, c = 0, text = None, state = "normal", see = True, set_data_ref_on_destroy = False, binding = None):
         self.destroy_text_editor()
         if see:
-            self.see(r = r, c = c, check_cell_visibility = True)
+            has_redrawn = self.see(r = r, c = c, check_cell_visibility = True)
+            if not has_redrawn:
+                self.refresh()
         self.text_editor_loc = (r, c)
         x = self.col_positions[c]
         y = self.row_positions[r]

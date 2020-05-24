@@ -800,7 +800,7 @@ class RowIndex(tk.Canvas):
                     self.set_width(new_w, set_TL = True)
                     return True
             elif self.default_index == "both":
-                new_w = self.MT.GetTextWidth(f"{num2alpha(end_row)} {end_row + 1}") + 15
+                new_w = self.MT.GetTextWidth(f"{end_row + 1} {num2alpha(end_row)}") + 15
                 if self.current_width - new_w > 10 or new_w - self.current_width > 10:
                     self.set_width(new_w, set_TL = True)
                     return True
@@ -855,7 +855,7 @@ class RowIndex(tk.Canvas):
                     elif self.default_index == "numbers":
                         lns = (f"{r + 1}", )
                     else:
-                        lns = (f"{num2alpha(r)} {r + 1}", )
+                        lns = (f"{r + 1} {num2alpha(r)}", )
                 txt = lns[0]
                 y = fr + self.MT.fl_ins
                 if y + self.MT.half_txt_h - 1 > y1:

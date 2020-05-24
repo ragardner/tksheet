@@ -767,7 +767,7 @@ class ColumnHeaders(tk.Canvas):
                     elif self.default_hdr == "numbers":
                         lns = (f"{c + 1}", )
                     else:
-                        lns = (f"{num2alpha(c)} {c + 1}", )
+                        lns = (f"{c + 1} {num2alpha(c)}", )
                 y = self.MT.hdr_fl_ins
                 if incfl:
                     txt = lns[0]
