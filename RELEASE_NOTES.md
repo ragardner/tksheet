@@ -1,4 +1,12 @@
 ### Version 4.7.2
+ - Make `"begin_edit_cell"` and `"end_edit_cell"` the only two edit cell bindings for use with `extra_bindings()` function
+ - Make it so if `"begin_edit_cell"` binding returns anything other than `None` the text in the cell edit window will be that return value otherwise it will be the relevant keypress
+ - Prevent auto resize from firing two redraw commands in one go
+ - Fixed issue where clicking outside of cell edit window and Sheet would return focus to the Sheet widget anyway
+ - Fixed issues where row/column select highlight would be lower in canvas than cell selections
+ - Hopefully simplified cell edit code a bit
+
+### Version 4.7.2
  - Adjustment to dark theme colors
  - Clean up repetitions of code which had virtually no performance gain anyway
 
