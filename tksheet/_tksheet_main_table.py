@@ -92,10 +92,8 @@ class MainTable(tk.Canvas):
         self.extra_ctrl_v_func = None
         self.extra_ctrl_z_func = None
         self.extra_delete_key_func = None
-        self.extra_edit_cell_func = None
         self.extra_begin_edit_cell_func = None
-        self.extra_begin_edit_cell_keypress_func = None # use when you want to use keypress as cell edit start text
-        self.extra_escape_edit_cell_func = None
+        self.extra_end_edit_cell_func = None
         self.extra_del_rows_rc_func = None
         self.extra_del_cols_rc_func = None
         self.extra_insert_cols_rc_func = None
@@ -752,11 +750,11 @@ class MainTable(tk.Canvas):
                 self.reselect_from_get_boxes(undo_storage[1]['selection_boxes'])
             elif undo_storage[0] == "delete_cols":
                 start_col = float("inf")
-                for cn, w in reversed(undo_storage[1]['colwidths'].items()):
+                for cn, w in reversed(tuple(undo_storage[1]['colwidths'].items())):
                     self.insert_col_position(idx = cn, width = w)
                     if cn < start_col:
                         start_col = cn
-                for cn, rowdict in reversed(undo_storage[1]['deleted_cols'].items()):
+                for cn, rowdict in reversed(tuple(undo_storage[1]['deleted_cols'].items())):
                     for rn, v in rowdict.items():
                         try:
                             self.data_ref[rn].insert(cn, v)
@@ -2784,17 +2782,19 @@ class MainTable(tk.Canvas):
                                          last_row_line_pos + self.empty_vertical))
         except:
             return
-        self.delete("t", "g", "hi")
         x1 = self.canvasx(0)
         y1 = self.canvasy(0)
         x2 = self.canvasx(self.winfo_width())
         y2 = self.canvasy(self.winfo_height())
-        self.row_width_resize_bbox = (x1, y1, x1 + 2, y2)
-        self.header_height_resize_bbox = (x1 + 6, y1, x2, y1 + 2)
         start_row = bisect.bisect_left(self.row_positions, y1)
         end_row = bisect.bisect_right(self.row_positions, y2)
         if not y2 >= self.row_positions[-1]:
             end_row += 1
+        if redraw_row_index and self.show_index and self.RI.auto_set_index_width(end_row - 1):
+            return
+        self.row_width_resize_bbox = (x1, y1, x1 + 2, y2)
+        self.header_height_resize_bbox = (x1 + 6, y1, x2, y1 + 2)
+        self.delete("t", "g", "hi")
         start_col = bisect.bisect_left(self.col_positions, x1)
         end_col = bisect.bisect_right(self.col_positions, x2)
         if not x2 >= self.col_positions[-1]:
@@ -3088,24 +3088,23 @@ class MainTable(tk.Canvas):
                                       outline = self.selected_cells_border_col,
                                       width = 2,
                                       tags = tagr)
-            self.tag_raise(f"{r1}_{c1}_{r2}_{c2}")
+            self.tag_raise(b)
         else:
             b = self.create_rectangle(self.col_positions[c1], self.row_positions[r1], self.col_positions[c2], self.row_positions[r2],
                                       fill = self.selected_cells_background,
                                       outline = "",
                                       tags = tagr)
-            self.tag_lower(f"{r1}_{c1}_{r2}_{c2}")
-        if not inside:
-            self.RI.create_rectangle(0, self.row_positions[r1], self.RI.current_width - 1, self.row_positions[r2],
+            self.tag_lower(b)
+        ri = self.RI.create_rectangle(0, self.row_positions[r1], self.RI.current_width - 1, self.row_positions[r2],
                                       fill = self.RI.selected_cells_background,
                                       outline = "",
                                       tags = tagr)
-            self.CH.create_rectangle(self.col_positions[c1], 0, self.col_positions[c2], self.CH.current_height - 1,
+        ch = self.CH.create_rectangle(self.col_positions[c1], 0, self.col_positions[c2], self.CH.current_height - 1,
                                       fill = self.CH.selected_cells_background,
                                       outline = "",
                                       tags = tagr)
-            self.RI.tag_lower(f"{r1}_{c1}_{r2}_{c2}")
-            self.CH.tag_lower(f"{r1}_{c1}_{r2}_{c2}")
+        self.RI.tag_lower(ri)
+        self.CH.tag_lower(ch)
         return b
 
     def set_current_to_last(self):
@@ -3175,10 +3174,10 @@ class MainTable(tk.Canvas):
         if taglower:
             self.tag_lower(taglower)
             self.RI.tag_lower(taglower)
+            self.CH.tag_lower(taglower)
             self.RI.tag_lower("Current_Inside")
             self.RI.tag_lower("Current_Outside")
             self.RI.tag_lower("CellSelectFill")
-            self.CH.tag_lower(taglower)
             self.CH.tag_lower("Current_Inside")
             self.CH.tag_lower("Current_Outside")
             self.CH.tag_lower("CellSelectFill")
@@ -3208,15 +3207,19 @@ class MainTable(tk.Canvas):
                         self.create_current(r1, c1, full_tags[2], inside = True)
                     elif type_ == "Current_Outside":
                         self.create_current(r1, c1, full_tags[2], inside = False)
-        self.tag_lower("CellSelectFill")
-        self.RI.tag_lower("CellSelectFill")
-        self.CH.tag_lower("CellSelectFill")
         self.tag_lower("RowSelectFill")
         self.RI.tag_lower("RowSelectFill")
         self.CH.tag_lower("RowSelectFill")
         self.tag_lower("ColSelectFill")
         self.RI.tag_lower("ColSelectFill")
         self.CH.tag_lower("ColSelectFill")
+        self.tag_lower("CellSelectFill")
+        self.RI.tag_lower("CellSelectFill")
+        self.CH.tag_lower("CellSelectFill")
+        self.RI.tag_lower("Current_Inside")
+        self.RI.tag_lower("Current_Outside")
+        self.CH.tag_lower("Current_Inside")
+        self.CH.tag_lower("Current_Outside")
         if not self.show_selected_cells_border:
             self.tag_lower("Current_Outside")
 
@@ -3617,22 +3620,20 @@ class MainTable(tk.Canvas):
         y1 = int(currently_selected[0])
         x1 = int(currently_selected[1])
         self.text_editor_loc = (y1, x1)
-        if self.extra_begin_edit_cell_func is not None and self.extra_begin_edit_cell_keypress_func is None:
-            self.extra_begin_edit_cell_func((y1, x1, event.char))
-            text = self.data_ref[y1][x1]
-        else:
-            if self.extra_begin_edit_cell_keypress_func is not None:
-                self.extra_begin_edit_cell_keypress_func((y1, x1, event.char))
+        text = None
+        if self.extra_begin_edit_cell_func is not None:
+            text = self.extra_begin_edit_cell_func((y1, x1, event.char))
+        if self.extra_begin_edit_cell_func is None or text is None:
             if f"{event.keysym}".lower() == "backspace":
                 text = ""
             elif event.char in all_chars:
                 text = event.char
             else:
                 text = self.data_ref[y1][x1]
-        self.select_cell(r = y1, c = x1, keep_other_selections = True)
-        self.see(r = y1, c = x1, keep_yscroll = False, keep_xscroll = False, bottom_right_corner = False, check_cell_visibility = True)
         self.RI.set_row_height(y1, only_set_if_too_small = True)
         self.CH.set_col_width(x1, only_set_if_too_small = True)
+        self.select_cell(r = y1, c = x1, keep_other_selections = True)
+        self.see(r = y1, c = x1, keep_yscroll = False, keep_xscroll = False, bottom_right_corner = False, check_cell_visibility = True)
         self.refresh()
         self.create_text_editor(r = y1, c = x1, text = text, set_data_ref_on_destroy = True)
         
@@ -3671,8 +3672,8 @@ class MainTable(tk.Canvas):
         self.text_editor.textedit.focus_set()
 
     def destroy_text_editor(self, event = None):
-        if event is not None and self.extra_escape_edit_cell_func is not None:
-            self.extra_escape_edit_cell_func(self.text_editor_loc)
+        if event is not None and self.extra_end_edit_cell_func is not None:
+            self.extra_end_edit_cell_func(self.text_editor_loc + ("Escape", ))
         self.text_editor_loc = None
         try:
             self.delete(self.text_editor_id)
@@ -3691,6 +3692,8 @@ class MainTable(tk.Canvas):
         except:
             pass
         self.show_current()
+        if event is not None and len(event) >= 3 and "Escape" in event:
+            self.focus_set()
 
     def text_editor_newline_binding(self, event = None):
         if self.GetLinesHeight(self.text_editor.get_num_lines() + 1) > self.text_editor.winfo_height():
@@ -3708,8 +3711,8 @@ class MainTable(tk.Canvas):
             if r is None and c is None and destroy_tup:
                 r, c = destroy_tup[0], destroy_tup[1]
             self.set_cell_data(r, c, self.text_editor_value)
-            if self.extra_edit_cell_func is not None:
-                self.extra_edit_cell_func((r, c))
+            if self.extra_end_edit_cell_func is not None:
+                self.extra_end_edit_cell_func((r, c, destroy_tup[2] if len(destroy_tup) >= 3 else "FocusOut"))
         if move_down:
             if r is None and c is None and destroy_tup:
                 r, c = destroy_tup[0], destroy_tup[1]
@@ -3728,7 +3731,8 @@ class MainTable(tk.Canvas):
             self.resize_dropdowns()
         if redraw:
             self.refresh()
-        self.focus_set()
+        if destroy_tup is not None and len(destroy_tup) >= 3 and destroy_tup[2] != "FocusOut":
+            self.focus_set()
         return self.text_editor_value
 
     def set_cell_data(self, r = 0, c = 0, value = "", undo = True, cell_resize = True):
@@ -3804,8 +3808,8 @@ class MainTable(tk.Canvas):
             self.table_dropdown_value = self.dropdowns[(r, c)]['widget'].get_my_value()
         if set_cell_on_select:
             self.set_cell_data(r, c, self.table_dropdown_value, cell_resize = True if destroy else False)
-            if self.extra_edit_cell_func is not None:
-                self.extra_edit_cell_func((r, c))
+            if self.extra_end_edit_cell_func is not None:
+                self.extra_end_edit_cell_func((r, c))
             self.focus_set()
         if destroy:
             self.destroy_dropdown(r, c)

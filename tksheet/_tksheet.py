@@ -33,7 +33,8 @@ class Sheet(tk.Frame):
                  height = None,
                  headers = None,
                  measure_subset_header = True,
-                 default_header = "letters", #letters or numbers
+                 default_header = "letters", #letters, numbers or both
+                 default_row_index = "numbers", #letters, numbers or both
                  header_background = theme_light_blue['header_background'],
                  header_border_color = theme_light_blue['header_border_color'],
                  header_grid_color = theme_light_blue['header_grid_color'],
@@ -138,6 +139,7 @@ class Sheet(tk.Frame):
                            drag_and_drop_color = drag_and_drop_color,
                            resizing_line_color = resizing_line_color,
                            row_drag_and_drop_perform = row_drag_and_drop_perform,
+                           default_row_index = default_row_index,
                            measure_subset_index = measure_subset_index,
                            auto_resize_width = auto_resize_numerical_row_index)
         self.CH = ColumnHeaders(self,
@@ -351,14 +353,10 @@ class Sheet(tk.Frame):
                 self.MT.extra_ctrl_z_func = func
             if binding == "delete_key":
                 self.MT.extra_delete_key_func = func
-            if binding == "edit_cell":
-                self.MT.extra_edit_cell_func = func
             if binding == "begin_edit_cell":
                 self.MT.extra_begin_edit_cell_func = func
-            if binding == "begin_edit_cell_use_keypress":
-                self.MT.extra_begin_edit_cell_keypress_func = func
-            if binding == "escape_edit_cell":
-                self.MT.extra_escape_edit_cell_func = func
+            if binding == "end_edit_cell" or binding == "edit_cell":
+                self.MT.extra_end_edit_cell_func = func
             if binding == "row_index_drag_drop":
                 self.RI.ri_extra_drag_drop_func = func
             if binding == "column_header_drag_drop":
@@ -1159,7 +1157,8 @@ class Sheet(tk.Frame):
                     top_left_foreground_highlight = None,
                     auto_resize_default_row_index = None,
                     font = None,
-                    default_header = "letters",
+                    default_header = None,
+                    default_row_index = None,
                     header_font = None,
                     show_selected_cells_border = None,
                     theme = None,
@@ -1271,7 +1270,9 @@ class Sheet(tk.Frame):
         if selected_columns_foreground is not None:
             self.MT.selected_cols_fg = selected_columns_foreground 
         if default_header is not None:
-            self.CH.default_hdr = 1 if default_header.lower() == "letters" else 0
+            self.CH.default_hdr = default_header.lower()
+        if default_row_index is not None:
+            self.RI.default_index = default_row_index.lower()
         if max_colwidth is not None:
             self.CH.max_cw = float(max_colwidth)
         if max_row_height is not None:

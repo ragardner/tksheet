@@ -57,7 +57,7 @@ class ColumnHeaders(tk.Canvas):
         self.selection_binding_func = None
         self.shift_selection_binding_func = None
         self.drag_selection_binding_func = None
-        self.default_hdr = 1 if default_header.lower() == "letters" else 0
+        self.default_hdr = default_header.lower()
         self.max_cw = float(max_colwidth)
         self.max_header_height = float(max_header_height)
         self.current_height = None    # is set from within MainTable() __init__ or from Sheet parameters
@@ -762,7 +762,12 @@ class ColumnHeaders(tk.Canvas):
                         else:
                             lns = (f"{self.MT.my_hdrs[dcol]}", )
                 except:
-                    lns = (num2alpha(c), ) if self.default_hdr else (f"{c + 1}", )
+                    if self.default_hdr == "letters":
+                        lns = (num2alpha(c), )
+                    elif self.default_hdr == "numbers":
+                        lns = (f"{c + 1}", )
+                    else:
+                        lns = (f"{num2alpha(c)} {c + 1}", )
                 y = self.MT.hdr_fl_ins
                 if incfl:
                     txt = lns[0]
@@ -832,7 +837,12 @@ class ColumnHeaders(tk.Canvas):
                         else:
                             lns = (f"{self.MT.my_hdrs[dcol]}", )
                 except:
-                    lns = (num2alpha(c), ) if self.default_hdr else (f"{c + 1}", )
+                    if self.default_hdr == "letters":
+                        lns = (num2alpha(c), )
+                    elif self.default_hdr == "numbers":
+                        lns = (f"{c + 1}", )
+                    else:
+                        lns = (f"{num2alpha(c)} {c + 1}", )
                 y = self.MT.hdr_fl_ins
                 if incfl:
                     txt = lns[0]

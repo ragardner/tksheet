@@ -33,6 +33,7 @@ class RowIndex(tk.Canvas):
                  row_index_select_foreground = None,
                  row_index_select_row_bg = "#5f6368",
                  row_index_select_row_fg = "white",
+                 default_row_index = "numbers",
                  drag_and_drop_color = None,
                  resizing_line_color = None,
                  row_drag_and_drop_perform = True,
@@ -99,6 +100,7 @@ class RowIndex(tk.Canvas):
         self.currently_resizing_height = False
         self.measure_subset_index = measure_subset_index
         self.auto_resize_width = auto_resize_width
+        self.default_index = default_row_index.lower()
         self.bind("<Motion>", self.mouse_motion)
         self.bind("<ButtonPress-1>", self.b1_press)
         self.bind("<Shift-ButtonPress-1>",self.shift_b1_press)
@@ -594,7 +596,7 @@ class RowIndex(tk.Canvas):
                 self.MT.create_selected(r1, c1, r2, c2, current[2] + "s")
         self.MT.create_selected(r, 0, r + 1, len(self.MT.col_positions) - 1, "rows")
         if redraw:
-            self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
+            self.MT.main_table_redraw_grid_and_text(redraw_header = False, redraw_row_index = True)
         if self.selection_binding_func is not None and run_binding_func:
             self.selection_binding_func(("select_row", int(r)))
 
@@ -785,6 +787,25 @@ class RowIndex(tk.Canvas):
             tf = self.text_color
         return tf, self.MT.my_font
 
+    def auto_set_index_width(self, end_row):
+        if not self.MT.my_row_index and not isinstance(self.MT.my_row_index, int) and self.auto_resize_width:
+            if self.default_index == "letters":
+                new_w = self.MT.GetTextWidth(f"{num2alpha(end_row)}") + 15
+                if self.current_width - new_w > 10 or new_w - self.current_width > 10:
+                    self.set_width(new_w, set_TL = True)
+                    return True
+            elif self.default_index == "numbers":
+                new_w = self.MT.GetTextWidth(f"{end_row}") + 15
+                if self.current_width != new_w:
+                    self.set_width(new_w, set_TL = True)
+                    return True
+            elif self.default_index == "both":
+                new_w = self.MT.GetTextWidth(f"{num2alpha(end_row)} {end_row + 1}") + 15
+                if self.current_width - new_w > 10 or new_w - self.current_width > 10:
+                    self.set_width(new_w, set_TL = True)
+                    return True
+        return False
+
     def redraw_grid_and_text(self, last_row_line_pos, y1, y_stop, start_row, end_row, y2, x1, x_stop, selected_rows, selected_cols, actual_selected_rows):
         self.configure(scrollregion = (0,
                                        0,
@@ -808,11 +829,6 @@ class RowIndex(tk.Canvas):
         sb = y2 + 2
         c_2 = self.selected_cells_background if self.selected_cells_background.startswith("#") else Color_Map_[self.selected_cells_background]
         c_3 = self.selected_rows_bg if self.selected_rows_bg.startswith("#") else Color_Map_[self.selected_rows_bg]
-        if not self.MT.my_row_index and not isinstance(self.MT.my_row_index, int) and self.auto_resize_width:
-            new_w = self.MT.GetTextWidth(f"{end_row}") + 11
-            if self.current_width != new_w:
-                self.set_width(new_w, set_TL = True)
-                self.MT.recreate_all_selection_boxes()
         if self.align == "center":
             mw = self.current_width - 1
             x = floor(self.current_width / 2)
@@ -834,7 +850,12 @@ class RowIndex(tk.Canvas):
                         else:
                             lns = (f"{self.MT.my_row_index[r]}", )
                 except:
-                    lns = (f"{r + 1}", )
+                    if self.default_index == "letters":
+                        lns = (num2alpha(r), )
+                    elif self.default_index == "numbers":
+                        lns = (f"{r + 1}", )
+                    else:
+                        lns = (f"{num2alpha(r)} {r + 1}", )
                 txt = lns[0]
                 y = fr + self.MT.fl_ins
                 if y + self.MT.half_txt_h - 1 > y1:
@@ -900,7 +921,12 @@ class RowIndex(tk.Canvas):
                         else:
                             lns = (f"{self.MT.my_row_index[r]}", )
                 except:
-                    lns = (f"{r + 1}", )
+                    if self.default_index == "letters":
+                        lns = (num2alpha(r), )
+                    elif self.default_index == "numbers":
+                        lns = (f"{r + 1}", )
+                    else:
+                        lns = (f"{num2alpha(r)} {r + 1}", )
                 y = fr + self.MT.fl_ins
                 if y + self.MT.half_txt_h - 1 > y1:
                     txt = lns[0]
