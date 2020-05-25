@@ -35,16 +35,11 @@ class Sheet(tk.Frame):
                  measure_subset_header = True,
                  default_header = "letters", #letters, numbers or both
                  default_row_index = "numbers", #letters, numbers or both
-                 header_background = theme_light_blue['header_background'],
-                 header_border_color = theme_light_blue['header_border_color'],
-                 header_grid_color = theme_light_blue['header_grid_color'],
-                 header_foreground = theme_light_blue['header_foreground'],
-                 header_select_background = theme_light_blue['header_select_background'],
-                 header_select_foreground = theme_light_blue['header_select_foreground'],
-                 header_select_column_bg = theme_light_blue['header_select_column_bg'],
-                 header_select_column_fg = theme_light_blue['header_select_column_fg'],
+                 page_up_down_select_row = True,
                  data_reference = None,
                  data = None,
+                 startup_select = None,
+                 startup_focus = True,
                  total_columns = None,
                  total_rows = None,
                  column_width = 120,
@@ -56,20 +51,9 @@ class Sheet(tk.Frame):
                  row_index = None,
                  measure_subset_index = True,
                  row_index_width = 100,
-                 auto_resize_numerical_row_index = True,
+                 auto_resize_default_row_index = True,
                  set_all_heights_and_widths = False,
                  row_height = "1",
-                 row_index_background = theme_light_blue['row_index_background'],
-                 row_index_border_color = theme_light_blue['row_index_border_color'],
-                 row_index_grid_color = theme_light_blue['row_index_grid_color'],
-                 row_index_foreground = theme_light_blue['row_index_foreground'],
-                 row_index_select_background = theme_light_blue['row_index_select_background'],
-                 row_index_select_foreground = theme_light_blue['row_index_select_foreground'],
-                 row_index_select_row_bg = theme_light_blue['row_index_select_row_bg'],
-                 row_index_select_row_fg = theme_light_blue['row_index_select_row_fg'],
-                 top_left_background = theme_light_blue['top_left_background'],
-                 top_left_foreground = theme_light_blue['top_left_foreground'],
-                 top_left_foreground_highlight = theme_light_blue['top_left_foreground_highlight'],
                  font = get_font(),
                  header_font = get_heading_font(),
                  popup_menu_font = get_font(),
@@ -81,14 +65,14 @@ class Sheet(tk.Frame):
                  header_align = "center",
                  row_index_align = "center",
                  frame_background = theme_light_blue['table_background'],
-                 table_background = theme_light_blue['table_background'],
-                 grid_color = theme_light_blue['grid_color'],
-                 text_color = theme_light_blue['text_color'],
+                 grid_color = theme_light_blue['grid_color'], #grid lines color (inside table)
+                 table_background = theme_light_blue['table_background'], #background without selected cells (inside table)
+                 text_color = theme_light_blue['text_color'], #text color without selected cells (inside table)
                  show_selected_cells_border = True,
-                 selected_cells_border_color = theme_light_blue['selected_cells_border_color'],
-                 selected_cells_background = theme_light_blue['selected_cells_background'],
+                 selected_cells_border_color = theme_light_blue['selected_cells_border_color'], #border color of cell selection box, not columns/rows selected (inside table)
+                 selected_cells_background = theme_light_blue['selected_cells_background'], #background of cell selection box, not columns/rows selected (inside table)
                  display_selected_fg_over_highlights = False,
-                 selected_cells_foreground = theme_light_blue['selected_cells_foreground'],
+                 selected_cells_foreground = theme_light_blue['selected_cells_foreground'], #text color inside cell selection box, not columns/rows selected (inside table)
                  selected_rows_border_color = theme_light_blue['selected_rows_border_color'],
                  selected_rows_background = theme_light_blue['selected_rows_background'],
                  selected_rows_foreground = theme_light_blue['selected_rows_foreground'],
@@ -97,6 +81,25 @@ class Sheet(tk.Frame):
                  selected_columns_foreground = theme_light_blue['selected_columns_foreground'],
                  resizing_line_color = theme_light_blue['resizing_line_color'],
                  drag_and_drop_color = theme_light_blue['drag_and_drop_color'],
+                 row_index_background = theme_light_blue['row_index_background'],
+                 row_index_border_color = theme_light_blue['row_index_border_color'],
+                 row_index_grid_color = theme_light_blue['row_index_grid_color'],
+                 row_index_foreground = theme_light_blue['row_index_foreground'],
+                 row_index_select_background = theme_light_blue['row_index_select_background'],
+                 row_index_select_foreground = theme_light_blue['row_index_select_foreground'],
+                 row_index_select_row_bg = theme_light_blue['row_index_select_row_bg'],
+                 row_index_select_row_fg = theme_light_blue['row_index_select_row_fg'],
+                 header_background = theme_light_blue['header_background'], #non selected background (inside header)
+                 header_border_color = theme_light_blue['header_border_color'], #border color (inside header)
+                 header_grid_color = theme_light_blue['header_grid_color'], #grid lines color (inside header)
+                 header_foreground = theme_light_blue['header_foreground'], #text color (inside header)
+                 header_select_background = theme_light_blue['header_select_background'], #background when there is a cell selected (inside header)
+                 header_select_foreground = theme_light_blue['header_select_foreground'], #text color when there is a cell selected (inside header)
+                 header_select_column_bg = theme_light_blue['header_select_column_bg'], #background when that column is selected (inside header)
+                 header_select_column_fg = theme_light_blue['header_select_column_fg'], #text color when that column is selected (inside header)
+                 top_left_background = theme_light_blue['top_left_background'],
+                 top_left_foreground = theme_light_blue['top_left_foreground'],
+                 top_left_foreground_highlight = theme_light_blue['top_left_foreground_highlight'],
                  displayed_columns = [],
                  all_columns_displayed = True,
                  max_undos = 20,
@@ -141,7 +144,7 @@ class Sheet(tk.Frame):
                            row_drag_and_drop_perform = row_drag_and_drop_perform,
                            default_row_index = default_row_index,
                            measure_subset_index = measure_subset_index,
-                           auto_resize_width = auto_resize_numerical_row_index)
+                           auto_resize_width = auto_resize_default_row_index)
         self.CH = ColumnHeaders(self,
                                 max_colwidth = max_colwidth,
                                 max_header_height = max_header_height,
@@ -160,6 +163,7 @@ class Sheet(tk.Frame):
                                 measure_subset_header = measure_subset_header,
                                 resizing_line_color = resizing_line_color)
         self.MT = MainTable(self,
+                            page_up_down_select_row = page_up_down_select_row,
                             display_selected_fg_over_highlights = display_selected_fg_over_highlights,
                             show_vertical_grid = show_vertical_grid,
                             show_horizontal_grid = show_horizontal_grid,
@@ -232,7 +236,24 @@ class Sheet(tk.Frame):
                     self.set_options(**{k: v})
         if set_all_heights_and_widths:
             self.set_all_cell_sizes_to_text()
+        if startup_select is not None:
+            try:
+                if startup_select[-1] == "cells":
+                    self.create_selection_box(*startup_select)
+                    self.set_currently_selected(startup_select[0], startup_select[1], selection_binding = False)
+                    
+                elif startup_select[-1] == "rows":
+                    self.create_selection_box(startup_select[0], 0, startup_select[1], len(self.MT.col_positions) - 1, "rows")
+                    self.set_currently_selected(startup_select[0], 0, selection_binding = False)
+                    
+                elif startup_select[-1] in ("cols", "columns"):
+                    self.create_selection_box(0, startup_select[0], len(self.MT.row_positions) - 1, startup_select[1], "cols")
+                    self.set_currently_selected(0, startup_select[0], selection_binding = False)
+            except:
+                pass
         self.MT.update()
+        if startup_focus:
+            self.MT.focus_set()
 
     def show(self, canvas = "all"):
         if canvas == "all":
@@ -1000,7 +1021,7 @@ class Sheet(tk.Frame):
         return self.MT.get_all_selection_boxes_with_types()
 
     def create_selection_box(self, r1, c1, r2, c2, type_ = "cells"):
-        return self.MT.create_selected(r1 = r1, c1 = c1, r2 = r2, c2 = c2, type_ = type_)
+        return self.MT.create_selected(r1 = r1, c1 = c1, r2 = r2, c2 = c2, type_ = type_ if type_ != "columns" else "cols")
 
     def recreate_all_selection_boxes(self):
         self.MT.recreate_all_selection_boxes()
@@ -1149,6 +1170,7 @@ class Sheet(tk.Frame):
         self.MT.header_font(newfont)
 
     def set_options(self,
+                    page_up_down_select_row = None,
                     display_selected_fg_over_highlights = None,
                     empty_horizontal = None,
                     empty_vertical = None,
@@ -1213,6 +1235,8 @@ class Sheet(tk.Frame):
                     measure_subset_index = None,
                     measure_subset_header = None,
                     redraw = True):
+        if page_up_down_select_row is not None:
+            self.MT.page_up_down_select_row = page_up_down_select_row
         if display_selected_fg_over_highlights is not None:
             self.MT.display_selected_fg_over_highlights = display_selected_fg_over_highlights
         if show_horizontal_grid is not None:

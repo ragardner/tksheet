@@ -41,6 +41,20 @@ class ColumnHeaders(tk.Canvas):
         tk.Canvas.__init__(self,parentframe,
                            background = header_background,
                            highlightthickness = 0)
+
+        self.disp_text = {}
+        self.disp_high = {}
+        self.disp_grid = {}
+        self.disp_fill_sels = {}
+        self.disp_bord_sels = {}
+        self.disp_resize_lines = {}
+        self.hidd_text = {}
+        self.hidd_high = {}
+        self.hidd_grid = {}
+        self.hidd_fill_sels = {}
+        self.hidd_bord_sels = {}
+        self.hidd_resize_lines = {}
+        
         self.centre_alignment_text_mod_indexes = (slice(1, None), slice(None, -1))
         self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
         self.parentframe = parentframe
@@ -205,7 +219,7 @@ class ColumnHeaders(tk.Canvas):
             x = self.canvasx(event.x)
             y = self.canvasy(event.y)
             mouse_over_resize = False
-            if self.width_resizing_enabled and not mouse_over_resize:
+            if self.width_resizing_enabled:
                 ov = self.check_mouse_position_width_resizers(event)
                 if ov is not None:
                     for itm in ov:
@@ -506,7 +520,6 @@ class ColumnHeaders(tk.Canvas):
     def double_b1(self, event = None):
         self.focus_set()
         if self.double_click_resizing_enabled and self.width_resizing_enabled and self.rsz_w is not None and not self.currently_resizing_width:
-            # condition check if trying to resize width:
             col = self.rsz_w - 1
             self.set_col_width(col)
             self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
@@ -582,11 +595,10 @@ class ColumnHeaders(tk.Canvas):
     def set_col_width(self, col, width = None, only_set_if_too_small = False, displayed_only = False, recreate = True, return_new_width = False):
         if col < 0:
             return
+        qconf = self.MT.txt_measure_canvas.itemconfig
+        qbbox = self.MT.txt_measure_canvas.bbox
+        qtxtm = self.MT.txt_measure_canvas_text
         if width is None:
-            x = self.MT.txt_measure_canvas.create_text(0, 0, text = "", font = self.MT.my_font)
-            x2 = self.MT.txt_measure_canvas.create_text(0, 0, text = "", font = self.MT.my_hdr_font)
-            itmcon = self.MT.txt_measure_canvas.itemconfig
-            itmbbx = self.MT.txt_measure_canvas.bbox
             w = self.MT.min_cw
             if displayed_only:
                 x1, y1, x2, y2 = self.MT.get_canvas_visible_area()
@@ -603,18 +615,18 @@ class ColumnHeaders(tk.Canvas):
                 else:
                     txt = self.MT.my_hdrs[data_col if self.measure_subset_hdr else col]
                 if txt:
-                    itmcon(x2, text = txt)
-                    b = itmbbx(x2)
+                    qconf(qtxtm, text = txt, font = self.MT.my_hdr_font)
+                    b = qbbox(qtxtm)
                     hw = b[2] - b[0] + 5
                 else:
                     hw = self.MT.min_cw
             except:
-                if self.default_hdr:
-                    itmcon(x2, text = f"{num2alpha(data_col)}")
+                if self.default_hdr == "letters":
+                    hw = self.MT.GetHdrTextWidth(num2alpha(data_col)) + 5
+                elif self.default_hdr == "numbers":
+                    hw = self.MT.GetHdrTextWidth(f"{data_col + 1}") + 5
                 else:
-                    itmcon(x2, text = f"{data_col}")
-                b = itmbbx(x2)
-                hw = b[2] - b[0] + 5
+                    hw = self.MT.GetHdrTextWidth(f"{data_col + 1} {num2alpha(data_col)}") + 5
             for r in islice(self.MT.data_ref, start_row, end_row):
                 try:
                     if isinstance(r[data_col], str):
@@ -624,8 +636,8 @@ class ColumnHeaders(tk.Canvas):
                 except:
                     txt = ""
                 if txt:
-                    itmcon(x, text = txt)
-                    b = itmbbx(x)
+                    qconf(qtxtm, text = txt, font = self.MT.my_font)
+                    b = qbbox(qtxtm)
                     tw = b[2] - b[0] + 5
                     if tw > w:
                         w = tw
@@ -633,8 +645,6 @@ class ColumnHeaders(tk.Canvas):
                 new_width = w
             else:
                 new_width = hw
-            self.MT.txt_measure_canvas.delete(x)
-            self.MT.txt_measure_canvas.delete(x2)
         else:
             new_width = int(width)
         if new_width <= self.MT.min_cw:
@@ -677,7 +687,7 @@ class ColumnHeaders(tk.Canvas):
     def redraw_highlight_get_text_fg(self, fc, sc, c, c_2, c_3, selected_cols, selected_rows, actual_selected_cols, hlcol):
         if hlcol in self.highlighted_cells and c in actual_selected_cols:
             c_1 = self.highlighted_cells[hlcol][0] if self.highlighted_cells[hlcol][0].startswith("#") else Color_Map_[self.highlighted_cells[hlcol][0]]
-            self.create_rectangle(fc + 1,
+            self.redraw_highlight(fc + 1,
                                   0,
                                   sc,
                                   self.current_height - 1,
@@ -689,7 +699,7 @@ class ColumnHeaders(tk.Canvas):
             tf = self.selected_cols_fg if self.highlighted_cells[hlcol][1] is None or self.MT.display_selected_fg_over_highlights else self.highlighted_cells[hlcol][1]
         elif hlcol in self.highlighted_cells and (c in selected_cols or selected_rows):
             c_1 = self.highlighted_cells[hlcol][0] if self.highlighted_cells[hlcol][0].startswith("#") else Color_Map_[self.highlighted_cells[hlcol][0]]
-            self.create_rectangle(fc + 1,
+            self.redraw_highlight(fc + 1,
                                   0,
                                   sc,
                                   self.current_height - 1,
@@ -704,32 +714,72 @@ class ColumnHeaders(tk.Canvas):
         elif c in selected_cols or selected_rows:
             tf = self.selected_cells_foreground
         elif hlcol in self.highlighted_cells:
-            self.create_rectangle(fc + 1, 0, sc, self.current_height - 1, fill = self.highlighted_cells[hlcol][0], outline = "", tag = "s")
+            self.redraw_highlight(fc + 1, 0, sc, self.current_height - 1, fill = self.highlighted_cells[hlcol][0], outline = "", tag = "s")
             tf = self.text_color if self.highlighted_cells[hlcol][1] is None else self.highlighted_cells[hlcol][1]
         else:
             tf = self.text_color
         return tf, self.MT.my_hdr_font
+
+    def redraw_highlight(self, x1, y1, x2, y2, fill, outline, tag):
+        if self.hidd_high:
+            t, sh = self.hidd_high.popitem()
+            self.coords(t, x1, y1, x2, y2)
+            if sh:
+                self.itemconfig(t, fill = fill, outline = outline, tag = tag)
+            else:
+                self.itemconfig(t, fill = fill, outline = outline, tag = tag, state = "normal")
+            self.lift(t)
+            self.disp_high[t] = True
+        else:
+            self.disp_high[self.create_rectangle(x1, y1, x2, y2, fill = fill, outline = outline, tag = tag)] = True
+
+    def redraw_text(self, x, y, text, fill, font, anchor, tag):
+        if self.hidd_text:
+            t, sh = self.hidd_text.popitem()
+            self.coords(t, x, y)
+            if sh:
+                self.itemconfig(t, text = text, fill = fill, font = font, anchor = anchor)
+            else:
+                self.itemconfig(t, text = text, fill = fill, font = font, anchor = anchor, state = "normal")
+            self.lift(t)
+        else:
+            t = self.create_text(x, y, text = text, fill = fill, font = font, anchor = anchor, tag = tag)
+        self.disp_text[t] = True
+        return t
+
+    def redraw_gridline(self, x1, y1, x2, y2, fill, width, tag):
+        if self.hidd_grid:
+            t, sh = self.hidd_grid.popitem()
+            self.coords(t, x1, y1, x2, y2)
+            if sh:
+                self.itemconfig(t, fill = fill, width = width, tag = tag)
+            else:
+                self.itemconfig(t, fill = fill, width = width, tag = tag, state = "normal")
+            self.disp_grid[t] = True
+        else:
+            self.disp_grid[self.create_line(x1, y1, x2, y2, fill = fill, width = width, tag = tag)] = True
 
     def redraw_grid_and_text(self, last_col_line_pos, x1, x_stop, start_col, end_col, selected_cols, selected_rows, actual_selected_cols):
         self.configure(scrollregion = (0,
                                        0,
                                        last_col_line_pos + self.MT.empty_horizontal,
                                        self.current_height))
-        self.delete("h", "v", "t", "s", "fv")
+        self.hidd_text.update(self.disp_text)
+        self.disp_text = {}
+        self.hidd_high.update(self.disp_high)
+        self.disp_high = {}
+        self.hidd_grid.update(self.disp_grid)
+        self.disp_grid = {}
         self.visible_col_dividers = []
         x = self.MT.col_positions[start_col]
-        self.create_line(x, 0, x, self.current_height, fill = self.grid_color, width = 1, tag = "fv")
+        self.redraw_gridline(x, 0, x, self.current_height, fill = self.grid_color, width = 1, tag = "fv")
         self.col_height_resize_bbox = (x1, self.current_height - 2, x_stop, self.current_height)
         yend = self.current_height - 5
-        if self.width_resizing_enabled:
-            for c in range(start_col + 1, end_col):
-                x = self.MT.col_positions[c]
+        for c in range(start_col + 1, end_col):
+            x = self.MT.col_positions[c]
+            if self.width_resizing_enabled:
                 self.visible_col_dividers.append((x - 2, 1, x + 2, yend))
-                self.create_line(x, 0, x, self.current_height, fill = self.grid_color, width = 1, tag = ("v", f"{c}"))
-        else:
-            for c in range(start_col + 1, end_col):
-                x = self.MT.col_positions[c]
-                self.create_line(x, 0, x, self.current_height, fill = self.grid_color, width = 1, tag = ("v", f"{c}"))
+            self.redraw_gridline(x, 0, x, self.current_height, fill = self.grid_color, width = 1, tag = ("v", f"{c}"))
         top = self.canvasy(0)
         if self.MT.hdr_fl_ins + self.MT.hdr_half_txt_h - 1 > top:
             incfl = True
@@ -771,7 +821,7 @@ class ColumnHeaders(tk.Canvas):
                 y = self.MT.hdr_fl_ins
                 if incfl:
                     txt = lns[0]
-                    t = self.create_text(x, y, text = txt, fill = tf, font = font, anchor = "center", tag = "t")
+                    t = self.redraw_text(x, y, text = txt, fill = tf, font = font, anchor = "center", tag = "t")
                     wd = self.bbox(t)
                     wd = wd[2] - wd[0]
                     if wd > mw:
@@ -794,7 +844,7 @@ class ColumnHeaders(tk.Canvas):
                     if y + self.MT.hdr_half_txt_h - 1 < self.current_height:
                         for i in range(stl, len(lns)):
                             txt = lns[i]
-                            t = self.create_text(x, y, text = txt, fill = tf, font = font, anchor = "center", tag = "t")
+                            t = self.redraw_text(x, y, text = txt, fill = tf, font = font, anchor = "center", tag = "t")
                             wd = self.bbox(t)
                             wd = wd[2] - wd[0]
                             if wd > mw:
@@ -846,7 +896,7 @@ class ColumnHeaders(tk.Canvas):
                 y = self.MT.hdr_fl_ins
                 if incfl:
                     txt = lns[0]
-                    t = self.create_text(x, y, text = txt, fill = tf, font = font, anchor = "w", tag = "t")
+                    t = self.redraw_text(x, y, text = txt, fill = tf, font = font, anchor = "w", tag = "t")
                     wd = self.bbox(t)
                     wd = wd[2] - wd[0]
                     if wd > mw:
@@ -865,7 +915,7 @@ class ColumnHeaders(tk.Canvas):
                     if y + self.MT.hdr_half_txt_h - 1 < self.current_height:
                         for i in range(stl, len(lns)):
                             txt = lns[i]
-                            t = self.create_text(x, y, text = txt, fill = tf, font = font, anchor = "w", tag = "t")
+                            t = self.redraw_text(x, y, text = txt, fill = tf, font = font, anchor = "w", tag = "t")
                             wd = self.bbox(t)
                             wd = wd[2] - wd[0]
                             if wd > mw:
@@ -879,7 +929,19 @@ class ColumnHeaders(tk.Canvas):
                             y += self.MT.hdr_xtra_lines_increment
                             if y + self.MT.hdr_half_txt_h - 1 > self.current_height:
                                 break
-        self.create_line(x1, self.current_height - 1, x_stop, self.current_height - 1, fill = self.header_border_color, width = 1, tag = "h")
+        self.redraw_gridline(x1, self.current_height - 1, x_stop, self.current_height - 1, fill = self.header_border_color, width = 1, tag = "h")
+        for t, sh in self.hidd_text.items():
+            if sh:
+                self.itemconfig(t, state = "hidden")
+                self.hidd_text[t] = False
+        for t, sh in self.hidd_high.items():
+            if sh:
+                self.itemconfig(t, state = "hidden")
+                self.hidd_high[t] = False
+        for t, sh in self.hidd_grid.items():
+            if sh:
+                self.itemconfig(t, state = "hidden")
+                self.hidd_grid[t] = False
         
     def GetCellCoords(self, event = None, r = None, c = None):
         pass

@@ -44,6 +44,20 @@ class RowIndex(tk.Canvas):
                            height = None,
                            background = row_index_background,
                            highlightthickness = 0)
+
+        self.disp_text = {}
+        self.disp_high = {}
+        self.disp_grid = {}
+        self.disp_fill_sels = {}
+        self.disp_bord_sels = {}
+        self.disp_resize_lines = {}
+        self.hidd_text = {}
+        self.hidd_high = {}
+        self.hidd_grid = {}
+        self.hidd_fill_sels = {}
+        self.hidd_bord_sels = {}
+        self.hidd_resize_lines = {}
+        
         self.centre_alignment_text_mod_indexes = (slice(1, None), slice(None, -1))
         self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
         self.parentframe = parentframe
@@ -303,10 +317,10 @@ class RowIndex(tk.Canvas):
             y = self.MT.row_positions[self.rsz_h]
             line2y = self.MT.row_positions[self.rsz_h - 1]
             x1, y1, x2, y2 = self.MT.get_canvas_visible_area()
-            self.create_line(0, y, self.current_width, y, width = 1, fill = self.resizing_line_color, tags = "rhl")
-            self.MT.create_line(x1, y, x2, y, width = 1, fill = self.resizing_line_color, tags = "rhl")
-            self.create_line(0, line2y, self.current_width, line2y, width = 1, fill = self.resizing_line_color, tags = "rhl2")
-            self.MT.create_line(x1, line2y, x2, line2y, width = 1, fill = self.resizing_line_color, tags = "rhl2")
+            self.create_line(0, y, self.current_width, y, width = 1, fill = self.resizing_line_color, tag = "rhl")
+            self.MT.create_line(x1, y, x2, y, width = 1, fill = self.resizing_line_color, tag = "rhl")
+            self.create_line(0, line2y, self.current_width, line2y, width = 1, fill = self.resizing_line_color, tag = "rhl2")
+            self.MT.create_line(x1, line2y, x2, line2y, width = 1, fill = self.resizing_line_color, tag = "rhl2")
         elif self.width_resizing_enabled and self.rsz_h is None and self.rsz_w == True:
             self.currently_resizing_width = True
             x1, y1, x2, y2 = self.MT.get_canvas_visible_area()
@@ -314,7 +328,7 @@ class RowIndex(tk.Canvas):
             if x < self.MT.min_cw:
                 x = int(self.MT.min_cw)
             self.new_row_width = x
-            self.create_line(x, y1, x, y2, width = 1, fill = self.resizing_line_color, tags = "rwl")
+            self.create_line(x, y1, x, y2, width = 1, fill = self.resizing_line_color, tag = "rwl")
         elif self.MT.identify_row(y = event.y, allow_end = False) is None:
             self.MT.deselect("all")
         elif self.row_selection_enabled and self.rsz_h is None and self.rsz_w is None:
@@ -335,8 +349,8 @@ class RowIndex(tk.Canvas):
             if not size <= self.MT.min_rh and size < self.max_rh:
                 self.delete("rhl")
                 self.MT.delete("rhl")
-                self.create_line(0, y, self.current_width, y, width = 1, fill = self.resizing_line_color, tags = "rhl")
-                self.MT.create_line(x1, y, x2, y, width = 1, fill = self.resizing_line_color, tags = "rhl")
+                self.create_line(0, y, self.current_width, y, width = 1, fill = self.resizing_line_color, tag = "rhl")
+                self.MT.create_line(x1, y, x2, y, width = 1, fill = self.resizing_line_color, tag = "rhl")
         elif self.width_resizing_enabled and self.rsz_w is not None and self.currently_resizing_width:
             evx = event.x
             self.delete("rwl")
@@ -347,13 +361,13 @@ class RowIndex(tk.Canvas):
                     evx = int(self.max_row_width)
                     x = self.MT.canvasx(evx - self.current_width)
                 self.new_row_width = evx
-                self.MT.create_line(x, y1, x, y2, width = 1, fill = self.resizing_line_color, tags = "rwl")
+                self.MT.create_line(x, y1, x, y2, width = 1, fill = self.resizing_line_color, tag = "rwl")
             else:
                 x = evx
                 if x < self.MT.min_cw:
                     x = int(self.MT.min_cw)
                 self.new_row_width = x
-                self.create_line(x, y1, x, y2, width = 1, fill = self.resizing_line_color, tags = "rwl")
+                self.create_line(x, y1, x, y2, width = 1, fill = self.resizing_line_color, tag = "rwl")
         if self.drag_and_drop_enabled and self.row_selection_enabled and self.rsz_h is None and self.rsz_w is None and self.dragged_row is not None and self.MT.anything_selected(exclude_cells = True, exclude_columns = True):
             y = self.canvasy(event.y)
             if y > 0 and y < self.MT.row_positions[-1]:
@@ -383,7 +397,7 @@ class RowIndex(tk.Canvas):
                 start = self.canvasy(event.y - int(rectw / 2))
                 end = self.canvasy(event.y + int(rectw / 2))
                 self.delete("dd")
-                self.create_rectangle(0, start, self.current_width - 1, end, fill = self.drag_and_drop_color, outline = self.grid_color, tags = "dd")
+                self.create_rectangle(0, start, self.current_width - 1, end, fill = self.drag_and_drop_color, outline = self.grid_color, tag = "dd")
                 self.tag_raise("dd")
                 self.tag_raise("t")
                 self.tag_raise("h")
@@ -600,18 +614,25 @@ class RowIndex(tk.Canvas):
         if self.selection_binding_func is not None and run_binding_func:
             self.selection_binding_func(("select_row", int(r)))
 
-    def set_row_height(self, row, height = None, only_set_if_too_small = False, recreate = True, return_new_height = False):
+    def set_row_height(self, row, height = None, only_set_if_too_small = False, recreate = True, return_new_height = False, displayed_only = False):
         r_norm = row + 1
         r_extra = row + 2
         min_rh = self.MT.min_rh
         if height is None:
-            x = self.MT.txt_measure_canvas.create_text(0, 0, text = "", font = self.MT.my_font)
-            itmcon = self.MT.txt_measure_canvas.itemconfig
-            itmbbx = self.MT.txt_measure_canvas.bbox
             if self.MT.all_columns_displayed:
-                iterable = range(len(self.MT.data_ref[row]))
+                if displayed_only:
+                    x1, y1, x2, y2 = self.MT.get_canvas_visible_area()
+                    start_col, end_col = self.MT.get_visible_columns(x1, x2)
+                else:
+                    start_col, end_col = 0, len(self.MT.data_ref[row])
+                iterable = range(start_col, end_col)
             else:
-                iterable = self.MT.displayed_columns
+                if displayed_only:
+                    x1, y1, x2, y2 = self.MT.get_canvas_visible_area()
+                    start_col, end_col = self.MT.get_visible_columns(x1, x2)
+                else:
+                    start_col, end_col = 0, len(self.MT.displayed_columns)
+                iterable = self.MT.displayed_columns[start_col:end_col]
             new_height = int(min_rh)
             try:
                 if isinstance(self.MT.my_row_index[row], str):
@@ -621,9 +642,7 @@ class RowIndex(tk.Canvas):
             except:
                 txt = ""
             if txt:
-                itmcon(x, text = txt)
-                b = itmbbx(x)
-                h = b[3] - b[1] + 5
+                h = self.MT.GetTextHeight(txt) + 5
             else:
                 h = min_rh
             if h < min_rh:
@@ -641,9 +660,7 @@ class RowIndex(tk.Canvas):
                 except:
                     txt = ""
                 if txt:
-                    itmcon(x, text = txt)
-                    b = itmbbx(x)
-                    h = b[3] - b[1] + 5
+                    h = self.MT.GetTextHeight(txt) + 5
                 else:
                     h = min_rh
                 if h < min_rh:
@@ -652,7 +669,6 @@ class RowIndex(tk.Canvas):
                     h = int(self.max_rh)
                 if h > new_height:
                     new_height = h
-            self.MT.txt_measure_canvas.delete(x)
         else:
             new_height = int(height)
         if new_height < min_rh:
@@ -751,10 +767,29 @@ class RowIndex(tk.Canvas):
         else:
             return int(self.MT.min_rh)
 
+    def auto_set_index_width(self, end_row):
+        if not self.MT.my_row_index and not isinstance(self.MT.my_row_index, int) and self.auto_resize_width:
+            if self.default_index == "letters":
+                new_w = self.MT.GetTextWidth(f"{num2alpha(end_row)}") + 15
+                if self.current_width - new_w > 15 or new_w - self.current_width > 8:
+                    self.set_width(new_w, set_TL = True)
+                    return True
+            elif self.default_index == "numbers":
+                new_w = self.MT.GetTextWidth(f"{end_row}") + 15
+                if self.current_width - new_w > 15 or new_w - self.current_width > 8:
+                    self.set_width(new_w, set_TL = True)
+                    return True
+            elif self.default_index == "both":
+                new_w = self.MT.GetTextWidth(f"{end_row + 1} {num2alpha(end_row)}") + 15
+                if self.current_width - new_w > 15 or new_w - self.current_width > 8:
+                    self.set_width(new_w, set_TL = True)
+                    return True
+        return False
+
     def redraw_highlight_get_text_fg(self, fr, sr, r, c_2, c_3, selected_rows, selected_cols, actual_selected_rows):
         if r in self.highlighted_cells and r in actual_selected_rows:
             c_1 = self.highlighted_cells[r][0] if self.highlighted_cells[r][0].startswith("#") else Color_Map_[self.highlighted_cells[r][0]]
-            self.create_rectangle(0,
+            self.redraw_highlight(0,
                                   fr + 1,
                                   self.current_width - 1,
                                   sr,
@@ -762,11 +797,11 @@ class RowIndex(tk.Canvas):
                                           f"{int((int(c_1[3:5], 16) + int(c_3[3:5], 16)) / 2):02X}" +
                                           f"{int((int(c_1[5:], 16) + int(c_3[5:], 16)) / 2):02X}"),
                                   outline = "",
-                                  tags = "s")
+                                  tag = "s")
             tf = self.selected_rows_fg if self.highlighted_cells[r][1] is None or self.MT.display_selected_fg_over_highlights else self.highlighted_cells[r][1]
         elif r in self.highlighted_cells and (r in selected_rows or selected_cols):
             c_1 = self.highlighted_cells[r][0] if self.highlighted_cells[r][0].startswith("#") else Color_Map_[self.highlighted_cells[r][0]]
-            self.create_rectangle(0,
+            self.redraw_highlight(0,
                                   fr + 1,
                                   self.current_width - 1,
                                   sr,
@@ -774,58 +809,79 @@ class RowIndex(tk.Canvas):
                                           f"{int((int(c_1[3:5], 16) + int(c_2[3:5], 16)) / 2):02X}" +
                                           f"{int((int(c_1[5:], 16) + int(c_2[5:], 16)) / 2):02X}"),
                                   outline = "",
-                                  tags = "s")
+                                  tag = "s")
             tf = self.selected_cells_foreground if self.highlighted_cells[r][1] is None or self.MT.display_selected_fg_over_highlights else self.highlighted_cells[r][1]
         elif r in actual_selected_rows:
             tf = self.selected_rows_fg
         elif r in selected_rows or selected_cols:
             tf = self.selected_cells_foreground
         elif r in self.highlighted_cells:
-            self.create_rectangle(0, fr + 1, self.current_width - 1, sr, fill = self.highlighted_cells[r][0], outline = "", tags = "s")
+            self.redraw_highlight(0, fr + 1, self.current_width - 1, sr, fill = self.highlighted_cells[r][0], outline = "", tag = "s")
             tf = self.text_color if self.highlighted_cells[r][1] is None else self.highlighted_cells[r][1]
         else:
             tf = self.text_color
         return tf, self.MT.my_font
 
-    def auto_set_index_width(self, end_row):
-        if not self.MT.my_row_index and not isinstance(self.MT.my_row_index, int) and self.auto_resize_width:
-            if self.default_index == "letters":
-                new_w = self.MT.GetTextWidth(f"{num2alpha(end_row)}") + 15
-                if self.current_width - new_w > 10 or new_w - self.current_width > 10:
-                    self.set_width(new_w, set_TL = True)
-                    return True
-            elif self.default_index == "numbers":
-                new_w = self.MT.GetTextWidth(f"{end_row}") + 15
-                if self.current_width != new_w:
-                    self.set_width(new_w, set_TL = True)
-                    return True
-            elif self.default_index == "both":
-                new_w = self.MT.GetTextWidth(f"{end_row + 1} {num2alpha(end_row)}") + 15
-                if self.current_width - new_w > 10 or new_w - self.current_width > 10:
-                    self.set_width(new_w, set_TL = True)
-                    return True
-        return False
+    def redraw_highlight(self, x1, y1, x2, y2, fill, outline, tag):
+        if self.hidd_high:
+            t, sh = self.hidd_high.popitem()
+            self.coords(t, x1, y1, x2, y2)
+            if sh:
+                self.itemconfig(t, fill = fill, outline = outline, tag = tag)
+            else:
+                self.itemconfig(t, fill = fill, outline = outline, tag = tag, state = "normal")
+            self.lift(t)
+            self.disp_high[t] = True
+        else:
+            self.disp_high[self.create_rectangle(x1, y1, x2, y2, fill = fill, outline = outline, tag = tag)] = True
+
+    def redraw_text(self, x, y, text, fill, font, anchor, tag):
+        if self.hidd_text:
+            t, sh = self.hidd_text.popitem()
+            self.coords(t, x, y)
+            if sh:
+                self.itemconfig(t, text = text, fill = fill, font = font, anchor = anchor)
+            else:
+                self.itemconfig(t, text = text, fill = fill, font = font, anchor = anchor, state = "normal")
+            self.lift(t)
+        else:
+            t = self.create_text(x, y, text = text, fill = fill, font = font, anchor = anchor, tag = tag)
+        self.disp_text[t] = True
+        return t
+
+    def redraw_gridline(self, x1, y1, x2, y2, fill, width, tag):
+        if self.hidd_grid:
+            t, sh = self.hidd_grid.popitem()
+            self.coords(t, x1, y1, x2, y2)
+            if sh:
+                self.itemconfig(t, fill = fill, width = width, tag = tag)
+            else:
+                self.itemconfig(t, fill = fill, width = width, tag = tag, state = "normal")
+            self.disp_grid[t] = True
+        else:
+            self.disp_grid[self.create_line(x1, y1, x2, y2, fill = fill, width = width, tag = tag)] = True
 
     def redraw_grid_and_text(self, last_row_line_pos, y1, y_stop, start_row, end_row, y2, x1, x_stop, selected_rows, selected_cols, actual_selected_rows):
         self.configure(scrollregion = (0,
                                        0,
                                        self.current_width,
                                        last_row_line_pos + self.MT.empty_vertical))
-        self.delete("fh", "h", "v", "t", "s") #first horizontal, horizontal, vertical, text, highlights
+        self.hidd_text.update(self.disp_text)
+        self.disp_text = {}
+        self.hidd_high.update(self.disp_high)
+        self.disp_high = {}
+        self.hidd_grid.update(self.disp_grid)
+        self.disp_grid = {}
         self.visible_row_dividers = []
         y = self.MT.row_positions[start_row]
-        self.create_line(0, y, self.current_width, y, fill = self.grid_color, width = 1, tags = "fh")
+        self.redraw_gridline(0, y, self.current_width, y, fill = self.grid_color, width = 1, tag = "fh")
         xend = self.current_width - 6
         self.row_width_resize_bbox = (self.current_width - 2, y1, self.current_width, y2)
-        if self.height_resizing_enabled:
-            for r in range(start_row + 1, end_row):
-                y = self.MT.row_positions[r]
+        for r in range(start_row + 1, end_row):
+            y = self.MT.row_positions[r]
+            if self.height_resizing_enabled:
                 self.visible_row_dividers.append((1, y - 2, xend, y + 2))
-                self.create_line(0, y, self.current_width, y, fill = self.grid_color, width = 1, tags = ("h", f"{r}"))
-        else:
-            for r in range(start_row + 1, end_row):
-                y = self.MT.row_positions[r]
-                self.create_line(0, y, self.current_width, y, fill = self.grid_color, width = 1, tags = ("h", f"{r}"))
+            self.redraw_gridline(0, y, self.current_width, y, fill = self.grid_color, width = 1, tag = ("h", f"{r}"))
         sb = y2 + 2
         c_2 = self.selected_cells_background if self.selected_cells_background.startswith("#") else Color_Map_[self.selected_cells_background]
         c_3 = self.selected_rows_bg if self.selected_rows_bg.startswith("#") else Color_Map_[self.selected_rows_bg]
@@ -859,7 +915,7 @@ class RowIndex(tk.Canvas):
                 txt = lns[0]
                 y = fr + self.MT.fl_ins
                 if y + self.MT.half_txt_h - 1 > y1:
-                    t = self.create_text(x, y, text = txt, fill = tf, font = font, anchor = "center", tags = "t")
+                    t = self.redraw_text(x, y, text = txt, fill = tf, font = font, anchor = "center", tag = "t")
                     wd = self.bbox(t)
                     wd = wd[2] - wd[0]
                     if wd > mw:
@@ -882,7 +938,7 @@ class RowIndex(tk.Canvas):
                     if y + self.MT.half_txt_h - 1 < sr:
                         for i in range(stl, len(lns)):
                             txt = lns[i]
-                            t = self.create_text(x, y, text = txt, fill = tf, font = font, anchor = "center", tags = "t")
+                            t = self.redraw_text(x, y, text = txt, fill = tf, font = font, anchor = "center", tag = "t")
                             wd = self.bbox(t)
                             wd = wd[2] - wd[0]
                             if wd > mw:
@@ -930,7 +986,7 @@ class RowIndex(tk.Canvas):
                 y = fr + self.MT.fl_ins
                 if y + self.MT.half_txt_h - 1 > y1:
                     txt = lns[0]
-                    t = self.create_text(x, y, text = txt, fill = tf, font = font, anchor = "w", tags = "t")
+                    t = self.redraw_text(x, y, text = txt, fill = tf, font = font, anchor = "w", tag = "t")
                     wd = self.bbox(t)
                     wd = wd[2] - wd[0]
                     if wd > mw:
@@ -949,7 +1005,7 @@ class RowIndex(tk.Canvas):
                     if y + self.MT.half_txt_h - 1 < sr:
                         for i in range(stl, len(lns)):
                             txt = lns[i]
-                            t = self.create_text(x, y, text = txt, fill = tf, font = font, anchor = "w", tags = "t")
+                            t = self.redraw_text(x, y, text = txt, fill = tf, font = font, anchor = "w", tag = "t")
                             wd = self.bbox(t)
                             wd = wd[2] - wd[0]
                             if wd > mw:
@@ -963,7 +1019,19 @@ class RowIndex(tk.Canvas):
                             y += self.MT.xtra_lines_increment
                             if y + self.MT.half_txt_h - 1 > sr:
                                 break
-        self.create_line(self.current_width - 1, y1, self.current_width - 1, y_stop, fill = self.row_index_border_color, width = 1, tags = "v")
+        self.redraw_gridline(self.current_width - 1, y1, self.current_width - 1, y_stop, fill = self.row_index_border_color, width = 1, tag = "v")
+        for t, sh in self.hidd_text.items():
+            if sh:
+                self.itemconfig(t, state = "hidden")
+                self.hidd_text[t] = False
+        for t, sh in self.hidd_high.items():
+            if sh:
+                self.itemconfig(t, state = "hidden")
+                self.hidd_high[t] = False
+        for t, sh in self.hidd_grid.items():
+            if sh:
+                self.itemconfig(t, state = "hidden")
+                self.hidd_grid[t] = False
 
     def GetCellCoords(self, event = None, r = None, c = None):
         pass

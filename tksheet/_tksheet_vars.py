@@ -151,7 +151,7 @@ theme_dark_green = {
 'selected_cells_background': "#2e4744",
 'selected_cells_foreground': "#fcfcfc",
 'resizing_line_color': "#fcfcfc",
-'drag_and_drop_color': "#67c9d0",
+'drag_and_drop_color': "#1a73e8",
 'outline_color': "gray95",
 'header_select_column_bg': "#c2c9cf",
 'header_select_column_fg': "#2d2d2d",
