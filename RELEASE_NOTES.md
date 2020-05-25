@@ -1,3 +1,26 @@
+### Version 4.7.4
+ - Add option `page_up_down_select_row` will select row when using page up/down, default is `True`
+ - Overhaul text, grid and highlight canvas item management, no longer deletes and redraws, keeps items using `"hidden"` and reuses them to prevent canvas item number getting high quickly
+ - Edit cell resizing now only uses displayed rows/columns to fit to cell text
+ - Fix `see()` not being correct when using non-default `empty_vertical` and `empty_horizontal`
+ - Fix flicker when row index auto resizes
+ - Rename `auto_resize_numerical_row_index` to `auto_resize_default_row_index`
+ - Add option `startup_focus` to give `Sheet()` main table focus on initialization
+ - Add startup argument `startup_select` use like so:
+
+To create a cell selection box where cells 0,0 up to but not including 3,3 are selected:
+```python
+startup_select = (0, 0, 3, 3, "cells"),
+```
+To create a row selection box where rows 0 up to but not including 3 are selected:
+```python
+startup_select = (0, 3, "rows"),
+```
+To create a column selection box where columns 0 up to but not including 3 are selected:
+```python
+startup_select = (0, 3, "columns"),
+```
+
 ### Version 4.7.3
  - Make `"begin_edit_cell"` and `"end_edit_cell"` the only two edit cell bindings for use with `extra_bindings()` function (although `"edit_cell"` still works and is the equivalent of `"end_edit_cell"`)
  - Make it so if `"begin_edit_cell"` binding returns anything other than `None` the text in the cell edit window will be that return value otherwise it will be the relevant keypress
