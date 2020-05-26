@@ -1186,10 +1186,7 @@ class MainTable(tk.Canvas):
             r = currently_selected[0]
             c = currently_selected[1]
             if r == 0 and self.CH.col_selection_enabled:
-                if self.cell_is_completely_visible(r = r, c = 0):
-                    self.CH.select_col(c, redraw = True)
-                else:
-                    self.CH.select_col(c)
+                if not self.cell_is_completely_visible(r = r, c = 0):
                     self.see(r, c, keep_xscroll = True, check_cell_visibility = False)
             elif r != 0 and (self.single_selection_enabled or self.toggle_selection_enabled):
                 if self.cell_is_completely_visible(r = r - 1, c = c):
@@ -1274,10 +1271,7 @@ class MainTable(tk.Canvas):
             r = currently_selected[0]
             c = currently_selected[1]
             if c == 0 and self.RI.row_selection_enabled:
-                if self.cell_is_completely_visible(r = r, c = 0):
-                    self.RI.select_row(r, redraw = True)
-                else:
-                    self.RI.select_row(r)
+                if not self.cell_is_completely_visible(r = r, c = 0):
                     self.see(r, c, keep_yscroll = True, check_cell_visibility = False)
             elif c != 0 and (self.single_selection_enabled or self.toggle_selection_enabled):
                 if self.cell_is_completely_visible(r = r, c = c - 1):
@@ -1600,6 +1594,7 @@ class MainTable(tk.Canvas):
             self.CH.enable_bindings("column_select")
         elif binding == "column_height_resize":
             self.CH.enable_bindings("column_height_resize")
+            self.TL.rh_state()
         elif binding == "column_drag_and_drop":
             self.CH.enable_bindings("drag_and_drop")
         elif binding == "double_click_column_resize":
@@ -1610,6 +1605,7 @@ class MainTable(tk.Canvas):
             self.RI.enable_bindings("double_click_row_resize")
         elif binding == "row_width_resize":
             self.RI.enable_bindings("row_width_resize")
+            self.TL.rw_state()
         elif binding == "row_select":
             self.RI.enable_bindings("row_select")
         elif binding == "row_drag_and_drop":
@@ -1707,6 +1703,7 @@ class MainTable(tk.Canvas):
             self.CH.disable_bindings("column_select")
         elif binding == "column_height_resize":
             self.CH.disable_bindings("column_height_resize")
+            self.TL.rh_state("hidden")
         elif binding == "column_drag_and_drop":
             self.CH.disable_bindings("drag_and_drop")
         elif binding == "double_click_column_resize":
@@ -1717,6 +1714,7 @@ class MainTable(tk.Canvas):
             self.RI.disable_bindings("double_click_row_resize")
         elif binding == "row_width_resize":
             self.RI.disable_bindings("row_width_resize")
+            self.TL.rw_state("hidden")
         elif binding == "row_select":
             self.RI.disable_bindings("row_select")
         elif binding == "row_drag_and_drop":

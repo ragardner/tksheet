@@ -47,8 +47,8 @@ class TopLeftRectangle(tk.Canvas):
         self.CH.TL = self
         w = self.RI.current_width - 1
         h = self.CH.current_height - 1
-        self.create_rectangle(0, h - 5, w - 5, h, fill = self.rectangle_foreground, outline = "", tag = "rw")
-        self.create_rectangle(w - 5, 0, w, h, fill = self.rectangle_foreground, outline = "", tag = "rh")
+        self.create_rectangle(0, h - 5, w - 5, h, fill = self.rectangle_foreground, outline = "", tag = "rw", state = "normal" if self.RI.width_resizing_enabled else "hidden")
+        self.create_rectangle(w - 5, 0, w, h, fill = self.rectangle_foreground, outline = "", tag = "rh", state = "normal" if self.CH.height_resizing_enabled else "hidden")
         self.tag_bind("rw", "<Enter>", self.rw_enter)
         self.tag_bind("rh", "<Enter>", self.rh_enter)
         self.tag_bind("rw", "<Leave>", self.rw_leave)
@@ -59,6 +59,12 @@ class TopLeftRectangle(tk.Canvas):
         self.bind("<ButtonRelease-1>", self.b1_release)
         self.bind("<Double-Button-1>", self.double_b1)
         self.bind(get_rc_binding(), self.rc)
+
+    def rw_state(self, state = "normal"):
+        self.itemconfig("rw", state = state)
+
+    def rh_state(self, state = "normal"):
+        self.itemconfig("rh", state = state)
 
     def rw_enter(self, event = None):
         if self.RI.width_resizing_enabled:

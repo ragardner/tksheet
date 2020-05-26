@@ -770,18 +770,18 @@ class RowIndex(tk.Canvas):
     def auto_set_index_width(self, end_row):
         if not self.MT.my_row_index and not isinstance(self.MT.my_row_index, int) and self.auto_resize_width:
             if self.default_index == "letters":
-                new_w = self.MT.GetTextWidth(f"{num2alpha(end_row)}") + 15
-                if self.current_width - new_w > 15 or new_w - self.current_width > 8:
+                new_w = self.MT.GetTextWidth(f"{num2alpha(end_row)}") + 20
+                if self.current_width - new_w > 15 or new_w - self.current_width > 5:
                     self.set_width(new_w, set_TL = True)
                     return True
             elif self.default_index == "numbers":
-                new_w = self.MT.GetTextWidth(f"{end_row}") + 15
-                if self.current_width - new_w > 15 or new_w - self.current_width > 8:
+                new_w = self.MT.GetTextWidth(f"{end_row}") + 20
+                if self.current_width - new_w > 15 or new_w - self.current_width > 5:
                     self.set_width(new_w, set_TL = True)
                     return True
             elif self.default_index == "both":
-                new_w = self.MT.GetTextWidth(f"{end_row + 1} {num2alpha(end_row)}") + 15
-                if self.current_width - new_w > 15 or new_w - self.current_width > 8:
+                new_w = self.MT.GetTextWidth(f"{end_row + 1} {num2alpha(end_row)}") + 20
+                if self.current_width - new_w > 15 or new_w - self.current_width > 5:
                     self.set_width(new_w, set_TL = True)
                     return True
         return False
