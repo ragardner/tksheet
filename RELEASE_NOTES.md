@@ -1,3 +1,8 @@
+### Version 4.7.5
+ - Make arrowkey up and left not select column/row when at end, will add more shortcuts in a later update
+ - Adjust width of auto-resized index
+ - Hide header height/index width reset bars in top left if relevant options are disabled
+
 ### Version 4.7.4
  - Add option `page_up_down_select_row` will select row when using page up/down, default is `True`
  - Overhaul text, grid and highlight canvas item management, no longer deletes and redraws, keeps items using `"hidden"` and reuses them to prevent canvas item number getting high quickly
