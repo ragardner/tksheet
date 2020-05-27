@@ -2167,12 +2167,13 @@ class MainTable(tk.Canvas):
         return b[3] - b[1]
 
     def set_min_cw(self):
-        w1 = self.GetHdrTextWidth("X") + 5
-        w2 = self.GetTextWidth("X") + 5
-        if w1 >= w2:
-            self.min_cw = w1
-        else:
-            self.min_cw = w2
+        #w1 = self.GetHdrTextWidth("X") + 5
+        #w2 = self.GetTextWidth("X") + 5
+        #if w1 >= w2:
+        #    self.min_cw = w1
+        #else:
+        #    self.min_cw = w2
+        self.min_cw = 5
         if self.min_cw > self.CH.max_cw:
             self.CH.max_cw = self.min_cw * 2
         if self.min_cw > self.default_cw:
@@ -2902,15 +2903,15 @@ class MainTable(tk.Canvas):
             tf = self.selected_cols_fg if self.highlighted_cols[dcol][1] is None or self.display_selected_fg_over_highlights else self.highlighted_cols[dcol][1]
 
         # ________________________ CELL IS HIGHLIGHTED AND NOT SELECTED ________________________
-        elif (r, dcol) in self.highlighted_cells and (r, dcol) not in selected_cells and r not in actual_selected_rows and c not in actual_selected_cols:
+        elif (r, dcol) in self.highlighted_cells and (r, c) not in selected_cells and r not in actual_selected_rows and c not in actual_selected_cols:
             self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = self.highlighted_cells[(r, dcol)][0], outline = "", tag = "hi")
             tf = self.text_color if self.highlighted_cells[(r, dcol)][1] is None else self.highlighted_cells[(r, dcol)][1]
             
-        elif r in self.highlighted_rows and (r, dcol) not in selected_cells and r not in actual_selected_rows and c not in actual_selected_cols:
+        elif r in self.highlighted_rows and (r, c) not in selected_cells and r not in actual_selected_rows and c not in actual_selected_cols:
             self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = self.highlighted_rows[r][0], outline = "", tag = "hi")
             tf = self.text_color if self.highlighted_rows[r][1] is None else self.highlighted_rows[r][1]
             
-        elif dcol in self.highlighted_cols and (r, dcol) not in selected_cells and r not in actual_selected_rows and c not in actual_selected_cols:
+        elif dcol in self.highlighted_cols and (r, c) not in selected_cells and r not in actual_selected_rows and c not in actual_selected_cols:
             self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = self.highlighted_cols[dcol][0], outline = "", tag = "hi")
             tf = self.text_color if self.highlighted_cols[dcol][1] is None else self.highlighted_cols[dcol][1]
         
@@ -3037,7 +3038,7 @@ class MainTable(tk.Canvas):
                     else:
                         dcol = self.displayed_columns[c]
                     tf = self.redraw_highlight_get_text_fg(r, c, fc, fr, sc, sr, c_2_, c_3_, c_4_, selected_cells, actual_selected_rows, actual_selected_cols, dcol)
-                    if x > x2 or mw < 5:
+                    if x > x2 or mw <= 5:
                         continue
                     try:
                         lns = self.data_ref[r][dcol]
@@ -3120,7 +3121,7 @@ class MainTable(tk.Canvas):
                     else:
                         dcol = self.displayed_columns[c]
                     tf = self.redraw_highlight_get_text_fg(r, c, fc, fr, sc, sr, c_2_, c_3_, c_4_, selected_cells, actual_selected_rows, actual_selected_cols, dcol)
-                    if stop > x2 or mw < 5:
+                    if stop > x2 or mw <= 5:
                         continue
                     try:
                         lns = self.data_ref[r][dcol]

@@ -796,9 +796,9 @@ class ColumnHeaders(tk.Canvas):
                 else:
                     dcol = self.MT.displayed_columns[c]
                 tf, font = self.redraw_highlight_get_text_fg(fc, sc, c, c_2, c_3, selected_cols, selected_rows, actual_selected_cols, dcol)
-                if fc + 5 > x_stop:
-                    continue
                 mw = sc - fc - 1
+                if fc + 5 > x_stop or mw <= 5:
+                    continue
                 x = fc + floor((sc - fc) / 2)
                 try:
                     if isinstance(self.MT.my_hdrs, int):
@@ -873,7 +873,7 @@ class ColumnHeaders(tk.Canvas):
                 tf, font = self.redraw_highlight_get_text_fg(fc, sc, c, c_2, c_3, selected_cols, selected_rows, actual_selected_cols, dcol)
                 mw = sc - fc - 5
                 x = fc + 5
-                if x > x_stop:
+                if x > x_stop or mw <= 5:
                     continue
                 try:
                     if isinstance(self.MT.my_hdrs, int):

@@ -739,6 +739,8 @@ class RowIndex(tk.Canvas):
                     h = int(self.max_row_width)
                 if w > new_width:
                     new_width = w
+        if new_width == self.MT.min_cw:
+            new_width = self.MT.min_cw + 10
         self.MT.txt_measure_canvas.delete(x)
         self.set_width(new_width, set_TL = True)
         if recreate:
@@ -894,6 +896,8 @@ class RowIndex(tk.Canvas):
                 if sr > sb:
                     sr = sb
                 tf, font = self.redraw_highlight_get_text_fg(fr, sr, r, c_2, c_3, selected_rows, selected_cols, actual_selected_rows)
+                if mw <= 5:
+                    continue
                 try:
                     if isinstance(self.MT.my_row_index, int):
                         if isinstance(self.MT.data_ref[r][self.MT.my_row_index], str):
@@ -965,6 +969,8 @@ class RowIndex(tk.Canvas):
                 if sr > sb:
                     sr = sb
                 tf, font = self.redraw_highlight_get_text_fg(fr, sr, r, c_2, c_3, selected_rows, selected_cols, actual_selected_rows)
+                if mw <= 5:
+                    continue
                 try:
                     if isinstance(self.MT.my_row_index, int):
                         if isinstance(self.MT.data_ref[r][self.MT.my_row_index], str):
