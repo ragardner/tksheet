@@ -1,3 +1,7 @@
+### Version 4.7.7
+ - Reduce column minimum size even further
+ - Fix bug with highlights introduced in 4.7.6
+
 ### Version 4.7.6
  - Make `startup_select` also see the chosen cell
  - Deprecated functions `is_cell_selected()`, `is_row_selected()`, `is_column_selected()` use the same functions but without the `is_` in the name
