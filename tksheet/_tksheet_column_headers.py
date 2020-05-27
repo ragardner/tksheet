@@ -539,7 +539,7 @@ class ColumnHeaders(tk.Canvas):
         if bg is None and fg is None:
             return
         if cells:
-            self.highlighted_cells = {c_: (bg, fg)  for c_ in cells}
+            self.highlighted_cells.update({c_: (bg, fg)  for c_ in cells})
         else:
             self.highlighted_cells[c] = (bg, fg)
         if redraw:

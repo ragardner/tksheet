@@ -236,22 +236,24 @@ class Sheet(tk.Frame):
                     self.set_options(**{k: v})
         if set_all_heights_and_widths:
             self.set_all_cell_sizes_to_text()
+        self.refresh()
+        self.MT.update()
         if startup_select is not None:
             try:
                 if startup_select[-1] == "cells":
                     self.create_selection_box(*startup_select)
                     self.set_currently_selected(startup_select[0], startup_select[1], selection_binding = False)
-                    
+                    self.see(startup_select[0], startup_select[1])
                 elif startup_select[-1] == "rows":
                     self.create_selection_box(startup_select[0], 0, startup_select[1], len(self.MT.col_positions) - 1, "rows")
                     self.set_currently_selected(startup_select[0], 0, selection_binding = False)
-                    
+                    self.see(startup_select[0], 0)
                 elif startup_select[-1] in ("cols", "columns"):
                     self.create_selection_box(0, startup_select[0], len(self.MT.row_positions) - 1, startup_select[1], "cols")
                     self.set_currently_selected(0, startup_select[0], selection_binding = False)
+                    self.see(0, startup_select[0])
             except:
                 pass
-        self.MT.update()
         if startup_focus:
             self.MT.focus_set()
 
@@ -1034,23 +1036,68 @@ class Sheet(tk.Frame):
 
     def column_selected(self, c):
         return self.MT.col_selected(c)
-
-#___ WILL REMOVE THESE FUNCTIONS IN A LATER VERSION ___
-    def is_cell_selected(self, r, c):
-        return self.MT.cell_selected(r, c)
-
-    def is_row_selected(self, r):
-        return self.MT.row_selected(r)
-
-    def is_column_selected(self, c):
-        return self.MT.col_selected(c)
-#___ _______________________________________________ ___
     
     def anything_selected(self, exclude_columns = False, exclude_rows = False, exclude_cells = False):
         return self.MT.anything_selected(exclude_columns = exclude_columns, exclude_rows = exclude_rows, exclude_cells = exclude_cells)
 
     def all_selected(self):
         return self.MT.all_selected()
+
+    def highlight_rows(self, rows = [], canvas = "table", bg = None, fg = None, highlight_index = True, redraw = False):
+        self.MT.highlight_rows(rows = rows,
+                               bg = bg,
+                               fg = fg,
+                               highlight_index = highlight_index,
+                               redraw = redraw)
+
+    def highlight_columns(self, columns = [], canvas = "table", bg = None, fg = None, highlight_header = True, redraw = False):
+        self.MT.highlight_cols(cols = columns,
+                                  bg = bg,
+                                  fg = fg,
+                                  highlight_header = highlight_header,
+                                  redraw = redraw)
+
+    def dehighlight_rows(self, rows = [], redraw = False):
+        if isinstance(rows, int):
+            rows_ = [rows]
+        else:
+            rows_ = rows
+        if not rows_ or rows_ == "all":
+            for r in self.MT.highlighted_rows:
+                try:
+                    del self.RI.highlighted_cells[r]
+                except:
+                    pass
+            self.MT.highlighted_rows = {}
+        else:
+            for r in rows_:
+                try:
+                    del self.MT.highlighted_rows[r]
+                except:
+                    pass
+                try:
+                    del self.RI.highlighted_cells[r]
+                except:
+                    pass
+        if redraw:
+            self.refresh(True, True)
+
+    def dehighlight_columns(self, columns = [], redraw = False):
+        if isinstance(columns, int):
+            columns_ = [columns]
+        else:
+            columns_ = columns
+        for c in columns_:
+            try:
+                del self.MT.highlighted_cols[c]
+            except:
+                pass
+            try:
+                del self.CH.highlighted_cells[c]
+            except:
+                pass
+        if redraw:
+            self.refresh(True, True)
 
     def highlight_cells(self, row = 0, column = 0, cells = [], canvas = "table", bg = None, fg = None, redraw = False):
         if canvas == "table":
@@ -1613,6 +1660,22 @@ class Sheet(tk.Frame):
                                   set_col_positions = True,
                                   refresh = False,
                                   deselect_all = True):
+        res = self.MT.display_columns(indexes = indexes,
+                                      enable = enable,
+                                      reset_col_positions = reset_col_positions,
+                                      set_col_positions = set_col_positions,
+                                      deselect_all = deselect_all)
+        if refresh:
+            self.refresh()
+        return res
+
+    def display_columns(self,
+                        indexes = None,
+                        enable = None,
+                        reset_col_positions = True,
+                        set_col_positions = True,
+                        refresh = False,
+                        deselect_all = True):
         res = self.MT.display_columns(indexes = indexes,
                                       enable = enable,
                                       reset_col_positions = reset_col_positions,

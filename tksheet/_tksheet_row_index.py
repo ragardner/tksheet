@@ -561,7 +561,7 @@ class RowIndex(tk.Canvas):
         if bg is None and fg is None:
             return
         if cells:
-            self.highlighted_cells = {r_: (bg, fg)  for r_ in cells}
+            self.highlighted_cells.update({r_: (bg, fg)  for r_ in cells})
         else:
             self.highlighted_cells[r] = (bg, fg)
         if redraw:
