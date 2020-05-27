@@ -1,3 +1,10 @@
+### Version 4.7.6
+ - Make `startup_select` also see the chosen cell
+ - Deprecated functions `is_cell_selected()`, `is_row_selected()`, `is_column_selected()` use the same functions but without the `is_` in the name
+ - Add functions `highlight_columns()`, `highlight_rows()`, make `highlight_cells()` argument `cells` update dictionary rather than overwrite
+ - Remove double click resizing of index
+ - Reduce minimum column width to 1 character
+
 ### Version 4.7.5
  - Make arrowkey up and left not select column/row when at end, will add more shortcuts in a later update
  - Adjust width of auto-resized index
