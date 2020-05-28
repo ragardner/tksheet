@@ -1,3 +1,6 @@
+### Version 4.7.8
+ - Fix show_horizontal and show_vertical grid
+
 ### Version 4.7.7
  - Reduce column minimum size even further
  - Fix bug with highlights introduced in 4.7.6
