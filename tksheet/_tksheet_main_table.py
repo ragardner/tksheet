@@ -2983,7 +2983,7 @@ class MainTable(tk.Canvas):
             y_stop = last_row_line_pos
         ct_ = self.create_text
         sb = y2 + 2
-        if self.show_vertical_grid:
+        if self.show_horizontal_grid:
             for r in range(start_row - 1, end_row):
                 y = self.row_positions[r]
                 if self.hidd_grid:
@@ -2996,7 +2996,7 @@ class MainTable(tk.Canvas):
                     self.disp_grid[t] = True
                 else:
                     self.disp_grid[self.create_line(x1, y, x_stop, y, fill = self.grid_color, width = 1, tag = "g")] = True
-        if self.show_horizontal_grid:
+        if self.show_vertical_grid:
             for c in range(start_col - 1, end_col):
                 x = self.col_positions[c]
                 if self.hidd_grid:
