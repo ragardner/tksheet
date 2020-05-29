@@ -61,7 +61,6 @@ class demo(tk.Tk):
                            #align = "center",
                            #header_align = "w",
                             #row_index_align = "w",
-                            #theme = "green",
                             data = [[f"Row {r}, Column {c}\nnewline1\nnewline2" for c in range(30)] for r in range(100)], #to set sheet data at startup
                            #data = [[1,2,3,4,5], [1,2,3]],
                             #headers = [f"Column {c}\nnewline1\nnewline2" for c in range(30)],
