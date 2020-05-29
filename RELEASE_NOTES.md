@@ -1,3 +1,7 @@
+### Version 4.7.9
+ - Add option to use integer in `insert_row_positions()` and `insert_column_positions()` for how many columns to add
+ - Fix error occurring in above functions when using python 3.6-3.7 due to itertools argument added in python 3.8
+
 ### Version 4.7.8
  - Fix show_horizontal and show_vertical grid
 
