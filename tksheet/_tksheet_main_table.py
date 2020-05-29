@@ -2393,10 +2393,12 @@ class MainTable(tk.Canvas):
             self.deselect("all", redraw = False)
         if widths is None:
             w = [self.default_cw]
+        elif isinstance(widths, int):
+            w = list(repeat(self.default_cw, widths))
         else:
             w = widths
         if idx == "end" or len(self.col_positions) == idx + 1:
-            self.col_positions += list(accumulate(w, initial = self.col_positions[-1]))
+            self.col_positions += list(accumulate(chain([self.col_positions[-1] + w[0]], islice(w, 1, None))))
         else:
             if len(widths) > 1:
                 cws = [int(b - a) for a, b in zip(self.col_positions, islice(self.col_positions, 1, len(self.col_positions)))]
@@ -2632,10 +2634,12 @@ class MainTable(tk.Canvas):
             self.deselect("all", redraw = False)
         if heights is None:
             h = [self.default_rh[1]]
+        elif isinstance(heights, int):
+            w = list(repeat(self.default_rh, heights))
         else:
             h = heights
         if idx == "end" or len(self.row_positions) == idx + 1:
-            self.row_positions += list(accumulate(h, initial = self.row_positions[-1]))
+            self.row_positions += list(accumulate(chain([self.row_positions[-1] + h[0]], islice(h, 1, None))))
         else:
             if len(heights) > 1:
                 rhs = [int(b - a) for a, b in zip(self.row_positions, islice(self.row_positions, 1, len(self.row_positions)))]
