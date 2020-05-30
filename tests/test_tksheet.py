@@ -11,26 +11,30 @@ class demo(tk.Tk):
         self.frame.grid_columnconfigure(0, weight = 1)
         self.frame.grid_rowconfigure(0, weight = 1)
         self.sheet = Sheet(self.frame,
+                           page_up_down_select_row = True,
                            #empty_vertical = 0,
+                           column_width = 120,
+                           startup_select = (0,1,"rows"),
+                           #row_height = "4",
+                           #default_row_index = "numbers",
+                           #default_header = "both",
                            #empty_horizontal = 0,
                            #show_vertical_grid = False,
                            #show_horizontal_grid = False,
-                           #auto_resize_numerical_row_index = False,
+                           #auto_resize_default_row_index = False,
                            #header_height = "3",
                            #row_index_width = 100,
                            #align = "center",
                            #header_align = "w",
                             #row_index_align = "w",
-                            #theme = "green",
-                            data = [[f"Row {r}, Column {c}\nnewline1\nnewline2" for c in range(30)] for r in range(100)], #to set sheet data at startup
+                            data = [[f"Row {r}, Column {c}\nnewline1\nnewline2" for c in range(300)] for r in range(5000)], #to set sheet data at startup
                            #data = [[1,2,3,4,5], [1,2,3]],
                             #headers = [f"Column {c}\nnewline1\nnewline2" for c in range(30)],
                             #row_index = [f"Row {r}\nnewline1\nnewline2" for r in range(2000)],
                             #set_all_heights_and_widths = True, #to fit all cell sizes to text at start up
                             #headers = 0, #to set headers as first row at startup
                             #headers = [f"Column {c}\nnewline1\nnewline2" for c in range(30)],
-                           theme = "dark green",
-                           #header_background = "black",
+                           theme = "light green",
                             #row_index = 0, #to set row_index as first column at startup
                             #total_rows = 2000, #if you want to set empty sheet dimensions at startup
                             #total_columns = 30, #if you want to set empty sheet dimensions at startup
@@ -48,8 +52,8 @@ class demo(tk.Tk):
                                          "row_select",
                                          "column_width_resize",
                                          "double_click_column_resize",
-                                         #"row_width_resize",
-                                         #"column_height_resize",
+                                         "row_width_resize",
+                                         "column_height_resize",
                                          "arrowkeys",
                                          "row_height_resize",
                                          "double_click_row_resize",
@@ -68,7 +72,7 @@ class demo(tk.Tk):
         #self.sheet.enable_bindings("enable_all")
         #self.sheet.disable_bindings() #uses the same strings
         #self.bind("<Configure>", self.window_resized)
-        self.sheet.set_all_cell_sizes_to_text()
+        #self.sheet.set_all_cell_sizes_to_text()
         self.frame.grid(row = 0, column = 0, sticky = "nswe")
         self.sheet.grid(row = 0, column = 0, sticky = "nswe")
         
@@ -88,7 +92,7 @@ class demo(tk.Tk):
 
         # __________ DISPLAY SUBSET OF COLUMNS __________
 
-        #self.sheet.display_subset_of_columns(indexes = [1, 0, 2], enable = True) #any order
+        #self.sheet.display_subset_of_columns(indexes = [1, 0, 2, 10, 15, 20, 25, 35, 30, 36, 39, 9, 5, 11, 12, 43, 45], enable = True) #any order
 
         # __________ DATA AND DISPLAY DIMENSIONS __________
 
@@ -120,26 +124,27 @@ class demo(tk.Tk):
         
         # __________ BINDING A FUNCTIONS TO USER ACTIONS __________
 
-        self.sheet.extra_bindings([("cell_select", self.cell_select),
-                                    #("begin_edit_cell", self.begin_edit_cell),
-                                    ("shift_cell_select", self.shift_select_cells),
-                                    ("drag_select_cells", self.drag_select_cells),
-                                    ("ctrl_a", self.ctrl_a),
-                                    ("row_select", self.row_select),
-                                    ("shift_row_select", self.shift_select_rows),
-                                    ("drag_select_rows", self.drag_select_rows),
-                                    ("column_select", self.column_select),
-                                    ("shift_column_select", self.shift_select_columns),
-                                    ("drag_select_columns", self.drag_select_columns),
-                                    ("deselect", self.deselect)
-                                    ])
-        
+        #self.sheet.extra_bindings([("cell_select", self.cell_select),
+        #                            ("begin_edit_cell", self.begin_edit_cell),
+        #                           ("end_edit_cell", self.end_edit_cell),
+        #                            ("shift_cell_select", self.shift_select_cells),
+        #                            ("drag_select_cells", self.drag_select_cells),
+        #                            ("ctrl_a", self.ctrl_a),
+        #                            ("row_select", self.row_select),
+        #                            ("shift_row_select", self.shift_select_rows),
+        #                            ("drag_select_rows", self.drag_select_rows),
+        #                            ("column_select", self.column_select),
+        #                            ("shift_column_select", self.shift_select_columns),
+        #                            ("drag_select_columns", self.drag_select_columns),
+        #                            ("deselect", self.deselect)
+        #                            ])
+        #self.sheet.extra_bindings("begin_edit_cell", self.begin_edit_cell)
         #self.sheet.extra_bindings([("cell_select", None)]) #unbind cell select
         #self.sheet.extra_bindings("unbind_all") #remove all functions set by extra_bindings()
 
         # __________ BINDING NEW RIGHT CLICK FUNCTION __________
     
-        self.sheet.bind("<3>", self.rc)
+        #self.sheet.bind("<3>", self.rc)
 
         # __________ SETTING HEADERS __________
 
@@ -237,7 +242,11 @@ class demo(tk.Tk):
     """
     
     def begin_edit_cell(self, event):
-        pass
+        print (event)   # event[2] is keystroke
+        return event[2] # return value is the text to be put into cell edit window
+
+    def end_edit_cell(self, event):
+        print (event)
 
     def window_resized(self, event):
         pass
