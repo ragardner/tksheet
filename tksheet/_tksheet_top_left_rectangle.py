@@ -22,16 +22,16 @@ class TopLeftRectangle(tk.Canvas):
                  main_canvas = None,
                  row_index_canvas = None,
                  header_canvas = None,
-                 background = None,
-                 foreground = None,
-                 foreground_highlight = None):
+                 top_left_bg = None,
+                 top_left_fg = None,
+                 top_left_fg_highlight = None):
         tk.Canvas.__init__(self,
                            parentframe,
-                           background = background,
+                           background = top_left_bg,
                            highlightthickness = 0)
         self.parentframe = parentframe
-        self.rectangle_foreground = foreground
-        self.resizers_highlight = foreground_highlight
+        self.top_left_fg = top_left_fg
+        self.top_left_fg_highlight = top_left_fg_highlight
         self.MT = main_canvas
         self.RI = row_index_canvas
         self.CH = header_canvas
@@ -47,8 +47,8 @@ class TopLeftRectangle(tk.Canvas):
         self.CH.TL = self
         w = self.RI.current_width - 1
         h = self.CH.current_height - 1
-        self.create_rectangle(0, h - 5, w - 5, h, fill = self.rectangle_foreground, outline = "", tag = "rw", state = "normal" if self.RI.width_resizing_enabled else "hidden")
-        self.create_rectangle(w - 5, 0, w, h, fill = self.rectangle_foreground, outline = "", tag = "rh", state = "normal" if self.CH.height_resizing_enabled else "hidden")
+        self.create_rectangle(0, h - 5, w - 5, h, fill = self.top_left_fg, outline = "", tag = "rw", state = "normal" if self.RI.width_resizing_enabled else "hidden")
+        self.create_rectangle(w - 5, 0, w, h, fill = self.top_left_fg, outline = "", tag = "rh", state = "normal" if self.CH.height_resizing_enabled else "hidden")
         self.tag_bind("rw", "<Enter>", self.rw_enter)
         self.tag_bind("rh", "<Enter>", self.rh_enter)
         self.tag_bind("rw", "<Leave>", self.rw_leave)
@@ -68,17 +68,17 @@ class TopLeftRectangle(tk.Canvas):
 
     def rw_enter(self, event = None):
         if self.RI.width_resizing_enabled:
-            self.itemconfig("rw", fill = self.resizers_highlight)
+            self.itemconfig("rw", fill = self.top_left_fg_highlight)
 
     def rh_enter(self, event = None):
         if self.CH.height_resizing_enabled:
-            self.itemconfig("rh", fill = self.resizers_highlight)
+            self.itemconfig("rh", fill = self.top_left_fg_highlight)
 
     def rw_leave(self, event = None):
-        self.itemconfig("rw", fill = self.rectangle_foreground)
+        self.itemconfig("rw", fill = self.top_left_fg)
 
     def rh_leave(self, event = None):
-        self.itemconfig("rh", fill = self.rectangle_foreground)
+        self.itemconfig("rh", fill = self.top_left_fg)
 
     def basic_bindings(self, enable = True):
         if enable:

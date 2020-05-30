@@ -207,9 +207,9 @@ class Sheet(tk.Frame):
                                    main_canvas = self.MT,
                                    row_index_canvas = self.RI,
                                    header_canvas = self.CH,
-                                   background = top_left_bg,
-                                   foreground = top_left_fg,
-                                   foreground_highlight = top_left_fg_highlight)
+                                   top_left_bg = top_left_bg,
+                                   top_left_fg = top_left_fg,
+                                   top_left_fg_highlight = top_left_fg_highlight)
         self.yscroll = ttk.Scrollbar(self, command = self.MT.set_yviews, orient = "vertical")
         self.xscroll = ttk.Scrollbar(self, command = self.MT.set_xviews, orient = "horizontal")
         if show_table:
@@ -1317,7 +1317,7 @@ class Sheet(tk.Frame):
         if popup_menu_highlight_fg is not None:
             self.MT.popup_menu_highlight_fg = popup_menu_highlight_fg
         if top_left_fg_highlight is not None:
-            self.TL.resizers_highlight = top_left_fg_highlight
+            self.TL.top_left_fg_highlight = top_left_fg_highlight
         if auto_resize_default_row_index is not None:
             self.RI.auto_resize_width = auto_resize_default_row_index
         if header_selected_columns_bg is not None:
@@ -1385,11 +1385,12 @@ class Sheet(tk.Frame):
         if index_selected_cells_fg is not None:
             self.RI.index_selected_cells_fg = index_selected_cells_fg
         if top_left_bg is not None:
-            self.TL.config(background=top_left_bg)
+            self.TL.config(background = top_left_bg)
         if top_left_fg is not None:
-            self.TL.rectangle_foreground = top_left_fg
+            self.TL.top_left_fg = top_left_fg
             self.TL.itemconfig("rw", fill = top_left_fg)
             self.TL.itemconfig("rh", fill = top_left_fg)
+        
         if frame_bg is not None:
             self.config(background = frame_bg)
         if table_bg is not None:
