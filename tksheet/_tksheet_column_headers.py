@@ -59,8 +59,7 @@ class ColumnHeaders(tk.Canvas):
         self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
         self.parentframe = parentframe
         self.column_drag_and_drop_perform = column_drag_and_drop_perform
-        self.beingDrawnSelRect = None
-        self.beingDrawnSelBorder = None
+        self.being_drawn_rect = None
         self.extra_motion_func = None
         self.extra_b1_press_func = None
         self.extra_b1_motion_func = None
@@ -347,13 +346,16 @@ class ColumnHeaders(tk.Canvas):
             if end_col < len(self.MT.col_positions) - 1 and currently_selected:
                 if currently_selected[0] == "column":
                     start_col = currently_selected[1]
-                    self.MT.delete_selection_rects(delete_current = False)
                     if end_col >= start_col:
-                        self.MT.create_selected(0, start_col, len(self.MT.row_positions) - 1, end_col + 1, "cols")
+                        rect = (0, start_col, len(self.MT.row_positions) - 1, end_col + 1, "cols")
                         func_event = tuple(range(start_col, end_col + 1))
                     elif end_col < start_col:
-                        self.MT.create_selected(0, end_col, len(self.MT.row_positions) - 1, start_col + 1, "cols")
+                        rect = (0, end_col, len(self.MT.row_positions) - 1, start_col + 1, "cols")
                         func_event = tuple(range(end_col, start_col + 1))
+                    if self.being_drawn_rect != rect:
+                        self.MT.delete_selection_rects(delete_current = False)
+                        self.MT.create_selected(*rect)
+                        self.being_drawn_rect = rect
                     if self.drag_selection_binding_func is not None:
                         self.drag_selection_binding_func(("drag_select_columns", func_event))
                 xcheck = self.xview()
@@ -513,6 +515,7 @@ class ColumnHeaders(tk.Canvas):
         self.currently_resizing_height = False
         self.rsz_w = None
         self.rsz_h = None
+        self.being_drawn_rect = None
         self.mouse_motion(event)
         if self.extra_b1_release_func is not None:
             self.extra_b1_release_func(event)

@@ -2049,6 +2049,7 @@ class MainTable(tk.Canvas):
             self.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
         self.RI.rsz_w = None
         self.CH.rsz_h = None
+        self.being_drawn_rect = None
         self.mouse_motion(event)
         if self.extra_b1_release_func is not None:
             self.extra_b1_release_func(event)

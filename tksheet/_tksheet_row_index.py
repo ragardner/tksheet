@@ -62,8 +62,7 @@ class RowIndex(tk.Canvas):
         self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
         self.parentframe = parentframe
         self.row_drag_and_drop_perform = row_drag_and_drop_perform
-        self.beingDrawnSelRect = None
-        self.beingDrawnSelBorder = None
+        self.being_drawn_rect = None
         self.extra_motion_func = None
         self.extra_b1_press_func = None
         self.extra_b1_motion_func = None
@@ -407,13 +406,16 @@ class RowIndex(tk.Canvas):
             if end_row < len(self.MT.row_positions) - 1 and currently_selected:
                 if currently_selected[0] == "row":
                     start_row = currently_selected[1]
-                    self.MT.delete_selection_rects(delete_current = False)
                     if end_row >= start_row:
-                        self.MT.create_selected(start_row, 0, end_row + 1, len(self.MT.col_positions) - 1, "rows")
+                        rect = (start_row, 0, end_row + 1, len(self.MT.col_positions) - 1, "rows")
                         func_event = tuple(range(start_row, end_row + 1))
                     elif end_row < start_row:
+                        rect = (end_row, 0, start_row + 1, len(self.MT.col_positions) - 1, "rows")
                         func_event = tuple(range(end_row, start_row + 1))
-                        self.MT.create_selected(end_row, 0, start_row + 1, len(self.MT.col_positions) - 1, "rows")
+                    if self.being_drawn_rect != rect:
+                        self.MT.delete_selection_rects(delete_current = False)
+                        self.MT.create_selected(*rect)
+                        self.being_drawn_rect = rect
                     if self.drag_selection_binding_func is not None:
                         self.drag_selection_binding_func(("drag_select_rows", func_event))
             ycheck = self.yview()
@@ -553,6 +555,7 @@ class RowIndex(tk.Canvas):
         self.currently_resizing_height = False
         self.rsz_w = None
         self.rsz_h = None
+        self.being_drawn_rect = None
         self.mouse_motion(event)
         if self.extra_b1_release_func is not None:
             self.extra_b1_release_func(event)
