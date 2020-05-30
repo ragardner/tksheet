@@ -1,3 +1,6 @@
+### Version 4.8.1
+ - Make drag selection only redraw table when rectangle dimensions change instead of mouse moves
+
 ### Version 4.8.0
  - Adjust light green theme colors slightly
  - Changed all color option argument names for better clarity
