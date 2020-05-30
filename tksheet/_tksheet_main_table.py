@@ -96,8 +96,7 @@ class MainTable(tk.Canvas):
         self.show_horizontal_grid = show_horizontal_grid
         self.min_rh = 0
         self.hdr_min_rh = 0
-        self.beingDrawnSelRect = None
-        self.beingDrawnSelBorder = None
+        self.being_drawn_rect = None
         self.extra_motion_func = None
         self.extra_b1_press_func = None
         self.extra_b1_motion_func = None
@@ -1946,15 +1945,18 @@ class MainTable(tk.Canvas):
             if end_row < len(self.row_positions) - 1 and end_col < len(self.col_positions) - 1 and currently_selected and isinstance(currently_selected[0], int):
                 start_row = currently_selected[0]
                 start_col = currently_selected[1]
-                self.delete_selection_rects(delete_current = False)
                 if end_row >= start_row and end_col >= start_col:
-                    self.create_selected(start_row, start_col, end_row + 1, end_col + 1)
+                    rect = (start_row, start_col, end_row + 1, end_col + 1)
                 elif end_row >= start_row and end_col < start_col:
-                    self.create_selected(start_row, end_col, end_row + 1, start_col + 1)
+                    rect = (start_row, end_col, end_row + 1, start_col + 1)
                 elif end_row < start_row and end_col >= start_col:
-                    self.create_selected(end_row, start_col, start_row + 1, end_col + 1)
+                    rect = (end_row, start_col, start_row + 1, end_col + 1)
                 elif end_row < start_row and end_col < start_col:
-                    self.create_selected(end_row, end_col, start_row + 1, start_col + 1)
+                    rect = (end_row, end_col, start_row + 1, start_col + 1)
+                if self.being_drawn_rect != rect:
+                    self.delete_selection_rects(delete_current = False)
+                    self.create_selected(*rect)
+                    self.being_drawn_rect = rect
                 if self.drag_selection_binding_func is not None:
                     self.drag_selection_binding_func(("drag_select_cells", ) + tuple(int(e) for e in self.gettags(self.find_withtag("CellSelectFill"))[1].split("_") if e))
             scrolled = False
