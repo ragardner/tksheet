@@ -219,10 +219,11 @@ class demo(tk.Tk):
 
         # __________ CHECKING SELECTED __________
 
-        #print (self.sheet.is_cell_selected(0, 0))
-        #print (self.sheet.is_row_selected(0))
-        #print (self.sheet.is_column_selected(0))
+        #print (self.sheet.cell_selected(0, 0))
+        #print (self.sheet.row_selected(0))
+        #print (self.sheet.column_selected(0))
         #print (self.sheet.anything_selected())
+        #print (self.sheet.all_selected())
 
         # __________ HIDING THE ROW INDEX AND HEADERS __________
 
