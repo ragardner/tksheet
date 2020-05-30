@@ -1,3 +1,44 @@
+### Version 4.8.0
+ - Adjust light green theme colors slightly
+ - Changed all color option argument names for better clarity
+
+| Old Name                     | New Name                          |
+|------------------------------|----------------------------------:|
+|frame_background              |frame_bg                           |
+|grid_color                    |table_grid_fg                      |
+|table_background              |table_bg                           |
+|text_color                    |table_fg                           |
+|selected_cells_border_color   |table_selected_cells_border_fg     |
+|selected_cells_background     |table_selected_cells_bg            |
+|selected_cells_foreground     |table_selected_cells_fg            |
+|selected_rows_border_color    |table_selected_rows_border_fg      |
+|selected_rows_background      |table_selected_rows_bg             |
+|selected_rows_foreground      |table_selected_rows_fg             |
+|selected_columns_border_color |table_selected_columns_border_fg   |
+|selected_columns_background   |table_selected_columns_bg          |
+|selected_columns_foreground   |table_selected_columns_fg          |
+|resizing_line_color           |resizing_line_fg                   |
+|drag_and_drop_color           |drag_and_drop_bg                   |
+|row_index_background          |index_bg                           |
+|row_index_foreground          |index_fg                           |
+|row_index_border_color        |index_border_fg                    |
+|row_index_grid_color          |index_grid_fg                      |
+|row_index_select_background   |index_selected_cells_bg            |
+|row_index_select_foreground   |index_selected_cells_fg            |
+|row_index_select_row_bg       |index_selected_rows_bg             |
+|row_index_select_row_fg       |index_selected_rows_fg             |
+|header_background             |header_bg                          |
+|header_foreground             |header_fg                          |
+|header_border_color           |header_border_fg                   |
+|header_grid_color             |header_grid_fg                     |
+|header_select_background      |header_selected_cells_bg           |
+|header_select_foreground      |header_selected_cells_fg           |
+|header_select_column_bg       |header_selected_columns_bg         |
+|header_select_column_fg       |header_selected_columns_fg         |
+|top_left_background           |top_left_bg                        |
+|top_left_foreground           |top_left_fg                        |
+|top_left_foreground_highlight |top_left_fg_highlight              |
+
 ### Version 4.7.9
  - Add option to use integer in `insert_row_positions()` and `insert_column_positions()` for how many columns to add
  - Fix error occurring in above functions when using python 3.6-3.7 due to itertools argument added in python 3.8
