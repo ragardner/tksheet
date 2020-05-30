@@ -30,7 +30,7 @@ class TextEditor_(tk.Text):
                          highlightthickness = 0,
                          undo = True,
                          maxundo = 20,
-                         background = parent.parent.table_background,
+                         background = parent.parent.table_bg,
                          foreground = parent.parent.text_color,
                          insertbackground = parent.parent.text_color)
         self.parent = parent

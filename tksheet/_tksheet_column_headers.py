@@ -25,21 +25,21 @@ class ColumnHeaders(tk.Canvas):
                  max_header_height = None,
                  default_header = None,
                  header_align = None,
-                 header_background = None,
-                 header_border_color = None,
-                 header_grid_color = None,
-                 header_foreground = None,
-                 header_select_background = None,
-                 header_select_foreground = None,
-                 header_select_column_bg = "#5f6368",
-                 header_select_column_fg = "white",
+                 header_bg = None,
+                 header_border_fg = None,
+                 header_grid_fg = None,
+                 header_fg = None,
+                 header_selected_cells_bg = None,
+                 header_selected_cells_fg = None,
+                 header_selected_columns_bg = "#5f6368",
+                 header_selected_columns_fg = "white",
                  header_select_bold = True,
-                 drag_and_drop_color = None,
+                 drag_and_drop_bg = None,
                  column_drag_and_drop_perform = True,
                  measure_subset_header = True,
-                 resizing_line_color = None):
+                 resizing_line_fg = None):
         tk.Canvas.__init__(self,parentframe,
-                           background = header_background,
+                           background = header_bg,
                            highlightthickness = 0)
 
         self.disp_text = {}
@@ -78,16 +78,16 @@ class ColumnHeaders(tk.Canvas):
         self.MT = main_canvas         # is set from within MainTable() __init__
         self.RI = row_index_canvas    # is set from within MainTable() __init__
         self.TL = None                # is set from within TopLeftRectangle() __init__
-        self.text_color = header_foreground
-        self.grid_color = header_grid_color
-        self.header_border_color = header_border_color
-        self.selected_cells_background = header_select_background
-        self.selected_cells_foreground = header_select_foreground
-        self.selected_cols_bg = header_select_column_bg
-        self.selected_cols_fg = header_select_column_fg
+        self.header_fg = header_fg
+        self.header_grid_fg = header_grid_fg
+        self.header_border_fg = header_border_fg
+        self.header_selected_cells_bg = header_selected_cells_bg
+        self.header_selected_cells_fg = header_selected_cells_fg
+        self.header_selected_columns_bg = header_selected_columns_bg
+        self.header_selected_columns_fg = header_selected_columns_fg
         self.select_bold = header_select_bold
-        self.drag_and_drop_color = drag_and_drop_color
-        self.resizing_line_color = resizing_line_color
+        self.drag_and_drop_bg = drag_and_drop_bg
+        self.resizing_line_fg = resizing_line_fg
         self.align = header_align
         self.width_resizing_enabled = False
         self.height_resizing_enabled = False
@@ -258,17 +258,17 @@ class ColumnHeaders(tk.Canvas):
             self.currently_resizing_width = True
             x = self.MT.col_positions[self.rsz_w]
             line2x = self.MT.col_positions[self.rsz_w - 1]
-            self.create_line(x, 0, x, self.current_height, width = 1, fill = self.resizing_line_color, tag = "rwl")
-            self.MT.create_line(x, y1, x, y2, width = 1, fill = self.resizing_line_color, tag = "rwl")
-            self.create_line(line2x, 0, line2x, self.current_height,width = 1, fill = self.resizing_line_color, tag = "rwl2")
-            self.MT.create_line(line2x, y1, line2x, y2, width = 1, fill = self.resizing_line_color, tag = "rwl2")
+            self.create_line(x, 0, x, self.current_height, width = 1, fill = self.resizing_line_fg, tag = "rwl")
+            self.MT.create_line(x, y1, x, y2, width = 1, fill = self.resizing_line_fg, tag = "rwl")
+            self.create_line(line2x, 0, line2x, self.current_height,width = 1, fill = self.resizing_line_fg, tag = "rwl2")
+            self.MT.create_line(line2x, y1, line2x, y2, width = 1, fill = self.resizing_line_fg, tag = "rwl2")
         elif self.height_resizing_enabled and self.rsz_w is None and self.rsz_h is not None:
             self.currently_resizing_height = True
             y = event.y
             if y < self.MT.hdr_min_rh:
                 y = int(self.MT.hdr_min_rh)
             self.new_col_height = y
-            self.create_line(x1, y, x2, y, width = 1, fill = self.resizing_line_color, tag = "rhl")
+            self.create_line(x1, y, x2, y, width = 1, fill = self.resizing_line_fg, tag = "rhl")
         elif self.MT.identify_col(x = event.x, allow_end = False) is None:
             self.MT.deselect("all")
         elif self.col_selection_enabled and self.rsz_w is None and self.rsz_h is None:
@@ -289,8 +289,8 @@ class ColumnHeaders(tk.Canvas):
             if not size <= self.MT.min_cw and size < self.max_cw:
                 self.delete("rwl")
                 self.MT.delete("rwl")
-                self.create_line(x, 0, x, self.current_height, width = 1, fill = self.resizing_line_color, tag = "rwl")
-                self.MT.create_line(x, y1, x, y2, width = 1, fill = self.resizing_line_color, tag = "rwl")
+                self.create_line(x, 0, x, self.current_height, width = 1, fill = self.resizing_line_fg, tag = "rwl")
+                self.MT.create_line(x, y1, x, y2, width = 1, fill = self.resizing_line_fg, tag = "rwl")
         elif self.height_resizing_enabled and self.rsz_h is not None and self.currently_resizing_height:
             evy = event.y
             self.delete("rhl")
@@ -301,13 +301,13 @@ class ColumnHeaders(tk.Canvas):
                     evy = int(self.max_header_height)
                     y = self.MT.canvasy(evy - self.current_height)
                 self.new_col_height = evy
-                self.MT.create_line(x1, y, x2, y, width = 1, fill = self.resizing_line_color, tag = "rhl")
+                self.MT.create_line(x1, y, x2, y, width = 1, fill = self.resizing_line_fg, tag = "rhl")
             else:
                 y = evy
                 if y < self.MT.hdr_min_rh:
                     y = int(self.MT.hdr_min_rh)
                 self.new_col_height = y
-                self.create_line(x1, y, x2, y, width = 1, fill = self.resizing_line_color, tag = "rhl")
+                self.create_line(x1, y, x2, y, width = 1, fill = self.resizing_line_fg, tag = "rhl")
         elif self.drag_and_drop_enabled and self.col_selection_enabled and self.MT.anything_selected(exclude_cells = True, exclude_rows = True) and self.rsz_h is None and self.rsz_w is None and self.dragged_col is not None:
             x = self.canvasx(event.x)
             if x > 0 and x < self.MT.col_positions[-1]:
@@ -337,7 +337,7 @@ class ColumnHeaders(tk.Canvas):
                 start = self.canvasx(event.x - int(rectw / 2))
                 end = self.canvasx(event.x + int(rectw / 2))
                 self.delete("dd")
-                self.create_rectangle(start, 0, end, self.current_height - 1, fill = self.drag_and_drop_color, outline = self.grid_color, tag = "dd")
+                self.create_rectangle(start, 0, end, self.current_height - 1, fill = self.drag_and_drop_bg, outline = self.header_grid_fg, tag = "dd")
                 self.tag_raise("dd")
                 self.tag_raise("t")
                 self.tag_raise("v")
@@ -696,7 +696,7 @@ class ColumnHeaders(tk.Canvas):
                                           f"{int((int(c_1[5:], 16) + int(c_3[5:], 16)) / 2):02X}"),
                                   outline = "",
                                   tag = "s")
-            tf = self.selected_cols_fg if self.highlighted_cells[hlcol][1] is None or self.MT.display_selected_fg_over_highlights else self.highlighted_cells[hlcol][1]
+            tf = self.header_selected_columns_fg if self.highlighted_cells[hlcol][1] is None or self.MT.display_selected_fg_over_highlights else self.highlighted_cells[hlcol][1]
         elif hlcol in self.highlighted_cells and (c in selected_cols or selected_rows):
             c_1 = self.highlighted_cells[hlcol][0] if self.highlighted_cells[hlcol][0].startswith("#") else Color_Map_[self.highlighted_cells[hlcol][0]]
             self.redraw_highlight(fc + 1,
@@ -708,16 +708,16 @@ class ColumnHeaders(tk.Canvas):
                                           f"{int((int(c_1[5:], 16) + int(c_2[5:], 16)) / 2):02X}"),
                                   outline = "",
                                   tag = "s")
-            tf = self.selected_cells_foreground if self.highlighted_cells[hlcol][1] is None or self.MT.display_selected_fg_over_highlights else self.highlighted_cells[hlcol][1]
+            tf = self.header_selected_cells_fg if self.highlighted_cells[hlcol][1] is None or self.MT.display_selected_fg_over_highlights else self.highlighted_cells[hlcol][1]
         elif c in actual_selected_cols:
-            tf = self.selected_cols_fg
+            tf = self.header_selected_columns_fg
         elif c in selected_cols or selected_rows:
-            tf = self.selected_cells_foreground
+            tf = self.header_selected_cells_fg
         elif hlcol in self.highlighted_cells:
             self.redraw_highlight(fc + 1, 0, sc, self.current_height - 1, fill = self.highlighted_cells[hlcol][0], outline = "", tag = "s")
-            tf = self.text_color if self.highlighted_cells[hlcol][1] is None else self.highlighted_cells[hlcol][1]
+            tf = self.header_fg if self.highlighted_cells[hlcol][1] is None else self.highlighted_cells[hlcol][1]
         else:
-            tf = self.text_color
+            tf = self.header_fg
         return tf, self.MT.my_hdr_font
 
     def redraw_highlight(self, x1, y1, x2, y2, fill, outline, tag):
@@ -772,21 +772,21 @@ class ColumnHeaders(tk.Canvas):
         self.disp_grid = {}
         self.visible_col_dividers = []
         x = self.MT.col_positions[start_col]
-        self.redraw_gridline(x, 0, x, self.current_height, fill = self.grid_color, width = 1, tag = "fv")
+        self.redraw_gridline(x, 0, x, self.current_height, fill = self.header_grid_fg, width = 1, tag = "fv")
         self.col_height_resize_bbox = (x1, self.current_height - 2, x_stop, self.current_height)
         yend = self.current_height - 5
         for c in range(start_col + 1, end_col):
             x = self.MT.col_positions[c]
             if self.width_resizing_enabled:
                 self.visible_col_dividers.append((x - 2, 1, x + 2, yend))
-            self.redraw_gridline(x, 0, x, self.current_height, fill = self.grid_color, width = 1, tag = ("v", f"{c}"))
+            self.redraw_gridline(x, 0, x, self.current_height, fill = self.header_grid_fg, width = 1, tag = ("v", f"{c}"))
         top = self.canvasy(0)
         if self.MT.hdr_fl_ins + self.MT.hdr_half_txt_h - 1 > top:
             incfl = True
         else:
             incfl = False
-        c_2 = self.selected_cells_background if self.selected_cells_background.startswith("#") else Color_Map_[self.selected_cells_background]
-        c_3 = self.selected_cols_bg if self.selected_cols_bg.startswith("#") else Color_Map_[self.selected_cols_bg]
+        c_2 = self.header_selected_cells_bg if self.header_selected_cells_bg.startswith("#") else Color_Map_[self.header_selected_cells_bg]
+        c_3 = self.header_selected_columns_bg if self.header_selected_columns_bg.startswith("#") else Color_Map_[self.header_selected_columns_bg]
         if self.align == "center":
             for c in range(start_col, end_col - 1):
                 fc = self.MT.col_positions[c]
@@ -929,7 +929,7 @@ class ColumnHeaders(tk.Canvas):
                             y += self.MT.hdr_xtra_lines_increment
                             if y + self.MT.hdr_half_txt_h - 1 > self.current_height:
                                 break
-        self.redraw_gridline(x1, self.current_height - 1, x_stop, self.current_height - 1, fill = self.header_border_color, width = 1, tag = "h")
+        self.redraw_gridline(x1, self.current_height - 1, x_stop, self.current_height - 1, fill = self.header_border_fg, width = 1, tag = "h")
         for t, sh in self.hidd_text.items():
             if sh:
                 self.itemconfig(t, state = "hidden")

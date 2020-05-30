@@ -40,20 +40,20 @@ class MainTable(tk.Canvas):
                  align = None,
                  width = None,
                  height = None,
-                 table_background = "white",
-                 grid_color = "gray15",
-                 text_color = "black",
+                 table_bg = "white",
+                 table_grid_fg = "gray15",
+                 table_fg = "black",
                  show_selected_cells_border = True,
-                 selected_cells_border_color = "#1a73e8",
-                 selected_cells_background = "#e7f0fd",
+                 table_selected_cells_border_fg = "#1a73e8",
+                 table_selected_cells_bg = "#e7f0fd",
                  display_selected_fg_over_highlights = False,
-                 selected_cells_foreground = "black",
-                 selected_rows_border_color = "#1a73e8",
-                 selected_rows_background = "#e7f0fd",
-                 selected_rows_foreground = "black",
-                 selected_columns_border_color = "#1a73e8",
-                 selected_columns_background = "#e7f0fd",
-                 selected_columns_foreground = "black",
+                 table_selected_cells_fg = "black",
+                 table_selected_rows_border_fg = "#1a73e8",
+                 table_selected_rows_bg = "#e7f0fd",
+                 table_selected_rows_fg = "black",
+                 table_selected_columns_border_fg = "#1a73e8",
+                 table_selected_columns_bg = "#e7f0fd",
+                 table_selected_columns_fg = "black",
                  displayed_columns = [],
                  all_columns_displayed = True,
                  show_vertical_grid = True,
@@ -67,7 +67,7 @@ class MainTable(tk.Canvas):
                            parentframe,
                            width = width,
                            height = height,
-                           background = table_background,
+                           background = table_bg,
                            highlightthickness = 0)
         
         self.disp_text = {}
@@ -160,18 +160,18 @@ class MainTable(tk.Canvas):
         self.displayed_columns = displayed_columns
         self.all_columns_displayed = all_columns_displayed
 
-        self.grid_color = grid_color
-        self.text_color = text_color
-        self.selected_cells_border_col = selected_cells_border_color
-        self.selected_cells_background = selected_cells_background
-        self.selected_cells_foreground = selected_cells_foreground
-        self.selected_rows_border_color = selected_rows_border_color
-        self.selected_rows_bg = selected_rows_background
-        self.selected_rows_fg = selected_rows_foreground
-        self.selected_cols_border_color = selected_columns_border_color
-        self.selected_cols_bg = selected_columns_background
-        self.selected_cols_fg = selected_columns_foreground
-        self.table_background = table_background
+        self.table_grid_fg = table_grid_fg
+        self.table_fg = table_fg
+        self.table_selected_cells_border_fg = table_selected_cells_border_fg
+        self.table_selected_cells_bg = table_selected_cells_bg
+        self.table_selected_cells_fg = table_selected_cells_fg
+        self.table_selected_rows_border_fg = table_selected_rows_border_fg
+        self.table_selected_rows_bg = table_selected_rows_bg
+        self.table_selected_rows_fg = table_selected_rows_fg
+        self.table_selected_columns_border_fg = table_selected_columns_border_fg
+        self.table_selected_columns_bg = table_selected_columns_bg
+        self.table_selected_columns_fg = table_selected_columns_fg
+        self.table_bg = table_bg
         
         self.align = align
         self.my_font = font
@@ -270,7 +270,7 @@ class MainTable(tk.Canvas):
                                                               fill = "",
                                                               dash = (25, 5),
                                                               width = 2,
-                                                              outline = self.selected_cells_border_col,
+                                                              outline = self.table_selected_cells_border_fg,
                                                               tag = "ctrl")
             
         else:
@@ -283,7 +283,7 @@ class MainTable(tk.Canvas):
                             fill = "",
                               dash = (25, 5),
                               width = 3,
-                              outline = self.selected_cells_border_col,
+                              outline = self.table_selected_cells_border_fg,
                               tag = "ctrl",
                             state = "normal")
         self.tag_raise("ctrl")
@@ -1883,12 +1883,12 @@ class MainTable(tk.Canvas):
             self.RI.currently_resizing_width = True
             self.new_row_width = self.RI.current_width + event.x
             x = self.canvasx(event.x)
-            self.create_resize_line(x, y1, x, y2, width = 1, fill = self.RI.resizing_line_color, tag = "rwl")
+            self.create_resize_line(x, y1, x, y2, width = 1, fill = self.RI.resizing_line_fg, tag = "rwl")
         elif self.CH.height_resizing_enabled and self.CH.rsz_w is None and self.CH.rsz_h == True:
             self.CH.currently_resizing_height = True
             self.new_header_height = self.CH.current_height + event.y
             y = self.canvasy(event.y)
-            self.create_resize_line(x1, y, x2, y, width = 1, fill = self.RI.resizing_line_color, tag = "rhl")
+            self.create_resize_line(x1, y, x2, y, width = 1, fill = self.RI.resizing_line_fg, tag = "rhl")
         if self.extra_b1_press_func is not None:
             self.extra_b1_press_func(event)
 
@@ -1997,26 +1997,26 @@ class MainTable(tk.Canvas):
             if event.x >= 0:
                 x = self.canvasx(event.x)
                 self.new_row_width = self.RI.current_width + event.x
-                self.create_resize_line(x, y1, x, y2, width = 1, fill = self.RI.resizing_line_color, tag = "rwl")
+                self.create_resize_line(x, y1, x, y2, width = 1, fill = self.RI.resizing_line_fg, tag = "rwl")
             else:
                 x = self.RI.current_width + event.x
                 if x < self.min_cw:
                     x = int(self.min_cw)
                 self.new_row_width = x
-                self.RI.create_line(x, y1, x, y2, width = 1, fill = self.RI.resizing_line_color, tag = "rwl")
+                self.RI.create_line(x, y1, x, y2, width = 1, fill = self.RI.resizing_line_fg, tag = "rwl")
         elif self.CH.height_resizing_enabled and self.CH.rsz_h is not None and self.CH.currently_resizing_height:
             self.CH.delete("rhl")
             self.delete_resize_lines()
             if event.y >= 0:
                 y = self.canvasy(event.y)
                 self.new_header_height = self.CH.current_height + event.y
-                self.create_resize_line(x1, y, x2, y, width = 1, fill = self.RI.resizing_line_color, tag = "rhl")
+                self.create_resize_line(x1, y, x2, y, width = 1, fill = self.RI.resizing_line_fg, tag = "rhl")
             else:
                 y = self.CH.current_height + event.y
                 if y < self.hdr_min_rh:
                     y = int(self.hdr_min_rh)
                 self.new_header_height = y
-                self.CH.create_line(x1, y, x2, y, width = 1, fill = self.RI.resizing_line_color, tag = "rhl")
+                self.CH.create_line(x1, y, x2, y, width = 1, fill = self.RI.resizing_line_fg, tag = "rhl")
         if self.extra_b1_motion_func is not None:
             self.extra_b1_motion_func(event)
 
@@ -2846,21 +2846,21 @@ class MainTable(tk.Canvas):
             self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_2_[0]) / 2):02X}" +
                                                                   f"{int((int(c_1[3:5], 16) + c_2_[1]) / 2):02X}" +
                                                                   f"{int((int(c_1[5:], 16) + c_2_[2]) / 2):02X}"), outline = "", tag = "hi")
-            tf = self.selected_cells_foreground if self.highlighted_cells[(r, dcol)][1] is None or self.display_selected_fg_over_highlights else self.highlighted_cells[(r, dcol)][1]
+            tf = self.table_selected_cells_fg if self.highlighted_cells[(r, dcol)][1] is None or self.display_selected_fg_over_highlights else self.highlighted_cells[(r, dcol)][1]
             
         elif r in self.highlighted_rows and (r, c) in selected_cells:
             c_1 = self.highlighted_rows[r][0] if self.highlighted_rows[r][0].startswith("#") else Color_Map_[self.highlighted_rows[r][0]]
             self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_2_[0]) / 2):02X}" +
                                                                   f"{int((int(c_1[3:5], 16) + c_2_[1]) / 2):02X}" +
                                                                   f"{int((int(c_1[5:], 16) + c_2_[2]) / 2):02X}"), outline = "", tag = "hi")
-            tf = self.selected_cells_foreground if self.highlighted_rows[r][1] is None or self.display_selected_fg_over_highlights else self.highlighted_rows[r][1]
+            tf = self.table_selected_cells_fg if self.highlighted_rows[r][1] is None or self.display_selected_fg_over_highlights else self.highlighted_rows[r][1]
             
         elif dcol in self.highlighted_cols and (r, c) in selected_cells:
             c_1 = self.highlighted_cols[dcol][0] if self.highlighted_cols[dcol][0].startswith("#") else Color_Map_[self.highlighted_cols[dcol][0]]
             self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_2_[0]) / 2):02X}" +
                                                                   f"{int((int(c_1[3:5], 16) + c_2_[1]) / 2):02X}" +
                                                                   f"{int((int(c_1[5:], 16) + c_2_[2]) / 2):02X}"), outline = "", tag = "hi")
-            tf = self.selected_cells_foreground if self.highlighted_cols[dcol][1] is None or self.display_selected_fg_over_highlights else self.highlighted_cols[dcol][1]
+            tf = self.table_selected_cells_fg if self.highlighted_cols[dcol][1] is None or self.display_selected_fg_over_highlights else self.highlighted_cols[dcol][1]
             
         # ________________________ CELL IS HIGHLIGHTED AND IN SELECTED ROWS ________________________
         elif (r, dcol) in self.highlighted_cells and r in actual_selected_rows:
@@ -2868,21 +2868,21 @@ class MainTable(tk.Canvas):
             self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_4_[0]) / 2):02X}" +
                                                                   f"{int((int(c_1[3:5], 16) + c_4_[1]) / 2):02X}" +
                                                                   f"{int((int(c_1[5:], 16) + c_4_[2]) / 2):02X}"), outline = "", tag = "hi")
-            tf = self.selected_rows_fg if self.highlighted_cells[(r, dcol)][1] is None or self.display_selected_fg_over_highlights else self.highlighted_cells[(r, dcol)][1]
+            tf = self.table_selected_rows_fg if self.highlighted_cells[(r, dcol)][1] is None or self.display_selected_fg_over_highlights else self.highlighted_cells[(r, dcol)][1]
             
         elif r in self.highlighted_rows and r in actual_selected_rows:
             c_1 = self.highlighted_rows[r][0] if self.highlighted_rows[r][0].startswith("#") else Color_Map_[self.highlighted_rows[r][0]]
             self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_4_[0]) / 2):02X}" +
                                                                   f"{int((int(c_1[3:5], 16) + c_4_[1]) / 2):02X}" +
                                                                   f"{int((int(c_1[5:], 16) + c_4_[2]) / 2):02X}"), outline = "", tag = "hi")
-            tf = self.selected_rows_fg if self.highlighted_rows[r][1] is None or self.display_selected_fg_over_highlights else self.highlighted_rows[r][1]
+            tf = self.table_selected_rows_fg if self.highlighted_rows[r][1] is None or self.display_selected_fg_over_highlights else self.highlighted_rows[r][1]
             
         elif dcol in self.highlighted_cols and r in actual_selected_rows:
             c_1 = self.highlighted_cols[dcol][0] if self.highlighted_cols[dcol][0].startswith("#") else Color_Map_[self.highlighted_cols[dcol][0]]
             self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_4_[0]) / 2):02X}" +
                                                                   f"{int((int(c_1[3:5], 16) + c_4_[1]) / 2):02X}" +
                                                                   f"{int((int(c_1[5:], 16) + c_4_[2]) / 2):02X}"), outline = "", tag = "hi")
-            tf = self.selected_rows_fg if self.highlighted_cols[dcol][1] is None or self.display_selected_fg_over_highlights else self.highlighted_cols[dcol][1]
+            tf = self.table_selected_rows_fg if self.highlighted_cols[dcol][1] is None or self.display_selected_fg_over_highlights else self.highlighted_cols[dcol][1]
             
         # ________________________ CELL IS HIGHLIGHTED AND IN SELECTED COLUMNS ________________________
         elif (r, dcol) in self.highlighted_cells and c in actual_selected_cols:
@@ -2890,46 +2890,46 @@ class MainTable(tk.Canvas):
             self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_3_[0]) / 2):02X}" +
                                                                   f"{int((int(c_1[3:5], 16) + c_3_[1]) / 2):02X}" +
                                                                   f"{int((int(c_1[5:], 16) + c_3_[2]) / 2):02X}"), outline = "", tag = "hi")
-            tf = self.selected_cols_fg if self.highlighted_cells[(r, dcol)][1] is None or self.display_selected_fg_over_highlights else self.highlighted_cells[(r, dcol)][1]
+            tf = self.table_selected_columns_fg if self.highlighted_cells[(r, dcol)][1] is None or self.display_selected_fg_over_highlights else self.highlighted_cells[(r, dcol)][1]
             
         elif r in self.highlighted_rows and c in actual_selected_cols:
             c_1 = self.highlighted_rows[r][0] if self.highlighted_rows[r][0].startswith("#") else Color_Map_[self.highlighted_rows[r][0]]
             self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_3_[0]) / 2):02X}" +
                                                                   f"{int((int(c_1[3:5], 16) + c_3_[1]) / 2):02X}" +
                                                                   f"{int((int(c_1[5:], 16) + c_3_[2]) / 2):02X}"), outline = "", tag = "hi")
-            tf = self.selected_cols_fg if self.highlighted_rows[r][1] is None or self.display_selected_fg_over_highlights else self.highlighted_rows[r][1]
+            tf = self.table_selected_columns_fg if self.highlighted_rows[r][1] is None or self.display_selected_fg_over_highlights else self.highlighted_rows[r][1]
             
         elif dcol in self.highlighted_cols and c in actual_selected_cols:
             c_1 = self.highlighted_cols[dcol][0] if self.highlighted_cols[dcol][0].startswith("#") else Color_Map_[self.highlighted_cols[dcol][0]]
             self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_3_[0]) / 2):02X}" +
                                                                   f"{int((int(c_1[3:5], 16) + c_3_[1]) / 2):02X}" +
                                                                   f"{int((int(c_1[5:], 16) + c_3_[2]) / 2):02X}"), outline = "", tag = "hi")
-            tf = self.selected_cols_fg if self.highlighted_cols[dcol][1] is None or self.display_selected_fg_over_highlights else self.highlighted_cols[dcol][1]
+            tf = self.table_selected_columns_fg if self.highlighted_cols[dcol][1] is None or self.display_selected_fg_over_highlights else self.highlighted_cols[dcol][1]
 
         # ________________________ CELL IS HIGHLIGHTED AND NOT SELECTED ________________________
         elif (r, dcol) in self.highlighted_cells and (r, c) not in selected_cells and r not in actual_selected_rows and c not in actual_selected_cols:
             self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = self.highlighted_cells[(r, dcol)][0], outline = "", tag = "hi")
-            tf = self.text_color if self.highlighted_cells[(r, dcol)][1] is None else self.highlighted_cells[(r, dcol)][1]
+            tf = self.table_fg if self.highlighted_cells[(r, dcol)][1] is None else self.highlighted_cells[(r, dcol)][1]
             
         elif r in self.highlighted_rows and (r, c) not in selected_cells and r not in actual_selected_rows and c not in actual_selected_cols:
             self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = self.highlighted_rows[r][0], outline = "", tag = "hi")
-            tf = self.text_color if self.highlighted_rows[r][1] is None else self.highlighted_rows[r][1]
+            tf = self.table_fg if self.highlighted_rows[r][1] is None else self.highlighted_rows[r][1]
             
         elif dcol in self.highlighted_cols and (r, c) not in selected_cells and r not in actual_selected_rows and c not in actual_selected_cols:
             self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = self.highlighted_cols[dcol][0], outline = "", tag = "hi")
-            tf = self.text_color if self.highlighted_cols[dcol][1] is None else self.highlighted_cols[dcol][1]
+            tf = self.table_fg if self.highlighted_cols[dcol][1] is None else self.highlighted_cols[dcol][1]
         
         # ________________________ CELL IS JUST SELECTED ________________________
         elif (r, c) in selected_cells:
-            tf = self.selected_cells_foreground
+            tf = self.table_selected_cells_fg
         elif r in actual_selected_rows:
-            tf = self.selected_rows_fg
+            tf = self.table_selected_rows_fg
         elif c in actual_selected_cols:
-            tf = self.selected_cols_fg
+            tf = self.table_selected_columns_fg
 
         # ________________________ CELL IS NOT SELECTED ________________________
         else:
-            tf = self.text_color
+            tf = self.table_fg
         return tf
 
     def redraw_highlight(self, x1, y1, x2, y2, fill, outline, tag):
@@ -2994,12 +2994,12 @@ class MainTable(tk.Canvas):
                     t, sh = self.hidd_grid.popitem()
                     self.coords(t, x1, y, x_stop, y)
                     if sh:
-                        self.itemconfig(t, fill = self.grid_color)
+                        self.itemconfig(t, fill = self.table_grid_fg)
                     else:
-                        self.itemconfig(t, fill = self.grid_color, state = "normal")
+                        self.itemconfig(t, fill = self.table_grid_fg, state = "normal")
                     self.disp_grid[t] = True
                 else:
-                    self.disp_grid[self.create_line(x1, y, x_stop, y, fill = self.grid_color, width = 1, tag = "g")] = True
+                    self.disp_grid[self.create_line(x1, y, x_stop, y, fill = self.table_grid_fg, width = 1, tag = "g")] = True
         if self.show_vertical_grid:
             for c in range(start_col - 1, end_col):
                 x = self.col_positions[c]
@@ -3007,22 +3007,22 @@ class MainTable(tk.Canvas):
                     t, sh = self.hidd_grid.popitem()
                     self.coords(t, x, y1, x, y_stop)
                     if sh:
-                        self.itemconfig(t, fill = self.grid_color)
+                        self.itemconfig(t, fill = self.table_grid_fg)
                     else:
-                        self.itemconfig(t, fill = self.grid_color, state = "normal")
+                        self.itemconfig(t, fill = self.table_grid_fg, state = "normal")
                     self.disp_grid[t] = True
                 else:
-                    self.disp_grid[self.create_line(x, y1, x, y_stop, fill = self.grid_color, width = 1, tag = "g")] = True
+                    self.disp_grid[self.create_line(x, y1, x, y_stop, fill = self.table_grid_fg, width = 1, tag = "g")] = True
         if start_row > 0:
             start_row -= 1
         if start_col > 0:
             start_col -= 1
         end_row -= 1
-        c_2 = self.selected_cells_background if self.selected_cells_background.startswith("#") else Color_Map_[self.selected_cells_background]
+        c_2 = self.table_selected_cells_bg if self.table_selected_cells_bg.startswith("#") else Color_Map_[self.table_selected_cells_bg]
         c_2_ = (int(c_2[1:3], 16), int(c_2[3:5], 16), int(c_2[5:], 16))
-        c_3 = self.selected_cols_bg if self.selected_cols_bg.startswith("#") else Color_Map_[self.selected_cols_bg]
+        c_3 = self.table_selected_columns_bg if self.table_selected_columns_bg.startswith("#") else Color_Map_[self.table_selected_columns_bg]
         c_3_ = (int(c_3[1:3], 16), int(c_3[3:5], 16), int(c_3[5:], 16))
-        c_4 = self.selected_rows_bg if self.selected_rows_bg.startswith("#") else Color_Map_[self.selected_rows_bg]
+        c_4 = self.table_selected_rows_bg if self.table_selected_rows_bg.startswith("#") else Color_Map_[self.table_selected_rows_bg]
         c_4_ = (int(c_4[1:3], 16), int(c_4[3:5], 16), int(c_4[5:], 16))
         rows_ = tuple(range(start_row, end_row))
         selected_cells, selected_rows, selected_cols, actual_selected_rows, actual_selected_cols = self.get_redraw_selections((start_row, start_col, end_row, end_col - 1))
@@ -3330,22 +3330,22 @@ class MainTable(tk.Canvas):
         if self.show_selected_cells_border:
             b = self.create_rectangle(self.col_positions[c1] + 1, self.row_positions[r1] + 1, self.col_positions[c2], self.row_positions[r2],
                                       fill = "",
-                                      outline = self.selected_cells_border_col,
+                                      outline = self.table_selected_cells_border_fg,
                                       width = 2,
                                       tags = tagr)
             self.tag_raise(b)
         else:
             b = self.create_rectangle(self.col_positions[c1], self.row_positions[r1], self.col_positions[c2], self.row_positions[r2],
-                                      fill = self.selected_cells_background,
+                                      fill = self.table_selected_cells_bg,
                                       outline = "",
                                       tags = tagr)
             self.tag_lower(b)
         ri = self.RI.create_rectangle(0, self.row_positions[r1], self.RI.current_width - 1, self.row_positions[r2],
-                                      fill = self.RI.selected_cells_background,
+                                      fill = self.RI.index_selected_cells_bg,
                                       outline = "",
                                       tags = tagr)
         ch = self.CH.create_rectangle(self.col_positions[c1], 0, self.col_positions[c2], self.CH.current_height - 1,
-                                      fill = self.CH.selected_cells_background,
+                                      fill = self.CH.header_selected_cells_bg,
                                       outline = "",
                                       tags = tagr)
         self.RI.tag_lower(ri)
@@ -3383,30 +3383,30 @@ class MainTable(tk.Canvas):
             tagr = ("CellSelectFill", f"{r1}_{c1}_{r2}_{c2}")
             tagb = ("CellSelectBorder", f"{r1}_{c1}_{r2}_{c2}")
             taglower = "CellSelectFill"
-            MT_bg = self.selected_cells_background
-            MT_border_col = self.selected_cells_border_col
+            MT_bg = self.table_selected_cells_bg
+            MT_border_col = self.table_selected_cells_border_fg
         elif type_ == "rows":
             tagr = ("RowSelectFill", f"{r1}_{c1}_{r2}_{c2}")
             tagb = ("RowSelectBorder", f"{r1}_{c1}_{r2}_{c2}")
             taglower = "RowSelectFill"
-            MT_bg = self.selected_rows_bg
-            MT_border_col = self.selected_rows_border_color
+            MT_bg = self.table_selected_rows_bg
+            MT_border_col = self.table_selected_rows_border_fg
         elif type_ == "cols":
             tagr = ("ColSelectFill", f"{r1}_{c1}_{r2}_{c2}")
             tagb = ("ColSelectBorder", f"{r1}_{c1}_{r2}_{c2}")
             taglower = "ColSelectFill"
-            MT_bg = self.selected_cols_bg
-            MT_border_col = self.selected_cols_border_color
+            MT_bg = self.table_selected_columns_bg
+            MT_border_col = self.table_selected_columns_border_fg
         r = self.create_rectangle(self.col_positions[c1], self.row_positions[r1], self.col_positions[c2], self.row_positions[r2],
                                   fill = MT_bg,
                                   outline = "",
                                   tags = tagr)
         self.RI.create_rectangle(0, self.row_positions[r1], self.RI.current_width - 1, self.row_positions[r2],
-                                 fill = self.RI.selected_rows_bg if type_ == "rows" else self.RI.selected_cells_background,
+                                 fill = self.RI.index_selected_rows_bg if type_ == "rows" else self.RI.index_selected_cells_bg,
                                  outline = "",
                                  tags = tagr)
         self.CH.create_rectangle(self.col_positions[c1], 0, self.col_positions[c2], self.CH.current_height - 1,
-                                 fill = self.CH.selected_cols_bg if type_ == "cols" else self.CH.selected_cells_background,
+                                 fill = self.CH.header_selected_columns_bg if type_ == "cols" else self.CH.header_selected_cells_bg,
                                  outline = "",
                                  tags = tagr)
         if self.show_selected_cells_border:
@@ -3896,7 +3896,7 @@ class MainTable(tk.Canvas):
         if text is None:
             text = ""
         self.hide_current()
-        self.text_editor = TextEditor(self, text = text, font = self.my_font, state = state, width = w, height = h, border_color = self.selected_cells_border_col, show_border = self.show_selected_cells_border)
+        self.text_editor = TextEditor(self, text = text, font = self.my_font, state = state, width = w, height = h, border_color = self.table_selected_cells_border_fg, show_border = self.show_selected_cells_border)
         self.text_editor_id = self.create_window((x, y), window = self.text_editor, anchor = "nw")
         self.text_editor.textedit.bind("<Alt-Return>", self.text_editor_newline_binding)
         if binding is not None:
