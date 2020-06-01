@@ -1,3 +1,6 @@
+### Version 4.8.2
+ - Fix old color name, credit `ministiy`
+
 ### Version 4.8.1
  - Make drag selection only redraw table when rectangle dimensions change instead of mouse moves
 
