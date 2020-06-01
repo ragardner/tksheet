@@ -31,8 +31,8 @@ class TextEditor_(tk.Text):
                          undo = True,
                          maxundo = 20,
                          background = parent.parent.table_bg,
-                         foreground = parent.parent.text_color,
-                         insertbackground = parent.parent.text_color)
+                         foreground = parent.parent.table_fg,
+                         insertbackground = parent.parent.table_fg)
         self.parent = parent
         if text is not None:
             self.insert(1.0, text)
