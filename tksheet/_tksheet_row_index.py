@@ -247,6 +247,27 @@ class RowIndex(tk.Canvas):
                 elif r_selected:
                     self.dragged_row = r
 
+    def create_resize_line(self, x1, y1, x2, y2, width, fill, tag):
+        if self.hidd_resize_lines:
+            t, sh = self.hidd_resize_lines.popitem()
+            self.coords(t, x1, y1, x2, y2)
+            if sh:
+                self.itemconfig(t, width = width, fill = fill, tag = tag)
+            else:
+                self.itemconfig(t, width = width, fill = fill, tag = tag, state = "normal")
+            self.lift(t)
+        else:
+            t = self.create_line(x1, y1, x2, y2, width = width, fill = fill, tag = tag)
+        self.disp_resize_lines[t] = True
+
+    def delete_resize_lines(self):
+        self.hidd_resize_lines.update(self.disp_resize_lines)
+        self.disp_resize_lines = {}
+        for t, sh in self.hidd_resize_lines.items():
+            if sh:
+                self.itemconfig(t, state = "hidden")
+                self.hidd_resize_lines[t] = False
+
     def mouse_motion(self, event):
         if not self.currently_resizing_height and not self.currently_resizing_width:
             x = self.canvasx(event.x)
@@ -316,10 +337,10 @@ class RowIndex(tk.Canvas):
             y = self.MT.row_positions[self.rsz_h]
             line2y = self.MT.row_positions[self.rsz_h - 1]
             x1, y1, x2, y2 = self.MT.get_canvas_visible_area()
-            self.create_line(0, y, self.current_width, y, width = 1, fill = self.resizing_line_fg, tag = "rhl")
-            self.MT.create_line(x1, y, x2, y, width = 1, fill = self.resizing_line_fg, tag = "rhl")
-            self.create_line(0, line2y, self.current_width, line2y, width = 1, fill = self.resizing_line_fg, tag = "rhl2")
-            self.MT.create_line(x1, line2y, x2, line2y, width = 1, fill = self.resizing_line_fg, tag = "rhl2")
+            self.create_resize_line(0, y, self.current_width, y, width = 1, fill = self.resizing_line_fg, tag = "rhl")
+            self.MT.create_resize_line(x1, y, x2, y, width = 1, fill = self.resizing_line_fg, tag = "rhl")
+            self.create_resize_line(0, line2y, self.current_width, line2y, width = 1, fill = self.resizing_line_fg, tag = "rhl2")
+            self.MT.create_resize_line(x1, line2y, x2, line2y, width = 1, fill = self.resizing_line_fg, tag = "rhl2")
         elif self.width_resizing_enabled and self.rsz_h is None and self.rsz_w == True:
             self.currently_resizing_width = True
             x1, y1, x2, y2 = self.MT.get_canvas_visible_area()
@@ -327,7 +348,7 @@ class RowIndex(tk.Canvas):
             if x < self.MT.min_cw:
                 x = int(self.MT.min_cw)
             self.new_row_width = x
-            self.create_line(x, y1, x, y2, width = 1, fill = self.resizing_line_fg, tag = "rwl")
+            self.create_resize_line(x, y1, x, y2, width = 1, fill = self.resizing_line_fg, tag = "rwl")
         elif self.MT.identify_row(y = event.y, allow_end = False) is None:
             self.MT.deselect("all")
         elif self.row_selection_enabled and self.rsz_h is None and self.rsz_w is None:
@@ -346,14 +367,17 @@ class RowIndex(tk.Canvas):
             y = self.canvasy(event.y)
             size = y - self.MT.row_positions[self.rsz_h - 1]
             if not size <= self.MT.min_rh and size < self.max_rh:
-                self.delete("rhl")
-                self.MT.delete("rhl")
-                self.create_line(0, y, self.current_width, y, width = 1, fill = self.resizing_line_fg, tag = "rhl")
-                self.MT.create_line(x1, y, x2, y, width = 1, fill = self.resizing_line_fg, tag = "rhl")
+                self.delete_resize_lines()
+                self.MT.delete_resize_lines()
+                line2y = self.MT.row_positions[self.rsz_h - 1]
+                self.create_resize_line(0, y, self.current_width, y, width = 1, fill = self.resizing_line_fg, tag = "rhl")
+                self.MT.create_resize_line(x1, y, x2, y, width = 1, fill = self.resizing_line_fg, tag = "rhl")
+                self.create_resize_line(0, line2y, self.current_width, line2y, width = 1, fill = self.resizing_line_fg, tag = "rhl2")
+                self.MT.create_resize_line(x1, line2y, x2, line2y, width = 1, fill = self.resizing_line_fg, tag = "rhl2")
         elif self.width_resizing_enabled and self.rsz_w is not None and self.currently_resizing_width:
             evx = event.x
-            self.delete("rwl")
-            self.MT.delete("rwl")
+            self.delete_resize_lines()
+            self.MT.delete_resize_lines()
             if evx > self.current_width:
                 x = self.MT.canvasx(evx - self.current_width)
                 if evx > self.max_row_width:
@@ -366,7 +390,7 @@ class RowIndex(tk.Canvas):
                 if x < self.MT.min_cw:
                     x = int(self.MT.min_cw)
                 self.new_row_width = x
-                self.create_line(x, y1, x, y2, width = 1, fill = self.resizing_line_fg, tag = "rwl")
+                self.create_resize_line(x, y1, x, y2, width = 1, fill = self.resizing_line_fg, tag = "rwl")
         if self.drag_and_drop_enabled and self.row_selection_enabled and self.rsz_h is None and self.rsz_w is None and self.dragged_row is not None and self.MT.anything_selected(exclude_cells = True, exclude_columns = True):
             y = self.canvasy(event.y)
             if y > 0 and y < self.MT.row_positions[-1]:
@@ -391,15 +415,20 @@ class RowIndex(tk.Canvas):
                         self.yview_scroll(-2, "units")
                     self.check_yview()
                     self.MT.main_table_redraw_grid_and_text(redraw_row_index = True)
-                selected_rows = sorted(self.MT.get_selected_rows())
-                rectw = self.MT.row_positions[selected_rows[-1] + 1] - self.MT.row_positions[selected_rows[0]]
-                start = self.canvasy(event.y - int(rectw / 2))
-                end = self.canvasy(event.y + int(rectw / 2))
-                self.delete("dd")
-                self.create_rectangle(0, start, self.current_width - 1, end, fill = self.drag_and_drop_bg, outline = self.index_grid_fg, tag = "dd")
-                self.tag_raise("dd")
-                self.tag_raise("t")
-                self.tag_raise("h")
+                row = self.MT.identify_row(y = event.y)
+                sels = self.MT.get_selected_rows()
+                selsmin = min(sels)
+                if row in sels:
+                    ypos = self.MT.row_positions[selsmin]
+                else:
+                    if row < selsmin:
+                        ypos = self.MT.row_positions[row]
+                    else:
+                        ypos = self.MT.row_positions[row + 1]
+                self.delete_resize_lines()
+                self.MT.delete_resize_lines()
+                self.create_resize_line(0, ypos, self.current_width, ypos, width = 3, fill = self.drag_and_drop_bg, tag = "dd")
+                self.MT.create_resize_line(x1, ypos, x2, ypos, width = 3, fill = self.drag_and_drop_bg, tag = "dd")
         elif self.MT.drag_selection_enabled and self.row_selection_enabled and self.rsz_h is None and self.rsz_w is None:
             end_row = self.MT.identify_row(y = event.y)
             currently_selected = self.MT.currently_selected()
@@ -449,8 +478,8 @@ class RowIndex(tk.Canvas):
         if self.height_resizing_enabled and self.rsz_h is not None and self.currently_resizing_height:
             self.currently_resizing_height = False
             new_row_pos = self.coords("rhl")[1]
-            self.delete("rhl", "rhl2")
-            self.MT.delete("rhl", "rhl2")
+            self.delete_resize_lines()
+            self.MT.delete_resize_lines()
             size = new_row_pos - self.MT.row_positions[self.rsz_h - 1]
             if size < self.MT.min_rh:
                 new_row_pos = ceil(self.MT.row_positions[self.rsz_h - 1] + self.MT.min_rh)
@@ -464,12 +493,13 @@ class RowIndex(tk.Canvas):
             self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
         elif self.width_resizing_enabled and self.rsz_w is not None and self.currently_resizing_width:
             self.currently_resizing_width = False
-            self.delete("rwl")
-            self.MT.delete("rwl")
+            self.delete_resize_lines()
+            self.MT.delete_resize_lines()
             self.set_width(self.new_row_width, set_TL = True)
             self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
         if self.drag_and_drop_enabled and self.MT.anything_selected(exclude_cells = True, exclude_columns = True) and self.row_selection_enabled and self.rsz_h is None and self.rsz_w is None and self.dragged_row is not None:
-            self.delete("dd")
+            self.delete_resize_lines()
+            self.MT.delete_resize_lines()
             y = event.y
             r = self.MT.identify_row(y = y)
             orig_selected_rows = self.MT.get_selected_rows()

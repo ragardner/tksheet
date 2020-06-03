@@ -213,6 +213,27 @@ class ColumnHeaders(tk.Canvas):
                 elif c_selected:
                     self.dragged_col = c
 
+    def create_resize_line(self, x1, y1, x2, y2, width, fill, tag):
+        if self.hidd_resize_lines:
+            t, sh = self.hidd_resize_lines.popitem()
+            self.coords(t, x1, y1, x2, y2)
+            if sh:
+                self.itemconfig(t, width = width, fill = fill, tag = tag)
+            else:
+                self.itemconfig(t, width = width, fill = fill, tag = tag, state = "normal")
+            self.lift(t)
+        else:
+            t = self.create_line(x1, y1, x2, y2, width = width, fill = fill, tag = tag)
+        self.disp_resize_lines[t] = True
+
+    def delete_resize_lines(self):
+        self.hidd_resize_lines.update(self.disp_resize_lines)
+        self.disp_resize_lines = {}
+        for t, sh in self.hidd_resize_lines.items():
+            if sh:
+                self.itemconfig(t, state = "hidden")
+                self.hidd_resize_lines[t] = False
+
     def mouse_motion(self, event):
         if not self.currently_resizing_height and not self.currently_resizing_width:
             x = self.canvasx(event.x)
@@ -257,17 +278,17 @@ class ColumnHeaders(tk.Canvas):
             self.currently_resizing_width = True
             x = self.MT.col_positions[self.rsz_w]
             line2x = self.MT.col_positions[self.rsz_w - 1]
-            self.create_line(x, 0, x, self.current_height, width = 1, fill = self.resizing_line_fg, tag = "rwl")
-            self.MT.create_line(x, y1, x, y2, width = 1, fill = self.resizing_line_fg, tag = "rwl")
-            self.create_line(line2x, 0, line2x, self.current_height,width = 1, fill = self.resizing_line_fg, tag = "rwl2")
-            self.MT.create_line(line2x, y1, line2x, y2, width = 1, fill = self.resizing_line_fg, tag = "rwl2")
+            self.create_resize_line(x, 0, x, self.current_height, width = 1, fill = self.resizing_line_fg, tag = "rwl")
+            self.MT.create_resize_line(x, y1, x, y2, width = 1, fill = self.resizing_line_fg, tag = "rwl")
+            self.create_resize_line(line2x, 0, line2x, self.current_height,width = 1, fill = self.resizing_line_fg, tag = "rwl2")
+            self.MT.create_resize_line(line2x, y1, line2x, y2, width = 1, fill = self.resizing_line_fg, tag = "rwl2")
         elif self.height_resizing_enabled and self.rsz_w is None and self.rsz_h is not None:
             self.currently_resizing_height = True
             y = event.y
             if y < self.MT.hdr_min_rh:
                 y = int(self.MT.hdr_min_rh)
             self.new_col_height = y
-            self.create_line(x1, y, x2, y, width = 1, fill = self.resizing_line_fg, tag = "rhl")
+            self.create_resize_line(x1, y, x2, y, width = 1, fill = self.resizing_line_fg, tag = "rhl")
         elif self.MT.identify_col(x = event.x, allow_end = False) is None:
             self.MT.deselect("all")
         elif self.col_selection_enabled and self.rsz_w is None and self.rsz_h is None:
@@ -286,27 +307,30 @@ class ColumnHeaders(tk.Canvas):
             x = self.canvasx(event.x)
             size = x - self.MT.col_positions[self.rsz_w - 1]
             if not size <= self.MT.min_cw and size < self.max_cw:
-                self.delete("rwl")
-                self.MT.delete("rwl")
-                self.create_line(x, 0, x, self.current_height, width = 1, fill = self.resizing_line_fg, tag = "rwl")
-                self.MT.create_line(x, y1, x, y2, width = 1, fill = self.resizing_line_fg, tag = "rwl")
+                self.delete_resize_lines()
+                self.MT.delete_resize_lines()
+                line2x = self.MT.col_positions[self.rsz_w - 1]
+                self.create_resize_line(x, 0, x, self.current_height, width = 1, fill = self.resizing_line_fg, tag = "rwl")
+                self.MT.create_resize_line(x, y1, x, y2, width = 1, fill = self.resizing_line_fg, tag = "rwl")
+                self.create_resize_line(line2x, 0, line2x, self.current_height,width = 1, fill = self.resizing_line_fg, tag = "rwl2")
+                self.MT.create_resize_line(line2x, y1, line2x, y2, width = 1, fill = self.resizing_line_fg, tag = "rwl2")
         elif self.height_resizing_enabled and self.rsz_h is not None and self.currently_resizing_height:
             evy = event.y
-            self.delete("rhl")
-            self.MT.delete("rhl")
+            self.delete_resize_lines()
+            self.MT.delete_resize_lines()
             if evy > self.current_height:
                 y = self.MT.canvasy(evy - self.current_height)
                 if evy > self.max_header_height:
                     evy = int(self.max_header_height)
                     y = self.MT.canvasy(evy - self.current_height)
                 self.new_col_height = evy
-                self.MT.create_line(x1, y, x2, y, width = 1, fill = self.resizing_line_fg, tag = "rhl")
+                self.MT.create_resize_line(x1, y, x2, y, width = 1, fill = self.resizing_line_fg, tag = "rhl")
             else:
                 y = evy
                 if y < self.MT.hdr_min_rh:
                     y = int(self.MT.hdr_min_rh)
                 self.new_col_height = y
-                self.create_line(x1, y, x2, y, width = 1, fill = self.resizing_line_fg, tag = "rhl")
+                self.create_resize_line(x1, y, x2, y, width = 1, fill = self.resizing_line_fg, tag = "rhl")
         elif self.drag_and_drop_enabled and self.col_selection_enabled and self.MT.anything_selected(exclude_cells = True, exclude_rows = True) and self.rsz_h is None and self.rsz_w is None and self.dragged_col is not None:
             x = self.canvasx(event.x)
             if x > 0 and x < self.MT.col_positions[-1]:
@@ -331,15 +355,20 @@ class ColumnHeaders(tk.Canvas):
                         self.xview_scroll(-2, "units")
                     self.check_xview()
                     self.MT.main_table_redraw_grid_and_text(redraw_header = True)
-                selected_cols = sorted(self.MT.get_selected_cols())
-                rectw = self.MT.col_positions[selected_cols[-1] + 1] - self.MT.col_positions[selected_cols[0]]
-                start = self.canvasx(event.x - int(rectw / 2))
-                end = self.canvasx(event.x + int(rectw / 2))
-                self.delete("dd")
-                self.create_rectangle(start, 0, end, self.current_height - 1, fill = self.drag_and_drop_bg, outline = self.header_grid_fg, tag = "dd")
-                self.tag_raise("dd")
-                self.tag_raise("t")
-                self.tag_raise("v")
+                col = self.MT.identify_col(x = event.x)
+                sels = self.MT.get_selected_cols()
+                selsmin = min(sels)
+                if col in sels:
+                    xpos = self.MT.col_positions[selsmin]
+                else:
+                    if col < selsmin:
+                        xpos = self.MT.col_positions[col]
+                    else:
+                        xpos = self.MT.col_positions[col + 1]
+                self.delete_resize_lines()
+                self.MT.delete_resize_lines()
+                self.create_resize_line(xpos, 0, xpos, self.current_height, width = 3, fill = self.drag_and_drop_bg, tag = "dd")
+                self.MT.create_resize_line(xpos, y1, xpos, y2, width = 3, fill = self.drag_and_drop_bg, tag = "dd")
         elif self.MT.drag_selection_enabled and self.col_selection_enabled and self.rsz_h is None and self.rsz_w is None:
             end_col = self.MT.identify_col(x = event.x)
             currently_selected = self.MT.currently_selected()
@@ -389,8 +418,8 @@ class ColumnHeaders(tk.Canvas):
         if self.width_resizing_enabled and self.rsz_w is not None and self.currently_resizing_width:
             self.currently_resizing_width = False
             new_col_pos = self.coords("rwl")[0]
-            self.delete("rwl", "rwl2")
-            self.MT.delete("rwl", "rwl2")
+            self.delete_resize_lines()
+            self.MT.delete_resize_lines()
             size = new_col_pos - self.MT.col_positions[self.rsz_w - 1]
             if size < self.MT.min_cw:
                 new_row_pos = ceil(self.MT.col_positions[self.rsz_w - 1] + self.MT.min_cw)
@@ -404,12 +433,13 @@ class ColumnHeaders(tk.Canvas):
             self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
         elif self.height_resizing_enabled and self.rsz_h is not None and self.currently_resizing_height:
             self.currently_resizing_height = False
-            self.delete("rhl")
-            self.MT.delete("rhl")
+            self.delete_resize_lines()
+            self.MT.delete_resize_lines()
             self.set_height(self.new_col_height,set_TL = True)
             self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
         if self.drag_and_drop_enabled and self.col_selection_enabled and self.MT.anything_selected(exclude_cells = True, exclude_rows = True) and self.rsz_h is None and self.rsz_w is None and self.dragged_col is not None:
-            self.delete("dd")
+            self.delete_resize_lines()
+            self.MT.delete_resize_lines()
             x = event.x
             c = self.MT.identify_col(x = x)
             orig_selected_cols = self.MT.get_selected_cols()

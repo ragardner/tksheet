@@ -1573,7 +1573,7 @@ class MainTable(tk.Canvas):
             self.enable_bindings_internal(bindings.lower())
 
     def enable_bindings_internal(self, binding):
-        if binding == "enable_all":
+        if binding in ("enable_all", "all"):
             self.single_selection_enabled = True
             self.toggle_selection_enabled = False
             self.drag_selection_enabled = True
@@ -1601,6 +1601,8 @@ class MainTable(tk.Canvas):
             self.rc_insert_row_enabled = True
             self.rc_popup_menus_enabled = True
             self.rc_select_enabled = True
+            self.TL.rh_state()
+            self.TL.rw_state()
         elif binding in ("single", "single_selection_mode", "single_select"):
             self.single_selection_enabled = True
             self.toggle_selection_enabled = False
@@ -1684,7 +1686,7 @@ class MainTable(tk.Canvas):
             self.disable_bindings_internal(bindings)
 
     def disable_bindings_internal(self, binding):
-        if binding == "disable_all":
+        if binding in ("all", "disable_all"):
             self.single_selection_enabled = False
             self.toggle_selection_enabled = False
             self.drag_selection_enabled = False
@@ -1712,6 +1714,8 @@ class MainTable(tk.Canvas):
             self.rc_insert_row_enabled = False
             self.rc_popup_menus_enabled = False
             self.rc_select_enabled = False
+            self.TL.rh_state("hidden")
+            self.TL.rw_state("hidden")
         elif binding in ("single", "single_selection_mode", "single_select"):
             self.single_selection_enabled = False
         elif binding in ("toggle", "toggle_selection_mode", "toggle_select"):
@@ -1896,9 +1900,9 @@ class MainTable(tk.Canvas):
             t, sh = self.hidd_resize_lines.popitem()
             self.coords(t, x1, y1, x2, y2)
             if sh:
-                self.itemconfig(t, fill = fill, tag = "g")
+                self.itemconfig(t, width = width, fill = fill, tag = tag)
             else:
-                self.itemconfig(t, fill = fill, tag = "g", state = "normal")
+                self.itemconfig(t, width = width, fill = fill, tag = tag, state = "normal")
             self.lift(t)
         else:
             t = self.create_line(x1, y1, x2, y2, width = width, fill = fill, tag = tag)
@@ -1994,7 +1998,7 @@ class MainTable(tk.Canvas):
             self.check_views()
             self.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True, redraw_table = True)#here
         elif self.RI.width_resizing_enabled and self.RI.rsz_w is not None and self.RI.currently_resizing_width:
-            self.RI.delete("rwl")#here
+            self.RI.delete_resize_lines()
             self.delete_resize_lines()
             if event.x >= 0:
                 x = self.canvasx(event.x)
@@ -2005,9 +2009,9 @@ class MainTable(tk.Canvas):
                 if x < self.min_cw:
                     x = int(self.min_cw)
                 self.new_row_width = x
-                self.RI.create_line(x, y1, x, y2, width = 1, fill = self.RI.resizing_line_fg, tag = "rwl")
+                self.RI.create_resize_line(x, y1, x, y2, width = 1, fill = self.RI.resizing_line_fg, tag = "rwl")
         elif self.CH.height_resizing_enabled and self.CH.rsz_h is not None and self.CH.currently_resizing_height:
-            self.CH.delete("rhl")
+            self.CH.delete_resize_lines()
             self.delete_resize_lines()
             if event.y >= 0:
                 y = self.canvasy(event.y)
@@ -2018,7 +2022,7 @@ class MainTable(tk.Canvas):
                 if y < self.hdr_min_rh:
                     y = int(self.hdr_min_rh)
                 self.new_header_height = y
-                self.CH.create_line(x1, y, x2, y, width = 1, fill = self.RI.resizing_line_fg, tag = "rhl")
+                self.CH.create_resize_line(x1, y, x2, y, width = 1, fill = self.RI.resizing_line_fg, tag = "rhl")
         if self.extra_b1_motion_func is not None:
             self.extra_b1_motion_func(event)
 
@@ -2037,13 +2041,13 @@ class MainTable(tk.Canvas):
     def b1_release(self, event = None):
         if self.RI.width_resizing_enabled and self.RI.rsz_w is not None and self.RI.currently_resizing_width:
             self.delete_resize_lines()
-            self.RI.delete("rwl")
+            self.RI.delete_resize_lines()
             self.RI.currently_resizing_width = False
             self.RI.set_width(self.new_row_width, set_TL = True)
             self.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
         elif self.CH.height_resizing_enabled and self.CH.rsz_h is not None and self.CH.currently_resizing_height:
             self.delete_resize_lines()
-            self.CH.delete("rhl")
+            self.CH.delete_resize_lines()
             self.CH.currently_resizing_height = False
             self.CH.set_height(self.new_header_height, set_TL = True)
             self.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
@@ -2403,10 +2407,12 @@ class MainTable(tk.Canvas):
         if idx == "end" or len(self.col_positions) == idx + 1:
             self.col_positions += list(accumulate(chain([self.col_positions[-1] + w[0]], islice(w, 1, None))))
         else:
-            if len(widths) > 1:
-                cws = [int(b - a) for a, b in zip(self.col_positions, islice(self.col_positions, 1, len(self.col_positions)))]
-                cws[idx:idx] = widths
-                self.col_positions = list(accumulate(chain([0], (width for width in cws))))
+            if len(w) > 1:
+                idx += 1
+                self.col_positions[idx:idx] = list(accumulate(chain([self.col_positions[idx - 1] + w[0]], islice(w, 1, None))))
+                idx += len(w)
+                sumw = sum(w)
+                self.col_positions[idx:] = [e + sumw for e in islice(self.col_positions, idx, len(self.col_positions))]
             else:
                 w = w[0]
                 idx += 1
@@ -2638,22 +2644,25 @@ class MainTable(tk.Canvas):
         if heights is None:
             h = [self.default_rh[1]]
         elif isinstance(heights, int):
-            w = list(repeat(self.default_rh, heights))
+            h = list(repeat(self.default_rh, heights))
         else:
             h = heights
         if idx == "end" or len(self.row_positions) == idx + 1:
             self.row_positions += list(accumulate(chain([self.row_positions[-1] + h[0]], islice(h, 1, None))))
         else:
-            if len(heights) > 1:
-                rhs = [int(b - a) for a, b in zip(self.row_positions, islice(self.row_positions, 1, len(self.row_positions)))]
-                rhs[idx:idx] = heights
-                self.row_positions = list(accumulate(chain([0], (height for height in rhs))))
+            if len(h) > 1:
+                idx += 1
+                self.row_positions[idx:idx] = list(accumulate(chain([self.row_positions[idx - 1] + h[0]], islice(h, 1, None))))
+                idx += len(h)
+                sumh = sum(h)
+                self.row_positions[idx:] = [e + sumh for e in islice(self.row_positions, idx, len(self.row_positions))]
             else:
                 h = h[0]
                 idx += 1
                 self.row_positions.insert(idx, self.row_positions[idx - 1] + h)
                 idx += 1
                 self.row_positions[idx:] = [e + h for e in islice(self.row_positions, idx, len(self.row_positions))]
+            
 
     def move_row_position(self, idx1, idx2):
         if not len(self.row_positions) <= 2:

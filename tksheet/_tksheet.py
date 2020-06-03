@@ -501,10 +501,10 @@ class Sheet(tk.Frame):
             self.RI.unbind(binding)
             self.TL.unbind(binding)
 
-    def enable_bindings(self, bindings):
+    def enable_bindings(self, bindings = "all"):
         self.MT.enable_bindings(bindings)
 
-    def disable_bindings(self, bindings):
+    def disable_bindings(self, bindings = "all"):
         self.MT.disable_bindings(bindings)
 
     def basic_bindings(self, enable = False):
@@ -771,17 +771,21 @@ class Sheet(tk.Frame):
                                  deselect_all = deselect_all,
                                  preserve_other_selections = preserve_other_selections)
 
-    def insert_row_position(self, idx = "end", height = None, deselect_all = False, preserve_other_selections = False):
+    def insert_row_position(self, idx = "end", height = None, deselect_all = False, preserve_other_selections = False, redraw = False):
         self.MT.insert_row_position(idx = idx,
                                     height = height,
                                     deselect_all = deselect_all,
                                     preserve_other_selections = preserve_other_selections)
+        if redraw:
+            self.redraw()
 
-    def insert_row_positions(self, idx = "end", heights = None, deselect_all = False, preserve_other_selections = False):
+    def insert_row_positions(self, idx = "end", heights = None, deselect_all = False, preserve_other_selections = False, redraw = False):
         self.MT.insert_row_positions(idx = idx,
                                      heights = heights,
                                      deselect_all = deselect_all,
                                      preserve_other_selections = preserve_other_selections)
+        if redraw:
+            self.redraw()
 
     def total_rows(self, number = None, mod_positions = True, mod_data = True):
         if number is None:
@@ -849,17 +853,21 @@ class Sheet(tk.Frame):
                                  deselect_all = deselect_all,
                                  preserve_other_selections = preserve_other_selections)
 
-    def insert_column_position(self, idx = "end", width = None, deselect_all = False, preserve_other_selections = False):
+    def insert_column_position(self, idx = "end", width = None, deselect_all = False, preserve_other_selections = False, redraw = False):
         self.MT.insert_col_position(idx = idx,
                                     width = width,
                                     deselect_all = deselect_all,
                                     preserve_other_selections = preserve_other_selections)
+        if redraw:
+            self.redraw()
 
-    def insert_column_positions(self, idx = "end", widths = None, deselect_all = False, preserve_other_selections = False):
+    def insert_column_positions(self, idx = "end", widths = None, deselect_all = False, preserve_other_selections = False, redraw = False):
         self.MT.insert_col_positions(idx = idx,
                                      widths = widths,
                                      deselect_all = deselect_all,
                                      preserve_other_selections = preserve_other_selections)
+        if redraw:
+            self.redraw()
 
     def move_column_position(self, column, moveto):
         self.MT.move_col_position(column, moveto)
@@ -1660,13 +1668,14 @@ class Sheet(tk.Frame):
                                   reset_col_positions = True,
                                   set_col_positions = True,
                                   refresh = False,
+                                  redraw = False,
                                   deselect_all = True):
         res = self.MT.display_columns(indexes = indexes,
                                       enable = enable,
                                       reset_col_positions = reset_col_positions,
                                       set_col_positions = set_col_positions,
                                       deselect_all = deselect_all)
-        if refresh:
+        if refresh or redraw:
             self.refresh()
         return res
 
@@ -1676,13 +1685,14 @@ class Sheet(tk.Frame):
                         reset_col_positions = True,
                         set_col_positions = True,
                         refresh = False,
+                        redraw = False,
                         deselect_all = True):
         res = self.MT.display_columns(indexes = indexes,
                                       enable = enable,
                                       reset_col_positions = reset_col_positions,
                                       set_col_positions = set_col_positions,
                                       deselect_all = deselect_all)
-        if refresh:
+        if refresh or redraw:
             self.refresh()
         return res
 
@@ -1703,6 +1713,9 @@ class Sheet(tk.Frame):
 
     def reset_undos(self):
         self.MT.undo_storage = deque(maxlen = self.MT.max_undos)
+
+    def redraw(self, redraw_header = True, redraw_row_index = True):
+        self.MT.main_table_redraw_grid_and_text(redraw_header = redraw_header, redraw_row_index = redraw_row_index)
 
     def refresh(self, redraw_header = True, redraw_row_index = True):
         self.MT.main_table_redraw_grid_and_text(redraw_header = redraw_header, redraw_row_index = redraw_row_index)
