@@ -1,3 +1,6 @@
+### Version 4.8.4
+ - Fix bug in `insert_row_positions()`
+
 ### Version 4.8.3
  - Make `enable_bindings()` and `disable_bindings()` without arguments do all bindings
  - Fix top left resizers not showing up if enabling/disabling all bindings
