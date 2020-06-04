@@ -384,7 +384,7 @@ class RowIndex(tk.Canvas):
                     evx = int(self.max_row_width)
                     x = self.MT.canvasx(evx - self.current_width)
                 self.new_row_width = evx
-                self.MT.create_line(x, y1, x, y2, width = 1, fill = self.resizing_line_fg, tag = "rwl")
+                self.MT.create_resize_line(x, y1, x, y2, width = 1, fill = self.resizing_line_fg, tag = "rwl")
             else:
                 x = evx
                 if x < self.MT.min_cw:

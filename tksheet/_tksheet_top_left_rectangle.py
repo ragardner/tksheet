@@ -47,7 +47,7 @@ class TopLeftRectangle(tk.Canvas):
         self.CH.TL = self
         w = self.RI.current_width - 1
         h = self.CH.current_height - 1
-        self.create_rectangle(0, h - 5, w - 5, h, fill = self.top_left_fg, outline = "", tag = "rw", state = "normal" if self.RI.width_resizing_enabled else "hidden")
+        self.create_rectangle(0, h - 5, w, h, fill = self.top_left_fg, outline = "", tag = "rw", state = "normal" if self.RI.width_resizing_enabled else "hidden")
         self.create_rectangle(w - 5, 0, w, h, fill = self.top_left_fg, outline = "", tag = "rh", state = "normal" if self.CH.height_resizing_enabled else "hidden")
         self.tag_bind("rw", "<Enter>", self.rw_enter)
         self.tag_bind("rh", "<Enter>", self.rh_enter)
@@ -105,7 +105,7 @@ class TopLeftRectangle(tk.Canvas):
             self.config(height = new_h)
             w = self.winfo_width() - 1
             h = new_h - 1
-        self.coords("rw", 0, h - 5, w - 5, h)
+        self.coords("rw", 0, h - 5, w, h)
         self.coords("rh", w - 5, 0, w, h)
         self.MT.recreate_all_selection_boxes()
 
