@@ -1004,7 +1004,7 @@ class MainTable(tk.Canvas):
         if redraw:
             self.main_table_redraw_grid_and_text()
 
-    def highlight_rows(self, rows = [], bg = None, fg = None, highlight_header = False, redraw = False):
+    def highlight_rows(self, rows = [], bg = None, fg = None, highlight_index = False, redraw = False):
         if bg is None and fg is None:
             return
         if isinstance(rows, int):
@@ -1012,8 +1012,8 @@ class MainTable(tk.Canvas):
         else:
             rows_ = rows
         self.highlighted_rows.update({c: (bg, fg) for c in rows_})
-        if highlight_header:
-            self.CH.highlight_cells(cells = rows_, bg = bg, fg = fg)
+        if highlight_index:
+            self.RI.highlight_cells(cells = rows_, bg = bg, fg = fg)
         if redraw:
             self.main_table_redraw_grid_and_text()
 
