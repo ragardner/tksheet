@@ -2644,7 +2644,7 @@ class MainTable(tk.Canvas):
         if heights is None:
             h = [self.default_rh[1]]
         elif isinstance(heights, int):
-            h = list(repeat(self.default_rh, heights))
+            h = list(repeat(self.default_rh[1], heights))
         else:
             h = heights
         if idx == "end" or len(self.row_positions) == idx + 1:
