@@ -1002,7 +1002,7 @@ class MainTable(tk.Canvas):
         if highlight_header:
             self.CH.highlight_cells(cells = cols_, bg = bg, fg = fg)
         if redraw:
-            self.main_table_redraw_grid_and_text()
+            self.main_table_redraw_grid_and_text(redraw_header = highlight_header)
 
     def highlight_rows(self, rows = [], bg = None, fg = None, highlight_index = False, redraw = False):
         if bg is None and fg is None:
@@ -1015,7 +1015,7 @@ class MainTable(tk.Canvas):
         if highlight_index:
             self.RI.highlight_cells(cells = rows_, bg = bg, fg = fg)
         if redraw:
-            self.main_table_redraw_grid_and_text()
+            self.main_table_redraw_grid_and_text(redraw_row_index = highlight_index)
 
     def deselect(self, r = None, c = None, cell = None, redraw = True):
         deselected = tuple()

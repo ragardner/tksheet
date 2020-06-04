@@ -1051,14 +1051,14 @@ class Sheet(tk.Frame):
     def all_selected(self):
         return self.MT.all_selected()
 
-    def highlight_rows(self, rows = [], canvas = "table", bg = None, fg = None, highlight_index = True, redraw = False):
+    def highlight_rows(self, rows = [], bg = None, fg = None, highlight_index = True, redraw = False):
         self.MT.highlight_rows(rows = rows,
                                bg = bg,
                                fg = fg,
                                highlight_index = highlight_index,
                                redraw = redraw)
 
-    def highlight_columns(self, columns = [], canvas = "table", bg = None, fg = None, highlight_header = True, redraw = False):
+    def highlight_columns(self, columns = [], bg = None, fg = None, highlight_header = True, redraw = False):
         self.MT.highlight_cols(cols = columns,
                                   bg = bg,
                                   fg = fg,
