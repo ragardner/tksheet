@@ -67,14 +67,13 @@ class demo(tk.Tk):
                            #align = "center",
                            #header_align = "w",
                             #row_index_align = "w",
-                            data = [[f"Row {r}, Column {c}\nnewline1\nnewline2" for c in range(300)] for r in range(5000)], #to set sheet data at startup
-                           #data = [[1,2,3,4,5], [1,2,3]],
+                            data = [[f"Row {r}, Column {c}\nnewline1\nnewline2" for c in range(50)] for r in range(1000)], #to set sheet data at startup
                             #headers = [f"Column {c}\nnewline1\nnewline2" for c in range(30)],
                             #row_index = [f"Row {r}\nnewline1\nnewline2" for r in range(2000)],
                             #set_all_heights_and_widths = True, #to fit all cell sizes to text at start up
                             #headers = 0, #to set headers as first row at startup
                             #headers = [f"Column {c}\nnewline1\nnewline2" for c in range(30)],
-                           theme = "light green",
+                           #theme = "light green",
                             #row_index = 0, #to set row_index as first column at startup
                             #total_rows = 2000, #if you want to set empty sheet dimensions at startup
                             #total_columns = 30, #if you want to set empty sheet dimensions at startup
@@ -92,8 +91,8 @@ class demo(tk.Tk):
                                          "row_select",
                                          "column_width_resize",
                                          "double_click_column_resize",
-                                         "row_width_resize",
-                                         "column_height_resize",
+                                         #"row_width_resize",
+                                         #"column_height_resize",
                                          "arrowkeys",
                                          "row_height_resize",
                                          "double_click_row_resize",
@@ -109,10 +108,9 @@ class demo(tk.Tk):
                                          "delete",
                                          "undo",
                                          "edit_cell"))
-        #self.sheet.enable_bindings("enable_all")
-        #self.sheet.disable_bindings() #uses the same strings
-        #self.bind("<Configure>", self.window_resized)
-        #self.sheet.set_all_cell_sizes_to_text()
+        self.sheet.disable_bindings() #uses the same strings
+        self.sheet.enable_bindings()
+
         self.frame.grid(row = 0, column = 0, sticky = "nswe")
         self.sheet.grid(row = 0, column = 0, sticky = "nswe")
         
@@ -121,7 +119,7 @@ class demo(tk.Tk):
 
         # __________ CHANGING THEME __________
 
-        #self.sheet.change_theme("dark")
+        #self.sheet.change_theme("light green")
 
         # __________ HIGHLIGHT / DEHIGHLIGHT CELLS __________
         
@@ -129,6 +127,8 @@ class demo(tk.Tk):
         self.sheet.highlight_cells(row = 5, column = 1, bg = "#ed4337", fg = "white")
         self.sheet.highlight_cells(row = 5, bg = "#ed4337", fg = "white", canvas = "row_index")
         self.sheet.highlight_cells(column = 0, bg = "#ed4337", fg = "white", canvas = "header")
+        #self.sheet.highlight_rows(6, "green")
+        #self.sheet.highlight_columns(4, "yellow")
 
         # __________ DISPLAY SUBSET OF COLUMNS __________
 
@@ -173,7 +173,7 @@ class demo(tk.Tk):
         #                            ("row_select", self.row_select),
         #                            ("shift_row_select", self.shift_select_rows),
         #                            ("drag_select_rows", self.drag_select_rows),
-        #                            ("column_select", self.column_select),
+        #                            ("column_select", self.column_select)
         #                            ("shift_column_select", self.shift_select_columns),
         #                            ("drag_select_columns", self.drag_select_columns),
         #                            ("deselect", self.deselect)
@@ -346,6 +346,7 @@ class demo(tk.Tk):
         
 app = demo()
 app.mainloop()
+
 
 ```
 
