@@ -1,3 +1,10 @@
+### Version 4.8.3
+ - Make `enable_bindings()` and `disable_bindings()` without arguments do all bindings
+ - Fix top left resizers not showing up if enabling/disabling all bindings
+ - Improve look and feel of drag and drop
+ - Fix bug in certain circumstances with "insert_row_positions()"
+ - Fix `highlight_rows()` bug
+
 ### Version 4.8.2
  - Fix old color name, credit `ministiy`
 
