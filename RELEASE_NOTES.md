@@ -1,3 +1,7 @@
+### Version 4.8.5
+ - Fix line creation when click drag resizing index
+ - Improve looks of top left rectangle resizers when one is disabled
+
 ### Version 4.8.4
  - Fix bug in `insert_row_positions()`
 
