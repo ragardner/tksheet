@@ -372,109 +372,110 @@ class Sheet(tk.Frame):
             self.RI.shift_selection_binding_func = None if func == "None" else func
             self.CH.shift_selection_binding_func = None if func == "None" else func
             self.MT.deselection_binding_func = None
-        elif isinstance(bindings[0], str) and func == "None":
-            iterable = [bindings]
-        elif isinstance(bindings, str) and func != "None":
-            iterable = [(bindings, func)]
         else:
-            iterable = bindings
-        for binding, func in iterable:
-            binding == binding.lower()
-            if binding in ("begin_copy", "begin_ctrl_c"):
-                self.MT.extra_begin_ctrl_c_func = func
-            if binding in ("ctrl_c", "end_copy", "end_ctrl_c"):
-                self.MT.extra_end_ctrl_c_func = func
+            if isinstance(bindings[0], str) and func == "None":
+                iterable = [bindings]
+            elif isinstance(bindings, str) and func != "None":
+                iterable = [(bindings, func)]
+            else:
+                iterable = bindings
+            for binding, func in iterable:
+                binding == binding.lower()
+                if binding in ("begin_copy", "begin_ctrl_c"):
+                    self.MT.extra_begin_ctrl_c_func = func
+                if binding in ("ctrl_c", "end_copy", "end_ctrl_c"):
+                    self.MT.extra_end_ctrl_c_func = func
 
-            if binding in ("begin_cut", "begin_ctrl_x"):
-                self.MT.extra_begin_ctrl_x_func = func
-            if binding in ("ctrl_x", "end_cut", "end_ctrl_x"):
-                self.MT.extra_end_ctrl_x_func = func
+                if binding in ("begin_cut", "begin_ctrl_x"):
+                    self.MT.extra_begin_ctrl_x_func = func
+                if binding in ("ctrl_x", "end_cut", "end_ctrl_x"):
+                    self.MT.extra_end_ctrl_x_func = func
 
-            if binding in ("begin_paste", "begin_ctrl_v"):
-                self.MT.extra_begin_ctrl_v_func = func
-            if binding in ("ctrl_v", "end_paste", "end_ctrl_v"):
-                self.MT.extra_end_ctrl_v_func = func
+                if binding in ("begin_paste", "begin_ctrl_v"):
+                    self.MT.extra_begin_ctrl_v_func = func
+                if binding in ("ctrl_v", "end_paste", "end_ctrl_v"):
+                    self.MT.extra_end_ctrl_v_func = func
 
-            if binding in ("begin_undo", "begin_ctrl_z"):
-                self.MT.extra_begin_ctrl_z_func = func
-            if binding in ("ctrl_z", "end_undo", "end_ctrl_z"):
-                self.MT.extra_end_ctrl_z_func = func
+                if binding in ("begin_undo", "begin_ctrl_z"):
+                    self.MT.extra_begin_ctrl_z_func = func
+                if binding in ("ctrl_z", "end_undo", "end_ctrl_z"):
+                    self.MT.extra_end_ctrl_z_func = func
 
-            if binding in ("begin_delete_key", "begin_delete"):
-                self.MT.extra_begin_delete_key_func = func
-            if binding in ("delete_key", "end_delete", "end_delete_key"):
-                self.MT.extra_end_delete_key_func = func
-                
-            if binding == "begin_edit_cell":
-                self.MT.extra_begin_edit_cell_func = func
-            if binding == "end_edit_cell" or binding == "edit_cell":
-                self.MT.extra_end_edit_cell_func = func
+                if binding in ("begin_delete_key", "begin_delete"):
+                    self.MT.extra_begin_delete_key_func = func
+                if binding in ("delete_key", "end_delete", "end_delete_key"):
+                    self.MT.extra_end_delete_key_func = func
+                    
+                if binding == "begin_edit_cell":
+                    self.MT.extra_begin_edit_cell_func = func
+                if binding == "end_edit_cell" or binding == "edit_cell":
+                    self.MT.extra_end_edit_cell_func = func
 
-            if binding == "begin_row_index_drag_drop":
-                self.RI.ri_extra_begin_drag_drop_func = func
-            if binding in ("row_index_drag_drop", "end_row_index_drag_drop"):
-                self.RI.ri_extra_end_drag_drop_func = func
+                if binding == "begin_row_index_drag_drop":
+                    self.RI.ri_extra_begin_drag_drop_func = func
+                if binding in ("row_index_drag_drop", "end_row_index_drag_drop"):
+                    self.RI.ri_extra_end_drag_drop_func = func
 
-            if binding == "begin_column_header_drag_drop":
-                self.CH.ch_extra_begin_drag_drop_func = func
-            if binding in ("column_header_drag_drop", "end_column_header_drag_drop"):
-                self.CH.ch_extra_end_drag_drop_func = func
+                if binding == "begin_column_header_drag_drop":
+                    self.CH.ch_extra_begin_drag_drop_func = func
+                if binding in ("column_header_drag_drop", "end_column_header_drag_drop"):
+                    self.CH.ch_extra_end_drag_drop_func = func
 
-            if binding == "begin_rc_delete_row":
-                self.MT.extra_begin_del_rows_rc_func = func
-            if binding in ("rc_delete_row", "end_rc_delete_row"):
-                self.MT.extra_end_del_rows_rc_func = func
+                if binding == "begin_rc_delete_row":
+                    self.MT.extra_begin_del_rows_rc_func = func
+                if binding in ("rc_delete_row", "end_rc_delete_row"):
+                    self.MT.extra_end_del_rows_rc_func = func
 
-            if binding == "begin_rc_delete_column":
-                self.MT.extra_begin_del_cols_rc_func = func
-            if binding in ("rc_delete_column", "end_rc_delete_column"):
-                self.MT.extra_end_del_cols_rc_func = func
-                
-            if binding == "begin_rc_insert_column":
-                self.MT.extra_begin_insert_cols_rc_func = func
-            if binding in ("rc_insert_column", "end_rc_insert_column"):
-                self.MT.extra_end_insert_cols_rc_func = func
+                if binding == "begin_rc_delete_column":
+                    self.MT.extra_begin_del_cols_rc_func = func
+                if binding in ("rc_delete_column", "end_rc_delete_column"):
+                    self.MT.extra_end_del_cols_rc_func = func
+                    
+                if binding == "begin_rc_insert_column":
+                    self.MT.extra_begin_insert_cols_rc_func = func
+                if binding in ("rc_insert_column", "end_rc_insert_column"):
+                    self.MT.extra_end_insert_cols_rc_func = func
 
-            if binding == "begin_rc_insert_row":
-                self.MT.extra_begin_insert_rows_rc_func = func
-            if binding in ("rc_insert_row", "end_rc_insert_row"):
-                self.MT.extra_end_insert_rows_rc_func = func
-                
-            if binding == "cell_select":
-                self.MT.selection_binding_func = func
-            if binding in ("select_all", "ctrl_a"):
-                self.MT.select_all_binding_func = func
-            if binding == "row_select":
-                self.RI.selection_binding_func = func
-            if binding in ("col_select", "column_select"):
-                self.CH.selection_binding_func = func
-            if binding == "drag_select_cells":
-                self.MT.drag_selection_binding_func = func
-            if binding == "drag_select_rows":
-                self.RI.drag_selection_binding_func = func
-            if binding == "drag_select_columns":
-                self.CH.drag_selection_binding_func = func
-            if binding == "shift_cell_select":
-                self.MT.shift_selection_binding_func = func
-            if binding == "shift_row_select":
-                self.RI.shift_selection_binding_func = func
-            if binding == "shift_column_select":
-                self.CH.shift_selection_binding_func = func
-            if binding == "deselect":
-                self.MT.deselection_binding_func = func
-                
-            if binding == "all_select_events":
-                self.MT.selection_binding_func = func
-                self.MT.select_all_binding_func = func
-                self.RI.selection_binding_func = func
-                self.CH.selection_binding_func = func
-                self.MT.drag_selection_binding_func = func
-                self.RI.drag_selection_binding_func = func
-                self.CH.drag_selection_binding_func = func
-                self.MT.shift_selection_binding_func = func
-                self.RI.shift_selection_binding_func = func
-                self.CH.shift_selection_binding_func = func
-                self.MT.deselection_binding_func = func
+                if binding == "begin_rc_insert_row":
+                    self.MT.extra_begin_insert_rows_rc_func = func
+                if binding in ("rc_insert_row", "end_rc_insert_row"):
+                    self.MT.extra_end_insert_rows_rc_func = func
+                    
+                if binding == "cell_select":
+                    self.MT.selection_binding_func = func
+                if binding in ("select_all", "ctrl_a"):
+                    self.MT.select_all_binding_func = func
+                if binding == "row_select":
+                    self.RI.selection_binding_func = func
+                if binding in ("col_select", "column_select"):
+                    self.CH.selection_binding_func = func
+                if binding == "drag_select_cells":
+                    self.MT.drag_selection_binding_func = func
+                if binding == "drag_select_rows":
+                    self.RI.drag_selection_binding_func = func
+                if binding == "drag_select_columns":
+                    self.CH.drag_selection_binding_func = func
+                if binding == "shift_cell_select":
+                    self.MT.shift_selection_binding_func = func
+                if binding == "shift_row_select":
+                    self.RI.shift_selection_binding_func = func
+                if binding == "shift_column_select":
+                    self.CH.shift_selection_binding_func = func
+                if binding == "deselect":
+                    self.MT.deselection_binding_func = func
+                    
+                if binding == "all_select_events":
+                    self.MT.selection_binding_func = func
+                    self.MT.select_all_binding_func = func
+                    self.RI.selection_binding_func = func
+                    self.CH.selection_binding_func = func
+                    self.MT.drag_selection_binding_func = func
+                    self.RI.drag_selection_binding_func = func
+                    self.CH.drag_selection_binding_func = func
+                    self.MT.shift_selection_binding_func = func
+                    self.RI.shift_selection_binding_func = func
+                    self.CH.shift_selection_binding_func = func
+                    self.MT.deselection_binding_func = func
 
     def bind(self, binding, func):
         if binding == "<ButtonPress-1>":

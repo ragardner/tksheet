@@ -386,8 +386,8 @@ class ColumnHeaders(tk.Canvas):
                         self.MT.delete_selection_rects(delete_current = False)
                         self.MT.create_selected(*rect)
                         self.being_drawn_rect = rect
-                    if self.drag_selection_binding_func is not None:
-                        self.drag_selection_binding_func(("drag_select_columns", func_event))
+                        if self.drag_selection_binding_func is not None:
+                            self.drag_selection_binding_func(("drag_select_columns", func_event))
                 xcheck = self.xview()
                 if event.x > self.winfo_width() and len(xcheck) > 1 and xcheck[1] < 1:
                     try:
@@ -466,7 +466,7 @@ class ColumnHeaders(tk.Canvas):
                     c -= 1
                 c_ = int(c)
                 if self.ch_extra_begin_drag_drop_func is not None:
-                    self.ch_extra_begin_drag_drop_func(tuple(orig_selected_cols), int(c))
+                    self.ch_extra_begin_drag_drop_func((tuple(orig_selected_cols), int(c)))
                 if self.column_drag_and_drop_perform:
                     if self.MT.all_columns_displayed:
                         if rm1start > c:
@@ -542,7 +542,7 @@ class ColumnHeaders(tk.Canvas):
                     self.MT.undo_storage.append(zlib.compress(pickle.dumps(("move_cols", int(orig_selected_cols[0]), (int(new_selected[0]), int(new_selected[-1]))))))
                 self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
                 if self.ch_extra_end_drag_drop_func is not None:
-                    self.ch_extra_end_drag_drop_func(tuple(orig_selected_cols), new_selected, int(c))
+                    self.ch_extra_end_drag_drop_func((tuple(orig_selected_cols), new_selected, int(c)))
         self.dragged_col = None
         self.currently_resizing_width = False
         self.currently_resizing_height = False

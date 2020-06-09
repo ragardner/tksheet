@@ -662,7 +662,7 @@ class MainTable(tk.Canvas):
             undo_storage = pickle.loads(zlib.decompress(self.undo_storage.pop()))
             self.deselect("all")
             if self.extra_begin_ctrl_z_func is not None:
-                self.extra_begin_ctrl_z_func(undo_storage[0])
+                self.extra_begin_ctrl_z_func(f"begin undo {undo_storage[0]}")
             if undo_storage[0] == "edit_cells":
                 for (r, c), v in undo_storage[1].items():
                     self.data_ref[r][c] = v
@@ -849,7 +849,7 @@ class MainTable(tk.Canvas):
                 self.reselect_from_get_boxes(undo_storage[1]['selection_boxes'])
             self.refresh()
             if self.extra_end_ctrl_z_func is not None:
-                self.extra_end_ctrl_z_func(undo_storage[0])
+                self.extra_end_ctrl_z_func(f"begin undo {undo_storage[0]}")
             
     def bind_arrowkeys(self, event = None):
         self.arrowkeys_enabled = True
@@ -2009,8 +2009,8 @@ class MainTable(tk.Canvas):
                     self.delete_selection_rects(delete_current = False)
                     self.create_selected(*rect)
                     self.being_drawn_rect = rect
-                if self.drag_selection_binding_func is not None:
-                    self.drag_selection_binding_func(("drag_select_cells", ) + tuple(int(e) for e in self.gettags(self.find_withtag("CellSelectFill"))[1].split("_") if e))
+                    if self.drag_selection_binding_func is not None:
+                        self.drag_selection_binding_func(("drag_select_cells", ) + tuple(int(e) for e in self.gettags(self.find_withtag("CellSelectFill"))[1].split("_") if e))
             scrolled = False
             if self.data_ref:
                 xcheck = self.xview()
