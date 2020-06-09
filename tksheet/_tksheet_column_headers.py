@@ -466,7 +466,7 @@ class ColumnHeaders(tk.Canvas):
                     c -= 1
                 c_ = int(c)
                 if self.ch_extra_begin_drag_drop_func is not None:
-                    self.ch_extra_begin_drag_drop_func((tuple(orig_selected_cols), int(c)))
+                    self.ch_extra_begin_drag_drop_func(("begin_column_header_drag_drop", tuple(orig_selected_cols), int(c)))
                 if self.column_drag_and_drop_perform:
                     if self.MT.all_columns_displayed:
                         if rm1start > c:
@@ -542,7 +542,7 @@ class ColumnHeaders(tk.Canvas):
                     self.MT.undo_storage.append(zlib.compress(pickle.dumps(("move_cols", int(orig_selected_cols[0]), (int(new_selected[0]), int(new_selected[-1]))))))
                 self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
                 if self.ch_extra_end_drag_drop_func is not None:
-                    self.ch_extra_end_drag_drop_func((tuple(orig_selected_cols), new_selected, int(c)))
+                    self.ch_extra_end_drag_drop_func(("end_column_header_drag_drop", tuple(orig_selected_cols), new_selected, int(c)))
         self.dragged_col = None
         self.currently_resizing_width = False
         self.currently_resizing_height = False

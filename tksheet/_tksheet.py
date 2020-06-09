@@ -421,24 +421,24 @@ class Sheet(tk.Frame):
                 if binding in ("column_header_drag_drop", "end_column_header_drag_drop"):
                     self.CH.ch_extra_end_drag_drop_func = func
 
-                if binding == "begin_rc_delete_row":
+                if binding in ("begin_rc_delete_row", "begin_delete_rows"):
                     self.MT.extra_begin_del_rows_rc_func = func
-                if binding in ("rc_delete_row", "end_rc_delete_row"):
+                if binding in ("rc_delete_row", "end_rc_delete_row", "end_delete_rows"):
                     self.MT.extra_end_del_rows_rc_func = func
 
-                if binding == "begin_rc_delete_column":
+                if binding in ("begin_rc_delete_column", "begin_delete_columns"):
                     self.MT.extra_begin_del_cols_rc_func = func
-                if binding in ("rc_delete_column", "end_rc_delete_column"):
+                if binding in ("rc_delete_column", "end_rc_delete_column", "end_delete_columns"):
                     self.MT.extra_end_del_cols_rc_func = func
                     
-                if binding == "begin_rc_insert_column":
+                if binding in ("begin_rc_insert_column", "begin_insert_column", "begin_insert_columns"):
                     self.MT.extra_begin_insert_cols_rc_func = func
-                if binding in ("rc_insert_column", "end_rc_insert_column"):
+                if binding in ("rc_insert_column", "end_rc_insert_column", "end_insert_column", "end_insert_columns"):
                     self.MT.extra_end_insert_cols_rc_func = func
 
-                if binding == "begin_rc_insert_row":
+                if binding in ("begin_rc_insert_row", "begin_insert_row", "begin_insert_rows"):
                     self.MT.extra_begin_insert_rows_rc_func = func
-                if binding in ("rc_insert_row", "end_rc_insert_row"):
+                if binding in ("rc_insert_row", "end_rc_insert_row", "end_insert_row", "end_insert_rows"):
                     self.MT.extra_end_insert_rows_rc_func = func
                     
                 if binding == "cell_select":

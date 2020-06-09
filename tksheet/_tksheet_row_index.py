@@ -526,7 +526,7 @@ class RowIndex(tk.Canvas):
                     r -= 1
                 r_ = int(r)
                 if self.ri_extra_begin_drag_drop_func is not None:
-                    self.ri_extra_begin_drag_drop_func((tuple(orig_selected_rows), int(r)))
+                    self.ri_extra_begin_drag_drop_func(("begin_row_index_drag_drop", tuple(orig_selected_rows), int(r)))
                 if self.row_drag_and_drop_perform:
                     if rm1start > r:
                         self.MT.data_ref = (self.MT.data_ref[:r] +
@@ -582,7 +582,7 @@ class RowIndex(tk.Canvas):
                     self.MT.undo_storage.append(zlib.compress(pickle.dumps(("move_rows", min(orig_selected_rows), (new_selected[0], new_selected[-1])))))
                 self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
                 if self.ri_extra_end_drag_drop_func is not None:
-                    self.ri_extra_end_drag_drop_func((tuple(orig_selected_rows), new_selected, int(r)))
+                    self.ri_extra_end_drag_drop_func(("end_row_index_drag_drop", tuple(orig_selected_rows), new_selected, int(r)))
         self.dragged_row = None
         self.currently_resizing_width = False
         self.currently_resizing_height = False
