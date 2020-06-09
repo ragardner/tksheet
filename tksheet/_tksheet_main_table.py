@@ -103,17 +103,37 @@ class MainTable(tk.Canvas):
         self.extra_b1_release_func = None
         self.extra_double_b1_func = None
         self.extra_rc_func = None
-        self.extra_ctrl_c_func = None
-        self.extra_ctrl_x_func = None
-        self.extra_ctrl_v_func = None
-        self.extra_ctrl_z_func = None
-        self.extra_delete_key_func = None
+        
+        self.extra_begin_ctrl_c_func = None
+        self.extra_end_ctrl_c_func = None
+        
+        self.extra_begin_ctrl_x_func = None
+        self.extra_end_ctrl_x_func = None
+
+        self.extra_begin_ctrl_v_func = None
+        self.extra_end_ctrl_v_func = None
+
+        self.extra_begin_ctrl_z_func = None
+        self.extra_end_ctrl_z_func = None
+
+        self.extra_begin_delete_key_func = None
+        self.extra_end_delete_key_func = None
+        
         self.extra_begin_edit_cell_func = None
         self.extra_end_edit_cell_func = None
-        self.extra_del_rows_rc_func = None
-        self.extra_del_cols_rc_func = None
-        self.extra_insert_cols_rc_func = None
-        self.extra_insert_rows_rc_func = None
+
+        self.extra_begin_del_rows_rc_func = None
+        self.extra_end_del_rows_rc_func = None
+
+        self.extra_begin_del_cols_rc_func = None
+        self.extra_end_del_cols_rc_func = None
+
+        self.extra_begin_insert_cols_rc_func = None
+        self.extra_end_insert_cols_rc_func = None
+
+        self.extra_begin_insert_rows_rc_func = None
+        self.extra_end_insert_rows_rc_func = None
+        
         self.selection_binding_func = None # function to run when a spreadsheet selection event occurs
         self.deselection_binding_func = None # function to run when a spreadsheet deselection event occurs
         self.drag_selection_binding_func = None # function to run when a spreadsheet mouse drag selection event occurs
@@ -296,8 +316,11 @@ class MainTable(tk.Canvas):
         if currently_selected:
             s = io.StringIO()
             writer = csv_module.writer(s, dialect = csv_module.excel_tab, lineterminator = "\n")
+            rows = []
             if isinstance(currently_selected[0], int) or currently_selected[0] == "column":
                 boxes, maxrows = self.get_ctrl_x_c_boxes()
+                if self.extra_begin_ctrl_c_func is not None:
+                    self.extra_begin_ctrl_c_func((boxes, currently_selected))
                 if self.all_columns_displayed:
                     for rn in range(maxrows):
                         row = []
@@ -311,6 +334,7 @@ class MainTable(tk.Canvas):
                                 except:
                                     row.append("")
                         writer.writerow(row)
+                        rows.append(row)
                 else:
                     for rn in range(maxrows):
                         row = []
@@ -324,8 +348,11 @@ class MainTable(tk.Canvas):
                                 except:
                                     row.append("")
                         writer.writerow(row)
+                        rows.append(row)
             elif currently_selected[0] == "row":
                 boxes = self.get_ctrl_x_c_boxes()
+                if self.extra_begin_ctrl_c_func is not None:
+                    self.extra_begin_ctrl_c_func((boxes, currently_selected))
                 if self.all_columns_displayed:
                     for r1, c1, r2, c2 in boxes:
                         for rn in range(r2 - r1):
@@ -337,6 +364,7 @@ class MainTable(tk.Canvas):
                                 except:
                                     row.append("")
                             writer.writerow(row)
+                            rows.append(row)
                 else:
                     for r1, c1, r2, c2 in boxes:
                         for rn in range(r2 - r1):
@@ -348,14 +376,15 @@ class MainTable(tk.Canvas):
                                 except:
                                     row.append("")
                             writer.writerow(row)
+                            rows.append(row)
             for r1, c1, r2, c2 in boxes:
                 self.show_ctrl_outline(canvas = "table", start_cell = (c1, r1), end_cell = (c2, r2))
             self.clipboard_clear()
-            s = s.getvalue().rstrip()
-            if self.extra_ctrl_c_func is not None:
-                self.extra_ctrl_c_func(s)
+            s = s.getvalue()
             self.clipboard_append(s)
             self.update()
+            if self.extra_end_ctrl_c_func is not None:
+                self.extra_end_ctrl_c_func((boxes, currently_selected, rows))
 
     def get_ctrl_x_c_boxes(self):
         currently_selected = self.currently_selected()
@@ -386,9 +415,12 @@ class MainTable(tk.Canvas):
                 undo_storage = {}
             s = io.StringIO()
             writer = csv_module.writer(s, dialect = csv_module.excel_tab, lineterminator = "\n")
-            currently_selected = self.currently_selected()         
+            currently_selected = self.currently_selected()
+            rows = []
             if isinstance(currently_selected[0], int) or currently_selected[0] == "column":
                 boxes, maxrows = self.get_ctrl_x_c_boxes()
+                if self.extra_begin_ctrl_x_func is not None:
+                    self.extra_begin_ctrl_x_func((boxes, currently_selected))
                 if self.all_columns_displayed:
                     for rn in range(maxrows):
                         row = []
@@ -405,6 +437,7 @@ class MainTable(tk.Canvas):
                                 except:
                                     row.append("")
                         writer.writerow(row)
+                        rows.append(row)
                     for rn in range(maxrows):
                         for r1, c1, r2, c2 in boxes:
                             if r2 - r1 < maxrows:
@@ -430,6 +463,7 @@ class MainTable(tk.Canvas):
                                 except:
                                     row.append("")
                         writer.writerow(row)
+                        rows.append(row)
                     for rn in range(maxrows):
                         for r1, c1, r2, c2 in boxes:
                             if r2 - r1 < maxrows:
@@ -441,6 +475,8 @@ class MainTable(tk.Canvas):
                                     continue
             elif currently_selected[0] == "row":
                 boxes = self.get_ctrl_x_c_boxes()
+                if self.extra_begin_ctrl_x_func is not None:
+                    self.extra_begin_ctrl_x_func((boxes, currently_selected))
                 if self.all_columns_displayed:
                     for r1, c1, r2, c2 in boxes:
                         for rn in range(r2 - r1):
@@ -455,6 +491,7 @@ class MainTable(tk.Canvas):
                                 except:
                                     row.append("")
                             writer.writerow(row)
+                            rows.append(row)
                     for r1, c1, r2, c2 in boxes:
                         for rn in range(r2 - r1):
                             for c in range(c1, c2):
@@ -476,6 +513,7 @@ class MainTable(tk.Canvas):
                                 except:
                                     row.append("")
                             writer.writerow(row)
+                            rows.append(row)
                     for r1, c1, r2, c2 in boxes:
                         for rn in range(r2 - r1):
                             for c in range(c1, c2):
@@ -486,14 +524,14 @@ class MainTable(tk.Canvas):
             if self.undo_enabled:
                 self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells", undo_storage, tuple(boxes.items()), currently_selected))))
             self.clipboard_clear()
-            s = s.getvalue().rstrip()
+            s = s.getvalue()
             self.clipboard_append(s)
             self.update()
             self.refresh()
             for r1, c1, r2, c2 in boxes:
                 self.show_ctrl_outline(canvas = "table", start_cell = (c1, r1), end_cell = (c2, r2))
-            if self.extra_ctrl_x_func is not None:
-                self.extra_ctrl_x_func()
+            if self.extra_end_ctrl_x_func is not None:
+                self.extra_end_ctrl_x_func((boxes, currently_selected, rows))
 
     def ctrl_v(self, event = None):
         currently_selected = self.currently_selected()
@@ -531,6 +569,10 @@ class MainTable(tk.Canvas):
                 numcols = len(self.col_positions) - 1 - x1
             if y1 + numrows > len(self.row_positions) - 1:
                 numrows = len(self.row_positions) - 1 - y1
+            if self.extra_begin_ctrl_v_func is not None or self.extra_end_ctrl_v_func is not None:
+                extra_func_data = [[data[ndr][ndc] for ndc, c in enumerate(range(x1, x1 + numcols))] for ndr, r in enumerate(range(y1, y1 + numrows))]
+            if self.extra_begin_ctrl_v_func is not None:
+                self.extra_begin_ctrl_v_func((currently_selected, extra_func_data))
             if self.all_columns_displayed:
                 for ndr, r in enumerate(range(y1, y1 + numrows)):
                     for ndc, c in enumerate(range(x1, x1 + numcols)):
@@ -558,8 +600,8 @@ class MainTable(tk.Canvas):
             self.create_current(y1, x1, type_ = "cell", inside = True if numrows > 1 or numcols > 1 else False)
             self.see(r = y1, c = x1, keep_yscroll = False, keep_xscroll = False, bottom_right_corner = False, check_cell_visibility = True, redraw = False)
             self.refresh()
-            if self.extra_ctrl_v_func is not None:
-                self.extra_ctrl_v_func()
+            if self.extra_end_ctrl_v_func is not None:
+                self.extra_end_ctrl_v_func((currently_selected, extra_func_data))
 
     def delete_key(self, event = None):
         if self.anything_selected():
@@ -571,14 +613,15 @@ class MainTable(tk.Canvas):
                 for item in chain(self.find_withtag("CellSelectFill"), self.find_withtag("RowSelectFill"), self.find_withtag("ColSelectFill"), self.find_withtag("Current_Outside")):
                     alltags = self.gettags(item)
                     box = tuple(int(e) for e in alltags[1].split("_") if e)
-                    if self.undo_enabled:
-                        if alltags[0] in ("CellSelectFill", "Current_Outside"):
-                            boxes.append((box, "cells"))
-                        elif alltags[0] == "ColSelectFill":
-                            boxes.append((box, "cols"))
-                        elif alltags[0] == "RowSelectFill":
-                            boxes.append((box, "rows"))
-                    r1, c1, r2, c2 = box
+                    if alltags[0] in ("CellSelectFill", "Current_Outside"):
+                        boxes.append((box, "cells"))
+                    elif alltags[0] == "ColSelectFill":
+                        boxes.append((box, "cols"))
+                    elif alltags[0] == "RowSelectFill":
+                        boxes.append((box, "rows"))
+                if self.extra_begin_delete_key_func is not None:
+                    self.extra_begin_delete_key_func((boxes, currently_selected))
+                for r1, c1, r2, c2 in boxes:
                     for r in range(r1, r2):
                         for c in range(c1, c2):
                             try:
@@ -591,14 +634,15 @@ class MainTable(tk.Canvas):
                 for item in chain(self.find_withtag("CellSelectFill"), self.find_withtag("RowSelectFill"), self.find_withtag("ColSelectFill"), self.find_withtag("Current_Outside")):
                     alltags = self.gettags(item)
                     box = tuple(int(e) for e in alltags[1].split("_") if e)
-                    if self.undo_enabled:
-                        if alltags[0] in ("CellSelectFill", "Current_Outside"):
-                            boxes.append((box, "cells"))
-                        elif alltags[0] == "ColSelectFill":
-                            boxes.append((box, "cols"))
-                        elif alltags[0] == "RowSelectFill":
-                            boxes.append((box, "rows"))
-                    r1, c1, r2, c2 = box
+                    if alltags[0] in ("CellSelectFill", "Current_Outside"):
+                        boxes.append((box, "cells"))
+                    elif alltags[0] == "ColSelectFill":
+                        boxes.append((box, "cols"))
+                    elif alltags[0] == "RowSelectFill":
+                        boxes.append((box, "rows"))
+                if self.extra_begin_delete_key_func is not None:
+                    self.extra_begin_delete_key_func((boxes, currently_selected))
+                for r1, c1, r2, c2 in boxes:
                     for r in range(r1, r2):
                         for c in range(c1, c2):
                             try:
@@ -610,13 +654,15 @@ class MainTable(tk.Canvas):
             if self.undo_enabled:
                 self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells", undo_storage, boxes, currently_selected))))
             self.refresh()
-            if self.extra_delete_key_func is not None:
-                self.extra_delete_key_func()
+            if self.extra_end_delete_key_func is not None:
+                self.extra_end_delete_key_func((boxes, currently_selected))
 
     def ctrl_z(self, event = None):
         if self.undo_storage:
             undo_storage = pickle.loads(zlib.decompress(self.undo_storage.pop()))
             self.deselect("all")
+            if self.extra_begin_ctrl_z_func is not None:
+                self.extra_begin_ctrl_z_func(undo_storage[0])
             if undo_storage[0] == "edit_cells":
                 for (r, c), v in undo_storage[1].items():
                     self.data_ref[r][c] = v
@@ -802,8 +848,8 @@ class MainTable(tk.Canvas):
                         continue
                 self.reselect_from_get_boxes(undo_storage[1]['selection_boxes'])
             self.refresh()
-            if self.extra_ctrl_z_func is not None:
-                self.extra_ctrl_z_func()
+            if self.extra_end_ctrl_z_func is not None:
+                self.extra_end_ctrl_z_func(undo_storage[0])
             
     def bind_arrowkeys(self, event = None):
         self.arrowkeys_enabled = True
@@ -1728,6 +1774,8 @@ class MainTable(tk.Canvas):
             self.RI.unbind("<Control-A>")
             self.CH.unbind("<Control-a>")
             self.CH.unbind("<Control-A>")
+        elif binding == "ctrl_click_select":
+            self.ctrl_selection_enabled = True
         elif binding == "column_width_resize":
             self.CH.disable_bindings("column_width_resize")
         elif binding == "column_select":
@@ -2437,6 +2485,8 @@ class MainTable(tk.Canvas):
                 stidx = self.displayed_columns[-1] + 1
                 self.displayed_columns = [e + 1 if i >= self.displayed_columns[-1] else e for i, e in enumerate(self.displayed_columns)]
                 self.displayed_columns.append(int(self.displayed_columns[-1]) + 1)
+        if self.extra_begin_insert_cols_rc_func is not None:
+            self.extra_begin_insert_cols_rc_func((stidx, posidx))
         self.insert_col_position(idx = posidx,
                                  width = int(self.default_cw),
                                  deselect_all = True,
@@ -2460,8 +2510,8 @@ class MainTable(tk.Canvas):
             self.undo_storage.append(zlib.compress(pickle.dumps(("insert_col", {"data_col_num": stidx,
                                                                                 "sheet_col_num": posidx}))))
         self.refresh()
-        if self.extra_insert_cols_rc_func is not None:
-            self.extra_insert_cols_rc_func((stidx, posidx))
+        if self.extra_end_insert_cols_rc_func is not None:
+            self.extra_end_insert_cols_rc_func((stidx, posidx))
 
     def insert_row_rc(self, event = None): #subset of rows
         if self.anything_selected(exclude_columns = True, exclude_cells = True):
@@ -2470,6 +2520,8 @@ class MainTable(tk.Canvas):
         else:
             stidx = self.total_data_rows()
             posidx = len(self.row_positions) - 1
+        if self.extra_begin_insert_rows_rc_func is not None:
+            self.extra_begin_insert_rows_rc_func((stidx, posidx))
         self.insert_row_position(idx = posidx,
                                  height = self.default_rh[1],
                                  deselect_all = True,
@@ -2492,12 +2544,14 @@ class MainTable(tk.Canvas):
             self.undo_storage.append(zlib.compress(pickle.dumps(("insert_row", {"data_row_num": stidx,
                                                                                 "sheet_row_num": posidx}))))
         self.refresh()
-        if self.extra_insert_rows_rc_func is not None:
-            self.extra_insert_rows_rc_func((stidx, posidx))
+        if self.extra_end_insert_rows_rc_func is not None:
+            self.extra_end_insert_rows_rc_func((stidx, posidx))
             
     def del_cols_rc(self, event = None):
         seld_cols = sorted(self.get_selected_cols())
         if seld_cols:
+            if self.extra_begin_del_cols_rc_func is not None:
+                self.extra_begin_del_cols_rc_func(seld_cols)
             if self.undo_enabled:
                 undo_storage = {'deleted_cols': {},
                                 'colwidths': {},
@@ -2566,12 +2620,14 @@ class MainTable(tk.Canvas):
             self.deselect("allcols", redraw = False)
             self.set_current_to_last()
             self.refresh()
-            if self.extra_del_cols_rc_func is not None:
-                self.extra_del_cols_rc_func(tuple(seld_cols))
+            if self.extra_end_del_cols_rc_func is not None:
+                self.extra_end_del_cols_rc_func(seld_cols)
 
     def del_rows_rc(self, event = None):
         seld_rows = sorted(self.get_selected_rows())
         if seld_rows:
+            if self.extra_begin_del_rows_rc_func is not None:
+                self.extra_begin_del_rows_rc_func(seld_rows)
             if self.undo_enabled:
                 undo_storage = {'deleted_rows': [],
                                 'deleted_index_values': [],
@@ -2603,8 +2659,8 @@ class MainTable(tk.Canvas):
             self.deselect("allrows", redraw = False)
             self.set_current_to_last()
             self.refresh()
-            if self.extra_del_rows_rc_func is not None:
-                self.extra_del_rows_rc_func(tuple(seld_rows))
+            if self.extra_end_del_rows_rc_func is not None:
+                self.extra_end_del_rows_rc_func(seld_rows)
 
     def reset_row_positions(self):
         rowpos = self.default_rh[1]
