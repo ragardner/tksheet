@@ -76,7 +76,9 @@ class MainTable(tk.Canvas):
         self.disp_fill_sels = {}
         self.disp_bord_sels = {}
         self.disp_resize_lines = {}
-        self.ctrl_outline_rect = None
+        self.disp_ctrl_outline = {}
+        
+        self.hidd_ctrl_outline = {}
         self.hidd_text = {}
         self.hidd_high = {}
         self.hidd_grid = {}
@@ -281,35 +283,37 @@ class MainTable(tk.Canvas):
             self.unbind(get_rc_binding())
 
     def show_ctrl_outline(self, canvas = "table", start_cell = (0, 0), end_cell = (0, 0)):
-        if self.ctrl_outline_rect is None:
-            self.ctrl_outline_rect = self.create_rectangle(self.col_positions[start_cell[0]] + 1,
-                                                              self.row_positions[start_cell[1]] + 1,
-                                                              self.col_positions[end_cell[0]],
-                                                              self.row_positions[end_cell[1]],
-                                                              fill = "",
-                                                              dash = (25, 5),
-                                                              width = 2,
-                                                              outline = self.table_selected_cells_border_fg,
-                                                              tag = "ctrl")
-            
-        else:
-            self.coords(self.ctrl_outline_rect,
-                        self.col_positions[start_cell[0]] + 1,
-                          self.row_positions[start_cell[1]] + 1,
-                          self.col_positions[end_cell[0]],
-                          self.row_positions[end_cell[1]])
-            self.itemconfig(self.ctrl_outline_rect,
-                            fill = "",
-                              dash = (25, 5),
-                              width = 3,
-                              outline = self.table_selected_cells_border_fg,
-                              tag = "ctrl",
-                            state = "normal")
-        self.tag_raise("ctrl")
-        self.after(1000, self.del_ctrl_outline)
+        self.create_ctrl_outline(self.col_positions[start_cell[0]] + 1,
+                                 self.row_positions[start_cell[1]] + 1,
+                                  self.col_positions[end_cell[0]],
+                                  self.row_positions[end_cell[1]],
+                                  fill = "",
+                                  dash = (25, 5),
+                                  width = 3,
+                                  outline = self.table_selected_cells_border_fg,
+                                  tag = "ctrl")
+        self.after(1000, self.delete_ctrl_outlines)
 
-    def del_ctrl_outline(self, event = None):
-        self.itemconfig(self.ctrl_outline_rect, state = "hidden")
+    def create_ctrl_outline(self, x1, y1, x2, y2, fill, dash, width, outline, tag):
+        if self.hidd_ctrl_outline:
+            t, sh = self.hidd_ctrl_outline.popitem()
+            self.coords(t, x1, y1, x2, y2)
+            if sh:
+                self.itemconfig(t, fill = fill, dash = dash, width = width, outline = outline, tag = tag)
+            else:
+                self.itemconfig(t, fill = fill, dash = dash, width = width, outline = outline, tag = tag, state = "normal")
+            self.lift(t)
+        else:
+            t = self.create_rectangle(x1, y1, x2, y2, fill = fill, dash = dash, width = width, outline = outline, tag = tag)
+        self.disp_ctrl_outline[t] = True
+
+    def delete_ctrl_outlines(self):
+        self.hidd_ctrl_outline.update(self.disp_ctrl_outline)
+        self.disp_ctrl_outline = {}
+        for t, sh in self.hidd_ctrl_outline.items():
+            if sh:
+                self.itemconfig(t, state = "hidden")
+                self.hidd_ctrl_outline[t] = False
 
     def get_ctrl_x_c_boxes(self):
         currently_selected = self.currently_selected()
@@ -1456,7 +1460,7 @@ class MainTable(tk.Canvas):
                                            activeforeground = self.popup_menu_highlight_fg,
                                            command = self.ctrl_x)
             #self.rc_popup_menu.add_separator()
-            self.CH.ch_rc_popup_menu.add_command(label = "Cut Contents",
+            self.CH.ch_rc_popup_menu.add_command(label = "Cut contents",
                                            accelerator = "Ctrl+X",
                                            font = self.popup_menu_font,
                                            foreground = self.popup_menu_fg,
@@ -1465,7 +1469,7 @@ class MainTable(tk.Canvas):
                                            activeforeground = self.popup_menu_highlight_fg,
                                                command = self.ctrl_x)
             #self.CH.ch_rc_popup_menu.add_separator()
-            self.RI.ri_rc_popup_menu.add_command(label = "Cut Contents",
+            self.RI.ri_rc_popup_menu.add_command(label = "Cut contents",
                                            accelerator = "Ctrl+X",
                                            font = self.popup_menu_font,
                                            foreground = self.popup_menu_fg,
@@ -1484,7 +1488,7 @@ class MainTable(tk.Canvas):
                                            activeforeground = self.popup_menu_highlight_fg,
                                            command = self.ctrl_c)
             #self.rc_popup_menu.add_separator()
-            self.CH.ch_rc_popup_menu.add_command(label = "Copy Contents",
+            self.CH.ch_rc_popup_menu.add_command(label = "Copy contents",
                                                  accelerator = "Ctrl+C",
                                            font = self.popup_menu_font,
                                            foreground = self.popup_menu_fg,
@@ -1493,7 +1497,7 @@ class MainTable(tk.Canvas):
                                            activeforeground = self.popup_menu_highlight_fg,
                                                  command = self.ctrl_c)
             #self.CH.ch_rc_popup_menu.add_separator()
-            self.RI.ri_rc_popup_menu.add_command(label = "Copy Contents",
+            self.RI.ri_rc_popup_menu.add_command(label = "Copy contents",
                                                  accelerator = "Ctrl+C",
                                            font = self.popup_menu_font,
                                            foreground = self.popup_menu_fg,
@@ -1539,7 +1543,7 @@ class MainTable(tk.Canvas):
                                            activebackground = self.popup_menu_highlight_bg,
                                            activeforeground = self.popup_menu_highlight_fg,
                                            command = self.delete_key)
-            self.CH.ch_rc_popup_menu.add_command(label = "Clear Contents",
+            self.CH.ch_rc_popup_menu.add_command(label = "Clear contents",
                                                  accelerator = "Del",
                                            font = self.popup_menu_font,
                                            foreground = self.popup_menu_fg,
@@ -1548,7 +1552,7 @@ class MainTable(tk.Canvas):
                                            activeforeground = self.popup_menu_highlight_fg,
                                                  command = self.delete_key)
             #self.CH.ch_rc_popup_menu.add_separator()
-            self.RI.ri_rc_popup_menu.add_command(label = "Clear Contents",
+            self.RI.ri_rc_popup_menu.add_command(label = "Clear contents",
                                                  accelerator = "Del",
                                            font = self.popup_menu_font,
                                            foreground = self.popup_menu_fg,
@@ -1558,7 +1562,7 @@ class MainTable(tk.Canvas):
                                                command = self.delete_key)
             #self.RI.ri_rc_popup_menu.add_separator()
         if self.rc_delete_column_enabled:
-            self.CH.ch_rc_popup_menu.add_command(label = "Delete Columns",
+            self.CH.ch_rc_popup_menu.add_command(label = "Delete columns",
                                            font = self.popup_menu_font,
                                            foreground = self.popup_menu_fg,
                                            background = self.popup_menu_bg,
@@ -1567,7 +1571,7 @@ class MainTable(tk.Canvas):
                                                  command = self.del_cols_rc)
             #self.CH.ch_rc_popup_menu.add_separator()
         if self.rc_insert_column_enabled:
-            self.CH.ch_rc_popup_menu.add_command(label = "Insert Column",
+            self.CH.ch_rc_popup_menu.add_command(label = "Insert columns left",
                                            font = self.popup_menu_font,
                                            foreground = self.popup_menu_fg,
                                            background = self.popup_menu_bg,
@@ -1575,7 +1579,7 @@ class MainTable(tk.Canvas):
                                            activeforeground = self.popup_menu_highlight_fg,
                                                  command = self.insert_col_rc)
         if self.rc_delete_row_enabled:
-            self.RI.ri_rc_popup_menu.add_command(label = "Delete Rows",
+            self.RI.ri_rc_popup_menu.add_command(label = "Delete rows",
                                            font = self.popup_menu_font,
                                            foreground = self.popup_menu_fg,
                                            background = self.popup_menu_bg,
@@ -1584,7 +1588,7 @@ class MainTable(tk.Canvas):
                                                  command = self.del_rows_rc)
             #self.RI.ri_rc_popup_menu.add_separator()
         if self.rc_insert_row_enabled:
-            self.RI.ri_rc_popup_menu.add_command(label = "Insert Row",
+            self.RI.ri_rc_popup_menu.add_command(label = "Insert rows above",
                                            font = self.popup_menu_font,
                                            foreground = self.popup_menu_fg,
                                            background = self.popup_menu_bg,
@@ -2520,7 +2524,8 @@ class MainTable(tk.Canvas):
         else:
             for rn in range(len(self.data_ref)):
                 self.data_ref[rn][stidx:stidx] = list(repeat("", numcols))
-        self.CH.select_col(c = posidx)
+        self.create_selected(0, posidx, len(self.row_positions) - 1, posidx + numcols, "cols")
+        self.create_current(0, posidx, "col", inside = True)
         if self.undo_enabled:
             self.undo_storage.append(zlib.compress(pickle.dumps(("insert_col", {"data_col_num": stidx,
                                                                                 "sheet_col_num": posidx,
@@ -2559,7 +2564,8 @@ class MainTable(tk.Canvas):
             self.data_ref.append([""])
         else:
             self.data_ref[stidx:stidx] = list(repeat(list(repeat("", self.total_data_cols())), numrows))
-        self.RI.select_row(r = posidx)
+        self.create_selected(posidx, 0, posidx + numrows, len(self.col_positions) - 1, "rows")
+        self.create_current(posidx, 0, "row", inside = True)
         if self.undo_enabled:
             self.undo_storage.append(zlib.compress(pickle.dumps(("insert_row", {"data_row_num": stidx,
                                                                                 "sheet_row_num": posidx,

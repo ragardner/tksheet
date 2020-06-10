@@ -174,7 +174,7 @@ class ColumnHeaders(tk.Canvas):
         if self.MT.identify_col(x = event.x, allow_end = False) is None:
             self.MT.deselect("all")
             self.ch_rc_popup_menu.tk_popup(event.x_root, event.y_root)
-        elif self.col_selection_enabled and all(v is None for v in (self.RI.rsz_h, self.RI.rsz_w, self.rsz_h, self.rsz_w)):
+        elif self.col_selection_enabled and not self.currently_resizing_width and not self.currently_resizing_height:
             c = self.MT.identify_col(x = event.x)
             if c < len(self.MT.col_positions) - 1:
                 if self.MT.col_selected(c):

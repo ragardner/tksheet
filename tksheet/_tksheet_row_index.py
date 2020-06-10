@@ -208,7 +208,7 @@ class RowIndex(tk.Canvas):
             self.MT.deselect("all")
             if self.MT.rc_popup_menus_enabled:
                 self.ri_rc_popup_menu.tk_popup(event.x_root, event.y_root)
-        elif self.row_selection_enabled and all(v is None for v in (self.CH.rsz_h, self.CH.rsz_w, self.rsz_h, self.rsz_w)):
+        elif self.row_selection_enabled and not self.currently_resizing_width and not self.currently_resizing_height:
             r = self.MT.identify_row(y = event.y)
             if r < len(self.MT.row_positions) - 1:
                 if self.MT.row_selected(r):
