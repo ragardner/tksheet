@@ -1,3 +1,33 @@
+### Version 4.8.6
+ - Change many values sent to functions set by `extra_bindings()` - begin is before action is taken, end is after
+
+| Binding                        | Response                                                                |
+|--------------------------------|------------------------------------------------------------------------:|
+|"begin_ctrl_c"                  |("begin_ctrl_c", boxes, currently_selected)                              |
+|"end_ctrl_c"                    |("end_ctrl_c", boxes, currently_selected, rows)                          |
+|"begin_ctrl_x"                  |("begin_ctrl_x", boxes, currently_selected)                              |
+|"end_ctrl_x"                    |("end_ctrl_x", boxes, currently_selected, rows)                          |
+|"begin_ctrl_v"                  |("begin_ctrl_v", currently_selected, rows)                               |
+|"end_ctrl_v"                    |("end_ctrl_v", currently_selected, rows)                                 |
+|"begin_delete_key"              |("begin_delete_key", boxes, currently_selected)                          |
+|"end_delete_key"                |("end_delete_key", boxes, currently_selected)                            |
+|"begin_ctrl_z"                  |("begin_ctrl_z", change type)                                            |
+|"end_ctrl_z"                    |("end_ctrl_z", change type)                                              |
+|"begin_insert_columns"          |("begin_insert_columns", stidx, posidx, numcols)                         |
+|"end_insert_columns"            |("end_insert_columns", stidx, posidx, numcols)                           |
+|"begin_insert_rows"             |("begin_insert_rows", stidx, posidx, numrows)                            |
+|"end_insert_rows"               |("end_insert_rows", stidx, posidx, numrows)                              |
+|"begin_row_index_drag_drop"     |("begin_row_index_drag_drop", orig_selected_rows, r)                     |
+|"end_row_index_drag_drop"       |("end_row_index_drag_drop", orig_selected_rows, new_selected, r)         |
+|"begin_column_header_drag_drop" |("begin_column_header_drag_drop", orig_selected_cols, c)                 |
+|"begin_column_header_drag_drop" |("begin_column_header_drag_drop", orig_selected_cols, new_selected, c)   |
+
+`boxes` are all selection box coordinates in the table, currently selected is cell coordinates
+`rows` (in ctrl_c, ctrl_x and ctrl_v) is a list of lists which represents the data which was worked on
+
+ - Right click insert columns/rows now inserts as many as selected or one if none selected
+ - Some minor improvements
+
 ### Version 4.8.5
  - Fix line creation when click drag resizing index
  - Improve looks of top left rectangle resizers when one is disabled
