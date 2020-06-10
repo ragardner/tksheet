@@ -23,6 +23,7 @@
 |"begin_column_header_drag_drop" |("begin_column_header_drag_drop", orig_selected_cols, new_selected, c)   |
 
 `boxes` are all selection box coordinates in the table, currently selected is cell coordinates
+
 `rows` (in ctrl_c, ctrl_x and ctrl_v) is a list of lists which represents the data which was worked on
 
  - Right click insert columns/rows now inserts as many as selected or one if none selected
