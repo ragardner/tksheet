@@ -68,8 +68,8 @@ class demo(tk.Tk):
                                          "delete",
                                          "undo",
                                          "edit_cell"))
-        self.sheet.disable_bindings() #uses the same strings
-        self.sheet.enable_bindings()
+        #self.sheet.disable_bindings() #uses the same strings
+        #self.sheet.enable_bindings()
 
         self.frame.grid(row = 0, column = 0, sticky = "nswe")
         self.sheet.grid(row = 0, column = 0, sticky = "nswe")
@@ -138,6 +138,7 @@ class demo(tk.Tk):
         #                            ("drag_select_columns", self.drag_select_columns),
         #                            ("deselect", self.deselect)
         #                            ])
+        #self.sheet.extra_bindings("bind_all", self.all_extra_bindings)
         #self.sheet.extra_bindings("begin_edit_cell", self.begin_edit_cell)
         #self.sheet.extra_bindings([("cell_select", None)]) #unbind cell select
         #self.sheet.extra_bindings("unbind_all") #remove all functions set by extra_bindings()
@@ -241,6 +242,9 @@ class demo(tk.Tk):
     _tksheet.py FOR A FULL LIST OF FUNCTIONS AND THEIR PARAMETERS
 
     """
+
+    def all_extra_bindings(self, event):
+        print (event)
     
     def begin_edit_cell(self, event):
         print (event)   # event[2] is keystroke
