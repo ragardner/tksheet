@@ -20,7 +20,7 @@
 |"begin_row_index_drag_drop"     |("begin_row_index_drag_drop", orig_selected_rows, r)                     |
 |"end_row_index_drag_drop"       |("end_row_index_drag_drop", orig_selected_rows, new_selected, r)         |
 |"begin_column_header_drag_drop" |("begin_column_header_drag_drop", orig_selected_cols, c)                 |
-|"begin_column_header_drag_drop" |("begin_column_header_drag_drop", orig_selected_cols, new_selected, c)   |
+|"end_column_header_drag_drop"   |("end_column_header_drag_drop", orig_selected_cols, new_selected, c)   |
 
 `boxes` are all selection box coordinates in the table, currently selected is cell coordinates
 
