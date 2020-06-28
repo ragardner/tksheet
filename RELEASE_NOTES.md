@@ -1,3 +1,6 @@
+### Version 4.8.7
+ - Fix delete key bug
+
 ### Version 4.8.6
  - Change many values sent to functions set by `extra_bindings()` - begin is before action is taken, end is after
 
