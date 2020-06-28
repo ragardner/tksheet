@@ -625,7 +625,7 @@ class MainTable(tk.Canvas):
                         boxes.append((box, "rows"))
                 if self.extra_begin_delete_key_func is not None:
                     self.extra_begin_delete_key_func(("begin_delete_key", boxes, currently_selected))
-                for r1, c1, r2, c2 in boxes:
+                for (r1, c1, r2, c2), _ in boxes:
                     for r in range(r1, r2):
                         for c in range(c1, c2):
                             try:
@@ -646,7 +646,7 @@ class MainTable(tk.Canvas):
                         boxes.append((box, "rows"))
                 if self.extra_begin_delete_key_func is not None:
                     self.extra_begin_delete_key_func(("begin_delete_key", boxes, currently_selected))
-                for r1, c1, r2, c2 in boxes:
+                for (r1, c1, r2, c2), _ in boxes:
                     for r in range(r1, r2):
                         for c in range(c1, c2):
                             try:
