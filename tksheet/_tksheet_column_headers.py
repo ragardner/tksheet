@@ -722,35 +722,38 @@ class ColumnHeaders(tk.Canvas):
 
     def redraw_highlight_get_text_fg(self, fc, sc, c, c_2, c_3, selected_cols, selected_rows, actual_selected_cols, hlcol):
         if hlcol in self.highlighted_cells and c in actual_selected_cols:
-            c_1 = self.highlighted_cells[hlcol][0] if self.highlighted_cells[hlcol][0].startswith("#") else Color_Map_[self.highlighted_cells[hlcol][0]]
-            self.redraw_highlight(fc + 1,
-                                  0,
-                                  sc,
-                                  self.current_height - 1,
-                                  fill = (f"#{int((int(c_1[1:3], 16) + int(c_3[1:3], 16)) / 2):02X}" +
-                                          f"{int((int(c_1[3:5], 16) + int(c_3[3:5], 16)) / 2):02X}" +
-                                          f"{int((int(c_1[5:], 16) + int(c_3[5:], 16)) / 2):02X}"),
-                                  outline = "",
-                                  tag = "s")
+            if self.highlighted_cells[hlcol][0] is not None:
+                c_1 = self.highlighted_cells[hlcol][0] if self.highlighted_cells[hlcol][0].startswith("#") else Color_Map_[self.highlighted_cells[hlcol][0]]
+                self.redraw_highlight(fc + 1,
+                                      0,
+                                      sc,
+                                      self.current_height - 1,
+                                      fill = (f"#{int((int(c_1[1:3], 16) + int(c_3[1:3], 16)) / 2):02X}" +
+                                              f"{int((int(c_1[3:5], 16) + int(c_3[3:5], 16)) / 2):02X}" +
+                                              f"{int((int(c_1[5:], 16) + int(c_3[5:], 16)) / 2):02X}"),
+                                      outline = "",
+                                      tag = "s")
             tf = self.header_selected_columns_fg if self.highlighted_cells[hlcol][1] is None or self.MT.display_selected_fg_over_highlights else self.highlighted_cells[hlcol][1]
         elif hlcol in self.highlighted_cells and (c in selected_cols or selected_rows):
-            c_1 = self.highlighted_cells[hlcol][0] if self.highlighted_cells[hlcol][0].startswith("#") else Color_Map_[self.highlighted_cells[hlcol][0]]
-            self.redraw_highlight(fc + 1,
-                                  0,
-                                  sc,
-                                  self.current_height - 1,
-                                  fill = (f"#{int((int(c_1[1:3], 16) + int(c_2[1:3], 16)) / 2):02X}" +
-                                          f"{int((int(c_1[3:5], 16) + int(c_2[3:5], 16)) / 2):02X}" +
-                                          f"{int((int(c_1[5:], 16) + int(c_2[5:], 16)) / 2):02X}"),
-                                  outline = "",
-                                  tag = "s")
+            if self.highlighted_cells[hlcol][0] is not None:
+                c_1 = self.highlighted_cells[hlcol][0] if self.highlighted_cells[hlcol][0].startswith("#") else Color_Map_[self.highlighted_cells[hlcol][0]]
+                self.redraw_highlight(fc + 1,
+                                      0,
+                                      sc,
+                                      self.current_height - 1,
+                                      fill = (f"#{int((int(c_1[1:3], 16) + int(c_2[1:3], 16)) / 2):02X}" +
+                                              f"{int((int(c_1[3:5], 16) + int(c_2[3:5], 16)) / 2):02X}" +
+                                              f"{int((int(c_1[5:], 16) + int(c_2[5:], 16)) / 2):02X}"),
+                                      outline = "",
+                                      tag = "s")
             tf = self.header_selected_cells_fg if self.highlighted_cells[hlcol][1] is None or self.MT.display_selected_fg_over_highlights else self.highlighted_cells[hlcol][1]
         elif c in actual_selected_cols:
             tf = self.header_selected_columns_fg
         elif c in selected_cols or selected_rows:
             tf = self.header_selected_cells_fg
         elif hlcol in self.highlighted_cells:
-            self.redraw_highlight(fc + 1, 0, sc, self.current_height - 1, fill = self.highlighted_cells[hlcol][0], outline = "", tag = "s")
+            if self.highlighted_cells[hlcol][0] is not None:
+                self.redraw_highlight(fc + 1, 0, sc, self.current_height - 1, fill = self.highlighted_cells[hlcol][0], outline = "", tag = "s")
             tf = self.header_fg if self.highlighted_cells[hlcol][1] is None else self.highlighted_cells[hlcol][1]
         else:
             tf = self.header_fg

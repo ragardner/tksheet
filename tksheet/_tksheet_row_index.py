@@ -826,35 +826,38 @@ class RowIndex(tk.Canvas):
 
     def redraw_highlight_get_text_fg(self, fr, sr, r, c_2, c_3, selected_rows, selected_cols, actual_selected_rows):
         if r in self.highlighted_cells and r in actual_selected_rows:
-            c_1 = self.highlighted_cells[r][0] if self.highlighted_cells[r][0].startswith("#") else Color_Map_[self.highlighted_cells[r][0]]
-            self.redraw_highlight(0,
-                                  fr + 1,
-                                  self.current_width - 1,
-                                  sr,
-                                  fill = (f"#{int((int(c_1[1:3], 16) + int(c_3[1:3], 16)) / 2):02X}" +
-                                          f"{int((int(c_1[3:5], 16) + int(c_3[3:5], 16)) / 2):02X}" +
-                                          f"{int((int(c_1[5:], 16) + int(c_3[5:], 16)) / 2):02X}"),
-                                  outline = "",
-                                  tag = "s")
+            if self.highlighted_cells[r][0] is not None:
+                c_1 = self.highlighted_cells[r][0] if self.highlighted_cells[r][0].startswith("#") else Color_Map_[self.highlighted_cells[r][0]]
+                self.redraw_highlight(0,
+                                      fr + 1,
+                                      self.current_width - 1,
+                                      sr,
+                                      fill = (f"#{int((int(c_1[1:3], 16) + int(c_3[1:3], 16)) / 2):02X}" +
+                                              f"{int((int(c_1[3:5], 16) + int(c_3[3:5], 16)) / 2):02X}" +
+                                              f"{int((int(c_1[5:], 16) + int(c_3[5:], 16)) / 2):02X}"),
+                                      outline = "",
+                                      tag = "s")
             tf = self.index_selected_rows_fg if self.highlighted_cells[r][1] is None or self.MT.display_selected_fg_over_highlights else self.highlighted_cells[r][1]
         elif r in self.highlighted_cells and (r in selected_rows or selected_cols):
-            c_1 = self.highlighted_cells[r][0] if self.highlighted_cells[r][0].startswith("#") else Color_Map_[self.highlighted_cells[r][0]]
-            self.redraw_highlight(0,
-                                  fr + 1,
-                                  self.current_width - 1,
-                                  sr,
-                                  fill = (f"#{int((int(c_1[1:3], 16) + int(c_2[1:3], 16)) / 2):02X}" +
-                                          f"{int((int(c_1[3:5], 16) + int(c_2[3:5], 16)) / 2):02X}" +
-                                          f"{int((int(c_1[5:], 16) + int(c_2[5:], 16)) / 2):02X}"),
-                                  outline = "",
-                                  tag = "s")
+            if self.highlighted_cells[r][0] is not None:
+                c_1 = self.highlighted_cells[r][0] if self.highlighted_cells[r][0].startswith("#") else Color_Map_[self.highlighted_cells[r][0]]
+                self.redraw_highlight(0,
+                                      fr + 1,
+                                      self.current_width - 1,
+                                      sr,
+                                      fill = (f"#{int((int(c_1[1:3], 16) + int(c_2[1:3], 16)) / 2):02X}" +
+                                              f"{int((int(c_1[3:5], 16) + int(c_2[3:5], 16)) / 2):02X}" +
+                                              f"{int((int(c_1[5:], 16) + int(c_2[5:], 16)) / 2):02X}"),
+                                      outline = "",
+                                      tag = "s")
             tf = self.index_selected_cells_fg if self.highlighted_cells[r][1] is None or self.MT.display_selected_fg_over_highlights else self.highlighted_cells[r][1]
         elif r in actual_selected_rows:
             tf = self.index_selected_rows_fg
         elif r in selected_rows or selected_cols:
             tf = self.index_selected_cells_fg
         elif r in self.highlighted_cells:
-            self.redraw_highlight(0, fr + 1, self.current_width - 1, sr, fill = self.highlighted_cells[r][0], outline = "", tag = "s")
+            if self.highlighted_cells[r][0] is not None:
+                self.redraw_highlight(0, fr + 1, self.current_width - 1, sr, fill = self.highlighted_cells[r][0], outline = "", tag = "s")
             tf = self.index_fg if self.highlighted_cells[r][1] is None else self.highlighted_cells[r][1]
         else:
             tf = self.index_fg

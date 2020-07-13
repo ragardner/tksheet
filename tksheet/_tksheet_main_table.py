@@ -2948,81 +2948,93 @@ class MainTable(tk.Canvas):
     def redraw_highlight_get_text_fg(self, r, c, fc, fr, sc, sr, c_2_, c_3_, c_4_, selected_cells, actual_selected_rows, actual_selected_cols, dcol):
         # ________________________ CELL IS HIGHLIGHTED AND IN SELECTED CELLS ________________________
         if (r, dcol) in self.highlighted_cells and (r, c) in selected_cells:
-            c_1 = self.highlighted_cells[(r, dcol)][0] if self.highlighted_cells[(r, dcol)][0].startswith("#") else Color_Map_[self.highlighted_cells[(r, dcol)][0]]
-            self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_2_[0]) / 2):02X}" +
-                                                                  f"{int((int(c_1[3:5], 16) + c_2_[1]) / 2):02X}" +
-                                                                  f"{int((int(c_1[5:], 16) + c_2_[2]) / 2):02X}"), outline = "", tag = "hi")
+            if self.highlighted_cells[(r, dcol)][0] is not None:
+                c_1 = self.highlighted_cells[(r, dcol)][0] if self.highlighted_cells[(r, dcol)][0].startswith("#") else Color_Map_[self.highlighted_cells[(r, dcol)][0]]
+                self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_2_[0]) / 2):02X}" +
+                                                                      f"{int((int(c_1[3:5], 16) + c_2_[1]) / 2):02X}" +
+                                                                      f"{int((int(c_1[5:], 16) + c_2_[2]) / 2):02X}"), outline = "", tag = "hi")
             tf = self.table_selected_cells_fg if self.highlighted_cells[(r, dcol)][1] is None or self.display_selected_fg_over_highlights else self.highlighted_cells[(r, dcol)][1]
             
         elif r in self.highlighted_rows and (r, c) in selected_cells:
-            c_1 = self.highlighted_rows[r][0] if self.highlighted_rows[r][0].startswith("#") else Color_Map_[self.highlighted_rows[r][0]]
-            self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_2_[0]) / 2):02X}" +
-                                                                  f"{int((int(c_1[3:5], 16) + c_2_[1]) / 2):02X}" +
-                                                                  f"{int((int(c_1[5:], 16) + c_2_[2]) / 2):02X}"), outline = "", tag = "hi")
+            if self.highlighted_rows[r][0] is not None:
+                c_1 = self.highlighted_rows[r][0] if self.highlighted_rows[r][0].startswith("#") else Color_Map_[self.highlighted_rows[r][0]]
+                self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_2_[0]) / 2):02X}" +
+                                                                      f"{int((int(c_1[3:5], 16) + c_2_[1]) / 2):02X}" +
+                                                                      f"{int((int(c_1[5:], 16) + c_2_[2]) / 2):02X}"), outline = "", tag = "hi")
             tf = self.table_selected_cells_fg if self.highlighted_rows[r][1] is None or self.display_selected_fg_over_highlights else self.highlighted_rows[r][1]
             
         elif dcol in self.highlighted_cols and (r, c) in selected_cells:
-            c_1 = self.highlighted_cols[dcol][0] if self.highlighted_cols[dcol][0].startswith("#") else Color_Map_[self.highlighted_cols[dcol][0]]
-            self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_2_[0]) / 2):02X}" +
-                                                                  f"{int((int(c_1[3:5], 16) + c_2_[1]) / 2):02X}" +
-                                                                  f"{int((int(c_1[5:], 16) + c_2_[2]) / 2):02X}"), outline = "", tag = "hi")
+            if self.highlighted_cols[dcol][0] is not None:
+                c_1 = self.highlighted_cols[dcol][0] if self.highlighted_cols[dcol][0].startswith("#") else Color_Map_[self.highlighted_cols[dcol][0]]
+                self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_2_[0]) / 2):02X}" +
+                                                                      f"{int((int(c_1[3:5], 16) + c_2_[1]) / 2):02X}" +
+                                                                      f"{int((int(c_1[5:], 16) + c_2_[2]) / 2):02X}"), outline = "", tag = "hi")
             tf = self.table_selected_cells_fg if self.highlighted_cols[dcol][1] is None or self.display_selected_fg_over_highlights else self.highlighted_cols[dcol][1]
             
         # ________________________ CELL IS HIGHLIGHTED AND IN SELECTED ROWS ________________________
         elif (r, dcol) in self.highlighted_cells and r in actual_selected_rows:
-            c_1 = self.highlighted_cells[(r, dcol)][0] if self.highlighted_cells[(r, dcol)][0].startswith("#") else Color_Map_[self.highlighted_cells[(r, dcol)][0]]
-            self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_4_[0]) / 2):02X}" +
-                                                                  f"{int((int(c_1[3:5], 16) + c_4_[1]) / 2):02X}" +
-                                                                  f"{int((int(c_1[5:], 16) + c_4_[2]) / 2):02X}"), outline = "", tag = "hi")
+            if self.highlighted_cells[(r, dcol)][0] is not None:
+                c_1 = self.highlighted_cells[(r, dcol)][0] if self.highlighted_cells[(r, dcol)][0].startswith("#") else Color_Map_[self.highlighted_cells[(r, dcol)][0]]
+                self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_4_[0]) / 2):02X}" +
+                                                                      f"{int((int(c_1[3:5], 16) + c_4_[1]) / 2):02X}" +
+                                                                      f"{int((int(c_1[5:], 16) + c_4_[2]) / 2):02X}"), outline = "", tag = "hi")
             tf = self.table_selected_rows_fg if self.highlighted_cells[(r, dcol)][1] is None or self.display_selected_fg_over_highlights else self.highlighted_cells[(r, dcol)][1]
             
         elif r in self.highlighted_rows and r in actual_selected_rows:
-            c_1 = self.highlighted_rows[r][0] if self.highlighted_rows[r][0].startswith("#") else Color_Map_[self.highlighted_rows[r][0]]
-            self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_4_[0]) / 2):02X}" +
-                                                                  f"{int((int(c_1[3:5], 16) + c_4_[1]) / 2):02X}" +
-                                                                  f"{int((int(c_1[5:], 16) + c_4_[2]) / 2):02X}"), outline = "", tag = "hi")
+            if self.highlighted_rows[r][0] is not None:
+                c_1 = self.highlighted_rows[r][0] if self.highlighted_rows[r][0].startswith("#") else Color_Map_[self.highlighted_rows[r][0]]
+                self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_4_[0]) / 2):02X}" +
+                                                                      f"{int((int(c_1[3:5], 16) + c_4_[1]) / 2):02X}" +
+                                                                      f"{int((int(c_1[5:], 16) + c_4_[2]) / 2):02X}"), outline = "", tag = "hi")
             tf = self.table_selected_rows_fg if self.highlighted_rows[r][1] is None or self.display_selected_fg_over_highlights else self.highlighted_rows[r][1]
             
         elif dcol in self.highlighted_cols and r in actual_selected_rows:
-            c_1 = self.highlighted_cols[dcol][0] if self.highlighted_cols[dcol][0].startswith("#") else Color_Map_[self.highlighted_cols[dcol][0]]
-            self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_4_[0]) / 2):02X}" +
-                                                                  f"{int((int(c_1[3:5], 16) + c_4_[1]) / 2):02X}" +
-                                                                  f"{int((int(c_1[5:], 16) + c_4_[2]) / 2):02X}"), outline = "", tag = "hi")
+            if self.highlighted_cols[dcol][0] is not None:
+                c_1 = self.highlighted_cols[dcol][0] if self.highlighted_cols[dcol][0].startswith("#") else Color_Map_[self.highlighted_cols[dcol][0]]
+                self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_4_[0]) / 2):02X}" +
+                                                                      f"{int((int(c_1[3:5], 16) + c_4_[1]) / 2):02X}" +
+                                                                      f"{int((int(c_1[5:], 16) + c_4_[2]) / 2):02X}"), outline = "", tag = "hi")
             tf = self.table_selected_rows_fg if self.highlighted_cols[dcol][1] is None or self.display_selected_fg_over_highlights else self.highlighted_cols[dcol][1]
             
         # ________________________ CELL IS HIGHLIGHTED AND IN SELECTED COLUMNS ________________________
         elif (r, dcol) in self.highlighted_cells and c in actual_selected_cols:
-            c_1 = self.highlighted_cells[(r, dcol)][0] if self.highlighted_cells[(r, dcol)][0].startswith("#") else Color_Map_[self.highlighted_cells[(r, dcol)][0]]
-            self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_3_[0]) / 2):02X}" +
-                                                                  f"{int((int(c_1[3:5], 16) + c_3_[1]) / 2):02X}" +
-                                                                  f"{int((int(c_1[5:], 16) + c_3_[2]) / 2):02X}"), outline = "", tag = "hi")
+            if self.highlighted_cells[(r, dcol)][0] is not None:
+                c_1 = self.highlighted_cells[(r, dcol)][0] if self.highlighted_cells[(r, dcol)][0].startswith("#") else Color_Map_[self.highlighted_cells[(r, dcol)][0]]
+                self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_3_[0]) / 2):02X}" +
+                                                                      f"{int((int(c_1[3:5], 16) + c_3_[1]) / 2):02X}" +
+                                                                      f"{int((int(c_1[5:], 16) + c_3_[2]) / 2):02X}"), outline = "", tag = "hi")
             tf = self.table_selected_columns_fg if self.highlighted_cells[(r, dcol)][1] is None or self.display_selected_fg_over_highlights else self.highlighted_cells[(r, dcol)][1]
             
         elif r in self.highlighted_rows and c in actual_selected_cols:
-            c_1 = self.highlighted_rows[r][0] if self.highlighted_rows[r][0].startswith("#") else Color_Map_[self.highlighted_rows[r][0]]
-            self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_3_[0]) / 2):02X}" +
-                                                                  f"{int((int(c_1[3:5], 16) + c_3_[1]) / 2):02X}" +
-                                                                  f"{int((int(c_1[5:], 16) + c_3_[2]) / 2):02X}"), outline = "", tag = "hi")
+            if self.highlighted_rows[r][0] is not None:
+                c_1 = self.highlighted_rows[r][0] if self.highlighted_rows[r][0].startswith("#") else Color_Map_[self.highlighted_rows[r][0]]
+                self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_3_[0]) / 2):02X}" +
+                                                                      f"{int((int(c_1[3:5], 16) + c_3_[1]) / 2):02X}" +
+                                                                      f"{int((int(c_1[5:], 16) + c_3_[2]) / 2):02X}"), outline = "", tag = "hi")
             tf = self.table_selected_columns_fg if self.highlighted_rows[r][1] is None or self.display_selected_fg_over_highlights else self.highlighted_rows[r][1]
             
         elif dcol in self.highlighted_cols and c in actual_selected_cols:
-            c_1 = self.highlighted_cols[dcol][0] if self.highlighted_cols[dcol][0].startswith("#") else Color_Map_[self.highlighted_cols[dcol][0]]
-            self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_3_[0]) / 2):02X}" +
-                                                                  f"{int((int(c_1[3:5], 16) + c_3_[1]) / 2):02X}" +
-                                                                  f"{int((int(c_1[5:], 16) + c_3_[2]) / 2):02X}"), outline = "", tag = "hi")
+            if self.highlighted_cols[dcol][0] is not None:
+                c_1 = self.highlighted_cols[dcol][0] if self.highlighted_cols[dcol][0].startswith("#") else Color_Map_[self.highlighted_cols[dcol][0]]
+                self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_3_[0]) / 2):02X}" +
+                                                                      f"{int((int(c_1[3:5], 16) + c_3_[1]) / 2):02X}" +
+                                                                      f"{int((int(c_1[5:], 16) + c_3_[2]) / 2):02X}"), outline = "", tag = "hi")
             tf = self.table_selected_columns_fg if self.highlighted_cols[dcol][1] is None or self.display_selected_fg_over_highlights else self.highlighted_cols[dcol][1]
 
         # ________________________ CELL IS HIGHLIGHTED AND NOT SELECTED ________________________
         elif (r, dcol) in self.highlighted_cells and (r, c) not in selected_cells and r not in actual_selected_rows and c not in actual_selected_cols:
-            self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = self.highlighted_cells[(r, dcol)][0], outline = "", tag = "hi")
+            if self.highlighted_cells[(r, dcol)][0] is not None:
+                self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = self.highlighted_cells[(r, dcol)][0], outline = "", tag = "hi")
             tf = self.table_fg if self.highlighted_cells[(r, dcol)][1] is None else self.highlighted_cells[(r, dcol)][1]
             
         elif r in self.highlighted_rows and (r, c) not in selected_cells and r not in actual_selected_rows and c not in actual_selected_cols:
-            self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = self.highlighted_rows[r][0], outline = "", tag = "hi")
+            if self.highlighted_rows[r][0] is not None:
+                self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = self.highlighted_rows[r][0], outline = "", tag = "hi")
             tf = self.table_fg if self.highlighted_rows[r][1] is None else self.highlighted_rows[r][1]
             
         elif dcol in self.highlighted_cols and (r, c) not in selected_cells and r not in actual_selected_rows and c not in actual_selected_cols:
-            self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = self.highlighted_cols[dcol][0], outline = "", tag = "hi")
+            if self.highlighted_cols[dcol][0] is not None:
+                self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = self.highlighted_cols[dcol][0], outline = "", tag = "hi")
             tf = self.table_fg if self.highlighted_cols[dcol][1] is None else self.highlighted_cols[dcol][1]
         
         # ________________________ CELL IS JUST SELECTED ________________________
