@@ -1,3 +1,6 @@
+### Version 4.8.8
+ - Fix bug with `highlight` functions where `fg` is set but not `bg`
+
 ### Version 4.8.7
  - Fix delete key bug
 
