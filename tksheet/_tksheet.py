@@ -820,6 +820,14 @@ class Sheet(tk.Frame):
         self.MT.del_row_position(idx = idx,
                                  deselect_all = deselect_all,
                                  preserve_other_selections = preserve_other_selections)
+        self.MT.highlighted_cells = {t1: t2 for t1, t2 in self.MT.highlighted_cells.items() if t1[0] != idx}
+        if idx in self.MT.highlighted_rows:
+            del self.MT.highlighted_rows[idx]
+        if idx in self.RI.highlighted_cells:
+            del self.RI.highlighted_cells[idx]
+        self.MT.highlighted_cells = {(rn if rn < idx else rn - 1, cn): t2 for (rn, cn), t2 in self.MT.highlighted_cells.items()}
+        self.MT.highlighted_rows = {rn if rn < idx else rn - 1: t for rn, t in self.MT.highlighted_rows.items()}
+        self.RI.highlighted_cells = {rn if rn < idx else rn - 1: t for rn, t in self.RI.highlighted_cells.items()}
 
     def insert_row_position(self, idx = "end", height = None, deselect_all = False, preserve_other_selections = False, redraw = False):
         self.MT.insert_row_position(idx = idx,
@@ -902,6 +910,14 @@ class Sheet(tk.Frame):
         self.MT.del_col_position(idx,
                                  deselect_all = deselect_all,
                                  preserve_other_selections = preserve_other_selections)
+        self.MT.highlighted_cells = {t1: t2 for t1, t2 in self.MT.highlighted_cells.items() if t1[1] != idx}
+        if idx in self.MT.highlighted_rows:
+            del self.MT.highlighted_cols[idx]
+        if idx in self.CH.highlighted_cells:
+            del self.CH.highlighted_cells[idx]
+        self.MT.highlighted_cells = {(rn, cn if cn < idx else cn - 1): t2 for (rn, cn), t2 in self.MT.highlighted_cells.items()}
+        self.MT.highlighted_cols = {cn if cn < idx else cn - 1: t for cn, t in self.MT.highlighted_cols.items()}
+        self.CH.highlighted_cells = {cn if cn < idx else cn - 1: t for cn, t in self.CH.highlighted_cells.items()}
 
     def insert_column_position(self, idx = "end", width = None, deselect_all = False, preserve_other_selections = False, redraw = False):
         self.MT.insert_col_position(idx = idx,
@@ -1115,6 +1131,13 @@ class Sheet(tk.Frame):
                                   highlight_header = highlight_header,
                                   redraw = redraw)
 
+    def dehighlight_all(self):
+        self.MT.highlighted_cells = {}
+        self.MT.highlighted_rows = {}
+        self.MT.highlighted_cols = {}
+        self.RI.highlighted_cells = {}
+        self.CH.highlighted_cells = {}
+
     def dehighlight_rows(self, rows = [], redraw = False):
         if isinstance(rows, int):
             rows_ = [rows]
@@ -1145,15 +1168,23 @@ class Sheet(tk.Frame):
             columns_ = [columns]
         else:
             columns_ = columns
-        for c in columns_:
-            try:
-                del self.MT.highlighted_cols[c]
-            except:
-                pass
-            try:
-                del self.CH.highlighted_cells[c]
-            except:
-                pass
+        if not columns_ or columns_ == "all":
+            for c in self.MT.highlighted_cols:
+                try:
+                    del self.CH.highlighted_cells[c]
+                except:
+                    pass
+            self.MT.highlighted_cols = {}
+        else:
+            for c in columns_:
+                try:
+                    del self.MT.highlighted_cols[c]
+                except:
+                    pass
+                try:
+                    del self.CH.highlighted_cells[c]
+                except:
+                    pass
         if redraw:
             self.refresh(True, True)
 
@@ -1516,10 +1547,13 @@ class Sheet(tk.Frame):
                        reset_col_positions = True,
                        reset_row_positions = True,
                        redraw = True,
-                       verify = True):
+                       verify = True,
+                       reset_highlights = False):
         if verify:
             if not isinstance(data, list) or not all(isinstance(row, list) for row in data):
                 raise ValueError("data argument must be a list of lists, sublists being rows")
+        if reset_highlights:
+            self.dehighlight_all()
         return self.MT.data_reference(data,
                                       reset_col_positions,
                                       reset_row_positions,
@@ -1624,18 +1658,22 @@ class Sheet(tk.Frame):
             old_total = self.MT.equalize_data_row_lengths()
         else:
             old_total = self.MT.total_data_cols()
+        if values is None:
+            data = list(repeat("", self.MT.total_data_rows()))
+        else:
+            data = values
         maxidx = len(self.MT.data_ref) - 1
         if add_rows:
             height = self.MT.default_rh[1]
             if idx == "end":
-                for rn, v in enumerate(values):
+                for rn, v in enumerate(data):
                     if rn > maxidx:
                         self.MT.data_ref.append(list(repeat("", old_total)))
                         self.MT.insert_row_position("end", height = height)
                         maxidx += 1
                     self.MT.data_ref[rn].append(v)
             else:
-                for rn, v in enumerate(values):
+                for rn, v in enumerate(data):
                     if rn > maxidx:
                         self.MT.data_ref.append(list(repeat("", old_total)))
                         self.MT.insert_row_position("end", height = height)
@@ -1643,17 +1681,20 @@ class Sheet(tk.Frame):
                     self.MT.data_ref[rn].insert(idx, v)
         else:
             if idx == "end":
-                for rn, v in enumerate(values):
+                for rn, v in enumerate(data):
                     if rn > maxidx:
                         break
                     self.MT.data_ref[rn].append(v)
             else:
-                for rn, v in enumerate(values):
+                for rn, v in enumerate(data):
                     if rn > maxidx:
                         break
                     self.MT.data_ref[rn].insert(idx, v)
+        self.MT.highlighted_cells = {(rn, cn if cn < idx else cn + 1): t2 for (rn, cn), t2 in self.MT.highlighted_cells.items()}
+        self.MT.highlighted_cols = {cn if cn < idx else cn + 1: t for cn, t in self.MT.highlighted_cols.items()}
+        self.CH.highlighted_cells = {cn if cn < idx else cn + 1: t for cn, t in self.CH.highlighted_cells.items()}
 
-    def insert_columns(self, columns = None, idx = "end", widths = None, deselect_all = False, preserve_other_selections = False, add_rows = True, equalize_data_row_lengths = True):
+    def insert_columns(self, columns = 1, idx = "end", widths = None, deselect_all = False, preserve_other_selections = False, add_rows = True, equalize_data_row_lengths = True):
         self.MT.insert_col_positions(idx = idx,
                                      widths = widths,
                                      deselect_all = deselect_all,
@@ -1662,11 +1703,16 @@ class Sheet(tk.Frame):
             old_total = self.MT.equalize_data_row_lengths()
         else:
             old_total = self.MT.total_data_cols()
+        if isinstance(columns, int):
+            total_rows = self.MT.total_data_rows()
+            data = list(repeat(list(repeat("", total_rows)), columns))
+        else:
+            data = columns
         maxidx = len(self.MT.data_ref) - 1
         if add_rows:
             height = self.MT.default_rh[1]
             if idx == "end":
-                for values in columns:
+                for values in data:
                     for rn, v in enumerate(values):
                         if rn > maxidx:
                             self.MT.data_ref.append(list(repeat("", old_total)))
@@ -1674,7 +1720,7 @@ class Sheet(tk.Frame):
                             maxidx += 1
                         self.MT.data_ref[rn].append(v)
             else:
-                for values in columns:
+                for values in data:
                     for rn, v in enumerate(values):
                         if rn > maxidx:
                             self.MT.data_ref.append(list(repeat("", old_total)))
@@ -1683,15 +1729,21 @@ class Sheet(tk.Frame):
                         self.MT.data_ref[rn].insert(idx, v)
         else:
             if idx == "end":
-                for rn, v in enumerate(values):
-                    if rn > maxidx:
-                        break
-                    self.MT.data_ref[rn].append(v)
+                for values in data:
+                    for rn, v in enumerate(values):
+                        if rn > maxidx:
+                            break
+                        self.MT.data_ref[rn].append(v)
             else:
-                for rn, v in enumerate(values):
-                    if rn > maxidx:
-                        break
-                    self.MT.data_ref[rn].insert(idx, v)
+                for values in data:
+                    for rn, v in enumerate(values):
+                        if rn > maxidx:
+                            break
+                        self.MT.data_ref[rn].insert(idx, v)
+        num_add = len(data)
+        self.MT.highlighted_cells = {(rn, cn if cn < idx else cn + num_add): t2 for (rn, cn), t2 in self.MT.highlighted_cells.items()}
+        self.MT.highlighted_cols = {cn if cn < idx else cn + num_add: t for cn, t in self.MT.highlighted_cols.items()}
+        self.CH.highlighted_cells = {cn if cn < idx else cn + num_add: t for cn, t in self.CH.highlighted_cells.items()}
 
     def set_row_data(self, r, values = tuple(), add_columns = True):
         if len(self.MT.data_ref) - 1 < r:
@@ -1741,6 +1793,9 @@ class Sheet(tk.Frame):
             self.MT.data_ref.append(data)
         else:
             self.MT.data_ref.insert(idx, data)
+            self.MT.highlighted_cells = {(rn if rn < idx else rn + 1, cn): t2 for (rn, cn), t2 in self.MT.highlighted_cells.items()}
+            self.MT.highlighted_rows = {rn if rn < idx else rn + 1: t for rn, t in self.MT.highlighted_rows.items()}
+            self.RI.highlighted_cells = {rn if rn < idx else rn + 1: t for rn, t in self.RI.highlighted_cells.items()}
 
     def insert_rows(self, rows = 1, idx = "end", heights = None, deselect_all = False, preserve_other_selections = False, add_columns = True):
         self.MT.insert_row_positions(idx = idx,
@@ -1750,7 +1805,7 @@ class Sheet(tk.Frame):
         total_cols = None
         if isinstance(rows, int):
             total_cols = self.MT.total_data_cols()
-            data = list(repeat("", total_cols))
+            data = list(repeat(list(repeat("", total_cols)), rows))
         elif isinstance(rows, list):
             data = rows
         else:
@@ -1767,11 +1822,15 @@ class Sheet(tk.Frame):
                 if not self.MT.col_positions:
                     self.MT.col_positions = [0]
                 if data_max_cols > len(self.MT.col_positions) - 1:
-                    self.insert_column_positions("end", len(data) - (len(self.MT.col_positions) - 1))
+                    self.insert_column_positions("end", data_max_cols - (len(self.MT.col_positions) - 1))
         if isinstance(idx, str) and idx.lower() == "end":
             self.MT.data_ref.extend(data)
         else:
             self.MT.data_ref[idx:idx] = data
+            num_add = len(data)
+            self.MT.highlighted_cells = {(rn if rn < idx else rn + num_add, cn): t2 for (rn, cn), t2 in self.MT.highlighted_cells.items()}
+            self.MT.highlighted_rows = {rn if rn < idx else rn + num_add: t for rn, t in self.MT.highlighted_rows.items()}
+            self.RI.highlighted_cells = {rn if rn < idx else rn + num_add: t for rn, t in self.RI.highlighted_cells.items()}
 
     def sheet_data_dimensions(self, total_rows = None, total_columns = None):
         self.MT.data_dimensions(total_rows, total_columns)
