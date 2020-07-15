@@ -2510,6 +2510,9 @@ class MainTable(tk.Canvas):
                                   widths = numcols,
                                   deselect_all = True,
                                   preserve_other_selections = False)
+        self.highlighted_cells = {(rn, cn if cn < posidx else cn + numcols): t2 for (rn, cn), t2 in self.highlighted_cells.items()}
+        self.highlighted_cols = {cn if cn < posidx else cn + numcols: t for cn, t in self.highlighted_cols.items()}
+        self.CH.highlighted_cells = {cn if cn < posidx else cn + numcols: t for cn, t in self.CH.highlighted_cells.items()}
         if self.my_hdrs and isinstance(self.my_hdrs, list):
             try:
                 self.my_hdrs[stidx:stidx] = list(repeat("", numcols))
@@ -2551,6 +2554,9 @@ class MainTable(tk.Canvas):
                                   heights = numrows,
                                   deselect_all = True,
                                   preserve_other_selections = False)
+        self.highlighted_cells = {(rn if rn < posidx else rn + numrows, cn): t2 for (rn, cn), t2 in self.highlighted_cells.items()}
+        self.highlighted_rows = {rn if rn < posidx else rn + numrows: t for rn, t in self.highlighted_rows.items()}
+        self.RI.highlighted_cells = {rn if rn < posidx else rn + numrows: t for rn, t in self.RI.highlighted_cells.items()}
         if self.my_row_index and isinstance(self.my_row_index, list):
             try:
                 self.my_row_index[stidx:stidx] = list(repeat("", numrows))
@@ -2642,6 +2648,15 @@ class MainTable(tk.Canvas):
                 self.del_col_position(c,
                                       deselect_all = False,
                                       preserve_other_selections = False)
+                if c in self.highlighted_cols:
+                    del self.highlighted_cols[c]
+                if c in self.CH.highlighted_cells:
+                    del self.CH.highlighted_cells[c]
+            numcols = len(seld_cols)
+            idx = seld_cols[-1]
+            self.highlighted_cells = {(rn, cn if cn < idx else cn - numcols): t2 for (rn, cn), t2 in self.highlighted_cells.items()}
+            self.highlighted_cols = {cn if cn < idx else cn - numcols: t for cn, t in self.highlighted_cols.items()}
+            self.CH.highlighted_cells = {cn if cn < idx else cn - numcols: t for cn, t in self.CH.highlighted_cells.items()}
             if self.undo_enabled:
                 self.undo_storage.append(zlib.compress(pickle.dumps(("delete_cols", undo_storage))))
             self.deselect("allcols", redraw = False)
@@ -2683,6 +2698,15 @@ class MainTable(tk.Canvas):
                 self.del_row_position(r,
                                       deselect_all = False,
                                       preserve_other_selections = False)
+                if r in self.highlighted_rows:
+                    del self.highlighted_rows[r]
+                if r in self.RI.highlighted_cells:
+                    del self.RI.highlighted_cells[r]
+            numrows = len(seld_rows)
+            idx = seld_rows[-1]
+            self.highlighted_cells = {(rn if rn < idx else rn - numrows, cn): t2 for (rn, cn), t2 in self.highlighted_cells.items()}
+            self.highlighted_rows = {rn if rn < idx else rn - numrows: t for rn, t in self.highlighted_rows.items()}
+            self.RI.highlighted_cells = {rn if rn < idx else rn - numrows: t for rn, t in self.RI.highlighted_cells.items()}
             self.deselect("allrows", redraw = False)
             self.set_current_to_last()
             self.refresh()

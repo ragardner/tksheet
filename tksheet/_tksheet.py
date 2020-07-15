@@ -911,7 +911,7 @@ class Sheet(tk.Frame):
                                  deselect_all = deselect_all,
                                  preserve_other_selections = preserve_other_selections)
         self.MT.highlighted_cells = {t1: t2 for t1, t2 in self.MT.highlighted_cells.items() if t1[1] != idx}
-        if idx in self.MT.highlighted_rows:
+        if idx in self.MT.highlighted_cols:
             del self.MT.highlighted_cols[idx]
         if idx in self.CH.highlighted_cells:
             del self.CH.highlighted_cells[idx]
