@@ -1712,7 +1712,7 @@ class Sheet(tk.Frame):
         if add_rows:
             height = self.MT.default_rh[1]
             if idx == "end":
-                for values in data:
+                for values in reversed(data):
                     for rn, v in enumerate(values):
                         if rn > maxidx:
                             self.MT.data_ref.append(list(repeat("", old_total)))
@@ -1720,7 +1720,7 @@ class Sheet(tk.Frame):
                             maxidx += 1
                         self.MT.data_ref[rn].append(v)
             else:
-                for values in data:
+                for values in reversed(data):
                     for rn, v in enumerate(values):
                         if rn > maxidx:
                             self.MT.data_ref.append(list(repeat("", old_total)))
@@ -1729,13 +1729,13 @@ class Sheet(tk.Frame):
                         self.MT.data_ref[rn].insert(idx, v)
         else:
             if idx == "end":
-                for values in data:
+                for values in reversed(data):
                     for rn, v in enumerate(values):
                         if rn > maxidx:
                             break
                         self.MT.data_ref[rn].append(v)
             else:
-                for values in data:
+                for values in reversed(data):
                     for rn, v in enumerate(values):
                         if rn > maxidx:
                             break

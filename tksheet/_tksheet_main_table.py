@@ -802,6 +802,17 @@ class MainTable(tk.Canvas):
                                        undo_storage[1]['numrows'],
                                        deselect_all = False,
                                        preserve_other_selections = False)
+                for r in range(undo_storage[1]['sheet_row_num'],
+                               undo_storage[1]['sheet_row_num'] + undo_storage[1]['numrows']):
+                    if r in self.highlighted_rows:
+                        del self.highlighted_rows[r]
+                    if r in self.RI.highlighted_cells:
+                        del self.RI.highlighted_cells[r]
+                numrows = undo_storage[1]['numrows']
+                idx = undo_storage[1]['sheet_row_num'] + undo_storage[1]['numrows']
+                self.highlighted_cells = {(rn if rn < idx else rn - numrows, cn): t2 for (rn, cn), t2 in self.highlighted_cells.items()}
+                self.highlighted_rows = {rn if rn < idx else rn - numrows: t for rn, t in self.highlighted_rows.items()}
+                self.RI.highlighted_cells = {rn if rn < idx else rn - numrows: t for rn, t in self.RI.highlighted_cells.items()}
                 if len(self.row_positions) > 1:
                     start_row = undo_storage[1]['sheet_row_num'] if undo_storage[1]['sheet_row_num'] < len(self.row_positions) - 1 else undo_storage[1]['sheet_row_num'] - 1
                     self.RI.select_row(start_row)
@@ -819,17 +830,28 @@ class MainTable(tk.Canvas):
                                        undo_storage[1]['numcols'],
                                        deselect_all = False,
                                        preserve_other_selections = False)
+                for c in range(undo_storage[1]['sheet_col_num'],
+                               undo_storage[1]['sheet_col_num'] + undo_storage[1]['numcols']):
+                    if c in self.highlighted_cols:
+                        del self.highlighted_cols[c]
+                    if c in self.CH.highlighted_cells:
+                        del self.CH.highlighted_cells[c]
+                numcols = undo_storage[1]['numcols']
+                idx = undo_storage[1]['sheet_col_num'] + undo_storage[1]['numcols']
+                self.highlighted_cells = {(rn, cn if cn < idx else cn - numcols): t2 for (rn, cn), t2 in self.highlighted_cells.items()}
+                self.highlighted_cols = {cn if cn < idx else cn - numcols: t for cn, t in self.highlighted_cols.items()}
+                self.CH.highlighted_cells = {cn if cn < idx else cn - numcols: t for cn, t in self.CH.highlighted_cells.items()}
                 if len(self.col_positions) > 1:
                     start_col = undo_storage[1]['sheet_col_num'] if undo_storage[1]['sheet_col_num'] < len(self.col_positions) - 1 else undo_storage[1]['sheet_col_num'] - 1
                     self.CH.select_col(start_col)
                     self.see(r = 0, c = start_col, keep_yscroll = False, keep_xscroll = False, bottom_right_corner = False, check_cell_visibility = True, redraw = False)
             elif undo_storage[0] == "delete_rows":
-                start_row = float("inf")
                 for rn, r, h in reversed(undo_storage[1]['deleted_rows']):
                     self.data_ref.insert(rn, r)
                     self.insert_row_position(idx = rn, height = h)
-                    if rn < start_row:
-                        start_row = rn
+                self.highlighted_cells = undo_storage[1]['highlighted_cells']
+                self.highlighted_rows = undo_storage[1]['highlighted_rows']
+                self.RI.highlighted_cells = undo_storage[1]['RI_highlighted_cells']
                 for rn, r in reversed(undo_storage[1]['deleted_index_values']):
                     try:
                         self.my_row_index.insert(rn, r)
@@ -837,11 +859,11 @@ class MainTable(tk.Canvas):
                         continue
                 self.reselect_from_get_boxes(undo_storage[1]['selection_boxes'])
             elif undo_storage[0] == "delete_cols":
-                start_col = float("inf")
+                self.highlighted_cells = undo_storage[1]['highlighted_cells']
+                self.highlighted_cols = undo_storage[1]['highlighted_cols']
+                self.CH.highlighted_cells = undo_storage[1]['CH_highlighted_cells']
                 for cn, w in reversed(tuple(undo_storage[1]['colwidths'].items())):
                     self.insert_col_position(idx = cn, width = w)
-                    if cn < start_col:
-                        start_col = cn
                 for cn, rowdict in reversed(tuple(undo_storage[1]['deleted_cols'].items())):
                     for rn, v in rowdict.items():
                         try:
@@ -2589,7 +2611,10 @@ class MainTable(tk.Canvas):
                 undo_storage = {'deleted_cols': {},
                                 'colwidths': {},
                                 'deleted_hdr_values': {},
-                                'selection_boxes': self.get_boxes()}
+                                'selection_boxes': self.get_boxes(),
+                                'highlighted_cells': self.highlighted_cells,
+                                'highlighted_cols': self.highlighted_cols,
+                                'CH_highlighted_cells': self.CH.highlighted_cells}
             if self.all_columns_displayed:
                 if self.undo_enabled:
                     for c in reversed(seld_cols):
@@ -2644,6 +2669,8 @@ class MainTable(tk.Canvas):
                                 del self.my_hdrs[self.displayed_columns[c]]
                             except:
                                 continue
+            if self.undo_enabled:
+                self.undo_storage.append(zlib.compress(pickle.dumps(("delete_cols", undo_storage))))
             for c in reversed(seld_cols):
                 self.del_col_position(c,
                                       deselect_all = False,
@@ -2657,8 +2684,6 @@ class MainTable(tk.Canvas):
             self.highlighted_cells = {(rn, cn if cn < idx else cn - numcols): t2 for (rn, cn), t2 in self.highlighted_cells.items()}
             self.highlighted_cols = {cn if cn < idx else cn - numcols: t for cn, t in self.highlighted_cols.items()}
             self.CH.highlighted_cells = {cn if cn < idx else cn - numcols: t for cn, t in self.CH.highlighted_cells.items()}
-            if self.undo_enabled:
-                self.undo_storage.append(zlib.compress(pickle.dumps(("delete_cols", undo_storage))))
             self.deselect("allcols", redraw = False)
             self.set_current_to_last()
             self.refresh()
@@ -2673,7 +2698,10 @@ class MainTable(tk.Canvas):
             if self.undo_enabled:
                 undo_storage = {'deleted_rows': [],
                                 'deleted_index_values': [],
-                                'selection_boxes': self.get_boxes()}                                                       
+                                'selection_boxes': self.get_boxes(),
+                                'highlighted_cells': self.highlighted_cells,
+                                'highlighted_rows': self.highlighted_rows,
+                                'RI_highlighted_cells': self.RI.highlighted_cells}
                 for r in reversed(seld_rows):
                     undo_storage['deleted_rows'].append((r, self.data_ref.pop(r), self.row_positions[r + 1] - self.row_positions[r]))
             else:
