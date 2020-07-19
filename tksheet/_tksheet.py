@@ -942,6 +942,7 @@ class Sheet(tk.Frame):
         self.MT.move_col_position(column, moveto)
         for rn in range(len(self.MT.data_ref)):
             self.MT.data_ref[rn].insert(moveto, self.MT.data_ref[rn].pop(column))
+        
 
     def create_text_editor(self, row = 0, column = 0, text = None, state = "normal", see = True, set_data_ref_on_destroy = False,
                            binding = None):

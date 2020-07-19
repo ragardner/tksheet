@@ -690,8 +690,8 @@ class MainTable(tk.Canvas):
                 rhs = [int(b - a) for a, b in zip(self.row_positions, islice(self.row_positions, 1, len(self.row_positions)))]
                 ins_row = undo_storage[1]
                 orig_ins_row = int(ins_row)
-                rm1start = undo_storage[2][0]
-                rm1end = undo_storage[2][1] + 1
+                rm1start = undo_storage[2]
+                rm1end = undo_storage[3] + 1
                 rm2start = rm1start + (rm1end - rm1start)
                 rm2end = rm1end + (rm1end - rm1start)
                 totalrows = rm1end - rm1start
@@ -721,6 +721,9 @@ class MainTable(tk.Canvas):
                             self.my_row_index[rm1start:rm1end] = []
                         except:
                             pass
+                self.highlighted_cells = undo_storage[4]
+                self.highlighted_rows = undo_storage[5]
+                self.RI.highlighted_cells = undo_storage[6]
                 if rm1start > ins_row:
                     rhs[ins_row:ins_row] = rhs[rm1start:rm1end]
                     rhs[rm2start:rm2end] = []
@@ -738,8 +741,8 @@ class MainTable(tk.Canvas):
                 cws = [int(b - a) for a, b in zip(self.col_positions, islice(self.col_positions, 1, len(self.col_positions)))]
                 ins_col = undo_storage[1]
                 orig_ins_col = int(ins_col)
-                rm1start = undo_storage[2][0]
-                rm1end = undo_storage[2][1] + 1
+                rm1start = undo_storage[2]
+                rm1end = undo_storage[3] + 1
                 rm2start = rm1start + (rm1end - rm1start)
                 rm2end = rm1end + (rm1end - rm1start)
                 totalcols = rm1end - rm1start
@@ -779,6 +782,9 @@ class MainTable(tk.Canvas):
                     else:
                         self.displayed_columns[ins_col:ins_col] = self.displayed_columns[rm1start:rm1end]
                         self.displayed_columns[rm1start:rm1end] = []
+                self.highlighted_cells = undo_storage[4]
+                self.highlighted_cols = undo_storage[5]
+                self.CH.highlighted_cells = undo_storage[6]
                 if rm1start > ins_col:
                     cws[ins_col:ins_col] = cws[rm1start:rm1end]
                     cws[rm2start:rm2end] = []

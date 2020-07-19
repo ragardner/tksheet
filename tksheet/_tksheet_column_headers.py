@@ -539,7 +539,45 @@ class ColumnHeaders(tk.Canvas):
                         self.MT.create_selected(0, c_ + 1 - totalcols, len(self.MT.row_positions) - 1, c_ + 1, "cols")
                 self.MT.create_current(0, int(new_selected[0]), type_ = "col", inside = True)
                 if self.MT.undo_enabled:
-                    self.MT.undo_storage.append(zlib.compress(pickle.dumps(("move_cols", int(orig_selected_cols[0]), (int(new_selected[0]), int(new_selected[-1]))))))
+                    self.MT.undo_storage.append(zlib.compress(pickle.dumps(("move_cols",
+                                                                            int(orig_selected_cols[0]),
+                                                                            int(new_selected[0]),
+                                                                             int(new_selected[-1]),
+                                                                             self.MT.highlighted_cells,
+                                                                             self.MT.highlighted_cols,
+                                                                             self.highlighted_cells))))
+                colset = set(colsiter)
+                popped_ch_highlights = {t1: t2 for t1, t2 in self.highlighted_cells.items() if t1 in colset}
+                popped_cell_highlights = {t1: t2 for t1, t2 in self.MT.highlighted_cells.items() if t1[1] in colset}
+                popped_col_highlights = {t1: t2 for t1, t2 in self.MT.highlighted_cols.items() if t1 in colset}
+                
+                popped_ch_highlights = {t1: self.highlighted_cells.pop(t1) for t1 in popped_ch_highlights}
+                popped_cell_highlights = {t1: self.MT.highlighted_cells.pop(t1) for t1 in popped_cell_highlights}
+                popped_col_highlights = {t1: self.MT.highlighted_cols.pop(t1) for t1 in popped_col_highlights}
+
+                self.highlighted_cells = {t1 if t1 < rm1start else t1 - totalcols: t2 for t1, t2 in self.highlighted_cells.items()}
+                self.highlighted_cells = {t1 if t1 < c_ else t1 + totalcols: t2 for t1, t2 in self.highlighted_cells.items()}
+
+                self.MT.highlighted_cols = {t1 if t1 < rm1start else t1 - totalcols: t2 for t1, t2 in self.MT.highlighted_cols.items()}
+                self.MT.highlighted_cols = {t1 if t1 < c_ else t1 + totalcols: t2 for t1, t2 in self.MT.highlighted_cols.items()}
+
+                self.MT.highlighted_cells = {(t10, t11 if t11 < rm1start else t11 - totalcols): t2 for (t10, t11), t2 in self.MT.highlighted_cells.items()}
+                self.MT.highlighted_cells = {(t10, t11 if t11 < c_ else t11 + totalcols): t2 for (t10, t11), t2 in self.MT.highlighted_cells.items()}
+
+
+                if popped_ch_highlights:
+                    for t1, t2 in zip(colsiter, new_selected):
+                        self.highlighted_cells[t2] = popped_ch_highlights[t1]
+
+                if popped_col_highlights:
+                    for t1, t2 in zip(colsiter, new_selected):
+                        self.MT.highlighted_cols[t2] = popped_col_highlights[t1]
+
+                if popped_cell_highlights:
+                    newcolsdct = {t1: t2 for t1, t2 in zip(colsiter, new_selected)}
+                    for (t10, t11), t2 in popped_cell_highlights.items():
+                        self.MT.highlighted_cells[(t10, newcolsdct[t11])] = t2
+                
                 self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
                 if self.ch_extra_end_drag_drop_func is not None:
                     self.ch_extra_end_drag_drop_func(("end_column_header_drag_drop", tuple(orig_selected_cols), new_selected, int(c)))

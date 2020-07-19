@@ -579,7 +579,46 @@ class RowIndex(tk.Canvas):
                         self.MT.create_selected(r_ + 1 - totalrows, 0, r_ + 1, len(self.MT.col_positions) - 1, "rows")
                 self.MT.create_current(int(new_selected[0]), 0, type_ = "row", inside = True)
                 if self.MT.undo_enabled:
-                    self.MT.undo_storage.append(zlib.compress(pickle.dumps(("move_rows", min(orig_selected_rows), (new_selected[0], new_selected[-1])))))
+                    self.MT.undo_storage.append(zlib.compress(pickle.dumps(("move_rows",
+                                                                            min(orig_selected_rows),
+                                                                            new_selected[0],
+                                                                            new_selected[-1],
+                                                                            self.MT.highlighted_cells,
+                                                                            self.MT.highlighted_rows,
+                                                                            self.highlighted_cells))))
+                
+                rowset = set(rowsiter)
+                popped_ri_highlights = {t1: t2 for t1, t2 in self.highlighted_cells.items() if t1 in rowset}
+                popped_cell_highlights = {t1: t2 for t1, t2 in self.MT.highlighted_cells.items() if t1[0] in rowset}
+                popped_row_highlights = {t1: t2 for t1, t2 in self.MT.highlighted_rows.items() if t1 in rowset}
+                
+                popped_ri_highlights = {t1: self.highlighted_cells.pop(t1) for t1 in popped_ri_highlights}
+                popped_cell_highlights = {t1: self.MT.highlighted_cells.pop(t1) for t1 in popped_cell_highlights}
+                popped_row_highlights = {t1: self.MT.highlighted_rows.pop(t1) for t1 in popped_row_highlights}
+
+                self.highlighted_cells = {t1 if t1 < rm1start else t1 - totalrows: t2 for t1, t2 in self.highlighted_cells.items()}
+                self.highlighted_cells = {t1 if t1 < r_ else t1 + totalrows: t2 for t1, t2 in self.highlighted_cells.items()}
+
+                self.MT.highlighted_rows = {t1 if t1 < rm1start else t1 - totalrows: t2 for t1, t2 in self.MT.highlighted_rows.items()}
+                self.MT.highlighted_rows = {t1 if t1 < r_ else t1 + totalrows: t2 for t1, t2 in self.MT.highlighted_rows.items()}
+
+                self.MT.highlighted_cells = {(t10 if t10 < rm1start else t10 - totalrows, t11): t2 for (t10, t11), t2 in self.MT.highlighted_cells.items()}
+                self.MT.highlighted_cells = {(t10 if t10 < r_ else t10 + totalrows, t11): t2 for (t10, t11), t2 in self.MT.highlighted_cells.items()}
+
+
+                if popped_ri_highlights:
+                    for t1, t2 in zip(rowsiter, new_selected):
+                        self.highlighted_cells[t2] = popped_ri_highlights[t1]
+
+                if popped_row_highlights:
+                    for t1, t2 in zip(rowsiter, new_selected):
+                        self.MT.highlighted_rows[t2] = popped_row_highlights[t1]
+
+                if popped_cell_highlights:
+                    newrowsdct = {t1: t2 for t1, t2 in zip(rowsiter, new_selected)}
+                    for (t10, t11), t2 in popped_cell_highlights.items():
+                        self.MT.highlighted_cells[(newrowsdct[t10], t11)] = t2
+
                 self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
                 if self.ri_extra_end_drag_drop_func is not None:
                     self.ri_extra_end_drag_drop_func(("end_row_index_drag_drop", tuple(orig_selected_rows), new_selected, int(r)))
