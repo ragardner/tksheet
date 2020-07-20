@@ -586,7 +586,6 @@ class RowIndex(tk.Canvas):
                                                                             self.MT.highlighted_cells,
                                                                             self.MT.highlighted_rows,
                                                                             self.highlighted_cells))))
-                
                 rowset = set(rowsiter)
                 popped_ri_highlights = {t1: t2 for t1, t2 in self.highlighted_cells.items() if t1 in rowset}
                 popped_cell_highlights = {t1: t2 for t1, t2 in self.MT.highlighted_cells.items() if t1[0] in rowset}
@@ -604,7 +603,6 @@ class RowIndex(tk.Canvas):
 
                 self.MT.highlighted_cells = {(t10 if t10 < rm1start else t10 - totalrows, t11): t2 for (t10, t11), t2 in self.MT.highlighted_cells.items()}
                 self.MT.highlighted_cells = {(t10 if t10 < r_ else t10 + totalrows, t11): t2 for (t10, t11), t2 in self.MT.highlighted_cells.items()}
-
 
                 if popped_ri_highlights:
                     for t1, t2 in zip(rowsiter, new_selected):

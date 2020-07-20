@@ -2496,7 +2496,10 @@ class MainTable(tk.Canvas):
         else:
             w = widths
         if idx == "end" or len(self.col_positions) == idx + 1:
-            self.col_positions += list(accumulate(chain([self.col_positions[-1] + w[0]], islice(w, 1, None))))
+            if len(w) > 1:
+                self.col_positions += list(accumulate(chain([self.col_positions[-1] + w[0]], islice(w, 1, None))))
+            else:
+                self.col_positions.append(self.col_positions[-1] + w[0])
         else:
             if len(w) > 1:
                 idx += 1
@@ -2516,22 +2519,16 @@ class MainTable(tk.Canvas):
             selcols = self.get_selected_cols()
             numcols = len(selcols)
             stidx = min(selcols)
-            if stidx is None:
-                return
             posidx = int(stidx)
             if not self.all_columns_displayed:
-                stidx = int(self.displayed_columns[posidx])
-                self.displayed_columns = [e + 1 if i >= posidx else e for i, e in enumerate(self.displayed_columns)]
+                stidx = self.total_data_cols()
                 self.displayed_columns[posidx:posidx] = list(range(stidx, stidx + numcols))
         else:
-            selcols = [0]
             numcols = 1
             stidx = self.total_data_cols()
             posidx = len(self.col_positions) - 1
             if not self.all_columns_displayed:
-                stidx = self.displayed_columns[-1] + 1
-                self.displayed_columns = [e + 1 if i >= self.displayed_columns[-1] else e for i, e in enumerate(self.displayed_columns)]
-                self.displayed_columns.append(int(self.displayed_columns[-1]) + 1)
+                self.displayed_columns.extend(list(range(stidx, stidx + numcols)))
         if self.extra_begin_insert_cols_rc_func is not None:
             self.extra_begin_insert_cols_rc_func(("begin_insert_columns", stidx, posidx, numcols))
         self.insert_col_positions(idx = posidx,
@@ -2800,7 +2797,10 @@ class MainTable(tk.Canvas):
         else:
             h = heights
         if idx == "end" or len(self.row_positions) == idx + 1:
-            self.row_positions += list(accumulate(chain([self.row_positions[-1] + h[0]], islice(h, 1, None))))
+            if len(h) > 1:
+                self.row_positions += list(accumulate(chain([self.row_positions[-1] + h[0]], islice(h, 1, None))))
+            else:
+                self.row_positions.append(self.row_positions[-1] + h[0])
         else:
             if len(h) > 1:
                 idx += 1
@@ -2814,7 +2814,6 @@ class MainTable(tk.Canvas):
                 self.row_positions.insert(idx, self.row_positions[idx - 1] + h)
                 idx += 1
                 self.row_positions[idx:] = [e + h for e in islice(self.row_positions, idx, len(self.row_positions))]
-            
 
     def move_row_position(self, idx1, idx2):
         if not len(self.row_positions) <= 2:

@@ -898,6 +898,33 @@ class Sheet(tk.Frame):
     def move_row(self, row, moveto):
         self.MT.move_row_position(row, moveto)
         self.MT.data_ref.insert(moveto, self.MT.data_ref.pop(row))
+        popped_ri_highlights = {t1: t2 for t1, t2 in self.RI.highlighted_cells.items() if t1 == row}
+        popped_cell_highlights = {t1: t2 for t1, t2 in self.MT.highlighted_cells.items() if t1[0] == row}
+        popped_row_highlights = {t1: t2 for t1, t2 in self.MT.highlighted_rows.items() if t1 == row}
+        
+        popped_ri_highlights = {t1: self.RI.highlighted_cells.pop(t1) for t1 in popped_ri_highlights}
+        popped_cell_highlights = {t1: self.MT.highlighted_cells.pop(t1) for t1 in popped_cell_highlights}
+        popped_row_highlights = {t1: self.MT.highlighted_rows.pop(t1) for t1 in popped_row_highlights}
+
+        self.RI.highlighted_cells = {t1 if t1 < row else t1 - 1: t2 for t1, t2 in self.RI.highlighted_cells.items()}
+        self.RI.highlighted_cells = {t1 if t1 < moveto else t1 + 1: t2 for t1, t2 in self.RI.highlighted_cells.items()}
+
+        self.MT.highlighted_rows = {t1 if t1 < row else t1 - 1: t2 for t1, t2 in self.MT.highlighted_rows.items()}
+        self.MT.highlighted_rows = {t1 if t1 < moveto else t1 + 1: t2 for t1, t2 in self.MT.highlighted_rows.items()}
+
+        self.MT.highlighted_cells = {(t10 if t10 < row else t10 - 1, t11): t2 for (t10, t11), t2 in self.MT.highlighted_cells.items()}
+        self.MT.highlighted_cells = {(t10 if t10 < moveto else t10 + 1, t11): t2 for (t10, t11), t2 in self.MT.highlighted_cells.items()}
+
+        if popped_ri_highlights:
+            self.RI.highlighted_cells[moveto] = popped_ri_highlights[row]
+
+        if popped_row_highlights:
+            self.MT.highlighted_rows[moveto] = popped_row_highlights[row]
+
+        if popped_cell_highlights:
+            newrowsdct = {row: moveto}
+            for (t10, t11), t2 in popped_cell_highlights.items():
+                self.MT.highlighted_cells[(newrowsdct[t10], t11)] = t2
 
     def delete_column_position(self, idx, deselect_all = False, preserve_other_selections = False):
         self.MT.del_col_position(idx,
@@ -942,7 +969,33 @@ class Sheet(tk.Frame):
         self.MT.move_col_position(column, moveto)
         for rn in range(len(self.MT.data_ref)):
             self.MT.data_ref[rn].insert(moveto, self.MT.data_ref[rn].pop(column))
+        popped_ch_highlights = {t1: t2 for t1, t2 in self.CH.highlighted_cells.items() if t1 == column}
+        popped_cell_highlights = {t1: t2 for t1, t2 in self.MT.highlighted_cells.items() if t1[1] == column}
+        popped_col_highlights = {t1: t2 for t1, t2 in self.MT.highlighted_cols.items() if t1 == column}
         
+        popped_ch_highlights = {t1: self.CH.highlighted_cells.pop(t1) for t1 in popped_ch_highlights}
+        popped_cell_highlights = {t1: self.MT.highlighted_cells.pop(t1) for t1 in popped_cell_highlights}
+        popped_col_highlights = {t1: self.MT.highlighted_cols.pop(t1) for t1 in popped_col_highlights}
+
+        self.CH.highlighted_cells = {t1 if t1 < column else t1 - 1: t2 for t1, t2 in self.CH.highlighted_cells.items()}
+        self.CH.highlighted_cells = {t1 if t1 < moveto else t1 + 1: t2 for t1, t2 in self.CH.highlighted_cells.items()}
+
+        self.MT.highlighted_cols = {t1 if t1 < column else t1 - 1: t2 for t1, t2 in self.MT.highlighted_cols.items()}
+        self.MT.highlighted_cols = {t1 if t1 < moveto else t1 + 1: t2 for t1, t2 in self.MT.highlighted_cols.items()}
+
+        self.MT.highlighted_cells = {(t10, t11 if t11 < column else t11 - 1): t2 for (t10, t11), t2 in self.MT.highlighted_cells.items()}
+        self.MT.highlighted_cells = {(t10, t11 if t11 < moveto else t11 + 1): t2 for (t10, t11), t2 in self.MT.highlighted_cells.items()}
+
+        if popped_ch_highlights:
+            self.CH.highlighted_cells[moveto] = popped_ch_highlights[column]
+
+        if popped_col_highlights:
+            self.MT.highlighted_cols[moveto] = popped_col_highlights[column]
+
+        if popped_cell_highlights:
+            newcolsdct = {column: moveto}
+            for (t10, t11), t2 in popped_cell_highlights.items():
+                self.MT.highlighted_cells[(t10, newcolsdct[t11])] = t2
 
     def create_text_editor(self, row = 0, column = 0, text = None, state = "normal", see = True, set_data_ref_on_destroy = False,
                            binding = None):

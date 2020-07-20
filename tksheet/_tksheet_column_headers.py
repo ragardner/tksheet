@@ -564,7 +564,6 @@ class ColumnHeaders(tk.Canvas):
                 self.MT.highlighted_cells = {(t10, t11 if t11 < rm1start else t11 - totalcols): t2 for (t10, t11), t2 in self.MT.highlighted_cells.items()}
                 self.MT.highlighted_cells = {(t10, t11 if t11 < c_ else t11 + totalcols): t2 for (t10, t11), t2 in self.MT.highlighted_cells.items()}
 
-
                 if popped_ch_highlights:
                     for t1, t2 in zip(colsiter, new_selected):
                         self.highlighted_cells[t2] = popped_ch_highlights[t1]
