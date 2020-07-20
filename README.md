@@ -34,7 +34,7 @@ Planned future changes:
  - If it's popular enough or someone is willing to pay for my time I will integrate pandas dataframe
    to save memory when using large dataframes
 
-### Basic Demo:
+### Demonstration of setup and various functions:
 
 ```python
 from tksheet import Sheet
