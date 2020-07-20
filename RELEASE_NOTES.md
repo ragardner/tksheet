@@ -1,8 +1,10 @@
 ### Version 4.8.9
  - Make functions `insert_row()`, `insert_column()`, `delete_row()`, `delete_column()` adjust highlighted cells/rows/columns to maintain correct highlight indexes
+ - Built in right click functions now also auto-update highlighted cells/rows/columns
  - Add argument `reset_highlights` to `set_sheet_data()` default is `False`
  - Add function `dehighlight_all()`
- - Fix some bugs with insert functions
+ - Various bug fixes
+ - Right click insert column when hiding columns has been changed to always insert fresh new columns
 
 ### Version 4.8.8
  - Fix bug with `highlight` functions where `fg` is set but not `bg`
