@@ -4122,7 +4122,7 @@ class MainTable(tk.Canvas):
             self.text_editor.config(height = self.text_editor.winfo_height() + self.xtra_lines_increment)
 
     def get_text_editor_value(self, destroy_tup = None, r = None, c = None, set_data_ref_on_destroy = True, event = None, destroy = True, move_down = True, redraw = True, recreate = True):
-        if self.focus_get() is None:
+        if self.focus_get() is None and destroy_tup:
             return
         if destroy_tup is not None and len(destroy_tup) >= 3 and destroy_tup[2] == "Escape":
             self.destroy_text_editor("Escape")
