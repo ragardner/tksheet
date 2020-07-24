@@ -1750,7 +1750,7 @@ class Sheet(tk.Frame):
 
     def insert_columns(self, columns = 1, idx = "end", widths = None, deselect_all = False, preserve_other_selections = False, add_rows = True, equalize_data_row_lengths = True):
         self.MT.insert_col_positions(idx = idx,
-                                     widths = widths,
+                                     widths = columns if isinstance(columns, int) and widths is None else widths,
                                      deselect_all = deselect_all,
                                      preserve_other_selections = preserve_other_selections)
         if equalize_data_row_lengths:
