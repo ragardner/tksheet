@@ -1,3 +1,7 @@
+### Version 4.9.1
+ - Make alt tab windows maintain open cell edit box
+ - Fix bug in `insert_columns()`
+
 ### Version 4.8.9 - 4.9.0
  - Make functions `insert_row()`, `insert_column()`, `delete_row()`, `delete_column()` adjust highlighted cells/rows/columns to maintain correct highlight indexes
  - Built in right click functions now also auto-update highlighted cells/rows/columns
