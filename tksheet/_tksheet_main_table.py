@@ -1391,82 +1391,64 @@ class MainTable(tk.Canvas):
     def edit_bindings(self, enable = True, key = None):
         if key is None or key == "copy":
             if enable:
-                self.bind("<Control-c>", self.ctrl_c)
-                self.bind("<Control-C>", self.ctrl_c)
-                self.RI.bind("<Control-c>", self.ctrl_c)
-                self.RI.bind("<Control-C>", self.ctrl_c)
-                self.CH.bind("<Control-c>", self.ctrl_c)
-                self.CH.bind("<Control-C>", self.ctrl_c)
+                for s1 in ("Control", "Command"):
+                    for s2 in ("c", "C"):
+                        for widget in (self, self.RI, self.CH):
+                            widget.bind(f"<{s1}-{s2}>", self.ctrl_c)
                 self.copy_enabled = True
             else:
-                self.unbind("<Control-c>")
-                self.unbind("<Control-C>")
-                self.RI.unbind("<Control-c>")
-                self.RI.unbind("<Control-C>")
-                self.CH.unbind("<Control-c>")
-                self.CH.unbind("<Control-C>")
+                for s1 in ("Control", "Command"):
+                    for s2 in ("c", "C"):
+                        for widget in (self, self.RI, self.CH):
+                            widget.unbind(f"<{s1}-{s2}>")
                 self.copy_enabled = False
         if key is None or key == "cut":
             if enable:
-                self.bind("<Control-x>", self.ctrl_x)
-                self.bind("<Control-X>", self.ctrl_x)
-                self.RI.bind("<Control-x>", self.ctrl_x)
-                self.RI.bind("<Control-X>", self.ctrl_x)
-                self.CH.bind("<Control-x>", self.ctrl_x)
-                self.CH.bind("<Control-X>", self.ctrl_x)
+                for s1 in ("Control", "Command"):
+                    for s2 in ("x", "X"):
+                        for widget in (self, self.RI, self.CH):
+                            widget.bind(f"<{s1}-{s2}>", self.ctrl_x)
                 self.cut_enabled = True
             else:
-                self.unbind("<Control-x>")
-                self.unbind("<Control-X>")
-                self.RI.unbind("<Control-x>")
-                self.RI.unbind("<Control-X>")
-                self.CH.unbind("<Control-x>")
-                self.CH.unbind("<Control-X>")
+                for s1 in ("Control", "Command"):
+                    for s2 in ("x", "X"):
+                        for widget in (self, self.RI, self.CH):
+                            widget.unbind(f"<{s1}-{s2}>")
                 self.cut_enabled = False
         if key is None or key == "paste":
             if enable:
-                self.bind("<Control-v>", self.ctrl_v)
-                self.bind("<Control-V>", self.ctrl_v)
-                self.RI.bind("<Control-v>", self.ctrl_v)
-                self.RI.bind("<Control-V>", self.ctrl_v)
-                self.CH.bind("<Control-v>", self.ctrl_v)
-                self.CH.bind("<Control-V>", self.ctrl_v)
+                for s1 in ("Control", "Command"):
+                    for s2 in ("v", "V"):
+                        for widget in (self, self.RI, self.CH):
+                            widget.bind(f"<{s1}-{s2}>", self.ctrl_v)
                 self.paste_enabled = True
             else:
-                self.unbind("<Control-v>")
-                self.unbind("<Control-V>")
-                self.RI.unbind("<Control-v>")
-                self.RI.unbind("<Control-V>")
-                self.CH.unbind("<Control-v>")
-                self.CH.unbind("<Control-V>")
+                for s1 in ("Control", "Command"):
+                    for s2 in ("v", "V"):
+                        for widget in (self, self.RI, self.CH):
+                            widget.unbind(f"<{s1}-{s2}>")
                 self.paste_enabled = False
         if key is None or key == "undo":
             if enable:
+                for s1 in ("Control", "Command"):
+                    for s2 in ("z", "Z"):
+                        for widget in (self, self.RI, self.CH):
+                            widget.bind(f"<{s1}-{s2}>", self.ctrl_z)
                 self.undo_enabled = True
-                self.bind("<Control-z>", self.ctrl_z)
-                self.bind("<Control-Z>", self.ctrl_z)
-                self.RI.bind("<Control-z>", self.ctrl_z)
-                self.RI.bind("<Control-Z>", self.ctrl_z)
-                self.CH.bind("<Control-z>", self.ctrl_z)
-                self.CH.bind("<Control-Z>", self.ctrl_z)
             else:
+                for s1 in ("Control", "Command"):
+                    for s2 in ("z", "Z"):
+                        for widget in (self, self.RI, self.CH):
+                            widget.unbind(f"<{s1}-{s2}>")
                 self.undo_enabled = False
-                self.unbind("<Control-z>")
-                self.unbind("<Control-Z>")
-                self.RI.unbind("<Control-z>")
-                self.RI.unbind("<Control-Z>")
-                self.CH.unbind("<Control-z>")
-                self.CH.unbind("<Control-Z>")
         if key is None or key == "delete":
             if enable:
-                self.bind("<Delete>", self.delete_key)
-                self.RI.bind("<Delete>", self.delete_key)
-                self.CH.bind("<Delete>", self.delete_key)
+                for widget in (self, self.RI, self.CH):
+                    widget.bind("<Delete>", self.delete_key)
                 self.delete_key_enabled = True
             else:
-                self.unbind("<Delete>")
-                self.RI.unbind("<Delete>")
-                self.CH.unbind("<Delete>")
+                for widget in (self, self.RI, self.CH):
+                    widget.unbind("<Delete>")
                 self.delete_key_enabled = False
         if key is None or key == "edit_cell":
             if enable:
@@ -1658,12 +1640,10 @@ class MainTable(tk.Canvas):
             self.single_selection_enabled = True
             self.toggle_selection_enabled = False
             self.drag_selection_enabled = True
-            self.bind("<Control-a>", self.select_all)
-            self.bind("<Control-A>", self.select_all)
-            self.RI.bind("<Control-a>", self.select_all)
-            self.RI.bind("<Control-A>", self.select_all)
-            self.CH.bind("<Control-a>", self.select_all)
-            self.CH.bind("<Control-A>", self.select_all)
+            for s1 in ("Control", "Command"):
+                for s2 in ("a", "A"):
+                    for widget in (self, self.RI, self.CH):
+                        widget.bind(f"<{s1}-{s2}>", self.select_all)
             self.CH.enable_bindings("column_width_resize")
             self.CH.enable_bindings("column_select")
             self.CH.enable_bindings("column_height_resize")
@@ -1692,12 +1672,10 @@ class MainTable(tk.Canvas):
             self.single_selection_enabled = False
         elif binding == "drag_select":
             self.drag_selection_enabled = True
-            self.bind("<Control-a>", self.select_all)
-            self.bind("<Control-A>", self.select_all)
-            self.RI.bind("<Control-a>", self.select_all)
-            self.RI.bind("<Control-A>", self.select_all)
-            self.CH.bind("<Control-a>", self.select_all)
-            self.CH.bind("<Control-A>", self.select_all)
+            for s1 in ("Control", "Command"):
+                for s2 in ("a", "A"):
+                    for widget in (self, self.RI, self.CH):
+                        widget.bind(f"<{s1}-{s2}>", self.select_all)
         elif binding == "column_width_resize":
             self.CH.enable_bindings("column_width_resize")
         elif binding == "column_select":
@@ -1771,12 +1749,10 @@ class MainTable(tk.Canvas):
             self.single_selection_enabled = False
             self.toggle_selection_enabled = False
             self.drag_selection_enabled = False
-            self.unbind("<Control-a>")
-            self.unbind("<Control-A>")
-            self.RI.unbind("<Control-a>")
-            self.RI.unbind("<Control-A>")
-            self.CH.unbind("<Control-a>")
-            self.CH.unbind("<Control-A>")
+            for s1 in ("Control", "Command"):
+                for s2 in ("a", "A"):
+                    for widget in (self, self.RI, self.CH):
+                        widget.unbind(f"<{s1}-{s2}>")
             self.CH.disable_bindings("column_width_resize")
             self.CH.disable_bindings("column_select")
             self.CH.disable_bindings("column_height_resize")
@@ -1803,12 +1779,10 @@ class MainTable(tk.Canvas):
             self.toggle_selection_enabled = False
         elif binding == "drag_select":
             self.drag_selection_enabled = False
-            self.unbind("<Control-a>")
-            self.unbind("<Control-A>")
-            self.RI.unbind("<Control-a>")
-            self.RI.unbind("<Control-A>")
-            self.CH.unbind("<Control-a>")
-            self.CH.unbind("<Control-A>")
+            for s1 in ("Control", "Command"):
+                for s2 in ("a", "A"):
+                    for widget in (self, self.RI, self.CH):
+                        widget.unbind(f"<{s1}-{s2}>")
         elif binding == "column_width_resize":
             self.CH.disable_bindings("column_width_resize")
         elif binding == "column_select":
@@ -2220,15 +2194,26 @@ class MainTable(tk.Canvas):
                                              redraw_header = True if self.show_header else False)
 
     def mousewheel(self, event = None):
-        if event.num == 5 or event.delta == -120:
-            self.yview_scroll(1, "units")
-            self.RI.yview_scroll(1, "units")
-        if event.num == 4 or event.delta == 120:
-            if self.canvasy(0) <= 0:
-                return
-            self.yview_scroll(-1, "units")
-            self.RI.yview_scroll(-1, "units")
-        self.main_table_redraw_grid_and_text(redraw_row_index = True)
+        if event.state:
+            if event.num == 5 or event.delta == -120 or event.delta == -1:
+                self.xview_scroll(1, "units")
+                self.CH.xview_scroll(1, "units")
+            if event.num == 4 or event.delta == 120 or event.delta == 1:
+                if self.canvasx(0) <= 0:
+                    return
+                self.xview_scroll(-1, "units")
+                self.CH.xview_scroll(-1, "units")
+            self.main_table_redraw_grid_and_text(redraw_header = True)
+        else:
+            if event.num == 5 or event.delta == -120:
+                self.yview_scroll(1, "units")
+                self.RI.yview_scroll(1, "units")
+            if event.num == 4 or event.delta == 120:
+                if self.canvasy(0) <= 0:
+                    return
+                self.yview_scroll(-1, "units")
+                self.RI.yview_scroll(-1, "units")
+            self.main_table_redraw_grid_and_text(redraw_row_index = True)
 
     def GetWidthChars(self, width):
         char_w = self.GetTextWidth("_")

@@ -89,23 +89,23 @@ class TextEditor_(tk.Text):
         self.rc_popup_menu.tk_popup(event.x_root, event.y_root)
         
     def select_all(self, event = None):
-        self.event_generate("<Control-a>")
+        self.event_generate("<Command-a>" if is_mac() else "<Control-a>")
         return "break"
     
     def cut(self, event = None):
-        self.event_generate("<Control-x>")
+        self.event_generate("<Command-x>" if is_mac() else "<Control-x>")
         return "break"
     
     def copy(self, event = None):
-        self.event_generate("<Control-c>")
+        self.event_generate("<Command-c>" if is_mac() else "<Control-c>")
         return "break"
     
     def paste(self, event = None):
-        self.event_generate("<Control-v>")
+        self.event_generate("<Command-v>" if is_mac() else "<Control-v>")
         return "break"
 
     def undo(self, event = None):
-        self.event_generate("<Control-z>")
+        self.event_generate("<Command-z>" if is_mac() else "<Control-z>")
         return "break"
 
 
@@ -245,6 +245,12 @@ def get_index_of_gap_in_sorted_integer_seq_reverse(seq, start = 0):
             return idx
         prevn = n
     return None
+
+def is_mac():
+    if f"{get_os()}" == "Darwin":
+        return True
+    else:
+        return False
 
 def get_rc_binding():
         if f"{get_os()}" == "Darwin":
