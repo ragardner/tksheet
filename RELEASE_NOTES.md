@@ -1,3 +1,7 @@
+### Version 4.9.2
+ - Add mac OS command c, x, v, z bindings
+ - Make shift - mousewheel horizontal scroll
+
 ### Version 4.9.1
  - Make alt tab windows maintain open cell edit box
  - Fix bug in `insert_columns()`
