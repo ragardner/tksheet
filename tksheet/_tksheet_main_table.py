@@ -544,12 +544,7 @@ class MainTable(tk.Canvas):
                 data = self.clipboard_get()
             except:
                 return
-            nd = []
-            for r in csv_module.reader(io.StringIO(data), delimiter = "\t", quotechar = '"', skipinitialspace = True):
-                try:
-                    nd.append(r[:len(r) - next(i for i, c in enumerate(reversed(r)) if c)])
-                except:
-                    continue
+            nd = list(csv_module.reader(io.StringIO(data), delimiter = "\t", quotechar = '"', skipinitialspace = True))
             if not nd:
                 return
             data = nd
@@ -2205,10 +2200,10 @@ class MainTable(tk.Canvas):
                 self.CH.xview_scroll(-1, "units")
             self.main_table_redraw_grid_and_text(redraw_header = True)
         else:
-            if event.num == 5 or event.delta == -120:
+            if event.num == 5 or event.delta == -120 or event.delta == -1:
                 self.yview_scroll(1, "units")
                 self.RI.yview_scroll(1, "units")
-            if event.num == 4 or event.delta == 120:
+            if event.num == 4 or event.delta == 120 or event.delta == 1:
                 if self.canvasy(0) <= 0:
                     return
                 self.yview_scroll(-1, "units")
