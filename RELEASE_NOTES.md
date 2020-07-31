@@ -1,3 +1,7 @@
+### Version 4.9.3
+ - Fix paste bug
+ - Fix mac os vertical scroll code
+
 ### Version 4.9.2
  - Add mac OS command c, x, v, z bindings
  - Make shift - mousewheel horizontal scroll
