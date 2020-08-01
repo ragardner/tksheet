@@ -819,6 +819,7 @@ class MainTable(tk.Canvas):
                     self.RI.select_row(start_row)
                     self.see(r = start_row, c = 0, keep_yscroll = False, keep_xscroll = False, bottom_right_corner = False, check_cell_visibility = True, redraw = False)
             elif undo_storage[0] == "insert_col":
+                self.displayed_columns = undo_storage[1]['displayed_columns']
                 qx = undo_storage[1]['data_col_num']
                 qnum = undo_storage[1]['numcols']
                 for rn in range(len(self.data_ref)):
@@ -2498,29 +2499,33 @@ class MainTable(tk.Canvas):
         if self.anything_selected(exclude_rows = True, exclude_cells = True):
             selcols = self.get_selected_cols()
             numcols = len(selcols)
-            stidx = min(selcols)
-            posidx = int(stidx)
-            if not self.all_columns_displayed:
-                stidx = self.total_data_cols()
-                self.displayed_columns[posidx:posidx] = list(range(stidx, stidx + numcols))
+            displayed_ins_col = min(selcols)
+            if self.all_columns_displayed:
+                data_ins_col = int(displayed_ins_col)
+            else:
+                data_ins_col = int(self.displayed_columns[displayed_ins_col])
         else:
             numcols = 1
-            stidx = self.total_data_cols()
-            posidx = len(self.col_positions) - 1
-            if not self.all_columns_displayed:
-                self.displayed_columns.extend(list(range(stidx, stidx + numcols)))
+            displayed_ins_col = len(self.col_positions) - 1
+            data_ins_col = int(displayed_ins_col)
         if self.extra_begin_insert_cols_rc_func is not None:
-            self.extra_begin_insert_cols_rc_func(("begin_insert_columns", stidx, posidx, numcols))
-        self.insert_col_positions(idx = posidx,
+            self.extra_begin_insert_cols_rc_func(("begin_insert_columns", data_ins_col, displayed_ins_col, numcols))
+        if not self.all_columns_displayed:
+            try:
+                disp_next = max(self.displayed_columns) + 1
+            except:
+                disp_next = 0
+            self.displayed_columns.extend(list(range(disp_next, disp_next + numcols)))
+        self.insert_col_positions(idx = displayed_ins_col,
                                   widths = numcols,
                                   deselect_all = True,
                                   preserve_other_selections = False)
-        self.highlighted_cells = {(rn, cn if cn < posidx else cn + numcols): t2 for (rn, cn), t2 in self.highlighted_cells.items()}
-        self.highlighted_cols = {cn if cn < posidx else cn + numcols: t for cn, t in self.highlighted_cols.items()}
-        self.CH.highlighted_cells = {cn if cn < posidx else cn + numcols: t for cn, t in self.CH.highlighted_cells.items()}
+        self.highlighted_cells = {(rn, cn if cn < displayed_ins_col else cn + numcols): t2 for (rn, cn), t2 in self.highlighted_cells.items()}
+        self.highlighted_cols = {cn if cn < displayed_ins_col else cn + numcols: t for cn, t in self.highlighted_cols.items()}
+        self.CH.highlighted_cells = {cn if cn < displayed_ins_col else cn + numcols: t for cn, t in self.CH.highlighted_cells.items()}
         if self.my_hdrs and isinstance(self.my_hdrs, list):
             try:
-                self.my_hdrs[stidx:stidx] = list(repeat("", numcols))
+                self.my_hdrs[data_ins_col:data_ins_col] = list(repeat("", numcols))
             except:
                 pass
         if self.row_positions == [0] and not self.data_ref:
@@ -2531,16 +2536,17 @@ class MainTable(tk.Canvas):
             self.data_ref.append(list(repeat("", numcols)))
         else:
             for rn in range(len(self.data_ref)):
-                self.data_ref[rn][stidx:stidx] = list(repeat("", numcols))
-        self.create_selected(0, posidx, len(self.row_positions) - 1, posidx + numcols, "cols")
-        self.create_current(0, posidx, "col", inside = True)
+                self.data_ref[rn][data_ins_col:data_ins_col] = list(repeat("", numcols))
+        self.create_selected(0, displayed_ins_col, len(self.row_positions) - 1, displayed_ins_col + numcols, "cols")
+        self.create_current(0, displayed_ins_col, "col", inside = True)
         if self.undo_enabled:
-            self.undo_storage.append(zlib.compress(pickle.dumps(("insert_col", {"data_col_num": stidx,
-                                                                                "sheet_col_num": posidx,
+            self.undo_storage.append(zlib.compress(pickle.dumps(("insert_col", {"data_col_num": data_ins_col,
+                                                                                "displayed_columns": self.displayed_columns,
+                                                                                "sheet_col_num": displayed_ins_col,
                                                                                 "numcols": numcols}))))
         self.refresh()
         if self.extra_end_insert_cols_rc_func is not None:
-            self.extra_end_insert_cols_rc_func(("end_insert_columns", stidx, posidx, numcols))
+            self.extra_end_insert_cols_rc_func(("end_insert_columns", data_ins_col, displayed_ins_col, numcols))
 
     def insert_row_rc(self, event = None): #subset of rows
         if self.anything_selected(exclude_columns = True, exclude_cells = True):
@@ -2863,7 +2869,7 @@ class MainTable(tk.Canvas):
         if indexes != self.displayed_columns:
             self.undo_storage = deque(maxlen = self.max_undos)
         if indexes is not None:
-            self.displayed_columns = indexes 
+            self.displayed_columns = sorted(indexes)
         if enable:
             self.all_columns_displayed = False
         else:
@@ -2926,11 +2932,12 @@ class MainTable(tk.Canvas):
             else:
                 return self.my_row_index
 
-    def total_data_cols(self):
+    def total_data_cols(self, exclude_headers = False):
         h_total = 0
         d_total = 0
-        if isinstance(self.my_hdrs, list):
-            h_total = len(self.my_hdrs)
+        if not exclude_headers:
+            if isinstance(self.my_hdrs, list):
+                h_total = len(self.my_hdrs)
         try:
             d_total = len(max(self.data_ref, key = len))
         except:

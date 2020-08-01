@@ -73,7 +73,7 @@ class Sheet(tk.Frame):
                  show_horizontal_grid = True,
                  display_selected_fg_over_highlights = False,
                  show_selected_cells_border = True,
-                 theme = "light blue",
+                 theme                              = "light blue",
                  popup_menu_fg                      = "gray2",
                  popup_menu_bg                      = "#f2f2f2",
                  popup_menu_highlight_bg            = "#91c9f7",
@@ -1895,14 +1895,14 @@ class Sheet(tk.Frame):
     def equalize_data_row_lengths(self):
         return self.MT.equalize_data_row_lengths()
                     
-    def display_subset_of_columns(self,
-                                  indexes = None,
-                                  enable = None,
-                                  reset_col_positions = True,
-                                  set_col_positions = True,
-                                  refresh = False,
-                                  redraw = False,
-                                  deselect_all = True):
+    def displayed_columns(self,
+                          indexes = None,
+                          enable = None,
+                          reset_col_positions = True,
+                          set_col_positions = True,
+                          refresh = False,
+                          redraw = False,
+                          deselect_all = True):
         res = self.MT.display_columns(indexes = indexes,
                                       enable = enable,
                                       reset_col_positions = reset_col_positions,
@@ -1911,23 +1911,12 @@ class Sheet(tk.Frame):
         if refresh or redraw:
             self.refresh()
         return res
+                    
+    def display_subset_of_columns(self, indexes = None, enable = None, reset_col_positions = True, set_col_positions = True, refresh = False, redraw = False, deselect_all = True):
+        return self.displayed_columns(indexes = indexes, enable = enable, reset_col_positions = reset_col_positions, set_col_positions = set_col_positions, refresh = refresh, redraw = redraw, deselect_all = deselect_all)
 
-    def display_columns(self,
-                        indexes = None,
-                        enable = None,
-                        reset_col_positions = True,
-                        set_col_positions = True,
-                        refresh = False,
-                        redraw = False,
-                        deselect_all = True):
-        res = self.MT.display_columns(indexes = indexes,
-                                      enable = enable,
-                                      reset_col_positions = reset_col_positions,
-                                      set_col_positions = set_col_positions,
-                                      deselect_all = deselect_all)
-        if refresh or redraw:
-            self.refresh()
-        return res
+    def display_columns(self, indexes = None, enable = None, reset_col_positions = True, set_col_positions = True, refresh = False, redraw = False, deselect_all = True):
+        return self.displayed_columns(indexes = indexes, enable = enable, reset_col_positions = reset_col_positions, set_col_positions = set_col_positions, refresh = refresh, redraw = redraw, deselect_all = deselect_all)
 
     def show_ctrl_outline(self, canvas = "table", start_cell = (0, 0), end_cell = (1, 1)):
         self.MT.show_ctrl_outline(canvas = canvas, start_cell = start_cell, end_cell = end_cell)
