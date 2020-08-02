@@ -1703,11 +1703,19 @@ class Sheet(tk.Frame):
                     self.MT.data_ref[rn].extend(list(repeat("", c - len(self.MT.data_ref[rn]))))
                 self.MT.data_ref[rn][c] = v
 
-    def insert_column(self, values = None, idx = "end", width = None, deselect_all = False, preserve_other_selections = False, add_rows = True, equalize_data_row_lengths = True):
-        self.MT.insert_col_position(idx = idx,
-                                    width = width,
-                                    deselect_all = deselect_all,
-                                    preserve_other_selections = preserve_other_selections)
+    def insert_column(self, values = None, idx = "end", width = None, deselect_all = False, preserve_other_selections = False, add_rows = True, equalize_data_row_lengths = True,
+                      mod_column_positions = True):
+        if mod_column_positions:
+            self.MT.insert_col_position(idx = idx,
+                                        width = width,
+                                        deselect_all = deselect_all,
+                                        preserve_other_selections = preserve_other_selections)
+            if not self.MT.all_columns_displayed:
+                try:
+                    disp_next = max(self.MT.displayed_columns) + 1
+                except:
+                    disp_next = 0
+                self.MT.displayed_columns.extend(list(range(disp_next, disp_next + 1)))
         if equalize_data_row_lengths:
             old_total = self.MT.equalize_data_row_lengths()
         else:
@@ -1748,11 +1756,13 @@ class Sheet(tk.Frame):
         self.MT.highlighted_cols = {cn if cn < idx else cn + 1: t for cn, t in self.MT.highlighted_cols.items()}
         self.CH.highlighted_cells = {cn if cn < idx else cn + 1: t for cn, t in self.CH.highlighted_cells.items()}
 
-    def insert_columns(self, columns = 1, idx = "end", widths = None, deselect_all = False, preserve_other_selections = False, add_rows = True, equalize_data_row_lengths = True):
-        self.MT.insert_col_positions(idx = idx,
-                                     widths = columns if isinstance(columns, int) and widths is None else widths,
-                                     deselect_all = deselect_all,
-                                     preserve_other_selections = preserve_other_selections)
+    def insert_columns(self, columns = 1, idx = "end", widths = None, deselect_all = False, preserve_other_selections = False, add_rows = True, equalize_data_row_lengths = True,
+                       mod_column_positions = True):
+        if mod_column_positions:
+            self.MT.insert_col_positions(idx = idx,
+                                         widths = columns if isinstance(columns, int) and widths is None else widths,
+                                         deselect_all = deselect_all,
+                                         preserve_other_selections = preserve_other_selections)
         if equalize_data_row_lengths:
             old_total = self.MT.equalize_data_row_lengths()
         else:
@@ -1760,8 +1770,17 @@ class Sheet(tk.Frame):
         if isinstance(columns, int):
             total_rows = self.MT.total_data_rows()
             data = list(repeat(list(repeat("", total_rows)), columns))
+            numcols = columns
         else:
             data = columns
+            numcols = len(columns)
+        if mod_column_positions:
+            if not self.MT.all_columns_displayed:
+                try:
+                    disp_next = max(self.MT.displayed_columns) + 1
+                except:
+                    disp_next = 0
+                self.MT.displayed_columns.extend(list(range(disp_next, disp_next + numcols)))
         maxidx = len(self.MT.data_ref) - 1
         if add_rows:
             height = self.MT.default_rh[1]
