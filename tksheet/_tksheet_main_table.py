@@ -86,6 +86,9 @@ class MainTable(tk.Canvas):
         self.hidd_bord_sels = {}
         self.hidd_resize_lines = {}
 
+        self.max_undos = max_undos
+        self.undo_storage = deque(maxlen = max_undos)
+
         self.page_up_down_select_row = page_up_down_select_row
         self.display_selected_fg_over_highlights = display_selected_fg_over_highlights
         self.centre_alignment_text_mod_indexes = (slice(1, None), slice(None, -1))
@@ -135,15 +138,17 @@ class MainTable(tk.Canvas):
 
         self.extra_begin_insert_rows_rc_func = None
         self.extra_end_insert_rows_rc_func = None
-        
-        self.selection_binding_func = None # function to run when a spreadsheet selection event occurs
-        self.deselection_binding_func = None # function to run when a spreadsheet deselection event occurs
-        self.drag_selection_binding_func = None # function to run when a spreadsheet mouse drag selection event occurs
-        self.shift_selection_binding_func = None # function to run when a spreadsheet shift click selection event occurs
+
+        self.selection_binding_func = None
+        self.deselection_binding_func = None
+        self.drag_selection_binding_func = None
+        self.shift_selection_binding_func = None
         self.select_all_binding_func = None
+
         self.single_selection_enabled = False
+        self.toggle_selection_enabled = False # with this mode every left click adds the cell to selected cells
+
         self.drag_selection_enabled = False
-        self.toggle_selection_enabled = False # with this mode every left click adds the cell to selected cells, work ongoing with this...
         self.arrowkeys_enabled = False
         self.undo_enabled = False
         self.cut_enabled = False
@@ -157,7 +162,8 @@ class MainTable(tk.Canvas):
         self.rc_insert_row_enabled = False
         self.rc_popup_menus_enabled = False
         self.edit_cell_enabled = False
-        self.show_selected_cells_border = show_selected_cells_border # probably best to turn off if using toggle_selection_enabled
+
+        self.show_selected_cells_border = show_selected_cells_border
         self.new_row_width = 0
         self.new_header_height = 0
         self.parentframe = parentframe
@@ -170,30 +176,7 @@ class MainTable(tk.Canvas):
         self.RI.MT = self
         self.RI.CH = column_headers_canvas
         self.TL = None                # is set from within TopLeftRectangle() __init__
-        self.data_ref = data_reference
-        if isinstance(self.data_ref, list):
-            self.data_ref = data_reference
-        else:
-            self.data_ref = []
-        if not self.data_ref:
-            if isinstance(total_rows, int) and isinstance(total_cols, int) and total_rows > 0 and total_cols > 0:
-                self.data_ref = [list(repeat("", total_cols)) for r in range(total_rows)]
-        self.displayed_columns = displayed_columns
-        self.all_columns_displayed = all_columns_displayed
-
-        self.table_grid_fg = table_grid_fg
-        self.table_fg = table_fg
-        self.table_selected_cells_border_fg = table_selected_cells_border_fg
-        self.table_selected_cells_bg = table_selected_cells_bg
-        self.table_selected_cells_fg = table_selected_cells_fg
-        self.table_selected_rows_border_fg = table_selected_rows_border_fg
-        self.table_selected_rows_bg = table_selected_rows_bg
-        self.table_selected_rows_fg = table_selected_rows_fg
-        self.table_selected_columns_border_fg = table_selected_columns_border_fg
-        self.table_selected_columns_bg = table_selected_columns_bg
-        self.table_selected_columns_fg = table_selected_columns_fg
-        self.table_bg = table_bg
-        
+        self.all_columns_displayed = True
         self.align = align
         self.my_font = font
         self.fnt_fam = font[0]
@@ -209,17 +192,20 @@ class MainTable(tk.Canvas):
         self.text_editor = None
         self.text_editor_id = None
         self.default_cw = column_width
-        self.default_rh = (row_height if isinstance(row_height, str) else "pixels", row_height if isinstance(row_height, int) else self.GetLinesHeight(int(row_height)))
-        self.default_hh = (header_height if isinstance(header_height, str) else "pixels", header_height if isinstance(header_height, int) else self.GetHdrLinesHeight(int(header_height)))
+        self.default_rh = (row_height if isinstance(row_height, str) else "pixels",
+                           row_height if isinstance(row_height, int) else self.GetLinesHeight(int(row_height)))
+        self.default_hh = (header_height if isinstance(header_height, str) else "pixels",
+                           header_height if isinstance(header_height, int) else self.GetHdrLinesHeight(int(header_height)))
         self.set_fnt_help()
         self.set_hdr_fnt_help()
-
-        self.popup_menu_font = popup_menu_font
-        self.popup_menu_fg = popup_menu_fg
-        self.popup_menu_bg = popup_menu_bg
-        self.popup_menu_highlight_bg = popup_menu_highlight_bg
-        self.popup_menu_highlight_fg = popup_menu_highlight_fg
-
+        self.data_ref = data_reference
+        if isinstance(self.data_ref, list):
+            self.data_ref = data_reference
+        else:
+            self.data_ref = []
+        if not self.data_ref:
+            if isinstance(total_rows, int) and isinstance(total_cols, int) and total_rows > 0 and total_cols > 0:
+                self.data_ref = list(repeat(list(repeat("", total_cols)), total_rows))
         if isinstance(headers, int):
             self.my_hdrs = headers
         else:
@@ -227,7 +213,6 @@ class MainTable(tk.Canvas):
                 self.my_hdrs = headers
             else:
                 self.my_hdrs = []
-        
         if isinstance(row_index, int):
             self.my_row_index = row_index
         else:
@@ -235,18 +220,46 @@ class MainTable(tk.Canvas):
                 self.my_row_index = row_index
             else:
                 self.my_row_index = []
-
+        self.displayed_columns = []
+        self.hidd_col_expander_idxs = set()
         self.col_positions = [0]
         self.row_positions = [0]
-        self.reset_col_positions()
         self.reset_row_positions()
+        
+        self.display_columns(indexes = displayed_columns,
+                             enable = not all_columns_displayed,
+                             reset_col_positions = False,
+                             set_col_positions = False,
+                             deselect_all = False)
+        self.reset_col_positions()
+
+        self.table_grid_fg = table_grid_fg
+        self.table_fg = table_fg
+        self.table_selected_cells_border_fg = table_selected_cells_border_fg
+        self.table_selected_cells_bg = table_selected_cells_bg
+        self.table_selected_cells_fg = table_selected_cells_fg
+        self.table_selected_rows_border_fg = table_selected_rows_border_fg
+        self.table_selected_rows_bg = table_selected_rows_bg
+        self.table_selected_rows_fg = table_selected_rows_fg
+        self.table_selected_columns_border_fg = table_selected_columns_border_fg
+        self.table_selected_columns_bg = table_selected_columns_bg
+        self.table_selected_columns_fg = table_selected_columns_fg
+        self.table_bg = table_bg
+
+        self.popup_menu_font = popup_menu_font
+        self.popup_menu_fg = popup_menu_fg
+        self.popup_menu_bg = popup_menu_bg
+        self.popup_menu_highlight_bg = popup_menu_highlight_bg
+        self.popup_menu_highlight_fg = popup_menu_highlight_fg
 
         self.highlighted_cells = {}
         self.highlighted_cols = {}
         self.highlighted_rows = {}
-        self.max_undos = max_undos
-        self.undo_storage = deque(maxlen = max_undos)
         self.dropdowns = {}
+
+        self.cell_alignments = {}
+        self.row_alignments = {}
+        self.col_alignments = {}
 
         self.bind("<Motion>", self.mouse_motion)
         self.bind("<Shift-ButtonPress-1>",self.shift_b1_press)
@@ -1057,6 +1070,45 @@ class MainTable(tk.Canvas):
                 self.deselect(r = row, c = column, redraw = redraw)
             else:
                 self.select_cell(row, column, redraw = redraw)
+
+    def align_rows(self, rows = [], align = "global", align_index = False): #"center", "w", "e" or "global"
+        if isinstance(rows, int):
+            rows_ = [rows]
+        else:
+            rows_ = rows
+        if align == "global":
+            for r in rows_:
+                if r in self.row_alignments:
+                    del self.row_alignments[r]
+        else:
+            self.row_alignments.update({r: align for r in rows_})
+
+    def align_columns(self, columns = [], align = "global", align_header = False): #"center", "w", "e" or "global"
+        if isinstance(columns, int):
+            cols_ = [columns]
+        else:
+            cols_ = columns
+        if align == "global":
+            for c in cols_:
+                if c in self.col_alignments:
+                    del self.col_alignments[c]
+        else:
+            self.col_alignments.update({c: align for c in cols_})
+
+    def align_cells(self, row = 0, column = 0, cells = [], align = "global"): #"center", "w", "e" or "global"
+        if align == "global":
+            if cells:
+                for r, c in cells:
+                    if (r, c) in self.cell_alignments:
+                        del self.cell_alignments[(r, c)]
+            else:
+                if (row, column) in self.cell_alignments:
+                    del self.cell_alignments[(row, column)]
+        else:
+            if cells:
+                self.cell_alignments.update({(r, c): align for r, c in cells})
+            else:
+                self.cell_alignments[(row, column)] = align
 
     def highlight_cells(self, r = 0, c = 0, cells = tuple(), bg = None, fg = None, redraw = False):
         if bg is None and fg is None:
@@ -2870,6 +2922,16 @@ class MainTable(tk.Canvas):
             self.undo_storage = deque(maxlen = self.max_undos)
         if indexes is not None:
             self.displayed_columns = sorted(indexes)
+            if self.displayed_columns:
+                self.hidd_col_expander_idxs = [c1 for c1, c2 in zip(islice(self.displayed_columns, 0, None), islice(self.displayed_columns, 1, None)) if c2 - c1 != 1]
+                #total = self.total_data_cols()
+                #if self.displayed_columns[-1] != total - 1 and (not self.hidd_col_expander_idxs or self.hidd_col_expander_idxs[-1] != self.displayed_columns[-1]):
+                #    self.hidd_col_expander_idxs.append(self.displayed_columns[-1])
+                #if self.hidd_col_expander_idxs[0] != self.displayed_columns[0]:
+                #    self.hidd_col_expander_idxs = [self.displayed_columns[0]] + self.hidd_col_expander_idxs
+                #self.hidd_col_expander_idxs = set(self.hidd_col_expander_idxs)
+            else:
+                self.hidd_col_expander_idxs = set()
         if enable:
             self.all_columns_displayed = False
         else:
@@ -3188,13 +3250,37 @@ class MainTable(tk.Canvas):
         c_4_ = (int(c_4[1:3], 16), int(c_4[3:5], 16), int(c_4[5:], 16))
         rows_ = tuple(range(start_row, end_row))
         selected_cells, selected_rows, selected_cols, actual_selected_rows, actual_selected_cols = self.get_redraw_selections((start_row, start_col, end_row, end_col - 1))
-        if redraw_table and self.align == "w":
+        if redraw_table:
             for c in range(start_col, end_col - 1):
-                fc = self.col_positions[c]
-                sc = self.col_positions[c + 1]
-                x = fc + 5
-                mw = sc - fc - 5
-                for r in rows_:
+                for r in rows_:  
+                    if r in self.row_alignments:
+                        cell_alignment = self.row_alignments[r]
+                    elif c in self.col_alignments:
+                        cell_alignment = self.col_alignments[c]
+                    elif (r, c) in self.cell_alignments:
+                        cell_alignment = self.cell_alignments[(r, c)]
+                    else:
+                        cell_alignment = self.align
+                    
+                    if cell_alignment == "w":
+                        fc = self.col_positions[c]
+                        sc = self.col_positions[c + 1]
+                        x = fc + 5
+                        mw = sc - fc - 5
+
+                    if cell_alignment == "e":
+                        fc = self.col_positions[c]
+                        sc = self.col_positions[c + 1]
+                        x = sc - 5
+                        mw = sc - fc - 5
+
+                    elif cell_alignment == "center":
+                        fc = self.col_positions[c]
+                        stop = fc + 5
+                        sc = self.col_positions[c + 1]
+                        mw = sc - fc - 1
+                        x = fc + floor((sc - fc) / 2)
+                    
                     fr = self.row_positions[r]
                     sr = self.row_positions[r + 1]
                     if sr > sb:
@@ -3204,163 +3290,216 @@ class MainTable(tk.Canvas):
                     else:
                         dcol = self.displayed_columns[c]
                     tf = self.redraw_highlight_get_text_fg(r, c, fc, fr, sc, sr, c_2_, c_3_, c_4_, selected_cells, actual_selected_rows, actual_selected_cols, dcol)
-                    if x > x2 or mw <= 5:
-                        continue
-                    try:
-                        lns = self.data_ref[r][dcol]
-                        if isinstance(lns, str):
-                            lns = lns.split("\n")
-                        else:
-                            lns = (f"{lns}", )
-                        y = fr + self.fl_ins
-                        if y + self.half_txt_h - 1 > y1:
-                            txt = lns[0]
-                            if self.hidd_text:
-                                t, sh = self.hidd_text.popitem()
-                                self.coords(t, x, y)
-                                if sh:
-                                    self.itemconfig(t, text = txt, fill = tf, font = self.my_font, anchor = "w")
-                                else:
-                                    self.itemconfig(t, text = txt, fill = tf, font = self.my_font, anchor = "w", state = "normal")
-                                self.lift(t)
+                    if cell_alignment == "w":
+                        if x > x2 or mw <= 5:
+                            continue
+                        try:
+                            lns = self.data_ref[r][dcol]
+                            if isinstance(lns, str):
+                                lns = lns.split("\n")
                             else:
-                                t = self.create_text(x, y, text = txt, fill = tf, font = self.my_font, anchor = "w", tag = "t")
-                            self.disp_text[t] = True
-                            wd = self.bbox(t)
-                            wd = wd[2] - wd[0]
-                            if wd > mw:
-                                nl = int(len(txt) * (mw / wd))
-                                self.itemconfig(t, text = txt[:nl])
-                                wd = self.bbox(t)
-                                while wd[2] - wd[0] > mw:
-                                    nl -= 1
-                                    self.dchars(t, nl)
-                                    wd = self.bbox(t)
-                        if len(lns) > 1:
-                            stl = int((y1 - y) / self.xtra_lines_increment) - 1
-                            if stl < 1:
-                                stl = 1
-                            y += (stl * self.xtra_lines_increment)
-                            if y + self.half_txt_h - 1 < sr:
-                                for i in range(stl, len(lns)):
-                                    txt = lns[i]
-                                    if self.hidd_text:
-                                        t, sh = self.hidd_text.popitem()
-                                        self.coords(t, x, y)
-                                        if sh:
-                                            self.itemconfig(t, text = txt, fill = tf, font = self.my_font, anchor = "w")
-                                        else:
-                                            self.itemconfig(t, text = txt, fill = tf, font = self.my_font, anchor = "w", state = "normal")
-                                        self.lift(t)
+                                lns = (f"{lns}", )
+                            y = fr + self.fl_ins
+                            if y + self.half_txt_h - 1 > y1:
+                                txt = lns[0]
+                                if self.hidd_text:
+                                    t, sh = self.hidd_text.popitem()
+                                    self.coords(t, x, y)
+                                    if sh:
+                                        self.itemconfig(t, text = txt, fill = tf, font = self.my_font, anchor = "w")
                                     else:
-                                        t = self.create_text(x, y, text = txt, fill = tf, font = self.my_font, anchor = "w", tag = "t")
-                                    self.disp_text[t] = True
+                                        self.itemconfig(t, text = txt, fill = tf, font = self.my_font, anchor = "w", state = "normal")
+                                    self.lift(t)
+                                else:
+                                    t = self.create_text(x, y, text = txt, fill = tf, font = self.my_font, anchor = "w", tag = "t")
+                                self.disp_text[t] = True
+                                wd = self.bbox(t)
+                                wd = wd[2] - wd[0]
+                                if wd > mw:
+                                    nl = int(len(txt) * (mw / wd))
+                                    self.itemconfig(t, text = txt[:nl])
                                     wd = self.bbox(t)
-                                    wd = wd[2] - wd[0]
-                                    if wd > mw:
-                                        nl = int(len(txt) * (mw / wd))
-                                        self.itemconfig(t, text = txt[:nl])
+                                    while wd[2] - wd[0] > mw:
+                                        nl -= 1
+                                        self.dchars(t, nl)
                                         wd = self.bbox(t)
-                                        while wd[2] - wd[0] > mw:
-                                            nl -= 1
-                                            self.dchars(t, nl)
-                                            wd = self.bbox(t)
-                                    y += self.xtra_lines_increment
-                                    if y + self.half_txt_h - 1 > sr:
-                                        break
-                    except:
-                        continue
-        elif redraw_table and self.align == "center":
-            for c in range(start_col, end_col - 1):
-                fc = self.col_positions[c]
-                stop = fc + 5
-                sc = self.col_positions[c + 1]
-                mw = sc - fc - 1
-                x = fc + floor((sc - fc) / 2)
-                for r in rows_:
-                    fr = self.row_positions[r]
-                    sr = self.row_positions[r + 1]
-                    if sr > sb:
-                        sr = sb
-                    if self.all_columns_displayed:
-                        dcol = c
-                    else:
-                        dcol = self.displayed_columns[c]
-                    tf = self.redraw_highlight_get_text_fg(r, c, fc, fr, sc, sr, c_2_, c_3_, c_4_, selected_cells, actual_selected_rows, actual_selected_cols, dcol)
-                    if stop > x2 or mw <= 5:
-                        continue
-                    try:
-                        lns = self.data_ref[r][dcol]
-                        if isinstance(lns, str):
-                            lns = lns.split("\n")
-                        else:
-                            lns = (f"{lns}", )
-                        txt = lns[0]
-                        y = fr + self.fl_ins
-                        if y + self.half_txt_h - 1 > y1:
-                            if self.hidd_text:
-                                t, sh = self.hidd_text.popitem()
-                                self.coords(t, x, y)
-                                if sh:
-                                    self.itemconfig(t, text = txt, fill = tf, font = self.my_font, anchor = "center")
-                                else:
-                                    self.itemconfig(t, text = txt, fill = tf, font = self.my_font, anchor = "center", state = "normal")
-                                self.lift(t)
-                            else:
-                                t = self.create_text(x, y, text = txt, fill = tf, font = self.my_font, anchor = "center", tag = "t")
-                            self.disp_text[t] = True
-                            wd = self.bbox(t)
-                            wd = wd[2] - wd[0]
-                            if wd > mw:
-                                tl = len(txt)
-                                tmod = ceil((tl - int(tl * (mw / wd))) / 2)
-                                txt = txt[tmod - 1:-tmod]
-                                self.itemconfig(t, text = txt)
-                                wd = self.bbox(t)
-                                self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
-                                while wd[2] - wd[0] > mw:
-                                    txt = txt[next(self.c_align_cyc)]
-                                    self.itemconfig(t, text = txt)
-                                    wd = self.bbox(t)
-                                self.coords(t, x, y)
-                        if len(lns) > 1:
-                            stl = int((y1 - y) / self.xtra_lines_increment) - 1
-                            if stl < 1:
-                                stl = 1
-                            y += (stl * self.xtra_lines_increment)
-                            if y + self.half_txt_h - 1 < sr:
-                                for i in range(stl, len(lns)):
-                                    txt = lns[i]
-                                    if self.hidd_text:
-                                        t, sh = self.hidd_text.popitem()
-                                        self.coords(t, x, y)
-                                        if sh:
-                                            self.itemconfig(t, text = txt, fill = tf, font = self.my_font, anchor = "center")
+                            if len(lns) > 1:
+                                stl = int((y1 - y) / self.xtra_lines_increment) - 1
+                                if stl < 1:
+                                    stl = 1
+                                y += (stl * self.xtra_lines_increment)
+                                if y + self.half_txt_h - 1 < sr:
+                                    for i in range(stl, len(lns)):
+                                        txt = lns[i]
+                                        if self.hidd_text:
+                                            t, sh = self.hidd_text.popitem()
+                                            self.coords(t, x, y)
+                                            if sh:
+                                                self.itemconfig(t, text = txt, fill = tf, font = self.my_font, anchor = "w")
+                                            else:
+                                                self.itemconfig(t, text = txt, fill = tf, font = self.my_font, anchor = "w", state = "normal")
+                                            self.lift(t)
                                         else:
-                                            self.itemconfig(t, text = txt, fill = tf, font = self.my_font, anchor = "center", state = "normal")
-                                        self.lift(t)
+                                            t = self.create_text(x, y, text = txt, fill = tf, font = self.my_font, anchor = "w", tag = "t")
+                                        self.disp_text[t] = True
+                                        wd = self.bbox(t)
+                                        wd = wd[2] - wd[0]
+                                        if wd > mw:
+                                            nl = int(len(txt) * (mw / wd))
+                                            self.itemconfig(t, text = txt[:nl])
+                                            wd = self.bbox(t)
+                                            while wd[2] - wd[0] > mw:
+                                                nl -= 1
+                                                self.dchars(t, nl)
+                                                wd = self.bbox(t)
+                                        y += self.xtra_lines_increment
+                                        if y + self.half_txt_h - 1 > sr:
+                                            break
+                        except:
+                            continue
+
+                    if cell_alignment == "e":
+                        if x > x2 or mw <= 5:
+                            continue
+                        try:
+                            lns = self.data_ref[r][dcol]
+                            if isinstance(lns, str):
+                                lns = lns.split("\n")
+                            else:
+                                lns = (f"{lns}", )
+                            y = fr + self.fl_ins
+                            if y + self.half_txt_h - 1 > y1:
+                                txt = lns[0]
+                                if self.hidd_text:
+                                    t, sh = self.hidd_text.popitem()
+                                    self.coords(t, x, y)
+                                    if sh:
+                                        self.itemconfig(t, text = txt, fill = tf, font = self.my_font, anchor = "e")
                                     else:
-                                        t = self.create_text(x, y, text = txt, fill = tf, font = self.my_font, anchor = "center", tag = "t")
-                                    self.disp_text[t] = True
+                                        self.itemconfig(t, text = txt, fill = tf, font = self.my_font, anchor = "e", state = "normal")
+                                    self.lift(t)
+                                else:
+                                    t = self.create_text(x, y, text = txt, fill = tf, font = self.my_font, anchor = "e", tag = "t")
+                                self.disp_text[t] = True
+                                wd = self.bbox(t)
+                                wd = wd[2] - wd[0]
+                                if wd > mw:
+                                    self.itemconfig(t, text = txt[len(txt) - int(len(txt) * (mw / wd)):])
                                     wd = self.bbox(t)
-                                    wd = wd[2] - wd[0]
-                                    if wd > mw:
-                                        tl = len(txt)
-                                        tmod = ceil((tl - int(tl * (mw / wd))) / 2)
-                                        txt = txt[tmod - 1:-tmod]
+                                    while wd[2] - wd[0] > mw:
+                                        txt = txt[1:]
                                         self.itemconfig(t, text = txt)
                                         wd = self.bbox(t)
-                                        self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
-                                        while wd[2] - wd[0] > mw:
-                                            txt = txt[next(self.c_align_cyc)]
+                            if len(lns) > 1:
+                                stl = int((y1 - y) / self.xtra_lines_increment) - 1
+                                if stl < 1:
+                                    stl = 1
+                                y += (stl * self.xtra_lines_increment)
+                                if y + self.half_txt_h - 1 < sr:
+                                    for i in range(stl, len(lns)):
+                                        txt = lns[i]
+                                        if self.hidd_text:
+                                            t, sh = self.hidd_text.popitem()
+                                            self.coords(t, x, y)
+                                            if sh:
+                                                self.itemconfig(t, text = txt, fill = tf, font = self.my_font, anchor = "e")
+                                            else:
+                                                self.itemconfig(t, text = txt, fill = tf, font = self.my_font, anchor = "e", state = "normal")
+                                            self.lift(t)
+                                        else:
+                                            t = self.create_text(x, y, text = txt, fill = tf, font = self.my_font, anchor = "e", tag = "t")
+                                        self.disp_text[t] = True
+                                        wd = self.bbox(t)
+                                        wd = wd[2] - wd[0]
+                                        if wd > mw:
+                                            self.itemconfig(t, text = txt[len(txt) - int(len(txt) * (mw / wd)):])
+                                            wd = self.bbox(t)
+                                            while wd[2] - wd[0] > mw:
+                                                txt = txt[1:]
+                                                self.itemconfig(t, text = txt)
+                                                wd = self.bbox(t)
+                                        y += self.xtra_lines_increment
+                                        if y + self.half_txt_h - 1 > sr:
+                                            break
+                        except:
+                            continue
+
+                    elif cell_alignment == "center":
+                        if stop > x2 or mw <= 5:
+                            continue
+                        try:
+                            lns = self.data_ref[r][dcol]
+                            if isinstance(lns, str):
+                                lns = lns.split("\n")
+                            else:
+                                lns = (f"{lns}", )
+                            txt = lns[0]
+                            y = fr + self.fl_ins
+                            if y + self.half_txt_h - 1 > y1:
+                                if self.hidd_text:
+                                    t, sh = self.hidd_text.popitem()
+                                    self.coords(t, x, y)
+                                    if sh:
+                                        self.itemconfig(t, text = txt, fill = tf, font = self.my_font, anchor = "center")
+                                    else:
+                                        self.itemconfig(t, text = txt, fill = tf, font = self.my_font, anchor = "center", state = "normal")
+                                    self.lift(t)
+                                else:
+                                    t = self.create_text(x, y, text = txt, fill = tf, font = self.my_font, anchor = "center", tag = "t")
+                                self.disp_text[t] = True
+                                wd = self.bbox(t)
+                                wd = wd[2] - wd[0]
+                                if wd > mw:
+                                    tl = len(txt)
+                                    tmod = ceil((tl - int(tl * (mw / wd))) / 2)
+                                    txt = txt[tmod - 1:-tmod]
+                                    self.itemconfig(t, text = txt)
+                                    wd = self.bbox(t)
+                                    self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
+                                    while wd[2] - wd[0] > mw:
+                                        txt = txt[next(self.c_align_cyc)]
+                                        self.itemconfig(t, text = txt)
+                                        wd = self.bbox(t)
+                                    self.coords(t, x, y)
+                            if len(lns) > 1:
+                                stl = int((y1 - y) / self.xtra_lines_increment) - 1
+                                if stl < 1:
+                                    stl = 1
+                                y += (stl * self.xtra_lines_increment)
+                                if y + self.half_txt_h - 1 < sr:
+                                    for i in range(stl, len(lns)):
+                                        txt = lns[i]
+                                        if self.hidd_text:
+                                            t, sh = self.hidd_text.popitem()
+                                            self.coords(t, x, y)
+                                            if sh:
+                                                self.itemconfig(t, text = txt, fill = tf, font = self.my_font, anchor = "center")
+                                            else:
+                                                self.itemconfig(t, text = txt, fill = tf, font = self.my_font, anchor = "center", state = "normal")
+                                            self.lift(t)
+                                        else:
+                                            t = self.create_text(x, y, text = txt, fill = tf, font = self.my_font, anchor = "center", tag = "t")
+                                        self.disp_text[t] = True
+                                        wd = self.bbox(t)
+                                        wd = wd[2] - wd[0]
+                                        if wd > mw:
+                                            tl = len(txt)
+                                            tmod = ceil((tl - int(tl * (mw / wd))) / 2)
+                                            txt = txt[tmod - 1:-tmod]
                                             self.itemconfig(t, text = txt)
                                             wd = self.bbox(t)
-                                        self.coords(t, x, y)
-                                    y += self.xtra_lines_increment
-                                    if y + self.half_txt_h - 1 > sr:
-                                        break
-                    except:
-                        continue
+                                            self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
+                                            while wd[2] - wd[0] > mw:
+                                                txt = txt[next(self.c_align_cyc)]
+                                                self.itemconfig(t, text = txt)
+                                                wd = self.bbox(t)
+                                            self.coords(t, x, y)
+                                        y += self.xtra_lines_increment
+                                        if y + self.half_txt_h - 1 > sr:
+                                            break
+                        except:
+                            continue
+
         for t, sh in self.hidd_text.items():
             if sh:
                 self.itemconfig(t, state = "hidden")

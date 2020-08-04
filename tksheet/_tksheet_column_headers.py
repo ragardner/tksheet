@@ -35,6 +35,7 @@ class ColumnHeaders(tk.Canvas):
                  header_selected_columns_fg = "white",
                  header_select_bold = True,
                  drag_and_drop_bg = None,
+                 header_hidden_columns_expander_bg = None,
                  column_drag_and_drop_perform = True,
                  measure_subset_header = True,
                  resizing_line_fg = None):
@@ -46,13 +47,13 @@ class ColumnHeaders(tk.Canvas):
         self.disp_high = {}
         self.disp_grid = {}
         self.disp_fill_sels = {}
-        self.disp_bord_sels = {}
+        self.disp_col_exps = {}
         self.disp_resize_lines = {}
         self.hidd_text = {}
         self.hidd_high = {}
         self.hidd_grid = {}
         self.hidd_fill_sels = {}
-        self.hidd_bord_sels = {}
+        self.hidd_col_exps = {}
         self.hidd_resize_lines = {}
         
         self.centre_alignment_text_mod_indexes = (slice(1, None), slice(None, -1))
@@ -85,6 +86,7 @@ class ColumnHeaders(tk.Canvas):
         self.header_selected_cells_fg = header_selected_cells_fg
         self.header_selected_columns_bg = header_selected_columns_bg
         self.header_selected_columns_fg = header_selected_columns_fg
+        self.header_hidden_columns_expander_bg = header_hidden_columns_expander_bg
         self.select_bold = header_select_bold
         self.drag_and_drop_bg = drag_and_drop_bg
         self.resizing_line_fg = resizing_line_fg
@@ -96,6 +98,7 @@ class ColumnHeaders(tk.Canvas):
         self.drag_and_drop_enabled = False
         self.rc_delete_col_enabled = False
         self.rc_insert_col_enabled = False
+        self.hide_columns_enabled = False
         self.measure_subset_hdr = measure_subset_header
         self.dragged_col = None
         self.visible_col_dividers = []
@@ -146,6 +149,8 @@ class ColumnHeaders(tk.Canvas):
             self.col_selection_enabled = True
         if binding == "drag_and_drop":
             self.drag_and_drop_enabled = True
+        if binding == "hide_columns":
+            self.hide_columns_enabled = True
 
     def disable_bindings(self, binding):
         if binding == "column_width_resize":
@@ -158,6 +163,8 @@ class ColumnHeaders(tk.Canvas):
             self.col_selection_enabled = False
         if binding == "drag_and_drop":
             self.drag_and_drop_enabled = False
+        if binding == "hide_columns":
+            self.hide_columns_enabled = False
 
     def check_mouse_position_width_resizers(self, event):
         x = self.canvasx(event.x)
@@ -835,6 +842,38 @@ class ColumnHeaders(tk.Canvas):
         else:
             self.disp_grid[self.create_line(x1, y1, x2, y2, fill = fill, width = width, tag = tag)] = True
 
+    def redraw_hidden_col_expander(self, x1, y1, x2, y2, fill, outline, tag):
+        if self.hidd_col_exps:
+            t, sh = self.hidd_col_exps.popitem()
+            self.coords(t, x1, y1, x2, y2)
+            if sh:
+                self.itemconfig(t, fill = fill, outline = outline, tag = tag)
+            else:
+                self.itemconfig(t, fill = fill, outline = outline, tag = tag, state = "normal")
+            self.lift(t)
+            self.disp_col_exps[t] = True
+        else:
+            t = self.create_rectangle(x1, y1, x2, y2, fill = fill, outline = outline, tag = tag)
+            self.disp_col_exps[t] = True
+        self.tag_bind(t, "<Button-1>", self.click_expander)
+
+    def click_expander(self, event = None):
+        c = self.MT.identify_col(x = event.x, allow_end = False)
+        if c is not None and self.rsz_w is None and self.rsz_h is None:
+            disp = sorted(self.MT.displayed_columns)
+            col = self.MT.displayed_columns[c]
+            idx = disp.index(col)
+            ins = idx + 1
+            if idx == len(disp) - 1:
+                total = self.MT.total_data_cols()
+                newcols = list(range(col + 1, total))
+                self.MT.displayed_columns[ins:ins] = newcols
+            else:
+                newcols = list(range(disp[idx] + 1, disp[idx + 1]))
+                self.MT.displayed_columns[ins:ins] = newcols
+            self.MT.insert_col_positions(idx, len(newcols))
+            self.MT.hidd_col_expander_idxs.discard(col)
+
     def redraw_grid_and_text(self, last_col_line_pos, x1, x_stop, start_col, end_col, selected_cols, selected_rows, actual_selected_cols):
         self.configure(scrollregion = (0,
                                        0,
@@ -846,6 +885,8 @@ class ColumnHeaders(tk.Canvas):
         self.disp_high = {}
         self.hidd_grid.update(self.disp_grid)
         self.disp_grid = {}
+        self.hidd_col_exps.update(self.disp_col_exps)
+        self.disp_col_exps = {}
         self.visible_col_dividers = []
         x = self.MT.col_positions[start_col]
         self.redraw_gridline(x, 0, x, self.current_height, fill = self.header_grid_fg, width = 1, tag = "fv")
@@ -856,6 +897,9 @@ class ColumnHeaders(tk.Canvas):
             if self.width_resizing_enabled:
                 self.visible_col_dividers.append((x - 2, 1, x + 2, yend))
             self.redraw_gridline(x, 0, x, self.current_height, fill = self.header_grid_fg, width = 1, tag = ("v", f"{c}"))
+            if self.hide_columns_enabled and len(self.MT.displayed_columns) > c and self.MT.displayed_columns[c] in self.MT.hidd_col_expander_idxs:
+                self.redraw_hidden_col_expander(self.MT.col_positions[c + 1] - 2, 2, self.MT.col_positions[c + 1] - 6, self.current_height - 2, fill = self.header_hidden_columns_expander_bg, outline = "",
+                                                tag = ("hidd", f"{c}"))
         top = self.canvasy(0)
         if self.MT.hdr_fl_ins + self.MT.hdr_half_txt_h - 1 > top:
             incfl = True
@@ -1018,6 +1062,10 @@ class ColumnHeaders(tk.Canvas):
             if sh:
                 self.itemconfig(t, state = "hidden")
                 self.hidd_grid[t] = False
+        for t, sh in self.hidd_col_exps.items():
+            if sh:
+                self.itemconfig(t, state = "hidden")
+                self.hidd_col_exps[t] = False
         
     def GetCellCoords(self, event = None, r = None, c = None):
         pass

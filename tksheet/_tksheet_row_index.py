@@ -34,6 +34,7 @@ class RowIndex(tk.Canvas):
                  index_selected_rows_bg = "#5f6368",
                  index_selected_rows_fg = "white",
                  default_row_index = "numbers",
+                 index_hidden_rows_expander_bg = None,
                  drag_and_drop_bg = None,
                  resizing_line_fg = None,
                  row_drag_and_drop_perform = True,
@@ -93,6 +94,7 @@ class RowIndex(tk.Canvas):
         self.index_selected_cells_fg = index_selected_cells_fg
         self.index_selected_rows_bg = index_selected_rows_bg
         self.index_selected_rows_fg = index_selected_rows_fg
+        self.index_hidden_rows_expander_bg = index_hidden_rows_expander_bg
         self.index_bg = index_bg
         self.drag_and_drop_bg = drag_and_drop_bg
         self.resizing_line_fg = resizing_line_fg

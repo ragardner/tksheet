@@ -101,6 +101,7 @@ class Sheet(tk.Frame):
                  index_selected_cells_fg            = theme_light_blue['index_selected_cells_fg'],
                  index_selected_rows_bg             = theme_light_blue['index_selected_rows_bg'],
                  index_selected_rows_fg             = theme_light_blue['index_selected_rows_fg'],
+                 index_hidden_rows_expander_bg      = theme_light_blue['index_hidden_rows_expander_bg'],
                  header_bg                          = theme_light_blue['header_bg'],
                  header_border_fg                   = theme_light_blue['header_border_fg'],
                  header_grid_fg                     = theme_light_blue['header_grid_fg'],
@@ -109,6 +110,7 @@ class Sheet(tk.Frame):
                  header_selected_cells_fg           = theme_light_blue['header_selected_cells_fg'],
                  header_selected_columns_bg         = theme_light_blue['header_selected_columns_bg'],
                  header_selected_columns_fg         = theme_light_blue['header_selected_columns_fg'],
+                 header_hidden_columns_expander_bg  = theme_light_blue['header_hidden_columns_expander_bg'],
                  top_left_bg                        = theme_light_blue['top_left_bg'],
                  top_left_fg                        = theme_light_blue['top_left_fg'],
                  top_left_fg_highlight              = theme_light_blue['top_left_fg_highlight']):
@@ -139,6 +141,7 @@ class Sheet(tk.Frame):
                            index_selected_cells_fg = index_selected_cells_fg,
                            index_selected_rows_bg = index_selected_rows_bg,
                            index_selected_rows_fg = index_selected_rows_fg,
+                           index_hidden_rows_expander_bg = index_hidden_rows_expander_bg,
                            drag_and_drop_bg = drag_and_drop_bg,
                            resizing_line_fg = resizing_line_fg,
                            row_drag_and_drop_perform = row_drag_and_drop_perform,
@@ -158,6 +161,7 @@ class Sheet(tk.Frame):
                                 header_selected_cells_fg = header_selected_cells_fg,
                                 header_selected_columns_bg = header_selected_columns_bg,
                                 header_selected_columns_fg = header_selected_columns_fg,
+                                header_hidden_columns_expander_bg = header_hidden_columns_expander_bg,
                                 drag_and_drop_bg = drag_and_drop_bg,
                                 column_drag_and_drop_perform = column_drag_and_drop_perform,
                                 measure_subset_header = measure_subset_header,
@@ -1171,6 +1175,28 @@ class Sheet(tk.Frame):
     def all_selected(self):
         return self.MT.all_selected()
 
+    def align_rows(self, rows = [], align = "global", align_index = False, redraw = True): #"center", "w", "e" or "global"
+        self.MT.align_rows(rows = rows,
+                           align = align,
+                           align_index = align_index)
+        if redraw:
+            self.redraw()
+
+    def align_columns(self, columns = [], align = "global", align_header = False, redraw = True): #"center", "w", "e" or "global"
+        self.MT.align_columns(columns = columns,
+                              align = align,
+                              align_header = align_header)
+        if redraw:
+            self.redraw()
+
+    def align_cells(self, row = 0, column = 0, cells = [], align = "global", redraw = True): #"center", "w", "e" or "global"
+        self.MT.align_cells(row = row,
+                            column = column,
+                            cells = cells,
+                            align = align)
+        if redraw:
+            self.redraw()
+
     def highlight_rows(self, rows = [], bg = None, fg = None, highlight_index = True, redraw = False):
         self.MT.highlight_rows(rows = rows,
                                bg = bg,
@@ -1386,12 +1412,14 @@ class Sheet(tk.Frame):
                     header_fg = None,
                     header_selected_cells_bg = None,
                     header_selected_cells_fg = None,
+                    header_hidden_columns_expander_bg = None,
                     index_bg = None,
                     index_border_fg = None,
                     index_grid_fg = None,
                     index_fg = None,
                     index_selected_cells_bg = None,
                     index_selected_cells_fg = None,
+                    index_hidden_rows_expander_bg = None,
                     top_left_bg = None,
                     top_left_fg = None,
                     frame_bg = None,
@@ -1425,6 +1453,10 @@ class Sheet(tk.Frame):
                     measure_subset_index = None,
                     measure_subset_header = None,
                     redraw = True):
+        if header_hidden_columns_expander_bg is not None:
+            self.CH.header_hidden_columns_expander_bg = header_hidden_columns_expander_bg
+        if index_hidden_rows_expander_bg is not None:
+            self.RI.index_hidden_rows_expander_bg = index_hidden_rows_expander_bg
         if page_up_down_select_row is not None:
             self.MT.page_up_down_select_row = page_up_down_select_row
         if display_selected_fg_over_highlights is not None:

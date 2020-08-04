@@ -15,6 +15,8 @@ def get_heading_font():
 
 
 theme_light_blue = {
+'index_hidden_rows_expander_bg': "gray30",
+'header_hidden_columns_expander_bg': "gray30",
 'header_bg': "#f8f9fa",
 'header_border_fg': "#ababab",
 'header_grid_fg': "#ababab",
@@ -53,6 +55,8 @@ theme_light_blue = {
 
 
 theme_light_green = {
+'index_hidden_rows_expander_bg': "gray30",
+'header_hidden_columns_expander_bg': "gray30",
 'header_bg': "#edebe9",
 'header_border_fg': "#ababab",
 'header_grid_fg': "#ababab",
@@ -91,6 +95,8 @@ theme_light_green = {
 
 
 theme_dark_blue = {
+'index_hidden_rows_expander_bg': "gray30",
+'header_hidden_columns_expander_bg': "gray30",
 'header_bg': "#2d2d2d",
 'header_border_fg': "#4a4e51",
 'header_grid_fg': "#4a4e51",
@@ -129,6 +135,8 @@ theme_dark_blue = {
 
 
 theme_dark_green = {
+'index_hidden_rows_expander_bg': "gray30",
+'header_hidden_columns_expander_bg': "gray30",
 'header_bg': "#2d2d2d",
 'header_border_fg': "#5f5a55",
 'header_grid_fg': "#5f5a55",
