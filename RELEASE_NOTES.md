@@ -1,3 +1,11 @@
+### Version 4.9.4
+ - Make `display_subset_of_columns()` and other names of the same function always sort the showing columns
+ - Make right click insert columns left shift data columns along
+ - Fix issues with `insert_column()`/`insert_columns()` when hiding columns
+ - Add default arguments `mod_column_positions` to functions `insert_column()`/`insert_columns()` which when set to `False` only changes data, not number of showing columns
+ - Add `"e"` aka right hand side text alignment for main table, have not added to header or index yet
+ - Add functions `align_cells()`, `align_rows()`, `align_columns()`
+
 ### Version 4.9.3
  - Fix paste bug
  - Fix mac os vertical scroll code
