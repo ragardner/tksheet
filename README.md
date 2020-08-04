@@ -20,7 +20,7 @@ pip install tksheet
  - Expand row heights and column widths
  - Change fonts and font size
  - Change any colors in the sheet
- - Left or Centre text alignment
+ - Left `"w"`, Center `"center"` or Right `"e"` text alignment
  - Cell elements can be any class with a `str` method
 
 Work on this repository is ongoing, improvements in usability, functionality and finally documentation
@@ -63,7 +63,7 @@ class demo(tk.Tk):
                            #auto_resize_default_row_index = False,
                            #header_height = "3",
                            #row_index_width = 100,
-                           #align = "center",
+                           #align = "e",
                            #header_align = "w",
                             #row_index_align = "w",
                             data = [[f"Row {r}, Column {c}\nnewline1\nnewline2" for c in range(50)] for r in range(1000)], #to set sheet data at startup
@@ -101,6 +101,7 @@ class demo(tk.Tk):
                                          "rc_delete_column",
                                          "rc_insert_row",
                                          "rc_delete_row",
+                                    "hide_columns",
                                          "copy",
                                          "cut",
                                          "paste",
@@ -120,18 +121,38 @@ class demo(tk.Tk):
 
         #self.sheet.change_theme("light green")
 
-        # __________ HIGHLIGHT / DEHIGHLIGHT CELLS __________
-        
-        self.sheet.highlight_cells(row = 5, column = 5, bg = "#ed4337", fg = "white")
-        self.sheet.highlight_cells(row = 5, column = 1, bg = "#ed4337", fg = "white")
-        self.sheet.highlight_cells(row = 5, bg = "#ed4337", fg = "white", canvas = "row_index")
-        self.sheet.highlight_cells(column = 0, bg = "#ed4337", fg = "white", canvas = "header")
-        #self.sheet.highlight_rows(6, "green")
-        #self.sheet.highlight_columns(4, "yellow")
-
         # __________ DISPLAY SUBSET OF COLUMNS __________
 
-        #self.sheet.display_subset_of_columns(indexes = [1, 0, 2, 10, 15, 20, 25, 35, 30, 36, 39, 9, 5, 11, 12, 43, 45], enable = True) #any order
+        self.sheet.display_subset_of_columns(indexes = [0, 1, 2, 3, 4, 5], enable = True)
+        #self.sheet.display_columns(enable = False)
+        self.sheet.insert_column(idx = 0)
+        self.sheet.insert_columns(columns = 5, idx = 10, mod_column_positions = False)
+
+        # __________ HIGHLIGHT / DEHIGHLIGHT CELLS __________
+        
+        self.sheet.highlight_cells(row = 5, column = 5, fg = "red")
+        self.sheet.highlight_cells(row = 5, column = 1, fg = "red")
+        self.sheet.highlight_cells(row = 5, bg = "#ed4337", fg = "white", canvas = "row_index")
+        self.sheet.highlight_cells(column = 0, bg = "#ed4337", fg = "white", canvas = "header")
+        
+        #self.sheet.highlight_columns([7, 8, 9], bg = "light blue", fg = "purple")
+        #self.sheet.insert_columns(columns = [[1, 2, 3], [4, 5, 6], [7, 8, 9]], idx = 8)
+        #self.sheet.delete_column(idx = 2)
+        #self.sheet.highlight_rows([7, 8, 9], bg = "light blue", fg = "purple")
+        #self.sheet.insert_rows(rows = 5, idx = 8)
+        #self.sheet.insert_row(idx = 10, values = ["hi"])
+        #self.sheet.move_row(7, 0)
+        #self.sheet.move_column(6, 0)
+        #self.sheet.delete_row(idx = 2)
+        #self.sheet.dehighlight_rows(8)
+        
+        #self.sheet.highlight_columns(4, fg = "yellow")
+
+        # __________ CELL / ROW / COLUMN ALIGNMENTS __________
+
+        self.sheet.align_cells(row = 1, column = 1, align = "e")
+        self.sheet.align_rows(rows = 3, align = "e")
+        self.sheet.align_columns(columns = 4, align = "e")
 
         # __________ DATA AND DISPLAY DIMENSIONS __________
 
