@@ -1,3 +1,6 @@
+### Version 4.9.5
+ - Attempt to fix scrolling issues
+
 ### Version 4.9.4
  - Make `display_subset_of_columns()` and other names of the same function always sort the showing columns
  - Make right click insert columns left shift data columns along
