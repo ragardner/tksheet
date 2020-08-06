@@ -117,13 +117,7 @@ class RowIndex(tk.Canvas):
         self.measure_subset_index = measure_subset_index
         self.auto_resize_width = auto_resize_width
         self.default_index = default_row_index.lower()
-        self.bind("<Motion>", self.mouse_motion)
-        self.bind("<ButtonPress-1>", self.b1_press)
-        self.bind("<Shift-ButtonPress-1>",self.shift_b1_press)
-        self.bind("<B1-Motion>", self.b1_motion)
-        self.bind("<ButtonRelease-1>", self.b1_release)
-        self.bind("<Double-Button-1>", self.double_b1)
-        self.bind("<MouseWheel>", self.mousewheel)
+        self.basic_bindings()
 
     def basic_bindings(self, enable = True):
         if enable:
@@ -132,7 +126,6 @@ class RowIndex(tk.Canvas):
             self.bind("<B1-Motion>", self.b1_motion)
             self.bind("<ButtonRelease-1>", self.b1_release)
             self.bind("<Double-Button-1>", self.double_b1)
-            self.bind("<MouseWheel>", self.mousewheel)
             self.bind(get_rc_binding(), self.rc)
         else:
             self.unbind("<Motion>")
@@ -140,7 +133,6 @@ class RowIndex(tk.Canvas):
             self.unbind("<B1-Motion>")
             self.unbind("<ButtonRelease-1>")
             self.unbind("<Double-Button-1>")
-            self.unbind("<MouseWheel>")
             self.unbind(get_rc_binding())
 
     def mousewheel(self, event = None):

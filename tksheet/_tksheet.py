@@ -240,8 +240,9 @@ class Sheet(tk.Frame):
                     self.set_options(**{k: v})
         if set_all_heights_and_widths:
             self.set_all_cell_sizes_to_text()
-        self.refresh()
         self.MT.update()
+        self.update()
+        self.refresh()
         if startup_select is not None:
             try:
                 if startup_select[-1] == "cells":

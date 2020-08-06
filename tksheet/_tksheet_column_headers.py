@@ -109,12 +109,7 @@ class ColumnHeaders(tk.Canvas):
         self.new_col_height = 0
         self.currently_resizing_width = False
         self.currently_resizing_height = False
-        self.bind("<Motion>", self.mouse_motion)
-        self.bind("<ButtonPress-1>", self.b1_press)
-        self.bind("<Shift-ButtonPress-1>",self.shift_b1_press)
-        self.bind("<B1-Motion>", self.b1_motion)
-        self.bind("<ButtonRelease-1>", self.b1_release)
-        self.bind("<Double-Button-1>", self.double_b1)
+        self.basic_bindings()
         
     def basic_bindings(self, enable = True):
         if enable:

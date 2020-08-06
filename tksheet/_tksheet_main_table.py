@@ -261,17 +261,7 @@ class MainTable(tk.Canvas):
         self.row_alignments = {}
         self.col_alignments = {}
 
-        self.bind("<Motion>", self.mouse_motion)
-        self.bind("<Shift-ButtonPress-1>",self.shift_b1_press)
-        self.bind("<ButtonPress-1>", self.b1_press)
-        self.bind("<B1-Motion>", self.b1_motion)
-        self.bind("<ButtonRelease-1>", self.b1_release)
-        self.bind("<Double-Button-1>", self.double_b1)
-        self.bind("<Configure>", self.refresh)
-        self.bind("<MouseWheel>", self.mousewheel)
-        self.bind(get_rc_binding(), self.rc)
-        self.CH.bind(get_rc_binding(), self.CH.rc)
-        self.RI.bind(get_rc_binding(), self.RI.rc)
+        self.basic_bindings()
         self.create_rc_menus()
         
     def refresh(self, event = None):
@@ -279,20 +269,28 @@ class MainTable(tk.Canvas):
 
     def basic_bindings(self, enable = True):
         if enable:
+            self.bind("<Configure>", self.refresh)
             self.bind("<Motion>", self.mouse_motion)
             self.bind("<ButtonPress-1>", self.b1_press)
             self.bind("<B1-Motion>", self.b1_motion)
             self.bind("<ButtonRelease-1>", self.b1_release)
             self.bind("<Double-Button-1>", self.double_b1)
             self.bind("<MouseWheel>", self.mousewheel)
+            self.bind("<Shift-MouseWheel>", self.shift_mousewheel)
+            self.CH.bind("<Shift-MouseWheel>", self.shift_mousewheel)
+            self.RI.bind("<MouseWheel>", self.mousewheel)
             self.bind(get_rc_binding(), self.rc)
         else:
+            self.unbind("<Configure>")
             self.unbind("<Motion>")
             self.unbind("<ButtonPress-1>")
             self.unbind("<B1-Motion>")
             self.unbind("<ButtonRelease-1>")
             self.unbind("<Double-Button-1>")
             self.unbind("<MouseWheel>")
+            self.unbind("<Shift-MouseWheel>")
+            self.CH.unbind("<Shift-MouseWheel>")
+            self.RI.unbind("<MouseWheel>")
             self.unbind(get_rc_binding())
 
     def show_ctrl_outline(self, canvas = "table", start_cell = (0, 0), end_cell = (0, 0)):
@@ -2242,26 +2240,26 @@ class MainTable(tk.Canvas):
                                              redraw_header = True if self.show_header else False)
 
     def mousewheel(self, event = None):
-        if event.state:
-            if event.num == 5 or event.delta == -120 or event.delta == -1:
-                self.xview_scroll(1, "units")
-                self.CH.xview_scroll(1, "units")
-            if event.num == 4 or event.delta == 120 or event.delta == 1:
-                if self.canvasx(0) <= 0:
-                    return
-                self.xview_scroll(-1, "units")
-                self.CH.xview_scroll(-1, "units")
-            self.main_table_redraw_grid_and_text(redraw_header = True)
-        else:
-            if event.num == 5 or event.delta == -120 or event.delta == -1:
-                self.yview_scroll(1, "units")
-                self.RI.yview_scroll(1, "units")
-            if event.num == 4 or event.delta == 120 or event.delta == 1:
-                if self.canvasy(0) <= 0:
-                    return
-                self.yview_scroll(-1, "units")
-                self.RI.yview_scroll(-1, "units")
-            self.main_table_redraw_grid_and_text(redraw_row_index = True)
+        if event.delta < 0:
+            self.yview_scroll(1, "units")
+            self.RI.yview_scroll(1, "units")
+        if event.delta >= 0:
+            if self.canvasy(0) <= 0:
+                return
+            self.yview_scroll(-1, "units")
+            self.RI.yview_scroll(-1, "units")
+        self.main_table_redraw_grid_and_text(redraw_row_index = True)
+
+    def shift_mousewheel(self, event = None):
+        if event.delta < 0:
+            self.xview_scroll(1, "units")
+            self.CH.xview_scroll(1, "units")
+        if event.delta >= 0:
+            if self.canvasx(0) <= 0:
+                return
+            self.xview_scroll(-1, "units")
+            self.CH.xview_scroll(-1, "units")
+        self.main_table_redraw_grid_and_text(redraw_header = True)
 
     def GetWidthChars(self, width):
         char_w = self.GetTextWidth("_")
