@@ -7,8 +7,9 @@ Python tkinter table widget
 pip install tksheet
 ```
 
-### [Version release notes](https://github.com/ragardner/tksheet/blob/master/RELEASE_NOTES.md)
-### [Documentation](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md) (unfinished)
+#### [Version release notes](https://github.com/ragardner/tksheet/blob/master/RELEASE_NOTES.md)
+#### [Documentation](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md) (unfinished)
+#### [Donate](https://github.com/ragardner/tksheet/blob/master/DONATE.md)
 
 ### Features
  - Display and modify tabular data
