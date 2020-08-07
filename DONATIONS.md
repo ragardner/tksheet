@@ -1,3 +1,5 @@
+If you would like to donate and support the library and ragardner you can use the below methods
+
 #### Bitcoin
 `bc1qrdgzfr4jy55f5ew87pgg7yme4lev6g659ne5x4`
 
