@@ -7,9 +7,10 @@ Python tkinter table widget
 pip install tksheet
 ```
 
-#### [Version release notes](https://github.com/ragardner/tksheet/blob/master/RELEASE_NOTES.md)
-#### [Documentation](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md) (unfinished)
-#### [Donate](https://github.com/ragardner/tksheet/blob/master/DONATE.md)
+### Help
+ - [Documentation](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md) (unfinished)
+ - [Version release notes](https://github.com/ragardner/tksheet/blob/master/RELEASE_NOTES.md)
+ - [Donate](https://github.com/ragardner/tksheet/blob/master/DONATE.md)
 
 ### Features
  - Display and modify tabular data
@@ -25,15 +26,6 @@ pip install tksheet
  - Cell elements can be any class with a `str` method
 
 Work on this repository is ongoing, improvements in usability, functionality and finally documentation
-
-Planned future changes:
- - Ctrl + click selection
- - Display subset of rows
- - More builtin functionality on right click
- - Better functions to access and manipulate table data
- - Better behavior from some functions e.g. maintaining correct selections when inserting columns
- - If it's popular enough or someone is willing to pay for my time I will integrate pandas dataframe
-   to save memory when using large dataframes
 
 ### Demonstration of setup and various functions:
 
