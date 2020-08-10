@@ -1380,8 +1380,8 @@ class Sheet(tk.Frame):
         if redraw:
             self.refresh()
 
-    def font(self, newfont = None):
-        self.MT.font(newfont)
+    def font(self, newfont = None, reset_row_positions = True):
+        self.MT.font(newfont, reset_row_positions = reset_row_positions)
 
     def header_font(self, newfont = None):
         self.MT.header_font(newfont)

@@ -963,6 +963,8 @@ class RowIndex(tk.Canvas):
             for r in range(start_row, end_row - 1):
                 fr = self.MT.row_positions[r]
                 sr = self.MT.row_positions[r + 1]
+                if sr - fr < self.MT.txt_h:
+                    continue
                 if sr > sb:
                     sr = sb
                 tf, font = self.redraw_highlight_get_text_fg(fr, sr, r, c_2, c_3, selected_rows, selected_cols, actual_selected_rows)
@@ -1036,6 +1038,8 @@ class RowIndex(tk.Canvas):
             for r in range(start_row, end_row - 1):
                 fr = self.MT.row_positions[r]
                 sr = self.MT.row_positions[r + 1]
+                if sr - fr < self.MT.txt_h:
+                    continue
                 if sr > sb:
                     sr = sb
                 tf, font = self.redraw_highlight_get_text_fg(fr, sr, r, c_2, c_3, selected_rows, selected_cols, actual_selected_rows)

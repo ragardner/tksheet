@@ -2298,22 +2298,26 @@ class MainTable(tk.Canvas):
         if self.min_cw > self.default_cw:
             self.default_cw = self.min_cw * 2
 
-    def font(self, newfont = None):
+    def font(self, newfont = None, reset_row_positions = False):
         if newfont:
+            if not isinstance(newfont, tuple):
+                raise ValueError("Argument must be tuple e.g. ('Carlito',12,'normal')")
+            if len(newfont) != 3:
+                raise ValueError("Argument must be three-tuple")
             if (
-                not isinstance(newfont, tuple) or
                 not isinstance(newfont[0], str) or
-                not isinstance(newfont[1], int)
+                not isinstance(newfont[1], int) or
+                not isinstance(newfont[2], str)
                 ):
-                raise ValueError("Parameter must be tuple e.g. ('Carlito',12,'normal')")
-            if len(newfont) > 2:
-                raise ValueError("Parameter must be three-tuple")
+                raise ValueError("Argument must be font, size and 'normal', 'bold' or 'italic' e.g. ('Carlito',12,'normal')")
             else:
                 self.my_font = newfont
             self.fnt_fam = newfont[0]
             self.fnt_sze = newfont[1]
             self.fnt_wgt = newfont[2]
             self.set_fnt_help()
+            if reset_row_positions:
+                self.reset_row_positions()
         else:
             return self.my_font
 
@@ -2328,6 +2332,7 @@ class MainTable(tk.Canvas):
         self.min_rh = self.txt_h + 5
         if self.min_rh < 12:
             self.min_rh = 12
+        #self.min_rh = 5
         if self.default_rh[0] != "pixels":
             self.default_rh = (self.default_rh[0] if self.default_rh[0] != "pixels" else "pixels",
                                self.GetLinesHeight(int(self.default_rh[0])) if self.default_rh[0] != "pixels" else self.default_rh[1])
@@ -2335,17 +2340,16 @@ class MainTable(tk.Canvas):
         
     def header_font(self, newfont = None):
         if newfont:
+            if not isinstance(newfont, tuple):
+                raise ValueError("Argument must be tuple e.g. ('Carlito',12,'normal')")
+            if len(newfont) != 3:
+                raise ValueError("Argument must be three-tuple")
             if (
-                not isinstance(newfont, tuple) or
                 not isinstance(newfont[0], str) or
-                not isinstance(newfont[1], int)
+                not isinstance(newfont[1], int) or
+                not isinstance(newfont[2], str)
                 ):
-                raise ValueError("Parameter must be tuple e.g. ('Carlito',12,'bold')")
-            if len(newfont) == 3:
-                if not isinstance(newfont[2], str):
-                    raise ValueError("Parameter must be tuple e.g. ('Carlito',12,'bold')")
-            if len(newfont) > 3:
-                raise ValueError("Parameter must be three tuple")
+                raise ValueError("Argument must be font, size and 'normal', 'bold' or 'italic' e.g. ('Carlito',12,'normal')")
             else:
                 self.my_hdr_font = newfont
             self.hdr_fnt_fam = newfont[0]
@@ -3250,7 +3254,12 @@ class MainTable(tk.Canvas):
         selected_cells, selected_rows, selected_cols, actual_selected_rows, actual_selected_cols = self.get_redraw_selections((start_row, start_col, end_row, end_col - 1))
         if redraw_table:
             for c in range(start_col, end_col - 1):
-                for r in rows_:  
+                for r in rows_:
+                    fr = self.row_positions[r]
+                    sr = self.row_positions[r + 1]
+                    if sr - fr < self.txt_h:
+                        continue
+                    
                     if r in self.row_alignments:
                         cell_alignment = self.row_alignments[r]
                     elif c in self.col_alignments:
@@ -3279,8 +3288,6 @@ class MainTable(tk.Canvas):
                         mw = sc - fc - 1
                         x = fc + floor((sc - fc) / 2)
                     
-                    fr = self.row_positions[r]
-                    sr = self.row_positions[r + 1]
                     if sr > sb:
                         sr = sb
                     if self.all_columns_displayed:
@@ -4175,7 +4182,7 @@ class MainTable(tk.Canvas):
             elif event.char in all_chars:
                 text = event.char
             else:
-                text = self.data_ref[y1][x1]
+                text = f"{self.data_ref[y1][x1]}" if self.all_columns_displayed else f"{self.data_ref[y1][self.displayed_columns[x1]]}"
         self.RI.set_row_height(y1, only_set_if_too_small = True, displayed_only = True)
         self.CH.set_col_width(x1, only_set_if_too_small = True, displayed_only = True)
         self.select_cell(r = y1, c = x1, keep_other_selections = True)
