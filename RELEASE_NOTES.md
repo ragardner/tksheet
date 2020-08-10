@@ -1,3 +1,7 @@
+### Version 4.9.6
+ - Fix bugs with `font()` functions
+ - Fix edit cell bug when hiding columns
+
 ### Version 4.9.5
  - Attempt to fix scrolling issues
 
