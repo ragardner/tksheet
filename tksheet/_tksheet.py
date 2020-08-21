@@ -1030,6 +1030,31 @@ class Sheet(tk.Frame):
     def destroy_text_editor(self, event = None):
         self.MT.destroy_text_editor(event = event)
 
+    def get_text_editor_widget(self, event = None):
+        try:
+            return self.MT.text_editor.textedit
+        except:
+            return None
+
+    def bind_key_text_editor(self, key, function):
+        self.MT.text_editor_user_bound_keys[key] = function
+
+    def unbind_key_text_editor(self, key):
+        if key == "all":
+            for key in self.MT.text_editor_user_bound_keys:
+                try:
+                    self.MT.text_editor.textedit.unbind(key)
+                except:
+                    pass
+            self.MT.text_editor_user_bound_keys = {}
+        else:
+            if key in self.MT.text_editor_user_bound_keys:
+                del self.MT.text_editor_user_bound_keys[key]
+            try:
+                self.MT.text_editor.textedit.unbind(key)
+            except:
+                pass
+
     def get_xview(self):
         return self.MT.xview()
 

@@ -139,6 +139,8 @@ class MainTable(tk.Canvas):
         self.extra_begin_insert_rows_rc_func = None
         self.extra_end_insert_rows_rc_func = None
 
+        self.text_editor_user_bound_keys = {}
+
         self.selection_binding_func = None
         self.deselection_binding_func = None
         self.drag_selection_binding_func = None
@@ -1285,15 +1287,22 @@ class MainTable(tk.Canvas):
         scrollto = top - height
         if scrollto < 0:
             scrollto = 0
-        if self.page_up_down_select_row and self.RI.row_selection_enabled:
+        if self.page_up_down_select_row:
             r = bisect.bisect_left(self.row_positions, scrollto)
             current = self.currently_selected(get_coords = True)
             if current and current[0] == r:
                 r -= 1
             if r < 0:
                 r = 0
-            self.RI.select_row(r)
-            self.see(r, 0, keep_xscroll = True, check_cell_visibility = False)
+            if self.RI.row_selection_enabled and (self.anything_selected(exclude_columns = True, exclude_cells = True) or not self.anything_selected()):
+                self.RI.select_row(r)
+                self.see(r, 0, keep_xscroll = True, check_cell_visibility = False)
+            elif (self.single_selection_enabled or self.toggle_selection_enabled) and self.anything_selected(exclude_columns = True, exclude_rows = True):
+                box = self.get_all_selection_boxes_with_types()[0][0]
+                self.see(r, box[1], keep_xscroll = True, check_cell_visibility = False)
+                self.deselect("all")
+                self.create_selected(r, box[1], r + (box[2] - box[0]), box[3], "cells")
+                self.create_current(r, box[1], "cell", inside = True)
         else:
             args = ("moveto", scrollto / (self.row_positions[-1] + 100))
             self.yview(*args)
@@ -1313,8 +1322,15 @@ class MainTable(tk.Canvas):
                 r += 1
             if r > len(self.row_positions) - 2:
                 r = len(self.row_positions) - 2
-            self.RI.select_row(r)
-            self.see(r, 0, keep_xscroll = True, check_cell_visibility = False)
+            if self.RI.row_selection_enabled and (self.anything_selected(exclude_columns = True, exclude_cells = True) or not self.anything_selected()):
+                self.RI.select_row(r)
+                self.see(r, 0, keep_xscroll = True, check_cell_visibility = False)
+            elif (self.single_selection_enabled or self.toggle_selection_enabled) and self.anything_selected(exclude_columns = True, exclude_rows = True):
+                box = self.get_all_selection_boxes_with_types()[0][0]
+                self.see(r, box[1], keep_xscroll = True, check_cell_visibility = False)
+                self.deselect("all")
+                self.create_selected(r, box[1], r + (box[2] - box[0]), box[3], "cells")
+                self.create_current(r, box[1], "cell", inside = True)
         else:
             end = self.row_positions[-1]
             if scrollto > end  + 100:
@@ -4205,11 +4221,15 @@ class MainTable(tk.Canvas):
         self.text_editor = TextEditor(self, text = text, font = self.my_font, state = state, width = w, height = h, border_color = self.table_selected_cells_border_fg, show_border = self.show_selected_cells_border)
         self.text_editor_id = self.create_window((x, y), window = self.text_editor, anchor = "nw")
         self.text_editor.textedit.bind("<Alt-Return>", self.text_editor_newline_binding)
+        for key, func in self.text_editor_user_bound_keys.items():
+            self.text_editor.textedit.bind(key, func)
         if binding is not None:
+            self.text_editor.textedit.bind("<Tab>", lambda x: binding((r, c, "Tab")))
             self.text_editor.textedit.bind("<Return>", lambda x: binding((r, c, "Return")))
             self.text_editor.textedit.bind("<FocusOut>", lambda x: binding((r, c, "FocusOut")))
             self.text_editor.textedit.bind("<Escape>", lambda x: binding((r, c, "Escape")))
         elif binding is None and set_data_ref_on_destroy:
+            self.text_editor.textedit.bind("<Tab>", lambda x: self.get_text_editor_value((r, c, "Tab")))
             self.text_editor.textedit.bind("<Return>", lambda x: self.get_text_editor_value((r, c, "Return")))
             self.text_editor.textedit.bind("<FocusOut>", lambda x: self.get_text_editor_value((r, c, "FocusOut")))
             self.text_editor.textedit.bind("<Escape>", lambda x: self.get_text_editor_value((r, c, "Escape")))
@@ -4237,11 +4257,11 @@ class MainTable(tk.Canvas):
         except:
             pass
         try:
-            self.text_editor_id = None
+            self.text_editor = None
         except:
             pass
         try:
-            self.text_editor = None
+            self.text_editor_id = None
         except:
             pass
         self.show_current()
@@ -4279,8 +4299,12 @@ class MainTable(tk.Canvas):
                     c == currently_selected[1] and
                     (self.single_selection_enabled or self.toggle_selection_enabled)
                     ):
-                    self.select_cell(r + 1 if r < len(self.row_positions) - 2 else r, c)
-                    self.see(r + 1 if r < len(self.row_positions) - 2 else r, c, keep_xscroll = True, bottom_right_corner = True, check_cell_visibility = True)
+                    if destroy_tup is not None and len(destroy_tup) >= 3 and destroy_tup[2] == "Return":
+                        self.select_cell(r + 1 if r < len(self.row_positions) - 2 else r, c)
+                        self.see(r + 1 if r < len(self.row_positions) - 2 else r, c, keep_xscroll = True, bottom_right_corner = True, check_cell_visibility = True)
+                    elif destroy_tup is not None and len(destroy_tup) >= 3 and destroy_tup[2] == "Tab":
+                        self.select_cell(r, c + 1 if c < len(self.col_positions) - 2 else c)
+                        self.see(r, c + 1 if c < len(self.col_positions) - 2 else c, keep_xscroll = True, bottom_right_corner = True, check_cell_visibility = True)
         if recreate:
             self.recreate_all_selection_boxes()
             self.resize_dropdowns()
