@@ -86,6 +86,18 @@ class MainTable(tk.Canvas):
         self.hidd_bord_sels = {}
         self.hidd_resize_lines = {}
 
+        self.cell_options = {}
+        self.col_options = {}
+        self.row_options = {}
+
+        """
+        cell options dict looks like:
+        {(row int, column int): {'dropdown': (widget, id),
+                                 'highlight: (bg, fg),
+                                 'align': "e",
+                                 'readonly': True}
+        """
+
         self.max_undos = max_undos
         self.undo_storage = deque(maxlen = max_undos)
 
@@ -254,18 +266,6 @@ class MainTable(tk.Canvas):
         self.popup_menu_highlight_bg = popup_menu_highlight_bg
         self.popup_menu_highlight_fg = popup_menu_highlight_fg
 
-        self.cell_options = {}
-        self.col_options = {}
-        self.row_options = {}
-
-        """
-        cell options dict looks like:
-        {(row int, column int): {'dropdown': (widget, id),
-                                 'highlight: (bg, fg),
-                                 'align': "e",
-                                 'readonly': True}
-        """
-
         self.basic_bindings()
         self.create_rc_menus()
         
@@ -282,6 +282,9 @@ class MainTable(tk.Canvas):
             self.bind("<Double-Button-1>", self.double_b1)
             self.bind("<MouseWheel>", self.mousewheel)
             self.bind("<Shift-MouseWheel>", self.shift_mousewheel)
+            self.bind("<Shift-ButtonPress-1>", self.shift_b1_press)
+            self.CH.bind("<Shift-ButtonPress-1>", self.CH.shift_b1_press)
+            self.RI.bind("<Shift-ButtonPress-1>", self.RI.shift_b1_press)
             self.CH.bind("<Shift-MouseWheel>", self.shift_mousewheel)
             self.RI.bind("<MouseWheel>", self.mousewheel)
             self.bind(get_rc_binding(), self.rc)
@@ -293,6 +296,9 @@ class MainTable(tk.Canvas):
             self.unbind("<ButtonRelease-1>")
             self.unbind("<Double-Button-1>")
             self.unbind("<MouseWheel>")
+            self.unbind("<Shift-ButtonPress-1>")
+            self.CH.unbind("<Shift-ButtonPress-1>")
+            self.RI.unbind("<Shift-ButtonPress-1>")
             self.unbind("<Shift-MouseWheel>")
             self.CH.unbind("<Shift-MouseWheel>")
             self.RI.unbind("<MouseWheel>")
@@ -3105,7 +3111,7 @@ class MainTable(tk.Canvas):
                                                                       f"{int((int(c_1[5:], 16) + c_2_[2]) / 2):02X}"), outline = "", tag = "hi")
             tf = self.table_selected_cells_fg if self.cell_options[(r, dcol)]['highlight'][1] is None or self.display_selected_fg_over_highlights else self.cell_options[(r, dcol)]['highlight'][1]
             
-        elif r in self.row_options and 'highlight' in self.row_options[(r, c)] and (r, c) in selected_cells:
+        elif r in self.row_options and 'highlight' in self.row_options[r] and (r, c) in selected_cells:
             if self.row_options[r]['highlight'][0] is not None:
                 c_1 = self.row_options[r]['highlight'][0] if self.row_options[r]['highlight'][0].startswith("#") else Color_Map_[self.row_options[r]['highlight'][0]]
                 self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_2_[0]) / 2):02X}" +
@@ -3113,7 +3119,7 @@ class MainTable(tk.Canvas):
                                                                       f"{int((int(c_1[5:], 16) + c_2_[2]) / 2):02X}"), outline = "", tag = "hi")
             tf = self.table_selected_cells_fg if self.row_options[r]['highlight'][1] is None or self.display_selected_fg_over_highlights else self.row_options[r]['highlight'][1]
             
-        elif dcol in self.col_options and 'highlight' in self.col_options[(r, c)] and (r, c) in selected_cells:
+        elif dcol in self.col_options and 'highlight' in self.col_options[dcol] and (r, c) in selected_cells:
             if self.col_options[dcol]['highlight'][0] is not None:
                 c_1 = self.col_options[dcol]['highlight'][0] if self.col_options[dcol]['highlight'][0].startswith("#") else Color_Map_[self.col_options[dcol]['highlight'][0]]
                 self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_2_[0]) / 2):02X}" +

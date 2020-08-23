@@ -765,9 +765,9 @@ class ColumnHeaders(tk.Canvas):
         return max(cell.split("\n"), key = self.MT.GetTextWidth)
 
     def redraw_highlight_get_text_fg(self, fc, sc, c, c_2, c_3, selected_cols, selected_rows, actual_selected_cols, hlcol):
-        if hlcol in self.cell_options and c in actual_selected_cols:
-            if self.cell_options[hlcol][0] is not None:
-                c_1 = self.cell_options[hlcol][0] if self.cell_options[hlcol][0].startswith("#") else Color_Map_[self.cell_options[hlcol][0]]
+        if hlcol in self.cell_options and 'highlight' in self.cell_options[hlcol] and c in actual_selected_cols:
+            if self.cell_options[hlcol]['highlight'][0] is not None:
+                c_1 = self.cell_options[hlcol]['highlight'][0] if self.cell_options[hlcol]['highlight'][0].startswith("#") else Color_Map_[self.cell_options[hlcol]['highlight'][0]]
                 self.redraw_highlight(fc + 1,
                                       0,
                                       sc,
@@ -777,10 +777,10 @@ class ColumnHeaders(tk.Canvas):
                                               f"{int((int(c_1[5:], 16) + int(c_3[5:], 16)) / 2):02X}"),
                                       outline = "",
                                       tag = "s")
-            tf = self.header_selected_columns_fg if self.cell_options[hlcol][1] is None or self.MT.display_selected_fg_over_highlights else self.cell_options[hlcol][1]
-        elif hlcol in self.cell_options and (c in selected_cols or selected_rows):
-            if self.cell_options[hlcol][0] is not None:
-                c_1 = self.cell_options[hlcol][0] if self.cell_options[hlcol][0].startswith("#") else Color_Map_[self.cell_options[hlcol][0]]
+            tf = self.header_selected_columns_fg if self.cell_options[hlcol]['highlight'][1] is None or self.MT.display_selected_fg_over_highlights else self.cell_options[hlcol]['highlight'][1]
+        elif hlcol in self.cell_options and 'highlight' in self.cell_options[hlcol] and (c in selected_cols or selected_rows):
+            if self.cell_options[hlcol]['highlight'][0] is not None:
+                c_1 = self.cell_options[hlcol]['highlight'][0] if self.cell_options[hlcol]['highlight'][0].startswith("#") else Color_Map_[self.cell_options[hlcol]['highlight'][0]]
                 self.redraw_highlight(fc + 1,
                                       0,
                                       sc,
@@ -790,15 +790,15 @@ class ColumnHeaders(tk.Canvas):
                                               f"{int((int(c_1[5:], 16) + int(c_2[5:], 16)) / 2):02X}"),
                                       outline = "",
                                       tag = "s")
-            tf = self.header_selected_cells_fg if self.cell_options[hlcol][1] is None or self.MT.display_selected_fg_over_highlights else self.cell_options[hlcol][1]
+            tf = self.header_selected_cells_fg if self.cell_options[hlcol]['highlight'][1] is None or self.MT.display_selected_fg_over_highlights else self.cell_options[hlcol]['highlight'][1]
         elif c in actual_selected_cols:
             tf = self.header_selected_columns_fg
         elif c in selected_cols or selected_rows:
             tf = self.header_selected_cells_fg
-        elif hlcol in self.cell_options:
-            if self.cell_options[hlcol][0] is not None:
-                self.redraw_highlight(fc + 1, 0, sc, self.current_height - 1, fill = self.cell_options[hlcol][0], outline = "", tag = "s")
-            tf = self.header_fg if self.cell_options[hlcol][1] is None else self.cell_options[hlcol][1]
+        elif hlcol in self.cell_options and 'highlight' in self.cell_options[hlcol]:
+            if self.cell_options[hlcol]['highlight'][0] is not None:
+                self.redraw_highlight(fc + 1, 0, sc, self.current_height - 1, fill = self.cell_options[hlcol]['highlight'][0], outline = "", tag = "s")
+            tf = self.header_fg if self.cell_options[hlcol]['highlight'][1] is None else self.cell_options[hlcol]['highlight'][1]
         else:
             tf = self.header_fg
         return tf, self.MT.my_hdr_font
