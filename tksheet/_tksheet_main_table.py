@@ -4254,6 +4254,7 @@ class MainTable(tk.Canvas):
         self.text_editor = TextEditor(self, text = text, font = self.my_font, state = state, width = w, height = h, border_color = self.table_selected_cells_border_fg, show_border = self.show_selected_cells_border)
         self.text_editor_id = self.create_window((x, y), window = self.text_editor, anchor = "nw")
         self.text_editor.textedit.bind("<Alt-Return>", self.text_editor_newline_binding)
+        self.text_editor.textedit.bind("<Option-Return>", self.text_editor_newline_binding)
         for key, func in self.text_editor_user_bound_keys.items():
             self.text_editor.textedit.bind(key, func)
         if binding is not None:
