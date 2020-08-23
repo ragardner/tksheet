@@ -103,7 +103,7 @@ class ColumnHeaders(tk.Canvas):
         self.dragged_col = None
         self.visible_col_dividers = []
         self.col_height_resize_bbox = tuple()
-        self.highlighted_cells = {}
+        self.cell_options = {}
         self.rsz_w = None
         self.rsz_h = None
         self.new_col_height = 0
@@ -545,39 +545,39 @@ class ColumnHeaders(tk.Canvas):
                                                                             int(orig_selected_cols[0]),
                                                                             int(new_selected[0]),
                                                                              int(new_selected[-1]),
-                                                                             self.MT.highlighted_cells,
-                                                                             self.MT.highlighted_cols,
-                                                                             self.highlighted_cells))))
+                                                                             self.MT.cell_options,
+                                                                             self.MT.col_options,
+                                                                             self.cell_options))))
                 colset = set(colsiter)
-                popped_ch_highlights = {t1: t2 for t1, t2 in self.highlighted_cells.items() if t1 in colset}
-                popped_cell_highlights = {t1: t2 for t1, t2 in self.MT.highlighted_cells.items() if t1[1] in colset}
-                popped_col_highlights = {t1: t2 for t1, t2 in self.MT.highlighted_cols.items() if t1 in colset}
+                popped_ch = {t1: t2 for t1, t2 in self.cell_options.items() if t1 in colset}
+                popped_cell = {t1: t2 for t1, t2 in self.MT.cell_options.items() if t1[1] in colset}
+                popped_col = {t1: t2 for t1, t2 in self.MT.col_options.items() if t1 in colset}
                 
-                popped_ch_highlights = {t1: self.highlighted_cells.pop(t1) for t1 in popped_ch_highlights}
-                popped_cell_highlights = {t1: self.MT.highlighted_cells.pop(t1) for t1 in popped_cell_highlights}
-                popped_col_highlights = {t1: self.MT.highlighted_cols.pop(t1) for t1 in popped_col_highlights}
+                popped_ch = {t1: self.cell_options.pop(t1) for t1 in popped_ch}
+                popped_cell = {t1: self.MT.cell_options.pop(t1) for t1 in popped_cell}
+                popped_col = {t1: self.MT.col_options.pop(t1) for t1 in popped_col}
 
-                self.highlighted_cells = {t1 if t1 < rm1start else t1 - totalcols: t2 for t1, t2 in self.highlighted_cells.items()}
-                self.highlighted_cells = {t1 if t1 < c_ else t1 + totalcols: t2 for t1, t2 in self.highlighted_cells.items()}
+                self.cell_options = {t1 if t1 < rm1start else t1 - totalcols: t2 for t1, t2 in self.cell_options.items()}
+                self.cell_options = {t1 if t1 < c_ else t1 + totalcols: t2 for t1, t2 in self.cell_options.items()}
 
-                self.MT.highlighted_cols = {t1 if t1 < rm1start else t1 - totalcols: t2 for t1, t2 in self.MT.highlighted_cols.items()}
-                self.MT.highlighted_cols = {t1 if t1 < c_ else t1 + totalcols: t2 for t1, t2 in self.MT.highlighted_cols.items()}
+                self.MT.col_options = {t1 if t1 < rm1start else t1 - totalcols: t2 for t1, t2 in self.MT.col_options.items()}
+                self.MT.col_options = {t1 if t1 < c_ else t1 + totalcols: t2 for t1, t2 in self.MT.col_options.items()}
 
-                self.MT.highlighted_cells = {(t10, t11 if t11 < rm1start else t11 - totalcols): t2 for (t10, t11), t2 in self.MT.highlighted_cells.items()}
-                self.MT.highlighted_cells = {(t10, t11 if t11 < c_ else t11 + totalcols): t2 for (t10, t11), t2 in self.MT.highlighted_cells.items()}
+                self.MT.cell_options = {(t10, t11 if t11 < rm1start else t11 - totalcols): t2 for (t10, t11), t2 in self.MT.cell_options.items()}
+                self.MT.cell_options = {(t10, t11 if t11 < c_ else t11 + totalcols): t2 for (t10, t11), t2 in self.MT.cell_options.items()}
 
-                if popped_ch_highlights:
+                if popped_ch:
                     for t1, t2 in zip(colsiter, new_selected):
-                        self.highlighted_cells[t2] = popped_ch_highlights[t1]
+                        self.cell_options[t2] = popped_ch[t1]
 
-                if popped_col_highlights:
+                if popped_col:
                     for t1, t2 in zip(colsiter, new_selected):
-                        self.MT.highlighted_cols[t2] = popped_col_highlights[t1]
+                        self.MT.col_options[t2] = popped_col[t1]
 
-                if popped_cell_highlights:
+                if popped_cell:
                     newcolsdct = {t1: t2 for t1, t2 in zip(colsiter, new_selected)}
-                    for (t10, t11), t2 in popped_cell_highlights.items():
-                        self.MT.highlighted_cells[(t10, newcolsdct[t11])] = t2
+                    for (t10, t11), t2 in popped_cell.items():
+                        self.MT.cell_options[(t10, newcolsdct[t11])] = t2
                 
                 self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
                 if self.ch_extra_end_drag_drop_func is not None:
@@ -614,9 +614,14 @@ class ColumnHeaders(tk.Canvas):
         if bg is None and fg is None:
             return
         if cells:
-            self.highlighted_cells.update({c_: (bg, fg)  for c_ in cells})
+            for c_ in cells:
+                if c_ not in self.cell_options:
+                    self.cell_options[c_] = {}
+                self.cell_options[c_]['highlight'] = (bg, fg)
         else:
-            self.highlighted_cells[c] = (bg, fg)
+            if c not in self.cell_options:
+                self.cell_options[c] = {}
+            self.cell_options[c]['highlight'] = (bg, fg)
         if redraw:
             self.MT.main_table_redraw_grid_and_text(True, False)
 
@@ -760,9 +765,9 @@ class ColumnHeaders(tk.Canvas):
         return max(cell.split("\n"), key = self.MT.GetTextWidth)
 
     def redraw_highlight_get_text_fg(self, fc, sc, c, c_2, c_3, selected_cols, selected_rows, actual_selected_cols, hlcol):
-        if hlcol in self.highlighted_cells and c in actual_selected_cols:
-            if self.highlighted_cells[hlcol][0] is not None:
-                c_1 = self.highlighted_cells[hlcol][0] if self.highlighted_cells[hlcol][0].startswith("#") else Color_Map_[self.highlighted_cells[hlcol][0]]
+        if hlcol in self.cell_options and c in actual_selected_cols:
+            if self.cell_options[hlcol][0] is not None:
+                c_1 = self.cell_options[hlcol][0] if self.cell_options[hlcol][0].startswith("#") else Color_Map_[self.cell_options[hlcol][0]]
                 self.redraw_highlight(fc + 1,
                                       0,
                                       sc,
@@ -772,10 +777,10 @@ class ColumnHeaders(tk.Canvas):
                                               f"{int((int(c_1[5:], 16) + int(c_3[5:], 16)) / 2):02X}"),
                                       outline = "",
                                       tag = "s")
-            tf = self.header_selected_columns_fg if self.highlighted_cells[hlcol][1] is None or self.MT.display_selected_fg_over_highlights else self.highlighted_cells[hlcol][1]
-        elif hlcol in self.highlighted_cells and (c in selected_cols or selected_rows):
-            if self.highlighted_cells[hlcol][0] is not None:
-                c_1 = self.highlighted_cells[hlcol][0] if self.highlighted_cells[hlcol][0].startswith("#") else Color_Map_[self.highlighted_cells[hlcol][0]]
+            tf = self.header_selected_columns_fg if self.cell_options[hlcol][1] is None or self.MT.display_selected_fg_over_highlights else self.cell_options[hlcol][1]
+        elif hlcol in self.cell_options and (c in selected_cols or selected_rows):
+            if self.cell_options[hlcol][0] is not None:
+                c_1 = self.cell_options[hlcol][0] if self.cell_options[hlcol][0].startswith("#") else Color_Map_[self.cell_options[hlcol][0]]
                 self.redraw_highlight(fc + 1,
                                       0,
                                       sc,
@@ -785,15 +790,15 @@ class ColumnHeaders(tk.Canvas):
                                               f"{int((int(c_1[5:], 16) + int(c_2[5:], 16)) / 2):02X}"),
                                       outline = "",
                                       tag = "s")
-            tf = self.header_selected_cells_fg if self.highlighted_cells[hlcol][1] is None or self.MT.display_selected_fg_over_highlights else self.highlighted_cells[hlcol][1]
+            tf = self.header_selected_cells_fg if self.cell_options[hlcol][1] is None or self.MT.display_selected_fg_over_highlights else self.cell_options[hlcol][1]
         elif c in actual_selected_cols:
             tf = self.header_selected_columns_fg
         elif c in selected_cols or selected_rows:
             tf = self.header_selected_cells_fg
-        elif hlcol in self.highlighted_cells:
-            if self.highlighted_cells[hlcol][0] is not None:
-                self.redraw_highlight(fc + 1, 0, sc, self.current_height - 1, fill = self.highlighted_cells[hlcol][0], outline = "", tag = "s")
-            tf = self.header_fg if self.highlighted_cells[hlcol][1] is None else self.highlighted_cells[hlcol][1]
+        elif hlcol in self.cell_options:
+            if self.cell_options[hlcol][0] is not None:
+                self.redraw_highlight(fc + 1, 0, sc, self.current_height - 1, fill = self.cell_options[hlcol][0], outline = "", tag = "s")
+            tf = self.header_fg if self.cell_options[hlcol][1] is None else self.cell_options[hlcol][1]
         else:
             tf = self.header_fg
         return tf, self.MT.my_hdr_font
