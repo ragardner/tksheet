@@ -3414,14 +3414,20 @@ class MainTable(tk.Canvas):
                     sr = self.row_positions[r + 1]
                     if sr - fr < self.txt_h:
                         continue
+                    if sr > sb:
+                        sr = sb
                     
-                    if (r, c) in self.cell_options and 'align' in self.cell_options[(r, c)]:
-                        cell_alignment = self.cell_options[(r, c)]['align']
+                    if self.all_columns_displayed:
+                        dcol = c
+                    else:
+                        dcol = self.displayed_columns[c]
+                        
+                    if (r, dcol) in self.cell_options and 'align' in self.cell_options[(r, dcol)]:
+                        cell_alignment = self.cell_options[(r, dcol)]['align']
                     elif r in self.row_options and 'align' in self.row_options[r]:
                         cell_alignment = self.row_options[r]['align']
-                    elif c in self.col_options and 'align' in self.col_options[c]:
-                        cell_alignment = self.col_options[c]['align']
-                    
+                    elif dcol in self.col_options and 'align' in self.col_options[dcol]:
+                        cell_alignment = self.col_options[dcol]['align']
                     else:
                         cell_alignment = self.align
                     
@@ -3431,7 +3437,7 @@ class MainTable(tk.Canvas):
                         x = fc + 5
                         mw = sc - fc - 5
 
-                    if cell_alignment == "e":
+                    elif cell_alignment == "e":
                         fc = self.col_positions[c]
                         sc = self.col_positions[c + 1]
                         x = sc - 5
@@ -3444,12 +3450,6 @@ class MainTable(tk.Canvas):
                         mw = sc - fc - 1
                         x = fc + floor((sc - fc) / 2)
                     
-                    if sr > sb:
-                        sr = sb
-                    if self.all_columns_displayed:
-                        dcol = c
-                    else:
-                        dcol = self.displayed_columns[c]
                     tf = self.redraw_highlight_get_text_fg(r, c, fc, fr, sc, sr, c_2_, c_3_, c_4_, selected_cells, actual_selected_rows, actual_selected_cols, dcol)
                     if cell_alignment == "w":
                         if x > x2 or mw <= 5:
@@ -3519,8 +3519,8 @@ class MainTable(tk.Canvas):
                         except:
                             continue
 
-                    if cell_alignment == "e":
-                        if x > x2 or mw <= 5:
+                    elif cell_alignment == "e":
+                        if fc + 5 > x2 or mw <= 5:
                             continue
                         try:
                             lns = self.data_ref[r][dcol]
