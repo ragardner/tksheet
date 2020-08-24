@@ -742,6 +742,8 @@ class MainTable(tk.Canvas):
             if undo_storage[0] == "edit_cells":
                 for (r, c), v in undo_storage[1].items():
                     self.data_ref[r][c] = v
+                    if (r, c) in self.cell_options and 'dropdown' in self.cell_options[(r, c)]:
+                        self.cell_options[(r, c)]['dropdown'][0].set_displayed(v)
                 start_row = float("inf")
                 start_col = float("inf")
                 for box in undo_storage[2]:
@@ -751,12 +753,15 @@ class MainTable(tk.Canvas):
                         start_row = r1
                     if c1 < start_col:
                         start_col = c1
-                if isinstance(undo_storage[3][0], int):
-                    self.create_current(undo_storage[3][0], undo_storage[3][1], type_ = "cell", inside = True if self.cell_selected(undo_storage[3][0], undo_storage[3][1]) else False)
-                elif undo_storage[3][0] == "column":
-                    self.create_current(0, undo_storage[3][1], type_ = "col", inside = True)
-                elif undo_storage[3][0] == "row":
-                    self.create_current(undo_storage[3][1], 0, type_ = "row", inside = True)
+                if undo_storage[3]:
+                    if isinstance(undo_storage[3][0], int):
+                        self.create_current(undo_storage[3][0], undo_storage[3][1], type_ = "cell", inside = True if self.cell_selected(undo_storage[3][0], undo_storage[3][1]) else False)
+                    elif undo_storage[3][0] == "column":
+                        self.create_current(0, undo_storage[3][1], type_ = "col", inside = True)
+                    elif undo_storage[3][0] == "row":
+                        self.create_current(undo_storage[3][1], 0, type_ = "row", inside = True)
+                else:
+                    self.create_current(start_row, start_col, type_ = "cell", inside = True if self.cell_selected(start_row, start_col) else False)
                 self.see(r = start_row, c = start_col, keep_yscroll = False, keep_xscroll = False, bottom_right_corner = False, check_cell_visibility = True, redraw = False)
             elif undo_storage[0] == "move_rows":
                 rhs = [int(b - a) for a, b in zip(self.row_positions, islice(self.row_positions, 1, len(self.row_positions)))]

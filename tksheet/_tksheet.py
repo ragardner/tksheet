@@ -797,8 +797,9 @@ class Sheet(tk.Frame):
         self.MT.resize_dropdowns(dropdowns = dropdowns)
 
     def set_all_dropdown_values_to_sheet(self):
-        for r, c in self.MT.dropdowns:
-            self.MT.dropdowns[(r, c)]['widget'].set_displayed(self.MT.data_ref[r][c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]])
+        for r, c in self.MT.cell_options:
+            if 'dropdown' in self.MT.cell_options[(r, c)]:
+                self.MT.cell_options[(r, c)]['dropdown'][0].set_displayed(self.MT.data_ref[r][c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]])
 
     def cut(self, event = None):
         self.MT.ctrl_x()
