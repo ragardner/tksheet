@@ -4471,7 +4471,7 @@ class MainTable(tk.Canvas):
 
     def set_cell_data(self, r = 0, c = 0, value = "", undo = True, cell_resize = True):
         if r > len(self.data_ref) - 1:
-            self.data_ref.extend([list(repeat("", c + 1)) for r in range((r + 1) - len(self.data_ref))])
+            self.data_ref.extend(list(repeat(list(repeat("", c + 1)), range((r + 1) - len(self.data_ref)))))
         elif c > len(self.data_ref[r]) - 1:
             self.data_ref[r].extend(list(repeat("", (c + 1) - len(self.data_ref[r]))))
         if self.undo_enabled and undo:
@@ -4495,10 +4495,11 @@ class MainTable(tk.Canvas):
 
     def create_dropdown(self, r = 0, c = 0, values = [], set_value = None, state = "readonly", see = True, destroy_on_leave = True, destroy_on_select = True, current = False,
                         set_cell_on_select = True, redraw = True, recreate = True):
+        quick_disp_cols = dict(zip(self.displayed_columns, range(len(self.displayed_columns))))
         if self.all_columns_displayed:
             cpos = c
         else:
-            cpos = self.displayed_columns[c]
+            cpos = quick_disp_cols[c]
         if see:
             self.see(r = r, c = cpos)
         if (r, c) in self.cell_options and 'dropdown' in self.cell_options[(r, c)]:
@@ -4511,20 +4512,19 @@ class MainTable(tk.Canvas):
             self.set_cell_data(r, cpos, set_value if set_value is not None else values[0], cell_resize = False)
         if (r, c) not in self.cell_options:
             self.cell_options[(r, c)] = {}
-        self.cell_options[(r, c)]['dropdown'] = (TableDropdown(self,                    # widget
-                                                                 font = self.my_font,
-                                                                 state = state,
-                                                                 values = values,
-                                                                 set_value = set_value,
-                                                                 width = w,
-                                                                 height = h),
-                                                 self.create_window((x, y),             # canvas id
-                                                                      window = self.cell_options[(r, c)]['widget'],
-                                                                      anchor = "nw")
-                                                 )
+        widget = TableDropdown(self,
+                                 font = self.my_font,
+                                 state = state,
+                                 values = values,
+                                 set_value = set_value,
+                                 width = w,
+                                 height = h)
+        window = self.create_window((x, y),
+                                      window = widget,
+                                      anchor = "nw")
+        self.cell_options[(r, c)]['dropdown'] = (widget, window)
         self.cell_options[(r, c)]['dropdown'][0].dropdown.bind("<<ComboboxSelected>>",
-                                                               lambda event: self.get_dropdown_value(r = r,
-                                                                                                     c = c,
+                                                               lambda event: self.get_dropdown_value(canvas_window = window,
                                                                                                      current = current,
                                                                                                      destroy = destroy_on_select,
                                                                                                      set_cell_on_select = set_cell_on_select,
@@ -4532,8 +4532,7 @@ class MainTable(tk.Canvas):
                                                                                                      recreate = recreate))
         if destroy_on_leave:
             self.cell_options[(r, c)]['dropdown'][0].dropdown.bind("<FocusOut>",
-                                                                   lambda event: self.get_dropdown_value(r = r,
-                                                                                                         c = c,
+                                                                   lambda event: self.get_dropdown_value(canvas_window = window,
                                                                                                          current = current,
                                                                                                          destroy = True,
                                                                                                          set_cell_on_select = set_cell_on_select,
@@ -4541,13 +4540,21 @@ class MainTable(tk.Canvas):
                                                                                                          recreate = recreate))
             self.cell_options[(r, c)]['dropdown'][0].dropdown.focus_set()
 
-    def get_dropdown_value(self, event = None, r = 0, c = 0, current = False, destroy = True, set_cell_on_select = True, redraw = True, recreate = True):
+    def get_dropdown_value(self, event = None, r = None, c = None, canvas_window = None, current = False, destroy = True, set_cell_on_select = True, redraw = True, recreate = True):
+        if r is None or c is None:
+            x, y = self.coords(canvas_window)
+            x = int(x)
+            y = int(y)
+            rpos = bisect.bisect_left(self.row_positions, y)
+            cpos = bisect.bisect_left(self.col_positions, x)
+            r = rpos
+            c = self.displayed_columns[cpos]
         if current:
             self.table_dropdown_value = self.cell_options[(r, c)]['dropdown'][0].dropdown.current()
         else:
             self.table_dropdown_value = self.cell_options[(r, c)]['dropdown'][0].get_my_value()
         if set_cell_on_select:
-            self.set_cell_data(r, c, self.table_dropdown_value, cell_resize = True if destroy else False)
+            self.set_cell_data(r, cpos, self.table_dropdown_value, cell_resize = True if destroy else False)
             if self.extra_end_edit_cell_func is not None:
                 self.extra_end_edit_cell_func((r, c))
             self.focus_set()
@@ -4566,18 +4573,22 @@ class MainTable(tk.Canvas):
         del self.cell_options[(r, c)]['dropdown']
 
     def resize_dropdowns(self, dropdowns = []):
+        quick_disp_cols = dict(zip(self.displayed_columns, range(len(self.displayed_columns))))
         for r, c in dropdowns if dropdowns else self.cell_options:
             if 'dropdown' in self.cell_options[(r, c)]:
                 if self.all_columns_displayed:
                     cpos = c
                 else:
-                    cpos = self.displayed_columns[c]
+                    if c not in quick_disp_cols:
+                        self.itemconfig(self.cell_options[(r, c)]['dropdown'][1], state = "hidden")
+                        continue
+                    cpos = quick_disp_cols[c]
                 x = self.col_positions[cpos]
                 y = self.row_positions[r]
                 w = self.col_positions[cpos + 1] - self.col_positions[cpos] + 1
                 h = self.row_positions[r + 1] - self.row_positions[r] + 1
                 self.coords(self.cell_options[(r, c)]['dropdown'][1], x, y)
-                self.itemconfig(self.cell_options[(r, c)]['dropdown'][1], width = w, height = h)
+                self.itemconfig(self.cell_options[(r, c)]['dropdown'][1], width = w, height = h, state = "normal")
             
                 
 
