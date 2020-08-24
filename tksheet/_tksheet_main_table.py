@@ -468,7 +468,14 @@ class MainTable(tk.Canvas):
                         for r1, c1, r2, c2 in boxes:
                             if r2 - r1 < maxrows:
                                 continue
+                            if rn in self.cell_options and 'readonly' in self.cell_options[rn]:
+                                continue
                             for c in range(c1, c2):
+                                if (
+                                    ((rn, c) in self.cell_options and 'readonly' in self.cell_options[(rn, c)]) or
+                                    (c in self.col_options and 'readonly' in self.col_options[c])
+                                    ):
+                                    continue
                                 try:
                                     self.data_ref[r1 + rn][c] = ""
                                 except:
@@ -494,9 +501,17 @@ class MainTable(tk.Canvas):
                         for r1, c1, r2, c2 in boxes:
                             if r2 - r1 < maxrows:
                                 continue
+                            data_ref_rn = r1 + rn
+                            if data_ref_rn in self.cell_options and 'readonly' in self.cell_options[data_ref_rn]:
+                                continue
                             for c in range(c1, c2):
+                                if (
+                                    ((data_ref_rn, self.displayed_columns[c]) in self.cell_options and 'readonly' in self.cell_options[(data_ref_rn, self.displayed_columns[c])]) or
+                                    (self.displayed_columns[c] in self.col_options and 'readonly' in self.col_options[self.displayed_columns[c]])
+                                    ):
+                                    continue
                                 try:
-                                    self.data_ref[r1 + rn][self.displayed_columns[c]] = ""
+                                    self.data_ref[data_ref_rn][self.displayed_columns[c]] = ""
                                 except:
                                     continue
             elif currently_selected[0] == "row":
@@ -520,9 +535,17 @@ class MainTable(tk.Canvas):
                             rows.append(row)
                     for r1, c1, r2, c2 in boxes:
                         for rn in range(r2 - r1):
+                            data_ref_rn = r1 + rn
+                            if data_ref_rn in self.cell_options and 'readonly' in self.cell_options[data_ref_rn]:
+                                continue
                             for c in range(c1, c2):
+                                if (
+                                    ((data_ref_rn, c) in self.cell_options and 'readonly' in self.cell_options[(data_ref_rn, c)]) or
+                                    (c in self.col_options and 'readonly' in self.col_options[c])
+                                    ):
+                                    continue
                                 try:
-                                    self.data_ref[r1 + rn][c] = ""
+                                    self.data_ref[data_ref_rn][c] = ""
                                 except:
                                     continue
                 else:
@@ -542,9 +565,17 @@ class MainTable(tk.Canvas):
                             rows.append(row)
                     for r1, c1, r2, c2 in boxes:
                         for rn in range(r2 - r1):
+                            data_ref_rn = r1 + rn
+                            if data_ref_rn in self.cell_options and 'readonly' in self.cell_options[data_ref_rn]:
+                                continue
                             for c in range(c1, c2):
+                                if (
+                                    ((data_ref_rn, self.displayed_columns[c]) in self.cell_options and 'readonly' in self.cell_options[(data_ref_rn, self.displayed_columns[c])]) or
+                                    (self.displayed_columns[c] in self.col_options and 'readonly' in self.col_options[self.displayed_columns[c]])
+                                    ):
+                                    continue
                                 try:
-                                    self.data_ref[r1 + rn][self.displayed_columns[c]] = ""
+                                    self.data_ref[data_ref_rn][self.displayed_columns[c]] = ""
                                 except:
                                     continue
             if self.undo_enabled:
@@ -601,6 +632,12 @@ class MainTable(tk.Canvas):
                             self.data_ref.extend([list(repeat("", c + 1)) for r in range((r + 1) - len(self.data_ref))])
                         elif c > len(self.data_ref[r]) - 1:
                             self.data_ref[r].extend(list(repeat("", (c + 1) - len(self.data_ref[r]))))
+                        if (
+                            (r, c) in self.cell_options and 'readonly' in self.cell_options[(r, c)] or
+                            c in self.col_options and 'readonly' in self.col_options[c] or
+                            r in self.row_options and 'readonly' in self.row_options[r]
+                            ):
+                            continue
                         if self.undo_enabled:
                             undo_storage[(r, c)] = f"{self.data_ref[r][c]}"
                         self.data_ref[r][c] = data[ndr][ndc]
@@ -611,6 +648,12 @@ class MainTable(tk.Canvas):
                             self.data_ref.extend([list(repeat("", c + 1)) for r in range((r + 1) - len(self.data_ref))])
                         elif c > len(self.data_ref[r]) - 1:
                             self.data_ref[r].extend(list(repeat("", (c + 1) - len(self.data_ref[r]))))
+                        if (
+                            (r, self.displayed_columns[c]) in self.cell_options and 'readonly' in self.cell_options[(r, self.displayed_columns[c])] or
+                            self.displayed_columns[c] in self.col_options and 'readonly' in self.col_options[self.displayed_columns[c]] or
+                            r in self.row_options and 'readonly' in self.row_options[r]
+                            ):
+                            continue
                         if self.undo_enabled:
                             undo_storage[(r, self.displayed_columns[c])] = f"{self.data_ref[r][self.displayed_columns[c]]}"
                         self.data_ref[r][self.displayed_columns[c]] = data[ndr][ndc]
@@ -645,6 +688,12 @@ class MainTable(tk.Canvas):
                 for (r1, c1, r2, c2), _ in boxes:
                     for r in range(r1, r2):
                         for c in range(c1, c2):
+                            if (
+                                (r, c) in self.cell_options and 'readonly' in self.cell_options[(r, c)] or
+                                c in self.col_options and 'readonly' in self.col_options[c] or
+                                r in self.row_options and 'readonly' in self.row_options[r]
+                                ):
+                                continue
                             try:
                                 if self.undo_enabled:
                                     undo_storage[(r, c)] = f"{self.data_ref[r][c]}"
@@ -666,6 +715,12 @@ class MainTable(tk.Canvas):
                 for (r1, c1, r2, c2), _ in boxes:
                     for r in range(r1, r2):
                         for c in range(c1, c2):
+                            if (
+                                (r, self.displayed_columns[c]) in self.cell_options and 'readonly' in self.cell_options[(r, self.displayed_columns[c])] or
+                                self.displayed_columns[c] in self.col_options and 'readonly' in self.col_options[self.displayed_columns[c]] or
+                                r in self.row_options and 'readonly' in self.row_options[r]
+                                ):
+                                continue
                             try:
                                 if self.undo_enabled:
                                     undo_storage[(r, self.displayed_columns[c])] = f"{self.data_ref[r][self.displayed_columns[c]]}"
@@ -1123,12 +1178,64 @@ class MainTable(tk.Canvas):
                     del self.cell_options[(row, column)]['align']
         else:
             if cells:
-                for (r, c) in cells:
+                for r, c in cells:
                     if (r, c) not in self.cell_options:
                         self.cell_options[(r, c)] = {}
                     self.cell_options[(r, c)]['align'] = align
             else:
-                self.cell_options[(row, column)] = align
+                if (row, column) not in self.cell_options:
+                    self.cell_options[(row, column)] = {}
+                self.cell_options[(row, column)]['align'] = align
+
+    def readonly_rows(self, rows = [], readonly = True):
+        if isinstance(rows, int):
+            rows_ = [rows]
+        else:
+            rows_ = rows
+        if not readonly:
+            for r in rows_:
+                if r in self.row_options and 'readonly' in self.row_options[r]:
+                    del self.row_options[r]['readonly']
+        else:
+            for r in rows_:
+                if r not in self.row_options:
+                    self.row_options[r] = {}
+                self.row_options[r]['readonly'] = True
+
+    def readonly_columns(self, columns = [], readonly = True):
+        if isinstance(columns, int):
+            cols_ = [columns]
+        else:
+            cols_ = columns
+        if not readonly:
+            for c in cols_:
+                if c in self.col_options and 'readonly' in self.col_options[c]:
+                    del self.col_options[c]['readonly']
+        else:
+            for c in cols_:
+                if c not in self.col_options:
+                    self.col_options[c] = {}
+                self.col_options[c]['readonly'] = True
+
+    def readonly_cells(self, row = 0, column = 0, cells = [], readonly = True):
+        if not readonly:
+            if cells:
+                for r, c in cells:
+                    if (r, c) in self.cell_options and 'readonly' in self.cell_options[(r, c)]:
+                        del self.cell_options[(r, c)]['readonly']
+            else:
+                if (row, column) in self.cell_options and 'readonly' in self.cell_options[(row, column)]:
+                    del self.cell_options[(row, column)]['readonly']
+        else:
+            if cells:
+                for (r, c) in cells:
+                    if (r, c) not in self.cell_options:
+                        self.cell_options[(r, c)] = {}
+                    self.cell_options[(r, c)]['readonly'] = True
+            else:
+                if (row, column) not in self.cell_options:
+                    self.cell_options[(row, column)] = {}
+                self.cell_options[(row, column)]['readonly'] = True
 
     def highlight_cells(self, r = 0, c = 0, cells = tuple(), bg = None, fg = None, redraw = False):
         if bg is None and fg is None:
@@ -4221,6 +4328,20 @@ class MainTable(tk.Canvas):
         x1 = int(currently_selected[1])
         self.text_editor_loc = (y1, x1)
         text = None
+        if self.all_columns_displayed:
+            if (
+                (y1, x1) in self.cell_options and 'readonly' in self.cell_options[(y1, x1)] or
+                x1 in self.col_options and 'readonly' in self.col_options[x1] or
+                y1 in self.row_options and 'readonly' in self.row_options[y1]
+                ):
+                return
+        else:
+            if (
+                (y1, self.displayed_columns[x1]) in self.cell_options and 'readonly' in self.cell_options[(y1, self.displayed_columns[x1])] or
+                self.displayed_columns[x1] in self.col_options and 'readonly' in self.col_options[self.displayed_columns[x1]] or
+                y1 in self.row_options and 'readonly' in self.row_options[y1]
+                ):
+                return
         if self.extra_begin_edit_cell_func is not None:
             text = self.extra_begin_edit_cell_func((y1, x1, event.char))
             if text is not None:

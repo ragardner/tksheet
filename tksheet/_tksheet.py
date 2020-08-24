@@ -1223,6 +1223,26 @@ class Sheet(tk.Frame):
         if redraw:
             self.redraw()
 
+    def readonly_rows(self, rows = [], readonly = True, redraw = True):
+        self.MT.readonly_rows(rows = rows,
+                              readonly = readonly)
+        if redraw:
+            self.redraw()
+
+    def readonly_columns(self, columns = [], readonly = True, redraw = True):
+        self.MT.readonly_columns(columns = columns,
+                                 readonly = readonly)
+        if redraw:
+            self.redraw()
+
+    def readonly_cells(self, row = 0, column = 0, cells = [], readonly = True, redraw = True):
+        self.MT.readonly_cells(row = row,
+                               column = column,
+                               cells = cells,
+                               readonly = readonly)
+        if redraw:
+            self.redraw()
+
     def highlight_rows(self, rows = [], bg = None, fg = None, highlight_index = True, redraw = False):
         self.MT.highlight_rows(rows = rows,
                                bg = bg,
