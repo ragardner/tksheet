@@ -785,16 +785,17 @@ class Sheet(tk.Frame):
 
     def delete_dropdown(self, r = 0, c = 0):
         if r == "all":
-            for k in tuple(self.MT.dropdowns):
-                self.MT.destroy_dropdown(k[0], k[1])
+            for r, c in self.MT.cell_options:
+                if 'dropdown' in self.MT.cell_options[(r, c)]:
+                    self.MT.destroy_dropdown(r, c)
         else:
             self.MT.destroy_dropdown(r, c)
 
     def get_dropdowns(self):
-        return self.MT.dropdowns
+        return {k: v['dropdown'] for k, v in self.MT.cell_options if 'dropdown' in v}
 
-    def resize_dropdowns(self, dropdowns = []):
-        self.MT.resize_dropdowns(dropdowns = dropdowns)
+    def refresh_dropdowns(self, dropdowns = []):
+        self.MT.refresh_dropdowns(dropdowns = dropdowns)
 
     def set_all_dropdown_values_to_sheet(self):
         for r, c in self.MT.cell_options:

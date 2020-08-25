@@ -484,7 +484,7 @@ class RowIndex(tk.Canvas):
             self.MT.row_positions[self.rsz_h + 1:] = [e + increment for e in islice(self.MT.row_positions, self.rsz_h + 1, len(self.MT.row_positions))]
             self.MT.row_positions[self.rsz_h] = new_row_pos
             self.MT.recreate_all_selection_boxes()
-            self.MT.resize_dropdowns()
+            self.MT.refresh_dropdowns()
             self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
         elif self.width_resizing_enabled and self.rsz_w is not None and self.currently_resizing_width:
             self.currently_resizing_width = False
@@ -572,15 +572,13 @@ class RowIndex(tk.Canvas):
                         new_selected = tuple(range(r_ + 1 - totalrows, r_ + 1))
                         self.MT.create_selected(r_ + 1 - totalrows, 0, r_ + 1, len(self.MT.col_positions) - 1, "rows")
                 self.MT.create_current(int(new_selected[0]), 0, type_ = "row", inside = True)
+                rowset = set(rowsiter)
                 if self.MT.undo_enabled:
                     self.MT.undo_storage.append(zlib.compress(pickle.dumps(("move_rows",
                                                                             min(orig_selected_rows),
                                                                             new_selected[0],
                                                                             new_selected[-1],
-                                                                            self.MT.cell_options,
-                                                                            self.MT.row_options,
-                                                                            self.cell_options))))
-                rowset = set(rowsiter)
+                                                                            sorted(orig_selected_rows)))))
                 popped_ri = {t1: t2 for t1, t2 in self.cell_options.items() if t1 in rowset}
                 popped_cell = {t1: t2 for t1, t2 in self.MT.cell_options.items() if t1[0] in rowset}
                 popped_row = {t1: t2 for t1, t2 in self.MT.row_options.items() if t1 in rowset}
@@ -610,6 +608,8 @@ class RowIndex(tk.Canvas):
                     newrowsdct = {t1: t2 for t1, t2 in zip(rowsiter, new_selected)}
                     for (t10, t11), t2 in popped_cell.items():
                         self.MT.cell_options[(newrowsdct[t10], t11)] = t2
+
+                self.MT.refresh_dropdowns()
 
                 self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
                 if self.ri_extra_end_drag_drop_func is not None:
@@ -759,7 +759,7 @@ class RowIndex(tk.Canvas):
             self.MT.row_positions[r_norm] = new_row_pos
             if recreate:
                 self.MT.recreate_all_selection_boxes()
-                self.MT.resize_dropdowns()
+                self.MT.refresh_dropdowns()
 
     def set_width_of_index_to_text(self, recreate = True):
         if not self.MT.my_row_index and isinstance(self.MT.my_row_index, list):
@@ -826,7 +826,7 @@ class RowIndex(tk.Canvas):
             self.MT.row_positions = list(accumulate(chain([0], (height for r in range(len(self.MT.data_ref))))))
         if recreate:
             self.MT.recreate_all_selection_boxes()
-            self.MT.resize_dropdowns()
+            self.MT.refresh_dropdowns()
         
     def GetNumLines(self, cell):
         if isinstance(cell, str):
@@ -977,15 +977,9 @@ class RowIndex(tk.Canvas):
                     continue
                 try:
                     if isinstance(self.MT.my_row_index, int):
-                        if isinstance(self.MT.data_ref[r][self.MT.my_row_index], str):
-                            lns = self.MT.data_ref[r][self.MT.my_row_index].split("\n")
-                        else:
-                            lns = (f"{self.MT.data_ref[r][self.MT.my_row_index]}", )
+                        lns = self.MT.data_ref[r][self.MT.my_row_index].split("\n") if isinstance(self.MT.data_ref[r][self.MT.my_row_index], str) else f"{self.MT.data_ref[r][self.MT.my_row_index]}".split("\n")
                     else:
-                        if isinstance(self.MT.my_row_index[r], str):
-                            lns = self.MT.my_row_index[r].split("\n")
-                        else:
-                            lns = (f"{self.MT.my_row_index[r]}", )
+                        lns = self.MT.my_row_index[r].split("\n") if isinstance(self.MT.my_row_index[r], str) else f"{self.MT.my_row_index[r]}".split("\n")
                 except:
                     if self.default_index == "letters":
                         lns = (num2alpha(r), )
@@ -1052,15 +1046,9 @@ class RowIndex(tk.Canvas):
                     continue
                 try:
                     if isinstance(self.MT.my_row_index, int):
-                        if isinstance(self.MT.data_ref[r][self.MT.my_row_index], str):
-                            lns = self.MT.data_ref[r][self.MT.my_row_index].split("\n")
-                        else:
-                            lns = (f"{self.MT.data_ref[r][self.MT.my_row_index]}", )
+                        lns = self.MT.data_ref[r][self.MT.my_row_index].split("\n") if isinstance(self.MT.data_ref[r][self.MT.my_row_index], str) else f"{self.MT.data_ref[r][self.MT.my_row_index]}".split("\n")
                     else:
-                        if isinstance(self.MT.my_row_index[r], str):
-                            lns = self.MT.my_row_index[r].split("\n")
-                        else:
-                            lns = (f"{self.MT.my_row_index[r]}", )
+                        lns = self.MT.my_row_index[r].split("\n") if isinstance(self.MT.my_row_index[r], str) else f"{self.MT.my_row_index[r]}".split("\n")
                 except:
                     if self.default_index == "letters":
                         lns = (num2alpha(r), )

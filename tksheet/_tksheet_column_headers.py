@@ -432,7 +432,7 @@ class ColumnHeaders(tk.Canvas):
             self.MT.col_positions[self.rsz_w + 1:] = [e + increment for e in islice(self.MT.col_positions, self.rsz_w + 1, len(self.MT.col_positions))]
             self.MT.col_positions[self.rsz_w] = new_col_pos
             self.MT.recreate_all_selection_boxes()
-            self.MT.resize_dropdowns()
+            self.MT.refresh_dropdowns()
             self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
         elif self.height_resizing_enabled and self.rsz_h is not None and self.currently_resizing_height:
             self.currently_resizing_height = False
@@ -446,7 +446,7 @@ class ColumnHeaders(tk.Canvas):
             x = event.x
             c = self.MT.identify_col(x = x)
             orig_selected_cols = self.MT.get_selected_cols()
-            if c != self.dragged_col and c is not None and c not in orig_selected_cols and len(orig_selected_cols) != len(self.MT.col_positions) - 1:
+            if self.MT.all_columns_displayed and c != self.dragged_col and c is not None and c not in orig_selected_cols and len(orig_selected_cols) != len(self.MT.col_positions) - 1:
                 orig_selected_cols = sorted(orig_selected_cols)
                 if len(orig_selected_cols) > 1:
                     orig_min = orig_selected_cols[0]
@@ -506,16 +506,8 @@ class ColumnHeaders(tk.Canvas):
                                 except:
                                     pass
                     else:
-                        if rm1start > c:
-                            self.MT.displayed_columns = (self.MT.displayed_columns[:c] +
-                                                         self.MT.displayed_columns[rm1start:rm1start + totalcols] +
-                                                         self.MT.displayed_columns[c:rm1start] +
-                                                         self.MT.displayed_columns[rm1start + totalcols:])
-                        else:
-                            self.MT.displayed_columns = (self.MT.displayed_columns[:rm1start] +
-                                                         self.MT.displayed_columns[rm1start + totalcols:c + 1] +
-                                                         self.MT.displayed_columns[rm1start:rm1start + totalcols] +
-                                                         self.MT.displayed_columns[c + 1:])
+                        pass
+                        # drag and drop columns when some are hidden disabled until correct code written
                 cws = [int(b - a) for a, b in zip(self.MT.col_positions, islice(self.MT.col_positions, 1, len(self.MT.col_positions)))]
                 if rm1start > c:
                     cws = (cws[:c] +
@@ -545,9 +537,7 @@ class ColumnHeaders(tk.Canvas):
                                                                             int(orig_selected_cols[0]),
                                                                             int(new_selected[0]),
                                                                              int(new_selected[-1]),
-                                                                             self.MT.cell_options,
-                                                                             self.MT.col_options,
-                                                                             self.cell_options))))
+                                                                             sorted(orig_selected_cols)))))
                 colset = set(colsiter)
                 popped_ch = {t1: t2 for t1, t2 in self.cell_options.items() if t1 in colset}
                 popped_cell = {t1: t2 for t1, t2 in self.MT.cell_options.items() if t1[1] in colset}
@@ -578,6 +568,8 @@ class ColumnHeaders(tk.Canvas):
                     newcolsdct = {t1: t2 for t1, t2 in zip(colsiter, new_selected)}
                     for (t10, t11), t2 in popped_cell.items():
                         self.MT.cell_options[(t10, newcolsdct[t11])] = t2
+
+                self.MT.refresh_dropdowns()
                 
                 self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
                 if self.ch_extra_end_drag_drop_func is not None:
@@ -743,7 +735,7 @@ class ColumnHeaders(tk.Canvas):
             self.MT.col_positions[col + 1] = new_col_pos
             if recreate:
                 self.MT.recreate_all_selection_boxes()
-                self.MT.resize_dropdowns()
+                self.MT.refresh_dropdowns()
 
     def set_width_of_all_cols(self, width = None, only_set_if_too_small = False, recreate = True):
         if width is None:
@@ -759,7 +751,7 @@ class ColumnHeaders(tk.Canvas):
                 self.MT.col_positions = list(accumulate(chain([0], (width for cn in range(len(self.MT.displayed_columns))))))
         if recreate:
             self.MT.recreate_all_selection_boxes()
-            self.MT.resize_dropdowns()
+            self.MT.refresh_dropdowns()
 
     def GetLargestWidth(self, cell):
         return max(cell.split("\n"), key = self.MT.GetTextWidth)
@@ -922,15 +914,9 @@ class ColumnHeaders(tk.Canvas):
                 x = fc + floor((sc - fc) / 2)
                 try:
                     if isinstance(self.MT.my_hdrs, int):
-                        if isinstance(self.MT.data_ref[self.MT.my_hdrs][dcol], str):
-                            lns = self.MT.data_ref[self.MT.my_hdrs][dcol].split("\n")
-                        else:
-                            lns = (f"{self.MT.data_ref[self.MT.my_hdrs][dcol]}", )
+                        lns = self.MT.data_ref[self.MT.my_hdrs][dcol].split("\n") if isinstance(self.MT.data_ref[self.MT.my_hdrs][dcol], str) else f"{self.MT.data_ref[self.MT.my_hdrs][dcol]}".split("\n")
                     else:
-                        if isinstance(self.MT.my_hdrs[dcol], str):
-                            lns = self.MT.my_hdrs[dcol].split("\n")
-                        else:
-                            lns = (f"{self.MT.my_hdrs[dcol]}", )
+                        lns = self.MT.my_hdrs[dcol].split("\n") if isinstance(self.MT.my_hdrs[dcol], str) else f"{self.MT.my_hdrs[dcol]}".split("\n")
                 except:
                     if self.default_hdr == "letters":
                         lns = (num2alpha(c), )
@@ -997,15 +983,9 @@ class ColumnHeaders(tk.Canvas):
                     continue
                 try:
                     if isinstance(self.MT.my_hdrs, int):
-                        if isinstance(self.MT.data_ref[self.MT.my_hdrs][dcol], str):
-                            lns = self.MT.data_ref[self.MT.my_hdrs][dcol].split("\n")
-                        else:
-                            lns = (f"{self.MT.data_ref[self.MT.my_hdrs][dcol]}", )
+                        lns = self.MT.data_ref[self.MT.my_hdrs][dcol].split("\n") if isinstance(self.MT.data_ref[self.MT.my_hdrs][dcol], str) else f"{self.MT.data_ref[self.MT.my_hdrs][dcol]}".split("\n")
                     else:
-                        if isinstance(self.MT.my_hdrs[dcol], str):
-                            lns = self.MT.my_hdrs[dcol].split("\n")
-                        else:
-                            lns = (f"{self.MT.my_hdrs[dcol]}", )
+                        lns = self.MT.my_hdrs[dcol].split("\n") if isinstance(self.MT.my_hdrs[dcol], str) else f"{self.MT.my_hdrs[dcol]}".split("\n")
                 except:
                     if self.default_hdr == "letters":
                         lns = (num2alpha(c), )
