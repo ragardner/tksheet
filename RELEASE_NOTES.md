@@ -1,3 +1,7 @@
+### Version 4.9.7
+ - Various bug fixes and improvements
+ - Add readonly cells/columns/rows
+
 ### Version 4.9.6
  - Fix bugs with `font()` functions
  - Fix edit cell bug when hiding columns

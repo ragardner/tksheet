@@ -25,7 +25,10 @@ pip install tksheet
  - Left `"w"`, Center `"center"` or Right `"e"` text alignment
  - Cell elements can be any class with a `str` method
 
-Work on this repository is ongoing, improvements in usability, functionality and finally documentation
+### To do
+ - Index and Header right text alignment
+ - Excel style box drag down to copy cells
+ - Documentation
 
 ### Demonstration of setup and various functions:
 
