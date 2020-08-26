@@ -596,18 +596,15 @@ class RowIndex(tk.Canvas):
                 self.MT.cell_options = {(t10 if t10 < rm1start else t10 - totalrows, t11): t2 for (t10, t11), t2 in self.MT.cell_options.items()}
                 self.MT.cell_options = {(t10 if t10 < r_ else t10 + totalrows, t11): t2 for (t10, t11), t2 in self.MT.cell_options.items()}
 
-                if popped_ri:
-                    for t1, t2 in zip(rowsiter, new_selected):
-                        self.cell_options[t2] = popped_ri[t1]
+                newrowsdct = {t1: t2 for t1, t2 in zip(rowsiter, new_selected)}
+                for t1, t2 in popped_ri.items():
+                    self.cell_options[newrowsdct[t1]] = t2
 
-                if popped_row:
-                    for t1, t2 in zip(rowsiter, new_selected):
-                        self.MT.row_options[t2] = popped_row[t1]
+                for t1, t2 in popped_row.items():
+                    self.MT.row_options[newrowsdct[t1]] = t2
 
-                if popped_cell:
-                    newrowsdct = {t1: t2 for t1, t2 in zip(rowsiter, new_selected)}
-                    for (t10, t11), t2 in popped_cell.items():
-                        self.MT.cell_options[(newrowsdct[t10], t11)] = t2
+                for (t10, t11), t2 in popped_cell.items():
+                    self.MT.cell_options[(newrowsdct[t10], t11)] = t2
 
                 self.MT.refresh_dropdowns()
 

@@ -556,18 +556,15 @@ class ColumnHeaders(tk.Canvas):
                 self.MT.cell_options = {(t10, t11 if t11 < rm1start else t11 - totalcols): t2 for (t10, t11), t2 in self.MT.cell_options.items()}
                 self.MT.cell_options = {(t10, t11 if t11 < c_ else t11 + totalcols): t2 for (t10, t11), t2 in self.MT.cell_options.items()}
 
-                if popped_ch:
-                    for t1, t2 in zip(colsiter, new_selected):
-                        self.cell_options[t2] = popped_ch[t1]
+                newcolsdct = {t1: t2 for t1, t2 in zip(colsiter, new_selected)}
+                for t1, t2 in popped_ch.items():
+                    self.cell_options[newcolsdct[t1]] = t2
 
-                if popped_col:
-                    for t1, t2 in zip(colsiter, new_selected):
-                        self.MT.col_options[t2] = popped_col[t1]
+                for t1, t2 in popped_col.items():
+                    self.MT.col_options[newcolsdct[t1]] = t2
 
-                if popped_cell:
-                    newcolsdct = {t1: t2 for t1, t2 in zip(colsiter, new_selected)}
-                    for (t10, t11), t2 in popped_cell.items():
-                        self.MT.cell_options[(t10, newcolsdct[t11])] = t2
+                for (t10, t11), t2 in popped_cell.items():
+                    self.MT.cell_options[(t10, newcolsdct[t11])] = t2
 
                 self.MT.refresh_dropdowns()
                 

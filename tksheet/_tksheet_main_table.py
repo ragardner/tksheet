@@ -834,18 +834,15 @@ class MainTable(tk.Canvas):
                 self.cell_options = {(t10 if t10 < rm1start else t10 - totalrows, t11): t2 for (t10, t11), t2 in self.cell_options.items()}
                 self.cell_options = {(t10 if t10 < ins_row else t10 + totalrows, t11): t2 for (t10, t11), t2 in self.cell_options.items()}
 
-                if popped_ri:
-                    for t1, t2 in zip(rowsiter, new_selected):
-                        self.RI.cell_options[t2] = popped_ri[t1]
+                newrowsdct = {t1: t2 for t1, t2 in zip(rowsiter, new_selected)}
+                for t1, t2 in popped_ri.items():
+                    self.RI.cell_options[newrowsdct[t1]] = t2
 
-                if popped_row:
-                    for t1, t2 in zip(rowsiter, new_selected):
-                        self.row_options[t2] = popped_row[t1]
+                for t1, t2 in popped_row.items():
+                    self.row_options[newrowsdct[t1]] = t2
 
-                if popped_cell:
-                    newrowsdct = {t1: t2 for t1, t2 in zip(rowsiter, new_selected)}
-                    for (t10, t11), t2 in popped_cell.items():
-                        self.cell_options[(newrowsdct[t10], t11)] = t2
+                for (t10, t11), t2 in popped_cell.items():
+                    self.cell_options[(newrowsdct[t10], t11)] = t2
 
                 self.refresh_dropdowns()
                         
@@ -927,18 +924,15 @@ class MainTable(tk.Canvas):
                 self.cell_options = {(t10, t11 if t11 < rm1start else t11 - totalcols): t2 for (t10, t11), t2 in self.cell_options.items()}
                 self.cell_options = {(t10, t11 if t11 < ins_col else t11 + totalcols): t2 for (t10, t11), t2 in self.cell_options.items()}
 
-                if popped_ch:
-                    for t1, t2 in zip(colsiter, new_selected):
-                        self.CH.cell_options[t2] = popped_ch[t1]
+                newcolsdct = {t1: t2 for t1, t2 in zip(colsiter, new_selected)}
+                for t1, t2 in popped_ch.items():
+                    self.CH.cell_options[newcolsdct[t1]] = t2
 
-                if popped_col:
-                    for t1, t2 in zip(colsiter, new_selected):
-                        self.col_options[t2] = popped_col[t1]
+                for t1, t2 in popped_col.items():
+                    self.col_options[newcolsdct[t1]] = t2
 
-                if popped_cell:
-                    newcolsdct = {t1: t2 for t1, t2 in zip(colsiter, new_selected)}
-                    for (t10, t11), t2 in popped_cell.items():
-                        self.cell_options[(t10, newcolsdct[t11])] = t2
+                for (t10, t11), t2 in popped_cell.items():
+                    self.cell_options[(t10, newcolsdct[t11])] = t2
 
                 self.refresh_dropdowns()
                         
@@ -2896,9 +2890,9 @@ class MainTable(tk.Canvas):
                                 'colwidths': {},
                                 'deleted_hdr_values': {},
                                 'selection_boxes': self.get_boxes(),
-                                'cell_options': dict(dict(self.cell_options)),
-                                'col_options': dict(dict(self.col_options)),
-                                'CH_cell_options': dict(dict(self.CH.cell_options))}
+                                'cell_options': {k: v.copy() for k, v in self.cell_options.items()},
+                                'col_options': {k: v.copy() for k, v in self.col_options.items()},
+                                'CH_cell_options': {k: v.copy() for k, v in self.CH.cell_options.items()}}
             if self.all_columns_displayed:
                 if self.undo_enabled:
                     for c in reversed(seld_cols):
@@ -2970,6 +2964,7 @@ class MainTable(tk.Canvas):
             self.cell_options = {(rn, cn if cn < idx else cn - numcols): t2 for (rn, cn), t2 in self.cell_options.items()}
             self.col_options = {cn if cn < idx else cn - numcols: t for cn, t in self.col_options.items()}
             self.CH.cell_options = {cn if cn < idx else cn - numcols: t for cn, t in self.CH.cell_options.items()}
+            self.refresh_dropdowns()
             self.deselect("allcols", redraw = False)
             self.set_current_to_last()
             self.refresh()
@@ -2990,9 +2985,9 @@ class MainTable(tk.Canvas):
                 undo_storage = {'deleted_rows': [],
                                 'deleted_index_values': [],
                                 'selection_boxes': self.get_boxes(),
-                                'cell_options': dict(dict(self.cell_options)),
-                                'row_options': dict(dict(self.row_options)),
-                                'RI_cell_options': dict(dict(self.RI.cell_options))}
+                                'cell_options': {k: v.copy() for k, v in self.cell_options.items()},
+                                'row_options': {k: v.copy() for k, v in self.row_options.items()},
+                                'RI_cell_options': {k: v.copy() for k, v in self.RI.cell_options.items()}}
                 for r in reversed(seld_rows):
                     undo_storage['deleted_rows'].append((r, self.data_ref.pop(r), self.row_positions[r + 1] - self.row_positions[r]))
             else:
@@ -3028,6 +3023,7 @@ class MainTable(tk.Canvas):
             self.cell_options = {(rn if rn < idx else rn - numrows, cn): t2 for (rn, cn), t2 in self.cell_options.items()}
             self.row_options = {rn if rn < idx else rn - numrows: t for rn, t in self.row_options.items()}
             self.RI.cell_options = {rn if rn < idx else rn - numrows: t for rn, t in self.RI.cell_options.items()}
+            self.refresh_dropdowns()
             self.deselect("allrows", redraw = False)
             self.set_current_to_last()
             self.refresh()
