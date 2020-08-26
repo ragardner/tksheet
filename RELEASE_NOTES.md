@@ -1,3 +1,8 @@
+### Version 4.9.8
+ - Fix potential issue with undo and dictionary copying
+ - Fix potential errors when moving/inserting/deleting rows/columns
+ - Add drop down position refresh to delete columns/rows on right click menu
+
 ### Version 4.9.7
  - Various bug fixes and improvements
  - Add readonly cells/columns/rows
