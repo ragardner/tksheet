@@ -1458,6 +1458,7 @@ class Sheet(tk.Frame):
         self.MT.header_font(newfont)
 
     def set_options(self,
+                    enable_edit_cell_auto_resize = None,
                     page_up_down_select_row = None,
                     display_selected_fg_over_highlights = None,
                     empty_horizontal = None,
@@ -1525,6 +1526,8 @@ class Sheet(tk.Frame):
                     measure_subset_index = None,
                     measure_subset_header = None,
                     redraw = True):
+        if enable_edit_cell_auto_resize is not None:
+            self.MT.enable_edit_cell_auto_resize = enable_edit_cell_auto_resize
         if header_hidden_columns_expander_bg is not None:
             self.CH.header_hidden_columns_expander_bg = header_hidden_columns_expander_bg
         if index_hidden_rows_expander_bg is not None:
