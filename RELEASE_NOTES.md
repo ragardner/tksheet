@@ -1,3 +1,7 @@
+### Version 4.9.9
+ - Attempt to fix Linux mousewheel scrolling
+ - Add `enable_edit_cell_auto_resize` option to startup and `set_options` default is `True`
+
 ### Version 4.9.8
  - Fix potential issue with undo and dictionary copying
  - Fix potential errors when moving/inserting/deleting rows/columns
