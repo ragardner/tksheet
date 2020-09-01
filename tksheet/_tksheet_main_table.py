@@ -19,6 +19,7 @@ from platform import system as get_os
 class MainTable(tk.Canvas):
     def __init__(self,
                  parentframe = None,
+                 enable_edit_cell_auto_resize = True,
                  page_up_down_select_row = False,
                  column_width = None,
                  column_headers_canvas = None,
@@ -102,6 +103,7 @@ class MainTable(tk.Canvas):
         self.undo_storage = deque(maxlen = max_undos)
 
         self.page_up_down_select_row = page_up_down_select_row
+        self.enable_edit_cell_auto_resize = enable_edit_cell_auto_resize
         self.display_selected_fg_over_highlights = display_selected_fg_over_highlights
         self.centre_alignment_text_mod_indexes = (slice(1, None), slice(None, -1))
         self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
@@ -281,12 +283,17 @@ class MainTable(tk.Canvas):
             self.bind("<ButtonRelease-1>", self.b1_release)
             self.bind("<Double-Button-1>", self.double_b1)
             self.bind("<MouseWheel>", self.mousewheel)
+            if USER_OS == "Linux":
+                for canvas in (self, self.RI):
+                    canvas.bind("<Button-4>", self.mousewheel)
+                    canvas.bind("<Button-5>", self.mousewheel)
             self.bind("<Shift-MouseWheel>", self.shift_mousewheel)
             self.bind("<Shift-ButtonPress-1>", self.shift_b1_press)
             self.CH.bind("<Shift-ButtonPress-1>", self.CH.shift_b1_press)
             self.RI.bind("<Shift-ButtonPress-1>", self.RI.shift_b1_press)
             self.CH.bind("<Shift-MouseWheel>", self.shift_mousewheel)
             self.RI.bind("<MouseWheel>", self.mousewheel)
+            
             self.bind(get_rc_binding(), self.rc)
         else:
             self.unbind("<Configure>")
@@ -296,6 +303,10 @@ class MainTable(tk.Canvas):
             self.unbind("<ButtonRelease-1>")
             self.unbind("<Double-Button-1>")
             self.unbind("<MouseWheel>")
+            if USER_OS == "Linux":
+                for canvas in (self, self.RI):
+                    canvas.unbind("<Button-4>")
+                    canvas.unbind("<Button-5>")
             self.unbind("<Shift-ButtonPress-1>")
             self.CH.unbind("<Shift-ButtonPress-1>")
             self.RI.unbind("<Shift-ButtonPress-1>")
@@ -429,8 +440,7 @@ class MainTable(tk.Canvas):
             for r1, c1, r2, c2 in boxes:
                 self.show_ctrl_outline(canvas = "table", start_cell = (c1, r1), end_cell = (c2, r2))
             self.clipboard_clear()
-            s = s.getvalue()
-            self.clipboard_append(s)
+            self.clipboard_append(s.getvalue())
             self.update()
             if self.extra_end_ctrl_c_func is not None:
                 self.extra_end_ctrl_c_func(("end_ctrl_c", boxes, currently_selected, rows))
@@ -581,8 +591,7 @@ class MainTable(tk.Canvas):
             if self.undo_enabled:
                 self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells", undo_storage, tuple(boxes.items()), currently_selected))))
             self.clipboard_clear()
-            s = s.getvalue()
-            self.clipboard_append(s)
+            self.clipboard_append(s.getvalue())
             self.update()
             self.refresh()
             for r1, c1, r2, c2 in boxes:
@@ -4433,8 +4442,8 @@ class MainTable(tk.Canvas):
                 text = event.char
             else:
                 text = f"{self.data_ref[y1][x1]}" if self.all_columns_displayed else f"{self.data_ref[y1][self.displayed_columns[x1]]}"
-        self.RI.set_row_height(y1, only_set_if_too_small = True, displayed_only = True)
-        self.CH.set_col_width(x1, only_set_if_too_small = True, displayed_only = True)
+                self.RI.set_row_height(y1, only_set_if_too_small = True, displayed_only = True)
+                self.CH.set_col_width(x1, only_set_if_too_small = True, displayed_only = True)
         self.select_cell(r = y1, c = x1, keep_other_selections = True)
         self.create_text_editor(r = y1, c = x1, text = text, set_data_ref_on_destroy = True)
         
@@ -4569,7 +4578,7 @@ class MainTable(tk.Canvas):
             self.data_ref[r][c] = value
         else:
             self.data_ref[r][self.displayed_columns[c]] = value
-        if cell_resize:
+        if cell_resize and self.enable_edit_cell_auto_resize:
             self.RI.set_row_height(r, recreate = False, displayed_only = True)
             self.CH.set_col_width(c, only_set_if_too_small = True, displayed_only = True)
 

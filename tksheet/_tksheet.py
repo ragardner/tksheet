@@ -36,6 +36,7 @@ class Sheet(tk.Frame):
                  default_header = "letters", #letters, numbers or both
                  default_row_index = "numbers", #letters, numbers or both
                  page_up_down_select_row = True,
+                 enable_edit_cell_auto_resize = True,
                  data_reference = None,
                  data = None,
                  startup_select = None,
@@ -167,6 +168,7 @@ class Sheet(tk.Frame):
                                 measure_subset_header = measure_subset_header,
                                 resizing_line_fg = resizing_line_fg)
         self.MT = MainTable(self,
+                            enable_edit_cell_auto_resize = enable_edit_cell_auto_resize,
                             page_up_down_select_row = page_up_down_select_row,
                             display_selected_fg_over_highlights = display_selected_fg_over_highlights,
                             show_vertical_grid = show_vertical_grid,
