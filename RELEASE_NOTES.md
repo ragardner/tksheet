@@ -1,3 +1,6 @@
+### Version 4.9.91
+ - Fix auto resize issue
+
 ### Version 4.9.9
  - Attempt to fix Linux mousewheel scrolling
  - Add `enable_edit_cell_auto_resize` option to startup and `set_options` default is `True`
