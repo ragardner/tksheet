@@ -1,3 +1,6 @@
+### Version 4.9.92
+ - Hopefully fix Linux mousewheel
+
 ### Version 4.9.91
  - Fix auto resize issue
 
