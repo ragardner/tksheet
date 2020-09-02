@@ -4442,8 +4442,9 @@ class MainTable(tk.Canvas):
                 text = event.char
             else:
                 text = f"{self.data_ref[y1][x1]}" if self.all_columns_displayed else f"{self.data_ref[y1][self.displayed_columns[x1]]}"
-                self.RI.set_row_height(y1, only_set_if_too_small = True, displayed_only = True)
-                self.CH.set_col_width(x1, only_set_if_too_small = True, displayed_only = True)
+                if self.enable_edit_cell_auto_resize:
+                    self.RI.set_row_height(y1, only_set_if_too_small = True, displayed_only = True)
+                    self.CH.set_col_width(x1, only_set_if_too_small = True, displayed_only = True)
         self.select_cell(r = y1, c = x1, keep_other_selections = True)
         self.create_text_editor(r = y1, c = x1, text = text, set_data_ref_on_destroy = True)
         
