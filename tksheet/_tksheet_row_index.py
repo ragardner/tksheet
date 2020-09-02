@@ -135,17 +135,6 @@ class RowIndex(tk.Canvas):
             self.unbind("<Double-Button-1>")
             self.unbind(get_rc_binding())
 
-    def mousewheel(self, event = None):
-        if event.num == 5 or event.delta == -120:
-            self.yview_scroll(1, "units")
-            self.MT.yview_scroll(1, "units")
-        if event.num == 4 or event.delta == 120:
-            if self.canvasy(0) <= 0:
-                return
-            self.yview_scroll( - 1, "units")
-            self.MT.yview_scroll( - 1, "units")
-        self.MT.main_table_redraw_grid_and_text(redraw_row_index = True)
-
     def set_width(self, new_width, set_TL = False):
         self.current_width = new_width
         self.config(width = new_width)

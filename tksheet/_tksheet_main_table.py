@@ -2477,10 +2477,10 @@ class MainTable(tk.Canvas):
                                              redraw_header = True if self.show_header else False)
 
     def mousewheel(self, event = None):
-        if event.delta < 0:
+        if event.delta < 0 or event.num == 5:
             self.yview_scroll(1, "units")
             self.RI.yview_scroll(1, "units")
-        if event.delta >= 0:
+        if event.delta >= 0 or event.num == 4:
             if self.canvasy(0) <= 0:
                 return
             self.yview_scroll(-1, "units")
@@ -2488,11 +2488,11 @@ class MainTable(tk.Canvas):
         self.main_table_redraw_grid_and_text(redraw_row_index = True)
 
     def shift_mousewheel(self, event = None):
-        if event.delta < 0:
+        if event.delta < 0 or event.num == 5:
             self.xview_scroll(1, "units")
             self.CH.xview_scroll(1, "units")
         if event.delta >= 0:
-            if self.canvasx(0) <= 0:
+            if self.canvasx(0) <= 0 or event.num == 4:
                 return
             self.xview_scroll(-1, "units")
             self.CH.xview_scroll(-1, "units")
