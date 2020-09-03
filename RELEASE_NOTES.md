@@ -1,4 +1,4 @@
-### Version 4.9.92
+### Version 4.9.92 - 4.9.93
  - Hopefully fix Linux mousewheel
 
 ### Version 4.9.91
