@@ -2497,8 +2497,8 @@ class MainTable(tk.Canvas):
         if event.delta < 0 or event.num == 5:
             self.xview_scroll(1, "units")
             self.CH.xview_scroll(1, "units")
-        elif event.delta >= 0:
-            if self.canvasx(0) <= 0 or event.num == 4:
+        elif event.delta >= 0 or event.num == 4:
+            if self.canvasx(0) <= 0:
                 return
             self.xview_scroll(-1, "units")
             self.CH.xview_scroll(-1, "units")
