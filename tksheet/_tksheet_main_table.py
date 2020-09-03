@@ -287,7 +287,6 @@ class MainTable(tk.Canvas):
                 for canvas in (self, self.RI):
                     canvas.bind("<Button-4>", self.mousewheel)
                     canvas.bind("<Button-5>", self.mousewheel)
-            if USER_OS == "Linux":
                 for canvas in (self, self.CH):
                     canvas.bind("<Shift-Button-4>", self.shift_mousewheel)
                     canvas.bind("<Shift-Button-5>", self.shift_mousewheel)
@@ -311,7 +310,6 @@ class MainTable(tk.Canvas):
                 for canvas in (self, self.RI):
                     canvas.unbind("<Button-4>")
                     canvas.unbind("<Button-5>")
-            if USER_OS == "Linux":
                 for canvas in (self, self.CH):
                     canvas.unbind("<Shift-Button-4>")
                     canvas.unbind("<Shift-Button-5>")
