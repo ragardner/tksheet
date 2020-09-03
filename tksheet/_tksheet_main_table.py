@@ -287,6 +287,10 @@ class MainTable(tk.Canvas):
                 for canvas in (self, self.RI):
                     canvas.bind("<Button-4>", self.mousewheel)
                     canvas.bind("<Button-5>", self.mousewheel)
+            if USER_OS == "Linux":
+                for canvas in (self, self.CH):
+                    canvas.bind("<Shift-Button-4>", self.shift_mousewheel)
+                    canvas.bind("<Shift-Button-5>", self.shift_mousewheel)
             self.bind("<Shift-MouseWheel>", self.shift_mousewheel)
             self.bind("<Shift-ButtonPress-1>", self.shift_b1_press)
             self.CH.bind("<Shift-ButtonPress-1>", self.CH.shift_b1_press)
@@ -307,6 +311,10 @@ class MainTable(tk.Canvas):
                 for canvas in (self, self.RI):
                     canvas.unbind("<Button-4>")
                     canvas.unbind("<Button-5>")
+            if USER_OS == "Linux":
+                for canvas in (self, self.CH):
+                    canvas.unbind("<Shift-Button-4>")
+                    canvas.unbind("<Shift-Button-5>")
             self.unbind("<Shift-ButtonPress-1>")
             self.CH.unbind("<Shift-ButtonPress-1>")
             self.RI.unbind("<Shift-ButtonPress-1>")
@@ -2480,7 +2488,7 @@ class MainTable(tk.Canvas):
         if event.delta < 0 or event.num == 5:
             self.yview_scroll(1, "units")
             self.RI.yview_scroll(1, "units")
-        if event.delta >= 0 or event.num == 4:
+        elif event.delta >= 0 or event.num == 4:
             if self.canvasy(0) <= 0:
                 return
             self.yview_scroll(-1, "units")
@@ -2491,7 +2499,7 @@ class MainTable(tk.Canvas):
         if event.delta < 0 or event.num == 5:
             self.xview_scroll(1, "units")
             self.CH.xview_scroll(1, "units")
-        if event.delta >= 0:
+        elif event.delta >= 0:
             if self.canvasx(0) <= 0 or event.num == 4:
                 return
             self.xview_scroll(-1, "units")
