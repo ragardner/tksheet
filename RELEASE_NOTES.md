@@ -1,3 +1,7 @@
+### Version 4.9.95
+ - Fix bug with `insert_rows()`
+ - Add `redraw` default argument to many functions, default is `False`
+
 ### Version 4.9.92 - 4.9.94
  - Hopefully fix Linux mousewheel
 
