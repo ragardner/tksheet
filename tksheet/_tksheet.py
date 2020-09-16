@@ -121,6 +121,7 @@ class Sheet(tk.Frame):
                           highlightthickness = outline_thickness,
                           highlightbackground = outline_color)
         self.C = parent
+        self.after_redraw_id = None
         if width is not None and height is not None:
             self.grid_propagate(0)
         if width is not None:
@@ -1786,10 +1787,15 @@ class Sheet(tk.Frame):
                     continue
             return res
 
-    def set_cell_data(self, r, c, value = "", set_copy = True):
+    def set_cell_data(self, r, c, value = "", set_copy = True, redraw = False):
         self.MT.data_ref[r][c] = f"{value}" if set_copy else value
+        if redraw and self.after_redraw_id is None:
+            try:
+                self.after_redraw_id = self.after(100, self.after_redraw)
+            except:
+                pass
 
-    def set_column_data(self, c, values = tuple(), add_rows = True):
+    def set_column_data(self, c, values = tuple(), add_rows = True, redraw = False):
         if add_rows:
             maxidx = len(self.MT.data_ref) - 1
             total_cols = None
@@ -1809,9 +1815,15 @@ class Sheet(tk.Frame):
                 if c > len(self.MT.data_ref[rn]) - 1:
                     self.MT.data_ref[rn].extend(list(repeat("", c - len(self.MT.data_ref[rn]))))
                 self.MT.data_ref[rn][c] = v
+        if redraw and self.after_redraw_id is None:
+            try:
+                self.after_redraw_id = self.after(100, self.after_redraw)
+            except:
+                pass
 
     def insert_column(self, values = None, idx = "end", width = None, deselect_all = False, preserve_other_selections = False, add_rows = True, equalize_data_row_lengths = True,
-                      mod_column_positions = True):
+                      mod_column_positions = True,
+                      redraw = False):
         if mod_column_positions:
             self.MT.insert_col_position(idx = idx,
                                         width = width,
@@ -1862,9 +1874,15 @@ class Sheet(tk.Frame):
         self.MT.cell_options = {(rn, cn if cn < idx else cn + 1): t2 for (rn, cn), t2 in self.MT.cell_options.items()}
         self.MT.col_options = {cn if cn < idx else cn + 1: t for cn, t in self.MT.col_options.items()}
         self.CH.cell_options = {cn if cn < idx else cn + 1: t for cn, t in self.CH.cell_options.items()}
+        if redraw and self.after_redraw_id is None:
+            try:
+                self.after_redraw_id = self.after(100, self.after_redraw)
+            except:
+                pass
 
     def insert_columns(self, columns = 1, idx = "end", widths = None, deselect_all = False, preserve_other_selections = False, add_rows = True, equalize_data_row_lengths = True,
-                       mod_column_positions = True):
+                       mod_column_positions = True,
+                       redraw = False):
         if mod_column_positions:
             self.MT.insert_col_positions(idx = idx,
                                          widths = columns if isinstance(columns, int) and widths is None else widths,
@@ -1924,8 +1942,13 @@ class Sheet(tk.Frame):
         self.MT.cell_options = {(rn, cn if cn < idx else cn + num_add): t2 for (rn, cn), t2 in self.MT.cell_options.items()}
         self.MT.col_options = {cn if cn < idx else cn + num_add: t for cn, t in self.MT.col_options.items()}
         self.CH.cell_options = {cn if cn < idx else cn + num_add: t for cn, t in self.CH.cell_options.items()}
+        if redraw and self.after_redraw_id is None:
+            try:
+                self.after_redraw_id = self.after(100, self.after_redraw)
+            except:
+                pass
 
-    def set_row_data(self, r, values = tuple(), add_columns = True):
+    def set_row_data(self, r, values = tuple(), add_columns = True, redraw = False):
         if len(self.MT.data_ref) - 1 < r:
             raise Exception("Row number is out of range")
         maxidx = len(self.MT.data_ref[r]) - 1
@@ -1943,8 +1966,14 @@ class Sheet(tk.Frame):
                     self.MT.data_ref[r].append(v)
                 else:
                     self.MT.data_ref[r][c] = v
+        if redraw and self.after_redraw_id is None:
+            try:
+                self.after_redraw_id = self.after(100, self.after_redraw)
+            except:
+                pass
 
-    def insert_row(self, values = None, idx = "end", height = None, deselect_all = False, preserve_other_selections = False, add_columns = True):
+    def insert_row(self, values = None, idx = "end", height = None, deselect_all = False, preserve_other_selections = False, add_columns = True,
+                   redraw = False):
         self.MT.insert_row_position(idx = idx,
                                     height = height,
                                     deselect_all = deselect_all,
@@ -1976,8 +2005,14 @@ class Sheet(tk.Frame):
             self.MT.cell_options = {(rn if rn < idx else rn + 1, cn): t2 for (rn, cn), t2 in self.MT.cell_options.items()}
             self.MT.row_options = {rn if rn < idx else rn + 1: t for rn, t in self.MT.row_options.items()}
             self.RI.cell_options = {rn if rn < idx else rn + 1: t for rn, t in self.RI.cell_options.items()}
+        if redraw and self.after_redraw_id is None:
+            try:
+                self.after_redraw_id = self.after(100, self.after_redraw)
+            except:
+                pass
 
-    def insert_rows(self, rows = 1, idx = "end", heights = None, deselect_all = False, preserve_other_selections = False, add_columns = True):
+    def insert_rows(self, rows = 1, idx = "end", heights = None, deselect_all = False, preserve_other_selections = False, add_columns = True,
+                    redraw = False):
         self.MT.insert_row_positions(idx = idx,
                                      heights = heights,
                                      deselect_all = deselect_all,
@@ -2011,6 +2046,11 @@ class Sheet(tk.Frame):
             self.MT.cell_options = {(rn if rn < idx else rn + num_add, cn): t2 for (rn, cn), t2 in self.MT.cell_options.items()}
             self.MT.row_options = {rn if rn < idx else rn + num_add: t for rn, t in self.MT.row_options.items()}
             self.RI.cell_options = {rn if rn < idx else rn + num_add: t for rn, t in self.RI.cell_options.items()}
+        if redraw and self.after_redraw_id is None:
+            try:
+                self.after_redraw_id = self.after(100, self.after_redraw)
+            except:
+                pass
 
     def sheet_data_dimensions(self, total_rows = None, total_columns = None):
         self.MT.data_dimensions(total_rows, total_columns)
@@ -2061,6 +2101,10 @@ class Sheet(tk.Frame):
 
     def reset_undos(self):
         self.MT.undo_storage = deque(maxlen = self.MT.max_undos)
+
+    def after_redraw(self, redraw_header = True, redraw_row_index = True):
+        self.MT.main_table_redraw_grid_and_text(redraw_header = redraw_header, redraw_row_index = redraw_row_index)
+        self.after_redraw_id = None
 
     def redraw(self, redraw_header = True, redraw_row_index = True):
         self.MT.main_table_redraw_grid_and_text(redraw_header = redraw_header, redraw_row_index = redraw_row_index)

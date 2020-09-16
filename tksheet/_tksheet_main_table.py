@@ -3442,7 +3442,7 @@ class MainTable(tk.Canvas):
                                          last_col_line_pos + self.empty_horizontal,
                                          last_row_line_pos + self.empty_vertical))
         except:
-            return
+            return False
         y2 = self.canvasy(self.winfo_height())
         end_row = bisect.bisect_right(self.row_positions, y2)
         if not y2 >= self.row_positions[-1]:
@@ -3774,13 +3774,14 @@ class MainTable(tk.Canvas):
             if redraw_row_index and self.show_index:
                 self.RI.redraw_grid_and_text(last_row_line_pos, y1, y_stop, start_row, end_row + 1, y2, x1, x_stop, selected_rows, actual_selected_cols, actual_selected_rows)
         except:
-            return
+            return False
         if self.show_selected_cells_border:
             self.tag_raise("CellSelectBorder")
             self.tag_raise("Current_Inside")
             self.tag_raise("Current_Outside")
             self.tag_raise("RowSelectBorder")
             self.tag_raise("ColSelectBorder")
+        return True
 
     def get_all_selection_items(self):
         return sorted(self.find_withtag("CellSelectFill") + self.find_withtag("RowSelectFill") + self.find_withtag("ColSelectFill") + self.find_withtag("Current_Inside") + self.find_withtag("Current_Outside"))
