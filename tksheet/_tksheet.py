@@ -2013,10 +2013,6 @@ class Sheet(tk.Frame):
 
     def insert_rows(self, rows = 1, idx = "end", heights = None, deselect_all = False, preserve_other_selections = False, add_columns = True,
                     redraw = False):
-        self.MT.insert_row_positions(idx = idx,
-                                     heights = heights,
-                                     deselect_all = deselect_all,
-                                     preserve_other_selections = preserve_other_selections)
         total_cols = None
         if isinstance(rows, int):
             total_cols = self.MT.total_data_cols()
@@ -2025,6 +2021,14 @@ class Sheet(tk.Frame):
             data = rows
         else:
             data = list(rows)
+        if heights is None:
+            heights_ = len(data)
+        else:
+            heights_ = heights
+        self.MT.insert_row_positions(idx = idx,
+                                     heights = heights_,
+                                     deselect_all = deselect_all,
+                                     preserve_other_selections = preserve_other_selections)
         if add_columns:
             if total_cols is None:
                 total_cols = self.MT.total_data_cols()
