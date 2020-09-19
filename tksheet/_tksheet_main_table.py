@@ -2369,18 +2369,6 @@ class MainTable(tk.Canvas):
                 self.CH.create_resize_line(x1, y, x2, y, width = 1, fill = self.RI.resizing_line_fg, tag = "rhl")
         if self.extra_b1_motion_func is not None:
             self.extra_b1_motion_func(event)
-
-    def check_views(self):
-        xcheck = self.xview()
-        ycheck = self.yview()
-        if xcheck and xcheck[0] < 0:
-            self.set_xviews("moveto", 0)
-        if ycheck and ycheck[0] < 0:
-            self.set_yviews("moveto", 0)
-        if len(xcheck) > 1 and xcheck[1] > 1:
-            self.set_xviews("moveto", 1)
-        if len(ycheck) > 1 and ycheck[1] > 1:
-            self.set_yviews("moveto", 1)
         
     def b1_release(self, event = None):
         if self.RI.width_resizing_enabled and self.RI.rsz_w is not None and self.RI.currently_resizing_width:
@@ -2460,16 +2448,40 @@ class MainTable(tk.Canvas):
             else:
                 return self.col_positions[c], self.row_positions[r], self.col_positions[c + 1], self.row_positions[r + 1]
 
+    def check_views(self):
+        xcheck = self.xview()
+        ycheck = self.yview()
+        if xcheck and xcheck[0] <= 0:
+            self.xview(*("moveto", 0))
+            if self.show_header:
+                self.CH.xview(*("moveto", 0))
+
+        elif len(xcheck) > 1 and xcheck[1] >= 1:
+            self.xview(*("moveto", 1))
+            if self.show_header:
+                self.CH.xview(*("moveto", 1))
+                
+        if ycheck and ycheck[0] <= 0:
+            self.yview(*("moveto", 0))
+            if self.show_index:
+                self.RI.yview(*("moveto", 0))
+        elif len(ycheck) > 1 and ycheck[1] >= 1:
+            self.yview(*("moveto", 1))
+            if self.show_index:
+                self.RI.yview(*("moveto", 1))
+
     def set_xviews(self, *args):
         self.xview(*args)
         if self.show_header:
             self.CH.xview(*args)
+        self.check_views()
         self.main_table_redraw_grid_and_text(redraw_header = True if self.show_header else False)
 
     def set_yviews(self, *args):
         self.yview(*args)
         if self.show_index:
             self.RI.yview(*args)
+        self.check_views()
         self.main_table_redraw_grid_and_text(redraw_row_index = True if self.show_index else False)
 
     def set_view(self, x_args, y_args):
@@ -2479,6 +2491,7 @@ class MainTable(tk.Canvas):
         self.yview(*y_args)
         if self.show_index:
             self.RI.yview(*y_args)
+        self.check_views()
         self.main_table_redraw_grid_and_text(redraw_row_index = True if self.show_index else False,
                                              redraw_header = True if self.show_header else False)
 
@@ -3755,32 +3768,31 @@ class MainTable(tk.Canvas):
                                             break
                         except:
                             continue
-
-        for t, sh in self.hidd_text.items():
-            if sh:
-                self.itemconfig(t, state = "hidden")
-                self.hidd_text[t] = False
-        for t, sh in self.hidd_high.items():
-            if sh:
-                self.itemconfig(t, state = "hidden")
-                self.hidd_high[t] = False
-        for t, sh in self.hidd_grid.items():
-            if sh:
-                self.itemconfig(t, state = "hidden")
-                self.hidd_grid[t] = False
         try:
+            for t, sh in self.hidd_text.items():
+                if sh:
+                    self.itemconfig(t, state = "hidden")
+                    self.hidd_text[t] = False
+            for t, sh in self.hidd_high.items():
+                if sh:
+                    self.itemconfig(t, state = "hidden")
+                    self.hidd_high[t] = False
+            for t, sh in self.hidd_grid.items():
+                if sh:
+                    self.itemconfig(t, state = "hidden")
+                    self.hidd_grid[t] = False
             if redraw_header and self.show_header:
                 self.CH.redraw_grid_and_text(last_col_line_pos, x1, x_stop, start_col, end_col, selected_cols, actual_selected_rows, actual_selected_cols)
             if redraw_row_index and self.show_index:
                 self.RI.redraw_grid_and_text(last_row_line_pos, y1, y_stop, start_row, end_row + 1, y2, x1, x_stop, selected_rows, actual_selected_cols, actual_selected_rows)
+            if self.show_selected_cells_border:
+                self.tag_raise("CellSelectBorder")
+                self.tag_raise("Current_Inside")
+                self.tag_raise("Current_Outside")
+                self.tag_raise("RowSelectBorder")
+                self.tag_raise("ColSelectBorder")
         except:
             return False
-        if self.show_selected_cells_border:
-            self.tag_raise("CellSelectBorder")
-            self.tag_raise("Current_Inside")
-            self.tag_raise("Current_Outside")
-            self.tag_raise("RowSelectBorder")
-            self.tag_raise("ColSelectBorder")
         return True
 
     def get_all_selection_items(self):
