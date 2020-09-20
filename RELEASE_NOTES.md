@@ -1,3 +1,7 @@
+### Version 4.9.96
+ - Fix bug with dragging scrollbar when columns are shorter than window
+ - Add startup argument `after_redraw_time_ms` default is `100`
+
 ### Version 4.9.95
  - Fix bug with `insert_rows()`
  - Add `redraw` default argument to many functions, default is `False`
