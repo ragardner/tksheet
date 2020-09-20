@@ -51,6 +51,7 @@ class Sheet(tk.Frame):
                  max_row_width = "inf",
                  row_index = None,
                  measure_subset_index = True,
+                 after_redraw_time_ms = 100,
                  row_index_width = 100,
                  auto_resize_default_row_index = True,
                  set_all_heights_and_widths = False,
@@ -122,6 +123,7 @@ class Sheet(tk.Frame):
                           highlightbackground = outline_color)
         self.C = parent
         self.after_redraw_id = None
+        self.after_redraw_time_ms = after_redraw_time_ms
         if width is not None and height is not None:
             self.grid_propagate(0)
         if width is not None:
@@ -1790,7 +1792,7 @@ class Sheet(tk.Frame):
     def set_cell_data(self, r, c, value = "", set_copy = True, redraw = False):
         self.MT.data_ref[r][c] = f"{value}" if set_copy else value
         if redraw and self.after_redraw_id is None:
-            self.after_redraw_id = self.after(100, self.after_redraw)
+            self.after_redraw_id = self.after(self.after_redraw_time_ms, self.after_redraw)
 
     def set_column_data(self, c, values = tuple(), add_rows = True, redraw = False):
         if add_rows:
@@ -1813,7 +1815,7 @@ class Sheet(tk.Frame):
                     self.MT.data_ref[rn].extend(list(repeat("", c - len(self.MT.data_ref[rn]))))
                 self.MT.data_ref[rn][c] = v
         if redraw and self.after_redraw_id is None:
-            self.after_redraw_id = self.after(100, self.after_redraw)
+            self.after_redraw_id = self.after(self.after_redraw_time_ms, self.after_redraw)
 
     def insert_column(self, values = None, idx = "end", width = None, deselect_all = False, preserve_other_selections = False, add_rows = True, equalize_data_row_lengths = True,
                       mod_column_positions = True,
@@ -1869,7 +1871,7 @@ class Sheet(tk.Frame):
         self.MT.col_options = {cn if cn < idx else cn + 1: t for cn, t in self.MT.col_options.items()}
         self.CH.cell_options = {cn if cn < idx else cn + 1: t for cn, t in self.CH.cell_options.items()}
         if redraw and self.after_redraw_id is None:
-            self.after_redraw_id = self.after(100, self.after_redraw)
+            self.after_redraw_id = self.after(self.after_redraw_time_ms, self.after_redraw)
 
     def insert_columns(self, columns = 1, idx = "end", widths = None, deselect_all = False, preserve_other_selections = False, add_rows = True, equalize_data_row_lengths = True,
                        mod_column_positions = True,
@@ -1934,7 +1936,7 @@ class Sheet(tk.Frame):
         self.MT.col_options = {cn if cn < idx else cn + num_add: t for cn, t in self.MT.col_options.items()}
         self.CH.cell_options = {cn if cn < idx else cn + num_add: t for cn, t in self.CH.cell_options.items()}
         if redraw and self.after_redraw_id is None:
-            self.after_redraw_id = self.after(100, self.after_redraw)
+            self.after_redraw_id = self.after(self.after_redraw_time_ms, self.after_redraw)
 
     def set_row_data(self, r, values = tuple(), add_columns = True, redraw = False):
         if len(self.MT.data_ref) - 1 < r:
@@ -1955,7 +1957,7 @@ class Sheet(tk.Frame):
                 else:
                     self.MT.data_ref[r][c] = v
         if redraw and self.after_redraw_id is None:
-            self.after_redraw_id = self.after(100, self.after_redraw)
+            self.after_redraw_id = self.after(self.after_redraw_time_ms, self.after_redraw)
 
     def insert_row(self, values = None, idx = "end", height = None, deselect_all = False, preserve_other_selections = False, add_columns = True,
                    redraw = False):
@@ -1991,7 +1993,7 @@ class Sheet(tk.Frame):
             self.MT.row_options = {rn if rn < idx else rn + 1: t for rn, t in self.MT.row_options.items()}
             self.RI.cell_options = {rn if rn < idx else rn + 1: t for rn, t in self.RI.cell_options.items()}
         if redraw and self.after_redraw_id is None:
-            self.after_redraw_id = self.after(100, self.after_redraw)
+            self.after_redraw_id = self.after(self.after_redraw_time_ms, self.after_redraw)
 
     def insert_rows(self, rows = 1, idx = "end", heights = None, deselect_all = False, preserve_other_selections = False, add_columns = True,
                     redraw = False):
@@ -2033,7 +2035,7 @@ class Sheet(tk.Frame):
             self.MT.row_options = {rn if rn < idx else rn + num_add: t for rn, t in self.MT.row_options.items()}
             self.RI.cell_options = {rn if rn < idx else rn + num_add: t for rn, t in self.RI.cell_options.items()}
         if redraw and self.after_redraw_id is None:
-            self.after_redraw_id = self.after(100, self.after_redraw)
+            self.after_redraw_id = self.after(self.after_redraw_time_ms, self.after_redraw)
 
     def sheet_data_dimensions(self, total_rows = None, total_columns = None):
         self.MT.data_dimensions(total_rows, total_columns)
