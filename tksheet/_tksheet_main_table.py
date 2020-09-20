@@ -3571,10 +3571,10 @@ class MainTable(tk.Canvas):
                         x = fc + floor((sc - fc) / 2)
                     
                     tf = self.redraw_highlight_get_text_fg(r, c, fc, fr, sc, sr, c_2_, c_3_, c_4_, selected_cells, actual_selected_rows, actual_selected_cols, dcol)
-                    if cell_alignment == "w":
-                        if x > x2 or mw <= 5:
-                            continue
-                        try:
+                    try:
+                        if cell_alignment == "w":
+                            if x > x2 or mw <= 5:
+                                continue
                             lns = self.data_ref[r][dcol].split("\n") if isinstance(self.data_ref[r][dcol], str) else f"{self.data_ref[r][dcol]}".split("\n")
                             y = fr + self.fl_ins
                             if y + self.half_txt_h - 1 > y1:
@@ -3586,7 +3586,6 @@ class MainTable(tk.Canvas):
                                         self.itemconfig(t, text = txt, fill = tf, font = self.my_font, anchor = "w")
                                     else:
                                         self.itemconfig(t, text = txt, fill = tf, font = self.my_font, anchor = "w", state = "normal")
-                                    self.lift(t)
                                 else:
                                     t = self.create_text(x, y, text = txt, fill = tf, font = self.my_font, anchor = "w", tag = "t")
                                 self.disp_text[t] = True
@@ -3615,7 +3614,6 @@ class MainTable(tk.Canvas):
                                                 self.itemconfig(t, text = txt, fill = tf, font = self.my_font, anchor = "w")
                                             else:
                                                 self.itemconfig(t, text = txt, fill = tf, font = self.my_font, anchor = "w", state = "normal")
-                                            self.lift(t)
                                         else:
                                             t = self.create_text(x, y, text = txt, fill = tf, font = self.my_font, anchor = "w", tag = "t")
                                         self.disp_text[t] = True
@@ -3632,13 +3630,10 @@ class MainTable(tk.Canvas):
                                         y += self.xtra_lines_increment
                                         if y + self.half_txt_h - 1 > sr:
                                             break
-                        except:
-                            continue
 
-                    elif cell_alignment == "e":
-                        if fc + 5 > x2 or mw <= 5:
-                            continue
-                        try:
+                        elif cell_alignment == "e":
+                            if fc + 5 > x2 or mw <= 5:
+                                continue
                             lns = self.data_ref[r][dcol].split("\n") if isinstance(self.data_ref[r][dcol], str) else f"{self.data_ref[r][dcol]}".split("\n")
                             y = fr + self.fl_ins
                             if y + self.half_txt_h - 1 > y1:
@@ -3650,7 +3645,6 @@ class MainTable(tk.Canvas):
                                         self.itemconfig(t, text = txt, fill = tf, font = self.my_font, anchor = "e")
                                     else:
                                         self.itemconfig(t, text = txt, fill = tf, font = self.my_font, anchor = "e", state = "normal")
-                                    self.lift(t)
                                 else:
                                     t = self.create_text(x, y, text = txt, fill = tf, font = self.my_font, anchor = "e", tag = "t")
                                 self.disp_text[t] = True
@@ -3678,7 +3672,6 @@ class MainTable(tk.Canvas):
                                                 self.itemconfig(t, text = txt, fill = tf, font = self.my_font, anchor = "e")
                                             else:
                                                 self.itemconfig(t, text = txt, fill = tf, font = self.my_font, anchor = "e", state = "normal")
-                                            self.lift(t)
                                         else:
                                             t = self.create_text(x, y, text = txt, fill = tf, font = self.my_font, anchor = "e", tag = "t")
                                         self.disp_text[t] = True
@@ -3694,13 +3687,10 @@ class MainTable(tk.Canvas):
                                         y += self.xtra_lines_increment
                                         if y + self.half_txt_h - 1 > sr:
                                             break
-                        except:
-                            continue
 
-                    elif cell_alignment == "center":
-                        if stop > x2 or mw <= 5:
-                            continue
-                        try:
+                        elif cell_alignment == "center":
+                            if stop > x2 or mw <= 5:
+                                continue
                             lns = self.data_ref[r][dcol].split("\n") if isinstance(self.data_ref[r][dcol], str) else f"{self.data_ref[r][dcol]}".split("\n")
                             txt = lns[0]
                             y = fr + self.fl_ins
@@ -3712,7 +3702,6 @@ class MainTable(tk.Canvas):
                                         self.itemconfig(t, text = txt, fill = tf, font = self.my_font, anchor = "center")
                                     else:
                                         self.itemconfig(t, text = txt, fill = tf, font = self.my_font, anchor = "center", state = "normal")
-                                    self.lift(t)
                                 else:
                                     t = self.create_text(x, y, text = txt, fill = tf, font = self.my_font, anchor = "center", tag = "t")
                                 self.disp_text[t] = True
@@ -3745,7 +3734,6 @@ class MainTable(tk.Canvas):
                                                 self.itemconfig(t, text = txt, fill = tf, font = self.my_font, anchor = "center")
                                             else:
                                                 self.itemconfig(t, text = txt, fill = tf, font = self.my_font, anchor = "center", state = "normal")
-                                            self.lift(t)
                                         else:
                                             t = self.create_text(x, y, text = txt, fill = tf, font = self.my_font, anchor = "center", tag = "t")
                                         self.disp_text[t] = True
@@ -3766,9 +3754,10 @@ class MainTable(tk.Canvas):
                                         y += self.xtra_lines_increment
                                         if y + self.half_txt_h - 1 > sr:
                                             break
-                        except:
-                            continue
+                    except:
+                        continue
         try:
+            self.tag_raise("t")
             for t, sh in self.hidd_text.items():
                 if sh:
                     self.itemconfig(t, state = "hidden")
