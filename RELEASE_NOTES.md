@@ -1,3 +1,6 @@
+### Version 4.9.97
+ - Fix bug with `delete_row()` and `delete_column()` functions when used with default arguments
+
 ### Version 4.9.96
  - Fix bug with dragging scrollbar when columns are shorter than window
  - Add startup argument `after_redraw_time_ms` default is `100`

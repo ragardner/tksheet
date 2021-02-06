@@ -827,7 +827,7 @@ class Sheet(tk.Frame):
                                  deselect_all = deselect_all,
                                  preserve_other_selections = preserve_other_selections)
 
-    def delete_row(self, idx = -1, deselect_all = False, preserve_other_selections = False):
+    def delete_row(self, idx = 0, deselect_all = False, preserve_other_selections = False):
         del self.MT.data_ref[idx]
         self.MT.del_row_position(idx = idx,
                                  deselect_all = deselect_all,
@@ -943,7 +943,7 @@ class Sheet(tk.Frame):
                                  deselect_all = deselect_all,
                                  preserve_other_selections = preserve_other_selections)
 
-    def delete_column(self, idx = -1, deselect_all = False, preserve_other_selections = False):
+    def delete_column(self, idx = 0, deselect_all = False, preserve_other_selections = False):
         for rn in range(len(self.MT.data_ref)):
             del self.MT.data_ref[rn][idx] 
         self.MT.del_col_position(idx,

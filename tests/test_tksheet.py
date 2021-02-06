@@ -84,10 +84,10 @@ class demo(tk.Tk):
 
         # __________ DISPLAY SUBSET OF COLUMNS __________
 
-        self.sheet.display_subset_of_columns(indexes = [0, 1, 2, 3, 4, 5], enable = True)
+        #self.sheet.display_subset_of_columns(indexes = [0, 1, 2, 3, 4, 5], enable = True)
         #self.sheet.display_columns(enable = False)
-        self.sheet.insert_column(idx = 0)
-        self.sheet.insert_columns(columns = 5, idx = 10, mod_column_positions = False)
+        #self.sheet.insert_column(idx = 0)
+        #self.sheet.insert_columns(columns = 5, idx = 10, mod_column_positions = False)
 
         # __________ HIGHLIGHT / DEHIGHLIGHT CELLS __________
         
@@ -191,6 +191,10 @@ class demo(tk.Tk):
 
         #self.sheet.insert_column(values = (f"my new col here {r}" for r in range(2050)), idx = 0) # a filled column at the start
         #self.sheet.insert_column() # an empty column at the end
+
+        # __________ DELETING A ROW __________
+
+        self.sheet.delete_row() # first row
 
         # __________ SETTING A COLUMNS DATA __________
 
