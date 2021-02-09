@@ -1,3 +1,6 @@
+### Version 4.9.98
+ - Fix error with dropdown box close while showing all columns
+
 ### Version 4.9.97
  - Fix bug with `delete_row()` and `delete_column()` functions when used with default arguments
 

@@ -4646,7 +4646,7 @@ class MainTable(tk.Canvas):
             rpos = bisect.bisect_left(self.row_positions, y)
             cpos = bisect.bisect_left(self.col_positions, x)
             r = rpos
-            c = self.displayed_columns[cpos]
+            c = self.displayed_columns[cpos] if not self.all_columns_displayed else cpos
         if current:
             self.table_dropdown_value = self.cell_options[(r, c)]['dropdown'][0].dropdown.current()
         else:
