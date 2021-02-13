@@ -696,7 +696,7 @@ class ColumnHeaders(tk.Canvas):
                     hw = self.MT.GetHdrTextWidth(f"{data_col + 1}") + 5
                 else:
                     hw = self.MT.GetHdrTextWidth(f"{data_col + 1} {num2alpha(data_col)}") + 5
-            for r in islice(self.MT.data_ref, start_row, end_row):
+            for rn, r in enumerate(islice(self.MT.data_ref, start_row, end_row), start_row):
                 try:
                     if isinstance(r[data_col], str):
                         txt = r[data_col]
@@ -707,7 +707,11 @@ class ColumnHeaders(tk.Canvas):
                 if txt:
                     qconf(qtxtm, text = txt, font = self.MT.my_font)
                     b = qbbox(qtxtm)
-                    tw = b[2] - b[0] + 5
+                    tw = b[2] - b[0] + 25 if (rn, data_col) in self.MT.cell_options and 'dropdown' in self.MT.cell_options[(rn, data_col)] else b[2] - b[0] + 5
+                    if tw > w:
+                        w = tw
+                elif (rn, data_col) in self.MT.cell_options and 'dropdown' in self.MT.cell_options[(rn, data_col)]:
+                    tw = 20
                     if tw > w:
                         w = tw
             if w > hw:

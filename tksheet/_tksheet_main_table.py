@@ -221,7 +221,7 @@ class MainTable(tk.Canvas):
             self.data_ref = []
         if not self.data_ref:
             if isinstance(total_rows, int) and isinstance(total_cols, int) and total_rows > 0 and total_cols > 0:
-                self.data_ref = list(repeat(list(repeat("", total_cols)), total_rows))
+                self.data_ref = [list(repeat("", total_cols)) for i in range(total_rows)]
         if isinstance(headers, int):
             self.my_hdrs = headers
         else:
@@ -2709,10 +2709,13 @@ class MainTable(tk.Canvas):
                 if txt:
                     itmcon(x, text = txt)
                     b = itmbbx(x)
-                    tw = b[2] - b[0] + 5
+                    tw = b[2] - b[0] + 25 if (rn, cn) in self.cell_options and 'dropdown' in self.cell_options[(rn, cn)] else b[2] - b[0] + 5
                     h = b[3] - b[1] + 5
                 else:
-                    tw = min_cw
+                    if (rn, cn) in self.cell_options and 'dropdown' in self.cell_options[(rn, cn)]:
+                        tw = 20
+                    else:
+                        tw = min_cw
                     h = min_rh
                 if tw > w:
                     w = tw
@@ -2892,7 +2895,7 @@ class MainTable(tk.Canvas):
                                      preserve_other_selections = False)
             self.data_ref.append([""])
         else:
-            self.data_ref[stidx:stidx] = list(repeat(list(repeat("", self.total_data_cols())), numrows))
+            self.data_ref[stidx:stidx] = [list(repeat("", self.total_data_cols())) for rn in range(numrows)]
         self.create_selected(posidx, 0, posidx + numrows, len(self.col_positions) - 1, "rows")
         self.create_current(posidx, 0, "row", inside = True)
         if self.undo_enabled:
@@ -4569,7 +4572,7 @@ class MainTable(tk.Canvas):
 
     def set_cell_data(self, r = 0, c = 0, value = "", undo = True, cell_resize = True):
         if r > len(self.data_ref) - 1:
-            self.data_ref.extend(list(repeat(list(repeat("", c + 1)), range((r + 1) - len(self.data_ref)))))
+            self.data_ref.extend([list(repeat("", c + 1)) for i in range((r + 1) - len(self.data_ref))])
         elif c > len(self.data_ref[r]) - 1:
             self.data_ref[r].extend(list(repeat("", (c + 1) - len(self.data_ref[r]))))
         if self.undo_enabled and undo:

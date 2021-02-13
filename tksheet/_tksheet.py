@@ -1887,7 +1887,7 @@ class Sheet(tk.Frame):
             old_total = self.MT.total_data_cols()
         if isinstance(columns, int):
             total_rows = self.MT.total_data_rows()
-            data = list(repeat(list(repeat("", total_rows)), columns))
+            data = [list(repeat("", total_rows)) for i in range(columns)]
             numcols = columns
         else:
             data = columns
@@ -2000,7 +2000,7 @@ class Sheet(tk.Frame):
         total_cols = None
         if isinstance(rows, int):
             total_cols = self.MT.total_data_cols()
-            data = list(repeat(list(repeat("", total_cols)), rows))
+            data = [list(repeat("", total_cols)) for i in range(rows)]
         elif isinstance(rows, list):
             data = rows
         else:
