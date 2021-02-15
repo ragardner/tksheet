@@ -1867,9 +1867,10 @@ class Sheet(tk.Frame):
                     if rn > maxidx:
                         break
                     self.MT.data_ref[rn].insert(idx, v)
-        self.MT.cell_options = {(rn, cn if cn < idx else cn + 1): t2 for (rn, cn), t2 in self.MT.cell_options.items()}
-        self.MT.col_options = {cn if cn < idx else cn + 1: t for cn, t in self.MT.col_options.items()}
-        self.CH.cell_options = {cn if cn < idx else cn + 1: t for cn, t in self.CH.cell_options.items()}
+        if isinstance(idx, int):
+            self.MT.cell_options = {(rn, cn if cn < idx else cn + 1): t2 for (rn, cn), t2 in self.MT.cell_options.items()}
+            self.MT.col_options = {cn if cn < idx else cn + 1: t for cn, t in self.MT.col_options.items()}
+            self.CH.cell_options = {cn if cn < idx else cn + 1: t for cn, t in self.CH.cell_options.items()}
         if redraw and self.after_redraw_id is None:
             self.after_redraw_id = self.after(self.after_redraw_time_ms, self.after_redraw)
 
@@ -1931,10 +1932,11 @@ class Sheet(tk.Frame):
                         if rn > maxidx:
                             break
                         self.MT.data_ref[rn].insert(idx, v)
-        num_add = len(data)
-        self.MT.cell_options = {(rn, cn if cn < idx else cn + num_add): t2 for (rn, cn), t2 in self.MT.cell_options.items()}
-        self.MT.col_options = {cn if cn < idx else cn + num_add: t for cn, t in self.MT.col_options.items()}
-        self.CH.cell_options = {cn if cn < idx else cn + num_add: t for cn, t in self.CH.cell_options.items()}
+        if isinstance(idx, int):
+            num_add = len(data)
+            self.MT.cell_options = {(rn, cn if cn < idx else cn + num_add): t2 for (rn, cn), t2 in self.MT.cell_options.items()}
+            self.MT.col_options = {cn if cn < idx else cn + num_add: t for cn, t in self.MT.col_options.items()}
+            self.CH.cell_options = {cn if cn < idx else cn + num_add: t for cn, t in self.CH.cell_options.items()}
         if redraw and self.after_redraw_id is None:
             self.after_redraw_id = self.after(self.after_redraw_time_ms, self.after_redraw)
 

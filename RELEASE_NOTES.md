@@ -1,3 +1,6 @@
+### Version 5.0.0
+ - Fix errors with `insert_column()` and `insert_columns()`
+
 ### Version 4.9.99
  - Fixed bugs with row copying where `list(repeat(list(repeat(` was used in code to create empty list of lists
  - Made cell resize to text (width only) take dropdown boxes into account
