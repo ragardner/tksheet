@@ -1230,6 +1230,18 @@ class Sheet(tk.Frame):
         if redraw:
             self.redraw()
 
+    def align_header(self, columns = [], align = "global", redraw = True):
+        self.CH.align_cells(columns = columns,
+                            align = align)
+        if redraw:
+            self.redraw()
+
+    def align_index(self, rows = [], align = "global", redraw = True):
+        self.RI.align_cells(rows = rows,
+                            align = align)
+        if redraw:
+            self.redraw()
+
     def readonly_rows(self, rows = [], readonly = True, redraw = True):
         self.MT.readonly_rows(rows = rows,
                               readonly = readonly)

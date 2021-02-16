@@ -757,6 +757,21 @@ class ColumnHeaders(tk.Canvas):
     def GetLargestWidth(self, cell):
         return max(cell.split("\n"), key = self.MT.GetTextWidth)
 
+    def align_cells(self, columns = [], align = "global"):
+        if isinstance(columns, int):
+            cols = [columns]
+        else:
+            cols = columns
+        if align == "global":
+            for c in cols:
+                if c in self.cell_options and 'align' in self.cell_options[c]:
+                    del self.cell_options[c]['align']
+        else:
+            for c in cols:
+                if c not in self.cell_options:
+                    self.cell_options[c] = {}
+                self.cell_options[c]['align'] = align
+
     def redraw_highlight_get_text_fg(self, fc, sc, c, c_2, c_3, selected_cols, selected_rows, actual_selected_cols, hlcol):
         if hlcol in self.cell_options and 'highlight' in self.cell_options[hlcol] and c in actual_selected_cols:
             if self.cell_options[hlcol]['highlight'][0] is not None:
@@ -900,31 +915,40 @@ class ColumnHeaders(tk.Canvas):
             incfl = False
         c_2 = self.header_selected_cells_bg if self.header_selected_cells_bg.startswith("#") else Color_Map_[self.header_selected_cells_bg]
         c_3 = self.header_selected_columns_bg if self.header_selected_columns_bg.startswith("#") else Color_Map_[self.header_selected_columns_bg]
-        if self.align == "center":
-            for c in range(start_col, end_col - 1):
-                fc = self.MT.col_positions[c]
-                sc = self.MT.col_positions[c + 1]
-                if self.MT.all_columns_displayed:
-                    dcol = c
+        for c in range(start_col, end_col - 1):
+            fc = self.MT.col_positions[c]
+            sc = self.MT.col_positions[c + 1]
+            if self.MT.all_columns_displayed:
+                dcol = c
+            else:
+                dcol = self.MT.displayed_columns[c]
+            tf, font = self.redraw_highlight_get_text_fg(fc, sc, c, c_2, c_3, selected_cols, selected_rows, actual_selected_cols, dcol)
+
+            if dcol in self.cell_options and 'align' in self.cell_options[dcol]:
+                cell_alignment = self.cell_options[dcol]['align']
+            elif dcol in self.MT.col_options and 'align' in self.MT.col_options[dcol]:
+                cell_alignment = self.MT.col_options[dcol]['align']
+            else:
+                cell_alignment = self.align
+
+            try:
+                if isinstance(self.MT.my_hdrs, int):
+                    lns = self.MT.data_ref[self.MT.my_hdrs][dcol].split("\n") if isinstance(self.MT.data_ref[self.MT.my_hdrs][dcol], str) else f"{self.MT.data_ref[self.MT.my_hdrs][dcol]}".split("\n")
                 else:
-                    dcol = self.MT.displayed_columns[c]
-                tf, font = self.redraw_highlight_get_text_fg(fc, sc, c, c_2, c_3, selected_cols, selected_rows, actual_selected_cols, dcol)
+                    lns = self.MT.my_hdrs[dcol].split("\n") if isinstance(self.MT.my_hdrs[dcol], str) else f"{self.MT.my_hdrs[dcol]}".split("\n")
+            except:
+                if self.default_hdr == "letters":
+                    lns = (num2alpha(c), )
+                elif self.default_hdr == "numbers":
+                    lns = (f"{c + 1}", )
+                else:
+                    lns = (f"{c + 1} {num2alpha(c)}", )
+            
+            if cell_alignment == "center":
                 mw = sc - fc - 1
                 if fc + 5 > x_stop or mw <= 5:
                     continue
                 x = fc + floor((sc - fc) / 2)
-                try:
-                    if isinstance(self.MT.my_hdrs, int):
-                        lns = self.MT.data_ref[self.MT.my_hdrs][dcol].split("\n") if isinstance(self.MT.data_ref[self.MT.my_hdrs][dcol], str) else f"{self.MT.data_ref[self.MT.my_hdrs][dcol]}".split("\n")
-                    else:
-                        lns = self.MT.my_hdrs[dcol].split("\n") if isinstance(self.MT.my_hdrs[dcol], str) else f"{self.MT.my_hdrs[dcol]}".split("\n")
-                except:
-                    if self.default_hdr == "letters":
-                        lns = (num2alpha(c), )
-                    elif self.default_hdr == "numbers":
-                        lns = (f"{c + 1}", )
-                    else:
-                        lns = (f"{c + 1} {num2alpha(c)}", )
                 y = self.MT.hdr_fl_ins
                 if incfl:
                     txt = lns[0]
@@ -951,7 +975,7 @@ class ColumnHeaders(tk.Canvas):
                     if y + self.MT.hdr_half_txt_h - 1 < self.current_height:
                         for i in range(stl, len(lns)):
                             txt = lns[i]
-                            t = self.redraw_text(x, y, text = txt, fill = tf, font = font, anchor = "center", tag = "t")
+                            t = self.redraw_text(x, y, text = txt, fill = tf, font = font, anchor = cell_alignment, tag = "t")
                             wd = self.bbox(t)
                             wd = wd[2] - wd[0]
                             if wd > mw:
@@ -969,35 +993,58 @@ class ColumnHeaders(tk.Canvas):
                             y += self.MT.hdr_xtra_lines_increment
                             if y + self.MT.hdr_half_txt_h - 1 > self.current_height:
                                 break
-        elif self.align == "w":
-            for c in range(start_col, end_col - 1):
-                fc = self.MT.col_positions[c]
-                sc = self.MT.col_positions[c + 1]
-                if self.MT.all_columns_displayed:
-                    dcol = c
-                else:
-                    dcol = self.MT.displayed_columns[c]
-                tf, font = self.redraw_highlight_get_text_fg(fc, sc, c, c_2, c_3, selected_cols, selected_rows, actual_selected_cols, dcol)
+                            
+            elif cell_alignment == "e":
+                mw = sc - fc - 5
+                x = sc - 5
+                if x > x_stop or mw <= 5:
+                    continue
+                y = self.MT.hdr_fl_ins
+                if incfl:
+                    txt = lns[0]
+                    t = self.redraw_text(x, y, text = txt, fill = tf, font = font, anchor = cell_alignment, tag = "t")
+                    wd = self.bbox(t)
+                    wd = wd[2] - wd[0]
+                    if wd > mw:
+                        txt = txt[len(txt) - int(len(txt) * (mw / wd)):]
+                        self.itemconfig(t, text = txt)
+                        wd = self.bbox(t)
+                        while wd[2] - wd[0] > mw:
+                            txt = txt[1:]
+                            self.itemconfig(t, text = txt)
+                            wd = self.bbox(t)
+                if len(lns) > 1:
+                    stl = int((top - y) / self.MT.hdr_xtra_lines_increment) - 1
+                    if stl < 1:
+                        stl = 1
+                    y += (stl * self.MT.hdr_xtra_lines_increment)
+                    if y + self.MT.hdr_half_txt_h - 1 < self.current_height:
+                        for i in range(stl, len(lns)):
+                            txt = lns[i]
+                            t = self.redraw_text(x, y, text = txt, fill = tf, font = font, anchor = cell_alignment, tag = "t")
+                            wd = self.bbox(t)
+                            wd = wd[2] - wd[0]
+                            if wd > mw:
+                                txt = txt[len(txt) - int(len(txt) * (mw / wd)):]
+                                self.itemconfig(t, text = txt)
+                                wd = self.bbox(t)
+                                while wd[2] - wd[0] > mw:
+                                    txt = txt[1:]
+                                    self.itemconfig(t, text = txt)
+                                    wd = self.bbox(t)
+                            y += self.MT.hdr_xtra_lines_increment
+                            if y + self.MT.hdr_half_txt_h - 1 > self.current_height:
+                                break
+                
+            elif cell_alignment == "w":
                 mw = sc - fc - 5
                 x = fc + 5
                 if x > x_stop or mw <= 5:
                     continue
-                try:
-                    if isinstance(self.MT.my_hdrs, int):
-                        lns = self.MT.data_ref[self.MT.my_hdrs][dcol].split("\n") if isinstance(self.MT.data_ref[self.MT.my_hdrs][dcol], str) else f"{self.MT.data_ref[self.MT.my_hdrs][dcol]}".split("\n")
-                    else:
-                        lns = self.MT.my_hdrs[dcol].split("\n") if isinstance(self.MT.my_hdrs[dcol], str) else f"{self.MT.my_hdrs[dcol]}".split("\n")
-                except:
-                    if self.default_hdr == "letters":
-                        lns = (num2alpha(c), )
-                    elif self.default_hdr == "numbers":
-                        lns = (f"{c + 1}", )
-                    else:
-                        lns = (f"{num2alpha(c)} {c + 1}", )
                 y = self.MT.hdr_fl_ins
                 if incfl:
                     txt = lns[0]
-                    t = self.redraw_text(x, y, text = txt, fill = tf, font = font, anchor = "w", tag = "t")
+                    t = self.redraw_text(x, y, text = txt, fill = tf, font = font, anchor = cell_alignment, tag = "t")
                     wd = self.bbox(t)
                     wd = wd[2] - wd[0]
                     if wd > mw:
@@ -1016,7 +1063,7 @@ class ColumnHeaders(tk.Canvas):
                     if y + self.MT.hdr_half_txt_h - 1 < self.current_height:
                         for i in range(stl, len(lns)):
                             txt = lns[i]
-                            t = self.redraw_text(x, y, text = txt, fill = tf, font = font, anchor = "w", tag = "t")
+                            t = self.redraw_text(x, y, text = txt, fill = tf, font = font, anchor = cell_alignment, tag = "t")
                             wd = self.bbox(t)
                             wd = wd[2] - wd[0]
                             if wd > mw:
@@ -1030,6 +1077,7 @@ class ColumnHeaders(tk.Canvas):
                             y += self.MT.hdr_xtra_lines_increment
                             if y + self.MT.hdr_half_txt_h - 1 > self.current_height:
                                 break
+                            
         self.redraw_gridline(x1, self.current_height - 1, x_stop, self.current_height - 1, fill = self.header_border_fg, width = 1, tag = "h")
         for t, sh in self.hidd_text.items():
             if sh:

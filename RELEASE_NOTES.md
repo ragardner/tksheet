@@ -1,3 +1,6 @@
+### Version 5.0.1
+ - Add right (`e`) cell alignment for index and header
+
 ### Version 5.0.0
  - Fix errors with `insert_column()` and `insert_columns()`
 

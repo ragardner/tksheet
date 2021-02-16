@@ -26,7 +26,6 @@ pip install tksheet
  - Cell elements can be any class with a `str` method
 
 ### To do
- - Index and Header right text alignment
  - Excel style box drag down to copy cells
  - Documentation
 

@@ -827,6 +827,21 @@ class RowIndex(tk.Canvas):
         else:
             return int(self.MT.min_rh)
 
+    def align_cells(self, rows = [], align = "global"):
+        if isinstance(rows, int):
+            rows = [rows]
+        else:
+            rows = rows
+        if align == "global":
+            for r in rows:
+                if r in self.cell_options and 'align' in self.cell_options[r]:
+                    del self.cell_options[r]['align']
+        else:
+            for r in rows:
+                if r not in self.cell_options:
+                    self.cell_options[r] = {}
+                self.cell_options[r]['align'] = align
+
     def auto_set_index_width(self, end_row):
         if not self.MT.my_row_index and not isinstance(self.MT.my_row_index, int) and self.auto_resize_width:
             if self.default_index == "letters":
@@ -948,35 +963,44 @@ class RowIndex(tk.Canvas):
         sb = y2 + 2
         c_2 = self.index_selected_cells_bg if self.index_selected_cells_bg.startswith("#") else Color_Map_[self.index_selected_cells_bg]
         c_3 = self.index_selected_rows_bg if self.index_selected_rows_bg.startswith("#") else Color_Map_[self.index_selected_rows_bg]
-        if self.align == "center":
-            mw = self.current_width - 1
-            x = floor(self.current_width / 2)
-            for r in range(start_row, end_row - 1):
-                fr = self.MT.row_positions[r]
-                sr = self.MT.row_positions[r + 1]
-                if sr - fr < self.MT.txt_h:
-                    continue
-                if sr > sb:
-                    sr = sb
+        for r in range(start_row, end_row - 1):
+            fr = self.MT.row_positions[r]
+            sr = self.MT.row_positions[r + 1]
+            if sr - fr < self.MT.txt_h:
+                continue
+            if sr > sb:
+                sr = sb
+
+            if r in self.cell_options and 'align' in self.cell_options[r]:
+                cell_alignment = self.cell_options[r]['align']
+            elif r in self.MT.row_options and 'align' in self.MT.row_options[r]:
+                cell_alignment = self.MT.row_options[r]['align']
+            else:
+                cell_alignment = self.align
+
+            try:
+                if isinstance(self.MT.my_row_index, int):
+                    lns = self.MT.data_ref[r][self.MT.my_row_index].split("\n") if isinstance(self.MT.data_ref[r][self.MT.my_row_index], str) else f"{self.MT.data_ref[r][self.MT.my_row_index]}".split("\n")
+                else:
+                    lns = self.MT.my_row_index[r].split("\n") if isinstance(self.MT.my_row_index[r], str) else f"{self.MT.my_row_index[r]}".split("\n")
+            except:
+                if self.default_index == "letters":
+                    lns = (num2alpha(r), )
+                elif self.default_index == "numbers":
+                    lns = (f"{r + 1}", )
+                else:
+                    lns = (f"{num2alpha(r)} {r + 1}", )
+
+            if cell_alignment == "center":
+                mw = self.current_width - 1
+                x = floor(self.current_width / 2)
                 tf, font = self.redraw_highlight_get_text_fg(fr, sr, r, c_2, c_3, selected_rows, selected_cols, actual_selected_rows)
                 if mw <= 5:
                     continue
-                try:
-                    if isinstance(self.MT.my_row_index, int):
-                        lns = self.MT.data_ref[r][self.MT.my_row_index].split("\n") if isinstance(self.MT.data_ref[r][self.MT.my_row_index], str) else f"{self.MT.data_ref[r][self.MT.my_row_index]}".split("\n")
-                    else:
-                        lns = self.MT.my_row_index[r].split("\n") if isinstance(self.MT.my_row_index[r], str) else f"{self.MT.my_row_index[r]}".split("\n")
-                except:
-                    if self.default_index == "letters":
-                        lns = (num2alpha(r), )
-                    elif self.default_index == "numbers":
-                        lns = (f"{r + 1}", )
-                    else:
-                        lns = (f"{r + 1} {num2alpha(r)}", )
                 txt = lns[0]
                 y = fr + self.MT.fl_ins
                 if y + self.MT.half_txt_h - 1 > y1:
-                    t = self.redraw_text(x, y, text = txt, fill = tf, font = font, anchor = "center", tag = "t")
+                    t = self.redraw_text(x, y, text = txt, fill = tf, font = font, anchor = cell_alignment, tag = "t")
                     wd = self.bbox(t)
                     wd = wd[2] - wd[0]
                     if wd > mw:
@@ -999,7 +1023,7 @@ class RowIndex(tk.Canvas):
                     if y + self.MT.half_txt_h - 1 < sr:
                         for i in range(stl, len(lns)):
                             txt = lns[i]
-                            t = self.redraw_text(x, y, text = txt, fill = tf, font = font, anchor = "center", tag = "t")
+                            t = self.redraw_text(x, y, text = txt, fill = tf, font = font, anchor = cell_alignment, tag = "t")
                             wd = self.bbox(t)
                             wd = wd[2] - wd[0]
                             if wd > mw:
@@ -1017,35 +1041,60 @@ class RowIndex(tk.Canvas):
                             y += self.MT.xtra_lines_increment
                             if y + self.MT.half_txt_h - 1 > sr:
                                 break
-        elif self.align == "w":
-            mw = self.current_width - 5
-            x = 5
-            for r in range(start_row, end_row - 1):
-                fr = self.MT.row_positions[r]
-                sr = self.MT.row_positions[r + 1]
-                if sr - fr < self.MT.txt_h:
-                    continue
-                if sr > sb:
-                    sr = sb
+
+            elif cell_alignment == "e":
+                mw = self.current_width - 5
+                x = self.current_width - 5
                 tf, font = self.redraw_highlight_get_text_fg(fr, sr, r, c_2, c_3, selected_rows, selected_cols, actual_selected_rows)
                 if mw <= 5:
                     continue
-                try:
-                    if isinstance(self.MT.my_row_index, int):
-                        lns = self.MT.data_ref[r][self.MT.my_row_index].split("\n") if isinstance(self.MT.data_ref[r][self.MT.my_row_index], str) else f"{self.MT.data_ref[r][self.MT.my_row_index]}".split("\n")
-                    else:
-                        lns = self.MT.my_row_index[r].split("\n") if isinstance(self.MT.my_row_index[r], str) else f"{self.MT.my_row_index[r]}".split("\n")
-                except:
-                    if self.default_index == "letters":
-                        lns = (num2alpha(r), )
-                    elif self.default_index == "numbers":
-                        lns = (f"{r + 1}", )
-                    else:
-                        lns = (f"{num2alpha(r)} {r + 1}", )
                 y = fr + self.MT.fl_ins
                 if y + self.MT.half_txt_h - 1 > y1:
                     txt = lns[0]
-                    t = self.redraw_text(x, y, text = txt, fill = tf, font = font, anchor = "w", tag = "t")
+                    t = self.redraw_text(x, y, text = txt, fill = tf, font = font, anchor = cell_alignment, tag = "t")
+                    wd = self.bbox(t)
+                    wd = wd[2] - wd[0]
+                    if wd > mw:
+                        txt = txt[len(txt) - int(len(txt) * (mw / wd)):]
+                        self.itemconfig(t, text = txt)
+                        wd = self.bbox(t)
+                        while wd[2] - wd[0] > mw:
+                            nl -= 1
+                            self.dchars(t, nl)
+                            wd = self.bbox(t)
+                if len(lns) > 1:
+                    stl = int((y1 - y) / self.MT.xtra_lines_increment) - 1
+                    if stl < 1:
+                        stl = 1
+                    y += (stl * self.MT.xtra_lines_increment)
+                    if y + self.MT.half_txt_h - 1 < sr:
+                        for i in range(stl, len(lns)):
+                            txt = lns[i]
+                            t = self.redraw_text(x, y, text = txt, fill = tf, font = font, anchor = cell_alignment, tag = "t")
+                            wd = self.bbox(t)
+                            wd = wd[2] - wd[0]
+                            if wd > mw:
+                                txt = txt[len(txt) - int(len(txt) * (mw / wd)):]
+                                self.itemconfig(t, text = txt)
+                                wd = self.bbox(t)
+                                while wd[2] - wd[0] > mw:
+                                    txt = txt[1:]
+                                    self.itemconfig(t, text = txt)
+                                    wd = self.bbox(t)
+                            y += self.MT.xtra_lines_increment
+                            if y + self.MT.half_txt_h - 1 > sr:
+                                break
+
+            elif cell_alignment == "w":
+                mw = self.current_width - 5
+                x = 5
+                tf, font = self.redraw_highlight_get_text_fg(fr, sr, r, c_2, c_3, selected_rows, selected_cols, actual_selected_rows)
+                if mw <= 5:
+                    continue
+                y = fr + self.MT.fl_ins
+                if y + self.MT.half_txt_h - 1 > y1:
+                    txt = lns[0]
+                    t = self.redraw_text(x, y, text = txt, fill = tf, font = font, anchor = cell_alignment, tag = "t")
                     wd = self.bbox(t)
                     wd = wd[2] - wd[0]
                     if wd > mw:
@@ -1064,7 +1113,7 @@ class RowIndex(tk.Canvas):
                     if y + self.MT.half_txt_h - 1 < sr:
                         for i in range(stl, len(lns)):
                             txt = lns[i]
-                            t = self.redraw_text(x, y, text = txt, fill = tf, font = font, anchor = "w", tag = "t")
+                            t = self.redraw_text(x, y, text = txt, fill = tf, font = font, anchor = cell_alignment, tag = "t")
                             wd = self.bbox(t)
                             wd = wd[2] - wd[0]
                             if wd > mw:
@@ -1078,6 +1127,7 @@ class RowIndex(tk.Canvas):
                             y += self.MT.xtra_lines_increment
                             if y + self.MT.half_txt_h - 1 > sr:
                                 break
+                            
         self.redraw_gridline(self.current_width - 1, y1, self.current_width - 1, y_stop, fill = self.index_border_fg, width = 1, tag = "v")
         for t, sh in self.hidd_text.items():
             if sh:

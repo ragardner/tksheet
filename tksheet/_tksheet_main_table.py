@@ -1235,11 +1235,17 @@ class MainTable(tk.Canvas):
             for r in rows_:
                 if r in self.row_options and 'align' in self.row_options[r]:
                     del self.row_options[r]['align']
+                if align_index and r in self.RI.cell_options and 'align' in self.RI.cell_options[r]:
+                    del self.RI.cell_options[r]['align']
         else:
             for r in rows_:
                 if r not in self.row_options:
                     self.row_options[r] = {}
                 self.row_options[r]['align'] = align
+                if align_index:
+                    if r not in self.RI.cell_options:
+                        self.RI.cell_options[r] = {}
+                    self.RI.cell_options[r]['align'] = align
 
     def align_columns(self, columns = [], align = "global", align_header = False): #"center", "w", "e" or "global"
         if isinstance(columns, int):
@@ -1250,11 +1256,17 @@ class MainTable(tk.Canvas):
             for c in cols_:
                 if c in self.col_options and 'align' in self.col_options[c]:
                     del self.col_options[c]['align']
+                if align_header and c in self.CH.cell_options and 'align' in self.CH.cell_options[c]:
+                    del self.CH.cell_options[c]['align']
         else:
             for c in cols_:
                 if c not in self.col_options:
                     self.col_options[c] = {}
                 self.col_options[c]['align'] = align
+                if align_header:
+                    if c not in self.CH.cell_options:
+                        self.CH.cell_options[c] = {}
+                    self.CH.cell_options[c]['align'] = align
 
     def align_cells(self, row = 0, column = 0, cells = [], align = "global"): #"center", "w", "e" or "global"
         if align == "global":
@@ -3539,6 +3551,8 @@ class MainTable(tk.Canvas):
                         continue
                     if sr > sb:
                         sr = sb
+                    fc = self.col_positions[c]
+                    sc = self.col_positions[c + 1]
                     
                     if self.all_columns_displayed:
                         dcol = c
@@ -3555,21 +3569,15 @@ class MainTable(tk.Canvas):
                         cell_alignment = self.align
                     
                     if cell_alignment == "w":
-                        fc = self.col_positions[c]
-                        sc = self.col_positions[c + 1]
                         x = fc + 5
                         mw = sc - fc - 5
 
                     elif cell_alignment == "e":
-                        fc = self.col_positions[c]
-                        sc = self.col_positions[c + 1]
                         x = sc - 5
                         mw = sc - fc - 5
 
                     elif cell_alignment == "center":
-                        fc = self.col_positions[c]
                         stop = fc + 5
-                        sc = self.col_positions[c + 1]
                         mw = sc - fc - 1
                         x = fc + floor((sc - fc) / 2)
                     
@@ -3654,7 +3662,8 @@ class MainTable(tk.Canvas):
                                 wd = self.bbox(t)
                                 wd = wd[2] - wd[0]
                                 if wd > mw:
-                                    self.itemconfig(t, text = txt[len(txt) - int(len(txt) * (mw / wd)):])
+                                    txt = txt[len(txt) - int(len(txt) * (mw / wd)):]
+                                    self.itemconfig(t, text = txt)
                                     wd = self.bbox(t)
                                     while wd[2] - wd[0] > mw:
                                         txt = txt[1:]
@@ -3681,7 +3690,8 @@ class MainTable(tk.Canvas):
                                         wd = self.bbox(t)
                                         wd = wd[2] - wd[0]
                                         if wd > mw:
-                                            self.itemconfig(t, text = txt[len(txt) - int(len(txt) * (mw / wd)):])
+                                            txt = txt[len(txt) - int(len(txt) * (mw / wd)):]
+                                            self.itemconfig(t, text = txt)
                                             wd = self.bbox(t)
                                             while wd[2] - wd[0] > mw:
                                                 txt = txt[1:]
