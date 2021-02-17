@@ -1,3 +1,6 @@
+### Version 5.0.11
+ - Add default height and width if a height is used without a width or vice versa
+
 ### Version 5.0.1
  - Add right (`e`) cell alignment for index and header
 

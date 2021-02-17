@@ -124,12 +124,16 @@ class Sheet(tk.Frame):
         self.C = parent
         self.after_redraw_id = None
         self.after_redraw_time_ms = after_redraw_time_ms
-        if width is not None and height is not None:
+        if width is not None or height is not None:
             self.grid_propagate(0)
         if width is not None:
             self.config(width = width)
         if height is not None:
             self.config(height = height)
+        if width is not None and height is None:
+            self.config(height = 300)
+        if height is not None and width is None:
+            self.config(width = 350)
         self.grid_columnconfigure(1, weight = 1)
         self.grid_rowconfigure(1, weight = 1)
         self.RI = RowIndex(self,
