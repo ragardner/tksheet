@@ -70,6 +70,8 @@ class MainTable(tk.Canvas):
                            height = height,
                            background = table_bg,
                            highlightthickness = 0)
+
+        self.parentframe = parentframe
         
         self.disp_text = {}
         self.disp_high = {}
@@ -687,7 +689,7 @@ class MainTable(tk.Canvas):
             currently_selected = self.currently_selected()
             if self.undo_enabled:
                 undo_storage = {}
-                boxes = []
+            boxes = []
             if self.all_columns_displayed:    
                 for item in chain(self.find_withtag("CellSelectFill"), self.find_withtag("RowSelectFill"), self.find_withtag("ColSelectFill"), self.find_withtag("Current_Outside")):
                     alltags = self.gettags(item)
@@ -3465,13 +3467,27 @@ class MainTable(tk.Canvas):
         last_col_line_pos = self.col_positions[-1] + 1
         last_row_line_pos = self.row_positions[-1] + 1
         try:
+            can_width = self.winfo_width()
+            can_height = self.winfo_height()
             self.configure(scrollregion=(0,
                                          0,
                                          last_col_line_pos + self.empty_horizontal,
                                          last_row_line_pos + self.empty_vertical))
+            if can_width >= last_col_line_pos + self.empty_horizontal and self.parentframe.xscroll_showing:
+                self.parentframe.xscroll.grid_forget()
+                self.parentframe.xscroll_showing = False
+            elif can_width < last_col_line_pos + self.empty_horizontal and not self.parentframe.xscroll_showing:
+                self.parentframe.xscroll.grid(row = 2, column = 1, columnspan = 2, sticky = "nswe")
+                self.parentframe.xscroll_showing = True
+            if can_height >= last_row_line_pos + self.empty_vertical and self.parentframe.yscroll_showing:
+                self.parentframe.yscroll.grid_forget()
+                self.parentframe.yscroll_showing = False
+            elif can_height < last_row_line_pos + self.empty_vertical and not self.parentframe.yscroll_showing:
+                self.parentframe.yscroll.grid(row = 1, column = 2, sticky = "nswe")
+                self.parentframe.yscroll_showing = True
         except:
             return False
-        y2 = self.canvasy(self.winfo_height())
+        y2 = self.canvasy(can_height)
         end_row = bisect.bisect_right(self.row_positions, y2)
         if not y2 >= self.row_positions[-1]:
             end_row += 1
@@ -3479,7 +3495,7 @@ class MainTable(tk.Canvas):
             self.RI.auto_set_index_width(end_row - 1)
         x1 = self.canvasx(0)
         y1 = self.canvasy(0)
-        x2 = self.canvasx(self.winfo_width())
+        x2 = self.canvasx(can_width)
         start_row = bisect.bisect_left(self.row_positions, y1)
         self.row_width_resize_bbox = (x1, y1, x1 + 2, y2)
         self.header_height_resize_bbox = (x1 + 6, y1, x2, y1 + 2)

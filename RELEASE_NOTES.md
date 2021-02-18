@@ -1,3 +1,7 @@
+### Version 5.0.12
+ - Remove/add scrollbars depending on if window can be scrolled
+ - Fix bug with delete key
+
 ### Version 5.0.11
  - Add default height and width if a height is used without a width or vice versa
 

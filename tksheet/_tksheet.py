@@ -239,8 +239,14 @@ class Sheet(tk.Frame):
             self.CH["xscrollcommand"] = self.xscroll.set
         if show_x_scrollbar:
             self.xscroll.grid(row = 2, column = 1, columnspan = 2, sticky = "nswe")
+            self.xscroll_showing = True
+        else:
+            self.xscroll_showing = False
         if show_y_scrollbar:
             self.yscroll.grid(row = 1, column = 2, sticky = "nswe")
+            self.yscroll_showing = True
+        else:
+            self.yscroll_showing = False
         if theme != "light blue":
             self.MT.display_selected_fg_over_highlights = True
             self.change_theme(theme)
@@ -284,6 +290,8 @@ class Sheet(tk.Frame):
             self.CH["xscrollcommand"] = self.xscroll.set
             self.MT["yscrollcommand"] = self.yscroll.set
             self.RI["yscrollcommand"] = self.yscroll.set
+            self.xscroll_showing = True
+            self.yscroll_showing = True
         elif canvas == "row_index":
             self.RI.grid(row = 1, column = 0, sticky = "nswe")
             self.MT["yscrollcommand"] = self.yscroll.set
@@ -298,8 +306,10 @@ class Sheet(tk.Frame):
             self.TL.grid(row = 0, column = 0)
         elif canvas == "x_scrollbar":
             self.xscroll.grid(row = 2, column = 1, columnspan = 2, sticky = "nswe")
+            self.xscroll_showing = True
         elif canvas == "y_scrollbar":
             self.yscroll.grid(row = 1, column = 2, sticky = "nswe")
+            self.yscroll_showing = True
         self.MT.update()
 
     def hide(self, canvas = "all"):
@@ -310,6 +320,8 @@ class Sheet(tk.Frame):
             self.MT.grid_forget()
             self.yscroll.grid_forget()
             self.xscroll.grid_forget()
+            self.xscroll_showing = False
+            self.yscroll_showing = False
         elif canvas == "row_index":
             self.RI.grid_forget()
             self.RI["yscrollcommand"] = 0
@@ -322,8 +334,10 @@ class Sheet(tk.Frame):
             self.TL.grid_forget()
         elif canvas == "x_scrollbar":
             self.xscroll.grid_forget()
+            self.xscroll_showing = False
         elif canvas == "y_scrollbar":
             self.yscroll.grid_forget()
+            self.yscroll_showing = False
 
     def height_and_width(self, height = None, width = None):
         if width is not None or height is not None:
