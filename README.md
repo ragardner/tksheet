@@ -9,6 +9,7 @@ pip install tksheet
 
 ### Help
  - [Documentation](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md) (unfinished)
+ - [Basic demonstration](https://github.com/ragardner/tksheet#demonstration-of-setup-and-various-functions)
  - [Version release notes](https://github.com/ragardner/tksheet/blob/master/RELEASE_NOTES.md)
  - [Donations](https://github.com/ragardner/tksheet#donations)
 
