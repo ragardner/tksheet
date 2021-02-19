@@ -757,7 +757,7 @@ class MainTable(tk.Canvas):
                 undo_storage = pickle.loads(zlib.decompress(undo_storage))
             self.deselect("all")
             if self.extra_begin_ctrl_z_func is not None:
-                self.extra_begin_ctrl_z_func(("begin_ctrl_z", undo_storage[0]))
+                self.extra_begin_ctrl_z_func(("begin_ctrl_z", undo_storage[0], undo_storage))
             if undo_storage[0] == "edit_cells":
                 for (r, c), v in undo_storage[1].items():
                     self.data_ref[r][c] = v
@@ -1048,7 +1048,7 @@ class MainTable(tk.Canvas):
                 
             self.refresh()
             if self.extra_end_ctrl_z_func is not None:
-                self.extra_end_ctrl_z_func(("end_ctrl_z", undo_storage[0]))
+                self.extra_end_ctrl_z_func(("end_ctrl_z", undo_storage[0], undo_storage))
             
     def bind_arrowkeys(self, event = None):
         self.arrowkeys_enabled = True
@@ -4603,15 +4603,17 @@ class MainTable(tk.Canvas):
             self.data_ref[r].extend(list(repeat("", (c + 1) - len(self.data_ref[r]))))
         if self.undo_enabled and undo:
             if self.all_columns_displayed:
-                self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells",
-                                                                     {(r, c): f"{self.data_ref[r][c]}"},
-                                                                     (((r, c, r + 1, c + 1), "cells"), ),
-                                                                     self.currently_selected()))))
+                if self.data_ref[r][c] != value:
+                    self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells",
+                                                                         {(r, c): f"{self.data_ref[r][c]}"},
+                                                                         (((r, c, r + 1, c + 1), "cells"), ),
+                                                                         self.currently_selected()))))
             else:
-                self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells",
-                                                                     {(r, self.displayed_columns[c]): f"{self.data_ref[r][self.displayed_columns[c]]}"},
-                                                                     (((r, c, r + 1, c + 1), "cells"), ),
-                                                                     self.currently_selected()))))
+                if self.data_ref[r][self.displayed_columns[c]] != value:
+                    self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells",
+                                                                         {(r, self.displayed_columns[c]): f"{self.data_ref[r][self.displayed_columns[c]]}"},
+                                                                         (((r, c, r + 1, c + 1), "cells"), ),
+                                                                         self.currently_selected()))))
         if self.all_columns_displayed:
             self.data_ref[r][c] = value
         else:

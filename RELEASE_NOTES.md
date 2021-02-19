@@ -1,3 +1,7 @@
+### Version 5.0.13
+ - Add extra variable to undo event
+ - Edit cell no longer creates undo if cell is left unchanged
+
 ### Version 5.0.12
  - Remove/add scrollbars depending on if window can be scrolled
  - Fix bug with delete key
