@@ -27,7 +27,6 @@ pip install tksheet
  - Cell elements can be any class with a `str` method
 
 ### To do
- - Excel style box drag down to copy cells
  - Documentation
 
 ### Demonstration of setup and various functions:
