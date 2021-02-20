@@ -1,5 +1,41 @@
-#### Sheet startup arguments
-This is a full list of all the start up arguments, the only required argument is the sheets parent, everything else has default arguments
+# Table of Contents
+1. [About tksheet](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#About tksheet)
+2. [Installation and Requirements](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Installation and Requirements)
+3. [Basic Initialization](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Basic Initialization)
+4. [Initialization Options](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Initialization Options)
+5. [Modifying Table Data](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Modifying Table Data)
+6. [Retrieving Table Data](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Retrieving Table Data)
+7. [Bindings](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Bindings)
+8. [Identifying Bound Event Mouse Position](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Identifying Bound Event Mouse Position)
+9. [Table Colors](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Table Colors)
+10. [Highlighting Cells](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Highlighting Cells)
+11. [Text Font and Alignment](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Text Font and Alignment)
+12. [Row Heights and Column Widths](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Row Heights and Column Widths)
+13. [Retrieving Selected Cells](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Retrieving Selected Cells)
+14. [Modifying Selected Cells](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Modifying Selected Cells)
+15. [Modifying and Retrieving Scroll Positions](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Modifying and Retrieving Scroll Positions)
+16. [Setting Read-only Cells](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Setting Read-only Cells)
+17. [Hiding Columns](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Hiding Columns)
+18. [Hiding the Index and Header](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Hiding the Index and Header)
+19. [Cell Text Editor](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Cell Text Editor)
+20. [Dropdown Boxes](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Dropdown Boxes)
+
+### About tksheet
+`tksheet` is a Python tkinter table widget written in pure python. It is licensed under the [MIT license](https://github.com/ragardner/tksheet/blob/master/LICENSE.txt).
+
+### Installation and Requirements
+`tksheet` is available through PyPi (Python package index) and can be installed by using Pip through the command line `pip install tksheet`
+
+Alternatively you can download the source code and (inside the tksheet directory) use the command line `python setup.py develop`
+
+`tksheet` requires a Python version of `3.6` or higher.
+
+### Basic Initialization
+
+
+
+### Initialization Options
+This is a full list of all the start up arguments, the only required argument is the sheets parent, everything else has default arguments.
 
 ```python
 Sheet(
@@ -96,11 +132,7 @@ top_left_fg_highlight                   = theme_light_blue['top_left_fg_highligh
 )
 ```
 
-You can change these settings after initialization using the `set_options()` function or other functions contained within `_tksheet.py`
-
-Take a look inside the `tests` folder for demonstrations
-
-Documentation not finished...
+You can change these settings after initialization using the `set_options()` function.
 
 
 
