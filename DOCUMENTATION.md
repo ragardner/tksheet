@@ -201,14 +201,14 @@ You can change these settings after initialization using the `set_options()` fun
 
 ### Hiding the Index and Header
 
-##### Hiding table elements
+#### Hiding table elements
 ```python
 hide(canvas = "all")
 ```
  - `canvas` (`str`) options are `all`, `row_index`, `header`, `top_left`, `x_scrollbar`, `y_scrollbar`
 	- `all` hides the entire table and is the default.
 
-##### Showing table elements
+#### Showing table elements
 ```python
 show(canvas = "all")
 ```
