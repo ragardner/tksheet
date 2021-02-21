@@ -162,14 +162,82 @@ You can change these settings after initialization using the `set_options()` fun
 
 ## Modifying Table Data
 
+```python
+delete_row(idx = 0, deselect_all = False, preserve_other_selections = False)
+```
+
+```python
+total_rows(number = None, mod_positions = True, mod_data = True)
+```
+
+```python
+total_columns(number = None, mod_positions = True, mod_data = True)
+```
+
+```python
+set_sheet_data_and_display_dimensions(total_rows = None, total_columns = None)
+```
 
 ## Retrieving Table Data
 
 
 ## Bindings and Functionality
 
+```python
+enable_bindings(bindings = "all")
+```
+
+```python
+disable_bindings(bindings = "all")
+```
+
+```python
+basic_bindings(enable = False)
+```
+
+```python
+edit_bindings(enable = False)
+```
+
+```python
+cell_edit_binding(enable = False)
+```
+
+```python
+extra_bindings(bindings, func = "None")
+```
+
+```python
+bind(binding, func)
+```
+
+```python
+unbind(binding)
+```
+
+```python
+cut(event = None)
+copy(event = None)
+paste(event = None)
+delete(event = None)
+undo(event = None)
+```
+
 
 ## Identifying Bound Event Mouse Position
+
+```python
+identify_region(event)
+```
+
+```python
+identify_row(event, exclude_index = False, allow_end = True)
+```
+
+```python
+identify_column(event, exclude_header = False, allow_end = True)
+```
+
 
 
 ## Table Colors
@@ -182,6 +250,86 @@ You can change these settings after initialization using the `set_options()` fun
 
 
 ## Row Heights and Column Widths
+
+```python
+get_example_canvas_column_widths(total_cols = None)
+```
+
+```python
+get_example_canvas_row_heights(total_rows = None)
+```
+
+```python
+get_column_widths(canvas_positions = False)
+```
+
+```python
+get_row_heights(canvas_positions = False)
+```
+
+```python
+set_all_cell_sizes_to_text(redraw = True)
+```
+
+```python
+set_all_column_widths(width = None, only_set_if_too_small = False, redraw = True, recreate_selection_boxes = True)
+```
+
+```python
+set_all_row_heights(height = None, only_set_if_too_small = False, redraw = True, recreate_selection_boxes = True)
+```
+
+```python
+column_width(column = None, width = None, only_set_if_too_small = False, redraw = True)
+```
+
+```python
+set_column_widths(column_widths = None, canvas_positions = False, reset = False, verify = False)
+```
+
+```python
+set_width_of_index_to_text(recreate = True)
+```
+
+```python
+row_height(row = None, height = None, only_set_if_too_small = False, redraw = True)
+```
+
+```python
+set_row_heights(row_heights = None, canvas_positions = False, reset = False, verify = False)
+```
+
+```python
+verify_row_heights(row_heights, canvas_positions = False)
+```
+
+```python
+verify_column_widths(column_widths, canvas_positions = False)
+```
+
+```python
+default_row_height(height = None)
+```
+
+```python
+default_header_height(height = None)
+```
+
+```python
+delete_row_position(idx, deselect_all = False, preserve_other_selections = False)
+```
+
+```python
+insert_row_position(idx = "end", height = None, deselect_all = False, preserve_other_selections = False, redraw = False)
+```
+
+```python
+insert_row_positions(idx = "end", heights = None, deselect_all = False, preserve_other_selections = False, redraw = False)
+```
+
+```python
+sheet_display_dimensions(total_rows = None, total_columns = None)
+```
 
 
 ## Retrieving Selected Cells
@@ -199,7 +347,7 @@ You can change these settings after initialization using the `set_options()` fun
 ## Hiding Columns
 
 
-## Hiding the Index and Header
+## Table Elements, Height and Width
 
 ### Hiding table elements
 ```python
@@ -215,11 +363,54 @@ show(canvas = "all")
  - `canvas` (`str`) options are `all`, `row_index`, `header`, `top_left`, `x_scrollbar`, `y_scrollbar`
 	- `all` shows the entire table and is the default.
 
+### Table height and width
+```python
+height_and_width(height = None, width = None)
+```
+ - `height` (`int`) set a height in pixels
+ - `width` (`int`) set a width in pixels
+If both arguments are `None` then table will reset to default tkinter canvas dimensions.
+
 
 ## Cell Text Editor
 
 
 ## Dropdown Boxes
+
+```python
+create_dropdown(r = 0,
+                c = 0,
+                values = [],
+                set_value = None,
+                state = "readonly",
+                see = True,
+                destroy_on_leave = False,
+                destroy_on_select = True,
+                current = False,
+                set_cell_on_select = True,
+                redraw = True,
+                recreate_selection_boxes = True)
+```
+
+```python
+get_dropdown_value(current = False, destroy = True, set_cell_on_select = True, redraw = True, recreate = True)
+```
+
+```python
+delete_dropdown(r = 0, c = 0)
+```
+
+```python
+get_dropdowns()
+```
+
+```python
+refresh_dropdowns(dropdowns = [])
+```
+
+```python
+set_all_dropdown_values_to_sheet()
+```
 
 
 ## Example: Loading Data from Excel
