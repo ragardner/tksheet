@@ -5,7 +5,7 @@
 4. [Initialization Options](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Initialization-Options)
 5. [Modifying Table Data](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Modifying-Table-Data)
 6. [Retrieving Table Data](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Retrieving-Table-Data)
-7. [Bindings](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Bindings)
+7. [Bindings and Functionality](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Bindings-and-Functionality)
 8. [Identifying Bound Event Mouse Position](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Identifying-Bound-Event-Mouse-Position)
 9. [Table Colors](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Table-Colors)
 10. [Highlighting Cells](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Highlighting-Cells)
@@ -19,6 +19,8 @@
 18. [Hiding the Index and Header](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Hiding-the-Index-and-Header)
 19. [Cell Text Editor](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Cell-Text-Editor)
 20. [Dropdown Boxes](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Dropdown-Boxes)
+21. [Example: Loading Data from Excel](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Example:-Loading-Data-from-Excel)
+
 
 ### About tksheet
 `tksheet` is a Python tkinter table widget written in pure python. It is licensed under the [MIT license](https://github.com/ragardner/tksheet/blob/master/LICENSE.txt).
@@ -31,8 +33,29 @@ Alternatively you can download the source code and (inside the tksheet directory
 `tksheet` requires a Python version of `3.6` or higher.
 
 ### Basic Initialization
+```python
+from tksheet import Sheet
+import tkinter as tk
 
 
+class demo(tk.Tk):
+    def __init__(self):
+        tk.Tk.__init__(self)
+        self.grid_columnconfigure(0, weight = 1)
+        self.grid_rowconfigure(0, weight = 1)
+        self.frame = tk.Frame(self)
+        self.frame.grid_columnconfigure(0, weight = 1)
+        self.frame.grid_rowconfigure(0, weight = 1)
+        self.sheet = Sheet(self.frame,
+                           data = [[f"Row {r}, Column {c}\nnewline1\nnewline2" for c in range(5)] for r in range(5)])
+        self.sheet.enable_bindings()
+        self.frame.grid(row = 0, column = 0, sticky = "nswe")
+        self.sheet.grid(row = 0, column = 0, sticky = "nswe")
+
+
+app = demo()
+app.mainloop()
+```
 
 ### Initialization Options
 This is a full list of all the start up arguments, the only required argument is the sheets parent, everything else has default arguments.
@@ -50,8 +73,8 @@ width = None,
 height = None,
 headers = None,
 measure_subset_header = True,
-default_header = "letters", #letters, numbers or both
-default_row_index = "numbers", #letters, numbers or both
+default_header = "letters",     #letters, numbers or both
+default_row_index = "numbers",  #letters, numbers or both
 page_up_down_select_row = True,
 data_reference = None,
 data = None,
@@ -132,7 +155,91 @@ top_left_fg_highlight                   = theme_light_blue['top_left_fg_highligh
 )
 ```
 
+ - `startup_select` selects cells, rows or columns at initialization by using a `tuple` e.g. `(0, 0, "cells")` for cell A0 or `(0, 5, "rows")` for rows 0 to 5.
+ - `data_reference` and `data` are essentially the same
+
 You can change these settings after initialization using the `set_options()` function.
+
+### Modifying Table Data
+
+
+### Retrieving Table Data
+
+
+### Bindings and Functionality
+
+
+### Identifying Bound Event Mouse Position
+
+
+### Table Colors
+
+
+### Highlighting Cells
+
+
+### Text Font and Alignment
+
+
+### Row Heights and Column Widths
+
+
+### Retrieving Selected Cells
+
+
+### Modifying Selected Cells
+
+
+### Modifying and Retrieving Scroll Positions
+
+
+### Setting Readonly Cells
+
+
+### Hiding Columns
+
+
+### Hiding the Index and Header
+
+##### Hiding table elements
+```python
+hide(canvas = "all")
+```
+ - `canvas` (`str`) options are `all`, `row_index`, `header`, `top_left`, `x_scrollbar`, `y_scrollbar`
+	- `all` hides the entire table and is the default.
+
+##### Showing table elements
+```python
+show(canvas = "all")
+```
+ - `canvas` (`str`) options are `all`, `row_index`, `header`, `top_left`, `x_scrollbar`, `y_scrollbar`
+	- `all` shows the entire table and is the default.
+
+
+### Cell Text Editor
+
+
+### Dropdown Boxes
+
+
+### Example: Loading Data from Excel
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
