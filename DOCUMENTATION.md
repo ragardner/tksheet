@@ -22,17 +22,17 @@
 21. [Example: Loading Data from Excel](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Example:-Loading-Data-from-Excel)
 
 
-### About tksheet
+## About tksheet
 `tksheet` is a Python tkinter table widget written in pure python. It is licensed under the [MIT license](https://github.com/ragardner/tksheet/blob/master/LICENSE.txt).
 
-### Installation and Requirements
+## Installation and Requirements
 `tksheet` is available through PyPi (Python package index) and can be installed by using Pip through the command line `pip install tksheet`
 
 Alternatively you can download the source code and (inside the tksheet directory) use the command line `python setup.py develop`
 
 `tksheet` requires a Python version of `3.6` or higher.
 
-### Basic Initialization
+## Basic Initialization
 ```python
 from tksheet import Sheet
 import tkinter as tk
@@ -57,7 +57,7 @@ app = demo()
 app.mainloop()
 ```
 
-### Initialization Options
+## Initialization Options
 This is a full list of all the start up arguments, the only required argument is the sheets parent, everything else has default arguments.
 
 ```python
@@ -160,55 +160,55 @@ top_left_fg_highlight                   = theme_light_blue['top_left_fg_highligh
 
 You can change these settings after initialization using the `set_options()` function.
 
-### Modifying Table Data
+## Modifying Table Data
 
 
-### Retrieving Table Data
+## Retrieving Table Data
 
 
-### Bindings and Functionality
+## Bindings and Functionality
 
 
-### Identifying Bound Event Mouse Position
+## Identifying Bound Event Mouse Position
 
 
-### Table Colors
+## Table Colors
 
 
-### Highlighting Cells
+## Highlighting Cells
 
 
-### Text Font and Alignment
+## Text Font and Alignment
 
 
-### Row Heights and Column Widths
+## Row Heights and Column Widths
 
 
-### Retrieving Selected Cells
+## Retrieving Selected Cells
 
 
-### Modifying Selected Cells
+## Modifying Selected Cells
 
 
-### Modifying and Retrieving Scroll Positions
+## Modifying and Retrieving Scroll Positions
 
 
-### Setting Readonly Cells
+## Setting Readonly Cells
 
 
-### Hiding Columns
+## Hiding Columns
 
 
-### Hiding the Index and Header
+## Hiding the Index and Header
 
-#### Hiding table elements
+### Hiding table elements
 ```python
 hide(canvas = "all")
 ```
  - `canvas` (`str`) options are `all`, `row_index`, `header`, `top_left`, `x_scrollbar`, `y_scrollbar`
 	- `all` hides the entire table and is the default.
 
-#### Showing table elements
+### Showing table elements
 ```python
 show(canvas = "all")
 ```
@@ -216,13 +216,13 @@ show(canvas = "all")
 	- `all` shows the entire table and is the default.
 
 
-### Cell Text Editor
+## Cell Text Editor
 
 
-### Dropdown Boxes
+## Dropdown Boxes
 
 
-### Example: Loading Data from Excel
+## Example: Loading Data from Excel
 
 
 
