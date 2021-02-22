@@ -187,19 +187,19 @@ set_sheet_data_and_display_dimensions(total_rows = None, total_columns = None)
 ___
 
 ```python
-move_row(self, row, moveto)
+move_row(row, moveto)
 ```
 
 ___
 
 ```python
-delete_column(self, idx = 0, deselect_all = False)
+delete_column(idx = 0, deselect_all = False)
 ```
 
 ___
 
 ```python
-move_column(self, column, moveto)
+move_column(column, moveto)
 ```
 
 ## Retrieving Table Data
@@ -416,31 +416,31 @@ sheet_display_dimensions(total_rows = None, total_columns = None)
 ___
 
 ```python
-move_row_position(self, row, moveto)
+move_row_position(row, moveto)
 ```
 
 ___
 
 ```python
-delete_column_position(self, idx, deselect_all = False)
+delete_column_position(idx, deselect_all = False)
 ```
 
 ___
 
 ```python
-insert_column_position(self, idx = "end", width = None, deselect_all = False, redraw = False)
+insert_column_position(idx = "end", width = None, deselect_all = False, redraw = False)
 ```
 
 ___
 
 ```python
-insert_column_positions(self, idx = "end", widths = None, deselect_all = False, redraw = False)
+insert_column_positions(idx = "end", widths = None, deselect_all = False, redraw = False)
 ```
 
 ___
 
 ```python
-move_column_position(self, column, moveto)
+move_column_position(column, moveto)
 ```
 
 ## Retrieving Selected Cells
@@ -492,50 +492,50 @@ If both arguments are `None` then table will reset to default tkinter canvas dim
 ## Cell Text Editor
 
 ```python
-create_text_editor(self, row = 0, column = 0, text = None, state = "normal", see = True, set_data_ref_on_destroy = False,
+create_text_editor(row = 0, column = 0, text = None, state = "normal", see = True, set_data_ref_on_destroy = False,
                            binding = None)
 ```
 
 ___
 
 ```python
-set_text_editor_value(self, text = "", r = None, c = None)
+set_text_editor_value(text = "", r = None, c = None)
 ```
 
 ___
 
 ```python
-bind_text_editor_set(self, func, row, column)
+bind_text_editor_set(func, row, column)
 ```
 
 ___
 
 ```python
-get_text_editor_value(self, destroy_tup = None, r = None, c = None, set_data_ref_on_destroy = True, event = None, destroy = True, move_down = True, redraw = True, recreate = True)
+get_text_editor_value(destroy_tup = None, r = None, c = None, set_data_ref_on_destroy = True, event = None, destroy = True, move_down = True, redraw = True, recreate = True)
 ```
 
 ___
 
 ```python
-destroy_text_editor(self, event = None)
+destroy_text_editor(event = None)
 ```
 
 ___
 
 ```python
-get_text_editor_widget(self, event = None)
+get_text_editor_widget(event = None)
 ```
 
 ___
 
 ```python
-bind_key_text_editor(self, key, function)
+bind_key_text_editor(key, function)
 ```
 
 ___
 
 ```python
-unbind_key_text_editor(self, key)
+unbind_key_text_editor(key)
 ```
 
 ## Dropdown Boxes
