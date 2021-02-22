@@ -961,8 +961,7 @@ class MainTable(tk.Canvas):
                     pass
                 self.del_row_positions(undo_storage[1]['sheet_row_num'],
                                        undo_storage[1]['numrows'],
-                                       deselect_all = False,
-                                       preserve_other_selections = False)
+                                       deselect_all = False)
                 for r in range(undo_storage[1]['sheet_row_num'],
                                undo_storage[1]['sheet_row_num'] + undo_storage[1]['numrows']):
                     if r in self.row_options:
@@ -992,8 +991,7 @@ class MainTable(tk.Canvas):
                     pass
                 self.del_col_positions(undo_storage[1]['sheet_col_num'],
                                        undo_storage[1]['numcols'],
-                                       deselect_all = False,
-                                       preserve_other_selections = False)
+                                       deselect_all = False)
                 for c in range(undo_storage[1]['sheet_col_num'],
                                undo_storage[1]['sheet_col_num'] + undo_storage[1]['numcols']):
                     if c in self.col_options:
@@ -2758,7 +2756,7 @@ class MainTable(tk.Canvas):
         else:
             self.col_positions = list(accumulate(chain([0], (colpos for c in range(len(self.displayed_columns))))))
 
-    def del_col_position(self, idx, deselect_all = False, preserve_other_selections = False):
+    def del_col_position(self, idx, deselect_all = False):
         if deselect_all:
             self.deselect("all", redraw = False)
         if idx == "end" or len(self.col_positions) <= idx + 1:
@@ -2769,7 +2767,7 @@ class MainTable(tk.Canvas):
             del self.col_positions[idx]
             self.col_positions[idx:] = [e - w for e in islice(self.col_positions, idx, len(self.col_positions))]
 
-    def del_col_positions(self, idx, num = 1, deselect_all = False, preserve_other_selections = False):
+    def del_col_positions(self, idx, num = 1, deselect_all = False):
         if deselect_all:
             self.deselect("all", redraw = False)
         if idx == "end" or len(self.col_positions) <= idx + 1:
@@ -2779,7 +2777,7 @@ class MainTable(tk.Canvas):
             cws[idx:idx + num] = []
             self.col_positions = list(accumulate(chain([0], (width for width in cws))))
 
-    def insert_col_position(self, idx = "end", width = None, deselect_all = False, preserve_other_selections = False):
+    def insert_col_position(self, idx = "end", width = None, deselect_all = False):
         if deselect_all:
             self.deselect("all", redraw = False)
         if width is None:
@@ -2794,7 +2792,7 @@ class MainTable(tk.Canvas):
             idx += 1
             self.col_positions[idx:] = [e + w for e in islice(self.col_positions, idx, len(self.col_positions))]
 
-    def insert_col_positions(self, idx = "end", widths = None, deselect_all = False, preserve_other_selections = False):
+    def insert_col_positions(self, idx = "end", widths = None, deselect_all = False):
         if deselect_all:
             self.deselect("all", redraw = False)
         if widths is None:
@@ -2845,8 +2843,7 @@ class MainTable(tk.Canvas):
             self.displayed_columns.extend(list(range(disp_next, disp_next + numcols)))
         self.insert_col_positions(idx = displayed_ins_col,
                                   widths = numcols,
-                                  deselect_all = True,
-                                  preserve_other_selections = False)
+                                  deselect_all = True)
         self.cell_options = {(rn, cn if cn < displayed_ins_col else cn + numcols): t2 for (rn, cn), t2 in self.cell_options.items()}
         self.col_options = {cn if cn < displayed_ins_col else cn + numcols: t for cn, t in self.col_options.items()}
         self.CH.cell_options = {cn if cn < displayed_ins_col else cn + numcols: t for cn, t in self.CH.cell_options.items()}
@@ -2859,8 +2856,7 @@ class MainTable(tk.Canvas):
         if self.row_positions == [0] and not self.data_ref:
             self.insert_row_position(idx = "end",
                                      height = int(self.min_rh),
-                                     deselect_all = False,
-                                     preserve_other_selections = False)
+                                     deselect_all = False)
             self.data_ref.append(list(repeat("", numcols)))
         else:
             for rn in range(len(self.data_ref)):
@@ -2891,8 +2887,7 @@ class MainTable(tk.Canvas):
             self.extra_begin_insert_rows_rc_func(("begin_insert_rows", stidx, posidx, numrows))
         self.insert_row_positions(idx = posidx,
                                   heights = numrows,
-                                  deselect_all = True,
-                                  preserve_other_selections = False)
+                                  deselect_all = True)
         self.cell_options = {(rn if rn < posidx else rn + numrows, cn): t2 for (rn, cn), t2 in self.cell_options.items()}
         self.row_options = {rn if rn < posidx else rn + numrows: t for rn, t in self.row_options.items()}
         self.RI.cell_options = {rn if rn < posidx else rn + numrows: t for rn, t in self.RI.cell_options.items()}
@@ -2905,8 +2900,7 @@ class MainTable(tk.Canvas):
         if self.col_positions == [0] and not self.data_ref:
             self.insert_col_position(idx = "end",
                                      width = None,
-                                     deselect_all = False,
-                                     preserve_other_selections = False)
+                                     deselect_all = False)
             self.data_ref.append([""])
         else:
             self.data_ref[stidx:stidx] = [list(repeat("", self.total_data_cols())) for rn in range(numrows)]
@@ -2998,8 +2992,7 @@ class MainTable(tk.Canvas):
                 del self.cell_options[(r, c)]
             for c in reversed(seld_cols):
                 self.del_col_position(c,
-                                      deselect_all = False,
-                                      preserve_other_selections = False)
+                                      deselect_all = False)
                 if c in self.col_options:
                     del self.col_options[c]
                 if c in self.CH.cell_options:
@@ -3057,8 +3050,7 @@ class MainTable(tk.Canvas):
                 del self.cell_options[(r, c)]
             for r in reversed(seld_rows):
                 self.del_row_position(r,
-                                      deselect_all = False,
-                                      preserve_other_selections = False)
+                                      deselect_all = False)
                 if r in self.row_options:
                     del self.row_options[r]
                 if r in self.RI.cell_options:
@@ -3079,8 +3071,7 @@ class MainTable(tk.Canvas):
         rowpos = self.default_rh[1]
         self.row_positions = list(accumulate(chain([0], (rowpos for r in range(self.total_data_rows())))))
 
-    def del_row_position(self, idx, deselect_all = False, preserve_other_selections = False):
-        # WORK NEEDED FOR PRESERVE SELECTIONS ?
+    def del_row_position(self, idx, deselect_all = False):
         if deselect_all:
             self.deselect("all", redraw = False)
         if idx == "end" or len(self.row_positions) <= idx + 1:
@@ -3091,8 +3082,7 @@ class MainTable(tk.Canvas):
             del self.row_positions[idx]
             self.row_positions[idx:] = [e - w for e in islice(self.row_positions, idx, len(self.row_positions))]
 
-    def del_row_positions(self, idx, numrows = 1, deselect_all = False, preserve_other_selections = False):
-        # WORK NEEDED FOR PRESERVE SELECTIONS ?
+    def del_row_positions(self, idx, numrows = 1, deselect_all = False):
         if deselect_all:
             self.deselect("all", redraw = False)
         if idx == "end" or len(self.row_positions) <= idx + 1:
@@ -3102,8 +3092,7 @@ class MainTable(tk.Canvas):
             rhs[idx:idx + numrows] = []
             self.row_positions = list(accumulate(chain([0], (height for height in rhs))))
 
-    def insert_row_position(self, idx, height = None, deselect_all = False, preserve_other_selections = False):
-        # WORK NEEDED FOR PRESERVE SELECTIONS ?
+    def insert_row_position(self, idx, height = None, deselect_all = False):
         if deselect_all:
             self.deselect("all", redraw = False)
         if height is None:
@@ -3118,7 +3107,7 @@ class MainTable(tk.Canvas):
             idx += 1
             self.row_positions[idx:] = [e + h for e in islice(self.row_positions, idx, len(self.row_positions))]
 
-    def insert_row_positions(self, idx = "end", heights = None, deselect_all = False, preserve_other_selections = False):
+    def insert_row_positions(self, idx = "end", heights = None, deselect_all = False):
         if deselect_all:
             self.deselect("all", redraw = False)
         if heights is None:

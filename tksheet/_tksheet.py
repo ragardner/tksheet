@@ -664,9 +664,6 @@ class Sheet(tk.Frame):
         if redraw:
             self.refresh()
 
-    def set_all_row_heights(self, height = None, only_set_if_too_small = False, recreate = True):
-        self.RI.set_height_of_all_rows(height = height, only_set_if_too_small = only_set_if_too_small, recreate = recreate)
-
     def column_width(self, column = None, width = None, only_set_if_too_small = False, redraw = True):
         if column == "all":
             if width == "default":
@@ -840,16 +837,14 @@ class Sheet(tk.Frame):
     def undo(self, event = None):
         self.MT.ctrl_z()
 
-    def delete_row_position(self, idx, deselect_all = False, preserve_other_selections = False):
+    def delete_row_position(self, idx, deselect_all = False):
         self.MT.del_row_position(idx = idx,
-                                 deselect_all = deselect_all,
-                                 preserve_other_selections = preserve_other_selections)
+                                 deselect_all = deselect_all)
 
-    def delete_row(self, idx = 0, deselect_all = False, preserve_other_selections = False):
+    def delete_row(self, idx = 0, deselect_all = False):
         del self.MT.data_ref[idx]
         self.MT.del_row_position(idx = idx,
-                                 deselect_all = deselect_all,
-                                 preserve_other_selections = preserve_other_selections)
+                                 deselect_all = deselect_all)
         self.MT.cell_options = {t1: t2 for t1, t2 in self.MT.cell_options.items() if t1[0] != idx}
         if idx in self.MT.row_options:
             del self.MT.row_options[idx]
@@ -859,19 +854,17 @@ class Sheet(tk.Frame):
         self.MT.row_options = {rn if rn < idx else rn - 1: t for rn, t in self.MT.row_options.items()}
         self.RI.cell_options = {rn if rn < idx else rn - 1: t for rn, t in self.RI.cell_options.items()}
 
-    def insert_row_position(self, idx = "end", height = None, deselect_all = False, preserve_other_selections = False, redraw = False):
+    def insert_row_position(self, idx = "end", height = None, deselect_all = False, redraw = False):
         self.MT.insert_row_position(idx = idx,
                                     height = height,
-                                    deselect_all = deselect_all,
-                                    preserve_other_selections = preserve_other_selections)
+                                    deselect_all = deselect_all)
         if redraw:
             self.redraw()
 
-    def insert_row_positions(self, idx = "end", heights = None, deselect_all = False, preserve_other_selections = False, redraw = False):
+    def insert_row_positions(self, idx = "end", heights = None, deselect_all = False, redraw = False):
         self.MT.insert_row_positions(idx = idx,
                                      heights = heights,
-                                     deselect_all = deselect_all,
-                                     preserve_other_selections = preserve_other_selections)
+                                     deselect_all = deselect_all)
         if redraw:
             self.redraw()
 
@@ -956,17 +949,15 @@ class Sheet(tk.Frame):
             for (t10, t11), t2 in popped_cell.items():
                 self.MT.cell_options[(newrowsdct[t10], t11)] = t2
 
-    def delete_column_position(self, idx, deselect_all = False, preserve_other_selections = False):
+    def delete_column_position(self, idx, deselect_all = False):
         self.MT.del_col_position(idx,
-                                 deselect_all = deselect_all,
-                                 preserve_other_selections = preserve_other_selections)
+                                 deselect_all = deselect_all)
 
-    def delete_column(self, idx = 0, deselect_all = False, preserve_other_selections = False):
+    def delete_column(self, idx = 0, deselect_all = False):
         for rn in range(len(self.MT.data_ref)):
             del self.MT.data_ref[rn][idx] 
         self.MT.del_col_position(idx,
-                                 deselect_all = deselect_all,
-                                 preserve_other_selections = preserve_other_selections)
+                                 deselect_all = deselect_all)
         self.MT.cell_options = {t1: t2 for t1, t2 in self.MT.cell_options.items() if t1[1] != idx}
         if idx in self.MT.col_options:
             del self.MT.col_options[idx]
@@ -976,19 +967,17 @@ class Sheet(tk.Frame):
         self.MT.col_options = {cn if cn < idx else cn - 1: t for cn, t in self.MT.col_options.items()}
         self.CH.cell_options = {cn if cn < idx else cn - 1: t for cn, t in self.CH.cell_options.items()}
 
-    def insert_column_position(self, idx = "end", width = None, deselect_all = False, preserve_other_selections = False, redraw = False):
+    def insert_column_position(self, idx = "end", width = None, deselect_all = False, redraw = False):
         self.MT.insert_col_position(idx = idx,
                                     width = width,
-                                    deselect_all = deselect_all,
-                                    preserve_other_selections = preserve_other_selections)
+                                    deselect_all = deselect_all)
         if redraw:
             self.redraw()
 
-    def insert_column_positions(self, idx = "end", widths = None, deselect_all = False, preserve_other_selections = False, redraw = False):
+    def insert_column_positions(self, idx = "end", widths = None, deselect_all = False, redraw = False):
         self.MT.insert_col_positions(idx = idx,
                                      widths = widths,
-                                     deselect_all = deselect_all,
-                                     preserve_other_selections = preserve_other_selections)
+                                     deselect_all = deselect_all)
         if redraw:
             self.redraw()
 
@@ -1080,7 +1069,7 @@ class Sheet(tk.Frame):
             except:
                 pass
 
-    def get_xview(self):
+    def get_xview(self): #here
         return self.MT.xview()
 
     def get_yview(self):
@@ -1847,14 +1836,13 @@ class Sheet(tk.Frame):
         if redraw and self.after_redraw_id is None:
             self.after_redraw_id = self.after(self.after_redraw_time_ms, self.after_redraw)
 
-    def insert_column(self, values = None, idx = "end", width = None, deselect_all = False, preserve_other_selections = False, add_rows = True, equalize_data_row_lengths = True,
+    def insert_column(self, values = None, idx = "end", width = None, deselect_all = False, add_rows = True, equalize_data_row_lengths = True,
                       mod_column_positions = True,
                       redraw = False):
         if mod_column_positions:
             self.MT.insert_col_position(idx = idx,
                                         width = width,
-                                        deselect_all = deselect_all,
-                                        preserve_other_selections = preserve_other_selections)
+                                        deselect_all = deselect_all)
             if not self.MT.all_columns_displayed:
                 try:
                     disp_next = max(self.MT.displayed_columns) + 1
@@ -1904,14 +1892,13 @@ class Sheet(tk.Frame):
         if redraw and self.after_redraw_id is None:
             self.after_redraw_id = self.after(self.after_redraw_time_ms, self.after_redraw)
 
-    def insert_columns(self, columns = 1, idx = "end", widths = None, deselect_all = False, preserve_other_selections = False, add_rows = True, equalize_data_row_lengths = True,
+    def insert_columns(self, columns = 1, idx = "end", widths = None, deselect_all = False, add_rows = True, equalize_data_row_lengths = True,
                        mod_column_positions = True,
                        redraw = False):
         if mod_column_positions:
             self.MT.insert_col_positions(idx = idx,
                                          widths = columns if isinstance(columns, int) and widths is None else widths,
-                                         deselect_all = deselect_all,
-                                         preserve_other_selections = preserve_other_selections)
+                                         deselect_all = deselect_all)
         if equalize_data_row_lengths:
             old_total = self.MT.equalize_data_row_lengths()
         else:
@@ -1991,12 +1978,11 @@ class Sheet(tk.Frame):
         if redraw and self.after_redraw_id is None:
             self.after_redraw_id = self.after(self.after_redraw_time_ms, self.after_redraw)
 
-    def insert_row(self, values = None, idx = "end", height = None, deselect_all = False, preserve_other_selections = False, add_columns = True,
+    def insert_row(self, values = None, idx = "end", height = None, deselect_all = False, add_columns = True,
                    redraw = False):
         self.MT.insert_row_position(idx = idx,
                                     height = height,
-                                    deselect_all = deselect_all,
-                                    preserve_other_selections = preserve_other_selections)
+                                    deselect_all = deselect_all)
         total_cols = None
         if values is None:
             total_cols = self.MT.total_data_cols()
@@ -2027,7 +2013,7 @@ class Sheet(tk.Frame):
         if redraw and self.after_redraw_id is None:
             self.after_redraw_id = self.after(self.after_redraw_time_ms, self.after_redraw)
 
-    def insert_rows(self, rows = 1, idx = "end", heights = None, deselect_all = False, preserve_other_selections = False, add_columns = True,
+    def insert_rows(self, rows = 1, idx = "end", heights = None, deselect_all = False, add_columns = True,
                     redraw = False):
         total_cols = None
         if isinstance(rows, int):
@@ -2043,8 +2029,7 @@ class Sheet(tk.Frame):
             heights_ = heights
         self.MT.insert_row_positions(idx = idx,
                                      heights = heights_,
-                                     deselect_all = deselect_all,
-                                     preserve_other_selections = preserve_other_selections)
+                                     deselect_all = deselect_all)
         if add_columns:
             if total_cols is None:
                 total_cols = self.MT.total_data_cols()
