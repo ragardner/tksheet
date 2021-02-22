@@ -351,19 +351,19 @@ sheet_display_dimensions(total_rows = None, total_columns = None)
 
 ___
 
+Hide parts of the table or all of it
 ```python
 hide(canvas = "all")
 ```
-Hides parts of the table or all of it
  - `canvas` (`str`) options are `all`, `row_index`, `header`, `top_left`, `x_scrollbar`, `y_scrollbar`
 	- `all` hides the entire table and is the default.
 
 ___
 
+Show parts of the table or all of it
 ```python
 show(canvas = "all")
 ```
-Shows parts of the table or all of it
  - `canvas` (`str`) options are `all`, `row_index`, `header`, `top_left`, `x_scrollbar`, `y_scrollbar`
 	- `all` shows the entire table and is the default.
 
