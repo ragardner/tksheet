@@ -367,7 +367,9 @@ show(canvas = "all")
  - `canvas` (`str`) options are `all`, `row_index`, `header`, `top_left`, `x_scrollbar`, `y_scrollbar`
 	- `all` shows the entire table and is the default.
 
-### Table height and width
+___
+
+Modify widget height and width in pixels
 ```python
 height_and_width(height = None, width = None)
 ```
