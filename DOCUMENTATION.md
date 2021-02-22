@@ -163,19 +163,43 @@ You can change these settings after initialization using the `set_options()` fun
 ## Modifying Table Data
 
 ```python
-delete_row(idx = 0, deselect_all = False, preserve_other_selections = False)
+delete_row(idx = 0, deselect_all = False)
 ```
+
+___
 
 ```python
 total_rows(number = None, mod_positions = True, mod_data = True)
 ```
 
+___
+
 ```python
 total_columns(number = None, mod_positions = True, mod_data = True)
 ```
 
+___
+
 ```python
 set_sheet_data_and_display_dimensions(total_rows = None, total_columns = None)
+```
+
+___
+
+```python
+move_row(self, row, moveto)
+```
+
+___
+
+```python
+delete_column(self, idx = 0, deselect_all = False)
+```
+
+___
+
+```python
+move_column(self, column, moveto)
 ```
 
 ## Retrieving Table Data
@@ -187,33 +211,49 @@ set_sheet_data_and_display_dimensions(total_rows = None, total_columns = None)
 enable_bindings(bindings = "all")
 ```
 
+___
+
 ```python
 disable_bindings(bindings = "all")
 ```
+
+___
 
 ```python
 basic_bindings(enable = False)
 ```
 
+___
+
 ```python
 edit_bindings(enable = False)
 ```
+
+___
 
 ```python
 cell_edit_binding(enable = False)
 ```
 
+___
+
 ```python
 extra_bindings(bindings, func = "None")
 ```
+
+___
 
 ```python
 bind(binding, func)
 ```
 
+___
+
 ```python
 unbind(binding)
 ```
+
+___
 
 ```python
 cut(event = None)
@@ -230,9 +270,13 @@ undo(event = None)
 identify_region(event)
 ```
 
+___
+
 ```python
 identify_row(event, exclude_index = False, allow_end = True)
 ```
+
+___
 
 ```python
 identify_column(event, exclude_header = False, allow_end = True)
@@ -255,82 +299,149 @@ identify_column(event, exclude_header = False, allow_end = True)
 get_example_canvas_column_widths(total_cols = None)
 ```
 
+___
+
 ```python
 get_example_canvas_row_heights(total_rows = None)
 ```
+
+___
 
 ```python
 get_column_widths(canvas_positions = False)
 ```
 
+___
+
 ```python
 get_row_heights(canvas_positions = False)
 ```
+
+___
 
 ```python
 set_all_cell_sizes_to_text(redraw = True)
 ```
 
+___
+
 ```python
 set_all_column_widths(width = None, only_set_if_too_small = False, redraw = True, recreate_selection_boxes = True)
 ```
+
+___
 
 ```python
 set_all_row_heights(height = None, only_set_if_too_small = False, redraw = True, recreate_selection_boxes = True)
 ```
 
+___
+
 ```python
 column_width(column = None, width = None, only_set_if_too_small = False, redraw = True)
 ```
+
+___
 
 ```python
 set_column_widths(column_widths = None, canvas_positions = False, reset = False, verify = False)
 ```
 
+___
+
 ```python
 set_width_of_index_to_text(recreate = True)
 ```
+
+___
 
 ```python
 row_height(row = None, height = None, only_set_if_too_small = False, redraw = True)
 ```
 
+___
+
 ```python
 set_row_heights(row_heights = None, canvas_positions = False, reset = False, verify = False)
 ```
+
+___
 
 ```python
 verify_row_heights(row_heights, canvas_positions = False)
 ```
 
+___
+
 ```python
 verify_column_widths(column_widths, canvas_positions = False)
 ```
+
+___
 
 ```python
 default_row_height(height = None)
 ```
 
+___
+
 ```python
 default_header_height(height = None)
 ```
 
-```python
-delete_row_position(idx, deselect_all = False, preserve_other_selections = False)
-```
+___
 
 ```python
-insert_row_position(idx = "end", height = None, deselect_all = False, preserve_other_selections = False, redraw = False)
+delete_row_position(idx, deselect_all = False)
 ```
 
+___
+
 ```python
-insert_row_positions(idx = "end", heights = None, deselect_all = False, preserve_other_selections = False, redraw = False)
+insert_row_position(idx = "end", height = None, deselect_all = False, redraw = False)
 ```
+
+___
+
+```python
+insert_row_positions(idx = "end", heights = None, deselect_all = False, redraw = False)
+```
+
+___
 
 ```python
 sheet_display_dimensions(total_rows = None, total_columns = None)
 ```
 
+___
+
+```python
+move_row_position(self, row, moveto)
+```
+
+___
+
+```python
+delete_column_position(self, idx, deselect_all = False)
+```
+
+___
+
+```python
+insert_column_position(self, idx = "end", width = None, deselect_all = False, redraw = False)
+```
+
+___
+
+```python
+insert_column_positions(self, idx = "end", widths = None, deselect_all = False, redraw = False)
+```
+
+___
+
+```python
+move_column_position(self, column, moveto)
+```
 
 ## Retrieving Selected Cells
 
@@ -380,6 +491,52 @@ If both arguments are `None` then table will reset to default tkinter canvas dim
 
 ## Cell Text Editor
 
+```python
+create_text_editor(self, row = 0, column = 0, text = None, state = "normal", see = True, set_data_ref_on_destroy = False,
+                           binding = None)
+```
+
+___
+
+```python
+set_text_editor_value(self, text = "", r = None, c = None)
+```
+
+___
+
+```python
+bind_text_editor_set(self, func, row, column)
+```
+
+___
+
+```python
+get_text_editor_value(self, destroy_tup = None, r = None, c = None, set_data_ref_on_destroy = True, event = None, destroy = True, move_down = True, redraw = True, recreate = True)
+```
+
+___
+
+```python
+destroy_text_editor(self, event = None)
+```
+
+___
+
+```python
+get_text_editor_widget(self, event = None)
+```
+
+___
+
+```python
+bind_key_text_editor(self, key, function)
+```
+
+___
+
+```python
+unbind_key_text_editor(self, key)
+```
 
 ## Dropdown Boxes
 
@@ -398,21 +555,31 @@ create_dropdown(r = 0,
                 recreate_selection_boxes = True)
 ```
 
+___
+
 ```python
 get_dropdown_value(current = False, destroy = True, set_cell_on_select = True, redraw = True, recreate = True)
 ```
+
+___
 
 ```python
 delete_dropdown(r = 0, c = 0)
 ```
 
+___
+
 ```python
 get_dropdowns()
 ```
 
+___
+
 ```python
 refresh_dropdowns(dropdowns = [])
 ```
+
+___
 
 ```python
 set_all_dropdown_values_to_sheet()
