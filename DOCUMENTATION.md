@@ -445,9 +445,154 @@ move_column_position(column, moveto)
 
 ## Retrieving Selected Cells
 
+```python
+get_currently_selected(get_coords = False, return_nones_if_not = False)
+```
+
+___
+
+```python
+get_selected_rows(get_cells = False, get_cells_as_rows = False, return_tuple = False)
+```
+
+___
+
+```python
+get_selected_columns(get_cells = False, get_cells_as_columns = False, return_tuple = False)
+```
+
+___
+
+```python
+get_selected_cells(get_rows = False, get_columns = False, sort_by_row = False, sort_by_column = False)
+```
+
+___
+
+```python
+get_all_selection_boxes()
+```
+
+___
+
+```python
+get_all_selection_boxes_with_types()
+```
+
+___
+
+```python
+cell_selected(r, c)
+```
+
+___
+
+```python
+row_selected(r)
+```
+
+___
+
+```python
+column_selected(c)
+```
+
+___
+
+```python
+anything_selected(exclude_columns = False, exclude_rows = False, exclude_cells = False)
+```
+
+___
+
+```python
+all_selected()
+```
+
 
 ## Modifying Selected Cells
 
+```python
+set_currently_selected(current_tuple_0 = 0, current_tuple_1 = 0, selection_binding = True)
+```
+
+___
+
+```python
+select_row(row, redraw = True)
+```
+
+___
+
+```python
+select_column(column, redraw = True)
+```
+
+___
+
+```python
+select_cell(row, column, redraw = True)
+```
+
+___
+
+```python
+move_down()
+```
+
+___
+
+```python
+add_cell_selection(row, column, redraw = True, run_binding_func = True, set_as_current = True)
+```
+
+___
+
+```python
+add_row_selection(row, redraw = True, run_binding_func = True, set_as_current = True)
+```
+
+___
+
+```python
+add_column_selection(column, redraw = True, run_binding_func = True, set_as_current = True)
+```
+
+___
+
+```python
+toggle_select_cell(row, column, add_selection = True, redraw = True, run_binding_func = True, set_as_current = True)
+```
+
+___
+
+```python
+toggle_select_row(row, add_selection = True, redraw = True, run_binding_func = True, set_as_current = True)
+```
+
+___
+
+```python
+toggle_select_column(column, add_selection = True, redraw = True, run_binding_func = True, set_as_current = True)
+```
+
+___
+
+```python
+create_selection_box(r1, c1, r2, c2, type_ = "cells")
+```
+
+___
+
+```python
+recreate_all_selection_boxes()
+```
+
+___
+
+```python
+deselect(row = None, column = None, cell = None, redraw = True)
+```
 
 ## Modifying and Retrieving Scroll Positions
 
@@ -485,6 +630,12 @@ ___
 see(row = 0, column = 0, keep_yscroll = False, keep_xscroll = False, bottom_right_corner = False, check_cell_visibility = True)
 ```
 
+___
+
+```python
+move_down()
+```
+
 ## Setting Readonly Cells
 
 
@@ -492,8 +643,6 @@ see(row = 0, column = 0, keep_yscroll = False, keep_xscroll = False, bottom_righ
 
 
 ## Table Elements, Height and Width
-
-___
 
 Hide parts of the table or all of it
 ```python
