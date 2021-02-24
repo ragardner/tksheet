@@ -2292,7 +2292,7 @@ class MainTable(tk.Canvas):
                         self.create_selected(rowsel, colsel, min_r + 1, min_c + 1)
                 else:
                     self.select_cell(rowsel, colsel, redraw = False)
-                self.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True, redraw_table = True)#here
+                self.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True, redraw_table = True)
                 if self.shift_selection_binding_func is not None:
                     self.shift_selection_binding_func(("shift_select_cells", ) + tuple(int(e) for e in self.gettags(self.find_withtag("CellSelectFill"))[1].split("_") if e))
         
@@ -2352,7 +2352,7 @@ class MainTable(tk.Canvas):
                     except:
                         pass
             self.check_views()
-            self.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True, redraw_table = True)#here
+            self.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True, redraw_table = True)
         elif self.RI.width_resizing_enabled and self.RI.rsz_w is not None and self.RI.currently_resizing_width:
             self.RI.delete_resize_lines()
             self.delete_resize_lines()
@@ -2872,7 +2872,7 @@ class MainTable(tk.Canvas):
         if self.extra_end_insert_cols_rc_func is not None:
             self.extra_end_insert_cols_rc_func(("end_insert_columns", data_ins_col, displayed_ins_col, numcols))
 
-    def insert_row_rc(self, event = None): #subset of rows
+    def insert_row_rc(self, event = None):
         if self.anything_selected(exclude_columns = True, exclude_cells = True):
             selrows = self.get_selected_rows()
             numrows = len(selrows)

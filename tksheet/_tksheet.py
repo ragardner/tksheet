@@ -1069,7 +1069,7 @@ class Sheet(tk.Frame):
             except:
                 pass
 
-    def get_xview(self): #here
+    def get_xview(self):
         return self.MT.xview()
 
     def get_yview(self):
@@ -1078,7 +1078,7 @@ class Sheet(tk.Frame):
     def set_xview(self, position, option = "moveto"):
         self.MT.set_xviews(option, position)
 
-    def set_yview(self,position, option = "moveto"):
+    def set_yview(self, position, option = "moveto"):
         self.MT.set_yviews(option, position)
 
     def set_view(self, x_args, y_args):
@@ -1087,7 +1087,7 @@ class Sheet(tk.Frame):
     def see(self, row = 0, column = 0, keep_yscroll = False, keep_xscroll = False, bottom_right_corner = False, check_cell_visibility = True):
         self.MT.see(row, column, keep_yscroll, keep_xscroll, bottom_right_corner, check_cell_visibility = check_cell_visibility)
 
-    def select_row(self, row, redraw = True):
+    def select_row(self, row, redraw = True): #here
         self.RI.select_row(row, redraw = redraw)
 
     def select_column(self, column, redraw = True):
