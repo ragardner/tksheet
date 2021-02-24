@@ -451,6 +451,39 @@ move_column_position(column, moveto)
 
 ## Modifying and Retrieving Scroll Positions
 
+```python
+get_xview()
+```
+
+___
+
+```python
+get_yview()
+```
+
+___
+
+```python
+set_xview(position, option = "moveto")
+```
+
+___
+
+```python
+set_yview(position, option = "moveto")
+```
+
+___
+
+```python
+set_view(x_args, y_args)
+```
+
+___
+
+```python
+see(row = 0, column = 0, keep_yscroll = False, keep_xscroll = False, bottom_right_corner = False, check_cell_visibility = True)
+```
 
 ## Setting Readonly Cells
 
