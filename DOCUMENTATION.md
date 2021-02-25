@@ -292,6 +292,68 @@ identify_column(event, exclude_header = False, allow_end = True)
 
 ## Text Font and Alignment
 
+```python
+font(self, newfont = None, reset_row_positions = True)
+```
+
+___
+
+```python
+header_font(self, newfont = None)
+```
+
+___
+
+```python
+align(self, align = None, redraw = True)
+```
+
+___
+
+```python
+header_align(self, align = None, redraw = True)
+```
+
+___
+
+```python
+row_index_align(self, align = None, redraw = True)
+```
+
+___
+
+Change the text alignment for **specific** rows.
+```python
+align_rows(self, rows = [], align = "global", align_index = False, redraw = True)
+```
+
+___
+
+Change the text alignment for **specific** columns.
+```python
+align_columns(self, columns = [], align = "global", align_header = False, redraw = True)
+```
+
+___
+
+Change the text alignment for **specific** cells inside the table.
+```python
+align_cells(self, row = 0, column = 0, cells = [], align = "global", redraw = True)
+```
+
+___
+
+Change the text alignment for **specific** cells inside the header.
+```python
+align_header(self, columns = [], align = "global", redraw = True)
+```
+
+___
+
+Change the text alignment for **specific** cells inside the index.
+```python
+align_index(self, rows = [], align = "global", redraw = True)
+```
 
 ## Row Heights and Column Widths
 
