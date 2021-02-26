@@ -187,7 +187,21 @@ set_cell_data(r, c, value = "", set_copy = True, redraw = False)
 ___
 
 ```python
-set_column_data(self, c, values = tuple(), add_rows = True, redraw = False)
+set_column_data(c, values = tuple(), add_rows = True, redraw = False)
+```
+
+___
+
+Set the header to something non-default (if new header is shorter than total columns then default headers e.g. letters will be used on the end.
+```python
+headers(newheaders = None, index = None, reset_col_positions = False, show_headers_if_not_sheet = True)
+```
+
+___
+
+Set the index to something non-default (if new index is shorter than total rows then default index e.g. numbers will be used on the end.
+```python
+row_index(newindex = None, index = None, reset_row_positions = False, show_index_if_not_sheet = True)
 ```
 
 ___
@@ -274,6 +288,13 @@ ___
 move_column(column, moveto)
 ```
 
+___
+
+Make all data rows the same length (same number of columns), goes by longest row. This will usually only affect the data variable, not visible columns.
+```python
+equalize_data_row_lengths()
+```
+
 ## Getting Table Data
 
 Get sheet data and, if required, header and index data.
@@ -300,6 +321,13 @@ ___
 
 ```python
 get_column_data(c, return_copy = True)
+```
+
+___
+
+Get number of rows in table data.
+```python
+get_total_rows()
 ```
 
 ## Bindings and Functionality
@@ -714,6 +742,18 @@ ___
 all_selected()
 ```
 
+___
+
+```python
+get_ctrl_x_c_boxes()
+```
+
+___
+
+```python
+get_selected_min_max()
+```
+ - returns `(min_y, min_x, max_y, max_x)` of any selections including rows/columns.
 
 ## Modifying Selected Cells
 
@@ -861,6 +901,16 @@ readonly_cells(row = 0, column = 0, cells = [], readonly = True, redraw = True)
 
 ## Hiding Columns
 
+Display only certain columns.
+```python
+display_columns(indexes = None,
+                enable = None,
+                reset_col_positions = True,
+                set_col_positions = True,
+                refresh = False,
+                redraw = False,
+                deselect_all = True)
+```
 
 ## Table Elements, Height and Width
 
@@ -1062,6 +1112,7 @@ set_options(enable_edit_cell_auto_resize = None,
 
 ___
 
+Get internal storage dictionary of highlights, readonly cells, dropdowns etc.
 ```python
 get_cell_options(canvas = "table")
 ```
@@ -1076,6 +1127,34 @@ ___
 
 ```python
 get_frame_x(x)
+```
+
+___
+
+Flash a dashed box of chosen dimensions.
+```python
+show_ctrl_outline(canvas = "table", start_cell = (0, 0), end_cell = (1, 1))
+```
+
+___
+
+Reset table undo storage.
+```python
+reset_undos()
+```
+
+___
+
+Refresh the table.
+```python
+redraw(redraw_header = True, redraw_row_index = True)
+```
+
+___
+
+Refresh the table.
+```python
+refresh(redraw_header = True, redraw_row_index = True)
 ```
 
 ## Example: Loading Data from Excel
