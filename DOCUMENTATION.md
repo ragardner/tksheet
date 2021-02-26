@@ -163,6 +163,77 @@ You can change these settings after initialization using the `set_options()` fun
 
 ## Modifying Table Data
 
+Set sheet data, overwrites any existing data.
+```python
+set_sheet_data(data = [[]],
+               reset_col_positions = True,
+               reset_row_positions = True,
+               redraw = True,
+               verify = True,
+               reset_highlights = False)
+```
+ - `data` (`list`) has to be a list of lists.
+ - `reset_col_positions` and `reset_row_positions` (`bool`) when `True` will reset column widths and row heights.
+ - `redraw` (`bool`) refreses the table after setting new data.
+ - `verify` (`bool`) goes through `data` and checks if it is a list of lists, will raise error if not, set to `False` if you don't need to check.
+ - `reset_highlights` (`bool`) resets all table cell highlights.
+
+___
+
+```python
+set_cell_data(r, c, value = "", set_copy = True, redraw = False)
+```
+
+___
+
+```python
+set_column_data(self, c, values = tuple(), add_rows = True, redraw = False)
+```
+
+___
+
+```python
+insert_column(values = None, idx = "end", width = None, deselect_all = False, add_rows = True, equalize_data_row_lengths = True,
+              mod_column_positions = True,
+              redraw = False)
+```
+
+___
+
+```python
+insert_columns(columns = 1, idx = "end", widths = None, deselect_all = False, add_rows = True, equalize_data_row_lengths = True,
+               mod_column_positions = True,
+               redraw = False)
+```
+
+___
+
+```python
+set_row_data(r, values = tuple(), add_columns = True, redraw = False)
+```
+
+___
+
+```python
+insert_row(values = None, idx = "end", height = None, deselect_all = False, add_columns = True,
+           redraw = False)
+```
+
+___
+
+```python
+insert_rows(rows = 1, idx = "end", heights = None, deselect_all = False, add_columns = True,
+            redraw = False)
+```
+
+___
+
+```python
+sheet_data_dimensions(total_rows = None, total_columns = None)
+```
+
+___
+
 ```python
 delete_row(idx = 0, deselect_all = False)
 ```
@@ -205,6 +276,31 @@ move_column(column, moveto)
 
 ## Getting Table Data
 
+Get sheet data and, if required, header and index data.
+```python
+get_sheet_data(return_copy = False, get_header = False, get_index = False)
+```
+ - `return_copy` (`bool`) will copy all cells if `True`, also copies header and index if they are `True`.
+ - `get_header` (`bool`) will put the header as the first row if `True`.
+ - `get_index` (`bool`) will put index items as the first item in every row.
+
+___
+
+```python
+get_cell_data(r, c, return_copy = True)
+```
+
+___
+
+```python
+get_row_data(r, return_copy = True)
+```
+
+___
+
+```python
+get_column_data(c, return_copy = True)
+```
 
 ## Bindings and Functionality
 
@@ -287,6 +383,13 @@ identify_column(event, exclude_header = False, allow_end = True)
 
 ## Table Colors
 
+```python
+change_theme(theme = "light")
+```
+
+___
+
+Alternatively use the function `set_options()`, arguments can be found [here](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Table-Options-and-Other-Functions).
 
 ## Highlighting Cells
 
