@@ -290,7 +290,7 @@ move_column(column, moveto)
 
 ___
 
-Make all data rows the same length (same number of columns), goes by longest row. This will usually only affect the data variable, not visible columns.
+Make all data rows the same length (same number of columns), goes by longest row. This will only affect the data variable, not visible columns.
 ```python
 equalize_data_row_lengths()
 ```
