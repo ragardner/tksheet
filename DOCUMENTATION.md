@@ -4,22 +4,23 @@
 3. [Basic Initialization](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Basic-Initialization)
 4. [Initialization Options](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Initialization-Options)
 5. [Modifying Table Data](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Modifying-Table-Data)
-6. [Retrieving Table Data](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Retrieving-Table-Data)
+6. [Getting Table Data](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Getting-Table-Data)
 7. [Bindings and Functionality](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Bindings-and-Functionality)
 8. [Identifying Bound Event Mouse Position](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Identifying-Bound-Event-Mouse-Position)
 9. [Table Colors](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Table-Colors)
 10. [Highlighting Cells](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Highlighting-Cells)
 11. [Text Font and Alignment](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Text-Font-and-Alignment)
 12. [Row Heights and Column Widths](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Row-Heights-and-Column-Widths)
-13. [Retrieving Selected Cells](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Retrieving-Selected-Cells)
+13. [Getting Selected Cells](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Getting-Selected-Cells)
 14. [Modifying Selected Cells](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Modifying-Selected-Cells)
-15. [Modifying and Retrieving Scroll Positions](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Modifying-and-Retrieving-Scroll-Positions)
-16. [Setting Readonly Cells](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Setting-Readonly-Cells)
+15. [Modifying and Getting Scroll Positions](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Modifying-and-Getting-Scroll-Positions)
+16. [Readonly Cells](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Readonly-Cells)
 17. [Hiding Columns](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Hiding-Columns)
 18. [Hiding the Index and Header](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Hiding-the-Index-and-Header)
 19. [Cell Text Editor](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Cell-Text-Editor)
 20. [Dropdown Boxes](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Dropdown-Boxes)
-21. [Example: Loading Data from Excel](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Example:-Loading-Data-from-Excel)
+21. [Table Options and Other Functions](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Table-Options-and-Other-Functions)
+22. [Example: Loading Data from Excel](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Example:-Loading-Data-from-Excel)
 
 
 ## About tksheet
@@ -202,7 +203,7 @@ ___
 move_column(column, moveto)
 ```
 
-## Retrieving Table Data
+## Getting Table Data
 
 
 ## Bindings and Functionality
@@ -289,70 +290,109 @@ identify_column(event, exclude_header = False, allow_end = True)
 
 ## Highlighting Cells
 
+```python
+highlight_cells(row = 0, column = 0, cells = [], canvas = "table", bg = None, fg = None, redraw = False)
+```
+
+___
+
+```python
+dehighlight_cells(row = 0, column = 0, cells = [], canvas = "table", all_ = False, redraw = True)
+```
+
+___
+
+```python
+highlight_rows(rows = [], bg = None, fg = None, highlight_index = True, redraw = False)
+```
+
+___
+
+```python
+highlight_columns(columns = [], bg = None, fg = None, highlight_header = True, redraw = False)
+```
+
+___
+
+```python
+dehighlight_all()
+```
+
+___
+
+```python
+dehighlight_rows(rows = [], redraw = False)
+```
+
+___
+
+```python
+dehighlight_columns(columns = [], redraw = False)
+```
 
 ## Text Font and Alignment
 
 ```python
-font(self, newfont = None, reset_row_positions = True)
+font(newfont = None, reset_row_positions = True)
 ```
 
 ___
 
 ```python
-header_font(self, newfont = None)
+header_font(newfont = None)
 ```
 
 ___
 
 ```python
-align(self, align = None, redraw = True)
+align(align = None, redraw = True)
 ```
 
 ___
 
 ```python
-header_align(self, align = None, redraw = True)
+header_align(align = None, redraw = True)
 ```
 
 ___
 
 ```python
-row_index_align(self, align = None, redraw = True)
+row_index_align(align = None, redraw = True)
 ```
 
 ___
 
 Change the text alignment for **specific** rows.
 ```python
-align_rows(self, rows = [], align = "global", align_index = False, redraw = True)
+align_rows(rows = [], align = "global", align_index = False, redraw = True)
 ```
 
 ___
 
 Change the text alignment for **specific** columns.
 ```python
-align_columns(self, columns = [], align = "global", align_header = False, redraw = True)
+align_columns(columns = [], align = "global", align_header = False, redraw = True)
 ```
 
 ___
 
 Change the text alignment for **specific** cells inside the table.
 ```python
-align_cells(self, row = 0, column = 0, cells = [], align = "global", redraw = True)
+align_cells(row = 0, column = 0, cells = [], align = "global", redraw = True)
 ```
 
 ___
 
 Change the text alignment for **specific** cells inside the header.
 ```python
-align_header(self, columns = [], align = "global", redraw = True)
+align_header(columns = [], align = "global", redraw = True)
 ```
 
 ___
 
 Change the text alignment for **specific** cells inside the index.
 ```python
-align_index(self, rows = [], align = "global", redraw = True)
+align_index(rows = [], align = "global", redraw = True)
 ```
 
 ## Row Heights and Column Widths
@@ -505,7 +545,7 @@ ___
 move_column_position(column, moveto)
 ```
 
-## Retrieving Selected Cells
+## Getting Selected Cells
 
 ```python
 get_currently_selected(get_coords = False, return_nones_if_not = False)
@@ -656,7 +696,7 @@ ___
 deselect(row = None, column = None, cell = None, redraw = True)
 ```
 
-## Modifying and Retrieving Scroll Positions
+## Modifying and Getting Scroll Positions
 
 ```python
 get_xview()
@@ -698,8 +738,23 @@ ___
 move_down()
 ```
 
-## Setting Readonly Cells
+## Readonly Cells
 
+```python
+readonly_rows(rows = [], readonly = True, redraw = True)
+```
+
+___
+
+```python
+readonly_columns(columns = [], readonly = True, redraw = True)
+```
+
+___
+
+```python
+readonly_cells(row = 0, column = 0, cells = [], readonly = True, redraw = True)
+```
 
 ## Hiding Columns
 
@@ -829,6 +884,96 @@ ___
 set_all_dropdown_values_to_sheet()
 ```
 
+## Table Options and Other Functions
+
+```python
+set_options(enable_edit_cell_auto_resize = None,
+            page_up_down_select_row = None,
+            display_selected_fg_over_highlights = None,
+            empty_horizontal = None,
+            empty_vertical = None,
+            show_horizontal_grid = None,
+            show_vertical_grid = None,
+            top_left_fg_highlight = None,
+            auto_resize_default_row_index = None,
+            font = None,
+            default_header = None,
+            default_row_index = None,
+            header_font = None,
+            show_selected_cells_border = None,
+            theme = None,
+            max_colwidth = None,
+            max_row_height = None,
+            max_header_height = None,
+            max_row_width = None,
+            header_height = None,
+            row_height = None,
+            header_bg = None,
+            header_border_fg = None,
+            header_grid_fg = None,
+            header_fg = None,
+            header_selected_cells_bg = None,
+            header_selected_cells_fg = None,
+            header_hidden_columns_expander_bg = None,
+            index_bg = None,
+            index_border_fg = None,
+            index_grid_fg = None,
+            index_fg = None,
+            index_selected_cells_bg = None,
+            index_selected_cells_fg = None,
+            index_hidden_rows_expander_bg = None,
+            top_left_bg = None,
+            top_left_fg = None,
+            frame_bg = None,
+            table_bg = None,
+            table_grid_fg = None,
+            table_fg = None,
+            table_selected_cells_border_fg = None,
+            table_selected_cells_bg = None,
+            table_selected_cells_fg = None,
+            resizing_line_fg = None,
+            drag_and_drop_bg = None,
+            outline_thickness = None,
+            outline_color = None,
+            header_selected_columns_bg = None,
+            header_selected_columns_fg = None,
+            index_selected_rows_bg = None,
+            index_selected_rows_fg = None,
+            table_selected_rows_border_fg = None,
+            table_selected_rows_bg = None,
+            table_selected_rows_fg = None,
+            table_selected_columns_border_fg = None,
+            table_selected_columns_bg = None,
+            table_selected_columns_fg = None,
+            popup_menu_font = None,
+            popup_menu_fg = None,
+            popup_menu_bg = None,
+            popup_menu_highlight_bg = None,
+            popup_menu_highlight_fg = None,
+            row_drag_and_drop_perform = None,
+            column_drag_and_drop_perform = None,
+            measure_subset_index = None,
+            measure_subset_header = None,
+            redraw = True)
+```
+
+___
+
+```python
+get_cell_options(canvas = "table")
+```
+
+___
+
+```python
+get_frame_y(y)
+```
+
+___
+
+```python
+get_frame_x(x)
+```
 
 ## Example: Loading Data from Excel
 
