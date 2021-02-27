@@ -20,7 +20,7 @@
 19. [Cell Text Editor](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Cell-Text-Editor)
 20. [Dropdown Boxes](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Dropdown-Boxes)
 21. [Table Options and Other Functions](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Table-Options-and-Other-Functions)
-22. [Example: Loading Data from Excel](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Example:-Loading-Data-from-Excel)
+22. [Example Loading Data from Excel](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Example-Loading-Data-from-Excel)
 
 
 ## About tksheet
@@ -1157,7 +1157,7 @@ Refresh the table.
 refresh(redraw_header = True, redraw_row_index = True)
 ```
 
-## Example: Loading Data from Excel
+## Example Loading Data from Excel
 
 Using `pandas` library, requires additional libraries:
  - `pandas`
