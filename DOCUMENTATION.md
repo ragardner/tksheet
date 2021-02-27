@@ -1,39 +1,42 @@
 # Table of Contents
-1. [About tksheet](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#About-tksheet)
-2. [Installation and Requirements](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Installation-and-Requirements)
-3. [Basic Initialization](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Basic-Initialization)
-4. [Initialization Options](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Initialization-Options)
-5. [Modifying Table Data](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Modifying-Table-Data)
-6. [Getting Table Data](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Getting-Table-Data)
-7. [Bindings and Functionality](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Bindings-and-Functionality)
-8. [Identifying Bound Event Mouse Position](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Identifying-Bound-Event-Mouse-Position)
-9. [Table Colors](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Table-Colors)
-10. [Highlighting Cells](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Highlighting-Cells)
-11. [Text Font and Alignment](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Text-Font-and-Alignment)
-12. [Row Heights and Column Widths](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Row-Heights-and-Column-Widths)
-13. [Getting Selected Cells](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Getting-Selected-Cells)
-14. [Modifying Selected Cells](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Modifying-Selected-Cells)
-15. [Modifying and Getting Scroll Positions](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Modifying-and-Getting-Scroll-Positions)
-16. [Readonly Cells](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Readonly-Cells)
-17. [Hiding Columns](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Hiding-Columns)
-18. [Hiding the Index and Header](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Hiding-the-Index-and-Header)
-19. [Cell Text Editor](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Cell-Text-Editor)
-20. [Dropdown Boxes](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Dropdown-Boxes)
-21. [Table Options and Other Functions](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Table-Options-and-Other-Functions)
-22. [Example Loading Data from Excel](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Example-Loading-Data-from-Excel)
+1. [About tksheet](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#1-About-tksheet)
+2. [Installation and Requirements](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#2-Installation-and-Requirements)
+3. [Basic Initialization](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#3-Basic-Initialization)
+4. [Initialization Options](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#4-Initialization-Options)
+5. [Modifying Table Data](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#5-Modifying-Table-Data)
+6. [Getting Table Data](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#6-Getting-Table-Data)
+7. [Bindings and Functionality](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#7-Bindings-and-Functionality)
+8. [Identifying Bound Event Mouse Position](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#8-Identifying-Bound-Event-Mouse-Position)
+9. [Table Colors](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#9-Table-Colors)
+10. [Highlighting Cells](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#10-Highlighting-Cells)
+11. [Text Font and Alignment](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#11-Text-Font-and-Alignment)
+12. [Row Heights and Column Widths](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#12-Row-Heights-and-Column-Widths)
+13. [Getting Selected Cells](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#13-Getting-Selected-Cells)
+14. [Modifying Selected Cells](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#14-Modifying-Selected-Cells)
+15. [Modifying and Getting Scroll Positions](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#15-Modifying-and-Getting-Scroll-Positions)
+16. [Readonly Cells](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#16-Readonly-Cells)
+17. [Hiding Columns](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#17-Hiding-Columns)
+18. [Hiding the Index and Header](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#18-Hiding-the-Index-and-Header)
+19. [Cell Text Editor](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#19-Cell-Text-Editor)
+20. [Dropdown Boxes](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#20-Dropdown-Boxes)
+21. [Table Options and Other Functions](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#21-Table-Options-and-Other-Functions)
+22. [Example Loading Data from Excel](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#22-Example-Loading-Data-from-Excel)
+23. [Example Binding Right Click](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#23-Example-Binding-Right-Click)
 
 
-## About tksheet
+## 1 About tksheet
 `tksheet` is a Python tkinter table widget written in pure python. It is licensed under the [MIT license](https://github.com/ragardner/tksheet/blob/master/LICENSE.txt).
 
-## Installation and Requirements
+See the [tests](https://github.com/ragardner/tksheet/tree/master/tests) folder for more examples.
+
+## 2 Installation and Requirements
 `tksheet` is available through PyPi (Python package index) and can be installed by using Pip through the command line `pip install tksheet`
 
 Alternatively you can download the source code and (inside the tksheet directory) use the command line `python setup.py develop`
 
 `tksheet` requires a Python version of `3.6` or higher.
 
-## Basic Initialization
+## 3 Basic Initialization
 ```python
 from tksheet import Sheet
 import tkinter as tk
@@ -48,7 +51,7 @@ class demo(tk.Tk):
         self.frame.grid_columnconfigure(0, weight = 1)
         self.frame.grid_rowconfigure(0, weight = 1)
         self.sheet = Sheet(self.frame,
-                           data = [[f"Row {r}, Column {c}\nnewline1\nnewline2" for c in range(5)] for r in range(5)])
+                           data = [[f"Row {r}, Column {c}\nnewline1\nnewline2" for c in range(50)] for r in range(500)])
         self.sheet.enable_bindings()
         self.frame.grid(row = 0, column = 0, sticky = "nswe")
         self.sheet.grid(row = 0, column = 0, sticky = "nswe")
@@ -58,7 +61,7 @@ app = demo()
 app.mainloop()
 ```
 
-## Initialization Options
+## 4 Initialization Options
 This is a full list of all the start up arguments, the only required argument is the sheets parent, everything else has default arguments.
 
 ```python
@@ -161,7 +164,7 @@ top_left_fg_highlight                   = theme_light_blue['top_left_fg_highligh
 
 You can change these settings after initialization using the `set_options()` function.
 
-## Modifying Table Data
+## 5 Modifying Table Data
 
 Set sheet data, overwrites any existing data.
 ```python
@@ -295,7 +298,7 @@ Make all data rows the same length (same number of columns), goes by longest row
 equalize_data_row_lengths()
 ```
 
-## Getting Table Data
+## 6 Getting Table Data
 
 Get sheet data and, if required, header and index data.
 ```python
@@ -330,41 +333,88 @@ Get number of rows in table data.
 get_total_rows()
 ```
 
-## Bindings and Functionality
+## 7 Bindings and Functionality
 
+Enable table functionality and bindings.
 ```python
 enable_bindings(bindings = "all")
 ```
+ - `bindings` (`str`) options are (rc stands for right click):
+	- "all"
+	- "single_select"
+	- "toggle_select"
+	- "drag_select"
+	- "column_drag_and_drop"
+	- "row_drag_and_drop"
+	- "column_select"
+	- "row_select"
+	- "column_width_resize"
+	- "double_click_column_resize"
+	- "row_width_resize"
+	- "column_height_resize"
+	- "arrowkeys"
+	- "row_height_resize"
+	- "double_click_row_resize"
+	- "right_click_popup_menu"
+	- "rc_select"
+	- "rc_insert_column"
+	- "rc_delete_column"
+	- "rc_insert_row"
+	- "rc_delete_row"
+	- "hide_columns"
+	- "copy"
+	- "cut"
+	- "paste"
+	- "delete"
+	- "undo"
+	- "edit_cell"
 
 ___
 
+Disable table functionality and bindings (uses the same options as `enable_bindings()`.
 ```python
 disable_bindings(bindings = "all")
 ```
 
 ___
 
+Enable or disable mousewheel, left click etc.
 ```python
 basic_bindings(enable = False)
 ```
 
 ___
 
+Enable or disable cell edit functionality, including Undo.
 ```python
 edit_bindings(enable = False)
 ```
 
 ___
 
+Enable or disable the ability to edit a specific cell.
 ```python
 cell_edit_binding(enable = False)
 ```
 
 ___
 
+Bind various table functionality to your own functions.
 ```python
 extra_bindings(bindings, func = "None")
 ```
+ - `bindings` (`str`) options are:
+	- "begin_copy"
+	- "end_copy"
+	- "begin_cut"
+	- "end_cut"
+	- "begin_paste"
+	- "end_paste"
+	- "begin_undo"
+	- "end_undo"
+	- "begin_delete"
+	- 
+#here
 
 ___
 
@@ -389,7 +439,7 @@ undo(event = None)
 ```
 
 
-## Identifying Bound Event Mouse Position
+## 8 Identifying Bound Event Mouse Position
 
 ```python
 identify_region(event)
@@ -409,7 +459,7 @@ identify_column(event, exclude_header = False, allow_end = True)
 
 
 
-## Table Colors
+## 9 Table Colors
 
 ```python
 change_theme(theme = "light")
@@ -419,7 +469,7 @@ ___
 
 Alternatively use the function `set_options()`, arguments can be found [here](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Table-Options-and-Other-Functions).
 
-## Highlighting Cells
+## 10 Highlighting Cells
 
 ```python
 highlight_cells(row = 0, column = 0, cells = [], canvas = "table", bg = None, fg = None, redraw = False)
@@ -461,7 +511,7 @@ ___
 dehighlight_columns(columns = [], redraw = False)
 ```
 
-## Text Font and Alignment
+## 11 Text Font and Alignment
 
 ```python
 font(newfont = None, reset_row_positions = True)
@@ -526,7 +576,7 @@ Change the text alignment for **specific** cells inside the index.
 align_index(rows = [], align = "global", redraw = True)
 ```
 
-## Row Heights and Column Widths
+## 12 Row Heights and Column Widths
 
 ```python
 get_example_canvas_column_widths(total_cols = None)
@@ -676,7 +726,7 @@ ___
 move_column_position(column, moveto)
 ```
 
-## Getting Selected Cells
+## 13 Getting Selected Cells
 
 ```python
 get_currently_selected(get_coords = False, return_nones_if_not = False)
@@ -755,7 +805,7 @@ get_selected_min_max()
 ```
  - returns `(min_y, min_x, max_y, max_x)` of any selections including rows/columns.
 
-## Modifying Selected Cells
+## 14 Modifying Selected Cells
 
 ```python
 set_currently_selected(current_tuple_0 = 0, current_tuple_1 = 0, selection_binding = True)
@@ -839,7 +889,7 @@ ___
 deselect(row = None, column = None, cell = None, redraw = True)
 ```
 
-## Modifying and Getting Scroll Positions
+## 15 Modifying and Getting Scroll Positions
 
 ```python
 get_xview()
@@ -881,7 +931,7 @@ ___
 move_down()
 ```
 
-## Readonly Cells
+## 16 Readonly Cells
 
 ```python
 readonly_rows(rows = [], readonly = True, redraw = True)
@@ -899,7 +949,7 @@ ___
 readonly_cells(row = 0, column = 0, cells = [], readonly = True, redraw = True)
 ```
 
-## Hiding Columns
+## 17 Hiding Columns
 
 Display only certain columns.
 ```python
@@ -912,7 +962,7 @@ display_columns(indexes = None,
                 deselect_all = True)
 ```
 
-## Table Elements, Height and Width
+## 18 Table Elements, Height and Width
 
 Hide parts of the table or all of it
 ```python
@@ -941,7 +991,7 @@ height_and_width(height = None, width = None)
 If both arguments are `None` then table will reset to default tkinter canvas dimensions.
 
 
-## Cell Text Editor
+## 19 Cell Text Editor
 
 ```python
 create_text_editor(row = 0, column = 0, text = None, state = "normal", see = True, set_data_ref_on_destroy = False,
@@ -990,7 +1040,7 @@ ___
 unbind_key_text_editor(key)
 ```
 
-## Dropdown Boxes
+## 20 Dropdown Boxes
 
 ```python
 create_dropdown(r = 0,
@@ -1037,7 +1087,7 @@ ___
 set_all_dropdown_values_to_sheet()
 ```
 
-## Table Options and Other Functions
+## 21 Table Options and Other Functions
 
 ```python
 set_options(enable_edit_cell_auto_resize = None,
@@ -1157,7 +1207,7 @@ Refresh the table.
 refresh(redraw_header = True, redraw_row_index = True)
 ```
 
-## Example Loading Data from Excel
+## 22 Example Loading Data from Excel
 
 Using `pandas` library, requires additional libraries:
  - `pandas`
@@ -1190,15 +1240,34 @@ app = demo()
 app.mainloop()
 ```
 
-___
+## 23 Example Binding Right Click
 
-Using `openpyxl` library, requires additional libraries:
- - `openpyxl`
 ```python
+from tksheet import Sheet
+import tkinter as tk
 
+
+class demo(tk.Tk):
+    def __init__(self):
+        tk.Tk.__init__(self)
+        self.grid_columnconfigure(0, weight = 1)
+        self.grid_rowconfigure(0, weight = 1)
+        self.frame = tk.Frame(self)
+        self.frame.grid_columnconfigure(0, weight = 1)
+        self.frame.grid_rowconfigure(0, weight = 1)
+        self.sheet = Sheet(self.frame,
+                           data = [[f"Row {r}, Column {c}\nnewline1\nnewline2" for c in range(50)] for r in range(500)])
+        self.sheet.enable_bindings()
+        self.sheet.bind("<3>", self.rc)
+        self.frame.grid(row = 0, column = 0, sticky = "nswe")
+        self.sheet.grid(row = 0, column = 0, sticky = "nswe")
+
+    def rc(self, event):
+        print (event)
+
+app = demo()
+app.mainloop()
 ```
-
-
 
 
 
