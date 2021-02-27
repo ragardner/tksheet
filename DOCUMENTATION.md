@@ -467,7 +467,7 @@ change_theme(theme = "light")
 
 ___
 
-Alternatively use the function `set_options()`, arguments can be found [here](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#Table-Options-and-Other-Functions).
+Alternatively use the function `set_options()`, arguments can be found [here](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#21-Table-Options-and-Other-Functions).
 
 ## 10 Highlighting Cells
 
