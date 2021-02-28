@@ -494,8 +494,9 @@ identify_column(event, exclude_header = False, allow_end = True)
 ## 9 Table Colors
 
 ```python
-change_theme(theme = "light")
+change_theme(theme = "light blue")
 ```
+ - `theme` (`str`) options (themes) are `light blue`, `light green`, `dark blue` and `dark green`.
 
 ___
 
