@@ -413,8 +413,36 @@ extra_bindings(bindings, func = "None")
 	- "begin_undo"
 	- "end_undo"
 	- "begin_delete"
-	- 
-#here
+	- "end_delete"
+	- "begin_edit_cell"
+	- "end_edit_cell"
+	- "begin_row_index_drag_drop"
+	- "end_row_index_drag_drop"
+	- "begin_column_header_drag_drop"
+	- "end_column_header_drag_drop"
+	- "begin_delete_rows"
+	- "end_delete_rows"
+	- "begin_delete_columns"
+	- "end_delete_columns"
+	- "begin_insert_columns"
+	- "end_insert_columns"
+	- "begin_insert_rows"
+	- "end_insert_rows"
+	- "cell_select"
+	- "select_all"
+	- "row_select"
+	- "column_select"
+	- "drag_select_cells"
+	- "drag_select_rows"
+	- "drag_select_columns"
+	- "shift_cell_select"
+	- "shift_row_select"
+	- "shift_column_select"
+	- "deselect"
+	- "all_select_events"
+	- "bind_all"
+	- "unbind_all"
+ - `func` argument is the function you want to send the binding event to.
 
 ___
 
@@ -440,6 +468,10 @@ undo(event = None)
 
 
 ## 8 Identifying Bound Event Mouse Position
+
+The below functions require a mouse click event, for example you could bind right click, example [here](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#23-Example-Binding-Right-Click), and then identify where the user has clicked.
+
+___
 
 ```python
 identify_region(event)
@@ -470,6 +502,8 @@ ___
 Alternatively use the function `set_options()`, arguments can be found [here](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#21-Table-Options-and-Other-Functions).
 
 ## 10 Highlighting Cells
+
+ - `bg` and `fg` arguments use either a tkinter color or a hex `str` color.
 
 ```python
 highlight_cells(row = 0, column = 0, cells = [], canvas = "table", bg = None, fg = None, redraw = False)
@@ -513,6 +547,9 @@ dehighlight_columns(columns = [], redraw = False)
 
 ## 11 Text Font and Alignment
 
+ - `newfont` arguments require a three tuple e.g. `("Arial", 12, "normal")`
+ - `align` arguments (`str`) options are `w`, `e` or `center`.
+
 ```python
 font(newfont = None, reset_row_positions = True)
 ```
@@ -543,40 +580,46 @@ row_index_align(align = None, redraw = True)
 
 ___
 
-Change the text alignment for **specific** rows.
+Change the text alignment for **specific** rows, `"global"` resets to table setting.
 ```python
 align_rows(rows = [], align = "global", align_index = False, redraw = True)
 ```
 
 ___
 
-Change the text alignment for **specific** columns.
+Change the text alignment for **specific** columns, `"global"` resets to table setting.
 ```python
 align_columns(columns = [], align = "global", align_header = False, redraw = True)
 ```
 
 ___
 
-Change the text alignment for **specific** cells inside the table.
+Change the text alignment for **specific** cells inside the table, `"global"` resets to table setting.
 ```python
 align_cells(row = 0, column = 0, cells = [], align = "global", redraw = True)
 ```
 
 ___
 
-Change the text alignment for **specific** cells inside the header.
+Change the text alignment for **specific** cells inside the header, `"global"` resets to header setting.
 ```python
 align_header(columns = [], align = "global", redraw = True)
 ```
 
 ___
 
-Change the text alignment for **specific** cells inside the index.
+Change the text alignment for **specific** cells inside the index, `"global"` resets to index setting.
 ```python
 align_index(rows = [], align = "global", redraw = True)
 ```
 
 ## 12 Row Heights and Column Widths
+
+```python
+set_all_cell_sizes_to_text(redraw = True)
+```
+
+___
 
 ```python
 get_example_canvas_column_widths(total_cols = None)
@@ -598,12 +641,6 @@ ___
 
 ```python
 get_row_heights(canvas_positions = False)
-```
-
-___
-
-```python
-set_all_cell_sizes_to_text(redraw = True)
 ```
 
 ___
@@ -764,30 +801,35 @@ get_all_selection_boxes_with_types()
 
 ___
 
+Check if cell is selected, returns `bool`.
 ```python
 cell_selected(r, c)
 ```
 
 ___
 
+Check if row is selected, returns `bool`.
 ```python
 row_selected(r)
 ```
 
 ___
 
+Check if column is selected, returns `bool`.
 ```python
 column_selected(c)
 ```
 
 ___
 
+Check if any cells, rows or columns are selected, there are options for exclusions, returns `bool`.
 ```python
 anything_selected(exclude_columns = False, exclude_rows = False, exclude_cells = False)
 ```
 
 ___
 
+Check if user has entire table selected, returns `bool`.
 ```python
 all_selected()
 ```
