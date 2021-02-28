@@ -1,3 +1,7 @@
+### Version 5.0.14
+ - Remove some unnecessary code (`preserve_other_selections` arguments in some functions)
+ - Add documentation file, update readme file
+
 ### Version 5.0.13
  - Add extra variable to undo event
  - Edit cell no longer creates undo if cell is left unchanged
