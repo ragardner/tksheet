@@ -1087,7 +1087,7 @@ class Sheet(tk.Frame):
     def see(self, row = 0, column = 0, keep_yscroll = False, keep_xscroll = False, bottom_right_corner = False, check_cell_visibility = True):
         self.MT.see(row, column, keep_yscroll, keep_xscroll, bottom_right_corner, check_cell_visibility = check_cell_visibility)
 
-    def select_row(self, row, redraw = True): #here
+    def select_row(self, row, redraw = True):
         self.RI.select_row(row, redraw = redraw)
 
     def select_column(self, column, redraw = True):
@@ -2079,7 +2079,7 @@ class Sheet(tk.Frame):
         if refresh or redraw:
             self.refresh()
         return res
-                    
+
     def display_subset_of_columns(self, indexes = None, enable = None, reset_col_positions = True, set_col_positions = True, refresh = False, redraw = False, deselect_all = True):
         return self.displayed_columns(indexes = indexes, enable = enable, reset_col_positions = reset_col_positions, set_col_positions = set_col_positions, refresh = refresh, redraw = redraw, deselect_all = deselect_all)
 
