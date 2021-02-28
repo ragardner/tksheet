@@ -1692,7 +1692,7 @@ class Sheet(tk.Frame):
         if redraw:
             self.refresh()
 
-    def change_theme(self, theme = "light"):
+    def change_theme(self, theme = "light blue"):
         if theme == "light blue":
             self.MT.display_selected_fg_over_highlights = False
             self.set_options(**theme_light_blue,
