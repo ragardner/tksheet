@@ -8,7 +8,7 @@ pip install tksheet
 ```
 
 ### Help
- - [Documentation](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md) (unfinished)
+ - [Documentation](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md)
  - [Basic demonstration](https://github.com/ragardner/tksheet#demonstration-of-setup-and-various-functions)
  - [Test file / demonstration](https://github.com/ragardner/tksheet/blob/master/tests/test_tksheet.py)
  - [Version release notes](https://github.com/ragardner/tksheet/blob/master/RELEASE_NOTES.md)
