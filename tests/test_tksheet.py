@@ -27,7 +27,7 @@ class demo(tk.Tk):
                            #align = "e",
                            #header_align = "w",
                             #row_index_align = "w",
-                            data = [[f"Row {r}, Column {c}\nnewline1\nnewline2" for c in range(50)] for r in range(1000)], #to set sheet data at startup
+                            #data = [[f"Row {r}, Column {c}\nnewline1\nnewline2" for c in range(5)] for r in range(5)], #to set sheet data at startup
                             #headers = [f"Column {c}\nnewline1\nnewline2" for c in range(30)],
                             #row_index = [f"Row {r}\nnewline1\nnewline2" for r in range(2000)],
                             #set_all_heights_and_widths = True, #to fit all cell sizes to text at start up
@@ -35,8 +35,8 @@ class demo(tk.Tk):
                             #headers = [f"Column {c}\nnewline1\nnewline2" for c in range(30)],
                            #theme = "light green",
                             #row_index = 0, #to set row_index as first column at startup
-                            #total_rows = 2000, #if you want to set empty sheet dimensions at startup
-                            #total_columns = 30, #if you want to set empty sheet dimensions at startup
+                            total_rows = 5, #if you want to set empty sheet dimensions at startup
+                            total_columns = 5, #if you want to set empty sheet dimensions at startup
                             height = 500, #height and width arguments are optional
                             width = 1200 #For full startup arguments see DOCUMENTATION.md
                             )
@@ -86,15 +86,15 @@ class demo(tk.Tk):
 
         #self.sheet.display_subset_of_columns(indexes = [0, 1, 2, 3, 4, 5], enable = True)
         #self.sheet.display_columns(enable = False)
-        #self.sheet.insert_column(idx = 0)
+        #self.sheet.insert_column(idx = 2)
         #self.sheet.insert_columns(columns = 5, idx = 10, mod_column_positions = False)
 
         # __________ HIGHLIGHT / DEHIGHLIGHT CELLS __________
         
-        self.sheet.highlight_cells(row = 5, column = 5, fg = "red")
-        self.sheet.highlight_cells(row = 5, column = 1, fg = "red")
-        self.sheet.highlight_cells(row = 5, bg = "#ed4337", fg = "white", canvas = "row_index")
-        self.sheet.highlight_cells(column = 0, bg = "#ed4337", fg = "white", canvas = "header")
+        #self.sheet.highlight_cells(row = 5, column = 5, fg = "red")
+        #self.sheet.highlight_cells(row = 5, column = 1, fg = "red")
+        #self.sheet.highlight_cells(row = 5, bg = "#ed4337", fg = "white", canvas = "row_index")
+        #self.sheet.highlight_cells(column = 0, bg = "#ed4337", fg = "white", canvas = "header")
         
         #self.sheet.highlight_columns([7, 8, 9], bg = "light blue", fg = "purple")
         #self.sheet.insert_columns(columns = [[1, 2, 3], [4, 5, 6], [7, 8, 9]], idx = 8)
@@ -111,9 +111,12 @@ class demo(tk.Tk):
 
         # __________ CELL / ROW / COLUMN ALIGNMENTS __________
 
-        self.sheet.align_cells(row = 1, column = 1, align = "e")
-        self.sheet.align_rows(rows = 3, align = "e")
-        self.sheet.align_columns(columns = 4, align = "e")
+        #self.sheet.align_cells(row = 1, column = 1, align = "e")
+        #self.sheet.align_rows(rows = 3, align = "e", align_index = True)
+        #self.sheet.align_columns(columns = 4, align = "e", align_header = True)
+        #self.sheet.align_index(rows = 1, align = "e")
+        #self.sheet.align_header(columns = 4, align = "e")
+        #self.sheet.align_index(rows = 1) # reset row index 1 to global alignment
 
         # __________ DATA AND DISPLAY DIMENSIONS __________
 
@@ -194,7 +197,7 @@ class demo(tk.Tk):
 
         # __________ DELETING A ROW __________
 
-        self.sheet.delete_row() # first row
+        #self.sheet.delete_row() # first row
 
         # __________ SETTING A COLUMNS DATA __________
 
