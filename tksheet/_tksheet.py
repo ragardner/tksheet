@@ -359,6 +359,29 @@ class Sheet(tk.Frame):
         elif canvas == "topleft":
             self.TL.focus_set()
 
+    def popup_menu_add_command(self, label, func, table_menu = True, index_menu = True, header_menu = True):
+        if label not in self.MT.extra_table_rc_menu_funcs and table_menu:
+            self.MT.extra_table_rc_menu_funcs[label] = func
+        if label not in self.MT.extra_index_rc_menu_funcs and index_menu:
+            self.MT.extra_index_rc_menu_funcs[label] = func
+        if label not in self.MT.extra_header_rc_menu_funcs and header_menu:
+            self.MT.extra_header_rc_menu_funcs[label] = func
+        self.MT.create_rc_menus()
+
+    def popup_menu_del_command(self, label = None):
+        if label is None:
+            self.MT.extra_table_rc_menu_funcs = {}
+            self.MT.extra_index_rc_menu_funcs = {}
+            self.MT.extra_header_rc_menu_funcs = {}
+        else:
+            if label in self.MT.extra_table_rc_menu_funcs:
+                del self.MT.extra_table_rc_menu_funcs[label]
+            if label in self.MT.extra_index_rc_menu_funcs:
+                del self.MT.extra_index_rc_menu_funcs[label]
+            if label in self.MT.extra_header_rc_menu_funcs:
+                del self.MT.extra_header_rc_menu_funcs[label]
+        self.MT.create_rc_menus()
+
     def extra_bindings(self, bindings, func = "None"):
         if isinstance(bindings, str) and bindings.lower() in ("bind_all", "unbind_all"):
             self.MT.extra_begin_ctrl_c_func = None if func == "None" else func
@@ -673,6 +696,8 @@ class Sheet(tk.Frame):
                 sc, ec = self.MT.get_visible_columns(self.MT.canvasx(0), self.MT.canvasx(self.winfo_width()))
                 for c in range(sc, ec - 1):
                     self.CH.set_col_width(c)
+        elif width == "text" and column is not None:
+            self.CH.set_col_width(col = column, width = None, only_set_if_too_small = only_set_if_too_small)
         elif width is not None and column is not None:
             self.CH.set_col_width(col = column, width = width, only_set_if_too_small = only_set_if_too_small)
         elif column is not None:
@@ -711,6 +736,8 @@ class Sheet(tk.Frame):
                 sr, er = self.MT.get_visible_rows(self.MT.canvasy(0), self.MT.canvasy(self.winfo_width()))
                 for r in range(sr, er - 1):
                     self.RI.set_row_height(r)
+        elif height == "text" and row is not None:
+            self.RI.set_row_height(row = row, height = None, only_set_if_too_small = only_set_if_too_small)
         elif height is not None and row is not None:
             self.RI.set_row_height(row = row, height = height, only_set_if_too_small = only_set_if_too_small)
         elif row is not None:

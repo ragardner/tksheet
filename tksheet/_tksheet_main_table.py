@@ -101,6 +101,10 @@ class MainTable(tk.Canvas):
                                  'readonly': True}
         """
 
+        self.extra_table_rc_menu_funcs = {}
+        self.extra_index_rc_menu_funcs = {}
+        self.extra_header_rc_menu_funcs = {}
+
         self.max_undos = max_undos
         self.undo_storage = deque(maxlen = max_undos)
 
@@ -1906,6 +1910,30 @@ class MainTable(tk.Canvas):
                                            activebackground = self.popup_menu_highlight_bg,
                                            activeforeground = self.popup_menu_highlight_fg,
                                                  command = self.insert_row_rc)
+        for label, func in self.extra_table_rc_menu_funcs.items():
+            self.rc_popup_menu.add_command(label = label,
+                                           font = self.popup_menu_font,
+                                           foreground = self.popup_menu_fg,
+                                           background = self.popup_menu_bg,
+                                           activebackground = self.popup_menu_highlight_bg,
+                                           activeforeground = self.popup_menu_highlight_fg,
+                                           command = func)
+        for label, func in self.extra_index_rc_menu_funcs.items():
+            self.RI.ri_rc_popup_menu.add_command(label = label,
+                                                   font = self.popup_menu_font,
+                                                   foreground = self.popup_menu_fg,
+                                                   background = self.popup_menu_bg,
+                                                   activebackground = self.popup_menu_highlight_bg,
+                                                   activeforeground = self.popup_menu_highlight_fg,
+                                                   command = func)
+        for label, func in self.extra_header_rc_menu_funcs.items():
+            self.CH.ch_rc_popup_menu.add_command(label = label,
+                                                   font = self.popup_menu_font,
+                                                   foreground = self.popup_menu_fg,
+                                                   background = self.popup_menu_bg,
+                                                   activebackground = self.popup_menu_highlight_bg,
+                                                   activeforeground = self.popup_menu_highlight_fg,
+                                                   command = func)
 
     def bind_cell_edit(self, enable = True):
         if enable:
