@@ -11,7 +11,6 @@ pip install tksheet
  - [Documentation](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md)
  - [Test file](https://github.com/ragardner/tksheet/blob/master/tests/test_tksheet.py)
  - [Version release notes](https://github.com/ragardner/tksheet/blob/master/RELEASE_NOTES.md)
- - [Donations](https://github.com/ragardner/tksheet#donations)
 
 ### Features
  - Display and modify tabular data
@@ -33,11 +32,8 @@ pip install tksheet
 ### Donations
 If you would like to donate and support the library and ragardner you can use the below methods
 
-#### Litecoin
-`LWaj9iau7Yz3cEirCuG1mtBGLXyMdZ3Soz`
-
-#### Ethereum
-`0x2D335C3A435d43903de53eF417Fb1120EFF896E5`
-
 #### PayPal
 `https://paypal.me/ragardner1`
+
+#### Litecoin
+`LWaj9iau7Yz3cEirCuG1mtBGLXyMdZ3Soz`
