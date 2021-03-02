@@ -1360,7 +1360,7 @@ app = demo()
 app.mainloop()
 ```
  - If you want to evaluate the value from the text editor you can set `set_data_ref_on_destroy` to `False` and do the evaluation to decide whether or not to use `set_cell_data()`.
- - If you want a totally new right click menu you can use `self.sheet.bind("<3>", <function>)` with a `tk.Menu` of your own design (right click is `<2>` on MacOS).
+ - If you want a totally new right click menu you can use `self.sheet.bind("<3>", <function>)` with a `tk.Menu` of your own design (right click is `<2>` on MacOS) and don't use `"right_click_popup_menu"` with `enable_bindings()`.
 
 
 
