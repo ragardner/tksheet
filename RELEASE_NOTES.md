@@ -1,3 +1,7 @@
+### Version 5.0.15
+ - Add functions `popup_menu_add_command()` and `popup_menu_del_command()` for extra commands on in-built right click popup menu
+ - Update documentation
+
 ### Version 5.0.14
  - Remove some unnecessary code (`preserve_other_selections` arguments in some functions)
  - Add documentation file, update readme file

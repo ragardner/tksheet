@@ -21,7 +21,7 @@
 20. [Dropdown Boxes](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#20-Dropdown-Boxes)
 21. [Table Options and Other Functions](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#21-Table-Options-and-Other-Functions)
 22. [Example Loading Data from Excel](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#22-Example-Loading-Data-from-Excel)
-23. [Example Binding Right Click](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#23-Example-Binding-Right-Click)
+23. [Example Custom Right Click and Text Editor Functionality](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#23-Example-Custom-Right-Click-and-Text-Editor-Functionality)
 
 
 ## 1 About tksheet
@@ -368,6 +368,20 @@ enable_bindings(bindings = "all")
 	- "delete"
 	- "undo"
 	- "edit_cell"
+
+___
+
+Add commands to the in-built right click popup menu.
+```python
+popup_menu_add_command(label, func, table_menu = True, index_menu = True, header_menu = True)
+```
+
+___
+
+Remove the custom commands added using the above function from the in-built right click popup menu, if `label` is `None` then it removes all.
+```python
+popup_menu_del_command(label = None)
+```
 
 ___
 
@@ -1283,8 +1297,9 @@ app = demo()
 app.mainloop()
 ```
 
-## 23 Example Binding Right Click
+## 23 Example Custom Right Click and Text Editor Functionality
 
+This is to demonstrate adding your own commands to the in-built right click popup menu (or how you might start making your own right click menu functionality) and also creating a cell text editor the manual way.
 ```python
 from tksheet import Sheet
 import tkinter as tk
@@ -1300,18 +1315,52 @@ class demo(tk.Tk):
         self.frame.grid_rowconfigure(0, weight = 1)
         self.sheet = Sheet(self.frame,
                            data = [[f"Row {r}, Column {c}\nnewline1\nnewline2" for c in range(50)] for r in range(500)])
-        self.sheet.enable_bindings()
-        self.sheet.bind("<3>", self.rc)
+        self.sheet.enable_bindings(("single_select",
+                                    "drag_select",
+                                    "column_select",
+                                    "row_select",
+                                    "column_width_resize",
+                                    "double_click_column_resize",
+                                    "arrowkeys",
+                                    "row_height_resize",
+                                    "double_click_row_resize",
+                                    "right_click_popup_menu",
+                                    "rc_select"
+                                    ))
+        self.sheet.popup_menu_add_command("Say Hello", self.new_right_click_button)
+        self.sheet.popup_menu_add_command("Edit Cell", self.edit_cell, index_menu = False, header_menu = False)
         self.frame.grid(row = 0, column = 0, sticky = "nswe")
         self.sheet.grid(row = 0, column = 0, sticky = "nswe")
 
-    def rc(self, event):
-        print (event)
+    def new_right_click_button(self, event = None):
+        print ("Hello World!")
+
+    def edit_cell(self, event = None):
+        r, c = self.sheet.get_currently_selected()
+        self.sheet.row_height(row = r, height = "text", only_set_if_too_small = True, redraw = False)
+        self.sheet.column_width(column = c, width = "text", only_set_if_too_small = True, redraw = True)
+        self.sheet.create_text_editor(row = r,
+                                      column = c,
+                                      text = self.sheet.get_cell_data(r, c),
+                                      set_data_ref_on_destroy = False,
+                                      binding = self.end_edit_cell)
+
+    def end_edit_cell(self, event = None):
+        newtext = self.sheet.get_text_editor_value(event,
+                                                   r = event[0],
+                                                   c = event[1],
+                                                   set_data_ref_on_destroy = True,
+                                                   move_down = True,
+                                                   redraw = True,
+                                                   recreate = True)
+        print (newtext)
+
 
 app = demo()
 app.mainloop()
 ```
-
+ - If you want to evaluate the value from the text editor you can set `set_data_ref_on_destroy` to `False` and do the evaluation to decide whether or not to use `set_cell_data()`.
+ - If you want a totally new right click menu you can use `self.sheet.bind("<3>", <function>)` with a `tk.Menu` of your own design (right click is `<2>` on MacOS).
 
 
 
