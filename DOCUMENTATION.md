@@ -630,6 +630,28 @@ align_index(rows = [], align = "global", redraw = True)
 
 ## 12 Row Heights and Column Widths
 
+Set default column width in pixels.
+```python
+default_column_width(width = None)
+```
+ - `width` (`int`).
+
+___
+
+Set default row height in pixels or lines.
+```python
+default_row_height(height = None)
+```
+ - `height` (`int`, `str`) use a numerical `str` for number of lines e.g. `"3"` for a height that fits 3 lines or `int` for pixels.
+
+___
+
+```python
+default_header_height(height = None)
+```
+
+___
+
 ```python
 set_all_cell_sizes_to_text(redraw = True)
 ```
@@ -710,18 +732,6 @@ ___
 
 ```python
 verify_column_widths(column_widths, canvas_positions = False)
-```
-
-___
-
-```python
-default_row_height(height = None)
-```
-
-___
-
-```python
-default_header_height(height = None)
 ```
 
 ___
