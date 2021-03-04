@@ -2590,9 +2590,9 @@ class MainTable(tk.Canvas):
         #    self.min_cw = w2
         self.min_cw = 5
         if self.min_cw > self.CH.max_cw:
-            self.CH.max_cw = self.min_cw * 2
+            self.CH.max_cw = self.min_cw + 20
         if self.min_cw > self.default_cw:
-            self.default_cw = self.min_cw * 2
+            self.default_cw = self.min_cw + 20
 
     def font(self, newfont = None, reset_row_positions = False):
         if newfont:

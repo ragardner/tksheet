@@ -800,6 +800,14 @@ class Sheet(tk.Frame):
             self.MT.default_hh = (height if isinstance(height, str) else "pixels", height if isinstance(height, int) else self.MT.GetHdrLinesHeight(int(height)))
         return self.MT.default_hh[1]
 
+    def default_column_width(self, width = None):
+        if width is not None:
+            if width < self.MT.min_cw:
+                self.default_cw = self.MT.min_cw + 20
+            else:
+                self.default_cw = int(width)
+        return self.MT.default_cw
+
     def create_dropdown(self,
                         r = 0,
                         c = 0,
