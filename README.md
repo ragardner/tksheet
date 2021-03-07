@@ -28,12 +28,3 @@ pip install tksheet
 ### Light Blue Theme
 
 ![alt text](https://i.imgur.com/PWJSPxf.jpg)
-
-### Donations
-If you would like to donate and support the library and ragardner you can use the below methods
-
-#### PayPal
-`https://paypal.me/ragardner1`
-
-#### Litecoin
-`LWaj9iau7Yz3cEirCuG1mtBGLXyMdZ3Soz`

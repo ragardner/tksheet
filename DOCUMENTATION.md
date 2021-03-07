@@ -646,54 +646,52 @@ default_row_height(height = None)
 
 ___
 
+Set default row height in pixels or lines.
 ```python
 default_header_height(height = None)
 ```
+ - `height` (`int`, `str`) use a numerical `str` for number of lines e.g. `"3"` for a height that fits 3 lines or `int` for pixels.
 
 ___
 
+Set all row heights and column widths to cell text sizes.
 ```python
 set_all_cell_sizes_to_text(redraw = True)
 ```
 
 ___
 
-```python
-get_example_canvas_column_widths(total_cols = None)
-```
-
-___
-
-```python
-get_example_canvas_row_heights(total_rows = None)
-```
-
-___
-
+Get the sheets column widths.
 ```python
 get_column_widths(canvas_positions = False)
 ```
+ - `canvas_positions` (`bool`) gets the actual canvas x coordinates of column lines.
 
 ___
 
+Get the sheets row heights.
 ```python
 get_row_heights(canvas_positions = False)
 ```
+ - `canvas_positions` (`bool`) gets the actual canvas y coordinates of row lines.
 
 ___
 
+Set all column widths to specific `width` in pixels (`int`) or leave `None` to set to cell text sizes for each column.
 ```python
 set_all_column_widths(width = None, only_set_if_too_small = False, redraw = True, recreate_selection_boxes = True)
 ```
 
 ___
 
+Set all row heights to specific `height` in pixels (`int`) or leave `None` to set to cell text sizes for each row.
 ```python
 set_all_row_heights(height = None, only_set_if_too_small = False, redraw = True, recreate_selection_boxes = True)
 ```
 
 ___
 
+Set a specific column width.
 ```python
 column_width(column = None, width = None, only_set_if_too_small = False, redraw = True)
 ```
@@ -720,18 +718,6 @@ ___
 
 ```python
 set_row_heights(row_heights = None, canvas_positions = False, reset = False, verify = False)
-```
-
-___
-
-```python
-verify_row_heights(row_heights, canvas_positions = False)
-```
-
-___
-
-```python
-verify_column_widths(column_widths, canvas_positions = False)
 ```
 
 ___
@@ -786,6 +772,30 @@ ___
 
 ```python
 move_column_position(column, moveto)
+```
+
+___
+
+```python
+get_example_canvas_column_widths(total_cols = None)
+```
+
+___
+
+```python
+get_example_canvas_row_heights(total_rows = None)
+```
+
+___
+
+```python
+verify_row_heights(row_heights, canvas_positions = False)
+```
+
+___
+
+```python
+verify_column_widths(column_widths, canvas_positions = False)
 ```
 
 ## 13 Getting Selected Cells
@@ -959,13 +969,7 @@ deselect(row = None, column = None, cell = None, redraw = True)
 ## 15 Modifying and Getting Scroll Positions
 
 ```python
-get_xview()
-```
-
-___
-
-```python
-get_yview()
+see(row = 0, column = 0, keep_yscroll = False, keep_xscroll = False, bottom_right_corner = False, check_cell_visibility = True)
 ```
 
 ___
@@ -983,13 +987,19 @@ set_yview(position, option = "moveto")
 ___
 
 ```python
-set_view(x_args, y_args)
+get_xview()
 ```
 
 ___
 
 ```python
-see(row = 0, column = 0, keep_yscroll = False, keep_xscroll = False, bottom_right_corner = False, check_cell_visibility = True)
+get_yview()
+```
+
+___
+
+```python
+set_view(x_args, y_args)
 ```
 
 ___
