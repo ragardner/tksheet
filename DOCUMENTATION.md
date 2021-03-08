@@ -371,48 +371,6 @@ enable_bindings(bindings = "all")
 
 ___
 
-Add commands to the in-built right click popup menu.
-```python
-popup_menu_add_command(label, func, table_menu = True, index_menu = True, header_menu = True)
-```
-
-___
-
-Remove the custom commands added using the above function from the in-built right click popup menu, if `label` is `None` then it removes all.
-```python
-popup_menu_del_command(label = None)
-```
-
-___
-
-Disable table functionality and bindings (uses the same options as `enable_bindings()`.
-```python
-disable_bindings(bindings = "all")
-```
-
-___
-
-Enable or disable mousewheel, left click etc.
-```python
-basic_bindings(enable = False)
-```
-
-___
-
-Enable or disable cell edit functionality, including Undo.
-```python
-edit_bindings(enable = False)
-```
-
-___
-
-Enable or disable the ability to edit a specific cell.
-```python
-cell_edit_binding(enable = False)
-```
-
-___
-
 Bind various table functionality to your own functions.
 ```python
 extra_bindings(bindings, func = "None")
@@ -457,6 +415,48 @@ extra_bindings(bindings, func = "None")
 	- "bind_all"
 	- "unbind_all"
  - `func` argument is the function you want to send the binding event to.
+
+___
+
+Remove the custom commands added using the above function from the in-built right click popup menu, if `label` is `None` then it removes all.
+```python
+popup_menu_del_command(label = None)
+```
+
+___
+
+Disable table functionality and bindings (uses the same options as `enable_bindings()`.
+```python
+disable_bindings(bindings = "all")
+```
+
+___
+
+Enable or disable mousewheel, left click etc.
+```python
+basic_bindings(enable = False)
+```
+
+___
+
+Enable or disable cell edit functionality, including Undo.
+```python
+edit_bindings(enable = False)
+```
+
+___
+
+Enable or disable the ability to edit a specific cell.
+```python
+cell_edit_binding(enable = False)
+```
+
+___
+
+Add commands to the in-built right click popup menu.
+```python
+popup_menu_add_command(label, func, table_menu = True, index_menu = True, header_menu = True)
+```
 
 ___
 
@@ -1200,6 +1200,7 @@ set_options(enable_edit_cell_auto_resize = None,
             font = None,
             default_header = None,
             default_row_index = None,
+            column_width = None,
             header_font = None,
             show_selected_cells_border = None,
             theme = None,
