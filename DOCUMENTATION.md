@@ -418,6 +418,13 @@ extra_bindings(bindings, func = "None")
 
 ___
 
+Add commands to the in-built right click popup menu.
+```python
+popup_menu_add_command(label, func, table_menu = True, index_menu = True, header_menu = True)
+```
+
+___
+
 Remove the custom commands added using the above function from the in-built right click popup menu, if `label` is `None` then it removes all.
 ```python
 popup_menu_del_command(label = None)
@@ -453,13 +460,6 @@ cell_edit_binding(enable = False)
 
 ___
 
-Add commands to the in-built right click popup menu.
-```python
-popup_menu_add_command(label, func, table_menu = True, index_menu = True, header_menu = True)
-```
-
-___
-
 ```python
 bind(binding, func)
 ```
@@ -479,7 +479,6 @@ paste(event = None)
 delete(event = None)
 undo(event = None)
 ```
-
 
 ## 8 Identifying Bound Event Mouse Position
 
