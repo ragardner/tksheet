@@ -1,5 +1,8 @@
 ### Version 5.0.16
- - Add function `default_column_width()`
+ - Add function `default_column_width()` and add `column_width` to function `set_options()`
+ - Add functions `get_dropdown_values()` and `set_dropdown_values()`
+ - Add row and column arguments to `get_dropdown_value()` to get a specific dropdown boxes value
+ - `create_dropdown()` argument `see` is now `False` by default
 
 ### Version 5.0.15
  - Add functions `popup_menu_add_command()` and `popup_menu_del_command()` for extra commands on in-built right click popup menu

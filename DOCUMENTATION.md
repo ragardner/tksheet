@@ -1125,7 +1125,7 @@ create_dropdown(r = 0,
                 values = [],
                 set_value = None,
                 state = "readonly",
-                see = True,
+                see = False,
                 destroy_on_leave = False,
                 destroy_on_select = True,
                 current = False,
@@ -1136,18 +1136,39 @@ create_dropdown(r = 0,
 
 ___
 
+Get the currently displayed value of a chosen dropdown box.
 ```python
-get_dropdown_value(current = False, destroy = True, set_cell_on_select = True, redraw = True, recreate = True)
+get_dropdown_value(r, c, current = False, destroy = True, set_cell_on_select = True, redraw = True, recreate = True)
 ```
+ - `current` (`bool`) set to `True` if you want to get the index of the displayed value.
+ - `recreate` redraws selection boxes, use if destroying the dropdown box.
+
+___
+
+Get a tuple of a chosen dropdown boxes values.
+```python
+get_dropdown_values(r = 0, c = 0)
+```
+
+___
+
+Set the values and displayed value of a chosen dropdown box.
+```python
+set_dropdown_values(r = 0, c = 0, values = [], displayed = None)
+```
+ - `values` (`list`, `tuple`)
+ - `displayed` (`str`, `None`) if not `None` will try to set the displayed value of the chosen dropdown box to given argument.
 
 ___
 
 ```python
 delete_dropdown(r = 0, c = 0)
 ```
+ - Set `r` to `"all"` to delete all dropdown boxes on the sheet.
 
 ___
 
+Get a dictionary of all dropdown boxes; keys: `(row int, column int)` and values: `(ttk combobox widget, tk canvas window object)`
 ```python
 get_dropdowns()
 ```
