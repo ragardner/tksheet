@@ -482,7 +482,7 @@ undo(event = None)
 
 ## 8 Identifying Bound Event Mouse Position
 
-The below functions require a mouse click event, for example you could bind right click, example [here](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#23-Example-Binding-Right-Click), and then identify where the user has clicked.
+The below functions require a mouse click event, for example you could bind right click, example [here](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#23-example-custom-right-click-and-text-editor-functionality), and then identify where the user has clicked.
 
 ___
 
