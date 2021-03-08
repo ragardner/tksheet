@@ -4696,11 +4696,11 @@ class MainTable(tk.Canvas):
             r = rpos
             c = self.displayed_columns[cpos] if not self.all_columns_displayed else cpos
         if current:
-            self.table_dropdown_value = self.cell_options[(r, c)]['dropdown'][0].dropdown.current()
+            table_dropdown_value = self.cell_options[(r, c)]['dropdown'][0].dropdown.current()
         else:
-            self.table_dropdown_value = self.cell_options[(r, c)]['dropdown'][0].get_my_value()
+            table_dropdown_value = self.cell_options[(r, c)]['dropdown'][0].get_my_value()
         if set_cell_on_select:
-            self.set_cell_data(r, cpos, self.table_dropdown_value, cell_resize = True if destroy else False)
+            self.set_cell_data(r, cpos, table_dropdown_value, cell_resize = True if destroy else False)
             if self.extra_end_edit_cell_func is not None:
                 self.extra_end_edit_cell_func((r, c))
             self.focus_set()
@@ -4711,7 +4711,7 @@ class MainTable(tk.Canvas):
             self.refresh_dropdowns()
         if redraw:
             self.refresh()
-        return self.table_dropdown_value
+        return table_dropdown_value
 
     def destroy_dropdown(self, r, c):
         self.delete(self.cell_options[(r, c)]['dropdown'][1])

@@ -803,9 +803,9 @@ class Sheet(tk.Frame):
     def default_column_width(self, width = None):
         if width is not None:
             if width < self.MT.min_cw:
-                self.default_cw = self.MT.min_cw + 20
+                self.MT.default_cw = self.MT.min_cw + 20
             else:
-                self.default_cw = int(width)
+                self.MT.default_cw = int(width)
         return self.MT.default_cw
 
     def create_dropdown(self,
@@ -814,7 +814,7 @@ class Sheet(tk.Frame):
                         values = [],
                         set_value = None,
                         state = "readonly",
-                        see = True,
+                        see = False,
                         destroy_on_leave = False,
                         destroy_on_select = True,
                         current = False,
@@ -834,9 +834,18 @@ class Sheet(tk.Frame):
                                 redraw = redraw,
                                 recreate = recreate_selection_boxes)
 
-    def get_dropdown_value(self, current = False, destroy = True, set_cell_on_select = True, redraw = True, recreate = True):
-        return self.MT.get_dropdown_value(current = current, destroy = destroy,
+    def get_dropdown_value(self, r, c, current = False, destroy = True, set_cell_on_select = True, redraw = True, recreate = True):
+        return self.MT.get_dropdown_value(r, c, current = current, destroy = destroy,
                                           set_cell_on_select = set_cell_on_select, redraw = redraw, recreate = recreate)
+
+    def get_dropdown_values(self, r = 0, c = 0):
+        return self.MT.cell_options[(r, c)]['dropdown'][0].dropdown['values']
+
+    def set_dropdown_values(self, r = 0, c = 0, values = [], displayed = None):
+        self.MT.cell_options[(r, c)]['dropdown'][0].dropdown['values'] = values
+        if displayed is not None:
+            self.MT.cell_options[(r, c)]['dropdown'][0].dropdown.set(displayed)
+            self.MT.set_cell_data(r, c, displayed, undo = False, cell_resize = False)
 
     def delete_dropdown(self, r = 0, c = 0):
         if r == "all":
@@ -1536,6 +1545,7 @@ class Sheet(tk.Frame):
                     max_row_width = None,
                     header_height = None,
                     row_height = None,
+                    column_width = None,
                     header_bg = None,
                     header_border_fg = None,
                     header_grid_fg = None,
@@ -1603,6 +1613,8 @@ class Sheet(tk.Frame):
             self.MT.empty_vertical = empty_vertical
         if row_height is not None:
             self.MT.default_rh = (row_height if isinstance(row_height, str) else "pixels", row_height if isinstance(row_height, int) else self.MT.GetLinesHeight(int(row_height)))
+        if column_width is not None:
+            self.MT.default_cw = self.MT.min_cw + 20 if column_width < self.MT.min_cw else int(column_width)
         if header_height is not None:
             self.MT.default_hh = (header_height if isinstance(header_height, str) else "pixels", header_height if isinstance(header_height, int) else self.MT.GetHdrLinesHeight(int(header_height)))
         if measure_subset_index is not None:
