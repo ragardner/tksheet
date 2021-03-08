@@ -27,7 +27,7 @@ class demo(tk.Tk):
                            #align = "e",
                            #header_align = "w",
                             #row_index_align = "w",
-                            #data = [[f"Row {r}, Column {c}\nnewline1\nnewline2" for c in range(5)] for r in range(5)], #to set sheet data at startup
+                            data = [[f"Row {r}, Column {c}\nnewline1\nnewline2" for c in range(50)] for r in range(500)], #to set sheet data at startup
                             #headers = [f"Column {c}\nnewline1\nnewline2" for c in range(30)],
                             #row_index = [f"Row {r}\nnewline1\nnewline2" for r in range(2000)],
                             #set_all_heights_and_widths = True, #to fit all cell sizes to text at start up
@@ -35,8 +35,8 @@ class demo(tk.Tk):
                             #headers = [f"Column {c}\nnewline1\nnewline2" for c in range(30)],
                            #theme = "light green",
                             #row_index = 0, #to set row_index as first column at startup
-                            total_rows = 5, #if you want to set empty sheet dimensions at startup
-                            total_columns = 5, #if you want to set empty sheet dimensions at startup
+                            #total_rows = 5, #if you want to set empty sheet dimensions at startup
+                            #total_columns = 5, #if you want to set empty sheet dimensions at startup
                             height = 500, #height and width arguments are optional
                             width = 1200 #For full startup arguments see DOCUMENTATION.md
                             )
