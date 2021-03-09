@@ -1,3 +1,7 @@
+### Version 5.0.17
+ - Cell highlight tkinter colors no longer case sensitive
+ - Add additional items to `end_edit_cell` event responses
+
 ### Version 5.0.16
  - Add function `default_column_width()` and add `column_width` to function `set_options()`
  - Add functions `get_dropdown_values()` and `set_dropdown_values()`

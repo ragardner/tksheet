@@ -1132,6 +1132,7 @@ create_dropdown(r = 0,
                 redraw = True,
                 recreate_selection_boxes = True)
 ```
+ - `set_cell_on_select` will set the underlying cells data to the selected item, to bind this event see the function `extra_bindings()` with binding `"end_edit_cell"` [here](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#7-Bindings-and-Functionality).
 
 ___
 
