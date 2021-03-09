@@ -4545,7 +4545,7 @@ class MainTable(tk.Canvas):
 
     def destroy_text_editor(self, event = None):
         if event is not None and self.extra_end_edit_cell_func is not None:
-            self.extra_end_edit_cell_func(self.text_editor_loc + ("Escape", ))
+            self.extra_end_edit_cell_func(self.text_editor_loc + ("Escape", None))
         self.text_editor_loc = None
         try:
             self.delete(self.text_editor_id)
@@ -4586,7 +4586,7 @@ class MainTable(tk.Canvas):
                 r, c = destroy_tup[0], destroy_tup[1]
             self.set_cell_data(r, c, self.text_editor_value)
             if self.extra_end_edit_cell_func is not None:
-                self.extra_end_edit_cell_func((r, c, destroy_tup[2] if len(destroy_tup) >= 3 else "FocusOut"))
+                self.extra_end_edit_cell_func((r, c, destroy_tup[2] if len(destroy_tup) >= 3 else "FocusOut", f"{self.text_editor_value}"))
         if move_down:
             if r is None and c is None and destroy_tup:
                 r, c = destroy_tup[0], destroy_tup[1]
@@ -4702,7 +4702,7 @@ class MainTable(tk.Canvas):
         if set_cell_on_select:
             self.set_cell_data(r, cpos, table_dropdown_value, cell_resize = True if destroy else False)
             if self.extra_end_edit_cell_func is not None:
-                self.extra_end_edit_cell_func((r, c))
+                self.extra_end_edit_cell_func((r, c, "ComboboxSelected", f"{table_dropdown_value}"))
             self.focus_set()
         if destroy:
             self.destroy_dropdown(r, c)
