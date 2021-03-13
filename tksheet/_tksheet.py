@@ -240,13 +240,17 @@ class Sheet(tk.Frame):
         if show_x_scrollbar:
             self.xscroll.grid(row = 2, column = 1, columnspan = 2, sticky = "nswe")
             self.xscroll_showing = True
+            self.xscroll_disabled = False
         else:
             self.xscroll_showing = False
+            self.xscroll_disabled = True
         if show_y_scrollbar:
             self.yscroll.grid(row = 1, column = 2, sticky = "nswe")
             self.yscroll_showing = True
+            self.yscroll_disabled = False
         else:
             self.yscroll_showing = False
+            self.yscroll_disabled = True
         if theme != "light blue":
             self.MT.display_selected_fg_over_highlights = True
             self.change_theme(theme)
@@ -292,6 +296,8 @@ class Sheet(tk.Frame):
             self.RI["yscrollcommand"] = self.yscroll.set
             self.xscroll_showing = True
             self.yscroll_showing = True
+            self.xscroll_disabled = False
+            self.yscroll_disabled = False
         elif canvas == "row_index":
             self.RI.grid(row = 1, column = 0, sticky = "nswe")
             self.MT["yscrollcommand"] = self.yscroll.set
@@ -307,9 +313,11 @@ class Sheet(tk.Frame):
         elif canvas == "x_scrollbar":
             self.xscroll.grid(row = 2, column = 1, columnspan = 2, sticky = "nswe")
             self.xscroll_showing = True
+            self.xscroll_disabled = False
         elif canvas == "y_scrollbar":
             self.yscroll.grid(row = 1, column = 2, sticky = "nswe")
             self.yscroll_showing = True
+            self.yscroll_disabled = False
         self.MT.update()
 
     def hide(self, canvas = "all"):
@@ -322,6 +330,8 @@ class Sheet(tk.Frame):
             self.xscroll.grid_forget()
             self.xscroll_showing = False
             self.yscroll_showing = False
+            self.xscroll_disabled = True
+            self.yscroll_disabled = True
         elif canvas == "row_index":
             self.RI.grid_forget()
             self.RI["yscrollcommand"] = 0
@@ -335,9 +345,11 @@ class Sheet(tk.Frame):
         elif canvas == "x_scrollbar":
             self.xscroll.grid_forget()
             self.xscroll_showing = False
+            self.xscroll_disabled = True
         elif canvas == "y_scrollbar":
             self.yscroll.grid_forget()
             self.yscroll_showing = False
+            self.yscroll_disabled = True
 
     def height_and_width(self, height = None, width = None):
         if width is not None or height is not None:

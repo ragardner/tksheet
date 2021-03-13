@@ -1,3 +1,6 @@
+### Version 5.0.18
+ - Fix bug with hiding scrollbars not working
+
 ### Version 5.0.17
  - Cell highlight tkinter colors no longer case sensitive
  - Add additional items to `end_edit_cell` event responses

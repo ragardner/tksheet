@@ -3493,13 +3493,13 @@ class MainTable(tk.Canvas):
             if can_width >= last_col_line_pos + self.empty_horizontal and self.parentframe.xscroll_showing:
                 self.parentframe.xscroll.grid_forget()
                 self.parentframe.xscroll_showing = False
-            elif can_width < last_col_line_pos + self.empty_horizontal and not self.parentframe.xscroll_showing:
+            elif can_width < last_col_line_pos + self.empty_horizontal and not self.parentframe.xscroll_showing and not self.parentframe.xscroll_disabled:
                 self.parentframe.xscroll.grid(row = 2, column = 1, columnspan = 2, sticky = "nswe")
                 self.parentframe.xscroll_showing = True
             if can_height >= last_row_line_pos + self.empty_vertical and self.parentframe.yscroll_showing:
                 self.parentframe.yscroll.grid_forget()
                 self.parentframe.yscroll_showing = False
-            elif can_height < last_row_line_pos + self.empty_vertical and not self.parentframe.yscroll_showing:
+            elif can_height < last_row_line_pos + self.empty_vertical and not self.parentframe.yscroll_showing and not self.parentframe.yscroll_disabled:
                 self.parentframe.yscroll.grid(row = 1, column = 2, sticky = "nswe")
                 self.parentframe.yscroll_showing = True
         except:
