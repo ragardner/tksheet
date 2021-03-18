@@ -272,7 +272,7 @@ class Sheet(tk.Frame):
                     self.see(startup_select[0], startup_select[1])
                 elif startup_select[-1] == "rows":
                     self.create_selection_box(startup_select[0], 0, startup_select[1], len(self.MT.col_positions) - 1, "rows")
-                    self.set_currently_selected("row", 0, selection_binding = False)
+                    self.set_currently_selected("row", startup_select[0], selection_binding = False)
                     self.see(startup_select[0], 0)
                 elif startup_select[-1] in ("cols", "columns"):
                     self.create_selection_box(0, startup_select[0], len(self.MT.row_positions) - 1, startup_select[1], "cols")

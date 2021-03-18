@@ -1,5 +1,5 @@
 ### Version 5.0.19
- - 
+ - Scrolling with arrowkeys improvements
 
 ### Version 5.0.18
  - Fix bug with hiding scrollbars not working
