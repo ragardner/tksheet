@@ -1,3 +1,6 @@
+### Version 5.0.19
+ - 
+
 ### Version 5.0.18
  - Fix bug with hiding scrollbars not working
 

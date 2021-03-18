@@ -21,6 +21,7 @@ class MainTable(tk.Canvas):
                  parentframe = None,
                  enable_edit_cell_auto_resize = True,
                  page_up_down_select_row = False,
+                 arrow_key_down_right_scroll_page = False,
                  column_width = None,
                  column_headers_canvas = None,
                  row_index_canvas = None,
@@ -109,6 +110,7 @@ class MainTable(tk.Canvas):
         self.undo_storage = deque(maxlen = max_undos)
 
         self.page_up_down_select_row = page_up_down_select_row
+        self.arrow_key_down_right_scroll_page = arrow_key_down_right_scroll_page
         self.enable_edit_cell_auto_resize = enable_edit_cell_auto_resize
         self.display_selected_fg_over_highlights = display_selected_fg_over_highlights
         self.centre_alignment_text_mod_indexes = (slice(1, None), slice(None, -1))
@@ -1636,7 +1638,7 @@ class MainTable(tk.Canvas):
                     self.select_cell(r, c + 1, redraw =True)
                 else:
                     self.select_cell(r, c + 1)
-                    self.see(r, c + 1, keep_yscroll = True, bottom_right_corner = True, check_cell_visibility = False)
+                    self.see(r, c + 1, keep_yscroll = True, bottom_right_corner = False if self.arrow_key_down_right_scroll_page else True, check_cell_visibility = False)
 
     def arrowkey_DOWN(self, event = None):
         currently_selected = self.currently_selected()
@@ -1649,7 +1651,7 @@ class MainTable(tk.Canvas):
                     self.RI.select_row(r + 1, redraw = True)
                 else:
                     self.RI.select_row(r + 1)
-                    self.see(r + 1, 0, keep_xscroll = True, bottom_right_corner = True, check_cell_visibility = False)
+                    self.see(r + 1, 0, keep_xscroll = True, bottom_right_corner = False if self.arrow_key_down_right_scroll_page else True, check_cell_visibility = False)
         elif currently_selected[0] == "column":
             c = currently_selected[1]
             if self.single_selection_enabled or self.toggle_selection_enabled:
@@ -1658,7 +1660,7 @@ class MainTable(tk.Canvas):
                 else:
                     self.select_cell(0, c)
                     self.see(0, c, keep_xscroll = True, bottom_right_corner = True, check_cell_visibility = False)
-        elif isinstance(currently_selected[0],int):
+        elif isinstance(currently_selected[0], int):
             r = currently_selected[0]
             c = currently_selected[1]
             if r < len(self.row_positions) - 2 and (self.single_selection_enabled or self.toggle_selection_enabled):
@@ -1666,7 +1668,7 @@ class MainTable(tk.Canvas):
                     self.select_cell(r + 1, c, redraw = True)
                 else:
                     self.select_cell(r + 1, c)
-                    self.see(r + 1, c, keep_xscroll = True, bottom_right_corner = True, check_cell_visibility = False)
+                    self.see(r + 1, c, keep_xscroll = True, bottom_right_corner = False if self.arrow_key_down_right_scroll_page else True, check_cell_visibility = False)
                     
     def arrowkey_LEFT(self, event = None):
         currently_selected = self.currently_selected()

@@ -36,6 +36,7 @@ class Sheet(tk.Frame):
                  default_header = "letters", #letters, numbers or both
                  default_row_index = "numbers", #letters, numbers or both
                  page_up_down_select_row = True,
+                 arrow_key_down_right_scroll_page = False,
                  enable_edit_cell_auto_resize = True,
                  data_reference = None,
                  data = None,
@@ -177,6 +178,7 @@ class Sheet(tk.Frame):
         self.MT = MainTable(self,
                             enable_edit_cell_auto_resize = enable_edit_cell_auto_resize,
                             page_up_down_select_row = page_up_down_select_row,
+                            arrow_key_down_right_scroll_page = arrow_key_down_right_scroll_page,
                             display_selected_fg_over_highlights = display_selected_fg_over_highlights,
                             show_vertical_grid = show_vertical_grid,
                             show_horizontal_grid = show_horizontal_grid,
@@ -270,11 +272,11 @@ class Sheet(tk.Frame):
                     self.see(startup_select[0], startup_select[1])
                 elif startup_select[-1] == "rows":
                     self.create_selection_box(startup_select[0], 0, startup_select[1], len(self.MT.col_positions) - 1, "rows")
-                    self.set_currently_selected(startup_select[0], 0, selection_binding = False)
+                    self.set_currently_selected("row", 0, selection_binding = False)
                     self.see(startup_select[0], 0)
                 elif startup_select[-1] in ("cols", "columns"):
                     self.create_selection_box(0, startup_select[0], len(self.MT.row_positions) - 1, startup_select[1], "cols")
-                    self.set_currently_selected(0, startup_select[0], selection_binding = False)
+                    self.set_currently_selected("col", startup_select[0], selection_binding = False)
                     self.see(0, startup_select[0])
             except:
                 pass
@@ -1538,6 +1540,7 @@ class Sheet(tk.Frame):
     def set_options(self,
                     enable_edit_cell_auto_resize = None,
                     page_up_down_select_row = None,
+                    arrow_key_down_right_scroll_page = None,
                     display_selected_fg_over_highlights = None,
                     empty_horizontal = None,
                     empty_vertical = None,
@@ -1605,6 +1608,8 @@ class Sheet(tk.Frame):
                     measure_subset_index = None,
                     measure_subset_header = None,
                     redraw = True):
+        if arrow_key_down_right_scroll_page is not None:
+            self.MT.arrow_key_down_right_scroll_page = arrow_key_down_right_scroll_page
         if enable_edit_cell_auto_resize is not None:
             self.MT.enable_edit_cell_auto_resize = enable_edit_cell_auto_resize
         if header_hidden_columns_expander_bg is not None:
