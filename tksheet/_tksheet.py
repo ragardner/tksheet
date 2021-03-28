@@ -1794,7 +1794,7 @@ class Sheet(tk.Frame):
                        reset_col_positions = True,
                        reset_row_positions = True,
                        redraw = True,
-                       verify = True,
+                       verify = False,
                        reset_highlights = False):
         if verify:
             if not isinstance(data, list) or not all(isinstance(row, list) for row in data):

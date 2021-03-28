@@ -29,6 +29,11 @@
 
 See the [tests](https://github.com/ragardner/tksheet/tree/master/tests) folder for more examples.
 
+Examples of things that are not possible with tksheet:
+ - Cell merging
+ - Changing font for individual cells
+ - 
+
 ## 2 Installation and Requirements
 `tksheet` is available through PyPi (Python package index) and can be installed by using Pip through the command line `pip install tksheet`
 
@@ -172,13 +177,13 @@ set_sheet_data(data = [[]],
                reset_col_positions = True,
                reset_row_positions = True,
                redraw = True,
-               verify = True,
+               verify = False,
                reset_highlights = False)
 ```
  - `data` (`list`) has to be a list of lists.
  - `reset_col_positions` and `reset_row_positions` (`bool`) when `True` will reset column widths and row heights.
  - `redraw` (`bool`) refreses the table after setting new data.
- - `verify` (`bool`) goes through `data` and checks if it is a list of lists, will raise error if not, set to `False` if you don't need to check.
+ - `verify` (`bool`) goes through `data` and checks if it is a list of lists, will raise error if not, disabled by default.
  - `reset_highlights` (`bool`) resets all table cell highlights.
 
 ___

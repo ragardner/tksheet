@@ -1,3 +1,7 @@
+### Version 5.0.2
+ - `set_sheet_data()` no longer verifies by default that data is list of lists (inbuilt functionality such as cell editing still requires list of lists though)
+ - Initialization argument `data` allows tuple or list
+
 ### Version 5.0.19
  - Scrolling with arrowkeys improvements
 

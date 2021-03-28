@@ -223,7 +223,7 @@ class MainTable(tk.Canvas):
         self.set_fnt_help()
         self.set_hdr_fnt_help()
         self.data_ref = data_reference
-        if isinstance(self.data_ref, list):
+        if isinstance(self.data_ref, (list, tuple)):
             self.data_ref = data_reference
         else:
             self.data_ref = []
