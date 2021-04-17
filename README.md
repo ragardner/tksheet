@@ -3,6 +3,8 @@
 
 Python tkinter table widget
 
+###### Except for any bug fixing and minor improvements, work on this repository has more or less finished
+
 ```
 pip install tksheet
 ```
