@@ -464,113 +464,118 @@ class ColumnHeaders(tk.Canvas):
                 rm2start = rm1start + (rm1end - rm1start)
                 rm2end = rm1end + (rm1end - rm1start)
                 totalcols = len(colsiter)
+                extra_func_success = True
                 if c >= len(self.MT.col_positions) - 1:
                     c -= 1
                 c_ = int(c)
                 if self.ch_extra_begin_drag_drop_func is not None:
-                    self.ch_extra_begin_drag_drop_func(("begin_column_header_drag_drop", tuple(orig_selected_cols), int(c)))
-                if self.column_drag_and_drop_perform:
-                    if self.MT.all_columns_displayed:
-                        if rm1start > c:
-                            for rn in range(len(self.MT.data_ref)):
-                                try:
-                                    self.MT.data_ref[rn] = (self.MT.data_ref[rn][:c] +
-                                                            self.MT.data_ref[rn][rm1start:rm1start + totalcols] +
-                                                            self.MT.data_ref[rn][c:rm1start] +
-                                                            self.MT.data_ref[rn][rm1start + totalcols:])
-                                except:
-                                    continue
-                            if not isinstance(self.MT.my_hdrs, int) and self.MT.my_hdrs:
-                                try:
-                                    self.MT.my_hdrs = (self.MT.my_hdrs[:c] +
-                                                       self.MT.my_hdrs[rm1start:rm1start + totalcols] +
-                                                       self.MT.my_hdrs[c:rm1start] +
-                                                       self.MT.my_hdrs[rm1start + totalcols:])
-                                except:
-                                    pass
+                    try:
+                        self.ch_extra_begin_drag_drop_func(("begin_column_header_drag_drop", tuple(orig_selected_cols), int(c)))
+                    except:
+                        extra_func_success = False
+                if extra_func_success:
+                    if self.column_drag_and_drop_perform:
+                        if self.MT.all_columns_displayed:
+                            if rm1start > c:
+                                for rn in range(len(self.MT.data_ref)):
+                                    try:
+                                        self.MT.data_ref[rn] = (self.MT.data_ref[rn][:c] +
+                                                                self.MT.data_ref[rn][rm1start:rm1start + totalcols] +
+                                                                self.MT.data_ref[rn][c:rm1start] +
+                                                                self.MT.data_ref[rn][rm1start + totalcols:])
+                                    except:
+                                        continue
+                                if not isinstance(self.MT.my_hdrs, int) and self.MT.my_hdrs:
+                                    try:
+                                        self.MT.my_hdrs = (self.MT.my_hdrs[:c] +
+                                                           self.MT.my_hdrs[rm1start:rm1start + totalcols] +
+                                                           self.MT.my_hdrs[c:rm1start] +
+                                                           self.MT.my_hdrs[rm1start + totalcols:])
+                                    except:
+                                        pass
+                            else:
+                                for rn in range(len(self.MT.data_ref)):
+                                    try:
+                                        self.MT.data_ref[rn] = (self.MT.data_ref[rn][:rm1start] +
+                                                                self.MT.data_ref[rn][rm1start + totalcols:c + 1] +
+                                                                self.MT.data_ref[rn][rm1start:rm1start + totalcols] +
+                                                                self.MT.data_ref[rn][c + 1:])
+                                    except:
+                                        continue
+                                if not isinstance(self.MT.my_hdrs, int) and self.MT.my_hdrs:
+                                    try:
+                                        self.MT.my_hdrs = (self.MT.my_hdrs[:rm1start] +
+                                                           self.MT.my_hdrs[rm1start + totalcols:c + 1] +
+                                                           self.MT.my_hdrs[rm1start:rm1start + totalcols] +
+                                                           self.MT.my_hdrs[c + 1:])
+                                    except:
+                                        pass
                         else:
-                            for rn in range(len(self.MT.data_ref)):
-                                try:
-                                    self.MT.data_ref[rn] = (self.MT.data_ref[rn][:rm1start] +
-                                                            self.MT.data_ref[rn][rm1start + totalcols:c + 1] +
-                                                            self.MT.data_ref[rn][rm1start:rm1start + totalcols] +
-                                                            self.MT.data_ref[rn][c + 1:])
-                                except:
-                                    continue
-                            if not isinstance(self.MT.my_hdrs, int) and self.MT.my_hdrs:
-                                try:
-                                    self.MT.my_hdrs = (self.MT.my_hdrs[:rm1start] +
-                                                       self.MT.my_hdrs[rm1start + totalcols:c + 1] +
-                                                       self.MT.my_hdrs[rm1start:rm1start + totalcols] +
-                                                       self.MT.my_hdrs[c + 1:])
-                                except:
-                                    pass
-                    else:
-                        pass
-                        # drag and drop columns when some are hidden disabled until correct code written
-                cws = [int(b - a) for a, b in zip(self.MT.col_positions, islice(self.MT.col_positions, 1, len(self.MT.col_positions)))]
-                if rm1start > c:
-                    cws = (cws[:c] +
-                           cws[rm1start:rm1start + totalcols] +
-                           cws[c:rm1start] +
-                           cws[rm1start + totalcols:])
-                else:
-                    cws = (cws[:rm1start] +
-                           cws[rm1start + totalcols:c + 1] +
-                           cws[rm1start:rm1start + totalcols] +
-                           cws[c + 1:])
-                self.MT.col_positions = list(accumulate(chain([0], (width for width in cws))))
-                self.MT.deselect("all")
-                if (c_ - 1) + totalcols > len(self.MT.col_positions) - 1:
-                    new_selected = tuple(range(len(self.MT.col_positions) - 1 - totalcols, len(self.MT.col_positions) - 1))
-                    self.MT.create_selected(0, len(self.MT.col_positions) - 1 - totalcols, len(self.MT.row_positions) - 1, len(self.MT.col_positions) - 1, "cols")
-                else:
+                            pass
+                            # drag and drop columns when some are hidden disabled until correct code written
+                    cws = [int(b - a) for a, b in zip(self.MT.col_positions, islice(self.MT.col_positions, 1, len(self.MT.col_positions)))]
                     if rm1start > c:
-                        new_selected = tuple(range(c_, c_ + totalcols))
-                        self.MT.create_selected(0, c_, len(self.MT.row_positions) - 1, c_ + totalcols, "cols")
+                        cws = (cws[:c] +
+                               cws[rm1start:rm1start + totalcols] +
+                               cws[c:rm1start] +
+                               cws[rm1start + totalcols:])
                     else:
-                        new_selected = tuple(range(c_ + 1 - totalcols, c_ + 1))
-                        self.MT.create_selected(0, c_ + 1 - totalcols, len(self.MT.row_positions) - 1, c_ + 1, "cols")
-                self.MT.create_current(0, int(new_selected[0]), type_ = "col", inside = True)
-                if self.MT.undo_enabled:
-                    self.MT.undo_storage.append(zlib.compress(pickle.dumps(("move_cols",
-                                                                            int(orig_selected_cols[0]),
-                                                                            int(new_selected[0]),
-                                                                             int(new_selected[-1]),
-                                                                             sorted(orig_selected_cols)))))
-                colset = set(colsiter)
-                popped_ch = {t1: t2 for t1, t2 in self.cell_options.items() if t1 in colset}
-                popped_cell = {t1: t2 for t1, t2 in self.MT.cell_options.items() if t1[1] in colset}
-                popped_col = {t1: t2 for t1, t2 in self.MT.col_options.items() if t1 in colset}
-                
-                popped_ch = {t1: self.cell_options.pop(t1) for t1 in popped_ch}
-                popped_cell = {t1: self.MT.cell_options.pop(t1) for t1 in popped_cell}
-                popped_col = {t1: self.MT.col_options.pop(t1) for t1 in popped_col}
+                        cws = (cws[:rm1start] +
+                               cws[rm1start + totalcols:c + 1] +
+                               cws[rm1start:rm1start + totalcols] +
+                               cws[c + 1:])
+                    self.MT.col_positions = list(accumulate(chain([0], (width for width in cws))))
+                    self.MT.deselect("all")
+                    if (c_ - 1) + totalcols > len(self.MT.col_positions) - 1:
+                        new_selected = tuple(range(len(self.MT.col_positions) - 1 - totalcols, len(self.MT.col_positions) - 1))
+                        self.MT.create_selected(0, len(self.MT.col_positions) - 1 - totalcols, len(self.MT.row_positions) - 1, len(self.MT.col_positions) - 1, "cols")
+                    else:
+                        if rm1start > c:
+                            new_selected = tuple(range(c_, c_ + totalcols))
+                            self.MT.create_selected(0, c_, len(self.MT.row_positions) - 1, c_ + totalcols, "cols")
+                        else:
+                            new_selected = tuple(range(c_ + 1 - totalcols, c_ + 1))
+                            self.MT.create_selected(0, c_ + 1 - totalcols, len(self.MT.row_positions) - 1, c_ + 1, "cols")
+                    self.MT.create_current(0, int(new_selected[0]), type_ = "col", inside = True)
+                    if self.MT.undo_enabled:
+                        self.MT.undo_storage.append(zlib.compress(pickle.dumps(("move_cols",
+                                                                                int(orig_selected_cols[0]),
+                                                                                int(new_selected[0]),
+                                                                                 int(new_selected[-1]),
+                                                                                 sorted(orig_selected_cols)))))
+                    colset = set(colsiter)
+                    popped_ch = {t1: t2 for t1, t2 in self.cell_options.items() if t1 in colset}
+                    popped_cell = {t1: t2 for t1, t2 in self.MT.cell_options.items() if t1[1] in colset}
+                    popped_col = {t1: t2 for t1, t2 in self.MT.col_options.items() if t1 in colset}
+                    
+                    popped_ch = {t1: self.cell_options.pop(t1) for t1 in popped_ch}
+                    popped_cell = {t1: self.MT.cell_options.pop(t1) for t1 in popped_cell}
+                    popped_col = {t1: self.MT.col_options.pop(t1) for t1 in popped_col}
 
-                self.cell_options = {t1 if t1 < rm1start else t1 - totalcols: t2 for t1, t2 in self.cell_options.items()}
-                self.cell_options = {t1 if t1 < c_ else t1 + totalcols: t2 for t1, t2 in self.cell_options.items()}
+                    self.cell_options = {t1 if t1 < rm1start else t1 - totalcols: t2 for t1, t2 in self.cell_options.items()}
+                    self.cell_options = {t1 if t1 < c_ else t1 + totalcols: t2 for t1, t2 in self.cell_options.items()}
 
-                self.MT.col_options = {t1 if t1 < rm1start else t1 - totalcols: t2 for t1, t2 in self.MT.col_options.items()}
-                self.MT.col_options = {t1 if t1 < c_ else t1 + totalcols: t2 for t1, t2 in self.MT.col_options.items()}
+                    self.MT.col_options = {t1 if t1 < rm1start else t1 - totalcols: t2 for t1, t2 in self.MT.col_options.items()}
+                    self.MT.col_options = {t1 if t1 < c_ else t1 + totalcols: t2 for t1, t2 in self.MT.col_options.items()}
 
-                self.MT.cell_options = {(t10, t11 if t11 < rm1start else t11 - totalcols): t2 for (t10, t11), t2 in self.MT.cell_options.items()}
-                self.MT.cell_options = {(t10, t11 if t11 < c_ else t11 + totalcols): t2 for (t10, t11), t2 in self.MT.cell_options.items()}
+                    self.MT.cell_options = {(t10, t11 if t11 < rm1start else t11 - totalcols): t2 for (t10, t11), t2 in self.MT.cell_options.items()}
+                    self.MT.cell_options = {(t10, t11 if t11 < c_ else t11 + totalcols): t2 for (t10, t11), t2 in self.MT.cell_options.items()}
 
-                newcolsdct = {t1: t2 for t1, t2 in zip(colsiter, new_selected)}
-                for t1, t2 in popped_ch.items():
-                    self.cell_options[newcolsdct[t1]] = t2
+                    newcolsdct = {t1: t2 for t1, t2 in zip(colsiter, new_selected)}
+                    for t1, t2 in popped_ch.items():
+                        self.cell_options[newcolsdct[t1]] = t2
 
-                for t1, t2 in popped_col.items():
-                    self.MT.col_options[newcolsdct[t1]] = t2
+                    for t1, t2 in popped_col.items():
+                        self.MT.col_options[newcolsdct[t1]] = t2
 
-                for (t10, t11), t2 in popped_cell.items():
-                    self.MT.cell_options[(t10, newcolsdct[t11])] = t2
+                    for (t10, t11), t2 in popped_cell.items():
+                        self.MT.cell_options[(t10, newcolsdct[t11])] = t2
 
-                self.MT.refresh_dropdowns()
-                
-                self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
-                if self.ch_extra_end_drag_drop_func is not None:
-                    self.ch_extra_end_drag_drop_func(("end_column_header_drag_drop", tuple(orig_selected_cols), new_selected, int(c)))
+                    self.MT.refresh_dropdowns()
+                    
+                    self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
+                    if self.ch_extra_end_drag_drop_func is not None:
+                        self.ch_extra_end_drag_drop_func(("end_column_header_drag_drop", tuple(orig_selected_cols), new_selected, int(c)))
         self.dragged_col = None
         self.currently_resizing_width = False
         self.currently_resizing_height = False

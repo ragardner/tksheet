@@ -27,12 +27,16 @@
 ## 1 About tksheet
 `tksheet` is a Python tkinter table widget written in pure python. It is licensed under the [MIT license](https://github.com/ragardner/tksheet/blob/master/LICENSE.txt).
 
+It works using tkinter canvases to draw and moves lines and text for only the visible portion of the table.
+
 See the [tests](https://github.com/ragardner/tksheet/tree/master/tests) folder for more examples.
 
 Examples of things that are not possible with tksheet:
  - Cell merging
  - Changing font for individual cells
- - 
+ - Checkboxes in cells
+ - Different fonts for index and table
+ - Mouse drag copy cells
 
 ## 2 Installation and Requirements
 `tksheet` is available through PyPi (Python package index) and can be installed by using Pip through the command line `pip install tksheet`

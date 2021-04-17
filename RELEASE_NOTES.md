@@ -1,3 +1,6 @@
+### Version 5.0.22
+ - Put all begin extra functions inside try/except, returns on exception
+
 ### Version 5.0.21
  - Attempt to fix PyPi version issue
 

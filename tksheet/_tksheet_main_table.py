@@ -394,7 +394,10 @@ class MainTable(tk.Canvas):
             if isinstance(currently_selected[0], int) or currently_selected[0] == "column":
                 boxes, maxrows = self.get_ctrl_x_c_boxes()
                 if self.extra_begin_ctrl_c_func is not None:
-                    self.extra_begin_ctrl_c_func(("begin_ctrl_c", boxes, currently_selected))
+                    try:
+                        self.extra_begin_ctrl_c_func(("begin_ctrl_c", boxes, currently_selected))
+                    except:
+                        return
                 if self.all_columns_displayed:
                     for rn in range(maxrows):
                         row = []
@@ -426,7 +429,10 @@ class MainTable(tk.Canvas):
             elif currently_selected[0] == "row":
                 boxes = self.get_ctrl_x_c_boxes()
                 if self.extra_begin_ctrl_c_func is not None:
-                    self.extra_begin_ctrl_c_func(("begin_ctrl_c", boxes, currently_selected))
+                    try:
+                        self.extra_begin_ctrl_c_func(("begin_ctrl_c", boxes, currently_selected))
+                    except:
+                        return
                 if self.all_columns_displayed:
                     for r1, c1, r2, c2 in boxes:
                         for rn in range(r2 - r1):
@@ -470,7 +476,10 @@ class MainTable(tk.Canvas):
             if isinstance(currently_selected[0], int) or currently_selected[0] == "column":
                 boxes, maxrows = self.get_ctrl_x_c_boxes()
                 if self.extra_begin_ctrl_x_func is not None:
-                    self.extra_begin_ctrl_x_func(("begin_ctrl_x", boxes, currently_selected))
+                    try:
+                        self.extra_begin_ctrl_x_func(("begin_ctrl_x", boxes, currently_selected))
+                    except:
+                        return
                 if self.all_columns_displayed:
                     for rn in range(maxrows):
                         row = []
@@ -541,7 +550,10 @@ class MainTable(tk.Canvas):
             elif currently_selected[0] == "row":
                 boxes = self.get_ctrl_x_c_boxes()
                 if self.extra_begin_ctrl_x_func is not None:
-                    self.extra_begin_ctrl_x_func(("begin_ctrl_x", boxes, currently_selected))
+                    try:
+                        self.extra_begin_ctrl_x_func(("begin_ctrl_x", boxes, currently_selected))
+                    except:
+                        return
                 if self.all_columns_displayed:
                     for r1, c1, r2, c2 in boxes:
                         for rn in range(r2 - r1):
@@ -647,7 +659,10 @@ class MainTable(tk.Canvas):
             if self.extra_begin_ctrl_v_func is not None or self.extra_end_ctrl_v_func is not None:
                 rows = [[data[ndr][ndc] for ndc, c in enumerate(range(x1, x1 + numcols))] for ndr, r in enumerate(range(y1, y1 + numrows))]
             if self.extra_begin_ctrl_v_func is not None:
-                self.extra_begin_ctrl_v_func(("begin_ctrl_v", currently_selected, rows))
+                try:
+                    self.extra_begin_ctrl_v_func(("begin_ctrl_v", currently_selected, rows))
+                except:
+                    return
             if self.all_columns_displayed:
                 for ndr, r in enumerate(range(y1, y1 + numrows)):
                     for ndc, c in enumerate(range(x1, x1 + numcols)):
@@ -707,7 +722,10 @@ class MainTable(tk.Canvas):
                     elif alltags[0] == "RowSelectFill":
                         boxes.append((box, "rows"))
                 if self.extra_begin_delete_key_func is not None:
-                    self.extra_begin_delete_key_func(("begin_delete_key", boxes, currently_selected))
+                    try:
+                        self.extra_begin_delete_key_func(("begin_delete_key", boxes, currently_selected))
+                    except:
+                        return
                 for (r1, c1, r2, c2), _ in boxes:
                     for r in range(r1, r2):
                         for c in range(c1, c2):
@@ -734,7 +752,10 @@ class MainTable(tk.Canvas):
                     elif alltags[0] == "RowSelectFill":
                         boxes.append((box, "rows"))
                 if self.extra_begin_delete_key_func is not None:
-                    self.extra_begin_delete_key_func(("begin_delete_key", boxes, currently_selected))
+                    try:
+                        self.extra_begin_delete_key_func(("begin_delete_key", boxes, currently_selected))
+                    except:
+                        return
                 for (r1, c1, r2, c2), _ in boxes:
                     for r in range(r1, r2):
                         for c in range(c1, c2):
@@ -758,12 +779,17 @@ class MainTable(tk.Canvas):
 
     def ctrl_z(self, event = None):
         if self.undo_storage:
-            undo_storage = self.undo_storage.pop()
-            if not isinstance(undo_storage, (tuple, dict)):
-                undo_storage = pickle.loads(zlib.decompress(undo_storage))
+            if not isinstance(self.undo_storage[-1], (tuple, dict)):
+                undo_storage = pickle.loads(zlib.decompress(self.undo_storage[-1]))
+            else:
+                undo_storage = self.undo_storage[-1]
             self.deselect("all")
             if self.extra_begin_ctrl_z_func is not None:
-                self.extra_begin_ctrl_z_func(("begin_ctrl_z", undo_storage[0], undo_storage))
+                try:
+                    self.extra_begin_ctrl_z_func(("begin_ctrl_z", undo_storage[0], undo_storage))
+                except:
+                    return
+            self.undo_storage.pop()
             if undo_storage[0] == "edit_cells":
                 for (r, c), v in undo_storage[1].items():
                     self.data_ref[r][c] = v
@@ -2878,7 +2904,10 @@ class MainTable(tk.Canvas):
             displayed_ins_col = len(self.col_positions) - 1
             data_ins_col = int(displayed_ins_col)
         if self.extra_begin_insert_cols_rc_func is not None:
-            self.extra_begin_insert_cols_rc_func(("begin_insert_columns", data_ins_col, displayed_ins_col, numcols))
+            try:
+                self.extra_begin_insert_cols_rc_func(("begin_insert_columns", data_ins_col, displayed_ins_col, numcols))
+            except:
+                return
         if not self.all_columns_displayed:
             try:
                 disp_next = max(self.displayed_columns) + 1
@@ -2928,7 +2957,10 @@ class MainTable(tk.Canvas):
             stidx = self.total_data_rows()
             posidx = len(self.row_positions) - 1
         if self.extra_begin_insert_rows_rc_func is not None:
-            self.extra_begin_insert_rows_rc_func(("begin_insert_rows", stidx, posidx, numrows))
+            try:
+                self.extra_begin_insert_rows_rc_func(("begin_insert_rows", stidx, posidx, numrows))
+            except:
+                return
         self.insert_row_positions(idx = posidx,
                                   heights = numrows,
                                   deselect_all = True)
@@ -2962,7 +2994,10 @@ class MainTable(tk.Canvas):
         seld_cols = sorted(self.get_selected_cols())
         if seld_cols:
             if self.extra_begin_del_cols_rc_func is not None:
-                self.extra_begin_del_cols_rc_func(("begin_delete_columns", seld_cols))
+                try:
+                    self.extra_begin_del_cols_rc_func(("begin_delete_columns", seld_cols))
+                except:
+                    return
             seldset = set(seld_cols) if self.all_columns_displayed else set(self.displayed_columns[c] for c in seld_cols)
             del_cell_options = tuple((r, c) for (r, c) in self.cell_options if c in seldset)
             for r, c in del_cell_options:
@@ -3057,7 +3092,10 @@ class MainTable(tk.Canvas):
         seld_rows = sorted(self.get_selected_rows())
         if seld_rows:
             if self.extra_begin_del_rows_rc_func is not None:
-                self.extra_begin_del_rows_rc_func(("begin_delete_rows", seld_rows))
+                try:
+                    self.extra_begin_del_rows_rc_func(("begin_delete_rows", seld_rows))
+                except:
+                    return
             seldset = set(seld_rows)
             del_cell_options = tuple((r, c) for (r, c) in self.cell_options if r in seldset)
             for r, c in del_cell_options:
@@ -4502,7 +4540,10 @@ class MainTable(tk.Canvas):
                 ):
                 return
         if self.extra_begin_edit_cell_func is not None:
-            text = self.extra_begin_edit_cell_func((y1, x1, event.char))
+            try:
+                text = self.extra_begin_edit_cell_func((y1, x1, event.char))
+            except:
+                return
             if text is not None:
                 text = f"{text}"
         if self.extra_begin_edit_cell_func is None or text is None:

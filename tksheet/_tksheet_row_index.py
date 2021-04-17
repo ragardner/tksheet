@@ -505,101 +505,106 @@ class RowIndex(tk.Canvas):
                 rm2start = rm1start + (rm1end - rm1start)
                 rm2end = rm1end + (rm1end - rm1start)
                 totalrows = len(rowsiter)
+                extra_func_success = True
                 if r >= len(self.MT.row_positions) - 1:
                     r -= 1
                 r_ = int(r)
                 if self.ri_extra_begin_drag_drop_func is not None:
-                    self.ri_extra_begin_drag_drop_func(("begin_row_index_drag_drop", tuple(orig_selected_rows), int(r)))
-                if self.row_drag_and_drop_perform:
+                    try:
+                        self.ri_extra_begin_drag_drop_func(("begin_row_index_drag_drop", tuple(orig_selected_rows), int(r)))
+                    except:
+                        extra_func_success = False
+                if extra_func_success:
+                    if self.row_drag_and_drop_perform:
+                        if rm1start > r:
+                            self.MT.data_ref = (self.MT.data_ref[:r] +
+                                                self.MT.data_ref[rm1start:rm1start + totalrows] +
+                                                self.MT.data_ref[r:rm1start] +
+                                                self.MT.data_ref[rm1start + totalrows:])
+                            if not isinstance(self.MT.my_row_index, int) and self.MT.my_row_index:
+                                try:
+                                    self.MT.my_row_index = (self.MT.my_row_index[:r] +
+                                                            self.MT.my_row_index[rm1start:rm1start + totalrows] +
+                                                            self.MT.my_row_index[r:rm1start] +
+                                                            self.MT.my_row_index[rm1start + totalrows:])
+                                except:
+                                    pass
+                        else:
+                            self.MT.data_ref = (self.MT.data_ref[:rm1start] +
+                                                self.MT.data_ref[rm1start + totalrows:r + 1] +
+                                                self.MT.data_ref[rm1start:rm1start + totalrows] +
+                                                self.MT.data_ref[r + 1:])
+                            if not isinstance(self.MT.my_row_index, int) and self.MT.my_row_index:
+                                try:
+                                    self.MT.my_row_index = (self.MT.my_row_index[:rm1start] +
+                                                            self.MT.my_row_index[rm1start + totalrows:r + 1] +
+                                                            self.MT.my_row_index[rm1start:rm1start + totalrows] +
+                                                            self.MT.my_row_index[r + 1:])
+                                except:
+                                    pass
+                    rhs = [int(b - a) for a, b in zip(self.MT.row_positions, islice(self.MT.row_positions, 1, len(self.MT.row_positions)))]
                     if rm1start > r:
-                        self.MT.data_ref = (self.MT.data_ref[:r] +
-                                            self.MT.data_ref[rm1start:rm1start + totalrows] +
-                                            self.MT.data_ref[r:rm1start] +
-                                            self.MT.data_ref[rm1start + totalrows:])
-                        if not isinstance(self.MT.my_row_index, int) and self.MT.my_row_index:
-                            try:
-                                self.MT.my_row_index = (self.MT.my_row_index[:r] +
-                                                        self.MT.my_row_index[rm1start:rm1start + totalrows] +
-                                                        self.MT.my_row_index[r:rm1start] +
-                                                        self.MT.my_row_index[rm1start + totalrows:])
-                            except:
-                                pass
+                        rhs = (rhs[:r] +
+                               rhs[rm1start:rm1start + totalrows] +
+                               rhs[r:rm1start] +
+                               rhs[rm1start + totalrows:])
                     else:
-                        self.MT.data_ref = (self.MT.data_ref[:rm1start] +
-                                            self.MT.data_ref[rm1start + totalrows:r + 1] +
-                                            self.MT.data_ref[rm1start:rm1start + totalrows] +
-                                            self.MT.data_ref[r + 1:])
-                        if not isinstance(self.MT.my_row_index, int) and self.MT.my_row_index:
-                            try:
-                                self.MT.my_row_index = (self.MT.my_row_index[:rm1start] +
-                                                        self.MT.my_row_index[rm1start + totalrows:r + 1] +
-                                                        self.MT.my_row_index[rm1start:rm1start + totalrows] +
-                                                        self.MT.my_row_index[r + 1:])
-                            except:
-                                pass
-                rhs = [int(b - a) for a, b in zip(self.MT.row_positions, islice(self.MT.row_positions, 1, len(self.MT.row_positions)))]
-                if rm1start > r:
-                    rhs = (rhs[:r] +
-                           rhs[rm1start:rm1start + totalrows] +
-                           rhs[r:rm1start] +
-                           rhs[rm1start + totalrows:])
-                else:
-                    rhs = (rhs[:rm1start] +
-                           rhs[rm1start + totalrows:r + 1] +
-                           rhs[rm1start:rm1start + totalrows] +
-                           rhs[r + 1:])
-                self.MT.row_positions = list(accumulate(chain([0], (height for height in rhs))))
-                self.MT.deselect("all")
-                if (r_ - 1) + totalrows > len(self.MT.row_positions) - 1:
-                    new_selected = tuple(range(len(self.MT.row_positions) - 1 - totalrows, len(self.MT.row_positions) - 1))
-                    self.MT.create_selected(len(self.MT.row_positions) - 1 - totalrows, 0, len(self.MT.row_positions) - 1, len(self.MT.col_positions) - 1, "rows")
-                else:
-                    if rm1start > r:
-                        new_selected = tuple(range(r_, r_ + totalrows))
-                        self.MT.create_selected(r_, 0, r_ + totalrows, len(self.MT.col_positions) - 1, "rows")
+                        rhs = (rhs[:rm1start] +
+                               rhs[rm1start + totalrows:r + 1] +
+                               rhs[rm1start:rm1start + totalrows] +
+                               rhs[r + 1:])
+                    self.MT.row_positions = list(accumulate(chain([0], (height for height in rhs))))
+                    self.MT.deselect("all")
+                    if (r_ - 1) + totalrows > len(self.MT.row_positions) - 1:
+                        new_selected = tuple(range(len(self.MT.row_positions) - 1 - totalrows, len(self.MT.row_positions) - 1))
+                        self.MT.create_selected(len(self.MT.row_positions) - 1 - totalrows, 0, len(self.MT.row_positions) - 1, len(self.MT.col_positions) - 1, "rows")
                     else:
-                        new_selected = tuple(range(r_ + 1 - totalrows, r_ + 1))
-                        self.MT.create_selected(r_ + 1 - totalrows, 0, r_ + 1, len(self.MT.col_positions) - 1, "rows")
-                self.MT.create_current(int(new_selected[0]), 0, type_ = "row", inside = True)
-                rowset = set(rowsiter)
-                if self.MT.undo_enabled:
-                    self.MT.undo_storage.append(zlib.compress(pickle.dumps(("move_rows",
-                                                                            min(orig_selected_rows),
-                                                                            new_selected[0],
-                                                                            new_selected[-1],
-                                                                            sorted(orig_selected_rows)))))
-                popped_ri = {t1: t2 for t1, t2 in self.cell_options.items() if t1 in rowset}
-                popped_cell = {t1: t2 for t1, t2 in self.MT.cell_options.items() if t1[0] in rowset}
-                popped_row = {t1: t2 for t1, t2 in self.MT.row_options.items() if t1 in rowset}
-                
-                popped_ri = {t1: self.cell_options.pop(t1) for t1 in popped_ri}
-                popped_cell = {t1: self.MT.cell_options.pop(t1) for t1 in popped_cell}
-                popped_row = {t1: self.MT.row_options.pop(t1) for t1 in popped_row}
+                        if rm1start > r:
+                            new_selected = tuple(range(r_, r_ + totalrows))
+                            self.MT.create_selected(r_, 0, r_ + totalrows, len(self.MT.col_positions) - 1, "rows")
+                        else:
+                            new_selected = tuple(range(r_ + 1 - totalrows, r_ + 1))
+                            self.MT.create_selected(r_ + 1 - totalrows, 0, r_ + 1, len(self.MT.col_positions) - 1, "rows")
+                    self.MT.create_current(int(new_selected[0]), 0, type_ = "row", inside = True)
+                    rowset = set(rowsiter)
+                    if self.MT.undo_enabled:
+                        self.MT.undo_storage.append(zlib.compress(pickle.dumps(("move_rows",
+                                                                                min(orig_selected_rows),
+                                                                                new_selected[0],
+                                                                                new_selected[-1],
+                                                                                sorted(orig_selected_rows)))))
+                    popped_ri = {t1: t2 for t1, t2 in self.cell_options.items() if t1 in rowset}
+                    popped_cell = {t1: t2 for t1, t2 in self.MT.cell_options.items() if t1[0] in rowset}
+                    popped_row = {t1: t2 for t1, t2 in self.MT.row_options.items() if t1 in rowset}
+                    
+                    popped_ri = {t1: self.cell_options.pop(t1) for t1 in popped_ri}
+                    popped_cell = {t1: self.MT.cell_options.pop(t1) for t1 in popped_cell}
+                    popped_row = {t1: self.MT.row_options.pop(t1) for t1 in popped_row}
 
-                self.cell_options = {t1 if t1 < rm1start else t1 - totalrows: t2 for t1, t2 in self.cell_options.items()}
-                self.cell_options = {t1 if t1 < r_ else t1 + totalrows: t2 for t1, t2 in self.cell_options.items()}
+                    self.cell_options = {t1 if t1 < rm1start else t1 - totalrows: t2 for t1, t2 in self.cell_options.items()}
+                    self.cell_options = {t1 if t1 < r_ else t1 + totalrows: t2 for t1, t2 in self.cell_options.items()}
 
-                self.MT.row_options = {t1 if t1 < rm1start else t1 - totalrows: t2 for t1, t2 in self.MT.row_options.items()}
-                self.MT.row_options = {t1 if t1 < r_ else t1 + totalrows: t2 for t1, t2 in self.MT.row_options.items()}
+                    self.MT.row_options = {t1 if t1 < rm1start else t1 - totalrows: t2 for t1, t2 in self.MT.row_options.items()}
+                    self.MT.row_options = {t1 if t1 < r_ else t1 + totalrows: t2 for t1, t2 in self.MT.row_options.items()}
 
-                self.MT.cell_options = {(t10 if t10 < rm1start else t10 - totalrows, t11): t2 for (t10, t11), t2 in self.MT.cell_options.items()}
-                self.MT.cell_options = {(t10 if t10 < r_ else t10 + totalrows, t11): t2 for (t10, t11), t2 in self.MT.cell_options.items()}
+                    self.MT.cell_options = {(t10 if t10 < rm1start else t10 - totalrows, t11): t2 for (t10, t11), t2 in self.MT.cell_options.items()}
+                    self.MT.cell_options = {(t10 if t10 < r_ else t10 + totalrows, t11): t2 for (t10, t11), t2 in self.MT.cell_options.items()}
 
-                newrowsdct = {t1: t2 for t1, t2 in zip(rowsiter, new_selected)}
-                for t1, t2 in popped_ri.items():
-                    self.cell_options[newrowsdct[t1]] = t2
+                    newrowsdct = {t1: t2 for t1, t2 in zip(rowsiter, new_selected)}
+                    for t1, t2 in popped_ri.items():
+                        self.cell_options[newrowsdct[t1]] = t2
 
-                for t1, t2 in popped_row.items():
-                    self.MT.row_options[newrowsdct[t1]] = t2
+                    for t1, t2 in popped_row.items():
+                        self.MT.row_options[newrowsdct[t1]] = t2
 
-                for (t10, t11), t2 in popped_cell.items():
-                    self.MT.cell_options[(newrowsdct[t10], t11)] = t2
+                    for (t10, t11), t2 in popped_cell.items():
+                        self.MT.cell_options[(newrowsdct[t10], t11)] = t2
 
-                self.MT.refresh_dropdowns()
+                    self.MT.refresh_dropdowns()
 
-                self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
-                if self.ri_extra_end_drag_drop_func is not None:
-                    self.ri_extra_end_drag_drop_func(("end_row_index_drag_drop", tuple(orig_selected_rows), new_selected, int(r)))
+                    self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
+                    if self.ri_extra_end_drag_drop_func is not None:
+                        self.ri_extra_end_drag_drop_func(("end_row_index_drag_drop", tuple(orig_selected_rows), new_selected, int(r)))
         self.dragged_row = None
         self.currently_resizing_width = False
         self.currently_resizing_height = False
