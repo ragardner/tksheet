@@ -3,8 +3,6 @@
 
 Python tkinter table widget
 
-###### Except for any bug fixing and minor improvements, work on this repository has more or less finished
-
 ```
 pip install tksheet
 ```
@@ -13,6 +11,7 @@ pip install tksheet
  - [Documentation](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md)
  - [Test file](https://github.com/ragardner/tksheet/blob/master/tests/test_tksheet.py)
  - [Version release notes](https://github.com/ragardner/tksheet/blob/master/RELEASE_NOTES.md)
+###### Except for any bug fixing and minor improvements I am no longer working on this repository
 
 ### Features
  - Display and modify tabular data
