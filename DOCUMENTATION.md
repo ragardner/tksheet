@@ -22,7 +22,7 @@
 21. [Table Options and Other Functions](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#21-Table-Options-and-Other-Functions)
 22. [Example Loading Data from Excel](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#22-Example-Loading-Data-from-Excel)
 23. [Example Custom Right Click and Text Editor Functionality](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#23-Example-Custom-Right-Click-and-Text-Editor-Functionality)
-24. [Example Displaying Selections](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#23-Example-Displaying-Selections)
+24. [Example Displaying Selections](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#24-Example-Displaying-Selections)
 
 
 ## 1 About tksheet
