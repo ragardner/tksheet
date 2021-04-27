@@ -1,3 +1,6 @@
+### Version 5.0.23
+ - Fix page up/down cell select event not being created if user has cell selected
+
 ### Version 5.0.22
  - Put all begin extra functions inside try/except, returns on exception
 

@@ -1579,9 +1579,7 @@ class MainTable(tk.Canvas):
             elif (self.single_selection_enabled or self.toggle_selection_enabled) and self.anything_selected(exclude_columns = True, exclude_rows = True):
                 box = self.get_all_selection_boxes_with_types()[0][0]
                 self.see(r, box[1], keep_xscroll = True, check_cell_visibility = False)
-                self.deselect("all")
-                self.create_selected(r, box[1], r + (box[2] - box[0]), box[3], "cells")
-                self.create_current(r, box[1], "cell", inside = True)
+                self.select_cell(r, box[1])
         else:
             args = ("moveto", scrollto / (self.row_positions[-1] + 100))
             self.yview(*args)
@@ -1607,9 +1605,7 @@ class MainTable(tk.Canvas):
             elif (self.single_selection_enabled or self.toggle_selection_enabled) and self.anything_selected(exclude_columns = True, exclude_rows = True):
                 box = self.get_all_selection_boxes_with_types()[0][0]
                 self.see(r, box[1], keep_xscroll = True, check_cell_visibility = False)
-                self.deselect("all")
-                self.create_selected(r, box[1], r + (box[2] - box[0]), box[3], "cells")
-                self.create_current(r, box[1], "cell", inside = True)
+                self.select_cell(r, box[1])
         else:
             end = self.row_positions[-1]
             if scrollto > end  + 100:
