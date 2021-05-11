@@ -354,6 +354,7 @@ enable_bindings(bindings = "all")
 	- "single_select"
 	- "toggle_select"
 	- "drag_select"
+        - "select_all"
 	- "column_drag_and_drop"
 	- "row_drag_and_drop"
 	- "column_select"
@@ -1369,6 +1370,7 @@ class demo(tk.Tk):
                            data = [[f"Row {r}, Column {c}\nnewline1\nnewline2" for c in range(50)] for r in range(500)])
         self.sheet.enable_bindings(("single_select",
                                     "drag_select",
+                                    "select_all",
                                     "column_select",
                                     "row_select",
                                     "column_width_resize",

@@ -1,3 +1,7 @@
+### Version 5.0.25
+ - Select all now needs to be enabled separately from `"drag_select"` using `"select_all"`
+ - Separate Control / Command bindings based on OS
+
 ### Version 5.0.24
  - Fix documentation link
 

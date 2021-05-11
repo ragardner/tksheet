@@ -45,14 +45,15 @@ class demo(tk.Tk):
         #self.sheet.hide("top_left")
         self.sheet.enable_bindings(("single_select", #"single_select" or "toggle_select"
                                          "drag_select",   #enables shift click selection as well
+                                    "select_all",
                                          "column_drag_and_drop",
                                          "row_drag_and_drop",
                                          "column_select",
                                          "row_select",
                                          "column_width_resize",
                                          "double_click_column_resize",
-                                         #"row_width_resize",
-                                         #"column_height_resize",
+                                         "row_width_resize",
+                                         "column_height_resize",
                                          "arrowkeys",
                                          "row_height_resize",
                                          "double_click_row_resize",
@@ -62,13 +63,13 @@ class demo(tk.Tk):
                                          "rc_delete_column",
                                          "rc_insert_row",
                                          "rc_delete_row",
-                                    "hide_columns",
                                          "copy",
                                          "cut",
                                          "paste",
                                          "delete",
                                          "undo",
-                                         "edit_cell"))
+                                         "edit_cell"
+                                    ))
         #self.sheet.disable_bindings() #uses the same strings
         #self.sheet.enable_bindings()
 
@@ -164,7 +165,7 @@ class demo(tk.Tk):
         #                            ])
         #self.sheet.extra_bindings("bind_all", self.all_extra_bindings)
         #self.sheet.extra_bindings("begin_edit_cell", self.begin_edit_cell)
-        #self.sheet.extra_bindings([("cell_select", None)]) #unbind cell select
+        self.sheet.extra_bindings([("all_select_events", self.all_extra_bindings)])
         #self.sheet.extra_bindings("unbind_all") #remove all functions set by extra_bindings()
 
         # __________ BINDING NEW RIGHT CLICK FUNCTION __________

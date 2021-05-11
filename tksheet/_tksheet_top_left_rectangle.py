@@ -118,7 +118,7 @@ class TopLeftRectangle(tk.Canvas):
         self.focus_set()
         rect = self.find_overlapping(event.x, event.y, event.x, event.y)
         if not rect:
-            if self.MT.drag_selection_enabled and not self.MT.all_selected():
+            if self.MT.select_all_enabled and not self.MT.all_selected():
                 self.MT.select_all()
             else:
                 self.MT.deselect("all")

@@ -173,6 +173,7 @@ class MainTable(tk.Canvas):
         self.toggle_selection_enabled = False # with this mode every left click adds the cell to selected cells
 
         self.drag_selection_enabled = False
+        self.select_all_enabled = False
         self.arrowkeys_enabled = False
         self.undo_enabled = False
         self.cut_enabled = False
@@ -1734,10 +1735,9 @@ class MainTable(tk.Canvas):
     def edit_bindings(self, enable = True, key = None):
         if key is None or key == "copy":
             if enable:
-                for s1 in ("Control", "Command"):
-                    for s2 in ("c", "C"):
-                        for widget in (self, self.RI, self.CH):
-                            widget.bind(f"<{s1}-{s2}>", self.ctrl_c)
+                for s2 in ("c", "C"):
+                    for widget in (self, self.RI, self.CH):
+                        widget.bind(f"<{'Command' if USER_OS == 'Darwin' else 'Control'}-{s2}>", self.ctrl_c)
                 self.copy_enabled = True
             else:
                 for s1 in ("Control", "Command"):
@@ -1747,10 +1747,9 @@ class MainTable(tk.Canvas):
                 self.copy_enabled = False
         if key is None or key == "cut":
             if enable:
-                for s1 in ("Control", "Command"):
-                    for s2 in ("x", "X"):
-                        for widget in (self, self.RI, self.CH):
-                            widget.bind(f"<{s1}-{s2}>", self.ctrl_x)
+                for s2 in ("x", "X"):
+                    for widget in (self, self.RI, self.CH):
+                        widget.bind(f"<{'Command' if USER_OS == 'Darwin' else 'Control'}-{s2}>", self.ctrl_x)
                 self.cut_enabled = True
             else:
                 for s1 in ("Control", "Command"):
@@ -1760,10 +1759,9 @@ class MainTable(tk.Canvas):
                 self.cut_enabled = False
         if key is None or key == "paste":
             if enable:
-                for s1 in ("Control", "Command"):
-                    for s2 in ("v", "V"):
-                        for widget in (self, self.RI, self.CH):
-                            widget.bind(f"<{s1}-{s2}>", self.ctrl_v)
+                for s2 in ("v", "V"):
+                    for widget in (self, self.RI, self.CH):
+                        widget.bind(f"<{'Command' if USER_OS == 'Darwin' else 'Control'}-{s2}>", self.ctrl_v)
                 self.paste_enabled = True
             else:
                 for s1 in ("Control", "Command"):
@@ -1773,10 +1771,9 @@ class MainTable(tk.Canvas):
                 self.paste_enabled = False
         if key is None or key == "undo":
             if enable:
-                for s1 in ("Control", "Command"):
-                    for s2 in ("z", "Z"):
-                        for widget in (self, self.RI, self.CH):
-                            widget.bind(f"<{s1}-{s2}>", self.ctrl_z)
+                for s2 in ("z", "Z"):
+                    for widget in (self, self.RI, self.CH):
+                        widget.bind(f"<{'Command' if USER_OS == 'Darwin' else 'Control'}-{s2}>", self.ctrl_z)
                 self.undo_enabled = True
             else:
                 for s1 in ("Control", "Command"):
@@ -2002,15 +1999,22 @@ class MainTable(tk.Canvas):
         elif isinstance(bindings, str):
             self.enable_bindings_internal(bindings.lower())
 
+    def enable_disable_select_all(self, enable = True):
+        self.select_all_enabled = bool(enable)
+        for s in ("A", "a"):
+            binding = f"<{'Command' if USER_OS == 'Darwin' else 'Control'}-{s}>"
+            for widget in (self, self.RI, self.CH, self.TL):
+                if enable:
+                    widget.bind(binding, self.select_all)
+                else:
+                    widget.unbind(binding)
+
     def enable_bindings_internal(self, binding):
         if binding in ("enable_all", "all"):
             self.single_selection_enabled = True
             self.toggle_selection_enabled = False
             self.drag_selection_enabled = True
-            for s1 in ("Control", "Command"):
-                for s2 in ("a", "A"):
-                    for widget in (self, self.RI, self.CH):
-                        widget.bind(f"<{s1}-{s2}>", self.select_all)
+            self.enable_disable_select_all(True)
             self.CH.enable_bindings("column_width_resize")
             self.CH.enable_bindings("column_select")
             self.CH.enable_bindings("column_height_resize")
@@ -2039,10 +2043,8 @@ class MainTable(tk.Canvas):
             self.single_selection_enabled = False
         elif binding == "drag_select":
             self.drag_selection_enabled = True
-            for s1 in ("Control", "Command"):
-                for s2 in ("a", "A"):
-                    for widget in (self, self.RI, self.CH):
-                        widget.bind(f"<{s1}-{s2}>", self.select_all)
+        elif binding == "select_all":
+            self.enable_disable_select_all(True)
         elif binding == "column_width_resize":
             self.CH.enable_bindings("column_width_resize")
         elif binding == "column_select":
@@ -2116,10 +2118,7 @@ class MainTable(tk.Canvas):
             self.single_selection_enabled = False
             self.toggle_selection_enabled = False
             self.drag_selection_enabled = False
-            for s1 in ("Control", "Command"):
-                for s2 in ("a", "A"):
-                    for widget in (self, self.RI, self.CH):
-                        widget.unbind(f"<{s1}-{s2}>")
+            self.enable_disable_select_all(False)
             self.CH.disable_bindings("column_width_resize")
             self.CH.disable_bindings("column_select")
             self.CH.disable_bindings("column_height_resize")
@@ -2146,10 +2145,8 @@ class MainTable(tk.Canvas):
             self.toggle_selection_enabled = False
         elif binding == "drag_select":
             self.drag_selection_enabled = False
-            for s1 in ("Control", "Command"):
-                for s2 in ("a", "A"):
-                    for widget in (self, self.RI, self.CH):
-                        widget.unbind(f"<{s1}-{s2}>")
+        elif binding == "select_all":
+            self.enable_disable_select_all(False)
         elif binding == "column_width_resize":
             self.CH.disable_bindings("column_width_resize")
         elif binding == "column_select":
