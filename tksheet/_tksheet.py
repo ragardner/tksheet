@@ -36,6 +36,7 @@ class Sheet(tk.Frame):
                  default_header = "letters", #letters, numbers or both
                  default_row_index = "numbers", #letters, numbers or both
                  page_up_down_select_row = True,
+                 expand_sheet_if_paste_too_big = False,
                  arrow_key_down_right_scroll_page = False,
                  enable_edit_cell_auto_resize = True,
                  data_reference = None,
@@ -178,6 +179,7 @@ class Sheet(tk.Frame):
         self.MT = MainTable(self,
                             enable_edit_cell_auto_resize = enable_edit_cell_auto_resize,
                             page_up_down_select_row = page_up_down_select_row,
+                            expand_sheet_if_paste_too_big = expand_sheet_if_paste_too_big,
                             arrow_key_down_right_scroll_page = arrow_key_down_right_scroll_page,
                             display_selected_fg_over_highlights = display_selected_fg_over_highlights,
                             show_vertical_grid = show_vertical_grid,
@@ -1540,6 +1542,7 @@ class Sheet(tk.Frame):
     def set_options(self,
                     enable_edit_cell_auto_resize = None,
                     page_up_down_select_row = None,
+                    expand_sheet_if_paste_too_big = None,
                     arrow_key_down_right_scroll_page = None,
                     display_selected_fg_over_highlights = None,
                     empty_horizontal = None,
@@ -1608,6 +1611,8 @@ class Sheet(tk.Frame):
                     measure_subset_index = None,
                     measure_subset_header = None,
                     redraw = True):
+        if expand_sheet_if_paste_too_big is not None:
+            self.MT.expand_sheet_if_paste_too_big = expand_sheet_if_paste_too_big
         if arrow_key_down_right_scroll_page is not None:
             self.MT.arrow_key_down_right_scroll_page = arrow_key_down_right_scroll_page
         if enable_edit_cell_auto_resize is not None:

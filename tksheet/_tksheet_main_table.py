@@ -21,6 +21,7 @@ class MainTable(tk.Canvas):
                  parentframe = None,
                  enable_edit_cell_auto_resize = True,
                  page_up_down_select_row = False,
+                 expand_sheet_if_paste_too_big = False,
                  arrow_key_down_right_scroll_page = False,
                  column_width = None,
                  column_headers_canvas = None,
@@ -110,6 +111,7 @@ class MainTable(tk.Canvas):
         self.undo_storage = deque(maxlen = max_undos)
 
         self.page_up_down_select_row = page_up_down_select_row
+        self.expand_sheet_if_paste_too_big = expand_sheet_if_paste_too_big
         self.arrow_key_down_right_scroll_page = arrow_key_down_right_scroll_page
         self.enable_edit_cell_auto_resize = enable_edit_cell_auto_resize
         self.display_selected_fg_over_highlights = display_selected_fg_over_highlights
@@ -653,10 +655,22 @@ class MainTable(tk.Canvas):
             elif isinstance(currently_selected[0], int):
                 y1 = currently_selected[0]
                 x1 = currently_selected[1]
-            if x1 + numcols > len(self.col_positions) - 1:
-                numcols = len(self.col_positions) - 1 - x1
-            if y1 + numrows > len(self.row_positions) - 1:
-                numrows = len(self.row_positions) - 1 - y1
+            if self.expand_sheet_if_paste_too_big:
+                added_rows = 0
+                added_cols = 0
+                if x1 + numcols > len(self.col_positions) - 1:
+                    added_cols = x1 + numcols - len(self.col_positions) + 1
+                    self.insert_col_positions(widths = int(added_cols))
+                if y1 + numrows > len(self.row_positions) - 1:
+                    added_rows = y1 + numrows - len(self.row_positions) + 1
+                    self.insert_row_positions(heights = int(added_rows))
+                added_rows_cols = (added_rows, added_cols)
+            else:
+                if x1 + numcols > len(self.col_positions) - 1:
+                    numcols = len(self.col_positions) - 1 - x1
+                if y1 + numrows > len(self.row_positions) - 1:
+                    numrows = len(self.row_positions) - 1 - y1
+                added_rows_cols = (0, 0)
             if self.extra_begin_ctrl_v_func is not None or self.extra_end_ctrl_v_func is not None:
                 rows = [[data[ndr][ndc] for ndc, c in enumerate(range(x1, x1 + numcols))] for ndr, r in enumerate(range(y1, y1 + numrows))]
             if self.extra_begin_ctrl_v_func is not None:
@@ -698,7 +712,11 @@ class MainTable(tk.Canvas):
                         self.data_ref[r][self.displayed_columns[c]] = data[ndr][ndc]
             self.deselect("all")
             if self.undo_enabled:
-                self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells", undo_storage, (((y1, x1, y1 + numrows, x1 + numcols), "cells"), ), currently_selected))))
+                self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells_paste",
+                                                                     undo_storage,
+                                                                     (((y1, x1, y1 + numrows, x1 + numcols), "cells"), ), # boxes
+                                                                     currently_selected,
+                                                                     added_rows_cols))))
             self.create_selected(y1, x1, y1 + numrows, x1 + numcols, "cells")
             self.create_current(y1, x1, type_ = "cell", inside = True if numrows > 1 or numcols > 1 else False)
             self.see(r = y1, c = x1, keep_yscroll = False, keep_xscroll = False, bottom_right_corner = False, check_cell_visibility = True, redraw = False)
@@ -791,7 +809,7 @@ class MainTable(tk.Canvas):
                 except:
                     return
             self.undo_storage.pop()
-            if undo_storage[0] == "edit_cells":
+            if undo_storage[0] in ("edit_cells", "edit_cells_paste"):
                 for (r, c), v in undo_storage[1].items():
                     self.data_ref[r][c] = v
                     if (r, c) in self.cell_options and 'dropdown' in self.cell_options[(r, c)]:
@@ -805,6 +823,11 @@ class MainTable(tk.Canvas):
                         start_row = r1
                     if c1 < start_col:
                         start_col = c1
+                if undo_storage[0] == "edit_cells_paste":
+                    if undo_storage[4][0] > 0:
+
+                    if undo_storage[4][0] > 0:
+                        
                 if undo_storage[3]:
                     if isinstance(undo_storage[3][0], int):
                         self.create_current(undo_storage[3][0], undo_storage[3][1], type_ = "cell", inside = True if self.cell_selected(undo_storage[3][0], undo_storage[3][1]) else False)
