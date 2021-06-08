@@ -818,16 +818,17 @@ class MainTable(tk.Canvas):
                 start_col = float("inf")
                 for box in undo_storage[2]:
                     r1, c1, r2, c2 = box[0]
-                    self.create_selected(r1, c1, r2, c2, box[1])
+                    if not self.expand_sheet_if_paste_too_big:
+                        self.create_selected(r1, c1, r2, c2, box[1])
                     if r1 < start_row:
                         start_row = r1
                     if c1 < start_col:
                         start_col = c1
-                if undo_storage[0] == "edit_cells_paste":
+                if undo_storage[0] == "edit_cells_paste" and self.expand_sheet_if_paste_too_big:
                     if undo_storage[4][0] > 0:
-
-                    if undo_storage[4][0] > 0:
-                        
+                        self.del_row_positions(len(self.row_positions) - 1 - undo_storage[4][0], undo_storage[4][0])
+                    if undo_storage[4][1] > 0:
+                        self.del_col_positions(len(self.col_positions) - 1 - undo_storage[4][1], undo_storage[4][1])
                 if undo_storage[3]:
                     if isinstance(undo_storage[3][0], int):
                         self.create_current(undo_storage[3][0], undo_storage[3][1], type_ = "cell", inside = True if self.cell_selected(undo_storage[3][0], undo_storage[3][1]) else False)
