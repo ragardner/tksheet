@@ -90,6 +90,7 @@ measure_subset_header = True,
 default_header = "letters",     #letters, numbers or both
 default_row_index = "numbers",  #letters, numbers or both
 page_up_down_select_row = True,
+expand_sheet_if_paste_too_big = False,
 data_reference = None,
 data = None,
 startup_select = None,
@@ -379,6 +380,10 @@ enable_bindings(bindings = "all")
 	- "delete"
 	- "undo"
 	- "edit_cell"
+
+To allow table expansion when pasting data which doesn't fit in the table use either:
+ - `expand_sheet_if_paste_too_big = True` in sheet initialization arguments.
+ - `sheet.set_options(expand_sheet_if_paste_too_big = True)`
 
 ___
 

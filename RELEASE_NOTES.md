@@ -1,3 +1,6 @@
+### Version 5.0.26
+ - Add option `expand_sheet_if_paste_too_big` in initialization and `set_options()` which adds rows/columns if paste is too large for sheet, disabled by default
+
 ### Version 5.0.25
  - Select all now needs to be enabled separately from `"drag_select"` using `"select_all"`
  - Separate Control / Command bindings based on OS
