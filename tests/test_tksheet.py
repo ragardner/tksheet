@@ -12,6 +12,7 @@ class demo(tk.Tk):
         self.frame.grid_rowconfigure(0, weight = 1)
         self.sheet = Sheet(self.frame,
                            page_up_down_select_row = True,
+                           expand_sheet_if_paste_too_big = True,
                            #empty_vertical = 0,
                            column_width = 120,
                            startup_select = (0,1,"rows"),
@@ -265,15 +266,19 @@ class demo(tk.Tk):
 
         #self.sheet.bind("<Motion>", self.mouse_motion)
 
-    """
+        # __________ ADDITIONAL BINDINGS __________
 
-    UNTIL DOCUMENTATION IS COMPLETE, PLEASE BROWSE THE FILE
-    _tksheet.py FOR A FULL LIST OF FUNCTIONS AND THEIR PARAMETERS
+        self.sheet.popup_menu_add_command("Hide columns", self.hide_columns_right_click, table_menu = False, index_menu = False)
 
-    """
+    def hide_columns_right_click(self, event = None):
+        currently_displayed = self.sheet.display_columns()
+        exclude = set(currently_displayed[c] for c in self.sheet.get_selected_columns())
+        indexes = [c for c in currently_displayed if c not in exclude]
+        self.sheet.display_columns(indexes = indexes, enable = True, refresh = True)
 
     def all_extra_bindings(self, event):
-        print (event)
+        #print (event)
+        pass
     
     def begin_edit_cell(self, event):
         print (event)   # event[2] is keystroke
