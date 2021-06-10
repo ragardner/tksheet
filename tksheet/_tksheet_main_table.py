@@ -836,9 +836,12 @@ class MainTable(tk.Canvas):
                         self.del_row_positions(len(self.row_positions) - 1 - undo_storage[4][0], undo_storage[4][0])
                         self.data_ref[:] = self.data_ref[:-undo_storage[4][0]]
                     if undo_storage[4][1] > 0:
-                        self.del_col_positions(len(self.col_positions) - 1 - undo_storage[4][1], undo_storage[4][1])
+                        quick_added_cols = undo_storage[4][1]
+                        self.del_col_positions(len(self.col_positions) - 1 - quick_added_cols, quick_added_cols)
                         for rn in range(len(self.data_ref)):
-                            self.data_ref[rn][:] = self.data_ref[rn][:-undo_storage[4][1]]
+                            self.data_ref[rn][:] = self.data_ref[rn][:-quick_added_cols]
+                        if not self.all_columns_displayed:
+                            self.displayed_columns[:] = self.displayed_columns[:-quick_added_cols]
                 if undo_storage[3]:
                     if isinstance(undo_storage[3][0], int):
                         self.create_current(undo_storage[3][0], undo_storage[3][1], type_ = "cell", inside = True if self.cell_selected(undo_storage[3][0], undo_storage[3][1]) else False)
