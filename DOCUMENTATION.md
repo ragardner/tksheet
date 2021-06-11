@@ -1053,6 +1053,7 @@ display_columns(indexes = None,
                 redraw = False,
                 deselect_all = True)
 ```
+ - If the chosen indexes are equal to a list of columns as long as the longest row in the sheets data then enable will be set to `False`.
 
 ## 18 Table Elements, Height and Width
 

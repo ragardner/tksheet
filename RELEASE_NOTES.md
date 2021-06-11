@@ -1,3 +1,6 @@
+### Version 5.0.27
+ - Internally set `all_columns_displayed` to `True` when user chooses full list of columns as argument for `display_columns()`/`display_subset_of_columns()`
+
 ### Version 5.0.26
  - Add option `expand_sheet_if_paste_too_big` in initialization and `set_options()` which adds rows/columns if paste is too large for sheet, disabled by default
 

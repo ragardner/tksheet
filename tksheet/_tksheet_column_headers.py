@@ -512,7 +512,6 @@ class ColumnHeaders(tk.Canvas):
                                         pass
                         else:
                             pass
-                            # drag and drop columns when some are hidden disabled until correct code written
                     cws = [int(b - a) for a, b in zip(self.MT.col_positions, islice(self.MT.col_positions, 1, len(self.MT.col_positions)))]
                     if rm1start > c:
                         cws = (cws[:c] +

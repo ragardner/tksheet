@@ -3330,7 +3330,7 @@ class MainTable(tk.Canvas):
                 #self.hidd_col_expander_idxs = set(self.hidd_col_expander_idxs)
             else:
                 self.hidd_col_expander_idxs = set()
-        if enable:
+        if enable and list(range(len(max(self.data_ref, key = len)))) != self.displayed_columns:
             self.all_columns_displayed = False
         else:
             self.all_columns_displayed = True
