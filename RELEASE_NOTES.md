@@ -1,3 +1,6 @@
+### Version 5.0.28
+ - Various minor improvements
+
 ### Version 5.0.27
  - Internally set `all_columns_displayed` to `True` when user chooses full list of columns as argument for `display_columns()`/`display_subset_of_columns()`
 

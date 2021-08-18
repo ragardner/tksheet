@@ -91,6 +91,8 @@ default_header = "letters",     #letters, numbers or both
 default_row_index = "numbers",  #letters, numbers or both
 page_up_down_select_row = True,
 expand_sheet_if_paste_too_big = False,
+paste_insert_column_limit = paste_insert_column_limit,
+paste_insert_row_limit = paste_insert_row_limit,
 data_reference = None,
 data = None,
 startup_select = None,
@@ -548,6 +550,12 @@ dehighlight_cells(row = 0, column = 0, cells = [], canvas = "table", all_ = Fals
 ___
 
 ```python
+get_highlighted_cells(canvas = "table")
+```
+
+___
+
+```python
 highlight_rows(rows = [], bg = None, fg = None, highlight_index = True, redraw = False)
 ```
 
@@ -666,6 +674,12 @@ Set default row height in pixels or lines.
 default_header_height(height = None)
 ```
  - `height` (`int`, `str`) use a numerical `str` for number of lines e.g. `"3"` for a height that fits 3 lines or `int` for pixels.
+
+___
+Set a specific cell size to its text
+```python
+set_cell_size_to_text(row, column, only_set_if_too_small = False, redraw = True)
+```
 
 ___
 
@@ -919,6 +933,12 @@ ___
 
 ```python
 select_cell(row, column, redraw = True)
+```
+
+___
+
+```python
+select_all(redraw = True, run_binding_func = True)
 ```
 
 ___
@@ -1207,6 +1227,10 @@ set_all_dropdown_values_to_sheet()
 ```python
 set_options(enable_edit_cell_auto_resize = None,
             page_up_down_select_row = None,
+            expand_sheet_if_paste_too_big = None,
+            paste_insert_column_limit = None,
+            paste_insert_row_limit = None,
+            arrow_key_down_right_scroll_page = None,
             display_selected_fg_over_highlights = None,
             empty_horizontal = None,
             empty_vertical = None,

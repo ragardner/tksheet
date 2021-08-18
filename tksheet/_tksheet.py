@@ -37,6 +37,8 @@ class Sheet(tk.Frame):
                  default_row_index = "numbers", #letters, numbers or both
                  page_up_down_select_row = True,
                  expand_sheet_if_paste_too_big = False,
+                 paste_insert_column_limit = None,
+                 paste_insert_row_limit = None,
                  arrow_key_down_right_scroll_page = False,
                  enable_edit_cell_auto_resize = True,
                  data_reference = None,
@@ -180,6 +182,8 @@ class Sheet(tk.Frame):
                             enable_edit_cell_auto_resize = enable_edit_cell_auto_resize,
                             page_up_down_select_row = page_up_down_select_row,
                             expand_sheet_if_paste_too_big = expand_sheet_if_paste_too_big,
+                            paste_insert_column_limit = paste_insert_column_limit,
+                            paste_insert_row_limit = paste_insert_row_limit,
                             arrow_key_down_right_scroll_page = arrow_key_down_right_scroll_page,
                             display_selected_fg_over_highlights = display_selected_fg_over_highlights,
                             show_vertical_grid = show_vertical_grid,
@@ -740,6 +744,11 @@ class Sheet(tk.Frame):
         if redraw:
             self.refresh()
 
+    def set_cell_size_to_text(self, row, column, only_set_if_too_small = False, redraw = True):
+        self.MT.set_cell_size_to_text(r = row, c = column, only_set_if_too_small = only_set_if_too_small)
+        if redraw:
+            self.refresh()
+
     def set_width_of_index_to_text(self, recreate = True):
         self.RI.set_width_of_index_to_text(recreate = recreate)
 
@@ -1077,9 +1086,11 @@ class Sheet(tk.Frame):
                 self.MT.cell_options[(t10, newcolsdct[t11])] = t2
 
     def create_text_editor(self, row = 0, column = 0, text = None, state = "normal", see = True, set_data_ref_on_destroy = False,
-                           binding = None):
+                           binding = None,
+                           keep_existing_if_same_cell = False):
         self.MT.create_text_editor(r = row, c = column, text = text, state = state, see = see, set_data_ref_on_destroy = set_data_ref_on_destroy,
-                                   binding = binding)
+                                   binding = binding,
+                                   keep_existing_if_same_cell = keep_existing_if_same_cell)
 
     def set_text_editor_value(self, text = "", r = None, c = None):
         if self.MT.text_editor is not None and r is None and c is None:
@@ -1144,8 +1155,8 @@ class Sheet(tk.Frame):
     def set_view(self, x_args, y_args):
         self.MT.set_view(x_args, y_args)
 
-    def see(self, row = 0, column = 0, keep_yscroll = False, keep_xscroll = False, bottom_right_corner = False, check_cell_visibility = True):
-        self.MT.see(row, column, keep_yscroll, keep_xscroll, bottom_right_corner, check_cell_visibility = check_cell_visibility)
+    def see(self, row = 0, column = 0, keep_yscroll = False, keep_xscroll = False, bottom_right_corner = False, check_cell_visibility = True, redraw = True):
+        self.MT.see(row, column, keep_yscroll, keep_xscroll, bottom_right_corner, check_cell_visibility = check_cell_visibility, redraw = redraw)
 
     def select_row(self, row, redraw = True):
         self.RI.select_row(row, redraw = redraw)
@@ -1155,6 +1166,9 @@ class Sheet(tk.Frame):
 
     def select_cell(self, row, column, redraw = True):
         self.MT.select_cell(row, column, redraw = redraw)
+
+    def select_all(self, redraw = True, run_binding_func = True):
+        self.MT.select_all(redraw = redraw, run_binding_func = run_binding_func)
 
     def move_down(self):
         self.MT.move_down()
@@ -1496,6 +1510,14 @@ class Sheet(tk.Frame):
             return self.RI.cell_options
         elif canvas == "header":
             return self.CH.cell_options
+
+    def get_highlighted_cells(self, canvas = "table"):
+        if canvas == "table":
+            return {k: v['highlight'] for k, v in self.MT.cell_options.items() if 'highlight' in v}
+        elif canvas == "row_index":
+            return {k: v['highlight'] for k, v in self.RI.cell_options.items() if 'highlight' in v}
+        elif canvas == "header":
+            return {k: v['highlight'] for k, v in self.CH.cell_options.items() if 'highlight' in v}
         
     def get_frame_y(self, y):
         return y + self.CH.current_height
@@ -1543,6 +1565,8 @@ class Sheet(tk.Frame):
                     enable_edit_cell_auto_resize = None,
                     page_up_down_select_row = None,
                     expand_sheet_if_paste_too_big = None,
+                    paste_insert_column_limit = None,
+                    paste_insert_row_limit = None,
                     arrow_key_down_right_scroll_page = None,
                     display_selected_fg_over_highlights = None,
                     empty_horizontal = None,
@@ -1611,6 +1635,10 @@ class Sheet(tk.Frame):
                     measure_subset_index = None,
                     measure_subset_header = None,
                     redraw = True):
+        if paste_insert_column_limit is not None:
+            self.MT.paste_insert_column_limit = paste_insert_column_limit
+        if paste_insert_row_limit is not None:
+            self.MT.paste_insert_row_limit = paste_insert_row_limit
         if expand_sheet_if_paste_too_big is not None:
             self.MT.expand_sheet_if_paste_too_big = expand_sheet_if_paste_too_big
         if arrow_key_down_right_scroll_page is not None:

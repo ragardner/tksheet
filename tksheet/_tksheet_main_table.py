@@ -22,6 +22,8 @@ class MainTable(tk.Canvas):
                  enable_edit_cell_auto_resize = True,
                  page_up_down_select_row = False,
                  expand_sheet_if_paste_too_big = False,
+                 paste_insert_column_limit = None,
+                 paste_insert_row_limit = None,
                  arrow_key_down_right_scroll_page = False,
                  column_width = None,
                  column_headers_canvas = None,
@@ -112,6 +114,8 @@ class MainTable(tk.Canvas):
 
         self.page_up_down_select_row = page_up_down_select_row
         self.expand_sheet_if_paste_too_big = expand_sheet_if_paste_too_big
+        self.paste_insert_column_limit = paste_insert_column_limit
+        self.paste_insert_row_limit = paste_insert_row_limit
         self.arrow_key_down_right_scroll_page = arrow_key_down_right_scroll_page
         self.enable_edit_cell_auto_resize = enable_edit_cell_auto_resize
         self.display_selected_fg_over_highlights = display_selected_fg_over_highlights
@@ -189,6 +193,7 @@ class MainTable(tk.Canvas):
         self.rc_insert_row_enabled = False
         self.rc_popup_menus_enabled = False
         self.edit_cell_enabled = False
+        self.text_editor_loc = None
 
         self.show_selected_cells_border = show_selected_cells_border
         self.new_row_width = 0
@@ -629,23 +634,10 @@ class MainTable(tk.Canvas):
                 self.extra_end_ctrl_x_func(("end_ctrl_x", boxes, currently_selected, rows))
 
     def ctrl_v(self, event = None):
+        if not self.expand_sheet_if_paste_too_big and (len(self.col_positions) == 1 or len(self.row_positions) == 1):
+            return
         currently_selected = self.currently_selected()
         if currently_selected:
-            try:
-                data = self.clipboard_get()
-            except:
-                return
-            nd = list(csv_module.reader(io.StringIO(data), delimiter = "\t", quotechar = '"', skipinitialspace = True))
-            if not nd:
-                return
-            data = nd
-            numcols = len(max(data, key = len))
-            numrows = len(data)
-            for rn, r in enumerate(data):
-                if len(r) < numcols:
-                    data[rn].extend(list(repeat("", numcols - len(r))))
-            if self.undo_enabled:
-                undo_storage = {}
             if currently_selected[0] == "column":
                 x1 = currently_selected[1]
                 y1 = 0
@@ -655,81 +647,100 @@ class MainTable(tk.Canvas):
             elif isinstance(currently_selected[0], int):
                 y1 = currently_selected[0]
                 x1 = currently_selected[1]
-            if self.expand_sheet_if_paste_too_big:
-                added_rows = 0
-                added_cols = 0
-                if x1 + numcols > len(self.col_positions) - 1 or y1 + numrows > len(self.row_positions) - 1:
-                    total_data_cols = self.total_data_cols()
-                if x1 + numcols > len(self.col_positions) - 1:
-                    added_cols = x1 + numcols - len(self.col_positions) + 1
+        else:
+            y1 = len(self.row_positions) - 1 if self.data_ref else 0
+            x1 = len(self.col_positions) - 1 if self.data_ref else 0
+        try:
+            data = self.clipboard_get()
+        except:
+            return
+        data = list(csv_module.reader(io.StringIO(data), delimiter = "\t", quotechar = '"', skipinitialspace = True))
+        if not data:
+            return
+        numcols = len(max(data, key = len))
+        numrows = len(data)
+        for rn, r in enumerate(data):
+            if len(r) < numcols:
+                data[rn].extend(list(repeat("", numcols - len(r))))
+        if self.undo_enabled:
+            undo_storage = {}
+        if self.expand_sheet_if_paste_too_big:
+            added_rows = 0
+            added_cols = 0
+            if x1 + numcols > len(self.col_positions) - 1:
+                added_cols = x1 + numcols - len(self.col_positions) + 1
+                if isinstance(self.paste_insert_column_limit, int) and self.paste_insert_column_limit < len(self.col_positions) - 1 + added_cols:
+                    added_cols = self.paste_insert_column_limit - len(self.col_positions) - 1
+                if added_cols > 0:
                     self.insert_col_positions(widths = int(added_cols))
-                    if not self.all_columns_displayed:
-                        self.displayed_columns.extend(list(range(total_data_cols, self.total_data_cols() + added_cols)))
-                    total_data_cols += added_cols
-                    self.data_ref[:] = [r + list(repeat("", total_data_cols - len(r))) if total_data_cols > len(r) else r for r in self.data_ref]
-                if y1 + numrows > len(self.row_positions) - 1:
-                    added_rows = y1 + numrows - len(self.row_positions) + 1
+                if not self.all_columns_displayed:
+                    total_data_cols = self.total_data_cols()
+                    self.displayed_columns.extend(list(range(total_data_cols, total_data_cols + added_cols)))
+            if y1 + numrows > len(self.row_positions) - 1:
+                added_rows = y1 + numrows - len(self.row_positions) + 1
+                if isinstance(self.paste_insert_row_limit, int) and self.paste_insert_row_limit < len(self.row_positions) - 1 + added_rows:
+                    added_rows = self.paste_insert_row_limit - len(self.row_positions) - 1
+                if added_rows > 0:
                     self.insert_row_positions(heights = int(added_rows))
-                    self.data_ref += [list(repeat("", total_data_cols)) for rn in range(added_rows)]
-                added_rows_cols = (added_rows, added_cols)
-            else:
-                if x1 + numcols > len(self.col_positions) - 1:
-                    numcols = len(self.col_positions) - 1 - x1
-                if y1 + numrows > len(self.row_positions) - 1:
-                    numrows = len(self.row_positions) - 1 - y1
-                added_rows_cols = (0, 0)
-            if self.extra_begin_ctrl_v_func is not None or self.extra_end_ctrl_v_func is not None:
-                rows = [[data[ndr][ndc] for ndc, c in enumerate(range(x1, x1 + numcols))] for ndr, r in enumerate(range(y1, y1 + numrows))]
-            if self.extra_begin_ctrl_v_func is not None:
-                try:
-                    self.extra_begin_ctrl_v_func(("begin_ctrl_v", currently_selected, rows))
-                except:
-                    return
-            if self.all_columns_displayed:
-                for ndr, r in enumerate(range(y1, y1 + numrows)):
-                    for ndc, c in enumerate(range(x1, x1 + numcols)):
-                        if r > len(self.data_ref) - 1:
-                            self.data_ref.extend([list(repeat("", c + 1)) for r in range((r + 1) - len(self.data_ref))])
-                        elif c > len(self.data_ref[r]) - 1:
-                            self.data_ref[r].extend(list(repeat("", (c + 1) - len(self.data_ref[r]))))
-                        if (
-                            (r, c) in self.cell_options and 'readonly' in self.cell_options[(r, c)] or
-                            c in self.col_options and 'readonly' in self.col_options[c] or
-                            r in self.row_options and 'readonly' in self.row_options[r]
-                            ):
-                            continue
-                        if self.undo_enabled:
-                            undo_storage[(r, c)] = f"{self.data_ref[r][c]}"
-                        self.data_ref[r][c] = data[ndr][ndc]
-            else:
-                for ndr, r in enumerate(range(y1, y1 + numrows)):
-                    for ndc, c in enumerate(range(x1, x1 + numcols)):
-                        if r > len(self.data_ref) - 1:
-                            self.data_ref.extend([list(repeat("", c + 1)) for r in range((r + 1) - len(self.data_ref))])
-                        elif c > len(self.data_ref[r]) - 1:
-                            self.data_ref[r].extend(list(repeat("", (c + 1) - len(self.data_ref[r]))))
-                        if (
-                            (r, self.displayed_columns[c]) in self.cell_options and 'readonly' in self.cell_options[(r, self.displayed_columns[c])] or
-                            self.displayed_columns[c] in self.col_options and 'readonly' in self.col_options[self.displayed_columns[c]] or
-                            r in self.row_options and 'readonly' in self.row_options[r]
-                            ):
-                            continue
-                        if self.undo_enabled:
-                            undo_storage[(r, self.displayed_columns[c])] = f"{self.data_ref[r][self.displayed_columns[c]]}"
-                        self.data_ref[r][self.displayed_columns[c]] = data[ndr][ndc]
-            self.deselect("all")
-            if self.undo_enabled:
-                self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells_paste",
-                                                                     undo_storage,
-                                                                     (((y1, x1, y1 + numrows, x1 + numcols), "cells"), ), # boxes
-                                                                     currently_selected,
-                                                                     added_rows_cols))))
-            self.create_selected(y1, x1, y1 + numrows, x1 + numcols, "cells")
-            self.create_current(y1, x1, type_ = "cell", inside = True if numrows > 1 or numcols > 1 else False)
-            self.see(r = y1, c = x1, keep_yscroll = False, keep_xscroll = False, bottom_right_corner = False, check_cell_visibility = True, redraw = False)
-            self.refresh()
-            if self.extra_end_ctrl_v_func is not None:
-                self.extra_end_ctrl_v_func(("end_ctrl_v", currently_selected, rows))
+            added_rows_cols = (added_rows, added_cols)
+        else:
+            added_rows_cols = (0, 0)
+        if x1 + numcols > len(self.col_positions) - 1:
+            numcols = len(self.col_positions) - 1 - x1
+        if y1 + numrows > len(self.row_positions) - 1:
+            numrows = len(self.row_positions) - 1 - y1
+        if self.extra_begin_ctrl_v_func is not None or self.extra_end_ctrl_v_func is not None:
+            rows = [[data[ndr][ndc] for ndc, c in enumerate(range(x1, x1 + numcols))] for ndr, r in enumerate(range(y1, y1 + numrows))]
+        if self.extra_begin_ctrl_v_func is not None:
+            try:
+                self.extra_begin_ctrl_v_func(("begin_ctrl_v", currently_selected, rows))
+            except:
+                return
+        if self.all_columns_displayed:
+            for ndr, r in enumerate(range(y1, y1 + numrows)):
+                for ndc, c in enumerate(range(x1, x1 + numcols)):
+                    if r > len(self.data_ref) - 1:
+                        self.data_ref.extend([list(repeat("", c + 1)) for r in range((r + 1) - len(self.data_ref))])
+                    elif c > len(self.data_ref[r]) - 1:
+                        self.data_ref[r].extend(list(repeat("", (c + 1) - len(self.data_ref[r]))))
+                    if (
+                        (r, c) in self.cell_options and 'readonly' in self.cell_options[(r, c)] or
+                        c in self.col_options and 'readonly' in self.col_options[c] or
+                        r in self.row_options and 'readonly' in self.row_options[r]
+                        ):
+                        continue
+                    if self.undo_enabled:
+                        undo_storage[(r, c)] = f"{self.data_ref[r][c]}"
+                    self.data_ref[r][c] = data[ndr][ndc]
+        else:
+            for ndr, r in enumerate(range(y1, y1 + numrows)):
+                for ndc, c in enumerate(range(x1, x1 + numcols)):
+                    if r > len(self.data_ref) - 1:
+                        self.data_ref.extend([list(repeat("", c + 1)) for r in range((r + 1) - len(self.data_ref))])
+                    elif c > len(self.data_ref[r]) - 1:
+                        self.data_ref[r].extend(list(repeat("", (c + 1) - len(self.data_ref[r]))))
+                    if (
+                        (r, self.displayed_columns[c]) in self.cell_options and 'readonly' in self.cell_options[(r, self.displayed_columns[c])] or
+                        self.displayed_columns[c] in self.col_options and 'readonly' in self.col_options[self.displayed_columns[c]] or
+                        r in self.row_options and 'readonly' in self.row_options[r]
+                        ):
+                        continue
+                    if self.undo_enabled:
+                        undo_storage[(r, self.displayed_columns[c])] = f"{self.data_ref[r][self.displayed_columns[c]]}"
+                    self.data_ref[r][self.displayed_columns[c]] = data[ndr][ndc]
+        self.deselect("all")
+        if self.undo_enabled:
+            self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells_paste",
+                                                                 undo_storage,
+                                                                 (((y1, x1, y1 + numrows, x1 + numcols), "cells"), ), # boxes
+                                                                 currently_selected,
+                                                                 added_rows_cols))))
+        self.create_selected(y1, x1, y1 + numrows, x1 + numcols, "cells")
+        self.create_current(y1, x1, type_ = "cell", inside = True if numrows > 1 or numcols > 1 else False)
+        self.see(r = y1, c = x1, keep_yscroll = False, keep_xscroll = False, bottom_right_corner = False, check_cell_visibility = True, redraw = False)
+        self.refresh()
+        if self.extra_end_ctrl_v_func is not None:
+            self.extra_end_ctrl_v_func(("end_ctrl_v", currently_selected, rows))
 
     def delete_key(self, event = None):
         if self.anything_selected():
@@ -1837,6 +1848,7 @@ class MainTable(tk.Canvas):
         self.rc_popup_menu = tk.Menu(self, tearoff = 0, background = self.popup_menu_bg)
         self.CH.ch_rc_popup_menu = tk.Menu(self.CH, tearoff = 0, background = self.popup_menu_bg)
         self.RI.ri_rc_popup_menu = tk.Menu(self.RI, tearoff = 0, background = self.popup_menu_bg)
+        self.empty_rc_popup_menu = tk.Menu(self, tearoff = 0, background = self.popup_menu_bg)
         if self.cut_enabled:
             self.rc_popup_menu.add_command(label = "Cut",
                                            accelerator = "Ctrl+X",
@@ -1921,6 +1933,15 @@ class MainTable(tk.Canvas):
                                            activeforeground = self.popup_menu_highlight_fg,
                                                  command = self.ctrl_v)
             #self.RI.ri_rc_popup_menu.add_separator()
+            if self.expand_sheet_if_paste_too_big:
+                self.empty_rc_popup_menu.add_command(label = "Paste",
+                                                     accelerator = "Ctrl+V",
+                                                   font = self.popup_menu_font,
+                                                   foreground = self.popup_menu_fg,
+                                                   background = self.popup_menu_bg,
+                                                   activebackground = self.popup_menu_highlight_bg,
+                                                   activeforeground = self.popup_menu_highlight_fg,
+                                                     command = self.ctrl_v)
         if self.delete_key_enabled:
             self.rc_popup_menu.add_command(label = "Delete",
                                            accelerator = "Del",
@@ -1964,7 +1985,21 @@ class MainTable(tk.Canvas):
                                            background = self.popup_menu_bg,
                                            activebackground = self.popup_menu_highlight_bg,
                                            activeforeground = self.popup_menu_highlight_fg,
-                                                 command = self.insert_col_rc)
+                                                 command = lambda: self.insert_col_rc("left"))
+            self.empty_rc_popup_menu.add_command(label = "Insert column",
+                                           font = self.popup_menu_font,
+                                           foreground = self.popup_menu_fg,
+                                           background = self.popup_menu_bg,
+                                           activebackground = self.popup_menu_highlight_bg,
+                                           activeforeground = self.popup_menu_highlight_fg,
+                                                 command = lambda: self.insert_col_rc("left"))
+            self.CH.ch_rc_popup_menu.add_command(label = "Insert columns right",
+                                           font = self.popup_menu_font,
+                                           foreground = self.popup_menu_fg,
+                                           background = self.popup_menu_bg,
+                                           activebackground = self.popup_menu_highlight_bg,
+                                           activeforeground = self.popup_menu_highlight_fg,
+                                                 command = lambda: self.insert_col_rc("right"))
         if self.rc_delete_row_enabled:
             self.RI.ri_rc_popup_menu.add_command(label = "Delete rows",
                                            font = self.popup_menu_font,
@@ -1981,7 +2016,21 @@ class MainTable(tk.Canvas):
                                            background = self.popup_menu_bg,
                                            activebackground = self.popup_menu_highlight_bg,
                                            activeforeground = self.popup_menu_highlight_fg,
-                                                 command = self.insert_row_rc)
+                                                 command = lambda: self.insert_row_rc("above"))
+            self.RI.ri_rc_popup_menu.add_command(label = "Insert rows below",
+                                           font = self.popup_menu_font,
+                                           foreground = self.popup_menu_fg,
+                                           background = self.popup_menu_bg,
+                                           activebackground = self.popup_menu_highlight_bg,
+                                           activeforeground = self.popup_menu_highlight_fg,
+                                                 command = lambda: self.insert_row_rc("below"))
+            self.empty_rc_popup_menu.add_command(label = "Insert row",
+                                           font = self.popup_menu_font,
+                                           foreground = self.popup_menu_fg,
+                                           background = self.popup_menu_bg,
+                                           activebackground = self.popup_menu_highlight_bg,
+                                           activeforeground = self.popup_menu_highlight_fg,
+                                                 command = lambda: self.insert_row_rc("below"))
         for label, func in self.extra_table_rc_menu_funcs.items():
             self.rc_popup_menu.add_command(label = label,
                                            font = self.popup_menu_font,
@@ -2282,9 +2331,7 @@ class MainTable(tk.Canvas):
 
     def rc(self, event = None):
         self.focus_set()
-        if self.identify_col(x = event.x, allow_end = False) is None or self.identify_row(y = event.y, allow_end = False) is None:
-            self.deselect("all")
-        elif self.single_selection_enabled and all(v is None for v in (self.RI.rsz_h, self.RI.rsz_w, self.CH.rsz_h, self.CH.rsz_w)):
+        if self.single_selection_enabled and all(v is None for v in (self.RI.rsz_h, self.RI.rsz_w, self.CH.rsz_h, self.CH.rsz_w)):
             r = self.identify_row(y = event.y)
             c = self.identify_col(x = event.x)
             if r < len(self.row_positions) - 1 and c < len(self.col_positions) - 1:
@@ -2302,6 +2349,8 @@ class MainTable(tk.Canvas):
                         self.select_cell(r, c, redraw = True)
                     if self.rc_popup_menus_enabled:
                         self.rc_popup_menu.tk_popup(event.x_root, event.y_root)
+            else:
+                self.empty_rc_popup_menu.tk_popup(event.x_root, event.y_root)
         elif self.toggle_selection_enabled and all(v is None for v in (self.RI.rsz_h, self.RI.rsz_w, self.CH.rsz_h, self.CH.rsz_w)):
             r = self.identify_row(y = event.y)
             c = self.identify_col(x = event.x)
@@ -2320,6 +2369,8 @@ class MainTable(tk.Canvas):
                         self.toggle_select_cell(r, c, redraw = True)
                     if self.rc_popup_menus_enabled:
                         self.rc_popup_menu.tk_popup(event.x_root, event.y_root)
+            else:
+                self.empty_rc_popup_menu.tk_popup(event.x_root, event.y_root)
         if self.extra_rc_func is not None:
             self.extra_rc_func(event)
 
@@ -2757,6 +2808,77 @@ class MainTable(tk.Canvas):
         else:
             return self.data_ref
 
+    def set_cell_size_to_text(self, r, c, only_set_if_too_small = False, redraw = True):
+        min_cw = self.min_cw
+        min_rh = self.min_rh
+        h = int(min_rh)
+        w = int(min_cw)
+        x = self.txt_measure_canvas.create_text(0, 0, text = "", font = self.my_font)
+        x2 = self.txt_measure_canvas.create_text(0, 0, text = "", font = self.my_hdr_font)
+        itmcon = self.txt_measure_canvas.itemconfig
+        itmbbx = self.txt_measure_canvas.bbox
+        if self.all_columns_displayed:
+            cn = int(c)
+        else:
+            cn = self.displayed_columns[c]
+        rn = int(r)
+
+        try:
+            if isinstance(self.data_ref[r][cn], str):
+                txt = self.data_ref[r][cn]
+            else:
+                txt = f"{self.data_ref[r][cn]}"
+        except:
+            txt = ""
+        if txt:
+            itmcon(x, text = txt)
+            b = itmbbx(x)
+            tw = b[2] - b[0] + 25 if (rn, cn) in self.cell_options and 'dropdown' in self.cell_options[(rn, cn)] else b[2] - b[0] + 5
+            if b[3] - b[1] + 5 > h:
+                h = b[3] - b[1] + 5
+        else:
+            if (rn, cn) in self.cell_options and 'dropdown' in self.cell_options[(rn, cn)]:
+                tw = 20
+            else:
+                tw = min_cw
+        if tw > w:
+            w = tw
+        if h < min_rh:
+            h = int(min_rh)
+        elif h > self.RI.max_rh:
+            h = int(self.RI.max_rh)
+        if w < min_cw:
+            w = int(min_cw)
+        elif w > self.CH.max_cw:
+            w = int(self.CH.max_cw) 
+        self.txt_measure_canvas.delete(x)
+        self.txt_measure_canvas.delete(x2)
+        cell_needs_resize_w = False
+        cell_needs_resize_h = False
+        if only_set_if_too_small:
+            if w > self.col_positions[c + 1] - self.col_positions[c]:
+                cell_needs_resize_w = True
+            if h > self.row_positions[r + 1] - self.row_positions[r]:
+                cell_needs_resize_h = True
+        else:
+            if w != self.col_positions[c + 1] - self.col_positions[c]:
+                cell_needs_resize_w = True
+            if h != self.row_positions[r + 1] - self.row_positions[r]:
+                cell_needs_resize_h = True
+        if cell_needs_resize_w:
+            new_col_pos = self.col_positions[c] + w
+            increment = new_col_pos - self.col_positions[c + 1]
+            self.col_positions[c + 2:] = [e + increment for e in islice(self.col_positions, c + 2, len(self.col_positions))]
+            self.col_positions[c + 1] = new_col_pos
+        if cell_needs_resize_h:
+            new_row_pos = self.row_positions[r] + h
+            increment = new_row_pos - self.row_positions[r + 1]
+            self.row_positions[r + 2:] = [e + increment for e in islice(self.row_positions, r + 2, len(self.row_positions))]
+            self.row_positions[r + 1] = new_row_pos
+        if cell_needs_resize_w or cell_needs_resize_h:
+            self.recreate_all_selection_boxes()
+            self.refresh_dropdowns()
+
     def set_all_cell_sizes_to_text(self, include_index = False):
         min_cw = self.min_cw
         min_rh = self.min_rh
@@ -2924,7 +3046,7 @@ class MainTable(tk.Canvas):
         if self.anything_selected(exclude_rows = True, exclude_cells = True):
             selcols = self.get_selected_cols()
             numcols = len(selcols)
-            displayed_ins_col = min(selcols)
+            displayed_ins_col = min(selcols) if event == "left" else max(selcols)
             if self.all_columns_displayed:
                 data_ins_col = int(displayed_ins_col)
             else:
@@ -2933,6 +3055,10 @@ class MainTable(tk.Canvas):
             numcols = 1
             displayed_ins_col = len(self.col_positions) - 1
             data_ins_col = int(displayed_ins_col)
+        if isinstance(self.paste_insert_column_limit, int) and self.paste_insert_column_limit < displayed_ins_col + numcols:
+            numcols = self.paste_insert_column_limit - len(self.col_positions) - 1
+            if numcols < 1:
+                return
         if self.extra_begin_insert_cols_rc_func is not None:
             try:
                 self.extra_begin_insert_cols_rc_func(("begin_insert_columns", data_ins_col, displayed_ins_col, numcols))
@@ -2979,13 +3105,17 @@ class MainTable(tk.Canvas):
         if self.anything_selected(exclude_columns = True, exclude_cells = True):
             selrows = self.get_selected_rows()
             numrows = len(selrows)
-            stidx = min(selrows)
+            stidx = min(selrows) if event == "above" else max(selrows)
             posidx = int(stidx)
         else:
             selrows = [0]
             numrows = 1
             stidx = self.total_data_rows()
             posidx = len(self.row_positions) - 1
+        if isinstance(self.paste_insert_row_limit, int) and self.paste_insert_row_limit < posidx + numrows:
+            numrows = self.paste_insert_row_limit - len(self.row_positions) - 1
+            if numrows < 1:
+                return
         if self.extra_begin_insert_rows_rc_func is not None:
             try:
                 self.extra_begin_insert_rows_rc_func(("begin_insert_rows", stidx, posidx, numrows))
@@ -3330,7 +3460,9 @@ class MainTable(tk.Canvas):
                 #self.hidd_col_expander_idxs = set(self.hidd_col_expander_idxs)
             else:
                 self.hidd_col_expander_idxs = set()
-        if enable and list(range(len(max(self.data_ref, key = len)))) != self.displayed_columns:
+        if enable and not self.data_ref:
+            self.all_columns_displayed = False
+        elif enable and list(range(len(max(self.data_ref, key = len)))) != self.displayed_columns:
             self.all_columns_displayed = False
         else:
             self.all_columns_displayed = True
@@ -4134,6 +4266,12 @@ class MainTable(tk.Canvas):
                 self.delete(f"{r1}_{c1}_{r2}_{c2}")
                 self.RI.delete(f"{r1}_{c1}_{r2}_{c2}")
                 self.CH.delete(f"{r1}_{c1}_{r2}_{c2}")
+                if r1 >= len(self.row_positions) - 1 or c1 >= len(self.col_positions) - 1:
+                    continue
+                if r2 > len(self.row_positions) - 1:
+                    r2 = len(self.row_positions) - 1
+                if c2 > len(self.col_positions) - 1:
+                    c2 = len(self.col_positions) - 1
                 if type_.startswith("CellSelect"):
                     self.create_selected(r1, c1, r2, c2, "cells")
                 elif type_.startswith("RowSelect"):
@@ -4588,12 +4726,15 @@ class MainTable(tk.Canvas):
             else:
                 text = f"{self.data_ref[y1][x1]}" if self.all_columns_displayed else f"{self.data_ref[y1][self.displayed_columns[x1]]}"
                 if self.enable_edit_cell_auto_resize:
-                    self.RI.set_row_height(y1, only_set_if_too_small = True, displayed_only = True)
-                    self.CH.set_col_width(x1, only_set_if_too_small = True, displayed_only = True)
+                    self.set_cell_size_to_text(y1, x1, only_set_if_too_small = True, redraw = True)
         self.select_cell(r = y1, c = x1, keep_other_selections = True)
         self.create_text_editor(r = y1, c = x1, text = text, set_data_ref_on_destroy = True)
         
-    def create_text_editor(self, r = 0, c = 0, text = None, state = "normal", see = True, set_data_ref_on_destroy = False, binding = None):
+    def create_text_editor(self, r = 0, c = 0, text = None, state = "normal", see = True, set_data_ref_on_destroy = False, binding = None,
+                           keep_existing_if_same_cell = False):
+        if keep_existing_if_same_cell and (r, c) == self.text_editor_loc and self.text_editor is not None:
+            self.text_editor.set_text(self.text_editor.get() + "" if not isinstance(text, str) else text)
+            return
         self.destroy_text_editor()
         if see:
             has_redrawn = self.see(r = r, c = c, check_cell_visibility = True)
@@ -4609,6 +4750,8 @@ class MainTable(tk.Canvas):
         self.hide_current()
         self.text_editor = TextEditor(self, text = text, font = self.my_font, state = state, width = w, height = h, border_color = self.table_selected_cells_border_fg, show_border = self.show_selected_cells_border)
         self.text_editor_id = self.create_window((x, y), window = self.text_editor, anchor = "nw")
+        self.text_editor.textedit.focus_set()
+        self.text_editor.scroll_to_bottom()
         self.text_editor.textedit.bind("<Alt-Return>", self.text_editor_newline_binding)
         self.text_editor.textedit.bind("<Option-Return>", self.text_editor_newline_binding)
         for key, func in self.text_editor_user_bound_keys.items():
@@ -4625,8 +4768,6 @@ class MainTable(tk.Canvas):
             self.text_editor.textedit.bind("<Escape>", lambda x: self.get_text_editor_value((r, c, "Escape")))
         else:
             self.text_editor.textedit.bind("<Escape>", lambda x: self.destroy_text_editor("Escape"))
-        self.text_editor.textedit.focus_set()
-        self.text_editor.scroll_to_bottom()
 
     def bind_text_editor_destroy(self, binding, r, c):
         self.text_editor.textedit.bind("<Return>", lambda x: binding((r, c, "Return")))
@@ -4727,8 +4868,7 @@ class MainTable(tk.Canvas):
         else:
             self.data_ref[r][self.displayed_columns[c]] = value
         if cell_resize and self.enable_edit_cell_auto_resize:
-            self.RI.set_row_height(r, recreate = False, displayed_only = True)
-            self.CH.set_col_width(c, only_set_if_too_small = True, displayed_only = True)
+            self.set_cell_size_to_text(r, c, only_set_if_too_small = True, redraw = True)
 
     def create_dropdown(self, r = 0, c = 0, values = [], set_value = None, state = "readonly", see = True, destroy_on_leave = True, destroy_on_select = True, current = False,
                         set_cell_on_select = True, redraw = True, recreate = True):
