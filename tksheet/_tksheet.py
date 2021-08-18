@@ -332,7 +332,11 @@ class Sheet(tk.Frame):
         if canvas.lower() == "all":
             self.TL.grid_forget()
             self.RI.grid_forget()
+            self.RI["yscrollcommand"] = 0
+            self.MT.show_index = False
             self.CH.grid_forget()
+            self.CH["xscrollcommand"] = 0
+            self.MT.show_header = False
             self.MT.grid_forget()
             self.yscroll.grid_forget()
             self.xscroll.grid_forget()
@@ -340,21 +344,21 @@ class Sheet(tk.Frame):
             self.yscroll_showing = False
             self.xscroll_disabled = True
             self.yscroll_disabled = True
-        elif canvas == "row_index":
+        elif canvas.lower() == "row_index":
             self.RI.grid_forget()
             self.RI["yscrollcommand"] = 0
             self.MT.show_index = False
-        elif canvas == "header":
+        elif canvas.lower() == "header":
             self.CH.grid_forget()
             self.CH["xscrollcommand"] = 0
             self.MT.show_header = False
-        elif canvas == "top_left":
+        elif canvas.lower() == "top_left":
             self.TL.grid_forget()
-        elif canvas == "x_scrollbar":
+        elif canvas.lower() == "x_scrollbar":
             self.xscroll.grid_forget()
             self.xscroll_showing = False
             self.xscroll_disabled = True
-        elif canvas == "y_scrollbar":
+        elif canvas.lower() == "y_scrollbar":
             self.yscroll.grid_forget()
             self.yscroll_showing = False
             self.yscroll_disabled = True
