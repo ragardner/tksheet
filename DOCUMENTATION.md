@@ -47,6 +47,15 @@ Alternatively you can download the source code and (inside the tksheet directory
 `tksheet` requires a Python version of `3.6` or higher.
 
 ## 3 Basic Initialization
+Like other tkinter widgets you need only the `Sheet()`s parent as an argument to initialize a `Sheet()` e.g.
+```python
+self.sheet = Sheet(my_frame_widget)
+```
+ - `my_frame_widget` would be replaced by whatever widget is your `Sheet()`s parent.
+
+___
+
+As an example, this is a tkinter program involving a `Sheet()` widget
 ```python
 from tksheet import Sheet
 import tkinter as tk
