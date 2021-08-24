@@ -3,7 +3,7 @@
 2. [Installation and Requirements](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#2-Installation-and-Requirements)
 3. [Basic Initialization](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#3-Basic-Initialization)
 4. [Initialization Options](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#4-Initialization-Options)
-5. [Modifying Table Data](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#5-Modifying-Table-Data)
+5. [Modifying Table Data and Dimensions](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#5-Modifying-Table-Data-and-Dimensions)
 6. [Getting Table Data](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#6-Getting-Table-Data)
 7. [Bindings and Functionality](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#7-Bindings-and-Functionality)
 8. [Identifying Bound Event Mouse Position](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#8-Identifying-Bound-Event-Mouse-Position)
@@ -16,7 +16,7 @@
 15. [Modifying and Getting Scroll Positions](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#15-Modifying-and-Getting-Scroll-Positions)
 16. [Readonly Cells](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#16-Readonly-Cells)
 17. [Hiding Columns](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#17-Hiding-Columns)
-18. [Table Elements, Height and Width](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#18-Table-Elements,-Height-and-Width)
+18. [Hiding Table Elements](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#18-Hiding-Table-Elements)
 19. [Cell Text Editor](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#19-Cell-Text-Editor)
 20. [Dropdown Boxes](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#20-Dropdown-Boxes)
 21. [Table Options and Other Functions](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#21-Table-Options-and-Other-Functions)
@@ -186,7 +186,7 @@ top_left_fg_highlight                   = theme_light_blue['top_left_fg_highligh
 
 You can change these settings after initialization using the `set_options()` function.
 
-## 5 Modifying Table Data
+## 5 Modifying Table Data and Dimensions
 
 Set sheet data, overwrites any existing data.
 ```python
@@ -319,6 +319,16 @@ Make all data rows the same length (same number of columns), goes by longest row
 ```python
 equalize_data_row_lengths()
 ```
+
+___
+
+Modify widget height and width in pixels
+```python
+height_and_width(height = None, width = None)
+```
+ - `height` (`int`) set a height in pixels
+ - `width` (`int`) set a width in pixels
+If both arguments are `None` then table will reset to default tkinter canvas dimensions.
 
 ## 6 Getting Table Data
 
@@ -1084,7 +1094,7 @@ display_columns(indexes = None,
 ```
  - If the chosen indexes are equal to a list of columns as long as the longest row in the sheets data then enable will be set to `False`.
 
-## 18 Table Elements, Height and Width
+## 18 Hiding Table Elements
 
 Hide parts of the table or all of it
 ```python
@@ -1101,17 +1111,6 @@ show(canvas = "all")
 ```
  - `canvas` (`str`) options are `all`, `row_index`, `header`, `top_left`, `x_scrollbar`, `y_scrollbar`
 	- `all` shows the entire table and is the default.
-
-___
-
-Modify widget height and width in pixels
-```python
-height_and_width(height = None, width = None)
-```
- - `height` (`int`) set a height in pixels
- - `width` (`int`) set a width in pixels
-If both arguments are `None` then table will reset to default tkinter canvas dimensions.
-
 
 ## 19 Cell Text Editor
 
