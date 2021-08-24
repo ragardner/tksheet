@@ -16,7 +16,7 @@
 15. [Modifying and Getting Scroll Positions](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#15-Modifying-and-Getting-Scroll-Positions)
 16. [Readonly Cells](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#16-Readonly-Cells)
 17. [Hiding Columns](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#17-Hiding-Columns)
-18. [Hiding the Index and Header](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#18-Hiding-the-Index-and-Header)
+18. [Table Elements, Height and Width](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#18-Table-Elements,-Height-and-Width)
 19. [Cell Text Editor](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#19-Cell-Text-Editor)
 20. [Dropdown Boxes](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#20-Dropdown-Boxes)
 21. [Table Options and Other Functions](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#21-Table-Options-and-Other-Functions)
