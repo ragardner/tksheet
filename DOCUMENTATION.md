@@ -30,6 +30,8 @@
 
 It works using tkinter canvases to draw and moves lines and text for only the visible portion of the table.
 
+Cell values can be any class with a `str` method.
+
 See the [tests](https://github.com/ragardner/tksheet/tree/master/tests) folder for more examples.
 
 Examples of things that are not possible with tksheet:
@@ -49,7 +51,7 @@ Alternatively you can download the source code and (inside the tksheet directory
 ## 3 Basic Initialization
 Like other tkinter widgets you need only the `Sheet()`s parent as an argument to initialize a `Sheet()` e.g.
 ```python
-self.sheet = Sheet(my_frame_widget)
+sheet = Sheet(my_frame_widget)
 ```
  - `my_frame_widget` would be replaced by whatever widget is your `Sheet()`s parent.
 
@@ -205,15 +207,30 @@ set_sheet_data(data = [[]],
 
 ___
 
+Set cell data, overwrites any existing data.
 ```python
 set_cell_data(r, c, value = "", set_copy = True, redraw = False)
 ```
+ - `set_copy` means `str()` will be used on the value before setting.
 
 ___
 
+Insert a row into the sheet.
+```python
+insert_row(values = None, idx = "end", height = None, deselect_all = False, add_columns = False,
+           redraw = False)
+```
+ - Leaving `values` as `None` inserts an empty row, e.g. `insert_row()` will append an empty row to the sheet.
+ - `height` is the new rows displayed height in pixels, leave as `None` for default.
+ - `add_columns` checks the rest of the sheets rows are at least the length as the new row, leave as `False` for better performance.
+
+___
+
+Set column data, overwrites any existing data.
 ```python
 set_column_data(c, values = tuple(), add_rows = True, redraw = False)
 ```
+ - `add_rows` adds extra rows to the sheet if the column data doesn't fit within current sheet dimensions.
 
 ___
 
@@ -221,6 +238,9 @@ Set the header to something non-default (if new header is shorter than total col
 ```python
 headers(newheaders = None, index = None, reset_col_positions = False, show_headers_if_not_sheet = True)
 ```
+ - Using an integer `int` for argument `newheaders` makes the sheet use that row as a header e.g. `headers(0)` means the first row will be used as a header (the first row will not be hidden in the sheet though).
+ - Leaving `newheaders` as `None` and using the `index` argument returns the existing header value in that index.
+ - Leaving all arguments as default e.g. `headers()` returns existing headers.
 
 ___
 
@@ -228,9 +248,12 @@ Set the index to something non-default (if new index is shorter than total rows 
 ```python
 row_index(newindex = None, index = None, reset_row_positions = False, show_index_if_not_sheet = True)
 ```
+ - Leaving `newindex` as `None` and using the `index` argument returns the existing row index value in that index.
+ - Leaving all arguments as default e.g. `row_index()` returns the existing row index.
 
 ___
 
+Insert a column into the sheet.
 ```python
 insert_column(values = None, idx = "end", width = None, deselect_all = False, add_rows = True, equalize_data_row_lengths = True,
               mod_column_positions = True,
@@ -239,31 +262,29 @@ insert_column(values = None, idx = "end", width = None, deselect_all = False, ad
 
 ___
 
+Insert multiple columns into the sheet.
 ```python
 insert_columns(columns = 1, idx = "end", widths = None, deselect_all = False, add_rows = True, equalize_data_row_lengths = True,
                mod_column_positions = True,
                redraw = False)
 ```
+ - `columns` can be either `int` or iterable of iterables.
 
 ___
 
+Set row data, overwrites any existing data.
 ```python
 set_row_data(r, values = tuple(), add_columns = True, redraw = False)
 ```
 
 ___
 
-```python
-insert_row(values = None, idx = "end", height = None, deselect_all = False, add_columns = True,
-           redraw = False)
-```
-
-___
-
+Insert multiple rows into the sheet.
 ```python
 insert_rows(rows = 1, idx = "end", heights = None, deselect_all = False, add_columns = True,
             redraw = False)
 ```
+ - `rows` can be either `int` or iterable of iterables.
 
 ___
 

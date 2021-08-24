@@ -1,3 +1,7 @@
+### Version 5.0.29
+ - Update documentation
+ - `insert_row` argument `add_columns` now `False` by default for better performance
+
 ### Version 5.0.28
  - Various minor improvements
 

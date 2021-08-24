@@ -24,7 +24,7 @@ pip install tksheet
  - Change fonts and font size
  - Change any colors in the sheet
  - Left `"w"`, Center `"center"` or Right `"e"` text alignment
- - Cell elements can be any class with a `str` method
+ - Cell values can be any class with a `str` method
 
 ### Light Blue Theme
 

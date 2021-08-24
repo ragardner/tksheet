@@ -2079,7 +2079,7 @@ class Sheet(tk.Frame):
         if redraw and self.after_redraw_id is None:
             self.after_redraw_id = self.after(self.after_redraw_time_ms, self.after_redraw)
 
-    def insert_row(self, values = None, idx = "end", height = None, deselect_all = False, add_columns = True,
+    def insert_row(self, values = None, idx = "end", height = None, deselect_all = False, add_columns = False,
                    redraw = False):
         self.MT.insert_row_position(idx = idx,
                                     height = height,
