@@ -1,3 +1,6 @@
+### Version 5.0.30
+ - Fixed issue with cell editor stripping whitespace from the end of value
+
 ### Version 5.0.29
  - Update documentation
  - `insert_row` argument `add_columns` now `False` by default for better performance

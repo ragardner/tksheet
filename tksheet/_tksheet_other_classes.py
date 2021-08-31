@@ -142,7 +142,7 @@ class TextEditor(tk.Frame):
         self.textedit.focus_set()
         
     def get(self):
-        return self.textedit.get("1.0", "end").rstrip()
+        return self.textedit.get("1.0", "end-1c")
 
     def get_num_lines(self):
         return int(self.textedit.index('end-1c').split('.')[0])
