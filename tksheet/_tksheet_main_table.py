@@ -3046,7 +3046,7 @@ class MainTable(tk.Canvas):
         if self.anything_selected(exclude_rows = True, exclude_cells = True):
             selcols = self.get_selected_cols()
             numcols = len(selcols)
-            displayed_ins_col = min(selcols) if event == "left" else max(selcols)
+            displayed_ins_col = min(selcols) if event == "left" else max(selcols) + 1
             if self.all_columns_displayed:
                 data_ins_col = int(displayed_ins_col)
             else:
@@ -3105,7 +3105,7 @@ class MainTable(tk.Canvas):
         if self.anything_selected(exclude_columns = True, exclude_cells = True):
             selrows = self.get_selected_rows()
             numrows = len(selrows)
-            stidx = min(selrows) if event == "above" else max(selrows)
+            stidx = min(selrows) if event == "above" else max(selrows) + 1
             posidx = int(stidx)
         else:
             selrows = [0]

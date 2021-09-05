@@ -1,3 +1,6 @@
+### Version 5.0.31
+ - Fixed insert rows, columns below working incorrectly
+
 ### Version 5.0.30
  - Fixed issue with cell editor stripping whitespace from the end of value
 
