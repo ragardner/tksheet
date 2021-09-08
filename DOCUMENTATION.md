@@ -295,7 +295,7 @@ sheet_data_dimensions(total_rows = None, total_columns = None)
 ___
 
 ```python
-delete_row(idx = 0, deselect_all = False)
+delete_row(idx = 0, deselect_all = False, redraw = True)
 ```
 
 ___
@@ -325,7 +325,7 @@ move_row(row, moveto)
 ___
 
 ```python
-delete_column(idx = 0, deselect_all = False)
+delete_column(idx = 0, deselect_all = False, redraw = True)
 ```
 
 ___
