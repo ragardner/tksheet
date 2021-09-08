@@ -1,5 +1,5 @@
 ### Version 5.0.32
- - Add sheet refreshing to insert rows and columns
+ - Add sheet refreshing to delete_row(), delete_column()
 
 ### Version 5.0.31
  - Fixed insert rows/columns below/left working incorrectly
