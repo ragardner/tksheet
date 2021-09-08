@@ -914,7 +914,7 @@ class Sheet(tk.Frame):
         self.MT.del_row_position(idx = idx,
                                  deselect_all = deselect_all)
 
-    def delete_row(self, idx = 0, deselect_all = False):
+    def delete_row(self, idx = 0, deselect_all = False, redraw = True):
         del self.MT.data_ref[idx]
         self.MT.del_row_position(idx = idx,
                                  deselect_all = deselect_all)
@@ -926,6 +926,8 @@ class Sheet(tk.Frame):
         self.MT.cell_options = {(rn if rn < idx else rn - 1, cn): t2 for (rn, cn), t2 in self.MT.cell_options.items()}
         self.MT.row_options = {rn if rn < idx else rn - 1: t for rn, t in self.MT.row_options.items()}
         self.RI.cell_options = {rn if rn < idx else rn - 1: t for rn, t in self.RI.cell_options.items()}
+        if redraw and self.after_redraw_id is None:
+            self.after_redraw_id = self.after(self.after_redraw_time_ms, self.after_redraw)
 
     def insert_row_position(self, idx = "end", height = None, deselect_all = False, redraw = False):
         self.MT.insert_row_position(idx = idx,
@@ -1026,7 +1028,7 @@ class Sheet(tk.Frame):
         self.MT.del_col_position(idx,
                                  deselect_all = deselect_all)
 
-    def delete_column(self, idx = 0, deselect_all = False):
+    def delete_column(self, idx = 0, deselect_all = False, redraw = True):
         for rn in range(len(self.MT.data_ref)):
             del self.MT.data_ref[rn][idx] 
         self.MT.del_col_position(idx,
@@ -1039,6 +1041,8 @@ class Sheet(tk.Frame):
         self.MT.cell_options = {(rn, cn if cn < idx else cn - 1): t2 for (rn, cn), t2 in self.MT.cell_options.items()}
         self.MT.col_options = {cn if cn < idx else cn - 1: t for cn, t in self.MT.col_options.items()}
         self.CH.cell_options = {cn if cn < idx else cn - 1: t for cn, t in self.CH.cell_options.items()}
+        if redraw and self.after_redraw_id is None:
+            self.after_redraw_id = self.after(self.after_redraw_time_ms, self.after_redraw)
 
     def insert_column_position(self, idx = "end", width = None, deselect_all = False, redraw = False):
         self.MT.insert_col_position(idx = idx,

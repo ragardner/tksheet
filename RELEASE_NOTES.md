@@ -1,3 +1,6 @@
+### Version 5.0.32
+ - Add sheet refreshing to insert rows and columns
+
 ### Version 5.0.31
  - Fixed insert rows/columns below/left working incorrectly
 
