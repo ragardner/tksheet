@@ -1196,9 +1196,11 @@ create_dropdown(r = 0,
                 current = False,
                 set_cell_on_select = True,
                 redraw = True,
-                recreate_selection_boxes = True)
+                recreate_selection_boxes = True,
+                selection_function = None)
 ```
  - `set_cell_on_select` will set the underlying cells data to the selected item, to bind this event see the function `extra_bindings()` with binding `"end_edit_cell"` [here](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#7-Bindings-and-Functionality).
+ - `selection_function` can be used to trigger a specific function when an item from the dropdown box is selected, if you are using the above `extra_bindings()` as well it will also be triggered but after this function. e.g. `selection_function = my_function_name`
 
 ___
 

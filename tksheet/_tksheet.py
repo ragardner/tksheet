@@ -849,7 +849,8 @@ class Sheet(tk.Frame):
                         current = False,
                         set_cell_on_select = True,
                         redraw = True,
-                        recreate_selection_boxes = True):
+                        recreate_selection_boxes = True,
+                        selection_function = None):
         self.MT.create_dropdown(r = r,
                                 c = c,
                                 values = values,
@@ -861,7 +862,8 @@ class Sheet(tk.Frame):
                                 current = current,
                                 set_cell_on_select = set_cell_on_select,
                                 redraw = redraw,
-                                recreate = recreate_selection_boxes)
+                                recreate = recreate_selection_boxes,
+                                selection_function = selection_function)
 
     def get_dropdown_value(self, r, c, current = False, destroy = True, set_cell_on_select = True, redraw = True, recreate = True):
         return self.MT.get_dropdown_value(r, c, current = current, destroy = destroy,

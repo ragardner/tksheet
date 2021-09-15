@@ -4871,7 +4871,7 @@ class MainTable(tk.Canvas):
             self.set_cell_size_to_text(r, c, only_set_if_too_small = True, redraw = True)
 
     def create_dropdown(self, r = 0, c = 0, values = [], set_value = None, state = "readonly", see = True, destroy_on_leave = True, destroy_on_select = True, current = False,
-                        set_cell_on_select = True, redraw = True, recreate = True):
+                        set_cell_on_select = True, redraw = True, recreate = True, selection_function = None):
         quick_disp_cols = dict(zip(self.displayed_columns, range(len(self.displayed_columns))))
         if self.all_columns_displayed:
             cpos = c
@@ -4899,7 +4899,7 @@ class MainTable(tk.Canvas):
         window = self.create_window((x, y),
                                       window = widget,
                                       anchor = "nw")
-        self.cell_options[(r, c)]['dropdown'] = (widget, window)
+        self.cell_options[(r, c)]['dropdown'] = (widget, window, selection_function)
         self.cell_options[(r, c)]['dropdown'][0].dropdown.bind("<<ComboboxSelected>>",
                                                                lambda event: self.get_dropdown_value(canvas_window = window,
                                                                                                      current = current,
@@ -4930,6 +4930,8 @@ class MainTable(tk.Canvas):
             table_dropdown_value = self.cell_options[(r, c)]['dropdown'][0].dropdown.current()
         else:
             table_dropdown_value = self.cell_options[(r, c)]['dropdown'][0].get_my_value()
+        if self.cell_options[(r, c)]['dropdown'][2] is not None: # user has specified a selection function
+            self.cell_options[(r, c)]['dropdown'][2]((r, c, "ComboboxSelected", f"{table_dropdown_value}"))
         if set_cell_on_select:
             self.set_cell_data(r, cpos, table_dropdown_value, cell_resize = True if destroy else False)
             if self.extra_end_edit_cell_func is not None:

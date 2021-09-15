@@ -1,3 +1,6 @@
+### Version 5.0.33
+ - Add default argument `selection_function` to `create_dropdown()`
+
 ### Version 5.0.32
  - Add sheet refreshing to delete_row(), delete_column()
 
