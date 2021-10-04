@@ -75,6 +75,7 @@ class RowIndex(tk.Canvas):
         self.ri_extra_begin_drag_drop_func = None
         self.ri_extra_end_drag_drop_func = None
         self.extra_double_b1_func = None
+        self.row_height_resize_func = None
         self.new_row_width = 0
         if row_index_width is None:
             self.set_width(100)
@@ -291,8 +292,11 @@ class RowIndex(tk.Canvas):
         self.focus_set()
         if self.double_click_resizing_enabled and self.height_resizing_enabled and self.rsz_h is not None and not self.currently_resizing_height:
             row = self.rsz_h - 1
-            self.set_row_height(row)
+            old_height = self.MT.row_positions[self.rsz_h] - self.MT.row_positions[self.rsz_h - 1]
+            new_height = self.set_row_height(row)
             self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
+            if self.row_height_resize_func is not None:
+                self.row_height_resize_func(("row_height_resize", row, old_height, new_height))
         elif self.width_resizing_enabled and self.rsz_h is None and self.rsz_w == True:
             self.set_width_of_index_to_text()
         elif self.row_selection_enabled and self.rsz_h is None and self.rsz_w is None:
@@ -475,6 +479,8 @@ class RowIndex(tk.Canvas):
             self.MT.recreate_all_selection_boxes()
             self.MT.refresh_dropdowns()
             self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
+            if self.row_height_resize_func is not None:
+                self.row_height_resize_func(("row_height_resize", self.rsz_h - 1, int(size), int(self.MT.row_positions[self.rsz_h] - self.MT.row_positions[self.rsz_h - 1]))
         elif self.width_resizing_enabled and self.rsz_w is not None and self.currently_resizing_width:
             self.currently_resizing_width = False
             self.delete_resize_lines()
@@ -751,6 +757,7 @@ class RowIndex(tk.Canvas):
             if recreate:
                 self.MT.recreate_all_selection_boxes()
                 self.MT.refresh_dropdowns()
+        return new_height
 
     def set_width_of_index_to_text(self, recreate = True):
         if not self.MT.my_row_index and isinstance(self.MT.my_row_index, list):

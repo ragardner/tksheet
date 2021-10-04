@@ -447,6 +447,9 @@ class Sheet(tk.Frame):
             self.RI.shift_selection_binding_func = None if func == "None" else func
             self.CH.shift_selection_binding_func = None if func == "None" else func
             self.MT.deselection_binding_func = None
+
+            self.CH.column_width_resize_func = None if func == "None" else func
+            self.RI.row_height_resize_func = None if func == "None" else func
         else:
             if isinstance(bindings[0], str) and func == "None":
                 iterable = [bindings]
@@ -515,6 +518,11 @@ class Sheet(tk.Frame):
                     self.MT.extra_begin_insert_rows_rc_func = func
                 if binding in ("rc_insert_row", "end_rc_insert_row", "end_insert_row", "end_insert_rows"):
                     self.MT.extra_end_insert_rows_rc_func = func
+
+                if binding == "column_width_resize":
+                    self.CH.column_width_resize_func = func
+                if binding == "row_height_resize":
+                    self.RI.row_height_resize_func = func
                     
                 if binding == "cell_select":
                     self.MT.selection_binding_func = func
@@ -887,7 +895,7 @@ class Sheet(tk.Frame):
             self.MT.destroy_dropdown(r, c)
 
     def get_dropdowns(self):
-        return {k: v['dropdown'] for k, v in self.MT.cell_options if 'dropdown' in v}
+        return {k: v['dropdown'] for k, v in self.MT.cell_options.items() if 'dropdown' in v}
 
     def refresh_dropdowns(self, dropdowns = []):
         self.MT.refresh_dropdowns(dropdowns = dropdowns)
@@ -1841,7 +1849,7 @@ class Sheet(tk.Frame):
                        reset_highlights = False):
         if verify:
             if not isinstance(data, list) or not all(isinstance(row, list) for row in data):
-                raise ValueError("data argument must be a list of lists, sublists being rows")
+                raise ValueError("Data argument must be a list of lists, sublists being rows")
         if reset_highlights:
             self.dehighlight_all()
         return self.MT.data_reference(data,
@@ -1894,7 +1902,7 @@ class Sheet(tk.Frame):
                 return None
         else:
             try:
-                self.MT.data_ref[r]
+                return self.MT.data_ref[r]
             except:
                 return None
 
