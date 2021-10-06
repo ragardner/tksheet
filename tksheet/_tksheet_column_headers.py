@@ -271,6 +271,27 @@ class ColumnHeaders(tk.Canvas):
                 self.MT.reset_mouse_motion_creations()
         if self.extra_motion_func is not None:
             self.extra_motion_func(event)
+
+    def double_b1(self, event = None):
+        self.focus_set()
+        if self.double_click_resizing_enabled and self.width_resizing_enabled and self.rsz_w is not None and not self.currently_resizing_width:
+            col = self.rsz_w - 1
+            old_width = self.MT.col_positions[self.rsz_w] - self.MT.col_positions[self.rsz_w - 1]
+            new_width = self.set_col_width(col)
+            self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
+            if self.col_width_resize_func is not None:
+                self.col_width_resize_func(("column_width_resize", col, old_width, new_width))
+        elif self.col_selection_enabled and self.rsz_h is None and self.rsz_w is None:
+            c = self.MT.identify_col(x = event.x)
+            if c < len(self.MT.col_positions) - 1:
+                if self.MT.single_selection_enabled:
+                    self.select_col(c, redraw = True)
+                elif self.MT.toggle_selection_enabled:
+                    self.toggle_select_col(c, redraw = True)
+        self.mouse_motion(event)
+        self.rsz_w = None
+        if self.extra_double_b1_func is not None:
+            self.extra_double_b1_func(event)
         
     def b1_press(self, event = None):
         self.focus_set()
@@ -424,6 +445,7 @@ class ColumnHeaders(tk.Canvas):
             new_col_pos = self.coords("rwl")[0]
             self.delete_resize_lines()
             self.MT.delete_resize_lines()
+            old_width = self.MT.col_positions[self.rsz_w] - self.MT.col_positions[self.rsz_w - 1]
             size = new_col_pos - self.MT.col_positions[self.rsz_w - 1]
             if size < self.MT.min_cw:
                 new_col_pos = ceil(self.MT.col_positions[self.rsz_w - 1] + self.MT.min_cw)
@@ -432,11 +454,12 @@ class ColumnHeaders(tk.Canvas):
             increment = new_col_pos - self.MT.col_positions[self.rsz_w]
             self.MT.col_positions[self.rsz_w + 1:] = [e + increment for e in islice(self.MT.col_positions, self.rsz_w + 1, len(self.MT.col_positions))]
             self.MT.col_positions[self.rsz_w] = new_col_pos
+            new_width = self.MT.col_positions[self.rsz_w] - self.MT.col_positions[self.rsz_w - 1]
             self.MT.recreate_all_selection_boxes()
             self.MT.refresh_dropdowns()
             self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
             if self.column_width_resize_func is not None:
-                self.column_width_resize_func(("column_width_resize", self.rsz_w - 1, int(size), int(self.MT.col_positions[self.rsz_w] - self.MT.col_positions[self.rsz_w - 1]))
+                self.column_width_resize_func(("column_width_resize", self.rsz_w - 1, old_width, new_width))
         elif self.height_resizing_enabled and self.rsz_h is not None and self.currently_resizing_height:
             self.currently_resizing_height = False
             self.delete_resize_lines()
@@ -587,27 +610,6 @@ class ColumnHeaders(tk.Canvas):
         self.mouse_motion(event)
         if self.extra_b1_release_func is not None:
             self.extra_b1_release_func(event)
-
-    def double_b1(self, event = None):
-        self.focus_set()
-        if self.double_click_resizing_enabled and self.width_resizing_enabled and self.rsz_w is not None and not self.currently_resizing_width:
-            col = self.rsz_w - 1
-            old_width = self.MT.col_positions[self.rsz_w] - self.MT.col_positions[self.rsz_w - 1]
-            new_width = self.set_col_width(col)
-            self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
-            if self.col_width_resize_func is not None:
-                self.col_width_resize_func(("column_width_resize", col, old_width, new_width))
-        elif self.col_selection_enabled and self.rsz_h is None and self.rsz_w is None:
-            c = self.MT.identify_col(x = event.x)
-            if c < len(self.MT.col_positions) - 1:
-                if self.MT.single_selection_enabled:
-                    self.select_col(c, redraw = True)
-                elif self.MT.toggle_selection_enabled:
-                    self.toggle_select_col(c, redraw = True)
-        self.mouse_motion(event)
-        self.rsz_w = None
-        if self.extra_double_b1_func is not None:
-            self.extra_double_b1_func(event)
 
     def highlight_cells(self, c = 0, cells = tuple(), bg = None, fg = None, redraw = False):
         if bg is None and fg is None:

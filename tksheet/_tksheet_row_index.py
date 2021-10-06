@@ -468,6 +468,7 @@ class RowIndex(tk.Canvas):
             new_row_pos = self.coords("rhl")[1]
             self.delete_resize_lines()
             self.MT.delete_resize_lines()
+            old_height = self.MT.row_positions[self.rsz_h] - self.MT.row_positions[self.rsz_h - 1]
             size = new_row_pos - self.MT.row_positions[self.rsz_h - 1]
             if size < self.MT.min_rh:
                 new_row_pos = ceil(self.MT.row_positions[self.rsz_h - 1] + self.MT.min_rh)
@@ -476,11 +477,12 @@ class RowIndex(tk.Canvas):
             increment = new_row_pos - self.MT.row_positions[self.rsz_h]
             self.MT.row_positions[self.rsz_h + 1:] = [e + increment for e in islice(self.MT.row_positions, self.rsz_h + 1, len(self.MT.row_positions))]
             self.MT.row_positions[self.rsz_h] = new_row_pos
+            new_height = self.MT.row_positions[self.rsz_h] - self.MT.row_positions[self.rsz_h - 1]
             self.MT.recreate_all_selection_boxes()
             self.MT.refresh_dropdowns()
             self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
             if self.row_height_resize_func is not None:
-                self.row_height_resize_func(("row_height_resize", self.rsz_h - 1, int(size), int(self.MT.row_positions[self.rsz_h] - self.MT.row_positions[self.rsz_h - 1]))
+                self.row_height_resize_func(("row_height_resize", self.rsz_h - 1, old_height, new_height))
         elif self.width_resizing_enabled and self.rsz_w is not None and self.currently_resizing_width:
             self.currently_resizing_width = False
             self.delete_resize_lines()

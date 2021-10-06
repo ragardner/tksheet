@@ -117,7 +117,7 @@ class MainTable(tk.Canvas):
         self.paste_insert_column_limit = paste_insert_column_limit
         self.paste_insert_row_limit = paste_insert_row_limit
         self.arrow_key_down_right_scroll_page = arrow_key_down_right_scroll_page
-        self.enable_edit_cell_auto_resize = enable_edit_cell_auto_resize
+        self.cell_auto_resize_enabled = enable_edit_cell_auto_resize
         self.display_selected_fg_over_highlights = display_selected_fg_over_highlights
         self.centre_alignment_text_mod_indexes = (slice(1, None), slice(None, -1))
         self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
@@ -2808,7 +2808,7 @@ class MainTable(tk.Canvas):
         else:
             return self.data_ref
 
-    def set_cell_size_to_text(self, r, c, only_set_if_too_small = False, redraw = True):
+    def set_cell_size_to_text(self, r, c, only_set_if_too_small = False, redraw = True, run_binding = False):
         min_cw = self.min_cw
         min_rh = self.min_rh
         h = int(min_rh)
@@ -2866,18 +2866,28 @@ class MainTable(tk.Canvas):
             if h != self.row_positions[r + 1] - self.row_positions[r]:
                 cell_needs_resize_h = True
         if cell_needs_resize_w:
+            old_width = self.col_positions[c + 1] - self.col_positions[c]
             new_col_pos = self.col_positions[c] + w
             increment = new_col_pos - self.col_positions[c + 1]
             self.col_positions[c + 2:] = [e + increment for e in islice(self.col_positions, c + 2, len(self.col_positions))]
             self.col_positions[c + 1] = new_col_pos
+            new_width = self.col_positions[c + 1] - self.col_positions[c]
+            if run_binding and self.CH.column_width_resize_func is not None:
+                self.CH.column_width_resize_func(("column_width_resize", c, old_width, new_width))
         if cell_needs_resize_h:
+            old_height = self.row_positions[r + 1] - self.row_positions[r]
             new_row_pos = self.row_positions[r] + h
             increment = new_row_pos - self.row_positions[r + 1]
             self.row_positions[r + 2:] = [e + increment for e in islice(self.row_positions, r + 2, len(self.row_positions))]
             self.row_positions[r + 1] = new_row_pos
+            new_height = self.row_positions[r + 1] - self.row_positions[r]
+            if run_binding and self.RI.row_height_resize_func is not None:
+                self.RI.row_height_resize_func(("row_height_resize", r, old_height, new_height))
         if cell_needs_resize_w or cell_needs_resize_h:
             self.recreate_all_selection_boxes()
             self.refresh_dropdowns()
+            if redraw:
+                self.refresh()
 
     def set_all_cell_sizes_to_text(self, include_index = False):
         min_cw = self.min_cw
@@ -4725,8 +4735,8 @@ class MainTable(tk.Canvas):
                 text = event.char
             else:
                 text = f"{self.data_ref[y1][x1]}" if self.all_columns_displayed else f"{self.data_ref[y1][self.displayed_columns[x1]]}"
-                if self.enable_edit_cell_auto_resize:
-                    self.set_cell_size_to_text(y1, x1, only_set_if_too_small = True, redraw = True)
+                if self.cell_auto_resize_enabled:
+                    self.set_cell_size_to_text(y1, x1, only_set_if_too_small = True, redraw = True, run_binding = True)
         self.select_cell(r = y1, c = x1, keep_other_selections = True)
         self.create_text_editor(r = y1, c = x1, text = text, set_data_ref_on_destroy = True)
         
@@ -4867,8 +4877,8 @@ class MainTable(tk.Canvas):
             self.data_ref[r][c] = value
         else:
             self.data_ref[r][self.displayed_columns[c]] = value
-        if cell_resize and self.enable_edit_cell_auto_resize:
-            self.set_cell_size_to_text(r, c, only_set_if_too_small = True, redraw = True)
+        if cell_resize and self.cell_auto_resize_enabled:
+            self.set_cell_size_to_text(r, c, only_set_if_too_small = True, redraw = True, run_binding = True)
 
     def create_dropdown(self, r = 0, c = 0, values = [], set_value = None, state = "readonly", see = True, destroy_on_leave = True, destroy_on_select = True, current = False,
                         set_cell_on_select = True, redraw = True, recreate = True, selection_function = None):
