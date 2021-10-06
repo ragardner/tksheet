@@ -1662,7 +1662,7 @@ class Sheet(tk.Frame):
         if arrow_key_down_right_scroll_page is not None:
             self.MT.arrow_key_down_right_scroll_page = arrow_key_down_right_scroll_page
         if enable_edit_cell_auto_resize is not None:
-            self.MT.enable_edit_cell_auto_resize = enable_edit_cell_auto_resize
+            self.MT.cell_auto_resize_enabled = enable_edit_cell_auto_resize
         if header_hidden_columns_expander_bg is not None:
             self.CH.header_hidden_columns_expander_bg = header_hidden_columns_expander_bg
         if index_hidden_rows_expander_bg is not None:
