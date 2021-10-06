@@ -2872,7 +2872,7 @@ class MainTable(tk.Canvas):
             self.col_positions[c + 2:] = [e + increment for e in islice(self.col_positions, c + 2, len(self.col_positions))]
             self.col_positions[c + 1] = new_col_pos
             new_width = self.col_positions[c + 1] - self.col_positions[c]
-            if run_binding and self.CH.column_width_resize_func is not None:
+            if run_binding and self.CH.column_width_resize_func is not None and old_width != new_width:
                 self.CH.column_width_resize_func(("column_width_resize", c, old_width, new_width))
         if cell_needs_resize_h:
             old_height = self.row_positions[r + 1] - self.row_positions[r]
@@ -2881,7 +2881,7 @@ class MainTable(tk.Canvas):
             self.row_positions[r + 2:] = [e + increment for e in islice(self.row_positions, r + 2, len(self.row_positions))]
             self.row_positions[r + 1] = new_row_pos
             new_height = self.row_positions[r + 1] - self.row_positions[r]
-            if run_binding and self.RI.row_height_resize_func is not None:
+            if run_binding and self.RI.row_height_resize_func is not None and old_height != new_height:
                 self.RI.row_height_resize_func(("row_height_resize", r, old_height, new_height))
         if cell_needs_resize_w or cell_needs_resize_h:
             self.recreate_all_selection_boxes()

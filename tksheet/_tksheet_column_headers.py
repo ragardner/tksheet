@@ -279,8 +279,8 @@ class ColumnHeaders(tk.Canvas):
             old_width = self.MT.col_positions[self.rsz_w] - self.MT.col_positions[self.rsz_w - 1]
             new_width = self.set_col_width(col)
             self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
-            if self.col_width_resize_func is not None:
-                self.col_width_resize_func(("column_width_resize", col, old_width, new_width))
+            if self.column_width_resize_func is not None and old_width != new_width:
+                self.column_width_resize_func(("column_width_resize", col, old_width, new_width))
         elif self.col_selection_enabled and self.rsz_h is None and self.rsz_w is None:
             c = self.MT.identify_col(x = event.x)
             if c < len(self.MT.col_positions) - 1:
@@ -458,7 +458,7 @@ class ColumnHeaders(tk.Canvas):
             self.MT.recreate_all_selection_boxes()
             self.MT.refresh_dropdowns()
             self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
-            if self.column_width_resize_func is not None:
+            if self.column_width_resize_func is not None and old_width != new_width:
                 self.column_width_resize_func(("column_width_resize", self.rsz_w - 1, old_width, new_width))
         elif self.height_resizing_enabled and self.rsz_h is not None and self.currently_resizing_height:
             self.currently_resizing_height = False

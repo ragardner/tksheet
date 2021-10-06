@@ -28,7 +28,7 @@ class demo(tk.Tk):
                            #align = "e",
                            #header_align = "w",
                             #row_index_align = "w",
-                            data = [[f"Row {r}, Column {c}\nnewline1\nnewline2" for c in range(50)] for r in range(500)], #to set sheet data at startup
+                            data = [[f"Row {r}, Column {c}\nnewline1\nnewline2" for c in range(5)] for r in range(500)], #to set sheet data at startup
                             #headers = [f"Column {c}\nnewline1\nnewline2" for c in range(30)],
                             #row_index = [f"Row {r}\nnewline1\nnewline2" for r in range(2000)],
                             #set_all_heights_and_widths = True, #to fit all cell sizes to text at start up
@@ -86,7 +86,8 @@ class demo(tk.Tk):
 
         # __________ DISPLAY SUBSET OF COLUMNS __________
 
-        #self.sheet.display_subset_of_columns(indexes = [0, 1, 2, 3, 4, 5], enable = True)
+        #self.sheet.display_subset_of_columns(indexes = [0, 1, 2], enable = True)
+        #self.sheet.display_subset_of_columns(indexes = [0, 1, 2, 3, 4], enable = True)
         #self.sheet.display_columns(enable = False)
         #self.sheet.insert_column(idx = 2)
         #self.sheet.insert_columns(columns = 5, idx = 10, mod_column_positions = False)
@@ -166,7 +167,9 @@ class demo(tk.Tk):
         #                            ])
         #self.sheet.extra_bindings("bind_all", self.all_extra_bindings)
         #self.sheet.extra_bindings("begin_edit_cell", self.begin_edit_cell)
-        self.sheet.extra_bindings([("all_select_events", self.all_extra_bindings)])
+        self.sheet.extra_bindings([("all_select_events", self.all_extra_bindings),
+                                   ("column_width_resize", self.all_extra_bindings),
+                                   ("row_height_resize", self.all_extra_bindings)])
         #self.sheet.extra_bindings("unbind_all") #remove all functions set by extra_bindings()
 
         # __________ BINDING NEW RIGHT CLICK FUNCTION __________
@@ -268,7 +271,7 @@ class demo(tk.Tk):
 
         # __________ ADDITIONAL BINDINGS __________
 
-        self.sheet.popup_menu_add_command("Hide columns", self.hide_columns_right_click, table_menu = False, index_menu = False)
+        #self.sheet.popup_menu_add_command("Hide columns", self.hide_columns_right_click, table_menu = False, index_menu = False)
 
     def hide_columns_right_click(self, event = None):
         currently_displayed = self.sheet.display_columns()
@@ -277,8 +280,9 @@ class demo(tk.Tk):
         self.sheet.display_columns(indexes = indexes, enable = True, refresh = True)
 
     def all_extra_bindings(self, event):
-        #print (event)
-        pass
+        print (event)
+        if event and event[0] == "select_row":
+            self.sheet.delete_row(event[1])
     
     def begin_edit_cell(self, event):
         print (event)   # event[2] is keystroke
