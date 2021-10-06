@@ -1,3 +1,8 @@
+### Version 5.0.34
+ - Fix `None` returned with `get_row_data()` when `get_copy` is `False`
+ - Add bindings for column width resize and row height resize
+ - Fix error with function `get_dropdowns()`
+
 ### Version 5.0.33
  - Add default argument `selection_function` to `create_dropdown()`
 

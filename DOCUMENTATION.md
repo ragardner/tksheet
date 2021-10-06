@@ -458,6 +458,8 @@ extra_bindings(bindings, func = "None")
 	- "end_insert_columns"
 	- "begin_insert_rows"
 	- "end_insert_rows"
+    - "row_height_resize"
+    - "column_width_resize"
 	- "cell_select"
 	- "select_all"
 	- "row_select"
