@@ -1186,36 +1186,32 @@ unbind_key_text_editor(key)
 
 ## 20 Dropdown Boxes
 
+Create a dropdown box (only creates the arrow and border and sets it up for usage, does not pop open the box).
 ```python
-create_dropdown(r = 0,
-                c = 0,
-                values = [],
-                set_value = None,
-                state = "readonly",
-                see = False,
-                destroy_on_leave = False,
-                destroy_on_select = True,
-                current = False,
-                set_cell_on_select = True,
-                redraw = True,
-                recreate_selection_boxes = True,
-                selection_function = None)
+def create_dropdown(r = 0,
+                    c = 0,
+                    values = [],
+                    set_value = None,
+                    state = "readonly",
+                    see = False,
+                    redraw = False,
+                    selection_function = None,
+                    modified_function = None)
 ```
- - `set_cell_on_select` will set the underlying cells data to the selected item, to bind this event see the function `extra_bindings()` with binding `"end_edit_cell"` [here](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#7-Bindings-and-Functionality).
+Notes:
+ - When a user selects an item from the dropdown box the sheet will set the underlying cells data to the selected item, to bind this event see the function `extra_bindings()` with binding `"end_edit_cell"` [here](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#7-Bindings-and-Functionality).
+
+ Arguments:
+ - `values` are the values to appear when the dropdown box is popped open.
+ - `state` determines whether or not there is also an editable text window at the top of the dropdown box when it is open.
+ - `see` scrolls the sheet to the location of the newly created dropdown box.
+ - `redraw` refreshes the sheet so the newly created box is visible.
  - `selection_function` can be used to trigger a specific function when an item from the dropdown box is selected, if you are using the above `extra_bindings()` as well it will also be triggered but after this function. e.g. `selection_function = my_function_name`
+ - `modified_function` can be used to trigger a specific function when the `state` of the box is set to `"normal"` and there is an editable text window and a change of the text in that window has occurred.
 
 ___
 
-Get the currently displayed value of a chosen dropdown box.
-```python
-get_dropdown_value(r, c, current = False, destroy = True, set_cell_on_select = True, redraw = True, recreate = True)
-```
- - `current` (`bool`) set to `True` if you want to get the index of the displayed value.
- - `recreate` redraws selection boxes, use if destroying the dropdown box.
-
-___
-
-Get a tuple of a chosen dropdown boxes values.
+Get chosen dropdown boxes values.
 ```python
 get_dropdown_values(r = 0, c = 0)
 ```
@@ -1224,8 +1220,9 @@ ___
 
 Set the values and displayed value of a chosen dropdown box.
 ```python
-set_dropdown_values(r = 0, c = 0, values = [], displayed = None)
+set_dropdown_values(r = 0, c = 0, set_existing_dropdown = False, values = [], displayed = None)
 ```
+ - `set_existing_dropdown` if `True` takes priority over `r` and `c` and sets the values of the last popped open dropdown box (if one one is popped open, if not then an `Exception` is raised).
  - `values` (`list`, `tuple`)
  - `displayed` (`str`, `None`) if not `None` will try to set the displayed value of the chosen dropdown box to given argument.
 
@@ -1245,15 +1242,18 @@ get_dropdowns()
 
 ___
 
+Pop open a dropdown box.
 ```python
-refresh_dropdowns(dropdowns = [])
+open_dropdown(r, c)
 ```
 
 ___
 
+Close an already open dropdown box.
 ```python
-set_all_dropdown_values_to_sheet()
+close_dropdown(r, c)
 ```
+ - Also destroys any opened text editor windows.
 
 ## 21 Table Options and Other Functions
 

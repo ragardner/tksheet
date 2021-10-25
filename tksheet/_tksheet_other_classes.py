@@ -13,7 +13,7 @@ import zlib
 # for mac bindings
 from platform import system as get_os
 USER_OS = f"{get_os()}"
-
+        
 
 class TextEditor_(tk.Text):
     def __init__(self,
@@ -84,6 +84,16 @@ class TextEditor_(tk.Text):
             self.bind("<2>", self.rc)
         else:
             self.bind("<3>", self.rc)
+        self._orig = self._w + "_orig"
+        self.tk.call("rename", self._w, self._orig)
+        self.tk.createcommand(self._w, self._proxy)
+
+    def _proxy(self, command, *args):
+        cmd = (self._orig, command) + args
+        result = self.tk.call(cmd)
+        if command in ("insert", "delete", "replace"):
+            self.event_generate("<<TextModified>>")
+        return result
     
     def rc(self,event):
         self.focus_set()
@@ -139,6 +149,8 @@ class TextEditor(tk.Frame):
         self.grid_columnconfigure(0, weight = 1)
         self.grid_rowconfigure(0, weight = 1)
         self.grid_propagate(False)
+        self.w_ = width
+        self.h_ = height
         self.textedit.focus_set()
         
     def get(self):
@@ -153,74 +165,6 @@ class TextEditor(tk.Frame):
 
     def scroll_to_bottom(self):
         self.textedit.yview_moveto(1)
-
-
-class TableDropdown(tk.Frame):
-    def __init__(self,
-                 parent,
-                 font,
-                 state,
-                 values = [],
-                 set_value = None,
-                 width = None,
-                 height = None):
-        tk.Frame.__init__(self,
-                          parent)
-        if width:
-            self.config(width = width)
-        if height:
-            self.config(height = height)
-        self.parent = parent
-        self.grid_columnconfigure(0, weight = 1)
-        self.grid_rowconfigure(0, weight = 1)
-        self.dropdown = TableDropdown_(self,
-                                       font,
-                                       state,
-                                       values = values,
-                                       set_value = set_value)
-        self.dropdown.grid(row = 0,
-                           column = 0,
-                           sticky = "nswe")
-        self.grid_propagate(False)
-        self.dropdown.focus_set()
-        
-    def get_my_value(self, event = None):
-        return self.dropdown.displayed.get()
-    
-    def set_displayed(self, value, event = None):
-        self.dropdown.displayed.set(value)
-
-    def set_my_values(self, values = []):
-        self.dropdown['values'] = values
-
-
-class TableDropdown_(ttk.Combobox):
-    def __init__(self,
-                 parent,
-                 font,
-                 state,
-                 values = [],
-                 set_value = None):
-        self.displayed = tk.StringVar()
-        ttk.Combobox.__init__(self,
-                              parent,
-                              font = font,
-                              state = state,
-                              values = values,
-                              textvariable = self.displayed)
-        if set_value is not None:
-            self.displayed.set(set_value)
-        elif values:
-            self.displayed.set(values[0])
-            
-    def get_my_value(self, event = None):
-        return self.displayed.get()
-    
-    def set_my_value(self, value, event = None):
-        self.displayed.set(value)
-
-    def set_my_values(self, values = []):
-        self['values'] = values
 
 
 def num2alpha(n):

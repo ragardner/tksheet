@@ -746,12 +746,9 @@ class RowIndex(tk.Canvas):
             new_height = int(min_rh)
         elif new_height > self.max_rh:
             new_height = int(self.max_rh)
-        if only_set_if_too_small:
-            if new_height <= self.MT.row_positions[row + 1] - self.MT.row_positions[row]:
-                return self.MT.row_positions[row + 1] - self.MT.row_positions[row]
-        if return_new_height:
-            return new_height
-        else:
+        if only_set_if_too_small and new_height <= self.MT.row_positions[row + 1] - self.MT.row_positions[row]:
+            return self.MT.row_positions[row + 1] - self.MT.row_positions[row]
+        if not return_new_height:
             new_row_pos = self.MT.row_positions[row] + new_height
             increment = new_row_pos - self.MT.row_positions[r_norm]
             self.MT.row_positions[r_extra:] = [e + increment for e in islice(self.MT.row_positions, r_extra, len(self.MT.row_positions))]

@@ -1,3 +1,7 @@
+### Version 5.1.0
+ - Overhaul dropdowns
+ - Replace ttk dropdown widget
+
 ### Version 5.0.34
  - Fix `None` returned with `get_row_data()` when `get_copy` is `False`
  - Add bindings for column width resize and row height resize

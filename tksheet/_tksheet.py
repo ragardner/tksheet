@@ -75,6 +75,8 @@ class Sheet(tk.Frame):
                  row_drag_and_drop_perform = True,
                  empty_horizontal = 150,
                  empty_vertical = 100,
+                 horizontal_grid_to_end_of_window = False,
+                 vertical_grid_to_end_of_window = False,
                  show_vertical_grid = True,
                  show_horizontal_grid = True,
                  display_selected_fg_over_highlights = False,
@@ -126,6 +128,7 @@ class Sheet(tk.Frame):
                           highlightthickness = outline_thickness,
                           highlightbackground = outline_color)
         self.C = parent
+        self.dropdown_class = Sheet_Dropdown
         self.after_redraw_id = None
         self.after_redraw_time_ms = after_redraw_time_ms
         if width is not None or height is not None:
@@ -221,6 +224,8 @@ class Sheet(tk.Frame):
                             table_selected_columns_fg = table_selected_columns_fg,
                             displayed_columns = displayed_columns,
                             all_columns_displayed = all_columns_displayed,
+                            horizontal_grid_to_end_of_window = horizontal_grid_to_end_of_window,
+                            vertical_grid_to_end_of_window = vertical_grid_to_end_of_window,
                             empty_horizontal = empty_horizontal,
                             empty_vertical = empty_vertical,
                             max_undos = max_undos)
@@ -845,66 +850,6 @@ class Sheet(tk.Frame):
                 self.MT.default_cw = int(width)
         return self.MT.default_cw
 
-    def create_dropdown(self,
-                        r = 0,
-                        c = 0,
-                        values = [],
-                        set_value = None,
-                        state = "readonly",
-                        see = False,
-                        destroy_on_leave = False,
-                        destroy_on_select = True,
-                        current = False,
-                        set_cell_on_select = True,
-                        redraw = True,
-                        recreate_selection_boxes = True,
-                        selection_function = None):
-        self.MT.create_dropdown(r = r,
-                                c = c,
-                                values = values,
-                                set_value = set_value,
-                                state = state,
-                                see = see,
-                                destroy_on_leave = destroy_on_leave,
-                                destroy_on_select = destroy_on_select,
-                                current = current,
-                                set_cell_on_select = set_cell_on_select,
-                                redraw = redraw,
-                                recreate = recreate_selection_boxes,
-                                selection_function = selection_function)
-
-    def get_dropdown_value(self, r, c, current = False, destroy = True, set_cell_on_select = True, redraw = True, recreate = True):
-        return self.MT.get_dropdown_value(r, c, current = current, destroy = destroy,
-                                          set_cell_on_select = set_cell_on_select, redraw = redraw, recreate = recreate)
-
-    def get_dropdown_values(self, r = 0, c = 0):
-        return self.MT.cell_options[(r, c)]['dropdown'][0].dropdown['values']
-
-    def set_dropdown_values(self, r = 0, c = 0, values = [], displayed = None):
-        self.MT.cell_options[(r, c)]['dropdown'][0].dropdown['values'] = values
-        if displayed is not None:
-            self.MT.cell_options[(r, c)]['dropdown'][0].dropdown.set(displayed)
-            self.MT.set_cell_data(r, c, displayed, undo = False, cell_resize = False)
-
-    def delete_dropdown(self, r = 0, c = 0):
-        if r == "all":
-            for r, c in self.MT.cell_options:
-                if 'dropdown' in self.MT.cell_options[(r, c)]:
-                    self.MT.destroy_dropdown(r, c)
-        else:
-            self.MT.destroy_dropdown(r, c)
-
-    def get_dropdowns(self):
-        return {k: v['dropdown'] for k, v in self.MT.cell_options.items() if 'dropdown' in v}
-
-    def refresh_dropdowns(self, dropdowns = []):
-        self.MT.refresh_dropdowns(dropdowns = dropdowns)
-
-    def set_all_dropdown_values_to_sheet(self):
-        for r, c in self.MT.cell_options:
-            if 'dropdown' in self.MT.cell_options[(r, c)]:
-                self.MT.cell_options[(r, c)]['dropdown'][0].set_displayed(self.MT.data_ref[r][c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]])
-
     def cut(self, event = None):
         self.MT.ctrl_x()
 
@@ -1361,12 +1306,13 @@ class Sheet(tk.Frame):
         if redraw:
             self.redraw()
 
-    def highlight_rows(self, rows = [], bg = None, fg = None, highlight_index = True, redraw = False):
+    def highlight_rows(self, rows = [], bg = None, fg = None, highlight_index = True, redraw = False, end_of_screen = False):
         self.MT.highlight_rows(rows = rows,
                                bg = bg,
                                fg = fg,
                                highlight_index = highlight_index,
-                               redraw = redraw)
+                               redraw = redraw,
+                               end_of_screen = end_of_screen)
 
     def highlight_columns(self, columns = [], bg = None, fg = None, highlight_header = True, redraw = False):
         self.MT.highlight_cols(cols = columns,
@@ -1581,6 +1527,8 @@ class Sheet(tk.Frame):
 
     def set_options(self,
                     enable_edit_cell_auto_resize = None,
+                    horizontal_grid_to_end_of_window = None,
+                    vertical_grid_to_end_of_window = None,
                     page_up_down_select_row = None,
                     expand_sheet_if_paste_too_big = None,
                     paste_insert_column_limit = None,
@@ -1653,6 +1601,10 @@ class Sheet(tk.Frame):
                     measure_subset_index = None,
                     measure_subset_header = None,
                     redraw = True):
+        if horizontal_grid_to_end_of_window is not None:
+            self.MT.horizontal_grid_to_end_of_window = horizontal_grid_to_end_of_window
+        if vertical_grid_to_end_of_window is not None:
+            self.MT.vertical_grid_to_end_of_window = vertical_grid_to_end_of_window
         if paste_insert_column_limit is not None:
             self.MT.paste_insert_column_limit = paste_insert_column_limit
         if paste_insert_row_limit is not None:
@@ -2229,7 +2181,135 @@ class Sheet(tk.Frame):
     def refresh(self, redraw_header = True, redraw_row_index = True):
         self.MT.main_table_redraw_grid_and_text(redraw_header = redraw_header, redraw_row_index = redraw_row_index)
 
+    def create_dropdown(self,
+                        r = 0,
+                        c = 0,
+                        values = [],
+                        set_value = None,
+                        state = "readonly",
+                        see = False,
+                        redraw = False,
+                        selection_function = None,
+                        modified_function = None):
+        self.MT.create_dropdown(r = r,
+                                c = c,
+                                values = values,
+                                set_value = set_value,
+                                state = state,
+                                see = see,
+                                redraw = redraw,
+                                selection_function = selection_function,
+                                modified_function = modified_function)
 
+    def get_dropdown_value(self, r, c):
+        return self.get_cell_data(r, c)
+
+    def get_dropdown_values(self, r = 0, c = 0):
+        return self.MT.cell_options[(r, c)]['dropdown']['values']
+
+    def set_dropdown_values(self, r = 0, c = 0, set_existing_dropdown = False, values = [], displayed = None):
+        if set_existing_dropdown:
+            if self.MT.existing_dropdown_window is not None:
+                r_ = self.MT.existing_dropdown_window.r
+                c_ = self.MT.existing_dropdown_window.c
+            else:
+                raise Exception("No dropdown box is currently open")
+        else:
+            r_ = r
+            c_ = c
+        self.MT.cell_options[(r_, c_)]['dropdown']['values'] = values
+        if self.MT.cell_options[(r_, c_)]['dropdown']['window'] != "no dropdown open":
+            self.MT.cell_options[(r_, c_)]['dropdown']['window'].values(values)
+        if displayed is not None:
+            self.MT.set_cell_data(r_, c_, displayed, undo = False, cell_resize = False)
+            if self.MT.cell_options[(r_, c_)]['dropdown']['window'] != "no dropdown open" and self.MT.text_editor_loc is not None and self.MT.text_editor is not None:
+                self.MT.text_editor.set_text(displayed)
+
+    def delete_dropdown(self, r = 0, c = 0):
+        if r == "all":
+            for r, c in self.MT.cell_options:
+                if 'dropdown' in self.MT.cell_options[(r, c)]:
+                    self.MT.destroy_dropdown(r, c)
+        else:
+            self.MT.destroy_dropdown(r, c)
+
+    def get_dropdowns(self):
+        return {k: v['dropdown'] for k, v in self.MT.cell_options.items() if 'dropdown' in v}
+
+    def refresh_dropdowns(self, dropdowns = []):
+        pass
+
+    def set_all_dropdown_values_to_sheet(self):
+        pass
+
+    def open_dropdown(self, r, c):
+        self.MT.display_dropdown_window(r, c)
+
+    def close_dropdown(self, r, c):
+        self.MT.hide_dropdown_window(r, c)
+
+
+class Sheet_Dropdown(Sheet):
+    def __init__(self,
+                 parent,
+                 r,
+                 c,
+                 width = None,
+                 height = None,
+                 font = None,
+                 bg = theme_light_blue['table_bg'],
+                 fg = theme_light_blue['table_fg'],
+                 values = []):
+        Sheet.__init__(self,
+                       parent = parent,
+                       outline_thickness = 2,
+                       outline_color = fg,
+                       show_horizontal_grid = True,
+                       show_vertical_grid = False,
+                       show_header = False,
+                       show_row_index = False,
+                       show_top_left = False,
+                       align = "center",
+                       empty_horizontal = 0,
+                       empty_vertical = 0,
+                       horizontal_grid_to_end_of_window = True,
+                       width = width,
+                       height = height,
+                       font = font if font else get_font(),
+                       table_fg = fg,
+                       table_bg = bg)
+        self.parent = parent
+        self.h_ = height
+        self.w_ = width
+        self.r = r
+        self.c = c
+        self.bg = bg
+        self.fg = fg
+        self.bind("<Motion>", self.mouse_motion)
+        self.bind("<ButtonPress-1>", self.b1)
+        if values:
+            self.values(values)
+
+    def mouse_motion(self, event = None):
+        row = self.identify_row(event, exclude_index = True, allow_end = False)
+        self.dehighlight_all()
+        if row is not None:
+            self.highlight_rows(row, bg = self.fg, fg = self.bg, redraw = True, end_of_screen = True)
+
+    def b1(self, event = None):
+        row = self.identify_row(event, exclude_index = True, allow_end = False)
+        if row is None:
+            self.parent.hide_dropdown_window(self.r, self.c)
+        else:
+            self.parent.hide_dropdown_window(self.r, self.c, self.get_cell_data(row, 0))
+
+    def values(self, values = []):
+        self.set_sheet_data([[v] for v in values],
+                            reset_col_positions = False,
+                            reset_row_positions = False,
+                            redraw = False,
+                            verify = False)
+        self.set_all_cell_sizes_to_text(redraw = True)
 
 
 

@@ -719,11 +719,11 @@ class ColumnHeaders(tk.Canvas):
                 if txt:
                     qconf(qtxtm, text = txt, font = self.MT.my_font)
                     b = qbbox(qtxtm)
-                    tw = b[2] - b[0] + 25 if (rn, data_col) in self.MT.cell_options and 'dropdown' in self.MT.cell_options[(rn, data_col)] else b[2] - b[0] + 5
+                    tw = b[2] - b[0] + self.MT.txt_h + 3 if (rn, data_col) in self.MT.cell_options and 'dropdown' in self.MT.cell_options[(rn, data_col)] else b[2] - b[0] + 5
                     if tw > w:
                         w = tw
                 elif (rn, data_col) in self.MT.cell_options and 'dropdown' in self.MT.cell_options[(rn, data_col)]:
-                    tw = 20
+                    tw = self.MT.txt_h + 3
                     if tw > w:
                         w = tw
             if w > hw:
