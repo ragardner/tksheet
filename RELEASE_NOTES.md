@@ -1,3 +1,6 @@
+### Version 5.1.2
+ - Bugfixes and improvements related to `5.1.0`
+
 ### Version 5.1.1
  - Bugfixes and improvements related to `5.1.0`
 

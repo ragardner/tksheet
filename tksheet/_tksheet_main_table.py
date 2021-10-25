@@ -81,6 +81,7 @@ class MainTable(tk.Canvas):
         self.b1_pressed_loc = None
         self.existing_dropdown_canvas_id = None
         self.existing_dropdown_window = None
+        self.closed_dropdown = None
         
         self.disp_text = {}
         self.disp_high = {}
@@ -2389,7 +2390,7 @@ class MainTable(tk.Canvas):
             self.extra_rc_func(event)
 
     def b1_press(self, event = None):
-        self.hide_dropdown_window()
+        self.closed_dropdown = self.hide_dropdown_window()
         self.focus_set()
         x1, y1, x2, y2 = self.get_canvas_visible_area()
         if self.identify_col(x = event.x, allow_end = False) is None or self.identify_row(y = event.y, allow_end = False) is None:
@@ -2551,7 +2552,7 @@ class MainTable(tk.Canvas):
                 self.CH.create_resize_line(x1, y, x2, y, width = 1, fill = self.RI.resizing_line_fg, tag = "rhl")
         if self.extra_b1_motion_func is not None:
             self.extra_b1_motion_func(event)
-        
+
     def b1_release(self, event = None):
         if self.RI.width_resizing_enabled and self.RI.rsz_w is not None and self.RI.currently_resizing_width:
             self.delete_resize_lines()
@@ -2573,11 +2574,13 @@ class MainTable(tk.Canvas):
             c = self.identify_col(x = event.x)
             if ((r, c) == self.b1_pressed_loc and
                 (r, c if self.all_columns_displayed else self.displayed_columns[c]) in self.cell_options and
+                self.closed_dropdown != self.b1_pressed_loc and
                 'dropdown' in self.cell_options[(r, c if self.all_columns_displayed else self.displayed_columns[c])]):
                 self.display_dropdown_window(r, c)
             else:
                 self.hide_dropdown_window()
         self.b1_pressed_loc = None
+        self.closed_dropdown = None
         self.mouse_motion(event)
         if self.extra_b1_release_func is not None:
             self.extra_b1_release_func(event)
@@ -5070,8 +5073,6 @@ class MainTable(tk.Canvas):
                                                      bg = bg,
                                                      fg = fg,
                                                      values = self.cell_options[(r, c)]['dropdown']['values'])
-            self.existing_dropdown_window = window
-            self.cell_options[(r, c_)]['dropdown']['window'] = window
             if anchor == "nw":
                 ypos = self.row_positions[r] + self.text_editor.h_ - 1
             else:
@@ -5097,15 +5098,18 @@ class MainTable(tk.Canvas):
                                                      bg = bg,
                                                      fg = fg,
                                                      values = self.cell_options[(r, c)]['dropdown']['values'])
+            
             if anchor == "nw":
                 ypos = self.row_positions[r + 1]
             else:
                 ypos = self.row_positions[r]
-            self.cell_options[(r, c_)]['dropdown']['canvas_id'] = self.create_window((self.col_positions[c], self.row_positions[r + 1]),
+            self.cell_options[(r, c_)]['dropdown']['canvas_id'] = self.create_window((self.col_positions[c], ypos),
             window = window,
             anchor = anchor)
             window.bind("<FocusOut>", lambda x: self.hide_dropdown_window(r, c))
             window.focus_set()
+        self.existing_dropdown_window = window
+        self.cell_options[(r, c_)]['dropdown']['window'] = window
         self.existing_dropdown_canvas_id = self.cell_options[(r, c_)]['dropdown']['canvas_id']
 
     def hide_dropdown_window(self, r = None, c = None, selection = None, redraw = True):
@@ -5119,8 +5123,14 @@ class MainTable(tk.Canvas):
             self.recreate_all_selection_boxes()
             if redraw:
                 self.refresh()
+        if self.existing_dropdown_window is not None:
+            closedr, closedc, ret_tup = int(self.existing_dropdown_window.r), int(self.existing_dropdown_window.c), True
+        else:
+            ret_tup = False
         self.destroy_text_editor("Escape")
         self.delete_opened_dropdown_window(r, c)
+        if ret_tup:
+            return closedr, closedc
 
     def delete_opened_dropdown_window(self, r = None, c = None):
         try:
