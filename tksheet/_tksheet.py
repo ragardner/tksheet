@@ -2269,7 +2269,7 @@ class Sheet_Dropdown(Sheet):
                        show_header = False,
                        show_row_index = False,
                        show_top_left = False,
-                       align = "center",
+                       align = "w",
                        empty_horizontal = 0,
                        empty_vertical = 0,
                        horizontal_grid_to_end_of_window = True,

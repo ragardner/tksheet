@@ -20,7 +20,9 @@ class TextEditor_(tk.Text):
                  parent,
                  font = get_font(),
                  text = None,
-                 state = "normal"):
+                 state = "normal",
+                 bg = "white",
+                 fg = "black"):
         tk.Text.__init__(self,
                          parent,
                          font = font,
@@ -31,9 +33,9 @@ class TextEditor_(tk.Text):
                          highlightthickness = 0,
                          undo = True,
                          maxundo = 20,
-                         background = parent.parent.table_bg,
-                         foreground = parent.parent.table_fg,
-                         insertbackground = parent.parent.table_fg)
+                         background = bg,
+                         foreground = fg,
+                         insertbackground = fg)
         self.parent = parent
         if text is not None:
             self.insert(1.0, text)
@@ -90,7 +92,10 @@ class TextEditor_(tk.Text):
 
     def _proxy(self, command, *args):
         cmd = (self._orig, command) + args
-        result = self.tk.call(cmd)
+        try:
+            result = self.tk.call(cmd)
+        except:
+            return
         if command in ("insert", "delete", "replace"):
             self.event_generate("<<TextModified>>")
         return result
@@ -129,7 +134,9 @@ class TextEditor(tk.Frame):
                  width = None,
                  height = None,
                  border_color = "black",
-                 show_border = True):
+                 show_border = True,
+                 bg = "white",
+                 fg = "black"):
         tk.Frame.__init__(self,
                           parent,
                           height = height,
@@ -142,7 +149,9 @@ class TextEditor(tk.Frame):
         self.textedit = TextEditor_(self,
                                     font = font,
                                     text = text,
-                                    state = state)
+                                    state = state,
+                                    bg = bg,
+                                    fg = fg)
         self.textedit.grid(row = 0,
                            column = 0,
                            sticky = "nswe")
