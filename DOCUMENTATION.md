@@ -98,12 +98,14 @@ width = None,
 height = None,
 headers = None,
 measure_subset_header = True,
-default_header = "letters",     #letters, numbers or both
-default_row_index = "numbers",  #letters, numbers or both
+default_header = "letters", #letters, numbers or both
+default_row_index = "numbers", #letters, numbers or both
 page_up_down_select_row = True,
 expand_sheet_if_paste_too_big = False,
-paste_insert_column_limit = paste_insert_column_limit,
-paste_insert_row_limit = paste_insert_row_limit,
+paste_insert_column_limit = None,
+paste_insert_row_limit = None,
+arrow_key_down_right_scroll_page = False,
+enable_edit_cell_auto_resize = True,
 data_reference = None,
 data = None,
 startup_select = None,
@@ -118,6 +120,7 @@ max_header_height = "inf",
 max_row_width = "inf",
 row_index = None,
 measure_subset_index = True,
+after_redraw_time_ms = 100,
 row_index_width = 100,
 auto_resize_default_row_index = True,
 set_all_heights_and_widths = False,
@@ -137,52 +140,55 @@ column_drag_and_drop_perform = True,
 row_drag_and_drop_perform = True,
 empty_horizontal = 150,
 empty_vertical = 100,
+selected_rows_to_end_of_window = False,
+horizontal_grid_to_end_of_window = False,
+vertical_grid_to_end_of_window = False,
 show_vertical_grid = True,
 show_horizontal_grid = True,
 display_selected_fg_over_highlights = False,
 show_selected_cells_border = True,
-theme = "light blue",
-popup_menu_fg                           = "gray2",
-popup_menu_bg                           = "#f2f2f2",
-popup_menu_highlight_bg                 = "#91c9f7",
-popup_menu_highlight_fg                 = "black",
-frame_bg                                = theme_light_blue['table_bg'],
-table_grid_fg                           = theme_light_blue['table_grid_fg'],
-table_bg                                = theme_light_blue['table_bg'],
-table_fg                                = theme_light_blue['table_fg'], 
-table_selected_cells_border_fg          = theme_light_blue['table_selected_cells_border_fg'],
-table_selected_cells_bg                 = theme_light_blue['table_selected_cells_bg'],
-table_selected_cells_fg                 = theme_light_blue['table_selected_cells_fg'],
-table_selected_rows_border_fg           = theme_light_blue['table_selected_rows_border_fg'],
-table_selected_rows_bg                  = theme_light_blue['table_selected_rows_bg'],
-table_selected_rows_fg                  = theme_light_blue['table_selected_rows_fg'],
-table_selected_columns_border_fg        = theme_light_blue['table_selected_columns_border_fg'],
-table_selected_columns_bg               = theme_light_blue['table_selected_columns_bg'],
-table_selected_columns_fg               = theme_light_blue['table_selected_columns_fg'],
-resizing_line_fg                        = theme_light_blue['resizing_line_fg'],
-drag_and_drop_bg                        = theme_light_blue['drag_and_drop_bg'],
-index_bg                                = theme_light_blue['index_bg'],
-index_border_fg                         = theme_light_blue['index_border_fg'],
-index_grid_fg                           = theme_light_blue['index_grid_fg'],
-index_fg                                = theme_light_blue['index_fg'],
-index_selected_cells_bg                 = theme_light_blue['index_selected_cells_bg'],
-index_selected_cells_fg                 = theme_light_blue['index_selected_cells_fg'],
-index_selected_rows_bg                  = theme_light_blue['index_selected_rows_bg'],
-index_selected_rows_fg                  = theme_light_blue['index_selected_rows_fg'],
-header_bg                               = theme_light_blue['header_bg'],
-header_border_fg                        = theme_light_blue['header_border_fg'],
-header_grid_fg                          = theme_light_blue['header_grid_fg'],
-header_fg                               = theme_light_blue['header_fg'],
-header_selected_cells_bg                = theme_light_blue['header_selected_cells_bg'],
-header_selected_cells_fg                = theme_light_blue['header_selected_cells_fg'],
-header_selected_columns_bg              = theme_light_blue['header_selected_columns_bg'],
-header_selected_columns_fg              = theme_light_blue['header_selected_columns_fg'],
-top_left_bg                             = theme_light_blue['top_left_bg'],
-top_left_fg                             = theme_light_blue['top_left_fg'],
-top_left_fg_highlight                   = theme_light_blue['top_left_fg_highlight']
-)
+theme                              = "light blue",
+popup_menu_fg                      = "gray2",
+popup_menu_bg                      = "#f2f2f2",
+popup_menu_highlight_bg            = "#91c9f7",
+popup_menu_highlight_fg            = "black",
+frame_bg                           = theme_light_blue['table_bg'],
+table_grid_fg                      = theme_light_blue['table_grid_fg'],
+table_bg                           = theme_light_blue['table_bg'],
+table_fg                           = theme_light_blue['table_fg'], 
+table_selected_cells_border_fg     = theme_light_blue['table_selected_cells_border_fg'],
+table_selected_cells_bg            = theme_light_blue['table_selected_cells_bg'],
+table_selected_cells_fg            = theme_light_blue['table_selected_cells_fg'],
+table_selected_rows_border_fg      = theme_light_blue['table_selected_rows_border_fg'],
+table_selected_rows_bg             = theme_light_blue['table_selected_rows_bg'],
+table_selected_rows_fg             = theme_light_blue['table_selected_rows_fg'],
+table_selected_columns_border_fg   = theme_light_blue['table_selected_columns_border_fg'],
+table_selected_columns_bg          = theme_light_blue['table_selected_columns_bg'],
+table_selected_columns_fg          = theme_light_blue['table_selected_columns_fg'],
+resizing_line_fg                   = theme_light_blue['resizing_line_fg'],
+drag_and_drop_bg                   = theme_light_blue['drag_and_drop_bg'],
+index_bg                           = theme_light_blue['index_bg'],
+index_border_fg                    = theme_light_blue['index_border_fg'],
+index_grid_fg                      = theme_light_blue['index_grid_fg'],
+index_fg                           = theme_light_blue['index_fg'],
+index_selected_cells_bg            = theme_light_blue['index_selected_cells_bg'],
+index_selected_cells_fg            = theme_light_blue['index_selected_cells_fg'],
+index_selected_rows_bg             = theme_light_blue['index_selected_rows_bg'],
+index_selected_rows_fg             = theme_light_blue['index_selected_rows_fg'],
+index_hidden_rows_expander_bg      = theme_light_blue['index_hidden_rows_expander_bg'],
+header_bg                          = theme_light_blue['header_bg'],
+header_border_fg                   = theme_light_blue['header_border_fg'],
+header_grid_fg                     = theme_light_blue['header_grid_fg'],
+header_fg                          = theme_light_blue['header_fg'],
+header_selected_cells_bg           = theme_light_blue['header_selected_cells_bg'],
+header_selected_cells_fg           = theme_light_blue['header_selected_cells_fg'],
+header_selected_columns_bg         = theme_light_blue['header_selected_columns_bg'],
+header_selected_columns_fg         = theme_light_blue['header_selected_columns_fg'],
+header_hidden_columns_expander_bg  = theme_light_blue['header_hidden_columns_expander_bg'],
+top_left_bg                        = theme_light_blue['top_left_bg'],
+top_left_fg                        = theme_light_blue['top_left_fg'],
+top_left_fg_highlight              = theme_light_blue['top_left_fg_highlight'])
 ```
-
  - `startup_select` selects cells, rows or columns at initialization by using a `tuple` e.g. `(0, 0, "cells")` for cell A0 or `(0, 5, "rows")` for rows 0 to 5.
  - `data_reference` and `data` are essentially the same
 
@@ -424,12 +430,19 @@ enable_bindings(bindings = "all")
 	- "edit_cell"
 
 To allow table expansion when pasting data which doesn't fit in the table use either:
- - `expand_sheet_if_paste_too_big = True` in sheet initialization arguments.
+ - `expand_sheet_if_paste_too_big = True` in sheet initialization arguments or
  - `sheet.set_options(expand_sheet_if_paste_too_big = True)`
 
 ___
 
-Bind various table functionality to your own functions.
+Disable table functionality and bindings, uses the same arguments as `enable_bindings()`
+```python
+disable_bindings(bindings = "all")
+```
+
+___
+
+Bind various table functionality to your own functions. To unbind a function either set `func` argument to `None` or leave it as default e.g. `extra_bindings("begin_copy")` to unbind `"begin_copy"`.
 ```python
 extra_bindings(bindings, func = "None")
 ```
@@ -515,8 +528,9 @@ ___
 
 Enable or disable the ability to edit a specific cell.
 ```python
-cell_edit_binding(enable = False)
+cell_edit_binding(enable = False, keys = [])
 ```
+ - `keys` can be used to bind more keys to open a cell edit window
 
 ___
 
@@ -562,7 +576,17 @@ ___
 identify_column(event, exclude_header = False, allow_end = True)
 ```
 
+___
 
+Sheet control actions for binding your own keys to e.g. `sheet.bind("<Control-B>", sheet,paste)`
+```python
+cut(self, event = None)
+copy(self, event = None)
+paste(self, event = None)
+delete(self, event = None)
+undo(self, event = None)
+edit_cell(self, event = None, dropdown = False)
+```
 
 ## 9 Table Colors
 
@@ -598,8 +622,9 @@ get_highlighted_cells(canvas = "table")
 ___
 
 ```python
-highlight_rows(rows = [], bg = None, fg = None, highlight_index = True, redraw = False)
+highlight_rows(rows = [], bg = None, fg = None, highlight_index = True, redraw = False, end_of_screen = False)
 ```
+ - `end_of_screen` when `True` makes the row highlight go past the last column line if there is any room there.
 
 ___
 
@@ -1258,79 +1283,83 @@ close_dropdown(r, c)
 ## 21 Table Options and Other Functions
 
 ```python
-set_options(enable_edit_cell_auto_resize = None,
-            page_up_down_select_row = None,
-            expand_sheet_if_paste_too_big = None,
-            paste_insert_column_limit = None,
-            paste_insert_row_limit = None,
-            arrow_key_down_right_scroll_page = None,
-            display_selected_fg_over_highlights = None,
-            empty_horizontal = None,
-            empty_vertical = None,
-            show_horizontal_grid = None,
-            show_vertical_grid = None,
-            top_left_fg_highlight = None,
-            auto_resize_default_row_index = None,
-            font = None,
-            default_header = None,
-            default_row_index = None,
-            column_width = None,
-            header_font = None,
-            show_selected_cells_border = None,
-            theme = None,
-            max_colwidth = None,
-            max_row_height = None,
-            max_header_height = None,
-            max_row_width = None,
-            header_height = None,
-            row_height = None,
-            header_bg = None,
-            header_border_fg = None,
-            header_grid_fg = None,
-            header_fg = None,
-            header_selected_cells_bg = None,
-            header_selected_cells_fg = None,
-            header_hidden_columns_expander_bg = None,
-            index_bg = None,
-            index_border_fg = None,
-            index_grid_fg = None,
-            index_fg = None,
-            index_selected_cells_bg = None,
-            index_selected_cells_fg = None,
-            index_hidden_rows_expander_bg = None,
-            top_left_bg = None,
-            top_left_fg = None,
-            frame_bg = None,
-            table_bg = None,
-            table_grid_fg = None,
-            table_fg = None,
-            table_selected_cells_border_fg = None,
-            table_selected_cells_bg = None,
-            table_selected_cells_fg = None,
-            resizing_line_fg = None,
-            drag_and_drop_bg = None,
-            outline_thickness = None,
-            outline_color = None,
-            header_selected_columns_bg = None,
-            header_selected_columns_fg = None,
-            index_selected_rows_bg = None,
-            index_selected_rows_fg = None,
-            table_selected_rows_border_fg = None,
-            table_selected_rows_bg = None,
-            table_selected_rows_fg = None,
-            table_selected_columns_border_fg = None,
-            table_selected_columns_bg = None,
-            table_selected_columns_fg = None,
-            popup_menu_font = None,
-            popup_menu_fg = None,
-            popup_menu_bg = None,
-            popup_menu_highlight_bg = None,
-            popup_menu_highlight_fg = None,
-            row_drag_and_drop_perform = None,
-            column_drag_and_drop_perform = None,
-            measure_subset_index = None,
-            measure_subset_header = None,
-            redraw = True)
+def set_options(
+enable_edit_cell_auto_resize = None,
+selected_rows_to_end_of_window = None,
+horizontal_grid_to_end_of_window = None,
+vertical_grid_to_end_of_window = None,
+page_up_down_select_row = None,
+expand_sheet_if_paste_too_big = None,
+paste_insert_column_limit = None,
+paste_insert_row_limit = None,
+arrow_key_down_right_scroll_page = None,
+display_selected_fg_over_highlights = None,
+empty_horizontal = None,
+empty_vertical = None,
+show_horizontal_grid = None,
+show_vertical_grid = None,
+top_left_fg_highlight = None,
+auto_resize_default_row_index = None,
+font = None,
+default_header = None,
+default_row_index = None,
+header_font = None,
+show_selected_cells_border = None,
+theme = None,
+max_colwidth = None,
+max_row_height = None,
+max_header_height = None,
+max_row_width = None,
+header_height = None,
+row_height = None,
+column_width = None,
+header_bg = None,
+header_border_fg = None,
+header_grid_fg = None,
+header_fg = None,
+header_selected_cells_bg = None,
+header_selected_cells_fg = None,
+header_hidden_columns_expander_bg = None,
+index_bg = None,
+index_border_fg = None,
+index_grid_fg = None,
+index_fg = None,
+index_selected_cells_bg = None,
+index_selected_cells_fg = None,
+index_hidden_rows_expander_bg = None,
+top_left_bg = None,
+top_left_fg = None,
+frame_bg = None,
+table_bg = None,
+table_grid_fg = None,
+table_fg = None,
+table_selected_cells_border_fg = None,
+table_selected_cells_bg = None,
+table_selected_cells_fg = None,
+resizing_line_fg = None,
+drag_and_drop_bg = None,
+outline_thickness = None,
+outline_color = None,
+header_selected_columns_bg = None,
+header_selected_columns_fg = None,
+index_selected_rows_bg = None,
+index_selected_rows_fg = None,
+table_selected_rows_border_fg = None,
+table_selected_rows_bg = None,
+table_selected_rows_fg = None,
+table_selected_columns_border_fg = None,
+table_selected_columns_bg = None,
+table_selected_columns_fg = None,
+popup_menu_font = None,
+popup_menu_fg = None,
+popup_menu_bg = None,
+popup_menu_highlight_bg = None,
+popup_menu_highlight_fg = None,
+row_drag_and_drop_perform = None,
+column_drag_and_drop_perform = None,
+measure_subset_index = None,
+measure_subset_header = None,
+redraw = True)
 ```
 
 ___
@@ -1531,13 +1560,6 @@ class demo(tk.Tk):
 app = demo()
 app.mainloop()
 ```
-
-
-
-
-
-
-
 
 
 
