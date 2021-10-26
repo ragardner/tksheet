@@ -2560,13 +2560,16 @@ class MainTable(tk.Canvas):
         self.CH.rsz_h = None
         self.being_drawn_rect = None
         if self.b1_pressed_loc is not None:
-            r = self.identify_row(y = event.y)
-            c = self.identify_col(x = event.x)
-            if ((r, c) == self.b1_pressed_loc and
-                (r, c if self.all_columns_displayed else self.displayed_columns[c]) in self.cell_options and
-                self.closed_dropdown != self.b1_pressed_loc and
-                'dropdown' in self.cell_options[(r, c if self.all_columns_displayed else self.displayed_columns[c])]):
-                self.display_dropdown_window(r, c)
+            r = self.identify_row(y = event.y, allow_end = False)
+            c = self.identify_col(x = event.x, allow_end = False)
+            if r is not None and c is not None:
+                if ((r, c) == self.b1_pressed_loc and
+                    (r, c if self.all_columns_displayed else self.displayed_columns[c]) in self.cell_options and
+                    self.closed_dropdown != self.b1_pressed_loc and
+                    'dropdown' in self.cell_options[(r, c if self.all_columns_displayed else self.displayed_columns[c])]):
+                    self.display_dropdown_window(r, c)
+                else:
+                    self.hide_dropdown_window()
             else:
                 self.hide_dropdown_window()
         self.b1_pressed_loc = None
@@ -4957,13 +4960,13 @@ class MainTable(tk.Canvas):
             self.focus_set()
         return self.text_editor_value
 
-    def set_cell_data(self, r = 0, c = 0, value = "", undo = True, cell_resize = True):
+    def set_cell_data(self, r = 0, c = 0, value = "", undo = True, cell_resize = True, dcol = False):
         if r > len(self.data_ref) - 1:
             self.data_ref.extend([list(repeat("", c + 1)) for i in range((r + 1) - len(self.data_ref))])
         elif c > len(self.data_ref[r]) - 1:
             self.data_ref[r].extend(list(repeat("", (c + 1) - len(self.data_ref[r]))))
         if self.undo_enabled and undo:
-            if self.all_columns_displayed:
+            if self.all_columns_displayed or dcol:
                 if self.data_ref[r][c] != value:
                     self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells",
                                                                          {(r, c): f"{self.data_ref[r][c]}"},
@@ -4975,7 +4978,7 @@ class MainTable(tk.Canvas):
                                                                          {(r, self.displayed_columns[c]): f"{self.data_ref[r][self.displayed_columns[c]]}"},
                                                                          (((r, c, r + 1, c + 1), "cells"), ),
                                                                          self.currently_selected()))))
-        if self.all_columns_displayed:
+        if self.all_columns_displayed or dcol:
             self.data_ref[r][c] = value
         else:
             self.data_ref[r][self.displayed_columns[c]] = value
@@ -4983,16 +4986,12 @@ class MainTable(tk.Canvas):
             self.set_cell_size_to_text(r, c, only_set_if_too_small = True, redraw = True, run_binding = True)
 
     def create_dropdown(self, r = 0, c = 0, values = [], set_value = None, state = "readonly", see = True, redraw = True, selection_function = None, modified_function = None):
-        if self.all_columns_displayed:
-            cpos = c
-        else:
-            cpos = self.displayed_columns.index(c)
         if (r, c) in self.cell_options and 'dropdown' in self.cell_options[(r, c)]:
             self.destroy_dropdown(r, c)
         if values:
-            self.set_cell_data(r, cpos, set_value if set_value is not None else values[0], cell_resize = False, undo = False)
+            self.set_cell_data(r, c, set_value if set_value is not None else values[0], cell_resize = False, undo = False, dcol = True)
         elif not values and set_value is not None:
-            self.set_cell_data(r, cpos, set_value, cell_resize = False, undo = False)
+            self.set_cell_data(r, c, set_value, cell_resize = False, undo = False, dcol = True)
         if (r, c) not in self.cell_options:
             self.cell_options[(r, c)] = {}
         self.cell_options[(r, c)]['dropdown'] = {'values': values,
@@ -5002,7 +5001,7 @@ class MainTable(tk.Canvas):
                                                  'modified_function': modified_function,
                                                  'state': state}
         if see:
-            self.see(r = r, c = cpos)
+            self.see(r = r, c = c)
         elif redraw:
             self.refresh()
 
@@ -5061,31 +5060,23 @@ class MainTable(tk.Canvas):
         else:
             win_h = int(self.txt_h * len(self.cell_options[(r, dcol)]['dropdown']['values']) + 32)
             values_more_than_five = False
-        if win_h > 200:
-            win_h = 200
+        if win_h > 300:
+            win_h = 300
         space_bot = self.get_space_bot(r, text_editor_h)
         space_top = int(self.row_positions[r])
         anchor = "nw"
-        if text_editor_h:
-            if win_h + 4 > space_bot:
-                if space_bot >= space_top:
-                    anchor = "nw"
-                    if values_more_than_five:
-                        win_h = space_bot
-                elif space_top > space_bot:
-                    anchor = "sw"
-                    if values_more_than_five:
-                        win_h = space_top
-        else:
-            if win_h + 4 > space_bot:
-                if space_bot >= space_top:
-                    anchor = "nw"
-                    if values_more_than_five:
-                        win_h = space_bot
-                elif space_top > space_bot:
-                    anchor = "sw"
-                    if values_more_than_five:
-                        win_h = space_top
+        win_h2 = int(win_h)
+        if win_h + 4 > space_bot:
+            if space_bot >= space_top:
+                anchor = "nw"
+                if values_more_than_five:
+                    win_h = space_bot
+            elif space_top > space_bot:
+                anchor = "sw"
+                if values_more_than_five:
+                    win_h = space_top
+        if win_h > win_h2:
+            win_h = win_h2
         return win_h, anchor
 
     def display_dropdown_window(self, r, c):

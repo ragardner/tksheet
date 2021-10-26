@@ -1,3 +1,7 @@
+### Version 5.1.4
+ - Fix error when hiding columns and creating dropdown boxes
+ - Fix dropdown box sizes
+
 ### Version 5.1.3
  - Major fixes for dropdown boxes and possibly cell editor
  - Fix mouse click outside cell edit window not setting cell value
