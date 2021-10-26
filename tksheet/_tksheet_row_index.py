@@ -639,7 +639,6 @@ class RowIndex(tk.Canvas):
             self.MT.main_table_redraw_grid_and_text(False, True)
 
     def select_row(self, r, redraw = False, keep_other_selections = False):
-        r = int(r)
         ignore_keep = False
         if keep_other_selections:
             if self.MT.row_selected(r):

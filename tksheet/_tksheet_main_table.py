@@ -65,6 +65,7 @@ class MainTable(tk.Canvas):
                  show_horizontal_grid = True,
                  show_index = True,
                  show_header = True,
+                 selected_rows_to_end_of_window = False,
                  horizontal_grid_to_end_of_window = False,
                  vertical_grid_to_end_of_window = False,
                  empty_horizontal = 150,
@@ -135,6 +136,7 @@ class MainTable(tk.Canvas):
         self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
         self.show_index = show_index
         self.show_header = show_header
+        self.selected_rows_to_end_of_window = selected_rows_to_end_of_window
         self.horizontal_grid_to_end_of_window = horizontal_grid_to_end_of_window
         self.vertical_grid_to_end_of_window = vertical_grid_to_end_of_window
         self.empty_horizontal = empty_horizontal
@@ -2070,27 +2072,15 @@ class MainTable(tk.Canvas):
                                                    activeforeground = self.popup_menu_highlight_fg,
                                                    command = func)
 
-    def bind_cell_edit(self, enable = True):
+    def bind_cell_edit(self, enable = True, keys = []):
         if enable:
             self.edit_cell_enabled = True
             for w in (self, self.RI, self.CH):
-                for c in chain(lowercase_letters, uppercase_letters):
-                    w.bind(f"<{c}>", self.edit_cell_)
-                for c in chain(numbers, symbols, other_symbols):
-                    w.bind(c, self.edit_cell_)
-                w.bind("<F2>", self.edit_cell_)
-                w.bind("<Return>", self.edit_cell_)
-                w.bind("<BackSpace>", self.edit_cell_)
+                w.bind("<Key>", self.edit_cell_)
         else:
             self.edit_cell_enabled = False
             for w in (self, self.RI, self.CH):
-                for c in chain(lowercase_letters, uppercase_letters):
-                    w.unbind(f"<{c}>")
-                for c in chain(numbers, symbols, other_symbols):
-                    w.unbind(c)
-                w.unbind("<F2>")
-                w.unbind("<Return>")
-                w.unbind("<BackSpace>")
+                w.unbind("<Key>")
 
     def enable_bindings(self, bindings):
         if isinstance(bindings,(list, tuple)):
@@ -2390,7 +2380,7 @@ class MainTable(tk.Canvas):
             self.extra_rc_func(event)
 
     def b1_press(self, event = None):
-        self.closed_dropdown = self.hide_dropdown_window()
+        self.closed_dropdown = self.hide_dropdown_window(b1 = True)
         self.focus_set()
         x1, y1, x2, y2 = self.get_canvas_visible_area()
         if self.identify_col(x = event.x, allow_end = False) is None or self.identify_row(y = event.y, allow_end = False) is None:
@@ -4327,15 +4317,24 @@ class MainTable(tk.Canvas):
             taglower = "ColSelectFill"
             MT_bg = self.table_selected_columns_bg
             MT_border_col = self.table_selected_columns_border_fg
-        r = self.create_rectangle(self.col_positions[c1], self.row_positions[r1], self.col_positions[c2], self.row_positions[r2],
+        r = self.create_rectangle(self.col_positions[c1],
+                                  self.row_positions[r1],
+                                  self.canvasx(self.winfo_width()) if self.selected_rows_to_end_of_window else self.col_positions[c2],
+                                  self.row_positions[r2],
                                   fill = MT_bg,
                                   outline = "",
                                   tags = tagr)
-        self.RI.create_rectangle(0, self.row_positions[r1], self.RI.current_width - 1, self.row_positions[r2],
+        self.RI.create_rectangle(0,
+                                 self.row_positions[r1],
+                                 self.RI.current_width - 1,
+                                 self.row_positions[r2],
                                  fill = self.RI.index_selected_rows_bg if type_ == "rows" else self.RI.index_selected_cells_bg,
                                  outline = "",
                                  tags = tagr)
-        self.CH.create_rectangle(self.col_positions[c1], 0, self.col_positions[c2], self.CH.current_height - 1,
+        self.CH.create_rectangle(self.col_positions[c1],
+                                 0,
+                                 self.col_positions[c2],
+                                 self.CH.current_height - 1,
                                  fill = self.CH.header_selected_columns_bg if type_ == "cols" else self.CH.header_selected_cells_bg,
                                  outline = "",
                                  tags = tagr)
@@ -4800,11 +4799,6 @@ class MainTable(tk.Canvas):
             return
         y1 = int(currently_selected[0])
         x1 = int(currently_selected[1])
-        if not dropdown and (y1, x1 if self.all_columns_displayed else self.displayed_columns[x1]) in self.cell_options and 'dropdown' in self.cell_options[(y1, x1 if self.all_columns_displayed else self.displayed_columns[x1])]:
-            self.display_dropdown_window(y1, x1)
-            return
-        self.text_editor_loc = (y1, x1)
-        text = None
         if self.all_columns_displayed:
             if (
                 (y1, x1) in self.cell_options and 'readonly' in self.cell_options[(y1, x1)] or
@@ -4819,6 +4813,21 @@ class MainTable(tk.Canvas):
                 y1 in self.row_options and 'readonly' in self.row_options[y1]
                 ):
                 return
+        text = None
+        if event is not None and event.keycode == 8: # backspace
+            text = ""
+        elif ((event is not None and event.keycode in (13, 113)) or  # enter or f2
+              event is None):
+            text = f"{self.data_ref[y1][x1]}" if self.all_columns_displayed else f"{self.data_ref[y1][self.displayed_columns[x1]]}"
+            if self.cell_auto_resize_enabled:
+                self.set_cell_size_to_text(y1, x1, only_set_if_too_small = True, redraw = True, run_binding = True)
+        elif event is not None and (event.char.isalpha() or
+                                    event.char.isdigit() or
+                                    event.keycode == 32):
+            text = event.char
+        else:
+            return
+        self.text_editor_loc = (y1, x1)
         if self.extra_begin_edit_cell_func is not None:
             try:
                 text = self.extra_begin_edit_cell_func((y1, x1, event.char))
@@ -4826,15 +4835,9 @@ class MainTable(tk.Canvas):
                 return
             if text is not None:
                 text = f"{text}"
-        if self.extra_begin_edit_cell_func is None or text is None:
-            if event is not None and f"{event.keysym}".lower() == "backspace":
-                text = ""
-            elif event is not None and event.char in all_chars:
-                text = event.char
-            else:
-                text = f"{self.data_ref[y1][x1]}" if self.all_columns_displayed else f"{self.data_ref[y1][self.displayed_columns[x1]]}"
-                if self.cell_auto_resize_enabled:
-                    self.set_cell_size_to_text(y1, x1, only_set_if_too_small = True, redraw = True, run_binding = True)
+        if not dropdown and (y1, x1 if self.all_columns_displayed else self.displayed_columns[x1]) in self.cell_options and 'dropdown' in self.cell_options[(y1, x1 if self.all_columns_displayed else self.displayed_columns[x1])]:
+            self.display_dropdown_window(y1, x1)
+            return
         self.select_cell(r = y1, c = x1, keep_other_selections = True)
         self.create_text_editor(r = y1, c = x1, text = text, set_data_ref_on_destroy = True, dropdown = dropdown)
         
@@ -5026,62 +5029,91 @@ class MainTable(tk.Canvas):
     def text_editor_newline_binding(self, r = None, c = None, event = None):
         if self.GetLinesHeight(self.text_editor.get_num_lines() + 1) > self.text_editor.winfo_height():
             self.text_editor.config(height = self.text_editor.winfo_height() + self.xtra_lines_increment)
+            dcol = c if self.all_columns_displayed else self.displayed_columns[c]
             if ((r, c if self.all_columns_displayed else self.displayed_columns[c]) in self.cell_options and
-                'dropdown' in self.cell_options[(r, c if self.all_columns_displayed else self.displayed_columns[c])]):
-                space_bot = self.get_space_bot(r)
-                space_top = int(self.row_positions[r])
-                if space_bot >= int(self.txt_h * 6 + 40) + self.text_editor.winfo_height():
-                    self.coords(self.cell_options[(r, c if self.all_columns_displayed else self.displayed_columns[c])]['dropdown']['canvas_id'],
-                                self.col_positions[c], self.row_positions[r] + self.text_editor.winfo_height() - 1)
-                else:
-                    self.itemconfig(self.cell_options[(r, c if self.all_columns_displayed else self.displayed_columns[c])]['dropdown']['canvas_id'],
-                                    anchor = "sw")
-                    self.coords(self.cell_options[(r, c if self.all_columns_displayed else self.displayed_columns[c])]['dropdown']['canvas_id'],
+                'dropdown' in self.cell_options[(r, dcol)]):
+                text_editor_h = self.text_editor.winfo_height()
+                win_h, anchor = self.get_dropdown_height_anchor(r, c, dcol, text_editor_h)
+                if anchor == "nw":
+                    self.coords(self.cell_options[(r, dcol)]['dropdown']['canvas_id'],
+                                self.col_positions[c], self.row_positions[r] + text_editor_h - 1)
+                    self.itemconfig(self.cell_options[(r, dcol)]['dropdown']['canvas_id'],
+                                    anchor = anchor, height = win_h)
+                elif anchor == "sw":
+                    self.coords(self.cell_options[(r, dcol)]['dropdown']['canvas_id'],
                                 self.col_positions[c], self.row_positions[r])
+                    self.itemconfig(self.cell_options[(r, dcol)]['dropdown']['canvas_id'],
+                                    anchor = anchor, height = win_h)
 
-    def get_space_bot(self, r):
-        cwinfo_h = self.canvasy(self.winfo_height())
-        if cwinfo_h >= self.row_positions[-1] + 1 + self.empty_vertical:
-            return cwinfo_h
+    def get_space_bot(self, r, text_editor_h = None):
+        if text_editor_h is None:
+            win_h = int(self.canvasy(0) + self.winfo_height() - self.row_positions[r + 1])
+            sheet_h = int(self.row_positions[-1] + 1 + self.empty_vertical - self.row_positions[r + 1])
         else:
-            return int(self.row_positions[-1] + 1 + self.empty_vertical - self.row_positions[r])
+            win_h = int(self.canvasy(0) + self.winfo_height() - (self.row_positions[r] + text_editor_h))
+            sheet_h = int(self.row_positions[-1] + 1 + self.empty_vertical - (self.row_positions[r] + text_editor_h))
+        return win_h if win_h >= sheet_h else sheet_h
+
+    def get_dropdown_height_anchor(self, r, c, dcol, text_editor_h = None):
+        if len(self.cell_options[(r, dcol)]['dropdown']['values']) >= 6:
+            win_h = int(self.txt_h * 6 + 32)
+            values_more_than_five = True
+        else:
+            win_h = int(self.txt_h * len(self.cell_options[(r, dcol)]['dropdown']['values']) + 32)
+            values_more_than_five = False
+        if win_h > 200:
+            win_h = 200
+        space_bot = self.get_space_bot(r, text_editor_h)
+        space_top = int(self.row_positions[r])
+        anchor = "nw"
+        if text_editor_h:
+            if win_h + 4 > space_bot:
+                if space_bot >= space_top:
+                    anchor = "nw"
+                    if values_more_than_five:
+                        win_h = space_bot
+                elif space_top > space_bot:
+                    anchor = "sw"
+                    if values_more_than_five:
+                        win_h = space_top
+        else:
+            if win_h + 4 > space_bot:
+                if space_bot >= space_top:
+                    anchor = "nw"
+                    if values_more_than_five:
+                        win_h = space_bot
+                elif space_top > space_bot:
+                    anchor = "sw"
+                    if values_more_than_five:
+                        win_h = space_top
+        return win_h, anchor
 
     def display_dropdown_window(self, r, c):
         self.destroy_text_editor("Escape")
         self.delete_opened_dropdown_window()
-        space_bot = self.get_space_bot(r)
-        space_top = int(self.row_positions[r])
-        win_h = int(self.txt_h * 6 + 30)
-        win_h_check = int(self.txt_h * 6 + 40)
-        c_ = c if self.all_columns_displayed else self.displayed_columns[c]
-        anchor = "nw"
-        if space_bot < win_h_check:
-            if space_bot >= space_top:
-                anchor = "nw"
-            elif space_top > space_bot:
-                anchor = "sw"
-                win_h = int(self.txt_h * 3 + 20)
-        bg, fg = self.get_widget_bg_fg(r, c_)
-        if self.cell_options[(r, c_)]['dropdown']['state'] == "normal":
+        dcol = c if self.all_columns_displayed else self.displayed_columns[c]
+        bg, fg = self.get_widget_bg_fg(r, dcol)
+        win_h, anchor = self.get_dropdown_height_anchor(r, c, dcol)
+        window = self.parentframe.dropdown_class(self,
+                                                 r,
+                                                 c,
+                                                 width = self.col_positions[c + 1] - self.col_positions[c] + 1,
+                                                 height = win_h,
+                                                 font = self.my_font,
+                                                 bg = bg,
+                                                 fg = fg,
+                                                 values = self.cell_options[(r, dcol)]['dropdown']['values'])
+        if self.cell_options[(r, dcol)]['dropdown']['state'] == "normal":
             self.edit_cell_(dropdown = True)
-            window = self.parentframe.dropdown_class(self,
-                                                     r,
-                                                     c,
-                                                     width = self.col_positions[c + 1] - self.col_positions[c] + 1,
-                                                     height = win_h,
-                                                     font = self.my_font,
-                                                     bg = bg,
-                                                     fg = fg,
-                                                     values = self.cell_options[(r, c)]['dropdown']['values'])
             if anchor == "nw":
                 ypos = self.row_positions[r] + self.text_editor.h_ - 1
             else:
                 ypos = self.row_positions[r]
-            self.cell_options[(r, c_)]['dropdown']['canvas_id'] = self.create_window((self.col_positions[c], ypos),
+            self.cell_options[(r, dcol)]['dropdown']['canvas_id'] = self.create_window((self.col_positions[c], ypos),
             window = window,
             anchor = anchor)
-            if self.cell_options[(r, c_)]['dropdown']['modified_function'] is not None:
-                self.text_editor.textedit.bind("<<TextModified>>", self.cell_options[(r, c_)]['dropdown']['modified_function'])
+            if self.cell_options[(r, dcol)]['dropdown']['modified_function'] is not None:
+                self.text_editor.textedit.bind("<<TextModified>>", self.cell_options[(r, dcol)]['dropdown']['modified_function'])
             self.update()
             try:
                 self.text_editor.textedit.focus_set()
@@ -5089,30 +5121,24 @@ class MainTable(tk.Canvas):
             except:
                 return
         else:
-            window = self.parentframe.dropdown_class(self,
-                                                     r,
-                                                     c,
-                                                     width = self.col_positions[c + 1] - self.col_positions[c] + 1,
-                                                     height = win_h,
-                                                     font = self.my_font,
-                                                     bg = bg,
-                                                     fg = fg,
-                                                     values = self.cell_options[(r, c)]['dropdown']['values'])
-            
             if anchor == "nw":
                 ypos = self.row_positions[r + 1]
             else:
                 ypos = self.row_positions[r]
-            self.cell_options[(r, c_)]['dropdown']['canvas_id'] = self.create_window((self.col_positions[c], ypos),
+            self.cell_options[(r, dcol)]['dropdown']['canvas_id'] = self.create_window((self.col_positions[c], ypos),
             window = window,
             anchor = anchor)
             window.bind("<FocusOut>", lambda x: self.hide_dropdown_window(r, c))
-            window.focus_set()
+            self.update()
+            try:
+                window.focus_set()
+            except:
+                return
         self.existing_dropdown_window = window
-        self.cell_options[(r, c_)]['dropdown']['window'] = window
-        self.existing_dropdown_canvas_id = self.cell_options[(r, c_)]['dropdown']['canvas_id']
+        self.cell_options[(r, dcol)]['dropdown']['window'] = window
+        self.existing_dropdown_canvas_id = self.cell_options[(r, dcol)]['dropdown']['canvas_id']
 
-    def hide_dropdown_window(self, r = None, c = None, selection = None, redraw = True):
+    def hide_dropdown_window(self, r = None, c = None, selection = None, b1 = False, redraw = True):
         if selection is not None:
             if self.cell_options[(r, c)]['dropdown']['select_function'] is not None: # user has specified a selection function
                 self.cell_options[(r, c)]['dropdown']['select_function']((r, c, "ComboboxSelected", f"{selection}"))
@@ -5127,7 +5153,8 @@ class MainTable(tk.Canvas):
             closedr, closedc, ret_tup = int(self.existing_dropdown_window.r), int(self.existing_dropdown_window.c), True
         else:
             ret_tup = False
-        self.destroy_text_editor("Escape")
+        if not b1:
+            self.destroy_text_editor("Escape")
         self.delete_opened_dropdown_window(r, c)
         if ret_tup:
             return closedr, closedc

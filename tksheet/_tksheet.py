@@ -75,6 +75,7 @@ class Sheet(tk.Frame):
                  row_drag_and_drop_perform = True,
                  empty_horizontal = 150,
                  empty_vertical = 100,
+                 selected_rows_to_end_of_window = False,
                  horizontal_grid_to_end_of_window = False,
                  vertical_grid_to_end_of_window = False,
                  show_vertical_grid = True,
@@ -224,6 +225,7 @@ class Sheet(tk.Frame):
                             table_selected_columns_fg = table_selected_columns_fg,
                             displayed_columns = displayed_columns,
                             all_columns_displayed = all_columns_displayed,
+                            selected_rows_to_end_of_window = selected_rows_to_end_of_window,
                             horizontal_grid_to_end_of_window = horizontal_grid_to_end_of_window,
                             vertical_grid_to_end_of_window = vertical_grid_to_end_of_window,
                             empty_horizontal = empty_horizontal,
@@ -655,8 +657,8 @@ class Sheet(tk.Frame):
         elif not enable:
             self.MT.edit_bindings(False)
 
-    def cell_edit_binding(self, enable = False):
-        self.MT.bind_cell_edit(enable)
+    def cell_edit_binding(self, enable = False, keys = []):
+        self.MT.bind_cell_edit(enable, keys = [])
 
     def identify_region(self, event):
         if event.widget == self.MT:
@@ -864,6 +866,9 @@ class Sheet(tk.Frame):
 
     def undo(self, event = None):
         self.MT.ctrl_z()
+
+    def edit_cell(self, event = None, dropdown = False):
+        self.MT.edit_cell_(event = event, dropdown = dropdown)
 
     def delete_row_position(self, idx, deselect_all = False):
         self.MT.del_row_position(idx = idx,
@@ -1527,6 +1532,7 @@ class Sheet(tk.Frame):
 
     def set_options(self,
                     enable_edit_cell_auto_resize = None,
+                    selected_rows_to_end_of_window = None,
                     horizontal_grid_to_end_of_window = None,
                     vertical_grid_to_end_of_window = None,
                     page_up_down_select_row = None,
@@ -1601,6 +1607,8 @@ class Sheet(tk.Frame):
                     measure_subset_index = None,
                     measure_subset_header = None,
                     redraw = True):
+        if selected_rows_to_end_of_window is not None:
+            self.MT.selected_rows_to_end_of_window = selected_rows_to_end_of_window
         if horizontal_grid_to_end_of_window is not None:
             self.MT.horizontal_grid_to_end_of_window = horizontal_grid_to_end_of_window
         if vertical_grid_to_end_of_window is not None:
@@ -2262,7 +2270,7 @@ class Sheet_Dropdown(Sheet):
                  values = []):
         Sheet.__init__(self,
                        parent = parent,
-                       outline_thickness = 2,
+                       outline_thickness = 1,
                        outline_color = fg,
                        show_horizontal_grid = True,
                        show_vertical_grid = False,
@@ -2272,7 +2280,14 @@ class Sheet_Dropdown(Sheet):
                        align = "w",
                        empty_horizontal = 0,
                        empty_vertical = 0,
+                       selected_rows_to_end_of_window = True,
                        horizontal_grid_to_end_of_window = True,
+                       show_selected_cells_border = False,
+                       table_selected_cells_border_fg = fg,
+                       table_selected_cells_bg = fg,
+                       table_selected_rows_border_fg = fg,
+                       table_selected_rows_bg = fg,
+                       table_selected_rows_fg = bg,
                        width = width,
                        height = height,
                        font = font if font else get_font(),
@@ -2285,19 +2300,46 @@ class Sheet_Dropdown(Sheet):
         self.c = c
         self.bg = bg
         self.fg = fg
+        self.row = None
         self.bind("<Motion>", self.mouse_motion)
         self.bind("<ButtonPress-1>", self.b1)
+        self.bind("<Up>", self.arrowkey_UP)
+        self.bind("<Tab>", self.parent.arrowkey_RIGHT)
+        self.bind("<Right>", self.parent.arrowkey_RIGHT)
+        self.bind("<Down>", self.arrowkey_DOWN)
+        self.bind("<Left>", self.parent.arrowkey_LEFT)
+        self.bind("<Prior>", self.arrowkey_UP)
+        self.bind("<Next>", self.arrowkey_DOWN)
         if values:
             self.values(values)
 
+    def arrowkey_UP(self, event = None):
+        if self.row is not None:
+            if self.row > 0:
+                self.deselect("all")
+                self.row -= 1
+                self.see(self.row, 0, redraw = False)
+                self.select_row(self.row)
+
+    def arrowkey_DOWN(self, event = None):
+        if self.row is not None:
+            if len(self.MT.data_ref) - 1 > self.row:
+                self.deselect("all")
+                self.row += 1
+                self.see(self.row, 0, redraw = False)
+                self.select_row(self.row)
+
     def mouse_motion(self, event = None):
-        row = self.identify_row(event, exclude_index = True, allow_end = False)
-        self.dehighlight_all()
-        if row is not None:
-            self.highlight_rows(row, bg = self.fg, fg = self.bg, redraw = True, end_of_screen = True)
+        self.row = self.identify_row(event, exclude_index = True, allow_end = False)
+        self.deselect("all")
+        if self.row is not None:
+            self.select_row(self.row)
 
     def b1(self, event = None):
-        row = self.identify_row(event, exclude_index = True, allow_end = False)
+        if event is None:
+            row = None
+        else:
+            row = self.identify_row(event, exclude_index = True, allow_end = False)
         if row is None:
             self.parent.hide_dropdown_window(self.r, self.c)
         else:

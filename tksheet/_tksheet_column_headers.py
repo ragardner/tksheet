@@ -627,7 +627,6 @@ class ColumnHeaders(tk.Canvas):
             self.MT.main_table_redraw_grid_and_text(True, False)
 
     def select_col(self, c, redraw = False, keep_other_selections = False):
-        c = int(c)
         ignore_keep = False
         if keep_other_selections:
             if self.MT.col_selected(c):

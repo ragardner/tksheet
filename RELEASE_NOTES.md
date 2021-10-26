@@ -1,3 +1,9 @@
+### Version 5.1.3
+ - Major fixes for dropdown boxes and possibly cell editor
+ - Fix mouse click outside cell edit window not setting cell value
+ - International characters should work to edit a cell by default
+ - Minor improvements
+
 ### Version 5.1.2
  - Bugfixes and improvements related to `5.1.0`
 
