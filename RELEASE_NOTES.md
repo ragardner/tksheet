@@ -1,3 +1,9 @@
+### Version 5.1.6
+ - Fix dropdown box and checkbox triggering off of non-Return keypresses
+ - Fix issues with readonly cells and rows and control actions such as cut, delete, paste
+ - Begin to add checkbox code
+ - Some code cleanup
+
 ### Version 5.1.5
  - Fix center, e text alignment with dropdowns
  - Fix potential error when closing root Tk() window

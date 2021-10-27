@@ -422,34 +422,20 @@ class MainTable(tk.Canvas):
                         self.extra_begin_ctrl_c_func(("begin_ctrl_c", boxes, currently_selected))
                     except:
                         return
-                if self.all_columns_displayed:
-                    for rn in range(maxrows):
-                        row = []
-                        for r1, c1, r2, c2 in boxes:
-                            if r2 - r1 < maxrows:
-                                continue
-                            data_ref_rn = r1 + rn
-                            for c in range(c1, c2):
-                                try:
-                                    row.append(self.data_ref[data_ref_rn][c])
-                                except:
-                                    row.append("")
-                        writer.writerow(row)
-                        rows.append(row)
-                else:
-                    for rn in range(maxrows):
-                        row = []
-                        for r1, c1, r2, c2 in boxes:
-                            if r2 - r1 < maxrows:
-                                continue
-                            data_ref_rn = r1 + rn
-                            for c in range(c1, c2):
-                                try:
-                                    row.append(self.data_ref[data_ref_rn][self.displayed_columns[c]])
-                                except:
-                                    row.append("")
-                        writer.writerow(row)
-                        rows.append(row)
+                for rn in range(maxrows):
+                    row = []
+                    for r1, c1, r2, c2 in boxes:
+                        if r2 - r1 < maxrows:
+                            continue
+                        data_ref_rn = r1 + rn
+                        for c in range(c1, c2):
+                            dcol = c if self.all_columns_displayed else self.displayed_columns[c]
+                            try:
+                                row.append(self.data_ref[data_ref_rn][dcol])
+                            except:
+                                row.append("")
+                    writer.writerow(row)
+                    rows.append(row)
             elif currently_selected[0] == "row":
                 boxes = self.get_ctrl_x_c_boxes()
                 if self.extra_begin_ctrl_c_func is not None:
@@ -457,30 +443,18 @@ class MainTable(tk.Canvas):
                         self.extra_begin_ctrl_c_func(("begin_ctrl_c", boxes, currently_selected))
                     except:
                         return
-                if self.all_columns_displayed:
-                    for r1, c1, r2, c2 in boxes:
-                        for rn in range(r2 - r1):
-                            row = []
-                            data_ref_rn = r1 + rn
-                            for c in range(c1, c2):
-                                try:
-                                    row.append(self.data_ref[data_ref_rn][c])
-                                except:
-                                    row.append("")
-                            writer.writerow(row)
-                            rows.append(row)
-                else:
-                    for r1, c1, r2, c2 in boxes:
-                        for rn in range(r2 - r1):
-                            row = []
-                            data_ref_rn = r1 + rn
-                            for c in range(c1, c2):
-                                try:
-                                    row.append(self.data_ref[data_ref_rn][self.displayed_columns[c]])
-                                except:
-                                    row.append("")
-                            writer.writerow(row)
-                            rows.append(row)
+                for r1, c1, r2, c2 in boxes:
+                    for rn in range(r2 - r1):
+                        row = []
+                        data_ref_rn = r1 + rn
+                        for c in range(c1, c2):
+                            dcol = c if self.all_columns_displayed else self.displayed_columns[c]
+                            try:
+                                row.append(self.data_ref[data_ref_rn][dcol])
+                            except:
+                                row.append("")
+                        writer.writerow(row)
+                        rows.append(row)
             for r1, c1, r2, c2 in boxes:
                 self.show_ctrl_outline(canvas = "table", start_cell = (c1, r1), end_cell = (c2, r2))
             self.clipboard_clear()
@@ -504,73 +478,41 @@ class MainTable(tk.Canvas):
                         self.extra_begin_ctrl_x_func(("begin_ctrl_x", boxes, currently_selected))
                     except:
                         return
-                if self.all_columns_displayed:
-                    for rn in range(maxrows):
-                        row = []
-                        for r1, c1, r2, c2 in boxes:
-                            if r2 - r1 < maxrows:
+                for rn in range(maxrows):
+                    row = []
+                    for r1, c1, r2, c2 in boxes:
+                        if r2 - r1 < maxrows:
+                            continue
+                        data_ref_rn = r1 + rn
+                        for c in range(c1, c2):
+                            dcol = c if self.all_columns_displayed else self.displayed_columns[c]
+                            try:
+                                sx = f"{self.data_ref[data_ref_rn][dcol]}"
+                                row.append(sx)
+                                if self.undo_enabled:
+                                    undo_storage[(data_ref_rn, dcol)] = sx
+                            except:
+                                row.append("")
+                    writer.writerow(row)
+                    rows.append(row)
+                for rn in range(maxrows):
+                    for r1, c1, r2, c2 in boxes:
+                        if r2 - r1 < maxrows:
+                            continue
+                        data_ref_rn = r1 + rn
+                        if data_ref_rn in self.row_options and 'readonly' in self.row_options[data_ref_rn]:
+                            continue
+                        for c in range(c1, c2):
+                            dcol = c if self.all_columns_displayed else self.displayed_columns[c]
+                            if (
+                                ((data_ref_rn, dcol) in self.cell_options and ('readonly' in self.cell_options[(data_ref_rn, dcol)] or 'checkbox' in self.cell_options[(data_ref_rn, dcol)])) or
+                                (dcol in self.col_options and 'readonly' in self.col_options[dcol])
+                                ):
                                 continue
-                            data_ref_rn = r1 + rn
-                            for c in range(c1, c2):
-                                try:
-                                    sx = f"{self.data_ref[data_ref_rn][c]}"
-                                    row.append(sx)
-                                    if self.undo_enabled:
-                                        undo_storage[(data_ref_rn, c)] = sx
-                                except:
-                                    row.append("")
-                        writer.writerow(row)
-                        rows.append(row)
-                    for rn in range(maxrows):
-                        for r1, c1, r2, c2 in boxes:
-                            if r2 - r1 < maxrows:
+                            try:
+                                self.data_ref[data_ref_rn][dcol] = ""
+                            except:
                                 continue
-                            if rn in self.cell_options and 'readonly' in self.cell_options[rn]:
-                                continue
-                            for c in range(c1, c2):
-                                if (
-                                    ((rn, c) in self.cell_options and 'readonly' in self.cell_options[(rn, c)]) or
-                                    (c in self.col_options and 'readonly' in self.col_options[c])
-                                    ):
-                                    continue
-                                try:
-                                    self.data_ref[r1 + rn][c] = ""
-                                except:
-                                    continue
-                else:
-                    for rn in range(maxrows):
-                        row = []
-                        for r1, c1, r2, c2 in boxes:
-                            if r2 - r1 < maxrows:
-                                continue
-                            data_ref_rn = r1 + rn
-                            for c in range(c1, c2):
-                                try:
-                                    sx = f"{self.data_ref[data_ref_rn][self.displayed_columns[c]]}"
-                                    row.append(sx)
-                                    if self.undo_enabled:
-                                        undo_storage[(data_ref_rn, self.displayed_columns[c])] = sx
-                                except:
-                                    row.append("")
-                        writer.writerow(row)
-                        rows.append(row)
-                    for rn in range(maxrows):
-                        for r1, c1, r2, c2 in boxes:
-                            if r2 - r1 < maxrows:
-                                continue
-                            data_ref_rn = r1 + rn
-                            if data_ref_rn in self.cell_options and 'readonly' in self.cell_options[data_ref_rn]:
-                                continue
-                            for c in range(c1, c2):
-                                if (
-                                    ((data_ref_rn, self.displayed_columns[c]) in self.cell_options and 'readonly' in self.cell_options[(data_ref_rn, self.displayed_columns[c])]) or
-                                    (self.displayed_columns[c] in self.col_options and 'readonly' in self.col_options[self.displayed_columns[c]])
-                                    ):
-                                    continue
-                                try:
-                                    self.data_ref[data_ref_rn][self.displayed_columns[c]] = ""
-                                except:
-                                    continue
             elif currently_selected[0] == "row":
                 boxes = self.get_ctrl_x_c_boxes()
                 if self.extra_begin_ctrl_x_func is not None:
@@ -578,66 +520,37 @@ class MainTable(tk.Canvas):
                         self.extra_begin_ctrl_x_func(("begin_ctrl_x", boxes, currently_selected))
                     except:
                         return
-                if self.all_columns_displayed:
-                    for r1, c1, r2, c2 in boxes:
-                        for rn in range(r2 - r1):
-                            row = []
-                            data_ref_rn = r1 + rn
-                            for c in range(c1, c2):
-                                try:
-                                    sx = f"{self.data_ref[data_ref_rn][c]}"
-                                    row.append(sx)
-                                    if self.undo_enabled:
-                                        undo_storage[(data_ref_rn, c)] = sx
-                                except:
-                                    row.append("")
-                            writer.writerow(row)
-                            rows.append(row)
-                    for r1, c1, r2, c2 in boxes:
-                        for rn in range(r2 - r1):
-                            data_ref_rn = r1 + rn
-                            if data_ref_rn in self.cell_options and 'readonly' in self.cell_options[data_ref_rn]:
+                for r1, c1, r2, c2 in boxes:
+                    for rn in range(r2 - r1):
+                        row = []
+                        data_ref_rn = r1 + rn
+                        for c in range(c1, c2):
+                            dcol = c if self.all_columns_displayed else self.displayed_columns[c]
+                            try:
+                                sx = f"{self.data_ref[data_ref_rn][dcol]}"
+                                row.append(sx)
+                                if self.undo_enabled:
+                                    undo_storage[(data_ref_rn, dcol)] = sx
+                            except:
+                                row.append("")
+                        writer.writerow(row)
+                        rows.append(row)
+                for r1, c1, r2, c2 in boxes:
+                    for rn in range(r2 - r1):
+                        data_ref_rn = r1 + rn
+                        if data_ref_rn in self.cell_options and 'readonly' in self.cell_options[data_ref_rn]:
+                            continue
+                        for c in range(c1, c2):
+                            dcol = c if self.all_columns_displayed else self.displayed_columns[c]
+                            if (
+                                ((data_ref_rn, dcol) in self.cell_options and ('readonly' in self.cell_options[(data_ref_rn, dcol)] or 'checkbox' in self.cell_options[(data_ref_rn, dcol)])) or
+                                (dcol in self.col_options and 'readonly' in self.col_options[dcol])
+                                ):
                                 continue
-                            for c in range(c1, c2):
-                                if (
-                                    ((data_ref_rn, c) in self.cell_options and 'readonly' in self.cell_options[(data_ref_rn, c)]) or
-                                    (c in self.col_options and 'readonly' in self.col_options[c])
-                                    ):
-                                    continue
-                                try:
-                                    self.data_ref[data_ref_rn][c] = ""
-                                except:
-                                    continue
-                else:
-                    for r1, c1, r2, c2 in boxes:
-                        for rn in range(r2 - r1):
-                            row = []
-                            data_ref_rn = r1 + rn
-                            for c in range(c1, c2):
-                                try:
-                                    sx = f"{self.data_ref[data_ref_rn][self.displayed_columns[c]]}"
-                                    row.append(sx)
-                                    if self.undo_enabled:
-                                        undo_storage[(data_ref_rn, self.displayed_columns[c])] = sx
-                                except:
-                                    row.append("")
-                            writer.writerow(row)
-                            rows.append(row)
-                    for r1, c1, r2, c2 in boxes:
-                        for rn in range(r2 - r1):
-                            data_ref_rn = r1 + rn
-                            if data_ref_rn in self.cell_options and 'readonly' in self.cell_options[data_ref_rn]:
+                            try:
+                                self.data_ref[data_ref_rn][dcol] = ""
+                            except:
                                 continue
-                            for c in range(c1, c2):
-                                if (
-                                    ((data_ref_rn, self.displayed_columns[c]) in self.cell_options and 'readonly' in self.cell_options[(data_ref_rn, self.displayed_columns[c])]) or
-                                    (self.displayed_columns[c] in self.col_options and 'readonly' in self.col_options[self.displayed_columns[c]])
-                                    ):
-                                    continue
-                                try:
-                                    self.data_ref[data_ref_rn][self.displayed_columns[c]] = ""
-                                except:
-                                    continue
             if self.undo_enabled:
                 self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells", undo_storage, tuple(boxes.items()), currently_selected))))
             self.clipboard_clear()
@@ -712,38 +625,23 @@ class MainTable(tk.Canvas):
                 self.extra_begin_ctrl_v_func(("begin_ctrl_v", currently_selected, rows))
             except:
                 return
-        if self.all_columns_displayed:
-            for ndr, r in enumerate(range(y1, y1 + numrows)):
-                for ndc, c in enumerate(range(x1, x1 + numcols)):
-                    if r > len(self.data_ref) - 1:
-                        self.data_ref.extend([list(repeat("", c + 1)) for r in range((r + 1) - len(self.data_ref))])
-                    elif c > len(self.data_ref[r]) - 1:
-                        self.data_ref[r].extend(list(repeat("", (c + 1) - len(self.data_ref[r]))))
-                    if (
-                        (r, c) in self.cell_options and 'readonly' in self.cell_options[(r, c)] or
-                        c in self.col_options and 'readonly' in self.col_options[c] or
-                        r in self.row_options and 'readonly' in self.row_options[r]
-                        ):
-                        continue
-                    if self.undo_enabled:
-                        undo_storage[(r, c)] = f"{self.data_ref[r][c]}"
-                    self.data_ref[r][c] = data[ndr][ndc]
-        else:
-            for ndr, r in enumerate(range(y1, y1 + numrows)):
-                for ndc, c in enumerate(range(x1, x1 + numcols)):
-                    if r > len(self.data_ref) - 1:
-                        self.data_ref.extend([list(repeat("", c + 1)) for r in range((r + 1) - len(self.data_ref))])
-                    elif c > len(self.data_ref[r]) - 1:
-                        self.data_ref[r].extend(list(repeat("", (c + 1) - len(self.data_ref[r]))))
-                    if (
-                        (r, self.displayed_columns[c]) in self.cell_options and 'readonly' in self.cell_options[(r, self.displayed_columns[c])] or
-                        self.displayed_columns[c] in self.col_options and 'readonly' in self.col_options[self.displayed_columns[c]] or
-                        r in self.row_options and 'readonly' in self.row_options[r]
-                        ):
-                        continue
-                    if self.undo_enabled:
-                        undo_storage[(r, self.displayed_columns[c])] = f"{self.data_ref[r][self.displayed_columns[c]]}"
-                    self.data_ref[r][self.displayed_columns[c]] = data[ndr][ndc]
+        for ndr, r in enumerate(range(y1, y1 + numrows)):
+            for ndc, c in enumerate(range(x1, x1 + numcols)):
+                dcol = c if self.all_columns_displayed else self.displayed_columns[c]
+                if r > len(self.data_ref) - 1:
+                    self.data_ref.extend([list(repeat("", c + 1)) for r in range((r + 1) - len(self.data_ref))])
+                elif c > len(self.data_ref[r]) - 1:
+                    self.data_ref[r].extend(list(repeat("", (c + 1) - len(self.data_ref[r]))))
+                if (
+                    ((r, dcol) in self.cell_options and 'readonly' in self.cell_options[(r, dcol)]) or
+                    ((r, dcol) in self.cell_options and 'checkbox' in self.cell_options[(r, dcol)]) or
+                    (dcol in self.col_options and 'readonly' in self.col_options[dcol]) or
+                    (r in self.row_options and 'readonly' in self.row_options[r])
+                    ):
+                    continue
+                if self.undo_enabled:
+                    undo_storage[(r, dcol)] = f"{self.data_ref[r][dcol]}"
+                self.data_ref[r][dcol] = data[ndr][ndc]
         self.deselect("all")
         if self.undo_enabled:
             self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells_paste",
@@ -764,66 +662,36 @@ class MainTable(tk.Canvas):
             if self.undo_enabled:
                 undo_storage = {}
             boxes = []
-            if self.all_columns_displayed:    
-                for item in chain(self.find_withtag("CellSelectFill"), self.find_withtag("RowSelectFill"), self.find_withtag("ColSelectFill"), self.find_withtag("Current_Outside")):
-                    alltags = self.gettags(item)
-                    box = tuple(int(e) for e in alltags[1].split("_") if e)
-                    if alltags[0] in ("CellSelectFill", "Current_Outside"):
-                        boxes.append((box, "cells"))
-                    elif alltags[0] == "ColSelectFill":
-                        boxes.append((box, "cols"))
-                    elif alltags[0] == "RowSelectFill":
-                        boxes.append((box, "rows"))
-                if self.extra_begin_delete_key_func is not None:
-                    try:
-                        self.extra_begin_delete_key_func(("begin_delete_key", boxes, currently_selected))
-                    except:
-                        return
-                for (r1, c1, r2, c2), _ in boxes:
-                    for r in range(r1, r2):
-                        for c in range(c1, c2):
-                            if (
-                                (r, c) in self.cell_options and 'readonly' in self.cell_options[(r, c)] or
-                                c in self.col_options and 'readonly' in self.col_options[c] or
-                                r in self.row_options and 'readonly' in self.row_options[r]
-                                ):
-                                continue
-                            try:
-                                if self.undo_enabled:
-                                    undo_storage[(r, c)] = f"{self.data_ref[r][c]}"
-                                self.data_ref[r][c] = ""
-                            except:
-                                continue
-            else:
-                for item in chain(self.find_withtag("CellSelectFill"), self.find_withtag("RowSelectFill"), self.find_withtag("ColSelectFill"), self.find_withtag("Current_Outside")):
-                    alltags = self.gettags(item)
-                    box = tuple(int(e) for e in alltags[1].split("_") if e)
-                    if alltags[0] in ("CellSelectFill", "Current_Outside"):
-                        boxes.append((box, "cells"))
-                    elif alltags[0] == "ColSelectFill":
-                        boxes.append((box, "cols"))
-                    elif alltags[0] == "RowSelectFill":
-                        boxes.append((box, "rows"))
-                if self.extra_begin_delete_key_func is not None:
-                    try:
-                        self.extra_begin_delete_key_func(("begin_delete_key", boxes, currently_selected))
-                    except:
-                        return
-                for (r1, c1, r2, c2), _ in boxes:
-                    for r in range(r1, r2):
-                        for c in range(c1, c2):
-                            if (
-                                (r, self.displayed_columns[c]) in self.cell_options and 'readonly' in self.cell_options[(r, self.displayed_columns[c])] or
-                                self.displayed_columns[c] in self.col_options and 'readonly' in self.col_options[self.displayed_columns[c]] or
-                                r in self.row_options and 'readonly' in self.row_options[r]
-                                ):
-                                continue
-                            try:
-                                if self.undo_enabled:
-                                    undo_storage[(r, self.displayed_columns[c])] = f"{self.data_ref[r][self.displayed_columns[c]]}"
-                                self.data_ref[r][self.displayed_columns[c]] = ""
-                            except:
-                                continue
+            for item in chain(self.find_withtag("CellSelectFill"), self.find_withtag("RowSelectFill"), self.find_withtag("ColSelectFill"), self.find_withtag("Current_Outside")):
+                alltags = self.gettags(item)
+                box = tuple(int(e) for e in alltags[1].split("_") if e)
+                if alltags[0] in ("CellSelectFill", "Current_Outside"):
+                    boxes.append((box, "cells"))
+                elif alltags[0] == "ColSelectFill":
+                    boxes.append((box, "cols"))
+                elif alltags[0] == "RowSelectFill":
+                    boxes.append((box, "rows"))
+            if self.extra_begin_delete_key_func is not None:
+                try:
+                    self.extra_begin_delete_key_func(("begin_delete_key", boxes, currently_selected))
+                except:
+                    return
+            for (r1, c1, r2, c2), _ in boxes:
+                for r in range(r1, r2):
+                    for c in range(c1, c2):
+                        dcol = c if self.all_columns_displayed else self.displayed_columns[c]
+                        if (
+                            ((r, dcol) in self.cell_options and ('readonly' in self.cell_options[(r, dcol)] or 'checkbox' in self.cell_options[(r, dcol)])) or
+                            (dcol in self.col_options and 'readonly' in self.col_options[dcol]) or
+                            (r in self.row_options and 'readonly' in self.row_options[r])
+                            ):
+                            continue
+                        try:
+                            if self.undo_enabled:
+                                undo_storage[(r, dcol)] = f"{self.data_ref[r][dcol]}"
+                            self.data_ref[r][dcol] = ""
+                        except:
+                            continue
             if self.undo_enabled:
                 self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells", undo_storage, boxes, currently_selected))))
             self.refresh()
@@ -4809,15 +4677,18 @@ class MainTable(tk.Canvas):
         x1 = int(currently_selected[1])
         dcol = x1 if self.all_columns_displayed else self.displayed_columns[x1]
         if (
-            (y1, dcol) in self.cell_options and 'readonly' in self.cell_options[(y1, dcol)] or
-            dcol in self.col_options and 'readonly' in self.col_options[dcol] or
-            y1 in self.row_options and 'readonly' in self.row_options[y1]
+            ((y1, dcol) in self.cell_options and 'readonly' in self.cell_options[(y1, dcol)]) or
+            (dcol in self.col_options and 'readonly' in self.col_options[dcol]) or
+            (y1 in self.row_options and 'readonly' in self.row_options[y1])
             ):
             return
-        elif (y1, dcol) in self.cell_options and 'dropdown' in self.cell_options[(y1, dcol)]:
-            self.display_dropdown_window(y1, x1)
-        elif (y1, dcol) in self.cell_options and 'checkbox' in self.cell_options[(y1, dcol)]:
-            self.click_checkbox(y1, dcol)
+        elif (y1, dcol) in self.cell_options:
+            if hasattr(event, 'keycode') and event.keycode != 13:
+                return
+            if 'dropdown' in self.cell_options[(y1, dcol)]:
+                self.display_dropdown_window(y1, x1)
+            elif 'checkbox' in self.cell_options[(y1, dcol)]:
+                self.click_checkbox(y1, dcol)
         else:
             self.edit_cell_(event, r = y1, c = x1, dropdown = False)
 
