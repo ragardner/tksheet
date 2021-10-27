@@ -35,7 +35,10 @@ class TopLeftRectangle(tk.Canvas):
         self.MT = main_canvas
         self.RI = row_index_canvas
         self.CH = header_canvas
-        self.config(width = self.RI.current_width, height = self.CH.current_height)
+        try:
+            self.config(width = self.RI.current_width, height = self.CH.current_height)
+        except:
+            return
         self.extra_motion_func = None
         self.extra_b1_press_func = None
         self.extra_b1_motion_func = None
@@ -97,14 +100,17 @@ class TopLeftRectangle(tk.Canvas):
             self.unbind(get_rc_binding())
 
     def set_dimensions(self, new_w = None, new_h = None):
-        if new_w:
-            self.config(width = new_w)
-            w = new_w - 1
-            h = self.winfo_height() - 1
-        if new_h:
-            self.config(height = new_h)
-            w = self.winfo_width() - 1
-            h = new_h - 1
+        try:
+            if new_w:
+                self.config(width = new_w)
+                w = new_w - 1
+                h = self.winfo_height() - 1
+            if new_h:
+                self.config(height = new_h)
+                w = self.winfo_width() - 1
+                h = new_h - 1
+        except:
+            return
         self.coords("rw", 0, h - 5, w, h)
         self.coords("rh", w - 5, 0, w, h)
         self.MT.recreate_all_selection_boxes()

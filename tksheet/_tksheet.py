@@ -2189,6 +2189,43 @@ class Sheet(tk.Frame):
     def refresh(self, redraw_header = True, redraw_row_index = True):
         self.MT.main_table_redraw_grid_and_text(redraw_header = redraw_header, redraw_row_index = redraw_row_index)
 
+    def create_checkbox(self,
+                        r,
+                        c,
+                        checked = False,
+                        state = "normal",
+                        see = False,
+                        redraw = False,
+                        check_function = None):
+        self.MT.create_checkbox(r = r,
+                                c = c,
+                                checked = checked,
+                                state = state,
+                                see = see,
+                                redraw = redraw,
+                                check_function = check_function)
+
+    def click_checkbox(self,
+                       r,
+                       c,
+                       checked = None,
+                       undo = False):
+        self.MT.click_checkbox(r = r,
+                               c = c,
+                               checked = checked,
+                               undo = undo)
+
+    def get_checkboxes(self):
+        return {k: v['checkbox'] for k, v in self.MT.cell_options.items() if 'checkbox' in v}
+
+    def delete_checkbox(self, r = 0, c = 0):
+        if r == "all":
+            for r, c in self.MT.cell_options:
+                if 'checkbox' in self.MT.cell_options[(r, c)]:
+                    self.MT.destroy_checkbox(r, c)
+        else:
+            self.MT.destroy_checkbox(r, c)
+
     def create_dropdown(self,
                         r = 0,
                         c = 0,
@@ -2198,7 +2235,8 @@ class Sheet(tk.Frame):
                         see = False,
                         redraw = False,
                         selection_function = None,
-                        modified_function = None):
+                        modified_function = None,
+                        align = "w"):
         self.MT.create_dropdown(r = r,
                                 c = c,
                                 values = values,
@@ -2207,7 +2245,8 @@ class Sheet(tk.Frame):
                                 see = see,
                                 redraw = redraw,
                                 selection_function = selection_function,
-                                modified_function = modified_function)
+                                modified_function = modified_function,
+                                align = align)
 
     def get_dropdown_value(self, r, c):
         return self.get_cell_data(r, c)
@@ -2267,7 +2306,11 @@ class Sheet_Dropdown(Sheet):
                  font = None,
                  bg = theme_light_blue['table_bg'],
                  fg = theme_light_blue['table_fg'],
-                 values = []):
+                 values = [],
+                 hide_dropdown_window = None,
+                 arrowkey_RIGHT = None,
+                 arrowkey_LEFT = None,
+                 align = "w"):
         Sheet.__init__(self,
                        parent = parent,
                        outline_thickness = 1,
@@ -2277,7 +2320,7 @@ class Sheet_Dropdown(Sheet):
                        show_header = False,
                        show_row_index = False,
                        show_top_left = False,
-                       align = "w",
+                       align = align,
                        empty_horizontal = 0,
                        empty_vertical = 0,
                        selected_rows_to_end_of_window = True,
@@ -2294,40 +2337,44 @@ class Sheet_Dropdown(Sheet):
                        table_fg = fg,
                        table_bg = bg)
         self.parent = parent
+        self.hide_dropdown_window = hide_dropdown_window
+        self.arrowkey_RIGHT = arrowkey_RIGHT
+        self.arrowkey_LEFT = arrowkey_LEFT
         self.h_ = height
         self.w_ = width
         self.r = r
         self.c = c
         self.bg = bg
         self.fg = fg
-        self.row = None
+        self.row = -1
         self.bind("<Motion>", self.mouse_motion)
         self.bind("<ButtonPress-1>", self.b1)
         self.bind("<Up>", self.arrowkey_UP)
-        self.bind("<Tab>", self.parent.arrowkey_RIGHT)
-        self.bind("<Right>", self.parent.arrowkey_RIGHT)
+        self.bind("<Tab>", self.arrowkey_RIGHT)
+        self.bind("<Right>", self.arrowkey_RIGHT)
         self.bind("<Down>", self.arrowkey_DOWN)
-        self.bind("<Left>", self.parent.arrowkey_LEFT)
+        self.bind("<Left>", self.arrowkey_LEFT)
         self.bind("<Prior>", self.arrowkey_UP)
         self.bind("<Next>", self.arrowkey_DOWN)
+        self.bind("<Return>", self.b1)
         if values:
-            self.values(values)
+            self.values(values, redraw = False)
 
     def arrowkey_UP(self, event = None):
-        if self.row is not None:
-            if self.row > 0:
-                self.deselect("all")
-                self.row -= 1
-                self.see(self.row, 0, redraw = False)
-                self.select_row(self.row)
+        self.deselect("all")
+        if self.row > 0:
+            self.row -= 1
+        else:
+            self.row = 0
+        self.see(self.row, 0, redraw = False)
+        self.select_row(self.row)
 
     def arrowkey_DOWN(self, event = None):
-        if self.row is not None:
-            if len(self.MT.data_ref) - 1 > self.row:
-                self.deselect("all")
-                self.row += 1
-                self.see(self.row, 0, redraw = False)
-                self.select_row(self.row)
+        self.deselect("all")
+        if len(self.MT.data_ref) - 1 > self.row:
+            self.row += 1
+        self.see(self.row, 0, redraw = False)
+        self.select_row(self.row)
 
     def mouse_motion(self, event = None):
         self.row = self.identify_row(event, exclude_index = True, allow_end = False)
@@ -2338,20 +2385,26 @@ class Sheet_Dropdown(Sheet):
     def b1(self, event = None):
         if event is None:
             row = None
+        elif event.keycode == 13:
+            row = self.get_selected_rows()
+            if not row:
+                row = None
+            else:
+                row = next(iter(row))
         else:
             row = self.identify_row(event, exclude_index = True, allow_end = False)
         if row is None:
-            self.parent.hide_dropdown_window(self.r, self.c)
+            self.hide_dropdown_window(self.r, self.c)
         else:
-            self.parent.hide_dropdown_window(self.r, self.c, self.get_cell_data(row, 0))
+            self.hide_dropdown_window(self.r, self.c, self.get_cell_data(row, 0))
 
-    def values(self, values = []):
+    def values(self, values = [], redraw = True):
         self.set_sheet_data([[v] for v in values],
                             reset_col_positions = False,
                             reset_row_positions = False,
                             redraw = False,
                             verify = False)
-        self.set_all_cell_sizes_to_text(redraw = True)
+        self.set_all_cell_sizes_to_text(redraw = redraw)
 
 
 

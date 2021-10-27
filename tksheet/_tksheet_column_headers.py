@@ -130,7 +130,10 @@ class ColumnHeaders(tk.Canvas):
 
     def set_height(self, new_height, set_TL = False):
         self.current_height = new_height
-        self.config(height = new_height)
+        try:
+            self.config(height = new_height)
+        except:
+            return
         if set_TL:
             self.TL.set_dimensions(new_h = new_height)
 

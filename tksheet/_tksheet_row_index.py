@@ -138,7 +138,10 @@ class RowIndex(tk.Canvas):
 
     def set_width(self, new_width, set_TL = False):
         self.current_width = new_width
-        self.config(width = new_width)
+        try:
+            self.config(width = new_width)
+        except:
+            return
         if set_TL:
             self.TL.set_dimensions(new_w = new_width)
 

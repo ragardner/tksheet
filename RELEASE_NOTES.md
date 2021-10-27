@@ -1,3 +1,7 @@
+### Version 5.1.5
+ - Fix center, e text alignment with dropdowns
+ - Fix potential error when closing root Tk() window
+
 ### Version 5.1.4
  - Fix error when hiding columns and creating dropdown boxes
  - Fix dropdown box sizes

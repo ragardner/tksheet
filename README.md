@@ -11,7 +11,6 @@ pip install tksheet
  - [Documentation](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md)
  - [Test file](https://github.com/ragardner/tksheet/blob/master/tests/test_tksheet.py)
  - [Version release notes](https://github.com/ragardner/tksheet/blob/master/RELEASE_NOTES.md)
-###### Except for any bug fixing and minor improvements I am no longer working on this repository
 
 ### Features
  - Display and modify tabular data
@@ -23,6 +22,7 @@ pip install tksheet
  - Expand row heights and column widths
  - Change fonts and font size
  - Change any colors in the sheet
+ - Dropdown boxes
  - Left `"w"`, Center `"center"` or Right `"e"` text alignment
  - Cell values can be any class with a `str` method
 
