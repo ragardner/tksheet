@@ -1,3 +1,7 @@
+### Version 5.1.7
+ - Fix double button-1 not editing cell
+ - Fix error with edit cell extra bindings
+
 ### Version 5.1.6
  - Fix dropdown box and checkbox triggering off of non-Return keypresses
  - Fix issues with readonly cells and rows and control actions such as cut, delete, paste

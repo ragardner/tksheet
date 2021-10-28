@@ -4696,8 +4696,10 @@ class MainTable(tk.Canvas):
         text = None
         if event is not None and event.keycode == 8: # backspace
             text = ""
-        elif ((event is not None and event.keycode in (13, 113)) or  # enter or f2
-              event is None):
+        elif ((event is not None and hasattr(event, 'keycode') and event.keycode in (13, 113)) or  # enter or f2
+              (event is not None and hasattr(event, 'keycode') and event.keycode == "??" and hasattr(event, 'num') and event.num == 1) or
+              event is None
+              ):
             text = f"{self.data_ref[r][c]}" if self.all_columns_displayed else f"{self.data_ref[r][self.displayed_columns[c]]}"
             if self.cell_auto_resize_enabled:
                 self.set_cell_size_to_text(r, c, only_set_if_too_small = True, redraw = True, run_binding = True)
@@ -4715,6 +4717,7 @@ class MainTable(tk.Canvas):
                 return
             if text is not None:
                 text = f"{text}"
+        text = "" if text is None else text
         self.select_cell(r = r, c = c, keep_other_selections = True)
         self.create_text_editor(r = r, c = c, text = text, set_data_ref_on_destroy = True, dropdown = dropdown)
         
@@ -4775,7 +4778,7 @@ class MainTable(tk.Canvas):
         self.text_editor.textedit.focus_set()
 
     def destroy_text_editor(self, event = None):
-        if event is not None and self.extra_end_edit_cell_func is not None:
+        if event is not None and self.extra_end_edit_cell_func is not None and self.text_editor_loc is not None:
             self.extra_end_edit_cell_func(self.text_editor_loc + ("Escape", None))
         self.text_editor_loc = None
         try:
@@ -4975,11 +4978,11 @@ class MainTable(tk.Canvas):
             if space_bot >= space_top:
                 anchor = "nw"
                 if values_more_than_five:
-                    win_h = space_bot
+                    win_h = space_bot + 2
             elif space_top > space_bot:
                 anchor = "sw"
                 if values_more_than_five:
-                    win_h = space_top
+                    win_h = space_top + 2
         if win_h > win_h2:
             win_h = win_h2
         return win_h, anchor
@@ -5029,11 +5032,11 @@ class MainTable(tk.Canvas):
             window = window,
             anchor = anchor)
             window.bind("<FocusOut>", lambda x: self.hide_dropdown_window(r, c))
+            self.update()
             try:
                 window.focus_set()
             except:
                 return
-            self.update()
         self.existing_dropdown_window = window
         self.cell_options[(r, dcol)]['dropdown']['window'] = window
         self.existing_dropdown_canvas_id = self.cell_options[(r, dcol)]['dropdown']['canvas_id']
