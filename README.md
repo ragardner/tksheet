@@ -22,7 +22,7 @@ pip install tksheet
  - Expand row heights and column widths
  - Change fonts and font size
  - Change any colors in the sheet
- - Dropdown boxes
+ - Create an unlimited number of high performance dropdown and check boxes
  - Left `"w"`, Center `"center"` or Right `"e"` text alignment
  - Cell values can be any class with a `str` method
 
