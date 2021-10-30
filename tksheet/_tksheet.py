@@ -5,7 +5,7 @@ from ._tksheet_column_headers import *
 from ._tksheet_row_index import *
 from ._tksheet_main_table import *
 
-from collections import defaultdict, deque
+from collections import defaultdict, deque, namedtuple
 from itertools import islice, repeat, accumulate, chain, product, cycle
 from math import floor, ceil
 from tkinter import ttk
@@ -453,7 +453,7 @@ class Sheet(tk.Frame):
             self.MT.shift_selection_binding_func = None if func == "None" else func
             self.RI.shift_selection_binding_func = None if func == "None" else func
             self.CH.shift_selection_binding_func = None if func == "None" else func
-            self.MT.deselection_binding_func = None
+            self.MT.deselection_binding_func = None if func == "None" else func
 
             self.CH.column_width_resize_func = None if func == "None" else func
             self.RI.row_height_resize_func = None if func == "None" else func
@@ -720,6 +720,7 @@ class Sheet(tk.Frame):
         self.MT.set_all_cell_sizes_to_text()
         if redraw:
             self.refresh()
+        return self.MT.row_positions, self.MT.col_positions
 
     def set_all_column_widths(self, width = None, only_set_if_too_small = False, redraw = True, recreate_selection_boxes = True):
         self.CH.set_width_of_all_cols(width = width, only_set_if_too_small = only_set_if_too_small, recreate = recreate_selection_boxes)
@@ -2226,6 +2227,20 @@ class Sheet(tk.Frame):
         else:
             self.MT.destroy_checkbox(r, c)
 
+    def checkbox(self,
+                 r,
+                 c,
+                 checked = None,
+                 state = None,
+                 check_function = ""):
+        if type(checked) == bool:
+            self.set_cell_data(r, c, checked)
+        if check_function != "":
+            self.MT.cell_options[(r, c)]['checkbox']['check_function'] = check_function
+        if state.lower() in ("normal", "disabled"):
+            self.MT.cell_options[(r, c)]['checkbox']['state'] = state
+        return {**self.MT.cell_options[(r, c)]['checkbox'], 'checked': self.MT.data_ref[r][c]}
+
     def create_dropdown(self,
                         r = 0,
                         c = 0,
@@ -2236,7 +2251,7 @@ class Sheet(tk.Frame):
                         redraw = False,
                         selection_function = None,
                         modified_function = None,
-                        align = "w"):
+                        align = None):
         self.MT.create_dropdown(r = r,
                                 c = c,
                                 values = values,
@@ -2253,6 +2268,13 @@ class Sheet(tk.Frame):
 
     def get_dropdown_values(self, r = 0, c = 0):
         return self.MT.cell_options[(r, c)]['dropdown']['values']
+
+    def dropdown_functions(self, r, c, selection_function = "", modified_function = ""):
+        if selection_function != "":
+            self.MT.cell_options[(r, c)]['dropdown']['select_function'] = selection_function
+        if modified_function != "":
+            self.MT.cell_options[(r, c)]['dropdown']['modified_function'] = modified_function
+        return self.MT.cell_options[(r, c)]['dropdown']['select_function'], self.MT.cell_options[(r, c)]['dropdown']['modified_function']
 
     def set_dropdown_values(self, r = 0, c = 0, set_existing_dropdown = False, values = [], displayed = None):
         if set_existing_dropdown:
@@ -2404,8 +2426,11 @@ class Sheet_Dropdown(Sheet):
                             reset_row_positions = False,
                             redraw = False,
                             verify = False)
-        self.set_all_cell_sizes_to_text(redraw = redraw)
-
+        cws = self.set_all_cell_sizes_to_text(redraw = True)[1]
+        #cw = int(cws[1] - cws[0])
+        #ww = self.winfo_width() - 2
+        #if cw < ww:
+        #    self.column_width(0, ww)
 
 
 

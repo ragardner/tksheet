@@ -2,6 +2,7 @@ lowercase_letters = """abcdefghijklmnopqrstuvwxyz"""
 uppercase_letters = """ABCDEFGHIJKLMNOPQRSTUVWXYZ"""
 numbers = """0123456789"""
 symbols = """!#\$%&'()*+,-./:;"@[]^_`{|}~>?="""
+symbols_set = set(symbols)
 all_chars = set(lowercase_letters + uppercase_letters + numbers + symbols + " " + "\<")
 other_symbols = {"<space>": " ",
                  "less": "<"}

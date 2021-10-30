@@ -1,5 +1,5 @@
 from ._tksheet_vars import *
-from collections import defaultdict, deque
+from collections import defaultdict, deque, namedtuple
 from itertools import islice, repeat, accumulate, chain, product, cycle
 from math import floor, ceil
 from tkinter import ttk
@@ -13,7 +13,23 @@ import zlib
 # for mac bindings
 from platform import system as get_os
 USER_OS = f"{get_os()}"
-        
+
+
+CtrlKeyEvent = namedtuple("CtrlKeyEvent", "eventname selectionboxes currentlyselected rows")
+PasteEvent = namedtuple("PasteEvent", "eventname currentlyselected rows")
+UndoEvent = namedtuple("UndoEvent", "eventname type storeddata")
+SelectCellEvent = namedtuple("SelectCellEvent", "eventname row column")
+SelectColumnEvent = namedtuple("SelectColumnEvent", "eventname column")
+SelectRowEvent = namedtuple("SelectRowEvent", "eventname row")
+DeselectionEvent = namedtuple("DeselectionEvent", "eventname selectionboxes")
+SelectionBoxEvent = namedtuple("SelectionBoxEvent", "eventname selectionboxes")
+InsertEvent = namedtuple("InsertEvent", "eventname dataindex displayindex quantity")
+DeleteRowColumnEvent = namedtuple("DeleteRowColumnEvent", "eventname deleteindexes")
+EditCellEvent = namedtuple("EditCellEvent", "row column key text eventname")
+BeginDragDropEvent = namedtuple("BeginDragDropEvent", "eventname columnstomove movedto")
+EndDragDropEvent = namedtuple("EndDragDropEvent", "eventname oldindexes newindexes movedto")
+ResizeEvent = namedtuple("ResizeEvent", "eventname index oldsize newsize")
+
 
 class TextEditor_(tk.Text):
     def __init__(self,

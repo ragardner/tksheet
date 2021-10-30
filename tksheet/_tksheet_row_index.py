@@ -225,13 +225,15 @@ class RowIndex(tk.Canvas):
                         self.MT.delete_selection_rects(delete_current = False)
                         if r > min_r:
                             self.MT.create_selected(min_r, 0, r + 1, len(self.MT.col_positions) - 1, "rows")
+                            func_event = tuple(range(min_r, r + 1))
                         elif r < min_r:
                             self.MT.create_selected(r, 0, min_r + 1, len(self.MT.col_positions) - 1, "rows")
+                            func_event = tuple(range(r, min_r + 1))
                     else:
                         self.select_row(r)
                     self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
                     if self.shift_selection_binding_func is not None:
-                        self.shift_selection_binding_func(("shift_select_rows", tuple(sorted(self.MT.get_selected_rows()))))
+                        self.shift_selection_binding_func(SelectionBoxEvent("shift_select_rows", func_event))
                 elif r_selected:
                     self.dragged_row = r
 
@@ -299,7 +301,7 @@ class RowIndex(tk.Canvas):
             new_height = self.set_row_height(row)
             self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
             if self.row_height_resize_func is not None and old_height != new_height:
-                self.row_height_resize_func(("row_height_resize", row, old_height, new_height))
+                self.row_height_resize_func(ResizeEvent("row_height_resize", row, old_height, new_height))
         elif self.width_resizing_enabled and self.rsz_h is None and self.rsz_w == True:
             self.set_width_of_index_to_text()
         elif self.row_selection_enabled and self.rsz_h is None and self.rsz_w is None:
@@ -437,7 +439,7 @@ class RowIndex(tk.Canvas):
                         self.MT.create_selected(*rect)
                         self.being_drawn_rect = rect
                         if self.drag_selection_binding_func is not None:
-                            self.drag_selection_binding_func(("drag_select_rows", func_event))
+                            self.drag_selection_binding_func(SelectionBoxEvent("drag_select_rows", func_event))
             ycheck = self.yview()
             if event.y > self.winfo_height() and len(ycheck) > 1 and ycheck[1] < 1:
                 try:
@@ -485,7 +487,7 @@ class RowIndex(tk.Canvas):
             self.MT.refresh_dropdowns()
             self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
             if self.row_height_resize_func is not None and old_height != new_height:
-                self.row_height_resize_func(("row_height_resize", self.rsz_h - 1, old_height, new_height))
+                self.row_height_resize_func(ResizeEvent("row_height_resize", self.rsz_h - 1, old_height, new_height))
         elif self.width_resizing_enabled and self.rsz_w is not None and self.currently_resizing_width:
             self.currently_resizing_width = False
             self.delete_resize_lines()
@@ -522,7 +524,7 @@ class RowIndex(tk.Canvas):
                 r_ = int(r)
                 if self.ri_extra_begin_drag_drop_func is not None:
                     try:
-                        self.ri_extra_begin_drag_drop_func(("begin_row_index_drag_drop", tuple(orig_selected_rows), int(r)))
+                        self.ri_extra_begin_drag_drop_func(BeginDragDropEvent("begin_row_index_drag_drop", tuple(orig_selected_rows), int(r)))
                     except:
                         extra_func_success = False
                 if extra_func_success:
@@ -615,7 +617,7 @@ class RowIndex(tk.Canvas):
 
                     self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
                     if self.ri_extra_end_drag_drop_func is not None:
-                        self.ri_extra_end_drag_drop_func(("end_row_index_drag_drop", tuple(orig_selected_rows), new_selected, int(r)))
+                        self.ri_extra_end_drag_drop_func(EndDragDropEvent("end_row_index_drag_drop", tuple(orig_selected_rows), new_selected, int(r)))
         self.dragged_row = None
         self.currently_resizing_width = False
         self.currently_resizing_height = False
@@ -655,7 +657,7 @@ class RowIndex(tk.Canvas):
         if redraw:
             self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
         if self.selection_binding_func is not None:
-            self.selection_binding_func(("select_row", int(r)))
+            self.selection_binding_func(SelectRowEvent("select_row", int(r)))
 
     def toggle_select_row(self, row, add_selection = True, redraw = True, run_binding_func = True, set_as_current = True):
         if add_selection:
