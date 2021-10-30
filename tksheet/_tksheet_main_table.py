@@ -5079,7 +5079,9 @@ class MainTable(tk.Canvas):
             elif space_top > space_bot:
                 anchor = "sw"
                 win_h = space_top - 1
-        if win_h > win_h2:
+        if win_h < self.txt_h:
+            win_h = self.txt_h + 5
+        elif win_h > win_h2:
             win_h = win_h2
         return win_h, anchor
 

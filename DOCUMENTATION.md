@@ -19,10 +19,11 @@
 18. [Hiding Table Elements](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#18-Hiding-Table-Elements)
 19. [Cell Text Editor](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#19-Cell-Text-Editor)
 20. [Dropdown Boxes](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#20-Dropdown-Boxes)
-21. [Table Options and Other Functions](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#21-Table-Options-and-Other-Functions)
-22. [Example Loading Data from Excel](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#22-Example-Loading-Data-from-Excel)
-23. [Example Custom Right Click and Text Editor Functionality](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#23-Example-Custom-Right-Click-and-Text-Editor-Functionality)
-24. [Example Displaying Selections](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#24-Example-Displaying-Selections)
+21. [Check Boxes](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#21-Check-Boxes)
+22. [Table Options and Other Functions](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#22-Table-Options-and-Other-Functions)
+23. [Example Loading Data from Excel](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#23-Example-Loading-Data-from-Excel)
+24. [Example Custom Right Click and Text Editor Functionality](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#24-Example-Custom-Right-Click-and-Text-Editor-Functionality)
+25. [Example Displaying Selections](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#25-Example-Displaying-Selections)
 
 
 ## 1 About tksheet
@@ -578,7 +579,7 @@ identify_column(event, exclude_header = False, allow_end = True)
 
 ___
 
-Sheet control actions for binding your own keys to e.g. `sheet.bind("<Control-B>", sheet,paste)`
+Sheet control actions for binding your own keys to e.g. `sheet.bind("<Control-B>", sheet.paste)`
 ```python
 cut(self, event = None)
 copy(self, event = None)
@@ -602,6 +603,9 @@ Alternatively use the function `set_options()`, arguments can be found [here](ht
 ## 10 Highlighting Cells
 
  - `bg` and `fg` arguments use either a tkinter color or a hex `str` color.
+ - Highlighting cells, rows or columns will also change the colors of dropdown boxes and check boxes.
+
+___
 
 ```python
 highlight_cells(row = 0, column = 0, cells = [], canvas = "table", bg = None, fg = None, redraw = False)
@@ -654,6 +658,8 @@ dehighlight_columns(columns = [], redraw = False)
 
  - `newfont` arguments require a three tuple e.g. `("Arial", 12, "normal")`
  - `align` arguments (`str`) options are `w`, `e` or `center`.
+
+___
 
 ```python
 font(newfont = None, reset_row_positions = True)
@@ -736,7 +742,7 @@ default_row_height(height = None)
 
 ___
 
-Set default row height in pixels or lines.
+Set default header bar height in pixels or lines.
 ```python
 default_header_height(height = None)
 ```
@@ -1224,7 +1230,7 @@ def create_dropdown(r = 0,
                     modified_function = None)
 ```
 Notes:
- - When a user selects an item from the dropdown box the sheet will set the underlying cells data to the selected item, to bind this event see the function `extra_bindings()` with binding `"end_edit_cell"` [here](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#7-Bindings-and-Functionality).
+ - When a user selects an item from the dropdown box the sheet will set the underlying cells data to the selected item, to bind this event use either the `selection_function` argument or see the function `extra_bindings()` with binding `"end_edit_cell"` [here](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#7-Bindings-and-Functionality).
 
  Arguments:
  - `values` are the values to appear when the dropdown box is popped open.
@@ -1253,6 +1259,14 @@ set_dropdown_values(r = 0, c = 0, set_existing_dropdown = False, values = [], di
 
 ___
 
+Set and get bound dropdown functions.
+```python
+dropdown_functions(r, c, selection_function = "", modified_function = "")
+```
+
+___
+
+Delete dropdown boxes.
 ```python
 delete_dropdown(r = 0, c = 0)
 ```
@@ -1280,7 +1294,63 @@ close_dropdown(r, c)
 ```
  - Also destroys any opened text editor windows.
 
-## 21 Table Options and Other Functions
+## 21 Check Boxes
+
+Create a check box.
+```python
+create_checkbox(r,
+                c,
+                checked = False,
+                state = "normal",
+                see = False,
+                redraw = False,
+                check_function = None)
+```
+Notes:
+ - Use `highlight_cells()` or rows or columns to change the color of the checkbox.
+ - Check boxes are always left aligned despite any align settings.
+
+ Arguments:
+ - `check_function` can be used to trigger a function when the user clicks a checkbox.
+ - `state` can be `"normal"` or `"disabled"`. If `"disabled"` then color will be same as table grid lines, else it will be the cells text color.
+
+___
+
+Set or toggle a checkbox.
+```python
+ click_checkbox(r,
+                c,
+                checked = None,
+                undo = False)
+```
+
+___
+
+Get a dictionary of all check box dictionaries.
+```python
+get_checkboxes()
+```
+
+___
+
+Delete a checkbox.
+```python
+delete_checkbox(r = 0, c = 0)
+```
+ - Set `r` to `"all"` to delete all check boxes.
+
+___
+
+Set or get information about a particular checkbox.
+```python
+checkbox(r,
+         c,
+         checked = None,
+         state = None,
+         check_function = "")
+```
+
+## 22 Table Options and Other Functions
 
 ```python
 def set_options(
@@ -1409,7 +1479,7 @@ Refresh the table.
 refresh(redraw_header = True, redraw_row_index = True)
 ```
 
-## 22 Example Loading Data from Excel
+## 23 Example Loading Data from Excel
 
 Using `pandas` library, requires additional libraries:
  - `pandas`
@@ -1442,7 +1512,7 @@ app = demo()
 app.mainloop()
 ```
 
-## 23 Example Custom Right Click and Text Editor Functionality
+## 24 Example Custom Right Click and Text Editor Functionality
 
 This is to demonstrate adding your own commands to the in-built right click popup menu (or how you might start making your own right click menu functionality) and also creating a cell text editor the manual way.
 ```python
@@ -1508,7 +1578,7 @@ app.mainloop()
  - If you want to evaluate the value from the text editor you can set `set_data_ref_on_destroy` to `False` and do the evaluation to decide whether or not to use `set_cell_data()`.
  - If you want a totally new right click menu you can use `self.sheet.bind("<3>", <function>)` with a `tk.Menu` of your own design (right click is `<2>` on MacOS) and don't use `"right_click_popup_menu"` with `enable_bindings()`.
 
-## 24 Example Displaying Selections
+## 25 Example Displaying Selections
 
 This is to demonstrate displaying what the user has selected in the sheet.
 ```python

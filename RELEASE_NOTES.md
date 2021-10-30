@@ -1,3 +1,9 @@
+### Version 5.2.0
+ - Adjust dropdown box heights slightly
+ - Fix extra bindings begin edit cell making cell edit delete contents
+ - Make many events namedtuples for better clarity
+ - Add checkbox functionality
+
 ### Version 5.1.7
  - Fix double button-1 not editing cell
  - Fix error with edit cell extra bindings
