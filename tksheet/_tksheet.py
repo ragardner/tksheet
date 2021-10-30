@@ -413,54 +413,54 @@ class Sheet(tk.Frame):
                 del self.MT.extra_header_rc_menu_funcs[label]
         self.MT.create_rc_menus()
 
-    def extra_bindings(self, bindings, func = "None"):
+    def extra_bindings(self, bindings, func=None):
         if isinstance(bindings, str) and bindings.lower() in ("bind_all", "unbind_all"):
-            self.MT.extra_begin_ctrl_c_func = None if func == "None" else func
-            self.MT.extra_begin_ctrl_x_func = None if func == "None" else func
-            self.MT.extra_begin_ctrl_v_func = None if func == "None" else func
-            self.MT.extra_begin_ctrl_z_func = None if func == "None" else func
-            self.MT.extra_begin_delete_key_func = None if func == "None" else func
-            self.MT.extra_begin_edit_cell_func = None if func == "None" else func
-            self.MT.extra_begin_edit_cell_func = None if func == "None" else func
-            self.RI.ri_extra_begin_drag_drop_func = None if func == "None" else func
-            self.CH.ch_extra_begin_drag_drop_func = None if func == "None" else func
-            self.MT.extra_begin_del_rows_rc_func = None if func == "None" else func
-            self.MT.extra_begin_del_cols_rc_func = None if func == "None" else func
-            self.MT.extra_begin_insert_cols_rc_func = None if func == "None" else func
-            self.MT.extra_begin_insert_rows_rc_func = None if func == "None" else func
+            self.MT.extra_begin_ctrl_c_func = func
+            self.MT.extra_begin_ctrl_x_func = func
+            self.MT.extra_begin_ctrl_v_func = func
+            self.MT.extra_begin_ctrl_z_func = func
+            self.MT.extra_begin_delete_key_func = func
+            self.MT.extra_begin_edit_cell_func = func
+            self.MT.extra_begin_edit_cell_func = func
+            self.RI.ri_extra_begin_drag_drop_func = func
+            self.CH.ch_extra_begin_drag_drop_func = func
+            self.MT.extra_begin_del_rows_rc_func = func
+            self.MT.extra_begin_del_cols_rc_func = func
+            self.MT.extra_begin_insert_cols_rc_func = func
+            self.MT.extra_begin_insert_rows_rc_func = func
             
-            self.MT.extra_end_ctrl_c_func = None if func == "None" else func
-            self.MT.extra_end_ctrl_x_func = None if func == "None" else func
-            self.MT.extra_end_ctrl_v_func = None if func == "None" else func
-            self.MT.extra_end_ctrl_z_func = None if func == "None" else func
-            self.MT.extra_end_delete_key_func = None if func == "None" else func
-            self.MT.extra_begin_edit_cell_func = None if func == "None" else func
-            self.MT.extra_end_edit_cell_func = None if func == "None" else func
-            self.RI.ri_extra_end_drag_drop_func = None if func == "None" else func
-            self.CH.ch_extra_end_drag_drop_func = None if func == "None" else func
-            self.MT.extra_end_del_rows_rc_func = None if func == "None" else func
-            self.MT.extra_end_del_cols_rc_func = None if func == "None" else func
-            self.MT.extra_end_insert_cols_rc_func = None if func == "None" else func
-            self.MT.extra_end_insert_rows_rc_func = None if func == "None" else func
+            self.MT.extra_end_ctrl_c_func = func
+            self.MT.extra_end_ctrl_x_func = func
+            self.MT.extra_end_ctrl_v_func = func
+            self.MT.extra_end_ctrl_z_func = func
+            self.MT.extra_end_delete_key_func = func
+            self.MT.extra_begin_edit_cell_func = func
+            self.MT.extra_end_edit_cell_func = func
+            self.RI.ri_extra_end_drag_drop_func = func
+            self.CH.ch_extra_end_drag_drop_func = func
+            self.MT.extra_end_del_rows_rc_func = func
+            self.MT.extra_end_del_cols_rc_func = func
+            self.MT.extra_end_insert_cols_rc_func = func
+            self.MT.extra_end_insert_rows_rc_func = func
             
-            self.MT.selection_binding_func = None if func == "None" else func
-            self.MT.select_all_binding_func = None if func == "None" else func
-            self.RI.selection_binding_func = None if func == "None" else func
-            self.CH.selection_binding_func = None if func == "None" else func
-            self.MT.drag_selection_binding_func = None if func == "None" else func
-            self.RI.drag_selection_binding_func = None if func == "None" else func
-            self.CH.drag_selection_binding_func = None if func == "None" else func
-            self.MT.shift_selection_binding_func = None if func == "None" else func
-            self.RI.shift_selection_binding_func = None if func == "None" else func
-            self.CH.shift_selection_binding_func = None if func == "None" else func
-            self.MT.deselection_binding_func = None if func == "None" else func
+            self.MT.selection_binding_func = func
+            self.MT.select_all_binding_func = func
+            self.RI.selection_binding_func = func
+            self.CH.selection_binding_func = func
+            self.MT.drag_selection_binding_func = func
+            self.RI.drag_selection_binding_func = func
+            self.CH.drag_selection_binding_func = func
+            self.MT.shift_selection_binding_func = func
+            self.RI.shift_selection_binding_func = func
+            self.CH.shift_selection_binding_func = func
+            self.MT.deselection_binding_func = func
 
-            self.CH.column_width_resize_func = None if func == "None" else func
-            self.RI.row_height_resize_func = None if func == "None" else func
+            self.CH.column_width_resize_func = func
+            self.RI.row_height_resize_func = func
         else:
-            if isinstance(bindings[0], str) and func == "None":
+            if isinstance(bindings[0], str) and func is None:
                 iterable = [bindings]
-            elif isinstance(bindings, str) and func != "None":
+            elif isinstance(bindings, str) and func is not None:
                 iterable = [(bindings, func)]
             else:
                 iterable = bindings
