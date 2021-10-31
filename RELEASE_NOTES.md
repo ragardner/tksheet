@@ -1,3 +1,12 @@
+### Version 5.2.1
+ - Horizontal scroll bar hidden when sheet too small to fit it
+ - Remove `see` argument from `create_checkbox()` and `create_dropdown()` because they rely on data indexes whereas `see()` relies on displayed indexes
+ - Fix undo not working with check box toggle
+ - Fix error on clicking sheet empty space
+ - Fix bugs related to hidden columns and dropdowns/checkboxes
+ - Disable align from working with `create_dropdown()` because it was broken with anything except left alignment
+ - Code cleanup
+
 ### Version 5.2.0
  - Adjust dropdown box heights slightly
  - Fix extra bindings begin edit cell making cell edit delete contents
