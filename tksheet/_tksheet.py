@@ -2250,8 +2250,7 @@ class Sheet(tk.Frame):
                         state = "readonly",
                         redraw = False,
                         selection_function = None,
-                        modified_function = None,
-                        align = None):
+                        modified_function = None):
         self.MT.create_dropdown(r = r,
                                 c = c,
                                 values = values,
@@ -2259,8 +2258,7 @@ class Sheet(tk.Frame):
                                 state = state,
                                 redraw = redraw,
                                 selection_function = selection_function,
-                                modified_function = modified_function,
-                                align = align)
+                                modified_function = modified_function)
 
     def get_dropdown_value(self, r, c):
         return self.get_cell_data(r, c)

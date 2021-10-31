@@ -293,7 +293,6 @@ class ColumnHeaders(tk.Canvas):
                     self.select_col(c, redraw = True)
                 elif self.MT.toggle_selection_enabled:
                     self.toggle_select_col(c, redraw = True)
-        self.mouse_motion(event)
         self.rsz_w = None
         if self.extra_double_b1_func is not None:
             self.extra_double_b1_func(event)
@@ -612,7 +611,6 @@ class ColumnHeaders(tk.Canvas):
         self.rsz_w = None
         self.rsz_h = None
         self.being_drawn_rect = None
-        self.mouse_motion(event)
         if self.extra_b1_release_func is not None:
             self.extra_b1_release_func(event)
 

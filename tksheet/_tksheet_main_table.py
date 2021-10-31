@@ -1011,7 +1011,6 @@ class MainTable(tk.Canvas):
                         continue
                 self.reselect_from_get_boxes(undo_storage[1]['selection_boxes'])
                 self.refresh_dropdowns()
-                
             self.refresh()
             if self.extra_end_ctrl_z_func is not None:
                 self.extra_end_ctrl_z_func(UndoEvent("end_ctrl_z", undo_storage[0], undo_storage))
@@ -2448,7 +2447,6 @@ class MainTable(tk.Canvas):
                 self.hide_dropdown_window()
         self.b1_pressed_loc = None
         self.closed_dropdown = None
-        self.mouse_motion(event)
         if self.extra_b1_release_func is not None:
             self.extra_b1_release_func(event)
 
@@ -3622,21 +3620,21 @@ class MainTable(tk.Canvas):
         if draw_arrow:
             topysub = floor(self.half_txt_h / 2)
             mid_y = y1 + floor((y2 - y1) / 2)
-            """bottom points for triangle"""
+            #bottom points for triangle
             ty1 = mid_y + self.half_txt_h - 3
             tx1 = x2 - self.half_txt_h - 1
             
-            """top left points for triangle"""
+            #top left points for triangle
             ty2 = mid_y - topysub
             tx2 = x2 - self.txt_h
             ty3 = mid_y - topysub
             tx3 = x2 - self.txt_h + 2
 
-            """bottom again points for triangle (arrow head style)"""
+            #bottom again points for triangle
             ty4 = mid_y + self.half_txt_h - 5
             tx4 = x2 - self.half_txt_h - 1
             
-            """top right points for triangle"""
+            #top right points for triangle
             ty5 = mid_y - topysub
             tx5 = x2 - 4
             ty6 = mid_y - topysub
@@ -3655,9 +3653,8 @@ class MainTable(tk.Canvas):
                 t = self.create_polygon(points, fill = fill, outline = outline, tag = tag)
             self.disp_dropdown[t] = True
 
-    def redraw_checkbox(self, x1, y1, x2, y2, fill, outline, tag, draw_check = False):
-        radius = 6
-        points = [x1+radius, y1,
+    def get_checkbox_points(self, x1, y1, x2, y2, radius = 6):
+        return [x1+radius, y1,
                   x1+radius, y1,
                   x2-radius, y1,
                   x2-radius, y1,
@@ -3677,6 +3674,9 @@ class MainTable(tk.Canvas):
                   x1, y1+radius,
                   x1, y1+radius,
                   x1, y1]
+
+    def redraw_checkbox(self, x1, y1, x2, y2, fill, outline, tag, draw_check = False):
+        points = self.get_checkbox_points(x1, y1, x2, y2)
         if self.hidd_checkbox:
             t, sh = self.hidd_checkbox.popitem()
             self.coords(t, points)
@@ -3689,30 +3689,12 @@ class MainTable(tk.Canvas):
             t = self.create_polygon(points, fill = outline, outline = fill, tag = tag, smooth = True)
         self.disp_checkbox[t] = True
         if draw_check:
-            x1 = int(x1 + 3)
-            y1 = int(y1 + 3)
-            x2 = int(x2 - 2)
-            y2 = int(y2 - 2)
-            points = [x1+radius, y1,
-                      x1+radius, y1,
-                      x2-radius, y1,
-                      x2-radius, y1,
-                      x2, y1,
-                      x2, y1+radius,
-                      x2, y1+radius,
-                      x2, y2-radius,
-                      x2, y2-radius,
-                      x2, y2,
-                      x2-radius, y2,
-                      x2-radius, y2,
-                      x1+radius, y2,
-                      x1+radius, y2,
-                      x1, y2,
-                      x1, y2-radius,
-                      x1, y2-radius,
-                      x1, y1+radius,
-                      x1, y1+radius,
-                      x1, y1]
+            # draw filled box
+            x1 = x1 + 3
+            y1 = y1 + 3
+            x2 = x2 - 2
+            y2 = y2 - 2
+            points = self.get_checkbox_points(x1, y1, x2, y2)
             if self.hidd_checkbox:
                 t, sh = self.hidd_checkbox.popitem()
                 self.coords(t, points)
@@ -3725,30 +3707,52 @@ class MainTable(tk.Canvas):
                 t = self.create_polygon(points, fill = fill, outline = outline, tag = tag, smooth = True)
             self.disp_checkbox[t] = True
 
+            # draw one line of X
+            if self.hidd_grid:
+                t, sh = self.hidd_grid.popitem()
+                self.coords(t, x1 + 2, y1 + 2, x2 - 2, y2 - 2)
+                if sh:
+                    self.itemconfig(t, fill = self.table_bg, width = 2)
+                else:
+                    self.itemconfig(t, fill = self.table_bg, width = 2, tag = tag, state = "normal")
+                self.lift(t)
+            else:
+                t = self.create_line(x1 + 2, y1 + 2, x2 - 2, y2 - 2, fill = self.table_bg, width = 2, tag = tag)
+            self.disp_grid[t] = True
+
+            # draw other line of X
+            if self.hidd_grid:
+                t, sh = self.hidd_grid.popitem()
+                self.coords(t, x2 - 2, y1 + 2, x1 + 2, y2 - 2)
+                if sh:
+                    self.itemconfig(t, fill = self.table_bg, width = 2)
+                else:
+                    self.itemconfig(t, fill = self.table_bg, width = 2, tag = tag, state = "normal")
+                self.lift(t)
+            else:
+                t = self.create_line(x2 - 2, y1 + 2, x1 + 2, y2 - 2, fill = self.table_bg, width = 2, tag = tag)
+            self.disp_grid[t] = True
+
     def main_table_redraw_grid_and_text(self, redraw_header = False, redraw_row_index = False, redraw_table = True):
         last_col_line_pos = self.col_positions[-1] + 1
         last_row_line_pos = self.row_positions[-1] + 1
         try:
             can_width = self.winfo_width()
             can_height = self.winfo_height()
-            self.unbind("<Configure>")
             self.configure(scrollregion = (0,
                                            0,
                                            last_col_line_pos + self.empty_horizontal,
                                            last_row_line_pos + self.empty_vertical))
-            if can_height < 20 and self.parentframe.xscroll_showing:
+            if can_width >= last_col_line_pos + self.empty_horizontal and self.parentframe.xscroll_showing:
                 self.parentframe.xscroll.grid_forget()
                 self.parentframe.xscroll_showing = False
-            elif can_width >= last_col_line_pos + self.empty_horizontal and self.parentframe.xscroll_showing:
-                self.parentframe.xscroll.grid_forget()
-                self.parentframe.xscroll_showing = False
-            elif can_width < last_col_line_pos + self.empty_horizontal and not self.parentframe.xscroll_showing and not self.parentframe.xscroll_disabled and can_height > 40:
+            elif can_width < last_col_line_pos + self.empty_horizontal and not self.parentframe.xscroll_showing and not self.parentframe.xscroll_disabled and can_height > 45:
                 self.parentframe.xscroll.grid(row = 2, column = 1, columnspan = 2, sticky = "nswe")
                 self.parentframe.xscroll_showing = True
             if can_height >= last_row_line_pos + self.empty_vertical and self.parentframe.yscroll_showing:
                 self.parentframe.yscroll.grid_forget()
                 self.parentframe.yscroll_showing = False
-            elif can_height < last_row_line_pos + self.empty_vertical and not self.parentframe.yscroll_showing and not self.parentframe.yscroll_disabled:
+            elif can_height < last_row_line_pos + self.empty_vertical and not self.parentframe.yscroll_showing and not self.parentframe.yscroll_disabled and can_width > 45:
                 self.parentframe.yscroll.grid(row = 1, column = 2, sticky = "nswe")
                 self.parentframe.yscroll_showing = True
         except:
@@ -3796,9 +3800,9 @@ class MainTable(tk.Canvas):
                     t, sh = self.hidd_grid.popitem()
                     self.coords(t, x1, y, can_width if self.horizontal_grid_to_end_of_window else x_stop, y)
                     if sh:
-                        self.itemconfig(t, fill = self.table_grid_fg)
+                        self.itemconfig(t, fill = self.table_grid_fg, width = 1)
                     else:
-                        self.itemconfig(t, fill = self.table_grid_fg, state = "normal")
+                        self.itemconfig(t, fill = self.table_grid_fg, width = 1, state = "normal")
                     self.disp_grid[t] = True
                 else:
                     self.disp_grid[self.create_line(x1, y, can_width if self.horizontal_grid_to_end_of_window else x_stop, y, fill = self.table_grid_fg, width = 1, tag = "g")] = True
@@ -3809,9 +3813,9 @@ class MainTable(tk.Canvas):
                     t, sh = self.hidd_grid.popitem()
                     self.coords(t, x, y1, x, can_height if self.vertical_grid_to_end_of_window else y_stop)
                     if sh:
-                        self.itemconfig(t, fill = self.table_grid_fg)
+                        self.itemconfig(t, fill = self.table_grid_fg, width = 1)
                     else:
-                        self.itemconfig(t, fill = self.table_grid_fg, state = "normal")
+                        self.itemconfig(t, fill = self.table_grid_fg, width = 1, state = "normal")
                     self.disp_grid[t] = True
                 else:
                     self.disp_grid[self.create_line(x, y1, x, can_height if self.vertical_grid_to_end_of_window else y_stop, fill = self.table_grid_fg, width = 1, tag = "g")] = True
@@ -3886,9 +3890,9 @@ class MainTable(tk.Canvas):
                     if (r, dcol) in self.cell_options and 'checkbox' in self.cell_options[(r, dcol)] and mw > self.txt_h + 2:
                         cent = fr + floor((self.row_positions[r + 1] - fr) / 2)
                         self.redraw_checkbox(fc + 2,
-                                             cent - self.half_txt_h,
-                                             fc + 2 + self.txt_h,
-                                             cent + self.half_txt_h,
+                                             cent - self.half_txt_h - 1,
+                                             fc + 2 + self.txt_h + 2,
+                                             cent + self.half_txt_h + 1,
                                              fill = tf if self.cell_options[(r, dcol)]['checkbox']['state'] == "normal" else self.table_grid_fg,
                                              outline = "", tag = "cb", draw_check = self.data_ref[r][dcol])
                         continue
@@ -4112,7 +4116,6 @@ class MainTable(tk.Canvas):
                 self.tag_raise("Current_Outside")
                 self.tag_raise("RowSelectBorder")
                 self.tag_raise("ColSelectBorder")
-            self.bind("<Configure>", self.refresh)
         except:
             return False
         return True
@@ -4993,7 +4996,7 @@ class MainTable(tk.Canvas):
         if redraw:
             self.refresh()
 
-    def create_dropdown(self, r = 0, c = 0, values = [], set_value = None, state = "readonly", redraw = True, selection_function = None, modified_function = None, align = None):
+    def create_dropdown(self, r = 0, c = 0, values = [], set_value = None, state = "readonly", redraw = True, selection_function = None, modified_function = None):
         if (r, c) in self.cell_options and any(x in self.cell_options[(r, c)] for x in ('dropdown', 'checkbox')):
             self.destroy_dropdown_and_checkbox(r, c)
         if values:
@@ -5003,7 +5006,7 @@ class MainTable(tk.Canvas):
         if (r, c) not in self.cell_options:
             self.cell_options[(r, c)] = {}
         self.cell_options[(r, c)]['dropdown'] = {'values': values,
-                                                 'align': self.align if align is None else align,
+                                                 'align': "w",
                                                  'window': "no dropdown open",
                                                  'canvas_id': "no dropdown open",
                                                  'select_function': selection_function,
@@ -5090,6 +5093,8 @@ class MainTable(tk.Canvas):
         self.delete_opened_dropdown_window()
         if dcol is None:
             dcol = c if self.all_columns_displayed else self.displayed_columns[c]
+        if self.cell_options[(r, dcol)]['dropdown']['state'] == "normal":
+            self.edit_cell_(r = r, c = c, dropdown = True)
         bg, fg = self.get_widget_bg_fg(r, dcol)
         win_h, anchor = self.get_dropdown_height_anchor(r, c, dcol)
         window = self.parentframe.dropdown_class(self.winfo_toplevel(),
@@ -5106,7 +5111,6 @@ class MainTable(tk.Canvas):
                                                  arrowkey_LEFT = self.arrowkey_LEFT,
                                                  align = self.cell_options[(r, dcol)]['dropdown']['align'])
         if self.cell_options[(r, dcol)]['dropdown']['state'] == "normal":
-            self.edit_cell_(r = r, c = c, dropdown = True)
             if anchor == "nw":
                 ypos = self.row_positions[r] + self.text_editor.h_ - 1
             else:

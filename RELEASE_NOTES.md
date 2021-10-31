@@ -3,6 +3,8 @@
  - Remove `see` argument from `create_checkbox()` and `create_dropdown()` because they rely on data indexes whereas `see()` relies on displayed indexes
  - Fix undo not working with check box toggle
  - Fix error on clicking sheet empty space
+ - Attempt to fix endless redraw loop under certain conditions (related to scroll bars)
+ - Improve check box looks
  - Fix bugs related to hidden columns and dropdowns/checkboxes
  - Disable align from working with `create_dropdown()` because it was broken with anything except left alignment
  - Code cleanup
