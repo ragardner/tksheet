@@ -2433,16 +2433,17 @@ class MainTable(tk.Canvas):
         if self.b1_pressed_loc is not None:
             r = self.identify_row(y = event.y, allow_end = False)
             c = self.identify_col(x = event.x, allow_end = False)
-            dcol = c if self.all_columns_displayed else self.displayed_columns[c]
-            if r is not None and c is not None and (r, c) == self.b1_pressed_loc and (r, dcol) in self.cell_options:
-                if (self.closed_dropdown != self.b1_pressed_loc and
-                    'dropdown' in self.cell_options[(r, dcol)]):
-                    self.display_dropdown_window(r, c)
-                elif 'checkbox' in self.cell_options[(r, dcol)]:
-                    self.click_checkbox(r, dcol)
-                    self.hide_dropdown_window()
-                else:
-                    self.hide_dropdown_window()
+            if r is not None and c is not None and (r, c) == self.b1_pressed_loc:
+                dcol = c if self.all_columns_displayed else self.displayed_columns[c]
+                if (r, dcol) in self.cell_options:
+                    if (self.closed_dropdown != self.b1_pressed_loc and
+                        'dropdown' in self.cell_options[(r, dcol)]):
+                        self.display_dropdown_window(r, c)
+                    elif 'checkbox' in self.cell_options[(r, dcol)]:
+                        self._click_checkbox(r, c, dcol)
+                        self.hide_dropdown_window()
+                    else:
+                        self.hide_dropdown_window()
             else:
                 self.hide_dropdown_window()
         self.b1_pressed_loc = None
@@ -3070,8 +3071,8 @@ class MainTable(tk.Canvas):
             seldset = set(seld_cols) if self.all_columns_displayed else set(self.displayed_columns[c] for c in seld_cols)
             del_cell_options = tuple((r, c) for (r, c) in self.cell_options if c in seldset)
             for r, c in del_cell_options:
-                if 'dropdown' in self.cell_options[(r, c)]:
-                    self.destroy_dropdown(r, c)
+                if 'dropdown' in self.cell_options[(r, c)] or 'checkbox' in self.cell_options[(r, c)]:
+                    self.destroy_dropdown_and_checkbox(r, c)
             if self.undo_enabled:
                 undo_storage = {'deleted_cols': {},
                                 'colwidths': {},
@@ -3168,8 +3169,8 @@ class MainTable(tk.Canvas):
             seldset = set(seld_rows)
             del_cell_options = tuple((r, c) for (r, c) in self.cell_options if r in seldset)
             for r, c in del_cell_options:
-                if 'dropdown' in self.cell_options[(r, c)]:
-                    self.destroy_dropdown(r, c)
+                if 'dropdown' in self.cell_options[(r, c)] or 'checkbox' in self.cell_options[(r, c)]:
+                    self.destroy_dropdown_and_checkbox(r, c)
             if self.undo_enabled:
                 undo_storage = {'deleted_rows': [],
                                 'deleted_index_values': [],
@@ -3730,14 +3731,18 @@ class MainTable(tk.Canvas):
         try:
             can_width = self.winfo_width()
             can_height = self.winfo_height()
+            self.unbind("<Configure>")
             self.configure(scrollregion = (0,
                                            0,
                                            last_col_line_pos + self.empty_horizontal,
                                            last_row_line_pos + self.empty_vertical))
-            if can_width >= last_col_line_pos + self.empty_horizontal and self.parentframe.xscroll_showing:
+            if can_height < 20 and self.parentframe.xscroll_showing:
                 self.parentframe.xscroll.grid_forget()
                 self.parentframe.xscroll_showing = False
-            elif can_width < last_col_line_pos + self.empty_horizontal and not self.parentframe.xscroll_showing and not self.parentframe.xscroll_disabled:
+            elif can_width >= last_col_line_pos + self.empty_horizontal and self.parentframe.xscroll_showing:
+                self.parentframe.xscroll.grid_forget()
+                self.parentframe.xscroll_showing = False
+            elif can_width < last_col_line_pos + self.empty_horizontal and not self.parentframe.xscroll_showing and not self.parentframe.xscroll_disabled and can_height > 40:
                 self.parentframe.xscroll.grid(row = 2, column = 1, columnspan = 2, sticky = "nswe")
                 self.parentframe.xscroll_showing = True
             if can_height >= last_row_line_pos + self.empty_vertical and self.parentframe.yscroll_showing:
@@ -4107,6 +4112,7 @@ class MainTable(tk.Canvas):
                 self.tag_raise("Current_Outside")
                 self.tag_raise("RowSelectBorder")
                 self.tag_raise("ColSelectBorder")
+            self.bind("<Configure>", self.refresh)
         except:
             return False
         return True
@@ -4778,10 +4784,11 @@ class MainTable(tk.Canvas):
             if 'dropdown' in self.cell_options[(y1, dcol)]:
                 self.display_dropdown_window(y1, x1)
             elif 'checkbox' in self.cell_options[(y1, dcol)]:
-                self.click_checkbox(y1, dcol)
+                self._click_checkbox(y1, x1, dcol)
         else:
             self.edit_cell_(event, r = y1, c = x1, dropdown = False)
 
+    # c is displayed col
     def edit_cell_(self, event = None, r = None, c = None, dropdown = False):
         text = None
         extra_func_key = "??"
@@ -4820,7 +4827,8 @@ class MainTable(tk.Canvas):
         text = "" if text is None else text
         self.select_cell(r = r, c = c, keep_other_selections = True)
         self.create_text_editor(r = r, c = c, text = text, set_data_ref_on_destroy = True, dropdown = dropdown)
-        
+
+    # c is displayed col
     def create_text_editor(self, 
                            r = 0, 
                            c = 0, 
@@ -4901,6 +4909,7 @@ class MainTable(tk.Canvas):
         if event is not None and len(event) >= 3 and "Escape" in event:
             self.focus_set()
 
+    # c is displayed col
     def get_text_editor_value(self, destroy_tup = None, r = None, c = None, set_data_ref_on_destroy = True, event = None, destroy = True, move_down = True, redraw = True, recreate = True):
         if self.focus_get() is None and destroy_tup:
             return
@@ -4915,7 +4924,7 @@ class MainTable(tk.Canvas):
         if set_data_ref_on_destroy:
             if r is None and c is None and destroy_tup:
                 r, c = destroy_tup[0], destroy_tup[1]
-            self.set_cell_data(r, c, self.text_editor_value)
+            self._set_cell_data(r, c, value = self.text_editor_value)
             if self.extra_end_edit_cell_func is not None:
                 self.extra_end_edit_cell_func(EditCellEvent(r, c, destroy_tup[2] if len(destroy_tup) >= 3 else "FocusOut", f"{self.text_editor_value}", "end_edit_cell"))
         if move_down:
@@ -4945,60 +4954,52 @@ class MainTable(tk.Canvas):
             self.focus_set()
         return self.text_editor_value
 
-    def set_cell_data(self, r = 0, c = 0, value = "", undo = True, cell_resize = True, dcol = False):
+    #internal event use
+    def _set_cell_data(self, r = 0, c = 0, dcol = None, value = "", undo = True, cell_resize = True):
+        if dcol is None:
+            dcol = c if self.all_columns_displayed else self.displayed_columns[c]
         if r > len(self.data_ref) - 1:
-            self.data_ref.extend([list(repeat("", c + 1)) for i in range((r + 1) - len(self.data_ref))])
-        elif c > len(self.data_ref[r]) - 1:
-            self.data_ref[r].extend(list(repeat("", (c + 1) - len(self.data_ref[r]))))
+            self.data_ref.extend([list(repeat("", dcol + 1)) for i in range((r + 1) - len(self.data_ref))])
+        elif dcol > len(self.data_ref[r]) - 1:
+            self.data_ref[r].extend(list(repeat("", (dcol + 1) - len(self.data_ref[r]))))
         if self.undo_enabled and undo:
-            if self.all_columns_displayed or dcol:
-                if self.data_ref[r][c] != value:
-                    self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells",
-                                                                         {(r, c): f"{self.data_ref[r][c]}"},
-                                                                         (((r, c, r + 1, c + 1), "cells"), ),
-                                                                         self.currently_selected()))))
-            else:
-                if self.data_ref[r][self.displayed_columns[c]] != value:
-                    self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells",
-                                                                         {(r, self.displayed_columns[c]): f"{self.data_ref[r][self.displayed_columns[c]]}"},
-                                                                         (((r, c, r + 1, c + 1), "cells"), ),
-                                                                         self.currently_selected()))))
-        if self.all_columns_displayed or dcol:
-            self.data_ref[r][c] = value
-        else:
-            self.data_ref[r][self.displayed_columns[c]] = value
+            if self.data_ref[r][dcol] != value:
+                self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells",
+                                                                     {(r, dcol): self.data_ref[r][dcol]},
+                                                                     (((r, c, r + 1, c + 1), "cells"), ),
+                                                                     self.currently_selected()))))
+        self.data_ref[r][dcol] = value
         if cell_resize and self.cell_auto_resize_enabled:
             self.set_cell_size_to_text(r, c, only_set_if_too_small = True, redraw = True, run_binding = True)
 
-    def click_checkbox(self, r, c, checked = None, undo = True, redraw = True):
-        if type(checked) == bool:
-            self.set_cell_data(r, c, value = checked, undo = undo, cell_resize = False, dcol = True)
-        elif self.cell_options[(r, c)]['checkbox']['state'] == "normal":
-            self.set_cell_data(r, c, value = not self.data_ref[r][c] if type(self.data_ref[r][c]) == bool else False, undo = undo, cell_resize = False, dcol = True)
-            self.cell_options[(r, c)]['checkbox']['check_function']((r, c, "CheckboxClicked", f"{self.data_ref[r][c]}"))
+    #internal event use
+    def _click_checkbox(self, r, c, dcol = None, undo = True, redraw = True):
+        if dcol is None:
+            dcol = c if self.all_columns_displayed else self.displayed_columns[c]
+        if self.cell_options[(r, dcol)]['checkbox']['state'] == "normal":
+            self._set_cell_data(r, c, dcol, value = not self.data_ref[r][dcol] if type(self.data_ref[r][dcol]) == bool else False, undo = undo, cell_resize = False)
+            self.cell_options[(r, dcol)]['checkbox']['check_function']((r, c, "CheckboxClicked", f"{self.data_ref[r][dcol]}"))
         if redraw:
             self.refresh()
 
-    def create_checkbox(self, r = 0, c = 0, checked = False, state = "normal", see = see, redraw = False, check_function = None):
+    def create_checkbox(self, r = 0, c = 0, checked = False, state = "normal", redraw = False, check_function = None):
         if (r, c) in self.cell_options and any(x in self.cell_options[(r, c)] for x in ('dropdown', 'checkbox')):
             self.destroy_dropdown_and_checkbox(r, c)
-        self.set_cell_data(r, c, checked, cell_resize = False, undo = False, dcol = True)
+        self._set_cell_data(r, dcol = c, value = checked, cell_resize = False, undo = False) #only works because cell_resize is false and undo is false, otherwise needs displayed col and dcol args
         if (r, c) not in self.cell_options:
             self.cell_options[(r, c)] = {}
         self.cell_options[(r, c)]['checkbox'] = {'check_function': check_function,
                                                  'state': state}
-        if see:
-            self.see(r = r, c = c)
-        elif redraw:
+        if redraw:
             self.refresh()
 
-    def create_dropdown(self, r = 0, c = 0, values = [], set_value = None, state = "readonly", see = True, redraw = True, selection_function = None, modified_function = None, align = None):
+    def create_dropdown(self, r = 0, c = 0, values = [], set_value = None, state = "readonly", redraw = True, selection_function = None, modified_function = None, align = None):
         if (r, c) in self.cell_options and any(x in self.cell_options[(r, c)] for x in ('dropdown', 'checkbox')):
             self.destroy_dropdown_and_checkbox(r, c)
         if values:
-            self.set_cell_data(r, c, set_value if set_value is not None else values[0], cell_resize = False, undo = False, dcol = True)
+            self._set_cell_data(r, c, value = set_value if set_value is not None else values[0], cell_resize = False, undo = False)
         elif not values and set_value is not None:
-            self.set_cell_data(r, c, set_value, cell_resize = False, undo = False, dcol = True)
+            self._set_cell_data(r, c, value = set_value, cell_resize = False, undo = False)
         if (r, c) not in self.cell_options:
             self.cell_options[(r, c)] = {}
         self.cell_options[(r, c)]['dropdown'] = {'values': values,
@@ -5008,9 +5009,7 @@ class MainTable(tk.Canvas):
                                                  'select_function': selection_function,
                                                  'modified_function': modified_function,
                                                  'state': state}
-        if see:
-            self.see(r = r, c = c)
-        elif redraw:
+        if redraw:
             self.refresh()
 
     def get_widget_bg_fg(self, r, c):
@@ -5063,9 +5062,9 @@ class MainTable(tk.Canvas):
 
     def get_dropdown_height_anchor(self, r, c, dcol, text_editor_h = None):
         if len(self.cell_options[(r, dcol)]['dropdown']['values']) > 5:
-            win_h = int(self.txt_h * 6 + 31)
+            win_h = int(self.txt_h * 6 + 32)
         else:
-            win_h = int(self.txt_h * len(self.cell_options[(r, dcol)]['dropdown']['values']) + 31)
+            win_h = int(self.txt_h * len(self.cell_options[(r, dcol)]['dropdown']['values']) + 32)
         if win_h > 300:
             win_h = 300
         space_bot = self.get_space_bot(r, text_editor_h)
@@ -5079,16 +5078,18 @@ class MainTable(tk.Canvas):
             elif space_top > space_bot:
                 anchor = "sw"
                 win_h = space_top - 1
-        if win_h < self.txt_h:
+        if win_h < self.txt_h + 5:
             win_h = self.txt_h + 5
         elif win_h > win_h2:
             win_h = win_h2
         return win_h, anchor
 
-    def display_dropdown_window(self, r, c):
+    # c is displayed col
+    def display_dropdown_window(self, r, c, dcol = None):
         self.destroy_text_editor("Escape")
         self.delete_opened_dropdown_window()
-        dcol = c if self.all_columns_displayed else self.displayed_columns[c]
+        if dcol is None:
+            dcol = c if self.all_columns_displayed else self.displayed_columns[c]
         bg, fg = self.get_widget_bg_fg(r, dcol)
         win_h, anchor = self.get_dropdown_height_anchor(r, c, dcol)
         window = self.parentframe.dropdown_class(self.winfo_toplevel(),
@@ -5139,11 +5140,13 @@ class MainTable(tk.Canvas):
         self.cell_options[(r, dcol)]['dropdown']['window'] = window
         self.existing_dropdown_canvas_id = self.cell_options[(r, dcol)]['dropdown']['canvas_id']
 
+    # c is displayed col
     def hide_dropdown_window(self, r = None, c = None, selection = None, b1 = False, redraw = True):
-        if selection is not None:
-            if self.cell_options[(r, c)]['dropdown']['select_function'] is not None: # user has specified a selection function
-                self.cell_options[(r, c)]['dropdown']['select_function']((r, c, "ComboboxSelected", f"{selection}"))
-            self.set_cell_data(r, c, selection, cell_resize = True)
+        if r is not None and c is not None and selection is not None:
+            dcol = c if self.all_columns_displayed else self.displayed_columns[c]
+            if self.cell_options[(r, dcol)]['dropdown']['select_function'] is not None: # user has specified a selection function
+                self.cell_options[(r, dcol)]['dropdown']['select_function']((r, c, "ComboboxSelected", f"{selection}"))
+            self._set_cell_data(r, c, dcol, selection, cell_resize = True)
             if self.extra_end_edit_cell_func is not None:
                 self.extra_end_edit_cell_func((r, c, "ComboboxSelected", f"{selection}"))
             self.focus_set()
@@ -5160,7 +5163,10 @@ class MainTable(tk.Canvas):
         if ret_tup:
             return closedr, closedc
 
-    def delete_opened_dropdown_window(self, r = None, c = None):
+    # c is displayed col
+    def delete_opened_dropdown_window(self, r = None, c = None, dcol = None):
+        if c is not None and dcol is None:
+            dcol = c if self.all_columns_displayed else self.displayed_columns[c]
         try:
             self.delete(self.existing_dropdown_canvas_id)
         except:
@@ -5171,21 +5177,30 @@ class MainTable(tk.Canvas):
         except:
             pass
         self.existing_dropdown_window = None
-        if r is not None and c is not None and (r, c) in self.cell_options and 'dropdown' in self.cell_options[(r, c)]:
-            self.cell_options[(r, c)]['dropdown']['canvas_id'] = "no dropdown open"
-            self.cell_options[(r, c)]['dropdown']['window'] = "no dropdown open"
+        if r is not None and c is not None and (r, dcol) in self.cell_options and 'dropdown' in self.cell_options[(r, dcol)]:
+            self.cell_options[(r, dcol)]['dropdown']['canvas_id'] = "no dropdown open"
+            self.cell_options[(r, dcol)]['dropdown']['window'] = "no dropdown open"
             try:
-                self.delete(self.cell_options[(r, c)]['dropdown']['canvas_id'])
+                self.delete(self.cell_options[(r, dcol)]['dropdown']['canvas_id'])
             except:
                 pass
 
+    def get_displayed_col_from_dcol(self, dcol):
+        try:
+            return self.displayed_columns.index(dcol)
+        except:
+            return None
+    
+    # c is dcol
     def destroy_dropdown(self, r, c):
         self.delete_opened_dropdown_window(r, c)
         del self.cell_options[(r, c)]['dropdown']
 
+    # c is dcol
     def destroy_checkbox(self, r, c):
         del self.cell_options[(r, c)]['checkbox']
 
+    # c is dcol
     def destroy_dropdown_and_checkbox(self, r, c):
         self.destroy_dropdown(r, c)
         self.destroy_checkbox(r, c)

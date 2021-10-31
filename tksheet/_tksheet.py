@@ -413,54 +413,54 @@ class Sheet(tk.Frame):
                 del self.MT.extra_header_rc_menu_funcs[label]
         self.MT.create_rc_menus()
 
-    def extra_bindings(self, bindings, func = "None"):
+    def extra_bindings(self, bindings, func = None):
         if isinstance(bindings, str) and bindings.lower() in ("bind_all", "unbind_all"):
-            self.MT.extra_begin_ctrl_c_func = None if func == "None" else func
-            self.MT.extra_begin_ctrl_x_func = None if func == "None" else func
-            self.MT.extra_begin_ctrl_v_func = None if func == "None" else func
-            self.MT.extra_begin_ctrl_z_func = None if func == "None" else func
-            self.MT.extra_begin_delete_key_func = None if func == "None" else func
-            self.MT.extra_begin_edit_cell_func = None if func == "None" else func
-            self.MT.extra_begin_edit_cell_func = None if func == "None" else func
-            self.RI.ri_extra_begin_drag_drop_func = None if func == "None" else func
-            self.CH.ch_extra_begin_drag_drop_func = None if func == "None" else func
-            self.MT.extra_begin_del_rows_rc_func = None if func == "None" else func
-            self.MT.extra_begin_del_cols_rc_func = None if func == "None" else func
-            self.MT.extra_begin_insert_cols_rc_func = None if func == "None" else func
-            self.MT.extra_begin_insert_rows_rc_func = None if func == "None" else func
+            self.MT.extra_begin_ctrl_c_func = func
+            self.MT.extra_begin_ctrl_x_func = func
+            self.MT.extra_begin_ctrl_v_func = func
+            self.MT.extra_begin_ctrl_z_func = func
+            self.MT.extra_begin_delete_key_func = func
+            self.MT.extra_begin_edit_cell_func = func
+            self.MT.extra_begin_edit_cell_func = func
+            self.RI.ri_extra_begin_drag_drop_func = func
+            self.CH.ch_extra_begin_drag_drop_func = func
+            self.MT.extra_begin_del_rows_rc_func = func
+            self.MT.extra_begin_del_cols_rc_func = func
+            self.MT.extra_begin_insert_cols_rc_func = func
+            self.MT.extra_begin_insert_rows_rc_func = func
             
-            self.MT.extra_end_ctrl_c_func = None if func == "None" else func
-            self.MT.extra_end_ctrl_x_func = None if func == "None" else func
-            self.MT.extra_end_ctrl_v_func = None if func == "None" else func
-            self.MT.extra_end_ctrl_z_func = None if func == "None" else func
-            self.MT.extra_end_delete_key_func = None if func == "None" else func
-            self.MT.extra_begin_edit_cell_func = None if func == "None" else func
-            self.MT.extra_end_edit_cell_func = None if func == "None" else func
-            self.RI.ri_extra_end_drag_drop_func = None if func == "None" else func
-            self.CH.ch_extra_end_drag_drop_func = None if func == "None" else func
-            self.MT.extra_end_del_rows_rc_func = None if func == "None" else func
-            self.MT.extra_end_del_cols_rc_func = None if func == "None" else func
-            self.MT.extra_end_insert_cols_rc_func = None if func == "None" else func
-            self.MT.extra_end_insert_rows_rc_func = None if func == "None" else func
+            self.MT.extra_end_ctrl_c_func = func
+            self.MT.extra_end_ctrl_x_func = func
+            self.MT.extra_end_ctrl_v_func = func
+            self.MT.extra_end_ctrl_z_func = func
+            self.MT.extra_end_delete_key_func = func
+            self.MT.extra_begin_edit_cell_func = func
+            self.MT.extra_end_edit_cell_func = func
+            self.RI.ri_extra_end_drag_drop_func = func
+            self.CH.ch_extra_end_drag_drop_func = func
+            self.MT.extra_end_del_rows_rc_func = func
+            self.MT.extra_end_del_cols_rc_func = func
+            self.MT.extra_end_insert_cols_rc_func = func
+            self.MT.extra_end_insert_rows_rc_func = func
             
-            self.MT.selection_binding_func = None if func == "None" else func
-            self.MT.select_all_binding_func = None if func == "None" else func
-            self.RI.selection_binding_func = None if func == "None" else func
-            self.CH.selection_binding_func = None if func == "None" else func
-            self.MT.drag_selection_binding_func = None if func == "None" else func
-            self.RI.drag_selection_binding_func = None if func == "None" else func
-            self.CH.drag_selection_binding_func = None if func == "None" else func
-            self.MT.shift_selection_binding_func = None if func == "None" else func
-            self.RI.shift_selection_binding_func = None if func == "None" else func
-            self.CH.shift_selection_binding_func = None if func == "None" else func
-            self.MT.deselection_binding_func = None if func == "None" else func
+            self.MT.selection_binding_func = func
+            self.MT.select_all_binding_func = func
+            self.RI.selection_binding_func = func
+            self.CH.selection_binding_func = func
+            self.MT.drag_selection_binding_func = func
+            self.RI.drag_selection_binding_func = func
+            self.CH.drag_selection_binding_func = func
+            self.MT.shift_selection_binding_func = func
+            self.RI.shift_selection_binding_func = func
+            self.CH.shift_selection_binding_func = func
+            self.MT.deselection_binding_func = func
 
-            self.CH.column_width_resize_func = None if func == "None" else func
-            self.RI.row_height_resize_func = None if func == "None" else func
+            self.CH.column_width_resize_func = func
+            self.RI.row_height_resize_func = func
         else:
-            if isinstance(bindings[0], str) and func == "None":
+            if isinstance(bindings[0], str) and not isinstance(bindings, str):
                 iterable = [bindings]
-            elif isinstance(bindings, str) and func != "None":
+            elif isinstance(bindings, str):
                 iterable = [(bindings, func)]
             else:
                 iterable = bindings
@@ -2195,26 +2195,27 @@ class Sheet(tk.Frame):
                         c,
                         checked = False,
                         state = "normal",
-                        see = False,
                         redraw = False,
                         check_function = None):
         self.MT.create_checkbox(r = r,
                                 c = c,
                                 checked = checked,
                                 state = state,
-                                see = see,
                                 redraw = redraw,
                                 check_function = check_function)
 
     def click_checkbox(self,
                        r,
                        c,
-                       checked = None,
-                       undo = False):
-        self.MT.click_checkbox(r = r,
-                               c = c,
-                               checked = checked,
-                               undo = undo)
+                       checked = None):
+        if (r, c) in self.MT.cell_options and 'checkbox' in self.MT.cell_options[(r, c)]:
+            if not type(self.MT.data_ref[r][c]) == bool:
+                if checked is None:
+                    self.MT.data_ref[r][c] = False
+                else:
+                    self.MT.data_ref[r][c] = bool(checked)
+            else:
+                self.MT.data_ref[r][c] = not self.MT.data_ref[r][c]
 
     def get_checkboxes(self):
         return {k: v['checkbox'] for k, v in self.MT.cell_options.items() if 'checkbox' in v}
@@ -2247,7 +2248,6 @@ class Sheet(tk.Frame):
                         values = [],
                         set_value = None,
                         state = "readonly",
-                        see = False,
                         redraw = False,
                         selection_function = None,
                         modified_function = None,
@@ -2257,7 +2257,6 @@ class Sheet(tk.Frame):
                                 values = values,
                                 set_value = set_value,
                                 state = state,
-                                see = see,
                                 redraw = redraw,
                                 selection_function = selection_function,
                                 modified_function = modified_function,
@@ -2290,7 +2289,7 @@ class Sheet(tk.Frame):
         if self.MT.cell_options[(r_, c_)]['dropdown']['window'] != "no dropdown open":
             self.MT.cell_options[(r_, c_)]['dropdown']['window'].values(values)
         if displayed is not None:
-            self.MT.set_cell_data(r_, c_, displayed, undo = False, cell_resize = False)
+            self.set_cell_data(r_, c_, displayed)
             if self.MT.cell_options[(r_, c_)]['dropdown']['window'] != "no dropdown open" and self.MT.text_editor_loc is not None and self.MT.text_editor is not None:
                 self.MT.text_editor.set_text(displayed)
 
@@ -2342,7 +2341,7 @@ class Sheet_Dropdown(Sheet):
                        show_header = False,
                        show_row_index = False,
                        show_top_left = False,
-                       align = align,
+                       align = "w", #alignments other than w for dropdown boxes are broken at the moment
                        empty_horizontal = 0,
                        empty_vertical = 0,
                        selected_rows_to_end_of_window = True,
@@ -2427,10 +2426,6 @@ class Sheet_Dropdown(Sheet):
                             redraw = False,
                             verify = False)
         cws = self.set_all_cell_sizes_to_text(redraw = True)[1]
-        #cw = int(cws[1] - cws[0])
-        #ww = self.winfo_width() - 2
-        #if cw < ww:
-        #    self.column_width(0, ww)
 
 
 
