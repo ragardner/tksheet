@@ -3603,14 +3603,14 @@ class MainTable(tk.Canvas):
     def redraw_highlight(self, x1, y1, x2, y2, fill, outline, tag, can_width = None):
         if self.hidd_high:
             t, sh = self.hidd_high.popitem()
-            self.coords(t, x1 - 1 if outline else x1, y1 - 1 if outline else y1, x2 if can_width is None else can_width, y2)
+            self.coords(t, x1 - 1 if outline else x1, y1 - 1 if outline else y1, x2 if can_width is None else x2 + can_width, y2)
             if sh:
                 self.itemconfig(t, fill = fill, outline = outline)
             else:
                 self.itemconfig(t, fill = fill, outline = outline, tag = tag, state = "normal")
             self.lift(t)
         else:
-            t = self.create_rectangle(x1 - 1 if outline else x1, y1 - 1 if outline else y1, x2 if can_width is None else can_width, y2, fill = fill, outline = outline, tag = tag)
+            t = self.create_rectangle(x1 - 1 if outline else x1, y1 - 1 if outline else y1, x2 if can_width is None else x2 + can_width, y2, fill = fill, outline = outline, tag = tag)
         self.disp_high[t] = True
         return True
 
@@ -3620,37 +3620,27 @@ class MainTable(tk.Canvas):
         if draw_arrow:
             topysub = floor(self.half_txt_h / 2)
             mid_y = y1 + floor((y2 - y1) / 2)
-            #bottom points for triangle
-            ty1 = mid_y + self.half_txt_h - 3
-            tx1 = x2 - self.half_txt_h - 1
-            
             #top left points for triangle
-            ty2 = mid_y - topysub
-            tx2 = x2 - self.txt_h
-            ty3 = mid_y - topysub
-            tx3 = x2 - self.txt_h + 2
-
-            #bottom again points for triangle
-            ty4 = mid_y + self.half_txt_h - 5
-            tx4 = x2 - self.half_txt_h - 1
-            
+            ty1 = mid_y - topysub + 2
+            tx1 = x2 - self.txt_h
+            #bottom points for triangle
+            ty2 = mid_y + self.half_txt_h - 4
+            tx2 = x2 - self.half_txt_h - 1
             #top right points for triangle
-            ty5 = mid_y - topysub
-            tx5 = x2 - 4
-            ty6 = mid_y - topysub
-            tx6 = x2 - 2
+            ty3 = mid_y - topysub + 2
+            tx3 = x2 - 3
             
-            points = (tx1, ty1, tx2, ty2, tx3, ty3, tx4, ty4, tx5, ty5, tx6, ty6)
+            points = (tx1, ty1, tx2, ty2, tx3, ty3)
             if self.hidd_dropdown:
                 t, sh = self.hidd_dropdown.popitem()
                 self.coords(t, points)
                 if sh:
-                    self.itemconfig(t, fill = fill, outline = outline)
+                    self.itemconfig(t, fill = fill)
                 else:
-                    self.itemconfig(t, fill = fill, outline = outline, tag = tag, state = "normal")
+                    self.itemconfig(t, fill = fill, tag = tag, state = "normal")
                 self.lift(t)
             else:
-                t = self.create_polygon(points, fill = fill, outline = outline, tag = tag)
+                t = self.create_line(points, fill = fill, width = 4, capstyle = tk.ROUND, joinstyle = tk.ROUND, tag = tag)
             self.disp_dropdown[t] = True
 
     def get_checkbox_points(self, x1, y1, x2, y2, radius = 6):
@@ -3794,31 +3784,32 @@ class MainTable(tk.Canvas):
         ct_ = self.create_text
         sb = y2 + 2
         if self.show_horizontal_grid:
+            
             for r in range(start_row - 1, end_row):
                 y = self.row_positions[r]
                 if self.hidd_grid:
                     t, sh = self.hidd_grid.popitem()
-                    self.coords(t, x1, y, can_width if self.horizontal_grid_to_end_of_window else x_stop, y)
+                    self.coords(t, x1, y, x2 + can_width if self.horizontal_grid_to_end_of_window else x_stop, y)
                     if sh:
                         self.itemconfig(t, fill = self.table_grid_fg, width = 1)
                     else:
                         self.itemconfig(t, fill = self.table_grid_fg, width = 1, state = "normal")
                     self.disp_grid[t] = True
                 else:
-                    self.disp_grid[self.create_line(x1, y, can_width if self.horizontal_grid_to_end_of_window else x_stop, y, fill = self.table_grid_fg, width = 1, tag = "g")] = True
+                    self.disp_grid[self.create_line(x1, y, x2 + can_width if self.horizontal_grid_to_end_of_window else x_stop, y, fill = self.table_grid_fg, width = 1, tag = "g")] = True
         if self.show_vertical_grid:
             for c in range(start_col - 1, end_col):
                 x = self.col_positions[c]
                 if self.hidd_grid:
                     t, sh = self.hidd_grid.popitem()
-                    self.coords(t, x, y1, x, can_height if self.vertical_grid_to_end_of_window else y_stop)
+                    self.coords(t, x, y1, x, y2 + can_height if self.vertical_grid_to_end_of_window else y_stop)
                     if sh:
                         self.itemconfig(t, fill = self.table_grid_fg, width = 1)
                     else:
                         self.itemconfig(t, fill = self.table_grid_fg, width = 1, state = "normal")
                     self.disp_grid[t] = True
                 else:
-                    self.disp_grid[self.create_line(x, y1, x, can_height if self.vertical_grid_to_end_of_window else y_stop, fill = self.table_grid_fg, width = 1, tag = "g")] = True
+                    self.disp_grid[self.create_line(x, y1, x, y2 + can_height if self.vertical_grid_to_end_of_window else y_stop, fill = self.table_grid_fg, width = 1, tag = "g")] = True
         if start_row > 0:
             start_row -= 1
         if start_col > 0:
