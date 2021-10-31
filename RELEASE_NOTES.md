@@ -1,5 +1,4 @@
 ### Version 5.2.1
- - Horizontal scroll bar hidden when sheet too small to fit it
  - Remove `see` argument from `create_checkbox()` and `create_dropdown()` because they rely on data indexes whereas `see()` relies on displayed indexes
  - Fix undo not working with check box toggle
  - Fix error on clicking sheet empty space
