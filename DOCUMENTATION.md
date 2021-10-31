@@ -1224,7 +1224,6 @@ def create_dropdown(r = 0,
                     values = [],
                     set_value = None,
                     state = "readonly",
-                    see = False,
                     redraw = False,
                     selection_function = None,
                     modified_function = None)
@@ -1235,7 +1234,6 @@ Notes:
  Arguments:
  - `values` are the values to appear when the dropdown box is popped open.
  - `state` determines whether or not there is also an editable text window at the top of the dropdown box when it is open.
- - `see` scrolls the sheet to the location of the newly created dropdown box.
  - `redraw` refreshes the sheet so the newly created box is visible.
  - `selection_function` can be used to trigger a specific function when an item from the dropdown box is selected, if you are using the above `extra_bindings()` as well it will also be triggered but after this function. e.g. `selection_function = my_function_name`
  - `modified_function` can be used to trigger a specific function when the `state` of the box is set to `"normal"` and there is an editable text window and a change of the text in that window has occurred.
@@ -1302,7 +1300,6 @@ create_checkbox(r,
                 c,
                 checked = False,
                 state = "normal",
-                see = False,
                 redraw = False,
                 check_function = None)
 ```
@@ -1318,10 +1315,7 @@ ___
 
 Set or toggle a checkbox.
 ```python
- click_checkbox(r,
-                c,
-                checked = None,
-                undo = False)
+click_checkbox(r, c, checked = None)
 ```
 
 ___
