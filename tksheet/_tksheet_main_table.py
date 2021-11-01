@@ -5055,10 +5055,14 @@ class MainTable(tk.Canvas):
         return win_h if win_h >= sheet_h else sheet_h
 
     def get_dropdown_height_anchor(self, r, c, dcol, text_editor_h = None):
-        if len(self.cell_options[(r, dcol)]['dropdown']['values']) > 5:
-            win_h = int(self.txt_h * 6 + 32)
+        numvalues = len(self.cell_options[(r, dcol)]['dropdown']['values'])
+        xscroll_h = self.parentframe.xscroll.winfo_height()
+        if numvalues > 5:
+            linespace = 6 * 5 + 3
+            win_h = int(self.txt_h * 6 + linespace + xscroll_h)
         else:
-            win_h = int(self.txt_h * len(self.cell_options[(r, dcol)]['dropdown']['values']) + 32)
+            linespace = numvalues * 5 + 3
+            win_h = int(self.txt_h * numvalues + linespace + xscroll_h)
         if win_h > 300:
             win_h = 300
         space_bot = self.get_space_bot(r, text_editor_h)
