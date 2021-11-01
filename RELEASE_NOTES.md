@@ -1,3 +1,9 @@
+### Version 5.2.2
+ - Improve looks for dropdown arrows
+ - Fix grid lines in certain drop down boxes
+ - Fix dropdown scroll bar showing up when not needed
+ - After resizing rows/columns if mouse is in same position cursor reacts accordingly again
+
 ### Version 5.2.1
  - Remove `see` argument from `create_checkbox()` and `create_dropdown()` because they rely on data indexes whereas `see()` relies on displayed indexes
  - Fix undo not working with check box toggle
