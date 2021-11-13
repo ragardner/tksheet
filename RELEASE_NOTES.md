@@ -1,3 +1,7 @@
+### Version 5.2.3
+ - Fix error on deleting row with dropdown box
+ - Fix issues with deleting columns with check boxes, dropdown boxes
+
 ### Version 5.2.2
  - Improve looks for dropdown arrows
  - Fix grid lines in certain drop down boxes

@@ -993,6 +993,7 @@ class MainTable(tk.Canvas):
                 self.refresh_dropdowns()
                 
             elif undo_storage[0] == "delete_cols":
+                self.displayed_columns = undo_storage[1]['displayed_columns']
                 self.cell_options = undo_storage[1]['cell_options']
                 self.col_options = undo_storage[1]['col_options']
                 self.CH.cell_options = undo_storage[1]['CH_cell_options']
@@ -3067,15 +3068,13 @@ class MainTable(tk.Canvas):
                 except:
                     return
             seldset = set(seld_cols) if self.all_columns_displayed else set(self.displayed_columns[c] for c in seld_cols)
-            del_cell_options = tuple((r, c) for (r, c) in self.cell_options if c in seldset)
-            for r, c in del_cell_options:
-                if 'dropdown' in self.cell_options[(r, c)] or 'checkbox' in self.cell_options[(r, c)]:
-                    self.destroy_dropdown_and_checkbox(r, c)
+            list_of_coords = tuple((r, c) for (r, c) in self.cell_options if c in seldset)
             if self.undo_enabled:
                 undo_storage = {'deleted_cols': {},
                                 'colwidths': {},
                                 'deleted_hdr_values': {},
                                 'selection_boxes': self.get_boxes(),
+                                'displayed_columns': list(self.displayed_columns),
                                 'cell_options': {k: v.copy() for k, v in self.cell_options.items()},
                                 'col_options': {k: v.copy() for k, v in self.col_options.items()},
                                 'CH_cell_options': {k: v.copy() for k, v in self.CH.cell_options.items()}}
@@ -3135,15 +3134,15 @@ class MainTable(tk.Canvas):
                                 continue
             if self.undo_enabled:
                 self.undo_storage.append(("delete_cols", undo_storage))
-            for r, c in del_cell_options:
-                del self.cell_options[(r, c)]
+            self.del_cell_options(list_of_coords)
             for c in reversed(seld_cols):
+                dcol = c if self.all_columns_displayed else self.displayed_columns[c]
                 self.del_col_position(c,
                                       deselect_all = False)
-                if c in self.col_options:
-                    del self.col_options[c]
-                if c in self.CH.cell_options:
-                    del self.CH.cell_options[c]
+                if dcol in self.col_options:
+                    del self.col_options[dcol]
+                if dcol in self.CH.cell_options:
+                    del self.CH.cell_options[dcol]
             numcols = len(seld_cols)
             idx = seld_cols[-1]
             self.cell_options = {(rn, cn if cn < idx else cn - numcols): t2 for (rn, cn), t2 in self.cell_options.items()}
@@ -3152,9 +3151,19 @@ class MainTable(tk.Canvas):
             self.refresh_dropdowns()
             self.deselect("allcols", redraw = False)
             self.set_current_to_last()
+            if not self.all_columns_displayed:
+                self.displayed_columns = [c for c in self.displayed_columns if c not in seldset]
+                for c in sorted(seldset):
+                    self.displayed_columns = [dc if c > dc else dc - 1 for dc in self.displayed_columns]
             self.refresh()
             if self.extra_end_del_cols_rc_func is not None:
                 self.extra_end_del_cols_rc_func(DeleteRowColumnEvent("end_delete_columns", seld_cols))
+
+    def del_cell_options(self, list_of_coords):
+        for r, dcol in list_of_coords:
+            if (r, dcol) in self.cell_options and 'dropdown' in self.cell_options[(r, dcol)]:
+                self.destroy_dropdown(r, dcol)
+            del self.cell_options[(r, dcol)]
 
     def del_rows_rc(self, event = None):
         seld_rows = sorted(self.get_selected_rows())
@@ -3165,10 +3174,7 @@ class MainTable(tk.Canvas):
                 except:
                     return
             seldset = set(seld_rows)
-            del_cell_options = tuple((r, c) for (r, c) in self.cell_options if r in seldset)
-            for r, c in del_cell_options:
-                if 'dropdown' in self.cell_options[(r, c)] or 'checkbox' in self.cell_options[(r, c)]:
-                    self.destroy_dropdown_and_checkbox(r, c)
+            list_of_coords = tuple((r, c) for (r, c) in self.cell_options if r in seldset)
             if self.undo_enabled:
                 undo_storage = {'deleted_rows': [],
                                 'deleted_index_values': [],
@@ -3196,8 +3202,7 @@ class MainTable(tk.Canvas):
                             continue
             if self.undo_enabled:
                 self.undo_storage.append(("delete_rows", undo_storage))
-            for r, c in del_cell_options:
-                del self.cell_options[(r, c)]
+            self.del_cell_options(list_of_coords)
             for r in reversed(seld_rows):
                 self.del_row_position(r,
                                       deselect_all = False)
