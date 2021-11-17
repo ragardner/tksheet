@@ -1,3 +1,7 @@
+### Version 5.2.4
+ - Fix user bound right click event not firing due to right click context menu
+ - Fix issues with hidden columns and right click insert columns
+
 ### Version 5.2.3
  - Fix error on deleting row with dropdown box
  - Fix issues with deleting columns with check boxes, dropdown boxes

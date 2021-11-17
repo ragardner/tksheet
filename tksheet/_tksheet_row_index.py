@@ -191,25 +191,28 @@ class RowIndex(tk.Canvas):
 
     def rc(self, event):
         self.focus_set()
+        popup_menu = None
         if self.MT.identify_row(y = event.y, allow_end = False) is None:
             self.MT.deselect("all")
             if self.MT.rc_popup_menus_enabled:
-                self.ri_rc_popup_menu.tk_popup(event.x_root, event.y_root)
+                popup_menu = self.ri_rc_popup_menu
         elif self.row_selection_enabled and not self.currently_resizing_width and not self.currently_resizing_height:
             r = self.MT.identify_row(y = event.y)
             if r < len(self.MT.row_positions) - 1:
                 if self.MT.row_selected(r):
                     if self.MT.rc_popup_menus_enabled:
-                        self.ri_rc_popup_menu.tk_popup(event.x_root, event.y_root)
+                        popup_menu = self.ri_rc_popup_menu
                 else:
                     if self.MT.single_selection_enabled and self.MT.rc_select_enabled:
                         self.select_row(r, redraw = True)
                     elif self.MT.toggle_selection_enabled and self.MT.rc_select_enabled:
                         self.toggle_select_row(r, redraw = True)
                     if self.MT.rc_popup_menus_enabled:
-                        self.ri_rc_popup_menu.tk_popup(event.x_root, event.y_root)
+                        popup_menu = self.ri_rc_popup_menu
         if self.extra_rc_func is not None:
             self.extra_rc_func(event)
+        if popup_menu is not None:
+            popup_menu.tk_popup(event.x_root, event.y_root)
 
     def shift_b1_press(self, event):
         y = event.y

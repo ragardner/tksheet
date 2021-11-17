@@ -2207,48 +2207,51 @@ class MainTable(tk.Canvas):
     def rc(self, event = None):
         self.hide_dropdown_window()
         self.focus_set()
+        popup_menu = None
         if self.single_selection_enabled and all(v is None for v in (self.RI.rsz_h, self.RI.rsz_w, self.CH.rsz_h, self.CH.rsz_w)):
             r = self.identify_row(y = event.y)
             c = self.identify_col(x = event.x)
             if r < len(self.row_positions) - 1 and c < len(self.col_positions) - 1:
                 if self.col_selected(c):
                     if self.rc_popup_menus_enabled:
-                        self.CH.ch_rc_popup_menu.tk_popup(event.x_root, event.y_root)
+                        popup_menu = self.CH.ch_rc_popup_menu
                 elif self.row_selected(r):
                     if self.rc_popup_menus_enabled:
-                        self.RI.ri_rc_popup_menu.tk_popup(event.x_root, event.y_root)
+                        popup_menu = self.RI.ri_rc_popup_menu
                 elif self.cell_selected(r, c):
                     if self.rc_popup_menus_enabled:
-                        self.rc_popup_menu.tk_popup(event.x_root, event.y_root)
+                        popup_menu = self.rc_popup_menu
                 else:
                     if self.rc_select_enabled:
                         self.select_cell(r, c, redraw = True)
                     if self.rc_popup_menus_enabled:
-                        self.rc_popup_menu.tk_popup(event.x_root, event.y_root)
+                        popup_menu = self.rc_popup_menu
             else:
-                self.empty_rc_popup_menu.tk_popup(event.x_root, event.y_root)
+                popup_menu = self.empty_rc_popup_menu
         elif self.toggle_selection_enabled and all(v is None for v in (self.RI.rsz_h, self.RI.rsz_w, self.CH.rsz_h, self.CH.rsz_w)):
             r = self.identify_row(y = event.y)
             c = self.identify_col(x = event.x)
             if r < len(self.row_positions) - 1 and c < len(self.col_positions) - 1:
                 if self.col_selected(c):
                     if self.rc_popup_menus_enabled:
-                        self.CH.ch_rc_popup_menu.tk_popup(event.x_root, event.y_root)
+                        popup_menu = self.CH.ch_rc_popup_menu
                 elif self.row_selected(r):
                     if self.rc_popup_menus_enabled:
-                        self.RI.ri_rc_popup_menu.tk_popup(event.x_root, event.y_root)
+                        popup_menu = self.RI.ri_rc_popup_menu
                 elif self.cell_selected(r, c):
                     if self.rc_popup_menus_enabled:
-                        self.rc_popup_menu.tk_popup(event.x_root, event.y_root)
+                        popup_menu = self.rc_popup_menu
                 else:
                     if self.rc_select_enabled:
                         self.toggle_select_cell(r, c, redraw = True)
                     if self.rc_popup_menus_enabled:
-                        self.rc_popup_menu.tk_popup(event.x_root, event.y_root)
+                        popup_menu = self.rc_popup_menu
             else:
-                self.empty_rc_popup_menu.tk_popup(event.x_root, event.y_root)
+                popup_menu = self.empty_rc_popup_menu
         if self.extra_rc_func is not None:
             self.extra_rc_func(event)
+        if popup_menu is not None:
+            popup_menu.tk_popup(event.x_root, event.y_root)
 
     def b1_press(self, event = None):
         self.closed_dropdown = self.hide_dropdown_window(b1 = True)
@@ -2958,7 +2961,14 @@ class MainTable(tk.Canvas):
             if self.all_columns_displayed:
                 data_ins_col = int(displayed_ins_col)
             else:
-                data_ins_col = int(self.displayed_columns[displayed_ins_col])
+                if displayed_ins_col == len(self.col_positions) - 1:
+                    rowlen = len(max(self.data_ref, key = len)) if self.data_ref else 0
+                    data_ins_col = rowlen
+                else:
+                    try:
+                        data_ins_col = int(self.displayed_columns[displayed_ins_col])
+                    except:
+                        data_ins_col = int(self.displayed_columns[displayed_ins_col - 1])
         else:
             numcols = 1
             displayed_ins_col = len(self.col_positions) - 1
@@ -2972,18 +2982,27 @@ class MainTable(tk.Canvas):
                 self.extra_begin_insert_cols_rc_func(InsertEvent("begin_insert_columns", data_ins_col, displayed_ins_col, numcols))
             except:
                 return
+        saved_displayed_columns = list(self.displayed_columns)
         if not self.all_columns_displayed:
-            try:
-                disp_next = max(self.displayed_columns) + 1
-            except:
-                disp_next = 0
-            self.displayed_columns.extend(list(range(disp_next, disp_next + numcols)))
+            if displayed_ins_col == len(self.col_positions) - 1:
+                self.displayed_columns += list(range(rowlen, rowlen + numcols))
+            else:
+                if displayed_ins_col > len(self.displayed_columns) - 1:
+                    adj_ins = displayed_ins_col - 1
+                else:
+                    adj_ins = displayed_ins_col
+                part1 = self.displayed_columns[:adj_ins]
+                part2 = list(range(self.displayed_columns[adj_ins], self.displayed_columns[adj_ins] + numcols + 1))
+                part3 = [] if displayed_ins_col > len(self.displayed_columns) - 1 else [cn + numcols for cn in islice(self.displayed_columns, adj_ins + 1, None)]
+                self.displayed_columns = (part1 +
+                                          part2 +
+                                          part3)
         self.insert_col_positions(idx = displayed_ins_col,
                                   widths = numcols,
                                   deselect_all = True)
-        self.cell_options = {(rn, cn if cn < displayed_ins_col else cn + numcols): t2 for (rn, cn), t2 in self.cell_options.items()}
-        self.col_options = {cn if cn < displayed_ins_col else cn + numcols: t for cn, t in self.col_options.items()}
-        self.CH.cell_options = {cn if cn < displayed_ins_col else cn + numcols: t for cn, t in self.CH.cell_options.items()}
+        self.cell_options = {(rn, cn if cn < data_ins_col else cn + numcols): t2 for (rn, cn), t2 in self.cell_options.items()}
+        self.col_options = {cn if cn < data_ins_col else cn + numcols: t for cn, t in self.col_options.items()}
+        self.CH.cell_options = {cn if cn < data_ins_col else cn + numcols: t for cn, t in self.CH.cell_options.items()}
         self.refresh_dropdowns()
         if self.my_hdrs and isinstance(self.my_hdrs, list):
             try:
@@ -3002,7 +3021,7 @@ class MainTable(tk.Canvas):
         self.create_current(0, displayed_ins_col, "col", inside = True)
         if self.undo_enabled:
             self.undo_storage.append(zlib.compress(pickle.dumps(("insert_col", {"data_col_num": data_ins_col,
-                                                                                "displayed_columns": self.displayed_columns,
+                                                                                "displayed_columns": saved_displayed_columns,
                                                                                 "sheet_col_num": displayed_ins_col,
                                                                                 "numcols": numcols}))))
         self.refresh()
