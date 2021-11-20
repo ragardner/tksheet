@@ -37,8 +37,8 @@ See the [tests](https://github.com/ragardner/tksheet/tree/master/tests) folder f
 
 Examples of things that are not possible with tksheet:
  - Cell merging
+ - Cell text wrap
  - Changing font for individual cells
- - Checkboxes in cells
  - Different fonts for index and table
  - Mouse drag copy cells
 

@@ -4796,10 +4796,10 @@ class MainTable(tk.Canvas):
             (y1 in self.row_options and 'readonly' in self.row_options[y1])
             ):
             return
-        elif (y1, dcol) in self.cell_options:
+        elif (y1, dcol) in self.cell_options and ('dropdown' in self.cell_options[(y1, dcol)] or 'checkbox' in self.cell_options[(y1, dcol)]):
             if hasattr(event, 'keycode') and event.keycode != 13:
                 return
-            if 'dropdown' in self.cell_options[(y1, dcol)]:
+            elif 'dropdown' in self.cell_options[(y1, dcol)]:
                 self.display_dropdown_window(y1, x1)
             elif 'checkbox' in self.cell_options[(y1, dcol)]:
                 self._click_checkbox(y1, x1, dcol)

@@ -1,3 +1,6 @@
+### Version 5.2.5
+ - Fix bug with highlighted cells being readonly
+
 ### Version 5.2.4
  - Fix user bound right click event not firing due to right click context menu
  - Fix issues with hidden columns and right click insert columns
