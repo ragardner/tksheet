@@ -4797,11 +4797,9 @@ class MainTable(tk.Canvas):
             ):
             return
         elif (y1, dcol) in self.cell_options and ('dropdown' in self.cell_options[(y1, dcol)] or 'checkbox' in self.cell_options[(y1, dcol)]):
-            if hasattr(event, 'keycode') and event.keycode != 13:
-                return
-            elif 'dropdown' in self.cell_options[(y1, dcol)]:
-                self.display_dropdown_window(y1, x1)
-            elif 'checkbox' in self.cell_options[(y1, dcol)]:
+            if 'dropdown' in self.cell_options[(y1, dcol)]:
+                self.display_dropdown_window(y1, x1, event = event)
+            elif 'checkbox' in self.cell_options[(y1, dcol)] and hasattr(event, 'keycode') and event.keycode == 13:
                 self._click_checkbox(y1, x1, dcol)
         else:
             self.edit_cell_(event, r = y1, c = x1, dropdown = False)
@@ -5107,13 +5105,13 @@ class MainTable(tk.Canvas):
         return win_h, anchor
 
     # c is displayed col
-    def display_dropdown_window(self, r, c, dcol = None):
+    def display_dropdown_window(self, r, c, dcol = None, event = None):
         self.destroy_text_editor("Escape")
         self.delete_opened_dropdown_window()
         if dcol is None:
             dcol = c if self.all_columns_displayed else self.displayed_columns[c]
         if self.cell_options[(r, dcol)]['dropdown']['state'] == "normal":
-            self.edit_cell_(r = r, c = c, dropdown = True)
+            self.edit_cell_(r = r, c = c, dropdown = True, event = event)
         bg, fg = self.get_widget_bg_fg(r, dcol)
         win_h, anchor = self.get_dropdown_height_anchor(r, c, dcol)
         window = self.parentframe.dropdown_class(self.winfo_toplevel(),
@@ -5180,7 +5178,9 @@ class MainTable(tk.Canvas):
             closedr, closedc, ret_tup = int(self.existing_dropdown_window.r), int(self.existing_dropdown_window.c), True
         else:
             ret_tup = False
-        if not b1:
+        if b1 and self.text_editor_loc is not None and self.text_editor is not None:
+            self.get_text_editor_value(destroy_tup = self.text_editor_loc + ("Return", ))
+        else:
             self.destroy_text_editor("Escape")
         self.delete_opened_dropdown_window(r, c)
         if ret_tup:

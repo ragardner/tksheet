@@ -1,3 +1,7 @@
+### Version 5.2.6
+ - Fix issues with editable (`"normal"`) dropdown boxes and focus out bindings
+ - Editable dropdown boxes now respond normally to character, backspace etc. key presses
+
 ### Version 5.2.5
  - Fix bug with highlighted cells being readonly
 

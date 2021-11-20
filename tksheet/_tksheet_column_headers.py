@@ -176,6 +176,7 @@ class ColumnHeaders(tk.Canvas):
         return ov
 
     def rc(self, event):
+        self.MT.hide_dropdown_window()
         self.focus_set()
         popup_menu = None
         if self.MT.identify_col(x = event.x, allow_end = False) is None:
@@ -200,6 +201,7 @@ class ColumnHeaders(tk.Canvas):
             popup_menu.tk_popup(event.x_root, event.y_root)
 
     def shift_b1_press(self, event):
+        self.MT.hide_dropdown_window()
         x = event.x
         c = self.MT.identify_col(x = x)
         if self.drag_and_drop_enabled or self.col_selection_enabled and self.rsz_h is None and self.rsz_w is None:
@@ -281,6 +283,7 @@ class ColumnHeaders(tk.Canvas):
             self.extra_motion_func(event)
 
     def double_b1(self, event = None):
+        self.MT.hide_dropdown_window()
         self.focus_set()
         if self.double_click_resizing_enabled and self.width_resizing_enabled and self.rsz_w is not None and not self.currently_resizing_width:
             col = self.rsz_w - 1
@@ -302,6 +305,7 @@ class ColumnHeaders(tk.Canvas):
             self.extra_double_b1_func(event)
         
     def b1_press(self, event = None):
+        self.MT.hide_dropdown_window()
         self.focus_set()
         self.MT.unbind("<MouseWheel>")
         x1, y1, x2, y2 = self.MT.get_canvas_visible_area()

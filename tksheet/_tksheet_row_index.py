@@ -190,6 +190,7 @@ class RowIndex(tk.Canvas):
         return ov
 
     def rc(self, event):
+        self.MT.hide_dropdown_window()
         self.focus_set()
         popup_menu = None
         if self.MT.identify_row(y = event.y, allow_end = False) is None:
@@ -215,6 +216,7 @@ class RowIndex(tk.Canvas):
             popup_menu.tk_popup(event.x_root, event.y_root)
 
     def shift_b1_press(self, event):
+        self.MT.hide_dropdown_window()
         y = event.y
         r = self.MT.identify_row(y = y)
         if self.drag_and_drop_enabled or self.row_selection_enabled and self.rsz_h is None and self.rsz_w is None:
@@ -297,6 +299,7 @@ class RowIndex(tk.Canvas):
             self.extra_motion_func(event)
 
     def double_b1(self, event = None):
+        self.MT.hide_dropdown_window()
         self.focus_set()
         if self.double_click_resizing_enabled and self.height_resizing_enabled and self.rsz_h is not None and not self.currently_resizing_height:
             row = self.rsz_h - 1
@@ -320,6 +323,7 @@ class RowIndex(tk.Canvas):
             self.extra_double_b1_func(event)
         
     def b1_press(self, event = None):
+        self.MT.hide_dropdown_window()
         self.focus_set()
         self.MT.unbind("<MouseWheel>")
         x = self.canvasx(event.x)
