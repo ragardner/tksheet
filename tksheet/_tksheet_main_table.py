@@ -3646,7 +3646,7 @@ class MainTable(tk.Canvas):
             mid_y = y1 + floor((y2 - y1) / 2)
             #top left points for triangle
             ty1 = mid_y - topysub + 2
-            tx1 = x2 - self.txt_h
+            tx1 = x2 - self.txt_h + 1
             #bottom points for triangle
             ty2 = mid_y + self.half_txt_h - 4
             tx2 = x2 - self.half_txt_h - 1
@@ -3664,7 +3664,7 @@ class MainTable(tk.Canvas):
                     self.itemconfig(t, fill = fill, tag = tag, state = "normal")
                 self.lift(t)
             else:
-                t = self.create_line(points, fill = fill, width = 4, capstyle = tk.ROUND, joinstyle = tk.ROUND, tag = tag)
+                t = self.create_line(points, fill = fill, width = 2, capstyle = tk.ROUND, joinstyle = tk.ROUND, tag = tag)
             self.disp_dropdown[t] = True
 
     def get_checkbox_points(self, x1, y1, x2, y2, radius = 6):
@@ -3878,14 +3878,14 @@ class MainTable(tk.Canvas):
                     if cell_alignment == "w":
                         x = fc + 5
                         if (r, dcol) in self.cell_options and 'dropdown' in self.cell_options[(r, dcol)]:
-                            mw = sc - fc - self.txt_h
+                            mw = sc - fc - self.txt_h - 2
                             self.redraw_dropdown(fc, fr, sc, self.row_positions[r + 1], fill = tf, outline = tf, tag = "dd", draw_outline = not dd_drawn, draw_arrow = mw >= 5)
                         else:
                             mw = sc - fc - 5
 
                     elif cell_alignment == "e":
                         if (r, dcol) in self.cell_options and 'dropdown' in self.cell_options[(r, dcol)]:
-                            mw = sc - fc - self.txt_h
+                            mw = sc - fc - self.txt_h - 2
                             x = sc - 5 - self.txt_h
                             self.redraw_dropdown(fc, fr, sc, self.row_positions[r + 1], fill = tf, outline = tf, tag = "dd", draw_outline = not dd_drawn, draw_arrow = mw >= 5)
                         else:
@@ -3895,21 +3895,24 @@ class MainTable(tk.Canvas):
                     elif cell_alignment == "center":
                         stop = fc + 5
                         if (r, dcol) in self.cell_options and 'dropdown' in self.cell_options[(r, dcol)]:
-                            mw = sc - fc - self.txt_h
+                            mw = sc - fc - self.txt_h - 2
                             x = fc + ceil((sc - fc - self.txt_h) / 2)
                             self.redraw_dropdown(fc, fr, sc, self.row_positions[r + 1], fill = tf, outline = tf, tag = "dd", draw_outline = not dd_drawn, draw_arrow = mw >= 5)
                         else:
                             mw = sc - fc - 1
                             x = fc + floor((sc - fc) / 2)
 
-                    if (r, dcol) in self.cell_options and 'checkbox' in self.cell_options[(r, dcol)] and mw > self.txt_h + 2:
-                        cent = fr + floor((self.row_positions[r + 1] - fr) / 2)
-                        self.redraw_checkbox(fc + 2,
-                                             cent - self.half_txt_h - 1,
-                                             fc + 2 + self.txt_h + 2,
-                                             cent + self.half_txt_h + 1,
-                                             fill = tf if self.cell_options[(r, dcol)]['checkbox']['state'] == "normal" else self.table_grid_fg,
-                                             outline = "", tag = "cb", draw_check = self.data_ref[r][dcol])
+                    if (r, dcol) in self.cell_options and 'checkbox' in self.cell_options[(r, dcol)]:
+                        if mw > self.txt_h + 2:
+                            cent = fr + floor((self.row_positions[r + 1] - fr) / 2)
+                            self.redraw_checkbox(fc + 2,
+                                                 cent - self.half_txt_h - 1,
+                                                 fc + 2 + self.txt_h + 2,
+                                                 cent + self.half_txt_h + 1,
+                                                 fill = tf if self.cell_options[(r, dcol)]['checkbox']['state'] == "normal" else self.table_grid_fg,
+                                                 outline = "", tag = "cb", draw_check = self.data_ref[r][dcol])
+                        else:
+                            pass
                         continue
                     
                     try:

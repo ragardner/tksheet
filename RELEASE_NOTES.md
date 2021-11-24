@@ -1,3 +1,7 @@
+### Version 5.2.7
+ - Improve looks of dropdown arrows and fix slight overlapping with text
+ - Check boxes no longer show `Tr` and `Fa` when cell is too small for check box for large enough for text
+
 ### Version 5.2.6
  - Fix issues with editable (`"normal"`) dropdown boxes and focus out bindings
  - Editable dropdown boxes now respond normally to character, backspace etc. key presses
