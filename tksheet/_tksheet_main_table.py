@@ -699,7 +699,6 @@ class MainTable(tk.Canvas):
             if self.undo_enabled:
                 self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells", undo_storage, boxes, currently_selected))))
             self.refresh()
-            
 
     def ctrl_z(self, event = None):
         if self.undo_storage:
@@ -3522,7 +3521,8 @@ class MainTable(tk.Canvas):
                 c_1 = self.cell_options[(r, dcol)]['highlight'][0] if self.cell_options[(r, dcol)]['highlight'][0].startswith("#") else Color_Map_[self.cell_options[(r, dcol)]['highlight'][0]]
                 redrawn = self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_2_[0]) / 2):02X}" +
                                                                       f"{int((int(c_1[3:5], 16) + c_2_[1]) / 2):02X}" +
-                                                                      f"{int((int(c_1[5:], 16) + c_2_[2]) / 2):02X}"), outline = tf if (r, dcol) in self.cell_options and 'dropdown' in self.cell_options[(r, dcol)] else "", tag = "hi")
+                                                                      f"{int((int(c_1[5:], 16) + c_2_[2]) / 2):02X}"),
+                                                outline = self.table_fg if (r, dcol) in self.cell_options and 'dropdown' in self.cell_options[(r, dcol)] else "", tag = "hi")
             
         elif r in self.row_options and 'highlight' in self.row_options[r] and (r, c) in selected_cells:
             tf = self.table_selected_cells_fg if self.row_options[r]['highlight'][1] is None or self.display_selected_fg_over_highlights else self.row_options[r]['highlight'][1]
@@ -3531,7 +3531,7 @@ class MainTable(tk.Canvas):
                 redrawn = self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_2_[0]) / 2):02X}" +
                                                                       f"{int((int(c_1[3:5], 16) + c_2_[1]) / 2):02X}" +
                                                                       f"{int((int(c_1[5:], 16) + c_2_[2]) / 2):02X}"),
-                                      outline = tf if (r, dcol) in self.cell_options and 'dropdown' in self.cell_options[(r, dcol)] else "", tag = "hi",
+                                      outline = self.table_fg if (r, dcol) in self.cell_options and 'dropdown' in self.cell_options[(r, dcol)] else "", tag = "hi",
                                       can_width = can_width if self.row_options[r]['highlight'][2] else None)
             
         elif dcol in self.col_options and 'highlight' in self.col_options[dcol] and (r, c) in selected_cells:
@@ -3540,7 +3540,8 @@ class MainTable(tk.Canvas):
                 c_1 = self.col_options[dcol]['highlight'][0] if self.col_options[dcol]['highlight'][0].startswith("#") else Color_Map_[self.col_options[dcol]['highlight'][0]]
                 redrawn = self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_2_[0]) / 2):02X}" +
                                                                       f"{int((int(c_1[3:5], 16) + c_2_[1]) / 2):02X}" +
-                                                                      f"{int((int(c_1[5:], 16) + c_2_[2]) / 2):02X}"), outline = tf if (r, dcol) in self.cell_options and 'dropdown' in self.cell_options[(r, dcol)] else "", tag = "hi")
+                                                                      f"{int((int(c_1[5:], 16) + c_2_[2]) / 2):02X}"),
+                                                outline = self.table_fg if (r, dcol) in self.cell_options and 'dropdown' in self.cell_options[(r, dcol)] else "", tag = "hi")
             
         # ________________________ CELL IS HIGHLIGHTED AND IN SELECTED ROWS ________________________
         elif (r, dcol) in self.cell_options and 'highlight' in self.cell_options[(r, dcol)] and r in actual_selected_rows:
@@ -3549,7 +3550,8 @@ class MainTable(tk.Canvas):
                 c_1 = self.cell_options[(r, dcol)]['highlight'][0] if self.cell_options[(r, dcol)]['highlight'][0].startswith("#") else Color_Map_[self.cell_options[(r, dcol)]['highlight'][0]]
                 redrawn = self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_4_[0]) / 2):02X}" +
                                                                       f"{int((int(c_1[3:5], 16) + c_4_[1]) / 2):02X}" +
-                                                                      f"{int((int(c_1[5:], 16) + c_4_[2]) / 2):02X}"), outline = tf if (r, dcol) in self.cell_options and 'dropdown' in self.cell_options[(r, dcol)] else "", tag = "hi")
+                                                                      f"{int((int(c_1[5:], 16) + c_4_[2]) / 2):02X}"),
+                                                outline = self.table_fg if (r, dcol) in self.cell_options and 'dropdown' in self.cell_options[(r, dcol)] else "", tag = "hi")
             
         elif r in self.row_options and 'highlight' in self.row_options[r] and r in actual_selected_rows:
             tf = self.table_selected_rows_fg if self.row_options[r]['highlight'][1] is None or self.display_selected_fg_over_highlights else self.row_options[r]['highlight'][1]
@@ -3557,7 +3559,8 @@ class MainTable(tk.Canvas):
                 c_1 = self.row_options[r]['highlight'][0] if self.row_options[r]['highlight'][0].startswith("#") else Color_Map_[self.row_options[r]['highlight'][0]]
                 redrawn = self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_4_[0]) / 2):02X}" +
                                                                       f"{int((int(c_1[3:5], 16) + c_4_[1]) / 2):02X}" +
-                                                                      f"{int((int(c_1[5:], 16) + c_4_[2]) / 2):02X}"), outline = tf if (r, dcol) in self.cell_options and 'dropdown' in self.cell_options[(r, dcol)] else "", tag = "hi",
+                                                                      f"{int((int(c_1[5:], 16) + c_4_[2]) / 2):02X}"),
+                                                outline = self.table_fg if (r, dcol) in self.cell_options and 'dropdown' in self.cell_options[(r, dcol)] else "", tag = "hi",
                                       can_width = can_width if self.row_options[r]['highlight'][2] else None)
             
         elif dcol in self.col_options and 'highlight' in self.col_options[dcol] and r in actual_selected_rows:
@@ -3566,7 +3569,8 @@ class MainTable(tk.Canvas):
                 c_1 = self.col_options[dcol]['highlight'][0] if self.col_options[dcol]['highlight'][0].startswith("#") else Color_Map_[self.col_options[dcol]['highlight'][0]]
                 redrawn = self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_4_[0]) / 2):02X}" +
                                                                       f"{int((int(c_1[3:5], 16) + c_4_[1]) / 2):02X}" +
-                                                                      f"{int((int(c_1[5:], 16) + c_4_[2]) / 2):02X}"), outline = tf if (r, dcol) in self.cell_options and 'dropdown' in self.cell_options[(r, dcol)] else "", tag = "hi")
+                                                                      f"{int((int(c_1[5:], 16) + c_4_[2]) / 2):02X}"),
+                                                outline = self.table_fg if (r, dcol) in self.cell_options and 'dropdown' in self.cell_options[(r, dcol)] else "", tag = "hi")
             
         # ________________________ CELL IS HIGHLIGHTED AND IN SELECTED COLUMNS ________________________
         elif (r, dcol) in self.cell_options and 'highlight' in self.cell_options[(r, dcol)] and c in actual_selected_cols:
@@ -3575,7 +3579,8 @@ class MainTable(tk.Canvas):
                 c_1 = self.cell_options[(r, dcol)]['highlight'][0] if self.cell_options[(r, dcol)]['highlight'][0].startswith("#") else Color_Map_[self.cell_options[(r, dcol)]['highlight'][0]]
                 redrawn = self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_3_[0]) / 2):02X}" +
                                                                       f"{int((int(c_1[3:5], 16) + c_3_[1]) / 2):02X}" +
-                                                                      f"{int((int(c_1[5:], 16) + c_3_[2]) / 2):02X}"), outline = tf if (r, dcol) in self.cell_options and 'dropdown' in self.cell_options[(r, dcol)] else "", tag = "hi")
+                                                                      f"{int((int(c_1[5:], 16) + c_3_[2]) / 2):02X}"),
+                                                outline = self.table_fg if (r, dcol) in self.cell_options and 'dropdown' in self.cell_options[(r, dcol)] else "", tag = "hi")
             
         elif r in self.row_options and 'highlight' in self.row_options[r] and c in actual_selected_cols:
             tf = self.table_selected_columns_fg if self.row_options[r]['highlight'][1] is None or self.display_selected_fg_over_highlights else self.row_options[r]['highlight'][1]
@@ -3583,7 +3588,8 @@ class MainTable(tk.Canvas):
                 c_1 = self.row_options[r]['highlight'][0] if self.row_options[r]['highlight'][0].startswith("#") else Color_Map_[self.row_options[r]['highlight'][0]]
                 redrawn = self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_3_[0]) / 2):02X}" +
                                                                       f"{int((int(c_1[3:5], 16) + c_3_[1]) / 2):02X}" +
-                                                                      f"{int((int(c_1[5:], 16) + c_3_[2]) / 2):02X}"), outline = tf if (r, dcol) in self.cell_options and 'dropdown' in self.cell_options[(r, dcol)] else "", tag = "hi",
+                                                                      f"{int((int(c_1[5:], 16) + c_3_[2]) / 2):02X}"),
+                                                outline = self.table_fg if (r, dcol) in self.cell_options and 'dropdown' in self.cell_options[(r, dcol)] else "", tag = "hi",
                                       can_width = can_width if self.row_options[r]['highlight'][2] else None)
             
         elif dcol in self.col_options and 'highlight' in self.col_options[dcol] and c in actual_selected_cols:
@@ -3592,24 +3598,28 @@ class MainTable(tk.Canvas):
                 c_1 = self.col_options[dcol]['highlight'][0] if self.col_options[dcol]['highlight'][0].startswith("#") else Color_Map_[self.col_options[dcol]['highlight'][0]]
                 redrawn = self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_3_[0]) / 2):02X}" +
                                                                       f"{int((int(c_1[3:5], 16) + c_3_[1]) / 2):02X}" +
-                                                                      f"{int((int(c_1[5:], 16) + c_3_[2]) / 2):02X}"), outline = tf if (r, dcol) in self.cell_options and 'dropdown' in self.cell_options[(r, dcol)] else "", tag = "hi")
+                                                                      f"{int((int(c_1[5:], 16) + c_3_[2]) / 2):02X}"),
+                                                outline = self.table_fg if (r, dcol) in self.cell_options and 'dropdown' in self.cell_options[(r, dcol)] else "", tag = "hi")
 
         # ________________________ CELL IS HIGHLIGHTED AND NOT SELECTED ________________________
         elif (r, dcol) in self.cell_options and 'highlight' in self.cell_options[(r, dcol)] and (r, c) not in selected_cells and r not in actual_selected_rows and c not in actual_selected_cols:
             tf = self.table_fg if self.cell_options[(r, dcol)]['highlight'][1] is None else self.cell_options[(r, dcol)]['highlight'][1]
             if self.cell_options[(r, dcol)]['highlight'][0] is not None:
-                redrawn = self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = self.cell_options[(r, dcol)]['highlight'][0], outline = tf if (r, dcol) in self.cell_options and 'dropdown' in self.cell_options[(r, dcol)] else "", tag = "hi")
+                redrawn = self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = self.cell_options[(r, dcol)]['highlight'][0],
+                                                outline = self.table_fg if (r, dcol) in self.cell_options and 'dropdown' in self.cell_options[(r, dcol)] else "", tag = "hi")
             
         elif r in self.row_options and 'highlight' in self.row_options[r] and (r, c) not in selected_cells and r not in actual_selected_rows and c not in actual_selected_cols:
             tf = self.table_fg if self.row_options[r]['highlight'][1] is None else self.row_options[r]['highlight'][1]
             if self.row_options[r]['highlight'][0] is not None:
-                redrawn = self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = self.row_options[r]['highlight'][0], outline = tf if (r, dcol) in self.cell_options and 'dropdown' in self.cell_options[(r, dcol)] else "", tag = "hi",
+                redrawn = self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = self.row_options[r]['highlight'][0],
+                                                outline = self.table_fg if (r, dcol) in self.cell_options and 'dropdown' in self.cell_options[(r, dcol)] else "", tag = "hi",
                                                 can_width = can_width if self.row_options[r]['highlight'][2] else None)
             
         elif dcol in self.col_options and 'highlight' in self.col_options[dcol] and (r, c) not in selected_cells and r not in actual_selected_rows and c not in actual_selected_cols:
             tf = self.table_fg if self.col_options[dcol]['highlight'][1] is None else self.col_options[dcol]['highlight'][1]
             if self.col_options[dcol]['highlight'][0] is not None:
-                redrawn = self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = self.col_options[dcol]['highlight'][0], outline = tf if (r, dcol) in self.cell_options and 'dropdown' in self.cell_options[(r, dcol)] else "", tag = "hi")
+                redrawn = self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = self.col_options[dcol]['highlight'][0],
+                                                outline = self.table_fg if (r, dcol) in self.cell_options and 'dropdown' in self.cell_options[(r, dcol)] else "", tag = "hi")
         
         # ________________________ CELL IS JUST SELECTED ________________________
         elif (r, c) in selected_cells:
@@ -3640,7 +3650,7 @@ class MainTable(tk.Canvas):
 
     def redraw_dropdown(self, x1, y1, x2, y2, fill, outline, tag, draw_outline = True, draw_arrow = True):
         if draw_outline:
-            self.redraw_highlight(x1 + 1, y1 + 1, x2, y2, fill = "", outline = fill, tag = tag)
+            self.redraw_highlight(x1 + 1, y1 + 1, x2, y2, fill = "", outline = self.table_fg, tag = tag)
         if draw_arrow:
             topysub = floor(self.half_txt_h / 2)
             mid_y = y1 + floor((y2 - y1) / 2)
@@ -3667,27 +3677,27 @@ class MainTable(tk.Canvas):
                 t = self.create_line(points, fill = fill, width = 2, capstyle = tk.ROUND, joinstyle = tk.ROUND, tag = tag)
             self.disp_dropdown[t] = True
 
-    def get_checkbox_points(self, x1, y1, x2, y2, radius = 6):
+    def get_checkbox_points(self, x1, y1, x2, y2, radius = 4):
         return [x1+radius, y1,
-                  x1+radius, y1,
-                  x2-radius, y1,
-                  x2-radius, y1,
-                  x2, y1,
-                  x2, y1+radius,
-                  x2, y1+radius,
-                  x2, y2-radius,
-                  x2, y2-radius,
-                  x2, y2,
-                  x2-radius, y2,
-                  x2-radius, y2,
-                  x1+radius, y2,
-                  x1+radius, y2,
-                  x1, y2,
-                  x1, y2-radius,
-                  x1, y2-radius,
-                  x1, y1+radius,
-                  x1, y1+radius,
-                  x1, y1]
+                x1+radius, y1,
+                x2-radius, y1,
+                x2-radius, y1,
+                x2, y1,
+                x2, y1+radius,
+                x2, y1+radius,
+                x2, y2-radius,
+                x2, y2-radius,
+                x2, y2,
+                x2-radius, y2,
+                x2-radius, y2,
+                x1+radius, y2,
+                x1+radius, y2,
+                x1, y2,
+                x1, y2-radius,
+                x1, y2-radius,
+                x1, y1+radius,
+                x1, y1+radius,
+                x1, y1]
 
     def redraw_checkbox(self, x1, y1, x2, y2, fill, outline, tag, draw_check = False):
         points = self.get_checkbox_points(x1, y1, x2, y2)
@@ -3704,10 +3714,10 @@ class MainTable(tk.Canvas):
         self.disp_checkbox[t] = True
         if draw_check:
             # draw filled box
-            x1 = x1 + 3
-            y1 = y1 + 3
-            x2 = x2 - 2
-            y2 = y2 - 2
+            x1 = x1 + 2
+            y1 = y1 + 2
+            x2 = x2 - 1
+            y2 = y2 - 1
             points = self.get_checkbox_points(x1, y1, x2, y2)
             if self.hidd_checkbox:
                 t, sh = self.hidd_checkbox.popitem()
@@ -3726,12 +3736,12 @@ class MainTable(tk.Canvas):
                 t, sh = self.hidd_grid.popitem()
                 self.coords(t, x1 + 2, y1 + 2, x2 - 2, y2 - 2)
                 if sh:
-                    self.itemconfig(t, fill = self.table_bg, width = 2)
+                    self.itemconfig(t, fill = self.table_bg, capstyle = tk.ROUND, joinstyle = tk.ROUND, width = 2)
                 else:
-                    self.itemconfig(t, fill = self.table_bg, width = 2, tag = tag, state = "normal")
+                    self.itemconfig(t, fill = self.table_bg, capstyle = tk.ROUND, joinstyle = tk.ROUND, width = 2, tag = tag, state = "normal")
                 self.lift(t)
             else:
-                t = self.create_line(x1 + 2, y1 + 2, x2 - 2, y2 - 2, fill = self.table_bg, width = 2, tag = tag)
+                t = self.create_line(x1 + 2, y1 + 2, x2 - 2, y2 - 2, fill = self.table_bg, capstyle = tk.ROUND, joinstyle = tk.ROUND, width = 2, tag = tag)
             self.disp_grid[t] = True
 
             # draw other line of X
@@ -3739,12 +3749,12 @@ class MainTable(tk.Canvas):
                 t, sh = self.hidd_grid.popitem()
                 self.coords(t, x2 - 2, y1 + 2, x1 + 2, y2 - 2)
                 if sh:
-                    self.itemconfig(t, fill = self.table_bg, width = 2)
+                    self.itemconfig(t, fill = self.table_bg, capstyle = tk.ROUND, joinstyle = tk.ROUND, width = 2)
                 else:
-                    self.itemconfig(t, fill = self.table_bg, width = 2, tag = tag, state = "normal")
+                    self.itemconfig(t, fill = self.table_bg, capstyle = tk.ROUND, joinstyle = tk.ROUND, width = 2, tag = tag, state = "normal")
                 self.lift(t)
             else:
-                t = self.create_line(x2 - 2, y1 + 2, x1 + 2, y2 - 2, fill = self.table_bg, width = 2, tag = tag)
+                t = self.create_line(x2 - 2, y1 + 2, x1 + 2, y2 - 2, fill = self.table_bg, capstyle = tk.ROUND, joinstyle = tk.ROUND, width = 2, tag = tag)
             self.disp_grid[t] = True
 
     def main_table_redraw_grid_and_text(self, redraw_header = False, redraw_row_index = False, redraw_table = True):
@@ -3808,19 +3818,18 @@ class MainTable(tk.Canvas):
         ct_ = self.create_text
         sb = y2 + 2
         if self.show_horizontal_grid:
-            
             for r in range(start_row - 1, end_row):
                 y = self.row_positions[r]
                 if self.hidd_grid:
                     t, sh = self.hidd_grid.popitem()
                     self.coords(t, x1, y, x2 + can_width if self.horizontal_grid_to_end_of_window else x_stop, y)
                     if sh:
-                        self.itemconfig(t, fill = self.table_grid_fg, width = 1)
+                        self.itemconfig(t, fill = self.table_grid_fg, capstyle = tk.BUTT, joinstyle = tk.ROUND, width = 1)
                     else:
-                        self.itemconfig(t, fill = self.table_grid_fg, width = 1, state = "normal")
+                        self.itemconfig(t, fill = self.table_grid_fg, capstyle = tk.BUTT, joinstyle = tk.ROUND, width = 1, state = "normal")
                     self.disp_grid[t] = True
                 else:
-                    self.disp_grid[self.create_line(x1, y, x2 + can_width if self.horizontal_grid_to_end_of_window else x_stop, y, fill = self.table_grid_fg, width = 1, tag = "g")] = True
+                    self.disp_grid[self.create_line(x1, y, x2 + can_width if self.horizontal_grid_to_end_of_window else x_stop, y, fill = self.table_grid_fg, capstyle = tk.BUTT, joinstyle = tk.ROUND, width = 1, tag = "g")] = True
         if self.show_vertical_grid:
             for c in range(start_col - 1, end_col):
                 x = self.col_positions[c]
@@ -3828,12 +3837,12 @@ class MainTable(tk.Canvas):
                     t, sh = self.hidd_grid.popitem()
                     self.coords(t, x, y1, x, y2 + can_height if self.vertical_grid_to_end_of_window else y_stop)
                     if sh:
-                        self.itemconfig(t, fill = self.table_grid_fg, width = 1)
+                        self.itemconfig(t, fill = self.table_grid_fg, capstyle = tk.BUTT, joinstyle = tk.ROUND, width = 1)
                     else:
-                        self.itemconfig(t, fill = self.table_grid_fg, width = 1, state = "normal")
+                        self.itemconfig(t, fill = self.table_grid_fg, capstyle = tk.BUTT, joinstyle = tk.ROUND, width = 1, state = "normal")
                     self.disp_grid[t] = True
                 else:
-                    self.disp_grid[self.create_line(x, y1, x, y2 + can_height if self.vertical_grid_to_end_of_window else y_stop, fill = self.table_grid_fg, width = 1, tag = "g")] = True
+                    self.disp_grid[self.create_line(x, y1, x, y2 + can_height if self.vertical_grid_to_end_of_window else y_stop, fill = self.table_grid_fg, capstyle = tk.BUTT, joinstyle = tk.ROUND, width = 1, tag = "g")] = True
         if start_row > 0:
             start_row -= 1
         if start_col > 0:
@@ -4834,18 +4843,19 @@ class MainTable(tk.Canvas):
             extra_func_key = event.char
             text = event.char
         else:
-            return
+            return False
         self.text_editor_loc = (r, c)
         if self.extra_begin_edit_cell_func is not None:
             try:
                 text2 = self.extra_begin_edit_cell_func(EditCellEvent(r, c, extra_func_key, text, "begin_edit_cell"))
             except:
-                return
+                return False
             if text2 is not None:
                 text = text2
         text = "" if text is None else text
         self.select_cell(r = r, c = c, keep_other_selections = True)
         self.create_text_editor(r = r, c = c, text = text, set_data_ref_on_destroy = True, dropdown = dropdown)
+        return True
 
     # c is displayed col
     def create_text_editor(self, 
@@ -5114,7 +5124,8 @@ class MainTable(tk.Canvas):
         if dcol is None:
             dcol = c if self.all_columns_displayed else self.displayed_columns[c]
         if self.cell_options[(r, dcol)]['dropdown']['state'] == "normal":
-            self.edit_cell_(r = r, c = c, dropdown = True, event = event)
+            if not self.edit_cell_(r = r, c = c, dropdown = True, event = event):
+                return
         bg, fg = self.get_widget_bg_fg(r, dcol)
         win_h, anchor = self.get_dropdown_height_anchor(r, c, dcol)
         window = self.parentframe.dropdown_class(self.winfo_toplevel(),
@@ -5125,6 +5136,7 @@ class MainTable(tk.Canvas):
                                                  font = self.my_font,
                                                  bg = bg,
                                                  fg = fg,
+                                                 outline_color = self.table_fg,
                                                  values = self.cell_options[(r, dcol)]['dropdown']['values'],
                                                  hide_dropdown_window = self.hide_dropdown_window,
                                                  arrowkey_RIGHT = self.arrowkey_RIGHT,

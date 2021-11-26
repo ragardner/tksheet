@@ -1,3 +1,7 @@
+### Version 5.2.8
+ - Make dropdown box border consistent color
+ - Fix error with modifier key press on editable dropdown boxes
+
 ### Version 5.2.7
  - Improve looks of dropdown arrows and fix slight overlapping with text
  - Check boxes no longer show `Tr` and `Fa` when cell is too small for check box for large enough for text
