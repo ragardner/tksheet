@@ -447,6 +447,10 @@ Bind various table functionality to your own functions. To unbind a function eit
 ```python
 extra_bindings(bindings, func = "None")
 ```
+Notes:
+ - Upon an event being triggered the bound function will be sent a [namedtuple](https://docs.python.org/3/library/collections.html#collections.namedtuple) containing variables relevant to that event, use `print()` or similar to see all the variable names in the event. Each event contains different variable names with the exception of `eventname` e.g. `event.eventname`
+
+Arguments:
  - `bindings` (`str`) options are:
 	- "begin_copy"
 	- "end_copy"
