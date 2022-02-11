@@ -1135,7 +1135,7 @@ class MainTable(tk.Canvas):
             if redraw:
                 self.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
             if self.select_all_binding_func is not None and run_binding_func:
-                self.select_all_binding_func(("select_all_cells", ) + (0, 0, len(self.row_positions) - 1, len(self.col_positions) - 1))
+                self.select_all_binding_func(SelectionBoxEvent("select_all_cells", (0, 0, len(self.row_positions) - 1, len(self.col_positions) - 1)))
 
     def select_cell(self, r, c, redraw = False, keep_other_selections = False):
         r = int(r)
@@ -1187,7 +1187,7 @@ class MainTable(tk.Canvas):
         if redraw:
             self.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
         if self.selection_binding_func is not None and run_binding_func:
-            self.selection_binding_func(("select_cell", ) + tuple((r, c)))
+            self.selection_binding_func(SelectCellEvent("select_cell", r, c))
 
     def toggle_select_cell(self, row, column, add_selection = True, redraw = True, run_binding_func = True, set_as_current = True):
         if add_selection:
@@ -4858,20 +4858,20 @@ class MainTable(tk.Canvas):
         return True
 
     # c is displayed col
-    def create_text_editor(self, 
-                           r = 0, 
-                           c = 0, 
-                           text = None, 
-                           state = "normal", 
-                           see = True, 
+    def create_text_editor(self,
+                           r = 0,
+                           c = 0,
+                           text = None,
+                           state = "normal",
+                           see = True,
                            set_data_ref_on_destroy = False,
                            binding = None,
-                           keep_existing_if_same_cell = False, 
                            dropdown = False):
-        if keep_existing_if_same_cell and (r, c) == self.text_editor_loc and self.text_editor is not None:
+        if (r, c) == self.text_editor_loc and self.text_editor is not None:
             self.text_editor.set_text(self.text_editor.get() + "" if not isinstance(text, str) else text)
             return
-        self.destroy_text_editor()
+        if self.text_editor is not None:
+            self.destroy_text_editor()
         if see:
             has_redrawn = self.see(r = r, c = c, check_cell_visibility = True)
             if not has_redrawn:
@@ -4882,7 +4882,7 @@ class MainTable(tk.Canvas):
         w = self.col_positions[c + 1] - x + 1
         h = self.row_positions[r + 1] - y + 6
         if text is None:
-            text = ""
+            text = self.data_ref[r][c]
         self.hide_current()
         bg, fg = self.get_widget_bg_fg(r, c if self.all_columns_displayed else self.displayed_columns[c])
         self.text_editor = TextEditor(self, text = text, font = self.my_font, state = state, width = w, height = h, border_color = self.table_selected_cells_border_fg, show_border = self.show_selected_cells_border, bg = bg, fg = fg)
@@ -4916,7 +4916,7 @@ class MainTable(tk.Canvas):
 
     def destroy_text_editor(self, event = None):
         if event is not None and self.extra_end_edit_cell_func is not None and self.text_editor_loc is not None:
-            self.extra_end_edit_cell_func(self.text_editor_loc + ("Escape", None))
+            self.extra_end_edit_cell_func(EditCellEvent(int(self.text_editor_loc[0]), int(self.text_editor_loc[1]), "Escape", None, "escape_edit_cell"))
         self.text_editor_loc = None
         try:
             self.delete(self.text_editor_id)
@@ -5232,11 +5232,13 @@ class MainTable(tk.Canvas):
     # c is dcol
     def destroy_dropdown(self, r, c):
         self.delete_opened_dropdown_window(r, c)
-        del self.cell_options[(r, c)]['dropdown']
+        if (r, c) in self.cell_options and 'dropdown' in self.cell_options[(r, c)]:
+            del self.cell_options[(r, c)]['dropdown']
 
     # c is dcol
     def destroy_checkbox(self, r, c):
-        del self.cell_options[(r, c)]['checkbox']
+        if (r, c) in self.cell_options and 'checkbox' in self.cell_options[(r, c)]:
+            del self.cell_options[(r, c)]['checkbox']
 
     # c is dcol
     def destroy_dropdown_and_checkbox(self, r, c):

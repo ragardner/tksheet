@@ -1054,12 +1054,21 @@ class Sheet(tk.Frame):
             for (t10, t11), t2 in popped_cell.items():
                 self.MT.cell_options[(t10, newcolsdct[t11])] = t2
 
-    def create_text_editor(self, row = 0, column = 0, text = None, state = "normal", see = True, set_data_ref_on_destroy = False,
-                           binding = None,
-                           keep_existing_if_same_cell = False):
-        self.MT.create_text_editor(r = row, c = column, text = text, state = state, see = see, set_data_ref_on_destroy = set_data_ref_on_destroy,
-                                   binding = binding,
-                                   keep_existing_if_same_cell = keep_existing_if_same_cell)
+    def create_text_editor(self,
+                           row = 0,
+                           column = 0,
+                           text = None,
+                           state = "normal",
+                           see = True,
+                           set_data_ref_on_destroy = False,
+                           binding = None):
+        self.MT.create_text_editor(r = row,
+                                   c = column,
+                                   text = text,
+                                   state = state,
+                                   see = see,
+                                   set_data_ref_on_destroy = set_data_ref_on_destroy,
+                                   binding = binding)
 
     def set_text_editor_value(self, text = "", r = None, c = None):
         if self.MT.text_editor is not None and r is None and c is None:
@@ -1202,7 +1211,7 @@ class Sheet(tk.Frame):
                                    type_ = "col",
                                    inside = True if self.MT.cell_selected(0, current_tuple_1) else False)
         if selection_binding and self.MT.selection_binding_func is not None:
-            self.MT.selection_binding_func(("select_cell", ) + tuple((current_tuple_0, current_tuple_1)))
+            self.MT.selection_binding_func(SelectCellEvent("select_cell", current_tuple_0, current_tuple_1))
 
     def get_selected_rows(self, get_cells = False, get_cells_as_rows = False, return_tuple = False):
         if return_tuple:
