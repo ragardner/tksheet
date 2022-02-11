@@ -4891,7 +4891,8 @@ class MainTable(tk.Canvas):
             self.text_editor.textedit.focus_set()
             self.text_editor.scroll_to_bottom()
         self.text_editor.textedit.bind("<Alt-Return>", lambda x: self.text_editor_newline_binding(r, c))
-        self.text_editor.textedit.bind("<Option-Return>", lambda x: self.text_editor_newline_binding(r, c))
+        if USER_OS == 'Darwin':
+            self.text_editor.textedit.bind("<Option-Return>", lambda x: self.text_editor_newline_binding(r, c))
         for key, func in self.text_editor_user_bound_keys.items():
             self.text_editor.textedit.bind(key, func)
         if binding is not None:

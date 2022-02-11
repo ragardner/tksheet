@@ -2260,14 +2260,25 @@ class Sheet(tk.Frame):
                         redraw = False,
                         selection_function = None,
                         modified_function = None):
-        self.MT.create_dropdown(r = r,
-                                c = c,
-                                values = values,
-                                set_value = set_value,
-                                state = state,
-                                redraw = redraw,
-                                selection_function = selection_function,
-                                modified_function = modified_function)
+        if isinstance(r, str) and r.lower() == "all":
+            for r_ in range(len(self.MT.data_ref)):
+                self.MT.create_dropdown(r = r_,
+                                        c = c,
+                                        values = values,
+                                        set_value = set_value,
+                                        state = state,
+                                        redraw = redraw,
+                                        selection_function = selection_function,
+                                        modified_function = modified_function)
+        else:
+            self.MT.create_dropdown(r = r,
+                                    c = c,
+                                    values = values,
+                                    set_value = set_value,
+                                    state = state,
+                                    redraw = redraw,
+                                    selection_function = selection_function,
+                                    modified_function = modified_function)
 
     def get_dropdown_value(self, r, c):
         return self.get_cell_data(r, c)
