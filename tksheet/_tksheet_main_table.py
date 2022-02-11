@@ -2437,7 +2437,7 @@ class MainTable(tk.Canvas):
             c = self.identify_col(x = event.x, allow_end = False)
             if r is not None and c is not None and (r, c) == self.b1_pressed_loc:
                 dcol = c if self.all_columns_displayed else self.displayed_columns[c]
-                if (r, dcol) in self.cell_options:
+                if (r, dcol) in self.cell_options and ('dropdown' in self.cell_options[(r, dcol)] or 'checkbox' in self.cell_options[(r, dcol)]):
                     if (self.closed_dropdown != self.b1_pressed_loc and
                         'dropdown' in self.cell_options[(r, dcol)]):
                         self.display_dropdown_window(r, c)
