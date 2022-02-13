@@ -1,3 +1,8 @@
+### Version 5.2.9
+ - Fix text editor not opening in highlighted cells
+ - Linux return key in cell editor fix
+ - Fix potential error with check box / dropdown
+
 ### Version 5.2.8
  - Make dropdown box border consistent color
  - Fix error with modifier key press on editable dropdown boxes
