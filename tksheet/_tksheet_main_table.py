@@ -2444,8 +2444,6 @@ class MainTable(tk.Canvas):
                     elif 'checkbox' in self.cell_options[(r, dcol)]:
                         self._click_checkbox(r, c, dcol)
                         self.hide_dropdown_window()
-                    else:
-                        self.hide_dropdown_window()
             else:
                 self.hide_dropdown_window()
         self.b1_pressed_loc = None
@@ -5185,7 +5183,7 @@ class MainTable(tk.Canvas):
                 self.cell_options[(r, dcol)]['dropdown']['select_function']((r, c, "ComboboxSelected", f"{selection}"))
             self._set_cell_data(r, c, dcol, selection, cell_resize = True)
             if self.extra_end_edit_cell_func is not None:
-                self.extra_end_edit_cell_func((r, c, "ComboboxSelected", f"{selection}"))
+                self.extra_end_edit_cell_func(EditCellEvent(r, c, "ComboboxSelected", f"{selection}", "end_edit_cell"))
             self.focus_set()
             self.recreate_all_selection_boxes()
             if redraw:
