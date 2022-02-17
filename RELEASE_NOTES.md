@@ -1,3 +1,6 @@
+### Version 5.3.0
+ - Fix shift select error in main table when nothing else is selected
+
 ### Version 5.2.9
  - Fix text editor not opening in highlighted cells
  - Linux return key in cell editor fix

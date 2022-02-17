@@ -2324,11 +2324,13 @@ class MainTable(tk.Canvas):
                         self.create_selected(rowsel, min_c, min_r + 1, colsel + 1)
                     elif min_r >= rowsel and min_c >= colsel:
                         self.create_selected(rowsel, colsel, min_r + 1, min_c + 1)
+                    last_selected = tuple(int(e) for e in self.gettags(self.find_withtag("CellSelectFill"))[1].split("_") if e)
                 else:
                     self.select_cell(rowsel, colsel, redraw = False)
+                    last_selected = tuple(int(e) for e in self.gettags(self.find_withtag("Current_Outside"))[1].split("_") if e)
                 self.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True, redraw_table = True)
                 if self.shift_selection_binding_func is not None:
-                    self.shift_selection_binding_func(SelectionBoxEvent("shift_select_cells", tuple(int(e) for e in self.gettags(self.find_withtag("CellSelectFill"))[1].split("_") if e)))
+                    self.shift_selection_binding_func(SelectionBoxEvent("shift_select_cells", last_selected))
         
     def b1_motion(self, event):
         x1, y1, x2, y2 = self.get_canvas_visible_area()
