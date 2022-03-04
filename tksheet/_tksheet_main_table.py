@@ -4,7 +4,7 @@ from ._tksheet_other_classes import *
 from collections import defaultdict, deque, namedtuple
 from itertools import islice, repeat, accumulate, chain, product, cycle
 from math import floor, ceil
-from tkinter import ttk
+from tkinter import TclError, ttk
 import bisect
 import csv as csv_module
 import io
@@ -1733,6 +1733,16 @@ class MainTable(tk.Canvas):
             else:
                 self.bind_cell_edit(False)
 
+    def menu_add_command(self, menu: tk.Menu, **kwargs):
+        if 'label' not in kwargs:
+            return
+        try:
+            index = menu.index(kwargs['label'])
+            menu.delete(index)
+        except TclError:
+            pass
+        menu.add_command(**kwargs)
+
     def create_rc_menus(self):
         if not self.rc_popup_menu:
             self.rc_popup_menu = tk.Menu(self, tearoff = 0, background = self.popup_menu_bg)
@@ -1743,25 +1753,25 @@ class MainTable(tk.Canvas):
         if not self.empty_rc_popup_menu:
             self.empty_rc_popup_menu = tk.Menu(self, tearoff = 0, background = self.popup_menu_bg)
         if self.cut_enabled:
-            self.rc_popup_menu.add_command(label = "Cut",
-                                           accelerator = "Ctrl+X",
-                                           font = self.popup_menu_font,
-                                           foreground = self.popup_menu_fg,
-                                           background = self.popup_menu_bg,
-                                           activebackground = self.popup_menu_highlight_bg,
-                                           activeforeground = self.popup_menu_highlight_fg,
-                                           command = self.ctrl_x)
+            self.menu_add_command(self.rc_popup_menu, label = "Cut",
+                                            accelerator = "Ctrl+X",
+                                            font = self.popup_menu_font,
+                                            foreground = self.popup_menu_fg,
+                                            background = self.popup_menu_bg,
+                                            activebackground = self.popup_menu_highlight_bg,
+                                            activeforeground = self.popup_menu_highlight_fg,
+                                            command = self.ctrl_x)
             #self.rc_popup_menu.add_separator()
-            self.CH.ch_rc_popup_menu.add_command(label = "Cut contents",
-                                           accelerator = "Ctrl+X",
-                                           font = self.popup_menu_font,
-                                           foreground = self.popup_menu_fg,
-                                           background = self.popup_menu_bg,
-                                           activebackground = self.popup_menu_highlight_bg,
-                                           activeforeground = self.popup_menu_highlight_fg,
-                                               command = self.ctrl_x)
+            self.menu_add_command(self.CH.ch_rc_popup_menu, label = "Cut contents",
+                                        accelerator = "Ctrl+X",
+                                        font = self.popup_menu_font,
+                                        foreground = self.popup_menu_fg,
+                                        background = self.popup_menu_bg,
+                                        activebackground = self.popup_menu_highlight_bg,
+                                        activeforeground = self.popup_menu_highlight_fg,
+                                            command = self.ctrl_x)
             #self.CH.ch_rc_popup_menu.add_separator()
-            self.RI.ri_rc_popup_menu.add_command(label = "Cut contents",
+            self.menu_add_command(self.RI.ri_rc_popup_menu, label = "Cut contents",
                                            accelerator = "Ctrl+X",
                                            font = self.popup_menu_font,
                                            foreground = self.popup_menu_fg,
@@ -1771,7 +1781,7 @@ class MainTable(tk.Canvas):
                                                  command = self.ctrl_x)
             #self.RI.ri_rc_popup_menu.add_separator()
         if self.copy_enabled:
-            self.rc_popup_menu.add_command(label = "Copy",
+            self.menu_add_command(self.rc_popup_menu, label = "Copy",
                                            accelerator = "Ctrl+C",
                                            font = self.popup_menu_font,
                                            foreground = self.popup_menu_fg,
@@ -1780,7 +1790,7 @@ class MainTable(tk.Canvas):
                                            activeforeground = self.popup_menu_highlight_fg,
                                            command = self.ctrl_c)
             #self.rc_popup_menu.add_separator()
-            self.CH.ch_rc_popup_menu.add_command(label = "Copy contents",
+            self.menu_add_command(self.CH.ch_rc_popup_menu, label = "Copy contents",
                                                  accelerator = "Ctrl+C",
                                            font = self.popup_menu_font,
                                            foreground = self.popup_menu_fg,
@@ -1789,7 +1799,7 @@ class MainTable(tk.Canvas):
                                            activeforeground = self.popup_menu_highlight_fg,
                                                  command = self.ctrl_c)
             #self.CH.ch_rc_popup_menu.add_separator()
-            self.RI.ri_rc_popup_menu.add_command(label = "Copy contents",
+            self.menu_add_command(self.RI.ri_rc_popup_menu, label = "Copy contents",
                                                  accelerator = "Ctrl+C",
                                            font = self.popup_menu_font,
                                            foreground = self.popup_menu_fg,
@@ -1799,7 +1809,7 @@ class MainTable(tk.Canvas):
                                                  command = self.ctrl_c)
             #self.RI.ri_rc_popup_menu.add_separator()
         if self.paste_enabled:
-            self.rc_popup_menu.add_command(label = "Paste",
+            self.menu_add_command(self.rc_popup_menu, label = "Paste",
                                            accelerator = "Ctrl+V",
                                            font = self.popup_menu_font,
                                            foreground = self.popup_menu_fg,
@@ -1808,35 +1818,43 @@ class MainTable(tk.Canvas):
                                            activeforeground = self.popup_menu_highlight_fg,
                                            command = self.ctrl_v)
             #self.rc_popup_menu.add_separator()
-            self.CH.ch_rc_popup_menu.add_command(label = "Paste",
-                                                 accelerator = "Ctrl+V",
+            self.menu_add_command(self.CH.ch_rc_popup_menu, label = "Paste",
+                                           accelerator = "Ctrl+V",
                                            font = self.popup_menu_font,
                                            foreground = self.popup_menu_fg,
                                            background = self.popup_menu_bg,
                                            activebackground = self.popup_menu_highlight_bg,
                                            activeforeground = self.popup_menu_highlight_fg,
-                                                 command = self.ctrl_v)
+                                           command = self.ctrl_v)
             #self.CH.ch_rc_popup_menu.add_separator()
-            self.RI.ri_rc_popup_menu.add_command(label = "Paste",
-                                                 accelerator = "Ctrl+V",
+            self.menu_add_command(self.RI.ri_rc_popup_menu, label = "Paste",
+                                           accelerator = "Ctrl+V",
                                            font = self.popup_menu_font,
                                            foreground = self.popup_menu_fg,
                                            background = self.popup_menu_bg,
                                            activebackground = self.popup_menu_highlight_bg,
                                            activeforeground = self.popup_menu_highlight_fg,
-                                                 command = self.ctrl_v)
+                                           command = self.ctrl_v)
             #self.RI.ri_rc_popup_menu.add_separator()
             if self.expand_sheet_if_paste_too_big:
-                self.empty_rc_popup_menu.add_command(label = "Paste",
-                                                     accelerator = "Ctrl+V",
-                                                   font = self.popup_menu_font,
-                                                   foreground = self.popup_menu_fg,
-                                                   background = self.popup_menu_bg,
-                                                   activebackground = self.popup_menu_highlight_bg,
-                                                   activeforeground = self.popup_menu_highlight_fg,
-                                                     command = self.ctrl_v)
+                self.menu_add_command(self.empty_rc_popup_menu, label = "Paste",
+                                            accelerator = "Ctrl+V",
+                                            font = self.popup_menu_font,
+                                            foreground = self.popup_menu_fg,
+                                            background = self.popup_menu_bg,
+                                            activebackground = self.popup_menu_highlight_bg,
+                                            activeforeground = self.popup_menu_highlight_fg,
+                                            command = self.ctrl_v)
         if self.delete_key_enabled:
-            self.rc_popup_menu.add_command(label = "Delete",
+            self.menu_add_command(self.rc_popup_menu, label = "Delete",
+                                            accelerator = "Del",
+                                            font = self.popup_menu_font,
+                                            foreground = self.popup_menu_fg,
+                                            background = self.popup_menu_bg,
+                                            activebackground = self.popup_menu_highlight_bg,
+                                            activeforeground = self.popup_menu_highlight_fg,
+                                            command = self.delete_key)
+            self.menu_add_command(self.CH.ch_rc_popup_menu, label = "Clear contents",
                                            accelerator = "Del",
                                            font = self.popup_menu_font,
                                            foreground = self.popup_menu_fg,
@@ -1844,88 +1862,80 @@ class MainTable(tk.Canvas):
                                            activebackground = self.popup_menu_highlight_bg,
                                            activeforeground = self.popup_menu_highlight_fg,
                                            command = self.delete_key)
-            self.CH.ch_rc_popup_menu.add_command(label = "Clear contents",
-                                                 accelerator = "Del",
-                                           font = self.popup_menu_font,
-                                           foreground = self.popup_menu_fg,
-                                           background = self.popup_menu_bg,
-                                           activebackground = self.popup_menu_highlight_bg,
-                                           activeforeground = self.popup_menu_highlight_fg,
-                                                 command = self.delete_key)
             #self.CH.ch_rc_popup_menu.add_separator()
-            self.RI.ri_rc_popup_menu.add_command(label = "Clear contents",
-                                                 accelerator = "Del",
+            self.menu_add_command(self.RI.ri_rc_popup_menu, label = "Clear contents",
+                                           accelerator = "Del",
                                            font = self.popup_menu_font,
                                            foreground = self.popup_menu_fg,
                                            background = self.popup_menu_bg,
                                            activebackground = self.popup_menu_highlight_bg,
                                            activeforeground = self.popup_menu_highlight_fg,
-                                               command = self.delete_key)
+                                           command = self.delete_key)
             #self.RI.ri_rc_popup_menu.add_separator()
         if self.rc_delete_column_enabled:
-            self.CH.ch_rc_popup_menu.add_command(label = "Delete columns",
+            self.menu_add_command(self.CH.ch_rc_popup_menu, label = "Delete columns",
                                            font = self.popup_menu_font,
                                            foreground = self.popup_menu_fg,
                                            background = self.popup_menu_bg,
                                            activebackground = self.popup_menu_highlight_bg,
                                            activeforeground = self.popup_menu_highlight_fg,
-                                                 command = self.del_cols_rc)
+                                           command = self.del_cols_rc)
             #self.CH.ch_rc_popup_menu.add_separator()
         if self.rc_insert_column_enabled:
-            self.CH.ch_rc_popup_menu.add_command(label = "Insert columns left",
+            self.menu_add_command(self.CH.ch_rc_popup_menu, label = "Insert columns left",
                                            font = self.popup_menu_font,
                                            foreground = self.popup_menu_fg,
                                            background = self.popup_menu_bg,
                                            activebackground = self.popup_menu_highlight_bg,
                                            activeforeground = self.popup_menu_highlight_fg,
-                                                 command = lambda: self.insert_col_rc("left"))
-            self.empty_rc_popup_menu.add_command(label = "Insert column",
+                                           command = lambda: self.insert_col_rc("left"))
+            self.menu_add_command(self.empty_rc_popup_menu, label = "Insert column",
                                            font = self.popup_menu_font,
                                            foreground = self.popup_menu_fg,
                                            background = self.popup_menu_bg,
                                            activebackground = self.popup_menu_highlight_bg,
                                            activeforeground = self.popup_menu_highlight_fg,
-                                                 command = lambda: self.insert_col_rc("left"))
-            self.CH.ch_rc_popup_menu.add_command(label = "Insert columns right",
+                                           command = lambda: self.insert_col_rc("left"))
+            self.menu_add_command(self.CH.ch_rc_popup_menu, label = "Insert columns right",
                                            font = self.popup_menu_font,
                                            foreground = self.popup_menu_fg,
                                            background = self.popup_menu_bg,
                                            activebackground = self.popup_menu_highlight_bg,
                                            activeforeground = self.popup_menu_highlight_fg,
-                                                 command = lambda: self.insert_col_rc("right"))
+                                           command = lambda: self.insert_col_rc("right"))
         if self.rc_delete_row_enabled:
-            self.RI.ri_rc_popup_menu.add_command(label = "Delete rows",
+            self.menu_add_command(self.RI.ri_rc_popup_menu, label = "Delete rows",
                                            font = self.popup_menu_font,
                                            foreground = self.popup_menu_fg,
                                            background = self.popup_menu_bg,
                                            activebackground = self.popup_menu_highlight_bg,
                                            activeforeground = self.popup_menu_highlight_fg,
-                                                 command = self.del_rows_rc)
+                                           command = self.del_rows_rc)
             #self.RI.ri_rc_popup_menu.add_separator()
         if self.rc_insert_row_enabled:
-            self.RI.ri_rc_popup_menu.add_command(label = "Insert rows above",
+            self.menu_add_command(self.RI.ri_rc_popup_menu, label = "Insert rows above",
                                            font = self.popup_menu_font,
                                            foreground = self.popup_menu_fg,
                                            background = self.popup_menu_bg,
                                            activebackground = self.popup_menu_highlight_bg,
                                            activeforeground = self.popup_menu_highlight_fg,
-                                                 command = lambda: self.insert_row_rc("above"))
-            self.RI.ri_rc_popup_menu.add_command(label = "Insert rows below",
+                                           command = lambda: self.insert_row_rc("above"))
+            self.menu_add_command(self.RI.ri_rc_popup_menu, label = "Insert rows below",
                                            font = self.popup_menu_font,
                                            foreground = self.popup_menu_fg,
                                            background = self.popup_menu_bg,
                                            activebackground = self.popup_menu_highlight_bg,
                                            activeforeground = self.popup_menu_highlight_fg,
-                                                 command = lambda: self.insert_row_rc("below"))
-            self.empty_rc_popup_menu.add_command(label = "Insert row",
+                                           command = lambda: self.insert_row_rc("below"))
+            self.menu_add_command(self.empty_rc_popup_menu, label = "Insert row",
                                            font = self.popup_menu_font,
                                            foreground = self.popup_menu_fg,
                                            background = self.popup_menu_bg,
                                            activebackground = self.popup_menu_highlight_bg,
                                            activeforeground = self.popup_menu_highlight_fg,
-                                                 command = lambda: self.insert_row_rc("below"))
+                                           command = lambda: self.insert_row_rc("below"))
         for label, func in self.extra_table_rc_menu_funcs.items():
-            self.rc_popup_menu.add_command(label = label,
+            self.menu_add_command(self.rc_popup_menu, label = label,
                                            font = self.popup_menu_font,
                                            foreground = self.popup_menu_fg,
                                            background = self.popup_menu_bg,
@@ -1933,7 +1943,7 @@ class MainTable(tk.Canvas):
                                            activeforeground = self.popup_menu_highlight_fg,
                                            command = func)
         for label, func in self.extra_index_rc_menu_funcs.items():
-            self.RI.ri_rc_popup_menu.add_command(label = label,
+            self.menu_add_command(self.RI.ri_rc_popup_menu, label = label,
                                                    font = self.popup_menu_font,
                                                    foreground = self.popup_menu_fg,
                                                    background = self.popup_menu_bg,
@@ -1941,7 +1951,7 @@ class MainTable(tk.Canvas):
                                                    activeforeground = self.popup_menu_highlight_fg,
                                                    command = func)
         for label, func in self.extra_header_rc_menu_funcs.items():
-            self.CH.ch_rc_popup_menu.add_command(label = label,
+            self.menu_add_command(self.CH.ch_rc_popup_menu, label = label,
                                                    font = self.popup_menu_font,
                                                    foreground = self.popup_menu_fg,
                                                    background = self.popup_menu_bg,
