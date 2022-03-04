@@ -118,6 +118,7 @@ class RowIndex(tk.Canvas):
         self.measure_subset_index = measure_subset_index
         self.auto_resize_width = auto_resize_width
         self.default_index = default_row_index.lower()
+        self.ri_rc_popup_menu = None
         self.basic_bindings()
 
     def basic_bindings(self, enable = True):

@@ -301,6 +301,9 @@ class MainTable(tk.Canvas):
         self.popup_menu_bg = popup_menu_bg
         self.popup_menu_highlight_bg = popup_menu_highlight_bg
         self.popup_menu_highlight_fg = popup_menu_highlight_fg
+        
+        self.rc_popup_menu = None
+        self.empty_rc_popup_menu = None
 
         self.basic_bindings()
         self.create_rc_menus()
@@ -1731,10 +1734,14 @@ class MainTable(tk.Canvas):
                 self.bind_cell_edit(False)
 
     def create_rc_menus(self):
-        self.rc_popup_menu = tk.Menu(self, tearoff = 0, background = self.popup_menu_bg)
-        self.CH.ch_rc_popup_menu = tk.Menu(self.CH, tearoff = 0, background = self.popup_menu_bg)
-        self.RI.ri_rc_popup_menu = tk.Menu(self.RI, tearoff = 0, background = self.popup_menu_bg)
-        self.empty_rc_popup_menu = tk.Menu(self, tearoff = 0, background = self.popup_menu_bg)
+        if not self.rc_popup_menu:
+            self.rc_popup_menu = tk.Menu(self, tearoff = 0, background = self.popup_menu_bg)
+        if not self.CH.ch_rc_popup_menu:
+            self.CH.ch_rc_popup_menu = tk.Menu(self.CH, tearoff = 0, background = self.popup_menu_bg)
+        if not self.RI.ri_rc_popup_menu:
+            self.RI.ri_rc_popup_menu = tk.Menu(self.RI, tearoff = 0, background = self.popup_menu_bg)
+        if not self.empty_rc_popup_menu:
+            self.empty_rc_popup_menu = tk.Menu(self, tearoff = 0, background = self.popup_menu_bg)
         if self.cut_enabled:
             self.rc_popup_menu.add_command(label = "Cut",
                                            accelerator = "Ctrl+X",
