@@ -110,6 +110,7 @@ class ColumnHeaders(tk.Canvas):
         self.new_col_height = 0
         self.currently_resizing_width = False
         self.currently_resizing_height = False
+        self.ch_rc_popup_menu = None
         self.basic_bindings()
         
     def basic_bindings(self, enable = True):
