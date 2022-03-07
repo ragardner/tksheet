@@ -1752,6 +1752,11 @@ class MainTable(tk.Canvas):
             self.RI.ri_rc_popup_menu = tk.Menu(self.RI, tearoff = 0, background = self.popup_menu_bg)
         if not self.empty_rc_popup_menu:
             self.empty_rc_popup_menu = tk.Menu(self, tearoff = 0, background = self.popup_menu_bg)
+        for menu in (self.rc_popup_menu,
+                     self.CH.ch_rc_popup_menu,
+                     self.RI.ri_rc_popup_menu,
+                     self.empty_rc_popup_menu):
+            menu.delete(0, 'end')
         if self.cut_enabled:
             self.menu_add_command(self.rc_popup_menu, label = "Cut",
                                             accelerator = "Ctrl+X",
@@ -5265,10 +5270,4 @@ class MainTable(tk.Canvas):
 
     def refresh_dropdowns(self, dropdowns = []):
         pass
-            
-                
 
-
-
-
-                

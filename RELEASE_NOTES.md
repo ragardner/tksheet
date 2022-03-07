@@ -1,3 +1,7 @@
+### Version 5.3.1
+ - Fix minor issues with `startup_select` argument
+ - Fix extra menus being created in memory
+
 ### Version 5.3.0
  - Fix shift select error in main table when nothing else is selected
 

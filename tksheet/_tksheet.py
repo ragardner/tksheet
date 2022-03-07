@@ -280,16 +280,16 @@ class Sheet(tk.Frame):
         if startup_select is not None:
             try:
                 if startup_select[-1] == "cells":
-                    self.create_selection_box(*startup_select)
-                    self.set_currently_selected(startup_select[0], startup_select[1], selection_binding = False)
+                    self.MT.create_selected(*startup_select)
+                    self.MT.create_current(startup_select[0], startup_select[1], type_ = "cell", inside = True)
                     self.see(startup_select[0], startup_select[1])
                 elif startup_select[-1] == "rows":
-                    self.create_selection_box(startup_select[0], 0, startup_select[1], len(self.MT.col_positions) - 1, "rows")
-                    self.set_currently_selected("row", startup_select[0], selection_binding = False)
+                    self.MT.create_selected(startup_select[0], 0, startup_select[1], len(self.MT.col_positions) - 1, "rows")
+                    self.MT.create_current(startup_select[0], 0, type_ = "row", inside = True)
                     self.see(startup_select[0], 0)
                 elif startup_select[-1] in ("cols", "columns"):
-                    self.create_selection_box(0, startup_select[0], len(self.MT.row_positions) - 1, startup_select[1], "cols")
-                    self.set_currently_selected("col", startup_select[0], selection_binding = False)
+                    self.MT.create_selected(0, startup_select[0], len(self.MT.row_positions) - 1, startup_select[1], "cols")
+                    self.MT.create_current(0, startup_select[0], type_ = "col", inside = True)
                     self.see(0, startup_select[0])
             except:
                 pass
