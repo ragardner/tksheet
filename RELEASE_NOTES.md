@@ -1,3 +1,6 @@
+### Version 5.3.2
+ - Fix Backspace binding in main table
+
 ### Version 5.3.1
  - Fix minor issues with `startup_select` argument
  - Fix extra menus being created in memory

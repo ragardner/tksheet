@@ -1137,13 +1137,15 @@ class Sheet(tk.Frame):
         self.MT.see(row, column, keep_yscroll, keep_xscroll, bottom_right_corner, check_cell_visibility = check_cell_visibility, redraw = redraw)
 
     def select_row(self, row, redraw = True):
-        self.RI.select_row(row, redraw = redraw)
+        self.RI.select_row(int(row) if not isinstance(row, int) else row, redraw = redraw)
 
     def select_column(self, column, redraw = True):
-        self.CH.select_col(column, redraw = redraw)
+        self.CH.select_col(int(column) if not isinstance(column, int) else column, redraw = redraw)
 
     def select_cell(self, row, column, redraw = True):
-        self.MT.select_cell(row, column, redraw = redraw)
+        self.MT.select_cell(int(row) if not isinstance(row, int) else row,
+                            int(column) if not isinstance(column, int) else column,
+                            redraw = redraw)
 
     def select_all(self, redraw = True, run_binding_func = True):
         self.MT.select_all(redraw = redraw, run_binding_func = run_binding_func)

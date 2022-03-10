@@ -4842,7 +4842,9 @@ class MainTable(tk.Canvas):
     def edit_cell_(self, event = None, r = None, c = None, dropdown = False):
         text = None
         extra_func_key = "??"
-        if event is not None and event.keycode == 8: # backspace
+        if event is not None and ((hasattr(event, 'keysym') and event.keysym == 'BackSpace') or
+                                  event.keycode in (8, 855638143)
+                                  ):
             extra_func_key = "BackSpace"
             text = ""
         elif ((event is not None and hasattr(event, 'keycode') and event.keycode in (13, 113)) or  # enter or f2
