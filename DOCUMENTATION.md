@@ -540,9 +540,9 @@ cell_edit_binding(enable = False, keys = [])
 ___
 
 ```python
-bind(binding, func)
+bind(binding, func, add = None)
 ```
-
+ - `add` will only work for bindings which are not the following: `"<ButtonPress-1>"`, `"<ButtonMotion-1>"`, `"<ButtonRelease-1>"`, `"<Double-Button-1>"`, `"<Motion>"` and lastly whichever is your operating systems right mouse click button
 ___
 
 ```python

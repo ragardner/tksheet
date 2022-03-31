@@ -567,7 +567,7 @@ class Sheet(tk.Frame):
                     self.CH.shift_selection_binding_func = func
                     self.MT.deselection_binding_func = func
 
-    def bind(self, binding, func):
+    def bind(self, binding, func, add = None):
         if binding == "<ButtonPress-1>":
             self.MT.extra_b1_press_func = func
             self.CH.extra_b1_press_func = func
@@ -599,10 +599,10 @@ class Sheet(tk.Frame):
             self.RI.extra_rc_func = func
             self.TL.extra_rc_func = func
         else:
-            self.MT.bind(binding, func)
-            self.CH.bind(binding, func)
-            self.RI.bind(binding, func)
-            self.TL.bind(binding, func)
+            self.MT.bind(binding, func, add =  add)
+            self.CH.bind(binding, func, add =  add)
+            self.RI.bind(binding, func, add =  add)
+            self.TL.bind(binding, func, add =  add)
 
     def unbind(self, binding):
         if binding == "<ButtonPress-1>":
