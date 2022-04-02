@@ -595,14 +595,13 @@ edit_cell(self, event = None, dropdown = False)
 
 ## 9 Table Colors
 
+For specific colors use the function `set_options()`, arguments can be found [here](https://github.com/ragardner/tksheet/wiki#22-table-options-and-other-functions).
+
+Otherwise you can change the theme using the below function.
 ```python
 change_theme(theme = "light blue")
 ```
  - `theme` (`str`) options (themes) are `light blue`, `light green`, `dark blue` and `dark green`.
-
-___
-
-Alternatively use the function `set_options()`, arguments can be found [here](https://github.com/ragardner/tksheet/wiki#9-table-colors).
 
 ## 10 Highlighting Cells
 
