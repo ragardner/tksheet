@@ -561,7 +561,7 @@ undo(event = None)
 
 ## 8 Identifying Bound Event Mouse Position
 
-The below functions require a mouse click event, for example you could bind right click, example [here](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#23-Example-Custom-Right-Click-and-Text-Editor-Functionality), and then identify where the user has clicked.
+The below functions require a mouse click event, for example you could bind right click, example [here](https://github.com/ragardner/tksheet/wiki#24-example-custom-right-click-and-text-editor-functionality), and then identify where the user has clicked.
 
 ___
 
@@ -602,7 +602,7 @@ change_theme(theme = "light blue")
 
 ___
 
-Alternatively use the function `set_options()`, arguments can be found [here](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#22-Table-Options-and-Other-Functions).
+Alternatively use the function `set_options()`, arguments can be found [here](https://github.com/ragardner/tksheet/wiki#9-table-colors).
 
 ## 10 Highlighting Cells
 
@@ -1233,7 +1233,7 @@ def create_dropdown(r = 0,
                     modified_function = None)
 ```
 Notes:
- - When a user selects an item from the dropdown box the sheet will set the underlying cells data to the selected item, to bind this event use either the `selection_function` argument or see the function `extra_bindings()` with binding `"end_edit_cell"` [here](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#7-Bindings-and-Functionality).
+ - When a user selects an item from the dropdown box the sheet will set the underlying cells data to the selected item, to bind this event use either the `selection_function` argument or see the function `extra_bindings()` with binding `"end_edit_cell"` [here](https://github.com/ragardner/tksheet/wiki#7-bindings-and-functionality).
 
  Arguments:
  - `values` are the values to appear when the dropdown box is popped open.
