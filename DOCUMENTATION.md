@@ -602,7 +602,7 @@ change_theme(theme = "light blue")
 
 ___
 
-Alternatively use the function `set_options()`, arguments can be found [here](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#21-Table-Options-and-Other-Functions).
+Alternatively use the function `set_options()`, arguments can be found [here](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#22-Table-Options-and-Other-Functions).
 
 ## 10 Highlighting Cells
 
@@ -1628,10 +1628,6 @@ class demo(tk.Tk):
 app = demo()
 app.mainloop()
 ```
-
-
-
-
 
 
 
