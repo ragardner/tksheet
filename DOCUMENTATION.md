@@ -1629,7 +1629,7 @@ app = demo()
 app.mainloop()
 ```
 
-## 25 Example List Box
+## 26 Example List Box
 
 This is to demonstrate some simple customization to make a different sort of widget (a list box).
 
