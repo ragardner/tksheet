@@ -31,4 +31,4 @@ pip install tksheet
 
 ### Dark Theme
 
-![alt text](https://i.imgur.com/4w3yHVz.jpeg)
+![alt text](https://i.imgur.com/b9921fz.jpeg)
