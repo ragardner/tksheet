@@ -28,3 +28,7 @@ pip install tksheet
 ### Light Blue Theme
 
 ![alt text](https://i.imgur.com/VaARHUp.png)
+
+### Dark Theme
+
+![alt text](https://i.imgur.com/4w3yHVz.jpeg)
