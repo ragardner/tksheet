@@ -1785,6 +1785,11 @@ class Sheet(tk.Frame):
             self.set_options(**theme_light_blue,
                               redraw = True)
             self.config(bg = theme_light_blue['table_bg'])
+        elif theme == "dark":
+            self.MT.display_selected_fg_over_highlights = False
+            self.set_options(**theme_dark,
+                              redraw = True)
+            self.config(bg = theme_dark['table_bg'])
         elif theme == "light green":
             self.MT.display_selected_fg_over_highlights = True
             self.set_options(**theme_light_green,

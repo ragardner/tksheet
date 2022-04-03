@@ -1,3 +1,7 @@
+### Version 5.3.4
+ - Unnecessary folder deletion
+ - Add new theme `dark`
+
 ### Version 5.3.3
  - Add `add` parameter to `.bind()` function (only works for bindings which are not the following: `"<ButtonPress-1>"`, `"<ButtonMotion-1>"`, `"<ButtonRelease-1>"`, `"<Double-Button-1>"`, `"<Motion>"` and lastly whichever is your operating systems right mouse click button)
 

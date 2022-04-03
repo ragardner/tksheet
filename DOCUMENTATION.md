@@ -1,30 +1,30 @@
 # Table of Contents
-1. [About tksheet](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#1-About-tksheet)
-2. [Installation and Requirements](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#2-Installation-and-Requirements)
-3. [Basic Initialization](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#3-Basic-Initialization)
-4. [Initialization Options](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#4-Initialization-Options)
-5. [Modifying Table Data and Dimensions](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#5-Modifying-Table-Data-and-Dimensions)
-6. [Getting Table Data](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#6-Getting-Table-Data)
-7. [Bindings and Functionality](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#7-Bindings-and-Functionality)
-8. [Identifying Bound Event Mouse Position](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#8-Identifying-Bound-Event-Mouse-Position)
-9. [Table Colors](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#9-Table-Colors)
-10. [Highlighting Cells](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#10-Highlighting-Cells)
-11. [Text Font and Alignment](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#11-Text-Font-and-Alignment)
-12. [Row Heights and Column Widths](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#12-Row-Heights-and-Column-Widths)
-13. [Getting Selected Cells](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#13-Getting-Selected-Cells)
-14. [Modifying Selected Cells](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#14-Modifying-Selected-Cells)
-15. [Modifying and Getting Scroll Positions](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#15-Modifying-and-Getting-Scroll-Positions)
-16. [Readonly Cells](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#16-Readonly-Cells)
-17. [Hiding Columns](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#17-Hiding-Columns)
-18. [Hiding Table Elements](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#18-Hiding-Table-Elements)
-19. [Cell Text Editor](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#19-Cell-Text-Editor)
-20. [Dropdown Boxes](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#20-Dropdown-Boxes)
-21. [Check Boxes](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#21-Check-Boxes)
-22. [Table Options and Other Functions](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#22-Table-Options-and-Other-Functions)
-23. [Example Loading Data from Excel](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#23-Example-Loading-Data-from-Excel)
-24. [Example Custom Right Click and Text Editor Functionality](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#24-Example-Custom-Right-Click-and-Text-Editor-Functionality)
-25. [Example Displaying Selections](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#25-Example-Displaying-Selections)
-26. [Example List Box](https://github.com/ragardner/tksheet/blob/master/DOCUMENTATION.md#26-Example-List-Box)
+1. [About tksheet](https://github.com/ragardner/tksheet/wiki#1-about-tksheet)
+2. [Installation and Requirements](https://github.com/ragardner/tksheet/wiki#2-installation-and-requirements)
+3. [Basic Initialization](https://github.com/ragardner/tksheet/wiki#3-basic-initialization)
+4. [Initialization Options](https://github.com/ragardner/tksheet/wiki#4-initialization-options)
+5. [Modifying Table Data and Dimensions](https://github.com/ragardner/tksheet/wiki#5-modifying-table-data-and-dimensions)
+6. [Getting Table Data](https://github.com/ragardner/tksheet/wiki#6-getting-table-data)
+7. [Bindings and Functionality](https://github.com/ragardner/tksheet/wiki#7-bindings-and-functionality)
+8. [Identifying Bound Event Mouse Position](https://github.com/ragardner/tksheet/wiki#8-identifying-bound-event-mouse-position)
+9. [Table Colors](https://github.com/ragardner/tksheet/wiki#9-table-colors)
+10. [Highlighting Cells](https://github.com/ragardner/tksheet/wiki#10-highlighting-cells)
+11. [Text Font and Alignment](https://github.com/ragardner/tksheet/wiki#11-text-font-and-alignment)
+12. [Row Heights and Column Widths](https://github.com/ragardner/tksheet/wiki#12-row-heights-and-column-widths)
+13. [Getting Selected Cells](https://github.com/ragardner/tksheet/wiki#13-getting-selected-cells)
+14. [Modifying Selected Cells](https://github.com/ragardner/tksheet/wiki#14-modifying-selected-cells)
+15. [Modifying and Getting Scroll Positions](https://github.com/ragardner/tksheet/wiki#15-modifying-and-getting-scroll-positions)
+16. [Readonly Cells](https://github.com/ragardner/tksheet/wiki#16-readonly-cells)
+17. [Hiding Columns](https://github.com/ragardner/tksheet/wiki#17-hiding-columns)
+18. [Hiding Table Elements](https://github.com/ragardner/tksheet/wiki#18-hiding-table-elements)
+19. [Cell Text Editor](https://github.com/ragardner/tksheet/wiki#19-cell-text-editor)
+20. [Dropdown Boxes](https://github.com/ragardner/tksheet/wiki#20-dropdown-boxes)
+21. [Check Boxes](https://github.com/ragardner/tksheet/wiki#21-check-boxes)
+22. [Table Options and Other Functions](https://github.com/ragardner/tksheet/wiki#22-table-options-and-other-functions)
+23. [Example Loading Data from Excel](https://github.com/ragardner/tksheet/wiki#23-example-loading-data-from-excel)
+24. [Example Custom Right Click and Text Editor Functionality](https://github.com/ragardner/tksheet/wiki#24-example-custom-right-click-and-text-editor-functionality)
+25. [Example Displaying Selections](https://github.com/ragardner/tksheet/wiki#25-example-displaying-selections)
+26. [Example List Box](https://github.com/ragardner/tksheet/wiki#26-example-list-box)
 
 
 ## 1 About tksheet
@@ -602,7 +602,7 @@ Otherwise you can change the theme using the below function.
 ```python
 change_theme(theme = "light blue")
 ```
- - `theme` (`str`) options (themes) are `light blue`, `light green`, `dark blue` and `dark green`.
+ - `theme` (`str`) options (themes) are `light blue`, `light green`, `dark`, `dark blue` and `dark green`.
 
 ## 10 Highlighting Cells
 

@@ -4909,7 +4909,16 @@ class MainTable(tk.Canvas):
             text = self.data_ref[r][c]
         self.hide_current()
         bg, fg = self.get_widget_bg_fg(r, c if self.all_columns_displayed else self.displayed_columns[c])
-        self.text_editor = TextEditor(self, text = text, font = self.my_font, state = state, width = w, height = h, border_color = self.table_selected_cells_border_fg, show_border = self.show_selected_cells_border, bg = bg, fg = fg)
+        self.text_editor = TextEditor(self, 
+                                      text = text, 
+                                      font = self.my_font, 
+                                      state = state, 
+                                      width = w, 
+                                      height = h, 
+                                      border_color = self.table_selected_cells_border_fg, 
+                                      show_border = self.show_selected_cells_border,
+                                      bg = bg, 
+                                      fg = fg)
         self.text_editor_id = self.create_window((x, y), window = self.text_editor, anchor = "nw")
         if not dropdown:
             self.text_editor.textedit.focus_set()
