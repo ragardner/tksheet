@@ -34,8 +34,6 @@ It works using tkinter canvases to draw and moves lines and text for only the vi
 
 Cell values can be any class with a `str` method.
 
-See the [tests](https://github.com/ragardner/tksheet/tree/master/tests) folder for more examples.
-
 Examples of things that are not possible with tksheet:
  - Cell merging
  - Cell text wrap
