@@ -1,3 +1,7 @@
+### Version 5.3.5
+ - Fix control commands not working when top left has focus
+ - Fix bug when undoing paste where extra rows/columns were added during the paste (disabled by default)
+
 ### Version 5.3.4
  - Unnecessary folder deletion
  - Add new theme `dark`

@@ -361,14 +361,14 @@ class MainTable(tk.Canvas):
     def show_ctrl_outline(self, canvas = "table", start_cell = (0, 0), end_cell = (0, 0)):
         self.create_ctrl_outline(self.col_positions[start_cell[0]] + 1,
                                  self.row_positions[start_cell[1]] + 1,
-                                  self.col_positions[end_cell[0]],
-                                  self.row_positions[end_cell[1]],
-                                  fill = "",
-                                  dash = (25, 5),
-                                  width = 3,
-                                  outline = self.table_selected_cells_border_fg,
-                                  tag = "ctrl")
-        self.after(1000, self.delete_ctrl_outlines)
+                                 self.col_positions[end_cell[0]],
+                                 self.row_positions[end_cell[1]],
+                                 fill = "",
+                                 dash = (10, 15),
+                                 width = 2,
+                                 outline = self.table_selected_cells_border_fg,
+                                 tag = "ctrl")
+        self.after(1500, self.delete_ctrl_outlines)
 
     def create_ctrl_outline(self, x1, y1, x2, y2, fill, dash, width, outline, tag):
         if self.hidd_ctrl_outline:
@@ -647,6 +647,8 @@ class MainTable(tk.Canvas):
                 if self.undo_enabled:
                     undo_storage[(r, dcol)] = f"{self.data_ref[r][dcol]}"
                 self.data_ref[r][dcol] = data[ndr][ndc]
+        if self.expand_sheet_if_paste_too_big and self.undo_enabled:
+            self.equalize_data_row_lengths()
         self.deselect("all")
         if self.undo_enabled:
             self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells_paste",
@@ -1673,58 +1675,58 @@ class MainTable(tk.Canvas):
         if key is None or key == "copy":
             if enable:
                 for s2 in ("c", "C"):
-                    for widget in (self, self.RI, self.CH):
+                    for widget in (self, self.RI, self.CH, self.TL):
                         widget.bind(f"<{'Command' if USER_OS == 'Darwin' else 'Control'}-{s2}>", self.ctrl_c)
                 self.copy_enabled = True
             else:
                 for s1 in ("Control", "Command"):
                     for s2 in ("c", "C"):
-                        for widget in (self, self.RI, self.CH):
+                        for widget in (self, self.RI, self.CH, self.TL):
                             widget.unbind(f"<{s1}-{s2}>")
                 self.copy_enabled = False
         if key is None or key == "cut":
             if enable:
                 for s2 in ("x", "X"):
-                    for widget in (self, self.RI, self.CH):
+                    for widget in (self, self.RI, self.CH, self.TL):
                         widget.bind(f"<{'Command' if USER_OS == 'Darwin' else 'Control'}-{s2}>", self.ctrl_x)
                 self.cut_enabled = True
             else:
                 for s1 in ("Control", "Command"):
                     for s2 in ("x", "X"):
-                        for widget in (self, self.RI, self.CH):
+                        for widget in (self, self.RI, self.CH, self.TL):
                             widget.unbind(f"<{s1}-{s2}>")
                 self.cut_enabled = False
         if key is None or key == "paste":
             if enable:
                 for s2 in ("v", "V"):
-                    for widget in (self, self.RI, self.CH):
+                    for widget in (self, self.RI, self.CH, self.TL):
                         widget.bind(f"<{'Command' if USER_OS == 'Darwin' else 'Control'}-{s2}>", self.ctrl_v)
                 self.paste_enabled = True
             else:
                 for s1 in ("Control", "Command"):
                     for s2 in ("v", "V"):
-                        for widget in (self, self.RI, self.CH):
+                        for widget in (self, self.RI, self.CH, self.TL):
                             widget.unbind(f"<{s1}-{s2}>")
                 self.paste_enabled = False
         if key is None or key == "undo":
             if enable:
                 for s2 in ("z", "Z"):
-                    for widget in (self, self.RI, self.CH):
+                    for widget in (self, self.RI, self.CH, self.TL):
                         widget.bind(f"<{'Command' if USER_OS == 'Darwin' else 'Control'}-{s2}>", self.ctrl_z)
                 self.undo_enabled = True
             else:
                 for s1 in ("Control", "Command"):
                     for s2 in ("z", "Z"):
-                        for widget in (self, self.RI, self.CH):
+                        for widget in (self, self.RI, self.CH, self.TL):
                             widget.unbind(f"<{s1}-{s2}>")
                 self.undo_enabled = False
         if key is None or key == "delete":
             if enable:
-                for widget in (self, self.RI, self.CH):
+                for widget in (self, self.RI, self.CH, self.TL):
                     widget.bind("<Delete>", self.delete_key)
                 self.delete_key_enabled = True
             else:
-                for widget in (self, self.RI, self.CH):
+                for widget in (self, self.RI, self.CH, self.TL):
                     widget.unbind("<Delete>")
                 self.delete_key_enabled = False
         if key is None or key == "edit_cell":
@@ -3477,10 +3479,10 @@ class MainTable(tk.Canvas):
             else:
                 return self.my_row_index
 
-    def total_data_cols(self, exclude_headers = False):
+    def total_data_cols(self, include_headers = True):
         h_total = 0
         d_total = 0
-        if not exclude_headers:
+        if include_headers:
             if isinstance(self.my_hdrs, list):
                 h_total = len(self.my_hdrs)
         try:
@@ -4327,25 +4329,25 @@ class MainTable(tk.Canvas):
             tagr = ("CellSelectFill", f"{r1}_{c1}_{r2}_{c2}")
             tagb = ("CellSelectBorder", f"{r1}_{c1}_{r2}_{c2}")
             taglower = "CellSelectFill"
-            MT_bg = self.table_selected_cells_bg
-            MT_border_col = self.table_selected_cells_border_fg
+            mt_bg = self.table_selected_cells_bg
+            mt_border_col = self.table_selected_cells_border_fg
         elif type_ == "rows":
             tagr = ("RowSelectFill", f"{r1}_{c1}_{r2}_{c2}")
             tagb = ("RowSelectBorder", f"{r1}_{c1}_{r2}_{c2}")
             taglower = "RowSelectFill"
-            MT_bg = self.table_selected_rows_bg
-            MT_border_col = self.table_selected_rows_border_fg
+            mt_bg = self.table_selected_rows_bg
+            mt_border_col = self.table_selected_rows_border_fg
         elif type_ == "cols":
             tagr = ("ColSelectFill", f"{r1}_{c1}_{r2}_{c2}")
             tagb = ("ColSelectBorder", f"{r1}_{c1}_{r2}_{c2}")
             taglower = "ColSelectFill"
-            MT_bg = self.table_selected_columns_bg
-            MT_border_col = self.table_selected_columns_border_fg
+            mt_bg = self.table_selected_columns_bg
+            mt_border_col = self.table_selected_columns_border_fg
         r = self.create_rectangle(self.col_positions[c1],
                                   self.row_positions[r1],
                                   self.canvasx(self.winfo_width()) if self.selected_rows_to_end_of_window else self.col_positions[c2],
                                   self.row_positions[r2],
-                                  fill = MT_bg,
+                                  fill = mt_bg,
                                   outline = "",
                                   tags = tagr)
         self.RI.create_rectangle(0,
@@ -4365,7 +4367,7 @@ class MainTable(tk.Canvas):
         if self.show_selected_cells_border:
             b = self.create_rectangle(self.col_positions[c1], self.row_positions[r1], self.col_positions[c2], self.row_positions[r2],
                                       fill = "",
-                                      outline = MT_border_col,
+                                      outline = mt_border_col,
                                       tags = tagb)
         else:
             b = None

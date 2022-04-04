@@ -30,11 +30,11 @@
 ## 1 About tksheet
 `tksheet` is a Python tkinter table widget written in pure python. It is licensed under the [MIT license](https://github.com/ragardner/tksheet/blob/master/LICENSE.txt).
 
-It works using tkinter canvases to draw and moves lines and text for only the visible portion of the table.
+It works using tkinter canvases and moves lines and text for only the visible portion of the table.
 
 Cell values can be any class with a `str` method.
 
-Examples of things that are not possible with tksheet:
+Some examples of things that are not possible with tksheet:
  - Cell merging
  - Cell text wrap
  - Changing font for individual cells
