@@ -35,6 +35,7 @@ class Sheet(tk.Frame):
                  measure_subset_header = True,
                  default_header = "letters", #letters, numbers or both
                  default_row_index = "numbers", #letters, numbers or both
+                 show_default_header_for_empty = True,
                  page_up_down_select_row = True,
                  expand_sheet_if_paste_too_big = False,
                  paste_insert_column_limit = None,
@@ -181,7 +182,8 @@ class Sheet(tk.Frame):
                                 drag_and_drop_bg = drag_and_drop_bg,
                                 column_drag_and_drop_perform = column_drag_and_drop_perform,
                                 measure_subset_header = measure_subset_header,
-                                resizing_line_fg = resizing_line_fg)
+                                resizing_line_fg = resizing_line_fg,
+                                show_default_header_for_empty = show_default_header_for_empty)
         self.MT = MainTable(self,
                             enable_edit_cell_auto_resize = enable_edit_cell_auto_resize,
                             page_up_down_select_row = page_up_down_select_row,
@@ -420,8 +422,6 @@ class Sheet(tk.Frame):
             self.MT.extra_begin_ctrl_v_func = func
             self.MT.extra_begin_ctrl_z_func = func
             self.MT.extra_begin_delete_key_func = func
-            self.MT.extra_begin_edit_cell_func = func
-            self.MT.extra_begin_edit_cell_func = func
             self.RI.ri_extra_begin_drag_drop_func = func
             self.CH.ch_extra_begin_drag_drop_func = func
             self.MT.extra_begin_del_rows_rc_func = func
@@ -434,8 +434,12 @@ class Sheet(tk.Frame):
             self.MT.extra_end_ctrl_v_func = func
             self.MT.extra_end_ctrl_z_func = func
             self.MT.extra_end_delete_key_func = func
+            
             self.MT.extra_begin_edit_cell_func = func
             self.MT.extra_end_edit_cell_func = func
+            self.CH.extra_begin_edit_cell_func = func
+            self.CH.extra_end_edit_cell_func = func
+            
             self.RI.ri_extra_end_drag_drop_func = func
             self.CH.ch_extra_end_drag_drop_func = func
             self.MT.extra_end_del_rows_rc_func = func
@@ -495,6 +499,11 @@ class Sheet(tk.Frame):
                     self.MT.extra_begin_edit_cell_func = func
                 if binding == "end_edit_cell" or binding == "edit_cell":
                     self.MT.extra_end_edit_cell_func = func
+                    
+                if binding == "begin_edit_header":
+                    self.CH.extra_begin_edit_cell_func = func
+                if binding == "end_edit_header" or binding == "edit_header":
+                    self.CH.extra_end_edit_cell_func = func
 
                 if binding == "begin_row_index_drag_drop":
                     self.RI.ri_extra_begin_drag_drop_func = func
@@ -1322,6 +1331,12 @@ class Sheet(tk.Frame):
                                readonly = readonly)
         if redraw:
             self.redraw()
+            
+    def readonly_header(self, columns = [], readonly = True, redraw = True):
+        self.CH.readonly_cells(columns = columns,
+                               readonly = readonly)
+        if redraw:
+            self.redraw()
 
     def highlight_rows(self, rows = [], bg = None, fg = None, highlight_index = True, redraw = False, end_of_screen = False):
         self.MT.highlight_rows(rows = rows,
@@ -1543,6 +1558,7 @@ class Sheet(tk.Frame):
         self.MT.header_font(newfont)
 
     def set_options(self,
+                    show_default_header_for_empty = None,
                     enable_edit_cell_auto_resize = None,
                     selected_rows_to_end_of_window = None,
                     horizontal_grid_to_end_of_window = None,
@@ -1619,6 +1635,8 @@ class Sheet(tk.Frame):
                     measure_subset_index = None,
                     measure_subset_header = None,
                     redraw = True):
+        if show_default_header_for_empty is not None:
+            self.CH.show_default_header_for_empty = show_default_header_for_empty
         if selected_rows_to_end_of_window is not None:
             self.MT.selected_rows_to_end_of_window = selected_rows_to_end_of_window
         if horizontal_grid_to_end_of_window is not None:
@@ -1721,6 +1739,7 @@ class Sheet(tk.Frame):
             self.MT.show_selected_cells_border = show_selected_cells_border
         if header_bg is not None:
             self.CH.config(background = header_bg)
+            self.CH.header_bg = header_bg
         if header_border_fg is not None:
             self.CH.header_border_fg = header_border_fg
         if header_grid_fg is not None:
@@ -2205,6 +2224,68 @@ class Sheet(tk.Frame):
 
     def refresh(self, redraw_header = True, redraw_row_index = True):
         self.MT.main_table_redraw_grid_and_text(redraw_header = redraw_header, redraw_row_index = redraw_row_index)
+        
+    def create_header_checkbox(self,
+                               c,
+                               checked = False,
+                               state = "normal",
+                               redraw = False,
+                               check_function = None,
+                               text = ""):
+        if isinstance(c, str) and c.lower() == "all":
+            for c_ in range(len(self.MT.total_data_cols())):
+                self.CH.create_checkbox(c = c_,
+                                        checked = checked,
+                                        state = state,
+                                        redraw = redraw,
+                                        check_function = check_function,
+                                        text = text)
+        else:
+            self.CH.create_checkbox(c = c,
+                                    checked = checked,
+                                    state = state,
+                                    redraw = redraw,
+                                    check_function = check_function,
+                                    text = text)
+
+    def click_header_checkbox(self,
+                              c,
+                              checked = None):
+        if c in self.CH.cell_options and 'checkbox' in self.CH.cell_options[c]:
+            if not type(self.MT.my_hdrs[c]) == bool:
+                if checked is None:
+                    self.MT.my_hdrs[c] = False
+                else:
+                    self.MT.my_hdrs[c] = bool(checked)
+            else:
+                self.MT.my_hdrs[c] = not self.MT.my_hdrs[c]
+
+    def get_header_checkboxes(self):
+        return {k: v['checkbox'] for k, v in self.CH.cell_options.items() if 'checkbox' in v}
+
+    def delete_header_checkbox(self, c = 0):
+        if c == "all":
+            for c in self.CH.cell_options:
+                if 'checkbox' in self.CH.cell_options[c]:
+                    self.CH.destroy_checkbox(c)
+        else:
+            self.CH.destroy_checkbox(c)
+
+    def header_checkbox(self,
+                        c,
+                        checked = None,
+                        state = None,
+                        check_function = "",
+                        text = None):
+        if type(checked) == bool:
+            self.headers(newheaders = checked, index = c)
+        if check_function != "":
+            self.CH.cell_options[c]['checkbox']['check_function'] = check_function
+        if state.lower() in ("normal", "disabled"):
+            self.CH.cell_options[c]['checkbox']['state'] = state
+        if text is not None:
+            self.CH.cell_options[c]['checkbox']['text'] = text
+        return {**self.CH.cell_options[c]['checkbox'], 'checked': self.MT.my_hdrs[c]}
 
     def create_checkbox(self,
                         r,
@@ -2212,13 +2293,25 @@ class Sheet(tk.Frame):
                         checked = False,
                         state = "normal",
                         redraw = False,
-                        check_function = None):
-        self.MT.create_checkbox(r = r,
-                                c = c,
-                                checked = checked,
-                                state = state,
-                                redraw = redraw,
-                                check_function = check_function)
+                        check_function = None,
+                        text = ""):
+        if isinstance(r, str) and r.lower() == "all":
+            for r_ in range(len(self.MT.data_ref)):
+                self.MT.create_checkbox(r = r_,
+                                        c = c,
+                                        checked = checked,
+                                        state = state,
+                                        redraw = redraw,
+                                        check_function = check_function,
+                                        text = text)
+        else:
+            self.MT.create_checkbox(r = r,
+                                    c = c,
+                                    checked = checked,
+                                    state = state,
+                                    redraw = redraw,
+                                    check_function = check_function,
+                                    text = text)
 
     def click_checkbox(self,
                        r,
@@ -2249,14 +2342,88 @@ class Sheet(tk.Frame):
                  c,
                  checked = None,
                  state = None,
-                 check_function = ""):
+                 check_function = "",
+                 text = None):
         if type(checked) == bool:
             self.set_cell_data(r, c, checked)
         if check_function != "":
             self.MT.cell_options[(r, c)]['checkbox']['check_function'] = check_function
         if state.lower() in ("normal", "disabled"):
             self.MT.cell_options[(r, c)]['checkbox']['state'] = state
+        if text is not None:
+            self.MT.cell_options[(r, c)]['checkbox']['text'] = text
         return {**self.MT.cell_options[(r, c)]['checkbox'], 'checked': self.MT.data_ref[r][c]}
+    
+    def create_header_dropdown(self,
+                               c = 0,
+                                values = [],
+                                set_value = None,
+                                state = "readonly",
+                                redraw = False,
+                                selection_function = None,
+                                modified_function = None):
+        if isinstance(c, str) and c.lower() == "all":
+            for c_ in range(len(self.MT.total_data_cols())):
+                self.CH.create_dropdown(c = c_,
+                                        values = values,
+                                        set_value = set_value,
+                                        state = state,
+                                        redraw = redraw,
+                                        selection_function = selection_function,
+                                        modified_function = modified_function)
+        else:
+            self.CH.create_dropdown(c = c,
+                                    values = values,
+                                    set_value = set_value,
+                                    state = state,
+                                    redraw = redraw,
+                                    selection_function = selection_function,
+                                    modified_function = modified_function)
+
+    def get_header_dropdown_value(self, c):
+        if 'dropdown' in self.CH.cell_options[c]:
+            return self.MT.my_hdrs[c]
+
+    def get_header_dropdown_values(self, c = 0):
+        return self.CH.cell_options[c]['dropdown']['values']
+
+    def header_dropdown_functions(self, c, selection_function = "", modified_function = ""):
+        if selection_function != "":
+            self.CH.cell_options[c]['dropdown']['select_function'] = selection_function
+        if modified_function != "":
+            self.CH.cell_options[c]['dropdown']['modified_function'] = modified_function
+        return self.CH.cell_options[c]['dropdown']['select_function'], self.CH.cell_options[c]['dropdown']['modified_function']
+
+    def set_header_dropdown_values(self, c = 0, set_existing_dropdown = False, values = [], displayed = None):
+        if set_existing_dropdown:
+            if self.CH.existing_dropdown_window is not None:
+                c_ = self.CH.existing_dropdown_window.c
+            else:
+                raise Exception("No dropdown box is currently open")
+        else:
+            c_ = c
+        self.CH.cell_options[c_]['dropdown']['values'] = values
+        if self.CH.cell_options[c_]['dropdown']['window'] != "no dropdown open":
+            self.CH.cell_options[c_]['dropdown']['window'].values(values)
+        if displayed is not None:
+            self.MT.headers(newheaders = displayed, index = c_)
+
+    def delete_header_dropdown(self, c = 0):
+        if c == "all":
+            for c in self.CH.cell_options:
+                if 'dropdown' in self.CH.cell_options[c]:
+                    self.CH.destroy_dropdown(c)
+        else:
+            self.CH.destroy_dropdown(c)
+
+    def get_header_dropdowns(self):
+        return {k: v['dropdown'] for k, v in self.CH.cell_options.items() if 'dropdown' in v}
+    
+    def open_header_dropdown(self, c):
+        self.CH.display_dropdown_window(c)
+
+    def close_header_dropdown(self, c):
+        self.CH.hide_dropdown_window(c)
 
     def create_dropdown(self,
                         r = 0,
@@ -2329,17 +2496,18 @@ class Sheet(tk.Frame):
     def get_dropdowns(self):
         return {k: v['dropdown'] for k, v in self.MT.cell_options.items() if 'dropdown' in v}
 
-    def refresh_dropdowns(self, dropdowns = []):
-        pass
-
-    def set_all_dropdown_values_to_sheet(self):
-        pass
-
     def open_dropdown(self, r, c):
         self.MT.display_dropdown_window(r, c)
 
     def close_dropdown(self, r, c):
         self.MT.hide_dropdown_window(r, c)
+
+    # deprecated
+    def refresh_dropdowns(self, dropdowns = []):
+        pass
+    # deprecated
+    def set_all_dropdown_values_to_sheet(self):
+        pass
 
 
 class Sheet_Dropdown(Sheet):
@@ -2357,7 +2525,9 @@ class Sheet_Dropdown(Sheet):
                  hide_dropdown_window = None,
                  arrowkey_RIGHT = None,
                  arrowkey_LEFT = None,
-                 align = "w"):
+                 align = "w",
+                 # False for using r, c "r" for r "c" for c
+                 single_index = False):
         Sheet.__init__(self,
                        parent = parent,
                        outline_thickness = 1,
@@ -2394,6 +2564,7 @@ class Sheet_Dropdown(Sheet):
         self.bg = bg
         self.fg = fg
         self.row = -1
+        self.single_index = single_index
         self.bind("<Motion>", self.mouse_motion)
         self.bind("<ButtonPress-1>", self.b1)
         self.bind("<Up>", self.arrowkey_UP)
@@ -2440,10 +2611,16 @@ class Sheet_Dropdown(Sheet):
                 row = next(iter(row))
         else:
             row = self.identify_row(event, exclude_index = True, allow_end = False)
-        if row is None:
-            self.hide_dropdown_window(self.r, self.c)
+        if self.single_index:
+            if row is None:
+                self.hide_dropdown_window(self.r if self.single_index == "r" else self.c)
+            else:
+                self.hide_dropdown_window(self.r if self.single_index == "r" else self.c, self.get_cell_data(row, 0))
         else:
-            self.hide_dropdown_window(self.r, self.c, self.get_cell_data(row, 0))
+            if row is None:
+                self.hide_dropdown_window(self.r, self.c)
+            else:
+                self.hide_dropdown_window(self.r, self.c, self.get_cell_data(row, 0))
 
     def values(self, values = [], redraw = True):
         self.set_sheet_data([[v] for v in values],
@@ -2451,7 +2628,7 @@ class Sheet_Dropdown(Sheet):
                             reset_row_positions = False,
                             redraw = False,
                             verify = False)
-        cws = self.set_all_cell_sizes_to_text(redraw = True)[1]
+        self.set_all_cell_sizes_to_text(redraw = True)
 
 
 

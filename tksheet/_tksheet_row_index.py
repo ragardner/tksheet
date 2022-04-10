@@ -492,7 +492,6 @@ class RowIndex(tk.Canvas):
             self.MT.row_positions[self.rsz_h] = new_row_pos
             new_height = self.MT.row_positions[self.rsz_h] - self.MT.row_positions[self.rsz_h - 1]
             self.MT.recreate_all_selection_boxes()
-            self.MT.refresh_dropdowns()
             self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
             if self.row_height_resize_func is not None and old_height != new_height:
                 self.row_height_resize_func(ResizeEvent("row_height_resize", self.rsz_h - 1, old_height, new_height))
@@ -620,8 +619,6 @@ class RowIndex(tk.Canvas):
 
                     for (t10, t11), t2 in popped_cell.items():
                         self.MT.cell_options[(newrowsdct[t10], t11)] = t2
-
-                    self.MT.refresh_dropdowns()
 
                     self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
                     if self.ri_extra_end_drag_drop_func is not None:
@@ -767,7 +764,6 @@ class RowIndex(tk.Canvas):
             self.MT.row_positions[r_norm] = new_row_pos
             if recreate:
                 self.MT.recreate_all_selection_boxes()
-                self.MT.refresh_dropdowns()
         return new_height
 
     def set_width_of_index_to_text(self, recreate = True):
@@ -835,7 +831,6 @@ class RowIndex(tk.Canvas):
             self.MT.row_positions = list(accumulate(chain([0], (height for r in range(len(self.MT.data_ref))))))
         if recreate:
             self.MT.recreate_all_selection_boxes()
-            self.MT.refresh_dropdowns()
         
     def GetNumLines(self, cell):
         if isinstance(cell, str):
