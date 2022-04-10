@@ -539,6 +539,30 @@ class ColumnHeaders(tk.Canvas):
                     except:
                         extra_func_success = False
                 if extra_func_success:
+                    self.MT.deselect("all")
+                    cws = [int(b - a) for a, b in zip(self.MT.col_positions, islice(self.MT.col_positions, 1, len(self.MT.col_positions)))]
+                    if rm1start > c:
+                        cws = (cws[:c] +
+                               cws[rm1start:rm1start + totalcols] +
+                               cws[c:rm1start] +
+                               cws[rm1start + totalcols:])
+                    else:
+                        cws = (cws[:rm1start] +
+                               cws[rm1start + totalcols:c + 1] +
+                               cws[rm1start:rm1start + totalcols] +
+                               cws[c + 1:])
+                    self.MT.col_positions = list(accumulate(chain([0], (width for width in cws))))
+                    if (c_ - 1) + totalcols > len(self.MT.col_positions) - 1:
+                        new_selected = tuple(range(len(self.MT.col_positions) - 1 - totalcols, len(self.MT.col_positions) - 1))
+                        self.MT.create_selected(0, len(self.MT.col_positions) - 1 - totalcols, len(self.MT.row_positions) - 1, len(self.MT.col_positions) - 1, "cols")
+                    else:
+                        if rm1start > c:
+                            new_selected = tuple(range(c_, c_ + totalcols))
+                            self.MT.create_selected(0, c_, len(self.MT.row_positions) - 1, c_ + totalcols, "cols")
+                        else:
+                            new_selected = tuple(range(c_ + 1 - totalcols, c_ + 1))
+                            self.MT.create_selected(0, c_ + 1 - totalcols, len(self.MT.row_positions) - 1, c_ + 1, "cols")
+                    self.MT.create_current(0, int(new_selected[0]), type_ = "col", inside = True)
                     if self.column_drag_and_drop_perform:
                         if self.MT.all_columns_displayed:
                             if rm1start > c:
@@ -575,57 +599,23 @@ class ColumnHeaders(tk.Canvas):
                             popped_ch = {t1: t2 for t1, t2 in self.cell_options.items() if t1 in colset}
                             popped_cell = {t1: t2 for t1, t2 in self.MT.cell_options.items() if t1[1] in colset}
                             popped_col = {t1: t2 for t1, t2 in self.MT.col_options.items() if t1 in colset}
-                            
                             popped_ch = {t1: self.cell_options.pop(t1) for t1 in popped_ch}
                             popped_cell = {t1: self.MT.cell_options.pop(t1) for t1 in popped_cell}
                             popped_col = {t1: self.MT.col_options.pop(t1) for t1 in popped_col}
-
                             self.cell_options = {t1 if t1 < rm1start else t1 - totalcols: t2 for t1, t2 in self.cell_options.items()}
                             self.cell_options = {t1 if t1 < c_ else t1 + totalcols: t2 for t1, t2 in self.cell_options.items()}
-
                             self.MT.col_options = {t1 if t1 < rm1start else t1 - totalcols: t2 for t1, t2 in self.MT.col_options.items()}
                             self.MT.col_options = {t1 if t1 < c_ else t1 + totalcols: t2 for t1, t2 in self.MT.col_options.items()}
-
                             self.MT.cell_options = {(t10, t11 if t11 < rm1start else t11 - totalcols): t2 for (t10, t11), t2 in self.MT.cell_options.items()}
                             self.MT.cell_options = {(t10, t11 if t11 < c_ else t11 + totalcols): t2 for (t10, t11), t2 in self.MT.cell_options.items()}
-
                             newcolsdct = {t1: t2 for t1, t2 in zip(colsiter, new_selected)}
                             for t1, t2 in popped_ch.items():
                                 self.cell_options[newcolsdct[t1]] = t2
-
                             for t1, t2 in popped_col.items():
                                 self.MT.col_options[newcolsdct[t1]] = t2
-
                             for (t10, t11), t2 in popped_cell.items():
                                 self.MT.cell_options[(t10, newcolsdct[t11])] = t2
                             dispset = {}
-                            #quick_range = rm1start + totalcols
-                            #if rm1start > c:
-                            #    for rn in range(len(self.MT.data_ref)):
-                            #        for ctr, cint in enumerate(range(rm1start, quick_range)):
-                            #            try:
-                            #                self.MT.data_ref[rn].insert(c + ctr, self.MT.data_ref[rn].pop(cint))
-                            #            except:
-                            #                continue
-                            #    if isinstance(self.MT.my_hdrs, list) and self.MT.my_hdrs:
-                            #        for ctr, cint in enumerate(range(rm1start, quick_range)):
-                            #            try:
-                            #                self.MT.my_hdrs.insert(c + ctr, self.MT.my_hdrs.pop(cint))
-                            #            except:
-                            #                continue
-                            #else:
-                            #    for rn in range(len(self.MT.data_ref)):
-                            #        for cint in range(rm1start, quick_range):
-                            #            try:
-                            #                self.MT.data_ref[rn].insert(c, self.MT.data_ref[rn].pop(rm1start))
-                            #            except:
-                            #                continue
-                            #    if isinstance(self.MT.my_hdrs, list) and self.MT.my_hdrs:
-                            #        for cint in range(rm1start, quick_range):
-                            #            try:
-                            #                self.MT.my_hdrs.insert(c, self.MT.my_hdrs.pop(rm1start))
-                            #            except:
-                            #                continue
                         else:
                             # moves data around, not displayed columns indexes
                             # which remain sorted and the same after drop and drop
@@ -674,48 +664,19 @@ class ColumnHeaders(tk.Canvas):
                                     else:
                                         idx += 1
                                 self.MT.my_hdrs = new
-                            
                             dispset = {b: a for a, b in dispset.items()}
                             popped_ch = {t1: t2 for t1, t2 in self.cell_options.items() if t1 in dispset}
                             popped_cell = {t1: t2 for t1, t2 in self.MT.cell_options.items() if t1[1] in dispset}
                             popped_col = {t1: t2 for t1, t2 in self.MT.col_options.items() if t1 in dispset}
-                            
                             popped_ch = {t1: self.cell_options.pop(t1) for t1 in popped_ch}
                             popped_cell = {t1: self.MT.cell_options.pop(t1) for t1 in popped_cell}
                             popped_col = {t1: self.MT.col_options.pop(t1) for t1 in popped_col}
-
                             for t1 in popped_ch:
                                 self.cell_options[dispset[t1]] = popped_ch[t1]
                             for t1 in popped_cell:
                                 self.MT.cell_options[(t1[0], dispset[t1[1]])] = popped_cell[t1]
                             for t1 in popped_col:
                                 self.MT.col_options[dispset[t1]] = popped_col[t1]
-                                
-                    cws = [int(b - a) for a, b in zip(self.MT.col_positions, islice(self.MT.col_positions, 1, len(self.MT.col_positions)))]
-                    if rm1start > c:
-                        cws = (cws[:c] +
-                               cws[rm1start:rm1start + totalcols] +
-                               cws[c:rm1start] +
-                               cws[rm1start + totalcols:])
-                    else:
-                        cws = (cws[:rm1start] +
-                               cws[rm1start + totalcols:c + 1] +
-                               cws[rm1start:rm1start + totalcols] +
-                               cws[c + 1:])
-                    
-                    self.MT.col_positions = list(accumulate(chain([0], (width for width in cws))))
-                    self.MT.deselect("all")
-                    if (c_ - 1) + totalcols > len(self.MT.col_positions) - 1:
-                        new_selected = tuple(range(len(self.MT.col_positions) - 1 - totalcols, len(self.MT.col_positions) - 1))
-                        self.MT.create_selected(0, len(self.MT.col_positions) - 1 - totalcols, len(self.MT.row_positions) - 1, len(self.MT.col_positions) - 1, "cols")
-                    else:
-                        if rm1start > c:
-                            new_selected = tuple(range(c_, c_ + totalcols))
-                            self.MT.create_selected(0, c_, len(self.MT.row_positions) - 1, c_ + totalcols, "cols")
-                        else:
-                            new_selected = tuple(range(c_ + 1 - totalcols, c_ + 1))
-                            self.MT.create_selected(0, c_ + 1 - totalcols, len(self.MT.row_positions) - 1, c_ + 1, "cols")
-                    self.MT.create_current(0, int(new_selected[0]), type_ = "col", inside = True)
                     if self.MT.undo_enabled:
                         self.MT.undo_storage.append(zlib.compress(pickle.dumps(("move_cols",
                                                                                 int(orig_selected_cols[0]),

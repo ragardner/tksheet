@@ -4179,40 +4179,40 @@ class MainTable(tk.Canvas):
                                             break
                     except:
                         continue
-        #try:
-        self.tag_raise("t")
-        for t, sh in self.hidd_text.items():
-            if sh:
-                self.itemconfig(t, state = "hidden")
-                self.hidd_text[t] = False
-        for t, sh in self.hidd_high.items():
-            if sh:
-                self.itemconfig(t, state = "hidden")
-                self.hidd_high[t] = False
-        for t, sh in self.hidd_grid.items():
-            if sh:
-                self.itemconfig(t, state = "hidden")
-                self.hidd_grid[t] = False
-        for t, sh in self.hidd_dropdown.items():
-            if sh:
-                self.itemconfig(t, state = "hidden")
-                self.hidd_dropdown[t] = False
-        for t, sh in self.hidd_checkbox.items():
-            if sh:
-                self.itemconfig(t, state = "hidden")
-                self.hidd_checkbox[t] = False
-        if redraw_header and self.show_header:
-            self.CH.redraw_grid_and_text(last_col_line_pos, x1, x_stop, start_col, end_col, selected_cols, actual_selected_rows, actual_selected_cols)
-        if redraw_row_index and self.show_index:
-            self.RI.redraw_grid_and_text(last_row_line_pos, y1, y_stop, start_row, end_row + 1, y2, x1, x_stop, selected_rows, actual_selected_cols, actual_selected_rows)
-        if self.show_selected_cells_border:
-            self.tag_raise("CellSelectBorder")
-            self.tag_raise("Current_Inside")
-            self.tag_raise("Current_Outside")
-            self.tag_raise("RowSelectBorder")
-            self.tag_raise("ColSelectBorder")
-        #except:
-            #return False
+        try:
+            self.tag_raise("t")
+            for t, sh in self.hidd_text.items():
+                if sh:
+                    self.itemconfig(t, state = "hidden")
+                    self.hidd_text[t] = False
+            for t, sh in self.hidd_high.items():
+                if sh:
+                    self.itemconfig(t, state = "hidden")
+                    self.hidd_high[t] = False
+            for t, sh in self.hidd_grid.items():
+                if sh:
+                    self.itemconfig(t, state = "hidden")
+                    self.hidd_grid[t] = False
+            for t, sh in self.hidd_dropdown.items():
+                if sh:
+                    self.itemconfig(t, state = "hidden")
+                    self.hidd_dropdown[t] = False
+            for t, sh in self.hidd_checkbox.items():
+                if sh:
+                    self.itemconfig(t, state = "hidden")
+                    self.hidd_checkbox[t] = False
+            if redraw_header and self.show_header:
+                self.CH.redraw_grid_and_text(last_col_line_pos, x1, x_stop, start_col, end_col, selected_cols, actual_selected_rows, actual_selected_cols)
+            if redraw_row_index and self.show_index:
+                self.RI.redraw_grid_and_text(last_row_line_pos, y1, y_stop, start_row, end_row + 1, y2, x1, x_stop, selected_rows, actual_selected_cols, actual_selected_rows)
+            if self.show_selected_cells_border:
+                self.tag_raise("CellSelectBorder")
+                self.tag_raise("Current_Inside")
+                self.tag_raise("Current_Outside")
+                self.tag_raise("RowSelectBorder")
+                self.tag_raise("ColSelectBorder")
+        except:
+            return False
         return True
 
     def get_all_selection_items(self):
