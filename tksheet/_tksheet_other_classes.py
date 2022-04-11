@@ -1,15 +1,7 @@
 from ._tksheet_vars import *
-from collections import defaultdict, deque, namedtuple
-from itertools import islice, repeat, accumulate, chain, product, cycle
-from math import floor, ceil
-from tkinter import ttk
-import bisect
-import csv as csv_module
-import io
-import pickle
-import re
+from collections import namedtuple
+from itertools import islice
 import tkinter as tk
-import zlib
 # for mac bindings
 from platform import system as get_os
 USER_OS = f"{get_os()}"
@@ -31,6 +23,7 @@ EditIndexEvent = namedtuple("EditIndexEvent", "row key text eventname")
 BeginDragDropEvent = namedtuple("BeginDragDropEvent", "eventname columnstomove movedto")
 EndDragDropEvent = namedtuple("EndDragDropEvent", "eventname oldindexes newindexes movedto")
 ResizeEvent = namedtuple("ResizeEvent", "eventname index oldsize newsize")
+DropDownModifiedEvent = namedtuple("DropDownModifiedEvent", "eventname row column value")
 
 
 class TextEditor_(tk.Text):

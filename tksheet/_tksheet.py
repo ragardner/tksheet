@@ -5,19 +5,10 @@ from ._tksheet_column_headers import *
 from ._tksheet_row_index import *
 from ._tksheet_main_table import *
 
-from collections import defaultdict, deque, namedtuple
-from itertools import islice, repeat, accumulate, chain, product, cycle
-from math import floor, ceil
+from collections import deque
+from itertools import islice, repeat, accumulate, chain
 from tkinter import ttk
-import bisect
-import csv as csv_module
-import io
-import pickle
-import re
 import tkinter as tk
-import zlib
-# for mac bindings
-from platform import system as get_os
 
 
 class Sheet(tk.Frame):
@@ -32,7 +23,6 @@ class Sheet(tk.Frame):
                  width = None,
                  height = None,
                  headers = None,
-                 measure_subset_header = True,
                  default_header = "letters", #letters, numbers or both
                  default_row_index = "numbers", #letters, numbers or both
                  show_default_header_for_empty = True,
@@ -40,6 +30,7 @@ class Sheet(tk.Frame):
                  expand_sheet_if_paste_too_big = False,
                  paste_insert_column_limit = None,
                  paste_insert_row_limit = None,
+                 ctrl_keys_over_dropdowns_enabled = False,
                  arrow_key_down_right_scroll_page = False,
                  enable_edit_cell_auto_resize = True,
                  data_reference = None,
@@ -55,7 +46,6 @@ class Sheet(tk.Frame):
                  max_header_height = "inf",
                  max_row_width = "inf",
                  row_index = None,
-                 measure_subset_index = True,
                  after_redraw_time_ms = 100,
                  row_index_width = 100,
                  auto_resize_default_row_index = True,
@@ -128,7 +118,8 @@ class Sheet(tk.Frame):
                           parent,
                           background = frame_bg,
                           highlightthickness = outline_thickness,
-                          highlightbackground = outline_color)
+                          highlightbackground = outline_color,
+                          highlightcolor = outline_color)
         self.C = parent
         self.dropdown_class = Sheet_Dropdown
         self.after_redraw_id = None
@@ -163,7 +154,6 @@ class Sheet(tk.Frame):
                            resizing_line_fg = resizing_line_fg,
                            row_drag_and_drop_perform = row_drag_and_drop_perform,
                            default_row_index = default_row_index,
-                           measure_subset_index = measure_subset_index,
                            auto_resize_width = auto_resize_default_row_index)
         self.CH = ColumnHeaders(self,
                                 max_colwidth = max_colwidth,
@@ -181,7 +171,6 @@ class Sheet(tk.Frame):
                                 header_hidden_columns_expander_bg = header_hidden_columns_expander_bg,
                                 drag_and_drop_bg = drag_and_drop_bg,
                                 column_drag_and_drop_perform = column_drag_and_drop_perform,
-                                measure_subset_header = measure_subset_header,
                                 resizing_line_fg = resizing_line_fg,
                                 show_default_header_for_empty = show_default_header_for_empty)
         self.MT = MainTable(self,
@@ -190,6 +179,7 @@ class Sheet(tk.Frame):
                             expand_sheet_if_paste_too_big = expand_sheet_if_paste_too_big,
                             paste_insert_column_limit = paste_insert_column_limit,
                             paste_insert_row_limit = paste_insert_row_limit,
+                            ctrl_keys_over_dropdowns_enabled = ctrl_keys_over_dropdowns_enabled,
                             arrow_key_down_right_scroll_page = arrow_key_down_right_scroll_page,
                             display_selected_fg_over_highlights = display_selected_fg_over_highlights,
                             show_vertical_grid = show_vertical_grid,
@@ -650,10 +640,10 @@ class Sheet(tk.Frame):
             self.RI.unbind(binding)
             self.TL.unbind(binding)
 
-    def enable_bindings(self, bindings = "all"):
+    def enable_bindings(self, *bindings):
         self.MT.enable_bindings(bindings)
 
-    def disable_bindings(self, bindings = "all"):
+    def disable_bindings(self, *bindings):
         self.MT.disable_bindings(bindings)
 
     def basic_bindings(self, enable = False):
@@ -1312,19 +1302,19 @@ class Sheet(tk.Frame):
         if redraw:
             self.redraw()
 
-    def readonly_rows(self, rows = [], readonly = True, redraw = True):
+    def readonly_rows(self, rows = [], readonly = True, redraw = False):
         self.MT.readonly_rows(rows = rows,
                               readonly = readonly)
         if redraw:
             self.redraw()
 
-    def readonly_columns(self, columns = [], readonly = True, redraw = True):
+    def readonly_columns(self, columns = [], readonly = True, redraw = False):
         self.MT.readonly_columns(columns = columns,
                                  readonly = readonly)
         if redraw:
             self.redraw()
 
-    def readonly_cells(self, row = 0, column = 0, cells = [], readonly = True, redraw = True):
+    def readonly_cells(self, row = 0, column = 0, cells = [], readonly = True, redraw = False):
         self.MT.readonly_cells(row = row,
                                column = column,
                                cells = cells,
@@ -1332,9 +1322,9 @@ class Sheet(tk.Frame):
         if redraw:
             self.redraw()
             
-    def readonly_header(self, columns = [], readonly = True, redraw = True):
-        self.CH.readonly_cells(columns = columns,
-                               readonly = readonly)
+    def readonly_header(self, columns = [], readonly = True, redraw = False):
+        self.CH.readonly_header(columns = columns,
+                                readonly = readonly)
         if redraw:
             self.redraw()
 
@@ -1558,242 +1548,164 @@ class Sheet(tk.Frame):
         self.MT.header_font(newfont)
 
     def set_options(self,
-                    show_default_header_for_empty = None,
-                    enable_edit_cell_auto_resize = None,
-                    selected_rows_to_end_of_window = None,
-                    horizontal_grid_to_end_of_window = None,
-                    vertical_grid_to_end_of_window = None,
-                    page_up_down_select_row = None,
-                    expand_sheet_if_paste_too_big = None,
-                    paste_insert_column_limit = None,
-                    paste_insert_row_limit = None,
-                    arrow_key_down_right_scroll_page = None,
-                    display_selected_fg_over_highlights = None,
-                    empty_horizontal = None,
-                    empty_vertical = None,
-                    show_horizontal_grid = None,
-                    show_vertical_grid = None,
-                    top_left_fg_highlight = None,
-                    auto_resize_default_row_index = None,
-                    font = None,
-                    default_header = None,
-                    default_row_index = None,
-                    header_font = None,
-                    show_selected_cells_border = None,
-                    theme = None,
-                    max_colwidth = None,
-                    max_row_height = None,
-                    max_header_height = None,
-                    max_row_width = None,
-                    header_height = None,
-                    row_height = None,
-                    column_width = None,
-                    header_bg = None,
-                    header_border_fg = None,
-                    header_grid_fg = None,
-                    header_fg = None,
-                    header_selected_cells_bg = None,
-                    header_selected_cells_fg = None,
-                    header_hidden_columns_expander_bg = None,
-                    index_bg = None,
-                    index_border_fg = None,
-                    index_grid_fg = None,
-                    index_fg = None,
-                    index_selected_cells_bg = None,
-                    index_selected_cells_fg = None,
-                    index_hidden_rows_expander_bg = None,
-                    top_left_bg = None,
-                    top_left_fg = None,
-                    frame_bg = None,
-                    table_bg = None,
-                    table_grid_fg = None,
-                    table_fg = None,
-                    table_selected_cells_border_fg = None,
-                    table_selected_cells_bg = None,
-                    table_selected_cells_fg = None,
-                    resizing_line_fg = None,
-                    drag_and_drop_bg = None,
-                    outline_thickness = None,
-                    outline_color = None,
-                    header_selected_columns_bg = None,
-                    header_selected_columns_fg = None,
-                    index_selected_rows_bg = None,
-                    index_selected_rows_fg = None,
-                    table_selected_rows_border_fg = None,
-                    table_selected_rows_bg = None,
-                    table_selected_rows_fg = None,
-                    table_selected_columns_border_fg = None,
-                    table_selected_columns_bg = None,
-                    table_selected_columns_fg = None,
-                    popup_menu_font = None,
-                    popup_menu_fg = None,
-                    popup_menu_bg = None,
-                    popup_menu_highlight_bg = None,
-                    popup_menu_highlight_fg = None,
-                    row_drag_and_drop_perform = None,
-                    column_drag_and_drop_perform = None,
-                    measure_subset_index = None,
-                    measure_subset_header = None,
-                    redraw = True):
-        if show_default_header_for_empty is not None:
-            self.CH.show_default_header_for_empty = show_default_header_for_empty
-        if selected_rows_to_end_of_window is not None:
-            self.MT.selected_rows_to_end_of_window = selected_rows_to_end_of_window
-        if horizontal_grid_to_end_of_window is not None:
-            self.MT.horizontal_grid_to_end_of_window = horizontal_grid_to_end_of_window
-        if vertical_grid_to_end_of_window is not None:
-            self.MT.vertical_grid_to_end_of_window = vertical_grid_to_end_of_window
-        if paste_insert_column_limit is not None:
-            self.MT.paste_insert_column_limit = paste_insert_column_limit
-        if paste_insert_row_limit is not None:
-            self.MT.paste_insert_row_limit = paste_insert_row_limit
-        if expand_sheet_if_paste_too_big is not None:
-            self.MT.expand_sheet_if_paste_too_big = expand_sheet_if_paste_too_big
-        if arrow_key_down_right_scroll_page is not None:
-            self.MT.arrow_key_down_right_scroll_page = arrow_key_down_right_scroll_page
-        if enable_edit_cell_auto_resize is not None:
-            self.MT.cell_auto_resize_enabled = enable_edit_cell_auto_resize
-        if header_hidden_columns_expander_bg is not None:
-            self.CH.header_hidden_columns_expander_bg = header_hidden_columns_expander_bg
-        if index_hidden_rows_expander_bg is not None:
-            self.RI.index_hidden_rows_expander_bg = index_hidden_rows_expander_bg
-        if page_up_down_select_row is not None:
-            self.MT.page_up_down_select_row = page_up_down_select_row
-        if display_selected_fg_over_highlights is not None:
-            self.MT.display_selected_fg_over_highlights = display_selected_fg_over_highlights
-        if show_horizontal_grid is not None:
-            self.MT.show_horizontal_grid = show_horizontal_grid
-        if show_vertical_grid is not None:
-            self.MT.show_vertical_grid = show_vertical_grid
-        if empty_horizontal is not None:
-            self.MT.empty_horizontal = empty_horizontal
-        if empty_vertical is not None:
-            self.MT.empty_vertical = empty_vertical
-        if row_height is not None:
-            self.MT.default_rh = (row_height if isinstance(row_height, str) else "pixels", row_height if isinstance(row_height, int) else self.MT.GetLinesHeight(int(row_height)))
-        if column_width is not None:
-            self.MT.default_cw = self.MT.min_cw + 20 if column_width < self.MT.min_cw else int(column_width)
-        if header_height is not None:
-            self.MT.default_hh = (header_height if isinstance(header_height, str) else "pixels", header_height if isinstance(header_height, int) else self.MT.GetHdrLinesHeight(int(header_height)))
-        if measure_subset_index is not None:
-            self.RI.measure_subset_index = measure_subset_index
-        if measure_subset_header is not None:
-            self.CH.measure_subset_hdr = measure_subset_header
-        if row_drag_and_drop_perform is not None:
-            self.RI.row_drag_and_drop_perform = row_drag_and_drop_perform
-        if column_drag_and_drop_perform is not None:
-            self.CH.column_drag_and_drop_perform = column_drag_and_drop_perform
-        if popup_menu_font is not None:
-            self.MT.popup_menu_font = popup_menu_font
-        if popup_menu_fg is not None:
-            self.MT.popup_menu_fg = popup_menu_fg
-        if popup_menu_bg is not None:
-            self.MT.popup_menu_bg = popup_menu_bg
-        if popup_menu_highlight_bg is not None:
-            self.MT.popup_menu_highlight_bg = popup_menu_highlight_bg
-        if popup_menu_highlight_fg is not None:
-            self.MT.popup_menu_highlight_fg = popup_menu_highlight_fg
-        if top_left_fg_highlight is not None:
-            self.TL.top_left_fg_highlight = top_left_fg_highlight
-        if auto_resize_default_row_index is not None:
-            self.RI.auto_resize_width = auto_resize_default_row_index
-        if header_selected_columns_bg is not None:
-            self.CH.header_selected_columns_bg = header_selected_columns_bg
-        if header_selected_columns_fg is not None:
-            self.CH.header_selected_columns_fg = header_selected_columns_fg
-        if index_selected_rows_bg is not None:
-            self.RI.index_selected_rows_bg = index_selected_rows_bg
-        if index_selected_rows_fg is not None:
-            self.RI.index_selected_rows_fg = index_selected_rows_fg
-        if table_selected_rows_border_fg is not None:
-            self.MT.table_selected_rows_border_fg = table_selected_rows_border_fg
-        if table_selected_rows_bg is not None:
-            self.MT.table_selected_rows_bg = table_selected_rows_bg
-        if table_selected_rows_fg is not None:
-            self.MT.table_selected_rows_fg = table_selected_rows_fg
-        if table_selected_columns_border_fg is not None:
-            self.MT.table_selected_columns_border_fg = table_selected_columns_border_fg
-        if table_selected_columns_bg is not None:
-            self.MT.table_selected_columns_bg = table_selected_columns_bg
-        if table_selected_columns_fg is not None:
-            self.MT.table_selected_columns_fg = table_selected_columns_fg 
-        if default_header is not None:
-            self.CH.default_hdr = default_header.lower()
-        if default_row_index is not None:
-            self.RI.default_index = default_row_index.lower()
-        if max_colwidth is not None:
-            self.CH.max_cw = float(max_colwidth)
-        if max_row_height is not None:
-            self.RI.max_rh = float(max_row_height)
-        if max_header_height is not None:
-            self.CH.max_header_height = float(max_header_height)
-        if max_row_width is not None:
-            self.RI.max_row_width = float(max_row_width)
-        if font is not None:
-            self.MT.font(font)
-        if header_font is not None:
-            self.MT.header_font(header_font)
-        if theme is not None:
-            self.change_theme(theme)
-        if show_selected_cells_border is not None:
-            self.MT.show_selected_cells_border = show_selected_cells_border
-        if header_bg is not None:
-            self.CH.config(background = header_bg)
-            self.CH.header_bg = header_bg
-        if header_border_fg is not None:
-            self.CH.header_border_fg = header_border_fg
-        if header_grid_fg is not None:
-            self.CH.header_grid_fg = header_grid_fg
-        if header_fg is not None:
-            self.CH.header_fg = header_fg
-        if header_selected_cells_bg is not None:
-            self.CH.header_selected_cells_bg = header_selected_cells_bg
-        if header_selected_cells_fg is not None:
-            self.CH.header_selected_cells_fg = header_selected_cells_fg
-        if index_bg is not None:
-            self.RI.config(background = index_bg)
-        if index_border_fg is not None:
-            self.RI.index_border_fg = index_border_fg
-        if index_grid_fg is not None:
-            self.RI.index_grid_fg = index_grid_fg
-        if index_fg is not None:
-            self.RI.index_fg = index_fg
-        if index_selected_cells_bg is not None:
-            self.RI.index_selected_cells_bg = index_selected_cells_bg
-        if index_selected_cells_fg is not None:
-            self.RI.index_selected_cells_fg = index_selected_cells_fg
-        if top_left_bg is not None:
-            self.TL.config(background = top_left_bg)
-        if top_left_fg is not None:
-            self.TL.top_left_fg = top_left_fg
-            self.TL.itemconfig("rw", fill = top_left_fg)
-            self.TL.itemconfig("rh", fill = top_left_fg)
-        
-        if frame_bg is not None:
-            self.config(background = frame_bg)
-        if table_bg is not None:
-            self.MT.config(background = table_bg)
-            self.MT.table_bg = table_bg
-        if table_grid_fg is not None:
-            self.MT.table_grid_fg = table_grid_fg
-        if table_fg is not None:
-            self.MT.table_fg = table_fg
-        if table_selected_cells_border_fg is not None:
-            self.MT.table_selected_cells_border_fg = table_selected_cells_border_fg
-        if table_selected_cells_bg is not None:
-            self.MT.table_selected_cells_bg = table_selected_cells_bg
-        if table_selected_cells_fg is not None:
-            self.MT.table_selected_cells_fg = table_selected_cells_fg
-        if resizing_line_fg is not None:
-            self.CH.resizing_line_fg = resizing_line_fg
-            self.RI.resizing_line_fg = resizing_line_fg
-        if drag_and_drop_bg is not None:
-            self.CH.drag_and_drop_bg = drag_and_drop_bg
-            self.RI.drag_and_drop_bg = drag_and_drop_bg
-        if outline_thickness is not None:
-            self.config(highlightthickness = outline_thickness)
-        if outline_color is not None:
-            self.config(highlightbackground = outline_color)
+                    redraw = True,
+                    **kwargs):
+        if 'ctrl_keys_over_dropdowns_enabled' in kwargs:
+            self.MT.ctrl_keys_over_dropdowns_enabled = kwargs['ctrl_keys_over_dropdowns_enabled']
+        if 'show_default_header_for_empty' in kwargs:
+            self.CH.show_default_header_for_empty = kwargs['show_default_header_for_empty']
+        if 'selected_rows_to_end_of_window' in kwargs:
+            self.MT.selected_rows_to_end_of_window = kwargs['selected_rows_to_end_of_window']
+        if 'horizontal_grid_to_end_of_window' in kwargs:
+            self.MT.horizontal_grid_to_end_of_window = kwargs['horizontal_grid_to_end_of_window']
+        if 'vertical_grid_to_end_of_window' in kwargs:
+            self.MT.vertical_grid_to_end_of_window = kwargs['vertical_grid_to_end_of_window']
+        if 'paste_insert_column_limit' in kwargs:
+            self.MT.paste_insert_column_limit = kwargs['paste_insert_column_limit']
+        if 'paste_insert_row_limit' in kwargs:
+            self.MT.paste_insert_row_limit = kwargs['paste_insert_row_limit']
+        if 'expand_sheet_if_paste_too_big' in kwargs:
+            self.MT.expand_sheet_if_paste_too_big = kwargs['expand_sheet_if_paste_too_big']
+        if 'arrow_key_down_right_scroll_page' in kwargs:
+            self.MT.arrow_key_down_right_scroll_page = kwargs['arrow_key_down_right_scroll_page']
+        if 'enable_edit_cell_auto_resize' in kwargs:
+            self.MT.cell_auto_resize_enabled = kwargs['enable_edit_cell_auto_resize']
+        if 'header_hidden_columns_expander_bg' in kwargs:
+            self.CH.header_hidden_columns_expander_bg = kwargs['header_hidden_columns_expander_bg']
+        if 'index_hidden_rows_expander_bg' in kwargs:
+            self.RI.index_hidden_rows_expander_bg = kwargs['index_hidden_rows_expander_bg']
+        if 'page_up_down_select_row' in kwargs:
+            self.MT.page_up_down_select_row = kwargs['page_up_down_select_row']
+        if 'display_selected_fg_over_highlights' in kwargs:
+            self.MT.display_selected_fg_over_highlights = kwargs['display_selected_fg_over_highlights']
+        if 'show_horizontal_grid' in kwargs:
+            self.MT.show_horizontal_grid = kwargs['show_horizontal_grid']
+        if 'show_vertical_grid' in kwargs:
+            self.MT.show_vertical_grid = kwargs['show_vertical_grid']
+        if 'empty_horizontal' in kwargs:
+            self.MT.empty_horizontal = kwargs['empty_horizontal']
+        if 'empty_vertical' in kwargs:
+            self.MT.empty_vertical = kwargs['empty_vertical']
+        if 'row_height' in kwargs:
+            self.MT.default_rh = (kwargs['row_height'] if isinstance(kwargs['row_height'], str) else "pixels", kwargs['row_height'] if isinstance(kwargs['row_height'], int) else self.MT.GetLinesHeight(int(kwargs['row_height'])))
+        if 'column_width' in kwargs:
+            self.MT.default_cw = self.MT.min_cw + 20 if kwargs['column_width'] < self.MT.min_cw else int(kwargs['column_width'])
+        if 'header_height' in kwargs:
+            self.MT.default_hh = (kwargs['header_height'] if isinstance(kwargs['header_height'], str) else "pixels", kwargs['header_height'] if isinstance(kwargs['header_height'], int) else self.MT.GetHdrLinesHeight(int(kwargs['header_height'])))
+        if 'row_drag_and_drop_perform' in kwargs:
+            self.RI.row_drag_and_drop_perform = kwargs['row_drag_and_drop_perform']
+        if 'column_drag_and_drop_perform' in kwargs:
+            self.CH.column_drag_and_drop_perform = kwargs['column_drag_and_drop_perform']
+        if 'popup_menu_font' in kwargs:
+            self.MT.popup_menu_font = kwargs['popup_menu_font']
+        if 'popup_menu_fg' in kwargs:
+            self.MT.popup_menu_fg = kwargs['popup_menu_fg']
+        if 'popup_menu_bg' in kwargs:
+            self.MT.popup_menu_bg = kwargs['popup_menu_bg']
+        if 'popup_menu_highlight_bg' in kwargs:
+            self.MT.popup_menu_highlight_bg = kwargs['popup_menu_highlight_bg']
+        if 'popup_menu_highlight_fg' in kwargs:
+            self.MT.popup_menu_highlight_fg = kwargs['popup_menu_highlight_fg']
+        if 'top_left_fg_highlight' in kwargs:
+            self.TL.top_left_fg_highlight = kwargs['top_left_fg_highlight']
+        if 'auto_resize_default_row_index' in kwargs:
+            self.RI.auto_resize_width = kwargs['auto_resize_default_row_index']
+        if 'header_selected_columns_bg' in kwargs:
+            self.CH.header_selected_columns_bg = kwargs['header_selected_columns_bg']
+        if 'header_selected_columns_fg' in kwargs:
+            self.CH.header_selected_columns_fg = kwargs['header_selected_columns_fg']
+        if 'index_selected_rows_bg' in kwargs:
+            self.RI.index_selected_rows_bg = kwargs['index_selected_rows_bg']
+        if 'index_selected_rows_fg' in kwargs:
+            self.RI.index_selected_rows_fg = kwargs['index_selected_rows_fg']
+        if 'table_selected_rows_border_fg' in kwargs:
+            self.MT.table_selected_rows_border_fg = kwargs['table_selected_rows_border_fg']
+        if 'table_selected_rows_bg' in kwargs:
+            self.MT.table_selected_rows_bg = kwargs['table_selected_rows_bg']
+        if 'table_selected_rows_fg' in kwargs:
+            self.MT.table_selected_rows_fg = kwargs['table_selected_rows_fg']
+        if 'table_selected_columns_border_fg' in kwargs:
+            self.MT.table_selected_columns_border_fg = kwargs['table_selected_columns_border_fg']
+        if 'table_selected_columns_bg' in kwargs:
+            self.MT.table_selected_columns_bg = kwargs['table_selected_columns_bg']
+        if 'table_selected_columns_fg' in kwargs:
+            self.MT.table_selected_columns_fg = kwargs['table_selected_columns_fg']
+        if 'default_header' in kwargs:
+            self.CH.default_hdr = kwargs['default_header'].lower()
+        if 'default_row_index' in kwargs:
+            self.RI.default_index = kwargs['default_row_index'].lower()
+        if 'max_colwidth' in kwargs:
+            self.CH.max_cw = float(kwargs['max_colwidth'])
+        if 'max_row_height' in kwargs:
+            self.RI.max_rh = float(kwargs['max_row_height'])
+        if 'max_header_height' in kwargs:
+            self.CH.max_header_height = float(kwargs['max_header_height'])
+        if 'max_row_width' in kwargs:
+            self.RI.max_row_width = float(kwargs['max_row_width'])
+        if 'font' in kwargs:
+            self.MT.font(kwargs['font'])
+        if 'header_font' in kwargs:
+            self.MT.header_font(kwargs['header_font'])
+        if 'theme' in kwargs:
+            self.change_theme(kwargs['theme'])
+        if 'show_selected_cells_border' in kwargs:
+            self.MT.show_selected_cells_border = kwargs['show_selected_cells_border']
+        if 'header_bg' in kwargs:
+            self.CH.config(background = kwargs['header_bg'])
+            self.CH.header_bg = kwargs['header_bg']
+        if 'header_border_fg' in kwargs:
+            self.CH.header_border_fg = kwargs['header_border_fg']
+        if 'header_grid_fg' in kwargs:
+            self.CH.header_grid_fg = kwargs['header_grid_fg']
+        if 'header_fg' in kwargs:
+            self.CH.header_fg = kwargs['header_fg']
+        if 'header_selected_cells_bg' in kwargs:
+            self.CH.header_selected_cells_bg = kwargs['header_selected_cells_bg']
+        if 'header_selected_cells_fg' in kwargs:
+            self.CH.header_selected_cells_fg = kwargs['header_selected_cells_fg']
+        if 'index_bg' in kwargs:
+            self.RI.config(background = kwargs['index_bg'])
+        if 'index_border_fg' in kwargs:
+            self.RI.index_border_fg = kwargs['index_border_fg']
+        if 'index_grid_fg' in kwargs:
+            self.RI.index_grid_fg = kwargs['index_grid_fg']
+        if 'index_fg' in kwargs:
+            self.RI.index_fg = kwargs['index_fg']
+        if 'index_selected_cells_bg' in kwargs:
+            self.RI.index_selected_cells_bg = kwargs['index_selected_cells_bg']
+        if 'index_selected_cells_fg' in kwargs:
+            self.RI.index_selected_cells_fg = kwargs['index_selected_cells_fg']
+        if 'top_left_bg' in kwargs:
+            self.TL.config(background = kwargs['top_left_bg'])
+        if 'top_left_fg' in kwargs:
+            self.TL.top_left_fg = kwargs['top_left_fg']
+            self.TL.itemconfig("rw", fill = kwargs['top_left_fg'])
+            self.TL.itemconfig("rh", fill = kwargs['top_left_fg'])
+        if 'frame_bg' in kwargs:
+            self.config(background = kwargs['frame_bg'])
+        if 'table_bg' in kwargs:
+            self.MT.config(background = kwargs['table_bg'])
+            self.MT.table_bg = kwargs['table_bg']
+        if 'table_grid_fg' in kwargs:
+            self.MT.table_grid_fg = kwargs['table_grid_fg']
+        if 'table_fg' in kwargs:
+            self.MT.table_fg = kwargs['table_fg']
+        if 'table_selected_cells_border_fg' in kwargs:
+            self.MT.table_selected_cells_border_fg = kwargs['table_selected_cells_border_fg']
+        if 'table_selected_cells_bg' in kwargs:
+            self.MT.table_selected_cells_bg = kwargs['table_selected_cells_bg']
+        if 'table_selected_cells_fg' in kwargs:
+            self.MT.table_selected_cells_fg = kwargs['table_selected_cells_fg']
+        if 'resizing_line_fg' in kwargs:
+            self.CH.resizing_line_fg = kwargs['resizing_line_fg']
+            self.RI.resizing_line_fg = kwargs['resizing_line_fg']
+        if 'drag_and_drop_bg' in kwargs:
+            self.CH.drag_and_drop_bg = kwargs['drag_and_drop_bg']
+            self.RI.drag_and_drop_bg = kwargs['drag_and_drop_bg']
+        if 'outline_thickness' in kwargs:
+            self.config(highlightthickness = kwargs['outline_thickness'])
+        if 'outline_color' in kwargs:
+            self.config(highlightbackground = kwargs['outline_color'], highlightcolor = kwargs['outline_color'])
         self.MT.create_rc_menus()
         if redraw:
             self.refresh()
@@ -1824,6 +1736,11 @@ class Sheet(tk.Frame):
             self.set_options(**theme_dark_green,
                               redraw = True)
             self.config(bg = theme_dark_green['table_bg'])
+        elif theme == "black":
+            self.MT.display_selected_fg_over_highlights = False
+            self.set_options(**theme_black,
+                              redraw = True)
+            self.config(bg = theme_black['table_bg'])
         self.MT.recreate_all_selection_boxes()
             
     def data_reference(self,
@@ -2206,11 +2123,11 @@ class Sheet(tk.Frame):
     def get_selected_min_max(self): # returns (min_y, min_x, max_y, max_x) of any selections including rows/columns
         return self.MT.get_selected_min_max()
         
-    def headers(self, newheaders = None, index = None, reset_col_positions = False, show_headers_if_not_sheet = True):
-        return self.MT.headers(newheaders, index, reset_col_positions = reset_col_positions, show_headers_if_not_sheet = show_headers_if_not_sheet)
+    def headers(self, newheaders = None, index = None, reset_col_positions = False, show_headers_if_not_sheet = True, redraw = False):
+        return self.MT.headers(newheaders, index, reset_col_positions = reset_col_positions, show_headers_if_not_sheet = show_headers_if_not_sheet, redraw = redraw)
         
-    def row_index(self, newindex = None, index = None, reset_row_positions = False, show_index_if_not_sheet = True):
-        return self.MT.row_index(newindex, index, reset_row_positions = reset_row_positions, show_index_if_not_sheet = show_index_if_not_sheet)
+    def row_index(self, newindex = None, index = None, reset_row_positions = False, show_index_if_not_sheet = True, redraw = False):
+        return self.MT.row_index(newindex, index, reset_row_positions = reset_row_positions, show_index_if_not_sheet = show_index_if_not_sheet, redraw = redraw)
 
     def reset_undos(self):
         self.MT.undo_storage = deque(maxlen = self.MT.max_undos)
@@ -2521,6 +2438,7 @@ class Sheet_Dropdown(Sheet):
                  bg = theme_light_blue['table_bg'],
                  fg = theme_light_blue['table_fg'],
                  outline_color = theme_light_blue['table_fg'],
+                 outline_thickness = 1,
                  values = [],
                  hide_dropdown_window = None,
                  arrowkey_RIGHT = None,
@@ -2530,8 +2448,9 @@ class Sheet_Dropdown(Sheet):
                  single_index = False):
         Sheet.__init__(self,
                        parent = parent,
-                       outline_thickness = 1,
+                       outline_thickness = outline_thickness,
                        outline_color = outline_color,
+                       table_grid_fg = outline_color,
                        show_horizontal_grid = True,
                        show_vertical_grid = False,
                        show_header = False,

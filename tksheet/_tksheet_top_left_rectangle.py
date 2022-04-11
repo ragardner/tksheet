@@ -1,19 +1,7 @@
 from ._tksheet_vars import *
 from ._tksheet_other_classes import *
 
-from collections import defaultdict, deque
-from itertools import islice, repeat, accumulate, chain, product, cycle
-from math import floor, ceil
-from tkinter import ttk
-import bisect
-import csv as csv_module
-import io
-import pickle
-import re
 import tkinter as tk
-import zlib
-# for mac bindings
-from platform import system as get_os
 
 
 class TopLeftRectangle(tk.Canvas):

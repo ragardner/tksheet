@@ -1,19 +1,12 @@
 from ._tksheet_vars import *
 from ._tksheet_other_classes import *
 
-from collections import defaultdict, deque
-from itertools import islice, repeat, accumulate, chain, product, cycle
+from itertools import islice, accumulate, chain, cycle
 from math import floor, ceil
-from tkinter import ttk
 import bisect
-import csv as csv_module
-import io
 import pickle
-import re
 import tkinter as tk
 import zlib
-# for mac bindings
-from platform import system as get_os
 
 
 class RowIndex(tk.Canvas):
@@ -38,7 +31,6 @@ class RowIndex(tk.Canvas):
                  drag_and_drop_bg = None,
                  resizing_line_fg = None,
                  row_drag_and_drop_perform = True,
-                 measure_subset_index = True,
                  auto_resize_width = True):
         tk.Canvas.__init__(self,
                            parentframe,
@@ -115,7 +107,6 @@ class RowIndex(tk.Canvas):
         self.rsz_h = None
         self.currently_resizing_width = False
         self.currently_resizing_height = False
-        self.measure_subset_index = measure_subset_index
         self.auto_resize_width = auto_resize_width
         self.default_index = default_row_index.lower()
         self.ri_rc_popup_menu = None
@@ -732,13 +723,16 @@ class RowIndex(tk.Canvas):
             if h > new_height:
                 new_height = h
             for cn in iterable:
-                try:
-                    if isinstance(self.MT.data_ref[row][cn], str):
-                        txt = self.MT.data_ref[row][cn]
-                    else:
-                        txt = f"{self.MT.data_ref[row][cn]}"
-                except:
-                    txt = ""
+                if (row, cn) in self.MT.cell_options and 'checkbox' in self.MT.cell_options[(row, cn)]:
+                    txt = self.MT.cell_options[(row, cn)]['checkbox']['text']
+                else:
+                    try:
+                        if isinstance(self.MT.data_ref[row][cn], str):
+                            txt = self.MT.data_ref[row][cn]
+                        else:
+                            txt = f"{self.MT.data_ref[row][cn]}"
+                    except:
+                        txt = ""
                 if txt:
                     h = self.MT.GetTextHeight(txt) + 5
                 else:
@@ -769,9 +763,9 @@ class RowIndex(tk.Canvas):
     def set_width_of_index_to_text(self, recreate = True):
         if not self.MT.my_row_index and isinstance(self.MT.my_row_index, list):
             return
-        x = self.MT.txt_measure_canvas.create_text(0, 0, text = "", font = self.MT.my_font)
-        itmcon = self.MT.txt_measure_canvas.itemconfig
-        itmbbx = self.MT.txt_measure_canvas.bbox
+        qconf = self.MT.txt_measure_canvas.itemconfig
+        qbbox = self.MT.txt_measure_canvas.bbox
+        qtxtm = self.MT.txt_measure_canvas_text
         new_width = int(self.MT.min_cw)
         if isinstance(self.MT.my_row_index, list):
             for row in self.MT.my_row_index:
@@ -783,15 +777,15 @@ class RowIndex(tk.Canvas):
                 except:
                     txt = ""
                 if txt:
-                    itmcon(x, text = txt)
-                    b = itmbbx(x)
+                    qconf(qtxtm, text = txt)
+                    b = qbbox(qtxtm)
                     w = b[2] - b[0] + 10
                 else:
                     w = self.default_width
                 if w < self.MT.min_cw:
                     w = int(self.MT.min_cw)
                 elif w > self.max_row_width:
-                    h = int(self.max_row_width)
+                    w = int(self.max_row_width)
                 if w > new_width:
                     new_width = w
         elif isinstance(self.MT.my_row_index, int):
@@ -805,20 +799,19 @@ class RowIndex(tk.Canvas):
                 except:
                     txt = ""
                 if txt:
-                    itmcon(x, text = txt)
-                    b = itmbbx(x)
+                    qconf(qtxtm, text = txt)
+                    b = qbbox(qtxtm)
                     w = b[2] - b[0] + 10
                 else:
                     w = self.default_width
                 if w < self.MT.min_cw:
                     w = int(self.MT.min_cw)
                 elif w > self.max_row_width:
-                    h = int(self.max_row_width)
+                    w = int(self.max_row_width)
                 if w > new_width:
                     new_width = w
         if new_width == self.MT.min_cw:
             new_width = self.MT.min_cw + 10
-        self.MT.txt_measure_canvas.delete(x)
         self.set_width(new_width, set_TL = True)
         if recreate:
             self.MT.recreate_all_selection_boxes()

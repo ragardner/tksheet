@@ -1,19 +1,16 @@
 from ._tksheet_vars import *
 from ._tksheet_other_classes import *
 
-from collections import defaultdict, deque, namedtuple
+from collections import defaultdict, deque
 from itertools import islice, repeat, accumulate, chain, product, cycle
 from math import floor, ceil
-from tkinter import TclError, ttk
+from tkinter import TclError
 import bisect
 import csv as csv_module
 import io
 import pickle
-import re
 import tkinter as tk
 import zlib
-# for mac bindings
-from platform import system as get_os
 
 
 class MainTable(tk.Canvas):
@@ -25,6 +22,7 @@ class MainTable(tk.Canvas):
                  paste_insert_column_limit = None,
                  paste_insert_row_limit = None,
                  arrow_key_down_right_scroll_page = False,
+                 ctrl_keys_over_dropdowns_enabled = False,
                  column_width = None,
                  column_headers_canvas = None,
                  row_index_canvas = None,
@@ -197,6 +195,7 @@ class MainTable(tk.Canvas):
         self.single_selection_enabled = False
         self.toggle_selection_enabled = False # with this mode every left click adds the cell to selected cells
 
+        self.ctrl_keys_over_dropdowns_enabled = False
         self.drag_selection_enabled = False
         self.select_all_enabled = False
         self.arrowkeys_enabled = False
@@ -511,7 +510,11 @@ class MainTable(tk.Canvas):
                             dcol = c if self.all_columns_displayed else self.displayed_columns[c]
                             if (
                                 ((data_ref_rn, dcol) in self.cell_options and ('readonly' in self.cell_options[(data_ref_rn, dcol)] or 'checkbox' in self.cell_options[(data_ref_rn, dcol)])) or
-                                (dcol in self.col_options and 'readonly' in self.col_options[dcol])
+                                (dcol in self.col_options and 'readonly' in self.col_options[dcol]) or
+                                (not self.ctrl_keys_over_dropdowns_enabled and 
+                                (data_ref_rn, dcol) in self.cell_options and 
+                                'dropdown' in self.cell_options[(data_ref_rn, dcol)] and
+                                "" not in self.cell_options[(data_ref_rn, dcol)]['dropdown']['values'])
                                 ):
                                 continue
                             try:
@@ -543,13 +546,17 @@ class MainTable(tk.Canvas):
                 for r1, c1, r2, c2 in boxes:
                     for rn in range(r2 - r1):
                         data_ref_rn = r1 + rn
-                        if data_ref_rn in self.cell_options and 'readonly' in self.cell_options[data_ref_rn]:
+                        if data_ref_rn in self.row_options and 'readonly' in self.row_options[data_ref_rn]:
                             continue
                         for c in range(c1, c2):
                             dcol = c if self.all_columns_displayed else self.displayed_columns[c]
                             if (
                                 ((data_ref_rn, dcol) in self.cell_options and ('readonly' in self.cell_options[(data_ref_rn, dcol)] or 'checkbox' in self.cell_options[(data_ref_rn, dcol)])) or
-                                (dcol in self.col_options and 'readonly' in self.col_options[dcol])
+                                (dcol in self.col_options and 'readonly' in self.col_options[dcol]) or
+                                (not self.ctrl_keys_over_dropdowns_enabled and 
+                                (data_ref_rn, dcol) in self.cell_options and 
+                                'dropdown' in self.cell_options[(data_ref_rn, dcol)] and
+                                "" not in self.cell_options[(data_ref_rn, dcol)]['dropdown']['values'])
                                 ):
                                 continue
                             try:
@@ -641,7 +648,12 @@ class MainTable(tk.Canvas):
                     ((r, dcol) in self.cell_options and 'readonly' in self.cell_options[(r, dcol)]) or
                     ((r, dcol) in self.cell_options and 'checkbox' in self.cell_options[(r, dcol)]) or
                     (dcol in self.col_options and 'readonly' in self.col_options[dcol]) or
-                    (r in self.row_options and 'readonly' in self.row_options[r])
+                    (r in self.row_options and 'readonly' in self.row_options[r]) or
+                    # if pasting not allowed in dropdowns and paste value isn't in dropdown values
+                    (not self.ctrl_keys_over_dropdowns_enabled and 
+                     (r, dcol) in self.cell_options and 
+                     'dropdown' in self.cell_options[(r, dcol)] and
+                     data[ndr][ndc] not in self.cell_options[(r, dcol)]['dropdown']['values'])
                     ):
                     continue
                 if self.undo_enabled:
@@ -689,6 +701,11 @@ class MainTable(tk.Canvas):
                         dcol = c if self.all_columns_displayed else self.displayed_columns[c]
                         if (
                             ((r, dcol) in self.cell_options and ('readonly' in self.cell_options[(r, dcol)] or 'checkbox' in self.cell_options[(r, dcol)])) or
+                            # if del key not allowed in dropdowns and empty string isn't in dropdown values
+                            (not self.ctrl_keys_over_dropdowns_enabled and 
+                            (r, dcol) in self.cell_options and 
+                            'dropdown' in self.cell_options[(r, dcol)] and
+                            "" not in self.cell_options[(r, dcol)]['dropdown']['values']) or
                             (dcol in self.col_options and 'readonly' in self.col_options[dcol]) or
                             (r in self.row_options and 'readonly' in self.row_options[r])
                             ):
@@ -835,43 +852,30 @@ class MainTable(tk.Canvas):
                         
             elif undo_storage[0] == "move_cols":
                 cws = [int(b - a) for a, b in zip(self.col_positions, islice(self.col_positions, 1, len(self.col_positions)))]
-                ins_col = undo_storage[1]
-                orig_ins_col = int(ins_col)
+                c = undo_storage[1]
                 rm1start = undo_storage[2]
                 rm1end = undo_storage[3] + 1
                 new_selected = undo_storage[4]
-                dispset = undo_storage[5]
                 rm2start = rm1start + (rm1end - rm1start)
                 rm2end = rm1end + (rm1end - rm1start)
                 totalcols = rm1end - rm1start
-                quick_range = rm1start + totalcols
+                if rm1start < c:
+                    c += totalcols
                 if self.all_columns_displayed:
-                    if rm1start > ins_col:
+                    if rm1start > c:
                         for rn in range(len(self.data_ref)):
-                            for ctr, cint in enumerate(range(rm1start, quick_range)):
-                                try:
-                                    self.data_ref[rn].insert(ins_col + ctr, self.data_ref[rn].pop(cint))
-                                except:
-                                    continue
+                            self.data_ref[rn][c:c] = self.data_ref[rn][rm1start:rm1end]
+                            self.data_ref[rn][rm2start:rm2end] = []
                         if isinstance(self.my_hdrs, list) and self.my_hdrs:
-                            for ctr, cint in enumerate(range(rm1start, quick_range)):
-                                try:
-                                    self.my_hdrs.insert(ins_col + ctr, self.my_hdrs.pop(cint))
-                                except:
-                                    continue
+                            self.my_hdrs[c:c] = self.my_hdrs[rm1start:rm1end]
+                            self.my_hdrs[rm2start:rm2end] = []
                     else:
                         for rn in range(len(self.data_ref)):
-                            for cint in range(rm1start, quick_range):
-                                try:
-                                    self.data_ref[rn].insert(ins_col, self.data_ref[rn].pop(rm1start))
-                                except:
-                                    continue
+                            self.data_ref[rn][c:c] = self.data_ref[rn][rm1start:rm1end]
+                            self.data_ref[rn][rm1start:rm1end] = []
                         if isinstance(self.my_hdrs, list) and self.my_hdrs:
-                            for cint in range(rm1start, quick_range):
-                                try:
-                                    self.my_hdrs.insert(ins_col, self.my_hdrs.pop(rm1start))
-                                except:
-                                    continue
+                            self.my_hdrs[c:c] = self.my_hdrs[rm1start:rm1end]
+                            self.my_hdrs[rm1start:rm1end] = []
                     colsiter = tuple(range(rm1start, rm1end))
                     colset = set(colsiter)
                     popped_ch = {t1: t2 for t1, t2 in self.CH.cell_options.items() if t1 in colset}
@@ -883,13 +887,13 @@ class MainTable(tk.Canvas):
                     popped_col = {t1: self.col_options.pop(t1) for t1 in popped_col}
 
                     self.CH.cell_options = {t1 if t1 < rm1start else t1 - totalcols: t2 for t1, t2 in self.CH.cell_options.items()}
-                    self.CH.cell_options = {t1 if t1 < ins_col else t1 + totalcols: t2 for t1, t2 in self.CH.cell_options.items()}
+                    self.CH.cell_options = {t1 if t1 < c else t1 + totalcols: t2 for t1, t2 in self.CH.cell_options.items()}
 
                     self.col_options = {t1 if t1 < rm1start else t1 - totalcols: t2 for t1, t2 in self.col_options.items()}
-                    self.col_options = {t1 if t1 < ins_col else t1 + totalcols: t2 for t1, t2 in self.col_options.items()}
+                    self.col_options = {t1 if t1 < c else t1 + totalcols: t2 for t1, t2 in self.col_options.items()}
 
                     self.cell_options = {(t10, t11 if t11 < rm1start else t11 - totalcols): t2 for (t10, t11), t2 in self.cell_options.items()}
-                    self.cell_options = {(t10, t11 if t11 < ins_col else t11 + totalcols): t2 for (t10, t11), t2 in self.cell_options.items()}
+                    self.cell_options = {(t10, t11 if t11 < c else t11 + totalcols): t2 for (t10, t11), t2 in self.cell_options.items()}
 
                     newcolsdct = {t1: t2 for t1, t2 in zip(colsiter, new_selected)}
                     for t1, t2 in popped_ch.items():
@@ -944,34 +948,32 @@ class MainTable(tk.Canvas):
                         else:
                             idx += 1
                     self.my_hdrs = new
-                dispset = {b: a for a, b in dispset.items()}
-                popped_ch = {t1: t2 for t1, t2 in self.CH.cell_options.items() if t1 in dispset}
-                popped_cell = {t1: t2 for t1, t2 in self.cell_options.items() if t1[1] in dispset}
-                popped_col = {t1: t2 for t1, t2 in self.col_options.items() if t1 in dispset}
-                popped_ch = {t1: self.CH.cell_options.pop(t1) for t1 in popped_ch}
-                popped_cell = {t1: self.cell_options.pop(t1) for t1 in popped_cell}
-                popped_col = {t1: self.col_options.pop(t1) for t1 in popped_col}
-                for t1 in popped_ch:
-                    self.CH.cell_options[dispset[t1]] = popped_ch[t1]
-                for t1 in popped_cell:
-                    self.cell_options[(t1[0], dispset[t1[1]])] = popped_cell[t1]
-                for t1 in popped_col:
-                    self.col_options[dispset[t1]] = popped_col[t1]
-                if rm1start < ins_col:
-                    ins_col += totalcols
-                if rm1start > ins_col:
-                    cws[ins_col:ins_col] = cws[rm1start:rm1end]
+                    dispset = {b: a for a, b in dispset.items()}
+                    popped_ch = {t1: t2 for t1, t2 in self.CH.cell_options.items() if t1 in dispset}
+                    popped_cell = {t1: t2 for t1, t2 in self.cell_options.items() if t1[1] in dispset}
+                    popped_col = {t1: t2 for t1, t2 in self.col_options.items() if t1 in dispset}
+                    popped_ch = {t1: self.CH.cell_options.pop(t1) for t1 in popped_ch}
+                    popped_cell = {t1: self.cell_options.pop(t1) for t1 in popped_cell}
+                    popped_col = {t1: self.col_options.pop(t1) for t1 in popped_col}
+                    for t1 in popped_ch:
+                        self.CH.cell_options[dispset[t1]] = popped_ch[t1]
+                    for t1 in popped_cell:
+                        self.cell_options[(t1[0], dispset[t1[1]])] = popped_cell[t1]
+                    for t1 in popped_col:
+                        self.col_options[dispset[t1]] = popped_col[t1]
+                if rm1start > c:
+                    cws[c:c] = cws[rm1start:rm1end]
                     cws[rm2start:rm2end] = []
                     self.col_positions = list(accumulate(chain([0], (width for width in cws))))
-                    self.create_current(0, ins_col, type_ = "col", inside = True)
-                    self.create_selected(0, ins_col, len(self.row_positions) - 1, ins_col + totalcols, "cols")
+                    self.create_current(0, c, type_ = "col", inside = True)
+                    self.create_selected(0, c, len(self.row_positions) - 1, c + totalcols, "cols")
                 else:
-                    cws[ins_col:ins_col] = cws[rm1start:rm1end]
+                    cws[c:c] = cws[rm1start:rm1end]
                     cws[rm1start:rm1end] = []
                     self.col_positions = list(accumulate(chain([0], (width for width in cws))))
-                    self.create_current(0, ins_col - totalcols, type_ = "col", inside = True)
-                    self.create_selected(0, ins_col - totalcols, len(self.row_positions) - 1, ins_col, "cols")
-                self.see(r = 0, c = orig_ins_col, keep_yscroll = True, keep_xscroll = False, bottom_right_corner = False, check_cell_visibility = True, redraw = False)
+                    self.create_current(0, c - totalcols, type_ = "col", inside = True)
+                    self.create_selected(0, c - totalcols, len(self.row_positions) - 1, c, "cols")
+                self.see(r = 0, c = c - totalcols if rm1start < c else c, keep_yscroll = True, keep_xscroll = False, bottom_right_corner = False, check_cell_visibility = True, redraw = False)
                         
             elif undo_storage[0] == "insert_row":
                 self.data_ref[undo_storage[1]['data_row_num']:undo_storage[1]['data_row_num'] + undo_storage[1]['numrows']] = []
@@ -2029,7 +2031,9 @@ class MainTable(tk.Canvas):
                 w.unbind("<Key>")
 
     def enable_bindings(self, bindings):
-        if isinstance(bindings,(list, tuple)):
+        if not bindings:
+            self.enable_bindings_internal("all")
+        elif isinstance(bindings, (list, tuple)):
             for binding in bindings:
                 self.enable_bindings_internal(binding.lower())
         elif isinstance(bindings, str):
@@ -2145,7 +2149,9 @@ class MainTable(tk.Canvas):
         self.create_rc_menus()
         
     def disable_bindings(self, bindings):
-        if isinstance(bindings,(list, tuple)):
+        if not bindings:
+            self.disable_bindings_internal("all")
+        elif isinstance(bindings, (list, tuple)):
             for binding in bindings:
                 self.disable_bindings_internal(binding)
         elif isinstance(bindings, str):
@@ -2517,9 +2523,9 @@ class MainTable(tk.Canvas):
                 if (r, dcol) in self.cell_options and ('dropdown' in self.cell_options[(r, dcol)] or 'checkbox' in self.cell_options[(r, dcol)]):
                     if (self.closed_dropdown != self.b1_pressed_loc and
                         'dropdown' in self.cell_options[(r, dcol)]):
-                        self.display_dropdown_window(r, c)
+                        self.open_cell(event)
                     elif 'checkbox' in self.cell_options[(r, dcol)] and event.x < self.col_positions[c] + self.txt_h + 5 and event.y < self.row_positions[r] + self.txt_h + 5:
-                        self._click_checkbox(r, c, dcol)
+                        self.open_cell(event)
                         self.hide_dropdown_window()
                     else:
                         self.hide_dropdown_window()
@@ -2789,34 +2795,36 @@ class MainTable(tk.Canvas):
         min_rh = self.min_rh
         h = int(min_rh)
         w = int(min_cw)
-        x = self.txt_measure_canvas.create_text(0, 0, text = "", font = self.my_font)
-        x2 = self.txt_measure_canvas.create_text(0, 0, text = "", font = self.my_hdr_font)
-        itmcon = self.txt_measure_canvas.itemconfig
-        itmbbx = self.txt_measure_canvas.bbox
         if self.all_columns_displayed:
             cn = int(c)
         else:
             cn = self.displayed_columns[c]
         rn = int(r)
-
-        try:
-            if isinstance(self.data_ref[r][cn], str):
-                txt = self.data_ref[r][cn]
-            else:
-                txt = f"{self.data_ref[r][cn]}"
-        except:
-            txt = ""
-        if txt:
-            itmcon(x, text = txt)
-            b = itmbbx(x)
-            tw = b[2] - b[0] + self.txt_h + 3 if (rn, cn) in self.cell_options and 'dropdown' in self.cell_options[(rn, cn)] else b[2] - b[0] + 5
+        if (rn, cn) in self.cell_options and 'checkbox' in self.cell_options[(rn, cn)]:
+            self.txt_measure_canvas.itemconfig(self.txt_measure_canvas_text, text = self.cell_options[(rn, cn)]['checkbox']['text'], font = self.MT.my_hdr_font)
+            b = self.txt_measure_canvas.bbox(self.txt_measure_canvas_text)
+            tw = b[2] - b[0] + 7 + self.txt_h
             if b[3] - b[1] + 5 > h:
                 h = b[3] - b[1] + 5
         else:
-            if (rn, cn) in self.cell_options and 'dropdown' in self.cell_options[(rn, cn)]:
-                tw = self.txt_h + 3
+            try:
+                if isinstance(self.data_ref[r][cn], str):
+                    txt = self.data_ref[r][cn]
+                else:
+                    txt = f"{self.data_ref[r][cn]}"
+            except:
+                txt = ""
+            if txt:
+                self.txt_measure_canvas.itemconfig(self.txt_measure_canvas_text, text = txt, font = self.my_font)
+                b = self.txt_measure_canvas.bbox(self.txt_measure_canvas_text)
+                tw = b[2] - b[0] + self.txt_h + 7 if (rn, cn) in self.cell_options and 'dropdown' in self.cell_options[(rn, cn)] else b[2] - b[0] + 7
+                if b[3] - b[1] + 5 > h:
+                    h = b[3] - b[1] + 5
             else:
-                tw = min_cw
+                if (rn, cn) in self.cell_options and 'dropdown' in self.cell_options[(rn, cn)]:
+                    tw = self.txt_h + 7
+                else:
+                    tw = min_cw
         if tw > w:
             w = tw
         if h < min_rh:
@@ -2826,9 +2834,7 @@ class MainTable(tk.Canvas):
         if w < min_cw:
             w = int(min_cw)
         elif w > self.CH.max_cw:
-            w = int(self.CH.max_cw) 
-        self.txt_measure_canvas.delete(x)
-        self.txt_measure_canvas.delete(x2)
+            w = int(self.CH.max_cw)
         cell_needs_resize_w = False
         cell_needs_resize_h = False
         if only_set_if_too_small:
@@ -2889,7 +2895,7 @@ class MainTable(tk.Canvas):
                 if txt:
                     itmcon(x, text = txt)
                     b = itmbbx(x)
-                    h = b[3] - b[1] + 5
+                    h = b[3] - b[1] + 7
                 else:
                     h = min_rh
                 if h < min_rh:
@@ -2899,43 +2905,62 @@ class MainTable(tk.Canvas):
                 if h > rhs[rn]:
                     rhs[rn] = h
         for cn in iterable:
-            try:
-                if isinstance(self.my_hdrs, int):
-                    txt = self.data_ref[self.my_hdrs][cn]
-                else:
-                    txt = self.my_hdrs[cn]
+            if cn in self.CH.cell_options and 'checkbox' in self.CH.cell_options[cn]:
+                txt = self.CH.cell_options[cn]['checkbox']['text']
                 if txt:
                     itmcon(x2, text = txt)
                     b = itmbbx(x2)
-                    w = b[2] - b[0] + 5
+                    w = b[2] - b[0] + 7 + self.txt_h
                 else:
                     w = self.min_cw
-            except:
-                if self.CH.default_hdr:
-                    itmcon(x2, text = f"{num2alpha(cn)}")
-                else:
-                    itmcon(x2, text = f"{cn}")
-                b = itmbbx(x2)
-                w = b[2] - b[0] + 5
-            for rn, r in enumerate(self.data_ref):
+            else:
                 try:
-                    if isinstance(r[cn], str):
-                        txt = r[cn]
+                    if isinstance(self.my_hdrs, int):
+                        txt = self.data_ref[self.my_hdrs][cn]
                     else:
-                        txt = f"{r[cn]}"
+                        txt = self.my_hdrs[cn]
+                    if txt:
+                        itmcon(x2, text = txt)
+                        b = itmbbx(x2)
+                        w = b[2] - b[0] + self.txt_h + 7 if cn in self.CH.cell_options and 'dropdown' in self.CH.cell_options[cn] else b[2] - b[0] + 7
+                    else:
+                        w = self.min_cw + self.txt_h + 7 if cn in self.CH.cell_options and 'dropdown' in self.CH.cell_options[cn] else self.min_cw
                 except:
-                    txt = ""
-                if txt:
-                    itmcon(x, text = txt)
-                    b = itmbbx(x)
-                    tw = b[2] - b[0] + self.txt_h + 3 if (rn, cn) in self.cell_options and 'dropdown' in self.cell_options[(rn, cn)] else b[2] - b[0] + 5
-                    h = b[3] - b[1] + 5
-                else:
-                    if (rn, cn) in self.cell_options and 'dropdown' in self.cell_options[(rn, cn)]:
-                        tw = self.txt_h + 3
+                    if self.CH.default_hdr == "letters":
+                        itmcon(x2, text = f"{num2alpha(cn)}")
+                    elif self.CH.default_hdr == "numbers":
+                        itmcon(x2, text = f"{cn + 1}")
+                    else:
+                        itmcon(x2, text = f"{cn + 1} {num2alpha(cn)}")
+                    b = itmbbx(x2)
+                    w = b[2] - b[0] + 7
+            for rn, r in enumerate(self.data_ref):
+                if (rn, cn) in self.cell_options and 'checkbox' in self.cell_options[(rn, cn)]:
+                    txt = self.cell_options[(rn, cn)]['checkbox']['text']
+                    if txt:
+                        itmcon(x, text = txt)
+                        b = itmbbx(x)
+                        tw = b[2] - b[0] + 7
+                        h = b[3] - b[1] + 5
                     else:
                         tw = min_cw
-                    h = min_rh
+                        h = min_rh
+                else:
+                    try:
+                        if isinstance(r[cn], str):
+                            txt = r[cn]
+                        else:
+                            txt = f"{r[cn]}"
+                    except:
+                        txt = ""
+                    if txt:
+                        itmcon(x, text = txt)
+                        b = itmbbx(x)
+                        tw = b[2] - b[0] + self.txt_h + 7 if (rn, cn) in self.cell_options and 'dropdown' in self.cell_options[(rn, cn)] else b[2] - b[0] + 7
+                        h = b[3] - b[1] + 5
+                    else:
+                        tw = self.txt_h + 7 if (rn, cn) in self.cell_options and 'dropdown' in self.cell_options[(rn, cn)] else min_cw
+                        h = min_rh
                 if tw > w:
                     w = tw
                 if h < min_rh:
@@ -3460,7 +3485,7 @@ class MainTable(tk.Canvas):
         if reset_col_positions:
             self.reset_col_positions()
                 
-    def headers(self, newheaders = None, index = None, reset_col_positions = False, show_headers_if_not_sheet = True):
+    def headers(self, newheaders = None, index = None, reset_col_positions = False, show_headers_if_not_sheet = True, redraw = False):
         if newheaders is not None:
             if isinstance(newheaders, (list, tuple)):
                 self.my_hdrs = list(newheaders) if isinstance(newheaders, tuple) else newheaders
@@ -3483,6 +3508,8 @@ class MainTable(tk.Canvas):
                     self.col_positions = list(accumulate(chain([0], (colpos for c in range(len(self.my_hdrs))))))
                 else:
                     self.col_positions = list(accumulate(chain([0], (colpos for c in range(len(self.displayed_columns))))))
+            if redraw:
+                self.refresh()
         else:
             if index is not None:
                 if isinstance(index, int):
@@ -3490,7 +3517,7 @@ class MainTable(tk.Canvas):
             else:
                 return self.my_hdrs
 
-    def row_index(self, newindex = None, index = None, reset_row_positions = False, show_index_if_not_sheet = True):
+    def row_index(self, newindex = None, index = None, reset_row_positions = False, show_index_if_not_sheet = True, redraw = False):
         if newindex is not None:
             if not self.my_row_index and not isinstance(self.my_row_index, int):
                 self.RI.set_width(self.RI.default_width, set_TL = True)
@@ -3510,6 +3537,8 @@ class MainTable(tk.Canvas):
             elif show_index_if_not_sheet and isinstance(self.my_row_index, list) and (self.row_positions == [0] or not self.row_positions):
                 rowpos = self.default_rh[1]
                 self.row_positions = list(accumulate(chain([0], (rowpos for c in range(len(self.my_row_index))))))
+            if redraw:
+                self.refresh()
         else:
             if index is not None:
                 if isinstance(index, int):
@@ -4877,13 +4906,24 @@ class MainTable(tk.Canvas):
             ):
             return
         elif (y1, dcol) in self.cell_options and ('dropdown' in self.cell_options[(y1, dcol)] or 'checkbox' in self.cell_options[(y1, dcol)]):
-            if 'dropdown' in self.cell_options[(y1, dcol)]:
-                self.display_dropdown_window(y1, x1, event = event)
-            elif 'checkbox' in self.cell_options[(y1, dcol)] and ((hasattr(event, 'keysym') and event.keysym == 'Return') or
-                                                                  (hasattr(event, 'num') and event.num == 1)):
-                self._click_checkbox(y1, x1, dcol)
+            if self.event_opens_dropdown_or_checkbox(event):
+                if 'dropdown' in self.cell_options[(y1, dcol)]:
+                    self.display_dropdown_window(y1, x1, event = event)
+                elif 'checkbox' in self.cell_options[(y1, dcol)]:
+                    self._click_checkbox(y1, x1, dcol)
         else:
             self.edit_cell_(event, r = y1, c = x1, dropdown = False)
+            
+    def event_opens_dropdown_or_checkbox(self, event = None):
+        if event is None:
+            return False
+        elif ((hasattr(event, 'keysym') and event.keysym == 'Return') or  # enter or f2
+              (hasattr(event, 'keysym') and event.keysym == 'F2') or
+              (event is not None and hasattr(event, 'keycode') and event.keycode == "??" and hasattr(event, 'num') and event.num == 1) or
+              (hasattr(event, 'keysym') and event.keysym == 'BackSpace')):
+            return True
+        else:
+            return False
 
     # c is displayed col
     def edit_cell_(self, event = None, r = None, c = None, dropdown = False):
@@ -4892,11 +4932,7 @@ class MainTable(tk.Canvas):
         if event is not None and (hasattr(event, 'keysym') and event.keysym == 'BackSpace'):
             extra_func_key = "BackSpace"
             text = ""
-        elif ((hasattr(event, 'keysym') and event.keysym == 'Return') or  # enter or f2
-              (hasattr(event, 'keysym') and event.keysym == 'F2') or
-              (event is not None and hasattr(event, 'keycode') and event.keycode == "??" and hasattr(event, 'num') and event.num == 1) or
-              event is None
-              ):
+        elif event is None or self.event_opens_dropdown_or_checkbox(event):
             if event is not None:
                 if hasattr(event, 'keysym') and event.keysym == 'Return':
                     extra_func_key = "Return"
@@ -5037,9 +5073,11 @@ class MainTable(tk.Canvas):
         if set_data_ref_on_destroy:
             if r is None and c is None and destroy_tup:
                 r, c = destroy_tup[0], destroy_tup[1]
-            self._set_cell_data(r, c, value = self.text_editor_value)
             if self.extra_end_edit_cell_func is not None:
-                self.extra_end_edit_cell_func(EditCellEvent(r, c, destroy_tup[2] if len(destroy_tup) >= 3 else "FocusOut", f"{self.text_editor_value}", "end_edit_cell"))
+                validation = self.extra_end_edit_cell_func(EditCellEvent(r, c, destroy_tup[2] if len(destroy_tup) >= 3 else "FocusOut", f"{self.text_editor_value}", "end_edit_cell"))
+                if validation is not None:
+                    self.text_editor_value = validation
+            self._set_cell_data(r, c, value = self.text_editor_value)
         if move_down:
             if r is None and c is None and destroy_tup:
                 r, c = destroy_tup[0], destroy_tup[1]
@@ -5093,7 +5131,7 @@ class MainTable(tk.Canvas):
             if self.cell_options[(r, dcol)]['checkbox']['check_function'] is not None:
                 self.cell_options[(r, dcol)]['checkbox']['check_function']((r, c, "CheckboxClicked", f"{self.data_ref[r][dcol]}"))
             if self.extra_end_edit_cell_func is not None:
-                self.extra_end_edit_cell_func(EditCellEvent(r, c, "Return", f"{self.text_editor_value}", "end_edit_cell"))
+                self.extra_end_edit_cell_func(EditCellEvent(r, c, "Return", f"{self.data_ref[r][dcol]}", "end_edit_cell"))
         if redraw:
             self.refresh()
 
@@ -5223,7 +5261,8 @@ class MainTable(tk.Canvas):
                                                  font = self.my_font,
                                                  bg = bg,
                                                  fg = fg,
-                                                 outline_color = self.table_fg,
+                                                 outline_color = fg,
+                                                 outline_thickness = 1,
                                                  values = self.cell_options[(r, dcol)]['dropdown']['values'],
                                                  hide_dropdown_window = self.hide_dropdown_window,
                                                  arrowkey_RIGHT = self.arrowkey_RIGHT,
@@ -5235,10 +5274,10 @@ class MainTable(tk.Canvas):
             else:
                 ypos = self.row_positions[r]
             self.cell_options[(r, dcol)]['dropdown']['canvas_id'] = self.create_window((self.col_positions[c], ypos),
-            window = window,
-            anchor = anchor)
+                                                                                        window = window,
+                                                                                        anchor = anchor)
             if self.cell_options[(r, dcol)]['dropdown']['modified_function'] is not None:
-                self.text_editor.textedit.bind("<<TextModified>>", self.cell_options[(r, dcol)]['dropdown']['modified_function'])
+                self.text_editor.textedit.bind("<<TextModified>>", lambda x: self.cell_options[(r, dcol)]['dropdown']['modified_function'](DropDownModifiedEvent("ComboboxModified", r, dcol, self.text_editor.get())))
             self.update()
             try:
                 self.text_editor.textedit.focus_set()
@@ -5251,8 +5290,8 @@ class MainTable(tk.Canvas):
             else:
                 ypos = self.row_positions[r]
             self.cell_options[(r, dcol)]['dropdown']['canvas_id'] = self.create_window((self.col_positions[c], ypos),
-            window = window,
-            anchor = anchor)
+                                                                                        window = window,
+                                                                                        anchor = anchor)
             window.bind("<FocusOut>", lambda x: self.hide_dropdown_window(r, c))
             self.update()
             try:
@@ -5267,11 +5306,13 @@ class MainTable(tk.Canvas):
     def hide_dropdown_window(self, r = None, c = None, selection = None, b1 = False, redraw = True):
         if r is not None and c is not None and selection is not None:
             dcol = c if self.all_columns_displayed else self.displayed_columns[c]
-            self._set_cell_data(r, c, dcol, selection, cell_resize = True)
             if self.cell_options[(r, dcol)]['dropdown']['select_function'] is not None: # user has specified a selection function
-                self.cell_options[(r, dcol)]['dropdown']['select_function']((r, c, "ComboboxSelected", f"{selection}"))
+                self.cell_options[(r, dcol)]['dropdown']['select_function'](EditCellEvent(r, c, "ComboboxSelected", f"{selection}", "end_edit_cell"))
             if self.extra_end_edit_cell_func is not None:
-                self.extra_end_edit_cell_func(EditCellEvent(r, c, "ComboboxSelected", f"{selection}", "end_edit_cell"))
+                validation = self.extra_end_edit_cell_func(EditCellEvent(r, c, "ComboboxSelected", f"{selection}", "end_edit_cell"))
+                if validation is not None:
+                    selection = validation
+            self._set_cell_data(r, c, dcol, selection, cell_resize = True)
             self.focus_set()
             self.recreate_all_selection_boxes()
             if redraw:
