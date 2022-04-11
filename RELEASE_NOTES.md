@@ -1,3 +1,14 @@
+### Version 5.3.6
+ - Editable and readonly dropdown boxes and checkboxes in the header
+ - Add readonly functions to header
+ - Display text next to checkboxes in cells using `text` argument (is not considered data just for display, the data is either `True` or `False` in a checkbox)
+ - Move position of checkboxes and dropdown boxes to top left of cells
+ - Enable dragging and dropping columns when there are hidden columns, including undo
+ - Checkboxes no longer editable using `Delete`, `Paste` or `Cut`
+ - Dropdown boxes no longer editable using `Delete`, `Paste` or `Cut` unless dropdown box has a value which matches, override this behaviour with new option `ctrl_keys_over_dropdowns_enabled`
+ - More logical behaviour around checkboxes and dropdown boxes and bindings
+ - Many improvements and fixes
+
 ### Version 5.3.5
  - Fix control commands not working when top left has focus
  - Fix bug when undoing paste where extra rows/columns were added during the paste (disabled by default)

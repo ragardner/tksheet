@@ -25,6 +25,8 @@
 24. [Example Custom Right Click and Text Editor Functionality](https://github.com/ragardner/tksheet/wiki#24-example-custom-right-click-and-text-editor-functionality)
 25. [Example Displaying Selections](https://github.com/ragardner/tksheet/wiki#25-example-displaying-selections)
 26. [Example List Box](https://github.com/ragardner/tksheet/wiki#26-example-list-box)
+27. [Example Header Dropdown Boxes and Filtering](https://github.com/ragardner/tksheet/wiki#27-example-header-dropdown-boxes-and-filtering)
+28. [Example ReadMe Screenshot Code](https://github.com/ragardner/tksheet/wiki#28-example-readme-screenshot-code)
 
 
 ## 1 About tksheet
@@ -40,6 +42,7 @@ Some examples of things that are not possible with tksheet:
  - Changing font for individual cells
  - Different fonts for index and table
  - Mouse drag copy cells
+ - Hide rows
 
 ## 2 Installation and Requirements
 `tksheet` is available through PyPi (Python package index) and can be installed by using Pip through the command line `pip install tksheet`
@@ -97,13 +100,14 @@ show_y_scrollbar = True,
 width = None,
 height = None,
 headers = None,
-measure_subset_header = True,
 default_header = "letters", #letters, numbers or both
 default_row_index = "numbers", #letters, numbers or both
+show_default_header_for_empty = True,
 page_up_down_select_row = True,
 expand_sheet_if_paste_too_big = False,
 paste_insert_column_limit = None,
 paste_insert_row_limit = None,
+ctrl_keys_over_dropdowns_enabled = False,
 arrow_key_down_right_scroll_page = False,
 enable_edit_cell_auto_resize = True,
 data_reference = None,
@@ -119,7 +123,6 @@ max_rh = "inf",
 max_header_height = "inf",
 max_row_width = "inf",
 row_index = None,
-measure_subset_index = True,
 after_redraw_time_ms = 100,
 row_index_width = 100,
 auto_resize_default_row_index = True,
@@ -396,7 +399,7 @@ get_total_rows()
 
 Enable table functionality and bindings.
 ```python
-enable_bindings(bindings = "all")
+enable_bindings(*bindings)
 ```
  - `bindings` (`str`) options are (rc stands for right click):
 	- "all"
@@ -428,16 +431,20 @@ enable_bindings(bindings = "all")
 	- "delete"
 	- "undo"
 	- "edit_cell"
+    - "edit_header"
 
-To allow table expansion when pasting data which doesn't fit in the table use either:
- - `expand_sheet_if_paste_too_big = True` in sheet initialization arguments or
- - `sheet.set_options(expand_sheet_if_paste_too_big = True)`
+Notes:
+ - Dragging and dropping rows / columns is bound to shift - mouse left click and hold and drag.
+ - `"edit_header"` is not enabled by `bindings = "all"` and has to be enabled individually.
+ - To allow table expansion when pasting data which doesn't fit in the table use either:
+    - `expand_sheet_if_paste_too_big = True` in sheet initialization arguments or
+    - `sheet.set_options(expand_sheet_if_paste_too_big = True)`
 
 ___
 
 Disable table functionality and bindings, uses the same arguments as `enable_bindings()`
 ```python
-disable_bindings(bindings = "all")
+disable_bindings(*bindings)
 ```
 
 ___
@@ -446,6 +453,7 @@ Bind various table functionality to your own functions. To unbind a function eit
 ```python
 extra_bindings(bindings, func = "None")
 ```
+
 Notes:
  - Upon an event being triggered the bound function will be sent a [namedtuple](https://docs.python.org/3/library/collections.html#collections.namedtuple) containing variables relevant to that event, use `print()` or similar to see all the variable names in the event. Each event contains different variable names with the exception of `eventname` e.g. `event.eventname`
 
@@ -1136,6 +1144,12 @@ ___
 readonly_cells(row = 0, column = 0, cells = [], readonly = True, redraw = True)
 ```
 
+___
+
+```python
+readonly_header(columns = [], readonly = True, redraw = True)
+```
+
 ## 17 Hiding Columns
 
 Display only certain columns.
@@ -1230,10 +1244,22 @@ def create_dropdown(r = 0,
                     selection_function = None,
                     modified_function = None)
 ```
+
+```python
+def create_header_dropdown(c = 0,
+                           values = [],
+                           set_value = None,
+                           state = "readonly",
+                           redraw = False,
+                           selection_function = None,
+                           modified_function = None)
+```
+
 Notes:
  - When a user selects an item from the dropdown box the sheet will set the underlying cells data to the selected item, to bind this event use either the `selection_function` argument or see the function `extra_bindings()` with binding `"end_edit_cell"` [here](https://github.com/ragardner/tksheet/wiki#7-bindings-and-functionality).
 
  Arguments:
+ - Set first argument to `"all"` to create a full column (in the main table) or a full header of dropdown boxes.
  - `values` are the values to appear when the dropdown box is popped open.
  - `state` determines whether or not there is also an editable text window at the top of the dropdown box when it is open.
  - `redraw` refreshes the sheet so the newly created box is visible.
@@ -1247,11 +1273,19 @@ Get chosen dropdown boxes values.
 get_dropdown_values(r = 0, c = 0)
 ```
 
+```python
+get_header_dropdown_values(c = 0)
+```
+
 ___
 
 Set the values and displayed value of a chosen dropdown box.
 ```python
 set_dropdown_values(r = 0, c = 0, set_existing_dropdown = False, values = [], displayed = None)
+```
+
+```python
+set_header_dropdown_values(c = 0, set_existing_dropdown = False, values = [], displayed = None)
 ```
  - `set_existing_dropdown` if `True` takes priority over `r` and `c` and sets the values of the last popped open dropdown box (if one one is popped open, if not then an `Exception` is raised).
  - `values` (`list`, `tuple`)
@@ -1264,19 +1298,31 @@ Set and get bound dropdown functions.
 dropdown_functions(r, c, selection_function = "", modified_function = "")
 ```
 
+```python
+header_dropdown_functions(c, selection_function = "", modified_function = "")
+```
+
 ___
 
 Delete dropdown boxes.
 ```python
 delete_dropdown(r = 0, c = 0)
 ```
- - Set `r` to `"all"` to delete all dropdown boxes on the sheet.
+
+```python
+delete_header_dropdown(c = 0)
+```
+ - Set first argument to `"all"` to delete all dropdown boxes on the sheet.
 
 ___
 
 Get a dictionary of all dropdown boxes; keys: `(row int, column int)` and values: `(ttk combobox widget, tk canvas window object)`
 ```python
 get_dropdowns()
+```
+
+```python
+get_header_dropdowns()
 ```
 
 ___
@@ -1286,11 +1332,19 @@ Pop open a dropdown box.
 open_dropdown(r, c)
 ```
 
+```python
+open_header_dropdown(c)
+```
+
 ___
 
 Close an already open dropdown box.
 ```python
 close_dropdown(r, c)
+```
+
+```python
+close_header_dropdown(c)
 ```
  - Also destroys any opened text editor windows.
 
@@ -1303,13 +1357,26 @@ create_checkbox(r,
                 checked = False,
                 state = "normal",
                 redraw = False,
-                check_function = None)
+                check_function = None,
+                text = "")
 ```
+
+```python
+create_header_checkbox(c,
+                       checked = False,
+                       state = "normal",
+                       redraw = False,
+                       check_function = None,
+                       text = "")
+```
+
 Notes:
  - Use `highlight_cells()` or rows or columns to change the color of the checkbox.
  - Check boxes are always left aligned despite any align settings.
 
  Arguments:
+ - Set first argument to `"all"` to create a full column (in the main table) or a full header of checkboxes.
+ - `text` displays text next to the checkbox in the cell, but will not be used as data, data will either be `True` or `False`
  - `check_function` can be used to trigger a function when the user clicks a checkbox.
  - `state` can be `"normal"` or `"disabled"`. If `"disabled"` then color will be same as table grid lines, else it will be the cells text color.
 
@@ -1320,11 +1387,19 @@ Set or toggle a checkbox.
 click_checkbox(r, c, checked = None)
 ```
 
+```python
+click_header_checkbox(c, checked = None)
+```
+
 ___
 
 Get a dictionary of all check box dictionaries.
 ```python
 get_checkboxes()
+```
+
+```python
+get_header_checkboxes()
 ```
 
 ___
@@ -1333,7 +1408,11 @@ Delete a checkbox.
 ```python
 delete_checkbox(r = 0, c = 0)
 ```
- - Set `r` to `"all"` to delete all check boxes.
+
+```python
+delete_header_checkbox(c = 0)
+```
+ - Set first argument to `"all"` to delete all check boxes.
 
 ___
 
@@ -1343,13 +1422,25 @@ checkbox(r,
          c,
          checked = None,
          state = None,
-         check_function = "")
+         check_function = "",
+         text = None)
 ```
+
+```python
+checkbox(c,
+         checked = None,
+         state = None,
+         check_function = "",
+         text = None)
+```
+ - If any arguments are not default they will be set for the chosen checkbox.
+ - If all arguments are default a dictionary of all the checkboxes information will be returned.
 
 ## 22 Table Options and Other Functions
 
 ```python
 def set_options(
+show_default_header_for_empty = None,
 enable_edit_cell_auto_resize = None,
 selected_rows_to_end_of_window = None,
 horizontal_grid_to_end_of_window = None,
@@ -1358,6 +1449,7 @@ page_up_down_select_row = None,
 expand_sheet_if_paste_too_big = None,
 paste_insert_column_limit = None,
 paste_insert_row_limit = None,
+ctrl_keys_over_dropdowns_enabled = None,
 arrow_key_down_right_scroll_page = None,
 display_selected_fg_over_highlights = None,
 empty_horizontal = None,
@@ -1423,8 +1515,6 @@ popup_menu_highlight_bg = None,
 popup_menu_highlight_fg = None,
 row_drag_and_drop_perform = None,
 column_drag_and_drop_perform = None,
-measure_subset_index = None,
-measure_subset_header = None,
 redraw = True)
 ```
 
@@ -1526,19 +1616,18 @@ class demo(tk.Tk):
         self.frame.grid_rowconfigure(0, weight = 1)
         self.sheet = Sheet(self.frame,
                            data = [[f"Row {r}, Column {c}\nnewline1\nnewline2" for c in range(50)] for r in range(500)])
-        self.sheet.enable_bindings(("single_select",
-                                    "drag_select",
-                                    "select_all",
-                                    "column_select",
-                                    "row_select",
-                                    "column_width_resize",
-                                    "double_click_column_resize",
-                                    "arrowkeys",
-                                    "row_height_resize",
-                                    "double_click_row_resize",
-                                    "right_click_popup_menu",
-                                    "rc_select"
-                                    ))
+        self.sheet.enable_bindings("single_select",
+                                   "drag_select",
+                                   "select_all",
+                                   "column_select",
+                                   "row_select",
+                                   "column_width_resize",
+                                   "double_click_column_resize",
+                                   "arrowkeys",
+                                   "row_height_resize",
+                                   "double_click_row_resize",
+                                   "right_click_popup_menu",
+                                   "rc_select")
         self.sheet.popup_menu_add_command("Say Hello", self.new_right_click_button)
         self.sheet.popup_menu_add_command("Edit Cell", self.edit_cell, index_menu = False, header_menu = False)
         self.frame.grid(row = 0, column = 0, sticky = "nswe")
@@ -1677,4 +1766,83 @@ class demo(tk.Tk):
         
 app = demo()
 app.mainloop()
+```
+
+## 27 Example Header Dropdown Boxes and Filtering
+
+A very simple demonstration of row filtering using header dropdown boxes.
+
+```python
+from tksheet import Sheet
+import tkinter as tk
+
+
+class demo(tk.Tk):
+    def __init__(self):
+        tk.Tk.__init__(self)
+        self.grid_columnconfigure(0, weight = 1)
+        self.grid_rowconfigure(0, weight = 1)
+        self.frame = tk.Frame(self)
+        self.frame.grid_columnconfigure(0, weight = 1)
+        self.frame.grid_rowconfigure(0, weight = 1)
+        self.data = ([["3", "c", "z"],
+                      ["1", "a", "x"],
+                      ["1", "b", "y"],
+                      ["2", "b", "y"],
+                      ["2", "c", "z"]])
+        self.sheet = Sheet(self.frame,
+                           data = self.data,
+                           theme = "dark",
+                           height = 700,
+                           width = 1100)
+        self.sheet.enable_bindings("copy",
+                                   "rc_select",
+                                   "arrowkeys",
+                                   "double_click_column_resize",
+                                   "column_width_resize",
+                                   "column_select",
+                                   "row_select",
+                                   "drag_select",
+                                   "single_select",
+                                   "select_all")
+        self.frame.grid(row = 0, column = 0, sticky = "nswe")
+        self.sheet.grid(row = 0, column = 0, sticky = "nswe")
+        
+        self.sheet.create_header_dropdown(c = 0,
+                                            values = ["all", "1", "2", "3"],
+                                            set_value = "all",
+                                            selection_function = self.header_dropdown_selected)
+        self.sheet.create_header_dropdown(c = 1,
+                                            values = ["all", "a", "b", "c"],
+                                            set_value = "all",
+                                            selection_function = self.header_dropdown_selected)
+        self.sheet.create_header_dropdown(c = 2,
+                                            values = ["all", "x", "y", "z"],
+                                            set_value = "all",
+                                            selection_function = self.header_dropdown_selected)
+
+    def header_dropdown_selected(self, event = None):
+        hdrs = self.sheet.headers()
+        # this function is run before header cell data is set by dropdown selection
+        # so we have to get the new value from the event
+        hdrs[event.column] = event.text
+        if all(dd == "all" for dd in hdrs):
+            self.sheet.set_sheet_data(self.data,
+                                      reset_col_positions = False,
+                                      reset_row_positions = False)
+        else:
+            self.sheet.set_sheet_data([row for row in self.data if all(row[c] == e or e == "all" for c, e in enumerate(hdrs))],
+                                      reset_col_positions = False,
+                                      reset_row_positions = False)
+    
+app = demo()
+app.mainloop()
+```
+
+## 28 Example Header Dropdown Boxes and Filtering
+
+The code used to make a screenshot for the readme file.
+
+```python
+
 ```
