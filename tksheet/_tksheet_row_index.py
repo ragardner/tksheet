@@ -624,18 +624,17 @@ class RowIndex(tk.Canvas):
         if self.extra_b1_release_func is not None:
             self.extra_b1_release_func(event)
 
-    def highlight_cells(self, r = 0, cells = tuple(), bg = None, fg = None, redraw = False):
+    def highlight_cells(self, r = 0, cells = tuple(), bg = None, fg = None, redraw = False, overwrite = True):
         if bg is None and fg is None:
             return
-        if cells:
-            for r_ in cells:
-                if r_ not in self.cell_options:
-                    self.cell_options[r_] = {}
+        for r_ in cells if cells else (r, ):
+            if r_ not in self.cell_options:
+                self.cell_options[r_] = {}
+            if 'highlight' in self.cell_options[r_] and not overwrite:
+                self.cell_options[r_]['highlight'] = (self.cell_options[r_]['highlight'][0] if bg is None else bg,
+                                                        self.cell_options[r_]['highlight'][1] if fg is None else fg)
+            else:
                 self.cell_options[r_]['highlight'] = (bg, fg)
-        else:
-            if r not in self.cell_options:
-                self.cell_options[r] = {}
-            self.cell_options[r]['highlight'] = (bg, fg)
         if redraw:
             self.MT.main_table_redraw_grid_and_text(False, True)
 

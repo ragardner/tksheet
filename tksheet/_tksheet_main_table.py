@@ -589,8 +589,15 @@ class MainTable(tk.Canvas):
                 y1 = currently_selected[0]
                 x1 = currently_selected[1]
         else:
-            y1 = len(self.row_positions) - 1 if self.data_ref else 0
-            x1 = len(self.col_positions) - 1 if self.data_ref else 0
+            if not self.data_ref:
+                x1, y1 = 0, 0
+            else:
+                if len(self.col_positions) == 1 and len(self.row_positions) > 1:
+                    x1, y1 = 0, len(self.row_positions) - 1
+                elif len(self.row_positions) == 1 and len(self.col_positions) > 1:
+                    x1, y1 = len(self.col_positions) - 1, 0
+                elif len(self.row_positions) > 1 and len(self.col_positions) > 1:
+                    x1, y1 = 0, len(self.row_positions) - 1
         try:
             data = self.clipboard_get()
         except:
@@ -768,9 +775,10 @@ class MainTable(tk.Canvas):
                         self.create_current(0, undo_storage[3][1], type_ = "col", inside = True)
                     elif undo_storage[3][0] == "row":
                         self.create_current(undo_storage[3][1], 0, type_ = "row", inside = True)
-                else:
+                elif start_row < len(self.row_positions) - 1 and start_col < len(self.col_positions) - 1:
                     self.create_current(start_row, start_col, type_ = "cell", inside = True if self.cell_selected(start_row, start_col) else False)
-                self.see(r = start_row, c = start_col, keep_yscroll = False, keep_xscroll = False, bottom_right_corner = False, check_cell_visibility = True, redraw = False)
+                if start_row < len(self.row_positions) - 1 and start_col < len(self.col_positions) - 1:
+                    self.see(r = start_row, c = start_col, keep_yscroll = False, keep_xscroll = False, bottom_right_corner = False, check_cell_visibility = True, redraw = False)
                 
             elif undo_storage[0] == "move_rows":
                 rhs = [int(b - a) for a, b in zip(self.row_positions, islice(self.row_positions, 1, len(self.row_positions)))]
@@ -856,6 +864,7 @@ class MainTable(tk.Canvas):
                 rm1start = undo_storage[2]
                 rm1end = undo_storage[3] + 1
                 new_selected = undo_storage[4]
+                dispset = undo_storage[5]
                 rm2start = rm1start + (rm1end - rm1start)
                 rm2end = rm1end + (rm1end - rm1start)
                 totalcols = rm1end - rm1start
@@ -1364,50 +1373,70 @@ class MainTable(tk.Canvas):
                     self.cell_options[(row, column)] = {}
                 self.cell_options[(row, column)]['readonly'] = True
 
-    def highlight_cells(self, r = 0, c = 0, cells = tuple(), bg = None, fg = None, redraw = False):
+    def highlight_cells(self, r = 0, c = 0, cells = tuple(), bg = None, fg = None, redraw = False, overwrite = True):
         if bg is None and fg is None:
             return
         if cells:
             for r_, c_ in cells:
                 if (r_, c_) not in self.cell_options:
                     self.cell_options[(r_, c_)] = {}
-                self.cell_options[(r_, c_)]['highlight'] = (bg, fg)
+                if 'highlight' in self.cell_options[(r_, c_)] and not overwrite:
+                    self.cell_options[(r_, c_)]['highlight'] = (self.cell_options[(r_, c_)]['highlight'][0] if bg is None else bg,
+                                                                self.cell_options[(r_, c_)]['highlight'][1] if fg is None else fg)
+                else:
+                    self.cell_options[(r_, c_)]['highlight'] = (bg, fg)
         else:
-            if (r, c) not in self.cell_options:
-                self.cell_options[(r, c)] = {}
-            self.cell_options[(r, c)]['highlight'] = (bg, fg)
+            if isinstance(r, str) and r.lower() == "all" and isinstance(c, int):
+                riter = range(self.total_data_rows())
+                citer = (c, )
+            elif isinstance(c, str) and c.lower() == "all" and isinstance(r, int):
+                riter = (r, )
+                citer = range(self.total_data_cols())
+            elif isinstance(r, int) and isinstance(c, int):
+                riter = (r, )
+                citer = (c, )
+            for r_ in riter:
+                for c_ in citer:
+                    if (r_, c_) not in self.cell_options:
+                        self.cell_options[(r_, c_)] = {}
+                    if 'highlight' in self.cell_options[(r_, c_)] and not overwrite:
+                        self.cell_options[(r_, c_)]['highlight'] = (self.cell_options[(r_, c_)]['highlight'][0] if bg is None else bg,
+                                                                    self.cell_options[(r_, c_)]['highlight'][1] if fg is None else fg)
+                    else:
+                        self.cell_options[(r_, c_)]['highlight'] = (bg, fg)
         if redraw:
             self.main_table_redraw_grid_and_text()
 
-    def highlight_cols(self, cols = [], bg = None, fg = None, highlight_header = False, redraw = False):
+    def highlight_cols(self, cols = [], bg = None, fg = None, highlight_header = False, redraw = False, overwrite = True):
         if bg is None and fg is None:
             return
-        if isinstance(cols, int):
-            cols_ = [cols]
-        else:
-            cols_ = cols
-        for c in cols_:
+        for c in (cols, ) if isinstance(cols, int) else cols:
             if c not in self.col_options:
                 self.col_options[c] = {}
-            self.col_options[c]['highlight'] = (bg, fg)
+            if 'highlight' in self.col_options[c] and not overwrite:
+                self.col_options[c]['highlight'] = (self.col_options[c]['highlight'][0] if bg is None else bg,
+                                                    self.col_options[c]['highlight'][1] if fg is None else fg)
+            else:
+                self.col_options[c]['highlight'] = (bg, fg)
         if highlight_header:
-            self.CH.highlight_cells(cells = cols_, bg = bg, fg = fg)
+            self.CH.highlight_cells(cells = cols, bg = bg, fg = fg)
         if redraw:
             self.main_table_redraw_grid_and_text(redraw_header = highlight_header)
 
-    def highlight_rows(self, rows = [], bg = None, fg = None, highlight_index = False, redraw = False, end_of_screen = False):
+    def highlight_rows(self, rows = [], bg = None, fg = None, highlight_index = False, redraw = False, end_of_screen = False, overwrite = True):
         if bg is None and fg is None:
             return
-        if isinstance(rows, int):
-            rows_ = [rows]
-        else:
-            rows_ = rows
-        for r in rows_:
+        for r in (rows, ) if isinstance(rows, int) else rows:
             if r not in self.row_options:
                 self.row_options[r] = {}
-            self.row_options[r]['highlight'] = (bg, fg, end_of_screen)
+            if 'highlight' in self.row_options[r] and not overwrite:
+                self.row_options[r]['highlight'] = (self.row_options[r]['highlight'][0] if bg is None else bg,
+                                                    self.row_options[r]['highlight'][1] if fg is None else fg,
+                                                    self.row_options[r]['highlight'][2] if self.row_options[r]['highlight'][2] != end_of_screen else end_of_screen)
+            else:
+                self.row_options[r]['highlight'] = (bg, fg, end_of_screen)
         if highlight_index:
-            self.RI.highlight_cells(cells = rows_, bg = bg, fg = fg)
+            self.RI.highlight_cells(cells = rows, bg = bg, fg = fg)
         if redraw:
             self.main_table_redraw_grid_and_text(redraw_row_index = highlight_index)
 

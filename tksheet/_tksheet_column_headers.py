@@ -657,12 +657,12 @@ class ColumnHeaders(tk.Canvas):
                             for t1 in popped_col:
                                 self.MT.col_options[dispset[t1]] = popped_col[t1]
                     if self.MT.undo_enabled:
-                        self.MT.undo_storage.append(zlib.compress(pickle.dumps(("move_cols",
-                                                                                int(orig_selected_cols[0]),
-                                                                                int(new_selected[0]),
-                                                                                 int(new_selected[-1]),
-                                                                                 sorted(orig_selected_cols),
-                                                                                 dispset))))
+                        self.MT.undo_storage.append(zlib.compress(pickle.dumps(("move_cols",                 #0
+                                                                                int(orig_selected_cols[0]),  #1
+                                                                                int(new_selected[0]),        #2
+                                                                                int(new_selected[-1]),       #3
+                                                                                sorted(orig_selected_cols),  #4
+                                                                                dispset))))                  #5
                     self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
                     if self.ch_extra_end_drag_drop_func is not None:
                         self.ch_extra_end_drag_drop_func(EndDragDropEvent("end_column_header_drag_drop", tuple(orig_selected_cols), new_selected, int(c)))
@@ -702,18 +702,17 @@ class ColumnHeaders(tk.Canvas):
             for c in columns_:
                 self.cell_options[c]['readonly'] = True
 
-    def highlight_cells(self, c = 0, cells = tuple(), bg = None, fg = None, redraw = False):
+    def highlight_cells(self, c = 0, cells = tuple(), bg = None, fg = None, redraw = False, overwrite = True):
         if bg is None and fg is None:
             return
-        if cells:
-            for c_ in cells:
-                if c_ not in self.cell_options:
-                    self.cell_options[c_] = {}
+        for c_ in cells if cells else (c, ):
+            if c_ not in self.cell_options:
+                self.cell_options[c_] = {}
+            if 'highlight' in self.cell_options[c_] and not overwrite:
+                self.cell_options[c_]['highlight'] = (self.cell_options[c_]['highlight'][0] if bg is None else bg,
+                                                      self.cell_options[c_]['highlight'][1] if fg is None else fg)
+            else:
                 self.cell_options[c_]['highlight'] = (bg, fg)
-        else:
-            if c not in self.cell_options:
-                self.cell_options[c] = {}
-            self.cell_options[c]['highlight'] = (bg, fg)
         if redraw:
             self.MT.main_table_redraw_grid_and_text(True, False)
 
@@ -791,7 +790,7 @@ class ColumnHeaders(tk.Canvas):
                 hw = b[2] - b[0] + 7 + self.MT.hdr_txt_h
             else:
                 txt = ""
-                if isinstance(self.MT.my_hdrs, int) or len(self.MT.my_hdrs) >= data_col:
+                if isinstance(self.MT.my_hdrs, int) or len(self.MT.my_hdrs) - 1 >= data_col:
                     if isinstance(self.MT.my_hdrs, int):
                         txt = self.MT.data_ref[self.MT.my_hdrs][data_col]
                     else:

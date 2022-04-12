@@ -140,7 +140,7 @@ class Sheet(tk.Frame):
                            max_rh = max_rh,
                            max_row_width = max_row_width,
                            row_index_width = row_index_width,
-                           row_index_align = row_index_align,
+                           row_index_align = self.convert_align(row_index_align),
                            index_bg = index_bg,
                            index_border_fg = index_border_fg,
                            index_grid_fg = index_grid_fg,
@@ -159,7 +159,7 @@ class Sheet(tk.Frame):
                                 max_colwidth = max_colwidth,
                                 max_header_height = max_header_height,
                                 default_header = default_header,
-                                header_align = header_align,
+                                header_align = self.convert_align(header_align),
                                 header_bg = header_bg,
                                 header_border_fg = header_border_fg,
                                 header_grid_fg = header_grid_fg,
@@ -201,7 +201,7 @@ class Sheet(tk.Frame):
                             popup_menu_bg = popup_menu_bg,
                             popup_menu_highlight_bg = popup_menu_highlight_bg,
                             popup_menu_highlight_fg = popup_menu_highlight_fg,
-                            align = align,
+                            align = self.convert_align(align),
                             table_bg = table_bg,
                             table_grid_fg = table_grid_fg,
                             table_fg = table_fg,
@@ -808,7 +808,7 @@ class Sheet(tk.Frame):
                 else:
                     self.MT.row_positions = list(accumulate(chain([0], (height for height in row_heights))))
 
-    def verify_row_heights(self, row_heights, canvas_positions = False):
+    def verify_row_heights(self, row_heights: list, canvas_positions = False):
         if row_heights[0] != 0 or isinstance(row_heights[0], bool):
             return False
         if not isinstance(row_heights, list):
@@ -821,7 +821,7 @@ class Sheet(tk.Frame):
                 return False
         return True
 
-    def verify_column_widths(self, column_widths, canvas_positions = False):
+    def verify_column_widths(self, column_widths: list, canvas_positions = False):
         if column_widths[0] != 0 or isinstance(column_widths[0], bool):
             return False
         if not isinstance(column_widths, list):
@@ -870,7 +870,7 @@ class Sheet(tk.Frame):
     def edit_cell(self, event = None, dropdown = False):
         self.MT.edit_cell_(event = event, dropdown = dropdown)
 
-    def delete_row_position(self, idx, deselect_all = False):
+    def delete_row_position(self, idx: int, deselect_all = False):
         self.MT.del_row_position(idx = idx,
                                  deselect_all = deselect_all)
 
@@ -950,10 +950,10 @@ class Sheet(tk.Frame):
         self.sheet_display_dimensions(total_rows = total_rows, total_columns = total_columns)
         self.MT.data_dimensions(total_rows = total_rows, total_columns = total_columns)
 
-    def move_row_position(self, row, moveto):
+    def move_row_position(self, row: int, moveto: int):
         self.MT.move_row_position(row, moveto)
 
-    def move_row(self, row, moveto):
+    def move_row(self, row: int, moveto: int):
         self.MT.move_row_position(row, moveto)
         self.MT.data_ref.insert(moveto, self.MT.data_ref.pop(row))
         popped_ri = {t1: t2 for t1, t2 in self.RI.cell_options.items() if t1 == row}
@@ -984,7 +984,7 @@ class Sheet(tk.Frame):
             for (t10, t11), t2 in popped_cell.items():
                 self.MT.cell_options[(newrowsdct[t10], t11)] = t2
 
-    def delete_column_position(self, idx, deselect_all = False):
+    def delete_column_position(self, idx: int, deselect_all = False):
         self.MT.del_col_position(idx,
                                  deselect_all = deselect_all)
 
@@ -1018,10 +1018,10 @@ class Sheet(tk.Frame):
         if redraw:
             self.redraw()
 
-    def move_column_position(self, column, moveto):
+    def move_column_position(self, column: int, moveto: int):
         self.MT.move_col_position(column, moveto)
 
-    def move_column(self, column, moveto):
+    def move_column(self, column: int, moveto: int):
         self.MT.move_col_position(column, moveto)
         for rn in range(len(self.MT.data_ref)):
             self.MT.data_ref[rn].insert(moveto, self.MT.data_ref[rn].pop(column))
@@ -1098,10 +1098,10 @@ class Sheet(tk.Frame):
         except:
             return None
 
-    def bind_key_text_editor(self, key, function):
+    def bind_key_text_editor(self, key: str, function):
         self.MT.text_editor_user_bound_keys[key] = function
 
-    def unbind_key_text_editor(self, key):
+    def unbind_key_text_editor(self, key: str):
         if key == "all":
             for key in self.MT.text_editor_user_bound_keys:
                 try:
@@ -1269,36 +1269,10 @@ class Sheet(tk.Frame):
         return self.MT.all_selected()
 
     def align_rows(self, rows = [], align = "global", align_index = False, redraw = True): #"center", "w", "e" or "global"
-        self.MT.align_rows(rows = rows,
-                           align = align,
-                           align_index = align_index)
-        if redraw:
-            self.redraw()
-
-    def align_columns(self, columns = [], align = "global", align_header = False, redraw = True): #"center", "w", "e" or "global"
-        self.MT.align_columns(columns = columns,
-                              align = align,
-                              align_header = align_header)
-        if redraw:
-            self.redraw()
-
-    def align_cells(self, row = 0, column = 0, cells = [], align = "global", redraw = True): #"center", "w", "e" or "global"
-        self.MT.align_cells(row = row,
-                            column = column,
-                            cells = cells,
-                            align = align)
-        if redraw:
-            self.redraw()
-
-    def align_header(self, columns = [], align = "global", redraw = True):
-        self.CH.align_cells(columns = columns,
-                            align = align)
-        if redraw:
-            self.redraw()
-
-    def align_index(self, rows = [], align = "global", redraw = True):
-        self.RI.align_cells(rows = rows,
-                            align = align)
+        if align == "global" or self.convert_align(align):
+            self.MT.align_rows(rows = rows,
+                               align = align if align == "global" else self.convert_align(align),
+                               align_index = align_index)
         if redraw:
             self.redraw()
 
@@ -1327,21 +1301,6 @@ class Sheet(tk.Frame):
                                 readonly = readonly)
         if redraw:
             self.redraw()
-
-    def highlight_rows(self, rows = [], bg = None, fg = None, highlight_index = True, redraw = False, end_of_screen = False):
-        self.MT.highlight_rows(rows = rows,
-                               bg = bg,
-                               fg = fg,
-                               highlight_index = highlight_index,
-                               redraw = redraw,
-                               end_of_screen = end_of_screen)
-
-    def highlight_columns(self, columns = [], bg = None, fg = None, highlight_header = True, redraw = False):
-        self.MT.highlight_cols(cols = columns,
-                                  bg = bg,
-                                  fg = fg,
-                                  highlight_header = highlight_header,
-                                  redraw = redraw)
 
     def dehighlight_all(self):
         for k in self.MT.cell_options:
@@ -1415,27 +1374,47 @@ class Sheet(tk.Frame):
                     pass
         if redraw:
             self.refresh(True, True)
+            
+    def highlight_rows(self, rows = [], bg = None, fg = None, highlight_index = True, redraw = False, end_of_screen = False, overwrite = True):
+        self.MT.highlight_rows(rows = rows,
+                               bg = bg,
+                               fg = fg,
+                               highlight_index = highlight_index,
+                               redraw = redraw,
+                               end_of_screen = end_of_screen,
+                               overwrite = overwrite)
 
-    def highlight_cells(self, row = 0, column = 0, cells = [], canvas = "table", bg = None, fg = None, redraw = False):
+    def highlight_columns(self, columns = [], bg = None, fg = None, highlight_header = True, redraw = False, overwrite = True):
+        self.MT.highlight_cols(cols = columns,
+                               bg = bg,
+                               fg = fg,
+                               highlight_header = highlight_header,
+                               redraw = redraw,
+                               overwrite = overwrite)
+
+    def highlight_cells(self, row = 0, column = 0, cells = [], canvas = "table", bg = None, fg = None, redraw = False, overwrite = True):
         if canvas == "table":
             self.MT.highlight_cells(r = row,
                                     c = column,
                                     cells = cells,
                                     bg = bg,
                                     fg = fg,
-                                    redraw = redraw)
-        elif canvas == "row_index":
+                                    redraw = redraw,
+                                    overwrite = overwrite)
+        elif canvas in ("row_index", "index"):
             self.RI.highlight_cells(r = row,
                                     cells = cells,
                                     bg = bg,
                                     fg = fg,
-                                    redraw = redraw)
+                                    redraw = redraw,
+                                    overwrite = overwrite)
         elif canvas == "header":
             self.CH.highlight_cells(c = column,
                                     cells = cells,
                                     bg = bg,
                                     fg = fg,
-                                    redraw = redraw)
+                                    redraw = redraw,
+                                    overwrite = overwrite)
 
     def dehighlight_cells(self, row = 0, column = 0, cells = [], canvas = "table", all_ = False, redraw = True):
         if row == "all" and canvas == "table":
@@ -1505,39 +1484,81 @@ class Sheet(tk.Frame):
         elif canvas == "header":
             return {k: v['highlight'] for k, v in self.CH.cell_options.items() if 'highlight' in v}
         
-    def get_frame_y(self, y):
+    def get_frame_y(self, y: int):
         return y + self.CH.current_height
 
-    def get_frame_x(self, x):
+    def get_frame_x(self, x: int):
         return x + self.RI.current_width
+    
+    def convert_align(self, align: str):
+        a = align.lower()
+        if a in ("c", "center"):
+            return "center"
+        elif a in ("w", "west"):
+            return "w"
+        elif a in ("e", "east"):
+            return "e"
+        else:
+            raise ValueError("Align must be one of the following values: c, center, w, west, e, east")
+        
+    def align_columns(self, columns = [], align = "global", align_header = False, redraw = True): #"center", "w", "e" or "global"
+        if align == "global" or self.convert_align(align):
+            self.MT.align_columns(columns = columns,
+                                  align = align if align == "global" else self.convert_align(align),
+                                  align_header = align_header)
+        if redraw:
+            self.redraw()
 
-    def align(self, align = None, redraw = True):
+    def align_cells(self, row = 0, column = 0, cells = [], align = "global", redraw = True): #"center", "w", "e" or "global"
+        if align == "global" or self.convert_align(align):
+            self.MT.align_cells(row = row,
+                                column = column,
+                                cells = cells,
+                                align = align if align == "global" else self.convert_align(align))
+        if redraw:
+            self.redraw()
+
+    def align_header(self, columns = [], align = "global", redraw = True):
+        if align == "global" or self.convert_align(align):
+            self.CH.align_cells(columns = columns,
+                                align = align if align == "global" else self.convert_align(align))
+        if redraw:
+            self.redraw()
+
+    def align_index(self, rows = [], align = "global", redraw = True):
+        if align == "global" or self.convert_align(align):
+            self.RI.align_cells(rows = rows,
+                                align = align if align == "global" else self.convert_align(align))
+        if redraw:
+            self.redraw()
+
+    def align(self, align: str = None, redraw = True):
         if align is None:
             return self.MT.align
-        elif align in ("w", "center", "e"):
-            self.MT.align = align
+        elif self.convert_align(align):
+            self.MT.align = self.convert_align(align)
         else:
-            raise ValueError("Align must be either 'w' or 'center' or 'e'")
+            raise ValueError("Align must be one of the following values: c, center, w, west, e, east")
         if redraw:
             self.refresh()
 
-    def header_align(self, align = None, redraw = True):
+    def header_align(self, align: str = None, redraw = True):
         if align is None:
             return self.CH.align
-        elif align in ("w", "center"):
-            self.CH.align = align
+        elif self.convert_align(align):
+            self.CH.align = self.convert_align(align)
         else:
-            raise ValueError("Align must be either 'w' or 'center'")
+            raise ValueError("Align must be one of the following values: c, center, w, west, e, east")
         if redraw:
             self.refresh()
 
-    def row_index_align(self, align = None, redraw = True):
+    def row_index_align(self, align: str = None, redraw = True):
         if align is None:
             return self.RI.align
-        elif align in ("w", "center"):
-            self.RI.align = align
+        elif self.convert_align(align):
+            self.RI.align = self.convert_align(align)
         else:
-            raise ValueError("Align must be either 'w' or 'center'")
+            raise ValueError("Align must be one of the following values: c, center, w, west, e, east")
         if redraw:
             self.refresh()
 
