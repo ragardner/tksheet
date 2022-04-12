@@ -16,6 +16,10 @@ def get_heading_font():
 
 
 theme_light_blue = {
+'popup_menu_fg': "gray2",
+'popup_menu_bg': "#f2f2f2",
+'popup_menu_highlight_bg': "#91c9f7",
+'popup_menu_highlight_fg': "black",
 'index_hidden_rows_expander_bg': "gray30",
 'header_hidden_columns_expander_bg': "gray30",
 'header_bg': "#f8f9fa",
@@ -56,6 +60,10 @@ theme_light_blue = {
 
 
 theme_light_green = {
+'popup_menu_fg': "gray2",
+'popup_menu_bg': "#f2f2f2",
+'popup_menu_highlight_bg': "#91c9f7",
+'popup_menu_highlight_fg': "black",
 'index_hidden_rows_expander_bg': "gray30",
 'header_hidden_columns_expander_bg': "gray30",
 'header_bg': "#edebe9",
@@ -95,36 +103,40 @@ theme_light_green = {
 }
 
 theme_dark = {
+'popup_menu_fg': "white",
+'popup_menu_bg': "gray15",
+'popup_menu_highlight_bg': "gray35",
+'popup_menu_highlight_fg': "white",
 'index_hidden_rows_expander_bg': "gray30",
 'header_hidden_columns_expander_bg': "gray30",
-'header_bg': "#000000",
+'header_bg': "#19191e",
 'header_border_fg': "#505054",
 'header_grid_fg': "#505054",
 'header_fg': "#c2c9cf",
 'header_selected_cells_bg': "#3e3e45",
-'header_selected_cells_fg': "#fcfcfc",
-'index_bg': "#000000",
+'header_selected_cells_fg': "white",
+'index_bg': "#19191e",
 'index_border_fg': "#505054",
 'index_grid_fg': "#505054",
 'index_fg': "#c2c9cf",
 'index_selected_cells_bg': "#3e3e45",
-'index_selected_cells_fg': "#fcfcfc",
+'index_selected_cells_fg': "white",
 'top_left_bg': "#3d3d3d",
 'top_left_fg': "#505054",
 'top_left_fg_highlight': "#c2c9cf",
-'table_bg': "#19191e",
+'table_bg': "#000000",
 'table_grid_fg': "#505054",
 'table_fg': "#bcbcbc",
 'table_selected_cells_border_fg': "#bdbdbd",
 'table_selected_cells_bg': "#313034",
 'table_selected_cells_fg': "#dbdbdb",
-'resizing_line_fg': "#fcfcfc",
-'drag_and_drop_bg': "#ecf0f2",
+'resizing_line_fg': "white",
+'drag_and_drop_bg': "white",
 'outline_color': "gray95",
 'header_selected_columns_bg': "#3e3e45",
-'header_selected_columns_fg': "#fcfcfc",
+'header_selected_columns_fg': "white",
 'index_selected_rows_bg': "#3e3e45",
-'index_selected_rows_fg': "#fcfcfc",
+'index_selected_rows_fg': "white",
 'table_selected_rows_border_fg': "#bdbdbd",
 'table_selected_rows_bg': "#313034",
 'table_selected_rows_fg': "#dbdbdb",
@@ -134,6 +146,10 @@ theme_dark = {
 }
 
 theme_black = {
+'popup_menu_fg': "white",
+'popup_menu_bg': "gray15",
+'popup_menu_highlight_bg': "gray35",
+'popup_menu_highlight_fg': "white",
 'index_hidden_rows_expander_bg': "gray30",
 'header_hidden_columns_expander_bg': "gray30",
 'header_bg': "#000000",
@@ -173,6 +189,10 @@ theme_black = {
 }
 
 theme_dark_blue = {
+'popup_menu_fg': "white",
+'popup_menu_bg': "gray15",
+'popup_menu_highlight_bg': "gray35",
+'popup_menu_highlight_fg': "white",
 'index_hidden_rows_expander_bg': "gray30",
 'header_hidden_columns_expander_bg': "gray30",
 'header_bg': "#2d2d2d",
@@ -213,6 +233,10 @@ theme_dark_blue = {
 
 
 theme_dark_green = {
+'popup_menu_fg': "white",
+'popup_menu_bg': "gray15",
+'popup_menu_highlight_bg': "gray35",
+'popup_menu_highlight_fg': "white",
 'index_hidden_rows_expander_bg': "gray30",
 'header_hidden_columns_expander_bg': "gray30",
 'header_bg': "#2d2d2d",

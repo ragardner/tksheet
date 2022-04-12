@@ -74,10 +74,10 @@ class Sheet(tk.Frame):
                  display_selected_fg_over_highlights = False,
                  show_selected_cells_border = True,
                  theme                              = "light blue",
-                 popup_menu_fg                      = "gray2",
-                 popup_menu_bg                      = "#f2f2f2",
-                 popup_menu_highlight_bg            = "#91c9f7",
-                 popup_menu_highlight_fg            = "black",
+                 popup_menu_fg                      = theme_light_blue['popup_menu_fg'],
+                 popup_menu_bg                      = theme_light_blue['popup_menu_bg'],
+                 popup_menu_highlight_bg            = theme_light_blue['popup_menu_highlight_bg'],
+                 popup_menu_highlight_fg            = theme_light_blue['popup_menu_highlight_fg'],
                  frame_bg                           = theme_light_blue['table_bg'],
                  table_grid_fg                      = theme_light_blue['table_grid_fg'],
                  table_bg                           = theme_light_blue['table_bg'],
@@ -259,7 +259,6 @@ class Sheet(tk.Frame):
             self.yscroll_showing = False
             self.yscroll_disabled = True
         if theme != "light blue":
-            self.MT.display_selected_fg_over_highlights = True
             self.change_theme(theme)
             for k, v in locals().items():
                 if k in theme_light_blue and v != theme_light_blue[k]:
@@ -406,7 +405,7 @@ class Sheet(tk.Frame):
         self.MT.create_rc_menus()
 
     def extra_bindings(self, bindings, func = None):
-        if isinstance(bindings, str) and bindings.lower() in ("bind_all", "unbind_all"):
+        if isinstance(bindings, str) and bindings.lower() in ("all", "bind_all", "unbind_all"):
             self.MT.extra_begin_ctrl_c_func = func
             self.MT.extra_begin_ctrl_x_func = func
             self.MT.extra_begin_ctrl_v_func = func
