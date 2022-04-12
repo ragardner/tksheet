@@ -3821,7 +3821,7 @@ class MainTable(tk.Canvas):
                 x1, y1+radius,
                 x1, y1]
 
-    def redraw_checkbox(self, x1, y1, x2, y2, fill, outline, tag, draw_check = False):
+    def redraw_checkbox(self, r, dcol, x1, y1, x2, y2, fill, outline, tag, draw_check = False):
         points = self.get_checkbox_points(x1, y1, x2, y2)
         if self.hidd_checkbox:
             t, sh = self.hidd_checkbox.popitem()
@@ -3858,12 +3858,12 @@ class MainTable(tk.Canvas):
                 t, sh = self.hidd_grid.popitem()
                 self.coords(t, x1 + 2, y1 + 2, x2 - 2, y2 - 2)
                 if sh:
-                    self.itemconfig(t, fill = self.table_bg, capstyle = tk.ROUND, joinstyle = tk.ROUND, width = 2)
+                    self.itemconfig(t, fill = self.get_widget_bg_fg(r, dcol)[0], capstyle = tk.ROUND, joinstyle = tk.ROUND, width = 2)
                 else:
-                    self.itemconfig(t, fill = self.table_bg, capstyle = tk.ROUND, joinstyle = tk.ROUND, width = 2, tag = tag, state = "normal")
+                    self.itemconfig(t, fill = self.get_widget_bg_fg(r, dcol)[0], capstyle = tk.ROUND, joinstyle = tk.ROUND, width = 2, tag = tag, state = "normal")
                 self.lift(t)
             else:
-                t = self.create_line(x1 + 2, y1 + 2, x2 - 2, y2 - 2, fill = self.table_bg, capstyle = tk.ROUND, joinstyle = tk.ROUND, width = 2, tag = tag)
+                t = self.create_line(x1 + 2, y1 + 2, x2 - 2, y2 - 2, fill = self.get_widget_bg_fg(r, dcol)[0], capstyle = tk.ROUND, joinstyle = tk.ROUND, width = 2, tag = tag)
             self.disp_grid[t] = True
 
             # draw other line of X
@@ -3871,12 +3871,12 @@ class MainTable(tk.Canvas):
                 t, sh = self.hidd_grid.popitem()
                 self.coords(t, x2 - 2, y1 + 2, x1 + 2, y2 - 2)
                 if sh:
-                    self.itemconfig(t, fill = self.table_bg, capstyle = tk.ROUND, joinstyle = tk.ROUND, width = 2)
+                    self.itemconfig(t, fill = self.get_widget_bg_fg(r, dcol)[0], capstyle = tk.ROUND, joinstyle = tk.ROUND, width = 2)
                 else:
-                    self.itemconfig(t, fill = self.table_bg, capstyle = tk.ROUND, joinstyle = tk.ROUND, width = 2, tag = tag, state = "normal")
+                    self.itemconfig(t, fill = self.get_widget_bg_fg(r, dcol)[0], capstyle = tk.ROUND, joinstyle = tk.ROUND, width = 2, tag = tag, state = "normal")
                 self.lift(t)
             else:
-                t = self.create_line(x2 - 2, y1 + 2, x1 + 2, y2 - 2, fill = self.table_bg, capstyle = tk.ROUND, joinstyle = tk.ROUND, width = 2, tag = tag)
+                t = self.create_line(x2 - 2, y1 + 2, x1 + 2, y2 - 2, fill = self.get_widget_bg_fg(r, dcol)[0], capstyle = tk.ROUND, joinstyle = tk.ROUND, width = 2, tag = tag)
             self.disp_grid[t] = True
 
     def main_table_redraw_grid_and_text(self, redraw_header = False, redraw_row_index = False, redraw_table = True):
@@ -4040,7 +4040,9 @@ class MainTable(tk.Canvas):
                             elif cell_alignment == "center":
                                 x = x + floor(box_w / 2)
                             mw = mw - box_w
-                            self.redraw_checkbox(fc + 2,
+                            self.redraw_checkbox(r,
+                                                 dcol,
+                                                 fc + 2,
                                                  fr + 2,
                                                  fc + 2 + self.txt_h + 2,
                                                  fr + 2 + self.txt_h + 2,

@@ -1003,7 +1003,7 @@ class ColumnHeaders(tk.Canvas):
                 t = self.create_line(points, fill = fill, width = 2, capstyle = tk.ROUND, joinstyle = tk.ROUND, tag = tag)
             self.disp_dropdown[t] = True
             
-    def redraw_checkbox(self, x1, y1, x2, y2, fill, outline, tag, draw_check = False):
+    def redraw_checkbox(self, dcol, x1, y1, x2, y2, fill, outline, tag, draw_check = False):
         points = self.MT.get_checkbox_points(x1, y1, x2, y2)
         if self.hidd_checkbox:
             t, sh = self.hidd_checkbox.popitem()
@@ -1040,12 +1040,12 @@ class ColumnHeaders(tk.Canvas):
                 t, sh = self.hidd_grid.popitem()
                 self.coords(t, x1 + 2, y1 + 2, x2 - 2, y2 - 2)
                 if sh:
-                    self.itemconfig(t, fill = self.header_bg, capstyle = tk.ROUND, joinstyle = tk.ROUND, width = 2)
+                    self.itemconfig(t, fill = self.get_widget_bg_fg(dcol)[0], capstyle = tk.ROUND, joinstyle = tk.ROUND, width = 2)
                 else:
-                    self.itemconfig(t, fill = self.header_bg, capstyle = tk.ROUND, joinstyle = tk.ROUND, width = 2, tag = tag, state = "normal")
+                    self.itemconfig(t, fill = self.get_widget_bg_fg(dcol)[0], capstyle = tk.ROUND, joinstyle = tk.ROUND, width = 2, tag = tag, state = "normal")
                 self.lift(t)
             else:
-                t = self.create_line(x1 + 2, y1 + 2, x2 - 2, y2 - 2, fill = self.header_bg, capstyle = tk.ROUND, joinstyle = tk.ROUND, width = 2, tag = tag)
+                t = self.create_line(x1 + 2, y1 + 2, x2 - 2, y2 - 2, fill = self.get_widget_bg_fg(dcol)[0], capstyle = tk.ROUND, joinstyle = tk.ROUND, width = 2, tag = tag)
             self.disp_grid[t] = True
 
             # draw other line of X
@@ -1053,12 +1053,12 @@ class ColumnHeaders(tk.Canvas):
                 t, sh = self.hidd_grid.popitem()
                 self.coords(t, x2 - 2, y1 + 2, x1 + 2, y2 - 2)
                 if sh:
-                    self.itemconfig(t, fill = self.header_bg, capstyle = tk.ROUND, joinstyle = tk.ROUND, width = 2)
+                    self.itemconfig(t, fill = self.get_widget_bg_fg(dcol)[0], capstyle = tk.ROUND, joinstyle = tk.ROUND, width = 2)
                 else:
-                    self.itemconfig(t, fill = self.header_bg, capstyle = tk.ROUND, joinstyle = tk.ROUND, width = 2, tag = tag, state = "normal")
+                    self.itemconfig(t, fill = self.get_widget_bg_fg(dcol)[0], capstyle = tk.ROUND, joinstyle = tk.ROUND, width = 2, tag = tag, state = "normal")
                 self.lift(t)
             else:
-                t = self.create_line(x2 - 2, y1 + 2, x1 + 2, y2 - 2, fill = self.header_bg, capstyle = tk.ROUND, joinstyle = tk.ROUND, width = 2, tag = tag)
+                t = self.create_line(x2 - 2, y1 + 2, x1 + 2, y2 - 2, fill = self.get_widget_bg_fg(dcol)[0], capstyle = tk.ROUND, joinstyle = tk.ROUND, width = 2, tag = tag)
             self.disp_grid[t] = True
 
     def redraw_grid_and_text(self, last_col_line_pos, x1, x_stop, start_col, end_col, selected_cols, selected_rows, actual_selected_cols):
@@ -1146,7 +1146,8 @@ class ColumnHeaders(tk.Canvas):
                     elif cell_alignment == "center":
                         x = x + ceil(box_w / 2)
                     mw = mw - box_w
-                    self.redraw_checkbox(fc + 2,
+                    self.redraw_checkbox(dcol,
+                                         fc + 2,
                                          0,
                                          fc + 2 + self.MT.hdr_txt_h + 2,
                                          self.MT.hdr_txt_h + 2,

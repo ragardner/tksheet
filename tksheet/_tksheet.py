@@ -1268,14 +1268,6 @@ class Sheet(tk.Frame):
     def all_selected(self):
         return self.MT.all_selected()
 
-    def align_rows(self, rows = [], align = "global", align_index = False, redraw = True): #"center", "w", "e" or "global"
-        if align == "global" or self.convert_align(align):
-            self.MT.align_rows(rows = rows,
-                               align = align if align == "global" else self.convert_align(align),
-                               align_index = align_index)
-        if redraw:
-            self.redraw()
-
     def readonly_rows(self, rows = [], readonly = True, redraw = False):
         self.MT.readonly_rows(rows = rows,
                               readonly = readonly)
@@ -1500,6 +1492,14 @@ class Sheet(tk.Frame):
             return "e"
         else:
             raise ValueError("Align must be one of the following values: c, center, w, west, e, east")
+        
+    def align_rows(self, rows = [], align = "global", align_index = False, redraw = True): #"center", "w", "e" or "global"
+        if align == "global" or self.convert_align(align):
+            self.MT.align_rows(rows = rows,
+                               align = align if align == "global" else self.convert_align(align),
+                               align_index = align_index)
+        if redraw:
+            self.redraw()
         
     def align_columns(self, columns = [], align = "global", align_header = False, redraw = True): #"center", "w", "e" or "global"
         if align == "global" or self.convert_align(align):
