@@ -11,6 +11,8 @@ pip install tksheet
  - [Documentation](https://github.com/ragardner/tksheet/wiki)
  - [Version release notes](https://github.com/ragardner/tksheet/blob/master/RELEASE_NOTES.md)
 
+Except for bug fixing I am no longer working on this repository
+
 ### Features
  - Display and modify tabular data
  - Stores its display data as a Python list of lists, sublists being rows
@@ -31,4 +33,4 @@ pip install tksheet
 
 ### Dark Theme
 
-![alt text](https://i.imgur.com/b9921fz.jpeg)
+![alt text](https://i.imgur.com/ldzbkN9.png)
