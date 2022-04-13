@@ -2063,7 +2063,7 @@ class MainTable(tk.Canvas):
         if not bindings:
             self.enable_bindings_internal("all")
         elif isinstance(bindings, (list, tuple)):
-            for binding in bindings:
+            for binding in bindings[0]:
                 self.enable_bindings_internal(binding.lower())
         elif isinstance(bindings, str):
             self.enable_bindings_internal(bindings.lower())
@@ -2181,7 +2181,7 @@ class MainTable(tk.Canvas):
         if not bindings:
             self.disable_bindings_internal("all")
         elif isinstance(bindings, (list, tuple)):
-            for binding in bindings:
+            for binding in bindings[0]:
                 self.disable_bindings_internal(binding)
         elif isinstance(bindings, str):
             self.disable_bindings_internal(bindings)
