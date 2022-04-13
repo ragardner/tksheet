@@ -247,7 +247,7 @@ ___
 
 Set the header to something non-default (if new header is shorter than total columns then default headers e.g. letters will be used on the end.
 ```python
-headers(newheaders = None, index = None, reset_col_positions = False, show_headers_if_not_sheet = True)
+headers(newheaders = None, index = None, reset_col_positions = False, show_headers_if_not_sheet = True, redraw = False)
 ```
  - Using an integer `int` for argument `newheaders` makes the sheet use that row as a header e.g. `headers(0)` means the first row will be used as a header (the first row will not be hidden in the sheet though).
  - Leaving `newheaders` as `None` and using the `index` argument returns the existing header value in that index.
@@ -257,7 +257,7 @@ ___
 
 Set the index to something non-default (if new index is shorter than total rows then default index e.g. numbers will be used on the end.
 ```python
-row_index(newindex = None, index = None, reset_row_positions = False, show_index_if_not_sheet = True)
+row_index(newindex = None, index = None, reset_row_positions = False, show_index_if_not_sheet = True, redraw = False)
 ```
  - Leaving `newindex` as `None` and using the `index` argument returns the existing row index value in that index.
  - Leaving all arguments as default e.g. `row_index()` returns the existing row index.

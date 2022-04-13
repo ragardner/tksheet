@@ -505,8 +505,6 @@ class ColumnHeaders(tk.Canvas):
             if c != self.dragged_col and c is not None and c not in orig_selected_cols and len(orig_selected_cols) != len(self.MT.col_positions) - 1:
                 orig_selected_cols = sorted(orig_selected_cols)
                 if len(orig_selected_cols) > 1:
-                    orig_min = orig_selected_cols[0]
-                    orig_max = orig_selected_cols[1]
                     start_idx = bisect.bisect_left(orig_selected_cols, self.dragged_col)
                     forward_gap = get_index_of_gap_in_sorted_integer_seq_forward(orig_selected_cols, start_idx)
                     reverse_gap = get_index_of_gap_in_sorted_integer_seq_reverse(orig_selected_cols, start_idx)
@@ -514,148 +512,21 @@ class ColumnHeaders(tk.Canvas):
                         orig_selected_cols[:] = orig_selected_cols[:forward_gap]
                     if reverse_gap is not None:
                         orig_selected_cols[:] = orig_selected_cols[reverse_gap:]
-                colsiter = orig_selected_cols.copy()
-                rm1start = colsiter[0]
-                rm1end = colsiter[-1] + 1
-                rm2start = rm1start + (rm1end - rm1start)
-                rm2end = rm1end + (rm1end - rm1start)
-                totalcols = len(colsiter)
+                rm1start = orig_selected_cols[0]
+                totalcols = len(orig_selected_cols)
                 extra_func_success = True
                 if c >= len(self.MT.col_positions) - 1:
                     c -= 1
-                c_ = int(c)
                 if self.ch_extra_begin_drag_drop_func is not None:
                     try:
                         self.ch_extra_begin_drag_drop_func(BeginDragDropEvent("begin_column_header_drag_drop", tuple(orig_selected_cols), int(c)))
                     except:
                         extra_func_success = False
                 if extra_func_success:
-                    self.MT.deselect("all")
-                    cws = [int(b - a) for a, b in zip(self.MT.col_positions, islice(self.MT.col_positions, 1, len(self.MT.col_positions)))]
-                    if rm1start > c:
-                        cws[c:c] = cws[rm1start:rm1end]
-                        cws[rm2start:rm2end] = []
-                    else:
-                        cws[c + totalcols:c + totalcols] = cws[rm1start:rm1end]
-                        cws[rm1start:rm1end] = []
-                    self.MT.col_positions = list(accumulate(chain([0], (width for width in cws))))
-                    if c_ + totalcols > len(self.MT.col_positions):
-                        new_selected = tuple(range(len(self.MT.col_positions) - 1 - totalcols, len(self.MT.col_positions) - 1))
-                        self.MT.create_selected(0, len(self.MT.col_positions) - 1 - totalcols, len(self.MT.row_positions) - 1, len(self.MT.col_positions) - 1, "cols")
-                    else:
-                        if rm1start > c:
-                            new_selected = tuple(range(c_, c_ + totalcols))
-                            self.MT.create_selected(0, c_, len(self.MT.row_positions) - 1, c_ + totalcols, "cols")
-                        else:
-                            new_selected = tuple(range(c_ + 1 - totalcols, c_ + 1))
-                            self.MT.create_selected(0, c_ + 1 - totalcols, len(self.MT.row_positions) - 1, c_ + 1, "cols")
-                    self.MT.create_current(0, int(new_selected[0]), type_ = "col", inside = True)
-                    if self.column_drag_and_drop_perform:
-                        if self.MT.all_columns_displayed:
-                            if rm1start > c:
-                                for rn in range(len(self.MT.data_ref)):
-                                    if len(self.MT.data_ref[rn]) < rm1end:
-                                        self.MT.data_ref[rn].extend(list(repeat("", rm1end - len(self.MT.data_ref[rn]) + 1)))
-                                    self.MT.data_ref[rn][c:c] = self.MT.data_ref[rn][rm1start:rm1end]
-                                    self.MT.data_ref[rn][rm2start:rm2end] = []
-                                if isinstance(self.MT.my_hdrs, list) and self.MT.my_hdrs:
-                                    if len(self.MT.my_hdrs) < rm1end:
-                                        self.MT.my_hdrs.extend(list(repeat("", rm1end - len(self.MT.my_hdrs) + 1)))
-                                    self.MT.my_hdrs[c:c] = self.MT.my_hdrs[rm1start:rm1end]
-                                    self.MT.my_hdrs[rm2start:rm2end] = []
-                            else:
-                                for rn in range(len(self.MT.data_ref)):
-                                    if len(self.MT.data_ref[rn]) < c:
-                                        self.MT.data_ref[rn].extend(list(repeat("", c - len(self.MT.data_ref[rn]) + 1)))
-                                    self.MT.data_ref[rn][c + totalcols:c + totalcols] = self.MT.data_ref[rn][rm1start:rm1end]
-                                    self.MT.data_ref[rn][rm1start:rm1end] = []
-                                if isinstance(self.MT.my_hdrs, list) and self.MT.my_hdrs:
-                                    if len(self.MT.my_hdrs) < c:
-                                        self.MT.my_hdrs.extend(list(repeat("", c - len(self.MT.my_hdrs) + 1)))
-                                    self.MT.my_hdrs[c + totalcols:c + totalcols] = self.MT.my_hdrs[rm1start:rm1end]
-                                    self.MT.my_hdrs[rm1start:rm1end] = []
-                            colset = set(colsiter)
-                            popped_ch = {t1: t2 for t1, t2 in self.cell_options.items() if t1 in colset}
-                            popped_cell = {t1: t2 for t1, t2 in self.MT.cell_options.items() if t1[1] in colset}
-                            popped_col = {t1: t2 for t1, t2 in self.MT.col_options.items() if t1 in colset}
-                            popped_ch = {t1: self.cell_options.pop(t1) for t1 in popped_ch}
-                            popped_cell = {t1: self.MT.cell_options.pop(t1) for t1 in popped_cell}
-                            popped_col = {t1: self.MT.col_options.pop(t1) for t1 in popped_col}
-                            self.cell_options = {t1 if t1 < rm1start else t1 - totalcols: t2 for t1, t2 in self.cell_options.items()}
-                            self.cell_options = {t1 if t1 < c_ else t1 + totalcols: t2 for t1, t2 in self.cell_options.items()}
-                            self.MT.col_options = {t1 if t1 < rm1start else t1 - totalcols: t2 for t1, t2 in self.MT.col_options.items()}
-                            self.MT.col_options = {t1 if t1 < c_ else t1 + totalcols: t2 for t1, t2 in self.MT.col_options.items()}
-                            self.MT.cell_options = {(t10, t11 if t11 < rm1start else t11 - totalcols): t2 for (t10, t11), t2 in self.MT.cell_options.items()}
-                            self.MT.cell_options = {(t10, t11 if t11 < c_ else t11 + totalcols): t2 for (t10, t11), t2 in self.MT.cell_options.items()}
-                            newcolsdct = {t1: t2 for t1, t2 in zip(colsiter, new_selected)}
-                            for t1, t2 in popped_ch.items():
-                                self.cell_options[newcolsdct[t1]] = t2
-                            for t1, t2 in popped_col.items():
-                                self.MT.col_options[newcolsdct[t1]] = t2
-                            for (t10, t11), t2 in popped_cell.items():
-                                self.MT.cell_options[(t10, newcolsdct[t11])] = t2
-                            dispset = {}
-                        else:
-                            # moves data around, not displayed columns indexes
-                            # which remain sorted and the same after drop and drop
-                            if rm1start > c:
-                                dispset = {a: b for a, b in zip(self.MT.displayed_columns, (self.MT.displayed_columns[:c] +
-                                                                                            self.MT.displayed_columns[rm1start:rm1start + totalcols] +
-                                                                                            self.MT.displayed_columns[c:rm1start] +
-                                                                                            self.MT.displayed_columns[rm1start + totalcols:]))}
-                            else:
-                                dispset = {a: b for a, b in zip(self.MT.displayed_columns, (self.MT.displayed_columns[:rm1start] +
-                                                                                            self.MT.displayed_columns[rm1start + totalcols:c + 1] +
-                                                                                            self.MT.displayed_columns[rm1start:rm1start + totalcols] +
-                                                                                            self.MT.displayed_columns[c + 1:]))}
-                            # has to pick up elements from all over the place in the original row
-                            # building an entirely new row is best due to permutations of hidden columns
-                            max_idx = max(chain(dispset, dispset.values())) + 1
-                            for rn in range(len(self.MT.data_ref)):
-                                if len(self.MT.data_ref[rn]) < max_idx:
-                                    self.MT.data_ref[rn][:] = self.MT.data_ref[rn] + list(repeat("", max_idx - len(self.MT.data_ref[rn])))
-                                new = []
-                                idx = 0
-                                done = set()
-                                while len(new) < len(self.MT.data_ref[rn]):
-                                    if idx in dispset and idx not in done:
-                                        new.append(self.MT.data_ref[rn][dispset[idx]])
-                                        done.add(idx)
-                                    elif idx not in done:
-                                        new.append(self.MT.data_ref[rn][idx])
-                                        idx += 1
-                                    else:
-                                        idx += 1
-                                self.MT.data_ref[rn] = new
-                            if isinstance(self.MT.my_hdrs, list) and self.MT.my_hdrs:
-                                if len(self.MT.my_hdrs) < max_idx:
-                                    self.MT.my_hdrs[:] = self.MT.my_hdrs + list(repeat("", max_idx - len(self.MT.my_hdrs)))
-                                new = []
-                                idx = 0
-                                done = set()
-                                while len(new) < len(self.MT.my_hdrs):
-                                    if idx in dispset and idx not in done:
-                                        new.append(self.MT.my_hdrs[dispset[idx]])
-                                        done.add(idx)
-                                    elif idx not in done:
-                                        new.append(self.MT.my_hdrs[idx])
-                                        idx += 1
-                                    else:
-                                        idx += 1
-                                self.MT.my_hdrs = new
-                            dispset = {b: a for a, b in dispset.items()}
-                            popped_ch = {t1: t2 for t1, t2 in self.cell_options.items() if t1 in dispset}
-                            popped_cell = {t1: t2 for t1, t2 in self.MT.cell_options.items() if t1[1] in dispset}
-                            popped_col = {t1: t2 for t1, t2 in self.MT.col_options.items() if t1 in dispset}
-                            popped_ch = {t1: self.cell_options.pop(t1) for t1 in popped_ch}
-                            popped_cell = {t1: self.MT.cell_options.pop(t1) for t1 in popped_cell}
-                            popped_col = {t1: self.MT.col_options.pop(t1) for t1 in popped_col}
-                            for t1 in popped_ch:
-                                self.cell_options[dispset[t1]] = popped_ch[t1]
-                            for t1 in popped_cell:
-                                self.MT.cell_options[(t1[0], dispset[t1[1]])] = popped_cell[t1]
-                            for t1 in popped_col:
-                                self.MT.col_options[dispset[t1]] = popped_col[t1]
+                    new_selected, dispset = self.MT.move_columns_adjust_options_dict(c,
+                                                                                     rm1start, 
+                                                                                     totalcols,
+                                                                                     move_data = self.column_drag_and_drop_perform)
                     if self.MT.undo_enabled:
                         self.MT.undo_storage.append(zlib.compress(pickle.dumps(("move_cols",                 #0
                                                                                 int(orig_selected_cols[0]),  #1
@@ -802,7 +673,7 @@ class ColumnHeaders(tk.Canvas):
                             hw = b[2] - b[0] + 7 + self.MT.hdr_txt_h
                         else:
                             hw = b[2] - b[0] + 7
-                if (not txt and self.show_default_header_for_empty) or len(self.MT.my_hdrs) < data_col:
+                if not isinstance(self.MT.my_hdrs, int) and ((not txt and self.show_default_header_for_empty) or len(self.MT.my_hdrs) < data_col):
                     if self.default_hdr == "letters":
                         hw = self.MT.GetHdrTextWidth(num2alpha(data_col)) + 7
                     elif self.default_hdr == "numbers":
@@ -1094,8 +965,8 @@ class ColumnHeaders(tk.Canvas):
         c_2 = self.header_selected_cells_bg if self.header_selected_cells_bg.startswith("#") else Color_Map_[self.header_selected_cells_bg]
         c_3 = self.header_selected_columns_bg if self.header_selected_columns_bg.startswith("#") else Color_Map_[self.header_selected_columns_bg]
         font = self.MT.my_hdr_font
-        y = self.MT.hdr_fl_ins
         for c in range(start_col, end_col - 1):
+            y = self.MT.hdr_fl_ins
             fc = self.MT.col_positions[c]
             sc = self.MT.col_positions[c + 1]
             if self.MT.all_columns_displayed:
@@ -1154,7 +1025,7 @@ class ColumnHeaders(tk.Canvas):
                                          fill = tf if self.cell_options[dcol]['checkbox']['state'] == "normal" else self.header_grid_fg,
                                          outline = "",
                                          tag = "cb", 
-                                         draw_check = self.MT.my_hdrs[dcol])
+                                         draw_check = self.MT.my_hdrs[dcol] if isinstance(self.MT.my_hdrs, (list, tuple)) else self.MT.data_ref[self.MT.my_hdrs][dcol])
 
             try:
                 if dcol in self.cell_options and 'checkbox' in self.cell_options[dcol]:
@@ -1356,9 +1227,15 @@ class ColumnHeaders(tk.Canvas):
                 elif hasattr(event, 'keysym') and event.keysym == 'F2':
                     extra_func_key = "F2"
             dcol = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
-            if len(self.MT.my_hdrs) <= dcol:
-                self.MT.my_hdrs.extend(list(repeat("", dcol - len(self.MT.my_hdrs) + 1)))
-            text = f"{self.MT.my_hdrs[dcol]}"
+            if isinstance(self.MT.my_hdrs, list):
+                if len(self.MT.my_hdrs) <= dcol:
+                    self.MT.my_hdrs.extend(list(repeat("", dcol - len(self.MT.my_hdrs) + 1)))
+                text = f"{self.MT.my_hdrs[dcol]}"
+            elif isinstance(self.MT.my_hdrs, int):
+                try:
+                    text = f"{self.MT.data_ref[self.MT.my_hdrs][dcol]}"
+                except:
+                    text = ""
             if self.MT.cell_auto_resize_enabled:
                 self.set_col_width_run_binding(c)
         elif event is not None and ((hasattr(event, "char") and event.char.isalpha()) or
@@ -1406,9 +1283,15 @@ class ColumnHeaders(tk.Canvas):
         h = self.current_height + 1
         dcol = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
         if text is None:
-            if len(self.MT.my_hdrs) <= dcol:
-                self.MT.my_hdrs.extend(list(repeat("", dcol - len(self.MT.my_hdrs) + 1)))
-            text = self.MT.my_hdrs[dcol]
+            if isinstance(self.MT.my_hdrs, list):
+                if len(self.MT.my_hdrs) <= dcol:
+                    self.MT.my_hdrs.extend(list(repeat("", dcol - len(self.MT.my_hdrs) + 1)))
+                text = f"{self.MT.my_hdrs[dcol]}"
+            elif isinstance(self.MT.my_hdrs, int):
+                try:
+                    text = f"{self.MT.data_ref[self.MT.my_hdrs][dcol]}"
+                except:
+                    text = ""
         bg, fg = self.get_widget_bg_fg(dcol)
         self.text_editor = TextEditor(self,
                                       text = text,
@@ -1527,14 +1410,17 @@ class ColumnHeaders(tk.Canvas):
         if destroy_tup is not None and len(destroy_tup) >= 2 and destroy_tup[1] != "FocusOut":
             self.focus_set()
         return self.text_editor_value
-
+    
     #internal event use
     def _set_cell_data(self, c = 0, dcol = None, value = "", cell_resize = True):
         if dcol is None:
             dcol = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
-        if len(self.MT.my_hdrs) <= dcol:
-            self.MT.my_hdrs.extend(list(repeat("", dcol - len(self.MT.my_hdrs) + 1)))
-        self.MT.my_hdrs[dcol] = value
+        if isinstance(self.MT.my_hdrs, list):
+            if len(self.MT.my_hdrs) <= dcol:
+                self.MT.my_hdrs.extend(list(repeat("", dcol - len(self.MT.my_hdrs) + 1)))
+            self.MT.my_hdrs[dcol] = value
+        elif isinstance(self.MT.my_hdrs, int):
+            self.MT._set_cell_data(r = self.MT.my_hdrs, c = c, dcol = dcol, value = value, undo = True)
         if cell_resize and self.MT.cell_auto_resize_enabled:
             self.set_col_width_run_binding(c)
             self.MT.refresh()
@@ -1550,11 +1436,14 @@ class ColumnHeaders(tk.Canvas):
         if dcol is None:
             dcol = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
         if self.cell_options[dcol]['checkbox']['state'] == "normal":
-            self._set_cell_data(c, dcol, value = not self.MT.my_hdrs[dcol] if type(self.MT.my_hdrs[dcol]) == bool else False, cell_resize = False)
+            if isinstance(self.MT.my_hdrs, list):
+                self._set_cell_data(c, dcol, value = not self.MT.my_hdrs[dcol] if type(self.MT.my_hdrs[dcol]) == bool else False, cell_resize = False)
+            elif isinstance(self.MT.my_hdrs, int):
+                self._set_cell_data(c, dcol, value = not self.MT.data_ref[self.MT.my_hdrs][dcol] if type(self.MT.data_ref[self.MT.my_hdrs][dcol]) == bool else False, cell_resize = False)
             if self.cell_options[dcol]['checkbox']['check_function'] is not None:
-                self.cell_options[dcol]['checkbox']['check_function']((0, c, "HeaderCheckboxClicked", f"{self.MT.my_hdrs[dcol]}"))
+                self.cell_options[dcol]['checkbox']['check_function']((0, c, "HeaderCheckboxClicked", f"{self.MT.my_hdrs[dcol] if isinstance(self.MT.my_hdrs, list) else self.MT.data_ref[self.MT.my_hdrs][dcol]}"))
             if self.extra_end_edit_cell_func is not None:
-                self.extra_end_edit_cell_func(EditHeaderEvent(c, "Return", f"{self.MT.my_hdrs[dcol]}", "end_edit_header"))
+                self.extra_end_edit_cell_func(EditHeaderEvent(c, "Return", f"{self.MT.my_hdrs[dcol] if isinstance(self.MT.my_hdrs, list) else self.MT.data_ref[self.MT.my_hdrs][dcol]}", "end_edit_header"))
         if redraw:
             self.MT.refresh()
 

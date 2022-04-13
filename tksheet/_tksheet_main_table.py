@@ -728,6 +728,178 @@ class MainTable(tk.Canvas):
             if self.undo_enabled:
                 self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells", undo_storage, boxes, currently_selected))))
             self.refresh()
+            
+    def move_columns_adjust_options_dict(self, col, remove_start, num_cols, move_data = True):
+        c = int(col)
+        rm1start = int(remove_start)
+        rm1end = rm1start + num_cols
+        totalcols = int(num_cols)
+        rm2start = rm1start + (rm1end - rm1start)
+        rm2end = rm1end + (rm1end - rm1start)
+        orig_selected = list(range(rm1start, rm1start + totalcols))
+        self.deselect("all")
+        cws = [int(b - a) for a, b in zip(self.col_positions, islice(self.col_positions, 1, len(self.col_positions)))]
+        if rm1start > c:
+            cws[c:c] = cws[rm1start:rm1end]
+            cws[rm2start:rm2end] = []
+        else:
+            cws[c + 1:c + 1] = cws[rm1start:rm1end]
+            cws[rm1start:rm1end] = []
+        self.col_positions = list(accumulate(chain([0], (width for width in cws))))
+        if c + totalcols > len(self.col_positions):
+            new_selected = tuple(range(len(self.col_positions) - 1 - totalcols, len(self.col_positions) - 1))
+            self.create_selected(0, len(self.col_positions) - 1 - totalcols, len(self.row_positions) - 1, len(self.col_positions) - 1, "cols")
+        else:
+            if rm1start > c:
+                new_selected = tuple(range(c, c + totalcols))
+                self.create_selected(0, c, len(self.row_positions) - 1, c + totalcols, "cols")
+            else:
+                new_selected = tuple(range(c + 1 - totalcols, c + 1))
+                self.create_selected(0, c + 1 - totalcols, len(self.row_positions) - 1, c + 1, "cols")
+        self.create_current(0, int(new_selected[0]), type_ = "col", inside = True)
+        newcolsdct = {t1: t2 for t1, t2 in zip(orig_selected, new_selected)}
+        if self.all_columns_displayed:
+            dispset = {}
+            if rm1start > c:
+                if move_data:
+                    for rn in range(len(self.data_ref)):
+                        if len(self.data_ref[rn]) < rm1end:
+                            self.data_ref[rn].extend(list(repeat("", rm1end - len(self.data_ref[rn]) + 1)))
+                        self.data_ref[rn][c:c] = self.data_ref[rn][rm1start:rm1end]
+                        self.data_ref[rn][rm2start:rm2end] = []
+                    if isinstance(self.my_hdrs, list) and self.my_hdrs:
+                        if len(self.my_hdrs) < rm1end:
+                            self.my_hdrs.extend(list(repeat("", rm1end - len(self.my_hdrs) + 1)))
+                        self.my_hdrs[c:c] = self.my_hdrs[rm1start:rm1end]
+                        self.my_hdrs[rm2start:rm2end] = []
+
+                new_ch = {}
+                for k, v in self.CH.cell_options.items():
+                    if k in newcolsdct:
+                        new_ch[newcolsdct[k]] = v
+                    elif k < rm1start and k >= c:
+                        new_ch[k + totalcols] = v
+                    else:
+                        new_ch[k] = v
+                self.CH.cell_options = new_ch
+                
+                new_cell = {}
+                for k, v in self.cell_options.items():
+                    if k[1] in newcolsdct:
+                        new_cell[(k[0], newcolsdct[k[1]])] = v
+                    elif k[1] < rm1start and k[1] >= c:
+                        new_cell[(k[0], k[1] + totalcols)] = v
+                    else:
+                        new_cell[k] = v
+                self.cell_options = new_cell
+                
+                new_col = {}
+                for k, v in self.col_options.items():
+                    if k in newcolsdct:
+                        new_col[newcolsdct[k]] = v
+                    elif k < rm1start and k >= c:
+                        new_col[k + totalcols] = v
+                    else:
+                        new_col[k] = v
+                self.col_options = new_col
+            else:
+                c += 1
+                if move_data:
+                    for rn in range(len(self.data_ref)):
+                        if len(self.data_ref[rn]) < c - 1:
+                            self.data_ref[rn].extend(list(repeat("", c - len(self.data_ref[rn]))))
+                        self.data_ref[rn][c:c] = self.data_ref[rn][rm1start:rm1end]
+                        self.data_ref[rn][rm1start:rm1end] = []
+                    if isinstance(self.my_hdrs, list) and self.my_hdrs:
+                        if len(self.my_hdrs) < c:
+                            self.my_hdrs.extend(list(repeat("", c - len(self.my_hdrs))))
+                        self.my_hdrs[c:c] = self.my_hdrs[rm1start:rm1end]
+                        self.my_hdrs[rm1start:rm1end] = []
+            
+                new_ch = {}
+                for k, v in self.CH.cell_options.items():
+                    if k in newcolsdct:
+                        new_ch[newcolsdct[k]] = v
+                    elif k < c and k > rm1start:
+                        new_ch[k - totalcols] = v
+                    else:
+                        new_ch[k] = v
+                self.CH.cell_options = new_ch
+                
+                new_cell = {}
+                for k, v in self.cell_options.items():
+                    if k[1] in newcolsdct:
+                        new_cell[(k[0], newcolsdct[k[1]])] = v
+                    elif k[1] < c and k[1] > rm1start:
+                        new_cell[(k[0], k[1] - totalcols)] = v
+                    else:
+                        new_cell[k] = v
+                self.cell_options = new_cell
+                
+                new_col = {}
+                for k, v in self.col_options.items():
+                    if k in newcolsdct:
+                        new_col[newcolsdct[k]] = v
+                    elif k < c and k > rm1start:
+                        new_col[k - totalcols] = v
+                    else:
+                        new_col[k] = v
+                self.col_options = new_col
+        else:
+            # moves data around, not displayed columns indexes
+            # which remain sorted and the same after drop and drop
+            if rm1start > c:
+                dispset = {a: b for a, b in zip(self.displayed_columns, (self.displayed_columns[:c] +
+                                                                         self.displayed_columns[rm1start:rm1start + totalcols] +
+                                                                         self.displayed_columns[c:rm1start] +
+                                                                         self.displayed_columns[rm1start + totalcols:]))}
+            else:
+                dispset = {a: b for a, b in zip(self.displayed_columns, (self.displayed_columns[:rm1start] +
+                                                                         self.displayed_columns[rm1start + totalcols:c + 1] +
+                                                                         self.displayed_columns[rm1start:rm1start + totalcols] +
+                                                                         self.displayed_columns[c + 1:]))}
+            # has to pick up elements from all over the place in the original row
+            # building an entirely new row is best due to permutations of hidden columns
+            if move_data:
+                max_idx = max(chain(dispset, dispset.values())) + 1
+                for rn in range(len(self.data_ref)):
+                    if len(self.data_ref[rn]) < max_idx:
+                        self.data_ref[rn][:] = self.data_ref[rn] + list(repeat("", max_idx - len(self.data_ref[rn])))
+                    new = []
+                    idx = 0
+                    done = set()
+                    while len(new) < len(self.data_ref[rn]):
+                        if idx in dispset and idx not in done:
+                            new.append(self.data_ref[rn][dispset[idx]])
+                            done.add(idx)
+                        elif idx not in done:
+                            new.append(self.data_ref[rn][idx])
+                            idx += 1
+                        else:
+                            idx += 1
+                    self.data_ref[rn] = new
+                if isinstance(self.my_hdrs, list) and self.my_hdrs:
+                    if len(self.my_hdrs) < max_idx:
+                        self.my_hdrs[:] = self.my_hdrs + list(repeat("", max_idx - len(self.my_hdrs)))
+                    new = []
+                    idx = 0
+                    done = set()
+                    while len(new) < len(self.my_hdrs):
+                        if idx in dispset and idx not in done:
+                            new.append(self.my_hdrs[dispset[idx]])
+                            done.add(idx)
+                        elif idx not in done:
+                            new.append(self.my_hdrs[idx])
+                            idx += 1
+                        else:
+                            idx += 1
+                    self.my_hdrs = new
+            dispset = {b: a for a, b in dispset.items()}
+            self.CH.cell_options = {dispset[k] if k in dispset else k: v for k, v in self.CH.cell_options.items()}
+            self.cell_options = {(k[0], dispset[k[1]]) if k[1] in dispset else k: v for k, v in self.cell_options.items()}
+            self.col_options = {dispset[k] if k in dispset else k: v for k, v in self.col_options.items()}
+        
+        return new_selected, dispset
 
     def ctrl_z(self, event = None):
         if self.undo_storage:
@@ -779,7 +951,13 @@ class MainTable(tk.Canvas):
                     self.create_current(start_row, start_col, type_ = "cell", inside = True if self.cell_selected(start_row, start_col) else False)
                 if start_row < len(self.row_positions) - 1 and start_col < len(self.col_positions) - 1:
                     self.see(r = start_row, c = start_col, keep_yscroll = False, keep_xscroll = False, bottom_right_corner = False, check_cell_visibility = True, redraw = False)
-                
+            
+            elif undo_storage[0] == "move_cols":
+                c = undo_storage[1]
+                rm1start = undo_storage[2]
+                totalcols = len(undo_storage[4])
+                self.move_columns_adjust_options_dict(c, rm1start, totalcols)
+            
             elif undo_storage[0] == "move_rows":
                 rhs = [int(b - a) for a, b in zip(self.row_positions, islice(self.row_positions, 1, len(self.row_positions)))]
                 ins_row = undo_storage[1]
@@ -857,132 +1035,6 @@ class MainTable(tk.Canvas):
 
                 for (t10, t11), t2 in popped_cell.items():
                     self.cell_options[(newrowsdct[t10], t11)] = t2
-                        
-            elif undo_storage[0] == "move_cols":
-                cws = [int(b - a) for a, b in zip(self.col_positions, islice(self.col_positions, 1, len(self.col_positions)))]
-                c = undo_storage[1]
-                rm1start = undo_storage[2]
-                rm1end = undo_storage[3] + 1
-                new_selected = undo_storage[4]
-                dispset = undo_storage[5]
-                rm2start = rm1start + (rm1end - rm1start)
-                rm2end = rm1end + (rm1end - rm1start)
-                totalcols = rm1end - rm1start
-                if rm1start < c:
-                    c += totalcols
-                if self.all_columns_displayed:
-                    if rm1start > c:
-                        for rn in range(len(self.data_ref)):
-                            self.data_ref[rn][c:c] = self.data_ref[rn][rm1start:rm1end]
-                            self.data_ref[rn][rm2start:rm2end] = []
-                        if isinstance(self.my_hdrs, list) and self.my_hdrs:
-                            self.my_hdrs[c:c] = self.my_hdrs[rm1start:rm1end]
-                            self.my_hdrs[rm2start:rm2end] = []
-                    else:
-                        for rn in range(len(self.data_ref)):
-                            self.data_ref[rn][c:c] = self.data_ref[rn][rm1start:rm1end]
-                            self.data_ref[rn][rm1start:rm1end] = []
-                        if isinstance(self.my_hdrs, list) and self.my_hdrs:
-                            self.my_hdrs[c:c] = self.my_hdrs[rm1start:rm1end]
-                            self.my_hdrs[rm1start:rm1end] = []
-                    colsiter = tuple(range(rm1start, rm1end))
-                    colset = set(colsiter)
-                    popped_ch = {t1: t2 for t1, t2 in self.CH.cell_options.items() if t1 in colset}
-                    popped_cell = {t1: t2 for t1, t2 in self.cell_options.items() if t1[1] in colset}
-                    popped_col = {t1: t2 for t1, t2 in self.col_options.items() if t1 in colset}
-                    
-                    popped_ch = {t1: self.CH.cell_options.pop(t1) for t1 in popped_ch}
-                    popped_cell = {t1: self.cell_options.pop(t1) for t1 in popped_cell}
-                    popped_col = {t1: self.col_options.pop(t1) for t1 in popped_col}
-
-                    self.CH.cell_options = {t1 if t1 < rm1start else t1 - totalcols: t2 for t1, t2 in self.CH.cell_options.items()}
-                    self.CH.cell_options = {t1 if t1 < c else t1 + totalcols: t2 for t1, t2 in self.CH.cell_options.items()}
-
-                    self.col_options = {t1 if t1 < rm1start else t1 - totalcols: t2 for t1, t2 in self.col_options.items()}
-                    self.col_options = {t1 if t1 < c else t1 + totalcols: t2 for t1, t2 in self.col_options.items()}
-
-                    self.cell_options = {(t10, t11 if t11 < rm1start else t11 - totalcols): t2 for (t10, t11), t2 in self.cell_options.items()}
-                    self.cell_options = {(t10, t11 if t11 < c else t11 + totalcols): t2 for (t10, t11), t2 in self.cell_options.items()}
-
-                    newcolsdct = {t1: t2 for t1, t2 in zip(colsiter, new_selected)}
-                    for t1, t2 in popped_ch.items():
-                        self.CH.cell_options[newcolsdct[t1]] = t2
-
-                    for t1, t2 in popped_col.items():
-                        self.col_options[newcolsdct[t1]] = t2
-
-                    for (t10, t11), t2 in popped_cell.items():
-                        self.cell_options[(t10, newcolsdct[t11])] = t2
-                else:
-                    # moves data around, not displayed columns indexes
-                    # which remain sorted and the same after drop and drop
-                    # has to pick up elements from all over the place in the original row
-                    # building an entirely new row is best due to permutations of hidden columns
-                    for rn in range(len(self.data_ref)):
-                        new = []
-                        idx = 0
-                        done = set()
-                        while len(new) < len(self.data_ref[rn]):
-                            if idx in dispset and idx not in done:
-                                try:
-                                    new.append(self.data_ref[rn][dispset[idx]])
-                                    done.add(idx)
-                                except:
-                                    done.add(idx)
-                            elif idx not in done:
-                                try:
-                                    new.append(self.data_ref[rn][idx])
-                                    idx += 1
-                                except:
-                                    idx += 1
-                            else:
-                                idx += 1
-                        self.data_ref[rn] = new
-                    new = []
-                    idx = 0
-                    done = set()
-                    while len(new) < len(self.my_hdrs):
-                        if idx in dispset and idx not in done:
-                            try:
-                                new.append(self.my_hdrs[dispset[idx]])
-                                done.add(idx)
-                            except:
-                                done.add(idx)
-                        elif idx not in done:
-                            try:
-                                new.append(self.my_hdrs[idx])
-                                idx += 1
-                            except:
-                                idx += 1
-                        else:
-                            idx += 1
-                    self.my_hdrs = new
-                    dispset = {b: a for a, b in dispset.items()}
-                    popped_ch = {t1: t2 for t1, t2 in self.CH.cell_options.items() if t1 in dispset}
-                    popped_cell = {t1: t2 for t1, t2 in self.cell_options.items() if t1[1] in dispset}
-                    popped_col = {t1: t2 for t1, t2 in self.col_options.items() if t1 in dispset}
-                    popped_ch = {t1: self.CH.cell_options.pop(t1) for t1 in popped_ch}
-                    popped_cell = {t1: self.cell_options.pop(t1) for t1 in popped_cell}
-                    popped_col = {t1: self.col_options.pop(t1) for t1 in popped_col}
-                    for t1 in popped_ch:
-                        self.CH.cell_options[dispset[t1]] = popped_ch[t1]
-                    for t1 in popped_cell:
-                        self.cell_options[(t1[0], dispset[t1[1]])] = popped_cell[t1]
-                    for t1 in popped_col:
-                        self.col_options[dispset[t1]] = popped_col[t1]
-                if rm1start > c:
-                    cws[c:c] = cws[rm1start:rm1end]
-                    cws[rm2start:rm2end] = []
-                    self.col_positions = list(accumulate(chain([0], (width for width in cws))))
-                    self.create_current(0, c, type_ = "col", inside = True)
-                    self.create_selected(0, c, len(self.row_positions) - 1, c + totalcols, "cols")
-                else:
-                    cws[c:c] = cws[rm1start:rm1end]
-                    cws[rm1start:rm1end] = []
-                    self.col_positions = list(accumulate(chain([0], (width for width in cws))))
-                    self.create_current(0, c - totalcols, type_ = "col", inside = True)
-                    self.create_selected(0, c - totalcols, len(self.row_positions) - 1, c, "cols")
-                self.see(r = 0, c = c - totalcols if rm1start < c else c, keep_yscroll = True, keep_xscroll = False, bottom_right_corner = False, check_cell_visibility = True, redraw = False)
                         
             elif undo_storage[0] == "insert_row":
                 self.data_ref[undo_storage[1]['data_row_num']:undo_storage[1]['data_row_num'] + undo_storage[1]['numrows']] = []
@@ -2067,10 +2119,23 @@ class MainTable(tk.Canvas):
                 if isinstance(binding, (list, tuple)):
                     for bind in binding:
                         self.enable_bindings_internal(bind.lower())
-                else:
+                elif isinstance(binding, str):
                     self.enable_bindings_internal(binding.lower())
         elif isinstance(bindings, str):
             self.enable_bindings_internal(bindings.lower())
+            
+    def disable_bindings(self, bindings):
+        if not bindings:
+            self.disable_bindings_internal("all")
+        elif isinstance(bindings, (list, tuple)):
+            for binding in bindings:
+                if isinstance(binding, (list, tuple)):
+                    for bind in binding:
+                        self.disable_bindings_internal(bind.lower())
+                elif isinstance(binding, str):
+                    self.disable_bindings_internal(binding.lower())
+        elif isinstance(bindings, str):
+            self.disable_bindings_internal(bindings)
 
     def enable_disable_select_all(self, enable = True):
         self.select_all_enabled = bool(enable)
@@ -2180,19 +2245,6 @@ class MainTable(tk.Canvas):
         elif binding == "edit_header":
             self.edit_bindings(True, "edit_header")
         self.create_rc_menus()
-        
-    def disable_bindings(self, bindings):
-        if not bindings:
-            self.disable_bindings_internal("all")
-        elif isinstance(bindings, (list, tuple)):
-            for binding in bindings:
-                if isinstance(binding, (list, tuple)):
-                    for bind in binding:
-                        self.enable_bindings_internal(bind.lower())
-                else:
-                    self.enable_bindings_internal(binding.lower())
-        elif isinstance(bindings, str):
-            self.disable_bindings_internal(bindings)
 
     def disable_bindings_internal(self, binding):
         if binding in ("all", "disable_all"):
@@ -2838,7 +2890,7 @@ class MainTable(tk.Canvas):
             cn = self.displayed_columns[c]
         rn = int(r)
         if (rn, cn) in self.cell_options and 'checkbox' in self.cell_options[(rn, cn)]:
-            self.txt_measure_canvas.itemconfig(self.txt_measure_canvas_text, text = self.cell_options[(rn, cn)]['checkbox']['text'], font = self.MT.my_hdr_font)
+            self.txt_measure_canvas.itemconfig(self.txt_measure_canvas_text, text = self.cell_options[(rn, cn)]['checkbox']['text'], font = self.my_hdr_font)
             b = self.txt_measure_canvas.bbox(self.txt_measure_canvas_text)
             tw = b[2] - b[0] + 7 + self.txt_h
             if b[3] - b[1] + 5 > h:
@@ -3528,7 +3580,7 @@ class MainTable(tk.Canvas):
                 self.my_hdrs = list(newheaders) if isinstance(newheaders, tuple) else newheaders
             elif isinstance(newheaders, int):
                 self.my_hdrs = int(newheaders)
-            elif isinstance(index, int):
+            elif isinstance(self.my_hdrs, list) and isinstance(index, int):
                 if len(self.my_hdrs) <= index:
                     self.my_hdrs.extend(list(repeat("", index - len(self.my_hdrs) + 1)))
                 self.my_hdrs[index] = f"{newheaders}"
