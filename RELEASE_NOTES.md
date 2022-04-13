@@ -1,3 +1,8 @@
+### Version 5.3.7
+ - Fix issue with `enable_bindings()`/`disable_bindings()` no longer accept a tuple
+ - Fix drag and drop bugs introduced in 5.3.6
+ - Fix bugs with header set to integer introduced in 5.3.6
+
 ### Version 5.3.6
  - Editable and readonly dropdown boxes and checkboxes in the header
  - Add readonly functions to header
