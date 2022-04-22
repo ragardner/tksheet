@@ -458,6 +458,8 @@ extra_bindings(bindings, func = "None")
 
 Notes:
  - Upon an event being triggered the bound function will be sent a [namedtuple](https://docs.python.org/3/library/collections.html#collections.namedtuple) containing variables relevant to that event, use `print()` or similar to see all the variable names in the event. Each event contains different variable names with the exception of `eventname` e.g. `event.eventname`
+ - For most of the `"end_..."` events the bound function is run before the value is set.
+ - The bound function for `"end_edit_cell"` is run before the cell data is set in order that a return value can set the cell instead of the user input. Using the event you can assess the user input and if needed override it with a return value which is not `None`. if `None` is the return value then the user input will not be overridden.
 
 Arguments:
  - `bindings` (`str`) options are:

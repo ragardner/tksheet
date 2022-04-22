@@ -1,3 +1,6 @@
+### Version 5.3.8
+ - Fix focus out of table cell editor by clicking on header not setting cell.
+
 ### Version 5.3.7
  - Fix issue with `enable_bindings()`/`disable_bindings()` no longer accept a tuple
  - Fix drag and drop bugs introduced in 5.3.6
