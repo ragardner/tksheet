@@ -322,7 +322,7 @@ class ColumnHeaders(tk.Canvas):
             self.extra_double_b1_func(event)
         
     def b1_press(self, event = None):
-        self.MT.hide_dropdown_window()
+        self.MT.hide_dropdown_window(b1 = True)
         self.focus_set()
         self.MT.unbind("<MouseWheel>")
         self.closed_dropdown = self.hide_dropdown_window(b1 = True)
