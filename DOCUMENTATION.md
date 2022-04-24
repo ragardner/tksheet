@@ -46,6 +46,8 @@ Some examples of things that are not possible with tksheet:
  - Cell highlight borders (except for dropdown boxes)
  - Highlighting continuous multiple cells with a single border
 
+If you'd like to buy me a coffee for creating and supporting this library you can do so here: https://www.buymeacoffee.com/ragardner
+
 ## 2 Installation and Requirements
 `tksheet` is available through PyPi (Python package index) and can be installed by using Pip through the command line `pip install tksheet`
 
