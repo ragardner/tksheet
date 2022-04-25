@@ -627,7 +627,13 @@ class RowIndex(tk.Canvas):
     def highlight_cells(self, r = 0, cells = tuple(), bg = None, fg = None, redraw = False, overwrite = True):
         if bg is None and fg is None:
             return
-        for r_ in cells if cells else (r, ):
+        if cells and not isinstance(cells, int):
+            iterable = cells
+        elif isinstance(cells, int):
+            iterable = (cells, )
+        else:
+            iterable = (r, )
+        for r_ in iterable:
             if r_ not in self.cell_options:
                 self.cell_options[r_] = {}
             if 'highlight' in self.cell_options[r_] and not overwrite:

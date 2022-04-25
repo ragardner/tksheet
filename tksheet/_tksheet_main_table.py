@@ -195,7 +195,7 @@ class MainTable(tk.Canvas):
         self.single_selection_enabled = False
         self.toggle_selection_enabled = False # with this mode every left click adds the cell to selected cells
 
-        self.ctrl_keys_over_dropdowns_enabled = False
+        self.ctrl_keys_over_dropdowns_enabled = ctrl_keys_over_dropdowns_enabled
         self.drag_selection_enabled = False
         self.select_all_enabled = False
         self.arrowkeys_enabled = False
@@ -588,6 +588,8 @@ class MainTable(tk.Canvas):
             elif isinstance(currently_selected[0], int):
                 y1 = currently_selected[0]
                 x1 = currently_selected[1]
+        elif not currently_selected and not self.expand_sheet_if_paste_too_big:
+            return
         else:
             if not self.data_ref:
                 x1, y1 = 0, 0

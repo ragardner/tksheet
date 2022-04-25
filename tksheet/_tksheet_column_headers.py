@@ -576,7 +576,13 @@ class ColumnHeaders(tk.Canvas):
     def highlight_cells(self, c = 0, cells = tuple(), bg = None, fg = None, redraw = False, overwrite = True):
         if bg is None and fg is None:
             return
-        for c_ in cells if cells else (c, ):
+        if cells and not isinstance(cells, int):
+            iterable = cells
+        elif isinstance(cells, int):
+            iterable = (cells, )
+        else:
+            iterable = (c, )
+        for c_ in iterable:
             if c_ not in self.cell_options:
                 self.cell_options[c_] = {}
             if 'highlight' in self.cell_options[c_] and not overwrite:

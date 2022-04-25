@@ -1,5 +1,10 @@
+### Version 5.3.9
+ - Fix bug with paste without anything selected
+ - Minor fix to highlight functions which could cause an error using certain args
+ - Fix `ctrl_keys_over_dropdowns_enabled` initialization arg not setting
+
 ### Version 5.3.8
- - Fix focus out of table cell editor by clicking on header not setting cell.
+ - Fix focus out of table cell editor by clicking on header not setting cell
 
 ### Version 5.3.7
  - Fix issue with `enable_bindings()`/`disable_bindings()` no longer accept a tuple
