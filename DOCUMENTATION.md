@@ -214,7 +214,7 @@ set_sheet_data(data = [[]],
 ```
  - `data` (`list`) has to be a list of lists for full functionality, for display only a list of tuples or a tuple of tuples will work.
  - `reset_col_positions` and `reset_row_positions` (`bool`) when `True` will reset column widths and row heights.
- - `redraw` (`bool`) refreses the table after setting new data.
+ - `redraw` (`bool`) refreshes the table after setting new data.
  - `verify` (`bool`) goes through `data` and checks if it is a list of lists, will raise error if not, disabled by default.
  - `reset_highlights` (`bool`) resets all table cell highlights.
 
