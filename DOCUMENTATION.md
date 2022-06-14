@@ -1,35 +1,37 @@
 # Table of Contents
+
 1. [About tksheet](https://github.com/ragardner/tksheet/wiki#1-about-tksheet)
 2. [Installation and Requirements](https://github.com/ragardner/tksheet/wiki#2-installation-and-requirements)
 3. [Basic Initialization](https://github.com/ragardner/tksheet/wiki#3-basic-initialization)
 4. [Initialization Options](https://github.com/ragardner/tksheet/wiki#4-initialization-options)
-5. [Modifying Table Data and Dimensions](https://github.com/ragardner/tksheet/wiki#5-modifying-table-data-and-dimensions)
-6. [Getting Table Data](https://github.com/ragardner/tksheet/wiki#6-getting-table-data)
-7. [Bindings and Functionality](https://github.com/ragardner/tksheet/wiki#7-bindings-and-functionality)
-8. [Identifying Bound Event Mouse Position](https://github.com/ragardner/tksheet/wiki#8-identifying-bound-event-mouse-position)
-9. [Table Colors](https://github.com/ragardner/tksheet/wiki#9-table-colors)
-10. [Highlighting Cells](https://github.com/ragardner/tksheet/wiki#10-highlighting-cells)
-11. [Text Font and Alignment](https://github.com/ragardner/tksheet/wiki#11-text-font-and-alignment)
-12. [Row Heights and Column Widths](https://github.com/ragardner/tksheet/wiki#12-row-heights-and-column-widths)
-13. [Getting Selected Cells](https://github.com/ragardner/tksheet/wiki#13-getting-selected-cells)
-14. [Modifying Selected Cells](https://github.com/ragardner/tksheet/wiki#14-modifying-selected-cells)
-15. [Modifying and Getting Scroll Positions](https://github.com/ragardner/tksheet/wiki#15-modifying-and-getting-scroll-positions)
-16. [Readonly Cells](https://github.com/ragardner/tksheet/wiki#16-readonly-cells)
-17. [Hiding Columns](https://github.com/ragardner/tksheet/wiki#17-hiding-columns)
-18. [Hiding Table Elements](https://github.com/ragardner/tksheet/wiki#18-hiding-table-elements)
-19. [Cell Text Editor](https://github.com/ragardner/tksheet/wiki#19-cell-text-editor)
-20. [Dropdown Boxes](https://github.com/ragardner/tksheet/wiki#20-dropdown-boxes)
-21. [Check Boxes](https://github.com/ragardner/tksheet/wiki#21-check-boxes)
-22. [Table Options and Other Functions](https://github.com/ragardner/tksheet/wiki#22-table-options-and-other-functions)
-23. [Example Loading Data from Excel](https://github.com/ragardner/tksheet/wiki#23-example-loading-data-from-excel)
-24. [Example Custom Right Click and Text Editor Functionality](https://github.com/ragardner/tksheet/wiki#24-example-custom-right-click-and-text-editor-functionality)
-25. [Example Displaying Selections](https://github.com/ragardner/tksheet/wiki#25-example-displaying-selections)
-26. [Example List Box](https://github.com/ragardner/tksheet/wiki#26-example-list-box)
-27. [Example Header Dropdown Boxes and Filtering](https://github.com/ragardner/tksheet/wiki#27-example-header-dropdown-boxes-and-filtering)
-28. [Example ReadMe Screenshot Code](https://github.com/ragardner/tksheet/wiki#28-example-readme-screenshot-code)
-
+5. [Header and Index](https://github.com/ragardner/tksheet/wiki#5-header-and-index)
+6. [Setting Table Data](https://github.com/ragardner/tksheet/wiki#6-setting-table-data)
+7. [Getting Table Data](https://github.com/ragardner/tksheet/wiki#7-getting-table-data)
+8. [Bindings and Functionality](https://github.com/ragardner/tksheet/wiki#8-bindings-and-functionality)
+9. [Identifying Bound Event Mouse Position](https://github.com/ragardner/tksheet/wiki#9-identifying-bound-event-mouse-position)
+10. [Table Colors](https://github.com/ragardner/tksheet/wiki#10-table-colors)
+11. [Highlighting Cells](https://github.com/ragardner/tksheet/wiki#11-highlighting-cells)
+12. [Text Font and Alignment](https://github.com/ragardner/tksheet/wiki#12-text-font-and-alignment)
+13. [Row Heights and Column Widths](https://github.com/ragardner/tksheet/wiki#13-row-heights-and-column-widths)
+14. [Getting Selected Cells](https://github.com/ragardner/tksheet/wiki#14-getting-selected-cells)
+15. [Modifying Selected Cells](https://github.com/ragardner/tksheet/wiki#15-modifying-selected-cells)
+16. [Modifying and Getting Scroll Positions](https://github.com/ragardner/tksheet/wiki#16-modifying-and-getting-scroll-positions)
+17. [Readonly Cells](https://github.com/ragardner/tksheet/wiki#17-readonly-cells)
+18. [Hiding Columns](https://github.com/ragardner/tksheet/wiki#18-hiding-columns)
+19. [Hiding Table Elements](https://github.com/ragardner/tksheet/wiki#19-hiding-table-elements)
+20. [Cell Text Editor](https://github.com/ragardner/tksheet/wiki#20-cell-text-editor)
+21. [Dropdown Boxes](https://github.com/ragardner/tksheet/wiki#21-dropdown-boxes)
+22. [Check Boxes](https://github.com/ragardner/tksheet/wiki#22-check-boxes)
+23. [Table Options and Other Functions](https://github.com/ragardner/tksheet/wiki#23-table-options-and-other-functions)
+24. [Example Loading Data from Excel](https://github.com/ragardner/tksheet/wiki#24-example-loading-data-from-excel)
+25. [Example Custom Right Click and Text Editor Functionality](https://github.com/ragardner/tksheet/wiki#25-example-custom-right-click-and-text-editor-functionality)
+26. [Example Displaying Selections](https://github.com/ragardner/tksheet/wiki#26-example-displaying-selections)
+27. [Example List Box](https://github.com/ragardner/tksheet/wiki#27-example-list-box)
+28. [Example Header Dropdown Boxes and Filtering](https://github.com/ragardner/tksheet/wiki#28-example-header-dropdown-boxes-and-filtering)
+29. [Example ReadMe Screenshot Code](https://github.com/ragardner/tksheet/wiki#29-example-readme-screenshot-code)
 
 ## 1 About tksheet
+
 `tksheet` is a Python tkinter table widget written in pure python. It is licensed under the [MIT license](https://github.com/ragardner/tksheet/blob/master/LICENSE.txt).
 
 It works using tkinter canvases and moves lines, text and highlight rectangles around for only the visible portion of the table.
@@ -49,6 +51,7 @@ Some examples of things that are not possible with tksheet:
 If you'd like to buy me a coffee for creating and supporting this library you can do so here: https://www.buymeacoffee.com/ragardner
 
 ## 2 Installation and Requirements
+
 `tksheet` is available through PyPi (Python package index) and can be installed by using Pip through the command line `pip install tksheet`
 
 Alternatively you can download the source code and (inside the tksheet directory) use the command line `python setup.py develop`
@@ -56,6 +59,7 @@ Alternatively you can download the source code and (inside the tksheet directory
 `tksheet` requires a Python version of `3.6` or higher.
 
 ## 3 Basic Initialization
+
 Like other tkinter widgets you need only the `Sheet()`s parent as an argument to initialize a `Sheet()` e.g.
 ```python
 sheet = Sheet(my_frame_widget)
@@ -90,6 +94,7 @@ app.mainloop()
 ```
 
 ## 4 Initialization Options
+
 This is a full list of all the start up arguments, the only required argument is the sheets parent, everything else has default arguments.
 
 ```python
@@ -201,7 +206,27 @@ top_left_fg_highlight              = theme_light_blue['top_left_fg_highlight'])
 
 You can change these settings after initialization using the `set_options()` function.
 
-## 5 Modifying Table Data and Dimensions
+## 5 Header and Index
+
+Set the header to something non-default (if new header is shorter than total columns then default headers e.g. letters will be used on the end.
+```python
+headers(newheaders = None, index = None, reset_col_positions = False, show_headers_if_not_sheet = True, redraw = False)
+```
+ - Using an integer `int` for argument `newheaders` makes the sheet use that row as a header e.g. `headers(0)` means the first row will be used as a header (the first row will not be hidden in the sheet though), this is sort of equivalent to freezing the row.
+ - Leaving `newheaders` as `None` and using the `index` argument returns the existing header value in that index.
+ - Leaving all arguments as default e.g. `headers()` returns existing headers.
+
+___
+
+Set the index to something non-default (if new index is shorter than total rows then default index e.g. numbers will be used on the end.
+```python
+row_index(newindex = None, index = None, reset_row_positions = False, show_index_if_not_sheet = True, redraw = False)
+```
+ - Using an integer `int` for argument `newindex` makes the sheet use that column as an index e.g. `row_index(0)` means the first column will be used as an index (the first column will not be hidden in the sheet though), this is sort of equivalent to freezing the column.
+ - Leaving `newindex` as `None` and using the `index` argument returns the existing row index value in that index.
+ - Leaving all arguments as default e.g. `row_index()` returns the existing row index.
+
+## 6 Setting and Modifying Table Data and Dimensions
 
 Set sheet data, overwrites any existing data.
 ```python
@@ -244,25 +269,6 @@ Set column data, overwrites any existing data.
 set_column_data(c, values = tuple(), add_rows = True, redraw = False)
 ```
  - `add_rows` adds extra rows to the sheet if the column data doesn't fit within current sheet dimensions.
-
-___
-
-Set the header to something non-default (if new header is shorter than total columns then default headers e.g. letters will be used on the end.
-```python
-headers(newheaders = None, index = None, reset_col_positions = False, show_headers_if_not_sheet = True, redraw = False)
-```
- - Using an integer `int` for argument `newheaders` makes the sheet use that row as a header e.g. `headers(0)` means the first row will be used as a header (the first row will not be hidden in the sheet though).
- - Leaving `newheaders` as `None` and using the `index` argument returns the existing header value in that index.
- - Leaving all arguments as default e.g. `headers()` returns existing headers.
-
-___
-
-Set the index to something non-default (if new index is shorter than total rows then default index e.g. numbers will be used on the end.
-```python
-row_index(newindex = None, index = None, reset_row_positions = False, show_index_if_not_sheet = True, redraw = False)
-```
- - Leaving `newindex` as `None` and using the `index` argument returns the existing row index value in that index.
- - Leaving all arguments as default e.g. `row_index()` returns the existing row index.
 
 ___
 
@@ -364,7 +370,7 @@ height_and_width(height = None, width = None)
  - `width` (`int`) set a width in pixels
 If both arguments are `None` then table will reset to default tkinter canvas dimensions.
 
-## 6 Getting Table Data
+## 7 Getting Table Data
 
 Get sheet data and, if required, header and index data.
 ```python
@@ -399,7 +405,7 @@ Get number of rows in table data.
 get_total_rows()
 ```
 
-## 7 Bindings and Functionality
+## 8 Bindings and Functionality
 
 Enable table functionality and bindings.
 ```python
@@ -572,7 +578,7 @@ delete(event = None)
 undo(event = None)
 ```
 
-## 8 Identifying Bound Event Mouse Position
+## 9 Identifying Bound Event Mouse Position
 
 The below functions require a mouse click event, for example you could bind right click, example [here](https://github.com/ragardner/tksheet/wiki#24-example-custom-right-click-and-text-editor-functionality), and then identify where the user has clicked.
 
@@ -606,7 +612,7 @@ undo(self, event = None)
 edit_cell(self, event = None, dropdown = False)
 ```
 
-## 9 Table Colors
+## 10 Table Colors
 
 For specific colors use the function `set_options()`, arguments can be found [here](https://github.com/ragardner/tksheet/wiki#22-table-options-and-other-functions).
 
@@ -616,7 +622,7 @@ change_theme(theme = "light blue")
 ```
  - `theme` (`str`) options (themes) are `light blue`, `light green`, `dark`, `dark blue` and `dark green`.
 
-## 10 Highlighting Cells
+## 11 Highlighting Cells
 
  - `bg` and `fg` arguments use either a tkinter color or a hex `str` color.
  - Highlighting cells, rows or columns will also change the colors of dropdown boxes and check boxes.
@@ -673,7 +679,7 @@ ___
 dehighlight_columns(columns = [], redraw = False)
 ```
 
-## 11 Text Font and Alignment
+## 12 Text Font and Alignment
 
  - `newfont` arguments require a three tuple e.g. `("Arial", 12, "normal")`
  - `align` arguments (`str`) options are `w`, `e` or `center`.
@@ -743,7 +749,7 @@ Change the text alignment for **specific** cells inside the index, `"global"` re
 align_index(rows = [], align = "global", redraw = True)
 ```
 
-## 12 Row Heights and Column Widths
+## 13 Row Heights and Column Widths
 
 Set default column width in pixels.
 ```python
@@ -919,7 +925,7 @@ ___
 verify_column_widths(column_widths, canvas_positions = False)
 ```
 
-## 13 Getting Selected Cells
+## 14 Getting Selected Cells
 
 ```python
 get_currently_selected(get_coords = False, return_nones_if_not = False)
@@ -1003,7 +1009,7 @@ get_selected_min_max()
 ```
  - returns `(min_y, min_x, max_y, max_x)` of any selections including rows/columns.
 
-## 14 Modifying Selected Cells
+## 15 Modifying Selected Cells
 
 ```python
 set_currently_selected(current_tuple_0 = 0, current_tuple_1 = 0, selection_binding = True)
@@ -1093,7 +1099,7 @@ ___
 deselect(row = None, column = None, cell = None, redraw = True)
 ```
 
-## 15 Modifying and Getting Scroll Positions
+## 16 Modifying and Getting Scroll Positions
 
 ```python
 see(row = 0, column = 0, keep_yscroll = False, keep_xscroll = False, bottom_right_corner = False, check_cell_visibility = True)
@@ -1135,7 +1141,7 @@ ___
 move_down()
 ```
 
-## 16 Readonly Cells
+## 17 Readonly Cells
 
 ```python
 readonly_rows(rows = [], readonly = True, redraw = True)
@@ -1159,7 +1165,7 @@ ___
 readonly_header(columns = [], readonly = True, redraw = True)
 ```
 
-## 17 Hiding Columns
+## 18 Hiding Columns
 
 Display only certain columns.
 ```python
@@ -1173,7 +1179,7 @@ display_columns(indexes = None,
 ```
  - If the chosen indexes are equal to a list of columns as long as the longest row in the sheets data then enable will be set to `False`.
 
-## 18 Hiding Table Elements
+## 19 Hiding Table Elements
 
 Hide parts of the table or all of it
 ```python
@@ -1191,7 +1197,7 @@ show(canvas = "all")
  - `canvas` (`str`) options are `all`, `row_index`, `header`, `top_left`, `x_scrollbar`, `y_scrollbar`
 	- `all` shows the entire table and is the default.
 
-## 19 Cell Text Editor
+## 20 Cell Text Editor
 
 ```python
 create_text_editor(row = 0, column = 0, text = None, state = "normal", see = True, set_data_ref_on_destroy = False,
@@ -1240,7 +1246,7 @@ ___
 unbind_key_text_editor(key)
 ```
 
-## 20 Dropdown Boxes
+## 21 Dropdown Boxes
 
 Create a dropdown box (only creates the arrow and border and sets it up for usage, does not pop open the box).
 ```python
@@ -1357,7 +1363,7 @@ close_header_dropdown(c)
 ```
  - Also destroys any opened text editor windows.
 
-## 21 Check Boxes
+## 22 Check Boxes
 
 Create a check box.
 ```python
@@ -1445,7 +1451,7 @@ checkbox(c,
  - If any arguments are not default they will be set for the chosen checkbox.
  - If all arguments are default a dictionary of all the checkboxes information will be returned.
 
-## 22 Table Options and Other Functions
+## 23 Table Options and Other Functions
 
 ```python
 def set_options(
@@ -1574,7 +1580,7 @@ Refresh the table.
 refresh(redraw_header = True, redraw_row_index = True)
 ```
 
-## 23 Example Loading Data from Excel
+## 24 Example Loading Data from Excel
 
 Using `pandas` library, requires additional libraries:
  - `pandas`
@@ -1607,7 +1613,7 @@ app = demo()
 app.mainloop()
 ```
 
-## 24 Example Custom Right Click and Text Editor Functionality
+## 25 Example Custom Right Click and Text Editor Functionality
 
 This is to demonstrate adding your own commands to the in-built right click popup menu (or how you might start making your own right click menu functionality) and also creating a cell text editor the manual way.
 ```python
@@ -1672,7 +1678,7 @@ app.mainloop()
  - If you want to evaluate the value from the text editor you can set `set_data_ref_on_destroy` to `False` and do the evaluation to decide whether or not to use `set_cell_data()`.
  - If you want a totally new right click menu you can use `self.sheet.bind("<3>", <function>)` with a `tk.Menu` of your own design (right click is `<2>` on MacOS) and don't use `"right_click_popup_menu"` with `enable_bindings()`.
 
-## 25 Example Displaying Selections
+## 26 Example Displaying Selections
 
 This is to demonstrate displaying what the user has selected in the sheet.
 ```python
@@ -1725,7 +1731,7 @@ app = demo()
 app.mainloop()
 ```
 
-## 26 Example List Box
+## 27 Example List Box
 
 This is to demonstrate some simple customization to make a different sort of widget (a list box).
 
@@ -1777,7 +1783,7 @@ app = demo()
 app.mainloop()
 ```
 
-## 27 Example Header Dropdown Boxes and Filtering
+## 28 Example Header Dropdown Boxes and Filtering
 
 A very simple demonstration of row filtering using header dropdown boxes.
 
@@ -1848,7 +1854,7 @@ app = demo()
 app.mainloop()
 ```
 
-## 28 Example Readme Screenshot Code
+## 29 Example Readme Screenshot Code
 
 The code used to make a screenshot for the readme file.
 
