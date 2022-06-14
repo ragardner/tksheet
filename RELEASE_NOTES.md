@@ -1,3 +1,6 @@
+### Version 5.4.0
+ - Improve documentation a bit
+
 ### Version 5.3.9
  - Fix bug with paste without anything selected
  - Minor fix to highlight functions which could cause an error using certain args
