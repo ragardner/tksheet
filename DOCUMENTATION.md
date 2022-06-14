@@ -226,7 +226,7 @@ row_index(newindex = None, index = None, reset_row_positions = False, show_index
  - Leaving `newindex` as `None` and using the `index` argument returns the existing row index value in that index.
  - Leaving all arguments as default e.g. `row_index()` returns the existing row index.
 
-## 6 Setting and Modifying Table Data and Dimensions
+## 6 Setting Table Data
 
 Set sheet data, overwrites any existing data.
 ```python
