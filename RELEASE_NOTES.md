@@ -1,3 +1,7 @@
+### Version 5.4.1
+ - Fix bugs with functions `readonly_header()`, `checkbox()` and `header_checkbox()`
+ - Clarify table colors documentation
+
 ### Version 5.4.0
  - Improve documentation a bit
 

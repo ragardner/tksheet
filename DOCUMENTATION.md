@@ -614,7 +614,9 @@ edit_cell(self, event = None, dropdown = False)
 
 ## 10 Table Colors
 
-For specific colors use the function `set_options()`, arguments can be found [here](https://github.com/ragardner/tksheet/wiki#22-table-options-and-other-functions).
+To change the colors of individual cells, rows or columns use the functions listed under [highlighting cells](https://github.com/ragardner/tksheet/wiki#11-highlighting-cells).
+
+For the colors of specific parts of the table such as gridlines and backgrounds use the function `set_options()`, arguments can be found [here](https://github.com/ragardner/tksheet/wiki#22-table-options-and-other-functions). Most of the `set_options()` arguments are the same as the sheet initialization arguments.
 
 Otherwise you can change the theme using the below function.
 ```python
