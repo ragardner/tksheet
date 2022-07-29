@@ -2218,7 +2218,7 @@ class Sheet(tk.Frame):
             self.headers(newheaders = checked, index = c)
         if check_function != "":
             self.CH.cell_options[c]['checkbox']['check_function'] = check_function
-        if state.lower() in ("normal", "disabled"):
+        if state and state.lower() in ("normal", "disabled"):
             self.CH.cell_options[c]['checkbox']['state'] = state
         if text is not None:
             self.CH.cell_options[c]['checkbox']['text'] = text
@@ -2285,7 +2285,7 @@ class Sheet(tk.Frame):
             self.set_cell_data(r, c, checked)
         if check_function != "":
             self.MT.cell_options[(r, c)]['checkbox']['check_function'] = check_function
-        if state.lower() in ("normal", "disabled"):
+        if state and state.lower() in ("normal", "disabled"):
             self.MT.cell_options[(r, c)]['checkbox']['state'] = state
         if text is not None:
             self.MT.cell_options[(r, c)]['checkbox']['text'] = text

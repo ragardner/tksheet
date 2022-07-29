@@ -571,6 +571,8 @@ class ColumnHeaders(tk.Canvas):
                     del self.cell_options[c]['readonly']
         else:
             for c in columns_:
+                if c not in self.cell_options:
+                    self.cell_options[c] = {}
                 self.cell_options[c]['readonly'] = True
 
     def highlight_cells(self, c = 0, cells = tuple(), bg = None, fg = None, redraw = False, overwrite = True):
