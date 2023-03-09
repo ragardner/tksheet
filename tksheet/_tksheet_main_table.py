@@ -12,6 +12,7 @@ import pickle
 import tkinter as tk
 import zlib
 import random
+from copy import copy
 
 class MainTable(tk.Canvas):
     def __init__(self,
@@ -5178,6 +5179,9 @@ class MainTable(tk.Canvas):
             self.row_editor_id = self.RI.create_window((x, y), window = self.text_editor, anchor = "nw")
             for key, func in self.text_editor_user_bound_keys.items():
                 self.text_editor.textedit.bind(key, func)
+            self.text_editor.textedit.bind("<Alt-Return>", lambda x: self.text_editor_newline_binding(r, c))
+            if USER_OS == 'Darwin':
+                self.text_editor.textedit.bind("<Option-Return>", lambda x: self.text_editor_newline_binding(r, c))
             if binding is not None:
                 self.text_editor.textedit.bind("<Tab>", lambda x: binding((r, c, "Tab")))
                 self.text_editor.textedit.bind("<Return>", lambda x: binding((r, c, "Return")))
@@ -5248,7 +5252,7 @@ class MainTable(tk.Canvas):
         if editor_value == current_value:
             return
         else:
-            old_index = self.row_index()
+            old_index = copy(self.row_index())
             row_index[r] = editor_value
             self._set_index(old_index, row_index)
 
