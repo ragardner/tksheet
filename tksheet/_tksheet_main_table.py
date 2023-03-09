@@ -11,7 +11,7 @@ import io
 import pickle
 import tkinter as tk
 import zlib
-
+import random
 
 class MainTable(tk.Canvas):
     def __init__(self,
@@ -209,6 +209,7 @@ class MainTable(tk.Canvas):
         self.rc_insert_column_enabled = False
         self.rc_delete_row_enabled = False
         self.rc_insert_row_enabled = False
+        self.rc_edit_row_index_enabled = False
         self.rc_popup_menus_enabled = False
         self.edit_cell_enabled = False
         self.text_editor_loc = None
@@ -916,6 +917,8 @@ class MainTable(tk.Canvas):
                 except:
                     return
             self.undo_storage.pop()
+            if undo_storage[0] == "edit_index":
+                self._set_index(self.row_index(), undo_storage[1], undo = False)
             if undo_storage[0] in ("edit_cells", "edit_cells_paste"):
                 for (r, c), v in undo_storage[1].items():
                     self.data_ref[r][c] = v
@@ -2078,6 +2081,14 @@ class MainTable(tk.Canvas):
                                            activebackground = self.popup_menu_highlight_bg,
                                            activeforeground = self.popup_menu_highlight_fg,
                                            command = lambda: self.insert_row_rc("below"))
+        if self.rc_edit_row_index_enabled:
+            self.menu_add_command(self.RI.ri_rc_popup_menu, label = "Edit row index",
+                                           font = self.popup_menu_font,
+                                           foreground = self.popup_menu_fg,
+                                           background = self.popup_menu_bg,
+                                           activebackground = self.popup_menu_highlight_bg,
+                                           activeforeground = self.popup_menu_highlight_fg,
+                                           command = self.edit_index_rc)
         for label, func in self.extra_table_rc_menu_funcs.items():
             self.menu_add_command(self.rc_popup_menu, label = label,
                                            font = self.popup_menu_font,
@@ -2171,6 +2182,7 @@ class MainTable(tk.Canvas):
             self.rc_delete_row_enabled = True
             self.rc_insert_column_enabled = True
             self.rc_insert_row_enabled = True
+            self.rc_edit_row_index_enabled = True
             self.rc_popup_menus_enabled = True
             self.rc_select_enabled = True
             self.TL.rh_state()
@@ -2227,6 +2239,8 @@ class MainTable(tk.Canvas):
             self.rc_insert_row_enabled = True
             self.rc_popup_menus_enabled = True
             self.rc_select_enabled = True
+        elif binding == "rc_edit_row_index":
+            self.rc_edit_row_index_enabled = True
         elif binding == "copy":
             self.edit_bindings(True, "copy")
         elif binding == "cut":
@@ -2270,6 +2284,7 @@ class MainTable(tk.Canvas):
             self.rc_delete_row_enabled = False
             self.rc_insert_column_enabled = False
             self.rc_insert_row_enabled = False
+            self.rc_edit_row_index_enabled = False
             self.rc_popup_menus_enabled = False
             self.rc_select_enabled = False
             self.TL.rh_state("hidden")
@@ -2314,6 +2329,8 @@ class MainTable(tk.Canvas):
             self.rc_insert_column_enabled = False
         elif binding == "rc_insert_row":
             self.rc_insert_row_enabled = False
+        elif binding == "rc_edit_row_index":
+            self.rc_edit_row_index_enabled = False
         elif binding == "edit_bindings":
             self.edit_bindings(False)
         elif binding == "copy":
@@ -3426,6 +3443,14 @@ class MainTable(tk.Canvas):
             self.refresh()
             if self.extra_end_del_rows_rc_func is not None:
                 self.extra_end_del_rows_rc_func(DeleteRowColumnEvent("end_delete_rows", seld_rows))
+
+    def edit_index_rc(self):
+        selrows = self.get_selected_rows()
+        r = int(max(selrows))
+        self.create_text_editor(r = r,
+                                c = None,
+                                text = None,
+                                set_data_ref_on_destroy=True)
 
     def reset_row_positions(self):
         rowpos = self.default_rh[1]
@@ -5056,70 +5081,116 @@ class MainTable(tk.Canvas):
 
     # c is displayed col
     def create_text_editor(self,
-                           r = 0,
-                           c = 0,
+                           r = None,
+                           c = None,
                            text = None,
                            state = "normal",
                            see = True,
                            set_data_ref_on_destroy = False,
                            binding = None,
                            dropdown = False):
-        if (r, c) == self.text_editor_loc and self.text_editor is not None:
-            self.text_editor.set_text(self.text_editor.get() + "" if not isinstance(text, str) else text)
-            return
         if self.text_editor is not None:
             self.destroy_text_editor()
-        if see:
-            has_redrawn = self.see(r = r, c = c, check_cell_visibility = True)
-            if not has_redrawn:
-                self.refresh()
-        self.text_editor_loc = (r, c)
-        x = self.col_positions[c]
-        y = self.row_positions[r]
-        w = self.col_positions[c + 1] - x + 1
-        h = self.row_positions[r + 1] - y + 6
-        dcol = c if self.all_columns_displayed else self.displayed_columns[c]
-        if text is None:
-            text = self.data_ref[r][dcol]
-        self.hide_current()
-        bg, fg = self.get_widget_bg_fg(r, dcol)
-        self.text_editor = TextEditor(self, 
-                                      text = text, 
-                                      font = self.my_font, 
-                                      state = state, 
-                                      width = w, 
-                                      height = h, 
-                                      border_color = self.table_selected_cells_border_fg, 
-                                      show_border = self.show_selected_cells_border,
-                                      bg = bg, 
-                                      fg = fg,
-                                      popup_menu_font = self.popup_menu_font,
-                                      popup_menu_fg = self.popup_menu_fg,
-                                      popup_menu_bg = self.popup_menu_bg,
-                                      popup_menu_highlight_bg = self.popup_menu_highlight_bg,
-                                      popup_menu_highlight_fg = self.popup_menu_highlight_fg)
-        self.text_editor_id = self.create_window((x, y), window = self.text_editor, anchor = "nw")
-        if not dropdown:
-            self.text_editor.textedit.focus_set()
-            self.text_editor.scroll_to_bottom()
-        self.text_editor.textedit.bind("<Alt-Return>", lambda x: self.text_editor_newline_binding(r, c))
-        if USER_OS == 'Darwin':
-            self.text_editor.textedit.bind("<Option-Return>", lambda x: self.text_editor_newline_binding(r, c))
-        for key, func in self.text_editor_user_bound_keys.items():
-            self.text_editor.textedit.bind(key, func)
-        if binding is not None:
-            self.text_editor.textedit.bind("<Tab>", lambda x: binding((r, c, "Tab")))
-            self.text_editor.textedit.bind("<Return>", lambda x: binding((r, c, "Return")))
-            self.text_editor.textedit.bind("<FocusOut>", lambda x: binding((r, c, "FocusOut")))
-            self.text_editor.textedit.bind("<Escape>", lambda x: binding((r, c, "Escape")))
-        elif binding is None and set_data_ref_on_destroy:
-            self.text_editor.textedit.bind("<Tab>", lambda x: self.get_text_editor_value((r, c, "Tab")))
-            self.text_editor.textedit.bind("<Return>", lambda x: self.get_text_editor_value((r, c, "Return")))
+        if r!=None and c!=None: 
+            self.text_editor_loc = (r, c)
+        if self.text_editor_loc != None:
+            if (r, c) == self.text_editor_loc and self.text_editor is not None:
+                self.text_editor.set_text(self.text_editor.get() + "" if not isinstance(text, str) else text)
+                return
+            if see:
+                has_redrawn = self.see(r = r, c = c, check_cell_visibility = True)
+                if not has_redrawn:
+                    self.refresh()
+            # Text editor for table cells
+            x = self.col_positions[c]
+            y = self.row_positions[r]
+            w = self.col_positions[c + 1] - x + 1
+            h = self.row_positions[r + 1] - y + 6
+            dcol = c if self.all_columns_displayed else self.displayed_columns[c]
+            if text is None:
+                text = self.data_ref[r][dcol]
+            self.hide_current()
+            bg, fg = self.get_widget_bg_fg(r, dcol)
+            self.text_editor = TextEditor(self, 
+                                        text = text, 
+                                        font = self.my_font, 
+                                        state = state, 
+                                        width = w, 
+                                        height = h, 
+                                        border_color = self.table_selected_cells_border_fg, 
+                                        show_border = self.show_selected_cells_border,
+                                        bg = bg, 
+                                        fg = fg,
+                                        popup_menu_font = self.popup_menu_font,
+                                        popup_menu_fg = self.popup_menu_fg,
+                                        popup_menu_bg = self.popup_menu_bg,
+                                        popup_menu_highlight_bg = self.popup_menu_highlight_bg,
+                                        popup_menu_highlight_fg = self.popup_menu_highlight_fg)
+            self.text_editor_id = self.create_window((x, y), window = self.text_editor, anchor = "nw")
             if not dropdown:
-                self.text_editor.textedit.bind("<FocusOut>", lambda x: self.get_text_editor_value((r, c, "FocusOut")))
-            self.text_editor.textedit.bind("<Escape>", lambda x: self.get_text_editor_value((r, c, "Escape")))
-        else:
-            self.text_editor.textedit.bind("<Escape>", lambda x: self.destroy_text_editor("Escape"))
+                self.text_editor.textedit.focus_set()
+                self.text_editor.scroll_to_bottom()
+            self.text_editor.textedit.bind("<Alt-Return>", lambda x: self.text_editor_newline_binding(r, c))
+            if USER_OS == 'Darwin':
+                self.text_editor.textedit.bind("<Option-Return>", lambda x: self.text_editor_newline_binding(r, c))
+            for key, func in self.text_editor_user_bound_keys.items():
+                self.text_editor.textedit.bind(key, func)
+            if binding is not None:
+                self.text_editor.textedit.bind("<Tab>", lambda x: binding((r, c, "Tab")))
+                self.text_editor.textedit.bind("<Return>", lambda x: binding((r, c, "Return")))
+                self.text_editor.textedit.bind("<FocusOut>", lambda x: binding((r, c, "FocusOut")))
+                self.text_editor.textedit.bind("<Escape>", lambda x: binding((r, c, "Escape")))
+            elif binding is None and set_data_ref_on_destroy:
+                self.text_editor.textedit.bind("<Tab>", lambda x: self.get_text_editor_value((r, c, "Tab")))
+                self.text_editor.textedit.bind("<Return>", lambda x: self.get_text_editor_value((r, c, "Return")))
+                if not dropdown:
+                    self.text_editor.textedit.bind("<FocusOut>", lambda x: self.get_text_editor_value((r, c, "FocusOut")))
+                self.text_editor.textedit.bind("<Escape>", lambda x: self.get_text_editor_value((r, c, "Escape")))
+            else:
+                self.text_editor.textedit.bind("<Escape>", lambda x: self.destroy_text_editor("Escape"))
+        elif c == None and r != None:
+            # Row index editor
+            x = 0
+            y = self.row_positions[r]
+            w = self.RI.current_width
+            h = self.row_positions[r + 1] - y
+            if not self.row_index():
+                num_rows = self.total_data_rows()
+                current_value = [*range(1,num_rows+1)][r]
+            else:
+                current_value = self.row_index()[r]
+            self.refresh()
+            self.text_editor = TextEditor(self.RI, 
+                                        text = current_value, 
+                                        font = self.my_font, 
+                                        state = state, 
+                                        width = w, 
+                                        height = h, 
+                                        border_color = self.table_selected_cells_border_fg, 
+                                        show_border = self.show_selected_cells_border,
+                                        bg = "white", 
+                                        fg = "black",
+                                        popup_menu_font = self.popup_menu_font,
+                                        popup_menu_fg = self.popup_menu_fg,
+                                        popup_menu_bg = self.popup_menu_bg,
+                                        popup_menu_highlight_bg = self.popup_menu_highlight_bg,
+                                        popup_menu_highlight_fg = self.popup_menu_highlight_fg)
+            self.row_editor_id = self.RI.create_window((x, y), window = self.text_editor, anchor = "nw")
+            for key, func in self.text_editor_user_bound_keys.items():
+                self.text_editor.textedit.bind(key, func)
+            if binding is not None:
+                self.text_editor.textedit.bind("<Tab>", lambda x: binding((r, c, "Tab")))
+                self.text_editor.textedit.bind("<Return>", lambda x: binding((r, c, "Return")))
+                self.text_editor.textedit.bind("<FocusOut>", lambda x: binding((r, c, "FocusOut")))
+                self.text_editor.textedit.bind("<Escape>", lambda x: binding((r, c, "Escape")))
+            elif binding is None and set_data_ref_on_destroy:
+                self.text_editor.textedit.bind("<Tab>", lambda x: self.set_row_editor_value((r, c, "Tab")))
+                self.text_editor.textedit.bind("<Return>", lambda x: self.set_row_editor_value((r, c, "Return")))
+                if not dropdown:
+                    self.text_editor.textedit.bind("<FocusOut>", lambda x: self.set_row_editor_value((r, c, "FocusOut")))
+                self.text_editor.textedit.bind("<Escape>", lambda x: self.set_row_editor_value((r, c, "Escape")))
+            else:
+                self.text_editor.textedit.bind("<Escape>", lambda x: self.destroy_text_editor("Escape"))
 
     def bind_text_editor_destroy(self, binding, r, c):
         self.text_editor.textedit.bind("<Return>", lambda x: binding((r, c, "Return")))
@@ -5150,6 +5221,36 @@ class MainTable(tk.Canvas):
         self.show_current()
         if event is not None and len(event) >= 3 and "Escape" in event:
             self.focus_set()
+    
+    def set_row_editor_value(self, destroy_tup = None, r=None):
+        if self.focus_get() is None and destroy_tup:
+            return
+        if destroy_tup is not None and len(destroy_tup) >= 2 and destroy_tup[1] == "Escape":
+            self.destroy_text_editor("Escape")
+            return
+        if self.text_editor is not None:
+            editor_value = self.text_editor.get()
+            if editor_value.isdigit():
+                editor_value=int(editor_value)
+            else:
+                try:
+                    editor_value=float(editor_value)
+                except:
+                    pass
+        self.destroy_text_editor()
+        r = destroy_tup[0]
+
+        row_index = self.row_index()
+        if not row_index:
+            row_index = [*range(1,self.total_data_rows()+1)]
+        current_value = row_index[r]
+
+        if editor_value == current_value:
+            return
+        else:
+            old_index = self.row_index()
+            row_index[r] = editor_value
+            self._set_index(old_index, row_index)
 
     # c is displayed col
     def get_text_editor_value(self, destroy_tup = None, r = None, c = None, set_data_ref_on_destroy = True, event = None, destroy = True, move_down = True, redraw = True, recreate = True):
@@ -5196,6 +5297,26 @@ class MainTable(tk.Canvas):
         if destroy_tup is not None and len(destroy_tup) >= 3 and destroy_tup[2] != "FocusOut":
             self.focus_set()
         return self.text_editor_value
+    
+    def _set_index(self, old_index, new_index, undo = True):
+        if self.undo_enabled and undo:
+            self.undo_storage.append(zlib.compress(pickle.dumps(("edit_index",
+                                                                 old_index,
+                                                                 self.currently_selected()))))
+        max_len = -1
+        num_index = new_index
+        if not new_index:
+            num_index = [*range(1,self.total_data_rows()+1)]
+        for ele in num_index: 
+            if(len(str(ele)) > max_len): 
+                max_len = len(str(ele))
+                res = ele 
+        new_width = self.GetTextWidth(res) + 20
+        self.row_index(new_index)
+        self.RI.set_width(new_width, True)
+        self.refresh()
+        self.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
+        
 
     #internal event use
     def _set_cell_data(self, r = 0, c = 0, dcol = None, value = "", undo = True, cell_resize = True):
