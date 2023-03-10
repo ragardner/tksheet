@@ -5191,8 +5191,8 @@ class MainTable(tk.Canvas):
                                         height = h, 
                                         border_color = self.table_selected_cells_border_fg, 
                                         show_border = self.show_selected_cells_border,
-                                        bg = "white", 
-                                        fg = "black",
+                                        bg = self.RI.index_selected_rows_bg, 
+                                        fg = self.RI.index_selected_rows_fg,
                                         popup_menu_font = self.popup_menu_font,
                                         popup_menu_fg = self.popup_menu_fg,
                                         popup_menu_bg = self.popup_menu_bg,
@@ -5233,8 +5233,8 @@ class MainTable(tk.Canvas):
                                         height = h, 
                                         border_color = self.table_selected_cells_border_fg, 
                                         show_border = self.show_selected_cells_border,
-                                        bg = "white", 
-                                        fg = "black",
+                                        bg = self.CH.header_selected_columns_bg, 
+                                        fg = self.CH.header_selected_columns_fg,
                                         popup_menu_font = self.popup_menu_font,
                                         popup_menu_fg = self.popup_menu_fg,
                                         popup_menu_bg = self.popup_menu_bg,
@@ -5243,9 +5243,9 @@ class MainTable(tk.Canvas):
             self.idx_editor_id = self.CH.create_window((x, y), window = self.text_editor, anchor = "nw")
             for key, func in self.text_editor_user_bound_keys.items():
                 self.text_editor.textedit.bind(key, func)
-            self.text_editor.textedit.bind("<Alt-Return>", lambda x: self.text_editor_newline_binding(r, c))
+            self.text_editor.textedit.bind("<Alt-Return>", lambda x: self.column_editor_newline_binding(r, c))
             if USER_OS == 'Darwin':
-                self.text_editor.textedit.bind("<Option-Return>", lambda x: self.text_editor_newline_binding(r, c))
+                self.text_editor.textedit.bind("<Option-Return>", lambda x: self.column_editor_newline_binding(r, c))
             if binding is not None:
                 self.text_editor.textedit.bind("<Tab>", lambda x: binding((r, c, "Tab")))
                 self.text_editor.textedit.bind("<Return>", lambda x: binding((r, c, "Return")))
@@ -5287,7 +5287,14 @@ class MainTable(tk.Canvas):
         except:
             pass
         try:
-            self.idx_editor_id = None
+            if self.idx_editor_id:
+                headers = self.get_headers_as_list()
+                tallest_entry = max([len(str(s).split("\n")) for s in headers])
+                self.CH.set_height(self.GetHdrLinesHeight(tallest_entry), True)
+                index = self.get_index_as_list()
+                longest_entry = max([max(str(s).split("\n"), key=len) for s in index], key=len)
+                self.RI.set_width(self.GetTextWidth(longest_entry) + 20, True)
+                self.idx_editor_id = None
         except:
             pass
         self.show_current()
@@ -5309,7 +5316,6 @@ class MainTable(tk.Canvas):
                     editor_value=float(editor_value)
                 except:
                     pass
-        self.destroy_text_editor()
         r = destroy_tup[0]
         row_index = self.get_index_as_list()
         current_value = row_index[r]
@@ -5319,6 +5325,7 @@ class MainTable(tk.Canvas):
             old_index = copy(self.row_index())
             row_index[r] = editor_value
             self._set_index(old_index, row_index)
+        self.destroy_text_editor()
 
     def set_col_editor_value(self, destroy_tup = None):
         if self.focus_get() is None and destroy_tup:
@@ -5335,7 +5342,7 @@ class MainTable(tk.Canvas):
                     editor_value=float(editor_value)
                 except:
                     pass
-        self.destroy_text_editor()
+        
         c = destroy_tup[1]
         headers = self.get_headers_as_list()
         current_value = headers[c]
@@ -5345,6 +5352,7 @@ class MainTable(tk.Canvas):
             old_headers = copy(self.headers())
             headers[c] = editor_value
             self._set_headers(old_headers, headers)
+        self.destroy_text_editor()
 
     # c is displayed col
     def get_text_editor_value(self, destroy_tup = None, r = None, c = None, set_data_ref_on_destroy = True, event = None, destroy = True, move_down = True, redraw = True, recreate = True):
@@ -5397,17 +5405,17 @@ class MainTable(tk.Canvas):
             self.undo_storage.append(zlib.compress(pickle.dumps(("edit_index",
                                                                  old_index,
                                                                  self.currently_selected()))))
-        max_len = -1
-        num_index = new_index
-        if not new_index:
-            num_index = [*range(1,self.total_data_rows()+1)]
-        for ele in num_index: 
-            if(len(str(ele)) > max_len): 
-                max_len = len(str(ele))
-                res = ele 
-        new_width = self.GetTextWidth(res) + 20
+        _new_index = new_index
+        _old_index = old_index
+        if not _new_index:
+            _new_index = self.get_index_as_list(using_default=True)
+        if not _old_index:
+            _old_index = self.get_index_as_list(using_default=True)
+        changed_items = self._get_changed(_old_index, _new_index)
+        for r, n in changed_items:
+            height = self.GetLinesHeight(len(str(n).split('\n')))
+            self.RI.set_row_height(r, height)
         self.row_index(new_index)
-        self.RI.set_width(new_width, True)
         self.refresh()
         self.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
         
@@ -5422,8 +5430,6 @@ class MainTable(tk.Canvas):
             _new_headers = self.get_headers_as_list(using_default=True)
         if not old_headers:
             _old_headers = self.get_headers_as_list(using_default=True)
-        tallest_entry = max([len(str(s).split("\n")) for s in _new_headers])
-        self.CH.set_height(self.GetHdrLinesHeight(tallest_entry), True)
         self.headers(new_headers)
         changed_items = self._get_changed(_old_headers, _new_headers)
         for c, n in changed_items:
@@ -5460,7 +5466,7 @@ class MainTable(tk.Canvas):
         self.data_ref[r][dcol] = value
         if cell_resize and self.cell_auto_resize_enabled:
             self.set_cell_size_to_text(r, c, only_set_if_too_small = True, redraw = True, run_binding = True)
-
+    
     #internal event use
     def _click_checkbox(self, r, c, dcol = None, undo = True, redraw = True):
         if dcol is None:
@@ -5544,6 +5550,10 @@ class MainTable(tk.Canvas):
                     self.itemconfig(self.cell_options[(r, dcol)]['dropdown']['canvas_id'],
                                     anchor = anchor, height = win_h)
 
+    def column_editor_newline_binding(self, r = None, c = None, event = None):
+        self.text_editor_newline_binding(r, c, event)
+        self.CH.set_height(self.text_editor.winfo_height())
+    
     def get_space_bot(self, r, text_editor_h = None):
         if text_editor_h is None:
             win_h = int(self.canvasy(0) + self.winfo_height() - self.row_positions[r + 1])
