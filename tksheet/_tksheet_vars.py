@@ -169,7 +169,7 @@ theme_black = {
 'top_left_fg_highlight': "#ffb867",
 'table_bg': "#000000",
 'table_grid_fg': "#505054",
-'table_fg': "#bcbcbc",
+'table_fg': "#c1c1c1",
 'table_selected_cells_border_fg': "#bdbdbd",
 'table_selected_cells_bg': "#313034",
 'table_selected_cells_fg': "#dbdbdb",

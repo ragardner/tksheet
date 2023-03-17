@@ -29,6 +29,7 @@
 27. [Example List Box](https://github.com/ragardner/tksheet/wiki#27-example-list-box)
 28. [Example Header Dropdown Boxes and Filtering](https://github.com/ragardner/tksheet/wiki#28-example-header-dropdown-boxes-and-filtering)
 29. [Example ReadMe Screenshot Code](https://github.com/ragardner/tksheet/wiki#29-example-readme-screenshot-code)
+30. [Example Saving tksheet as a csv File](https://github.com/ragardner/tksheet/wiki#30-example-saving-tksheet-as-a-csv-file)
 
 ## 1 About tksheet
 
@@ -119,6 +120,7 @@ paste_insert_row_limit = None,
 ctrl_keys_over_dropdowns_enabled = False,
 arrow_key_down_right_scroll_page = False,
 enable_edit_cell_auto_resize = True,
+edit_cell_validation = True,
 data_reference = None,
 data = None,
 startup_select = None,
@@ -132,6 +134,7 @@ max_rh = "inf",
 max_header_height = "inf",
 max_row_width = "inf",
 row_index = None,
+index = None,
 after_redraw_time_ms = 100,
 row_index_width = 100,
 auto_resize_default_row_index = True,
@@ -202,7 +205,11 @@ top_left_fg                        = theme_light_blue['top_left_fg'],
 top_left_fg_highlight              = theme_light_blue['top_left_fg_highlight'])
 ```
  - `startup_select` selects cells, rows or columns at initialization by using a `tuple` e.g. `(0, 0, "cells")` for cell A0 or `(0, 5, "rows")` for rows 0 to 5.
- - `data_reference` and `data` are essentially the same
+ - `data_reference` and `data` are essentially the same.
+ - `row_index` and `index` are the same, `index` takes priority.
+ - `edit_cell_validation` (`bool`) is used when `extra_bindings()` have been set for cell edits. If a bound function returns something other than `None` it will be used as the cell value instead of the user input.
+    - `True` makes data edits take place after the binding function is run.
+    - `False` makes data edits take place before the binding function is run.
 
 You can change these settings after initialization using the `set_options()` function.
 
@@ -372,13 +379,20 @@ If both arguments are `None` then table will reset to default tkinter canvas dim
 
 ## 7 Getting Table Data
 
+Yield sheet rows one by one, includes default header and index if being used e.g. A, B, C, D, whereas `get_sheet_data()` does not.
+```python
+yield_sheet_rows(get_header = False, get_index = False)
+```
+ - `get_header` (`bool`) will put the header as the first row if `True`.
+ - `get_index` (`bool`) will put index items as the first item in every row.
+
+___
+
 Get sheet data and, if required, header and index data.
 ```python
 get_sheet_data(return_copy = False, get_header = False, get_index = False)
 ```
  - `return_copy` (`bool`) will copy all cells if `True`, also copies header and index if they are `True`.
- - `get_header` (`bool`) will put the header as the first row if `True`.
- - `get_index` (`bool`) will put index items as the first item in every row.
 
 ___
 
@@ -442,10 +456,11 @@ enable_bindings(*bindings)
 	- "undo"
 	- "edit_cell"
     - "edit_header"
+    - "edit_index"
 
 Notes:
  - Dragging and dropping rows / columns is bound to shift - mouse left click and hold and drag.
- - `"edit_header"` is not enabled by `bindings = "all"` and has to be enabled individually, double click on header cells to edit.
+ - `"edit_header"` and `"edit_index"` are not enabled by `bindings = "all"` and has to be enabled individually, double click or right click (if enabled) on header/index cells to edit.
  - To allow table expansion when pasting data which doesn't fit in the table use either:
     - `expand_sheet_if_paste_too_big = True` in sheet initialization arguments or
     - `sheet.set_options(expand_sheet_if_paste_too_big = True)`
@@ -467,7 +482,7 @@ extra_bindings(bindings, func = "None")
 Notes:
  - Upon an event being triggered the bound function will be sent a [namedtuple](https://docs.python.org/3/library/collections.html#collections.namedtuple) containing variables relevant to that event, use `print()` or similar to see all the variable names in the event. Each event contains different variable names with the exception of `eventname` e.g. `event.eventname`
  - For most of the `"end_..."` events the bound function is run before the value is set.
- - The bound function for `"end_edit_cell"` is run before the cell data is set in order that a return value can set the cell instead of the user input. Using the event you can assess the user input and if needed override it with a return value which is not `None`. if `None` is the return value then the user input will not be overridden.
+ - The bound function for `"end_edit_cell"` is run before the cell data is set in order that a return value can set the cell instead of the user input. Using the event you can assess the user input and if needed override it with a return value which is not `None`. If `None` is the return value then the user input will NOT be overridden. The setting `edit_cell_validation` (see initialization or the function `set_options()`) can be used to turn off this return value checking. The `edit_cell` bindings also run if header/index editing is turned on.
 
 Arguments:
  - `bindings` (`str`) options are:
@@ -1167,19 +1182,35 @@ ___
 readonly_header(columns = [], readonly = True, redraw = True)
 ```
 
+___
+
+```python
+readonly_index(rows = [], readonly = True, redraw = True)
+```
+
 ## 18 Hiding Columns
 
 Display only certain columns.
 ```python
-display_columns(indexes = None,
-                enable = None,
+display_columns(columns = None,
+                all_columns_displayed = None,
                 reset_col_positions = True,
-                set_col_positions = True,
                 refresh = False,
                 redraw = False,
                 deselect_all = True)
 ```
- - If the chosen indexes are equal to a list of columns as long as the longest row in the sheets data then enable will be set to `False`.
+ - `columns` (`int`, any iterable, `"all"`) are the columns to be displayed, omit the columns to be hidden.
+ - Use argument `True` with `all_columns_displayed` to display all columns, however, there's no need to use `False` when `columns` is not `None`.
+
+___
+
+Hide specific columns.
+```python
+hide_columns(columns = set(),
+             refresh = True, 
+             deselect_all = True)
+```
+ - `columns` (`int`) uses data indexes not displayed, e.g. if you already have column 0 hidden and you want to hide the first column shown in the sheet you would use argument `columns = 1`.
 
 ## 19 Hiding Table Elements
 
@@ -1221,7 +1252,7 @@ bind_text_editor_set(func, row, column)
 ___
 
 ```python
-get_text_editor_value(destroy_tup = None, r = None, c = None, set_data_ref_on_destroy = True, event = None, destroy = True, move_down = True, redraw = True, recreate = True)
+get_text_editor_value(editor_info = None, r = None, c = None, set_data_ref_on_destroy = True, event = None, destroy = True, move_down = True, redraw = True, recreate = True)
 ```
 
 ___
@@ -1252,24 +1283,34 @@ unbind_key_text_editor(key)
 
 Create a dropdown box (only creates the arrow and border and sets it up for usage, does not pop open the box).
 ```python
-def create_dropdown(r = 0,
-                    c = 0,
-                    values = [],
-                    set_value = None,
-                    state = "readonly",
-                    redraw = False,
-                    selection_function = None,
-                    modified_function = None)
+create_dropdown(r = 0,
+                c = 0,
+                values = [],
+                set_value = None,
+                state = "readonly",
+                redraw = False,
+                selection_function = None,
+                modified_function = None)
 ```
 
 ```python
-def create_header_dropdown(c = 0,
-                           values = [],
-                           set_value = None,
-                           state = "readonly",
-                           redraw = False,
-                           selection_function = None,
-                           modified_function = None)
+create_header_dropdown(c = 0,
+                       values = [],
+                       set_value = None,
+                       state = "readonly",
+                       redraw = False,
+                       selection_function = None,
+                       modified_function = None)
+```
+
+```python
+create_index_dropdown(r = 0,
+                      values = [],
+                      set_value = None,
+                      state = "readonly",
+                      redraw = False,
+                      selection_function = None,
+                      modified_function = None)
 ```
 
 Notes:
@@ -1294,6 +1335,10 @@ get_dropdown_values(r = 0, c = 0)
 get_header_dropdown_values(c = 0)
 ```
 
+```python
+get_index_dropdown_values(r = 0)
+```
+
 ___
 
 Set the values and displayed value of a chosen dropdown box.
@@ -1304,6 +1349,11 @@ set_dropdown_values(r = 0, c = 0, set_existing_dropdown = False, values = [], di
 ```python
 set_header_dropdown_values(c = 0, set_existing_dropdown = False, values = [], displayed = None)
 ```
+
+```python
+set_index_dropdown_values(r = 0, set_existing_dropdown = False, values = [], displayed = None)
+```
+
  - `set_existing_dropdown` if `True` takes priority over `r` and `c` and sets the values of the last popped open dropdown box (if one one is popped open, if not then an `Exception` is raised).
  - `values` (`list`, `tuple`)
  - `displayed` (`str`, `None`) if not `None` will try to set the displayed value of the chosen dropdown box to given argument.
@@ -1319,6 +1369,10 @@ dropdown_functions(r, c, selection_function = "", modified_function = "")
 header_dropdown_functions(c, selection_function = "", modified_function = "")
 ```
 
+```python
+index_dropdown_functions(r, selection_function = "", modified_function = "")
+```
+
 ___
 
 Delete dropdown boxes.
@@ -1329,6 +1383,11 @@ delete_dropdown(r = 0, c = 0)
 ```python
 delete_header_dropdown(c = 0)
 ```
+
+```python
+delete_index_dropdown(r = 0)
+```
+
  - Set first argument to `"all"` to delete all dropdown boxes on the sheet.
 
 ___
@@ -1342,6 +1401,10 @@ get_dropdowns()
 get_header_dropdowns()
 ```
 
+```python
+get_index_dropdowns()
+```
+
 ___
 
 Pop open a dropdown box.
@@ -1351,6 +1414,10 @@ open_dropdown(r, c)
 
 ```python
 open_header_dropdown(c)
+```
+
+```python
+open_index_dropdown(r)
 ```
 
 ___
@@ -1363,6 +1430,11 @@ close_dropdown(r, c)
 ```python
 close_header_dropdown(c)
 ```
+
+```python
+close_index_dropdown(r)
+```
+
  - Also destroys any opened text editor windows.
 
 ## 22 Check Boxes
@@ -1387,6 +1459,15 @@ create_header_checkbox(c,
                        text = "")
 ```
 
+```python
+create_index_checkbox(r,
+                      checked = False,
+                      state = "normal",
+                      redraw = False,
+                      check_function = None,
+                      text = "")
+```
+
 Notes:
  - Use `highlight_cells()` or rows or columns to change the color of the checkbox.
  - Check boxes are always left aligned despite any align settings.
@@ -1408,6 +1489,10 @@ click_checkbox(r, c, checked = None)
 click_header_checkbox(c, checked = None)
 ```
 
+```python
+click_index_checkbox(r, checked = None)
+```
+
 ___
 
 Get a dictionary of all check box dictionaries.
@@ -1417,6 +1502,10 @@ get_checkboxes()
 
 ```python
 get_header_checkboxes()
+```
+
+```python
+get_index_checkboxes()
 ```
 
 ___
@@ -1429,6 +1518,11 @@ delete_checkbox(r = 0, c = 0)
 ```python
 delete_header_checkbox(c = 0)
 ```
+
+```python
+delete_index_checkbox(r = 0)
+```
+
  - Set first argument to `"all"` to delete all check boxes.
 
 ___
@@ -1444,20 +1538,30 @@ checkbox(r,
 ```
 
 ```python
-checkbox(c,
-         checked = None,
-         state = None,
-         check_function = "",
-         text = None)
+header_checkbox(c,
+                checked = None,
+                state = None,
+                check_function = "",
+                text = None)
 ```
+
+```python
+index_checkbox(r,
+               checked = None,
+               state = None,
+               check_function = "",
+               text = None)
+```
+
  - If any arguments are not default they will be set for the chosen checkbox.
  - If all arguments are default a dictionary of all the checkboxes information will be returned.
 
 ## 23 Table Options and Other Functions
 
 ```python
-def set_options(
+set_options(
 show_default_header_for_empty = None,
+show_default_index_for_empty = None,
 enable_edit_cell_auto_resize = None,
 selected_rows_to_end_of_window = None,
 horizontal_grid_to_end_of_window = None,
@@ -1881,7 +1985,7 @@ class demo(tk.Tk):
                            header_align = "c",
                            data = [[f"Row {r}, Column {c}\nnewline 1\nnewline 2" for c in range(6)] for r in range(21)],
                            headers = ["Dropdown Column", "Checkbox Column", "Center Aligned Column", "East Aligned Column", "", ""],
-                           theme = "dark",
+                           theme = "black",
                            height = 520,
                            width = 930)
         self.sheet.enable_bindings()
@@ -1936,7 +2040,6 @@ class demo(tk.Tk):
                                    canvas = "header",
                                    bg = "white",
                                    fg = "purple")
-        #self.sheet.display_columns(indexes = [0, 1, 2], enable = True)
         self.sheet.set_all_column_widths()
         self.sheet.extra_bindings("all", self.all_extra_bindings)
         
@@ -1945,6 +2048,45 @@ class demo(tk.Tk):
         pass
 
         
+app = demo()
+app.mainloop()
+```
+
+## 30 Example Saving tksheet as a csv File
+
+To save tksheet data as a .csv file including headers and index.
+
+```python
+from tksheet import Sheet
+import tkinter as tk
+import csv
+
+
+class demo(tk.Tk):
+    def __init__(self):
+        tk.Tk.__init__(self)
+        self.grid_columnconfigure(0, weight = 1)
+        self.grid_rowconfigure(0, weight = 1)
+        self.frame = tk.Frame(self)
+        self.frame.grid_columnconfigure(0, weight = 1)
+        self.frame.grid_rowconfigure(0, weight = 1)
+        self.sheet = Sheet(self.frame,
+                           data = [[f"Row {r}, Column {c}\nnewline 1\nnewline 2" for c in range(6)] for r in range(21)])
+        self.sheet.enable_bindings()
+        self.frame.grid(row = 0, column = 0, sticky = "nswe")
+        self.sheet.grid(row = 0, column = 0, sticky = "nswe")
+        self.sheet.popup_menu_add_command("Save sheet", self.self.save_sheet)
+
+    def save_sheet(self):
+        with open("new_csv_file.csv", "w", newline = "", encoding = "utf-8") as fh:
+            writer = csv.writer(fh,
+                                dialect = csv.excel,
+                                lineterminator = "\n")
+            for r in self.sheet.yield_sheet_rows(get_header = True, get_index = True):
+                writer.writerow(r)
+        
+
+
 app = demo()
 app.mainloop()
 ```

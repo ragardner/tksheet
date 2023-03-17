@@ -203,17 +203,12 @@ class TextEditor(tk.Frame):
 
 
 def num2alpha(n):
-    if isinstance(n, (int, float)):
-        s = ""
-        n += 1
-        while n > 0:
-            n, r = divmod(n - 1, 26)
-            s = chr(65 + r) + s
-        return s
-    elif isinstance(n, (list, tuple)):
-        return [num2alpha(n_) for n_ in n]
-    else:
-        raise(TypeError(f"Conversion between {type(n)} and alphabetical index not supported."))
+    s = ""
+    n += 1
+    while n > 0:
+        n, r = divmod(n - 1, 26)
+        s = chr(65 + r) + s
+    return s
 
 def get_index_of_gap_in_sorted_integer_seq_forward(seq, start = 0):
     prevn = seq[start]

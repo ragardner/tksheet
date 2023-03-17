@@ -50,7 +50,6 @@ class ColumnHeaders(tk.Canvas):
         self.disp_resize_lines = {}
         self.disp_dropdown = {}
         self.disp_checkbox = {}
-        
         self.hidd_text = {}
         self.hidd_high = {}
         self.hidd_grid = {}
@@ -193,7 +192,8 @@ class ColumnHeaders(tk.Canvas):
         popup_menu = None
         if self.MT.identify_col(x = event.x, allow_end = False) is None:
             self.MT.deselect("all")
-            popup_menu = self.ch_rc_popup_menu
+            if self.MT.rc_popup_menus_enabled:
+                popup_menu = self.MT.empty_rc_popup_menu
         elif self.col_selection_enabled and not self.currently_resizing_width and not self.currently_resizing_height:
             c = self.MT.identify_col(x = event.x)
             if c < len(self.MT.col_positions) - 1:
@@ -311,11 +311,11 @@ class ColumnHeaders(tk.Canvas):
                     self.select_col(c, redraw = True)
                 elif self.MT.toggle_selection_enabled:
                     self.toggle_select_col(c, redraw = True)
-            dcol = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
-            if ((dcol in self.cell_options and 'checkbox' in self.cell_options[dcol]) or
-                (dcol in self.cell_options and 'dropdown' in self.cell_options[dcol]) or
-                self.edit_cell_enabled):
-                self.open_cell(event)
+                dcol = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
+                if ((dcol in self.cell_options and 'checkbox' in self.cell_options[dcol]) or
+                    (dcol in self.cell_options and 'dropdown' in self.cell_options[dcol]) or
+                    self.edit_cell_enabled):
+                    self.open_cell(event)
         self.rsz_w = None
         self.mouse_motion(event)
         if self.extra_double_b1_func is not None:
@@ -649,7 +649,7 @@ class ColumnHeaders(tk.Canvas):
         qtxtm = self.MT.txt_measure_canvas_text
         qtxth = self.MT.txt_h
         qclop = self.MT.cell_options
-        qfont = self.MT.my_font
+        qfont = self.MT._font
         if width is None:
             w = self.MT.min_cw
             hw = self.MT.min_cw
@@ -664,24 +664,24 @@ class ColumnHeaders(tk.Canvas):
                 data_col = self.MT.displayed_columns[col]
             # header
             if data_col in self.cell_options and 'checkbox' in self.cell_options[data_col]:
-                qconf(qtxtm, text = self.cell_options[data_col]['checkbox']['text'], font = self.MT.my_hdr_font)
+                qconf(qtxtm, text = self.cell_options[data_col]['checkbox']['text'], font = self.MT._hdr_font)
                 b = qbbox(qtxtm)
                 hw = b[2] - b[0] + 7 + self.MT.hdr_txt_h
             else:
                 txt = ""
-                if isinstance(self.MT.my_hdrs, int) or len(self.MT.my_hdrs) - 1 >= data_col:
-                    if isinstance(self.MT.my_hdrs, int):
-                        txt = self.MT.data_ref[self.MT.my_hdrs][data_col]
+                if isinstance(self.MT._headers, int) or len(self.MT._headers) - 1 >= data_col:
+                    if isinstance(self.MT._headers, int):
+                        txt = self.MT.data_ref[self.MT._headers][data_col]
                     else:
-                        txt = self.MT.my_hdrs[data_col]
+                        txt = self.MT._headers[data_col]
                     if txt or (data_col in self.cell_options and 'dropdown' in self.cell_options[data_col]):
-                        qconf(qtxtm, text = txt, font = self.MT.my_hdr_font)
+                        qconf(qtxtm, text = txt, font = self.MT._hdr_font)
                         b = qbbox(qtxtm)
                         if data_col in self.cell_options and 'dropdown' in self.cell_options[data_col]:
                             hw = b[2] - b[0] + 7 + self.MT.hdr_txt_h
                         else:
                             hw = b[2] - b[0] + 7
-                if not isinstance(self.MT.my_hdrs, int) and ((not txt and self.show_default_header_for_empty) or len(self.MT.my_hdrs) < data_col):
+                if not isinstance(self.MT._headers, int) and ((not txt and self.show_default_header_for_empty) or len(self.MT._headers) < data_col):
                     if self.default_hdr == "letters":
                         hw = self.MT.GetHdrTextWidth(num2alpha(data_col)) + 7
                     elif self.default_hdr == "numbers":
@@ -748,9 +748,6 @@ class ColumnHeaders(tk.Canvas):
                 self.MT.col_positions = list(accumulate(chain([0], (width for cn in range(len(self.MT.displayed_columns))))))
         if recreate:
             self.MT.recreate_all_selection_boxes()
-
-    def GetLargestWidth(self, cell):
-        return max(cell.split("\n"), key = self.MT.GetTextWidth)
 
     def align_cells(self, columns = [], align = "global"):
         if isinstance(columns, int):
@@ -868,7 +865,10 @@ class ColumnHeaders(tk.Canvas):
             #top right points for triangle
             ty3 = mid_y - topysub + 2
             tx3 = x2 - 3
-            
+            if tx2 - tx1 > tx3 - tx2:
+                tx1 += (tx2 - tx1) - (tx3 - tx2)
+            elif tx2 - tx1 < tx3 - tx2:
+                tx1 -= (tx3 - tx2) - (tx2 - tx1)
             points = (tx1, ty1, tx2, ty2, tx3, ty3)
             if self.hidd_dropdown:
                 t, sh = self.hidd_dropdown.popitem()
@@ -966,13 +966,9 @@ class ColumnHeaders(tk.Canvas):
                 self.visible_col_dividers.append((x - 2, 1, x + 2, yend))
             self.redraw_gridline(x, 0, x, self.current_height, fill = self.header_grid_fg, width = 1, tag = ("v", f"{c}"))
         top = self.canvasy(0)
-        if self.MT.hdr_fl_ins + self.MT.hdr_half_txt_h - 1 > top:
-            incfl = True
-        else:
-            incfl = False
         c_2 = self.header_selected_cells_bg if self.header_selected_cells_bg.startswith("#") else Color_Map_[self.header_selected_cells_bg]
         c_3 = self.header_selected_columns_bg if self.header_selected_columns_bg.startswith("#") else Color_Map_[self.header_selected_columns_bg]
-        font = self.MT.my_hdr_font
+        font = self.MT._hdr_font
         for c in range(start_col, end_col - 1):
             y = self.MT.hdr_fl_ins
             fc = self.MT.col_positions[c]
@@ -1019,164 +1015,103 @@ class ColumnHeaders(tk.Canvas):
 
             if dcol in self.cell_options and 'checkbox' in self.cell_options[dcol]:
                 if mw > self.MT.hdr_txt_h + 2:
-                    box_w = fc + self.MT.hdr_txt_h + 2 - fc
+                    box_w = self.MT.hdr_txt_h + 2
                     if cell_alignment == "w":
-                        x = x + box_w 
+                        x += box_w
                     elif cell_alignment == "center":
-                        x = x + ceil(box_w / 2)
+                        x += ceil(box_w / 2)
                     mw = mw - box_w
                     self.redraw_checkbox(dcol,
                                          fc + 2,
                                          0,
-                                         fc + 2 + self.MT.hdr_txt_h + 2,
+                                         fc + self.MT.hdr_txt_h + 4,
                                          self.MT.hdr_txt_h + 2,
                                          fill = tf if self.cell_options[dcol]['checkbox']['state'] == "normal" else self.header_grid_fg,
                                          outline = "",
                                          tag = "cb", 
-                                         draw_check = self.MT.my_hdrs[dcol] if isinstance(self.MT.my_hdrs, (list, tuple)) else self.MT.data_ref[self.MT.my_hdrs][dcol])
+                                         draw_check = self.MT._headers[dcol] if isinstance(self.MT._headers, (list, tuple)) else self.MT.data_ref[self.MT._headers][dcol])
 
             try:
                 if dcol in self.cell_options and 'checkbox' in self.cell_options[dcol]:
                     lns = self.cell_options[dcol]['checkbox']['text'].split("\n") if isinstance(self.cell_options[dcol]['checkbox']['text'], str) else f"{self.cell_options[dcol]['checkbox']['text']}".split("\n")
-                elif isinstance(self.MT.my_hdrs, int):
-                    lns = self.MT.data_ref[self.MT.my_hdrs][dcol].split("\n") if isinstance(self.MT.data_ref[self.MT.my_hdrs][dcol], str) else f"{self.MT.data_ref[self.MT.my_hdrs][dcol]}".split("\n")
+                elif isinstance(self.MT._headers, int):
+                    lns = self.MT.data_ref[self.MT._headers][dcol].split("\n") if isinstance(self.MT.data_ref[self.MT._headers][dcol], str) else f"{self.MT.data_ref[self.MT._headers][dcol]}".split("\n")
                 else:
-                    lns = self.MT.my_hdrs[dcol].split("\n") if isinstance(self.MT.my_hdrs[dcol], str) else f"{self.MT.my_hdrs[dcol]}".split("\n")
+                    lns = self.MT._headers[dcol].split("\n") if isinstance(self.MT._headers[dcol], str) else f"{self.MT._headers[dcol]}".split("\n")
                 got_hdr = True
             except:
                 got_hdr = False
             if not got_hdr or (lns == [""] and self.show_default_header_for_empty):
                 if self.default_hdr == "letters":
-                    lns = (num2alpha(c), )
+                    lns = (num2alpha(dcol), )
                 elif self.default_hdr == "numbers":
-                    lns = (f"{c + 1}", )
+                    lns = (f"{dcol + 1}", )
                 else:
-                    lns = (f"{c + 1} {num2alpha(c)}", )
-            
+                    lns = (f"{dcol + 1} {num2alpha(dcol)}", )
+
             if cell_alignment == "center":
                 if fc + 5 > x_stop or mw <= 5:
                     continue
-                if incfl:
-                    txt = lns[0]
-                    t = self.redraw_text(x, y, text = txt, fill = tf, font = font, anchor = "center", tag = "t")
-                    wd = self.bbox(t)
-                    wd = wd[2] - wd[0]
-                    if wd > mw:
-                        tl = len(txt)
-                        tmod = ceil((tl - int(tl * (mw / wd))) / 2)
-                        txt = txt[tmod - 1:-tmod]
-                        self.itemconfig(t, text = txt)
+                for txt in lns:
+                    if y > top:
+                        t = self.redraw_text(x, y, text = txt, fill = tf, font = font, anchor = "center", tag = "t")
                         wd = self.bbox(t)
-                        self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
-                        while wd[2] - wd[0] > mw:
-                            txt = txt[next(self.c_align_cyc)]
+                        wd = wd[2] - wd[0]
+                        if wd > mw:
+                            tl = len(txt)
+                            tmod = ceil((tl - int(tl * (mw / wd))) / 2)
+                            txt = txt[tmod - 1:-tmod]
                             self.itemconfig(t, text = txt)
                             wd = self.bbox(t)
-                        self.coords(t, x, y)
-                if len(lns) > 1:
-                    stl = int((top - y) / self.MT.hdr_xtra_lines_increment) - 1
-                    if stl < 1:
-                        stl = 1
-                    y += (stl * self.MT.hdr_xtra_lines_increment)
-                    if y + self.MT.hdr_half_txt_h - 1 < self.current_height:
-                        for i in range(stl, len(lns)):
-                            txt = lns[i]
-                            t = self.redraw_text(x, y, text = txt, fill = tf, font = font, anchor = cell_alignment, tag = "t")
-                            wd = self.bbox(t)
-                            wd = wd[2] - wd[0]
-                            if wd > mw:
-                                tl = len(txt)
-                                tmod = ceil((tl - int(tl * (mw / wd))) / 2)
-                                txt = txt[tmod - 1:-tmod]
+                            self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
+                            while wd[2] - wd[0] > mw:
+                                txt = txt[next(self.c_align_cyc)]
                                 self.itemconfig(t, text = txt)
                                 wd = self.bbox(t)
-                                self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
-                                while wd[2] - wd[0] > mw:
-                                    txt = txt[next(self.c_align_cyc)]
-                                    self.itemconfig(t, text = txt)
-                                    wd = self.bbox(t)
-                                self.coords(t, x, y)
-                            y += self.MT.hdr_xtra_lines_increment
-                            if y + self.MT.hdr_half_txt_h - 1 > self.current_height:
-                                break
-                            
+                            self.coords(t, x, y)
+                    y += self.MT.hdr_xtra_lines_increment
+                    if y - 1 > self.current_height:
+                        break
+
             elif cell_alignment == "e":
                 if x > x_stop or mw <= 5:
                     continue
-                if incfl:
-                    txt = lns[0]
-                    t = self.redraw_text(x, y, text = txt, fill = tf, font = font, anchor = cell_alignment, tag = "t")
-                    wd = self.bbox(t)
-                    wd = wd[2] - wd[0]
-                    if wd > mw:
-                        txt = txt[len(txt) - int(len(txt) * (mw / wd)):]
-                        self.itemconfig(t, text = txt)
+                for txt in lns:
+                    if y > top:
+                        t = self.redraw_text(x, y, text = txt, fill = tf, font = font, anchor = cell_alignment, tag = "t")
                         wd = self.bbox(t)
-                        while wd[2] - wd[0] > mw:
-                            txt = txt[1:]
+                        wd = wd[2] - wd[0]
+                        if wd > mw:
+                            txt = txt[len(txt) - int(len(txt) * (mw / wd)):]
                             self.itemconfig(t, text = txt)
                             wd = self.bbox(t)
-                if len(lns) > 1:
-                    stl = int((top - y) / self.MT.hdr_xtra_lines_increment) - 1
-                    if stl < 1:
-                        stl = 1
-                    y += (stl * self.MT.hdr_xtra_lines_increment)
-                    if y + self.MT.hdr_half_txt_h - 1 < self.current_height:
-                        for i in range(stl, len(lns)):
-                            txt = lns[i]
-                            t = self.redraw_text(x, y, text = txt, fill = tf, font = font, anchor = cell_alignment, tag = "t")
-                            wd = self.bbox(t)
-                            wd = wd[2] - wd[0]
-                            if wd > mw:
-                                txt = txt[len(txt) - int(len(txt) * (mw / wd)):]
+                            while wd[2] - wd[0] > mw:
+                                txt = txt[1:]
                                 self.itemconfig(t, text = txt)
                                 wd = self.bbox(t)
-                                while wd[2] - wd[0] > mw:
-                                    txt = txt[1:]
-                                    self.itemconfig(t, text = txt)
-                                    wd = self.bbox(t)
-                            y += self.MT.hdr_xtra_lines_increment
-                            if y + self.MT.hdr_half_txt_h - 1 > self.current_height:
-                                break
-                
+                    y += self.MT.hdr_xtra_lines_increment
+                    if y - 1 > self.current_height:
+                        break
+
             elif cell_alignment == "w":
                 if x > x_stop or mw <= 5:
                     continue
-                if incfl:
-                    txt = lns[0]
-                    t = self.redraw_text(x, y, text = txt, fill = tf, font = font, anchor = cell_alignment, tag = "t")
-                    wd = self.bbox(t)
-                    wd = wd[2] - wd[0]
-                    if wd > mw:
-                        nl = int(len(txt) * (mw / wd))
-                        self.itemconfig(t, text = txt[:nl])
+                for txt in lns:
+                    if y > top:
+                        t = self.redraw_text(x, y, text = txt, fill = tf, font = font, anchor = cell_alignment, tag = "t")
                         wd = self.bbox(t)
-                        while wd[2] - wd[0] > mw:
-                            nl -= 1
-                            self.dchars(t, nl)
+                        wd = wd[2] - wd[0]
+                        if wd > mw:
+                            nl = int(len(txt) * (mw / wd))
+                            self.itemconfig(t, text = txt[:nl])
                             wd = self.bbox(t)
-                if len(lns) > 1:
-                    stl = int((top - y) / self.MT.hdr_xtra_lines_increment) - 1
-                    if stl < 1:
-                        stl = 1
-                    y += (stl * self.MT.hdr_xtra_lines_increment)
-                    if y + self.MT.hdr_half_txt_h - 1 < self.current_height:
-                        for i in range(stl, len(lns)):
-                            txt = lns[i]
-                            t = self.redraw_text(x, y, text = txt, fill = tf, font = font, anchor = cell_alignment, tag = "t")
-                            wd = self.bbox(t)
-                            wd = wd[2] - wd[0]
-                            if wd > mw:
-                                nl = int(len(txt) * (mw / wd))
-                                self.itemconfig(t, text = txt[:nl])
+                            while wd[2] - wd[0] > mw:
+                                nl -= 1
+                                self.dchars(t, nl)
                                 wd = self.bbox(t)
-                                while wd[2] - wd[0] > mw:
-                                    nl -= 1
-                                    self.dchars(t, nl)
-                                    wd = self.bbox(t)
-                            y += self.MT.hdr_xtra_lines_increment
-                            if y + self.MT.hdr_half_txt_h - 1 > self.current_height:
-                                break
+                    y += self.MT.hdr_xtra_lines_increment
+                    if y - 1 > self.current_height:
+                        break
                             
         self.redraw_gridline(x1, self.current_height - 1, x_stop, self.current_height - 1, fill = self.header_border_fg, width = 1, tag = "h")
         for t, sh in self.hidd_text.items():
@@ -1223,29 +1158,30 @@ class ColumnHeaders(tk.Canvas):
     def edit_cell_(self, event = None, c = None, dropdown = False):
         text = None
         extra_func_key = "??"
-        if event is not None and ((hasattr(event, 'keysym') and event.keysym == 'BackSpace') or
-                                  event.keycode in (8, 855638143)
-                                  ):
-            extra_func_key = "BackSpace"
-            text = ""
-        elif event is None or self.MT.event_opens_dropdown_or_checkbox(event):
+        if event is None or self.MT.event_opens_dropdown_or_checkbox(event):
             if event is not None:
                 if hasattr(event, 'keysym') and event.keysym == 'Return':
                     extra_func_key = "Return"
                 elif hasattr(event, 'keysym') and event.keysym == 'F2':
                     extra_func_key = "F2"
             dcol = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
-            if isinstance(self.MT.my_hdrs, list):
-                if len(self.MT.my_hdrs) <= dcol:
-                    self.MT.my_hdrs.extend(list(repeat("", dcol - len(self.MT.my_hdrs) + 1)))
-                text = f"{self.MT.my_hdrs[dcol]}"
-            elif isinstance(self.MT.my_hdrs, int):
+            if isinstance(self.MT._headers, list):
+                if len(self.MT._headers) <= dcol:
+                    self.MT._headers.extend(list(repeat("", dcol - len(self.MT._headers) + 1)))
+                text = f"{self.MT._headers[dcol]}"
+            elif isinstance(self.MT._headers, int):
                 try:
-                    text = f"{self.MT.data_ref[self.MT.my_hdrs][dcol]}"
+                    text = f"{self.MT.data_ref[self.MT._headers][dcol]}"
                 except:
                     text = ""
             if self.MT.cell_auto_resize_enabled:
+                self.set_current_height_to_cell(dcol)
                 self.set_col_width_run_binding(c)
+        elif event is not None and ((hasattr(event, 'keysym') and event.keysym == 'BackSpace') or
+                                  event.keycode in (8, 855638143)
+                                  ):
+            extra_func_key = "BackSpace"
+            text = ""
         elif event is not None and ((hasattr(event, "char") and event.char.isalpha()) or
                                     (hasattr(event, "char") and event.char.isdigit()) or
                                     (hasattr(event, "char") and event.char in symbols_set)):
@@ -1253,7 +1189,7 @@ class ColumnHeaders(tk.Canvas):
             text = event.char
         else:
             return False
-        self.text_editor_loc = (c)
+        self.text_editor_loc = c
         if self.extra_begin_edit_cell_func is not None:
             try:
                 text2 = self.extra_begin_edit_cell_func(EditHeaderEvent(c, extra_func_key, text, "begin_edit_header"))
@@ -1291,19 +1227,19 @@ class ColumnHeaders(tk.Canvas):
         h = self.current_height + 1
         dcol = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
         if text is None:
-            if isinstance(self.MT.my_hdrs, list):
-                if len(self.MT.my_hdrs) <= dcol:
-                    self.MT.my_hdrs.extend(list(repeat("", dcol - len(self.MT.my_hdrs) + 1)))
-                text = f"{self.MT.my_hdrs[dcol]}"
-            elif isinstance(self.MT.my_hdrs, int):
+            if isinstance(self.MT._headers, list):
+                if len(self.MT._headers) <= dcol:
+                    self.MT._headers.extend(list(repeat("", dcol - len(self.MT._headers) + 1)))
+                text = f"{self.MT._headers[dcol]}"
+            elif isinstance(self.MT._headers, int):
                 try:
-                    text = f"{self.MT.data_ref[self.MT.my_hdrs][dcol]}"
+                    text = f"{self.MT.data_ref[self.MT._headers][dcol]}"
                 except:
                     text = ""
         bg, fg = self.get_widget_bg_fg(dcol)
         self.text_editor = TextEditor(self,
                                       text = text,
-                                      font = self.MT.my_hdr_font,
+                                      font = self.MT._hdr_font,
                                       state = state,
                                       width = w,
                                       height = h,
@@ -1375,10 +1311,10 @@ class ColumnHeaders(tk.Canvas):
             self.focus_set()
 
     # c is displayed col
-    def get_text_editor_value(self, destroy_tup = None, c = None, set_data_ref_on_destroy = True, event = None, destroy = True, move_down = True, redraw = True, recreate = True):
-        if self.focus_get() is None and destroy_tup:
+    def get_text_editor_value(self, editor_info = None, c = None, set_data_ref_on_destroy = True, event = None, destroy = True, move_down = True, redraw = True, recreate = True):
+        if self.focus_get() is None and editor_info:
             return
-        if destroy_tup is not None and len(destroy_tup) >= 2 and destroy_tup[1] == "Escape":
+        if editor_info is not None and len(editor_info) >= 2 and editor_info[1] == "Escape":
             self.destroy_text_editor("Escape")
             self.hide_dropdown_window(c)
             return
@@ -1387,16 +1323,21 @@ class ColumnHeaders(tk.Canvas):
         if destroy:
             self.destroy_text_editor()
         if set_data_ref_on_destroy:
-            if c is None and destroy_tup is not None and len(destroy_tup) >= 2:
-                c = destroy_tup[0]
-            if self.extra_end_edit_cell_func is not None:
-                validation = self.extra_end_edit_cell_func(EditHeaderEvent(c, destroy_tup[1] if len(destroy_tup) >= 2 else "FocusOut", f"{self.text_editor_value}", "end_edit_header"))
+            if c is None and editor_info is not None and len(editor_info) >= 2:
+                c = editor_info[0]
+            if self.extra_end_edit_cell_func is None:
+                self._set_cell_data(c, dcol = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c], value = self.text_editor_value)
+            elif self.extra_end_edit_cell_func is not None and self.MT.edit_cell_validation:
+                validation = self.extra_end_edit_cell_func(EditHeaderEvent(c, editor_info[1] if len(editor_info) >= 2 else "FocusOut", f"{self.text_editor_value}", "end_edit_header"))
                 if validation is not None:
                     self.text_editor_value = validation
-            self._set_cell_data(c, dcol = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c], value = self.text_editor_value)
+                self._set_cell_data(c, dcol = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c], value = self.text_editor_value)
+            elif self.extra_end_edit_cell_func is not None and not self.MT.edit_cell_validation:
+                self._set_cell_data(c, dcol = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c], value = self.text_editor_value)
+                self.extra_end_edit_cell_func(EditHeaderEvent(c, editor_info[1] if len(editor_info) >= 2 else "FocusOut", f"{self.text_editor_value}", "end_edit_header"))
         if move_down:
-            if c is None and destroy_tup is not None and len(destroy_tup) >= 2:
-                c = destroy_tup[0]
+            if c is None and editor_info is not None and len(editor_info) >= 2:
+                c = editor_info[0]
             currently_selected = self.MT.currently_selected()
             if c is not None:
                 if (
@@ -1404,10 +1345,10 @@ class ColumnHeaders(tk.Canvas):
                     c == currently_selected[1] and
                     (self.MT.single_selection_enabled or self.MT.toggle_selection_enabled)
                     ):
-                    if destroy_tup is not None and len(destroy_tup) >= 2 and destroy_tup[1] == "Return":
+                    if editor_info is not None and len(editor_info) >= 2 and editor_info[1] == "Return":
                         self.select_col(c)
                         self.MT.see(0, c, keep_yscroll = True, bottom_right_corner = True, check_cell_visibility = True)
-                    elif destroy_tup is not None and len(destroy_tup) >= 2 and destroy_tup[1] == "Tab":
+                    elif editor_info is not None and len(editor_info) >= 2 and editor_info[1] == "Tab":
                         self.select_col(c + 1 if c < len(self.MT.col_positions) - 2 else c)
                         self.MT.see(0, c + 1 if c < len(self.MT.col_positions) - 2 else c, keep_yscroll = True, bottom_right_corner = True, check_cell_visibility = True)
         self.hide_dropdown_window(c)
@@ -1415,20 +1356,26 @@ class ColumnHeaders(tk.Canvas):
             self.MT.recreate_all_selection_boxes()
         if redraw:
             self.MT.refresh()
-        if destroy_tup is not None and len(destroy_tup) >= 2 and destroy_tup[1] != "FocusOut":
+        if editor_info is not None and len(editor_info) >= 2 and editor_info[1] != "FocusOut":
             self.focus_set()
         return self.text_editor_value
     
     #internal event use
-    def _set_cell_data(self, c = 0, dcol = None, value = "", cell_resize = True):
+    def _set_cell_data(self, c = 0, dcol = None, value = "", cell_resize = True, undo = True):
         if dcol is None:
             dcol = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
-        if isinstance(self.MT.my_hdrs, list):
-            if len(self.MT.my_hdrs) <= dcol:
-                self.MT.my_hdrs.extend(list(repeat("", dcol - len(self.MT.my_hdrs) + 1)))
-            self.MT.my_hdrs[dcol] = value
-        elif isinstance(self.MT.my_hdrs, int):
-            self.MT._set_cell_data(r = self.MT.my_hdrs, c = c, dcol = dcol, value = value, undo = True)
+        if isinstance(self.MT._headers, list):
+            if len(self.MT._headers) <= dcol:
+                self.MT._headers.extend(list(repeat("", dcol - len(self.MT._headers) + 1)))
+            if self.MT.undo_enabled and undo:
+                if self.MT._headers[dcol] != value:
+                    self.MT.undo_storage.append(zlib.compress(pickle.dumps(("edit_header",
+                                                                           {dcol: self.MT._headers[dcol]},
+                                                                           (((0, c, len(self.MT.row_positions) - 1, c + 1), "cols"), ),
+                                                                           self.MT.currently_selected()))))
+            self.MT._headers[dcol] = value
+        elif isinstance(self.MT._headers, int):
+            self.MT._set_cell_data(r = self.MT._headers, c = c, dcol = dcol, value = value, undo = True)
         if cell_resize and self.MT.cell_auto_resize_enabled:
             self.set_col_width_run_binding(c)
             self.MT.refresh()
@@ -1444,21 +1391,21 @@ class ColumnHeaders(tk.Canvas):
         if dcol is None:
             dcol = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
         if self.cell_options[dcol]['checkbox']['state'] == "normal":
-            if isinstance(self.MT.my_hdrs, list):
-                self._set_cell_data(c, dcol, value = not self.MT.my_hdrs[dcol] if type(self.MT.my_hdrs[dcol]) == bool else False, cell_resize = False)
-            elif isinstance(self.MT.my_hdrs, int):
-                self._set_cell_data(c, dcol, value = not self.MT.data_ref[self.MT.my_hdrs][dcol] if type(self.MT.data_ref[self.MT.my_hdrs][dcol]) == bool else False, cell_resize = False)
+            if isinstance(self.MT._headers, list):
+                self._set_cell_data(c, dcol, value = not self.MT._headers[dcol] if type(self.MT._headers[dcol]) == bool else False, cell_resize = False)
+            elif isinstance(self.MT._headers, int):
+                self._set_cell_data(c, dcol, value = not self.MT.data_ref[self.MT._headers][dcol] if type(self.MT.data_ref[self.MT._headers][dcol]) == bool else False, cell_resize = False)
             if self.cell_options[dcol]['checkbox']['check_function'] is not None:
-                self.cell_options[dcol]['checkbox']['check_function']((0, c, "HeaderCheckboxClicked", f"{self.MT.my_hdrs[dcol] if isinstance(self.MT.my_hdrs, list) else self.MT.data_ref[self.MT.my_hdrs][dcol]}"))
+                self.cell_options[dcol]['checkbox']['check_function']((0, c, "HeaderCheckboxClicked", f"{self.MT._headers[dcol] if isinstance(self.MT._headers, list) else self.MT.data_ref[self.MT._headers][dcol]}"))
             if self.extra_end_edit_cell_func is not None:
-                self.extra_end_edit_cell_func(EditHeaderEvent(c, "Return", f"{self.MT.my_hdrs[dcol] if isinstance(self.MT.my_hdrs, list) else self.MT.data_ref[self.MT.my_hdrs][dcol]}", "end_edit_header"))
+                self.extra_end_edit_cell_func(EditHeaderEvent(c, "Return", f"{self.MT._headers[dcol] if isinstance(self.MT._headers, list) else self.MT.data_ref[self.MT._headers][dcol]}", "end_edit_header"))
         if redraw:
             self.MT.refresh()
 
     def create_checkbox(self, c = 0, checked = False, state = "normal", redraw = False, check_function = None, text = ""):
         if c in self.cell_options and any(x in self.cell_options[c] for x in ('dropdown', 'checkbox')):
             self.destroy_dropdown_and_checkbox(c)
-        self._set_cell_data(dcol = c, value = checked, cell_resize = False)
+        self._set_cell_data(dcol = c, value = checked, cell_resize = False, undo = False)
         if c not in self.cell_options:
             self.cell_options[c] = {}
         self.cell_options[c]['checkbox'] = {'check_function': check_function,
@@ -1497,7 +1444,7 @@ class ColumnHeaders(tk.Canvas):
         return bg, fg
 
     def get_dropdown_height_anchor(self, dcol, text_editor_h = None):
-        numvalues = len(self.cell_options[dcol]['dropdown']['values'])
+        numvalues = sum(len(v.split("\n") if isinstance(v, str) else f"{v}".split("\n")) for v in self.cell_options[dcol]['dropdown']['values'])
         xscroll_h = self.MT.parentframe.xscroll.winfo_height()
         if numvalues > 5:
             linespace = 6 * 5 + 3
@@ -1505,8 +1452,8 @@ class ColumnHeaders(tk.Canvas):
         else:
             linespace = numvalues * 5 + 3
             win_h = int(self.MT.hdr_txt_h * numvalues + linespace + xscroll_h)
-        if win_h > 300:
-            win_h = 300
+        if win_h > 400:
+            win_h = 400
         space_bot = self.MT.get_space_bot(0, text_editor_h)
         win_h2 = int(win_h)
         if win_h > space_bot:
@@ -1516,12 +1463,23 @@ class ColumnHeaders(tk.Canvas):
         elif win_h > win_h2:
             win_h = win_h2
         return win_h, "nw"
+    
+    def set_current_height_to_cell(self, c):
+        x = self.MT.txt_measure_canvas.create_text(0,
+                                                   0,
+                                                   text = self.MT.data_ref[self.MT._headers][c] if isinstance(self.MT._headers, int) else self.MT._headers[c],
+                                                   font = self.MT._hdr_font)
+        b = self.MT.txt_measure_canvas.bbox(x)
+        self.MT.txt_measure_canvas.delete(x)
+        self.set_height(b[3] - b[1] + 5, set_TL = True)
 
     def text_editor_newline_binding(self, c = None, event = None):
-        if self.GetLinesHeight(self.text_editor.get_num_lines() + 1) > self.text_editor.winfo_height():
+        if self.MT.GetHdrLinesHeight(self.text_editor.get_num_lines() + 1) > self.text_editor.winfo_height():
             self.text_editor.config(height = self.text_editor.winfo_height() + self.MT.hdr_xtra_lines_increment)
+            if self.height_resizing_enabled:
+                self.set_height(self.text_editor.winfo_height(), set_TL = True)
             dcol = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
-            if c if self.MT.all_columns_displayed else self.MT.displayed_columns[c] in self.cell_options and 'dropdown' in self.cell_options[dcol]:
+            if dcol in self.cell_options and 'dropdown' in self.cell_options[dcol]:
                 text_editor_h = self.text_editor.winfo_height()
                 win_h, anchor = self.get_dropdown_height_anchor(dcol, text_editor_h)
                 self.coords(self.cell_options[dcol]['dropdown']['canvas_id'],
@@ -1545,7 +1503,7 @@ class ColumnHeaders(tk.Canvas):
                                                     c,
                                                     width = self.MT.col_positions[c + 1] - self.MT.col_positions[c] + 1,
                                                     height = win_h,
-                                                    font = self.MT.my_hdr_font,
+                                                    font = self.MT._hdr_font,
                                                     bg = bg,
                                                     fg = fg,
                                                     outline_color = fg,
@@ -1562,19 +1520,16 @@ class ColumnHeaders(tk.Canvas):
         if self.cell_options[dcol]['dropdown']['state'] == "normal":
             if self.cell_options[dcol]['dropdown']['modified_function'] is not None:
                 self.text_editor.textedit.bind("<<TextModified>>", self.cell_options[dcol]['dropdown']['modified_function'])
-            self.update()
+            self.update_idletasks()
             try:
-                self.text_editor.textedit.focus_set()
-                self.text_editor.scroll_to_bottom()
+                self.after(1, lambda: self.text_editor.textedit.focus())
+                self.after(2, self.text_editor.scroll_to_bottom())
             except:
                 return
         else:
             window.bind("<FocusOut>", lambda x: self.hide_dropdown_window(c))
-            self.update()
-            try:
-                window.focus_set()
-            except:
-                return
+            self.update_idletasks()
+            window.focus_set()
         self.existing_dropdown_window = window
         self.cell_options[dcol]['dropdown']['window'] = window
         self.existing_dropdown_canvas_id = self.cell_options[dcol]['dropdown']['canvas_id']
@@ -1585,11 +1540,16 @@ class ColumnHeaders(tk.Canvas):
             dcol = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
             if self.cell_options[dcol]['dropdown']['select_function'] is not None: # user has specified a selection function
                 self.cell_options[dcol]['dropdown']['select_function'](EditHeaderEvent(c, "HeaderComboboxSelected", f"{selection}", "end_edit_header"))
-            if self.extra_end_edit_cell_func is not None:
+            if self.extra_end_edit_cell_func is None:
+                self._set_cell_data(c, dcol, selection, cell_resize = True)
+            elif self.extra_end_edit_cell_func is not None and self.MT.edit_cell_validation:
                 validation = self.extra_end_edit_cell_func(EditHeaderEvent(c, "HeaderComboboxSelected", f"{selection}", "end_edit_header"))
                 if validation is not None:
                     selection = validation
-            self._set_cell_data(c, dcol, selection, cell_resize = True)
+                self._set_cell_data(c, dcol, selection, cell_resize = True)
+            elif self.extra_end_edit_cell_func is not None and not self.MT.edit_cell_validation:
+                self._set_cell_data(c, dcol, selection, cell_resize = True)
+                self.extra_end_edit_cell_func(EditHeaderEvent(c, "HeaderComboboxSelected", f"{selection}", "end_edit_header"))
             self.focus_set()
             self.MT.recreate_all_selection_boxes()
             if redraw:
@@ -1599,7 +1559,7 @@ class ColumnHeaders(tk.Canvas):
         else:
             return_closedc = False
         if b1 and self.text_editor_loc is not None and self.text_editor is not None:
-            self.get_text_editor_value(destroy_tup = (self.text_editor_loc, "Return"))
+            self.get_text_editor_value(editor_info = (self.text_editor_loc, "Return"))
         else:
             self.destroy_text_editor("Escape")
         self.delete_opened_dropdown_window(c)
