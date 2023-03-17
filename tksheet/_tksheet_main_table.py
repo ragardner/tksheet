@@ -11,8 +11,7 @@ import io
 import pickle
 import tkinter as tk
 import zlib
-import random
-from copy import copy
+
 
 class MainTable(tk.Canvas):
     def __init__(self,
@@ -34,6 +33,7 @@ class MainTable(tk.Canvas):
                  total_cols = None,
                  total_rows = None,
                  row_index = None,
+                 index = None,
                  font = None,
                  header_font = None,
                  popup_menu_font = get_font(),
@@ -69,7 +69,8 @@ class MainTable(tk.Canvas):
                  vertical_grid_to_end_of_window = False,
                  empty_horizontal = 150,
                  empty_vertical = 100,
-                 max_undos = 20):
+                 max_undos = 20,
+                 edit_cell_validation = True):
         tk.Canvas.__init__(self,
                            parentframe,
                            width = width,
@@ -123,6 +124,7 @@ class MainTable(tk.Canvas):
         self.extra_table_rc_menu_funcs = {}
         self.extra_index_rc_menu_funcs = {}
         self.extra_header_rc_menu_funcs = {}
+        self.extra_empty_space_rc_menu_funcs = {}
 
         self.max_undos = max_undos
         self.undo_storage = deque(maxlen = max_undos)
@@ -133,6 +135,7 @@ class MainTable(tk.Canvas):
         self.paste_insert_row_limit = paste_insert_row_limit
         self.arrow_key_down_right_scroll_page = arrow_key_down_right_scroll_page
         self.cell_auto_resize_enabled = enable_edit_cell_auto_resize
+        self.edit_cell_validation = edit_cell_validation
         self.display_selected_fg_over_highlights = display_selected_fg_over_highlights
         self.centre_alignment_text_mod_indexes = (slice(1, None), slice(None, -1))
         self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
@@ -208,10 +211,8 @@ class MainTable(tk.Canvas):
         self.rc_select_enabled = False
         self.rc_delete_column_enabled = False
         self.rc_insert_column_enabled = False
-        self.rc_edit_column_header_enabled = False
         self.rc_delete_row_enabled = False
         self.rc_insert_row_enabled = False
-        self.rc_edit_row_index_enabled = False
         self.rc_popup_menus_enabled = False
         self.edit_cell_enabled = False
         self.text_editor_loc = None
@@ -230,18 +231,19 @@ class MainTable(tk.Canvas):
         self.RI.CH = column_headers_canvas
         self.TL = None                # is set from within TopLeftRectangle() __init__
         self.all_columns_displayed = True
+        self.all_rows_displayed = True
         self.align = align
-        self.my_font = font
+        self._font = font
         self.fnt_fam = font[0]
         self.fnt_sze = font[1]
         self.fnt_wgt = font[2]
-        self.my_hdr_font = header_font
+        self._hdr_font = header_font
         self.hdr_fnt_fam = header_font[0]
         self.hdr_fnt_sze = header_font[1]
         self.hdr_fnt_wgt = header_font[2]
 
         self.txt_measure_canvas = tk.Canvas(self)
-        self.txt_measure_canvas_text = self.txt_measure_canvas.create_text(0, 0, text = "", font = self.my_font)
+        self.txt_measure_canvas_text = self.txt_measure_canvas.create_text(0, 0, text = "", font = self._font)
         self.text_editor = None
         self.text_editor_id = None
         self.default_cw = column_width
@@ -260,28 +262,32 @@ class MainTable(tk.Canvas):
             if isinstance(total_rows, int) and isinstance(total_cols, int) and total_rows > 0 and total_cols > 0:
                 self.data_ref = [list(repeat("", total_cols)) for i in range(total_rows)]
         if isinstance(headers, int):
-            self.my_hdrs = headers
+            self._headers = headers
         else:
             if headers:
-                self.my_hdrs = headers
+                self._headers = headers
             else:
-                self.my_hdrs = []
-        if isinstance(row_index, int):
-            self.my_row_index = row_index
+                self._headers = []
+        if index is not None:
+            _row_index = index
         else:
-            if row_index:
-                self.my_row_index = row_index
+            _row_index = row_index
+        if isinstance(_row_index, int):
+            self._row_index = _row_index
+        else:
+            if _row_index:
+                self._row_index = _row_index
             else:
-                self.my_row_index = []
+                self._row_index = []
         self.displayed_columns = []
+        self.displayed_rows = []
         self.col_positions = [0]
         self.row_positions = [0]
         self.reset_row_positions()
         
-        self.display_columns(indexes = displayed_columns,
-                             enable = not all_columns_displayed,
+        self.display_columns(columns = displayed_columns,
+                             all_columns_displayed = all_columns_displayed,
                              reset_col_positions = False,
-                             set_col_positions = False,
                              deselect_all = False)
         self.reset_col_positions()
 
@@ -466,7 +472,7 @@ class MainTable(tk.Canvas):
                 self.show_ctrl_outline(canvas = "table", start_cell = (c1, r1), end_cell = (c2, r2))
             self.clipboard_clear()
             self.clipboard_append(s.getvalue())
-            self.update()
+            self.update_idletasks()
             if self.extra_end_ctrl_c_func is not None:
                 self.extra_end_ctrl_c_func(CtrlKeyEvent("end_ctrl_c", boxes, currently_selected, rows))
             
@@ -570,7 +576,7 @@ class MainTable(tk.Canvas):
                 self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells", undo_storage, tuple(boxes.items()), currently_selected))))
             self.clipboard_clear()
             self.clipboard_append(s.getvalue())
-            self.update()
+            self.update_idletasks()
             self.refresh()
             for r1, c1, r2, c2 in boxes:
                 self.show_ctrl_outline(canvas = "table", start_cell = (c1, r1), end_cell = (c2, r2))
@@ -772,11 +778,11 @@ class MainTable(tk.Canvas):
                             self.data_ref[rn].extend(list(repeat("", rm1end - len(self.data_ref[rn]) + 1)))
                         self.data_ref[rn][c:c] = self.data_ref[rn][rm1start:rm1end]
                         self.data_ref[rn][rm2start:rm2end] = []
-                    if isinstance(self.my_hdrs, list) and self.my_hdrs:
-                        if len(self.my_hdrs) < rm1end:
-                            self.my_hdrs.extend(list(repeat("", rm1end - len(self.my_hdrs) + 1)))
-                        self.my_hdrs[c:c] = self.my_hdrs[rm1start:rm1end]
-                        self.my_hdrs[rm2start:rm2end] = []
+                    if isinstance(self._headers, list) and self._headers:
+                        if len(self._headers) < rm1end:
+                            self._headers.extend(list(repeat("", rm1end - len(self._headers) + 1)))
+                        self._headers[c:c] = self._headers[rm1start:rm1end]
+                        self._headers[rm2start:rm2end] = []
 
                 new_ch = {}
                 for k, v in self.CH.cell_options.items():
@@ -815,11 +821,11 @@ class MainTable(tk.Canvas):
                             self.data_ref[rn].extend(list(repeat("", c - len(self.data_ref[rn]))))
                         self.data_ref[rn][c:c] = self.data_ref[rn][rm1start:rm1end]
                         self.data_ref[rn][rm1start:rm1end] = []
-                    if isinstance(self.my_hdrs, list) and self.my_hdrs:
-                        if len(self.my_hdrs) < c:
-                            self.my_hdrs.extend(list(repeat("", c - len(self.my_hdrs))))
-                        self.my_hdrs[c:c] = self.my_hdrs[rm1start:rm1end]
-                        self.my_hdrs[rm1start:rm1end] = []
+                    if isinstance(self._headers, list) and self._headers:
+                        if len(self._headers) < c:
+                            self._headers.extend(list(repeat("", c - len(self._headers))))
+                        self._headers[c:c] = self._headers[rm1start:rm1end]
+                        self._headers[rm1start:rm1end] = []
             
                 new_ch = {}
                 for k, v in self.CH.cell_options.items():
@@ -883,22 +889,22 @@ class MainTable(tk.Canvas):
                         else:
                             idx += 1
                     self.data_ref[rn] = new
-                if isinstance(self.my_hdrs, list) and self.my_hdrs:
-                    if len(self.my_hdrs) < max_idx:
-                        self.my_hdrs[:] = self.my_hdrs + list(repeat("", max_idx - len(self.my_hdrs)))
+                if isinstance(self._headers, list) and self._headers:
+                    if len(self._headers) < max_idx:
+                        self._headers[:] = self._headers + list(repeat("", max_idx - len(self._headers)))
                     new = []
                     idx = 0
                     done = set()
-                    while len(new) < len(self.my_hdrs):
+                    while len(new) < len(self._headers):
                         if idx in dispset and idx not in done:
-                            new.append(self.my_hdrs[dispset[idx]])
+                            new.append(self._headers[dispset[idx]])
                             done.add(idx)
                         elif idx not in done:
-                            new.append(self.my_hdrs[idx])
+                            new.append(self._headers[idx])
                             idx += 1
                         else:
                             idx += 1
-                    self.my_hdrs = new
+                    self._headers = new
             dispset = {b: a for a, b in dispset.items()}
             self.CH.cell_options = {dispset[k] if k in dispset else k: v for k, v in self.CH.cell_options.items()}
             self.cell_options = {(k[0], dispset[k[1]]) if k[1] in dispset else k: v for k, v in self.cell_options.items()}
@@ -919,15 +925,27 @@ class MainTable(tk.Canvas):
                 except:
                     return
             self.undo_storage.pop()
-            if undo_storage[0] == "edit_index":
-                self._set_index(self.row_index(), undo_storage[1], undo = False)
-            if undo_storage[0] == "edit_headers":
-                self._set_headers(self.headers(), undo_storage[1], undo = False)
+            if undo_storage[0] in ("edit_header", ):
+                for c, v in undo_storage[1].items():
+                    self._headers[c] = v
+                for box in undo_storage[2]:
+                    r1, c1, r2, c2 = box[0]
+                    if not self.expand_sheet_if_paste_too_big:
+                        self.create_selected(r1, c1, r2, c2, box[1])
+                self.create_current(0, undo_storage[3][1], type_ = "col", inside = True)
+                
+            if undo_storage[0] in ("edit_index", ):
+                for r, v in undo_storage[1].items():
+                    self._row_index[r] = v
+                for box in undo_storage[2]:
+                    r1, c1, r2, c2 = box[0]
+                    if not self.expand_sheet_if_paste_too_big:
+                        self.create_selected(r1, c1, r2, c2, box[1])
+                self.create_current(0, undo_storage[3][1], type_ = "row", inside = True)
+                            
             if undo_storage[0] in ("edit_cells", "edit_cells_paste"):
                 for (r, c), v in undo_storage[1].items():
                     self.data_ref[r][c] = v
-                    #if (r, c) in self.cell_options and 'dropdown' in self.cell_options[(r, c)]:
-                        #self.cell_options[(r, c)]['dropdown'][0].set_displayed(v)
                 start_row = float("inf")
                 start_col = float("inf")
                 for box in undo_storage[2]:
@@ -985,10 +1003,10 @@ class MainTable(tk.Canvas):
                         self.data_ref[rm2start:rm2end] = []
                     except:
                         pass
-                    if self.my_row_index:
+                    if self._row_index:
                         try:
-                            self.my_row_index[ins_row:ins_row] = self.my_row_index[rm1start:rm1end]
-                            self.my_row_index[rm2start:rm2end] = []
+                            self._row_index[ins_row:ins_row] = self._row_index[rm1start:rm1end]
+                            self._row_index[rm2start:rm2end] = []
                         except:
                             pass
                 else:
@@ -997,10 +1015,10 @@ class MainTable(tk.Canvas):
                         self.data_ref[rm1start:rm1end] = []
                     except:
                         pass
-                    if self.my_row_index:
+                    if self._row_index:
                         try:
-                            self.my_row_index[ins_row:ins_row] = self.my_row_index[rm1start:rm1end]
-                            self.my_row_index[rm1start:rm1end] = []
+                            self._row_index[ins_row:ins_row] = self._row_index[rm1start:rm1end]
+                            self._row_index[rm1start:rm1end] = []
                         except:
                             pass
                 if rm1start > ins_row:
@@ -1048,7 +1066,7 @@ class MainTable(tk.Canvas):
             elif undo_storage[0] == "insert_row":
                 self.data_ref[undo_storage[1]['data_row_num']:undo_storage[1]['data_row_num'] + undo_storage[1]['numrows']] = []
                 try:
-                    self.my_row_index[undo_storage[1]['data_row_num']:undo_storage[1]['data_row_num'] + undo_storage[1]['numrows']] = []
+                    self._row_index[undo_storage[1]['data_row_num']:undo_storage[1]['data_row_num'] + undo_storage[1]['numrows']] = []
                 except:
                     pass
                 self.del_row_positions(undo_storage[1]['sheet_row_num'],
@@ -1077,7 +1095,7 @@ class MainTable(tk.Canvas):
                 for rn in range(len(self.data_ref)):
                     self.data_ref[rn][qx:qx + qnum] = []
                 try:
-                    self.my_hdrs[qx:qx + qnum] = []
+                    self._headers[qx:qx + qnum] = []
                 except:
                     pass
                 self.del_col_positions(undo_storage[1]['sheet_col_num'],
@@ -1108,7 +1126,7 @@ class MainTable(tk.Canvas):
                 self.RI.cell_options = undo_storage[1]['RI_cell_options']
                 for rn, r in reversed(undo_storage[1]['deleted_index_values']):
                     try:
-                        self.my_row_index.insert(rn, r)
+                        self._row_index.insert(rn, r)
                     except:
                         continue
                 self.reselect_from_get_boxes(undo_storage[1]['selection_boxes'])
@@ -1128,7 +1146,7 @@ class MainTable(tk.Canvas):
                             continue
                 for cn, v in reversed(tuple(undo_storage[1]['deleted_hdr_values'].items())):
                     try:
-                        self.my_hdrs.insert(cn, v)
+                        self._headers.insert(cn, v)
                     except:
                         continue
                 self.reselect_from_get_boxes(undo_storage[1]['selection_boxes'])
@@ -1873,11 +1891,17 @@ class MainTable(tk.Canvas):
         # edit header with text editor (dropdowns and checkboxes not included)
         # this will not by enabled by using enable_bindings() to enable all bindings
         # must be enabled directly using enable_bindings("edit_header")
+        # the same goes for "edit_index"
         if key == "edit_header":
             if enable:
                 self.CH.bind_cell_edit(True)
             else:
                 self.CH.bind_cell_edit(False)
+        if key == "edit_index":
+            if enable:
+                self.RI.bind_cell_edit(True)
+            else:
+                self.RI.bind_cell_edit(False)
 
     def menu_add_command(self, menu: tk.Menu, **kwargs):
         if 'label' not in kwargs:
@@ -1903,228 +1927,259 @@ class MainTable(tk.Canvas):
                      self.RI.ri_rc_popup_menu,
                      self.empty_rc_popup_menu):
             menu.delete(0, 'end')
+        if self.rc_popup_menus_enabled and self.CH.edit_cell_enabled:
+            self.menu_add_command(self.CH.ch_rc_popup_menu,
+                                  label = "Edit header",
+                                  font = self.popup_menu_font,
+                                  foreground = self.popup_menu_fg,
+                                  background = self.popup_menu_bg,
+                                  activebackground = self.popup_menu_highlight_bg,
+                                  activeforeground = self.popup_menu_highlight_fg,
+                                  command = lambda: self.CH.open_cell(event = "rc"))
+        if self.rc_popup_menus_enabled and self.RI.edit_cell_enabled:
+            self.menu_add_command(self.RI.ri_rc_popup_menu,
+                                  label = "Edit index",
+                                  font = self.popup_menu_font,
+                                  foreground = self.popup_menu_fg,
+                                  background = self.popup_menu_bg,
+                                  activebackground = self.popup_menu_highlight_bg,
+                                  activeforeground = self.popup_menu_highlight_fg,
+                                  command = lambda: self.RI.open_cell(event = "rc"))
+        if self.rc_popup_menus_enabled and self.edit_cell_enabled:
+            self.menu_add_command(self.rc_popup_menu,
+                                  label = "Edit cell",
+                                  font = self.popup_menu_font,
+                                  foreground = self.popup_menu_fg,
+                                  background = self.popup_menu_bg,
+                                  activebackground = self.popup_menu_highlight_bg,
+                                  activeforeground = self.popup_menu_highlight_fg,
+                                  command = lambda: self.open_cell(event = "rc"))
         if self.cut_enabled:
-            self.menu_add_command(self.rc_popup_menu, label = "Cut",
-                                            accelerator = "Ctrl+X",
-                                            font = self.popup_menu_font,
-                                            foreground = self.popup_menu_fg,
-                                            background = self.popup_menu_bg,
-                                            activebackground = self.popup_menu_highlight_bg,
-                                            activeforeground = self.popup_menu_highlight_fg,
-                                            command = self.ctrl_x)
-            #self.rc_popup_menu.add_separator()
-            self.menu_add_command(self.CH.ch_rc_popup_menu, label = "Cut contents",
-                                        accelerator = "Ctrl+X",
-                                        font = self.popup_menu_font,
-                                        foreground = self.popup_menu_fg,
-                                        background = self.popup_menu_bg,
-                                        activebackground = self.popup_menu_highlight_bg,
-                                        activeforeground = self.popup_menu_highlight_fg,
-                                            command = self.ctrl_x)
-            #self.CH.ch_rc_popup_menu.add_separator()
-            self.menu_add_command(self.RI.ri_rc_popup_menu, label = "Cut contents",
-                                           accelerator = "Ctrl+X",
-                                           font = self.popup_menu_font,
-                                           foreground = self.popup_menu_fg,
-                                           background = self.popup_menu_bg,
-                                           activebackground = self.popup_menu_highlight_bg,
-                                           activeforeground = self.popup_menu_highlight_fg,
-                                                 command = self.ctrl_x)
-            #self.RI.ri_rc_popup_menu.add_separator()
+            self.menu_add_command(self.rc_popup_menu,
+                                  label = "Cut",
+                                  accelerator = "Ctrl+X",
+                                  font = self.popup_menu_font,
+                                  foreground = self.popup_menu_fg,
+                                  background = self.popup_menu_bg,
+                                  activebackground = self.popup_menu_highlight_bg,
+                                  activeforeground = self.popup_menu_highlight_fg,
+                                  command = self.ctrl_x)
+            self.menu_add_command(self.CH.ch_rc_popup_menu,
+                                  label = "Cut contents",
+                                  accelerator = "Ctrl+X",
+                                  font = self.popup_menu_font,
+                                  foreground = self.popup_menu_fg,
+                                  background = self.popup_menu_bg,
+                                  activebackground = self.popup_menu_highlight_bg,
+                                  activeforeground = self.popup_menu_highlight_fg,
+                                  command = self.ctrl_x)
+            self.menu_add_command(self.RI.ri_rc_popup_menu,
+                                  label = "Cut contents",
+                                  accelerator = "Ctrl+X",
+                                  font = self.popup_menu_font,
+                                  foreground = self.popup_menu_fg,
+                                  background = self.popup_menu_bg,
+                                  activebackground = self.popup_menu_highlight_bg,
+                                  activeforeground = self.popup_menu_highlight_fg,
+                                  command = self.ctrl_x)
         if self.copy_enabled:
-            self.menu_add_command(self.rc_popup_menu, label = "Copy",
-                                           accelerator = "Ctrl+C",
-                                           font = self.popup_menu_font,
-                                           foreground = self.popup_menu_fg,
-                                           background = self.popup_menu_bg,
-                                           activebackground = self.popup_menu_highlight_bg,
-                                           activeforeground = self.popup_menu_highlight_fg,
-                                           command = self.ctrl_c)
-            #self.rc_popup_menu.add_separator()
-            self.menu_add_command(self.CH.ch_rc_popup_menu, label = "Copy contents",
-                                                 accelerator = "Ctrl+C",
-                                           font = self.popup_menu_font,
-                                           foreground = self.popup_menu_fg,
-                                           background = self.popup_menu_bg,
-                                           activebackground = self.popup_menu_highlight_bg,
-                                           activeforeground = self.popup_menu_highlight_fg,
-                                                 command = self.ctrl_c)
-            #self.CH.ch_rc_popup_menu.add_separator()
-            self.menu_add_command(self.RI.ri_rc_popup_menu, label = "Copy contents",
-                                                 accelerator = "Ctrl+C",
-                                           font = self.popup_menu_font,
-                                           foreground = self.popup_menu_fg,
-                                           background = self.popup_menu_bg,
-                                           activebackground = self.popup_menu_highlight_bg,
-                                           activeforeground = self.popup_menu_highlight_fg,
-                                                 command = self.ctrl_c)
-            #self.RI.ri_rc_popup_menu.add_separator()
+            self.menu_add_command(self.rc_popup_menu, 
+                                  label = "Copy",
+                                  accelerator = "Ctrl+C",
+                                  font = self.popup_menu_font,
+                                  foreground = self.popup_menu_fg,
+                                  background = self.popup_menu_bg,
+                                  activebackground = self.popup_menu_highlight_bg,
+                                  activeforeground = self.popup_menu_highlight_fg,
+                                  command = self.ctrl_c)
+            self.menu_add_command(self.CH.ch_rc_popup_menu, 
+                                  label = "Copy contents",
+                                  accelerator = "Ctrl+C",
+                                  font = self.popup_menu_font,
+                                  foreground = self.popup_menu_fg,
+                                  background = self.popup_menu_bg,
+                                  activebackground = self.popup_menu_highlight_bg,
+                                  activeforeground = self.popup_menu_highlight_fg,
+                                  command = self.ctrl_c)
+            self.menu_add_command(self.RI.ri_rc_popup_menu, 
+                                  label = "Copy contents",
+                                  accelerator = "Ctrl+C",
+                                  font = self.popup_menu_font,
+                                  foreground = self.popup_menu_fg,
+                                  background = self.popup_menu_bg,
+                                  activebackground = self.popup_menu_highlight_bg,
+                                  activeforeground = self.popup_menu_highlight_fg,
+                                  command = self.ctrl_c)
         if self.paste_enabled:
-            self.menu_add_command(self.rc_popup_menu, label = "Paste",
-                                           accelerator = "Ctrl+V",
-                                           font = self.popup_menu_font,
-                                           foreground = self.popup_menu_fg,
-                                           background = self.popup_menu_bg,
-                                           activebackground = self.popup_menu_highlight_bg,
-                                           activeforeground = self.popup_menu_highlight_fg,
-                                           command = self.ctrl_v)
-            #self.rc_popup_menu.add_separator()
-            self.menu_add_command(self.CH.ch_rc_popup_menu, label = "Paste",
-                                           accelerator = "Ctrl+V",
-                                           font = self.popup_menu_font,
-                                           foreground = self.popup_menu_fg,
-                                           background = self.popup_menu_bg,
-                                           activebackground = self.popup_menu_highlight_bg,
-                                           activeforeground = self.popup_menu_highlight_fg,
-                                           command = self.ctrl_v)
-            #self.CH.ch_rc_popup_menu.add_separator()
-            self.menu_add_command(self.RI.ri_rc_popup_menu, label = "Paste",
-                                           accelerator = "Ctrl+V",
-                                           font = self.popup_menu_font,
-                                           foreground = self.popup_menu_fg,
-                                           background = self.popup_menu_bg,
-                                           activebackground = self.popup_menu_highlight_bg,
-                                           activeforeground = self.popup_menu_highlight_fg,
-                                           command = self.ctrl_v)
-            #self.RI.ri_rc_popup_menu.add_separator()
+            self.menu_add_command(self.rc_popup_menu, 
+                                  label = "Paste",
+                                  accelerator = "Ctrl+V",
+                                  font = self.popup_menu_font,
+                                  foreground = self.popup_menu_fg,
+                                  background = self.popup_menu_bg,
+                                  activebackground = self.popup_menu_highlight_bg,
+                                  activeforeground = self.popup_menu_highlight_fg,
+                                  command = self.ctrl_v)
+            self.menu_add_command(self.CH.ch_rc_popup_menu, 
+                                  label = "Paste",
+                                  accelerator = "Ctrl+V",
+                                  font = self.popup_menu_font,
+                                  foreground = self.popup_menu_fg,
+                                  background = self.popup_menu_bg,
+                                  activebackground = self.popup_menu_highlight_bg,
+                                  activeforeground = self.popup_menu_highlight_fg,
+                                  command = self.ctrl_v)
+            self.menu_add_command(self.RI.ri_rc_popup_menu, 
+                                  label = "Paste",
+                                  accelerator = "Ctrl+V",
+                                  font = self.popup_menu_font,
+                                  foreground = self.popup_menu_fg,
+                                  background = self.popup_menu_bg,
+                                  activebackground = self.popup_menu_highlight_bg,
+                                  activeforeground = self.popup_menu_highlight_fg,
+                                  command = self.ctrl_v)
             if self.expand_sheet_if_paste_too_big:
-                self.menu_add_command(self.empty_rc_popup_menu, label = "Paste",
-                                            accelerator = "Ctrl+V",
-                                            font = self.popup_menu_font,
-                                            foreground = self.popup_menu_fg,
-                                            background = self.popup_menu_bg,
-                                            activebackground = self.popup_menu_highlight_bg,
-                                            activeforeground = self.popup_menu_highlight_fg,
-                                            command = self.ctrl_v)
+                self.menu_add_command(self.empty_rc_popup_menu, 
+                                      label = "Paste",
+                                      accelerator = "Ctrl+V",
+                                      font = self.popup_menu_font,
+                                      foreground = self.popup_menu_fg,
+                                      background = self.popup_menu_bg,
+                                      activebackground = self.popup_menu_highlight_bg,
+                                      activeforeground = self.popup_menu_highlight_fg,
+                                      command = self.ctrl_v)
         if self.delete_key_enabled:
-            self.menu_add_command(self.rc_popup_menu, label = "Delete",
-                                            accelerator = "Del",
-                                            font = self.popup_menu_font,
-                                            foreground = self.popup_menu_fg,
-                                            background = self.popup_menu_bg,
-                                            activebackground = self.popup_menu_highlight_bg,
-                                            activeforeground = self.popup_menu_highlight_fg,
-                                            command = self.delete_key)
-            self.menu_add_command(self.CH.ch_rc_popup_menu, label = "Clear contents",
-                                           accelerator = "Del",
-                                           font = self.popup_menu_font,
-                                           foreground = self.popup_menu_fg,
-                                           background = self.popup_menu_bg,
-                                           activebackground = self.popup_menu_highlight_bg,
-                                           activeforeground = self.popup_menu_highlight_fg,
-                                           command = self.delete_key)
-            #self.CH.ch_rc_popup_menu.add_separator()
-            self.menu_add_command(self.RI.ri_rc_popup_menu, label = "Clear contents",
-                                           accelerator = "Del",
-                                           font = self.popup_menu_font,
-                                           foreground = self.popup_menu_fg,
-                                           background = self.popup_menu_bg,
-                                           activebackground = self.popup_menu_highlight_bg,
-                                           activeforeground = self.popup_menu_highlight_fg,
-                                           command = self.delete_key)
-            #self.RI.ri_rc_popup_menu.add_separator()
+            self.menu_add_command(self.rc_popup_menu, 
+                                  label = "Delete",
+                                  accelerator = "Del",
+                                  font = self.popup_menu_font,
+                                  foreground = self.popup_menu_fg,
+                                  background = self.popup_menu_bg,
+                                  activebackground = self.popup_menu_highlight_bg,
+                                  activeforeground = self.popup_menu_highlight_fg,
+                                  command = self.delete_key)
+            self.menu_add_command(self.CH.ch_rc_popup_menu,
+                                  label = "Clear contents",
+                                  accelerator = "Del",
+                                  font = self.popup_menu_font,
+                                  foreground = self.popup_menu_fg,
+                                  background = self.popup_menu_bg,
+                                  activebackground = self.popup_menu_highlight_bg,
+                                  activeforeground = self.popup_menu_highlight_fg,
+                                  command = self.delete_key)
+            self.menu_add_command(self.RI.ri_rc_popup_menu, 
+                                  label = "Clear contents",
+                                  accelerator = "Del",
+                                  font = self.popup_menu_font,
+                                  foreground = self.popup_menu_fg,
+                                  background = self.popup_menu_bg,
+                                  activebackground = self.popup_menu_highlight_bg,
+                                  activeforeground = self.popup_menu_highlight_fg,
+                                  command = self.delete_key)
         if self.rc_delete_column_enabled:
-            self.menu_add_command(self.CH.ch_rc_popup_menu, label = "Delete columns",
-                                           font = self.popup_menu_font,
-                                           foreground = self.popup_menu_fg,
-                                           background = self.popup_menu_bg,
-                                           activebackground = self.popup_menu_highlight_bg,
-                                           activeforeground = self.popup_menu_highlight_fg,
-                                           command = self.del_cols_rc)
-            #self.CH.ch_rc_popup_menu.add_separator()
+            self.menu_add_command(self.CH.ch_rc_popup_menu,
+                                  label = "Delete columns",
+                                  font = self.popup_menu_font,
+                                  foreground = self.popup_menu_fg,
+                                  background = self.popup_menu_bg,
+                                  activebackground = self.popup_menu_highlight_bg,
+                                  activeforeground = self.popup_menu_highlight_fg,
+                                  command = self.del_cols_rc)
         if self.rc_insert_column_enabled:
-            self.menu_add_command(self.CH.ch_rc_popup_menu, label = "Insert columns left",
-                                           font = self.popup_menu_font,
-                                           foreground = self.popup_menu_fg,
-                                           background = self.popup_menu_bg,
-                                           activebackground = self.popup_menu_highlight_bg,
-                                           activeforeground = self.popup_menu_highlight_fg,
-                                           command = lambda: self.insert_col_rc("left"))
-            self.menu_add_command(self.empty_rc_popup_menu, label = "Insert column",
-                                           font = self.popup_menu_font,
-                                           foreground = self.popup_menu_fg,
-                                           background = self.popup_menu_bg,
-                                           activebackground = self.popup_menu_highlight_bg,
-                                           activeforeground = self.popup_menu_highlight_fg,
-                                           command = lambda: self.insert_col_rc("left"))
-            self.menu_add_command(self.CH.ch_rc_popup_menu, label = "Insert columns right",
-                                           font = self.popup_menu_font,
-                                           foreground = self.popup_menu_fg,
-                                           background = self.popup_menu_bg,
-                                           activebackground = self.popup_menu_highlight_bg,
-                                           activeforeground = self.popup_menu_highlight_fg,
-                                           command = lambda: self.insert_col_rc("right"))
-        if self.rc_edit_column_header_enabled:
-            self.menu_add_command(self.CH.ch_rc_popup_menu, label = "Edit column header",
-                                           font = self.popup_menu_font,
-                                           foreground = self.popup_menu_fg,
-                                           background = self.popup_menu_bg,
-                                           activebackground = self.popup_menu_highlight_bg,
-                                           activeforeground = self.popup_menu_highlight_fg,
-                                           command = self.edit_header_rc)
+            self.menu_add_command(self.CH.ch_rc_popup_menu,
+                                  label = "Insert columns left",
+                                  font = self.popup_menu_font,
+                                  foreground = self.popup_menu_fg,
+                                  background = self.popup_menu_bg,
+                                  activebackground = self.popup_menu_highlight_bg,
+                                  activeforeground = self.popup_menu_highlight_fg,
+                                  command = lambda: self.insert_col_rc("left"))
+            self.menu_add_command(self.empty_rc_popup_menu, 
+                                  label = "Insert column",
+                                  font = self.popup_menu_font,
+                                  foreground = self.popup_menu_fg,
+                                  background = self.popup_menu_bg,
+                                  activebackground = self.popup_menu_highlight_bg,
+                                  activeforeground = self.popup_menu_highlight_fg,
+                                  command = lambda: self.insert_col_rc("left"))
+            self.menu_add_command(self.CH.ch_rc_popup_menu, 
+                                  label = "Insert columns right",
+                                  font = self.popup_menu_font,
+                                  foreground = self.popup_menu_fg,
+                                  background = self.popup_menu_bg,
+                                  activebackground = self.popup_menu_highlight_bg,
+                                  activeforeground = self.popup_menu_highlight_fg,
+                                  command = lambda: self.insert_col_rc("right"))
         if self.rc_delete_row_enabled:
-            self.menu_add_command(self.RI.ri_rc_popup_menu, label = "Delete rows",
-                                           font = self.popup_menu_font,
-                                           foreground = self.popup_menu_fg,
-                                           background = self.popup_menu_bg,
-                                           activebackground = self.popup_menu_highlight_bg,
-                                           activeforeground = self.popup_menu_highlight_fg,
-                                           command = self.del_rows_rc)
-            #self.RI.ri_rc_popup_menu.add_separator()
+            self.menu_add_command(self.RI.ri_rc_popup_menu, 
+                                  label = "Delete rows",
+                                  font = self.popup_menu_font,
+                                  foreground = self.popup_menu_fg,
+                                  background = self.popup_menu_bg,
+                                  activebackground = self.popup_menu_highlight_bg,
+                                  activeforeground = self.popup_menu_highlight_fg,
+                                  command = self.del_rows_rc)
         if self.rc_insert_row_enabled:
-            self.menu_add_command(self.RI.ri_rc_popup_menu, label = "Insert rows above",
-                                           font = self.popup_menu_font,
-                                           foreground = self.popup_menu_fg,
-                                           background = self.popup_menu_bg,
-                                           activebackground = self.popup_menu_highlight_bg,
-                                           activeforeground = self.popup_menu_highlight_fg,
-                                           command = lambda: self.insert_row_rc("above"))
-            self.menu_add_command(self.RI.ri_rc_popup_menu, label = "Insert rows below",
-                                           font = self.popup_menu_font,
-                                           foreground = self.popup_menu_fg,
-                                           background = self.popup_menu_bg,
-                                           activebackground = self.popup_menu_highlight_bg,
-                                           activeforeground = self.popup_menu_highlight_fg,
-                                           command = lambda: self.insert_row_rc("below"))
-            self.menu_add_command(self.empty_rc_popup_menu, label = "Insert row",
-                                           font = self.popup_menu_font,
-                                           foreground = self.popup_menu_fg,
-                                           background = self.popup_menu_bg,
-                                           activebackground = self.popup_menu_highlight_bg,
-                                           activeforeground = self.popup_menu_highlight_fg,
-                                           command = lambda: self.insert_row_rc("below"))
-        if self.rc_edit_row_index_enabled:
-            self.menu_add_command(self.RI.ri_rc_popup_menu, label = "Edit row index",
-                                           font = self.popup_menu_font,
-                                           foreground = self.popup_menu_fg,
-                                           background = self.popup_menu_bg,
-                                           activebackground = self.popup_menu_highlight_bg,
-                                           activeforeground = self.popup_menu_highlight_fg,
-                                           command = self.edit_index_rc)
+            self.menu_add_command(self.RI.ri_rc_popup_menu,
+                                  label = "Insert rows above",
+                                  font = self.popup_menu_font,
+                                  foreground = self.popup_menu_fg,
+                                  background = self.popup_menu_bg,
+                                  activebackground = self.popup_menu_highlight_bg,
+                                  activeforeground = self.popup_menu_highlight_fg,
+                                  command = lambda: self.insert_row_rc("above"))
+            self.menu_add_command(self.RI.ri_rc_popup_menu, 
+                                  label = "Insert rows below",
+                                  font = self.popup_menu_font,
+                                  foreground = self.popup_menu_fg,
+                                  background = self.popup_menu_bg,
+                                  activebackground = self.popup_menu_highlight_bg,
+                                  activeforeground = self.popup_menu_highlight_fg,
+                                  command = lambda: self.insert_row_rc("below"))
+            self.menu_add_command(self.empty_rc_popup_menu, 
+                                  label = "Insert row",
+                                  font = self.popup_menu_font,
+                                  foreground = self.popup_menu_fg,
+                                  background = self.popup_menu_bg,
+                                  activebackground = self.popup_menu_highlight_bg,
+                                  activeforeground = self.popup_menu_highlight_fg,
+                                  command = lambda: self.insert_row_rc("below"))
         for label, func in self.extra_table_rc_menu_funcs.items():
-            self.menu_add_command(self.rc_popup_menu, label = label,
-                                           font = self.popup_menu_font,
-                                           foreground = self.popup_menu_fg,
-                                           background = self.popup_menu_bg,
-                                           activebackground = self.popup_menu_highlight_bg,
-                                           activeforeground = self.popup_menu_highlight_fg,
-                                           command = func)
+            self.menu_add_command(self.rc_popup_menu, 
+                                  label = label,
+                                  font = self.popup_menu_font,
+                                  foreground = self.popup_menu_fg,
+                                  background = self.popup_menu_bg,
+                                  activebackground = self.popup_menu_highlight_bg,
+                                  activeforeground = self.popup_menu_highlight_fg,
+                                  command = func)
         for label, func in self.extra_index_rc_menu_funcs.items():
-            self.menu_add_command(self.RI.ri_rc_popup_menu, label = label,
-                                                   font = self.popup_menu_font,
-                                                   foreground = self.popup_menu_fg,
-                                                   background = self.popup_menu_bg,
-                                                   activebackground = self.popup_menu_highlight_bg,
-                                                   activeforeground = self.popup_menu_highlight_fg,
-                                                   command = func)
+            self.menu_add_command(self.RI.ri_rc_popup_menu, 
+                                  label = label,
+                                  font = self.popup_menu_font,
+                                  foreground = self.popup_menu_fg,
+                                  background = self.popup_menu_bg,
+                                  activebackground = self.popup_menu_highlight_bg,
+                                  activeforeground = self.popup_menu_highlight_fg,
+                                  command = func)
         for label, func in self.extra_header_rc_menu_funcs.items():
-            self.menu_add_command(self.CH.ch_rc_popup_menu, label = label,
-                                                   font = self.popup_menu_font,
-                                                   foreground = self.popup_menu_fg,
-                                                   background = self.popup_menu_bg,
-                                                   activebackground = self.popup_menu_highlight_bg,
-                                                   activeforeground = self.popup_menu_highlight_fg,
-                                                   command = func)
+            self.menu_add_command(self.CH.ch_rc_popup_menu, 
+                                  label = label,
+                                  font = self.popup_menu_font,
+                                  foreground = self.popup_menu_fg,
+                                  background = self.popup_menu_bg,
+                                  activebackground = self.popup_menu_highlight_bg,
+                                  activeforeground = self.popup_menu_highlight_fg,
+                                  command = func)
+        for label, func in self.extra_empty_space_rc_menu_funcs.items():
+            self.menu_add_command(self.empty_rc_popup_menu, 
+                                  label = label,
+                                  font = self.popup_menu_font,
+                                  foreground = self.popup_menu_fg,
+                                  background = self.popup_menu_bg,
+                                  activebackground = self.popup_menu_highlight_bg,
+                                  activeforeground = self.popup_menu_highlight_fg,
+                                  command = func)
 
     def bind_cell_edit(self, enable = True, keys = []):
         if enable:
@@ -2194,8 +2249,6 @@ class MainTable(tk.Canvas):
             self.rc_delete_row_enabled = True
             self.rc_insert_column_enabled = True
             self.rc_insert_row_enabled = True
-            self.rc_edit_row_index_enabled = True
-            self.rc_edit_column_header_enabled = True
             self.rc_popup_menus_enabled = True
             self.rc_select_enabled = True
             self.TL.rh_state()
@@ -2252,10 +2305,6 @@ class MainTable(tk.Canvas):
             self.rc_insert_row_enabled = True
             self.rc_popup_menus_enabled = True
             self.rc_select_enabled = True
-        elif binding == "rc_edit_row_index":
-            self.rc_edit_row_index_enabled = True
-        elif binding == "rc_edit_column_header":
-            self.rc_edit_column_header_enabled = True
         elif binding == "copy":
             self.edit_bindings(True, "copy")
         elif binding == "cut":
@@ -2275,6 +2324,8 @@ class MainTable(tk.Canvas):
             self.edit_bindings(True, "edit_cell")
         elif binding == "edit_header":
             self.edit_bindings(True, "edit_header")
+        elif binding == "edit_index":
+            self.edit_bindings(True, "edit_index")
         self.create_rc_menus()
 
     def disable_bindings_internal(self, binding):
@@ -2297,10 +2348,8 @@ class MainTable(tk.Canvas):
             self.edit_bindings(False)
             self.rc_delete_column_enabled = False
             self.rc_delete_row_enabled = False
-            self.rc_edit_column_header_enabled = False
             self.rc_insert_column_enabled = False
             self.rc_insert_row_enabled = False
-            self.rc_edit_row_index_enabled = False
             self.rc_popup_menus_enabled = False
             self.rc_select_enabled = False
             self.TL.rh_state("hidden")
@@ -2345,8 +2394,6 @@ class MainTable(tk.Canvas):
             self.rc_insert_column_enabled = False
         elif binding == "rc_insert_row":
             self.rc_insert_row_enabled = False
-        elif binding == "rc_edit_row_index":
-            self.rc_edit_row_index_enabled = False
         elif binding == "edit_bindings":
             self.edit_bindings(False)
         elif binding == "copy":
@@ -2367,6 +2414,8 @@ class MainTable(tk.Canvas):
             self.edit_bindings(False, "edit_cell")
         elif binding == "edit_header":
             self.edit_bindings(False, "edit_header")
+        elif binding == "edit_index":
+            self.edit_bindings(False, "edit_index")
         self.create_rc_menus()
 
     def reset_mouse_motion_creations(self, event = None):
@@ -2630,12 +2679,14 @@ class MainTable(tk.Canvas):
             self.RI.currently_resizing_width = False
             self.RI.set_width(self.new_row_width, set_TL = True)
             self.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
+            self.b1_pressed_loc = None
         elif self.CH.height_resizing_enabled and self.CH.rsz_h is not None and self.CH.currently_resizing_height:
             self.delete_resize_lines()
             self.CH.delete_resize_lines()
             self.CH.currently_resizing_height = False
             self.CH.set_height(self.new_header_height, set_TL = True)
             self.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
+            self.b1_pressed_loc = None
         self.RI.rsz_w = None
         self.CH.rsz_h = None
         self.being_drawn_rect = None
@@ -2791,28 +2842,55 @@ class MainTable(tk.Canvas):
         return int(width / char_w)
 
     def GetTextWidth(self, txt):
-        self.txt_measure_canvas.itemconfig(self.txt_measure_canvas_text, text = txt, font = self.my_font)
+        self.txt_measure_canvas.itemconfig(self.txt_measure_canvas_text, text = txt, font = self._font)
         b = self.txt_measure_canvas.bbox(self.txt_measure_canvas_text)
         return b[2] - b[0]
 
     def GetTextHeight(self, txt):
-        self.txt_measure_canvas.itemconfig(self.txt_measure_canvas_text, text = txt, font = self.my_font)
+        self.txt_measure_canvas.itemconfig(self.txt_measure_canvas_text, text = txt, font = self._font)
         b = self.txt_measure_canvas.bbox(self.txt_measure_canvas_text)
         return b[3] - b[1]
 
     def GetHdrTextWidth(self, txt):
-        self.txt_measure_canvas.itemconfig(self.txt_measure_canvas_text, text = txt, font = self.my_hdr_font)
+        self.txt_measure_canvas.itemconfig(self.txt_measure_canvas_text, text = txt, font = self._hdr_font)
         b = self.txt_measure_canvas.bbox(self.txt_measure_canvas_text)
         return b[2] - b[0]
 
     def GetHdrTextHeight(self, txt):
-        self.txt_measure_canvas.itemconfig(self.txt_measure_canvas_text, text = txt, font = self.my_hdr_font)
+        self.txt_measure_canvas.itemconfig(self.txt_measure_canvas_text, text = txt, font = self._hdr_font)
         b = self.txt_measure_canvas.bbox(self.txt_measure_canvas_text)
         return b[3] - b[1]
     
-    def GetLargestWidth(self, cells: list[str]):
-        return max(cells, key = self.GetTextWidth)
-    
+    def GetLinesHeight(self, n, old_method = False):
+        if old_method:
+            if n == 1:
+                return int(self.min_rh)
+            else:
+                return int(self.fl_ins) + (self.xtra_lines_increment * n) - 2
+        else:
+            x = self.txt_measure_canvas.create_text(0, 0,
+                                                    text = "\n".join(["j^|" for lines in range(n)]) if n > 1 else "j^|",
+                                                    font = self._font)
+            b = self.txt_measure_canvas.bbox(x)
+            h = b[3] - b[1] + 5
+            self.txt_measure_canvas.delete(x)
+            return h
+
+    def GetHdrLinesHeight(self, n, old_method = False):
+        if old_method:
+            if n == 1:
+                return int(self.hdr_min_rh)
+            else:
+                return int(self.hdr_fl_ins) + (self.hdr_xtra_lines_increment * n) - 2
+        else:
+            x = self.txt_measure_canvas.create_text(0, 0,
+                                                    text = "\n".join(["j^|" for lines in range(n)]) if n > 1 else "j^|",
+                                                    font = self._hdr_font)
+            b = self.txt_measure_canvas.bbox(x)
+            h = b[3] - b[1] + 5
+            self.txt_measure_canvas.delete(x)
+            return h
+
     def set_min_cw(self):
         #w1 = self.GetHdrTextWidth("X") + 5
         #w2 = self.GetTextWidth("X") + 5
@@ -2839,7 +2917,7 @@ class MainTable(tk.Canvas):
                 ):
                 raise ValueError("Argument must be font, size and 'normal', 'bold' or 'italic' e.g. ('Carlito',12,'normal')")
             else:
-                self.my_font = newfont
+                self._font = newfont
             self.fnt_fam = newfont[0]
             self.fnt_sze = newfont[1]
             self.fnt_wgt = newfont[2]
@@ -2847,7 +2925,7 @@ class MainTable(tk.Canvas):
             if reset_row_positions:
                 self.reset_row_positions()
         else:
-            return self.my_font
+            return self._font
 
     def set_fnt_help(self):
         self.txt_h = self.GetTextHeight("|ZXjy*'^")
@@ -2879,13 +2957,13 @@ class MainTable(tk.Canvas):
                 ):
                 raise ValueError("Argument must be font, size and 'normal', 'bold' or 'italic' e.g. ('Carlito', 12, 'normal')")
             else:
-                self.my_hdr_font = newfont
+                self._hdr_font = newfont
             self.hdr_fnt_fam = newfont[0]
             self.hdr_fnt_sze = newfont[1]
             self.hdr_fnt_wgt = newfont[2]
             self.set_hdr_fnt_help()
         else:
-            return self.my_hdr_font
+            return self._hdr_font
 
     def set_hdr_fnt_help(self):
         self.hdr_txt_h = self.GetHdrTextHeight("|ZXj*'^")
@@ -2928,7 +3006,9 @@ class MainTable(tk.Canvas):
             cn = self.displayed_columns[c]
         rn = int(r)
         if (rn, cn) in self.cell_options and 'checkbox' in self.cell_options[(rn, cn)]:
-            self.txt_measure_canvas.itemconfig(self.txt_measure_canvas_text, text = self.cell_options[(rn, cn)]['checkbox']['text'], font = self.my_hdr_font)
+            self.txt_measure_canvas.itemconfig(self.txt_measure_canvas_text, 
+                                               text = self.cell_options[(rn, cn)]['checkbox']['text'],
+                                               font = self._hdr_font)
             b = self.txt_measure_canvas.bbox(self.txt_measure_canvas_text)
             tw = b[2] - b[0] + 7 + self.txt_h
             if b[3] - b[1] + 5 > h:
@@ -2942,7 +3022,7 @@ class MainTable(tk.Canvas):
             except:
                 txt = ""
             if txt:
-                self.txt_measure_canvas.itemconfig(self.txt_measure_canvas_text, text = txt, font = self.my_font)
+                self.txt_measure_canvas.itemconfig(self.txt_measure_canvas_text, text = txt, font = self._font)
                 b = self.txt_measure_canvas.bbox(self.txt_measure_canvas_text)
                 tw = b[2] - b[0] + self.txt_h + 7 if (rn, cn) in self.cell_options and 'dropdown' in self.cell_options[(rn, cn)] else b[2] - b[0] + 7
                 if b[3] - b[1] + 5 > h:
@@ -3002,23 +3082,26 @@ class MainTable(tk.Canvas):
         min_rh = self.min_rh
         rhs = defaultdict(lambda: int(min_rh))
         cws = []
-        x = self.txt_measure_canvas.create_text(0, 0, text = "", font = self.my_font)
-        x2 = self.txt_measure_canvas.create_text(0, 0, text = "", font = self.my_hdr_font)
+        x = self.txt_measure_canvas.create_text(0, 0, text = "", font = self._font)
+        x2 = self.txt_measure_canvas.create_text(0, 0, text = "", font = self._hdr_font)
         itmcon = self.txt_measure_canvas.itemconfig
         itmbbx = self.txt_measure_canvas.bbox
         if self.all_columns_displayed:
             iterable = range(self.total_data_cols())
         else:
             iterable = self.displayed_columns
-        if isinstance(self.my_row_index, list):
+        if isinstance(self._row_index, list):
             for rn in range(self.total_data_rows()):
-                try:
-                    if isinstance(self.my_row_index[rn], str):
-                        txt = self.my_row_index[rn]
-                    else:
-                        txt = f"{self.my_row_index[rn]}"
-                except:
-                    txt = ""
+                if rn in self.RI.cell_options and 'checkbox' in self.RI.cell_options[rn]:
+                    txt = self.RI.cell_options[rn]['checkbox']['text']
+                else:
+                    try:
+                        if isinstance(self._row_index[rn], str):
+                            txt = self._row_index[rn]
+                        else:
+                            txt = f"{self._row_index[rn]}"
+                    except:
+                        txt = ""
                 if txt:
                     itmcon(x, text = txt)
                     b = itmbbx(x)
@@ -3042,10 +3125,10 @@ class MainTable(tk.Canvas):
                     w = self.min_cw
             else:
                 try:
-                    if isinstance(self.my_hdrs, int):
-                        txt = self.data_ref[self.my_hdrs][cn]
+                    if isinstance(self._headers, int):
+                        txt = self.data_ref[self._headers][cn]
                     else:
-                        txt = self.my_hdrs[cn]
+                        txt = self._headers[cn]
                     if txt:
                         itmcon(x2, text = txt)
                         b = itmbbx(x2)
@@ -3108,12 +3191,12 @@ class MainTable(tk.Canvas):
         self.recreate_all_selection_boxes()
         return self.row_positions, self.col_positions
 
-    def reset_col_positions(self):
+    def reset_col_positions(self, ncols = None):
         colpos = int(self.default_cw)
         if self.all_columns_displayed:
-            self.col_positions = list(accumulate(chain([0], (colpos for c in range(self.total_data_cols())))))
+            self.col_positions = list(accumulate(chain([0], (colpos for c in range(ncols if ncols is not None else self.total_data_cols())))))
         else:
-            self.col_positions = list(accumulate(chain([0], (colpos for c in range(len(self.displayed_columns))))))
+            self.col_positions = list(accumulate(chain([0], (colpos for c in range(ncols if ncols is not None else len(self.displayed_columns))))))
 
     def del_col_position(self, idx, deselect_all = False):
         if deselect_all:
@@ -3229,9 +3312,9 @@ class MainTable(tk.Canvas):
         self.cell_options = {(rn, cn if cn < data_ins_col else cn + numcols): t2 for (rn, cn), t2 in self.cell_options.items()}
         self.col_options = {cn if cn < data_ins_col else cn + numcols: t for cn, t in self.col_options.items()}
         self.CH.cell_options = {cn if cn < data_ins_col else cn + numcols: t for cn, t in self.CH.cell_options.items()}
-        if self.my_hdrs and isinstance(self.my_hdrs, list):
+        if self._headers and isinstance(self._headers, list):
             try:
-                self.my_hdrs[data_ins_col:data_ins_col] = list(repeat("", numcols))
+                self._headers[data_ins_col:data_ins_col] = list(repeat("", numcols))
             except:
                 pass
         if self.row_positions == [0] and not self.data_ref:
@@ -3279,9 +3362,9 @@ class MainTable(tk.Canvas):
         self.cell_options = {(rn if rn < posidx else rn + numrows, cn): t2 for (rn, cn), t2 in self.cell_options.items()}
         self.row_options = {rn if rn < posidx else rn + numrows: t for rn, t in self.row_options.items()}
         self.RI.cell_options = {rn if rn < posidx else rn + numrows: t for rn, t in self.RI.cell_options.items()}
-        if self.my_row_index and isinstance(self.my_row_index, list):
+        if self._row_index and isinstance(self._row_index, list):
             try:
-                self.my_row_index[stidx:stidx] = list(repeat("", numrows))
+                self._row_index[stidx:stidx] = list(repeat("", numrows))
             except:
                 pass
         if self.col_positions == [0] and not self.data_ref:
@@ -3332,20 +3415,20 @@ class MainTable(tk.Canvas):
                                 undo_storage['deleted_cols'][c][rn] = self.data_ref[rn].pop(c)
                             except:
                                 continue
-                    if self.my_hdrs and isinstance(self.my_hdrs, list):
+                    if self._headers and isinstance(self._headers, list):
                         for c in reversed(seld_cols):
                             try:
-                                undo_storage['deleted_hdr_values'][c] = self.my_hdrs.pop(c)
+                                undo_storage['deleted_hdr_values'][c] = self._headers.pop(c)
                             except:
                                 continue
                 else:
                     for rn in range(len(self.data_ref)):
                         for c in reversed(seld_cols):
                             del self.data_ref[rn][c]
-                    if self.my_hdrs and isinstance(self.my_hdrs, list):
+                    if self._headers and isinstance(self._headers, list):
                         for c in reversed(seld_cols):
                             try:
-                                del self.my_hdrs[c]
+                                del self._headers[c]
                             except:
                                 continue
             else:
@@ -3359,20 +3442,20 @@ class MainTable(tk.Canvas):
                                 undo_storage['deleted_cols'][self.displayed_columns[c]][rn] = self.data_ref[rn].pop(self.displayed_columns[c])
                             except:
                                 continue
-                    if self.my_hdrs and isinstance(self.my_hdrs, list):
+                    if self._headers and isinstance(self._headers, list):
                         for c in reversed(seld_cols):
                             try:
-                                undo_storage['deleted_hdr_values'][self.displayed_columns[c]] = self.my_hdrs.pop(self.displayed_columns[c])
+                                undo_storage['deleted_hdr_values'][self.displayed_columns[c]] = self._headers.pop(self.displayed_columns[c])
                             except:
                                 continue
                 else:
                     for rn in range(len(self.data_ref)):
                         for c in reversed(seld_cols):
                             del self.data_ref[rn][self.displayed_columns[c]]
-                    if self.my_hdrs and isinstance(self.my_hdrs, list):
+                    if self._headers and isinstance(self._headers, list):
                         for c in reversed(seld_cols):
                             try:
-                                del self.my_hdrs[self.displayed_columns[c]]
+                                del self._headers[self.displayed_columns[c]]
                             except:
                                 continue
             if self.undo_enabled:
@@ -3429,17 +3512,17 @@ class MainTable(tk.Canvas):
             else:
                 for r in reversed(seld_rows):
                     del self.data_ref[r]
-            if self.my_row_index and isinstance(self.my_row_index, list):
+            if self._row_index and isinstance(self._row_index, list):
                 if self.undo_enabled:
                     for r in reversed(seld_rows):
                         try:
-                            undo_storage['deleted_index_values'].append((r, self.my_row_index.pop(r)))
+                            undo_storage['deleted_index_values'].append((r, self._row_index.pop(r)))
                         except:
                             continue
                 else:
                     for r in reversed(seld_rows):
                         try:
-                            del self.my_row_index[r]
+                            del self._row_index[r]
                         except:
                             continue
             if self.undo_enabled:
@@ -3462,22 +3545,6 @@ class MainTable(tk.Canvas):
             self.refresh()
             if self.extra_end_del_rows_rc_func is not None:
                 self.extra_end_del_rows_rc_func(DeleteRowColumnEvent("end_delete_rows", seld_rows))
-
-    def edit_index_rc(self):
-        selrows = self.get_selected_rows()
-        r = int(max(selrows))
-        self.create_text_editor(r = r,
-                                c = None,
-                                text = None,
-                                set_data_ref_on_destroy=True)
-    
-    def edit_header_rc(self):
-        selcols = self.get_selected_cols()
-        c = int(max(selcols))
-        self.create_text_editor(r=None,
-                                c = c,
-                                text = None,
-                                set_data_ref_on_destroy=True)
 
     def reset_row_positions(self):
         rowpos = self.default_rh[1]
@@ -3577,78 +3644,50 @@ class MainTable(tk.Canvas):
                     self.col_positions[i] += width
                 self.col_positions[idx2 + 1] = self.col_positions[idx2] + width
 
-    def GetLinesHeight(self, n, old_method = False):
-        if old_method:
-            if n == 1:
-                return int(self.min_rh)
-            else:
-                return int(self.fl_ins) + (self.xtra_lines_increment * n) - 2
-        else:
-            x = self.txt_measure_canvas.create_text(0, 0,
-                                                    text = "\n".join(["j^|" for lines in range(n)]) if n > 1 else "j^|",
-                                                    font = self.my_font)
-            b = self.txt_measure_canvas.bbox(x)
-            h = b[3] - b[1] + 5
-            self.txt_measure_canvas.delete(x)
-            return h
-
-    def GetHdrLinesHeight(self, n, old_method = False):
-        if old_method:
-            if n == 1:
-                return int(self.hdr_min_rh)
-            else:
-                return int(self.hdr_fl_ins) + (self.hdr_xtra_lines_increment * n) - 2
-        else:
-            x = self.txt_measure_canvas.create_text(0, 0,
-                                                    text = "\n".join(["j^|" for lines in range(n)]) if n > 1 else "j^|",
-                                                    font = self.my_hdr_font)
-            b = self.txt_measure_canvas.bbox(x)
-            h = b[3] - b[1] + 5
-            self.txt_measure_canvas.delete(x)
-            return h
-
-    def display_columns(self, indexes = None, enable = None, reset_col_positions = True, set_col_positions = True, deselect_all = True):
-        if indexes is None and enable is None:
-            if self.all_columns_displayed:
-                return list(range(len(self.col_positions) - 1))
-            else:
-                return self.displayed_columns
+    def display_columns(self, columns = None, all_columns_displayed = None, reset_col_positions = True, deselect_all = True):
+        if columns is None and all_columns_displayed is None:
+            return list(range(self.total_data_cols())) if self.all_columns_displayed else self.displayed_columns
+        total_data_cols = None
+        if (
+            (columns is not None and columns != self.displayed_columns) or 
+            (all_columns_displayed and not self.all_columns_displayed)
+            ):
+            self.undo_storage = deque(maxlen = self.max_undos)
+        if columns is not None and columns != self.displayed_columns:
+            self.displayed_columns = sorted(columns)
+        if all_columns_displayed:
+            if not self.all_columns_displayed:
+                total_data_cols = self.total_data_cols()
+                self.displayed_columns = list(range(total_data_cols))
+            self.all_columns_displayed = True
+        elif all_columns_displayed is not None and not all_columns_displayed:
+            self.all_columns_displayed = False
+        if reset_col_positions:
+            self.reset_col_positions(ncols = total_data_cols)
         if deselect_all:
             self.deselect("all")
-        if indexes != self.displayed_columns:
-            self.undo_storage = deque(maxlen = self.max_undos)
-        if indexes is not None:
-            self.displayed_columns = sorted(indexes)
-        if enable and not self.data_ref:
-            self.all_columns_displayed = False
-        elif enable and list(range(len(max(self.data_ref, key = len)))) != self.displayed_columns:
-            self.all_columns_displayed = False
-        else:
-            self.all_columns_displayed = True
-        if reset_col_positions:
-            self.reset_col_positions()
                 
     def headers(self, newheaders = None, index = None, reset_col_positions = False, show_headers_if_not_sheet = True, redraw = False):
         if newheaders is not None:
             if isinstance(newheaders, (list, tuple)):
-                self.my_hdrs = list(newheaders) if isinstance(newheaders, tuple) else newheaders
+                self._headers = list(newheaders) if isinstance(newheaders, tuple) else newheaders
             elif isinstance(newheaders, int):
-                self.my_hdrs = int(newheaders)
-            elif isinstance(self.my_hdrs, list) and isinstance(index, int):
-                if len(self.my_hdrs) <= index:
-                    self.my_hdrs.extend(list(repeat("", index - len(self.my_hdrs) + 1)))
-                self.my_hdrs[index] = f"{newheaders}"
+                self._headers = int(newheaders)
+            elif isinstance(self._headers, list) and isinstance(index, int):
+                if len(self._headers) <= index:
+                    self._headers.extend(list(repeat("", index - len(self._headers) + 1)))
+                self._headers[index] = f"{newheaders}"
             elif not isinstance(newheaders, (list, tuple, int)) and index is None:
                 try:
-                    self.my_hdrs = list(newheaders)
+                    self._headers = list(newheaders)
                 except:
                     raise ValueError("New header must be iterable or int (use int to use a row as the header")
             if reset_col_positions:
                 self.reset_col_positions()
-            elif show_headers_if_not_sheet and isinstance(self.my_hdrs, list) and (self.col_positions == [0] or not self.col_positions):
+            elif show_headers_if_not_sheet and isinstance(self._headers, list) and (self.col_positions == [0] or not self.col_positions):
                 colpos = int(self.default_cw)
                 if self.all_columns_displayed:
-                    self.col_positions = list(accumulate(chain([0], (colpos for c in range(len(self.my_hdrs))))))
+                    self.col_positions = list(accumulate(chain([0], (colpos for c in range(len(self._headers))))))
                 else:
                     self.col_positions = list(accumulate(chain([0], (colpos for c in range(len(self.displayed_columns))))))
             if redraw:
@@ -3656,45 +3695,45 @@ class MainTable(tk.Canvas):
         else:
             if index is not None:
                 if isinstance(index, int):
-                    return self.my_hdrs[index]
+                    return self._headers[index]
             else:
-                return self.my_hdrs
+                return self._headers
 
     def row_index(self, newindex = None, index = None, reset_row_positions = False, show_index_if_not_sheet = True, redraw = False):
         if newindex is not None:
-            if not self.my_row_index and not isinstance(self.my_row_index, int):
+            if not self._row_index and not isinstance(self._row_index, int):
                 self.RI.set_width(self.RI.default_width, set_TL = True)
             if isinstance(newindex, (list, tuple)):
-                self.my_row_index = list(newindex) if isinstance(newindex, tuple) else newindex
+                self._row_index = list(newindex) if isinstance(newindex, tuple) else newindex
             elif isinstance(newindex, int):
-                self.my_row_index = int(newindex)
+                self._row_index = int(newindex)
             elif isinstance(index, int):
-                self.my_row_index[index] = f"{newindex}"
+                self._row_index[index] = f"{newindex}"
             elif not isinstance(newindex, (list, tuple, int)) and index is None:
                 try:
-                    self.my_row_index = list(newindex)
+                    self._row_index = list(newindex)
                 except:
                     raise ValueError("New index must be iterable or int (use int to use a column as the index")
             if reset_row_positions:
                 self.reset_row_positions()
-            elif show_index_if_not_sheet and isinstance(self.my_row_index, list) and (self.row_positions == [0] or not self.row_positions):
+            elif show_index_if_not_sheet and isinstance(self._row_index, list) and (self.row_positions == [0] or not self.row_positions):
                 rowpos = self.default_rh[1]
-                self.row_positions = list(accumulate(chain([0], (rowpos for c in range(len(self.my_row_index))))))
+                self.row_positions = list(accumulate(chain([0], (rowpos for c in range(len(self._row_index))))))
             if redraw:
                 self.refresh()
         else:
             if index is not None:
                 if isinstance(index, int):
-                    return self.my_row_index[index]
+                    return self._row_index[index]
             else:
-                return self.my_row_index
+                return self._row_index
 
     def total_data_cols(self, include_headers = True):
         h_total = 0
         d_total = 0
         if include_headers:
-            if isinstance(self.my_hdrs, list):
-                h_total = len(self.my_hdrs)
+            if isinstance(self._headers, list):
+                h_total = len(self._headers)
         try:
             d_total = len(max(self.data_ref, key = len))
         except:
@@ -3704,8 +3743,8 @@ class MainTable(tk.Canvas):
     def total_data_rows(self):
         i_total = 0
         d_total = 0
-        if isinstance(self.my_row_index, list):
-            i_total = len(self.my_row_index)
+        if isinstance(self._row_index, list):
+            i_total = len(self._row_index)
         d_total = len(self.data_ref)
         return i_total if i_total > d_total else d_total
 
@@ -3726,8 +3765,8 @@ class MainTable(tk.Canvas):
 
     def equalize_data_row_lengths(self, include_header = False):
         total_columns = self.total_data_cols()
-        if include_header and total_columns > len(self.my_hdrs):
-            self.my_hdrs[:] = self.my_hdrs + list(repeat("", total_columns - len(self.my_hdrs)))
+        if include_header and total_columns > len(self._headers):
+            self._headers[:] = self._headers + list(repeat("", total_columns - len(self._headers)))
         self.data_ref[:] = [r + list(repeat("", total_columns - len(r))) if total_columns > len(r) else r for r in self.data_ref]
         return total_columns
 
@@ -3899,7 +3938,10 @@ class MainTable(tk.Canvas):
             #top right points for triangle
             ty3 = mid_y - topysub + 2
             tx3 = x2 - 3
-            
+            if tx2 - tx1 > tx3 - tx2:
+                tx1 += (tx2 - tx1) - (tx3 - tx2)
+            elif tx2 - tx1 < tx3 - tx2:
+                tx1 -= (tx3 - tx2) - (tx2 - tx1)
             points = (tx1, ty1, tx2, ty2, tx3, ty3)
             if self.hidd_dropdown:
                 t, sh = self.hidd_dropdown.popitem()
@@ -4148,7 +4190,7 @@ class MainTable(tk.Canvas):
 
                     if (r, dcol) in self.cell_options and 'checkbox' in self.cell_options[(r, dcol)]:
                         if mw > self.txt_h + 2:
-                            box_w = fc + self.txt_h + 2 - fc
+                            box_w = self.txt_h + 2
                             if cell_alignment == "w":
                                 x = x + box_w 
                             elif cell_alignment == "center":
@@ -4164,53 +4206,32 @@ class MainTable(tk.Canvas):
                                                  outline = "", tag = "cb", draw_check = self.data_ref[r][dcol])
                     
                     try:
+                        if (r, dcol) in self.cell_options and 'checkbox' in self.cell_options[(r, dcol)]:
+                            lns = self.cell_options[(r, dcol)]['checkbox']['text'].split("\n") if isinstance(self.cell_options[(r, dcol)]['checkbox']['text'], str) else f"{self.cell_options[(r, dcol)]['checkbox']['text']}".split("\n")
+                        else:
+                            lns = self.data_ref[r][dcol].split("\n") if isinstance(self.data_ref[r][dcol], str) else f"{self.data_ref[r][dcol]}".split("\n")
+                        y = fr + self.fl_ins
                         if cell_alignment == "w":
                             if x > x2 or mw <= 5:
                                 continue
-                            if (r, dcol) in self.cell_options and 'checkbox' in self.cell_options[(r, dcol)]:
-                                lns = self.cell_options[(r, dcol)]['checkbox']['text'].split("\n") if isinstance(self.cell_options[(r, dcol)]['checkbox']['text'], str) else f"{self.cell_options[(r, dcol)]['checkbox']['text']}".split("\n")
-                            else:
-                                lns = self.data_ref[r][dcol].split("\n") if isinstance(self.data_ref[r][dcol], str) else f"{self.data_ref[r][dcol]}".split("\n")
-                            y = fr + self.fl_ins
-                            if y + self.half_txt_h - 1 > y1:
-                                txt = lns[0]
-                                if self.hidd_text:
-                                    t, sh = self.hidd_text.popitem()
-                                    self.coords(t, x, y)
-                                    if sh:
-                                        self.itemconfig(t, text = txt, fill = tf, font = self.my_font, anchor = "w")
-                                    else:
-                                        self.itemconfig(t, text = txt, fill = tf, font = self.my_font, anchor = "w", state = "normal")
-                                else:
-                                    t = self.create_text(x, y, text = txt, fill = tf, font = self.my_font, anchor = "w", tag = "t")
-                                self.disp_text[t] = True
-                                wd = self.bbox(t)
-                                wd = wd[2] - wd[0]
-                                if wd > mw:
-                                    nl = int(len(txt) * (mw / wd))
-                                    self.itemconfig(t, text = txt[:nl])
-                                    wd = self.bbox(t)
-                                    while wd[2] - wd[0] > mw:
-                                        nl -= 1
-                                        self.dchars(t, nl)
-                                        wd = self.bbox(t)
-                            if len(lns) > 1:
-                                stl = int((y1 - y) / self.xtra_lines_increment) - 1
-                                if stl < 1:
-                                    stl = 1
-                                y += (stl * self.xtra_lines_increment)
-                                if y + self.half_txt_h - 1 < sr:
-                                    for i in range(stl, len(lns)):
-                                        txt = lns[i]
+                            start_line = int((y1 - y) / self.xtra_lines_increment) - 1
+                            if start_line > 0:
+                                start_line += 1
+                                y += (start_line * self.xtra_lines_increment)
+                            elif start_line < 0:
+                                start_line = 0
+                            if len(lns) > start_line:
+                                for txt in islice(lns, start_line, None):
+                                    if y + self.half_txt_h - 1 > y1:
                                         if self.hidd_text:
                                             t, sh = self.hidd_text.popitem()
                                             self.coords(t, x, y)
                                             if sh:
-                                                self.itemconfig(t, text = txt, fill = tf, font = self.my_font, anchor = "w")
+                                                self.itemconfig(t, text = txt, fill = tf, font = self._font, anchor = "w")
                                             else:
-                                                self.itemconfig(t, text = txt, fill = tf, font = self.my_font, anchor = "w", state = "normal")
+                                                self.itemconfig(t, text = txt, fill = tf, font = self._font, anchor = "w", state = "normal")
                                         else:
-                                            t = self.create_text(x, y, text = txt, fill = tf, font = self.my_font, anchor = "w", tag = "t")
+                                            t = self.create_text(x, y, text = txt, fill = tf, font = self._font, anchor = "w", tag = "t")
                                         self.disp_text[t] = True
                                         wd = self.bbox(t)
                                         wd = wd[2] - wd[0]
@@ -4222,54 +4243,31 @@ class MainTable(tk.Canvas):
                                                 nl -= 1
                                                 self.dchars(t, nl)
                                                 wd = self.bbox(t)
-                                        y += self.xtra_lines_increment
-                                        if y + self.half_txt_h - 1 > sr:
-                                            break
+                                    y += self.xtra_lines_increment
+                                    if y + self.half_txt_h - 1 > sr:
+                                        break
 
                         elif cell_alignment == "e":
                             if fc + 5 > x2 or mw <= 5:
                                 continue
-                            lns = self.data_ref[r][dcol].split("\n") if isinstance(self.data_ref[r][dcol], str) else f"{self.data_ref[r][dcol]}".split("\n")
-                            y = fr + self.fl_ins
-                            if y + self.half_txt_h - 1 > y1:
-                                txt = lns[0]
-                                if self.hidd_text:
-                                    t, sh = self.hidd_text.popitem()
-                                    self.coords(t, x, y)
-                                    if sh:
-                                        self.itemconfig(t, text = txt, fill = tf, font = self.my_font, anchor = "e")
-                                    else:
-                                        self.itemconfig(t, text = txt, fill = tf, font = self.my_font, anchor = "e", state = "normal")
-                                else:
-                                    t = self.create_text(x, y, text = txt, fill = tf, font = self.my_font, anchor = "e", tag = "t")
-                                self.disp_text[t] = True
-                                wd = self.bbox(t)
-                                wd = wd[2] - wd[0]
-                                if wd > mw:
-                                    txt = txt[len(txt) - int(len(txt) * (mw / wd)):]
-                                    self.itemconfig(t, text = txt)
-                                    wd = self.bbox(t)
-                                    while wd[2] - wd[0] > mw:
-                                        txt = txt[1:]
-                                        self.itemconfig(t, text = txt)
-                                        wd = self.bbox(t)
-                            if len(lns) > 1:
-                                stl = int((y1 - y) / self.xtra_lines_increment) - 1
-                                if stl < 1:
-                                    stl = 1
-                                y += (stl * self.xtra_lines_increment)
-                                if y + self.half_txt_h - 1 < sr:
-                                    for i in range(stl, len(lns)):
-                                        txt = lns[i]
+                            start_line = int((y1 - y) / self.xtra_lines_increment) - 1
+                            if start_line > 0:
+                                start_line += 1
+                                y += (start_line * self.xtra_lines_increment)
+                            elif start_line < 0:
+                                start_line = 0
+                            if len(lns) > start_line:
+                                for txt in islice(lns, start_line, None):
+                                    if y + self.half_txt_h - 1 > y1:
                                         if self.hidd_text:
                                             t, sh = self.hidd_text.popitem()
                                             self.coords(t, x, y)
                                             if sh:
-                                                self.itemconfig(t, text = txt, fill = tf, font = self.my_font, anchor = "e")
+                                                self.itemconfig(t, text = txt, fill = tf, font = self._font, anchor = "e")
                                             else:
-                                                self.itemconfig(t, text = txt, fill = tf, font = self.my_font, anchor = "e", state = "normal")
+                                                self.itemconfig(t, text = txt, fill = tf, font = self._font, anchor = "e", state = "normal")
                                         else:
-                                            t = self.create_text(x, y, text = txt, fill = tf, font = self.my_font, anchor = "e", tag = "t")
+                                            t = self.create_text(x, y, text = txt, fill = tf, font = self._font, anchor = "e", tag = "t")
                                         self.disp_text[t] = True
                                         wd = self.bbox(t)
                                         wd = wd[2] - wd[0]
@@ -4281,58 +4279,31 @@ class MainTable(tk.Canvas):
                                                 txt = txt[1:]
                                                 self.itemconfig(t, text = txt)
                                                 wd = self.bbox(t)
-                                        y += self.xtra_lines_increment
-                                        if y + self.half_txt_h - 1 > sr:
-                                            break
+                                    y += self.xtra_lines_increment
+                                    if y + self.half_txt_h - 1 > sr:
+                                        break
 
                         elif cell_alignment == "center":
                             if stop > x2 or mw <= 5:
                                 continue
-                            lns = self.data_ref[r][dcol].split("\n") if isinstance(self.data_ref[r][dcol], str) else f"{self.data_ref[r][dcol]}".split("\n")
-                            txt = lns[0]
-                            y = fr + self.fl_ins
-                            if y + self.half_txt_h - 1 > y1:
-                                if self.hidd_text:
-                                    t, sh = self.hidd_text.popitem()
-                                    self.coords(t, x, y)
-                                    if sh:
-                                        self.itemconfig(t, text = txt, fill = tf, font = self.my_font, anchor = "center")
-                                    else:
-                                        self.itemconfig(t, text = txt, fill = tf, font = self.my_font, anchor = "center", state = "normal")
-                                else:
-                                    t = self.create_text(x, y, text = txt, fill = tf, font = self.my_font, anchor = "center", tag = "t")
-                                self.disp_text[t] = True
-                                wd = self.bbox(t)
-                                wd = wd[2] - wd[0]
-                                if wd > mw:
-                                    tl = len(txt)
-                                    tmod = ceil((tl - int(tl * (mw / wd))) / 2)
-                                    txt = txt[tmod - 1:-tmod]
-                                    self.itemconfig(t, text = txt)
-                                    wd = self.bbox(t)
-                                    self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
-                                    while wd[2] - wd[0] > mw:
-                                        txt = txt[next(self.c_align_cyc)]
-                                        self.itemconfig(t, text = txt)
-                                        wd = self.bbox(t)
-                                    self.coords(t, x, y)
-                            if len(lns) > 1:
-                                stl = int((y1 - y) / self.xtra_lines_increment) - 1
-                                if stl < 1:
-                                    stl = 1
-                                y += (stl * self.xtra_lines_increment)
-                                if y + self.half_txt_h - 1 < sr:
-                                    for i in range(stl, len(lns)):
-                                        txt = lns[i]
+                            start_line = int((y1 - y) / self.xtra_lines_increment) - 1
+                            if start_line > 0:
+                                start_line += 1
+                                y += (start_line * self.xtra_lines_increment)
+                            elif start_line < 0:
+                                start_line = 0
+                            if len(lns) > start_line:
+                                for txt in islice(lns, start_line, None):
+                                    if y + self.half_txt_h - 1 > y1:
                                         if self.hidd_text:
                                             t, sh = self.hidd_text.popitem()
                                             self.coords(t, x, y)
                                             if sh:
-                                                self.itemconfig(t, text = txt, fill = tf, font = self.my_font, anchor = "center")
+                                                self.itemconfig(t, text = txt, fill = tf, font = self._font, anchor = "center")
                                             else:
-                                                self.itemconfig(t, text = txt, fill = tf, font = self.my_font, anchor = "center", state = "normal")
+                                                self.itemconfig(t, text = txt, fill = tf, font = self._font, anchor = "center", state = "normal")
                                         else:
-                                            t = self.create_text(x, y, text = txt, fill = tf, font = self.my_font, anchor = "center", tag = "t")
+                                            t = self.create_text(x, y, text = txt, fill = tf, font = self._font, anchor = "center", tag = "t")
                                         self.disp_text[t] = True
                                         wd = self.bbox(t)
                                         wd = wd[2] - wd[0]
@@ -4348,9 +4319,10 @@ class MainTable(tk.Canvas):
                                                 self.itemconfig(t, text = txt)
                                                 wd = self.bbox(t)
                                             self.coords(t, x, y)
-                                        y += self.xtra_lines_increment
-                                        if y + self.half_txt_h - 1 > sr:
-                                            break
+                                    y += self.xtra_lines_increment
+                                    if y + self.half_txt_h - 1 > sr:
+                                        break
+
                     except:
                         continue
         try:
@@ -4555,7 +4527,7 @@ class MainTable(tk.Canvas):
             taglower = "RowSelectFill"
             mt_bg = self.table_selected_rows_bg
             mt_border_col = self.table_selected_rows_border_fg
-        elif type_ == "cols":
+        elif type_ in ("cols", "columns"):
             tagr = ("ColSelectFill", f"{r1}_{c1}_{r2}_{c2}")
             tagb = ("ColSelectBorder", f"{r1}_{c1}_{r2}_{c2}")
             taglower = "ColSelectFill"
@@ -5062,6 +5034,8 @@ class MainTable(tk.Canvas):
     def event_opens_dropdown_or_checkbox(self, event = None):
         if event is None:
             return False
+        elif event == "rc":
+            return True
         elif ((hasattr(event, 'keysym') and event.keysym == 'Return') or  # enter or f2
               (hasattr(event, 'keysym') and event.keysym == 'F2') or
               (event is not None and hasattr(event, 'keycode') and event.keycode == "??" and hasattr(event, 'num') and event.num == 1) or
@@ -5074,10 +5048,7 @@ class MainTable(tk.Canvas):
     def edit_cell_(self, event = None, r = None, c = None, dropdown = False):
         text = None
         extra_func_key = "??"
-        if event is not None and (hasattr(event, 'keysym') and event.keysym == 'BackSpace'):
-            extra_func_key = "BackSpace"
-            text = ""
-        elif event is None or self.event_opens_dropdown_or_checkbox(event):
+        if event is None or self.event_opens_dropdown_or_checkbox(event):
             if event is not None:
                 if hasattr(event, 'keysym') and event.keysym == 'Return':
                     extra_func_key = "Return"
@@ -5086,6 +5057,9 @@ class MainTable(tk.Canvas):
             text = f"{self.data_ref[r][c]}" if self.all_columns_displayed else f"{self.data_ref[r][self.displayed_columns[c]]}"
             if self.cell_auto_resize_enabled:
                 self.set_cell_size_to_text(r, c, only_set_if_too_small = True, redraw = True, run_binding = True)
+        elif event is not None and (hasattr(event, 'keysym') and event.keysym == 'BackSpace'):
+            extra_func_key = "BackSpace"
+            text = ""
         elif event is not None and ((hasattr(event, "char") and event.char.isalpha()) or
                                     (hasattr(event, "char") and event.char.isdigit()) or
                                     (hasattr(event, "char") and event.char in symbols_set)):
@@ -5108,157 +5082,70 @@ class MainTable(tk.Canvas):
 
     # c is displayed col
     def create_text_editor(self,
-                           r = None,
-                           c = None,
+                           r = 0,
+                           c = 0,
                            text = None,
                            state = "normal",
                            see = True,
                            set_data_ref_on_destroy = False,
                            binding = None,
                            dropdown = False):
+        if (r, c) == self.text_editor_loc and self.text_editor is not None:
+            self.text_editor.set_text(self.text_editor.get() + "" if not isinstance(text, str) else text)
+            return
         if self.text_editor is not None:
             self.destroy_text_editor()
-        if r!=None and c!=None: 
-            self.text_editor_loc = (r, c)
-        if self.text_editor_loc != None:
-            if (r, c) == self.text_editor_loc and self.text_editor is not None:
-                self.text_editor.set_text(self.text_editor.get() + "" if not isinstance(text, str) else text)
-                return
-            if see:
-                has_redrawn = self.see(r = r, c = c, check_cell_visibility = True)
-                if not has_redrawn:
-                    self.refresh()
-            # Text editor for table cells
-            x = self.col_positions[c]
-            y = self.row_positions[r]
-            w = self.col_positions[c + 1] - x + 1
-            h = self.row_positions[r + 1] - y + 6
-            dcol = c if self.all_columns_displayed else self.displayed_columns[c]
-            if text is None:
-                text = self.data_ref[r][dcol]
-            self.hide_current()
-            bg, fg = self.get_widget_bg_fg(r, dcol)
-            self.text_editor = TextEditor(self, 
-                                        text = text, 
-                                        font = self.my_font, 
-                                        state = state, 
-                                        width = w, 
-                                        height = h, 
-                                        border_color = self.table_selected_cells_border_fg, 
-                                        show_border = self.show_selected_cells_border,
-                                        bg = bg, 
-                                        fg = fg,
-                                        popup_menu_font = self.popup_menu_font,
-                                        popup_menu_fg = self.popup_menu_fg,
-                                        popup_menu_bg = self.popup_menu_bg,
-                                        popup_menu_highlight_bg = self.popup_menu_highlight_bg,
-                                        popup_menu_highlight_fg = self.popup_menu_highlight_fg)
-            self.text_editor_id = self.create_window((x, y), window = self.text_editor, anchor = "nw")
+        if see:
+            has_redrawn = self.see(r = r, c = c, check_cell_visibility = True)
+            if not has_redrawn:
+                self.refresh()
+        self.text_editor_loc = (r, c)
+        x = self.col_positions[c]
+        y = self.row_positions[r]
+        w = self.col_positions[c + 1] - x + 1
+        h = self.row_positions[r + 1] - y + 6
+        dcol = c if self.all_columns_displayed else self.displayed_columns[c]
+        if text is None:
+            text = self.data_ref[r][dcol]
+        self.hide_current()
+        bg, fg = self.get_widget_bg_fg(r, dcol)
+        self.text_editor = TextEditor(self, 
+                                      text = text, 
+                                      font = self._font, 
+                                      state = state, 
+                                      width = w, 
+                                      height = h, 
+                                      border_color = self.table_selected_cells_border_fg, 
+                                      show_border = self.show_selected_cells_border,
+                                      bg = bg, 
+                                      fg = fg,
+                                      popup_menu_font = self.popup_menu_font,
+                                      popup_menu_fg = self.popup_menu_fg,
+                                      popup_menu_bg = self.popup_menu_bg,
+                                      popup_menu_highlight_bg = self.popup_menu_highlight_bg,
+                                      popup_menu_highlight_fg = self.popup_menu_highlight_fg)
+        self.text_editor_id = self.create_window((x, y), window = self.text_editor, anchor = "nw")
+        if not dropdown:
+            self.text_editor.textedit.focus_set()
+            self.text_editor.scroll_to_bottom()
+        self.text_editor.textedit.bind("<Alt-Return>", lambda x: self.text_editor_newline_binding(r, c))
+        if USER_OS == 'Darwin':
+            self.text_editor.textedit.bind("<Option-Return>", lambda x: self.text_editor_newline_binding(r, c))
+        for key, func in self.text_editor_user_bound_keys.items():
+            self.text_editor.textedit.bind(key, func)
+        if binding is not None:
+            self.text_editor.textedit.bind("<Tab>", lambda x: binding((r, c, "Tab")))
+            self.text_editor.textedit.bind("<Return>", lambda x: binding((r, c, "Return")))
+            self.text_editor.textedit.bind("<FocusOut>", lambda x: binding((r, c, "FocusOut")))
+            self.text_editor.textedit.bind("<Escape>", lambda x: binding((r, c, "Escape")))
+        elif binding is None and set_data_ref_on_destroy:
+            self.text_editor.textedit.bind("<Tab>", lambda x: self.get_text_editor_value((r, c, "Tab")))
+            self.text_editor.textedit.bind("<Return>", lambda x: self.get_text_editor_value((r, c, "Return")))
             if not dropdown:
-                self.text_editor.textedit.focus_set()
-                self.text_editor.scroll_to_bottom()
-            self.text_editor.textedit.bind("<Alt-Return>", lambda x: self.text_editor_newline_binding(r, c))
-            if USER_OS == 'Darwin':
-                self.text_editor.textedit.bind("<Option-Return>", lambda x: self.text_editor_newline_binding(r, c))
-            for key, func in self.text_editor_user_bound_keys.items():
-                self.text_editor.textedit.bind(key, func)
-            if binding is not None:
-                self.text_editor.textedit.bind("<Tab>", lambda x: binding((r, c, "Tab")))
-                self.text_editor.textedit.bind("<Return>", lambda x: binding((r, c, "Return")))
-                self.text_editor.textedit.bind("<FocusOut>", lambda x: binding((r, c, "FocusOut")))
-                self.text_editor.textedit.bind("<Escape>", lambda x: binding((r, c, "Escape")))
-            elif binding is None and set_data_ref_on_destroy:
-                self.text_editor.textedit.bind("<Tab>", lambda x: self.get_text_editor_value((r, c, "Tab")))
-                self.text_editor.textedit.bind("<Return>", lambda x: self.get_text_editor_value((r, c, "Return")))
-                if not dropdown:
-                    self.text_editor.textedit.bind("<FocusOut>", lambda x: self.get_text_editor_value((r, c, "FocusOut")))
-                self.text_editor.textedit.bind("<Escape>", lambda x: self.get_text_editor_value((r, c, "Escape")))
-            else:
-                self.text_editor.textedit.bind("<Escape>", lambda x: self.destroy_text_editor("Escape"))
-        elif c == None and r != None:
-            # Row index editor
-            x = 0
-            y = self.row_positions[r]
-            w = self.RI.current_width
-            h = self.row_positions[r + 1] - y
-            current_value = self.get_index_as_list()[r]
-            self.refresh()
-            self.text_editor = TextEditor(self.RI, 
-                                        text = current_value, 
-                                        font = self.my_font, 
-                                        state = state, 
-                                        width = w, 
-                                        height = h, 
-                                        border_color = self.table_selected_cells_border_fg, 
-                                        show_border = self.show_selected_cells_border,
-                                        bg = self.RI.index_selected_rows_bg, 
-                                        fg = self.RI.index_selected_rows_fg,
-                                        popup_menu_font = self.popup_menu_font,
-                                        popup_menu_fg = self.popup_menu_fg,
-                                        popup_menu_bg = self.popup_menu_bg,
-                                        popup_menu_highlight_bg = self.popup_menu_highlight_bg,
-                                        popup_menu_highlight_fg = self.popup_menu_highlight_fg)
-            self.idx_editor_id = self.RI.create_window((x, y), window = self.text_editor, anchor = "nw")
-            for key, func in self.text_editor_user_bound_keys.items():
-                self.text_editor.textedit.bind(key, func)
-            self.text_editor.textedit.bind("<Alt-Return>", lambda x: self.text_editor_newline_binding(r, c))
-            if USER_OS == 'Darwin':
-                self.text_editor.textedit.bind("<Option-Return>", lambda x: self.text_editor_newline_binding(r, c))
-            if binding is not None:
-                self.text_editor.textedit.bind("<Tab>", lambda x: binding((r, c, "Tab")))
-                self.text_editor.textedit.bind("<Return>", lambda x: binding((r, c, "Return")))
-                self.text_editor.textedit.bind("<FocusOut>", lambda x: binding((r, c, "FocusOut")))
-                self.text_editor.textedit.bind("<Escape>", lambda x: binding((r, c, "Escape")))
-            elif binding is None and set_data_ref_on_destroy:
-                self.text_editor.textedit.bind("<Tab>", lambda x: self.set_row_editor_value((r, c, "Tab")))
-                self.text_editor.textedit.bind("<Return>", lambda x: self.set_row_editor_value((r, c, "Return")))
-                if not dropdown:
-                    self.text_editor.textedit.bind("<FocusOut>", lambda x: self.set_row_editor_value((r, c, "FocusOut")))
-                self.text_editor.textedit.bind("<Escape>", lambda x: self.set_row_editor_value((r, c, "Escape")))
-            else:
-                self.text_editor.textedit.bind("<Escape>", lambda x: self.destroy_text_editor("Escape"))
-        elif c != None and r == None:
-            # Column header editor
-            x = self.col_positions[c]
-            y = 0
-            h = self.CH.current_height
-            w = self.col_positions[c+1] - x
-            current_value = self.get_headers_as_list()[c]
-            self.refresh()
-            self.text_editor = TextEditor(self.CH, 
-                                        text = current_value, 
-                                        font = self.my_font, 
-                                        state = state, 
-                                        width = w, 
-                                        height = h, 
-                                        border_color = self.table_selected_cells_border_fg, 
-                                        show_border = self.show_selected_cells_border,
-                                        bg = self.CH.header_selected_columns_bg, 
-                                        fg = self.CH.header_selected_columns_fg,
-                                        popup_menu_font = self.popup_menu_font,
-                                        popup_menu_fg = self.popup_menu_fg,
-                                        popup_menu_bg = self.popup_menu_bg,
-                                        popup_menu_highlight_bg = self.popup_menu_highlight_bg,
-                                        popup_menu_highlight_fg = self.popup_menu_highlight_fg)
-            self.idx_editor_id = self.CH.create_window((x, y), window = self.text_editor, anchor = "nw")
-            for key, func in self.text_editor_user_bound_keys.items():
-                self.text_editor.textedit.bind(key, func)
-            self.text_editor.textedit.bind("<Alt-Return>", lambda x: self.column_editor_newline_binding(r, c))
-            if USER_OS == 'Darwin':
-                self.text_editor.textedit.bind("<Option-Return>", lambda x: self.column_editor_newline_binding(r, c))
-            if binding is not None:
-                self.text_editor.textedit.bind("<Tab>", lambda x: binding((r, c, "Tab")))
-                self.text_editor.textedit.bind("<Return>", lambda x: binding((r, c, "Return")))
-                self.text_editor.textedit.bind("<FocusOut>", lambda x: binding((r, c, "FocusOut")))
-                self.text_editor.textedit.bind("<Escape>", lambda x: binding((r, c, "Escape")))
-            elif binding is None and set_data_ref_on_destroy:
-                self.text_editor.textedit.bind("<Tab>", lambda x: self.set_col_editor_value((r, c, "Tab")))
-                self.text_editor.textedit.bind("<Return>", lambda x: self.set_col_editor_value((r, c, "Return")))
-                if not dropdown:
-                    self.text_editor.textedit.bind("<FocusOut>", lambda x: self.set_col_editor_value((r, c, "FocusOut")))
-                self.text_editor.textedit.bind("<Escape>", lambda x: self.set_col_editor_value((r, c, "Escape")))
-            else:
-                self.text_editor.textedit.bind("<Escape>", lambda x: self.destroy_text_editor("Escape"))
+                self.text_editor.textedit.bind("<FocusOut>", lambda x: self.get_text_editor_value((r, c, "FocusOut")))
+            self.text_editor.textedit.bind("<Escape>", lambda x: self.get_text_editor_value((r, c, "Escape")))
+        else:
+            self.text_editor.textedit.bind("<Escape>", lambda x: self.destroy_text_editor("Escape"))
 
     def bind_text_editor_destroy(self, binding, r, c):
         self.text_editor.textedit.bind("<Return>", lambda x: binding((r, c, "Return")))
@@ -5286,79 +5173,15 @@ class MainTable(tk.Canvas):
             self.text_editor_id = None
         except:
             pass
-        try:
-            if self.idx_editor_id:
-                headers = self.get_headers_as_list()
-                tallest_entry = max([len(str(s).split("\n")) for s in headers])
-                self.CH.set_height(self.GetHdrLinesHeight(tallest_entry), True)
-                index = self.get_index_as_list()
-                longest_entry = max([max(str(s).split("\n"), key=len) for s in index], key=len)
-                self.RI.set_width(self.GetTextWidth(longest_entry) + 20, True)
-                self.idx_editor_id = None
-        except:
-            pass
         self.show_current()
         if event is not None and len(event) >= 3 and "Escape" in event:
             self.focus_set()
-    
-    def set_row_editor_value(self, destroy_tup = None):
-        if self.focus_get() is None and destroy_tup:
-            return
-        if destroy_tup is not None and len(destroy_tup) >= 3 and destroy_tup[2] == "Escape":
-            self.destroy_text_editor("Escape")
-            return
-        if self.text_editor is not None:
-            editor_value = self.text_editor.get()
-            if editor_value.isdigit():
-                editor_value=int(editor_value)
-            else:
-                try:
-                    editor_value=float(editor_value)
-                except:
-                    pass
-        r = destroy_tup[0]
-        row_index = self.get_index_as_list()
-        current_value = row_index[r]
-        if editor_value == current_value:
-            return # Nothing has changed
-        else:
-            old_index = copy(self.row_index())
-            row_index[r] = editor_value
-            self._set_index(old_index, row_index)
-        self.destroy_text_editor()
-
-    def set_col_editor_value(self, destroy_tup = None):
-        if self.focus_get() is None and destroy_tup:
-            return
-        if destroy_tup is not None and len(destroy_tup) >= 3 and destroy_tup[2] == "Escape":
-            self.destroy_text_editor("Escape")
-            return
-        if self.text_editor is not None:
-            editor_value = self.text_editor.get()
-            if editor_value.isdigit():
-                editor_value=int(editor_value)
-            else:
-                try:
-                    editor_value=float(editor_value)
-                except:
-                    pass
-        
-        c = destroy_tup[1]
-        headers = self.get_headers_as_list()
-        current_value = headers[c]
-        if editor_value == current_value:
-            return # Nothing has changed
-        else:
-            old_headers = copy(self.headers())
-            headers[c] = editor_value
-            self._set_headers(old_headers, headers)
-        self.destroy_text_editor()
 
     # c is displayed col
-    def get_text_editor_value(self, destroy_tup = None, r = None, c = None, set_data_ref_on_destroy = True, event = None, destroy = True, move_down = True, redraw = True, recreate = True):
-        if self.focus_get() is None and destroy_tup:
+    def get_text_editor_value(self, editor_info = None, r = None, c = None, set_data_ref_on_destroy = True, event = None, destroy = True, move_down = True, redraw = True, recreate = True):
+        if self.focus_get() is None and editor_info:
             return
-        if destroy_tup is not None and len(destroy_tup) >= 3 and destroy_tup[2] == "Escape":
+        if editor_info is not None and len(editor_info) >= 3 and editor_info[2] == "Escape":
             self.destroy_text_editor("Escape")
             self.hide_dropdown_window(r, c)
             return
@@ -5367,16 +5190,21 @@ class MainTable(tk.Canvas):
         if destroy:
             self.destroy_text_editor()
         if set_data_ref_on_destroy:
-            if r is None and c is None and destroy_tup:
-                r, c = destroy_tup[0], destroy_tup[1]
-            if self.extra_end_edit_cell_func is not None:
-                validation = self.extra_end_edit_cell_func(EditCellEvent(r, c, destroy_tup[2] if len(destroy_tup) >= 3 else "FocusOut", f"{self.text_editor_value}", "end_edit_cell"))
+            if r is None and c is None and editor_info:
+                r, c = editor_info[0], editor_info[1]
+            if self.extra_end_edit_cell_func is None:
+                self._set_cell_data(r, c, value = self.text_editor_value)
+            elif self.extra_end_edit_cell_func is not None and not self.edit_cell_validation:
+                self._set_cell_data(r, c, value = self.text_editor_value)
+                self.extra_end_edit_cell_func(EditCellEvent(r, c, editor_info[2] if len(editor_info) >= 3 else "FocusOut", f"{self.text_editor_value}", "end_edit_cell"))
+            elif self.extra_end_edit_cell_func is not None and self.edit_cell_validation:
+                validation = self.extra_end_edit_cell_func(EditCellEvent(r, c, editor_info[2] if len(editor_info) >= 3 else "FocusOut", f"{self.text_editor_value}", "end_edit_cell"))
                 if validation is not None:
                     self.text_editor_value = validation
-            self._set_cell_data(r, c, value = self.text_editor_value)
+                self._set_cell_data(r, c, value = self.text_editor_value)
         if move_down:
-            if r is None and c is None and destroy_tup:
-                r, c = destroy_tup[0], destroy_tup[1]
+            if r is None and c is None and editor_info:
+                r, c = editor_info[0], editor_info[1]
             currently_selected = self.currently_selected()
             if r is not None and c is not None:
                 if (
@@ -5385,10 +5213,10 @@ class MainTable(tk.Canvas):
                     c == currently_selected[1] and
                     (self.single_selection_enabled or self.toggle_selection_enabled)
                     ):
-                    if destroy_tup is not None and len(destroy_tup) >= 3 and destroy_tup[2] == "Return":
+                    if editor_info is not None and len(editor_info) >= 3 and editor_info[2] == "Return":
                         self.select_cell(r + 1 if r < len(self.row_positions) - 2 else r, c)
                         self.see(r + 1 if r < len(self.row_positions) - 2 else r, c, keep_xscroll = True, bottom_right_corner = True, check_cell_visibility = True)
-                    elif destroy_tup is not None and len(destroy_tup) >= 3 and destroy_tup[2] == "Tab":
+                    elif editor_info is not None and len(editor_info) >= 3 and editor_info[2] == "Tab":
                         self.select_cell(r, c + 1 if c < len(self.col_positions) - 2 else c)
                         self.see(r, c + 1 if c < len(self.col_positions) - 2 else c, keep_xscroll = True, bottom_right_corner = True, check_cell_visibility = True)
         self.hide_dropdown_window(r, c)
@@ -5396,59 +5224,10 @@ class MainTable(tk.Canvas):
             self.recreate_all_selection_boxes()
         if redraw:
             self.refresh()
-        if destroy_tup is not None and len(destroy_tup) >= 3 and destroy_tup[2] != "FocusOut":
+        if editor_info is not None and len(editor_info) >= 3 and editor_info[2] != "FocusOut":
             self.focus_set()
         return self.text_editor_value
-    
-    def _set_index(self, old_index, new_index, undo = True):
-        if self.undo_enabled and undo:
-            self.undo_storage.append(zlib.compress(pickle.dumps(("edit_index",
-                                                                 old_index,
-                                                                 self.currently_selected()))))
-        _new_index = new_index
-        _old_index = old_index
-        if not _new_index:
-            _new_index = self.get_index_as_list(using_default=True)
-        if not _old_index:
-            _old_index = self.get_index_as_list(using_default=True)
-        changed_items = self._get_changed(_old_index, _new_index)
-        for r, n in changed_items:
-            height = self.GetLinesHeight(len(str(n).split('\n')))
-            self.RI.set_row_height(r, height)
-        self.row_index(new_index)
-        self.refresh()
-        self.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
-        
-    def _set_headers(self, old_headers, new_headers, undo = True):
-        if self.undo_enabled and undo:
-            self.undo_storage.append(zlib.compress(pickle.dumps(("edit_headers",
-                                                                 old_headers,
-                                                                 self.currently_selected()))))
-        _new_headers = new_headers
-        _old_headers = old_headers
-        if not new_headers:
-            _new_headers = self.get_headers_as_list(using_default=True)
-        if not old_headers:
-            _old_headers = self.get_headers_as_list(using_default=True)
-        self.headers(new_headers)
-        changed_items = self._get_changed(_old_headers, _new_headers)
-        for c, n in changed_items:
-            width = self.GetHdrTextWidth(n) + 7
-            col_data = []
-            for r in self.data_ref:
-                try:
-                    col_data.append(f"{r[c]}")
-                except:
-                    continue
-            min_width = self.GetTextWidth(self.GetLargestWidth(col_data))
-            min_width = self.min_cw if min_width < self.min_cw else min_width
-            if width >= min_width:
-                self.CH.set_col_width(c, width)
-            else:
-                self.CH.set_col_width(c, min_width)
-        self.refresh()
-        self.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
-        
+
     #internal event use
     def _set_cell_data(self, r = 0, c = 0, dcol = None, value = "", undo = True, cell_resize = True):
         if dcol is None:
@@ -5466,7 +5245,7 @@ class MainTable(tk.Canvas):
         self.data_ref[r][dcol] = value
         if cell_resize and self.cell_auto_resize_enabled:
             self.set_cell_size_to_text(r, c, only_set_if_too_small = True, redraw = True, run_binding = True)
-    
+
     #internal event use
     def _click_checkbox(self, r, c, dcol = None, undo = True, redraw = True):
         if dcol is None:
@@ -5550,10 +5329,6 @@ class MainTable(tk.Canvas):
                     self.itemconfig(self.cell_options[(r, dcol)]['dropdown']['canvas_id'],
                                     anchor = anchor, height = win_h)
 
-    def column_editor_newline_binding(self, r = None, c = None, event = None):
-        self.text_editor_newline_binding(r, c, event)
-        self.CH.set_height(self.text_editor.winfo_height())
-    
     def get_space_bot(self, r, text_editor_h = None):
         if text_editor_h is None:
             win_h = int(self.canvasy(0) + self.winfo_height() - self.row_positions[r + 1])
@@ -5564,7 +5339,7 @@ class MainTable(tk.Canvas):
         return win_h if win_h >= sheet_h else sheet_h
 
     def get_dropdown_height_anchor(self, r, c, dcol, text_editor_h = None):
-        numvalues = len(self.cell_options[(r, dcol)]['dropdown']['values'])
+        numvalues = sum(len(v.split("\n") if isinstance(v, str) else f"{v}".split("\n")) for v in self.cell_options[(r, dcol)]['dropdown']['values'])
         xscroll_h = self.parentframe.xscroll.winfo_height()
         if numvalues > 5:
             linespace = 6 * 5 + 3
@@ -5572,8 +5347,8 @@ class MainTable(tk.Canvas):
         else:
             linespace = numvalues * 5 + 3
             win_h = int(self.txt_h * numvalues + linespace + xscroll_h)
-        if win_h > 300:
-            win_h = 300
+        if win_h > 400:
+            win_h = 400
         space_bot = self.get_space_bot(r, text_editor_h)
         space_top = int(self.row_positions[r])
         anchor = "nw"
@@ -5607,7 +5382,7 @@ class MainTable(tk.Canvas):
                                                  c,
                                                  width = self.col_positions[c + 1] - self.col_positions[c] + 1,
                                                  height = win_h,
-                                                 font = self.my_font,
+                                                 font = self._font,
                                                  bg = bg,
                                                  fg = fg,
                                                  outline_color = fg,
@@ -5627,10 +5402,10 @@ class MainTable(tk.Canvas):
                                                                                         anchor = anchor)
             if self.cell_options[(r, dcol)]['dropdown']['modified_function'] is not None:
                 self.text_editor.textedit.bind("<<TextModified>>", lambda x: self.cell_options[(r, dcol)]['dropdown']['modified_function'](DropDownModifiedEvent("ComboboxModified", r, dcol, self.text_editor.get())))
-            self.update()
+            self.update_idletasks()
             try:
-                self.text_editor.textedit.focus_set()
-                self.text_editor.scroll_to_bottom()
+                self.after(1, lambda: self.text_editor.textedit.focus())
+                self.after(2, self.text_editor.scroll_to_bottom())
             except:
                 return
         else:
@@ -5641,12 +5416,9 @@ class MainTable(tk.Canvas):
             self.cell_options[(r, dcol)]['dropdown']['canvas_id'] = self.create_window((self.col_positions[c], ypos),
                                                                                         window = window,
                                                                                         anchor = anchor)
+            self.update_idletasks()
             window.bind("<FocusOut>", lambda x: self.hide_dropdown_window(r, c))
-            self.update()
-            try:
-                window.focus_set()
-            except:
-                return
+            window.focus()
         self.existing_dropdown_window = window
         self.cell_options[(r, dcol)]['dropdown']['window'] = window
         self.existing_dropdown_canvas_id = self.cell_options[(r, dcol)]['dropdown']['canvas_id']
@@ -5657,11 +5429,16 @@ class MainTable(tk.Canvas):
             dcol = c if self.all_columns_displayed else self.displayed_columns[c]
             if self.cell_options[(r, dcol)]['dropdown']['select_function'] is not None: # user has specified a selection function
                 self.cell_options[(r, dcol)]['dropdown']['select_function'](EditCellEvent(r, c, "ComboboxSelected", f"{selection}", "end_edit_cell"))
-            if self.extra_end_edit_cell_func is not None:
+            if self.extra_end_edit_cell_func is None:
+                self._set_cell_data(r, c, dcol, selection, cell_resize = True)
+            elif self.extra_end_edit_cell_func is not None and self.edit_cell_validation:
                 validation = self.extra_end_edit_cell_func(EditCellEvent(r, c, "ComboboxSelected", f"{selection}", "end_edit_cell"))
                 if validation is not None:
                     selection = validation
-            self._set_cell_data(r, c, dcol, selection, cell_resize = True)
+                self._set_cell_data(r, c, dcol, selection, cell_resize = True)
+            elif self.extra_end_edit_cell_func is not None and not self.edit_cell_validation:
+                self._set_cell_data(r, c, dcol, selection, cell_resize = True)
+                self.extra_end_edit_cell_func(EditCellEvent(r, c, "ComboboxSelected", f"{selection}", "end_edit_cell"))
             self.focus_set()
             self.recreate_all_selection_boxes()
             if redraw:
@@ -5671,7 +5448,7 @@ class MainTable(tk.Canvas):
         else:
             ret_tup = False
         if b1 and self.text_editor_loc is not None and self.text_editor is not None:
-            self.get_text_editor_value(destroy_tup = self.text_editor_loc + ("Return", ))
+            self.get_text_editor_value(editor_info = self.text_editor_loc + ("Return", ))
         else:
             self.destroy_text_editor("Escape")
         self.delete_opened_dropdown_window(r, c)
@@ -5726,33 +5503,3 @@ class MainTable(tk.Canvas):
     def refresh_dropdowns(self, dropdowns = []):
         pass
 
-    def get_headers_as_list(self, using_default = False) -> list:
-        headers = self.headers()
-        if headers and not using_default: # Early return if headers contains items (not default)
-            return headers
-        tot_cols = self.total_data_cols()
-        headers = [*range(tot_cols)]
-        if self.CH.default_hdr == 'numbers':
-            return [n+1 for n in headers]
-        elif self.CH.default_hdr == 'letters':
-            return num2alpha(headers)
-        else:
-            return [str(i+1)+' '+num2alpha(n) for i, n in enumerate(headers)]
-
-    def get_index_as_list(self, using_default = False) -> list:
-        index = self.row_index()
-        if index and not using_default: # Early return if index contains items (not default)
-            return index
-        tot_rows = self.total_data_rows()
-        index = [*range(tot_rows)]
-        if self.RI.default_index == 'numbers':
-            return [n+1 for n in index]
-        elif self.RI.default_index == 'letters':
-            return num2alpha(index)
-        else:
-            return [str(i+1)+' '+num2alpha(n) for i, n in enumerate(index)]
-    
-    def _get_changed(self, old, new):
-        if len(old) != len(new):
-            return
-        return [(i, n) for i, n in enumerate(new) if old[i]!=n]

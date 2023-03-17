@@ -1,3 +1,28 @@
+### Version 5.5.0 (current version)
+ - Deprecate functions `display_subset_of_columns()`, `displayed_columns()`
+ - Change `get_text_editor_value()` function argument `destroy_tup` to `editor_info`
+ - Change `display_columns()` function argument `indexes` to `columns`
+ - Change `display_columns()` function argument `enable` to `all_columns_displayed`
+ - Change some internal variable names
+ - Remove all calls to `update()` from `tksheet`
+ - Fix row index `"e"` text alignment bug
+ - Fix checkbox text not showing in main table when not using west alignment
+ - Fix `total_rows()` bug
+ - Fix dropdown arrow being asymmetrical with different font sizes
+ - Fix incorrect default headers while using hidden columns
+ - Fix issue with `get_sheet_data()` if including index and header not putting a corner cell in the top left
+ - Modify redrawing code, slightly improve redrawing efficiency in some scenarios
+ - Add dropdown boxes, check boxes and cell editing to index
+ - Add options `edit_cell_validation` which is an option for `extra_bindings`, see the documentation for more info
+ - Add function `yield_sheet_rows()` which includes default index and header values if using them
+ - Add function `hide_columns()` which allows input of columns to hide, instead of columns to display
+ - Add functions related to index editing, checkboxes and dropdown boxes
+ - Add default argument `show_default_index_for_empty`
+ - Add `Edit header` option to in-built right click menu if both are enabled
+ - Add `Edit index` option to in-built right click menu if both are enabled
+ - Add `Edit cell` option to in-built right click menu if both are enabled
+ - Documentation updates
+
 ### Version 5.4.1
  - Fix bugs with functions `readonly_header()`, `checkbox()` and `header_checkbox()`
  - Clarify table colors documentation
