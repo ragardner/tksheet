@@ -696,8 +696,7 @@ class MainTable(tk.Canvas):
     def delete_key(self, event = None):
         if self.anything_selected():
             currently_selected = self.currently_selected()
-            if self.undo_enabled:
-                undo_storage = {}
+            undo_storage = {}
             boxes = []
             for item in chain(self.find_withtag("CellSelectFill"), self.find_withtag("RowSelectFill"), self.find_withtag("ColSelectFill"), self.find_withtag("Current_Outside")):
                 alltags = self.gettags(item)
