@@ -1,4 +1,27 @@
-### Version 5.5.0 (current version)
+### Version 5.5.1 (current version)
+Fixed:
+ - `display_columns()` no longer redraws if `deselect_all` is `True` even when `redraw` is `False`
+ - `extra_bindings()` cell editors carrying out cell edits even if validation function returns `None`
+ - Index and header alignments wrongly associated with column and row alignments if `align_header`/`align_index` were `False`
+ - Undo drag and drop wrong position if columns move back to higher index
+ - Error when shift b1 press in headers/index while using extra bindings
+
+Changed:
+ - Internal variable name `data_ref` to `data`
+ - `get_currently_selected()` and `currently_selected()` see documentation for more information
+ - The way `extra_bindings()` + `begin_edit_cell` works, now if `None` is returned then the cell editor will not be opened
+ - Paste repeats when selection box is larger than pasted items and is a multiple of pasted box
+ - `move_row()`/`move_column()` now internally use `move_rows()`/`move_columns()`
+ - `black` theme text to be a lot brighter
+
+Added:
+ - Spacebar to edit cell keys
+ - Function `open_cell()` which uses currently selected box and mouse event
+ - Function `data` see the documentation for more info
+ - Functions `get_cell_alignments()`, `get_row_alignments()`, `get_column_alignments()`, `reset_all_options()`, `delete_out_of_bounds_options()`
+ - Functions `move_columns()`, `move_rows()`
+
+### Version 5.5.0
  - Deprecate functions `display_subset_of_columns()`, `displayed_columns()`
  - Change `get_text_editor_value()` function argument `destroy_tup` to `editor_info`
  - Change `display_columns()` function argument `indexes` to `columns`

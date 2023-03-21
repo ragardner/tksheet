@@ -351,6 +351,14 @@ move_row(row, moveto)
 ___
 
 ```python
+move_rows(moveto: int, to_move_min: int, number_of_rows: int, move_data: bool = True, index_type = "displayed", create_selections: bool = True, redraw = False)
+```
+ - `to_move_min` is the first row in the series of rows.
+ - `index_type` (`str`) either `"displayed"` or `"data"`
+
+___
+
+```python
 delete_column(idx = 0, deselect_all = False, redraw = True)
 ```
 
@@ -359,6 +367,14 @@ ___
 ```python
 move_column(column, moveto)
 ```
+
+___
+
+```python
+move_columns(moveto: int, to_move_min: int, number_of_columns: int, move_data: bool = True, index_type = "displayed", create_selections: bool = True, redraw = False)
+```
+ - `to_move_min` is the first column in the series of columns.
+ - `index_type` (`str`) either `"displayed"` or `"data"`, e.g. if columns are hidden and you want to supply the function with data indexes not sheet displayed indexes.
 
 ___
 
@@ -393,6 +409,23 @@ Get sheet data and, if required, header and index data.
 get_sheet_data(return_copy = False, get_header = False, get_index = False)
 ```
  - `return_copy` (`bool`) will copy all cells if `True`, also copies header and index if they are `True`.
+
+___
+
+Returns the main table data, readonly.
+```python
+@property
+data()
+```
+ - e.g. `self.sheet.data`
+
+___
+
+The name of the actual internal sheet data list.
+```python
+.MT.data
+```
+ - You can use this to directly modify or retrieve the main table's data e.g. `cell_0_0 = my_sheet_name_here.MT.data[0][0]`
 
 ___
 
@@ -737,6 +770,7 @@ Change the text alignment for **specific** rows, `"global"` resets to table sett
 ```python
 align_rows(rows = [], align = "global", align_index = False, redraw = True)
 ```
+ - Use argument `"all"` for `rows` e.g. `align_rows("all")` to clear all specific row alignments.
 
 ___
 
@@ -744,6 +778,7 @@ Change the text alignment for **specific** columns, `"global"` resets to table s
 ```python
 align_columns(columns = [], align = "global", align_header = False, redraw = True)
 ```
+ - Use argument `"all"` for `columns` e.g. `align_columns("all")` to clear all specific column alignments.
 
 ___
 
@@ -751,6 +786,7 @@ Change the text alignment for **specific** cells inside the table, `"global"` re
 ```python
 align_cells(row = 0, column = 0, cells = [], align = "global", redraw = True)
 ```
+ - Use argument `"all"` for `row` e.g. `align_cells("all")` to clear all specific cell alignments.
 
 ___
 
@@ -764,6 +800,24 @@ ___
 Change the text alignment for **specific** cells inside the index, `"global"` resets to index setting.
 ```python
 align_index(rows = [], align = "global", redraw = True)
+```
+
+___
+
+```python
+get_cell_alignments()
+```
+
+___
+
+```python
+get_row_alignments()
+```
+
+___
+
+```python
+get_column_alignments()
 ```
 
 ## 13 Row Heights and Column Widths
@@ -945,7 +999,18 @@ verify_column_widths(column_widths, canvas_positions = False)
 ## 14 Getting Selected Cells
 
 ```python
-get_currently_selected(get_coords = False, return_nones_if_not = False)
+get_currently_selected()
+```
+ - Returns `namedtuple` of `(row, column, type_)` e.g. `(0, 0, "column")`
+    - `type_` can be `"row"`, `"column"` or `"cell"`
+
+Usage example below:
+```python
+currently_selected = self.sheet.get_currently_selected()
+if currently_selected:
+    row = currently_selected.row
+    column = currently_selected.column
+    type_ = currently_selected.type_
 ```
 
 ___
@@ -1648,6 +1713,20 @@ get_cell_options(canvas = "table")
 
 ___
 
+Delete any alignments, dropdown boxes, checkboxes, highlights etc. that are larger than the sheets currently held data, includes row index and header in measurement of dimensions.
+```python
+delete_out_of_bounds_options()
+```
+
+___
+
+Delete all alignments, dropdown boxes, checkboxes, highlights etc.
+```python
+reset_all_options()
+```
+
+___
+
 ```python
 get_frame_y(y)
 ```
@@ -1719,9 +1798,9 @@ app = demo()
 app.mainloop()
 ```
 
-## 25 Example Custom Right Click and Text Editor Functionality
+## 25 Example Custom Right Click and Text Editor Validation
 
-This is to demonstrate adding your own commands to the in-built right click popup menu (or how you might start making your own right click menu functionality) and also creating a cell text editor the manual way.
+This is to demonstrate adding your own commands to the in-built right click popup menu (or how you might start making your own right click menu functionality) and also validating text editor input. In this demonstration the validation removes spaces from user input.
 ```python
 from tksheet import Sheet
 import tkinter as tk
@@ -1739,6 +1818,7 @@ class demo(tk.Tk):
                            data = [[f"Row {r}, Column {c}\nnewline1\nnewline2" for c in range(50)] for r in range(500)])
         self.sheet.enable_bindings("single_select",
                                    "drag_select",
+                                   "edit_cell",
                                    "select_all",
                                    "column_select",
                                    "row_select",
@@ -1749,39 +1829,27 @@ class demo(tk.Tk):
                                    "double_click_row_resize",
                                    "right_click_popup_menu",
                                    "rc_select")
+        self.sheet.extra_bindings([("begin_edit_cell", self.begin_edit_cell),
+                                   ("end_edit_cell", self.end_edit_cell)])
         self.sheet.popup_menu_add_command("Say Hello", self.new_right_click_button)
-        self.sheet.popup_menu_add_command("Edit Cell", self.edit_cell, index_menu = False, header_menu = False)
         self.frame.grid(row = 0, column = 0, sticky = "nswe")
         self.sheet.grid(row = 0, column = 0, sticky = "nswe")
 
     def new_right_click_button(self, event = None):
         print ("Hello World!")
 
-    def edit_cell(self, event = None):
-        r, c = self.sheet.get_currently_selected()
-        self.sheet.row_height(row = r, height = "text", only_set_if_too_small = True, redraw = False)
-        self.sheet.column_width(column = c, width = "text", only_set_if_too_small = True, redraw = True)
-        self.sheet.create_text_editor(row = r,
-                                      column = c,
-                                      text = self.sheet.get_cell_data(r, c),
-                                      set_data_ref_on_destroy = False,
-                                      binding = self.end_edit_cell)
+    def begin_edit_cell(self, event = None):
+        return event.text
 
     def end_edit_cell(self, event = None):
-        newtext = self.sheet.get_text_editor_value(event,
-                                                   r = event[0],
-                                                   c = event[1],
-                                                   set_data_ref_on_destroy = True,
-                                                   move_down = True,
-                                                   redraw = True,
-                                                   recreate = True)
-        print (newtext)
+        # remove spaces from user input
+        if event.text is not None:
+            return event.text.replace(" ", "")
 
 
 app = demo()
 app.mainloop()
 ```
- - If you want to evaluate the value from the text editor you can set `set_data_ref_on_destroy` to `False` and do the evaluation to decide whether or not to use `set_cell_data()`.
  - If you want a totally new right click menu you can use `self.sheet.bind("<3>", <function>)` with a `tk.Menu` of your own design (right click is `<2>` on MacOS) and don't use `"right_click_popup_menu"` with `enable_bindings()`.
 
 ## 26 Example Displaying Selections
@@ -1818,7 +1886,7 @@ class demo(tk.Tk):
             if event[0] == "select_cell":
                 self.show_selections.config(text = f"Cells: ({event[1] + 1},{event[2] + 1}) : ({event[1] + 1},{event[2] + 1})")
             elif "cells" in event[0]:
-                self.show_selections.config(text = f"Cells: ({event[1] + 1},{event[2] + 1}) : ({event[3] + 1},{event[4]})")
+                self.show_selections.config(text = f"Cells: ({event.selectionboxes[0] + 1},{event.selectionboxes[1] + 1}) : ({event.selectionboxes[2]},{event.selectionboxes[3]})")
             elif event[0] == "select_column":
                 self.show_selections.config(text = f"Columns: {event[1] + 1} : {event[1] + 1}")
             elif "columns" in event[0]:

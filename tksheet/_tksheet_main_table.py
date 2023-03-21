@@ -3730,7 +3730,7 @@ class MainTable(tk.Canvas):
         if reset_col_positions:
             self.reset_col_positions(ncols = total_data_cols)
         if deselect_all:
-            self.deselect("all")
+            self.deselect("all", redraw = False)
                 
     def headers(self, newheaders = None, index = None, reset_col_positions = False, show_headers_if_not_sheet = True, redraw = False):
         if newheaders is not None:

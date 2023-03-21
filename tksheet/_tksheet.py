@@ -1022,6 +1022,9 @@ class Sheet(tk.Frame):
     def move_column_position(self, column: int, moveto: int):
         self.MT.move_col_position(column, moveto)
 
+    def move_column(self, column: int, moveto: int):
+        self.move_columns(moveto, column)
+
     def move_columns(self, moveto: int, to_move_min: int, number_of_columns: int, move_data: bool = True, index_type: str = "displayed", create_selections: bool = True, redraw = False):
         if index_type.lower() == "displayed" or self.MT.all_columns_displayed:
             new_selected, dispset = self.MT.move_columns_adjust_options_dict(moveto, to_move_min, number_of_columns, move_data, create_selections)
@@ -1135,9 +1138,6 @@ class Sheet(tk.Frame):
                 self.MT.displayed_columns = sorted(int(newcolsdct[k]) if k in newcolsdct else k - totalcols if k < c and k > rm1start else int(k) for k in self.MT.displayed_columns)
             self.set_refresh_timer(redraw)
             return new_selected, {}
-
-    def move_column(self, column: int, moveto: int):
-        self.move_columns(moveto, column)
 
     # works on currently selected box
     def open_cell(self, ignore_existing_editor = True):
@@ -1528,7 +1528,20 @@ class Sheet(tk.Frame):
             self.refresh(True, True)
             
     def delete_out_of_bounds_options(self):
-        pass
+        maxc = self.total_columns()
+        maxr = self.total_rows()
+        self.MT.cell_options = {k: v for k, v in self.MT.cell_options.items() if k[0] <= maxr and k[1] <= maxc}
+        self.RI.cell_options = {k: v for k, v in self.MT.cell_options.items() if k <= maxr}
+        self.CH.cell_options = {k: v for k, v in self.MT.cell_options.items() if k <= maxc}
+        self.MT.col_options = {k: v for k, v in self.MT.cell_options.items() if k <= maxc}
+        self.MT.row_options = {k: v for k, v in self.MT.cell_options.items() if k <= maxr}
+        
+    def reset_all_options(self):
+        self.MT.cell_options = {}
+        self.RI.cell_options = {}
+        self.CH.cell_options = {}
+        self.MT.col_options = {}
+        self.MT.row_options = {}
 
     def get_cell_options(self, canvas = "table"):
         if canvas == "table":
