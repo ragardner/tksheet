@@ -225,8 +225,8 @@ class RowIndex(tk.Canvas):
                 if not r_selected and self.row_selection_enabled:
                     r = int(r)
                     currently_selected = self.MT.currently_selected()
-                    if currently_selected and currently_selected[0] == "row":
-                        min_r = int(currently_selected[1])
+                    if currently_selected and currently_selected.type_ == "row":
+                        min_r = int(currently_selected.row)
                         self.MT.delete_selection_rects(delete_current = False)
                         if r > min_r:
                             self.MT.create_selected(min_r, 0, r + 1, len(self.MT.col_positions) - 1, "rows")
@@ -236,6 +236,7 @@ class RowIndex(tk.Canvas):
                             func_event = tuple(range(r, min_r + 1))
                     else:
                         self.select_row(r)
+                        func_event = (r, )
                     self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
                     if self.shift_selection_binding_func is not None:
                         self.shift_selection_binding_func(SelectionBoxEvent("shift_select_rows", func_event))
@@ -441,8 +442,8 @@ class RowIndex(tk.Canvas):
             end_row = self.MT.identify_row(y = event.y)
             currently_selected = self.MT.currently_selected()
             if end_row < len(self.MT.row_positions) - 1 and currently_selected:
-                if currently_selected[0] == "row":
-                    start_row = currently_selected[1]
+                if currently_selected.type_ == "row":
+                    start_row = currently_selected.row
                     if end_row >= start_row:
                         rect = (start_row, 0, end_row + 1, len(self.MT.col_positions) - 1, "rows")
                         func_event = tuple(range(start_row, end_row + 1))
@@ -513,123 +514,42 @@ class RowIndex(tk.Canvas):
             self.MT.delete_resize_lines()
             y = event.y
             r = self.MT.identify_row(y = y)
-            orig_selected_rows = self.MT.get_selected_rows()
-            if r != self.dragged_row and r is not None and r not in orig_selected_rows and len(orig_selected_rows) != (len(self.MT.row_positions) - 1):
-                orig_selected_rows = sorted(orig_selected_rows)
-                if len(orig_selected_rows) > 1:
-                    orig_min = orig_selected_rows[0]
-                    orig_max = orig_selected_rows[1]
-                    start_idx = bisect.bisect_left(orig_selected_rows, self.dragged_row)
-                    forward_gap = get_index_of_gap_in_sorted_integer_seq_forward(orig_selected_rows, start_idx)
-                    reverse_gap = get_index_of_gap_in_sorted_integer_seq_reverse(orig_selected_rows, start_idx)
+            orig_selected = self.MT.get_selected_rows()
+            if r != self.dragged_row and r is not None and r not in orig_selected and len(orig_selected) != (len(self.MT.row_positions) - 1):
+                orig_selected = sorted(orig_selected)
+                if len(orig_selected) > 1:
+                    orig_min = orig_selected[0]
+                    orig_max = orig_selected[1]
+                    start_idx = bisect.bisect_left(orig_selected, self.dragged_row)
+                    forward_gap = get_index_of_gap_in_sorted_integer_seq_forward(orig_selected, start_idx)
+                    reverse_gap = get_index_of_gap_in_sorted_integer_seq_reverse(orig_selected, start_idx)
                     if forward_gap is not None:
-                        orig_selected_rows[:] = orig_selected_rows[:forward_gap]
+                        orig_selected[:] = orig_selected[:forward_gap]
                     if reverse_gap is not None:
-                        orig_selected_rows[:] = orig_selected_rows[reverse_gap:]
-                rowsiter = orig_selected_rows.copy()
+                        orig_selected[:] = orig_selected[reverse_gap:]
+                
+                rowsiter = orig_selected.copy()
                 rm1start = rowsiter[0]
-                rm1end = rowsiter[-1] + 1
-                rm2start = rm1start + (rm1end - rm1start)
-                rm2end = rm1end + (rm1end - rm1start)
                 totalrows = len(rowsiter)
                 extra_func_success = True
                 if r >= len(self.MT.row_positions) - 1:
                     r -= 1
-                r_ = int(r)
                 if self.ri_extra_begin_drag_drop_func is not None:
                     try:
-                        self.ri_extra_begin_drag_drop_func(BeginDragDropEvent("begin_row_index_drag_drop", tuple(orig_selected_rows), int(r)))
+                        self.ri_extra_begin_drag_drop_func(BeginDragDropEvent("begin_row_index_drag_drop", tuple(orig_selected), int(r)))
                     except:
                         extra_func_success = False
                 if extra_func_success:
-                    if self.row_drag_and_drop_perform:
-                        if rm1start > r:
-                            self.MT.data_ref = (self.MT.data_ref[:r] +
-                                                self.MT.data_ref[rm1start:rm1start + totalrows] +
-                                                self.MT.data_ref[r:rm1start] +
-                                                self.MT.data_ref[rm1start + totalrows:])
-                            if not isinstance(self.MT._row_index, int) and self.MT._row_index:
-                                try:
-                                    self.MT._row_index = (self.MT._row_index[:r] +
-                                                            self.MT._row_index[rm1start:rm1start + totalrows] +
-                                                            self.MT._row_index[r:rm1start] +
-                                                            self.MT._row_index[rm1start + totalrows:])
-                                except:
-                                    pass
-                        else:
-                            self.MT.data_ref = (self.MT.data_ref[:rm1start] +
-                                                self.MT.data_ref[rm1start + totalrows:r + 1] +
-                                                self.MT.data_ref[rm1start:rm1start + totalrows] +
-                                                self.MT.data_ref[r + 1:])
-                            if not isinstance(self.MT._row_index, int) and self.MT._row_index:
-                                try:
-                                    self.MT._row_index = (self.MT._row_index[:rm1start] +
-                                                            self.MT._row_index[rm1start + totalrows:r + 1] +
-                                                            self.MT._row_index[rm1start:rm1start + totalrows] +
-                                                            self.MT._row_index[r + 1:])
-                                except:
-                                    pass
-                    rhs = [int(b - a) for a, b in zip(self.MT.row_positions, islice(self.MT.row_positions, 1, len(self.MT.row_positions)))]
-                    if rm1start > r:
-                        rhs = (rhs[:r] +
-                               rhs[rm1start:rm1start + totalrows] +
-                               rhs[r:rm1start] +
-                               rhs[rm1start + totalrows:])
-                    else:
-                        rhs = (rhs[:rm1start] +
-                               rhs[rm1start + totalrows:r + 1] +
-                               rhs[rm1start:rm1start + totalrows] +
-                               rhs[r + 1:])
-                    self.MT.row_positions = list(accumulate(chain([0], (height for height in rhs))))
-                    self.MT.deselect("all")
-                    if (r_ - 1) + totalrows > len(self.MT.row_positions) - 1:
-                        new_selected = tuple(range(len(self.MT.row_positions) - 1 - totalrows, len(self.MT.row_positions) - 1))
-                        self.MT.create_selected(len(self.MT.row_positions) - 1 - totalrows, 0, len(self.MT.row_positions) - 1, len(self.MT.col_positions) - 1, "rows")
-                    else:
-                        if rm1start > r:
-                            new_selected = tuple(range(r_, r_ + totalrows))
-                            self.MT.create_selected(r_, 0, r_ + totalrows, len(self.MT.col_positions) - 1, "rows")
-                        else:
-                            new_selected = tuple(range(r_ + 1 - totalrows, r_ + 1))
-                            self.MT.create_selected(r_ + 1 - totalrows, 0, r_ + 1, len(self.MT.col_positions) - 1, "rows")
-                    self.MT.create_current(int(new_selected[0]), 0, type_ = "row", inside = True)
-                    rowset = set(rowsiter)
+                    new_selected, dispset = self.MT.move_rows_adjust_options_dict(r, rm1start, totalrows, move_data = self.row_drag_and_drop_perform)
                     if self.MT.undo_enabled:
                         self.MT.undo_storage.append(zlib.compress(pickle.dumps(("move_rows",
-                                                                                min(orig_selected_rows),
+                                                                                min(orig_selected),
                                                                                 new_selected[0],
                                                                                 new_selected[-1],
-                                                                                sorted(orig_selected_rows)))))
-                    popped_ri = {t1: t2 for t1, t2 in self.cell_options.items() if t1 in rowset}
-                    popped_cell = {t1: t2 for t1, t2 in self.MT.cell_options.items() if t1[0] in rowset}
-                    popped_row = {t1: t2 for t1, t2 in self.MT.row_options.items() if t1 in rowset}
-                    
-                    popped_ri = {t1: self.cell_options.pop(t1) for t1 in popped_ri}
-                    popped_cell = {t1: self.MT.cell_options.pop(t1) for t1 in popped_cell}
-                    popped_row = {t1: self.MT.row_options.pop(t1) for t1 in popped_row}
-
-                    self.cell_options = {t1 if t1 < rm1start else t1 - totalrows: t2 for t1, t2 in self.cell_options.items()}
-                    self.cell_options = {t1 if t1 < r_ else t1 + totalrows: t2 for t1, t2 in self.cell_options.items()}
-
-                    self.MT.row_options = {t1 if t1 < rm1start else t1 - totalrows: t2 for t1, t2 in self.MT.row_options.items()}
-                    self.MT.row_options = {t1 if t1 < r_ else t1 + totalrows: t2 for t1, t2 in self.MT.row_options.items()}
-
-                    self.MT.cell_options = {(t10 if t10 < rm1start else t10 - totalrows, t11): t2 for (t10, t11), t2 in self.MT.cell_options.items()}
-                    self.MT.cell_options = {(t10 if t10 < r_ else t10 + totalrows, t11): t2 for (t10, t11), t2 in self.MT.cell_options.items()}
-
-                    newrowsdct = {t1: t2 for t1, t2 in zip(rowsiter, new_selected)}
-                    for t1, t2 in popped_ri.items():
-                        self.cell_options[newrowsdct[t1]] = t2
-
-                    for t1, t2 in popped_row.items():
-                        self.MT.row_options[newrowsdct[t1]] = t2
-
-                    for (t10, t11), t2 in popped_cell.items():
-                        self.MT.cell_options[(newrowsdct[t10], t11)] = t2
-
+                                                                                sorted(orig_selected)))))
                     self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
                     if self.ri_extra_end_drag_drop_func is not None:
-                        self.ri_extra_end_drag_drop_func(EndDragDropEvent("end_row_index_drag_drop", tuple(orig_selected_rows), new_selected, int(r)))
+                        self.ri_extra_end_drag_drop_func(EndDragDropEvent("end_row_index_drag_drop", tuple(orig_selected), new_selected, int(r)))
                         
         elif self.b1_pressed_loc is not None and self.rsz_w is None and self.rsz_h is None:
             r = self.MT.identify_row(y = event.y)
@@ -745,7 +665,7 @@ class RowIndex(tk.Canvas):
                     x1, y1, x2, y2 = self.MT.get_canvas_visible_area()
                     start_col, end_col = self.MT.get_visible_columns(x1, x2)
                 else:
-                    start_col, end_col = 0, len(self.MT.data_ref[row])
+                    start_col, end_col = 0, len(self.MT.data[row])
                 iterable = range(start_col, end_col)
             else:
                 if displayed_only:
@@ -777,10 +697,10 @@ class RowIndex(tk.Canvas):
                     txt = self.MT.cell_options[(row, cn)]['checkbox']['text']
                 else:
                     try:
-                        if isinstance(self.MT.data_ref[row][cn], str):
-                            txt = self.MT.data_ref[row][cn]
+                        if isinstance(self.MT.data[row][cn], str):
+                            txt = self.MT.data[row][cn]
                         else:
-                            txt = f"{self.MT.data_ref[row][cn]}"
+                            txt = f"{self.MT.data[row][cn]}"
                     except:
                         txt = ""
                 if txt:
@@ -847,7 +767,7 @@ class RowIndex(tk.Canvas):
                     new_width = w
         elif isinstance(self.MT._row_index, int):
             c = self.MT._row_index
-            for rn, row in enumerate(self.MT.data_ref):
+            for rn, row in enumerate(self.MT.data):
                 if (rn, c) in self.MT.cell_options and 'checkbox' in self.MT.cell_options[(rn, c)]:
                     txt = self.MT.cell_options[(rn, c)]['checkbox']['text']
                 else:
@@ -879,9 +799,9 @@ class RowIndex(tk.Canvas):
 
     def set_height_of_all_rows(self, height = None, only_set_if_too_small = False, recreate = True):
         if height is None:
-            self.MT.row_positions = list(accumulate(chain([0], (self.set_row_height(rn, only_set_if_too_small = only_set_if_too_small, recreate = False, return_new_height = True) for rn in range(len(self.MT.data_ref))))))
+            self.MT.row_positions = list(accumulate(chain([0], (self.set_row_height(rn, only_set_if_too_small = only_set_if_too_small, recreate = False, return_new_height = True) for rn in range(len(self.MT.data))))))
         else:
-            self.MT.row_positions = list(accumulate(chain([0], (height for r in range(len(self.MT.data_ref))))))
+            self.MT.row_positions = list(accumulate(chain([0], (height for r in range(len(self.MT.data))))))
         if recreate:
             self.MT.recreate_all_selection_boxes()
 
@@ -1138,8 +1058,6 @@ class RowIndex(tk.Canvas):
             
             if r in self.cell_options and 'align' in self.cell_options[r]:
                 cell_alignment = self.cell_options[r]['align']
-            elif r in self.MT.row_options and 'align' in self.MT.row_options[r]:
-                cell_alignment = self.MT.row_options[r]['align']
             else:
                 cell_alignment = self.align
                 
@@ -1185,13 +1103,13 @@ class RowIndex(tk.Canvas):
                                          fill = tf if self.cell_options[r]['checkbox']['state'] == "normal" else self.index_grid_fg,
                                          outline = "",
                                          tag = "cb",
-                                         draw_check = self.MT._row_index[r] if isinstance(self.MT._row_index, (list, tuple)) else self.MT.data_ref[r][self.MT._row_index])
+                                         draw_check = self.MT._row_index[r] if isinstance(self.MT._row_index, (list, tuple)) else self.MT.data[r][self.MT._row_index])
 
             try:
                 if r in self.cell_options and 'checkbox' in self.cell_options[r]:
                     lns = self.cell_options[r]['checkbox']['text'].split("\n") if isinstance(self.cell_options[r]['checkbox']['text'], str) else f"{self.cell_options[r]['checkbox']['text']}".split("\n")
                 elif isinstance(self.MT._row_index, int):
-                    lns = self.MT.data_ref[r][self.MT._row_index].split("\n") if isinstance(self.MT.data_ref[r][self.MT._row_index], str) else f"{self.MT.data_ref[r][self.MT._row_index]}".split("\n")
+                    lns = self.MT.data[r][self.MT._row_index].split("\n") if isinstance(self.MT.data[r][self.MT._row_index], str) else f"{self.MT.data[r][self.MT._row_index]}".split("\n")
                 else:
                     lns = self.MT._row_index[r].split("\n") if isinstance(self.MT._row_index[r], str) else f"{self.MT._row_index[r]}".split("\n")
                 got_idx = True
@@ -1317,7 +1235,7 @@ class RowIndex(tk.Canvas):
     def open_cell(self, event = None):
         if not self.MT.anything_selected() or self.text_editor_id is not None:
             return
-        currently_selected = self.MT.currently_selected(get_coords = True)
+        currently_selected = self.MT.currently_selected()
         if not currently_selected:
             return
         r = int(currently_selected[0])
@@ -1350,7 +1268,7 @@ class RowIndex(tk.Canvas):
                 text = f"{self.MT._row_index[drow]}"
             elif isinstance(self.MT._row_index, int):
                 try:
-                    text = f"{self.MT.data_ref[self.MT._row_index][drow]}"
+                    text = f"{self.MT.data[self.MT._row_index][drow]}"
                 except:
                     text = ""
             if self.MT.cell_auto_resize_enabled:
@@ -1370,11 +1288,13 @@ class RowIndex(tk.Canvas):
         self.text_editor_loc = r
         if self.extra_begin_edit_cell_func is not None:
             try:
-                text2 = self.extra_begin_edit_cell_func(EditIndexEvent(r, extra_func_key, text, "begin_edit_index"))
+                text = self.extra_begin_edit_cell_func(EditIndexEvent(r, extra_func_key, text, "begin_edit_index"))
             except:
                 return False
-            if text2 is not None:
-                text = text2
+            if text is None:
+                return False
+            else:
+                text = text if isinstance(text, str) else f"{text}"
         text = "" if text is None else text
         self.select_row(r = r, keep_other_selections = True)
         self.create_text_editor(r = r, text = text, set_data_ref_on_destroy = True, dropdown = dropdown)
@@ -1411,7 +1331,7 @@ class RowIndex(tk.Canvas):
                 text = f"{self.MT._row_index[drow]}"
             elif isinstance(self.MT._row_index, int):
                 try:
-                    text = f"{self.MT.data_ref[self.MT._row_index][drow]}"
+                    text = f"{self.MT.data[self.MT._row_index][drow]}"
                 except:
                     text = ""
         bg, fg = self.get_widget_bg_fg(drow)
@@ -1500,20 +1420,21 @@ class RowIndex(tk.Canvas):
             self.text_editor_value = self.text_editor.get()
         if destroy:
             self.destroy_text_editor()
+        cell_was_edited = False
         if set_data_ref_on_destroy:
             if r is None and editor_info is not None and len(editor_info) >= 2:
                 r = editor_info[0]
             if self.extra_end_edit_cell_func is None:
-                self._set_cell_data(r, drow = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r], value = self.text_editor_value)
+                cell_was_edited = self._set_cell_data(r, drow = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r], value = self.text_editor_value)
+            elif self.extra_end_edit_cell_func is not None and not self.MT.edit_cell_validation:
+                cell_was_edited = self._set_cell_data(r, drow = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r], value = self.text_editor_value)
+                self.extra_end_edit_cell_func(EditIndexEvent(r, editor_info[1] if len(editor_info) >= 2 else "FocusOut", f"{self.text_editor_value}", "end_edit_index"))
             elif self.extra_end_edit_cell_func is not None and self.MT.edit_cell_validation:
                 validation = self.extra_end_edit_cell_func(EditIndexEvent(r, editor_info[1] if len(editor_info) >= 2 else "FocusOut", f"{self.text_editor_value}", "end_edit_index"))
                 if validation is not None:
                     self.text_editor_value = validation
-                self._set_cell_data(r, drow = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r], value = self.text_editor_value)
-            elif self.extra_end_edit_cell_func is not None and not self.MT.edit_cell_validation:
-                self._set_cell_data(r, drow = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r], value = self.text_editor_value)
-                self.extra_end_edit_cell_func(EditIndexEvent(r, editor_info[1] if len(editor_info) >= 2 else "FocusOut", f"{self.text_editor_value}", "end_edit_index"))
-        if move_down:
+                    cell_was_edited = self._set_cell_data(r, drow = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r], value = self.text_editor_value)
+        if move_down and cell_was_edited:
             if r is None and editor_info is not None and len(editor_info) >= 2:
                 r = editor_info[0]
             currently_selected = self.MT.currently_selected()
@@ -1557,6 +1478,7 @@ class RowIndex(tk.Canvas):
         if cell_resize and self.MT.cell_auto_resize_enabled:
             self.set_row_height_run_binding(r)
             self.MT.refresh()
+        return True
             
     def set_row_height_run_binding(self, r):
         old_height = self.MT.row_positions[r + 1] - self.MT.row_positions[r]
@@ -1572,11 +1494,11 @@ class RowIndex(tk.Canvas):
             if isinstance(self.MT._row_index, list):
                 self._set_cell_data(r, drow, value = not self.MT._row_index[drow] if type(self.MT._row_index[drow]) == bool else False, cell_resize = False)
             elif isinstance(self.MT._row_index, int):
-                self._set_cell_data(r, drow, value = not self.MT.data_ref[self.MT._row_index][drow] if type(self.MT.data_ref[self.MT._row_index][drow]) == bool else False, cell_resize = False)
+                self._set_cell_data(r, drow, value = not self.MT.data[self.MT._row_index][drow] if type(self.MT.data[self.MT._row_index][drow]) == bool else False, cell_resize = False)
             if self.cell_options[drow]['checkbox']['check_function'] is not None:
-                self.cell_options[drow]['checkbox']['check_function']((r, 0, "IndexCheckboxClicked", f"{self.MT._row_index[drow] if isinstance(self.MT._row_index, list) else self.MT.data_ref[self.MT._row_index][drow]}"))
+                self.cell_options[drow]['checkbox']['check_function']((r, 0, "IndexCheckboxClicked", f"{self.MT._row_index[drow] if isinstance(self.MT._row_index, list) else self.MT.data[self.MT._row_index][drow]}"))
             if self.extra_end_edit_cell_func is not None:
-                self.extra_end_edit_cell_func(EditIndexEvent(r, "Return", f"{self.MT._row_index[drow] if isinstance(self.MT._row_index, list) else self.MT.data_ref[self.MT._row_index][drow]}", "end_edit_index"))
+                self.extra_end_edit_cell_func(EditIndexEvent(r, "Return", f"{self.MT._row_index[drow] if isinstance(self.MT._row_index, list) else self.MT.data[self.MT._row_index][drow]}", "end_edit_index"))
         if redraw:
             self.MT.refresh()
 

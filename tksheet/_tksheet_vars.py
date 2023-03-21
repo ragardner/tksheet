@@ -1,7 +1,7 @@
 lowercase_letters = """abcdefghijklmnopqrstuvwxyz"""
 uppercase_letters = """ABCDEFGHIJKLMNOPQRSTUVWXYZ"""
 numbers = """0123456789"""
-symbols = """!#\$%&'()*+,-./:;"@[]^_`{|}~>?="""
+symbols = """!#\$%&'()*+,-./:;"@[]^_`{|}~>?= """
 symbols_set = set(symbols)
 all_chars = set(lowercase_letters + uppercase_letters + numbers + symbols + " " + "\<")
 other_symbols = {"<space>": " ",
@@ -169,10 +169,10 @@ theme_black = {
 'top_left_fg_highlight': "#ffb867",
 'table_bg': "#000000",
 'table_grid_fg': "#505054",
-'table_fg': "#c1c1c1",
+'table_fg': "#F2F2F2",
 'table_selected_cells_border_fg': "#bdbdbd",
 'table_selected_cells_bg': "#313034",
-'table_selected_cells_fg': "#dbdbdb",
+'table_selected_cells_fg': "#FFFFFF",
 'resizing_line_fg': "#ffb867",
 'drag_and_drop_bg': "#ecf0f2",
 'outline_color': "gray95",
@@ -182,10 +182,10 @@ theme_black = {
 'index_selected_rows_fg': "#ffb867",
 'table_selected_rows_border_fg': "#bdbdbd",
 'table_selected_rows_bg': "#313034",
-'table_selected_rows_fg': "#dbdbdb",
+'table_selected_rows_fg': "#FFFFFF",
 'table_selected_columns_border_fg': "#bdbdbd",
 'table_selected_columns_bg': "#313034",
-'table_selected_columns_fg': "#dbdbdb"
+'table_selected_columns_fg': "#FFFFFF"
 }
 
 theme_dark_blue = {

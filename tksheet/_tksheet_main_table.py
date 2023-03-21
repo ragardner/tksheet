@@ -84,6 +84,7 @@ class MainTable(tk.Canvas):
         self.existing_dropdown_canvas_id = None
         self.existing_dropdown_window = None
         self.closed_dropdown = None
+        self.last_selected = tuple()
         
         self.disp_text = {}
         self.disp_high = {}
@@ -253,14 +254,14 @@ class MainTable(tk.Canvas):
                            header_height if isinstance(header_height, int) else self.GetHdrLinesHeight(int(header_height)))
         self.set_fnt_help()
         self.set_hdr_fnt_help()
-        self.data_ref = data_reference
-        if isinstance(self.data_ref, (list, tuple)):
-            self.data_ref = data_reference
+        self.data = data_reference
+        if isinstance(self.data, (list, tuple)):
+            self.data = data_reference
         else:
-            self.data_ref = []
-        if not self.data_ref:
+            self.data = []
+        if not self.data:
             if isinstance(total_rows, int) and isinstance(total_cols, int) and total_rows > 0 and total_cols > 0:
-                self.data_ref = [list(repeat("", total_cols)) for i in range(total_rows)]
+                self.data = [list(repeat("", total_cols)) for i in range(total_rows)]
         if isinstance(headers, int):
             self._headers = headers
         else:
@@ -402,13 +403,13 @@ class MainTable(tk.Canvas):
     def get_ctrl_x_c_boxes(self):
         currently_selected = self.currently_selected()
         boxes = {}
-        if isinstance(currently_selected[0], int) or currently_selected[0] == "column":
+        if currently_selected.type_ in ("cell", "column"):
             for item in chain(self.find_withtag("CellSelectFill"), self.find_withtag("Current_Outside"), self.find_withtag("ColSelectFill")):
                 alltags = self.gettags(item)
                 if alltags[0] == "CellSelectFill" or alltags[0] == "Current_Outside":
                     boxes[tuple(int(e) for e in alltags[1].split("_") if e)] = "cells"
                 elif alltags[0] == "ColSelectFill":
-                    boxes[tuple(int(e) for e in alltags[1].split("_") if e)] = "cols"
+                    boxes[tuple(int(e) for e in alltags[1].split("_") if e)] = "columns"
             maxrows = 0
             for r1, c1, r2, c2 in boxes:
                 if r2 - r1 > maxrows:
@@ -417,7 +418,7 @@ class MainTable(tk.Canvas):
                 if r2 - r1 < maxrows:
                     del boxes[(r1, c1, r2, c2)]
             return boxes, maxrows
-        elif currently_selected[0] == "row":
+        else:
             for item in self.find_withtag("RowSelectFill"):
                 boxes[tuple(int(e) for e in self.gettags(item)[1].split("_") if e)] = "rows"
             return boxes
@@ -428,7 +429,7 @@ class MainTable(tk.Canvas):
             s = io.StringIO()
             writer = csv_module.writer(s, dialect = csv_module.excel_tab, lineterminator = "\n")
             rows = []
-            if isinstance(currently_selected[0], int) or currently_selected[0] == "column":
+            if currently_selected.type_ in ("cell", "column"):
                 boxes, maxrows = self.get_ctrl_x_c_boxes()
                 if self.extra_begin_ctrl_c_func is not None:
                     try:
@@ -444,12 +445,12 @@ class MainTable(tk.Canvas):
                         for c in range(c1, c2):
                             dcol = c if self.all_columns_displayed else self.displayed_columns[c]
                             try:
-                                row.append(self.data_ref[data_ref_rn][dcol])
+                                row.append(self.data[data_ref_rn][dcol])
                             except:
                                 row.append("")
                     writer.writerow(row)
                     rows.append(row)
-            elif currently_selected[0] == "row":
+            else:
                 boxes = self.get_ctrl_x_c_boxes()
                 if self.extra_begin_ctrl_c_func is not None:
                     try:
@@ -463,7 +464,7 @@ class MainTable(tk.Canvas):
                         for c in range(c1, c2):
                             dcol = c if self.all_columns_displayed else self.displayed_columns[c]
                             try:
-                                row.append(self.data_ref[data_ref_rn][dcol])
+                                row.append(self.data[data_ref_rn][dcol])
                             except:
                                 row.append("")
                         writer.writerow(row)
@@ -478,13 +479,12 @@ class MainTable(tk.Canvas):
             
     def ctrl_x(self, event = None):
         if self.anything_selected():
-            if self.undo_enabled:
-                undo_storage = {}
+            undo_storage = {}
             s = io.StringIO()
             writer = csv_module.writer(s, dialect = csv_module.excel_tab, lineterminator = "\n")
             currently_selected = self.currently_selected()
             rows = []
-            if isinstance(currently_selected[0], int) or currently_selected[0] == "column":
+            if currently_selected.type_ in ("cell", "column"):
                 boxes, maxrows = self.get_ctrl_x_c_boxes()
                 if self.extra_begin_ctrl_x_func is not None:
                     try:
@@ -500,7 +500,7 @@ class MainTable(tk.Canvas):
                         for c in range(c1, c2):
                             dcol = c if self.all_columns_displayed else self.displayed_columns[c]
                             try:
-                                sx = f"{self.data_ref[data_ref_rn][dcol]}"
+                                sx = f"{self.data[data_ref_rn][dcol]}"
                                 row.append(sx)
                                 if self.undo_enabled:
                                     undo_storage[(data_ref_rn, dcol)] = sx
@@ -527,10 +527,10 @@ class MainTable(tk.Canvas):
                                 ):
                                 continue
                             try:
-                                self.data_ref[data_ref_rn][dcol] = ""
+                                self.data[data_ref_rn][dcol] = ""
                             except:
                                 continue
-            elif currently_selected[0] == "row":
+            else:
                 boxes = self.get_ctrl_x_c_boxes()
                 if self.extra_begin_ctrl_x_func is not None:
                     try:
@@ -544,7 +544,7 @@ class MainTable(tk.Canvas):
                         for c in range(c1, c2):
                             dcol = c if self.all_columns_displayed else self.displayed_columns[c]
                             try:
-                                sx = f"{self.data_ref[data_ref_rn][dcol]}"
+                                sx = f"{self.data[data_ref_rn][dcol]}"
                                 row.append(sx)
                                 if self.undo_enabled:
                                     undo_storage[(data_ref_rn, dcol)] = sx
@@ -569,7 +569,7 @@ class MainTable(tk.Canvas):
                                 ):
                                 continue
                             try:
-                                self.data_ref[data_ref_rn][dcol] = ""
+                                self.data[data_ref_rn][dcol] = ""
                             except:
                                 continue
             if self.undo_enabled:
@@ -583,24 +583,32 @@ class MainTable(tk.Canvas):
             if self.extra_end_ctrl_x_func is not None:
                 self.extra_end_ctrl_x_func(CtrlKeyEvent("end_ctrl_x", boxes, currently_selected, rows))
 
+    def find_last_selected_box_with_current(self, currently_selected):
+        if currently_selected.type_ in ("cell", "column"):
+            boxes, maxrows = self.get_ctrl_x_c_boxes()
+        else:
+            boxes = self.get_ctrl_x_c_boxes()
+        for (r1, c1, r2, c2), type_ in boxes.items():
+            if (type_[:2] == currently_selected.type_[:2] and
+                currently_selected.row >= r1 and
+                currently_selected.row <= r2 and
+                currently_selected.column >= c1 and
+                currently_selected.column <= c2):
+                if (self.last_selected and self.last_selected == (r1, c1, r2, c2, type_)) or not self.last_selected:
+                    return (r1, c1, r2, c2)
+        return (currently_selected.row, currently_selected.column, currently_selected.row + 1, currently_selected.column + 1)
+
     def ctrl_v(self, event = None):
         if not self.expand_sheet_if_paste_too_big and (len(self.col_positions) == 1 or len(self.row_positions) == 1):
             return
         currently_selected = self.currently_selected()
         if currently_selected:
-            if currently_selected[0] == "column":
-                x1 = currently_selected[1]
-                y1 = 0
-            elif currently_selected[0] == "row":
-                y1 = currently_selected[1]
-                x1 = 0
-            elif isinstance(currently_selected[0], int):
-                y1 = currently_selected[0]
-                x1 = currently_selected[1]
+            y1 = currently_selected[0]
+            x1 = currently_selected[1]
         elif not currently_selected and not self.expand_sheet_if_paste_too_big:
             return
         else:
-            if not self.data_ref:
+            if not self.data:
                 x1, y1 = 0, 0
             else:
                 if len(self.col_positions) == 1 and len(self.row_positions) > 1:
@@ -621,8 +629,22 @@ class MainTable(tk.Canvas):
         for rn, r in enumerate(data):
             if len(r) < numcols:
                 data[rn].extend(list(repeat("", numcols - len(r))))
-        if self.undo_enabled:
-            undo_storage = {}
+        lastbox_r1, lastbox_c1, lastbox_r2, lastbox_c2 = self.find_last_selected_box_with_current(currently_selected)
+        lastbox_numrows = lastbox_r2 - lastbox_r1
+        lastbox_numcols = lastbox_c2 - lastbox_c1
+        
+        if lastbox_numrows > numrows and lastbox_numrows % numrows == 0:
+            nd = []
+            for times in range(int(lastbox_numrows / numrows)):
+                nd.extend([r.copy() for r in data])
+            data.extend(nd)
+            numrows *= int(lastbox_numrows / numrows)
+        if lastbox_numcols > numcols and lastbox_numcols % numcols == 0:
+            for rn, r in enumerate(data):
+                for times in range(int(lastbox_numcols / numcols)):
+                    data[rn].extend(r.copy())
+            numcols *= int(lastbox_numcols / numcols)
+        undo_storage = {}
         if self.expand_sheet_if_paste_too_big:
             added_rows = 0
             added_cols = 0
@@ -658,10 +680,10 @@ class MainTable(tk.Canvas):
         for ndr, r in enumerate(range(y1, y1 + numrows)):
             for ndc, c in enumerate(range(x1, x1 + numcols)):
                 dcol = c if self.all_columns_displayed else self.displayed_columns[c]
-                if r > len(self.data_ref) - 1:
-                    self.data_ref.extend([list(repeat("", c + 1)) for r in range((r + 1) - len(self.data_ref))])
-                elif c > len(self.data_ref[r]) - 1:
-                    self.data_ref[r].extend(list(repeat("", (c + 1) - len(self.data_ref[r]))))
+                if r > len(self.data) - 1:
+                    self.data.extend([list(repeat("", c + 1)) for r in range((r + 1) - len(self.data))])
+                elif c > len(self.data[r]) - 1:
+                    self.data[r].extend(list(repeat("", (c + 1) - len(self.data[r]))))
                 if (
                     ((r, dcol) in self.cell_options and 'readonly' in self.cell_options[(r, dcol)]) or
                     ((r, dcol) in self.cell_options and 'checkbox' in self.cell_options[(r, dcol)]) or
@@ -675,8 +697,8 @@ class MainTable(tk.Canvas):
                     ):
                     continue
                 if self.undo_enabled:
-                    undo_storage[(r, dcol)] = f"{self.data_ref[r][dcol]}"
-                self.data_ref[r][dcol] = data[ndr][ndc]
+                    undo_storage[(r, dcol)] = f"{self.data[r][dcol]}"
+                self.data[r][dcol] = data[ndr][ndc]
         if self.expand_sheet_if_paste_too_big and self.undo_enabled:
             self.equalize_data_row_lengths()
         self.deselect("all")
@@ -704,7 +726,7 @@ class MainTable(tk.Canvas):
                 if alltags[0] in ("CellSelectFill", "Current_Outside"):
                     boxes.append((box, "cells"))
                 elif alltags[0] == "ColSelectFill":
-                    boxes.append((box, "cols"))
+                    boxes.append((box, "columns"))
                 elif alltags[0] == "RowSelectFill":
                     boxes.append((box, "rows"))
             if self.extra_begin_delete_key_func is not None:
@@ -729,8 +751,8 @@ class MainTable(tk.Canvas):
                             continue
                         try:
                             if self.undo_enabled:
-                                undo_storage[(r, dcol)] = f"{self.data_ref[r][dcol]}"
-                            self.data_ref[r][dcol] = ""
+                                undo_storage[(r, dcol)] = f"{self.data[r][dcol]}"
+                            self.data[r][dcol] = ""
                         except:
                             continue
             if self.extra_end_delete_key_func is not None:
@@ -739,7 +761,7 @@ class MainTable(tk.Canvas):
                 self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells", undo_storage, boxes, currently_selected))))
             self.refresh()
             
-    def move_columns_adjust_options_dict(self, col, remove_start, num_cols, move_data = True):
+    def move_columns_adjust_options_dict(self, col, remove_start, num_cols, move_data = True, create_selections = True):
         c = int(col)
         rm1start = int(remove_start)
         rm1end = rm1start + num_cols
@@ -758,25 +780,29 @@ class MainTable(tk.Canvas):
         self.col_positions = list(accumulate(chain([0], (width for width in cws))))
         if c + totalcols > len(self.col_positions):
             new_selected = tuple(range(len(self.col_positions) - 1 - totalcols, len(self.col_positions) - 1))
-            self.create_selected(0, len(self.col_positions) - 1 - totalcols, len(self.row_positions) - 1, len(self.col_positions) - 1, "cols")
+            if create_selections:
+                self.create_selected(0, len(self.col_positions) - 1 - totalcols, len(self.row_positions) - 1, len(self.col_positions) - 1, "columns")
         else:
             if rm1start > c:
                 new_selected = tuple(range(c, c + totalcols))
-                self.create_selected(0, c, len(self.row_positions) - 1, c + totalcols, "cols")
+                if create_selections:
+                    self.create_selected(0, c, len(self.row_positions) - 1, c + totalcols, "columns")
             else:
                 new_selected = tuple(range(c + 1 - totalcols, c + 1))
-                self.create_selected(0, c + 1 - totalcols, len(self.row_positions) - 1, c + 1, "cols")
-        self.create_current(0, int(new_selected[0]), type_ = "col", inside = True)
+                if create_selections:
+                    self.create_selected(0, c + 1 - totalcols, len(self.row_positions) - 1, c + 1, "columns")
+        if create_selections:
+            self.create_current(0, int(new_selected[0]), type_ = "column", inside = True)
         newcolsdct = {t1: t2 for t1, t2 in zip(orig_selected, new_selected)}
         if self.all_columns_displayed:
             dispset = {}
             if rm1start > c:
                 if move_data:
-                    for rn in range(len(self.data_ref)):
-                        if len(self.data_ref[rn]) < rm1end:
-                            self.data_ref[rn].extend(list(repeat("", rm1end - len(self.data_ref[rn]) + 1)))
-                        self.data_ref[rn][c:c] = self.data_ref[rn][rm1start:rm1end]
-                        self.data_ref[rn][rm2start:rm2end] = []
+                    for rn in range(len(self.data)):
+                        if len(self.data[rn]) < rm1end:
+                            self.data[rn].extend(list(repeat("", rm1end - len(self.data[rn]) + 1)))
+                        self.data[rn][c:c] = self.data[rn][rm1start:rm1end]
+                        self.data[rn][rm2start:rm2end] = []
                     if isinstance(self._headers, list) and self._headers:
                         if len(self._headers) < rm1end:
                             self._headers.extend(list(repeat("", rm1end - len(self._headers) + 1)))
@@ -815,17 +841,17 @@ class MainTable(tk.Canvas):
             else:
                 c += 1
                 if move_data:
-                    for rn in range(len(self.data_ref)):
-                        if len(self.data_ref[rn]) < c - 1:
-                            self.data_ref[rn].extend(list(repeat("", c - len(self.data_ref[rn]))))
-                        self.data_ref[rn][c:c] = self.data_ref[rn][rm1start:rm1end]
-                        self.data_ref[rn][rm1start:rm1end] = []
+                    for rn in range(len(self.data)):
+                        if len(self.data[rn]) < c - 1:
+                            self.data[rn].extend(list(repeat("", c - len(self.data[rn]))))
+                        self.data[rn][c:c] = self.data[rn][rm1start:rm1end]
+                        self.data[rn][rm1start:rm1end] = []
                     if isinstance(self._headers, list) and self._headers:
                         if len(self._headers) < c:
                             self._headers.extend(list(repeat("", c - len(self._headers))))
                         self._headers[c:c] = self._headers[rm1start:rm1end]
                         self._headers[rm1start:rm1end] = []
-            
+
                 new_ch = {}
                 for k, v in self.CH.cell_options.items():
                     if k in newcolsdct:
@@ -836,15 +862,7 @@ class MainTable(tk.Canvas):
                         new_ch[k] = v
                 self.CH.cell_options = new_ch
                 
-                new_cell = {}
-                for k, v in self.cell_options.items():
-                    if k[1] in newcolsdct:
-                        new_cell[(k[0], newcolsdct[k[1]])] = v
-                    elif k[1] < c and k[1] > rm1start:
-                        new_cell[(k[0], k[1] - totalcols)] = v
-                    else:
-                        new_cell[k] = v
-                self.cell_options = new_cell
+                self.cell_options = {(k[0], newcolsdct[k[1]]) if k[1] in newcolsdct else (k[0], k[1] - totalcols) if k[1] < c and k[1] > rm1start else k: v for k, v in self.cell_options.items()}
                 
                 new_col = {}
                 for k, v in self.col_options.items():
@@ -872,22 +890,22 @@ class MainTable(tk.Canvas):
             # building an entirely new row is best due to permutations of hidden columns
             if move_data:
                 max_idx = max(chain(dispset, dispset.values())) + 1
-                for rn in range(len(self.data_ref)):
-                    if len(self.data_ref[rn]) < max_idx:
-                        self.data_ref[rn][:] = self.data_ref[rn] + list(repeat("", max_idx - len(self.data_ref[rn])))
+                for rn in range(len(self.data)):
+                    if len(self.data[rn]) < max_idx:
+                        self.data[rn][:] = self.data[rn] + list(repeat("", max_idx - len(self.data[rn])))
                     new = []
                     idx = 0
                     done = set()
-                    while len(new) < len(self.data_ref[rn]):
+                    while len(new) < len(self.data[rn]):
                         if idx in dispset and idx not in done:
-                            new.append(self.data_ref[rn][dispset[idx]])
+                            new.append(self.data[rn][dispset[idx]])
                             done.add(idx)
                         elif idx not in done:
-                            new.append(self.data_ref[rn][idx])
+                            new.append(self.data[rn][idx])
                             idx += 1
                         else:
                             idx += 1
-                    self.data_ref[rn] = new
+                    self.data[rn] = new
                 if isinstance(self._headers, list) and self._headers:
                     if len(self._headers) < max_idx:
                         self._headers[:] = self._headers + list(repeat("", max_idx - len(self._headers)))
@@ -910,6 +928,100 @@ class MainTable(tk.Canvas):
             self.col_options = {dispset[k] if k in dispset else k: v for k, v in self.col_options.items()}
         
         return new_selected, dispset
+    
+    def move_rows_adjust_options_dict(self, row, remove_start, num_rows, move_data = True, create_selections = True):
+        r = int(row)
+        rm1start = int(remove_start)
+        rm1end = rm1start + num_rows
+        totalrows = int(num_rows)
+        rm2start = rm1start + (rm1end - rm1start)
+        rm2end = rm1end + (rm1end - rm1start)
+        orig_selected = list(range(rm1start, rm1start + totalrows))
+        self.deselect("all")
+        if move_data:
+            if rm1start > r:
+                self.data = (self.data[:r] +
+                             self.data[rm1start:rm1start + totalrows] +
+                             self.data[r:rm1start] +
+                             self.data[rm1start + totalrows:])
+                if not isinstance(self._row_index, int) and self._row_index:
+                    try:
+                        self._row_index = (self._row_index[:r] +
+                                           self._row_index[rm1start:rm1start + totalrows] +
+                                           self._row_index[r:rm1start] +
+                                           self._row_index[rm1start + totalrows:])
+                    except:
+                        pass
+            else:
+                self.data = (self.data[:rm1start] +
+                             self.data[rm1start + totalrows:r + 1] +
+                             self.data[rm1start:rm1start + totalrows] +
+                             self.data[r + 1:])
+                if not isinstance(self._row_index, int) and self._row_index:
+                    try:
+                        self._row_index = (self._row_index[:rm1start] +
+                                           self._row_index[rm1start + totalrows:r + 1] +
+                                           self._row_index[rm1start:rm1start + totalrows] +
+                                           self._row_index[r + 1:])
+                    except:
+                        pass
+        rhs = [int(b - a) for a, b in zip(self.row_positions, islice(self.row_positions, 1, len(self.row_positions)))]
+        if rm1start > r:
+            rhs = (rhs[:r] +
+                   rhs[rm1start:rm1start + totalrows] +
+                   rhs[r:rm1start] +
+                   rhs[rm1start + totalrows:])
+        else:
+            rhs = (rhs[:rm1start] +
+                   rhs[rm1start + totalrows:r + 1] +
+                   rhs[rm1start:rm1start + totalrows] +
+                   rhs[r + 1:])
+        self.row_positions = list(accumulate(chain([0], (height for height in rhs))))
+        if (r - 1) + totalrows > len(self.row_positions) - 1:
+            new_selected = tuple(range(len(self.row_positions) - 1 - totalrows, len(self.row_positions) - 1))
+            if create_selections:
+                self.create_selected(len(self.row_positions) - 1 - totalrows, 0, len(self.row_positions) - 1, len(self.col_positions) - 1, "rows")
+        else:
+            if rm1start > r:
+                new_selected = tuple(range(r, r + totalrows))
+                if create_selections:
+                    self.create_selected(r, 0, r + totalrows, len(self.col_positions) - 1, "rows")
+            else:
+                new_selected = tuple(range(r + 1 - totalrows, r + 1))
+                if create_selections:
+                    self.create_selected(r + 1 - totalrows, 0, r + 1, len(self.col_positions) - 1, "rows")
+        if create_selections:
+            self.create_current(int(new_selected[0]), 0, type_ = "row", inside = True)
+        rowset = set(orig_selected)
+
+        popped_ri = {t1: t2 for t1, t2 in self.RI.cell_options.items() if t1 in rowset}
+        popped_cell = {t1: t2 for t1, t2 in self.cell_options.items() if t1[0] in rowset}
+        popped_row = {t1: t2 for t1, t2 in self.row_options.items() if t1 in rowset}
+        
+        popped_ri = {t1: self.RI.cell_options.pop(t1) for t1 in popped_ri}
+        popped_cell = {t1: self.cell_options.pop(t1) for t1 in popped_cell}
+        popped_row = {t1: self.row_options.pop(t1) for t1 in popped_row}
+
+        self.RI.cell_options = {t1 if t1 < rm1start else t1 - totalrows: t2 for t1, t2 in self.RI.cell_options.items()}
+        self.RI.cell_options = {t1 if t1 < r else t1 + totalrows: t2 for t1, t2 in self.RI.cell_options.items()}
+
+        self.row_options = {t1 if t1 < rm1start else t1 - totalrows: t2 for t1, t2 in self.row_options.items()}
+        self.row_options = {t1 if t1 < r else t1 + totalrows: t2 for t1, t2 in self.row_options.items()}
+
+        self.cell_options = {(t10 if t10 < rm1start else t10 - totalrows, t11): t2 for (t10, t11), t2 in self.cell_options.items()}
+        self.cell_options = {(t10 if t10 < r else t10 + totalrows, t11): t2 for (t10, t11), t2 in self.cell_options.items()}
+
+        newrowsdct = {t1: t2 for t1, t2 in zip(orig_selected, new_selected)}
+        for t1, t2 in popped_ri.items():
+            self.RI.cell_options[newrowsdct[t1]] = t2
+
+        for t1, t2 in popped_row.items():
+            self.row_options[newrowsdct[t1]] = t2
+
+        for (t10, t11), t2 in popped_cell.items():
+            self.cell_options[(newrowsdct[t10], t11)] = t2
+            
+        return new_selected, {}
 
     def ctrl_z(self, event = None):
         if self.undo_storage:
@@ -931,7 +1043,7 @@ class MainTable(tk.Canvas):
                     r1, c1, r2, c2 = box[0]
                     if not self.expand_sheet_if_paste_too_big:
                         self.create_selected(r1, c1, r2, c2, box[1])
-                self.create_current(0, undo_storage[3][1], type_ = "col", inside = True)
+                self.create_current(0, undo_storage[3][1], type_ = "column", inside = True)
                 
             if undo_storage[0] in ("edit_index", ):
                 for r, v in undo_storage[1].items():
@@ -944,7 +1056,7 @@ class MainTable(tk.Canvas):
                             
             if undo_storage[0] in ("edit_cells", "edit_cells_paste"):
                 for (r, c), v in undo_storage[1].items():
-                    self.data_ref[r][c] = v
+                    self.data[r][c] = v
                 start_row = float("inf")
                 start_col = float("inf")
                 for box in undo_storage[2]:
@@ -958,19 +1070,19 @@ class MainTable(tk.Canvas):
                 if undo_storage[0] == "edit_cells_paste" and self.expand_sheet_if_paste_too_big:
                     if undo_storage[4][0] > 0:
                         self.del_row_positions(len(self.row_positions) - 1 - undo_storage[4][0], undo_storage[4][0])
-                        self.data_ref[:] = self.data_ref[:-undo_storage[4][0]]
+                        self.data[:] = self.data[:-undo_storage[4][0]]
                     if undo_storage[4][1] > 0:
                         quick_added_cols = undo_storage[4][1]
                         self.del_col_positions(len(self.col_positions) - 1 - quick_added_cols, quick_added_cols)
-                        for rn in range(len(self.data_ref)):
-                            self.data_ref[rn][:] = self.data_ref[rn][:-quick_added_cols]
+                        for rn in range(len(self.data)):
+                            self.data[rn][:] = self.data[rn][:-quick_added_cols]
                         if not self.all_columns_displayed:
                             self.displayed_columns[:] = self.displayed_columns[:-quick_added_cols]
                 if undo_storage[3]:
                     if isinstance(undo_storage[3][0], int):
                         self.create_current(undo_storage[3][0], undo_storage[3][1], type_ = "cell", inside = True if self.cell_selected(undo_storage[3][0], undo_storage[3][1]) else False)
                     elif undo_storage[3][0] == "column":
-                        self.create_current(0, undo_storage[3][1], type_ = "col", inside = True)
+                        self.create_current(0, undo_storage[3][1], type_ = "column", inside = True)
                     elif undo_storage[3][0] == "row":
                         self.create_current(undo_storage[3][1], 0, type_ = "row", inside = True)
                 elif start_row < len(self.row_positions) - 1 and start_col < len(self.col_positions) - 1:
@@ -982,88 +1094,21 @@ class MainTable(tk.Canvas):
                 c = undo_storage[1]
                 rm1start = undo_storage[2]
                 totalcols = len(undo_storage[4])
+                if rm1start < c:
+                    c += totalcols - 1
                 self.move_columns_adjust_options_dict(c, rm1start, totalcols)
             
             elif undo_storage[0] == "move_rows":
                 rhs = [int(b - a) for a, b in zip(self.row_positions, islice(self.row_positions, 1, len(self.row_positions)))]
-                ins_row = undo_storage[1]
-                orig_ins_row = int(ins_row)
+                r = undo_storage[1]
                 rm1start = undo_storage[2]
-                rm1end = undo_storage[3] + 1
-                new_selected = undo_storage[4]
-                rm2start = rm1start + (rm1end - rm1start)
-                rm2end = rm1end + (rm1end - rm1start)
-                totalrows = rm1end - rm1start
-                if rm1start < ins_row:
-                    ins_row += totalrows
-                if rm1start > ins_row:
-                    try:
-                        self.data_ref[ins_row:ins_row] = self.data_ref[rm1start:rm1end]
-                        self.data_ref[rm2start:rm2end] = []
-                    except:
-                        pass
-                    if self._row_index:
-                        try:
-                            self._row_index[ins_row:ins_row] = self._row_index[rm1start:rm1end]
-                            self._row_index[rm2start:rm2end] = []
-                        except:
-                            pass
-                else:
-                    try:
-                        self.data_ref[ins_row:ins_row] = self.data_ref[rm1start:rm1end]
-                        self.data_ref[rm1start:rm1end] = []
-                    except:
-                        pass
-                    if self._row_index:
-                        try:
-                            self._row_index[ins_row:ins_row] = self._row_index[rm1start:rm1end]
-                            self._row_index[rm1start:rm1end] = []
-                        except:
-                            pass
-                if rm1start > ins_row:
-                    rhs[ins_row:ins_row] = rhs[rm1start:rm1end]
-                    rhs[rm2start:rm2end] = []
-                    self.row_positions = list(accumulate(chain([0], (height for height in rhs))))
-                    self.create_current(ins_row, 0, type_ = "row", inside = True)
-                    self.create_selected(ins_row, 0, ins_row + totalrows, len(self.col_positions) - 1, "rows")
-                else:
-                    rhs[ins_row:ins_row] = rhs[rm1start:rm1end]
-                    rhs[rm1start:rm1end] = []
-                    self.row_positions = list(accumulate(chain([0], (height for height in rhs))))
-                    self.create_current(ins_row - totalrows, 0, type_ = "row", inside = True)
-                    self.create_selected(ins_row - totalrows, 0, ins_row, len(self.col_positions) - 1, "rows")
-                self.see(r = orig_ins_row, c = 0, keep_yscroll = False, keep_xscroll = True, bottom_right_corner = False, check_cell_visibility = True, redraw = False)
-                rowsiter = tuple(range(rm1start, rm1end))
-                rowset = set(rowsiter)
-                popped_ri = {t1: t2 for t1, t2 in self.RI.cell_options.items() if t1 in rowset}
-                popped_cell = {t1: t2 for t1, t2 in self.cell_options.items() if t1[0] in rowset}
-                popped_row = {t1: t2 for t1, t2 in self.row_options.items() if t1 in rowset}
-                
-                popped_ri = {t1: self.RI.cell_options.pop(t1) for t1 in popped_ri}
-                popped_cell = {t1: self.cell_options.pop(t1) for t1 in popped_cell}
-                popped_row = {t1: self.row_options.pop(t1) for t1 in popped_row}
-
-                self.RI.cell_options = {t1 if t1 < rm1start else t1 - totalrows: t2 for t1, t2 in self.RI.cell_options.items()}
-                self.RI.cell_options = {t1 if t1 < ins_row else t1 + totalrows: t2 for t1, t2 in self.RI.cell_options.items()}
-
-                self.row_options = {t1 if t1 < rm1start else t1 - totalrows: t2 for t1, t2 in self.row_options.items()}
-                self.row_options = {t1 if t1 < ins_row else t1 + totalrows: t2 for t1, t2 in self.row_options.items()}
-
-                self.cell_options = {(t10 if t10 < rm1start else t10 - totalrows, t11): t2 for (t10, t11), t2 in self.cell_options.items()}
-                self.cell_options = {(t10 if t10 < ins_row else t10 + totalrows, t11): t2 for (t10, t11), t2 in self.cell_options.items()}
-
-                newrowsdct = {t1: t2 for t1, t2 in zip(rowsiter, new_selected)}
-                for t1, t2 in popped_ri.items():
-                    self.RI.cell_options[newrowsdct[t1]] = t2
-
-                for t1, t2 in popped_row.items():
-                    self.row_options[newrowsdct[t1]] = t2
-
-                for (t10, t11), t2 in popped_cell.items():
-                    self.cell_options[(newrowsdct[t10], t11)] = t2
+                totalrows = len(undo_storage[4])
+                if rm1start < r:
+                    r += totalrows - 1
+                self.move_rows_adjust_options_dict(r, rm1start, totalrows)
                         
             elif undo_storage[0] == "insert_row":
-                self.data_ref[undo_storage[1]['data_row_num']:undo_storage[1]['data_row_num'] + undo_storage[1]['numrows']] = []
+                self.data[undo_storage[1]['data_row_num']:undo_storage[1]['data_row_num'] + undo_storage[1]['numrows']] = []
                 try:
                     self._row_index[undo_storage[1]['data_row_num']:undo_storage[1]['data_row_num'] + undo_storage[1]['numrows']] = []
                 except:
@@ -1091,8 +1136,8 @@ class MainTable(tk.Canvas):
                 self.displayed_columns = undo_storage[1]['displayed_columns']
                 qx = undo_storage[1]['data_col_num']
                 qnum = undo_storage[1]['numcols']
-                for rn in range(len(self.data_ref)):
-                    self.data_ref[rn][qx:qx + qnum] = []
+                for rn in range(len(self.data)):
+                    self.data[rn][qx:qx + qnum] = []
                 try:
                     self._headers[qx:qx + qnum] = []
                 except:
@@ -1118,7 +1163,7 @@ class MainTable(tk.Canvas):
                     
             elif undo_storage[0] == "delete_rows":
                 for rn, r, h in reversed(undo_storage[1]['deleted_rows']):
-                    self.data_ref.insert(rn, r)
+                    self.data.insert(rn, r)
                     self.insert_row_position(idx = rn, height = h)
                 self.cell_options = undo_storage[1]['cell_options']
                 self.row_options = undo_storage[1]['row_options']
@@ -1140,7 +1185,7 @@ class MainTable(tk.Canvas):
                 for cn, rowdict in reversed(tuple(undo_storage[1]['deleted_cols'].items())):
                     for rn, v in rowdict.items():
                         try:
-                            self.data_ref[rn].insert(cn, v)
+                            self.data[rn].insert(cn, v)
                         except:
                             continue
                 for cn, v in reversed(tuple(undo_storage[1]['deleted_hdr_values'].items())):
@@ -1293,9 +1338,9 @@ class MainTable(tk.Canvas):
             self.selection_binding_func(SelectCellEvent("select_cell", r, c))
 
     def move_down(self):
-        currently_selected = self.currently_selected(get_coords = True)
+        currently_selected = self.currently_selected()
         if currently_selected:
-            r, c = currently_selected
+            r, c = currently_selected.row, currently_selected.column
             if (
                 r < len(self.row_positions) - 2 and
                 (self.single_selection_enabled or self.toggle_selection_enabled)
@@ -1340,8 +1385,19 @@ class MainTable(tk.Canvas):
                 self.select_cell(row, column, redraw = redraw)
 
     def align_rows(self, rows = [], align = "global", align_index = False): #"center", "w", "e" or "global"
+        if isinstance(rows, str) and rows.lower() == "all" and align == "global":
+            for r in self.row_options:
+                if 'align' in self.row_options[r]:
+                    del self.row_options[r]['align']
+            if align_index:
+                for r in self.RI.cell_options:
+                    if r in self.RI.cell_options and 'align' in self.RI.cell_options[r]:
+                        del self.RI.cell_options[r]['align']
+            return
         if isinstance(rows, int):
             rows_ = [rows]
+        elif isinstance(rows, str) and rows.lower() == "all":
+            rows_ = (r for r in range(self.total_data_rows()))
         else:
             rows_ = rows
         if align == "global":
@@ -1361,8 +1417,19 @@ class MainTable(tk.Canvas):
                     self.RI.cell_options[r]['align'] = align
 
     def align_columns(self, columns = [], align = "global", align_header = False): #"center", "w", "e" or "global"
+        if isinstance(columns, str) and columns.lower() == "all" and align == "global":
+            for c in self.col_options:
+                if 'align' in self.col_options[c]:
+                    del self.col_options[c]['align']
+            if align_header:
+                for c in self.CH.cell_options:
+                    if c in self.CH.cell_options and 'align' in self.CH.cell_options[c]:
+                        del self.CH.cell_options[c]['align']
+            return
         if isinstance(columns, int):
             cols_ = [columns]
+        elif isinstance(columns, str) and columns.lower() == "all":
+            cols_ = (c for c in range(self.total_data_cols()))
         else:
             cols_ = columns
         if align == "global":
@@ -1382,6 +1449,11 @@ class MainTable(tk.Canvas):
                     self.CH.cell_options[c]['align'] = align
 
     def align_cells(self, row = 0, column = 0, cells = [], align = "global"): #"center", "w", "e" or "global"
+        if isinstance(row, str) and row.lower() == "all" and align == "global":
+            for (r, c) in self.cell_options:
+                if 'align' in self.cell_options[(r, c)]:
+                    del self.cell_options[(r, c)]['align']
+            return
         if align == "global":
             if cells:
                 for r, c in cells:
@@ -1533,7 +1605,7 @@ class MainTable(tk.Canvas):
                     self.RI.delete(alltags[1])
                     self.CH.delete(alltags[1])
             current = self.currently_selected()
-            if current and current[0] == "row":
+            if current and current.type_ == "row":
                 deleted_boxes[tuple(int(e) for e in self.get_tags_of_current()[1].split("_") if e)] = "cell"
                 self.delete_current()
             deselected = ("deselect_all_rows", deleted_boxes)
@@ -1542,12 +1614,12 @@ class MainTable(tk.Canvas):
                 alltags = self.gettags(item)
                 if alltags:
                     r1, c1, r2, c2 = tuple(int(e) for e in alltags[1].split("_") if e)
-                    deleted_boxes[r1, c1, r2, c2] = "cols"
+                    deleted_boxes[r1, c1, r2, c2] = "columns"
                     self.delete(alltags[1])
                     self.RI.delete(alltags[1])
                     self.CH.delete(alltags[1])
             current = self.currently_selected()
-            if current and current[0] == "column":
+            if current and current.type_ == "column":
                 deleted_boxes[tuple(int(e) for e in self.get_tags_of_current()[1].split("_") if e)] = "cell"
                 self.delete_current()
             deselected = ("deselect_all_cols", deleted_boxes)
@@ -1590,7 +1662,7 @@ class MainTable(tk.Canvas):
                     if not reset_current and current and curr_c1 >= c1 and curr_c1 < c2:
                         reset_current = True
                         deleted_boxes[curr_r1, curr_c1, curr_r2, curr_c2] = "cell"
-                    deleted_boxes[r1, c1, r2, c2] = "cols"
+                    deleted_boxes[r1, c1, r2, c2] = "columns"
             if reset_current:
                 self.delete_current()
                 self.set_current_to_last()
@@ -1620,20 +1692,11 @@ class MainTable(tk.Canvas):
                             c == current[1]):
                             set_curr = True
                         if current and not set_curr:
-                            if isinstance(current[0], int):
-                                if (current[0] >= r1 and
-                                    current[0] < r2 and
-                                    current[1] >= c1 and
-                                    current[1] < c2):
-                                    set_curr = True
-                            elif current[0] == "column":
-                                if (current[1] >= c1 and
-                                    current[1] < c2):
-                                    set_curr = True
-                            elif current[0] == "row":
-                                if (current[1] >= r1 and
-                                    current[1] < r2):
-                                    set_curr = True
+                            if (current[0] >= r1 and
+                                current[0] < r2 and
+                                current[1] >= c1 and
+                                current[1] < c2):
+                                set_curr = True
                         self.delete(f"{r1}_{c1}_{r2}_{c2}")
                         self.RI.delete(f"{r1}_{c1}_{r2}_{c2}")
                         self.CH.delete(f"{r1}_{c1}_{r2}_{c2}")
@@ -1661,7 +1724,7 @@ class MainTable(tk.Canvas):
             scrollto = 0
         if self.page_up_down_select_row:
             r = bisect.bisect_left(self.row_positions, scrollto)
-            current = self.currently_selected(get_coords = True)
+            current = self.currently_selected()
             if current and current[0] == r:
                 r -= 1
             if r < 0:
@@ -1687,7 +1750,7 @@ class MainTable(tk.Canvas):
         scrollto = top + height
         if self.page_up_down_select_row and self.RI.row_selection_enabled:
             r = bisect.bisect_left(self.row_positions, scrollto) - 1
-            current = self.currently_selected(get_coords = True)
+            current = self.currently_selected()
             if current and current[0] == r:
                 r += 1
             if r > len(self.row_positions) - 2:
@@ -1712,15 +1775,15 @@ class MainTable(tk.Canvas):
         currently_selected = self.currently_selected()
         if not currently_selected or not self.arrowkeys_enabled:
             return
-        if currently_selected[0] == "row":
-            r = currently_selected[1]
+        if currently_selected.type_ == "row":
+            r = currently_selected.row
             if r != 0 and self.RI.row_selection_enabled:
                 if self.cell_is_completely_visible(r = r - 1, c = 0):
                     self.RI.select_row(r - 1, redraw = True)
                 else:
                     self.RI.select_row(r - 1)
                     self.see(r - 1, 0, keep_xscroll = True, check_cell_visibility = False)
-        elif isinstance(currently_selected[0],int):
+        elif currently_selected.type_ in ("cell", "column"):
             r = currently_selected[0]
             c = currently_selected[1]
             if r == 0 and self.CH.col_selection_enabled:
@@ -1737,23 +1800,23 @@ class MainTable(tk.Canvas):
         currently_selected = self.currently_selected()
         if not currently_selected or not self.arrowkeys_enabled:
             return
-        if currently_selected[0] == "row":
-            r = currently_selected[1]
+        if currently_selected.type_ == "row":
+            r = currently_selected.row
             if self.single_selection_enabled or self.toggle_selection_enabled:
                 if self.cell_is_completely_visible(r = r, c = 0):
                     self.select_cell(r, 0, redraw = True)
                 else:
                     self.select_cell(r, 0)
                     self.see(r, 0, keep_yscroll = True, bottom_right_corner = True, check_cell_visibility = False)
-        elif currently_selected[0] == "column":
-            c = currently_selected[1]
+        elif currently_selected.type_ == "column":
+            c = currently_selected.column
             if c < len(self.col_positions) - 2 and self.CH.col_selection_enabled:
                 if self.cell_is_completely_visible(r = 0, c = c + 1):
                     self.CH.select_col(c + 1, redraw = True)
                 else:
                     self.CH.select_col(c + 1)
                     self.see(0, c + 1, keep_yscroll = True, bottom_right_corner = False if self.arrow_key_down_right_scroll_page else True, check_cell_visibility = False)
-        elif isinstance(currently_selected[0], int):
+        else:
             r = currently_selected[0]
             c = currently_selected[1]
             if c < len(self.col_positions) - 2 and (self.single_selection_enabled or self.toggle_selection_enabled):
@@ -1767,8 +1830,8 @@ class MainTable(tk.Canvas):
         currently_selected = self.currently_selected()
         if not currently_selected or not self.arrowkeys_enabled:
             return
-        if currently_selected[0] == "row":
-            r = currently_selected[1]
+        if currently_selected.type_ == "row":
+            r = currently_selected.row
             if r < len(self.row_positions) - 2 and self.RI.row_selection_enabled:
                 if self.cell_is_completely_visible(r = min(r + 2, len(self.row_positions) - 2), c = 0):
                     self.RI.select_row(r + 1, redraw = True)
@@ -1778,15 +1841,15 @@ class MainTable(tk.Canvas):
                         self.see(r + 2, 0, keep_xscroll = True, bottom_right_corner = True, check_cell_visibility = False)
                     elif not self.cell_is_completely_visible(r = r + 1, c = 0):
                         self.see(r + 1, 0, keep_xscroll = True, bottom_right_corner = False if self.arrow_key_down_right_scroll_page else True, check_cell_visibility = False)
-        elif currently_selected[0] == "column":
-            c = currently_selected[1]
+        elif currently_selected.type_ == "column":
+            c = currently_selected.column
             if self.single_selection_enabled or self.toggle_selection_enabled:
                 if self.cell_is_completely_visible(r = 0, c = c):
                     self.select_cell(0, c, redraw = True)
                 else:
                     self.select_cell(0, c)
                     self.see(0, c, keep_xscroll = True, bottom_right_corner = True, check_cell_visibility = False)
-        elif isinstance(currently_selected[0], int):
+        else:
             r = currently_selected[0]
             c = currently_selected[1]
             if r < len(self.row_positions) - 2 and (self.single_selection_enabled or self.toggle_selection_enabled):
@@ -1803,17 +1866,17 @@ class MainTable(tk.Canvas):
         currently_selected = self.currently_selected()
         if not currently_selected or not self.arrowkeys_enabled:
             return
-        if currently_selected[0] == "column":
-            c = currently_selected[1]
+        if currently_selected.type_ == "column":
+            c = currently_selected.column
             if c != 0 and self.CH.col_selection_enabled:
                 if self.cell_is_completely_visible(r = 0, c = c - 1):
                     self.CH.select_col(c - 1, redraw = True)
                 else:
                     self.CH.select_col(c - 1)
                     self.see(0, c - 1, keep_yscroll = True, bottom_right_corner = True, check_cell_visibility = False)
-        elif isinstance(currently_selected[0], int):
-            r = currently_selected[0]
-            c = currently_selected[1]
+        elif currently_selected.type_ == "cell":
+            r = currently_selected.row
+            c = currently_selected.column
             if c == 0 and self.RI.row_selection_enabled:
                 if not self.cell_is_completely_visible(r = r, c = 0):
                     self.see(r, c, keep_yscroll = True, check_cell_visibility = False)
@@ -2570,7 +2633,7 @@ class MainTable(tk.Canvas):
             colsel = int(self.identify_col(x = event.x))
             if rowsel < len(self.row_positions) - 1 and colsel < len(self.col_positions) - 1:
                 currently_selected = self.currently_selected()
-                if currently_selected and isinstance(currently_selected[0], int):
+                if currently_selected and currently_selected.type_ == "cell":
                     min_r = currently_selected[0]
                     min_c = currently_selected[1]
                     self.delete_selection_rects(delete_current = False)
@@ -2596,7 +2659,7 @@ class MainTable(tk.Canvas):
             end_row = self.identify_row(y = event.y)
             end_col = self.identify_col(x = event.x)
             currently_selected = self.currently_selected()
-            if end_row < len(self.row_positions) - 1 and end_col < len(self.col_positions) - 1 and currently_selected and isinstance(currently_selected[0], int):
+            if end_row < len(self.row_positions) - 1 and end_col < len(self.col_positions) - 1 and currently_selected and currently_selected.type_ == "cell":
                 start_row = currently_selected[0]
                 start_col = currently_selected[1]
                 if end_row >= start_row and end_col >= start_col:
@@ -2613,7 +2676,7 @@ class MainTable(tk.Canvas):
                     self.being_drawn_rect = rect
                     if self.drag_selection_binding_func is not None:
                         self.drag_selection_binding_func(SelectionBoxEvent("drag_select_cells", tuple(int(e) for e in self.gettags(self.find_withtag("CellSelectFill"))[1].split("_") if e)))
-            if self.data_ref:
+            if self.data:
                 xcheck = self.xview()
                 ycheck = self.yview()
                 if len(xcheck) > 1 and xcheck[0] > 0 and event.x < 0:
@@ -2981,7 +3044,7 @@ class MainTable(tk.Canvas):
 
     def data_reference(self, newdataref = None, reset_col_positions = True, reset_row_positions = True, redraw = False, return_id = True):
         if isinstance(newdataref, (list, tuple)):
-            self.data_ref = newdataref
+            self.data = newdataref
             self.undo_storage = deque(maxlen = self.max_undos)
             if reset_col_positions:
                 self.reset_col_positions()
@@ -2990,9 +3053,9 @@ class MainTable(tk.Canvas):
             if redraw:
                 self.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
         if return_id:
-            return id(self.data_ref)
+            return id(self.data)
         else:
-            return self.data_ref
+            return self.data
 
     def set_cell_size_to_text(self, r, c, only_set_if_too_small = False, redraw = True, run_binding = False):
         min_cw = self.min_cw
@@ -3014,10 +3077,10 @@ class MainTable(tk.Canvas):
                 h = b[3] - b[1] + 5
         else:
             try:
-                if isinstance(self.data_ref[r][cn], str):
-                    txt = self.data_ref[r][cn]
+                if isinstance(self.data[r][cn], str):
+                    txt = self.data[r][cn]
                 else:
-                    txt = f"{self.data_ref[r][cn]}"
+                    txt = f"{self.data[r][cn]}"
             except:
                 txt = ""
             if txt:
@@ -3075,6 +3138,9 @@ class MainTable(tk.Canvas):
             self.recreate_all_selection_boxes()
             if redraw:
                 self.refresh()
+                return True
+            else:
+                return False
 
     def set_all_cell_sizes_to_text(self, include_index = False):
         min_cw = self.min_cw
@@ -3125,7 +3191,7 @@ class MainTable(tk.Canvas):
             else:
                 try:
                     if isinstance(self._headers, int):
-                        txt = self.data_ref[self._headers][cn]
+                        txt = self.data[self._headers][cn]
                     else:
                         txt = self._headers[cn]
                     if txt:
@@ -3143,7 +3209,7 @@ class MainTable(tk.Canvas):
                         itmcon(x2, text = f"{cn + 1} {num2alpha(cn)}")
                     b = itmbbx(x2)
                     w = b[2] - b[0] + 7
-            for rn, r in enumerate(self.data_ref):
+            for rn, r in enumerate(self.data):
                 if (rn, cn) in self.cell_options and 'checkbox' in self.cell_options[(rn, cn)]:
                     txt = self.cell_options[(rn, cn)]['checkbox']['text']
                     if txt:
@@ -3270,7 +3336,7 @@ class MainTable(tk.Canvas):
                 data_ins_col = int(displayed_ins_col)
             else:
                 if displayed_ins_col == len(self.col_positions) - 1:
-                    rowlen = len(max(self.data_ref, key = len)) if self.data_ref else 0
+                    rowlen = len(max(self.data, key = len)) if self.data else 0
                     data_ins_col = rowlen
                 else:
                     try:
@@ -3316,16 +3382,16 @@ class MainTable(tk.Canvas):
                 self._headers[data_ins_col:data_ins_col] = list(repeat("", numcols))
             except:
                 pass
-        if self.row_positions == [0] and not self.data_ref:
+        if self.row_positions == [0] and not self.data:
             self.insert_row_position(idx = "end",
                                      height = int(self.min_rh),
                                      deselect_all = False)
-            self.data_ref.append(list(repeat("", numcols)))
+            self.data.append(list(repeat("", numcols)))
         else:
-            for rn in range(len(self.data_ref)):
-                self.data_ref[rn][data_ins_col:data_ins_col] = list(repeat("", numcols))
-        self.create_selected(0, displayed_ins_col, len(self.row_positions) - 1, displayed_ins_col + numcols, "cols")
-        self.create_current(0, displayed_ins_col, "col", inside = True)
+            for rn in range(len(self.data)):
+                self.data[rn][data_ins_col:data_ins_col] = list(repeat("", numcols))
+        self.create_selected(0, displayed_ins_col, len(self.row_positions) - 1, displayed_ins_col + numcols, "columns")
+        self.create_current(0, displayed_ins_col, "column", inside = True)
         if self.undo_enabled:
             self.undo_storage.append(zlib.compress(pickle.dumps(("insert_col", {"data_col_num": data_ins_col,
                                                                                 "displayed_columns": saved_displayed_columns,
@@ -3366,14 +3432,14 @@ class MainTable(tk.Canvas):
                 self._row_index[stidx:stidx] = list(repeat("", numrows))
             except:
                 pass
-        if self.col_positions == [0] and not self.data_ref:
+        if self.col_positions == [0] and not self.data:
             self.insert_col_position(idx = "end",
                                      width = None,
                                      deselect_all = False)
-            self.data_ref.append([""])
+            self.data.append([""])
         else:
             total_data_cols = self.total_data_cols()
-            self.data_ref[stidx:stidx] = [list(repeat("", total_data_cols)) for rn in range(numrows)]
+            self.data[stidx:stidx] = [list(repeat("", total_data_cols)) for rn in range(numrows)]
         self.create_selected(posidx, 0, posidx + numrows, len(self.col_positions) - 1, "rows")
         self.create_current(posidx, 0, "row", inside = True)
         if self.undo_enabled:
@@ -3407,11 +3473,11 @@ class MainTable(tk.Canvas):
                 if self.undo_enabled:
                     for c in reversed(seld_cols):
                         undo_storage['colwidths'][c] = self.col_positions[c + 1] - self.col_positions[c]
-                        for rn in range(len(self.data_ref)):
+                        for rn in range(len(self.data)):
                             if c not in undo_storage['deleted_cols']:
                                 undo_storage['deleted_cols'][c] = {}
                             try:
-                                undo_storage['deleted_cols'][c][rn] = self.data_ref[rn].pop(c)
+                                undo_storage['deleted_cols'][c][rn] = self.data[rn].pop(c)
                             except:
                                 continue
                     if self._headers and isinstance(self._headers, list):
@@ -3421,9 +3487,9 @@ class MainTable(tk.Canvas):
                             except:
                                 continue
                 else:
-                    for rn in range(len(self.data_ref)):
+                    for rn in range(len(self.data)):
                         for c in reversed(seld_cols):
-                            del self.data_ref[rn][c]
+                            del self.data[rn][c]
                     if self._headers and isinstance(self._headers, list):
                         for c in reversed(seld_cols):
                             try:
@@ -3434,11 +3500,11 @@ class MainTable(tk.Canvas):
                 if self.undo_enabled:
                     for c in reversed(seld_cols):
                         undo_storage['colwidths'][c] = self.col_positions[c + 1] - self.col_positions[c]
-                        for rn in range(len(self.data_ref)):
+                        for rn in range(len(self.data)):
                             if self.displayed_columns[c] not in undo_storage['deleted_cols']:
                                 undo_storage['deleted_cols'][self.displayed_columns[c]] = {}
                             try:
-                                undo_storage['deleted_cols'][self.displayed_columns[c]][rn] = self.data_ref[rn].pop(self.displayed_columns[c])
+                                undo_storage['deleted_cols'][self.displayed_columns[c]][rn] = self.data[rn].pop(self.displayed_columns[c])
                             except:
                                 continue
                     if self._headers and isinstance(self._headers, list):
@@ -3448,9 +3514,9 @@ class MainTable(tk.Canvas):
                             except:
                                 continue
                 else:
-                    for rn in range(len(self.data_ref)):
+                    for rn in range(len(self.data)):
                         for c in reversed(seld_cols):
-                            del self.data_ref[rn][self.displayed_columns[c]]
+                            del self.data[rn][self.displayed_columns[c]]
                     if self._headers and isinstance(self._headers, list):
                         for c in reversed(seld_cols):
                             try:
@@ -3507,10 +3573,10 @@ class MainTable(tk.Canvas):
                                 'row_options': {k: v.copy() for k, v in self.row_options.items()},
                                 'RI_cell_options': {k: v.copy() for k, v in self.RI.cell_options.items()}}
                 for r in reversed(seld_rows):
-                    undo_storage['deleted_rows'].append((r, self.data_ref.pop(r), self.row_positions[r + 1] - self.row_positions[r]))
+                    undo_storage['deleted_rows'].append((r, self.data.pop(r), self.row_positions[r + 1] - self.row_positions[r]))
             else:
                 for r in reversed(seld_rows):
-                    del self.data_ref[r]
+                    del self.data[r]
             if self._row_index and isinstance(self._row_index, list):
                 if self.undo_enabled:
                     for r in reversed(seld_rows):
@@ -3734,7 +3800,7 @@ class MainTable(tk.Canvas):
             if isinstance(self._headers, list):
                 h_total = len(self._headers)
         try:
-            d_total = len(max(self.data_ref, key = len))
+            d_total = len(max(self.data, key = len))
         except:
             pass
         return h_total if h_total > d_total else d_total
@@ -3744,29 +3810,29 @@ class MainTable(tk.Canvas):
         d_total = 0
         if isinstance(self._row_index, list):
             i_total = len(self._row_index)
-        d_total = len(self.data_ref)
+        d_total = len(self.data)
         return i_total if i_total > d_total else d_total
 
     def data_dimensions(self, total_rows = None, total_columns = None):
         if total_rows is None and total_columns is None:
             return self.total_data_rows(), self.total_data_cols()
         if total_rows is not None:
-            if len(self.data_ref) < total_rows:
+            if len(self.data) < total_rows:
                 if total_columns is None:
                     total_data_cols = self.total_data_cols()
-                    self.data_ref.extend([list(repeat("", total_data_cols)) for r in range(total_rows - len(self.data_ref))])
+                    self.data.extend([list(repeat("", total_data_cols)) for r in range(total_rows - len(self.data))])
                 else:
-                    self.data_ref.extend([list(repeat("", total_columns)) for r in range(total_rows - len(self.data_ref))])
+                    self.data.extend([list(repeat("", total_columns)) for r in range(total_rows - len(self.data))])
             else:
-                self.data_ref[total_rows:] = []
+                self.data[total_rows:] = []
         if total_columns is not None:
-            self.data_ref[:] = [r[:total_columns] if len(r) > total_columns else r + list(repeat("", total_columns - len(r))) for r in self.data_ref]
+            self.data[:] = [r[:total_columns] if len(r) > total_columns else r + list(repeat("", total_columns - len(r))) for r in self.data]
 
     def equalize_data_row_lengths(self, include_header = False):
         total_columns = self.total_data_cols()
         if include_header and total_columns > len(self._headers):
             self._headers[:] = self._headers + list(repeat("", total_columns - len(self._headers)))
-        self.data_ref[:] = [r + list(repeat("", total_columns - len(r))) if total_columns > len(r) else r for r in self.data_ref]
+        self.data[:] = [r + list(repeat("", total_columns - len(r))) if total_columns > len(r) else r for r in self.data]
         return total_columns
 
     def get_canvas_visible_area(self):
@@ -4202,13 +4268,13 @@ class MainTable(tk.Canvas):
                                                  fc + 2 + self.txt_h + 2,
                                                  fr + 2 + self.txt_h + 2,
                                                  fill = tf if self.cell_options[(r, dcol)]['checkbox']['state'] == "normal" else self.table_grid_fg,
-                                                 outline = "", tag = "cb", draw_check = self.data_ref[r][dcol])
+                                                 outline = "", tag = "cb", draw_check = self.data[r][dcol])
                     
                     try:
                         if (r, dcol) in self.cell_options and 'checkbox' in self.cell_options[(r, dcol)]:
                             lns = self.cell_options[(r, dcol)]['checkbox']['text'].split("\n") if isinstance(self.cell_options[(r, dcol)]['checkbox']['text'], str) else f"{self.cell_options[(r, dcol)]['checkbox']['text']}".split("\n")
                         else:
-                            lns = self.data_ref[r][dcol].split("\n") if isinstance(self.data_ref[r][dcol], str) else f"{self.data_ref[r][dcol]}".split("\n")
+                            lns = self.data[r][dcol].split("\n") if isinstance(self.data[r][dcol], str) else f"{self.data[r][dcol]}".split("\n")
                         y = fr + self.fl_ins
                         if cell_alignment == "w":
                             if x > x2 or mw <= 5:
@@ -4372,7 +4438,7 @@ class MainTable(tk.Canvas):
             elif alltags[0] == "RowSelectFill":
                 boxes[tuple(int(e) for e in alltags[1].split("_") if e)] = "rows"
             elif alltags[0] == "ColSelectFill":
-                boxes[tuple(int(e) for e in alltags[1].split("_") if e)] = "cols"
+                boxes[tuple(int(e) for e in alltags[1].split("_") if e)] = "columns"
             elif alltags[0] == "Current_Inside":
                 boxes[tuple(int(e) for e in alltags[1].split("_") if e)] = f"{alltags[2]}_inside"
             elif alltags[0] == "Current_Outside":
@@ -4385,8 +4451,8 @@ class MainTable(tk.Canvas):
                 self.create_selected(k[0], k[1], k[2], k[3], "cells")
             elif v == "rows":
                 self.create_selected(k[0], k[1], k[2], k[3], "rows")
-            elif v == "cols":
-                self.create_selected(k[0], k[1], k[2], k[3], "cols")
+            elif v == "columns":
+                self.create_selected(k[0], k[1], k[2], k[3], "columns")
             elif v in ("cell_inside", "cell_outside", "row_inside", "row_outside", "col_outside", "col_inside"): #currently selected
                 x = v.split("_")
                 self.create_current(k[0], k[1], type_ = x[0], inside = True if x[1] == "inside" else False)
@@ -4413,7 +4479,7 @@ class MainTable(tk.Canvas):
             for item in self.find_withtag("ColSelectFill"):
                 alltags = self.gettags(item)
                 if alltags:
-                    deleted_boxes[tuple(int(e) for e in alltags[1].split("_") if e)] = "cols"
+                    deleted_boxes[tuple(int(e) for e in alltags[1].split("_") if e)] = "columns"
             self.delete("ColSelectFill", "ColSelectBorder")
             self.RI.delete("ColSelectFill", "ColSelectBorder")
             self.CH.delete("ColSelectFill", "ColSelectBorder")
@@ -4427,18 +4493,13 @@ class MainTable(tk.Canvas):
             self.CH.delete("Current_Inside", "Current_Outside")
         return deleted_boxes
 
-    def currently_selected(self, get_coords = False):
+    def currently_selected(self):
         items = self.find_withtag("Current_Inside") + self.find_withtag("Current_Outside")
         if not items:
             return tuple()
         alltags = self.gettags(items[0])
         box = tuple(int(e) for e in alltags[1].split("_") if e)
-        if alltags[2] == "cell":
-            return (box[0], box[1])
-        elif alltags[2] == "col":
-            return ("column", box[1]) if not get_coords else (0, box[1])
-        elif alltags[2] == "row":
-            return ("row", box[0]) if not get_coords else (box[0], 0)
+        return CurrentlySelectedClass(box[0], box[1], alltags[2])
 
     def get_tags_of_current(self):
         items = self.find_withtag("Current_Inside") + self.find_withtag("Current_Outside")
@@ -4498,7 +4559,7 @@ class MainTable(tk.Canvas):
                 elif last[0] == "RowSelectFill":
                     return self.gettags(self.create_current(r1, c1, "row", inside = True))
                 elif last[0] == "ColSelectFill":
-                    return self.gettags(self.create_current(r1, c1, "col", inside = True))
+                    return self.gettags(self.create_current(r1, c1, "column", inside = True))
         return tuple()
    
     def delete_current(self):
@@ -4508,12 +4569,12 @@ class MainTable(tk.Canvas):
             
     def create_selected(self, r1 = None, c1 = None, r2 = None, c2 = None, type_ = "cells", taglower = True):
         currently_selected = self.currently_selected()
-        if currently_selected and isinstance(currently_selected[0], int):
-            if (currently_selected[0] >= r1 and
-                currently_selected[1] >= c1 and
-                currently_selected[0] < r2 and
-                currently_selected[1] < c2):
-                self.create_current(currently_selected[0], currently_selected[1], type_ = "cell", inside = True)
+        if currently_selected and currently_selected.type_ == "cell":
+            if (currently_selected.row >= r1 and
+                currently_selected.column >= c1 and
+                currently_selected.row < r2 and
+                currently_selected.column < c2):
+                self.create_current(currently_selected.row, currently_selected.column, type_ = "cell", inside = True)
         if type_ == "cells":
             tagr = ("CellSelectFill", f"{r1}_{c1}_{r2}_{c2}")
             tagb = ("CellSelectBorder", f"{r1}_{c1}_{r2}_{c2}")
@@ -4526,12 +4587,13 @@ class MainTable(tk.Canvas):
             taglower = "RowSelectFill"
             mt_bg = self.table_selected_rows_bg
             mt_border_col = self.table_selected_rows_border_fg
-        elif type_ in ("cols", "columns"):
+        elif type_ == "columns":
             tagr = ("ColSelectFill", f"{r1}_{c1}_{r2}_{c2}")
             tagb = ("ColSelectBorder", f"{r1}_{c1}_{r2}_{c2}")
             taglower = "ColSelectFill"
             mt_bg = self.table_selected_columns_bg
             mt_border_col = self.table_selected_columns_border_fg
+        self.last_selected = (r1, c1, r2, c2, type_)
         r = self.create_rectangle(self.col_positions[c1],
                                   self.row_positions[r1],
                                   self.canvasx(self.winfo_width()) if self.selected_rows_to_end_of_window else self.col_positions[c2],
@@ -4539,6 +4601,7 @@ class MainTable(tk.Canvas):
                                   fill = mt_bg,
                                   outline = "",
                                   tags = tagr)
+        
         self.RI.create_rectangle(0,
                                  self.row_positions[r1],
                                  self.RI.current_width - 1,
@@ -4550,7 +4613,7 @@ class MainTable(tk.Canvas):
                                  0,
                                  self.col_positions[c2],
                                  self.CH.current_height - 1,
-                                 fill = self.CH.header_selected_columns_bg if type_ == "cols" else self.CH.header_selected_cells_bg,
+                                 fill = self.CH.header_selected_columns_bg if type_ == "columns" else self.CH.header_selected_cells_bg,
                                  outline = "",
                                  tags = tagr)
         if self.show_selected_cells_border:
@@ -4596,7 +4659,7 @@ class MainTable(tk.Canvas):
                 elif type_.startswith("RowSelect"):
                     self.create_selected(r1, c1, r2, c2, "rows")
                 elif type_.startswith("ColSelect"):
-                    self.create_selected(r1, c1, r2, c2, "cols")
+                    self.create_selected(r1, c1, r2, c2, "columns")
                 elif type_.startswith("Current"):
                     if type_ == "Current_Inside":
                         self.create_current(r1, c1, full_tags[2], inside = True)
@@ -4934,7 +4997,7 @@ class MainTable(tk.Canvas):
                 elif tags[0].startswith("Row"):
                     boxes.append((tuple(int(e) for e in tags[1].split("_") if e), "rows"))
                 elif tags[0].startswith("Col"):
-                    boxes.append((tuple(int(e) for e in tags[1].split("_") if e), "cols"))
+                    boxes.append((tuple(int(e) for e in tags[1].split("_") if e), "columns"))
         return boxes
 
     def all_selected(self):
@@ -5006,10 +5069,10 @@ class MainTable(tk.Canvas):
         for item in chain(self.find_withtag("Current_Inside"), self.find_withtag("Current_Outside")):
             self.itemconfig(item, state = "normal")
 
-    def open_cell(self, event = None):
-        if not self.anything_selected() or self.text_editor_id is not None:
+    def open_cell(self, event = None, ignore_existing_editor = False):
+        if not self.anything_selected() or (not ignore_existing_editor and self.text_editor_id is not None):
             return
-        currently_selected = self.currently_selected(get_coords = True)
+        currently_selected = self.currently_selected()
         if not currently_selected:
             return
         y1 = int(currently_selected[0])
@@ -5053,7 +5116,7 @@ class MainTable(tk.Canvas):
                     extra_func_key = "Return"
                 elif hasattr(event, 'keysym') and event.keysym == 'F2':
                     extra_func_key = "F2"
-            text = f"{self.data_ref[r][c]}" if self.all_columns_displayed else f"{self.data_ref[r][self.displayed_columns[c]]}"
+            text = f"{self.data[r][c]}" if self.all_columns_displayed else f"{self.data[r][self.displayed_columns[c]]}"
             if self.cell_auto_resize_enabled:
                 self.set_cell_size_to_text(r, c, only_set_if_too_small = True, redraw = True, run_binding = True)
         elif event is not None and (hasattr(event, 'keysym') and event.keysym == 'BackSpace'):
@@ -5069,11 +5132,13 @@ class MainTable(tk.Canvas):
         self.text_editor_loc = (r, c)
         if self.extra_begin_edit_cell_func is not None:
             try:
-                text2 = self.extra_begin_edit_cell_func(EditCellEvent(r, c, extra_func_key, text, "begin_edit_cell"))
+                text = self.extra_begin_edit_cell_func(EditCellEvent(r, c, extra_func_key, text, "begin_edit_cell"))
             except:
                 return False
-            if text2 is not None:
-                text = text2
+            if text is None:
+                return False
+            else:
+                text = text if isinstance(text, str) else f"{text}"
         text = "" if text is None else text
         self.select_cell(r = r, c = c, keep_other_selections = True)
         self.create_text_editor(r = r, c = c, text = text, set_data_ref_on_destroy = True, dropdown = dropdown)
@@ -5105,7 +5170,7 @@ class MainTable(tk.Canvas):
         h = self.row_positions[r + 1] - y + 6
         dcol = c if self.all_columns_displayed else self.displayed_columns[c]
         if text is None:
-            text = self.data_ref[r][dcol]
+            text = self.data[r][dcol]
         self.hide_current()
         bg, fg = self.get_widget_bg_fg(r, dcol)
         self.text_editor = TextEditor(self, 
@@ -5122,7 +5187,8 @@ class MainTable(tk.Canvas):
                                       popup_menu_fg = self.popup_menu_fg,
                                       popup_menu_bg = self.popup_menu_bg,
                                       popup_menu_highlight_bg = self.popup_menu_highlight_bg,
-                                      popup_menu_highlight_fg = self.popup_menu_highlight_fg)
+                                      popup_menu_highlight_fg = self.popup_menu_highlight_fg,
+                                      binding = binding)
         self.text_editor_id = self.create_window((x, y), window = self.text_editor, anchor = "nw")
         if not dropdown:
             self.text_editor.textedit.focus_set()
@@ -5188,20 +5254,21 @@ class MainTable(tk.Canvas):
             self.text_editor_value = self.text_editor.get()
         if destroy:
             self.destroy_text_editor()
+        cell_was_edited = False
         if set_data_ref_on_destroy:
             if r is None and c is None and editor_info:
                 r, c = editor_info[0], editor_info[1]
             if self.extra_end_edit_cell_func is None:
-                self._set_cell_data(r, c, value = self.text_editor_value)
+                cell_was_edited = self._set_cell_data(r, c, value = self.text_editor_value, redraw = False)
             elif self.extra_end_edit_cell_func is not None and not self.edit_cell_validation:
-                self._set_cell_data(r, c, value = self.text_editor_value)
+                cell_was_edited = self._set_cell_data(r, c, value = self.text_editor_value, redraw = False)
                 self.extra_end_edit_cell_func(EditCellEvent(r, c, editor_info[2] if len(editor_info) >= 3 else "FocusOut", f"{self.text_editor_value}", "end_edit_cell"))
             elif self.extra_end_edit_cell_func is not None and self.edit_cell_validation:
                 validation = self.extra_end_edit_cell_func(EditCellEvent(r, c, editor_info[2] if len(editor_info) >= 3 else "FocusOut", f"{self.text_editor_value}", "end_edit_cell"))
                 if validation is not None:
                     self.text_editor_value = validation
-                self._set_cell_data(r, c, value = self.text_editor_value)
-        if move_down:
+                    cell_was_edited = self._set_cell_data(r, c, value = self.text_editor_value, redraw = False)
+        if move_down and cell_was_edited:
             if r is None and c is None and editor_info:
                 r, c = editor_info[0], editor_info[1]
             currently_selected = self.currently_selected()
@@ -5228,33 +5295,34 @@ class MainTable(tk.Canvas):
         return self.text_editor_value
 
     #internal event use
-    def _set_cell_data(self, r = 0, c = 0, dcol = None, value = "", undo = True, cell_resize = True):
+    def _set_cell_data(self, r = 0, c = 0, dcol = None, value = "", undo = True, cell_resize = True, redraw = True):
         if dcol is None:
             dcol = c if self.all_columns_displayed else self.displayed_columns[c]
-        if r > len(self.data_ref) - 1:
-            self.data_ref.extend([list(repeat("", dcol + 1)) for i in range((r + 1) - len(self.data_ref))])
-        elif dcol > len(self.data_ref[r]) - 1:
-            self.data_ref[r].extend(list(repeat("", (dcol + 1) - len(self.data_ref[r]))))
+        if r > len(self.data) - 1:
+            self.data.extend([list(repeat("", dcol + 1)) for i in range((r + 1) - len(self.data))])
+        elif dcol > len(self.data[r]) - 1:
+            self.data[r].extend(list(repeat("", (dcol + 1) - len(self.data[r]))))
         if self.undo_enabled and undo:
-            if self.data_ref[r][dcol] != value:
+            if self.data[r][dcol] != value:
                 self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells",
-                                                                     {(r, dcol): self.data_ref[r][dcol]},
+                                                                     {(r, dcol): self.data[r][dcol]},
                                                                      (((r, c, r + 1, c + 1), "cells"), ),
                                                                      self.currently_selected()))))
-        self.data_ref[r][dcol] = value
+        self.data[r][dcol] = value
         if cell_resize and self.cell_auto_resize_enabled:
-            self.set_cell_size_to_text(r, c, only_set_if_too_small = True, redraw = True, run_binding = True)
+            self.set_cell_size_to_text(r, c, only_set_if_too_small = True, redraw = redraw, run_binding = True)
+        return True
 
     #internal event use
     def _click_checkbox(self, r, c, dcol = None, undo = True, redraw = True):
         if dcol is None:
             dcol = c if self.all_columns_displayed else self.displayed_columns[c]
         if self.cell_options[(r, dcol)]['checkbox']['state'] == "normal":
-            self._set_cell_data(r, c, dcol, value = not self.data_ref[r][dcol] if type(self.data_ref[r][dcol]) == bool else False, undo = undo, cell_resize = False)
+            self._set_cell_data(r, c, dcol, value = not self.data[r][dcol] if type(self.data[r][dcol]) == bool else False, undo = undo, cell_resize = False)
             if self.cell_options[(r, dcol)]['checkbox']['check_function'] is not None:
-                self.cell_options[(r, dcol)]['checkbox']['check_function']((r, c, "CheckboxClicked", f"{self.data_ref[r][dcol]}"))
+                self.cell_options[(r, dcol)]['checkbox']['check_function']((r, c, "CheckboxClicked", f"{self.data[r][dcol]}"))
             if self.extra_end_edit_cell_func is not None:
-                self.extra_end_edit_cell_func(EditCellEvent(r, c, "Return", f"{self.data_ref[r][dcol]}", "end_edit_cell"))
+                self.extra_end_edit_cell_func(EditCellEvent(r, c, "Return", f"{self.data[r][dcol]}", "end_edit_cell"))
         if redraw:
             self.refresh()
 
@@ -5447,7 +5515,7 @@ class MainTable(tk.Canvas):
         else:
             ret_tup = False
         if b1 and self.text_editor_loc is not None and self.text_editor is not None:
-            self.get_text_editor_value(editor_info = self.text_editor_loc + ("Return", ))
+            self.get_text_editor_value(editor_info = self.text_editor_loc + ("ButtonPress-1", ))
         else:
             self.destroy_text_editor("Escape")
         self.delete_opened_dropdown_window(r, c)

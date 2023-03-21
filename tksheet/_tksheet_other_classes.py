@@ -7,6 +7,7 @@ from platform import system as get_os
 USER_OS = f"{get_os()}"
 
 
+CurrentlySelectedClass = namedtuple("CurrentlySelectedClass", "row column type_")
 CtrlKeyEvent = namedtuple("CtrlKeyEvent", "eventname selectionboxes currentlyselected rows")
 PasteEvent = namedtuple("PasteEvent", "eventname currentlyselected rows")
 UndoEvent = namedtuple("UndoEvent", "eventname type storeddata")
@@ -157,7 +158,8 @@ class TextEditor(tk.Frame):
                  popup_menu_bg = "white",
                  popup_menu_fg = "black",
                  popup_menu_highlight_bg = "blue",
-                 popup_menu_highlight_fg = "white"):
+                 popup_menu_highlight_fg = "white",
+                 binding = None):
         tk.Frame.__init__(self,
                           parent,
                           height = height,
@@ -186,6 +188,7 @@ class TextEditor(tk.Frame):
         self.grid_propagate(False)
         self.w_ = width
         self.h_ = height
+        self.binding = binding
         self.textedit.focus_set()
         
     def get(self):
@@ -200,6 +203,12 @@ class TextEditor(tk.Frame):
 
     def scroll_to_bottom(self):
         self.textedit.yview_moveto(1)
+        
+        
+class GeneratedMouseEvent:
+    def __init__(self):
+        self.keycode = "??"
+        self.num = 1
 
 
 def num2alpha(n):

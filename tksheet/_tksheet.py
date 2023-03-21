@@ -285,8 +285,8 @@ class Sheet(tk.Frame):
                     self.MT.create_current(startup_select[0], 0, type_ = "row", inside = True)
                     self.see(startup_select[0], 0)
                 elif startup_select[-1] in ("cols", "columns"):
-                    self.MT.create_selected(0, startup_select[0], len(self.MT.row_positions) - 1, startup_select[1], "cols")
-                    self.MT.create_current(0, startup_select[0], type_ = "col", inside = True)
+                    self.MT.create_selected(0, startup_select[0], len(self.MT.row_positions) - 1, startup_select[1], "columns")
+                    self.MT.create_current(0, startup_select[0], type_ = "column", inside = True)
                     self.see(0, startup_select[0])
             except:
                 pass
@@ -898,7 +898,7 @@ class Sheet(tk.Frame):
                                  deselect_all = deselect_all)
 
     def delete_row(self, idx = 0, deselect_all = False, redraw = True):
-        del self.MT.data_ref[idx]
+        del self.MT.data[idx]
         self.MT.del_row_position(idx = idx,
                                  deselect_all = deselect_all)
         self.MT.cell_options = {t1: t2 for t1, t2 in self.MT.cell_options.items() if t1[0] != idx}
@@ -930,12 +930,12 @@ class Sheet(tk.Frame):
             return int(self.MT.total_data_rows())
         if not isinstance(number, int) or number < 0:
             raise ValueError("number argument must be integer and > 0")
-        if number > len(self.MT.data_ref):
+        if number > len(self.MT.data):
             if mod_positions:
                 height = self.MT.GetLinesHeight(int(self.MT.default_rh[0]))
-                for r in range(number - len(self.MT.data_ref)):
+                for r in range(number - len(self.MT.data)):
                     self.MT.insert_row_position("end", height)
-        elif number < len(self.MT.data_ref):
+        elif number < len(self.MT.data):
             self.MT.row_positions[number + 1:] = []
         if mod_data:
             self.MT.data_dimensions(total_rows = number)
@@ -976,43 +976,23 @@ class Sheet(tk.Frame):
         self.MT.move_row_position(row, moveto)
 
     def move_row(self, row: int, moveto: int):
-        self.MT.move_row_position(row, moveto)
-        self.MT.data_ref.insert(moveto, self.MT.data_ref.pop(row))
-        popped_ri = {t1: t2 for t1, t2 in self.RI.cell_options.items() if t1 == row}
-        popped_cell = {t1: t2 for t1, t2 in self.MT.cell_options.items() if t1[0] == row}
-        popped_row = {t1: t2 for t1, t2 in self.MT.row_options.items() if t1 == row}
-        
-        popped_ri = {t1: self.RI.cell_options.pop(t1) for t1 in popped_ri}
-        popped_cell = {t1: self.MT.cell_options.pop(t1) for t1 in popped_cell}
-        popped_row = {t1: self.MT.row_options.pop(t1) for t1 in popped_row}
+        self.move_rows(moveto, row)
 
-        self.RI.cell_options = {t1 if t1 < row else t1 - 1: t2 for t1, t2 in self.RI.cell_options.items()}
-        self.RI.cell_options = {t1 if t1 < moveto else t1 + 1: t2 for t1, t2 in self.RI.cell_options.items()}
-
-        self.MT.row_options = {t1 if t1 < row else t1 - 1: t2 for t1, t2 in self.MT.row_options.items()}
-        self.MT.row_options = {t1 if t1 < moveto else t1 + 1: t2 for t1, t2 in self.MT.row_options.items()}
-
-        self.MT.cell_options = {(t10 if t10 < row else t10 - 1, t11): t2 for (t10, t11), t2 in self.MT.cell_options.items()}
-        self.MT.cell_options = {(t10 if t10 < moveto else t10 + 1, t11): t2 for (t10, t11), t2 in self.MT.cell_options.items()}
-
-        if popped_ri:
-            self.RI.cell_options[moveto] = popped_ri[row]
-
-        if popped_row:
-            self.MT.row_options[moveto] = popped_row[row]
-
-        if popped_cell:
-            newrowsdct = {row: moveto}
-            for (t10, t11), t2 in popped_cell.items():
-                self.MT.cell_options[(newrowsdct[t10], t11)] = t2
+    def move_rows(self, moveto: int, to_move_min: int, number_of_rows: int, move_data: bool = True, index_type: str = "displayed", create_selections: bool = True, redraw = False):
+        if index_type.lower() == "displayed" or self.MT.all_rows_displayed:
+            new_selected, dispset = self.MT.move_rows_adjust_options_dict(moveto, to_move_min, number_of_rows, move_data, create_selections)
+        else:
+            new_selected, dispset = self.MT.move_rows_adjust_options_dict(moveto, to_move_min, number_of_rows, move_data, create_selections)
+        self.set_refresh_timer(redraw)
+        return new_selected, dispset
 
     def delete_column_position(self, idx: int, deselect_all = False):
         self.MT.del_col_position(idx,
                                  deselect_all = deselect_all)
 
     def delete_column(self, idx = 0, deselect_all = False, redraw = True):
-        for rn in range(len(self.MT.data_ref)):
-            del self.MT.data_ref[rn][idx] 
+        for rn in range(len(self.MT.data)):
+            del self.MT.data[rn][idx] 
         self.MT.del_col_position(idx,
                                  deselect_all = deselect_all)
         self.MT.cell_options = {t1: t2 for t1, t2 in self.MT.cell_options.items() if t1[1] != idx}
@@ -1042,37 +1022,126 @@ class Sheet(tk.Frame):
     def move_column_position(self, column: int, moveto: int):
         self.MT.move_col_position(column, moveto)
 
+    def move_columns(self, moveto: int, to_move_min: int, number_of_columns: int, move_data: bool = True, index_type: str = "displayed", create_selections: bool = True, redraw = False):
+        if index_type.lower() == "displayed" or self.MT.all_columns_displayed:
+            new_selected, dispset = self.MT.move_columns_adjust_options_dict(moveto, to_move_min, number_of_columns, move_data, create_selections)
+            self.set_refresh_timer(redraw)
+            return new_selected, dispset
+        else:
+            c = int(moveto)
+            rm1start = int(to_move_min)
+            rm1end = rm1start + number_of_columns
+            totalcols = int(number_of_columns)
+            rm2start = rm1start + (rm1end - rm1start)
+            rm2end = rm1end + (rm1end - rm1start)
+            orig_selected = list(range(rm1start, rm1start + totalcols))
+            num_data_cols = self.MT.total_data_cols()
+            if c + totalcols > num_data_cols:
+                new_selected = tuple(range(num_data_cols - totalcols, num_data_cols))
+            else:
+                if rm1start > c:
+                    new_selected = tuple(range(c, c + totalcols))
+                else:
+                    new_selected = tuple(range(c + 1 - totalcols, c + 1))
+            newcolsdct = {t1: t2 for t1, t2 in zip(orig_selected, new_selected)}
+            if rm1start > c:
+                for rn in range(len(self.MT.data)):
+                    if len(self.MT.data[rn]) < rm1end:
+                        self.MT.data[rn].extend(list(repeat("", rm1end - len(self.MT.data[rn]) + 1)))
+                    self.MT.data[rn][c:c] = self.MT.data[rn][rm1start:rm1end]
+                    self.MT.data[rn][rm2start:rm2end] = []
+                if isinstance(self.MT._headers, list) and self.MT._headers:
+                    if len(self.MT._headers) < rm1end:
+                        self.MT._headers.extend(list(repeat("", rm1end - len(self.MT._headers) + 1)))
+                    self.MT._headers[c:c] = self.MT._headers[rm1start:rm1end]
+                    self.MT._headers[rm2start:rm2end] = []
+
+                new_ch = {}
+                for k, v in self.CH.cell_options.items():
+                    if k in newcolsdct:
+                        new_ch[newcolsdct[k]] = v
+                    elif k < rm1start and k >= c:
+                        new_ch[k + totalcols] = v
+                    else:
+                        new_ch[k] = v
+                self.CH.cell_options = new_ch
+                
+                new_cell = {}
+                for k, v in self.MT.cell_options.items():
+                    if k[1] in newcolsdct:
+                        new_cell[(k[0], newcolsdct[k[1]])] = v
+                    elif k[1] < rm1start and k[1] >= c:
+                        new_cell[(k[0], k[1] + totalcols)] = v
+                    else:
+                        new_cell[k] = v
+                self.MT.cell_options = new_cell
+                
+                new_col = {}
+                for k, v in self.MT.col_options.items():
+                    if k in newcolsdct:
+                        new_col[newcolsdct[k]] = v
+                    elif k < rm1start and k >= c:
+                        new_col[k + totalcols] = v
+                    else:
+                        new_col[k] = v
+                self.MT.col_options = new_col
+                
+                self.MT.displayed_columns = sorted(int(newcolsdct[k]) if k in newcolsdct else k + totalcols if k < rm1start and k >= c else int(k) for k in self.MT.displayed_columns)
+                
+            else:
+                c += 1
+                if move_data:
+                    for rn in range(len(self.MT.data)):
+                        if len(self.MT.data[rn]) < c - 1:
+                            self.MT.data[rn].extend(list(repeat("", c - len(self.MT.data[rn]))))
+                        self.MT.data[rn][c:c] = self.MT.data[rn][rm1start:rm1end]
+                        self.MT.data[rn][rm1start:rm1end] = []
+                    if isinstance(self.MT._headers, list) and self.MT._headers:
+                        if len(self.MT._headers) < c:
+                            self.MT._headers.extend(list(repeat("", c - len(self.MT._headers))))
+                        self.MT._headers[c:c] = self.MT._headers[rm1start:rm1end]
+                        self.MT._headers[rm1start:rm1end] = []
+            
+                new_ch = {}
+                for k, v in self.CH.cell_options.items():
+                    if k in newcolsdct:
+                        new_ch[newcolsdct[k]] = v
+                    elif k < c and k > rm1start:
+                        new_ch[k - totalcols] = v
+                    else:
+                        new_ch[k] = v
+                self.CH.cell_options = new_ch
+                
+                new_cell = {}
+                for k, v in self.MT.cell_options.items():
+                    if k[1] in newcolsdct:
+                        new_cell[(k[0], newcolsdct[k[1]])] = v
+                    elif k[1] < c and k[1] > rm1start:
+                        new_cell[(k[0], k[1] - totalcols)] = v
+                    else:
+                        new_cell[k] = v
+                self.MT.cell_options = new_cell
+                
+                new_col = {}
+                for k, v in self.MT.col_options.items():
+                    if k in newcolsdct:
+                        new_col[newcolsdct[k]] = v
+                    elif k < c and k > rm1start:
+                        new_col[k - totalcols] = v
+                    else:
+                        new_col[k] = v
+                self.MT.col_options = new_col
+
+                self.MT.displayed_columns = sorted(int(newcolsdct[k]) if k in newcolsdct else k - totalcols if k < c and k > rm1start else int(k) for k in self.MT.displayed_columns)
+            self.set_refresh_timer(redraw)
+            return new_selected, {}
+
     def move_column(self, column: int, moveto: int):
-        self.MT.move_col_position(column, moveto)
-        for rn in range(len(self.MT.data_ref)):
-            self.MT.data_ref[rn].insert(moveto, self.MT.data_ref[rn].pop(column))
-        popped_ch = {t1: t2 for t1, t2 in self.CH.cell_options.items() if t1 == column}
-        popped_cell = {t1: t2 for t1, t2 in self.MT.cell_options.items() if t1[1] == column}
-        popped_col = {t1: t2 for t1, t2 in self.MT.col_options.items() if t1 == column}
-        
-        popped_ch = {t1: self.CH.cell_options.pop(t1) for t1 in popped_ch}
-        popped_cell = {t1: self.MT.cell_options.pop(t1) for t1 in popped_cell}
-        popped_col = {t1: self.MT.col_options.pop(t1) for t1 in popped_col}
+        self.move_columns(moveto, column)
 
-        self.CH.cell_options = {t1 if t1 < column else t1 - 1: t2 for t1, t2 in self.CH.cell_options.items()}
-        self.CH.cell_options = {t1 if t1 < moveto else t1 + 1: t2 for t1, t2 in self.CH.cell_options.items()}
-
-        self.MT.col_options = {t1 if t1 < column else t1 - 1: t2 for t1, t2 in self.MT.col_options.items()}
-        self.MT.col_options = {t1 if t1 < moveto else t1 + 1: t2 for t1, t2 in self.MT.col_options.items()}
-
-        self.MT.cell_options = {(t10, t11 if t11 < column else t11 - 1): t2 for (t10, t11), t2 in self.MT.cell_options.items()}
-        self.MT.cell_options = {(t10, t11 if t11 < moveto else t11 + 1): t2 for (t10, t11), t2 in self.MT.cell_options.items()}
-
-        if popped_ch:
-            self.CH.cell_options[moveto] = popped_ch[column]
-
-        if popped_col:
-            self.MT.col_options[moveto] = popped_col[column]
-
-        if popped_cell:
-            newcolsdct = {column: moveto}
-            for (t10, t11), t2 in popped_cell.items():
-                self.MT.cell_options[(t10, newcolsdct[t11])] = t2
+    # works on currently selected box
+    def open_cell(self, ignore_existing_editor = True):
+        self.MT.open_cell(event = GeneratedMouseEvent(), ignore_existing_editor = ignore_existing_editor)
 
     def create_text_editor(self,
                            row = 0,
@@ -1194,46 +1263,17 @@ class Sheet(tk.Frame):
     def deselect(self, row = None, column = None, cell = None, redraw = True):
         self.MT.deselect(r = row, c = column, cell = cell, redraw = redraw)
 
-    def get_currently_selected(self, get_coords = False, return_nones_if_not = False):
-        curr = self.MT.currently_selected()
-        if get_coords:
-            if curr:
-                if curr[0] == "row":
-                    return curr[1], 0
-                elif curr[0] == "column":
-                    return 0, curr[1]
-                else:
-                    return curr
-            elif not curr and return_nones_if_not:
-                return (None, None)
-            else:
-                return curr
-        else:
-            if curr:
-                return curr
-            elif not curr and return_nones_if_not:
-                return (None, None)
-            else:
-                return curr
+    # (row, column, type_) e.g. (0, 0, "column") as a named tuple
+    def get_currently_selected(self):
+        return self.MT.currently_selected()
 
-    def set_currently_selected(self, current_tuple_0 = 0, current_tuple_1 = 0, selection_binding = True):
-        if isinstance(current_tuple_0, int) and isinstance(current_tuple_1, int):
-            self.MT.create_current(r = current_tuple_0,
-                                   c = current_tuple_1,
-                                   type_ = "cell",
-                                   inside = True if self.MT.cell_selected(current_tuple_0, current_tuple_1) else False)
-        elif current_tuple_0 == "row" and isinstance(current_tuple_1, int):
-            self.MT.create_current(r = current_tuple_1,
-                                   c = 0,
-                                   type_ = "row",
-                                   inside = True if self.MT.cell_selected(current_tuple_1, 0) else False)
-        elif current_tuple_0 in ("col", "column") and isinstance(current_tuple_1, int):
-            self.MT.create_current(r = 0,
-                                   c = current_tuple_1,
-                                   type_ = "col",
-                                   inside = True if self.MT.cell_selected(0, current_tuple_1) else False)
+    def set_currently_selected(self, row, column, type_ = "cell", selection_binding = True):
+        self.MT.create_current(r = row,
+                               c = column,
+                               type_ = type_,
+                               inside = True if self.MT.cell_selected(row, column) else False)
         if selection_binding and self.MT.selection_binding_func is not None:
-            self.MT.selection_binding_func(SelectCellEvent("select_cell", current_tuple_0, current_tuple_1))
+            self.MT.selection_binding_func(SelectCellEvent("select_cell", row, column))
 
     def get_selected_rows(self, get_cells = False, get_cells_as_rows = False, return_tuple = False):
         if return_tuple:
@@ -1269,7 +1309,7 @@ class Sheet(tk.Frame):
         return self.MT.get_all_selection_boxes_with_types()
 
     def create_selection_box(self, r1, c1, r2, c2, type_ = "cells"):
-        return self.MT.create_selected(r1 = r1, c1 = c1, r2 = r2, c2 = c2, type_ = type_ if type_ != "columns" else "cols")
+        return self.MT.create_selected(r1 = r1, c1 = c1, r2 = r2, c2 = c2, type_ = "columns" if type_ == "cols" else type_)
 
     def recreate_all_selection_boxes(self):
         self.MT.recreate_all_selection_boxes()
@@ -1486,6 +1526,9 @@ class Sheet(tk.Frame):
                         del self.CH.cell_options[c]['highlight']
         if redraw:
             self.refresh(True, True)
+            
+    def delete_out_of_bounds_options(self):
+        pass
 
     def get_cell_options(self, canvas = "table"):
         if canvas == "table":
@@ -1511,14 +1554,23 @@ class Sheet(tk.Frame):
     
     def convert_align(self, align: str):
         a = align.lower()
-        if a in ("c", "center"):
+        if a in ("c", "center", "centre"):
             return "center"
-        elif a in ("w", "west"):
+        elif a in ("w", "west", "left"):
             return "w"
-        elif a in ("e", "east"):
+        elif a in ("e", "east", "right"):
             return "e"
         else:
-            raise ValueError("Align must be one of the following values: c, center, w, west, e, east")
+            raise ValueError("Align must be one of the following values: c, center, w, west, left, e, east, right")
+        
+    def get_cell_alignments(self):
+        return {(r, c): v['align'] for (r, c), v in self.MT.cell_options.items() if 'align' in v}
+    
+    def get_column_alignments(self):
+        return {c: v['align'] for c, v in self.MT.col_options.items() if 'align' in v}
+    
+    def get_row_alignments(self):
+        return {r: v['align'] for r, v in self.MT.row_options.items() if 'align' in v}
         
     def align_rows(self, rows = [], align = "global", align_index = False, redraw = True): #"center", "w", "e" or "global"
         if align == "global" or self.convert_align(align):
@@ -1828,43 +1880,46 @@ class Sheet(tk.Frame):
         if return_copy:
             if get_header and get_index:
                 index_limit = len(self.MT._row_index)
-                return [[""] + self.MT._headers.copy()] + [[f"{self.MT._row_index[rn]}"] + r.copy() if rn < index_limit else [""] + r.copy() for rn, r in enumerate(self.MT.data_ref)]
+                return [[""] + self.MT._headers.copy()] + [[f"{self.MT._row_index[rn]}"] + r.copy() if rn < index_limit else [""] + r.copy() for rn, r in enumerate(self.MT.data)]
             elif get_header and not get_index:
-                return [self.MT._headers.copy()] + [r.copy() for r in self.MT.data_ref]
+                return [self.MT._headers.copy()] + [r.copy() for r in self.MT.data]
             elif get_index and not get_header:
                 index_limit = len(self.MT._row_index)
-                return [[f"{self.MT._row_index[rn]}"] + r.copy() if rn < index_limit else [""] + r.copy() for rn, r in enumerate(self.MT.data_ref)]
+                return [[f"{self.MT._row_index[rn]}"] + r.copy() if rn < index_limit else [""] + r.copy() for rn, r in enumerate(self.MT.data)]
             elif not get_index and not get_header:
-                return [r.copy() for r in self.MT.data_ref]
+                return [r.copy() for r in self.MT.data]
         else:
             if get_header and get_index:
                 index_limit = len(self.MT._row_index)
-                return [[""] + self.MT._headers] + [[self.MT._row_index[rn]] + r if rn < index_limit else [""] + r for rn, r in enumerate(self.MT.data_ref)]
+                return [[""] + self.MT._headers] + [[self.MT._row_index[rn]] + r if rn < index_limit else [""] + r for rn, r in enumerate(self.MT.data)]
             elif get_header and not get_index:
-                return [self.MT._headers] + self.MT.data_ref
+                return [self.MT._headers] + self.MT.data
             elif get_index and not get_header:
                 index_limit = len(self.MT._row_index)
-                return [[self.MT._row_index[rn]] + r if rn < index_limit else [""] + r for rn, r in enumerate(self.MT.data_ref)]
+                return [[self.MT._row_index[rn]] + r if rn < index_limit else [""] + r for rn, r in enumerate(self.MT.data)]
             elif not get_index and not get_header:
-                return self.MT.data_ref
+                return self.MT.data
+
+    @property
+    def data(self):
+        return self.MT.data
             
     def yield_sheet_rows(self, get_header = False, get_index = False):
         if get_header:
             if get_index:
-                yield [""] + [self.get_n2a(c, self.CH.default_hdr) for c in range(len(max(self.MT.data_ref, key = len)))] if isinstance(self.MT._headers, int) or not self.MT._headers else self.MT._headers
+                yield [""] + [self.get_n2a(c, self.CH.default_hdr) for c in range(len(max(self.MT.data, key = len)))] if isinstance(self.MT._headers, int) or not self.MT._headers else self.MT._headers
             else:
-                yield [self.get_n2a(c, self.CH.default_hdr) for c in range(len(max(self.MT.data_ref, key = len)))] if isinstance(self.MT._headers, int) or not self.MT._headers else self.MT._headers
+                yield [self.get_n2a(c, self.CH.default_hdr) for c in range(len(max(self.MT.data, key = len)))] if isinstance(self.MT._headers, int) or not self.MT._headers else self.MT._headers
         if get_index:
             if isinstance(self.MT._row_index, int) or not self.MT._row_index:
-                for rn, r in enumerate(self.MT.data_ref):
+                for rn, r in enumerate(self.MT.data):
                     yield [self.get_n2a(rn, self.RI.default_index)] + r
             else:
                 index_limit = len(self.MT._row_index)
-                for rn, r in enumerate(self.MT.data_ref):
+                for rn, r in enumerate(self.MT.data):
                     yield [self.MT._row_index[rn]] + r if rn < index_limit else [""] + r
         else:
-            for r in self.MT.data_ref:
-                yield r
+            yield from self.MT.data
                 
     def get_n2a(self, n = 0, _type = "numbers"):
         if _type == "letters":
@@ -1877,38 +1932,38 @@ class Sheet(tk.Frame):
     def get_cell_data(self, r, c, return_copy = True):
         if return_copy:
             try:
-                return f"{self.MT.data_ref[r][c]}"
+                return f"{self.MT.data[r][c]}"
             except:
                 return None
         else:
             try:
-                return self.MT.data_ref[r][c]
+                return self.MT.data[r][c]
             except:
                 return None
 
     def get_row_data(self, r, return_copy = True):
         if return_copy:
             try:
-                return tuple(f"{e}" for e in self.MT.data_ref[r])
+                return tuple(f"{e}" for e in self.MT.data[r])
             except:
                 return None
         else:
             try:
-                return self.MT.data_ref[r]
+                return self.MT.data[r]
             except:
                 return None
 
     def get_column_data(self, c, return_copy = True):
         res = []
         if return_copy:
-            for r in self.MT.data_ref:
+            for r in self.MT.data:
                 try:
                     res.append(f"{r[c]}")
                 except:
                     continue
             return tuple(res)
         else:
-            for r in self.MT.data_ref:
+            for r in self.MT.data:
                 try:
                     res.append(r[c])
                 except:
@@ -1916,29 +1971,29 @@ class Sheet(tk.Frame):
             return res
 
     def set_cell_data(self, r, c, value = "", set_copy = True, redraw = False):
-        self.MT.data_ref[r][c] = f"{value}" if set_copy else value
+        self.MT.data[r][c] = f"{value}" if set_copy else value
         self.set_refresh_timer(redraw)
 
     def set_column_data(self, c, values = tuple(), add_rows = True, redraw = False):
         if add_rows:
-            maxidx = len(self.MT.data_ref) - 1
+            maxidx = len(self.MT.data) - 1
             total_cols = None
             height = self.MT.default_rh[1]
             for rn, v in enumerate(values):
                 if rn > maxidx:
                     if total_cols is None:
                         total_cols = self.MT.total_data_cols()
-                    self.MT.data_ref.append(list(repeat("", total_cols)))
+                    self.MT.data.append(list(repeat("", total_cols)))
                     self.MT.insert_row_position("end", height = height)
                     maxidx += 1
-                if c > len(self.MT.data_ref[rn]) - 1:
-                    self.MT.data_ref[rn].extend(list(repeat("", c - len(self.MT.data_ref[rn]))))
-                self.MT.data_ref[rn][c] = v
+                if c > len(self.MT.data[rn]) - 1:
+                    self.MT.data[rn].extend(list(repeat("", c - len(self.MT.data[rn]))))
+                self.MT.data[rn][c] = v
         else:
             for rn, v in enumerate(values):
-                if c > len(self.MT.data_ref[rn]) - 1:
-                    self.MT.data_ref[rn].extend(list(repeat("", c - len(self.MT.data_ref[rn]))))
-                self.MT.data_ref[rn][c] = v
+                if c > len(self.MT.data[rn]) - 1:
+                    self.MT.data[rn].extend(list(repeat("", c - len(self.MT.data[rn]))))
+                self.MT.data[rn][c] = v
         self.set_refresh_timer(redraw)
 
     def insert_column(self, values = None, idx = "end", width = None, deselect_all = False, add_rows = True, equalize_data_row_lengths = True,
@@ -1962,34 +2017,34 @@ class Sheet(tk.Frame):
             data = list(repeat("", self.MT.total_data_rows()))
         else:
             data = values
-        maxidx = len(self.MT.data_ref) - 1
+        maxidx = len(self.MT.data) - 1
         if add_rows:
             height = self.MT.default_rh[1]
             if idx == "end":
                 for rn, v in enumerate(data):
                     if rn > maxidx:
-                        self.MT.data_ref.append(list(repeat("", old_total)))
+                        self.MT.data.append(list(repeat("", old_total)))
                         self.MT.insert_row_position("end", height = height)
                         maxidx += 1
-                    self.MT.data_ref[rn].append(v)
+                    self.MT.data[rn].append(v)
             else:
                 for rn, v in enumerate(data):
                     if rn > maxidx:
-                        self.MT.data_ref.append(list(repeat("", old_total)))
+                        self.MT.data.append(list(repeat("", old_total)))
                         self.MT.insert_row_position("end", height = height)
                         maxidx += 1
-                    self.MT.data_ref[rn].insert(idx, v)
+                    self.MT.data[rn].insert(idx, v)
         else:
             if idx == "end":
                 for rn, v in enumerate(data):
                     if rn > maxidx:
                         break
-                    self.MT.data_ref[rn].append(v)
+                    self.MT.data[rn].append(v)
             else:
                 for rn, v in enumerate(data):
                     if rn > maxidx:
                         break
-                    self.MT.data_ref[rn].insert(idx, v)
+                    self.MT.data[rn].insert(idx, v)
         if isinstance(idx, int):
             self.MT.cell_options = {(rn, cn if cn < idx else cn + 1): t2 for (rn, cn), t2 in self.MT.cell_options.items()}
             self.MT.col_options = {cn if cn < idx else cn + 1: t for cn, t in self.MT.col_options.items()}
@@ -2021,38 +2076,38 @@ class Sheet(tk.Frame):
                 except:
                     disp_next = 0
                 self.MT.displayed_columns.extend(list(range(disp_next, disp_next + numcols)))
-        maxidx = len(self.MT.data_ref) - 1
+        maxidx = len(self.MT.data) - 1
         if add_rows:
             height = self.MT.default_rh[1]
             if idx == "end":
                 for values in reversed(data):
                     for rn, v in enumerate(values):
                         if rn > maxidx:
-                            self.MT.data_ref.append(list(repeat("", old_total)))
+                            self.MT.data.append(list(repeat("", old_total)))
                             self.MT.insert_row_position("end", height = height)
                             maxidx += 1
-                        self.MT.data_ref[rn].append(v)
+                        self.MT.data[rn].append(v)
             else:
                 for values in reversed(data):
                     for rn, v in enumerate(values):
                         if rn > maxidx:
-                            self.MT.data_ref.append(list(repeat("", old_total)))
+                            self.MT.data.append(list(repeat("", old_total)))
                             self.MT.insert_row_position("end", height = height)
                             maxidx += 1
-                        self.MT.data_ref[rn].insert(idx, v)
+                        self.MT.data[rn].insert(idx, v)
         else:
             if idx == "end":
                 for values in reversed(data):
                     for rn, v in enumerate(values):
                         if rn > maxidx:
                             break
-                        self.MT.data_ref[rn].append(v)
+                        self.MT.data[rn].append(v)
             else:
                 for values in reversed(data):
                     for rn, v in enumerate(values):
                         if rn > maxidx:
                             break
-                        self.MT.data_ref[rn].insert(idx, v)
+                        self.MT.data[rn].insert(idx, v)
         if isinstance(idx, int):
             num_add = len(data)
             self.MT.cell_options = {(rn, cn if cn < idx else cn + num_add): t2 for (rn, cn), t2 in self.MT.cell_options.items()}
@@ -2061,25 +2116,25 @@ class Sheet(tk.Frame):
         self.set_refresh_timer(redraw)
 
     def set_row_data(self, r, values = tuple(), add_columns = True, redraw = False):
-        if len(self.MT.data_ref) - 1 < r:
+        if len(self.MT.data) - 1 < r:
             raise Exception("Row number is out of range")
-        maxidx = len(self.MT.data_ref[r]) - 1
+        maxidx = len(self.MT.data[r]) - 1
         if not values:
-            self.MT.data_ref[r][:] = list(repeat("", len(self.MT.data_ref[r])))
+            self.MT.data[r][:] = list(repeat("", len(self.MT.data[r])))
         if add_columns:
             for c, v in enumerate(values):
                 if c > maxidx:
-                    self.MT.data_ref[r].append(v)
+                    self.MT.data[r].append(v)
                     if self.MT.all_columns_displayed and c >= len(self.MT.col_positions) - 1:
                         self.MT.insert_col_position("end")
                 else:
-                    self.MT.data_ref[r][c] = v
+                    self.MT.data[r][c] = v
         else:
             for c, v in enumerate(values):
                 if c > maxidx:
-                    self.MT.data_ref[r].append(v)
+                    self.MT.data[r].append(v)
                 else:
-                    self.MT.data_ref[r][c] = v
+                    self.MT.data[r][c] = v
         self.set_refresh_timer(redraw)
 
     def insert_row(self, values = None, idx = "end", height = None, deselect_all = False, add_columns = False,
@@ -2099,7 +2154,7 @@ class Sheet(tk.Frame):
             if total_cols is None:
                 total_cols = self.MT.total_data_cols()
             if len(data) > total_cols:
-                self.MT.data_ref[:] = [r + list(repeat("", len(data) - total_cols)) for r in self.MT.data_ref]
+                self.MT.data[:] = [r + list(repeat("", len(data) - total_cols)) for r in self.MT.data]
             elif len(data) < total_cols:
                 data += list(repeat("", total_cols - len(data)))
             if self.MT.all_columns_displayed:
@@ -2108,9 +2163,9 @@ class Sheet(tk.Frame):
                 if len(data) > len(self.MT.col_positions) - 1:
                     self.insert_column_positions("end", len(data) - (len(self.MT.col_positions) - 1))
         if isinstance(idx, str) and idx.lower() == "end":
-            self.MT.data_ref.append(data)
+            self.MT.data.append(data)
         else:
-            self.MT.data_ref.insert(idx, data)
+            self.MT.data.insert(idx, data)
             self.MT.cell_options = {(rn if rn < idx else rn + 1, cn): t2 for (rn, cn), t2 in self.MT.cell_options.items()}
             self.MT.row_options = {rn if rn < idx else rn + 1: t for rn, t in self.MT.row_options.items()}
             self.RI.cell_options = {rn if rn < idx else rn + 1: t for rn, t in self.RI.cell_options.items()}
@@ -2138,7 +2193,7 @@ class Sheet(tk.Frame):
                 total_cols = self.MT.total_data_cols()
             data_max_cols = len(max(data, key = len))
             if data_max_cols > total_cols:
-                self.MT.data_ref[:] = [r + list(repeat("", data_max_cols - total_cols)) for r in self.MT.data_ref]
+                self.MT.data[:] = [r + list(repeat("", data_max_cols - total_cols)) for r in self.MT.data]
             else:
                 data[:] = [r + list(repeat("", total_cols - data_max_cols)) for r in data]
             if self.MT.all_columns_displayed:
@@ -2147,9 +2202,9 @@ class Sheet(tk.Frame):
                 if data_max_cols > len(self.MT.col_positions) - 1:
                     self.insert_column_positions("end", data_max_cols - (len(self.MT.col_positions) - 1))
         if isinstance(idx, str) and idx.lower() == "end":
-            self.MT.data_ref.extend(data)
+            self.MT.data.extend(data)
         else:
-            self.MT.data_ref[idx:idx] = data
+            self.MT.data[idx:idx] = data
             num_add = len(data)
             self.MT.cell_options = {(rn if rn < idx else rn + num_add, cn): t2 for (rn, cn), t2 in self.MT.cell_options.items()}
             self.MT.row_options = {rn if rn < idx else rn + num_add: t for rn, t in self.MT.row_options.items()}
@@ -2160,7 +2215,7 @@ class Sheet(tk.Frame):
         self.MT.data_dimensions(total_rows, total_columns)
 
     def get_total_rows(self):
-        return len(self.MT.data_ref)
+        return len(self.MT.data)
 
     def equalize_data_row_lengths(self):
         return self.MT.equalize_data_row_lengths()
@@ -2349,7 +2404,7 @@ class Sheet(tk.Frame):
                         check_function = None,
                         text = ""):
         if isinstance(r, str) and r.lower() == "all":
-            for r_ in range(len(self.MT.data_ref)):
+            for r_ in range(len(self.MT.data)):
                 self.MT.create_checkbox(r = r_,
                                         c = c,
                                         checked = checked,
@@ -2371,13 +2426,13 @@ class Sheet(tk.Frame):
                        c,
                        checked = None):
         if (r, c) in self.MT.cell_options and 'checkbox' in self.MT.cell_options[(r, c)]:
-            if not type(self.MT.data_ref[r][c]) == bool:
+            if not type(self.MT.data[r][c]) == bool:
                 if checked is None:
-                    self.MT.data_ref[r][c] = False
+                    self.MT.data[r][c] = False
                 else:
-                    self.MT.data_ref[r][c] = bool(checked)
+                    self.MT.data[r][c] = bool(checked)
             else:
-                self.MT.data_ref[r][c] = not self.MT.data_ref[r][c]
+                self.MT.data[r][c] = not self.MT.data[r][c]
 
     def get_checkboxes(self):
         return {k: v['checkbox'] for k, v in self.MT.cell_options.items() if 'checkbox' in v}
@@ -2405,7 +2460,7 @@ class Sheet(tk.Frame):
             self.MT.cell_options[(r, c)]['checkbox']['state'] = state
         if text is not None:
             self.MT.cell_options[(r, c)]['checkbox']['text'] = text
-        return {**self.MT.cell_options[(r, c)]['checkbox'], 'checked': self.MT.data_ref[r][c]}
+        return {**self.MT.cell_options[(r, c)]['checkbox'], 'checked': self.MT.data[r][c]}
     
     def create_header_dropdown(self,
                                c = 0,
@@ -2708,7 +2763,7 @@ class Sheet_Dropdown(Sheet):
 
     def arrowkey_DOWN(self, event = None):
         self.deselect("all")
-        if len(self.MT.data_ref) - 1 > self.row:
+        if len(self.MT.data) - 1 > self.row:
             self.row += 1
         self.see(self.row, 0, redraw = False)
         self.select_row(self.row)
