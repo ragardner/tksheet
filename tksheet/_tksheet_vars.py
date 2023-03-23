@@ -14,6 +14,12 @@ def get_font():
 def get_heading_font():
     return ("Calibri", 10, "normal")
 
+def is_iterable(o):
+    try:
+        for e in o:
+            return True
+    except:
+        return False
 
 theme_light_blue = {
 'popup_menu_fg': "gray2",

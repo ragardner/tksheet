@@ -527,10 +527,8 @@ class RowIndex(tk.Canvas):
                         orig_selected[:] = orig_selected[:forward_gap]
                     if reverse_gap is not None:
                         orig_selected[:] = orig_selected[reverse_gap:]
-                
-                rowsiter = orig_selected.copy()
-                rm1start = rowsiter[0]
-                totalrows = len(rowsiter)
+                rm1start = orig_selected[0]
+                totalrows = len(orig_selected)
                 extra_func_success = True
                 if r >= len(self.MT.row_positions) - 1:
                     r -= 1
@@ -540,7 +538,8 @@ class RowIndex(tk.Canvas):
                     except:
                         extra_func_success = False
                 if extra_func_success:
-                    new_selected, dispset = self.MT.move_rows_adjust_options_dict(r, rm1start, totalrows, move_data = self.row_drag_and_drop_perform)
+                    new_selected, dispset = self.MT.move_rows_adjust_options_dict(r, 
+                                                                                  rm1start, totalrows, move_data = self.row_drag_and_drop_perform)
                     if self.MT.undo_enabled:
                         self.MT.undo_storage.append(zlib.compress(pickle.dumps(("move_rows",
                                                                                 min(orig_selected),
@@ -1492,9 +1491,9 @@ class RowIndex(tk.Canvas):
             drow = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r]
         if self.cell_options[drow]['checkbox']['state'] == "normal":
             if isinstance(self.MT._row_index, list):
-                self._set_cell_data(r, drow, value = not self.MT._row_index[drow] if type(self.MT._row_index[drow]) == bool else False, cell_resize = False)
+                self._set_cell_data(r, drow = drow, value = not self.MT._row_index[drow] if type(self.MT._row_index[drow]) == bool else False, cell_resize = False)
             elif isinstance(self.MT._row_index, int):
-                self._set_cell_data(r, drow, value = not self.MT.data[self.MT._row_index][drow] if type(self.MT.data[self.MT._row_index][drow]) == bool else False, cell_resize = False)
+                self._set_cell_data(r, drow = drow, value = not self.MT.data[self.MT._row_index][drow] if type(self.MT.data[self.MT._row_index][drow]) == bool else False, cell_resize = False)
             if self.cell_options[drow]['checkbox']['check_function'] is not None:
                 self.cell_options[drow]['checkbox']['check_function']((r, 0, "IndexCheckboxClicked", f"{self.MT._row_index[drow] if isinstance(self.MT._row_index, list) else self.MT.data[self.MT._row_index][drow]}"))
             if self.extra_end_edit_cell_func is not None:
@@ -1505,7 +1504,7 @@ class RowIndex(tk.Canvas):
     def create_checkbox(self, r = 0, checked = False, state = "normal", redraw = False, check_function = None, text = ""):
         if r in self.cell_options and any(x in self.cell_options[r] for x in ('dropdown', 'checkbox')):
             self.destroy_dropdown_and_checkbox(r)
-        self._set_cell_data(drow = r, value = checked, cell_resize = False, undo = False)
+        self._set_cell_data(drow = r, value = checked, cell_resize = False, undo = False) # only works because cell_resize and undo are false otherwise needs r arg
         if r not in self.cell_options:
             self.cell_options[r] = {}
         self.cell_options[r]['checkbox'] = {'check_function': check_function,
@@ -1630,14 +1629,14 @@ class RowIndex(tk.Canvas):
             if self.cell_options[drow]['dropdown']['select_function'] is not None: # user has specified a selection function
                 self.cell_options[drow]['dropdown']['select_function'](EditIndexEvent(r, "IndexComboboxSelected", f"{selection}", "end_edit_index"))
             if self.extra_end_edit_cell_func is None:
-                self._set_cell_data(r, drow, selection, cell_resize = True)
+                self._set_cell_data(r, drow = drow, selection, cell_resize = True)
             elif self.extra_end_edit_cell_func is not None and self.MT.edit_cell_validation:
                 validation = self.extra_end_edit_cell_func(EditIndexEvent(r, "IndexComboboxSelected", f"{selection}", "end_edit_index"))
                 if validation is not None:
                     selection = validation
-                self._set_cell_data(r, drow, selection, cell_resize = True)
+                self._set_cell_data(r, drow = drow, selection, cell_resize = True)
             elif self.extra_end_edit_cell_func is not None and not self.MT.edit_cell_validation:
-                self._set_cell_data(r, drow, selection, cell_resize = True)
+                self._set_cell_data(r, drow = drow, selection, cell_resize = True)
                 self.extra_end_edit_cell_func(EditIndexEvent(r, "IndexComboboxSelected", f"{selection}", "end_edit_index"))
             self.focus_set()
             self.MT.recreate_all_selection_boxes()

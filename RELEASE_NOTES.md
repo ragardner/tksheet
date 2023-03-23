@@ -1,4 +1,18 @@
-### Version 5.5.1 (current version)
+### Version 5.5.2 (current version)
+Fixed:
+ - Row index missing itertools repeat
+ - Header checkbox, index checkbox bugs
+ - Row index editing errors
+ - `move_columns()`/`move_rows()` redrawing when not supposed to
+ - `move_row()`/`move_column()` error
+ - `delete_out_of_bounds_options()` error
+ - `dehighlight_cells()` incorrectly wiping all cell options when `"all"` is used
+
+Changed:
+ - `set_column_widths()`/`set_row_heights()` can now receive any iterable if `canvas_positions` is `False`
+ - Tidied internal row/column moving code
+
+### Version 5.5.1
 Fixed:
  - `display_columns()` no longer redraws if `deselect_all` is `True` even when `redraw` is `False`
  - `extra_bindings()` cell editors carrying out cell edits even if validation function returns `None`

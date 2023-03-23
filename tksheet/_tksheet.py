@@ -774,8 +774,8 @@ class Sheet(tk.Frame):
             return
         if verify:
             cwx = self.verify_column_widths(column_widths, canvas_positions)
-        if isinstance(column_widths, list):
-            if canvas_positions:
+        if is_iterable(column_widths):
+            if canvas_positions and isinstance(column_widths, list):
                 self.MT.col_positions = column_widths
             else:
                 self.MT.col_positions = list(accumulate(chain([0], (width for width in column_widths))))
@@ -816,9 +816,9 @@ class Sheet(tk.Frame):
         if reset:
             self.MT.reset_row_positions()
             return
-        if isinstance(row_heights, list):
+        if is_iterable(row_heights):
             qmin = self.MT.min_rh
-            if canvas_positions:
+            if canvas_positions and isinstance(row_heights, list):
                 if verify:
                     self.MT.row_positions = list(accumulate(chain([0], (height if qmin < height else qmin
                                                                         for height in [x - z for z, x in zip(islice(row_heights, 0, None),
@@ -976,7 +976,7 @@ class Sheet(tk.Frame):
         self.MT.move_row_position(row, moveto)
 
     def move_row(self, row: int, moveto: int):
-        self.move_rows(moveto, row)
+        self.move_rows(moveto, row, 1)
 
     def move_rows(self, moveto: int, to_move_min: int, number_of_rows: int, move_data: bool = True, index_type: str = "displayed", create_selections: bool = True, redraw = False):
         if index_type.lower() == "displayed" or self.MT.all_rows_displayed:
@@ -1023,7 +1023,7 @@ class Sheet(tk.Frame):
         self.MT.move_col_position(column, moveto)
 
     def move_column(self, column: int, moveto: int):
-        self.move_columns(moveto, column)
+        self.move_columns(moveto, column, 1)
 
     def move_columns(self, moveto: int, to_move_min: int, number_of_columns: int, move_data: bool = True, index_type: str = "displayed", create_selections: bool = True, redraw = False):
         if index_type.lower() == "displayed" or self.MT.all_columns_displayed:
@@ -1058,39 +1058,22 @@ class Sheet(tk.Frame):
                         self.MT._headers.extend(list(repeat("", rm1end - len(self.MT._headers) + 1)))
                     self.MT._headers[c:c] = self.MT._headers[rm1start:rm1end]
                     self.MT._headers[rm2start:rm2end] = []
-
-                new_ch = {}
-                for k, v in self.CH.cell_options.items():
-                    if k in newcolsdct:
-                        new_ch[newcolsdct[k]] = v
-                    elif k < rm1start and k >= c:
-                        new_ch[k + totalcols] = v
-                    else:
-                        new_ch[k] = v
-                self.CH.cell_options = new_ch
-                
-                new_cell = {}
-                for k, v in self.MT.cell_options.items():
-                    if k[1] in newcolsdct:
-                        new_cell[(k[0], newcolsdct[k[1]])] = v
-                    elif k[1] < rm1start and k[1] >= c:
-                        new_cell[(k[0], k[1] + totalcols)] = v
-                    else:
-                        new_cell[k] = v
-                self.MT.cell_options = new_cell
-                
-                new_col = {}
-                for k, v in self.MT.col_options.items():
-                    if k in newcolsdct:
-                        new_col[newcolsdct[k]] = v
-                    elif k < rm1start and k >= c:
-                        new_col[k + totalcols] = v
-                    else:
-                        new_col[k] = v
-                self.MT.col_options = new_col
-                
+                self.CH.cell_options = {
+                    int(newcolsdct[k]) if k in newcolsdct else
+                    k + totalcols if k < rm1start and k >= c else
+                    int(k): v for k, v in self.CH.cell_options.items()
+                }
+                self.MT.cell_options = {
+                    (k[0], int(newcolsdct[k[1]])) if k[1] in newcolsdct else
+                    (k[0], k[1] + totalcols) if k[1] < rm1start and k[1] >= c else
+                    k: v for k, v in self.MT.cell_options.items()
+                }
+                self.MT.col_options = {
+                    int(newcolsdct[k]) if k in newcolsdct else
+                    k + totalcols if k < rm1start and k >= c else
+                    int(k): v for k, v in self.MT.col_options.items()
+                }
                 self.MT.displayed_columns = sorted(int(newcolsdct[k]) if k in newcolsdct else k + totalcols if k < rm1start and k >= c else int(k) for k in self.MT.displayed_columns)
-                
             else:
                 c += 1
                 if move_data:
@@ -1104,37 +1087,21 @@ class Sheet(tk.Frame):
                             self.MT._headers.extend(list(repeat("", c - len(self.MT._headers))))
                         self.MT._headers[c:c] = self.MT._headers[rm1start:rm1end]
                         self.MT._headers[rm1start:rm1end] = []
-            
-                new_ch = {}
-                for k, v in self.CH.cell_options.items():
-                    if k in newcolsdct:
-                        new_ch[newcolsdct[k]] = v
-                    elif k < c and k > rm1start:
-                        new_ch[k - totalcols] = v
-                    else:
-                        new_ch[k] = v
-                self.CH.cell_options = new_ch
-                
-                new_cell = {}
-                for k, v in self.MT.cell_options.items():
-                    if k[1] in newcolsdct:
-                        new_cell[(k[0], newcolsdct[k[1]])] = v
-                    elif k[1] < c and k[1] > rm1start:
-                        new_cell[(k[0], k[1] - totalcols)] = v
-                    else:
-                        new_cell[k] = v
-                self.MT.cell_options = new_cell
-                
-                new_col = {}
-                for k, v in self.MT.col_options.items():
-                    if k in newcolsdct:
-                        new_col[newcolsdct[k]] = v
-                    elif k < c and k > rm1start:
-                        new_col[k - totalcols] = v
-                    else:
-                        new_col[k] = v
-                self.MT.col_options = new_col
-
+                self.CH.cell_options = {
+                    int(newcolsdct[k]) if k in newcolsdct else
+                    k - totalcols if k < c and k > rm1start else
+                    int(k): v for k, v in self.CH.cell_options.items()
+                }
+                self.MT.cell_options = {
+                    (k[0], int(newcolsdct[k[1]])) if k[1] in newcolsdct else
+                    (k[0], k[1] - totalcols) if k[1] < c and k[1] > rm1start else
+                    k: v for k, v in self.MT.cell_options.items()
+                }
+                self.MT.col_options = {
+                    int(newcolsdct[k]) if k in newcolsdct else
+                    k - totalcols if k < c and k > rm1start else
+                    int(k): v for k, v in self.MT.col_options.items()
+                }
                 self.MT.displayed_columns = sorted(int(newcolsdct[k]) if k in newcolsdct else k - totalcols if k < c and k > rm1start else int(k) for k in self.MT.displayed_columns)
             self.set_refresh_timer(redraw)
             return new_selected, {}
@@ -1477,11 +1444,17 @@ class Sheet(tk.Frame):
 
     def dehighlight_cells(self, row = 0, column = 0, cells = [], canvas = "table", all_ = False, redraw = True):
         if row == "all" and canvas == "table":
-            self.MT.cell_options = {}
+            for k, v in self.MT.cell_options.items():
+                if 'highlight' in v:
+                    del self.MT.cell_options[k]['highlight']
         elif row == "all" and canvas == "row_index":
-            self.RI.cell_options = {}
+            for k, v in self.RI.cell_options.items():
+                if 'highlight' in v:
+                    del self.RI.cell_options[k]['highlight']
         elif row == "all" and canvas == "header":
-            self.CH.cell_options = {}
+            for k, v in self.CH.cell_options.items():
+                if 'highlight' in v:
+                    del self.CH.cell_options[k]['highlight']
         if canvas == "table":
             if cells and not all_:
                 for t in cells:
@@ -1530,11 +1503,11 @@ class Sheet(tk.Frame):
     def delete_out_of_bounds_options(self):
         maxc = self.total_columns()
         maxr = self.total_rows()
-        self.MT.cell_options = {k: v for k, v in self.MT.cell_options.items() if k[0] <= maxr and k[1] <= maxc}
-        self.RI.cell_options = {k: v for k, v in self.MT.cell_options.items() if k <= maxr}
-        self.CH.cell_options = {k: v for k, v in self.MT.cell_options.items() if k <= maxc}
-        self.MT.col_options = {k: v for k, v in self.MT.cell_options.items() if k <= maxc}
-        self.MT.row_options = {k: v for k, v in self.MT.cell_options.items() if k <= maxr}
+        self.MT.cell_options = {k: v for k, v in self.MT.cell_options.items() if k[0] < maxr and k[1] < maxc}
+        self.RI.cell_options = {k: v for k, v in self.RI.cell_options.items() if k < maxr}
+        self.CH.cell_options = {k: v for k, v in self.CH.cell_options.items() if k < maxc}
+        self.MT.col_options = {k: v for k, v in self.MT.col_options.items() if k < maxc}
+        self.MT.row_options = {k: v for k, v in self.MT.row_options.items() if k < maxr}
         
     def reset_all_options(self):
         self.MT.cell_options = {}
@@ -1587,40 +1560,69 @@ class Sheet(tk.Frame):
         
     def align_rows(self, rows = [], align = "global", align_index = False, redraw = True): #"center", "w", "e" or "global"
         if align == "global" or self.convert_align(align):
-            self.MT.align_rows(rows = rows,
-                               align = align if align == "global" else self.convert_align(align),
-                               align_index = align_index)
+            if isinstance(rows, dict):
+                for k, v in rows.items():
+                    self.MT.align_rows(rows = k,
+                                       align = v,
+                                       align_index = align_index)
+            else:
+                self.MT.align_rows(rows = rows,
+                                   align = align if align == "global" else self.convert_align(align),
+                                   align_index = align_index)
         if redraw:
             self.redraw()
         
     def align_columns(self, columns = [], align = "global", align_header = False, redraw = True): #"center", "w", "e" or "global"
         if align == "global" or self.convert_align(align):
-            self.MT.align_columns(columns = columns,
-                                  align = align if align == "global" else self.convert_align(align),
-                                  align_header = align_header)
+            if isinstance(columns, dict):
+                for k, v in columns.items():
+                    self.MT.align_columns(columns = k,
+                                          align = v,
+                                          align_header = align_header)
+            else:
+                self.MT.align_columns(columns = columns,
+                                      align = align if align == "global" else self.convert_align(align),
+                                      align_header = align_header)
         if redraw:
             self.redraw()
 
     def align_cells(self, row = 0, column = 0, cells = [], align = "global", redraw = True): #"center", "w", "e" or "global"
         if align == "global" or self.convert_align(align):
-            self.MT.align_cells(row = row,
-                                column = column,
-                                cells = cells,
-                                align = align if align == "global" else self.convert_align(align))
+            if isinstance(cells, dict):
+                for (r, c), v in cells.items():
+                    self.MT.align_cells(row = r,
+                                        column = c,
+                                        cells = [],
+                                        align = v)
+            else:
+                self.MT.align_cells(row = row,
+                                    column = column,
+                                    cells = cells,
+                                    align = align if align == "global" else self.convert_align(align))
         if redraw:
             self.redraw()
 
     def align_header(self, columns = [], align = "global", redraw = True):
         if align == "global" or self.convert_align(align):
-            self.CH.align_cells(columns = columns,
-                                align = align if align == "global" else self.convert_align(align))
+            if isinstance(columns, dict):
+                for k, v in columns.items():
+                    self.CH.align_cells(columns = k,
+                                        align = v)
+            else:
+                self.CH.align_cells(columns = columns,
+                                    align = align if align == "global" else self.convert_align(align))
         if redraw:
             self.redraw()
 
     def align_index(self, rows = [], align = "global", redraw = True):
         if align == "global" or self.convert_align(align):
-            self.RI.align_cells(rows = rows,
-                                align = align if align == "global" else self.convert_align(align))
+            if isinstance(rows, dict):
+                for k, v in rows.items():
+                    self.RI.align_cells(rows = rows,
+                                        align = v)
+            else:
+                self.RI.align_cells(rows = rows,
+                                    align = align if align == "global" else self.convert_align(align))
         if redraw:
             self.redraw()
 
@@ -2416,18 +2418,8 @@ class Sheet(tk.Frame):
                         redraw = False,
                         check_function = None,
                         text = ""):
-        if (isinstance(r, str) and r.lower() == "all") and (isinstance(c, str) and c.lower() == "all"):
-            for r_ in range(len(self.MT.data)):
-                for c_ in range(len(self.MT.data)):
-                    self.MT.create_checkbox(r = r_,
-                                            c = c_,
-                                            checked = checked,
-                                            state = state,
-                                            redraw = redraw,
-                                            check_function = check_function,
-                                            text = text)
-        elif isinstance(r, str) and r.lower() == "all":
-            for r_ in range(len(self.MT.data)):
+        if isinstance(r, str) and r.lower() == "all" and isinstance(c, int):
+            for r_ in range(self.MT.total_data_rows()):
                 self.MT.create_checkbox(r = r_,
                                         c = c,
                                         checked = checked,
@@ -2435,8 +2427,8 @@ class Sheet(tk.Frame):
                                         redraw = redraw,
                                         check_function = check_function,
                                         text = text)
-        elif isinstance(c, str) and c.lower() == "all":
-            for c_ in range(len(self.MT.data)):
+        elif isinstance(c, str) and c.lower() == "all" and isinstance(r, int):
+            for c_ in range(self.MT.total_data_cols()):
                 self.MT.create_checkbox(r = r,
                                         c = c_,
                                         checked = checked,
@@ -2444,6 +2436,18 @@ class Sheet(tk.Frame):
                                         redraw = redraw,
                                         check_function = check_function,
                                         text = text)
+            
+        elif isinstance(r, str) and r.lower() == "all" and isinstance(c, str) and c.lower() == "all":
+            totalcols = self.MT.total_data_cols()
+            for r_ in range(self.MT.total_data_rows()):
+                for c_ in range(totalcols):
+                    self.MT.create_checkbox(r = r_,
+                                            c = c_,
+                                            checked = checked,
+                                            state = state,
+                                            redraw = redraw,
+                                            check_function = check_function,
+                                            text = text)
         else:
             self.MT.create_checkbox(r = r,
                                     c = c,
@@ -2645,19 +2649,7 @@ class Sheet(tk.Frame):
                         redraw = False,
                         selection_function = None,
                         modified_function = None):
-        
-        if (isinstance(r, str) and r.lower() == "all") and (isinstance(c, str) and c.lower() == "all"):
-            for r_ in range(self.MT.total_data_rows()):
-                for c_ in range(self.MT.total_data_cols()):
-                    self.MT.create_dropdown(r = r_,
-                                            c = c_,
-                                            values = values,
-                                            set_value = set_value,
-                                            state = state,
-                                            redraw = redraw,
-                                            selection_function = selection_function,
-                                            modified_function = modified_function)
-        elif isinstance(r, str) and r.lower() == "all":
+        if isinstance(r, str) and r.lower() == "all" and isinstance(c, int):
             for r_ in range(self.MT.total_data_rows()):
                 self.MT.create_dropdown(r = r_,
                                         c = c,
@@ -2667,7 +2659,7 @@ class Sheet(tk.Frame):
                                         redraw = redraw,
                                         selection_function = selection_function,
                                         modified_function = modified_function)
-        elif isinstance(c, str) and c.lower() == "all":
+        elif isinstance(c, str) and c.lower() == "all" and isinstance(r, int):
             for c_ in range(self.MT.total_data_cols()):
                 self.MT.create_dropdown(r = r,
                                         c = c_,
@@ -2677,6 +2669,19 @@ class Sheet(tk.Frame):
                                         redraw = redraw,
                                         selection_function = selection_function,
                                         modified_function = modified_function)
+        elif isinstance(r, str) and r.lower() == "all" and isinstance(c, str) and c.lower() == "all":
+            totalcols = self.MT.total_data_cols()
+            for r_ in range(self.MT.total_data_rows()):
+                for c_ in range(totalcols):
+                    self.MT.create_dropdown(r = r_,
+                                            c = c_,
+                                            values = values,
+                                            set_value = set_value,
+                                            state = state,
+                                            redraw = redraw,
+                                            selection_function = selection_function,
+                                            modified_function = modified_function)
+        
         else:
             self.MT.create_dropdown(r = r,
                                     c = c,
