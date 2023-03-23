@@ -1,7 +1,7 @@
 from ._tksheet_vars import *
 from ._tksheet_other_classes import *
 
-from itertools import islice, accumulate, chain, cycle
+from itertools import islice, accumulate, chain, cycle, repeat
 from math import floor, ceil
 import bisect
 import pickle
@@ -1474,7 +1474,7 @@ class RowIndex(tk.Canvas):
                                                                            self.MT.currently_selected()))))
             self.MT._row_index[drow] = value
         elif isinstance(self.MT._row_index, int):
-            self.MT._set_cell_data(r = self.MT._row_index, c = c, drow = drow, value = value, undo = True)
+            self.MT._set_cell_data(r = r, c = self.MT._row_index, drow = drow, value = value, undo = True)
         if cell_resize and self.MT.cell_auto_resize_enabled:
             self.set_row_height_run_binding(r)
             self.MT.refresh()

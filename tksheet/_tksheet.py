@@ -2292,7 +2292,7 @@ class Sheet(tk.Frame):
                                check_function = None,
                                text = ""):
         if isinstance(c, str) and c.lower() == "all":
-            for c_ in range(len(self.MT.total_data_cols())):
+            for c_ in range(self.MT.total_data_cols()):
                 self.CH.create_checkbox(c = c_,
                                         checked = checked,
                                         state = state,
@@ -2354,7 +2354,7 @@ class Sheet(tk.Frame):
                               check_function = None,
                               text = ""):
         if isinstance(r, str) and r.lower() == "all":
-            for r_ in range(len(self.MT.total_data_rows())):
+            for r_ in range(self.MT.total_data_rows()):
                 self.RI.create_checkbox(r = r_,
                                         checked = checked,
                                         state = state,
@@ -2416,10 +2416,29 @@ class Sheet(tk.Frame):
                         redraw = False,
                         check_function = None,
                         text = ""):
-        if isinstance(r, str) and r.lower() == "all":
+        if (isinstance(r, str) and r.lower() == "all") and (isinstance(c, str) and c.lower() == "all"):
+            for r_ in range(len(self.MT.data)):
+                for c_ in range(len(self.MT.data)):
+                    self.MT.create_checkbox(r = r_,
+                                            c = c_,
+                                            checked = checked,
+                                            state = state,
+                                            redraw = redraw,
+                                            check_function = check_function,
+                                            text = text)
+        elif isinstance(r, str) and r.lower() == "all":
             for r_ in range(len(self.MT.data)):
                 self.MT.create_checkbox(r = r_,
                                         c = c,
+                                        checked = checked,
+                                        state = state,
+                                        redraw = redraw,
+                                        check_function = check_function,
+                                        text = text)
+        elif isinstance(c, str) and c.lower() == "all":
+            for c_ in range(len(self.MT.data)):
+                self.MT.create_checkbox(r = r,
+                                        c = c_,
                                         checked = checked,
                                         state = state,
                                         redraw = redraw,
@@ -2484,7 +2503,7 @@ class Sheet(tk.Frame):
                                selection_function = None,
                                modified_function = None):
         if isinstance(c, str) and c.lower() == "all":
-            for c_ in range(len(self.MT.total_data_cols())):
+            for c_ in range(self.MT.total_data_cols()):
                 self.CH.create_dropdown(c = c_,
                                         values = values,
                                         set_value = set_value,
@@ -2555,7 +2574,7 @@ class Sheet(tk.Frame):
                               selection_function = None,
                               modified_function = None):
         if isinstance(r, str) and r.lower() == "all":
-            for r_ in range(len(self.MT.total_data_rows())):
+            for r_ in range(self.MT.total_data_rows()):
                 self.RI.create_dropdown(r = r_,
                                         values = values,
                                         set_value = set_value,
@@ -2626,10 +2645,32 @@ class Sheet(tk.Frame):
                         redraw = False,
                         selection_function = None,
                         modified_function = None):
-        if isinstance(r, str) and r.lower() == "all":
+        
+        if (isinstance(r, str) and r.lower() == "all") and (isinstance(c, str) and c.lower() == "all"):
+            for r_ in range(self.MT.total_data_rows()):
+                for c_ in range(self.MT.total_data_cols()):
+                    self.MT.create_dropdown(r = r_,
+                                            c = c_,
+                                            values = values,
+                                            set_value = set_value,
+                                            state = state,
+                                            redraw = redraw,
+                                            selection_function = selection_function,
+                                            modified_function = modified_function)
+        elif isinstance(r, str) and r.lower() == "all":
             for r_ in range(self.MT.total_data_rows()):
                 self.MT.create_dropdown(r = r_,
                                         c = c,
+                                        values = values,
+                                        set_value = set_value,
+                                        state = state,
+                                        redraw = redraw,
+                                        selection_function = selection_function,
+                                        modified_function = modified_function)
+        elif isinstance(c, str) and c.lower() == "all":
+            for c_ in range(self.MT.total_data_cols()):
+                self.MT.create_dropdown(r = r,
+                                        c = c_,
                                         values = values,
                                         set_value = set_value,
                                         state = state,
