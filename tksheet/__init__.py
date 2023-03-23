@@ -5,3 +5,4 @@ from ._tksheet_row_index import RowIndex
 from ._tksheet_top_left_rectangle import TopLeftRectangle
 from ._tksheet_vars import *
 from ._tksheet import Sheet
+from ._converters import NullableDateCell, NullableFloatCell, NullableDatetimeCell, NullableBoolCell, NullableIntCell
