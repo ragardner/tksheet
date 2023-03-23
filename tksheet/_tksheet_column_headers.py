@@ -1,7 +1,7 @@
 from ._tksheet_vars import *
 from ._tksheet_other_classes import *
 
-from itertools import islice, repeat, accumulate, chain, cycle
+from itertools import islice, accumulate, chain, cycle, repeat
 from math import floor, ceil
 import bisect
 import pickle
@@ -502,25 +502,25 @@ class ColumnHeaders(tk.Canvas):
             self.MT.delete_resize_lines()
             x = event.x
             c = self.MT.identify_col(x = x)
-            orig_selected_cols = self.MT.get_selected_cols()
-            if c != self.dragged_col and c is not None and c not in orig_selected_cols and len(orig_selected_cols) != len(self.MT.col_positions) - 1:
-                orig_selected_cols = sorted(orig_selected_cols)
-                if len(orig_selected_cols) > 1:
-                    start_idx = bisect.bisect_left(orig_selected_cols, self.dragged_col)
-                    forward_gap = get_index_of_gap_in_sorted_integer_seq_forward(orig_selected_cols, start_idx)
-                    reverse_gap = get_index_of_gap_in_sorted_integer_seq_reverse(orig_selected_cols, start_idx)
+            orig_selected = self.MT.get_selected_cols()
+            if c != self.dragged_col and c is not None and c not in orig_selected and len(orig_selected) != len(self.MT.col_positions) - 1:
+                orig_selected = sorted(orig_selected)
+                if len(orig_selected) > 1:
+                    start_idx = bisect.bisect_left(orig_selected, self.dragged_col)
+                    forward_gap = get_index_of_gap_in_sorted_integer_seq_forward(orig_selected, start_idx)
+                    reverse_gap = get_index_of_gap_in_sorted_integer_seq_reverse(orig_selected, start_idx)
                     if forward_gap is not None:
-                        orig_selected_cols[:] = orig_selected_cols[:forward_gap]
+                        orig_selected[:] = orig_selected[:forward_gap]
                     if reverse_gap is not None:
-                        orig_selected_cols[:] = orig_selected_cols[reverse_gap:]
-                rm1start = orig_selected_cols[0]
-                totalcols = len(orig_selected_cols)
+                        orig_selected[:] = orig_selected[reverse_gap:]
+                rm1start = orig_selected[0]
+                totalcols = len(orig_selected)
                 extra_func_success = True
                 if c >= len(self.MT.col_positions) - 1:
                     c -= 1
                 if self.ch_extra_begin_drag_drop_func is not None:
                     try:
-                        self.ch_extra_begin_drag_drop_func(BeginDragDropEvent("begin_column_header_drag_drop", tuple(orig_selected_cols), int(c)))
+                        self.ch_extra_begin_drag_drop_func(BeginDragDropEvent("begin_column_header_drag_drop", tuple(orig_selected), int(c)))
                     except:
                         extra_func_success = False
                 if extra_func_success:
@@ -530,14 +530,14 @@ class ColumnHeaders(tk.Canvas):
                                                                                      move_data = self.column_drag_and_drop_perform)
                     if self.MT.undo_enabled:
                         self.MT.undo_storage.append(zlib.compress(pickle.dumps(("move_cols",                 #0
-                                                                                int(orig_selected_cols[0]),  #1
+                                                                                int(orig_selected[0]),  #1
                                                                                 int(new_selected[0]),        #2
                                                                                 int(new_selected[-1]),       #3
-                                                                                sorted(orig_selected_cols),  #4
+                                                                                sorted(orig_selected),  #4
                                                                                 dispset))))                  #5
                     self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
                     if self.ch_extra_end_drag_drop_func is not None:
-                        self.ch_extra_end_drag_drop_func(EndDragDropEvent("end_column_header_drag_drop", tuple(orig_selected_cols), new_selected, int(c)))
+                        self.ch_extra_end_drag_drop_func(EndDragDropEvent("end_column_header_drag_drop", tuple(orig_selected), new_selected, int(c)))
         elif self.b1_pressed_loc is not None and self.rsz_w is None and self.rsz_h is None:
             c = self.MT.identify_col(x = event.x)
             if c is not None and c == self.b1_pressed_loc and self.b1_pressed_loc != self.closed_dropdown:
@@ -1395,9 +1395,9 @@ class ColumnHeaders(tk.Canvas):
             dcol = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
         if self.cell_options[dcol]['checkbox']['state'] == "normal":
             if isinstance(self.MT._headers, list):
-                self._set_cell_data(c, dcol, value = not self.MT._headers[dcol] if type(self.MT._headers[dcol]) == bool else False, cell_resize = False)
+                self._set_cell_data(c, dcol = dcol, value = not self.MT._headers[dcol] if type(self.MT._headers[dcol]) == bool else False, cell_resize = False)
             elif isinstance(self.MT._headers, int):
-                self._set_cell_data(c, dcol, value = not self.MT.data[self.MT._headers][dcol] if type(self.MT.data[self.MT._headers][dcol]) == bool else False, cell_resize = False)
+                self._set_cell_data(c, dcol = dcol, value = not self.MT.data[self.MT._headers][dcol] if type(self.MT.data[self.MT._headers][dcol]) == bool else False, cell_resize = False)
             if self.cell_options[dcol]['checkbox']['check_function'] is not None:
                 self.cell_options[dcol]['checkbox']['check_function']((0, c, "HeaderCheckboxClicked", f"{self.MT._headers[dcol] if isinstance(self.MT._headers, list) else self.MT.data[self.MT._headers][dcol]}"))
             if self.extra_end_edit_cell_func is not None:
@@ -1408,7 +1408,7 @@ class ColumnHeaders(tk.Canvas):
     def create_checkbox(self, c = 0, checked = False, state = "normal", redraw = False, check_function = None, text = ""):
         if c in self.cell_options and any(x in self.cell_options[c] for x in ('dropdown', 'checkbox')):
             self.destroy_dropdown_and_checkbox(c)
-        self._set_cell_data(dcol = c, value = checked, cell_resize = False, undo = False)
+        self._set_cell_data(dcol = c, value = checked, cell_resize = False, undo = False) # only works because cell_resize and undo are false else needs c arg
         if c not in self.cell_options:
             self.cell_options[c] = {}
         self.cell_options[c]['checkbox'] = {'check_function': check_function,
@@ -1544,14 +1544,14 @@ class ColumnHeaders(tk.Canvas):
             if self.cell_options[dcol]['dropdown']['select_function'] is not None: # user has specified a selection function
                 self.cell_options[dcol]['dropdown']['select_function'](EditHeaderEvent(c, "HeaderComboboxSelected", f"{selection}", "end_edit_header"))
             if self.extra_end_edit_cell_func is None:
-                self._set_cell_data(c, dcol, selection, cell_resize = True)
+                self._set_cell_data(c, dcol = dcol, value = selection, cell_resize = True)
             elif self.extra_end_edit_cell_func is not None and self.MT.edit_cell_validation:
                 validation = self.extra_end_edit_cell_func(EditHeaderEvent(c, "HeaderComboboxSelected", f"{selection}", "end_edit_header"))
                 if validation is not None:
                     selection = validation
-                self._set_cell_data(c, dcol, selection, cell_resize = True)
+                self._set_cell_data(c, dcol = dcol, value = selection, cell_resize = True)
             elif self.extra_end_edit_cell_func is not None and not self.MT.edit_cell_validation:
-                self._set_cell_data(c, dcol, selection, cell_resize = True)
+                self._set_cell_data(c, dcol = dcol, value = selection, cell_resize = True)
                 self.extra_end_edit_cell_func(EditHeaderEvent(c, "HeaderComboboxSelected", f"{selection}", "end_edit_header"))
             self.focus_set()
             self.MT.recreate_all_selection_boxes()

@@ -1379,10 +1379,11 @@ create_index_dropdown(r = 0,
 ```
 
 Notes:
+ - Use `selection_function`/`modified_function` like so `selection_function = my_function_name`. The function you use needs at least one argument because tksheet will send information to your function about the triggered dropdown.
  - When a user selects an item from the dropdown box the sheet will set the underlying cells data to the selected item, to bind this event use either the `selection_function` argument or see the function `extra_bindings()` with binding `"end_edit_cell"` [here](https://github.com/ragardner/tksheet/wiki#7-bindings-and-functionality).
 
  Arguments:
- - Set first argument to `"all"` to create a full column (in the main table) or a full header of dropdown boxes.
+ - `r` and `c` (`int`, `str`) can be set to `"all"`
  - `values` are the values to appear when the dropdown box is popped open.
  - `state` determines whether or not there is also an editable text window at the top of the dropdown box when it is open.
  - `redraw` refreshes the sheet so the newly created box is visible.
@@ -1534,11 +1535,12 @@ create_index_checkbox(r,
 ```
 
 Notes:
+ - Use `check_function` like so `check_function = my_function_name`. The function you use needs at least one argument because when the checkbox is clicked it will send information to your function about the clicked checkbox.
  - Use `highlight_cells()` or rows or columns to change the color of the checkbox.
  - Check boxes are always left aligned despite any align settings.
 
  Arguments:
- - Set first argument to `"all"` to create a full column (in the main table) or a full header of checkboxes.
+ - `r` and `c` (`int`, `str`) can be set to `"all"`
  - `text` displays text next to the checkbox in the cell, but will not be used as data, data will either be `True` or `False`
  - `check_function` can be used to trigger a function when the user clicks a checkbox.
  - `state` can be `"normal"` or `"disabled"`. If `"disabled"` then color will be same as table grid lines, else it will be the cells text color.

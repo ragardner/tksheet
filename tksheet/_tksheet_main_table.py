@@ -769,7 +769,7 @@ class MainTable(tk.Canvas):
         rm2start = rm1start + (rm1end - rm1start)
         rm2end = rm1end + (rm1end - rm1start)
         orig_selected = list(range(rm1start, rm1start + totalcols))
-        self.deselect("all")
+        self.deselect("all", redraw = False)
         cws = [int(b - a) for a, b in zip(self.col_positions, islice(self.col_positions, 1, len(self.col_positions)))]
         if rm1start > c:
             cws[c:c] = cws[rm1start:rm1end]
@@ -808,36 +808,21 @@ class MainTable(tk.Canvas):
                             self._headers.extend(list(repeat("", rm1end - len(self._headers) + 1)))
                         self._headers[c:c] = self._headers[rm1start:rm1end]
                         self._headers[rm2start:rm2end] = []
-
-                new_ch = {}
-                for k, v in self.CH.cell_options.items():
-                    if k in newcolsdct:
-                        new_ch[newcolsdct[k]] = v
-                    elif k < rm1start and k >= c:
-                        new_ch[k + totalcols] = v
-                    else:
-                        new_ch[k] = v
-                self.CH.cell_options = new_ch
-                
-                new_cell = {}
-                for k, v in self.cell_options.items():
-                    if k[1] in newcolsdct:
-                        new_cell[(k[0], newcolsdct[k[1]])] = v
-                    elif k[1] < rm1start and k[1] >= c:
-                        new_cell[(k[0], k[1] + totalcols)] = v
-                    else:
-                        new_cell[k] = v
-                self.cell_options = new_cell
-                
-                new_col = {}
-                for k, v in self.col_options.items():
-                    if k in newcolsdct:
-                        new_col[newcolsdct[k]] = v
-                    elif k < rm1start and k >= c:
-                        new_col[k + totalcols] = v
-                    else:
-                        new_col[k] = v
-                self.col_options = new_col
+                self.CH.cell_options = {
+                    newcolsdct[k] if k in newcolsdct else
+                    k + totalcols if k < rm1start and k >= c else
+                    k: v for k, v in self.CH.cell_options.items()
+                }
+                self.cell_options = {
+                    (k[0], newcolsdct[k[1]]) if k[1] in newcolsdct else
+                    (k[0], k[1] + totalcols) if k[1] < rm1start and k[1] >= c else
+                    k: v for k, v in self.cell_options.items()
+                }
+                self.col_options = {
+                    newcolsdct[k] if k in newcolsdct else
+                    k + totalcols if k < rm1start and k >= c else
+                    k: v for k, v in self.col_options.items()
+                }
             else:
                 c += 1
                 if move_data:
@@ -851,28 +836,21 @@ class MainTable(tk.Canvas):
                             self._headers.extend(list(repeat("", c - len(self._headers))))
                         self._headers[c:c] = self._headers[rm1start:rm1end]
                         self._headers[rm1start:rm1end] = []
-
-                new_ch = {}
-                for k, v in self.CH.cell_options.items():
-                    if k in newcolsdct:
-                        new_ch[newcolsdct[k]] = v
-                    elif k < c and k > rm1start:
-                        new_ch[k - totalcols] = v
-                    else:
-                        new_ch[k] = v
-                self.CH.cell_options = new_ch
-                
-                self.cell_options = {(k[0], newcolsdct[k[1]]) if k[1] in newcolsdct else (k[0], k[1] - totalcols) if k[1] < c and k[1] > rm1start else k: v for k, v in self.cell_options.items()}
-                
-                new_col = {}
-                for k, v in self.col_options.items():
-                    if k in newcolsdct:
-                        new_col[newcolsdct[k]] = v
-                    elif k < c and k > rm1start:
-                        new_col[k - totalcols] = v
-                    else:
-                        new_col[k] = v
-                self.col_options = new_col
+                self.CH.cell_options = {
+                    newcolsdct[k] if k in newcolsdct else
+                    k - totalcols if k < c and k > rm1start else
+                    k: v for k, v in self.CH.cell_options.items()
+                }
+                self.cell_options = {
+                    (k[0], newcolsdct[k[1]]) if k[1] in newcolsdct else 
+                    (k[0], k[1] - totalcols) if k[1] < c and k[1] > rm1start else 
+                    k: v for k, v in self.cell_options.items()
+                }
+                self.col_options = {
+                    newcolsdct[k] if k in newcolsdct else
+                    k - totalcols if k < c and k > rm1start else
+                    k: v for k, v in self.col_options.items()
+                }
         else:
             # moves data around, not displayed columns indexes
             # which remain sorted and the same after drop and drop
@@ -926,7 +904,6 @@ class MainTable(tk.Canvas):
             self.CH.cell_options = {dispset[k] if k in dispset else k: v for k, v in self.CH.cell_options.items()}
             self.cell_options = {(k[0], dispset[k[1]]) if k[1] in dispset else k: v for k, v in self.cell_options.items()}
             self.col_options = {dispset[k] if k in dispset else k: v for k, v in self.col_options.items()}
-        
         return new_selected, dispset
     
     def move_rows_adjust_options_dict(self, row, remove_start, num_rows, move_data = True, create_selections = True):
@@ -937,47 +914,16 @@ class MainTable(tk.Canvas):
         rm2start = rm1start + (rm1end - rm1start)
         rm2end = rm1end + (rm1end - rm1start)
         orig_selected = list(range(rm1start, rm1start + totalrows))
-        self.deselect("all")
-        if move_data:
-            if rm1start > r:
-                self.data = (self.data[:r] +
-                             self.data[rm1start:rm1start + totalrows] +
-                             self.data[r:rm1start] +
-                             self.data[rm1start + totalrows:])
-                if not isinstance(self._row_index, int) and self._row_index:
-                    try:
-                        self._row_index = (self._row_index[:r] +
-                                           self._row_index[rm1start:rm1start + totalrows] +
-                                           self._row_index[r:rm1start] +
-                                           self._row_index[rm1start + totalrows:])
-                    except:
-                        pass
-            else:
-                self.data = (self.data[:rm1start] +
-                             self.data[rm1start + totalrows:r + 1] +
-                             self.data[rm1start:rm1start + totalrows] +
-                             self.data[r + 1:])
-                if not isinstance(self._row_index, int) and self._row_index:
-                    try:
-                        self._row_index = (self._row_index[:rm1start] +
-                                           self._row_index[rm1start + totalrows:r + 1] +
-                                           self._row_index[rm1start:rm1start + totalrows] +
-                                           self._row_index[r + 1:])
-                    except:
-                        pass
+        self.deselect("all", redraw = False)
         rhs = [int(b - a) for a, b in zip(self.row_positions, islice(self.row_positions, 1, len(self.row_positions)))]
         if rm1start > r:
-            rhs = (rhs[:r] +
-                   rhs[rm1start:rm1start + totalrows] +
-                   rhs[r:rm1start] +
-                   rhs[rm1start + totalrows:])
+            rhs[r:r] = rhs[rm1start:rm1end]
+            rhs[rm2start:rm2end] = []
         else:
-            rhs = (rhs[:rm1start] +
-                   rhs[rm1start + totalrows:r + 1] +
-                   rhs[rm1start:rm1start + totalrows] +
-                   rhs[r + 1:])
-        self.row_positions = list(accumulate(chain([0], (height for height in rhs))))
-        if (r - 1) + totalrows > len(self.row_positions) - 1:
+            rhs[r + 1:r + 1] = rhs[rm1start:rm1end]
+            rhs[rm1start:rm1end] = []
+        self.row_positions = list(accumulate(chain([0], (height for height in rhs))))       
+        if r + totalrows > len(self.row_positions):
             new_selected = tuple(range(len(self.row_positions) - 1 - totalrows, len(self.row_positions) - 1))
             if create_selections:
                 self.create_selected(len(self.row_positions) - 1 - totalrows, 0, len(self.row_positions) - 1, len(self.col_positions) - 1, "rows")
@@ -992,35 +938,56 @@ class MainTable(tk.Canvas):
                     self.create_selected(r + 1 - totalrows, 0, r + 1, len(self.col_positions) - 1, "rows")
         if create_selections:
             self.create_current(int(new_selected[0]), 0, type_ = "row", inside = True)
-        rowset = set(orig_selected)
-
-        popped_ri = {t1: t2 for t1, t2 in self.RI.cell_options.items() if t1 in rowset}
-        popped_cell = {t1: t2 for t1, t2 in self.cell_options.items() if t1[0] in rowset}
-        popped_row = {t1: t2 for t1, t2 in self.row_options.items() if t1 in rowset}
-        
-        popped_ri = {t1: self.RI.cell_options.pop(t1) for t1 in popped_ri}
-        popped_cell = {t1: self.cell_options.pop(t1) for t1 in popped_cell}
-        popped_row = {t1: self.row_options.pop(t1) for t1 in popped_row}
-
-        self.RI.cell_options = {t1 if t1 < rm1start else t1 - totalrows: t2 for t1, t2 in self.RI.cell_options.items()}
-        self.RI.cell_options = {t1 if t1 < r else t1 + totalrows: t2 for t1, t2 in self.RI.cell_options.items()}
-
-        self.row_options = {t1 if t1 < rm1start else t1 - totalrows: t2 for t1, t2 in self.row_options.items()}
-        self.row_options = {t1 if t1 < r else t1 + totalrows: t2 for t1, t2 in self.row_options.items()}
-
-        self.cell_options = {(t10 if t10 < rm1start else t10 - totalrows, t11): t2 for (t10, t11), t2 in self.cell_options.items()}
-        self.cell_options = {(t10 if t10 < r else t10 + totalrows, t11): t2 for (t10, t11), t2 in self.cell_options.items()}
-
         newrowsdct = {t1: t2 for t1, t2 in zip(orig_selected, new_selected)}
-        for t1, t2 in popped_ri.items():
-            self.RI.cell_options[newrowsdct[t1]] = t2
-
-        for t1, t2 in popped_row.items():
-            self.row_options[newrowsdct[t1]] = t2
-
-        for (t10, t11), t2 in popped_cell.items():
-            self.cell_options[(newrowsdct[t10], t11)] = t2
-            
+        if rm1start > r:
+            if move_data:
+                self.data[r:r] = self.data[rm1start:rm1end]
+                self.data[rm2start:rm2end] = []
+                if isinstance(self._row_index, list) and self._row_index:
+                    if len(self._row_index) < rm1end:
+                        self._row_index.extend(list(repeat("", rm1end - len(self._row_index) + 1)))
+                    self._row_index[r:r] = self._row_index[rm1start:rm1end]
+                    self._row_index[rm2start:rm2end] = []
+            self.RI.cell_options = {
+                newrowsdct[k] if k in newrowsdct else
+                k + totalrows if k < rm1start and k >= r else
+                k: v for k, v in self.RI.cell_options.items()
+            }
+            self.cell_options = {
+                (newrowsdct[k[0]], k[1]) if k[0] in newrowsdct else
+                (k[0] + totalrows, k[1]) if k[0] < rm1start and k[0] >= r else
+                k: v for k, v in self.cell_options.items()
+            }
+            self.row_options = {
+                newrowsdct[k] if k in newrowsdct else
+                k + totalrows if k < rm1start and k >= r else
+                k: v for k, v in self.row_options.items()
+            }
+        else:
+            r += 1
+            if move_data:
+                self.data[r:r] = self.data[rm1start:rm1end]
+                self.data[rm1start:rm1end] = []
+                if isinstance(self._row_index, list) and self._row_index:
+                    if len(self._row_index) < r:
+                        self._row_index.extend(list(repeat("", r - len(self._row_index))))
+                    self._row_index[r:r] = self._row_index[rm1start:rm1end]
+                    self._row_index[rm1start:rm1end] = []
+            self.RI.cell_options = {
+                newrowsdct[k] if k in newrowsdct else
+                k - totalrows if k < r and k > rm1start else
+                k: v for k, v in self.RI.cell_options.items()
+            }
+            self.cell_options = {
+                (newrowsdct[k[0]], k[1]) if k[0] in newrowsdct else 
+                (k[0] - totalrows, k[1]) if k[1] < r and k[1] > rm1start else 
+                k: v for k, v in self.cell_options.items()
+            }
+            self.row_options = {
+                newrowsdct[k] if k in newrowsdct else
+                k - totalrows if k < r and k > rm1start else
+                k: v for k, v in self.row_options.items()
+            }
         return new_selected, {}
 
     def ctrl_z(self, event = None):
@@ -5295,9 +5262,11 @@ class MainTable(tk.Canvas):
         return self.text_editor_value
 
     #internal event use
-    def _set_cell_data(self, r = 0, c = 0, dcol = None, value = "", undo = True, cell_resize = True, redraw = True):
+    def _set_cell_data(self, r = 0, c = 0, drow = None, dcol = None, value = "", undo = True, cell_resize = True, redraw = True):
         if dcol is None:
             dcol = c if self.all_columns_displayed else self.displayed_columns[c]
+        if drow is None:
+            drow = r if self.all_rows_displayed else self.displayed_rows[r]
         if r > len(self.data) - 1:
             self.data.extend([list(repeat("", dcol + 1)) for i in range((r + 1) - len(self.data))])
         elif dcol > len(self.data[r]) - 1:
@@ -5318,7 +5287,7 @@ class MainTable(tk.Canvas):
         if dcol is None:
             dcol = c if self.all_columns_displayed else self.displayed_columns[c]
         if self.cell_options[(r, dcol)]['checkbox']['state'] == "normal":
-            self._set_cell_data(r, c, dcol, value = not self.data[r][dcol] if type(self.data[r][dcol]) == bool else False, undo = undo, cell_resize = False)
+            self._set_cell_data(r, c, dcol = dcol, value = not self.data[r][dcol] if type(self.data[r][dcol]) == bool else False, undo = undo, cell_resize = False)
             if self.cell_options[(r, dcol)]['checkbox']['check_function'] is not None:
                 self.cell_options[(r, dcol)]['checkbox']['check_function']((r, c, "CheckboxClicked", f"{self.data[r][dcol]}"))
             if self.extra_end_edit_cell_func is not None:
@@ -5329,7 +5298,7 @@ class MainTable(tk.Canvas):
     def create_checkbox(self, r = 0, c = 0, checked = False, state = "normal", redraw = False, check_function = None, text = ""):
         if (r, c) in self.cell_options and any(x in self.cell_options[(r, c)] for x in ('dropdown', 'checkbox')):
             self.destroy_dropdown_and_checkbox(r, c)
-        self._set_cell_data(r, dcol = c, value = checked, cell_resize = False, undo = False) #only works because cell_resize is false and undo is false, otherwise needs displayed col and dcol args
+        self._set_cell_data(r, dcol = c, value = checked, cell_resize = False, undo = False) #only works because cell_resize is false and undo is false, otherwise needs c arg
         if (r, c) not in self.cell_options:
             self.cell_options[(r, c)] = {}
         self.cell_options[(r, c)]['checkbox'] = {'check_function': check_function,
@@ -5497,14 +5466,14 @@ class MainTable(tk.Canvas):
             if self.cell_options[(r, dcol)]['dropdown']['select_function'] is not None: # user has specified a selection function
                 self.cell_options[(r, dcol)]['dropdown']['select_function'](EditCellEvent(r, c, "ComboboxSelected", f"{selection}", "end_edit_cell"))
             if self.extra_end_edit_cell_func is None:
-                self._set_cell_data(r, c, dcol, selection, cell_resize = True)
+                self._set_cell_data(r, c, dcol = dcol, value = selection, cell_resize = True)
             elif self.extra_end_edit_cell_func is not None and self.edit_cell_validation:
                 validation = self.extra_end_edit_cell_func(EditCellEvent(r, c, "ComboboxSelected", f"{selection}", "end_edit_cell"))
                 if validation is not None:
                     selection = validation
-                self._set_cell_data(r, c, dcol, selection, cell_resize = True)
+                self._set_cell_data(r, c, dcol = dcol, value = selection, cell_resize = True)
             elif self.extra_end_edit_cell_func is not None and not self.edit_cell_validation:
-                self._set_cell_data(r, c, dcol, selection, cell_resize = True)
+                self._set_cell_data(r, c, dcol = dcol, value = selection, cell_resize = True)
                 self.extra_end_edit_cell_func(EditCellEvent(r, c, "ComboboxSelected", f"{selection}", "end_edit_cell"))
             self.focus_set()
             self.recreate_all_selection_boxes()
