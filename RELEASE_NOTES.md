@@ -1,8 +1,8 @@
-### Version 5.5.3
+### Version 5.5.3 (current version)
 Fixed:
  - Error on start
 
-### Version 5.5.2 (current version)
+### Version 5.5.2
 Fixed:
  - Row index missing itertools repeat
  - Header checkbox, index checkbox bugs
