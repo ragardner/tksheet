@@ -1,3 +1,7 @@
+### Version 5.5.3
+Fixed:
+ - Error on start
+
 ### Version 5.5.2 (current version)
 Fixed:
  - Row index missing itertools repeat

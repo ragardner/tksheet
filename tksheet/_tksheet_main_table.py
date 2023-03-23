@@ -5466,14 +5466,14 @@ class MainTable(tk.Canvas):
             if self.cell_options[(r, dcol)]['dropdown']['select_function'] is not None: # user has specified a selection function
                 self.cell_options[(r, dcol)]['dropdown']['select_function'](EditCellEvent(r, c, "ComboboxSelected", f"{selection}", "end_edit_cell"))
             if self.extra_end_edit_cell_func is None:
-                self._set_cell_data(r, c, dcol = dcol, selection, cell_resize = True)
+                self._set_cell_data(r, c, dcol = dcol, value = selection, cell_resize = True)
             elif self.extra_end_edit_cell_func is not None and self.edit_cell_validation:
                 validation = self.extra_end_edit_cell_func(EditCellEvent(r, c, "ComboboxSelected", f"{selection}", "end_edit_cell"))
                 if validation is not None:
                     selection = validation
-                self._set_cell_data(r, c, dcol = dcol, selection, cell_resize = True)
+                self._set_cell_data(r, c, dcol = dcol, value = selection, cell_resize = True)
             elif self.extra_end_edit_cell_func is not None and not self.edit_cell_validation:
-                self._set_cell_data(r, c, dcol = dcol, selection, cell_resize = True)
+                self._set_cell_data(r, c, dcol = dcol, value = selection, cell_resize = True)
                 self.extra_end_edit_cell_func(EditCellEvent(r, c, "ComboboxSelected", f"{selection}", "end_edit_cell"))
             self.focus_set()
             self.recreate_all_selection_boxes()

@@ -1544,14 +1544,14 @@ class ColumnHeaders(tk.Canvas):
             if self.cell_options[dcol]['dropdown']['select_function'] is not None: # user has specified a selection function
                 self.cell_options[dcol]['dropdown']['select_function'](EditHeaderEvent(c, "HeaderComboboxSelected", f"{selection}", "end_edit_header"))
             if self.extra_end_edit_cell_func is None:
-                self._set_cell_data(c, dcol = dcol, selection, cell_resize = True)
+                self._set_cell_data(c, dcol = dcol, value = selection, cell_resize = True)
             elif self.extra_end_edit_cell_func is not None and self.MT.edit_cell_validation:
                 validation = self.extra_end_edit_cell_func(EditHeaderEvent(c, "HeaderComboboxSelected", f"{selection}", "end_edit_header"))
                 if validation is not None:
                     selection = validation
-                self._set_cell_data(c, dcol = dcol, selection, cell_resize = True)
+                self._set_cell_data(c, dcol = dcol, value = selection, cell_resize = True)
             elif self.extra_end_edit_cell_func is not None and not self.MT.edit_cell_validation:
-                self._set_cell_data(c, dcol = dcol, selection, cell_resize = True)
+                self._set_cell_data(c, dcol = dcol, value = selection, cell_resize = True)
                 self.extra_end_edit_cell_func(EditHeaderEvent(c, "HeaderComboboxSelected", f"{selection}", "end_edit_header"))
             self.focus_set()
             self.MT.recreate_all_selection_boxes()
