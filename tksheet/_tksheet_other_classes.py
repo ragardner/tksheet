@@ -39,13 +39,15 @@ class TextEditor_(tk.Text):
                  popup_menu_bg = "white",
                  popup_menu_fg = "black",
                  popup_menu_highlight_bg = "blue",
-                 popup_menu_highlight_fg = "white"):
+                 popup_menu_highlight_fg = "white",
+                 align = "w"):
         tk.Text.__init__(self,
                          parent,
                          font = font,
                          state = state,
-                         spacing1 = 2,
-                         spacing2 = 2,
+                         spacing1 = 0,
+                         spacing2 = 0,
+                         spacing3 = 0,
                          bd = 0,
                          highlightthickness = 0,
                          undo = True,
@@ -54,8 +56,16 @@ class TextEditor_(tk.Text):
                          foreground = fg,
                          insertbackground = fg)
         self.parent = parent
+        if align == "w":
+            self.align = "left"
+        elif align == "center":
+            self.align = "center"
+        elif align == "e":
+            self.align = "right"
+        self.tag_configure("align", justify = self.align)
         if text is not None:
             self.insert(1.0, text)
+        self.tag_add("align", 1.0, "end")
         self.yview_moveto(1)
         self.rc_popup_menu = tk.Menu(self, tearoff = 0)
         self.rc_popup_menu.add_command(label = "Select all",
@@ -114,7 +124,12 @@ class TextEditor_(tk.Text):
         except:
             return
         if command in ("insert", "delete", "replace"):
+            self.tag_add("align", 1.0, "end")
             self.event_generate("<<TextModified>>")
+            if args and len(args) > 1 and args[1] != '\n':
+                out_of_bounds = self.yview()
+                if out_of_bounds != (0.0, 1.0):
+                    self.parent.parent.text_editor_newline_binding(r = self.parent.r, c = self.parent.c, check_lines = False)
         return result
     
     def rc(self,event):
@@ -159,7 +174,10 @@ class TextEditor(tk.Frame):
                  popup_menu_fg = "black",
                  popup_menu_highlight_bg = "blue",
                  popup_menu_highlight_fg = "white",
-                 binding = None):
+                 binding = None,
+                 align = "w",
+                 r = 0,
+                 c = 0):
         tk.Frame.__init__(self,
                           parent,
                           height = height,
@@ -169,6 +187,8 @@ class TextEditor(tk.Frame):
                           highlightthickness = 2 if show_border else 0,
                           bd = 0)
         self.parent = parent
+        self.r = r
+        self.c = c
         self.textedit = TextEditor_(self,
                                     font = font,
                                     text = text,
@@ -179,7 +199,8 @@ class TextEditor(tk.Frame):
                                     popup_menu_bg = popup_menu_bg,
                                     popup_menu_fg = popup_menu_fg,
                                     popup_menu_highlight_bg = popup_menu_highlight_bg,
-                                    popup_menu_highlight_fg = popup_menu_highlight_fg)
+                                    popup_menu_highlight_fg = popup_menu_highlight_fg,
+                                    align = align)
         self.textedit.grid(row = 0,
                            column = 0,
                            sticky = "nswe")

@@ -926,20 +926,28 @@ class RowIndex(tk.Canvas):
         else:
             self.disp_grid[self.create_line(x1, y1, x2, y2, fill = fill, width = width, tag = tag)] = True
             
-    def redraw_dropdown(self, x1, y1, x2, y2, fill, outline, tag, draw_outline = True, draw_arrow = True):
+    def redraw_dropdown(self, x1, y1, x2, y2, fill, outline, tag, draw_outline = True, draw_arrow = True, dd_is_open = False):
         if draw_outline:
             self.redraw_highlight(x1 + 1, y1 + 1, x2, y2, fill = "", outline = self.index_fg, tag = tag)
         if draw_arrow:
             topysub = floor(self.MT.half_txt_h / 2)
             mid_y = y1 + floor(self.MT.half_txt_h / 2) + 5
-            #top left points for triangle
-            ty1 = mid_y - topysub + 2
+            if dd_is_open:
+                #top left points for triangle
+                ty1 = mid_y - topysub + 2
+                #bottom points for triangle
+                ty2 = mid_y + self.MT.half_txt_h - 4
+                #top right points for triangle
+                ty3 = mid_y - topysub + 2
+            else:
+                #top left points for triangle
+                ty1 = mid_y - topysub + 2
+                #bottom points for triangle
+                ty2 = mid_y + self.MT.half_txt_h - 4
+                #top right points for triangle
+                ty3 = mid_y - topysub + 2
             tx1 = x2 - self.MT.txt_h + 1
-            #bottom points for triangle
-            ty2 = mid_y + self.MT.half_txt_h - 4
             tx2 = x2 - self.MT.half_txt_h - 1
-            #top right points for triangle
-            ty3 = mid_y - topysub + 2
             tx3 = x2 - 3
             if tx2 - tx1 > tx3 - tx2:
                 tx1 += (tx2 - tx1) - (tx3 - tx2)
@@ -1063,27 +1071,33 @@ class RowIndex(tk.Canvas):
                 cell_alignment = self.align
                 
             if cell_alignment == "w":
-                x = 5
+                x = 3
                 if r in self.cell_options and 'dropdown' in self.cell_options[r]:
                     mw = self.current_width - self.MT.txt_h - 2
-                    self.redraw_dropdown(0, fr, self.current_width - 1, sr - 1, fill = tf, outline = tf, tag = "dd", draw_outline = not dd_drawn, draw_arrow = mw >= 5)
+                    self.redraw_dropdown(0, fr, self.current_width - 1, sr - 1, 
+                                         fill = tf, outline = tf, tag = "dd", draw_outline = not dd_drawn, draw_arrow = mw >= 5,
+                                         dd_is_open = self.cell_options[r]['dropdown']['window'] != "no dropdown open")
                 else:
-                    mw = self.current_width - 5
+                    mw = self.current_width - 3
 
             elif cell_alignment == "e":
                 if r in self.cell_options and 'dropdown' in self.cell_options[r]:
                     mw = self.current_width - self.MT.txt_h - 2
                     x = self.current_width - 5 - self.MT.txt_h
-                    self.redraw_dropdown(0, fr, self.current_width - 1, sr - 1, fill = tf, outline = tf, tag = "dd", draw_outline = not dd_drawn, draw_arrow = mw >= 5)
+                    self.redraw_dropdown(0, fr, self.current_width - 1, sr - 1, 
+                                         fill = tf, outline = tf, tag = "dd", draw_outline = not dd_drawn, draw_arrow = mw >= 5,
+                                         dd_is_open = self.cell_options[r]['dropdown']['window'] != "no dropdown open")
                 else:
-                    mw = self.current_width - 5
-                    x = self.current_width - 5
+                    mw = self.current_width - 3
+                    x = self.current_width - 3
 
             elif cell_alignment == "center":
                 if r in self.cell_options and 'dropdown' in self.cell_options[r]:
                     mw = self.current_width - self.MT.txt_h - 2
                     x = ceil((self.current_width - self.MT.txt_h) / 2)
-                    self.redraw_dropdown(0, fr, self.current_width - 1, sr - 1, fill = tf, outline = tf, tag = "dd", draw_outline = not dd_drawn, draw_arrow = mw >= 5)
+                    self.redraw_dropdown(0, fr, self.current_width - 1, sr - 1, 
+                                         fill = tf, outline = tf, tag = "dd", draw_outline = not dd_drawn, draw_arrow = mw >= 5,
+                                         dd_is_open = self.cell_options[r]['dropdown']['window'] != "no dropdown open")
                 else:
                     mw = self.current_width - 1
                     x = floor(self.current_width / 2)
@@ -1300,6 +1314,15 @@ class RowIndex(tk.Canvas):
         self.select_row(r = r, keep_other_selections = True)
         self.create_text_editor(r = r, text = text, set_data_ref_on_destroy = True, dropdown = dropdown)
         return True
+    
+    # displayed indexes
+    def get_cell_align(self, r):
+        drow = r if self.all_rows_displayed else self.displayed_rows[r]
+        if drow in self.cell_options and 'align' in self.cell_options[drow]:
+            cell_alignment = self.cell_options[drow]['align']
+        else:
+            cell_alignment = self.align
+        return cell_alignment
 
     # r is displayed row
     def create_text_editor(self,
@@ -1335,7 +1358,8 @@ class RowIndex(tk.Canvas):
                     text = f"{self.MT.data[self.MT._row_index][drow]}"
                 except:
                     text = ""
-        bg, fg = self.get_widget_bg_fg(drow)
+        #bg, fg = self.get_widget_bg_fg(drow)bg = 
+        bg, fg = self.index_bg, self.index_fg
         self.text_editor = TextEditor(self,
                                       text = text,
                                       font = self.MT._font,
@@ -1350,14 +1374,17 @@ class RowIndex(tk.Canvas):
                                       popup_menu_fg = self.MT.popup_menu_fg,
                                       popup_menu_bg = self.MT.popup_menu_bg,
                                       popup_menu_highlight_bg = self.MT.popup_menu_highlight_bg,
-                                      popup_menu_highlight_fg = self.MT.popup_menu_highlight_fg)
+                                      popup_menu_highlight_fg = self.MT.popup_menu_highlight_fg,
+                                      binding = binding,
+                                      align = self.get_cell_align(r),
+                                      r = r)
         self.text_editor_id = self.create_window((x, y), window = self.text_editor, anchor = "nw")
         if not dropdown:
             self.text_editor.textedit.focus_set()
             self.text_editor.scroll_to_bottom()
-        self.text_editor.textedit.bind("<Alt-Return>", lambda x: self.text_editor_newline_binding(r))
+        self.text_editor.textedit.bind("<Alt-Return>", lambda x: self.text_editor_newline_binding(r = r))
         if USER_OS == 'Darwin':
-            self.text_editor.textedit.bind("<Option-Return>", lambda x: self.text_editor_newline_binding(r))
+            self.text_editor.textedit.bind("<Option-Return>", lambda x: self.text_editor_newline_binding(r = r))
         for key, func in self.MT.text_editor_user_bound_keys.items():
             self.text_editor.textedit.bind(key, func)
         if binding is not None:
@@ -1373,6 +1400,18 @@ class RowIndex(tk.Canvas):
             self.text_editor.textedit.bind("<Escape>", lambda x: self.get_text_editor_value((r, "Escape")))
         else:
             self.text_editor.textedit.bind("<Escape>", lambda x: self.destroy_text_editor("Escape"))
+            
+    def text_editor_newline_binding(self, r = None, c = None, event = None, check_lines = True):
+        if not check_lines or self.MT.GetLinesHeight(self.text_editor.get_num_lines() + 1) > self.text_editor.winfo_height():
+            self.text_editor.config(height = self.text_editor.winfo_height() + self.MT.xtra_lines_increment)
+            drow = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r]
+            if r if self.MT.all_rows_displayed else self.MT.displayed_rows[r] in self.cell_options and 'dropdown' in self.cell_options[drow]:
+                text_editor_h = self.text_editor.winfo_height()
+                win_h, anchor = self.get_dropdown_height_anchor(drow, text_editor_h)
+                self.coords(self.cell_options[drow]['dropdown']['canvas_id'],
+                            self.MT.canvasx(0), self.MT.row_positions[r])
+                self.itemconfig(self.cell_options[drow]['dropdown']['canvas_id'],
+                                anchor = anchor, height = win_h)
             
     def bind_cell_edit(self, enable = True):
         if enable:
@@ -1421,36 +1460,21 @@ class RowIndex(tk.Canvas):
             self.text_editor_value = self.text_editor.get()
         if destroy:
             self.destroy_text_editor()
-        cell_was_edited = False
         if set_data_ref_on_destroy:
             if r is None and editor_info is not None and len(editor_info) >= 2:
                 r = editor_info[0]
             if self.extra_end_edit_cell_func is None:
-                cell_was_edited = self._set_cell_data(r, drow = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r], value = self.text_editor_value)
+                self._set_cell_data(r, drow = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r], value = self.text_editor_value)
             elif self.extra_end_edit_cell_func is not None and not self.MT.edit_cell_validation:
-                cell_was_edited = self._set_cell_data(r, drow = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r], value = self.text_editor_value)
+                self._set_cell_data(r, drow = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r], value = self.text_editor_value)
                 self.extra_end_edit_cell_func(EditIndexEvent(r, editor_info[1] if len(editor_info) >= 2 else "FocusOut", f"{self.text_editor_value}", "end_edit_index"))
             elif self.extra_end_edit_cell_func is not None and self.MT.edit_cell_validation:
                 validation = self.extra_end_edit_cell_func(EditIndexEvent(r, editor_info[1] if len(editor_info) >= 2 else "FocusOut", f"{self.text_editor_value}", "end_edit_index"))
                 if validation is not None:
                     self.text_editor_value = validation
-                    cell_was_edited = self._set_cell_data(r, drow = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r], value = self.text_editor_value)
-        if move_down and cell_was_edited:
-            if r is None and editor_info is not None and len(editor_info) >= 2:
-                r = editor_info[0]
-            currently_selected = self.MT.currently_selected()
-            if r is not None:
-                if (
-                    currently_selected and
-                    r == currently_selected[0] and
-                    (self.MT.single_selection_enabled or self.MT.toggle_selection_enabled)
-                    ):
-                    if editor_info is not None and len(editor_info) >= 2 and editor_info[1] == "Return":
-                        self.select_row(r)
-                        self.MT.see(r, 0, keep_yscroll = True, bottom_right_corner = True, check_cell_visibility = True)
-                    elif editor_info is not None and len(editor_info) >= 2 and editor_info[1] == "Tab":
-                        self.select_row(r + 1 if r < len(self.MT.row_positions) - 2 else r)
-                        self.MT.see(r + 1 if r < len(self.MT.row_positions) - 2 else r, 0, keep_yscroll = True, bottom_right_corner = True, check_cell_visibility = True)
+                    self._set_cell_data(r, drow = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r], value = self.text_editor_value)
+        if move_down:
+            pass
         self.hide_dropdown_window(r)
         if recreate:
             self.MT.recreate_all_selection_boxes()
@@ -1461,7 +1485,7 @@ class RowIndex(tk.Canvas):
         return self.text_editor_value
 
     #internal event use
-    def _set_cell_data(self, r = 0, drow = None, value = "", cell_resize = True, undo = True):
+    def _set_cell_data(self, r = 0, drow = None, value = "", cell_resize = True, undo = True, redraw = True):
         if drow is None:
             drow = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r]
         if isinstance(self.MT._row_index, list):
@@ -1476,7 +1500,7 @@ class RowIndex(tk.Canvas):
             self.MT._row_index[drow] = value
         elif isinstance(self.MT._row_index, int):
             self.MT._set_cell_data(r = r, c = self.MT._row_index, drow = drow, value = value, undo = True)
-        if cell_resize and self.MT.cell_auto_resize_enabled:
+        if cell_resize and self.MT.cell_auto_resize_enabled and redraw:
             self.set_row_height_run_binding(r)
             self.MT.refresh()
         return True
@@ -1518,10 +1542,10 @@ class RowIndex(tk.Canvas):
     def create_dropdown(self, r = 0, values = [], set_value = None, state = "readonly", redraw = True, selection_function = None, modified_function = None):
         if r in self.cell_options and any(x in self.cell_options[r] for x in ('dropdown', 'checkbox')):
             self.delete_dropdown_and_checkbox(r)
-        if values:
-            self.MT.row_index(newindex = set_value if set_value is not None else values[0], index = r)
-        elif not values and set_value is not None:
-            self.MT.row_index(newindex = set_value, index = r)
+        self._set_cell_data(drow = r, 
+                            value = set_value if set_value is not None else values[0] if values else "",
+                            cell_resize = False, 
+                            undo = False)
         if r not in self.cell_options:
             self.cell_options[r] = {}
         self.cell_options[r]['dropdown'] = {'values': values,
@@ -1543,18 +1567,19 @@ class RowIndex(tk.Canvas):
             if self.cell_options[r]['highlight'][1] is not None:
                 fg = self.cell_options[r]['highlight'][1]
         return bg, fg
-
+    
     def get_dropdown_height_anchor(self, drow, text_editor_h = None):
-        numvalues = sum(len(v.split("\n") if isinstance(v, str) else f"{v}".split("\n")) for v in self.cell_options[drow]['dropdown']['values'])
-        xscroll_h = self.MT.parentframe.xscroll.winfo_height()
-        if numvalues > 5:
-            linespace = 6 * 5 + 3
-            win_h = int(self.MT.txt_h * 6 + linespace + xscroll_h)
-        else:
-            linespace = numvalues * 5 + 3
-            win_h = int(self.MT.txt_h * numvalues + linespace + xscroll_h)
-        if win_h > 400:
-            win_h = 400
+        win_h = 5
+        for i, v in enumerate(self.cell_options[drow]['dropdown']['values']):
+            v_numlines = len(v.split("\n") if isinstance(v, str) else f"{v}".split("\n"))
+            if v_numlines > 1:
+                win_h += self.MT.fl_ins + (v_numlines * self.MT.xtra_lines_increment) + 5 # end of cell
+            else:
+                win_h += self.MT.min_rh
+            if i == 5:
+                break
+        if win_h > 500:
+            win_h = 500
         space_bot = self.MT.get_space_bot(0, text_editor_h)
         win_h2 = int(win_h)
         if win_h > space_bot:
@@ -1564,18 +1589,6 @@ class RowIndex(tk.Canvas):
         elif win_h > win_h2:
             win_h = win_h2
         return win_h, "nw"
-
-    def text_editor_newline_binding(self, r = None, event = None):
-        if self.MT.GetLinesHeight(self.text_editor.get_num_lines() + 1) > self.text_editor.winfo_height():
-            self.text_editor.config(height = self.text_editor.winfo_height() + self.MT.xtra_lines_increment)
-            drow = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r]
-            if r if self.MT.all_rows_displayed else self.MT.displayed_rows[r] in self.cell_options and 'dropdown' in self.cell_options[drow]:
-                text_editor_h = self.text_editor.winfo_height()
-                win_h, anchor = self.get_dropdown_height_anchor(drow, text_editor_h)
-                self.coords(self.cell_options[drow]['dropdown']['canvas_id'],
-                            self.MT.canvasx(0), self.MT.row_positions[r])
-                self.itemconfig(self.cell_options[drow]['dropdown']['canvas_id'],
-                                anchor = anchor, height = win_h)
             
     # r is displayed row
     def display_dropdown_window(self, r, drow = None, event = None):
@@ -1586,8 +1599,8 @@ class RowIndex(tk.Canvas):
         if self.cell_options[drow]['dropdown']['state'] == "normal":
             if not self.edit_cell_(r = r, dropdown = True, event = event):
                 return
-        bg, fg = self.index_bg, self.index_fg
         #bg, fg = self.get_widget_bg_fg(drow)
+        bg, fg = self.index_bg, self.index_fg
         win_h, anchor = self.get_dropdown_height_anchor(drow)
         window = self.MT.parentframe.dropdown_class(self.MT.winfo_toplevel(),
                                                     r,
@@ -1617,36 +1630,40 @@ class RowIndex(tk.Canvas):
                 self.after(2, self.text_editor.scroll_to_bottom())
             except:
                 return
+            redraw = False
         else:
             window.bind("<FocusOut>", lambda x: self.hide_dropdown_window(r))
             self.update_idletasks()
             window.focus_set()
+            redraw = True
         self.existing_dropdown_window = window
         self.cell_options[drow]['dropdown']['window'] = window
         self.existing_dropdown_canvas_id = self.cell_options[drow]['dropdown']['canvas_id']
+        if redraw:
+            self.MT.main_table_redraw_grid_and_text(redraw_header = False, redraw_row_index = True, redraw_table = False)
             
     # r is displayed row
-    def hide_dropdown_window(self, r = None, selection = None, b1 = False, redraw = True):
+    def hide_dropdown_window(self, r = None, selection = None, redraw = True):
         if r is not None and selection is not None:
             drow = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r]
             if self.cell_options[drow]['dropdown']['select_function'] is not None: # user has specified a selection function
                 self.cell_options[drow]['dropdown']['select_function'](EditIndexEvent(r, "IndexComboboxSelected", f"{selection}", "end_edit_index"))
             if self.extra_end_edit_cell_func is None:
-                self._set_cell_data(r, drow = drow, value = selection, cell_resize = True)
+                self._set_cell_data(r, drow = drow, value = selection, redraw = not redraw)
             elif self.extra_end_edit_cell_func is not None and self.MT.edit_cell_validation:
                 validation = self.extra_end_edit_cell_func(EditIndexEvent(r, "IndexComboboxSelected", f"{selection}", "end_edit_index"))
                 if validation is not None:
                     selection = validation
-                self._set_cell_data(r, drow = drow, value = selection, cell_resize = True)
+                self._set_cell_data(r, drow = drow, value = selection, redraw = not redraw)
             elif self.extra_end_edit_cell_func is not None and not self.MT.edit_cell_validation:
-                self._set_cell_data(r, drow = drow, value = selection, cell_resize = True)
+                self._set_cell_data(r, drow = drow, value = selection, redraw = not redraw)
                 self.extra_end_edit_cell_func(EditIndexEvent(r, "IndexComboboxSelected", f"{selection}", "end_edit_index"))
             self.focus_set()
             self.MT.recreate_all_selection_boxes()
-            if redraw:
-                self.MT.refresh()
         self.destroy_text_editor("Escape")
         self.destroy_opened_dropdown_window(r)
+        if redraw:
+            self.MT.refresh()
         
     def mouseclick_outside_editor_or_dropdown(self):
         if self.existing_dropdown_window is not None:
