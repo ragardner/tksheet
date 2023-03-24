@@ -176,7 +176,7 @@ theme_black = {
 'table_bg': "#000000",
 'table_grid_fg': "#505054",
 'table_fg': "#F2F2F2",
-'table_selected_cells_border_fg': "#bdbdbd",
+'table_selected_cells_border_fg': "#ffb867",
 'table_selected_cells_bg': "#313034",
 'table_selected_cells_fg': "#FFFFFF",
 'resizing_line_fg': "#ffb867",
@@ -186,10 +186,10 @@ theme_black = {
 'header_selected_columns_fg': "#ffb867",
 'index_selected_rows_bg': "#3e3e45",
 'index_selected_rows_fg': "#ffb867",
-'table_selected_rows_border_fg': "#bdbdbd",
+'table_selected_rows_border_fg': "#ffb867",
 'table_selected_rows_bg': "#313034",
 'table_selected_rows_fg': "#FFFFFF",
-'table_selected_columns_border_fg': "#bdbdbd",
+'table_selected_columns_border_fg': "#ffb867",
 'table_selected_columns_bg': "#313034",
 'table_selected_columns_fg': "#FFFFFF"
 }

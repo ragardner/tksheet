@@ -186,8 +186,8 @@ class ColumnHeaders(tk.Canvas):
         return ov
 
     def rc(self, event):
-        self.MT.hide_dropdown_window()
-        self.hide_dropdown_window()
+        self.MT.mouseclick_outside_editor_or_dropdown()
+        self.mouseclick_outside_editor_or_dropdown()
         self.focus_set()
         popup_menu = None
         if self.MT.identify_col(x = event.x, allow_end = False) is None:
@@ -213,7 +213,8 @@ class ColumnHeaders(tk.Canvas):
             popup_menu.tk_popup(event.x_root, event.y_root)
 
     def shift_b1_press(self, event):
-        self.MT.hide_dropdown_window()
+        self.MT.mouseclick_outside_editor_or_dropdown()
+        self.mouseclick_outside_editor_or_dropdown()
         x = event.x
         c = self.MT.identify_col(x = x)
         if self.drag_and_drop_enabled or self.col_selection_enabled and self.rsz_h is None and self.rsz_w is None:
@@ -296,7 +297,8 @@ class ColumnHeaders(tk.Canvas):
             self.extra_motion_func(event)
 
     def double_b1(self, event = None):
-        self.MT.hide_dropdown_window()
+        self.MT.mouseclick_outside_editor_or_dropdown()
+        self.mouseclick_outside_editor_or_dropdown()
         self.focus_set()
         if self.double_click_resizing_enabled and self.width_resizing_enabled and self.rsz_w is not None and not self.currently_resizing_width:
             col = self.rsz_w - 1
@@ -323,10 +325,10 @@ class ColumnHeaders(tk.Canvas):
             self.extra_double_b1_func(event)
         
     def b1_press(self, event = None):
-        self.MT.hide_dropdown_window(b1 = True)
-        self.focus_set()
         self.MT.unbind("<MouseWheel>")
-        self.closed_dropdown = self.hide_dropdown_window(b1 = True)
+        self.focus_set()
+        self.MT.mouseclick_outside_editor_or_dropdown()
+        self.closed_dropdown = self.mouseclick_outside_editor_or_dropdown()
         x1, y1, x2, y2 = self.MT.get_canvas_visible_area()
         if self.check_mouse_position_width_resizers(event) is None:
             self.rsz_w = None
@@ -547,7 +549,7 @@ class ColumnHeaders(tk.Canvas):
                     if event.y < self.MT.hdr_txt_h + 5:
                         self.open_cell(event)
             else:
-                self.hide_dropdown_window()
+                self.mouseclick_outside_editor_or_dropdown()
             self.b1_pressed_loc = None
             self.closed_dropdown = None
 
@@ -1407,7 +1409,7 @@ class ColumnHeaders(tk.Canvas):
 
     def create_checkbox(self, c = 0, checked = False, state = "normal", redraw = False, check_function = None, text = ""):
         if c in self.cell_options and any(x in self.cell_options[c] for x in ('dropdown', 'checkbox')):
-            self.destroy_dropdown_and_checkbox(c)
+            self.delete_dropdown_and_checkbox(c)
         self._set_cell_data(dcol = c, value = checked, cell_resize = False, undo = False) # only works because cell_resize and undo are false else needs c arg
         if c not in self.cell_options:
             self.cell_options[c] = {}
@@ -1419,11 +1421,8 @@ class ColumnHeaders(tk.Canvas):
 
     def create_dropdown(self, c = 0, values = [], set_value = None, state = "readonly", redraw = True, selection_function = None, modified_function = None):
         if c in self.cell_options and any(x in self.cell_options[c] for x in ('dropdown', 'checkbox')):
-            self.destroy_dropdown_and_checkbox(c)
-        if values:
-            self.MT.headers(newheaders = set_value if set_value is not None else values[0], index = c)
-        elif not values and set_value is not None:
-            self.MT.headers(newheaders = set_value, index = c)
+            self.delete_dropdown_and_checkbox(c)
+        self._set_cell_data(dcol = c, value = set_value if set_value is not None else values[0] if values else "", cell_resize = False, undo = False) # only works because cell_resize and undo are false else needs c arg
         if c not in self.cell_options:
             self.cell_options[c] = {}
         self.cell_options[c]['dropdown'] = {'values': values,
@@ -1493,13 +1492,14 @@ class ColumnHeaders(tk.Canvas):
     # c is displayed col
     def display_dropdown_window(self, c, dcol = None, event = None):
         self.destroy_text_editor("Escape")
-        self.delete_opened_dropdown_window()
+        self.destroy_opened_dropdown_window()
         if dcol is None:
             dcol = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
         if self.cell_options[dcol]['dropdown']['state'] == "normal":
             if not self.edit_cell_(c = c, dropdown = True, event = event):
                 return
-        bg, fg = self.get_widget_bg_fg(dcol)
+        bg, fg = self.header_bg, self.header_fg
+        #bg, fg = self.get_widget_bg_fg(dcol)
         win_h, anchor = self.get_dropdown_height_anchor(dcol)
         window = self.MT.parentframe.dropdown_class(self.MT.winfo_toplevel(),
                                                     0,
@@ -1557,22 +1557,31 @@ class ColumnHeaders(tk.Canvas):
             self.MT.recreate_all_selection_boxes()
             if redraw:
                 self.MT.refresh()
+        self.destroy_text_editor("Escape")
+        self.destroy_opened_dropdown_window(c)
+        
+    def mouseclick_outside_editor_or_dropdown(self):
         if self.existing_dropdown_window is not None:
-            closedc, return_closedc = int(self.existing_dropdown_window.c), True
+            closed_dd_coords = int(self.existing_dropdown_window.c)
         else:
-            return_closedc = False
-        if b1 and self.text_editor_loc is not None and self.text_editor is not None:
-            self.get_text_editor_value(editor_info = (self.text_editor_loc, "Return"))
+            closed_dd_coords = None
+        if self.text_editor_loc is not None and self.text_editor is not None:
+            self.get_text_editor_value(editor_info = self.text_editor_loc + ("ButtonPress-1", ))
         else:
             self.destroy_text_editor("Escape")
-        self.delete_opened_dropdown_window(c)
-        if return_closedc:
-            return closedc
+        if closed_dd_coords:
+            self.destroy_opened_dropdown_window(closed_dd_coords) #displayed coords not data, necessary for b1 function
+        return closed_dd_coords
             
-    # c is displayed col
-    def delete_opened_dropdown_window(self, c = None, dcol = None):
-        if c is not None and dcol is None:
-            dcol = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
+    # function can receive two None args
+    def destroy_opened_dropdown_window(self, c = None, dcol = None):
+        if c is not None or dcol is not None:
+            if dcol is None:
+                dcol_ = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
+            else:
+                dcol_ = dcol
+        else:
+            dcol_ = None
         try:
             self.delete(self.existing_dropdown_canvas_id)
         except:
@@ -1583,26 +1592,26 @@ class ColumnHeaders(tk.Canvas):
         except:
             pass
         self.existing_dropdown_window = None
-        if c is not None and dcol in self.cell_options and 'dropdown' in self.cell_options[dcol]:
-            self.cell_options[dcol]['dropdown']['canvas_id'] = "no dropdown open"
-            self.cell_options[dcol]['dropdown']['window'] = "no dropdown open"
+        if dcol_ in self.cell_options and 'dropdown' in self.cell_options[dcol_]:
+            self.cell_options[dcol_]['dropdown']['canvas_id'] = "no dropdown open"
+            self.cell_options[dcol_]['dropdown']['window'] = "no dropdown open"
             try:
-                self.delete(self.cell_options[dcol]['dropdown']['canvas_id'])
+                self.delete(self.cell_options[dcol_]['dropdown']['canvas_id'])
             except:
                 pass
             
     # c is dcol
-    def destroy_dropdown(self, c):
-        self.delete_opened_dropdown_window(c)
+    def delete_dropdown(self, c):
+        self.destroy_opened_dropdown_window(dcol = c)
         if c in self.cell_options and 'dropdown' in self.cell_options[c]:
             del self.cell_options[c]['dropdown']
             
     # c is dcol
-    def destroy_checkbox(self, c):
+    def delete_checkbox(self, c):
         if c in self.cell_options and 'checkbox' in self.cell_options[c]:
             del self.cell_options[c]['checkbox']
 
     # c is dcol
-    def destroy_dropdown_and_checkbox(self, c):
-        self.destroy_dropdown(c)
-        self.destroy_checkbox(c)
+    def delete_dropdown_and_checkbox(self, c):
+        self.delete_dropdown(dcol = c)
+        self.delete_checkbox(c)

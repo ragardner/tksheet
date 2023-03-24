@@ -1,4 +1,14 @@
-### Version 5.5.3 (current version)
+### Version 5.5.4 (current version)
+Fixed:
+ - `delete_dropdown()`/`delete_checkbox()` issues
+ - Issues and possible errors with dropdowns/checkboxes and hidden columns
+
+Changed:
+ - Improved visibility of dropdown box against sheet background
+ - Improved dropdown window height
+ - black theme selected cells border color
+
+### Version 5.5.3
 Fixed:
  - Error on start
 

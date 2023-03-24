@@ -189,8 +189,8 @@ class RowIndex(tk.Canvas):
         return ov
 
     def rc(self, event):
-        self.MT.hide_dropdown_window()
-        self.hide_dropdown_window()
+        self.MT.mouseclick_outside_editor_or_dropdown()
+        self.mouseclick_outside_editor_or_dropdown()
         self.focus_set()
         popup_menu = None
         if self.MT.identify_row(y = event.y, allow_end = False) is None:
@@ -216,7 +216,8 @@ class RowIndex(tk.Canvas):
             popup_menu.tk_popup(event.x_root, event.y_root)
 
     def shift_b1_press(self, event):
-        self.MT.hide_dropdown_window()
+        self.MT.mouseclick_outside_editor_or_dropdown()
+        self.mouseclick_outside_editor_or_dropdown()
         y = event.y
         r = self.MT.identify_row(y = y)
         if self.drag_and_drop_enabled or self.row_selection_enabled and self.rsz_h is None and self.rsz_w is None:
@@ -300,7 +301,8 @@ class RowIndex(tk.Canvas):
             self.extra_motion_func(event)
 
     def double_b1(self, event = None):
-        self.MT.hide_dropdown_window()
+        self.MT.mouseclick_outside_editor_or_dropdown()
+        self.mouseclick_outside_editor_or_dropdown()
         self.focus_set()
         if self.double_click_resizing_enabled and self.height_resizing_enabled and self.rsz_h is not None and not self.currently_resizing_height:
             row = self.rsz_h - 1
@@ -329,10 +331,10 @@ class RowIndex(tk.Canvas):
             self.extra_double_b1_func(event)
         
     def b1_press(self, event = None):
-        self.MT.hide_dropdown_window()
-        self.focus_set()
         self.MT.unbind("<MouseWheel>")
-        self.closed_dropdown = self.hide_dropdown_window(b1 = True)
+        self.focus_set()
+        self.MT.mouseclick_outside_editor_or_dropdown()
+        self.closed_dropdown = self.mouseclick_outside_editor_or_dropdown()
         x = self.canvasx(event.x)
         y = self.canvasy(event.y)
         r = self.MT.identify_row(y = event.y)
@@ -559,7 +561,7 @@ class RowIndex(tk.Canvas):
                     if event.y < self.MT.row_positions[r] + self.MT.txt_h + 5:
                         self.open_cell(event)
             else:
-                self.hide_dropdown_window()
+                self.mouseclick_outside_editor_or_dropdown()
             self.b1_pressed_loc = None
             self.closed_dropdown = None
                         
@@ -1503,7 +1505,7 @@ class RowIndex(tk.Canvas):
 
     def create_checkbox(self, r = 0, checked = False, state = "normal", redraw = False, check_function = None, text = ""):
         if r in self.cell_options and any(x in self.cell_options[r] for x in ('dropdown', 'checkbox')):
-            self.destroy_dropdown_and_checkbox(r)
+            self.delete_dropdown_and_checkbox(r)
         self._set_cell_data(drow = r, value = checked, cell_resize = False, undo = False) # only works because cell_resize and undo are false otherwise needs r arg
         if r not in self.cell_options:
             self.cell_options[r] = {}
@@ -1515,7 +1517,7 @@ class RowIndex(tk.Canvas):
 
     def create_dropdown(self, r = 0, values = [], set_value = None, state = "readonly", redraw = True, selection_function = None, modified_function = None):
         if r in self.cell_options and any(x in self.cell_options[r] for x in ('dropdown', 'checkbox')):
-            self.destroy_dropdown_and_checkbox(r)
+            self.delete_dropdown_and_checkbox(r)
         if values:
             self.MT.row_index(newindex = set_value if set_value is not None else values[0], index = r)
         elif not values and set_value is not None:
@@ -1578,13 +1580,14 @@ class RowIndex(tk.Canvas):
     # r is displayed row
     def display_dropdown_window(self, r, drow = None, event = None):
         self.destroy_text_editor("Escape")
-        self.delete_opened_dropdown_window()
+        self.destroy_opened_dropdown_window()
         if drow is None:
             drow = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r]
         if self.cell_options[drow]['dropdown']['state'] == "normal":
             if not self.edit_cell_(r = r, dropdown = True, event = event):
                 return
-        bg, fg = self.get_widget_bg_fg(drow)
+        bg, fg = self.index_bg, self.index_fg
+        #bg, fg = self.get_widget_bg_fg(drow)
         win_h, anchor = self.get_dropdown_height_anchor(drow)
         window = self.MT.parentframe.dropdown_class(self.MT.winfo_toplevel(),
                                                     r,
@@ -1642,22 +1645,31 @@ class RowIndex(tk.Canvas):
             self.MT.recreate_all_selection_boxes()
             if redraw:
                 self.MT.refresh()
+        self.destroy_text_editor("Escape")
+        self.destroy_opened_dropdown_window(r)
+        
+    def mouseclick_outside_editor_or_dropdown(self):
         if self.existing_dropdown_window is not None:
-            closedr, return_closedr = int(self.existing_dropdown_window.r), True
+            closed_dd_coords = int(self.existing_dropdown_window.r)
         else:
-            return_closedr = False
-        if b1 and self.text_editor_loc is not None and self.text_editor is not None:
-            self.get_text_editor_value(editor_info = (self.text_editor_loc, "Return"))
+            closed_dd_coords = None
+        if self.text_editor_loc is not None and self.text_editor is not None:
+            self.get_text_editor_value(editor_info = self.text_editor_loc + ("ButtonPress-1", ))
         else:
             self.destroy_text_editor("Escape")
-        self.delete_opened_dropdown_window(r)
-        if return_closedr:
-            return closedr
+        if closed_dd_coords:
+            self.destroy_opened_dropdown_window(closed_dd_coords) #displayed coords not data, necessary for b1 function
+        return closed_dd_coords
             
-    # r is displayed row
-    def delete_opened_dropdown_window(self, r = None, drow = None):
-        if r is not None and drow is None:
-            drow = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r]
+    # r is displayed row, function can have two None args
+    def destroy_opened_dropdown_window(self, r = None, drow = None):
+        if r is not None or drow is not None:
+            if drow is None:
+                drow_ = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r]
+            else:
+                drow_ = r
+        else:
+            drow_ = None
         try:
             self.delete(self.existing_dropdown_canvas_id)
         except:
@@ -1668,26 +1680,26 @@ class RowIndex(tk.Canvas):
         except:
             pass
         self.existing_dropdown_window = None
-        if r is not None and drow in self.cell_options and 'dropdown' in self.cell_options[drow]:
-            self.cell_options[drow]['dropdown']['canvas_id'] = "no dropdown open"
-            self.cell_options[drow]['dropdown']['window'] = "no dropdown open"
+        if drow_ in self.cell_options and 'dropdown' in self.cell_options[drow_]:
+            self.cell_options[drow_]['dropdown']['canvas_id'] = "no dropdown open"
+            self.cell_options[drow_]['dropdown']['window'] = "no dropdown open"
             try:
-                self.delete(self.cell_options[drow]['dropdown']['canvas_id'])
+                self.delete(self.cell_options[drow_]['dropdown']['canvas_id'])
             except:
                 pass
             
     # r is drow
-    def destroy_dropdown(self, r):
-        self.delete_opened_dropdown_window(r)
+    def delete_dropdown(self, r):
+        self.destroy_opened_dropdown_window(drow = r)
         if r in self.cell_options and 'dropdown' in self.cell_options[r]:
             del self.cell_options[r]['dropdown']
             
     # r is drow
-    def destroy_checkbox(self, r):
+    def delete_checkbox(self, r):
         if r in self.cell_options and 'checkbox' in self.cell_options[r]:
             del self.cell_options[r]['checkbox']
 
     # r is drow
-    def destroy_dropdown_and_checkbox(self, r):
-        self.destroy_dropdown(r)
-        self.destroy_checkbox(r)
+    def delete_dropdown_and_checkbox(self, r):
+        self.delete_dropdown(r)
+        self.delete_checkbox(r)
