@@ -65,6 +65,8 @@ class ColumnHeaders(tk.Canvas):
 
         self.centre_alignment_text_mod_indexes = (slice(1, None), slice(None, -1))
         self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
+        self.grid_cyctup = ("st", "end")
+        self.grid_cyc = cycle(self.grid_cyctup)
         self.parentframe = parentframe
         self.column_drag_and_drop_perform = column_drag_and_drop_perform
         self.being_drawn_rect = None
@@ -111,7 +113,7 @@ class ColumnHeaders(tk.Canvas):
         self.edit_cell_enabled = False
         self.show_default_header_for_empty = show_default_header_for_empty
         self.dragged_col = None
-        self.visible_col_dividers = []
+        self.visible_col_dividers = {}
         self.col_height_resize_bbox = tuple()
         self.cell_options = {}
         self.rsz_w = None
@@ -195,15 +197,13 @@ class ColumnHeaders(tk.Canvas):
         if binding == "hide_columns":
             self.hide_columns_enabled = False
 
-    def check_mouse_position_width_resizers(self, event):
-        x = self.canvasx(event.x)
-        y = self.canvasy(event.y)
-        ov = None
-        for x1, y1, x2, y2 in self.visible_col_dividers:
-            if x >= x1 and y >= y1 and x <= x2 and y <= y2:
-                ov = self.find_overlapping(x1, y1, x2, y2)
-                break
-        return ov
+    def check_mouse_position_width_resizers(self, x, y):
+        for c, (x1, y1, x2, y2) in self.visible_col_dividers.items():
+            if (x >= x1 and
+                y >= y1 and
+                x <= x2 and
+                y <= y2):
+                return c
 
     def rc(self, event):
         self.MT.mouseclick_outside_editor_or_dropdown()
@@ -288,16 +288,10 @@ class ColumnHeaders(tk.Canvas):
             y = self.canvasy(event.y)
             mouse_over_resize = False
             if self.width_resizing_enabled:
-                ov = self.check_mouse_position_width_resizers(event)
-                if ov is not None:
-                    tgs = tuple()
-                    for itm in ov:
-                        tgs = self.gettags(itm)
-                        if tgs and "v" == tgs[0]:
-                            c = int(tgs[1])
-                            self.rsz_w, mouse_over_resize = c, True
-                            self.config(cursor = "sb_h_double_arrow")
-                            break
+                c = self.check_mouse_position_width_resizers(x, y)
+                if c is not None:
+                    self.rsz_w, mouse_over_resize = c, True
+                    self.config(cursor = "sb_h_double_arrow")
                 else:
                     self.rsz_w = None
             if self.height_resizing_enabled and not mouse_over_resize:
@@ -349,12 +343,14 @@ class ColumnHeaders(tk.Canvas):
         self.focus_set()
         self.MT.mouseclick_outside_editor_or_dropdown()
         self.closed_dropdown = self.mouseclick_outside_editor_or_dropdown()
-        x1, y1, x2, y2 = self.MT.get_canvas_visible_area()
-        if self.check_mouse_position_width_resizers(event) is None:
-            self.rsz_w = None
+        x = self.canvasx(event.x)
+        y = self.canvasy(event.y)
         c = self.MT.identify_col(x = event.x)
         self.b1_pressed_loc = c
+        if self.check_mouse_position_width_resizers(x, y) is None:
+            self.rsz_w = None
         if self.width_resizing_enabled and self.rsz_w is not None:
+            x1, y1, x2, y2 = self.MT.get_canvas_visible_area()
             self.currently_resizing_width = True
             x = self.MT.col_positions[self.rsz_w]
             line2x = self.MT.col_positions[self.rsz_w - 1]
@@ -859,17 +855,17 @@ class ColumnHeaders(tk.Canvas):
         self.disp_text[t] = True
         return t
 
-    def redraw_gridline(self, x1, y1, x2, y2, fill, width, tag):
+    def redraw_gridline(self,points, fill, width, tag):
         if self.hidd_grid:
             t, sh = self.hidd_grid.popitem()
-            self.coords(t, x1, y1, x2, y2)
+            self.coords(t, points)
             if sh:
                 self.itemconfig(t, fill = fill, width = width, tag = tag, capstyle = tk.BUTT, joinstyle = tk.ROUND)
             else:
                 self.itemconfig(t, fill = fill, width = width, tag = tag, capstyle = tk.BUTT, joinstyle = tk.ROUND, state = "normal")
             self.disp_grid[t] = True
         else:
-            self.disp_grid[self.create_line(x1, y1, x2, y2, fill = fill, width = width, tag = tag)] = True
+            self.disp_grid[self.create_line(points, fill = fill, width = width, tag = tag)] = True
             
     def redraw_dropdown(self, x1, y1, x2, y2, fill, outline, tag, draw_outline = True, draw_arrow = True, dd_is_open = False):
         if draw_outline:
@@ -984,18 +980,30 @@ class ColumnHeaders(tk.Canvas):
         self.disp_dropdown = {}
         self.hidd_checkbox.update(self.disp_checkbox)
         self.disp_checkbox = {}
-        self.visible_col_dividers = []
+        self.visible_col_dividers = {}
         x = self.MT.col_positions[start_col]
-        self.redraw_gridline(x, 0, x, self.current_height, fill = self.header_grid_fg, width = 1, tag = "fv")
         self.col_height_resize_bbox = (x1, self.current_height - 2, x_stop, self.current_height)
         yend = self.current_height - 5
         if self.MT.show_vertical_grid or self.width_resizing_enabled:
+            self.grid_cyc = cycle(self.grid_cyctup)
+            points = []
             for c in range(start_col + 1, end_col):
                 x = self.MT.col_positions[c]
                 if self.width_resizing_enabled:
-                    self.visible_col_dividers.append((x - 2, 1, x + 2, yend))
-                self.redraw_gridline(x, 0, x, self.current_height, fill = self.header_grid_fg, width = 1, tag = ("v", f"{c}"))
-        self.redraw_gridline(x1, self.current_height - 1, x_stop, self.current_height - 1, fill = self.header_border_fg, width = 1, tag = "h")
+                    self.visible_col_dividers[c] = (x - 2, 1, x + 2, yend)
+                st_or_end = next(self.grid_cyc)
+                if st_or_end == "st":
+                    points.extend([x, -1,
+                                   x, self.current_height,
+                                   self.MT.col_positions[c + 1] if len(self.MT.col_positions) - 1 > c else x, self.current_height])
+                elif st_or_end == "end":
+                    points.extend([x, self.current_height,
+                                   x, -1,
+                                   self.MT.col_positions[c + 1] if len(self.MT.col_positions) - 1 > c else x, -1])
+                if points:
+                    self.redraw_gridline(points = points, fill = self.header_grid_fg, width = 1, tag = "v")
+        self.redraw_gridline(points = (x, 0, x, self.current_height), fill = self.header_grid_fg, width = 1, tag = "fv")
+        self.redraw_gridline(points = (x1, self.current_height - 1, x_stop, self.current_height - 1), fill = self.header_border_fg, width = 1, tag = "h")
         top = self.canvasy(0)
         c_2 = self.header_selected_cells_bg if self.header_selected_cells_bg.startswith("#") else Color_Map_[self.header_selected_cells_bg]
         c_3 = self.header_selected_columns_bg if self.header_selected_columns_bg.startswith("#") else Color_Map_[self.header_selected_columns_bg]
@@ -1054,8 +1062,8 @@ class ColumnHeaders(tk.Canvas):
                     if cell_alignment == "w":
                         x += box_w
                     elif cell_alignment == "center":
-                        x += ceil(box_w / 2)
-                    mw = mw - box_w
+                        x += ceil(box_w / 2) + 1
+                    mw = mw - box_w - 1
                     self.redraw_checkbox(dcol,
                                          fc + 2,
                                          0,
@@ -1098,6 +1106,7 @@ class ColumnHeaders(tk.Canvas):
                             txt = txt[tmod - 1:-tmod]
                             self.itemconfig(t, text = txt)
                             wd = self.bbox(t)
+                            self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
                             while wd[2] - wd[0] > mw:
                                 txt = txt[next(self.c_align_cyc)]
                                 self.itemconfig(t, text = txt)
@@ -1167,8 +1176,8 @@ class ColumnHeaders(tk.Canvas):
                 self.itemconfig(t, state = "hidden")
                 self.hidd_checkbox[t] = False
                 
-    def open_cell(self, event = None):
-        if not self.MT.anything_selected() or self.text_editor_id is not None:
+    def open_cell(self, event = None, ignore_existing_editor = False):
+        if not self.MT.anything_selected()  or (not ignore_existing_editor and self.text_editor_id is not None):
             return
         currently_selected = self.MT.currently_selected()
         if not currently_selected:
@@ -1316,11 +1325,11 @@ class ColumnHeaders(tk.Canvas):
             self.text_editor.textedit.bind("<FocusOut>", lambda x: binding((c, "FocusOut")))
             self.text_editor.textedit.bind("<Escape>", lambda x: binding((c, "Escape")))
         elif binding is None and set_data_ref_on_destroy:
-            self.text_editor.textedit.bind("<Tab>", lambda x: self.get_text_editor_value((c, "Tab")))
-            self.text_editor.textedit.bind("<Return>", lambda x: self.get_text_editor_value((c, "Return")))
+            self.text_editor.textedit.bind("<Tab>", lambda x: self.close_text_editor((c, "Tab")))
+            self.text_editor.textedit.bind("<Return>", lambda x: self.close_text_editor((c, "Return")))
             if not dropdown:
-                self.text_editor.textedit.bind("<FocusOut>", lambda x: self.get_text_editor_value((c, "FocusOut")))
-            self.text_editor.textedit.bind("<Escape>", lambda x: self.get_text_editor_value((c, "Escape")))
+                self.text_editor.textedit.bind("<FocusOut>", lambda x: self.close_text_editor((c, "FocusOut")))
+            self.text_editor.textedit.bind("<Escape>", lambda x: self.close_text_editor((c, "Escape")))
         else:
             self.text_editor.textedit.bind("<Escape>", lambda x: self.destroy_text_editor("Escape"))
     
@@ -1396,7 +1405,7 @@ class ColumnHeaders(tk.Canvas):
             self.focus_set()
 
     # c is displayed col
-    def get_text_editor_value(self, editor_info = None, c = None, set_data_ref_on_destroy = True, event = None, destroy = True, move_down = True, redraw = True, recreate = True):
+    def close_text_editor(self, editor_info = None, c = None, set_data_ref_on_destroy = True, event = None, destroy = True, move_down = True, redraw = True, recreate = True):
         if self.focus_get() is None and editor_info:
             return
         if editor_info is not None and len(editor_info) >= 2 and editor_info[1] == "Escape":
@@ -1429,7 +1438,7 @@ class ColumnHeaders(tk.Canvas):
             self.MT.refresh()
         if editor_info is not None and len(editor_info) >= 2 and editor_info[1] != "FocusOut":
             self.focus_set()
-        return self.text_editor_value
+        return "break"
     
     #internal event use
     def _set_cell_data(self, c = 0, dcol = None, value = "", cell_resize = True, undo = True, redraw = True):
@@ -1633,7 +1642,7 @@ class ColumnHeaders(tk.Canvas):
         else:
             closed_dd_coords = None
         if self.text_editor_loc is not None and self.text_editor is not None:
-            self.get_text_editor_value(editor_info = (self.text_editor_loc, "ButtonPress-1"))
+            self.close_text_editor(editor_info = (self.text_editor_loc, "ButtonPress-1"))
         else:
             self.destroy_text_editor("Escape")
         if closed_dd_coords:

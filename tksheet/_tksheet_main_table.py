@@ -1168,7 +1168,7 @@ class MainTable(tk.Canvas):
             
     def bind_arrowkeys(self, event = None):
         self.arrowkeys_enabled = True
-        for canvas in (self, self.CH, self.RI, self.TL):
+        for canvas in (self, self.parentframe, self.CH, self.RI, self.TL):
             canvas.bind("<Up>", self.arrowkey_UP)
             canvas.bind("<Tab>", self.tab_key)
             canvas.bind("<Right>", self.arrowkey_RIGHT)
@@ -1179,7 +1179,7 @@ class MainTable(tk.Canvas):
 
     def unbind_arrowkeys(self, event = None):
         self.arrowkeys_enabled = False
-        for canvas in (self, self.CH, self.RI, self.TL):
+        for canvas in (self, self.parentframe, self.CH, self.RI, self.TL):
             canvas.unbind("<Up>")
             canvas.unbind("<Right>")
             canvas.unbind("<Tab>")
@@ -4255,16 +4255,16 @@ class MainTable(tk.Canvas):
                         if mw > self.txt_h + 2:
                             box_w = self.txt_h + 2
                             if cell_alignment == "w":
-                                x = x + box_w 
+                                x = x + box_w + 1
                             elif cell_alignment == "center":
-                                x = x + floor(box_w / 2)
-                            mw = mw - box_w
+                                x = x + ceil(box_w / 2) 
+                            mw = mw - box_w - 1
                             self.redraw_checkbox(r,
                                                  dcol,
                                                  fc + 2,
                                                  fr + 2,
                                                  fc + 2 + self.txt_h + 2,
-                                                 fr + 2 + self.txt_h + 2,
+                                                 fr + self.txt_h + 4,
                                                  fill = tf if self.cell_options[(r, dcol)]['checkbox']['state'] == "normal" else self.table_grid_fg,
                                                  outline = "", tag = "cb", draw_check = self.data[r][dcol])
                     
@@ -4376,6 +4376,7 @@ class MainTable(tk.Canvas):
                                             txt = txt[tmod - 1:-tmod]
                                             self.itemconfig(t, text = txt)
                                             wd = self.bbox(t)
+                                            self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
                                             while wd[2] - wd[0] > mw:
                                                 txt = txt[next(self.c_align_cyc)]
                                                 self.itemconfig(t, text = txt)
@@ -5195,11 +5196,11 @@ class MainTable(tk.Canvas):
             self.text_editor.textedit.bind("<FocusOut>", lambda x: binding((r, c, "FocusOut")))
             self.text_editor.textedit.bind("<Escape>", lambda x: binding((r, c, "Escape")))
         elif binding is None and set_data_ref_on_destroy:
-            self.text_editor.textedit.bind("<Tab>", lambda x: self.get_text_editor_value((r, c, "Tab")))
-            self.text_editor.textedit.bind("<Return>", lambda x: self.get_text_editor_value((r, c, "Return")))
+            self.text_editor.textedit.bind("<Tab>", lambda x: self.close_text_editor((r, c, "Tab")))
+            self.text_editor.textedit.bind("<Return>", lambda x: self.close_text_editor((r, c, "Return")))
             if not dropdown:
-                self.text_editor.textedit.bind("<FocusOut>", lambda x: self.get_text_editor_value((r, c, "FocusOut")))
-            self.text_editor.textedit.bind("<Escape>", lambda x: self.get_text_editor_value((r, c, "Escape")))
+                self.text_editor.textedit.bind("<FocusOut>", lambda x: self.close_text_editor((r, c, "FocusOut")))
+            self.text_editor.textedit.bind("<Escape>", lambda x: self.close_text_editor((r, c, "Escape")))
         else:
             self.text_editor.textedit.bind("<Escape>", lambda x: self.destroy_text_editor("Escape"))
     
@@ -5230,12 +5231,6 @@ class MainTable(tk.Canvas):
                         self.itemconfig(self.cell_options[(r, dcol)]['dropdown']['canvas_id'],
                                         anchor = anchor, height = win_h)
 
-    def bind_text_editor_destroy(self, binding, r, c):
-        self.text_editor.textedit.bind("<Return>", lambda x: binding((r, c, "Return")))
-        self.text_editor.textedit.bind("<FocusOut>", lambda x: binding((r, c, "FocusOut")))
-        self.text_editor.textedit.bind("<Escape>", lambda x: binding((r, c, "Escape")))
-        self.text_editor.textedit.focus_set()
-
     def destroy_text_editor(self, event = None):
         if event is not None and self.extra_end_edit_cell_func is not None and self.text_editor_loc is not None:
             self.extra_end_edit_cell_func(EditCellEvent(int(self.text_editor_loc[0]), int(self.text_editor_loc[1]), "Escape", None, "escape_edit_cell"))
@@ -5261,13 +5256,13 @@ class MainTable(tk.Canvas):
             self.focus_set()
 
     # c is displayed col
-    def get_text_editor_value(self, editor_info = None, r = None, c = None, set_data_ref_on_destroy = True, event = None, destroy = True, move_down = True, redraw = True, recreate = True):
+    def close_text_editor(self, editor_info = None, r = None, c = None, set_data_ref_on_destroy = True, event = None, destroy = True, move_down = True, redraw = True, recreate = True):
         if self.focus_get() is None and editor_info:
-            return
+            return "break"
         if editor_info is not None and len(editor_info) >= 3 and editor_info[2] == "Escape":
             self.destroy_text_editor("Escape")
             self.hide_dropdown_window(r, c)
-            return
+            return "break"
         if self.text_editor is not None:
             self.text_editor_value = self.text_editor.get()
         if destroy:
@@ -5341,7 +5336,7 @@ class MainTable(tk.Canvas):
             self.refresh()
         if editor_info is not None and len(editor_info) >= 3 and editor_info[2] != "FocusOut":
             self.focus_set()
-        return self.text_editor_value
+        return "break"
     
     def tab_key(self, event = None):
         currently_selected = self.currently_selected()
@@ -5369,7 +5364,7 @@ class MainTable(tk.Canvas):
                     new_r = r1
                 elif numrows > 1:
                     new_r = r + 1
-        self.create_current(new_r, new_c, type_ = self.currently_selected.type_, inside = True)
+        self.create_current(new_r, new_c, type_ = currently_selected.type_, inside = True)
         self.see(new_r, new_c, keep_xscroll = True, bottom_right_corner = True, check_cell_visibility = True)
         return "break"
 
@@ -5603,7 +5598,7 @@ class MainTable(tk.Canvas):
         else:
             closed_dd_coords = None
         if self.text_editor_loc is not None and self.text_editor is not None:
-            self.get_text_editor_value(editor_info = self.text_editor_loc + ("ButtonPress-1", ))
+            self.close_text_editor(editor_info = self.text_editor_loc + ("ButtonPress-1", ))
         else:
             self.destroy_text_editor("Escape")
         if closed_dd_coords:

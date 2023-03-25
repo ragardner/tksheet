@@ -70,6 +70,8 @@ class RowIndex(tk.Canvas):
         
         self.centre_alignment_text_mod_indexes = (slice(1, None), slice(None, -1))
         self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
+        self.grid_cyctup = ("st", "end")
+        self.grid_cyc = cycle(self.grid_cyctup)
         self.parentframe = parentframe
         self.row_drag_and_drop_perform = row_drag_and_drop_perform
         self.being_drawn_rect = None
@@ -120,7 +122,7 @@ class RowIndex(tk.Canvas):
         self.rc_delete_row_enabled = False
         self.edit_cell_enabled = False
         self.show_default_index_for_empty = show_default_index_for_empty
-        self.visible_row_dividers = []
+        self.visible_row_dividers = {}
         self.row_width_resize_bbox = tuple()
         self.rsz_w = None
         self.rsz_h = None
@@ -181,12 +183,12 @@ class RowIndex(tk.Canvas):
             self.drag_and_drop_enabled = False
 
     def check_mouse_position_height_resizers(self, x, y):
-        ov = None
-        for x1, y1, x2, y2 in self.visible_row_dividers:
-            if x >= x1 and y >= y1 and x <= x2 and y <= y2:
-                ov = self.find_overlapping(x1, y1, x2, y2)
-                break
-        return ov
+        for r, (x1, y1, x2, y2) in self.visible_row_dividers.items():
+            if (x >= x1 and
+                y >= y1 and
+                x <= x2 and
+                y <= y2):
+                return r
 
     def rc(self, event):
         self.MT.mouseclick_outside_editor_or_dropdown()
@@ -271,14 +273,8 @@ class RowIndex(tk.Canvas):
             y = self.canvasy(event.y)
             mouse_over_resize = False
             if self.height_resizing_enabled and not mouse_over_resize:
-                ov = self.check_mouse_position_height_resizers(x, y)
-                if ov is not None:
-                    #tgs = next(itm for itm in ov if "h" == self.gettags(itm))
-                    for itm in ov:
-                        tgs = self.gettags(itm)
-                        if "h" == tgs[0]:
-                            break
-                    r = int(tgs[1])
+                r = self.check_mouse_position_height_resizers(x, y)
+                if r is not None:
                     self.config(cursor = "sb_v_double_arrow")
                     self.rsz_h = r
                     mouse_over_resize = True
@@ -915,17 +911,17 @@ class RowIndex(tk.Canvas):
         self.disp_text[t] = True
         return t
 
-    def redraw_gridline(self, x1, y1, x2, y2, fill, width, tag):
+    def redraw_gridline(self, points, fill, width, tag):
         if self.hidd_grid:
             t, sh = self.hidd_grid.popitem()
-            self.coords(t, x1, y1, x2, y2)
+            self.coords(t, points)
             if sh:
                 self.itemconfig(t, fill = fill, width = width, tag = tag)
             else:
                 self.itemconfig(t, fill = fill, width = width, tag = tag, state = "normal")
             self.disp_grid[t] = True
         else:
-            self.disp_grid[self.create_line(x1, y1, x2, y2, fill = fill, width = width, tag = tag)] = True
+            self.disp_grid[self.create_line(points, fill = fill, width = width, tag = tag)] = True
             
     def redraw_dropdown(self, x1, y1, x2, y2, fill, outline, tag, draw_outline = True, draw_arrow = True, dd_is_open = False):
         if draw_outline:
@@ -1040,18 +1036,30 @@ class RowIndex(tk.Canvas):
         self.disp_dropdown = {}
         self.hidd_checkbox.update(self.disp_checkbox)
         self.disp_checkbox = {}
-        self.visible_row_dividers = []
+        self.visible_row_dividers = {}
         y = self.MT.row_positions[start_row]
-        self.redraw_gridline(0, y, self.current_width, y, fill = self.index_grid_fg, width = 1, tag = "fh")
         xend = self.current_width - 6
         self.row_width_resize_bbox = (self.current_width - 2, y1, self.current_width, y2)
         if self.MT.show_horizontal_grid or self.height_resizing_enabled:
+            self.grid_cyc = cycle(self.grid_cyctup)
+            points = []
             for r in range(start_row + 1, end_row):
                 y = self.MT.row_positions[r]
                 if self.height_resizing_enabled:
-                    self.visible_row_dividers.append((1, y - 2, xend, y + 2))
-                self.redraw_gridline(0, y, self.current_width, y, fill = self.index_grid_fg, width = 1, tag = ("h", f"{r}"))
-        self.redraw_gridline(self.current_width - 1, y1, self.current_width - 1, y_stop, fill = self.index_border_fg, width = 1, tag = "v")
+                    self.visible_row_dividers[r] = (1, y - 2, xend, y + 2)
+                st_or_end = next(self.grid_cyc)
+                if st_or_end == "st":
+                    points.extend([-1, y,
+                                   self.current_width, y,
+                                   self.current_width, self.MT.row_positions[r + 1] if len(self.MT.row_positions) - 1 > r else y])
+                elif st_or_end == "end":
+                    points.extend([self.current_width, y,
+                                   -1, y,
+                                   -1, self.MT.row_positions[r + 1] if len(self.MT.row_positions) - 1 > r else y])
+                if points:
+                    self.redraw_gridline(points = points, fill = self.index_grid_fg, width = 1, tag = "h")
+        self.redraw_gridline(points = (0, y, self.current_width, y), width = 1, fill = self.index_grid_fg, tag = "fh")
+        self.redraw_gridline(points = (self.current_width - 1, y1, self.current_width - 1, y_stop), width = 1, fill = self.index_border_fg, tag = "v")
         sb = y2 + 2
         c_2 = self.index_selected_cells_bg if self.index_selected_cells_bg.startswith("#") else Color_Map_[self.index_selected_cells_bg]
         c_3 = self.index_selected_rows_bg if self.index_selected_rows_bg.startswith("#") else Color_Map_[self.index_selected_rows_bg]
@@ -1074,16 +1082,14 @@ class RowIndex(tk.Canvas):
                 cell_alignment = self.align
                 
             if cell_alignment == "w":
-                
+                x = 3
                 if r in self.cell_options and 'dropdown' in self.cell_options[r]:
-                    x = 2
                     mw = self.current_width - self.MT.txt_h - 2
                     self.redraw_dropdown(0, fr, self.current_width - 1, sr - 1, 
                                          fill = tf, outline = tf, tag = "dd", draw_outline = not dd_drawn, draw_arrow = mw >= 5,
                                          dd_is_open = self.cell_options[r]['dropdown']['window'] != "no dropdown open")
                 else:
-                    x = 1
-                    mw = self.current_width - 1
+                    mw = self.current_width - 2
 
             elif cell_alignment == "e":
                 if r in self.cell_options and 'dropdown' in self.cell_options[r]:
@@ -1093,8 +1099,8 @@ class RowIndex(tk.Canvas):
                                          fill = tf, outline = tf, tag = "dd", draw_outline = not dd_drawn, draw_arrow = mw >= 5,
                                          dd_is_open = self.cell_options[r]['dropdown']['window'] != "no dropdown open")
                 else:
-                    mw = self.current_width - 1
-                    x = self.current_width - 1
+                    mw = self.current_width - 2
+                    x = self.current_width - 3
 
             elif cell_alignment == "center":
                 if r in self.cell_options and 'dropdown' in self.cell_options[r]:
@@ -1113,8 +1119,8 @@ class RowIndex(tk.Canvas):
                     if cell_alignment == "w":
                         x += box_w
                     elif cell_alignment == "center":
-                        x += ceil(box_w / 2)
-                    mw = mw - box_w
+                        x += ceil(box_w / 2) + 1
+                    mw = mw - box_w - 1
                     self.redraw_checkbox(r,
                                          0,
                                          fr + 2,
@@ -1165,6 +1171,7 @@ class RowIndex(tk.Canvas):
                                 txt = txt[tmod - 1:-tmod]
                                 self.itemconfig(t, text = txt)
                                 wd = self.bbox(t)
+                                self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
                                 while wd[2] - wd[0] > mw:
                                     txt = txt[next(self.c_align_cyc)]
                                     self.itemconfig(t, text = txt)
@@ -1249,8 +1256,8 @@ class RowIndex(tk.Canvas):
                 self.itemconfig(t, state = "hidden")
                 self.hidd_checkbox[t] = False
                 
-    def open_cell(self, event = None):
-        if not self.MT.anything_selected() or self.text_editor_id is not None:
+    def open_cell(self, event = None, ignore_existing_editor = False):
+        if not self.MT.anything_selected() or (not ignore_existing_editor and self.text_editor_id is not None):
             return
         currently_selected = self.MT.currently_selected()
         if not currently_selected:
@@ -1396,11 +1403,11 @@ class RowIndex(tk.Canvas):
             self.text_editor.textedit.bind("<FocusOut>", lambda x: binding((r, "FocusOut")))
             self.text_editor.textedit.bind("<Escape>", lambda x: binding((r, "Escape")))
         elif binding is None and set_data_ref_on_destroy:
-            self.text_editor.textedit.bind("<Tab>", lambda x: self.get_text_editor_value((r, "Tab")))
-            self.text_editor.textedit.bind("<Return>", lambda x: self.get_text_editor_value((r, "Return")))
+            self.text_editor.textedit.bind("<Tab>", lambda x: self.close_text_editor((r, "Tab")))
+            self.text_editor.textedit.bind("<Return>", lambda x: self.close_text_editor((r, "Return")))
             if not dropdown:
-                self.text_editor.textedit.bind("<FocusOut>", lambda x: self.get_text_editor_value((r, "FocusOut")))
-            self.text_editor.textedit.bind("<Escape>", lambda x: self.get_text_editor_value((r, "Escape")))
+                self.text_editor.textedit.bind("<FocusOut>", lambda x: self.close_text_editor((r, "FocusOut")))
+            self.text_editor.textedit.bind("<Escape>", lambda x: self.close_text_editor((r, "Escape")))
         else:
             self.text_editor.textedit.bind("<Escape>", lambda x: self.destroy_text_editor("Escape"))
             
@@ -1467,13 +1474,13 @@ class RowIndex(tk.Canvas):
             self.focus_set()
 
     # r is displayed row
-    def get_text_editor_value(self, editor_info = None, r = None, set_data_ref_on_destroy = True, event = None, destroy = True, move_down = True, redraw = True, recreate = True):
+    def close_text_editor(self, editor_info = None, r = None, set_data_ref_on_destroy = True, event = None, destroy = True, move_down = True, redraw = True, recreate = True):
         if self.focus_get() is None and editor_info:
-            return
+            return "break"
         if editor_info is not None and len(editor_info) >= 2 and editor_info[1] == "Escape":
             self.destroy_text_editor("Escape")
             self.hide_dropdown_window(r)
-            return
+            return "break"
         if self.text_editor is not None:
             self.text_editor_value = self.text_editor.get()
         if destroy:
@@ -1500,7 +1507,7 @@ class RowIndex(tk.Canvas):
             self.MT.refresh()
         if editor_info is not None and len(editor_info) >= 2 and editor_info[1] != "FocusOut":
             self.focus_set()
-        return self.text_editor_value
+        return "break"
 
     #internal event use
     def _set_cell_data(self, r = 0, drow = None, value = "", cell_resize = True, undo = True, redraw = True):
@@ -1690,7 +1697,7 @@ class RowIndex(tk.Canvas):
         else:
             closed_dd_coords = None
         if self.text_editor_loc is not None and self.text_editor is not None:
-            self.get_text_editor_value(editor_info = (self.text_editor_loc, "ButtonPress-1"))
+            self.close_text_editor(editor_info = (self.text_editor_loc, "ButtonPress-1"))
         else:
             self.destroy_text_editor("Escape")
         if closed_dd_coords:

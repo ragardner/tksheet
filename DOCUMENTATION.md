@@ -1094,8 +1094,10 @@ get_selected_min_max()
 ## 15 Modifying Selected Cells
 
 ```python
-set_currently_selected(current_tuple_0 = 0, current_tuple_1 = 0, selection_binding = True)
+set_currently_selected(row, column, type_ = "cell", selection_binding = True)
 ```
+ - `type_` (`str`) either `"cell"`, `"row"` or `"column"`.
+ - `selection_binding` if `True` runs extra bindings selection function if one has been specified using `extra_bindings()`.
 
 ___
 
@@ -1297,27 +1299,32 @@ show(canvas = "all")
 
 ## 20 Cell Text Editor
 
+Open the currently selected cell in the main table.
 ```python
-create_text_editor(row = 0, column = 0, text = None, state = "normal", see = True, set_data_ref_on_destroy = False,
-                           binding = None)
+open_cell(ignore_existing_editor = True)
 ```
+ - Function utilises the currently selected cell in the main table, even if a column/row is selected, to open a non selected cell first use `set_currently_selected()` to set the cell to open.
+
+___
+
+Open the currently selected cell but in the header.
+```python
+open_header_cell(ignore_existing_editor = True)
+```
+ - Also uses currently selected cell, which you can set with `set_currently_selected()`.
+
+___
+
+Open the currently selected cell but in the index.
+```python
+open_index_cell(ignore_existing_editor = True)
+```
+ - Also uses currently selected cell, which you can set with `set_currently_selected()`.
 
 ___
 
 ```python
 set_text_editor_value(text = "", r = None, c = None)
-```
-
-___
-
-```python
-bind_text_editor_set(func, row, column)
-```
-
-___
-
-```python
-get_text_editor_value(editor_info = None, r = None, c = None, set_data_ref_on_destroy = True, event = None, destroy = True, move_down = True, redraw = True, recreate = True)
 ```
 
 ___

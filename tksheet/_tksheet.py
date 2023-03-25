@@ -1111,22 +1111,12 @@ class Sheet(tk.Frame):
     # works on currently selected box
     def open_cell(self, ignore_existing_editor = True):
         self.MT.open_cell(event = GeneratedMouseEvent(), ignore_existing_editor = ignore_existing_editor)
-
-    def create_text_editor(self,
-                           row = 0,
-                           column = 0,
-                           text = None,
-                           state = "normal",
-                           see = True,
-                           set_data_ref_on_destroy = False,
-                           binding = None):
-        self.MT.create_text_editor(r = row,
-                                   c = column,
-                                   text = text,
-                                   state = state,
-                                   see = see,
-                                   set_data_ref_on_destroy = set_data_ref_on_destroy,
-                                   binding = binding)
+        
+    def open_header_cell(self, ignore_existing_editor = True):
+        self.CH.open_cell(event = GeneratedMouseEvent(), ignore_existing_editor = ignore_existing_editor)
+        
+    def open_index_cell(self, ignore_existing_editor = True):
+        self.RI.open_cell(event = GeneratedMouseEvent(), ignore_existing_editor = ignore_existing_editor)
 
     def set_text_editor_value(self, text = "", r = None, c = None):
         if self.MT.text_editor is not None and r is None and c is None:
@@ -1136,17 +1126,6 @@ class Sheet(tk.Frame):
 
     def bind_text_editor_set(self, func, row, column):
         self.MT.bind_text_editor_destroy(func, row, column)
-
-    def get_text_editor_value(self, editor_info = None, r = None, c = None, set_data_ref_on_destroy = True, event = None, destroy = True, move_down = True, redraw = True, recreate = True):
-        return self.MT.get_text_editor_value(editor_info = editor_info,
-                                             r = r,
-                                             c = c,
-                                             set_data_ref_on_destroy = set_data_ref_on_destroy,
-                                             event = event,
-                                             destroy = destroy,
-                                             move_down = move_down,
-                                             redraw = redraw,
-                                             recreate = recreate)
 
     def destroy_text_editor(self, event = None):
         self.MT.destroy_text_editor(event = event)

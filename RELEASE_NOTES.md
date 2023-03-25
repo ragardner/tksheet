@@ -1,12 +1,17 @@
-### Version 5.6.0 (in development)
+### Version 5.6.0 (current version)
 Fixed:
- - Issues and possible errors with dropdowns/checkboxes
+ - Issues and possible errors with dropdowns/checkboxes/cell edits
  - `delete_dropdown()`/`delete_checkbox()` issues
 
 Changed:
- - Improvements to text editor
+ - Deprecated external functions `create_text_editor()`/`get_text_editor_value()`/`bind_text_editor_set()` as they no longer worked both externally and internally, use `open_cell()` instead
+ - Renamed internal function `get_text_editor_value()` to `close_text_editor()`
+
+Improved:
+ - Slightly boost performance if there are many cells onscreen and gridlines are showing
  - You can now use the scroll wheel in the header to vertically scroll if there are multiple lines in the column headers
- - Main table text now draws slightly closer to cell edges
+ - Improvements to text editor
+ - Text now draws slightly closer to cell edges in certain scenarios
  - Improved visibility of dropdown box against sheet background
  - Improved dropdown window height
  - black theme selected cells border color
