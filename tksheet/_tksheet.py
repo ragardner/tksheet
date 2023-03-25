@@ -2847,6 +2847,11 @@ class Sheet_Dropdown(Sheet):
         self.deselect("all")
         if self.row is not None:
             self.select_row(self.row)
+            
+    def _reselect(self):
+        rows = self.get_selected_rows()
+        if rows:
+            self.select_row(next(iter(rows)))
 
     def b1(self, event = None):
         if event is None:

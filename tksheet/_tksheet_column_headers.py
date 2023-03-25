@@ -145,9 +145,9 @@ class ColumnHeaders(tk.Canvas):
         maxlines = 0
         if isinstance(self.MT._headers, int):
             if len(self.MT.data) > self.MT._headers:
-                maxlines = max(len(e.split("\n")) if isinstance(e, str) else len(f"{e}".split("\n")) for e in self.MT.data[self.MT._headers])
+                maxlines = max(len(e.rstrip().split("\n")) if isinstance(e, str) else len(f"{e}".rstrip().split("\n")) for e in self.MT.data[self.MT._headers])
         elif self.MT._headers:
-            maxlines = max(len(e.split("\n")) if isinstance(e, str) else len(f"{e}".split("\n")) for e in self.MT._headers)
+            maxlines = max(len(e.rstrip().split("\n")) if isinstance(e, str) else len(f"{e}".rstrip().split("\n")) for e in self.MT._headers)
         if maxlines == 1:
             maxlines = 0
         if self.lines_start_at > maxlines:
@@ -1301,7 +1301,7 @@ class ColumnHeaders(tk.Canvas):
                                       binding = binding,
                                       align = self.get_cell_align(c),
                                       c = c,
-                                      newline_binding = self.text_editor_newline_binding)
+                                      newline_binding = self.text_editor_has_wrapped)
         self.text_editor_id = self.create_window((x, y), window = self.text_editor, anchor = "nw")
         if not dropdown:
             self.text_editor.textedit.focus_set()
@@ -1324,7 +1324,24 @@ class ColumnHeaders(tk.Canvas):
             self.text_editor.textedit.bind("<Escape>", lambda x: self.get_text_editor_value((c, "Escape")))
         else:
             self.text_editor.textedit.bind("<Escape>", lambda x: self.destroy_text_editor("Escape"))
-            
+    
+    # displayed indexes                            #just here to receive text editor arg
+    def text_editor_has_wrapped(self, r = 0, c = 0, check_lines = None):
+        if self.width_resizing_enabled:
+            dcol = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
+            curr_width = self.text_editor.winfo_width()
+            new_width = curr_width + (self.MT.hdr_txt_h * 2)
+            if new_width != curr_width:
+                self.text_editor.config(width = new_width)
+                self.set_col_width_run_binding(c, width = new_width, only_set_if_too_small = False)
+                if dcol in self.cell_options and 'dropdown' in self.cell_options[dcol]:
+                    self.itemconfig(self.cell_options[dcol]['dropdown']['canvas_id'],
+                                    width = new_width)
+                    self.cell_options[dcol]['dropdown']['window'].update_idletasks()
+                    self.cell_options[dcol]['dropdown']['window']._reselect()
+                self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = False, redraw_table = True)
+    
+    # displayed indexes
     def text_editor_newline_binding(self, r = 0, c = 0, event = None, check_lines = True):
         if self.height_resizing_enabled:
             dcol = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
@@ -1336,12 +1353,11 @@ class ColumnHeaders(tk.Canvas):
                     new_height = space_bot
                 if new_height != curr_height:
                     self.text_editor.config(height = new_height)
-                    self.set_height(self.text_editor.winfo_height(), set_TL = True)
+                    self.set_height(new_height, set_TL = True)
                     if dcol in self.cell_options and 'dropdown' in self.cell_options[dcol]:
-                        text_editor_h = self.text_editor.winfo_height()
-                        win_h, anchor = self.get_dropdown_height_anchor(dcol, text_editor_h)
+                        win_h, anchor = self.get_dropdown_height_anchor(dcol, new_height)
                         self.coords(self.cell_options[dcol]['dropdown']['canvas_id'],
-                                    self.MT.col_positions[c], self.MT.canvasy(0))
+                                    self.MT.col_positions[c], new_height - 1)
                         self.itemconfig(self.cell_options[dcol]['dropdown']['canvas_id'],
                                         anchor = anchor, height = win_h)
             
@@ -1439,10 +1455,11 @@ class ColumnHeaders(tk.Canvas):
         if redraw:
             self.MT.refresh()
         return True
-            
-    def set_col_width_run_binding(self, c, only_set_if_too_small = True):
+    
+    # displayed indexes
+    def set_col_width_run_binding(self, c, width = None, only_set_if_too_small = True):
         old_width = self.MT.col_positions[c + 1] - self.MT.col_positions[c]
-        new_width = self.set_col_width(c, only_set_if_too_small = only_set_if_too_small)
+        new_width = self.set_col_width(c, width = width, only_set_if_too_small = only_set_if_too_small)
         if self.column_width_resize_func is not None and old_width != new_width:
             self.column_width_resize_func(ResizeEvent("column_width_resize", c, old_width, new_width))
 
