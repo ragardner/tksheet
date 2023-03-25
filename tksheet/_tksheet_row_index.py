@@ -619,8 +619,8 @@ class RowIndex(tk.Canvas):
                 ignore_keep = True
         if ignore_keep or not keep_other_selections:
             self.MT.delete_selection_rects()
-            self.MT.create_current(r, 0, type_ = "row", inside = True)
             self.MT.create_selected(r, 0, r + 1, len(self.MT.col_positions) - 1, "rows")
+            self.MT.create_current(r, 0, type_ = "row", inside = True)
         if redraw:
             self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
         if self.selection_binding_func is not None:
@@ -1045,11 +1045,13 @@ class RowIndex(tk.Canvas):
         self.redraw_gridline(0, y, self.current_width, y, fill = self.index_grid_fg, width = 1, tag = "fh")
         xend = self.current_width - 6
         self.row_width_resize_bbox = (self.current_width - 2, y1, self.current_width, y2)
-        for r in range(start_row + 1, end_row):
-            y = self.MT.row_positions[r]
-            if self.height_resizing_enabled:
-                self.visible_row_dividers.append((1, y - 2, xend, y + 2))
-            self.redraw_gridline(0, y, self.current_width, y, fill = self.index_grid_fg, width = 1, tag = ("h", f"{r}"))
+        if self.MT.show_horizontal_grid or self.height_resizing_enabled:
+            for r in range(start_row + 1, end_row):
+                y = self.MT.row_positions[r]
+                if self.height_resizing_enabled:
+                    self.visible_row_dividers.append((1, y - 2, xend, y + 2))
+                self.redraw_gridline(0, y, self.current_width, y, fill = self.index_grid_fg, width = 1, tag = ("h", f"{r}"))
+        self.redraw_gridline(self.current_width - 1, y1, self.current_width - 1, y_stop, fill = self.index_border_fg, width = 1, tag = "v")
         sb = y2 + 2
         c_2 = self.index_selected_cells_bg if self.index_selected_cells_bg.startswith("#") else Color_Map_[self.index_selected_cells_bg]
         c_3 = self.index_selected_rows_bg if self.index_selected_rows_bg.startswith("#") else Color_Map_[self.index_selected_rows_bg]
@@ -1072,13 +1074,15 @@ class RowIndex(tk.Canvas):
                 cell_alignment = self.align
                 
             if cell_alignment == "w":
-                x = 1
+                
                 if r in self.cell_options and 'dropdown' in self.cell_options[r]:
+                    x = 2
                     mw = self.current_width - self.MT.txt_h - 2
                     self.redraw_dropdown(0, fr, self.current_width - 1, sr - 1, 
                                          fill = tf, outline = tf, tag = "dd", draw_outline = not dd_drawn, draw_arrow = mw >= 5,
                                          dd_is_open = self.cell_options[r]['dropdown']['window'] != "no dropdown open")
                 else:
+                    x = 1
                     mw = self.current_width - 1
 
             elif cell_alignment == "e":
@@ -1161,7 +1165,6 @@ class RowIndex(tk.Canvas):
                                 txt = txt[tmod - 1:-tmod]
                                 self.itemconfig(t, text = txt)
                                 wd = self.bbox(t)
-                                self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
                                 while wd[2] - wd[0] > mw:
                                     txt = txt[next(self.c_align_cyc)]
                                     self.itemconfig(t, text = txt)
@@ -1225,8 +1228,6 @@ class RowIndex(tk.Canvas):
                         y += self.MT.xtra_lines_increment
                         if y + self.MT.half_txt_h - 1 > sr:
                             break
-    
-        self.redraw_gridline(self.current_width - 1, y1, self.current_width - 1, y_stop, fill = self.index_border_fg, width = 1, tag = "v")
         for t, sh in self.hidd_text.items():
             if sh:
                 self.itemconfig(t, state = "hidden")
@@ -1419,10 +1420,16 @@ class RowIndex(tk.Canvas):
                     if drow in self.cell_options and 'dropdown' in self.cell_options[drow]:
                         text_editor_h = self.text_editor.winfo_height()
                         win_h, anchor = self.get_dropdown_height_anchor(drow, text_editor_h)
-                        self.coords(self.cell_options[drow]['dropdown']['canvas_id'],
-                                    self.MT.canvasx(0), self.MT.row_positions[r])
-                        self.itemconfig(self.cell_options[drow]['dropdown']['canvas_id'],
-                                        anchor = anchor, height = win_h)
+                        if anchor == "nw":
+                            self.coords(self.cell_options[drow]['dropdown']['canvas_id'],
+                                        self.MT.col_positions[c], self.MT.row_positions[r] + text_editor_h - 1)
+                            self.itemconfig(self.cell_options[drow]['dropdown']['canvas_id'],
+                                            anchor = anchor, height = win_h)
+                        elif anchor == "sw":
+                            self.coords(self.cell_options[drow]['dropdown']['canvas_id'],
+                                        self.MT.col_positions[c], self.MT.row_positions[r])
+                            self.itemconfig(self.cell_options[drow]['dropdown']['canvas_id'],
+                                            anchor = anchor, height = win_h)
             
     def bind_cell_edit(self, enable = True):
         if enable:

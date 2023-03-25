@@ -264,6 +264,10 @@ class Sheet(tk.Frame):
         else:
             self.yscroll_showing = False
             self.yscroll_disabled = True
+        self.update_idletasks()
+        self.MT.update_idletasks()
+        self.RI.update_idletasks()
+        self.CH.update_idletasks()
         if theme != "light blue":
             self.change_theme(theme)
             for k, v in locals().items():
@@ -271,9 +275,6 @@ class Sheet(tk.Frame):
                     self.set_options(**{k: v})
         if set_all_heights_and_widths:
             self.set_all_cell_sizes_to_text()
-        self.MT.update_idletasks()
-        self.update_idletasks()
-        self.refresh()
         if startup_select is not None:
             try:
                 if startup_select[-1] == "cells":
@@ -290,6 +291,7 @@ class Sheet(tk.Frame):
                     self.see(0, startup_select[0])
             except:
                 pass
+        self.refresh()
         if startup_focus:
             self.MT.focus_set()
             

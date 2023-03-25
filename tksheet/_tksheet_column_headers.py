@@ -989,11 +989,13 @@ class ColumnHeaders(tk.Canvas):
         self.redraw_gridline(x, 0, x, self.current_height, fill = self.header_grid_fg, width = 1, tag = "fv")
         self.col_height_resize_bbox = (x1, self.current_height - 2, x_stop, self.current_height)
         yend = self.current_height - 5
-        for c in range(start_col + 1, end_col):
-            x = self.MT.col_positions[c]
-            if self.width_resizing_enabled:
-                self.visible_col_dividers.append((x - 2, 1, x + 2, yend))
-            self.redraw_gridline(x, 0, x, self.current_height, fill = self.header_grid_fg, width = 1, tag = ("v", f"{c}"))
+        if self.MT.show_vertical_grid or self.width_resizing_enabled:
+            for c in range(start_col + 1, end_col):
+                x = self.MT.col_positions[c]
+                if self.width_resizing_enabled:
+                    self.visible_col_dividers.append((x - 2, 1, x + 2, yend))
+                self.redraw_gridline(x, 0, x, self.current_height, fill = self.header_grid_fg, width = 1, tag = ("v", f"{c}"))
+        self.redraw_gridline(x1, self.current_height - 1, x_stop, self.current_height - 1, fill = self.header_border_fg, width = 1, tag = "h")
         top = self.canvasy(0)
         c_2 = self.header_selected_cells_bg if self.header_selected_cells_bg.startswith("#") else Color_Map_[self.header_selected_cells_bg]
         c_3 = self.header_selected_columns_bg if self.header_selected_columns_bg.startswith("#") else Color_Map_[self.header_selected_columns_bg]
@@ -1096,7 +1098,6 @@ class ColumnHeaders(tk.Canvas):
                             txt = txt[tmod - 1:-tmod]
                             self.itemconfig(t, text = txt)
                             wd = self.bbox(t)
-                            self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
                             while wd[2] - wd[0] > mw:
                                 txt = txt[next(self.c_align_cyc)]
                                 self.itemconfig(t, text = txt)
@@ -1145,8 +1146,6 @@ class ColumnHeaders(tk.Canvas):
                     y += self.MT.hdr_xtra_lines_increment
                     if y - 1 > self.current_height:
                         break
-                            
-        self.redraw_gridline(x1, self.current_height - 1, x_stop, self.current_height - 1, fill = self.header_border_fg, width = 1, tag = "h")
         for t, sh in self.hidd_text.items():
             if sh:
                 self.itemconfig(t, state = "hidden")

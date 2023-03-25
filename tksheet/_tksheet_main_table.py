@@ -140,6 +140,8 @@ class MainTable(tk.Canvas):
         self.display_selected_fg_over_highlights = display_selected_fg_over_highlights
         self.centre_alignment_text_mod_indexes = (slice(1, None), slice(None, -1))
         self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
+        self.grid_cyctup = ("st", "end")
+        self.grid_cyc = cycle(self.grid_cyctup)
         self.show_index = show_index
         self.show_header = show_header
         self.selected_rows_to_end_of_window = selected_rows_to_end_of_window
@@ -4126,31 +4128,55 @@ class MainTable(tk.Canvas):
             y_stop = last_row_line_pos
         sb = y2 + 2
         if self.show_horizontal_grid:
+            self.grid_cyc = cycle(self.grid_cyctup)
+            points = []
             for r in range(start_row - 1, end_row):
                 y = self.row_positions[r]
+                st_or_end = next(self.grid_cyc)
+                if st_or_end == "st":
+                    points.extend([self.canvasx(0) - 1, y, 
+                                   x2 + can_width if self.horizontal_grid_to_end_of_window else x_stop - 1, y,
+                                   x2 + can_width if self.horizontal_grid_to_end_of_window else x_stop - 1, self.row_positions[r + 1] if len(self.row_positions) - 1 > r else y])
+                elif st_or_end == "end":
+                    points.extend([x2 + can_width if self.horizontal_grid_to_end_of_window else x_stop - 1, y,
+                                   self.canvasx(0) - 1, y,
+                                   self.canvasx(0) - 1, self.row_positions[r + 1] if len(self.row_positions) - 1 > r else y])
+            if points:
                 if self.hidd_grid:
                     t, sh = self.hidd_grid.popitem()
-                    self.coords(t, x1, y, x2 + can_width if self.horizontal_grid_to_end_of_window else x_stop, y)
+                    self.coords(t, points)
                     if sh:
                         self.itemconfig(t, fill = self.table_grid_fg, capstyle = tk.BUTT, joinstyle = tk.ROUND, width = 1)
                     else:
                         self.itemconfig(t, fill = self.table_grid_fg, capstyle = tk.BUTT, joinstyle = tk.ROUND, width = 1, state = "normal")
                     self.disp_grid[t] = True
                 else:
-                    self.disp_grid[self.create_line(x1, y, x2 + can_width if self.horizontal_grid_to_end_of_window else x_stop, y, fill = self.table_grid_fg, capstyle = tk.BUTT, joinstyle = tk.ROUND, width = 1, tag = "g")] = True
+                    self.disp_grid[self.create_line(points, fill = self.table_grid_fg, capstyle = tk.BUTT, joinstyle = tk.ROUND, width = 1, tag = "g")] = True
         if self.show_vertical_grid:
+            self.grid_cyc = cycle(self.grid_cyctup)
+            points = []
             for c in range(start_col - 1, end_col):
                 x = self.col_positions[c]
+                st_or_end = next(self.grid_cyc)
+                if st_or_end == "st":
+                    points.extend([x, y1 - 1,
+                                   x, y2 + can_height if self.vertical_grid_to_end_of_window else y_stop - 1,
+                                   self.col_positions[c + 1] if len(self.col_positions) - 1 > c else x, y2 + can_height if self.vertical_grid_to_end_of_window else y_stop - 1])
+                elif st_or_end == "end":
+                    points.extend([x, y2 + can_height if self.vertical_grid_to_end_of_window else y_stop - 1,
+                                   x, y1 - 1,
+                                   self.col_positions[c + 1] if len(self.col_positions) - 1 > c else x, y1 - 1])
+            if points:
                 if self.hidd_grid:
                     t, sh = self.hidd_grid.popitem()
-                    self.coords(t, x, y1, x, y2 + can_height if self.vertical_grid_to_end_of_window else y_stop)
+                    self.coords(t, points)
                     if sh:
                         self.itemconfig(t, fill = self.table_grid_fg, capstyle = tk.BUTT, joinstyle = tk.ROUND, width = 1)
                     else:
                         self.itemconfig(t, fill = self.table_grid_fg, capstyle = tk.BUTT, joinstyle = tk.ROUND, width = 1, state = "normal")
                     self.disp_grid[t] = True
                 else:
-                    self.disp_grid[self.create_line(x, y1, x, y2 + can_height if self.vertical_grid_to_end_of_window else y_stop, fill = self.table_grid_fg, capstyle = tk.BUTT, joinstyle = tk.ROUND, width = 1, tag = "g")] = True
+                    self.disp_grid[self.create_line(points, fill = self.table_grid_fg, capstyle = tk.BUTT, joinstyle = tk.ROUND, width = 1, tag = "g")] = True
         if start_row > 0:
             start_row -= 1
         if start_col > 0:
@@ -4193,7 +4219,7 @@ class MainTable(tk.Canvas):
                         cell_alignment = self.align
                     
                     if cell_alignment == "w":
-                        x = fc + 3
+                        x = fc + 2
                         if (r, dcol) in self.cell_options and 'dropdown' in self.cell_options[(r, dcol)]:
                             mw = sc - fc - self.txt_h - 2
                             self.redraw_dropdown(fc, fr, sc, self.row_positions[r + 1], 
@@ -4211,7 +4237,7 @@ class MainTable(tk.Canvas):
                                                  dd_is_open = self.cell_options[(r, dcol)]['dropdown']['window'] != "no dropdown open")
                         else:
                             mw = sc - fc - 1
-                            x = sc - 3
+                            x = sc - 2
 
                     elif cell_alignment == "center":
                         stop = fc + 5
@@ -4350,7 +4376,6 @@ class MainTable(tk.Canvas):
                                             txt = txt[tmod - 1:-tmod]
                                             self.itemconfig(t, text = txt)
                                             wd = self.bbox(t)
-                                            self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
                                             while wd[2] - wd[0] > mw:
                                                 txt = txt[next(self.c_align_cyc)]
                                                 self.itemconfig(t, text = txt)
@@ -5086,7 +5111,8 @@ class MainTable(tk.Canvas):
             else:
                 text = text if isinstance(text, str) else f"{text}"
         text = "" if text is None else text
-        self.select_cell(r = r, c = c, keep_other_selections = True)
+        if not self.currently_selected():
+            self.select_cell(r = r, c = c, keep_other_selections = True)
         self.create_text_editor(r = r, c = c, text = text, set_data_ref_on_destroy = True, dropdown = dropdown)
         return True
     
@@ -5306,7 +5332,7 @@ class MainTable(tk.Canvas):
                                 new_r = r1
                             elif numrows > 1:
                                 new_r = r + 1
-                    self.create_current(new_r, new_c, type_ = "cell", inside = True)
+                    self.create_current(new_r, new_c, type_ = currently_selected.type_, inside = True)
                     self.see(new_r, new_c, keep_xscroll = True, bottom_right_corner = True, check_cell_visibility = True)
         self.hide_dropdown_window(r, c)
         if recreate:
@@ -5343,7 +5369,7 @@ class MainTable(tk.Canvas):
                     new_r = r1
                 elif numrows > 1:
                     new_r = r + 1
-        self.create_current(new_r, new_c, type_ = "cell", inside = True)
+        self.create_current(new_r, new_c, type_ = self.currently_selected.type_, inside = True)
         self.see(new_r, new_c, keep_xscroll = True, bottom_right_corner = True, check_cell_visibility = True)
         return "break"
 
