@@ -1,12 +1,16 @@
-### Version 5.5.4 (current version)
+### Version 5.6.0 (in development)
 Fixed:
+ - Issues and possible errors with dropdowns/checkboxes
  - `delete_dropdown()`/`delete_checkbox()` issues
- - Issues and possible errors with dropdowns/checkboxes and hidden columns
 
 Changed:
+ - Improvements to text editor
+ - You can now use the scroll wheel in the header to vertically scroll if there are multiple lines in the column headers
+ - Main table text now draws slightly closer to cell edges
  - Improved visibility of dropdown box against sheet background
  - Improved dropdown window height
  - black theme selected cells border color
+ - light green theme selected cells background color
 
 ### Version 5.5.3
 Fixed:

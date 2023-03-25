@@ -1248,13 +1248,16 @@ class MainTable(tk.Canvas):
             return True
         else:
             return False
+        
+    def get_cell_coords(self, r = None, c = None):
+        return (0 if not c else self.col_positions[c] + 1,
+                0 if not r else self.row_positions[r] + 1, 
+                0 if not c else self.col_positions[c + 1],
+                0 if not r else self.row_positions[r + 1])
 
-    def cell_is_completely_visible(self, r = 0, c = 0, cell_coords = None, separate_axes = False):
+    def cell_is_completely_visible(self, r = 0, c = 0, separate_axes = False):
         cx1, cy1, cx2, cy2 = self.get_canvas_visible_area()
-        if cell_coords is None:
-            x1, y1, x2, y2 = self.GetCellCoords(r = r, c = c, sel = True)
-        else:
-            x1, y1, x2, y2 = cell_coords
+        x1, y1, x2, y2 = self.get_cell_coords(r, c)
         x_vis = True
         y_vis = True
         if cx1 > x1 or cx2 < x2:
@@ -1266,12 +1269,9 @@ class MainTable(tk.Canvas):
         else:
             return False if not y_vis or not x_vis else True
 
-    def cell_is_visible(self,r = 0, c = 0, cell_coords = None):
+    def cell_is_visible(self,r = 0, c = 0):
         cx1, cy1, cx2, cy2 = self.get_canvas_visible_area()
-        if cell_coords is None:
-            x1, y1, x2, y2 = self.GetCellCoords(r = r, c = c, sel = True)
-        else:
-            x1, y1, x2, y2 = cell_coords
+        x1, y1, x2, y2 = self.get_cell_coords(r, c)
         if x1 <= cx2 or y1 <= cy2 or x2 >= cx1 or y2 >= cy1:
             return True
         return False
@@ -2787,16 +2787,6 @@ class MainTable(tk.Canvas):
         if not allow_end and c >= len(self.col_positions) - 1:
             return None
         return c
-
-    def GetCellCoords(self, event = None, r = None, c = None, sel = False):
-        if event is not None:
-            r = self.identify_row(event)
-            c = self.identify_col(event)
-        elif r is not None and c is not None:
-            if sel:
-                return self.col_positions[c] + 1,self.row_positions[r] + 1, self.col_positions[c + 1], self.row_positions[r + 1]
-            else:
-                return self.col_positions[c], self.row_positions[r], self.col_positions[c + 1], self.row_positions[r + 1]
 
     def check_views(self):
         xcheck = self.xview()
@@ -4664,33 +4654,6 @@ class MainTable(tk.Canvas):
         if not self.show_selected_cells_border:
             self.tag_lower("Current_Outside")
 
-    def GetColCoords(self, c, sel = False):
-        last_col_line_pos = self.col_positions[-1] + 1
-        last_row_line_pos = self.row_positions[-1] + 1
-        x1 = self.col_positions[c]
-        x2 = self.col_positions[c + 1]
-        y1 = self.canvasy(0)
-        y2 = self.canvasy(self.winfo_height())
-        if last_row_line_pos < y2:
-            y2 = last_col_line_pos
-        if sel:
-            return x1, y1 + 1, x2, y2
-        else:
-            return x1, y1, x2, y2
-
-    def GetRowCoords(self, r, sel = False):
-        last_col_line_pos = self.col_positions[-1] + 1
-        x1 = self.canvasx(0)
-        x2 = self.canvasx(self.winfo_width())
-        if last_col_line_pos < x2:
-            x2 = last_col_line_pos
-        y1 = self.row_positions[r]
-        y2 = self.row_positions[r + 1]
-        if sel:
-            return x1, y1 + 1, x2, y2
-        else:
-            return x1, y1, x2, y2
-
     def get_redraw_selections(self, within_range):
         scells = set()
         srows = set()
@@ -5189,7 +5152,8 @@ class MainTable(tk.Canvas):
                                       binding = binding,
                                       align = self.get_cell_align(r, c),
                                       r = r,
-                                      c = c)
+                                      c = c,
+                                      newline_binding = self.text_editor_newline_binding)
         self.text_editor_id = self.create_window((x, y), window = self.text_editor, anchor = "nw")
         if not dropdown:
             self.text_editor.textedit.focus_set()
@@ -5214,30 +5178,31 @@ class MainTable(tk.Canvas):
             self.text_editor.textedit.bind("<Escape>", lambda x: self.destroy_text_editor("Escape"))
     
     # displayed indexes
-    def text_editor_newline_binding(self, r = None, c = None, event = None, check_lines = True):
+    def text_editor_newline_binding(self, r = 0, c = 0, event = None, check_lines = True):
+        drow = r if self.all_rows_displayed else self.displayed_rows[r]
         dcol = c if self.all_columns_displayed else self.displayed_columns[c]
         curr_height = self.text_editor.winfo_height()
-        curr_coords = self.coords(self.text_editor_id)
-        space_bot = self.get_space_bot(r, curr_height)
         if not check_lines or self.GetLinesHeight(self.text_editor.get_num_lines() + 1) > curr_height:
             new_height = curr_height + self.xtra_lines_increment
+            space_bot = self.get_space_bot(r)
             if new_height > space_bot:
                 new_height = space_bot
-            self.text_editor.config(height = new_height)
-            if ((r, dcol) in self.cell_options and
-                'dropdown' in self.cell_options[(r, dcol)]):
-                text_editor_h = self.text_editor.winfo_height()
-                win_h, anchor = self.get_dropdown_height_anchor(r, c, dcol, text_editor_h)
-                if anchor == "nw":
-                    self.coords(self.cell_options[(r, dcol)]['dropdown']['canvas_id'],
-                                self.col_positions[c], self.row_positions[r] + text_editor_h - 1)
-                    self.itemconfig(self.cell_options[(r, dcol)]['dropdown']['canvas_id'],
-                                    anchor = anchor, height = win_h)
-                elif anchor == "sw":
-                    self.coords(self.cell_options[(r, dcol)]['dropdown']['canvas_id'],
-                                self.col_positions[c], self.row_positions[r])
-                    self.itemconfig(self.cell_options[(r, dcol)]['dropdown']['canvas_id'],
-                                    anchor = anchor, height = win_h)
+            if new_height != curr_height:
+                self.text_editor.config(height = new_height)
+                if ((r, dcol) in self.cell_options and
+                    'dropdown' in self.cell_options[(r, dcol)]):
+                    text_editor_h = self.text_editor.winfo_height()
+                    win_h, anchor = self.get_dropdown_height_anchor(drow, dcol, text_editor_h)
+                    if anchor == "nw":
+                        self.coords(self.cell_options[(r, dcol)]['dropdown']['canvas_id'],
+                                    self.col_positions[c], self.row_positions[r] + text_editor_h - 1)
+                        self.itemconfig(self.cell_options[(r, dcol)]['dropdown']['canvas_id'],
+                                        anchor = anchor, height = win_h)
+                    elif anchor == "sw":
+                        self.coords(self.cell_options[(r, dcol)]['dropdown']['canvas_id'],
+                                    self.col_positions[c], self.row_positions[r])
+                        self.itemconfig(self.cell_options[(r, dcol)]['dropdown']['canvas_id'],
+                                        anchor = anchor, height = win_h)
 
     def bind_text_editor_destroy(self, binding, r, c):
         self.text_editor.textedit.bind("<Return>", lambda x: binding((r, c, "Return")))
@@ -5469,17 +5434,29 @@ class MainTable(tk.Canvas):
         return bg, fg
 
     def get_space_bot(self, r, text_editor_h = None):
-        if text_editor_h is None:
-            win_h = int(self.canvasy(0) + self.winfo_height() - self.row_positions[r + 1])
-            sheet_h = int(self.row_positions[-1] + 1 + self.empty_vertical - self.row_positions[r + 1])
+        if len(self.row_positions) <= 1:
+            if text_editor_h is None:
+                win_h = int(self.winfo_height())
+                sheet_h = int(1 + self.empty_vertical)
+            else:
+                win_h = int(self.winfo_height() - text_editor_h)
+                sheet_h = int(1 + self.empty_vertical - text_editor_h)
         else:
-            win_h = int(self.canvasy(0) + self.winfo_height() - (self.row_positions[r] + text_editor_h))
-            sheet_h = int(self.row_positions[-1] + 1 + self.empty_vertical - (self.row_positions[r] + text_editor_h))
+            if text_editor_h is None:
+                win_h = int(self.canvasy(0) + self.winfo_height() - self.row_positions[r + 1])
+                sheet_h = int(self.row_positions[-1] + 1 + self.empty_vertical - self.row_positions[r + 1])
+            else:
+                win_h = int(self.canvasy(0) + self.winfo_height() - (self.row_positions[r] + text_editor_h))
+                sheet_h = int(self.row_positions[-1] + 1 + self.empty_vertical - (self.row_positions[r] + text_editor_h))
+        if win_h > 0:
+            win_h -= 1
+        if sheet_h > 0:
+            sheet_h -= 1
         return win_h if win_h >= sheet_h else sheet_h
 
-    def get_dropdown_height_anchor(self, r, c, dcol, text_editor_h = None):
+    def get_dropdown_height_anchor(self, drow, dcol, text_editor_h = None):
         win_h = 5
-        for i, v in enumerate(self.cell_options[(r, dcol)]['dropdown']['values']):
+        for i, v in enumerate(self.cell_options[(drow, dcol)]['dropdown']['values']):
             v_numlines = len(v.split("\n") if isinstance(v, str) else f"{v}".split("\n"))
             if v_numlines > 1:
                 win_h += self.fl_ins + (v_numlines * self.xtra_lines_increment) + 5 # end of cell
@@ -5489,8 +5466,8 @@ class MainTable(tk.Canvas):
                 break
         if win_h > 500:
             win_h = 500
-        space_bot = self.get_space_bot(r, text_editor_h)
-        space_top = int(self.row_positions[r])
+        space_bot = self.get_space_bot(drow, text_editor_h)
+        space_top = int(self.row_positions[drow])
         anchor = "nw"
         win_h2 = int(win_h)
         if win_h > space_bot:

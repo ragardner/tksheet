@@ -40,7 +40,8 @@ class TextEditor_(tk.Text):
                  popup_menu_fg = "black",
                  popup_menu_highlight_bg = "blue",
                  popup_menu_highlight_fg = "white",
-                 align = "w"):
+                 align = "w",
+                 newline_binding = None):
         tk.Text.__init__(self,
                          parent,
                          font = font,
@@ -56,6 +57,7 @@ class TextEditor_(tk.Text):
                          foreground = fg,
                          insertbackground = fg)
         self.parent = parent
+        self.newline_bindng = newline_binding
         if align == "w":
             self.align = "left"
         elif align == "center":
@@ -128,8 +130,8 @@ class TextEditor_(tk.Text):
             self.event_generate("<<TextModified>>")
             if args and len(args) > 1 and args[1] != '\n':
                 out_of_bounds = self.yview()
-                if out_of_bounds != (0.0, 1.0):
-                    self.parent.parent.text_editor_newline_binding(r = self.parent.r, c = self.parent.c, check_lines = False)
+                if out_of_bounds != (0.0, 1.0) and self.newline_bindng is not None:
+                    self.newline_bindng(r = self.parent.r, c = self.parent.c, check_lines = False)
         return result
     
     def rc(self,event):
@@ -177,7 +179,8 @@ class TextEditor(tk.Frame):
                  binding = None,
                  align = "w",
                  r = 0,
-                 c = 0):
+                 c = 0,
+                 newline_binding = None):
         tk.Frame.__init__(self,
                           parent,
                           height = height,
@@ -200,7 +203,8 @@ class TextEditor(tk.Frame):
                                     popup_menu_fg = popup_menu_fg,
                                     popup_menu_highlight_bg = popup_menu_highlight_bg,
                                     popup_menu_highlight_fg = popup_menu_highlight_fg,
-                                    align = align)
+                                    align = align,
+                                    newline_binding = newline_binding)
         self.textedit.grid(row = 0,
                            column = 0,
                            sticky = "nswe")
