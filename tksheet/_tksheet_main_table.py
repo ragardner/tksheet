@@ -2726,10 +2726,11 @@ class MainTable(tk.Canvas):
             if r is not None and c is not None and (r, c) == self.b1_pressed_loc:
                 dcol = c if self.all_columns_displayed else self.displayed_columns[c]
                 if (r, dcol) in self.cell_options and ('dropdown' in self.cell_options[(r, dcol)] or 'checkbox' in self.cell_options[(r, dcol)]):
+                    canvasx = self.canvasx(event.x)
                     if (self.closed_dropdown != self.b1_pressed_loc and
                         'dropdown' in self.cell_options[(r, dcol)] and
-                        event.x > self.col_positions[c + 1] - self.txt_h - 5 and
-                        event.x < self.col_positions[c + 1] - 1):
+                        canvasx > self.col_positions[c + 1] - self.txt_h - 5 and
+                        canvasx < self.col_positions[c + 1] - 1):
                         self.open_cell(event)
                     elif 'checkbox' in self.cell_options[(r, dcol)] and event.x < self.col_positions[c] + self.txt_h + 5 and event.y < self.row_positions[r] + self.txt_h + 5:
                         self.open_cell(event)
@@ -3953,21 +3954,18 @@ class MainTable(tk.Canvas):
             self.redraw_highlight(x1 + 1, y1 + 1, x2, y2, fill = "", outline = self.table_fg, tag = tag)
         if draw_arrow:
             topysub = floor(self.half_txt_h / 2)
-            mid_y = y1 + floor(self.half_txt_h / 2) + 5
-            if dd_is_open:
-                #bottom left points for triangle
-                ty1 = mid_y - topysub + 2
-                #bottom points for triangle
-                ty2 = mid_y + self.half_txt_h - 4
-                #top right points for triangle
-                ty3 = mid_y - topysub + 2
+            mid_y = y1 + floor(self.min_rh / 2)
+            if mid_y + topysub + 1 >= y1 + self.txt_h - 1:
+                mid_y -= 1
+            if mid_y - topysub + 2 <= y1 + 4 + topysub:
+                mid_y -= 1
+                ty1 = mid_y + topysub + 1 if dd_is_open else mid_y - topysub + 3
+                ty2 = mid_y - topysub + 3 if dd_is_open else mid_y + topysub + 1
+                ty3 = mid_y + topysub + 1 if dd_is_open else mid_y - topysub + 3
             else:
-                #top left points for triangle
-                ty1 = mid_y - topysub + 2
-                #bottom points for triangle
-                ty2 = mid_y + self.half_txt_h - 4
-                #top right points for triangle
-                ty3 = mid_y - topysub + 2
+                ty1 = mid_y + topysub + 1 if dd_is_open else mid_y - topysub + 2
+                ty2 = mid_y - topysub + 2 if dd_is_open else mid_y + topysub + 1
+                ty3 = mid_y + topysub + 1 if dd_is_open else mid_y - topysub + 2
             tx1 = x2 - self.txt_h + 1
             tx2 = x2 - self.half_txt_h - 1
             tx3 = x2 - 3

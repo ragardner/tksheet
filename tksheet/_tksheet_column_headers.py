@@ -560,8 +560,9 @@ class ColumnHeaders(tk.Canvas):
             c = self.MT.identify_col(x = event.x)
             if c is not None and c == self.b1_pressed_loc and self.b1_pressed_loc != self.closed_dropdown:
                 dcol = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
-                if ((dcol in self.cell_options and 'dropdown' in self.cell_options[dcol] and event.x < self.MT.col_positions[c + 1] and event.x > self.MT.col_positions[c + 1] - self.MT.hdr_txt_h - 4) or
-                    (dcol in self.cell_options and 'checkbox' in self.cell_options[dcol] and event.x < self.MT.col_positions[c] + self.MT.hdr_txt_h + 5)):
+                canvasx = self.canvasx(event.x)
+                if ((dcol in self.cell_options and 'dropdown' in self.cell_options[dcol] and canvasx < self.MT.col_positions[c + 1] and canvasx > self.MT.col_positions[c + 1] - self.MT.hdr_txt_h - 4) or
+                    (dcol in self.cell_options and 'checkbox' in self.cell_options[dcol] and canvasx < self.MT.col_positions[c] + self.MT.hdr_txt_h + 5)):
                     if event.y < self.MT.hdr_txt_h + 5:
                         self.open_cell(event)
             else:
@@ -872,21 +873,18 @@ class ColumnHeaders(tk.Canvas):
             self.redraw_highlight(x1 + 1, y1 + 1, x2, y2, fill = "", outline = self.header_fg, tag = tag)
         if draw_arrow:
             topysub = floor(self.MT.hdr_half_txt_h / 2)
-            mid_y = y1 + floor(self.MT.hdr_half_txt_h / 2) + 5
-            if dd_is_open:
-                #top left points for triangle
-                ty1 = mid_y + self.MT.hdr_half_txt_h - 4
-                #bottom points for triangle
-                ty2 = mid_y - topysub + 2
-                #top right points for triangle
-                ty3 = mid_y + self.MT.hdr_half_txt_h - 4
+            mid_y = y1 + floor(self.MT.hdr_min_rh / 2)
+            if mid_y + topysub + 1 >= y1 + self.MT.hdr_txt_h - 1:
+                mid_y -= 1
+            if mid_y - topysub + 2 <= y1 + 4 + topysub:
+                mid_y -= 1
+                ty1 = mid_y + topysub + 1 if dd_is_open else mid_y - topysub + 3
+                ty2 = mid_y - topysub + 3 if dd_is_open else mid_y + topysub + 1
+                ty3 = mid_y + topysub + 1 if dd_is_open else mid_y - topysub + 3
             else:
-                #top left points for triangle
-                ty1 = mid_y - topysub + 2
-                #bottom points for triangle
-                ty2 = mid_y + self.MT.hdr_half_txt_h - 4
-                #top right points for triangle
-                ty3 = mid_y - topysub + 2
+                ty1 = mid_y + topysub + 1 if dd_is_open else mid_y - topysub + 2
+                ty2 = mid_y - topysub + 2 if dd_is_open else mid_y + topysub + 1
+                ty3 = mid_y + topysub + 1 if dd_is_open else mid_y - topysub + 2
             tx1 = x2 - self.MT.hdr_txt_h + 1
             tx2 = x2 - self.MT.hdr_half_txt_h - 1
             tx3 = x2 - 3
