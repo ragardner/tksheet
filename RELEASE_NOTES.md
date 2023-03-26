@@ -1,4 +1,13 @@
-### Version 5.6.0 (current version)
+### Latest version in release notes is current version
+
+### Version 5.6.1
+Fixed:
+ - [#153](https://github.com/ragardner/tksheet/issues/153)
+
+Changed:
+ - Adjust dropdown arrow sizes for more consistency for varying fonts
+
+### Version 5.6.0
 Fixed:
  - Issues and possible errors with dropdowns/checkboxes/cell edits
  - `delete_dropdown()`/`delete_checkbox()` issues
