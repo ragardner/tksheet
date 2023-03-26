@@ -75,7 +75,7 @@ theme_light_green = {
 'header_bg': "#ECECEC",
 'header_border_fg': "#ababab",
 'header_grid_fg': "#ababab",
-'header_fg': "#373737",
+'header_fg': "black",
 'header_selected_cells_bg': "#d6d4d2",
 'header_selected_cells_fg': "#217346",
 'index_bg': "#ECECEC",
@@ -89,10 +89,10 @@ theme_light_green = {
 'top_left_fg_highlight': "#5f6368",
 'table_bg': "#fcfcfc",
 'table_grid_fg': "#bfbfbf",
-'table_fg': "#373737",
+'table_fg': "black",
 'table_selected_cells_border_fg': "#217346",
-'table_selected_cells_bg': "#edeeed",
-'table_selected_cells_fg': "#0a0a0a",
+'table_selected_cells_bg': "#E3E3E3",
+'table_selected_cells_fg': "black",
 'resizing_line_fg': "black",
 'drag_and_drop_bg': "gray30",
 'outline_color': "gray2",
@@ -101,11 +101,11 @@ theme_light_green = {
 'index_selected_rows_bg': "#d3f0e0",
 'index_selected_rows_fg': "#217346",
 'table_selected_rows_border_fg': "#217346",
-'table_selected_rows_bg': "#edeeed",
-'table_selected_rows_fg': "#333333",
+'table_selected_rows_bg': "#E3E3E3",
+'table_selected_rows_fg': "black",
 'table_selected_columns_border_fg': "#217346",
-'table_selected_columns_bg': "#edeeed",
-'table_selected_columns_fg': "#333333"
+'table_selected_columns_bg': "#E3E3E3",
+'table_selected_columns_fg': "black"
 }
 
 theme_dark = {
@@ -176,8 +176,8 @@ theme_black = {
 'table_bg': "#000000",
 'table_grid_fg': "#505054",
 'table_fg': "#F2F2F2",
-'table_selected_cells_border_fg': "#bdbdbd",
-'table_selected_cells_bg': "#313034",
+'table_selected_cells_border_fg': "#ffb867",
+'table_selected_cells_bg': "#333333",
 'table_selected_cells_fg': "#FFFFFF",
 'resizing_line_fg': "#ffb867",
 'drag_and_drop_bg': "#ecf0f2",
@@ -186,11 +186,11 @@ theme_black = {
 'header_selected_columns_fg': "#ffb867",
 'index_selected_rows_bg': "#3e3e45",
 'index_selected_rows_fg': "#ffb867",
-'table_selected_rows_border_fg': "#bdbdbd",
-'table_selected_rows_bg': "#313034",
+'table_selected_rows_border_fg': "#ffb867",
+'table_selected_rows_bg': "#333333",
 'table_selected_rows_fg': "#FFFFFF",
-'table_selected_columns_border_fg': "#bdbdbd",
-'table_selected_columns_bg': "#313034",
+'table_selected_columns_border_fg': "#ffb867",
+'table_selected_columns_bg': "#333333",
 'table_selected_columns_fg': "#FFFFFF"
 }
 

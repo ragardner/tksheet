@@ -264,6 +264,10 @@ class Sheet(tk.Frame):
         else:
             self.yscroll_showing = False
             self.yscroll_disabled = True
+        self.update_idletasks()
+        self.MT.update_idletasks()
+        self.RI.update_idletasks()
+        self.CH.update_idletasks()
         if theme != "light blue":
             self.change_theme(theme)
             for k, v in locals().items():
@@ -271,9 +275,6 @@ class Sheet(tk.Frame):
                     self.set_options(**{k: v})
         if set_all_heights_and_widths:
             self.set_all_cell_sizes_to_text()
-        self.MT.update_idletasks()
-        self.update_idletasks()
-        self.refresh()
         if startup_select is not None:
             try:
                 if startup_select[-1] == "cells":
@@ -290,6 +291,7 @@ class Sheet(tk.Frame):
                     self.see(0, startup_select[0])
             except:
                 pass
+        self.refresh()
         if startup_focus:
             self.MT.focus_set()
             
@@ -1109,22 +1111,12 @@ class Sheet(tk.Frame):
     # works on currently selected box
     def open_cell(self, ignore_existing_editor = True):
         self.MT.open_cell(event = GeneratedMouseEvent(), ignore_existing_editor = ignore_existing_editor)
-
-    def create_text_editor(self,
-                           row = 0,
-                           column = 0,
-                           text = None,
-                           state = "normal",
-                           see = True,
-                           set_data_ref_on_destroy = False,
-                           binding = None):
-        self.MT.create_text_editor(r = row,
-                                   c = column,
-                                   text = text,
-                                   state = state,
-                                   see = see,
-                                   set_data_ref_on_destroy = set_data_ref_on_destroy,
-                                   binding = binding)
+        
+    def open_header_cell(self, ignore_existing_editor = True):
+        self.CH.open_cell(event = GeneratedMouseEvent(), ignore_existing_editor = ignore_existing_editor)
+        
+    def open_index_cell(self, ignore_existing_editor = True):
+        self.RI.open_cell(event = GeneratedMouseEvent(), ignore_existing_editor = ignore_existing_editor)
 
     def set_text_editor_value(self, text = "", r = None, c = None):
         if self.MT.text_editor is not None and r is None and c is None:
@@ -1134,17 +1126,6 @@ class Sheet(tk.Frame):
 
     def bind_text_editor_set(self, func, row, column):
         self.MT.bind_text_editor_destroy(func, row, column)
-
-    def get_text_editor_value(self, editor_info = None, r = None, c = None, set_data_ref_on_destroy = True, event = None, destroy = True, move_down = True, redraw = True, recreate = True):
-        return self.MT.get_text_editor_value(editor_info = editor_info,
-                                             r = r,
-                                             c = c,
-                                             set_data_ref_on_destroy = set_data_ref_on_destroy,
-                                             event = event,
-                                             destroy = destroy,
-                                             move_down = move_down,
-                                             redraw = redraw,
-                                             recreate = recreate)
 
     def destroy_text_editor(self, event = None):
         self.MT.destroy_text_editor(event = event)
@@ -2326,11 +2307,11 @@ class Sheet(tk.Frame):
 
     def delete_header_checkbox(self, c = 0):
         if c == "all":
-            for c in self.CH.cell_options:
-                if 'checkbox' in self.CH.cell_options[c]:
-                    self.CH.destroy_checkbox(c)
+            for c_ in self.CH.cell_options:
+                if 'checkbox' in self.CH.cell_options[c_]:
+                    self.CH.delete_checkbox(c_)
         else:
-            self.CH.destroy_checkbox(c)
+            self.CH.delete_checkbox(c)
 
     def header_checkbox(self,
                         c,
@@ -2388,11 +2369,11 @@ class Sheet(tk.Frame):
 
     def delete_index_checkbox(self, r = 0):
         if r == "all":
-            for r in self.RI.cell_options:
-                if 'checkbox' in self.RI.cell_options[r]:
-                    self.RI.destroy_checkbox(r)
+            for r_ in self.RI.cell_options:
+                if 'checkbox' in self.RI.cell_options[r_]:
+                    self.RI.delete_checkbox(r_)
         else:
-            self.RI.destroy_checkbox(r)
+            self.RI.delete_checkbox(r)
 
     def index_checkbox(self,
                        r,
@@ -2436,7 +2417,6 @@ class Sheet(tk.Frame):
                                         redraw = redraw,
                                         check_function = check_function,
                                         text = text)
-            
         elif isinstance(r, str) and r.lower() == "all" and isinstance(c, str) and c.lower() == "all":
             totalcols = self.MT.total_data_cols()
             for r_ in range(self.MT.total_data_rows()):
@@ -2474,12 +2454,20 @@ class Sheet(tk.Frame):
         return {k: v['checkbox'] for k, v in self.MT.cell_options.items() if 'checkbox' in v}
 
     def delete_checkbox(self, r = 0, c = 0):
-        if r == "all":
-            for r, c in self.MT.cell_options:
-                if 'checkbox' in self.MT.cell_options[(r, c)]:
-                    self.MT.destroy_checkbox(r, c)
+        if isinstance(r, str) and r.lower() == "all" and isinstance(c, int):
+            for r_, c_ in self.MT.cell_options:
+                if 'checkbox' in self.MT.cell_options[(r_, c)]:
+                    self.MT.delete_checkbox(r_, c)
+        elif isinstance(c, str) and c.lower() == "all" and isinstance(r, int):
+            for r_, c_ in self.MT.cell_options:
+                if 'checkbox' in self.MT.cell_options[(r, c_)]:
+                    self.MT.delete_checkbox(r, c_)
+        elif isinstance(r, str) and r.lower() == "all" and isinstance(c, str) and c.lower() == "all":
+            for r_, c_ in self.MT.cell_options:
+                if 'checkbox' in self.MT.cell_options[(r_, c_)]:
+                    self.MT.delete_checkbox(r_, c_)
         else:
-            self.MT.destroy_checkbox(r, c)
+            self.MT.delete_checkbox(r, c)
 
     def checkbox(self,
                  r,
@@ -2554,11 +2542,11 @@ class Sheet(tk.Frame):
 
     def delete_header_dropdown(self, c = 0):
         if c == "all":
-            for c in self.CH.cell_options:
-                if 'dropdown' in self.CH.cell_options[c]:
-                    self.CH.destroy_dropdown(c)
+            for c_ in self.CH.cell_options:
+                if 'dropdown' in self.CH.cell_options[c_]:
+                    self.CH.delete_dropdown(c_)
         else:
-            self.CH.destroy_dropdown(c)
+            self.CH.delete_dropdown(c)
 
     def get_header_dropdowns(self):
         return {k: v['dropdown'] for k, v in self.CH.cell_options.items() if 'dropdown' in v}
@@ -2625,11 +2613,11 @@ class Sheet(tk.Frame):
 
     def delete_index_dropdown(self, r = 0):
         if r == "all":
-            for r in self.RI.cell_options:
-                if 'dropdown' in self.RI.cell_options[r]:
-                    self.RI.destroy_dropdown(r)
+            for r_ in self.RI.cell_options:
+                if 'dropdown' in self.RI.cell_options[r_]:
+                    self.RI.delete_dropdown(r_)
         else:
-            self.RI.destroy_dropdown(r)
+            self.RI.delete_dropdown(r)
 
     def get_index_dropdowns(self):
         return {k: v['dropdown'] for k, v in self.RI.cell_options.items() if 'dropdown' in v}
@@ -2724,12 +2712,20 @@ class Sheet(tk.Frame):
                 self.MT.text_editor.set_text(displayed)
 
     def delete_dropdown(self, r = 0, c = 0):
-        if r == "all":
-            for r, c in self.MT.cell_options:
-                if 'dropdown' in self.MT.cell_options[(r, c)]:
-                    self.MT.destroy_dropdown(r, c)
+        if isinstance(r, str) and r.lower() == "all" and isinstance(c, int):
+            for r_, c_ in self.MT.cell_options:
+                if 'dropdown' in self.MT.cell_options[(r_, c)]:
+                    self.MT.delete_dropdown(r_, c)
+        elif isinstance(c, str) and c.lower() == "all" and isinstance(r, int):
+            for r_, c_ in self.MT.cell_options:
+                if 'dropdown' in self.MT.cell_options[(r, c_)]:
+                    self.MT.delete_dropdown(r, c_)
+        elif isinstance(r, str) and r.lower() == "all" and isinstance(c, str) and c.lower() == "all":
+            for r_, c_ in self.MT.cell_options:
+                if 'dropdown' in self.MT.cell_options[(r_, c_)]:
+                    self.MT.delete_dropdown(r_, c_)
         else:
-            self.MT.destroy_dropdown(r, c)
+            self.MT.delete_dropdown(r, c)
 
     def get_dropdowns(self):
         return {k: v['dropdown'] for k, v in self.MT.cell_options.items() if 'dropdown' in v}
@@ -2752,7 +2748,7 @@ class Sheet_Dropdown(Sheet):
                  bg = theme_light_blue['table_bg'],
                  fg = theme_light_blue['table_fg'],
                  outline_color = theme_light_blue['table_fg'],
-                 outline_thickness = 1,
+                 outline_thickness = 2,
                  values = [],
                  hide_dropdown_window = None,
                  arrowkey_RIGHT = None,
@@ -2832,6 +2828,11 @@ class Sheet_Dropdown(Sheet):
         self.deselect("all")
         if self.row is not None:
             self.select_row(self.row)
+            
+    def _reselect(self):
+        rows = self.get_selected_rows()
+        if rows:
+            self.select_row(next(iter(rows)))
 
     def b1(self, event = None):
         if event is None:
