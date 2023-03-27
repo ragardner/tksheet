@@ -9,7 +9,7 @@ pip install tksheet
 
 ### Help
  - [Documentation](https://github.com/ragardner/tksheet/wiki)
- - [Version release notes](https://github.com/ragardner/tksheet/blob/master/RELEASE_NOTES.md)
+ - [Changelog](https://github.com/ragardner/tksheet/blob/master/CHANGELOG.md)
 
 ### Features
  - Display and modify tabular data
