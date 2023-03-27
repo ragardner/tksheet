@@ -762,66 +762,63 @@ class MainTable(tk.Canvas):
                 self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells", undo_storage, boxes, currently_selected))))
             self.refresh()
             
-    def move_columns_adjust_options_dict(self, col, remove_start, num_cols, move_data = True, create_selections = True):
+    def move_columns_adjust_options_dict(self, col, to_move_min, num_cols, move_data = True, create_selections = True):
         c = int(col)
-        rm1start = int(remove_start)
-        rm1end = rm1start + num_cols
-        totalcols = int(num_cols)
-        rm2start = rm1start + (rm1end - rm1start)
-        rm2end = rm1end + (rm1end - rm1start)
-        orig_selected = list(range(rm1start, rm1start + totalcols))
+        to_move_max = to_move_min + num_cols
+        to_del = to_move_max + num_cols
+        orig_selected = list(range(to_move_min, to_move_min + num_cols))
         self.deselect("all", redraw = False)
         cws = [int(b - a) for a, b in zip(self.col_positions, islice(self.col_positions, 1, len(self.col_positions)))]
-        if rm1start > c:
-            cws[c:c] = cws[rm1start:rm1end]
-            cws[rm2start:rm2end] = []
+        if to_move_min > c:
+            cws[c:c] = cws[to_move_min:to_move_max]
+            cws[to_move_max:to_del] = []
         else:
-            cws[c + 1:c + 1] = cws[rm1start:rm1end]
-            cws[rm1start:rm1end] = []
+            cws[c + 1:c + 1] = cws[to_move_min:to_move_max]
+            cws[to_move_min:to_move_max] = []
         self.col_positions = list(accumulate(chain([0], (width for width in cws))))
-        if c + totalcols > len(self.col_positions):
-            new_selected = tuple(range(len(self.col_positions) - 1 - totalcols, len(self.col_positions) - 1))
+        if c + num_cols > len(self.col_positions):
+            new_selected = tuple(range(len(self.col_positions) - 1 - num_cols, len(self.col_positions) - 1))
             if create_selections:
-                self.create_selected(0, len(self.col_positions) - 1 - totalcols, len(self.row_positions) - 1, len(self.col_positions) - 1, "columns")
+                self.create_selected(0, len(self.col_positions) - 1 - num_cols, len(self.row_positions) - 1, len(self.col_positions) - 1, "columns")
         else:
-            if rm1start > c:
-                new_selected = tuple(range(c, c + totalcols))
+            if to_move_min > c:
+                new_selected = tuple(range(c, c + num_cols))
                 if create_selections:
-                    self.create_selected(0, c, len(self.row_positions) - 1, c + totalcols, "columns")
+                    self.create_selected(0, c, len(self.row_positions) - 1, c + num_cols, "columns")
             else:
-                new_selected = tuple(range(c + 1 - totalcols, c + 1))
+                new_selected = tuple(range(c + 1 - num_cols, c + 1))
                 if create_selections:
-                    self.create_selected(0, c + 1 - totalcols, len(self.row_positions) - 1, c + 1, "columns")
+                    self.create_selected(0, c + 1 - num_cols, len(self.row_positions) - 1, c + 1, "columns")
         if create_selections:
             self.create_current(0, int(new_selected[0]), type_ = "column", inside = True)
         newcolsdct = {t1: t2 for t1, t2 in zip(orig_selected, new_selected)}
         if self.all_columns_displayed:
             dispset = {}
-            if rm1start > c:
+            if to_move_min > c:
                 if move_data:
                     for rn in range(len(self.data)):
-                        if len(self.data[rn]) < rm1end:
-                            self.data[rn].extend(list(repeat("", rm1end - len(self.data[rn]) + 1)))
-                        self.data[rn][c:c] = self.data[rn][rm1start:rm1end]
-                        self.data[rn][rm2start:rm2end] = []
+                        if len(self.data[rn]) < to_move_max:
+                            self.data[rn].extend(list(repeat("", to_move_max - len(self.data[rn]) + 1)))
+                        self.data[rn][c:c] = self.data[rn][to_move_min:to_move_max]
+                        self.data[rn][to_move_max:to_del] = []
                     if isinstance(self._headers, list) and self._headers:
-                        if len(self._headers) < rm1end:
-                            self._headers.extend(list(repeat("", rm1end - len(self._headers) + 1)))
-                        self._headers[c:c] = self._headers[rm1start:rm1end]
-                        self._headers[rm2start:rm2end] = []
+                        if len(self._headers) < to_move_max:
+                            self._headers.extend(list(repeat("", to_move_max - len(self._headers) + 1)))
+                        self._headers[c:c] = self._headers[to_move_min:to_move_max]
+                        self._headers[to_move_max:to_del] = []
                 self.CH.cell_options = {
                     newcolsdct[k] if k in newcolsdct else
-                    k + totalcols if k < rm1start and k >= c else
+                    k + num_cols if k < to_move_min and k >= c else
                     k: v for k, v in self.CH.cell_options.items()
                 }
                 self.cell_options = {
                     (k[0], newcolsdct[k[1]]) if k[1] in newcolsdct else
-                    (k[0], k[1] + totalcols) if k[1] < rm1start and k[1] >= c else
+                    (k[0], k[1] + num_cols) if k[1] < to_move_min and k[1] >= c else
                     k: v for k, v in self.cell_options.items()
                 }
                 self.col_options = {
                     newcolsdct[k] if k in newcolsdct else
-                    k + totalcols if k < rm1start and k >= c else
+                    k + num_cols if k < to_move_min and k >= c else
                     k: v for k, v in self.col_options.items()
                 }
             else:
@@ -830,40 +827,40 @@ class MainTable(tk.Canvas):
                     for rn in range(len(self.data)):
                         if len(self.data[rn]) < c - 1:
                             self.data[rn].extend(list(repeat("", c - len(self.data[rn]))))
-                        self.data[rn][c:c] = self.data[rn][rm1start:rm1end]
-                        self.data[rn][rm1start:rm1end] = []
+                        self.data[rn][c:c] = self.data[rn][to_move_min:to_move_max]
+                        self.data[rn][to_move_min:to_move_max] = []
                     if isinstance(self._headers, list) and self._headers:
                         if len(self._headers) < c:
                             self._headers.extend(list(repeat("", c - len(self._headers))))
-                        self._headers[c:c] = self._headers[rm1start:rm1end]
-                        self._headers[rm1start:rm1end] = []
+                        self._headers[c:c] = self._headers[to_move_min:to_move_max]
+                        self._headers[to_move_min:to_move_max] = []
                 self.CH.cell_options = {
                     newcolsdct[k] if k in newcolsdct else
-                    k - totalcols if k < c and k > rm1start else
+                    k - num_cols if k < c and k > to_move_min else
                     k: v for k, v in self.CH.cell_options.items()
                 }
                 self.cell_options = {
                     (k[0], newcolsdct[k[1]]) if k[1] in newcolsdct else 
-                    (k[0], k[1] - totalcols) if k[1] < c and k[1] > rm1start else 
+                    (k[0], k[1] - num_cols) if k[1] < c and k[1] > to_move_min else 
                     k: v for k, v in self.cell_options.items()
                 }
                 self.col_options = {
                     newcolsdct[k] if k in newcolsdct else
-                    k - totalcols if k < c and k > rm1start else
+                    k - num_cols if k < c and k > to_move_min else
                     k: v for k, v in self.col_options.items()
                 }
         else:
             # moves data around, not displayed columns indexes
             # which remain sorted and the same after drop and drop
-            if rm1start > c:
+            if to_move_min > c:
                 dispset = {a: b for a, b in zip(self.displayed_columns, (self.displayed_columns[:c] +
-                                                                         self.displayed_columns[rm1start:rm1start + totalcols] +
-                                                                         self.displayed_columns[c:rm1start] +
-                                                                         self.displayed_columns[rm1start + totalcols:]))}
+                                                                         self.displayed_columns[to_move_min:to_move_min + num_cols] +
+                                                                         self.displayed_columns[c:to_move_min] +
+                                                                         self.displayed_columns[to_move_min + num_cols:]))}
             else:
-                dispset = {a: b for a, b in zip(self.displayed_columns, (self.displayed_columns[:rm1start] +
-                                                                         self.displayed_columns[rm1start + totalcols:c + 1] +
-                                                                         self.displayed_columns[rm1start:rm1start + totalcols] +
+                dispset = {a: b for a, b in zip(self.displayed_columns, (self.displayed_columns[:to_move_min] +
+                                                                         self.displayed_columns[to_move_min + num_cols:c + 1] +
+                                                                         self.displayed_columns[to_move_min:to_move_min + num_cols] +
                                                                          self.displayed_columns[c + 1:]))}
             # has to pick up elements from all over the place in the original row
             # building an entirely new row is best due to permutations of hidden columns
@@ -907,86 +904,83 @@ class MainTable(tk.Canvas):
             self.col_options = {dispset[k] if k in dispset else k: v for k, v in self.col_options.items()}
         return new_selected, dispset
     
-    def move_rows_adjust_options_dict(self, row, remove_start, num_rows, move_data = True, create_selections = True):
+    def move_rows_adjust_options_dict(self, row, to_move_min, num_rows, move_data = True, create_selections = True):
         r = int(row)
-        rm1start = int(remove_start)
-        rm1end = rm1start + num_rows
-        totalrows = int(num_rows)
-        rm2start = rm1start + (rm1end - rm1start)
-        rm2end = rm1end + (rm1end - rm1start)
-        orig_selected = list(range(rm1start, rm1start + totalrows))
+        to_move_max = to_move_min + num_rows
+        to_del = to_move_max + num_rows
+        orig_selected = list(range(to_move_min, to_move_min + num_rows))
         self.deselect("all", redraw = False)
         rhs = [int(b - a) for a, b in zip(self.row_positions, islice(self.row_positions, 1, len(self.row_positions)))]
-        if rm1start > r:
-            rhs[r:r] = rhs[rm1start:rm1end]
-            rhs[rm2start:rm2end] = []
+        if to_move_min > r:
+            rhs[r:r] = rhs[to_move_min:to_move_max]
+            rhs[to_move_max:to_del] = []
         else:
-            rhs[r + 1:r + 1] = rhs[rm1start:rm1end]
-            rhs[rm1start:rm1end] = []
+            rhs[r + 1:r + 1] = rhs[to_move_min:to_move_max]
+            rhs[to_move_min:to_move_max] = []
         self.row_positions = list(accumulate(chain([0], (height for height in rhs))))       
-        if r + totalrows > len(self.row_positions):
-            new_selected = tuple(range(len(self.row_positions) - 1 - totalrows, len(self.row_positions) - 1))
+        if r + num_rows > len(self.row_positions):
+            new_selected = tuple(range(len(self.row_positions) - 1 - num_rows, len(self.row_positions) - 1))
             if create_selections:
-                self.create_selected(len(self.row_positions) - 1 - totalrows, 0, len(self.row_positions) - 1, len(self.col_positions) - 1, "rows")
+                self.create_selected(len(self.row_positions) - 1 - num_rows, 0, len(self.row_positions) - 1, len(self.col_positions) - 1, "rows")
         else:
-            if rm1start > r:
-                new_selected = tuple(range(r, r + totalrows))
+            if to_move_min > r:
+                new_selected = tuple(range(r, r + num_rows))
                 if create_selections:
-                    self.create_selected(r, 0, r + totalrows, len(self.col_positions) - 1, "rows")
+                    self.create_selected(r, 0, r + num_rows, len(self.col_positions) - 1, "rows")
             else:
-                new_selected = tuple(range(r + 1 - totalrows, r + 1))
+                new_selected = tuple(range(r + 1 - num_rows, r + 1))
                 if create_selections:
-                    self.create_selected(r + 1 - totalrows, 0, r + 1, len(self.col_positions) - 1, "rows")
+                    self.create_selected(r + 1 - num_rows, 0, r + 1, len(self.col_positions) - 1, "rows")
         if create_selections:
             self.create_current(int(new_selected[0]), 0, type_ = "row", inside = True)
         newrowsdct = {t1: t2 for t1, t2 in zip(orig_selected, new_selected)}
-        if rm1start > r:
+        if to_move_min > r:
             if move_data:
-                self.data[r:r] = self.data[rm1start:rm1end]
-                self.data[rm2start:rm2end] = []
+                self.data[r:r] = self.data[to_move_min:to_move_max]
+                self.data[to_move_max:to_del] = []
                 if isinstance(self._row_index, list) and self._row_index:
-                    if len(self._row_index) < rm1end:
-                        self._row_index.extend(list(repeat("", rm1end - len(self._row_index) + 1)))
-                    self._row_index[r:r] = self._row_index[rm1start:rm1end]
-                    self._row_index[rm2start:rm2end] = []
+                    if len(self._row_index) < to_move_max:
+                        self._row_index.extend(list(repeat("", to_move_max - len(self._row_index) + 1)))
+                    self._row_index[r:r] = self._row_index[to_move_min:to_move_max]
+                    self._row_index[to_move_max:to_del] = []
             self.RI.cell_options = {
                 newrowsdct[k] if k in newrowsdct else
-                k + totalrows if k < rm1start and k >= r else
+                k + num_rows if k < to_move_min and k >= r else
                 k: v for k, v in self.RI.cell_options.items()
             }
             self.cell_options = {
                 (newrowsdct[k[0]], k[1]) if k[0] in newrowsdct else
-                (k[0] + totalrows, k[1]) if k[0] < rm1start and k[0] >= r else
+                (k[0] + num_rows, k[1]) if k[0] < to_move_min and k[0] >= r else
                 k: v for k, v in self.cell_options.items()
             }
             self.row_options = {
                 newrowsdct[k] if k in newrowsdct else
-                k + totalrows if k < rm1start and k >= r else
+                k + num_rows if k < to_move_min and k >= r else
                 k: v for k, v in self.row_options.items()
             }
         else:
             r += 1
             if move_data:
-                self.data[r:r] = self.data[rm1start:rm1end]
-                self.data[rm1start:rm1end] = []
+                self.data[r:r] = self.data[to_move_min:to_move_max]
+                self.data[to_move_min:to_move_max] = []
                 if isinstance(self._row_index, list) and self._row_index:
                     if len(self._row_index) < r:
                         self._row_index.extend(list(repeat("", r - len(self._row_index))))
-                    self._row_index[r:r] = self._row_index[rm1start:rm1end]
-                    self._row_index[rm1start:rm1end] = []
+                    self._row_index[r:r] = self._row_index[to_move_min:to_move_max]
+                    self._row_index[to_move_min:to_move_max] = []
             self.RI.cell_options = {
                 newrowsdct[k] if k in newrowsdct else
-                k - totalrows if k < r and k > rm1start else
+                k - num_rows if k < r and k > to_move_min else
                 k: v for k, v in self.RI.cell_options.items()
             }
             self.cell_options = {
                 (newrowsdct[k[0]], k[1]) if k[0] in newrowsdct else 
-                (k[0] - totalrows, k[1]) if k[1] < r and k[1] > rm1start else 
+                (k[0] - num_rows, k[1]) if k[0] < r and k[0] > to_move_min else 
                 k: v for k, v in self.cell_options.items()
             }
             self.row_options = {
                 newrowsdct[k] if k in newrowsdct else
-                k - totalrows if k < r and k > rm1start else
+                k - num_rows if k < r and k > to_move_min else
                 k: v for k, v in self.row_options.items()
             }
         return new_selected, {}
@@ -1060,20 +1054,20 @@ class MainTable(tk.Canvas):
             
             elif undo_storage[0] == "move_cols":
                 c = undo_storage[1]
-                rm1start = undo_storage[2]
+                to_move_min = undo_storage[2]
                 totalcols = len(undo_storage[4])
-                if rm1start < c:
+                if to_move_min < c:
                     c += totalcols - 1
-                self.move_columns_adjust_options_dict(c, rm1start, totalcols)
+                self.move_columns_adjust_options_dict(c, to_move_min, totalcols)
             
             elif undo_storage[0] == "move_rows":
                 rhs = [int(b - a) for a, b in zip(self.row_positions, islice(self.row_positions, 1, len(self.row_positions)))]
                 r = undo_storage[1]
-                rm1start = undo_storage[2]
+                to_move_min = undo_storage[2]
                 totalrows = len(undo_storage[4])
-                if rm1start < r:
+                if to_move_min < r:
                     r += totalrows - 1
-                self.move_rows_adjust_options_dict(r, rm1start, totalrows)
+                self.move_rows_adjust_options_dict(r, to_move_min, totalrows)
                         
             elif undo_storage[0] == "insert_row":
                 self.data[undo_storage[1]['data_row_num']:undo_storage[1]['data_row_num'] + undo_storage[1]['numrows']] = []

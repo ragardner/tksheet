@@ -327,6 +327,13 @@ delete_row(idx = 0, deselect_all = False, redraw = True)
 ___
 
 ```python
+delete_rows(rows: set = set(), deselect_all = False, redraw = True)
+```
+ - Does not maintain selections.
+
+___
+
+```python
 total_rows(number = None, mod_positions = True, mod_data = True)
 ```
 
@@ -361,6 +368,13 @@ ___
 ```python
 delete_column(idx = 0, deselect_all = False, redraw = True)
 ```
+
+___
+
+```python
+delete_columns(columns: set = set(), deselect_all = False, redraw = True)
+```
+ - Does not maintain selections.
 
 ___
 
