@@ -1,5 +1,3 @@
-from attrs import define, field
-from attrs.converters import *
 from datetime import datetime, date, timedelta
 from dateutil import parser, tz
 from abc import ABC, abstractmethod
@@ -71,51 +69,44 @@ def to_timedelta(t: str):
     else:
         raise ValueError(f'Cannot map "{t}" to timedelta.')
 
+def to_bool(val: str):
+    v = val.lower()
+    truthy = {True, "true", "t", "yes", "y", "on", "1", 1}
+    falsy = {False, "false", "f", "no", "n", "off", "0", 0}
+    if v in truthy:
+        return True
+    if v in falsy:
+        return False
+    else:
+        raise ValueError(f'Cannot map "{val}" to bool.')
+        
 def to_nullable_int(x):
-    try:
-        return None if is_nonelike(x) else to_int(x)
-    except ValueError:
-        return str(x)
+    return None if is_nonelike(x) else to_int(x)
 
 def to_nullable_float(x):
-    try:
-        return None if is_nonelike(x) else float(x)
-    except ValueError:
-        return str(x)
+    return None if is_nonelike(x) else float(x)
 
 def to_nullable_date(t):
-    try:
-        return None if is_nonelike(t) else to_date(t)
-    except ValueError:
-        return str(t)
+    return None if is_nonelike(t) else to_date(t)
 
 def to_nullable_datetime(t, time_zone=None):
-    try:
-        return None if is_nonelike(t) else to_datetime(t, time_zone=time_zone)
-    except ValueError:
-        return str(t)
+    return None if is_nonelike(t) else to_datetime(t, time_zone=time_zone)
     
 def to_nullable_utc_datetime(t):
-    try:
-        return None if is_nonelike(t) else to_utc_datetime(t)
-    except ValueError:
-        return str(t)
+    return None if is_nonelike(t) else to_utc_datetime(t)
 
 def to_nullable_timedelta(t):
-    try:
-        return None if is_nonelike(t) else to_timedelta(t)
-    except ValueError:
-        return str(t)
+    return None if is_nonelike(t) else to_timedelta(t)
     
 def to_nullable_bool(b):
-    try:
-        return None if is_nonelike(b) else to_bool(b)
-    except ValueError:
-        return str(b)
+    return None if is_nonelike(b) else to_bool(b)
 
 class AbstractCellClass(ABC):
     def __init__(self, value, datatypes):
-        self.value = self.converter(value)
+        try:
+            self.value = self.converter(value)
+        except ValueError:
+            self.value = str(value)
         self._datatypes = datatypes
         self.validator()
 
@@ -136,16 +127,12 @@ class DateCell(AbstractCellClass):
         super().__init__(value, date)
 
     def __str__(self):
-        self.validator()   
-        if isinstance(self.value, date):
-            return self.value.strftime(self.format)
-        return "NAT"
+        if not self.validator():
+            return "NAT"
+        return self.value.strftime(self.format)
         
     def converter(self, value):
-        try:
-            return to_date(value)
-        except ValueError:
-            return str(value)
+        return to_date(value)
     
 class NullableDateCell(AbstractCellClass):
     def __init__(self, value, format = "%m/%d/%Y"):
@@ -157,8 +144,7 @@ class NullableDateCell(AbstractCellClass):
             return "NAT"    
         elif isinstance(self.value, date):
             return self.value.strftime(self.format)
-        elif self.value is None:
-            return ""
+        return ""
         
     def converter(self, value):
         return to_nullable_date(value)
@@ -173,11 +159,23 @@ class NullableDatetimeCell(AbstractCellClass):
             return "NAT"    
         elif isinstance(self.value, datetime):
             return self.value.strftime(self.format)
-        elif self.value is None:
-            return ""
+        return ""
             
     def converter(self, value):
         return to_nullable_datetime(value)
+
+class DatetimeCell(AbstractCellClass):
+    def __init__(self, value, format = "%m/%d/%Y %H:%M:%S"):
+        self.format = format
+        super().__init__(value, datatypes=datetime)
+
+    def __str__(self):
+        if not self.validator():
+            return "NAT"   
+        return self.value.strftime(self.format)
+            
+    def converter(self, value):
+        return to_datetime(value)
     
 class NullableFloatCell(AbstractCellClass):
     def __init__(self, value, decimal_places = None):
@@ -189,13 +187,28 @@ class NullableFloatCell(AbstractCellClass):
             return "NA"
         if isinstance(self.value, float):
             return (f"%.{self._decimal_places}f" % self.value)
-        elif self.value is None:
-            return ""
+        return ""
             
     def converter(self, value):
         value = to_nullable_float(value)
         if self._decimal_places and isinstance(value, float):
             return round(value, self._decimal_places)
+        return value
+
+class FloatCell(AbstractCellClass):
+    def __init__(self, value, decimal_places = None):
+        self._decimal_places = decimal_places
+        super().__init__(value, datatypes=float)
+
+    def __str__(self):
+        if not self.validator():
+            return "NA"
+        return (f"%.{self._decimal_places}f" % self.value)
+            
+    def converter(self, value):
+        value = to_float(value)
+        if self._decimal_places and isinstance(value, float):
+            value = round(value, self._decimal_places)
         return value
     
 class NullableIntCell(AbstractCellClass):
@@ -207,13 +220,22 @@ class NullableIntCell(AbstractCellClass):
             return "NA"
         if isinstance(self.value, int):
             return str(self.value)
-        elif self.value is None:
-            return ""
-        else:
-            print('adsadasdasdasda')
+        return ""
     
     def converter(self, value):
         return to_nullable_int(value)
+    
+class IntCell(AbstractCellClass):
+    def __init__(self, value):
+        super().__init__(value, datatypes=int)
+
+    def __str__(self):
+        if not self.validator():
+            return "NA"
+        return str(self.value)
+    
+    def converter(self, value):
+        return to_int(value)
     
 class NullableBoolCell(AbstractCellClass):
     def __init__(self, value):
@@ -224,8 +246,19 @@ class NullableBoolCell(AbstractCellClass):
             return "NA"
         if isinstance(self.value, bool):
             return str(self.value)
-        elif self.value is None:
-            return ""
+        return ""
     
     def converter(self, value):
         return to_nullable_bool(value)
+
+class BoolCell(AbstractCellClass):
+    def __init__(self, value):
+        super().__init__(value, datatypes=bool)
+    
+    def __str__(self):
+        if not self.validator():
+            return "NA"
+        return str(self.value)
+    
+    def converter(self, value):
+        return to_bool(value)
