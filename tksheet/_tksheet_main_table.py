@@ -5432,6 +5432,23 @@ class MainTable(tk.Canvas):
         if redraw:
             self.refresh()
 
+    def set_cell_format(self, r, c, formatter = None, formatter_kwargs = {}, convert_existing_values = True, redraw = True):
+        if formatter is None:
+            return
+        if (r, c) in self.cell_options and any(x in self.cell_options[(r, c)] for x in ('dropdown', 'checkbox')):
+            print("Cannot currently support dropdown/checkbox and cell formatting... Will come in future.")
+            return
+        if (r, c) not in self.cell_options:
+            self.cell_options[(r, c)] = {}
+        value = None
+        if c < self.total_data_cols() and r < self.total_data_rows() and convert_existing_values:
+            value = self.data[r][c]
+        self.cell_options[(r, c)]['format'] = {'format': formatter,
+                                               'kwargs': formatter_kwargs}
+        self.data[r][c] = formatter(value, **formatter_kwargs)
+        if redraw:
+            self.refresh()
+
     def get_widget_bg_fg(self, r, c):
         bg = self.table_bg
         fg = self.table_fg
