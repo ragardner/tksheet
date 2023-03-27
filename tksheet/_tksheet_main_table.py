@@ -5080,7 +5080,13 @@ class MainTable(tk.Canvas):
                     extra_func_key = "Return"
                 elif hasattr(event, 'keysym') and event.keysym == 'F2':
                     extra_func_key = "F2"
-            text = f"{self.data[r][c]}" if self.all_columns_displayed else f"{self.data[r][self.displayed_columns[c]]}"
+            if (r, c) in self.cell_options and 'format' in self.cell_options[(r,c)]:
+                if isinstance(self.data[r][c].value, str):
+                    text = self.data[r][c].value
+                else:
+                    text = f"{self.data[r][c]}" if self.all_columns_displayed else f"{self.data[r][self.displayed_columns[c]]}"
+            else:
+                text = f"{self.data[r][c]}" if self.all_columns_displayed else f"{self.data[r][self.displayed_columns[c]]}"
             if self.cell_auto_resize_enabled:
                 self.set_cell_size_to_text(r, c, only_set_if_too_small = True, redraw = True, run_binding = True)
         elif event is not None and (hasattr(event, 'keysym') and event.keysym == 'BackSpace'):
@@ -5376,6 +5382,10 @@ class MainTable(tk.Canvas):
                                                                      {(r, dcol): self.data[r][dcol]},
                                                                      (((r, c, r + 1, c + 1), "cells"), ),
                                                                      self.currently_selected()))))
+        if (r, c) in self.cell_options and 'format' in self.cell_options[(r, c)]:
+            formatter = self.cell_options[(r,c)]['format']['formatter']
+            kwargs = self.cell_options[(r,c)]['format']['kwargs']
+            value = formatter(value, **kwargs)
         self.data[r][dcol] = value
         if cell_resize and self.cell_auto_resize_enabled:
             self.set_cell_size_to_text(r, c, only_set_if_too_small = True, redraw = redraw, run_binding = True)
@@ -5437,7 +5447,7 @@ class MainTable(tk.Canvas):
         value = None
         if c < self.total_data_cols() and r < self.total_data_rows() and convert_existing_values:
             value = self.data[r][c]
-        self.cell_options[(r, c)]['format'] = {'format': formatter,
+        self.cell_options[(r, c)]['format'] = {'formatter': formatter,
                                                'kwargs': formatter_kwargs}
         self.data[r][c] = formatter(value, **formatter_kwargs)
         if redraw:
