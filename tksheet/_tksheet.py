@@ -2628,6 +2628,47 @@ class Sheet(tk.Frame):
     def close_index_dropdown(self, r):
         self.RI.hide_dropdown_window(r)
 
+    def format_cells(self,
+                     r,
+                     c,
+                     format,
+                     formatter_kwargs = {},
+                     convert_existing_values = True,
+                     redraw = True,
+                     ):
+        if isinstance(r, str) and r.lower() == 'all' and isinstance(c, int):
+            for r_ in range(self.MT.total_data_rows()):
+                self.MT.set_cell_format(r = r_,
+                                        c = c, 
+                                        formatter=format,
+                                        formatter_kwargs=formatter_kwargs,
+                                        convert_existing_values=convert_existing_values,
+                                        redraw=redraw)
+        elif isinstance(c, str) and c.lower() == 'all' and isinstance(r, int):
+            for c_ in range(self.MT.total_data_cols()):
+                self.MT.set_cell_format(r = r,
+                                        c = c_, 
+                                        formatter=format,
+                                        formatter_kwargs=formatter_kwargs,
+                                        convert_existing_values=convert_existing_values,
+                                        redraw=redraw)
+        elif isinstance(r, str) and r.lower() == 'all' and isinstance(c, str) and c.lower() == 'all':
+            for r_ in range(self.MT.total_data_rows()):
+                for c_ in range(self.MT.total_data_cols()):
+                    self.MT.set_cell_format(r = r_,
+                                            c = c_, 
+                                            formatter=format,
+                                            formatter_kwargs=formatter_kwargs,
+                                            convert_existing_values=convert_existing_values,
+                                            redraw=redraw)
+        else:
+            self.MT.set_cell_format(r = r,
+                                    c = c, 
+                                    formatter=format,
+                                    formatter_kwargs=formatter_kwargs,
+                                    convert_existing_values=convert_existing_values,
+                                    redraw=redraw)
+
     def create_dropdown(self,
                         r = 0,
                         c = 0,

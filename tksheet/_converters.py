@@ -115,7 +115,7 @@ def to_nullable_bool(b):
 
 class AbstractCellClass(ABC):
     def __init__(self, value, datatypes):
-        self.value = self.coverter(value)
+        self.value = self.converter(value)
         self._datatypes = datatypes
         self.validator()
 
@@ -125,6 +125,10 @@ class AbstractCellClass(ABC):
         else:
             self._is_valid  = False
         return self._is_valid
+    
+    @abstractmethod
+    def converter(self, value):
+        pass
 
 class DateCell(AbstractCellClass):
     def __init__(self, value, format = "%m/%d/%Y"):
@@ -137,7 +141,7 @@ class DateCell(AbstractCellClass):
             return self.value.strftime(self.format)
         return "NAT"
         
-    def coverter(self, value):
+    def converter(self, value):
         try:
             return to_date(value)
         except ValueError:
@@ -156,7 +160,7 @@ class NullableDateCell(AbstractCellClass):
         elif self.value is None:
             return ""
         
-    def coverter(self, value):
+    def converter(self, value):
         return to_nullable_date(value)
 
 class NullableDatetimeCell(AbstractCellClass):
@@ -172,7 +176,7 @@ class NullableDatetimeCell(AbstractCellClass):
         elif self.value is None:
             return ""
             
-    def coverter(self, value):
+    def converter(self, value):
         return to_nullable_datetime(value)
     
 class NullableFloatCell(AbstractCellClass):
@@ -184,7 +188,7 @@ class NullableFloatCell(AbstractCellClass):
         if not self.validator():
             return "NA"
         if isinstance(self.value, float):
-            return str(self.value)
+            return (f"%.{self._decimal_places}f" % self.value)
         elif self.value is None:
             return ""
             
