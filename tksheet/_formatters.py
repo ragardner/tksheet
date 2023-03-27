@@ -12,10 +12,14 @@ def is_nonelike(n: str):
         return False
 
 def to_int(x: str):
+    if isinstance(x, int):
+        return x
     return int(float(x))
 
 def to_float(x: str):
-        return float(x)
+    if isinstance(x, float):
+        return x
+    return float(x)
 
 def to_date(d: str):
     if isinstance(d, date):
@@ -70,6 +74,8 @@ def to_timedelta(t: str):
         raise ValueError(f'Cannot map "{t}" to timedelta.')
 
 def to_bool(val: str):
+    if isinstance(val, bool):
+        return val
     v = val.lower()
     truthy = {True, "true", "t", "yes", "y", "on", "1", 1}
     falsy = {False, "false", "f", "no", "n", "off", "0", 0}
