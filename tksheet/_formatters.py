@@ -85,7 +85,7 @@ def to_bool(val: str):
         return False
     else:
         raise ValueError(f'Cannot map "{val}" to bool.')
-        
+    
 def to_nullable_int(x):
     return None if is_nonelike(x) else to_int(x)
 
@@ -129,7 +129,7 @@ class AbstractCellClass(ABC):
         pass
 
     def data(self):
-        if self.validator:
+        if self.validator():
             return self.value
         return self.missing_value
 
