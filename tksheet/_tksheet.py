@@ -1879,7 +1879,8 @@ class Sheet(tk.Frame):
                        reset_row_positions = True,
                        redraw = True,
                        verify = False,
-                       reset_highlights = False):
+                       reset_highlights = False,
+                       keep_formatting=True):
         if verify:
             if not isinstance(data, list) or not all(isinstance(row, list) for row in data):
                 raise ValueError("Data argument must be a list of lists, sublists being rows")
@@ -1889,7 +1890,8 @@ class Sheet(tk.Frame):
                                       reset_col_positions,
                                       reset_row_positions,
                                       redraw,
-                                      return_id = False)
+                                      return_id = False,
+                                      keep_formatting=keep_formatting)
 
     def get_sheet_data(self, return_copy = False, get_header = False, get_index = False):
         if return_copy:

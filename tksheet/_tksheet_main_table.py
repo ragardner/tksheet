@@ -2997,8 +2997,19 @@ class MainTable(tk.Canvas):
         self.set_min_cw()
         self.CH.set_height(self.default_hh[1])
 
-    def data_reference(self, newdataref = None, reset_col_positions = True, reset_row_positions = True, redraw = False, return_id = True):
+    def data_reference(self, newdataref = None, reset_col_positions = True, reset_row_positions = True, redraw = False, return_id = True, keep_formatting=True):
         if isinstance(newdataref, (list, tuple)):
+            formatted_cells = [cell for cell, options in self.cell_options.items() if 'format' in options]
+            if keep_formatting:
+                for r, c in formatted_cells:
+                    try: 
+                        formatter = self.cell_options[(r,c)]['format']['formatter']
+                        kwargs = self.cell_options[(r,c)]['format']['kwargs']
+                        newdataref[r][c] = formatter(newdataref[r][c], **kwargs)
+                    except IndexError:
+                        pass
+            else:
+                self.clear_cell_format(formatted_cells, clear_values = True)
             self.data = newdataref
             self.undo_storage = deque(maxlen = self.max_undos)
             if reset_col_positions:
@@ -5449,6 +5460,15 @@ class MainTable(tk.Canvas):
         self.data[r][c] = formatter(value, **formatter_kwargs)
         if redraw:
             self.refresh()
+
+    def clear_cell_format(self, cells, clear_values=False):
+        if all(isinstance(cell, (list, tuple)) for cell in cells):
+            for cell in cells:
+                self.clear_cell_format(cell, clear_values)
+        else:
+            r, c = cells
+            del self.cell_options[(r, c)]['format']
+            self.data[r][c] = self.data[r][c].value
 
     def get_widget_bg_fg(self, r, c):
         bg = self.table_bg
