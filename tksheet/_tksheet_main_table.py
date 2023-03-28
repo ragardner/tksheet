@@ -320,6 +320,14 @@ class MainTable(tk.Canvas):
         self.create_rc_menus()
         
     def refresh(self, event = None):
+        formatted_cells = self.get_formatted_cells()
+        for r, c in formatted_cells:
+            val = self.data[r][c]
+            formatter = self.cell_options[(r,c)]['format']['formatter']
+            if isinstance(val, formatter):
+                continue
+            kwargs = self.cell_options[(r,c)]['format']['kwargs']
+            self.data[r][c] = formatter(val, **kwargs)
         self.main_table_redraw_grid_and_text(True, True)
 
     def basic_bindings(self, enable = True):
