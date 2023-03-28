@@ -2999,7 +2999,7 @@ class MainTable(tk.Canvas):
 
     def data_reference(self, newdataref = None, reset_col_positions = True, reset_row_positions = True, redraw = False, return_id = True, keep_formatting=True):
         if isinstance(newdataref, (list, tuple)):
-            formatted_cells = [cell for cell, options in self.cell_options.items() if 'format' in options]
+            formatted_cells = self.get_formatted_cells()
             if keep_formatting:
                 for r, c in formatted_cells:
                     try: 
@@ -5467,8 +5467,16 @@ class MainTable(tk.Canvas):
                 self.clear_cell_format(cell, clear_values)
         else:
             r, c = cells
-            del self.cell_options[(r, c)]['format']
-            self.data[r][c] = self.data[r][c].value
+            try:
+                del self.cell_options[(r, c)]['format']
+                self.data[r][c] = self.data[r][c].value
+            except:
+                pass
+    
+    def get_formatted_cells(self, formatter = None):
+        if formatter is not None:
+            return [cell for cell, options in self.cell_options.items() if 'format' in options and options['format'] == formatter]
+        return [cell for cell, options in self.cell_options.items() if 'format' in options and options['format'] is not None]
 
     def get_widget_bg_fg(self, r, c):
         bg = self.table_bg
