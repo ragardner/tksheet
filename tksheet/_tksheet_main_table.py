@@ -5081,10 +5081,7 @@ class MainTable(tk.Canvas):
                 elif hasattr(event, 'keysym') and event.keysym == 'F2':
                     extra_func_key = "F2"
             if (r, c) in self.cell_options and 'format' in self.cell_options[(r,c)]:
-                if isinstance(self.data[r][c].value, str):
-                    text = self.data[r][c].value
-                else:
-                    text = f"{self.data[r][c]}" if self.all_columns_displayed else f"{self.data[r][self.displayed_columns[c]]}"
+                text = f"{self.data[r][c].value}" if self.all_columns_displayed else f"{self.data[r][self.displayed_columns[c]].value}"
             else:
                 text = f"{self.data[r][c]}" if self.all_columns_displayed else f"{self.data[r][self.displayed_columns[c]]}"
             if self.cell_auto_resize_enabled:
