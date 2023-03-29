@@ -6,6 +6,9 @@ Python tkinter table widget
 ```
 pip install tksheet
 ```
+```
+pip install tksheet --upgrade
+```
 
 ### Help
  - [Documentation](https://github.com/ragardner/tksheet/wiki)

@@ -52,7 +52,7 @@ class TextEditor_(tk.Text):
                          bd = 0,
                          highlightthickness = 0,
                          undo = True,
-                         maxundo = 20,
+                         maxundo = 30,
                          background = bg,
                          foreground = fg,
                          insertbackground = fg)

@@ -46,7 +46,7 @@ Some examples of things that are not possible with tksheet:
  - Different fonts for index and table
  - Mouse drag copy cells
  - Hide rows
- - Cell highlight borders (except for dropdown boxes)
+ - Cell highlight borders
  - Highlighting continuous multiple cells with a single border
 
 If you'd like to buy me a coffee for creating and supporting this library you can do so here: https://www.buymeacoffee.com/ragardner
@@ -101,69 +101,71 @@ This is a full list of all the start up arguments, the only required argument is
 ```python
 Sheet(
 parent,
-show_table = True,
-show_top_left = True,
-show_row_index = True,
-show_header = True,
-show_x_scrollbar = True,
-show_y_scrollbar = True,
-width = None,
-height = None,
-headers = None,
-header = None,
-default_header = "letters", #letters, numbers or both
-default_row_index = "numbers", #letters, numbers or both
-show_default_header_for_empty = True,
-show_default_index_for_empty = True,
-page_up_down_select_row = True,
-expand_sheet_if_paste_too_big = False,
-paste_insert_column_limit = None,
-paste_insert_row_limit = None,
-ctrl_keys_over_dropdowns_enabled = False,
-arrow_key_down_right_scroll_page = False,
-enable_edit_cell_auto_resize = True,
-edit_cell_validation = True,
-data_reference = None,
-data = None,
-startup_select = None,
-startup_focus = True,
-total_columns = None,
-total_rows = None,
-column_width = 120,
-header_height = "1",
-max_colwidth = "inf",
-max_rh = "inf",
-max_header_height = "inf",
-max_row_width = "inf",
-row_index = None,
-index = None,
-after_redraw_time_ms = 100,
-row_index_width = 100,
-auto_resize_default_row_index = True,
-set_all_heights_and_widths = False,
-row_height = "1",
-font = get_font(),
-header_font = get_heading_font(),
-popup_menu_font = get_font(),
-align = "w",
-header_align = "center",
-row_index_align = "center",
-displayed_columns = [],
-all_columns_displayed = True,
-max_undos = 20,
-outline_thickness = 0,
-outline_color = theme_light_blue['outline_color'],
-column_drag_and_drop_perform = True,
-row_drag_and_drop_perform = True,
-empty_horizontal = 150,
-empty_vertical = 100,
-selected_rows_to_end_of_window = False,
-horizontal_grid_to_end_of_window = False,
-vertical_grid_to_end_of_window = False,
-show_vertical_grid = True,
-show_horizontal_grid = True,
-display_selected_fg_over_highlights = False,
-show_selected_cells_border = True,
+show_table: bool = True,
+show_top_left: bool = True,
+show_row_index: bool = True,
+show_header: bool = True,
+show_x_scrollbar: bool = True,
+show_y_scrollbar: bool = True,
+width: int = None,
+height: int = None,
+headers: list = None,
+header: list = None,
+default_header: str = "letters", #letters, numbers or both
+default_row_index: str = "numbers", #letters, numbers or both
+show_default_header_for_empty: bool = True,
+show_default_index_for_empty: bool = True,
+page_up_down_select_row: bool = True,
+expand_sheet_if_paste_too_big: bool = False,
+paste_insert_column_limit: int = None,
+paste_insert_row_limit: int = None,
+show_dropdown_borders: bool = False,
+ctrl_keys_over_dropdowns_enabled: bool = False,
+arrow_key_down_right_scroll_page: bool = False,
+enable_edit_cell_auto_resize: bool = True,
+edit_cell_validation: bool = True,
+data_reference: list = None,
+data: list = None,
+startup_select: tuple = None, #either (start row, end row, "rows"), (start column, end column, "rows") or (cells start row, cells start column, cells end row, cells end column, "cells")
+startup_focus: bool = True,
+total_columns: int = None,
+total_rows: int = None,
+column_width: int = 120,
+header_height: str = "1", #str or int
+max_colwidth: str = "inf", #str or int
+max_rh: str = "inf", #str or int
+max_header_height: str = "inf", #str or int
+max_row_width: str = "inf", #str or int
+row_index: list = None,
+index: list = None,
+after_redraw_time_ms: int = 100,
+row_index_width: int = 100,
+auto_resize_default_row_index: bool = True,
+set_all_heights_and_widths: bool = False,
+row_height: str = "1", #str or int
+font: tuple = get_font(),
+header_font: tuple = get_heading_font(),
+index_font: tuple = get_index_font(), #currently has no effect
+popup_menu_font: tuple = get_font(),
+align: str = "w",
+header_align: str = "center",
+row_index_align: str = "center",
+displayed_columns: list = [],
+all_columns_displayed: bool = True,
+max_undos: int = 20,
+outline_thickness: int = 0,
+outline_color: str = theme_light_blue['outline_color'],
+column_drag_and_drop_perform: bool = True,
+row_drag_and_drop_perform: bool = True,
+empty_horizontal: int = 150,
+empty_vertical: int = 100,
+selected_rows_to_end_of_window: bool = False,
+horizontal_grid_to_end_of_window: bool = False,
+vertical_grid_to_end_of_window: bool = False,
+show_vertical_grid: bool = True,
+show_horizontal_grid: bool = True,
+display_selected_fg_over_highlights: bool = False,
+show_selected_cells_border: bool = True,
 theme                              = "light blue",
 popup_menu_fg                      = theme_light_blue['popup_menu_fg'],
 popup_menu_bg                      = theme_light_blue['popup_menu_bg'],
@@ -1648,85 +1650,87 @@ index_checkbox(r,
 
 ## 23 Table Options and Other Functions
 
+The list of key word arguments available for `set_options()` are as follows, [see here](https://github.com/ragardner/tksheet/wiki#4-initialization-options) as a guide for what arguments to use.
 ```python
-set_options(
-show_default_header_for_empty = None,
-show_default_index_for_empty = None,
-enable_edit_cell_auto_resize = None,
-selected_rows_to_end_of_window = None,
-horizontal_grid_to_end_of_window = None,
-vertical_grid_to_end_of_window = None,
-page_up_down_select_row = None,
-expand_sheet_if_paste_too_big = None,
-paste_insert_column_limit = None,
-paste_insert_row_limit = None,
-ctrl_keys_over_dropdowns_enabled = None,
-arrow_key_down_right_scroll_page = None,
-display_selected_fg_over_highlights = None,
-empty_horizontal = None,
-empty_vertical = None,
-show_horizontal_grid = None,
-show_vertical_grid = None,
-top_left_fg_highlight = None,
-auto_resize_default_row_index = None,
-font = None,
-default_header = None,
-default_row_index = None,
-header_font = None,
-show_selected_cells_border = None,
-theme = None,
-max_colwidth = None,
-max_row_height = None,
-max_header_height = None,
-max_row_width = None,
-header_height = None,
-row_height = None,
-column_width = None,
-header_bg = None,
-header_border_fg = None,
-header_grid_fg = None,
-header_fg = None,
-header_selected_cells_bg = None,
-header_selected_cells_fg = None,
-header_hidden_columns_expander_bg = None,
-index_bg = None,
-index_border_fg = None,
-index_grid_fg = None,
-index_fg = None,
-index_selected_cells_bg = None,
-index_selected_cells_fg = None,
-index_hidden_rows_expander_bg = None,
-top_left_bg = None,
-top_left_fg = None,
-frame_bg = None,
-table_bg = None,
-table_grid_fg = None,
-table_fg = None,
-table_selected_cells_border_fg = None,
-table_selected_cells_bg = None,
-table_selected_cells_fg = None,
-resizing_line_fg = None,
-drag_and_drop_bg = None,
-outline_thickness = None,
-outline_color = None,
-header_selected_columns_bg = None,
-header_selected_columns_fg = None,
-index_selected_rows_bg = None,
-index_selected_rows_fg = None,
-table_selected_rows_border_fg = None,
-table_selected_rows_bg = None,
-table_selected_rows_fg = None,
-table_selected_columns_border_fg = None,
-table_selected_columns_bg = None,
-table_selected_columns_fg = None,
-popup_menu_font = None,
-popup_menu_fg = None,
-popup_menu_bg = None,
-popup_menu_highlight_bg = None,
-popup_menu_highlight_fg = None,
-row_drag_and_drop_perform = None,
-column_drag_and_drop_perform = None,
-redraw = True)
+show_dropdown_borders
+edit_cell_validation
+show_default_header_for_empty
+show_default_index_for_empty
+enable_edit_cell_auto_resize
+selected_rows_to_end_of_window
+horizontal_grid_to_end_of_window
+vertical_grid_to_end_of_window
+page_up_down_select_row
+expand_sheet_if_paste_too_big
+paste_insert_column_limit
+paste_insert_row_limit
+ctrl_keys_over_dropdowns_enabled
+arrow_key_down_right_scroll_page
+display_selected_fg_over_highlights
+empty_horizontal
+empty_vertical
+show_horizontal_grid
+show_vertical_grid
+top_left_fg_highlight
+auto_resize_default_row_index
+font
+default_header
+default_row_index
+header_font
+show_selected_cells_border
+theme
+max_colwidth
+max_row_height
+max_header_height
+max_row_width
+header_height
+row_height
+column_width
+header_bg
+header_border_fg
+header_grid_fg
+header_fg
+header_selected_cells_bg
+header_selected_cells_fg
+header_hidden_columns_expander_bg
+index_bg
+index_border_fg
+index_grid_fg
+index_fg
+index_selected_cells_bg
+index_selected_cells_fg
+index_hidden_rows_expander_bg
+top_left_bg
+top_left_fg
+frame_bg
+table_bg
+table_grid_fg
+table_fg
+table_selected_cells_border_fg
+table_selected_cells_bg
+table_selected_cells_fg
+resizing_line_fg
+drag_and_drop_bg
+outline_thickness
+outline_color
+header_selected_columns_bg
+header_selected_columns_fg
+index_selected_rows_bg
+index_selected_rows_fg
+table_selected_rows_border_fg
+table_selected_rows_bg
+table_selected_rows_fg
+table_selected_columns_border_fg
+table_selected_columns_bg
+table_selected_columns_fg
+popup_menu_font
+popup_menu_fg
+popup_menu_bg
+popup_menu_highlight_bg
+popup_menu_highlight_fg
+row_drag_and_drop_perform
+column_drag_and_drop_perform
+redraw
 ```
 
 ___

@@ -6,23 +6,18 @@ import tkinter as tk
 
 class TopLeftRectangle(tk.Canvas):
     def __init__(self,
-                 parentframe = None,
-                 main_canvas = None,
-                 row_index_canvas = None,
-                 header_canvas = None,
-                 top_left_bg = None,
-                 top_left_fg = None,
-                 top_left_fg_highlight = None):
+                 *args,
+                 **kwargs):
         tk.Canvas.__init__(self,
-                           parentframe,
-                           background = top_left_bg,
+                           kwargs['parentframe'],
+                           background = kwargs['top_left_bg'],
                            highlightthickness = 0)
-        self.parentframe = parentframe
-        self.top_left_fg = top_left_fg
-        self.top_left_fg_highlight = top_left_fg_highlight
-        self.MT = main_canvas
-        self.RI = row_index_canvas
-        self.CH = header_canvas
+        self.parentframe = kwargs['parentframe']
+        self.top_left_fg = kwargs['top_left_fg']
+        self.top_left_fg_highlight = kwargs['top_left_fg_highlight']
+        self.MT = kwargs['main_canvas']
+        self.RI = kwargs['row_index_canvas']
+        self.CH = kwargs['header_canvas']
         try:
             self.config(width = self.RI.current_width, height = self.CH.current_height)
         except:
