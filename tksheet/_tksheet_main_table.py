@@ -11,7 +11,7 @@ import io
 import pickle
 import tkinter as tk
 import zlib
-
+from warnings import warn
 
 class MainTable(tk.Canvas):
     def __init__(self,
@@ -5401,11 +5401,11 @@ class MainTable(tk.Canvas):
                                                                      {(r, dcol): self.data[r][dcol]},
                                                                      (((r, c, r + 1, c + 1), "cells"), ),
                                                                      self.currently_selected()))))
-        if (r, c) in self.cell_options and 'format' in self.cell_options[(r, c)]:
-            formatter = self.cell_options[(r,c)]['format']['formatter']
-            kwargs = self.cell_options[(r,c)]['format']['kwargs']
+        if (drow, dcol) in self.cell_options and 'format' in self.cell_options[(drow, dcol)]:
+            formatter = self.cell_options[(drow, dcol)]['format']['formatter']
+            kwargs = self.cell_options[(drow, dcol)]['format']['kwargs']
             value = formatter(value, **kwargs)
-        self.data[r][dcol] = value
+        self.data[drow][dcol] = value
         if cell_resize and self.cell_auto_resize_enabled:
             self.set_cell_size_to_text(r, c, only_set_if_too_small = True, redraw = redraw, run_binding = True)
         return True
@@ -5424,6 +5424,8 @@ class MainTable(tk.Canvas):
             self.refresh()
 
     def create_checkbox(self, r = 0, c = 0, checked = False, state = "normal", redraw = False, check_function = None, text = ""):
+        if (r, c) in self.get_formatted_cells(): # Checkboxes are not supported with formatting, clear formatting
+            self.clear_cell_format((r,c), True)
         if (r, c) in self.cell_options and any(x in self.cell_options[(r, c)] for x in ('dropdown', 'checkbox')):
             self.delete_dropdown_and_checkbox(r, c)
         self._set_cell_data(r, dcol = c, value = checked, cell_resize = False, undo = False) #only works because cell_resize is false and undo is false, otherwise needs c arg
@@ -5455,17 +5457,28 @@ class MainTable(tk.Canvas):
         if redraw:
             self.refresh()
 
-    def set_cell_format(self, r, c, formatter = None, formatter_kwargs = {}, convert_existing_values = True, redraw = True):
+    def set_cell_format(self, r, c, formatter = None, formatter_kwargs = {}, drow = None, dcol = None, convert_existing_values = True, redraw = True):
         if formatter is None:
             return
-        if (r, c) in self.cell_options and any(x in self.cell_options[(r, c)] for x in ('dropdown', 'checkbox')):
-            print("Cannot currently support dropdown/checkbox and cell formatting... Will come in future.")
+        if (r, c) in self.cell_options and 'checkbox' in self.cell_options[(r, c)]:
+            warn("Cannot format a checkbox cell!", Warning)
             return
+        if dcol is None:
+            dcol = c if self.all_columns_displayed else self.displayed_columns[c]
+        if drow is None:
+            drow = r if self.all_rows_displayed else self.displayed_rows[r]
+        if r > len(self.data) - 1:
+            self.data.extend([list(repeat("", dcol + 1)) for i in range((r + 1) - len(self.data))])
+        elif dcol > len(self.data[r]) - 1:
+            self.data[r].extend(list(repeat("", (dcol + 1) - len(self.data[r]))))
         if (r, c) not in self.cell_options:
             self.cell_options[(r, c)] = {}
         value = None
         if c < self.total_data_cols() and r < self.total_data_rows() and convert_existing_values:
-            value = self.data[r][c]
+            try:
+                value = f"{self.data[r][c]}"
+            except IndexError:
+                value=None
         self.cell_options[(r, c)]['format'] = {'formatter': formatter,
                                                'kwargs': formatter_kwargs}
         self.data[r][c] = formatter(value, **formatter_kwargs)
@@ -5480,7 +5493,10 @@ class MainTable(tk.Canvas):
             r, c = cells
             try:
                 del self.cell_options[(r, c)]['format']
-                self.data[r][c] = self.data[r][c].value
+                if clear_values:
+                    self.data[r][c] = ''
+                else:
+                    self.data[r][c] = self.data[r][c].value
             except:
                 pass
     
