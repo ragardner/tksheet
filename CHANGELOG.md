@@ -1,5 +1,20 @@
 ### Latest version in release notes is current version
 
+### Version 5.6.3
+Fixed:
+ - Dropdown boxes in main table not opening in certain circumstances
+ - Scrollbars not having correct column/rowspan
+ - Error when moving header height
+ - Resizing arrows still showing up when hiding header/index if height/width resizing enabled
+
+Added:
+ - `header` startup argument, same as `headers`
+
+Changed:
+ - Increase default maximum undos from 20 to 30
+ - Removed dropdown box border, to get them back use `show_dropdown_borders = True` on startup or with `set_options()`
+ - Removed unnecessary variables and tidied `__init__` code
+
 ### Version 5.6.2
 Fixed:
  - [#154](https://github.com/ragardner/tksheet/issues/154)

@@ -14,68 +14,71 @@ from copy import copy
 class Sheet(tk.Frame):
     def __init__(self,
                  parent,
-                 show_table = True,
-                 show_top_left = True,
-                 show_row_index = True,
-                 show_header = True,
-                 show_x_scrollbar = True,
-                 show_y_scrollbar = True,
-                 width = None,
-                 height = None,
-                 headers = None,
-                 default_header = "letters", #letters, numbers or both
-                 default_row_index = "numbers", #letters, numbers or both
-                 show_default_header_for_empty = True,
-                 show_default_index_for_empty = True,
-                 page_up_down_select_row = True,
-                 expand_sheet_if_paste_too_big = False,
-                 paste_insert_column_limit = None,
-                 paste_insert_row_limit = None,
-                 ctrl_keys_over_dropdowns_enabled = False,
-                 arrow_key_down_right_scroll_page = False,
-                 enable_edit_cell_auto_resize = True,
-                 edit_cell_validation = True,
-                 data_reference = None,
-                 data = None,
-                 startup_select = None,
-                 startup_focus = True,
-                 total_columns = None,
-                 total_rows = None,
-                 column_width = 120,
-                 header_height = "1",
-                 max_colwidth = "inf",
-                 max_rh = "inf",
-                 max_header_height = "inf",
-                 max_row_width = "inf",
-                 row_index = None,
-                 index = None,
-                 after_redraw_time_ms = 100,
-                 row_index_width = 100,
-                 auto_resize_default_row_index = True,
-                 set_all_heights_and_widths = False,
-                 row_height = "1",
-                 font = get_font(),
-                 header_font = get_heading_font(),
-                 popup_menu_font = get_font(),
-                 align = "w",
-                 header_align = "center",
-                 row_index_align = "center",
-                 displayed_columns = [],
-                 all_columns_displayed = True,
-                 max_undos = 20,
-                 outline_thickness = 0,
-                 outline_color = theme_light_blue['outline_color'],
-                 column_drag_and_drop_perform = True,
-                 row_drag_and_drop_perform = True,
-                 empty_horizontal = 150,
-                 empty_vertical = 100,
-                 selected_rows_to_end_of_window = False,
-                 horizontal_grid_to_end_of_window = False,
-                 vertical_grid_to_end_of_window = False,
-                 show_vertical_grid = True,
-                 show_horizontal_grid = True,
-                 display_selected_fg_over_highlights = False,
-                 show_selected_cells_border = True,
+                 show_table: bool = True,
+                 show_top_left: bool = True,
+                 show_row_index: bool = True,
+                 show_header: bool = True,
+                 show_x_scrollbar: bool = True,
+                 show_y_scrollbar: bool = True,
+                 width: int = None,
+                 height: int = None,
+                 headers: list = None,
+                 header: list = None,
+                 default_header: str = "letters", #letters, numbers or both
+                 default_row_index: str = "numbers", #letters, numbers or both
+                 show_default_header_for_empty: bool = True,
+                 show_default_index_for_empty: bool = True,
+                 page_up_down_select_row: bool = True,
+                 expand_sheet_if_paste_too_big: bool = False,
+                 paste_insert_column_limit: int = None,
+                 paste_insert_row_limit: int = None,
+                 show_dropdown_borders: bool = False,
+                 ctrl_keys_over_dropdowns_enabled: bool = False,
+                 arrow_key_down_right_scroll_page: bool = False,
+                 enable_edit_cell_auto_resize: bool = True,
+                 edit_cell_validation: bool = True,
+                 data_reference: list = None,
+                 data: list = None,
+                 startup_select: tuple = None, #either (start row, end row, "rows"), (start column, end column, "rows") or (cells start row, cells start column, cells end row, cells end column, "cells")
+                 startup_focus: bool = True,
+                 total_columns: int = None,
+                 total_rows: int = None,
+                 column_width: int = 120,
+                 header_height: str = "1", #str or int
+                 max_colwidth: str = "inf", #str or int
+                 max_rh: str = "inf", #str or int
+                 max_header_height: str = "inf", #str or int
+                 max_row_width: str = "inf", #str or int
+                 row_index: list = None,
+                 index: list = None,
+                 after_redraw_time_ms: int = 100,
+                 row_index_width: int = 100,
+                 auto_resize_default_row_index: bool = True,
+                 set_all_heights_and_widths: bool = False,
+                 row_height: str = "1", #str or int
+                 font: tuple = get_font(),
+                 header_font: tuple = get_heading_font(),
+                 index_font: tuple = get_index_font(), #currently has no effect
+                 popup_menu_font: tuple = get_font(),
+                 align: str = "w",
+                 header_align: str = "center",
+                 row_index_align: str = "center",
+                 displayed_columns: list = [],
+                 all_columns_displayed: bool = True,
+                 max_undos: int = 30,
+                 outline_thickness: int = 0,
+                 outline_color: str = theme_light_blue['outline_color'],
+                 column_drag_and_drop_perform: bool = True,
+                 row_drag_and_drop_perform: bool = True,
+                 empty_horizontal: int = 150,
+                 empty_vertical: int = 100,
+                 selected_rows_to_end_of_window: bool = False,
+                 horizontal_grid_to_end_of_window: bool = False,
+                 vertical_grid_to_end_of_window: bool = False,
+                 show_vertical_grid: bool = True,
+                 show_horizontal_grid: bool = True,
+                 display_selected_fg_over_highlights: bool = False,
+                 show_selected_cells_border: bool = True,
                  theme                              = "light blue",
                  popup_menu_fg                      = theme_light_blue['popup_menu_fg'],
                  popup_menu_bg                      = theme_light_blue['popup_menu_bg'],
@@ -139,7 +142,7 @@ class Sheet(tk.Frame):
             self.config(width = 350)
         self.grid_columnconfigure(1, weight = 1)
         self.grid_rowconfigure(1, weight = 1)
-        self.RI = RowIndex(self,
+        self.RI = RowIndex(parentframe = self,
                            max_rh = max_rh,
                            max_row_width = max_row_width,
                            row_index_width = row_index_width,
@@ -159,7 +162,7 @@ class Sheet(tk.Frame):
                            default_row_index = default_row_index,
                            auto_resize_width = auto_resize_default_row_index,
                            show_default_index_for_empty = show_default_index_for_empty)
-        self.CH = ColumnHeaders(self,
+        self.CH = ColumnHeaders(parentframe = self,
                                 max_colwidth = max_colwidth,
                                 max_header_height = max_header_height,
                                 default_header = default_header,
@@ -177,7 +180,9 @@ class Sheet(tk.Frame):
                                 column_drag_and_drop_perform = column_drag_and_drop_perform,
                                 resizing_line_fg = resizing_line_fg,
                                 show_default_header_for_empty = show_default_header_for_empty)
-        self.MT = MainTable(self,
+        self.MT = MainTable(parentframe = self,
+                            show_index = show_row_index,
+                            show_header = show_header,
                             enable_edit_cell_auto_resize = enable_edit_cell_auto_resize,
                             edit_cell_validation = edit_cell_validation,
                             page_up_down_select_row = page_up_down_select_row,
@@ -185,6 +190,7 @@ class Sheet(tk.Frame):
                             paste_insert_column_limit = paste_insert_column_limit,
                             paste_insert_row_limit = paste_insert_row_limit,
                             ctrl_keys_over_dropdowns_enabled = ctrl_keys_over_dropdowns_enabled,
+                            show_dropdown_borders = show_dropdown_borders,
                             arrow_key_down_right_scroll_page = arrow_key_down_right_scroll_page,
                             display_selected_fg_over_highlights = display_selected_fg_over_highlights,
                             show_vertical_grid = show_vertical_grid,
@@ -194,6 +200,7 @@ class Sheet(tk.Frame):
                             column_headers_canvas = self.CH,
                             row_index_canvas = self.RI,
                             headers = headers,
+                            header = header,
                             header_height = header_height,
                             data_reference = data if data_reference is None else data_reference,
                             total_cols = total_columns,
@@ -202,6 +209,7 @@ class Sheet(tk.Frame):
                             index = index,
                             font = font,
                             header_font = header_font,
+                            index_font = index_font,
                             popup_menu_font = popup_menu_font,
                             popup_menu_fg = popup_menu_fg,
                             popup_menu_bg = popup_menu_bg,
@@ -238,12 +246,12 @@ class Sheet(tk.Frame):
                                    top_left_fg_highlight = top_left_fg_highlight)
         self.yscroll = ttk.Scrollbar(self, command = self.MT.set_yviews, orient = "vertical")
         self.xscroll = ttk.Scrollbar(self, command = self.MT.set_xviews, orient = "horizontal")
+        if show_top_left:
+            self.TL.grid(row = 0, column = 0)
         if show_table:
             self.MT.grid(row = 1, column = 1, sticky = "nswe")
             self.MT["xscrollcommand"] = self.xscroll.set
             self.MT["yscrollcommand"] = self.yscroll.set
-        if show_top_left:
-            self.TL.grid(row = 0, column = 0)
         if show_row_index:
             self.RI.grid(row = 1, column = 0, sticky = "nswe")
             self.RI["yscrollcommand"] = self.yscroll.set
@@ -251,14 +259,14 @@ class Sheet(tk.Frame):
             self.CH.grid(row = 0, column = 1, sticky = "nswe")
             self.CH["xscrollcommand"] = self.xscroll.set
         if show_x_scrollbar:
-            self.xscroll.grid(row = 2, column = 1, columnspan = 2, sticky = "nswe")
+            self.xscroll.grid(row = 2, column = 0, columnspan = 2, sticky = "nswe")
             self.xscroll_showing = True
             self.xscroll_disabled = False
         else:
             self.xscroll_showing = False
             self.xscroll_disabled = True
         if show_y_scrollbar:
-            self.yscroll.grid(row = 1, column = 2, sticky = "nswe")
+            self.yscroll.grid(row = 0, column = 2, rowspan = 3, sticky = "nswe")
             self.yscroll_showing = True
             self.yscroll_disabled = False
         else:
@@ -311,7 +319,7 @@ class Sheet(tk.Frame):
             self.CH.grid(row = 0, column = 1, sticky = "nswe")
             self.MT.grid(row = 1, column = 1, sticky = "nswe")
             self.yscroll.grid(row = 0, column = 2, rowspan = 3, sticky = "nswe")
-            self.xscroll.grid(row = 2, column = 1, sticky = "nswe")
+            self.xscroll.grid(row = 2, column = 0, columnspan = 2, sticky = "nswe")
             self.MT["xscrollcommand"] = self.xscroll.set
             self.CH["xscrollcommand"] = self.xscroll.set
             self.MT["yscrollcommand"] = self.yscroll.set
@@ -333,11 +341,11 @@ class Sheet(tk.Frame):
         elif canvas == "top_left":
             self.TL.grid(row = 0, column = 0)
         elif canvas == "x_scrollbar":
-            self.xscroll.grid(row = 2, column = 1, columnspan = 2, sticky = "nswe")
+            self.xscroll.grid(row = 2, column = 0, columnspan = 2, sticky = "nswe")
             self.xscroll_showing = True
             self.xscroll_disabled = False
         elif canvas == "y_scrollbar":
-            self.yscroll.grid(row = 1, column = 2, sticky = "nswe")
+            self.yscroll.grid(row = 0, column = 2, rowspan = 3, sticky = "nswe")
             self.yscroll_showing = True
             self.yscroll_disabled = False
         self.MT.update_idletasks()
@@ -1665,6 +1673,8 @@ class Sheet(tk.Frame):
     def set_options(self,
                     redraw = True,
                     **kwargs):
+        if 'show_dropdown_borders' in kwargs:
+            self.MT.show_dropdown_borders = kwargs['show_dropdown_borders']
         if 'edit_cell_validation' in kwargs:
             self.MT.edit_cell_validation = kwargs['edit_cell_validation']
         if 'ctrl_keys_over_dropdowns_enabled' in kwargs:

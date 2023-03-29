@@ -11,41 +11,61 @@ import zlib
 
 class RowIndex(tk.Canvas):
     def __init__(self,
-                 parentframe = None,
-                 main_canvas = None,
-                 header_canvas = None,
-                 max_rh = None,
-                 max_row_width = None,
-                 row_index_align = None,
-                 row_index_width = None,
-                 index_bg = None,
-                 index_border_fg = None,
-                 index_grid_fg = None,
-                 index_fg = None,
-                 index_selected_cells_bg = None,
-                 index_selected_cells_fg = None,
-                 index_selected_rows_bg = "#5f6368",
-                 index_selected_rows_fg = "white",
-                 default_row_index = "numbers",
-                 index_hidden_rows_expander_bg = None,
-                 drag_and_drop_bg = None,
-                 resizing_line_fg = None,
-                 row_drag_and_drop_perform = True,
-                 auto_resize_width = True,
-                 show_default_index_for_empty = True):
+                 *args,
+                 **kwargs):
         tk.Canvas.__init__(self,
-                           parentframe,
-                           height = None,
-                           background = index_bg,
+                           kwargs['parentframe'],
+                           background = kwargs['index_bg'],
                            highlightthickness = 0)
-        
+        self.parentframe = kwargs['parentframe']
+        self.MT = None         # is set from within MainTable() __init__
+        self.CH = None      # is set from within MainTable() __init__
+        self.TL = None                # is set from within TopLeftRectangle() __init__
         self.extra_begin_edit_cell_func = None
         self.extra_end_edit_cell_func = None
-        
         self.text_editor = None
         self.text_editor_id = None
         self.text_editor_loc = None
-
+        self.b1_pressed_loc = None
+        self.existing_dropdown_canvas_id = None
+        self.existing_dropdown_window = None
+        self.closed_dropdown = None
+        self.centre_alignment_text_mod_indexes = (slice(1, None), slice(None, -1))
+        self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
+        self.grid_cyctup = ("st", "end")
+        self.grid_cyc = cycle(self.grid_cyctup)
+        self.being_drawn_rect = None
+        self.extra_motion_func = None
+        self.extra_b1_press_func = None
+        self.extra_b1_motion_func = None
+        self.extra_b1_release_func = None
+        self.extra_rc_func = None
+        self.selection_binding_func = None
+        self.shift_selection_binding_func = None
+        self.drag_selection_binding_func = None
+        self.ri_extra_begin_drag_drop_func = None
+        self.ri_extra_end_drag_drop_func = None
+        self.extra_double_b1_func = None
+        self.row_height_resize_func = None
+        self.new_row_width = 0
+        self.cell_options = {}
+        self.drag_and_drop_enabled = False
+        self.dragged_row = None
+        self.width_resizing_enabled = False
+        self.height_resizing_enabled = False
+        self.double_click_resizing_enabled = False
+        self.row_selection_enabled = False
+        self.rc_insert_row_enabled = False
+        self.rc_delete_row_enabled = False
+        self.edit_cell_enabled = False
+        self.visible_row_dividers = {}
+        self.row_width_resize_bbox = tuple()
+        self.rsz_w = None
+        self.rsz_h = None
+        self.currently_resizing_width = False
+        self.currently_resizing_height = False
+        self.ri_rc_popup_menu = None
+        
         self.disp_text = {}
         self.disp_high = {}
         self.disp_grid = {}
@@ -63,74 +83,30 @@ class RowIndex(tk.Canvas):
         self.hidd_dropdown = {}
         self.hidd_checkbox = {}
         
-        self.b1_pressed_loc = None
-        self.existing_dropdown_canvas_id = None
-        self.existing_dropdown_window = None
-        self.closed_dropdown = None
-        
-        self.centre_alignment_text_mod_indexes = (slice(1, None), slice(None, -1))
-        self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
-        self.grid_cyctup = ("st", "end")
-        self.grid_cyc = cycle(self.grid_cyctup)
-        self.parentframe = parentframe
-        self.row_drag_and_drop_perform = row_drag_and_drop_perform
-        self.being_drawn_rect = None
-        self.extra_motion_func = None
-        self.extra_b1_press_func = None
-        self.extra_b1_motion_func = None
-        self.extra_b1_release_func = None
-        self.extra_rc_func = None
-        self.selection_binding_func = None
-        self.shift_selection_binding_func = None
-        self.drag_selection_binding_func = None
-        self.ri_extra_begin_drag_drop_func = None
-        self.ri_extra_end_drag_drop_func = None
-        self.extra_double_b1_func = None
-        self.row_height_resize_func = None
-        self.new_row_width = 0
-        if row_index_width is None:
+        self.row_drag_and_drop_perform = kwargs['row_drag_and_drop_perform']
+        if kwargs['row_index_width'] is None:
             self.set_width(70)
             self.default_width = 70
         else:
-            self.set_width(row_index_width)
-            self.default_width = row_index_width
-        self.max_rh = float(max_rh)
-        self.max_row_width = float(max_row_width)
-        self.MT = main_canvas         # is set from within MainTable() __init__
-        self.CH = header_canvas      # is set from within MainTable() __init__
-        self.TL = None                # is set from within TopLeftRectangle() __init__
-        self.index_fg = index_fg
-        self.index_grid_fg = index_grid_fg
-        self.index_border_fg = index_border_fg
-        self.index_selected_cells_bg = index_selected_cells_bg
-        self.index_selected_cells_fg = index_selected_cells_fg
-        self.index_selected_rows_bg = index_selected_rows_bg
-        self.index_selected_rows_fg = index_selected_rows_fg
-        self.index_hidden_rows_expander_bg = index_hidden_rows_expander_bg
-        self.index_bg = index_bg
-        self.drag_and_drop_bg = drag_and_drop_bg
-        self.resizing_line_fg = resizing_line_fg
-        self.align = row_index_align
-        self.cell_options = {}
-        self.drag_and_drop_enabled = False
-        self.dragged_row = None
-        self.width_resizing_enabled = False
-        self.height_resizing_enabled = False
-        self.double_click_resizing_enabled = False
-        self.row_selection_enabled = False
-        self.rc_insert_row_enabled = False
-        self.rc_delete_row_enabled = False
-        self.edit_cell_enabled = False
-        self.show_default_index_for_empty = show_default_index_for_empty
-        self.visible_row_dividers = {}
-        self.row_width_resize_bbox = tuple()
-        self.rsz_w = None
-        self.rsz_h = None
-        self.currently_resizing_width = False
-        self.currently_resizing_height = False
-        self.auto_resize_width = auto_resize_width
-        self.default_index = default_row_index.lower()
-        self.ri_rc_popup_menu = None
+            self.set_width(kwargs['row_index_width'])
+            self.default_width = kwargs['row_index_width']
+        self.max_rh = float(kwargs['max_rh'])
+        self.max_row_width = float(kwargs['max_row_width'])
+        self.index_fg = kwargs['index_fg']
+        self.index_grid_fg = kwargs['index_grid_fg']
+        self.index_border_fg = kwargs['index_border_fg']
+        self.index_selected_cells_bg = kwargs['index_selected_cells_bg']
+        self.index_selected_cells_fg = kwargs['index_selected_cells_fg']
+        self.index_selected_rows_bg = kwargs['index_selected_rows_bg']
+        self.index_selected_rows_fg = kwargs['index_selected_rows_fg']
+        self.index_hidden_rows_expander_bg = kwargs['index_hidden_rows_expander_bg']
+        self.index_bg = kwargs['index_bg']
+        self.drag_and_drop_bg = kwargs['drag_and_drop_bg']
+        self.resizing_line_fg = kwargs['resizing_line_fg']
+        self.align = kwargs['row_index_align']
+        self.show_default_index_for_empty = kwargs['show_default_index_for_empty']
+        self.auto_resize_width = kwargs['auto_resize_width']
+        self.default_index = kwargs['default_row_index'].lower()
         self.basic_bindings()
 
     def basic_bindings(self, enable = True):
@@ -850,7 +826,7 @@ class RowIndex(tk.Canvas):
                                                 fill = (f"#{int((int(c_1[1:3], 16) + int(c_3[1:3], 16)) / 2):02X}" +
                                                         f"{int((int(c_1[3:5], 16) + int(c_3[3:5], 16)) / 2):02X}" +
                                                         f"{int((int(c_1[5:], 16) + int(c_3[5:], 16)) / 2):02X}"),
-                                                outline = self.index_fg if hlrow in self.cell_options and 'dropdown' in self.cell_options[hlrow] else "",
+                                                outline = self.index_fg if hlrow in self.cell_options and 'dropdown' in self.cell_options[hlrow] and self.MT.show_dropdown_borders else "",
                                                 tag = "s")
             tf = self.index_selected_rows_fg if self.cell_options[r]['highlight'][1] is None or self.MT.display_selected_fg_over_highlights else self.cell_options[r]['highlight'][1]
         elif r in self.cell_options and 'highlight' in self.cell_options[r] and (r in selected_rows or selected_cols):
@@ -863,7 +839,7 @@ class RowIndex(tk.Canvas):
                                                 fill = (f"#{int((int(c_1[1:3], 16) + int(c_2[1:3], 16)) / 2):02X}" +
                                                         f"{int((int(c_1[3:5], 16) + int(c_2[3:5], 16)) / 2):02X}" +
                                                         f"{int((int(c_1[5:], 16) + int(c_2[5:], 16)) / 2):02X}"),
-                                                outline = self.index_fg if hlrow in self.cell_options and 'dropdown' in self.cell_options[hlrow] else "",
+                                                outline = self.index_fg if hlrow in self.cell_options and 'dropdown' in self.cell_options[hlrow] and self.MT.show_dropdown_borders else "",
                                                 tag = "s")
             tf = self.index_selected_cells_fg if self.cell_options[r]['highlight'][1] is None or self.MT.display_selected_fg_over_highlights else self.cell_options[r]['highlight'][1]
         elif r in actual_selected_rows:
@@ -877,7 +853,7 @@ class RowIndex(tk.Canvas):
                                                 self.current_width - 1, 
                                                 sr,
                                                 fill = self.cell_options[r]['highlight'][0], 
-                                                outline = self.index_fg if hlrow in self.cell_options and 'dropdown' in self.cell_options[hlrow] else "", 
+                                                outline = self.index_fg if hlrow in self.cell_options and 'dropdown' in self.cell_options[hlrow] and self.MT.show_dropdown_borders else "", 
                                                 tag = "s")
             tf = self.index_fg if self.cell_options[r]['highlight'][1] is None else self.cell_options[r]['highlight'][1]
         else:
@@ -925,7 +901,7 @@ class RowIndex(tk.Canvas):
             self.disp_grid[self.create_line(points, fill = fill, width = width, tag = tag)] = True
             
     def redraw_dropdown(self, x1, y1, x2, y2, fill, outline, tag, draw_outline = True, draw_arrow = True, dd_is_open = False):
-        if draw_outline:
+        if draw_outline and self.MT.show_dropdown_borders:
             self.redraw_highlight(x1 + 1, y1 + 1, x2, y2, fill = "", outline = self.index_fg, tag = tag)
         if draw_arrow:
             topysub = floor(self.MT.half_txt_h / 2)

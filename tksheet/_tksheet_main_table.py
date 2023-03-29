@@ -15,76 +15,22 @@ from warnings import warn
 
 class MainTable(tk.Canvas):
     def __init__(self,
-                 parentframe = None,
-                 enable_edit_cell_auto_resize = True,
-                 page_up_down_select_row = False,
-                 expand_sheet_if_paste_too_big = False,
-                 paste_insert_column_limit = None,
-                 paste_insert_row_limit = None,
-                 arrow_key_down_right_scroll_page = False,
-                 ctrl_keys_over_dropdowns_enabled = False,
-                 column_width = None,
-                 column_headers_canvas = None,
-                 row_index_canvas = None,
-                 headers = None,
-                 header_height = None,
-                 row_height = None,
-                 data_reference = None,
-                 total_cols = None,
-                 total_rows = None,
-                 row_index = None,
-                 index = None,
-                 font = None,
-                 header_font = None,
-                 popup_menu_font = get_font(),
-                 popup_menu_fg = "gray10",
-                 popup_menu_bg = "white",
-                 popup_menu_highlight_bg = "#f1f3f4",
-                 popup_menu_highlight_fg = "gray10",
-                 align = None,
-                 width = None,
-                 height = None,
-                 table_bg = "white",
-                 table_grid_fg = "gray15",
-                 table_fg = "black",
-                 show_selected_cells_border = True,
-                 table_selected_cells_border_fg = "#1a73e8",
-                 table_selected_cells_bg = "#e7f0fd",
-                 display_selected_fg_over_highlights = False,
-                 table_selected_cells_fg = "black",
-                 table_selected_rows_border_fg = "#1a73e8",
-                 table_selected_rows_bg = "#e7f0fd",
-                 table_selected_rows_fg = "black",
-                 table_selected_columns_border_fg = "#1a73e8",
-                 table_selected_columns_bg = "#e7f0fd",
-                 table_selected_columns_fg = "black",
-                 displayed_columns = [],
-                 all_columns_displayed = True,
-                 show_vertical_grid = True,
-                 show_horizontal_grid = True,
-                 show_index = True,
-                 show_header = True,
-                 selected_rows_to_end_of_window = False,
-                 horizontal_grid_to_end_of_window = False,
-                 vertical_grid_to_end_of_window = False,
-                 empty_horizontal = 150,
-                 empty_vertical = 100,
-                 max_undos = 20,
-                 edit_cell_validation = True):
+                 *args,
+                 **kwargs):
         tk.Canvas.__init__(self,
-                           parentframe,
-                           width = width,
-                           height = height,
-                           background = table_bg,
+                           kwargs['parentframe'],
+                           background = kwargs['table_bg'],
                            highlightthickness = 0)
-
-        self.parentframe = parentframe
-        
+        self.parentframe = kwargs['parentframe']
         self.b1_pressed_loc = None
         self.existing_dropdown_canvas_id = None
         self.existing_dropdown_window = None
         self.closed_dropdown = None
         self.last_selected = tuple()
+        self.centre_alignment_text_mod_indexes = (slice(1, None), slice(None, -1))
+        self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
+        self.grid_cyctup = ("st", "end")
+        self.grid_cyc = cycle(self.grid_cyctup)
         
         self.disp_text = {}
         self.disp_high = {}
@@ -127,30 +73,26 @@ class MainTable(tk.Canvas):
         self.extra_header_rc_menu_funcs = {}
         self.extra_empty_space_rc_menu_funcs = {}
 
-        self.max_undos = max_undos
-        self.undo_storage = deque(maxlen = max_undos)
+        self.max_undos = kwargs['max_undos']
+        self.undo_storage = deque(maxlen = kwargs['max_undos'])
 
-        self.page_up_down_select_row = page_up_down_select_row
-        self.expand_sheet_if_paste_too_big = expand_sheet_if_paste_too_big
-        self.paste_insert_column_limit = paste_insert_column_limit
-        self.paste_insert_row_limit = paste_insert_row_limit
-        self.arrow_key_down_right_scroll_page = arrow_key_down_right_scroll_page
-        self.cell_auto_resize_enabled = enable_edit_cell_auto_resize
-        self.edit_cell_validation = edit_cell_validation
-        self.display_selected_fg_over_highlights = display_selected_fg_over_highlights
-        self.centre_alignment_text_mod_indexes = (slice(1, None), slice(None, -1))
-        self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
-        self.grid_cyctup = ("st", "end")
-        self.grid_cyc = cycle(self.grid_cyctup)
-        self.show_index = show_index
-        self.show_header = show_header
-        self.selected_rows_to_end_of_window = selected_rows_to_end_of_window
-        self.horizontal_grid_to_end_of_window = horizontal_grid_to_end_of_window
-        self.vertical_grid_to_end_of_window = vertical_grid_to_end_of_window
-        self.empty_horizontal = empty_horizontal
-        self.empty_vertical = empty_vertical
-        self.show_vertical_grid = show_vertical_grid
-        self.show_horizontal_grid = show_horizontal_grid
+        self.page_up_down_select_row = kwargs['page_up_down_select_row']
+        self.expand_sheet_if_paste_too_big = kwargs['expand_sheet_if_paste_too_big']
+        self.paste_insert_column_limit = kwargs['paste_insert_column_limit']
+        self.paste_insert_row_limit = kwargs['paste_insert_row_limit']
+        self.arrow_key_down_right_scroll_page = kwargs['arrow_key_down_right_scroll_page']
+        self.cell_auto_resize_enabled = kwargs['enable_edit_cell_auto_resize']
+        self.edit_cell_validation = kwargs['edit_cell_validation']
+        self.display_selected_fg_over_highlights = kwargs['display_selected_fg_over_highlights']
+        self.show_index = kwargs['show_index']
+        self.show_header = kwargs['show_header']
+        self.selected_rows_to_end_of_window = kwargs['selected_rows_to_end_of_window']
+        self.horizontal_grid_to_end_of_window = kwargs['horizontal_grid_to_end_of_window']
+        self.vertical_grid_to_end_of_window = kwargs['vertical_grid_to_end_of_window']
+        self.empty_horizontal = kwargs['empty_horizontal']
+        self.empty_vertical = kwargs['empty_vertical']
+        self.show_vertical_grid = kwargs['show_vertical_grid']
+        self.show_horizontal_grid = kwargs['show_horizontal_grid']
         self.min_rh = 0
         self.hdr_min_rh = 0
         self.being_drawn_rect = None
@@ -201,8 +143,8 @@ class MainTable(tk.Canvas):
 
         self.single_selection_enabled = False
         self.toggle_selection_enabled = False # with this mode every left click adds the cell to selected cells
-
-        self.ctrl_keys_over_dropdowns_enabled = ctrl_keys_over_dropdowns_enabled
+        self.ctrl_keys_over_dropdowns_enabled = kwargs['ctrl_keys_over_dropdowns_enabled']
+        self.show_dropdown_borders = kwargs['show_dropdown_borders']
         self.drag_selection_enabled = False
         self.select_all_enabled = False
         self.arrowkeys_enabled = False
@@ -219,62 +161,62 @@ class MainTable(tk.Canvas):
         self.rc_popup_menus_enabled = False
         self.edit_cell_enabled = False
         self.text_editor_loc = None
-
-        self.show_selected_cells_border = show_selected_cells_border
+        self.show_selected_cells_border = kwargs['show_selected_cells_border']
         self.new_row_width = 0
         self.new_header_height = 0
-        self.parentframe = parentframe
         self.row_width_resize_bbox = tuple()
         self.header_height_resize_bbox = tuple()
-        self.CH = column_headers_canvas
+        self.CH = kwargs['column_headers_canvas']
         self.CH.MT = self
-        self.CH.RI = row_index_canvas
-        self.RI = row_index_canvas
+        self.CH.RI = kwargs['row_index_canvas']
+        self.RI = kwargs['row_index_canvas']
         self.RI.MT = self
-        self.RI.CH = column_headers_canvas
+        self.RI.CH = kwargs['column_headers_canvas']
         self.TL = None                # is set from within TopLeftRectangle() __init__
         self.all_columns_displayed = True
         self.all_rows_displayed = True
-        self.align = align
-        self._font = font
-        self.fnt_fam = font[0]
-        self.fnt_sze = font[1]
-        self.fnt_wgt = font[2]
-        self._hdr_font = header_font
-        self.hdr_fnt_fam = header_font[0]
-        self.hdr_fnt_sze = header_font[1]
-        self.hdr_fnt_wgt = header_font[2]
-
+        self.align = kwargs['align']
+        self._font = kwargs['font']
+        self.fnt_fam = kwargs['font'][0]
+        self.fnt_sze = kwargs['font'][1]
+        self.fnt_wgt = kwargs['font'][2]
+        self._index_font = kwargs['index_font']
+        self.index_fnt_fam = kwargs['index_font'][0]
+        self.index_fnt_sze = kwargs['index_font'][1]
+        self.index_fnt_wgt = kwargs['index_font'][2]
+        self._hdr_font = kwargs['header_font']
+        self.hdr_fnt_fam = kwargs['header_font'][0]
+        self.hdr_fnt_sze = kwargs['header_font'][1]
+        self.hdr_fnt_wgt = kwargs['header_font'][2]
         self.txt_measure_canvas = tk.Canvas(self)
         self.txt_measure_canvas_text = self.txt_measure_canvas.create_text(0, 0, text = "", font = self._font)
         self.text_editor = None
         self.text_editor_id = None
-        self.default_cw = column_width
-        self.default_rh = (row_height if isinstance(row_height, str) else "pixels",
-                           row_height if isinstance(row_height, int) else self.GetLinesHeight(int(row_height)))
-        self.default_hh = (header_height if isinstance(header_height, str) else "pixels",
-                           header_height if isinstance(header_height, int) else self.GetHdrLinesHeight(int(header_height)))
+        self.default_cw = kwargs['column_width']
+        self.default_rh = (kwargs['row_height'] if isinstance(kwargs['row_height'], str) else "pixels",
+                           kwargs['row_height'] if isinstance(kwargs['row_height'], int) else self.GetLinesHeight(int(kwargs['row_height'])))
+        self.default_hh = (kwargs['header_height'] if isinstance(kwargs['header_height'], str) else "pixels",
+                           kwargs['header_height'] if isinstance(kwargs['header_height'], int) else self.GetHdrLinesHeight(int(kwargs['header_height'])))
         self.set_fnt_help()
         self.set_hdr_fnt_help()
-        self.data = data_reference
+        self.set_index_fnt_help()
+        self.data = kwargs['data_reference']
         if isinstance(self.data, (list, tuple)):
-            self.data = data_reference
+            self.data = kwargs['data_reference']
         else:
             self.data = []
         if not self.data:
-            if isinstance(total_rows, int) and isinstance(total_cols, int) and total_rows > 0 and total_cols > 0:
-                self.data = [list(repeat("", total_cols)) for i in range(total_rows)]
-        if isinstance(headers, int):
-            self._headers = headers
+            if isinstance(kwargs['total_rows'], int) and isinstance(kwargs['total_cols'], int) and kwargs['total_rows'] > 0 and kwargs['total_cols'] > 0:
+                self.data = [list(repeat("", kwargs['total_cols'])) for i in range(kwargs['total_rows'])]
+        _header = kwargs['header'] if kwargs['header'] is not None else kwargs['headers']
+        if isinstance(_header, int):
+            self._headers = _header
         else:
-            if headers:
-                self._headers = headers
+            if _header:
+                self._headers = _header
             else:
                 self._headers = []
-        if index is not None:
-            _row_index = index
-        else:
-            _row_index = row_index
+        _row_index = kwargs['index'] if kwargs['index'] is not None else kwargs['row_index']
         if isinstance(_row_index, int):
             self._row_index = _row_index
         else:
@@ -287,35 +229,30 @@ class MainTable(tk.Canvas):
         self.col_positions = [0]
         self.row_positions = [0]
         self.reset_row_positions()
-        
-        self.display_columns(columns = displayed_columns,
-                             all_columns_displayed = all_columns_displayed,
+        self.display_columns(columns = kwargs['displayed_columns'],
+                             all_columns_displayed = kwargs['all_columns_displayed'],
                              reset_col_positions = False,
                              deselect_all = False)
         self.reset_col_positions()
-
-        self.table_grid_fg = table_grid_fg
-        self.table_fg = table_fg
-        self.table_selected_cells_border_fg = table_selected_cells_border_fg
-        self.table_selected_cells_bg = table_selected_cells_bg
-        self.table_selected_cells_fg = table_selected_cells_fg
-        self.table_selected_rows_border_fg = table_selected_rows_border_fg
-        self.table_selected_rows_bg = table_selected_rows_bg
-        self.table_selected_rows_fg = table_selected_rows_fg
-        self.table_selected_columns_border_fg = table_selected_columns_border_fg
-        self.table_selected_columns_bg = table_selected_columns_bg
-        self.table_selected_columns_fg = table_selected_columns_fg
-        self.table_bg = table_bg
-
-        self.popup_menu_font = popup_menu_font
-        self.popup_menu_fg = popup_menu_fg
-        self.popup_menu_bg = popup_menu_bg
-        self.popup_menu_highlight_bg = popup_menu_highlight_bg
-        self.popup_menu_highlight_fg = popup_menu_highlight_fg
-        
+        self.table_grid_fg = kwargs['table_grid_fg']
+        self.table_fg = kwargs['table_fg']
+        self.table_selected_cells_border_fg = kwargs['table_selected_cells_border_fg']
+        self.table_selected_cells_bg = kwargs['table_selected_cells_bg']
+        self.table_selected_cells_fg = kwargs['table_selected_cells_fg']
+        self.table_selected_rows_border_fg = kwargs['table_selected_rows_border_fg']
+        self.table_selected_rows_bg = kwargs['table_selected_rows_bg']
+        self.table_selected_rows_fg = kwargs['table_selected_rows_fg']
+        self.table_selected_columns_border_fg = kwargs['table_selected_columns_border_fg']
+        self.table_selected_columns_bg = kwargs['table_selected_columns_bg']
+        self.table_selected_columns_fg = kwargs['table_selected_columns_fg']
+        self.table_bg = kwargs['table_bg']
+        self.popup_menu_font = kwargs['popup_menu_font']
+        self.popup_menu_fg = kwargs['popup_menu_fg']
+        self.popup_menu_bg = kwargs['popup_menu_bg']
+        self.popup_menu_highlight_bg = kwargs['popup_menu_highlight_bg']
+        self.popup_menu_highlight_fg = kwargs['popup_menu_highlight_fg']
         self.rc_popup_menu = None
         self.empty_rc_popup_menu = None
-
         self.basic_bindings()
         self.create_rc_menus()
         
@@ -2469,7 +2406,7 @@ class MainTable(tk.Canvas):
             mouse_over_resize = False
             x = self.canvasx(event.x)
             y = self.canvasy(event.y)
-            if self.RI.width_resizing_enabled and not mouse_over_resize:
+            if self.RI.width_resizing_enabled and self.show_index and not mouse_over_resize:
                 try:
                     x1, y1, x2, y2 = self.row_width_resize_bbox[0], self.row_width_resize_bbox[1], self.row_width_resize_bbox[2], self.row_width_resize_bbox[3]
                     if x >= x1 and y >= y1 and x <= x2 and y <= y2:
@@ -2479,7 +2416,7 @@ class MainTable(tk.Canvas):
                         mouse_over_resize = True
                 except:
                     pass
-            if self.CH.height_resizing_enabled and not mouse_over_resize:
+            if self.CH.height_resizing_enabled and self.show_header and not mouse_over_resize:
                 try:
                     x1, y1, x2, y2 = self.header_height_resize_bbox[0], self.header_height_resize_bbox[1], self.header_height_resize_bbox[2], self.header_height_resize_bbox[3]
                     if x >= x1 and y >= y1 and x <= x2 and y <= y2:
@@ -2559,12 +2496,12 @@ class MainTable(tk.Canvas):
             c = self.identify_col(x = event.x)
             if r < len(self.row_positions) - 1 and c < len(self.col_positions) - 1:
                 self.toggle_select_cell(r, c, redraw = True)
-        elif self.RI.width_resizing_enabled and self.RI.rsz_h is None and self.RI.rsz_w == True:
+        elif self.RI.width_resizing_enabled and self.show_index and self.RI.rsz_h is None and self.RI.rsz_w == True:
             self.RI.currently_resizing_width = True
             self.new_row_width = self.RI.current_width + event.x
             x = self.canvasx(event.x)
             self.create_resize_line(x, y1, x, y2, width = 1, fill = self.RI.resizing_line_fg, tag = "rwl")
-        elif self.CH.height_resizing_enabled and self.CH.rsz_w is None and self.CH.rsz_h == True:
+        elif self.CH.height_resizing_enabled and self.show_header and self.CH.rsz_w is None and self.CH.rsz_h == True:
             self.CH.currently_resizing_height = True
             self.new_header_height = self.CH.current_height + event.y
             y = self.canvasy(event.y)
@@ -3004,6 +2941,9 @@ class MainTable(tk.Canvas):
                                self.GetHdrLinesHeight(int(self.default_hh[0])) if self.default_hh[0] != "pixels" else self.default_hh[1])
         self.set_min_cw()
         self.CH.set_height(self.default_hh[1])
+        
+    def set_index_fnt_help(self):
+        pass
 
     def data_reference(self, newdataref = None, reset_col_positions = True, reset_row_positions = True, redraw = False, return_id = True, keep_formatting=True):
         if isinstance(newdataref, (list, tuple)):
@@ -3836,7 +3776,8 @@ class MainTable(tk.Canvas):
                 redrawn = self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_2_[0]) / 2):02X}" +
                                                                       f"{int((int(c_1[3:5], 16) + c_2_[1]) / 2):02X}" +
                                                                       f"{int((int(c_1[5:], 16) + c_2_[2]) / 2):02X}"),
-                                                outline = self.table_fg if (r, dcol) in self.cell_options and 'dropdown' in self.cell_options[(r, dcol)] else "", tag = "hi")
+                                                outline = self.table_fg if (r, dcol) in self.cell_options and 'dropdown' in self.cell_options[(r, dcol)] and self.show_dropdown_borders else "", 
+                                                tag = "hi")
             
         elif r in self.row_options and 'highlight' in self.row_options[r] and (r, c) in selected_cells:
             tf = self.table_selected_cells_fg if self.row_options[r]['highlight'][1] is None or self.display_selected_fg_over_highlights else self.row_options[r]['highlight'][1]
@@ -3845,8 +3786,9 @@ class MainTable(tk.Canvas):
                 redrawn = self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_2_[0]) / 2):02X}" +
                                                                       f"{int((int(c_1[3:5], 16) + c_2_[1]) / 2):02X}" +
                                                                       f"{int((int(c_1[5:], 16) + c_2_[2]) / 2):02X}"),
-                                      outline = self.table_fg if (r, dcol) in self.cell_options and 'dropdown' in self.cell_options[(r, dcol)] else "", tag = "hi",
-                                      can_width = can_width if self.row_options[r]['highlight'][2] else None)
+                                                outline = self.table_fg if (r, dcol) in self.cell_options and 'dropdown' in self.cell_options[(r, dcol)] and self.show_dropdown_borders else "", 
+                                                tag = "hi",
+                                                can_width = can_width if self.row_options[r]['highlight'][2] else None)
             
         elif dcol in self.col_options and 'highlight' in self.col_options[dcol] and (r, c) in selected_cells:
             tf = self.table_selected_cells_fg if self.col_options[dcol]['highlight'][1] is None or self.display_selected_fg_over_highlights else self.col_options[dcol]['highlight'][1]
@@ -3855,7 +3797,8 @@ class MainTable(tk.Canvas):
                 redrawn = self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_2_[0]) / 2):02X}" +
                                                                       f"{int((int(c_1[3:5], 16) + c_2_[1]) / 2):02X}" +
                                                                       f"{int((int(c_1[5:], 16) + c_2_[2]) / 2):02X}"),
-                                                outline = self.table_fg if (r, dcol) in self.cell_options and 'dropdown' in self.cell_options[(r, dcol)] else "", tag = "hi")
+                                                outline = self.table_fg if (r, dcol) in self.cell_options and 'dropdown' in self.cell_options[(r, dcol)] and self.show_dropdown_borders else "", 
+                                                tag = "hi")
             
         # ________________________ CELL IS HIGHLIGHTED AND IN SELECTED ROWS ________________________
         elif (r, dcol) in self.cell_options and 'highlight' in self.cell_options[(r, dcol)] and r in actual_selected_rows:
@@ -3865,7 +3808,8 @@ class MainTable(tk.Canvas):
                 redrawn = self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_4_[0]) / 2):02X}" +
                                                                       f"{int((int(c_1[3:5], 16) + c_4_[1]) / 2):02X}" +
                                                                       f"{int((int(c_1[5:], 16) + c_4_[2]) / 2):02X}"),
-                                                outline = self.table_fg if (r, dcol) in self.cell_options and 'dropdown' in self.cell_options[(r, dcol)] else "", tag = "hi")
+                                                outline = self.table_fg if (r, dcol) in self.cell_options and 'dropdown' in self.cell_options[(r, dcol)] and self.show_dropdown_borders else "", 
+                                                tag = "hi")
             
         elif r in self.row_options and 'highlight' in self.row_options[r] and r in actual_selected_rows:
             tf = self.table_selected_rows_fg if self.row_options[r]['highlight'][1] is None or self.display_selected_fg_over_highlights else self.row_options[r]['highlight'][1]
@@ -3874,8 +3818,9 @@ class MainTable(tk.Canvas):
                 redrawn = self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_4_[0]) / 2):02X}" +
                                                                       f"{int((int(c_1[3:5], 16) + c_4_[1]) / 2):02X}" +
                                                                       f"{int((int(c_1[5:], 16) + c_4_[2]) / 2):02X}"),
-                                                outline = self.table_fg if (r, dcol) in self.cell_options and 'dropdown' in self.cell_options[(r, dcol)] else "", tag = "hi",
-                                      can_width = can_width if self.row_options[r]['highlight'][2] else None)
+                                                outline = self.table_fg if (r, dcol) in self.cell_options and 'dropdown' in self.cell_options[(r, dcol)] and self.show_dropdown_borders else "", 
+                                                tag = "hi",
+                                                can_width = can_width if self.row_options[r]['highlight'][2] else None)
             
         elif dcol in self.col_options and 'highlight' in self.col_options[dcol] and r in actual_selected_rows:
             tf = self.table_selected_rows_fg if self.col_options[dcol]['highlight'][1] is None or self.display_selected_fg_over_highlights else self.col_options[dcol]['highlight'][1]
@@ -3884,7 +3829,8 @@ class MainTable(tk.Canvas):
                 redrawn = self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_4_[0]) / 2):02X}" +
                                                                       f"{int((int(c_1[3:5], 16) + c_4_[1]) / 2):02X}" +
                                                                       f"{int((int(c_1[5:], 16) + c_4_[2]) / 2):02X}"),
-                                                outline = self.table_fg if (r, dcol) in self.cell_options and 'dropdown' in self.cell_options[(r, dcol)] else "", tag = "hi")
+                                                outline = self.table_fg if (r, dcol) in self.cell_options and 'dropdown' in self.cell_options[(r, dcol)] and self.show_dropdown_borders else "",
+                                                tag = "hi")
             
         # ________________________ CELL IS HIGHLIGHTED AND IN SELECTED COLUMNS ________________________
         elif (r, dcol) in self.cell_options and 'highlight' in self.cell_options[(r, dcol)] and c in actual_selected_cols:
@@ -3894,7 +3840,8 @@ class MainTable(tk.Canvas):
                 redrawn = self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_3_[0]) / 2):02X}" +
                                                                       f"{int((int(c_1[3:5], 16) + c_3_[1]) / 2):02X}" +
                                                                       f"{int((int(c_1[5:], 16) + c_3_[2]) / 2):02X}"),
-                                                outline = self.table_fg if (r, dcol) in self.cell_options and 'dropdown' in self.cell_options[(r, dcol)] else "", tag = "hi")
+                                                outline = self.table_fg if (r, dcol) in self.cell_options and 'dropdown' in self.cell_options[(r, dcol)] and self.show_dropdown_borders else "",
+                                                tag = "hi")
             
         elif r in self.row_options and 'highlight' in self.row_options[r] and c in actual_selected_cols:
             tf = self.table_selected_columns_fg if self.row_options[r]['highlight'][1] is None or self.display_selected_fg_over_highlights else self.row_options[r]['highlight'][1]
@@ -3903,8 +3850,9 @@ class MainTable(tk.Canvas):
                 redrawn = self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_3_[0]) / 2):02X}" +
                                                                       f"{int((int(c_1[3:5], 16) + c_3_[1]) / 2):02X}" +
                                                                       f"{int((int(c_1[5:], 16) + c_3_[2]) / 2):02X}"),
-                                                outline = self.table_fg if (r, dcol) in self.cell_options and 'dropdown' in self.cell_options[(r, dcol)] else "", tag = "hi",
-                                      can_width = can_width if self.row_options[r]['highlight'][2] else None)
+                                                outline = self.table_fg if (r, dcol) in self.cell_options and 'dropdown' in self.cell_options[(r, dcol)] and self.show_dropdown_borders else "", 
+                                                tag = "hi",
+                                                can_width = can_width if self.row_options[r]['highlight'][2] else None)
             
         elif dcol in self.col_options and 'highlight' in self.col_options[dcol] and c in actual_selected_cols:
             tf = self.table_selected_columns_fg if self.col_options[dcol]['highlight'][1] is None or self.display_selected_fg_over_highlights else self.col_options[dcol]['highlight'][1]
@@ -3913,27 +3861,31 @@ class MainTable(tk.Canvas):
                 redrawn = self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_3_[0]) / 2):02X}" +
                                                                       f"{int((int(c_1[3:5], 16) + c_3_[1]) / 2):02X}" +
                                                                       f"{int((int(c_1[5:], 16) + c_3_[2]) / 2):02X}"),
-                                                outline = self.table_fg if (r, dcol) in self.cell_options and 'dropdown' in self.cell_options[(r, dcol)] else "", tag = "hi")
+                                                outline = self.table_fg if (r, dcol) in self.cell_options and 'dropdown' in self.cell_options[(r, dcol)] and self.show_dropdown_borders else "",
+                                                tag = "hi")
 
         # ________________________ CELL IS HIGHLIGHTED AND NOT SELECTED ________________________
         elif (r, dcol) in self.cell_options and 'highlight' in self.cell_options[(r, dcol)] and (r, c) not in selected_cells and r not in actual_selected_rows and c not in actual_selected_cols:
             tf = self.table_fg if self.cell_options[(r, dcol)]['highlight'][1] is None else self.cell_options[(r, dcol)]['highlight'][1]
             if self.cell_options[(r, dcol)]['highlight'][0] is not None:
                 redrawn = self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = self.cell_options[(r, dcol)]['highlight'][0],
-                                                outline = self.table_fg if (r, dcol) in self.cell_options and 'dropdown' in self.cell_options[(r, dcol)] else "", tag = "hi")
+                                                outline = self.table_fg if (r, dcol) in self.cell_options and 'dropdown' in self.cell_options[(r, dcol)] and self.show_dropdown_borders else "", 
+                                                tag = "hi")
             
         elif r in self.row_options and 'highlight' in self.row_options[r] and (r, c) not in selected_cells and r not in actual_selected_rows and c not in actual_selected_cols:
             tf = self.table_fg if self.row_options[r]['highlight'][1] is None else self.row_options[r]['highlight'][1]
             if self.row_options[r]['highlight'][0] is not None:
                 redrawn = self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = self.row_options[r]['highlight'][0],
-                                                outline = self.table_fg if (r, dcol) in self.cell_options and 'dropdown' in self.cell_options[(r, dcol)] else "", tag = "hi",
+                                                outline = self.table_fg if (r, dcol) in self.cell_options and 'dropdown' in self.cell_options[(r, dcol)] and self.show_dropdown_borders else "", 
+                                                tag = "hi",
                                                 can_width = can_width if self.row_options[r]['highlight'][2] else None)
             
         elif dcol in self.col_options and 'highlight' in self.col_options[dcol] and (r, c) not in selected_cells and r not in actual_selected_rows and c not in actual_selected_cols:
             tf = self.table_fg if self.col_options[dcol]['highlight'][1] is None else self.col_options[dcol]['highlight'][1]
             if self.col_options[dcol]['highlight'][0] is not None:
                 redrawn = self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = self.col_options[dcol]['highlight'][0],
-                                                outline = self.table_fg if (r, dcol) in self.cell_options and 'dropdown' in self.cell_options[(r, dcol)] else "", tag = "hi")
+                                                outline = self.table_fg if (r, dcol) in self.cell_options and 'dropdown' in self.cell_options[(r, dcol)] and self.show_dropdown_borders else "",
+                                                tag = "hi")
         
         # ________________________ CELL IS JUST SELECTED ________________________
         elif (r, c) in selected_cells:
@@ -3963,7 +3915,7 @@ class MainTable(tk.Canvas):
         return True
 
     def redraw_dropdown(self, x1, y1, x2, y2, fill, outline, tag, draw_outline = True, draw_arrow = True, dd_is_open = False):
-        if draw_outline:
+        if draw_outline and self.show_dropdown_borders:
             self.redraw_highlight(x1 + 1, y1 + 1, x2, y2, fill = "", outline = self.table_fg, tag = tag)
         if draw_arrow:
             topysub = floor(self.half_txt_h / 2)
@@ -4093,13 +4045,13 @@ class MainTable(tk.Canvas):
                 self.parentframe.xscroll.grid_forget()
                 self.parentframe.xscroll_showing = False
             elif can_width < last_col_line_pos + self.empty_horizontal and not self.parentframe.xscroll_showing and not self.parentframe.xscroll_disabled and can_height > 45:
-                self.parentframe.xscroll.grid(row = 2, column = 1, columnspan = 2, sticky = "nswe")
+                self.parentframe.xscroll.grid(row = 2, column = 0, columnspan = 2, sticky = "nswe")
                 self.parentframe.xscroll_showing = True
             if can_height >= last_row_line_pos + self.empty_vertical and self.parentframe.yscroll_showing:
                 self.parentframe.yscroll.grid_forget()
                 self.parentframe.yscroll_showing = False
             elif can_height < last_row_line_pos + self.empty_vertical and not self.parentframe.yscroll_showing and not self.parentframe.yscroll_disabled and can_width > 45:
-                self.parentframe.yscroll.grid(row = 1, column = 2, sticky = "nswe")
+                self.parentframe.yscroll.grid(row = 0, column = 2, rowspan = 3, sticky = "nswe")
                 self.parentframe.yscroll_showing = True
         except:
             return False
@@ -5576,17 +5528,17 @@ class MainTable(tk.Canvas):
         return win_h, anchor
 
     # c is displayed col
-    def display_dropdown_window(self, r, c, dcol = None, event = None):
+    def display_dropdown_window(self, r, c, event = None):
         self.destroy_text_editor("Escape")
         self.destroy_opened_dropdown_window()
-        if dcol is None:
-            dcol = c if self.all_columns_displayed else self.displayed_columns[c]
+        drow = r if self.all_rows_displayed else self.displayed_rows[r]
+        dcol = c if self.all_columns_displayed else self.displayed_columns[c]
         if self.cell_options[(r, dcol)]['dropdown']['state'] == "normal":
             if not self.edit_cell_(r = r, c = c, dropdown = True, event = event):
                 return
         #bg, fg = self.get_widget_bg_fg(r, dcol)
         bg, fg = self.table_bg, self.table_fg
-        win_h, anchor = self.get_dropdown_height_anchor(r, c, dcol)
+        win_h, anchor = self.get_dropdown_height_anchor(drow, dcol)
         window = self.parentframe.dropdown_class(self.winfo_toplevel(),
                                                  r,
                                                  c,

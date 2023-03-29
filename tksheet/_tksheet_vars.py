@@ -1,15 +1,10 @@
-lowercase_letters = """abcdefghijklmnopqrstuvwxyz"""
-uppercase_letters = """ABCDEFGHIJKLMNOPQRSTUVWXYZ"""
-numbers = """0123456789"""
-symbols = """!#\$%&'()*+,-./:;"@[]^_`{|}~>?= """
-symbols_set = set(symbols)
-all_chars = set(lowercase_letters + uppercase_letters + numbers + symbols + " " + "\<")
-other_symbols = {"<space>": " ",
-                 "less": "<"}
-
+symbols_set = set("""!#\$%&'()*+,-./:;"@[]^_`{|}~>?= """)
 
 def get_font():
     return ("Calibri", 11, "normal")
+
+def get_index_font():
+    return ('Calibri', 11, "normal")
 
 def get_heading_font():
     return ("Calibri", 10, "normal")
@@ -63,7 +58,6 @@ theme_light_blue = {
 'table_selected_columns_bg': "#e7f0fd",
 'table_selected_columns_fg': "black"
 }
-
 
 theme_light_green = {
 'popup_menu_fg': "gray2",
@@ -236,7 +230,6 @@ theme_dark_blue = {
 'table_selected_columns_bg': "#004567",
 'table_selected_columns_fg': "#fcfcfc"
 }
-
 
 theme_dark_green = {
 'popup_menu_fg': "white",

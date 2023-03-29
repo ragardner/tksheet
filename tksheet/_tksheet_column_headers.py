@@ -11,37 +11,63 @@ import zlib
 
 class ColumnHeaders(tk.Canvas):
     def __init__(self,
-                 parentframe = None,
-                 main_canvas = None,
-                 row_index_canvas = None,
-                 max_colwidth = None,
-                 max_header_height = None,
-                 default_header = None,
-                 header_align = None,
-                 header_bg = None,
-                 header_border_fg = None,
-                 header_grid_fg = None,
-                 header_fg = None,
-                 header_selected_cells_bg = None,
-                 header_selected_cells_fg = None,
-                 header_selected_columns_bg = "#5f6368",
-                 header_selected_columns_fg = "white",
-                 header_select_bold = True,
-                 drag_and_drop_bg = None,
-                 header_hidden_columns_expander_bg = None,
-                 column_drag_and_drop_perform = True,
-                 resizing_line_fg = None,
-                 show_default_header_for_empty = True):
-        tk.Canvas.__init__(self,parentframe,
-                           background = header_bg,
+                 *args,
+                 **kwargs):
+        tk.Canvas.__init__(self,
+                           kwargs['parentframe'],
+                           background = kwargs['header_bg'],
                            highlightthickness = 0)
-
+        self.parentframe = kwargs['parentframe']
+        self.current_height = None    # is set from within MainTable() __init__ or from Sheet parameters
+        self.MT = None         # is set from within MainTable() __init__
+        self.RI = None    # is set from within MainTable() __init__
+        self.TL = None                # is set from within TopLeftRectangle() __init__
         self.extra_begin_edit_cell_func = None
         self.extra_end_edit_cell_func = None
-        
         self.text_editor = None
         self.text_editor_id = None
         self.text_editor_loc = None
+        self.centre_alignment_text_mod_indexes = (slice(1, None), slice(None, -1))
+        self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
+        self.grid_cyctup = ("st", "end")
+        self.grid_cyc = cycle(self.grid_cyctup)
+        self.b1_pressed_loc = None
+        self.existing_dropdown_canvas_id = None
+        self.existing_dropdown_window = None
+        self.closed_dropdown = None
+        self.being_drawn_rect = None
+        self.extra_motion_func = None
+        self.extra_b1_press_func = None
+        self.extra_b1_motion_func = None
+        self.extra_b1_release_func = None
+        self.extra_double_b1_func = None
+        self.ch_extra_begin_drag_drop_func = None
+        self.ch_extra_end_drag_drop_func = None
+        self.extra_rc_func = None
+        self.selection_binding_func = None
+        self.shift_selection_binding_func = None
+        self.drag_selection_binding_func = None
+        self.column_width_resize_func = None
+        self.width_resizing_enabled = False
+        self.height_resizing_enabled = False
+        self.double_click_resizing_enabled = False
+        self.col_selection_enabled = False
+        self.drag_and_drop_enabled = False
+        self.rc_delete_col_enabled = False
+        self.rc_insert_col_enabled = False
+        self.hide_columns_enabled = False
+        self.edit_cell_enabled = False
+        self.dragged_col = None
+        self.visible_col_dividers = {}
+        self.col_height_resize_bbox = tuple()
+        self.cell_options = {}
+        self.rsz_w = None
+        self.rsz_h = None
+        self.new_col_height = 0
+        self.lines_start_at = 0
+        self.currently_resizing_width = False
+        self.currently_resizing_height = False
+        self.ch_rc_popup_menu = None
         
         self.disp_text = {}
         self.disp_high = {}
@@ -58,71 +84,23 @@ class ColumnHeaders(tk.Canvas):
         self.hidd_dropdown = {}
         self.hidd_checkbox = {}
         
-        self.b1_pressed_loc = None
-        self.existing_dropdown_canvas_id = None
-        self.existing_dropdown_window = None
-        self.closed_dropdown = None
-
-        self.centre_alignment_text_mod_indexes = (slice(1, None), slice(None, -1))
-        self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
-        self.grid_cyctup = ("st", "end")
-        self.grid_cyc = cycle(self.grid_cyctup)
-        self.parentframe = parentframe
-        self.column_drag_and_drop_perform = column_drag_and_drop_perform
-        self.being_drawn_rect = None
-        self.extra_motion_func = None
-        self.extra_b1_press_func = None
-        self.extra_b1_motion_func = None
-        self.extra_b1_release_func = None
-        self.extra_double_b1_func = None
-        self.ch_extra_begin_drag_drop_func = None
-        self.ch_extra_end_drag_drop_func = None
-        self.extra_rc_func = None
-        self.selection_binding_func = None
-        self.shift_selection_binding_func = None
-        self.drag_selection_binding_func = None
-        self.column_width_resize_func = None
-        self.default_hdr = default_header.lower()
-        self.max_cw = float(max_colwidth)
-        self.max_header_height = float(max_header_height)
-        self.current_height = None    # is set from within MainTable() __init__ or from Sheet parameters
-        self.MT = main_canvas         # is set from within MainTable() __init__
-        self.RI = row_index_canvas    # is set from within MainTable() __init__
-        self.TL = None                # is set from within TopLeftRectangle() __init__
-        self.header_bg = header_bg
-        self.header_fg = header_fg
-        self.header_grid_fg = header_grid_fg
-        self.header_border_fg = header_border_fg
-        self.header_selected_cells_bg = header_selected_cells_bg
-        self.header_selected_cells_fg = header_selected_cells_fg
-        self.header_selected_columns_bg = header_selected_columns_bg
-        self.header_selected_columns_fg = header_selected_columns_fg
-        self.header_hidden_columns_expander_bg = header_hidden_columns_expander_bg
-        self.select_bold = header_select_bold
-        self.drag_and_drop_bg = drag_and_drop_bg
-        self.resizing_line_fg = resizing_line_fg
-        self.align = header_align
-        self.width_resizing_enabled = False
-        self.height_resizing_enabled = False
-        self.double_click_resizing_enabled = False
-        self.col_selection_enabled = False
-        self.drag_and_drop_enabled = False
-        self.rc_delete_col_enabled = False
-        self.rc_insert_col_enabled = False
-        self.hide_columns_enabled = False
-        self.edit_cell_enabled = False
-        self.show_default_header_for_empty = show_default_header_for_empty
-        self.dragged_col = None
-        self.visible_col_dividers = {}
-        self.col_height_resize_bbox = tuple()
-        self.cell_options = {}
-        self.rsz_w = None
-        self.rsz_h = None
-        self.new_col_height = 0
-        self.lines_start_at = 0
-        self.currently_resizing_width = False
-        self.currently_resizing_height = False
-        self.ch_rc_popup_menu = None
+        self.column_drag_and_drop_perform = kwargs['column_drag_and_drop_perform']
+        self.default_hdr = kwargs['default_header'].lower()
+        self.max_cw = float(kwargs['max_colwidth'])
+        self.max_header_height = float(kwargs['max_header_height'])
+        self.header_bg = kwargs['header_bg']
+        self.header_fg = kwargs['header_fg']
+        self.header_grid_fg = kwargs['header_grid_fg']
+        self.header_border_fg = kwargs['header_border_fg']
+        self.header_selected_cells_bg = kwargs['header_selected_cells_bg']
+        self.header_selected_cells_fg = kwargs['header_selected_cells_fg']
+        self.header_selected_columns_bg = kwargs['header_selected_columns_bg']
+        self.header_selected_columns_fg = kwargs['header_selected_columns_fg']
+        self.header_hidden_columns_expander_bg = kwargs['header_hidden_columns_expander_bg']
+        self.show_default_header_for_empty = kwargs['show_default_header_for_empty']
+        self.drag_and_drop_bg = kwargs['drag_and_drop_bg']
+        self.resizing_line_fg = kwargs['resizing_line_fg']
+        self.align = kwargs['header_align']
         self.basic_bindings()
         
     def basic_bindings(self, enable = True):
@@ -359,6 +337,7 @@ class ColumnHeaders(tk.Canvas):
             self.create_resize_line(line2x, 0, line2x, self.current_height,width = 1, fill = self.resizing_line_fg, tag = "rwl2")
             self.MT.create_resize_line(line2x, y1, line2x, y2, width = 1, fill = self.resizing_line_fg, tag = "rwl2")
         elif self.height_resizing_enabled and self.rsz_w is None and self.rsz_h is not None:
+            x1, y1, x2, y2 = self.MT.get_canvas_visible_area()
             self.currently_resizing_height = True
             y = event.y
             if y < self.MT.hdr_min_rh:
@@ -794,7 +773,7 @@ class ColumnHeaders(tk.Canvas):
                                                 fill = (f"#{int((int(c_1[1:3], 16) + int(c_3[1:3], 16)) / 2):02X}" +
                                                         f"{int((int(c_1[3:5], 16) + int(c_3[3:5], 16)) / 2):02X}" +
                                                         f"{int((int(c_1[5:], 16) + int(c_3[5:], 16)) / 2):02X}"),
-                                                outline = self.header_fg if hlcol in self.cell_options and 'dropdown' in self.cell_options[hlcol] else "", 
+                                                outline = self.header_fg if hlcol in self.cell_options and 'dropdown' in self.cell_options[hlcol] and self.MT.show_dropdown_borders else "",
                                                 tag = "hi")
             tf = self.header_selected_columns_fg if self.cell_options[hlcol]['highlight'][1] is None or self.MT.display_selected_fg_over_highlights else self.cell_options[hlcol]['highlight'][1]
         elif hlcol in self.cell_options and 'highlight' in self.cell_options[hlcol] and (c in selected_cols or selected_rows):
@@ -807,7 +786,7 @@ class ColumnHeaders(tk.Canvas):
                                                 fill = (f"#{int((int(c_1[1:3], 16) + int(c_2[1:3], 16)) / 2):02X}" +
                                                         f"{int((int(c_1[3:5], 16) + int(c_2[3:5], 16)) / 2):02X}" +
                                                         f"{int((int(c_1[5:], 16) + int(c_2[5:], 16)) / 2):02X}"),
-                                                outline = self.header_fg if hlcol in self.cell_options and 'dropdown' in self.cell_options[hlcol] else "", 
+                                                outline = self.header_fg if hlcol in self.cell_options and 'dropdown' in self.cell_options[hlcol] and self.MT.show_dropdown_borders else "", 
                                                 tag = "hi")
             tf = self.header_selected_cells_fg if self.cell_options[hlcol]['highlight'][1] is None or self.MT.display_selected_fg_over_highlights else self.cell_options[hlcol]['highlight'][1]
         elif c in actual_selected_cols:
@@ -821,7 +800,7 @@ class ColumnHeaders(tk.Canvas):
                                                 sc, 
                                                 self.current_height - 1, 
                                                 fill = self.cell_options[hlcol]['highlight'][0], 
-                                                outline = self.header_fg if hlcol in self.cell_options and 'dropdown' in self.cell_options[hlcol] else "", 
+                                                outline = self.header_fg if hlcol in self.cell_options and 'dropdown' in self.cell_options[hlcol] and self.MT.show_dropdown_borders else "", 
                                                 tag = "hi")
             tf = self.header_fg if self.cell_options[hlcol]['highlight'][1] is None else self.cell_options[hlcol]['highlight'][1]
         else:
@@ -869,7 +848,7 @@ class ColumnHeaders(tk.Canvas):
             self.disp_grid[self.create_line(points, fill = fill, width = width, tag = tag)] = True
             
     def redraw_dropdown(self, x1, y1, x2, y2, fill, outline, tag, draw_outline = True, draw_arrow = True, dd_is_open = False):
-        if draw_outline:
+        if draw_outline and self.MT.show_dropdown_borders:
             self.redraw_highlight(x1 + 1, y1 + 1, x2, y2, fill = "", outline = self.header_fg, tag = tag)
         if draw_arrow:
             topysub = floor(self.MT.hdr_half_txt_h / 2)
