@@ -24,7 +24,7 @@
 22. [Check Boxes](https://github.com/ragardner/tksheet/wiki#22-check-boxes)
 23. [Table Options and Other Functions](https://github.com/ragardner/tksheet/wiki#23-table-options-and-other-functions)
 24. [Example Loading Data from Excel](https://github.com/ragardner/tksheet/wiki#24-example-loading-data-from-excel)
-25. [Example Custom Right Click and Text Editor Functionality](https://github.com/ragardner/tksheet/wiki#25-example-custom-right-click-and-text-editor-functionality)
+25. [Example Custom Right Click and Text Editor Validation](https://github.com/ragardner/tksheet/wiki#25-example-custom-right-click-and-text-editor-validation)
 26. [Example Displaying Selections](https://github.com/ragardner/tksheet/wiki#26-example-displaying-selections)
 27. [Example List Box](https://github.com/ragardner/tksheet/wiki#27-example-list-box)
 28. [Example Header Dropdown Boxes and Filtering](https://github.com/ragardner/tksheet/wiki#28-example-header-dropdown-boxes-and-filtering)
@@ -110,9 +110,11 @@ show_y_scrollbar = True,
 width = None,
 height = None,
 headers = None,
+header = None,
 default_header = "letters", #letters, numbers or both
 default_row_index = "numbers", #letters, numbers or both
 show_default_header_for_empty = True,
+show_default_index_for_empty = True,
 page_up_down_select_row = True,
 expand_sheet_if_paste_too_big = False,
 paste_insert_column_limit = None,
@@ -163,10 +165,10 @@ show_horizontal_grid = True,
 display_selected_fg_over_highlights = False,
 show_selected_cells_border = True,
 theme                              = "light blue",
-popup_menu_fg                      = "gray2",
-popup_menu_bg                      = "#f2f2f2",
-popup_menu_highlight_bg            = "#91c9f7",
-popup_menu_highlight_fg            = "black",
+popup_menu_fg                      = theme_light_blue['popup_menu_fg'],
+popup_menu_bg                      = theme_light_blue['popup_menu_bg'],
+popup_menu_highlight_bg            = theme_light_blue['popup_menu_highlight_bg'],
+popup_menu_highlight_fg            = theme_light_blue['popup_menu_highlight_fg'],
 frame_bg                           = theme_light_blue['table_bg'],
 table_grid_fg                      = theme_light_blue['table_grid_fg'],
 table_bg                           = theme_light_blue['table_bg'],
@@ -206,7 +208,7 @@ top_left_fg_highlight              = theme_light_blue['top_left_fg_highlight'])
 ```
  - `startup_select` selects cells, rows or columns at initialization by using a `tuple` e.g. `(0, 0, "cells")` for cell A0 or `(0, 5, "rows")` for rows 0 to 5.
  - `data_reference` and `data` are essentially the same.
- - `row_index` and `index` are the same, `index` takes priority.
+ - `row_index` and `index` are the same, `index` takes priority, same as with `headers` and `header`.
  - `edit_cell_validation` (`bool`) is used when `extra_bindings()` have been set for cell edits. If a bound function returns something other than `None` it will be used as the cell value instead of the user input.
     - `True` makes data edits take place after the binding function is run.
     - `False` makes data edits take place before the binding function is run.
@@ -2145,37 +2147,77 @@ app.mainloop()
 
 ## 30 Example Saving tksheet as a csv File
 
-To save tksheet data as a .csv file including headers and index.
+To both load a csv file and save tksheet data as a csv file not including headers and index.
 
 ```python
 from tksheet import Sheet
 import tkinter as tk
+from tkinter import filedialog
 import csv
+from os.path import normpath
+import io
 
 
 class demo(tk.Tk):
     def __init__(self):
         tk.Tk.__init__(self)
+        self.withdraw()
+        self.title("tksheet")
         self.grid_columnconfigure(0, weight = 1)
         self.grid_rowconfigure(0, weight = 1)
         self.frame = tk.Frame(self)
         self.frame.grid_columnconfigure(0, weight = 1)
         self.frame.grid_rowconfigure(0, weight = 1)
         self.sheet = Sheet(self.frame,
-                           data = [[f"Row {r}, Column {c}\nnewline 1\nnewline 2" for c in range(6)] for r in range(21)])
-        self.sheet.enable_bindings()
+                           data = [[f"Row {r}, Column {c}" for c in range(6)] for r in range(21)])
+        self.sheet.enable_bindings("all", "edit_header", "edit_index")
         self.frame.grid(row = 0, column = 0, sticky = "nswe")
         self.sheet.grid(row = 0, column = 0, sticky = "nswe")
-        self.sheet.popup_menu_add_command("Save sheet", self.self.save_sheet)
+        self.sheet.popup_menu_add_command("Open csv", self.open_csv)
+        self.sheet.popup_menu_add_command("Save sheet", self.save_sheet)
+        self.sheet.set_all_cell_sizes_to_text()
+        self.sheet.change_theme("light green")
+        
+        # center the window and unhide
+        self.update_idletasks()
+        w = self.winfo_screenwidth() - 20
+        h = self.winfo_screenheight() - 70
+        size = (900, 500)
+        x = (w/2 - size[0]/2)
+        y = h/2 - size[1]/2
+        self.geometry("%dx%d+%d+%d" % (size + ((w/2 - size[0]/2), h/2 - size[1]/2)))
+        self.deiconify()
 
     def save_sheet(self):
-        with open("new_csv_file.csv", "w", newline = "", encoding = "utf-8") as fh:
-            writer = csv.writer(fh,
-                                dialect = csv.excel,
-                                lineterminator = "\n")
-            for r in self.sheet.yield_sheet_rows(get_header = True, get_index = True):
-                writer.writerow(r)
-        
+        filepath = filedialog.asksaveasfilename(parent = self,
+                                                title = "Save sheet as",
+                                                filetypes = [('CSV File','.csv'),
+                                                             ('TSV File','.tsv')],
+                                                defaultextension = ".csv",
+                                                confirmoverwrite = True)
+        if not filepath or not filepath.lower().endswith((".csv", ".tsv")):
+            return
+        try:
+            with open(normpath(filepath), "w", newline = "", encoding = "utf-8") as fh:
+                writer = csv.writer(fh,
+                                    dialect = csv.excel if filepath.lower().endswith(".csv") else csv.excel_tab,
+                                    lineterminator = "\n")
+                writer.writerows(self.sheet.yield_sheet_rows(get_header = False, get_index = False))
+        except:
+            return
+                
+    def open_csv(self):
+        filepath = filedialog.askopenfilename(parent = self, title = "Select a csv file")
+        if not filepath or not filepath.lower().endswith((".csv", ".tsv")):
+            return
+        try:
+            with open(normpath(filepath), "r") as filehandle:
+                filedata = filehandle.read()
+            self.sheet.set_sheet_data([r for r in csv.reader(io.StringIO(filedata),
+                                                             dialect = csv.Sniffer().sniff(filedata),
+                                                             skipinitialspace = False)])
+        except:
+            return
 
 
 app = demo()

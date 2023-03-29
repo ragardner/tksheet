@@ -23,6 +23,7 @@ class Sheet(tk.Frame):
                  width = None,
                  height = None,
                  headers = None,
+                 header = None,
                  default_header = "letters", #letters, numbers or both
                  default_row_index = "numbers", #letters, numbers or both
                  show_default_header_for_empty = True,
@@ -194,6 +195,7 @@ class Sheet(tk.Frame):
                             column_headers_canvas = self.CH,
                             row_index_canvas = self.RI,
                             headers = headers,
+                            header = header,
                             header_height = header_height,
                             data_reference = data if data_reference is None else data_reference,
                             total_cols = total_columns,
@@ -251,14 +253,14 @@ class Sheet(tk.Frame):
             self.CH.grid(row = 0, column = 1, sticky = "nswe")
             self.CH["xscrollcommand"] = self.xscroll.set
         if show_x_scrollbar:
-            self.xscroll.grid(row = 2, column = 1, columnspan = 2, sticky = "nswe")
+            self.xscroll.grid(row = 2, column = 0, columnspan = 2, sticky = "nswe")
             self.xscroll_showing = True
             self.xscroll_disabled = False
         else:
             self.xscroll_showing = False
             self.xscroll_disabled = True
         if show_y_scrollbar:
-            self.yscroll.grid(row = 1, column = 2, sticky = "nswe")
+            self.yscroll.grid(row = 0, column = 2, rowspan = 3, sticky = "nswe")
             self.yscroll_showing = True
             self.yscroll_disabled = False
         else:
@@ -311,7 +313,7 @@ class Sheet(tk.Frame):
             self.CH.grid(row = 0, column = 1, sticky = "nswe")
             self.MT.grid(row = 1, column = 1, sticky = "nswe")
             self.yscroll.grid(row = 0, column = 2, rowspan = 3, sticky = "nswe")
-            self.xscroll.grid(row = 2, column = 1, sticky = "nswe")
+            self.xscroll.grid(row = 2, column = 0, columnspan = 2, sticky = "nswe")
             self.MT["xscrollcommand"] = self.xscroll.set
             self.CH["xscrollcommand"] = self.xscroll.set
             self.MT["yscrollcommand"] = self.yscroll.set
@@ -333,11 +335,11 @@ class Sheet(tk.Frame):
         elif canvas == "top_left":
             self.TL.grid(row = 0, column = 0)
         elif canvas == "x_scrollbar":
-            self.xscroll.grid(row = 2, column = 1, columnspan = 2, sticky = "nswe")
+            self.xscroll.grid(row = 2, column = 0, columnspan = 2, sticky = "nswe")
             self.xscroll_showing = True
             self.xscroll_disabled = False
         elif canvas == "y_scrollbar":
-            self.yscroll.grid(row = 1, column = 2, sticky = "nswe")
+            self.yscroll.grid(row = 0, column = 2, rowspan = 3, sticky = "nswe")
             self.yscroll_showing = True
             self.yscroll_disabled = False
         self.MT.update_idletasks()

@@ -1,5 +1,16 @@
 ### Latest version in release notes is current version
 
+### Version 5.6.3
+Fixed:
+ - Dropdown boxes in main table not opening in certain circumstances
+ - Scrollbars not having correct column/rowspan
+
+Added:
+ - `header` startup argument
+
+Changed:
+ - Removed dropdown box border
+
 ### Version 5.6.2
 Fixed:
  - [#154](https://github.com/ragardner/tksheet/issues/154)

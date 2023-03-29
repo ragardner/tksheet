@@ -794,7 +794,7 @@ class ColumnHeaders(tk.Canvas):
                                                 fill = (f"#{int((int(c_1[1:3], 16) + int(c_3[1:3], 16)) / 2):02X}" +
                                                         f"{int((int(c_1[3:5], 16) + int(c_3[3:5], 16)) / 2):02X}" +
                                                         f"{int((int(c_1[5:], 16) + int(c_3[5:], 16)) / 2):02X}"),
-                                                outline = self.header_fg if hlcol in self.cell_options and 'dropdown' in self.cell_options[hlcol] else "", 
+                                                outline = "",
                                                 tag = "hi")
             tf = self.header_selected_columns_fg if self.cell_options[hlcol]['highlight'][1] is None or self.MT.display_selected_fg_over_highlights else self.cell_options[hlcol]['highlight'][1]
         elif hlcol in self.cell_options and 'highlight' in self.cell_options[hlcol] and (c in selected_cols or selected_rows):
@@ -807,7 +807,7 @@ class ColumnHeaders(tk.Canvas):
                                                 fill = (f"#{int((int(c_1[1:3], 16) + int(c_2[1:3], 16)) / 2):02X}" +
                                                         f"{int((int(c_1[3:5], 16) + int(c_2[3:5], 16)) / 2):02X}" +
                                                         f"{int((int(c_1[5:], 16) + int(c_2[5:], 16)) / 2):02X}"),
-                                                outline = self.header_fg if hlcol in self.cell_options and 'dropdown' in self.cell_options[hlcol] else "", 
+                                                outline = "", 
                                                 tag = "hi")
             tf = self.header_selected_cells_fg if self.cell_options[hlcol]['highlight'][1] is None or self.MT.display_selected_fg_over_highlights else self.cell_options[hlcol]['highlight'][1]
         elif c in actual_selected_cols:
@@ -821,7 +821,7 @@ class ColumnHeaders(tk.Canvas):
                                                 sc, 
                                                 self.current_height - 1, 
                                                 fill = self.cell_options[hlcol]['highlight'][0], 
-                                                outline = self.header_fg if hlcol in self.cell_options and 'dropdown' in self.cell_options[hlcol] else "", 
+                                                outline = "", 
                                                 tag = "hi")
             tf = self.header_fg if self.cell_options[hlcol]['highlight'][1] is None else self.cell_options[hlcol]['highlight'][1]
         else:
@@ -869,8 +869,8 @@ class ColumnHeaders(tk.Canvas):
             self.disp_grid[self.create_line(points, fill = fill, width = width, tag = tag)] = True
             
     def redraw_dropdown(self, x1, y1, x2, y2, fill, outline, tag, draw_outline = True, draw_arrow = True, dd_is_open = False):
-        if draw_outline:
-            self.redraw_highlight(x1 + 1, y1 + 1, x2, y2, fill = "", outline = self.header_fg, tag = tag)
+        #if draw_outline:
+        #    self.redraw_highlight(x1 + 1, y1 + 1, x2, y2, fill = "", outline = self.header_fg, tag = tag)
         if draw_arrow:
             topysub = floor(self.MT.hdr_half_txt_h / 2)
             mid_y = y1 + floor(self.MT.hdr_min_rh / 2)
