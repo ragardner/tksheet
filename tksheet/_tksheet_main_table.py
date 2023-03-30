@@ -4074,15 +4074,22 @@ class MainTable(tk.Canvas):
         if self.show_horizontal_grid:
             self.grid_cyc = cycle(self.grid_cyctup)
             points = []
+            if self.horizontal_grid_to_end_of_window:
+                x_grid_stop = x2 + can_width
+            else:
+                if last_col_line_pos > x2:
+                    x_grid_stop = x_stop + 1
+                else:
+                    x_grid_stop = x_stop - 1
             for r in range(start_row - 1, end_row):
                 y = self.row_positions[r]
                 st_or_end = next(self.grid_cyc)
                 if st_or_end == "st":
                     points.extend([self.canvasx(0) - 1, y, 
-                                   x2 + can_width if self.horizontal_grid_to_end_of_window else x_stop - 1, y,
-                                   x2 + can_width if self.horizontal_grid_to_end_of_window else x_stop - 1, self.row_positions[r + 1] if len(self.row_positions) - 1 > r else y])
+                                   x_grid_stop, y,
+                                   x_grid_stop, self.row_positions[r + 1] if len(self.row_positions) - 1 > r else y])
                 elif st_or_end == "end":
-                    points.extend([x2 + can_width if self.horizontal_grid_to_end_of_window else x_stop - 1, y,
+                    points.extend([x_grid_stop, y,
                                    self.canvasx(0) - 1, y,
                                    self.canvasx(0) - 1, self.row_positions[r + 1] if len(self.row_positions) - 1 > r else y])
             if points:
@@ -4099,15 +4106,22 @@ class MainTable(tk.Canvas):
         if self.show_vertical_grid:
             self.grid_cyc = cycle(self.grid_cyctup)
             points = []
+            if self.vertical_grid_to_end_of_window:
+                y_grid_stop = y2 + can_height
+            else:
+                if last_row_line_pos > y2:
+                    y_grid_stop = y_stop + 1
+                else:
+                    y_grid_stop = y_stop - 1
             for c in range(start_col - 1, end_col):
                 x = self.col_positions[c]
                 st_or_end = next(self.grid_cyc)
                 if st_or_end == "st":
                     points.extend([x, y1 - 1,
-                                   x, y2 + can_height if self.vertical_grid_to_end_of_window else y_stop - 1,
-                                   self.col_positions[c + 1] if len(self.col_positions) - 1 > c else x, y2 + can_height if self.vertical_grid_to_end_of_window else y_stop - 1])
+                                   x, y_grid_stop,
+                                   self.col_positions[c + 1] if len(self.col_positions) - 1 > c else x, y_grid_stop])
                 elif st_or_end == "end":
-                    points.extend([x, y2 + can_height if self.vertical_grid_to_end_of_window else y_stop - 1,
+                    points.extend([x, y_grid_stop,
                                    x, y1 - 1,
                                    self.col_positions[c + 1] if len(self.col_positions) - 1 > c else x, y1 - 1])
             if points:

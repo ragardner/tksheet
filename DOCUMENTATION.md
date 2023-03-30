@@ -686,7 +686,7 @@ For the colors of specific parts of the table such as gridlines and backgrounds 
 
 Otherwise you can change the theme using the below function.
 ```python
-change_theme(theme = "light blue")
+change_theme(theme = "light blue", redraw = True)
 ```
  - `theme` (`str`) options (themes) are `light blue`, `light green`, `dark`, `dark blue` and `dark green`.
 

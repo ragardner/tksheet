@@ -919,12 +919,12 @@ class Sheet(tk.Frame):
             _rows = set(rows)
         self.MT.data[:] = [row for r, row in enumerate(self.MT.data) if r not in _rows]
         if self.MT.all_rows_displayed:
-            self.set_row_heights(row_heights = tuple(h for r, h in enumerate(tuple(int(b - a) for a, b in zip(self.MT.row_positions, islice(self.MT.row_positions, 1, len(self.MT.row_positions))))) if r not in _rows))
+            self.set_row_heights(row_heights = (h for r, h in enumerate(tuple(int(b - a) for a, b in zip(self.MT.row_positions, islice(self.MT.row_positions, 1, len(self.MT.row_positions))))) if r not in _rows))
         else:
             dispset = set(self.MT.displayed_rows)
             heights_to_del = {i for i, r in enumerate(to_bis) if r in dispset}
             if heights_to_del:
-                self.set_row_heights(row_heights = tuple(h for r, h in enumerate(tuple(int(b - a) for a, b in zip(self.MT.row_positions, islice(self.MT.row_positions, 1, len(self.MT.row_positions))))) if r not in heights_to_del))
+                self.set_row_heights(row_heights = (h for r, h in enumerate(tuple(int(b - a) for a, b in zip(self.MT.row_positions, islice(self.MT.row_positions, 1, len(self.MT.row_positions))))) if r not in heights_to_del))
             self.MT.displayed_rows = [r for r in self.MT.displayed_rows if r not in _rows]
         to_bis = sorted(_rows)
         self.MT.cell_options = {(r if not bisect.bisect_left(to_bis, r) else r - bisect.bisect_left(to_bis, r), c): v for (r, c), v in self.MT.cell_options.items() if r not in _rows}
@@ -1024,12 +1024,12 @@ class Sheet(tk.Frame):
         self.MT.data[:] = [[e for c, e in enumerate(r) if c not in to_del] for r in self.MT.data]
         to_bis = sorted(to_del)
         if self.MT.all_columns_displayed:
-            self.set_column_widths(column_widths = tuple(w for c, w in enumerate(tuple(int(b - a) for a, b in zip(self.MT.col_positions, islice(self.MT.col_positions, 1, len(self.MT.col_positions))))) if c not in to_del))
+            self.set_column_widths(column_widths = (w for c, w in enumerate(tuple(int(b - a) for a, b in zip(self.MT.col_positions, islice(self.MT.col_positions, 1, len(self.MT.col_positions))))) if c not in to_del))
         else:
             dispset = set(self.MT.displayed_columns)
             widths_to_del = {i for i, c in enumerate(to_bis) if c in dispset}
             if widths_to_del:
-                self.set_column_widths(column_widths = tuple(w for c, w in enumerate(tuple(int(b - a) for a, b in zip(self.MT.col_positions, islice(self.MT.col_positions, 1, len(self.MT.col_positions))))) if c not in widths_to_del))
+                self.set_column_widths(column_widths = (w for c, w in enumerate(tuple(int(b - a) for a, b in zip(self.MT.col_positions, islice(self.MT.col_positions, 1, len(self.MT.col_positions))))) if c not in widths_to_del))
             self.MT.displayed_columns = [c if not bisect.bisect_left(to_bis, c) else c - bisect.bisect_left(to_bis, c) for c in self.MT.displayed_columns if c not in to_del]
         self.MT.cell_options = {(r, c if not bisect.bisect_left(to_bis, c) else c - bisect.bisect_left(to_bis, c)): v for (r, c), v in self.MT.cell_options.items() if c not in to_del}
         self.MT.col_options = {c if not bisect.bisect_left(to_bis, c) else c - bisect.bisect_left(to_bis, c): v for c, v in self.MT.col_options.items() if c not in to_del}
@@ -1840,36 +1840,36 @@ class Sheet(tk.Frame):
         if redraw:
             self.refresh()
 
-    def change_theme(self, theme = "light blue"):
+    def change_theme(self, theme = "light blue", redraw = True):
         if theme == "light blue":
             self.MT.display_selected_fg_over_highlights = False
             self.set_options(**theme_light_blue,
-                              redraw = True)
+                             redraw = redraw)
             self.config(bg = theme_light_blue['table_bg'])
         elif theme == "dark":
             self.MT.display_selected_fg_over_highlights = False
             self.set_options(**theme_dark,
-                              redraw = True)
+                             redraw = redraw)
             self.config(bg = theme_dark['table_bg'])
         elif theme == "light green":
             self.MT.display_selected_fg_over_highlights = True
             self.set_options(**theme_light_green,
-                              redraw = True)
+                             redraw = redraw)
             self.config(bg = theme_light_green['table_bg'])
         elif theme == "dark blue":
             self.MT.display_selected_fg_over_highlights = True
             self.set_options(**theme_dark_blue,
-                              redraw = True)
+                             redraw = redraw)
             self.config(bg = theme_dark_blue['table_bg'])
         elif theme == "dark green":
             self.MT.display_selected_fg_over_highlights = True
             self.set_options(**theme_dark_green,
-                              redraw = True)
+                             redraw = redraw)
             self.config(bg = theme_dark_green['table_bg'])
         elif theme == "black":
             self.MT.display_selected_fg_over_highlights = False
             self.set_options(**theme_black,
-                              redraw = True)
+                             redraw = redraw)
             self.config(bg = theme_black['table_bg'])
         self.MT.recreate_all_selection_boxes()
             

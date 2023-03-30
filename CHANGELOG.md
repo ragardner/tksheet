@@ -1,5 +1,14 @@
 ### Latest version in release notes is current version
 
+### Version 5.6.4
+Fixed:
+ - `set_row_heights()`/`set_column_widths()` failing to set if iterable was empty
+ - `delete_rows()`/`delete_columns()` failing to delete row heights, column widths if arg is empty
+ - Edges of grid lines appearing when not meant to
+
+Changed:
+ - Add `redraw` option for `change_theme()`
+
 ### Version 5.6.3
 Fixed:
  - Dropdown boxes in main table not opening in certain circumstances
