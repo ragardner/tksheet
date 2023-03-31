@@ -34,6 +34,8 @@ class RowIndex(tk.Canvas):
         self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
         self.grid_cyctup = ("st", "end")
         self.grid_cyc = cycle(self.grid_cyctup)
+        self.txt_last_drawn_coords = {}
+        self.txt_last_drawn_config = {}
         self.being_drawn_rect = None
         self.extra_motion_func = None
         self.extra_b1_press_func = None
@@ -74,7 +76,7 @@ class RowIndex(tk.Canvas):
         self.disp_resize_lines = {}
         self.disp_dropdown = {}
         self.disp_checkbox = {}
-        self.hidd_text = {}
+        self.hidd_text = PopKeyAndValueDict()
         self.hidd_high = {}
         self.hidd_grid = {}
         self.hidd_fill_sels = {}
@@ -248,6 +250,7 @@ class RowIndex(tk.Canvas):
             x = self.canvasx(event.x)
             y = self.canvasy(event.y)
             mouse_over_resize = False
+            mouse_over_selected = False
             if self.height_resizing_enabled and not mouse_over_resize:
                 r = self.check_mouse_position_height_resizers(x, y)
                 if r is not None:
@@ -268,6 +271,10 @@ class RowIndex(tk.Canvas):
                 except:
                     self.rsz_w = None
             if not mouse_over_resize:
+                if self.MT.row_selected(self.MT.identify_row(event, allow_end = False)):
+                    self.config(cursor = "hand2")
+                    mouse_over_selected = True
+            if not mouse_over_resize and not mouse_over_selected:
                 self.MT.reset_mouse_motion_creations()
         if self.extra_motion_func is not None:
             self.extra_motion_func(event)
@@ -337,10 +344,13 @@ class RowIndex(tk.Canvas):
         elif self.row_selection_enabled and self.rsz_h is None and self.rsz_w is None:
             r = self.MT.identify_row(y = event.y)
             if r < len(self.MT.row_positions) - 1:
-                if self.MT.single_selection_enabled:
-                    self.select_row(r, redraw = True)
-                elif self.MT.toggle_selection_enabled:
-                    self.toggle_select_row(r, redraw = True)
+                if self.MT.row_selected(r):
+                    self.dragged_row = r
+                else:
+                    if self.MT.single_selection_enabled:
+                        self.select_row(r, redraw = True)
+                    elif self.MT.toggle_selection_enabled:
+                        self.toggle_select_row(r, redraw = True)
         if self.extra_b1_press_func is not None:
             self.extra_b1_press_func(event)
     
@@ -457,6 +467,10 @@ class RowIndex(tk.Canvas):
             self.MT.set_yviews("moveto", 1)
             
     def b1_release(self, event = None):
+        if self.being_drawn_rect is not None:
+            to_sel = tuple(self.being_drawn_rect)
+            self.being_drawn_rect = None
+            self.MT.create_selected(*to_sel)
         self.MT.bind("<MouseWheel>", self.MT.mousewheel)
         if self.height_resizing_enabled and self.rsz_h is not None and self.currently_resizing_height:
             self.currently_resizing_height = False
@@ -536,14 +550,12 @@ class RowIndex(tk.Canvas):
             else:
                 self.mouseclick_outside_editor_or_dropdown()
             self.b1_pressed_loc = None
-            self.closed_dropdown = None
-                        
+            self.closed_dropdown = None    
         self.dragged_row = None
         self.currently_resizing_width = False
         self.currently_resizing_height = False
         self.rsz_w = None
         self.rsz_h = None
-        self.being_drawn_rect = None
         self.mouse_motion(event)
         if self.extra_b1_release_func is not None:
             self.extra_b1_release_func(event)
@@ -874,20 +886,6 @@ class RowIndex(tk.Canvas):
             self.disp_high[self.create_rectangle(x1, y1, x2, y2, fill = fill, outline = outline, tag = tag)] = True
         return True
 
-    def redraw_text(self, x, y, text, fill, font, anchor, tag):
-        if self.hidd_text:
-            t, sh = self.hidd_text.popitem()
-            self.coords(t, x, y)
-            if sh:
-                self.itemconfig(t, text = text, fill = fill, font = font, anchor = anchor)
-            else:
-                self.itemconfig(t, text = text, fill = fill, font = font, anchor = anchor, state = "normal")
-            self.lift(t)
-        else:
-            t = self.create_text(x, y, text = text, fill = fill, font = font, anchor = anchor, tag = tag)
-        self.disp_text[t] = True
-        return t
-
     def redraw_gridline(self, points, fill, width, tag):
         if self.hidd_grid:
             t, sh = self.hidd_grid.popitem()
@@ -1000,6 +998,7 @@ class RowIndex(tk.Canvas):
                                        0,
                                        self.current_width,
                                        last_row_line_pos + self.MT.empty_vertical))
+        drawn_txt = {}
         self.hidd_text.update(self.disp_text)
         self.disp_text = {}
         self.hidd_high.update(self.disp_high)
@@ -1037,6 +1036,7 @@ class RowIndex(tk.Canvas):
         sb = y2 + 2
         c_2 = self.index_selected_cells_bg if self.index_selected_cells_bg.startswith("#") else Color_Map_[self.index_selected_cells_bg]
         c_3 = self.index_selected_rows_bg if self.index_selected_rows_bg.startswith("#") else Color_Map_[self.index_selected_rows_bg]
+        font = self.MT._font
         for r in range(start_row, end_row - 1):
             fr = self.MT.row_positions[r]
             sr = self.MT.row_positions[r + 1]
@@ -1140,7 +1140,38 @@ class RowIndex(tk.Canvas):
                 if len(lns) > start_line:
                     for txt in islice(lns, start_line, None):
                         if y + self.MT.half_txt_h - 1 > y1:
-                            t = self.redraw_text(x, y, text = txt, fill = tf, font = self.MT._font, anchor = cell_alignment, tag = "t")
+                            
+                            config = (txt, tf, font, cell_alignment)
+                                            
+                            if (x, y) in self.txt_last_drawn_coords and self.txt_last_drawn_coords[(x, y)].config == config and self.txt_last_drawn_coords[(x, y)].iid in self.hidd_text:
+                                (t, sh), option = self.hidd_text.popkv(self.txt_last_drawn_coords[(x, y)].iid), 0
+                                
+                            elif config in self.txt_last_drawn_config and self.txt_last_drawn_config[config].iid in self.hidd_text:
+                                (t, sh), option = self.hidd_text.popkv(self.txt_last_drawn_config[config].iid), 1
+                                
+                            elif (x, y) in self.txt_last_drawn_coords and self.txt_last_drawn_coords[(x, y)].iid in self.hidd_text:
+                                (t, sh), option = self.hidd_text.popkv(self.txt_last_drawn_coords[(x, y)].iid), 2
+                                
+                            elif self.hidd_text:
+                                (t, sh), option = self.hidd_text.popitem(), 3
+                                
+                            else:
+                                t, sh, option = self.create_text(x, y, text = txt, fill = tf, font = font, anchor = cell_alignment, tag = "t"), True, 4
+
+                            if option in (1, 3):
+                                self.coords(t, x, y)
+                            if option in (2, 3):
+                                if sh:
+                                    self.itemconfig(t, text = txt, fill = tf, font = font, anchor = cell_alignment)
+                                else:
+                                    self.itemconfig(t, text = txt, fill = tf, font = font, anchor = cell_alignment, state = "normal")
+                            
+                            elif not option and not sh:
+                                self.itemconfig(t, state = "normal")
+                                    
+                            drawn_txt[(x, y)] = TextDrawnConfig((txt, tf, font, cell_alignment), t)
+                            self.disp_text[t] = True
+
                             wd = self.bbox(t)
                             wd = wd[2] - wd[0]
                             if wd > mw:
@@ -1171,7 +1202,38 @@ class RowIndex(tk.Canvas):
                 if len(lns) > start_line:
                     for txt in islice(lns, start_line, None):
                         if y + self.MT.half_txt_h - 1 > y1:
-                            t = self.redraw_text(x, y, text = txt, fill = tf, font = self.MT._font, anchor = cell_alignment, tag = "t")
+                            
+                            config = (txt, tf, font, cell_alignment)
+                                            
+                            if (x, y) in self.txt_last_drawn_coords and self.txt_last_drawn_coords[(x, y)].config == config and self.txt_last_drawn_coords[(x, y)].iid in self.hidd_text:
+                                (t, sh), option = self.hidd_text.popkv(self.txt_last_drawn_coords[(x, y)].iid), 0
+                                
+                            elif config in self.txt_last_drawn_config and self.txt_last_drawn_config[config].iid in self.hidd_text:
+                                (t, sh), option = self.hidd_text.popkv(self.txt_last_drawn_config[config].iid), 1
+                                
+                            elif (x, y) in self.txt_last_drawn_coords and self.txt_last_drawn_coords[(x, y)].iid in self.hidd_text:
+                                (t, sh), option = self.hidd_text.popkv(self.txt_last_drawn_coords[(x, y)].iid), 2
+                                
+                            elif self.hidd_text:
+                                (t, sh), option = self.hidd_text.popitem(), 3
+                                
+                            else:
+                                t, sh, option = self.create_text(x, y, text = txt, fill = tf, font = font, anchor = cell_alignment, tag = "t"), True, 4
+
+                            if option in (1, 3):
+                                self.coords(t, x, y)
+                            if option in (2, 3):
+                                if sh:
+                                    self.itemconfig(t, text = txt, fill = tf, font = font, anchor = cell_alignment)
+                                else:
+                                    self.itemconfig(t, text = txt, fill = tf, font = font, anchor = cell_alignment, state = "normal")
+                            
+                            elif not option and not sh:
+                                self.itemconfig(t, state = "normal")
+                                    
+                            drawn_txt[(x, y)] = TextDrawnConfig((txt, tf, font, cell_alignment), t)
+                            self.disp_text[t] = True
+                            
                             wd = self.bbox(t)
                             wd = wd[2] - wd[0]
                             if wd > mw:
@@ -1198,7 +1260,38 @@ class RowIndex(tk.Canvas):
                 if len(lns) > start_line:
                     for txt in islice(lns, start_line, None):
                         if y + self.MT.half_txt_h - 1 > y1:
-                            t = self.redraw_text(x, y, text = txt, fill = tf, font = self.MT._font, anchor = cell_alignment, tag = "t")
+                            
+                            config = (txt, tf, font, cell_alignment)
+                                            
+                            if (x, y) in self.txt_last_drawn_coords and self.txt_last_drawn_coords[(x, y)].config == config and self.txt_last_drawn_coords[(x, y)].iid in self.hidd_text:
+                                (t, sh), option = self.hidd_text.popkv(self.txt_last_drawn_coords[(x, y)].iid), 0
+                                
+                            elif config in self.txt_last_drawn_config and self.txt_last_drawn_config[config].iid in self.hidd_text:
+                                (t, sh), option = self.hidd_text.popkv(self.txt_last_drawn_config[config].iid), 1
+                                
+                            elif (x, y) in self.txt_last_drawn_coords and self.txt_last_drawn_coords[(x, y)].iid in self.hidd_text:
+                                (t, sh), option = self.hidd_text.popkv(self.txt_last_drawn_coords[(x, y)].iid), 2
+                                
+                            elif self.hidd_text:
+                                (t, sh), option = self.hidd_text.popitem(), 3
+                                
+                            else:
+                                t, sh, option = self.create_text(x, y, text = txt, fill = tf, font = font, anchor = cell_alignment, tag = "t"), True, 4
+
+                            if option in (1, 3):
+                                self.coords(t, x, y)
+                            if option in (2, 3):
+                                if sh:
+                                    self.itemconfig(t, text = txt, fill = tf, font = font, anchor = cell_alignment)
+                                else:
+                                    self.itemconfig(t, text = txt, fill = tf, font = font, anchor = cell_alignment, state = "normal")
+                            
+                            elif not option and not sh:
+                                self.itemconfig(t, state = "normal")
+                                    
+                            drawn_txt[(x, y)] = TextDrawnConfig((txt, tf, font, cell_alignment), t)
+                            self.disp_text[t] = True
+                            
                             if drow in self.cell_options and 'dropdown' in self.cell_options[drow]:
                                 wd = self.bbox(t)
                                 wd = wd[2] - wd[0]
@@ -1213,6 +1306,9 @@ class RowIndex(tk.Canvas):
                         y += self.MT.xtra_lines_increment
                         if y + self.MT.half_txt_h - 1 > sr:
                             break
+        self.txt_last_drawn_coords = drawn_txt
+        self.txt_last_drawn_config = {v: k for k, v in drawn_txt.items()}
+        self.tag_raise("t")
         for t, sh in self.hidd_text.items():
             if sh:
                 self.itemconfig(t, state = "hidden")
