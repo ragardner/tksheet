@@ -4217,6 +4217,10 @@ class MainTable(tk.Canvas):
                             elif cell_alignment == "center":
                                 x = x + ceil(box_w / 2) 
                             mw = mw - box_w - 1
+                            try:
+                                draw_check = self.data[r][dcol]
+                            except:
+                                draw_check = False
                             self.redraw_checkbox(r,
                                                  dcol,
                                                  fc + 2,
@@ -4224,7 +4228,7 @@ class MainTable(tk.Canvas):
                                                  fc + 2 + self.txt_h + 2,
                                                  fr + self.txt_h + 4,
                                                  fill = tf if self.cell_options[(r, dcol)]['checkbox']['state'] == "normal" else self.table_grid_fg,
-                                                 outline = "", tag = "cb", draw_check = self.data[r][dcol])
+                                                 outline = "", tag = "cb", draw_check = draw_check)
                     
                     try:
                         if (r, dcol) in self.cell_options and 'checkbox' in self.cell_options[(r, dcol)]:

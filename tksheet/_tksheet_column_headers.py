@@ -1041,6 +1041,10 @@ class ColumnHeaders(tk.Canvas):
                     elif cell_alignment == "center":
                         x += ceil(box_w / 2) + 1
                     mw = mw - box_w - 1
+                    try:
+                        draw_check = self.MT._headers[dcol] if isinstance(self.MT._headers, (list, tuple)) else self.MT.data[self.MT._headers][dcol]
+                    except:
+                        draw_check = False
                     self.redraw_checkbox(dcol,
                                          fc + 2,
                                          0,
@@ -1049,7 +1053,7 @@ class ColumnHeaders(tk.Canvas):
                                          fill = tf if self.cell_options[dcol]['checkbox']['state'] == "normal" else self.header_grid_fg,
                                          outline = "",
                                          tag = "cb", 
-                                         draw_check = self.MT._headers[dcol] if isinstance(self.MT._headers, (list, tuple)) else self.MT.data[self.MT._headers][dcol])
+                                         draw_check = draw_check)
 
             try:
                 if dcol in self.cell_options and 'checkbox' in self.cell_options[dcol]:

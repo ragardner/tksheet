@@ -1095,6 +1095,10 @@ class RowIndex(tk.Canvas):
                     elif cell_alignment == "center":
                         x += ceil(box_w / 2) + 1
                     mw = mw - box_w - 1
+                    try:
+                        draw_check = self.MT._row_index[r] if isinstance(self.MT._row_index, (list, tuple)) else self.MT.data[r][self.MT._row_index]
+                    except:
+                        draw_check = False
                     self.redraw_checkbox(r,
                                          0,
                                          fr + 2,
@@ -1103,7 +1107,7 @@ class RowIndex(tk.Canvas):
                                          fill = tf if self.cell_options[r]['checkbox']['state'] == "normal" else self.index_grid_fg,
                                          outline = "",
                                          tag = "cb",
-                                         draw_check = self.MT._row_index[r] if isinstance(self.MT._row_index, (list, tuple)) else self.MT.data[r][self.MT._row_index])
+                                         draw_check = draw_check)
 
             try:
                 if r in self.cell_options and 'checkbox' in self.cell_options[r]:

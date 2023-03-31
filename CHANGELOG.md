@@ -1,5 +1,9 @@
 ### Latest version in release notes is current version
 
+### Version 5.6.5
+Fixed:
+ - [#152](https://github.com/ragardner/tksheet/issues/152)
+
 ### Version 5.6.4
 Fixed:
  - `set_row_heights()`/`set_column_widths()` failing to set if iterable was empty
