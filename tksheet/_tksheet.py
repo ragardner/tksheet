@@ -918,14 +918,13 @@ class Sheet(tk.Frame):
         else:
             _rows = set(rows)
         self.MT.data[:] = [row for r, row in enumerate(self.MT.data) if r not in _rows]
-        rhs = tuple(int(b - a) for a, b in zip(self.MT.row_positions, islice(self.MT.row_positions, 1, len(self.MT.row_positions))))
         if self.MT.all_rows_displayed:
-            self.set_row_heights(row_heights = tuple(h for r, h in enumerate(rhs) if r not in _rows))
+            self.set_row_heights(row_heights = (h for r, h in enumerate(tuple(int(b - a) for a, b in zip(self.MT.row_positions, islice(self.MT.row_positions, 1, len(self.MT.row_positions))))) if r not in _rows))
         else:
             dispset = set(self.MT.displayed_rows)
             heights_to_del = {i for i, r in enumerate(to_bis) if r in dispset}
             if heights_to_del:
-                self.set_row_heights(row_heights = tuple(h for r, h in enumerate(rhs) if r not in heights_to_del))
+                self.set_row_heights(row_heights = (h for r, h in enumerate(tuple(int(b - a) for a, b in zip(self.MT.row_positions, islice(self.MT.row_positions, 1, len(self.MT.row_positions))))) if r not in heights_to_del))
             self.MT.displayed_rows = [r for r in self.MT.displayed_rows if r not in _rows]
         to_bis = sorted(_rows)
         self.MT.cell_options = {(r if not bisect.bisect_left(to_bis, r) else r - bisect.bisect_left(to_bis, r), c): v for (r, c), v in self.MT.cell_options.items() if r not in _rows}
@@ -1024,14 +1023,13 @@ class Sheet(tk.Frame):
             to_del = set(columns)
         self.MT.data[:] = [[e for c, e in enumerate(r) if c not in to_del] for r in self.MT.data]
         to_bis = sorted(to_del)
-        cws = tuple(int(b - a) for a, b in zip(self.MT.col_positions, islice(self.MT.col_positions, 1, len(self.MT.col_positions))))
         if self.MT.all_columns_displayed:
-            self.set_column_widths(column_widths = tuple(w for c, w in enumerate(cws) if c not in to_del))
+            self.set_column_widths(column_widths = (w for c, w in enumerate(tuple(int(b - a) for a, b in zip(self.MT.col_positions, islice(self.MT.col_positions, 1, len(self.MT.col_positions))))) if c not in to_del))
         else:
             dispset = set(self.MT.displayed_columns)
             widths_to_del = {i for i, c in enumerate(to_bis) if c in dispset}
             if widths_to_del:
-                self.set_column_widths(column_widths = tuple(w for c, w in enumerate(cws) if c not in widths_to_del))
+                self.set_column_widths(column_widths = (w for c, w in enumerate(tuple(int(b - a) for a, b in zip(self.MT.col_positions, islice(self.MT.col_positions, 1, len(self.MT.col_positions))))) if c not in widths_to_del))
             self.MT.displayed_columns = [c if not bisect.bisect_left(to_bis, c) else c - bisect.bisect_left(to_bis, c) for c in self.MT.displayed_columns if c not in to_del]
         self.MT.cell_options = {(r, c if not bisect.bisect_left(to_bis, c) else c - bisect.bisect_left(to_bis, c)): v for (r, c), v in self.MT.cell_options.items() if c not in to_del}
         self.MT.col_options = {c if not bisect.bisect_left(to_bis, c) else c - bisect.bisect_left(to_bis, c): v for c, v in self.MT.col_options.items() if c not in to_del}
@@ -2757,10 +2755,8 @@ class Sheet_Dropdown(Sheet):
                  width = None,
                  height = None,
                  font = None,
-                 colors = {'bg': theme_light_blue['popup_menu_bg'],
-                           'fg': theme_light_blue['popup_menu_fg'],
-                           'highlight_bg': theme_light_blue['popup_menu_highlight_bg'],
-                           'highlight_fg': theme_light_blue['popup_menu_highlight_fg']},
+                 bg = theme_light_blue['table_bg'],
+                 fg = theme_light_blue['table_fg'],
                  outline_color = theme_light_blue['table_fg'],
                  outline_thickness = 2,
                  values = [],
@@ -2774,7 +2770,7 @@ class Sheet_Dropdown(Sheet):
                        parent = parent,
                        outline_thickness = outline_thickness,
                        outline_color = outline_color,
-                       table_grid_fg = colors['fg'],
+                       table_grid_fg = outline_color,
                        show_horizontal_grid = True,
                        show_vertical_grid = False,
                        show_header = False,
@@ -2786,16 +2782,16 @@ class Sheet_Dropdown(Sheet):
                        selected_rows_to_end_of_window = True,
                        horizontal_grid_to_end_of_window = True,
                        show_selected_cells_border = False,
-                       table_selected_cells_border_fg = colors['fg'],
-                       table_selected_cells_bg = colors['highlight_bg'],
-                       table_selected_rows_border_fg = colors['fg'],
-                       table_selected_rows_bg = colors['highlight_bg'],
-                       table_selected_rows_fg = colors['highlight_fg'],
+                       table_selected_cells_border_fg = fg,
+                       table_selected_cells_bg = fg,
+                       table_selected_rows_border_fg = fg,
+                       table_selected_rows_bg = fg,
+                       table_selected_rows_fg = bg,
                        width = width,
                        height = height,
                        font = font if font else get_font(),
-                       table_fg = colors['fg'],
-                       table_bg = colors['bg'])
+                       table_fg = fg,
+                       table_bg = bg)
         self.parent = parent
         self.hide_dropdown_window = hide_dropdown_window
         self.arrowkey_RIGHT = arrowkey_RIGHT
@@ -2804,6 +2800,8 @@ class Sheet_Dropdown(Sheet):
         self.w_ = width
         self.r = r
         self.c = c
+        self.bg = bg
+        self.fg = fg
         self.row = -1
         self.single_index = single_index
         self.bind("<Motion>", self.mouse_motion)

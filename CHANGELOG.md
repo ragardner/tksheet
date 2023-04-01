@@ -1,17 +1,5 @@
 ### Latest version in release notes is current version
 
-### Version 5.6.6
-Fixed:
- - `delete_rows()`/`delete_columns()` incorrect row heights/column widths after use
-
-Improved:
- - Significant performance improvements in redrawing
- - Default theme `"light_blue"`
- - Can now drag and drop columns and rows with or without shift being held down, mouse cursor changes to hand when over selected
-
-Changed:
- - Dropdown box colors now use popup menu colors
-
 ### Version 5.6.5
 Fixed:
  - [#152](https://github.com/ragardner/tksheet/issues/152)

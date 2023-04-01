@@ -25,15 +25,6 @@ BeginDragDropEvent = namedtuple("BeginDragDropEvent", "eventname columnstomove m
 EndDragDropEvent = namedtuple("EndDragDropEvent", "eventname oldindexes newindexes movedto")
 ResizeEvent = namedtuple("ResizeEvent", "eventname index oldsize newsize")
 DropDownModifiedEvent = namedtuple("DropDownModifiedEvent", "eventname row column value")
-TextDrawnConfig = namedtuple("TextDrawnConfig", "config iid")
-TextDrawnCoords = namedtuple("TextDrawnCoords", "coords iid")
-
-
-class PopKeyAndValueDict(dict):
-    def popkv(self, k):
-        kv = (k, self[k])
-        self.pop(k)
-        return kv
 
 
 class TextEditor_(tk.Text):
