@@ -362,6 +362,7 @@ class ColumnHeaders(tk.Canvas):
                     else:
                         self.dragged_col = c
                 else:
+                    self.being_drawn_rect = (0, c, len(self.MT.row_positions) - 1, c + 1, "columns")
                     if self.MT.single_selection_enabled:
                         self.select_col(c, redraw = True)
                     elif self.MT.toggle_selection_enabled:
@@ -1016,14 +1017,14 @@ class ColumnHeaders(tk.Canvas):
                 align = self.align
                 
             if align == "w":
-                x = fc + 5
+                x = fc + 3
                 if dcol in self.cell_options and 'dropdown' in self.cell_options[dcol]:
                     mw = sc - fc - self.MT.hdr_txt_h - 2
                     self.redraw_dropdown(fc, 0, sc, self.current_height - 1, 
                                          fill = tf, outline = tf, tag = "dd", draw_outline = not dd_drawn, draw_arrow = mw >= 5,
                                          dd_is_open = self.cell_options[dcol]['dropdown']['window'] != "no dropdown open")
                 else:
-                    mw = sc - fc - 5
+                    mw = sc - fc - 1
 
             elif align == "e":
                 if dcol in self.cell_options and 'dropdown' in self.cell_options[dcol]:
@@ -1033,8 +1034,8 @@ class ColumnHeaders(tk.Canvas):
                                          fill = tf, outline = tf, tag = "dd", draw_outline = not dd_drawn, draw_arrow = mw >= 5,
                                          dd_is_open = self.cell_options[dcol]['dropdown']['window'] != "no dropdown open")
                 else:
-                    mw = sc - fc - 5
-                    x = sc - 5
+                    mw = sc - fc - 1
+                    x = sc - 3
 
             elif align == "center":
                 #stop = fc + 5
@@ -1050,21 +1051,22 @@ class ColumnHeaders(tk.Canvas):
 
             if dcol in self.cell_options and 'checkbox' in self.cell_options[dcol]:
                 if mw > self.MT.hdr_txt_h + 2:
-                    box_w = self.MT.hdr_txt_h + 2
+                    box_w = self.MT.hdr_txt_h + 1
+                    mw -= box_w
                     if align == "w":
-                        x += box_w
+                        x += box_w + 1
                     elif align == "center":
                         x += ceil(box_w / 2) + 1
-                    mw = mw - box_w - 1
+                        mw -= 1
                     try:
                         draw_check = self.MT._headers[dcol] if isinstance(self.MT._headers, (list, tuple)) else self.MT.data[self.MT._headers][dcol]
                     except:
                         draw_check = False
                     self.redraw_checkbox(dcol,
                                          fc + 2,
-                                         0,
-                                         fc + self.MT.hdr_txt_h + 4,
-                                         self.MT.hdr_txt_h + 2,
+                                         2,
+                                         fc + self.MT.hdr_txt_h + 3,
+                                         self.MT.hdr_txt_h + 3,
                                          fill = tf if self.cell_options[dcol]['checkbox']['state'] == "normal" else self.header_grid_fg,
                                          outline = "",
                                          tag = "cb", 
@@ -1143,11 +1145,11 @@ class ColumnHeaders(tk.Canvas):
                                     self.itemconfig(iid, text = txt)
                                     wd = self.bbox(iid)
                             elif align == "center":
+                                self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
                                 tmod = ceil((len(txt) - int(len(txt) * (mw / wd))) / 2)
                                 txt = txt[tmod - 1:-tmod]
                                 self.itemconfig(iid, text = txt)
                                 wd = self.bbox(iid)
-                                self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
                                 while wd[2] - wd[0] > mw:
                                     txt = txt[next(self.c_align_cyc)]
                                     self.itemconfig(iid, text = txt)
@@ -1224,10 +1226,7 @@ class ColumnHeaders(tk.Canvas):
                     text = f"{self.MT.data[self.MT._headers][dcol]}"
                 except:
                     text = ""
-            if self.MT.cell_auto_resize_enabled:
-                if self.height_resizing_enabled:
-                    self.set_current_height_to_cell(dcol)
-                self.set_col_width_run_binding(c)
+            
         elif event is not None and ((hasattr(event, 'keysym') and event.keysym == 'BackSpace') or
                                   event.keycode in (8, 855638143)
                                   ):
@@ -1251,6 +1250,10 @@ class ColumnHeaders(tk.Canvas):
             else:
                 text = text if isinstance(text, str) else f"{text}"
         text = "" if text is None else text
+        if self.MT.cell_auto_resize_enabled:
+            if self.height_resizing_enabled:
+                self.set_current_height_to_cell(dcol)
+            self.set_col_width_run_binding(c)
         self.select_col(c = c, keep_other_selections = True)
         self.create_text_editor(c = c, text = text, set_data_ref_on_destroy = True, dropdown = dropdown)
         return True

@@ -3104,7 +3104,7 @@ class MainTable(tk.Canvas):
                 if txt:
                     itmcon(x2, text = txt)
                     b = itmbbx(x2)
-                    w = b[2] - b[0] + 7 + self.txt_h
+                    w = b[2] - b[0] + 7 + self.hdr_txt_h
                 else:
                     w = self.min_cw
             else:
@@ -3116,9 +3116,9 @@ class MainTable(tk.Canvas):
                     if txt:
                         itmcon(x2, text = txt)
                         b = itmbbx(x2)
-                        w = b[2] - b[0] + self.txt_h + 7 if cn in self.CH.cell_options and 'dropdown' in self.CH.cell_options[cn] else b[2] - b[0] + 7
+                        w = b[2] - b[0] + self.hdr_txt_h + 7 if cn in self.CH.cell_options and 'dropdown' in self.CH.cell_options[cn] else b[2] - b[0] + 7
                     else:
-                        w = self.min_cw + self.txt_h + 7 if cn in self.CH.cell_options and 'dropdown' in self.CH.cell_options[cn] else self.min_cw
+                        w = self.min_cw + self.hdr_txt_h + 7 if cn in self.CH.cell_options and 'dropdown' in self.CH.cell_options[cn] else self.min_cw
                 except:
                     if self.CH.default_hdr == "letters":
                         itmcon(x2, text = f"{num2alpha(cn)}")
@@ -4248,12 +4248,13 @@ class MainTable(tk.Canvas):
 
                     if (r, dcol) in self.cell_options and 'checkbox' in self.cell_options[(r, dcol)]:
                         if mw > self.txt_h + 2:
-                            box_w = self.txt_h + 2
+                            box_w = self.txt_h + 1
+                            mw -= box_w
                             if align == "w":
-                                x = x + box_w + 2
+                                x += box_w + 1
                             elif align == "center":
-                                x = x + ceil(box_w / 2) 
-                            mw = mw - box_w - 1
+                                x += ceil(box_w / 2) + 1
+                                mw -= 1
                             try:
                                 draw_check = self.data[r][dcol]
                             except:
@@ -4262,7 +4263,7 @@ class MainTable(tk.Canvas):
                                                  dcol,
                                                  fc + 2,
                                                  fr + 2,
-                                                 fc + 2 + self.txt_h + 2,
+                                                 fc + self.txt_h + 3,
                                                  fr + self.txt_h + 3,
                                                  fill = tf if self.cell_options[(r, dcol)]['checkbox']['state'] == "normal" else self.table_grid_fg,
                                                  outline = "", tag = "cb", draw_check = draw_check)
@@ -4342,6 +4343,7 @@ class MainTable(tk.Canvas):
                                                     self.itemconfig(iid, text = txt)
                                                     wd = self.bbox(iid)
                                             elif align == "center":
+                                                self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
                                                 tmod = ceil((len(txt) - int(len(txt) * (mw / wd))) / 2)
                                                 txt = txt[tmod - 1:-tmod]
                                                 self.itemconfig(iid, text = txt)
@@ -4482,7 +4484,7 @@ class MainTable(tk.Canvas):
         else:
             return tuple()
 
-    def create_current(self, r, c, type_ = "cell", inside = False): # cell, col or row
+    def create_current(self, r, c, type_ = "cell", inside = False): # cell, column or row
         r1, c1, r2, c2 = r, c, r + 1, c + 1
         self.delete("Current_Inside", "Current_Outside")
         self.RI.delete("Current_Inside", "Current_Outside")
@@ -4497,10 +4499,16 @@ class MainTable(tk.Canvas):
             tagr = ("Current_Inside", f"{r1}_{c1}_{r2}_{c2}", type_)
         else:
             tagr = ("Current_Outside", f"{r1}_{c1}_{r2}_{c2}", type_)
+        if type_ == "cell":
+            outline = self.table_selected_cells_border_fg
+        elif type_ == "row":
+            outline = self.table_selected_rows_border_fg
+        elif type_ == "column":
+            outline = self.table_selected_columns_border_fg
         if self.show_selected_cells_border:
             b = self.create_rectangle(self.col_positions[c1] + 1, self.row_positions[r1] + 1, self.col_positions[c2], self.row_positions[r2],
                                       fill = "",
-                                      outline = self.table_selected_cells_border_fg,
+                                      outline = outline,
                                       width = 2,
                                       tags = tagr)
             self.tag_raise(b)
@@ -5070,8 +5078,6 @@ class MainTable(tk.Canvas):
                 elif hasattr(event, 'keysym') and event.keysym == 'F2':
                     extra_func_key = "F2"
             text = f"{self.data[r][c]}" if self.all_columns_displayed else f"{self.data[r][self.displayed_columns[c]]}"
-            if self.cell_auto_resize_enabled:
-                self.set_cell_size_to_text(r, c, only_set_if_too_small = True, redraw = True, run_binding = True)
         elif event is not None and (hasattr(event, 'keysym') and event.keysym == 'BackSpace'):
             extra_func_key = "BackSpace"
             text = ""
@@ -5093,6 +5099,8 @@ class MainTable(tk.Canvas):
             else:
                 text = text if isinstance(text, str) else f"{text}"
         text = "" if text is None else text
+        if self.cell_auto_resize_enabled:
+            self.set_cell_size_to_text(r, c, only_set_if_too_small = True, redraw = True, run_binding = True)
         if not self.currently_selected():
             self.select_cell(r = r, c = c, keep_other_selections = True)
         self.create_text_editor(r = r, c = c, text = text, set_data_ref_on_destroy = True, dropdown = dropdown)

@@ -457,6 +457,8 @@ class Sheet(tk.Frame):
             self.MT.extra_end_edit_cell_func = func
             self.CH.extra_begin_edit_cell_func = func
             self.CH.extra_end_edit_cell_func = func
+            self.RI.extra_begin_edit_cell_func = func
+            self.RI.extra_end_edit_cell_func = func
             
             self.RI.ri_extra_end_drag_drop_func = func
             self.CH.ch_extra_end_drag_drop_func = func
@@ -1849,33 +1851,27 @@ class Sheet(tk.Frame):
             self.refresh()
 
     def change_theme(self, theme = "light blue", redraw = True):
-        if theme == "light blue":
-            self.MT.display_selected_fg_over_highlights = False
+        if theme.lower() in ("light blue", "light_blue"):
             self.set_options(**theme_light_blue,
                              redraw = redraw)
             self.config(bg = theme_light_blue['table_bg'])
-        elif theme == "dark":
-            self.MT.display_selected_fg_over_highlights = False
+        elif theme.lower() == "dark":
             self.set_options(**theme_dark,
                              redraw = redraw)
             self.config(bg = theme_dark['table_bg'])
-        elif theme == "light green":
-            self.MT.display_selected_fg_over_highlights = True
+        elif theme.lower() in ("light green", "light_green"):
             self.set_options(**theme_light_green,
                              redraw = redraw)
             self.config(bg = theme_light_green['table_bg'])
-        elif theme == "dark blue":
-            self.MT.display_selected_fg_over_highlights = True
+        elif theme.lower() in ("dark blue", "dark_blue"):
             self.set_options(**theme_dark_blue,
                              redraw = redraw)
             self.config(bg = theme_dark_blue['table_bg'])
-        elif theme == "dark green":
-            self.MT.display_selected_fg_over_highlights = True
+        elif theme.lower() in ("dark green", "dark_green"):
             self.set_options(**theme_dark_green,
                              redraw = redraw)
             self.config(bg = theme_dark_green['table_bg'])
-        elif theme == "black":
-            self.MT.display_selected_fg_over_highlights = False
+        elif theme.lower() == "black":
             self.set_options(**theme_black,
                              redraw = redraw)
             self.config(bg = theme_black['table_bg'])

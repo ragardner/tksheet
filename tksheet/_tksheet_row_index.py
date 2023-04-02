@@ -351,6 +351,7 @@ class RowIndex(tk.Canvas):
                     else:
                         self.dragged_row = r
                 else:
+                    self.being_drawn_rect = (r, 0, r + 1, len(self.MT.col_positions) - 1, "rows")
                     if self.MT.single_selection_enabled:
                         self.select_row(r, redraw = True)
                     elif self.MT.toggle_selection_enabled:
@@ -553,8 +554,8 @@ class RowIndex(tk.Canvas):
                 drow = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r]
                 canvasy = self.canvasy(event.y)
                 if ((drow in self.cell_options and 'dropdown' in self.cell_options[drow] and event.x < self.current_width and event.x > self.current_width - self.MT.txt_h - 4) or
-                    (drow in self.cell_options and 'checkbox' in self.cell_options[drow] and event.x < self.current_width + self.MT.txt_h + 5)):
-                    if canvasy < self.MT.row_positions[r] + self.MT.txt_h + 5:
+                    (drow in self.cell_options and 'checkbox' in self.cell_options[drow] and event.x < self.MT.txt_h + 5)):
+                    if canvasy < self.MT.row_positions[r] + self.MT.txt_h:
                         self.open_cell(event)
             else:
                 self.mouseclick_outside_editor_or_dropdown()
@@ -1102,20 +1103,20 @@ class RowIndex(tk.Canvas):
 
             if r in self.cell_options and 'checkbox' in self.cell_options[r]:
                 if mw > + 2:
-                    box_w = self.MT.txt_h + 2
+                    box_w = self.MT.txt_h + 1
+                    mw -= box_w
                     if align == "w":
-                        x += box_w
+                        x += box_w + 1
                     elif align == "center":
                         x += ceil(box_w / 2) + 1
-                    mw = mw - box_w - 1
                     try:
                         draw_check = self.MT._row_index[r] if isinstance(self.MT._row_index, (list, tuple)) else self.MT.data[r][self.MT._row_index]
                     except:
                         draw_check = False
                     self.redraw_checkbox(r,
-                                         0,
+                                         2,
                                          fr + 2,
-                                         self.MT.txt_h + 2,
+                                         self.MT.txt_h + 3,
                                          fr + self.MT.txt_h + 3,
                                          fill = tf if self.cell_options[r]['checkbox']['state'] == "normal" else self.index_grid_fg,
                                          outline = "",
@@ -1282,8 +1283,6 @@ class RowIndex(tk.Canvas):
                     text = f"{self.MT.data[self.MT._row_index][drow]}"
                 except:
                     text = ""
-            if self.MT.cell_auto_resize_enabled:
-                self.set_row_height_run_binding(r)
         elif event is not None and ((hasattr(event, 'keysym') and event.keysym == 'BackSpace') or
                                   event.keycode in (8, 855638143)
                                   ):
@@ -1307,6 +1306,8 @@ class RowIndex(tk.Canvas):
             else:
                 text = text if isinstance(text, str) else f"{text}"
         text = "" if text is None else text
+        if self.MT.cell_auto_resize_enabled:
+            self.set_row_height_run_binding(r)
         self.select_row(r = r, keep_other_selections = True, redraw = not dropdown)
         self.create_text_editor(r = r, text = text, set_data_ref_on_destroy = True, dropdown = dropdown)
         return True

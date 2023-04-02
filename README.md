@@ -30,8 +30,8 @@ pip install tksheet --upgrade
 
 ### Light Blue Theme
 
-![alt text](https://i.imgur.com/VaARHUp.png)
+![alt text](https://i.imgur.com/ojU3IQi.jpeg)
 
 ### Dark Theme
 
-![alt text](https://i.imgur.com/ldzbkN9.png)
+![alt text](https://i.imgur.com/JeF9vJe.jpeg)
