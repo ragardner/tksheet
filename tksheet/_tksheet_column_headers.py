@@ -2,6 +2,7 @@ from ._tksheet_vars import *
 from ._tksheet_other_classes import *
 
 from itertools import islice, accumulate, chain, cycle, repeat
+from collections import defaultdict
 from math import floor, ceil
 import bisect
 import pickle
@@ -69,15 +70,15 @@ class ColumnHeaders(tk.Canvas):
         self.currently_resizing_height = False
         self.ch_rc_popup_menu = None
         
-        self.disp_text = {}
-        self.disp_high = {}
+        self.disp_text = defaultdict(set)
+        self.disp_high = defaultdict(set)
         self.disp_grid = {}
         self.disp_fill_sels = {}
         self.disp_resize_lines = {}
         self.disp_dropdown = {}
         self.disp_checkbox = {}
-        self.hidd_text = {}
-        self.hidd_high = {}
+        self.hidd_text = defaultdict(set)
+        self.hidd_high = defaultdict(set)
         self.hidd_grid = {}
         self.hidd_fill_sels = {}
         self.hidd_resize_lines = {}
@@ -265,6 +266,7 @@ class ColumnHeaders(tk.Canvas):
             x = self.canvasx(event.x)
             y = self.canvasy(event.y)
             mouse_over_resize = False
+            mouse_over_selected = False
             if self.width_resizing_enabled:
                 c = self.check_mouse_position_width_resizers(x, y)
                 if c is not None:
@@ -284,6 +286,10 @@ class ColumnHeaders(tk.Canvas):
                 except:
                     self.rsz_h = None
             if not mouse_over_resize:
+                if self.MT.col_selected(self.MT.identify_col(event, allow_end = False)):
+                    self.config(cursor = "hand2")
+                    mouse_over_selected = True
+            if not mouse_over_resize and not mouse_over_selected:
                 self.MT.reset_mouse_motion_creations()
         if self.extra_motion_func is not None:
             self.extra_motion_func(event)
@@ -348,10 +354,18 @@ class ColumnHeaders(tk.Canvas):
             self.MT.deselect("all")
         elif self.col_selection_enabled and self.rsz_w is None and self.rsz_h is None:
             if c < len(self.MT.col_positions) - 1:
-                if self.MT.single_selection_enabled:
-                    self.select_col(c, redraw = True)
-                elif self.MT.toggle_selection_enabled:
-                    self.toggle_select_col(c, redraw = True)
+                if self.MT.col_selected(c):
+                    dcol = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
+                    if ((dcol in self.cell_options and 'dropdown' in self.cell_options[dcol] and x < self.MT.col_positions[c + 1] and x > self.MT.col_positions[c + 1] - self.MT.hdr_txt_h - 4) or
+                        (dcol in self.cell_options and 'checkbox' in self.cell_options[dcol] and x < self.MT.col_positions[c] + self.MT.hdr_txt_h + 5)) and event.y < self.MT.hdr_txt_h + 5:
+                        pass
+                    else:
+                        self.dragged_col = c
+                else:
+                    if self.MT.single_selection_enabled:
+                        self.select_col(c, redraw = True)
+                    elif self.MT.toggle_selection_enabled:
+                        self.toggle_select_col(c, redraw = True)
         if self.extra_b1_press_func is not None:
             self.extra_b1_press_func(event)
     
@@ -360,7 +374,7 @@ class ColumnHeaders(tk.Canvas):
         if self.width_resizing_enabled and self.rsz_w is not None and self.currently_resizing_width:
             x = self.canvasx(event.x)
             size = x - self.MT.col_positions[self.rsz_w - 1]
-            if not size <= self.MT.min_cw and size < self.max_cw:
+            if not size < self.MT.min_cw and size < self.max_cw:
                 self.delete_resize_lines()
                 self.MT.delete_resize_lines()
                 line2x = self.MT.col_positions[self.rsz_w - 1]
@@ -424,6 +438,7 @@ class ColumnHeaders(tk.Canvas):
                 self.create_resize_line(xpos, 0, xpos, self.current_height, width = 3, fill = self.drag_and_drop_bg, tag = "dd")
                 self.MT.create_resize_line(xpos, y1, xpos, y2, width = 3, fill = self.drag_and_drop_bg, tag = "dd")
         elif self.MT.drag_selection_enabled and self.col_selection_enabled and self.rsz_h is None and self.rsz_w is None:
+            need_redraw = False
             end_col = self.MT.identify_col(x = event.x)
             currently_selected = self.MT.currently_selected()
             if end_col < len(self.MT.col_positions) - 1 and currently_selected:
@@ -436,6 +451,7 @@ class ColumnHeaders(tk.Canvas):
                         rect = (0, end_col, len(self.MT.row_positions) - 1, start_col + 1, "columns")
                         func_event = tuple(range(end_col, start_col + 1))
                     if self.being_drawn_rect != rect:
+                        need_redraw = True
                         self.MT.delete_selection_rects(delete_current = False)
                         self.MT.create_selected(*rect)
                         self.being_drawn_rect = rect
@@ -449,6 +465,7 @@ class ColumnHeaders(tk.Canvas):
                     except:
                         pass
                     self.check_xview()
+                    need_redraw = True
                 elif event.x < 0 and self.canvasx(self.winfo_width()) > 0 and xcheck and xcheck[0] > 0:
                     try:
                         self.xview_scroll(-1, "units")
@@ -456,7 +473,9 @@ class ColumnHeaders(tk.Canvas):
                     except:
                         pass
                     self.check_xview()
-            self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = False)
+                    need_redraw = True
+            if need_redraw:
+                self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = False)
         if self.extra_b1_motion_func is not None:
             self.extra_b1_motion_func(event)
 
@@ -468,6 +487,10 @@ class ColumnHeaders(tk.Canvas):
             self.MT.set_xviews("moveto", 1)
             
     def b1_release(self, event = None):
+        if self.being_drawn_rect is not None:
+            to_sel = tuple(self.being_drawn_rect)
+            self.being_drawn_rect = None
+            self.MT.create_selected(*to_sel)
         self.MT.bind("<MouseWheel>", self.MT.mousewheel)
         if self.width_resizing_enabled and self.rsz_w is not None and self.currently_resizing_width:
             self.currently_resizing_width = False
@@ -548,13 +571,11 @@ class ColumnHeaders(tk.Canvas):
                 self.mouseclick_outside_editor_or_dropdown()
             self.b1_pressed_loc = None
             self.closed_dropdown = None
-
         self.dragged_col = None
         self.currently_resizing_width = False
         self.currently_resizing_height = False
         self.rsz_w = None
         self.rsz_h = None
-        self.being_drawn_rect = None
         self.mouse_motion(event)
         if self.extra_b1_release_func is not None:
             self.extra_b1_release_func(event)
@@ -807,33 +828,45 @@ class ColumnHeaders(tk.Canvas):
             tf = self.header_fg
         return tf, redrawn
             
-    def redraw_highlight(self, x1, y1, x2, y2, fill, outline, tag, can_width = None):
-        if self.hidd_high:
-            t, sh = self.hidd_high.popitem()
-            self.coords(t, x1 - 1 if outline else x1, y1 - 1 if outline else y1, x2 if can_width is None else x2 + can_width, y2)
-            if sh:
-                self.itemconfig(t, fill = fill, outline = outline)
+    def redraw_highlight(self, x1, y1, x2, y2, fill, outline, tag):
+        config = (fill, outline)
+        coords = (x1 - 1 if outline else x1,
+                  y1 - 1 if outline else y1,
+                  x2, 
+                  y2)
+        k = None
+        if config in self.hidd_high:
+            k = config
+            iid, showing = self.hidd_high[k].pop()
+            if all(int(crd1) == int(crd2) for crd1, crd2 in zip(self.coords(iid), coords)):
+                option = 0 if showing else 2
             else:
-                self.itemconfig(t, fill = fill, outline = outline, tag = tag, state = "normal")
-            self.lift(t)
-        else:
-            t = self.create_rectangle(x1 - 1 if outline else x1, y1 - 1 if outline else y1, x2 if can_width is None else x2 + can_width, y2, fill = fill, outline = outline, tag = tag)
-        self.disp_high[t] = True
-        return True
+                option = 1 if showing else 3
 
-    def redraw_text(self, x, y, text, fill, font, anchor, tag):
-        if self.hidd_text:
-            t, sh = self.hidd_text.popitem()
-            self.coords(t, x, y)
-            if sh:
-                self.itemconfig(t, text = text, fill = fill, font = font, anchor = anchor)
+        elif self.hidd_high:
+            k = next(iter(self.hidd_high))
+            iid, showing = self.hidd_high[k].pop()
+            if all(int(crd1) == int(crd2) for crd1, crd2 in zip(self.coords(iid), coords)):
+                option = 2 if showing else 3
             else:
-                self.itemconfig(t, text = text, fill = fill, font = font, anchor = anchor, state = "normal")
-            self.lift(t)
+                option = 3
+            
         else:
-            t = self.create_text(x, y, text = text, fill = fill, font = font, anchor = anchor, tag = tag)
-        self.disp_text[t] = True
-        return t
+            iid, showing, option = self.create_rectangle(coords, fill = fill, outline = outline, tag = tag), 1, 4
+
+        if option in (1, 3):
+            self.coords(iid, coords)
+        if option in (2, 3):
+            if showing:
+                self.itemconfig(iid, fill = fill, outline = outline)
+            else:
+                self.itemconfig(iid, fill = fill, outline = outline, tag = tag, state = "normal")
+        
+        if k is not None and not self.hidd_high[k]:
+            del self.hidd_high[k]
+
+        self.disp_high[config].add(DrawnItem(iid = iid, showing = 1))
+        return True
 
     def redraw_gridline(self,points, fill, width, tag):
         if self.hidd_grid:
@@ -899,11 +932,11 @@ class ColumnHeaders(tk.Canvas):
         self.disp_checkbox[t] = True
         if draw_check:
             # draw filled box
-            x1 = x1 + 2
-            y1 = y1 + 2
-            x2 = x2 - 1
-            y2 = y2 - 1
-            points = self.MT.get_checkbox_points(x1, y1, x2, y2)
+            x1 = x1 + 4
+            y1 = y1 + 4
+            x2 = x2 - 3
+            y2 = y2 - 3
+            points = self.MT.get_checkbox_points(x1, y1, x2, y2, radius = 4)
             if self.hidd_checkbox:
                 t, sh = self.hidd_checkbox.popitem()
                 self.coords(t, points)
@@ -916,41 +949,23 @@ class ColumnHeaders(tk.Canvas):
                 t = self.create_polygon(points, fill = fill, outline = outline, tag = tag, smooth = True)
             self.disp_checkbox[t] = True
 
-            # draw one line of X
-            if self.hidd_grid:
-                t, sh = self.hidd_grid.popitem()
-                self.coords(t, x1 + 2, y1 + 2, x2 - 2, y2 - 2)
-                if sh:
-                    self.itemconfig(t, fill = self.get_widget_bg_fg(dcol)[0], capstyle = tk.ROUND, joinstyle = tk.ROUND, width = 2)
-                else:
-                    self.itemconfig(t, fill = self.get_widget_bg_fg(dcol)[0], capstyle = tk.ROUND, joinstyle = tk.ROUND, width = 2, tag = tag, state = "normal")
-                self.lift(t)
-            else:
-                t = self.create_line(x1 + 2, y1 + 2, x2 - 2, y2 - 2, fill = self.get_widget_bg_fg(dcol)[0], capstyle = tk.ROUND, joinstyle = tk.ROUND, width = 2, tag = tag)
-            self.disp_grid[t] = True
-
-            # draw other line of X
-            if self.hidd_grid:
-                t, sh = self.hidd_grid.popitem()
-                self.coords(t, x2 - 2, y1 + 2, x1 + 2, y2 - 2)
-                if sh:
-                    self.itemconfig(t, fill = self.get_widget_bg_fg(dcol)[0], capstyle = tk.ROUND, joinstyle = tk.ROUND, width = 2)
-                else:
-                    self.itemconfig(t, fill = self.get_widget_bg_fg(dcol)[0], capstyle = tk.ROUND, joinstyle = tk.ROUND, width = 2, tag = tag, state = "normal")
-                self.lift(t)
-            else:
-                t = self.create_line(x2 - 2, y1 + 2, x1 + 2, y2 - 2, fill = self.get_widget_bg_fg(dcol)[0], capstyle = tk.ROUND, joinstyle = tk.ROUND, width = 2, tag = tag)
-            self.disp_grid[t] = True
-
     def redraw_grid_and_text(self, last_col_line_pos, x1, x_stop, start_col, end_col, selected_cols, selected_rows, actual_selected_cols):
         self.configure(scrollregion = (0,
                                        0,
                                        last_col_line_pos + self.MT.empty_horizontal,
                                        self.current_height))
-        self.hidd_text.update(self.disp_text)
-        self.disp_text = {}
-        self.hidd_high.update(self.disp_high)
-        self.disp_high = {}
+        for k, v in self.disp_text.items():
+            if k in self.hidd_text:
+                self.hidd_text[k] = self.hidd_text[k] | self.disp_text[k]
+            else:
+                self.hidd_text[k] = v
+        self.disp_text = defaultdict(set)
+        for k, v in self.disp_high.items():
+            if k in self.hidd_high:
+                self.hidd_high[k] = self.hidd_high[k] | self.disp_high[k]
+            else:
+                self.hidd_high[k] = v
+        self.disp_high = defaultdict(set)
         self.hidd_grid.update(self.disp_grid)
         self.disp_grid = {}
         self.hidd_dropdown.update(self.disp_dropdown)
@@ -996,11 +1011,11 @@ class ColumnHeaders(tk.Canvas):
             tf, dd_drawn = self.redraw_highlight_get_text_fg(fc, sc, c, c_2, c_3, selected_cols, selected_rows, actual_selected_cols, dcol)
 
             if dcol in self.cell_options and 'align' in self.cell_options[dcol]:
-                cell_alignment = self.cell_options[dcol]['align']
+                align = self.cell_options[dcol]['align']
             else:
-                cell_alignment = self.align
+                align = self.align
                 
-            if cell_alignment == "w":
+            if align == "w":
                 x = fc + 5
                 if dcol in self.cell_options and 'dropdown' in self.cell_options[dcol]:
                     mw = sc - fc - self.MT.hdr_txt_h - 2
@@ -1010,7 +1025,7 @@ class ColumnHeaders(tk.Canvas):
                 else:
                     mw = sc - fc - 5
 
-            elif cell_alignment == "e":
+            elif align == "e":
                 if dcol in self.cell_options and 'dropdown' in self.cell_options[dcol]:
                     mw = sc - fc - self.MT.hdr_txt_h - 2
                     x = sc - 5 - self.MT.hdr_txt_h
@@ -1021,7 +1036,7 @@ class ColumnHeaders(tk.Canvas):
                     mw = sc - fc - 5
                     x = sc - 5
 
-            elif cell_alignment == "center":
+            elif align == "center":
                 #stop = fc + 5
                 if dcol in self.cell_options and 'dropdown' in self.cell_options[dcol]:
                     mw = sc - fc - self.MT.hdr_txt_h - 2
@@ -1036,9 +1051,9 @@ class ColumnHeaders(tk.Canvas):
             if dcol in self.cell_options and 'checkbox' in self.cell_options[dcol]:
                 if mw > self.MT.hdr_txt_h + 2:
                     box_w = self.MT.hdr_txt_h + 2
-                    if cell_alignment == "w":
+                    if align == "w":
                         x += box_w
-                    elif cell_alignment == "center":
+                    elif align == "center":
                         x += ceil(box_w / 2) + 1
                     mw = mw - box_w - 1
                     try:
@@ -1072,78 +1087,91 @@ class ColumnHeaders(tk.Canvas):
                     lns = (f"{dcol + 1}", )
                 else:
                     lns = (f"{dcol + 1} {num2alpha(dcol)}", )
-
-            if cell_alignment == "center":
-                if fc + 5 > x_stop or mw <= 5:
-                    continue
+            if not ((align == "w" and (x > x_stop or mw <= 5)) or
+                    (align == "e" and (x > x_stop or mw <= 5)) or
+                    (align == "center" and (fc + 5 > x_stop or mw <= 5))):
                 for txt in islice(lns, self.lines_start_at if self.lines_start_at < len(lns) else len(lns) - 1, None):
                     if y > top:
-                        t = self.redraw_text(x, y, text = txt, fill = tf, font = font, anchor = "center", tag = "t")
-                        wd = self.bbox(t)
+                        config = TextCfg(txt, tf, font, align)
+                        k = None
+                        if config in self.hidd_text:
+                            k = config
+                            iid, showing = self.hidd_text[k].pop()
+                            cc1, cc2 = self.coords(iid)
+                            if (int(cc1) == int(x) and
+                                int(cc2) == int(y)):
+                                option = 0 if showing else 2
+                            else:
+                                option = 1 if showing else 3
+                        elif self.hidd_text:
+                            k = next(iter(self.hidd_text))
+                            iid, showing = self.hidd_text[k].pop()
+                            cc1, cc2 = self.coords(iid)
+                            if (int(cc1) == int(x) and
+                                int(cc2) == int(y)):
+                                option = 2 if showing else 3
+                            else:
+                                option = 3
+                        else:
+                            iid, showing, option = self.create_text(x, y, text = txt, fill = tf, font = font, anchor = align, tag = "t"), 1, 4
+                        if option in (1, 3):
+                            self.coords(iid, x, y)
+                        if option in (2, 3):
+                            if showing:
+                                self.itemconfig(iid, text = txt, fill = tf, font = font, anchor = align)
+                            else:
+                                self.itemconfig(iid, text = txt, fill = tf, font = font, anchor = align, state = "normal")
+                        if k is not None and not self.hidd_text[k]:
+                            del self.hidd_text[k]
+                        wd = self.bbox(iid)
                         wd = wd[2] - wd[0]
                         if wd > mw:
-                            tl = len(txt)
-                            tmod = ceil((tl - int(tl * (mw / wd))) / 2)
-                            txt = txt[tmod - 1:-tmod]
-                            self.itemconfig(t, text = txt)
-                            wd = self.bbox(t)
-                            self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
-                            while wd[2] - wd[0] > mw:
-                                txt = txt[next(self.c_align_cyc)]
-                                self.itemconfig(t, text = txt)
-                                wd = self.bbox(t)
-                            self.coords(t, x, y)
+                            if align == "w":
+                                txt = txt[:int(len(txt) * (mw / wd))]
+                                self.itemconfig(iid, text = txt)
+                                wd = self.bbox(iid)
+                                while wd[2] - wd[0] > mw:
+                                    txt = txt[:-1]
+                                    self.itemconfig(iid, text = txt)
+                                    wd = self.bbox(iid)
+                            elif align == "e":
+                                txt = txt[len(txt) - int(len(txt) * (mw / wd)):]
+                                self.itemconfig(iid, text = txt)
+                                wd = self.bbox(iid)
+                                while wd[2] - wd[0] > mw:
+                                    txt = txt[1:]
+                                    self.itemconfig(iid, text = txt)
+                                    wd = self.bbox(iid)
+                            elif align == "center":
+                                tmod = ceil((len(txt) - int(len(txt) * (mw / wd))) / 2)
+                                txt = txt[tmod - 1:-tmod]
+                                self.itemconfig(iid, text = txt)
+                                wd = self.bbox(iid)
+                                self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
+                                while wd[2] - wd[0] > mw:
+                                    txt = txt[next(self.c_align_cyc)]
+                                    self.itemconfig(iid, text = txt)
+                                    wd = self.bbox(iid)
+                                self.coords(iid, x, y)
+                            self.disp_text[config._replace(txt = txt)].add(DrawnItem(iid = iid, showing = 1))
+                        else:
+                            self.disp_text[config].add(DrawnItem(iid = iid, showing = 1))
                     y += self.MT.hdr_xtra_lines_increment
                     if y - 1 > self.current_height:
                         break
-
-            elif cell_alignment == "e":
-                if x > x_stop or mw <= 5:
-                    continue
-                for txt in islice(lns, self.lines_start_at if self.lines_start_at < len(lns) else len(lns) - 1, None):
-                    if y > top:
-                        t = self.redraw_text(x, y, text = txt, fill = tf, font = font, anchor = cell_alignment, tag = "t")
-                        wd = self.bbox(t)
-                        wd = wd[2] - wd[0]
-                        if wd > mw:
-                            txt = txt[len(txt) - int(len(txt) * (mw / wd)):]
-                            self.itemconfig(t, text = txt)
-                            wd = self.bbox(t)
-                            while wd[2] - wd[0] > mw:
-                                txt = txt[1:]
-                                self.itemconfig(t, text = txt)
-                                wd = self.bbox(t)
-                    y += self.MT.hdr_xtra_lines_increment
-                    if y - 1 > self.current_height:
-                        break
-
-            elif cell_alignment == "w":
-                if x > x_stop or mw <= 5:
-                    continue
-                for txt in islice(lns, self.lines_start_at if self.lines_start_at < len(lns) else len(lns) - 1, None):
-                    if y > top:
-                        t = self.redraw_text(x, y, text = txt, fill = tf, font = font, anchor = cell_alignment, tag = "t")
-                        wd = self.bbox(t)
-                        wd = wd[2] - wd[0]
-                        if wd > mw:
-                            nl = int(len(txt) * (mw / wd))
-                            self.itemconfig(t, text = txt[:nl])
-                            wd = self.bbox(t)
-                            while wd[2] - wd[0] > mw:
-                                nl -= 1
-                                self.dchars(t, nl)
-                                wd = self.bbox(t)
-                    y += self.MT.hdr_xtra_lines_increment
-                    if y - 1 > self.current_height:
-                        break
-        for t, sh in self.hidd_text.items():
-            if sh:
-                self.itemconfig(t, state = "hidden")
-                self.hidd_text[t] = False
-        for t, sh in self.hidd_high.items():
-            if sh:
-                self.itemconfig(t, state = "hidden")
-                self.hidd_high[t] = False
+        self.tag_raise("t")
+        for cfg, set_ in self.hidd_text.items():
+            for namedtup in tuple(set_):
+                if namedtup.showing:
+                    self.itemconfig(namedtup.iid, state = "hidden")
+                    self.hidd_text[cfg].discard(namedtup)
+                    self.hidd_text[cfg].add(namedtup._replace(showing = 0))
+        for cfg, set_ in self.hidd_high.items():
+            for namedtup in tuple(set_):
+                if namedtup.showing:
+                    self.itemconfig(namedtup.iid, state = "hidden")
+                    self.hidd_high[cfg].discard(namedtup)
+                    self.hidd_high[cfg].add(namedtup._replace(showing = 0))
         for t, sh in self.hidd_grid.items():
             if sh:
                 self.itemconfig(t, state = "hidden")
@@ -1231,10 +1259,10 @@ class ColumnHeaders(tk.Canvas):
     def get_cell_align(self, c):
         dcol = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
         if dcol in self.cell_options and 'align' in self.cell_options[dcol]:
-            cell_alignment = self.cell_options[dcol]['align']
+            align = self.cell_options[dcol]['align']
         else:
-            cell_alignment = self.align
-        return cell_alignment
+            align = self.align
+        return align
 
     # c is displayed col
     def create_text_editor(self,
@@ -1551,8 +1579,6 @@ class ColumnHeaders(tk.Canvas):
         if self.cell_options[dcol]['dropdown']['state'] == "normal":
             if not self.edit_cell_(c = c, dropdown = True, event = event):
                 return
-        #bg, fg = self.get_widget_bg_fg(dcol)
-        bg, fg = self.header_bg, self.header_fg
         win_h, anchor = self.get_dropdown_height_anchor(dcol)
         window = self.MT.parentframe.dropdown_class(self.MT.winfo_toplevel(),
                                                     0,
@@ -1560,9 +1586,11 @@ class ColumnHeaders(tk.Canvas):
                                                     width = self.MT.col_positions[c + 1] - self.MT.col_positions[c] + 1,
                                                     height = win_h,
                                                     font = self.MT._hdr_font,
-                                                    bg = bg,
-                                                    fg = fg,
-                                                    outline_color = fg,
+                                                    colors = {'bg': self.MT.popup_menu_bg, 
+                                                              'fg': self.MT.popup_menu_fg, 
+                                                              'highlight_bg': self.MT.popup_menu_highlight_bg,
+                                                              'highlight_fg': self.MT.popup_menu_highlight_fg},
+                                                    outline_color = self.MT.popup_menu_fg,
                                                     values = self.cell_options[dcol]['dropdown']['values'],
                                                     hide_dropdown_window = self.hide_dropdown_window,
                                                     arrowkey_RIGHT = self.MT.arrowkey_RIGHT,

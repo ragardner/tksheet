@@ -1,5 +1,22 @@
 ### Latest version in release notes is current version
 
+### Version 5.6.6
+Fixed:
+ - `delete_rows()`/`delete_columns()` incorrect row heights/column widths after use
+ - Tab key not seeing cell if out of sight
+ - Row height / column width resizing with mouse incorrect by 1 pixel
+ - Row index not extending if too short when changing a specific index
+
+Improved:
+ - Significant performance improvements in redrawing table, especially when simply selecting cells
+ - Default theme `"light_blue"`
+ - Can now drag and drop columns and rows with or without shift being held down, mouse cursor changes to hand when over selected
+
+Changed:
+ - Dropdown box colors now use popup menu colors
+ - Move table text in left or right alignment by 1 pixel to align with text editor window
+ - Checkboxes no longer have X inside, instead simply a smaller more distinct rectangle to improve redrawing performance
+
 ### Version 5.6.5
 Fixed:
  - [#152](https://github.com/ragardner/tksheet/issues/152)
