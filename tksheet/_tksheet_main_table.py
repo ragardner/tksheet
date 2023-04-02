@@ -4255,6 +4255,8 @@ class MainTable(tk.Canvas):
                             elif align == "center":
                                 x += ceil(box_w / 2) + 1
                                 mw -= 1
+                            else:
+                                mw -= 3
                             try:
                                 draw_check = self.data[r][dcol]
                             except:

@@ -1058,6 +1058,8 @@ class ColumnHeaders(tk.Canvas):
                     elif align == "center":
                         x += ceil(box_w / 2) + 1
                         mw -= 1
+                    else:
+                        mw -= 3
                     try:
                         draw_check = self.MT._headers[dcol] if isinstance(self.MT._headers, (list, tuple)) else self.MT.data[self.MT._headers][dcol]
                     except:

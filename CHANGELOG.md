@@ -8,6 +8,7 @@ Fixed:
  - Row index not extending if too short when changing a specific index
  - Selected rows/columns border fg not displaying in cell border
  - Various minor text placements
+ - Edit index/header prematurely resizing height/width
 
 Improved:
  - Significant performance improvements in redrawing table, especially when simply selecting cells

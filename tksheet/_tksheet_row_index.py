@@ -1109,6 +1109,9 @@ class RowIndex(tk.Canvas):
                         x += box_w + 1
                     elif align == "center":
                         x += ceil(box_w / 2) + 1
+                        mw -= 1
+                    else:
+                        mw -= 3
                     try:
                         draw_check = self.MT._row_index[r] if isinstance(self.MT._row_index, (list, tuple)) else self.MT.data[r][self.MT._row_index]
                     except:
