@@ -1209,6 +1209,21 @@ see(row = 0, column = 0, keep_yscroll = False, keep_xscroll = False, bottom_righ
 
 ___
 
+Check if a cell has any part of it visible, returns `bool`.
+```python
+cell_visible(r, c)
+```
+
+___
+
+Check if a cell is totally visible, returns `bool`.
+```python
+cell_completely_visible(r, c, seperate_axes = False)
+```
+ - `separate_axes` returns tuple of bools e.g. `(cell y axis is visible, cell x axis is visible)`
+
+___
+
 ```python
 set_xview(position, option = "moveto")
 ```

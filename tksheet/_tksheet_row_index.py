@@ -672,10 +672,13 @@ class RowIndex(tk.Canvas):
                 iterable = self.MT.displayed_columns[start_col:end_col]
             new_height = int(min_rh)
             try:
-                if isinstance(self.MT._row_index[row], str):
-                    txt = self.MT._row_index[row]
+                if row in self.cell_options and 'checkbox' in self.cell_options[row]:
+                    txt = self.cell_options[row]['checkbox']['text']
                 else:
-                    txt = f"{self.MT._row_index[row]}"
+                    if isinstance(self.MT._row_index[row], str):
+                        txt = self.MT._row_index[row]
+                    else:
+                        txt = f"{self.MT._row_index[row]}"
             except:
                 txt = ""
             if txt:
@@ -850,7 +853,7 @@ class RowIndex(tk.Canvas):
                                                         f"{int((int(c_1[5:], 16) + int(c_3[5:], 16)) / 2):02X}"),
                                                 outline = self.index_fg if hlrow in self.cell_options and 'dropdown' in self.cell_options[hlrow] and self.MT.show_dropdown_borders else "",
                                                 tag = "s")
-            tf = self.index_selected_rows_fg if self.cell_options[r]['highlight'][1] is None or self.MT.display_selected_fg_over_highlights else self.cell_options[r]['highlight'][1]
+            fill = self.index_selected_rows_fg if self.cell_options[r]['highlight'][1] is None or self.MT.display_selected_fg_over_highlights else self.cell_options[r]['highlight'][1]
         elif r in self.cell_options and 'highlight' in self.cell_options[r] and (r in selected_rows or selected_cols):
             if self.cell_options[r]['highlight'][0] is not None:
                 c_1 = self.cell_options[r]['highlight'][0] if self.cell_options[r]['highlight'][0].startswith("#") else Color_Map_[self.cell_options[r]['highlight'][0]]
@@ -863,11 +866,11 @@ class RowIndex(tk.Canvas):
                                                         f"{int((int(c_1[5:], 16) + int(c_2[5:], 16)) / 2):02X}"),
                                                 outline = self.index_fg if hlrow in self.cell_options and 'dropdown' in self.cell_options[hlrow] and self.MT.show_dropdown_borders else "",
                                                 tag = "s")
-            tf = self.index_selected_cells_fg if self.cell_options[r]['highlight'][1] is None or self.MT.display_selected_fg_over_highlights else self.cell_options[r]['highlight'][1]
+            fill = self.index_selected_cells_fg if self.cell_options[r]['highlight'][1] is None or self.MT.display_selected_fg_over_highlights else self.cell_options[r]['highlight'][1]
         elif r in actual_selected_rows:
-            tf = self.index_selected_rows_fg
+            fill = self.index_selected_rows_fg
         elif r in selected_rows or selected_cols:
-            tf = self.index_selected_cells_fg
+            fill = self.index_selected_cells_fg
         elif r in self.cell_options and 'highlight' in self.cell_options[r]:
             if self.cell_options[r]['highlight'][0] is not None:
                 redrawn = self.redraw_highlight(0, 
@@ -877,10 +880,10 @@ class RowIndex(tk.Canvas):
                                                 fill = self.cell_options[r]['highlight'][0], 
                                                 outline = self.index_fg if hlrow in self.cell_options and 'dropdown' in self.cell_options[hlrow] and self.MT.show_dropdown_borders else "", 
                                                 tag = "s")
-            tf = self.index_fg if self.cell_options[r]['highlight'][1] is None else self.cell_options[r]['highlight'][1]
+            fill = self.index_fg if self.cell_options[r]['highlight'][1] is None else self.cell_options[r]['highlight'][1]
         else:
-            tf = self.index_fg
-        return tf, redrawn
+            fill = self.index_fg
+        return fill, redrawn
 
     def redraw_highlight(self, x1, y1, x2, y2, fill, outline, tag):
         config = (fill, outline)
@@ -1000,7 +1003,7 @@ class RowIndex(tk.Canvas):
                 t = self.create_polygon(points, fill = fill, outline = outline, tag = tag, smooth = True)
             self.disp_checkbox[t] = True
 
-    def redraw_grid_and_text(self, last_row_line_pos, y1, y_stop, start_row, end_row, y2, x1, x_stop, selected_rows, selected_cols, actual_selected_rows):
+    def redraw_grid_and_text(self, last_row_line_pos, scrollpos_top, y_stop, start_row, end_row, scrollpos_bot, selected_rows, selected_cols, actual_selected_rows):
         self.configure(scrollregion = (0,
                                        0,
                                        self.current_width,
@@ -1024,45 +1027,45 @@ class RowIndex(tk.Canvas):
         self.hidd_checkbox.update(self.disp_checkbox)
         self.disp_checkbox = {}
         self.visible_row_dividers = {}
-        y = self.MT.row_positions[start_row]
+        draw_y = self.MT.row_positions[start_row]
         xend = self.current_width - 6
-        self.row_width_resize_bbox = (self.current_width - 2, y1, self.current_width, y2)
+        self.row_width_resize_bbox = (self.current_width - 2, scrollpos_top, self.current_width, scrollpos_bot)
         if self.MT.show_horizontal_grid or self.height_resizing_enabled:
             self.grid_cyc = cycle(self.grid_cyctup)
             points = []
             for r in range(start_row + 1, end_row):
-                y = self.MT.row_positions[r]
+                draw_y = self.MT.row_positions[r]
                 if self.height_resizing_enabled:
-                    self.visible_row_dividers[r] = (1, y - 2, xend, y + 2)
+                    self.visible_row_dividers[r] = (1, draw_y - 2, xend, draw_y + 2)
                 st_or_end = next(self.grid_cyc)
                 if st_or_end == "st":
-                    points.extend([-1, y,
-                                   self.current_width, y,
-                                   self.current_width, self.MT.row_positions[r + 1] if len(self.MT.row_positions) - 1 > r else y])
+                    points.extend([-1, draw_y,
+                                   self.current_width, draw_y,
+                                   self.current_width, self.MT.row_positions[r + 1] if len(self.MT.row_positions) - 1 > r else draw_y])
                 elif st_or_end == "end":
-                    points.extend([self.current_width, y,
-                                   -1, y,
-                                   -1, self.MT.row_positions[r + 1] if len(self.MT.row_positions) - 1 > r else y])
+                    points.extend([self.current_width, draw_y,
+                                   -1, draw_y,
+                                   -1, self.MT.row_positions[r + 1] if len(self.MT.row_positions) - 1 > r else draw_y])
                 if points:
                     self.redraw_gridline(points = points, fill = self.index_grid_fg, width = 1, tag = "h")
-        self.redraw_gridline(points = (0, y, self.current_width, y), width = 1, fill = self.index_grid_fg, tag = "fh")
-        self.redraw_gridline(points = (self.current_width - 1, y1, self.current_width - 1, y_stop), width = 1, fill = self.index_border_fg, tag = "v")
-        sb = y2 + 2
+        self.redraw_gridline(points = (0, draw_y, self.current_width, draw_y), width = 1, fill = self.index_grid_fg, tag = "fh")
+        self.redraw_gridline(points = (self.current_width - 1, scrollpos_top, self.current_width - 1, y_stop), width = 1, fill = self.index_border_fg, tag = "v")
+        scrollpos_bot_add2 = scrollpos_bot + 2
         c_2 = self.index_selected_cells_bg if self.index_selected_cells_bg.startswith("#") else Color_Map_[self.index_selected_cells_bg]
         c_3 = self.index_selected_rows_bg if self.index_selected_rows_bg.startswith("#") else Color_Map_[self.index_selected_rows_bg]
         font = self.MT._font
         for r in range(start_row, end_row - 1):
-            fr = self.MT.row_positions[r]
-            sr = self.MT.row_positions[r + 1]
-            if sr - fr < self.MT.txt_h:
+            rtopgridln = self.MT.row_positions[r]
+            rbotgridln = self.MT.row_positions[r + 1]
+            if rbotgridln - rtopgridln < self.MT.txt_h:
                 continue
-            if sr > sb:
-                sr = sb
+            if rbotgridln > scrollpos_bot_add2:
+                rbotgridln = scrollpos_bot_add2
             if self.MT.all_rows_displayed:
                 drow = r
             else:
                 drow = self.MT.displayed_rows[r]
-            tf, dd_drawn = self.redraw_highlight_get_text_fg(fr, sr, r, c_2, c_3, selected_rows, selected_cols, actual_selected_rows, drow)
+            fill, dd_drawn = self.redraw_highlight_get_text_fg(rtopgridln, rbotgridln, r, c_2, c_3, selected_rows, selected_cols, actual_selected_rows, drow)
             
             if r in self.cell_options and 'align' in self.cell_options[r]:
                 align = self.cell_options[r]['align']
@@ -1070,11 +1073,11 @@ class RowIndex(tk.Canvas):
                 align = self.align
                 
             if align == "w":
-                x = 3
+                draw_x = 3
                 if r in self.cell_options and 'dropdown' in self.cell_options[r]:
                     mw = self.current_width - self.MT.txt_h - 2
-                    self.redraw_dropdown(0, fr, self.current_width - 1, sr - 1, 
-                                         fill = tf, outline = tf, tag = "dd", draw_outline = not dd_drawn, draw_arrow = mw >= 5,
+                    self.redraw_dropdown(0, rtopgridln, self.current_width - 1, rbotgridln - 1, 
+                                         fill = fill, outline = fill, tag = "dd", draw_outline = not dd_drawn, draw_arrow = mw >= 5,
                                          dd_is_open = self.cell_options[r]['dropdown']['window'] != "no dropdown open")
                 else:
                     mw = self.current_width - 2
@@ -1082,33 +1085,33 @@ class RowIndex(tk.Canvas):
             elif align == "e":
                 if r in self.cell_options and 'dropdown' in self.cell_options[r]:
                     mw = self.current_width - self.MT.txt_h - 2
-                    x = self.current_width - 5 - self.MT.txt_h
-                    self.redraw_dropdown(0, fr, self.current_width - 1, sr - 1, 
-                                         fill = tf, outline = tf, tag = "dd", draw_outline = not dd_drawn, draw_arrow = mw >= 5,
+                    draw_x = self.current_width - 5 - self.MT.txt_h
+                    self.redraw_dropdown(0, rtopgridln, self.current_width - 1, rbotgridln - 1, 
+                                         fill = fill, outline = fill, tag = "dd", draw_outline = not dd_drawn, draw_arrow = mw >= 5,
                                          dd_is_open = self.cell_options[r]['dropdown']['window'] != "no dropdown open")
                 else:
                     mw = self.current_width - 2
-                    x = self.current_width - 3
+                    draw_x = self.current_width - 3
 
             elif align == "center":
                 if r in self.cell_options and 'dropdown' in self.cell_options[r]:
                     mw = self.current_width - self.MT.txt_h - 2
-                    x = ceil((self.current_width - self.MT.txt_h) / 2)
-                    self.redraw_dropdown(0, fr, self.current_width - 1, sr - 1, 
-                                         fill = tf, outline = tf, tag = "dd", draw_outline = not dd_drawn, draw_arrow = mw >= 5,
+                    draw_x = ceil((self.current_width - self.MT.txt_h) / 2)
+                    self.redraw_dropdown(0, rtopgridln, self.current_width - 1, rbotgridln - 1, 
+                                         fill = fill, outline = fill, tag = "dd", draw_outline = not dd_drawn, draw_arrow = mw >= 5,
                                          dd_is_open = self.cell_options[r]['dropdown']['window'] != "no dropdown open")
                 else:
                     mw = self.current_width - 1
-                    x = floor(self.current_width / 2)
+                    draw_x = floor(self.current_width / 2)
 
             if r in self.cell_options and 'checkbox' in self.cell_options[r]:
                 if mw > + 2:
                     box_w = self.MT.txt_h + 1
                     mw -= box_w
                     if align == "w":
-                        x += box_w + 1
+                        draw_x += box_w + 1
                     elif align == "center":
-                        x += ceil(box_w / 2) + 1
+                        draw_x += ceil(box_w / 2) + 1
                         mw -= 1
                     else:
                         mw -= 3
@@ -1118,10 +1121,10 @@ class RowIndex(tk.Canvas):
                         draw_check = False
                     self.redraw_checkbox(r,
                                          2,
-                                         fr + 2,
+                                         rtopgridln + 2,
                                          self.MT.txt_h + 3,
-                                         fr + self.MT.txt_h + 3,
-                                         fill = tf if self.cell_options[r]['checkbox']['state'] == "normal" else self.index_grid_fg,
+                                         rtopgridln + self.MT.txt_h + 3,
+                                         fill = fill if self.cell_options[r]['checkbox']['state'] == "normal" else self.index_grid_fg,
                                          outline = "",
                                          tag = "cb",
                                          draw_check = draw_check)
@@ -1143,84 +1146,82 @@ class RowIndex(tk.Canvas):
                     lns = (f"{r + 1}", )
                 else:
                     lns = (f"{r + 1} {num2alpha(r)}", )
-            y = fr + self.MT.fl_ins
+            draw_y = rtopgridln + self.MT.fl_ins
             if mw > 5:
-                start_line = int((y1 - y) / self.MT.xtra_lines_increment) - 1
-                if start_line > 0:
-                    start_line += 1
-                    y += (start_line * self.MT.xtra_lines_increment)
-                elif start_line < 0:
-                    start_line = 0
-                if len(lns) > start_line:
-                    for txt in islice(lns, start_line, None):
-                        if y + self.MT.half_txt_h - 1 > y1:
-                            config = TextCfg(txt, tf, font, align)
-                            k = None
-                            if config in self.hidd_text:
-                                k = config
-                                iid, showing = self.hidd_text[k].pop()
-                                cc1, cc2 = self.coords(iid)
-                                if (int(cc1) == int(x) and
-                                    int(cc2) == int(y)):
-                                    option = 0 if showing else 2
-                                else:
-                                    option = 1 if showing else 3
-                            elif self.hidd_text:
-                                k = next(iter(self.hidd_text))
-                                iid, showing = self.hidd_text[k].pop()
-                                cc1, cc2 = self.coords(iid)
-                                if (int(cc1) == int(x) and
-                                    int(cc2) == int(y)):
-                                    option = 2 if showing else 3
-                                else:
-                                    option = 3
+                draw_y = rtopgridln + self.MT.fl_ins
+                start_ln = int((scrollpos_top - rtopgridln) / self.MT.xtra_lines_increment)
+                if start_ln < 0:
+                    start_ln = 0
+                draw_y += start_ln * self.MT.xtra_lines_increment
+                if draw_y + self.MT.half_txt_h - 1 <= rbotgridln and len(lns) > start_ln:
+                    for txt in islice(lns, start_ln, None):
+                        config = TextCfg(txt, fill, font, align)
+                        k = None
+                        if config in self.hidd_text:
+                            k = config
+                            iid, showing = self.hidd_text[k].pop()
+                            cc1, cc2 = self.coords(iid)
+                            if (int(cc1) == int(draw_x) and
+                                int(cc2) == int(draw_y)):
+                                option = 0 if showing else 2
                             else:
-                                iid, showing, option = self.create_text(x, y, text = txt, fill = tf, font = font, anchor = align, tag = "t"), 1, 4
-                            if option in (1, 3):
-                                self.coords(iid, x, y)
-                            if option in (2, 3):
-                                if showing:
-                                    self.itemconfig(iid, text = txt, fill = tf, font = font, anchor = align)
-                                else:
-                                    self.itemconfig(iid, text = txt, fill = tf, font = font, anchor = align, state = "normal")
-                            if k is not None and not self.hidd_text[k]:
-                                del self.hidd_text[k]
-                            wd = self.bbox(iid)
-                            wd = wd[2] - wd[0]
-                            if wd > mw:
-                                if align == "w" and drow in self.cell_options and 'dropdown' in self.cell_options[drow]:
-                                    txt = txt[:int(len(txt) * (mw / wd))]
-                                    self.itemconfig(iid, text = txt)
-                                    wd = self.bbox(iid)
-                                    while wd[2] - wd[0] > mw:
-                                        txt = txt[:-1]
-                                        self.itemconfig(iid, text = txt)
-                                        wd = self.bbox(iid)
-                                elif align == "e" and drow in self.cell_options and 'checkbox' in self.cell_options[drow]:
-                                    txt = txt[len(txt) - int(len(txt) * (mw / wd)):]
-                                    self.itemconfig(iid, text = txt)
-                                    wd = self.bbox(iid)
-                                    while wd[2] - wd[0] > mw:
-                                        txt = txt[1:]
-                                        self.itemconfig(iid, text = txt)
-                                        wd = self.bbox(iid)
-                                elif align == "center":
-                                    tmod = ceil((len(txt) - int(len(txt) * (mw / wd))) / 2)
-                                    txt = txt[tmod - 1:-tmod]
-                                    self.itemconfig(iid, text = txt)
-                                    wd = self.bbox(iid)
-                                    self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
-                                    while wd[2] - wd[0] > mw:
-                                        txt = txt[next(self.c_align_cyc)]
-                                        self.itemconfig(iid, text = txt)
-                                        wd = self.bbox(iid)
-                                    self.coords(iid, x, y)
-                                self.disp_text[config._replace(txt = txt)].add(DrawnItem(iid = iid, showing = 1))
+                                option = 1 if showing else 3
+                        elif self.hidd_text:
+                            k = next(iter(self.hidd_text))
+                            iid, showing = self.hidd_text[k].pop()
+                            cc1, cc2 = self.coords(iid)
+                            if (int(cc1) == int(draw_x) and
+                                int(cc2) == int(draw_y)):
+                                option = 2 if showing else 3
                             else:
-                                self.disp_text[config].add(DrawnItem(iid = iid, showing = 1))
-                            y += self.MT.xtra_lines_increment
-                            if y + self.MT.half_txt_h - 1 > sr:
-                                break
+                                option = 3
+                        else:
+                            iid, showing, option = self.create_text(draw_x, draw_y, text = txt, fill = fill, font = font, anchor = align, tag = "t"), 1, 4
+                        if option in (1, 3):
+                            self.coords(iid, draw_x, draw_y)
+                        if option in (2, 3):
+                            if showing:
+                                self.itemconfig(iid, text = txt, fill = fill, font = font, anchor = align)
+                            else:
+                                self.itemconfig(iid, text = txt, fill = fill, font = font, anchor = align, state = "normal")
+                        if k is not None and not self.hidd_text[k]:
+                            del self.hidd_text[k]
+                        wd = self.bbox(iid)
+                        wd = wd[2] - wd[0]
+                        if wd > mw:
+                            if align == "w" and drow in self.cell_options and 'dropdown' in self.cell_options[drow]:
+                                txt = txt[:int(len(txt) * (mw / wd))]
+                                self.itemconfig(iid, text = txt)
+                                wd = self.bbox(iid)
+                                while wd[2] - wd[0] > mw:
+                                    txt = txt[:-1]
+                                    self.itemconfig(iid, text = txt)
+                                    wd = self.bbox(iid)
+                            elif align == "e" and drow in self.cell_options and 'checkbox' in self.cell_options[drow]:
+                                txt = txt[len(txt) - int(len(txt) * (mw / wd)):]
+                                self.itemconfig(iid, text = txt)
+                                wd = self.bbox(iid)
+                                while wd[2] - wd[0] > mw:
+                                    txt = txt[1:]
+                                    self.itemconfig(iid, text = txt)
+                                    wd = self.bbox(iid)
+                            elif align == "center" and ((drow in self.cell_options and 'checkbox' in self.cell_options[drow]) or (drow in self.cell_options and 'dropdown' in self.cell_options[drow])):
+                                tmod = ceil((len(txt) - int(len(txt) * (mw / wd))) / 2)
+                                txt = txt[tmod - 1:-tmod]
+                                self.itemconfig(iid, text = txt)
+                                wd = self.bbox(iid)
+                                self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
+                                while wd[2] - wd[0] > mw:
+                                    txt = txt[next(self.c_align_cyc)]
+                                    self.itemconfig(iid, text = txt)
+                                    wd = self.bbox(iid)
+                                self.coords(iid, draw_x, draw_y)
+                            self.disp_text[config._replace(txt = txt)].add(DrawnItem(iid = iid, showing = 1))
+                        else:
+                            self.disp_text[config].add(DrawnItem(iid = iid, showing = 1))
+                        draw_y += self.MT.xtra_lines_increment
+                        if draw_y + self.MT.half_txt_h - 1 > rbotgridln:
+                            break
         self.tag_raise("t")
         for cfg, set_ in self.hidd_text.items():
             for namedtup in tuple(set_):

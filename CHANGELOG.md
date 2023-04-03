@@ -1,5 +1,13 @@
 ### Latest version in release notes is current version
 
+### Version 5.6.7
+Fixed:
+ - [#157](https://github.com/ragardner/tksheet/issues/157)
+ - Double click row height resize not taking into account index checkbox text
+
+Changed:
+ - Some internal variables local to redrawing functions for clarity
+
 ### Version 5.6.6
 Fixed:
  - `delete_rows()`/`delete_columns()` incorrect row heights/column widths after use
