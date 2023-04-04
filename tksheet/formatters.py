@@ -1,9 +1,8 @@
-from datetime import datetime, date, timedelta, time
-from dateutil import parser, tz
 from abc import ABC, abstractmethod
+from typing import Union, Any, Type, Callable
 
-def is_nonelike(n: str):
-    nonelike = {'none', '-', ''}
+def is_nonelike(n: Any):
+    nonelike = {'none', ''}
     if n is None:
         return True
     if isinstance(n, str):
@@ -11,12 +10,12 @@ def is_nonelike(n: str):
     else:
         return False
 
-def to_int(x: str):
+def to_int(x: Any):
     if isinstance(x, int):
         return x
     return int(float(x))
 
-def to_float(x: str):
+def to_float(x: Any):
     if isinstance(x, float):
         return x
     if isinstance(x, str) and x.endswith('%'):
@@ -26,58 +25,7 @@ def to_float(x: str):
             raise ValueError(f'Cannot map {x} to float')
     return float(x)
 
-def to_date(d: str):
-    if isinstance(d, date):
-        return d
-    elif isinstance(d, datetime):
-        return d.date()
-    if isinstance(d, str):
-        try:
-            return parser.parse(d).replace(tzinfo=None).date()
-        except Exception as ex:
-            raise ValueError(f'Cannot map "{d}" to date.')
-    else:
-        raise ValueError(f'Cannot map "{d}" to date.')
-
-def to_datetime(dt: str, time_zone=None):
-    if isinstance(dt, datetime):
-        pass
-    elif isinstance(dt, date):
-        dt = datetime(dt.year, dt.month, dt.day)
-    elif isinstance(dt, str):
-        try:
-            dt = parser.parse(dt)
-        except Exception as ex:
-            raise ValueError(f'Cannot map "{dt}" to datetime.')
-    else:
-        raise ValueError(f'Cannot map "{dt}" to datetime.')
-    if dt.tzinfo is None:
-        dt.replace(tzinfo=tz.tzlocal())
-    dt = dt.astimezone(tz.tzlocal() if time_zone is None else time_zone)
-    return dt.replace(tzinfo=None)
-
-def to_utc_datetime(dt: str):
-    return to_datetime(dt, tz.UTC)
-
-def to_time(t: str):
-    if isinstance(t, timedelta):
-        return t
-    elif isinstance(t, datetime):
-        return timedelta(
-            hours=t.hour, 
-            minutes=t.minute, 
-            seconds=t.second,
-            microseconds=t.microsecond,
-        )
-    elif isinstance(t, str):
-        try:
-            return parser.parse(t).time()
-        except Exception as ex:
-            raise ValueError(f'Cannot map "{t}" to timedelta.')
-    else:
-        raise ValueError(f'Cannot map "{t}" to timedelta.')
-
-def to_bool(val: str):
+def to_bool(val: Any):
     if isinstance(val, bool):
         return val
     v = val.lower()
@@ -90,32 +38,21 @@ def to_bool(val: str):
     else:
         raise ValueError(f'Cannot map "{val}" to bool.')
     
-def to_nullable_int(x):
+def to_nullable_int(x: Any):
     return None if is_nonelike(x) else to_int(x)
 
-def to_nullable_float(x):
+def to_nullable_float(x: Any):
     return None if is_nonelike(x) else to_float(x)
 
-def to_nullable_date(t):
-    return None if is_nonelike(t) else to_date(t)
 
-def to_nullable_datetime(t, time_zone=None):
-    return None if is_nonelike(t) else to_datetime(t, time_zone=time_zone)
-    
-def to_nullable_utc_datetime(t):
-    return None if is_nonelike(t) else to_utc_datetime(t)
-
-def to_nullable_time(t):
-    return None if is_nonelike(t) else to_time(t)
-    
-def to_nullable_bool(b):
+def to_nullable_bool(b: Any):
     return None if is_nonelike(b) else to_bool(b)
 
-class AbstractCellClass(ABC):
+class AbstractFormatterClass(ABC):
     '''
     The base class for all cell formatters. Subclasses must define a __str__ method which determines how the data will be displayed on the table.
     Parameters:
-        value: The value, usaually a string which is pass to the class on initialisaton. 
+        value: The value, usaually a string which is passed to the class on initialisaton. 
         datatypes: The target datatype(s) of the class. Used to validate itself by the data() method.
         converter: A function that allows conversions between the input string value and the target datatype.
         missing_values: The object used in place of data that cannot be convertered to the target datatype(s)
@@ -149,13 +86,80 @@ class AbstractCellClass(ABC):
     def __str__(self):
         pass
 
-    def validator(self) -> bool:
-        if isinstance(self.value, self.valid_datatypes):
-            self.is_valid = True
+    def validator(self, value = None) -> bool:
+        if value is None:
+            value = self.value
+        if isinstance(value, self.valid_datatypes):
+            return True
         else:
-            self.is_valid  = False
-        return self.is_valid
+            return False
     
+    def convert(self, value):
+        if self.pre_conversion_func:
+            value = self.pre_conversion_func(value)
+        value = self.converter(value)
+        if self.post_conversion_func and self.validator(value):
+             value = self.post_conversion_func(value)
+        return value
+    
+    def data(self):
+        if self.validator():
+            return self.value
+        return self.missing_values
+    
+
+class CellFormatter(AbstractFormatterClass):
+    '''
+    Cell formatter class:
+    Parameters:
+        value: The value, usaually a string which is passed to the class on initialisaton. 
+        datatypes: The target datatype(s) of the class. Used to validate itself by the data() method.
+        converter: A function that allows conversions between the input string value and the target datatype.
+        to_str: Function that converts between the datatype and a representative string
+        missing_values: The object used in place of data that cannot be convertered to the target datatype(s). Can be any type with a __str__ method.
+        is_nullable: whether the None values can be stored in addtion to the other datatypes.
+        pre_conversion_func: A function run on the initial value BEFORE it reaches the converter
+        post_conversion_func: A function run on the value AFTER it reaches the converter IF the value has been correctly converted.
+    
+    '''
+
+    def __init__(self, 
+                 value,
+                 datatypes: Union[Type, tuple[Type]],
+                 converter: Callable[[Any], Any], 
+                 to_str: Union[Callable[[Any], str], None] = None,
+                 missing_values: Any = "NA",
+                 nullable = False,
+                 pre_conversion_func: Union[Callable, None] = None, 
+                 post_conversion_func: Union[Callable, None] = None
+                 ):
+        if nullable:
+            if isinstance(datatypes, (list, tuple)):
+                datatypes = [t for t in datatypes]
+                datatypes.append(type(None))
+                datatypes = tuple(datatypes)
+            else:
+                datatypes = (datatypes, type(None))
+            _converter = lambda x: None if is_nonelike(x) else converter(x)
+        else:
+            _converter = converter
+        super().__init__(value, datatypes, _converter, missing_values, pre_conversion_func, post_conversion_func)
+        self.to_str = to_str
+
+    def __str__(self):
+        if self.to_str is None:
+            if not self.validator():
+                return str(self.missing_values)
+            if self.value is None:
+                return ''
+            return str(self.value)
+        else:
+            if not self.validator():
+                return str(self.missing_values)
+            if self.value is None:
+                return ''
+            return self.to_str(self.value)
+        
     def convert(self, value):
         if self.pre_conversion_func:
             value = self.pre_conversion_func(value)
@@ -164,188 +168,14 @@ class AbstractCellClass(ABC):
              value = self.post_conversion_func(value)
         return value
     
-    def data(self):
-        if self.validator():
-            return self.value
-        return self.missing_values
 
-class DateCell(AbstractCellClass):
-    def __init__(self, 
-                 value, 
-                 format = "%m/%d/%Y",
-                 missing_values = "NaT",
-                 converter = to_date,
-                 pre_conversion_func = None,
-                 post_conversion_func = None,
-                 ):
-        self.format = format
-        super().__init__(value, 
-                         date, 
-                         converter,
-                         missing_values,
-                         pre_conversion_func,
-                         post_conversion_func,
-                         )
 
-    def __str__(self):
-        if not self.validator():
-            return self.missing_values
-        return self.value.strftime(self.format)
-    
-class NullableDateCell(AbstractCellClass):
-    def __init__(self, 
-                 value, 
-                 format = "%m/%d/%Y",
-                 missing_values = "NaT",
-                 converter = to_nullable_date,
-                 pre_conversion_func = None,
-                 post_conversion_func = None,
-                 ):
-        self.format = format
-        super().__init__(value, 
-                         (date, type(None)), 
-                         converter,
-                         missing_values,
-                         pre_conversion_func,
-                         post_conversion_func,
-                         )
-
-    def __str__(self):
-        if not self.validator():
-            return self.missing_values   
-        elif isinstance(self.value, date):
-            return self.value.strftime(self.format)
-        return ""
-        
-class NullableDatetimeCell(AbstractCellClass):
-    def __init__(self, 
-                 value, 
-                 format = "%d/%m/%Y %H:%M:%S",
-                 missing_values = "NaT",
-                 converter = to_nullable_datetime,
-                 pre_conversion_func = None,
-                 post_conversion_func = None,
-                 ):
-        self.format = format
-        super().__init__(value, 
-                         (datetime, type(None)), 
-                         converter,
-                         missing_values,
-                         pre_conversion_func,
-                         post_conversion_func,
-                         )
-
-    def __str__(self):
-        if not self.validator():
-            return self.missing_values  
-        elif isinstance(self.value, datetime):
-            return self.value.strftime(self.format)
-        return ""
-
-class DatetimeCell(AbstractCellClass):
-    def __init__(self, 
-                 value, 
-                 format = "%d/%m/%Y %H:%M:%S",
-                 missing_values = "NaT",
-                 converter = to_datetime,
-                 pre_conversion_func = None,
-                 post_conversion_func = None,
-                 ):
-        self.format = format
-        super().__init__(value, 
-                         datetime, 
-                         converter,
-                         missing_values,
-                         pre_conversion_func,
-                         post_conversion_func,
-                         )
-
-    def __str__(self):
-        if not self.validator():
-            return self.missing_values  
-        return self.value.strftime(self.format)
-
-class NullableTimeCell(AbstractCellClass):
-    def __init__(self, 
-                 value, 
-                 format = "%H:%M:%S",
-                 missing_values = "NaT",
-                 converter = to_nullable_time,
-                 pre_conversion_func = None,
-                 post_conversion_func = None,
-                 ):
-        self.format = format
-        super().__init__(value, 
-                         (time, type(None)), 
-                         converter,
-                         missing_values,
-                         pre_conversion_func,
-                         post_conversion_func,
-                         )
-
-    def __str__(self):
-        if not self.validator():
-            return self.missing_values  
-        elif isinstance(self.value, datetime):
-            return self.value.strftime(self.format)
-        return ""
-
-class TimeCell(AbstractCellClass):
-    def __init__(self, 
-                 value, 
-                 format = "%H:%M:%S",
-                 missing_values = "NaT",
-                 converter = to_time,
-                 pre_conversion_func = None,
-                 post_conversion_func = None,
-                 ):
-        self.format = format
-        super().__init__(value, 
-                         time, 
-                         converter,
-                         missing_values,
-                         pre_conversion_func,
-                         post_conversion_func,
-                         )
-
-    def __str__(self):
-        if not self.validator():
-            return self.missing_values  
-        return self.value.strftime(self.format)
-
-class NullableFloatCell(AbstractCellClass):
+class FloatFormatter(AbstractFormatterClass):
     def __init__(self, 
                  value, 
                  decimals = None,
                  missing_values = "NaN",
                  converter = to_nullable_float,
-                 pre_conversion_func = None,
-                 post_conversion_func = None,
-                 ):
-        self.decimals = decimals
-        super().__init__(value, 
-                         (float, type(None)), 
-                         converter,
-                         missing_values,
-                         pre_conversion_func,
-                         post_conversion_func,
-                         )
-
-    def __str__(self):
-        if not self.validator():
-            return self.missing_values
-        if isinstance(self.value, float):
-            if self.decimals != None:
-                return (f"%.{self.decimals}f" % round(self.value, self.decimals))
-            return str(self.value)
-        return ""
-
-class FloatCell(AbstractCellClass):
-    def __init__(self, 
-                 value, 
-                 decimals = None,
-                 missing_values = "NaN",
-                 converter = to_float,
                  pre_conversion_func = None,
                  post_conversion_func = None,
                  ):
@@ -365,8 +195,33 @@ class FloatCell(AbstractCellClass):
             return (f"%.{self.decimals}f" % round(self.value, self.decimals))
         return str(self.value)
     
+class NullableFloatFormatter(AbstractFormatterClass):
+    def __init__(self, 
+                 value, 
+                 decimals = None,
+                 missing_values = "NaN",
+                 converter = to_float,
+                 pre_conversion_func = None,
+                 post_conversion_func = None,
+                 ):
+        self.decimals = decimals
+        super().__init__(value, 
+                         (float, type(None)), 
+                         converter,
+                         missing_values,
+                         pre_conversion_func,
+                         post_conversion_func,
+                         )
 
-class PercentageCell(AbstractCellClass):
+    def __str__(self):
+        if not self.validator():
+            return self.missing_values
+        if self.decimals != None:
+            return (f"%.{self.decimals}f" % round(self.value, self.decimals))
+        return str(self.value)
+    
+
+class PercentageFormatter(AbstractFormatterClass):
     def __init__(self, 
                  value, 
                  decimals = None,
@@ -391,7 +246,7 @@ class PercentageCell(AbstractCellClass):
             return (f"%.{self.decimals}f" % round(self.value*100, self.decimals))+'%'
         return str(self.value*100)+'%'
 
-class NullablePercentageCell(AbstractCellClass):
+class NullablePercentageFormatter(AbstractFormatterClass):
     def __init__(self, 
                  value, 
                  decimals = None,
@@ -418,7 +273,7 @@ class NullablePercentageCell(AbstractCellClass):
             return str(self.value*100)+'%'
         return ""
 
-class NullableIntCell(AbstractCellClass):
+class NullableIntFormatter(AbstractFormatterClass):
     def __init__(self, 
                  value,
                  missing_values = "NaN",
@@ -441,7 +296,7 @@ class NullableIntCell(AbstractCellClass):
             return str(self.value)
         return ""
     
-class IntCell(AbstractCellClass):
+class IntFormatter(AbstractFormatterClass):
     def __init__(self, 
                  value,
                  missing_values = "NaN",
@@ -462,7 +317,7 @@ class IntCell(AbstractCellClass):
             return self.missing_values
         return str(self.value)
     
-class NullableBoolCell(AbstractCellClass):
+class NullableBoolFormatter(AbstractFormatterClass):
     def __init__(self, 
                  value,
                  missing_values = "NA",
@@ -485,7 +340,7 @@ class NullableBoolCell(AbstractCellClass):
             return str(self.value)
         return ""
 
-class BoolCell(AbstractCellClass):
+class BoolFormatter(AbstractFormatterClass):
     def __init__(self, 
                  value,
                  missing_values = "NA",
