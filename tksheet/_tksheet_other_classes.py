@@ -2,9 +2,6 @@ from ._tksheet_vars import *
 from collections import namedtuple
 from itertools import islice
 import tkinter as tk
-# for mac bindings
-from platform import system as get_os
-USER_OS = f"{get_os()}"
 
 
 CurrentlySelectedClass = namedtuple("CurrentlySelectedClass", "row column type_")
@@ -67,10 +64,10 @@ class TextEditor_(tk.Text):
         elif align == "e":
             self.align = "right"
         self.tag_configure("align", justify = self.align)
-        if text is not None:
+        if text:
             self.insert(1.0, text)
+            self.yview_moveto(1)
         self.tag_add("align", 1.0, "end")
-        self.yview_moveto(1)
         self.rc_popup_menu = tk.Menu(self, tearoff = 0)
         self.rc_popup_menu.add_command(label = "Select all",
                                        accelerator = "Ctrl+A",
@@ -113,7 +110,7 @@ class TextEditor_(tk.Text):
                                        activeforeground = popup_menu_highlight_fg,
                                        command = self.undo)
         self.bind("<1>", lambda event: self.focus_set())
-        if USER_OS == "Darwin":
+        if USER_OS == "darwin":
             self.bind("<2>", self.rc)
         else:
             self.bind("<3>", self.rc)
@@ -263,13 +260,13 @@ def get_index_of_gap_in_sorted_integer_seq_reverse(seq, start = 0):
     return None
 
 def is_mac():
-    if USER_OS == "Darwin":
+    if USER_OS == "darwin":
         return True
     else:
         return False
 
 def get_rc_binding():
-    if USER_OS == "Darwin":
+    if USER_OS == "darwin":
         return "<2>"
     else:
         return "<3>"

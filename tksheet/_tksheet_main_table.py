@@ -11,7 +11,6 @@ import io
 import pickle
 import tkinter as tk
 import zlib
-import datetime
 from warnings import warn
 
 
@@ -277,7 +276,7 @@ class MainTable(tk.Canvas):
             self.bind("<ButtonRelease-1>", self.b1_release)
             self.bind("<Double-Button-1>", self.double_b1)
             self.bind("<MouseWheel>", self.mousewheel)
-            if USER_OS == "Linux":
+            if USER_OS == "linux":
                 for canvas in (self, self.RI):
                     canvas.bind("<Button-4>", self.mousewheel)
                     canvas.bind("<Button-5>", self.mousewheel)
@@ -299,7 +298,7 @@ class MainTable(tk.Canvas):
             self.unbind("<ButtonRelease-1>")
             self.unbind("<Double-Button-1>")
             self.unbind("<MouseWheel>")
-            if USER_OS == "Linux":
+            if USER_OS == "linux":
                 for canvas in (self, self.RI):
                     canvas.unbind("<Button-4>")
                     canvas.unbind("<Button-5>")
@@ -1799,7 +1798,7 @@ class MainTable(tk.Canvas):
             if enable:
                 for s2 in ("c", "C"):
                     for widget in (self, self.RI, self.CH, self.TL):
-                        widget.bind(f"<{'Command' if USER_OS == 'Darwin' else 'Control'}-{s2}>", self.ctrl_c)
+                        widget.bind(f"<{ctrl_key}-{s2}>", self.ctrl_c)
                 self.copy_enabled = True
             else:
                 for s1 in ("Control", "Command"):
@@ -1811,7 +1810,7 @@ class MainTable(tk.Canvas):
             if enable:
                 for s2 in ("x", "X"):
                     for widget in (self, self.RI, self.CH, self.TL):
-                        widget.bind(f"<{'Command' if USER_OS == 'Darwin' else 'Control'}-{s2}>", self.ctrl_x)
+                        widget.bind(f"<{ctrl_key}-{s2}>", self.ctrl_x)
                 self.cut_enabled = True
             else:
                 for s1 in ("Control", "Command"):
@@ -1823,7 +1822,7 @@ class MainTable(tk.Canvas):
             if enable:
                 for s2 in ("v", "V"):
                     for widget in (self, self.RI, self.CH, self.TL):
-                        widget.bind(f"<{'Command' if USER_OS == 'Darwin' else 'Control'}-{s2}>", self.ctrl_v)
+                        widget.bind(f"<{ctrl_key}-{s2}>", self.ctrl_v)
                 self.paste_enabled = True
             else:
                 for s1 in ("Control", "Command"):
@@ -1835,7 +1834,7 @@ class MainTable(tk.Canvas):
             if enable:
                 for s2 in ("z", "Z"):
                     for widget in (self, self.RI, self.CH, self.TL):
-                        widget.bind(f"<{'Command' if USER_OS == 'Darwin' else 'Control'}-{s2}>", self.ctrl_z)
+                        widget.bind(f"<{ctrl_key}-{s2}>", self.ctrl_z)
                 self.undo_enabled = True
             else:
                 for s1 in ("Control", "Command"):
@@ -2189,7 +2188,7 @@ class MainTable(tk.Canvas):
     def enable_disable_select_all(self, enable = True):
         self.select_all_enabled = bool(enable)
         for s in ("A", "a"):
-            binding = f"<{'Command' if USER_OS == 'Darwin' else 'Control'}-{s}>"
+            binding = f"<{ctrl_key}-{s}>"
             for widget in (self, self.RI, self.CH, self.TL):
                 if enable:
                     widget.bind(binding, self.select_all)
@@ -5196,12 +5195,13 @@ class MainTable(tk.Canvas):
                                       r = r,
                                       c = c,
                                       newline_binding = self.text_editor_newline_binding)
+        self.text_editor.update_idletasks()
         self.text_editor_id = self.create_window((x, y), window = self.text_editor, anchor = "nw")
         if not dropdown:
             self.text_editor.textedit.focus_set()
             self.text_editor.scroll_to_bottom()
         self.text_editor.textedit.bind("<Alt-Return>", lambda x: self.text_editor_newline_binding(r, c))
-        if USER_OS == 'Darwin':
+        if USER_OS == 'darwin':
             self.text_editor.textedit.bind("<Option-Return>", lambda x: self.text_editor_newline_binding(r, c))
         for key, func in self.text_editor_user_bound_keys.items():
             self.text_editor.textedit.bind(key, func)

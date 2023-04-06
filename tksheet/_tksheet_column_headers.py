@@ -375,7 +375,7 @@ class ColumnHeaders(tk.Canvas):
         if self.width_resizing_enabled and self.rsz_w is not None and self.currently_resizing_width:
             x = self.canvasx(event.x)
             size = x - self.MT.col_positions[self.rsz_w - 1]
-            if not size < self.MT.min_cw and size < self.max_cw:
+            if size >= self.MT.min_cw and size < self.max_cw:
                 self.delete_resize_lines()
                 self.MT.delete_resize_lines()
                 line2x = self.MT.col_positions[self.rsz_w - 1]
@@ -495,7 +495,7 @@ class ColumnHeaders(tk.Canvas):
         self.MT.bind("<MouseWheel>", self.MT.mousewheel)
         if self.width_resizing_enabled and self.rsz_w is not None and self.currently_resizing_width:
             self.currently_resizing_width = False
-            new_col_pos = self.coords("rwl")[0]
+            new_col_pos = int(self.coords("rwl")[0])
             self.delete_resize_lines()
             self.MT.delete_resize_lines()
             old_width = self.MT.col_positions[self.rsz_w] - self.MT.col_positions[self.rsz_w - 1]
@@ -1324,12 +1324,13 @@ class ColumnHeaders(tk.Canvas):
                                       align = self.get_cell_align(c),
                                       c = c,
                                       newline_binding = self.text_editor_has_wrapped)
+        self.text_editor.update_idletasks()
         self.text_editor_id = self.create_window((x, y), window = self.text_editor, anchor = "nw")
         if not dropdown:
             self.text_editor.textedit.focus_set()
             self.text_editor.scroll_to_bottom()
         self.text_editor.textedit.bind("<Alt-Return>", lambda x: self.text_editor_newline_binding(c = c))
-        if USER_OS == 'Darwin':
+        if USER_OS == 'darwin':
             self.text_editor.textedit.bind("<Option-Return>", lambda x: self.text_editor_newline_binding(c = c))
         for key, func in self.MT.text_editor_user_bound_keys.items():
             self.text_editor.textedit.bind(key, func)

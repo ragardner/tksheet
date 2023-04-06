@@ -1,13 +1,18 @@
+# for mac bindings
+from platform import system as get_os
+USER_OS = f"{get_os()}".lower()
+
+ctrl_key = "Command" if USER_OS == "darwin" else "Control"
 symbols_set = set("""!#\$%&'()*+,-./:;"@[]^_`{|}~>?= """)
 
 def get_font():
-    return ("Calibri", 11, "normal")
+    return ("Calibri", 13 if USER_OS == "darwin" else 11, "normal")
 
 def get_index_font():
-    return ('Calibri', 11, "normal")
+    return ('Calibri', 13 if USER_OS == "darwin" else 11, "normal")
 
 def get_heading_font():
-    return ("Calibri", 11, "normal")
+    return ("Calibri", 13 if USER_OS == "darwin" else 11, "normal")
 
 def is_iterable(o):
     try:
@@ -146,7 +151,49 @@ theme_black = {
 'table_selected_columns_fg': "#FFFFFF"
 }
 
-theme_dark = theme_black.copy()
+theme_dark = {
+'popup_menu_fg': "white",
+'popup_menu_bg': "gray15",
+'popup_menu_highlight_bg': "gray35",
+'popup_menu_highlight_fg': "white",
+'index_hidden_rows_expander_bg': "gray30",
+'header_hidden_columns_expander_bg': "gray30",
+'header_bg': "#141414",
+'header_border_fg': "#505054",
+'header_grid_fg': "#8C8C8C",
+'header_fg': "gray70",
+'header_selected_cells_bg': "#545454",
+'header_selected_cells_fg': "#6aa2fc",
+'index_bg': "#141414",
+'index_border_fg': "#505054",
+'index_grid_fg': "#8C8C8C",
+'index_fg': "gray70",
+'index_selected_cells_bg': "#545454",
+'index_selected_cells_fg': "#6aa2fc",
+'top_left_bg': "#323232",
+'top_left_fg': "#505054",
+'top_left_fg_highlight': "white",
+'table_bg': "#323232",
+'table_grid_fg': "#505054",
+'table_fg': "#F2F2F2",
+'table_selected_cells_border_fg': "#6aa2fc",
+'table_selected_cells_bg': "#141414",
+'table_selected_cells_fg': "#fafafa",
+'resizing_line_fg': "white",
+'drag_and_drop_bg': "#ecf0f2",
+'outline_color': "gray95",
+'header_selected_columns_bg': "#4489F7",
+'header_selected_columns_fg': "white",
+'index_selected_rows_bg': "#4489F7",
+'index_selected_rows_fg': "white",
+'table_selected_rows_border_fg': "#4489F7",
+'table_selected_rows_bg': "#141414",
+'table_selected_rows_fg': "#fafafa",
+'table_selected_columns_border_fg': "#4489F7",
+'table_selected_columns_bg': "#141414",
+'table_selected_columns_fg': "#fafafa"
+}
+
 theme_dark_blue = theme_black.copy()
 theme_dark_blue['header_fg'] = "#6ACAD8"
 theme_dark_blue['header_selected_cells_fg'] = "#6ACAD8"

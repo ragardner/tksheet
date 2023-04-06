@@ -1,5 +1,12 @@
 ### Latest version in release notes is current version
 
+### Version 5.6.8
+#### Fixed:
+ - [#159](https://github.com/ragardner/tksheet/issues/159)
+
+#### Changed:
+ - `"dark"` theme now looks more appropriate for MacOS dark theme
+
 ### Version 5.6.7
 Fixed:
  - [#157](https://github.com/ragardner/tksheet/issues/157)
