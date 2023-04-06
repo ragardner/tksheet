@@ -1973,7 +1973,7 @@ class Sheet(tk.Frame):
                 return ""
         else:
             try:
-                return self.MT.data[r][c] if (r, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(r, c)] else self.MT.data[r][c]
+                return f"{self.MT.data[r][c]}" if (r, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(r, c)] else self.MT.data[r][c]
             except:
                 return ""
 
@@ -1983,22 +1983,29 @@ class Sheet(tk.Frame):
         if get_formats:
             return [e.data if (r, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(r, c)] else e for c, e in enumerate(self.MT.data[r])]
         else:
-            return self.MT.data[r]
+            return [f"{e}" if (r, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(r, c)] else e for c, e in enumerate(self.MT.data[r])]
 
     def get_column_data(self, c, get_formats = False):
+        data = []
         if get_formats:
-            res = []
-            for r in self.MT.data:
+            for rn, r in enumerate(self.MT.data):
                 if c < len(r):
-                    if (r, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(r, c)]:
-                        res.append(r[c].data())
+                    if (rn, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(rn, c)]:
+                        data.append(r[c].data())
                     else:
-                        res.append(r[c])
+                        data.append(r[c])
                 else:
-                    res.append("")
-            return res
+                    data.append("")
         else:
-            return [r[c] if c < len(r) else "" for r in self.MT.data]
+            for rn, r in enumerate(self.MT.data):
+                if c < len(r):
+                    if (rn, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(rn, c)]:
+                        data.append(f"{r[c]}")
+                    else:
+                        data.append(r[c])
+                else:
+                    data.append("")
+        return data
 
     def set_cell_data(self, r, c, value = "", set_copy = True, redraw = False, keep_formatting = True):
         if keep_formatting and (r, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(r, c)]:
