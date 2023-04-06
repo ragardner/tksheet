@@ -364,7 +364,7 @@ class RowIndex(tk.Canvas):
         if self.height_resizing_enabled and self.rsz_h is not None and self.currently_resizing_height:
             y = self.canvasy(event.y)
             size = y - self.MT.row_positions[self.rsz_h - 1]
-            if not size < self.MT.min_rh and size < self.max_rh:
+            if size >= self.MT.min_rh and size < self.max_rh:
                 self.delete_resize_lines()
                 self.MT.delete_resize_lines()
                 line2y = self.MT.row_positions[self.rsz_h - 1]
@@ -484,7 +484,7 @@ class RowIndex(tk.Canvas):
         self.MT.bind("<MouseWheel>", self.MT.mousewheel)
         if self.height_resizing_enabled and self.rsz_h is not None and self.currently_resizing_height:
             self.currently_resizing_height = False
-            new_row_pos = self.coords("rhl")[1]
+            new_row_pos = int(self.coords("rhl")[1])
             self.delete_resize_lines()
             self.MT.delete_resize_lines()
             old_height = self.MT.row_positions[self.rsz_h] - self.MT.row_positions[self.rsz_h - 1]
@@ -1380,12 +1380,13 @@ class RowIndex(tk.Canvas):
                                       align = self.get_cell_align(r),
                                       r = r,
                                       newline_binding = self.text_editor_newline_binding)
+        self.text_editor.update_idletasks()
         self.text_editor_id = self.create_window((x, y), window = self.text_editor, anchor = "nw")
         if not dropdown:
             self.text_editor.textedit.focus_set()
             self.text_editor.scroll_to_bottom()
         self.text_editor.textedit.bind("<Alt-Return>", lambda x: self.text_editor_newline_binding(r = r))
-        if USER_OS == 'Darwin':
+        if USER_OS == 'darwin':
             self.text_editor.textedit.bind("<Option-Return>", lambda x: self.text_editor_newline_binding(r = r))
         for key, func in self.MT.text_editor_user_bound_keys.items():
             self.text_editor.textedit.bind(key, func)
