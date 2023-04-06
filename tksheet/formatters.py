@@ -68,10 +68,23 @@ class AbstractFormatterClass(ABC):
                  value, 
                  datatypes, 
                  converter,
+                 nullable = True,
                  missing_values = "NA",
                  pre_conversion_func = None,
                  post_conversion_func = None,
                  ):
+        if nullable:
+            if isinstance(datatypes, (list, tuple)):
+                datatypes = [t for t in datatypes]
+                datatypes.append(type(None))
+                datatypes = tuple(datatypes)
+            else:
+                datatypes = (datatypes, type(None))
+        elif isinstance(datatypes, (list, tuple)) and type(None) in datatypes:
+            raise TypeError("Non-nullable cells cannot have NoneType as a datatype!")
+        elif datatypes is type(None):
+            raise TypeError("Non-nullable cells cannot have NoneType as a datatype!")
+        self.nullable = nullable
         self.converter = converter
         self.pre_conversion_func = pre_conversion_func
         self.post_conversion_func = post_conversion_func
@@ -84,7 +97,10 @@ class AbstractFormatterClass(ABC):
 
     @abstractmethod
     def __str__(self):
-        pass
+        if not self.validator():
+            return self.missing_values
+        if self.value == None and self.nullable:
+            return ''
 
     def validator(self, value = None) -> bool:
         if value is None:
@@ -97,7 +113,10 @@ class AbstractFormatterClass(ABC):
     def convert(self, value):
         if self.pre_conversion_func:
             value = self.pre_conversion_func(value)
-        value = self.converter(value)
+        if self.nullable:
+            value = None if is_nonelike(value) else self.converter(value)
+        else:
+            value = self.converter(value)
         if self.post_conversion_func and self.validator(value):
              value = self.post_conversion_func(value)
         return value
@@ -128,45 +147,26 @@ class CellFormatter(AbstractFormatterClass):
                  datatypes: Union[Type, tuple[Type]],
                  converter: Callable[[Any], Any], 
                  to_str: Union[Callable[[Any], str], None] = None,
+                 nullable = True,
                  missing_values: Any = "NA",
-                 nullable = False,
                  pre_conversion_func: Union[Callable, None] = None, 
                  post_conversion_func: Union[Callable, None] = None
                  ):
-        if nullable:
-            if isinstance(datatypes, (list, tuple)):
-                datatypes = [t for t in datatypes]
-                datatypes.append(type(None))
-                datatypes = tuple(datatypes)
-            else:
-                datatypes = (datatypes, type(None))
-            _converter = lambda x: None if is_nonelike(x) else converter(x)
-        else:
-            _converter = converter
-        super().__init__(value, datatypes, _converter, missing_values, pre_conversion_func, post_conversion_func)
+        super().__init__(value, 
+                         datatypes, 
+                         converter, 
+                         nullable, 
+                         missing_values, 
+                         pre_conversion_func, 
+                         post_conversion_func)
         self.to_str = to_str
 
     def __str__(self):
-        if self.to_str is None:
-            if not self.validator():
-                return str(self.missing_values)
-            if self.value is None:
-                return ''
-            return str(self.value)
-        else:
-            if not self.validator():
-                return str(self.missing_values)
-            if self.value is None:
-                return ''
+        if (s:=super().__str__()) != None:
+            return s
+        if self.to_str != None:
             return self.to_str(self.value)
-        
-    def convert(self, value):
-        if self.pre_conversion_func:
-            value = self.pre_conversion_func(value)
-        value = self.converter(value)
-        if self.post_conversion_func and self.validator():
-             value = self.post_conversion_func(value)
-        return value
+        return f'{self.value}'
     
 
 
@@ -174,31 +174,7 @@ class FloatFormatter(AbstractFormatterClass):
     def __init__(self, 
                  value, 
                  decimals = None,
-                 missing_values = "NaN",
-                 converter = to_nullable_float,
-                 pre_conversion_func = None,
-                 post_conversion_func = None,
-                 ):
-        self.decimals = decimals
-        super().__init__(value, 
-                         float, 
-                         converter,
-                         missing_values,
-                         pre_conversion_func,
-                         post_conversion_func,
-                         )
-
-    def __str__(self):
-        if not self.validator():
-            return self.missing_values
-        if self.decimals != None:
-            return (f"%.{self.decimals}f" % round(self.value, self.decimals))
-        return str(self.value)
-    
-class NullableFloatFormatter(AbstractFormatterClass):
-    def __init__(self, 
-                 value, 
-                 decimals = None,
+                 nullable = True,
                  missing_values = "NaN",
                  converter = to_float,
                  pre_conversion_func = None,
@@ -206,16 +182,17 @@ class NullableFloatFormatter(AbstractFormatterClass):
                  ):
         self.decimals = decimals
         super().__init__(value, 
-                         (float, type(None)), 
+                         float, 
                          converter,
+                         nullable,
                          missing_values,
                          pre_conversion_func,
                          post_conversion_func,
                          )
 
     def __str__(self):
-        if not self.validator():
-            return self.missing_values
+        if (s:=super().__str__()) != None:
+            return s
         if self.decimals != None:
             return (f"%.{self.decimals}f" % round(self.value, self.decimals))
         return str(self.value)
@@ -225,6 +202,7 @@ class PercentageFormatter(AbstractFormatterClass):
     def __init__(self, 
                  value, 
                  decimals = None,
+                 nullable = True,
                  missing_values = "NaN",
                  converter = to_float,
                  pre_conversion_func = None,
@@ -234,71 +212,23 @@ class PercentageFormatter(AbstractFormatterClass):
         super().__init__(value, 
                          float, 
                          converter,
+                         nullable,
                          missing_values,
                          pre_conversion_func,
                          post_conversion_func,
                          )
 
     def __str__(self):
-        if not self.validator():
-            return self.missing_values
+        if (s:=super().__str__()) != None:
+            return s
         if self.decimals != None:
             return (f"%.{self.decimals}f" % round(self.value*100, self.decimals))+'%'
         return str(self.value*100)+'%'
-
-class NullablePercentageFormatter(AbstractFormatterClass):
-    def __init__(self, 
-                 value, 
-                 decimals = None,
-                 missing_values = "NaN",
-                 converter = to_nullable_float,
-                 pre_conversion_func = None,
-                 post_conversion_func = None,
-                 ):
-        self.decimals = decimals
-        super().__init__(value, 
-                         (float, type(None)), 
-                         converter,
-                         missing_values,
-                         pre_conversion_func,
-                         post_conversion_func,
-                         )
-
-    def __str__(self):
-        if not self.validator():
-            return self.missing_values
-        if isinstance(self.value, float):
-            if self.decimals != None:
-                return (f"%.{self.decimals}f" % round(self.value*100, self.decimals))+'%'
-            return str(self.value*100)+'%'
-        return ""
-
-class NullableIntFormatter(AbstractFormatterClass):
-    def __init__(self, 
-                 value,
-                 missing_values = "NaN",
-                 converter = to_nullable_int,
-                 pre_conversion_func = None,
-                 post_conversion_func = None,
-                 ):
-        super().__init__(value, 
-                         (int, type(None)), 
-                         converter,
-                         missing_values,
-                         pre_conversion_func,
-                         post_conversion_func,
-                         )
-
-    def __str__(self):
-        if not self.validator():
-            return self.missing_values
-        if isinstance(self.value, int):
-            return str(self.value)
-        return ""
     
 class IntFormatter(AbstractFormatterClass):
     def __init__(self, 
                  value,
+                 nullable = True,
                  missing_values = "NaN",
                  converter = to_int,
                  pre_conversion_func = None,
@@ -307,57 +237,37 @@ class IntFormatter(AbstractFormatterClass):
         super().__init__(value, 
                          int, 
                          converter,
+                         nullable,
                          missing_values,
                          pre_conversion_func,
                          post_conversion_func,
                          )
 
     def __str__(self):
-        if not self.validator():
-            return self.missing_values
+        if (s:=super().__str__()) != None:
+            return s
         return str(self.value)
-    
-class NullableBoolFormatter(AbstractFormatterClass):
-    def __init__(self, 
-                 value,
-                 missing_values = "NA",
-                 converter = to_nullable_bool,
-                 pre_conversion_func = None,
-                 post_conversion_func = None,                 
-                 ):
-        super().__init__(value, 
-                         (bool, type(None)),
-                         converter,
-                         missing_values,
-                         pre_conversion_func,
-                         post_conversion_func,
-                         )
-    
-    def __str__(self):
-        if not self.validator():
-            return self.missing_values
-        if isinstance(self.value, bool):
-            return str(self.value)
-        return ""
 
 class BoolFormatter(AbstractFormatterClass):
     def __init__(self, 
                  value,
                  missing_values = "NA",
                  converter = to_bool,
+                 nullable = True,
                  pre_conversion_func = None,
                  post_conversion_func = None,                 
                  ):
         super().__init__(value, 
                          bool,
                          converter,
+                         nullable,
                          missing_values,
                          pre_conversion_func,
                          post_conversion_func,
                          )
     
     def __str__(self):
-        if not self.validator():
-            return self.missing_values
+        if (s:=super().__str__()) != None:
+            return s
         return str(self.value)
     
