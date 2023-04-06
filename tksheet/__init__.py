@@ -4,4 +4,5 @@ from ._tksheet_other_classes import TextEditor_, TextEditor
 from ._tksheet_row_index import RowIndex
 from ._tksheet_top_left_rectangle import TopLeftRectangle
 from ._tksheet_vars import *
+from ._tksheet_formatters import *
 from ._tksheet import Sheet

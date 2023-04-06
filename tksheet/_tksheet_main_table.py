@@ -11,6 +11,7 @@ import io
 import pickle
 import tkinter as tk
 import zlib
+from warnings import warn
 
 
 class MainTable(tk.Canvas):
@@ -256,6 +257,14 @@ class MainTable(tk.Canvas):
         self.create_rc_menus()
         
     def refresh(self, event = None):
+        formatted_cells = self.get_formatted_cells()
+        for r, c in formatted_cells:
+            val = self.data[r][c]
+            formatter = self.cell_options[(r,c)]['format']['formatter']
+            if isinstance(val, formatter):
+                continue
+            kwargs = self.cell_options[(r,c)]['format']['kwargs']
+            self.data[r][c] = formatter(val, **kwargs)
         self.main_table_redraw_grid_and_text(True, True)
 
     def basic_bindings(self, enable = True):
@@ -2963,8 +2972,19 @@ class MainTable(tk.Canvas):
     def set_index_fnt_help(self):
         pass
 
-    def data_reference(self, newdataref = None, reset_col_positions = True, reset_row_positions = True, redraw = False, return_id = True):
+    def data_reference(self, newdataref = None, reset_col_positions = True, reset_row_positions = True, redraw = False, return_id = True, keep_formatting=True):
         if isinstance(newdataref, (list, tuple)):
+            formatted_cells = self.get_formatted_cells()
+            if keep_formatting:
+                for r, c in formatted_cells:
+                    try: 
+                        formatter = self.cell_options[(r,c)]['format']['formatter']
+                        kwargs = self.cell_options[(r,c)]['format']['kwargs']
+                        newdataref[r][c] = formatter(newdataref[r][c], **kwargs)
+                    except IndexError:
+                        pass
+            else:
+                self.clear_cell_format(formatted_cells, clear_values = True)
             self.data = newdataref
             self.undo_storage = deque(maxlen = self.max_undos)
             if reset_col_positions:
@@ -5074,7 +5094,15 @@ class MainTable(tk.Canvas):
                     extra_func_key = "Return"
                 elif hasattr(event, 'keysym') and event.keysym == 'F2':
                     extra_func_key = "F2"
-            text = f"{self.data[r][c]}" if self.all_columns_displayed else f"{self.data[r][self.displayed_columns[c]]}"
+            if (r, c) in self.cell_options and 'format' in self.cell_options[(r,c)]:
+                try:
+                    text = f"{self.data[r][c].value}" if self.all_columns_displayed else f"{self.data[r][self.displayed_columns[c]].value}"
+                except:
+                    text = f"{self.data[r][c]}" if self.all_columns_displayed else f"{self.data[r][self.displayed_columns[c]]}"
+            else:
+                text = f"{self.data[r][c]}" if self.all_columns_displayed else f"{self.data[r][self.displayed_columns[c]]}"
+            if self.cell_auto_resize_enabled:
+                self.set_cell_size_to_text(r, c, only_set_if_too_small = True, redraw = True, run_binding = True)
         elif event is not None and (hasattr(event, 'keysym') and event.keysym == 'BackSpace'):
             extra_func_key = "BackSpace"
             text = ""
@@ -5371,7 +5399,11 @@ class MainTable(tk.Canvas):
                                                                      {(r, dcol): self.data[r][dcol]},
                                                                      (((r, c, r + 1, c + 1), "cells"), ),
                                                                      self.currently_selected()))))
-        self.data[r][dcol] = value
+        if (drow, dcol) in self.cell_options and 'format' in self.cell_options[(drow, dcol)]:
+            formatter = self.cell_options[(drow, dcol)]['format']['formatter']
+            kwargs = self.cell_options[(drow, dcol)]['format']['kwargs']
+            value = formatter(value, **kwargs)
+        self.data[drow][dcol] = value
         if cell_resize and self.cell_auto_resize_enabled:
             self.set_cell_size_to_text(r, c, only_set_if_too_small = True, redraw = redraw, run_binding = True)
         return True
@@ -5390,6 +5422,8 @@ class MainTable(tk.Canvas):
             self.refresh()
 
     def create_checkbox(self, r = 0, c = 0, checked = False, state = "normal", redraw = False, check_function = None, text = ""):
+        if (r, c) in self.get_formatted_cells(): # Checkboxes are not supported with formatting, clear formatting
+            self.clear_cell_format((r,c), True)
         if (r, c) in self.cell_options and any(x in self.cell_options[(r, c)] for x in ('dropdown', 'checkbox')):
             self.delete_dropdown_and_checkbox(r, c)
         self._set_cell_data(r, dcol = c, value = checked, cell_resize = False, undo = False) #only works because cell_resize is false and undo is false, otherwise needs c arg
@@ -5420,6 +5454,54 @@ class MainTable(tk.Canvas):
                                                  'state': state}
         if redraw:
             self.refresh()
+
+    def set_cell_format(self, r, c, formatter = None, formatter_kwargs = {}, drow = None, dcol = None, convert_existing_values = True, redraw = True):
+        if formatter is None:
+            return
+        if (r, c) in self.cell_options and 'checkbox' in self.cell_options[(r, c)]:
+            warn("Cannot format a checkbox cell!", Warning)
+            return
+        if dcol is None:
+            dcol = c if self.all_columns_displayed else self.displayed_columns[c]
+        if drow is None:
+            drow = r if self.all_rows_displayed else self.displayed_rows[r]
+        if r > len(self.data) - 1:
+            self.data.extend([list(repeat("", dcol + 1)) for i in range((r + 1) - len(self.data))])
+        elif dcol > len(self.data[r]) - 1:
+            self.data[r].extend(list(repeat("", (dcol + 1) - len(self.data[r]))))
+        if (r, c) not in self.cell_options:
+            self.cell_options[(r, c)] = {}
+        value = None
+        if c < self.total_data_cols() and r < self.total_data_rows() and convert_existing_values:
+            try:
+                value = f"{self.data[r][c]}"
+            except IndexError:
+                value=None
+        self.cell_options[(r, c)]['format'] = {'formatter': formatter,
+                                               'kwargs': formatter_kwargs}
+        self.data[r][c] = formatter(value, **formatter_kwargs)
+        if redraw:
+            self.refresh()
+
+    def clear_cell_format(self, cells, clear_values=False):
+        if all(isinstance(cell, (list, tuple)) for cell in cells):
+            for cell in cells:
+                self.clear_cell_format(cell, clear_values)
+        else:
+            r, c = cells
+            try:
+                del self.cell_options[(r, c)]['format']
+                if clear_values:
+                    self.data[r][c] = ''
+                else:
+                    self.data[r][c] = self.data[r][c].value
+            except:
+                pass
+    
+    def get_formatted_cells(self, formatter = None):
+        if formatter is not None:
+            return [cell for cell, options in self.cell_options.items() if 'format' in options and options['format'] == formatter]
+        return [cell for cell, options in self.cell_options.items() if 'format' in options and options['format'] is not None]
 
     def get_widget_bg_fg(self, r, c):
         bg = self.table_bg
