@@ -48,6 +48,7 @@ def to_nullable_float(x: Any):
 def to_nullable_bool(b: Any):
     return None if is_nonelike(b) else to_bool(b)
 
+
 class AbstractFormatterClass(ABC):
     '''
     The base class for all cell formatters. Subclasses must define a __str__ method which determines how the data will be displayed on the table.
@@ -162,13 +163,13 @@ class CellFormatter(AbstractFormatterClass):
         self.to_str = to_str
 
     def __str__(self):
-        if (s:=super().__str__()) != None:
+        s = super().__str__()
+        if s != None:
             return s
         if self.to_str != None:
             return self.to_str(self.value)
         return f'{self.value}'
     
-
 
 class FloatFormatter(AbstractFormatterClass):
     def __init__(self, 
@@ -191,7 +192,8 @@ class FloatFormatter(AbstractFormatterClass):
                          )
 
     def __str__(self):
-        if (s:=super().__str__()) != None:
+        s = super().__str__()
+        if s != None:
             return s
         if self.decimals != None:
             return (f"%.{self.decimals}f" % round(self.value, self.decimals))
@@ -219,12 +221,14 @@ class PercentageFormatter(AbstractFormatterClass):
                          )
 
     def __str__(self):
-        if (s:=super().__str__()) != None:
+        s = super().__str__()
+        if s != None:
             return s
         if self.decimals != None:
             return (f"%.{self.decimals}f" % round(self.value*100, self.decimals))+'%'
         return str(self.value*100)+'%'
-    
+
+
 class IntFormatter(AbstractFormatterClass):
     def __init__(self, 
                  value,
@@ -244,9 +248,11 @@ class IntFormatter(AbstractFormatterClass):
                          )
 
     def __str__(self):
-        if (s:=super().__str__()) != None:
+        s = super().__str__()
+        if s != None:
             return s
         return str(self.value)
+
 
 class BoolFormatter(AbstractFormatterClass):
     def __init__(self, 
@@ -267,7 +273,8 @@ class BoolFormatter(AbstractFormatterClass):
                          )
     
     def __str__(self):
-        if (s:=super().__str__()) != None:
+        s = super().__str__()
+        if s != None:
             return s
         return str(self.value)
     

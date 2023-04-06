@@ -1,5 +1,9 @@
 ### Latest version in release notes is current version
 
+### Version 6.0.0
+#### Added:
+ - Cell formatters
+
 ### Version 5.6.8
 #### Fixed:
  - [#159](https://github.com/ragardner/tksheet/issues/159)

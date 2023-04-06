@@ -1,4 +1,5 @@
 from ._tksheet_vars import *
+from ._tksheet_formatters import *
 from ._tksheet_other_classes import *
 
 from collections import defaultdict, deque

@@ -1,4 +1,5 @@
 from ._tksheet_vars import *
+from ._tksheet_formatters import *
 from ._tksheet_other_classes import *
 from ._tksheet_top_left_rectangle import *
 from ._tksheet_column_headers import *
