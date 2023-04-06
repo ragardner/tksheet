@@ -258,14 +258,6 @@ class MainTable(tk.Canvas):
         self.create_rc_menus()
         
     def refresh(self, event = None):
-        formatted_cells = self.get_formatted_cells()
-        for r, c in formatted_cells:
-            val = self.data[r][c]
-            formatter = self.cell_options[(r,c)]['format']['formatter']
-            if isinstance(val, formatter):
-                continue
-            kwargs = self.cell_options[(r,c)]['format']['kwargs']
-            self.data[r][c] = formatter(val, **kwargs)
         self.main_table_redraw_grid_and_text(True, True)
 
     def basic_bindings(self, enable = True):
@@ -2981,9 +2973,8 @@ class MainTable(tk.Canvas):
                        return_id = True,
                        keep_formatting = True):
         if isinstance(newdataref, (list, tuple)):
-            formatted_cells = self.get_formatted_cells()
             if keep_formatting:
-                for r, c in formatted_cells:
+                for r, c in self.yield_formatted_cells():
                     try: 
                         formatter = self.cell_options[(r,c)]['format']['formatter']
                         kwargs = self.cell_options[(r,c)]['format']['kwargs']
@@ -2991,7 +2982,7 @@ class MainTable(tk.Canvas):
                     except IndexError:
                         pass
             else:
-                self.clear_cell_format(formatted_cells, clear_values = True)
+                self.delete_format(formatted_cells, clear_values = True)
             self.data = newdataref
             self.undo_storage = deque(maxlen = self.max_undos)
             if reset_col_positions:
@@ -5429,8 +5420,8 @@ class MainTable(tk.Canvas):
             self.refresh()
 
     def create_checkbox(self, r = 0, c = 0, checked = False, state = "normal", redraw = False, check_function = None, text = ""):
-        if (r, c) in self.get_formatted_cells(): # Checkboxes are not supported with formatting, clear formatting
-            self.clear_cell_format((r, c), True)
+        if self.formatted(r, c): # Checkboxes are not supported with formatting, clear formatting
+            self.delete_format((r, c), True)
         if (r, c) in self.cell_options and any(x in self.cell_options[(r, c)] for x in ('dropdown', 'checkbox')):
             self.delete_dropdown_and_checkbox(r, c)
         self._set_cell_data(r, dcol = c, value = checked, cell_resize = False, undo = False) #only works because cell_resize is false and undo is false, otherwise needs c arg
@@ -5462,38 +5453,35 @@ class MainTable(tk.Canvas):
         if redraw:
             self.refresh()
 
-    def set_cell_format(self, r, c, formatter = None, formatter_kwargs = {}, drow = None, dcol = None, convert_existing_values = True, redraw = True):
+    # data indexes
+    def format_cell(self, drow, dcol, formatter = None, formatter_kwargs = {}, convert_existing_values = True, redraw = True):
         if formatter is None:
             return
-        if (r, c) in self.cell_options and 'checkbox' in self.cell_options[(r, c)]:
+        if (drow, dcol) in self.cell_options and 'checkbox' in self.cell_options[(drow, dcol)]:
             warn("Cannot format a checkbox cell!", Warning)
             return
-        if dcol is None:
-            dcol = c if self.all_columns_displayed else self.displayed_columns[c]
-        if drow is None:
-            drow = r if self.all_rows_displayed else self.displayed_rows[r]
-        if r >= len(self.data):
-            self.data.extend([list(repeat("", dcol + 1)) for i in range((r + 1) - len(self.data))])
-        elif dcol >= len(self.data[r]):
-            self.data[r].extend(list(repeat("", (dcol + 1) - len(self.data[r]))))
-        if (r, c) not in self.cell_options:
-            self.cell_options[(r, c)] = {}
+        if drow >= len(self.data):
+            self.data.extend([list(repeat("", dcol + 1)) for i in range((drow + 1) - len(self.data))])
+        elif dcol >= len(self.data[drow]):
+            self.data[drow].extend(list(repeat("", (dcol + 1) - len(self.data[drow]))))
+        if (drow, dcol) not in self.cell_options:
+            self.cell_options[(drow, dcol)] = {}
         value = None
-        if c < self.total_data_cols() and r < self.total_data_rows() and convert_existing_values:
+        if dcol < self.total_data_cols() and drow < self.total_data_rows() and convert_existing_values:
             try:
-                value = f"{self.data[r][c]}"
+                value = f"{self.data[drow][dcol]}"
             except IndexError:
-                value=None
-        self.cell_options[(r, c)]['format'] = {'formatter': formatter,
-                                               'kwargs': formatter_kwargs}
-        self.data[r][c] = formatter(value, **formatter_kwargs)
+                value = None
+        self.cell_options[(drow, dcol)]['format'] = {'formatter': formatter,
+                                                     'kwargs': formatter_kwargs}
+        self.data[drow][dcol] = formatter(value, **formatter_kwargs)
         if redraw:
             self.refresh()
 
-    def clear_cell_format(self, cells, clear_values=False):
+    def delete_format(self, cells, clear_values = False):
         if all(isinstance(cell, (list, tuple)) for cell in cells):
             for cell in cells:
-                self.clear_cell_format(cell, clear_values)
+                self.delete_format(cell, clear_values)
         else:
             r, c = cells
             try:
@@ -5515,7 +5503,7 @@ class MainTable(tk.Canvas):
             return {cell for cell, options in self.cell_options.items() if 'format' in options and options['format'] == formatter}
         return {cell for cell, options in self.cell_options.items() if 'format' in options and options['format'] is not None}
     
-    def in_formatted_cells(self, r, c):
+    def formatted(self, r, c):
         if (r, c) in self.cell_options and 'format' in self.cell_options[(r, c)]:
             return True
         return False

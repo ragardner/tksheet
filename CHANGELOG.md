@@ -2,7 +2,11 @@
 
 ### Version 6.0.0
 #### Added:
- - Cell formatters
+ - Cell formatters credit [PR#158](https://github.com/ragardner/tksheet/pull/158)
+
+#### Changed:
+ - Removed `return_copy` arguments from `get_cell_data()`/`get_row_data()`/`get_column_data()`
+ - `get_cell_data()`/`get_row_data()`/`get_column_data()` now return empty string/s if index is out of bounds (instead of `None`s)
 
 ### Version 5.6.8
 #### Fixed:
