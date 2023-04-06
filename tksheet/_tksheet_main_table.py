@@ -627,9 +627,9 @@ class MainTable(tk.Canvas):
         for ndr, r in enumerate(range(y1, y1 + numrows)):
             for ndc, c in enumerate(range(x1, x1 + numcols)):
                 dcol = c if self.all_columns_displayed else self.displayed_columns[c]
-                if r > len(self.data) - 1:
+                if r >= len(self.data):
                     self.data.extend([list(repeat("", c + 1)) for r in range((r + 1) - len(self.data))])
-                elif c > len(self.data[r]) - 1:
+                elif c >= len(self.data[r]):
                     self.data[r].extend(list(repeat("", (c + 1) - len(self.data[r]))))
                 if (
                     ((r, dcol) in self.cell_options and 'readonly' in self.cell_options[(r, dcol)]) or
@@ -2973,7 +2973,13 @@ class MainTable(tk.Canvas):
     def set_index_fnt_help(self):
         pass
 
-    def data_reference(self, newdataref = None, reset_col_positions = True, reset_row_positions = True, redraw = False, return_id = True, keep_formatting=True):
+    def data_reference(self,
+                       newdataref = None, 
+                       reset_col_positions = True, 
+                       reset_row_positions = True,
+                       redraw = False, 
+                       return_id = True,
+                       keep_formatting = True):
         if isinstance(newdataref, (list, tuple)):
             formatted_cells = self.get_formatted_cells()
             if keep_formatting:
@@ -5390,9 +5396,9 @@ class MainTable(tk.Canvas):
             dcol = c if self.all_columns_displayed else self.displayed_columns[c]
         if drow is None:
             drow = r if self.all_rows_displayed else self.displayed_rows[r]
-        if r > len(self.data) - 1:
+        if r >= len(self.data):
             self.data.extend([list(repeat("", dcol + 1)) for i in range((r + 1) - len(self.data))])
-        elif dcol > len(self.data[r]) - 1:
+        elif dcol >= len(self.data[r]):
             self.data[r].extend(list(repeat("", (dcol + 1) - len(self.data[r]))))
         if self.undo_enabled and undo:
             if self.data[r][dcol] != value:
@@ -5424,7 +5430,7 @@ class MainTable(tk.Canvas):
 
     def create_checkbox(self, r = 0, c = 0, checked = False, state = "normal", redraw = False, check_function = None, text = ""):
         if (r, c) in self.get_formatted_cells(): # Checkboxes are not supported with formatting, clear formatting
-            self.clear_cell_format((r,c), True)
+            self.clear_cell_format((r, c), True)
         if (r, c) in self.cell_options and any(x in self.cell_options[(r, c)] for x in ('dropdown', 'checkbox')):
             self.delete_dropdown_and_checkbox(r, c)
         self._set_cell_data(r, dcol = c, value = checked, cell_resize = False, undo = False) #only works because cell_resize is false and undo is false, otherwise needs c arg
@@ -5466,9 +5472,9 @@ class MainTable(tk.Canvas):
             dcol = c if self.all_columns_displayed else self.displayed_columns[c]
         if drow is None:
             drow = r if self.all_rows_displayed else self.displayed_rows[r]
-        if r > len(self.data) - 1:
+        if r >= len(self.data):
             self.data.extend([list(repeat("", dcol + 1)) for i in range((r + 1) - len(self.data))])
-        elif dcol > len(self.data[r]) - 1:
+        elif dcol >= len(self.data[r]):
             self.data[r].extend(list(repeat("", (dcol + 1) - len(self.data[r]))))
         if (r, c) not in self.cell_options:
             self.cell_options[(r, c)] = {}
@@ -5498,11 +5504,21 @@ class MainTable(tk.Canvas):
                     self.data[r][c] = self.data[r][c].value
             except:
                 pass
+            
+    def yield_formatted_cells(self, formatter = None):
+        if formatter is not None:
+            yield from (cell for cell, options in self.cell_options.items() if 'format' in options and options['format'] == formatter)
+        yield from (cell for cell, options in self.cell_options.items() if 'format' in options and options['format'] is not None)
     
     def get_formatted_cells(self, formatter = None):
         if formatter is not None:
-            return [cell for cell, options in self.cell_options.items() if 'format' in options and options['format'] == formatter]
-        return [cell for cell, options in self.cell_options.items() if 'format' in options and options['format'] is not None]
+            return {cell for cell, options in self.cell_options.items() if 'format' in options and options['format'] == formatter}
+        return {cell for cell, options in self.cell_options.items() if 'format' in options and options['format'] is not None}
+    
+    def in_formatted_cells(self, r, c):
+        if (r, c) in self.cell_options and 'format' in self.cell_options[(r, c)]:
+            return True
+        return False
 
     def get_widget_bg_fg(self, r, c):
         bg = self.table_bg

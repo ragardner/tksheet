@@ -691,7 +691,7 @@ class ColumnHeaders(tk.Canvas):
                 hw = b[2] - b[0] + 7 + self.MT.hdr_txt_h
             else:
                 txt = ""
-                if isinstance(self.MT._headers, int) or len(self.MT._headers) - 1 >= data_col:
+                if isinstance(self.MT._headers, int) or len(self.MT._headers) > data_col:
                     if isinstance(self.MT._headers, int):
                         txt = self.MT.data[self.MT._headers][data_col]
                     else:
@@ -1221,7 +1221,7 @@ class ColumnHeaders(tk.Canvas):
                     extra_func_key = "F2"
             dcol = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
             if isinstance(self.MT._headers, list):
-                if len(self.MT._headers) <= dcol:
+                if dcol >= len(self.MT._headers):
                     self.MT._headers.extend(list(repeat("", dcol - len(self.MT._headers) + 1)))
                 text = f"{self.MT._headers[dcol]}"
             elif isinstance(self.MT._headers, int):
@@ -1296,7 +1296,7 @@ class ColumnHeaders(tk.Canvas):
         dcol = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
         if text is None:
             if isinstance(self.MT._headers, list):
-                if len(self.MT._headers) <= dcol:
+                if dcol >= len(self.MT._headers):
                     self.MT._headers.extend(list(repeat("", dcol - len(self.MT._headers) + 1)))
                 text = f"{self.MT._headers[dcol]}"
             elif isinstance(self.MT._headers, int):
@@ -1461,7 +1461,7 @@ class ColumnHeaders(tk.Canvas):
         if dcol is None:
             dcol = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
         if isinstance(self.MT._headers, list):
-            if len(self.MT._headers) <= dcol:
+            if dcol >= len(self.MT._headers):
                 self.MT._headers.extend(list(repeat("", dcol - len(self.MT._headers) + 1)))
             if self.MT.undo_enabled and undo:
                 if self.MT._headers[dcol] != value:

@@ -117,7 +117,7 @@ class AbstractFormatterClass(ABC):
         else:
             value = self.converter(value)
         if self.post_conversion_func and self.validator(value):
-             value = self.post_conversion_func(value)
+            value = self.post_conversion_func(value)
         return value
     
     def data(self):

@@ -1280,7 +1280,7 @@ class RowIndex(tk.Canvas):
                     extra_func_key = "F2"
             drow = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r]
             if isinstance(self.MT._row_index, list):
-                if len(self.MT._row_index) <= drow:
+                if drow >= len(self.MT._row_index):
                     self.MT._row_index.extend(list(repeat("", drow - len(self.MT._row_index) + 1)))
                 text = f"{self.MT._row_index[drow]}"
             elif isinstance(self.MT._row_index, int):
@@ -1352,7 +1352,7 @@ class RowIndex(tk.Canvas):
         drow = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r]
         if text is None:
             if isinstance(self.MT._row_index, list):
-                if len(self.MT._row_index) <= drow:
+                if drow >= len(self.MT._row_index):
                     self.MT._row_index.extend(list(repeat("", drow - len(self.MT._row_index) + 1)))
                 text = f"{self.MT._row_index[drow]}"
             elif isinstance(self.MT._row_index, int):
@@ -1508,7 +1508,7 @@ class RowIndex(tk.Canvas):
         if drow is None:
             drow = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r]
         if isinstance(self.MT._row_index, list):
-            if len(self.MT._row_index) <= drow:
+            if drow >= len(self.MT._row_index):
                 self.MT._row_index.extend(list(repeat("", drow - len(self.MT._row_index) + 1)))
             if self.MT.undo_enabled and undo:
                 if self.MT._row_index[drow] != value:

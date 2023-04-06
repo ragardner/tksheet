@@ -1908,8 +1908,8 @@ class Sheet(tk.Frame):
                                       return_id = False,
                                       keep_formatting = keep_formatting)
 
-    def get_sheet_data(self, return_copy = False, get_header = False, get_index = False, get_formatters = False):
-        if return_copy or not get_formatters:
+    def get_sheet_data(self, return_copy = False, get_header = False, get_index = False, get_formatted = False):
+        if return_copy:
             if get_header and get_index:
                 index_limit = len(self.MT._row_index)
                 data = [[""] + self.MT._headers.copy()] + [[f"{self.MT._row_index[rn]}"] + r.copy() if rn < index_limit else [""] + r.copy() for rn, r in enumerate(self.MT.data)]
@@ -1920,30 +1920,28 @@ class Sheet(tk.Frame):
                 data = [[f"{self.MT._row_index[rn]}"] + r.copy() if rn < index_limit else [""] + r.copy() for rn, r in enumerate(self.MT.data)]
             elif not get_index and not get_header:
                 data = [r.copy() for r in self.MT.data]
-            if not get_formatters:
-                formatted_cells = self.MT.get_formatted_cells()
-                if formatted_cells:
-                    for r,c in formatted_cells:
-                        if get_header and get_index:
-                            r+=1
-                            c+=1
-                        elif get_header and not get_index:
-                            c+=1
-                        elif get_index and not get_header:
-                            r+=1
-                        data[r][c] = data[r][c].data()
-            return data
         else:
             if get_header and get_index:
                 index_limit = len(self.MT._row_index)
-                return [[""] + self.MT._headers] + [[self.MT._row_index[rn]] + r if rn < index_limit else [""] + r for rn, r in enumerate(self.MT.data)]
+                data = [[""] + self.MT._headers] + [[self.MT._row_index[rn]] + r if rn < index_limit else [""] + r for rn, r in enumerate(self.MT.data)]
             elif get_header and not get_index:
-                return [self.MT._headers] + self.MT.data
+                data = [self.MT._headers] + self.MT.data
             elif get_index and not get_header:
                 index_limit = len(self.MT._row_index)
-                return [[self.MT._row_index[rn]] + r if rn < index_limit else [""] + r for rn, r in enumerate(self.MT.data)]
+                data = [[self.MT._row_index[rn]] + r if rn < index_limit else [""] + r for rn, r in enumerate(self.MT.data)]
             elif not get_index and not get_header:
-                return self.MT.data
+                data = self.MT.data
+        if get_formatted:
+            for r, c in self.MT.yield_formatted_cells():
+                if get_header and get_index:
+                    r+=1
+                    c+=1
+                elif get_header and not get_index:
+                    c+=1
+                elif get_index and not get_header:
+                    r+=1
+                data[r][c] = data[r][c].data()
+        return data
 
     @property
     def data(self):
@@ -1974,42 +1972,43 @@ class Sheet(tk.Frame):
         else:
             return f"{num2alpha(n)} {n + 1}"
 
-    def get_cell_data(self, r, c, return_copy = True, get_formatters = False):
-        if return_copy or not get_formatters:
-            if get_formatters:
+    def get_cell_data(self, r, c, return_copy = True, get_formatted = False):
+        if get_formatted:
+            if return_copy:
                 try:
-                    return copy(self.MT.data[r][c])
+                    return self.MT.data[r][c].data if (r, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(r, c)] else copy(self.MT.data[r][c])
                 except:
                     return None
             else:
-                formatted_cells = self.MT.get_formatted_cells()
                 try:
-                    return self.MT.data[r][c].data if (r, c) in formatted_cells else copy(self.MT.data[r][c])
+                    return self.MT.data[r][c].data if (r, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(r, c)] else self.MT.data[r][c]
                 except:
                     return None
         else:
             try:
-                return self.MT.data[r][c]
+                return copy(self.MT.data[r][c]) if return_copy else self.MT.data[r][c]
             except:
                 return None
 
-    def get_row_data(self, r, return_copy = True, get_formatters = False):
-        if return_copy or not get_formatters:
-            if get_formatters:
-                try:
-                    return copy(self.MT.data[r])
-                except:
-                    return None
-            else:
-                formatted_cells = self.MT.get_formatted_cells()
+    def get_row_data(self, r, return_copy = True, get_formatted = False):
+        
+        
+        
+        if return_copy or not get_formatted:
+            if get_formatted:
                 try:
                     for c, val in enumerate(self.MT.data[r]):
                         res = []
                         try:
-                            res.append(val.data if (r, c) in formatted_cells else copy(val))
+                            res.append(val.data if (r, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(r, c)] else copy(val))
                         except:
                             res.append(val)
                     return res
+                except:
+                    return None
+            else:
+                try:
+                    return copy(self.MT.data[r])
                 except:
                     return None
         else:
@@ -2018,10 +2017,28 @@ class Sheet(tk.Frame):
             except:
                 return None
 
-    def get_column_data(self, c, return_copy = True, get_formatters = False):
+    def get_column_data(self, c, return_copy = True, get_formatted = False):
+        if get_formatted:
+            if return_copy:
+                
+                
+            else:
+                
+        
+        else:
+            if return_copy:
+                
+                
+                
+            else:
+                
+            
+        
+        
+        
         res = []
-        if return_copy or not get_formatters:
-            if get_formatters:
+        if return_copy or not get_formatted:
+            if get_formatted:
                 for r in self.MT.data.copy():
                     try:
                         res.append(r[c])
@@ -2029,13 +2046,12 @@ class Sheet(tk.Frame):
                         continue
                 return tuple(res)
             else:
-                formatted_cells = self.MT.get_formatted_cells()
                 for r in self.MT.data:
                     try:
                         val = r[c]
                     except:
                         val = None
-                    if (r,c) in formatted_cells:
+                    if (r, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(r, c)]:
                         try:
                             res.append(val.data if (r, c) in formatted_cells else copy(val))
                         except:
@@ -2050,7 +2066,7 @@ class Sheet(tk.Frame):
             return res
 
     def set_cell_data(self, r, c, value = "", set_copy = True, redraw = False, keep_formatting = True):
-        if keep_formatting and (r, c) in self.MT.get_formatted_cells():
+        if keep_formatting and (r, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(r, c)]:
             formatter = self.MT.cell_options[(r,c)]['format']['formatter']
             kwargs = self.MT.cell_options[(r,c)]['format']['kwargs']
             self.MT.data[r][c] = formatter(f"{value}" if set_copy else value, **kwargs)
