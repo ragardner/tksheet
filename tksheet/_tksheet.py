@@ -1968,7 +1968,7 @@ class Sheet(tk.Frame):
     def get_cell_data(self, r, c, get_formats = False):
         if get_formats:
             try:
-                return self.MT.data[r][c].data if (r, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(r, c)] else self.MT.data[r][c]
+                return self.MT.data[r][c].data() if (r, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(r, c)] else self.MT.data[r][c]
             except:
                 return ""
         else:
@@ -1991,7 +1991,7 @@ class Sheet(tk.Frame):
             for r in self.MT.data:
                 if c < len(r):
                     if (r, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(r, c)]:
-                        res.append(r[c].data)
+                        res.append(r[c].data())
                     else:
                         res.append(r[c])
                 else:
