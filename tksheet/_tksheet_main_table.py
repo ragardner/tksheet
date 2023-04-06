@@ -2980,9 +2980,9 @@ class MainTable(tk.Canvas):
                         kwargs = self.cell_options[(r,c)]['format']['kwargs']
                         newdataref[r][c] = formatter(newdataref[r][c], **kwargs)
                     except IndexError:
-                        pass
+                        continue
             else:
-                self.delete_format(formatted_cells, clear_values = True)
+                self.delete_format("all", clear_values = True)
             self.data = newdataref
             self.undo_storage = deque(maxlen = self.max_undos)
             if reset_col_positions:
@@ -5421,7 +5421,7 @@ class MainTable(tk.Canvas):
 
     def create_checkbox(self, r = 0, c = 0, checked = False, state = "normal", redraw = False, check_function = None, text = ""):
         if self.formatted(r, c): # Checkboxes are not supported with formatting, clear formatting
-            self.delete_format((r, c), True)
+            self.delete_format(r, c, True)
         if (r, c) in self.cell_options and any(x in self.cell_options[(r, c)] for x in ('dropdown', 'checkbox')):
             self.delete_dropdown_and_checkbox(r, c)
         self._set_cell_data(r, dcol = c, value = checked, cell_resize = False, undo = False) #only works because cell_resize is false and undo is false, otherwise needs c arg
@@ -5478,18 +5478,24 @@ class MainTable(tk.Canvas):
         if redraw:
             self.refresh()
 
-    def delete_format(self, cells, clear_values = False):
-        if all(isinstance(cell, (list, tuple)) for cell in cells):
-            for cell in cells:
-                self.delete_format(cell, clear_values)
-        else:
-            r, c = cells
-            try:
+    def delete_format(self, drow, dcol, clear_values = False):
+        if isinstance(drow, str) and drow == "all":
+            for r, c in self.yield_formatted_cells():
                 del self.cell_options[(r, c)]['format']
+                try:
+                    if clear_values:
+                        self.data[drow][dcol] = ""
+                    else:
+                        self.data[drow][dcol] = self.data[drow][dcol].value
+                except:
+                    continue
+        else:
+            try:
+                del self.cell_options[(drow, dcol)]['format']
                 if clear_values:
-                    self.data[r][c] = ''
+                    self.data[drow][dcol] = ""
                 else:
-                    self.data[r][c] = self.data[r][c].value
+                    self.data[drow][dcol] = self.data[drow][dcol].value
             except:
                 pass
             

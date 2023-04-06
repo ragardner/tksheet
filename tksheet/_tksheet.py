@@ -2006,7 +2006,7 @@ class Sheet(tk.Frame):
                                                                                      **self.MT.cell_options[(r, c)]['format']['kwargs'])
         else:
             self.MT.data[r][c] = f"{value}" if set_copy else value
-            self.MT.delete_format((r, c))
+            self.MT.delete_format(r, c)
         if redraw:
             self.set_refresh_timer()
             
