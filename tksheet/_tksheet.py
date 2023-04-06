@@ -1877,58 +1877,59 @@ class Sheet(tk.Frame):
                              redraw = redraw)
             self.config(bg = theme_black['table_bg'])
         self.MT.recreate_all_selection_boxes()
-            
-    def data_reference(self,
-                       newdataref = None,
-                       reset_col_positions = True,
-                       reset_row_positions = True,
-                       redraw = False):
-        return self.MT.data_reference(newdataref,
-                                      reset_col_positions,
-                                      reset_row_positions,
-                                      redraw)
-
-    def set_sheet_data(self,
-                       data = [[]],
-                       reset_col_positions = True,
-                       reset_row_positions = True,
-                       redraw = True,
-                       verify = False,
-                       reset_highlights = False,
-                       keep_formatting = True):
-        if verify:
-            if not isinstance(data, list) or not all(isinstance(row, list) for row in data):
-                raise ValueError("Data argument must be a list of lists, sublists being rows")
-        if reset_highlights:
-            self.dehighlight_all()
-        return self.MT.data_reference(data,
-                                      reset_col_positions,
-                                      reset_row_positions,
-                                      redraw,
-                                      return_id = False,
-                                      keep_formatting = keep_formatting)
 
     def get_sheet_data(self, get_header = False, get_index = False, get_formats = False):
         if get_header and get_index:
             index_limit = len(self.MT._row_index)
-            data = [[""] + self.MT._headers] + [[self.MT._row_index[rn]] + r if rn < index_limit else [""] + r for rn, r in enumerate(self.MT.data)]
+            return [[""] + self.MT._headers] + [([self.MT._row_index[rn]] if rn < index_limit else [""]) + self.get_row_data(rn, get_formats = get_formats) for rn in range(len(self.MT.data))]
         elif get_header and not get_index:
-            data = [self.MT._headers] + self.MT.data
+            return [self.MT._headers] + [self.get_row_data(rn, get_formats = get_formats) for rn in range(len(self.MT.data))]
         elif get_index and not get_header:
             index_limit = len(self.MT._row_index)
-            data = [[self.MT._row_index[rn]] + r if rn < index_limit else [""] + r for rn, r in enumerate(self.MT.data)]
+            return [([self.MT._row_index[rn]] if rn < index_limit else [""]) + self.get_row_data(rn, get_formats = get_formats) for rn in range(len(self.MT.data))]
         elif not get_index and not get_header:
-            data = self.MT.data
+            return [self.get_row_data(rn, get_formats = get_formats) for rn in range(len(self.MT.data))]
+    
+    def get_cell_data(self, r, c, get_formats = False):
         if get_formats:
-            for r, c in self.MT.yield_formatted_cells():
-                if get_header and get_index:
-                    r+=1
-                    c+=1
-                elif get_header and not get_index:
-                    c+=1
-                elif get_index and not get_header:
-                    r+=1
-                data[r][c] = data[r][c].data()
+            try:
+                return self.MT.data[r][c].data() if (r, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(r, c)] else self.MT.data[r][c]
+            except:
+                return ""
+        else:
+            try:
+                return f"{self.MT.data[r][c]}" if (r, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(r, c)] else self.MT.data[r][c]
+            except:
+                return ""
+
+    def get_row_data(self, r, get_formats = False):
+        if r >= len(self.MT.data):
+            return ["" for c in range(self.MT.total_data_cols())]
+        if get_formats:
+            return [e.data() if (r, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(r, c)] else e for c, e in enumerate(self.MT.data[r])]
+        else:
+            return [f"{e}" if (r, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(r, c)] else e for c, e in enumerate(self.MT.data[r])]
+
+    def get_column_data(self, c, get_formats = False):
+        data = []
+        if get_formats:
+            for rn, r in enumerate(self.MT.data):
+                if c < len(r):
+                    if (rn, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(rn, c)]:
+                        data.append(r[c].data())
+                    else:
+                        data.append(r[c])
+                else:
+                    data.append("")
+        else:
+            for rn, r in enumerate(self.MT.data):
+                if c < len(r):
+                    if (rn, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(rn, c)]:
+                        data.append(f"{r[c]}")
+                    else:
+                        data.append(r[c])
+                else:
+                    data.append("")
         return data
 
     @property
@@ -1964,48 +1965,36 @@ class Sheet(tk.Frame):
         if (r, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(r, c)]:
             return True
         return False
+    
+    def data_reference(self,
+                       newdataref = None,
+                       reset_col_positions = True,
+                       reset_row_positions = True,
+                       redraw = False):
+        return self.MT.data_reference(newdataref,
+                                      reset_col_positions,
+                                      reset_row_positions,
+                                      redraw)
 
-    def get_cell_data(self, r, c, get_formats = False):
-        if get_formats:
-            try:
-                return self.MT.data[r][c].data() if (r, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(r, c)] else self.MT.data[r][c]
-            except:
-                return ""
-        else:
-            try:
-                return f"{self.MT.data[r][c]}" if (r, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(r, c)] else self.MT.data[r][c]
-            except:
-                return ""
-
-    def get_row_data(self, r, get_formats = False):
-        if r < len(self.MT.data):
-            return ["" for c in range(self.MT.total_data_cols())]
-        if get_formats:
-            return [e.data if (r, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(r, c)] else e for c, e in enumerate(self.MT.data[r])]
-        else:
-            return [f"{e}" if (r, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(r, c)] else e for c, e in enumerate(self.MT.data[r])]
-
-    def get_column_data(self, c, get_formats = False):
-        data = []
-        if get_formats:
-            for rn, r in enumerate(self.MT.data):
-                if c < len(r):
-                    if (rn, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(rn, c)]:
-                        data.append(r[c].data())
-                    else:
-                        data.append(r[c])
-                else:
-                    data.append("")
-        else:
-            for rn, r in enumerate(self.MT.data):
-                if c < len(r):
-                    if (rn, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(rn, c)]:
-                        data.append(f"{r[c]}")
-                    else:
-                        data.append(r[c])
-                else:
-                    data.append("")
-        return data
+    def set_sheet_data(self,
+                       data = [[]],
+                       reset_col_positions = True,
+                       reset_row_positions = True,
+                       redraw = True,
+                       verify = False,
+                       reset_highlights = False,
+                       keep_formatting = True):
+        if verify:
+            if not isinstance(data, list) or not all(isinstance(row, list) for row in data):
+                raise ValueError("Data argument must be a list of lists, sublists being rows")
+        if reset_highlights:
+            self.dehighlight_all()
+        return self.MT.data_reference(data,
+                                      reset_col_positions,
+                                      reset_row_positions,
+                                      redraw,
+                                      return_id = False,
+                                      keep_formatting = keep_formatting)
 
     def set_cell_data(self, r, c, value = "", set_copy = True, redraw = False, keep_formatting = True):
         if keep_formatting and (r, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(r, c)]:
