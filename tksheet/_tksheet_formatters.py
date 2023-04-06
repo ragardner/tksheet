@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Union, Any, Type, Callable
+from ._tksheet_vars import *
 
 def is_nonelike(n: Any):
-    nonelike = {'none', ''}
     if n is None:
         return True
     if isinstance(n, str):
@@ -29,8 +29,6 @@ def to_bool(val: Any):
     if isinstance(val, bool):
         return val
     v = val.lower()
-    truthy = {True, "true", "t", "yes", "y", "on", "1", 1}
-    falsy = {False, "false", "f", "no", "n", "off", "0", 0}
     if v in truthy:
         return True
     if v in falsy:

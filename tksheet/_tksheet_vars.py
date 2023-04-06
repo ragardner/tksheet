@@ -4,6 +4,9 @@ USER_OS = f"{get_os()}".lower()
 
 ctrl_key = "Command" if USER_OS == "darwin" else "Control"
 symbols_set = set("""!#\$%&'()*+,-./:;"@[]^_`{|}~>?= """)
+nonelike = {'none', ''}
+truthy = {True, "true", "t", "yes", "y", "on", "1", 1}
+falsy = {False, "false", "f", "no", "n", "off", "0", 0}
 
 def get_font():
     return ("Calibri", 13 if USER_OS == "darwin" else 11, "normal")
