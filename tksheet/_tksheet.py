@@ -1936,7 +1936,7 @@ class Sheet(tk.Frame):
     def data(self):
         return self.MT.data
             
-    def yield_sheet_rows(self, get_header = False, get_index = False):
+    def yield_sheet_rows(self, get_header = False, get_index = False, get_formats = False):
         if get_header:
             if get_index:
                 yield [""] + [self.get_n2a(c, self.CH.default_hdr) for c in range(len(max(self.MT.data, key = len)))] if isinstance(self.MT._headers, int) or not self.MT._headers else self.MT._headers
@@ -1944,12 +1944,12 @@ class Sheet(tk.Frame):
                 yield [self.get_n2a(c, self.CH.default_hdr) for c in range(len(max(self.MT.data, key = len)))] if isinstance(self.MT._headers, int) or not self.MT._headers else self.MT._headers
         if get_index:
             if isinstance(self.MT._row_index, int) or not self.MT._row_index:
-                for rn, r in enumerate(self.MT.data):
+                for rn in range(len(self.MT.data)):
                     yield [self.get_n2a(rn, self.RI.default_index)] + r
             else:
                 index_limit = len(self.MT._row_index)
-                for rn, r in enumerate(self.MT.data):
-                    yield [self.MT._row_index[rn]] + r if rn < index_limit else [""] + r
+                for rn in range(len(self.MT.data)):
+                    yield [self.MT._row_index[rn]] + self.get_row_data(rn, get_formats = get_formats) if rn < index_limit else [""] + self.get_row_data(rn, get_formats = get_formats)
         else:
             yield from self.MT.data
                 
@@ -2650,7 +2650,6 @@ class Sheet(tk.Frame):
                     c,
                     format_,
                     formatter_kwargs = {},
-                    convert_existing_values = True,
                     redraw = True,
                     ):
         if isinstance(r, str) and r.lower() == 'all' and isinstance(c, int):
@@ -2659,7 +2658,6 @@ class Sheet(tk.Frame):
                                     dcol = c, 
                                     formatter = format_,
                                     formatter_kwargs = formatter_kwargs,
-                                    convert_existing_values = convert_existing_values,
                                     redraw = redraw)
         elif isinstance(c, str) and c.lower() == 'all' and isinstance(r, int):
             for c_ in range(self.MT.total_data_cols()):
@@ -2667,7 +2665,6 @@ class Sheet(tk.Frame):
                                     dcol = c_, 
                                     formatter = format_,
                                     formatter_kwargs = formatter_kwargs,
-                                    convert_existing_values = convert_existing_values,
                                     redraw = redraw)
         elif isinstance(r, str) and r.lower() == 'all' and isinstance(c, str) and c.lower() == 'all':
             for r_ in range(self.MT.total_data_rows()):
@@ -2676,14 +2673,12 @@ class Sheet(tk.Frame):
                                         dcol = c_, 
                                         formatter = format_,
                                         formatter_kwargs = formatter_kwargs,
-                                        convert_existing_values = convert_existing_values,
                                         redraw = redraw)
         else:
             self.MT.format_cell(drow = r,
                                 dcol = c, 
                                 formatter = format_,
                                 formatter_kwargs = formatter_kwargs,
-                                convert_existing_values = convert_existing_values,
                                 redraw = redraw)
             
     def delete_format(self,
