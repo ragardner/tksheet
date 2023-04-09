@@ -1360,7 +1360,6 @@ class RowIndex(tk.Canvas):
                     text = f"{self.MT.data[self.MT._row_index][datarn]}"
                 except:
                     text = ""
-        #bg, fg = self.get_widget_bg_fg(datarn)bg = 
         bg, fg = self.index_bg, self.index_fg
         self.text_editor = TextEditor(self,
                                       text = text,
@@ -1577,16 +1576,6 @@ class RowIndex(tk.Canvas):
                                             'state': state}
         if redraw:
             self.MT.refresh()
-            
-    def get_widget_bg_fg(self, r):
-        bg = self.index_bg
-        fg = self.index_fg
-        if r in self.cell_options and 'highlight' in self.cell_options[r]:
-            if self.cell_options[r]['highlight'][0] is not None:
-                bg = self.cell_options[r]['highlight'][0]
-            if self.cell_options[r]['highlight'][1] is not None:
-                fg = self.cell_options[r]['highlight'][1]
-        return bg, fg
     
     def get_dropdown_height_anchor(self, datarn, text_editor_h = None):
         win_h = 5

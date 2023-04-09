@@ -87,7 +87,7 @@ class ColumnHeaders(tk.Canvas):
         self.hidd_checkbox = {}
         
         self.column_drag_and_drop_perform = kwargs['column_drag_and_drop_perform']
-        self.default_hdr = kwargs['default_header'].lower()
+        self.default_header = kwargs['default_header'].lower()
         self.max_cw = float(kwargs['max_colwidth'])
         self.max_header_height = float(kwargs['max_header_height'])
         self.header_bg = kwargs['header_bg']
@@ -704,9 +704,9 @@ class ColumnHeaders(tk.Canvas):
                         else:
                             hw = b[2] - b[0] + 7
                 if not isinstance(self.MT._headers, int) and ((not txt and self.show_default_header_for_empty) or len(self.MT._headers) < data_col):
-                    if self.default_hdr == "letters":
+                    if self.default_header == "letters":
                         hw = self.MT.GetHdrTextWidth(num2alpha(data_col)) + 7
-                    elif self.default_hdr == "numbers":
+                    elif self.default_header == "numbers":
                         hw = self.MT.GetHdrTextWidth(f"{data_col + 1}") + 7
                     else:
                         hw = self.MT.GetHdrTextWidth(f"{data_col + 1} {num2alpha(data_col)}") + 7
@@ -1086,9 +1086,9 @@ class ColumnHeaders(tk.Canvas):
             except:
                 got_hdr = False
             if not got_hdr or (lns == [""] and self.show_default_header_for_empty):
-                if self.default_hdr == "letters":
+                if self.default_header == "letters":
                     lns = (num2alpha(datacn), )
-                elif self.default_hdr == "numbers":
+                elif self.default_header == "numbers":
                     lns = (f"{datacn + 1}", )
                 else:
                     lns = (f"{datacn + 1} {num2alpha(datacn)}", )
@@ -1304,7 +1304,6 @@ class ColumnHeaders(tk.Canvas):
                     text = f"{self.MT.data[self.MT._headers][datacn]}"
                 except:
                     text = ""
-        #bg, fg = self.get_widget_bg_fg(datacn)
         bg, fg = self.header_bg, self.header_fg
         self.text_editor = TextEditor(self,
                                       text = text,
@@ -1530,16 +1529,6 @@ class ColumnHeaders(tk.Canvas):
                                             'state': state}
         if redraw:
             self.MT.refresh()
-            
-    def get_widget_bg_fg(self, c):
-        bg = self.header_bg
-        fg = self.header_fg
-        if c in self.cell_options and 'highlight' in self.cell_options[c]:
-            if self.cell_options[c]['highlight'][0] is not None:
-                bg = self.cell_options[c]['highlight'][0]
-            if self.cell_options[c]['highlight'][1] is not None:
-                fg = self.cell_options[c]['highlight'][1]
-        return bg, fg
 
     def get_dropdown_height_anchor(self, datacn, text_editor_h = None):
         win_h = 5

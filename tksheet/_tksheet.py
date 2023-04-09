@@ -1771,7 +1771,7 @@ class Sheet(tk.Frame):
         if 'table_selected_columns_fg' in kwargs:
             self.MT.table_selected_columns_fg = kwargs['table_selected_columns_fg']
         if 'default_header' in kwargs:
-            self.CH.default_hdr = kwargs['default_header'].lower()
+            self.CH.default_header = kwargs['default_header'].lower()
         if 'default_row_index' in kwargs:
             self.RI.default_index = kwargs['default_row_index'].lower()
         if 'max_colwidth' in kwargs:
@@ -1878,47 +1878,115 @@ class Sheet(tk.Frame):
             self.config(bg = theme_black['table_bg'])
         self.MT.recreate_all_selection_boxes()
 
-    def get_sheet_data(self, get_header = False, get_index = False, get_formats = False):
+    def get_header_data(self, cn, return_copy = True, default_for_empty = True):
+        if isinstance(self.MT._headers, int) or not self.MT._headers or cn >= len(self.MT._headers) or not self.MT._headers[cn]:
+            if default_for_empty:
+                return self.get_n2a(cn, self.CH.default_header)
+            else:
+                return ""
+        else:
+            if return_copy:
+                return f"{self.MT._headers[cn]}"
+            else:
+                return self.MT._headers[cn]
+                
+    def get_index_data(self, rn, return_copy = True, default_for_empty = True):
+        if isinstance(self.MT._row_index, int) or not self.MT._row_index or rn >= len(self.MT._row_index) or not self.MT._row_index[rn]:
+            if default_for_empty:
+                return self.get_n2a(rn, self.RI.default_index)
+            else:
+                return ""
+        elif self.MT._row_index[rn]:
+            if return_copy:
+                return f"{self.MT._row_index[rn]}"
+            else:
+                return self.MT._row_index[rn]
+
+    def get_sheet_data(self, 
+                       return_copy = True, 
+                       get_header = False,
+                       get_index = False,
+                       get_formats = False, 
+                       default_index_for_empty = True,
+                       default_header_for_empty = True):
+        if get_header:
+            maxlen = len(self.MT._headers) if isinstance(self.MT._headers, (list, tuple)) else 0
+            data = []
+        if get_index:
+            index_limit = len(self.MT._row_index)
         if get_header and get_index:
-            index_limit = len(self.MT._row_index)
-            return [[""] + self.MT._headers] + [([self.MT._row_index[rn]] if rn < index_limit else [""]) + self.get_row_data(rn, get_formats = get_formats) for rn in range(len(self.MT.data))]
+            for rn in range(len(self.MT.data)):
+                r = self.get_row_data(rn, return_copy = return_copy, get_formats = get_formats)
+                if len(r) > maxlen:
+                    maxlen = len(r)
+                data.append([self.get_index_data(rn, return_copy = return_copy, default_for_empty = default_index_for_empty)] + r)
+            return [[""] + [self.get_header_data(cn, return_copy = return_copy, default_for_empty = default_header_for_empty) for cn in range(maxlen)]] + data
         elif get_header and not get_index:
-            return [self.MT._headers] + [self.get_row_data(rn, get_formats = get_formats) for rn in range(len(self.MT.data))]
-        elif get_index and not get_header:
-            index_limit = len(self.MT._row_index)
-            return [([self.MT._row_index[rn]] if rn < index_limit else [""]) + self.get_row_data(rn, get_formats = get_formats) for rn in range(len(self.MT.data))]
-        elif not get_index and not get_header:
-            return [self.get_row_data(rn, get_formats = get_formats) for rn in range(len(self.MT.data))]
+            for rn in range(len(self.MT.data)):
+                r = self.get_row_data(rn, return_copy = return_copy, get_formats = get_formats)
+                if len(r) > maxlen:
+                    maxlen = len(r)
+                data.append(r)
+            return [[self.get_header_data(cn, return_copy = return_copy, default_for_empty = default_header_for_empty) for cn in range(maxlen)]] + data
+        elif not get_header:
+            return [self.get_row_data(rn,
+                                      return_copy = return_copy,
+                                      get_formats = get_formats,
+                                      get_index = get_index,
+                                      default_index_for_empty = default_index_for_empty)
+                    for rn in range(len(self.MT.data))]
     
-    def get_cell_data(self, r, c, get_formats = False):
+    def get_cell_data(self, r, c, return_copy = True, get_formats = False):
         if get_formats:
             try:
-                return self.MT.data[r][c].data() if (r, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(r, c)] else self.MT.data[r][c]
+                return self.MT.data[r][c].data() if ((r, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(r, c)]) else f"{self.MT.data[r][c]}"
             except:
                 return ""
         else:
             try:
-                return f"{self.MT.data[r][c]}" if (r, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(r, c)] else self.MT.data[r][c]
+                return f"{self.MT.data[r][c]}" if ((r, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(r, c)]) else f"{self.MT.data[r][c]}"
             except:
                 return ""
 
-    def get_row_data(self, r, get_formats = False):
-        if r >= len(self.MT.data):
-            return ["" for c in range(self.MT.total_data_cols())]
-        if get_formats:
-            return [e.data() if (r, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(r, c)] else e for c, e in enumerate(self.MT.data[r])]
+    def get_row_data(self, r, return_copy = True, get_formats = False, get_index = False, default_index_for_empty = True):
+        if get_index:
+            if r >= len(self.MT.data):
+                return [self.get_index_data(r, return_copy = return_copy, default_for_empty = default_index_for_empty)] + ["" for c in range(self.MT.total_data_cols())]
+            if get_formats:
+                return ([self.get_index_data(r, return_copy = return_copy, default_for_empty = default_index_for_empty)] +
+                        [e.data() if ((r, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(r, c)]) else 
+                         f"{e}" if return_copy else 
+                         e 
+                         for c, e in enumerate(self.MT.data[r])])
+            else:
+                return ([self.get_index_data(r, return_copy = return_copy, default_for_empty = default_index_for_empty)] +
+                        [f"{e}" if ((r, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(r, c)]) else 
+                         f"{e}" if return_copy else
+                         e 
+                         for c, e in enumerate(self.MT.data[r])])
         else:
-            return [f"{e}" if (r, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(r, c)] else e for c, e in enumerate(self.MT.data[r])]
+            if r >= len(self.MT.data):
+                return ["" for c in range(self.MT.total_data_cols())]
+            if get_formats:
+                return [e.data() if ((r, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(r, c)]) else
+                        f"{e}" if return_copy else 
+                        e 
+                        for c, e in enumerate(self.MT.data[r])]
+            else:
+                return [f"{e}" if ((r, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(r, c)]) else 
+                        f"{e}" if return_copy else 
+                        e 
+                        for c, e in enumerate(self.MT.data[r])]
 
-    def get_column_data(self, c, get_formats = False):
-        data = []
+    def get_column_data(self, c, return_copy = True, get_formats = False, get_header = False, default_header_for_empty = True):
+        data = [self.get_header_data(c, return_copy = return_copy, default_for_empty = default_header_for_empty)] if get_header else []
         if get_formats:
             for rn, r in enumerate(self.MT.data):
                 if c < len(r):
                     if (rn, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(rn, c)]:
                         data.append(r[c].data())
                     else:
-                        data.append(r[c])
+                        data.append(f"{r[c]}" if return_copy else r[c])
                 else:
                     data.append("")
         else:
@@ -1927,31 +1995,28 @@ class Sheet(tk.Frame):
                     if (rn, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(rn, c)]:
                         data.append(f"{r[c]}")
                     else:
-                        data.append(r[c])
+                        data.append(f"{r[c]}" if return_copy else r[c])
                 else:
                     data.append("")
         return data
+    
+    def yield_sheet_rows(self,
+                         return_copy = True, 
+                         get_header = False,
+                         get_index = False,
+                         get_formats = False, 
+                         default_index_for_empty = True,
+                         default_header_for_empty = True):
+        yield from self.get_sheet_data(return_copy = return_copy, 
+                                       get_header = get_header,
+                                       get_index = get_index,
+                                       get_formats = get_formats, 
+                                       default_index_for_empty = default_index_for_empty,
+                                       default_header_for_empty = default_header_for_empty)
 
     @property
     def data(self):
         return self.MT.data
-            
-    def yield_sheet_rows(self, get_header = False, get_index = False, get_formats = False):
-        if get_header:
-            if get_index:
-                yield [""] + [self.get_n2a(c, self.CH.default_hdr) for c in range(len(max(self.MT.data, key = len)))] if isinstance(self.MT._headers, int) or not self.MT._headers else self.MT._headers
-            else:
-                yield [self.get_n2a(c, self.CH.default_hdr) for c in range(len(max(self.MT.data, key = len)))] if isinstance(self.MT._headers, int) or not self.MT._headers else self.MT._headers
-        if get_index:
-            if isinstance(self.MT._row_index, int) or not self.MT._row_index:
-                for rn in range(len(self.MT.data)):
-                    yield [self.get_n2a(rn, self.RI.default_index)] + r
-            else:
-                index_limit = len(self.MT._row_index)
-                for rn in range(len(self.MT.data)):
-                    yield [self.MT._row_index[rn]] + self.get_row_data(rn, get_formats = get_formats) if rn < index_limit else [""] + self.get_row_data(rn, get_formats = get_formats)
-        else:
-            yield from self.MT.data
                 
     def get_n2a(self, n = 0, _type = "numbers"):
         if _type == "letters":
@@ -2648,7 +2713,7 @@ class Sheet(tk.Frame):
     def format_cell(self,
                     r,
                     c,
-                    format_,
+                    formatter,
                     formatter_kwargs = {},
                     redraw = True,
                     ):
@@ -2656,14 +2721,14 @@ class Sheet(tk.Frame):
             for r_ in range(self.MT.total_data_rows()):
                 self.MT.format_cell(drow = r_,
                                     dcol = c, 
-                                    formatter = format_,
+                                    formatter = formatter,
                                     formatter_kwargs = formatter_kwargs,
                                     redraw = redraw)
         elif isinstance(c, str) and c.lower() == 'all' and isinstance(r, int):
             for c_ in range(self.MT.total_data_cols()):
                 self.MT.format_cell(drow = r,
                                     dcol = c_, 
-                                    formatter = format_,
+                                    formatter = formatter,
                                     formatter_kwargs = formatter_kwargs,
                                     redraw = redraw)
         elif isinstance(r, str) and r.lower() == 'all' and isinstance(c, str) and c.lower() == 'all':
@@ -2671,13 +2736,13 @@ class Sheet(tk.Frame):
                 for c_ in range(self.MT.total_data_cols()):
                     self.MT.format_cell(drow = r_,
                                         dcol = c_, 
-                                        formatter = format_,
+                                        formatter = formatter,
                                         formatter_kwargs = formatter_kwargs,
                                         redraw = redraw)
         else:
             self.MT.format_cell(drow = r,
                                 dcol = c, 
-                                formatter = format_,
+                                formatter = formatter,
                                 formatter_kwargs = formatter_kwargs,
                                 redraw = redraw)
             
