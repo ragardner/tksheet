@@ -6,7 +6,7 @@ def is_nonelike(n: Any):
     if n is None:
         return True
     if isinstance(n, str):
-        return n.lower().replace(' ', '') in nonelike
+        return n.lower().replace(" ", "") in nonelike
     else:
         return False
 
@@ -20,7 +20,7 @@ def to_float(x: Any):
         return x
     if isinstance(x, str) and x.endswith('%'):
         try:
-            return float(x.replace('%', ''))/100
+            return float(x.replace('%', "")) / 100
         except:
             raise ValueError(f'Cannot map {x} to float')
     return float(x)
@@ -28,20 +28,23 @@ def to_float(x: Any):
 def to_bool(val: Any):
     if isinstance(val, bool):
         return val
-    v = val.lower()
-    if v in truthy:
-        return True
-    if v in falsy:
+    if isinstance(val, (int, float)):
+        if val:
+            return True
         return False
-    else:
-        raise ValueError(f'Cannot map "{val}" to bool.')
+    if isinstance(val, str):
+        v = val.lower()
+        if v in truthy:
+            return True
+        elif v in falsy:
+            return False
+    raise ValueError(f'Cannot map "{val}" to bool.')
     
 def to_nullable_int(x: Any):
     return None if is_nonelike(x) else to_int(x)
 
 def to_nullable_float(x: Any):
     return None if is_nonelike(x) else to_float(x)
-
 
 def to_nullable_bool(b: Any):
     return None if is_nonelike(b) else to_bool(b)
@@ -59,7 +62,7 @@ class AbstractFormatterClass(ABC):
         post_conversion_func: A function run on the value AFTER it reaches the converter IF the value has been correctly converted.
 
     Methods:
-        validator: returns Bool. used to validate whether self.value has been correctly converted
+        value_is_valid: returns Bool. used to validate whether self.value has been correctly converted
         data: Returns either the converted value or missing_values depending on whether self.value has been correctly converted
         convert(value): Tried to convert value using self.converter.
     '''
@@ -92,16 +95,16 @@ class AbstractFormatterClass(ABC):
         try:
             self.value = self.convert(value)
         except (ValueError, TypeError):
-            self.value = str(value)
+            self.value = f"{value}"
 
     @abstractmethod
     def __str__(self):
-        if not self.validator():
+        if not self.value_is_valid():
             return self.missing_values
-        if self.value == None and self.nullable:
-            return ''
+        if self.value is None and self.nullable:
+            return ""
 
-    def validator(self, value = None) -> bool:
+    def value_is_valid(self, value = None) -> bool:
         if value is None:
             value = self.value
         if isinstance(value, self.valid_datatypes):
@@ -116,12 +119,12 @@ class AbstractFormatterClass(ABC):
             value = None if is_nonelike(value) else self.converter(value)
         else:
             value = self.converter(value)
-        if self.post_conversion_func and self.validator(value):
+        if self.post_conversion_func and self.value_is_valid(value):
             value = self.post_conversion_func(value)
         return value
     
     def data(self):
-        if self.validator():
+        if self.value_is_valid():
             return self.value
         return self.missing_values
     
@@ -162,12 +165,12 @@ class CellFormatter(AbstractFormatterClass):
 
     def __str__(self):
         s = super().__str__()
-        if s != None:
+        if s is not None:
             return s
-        if self.to_str != None:
+        if self.to_str is not None:
             return self.to_str(self.value)
-        return f'{self.value}'
-    
+        return f"{self.value}"
+
 
 class FloatFormatter(AbstractFormatterClass):
     def __init__(self, 
@@ -191,11 +194,11 @@ class FloatFormatter(AbstractFormatterClass):
 
     def __str__(self):
         s = super().__str__()
-        if s != None:
+        if s is not None:
             return s
-        if self.decimals != None:
-            return (f"%.{self.decimals}f" % round(self.value, self.decimals))
-        return str(self.value)
+        if self.decimals is not None:
+            return f"{round(self.value, self.decimals)}"
+        return f"{self.value}"
     
 
 class PercentageFormatter(AbstractFormatterClass):
@@ -220,11 +223,11 @@ class PercentageFormatter(AbstractFormatterClass):
 
     def __str__(self):
         s = super().__str__()
-        if s != None:
+        if s is not None:
             return s
-        if self.decimals != None:
-            return (f"%.{self.decimals}f" % round(self.value*100, self.decimals))+'%'
-        return str(self.value*100)+'%'
+        if self.decimals is not None:
+            return f"{(round(self.value, self.decimals)) * 100}%"
+        return f"{self.value * 100}%"
 
 
 class IntFormatter(AbstractFormatterClass):
@@ -247,9 +250,9 @@ class IntFormatter(AbstractFormatterClass):
 
     def __str__(self):
         s = super().__str__()
-        if s != None:
+        if s is not None:
             return s
-        return str(self.value)
+        return f"{self.value}"
 
 
 class BoolFormatter(AbstractFormatterClass):
@@ -272,7 +275,7 @@ class BoolFormatter(AbstractFormatterClass):
     
     def __str__(self):
         s = super().__str__()
-        if s != None:
+        if s is not None:
             return s
-        return str(self.value)
+        return f"{self.value}"
     

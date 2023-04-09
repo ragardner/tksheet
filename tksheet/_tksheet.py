@@ -2072,7 +2072,7 @@ class Sheet(tk.Frame):
             self.set_refresh_timer()
             
     def set_row_data(self, r, values = tuple(), add_columns = True, set_copy = True, redraw = False, keep_formatting = True):
-        if len(self.MT.data) - 1 < r:
+        if r >= len(self.MT.data):
             raise Exception("Row number is out of range")
         maxidx = len(self.MT.data[r]) - 1
         if not values:

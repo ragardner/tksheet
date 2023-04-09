@@ -384,7 +384,7 @@ class MainTable(tk.Canvas):
                         for c in range(c1, c2):
                             datacn = c if self.all_columns_displayed else self.displayed_columns[c]
                             try:
-                                row.append(self.data[data_ref_rn][datacn])
+                                row.append(f"{self.data[data_ref_rn][datacn]}")
                             except:
                                 row.append("")
                     writer.writerow(row)
@@ -403,7 +403,7 @@ class MainTable(tk.Canvas):
                         for c in range(c1, c2):
                             datacn = c if self.all_columns_displayed else self.displayed_columns[c]
                             try:
-                                row.append(self.data[data_ref_rn][datacn])
+                                row.append(f"{self.data[data_ref_rn][datacn]}")
                             except:
                                 row.append("")
                         writer.writerow(row)
@@ -542,20 +542,20 @@ class MainTable(tk.Canvas):
             return
         currently_selected = self.currently_selected()
         if currently_selected:
-            y1 = currently_selected[0]
-            x1 = currently_selected[1]
+            selected_r = currently_selected[0]
+            selected_c = currently_selected[1]
         elif not currently_selected and not self.expand_sheet_if_paste_too_big:
             return
         else:
             if not self.data:
-                x1, y1 = 0, 0
+                selected_c, selected_r = 0, 0
             else:
                 if len(self.col_positions) == 1 and len(self.row_positions) > 1:
-                    x1, y1 = 0, len(self.row_positions) - 1
+                    selected_c, selected_r = 0, len(self.row_positions) - 1
                 elif len(self.row_positions) == 1 and len(self.col_positions) > 1:
-                    x1, y1 = len(self.col_positions) - 1, 0
+                    selected_c, selected_r = len(self.col_positions) - 1, 0
                 elif len(self.row_positions) > 1 and len(self.col_positions) > 1:
-                    x1, y1 = 0, len(self.row_positions) - 1
+                    selected_c, selected_r = 0, len(self.row_positions) - 1
         try:
             data = self.clipboard_get()
         except:
@@ -571,7 +571,6 @@ class MainTable(tk.Canvas):
         lastbox_r1, lastbox_c1, lastbox_r2, lastbox_c2 = self.find_last_selected_box_with_current(currently_selected)
         lastbox_numrows = lastbox_r2 - lastbox_r1
         lastbox_numcols = lastbox_c2 - lastbox_c1
-        
         if lastbox_numrows > numrows and lastbox_numrows % numrows == 0:
             nd = []
             for times in range(int(lastbox_numrows / numrows)):
@@ -587,8 +586,8 @@ class MainTable(tk.Canvas):
         if self.expand_sheet_if_paste_too_big:
             added_rows = 0
             added_cols = 0
-            if x1 + numcols > len(self.col_positions) - 1:
-                added_cols = x1 + numcols - len(self.col_positions) + 1
+            if selected_c + numcols > len(self.col_positions) - 1:
+                added_cols = selected_c + numcols - len(self.col_positions) + 1
                 if isinstance(self.paste_insert_column_limit, int) and self.paste_insert_column_limit < len(self.col_positions) - 1 + added_cols:
                     added_cols = self.paste_insert_column_limit - len(self.col_positions) - 1
                 if added_cols > 0:
@@ -596,8 +595,8 @@ class MainTable(tk.Canvas):
                 if not self.all_columns_displayed:
                     total_data_cols = self.total_data_cols()
                     self.displayed_columns.extend(list(range(total_data_cols, total_data_cols + added_cols)))
-            if y1 + numrows > len(self.row_positions) - 1:
-                added_rows = y1 + numrows - len(self.row_positions) + 1
+            if selected_r + numrows > len(self.row_positions) - 1:
+                added_rows = selected_r + numrows - len(self.row_positions) + 1
                 if isinstance(self.paste_insert_row_limit, int) and self.paste_insert_row_limit < len(self.row_positions) - 1 + added_rows:
                     added_rows = self.paste_insert_row_limit - len(self.row_positions) - 1
                 if added_rows > 0:
@@ -605,51 +604,56 @@ class MainTable(tk.Canvas):
             added_rows_cols = (added_rows, added_cols)
         else:
             added_rows_cols = (0, 0)
-        if x1 + numcols > len(self.col_positions) - 1:
-            numcols = len(self.col_positions) - 1 - x1
-        if y1 + numrows > len(self.row_positions) - 1:
-            numrows = len(self.row_positions) - 1 - y1
+        if selected_c + numcols > len(self.col_positions) - 1:
+            numcols = len(self.col_positions) - 1 - selected_c
+        if selected_r + numrows > len(self.row_positions) - 1:
+            numrows = len(self.row_positions) - 1 - selected_r
         if self.extra_begin_ctrl_v_func is not None or self.extra_end_ctrl_v_func is not None:
-            rows = [[data[ndr][ndc] for ndc, c in enumerate(range(x1, x1 + numcols))] for ndr, r in enumerate(range(y1, y1 + numrows))]
+            rows = [[data[ndr][ndc] for ndc, c in enumerate(range(selected_c, selected_c + numcols))] for ndr, r in enumerate(range(selected_r, selected_r + numrows))]
         if self.extra_begin_ctrl_v_func is not None:
             try:
                 self.extra_begin_ctrl_v_func(PasteEvent("begin_ctrl_v", currently_selected, rows))
             except:
                 return
-        for ndr, r in enumerate(range(y1, y1 + numrows)):
-            for ndc, c in enumerate(range(x1, x1 + numcols)):
+        for ndr, r in enumerate(range(selected_r, selected_r + numrows)):
+            datarn = r if self.all_rows_displayed else self.displayed_rows[r]
+            for ndc, c in enumerate(range(selected_c, selected_c + numcols)):
                 datacn = c if self.all_columns_displayed else self.displayed_columns[c]
-                if r >= len(self.data):
-                    self.data.extend([list(repeat("", c + 1)) for r in range((r + 1) - len(self.data))])
-                elif c >= len(self.data[r]):
-                    self.data[r].extend(list(repeat("", (c + 1) - len(self.data[r]))))
+                if datarn >= len(self.data):
+                    self.data.extend([list(repeat("", datacn + 1)) for _i in range((datarn + 1) - len(self.data))])
+                elif datacn >= len(self.data[datarn]):
+                    self.data[datarn].extend(list(repeat("", (datacn + 1) - len(self.data[datarn]))))
                 if (
-                    ((r, datacn) in self.cell_options and 'readonly' in self.cell_options[(r, datacn)]) or
-                    ((r, datacn) in self.cell_options and 'checkbox' in self.cell_options[(r, datacn)]) or
+                    ((datarn, datacn) in self.cell_options and 'readonly' in self.cell_options[(datarn, datacn)]) or
+                    ((datarn, datacn) in self.cell_options and 'checkbox' in self.cell_options[(datarn, datacn)]) or
                     (datacn in self.col_options and 'readonly' in self.col_options[datacn]) or
-                    (r in self.row_options and 'readonly' in self.row_options[r]) or
+                    (datarn in self.row_options and 'readonly' in self.row_options[datarn]) or
                     # if pasting not allowed in dropdowns and paste value isn't in dropdown values
                     (not self.ctrl_keys_over_dropdowns_enabled and 
-                     (r, datacn) in self.cell_options and 
-                     'dropdown' in self.cell_options[(r, datacn)] and
-                     data[ndr][ndc] not in self.cell_options[(r, datacn)]['dropdown']['values'])
+                     (datarn, datacn) in self.cell_options and 
+                     'dropdown' in self.cell_options[(datarn, datacn)] and
+                     data[ndr][ndc] not in self.cell_options[(datarn, datacn)]['dropdown']['values'])
                     ):
                     continue
                 if self.undo_enabled:
-                    undo_storage[(r, datacn)] = f"{self.data[r][datacn]}"
-                self.data[r][datacn] = data[ndr][ndc]
+                    undo_storage[(datarn, datacn)] = f"{self.data[datarn][datacn]}"
+                if (datarn, datacn) in self.cell_options and 'format' in self.cell_options[(datarn, datacn)]:
+                    self.data[datarn][datacn] = self.MT.cell_options[(datarn, datacn)]['format']['formatter'](data[ndr][ndc], 
+                                                                                                              **self.cell_options[(datarn, datacn)]['format']['kwargs'])
+                else:
+                    self.data[datarn][datacn] = data[ndr][ndc]
         if self.expand_sheet_if_paste_too_big and self.undo_enabled:
             self.equalize_data_row_lengths()
         self.deselect("all")
         if self.undo_enabled:
             self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells_paste",
                                                                  undo_storage,
-                                                                 (((y1, x1, y1 + numrows, x1 + numcols), "cells"), ), # boxes
+                                                                 (((selected_r, selected_c, selected_r + numrows, selected_c + numcols), "cells"), ), # boxes
                                                                  currently_selected,
                                                                  added_rows_cols))))
-        self.create_selected(y1, x1, y1 + numrows, x1 + numcols, "cells")
-        self.create_current(y1, x1, type_ = "cell", inside = True if numrows > 1 or numcols > 1 else False)
-        self.see(r = y1, c = x1, keep_yscroll = False, keep_xscroll = False, bottom_right_corner = False, check_cell_visibility = True, redraw = False)
+        self.create_selected(selected_r, selected_c, selected_r + numrows, selected_c + numcols, "cells")
+        self.create_current(selected_r, selected_c, type_ = "cell", inside = True if numrows > 1 or numcols > 1 else False)
+        self.see(r = selected_r, c = selected_c, keep_yscroll = False, keep_xscroll = False, bottom_right_corner = False, check_cell_visibility = True, redraw = False)
         self.refresh()
         if self.extra_end_ctrl_v_func is not None:
             self.extra_end_ctrl_v_func(PasteEvent("end_ctrl_v", currently_selected, rows))
@@ -956,8 +960,12 @@ class MainTable(tk.Canvas):
                 self.create_current(0, undo_storage[3][1], type_ = "row", inside = True)
                             
             if undo_storage[0] in ("edit_cells", "edit_cells_paste"):
-                for (r, c), v in undo_storage[1].items():
-                    self.data[r][c] = v
+                for (datarn, datacn), v in undo_storage[1].items():
+                    if (datarn, datacn) in self.cell_options and 'format' in self.cell_options[(datarn, datacn)]:
+                        self.data[datarn][datacn] = self.MT.cell_options[(datarn, datacn)]['format']['formatter'](v,
+                                                                                                                  **self.cell_options[(datarn, datacn)]['format']['kwargs'])
+                    else:
+                        self.data[r][c] = v
                 start_row = float("inf")
                 start_col = float("inf")
                 for box in undo_storage[2]:
