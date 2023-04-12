@@ -41,6 +41,12 @@ To contribute to tksheet, please follow these steps:
 
 tksheet is designed to only use built-in Python libraries, and we do not want any third-party dependencies. Please ensure that your contributions do not introduce any new dependencies outside of Python's built-in libraries.
 
+#### License
+
+tksheet is released under the MIT License. You can find the full text of the license [here](https://github.com/ragardner/tksheet/blob/master/LICENSE.txt).
+
+By contributing to the tksheet project, you agree to license your contributions under the same MIT License. Please make sure to read and understand the terms and conditions of the license before contributing.
+
 ### Enhancements/Suggestions
 
 We welcome suggestions for enhancements to tksheet! If you have an idea for a new feature or improvement, please follow these guidelines:
