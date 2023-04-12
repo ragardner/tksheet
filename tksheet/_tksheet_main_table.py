@@ -5101,7 +5101,7 @@ class MainTable(tk.Canvas):
             if len(self.data) > datarn and len(self.data[datarn]) > datacn:
                 if (datarn, datacn) in self.cell_options and 'format' in self.cell_options[(datarn, datacn)]:
                     try:
-                        text = f"{self.data[datarn][datacn].value}"
+                        text = f"{self.data[datarn][datacn].value}" if self.data[datarn][datacn].value is not None else ""
                     except:
                         text = f"{self.data[datarn][datacn]}"
                 else:
@@ -5393,9 +5393,15 @@ class MainTable(tk.Canvas):
         if datarn is None:
             datarn = r if self.all_rows_displayed else self.displayed_rows[r]
         if self.undo_enabled and undo:
-            if self.data[r][datacn] != value:
+            v = f"{self.data[r][datacn]}"
+            if (datarn, datacn) in self.cell_options and 'format' in self.cell_options[(datarn, datacn)]:
+                try:
+                    v = self.data[r][datacn].value
+                except:
+                    pass
+            if (f"{v}" if v is not None else "") != value:
                 self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells",
-                                                                     {(r, datacn): self.data[r][datacn]},
+                                                                     {(r, datacn): v},
                                                                      (((r, c, r + 1, c + 1), "cells"), ),
                                                                      self.currently_selected()))))
         if (datarn, datacn) in self.cell_options and 'format' in self.cell_options[(datarn, datacn)]:
