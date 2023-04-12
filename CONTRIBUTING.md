@@ -49,7 +49,7 @@ We welcome suggestions for enhancements to tksheet! If you have an idea for a ne
 
 ## Issues
 
-Got a bug to report or a question to ask? We're here to help! Please use the [Issues tab](https://github.com/ragardner/tksheet/issues) to report any issues or ask for assistance. Due to our small team and limited resources, please note that it may take some time for us to address all reported issues.
+Please use the [Issues tab](https://github.com/ragardner/tksheet/issues) to report any issues or ask for assistance. Due to our small team and limited resources, please note that it may take some time for us to address all reported issues.
 
 When submitting an issue, please follow these guidelines:
 
