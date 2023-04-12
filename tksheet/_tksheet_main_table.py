@@ -638,7 +638,7 @@ class MainTable(tk.Canvas):
                 if self.undo_enabled:
                     undo_storage[(datarn, datacn)] = f"{self.data[datarn][datacn]}"
                 if (datarn, datacn) in self.cell_options and 'format' in self.cell_options[(datarn, datacn)]:
-                    self.data[datarn][datacn] = self.MT.cell_options[(datarn, datacn)]['format']['formatter'](data[ndr][ndc], 
+                    self.data[datarn][datacn] = self.cell_options[(datarn, datacn)]['format']['formatter'](data[ndr][ndc], 
                                                                                                               **self.cell_options[(datarn, datacn)]['format']['kwargs'])
                 else:
                     self.data[datarn][datacn] = data[ndr][ndc]
@@ -663,6 +663,7 @@ class MainTable(tk.Canvas):
             currently_selected = self.currently_selected()
             undo_storage = {}
             boxes = []
+            test = (self.find_withtag("CellSelectFill"), self.find_withtag("RowSelectFill"), self.find_withtag("ColSelectFill"), self.find_withtag("Current_Outside"))
             for item in chain(self.find_withtag("CellSelectFill"), self.find_withtag("RowSelectFill"), self.find_withtag("ColSelectFill"), self.find_withtag("Current_Outside")):
                 alltags = self.gettags(item)
                 box = tuple(int(e) for e in alltags[1].split("_") if e)
@@ -677,6 +678,7 @@ class MainTable(tk.Canvas):
                     self.extra_begin_delete_key_func(CtrlKeyEvent("begin_delete_key", boxes, currently_selected, tuple()))
                 except:
                     return
+            boxes = list(set(boxes)) # Removes duplicates
             for (r1, c1, r2, c2), _ in boxes:
                 for r in range(r1, r2):
                     datarn = r if self.all_rows_displayed else self.displayed_rows[r]
@@ -695,7 +697,13 @@ class MainTable(tk.Canvas):
                             continue
                         try:
                             if self.undo_enabled:
-                                undo_storage[(datarn, datacn)] = f"{self.data[datarn][datacn]}"
+                                v = f"{self.data[datarn][datacn]}"
+                                if (datarn, datacn) in self.cell_options and 'format' in self.cell_options[(datarn, datacn)]:
+                                    try:
+                                        v = self.data[datarn][datacn].value
+                                    except:
+                                        pass
+                                undo_storage[(datarn, datacn)] = v
                             self.data[datarn][datacn] = ""
                         except:
                             continue
@@ -962,10 +970,10 @@ class MainTable(tk.Canvas):
             if undo_storage[0] in ("edit_cells", "edit_cells_paste"):
                 for (datarn, datacn), v in undo_storage[1].items():
                     if (datarn, datacn) in self.cell_options and 'format' in self.cell_options[(datarn, datacn)]:
-                        self.data[datarn][datacn] = self.MT.cell_options[(datarn, datacn)]['format']['formatter'](v,
+                        self.data[datarn][datacn] = self.cell_options[(datarn, datacn)]['format']['formatter'](v,
                                                                                                                   **self.cell_options[(datarn, datacn)]['format']['kwargs'])
                     else:
-                        self.data[r][c] = v
+                        self.data[datarn][datacn] = v
                 start_row = float("inf")
                 start_col = float("inf")
                 for box in undo_storage[2]:

@@ -2483,8 +2483,8 @@ class Sheet(tk.Frame):
                         text = ""):
         if isinstance(r, str) and r.lower() == "all" and isinstance(c, int):
             for r_ in range(self.MT.total_data_rows()):
-                self.MT.create_checkbox(r = r_,
-                                        c = c,
+                self.MT.create_checkbox(r_,
+                                        c,
                                         checked = checked,
                                         state = state,
                                         redraw = redraw,
@@ -2492,8 +2492,8 @@ class Sheet(tk.Frame):
                                         text = text)
         elif isinstance(c, str) and c.lower() == "all" and isinstance(r, int):
             for c_ in range(self.MT.total_data_cols()):
-                self.MT.create_checkbox(r = r,
-                                        c = c_,
+                self.MT.create_checkbox(r,
+                                        c_,
                                         checked = checked,
                                         state = state,
                                         redraw = redraw,
@@ -2503,16 +2503,16 @@ class Sheet(tk.Frame):
             totalcols = self.MT.total_data_cols()
             for r_ in range(self.MT.total_data_rows()):
                 for c_ in range(totalcols):
-                    self.MT.create_checkbox(r = r_,
-                                            c = c_,
+                    self.MT.create_checkbox(r_,
+                                            c_,
                                             checked = checked,
                                             state = state,
                                             redraw = redraw,
                                             check_function = check_function,
                                             text = text)
         else:
-            self.MT.create_checkbox(r = r,
-                                    c = c,
+            self.MT.create_checkbox(r,
+                                    c,
                                     checked = checked,
                                     state = state,
                                     redraw = redraw,
@@ -2719,23 +2719,23 @@ class Sheet(tk.Frame):
                     ):
         if isinstance(r, str) and r.lower() == 'all' and isinstance(c, int):
             for r_ in range(self.MT.total_data_rows()):
-                self.MT.format_cell(drow = r_,
-                                    dcol = c, 
+                self.MT.format_cell(r_,
+                                    c, 
                                     formatter = formatter,
                                     formatter_kwargs = formatter_kwargs,
                                     redraw = redraw)
         elif isinstance(c, str) and c.lower() == 'all' and isinstance(r, int):
             for c_ in range(self.MT.total_data_cols()):
-                self.MT.format_cell(drow = r,
-                                    dcol = c_, 
+                self.MT.format_cell(r,
+                                    c_, 
                                     formatter = formatter,
                                     formatter_kwargs = formatter_kwargs,
                                     redraw = redraw)
         elif isinstance(r, str) and r.lower() == 'all' and isinstance(c, str) and c.lower() == 'all':
             for r_ in range(self.MT.total_data_rows()):
                 for c_ in range(self.MT.total_data_cols()):
-                    self.MT.format_cell(drow = r_,
-                                        dcol = c_, 
+                    self.MT.format_cell(r_,
+                                        c_, 
                                         formatter = formatter,
                                         formatter_kwargs = formatter_kwargs,
                                         redraw = redraw)
@@ -2783,8 +2783,8 @@ class Sheet(tk.Frame):
                         modified_function = None):
         if isinstance(r, str) and r.lower() == "all" and isinstance(c, int):
             for r_ in range(self.MT.total_data_rows()):
-                self.MT.create_dropdown(r = r_,
-                                        c = c,
+                self.MT.create_dropdown(r_,
+                                        c,
                                         values = values,
                                         set_value = set_value,
                                         state = state,
@@ -2793,8 +2793,8 @@ class Sheet(tk.Frame):
                                         modified_function = modified_function)
         elif isinstance(c, str) and c.lower() == "all" and isinstance(r, int):
             for c_ in range(self.MT.total_data_cols()):
-                self.MT.create_dropdown(r = r,
-                                        c = c_,
+                self.MT.create_dropdown(r,
+                                        c_,
                                         values = values,
                                         set_value = set_value,
                                         state = state,
@@ -2805,8 +2805,8 @@ class Sheet(tk.Frame):
             totalcols = self.MT.total_data_cols()
             for r_ in range(self.MT.total_data_rows()):
                 for c_ in range(totalcols):
-                    self.MT.create_dropdown(r = r_,
-                                            c = c_,
+                    self.MT.create_dropdown(r_,
+                                            c_,
                                             values = values,
                                             set_value = set_value,
                                             state = state,
@@ -2815,8 +2815,8 @@ class Sheet(tk.Frame):
                                             modified_function = modified_function)
         
         else:
-            self.MT.create_dropdown(r = r,
-                                    c = c,
+            self.MT.create_dropdown(r,
+                                    c,
                                     values = values,
                                     set_value = set_value,
                                     state = state,
