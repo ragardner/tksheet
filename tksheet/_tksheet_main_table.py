@@ -5130,8 +5130,8 @@ class MainTable(tk.Canvas):
             datacn = c if self.all_columns_displayed else self.displayed_columns[c]
             if len(self.data) > datarn and len(self.data[datarn]) > datacn:
                 if (datarn, datacn) in self.cell_options and 'format' in self.cell_options[(datarn, datacn)]:
-                    try:
-                        text = f"{self.data[datarn][datacn].value}"
+                    try: # If the formatter value is None, then text editor should be empty not "None"
+                        text = f"{self.data[datarn][datacn].value}" if self.data[datarn][datacn].value is not None else ""
                     except:
                         text = f"{self.data[datarn][datacn]}"
                 else:
@@ -5494,19 +5494,19 @@ class MainTable(tk.Canvas):
     def format_cell(self,
                     datarn, 
                     datacn,
-                    formatter = Formatter,
+                    formatter_class = Formatter,
                     **kwargs):
         if (datarn, datacn) in self.cell_options and 'checkbox' in self.cell_options[(datarn, datacn)]:
             return
         if (datarn, datacn) not in self.cell_options:
             self.cell_options[(datarn, datacn)] = {}
-        self.cell_options[(datarn, datacn)]['format'] = {'formatter': formatter,
+        self.cell_options[(datarn, datacn)]['format'] = {'formatter': formatter_class,
                                                          'kwargs': kwargs}
         if 'value' in kwargs:
             v = kwargs['value']
         else:
             v = self.data[datarn][datacn] if len(self.data) > datarn and len(self.data[datarn]) > datacn else ""
-        self._set_cell_data(datarn, datacn, formatter(value = v, 
+        self._set_cell_data(datarn, datacn, formatter_class(value = v, 
                                                       **kwargs))
 
     def delete_format(self, datarn, datacn, clear_values = False):

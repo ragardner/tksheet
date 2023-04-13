@@ -6,7 +6,7 @@ from dateutil import parser, tz
 from math import ceil
 
 
-# --------------------- Special formatter arguements ---------------------
+# --------------------- Custom formatter methods ---------------------
 def round_up(x):
     return float(ceil(x))
 
@@ -30,7 +30,7 @@ def convert_to_local_datetime(dt: str, **kwargs):
 def datetime_to_string(dt: datetime, **kwargs):
     return dt.strftime('%d %b, %Y, %H:%M:%S')
 
-# --------------------- Custom Formatter Class ---------------------
+# --------------------- Custom Formatter with addition kwargs ---------------------
 
 def custom_datetime_to_str(dt: datetime, **kwargs):
     return dt.strftime(kwargs['format'])
@@ -58,44 +58,44 @@ class demo(tk.Tk):
                             'Bool Cell', 
                             'Percentage Cell\n0 decimal places', 
                             'Custom Datetime Cell',
-                            'Custom Datetime Cell Class',
+                            'Custom Datetime Cell\nCustom Format String',
                             'Float Cell that\nrounds up', 
                             'Float cell that\n strips non-numeric', 
                             'Dropdown Over Nullable\nPercentage Cell', 
                             'Percentage Cell\n2 decimal places'])
         
         # ---------- Some examples of cell formatting --------
-        self.sheet.format_cell('all', 0, formatter_kwargs = float_formatter_kwargs(nullable = False))
-        self.sheet.format_cell('all', 1, formatter_kwargs = float_formatter_kwargs())
-        self.sheet.format_cell('all', 2, formatter_kwargs = int_formatter_kwargs())
-        self.sheet.format_cell('all', 3, formatter_kwargs = bool_formatter_kwargs())
-        self.sheet.format_cell('all', 4, formatter_kwargs = percentage_formatter_kwargs())
+        self.sheet.format_cell('all', 0, formatter_options = float_formatter(nullable = False))
+        self.sheet.format_cell('all', 1, formatter_options = float_formatter())
+        self.sheet.format_cell('all', 2, formatter_options = int_formatter())
+        self.sheet.format_cell('all', 3, formatter_options = bool_formatter())
+        self.sheet.format_cell('all', 4, formatter_options = percentage_formatter())
 
 
         # ---------------- Custom Formatters -----------------
-        # Customformat
-        self.sheet.format_cell('all', 5, datatypes = datetime, 
-                                         format_func = convert_to_local_datetime, 
-                                         to_str_func = datetime_to_string, 
-                                         nullable = False,
-                                         invalid_value = 'NaT',
-                                         )
+        # Custom using generic formatter interface
+        self.sheet.format_cell('all', 5, formatter_options = formatter(datatypes = datetime, 
+                                                                       format_func = convert_to_local_datetime, 
+                                                                       to_str_func = datetime_to_string, 
+                                                                       nullable = False,
+                                                                       invalid_value = 'NaT',
+                                                                       ))
         # Custom format
         self.sheet.format_cell('all', 6, datatypes = datetime, 
                                          format_func = convert_to_local_datetime, 
                                          to_str_func = custom_datetime_to_str, 
                                          nullable = True,
                                          invalid_value = 'NaT',
-                                         format = '%Y-%m-%d %H:%M %p'
+                                         format = '(%Y-%m-%d) %H:%M %p'
                                          )
         
         # Unique cell behaviour using the post_conversion_function
-        self.sheet.format_cell('all', 7, formatter_kwargs = float_formatter_kwargs(post_format_func = round_up))
-        self.sheet.format_cell('all', 8, formatter_kwargs = float_formatter_kwargs(), pre_format_func = only_numeric)
+        self.sheet.format_cell('all', 7, formatter_options = float_formatter(post_format_func = round_up))
+        self.sheet.format_cell('all', 8, formatter_options = float_formatter(), pre_format_func = only_numeric)
 
         self.sheet.create_dropdown('all', 9, values = ['', '104%', .24, "300%", 'not a number'], set_value = 1)
-        self.sheet.format_cell('all', 9, formatter_kwargs = percentage_formatter_kwargs(), decimals = 0)
-        self.sheet.format_cell('all', 10, formatter_kwargs = percentage_formatter_kwargs(decimals = 5))
+        self.sheet.format_cell('all', 9, formatter_options = percentage_formatter(), decimals = 0)
+        self.sheet.format_cell('all', 10, formatter_options = percentage_formatter(decimals = 5))
 
 
 app = demo()

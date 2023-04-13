@@ -1513,7 +1513,7 @@ class ColumnHeaders(tk.Canvas):
         if datacn in self.cell_options and ('dropdown' in self.cell_options[datacn] or 
                                             'checkbox' in self.cell_options[datacn]):
             self.delete_dropdown_and_checkbox(datacn)
-        self._set_cell_data(datacn = c,
+        self._set_cell_data(datacn = datacn,
                             value = checked)
         if datacn not in self.cell_options:
             self.cell_options[datacn] = {}
@@ -1690,7 +1690,7 @@ class ColumnHeaders(tk.Canvas):
                 pass
 
     def delete_dropdown(self, datacn):
-        self.destroy_opened_dropdown_window(datacn = c)
+        self.destroy_opened_dropdown_window(datacn = datacn)
         if datacn in self.cell_options and 'dropdown' in self.cell_options[datacn]:
             del self.cell_options[datacn]['dropdown']
 
