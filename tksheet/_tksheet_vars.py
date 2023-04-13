@@ -7,6 +7,13 @@ symbols_set = set("""!#\$%&'()*+,-./:;"@[]^_`{|}~>?= """)
 nonelike = {'none', ''}
 truthy = {True, "true", "t", "yes", "y", "on", "1", 1, 1.0}
 falsy = {False, "false", "f", "no", "n", "off", "0", 0}
+arrowkey_bindings_helper = {"tab": "Tab",
+                            "up": "Up",
+                            "right": "Right",
+                            "left": "Left",
+                            "down": "Down",
+                            "prior": "Prior",
+                            "next": "Next"}
 
 def get_font():
     return ("Calibri", 13 if USER_OS == "darwin" else 11, "normal")

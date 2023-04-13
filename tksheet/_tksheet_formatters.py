@@ -233,9 +233,9 @@ class AbstractFormatterClass(ABC):
             else:
                 datatypes = (datatypes, type(None))
         elif isinstance(datatypes, (list, tuple)) and type(None) in datatypes:
-            raise TypeError("Non-nullable cells cannot have NoneType as a datatype!")
+            raise TypeError("Non-nullable cells cannot have NoneType as a datatype.")
         elif datatypes is type(None):
-            raise TypeError("Non-nullable cells cannot have NoneType as a datatype!")
+            raise TypeError("Non-nullable cells cannot have NoneType as a datatype.")
         self.nullable = nullable
         self.format_func = format_func
         self.pre_format_func = pre_format_func

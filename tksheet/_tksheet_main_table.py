@@ -65,9 +65,18 @@ class MainTable(tk.Canvas):
                                               'state': state},
                                  'highlight: (bg, fg),
                                  'align': "e",
-                                 'readonly': True}
+                                 'readonly': True,
+                                 'format': {'formatter': Formatter,
+                                            'kwargs: {}}
+                                }
         """
-
+        self.arrowkey_binding_functions = {"tab": self.tab_key,
+                                           "up": self.arrowkey_UP, 
+                                           "right": self.arrowkey_RIGHT,
+                                           "down": self.arrowkey_DOWN, 
+                                           "left": self.arrowkey_LEFT,
+                                           "prior": self.page_UP, 
+                                           "next": self.page_DOWN}
         self.extra_table_rc_menu_funcs = {}
         self.extra_index_rc_menu_funcs = {}
         self.extra_header_rc_menu_funcs = {}
@@ -147,7 +156,6 @@ class MainTable(tk.Canvas):
         self.show_dropdown_borders = kwargs['show_dropdown_borders']
         self.drag_selection_enabled = False
         self.select_all_enabled = False
-        self.arrowkeys_enabled = False
         self.undo_enabled = False
         self.cut_enabled = False
         self.copy_enabled = False
@@ -405,7 +413,10 @@ class MainTable(tk.Canvas):
                         for c in range(c1, c2):
                             datacn = c if self.all_columns_displayed else self.displayed_columns[c]
                             try:
-                                row.append(f"{self.data[data_ref_rn][datacn]}")
+                                if (data_ref_rn, datacn) in self.cell_options and 'format' in self.cell_options[(data_ref_rn, datacn)]:
+                                    row.append(self.data[data_ref_rn][datacn].clipboard())
+                                else:
+                                    row.append(f"{self.data[data_ref_rn][datacn]}")
                             except:
                                 row.append("")
                         writer.writerow(row)
@@ -442,12 +453,21 @@ class MainTable(tk.Canvas):
                             datacn = c if self.all_columns_displayed else self.displayed_columns[c]
                             try:
                                 if (data_ref_rn, datacn) in self.cell_options and 'format' in self.cell_options[(data_ref_rn, datacn)]:
-                                    val = self.data[data_ref_rn][datacn].clipboard()
+                                    try:
+                                        val = self.data[data_ref_rn][datacn].clipboard()
+                                    except:
+                                        val = self.data[data_ref_rn][datacn]
                                 else:
                                     val = self.data[data_ref_rn][datacn]
                                 row.append(val)
                                 if self.undo_enabled:
-                                    undo_storage[(data_ref_rn, datacn)] = self.data[data_ref_rn][datacn]
+                                    if (data_ref_rn, datacn) in self.cell_options and 'format' in self.cell_options[(data_ref_rn, datacn)]:
+                                        try:
+                                            undo_storage[(data_ref_rn, datacn)] = self.data[data_ref_rn][datacn].data()
+                                        except:
+                                            undo_storage[(data_ref_rn, datacn)] = self.data[data_ref_rn][datacn]
+                                    else:
+                                        undo_storage[(data_ref_rn, datacn)] = self.data[data_ref_rn][datacn]
                             except:
                                 row.append("")
                     writer.writerow(row)
@@ -489,12 +509,21 @@ class MainTable(tk.Canvas):
                             datacn = c if self.all_columns_displayed else self.displayed_columns[c]
                             try:
                                 if (data_ref_rn, datacn) in self.cell_options and 'format' in self.cell_options[(data_ref_rn, datacn)]:
-                                    val = self.data[data_ref_rn][datacn].clipboard()
+                                    try:
+                                        val = self.data[data_ref_rn][datacn].clipboard()
+                                    except:
+                                        val = self.data[data_ref_rn][datacn]
                                 else:
                                     val = self.data[data_ref_rn][datacn]
                                 row.append(val)
                                 if self.undo_enabled:
-                                    undo_storage[(data_ref_rn, datacn)] = self.data[data_ref_rn][datacn]
+                                    if (data_ref_rn, datacn) in self.cell_options and 'format' in self.cell_options[(data_ref_rn, datacn)]:
+                                        try:
+                                            undo_storage[(data_ref_rn, datacn)] = self.data[data_ref_rn][datacn].data()
+                                        except:
+                                            undo_storage[(data_ref_rn, datacn)] = self.data[data_ref_rn][datacn]
+                                    else:
+                                        undo_storage[(data_ref_rn, datacn)] = self.data[data_ref_rn][datacn]
                             except:
                                 row.append("")
                         writer.writerow(row)
@@ -644,12 +673,17 @@ class MainTable(tk.Canvas):
                      data[ndr][ndc] not in self.cell_options[(datarn, datacn)]['dropdown']['values'])
                     ):
                     continue
-                if self.undo_enabled:
-                    undo_storage[(datarn, datacn)] = self.data[datarn][datacn]
                 if (datarn, datacn) in self.cell_options and 'format' in self.cell_options[(datarn, datacn)]:
+                    if self.undo_enabled:
+                        try:
+                            undo_storage[(datarn, datacn)] = self.data[datarn][datacn].data()
+                        except:
+                            undo_storage[(datarn, datacn)] = self.data[datarn][datacn]
                     self.data[datarn][datacn] = self.cell_options[(datarn, datacn)]['format']['formatter'](data[ndr][ndc], 
                                                                                                            **self.cell_options[(datarn, datacn)]['format']['kwargs'])
                 else:
+                    if self.undo_enabled:
+                        undo_storage[(datarn, datacn)] = self.data[datarn][datacn]
                     self.data[datarn][datacn] = data[ndr][ndc]
         if self.expand_sheet_if_paste_too_big and self.undo_enabled:
             self.equalize_data_row_lengths()
@@ -704,7 +738,13 @@ class MainTable(tk.Canvas):
                             continue
                         try:
                             if self.undo_enabled:
-                                undo_storage[(datarn, datacn)] = self.data[datarn][datacn]
+                                if (datarn, datacn) in self.cell_options and 'format' in self.cell_options[(datarn, datacn)]:
+                                    undo_storage[(datarn, datacn)] = self.data[datarn][datacn].data()
+                                else:
+                                    undo_storage[(datarn, datacn)] = self.data[datarn][datacn]
+                        except:
+                            pass
+                        try:
                             self.data[datarn][datacn] = ""
                         except:
                             continue
@@ -971,7 +1011,11 @@ class MainTable(tk.Canvas):
                         
         if undo_storage[0] in ("edit_cells", "edit_cells_paste"):
             for (datarn, datacn), v in undo_storage[1].items():
-                self.data[datarn][datacn] = v
+                if (datarn, datacn) in self.cell_options and 'format' in self.cell_options[(datarn, datacn)]:
+                    self.data[datarn][datacn] = self.cell_options[(datarn, datacn)]['format']['formatter'](value = v, 
+                                                                                                           **self.cell_options[(datarn, datacn)]['format']['kwargs'])
+                else:
+                    self.data[datarn][datacn] = v
             start_row = float("inf")
             start_col = float("inf")
             for box in undo_storage[2]:
@@ -1112,28 +1156,16 @@ class MainTable(tk.Canvas):
         self.refresh()
         if self.extra_end_ctrl_z_func is not None:
             self.extra_end_ctrl_z_func(UndoEvent("end_ctrl_z", undo_storage[0], undo_storage))
-            
-    def bind_arrowkeys(self, event = None):
-        self.arrowkeys_enabled = True
-        for canvas in (self, self.parentframe, self.CH, self.RI, self.TL):
-            canvas.bind("<Up>", self.arrowkey_UP)
-            canvas.bind("<Tab>", self.tab_key)
-            canvas.bind("<Right>", self.arrowkey_RIGHT)
-            canvas.bind("<Down>", self.arrowkey_DOWN)
-            canvas.bind("<Left>", self.arrowkey_LEFT)
-            canvas.bind("<Prior>", self.page_UP)
-            canvas.bind("<Next>", self.page_DOWN)
 
-    def unbind_arrowkeys(self, event = None):
-        self.arrowkeys_enabled = False
+    def bind_arrowkeys(self, keys: dict = {}):
         for canvas in (self, self.parentframe, self.CH, self.RI, self.TL):
-            canvas.unbind("<Up>")
-            canvas.unbind("<Right>")
-            canvas.unbind("<Tab>")
-            canvas.unbind("<Down>")
-            canvas.unbind("<Left>")
-            canvas.unbind("<Prior>")
-            canvas.unbind("<Next>")
+            for k, func in keys.items():
+                canvas.bind(f"<{arrowkey_bindings_helper[k.lower()]}>", func)
+
+    def unbind_arrowkeys(self, keys: dict = {}):
+        for canvas in (self, self.parentframe, self.CH, self.RI, self.TL):
+            for k, func in keys.items():
+                canvas.unbind(f"<{arrowkey_bindings_helper[k.lower()]}>")
 
     def see(self,
             r = None,
@@ -1618,8 +1650,6 @@ class MainTable(tk.Canvas):
             self.deselection_binding_func(DeselectionEvent(*deselected))
 
     def page_UP(self, event = None):
-        if not self.arrowkeys_enabled:
-            return
         height = self.winfo_height()
         top = self.canvasy(0)
         scrollto = top - height
@@ -1646,8 +1676,6 @@ class MainTable(tk.Canvas):
             self.main_table_redraw_grid_and_text(redraw_row_index = True)
 
     def page_DOWN(self, event = None):
-        if not self.arrowkeys_enabled:
-            return
         height = self.winfo_height()
         top = self.canvasy(0)
         scrollto = top + height
@@ -1676,7 +1704,7 @@ class MainTable(tk.Canvas):
         
     def arrowkey_UP(self, event = None):
         currently_selected = self.currently_selected()
-        if not currently_selected or not self.arrowkeys_enabled:
+        if not currently_selected:
             return
         if currently_selected.type_ == "row":
             r = currently_selected.row
@@ -1701,7 +1729,7 @@ class MainTable(tk.Canvas):
                 
     def arrowkey_RIGHT(self, event = None):
         currently_selected = self.currently_selected()
-        if not currently_selected or not self.arrowkeys_enabled:
+        if not currently_selected:
             return
         if currently_selected.type_ == "row":
             r = currently_selected.row
@@ -1731,7 +1759,7 @@ class MainTable(tk.Canvas):
 
     def arrowkey_DOWN(self, event = None):
         currently_selected = self.currently_selected()
-        if not currently_selected or not self.arrowkeys_enabled:
+        if not currently_selected:
             return
         if currently_selected.type_ == "row":
             r = currently_selected.row
@@ -1767,7 +1795,7 @@ class MainTable(tk.Canvas):
                     
     def arrowkey_LEFT(self, event = None):
         currently_selected = self.currently_selected()
-        if not currently_selected or not self.arrowkeys_enabled:
+        if not currently_selected:
             return
         if currently_selected.type_ == "column":
             c = currently_selected.column
@@ -2208,7 +2236,7 @@ class MainTable(tk.Canvas):
             self.RI.enable_bindings("row_width_resize")
             self.RI.enable_bindings("row_select")
             self.RI.enable_bindings("drag_and_drop")
-            self.bind_arrowkeys()
+            self.bind_arrowkeys(self.arrowkey_binding_functions)
             self.edit_bindings(True)
             self.rc_delete_column_enabled = True
             self.rc_delete_row_enabled = True
@@ -2251,7 +2279,9 @@ class MainTable(tk.Canvas):
         elif binding == "row_drag_and_drop":
             self.RI.enable_bindings("drag_and_drop")
         elif binding == "arrowkeys":
-            self.bind_arrowkeys()
+            self.bind_arrowkeys(self.arrowkey_binding_functions)
+        elif binding in ("tab", "up", "right", "down", "left", "prior", "next"):
+            self.bind_arrowkeys(keys = {binding: self.arrowkey_binding_functions[binding]})
         elif binding == "edit_bindings":
             self.edit_bindings(True)
         elif binding == "rc_delete_column":
@@ -2309,7 +2339,7 @@ class MainTable(tk.Canvas):
             self.RI.disable_bindings("row_width_resize")
             self.RI.disable_bindings("row_select")
             self.RI.disable_bindings("drag_and_drop")
-            self.unbind_arrowkeys()
+            self.unbind_arrowkeys(self.arrowkey_binding_functions)
             self.edit_bindings(False)
             self.rc_delete_column_enabled = False
             self.rc_delete_row_enabled = False
@@ -2350,7 +2380,9 @@ class MainTable(tk.Canvas):
         elif binding == "row_drag_and_drop":
             self.RI.disable_bindings("drag_and_drop")
         elif binding == "arrowkeys":
-            self.unbind_arrowkeys()
+            self.unbind_arrowkeys(self.arrowkey_binding_functions)
+        elif binding in ("tab", "up", "right", "down", "left", "prior", "next"):
+            self.unbind_arrowkeys(keys = {binding: self.arrowkey_binding_functions[binding]})
         elif binding == "rc_delete_column":
             self.rc_delete_column_enabled = False
         elif binding == "rc_delete_row":
@@ -5393,14 +5425,14 @@ class MainTable(tk.Canvas):
         if self.undo_enabled and undo:
             if self.data[r][datacn] != value:
                 self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells",
-                                                                     {(datarn, datacn): self.data[datarn][datacn]},
+                                                                     {(datarn, datacn): self.data[datarn][datacn].data() if (datarn, datacn) in self.cell_options and 'format' in self.cell_options[(datarn, datacn)] else self.data[datarn][datacn]},
                                                                      (((r, c, r + 1, c + 1), "cells"), ),
                                                                      self.currently_selected()))))
         if (datarn, datacn) in self.cell_options and 'format' in self.cell_options[(datarn, datacn)]:
-            formatter = self.cell_options[(datarn, datacn)]['format']['formatter']
-            kwargs = self.cell_options[(datarn, datacn)]['format']['kwargs']
-            value = formatter(value, **kwargs)
-        self.data[datarn][datacn] = value
+            self.data[datarn][datacn] = self.cell_options[(datarn, datacn)]['format']['formatter'](value,
+                                                                                                   **self.cell_options[(datarn, datacn)]['format']['kwargs'])
+        else:
+            self.data[datarn][datacn] = value
         if cell_resize and self.cell_auto_resize_enabled:
             self.set_cell_size_to_text(r, c, only_set_if_too_small = True, redraw = redraw, run_binding = True)
         return True
