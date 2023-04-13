@@ -3,10 +3,13 @@
 ### Version 6.0.0
 #### Added:
  - Cell formatters credit [PR#158](https://github.com/ragardner/tksheet/pull/158)
+ - `tests` folder with a few test files
 
 #### Changed:
- - Removed `return_copy` arguments from `get_cell_data()`/`get_row_data()`/`get_column_data()`
+ - `return_copy` arg in data getting functions is removed but will not generate error if used as keyword arg
  - `get_cell_data()`/`get_row_data()`/`get_column_data()` now return empty string/s if index is out of bounds (instead of `None`s)
+ - Other modifications to data getting functions
+ - Extra bindings delete key now returns dict instead of list for boxes
 
 ### Version 5.6.8
 #### Fixed:

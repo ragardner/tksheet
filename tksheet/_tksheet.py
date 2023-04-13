@@ -1878,37 +1878,39 @@ class Sheet(tk.Frame):
             self.config(bg = theme_black['table_bg'])
         self.MT.recreate_all_selection_boxes()
 
-    def get_header_data(self, cn, return_copy = True, default_for_empty = True):
+    def get_header_data(self, cn, get_displayed = True, default_for_empty = True):
         if isinstance(self.MT._headers, int) or not self.MT._headers or cn >= len(self.MT._headers) or not self.MT._headers[cn]:
             if default_for_empty:
                 return self.get_n2a(cn, self.CH.default_header)
             else:
                 return ""
         else:
-            if return_copy:
+            #placeholder
+            if get_displayed:
                 return f"{self.MT._headers[cn]}"
             else:
-                return self.MT._headers[cn]
+                return f"{self.MT._headers[cn]}"
                 
-    def get_index_data(self, rn, return_copy = True, default_for_empty = True):
+    def get_index_data(self, rn, get_displayed = True, default_for_empty = True):
         if isinstance(self.MT._row_index, int) or not self.MT._row_index or rn >= len(self.MT._row_index) or not self.MT._row_index[rn]:
             if default_for_empty:
                 return self.get_n2a(rn, self.RI.default_index)
             else:
                 return ""
         elif self.MT._row_index[rn]:
-            if return_copy:
+            #placeholder
+            if get_displayed:
                 return f"{self.MT._row_index[rn]}"
             else:
-                return self.MT._row_index[rn]
+                return f"{self.MT._row_index[rn]}"
 
     def get_sheet_data(self, 
-                       return_copy = True, 
+                       get_displayed = True, 
                        get_header = False,
                        get_index = False,
-                       get_formats = False, 
                        default_index_for_empty = True,
-                       default_header_for_empty = True):
+                       default_header_for_empty = True,
+                       **kwargs):
         if get_header:
             maxlen = len(self.MT._headers) if isinstance(self.MT._headers, (list, tuple)) else 0
             data = []
@@ -1916,101 +1918,86 @@ class Sheet(tk.Frame):
             index_limit = len(self.MT._row_index)
         if get_header and get_index:
             for rn in range(len(self.MT.data)):
-                r = self.get_row_data(rn, return_copy = return_copy, get_formats = get_formats)
+                r = self.get_row_data(rn, get_displayed = get_displayed)
                 if len(r) > maxlen:
                     maxlen = len(r)
-                data.append([self.get_index_data(rn, return_copy = return_copy, default_for_empty = default_index_for_empty)] + r)
-            return [[""] + [self.get_header_data(cn, return_copy = return_copy, default_for_empty = default_header_for_empty) for cn in range(maxlen)]] + data
+                data.append([self.get_index_data(rn, get_displayed = get_displayed, default_for_empty = default_index_for_empty)] + r)
+            return [[""] + [self.get_header_data(cn, get_displayed = get_displayed, default_for_empty = default_header_for_empty) for cn in range(maxlen)]] + data
         elif get_header and not get_index:
             for rn in range(len(self.MT.data)):
-                r = self.get_row_data(rn, return_copy = return_copy, get_formats = get_formats)
+                r = self.get_row_data(rn, get_displayed = get_displayed)
                 if len(r) > maxlen:
                     maxlen = len(r)
                 data.append(r)
-            return [[self.get_header_data(cn, return_copy = return_copy, default_for_empty = default_header_for_empty) for cn in range(maxlen)]] + data
+            return [[self.get_header_data(cn, get_displayed = get_displayed, default_for_empty = default_header_for_empty) for cn in range(maxlen)]] + data
         elif not get_header:
             return [self.get_row_data(rn,
-                                      return_copy = return_copy,
-                                      get_formats = get_formats,
+                                      get_displayed = get_displayed,
                                       get_index = get_index,
                                       default_index_for_empty = default_index_for_empty)
                     for rn in range(len(self.MT.data))]
     
-    def get_cell_data(self, r, c, return_copy = True, get_formats = False):
-        if get_formats:
+    def get_cell_data(self, r, c, get_displayed = True, **kwargs):
+        if get_displayed:
+            try:
+                return f"{self.MT.data[r][c]}"
+            except:
+                return ""
+        else:
             try:
                 return self.MT.data[r][c].data() if ((r, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(r, c)]) else f"{self.MT.data[r][c]}"
             except:
                 return ""
-        else:
-            try:
-                return f"{self.MT.data[r][c]}" if ((r, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(r, c)]) else f"{self.MT.data[r][c]}"
-            except:
-                return ""
 
-    def get_row_data(self, r, return_copy = True, get_formats = False, get_index = False, default_index_for_empty = True):
+    def get_row_data(self, r, get_displayed = True, get_index = False, default_index_for_empty = True, **kwargs):
         if get_index:
             if r >= len(self.MT.data):
-                return [self.get_index_data(r, return_copy = return_copy, default_for_empty = default_index_for_empty)] + ["" for c in range(self.MT.total_data_cols())]
-            if get_formats:
-                return ([self.get_index_data(r, return_copy = return_copy, default_for_empty = default_index_for_empty)] +
-                        [e.data() if ((r, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(r, c)]) else 
-                         f"{e}" if return_copy else 
-                         e 
-                         for c, e in enumerate(self.MT.data[r])])
+                return [self.get_index_data(r, get_displayed = get_displayed, default_for_empty = default_index_for_empty)] + ["" for c in range(self.MT.total_data_cols())]
+            if get_displayed:
+                return ([self.get_index_data(r, get_displayed = get_displayed, default_for_empty = default_index_for_empty)] +
+                        [f"{e}" for c, e in enumerate(self.MT.data[r])])
             else:
-                return ([self.get_index_data(r, return_copy = return_copy, default_for_empty = default_index_for_empty)] +
-                        [f"{e}" if ((r, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(r, c)]) else 
-                         f"{e}" if return_copy else
-                         e 
-                         for c, e in enumerate(self.MT.data[r])])
+                return ([self.get_index_data(r, get_displayed = get_displayed, default_for_empty = default_index_for_empty)] +
+                        [e.data() if ((r, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(r, c)]) else 
+                         f"{e}" for c, e in enumerate(self.MT.data[r])])
         else:
             if r >= len(self.MT.data):
                 return ["" for c in range(self.MT.total_data_cols())]
-            if get_formats:
-                return [e.data() if ((r, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(r, c)]) else
-                        f"{e}" if return_copy else 
-                        e 
-                        for c, e in enumerate(self.MT.data[r])]
+            if get_displayed:
+                return [f"{e}" for c, e in enumerate(self.MT.data[r])]
             else:
-                return [f"{e}" if ((r, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(r, c)]) else 
-                        f"{e}" if return_copy else 
-                        e 
-                        for c, e in enumerate(self.MT.data[r])]
+                return [e.data() if ((r, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(r, c)]) else
+                        f"{e}" for c, e in enumerate(self.MT.data[r])]
 
-    def get_column_data(self, c, return_copy = True, get_formats = False, get_header = False, default_header_for_empty = True):
-        data = [self.get_header_data(c, return_copy = return_copy, default_for_empty = default_header_for_empty)] if get_header else []
-        if get_formats:
+    def get_column_data(self, c, get_displayed = True, get_header = False, default_header_for_empty = True, **kwargs):
+        data = [self.get_header_data(c, get_displayed = get_displayed, default_for_empty = default_header_for_empty)] if get_header else []
+        if get_displayed:
+            for rn, r in enumerate(self.MT.data):
+                if c < len(r):
+                    data.append(f"{r[c]}")
+                else:
+                    data.append("")
+        else:
             for rn, r in enumerate(self.MT.data):
                 if c < len(r):
                     if (rn, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(rn, c)]:
                         data.append(r[c].data())
                     else:
-                        data.append(f"{r[c]}" if return_copy else r[c])
-                else:
-                    data.append("")
-        else:
-            for rn, r in enumerate(self.MT.data):
-                if c < len(r):
-                    if (rn, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(rn, c)]:
                         data.append(f"{r[c]}")
-                    else:
-                        data.append(f"{r[c]}" if return_copy else r[c])
                 else:
                     data.append("")
         return data
     
     def yield_sheet_rows(self,
-                         return_copy = True, 
+                         get_displayed = True, 
                          get_header = False,
                          get_index = False,
-                         get_formats = False, 
                          default_index_for_empty = True,
-                         default_header_for_empty = True):
-        yield from self.get_sheet_data(return_copy = return_copy, 
+                         default_header_for_empty = True,
+                         **kwargs):
+        yield from self.get_sheet_data(get_displayed = get_displayed, 
                                        get_header = get_header,
                                        get_index = get_index,
-                                       get_formats = get_formats, 
                                        default_index_for_empty = default_index_for_empty,
                                        default_header_for_empty = default_header_for_empty)
 
@@ -2358,14 +2345,14 @@ class Sheet(tk.Frame):
                                text = ""):
         if isinstance(c, str) and c.lower() == "all":
             for c_ in range(self.MT.total_data_cols()):
-                self.CH.create_checkbox(c = c_,
+                self.CH.create_checkbox(datacn = c_,
                                         checked = checked,
                                         state = state,
                                         redraw = redraw,
                                         check_function = check_function,
                                         text = text)
         else:
-            self.CH.create_checkbox(c = c,
+            self.CH.create_checkbox(datacn = c,
                                     checked = checked,
                                     state = state,
                                     redraw = redraw,
@@ -2420,14 +2407,14 @@ class Sheet(tk.Frame):
                               text = ""):
         if isinstance(r, str) and r.lower() == "all":
             for r_ in range(self.MT.total_data_rows()):
-                self.RI.create_checkbox(r = r_,
+                self.RI.create_checkbox(datarn = r_,
                                         checked = checked,
                                         state = state,
                                         redraw = redraw,
                                         check_function = check_function,
                                         text = text)
         else:
-            self.RI.create_checkbox(r = r,
+            self.RI.create_checkbox(datarn = r,
                                     checked = checked,
                                     state = state,
                                     redraw = redraw,
@@ -2483,8 +2470,8 @@ class Sheet(tk.Frame):
                         text = ""):
         if isinstance(r, str) and r.lower() == "all" and isinstance(c, int):
             for r_ in range(self.MT.total_data_rows()):
-                self.MT.create_checkbox(r_,
-                                        c,
+                self.MT.create_checkbox(datarn = r_,
+                                        datacn = c,
                                         checked = checked,
                                         state = state,
                                         redraw = redraw,
@@ -2492,8 +2479,8 @@ class Sheet(tk.Frame):
                                         text = text)
         elif isinstance(c, str) and c.lower() == "all" and isinstance(r, int):
             for c_ in range(self.MT.total_data_cols()):
-                self.MT.create_checkbox(r,
-                                        c_,
+                self.MT.create_checkbox(datarn = r,
+                                        datacn = c_,
                                         checked = checked,
                                         state = state,
                                         redraw = redraw,
@@ -2503,16 +2490,16 @@ class Sheet(tk.Frame):
             totalcols = self.MT.total_data_cols()
             for r_ in range(self.MT.total_data_rows()):
                 for c_ in range(totalcols):
-                    self.MT.create_checkbox(r_,
-                                            c_,
+                    self.MT.create_checkbox(datarn = r_,
+                                            datacn = c_,
                                             checked = checked,
                                             state = state,
                                             redraw = redraw,
                                             check_function = check_function,
                                             text = text)
         else:
-            self.MT.create_checkbox(r,
-                                    c,
+            self.MT.create_checkbox(datarn = r,
+                                    datacn = c,
                                     checked = checked,
                                     state = state,
                                     redraw = redraw,
@@ -2578,7 +2565,7 @@ class Sheet(tk.Frame):
                                modified_function = None):
         if isinstance(c, str) and c.lower() == "all":
             for c_ in range(self.MT.total_data_cols()):
-                self.CH.create_dropdown(c = c_,
+                self.CH.create_dropdown(datacn = c_,
                                         values = values,
                                         set_value = set_value,
                                         state = state,
@@ -2586,7 +2573,7 @@ class Sheet(tk.Frame):
                                         selection_function = selection_function,
                                         modified_function = modified_function)
         else:
-            self.CH.create_dropdown(c = c,
+            self.CH.create_dropdown(datacn = c,
                                     values = values,
                                     set_value = set_value,
                                     state = state,
@@ -2649,7 +2636,7 @@ class Sheet(tk.Frame):
                               modified_function = None):
         if isinstance(r, str) and r.lower() == "all":
             for r_ in range(self.MT.total_data_rows()):
-                self.RI.create_dropdown(r = r_,
+                self.RI.create_dropdown(datarn = r_,
                                         values = values,
                                         set_value = set_value,
                                         state = state,
@@ -2657,7 +2644,7 @@ class Sheet(tk.Frame):
                                         selection_function = selection_function,
                                         modified_function = modified_function)
         else:
-            self.RI.create_dropdown(r = r,
+            self.RI.create_dropdown(datarn = r,
                                     values = values,
                                     set_value = set_value,
                                     state = state,
@@ -2713,38 +2700,36 @@ class Sheet(tk.Frame):
     def format_cell(self,
                     r,
                     c,
-                    formatter,
+                    formatter = Formatter,
                     formatter_kwargs = {},
                     redraw = True,
+                    **kwargs,
                     ):
+        _kwargs = {'formatter': formatter,
+                   **formatter_kwargs,
+                   **kwargs}
         if isinstance(r, str) and r.lower() == 'all' and isinstance(c, int):
             for r_ in range(self.MT.total_data_rows()):
-                self.MT.format_cell(r_,
-                                    c, 
-                                    formatter = formatter,
-                                    formatter_kwargs = formatter_kwargs,
-                                    redraw = redraw)
+                self.MT.format_cell(datarn = r_,
+                                    datacn = c, 
+                                    **_kwargs)
         elif isinstance(c, str) and c.lower() == 'all' and isinstance(r, int):
             for c_ in range(self.MT.total_data_cols()):
-                self.MT.format_cell(r,
-                                    c_, 
-                                    formatter = formatter,
-                                    formatter_kwargs = formatter_kwargs,
-                                    redraw = redraw)
+                self.MT.format_cell(datarn = r,
+                                    datacn = c_, 
+                                    **_kwargs)
         elif isinstance(r, str) and r.lower() == 'all' and isinstance(c, str) and c.lower() == 'all':
             for r_ in range(self.MT.total_data_rows()):
                 for c_ in range(self.MT.total_data_cols()):
-                    self.MT.format_cell(r_,
-                                        c_, 
-                                        formatter = formatter,
-                                        formatter_kwargs = formatter_kwargs,
-                                        redraw = redraw)
+                    self.MT.format_cell(datarn = r_,
+                                        datacn = c_, 
+                                        **_kwargs)
         else:
-            self.MT.format_cell(drow = r,
-                                dcol = c, 
-                                formatter = formatter,
-                                formatter_kwargs = formatter_kwargs,
-                                redraw = redraw)
+            self.MT.format_cell(datarn = r,
+                                datacn = c, 
+                                **_kwargs)
+        if redraw:
+            self.MT.refresh()
             
     def delete_format(self,
                       r,
@@ -2783,8 +2768,8 @@ class Sheet(tk.Frame):
                         modified_function = None):
         if isinstance(r, str) and r.lower() == "all" and isinstance(c, int):
             for r_ in range(self.MT.total_data_rows()):
-                self.MT.create_dropdown(r_,
-                                        c,
+                self.MT.create_dropdown(datarn = r_,
+                                        datacn = c,
                                         values = values,
                                         set_value = set_value,
                                         state = state,
@@ -2793,8 +2778,8 @@ class Sheet(tk.Frame):
                                         modified_function = modified_function)
         elif isinstance(c, str) and c.lower() == "all" and isinstance(r, int):
             for c_ in range(self.MT.total_data_cols()):
-                self.MT.create_dropdown(r,
-                                        c_,
+                self.MT.create_dropdown(datarn = r,
+                                        datacn = c_,
                                         values = values,
                                         set_value = set_value,
                                         state = state,
@@ -2805,8 +2790,8 @@ class Sheet(tk.Frame):
             totalcols = self.MT.total_data_cols()
             for r_ in range(self.MT.total_data_rows()):
                 for c_ in range(totalcols):
-                    self.MT.create_dropdown(r_,
-                                            c_,
+                    self.MT.create_dropdown(datarn = r_,
+                                            datacn = c_,
                                             values = values,
                                             set_value = set_value,
                                             state = state,
@@ -2815,8 +2800,8 @@ class Sheet(tk.Frame):
                                             modified_function = modified_function)
         
         else:
-            self.MT.create_dropdown(r,
-                                    c,
+            self.MT.create_dropdown(datarn = r,
+                                    datacn = c,
                                     values = values,
                                     set_value = set_value,
                                     state = state,

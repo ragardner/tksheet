@@ -12,7 +12,6 @@ import io
 import pickle
 import tkinter as tk
 import zlib
-from warnings import warn
 
 
 class MainTable(tk.Canvas):
@@ -384,7 +383,10 @@ class MainTable(tk.Canvas):
                         for c in range(c1, c2):
                             datacn = c if self.all_columns_displayed else self.displayed_columns[c]
                             try:
-                                row.append(f"{self.data[data_ref_rn][datacn]}")
+                                if (data_ref_rn, datacn) in self.cell_options and 'format' in self.cell_options[(data_ref_rn, datacn)]:
+                                    row.append(self.data[data_ref_rn][datacn].clipboard())
+                                else:
+                                    row.append(f"{self.data[data_ref_rn][datacn]}")
                             except:
                                 row.append("")
                     writer.writerow(row)
@@ -439,10 +441,13 @@ class MainTable(tk.Canvas):
                         for c in range(c1, c2):
                             datacn = c if self.all_columns_displayed else self.displayed_columns[c]
                             try:
-                                sx = f"{self.data[data_ref_rn][datacn]}"
-                                row.append(sx)
+                                if (data_ref_rn, datacn) in self.cell_options and 'format' in self.cell_options[(data_ref_rn, datacn)]:
+                                    val = self.data[data_ref_rn][datacn].clipboard()
+                                else:
+                                    val = self.data[data_ref_rn][datacn]
+                                row.append(val)
                                 if self.undo_enabled:
-                                    undo_storage[(data_ref_rn, datacn)] = sx
+                                    undo_storage[(data_ref_rn, datacn)] = self.data[data_ref_rn][datacn]
                             except:
                                 row.append("")
                     writer.writerow(row)
@@ -483,10 +488,13 @@ class MainTable(tk.Canvas):
                         for c in range(c1, c2):
                             datacn = c if self.all_columns_displayed else self.displayed_columns[c]
                             try:
-                                sx = f"{self.data[data_ref_rn][datacn]}"
-                                row.append(sx)
+                                if (data_ref_rn, datacn) in self.cell_options and 'format' in self.cell_options[(data_ref_rn, datacn)]:
+                                    val = self.data[data_ref_rn][datacn].clipboard()
+                                else:
+                                    val = self.data[data_ref_rn][datacn]
+                                row.append(val)
                                 if self.undo_enabled:
-                                    undo_storage[(data_ref_rn, datacn)] = sx
+                                    undo_storage[(data_ref_rn, datacn)] = self.data[data_ref_rn][datacn]
                             except:
                                 row.append("")
                         writer.writerow(row)
@@ -632,14 +640,15 @@ class MainTable(tk.Canvas):
                     (not self.ctrl_keys_over_dropdowns_enabled and 
                      (datarn, datacn) in self.cell_options and 
                      'dropdown' in self.cell_options[(datarn, datacn)] and
+                     'format' not in self.cell_options[(datarn, datacn)] and
                      data[ndr][ndc] not in self.cell_options[(datarn, datacn)]['dropdown']['values'])
                     ):
                     continue
                 if self.undo_enabled:
-                    undo_storage[(datarn, datacn)] = f"{self.data[datarn][datacn]}"
+                    undo_storage[(datarn, datacn)] = self.data[datarn][datacn]
                 if (datarn, datacn) in self.cell_options and 'format' in self.cell_options[(datarn, datacn)]:
                     self.data[datarn][datacn] = self.cell_options[(datarn, datacn)]['format']['formatter'](data[ndr][ndc], 
-                                                                                                              **self.cell_options[(datarn, datacn)]['format']['kwargs'])
+                                                                                                           **self.cell_options[(datarn, datacn)]['format']['kwargs'])
                 else:
                     self.data[datarn][datacn] = data[ndr][ndc]
         if self.expand_sheet_if_paste_too_big and self.undo_enabled:
@@ -662,24 +671,22 @@ class MainTable(tk.Canvas):
         if self.anything_selected():
             currently_selected = self.currently_selected()
             undo_storage = {}
-            boxes = []
-            test = (self.find_withtag("CellSelectFill"), self.find_withtag("RowSelectFill"), self.find_withtag("ColSelectFill"), self.find_withtag("Current_Outside"))
+            boxes = {}
             for item in chain(self.find_withtag("CellSelectFill"), self.find_withtag("RowSelectFill"), self.find_withtag("ColSelectFill"), self.find_withtag("Current_Outside")):
                 alltags = self.gettags(item)
                 box = tuple(int(e) for e in alltags[1].split("_") if e)
                 if alltags[0] in ("CellSelectFill", "Current_Outside"):
-                    boxes.append((box, "cells"))
+                    boxes[box] = "cells"
                 elif alltags[0] == "ColSelectFill":
-                    boxes.append((box, "columns"))
+                    boxes[box] = "columns"
                 elif alltags[0] == "RowSelectFill":
-                    boxes.append((box, "rows"))
+                    boxes[box] = "rows"
             if self.extra_begin_delete_key_func is not None:
                 try:
                     self.extra_begin_delete_key_func(CtrlKeyEvent("begin_delete_key", boxes, currently_selected, tuple()))
                 except:
                     return
-            boxes = list(set(boxes)) # Removes duplicates
-            for (r1, c1, r2, c2), _ in boxes:
+            for r1, c1, r2, c2 in boxes:
                 for r in range(r1, r2):
                     datarn = r if self.all_rows_displayed else self.displayed_rows[r]
                     for c in range(c1, c2):
@@ -697,20 +704,14 @@ class MainTable(tk.Canvas):
                             continue
                         try:
                             if self.undo_enabled:
-                                v = f"{self.data[datarn][datacn]}"
-                                if (datarn, datacn) in self.cell_options and 'format' in self.cell_options[(datarn, datacn)]:
-                                    try:
-                                        v = self.data[datarn][datacn].value
-                                    except:
-                                        pass
-                                undo_storage[(datarn, datacn)] = v
+                                undo_storage[(datarn, datacn)] = self.data[datarn][datacn]
                             self.data[datarn][datacn] = ""
                         except:
                             continue
             if self.extra_end_delete_key_func is not None:
                 self.extra_end_delete_key_func(CtrlKeyEvent("end_delete_key", boxes, currently_selected, undo_storage))
             if self.undo_enabled:
-                self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells", undo_storage, boxes, currently_selected))))
+                self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells", undo_storage, tuple(boxes.items()), currently_selected))))
             self.refresh()
             
     def move_columns_adjust_options_dict(self, col, to_move_min, num_cols, move_data = True, create_selections = True):
@@ -937,183 +938,180 @@ class MainTable(tk.Canvas):
         return new_selected, {}
 
     def ctrl_z(self, event = None):
-        if self.undo_storage:
-            if not isinstance(self.undo_storage[-1], (tuple, dict)):
-                undo_storage = pickle.loads(zlib.decompress(self.undo_storage[-1]))
-            else:
-                undo_storage = self.undo_storage[-1]
-            self.deselect("all")
-            if self.extra_begin_ctrl_z_func is not None:
-                try:
-                    self.extra_begin_ctrl_z_func(UndoEvent("begin_ctrl_z", undo_storage[0], undo_storage))
-                except:
-                    return
-            self.undo_storage.pop()
-            if undo_storage[0] in ("edit_header", ):
-                for c, v in undo_storage[1].items():
-                    self._headers[c] = v
-                for box in undo_storage[2]:
-                    r1, c1, r2, c2 = box[0]
-                    if not self.expand_sheet_if_paste_too_big:
-                        self.create_selected(r1, c1, r2, c2, box[1])
-                self.create_current(0, undo_storage[3][1], type_ = "column", inside = True)
-                
-            if undo_storage[0] in ("edit_index", ):
-                for r, v in undo_storage[1].items():
-                    self._row_index[r] = v
-                for box in undo_storage[2]:
-                    r1, c1, r2, c2 = box[0]
-                    if not self.expand_sheet_if_paste_too_big:
-                        self.create_selected(r1, c1, r2, c2, box[1])
-                self.create_current(0, undo_storage[3][1], type_ = "row", inside = True)
-                            
-            if undo_storage[0] in ("edit_cells", "edit_cells_paste"):
-                for (datarn, datacn), v in undo_storage[1].items():
-                    if (datarn, datacn) in self.cell_options and 'format' in self.cell_options[(datarn, datacn)]:
-                        self.data[datarn][datacn] = self.cell_options[(datarn, datacn)]['format']['formatter'](v,
-                                                                                                                  **self.cell_options[(datarn, datacn)]['format']['kwargs'])
-                    else:
-                        self.data[datarn][datacn] = v
-                start_row = float("inf")
-                start_col = float("inf")
-                for box in undo_storage[2]:
-                    r1, c1, r2, c2 = box[0]
-                    if not self.expand_sheet_if_paste_too_big:
-                        self.create_selected(r1, c1, r2, c2, box[1])
-                    if r1 < start_row:
-                        start_row = r1
-                    if c1 < start_col:
-                        start_col = c1
-                if undo_storage[0] == "edit_cells_paste" and self.expand_sheet_if_paste_too_big:
-                    if undo_storage[4][0] > 0:
-                        self.del_row_positions(len(self.row_positions) - 1 - undo_storage[4][0], undo_storage[4][0])
-                        self.data[:] = self.data[:-undo_storage[4][0]]
-                    if undo_storage[4][1] > 0:
-                        quick_added_cols = undo_storage[4][1]
-                        self.del_col_positions(len(self.col_positions) - 1 - quick_added_cols, quick_added_cols)
-                        for rn in range(len(self.data)):
-                            self.data[rn][:] = self.data[rn][:-quick_added_cols]
-                        if not self.all_columns_displayed:
-                            self.displayed_columns[:] = self.displayed_columns[:-quick_added_cols]
-                if undo_storage[3]:
-                    if isinstance(undo_storage[3][0], int):
-                        self.create_current(undo_storage[3][0], undo_storage[3][1], type_ = "cell", inside = True if self.cell_selected(undo_storage[3][0], undo_storage[3][1]) else False)
-                    elif undo_storage[3][0] == "column":
-                        self.create_current(0, undo_storage[3][1], type_ = "column", inside = True)
-                    elif undo_storage[3][0] == "row":
-                        self.create_current(undo_storage[3][1], 0, type_ = "row", inside = True)
-                elif start_row < len(self.row_positions) - 1 and start_col < len(self.col_positions) - 1:
-                    self.create_current(start_row, start_col, type_ = "cell", inside = True if self.cell_selected(start_row, start_col) else False)
-                if start_row < len(self.row_positions) - 1 and start_col < len(self.col_positions) - 1:
-                    self.see(r = start_row, c = start_col, keep_yscroll = False, keep_xscroll = False, bottom_right_corner = False, check_cell_visibility = True, redraw = False)
+        if not self.undo_storage:
+            return
+        if not isinstance(self.undo_storage[-1], (tuple, dict)):
+            undo_storage = pickle.loads(zlib.decompress(self.undo_storage[-1]))
+        else:
+            undo_storage = self.undo_storage[-1]
+        self.deselect("all")
+        if self.extra_begin_ctrl_z_func is not None:
+            try:
+                self.extra_begin_ctrl_z_func(UndoEvent("begin_ctrl_z", undo_storage[0], undo_storage))
+            except:
+                return
+        self.undo_storage.pop()
+        if undo_storage[0] in ("edit_header", ):
+            for c, v in undo_storage[1].items():
+                self._headers[c] = v
+            for box in undo_storage[2]:
+                r1, c1, r2, c2 = box[0]
+                if not self.expand_sheet_if_paste_too_big:
+                    self.create_selected(r1, c1, r2, c2, box[1])
+            self.create_current(0, undo_storage[3][1], type_ = "column", inside = True)
             
-            elif undo_storage[0] == "move_cols":
-                c = undo_storage[1]
-                to_move_min = undo_storage[2]
-                totalcols = len(undo_storage[4])
-                if to_move_min < c:
-                    c += totalcols - 1
-                self.move_columns_adjust_options_dict(c, to_move_min, totalcols)
-            
-            elif undo_storage[0] == "move_rows":
-                rhs = [int(b - a) for a, b in zip(self.row_positions, islice(self.row_positions, 1, len(self.row_positions)))]
-                r = undo_storage[1]
-                to_move_min = undo_storage[2]
-                totalrows = len(undo_storage[4])
-                if to_move_min < r:
-                    r += totalrows - 1
-                self.move_rows_adjust_options_dict(r, to_move_min, totalrows)
+        if undo_storage[0] in ("edit_index", ):
+            for r, v in undo_storage[1].items():
+                self._row_index[r] = v
+            for box in undo_storage[2]:
+                r1, c1, r2, c2 = box[0]
+                if not self.expand_sheet_if_paste_too_big:
+                    self.create_selected(r1, c1, r2, c2, box[1])
+            self.create_current(0, undo_storage[3][1], type_ = "row", inside = True)
                         
-            elif undo_storage[0] == "insert_row":
-                self.data[undo_storage[1]['data_row_num']:undo_storage[1]['data_row_num'] + undo_storage[1]['numrows']] = []
-                try:
-                    self._row_index[undo_storage[1]['data_row_num']:undo_storage[1]['data_row_num'] + undo_storage[1]['numrows']] = []
-                except:
-                    pass
-                self.del_row_positions(undo_storage[1]['sheet_row_num'],
-                                       undo_storage[1]['numrows'],
-                                       deselect_all = False)
-                for r in range(undo_storage[1]['sheet_row_num'],
-                               undo_storage[1]['sheet_row_num'] + undo_storage[1]['numrows']):
-                    if r in self.row_options:
-                        del self.row_options[r]
-                    if r in self.RI.cell_options:
-                        del self.RI.cell_options[r]
-                numrows = undo_storage[1]['numrows']
-                idx = undo_storage[1]['sheet_row_num'] + undo_storage[1]['numrows']
-                self.cell_options = {(rn if rn < idx else rn - numrows, cn): t2 for (rn, cn), t2 in self.cell_options.items()}
-                self.row_options = {rn if rn < idx else rn - numrows: t for rn, t in self.row_options.items()}
-                self.RI.cell_options = {rn if rn < idx else rn - numrows: t for rn, t in self.RI.cell_options.items()}
-                if len(self.row_positions) > 1:
-                    start_row = undo_storage[1]['sheet_row_num'] if undo_storage[1]['sheet_row_num'] < len(self.row_positions) - 1 else undo_storage[1]['sheet_row_num'] - 1
-                    self.RI.select_row(start_row)
-                    self.see(r = start_row, c = 0, keep_yscroll = False, keep_xscroll = False, bottom_right_corner = False, check_cell_visibility = True, redraw = False)
+        if undo_storage[0] in ("edit_cells", "edit_cells_paste"):
+            for (datarn, datacn), v in undo_storage[1].items():
+                self.data[datarn][datacn] = v
+            start_row = float("inf")
+            start_col = float("inf")
+            for box in undo_storage[2]:
+                r1, c1, r2, c2 = box[0]
+                if not self.expand_sheet_if_paste_too_big:
+                    self.create_selected(r1, c1, r2, c2, box[1])
+                if r1 < start_row:
+                    start_row = r1
+                if c1 < start_col:
+                    start_col = c1
+            if undo_storage[0] == "edit_cells_paste" and self.expand_sheet_if_paste_too_big:
+                if undo_storage[4][0] > 0:
+                    self.del_row_positions(len(self.row_positions) - 1 - undo_storage[4][0], undo_storage[4][0])
+                    self.data[:] = self.data[:-undo_storage[4][0]]
+                if undo_storage[4][1] > 0:
+                    quick_added_cols = undo_storage[4][1]
+                    self.del_col_positions(len(self.col_positions) - 1 - quick_added_cols, quick_added_cols)
+                    for rn in range(len(self.data)):
+                        self.data[rn][:] = self.data[rn][:-quick_added_cols]
+                    if not self.all_columns_displayed:
+                        self.displayed_columns[:] = self.displayed_columns[:-quick_added_cols]
+            if undo_storage[3]:
+                if isinstance(undo_storage[3][0], int):
+                    self.create_current(undo_storage[3][0], undo_storage[3][1], type_ = "cell", inside = True if self.cell_selected(undo_storage[3][0], undo_storage[3][1]) else False)
+                elif undo_storage[3][0] == "column":
+                    self.create_current(0, undo_storage[3][1], type_ = "column", inside = True)
+                elif undo_storage[3][0] == "row":
+                    self.create_current(undo_storage[3][1], 0, type_ = "row", inside = True)
+            elif start_row < len(self.row_positions) - 1 and start_col < len(self.col_positions) - 1:
+                self.create_current(start_row, start_col, type_ = "cell", inside = True if self.cell_selected(start_row, start_col) else False)
+            if start_row < len(self.row_positions) - 1 and start_col < len(self.col_positions) - 1:
+                self.see(r = start_row, c = start_col, keep_yscroll = False, keep_xscroll = False, bottom_right_corner = False, check_cell_visibility = True, redraw = False)
+        
+        elif undo_storage[0] == "move_cols":
+            c = undo_storage[1]
+            to_move_min = undo_storage[2]
+            totalcols = len(undo_storage[4])
+            if to_move_min < c:
+                c += totalcols - 1
+            self.move_columns_adjust_options_dict(c, to_move_min, totalcols)
+        
+        elif undo_storage[0] == "move_rows":
+            rhs = [int(b - a) for a, b in zip(self.row_positions, islice(self.row_positions, 1, len(self.row_positions)))]
+            r = undo_storage[1]
+            to_move_min = undo_storage[2]
+            totalrows = len(undo_storage[4])
+            if to_move_min < r:
+                r += totalrows - 1
+            self.move_rows_adjust_options_dict(r, to_move_min, totalrows)
                     
-            elif undo_storage[0] == "insert_col":
-                self.displayed_columns = undo_storage[1]['displayed_columns']
-                qx = undo_storage[1]['data_col_num']
-                qnum = undo_storage[1]['numcols']
-                for rn in range(len(self.data)):
-                    self.data[rn][qx:qx + qnum] = []
-                try:
-                    self._headers[qx:qx + qnum] = []
-                except:
-                    pass
-                self.del_col_positions(undo_storage[1]['sheet_col_num'],
-                                       undo_storage[1]['numcols'],
-                                       deselect_all = False)
-                for c in range(undo_storage[1]['sheet_col_num'],
-                               undo_storage[1]['sheet_col_num'] + undo_storage[1]['numcols']):
-                    if c in self.col_options:
-                        del self.col_options[c]
-                    if c in self.CH.cell_options:
-                        del self.CH.cell_options[c]
-                numcols = undo_storage[1]['numcols']
-                idx = undo_storage[1]['sheet_col_num'] + undo_storage[1]['numcols']
-                self.cell_options = {(rn, cn if cn < idx else cn - numcols): t2 for (rn, cn), t2 in self.cell_options.items()}
-                self.col_options = {cn if cn < idx else cn - numcols: t for cn, t in self.col_options.items()}
-                self.CH.cell_options = {cn if cn < idx else cn - numcols: t for cn, t in self.CH.cell_options.items()}
-                if len(self.col_positions) > 1:
-                    start_col = undo_storage[1]['sheet_col_num'] if undo_storage[1]['sheet_col_num'] < len(self.col_positions) - 1 else undo_storage[1]['sheet_col_num'] - 1
-                    self.CH.select_col(start_col)
-                    self.see(r = 0, c = start_col, keep_yscroll = False, keep_xscroll = False, bottom_right_corner = False, check_cell_visibility = True, redraw = False)
-                    
-            elif undo_storage[0] == "delete_rows":
-                for rn, r, h in reversed(undo_storage[1]['deleted_rows']):
-                    self.data.insert(rn, r)
-                    self.insert_row_position(idx = rn, height = h)
-                self.cell_options = undo_storage[1]['cell_options']
-                self.row_options = undo_storage[1]['row_options']
-                self.RI.cell_options = undo_storage[1]['RI_cell_options']
-                for rn, r in reversed(undo_storage[1]['deleted_index_values']):
-                    try:
-                        self._row_index.insert(rn, r)
-                    except:
-                        continue
-                self.reselect_from_get_boxes(undo_storage[1]['selection_boxes'])
+        elif undo_storage[0] == "insert_row":
+            self.data[undo_storage[1]['data_row_num']:undo_storage[1]['data_row_num'] + undo_storage[1]['numrows']] = []
+            try:
+                self._row_index[undo_storage[1]['data_row_num']:undo_storage[1]['data_row_num'] + undo_storage[1]['numrows']] = []
+            except:
+                pass
+            self.del_row_positions(undo_storage[1]['sheet_row_num'],
+                                    undo_storage[1]['numrows'],
+                                    deselect_all = False)
+            for r in range(undo_storage[1]['sheet_row_num'],
+                            undo_storage[1]['sheet_row_num'] + undo_storage[1]['numrows']):
+                if r in self.row_options:
+                    del self.row_options[r]
+                if r in self.RI.cell_options:
+                    del self.RI.cell_options[r]
+            numrows = undo_storage[1]['numrows']
+            idx = undo_storage[1]['sheet_row_num'] + undo_storage[1]['numrows']
+            self.cell_options = {(rn if rn < idx else rn - numrows, cn): t2 for (rn, cn), t2 in self.cell_options.items()}
+            self.row_options = {rn if rn < idx else rn - numrows: t for rn, t in self.row_options.items()}
+            self.RI.cell_options = {rn if rn < idx else rn - numrows: t for rn, t in self.RI.cell_options.items()}
+            if len(self.row_positions) > 1:
+                start_row = undo_storage[1]['sheet_row_num'] if undo_storage[1]['sheet_row_num'] < len(self.row_positions) - 1 else undo_storage[1]['sheet_row_num'] - 1
+                self.RI.select_row(start_row)
+                self.see(r = start_row, c = 0, keep_yscroll = False, keep_xscroll = False, bottom_right_corner = False, check_cell_visibility = True, redraw = False)
                 
-            elif undo_storage[0] == "delete_cols":
-                self.displayed_columns = undo_storage[1]['displayed_columns']
-                self.cell_options = undo_storage[1]['cell_options']
-                self.col_options = undo_storage[1]['col_options']
-                self.CH.cell_options = undo_storage[1]['CH_cell_options']
-                for cn, w in reversed(tuple(undo_storage[1]['colwidths'].items())):
-                    self.insert_col_position(idx = cn, width = w)
-                for cn, rowdict in reversed(tuple(undo_storage[1]['deleted_cols'].items())):
-                    for rn, v in rowdict.items():
-                        try:
-                            self.data[rn].insert(cn, v)
-                        except:
-                            continue
-                for cn, v in reversed(tuple(undo_storage[1]['deleted_hdr_values'].items())):
+        elif undo_storage[0] == "insert_col":
+            self.displayed_columns = undo_storage[1]['displayed_columns']
+            qx = undo_storage[1]['data_col_num']
+            qnum = undo_storage[1]['numcols']
+            for rn in range(len(self.data)):
+                self.data[rn][qx:qx + qnum] = []
+            try:
+                self._headers[qx:qx + qnum] = []
+            except:
+                pass
+            self.del_col_positions(undo_storage[1]['sheet_col_num'],
+                                    undo_storage[1]['numcols'],
+                                    deselect_all = False)
+            for c in range(undo_storage[1]['sheet_col_num'],
+                            undo_storage[1]['sheet_col_num'] + undo_storage[1]['numcols']):
+                if c in self.col_options:
+                    del self.col_options[c]
+                if c in self.CH.cell_options:
+                    del self.CH.cell_options[c]
+            numcols = undo_storage[1]['numcols']
+            idx = undo_storage[1]['sheet_col_num'] + undo_storage[1]['numcols']
+            self.cell_options = {(rn, cn if cn < idx else cn - numcols): t2 for (rn, cn), t2 in self.cell_options.items()}
+            self.col_options = {cn if cn < idx else cn - numcols: t for cn, t in self.col_options.items()}
+            self.CH.cell_options = {cn if cn < idx else cn - numcols: t for cn, t in self.CH.cell_options.items()}
+            if len(self.col_positions) > 1:
+                start_col = undo_storage[1]['sheet_col_num'] if undo_storage[1]['sheet_col_num'] < len(self.col_positions) - 1 else undo_storage[1]['sheet_col_num'] - 1
+                self.CH.select_col(start_col)
+                self.see(r = 0, c = start_col, keep_yscroll = False, keep_xscroll = False, bottom_right_corner = False, check_cell_visibility = True, redraw = False)
+                
+        elif undo_storage[0] == "delete_rows":
+            for rn, r, h in reversed(undo_storage[1]['deleted_rows']):
+                self.data.insert(rn, r)
+                self.insert_row_position(idx = rn, height = h)
+            self.cell_options = undo_storage[1]['cell_options']
+            self.row_options = undo_storage[1]['row_options']
+            self.RI.cell_options = undo_storage[1]['RI_cell_options']
+            for rn, r in reversed(undo_storage[1]['deleted_index_values']):
+                try:
+                    self._row_index.insert(rn, r)
+                except:
+                    continue
+            self.reselect_from_get_boxes(undo_storage[1]['selection_boxes'])
+            
+        elif undo_storage[0] == "delete_cols":
+            self.displayed_columns = undo_storage[1]['displayed_columns']
+            self.cell_options = undo_storage[1]['cell_options']
+            self.col_options = undo_storage[1]['col_options']
+            self.CH.cell_options = undo_storage[1]['CH_cell_options']
+            for cn, w in reversed(tuple(undo_storage[1]['colwidths'].items())):
+                self.insert_col_position(idx = cn, width = w)
+            for cn, rowdict in reversed(tuple(undo_storage[1]['deleted_cols'].items())):
+                for rn, v in rowdict.items():
                     try:
-                        self._headers.insert(cn, v)
+                        self.data[rn].insert(cn, v)
                     except:
                         continue
-                self.reselect_from_get_boxes(undo_storage[1]['selection_boxes'])
-            self.refresh()
-            if self.extra_end_ctrl_z_func is not None:
-                self.extra_end_ctrl_z_func(UndoEvent("end_ctrl_z", undo_storage[0], undo_storage))
+            for cn, v in reversed(tuple(undo_storage[1]['deleted_hdr_values'].items())):
+                try:
+                    self._headers.insert(cn, v)
+                except:
+                    continue
+            self.reselect_from_get_boxes(undo_storage[1]['selection_boxes'])
+        self.refresh()
+        if self.extra_end_ctrl_z_func is not None:
+            self.extra_end_ctrl_z_func(UndoEvent("end_ctrl_z", undo_storage[0], undo_storage))
             
     def bind_arrowkeys(self, event = None):
         self.arrowkeys_enabled = True
@@ -5101,7 +5099,7 @@ class MainTable(tk.Canvas):
             if len(self.data) > datarn and len(self.data[datarn]) > datacn:
                 if (datarn, datacn) in self.cell_options and 'format' in self.cell_options[(datarn, datacn)]:
                     try:
-                        text = f"{self.data[datarn][datacn].value}" if self.data[datarn][datacn].value is not None else ""
+                        text = f"{self.data[datarn][datacn].value}"
                     except:
                         text = f"{self.data[datarn][datacn]}"
                 else:
@@ -5393,15 +5391,9 @@ class MainTable(tk.Canvas):
         if datarn is None:
             datarn = r if self.all_rows_displayed else self.displayed_rows[r]
         if self.undo_enabled and undo:
-            v = f"{self.data[r][datacn]}"
-            if (datarn, datacn) in self.cell_options and 'format' in self.cell_options[(datarn, datacn)]:
-                try:
-                    v = self.data[r][datacn].value
-                except:
-                    pass
-            if (f"{v}" if v is not None else "") != value:
+            if self.data[r][datacn] != value:
                 self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells",
-                                                                     {(r, datacn): v},
+                                                                     {(datarn, datacn): self.data[datarn][datacn]},
                                                                      (((r, c, r + 1, c + 1), "cells"), ),
                                                                      self.currently_selected()))))
         if (datarn, datacn) in self.cell_options and 'format' in self.cell_options[(datarn, datacn)]:
@@ -5411,11 +5403,6 @@ class MainTable(tk.Canvas):
         self.data[datarn][datacn] = value
         if cell_resize and self.cell_auto_resize_enabled:
             self.set_cell_size_to_text(r, c, only_set_if_too_small = True, redraw = redraw, run_binding = True)
-        return True
-    
-    #used when creating checkboxes and dropdown boxes
-    def _set_cell_data(self, datarn, datacn, value = ""):
-        
         return True
 
     #internal event use
@@ -5441,9 +5428,10 @@ class MainTable(tk.Canvas):
         self.data[datarn][datacn] = value
 
     def create_checkbox(self, datarn = 0, datacn = 0, checked = False, state = "normal", redraw = False, check_function = None, text = ""):
-        if self.formatted(datarn, datacn): # Checkboxes are not supported with formatting, clear formatting
-            self.delete_format(datarn, datacn, True)
-        if (datarn, datacn) in self.cell_options and any(x in self.cell_options[(datarn, datacn)] for x in ('dropdown', 'checkbox')):
+        if (datarn, datacn) in self.cell_options and 'format' in self.cell_options[(datarn, datacn)]:
+            self.delete_format(datarn, datacn, clear_values = True)
+        if (datarn, datacn) in self.cell_options and ('dropdown' in self.cell_options[(datarn, datacn)] or 
+                                                      'checkbox' in self.cell_options[(datarn, datacn)]):
             self.delete_dropdown_and_checkbox(datarn, datacn)
         self._set_cell_data(datarn, datacn, checked)
         if (datarn, datacn) not in self.cell_options:
@@ -5455,7 +5443,8 @@ class MainTable(tk.Canvas):
             self.refresh()
 
     def create_dropdown(self, datarn = 0, datacn = 0, values = [], set_value = None, state = "readonly", redraw = True, selection_function = None, modified_function = None):
-        if (datarn, datacn) in self.cell_options and any(x in self.cell_options[(datarn, datacn)] for x in ('dropdown', 'checkbox')):
+        if (datarn, datacn) in self.cell_options and ('dropdown' in self.cell_options[(datarn, datacn)] or 
+                                                      'checkbox' in self.cell_options[(datarn, datacn)]):
             self.delete_dropdown_and_checkbox(datarn, datacn)
         self._set_cell_data(datarn, datacn, set_value if set_value is not None else values[0] if values else "")
         if (datarn, datacn) not in self.cell_options:
@@ -5470,21 +5459,23 @@ class MainTable(tk.Canvas):
         if redraw:
             self.refresh()
 
-    # data indexes
-    def format_cell(self, datarn, datacn, formatter = None, formatter_kwargs = {}, redraw = True):
-        if formatter is None:
-            return
+    def format_cell(self,
+                    datarn, 
+                    datacn,
+                    formatter = Formatter,
+                    **kwargs):
         if (datarn, datacn) in self.cell_options and 'checkbox' in self.cell_options[(datarn, datacn)]:
-            warn("Cannot format a checkbox cell!", Warning)
             return
         if (datarn, datacn) not in self.cell_options:
             self.cell_options[(datarn, datacn)] = {}
         self.cell_options[(datarn, datacn)]['format'] = {'formatter': formatter,
-                                                         'kwargs': formatter_kwargs}
-        self._set_cell_data(datarn, datacn, formatter(f"{self.data[datarn][datacn]}" if len(self.data) > datarn and len(self.data[datarn]) > datacn else "", 
-                                                      **formatter_kwargs))
-        if redraw:
-            self.refresh()
+                                                         'kwargs': kwargs}
+        if 'value' in kwargs:
+            v = kwargs['value']
+        else:
+            v = self.data[datarn][datacn] if len(self.data) > datarn and len(self.data[datarn]) > datacn else ""
+        self._set_cell_data(datarn, datacn, formatter(value = v, 
+                                                      **kwargs))
 
     def delete_format(self, datarn, datacn, clear_values = False):
         if isinstance(datarn, str) and datarn == "all":

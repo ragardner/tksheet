@@ -1482,15 +1482,15 @@ class RowIndex(tk.Canvas):
             if r is None and editor_info is not None and len(editor_info) >= 2:
                 r = editor_info[0]
             if self.extra_end_edit_cell_func is None:
-                self._set_cell_data(r, datarn = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r], value = self.text_editor_value)
+                self._set_cell_data_undo(r, datarn = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r], value = self.text_editor_value)
             elif self.extra_end_edit_cell_func is not None and not self.MT.edit_cell_validation:
-                self._set_cell_data(r, datarn = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r], value = self.text_editor_value)
+                self._set_cell_data_undo(r, datarn = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r], value = self.text_editor_value)
                 self.extra_end_edit_cell_func(EditIndexEvent(r, editor_info[1] if len(editor_info) >= 2 else "FocusOut", f"{self.text_editor_value}", "end_edit_index"))
             elif self.extra_end_edit_cell_func is not None and self.MT.edit_cell_validation:
                 validation = self.extra_end_edit_cell_func(EditIndexEvent(r, editor_info[1] if len(editor_info) >= 2 else "FocusOut", f"{self.text_editor_value}", "end_edit_index"))
                 if validation is not None:
                     self.text_editor_value = validation
-                    self._set_cell_data(r, datarn = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r], value = self.text_editor_value)
+                    self._set_cell_data_undo(r, datarn = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r], value = self.text_editor_value)
         if move_down:
             pass
         self.hide_dropdown_window(r)
@@ -1503,7 +1503,7 @@ class RowIndex(tk.Canvas):
         return "break"
 
     #internal event use
-    def _set_cell_data(self, r = 0, datarn = None, value = "", cell_resize = True, undo = True, redraw = True):
+    def _set_cell_data_undo(self, r = 0, datarn = None, value = "", cell_resize = True, undo = True, redraw = True):
         if datarn is None:
             datarn = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r]
         if isinstance(self.MT._row_index, list):
@@ -1517,12 +1517,19 @@ class RowIndex(tk.Canvas):
                                                                            self.MT.currently_selected()))))
             self.MT._row_index[datarn] = value
         elif isinstance(self.MT._row_index, int):
-            self.MT._set_cell_data(r = r, c = self.MT._row_index, datarn = datarn, value = value, undo = True)
+            self.MT._set_cell_data_undo(r = r, c = self.MT._row_index, datarn = datarn, value = value, undo = True)
         if cell_resize and self.MT.cell_auto_resize_enabled:
             self.set_row_height_run_binding(r, only_set_if_too_small = False)
         if redraw:
             self.MT.refresh()
-        return True
+
+    def _set_cell_data(self, datarn = None, value = ""):
+        if isinstance(self.MT._row_index, list):
+            if datarn >= len(self.MT._row_index):
+                self.MT._row_index.extend(list(repeat("", datarn - len(self.MT._row_index) + 1)))
+            self.MT._row_index[datarn] = value
+        elif isinstance(self.MT._row_index, int):
+            self.MT._set_cell_data(datarn = datarn, datacn = self.MT._row_index, value = value)
             
     def set_row_height_run_binding(self, r, only_set_if_too_small = True):
         old_height = self.MT.row_positions[r + 1] - self.MT.row_positions[r]
@@ -1536,9 +1543,9 @@ class RowIndex(tk.Canvas):
             datarn = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r]
         if self.cell_options[datarn]['checkbox']['state'] == "normal":
             if isinstance(self.MT._row_index, list):
-                self._set_cell_data(r, datarn = datarn, value = not self.MT._row_index[datarn] if type(self.MT._row_index[datarn]) == bool else False, cell_resize = False)
+                self._set_cell_data_undo(r, datarn = datarn, value = not self.MT._row_index[datarn] if type(self.MT._row_index[datarn]) == bool else False, cell_resize = False)
             elif isinstance(self.MT._row_index, int):
-                self._set_cell_data(r, datarn = datarn, value = not self.MT.data[self.MT._row_index][datarn] if type(self.MT.data[self.MT._row_index][datarn]) == bool else False, cell_resize = False)
+                self._set_cell_data_undo(r, datarn = datarn, value = not self.MT.data[self.MT._row_index][datarn] if type(self.MT.data[self.MT._row_index][datarn]) == bool else False, cell_resize = False)
             if self.cell_options[datarn]['checkbox']['check_function'] is not None:
                 self.cell_options[datarn]['checkbox']['check_function']((r, 0, "IndexCheckboxClicked", f"{self.MT._row_index[datarn] if isinstance(self.MT._row_index, list) else self.MT.data[self.MT._row_index][datarn]}"))
             if self.extra_end_edit_cell_func is not None:
@@ -1546,34 +1553,35 @@ class RowIndex(tk.Canvas):
         if redraw:
             self.MT.refresh()
 
-    def create_checkbox(self, r = 0, checked = False, state = "normal", redraw = False, check_function = None, text = ""):
-        if r in self.cell_options and any(x in self.cell_options[r] for x in ('dropdown', 'checkbox')):
-            self.delete_dropdown_and_checkbox(r)
-        self._set_cell_data(datarn = r, value = checked, cell_resize = False, undo = False) # only works because cell_resize and undo are false otherwise needs r arg
-        if r not in self.cell_options:
-            self.cell_options[r] = {}
-        self.cell_options[r]['checkbox'] = {'check_function': check_function,
-                                            'state': state,
-                                            'text': text}
+    def create_checkbox(self, datarn = 0, checked = False, state = "normal", redraw = False, check_function = None, text = ""):
+        if datarn in self.cell_options and ('dropdown' in self.cell_options[datarn] or 
+                                            'checkbox' in self.cell_options[datarn]):
+            self.delete_dropdown_and_checkbox(datarn)
+        self._set_cell_data(datarn = datarn, 
+                            value = checked)
+        if datarn not in self.cell_options:
+            self.cell_options[datarn] = {}
+        self.cell_options[datarn]['checkbox'] = {'check_function': check_function,
+                                                 'state': state,
+                                                 'text': text}
         if redraw:
             self.MT.refresh()
 
-    def create_dropdown(self, r = 0, values = [], set_value = None, state = "readonly", redraw = True, selection_function = None, modified_function = None):
-        if r in self.cell_options and any(x in self.cell_options[r] for x in ('dropdown', 'checkbox')):
-            self.delete_dropdown_and_checkbox(r)
-        self._set_cell_data(datarn = r, 
-                            value = set_value if set_value is not None else values[0] if values else "",
-                            cell_resize = False, 
-                            undo = False)
-        if r not in self.cell_options:
-            self.cell_options[r] = {}
-        self.cell_options[r]['dropdown'] = {'values': values,
-                                            'align': "w",
-                                            'window': "no dropdown open",
-                                            'canvas_id': "no dropdown open",
-                                            'select_function': selection_function,
-                                            'modified_function': modified_function,
-                                            'state': state}
+    def create_dropdown(self, datarn = 0, values = [], set_value = None, state = "readonly", redraw = True, selection_function = None, modified_function = None):
+        if datarn in self.cell_options and ('dropdown' in self.cell_options[datarn] or 
+                                            'checkbox' in self.cell_options[datarn]):
+            self.delete_dropdown_and_checkbox(datarn)
+        self._set_cell_data(datarn = datarn, 
+                            value = set_value if set_value is not None else values[0] if values else "")
+        if datarn not in self.cell_options:
+            self.cell_options[datarn] = {}
+        self.cell_options[datarn]['dropdown'] = {'values': values,
+                                                 'align': "w",
+                                                 'window': "no dropdown open",
+                                                 'canvas_id': "no dropdown open",
+                                                 'select_function': selection_function,
+                                                 'modified_function': modified_function,
+                                                 'state': state}
         if redraw:
             self.MT.refresh()
     
@@ -1658,14 +1666,14 @@ class RowIndex(tk.Canvas):
             if self.cell_options[datarn]['dropdown']['select_function'] is not None: # user has specified a selection function
                 self.cell_options[datarn]['dropdown']['select_function'](EditIndexEvent(r, "IndexComboboxSelected", f"{selection}", "end_edit_index"))
             if self.extra_end_edit_cell_func is None:
-                self._set_cell_data(r, datarn = datarn, value = selection, redraw = not redraw)
+                self._set_cell_data_undo(r, datarn = datarn, value = selection, redraw = not redraw)
             elif self.extra_end_edit_cell_func is not None and self.MT.edit_cell_validation:
                 validation = self.extra_end_edit_cell_func(EditIndexEvent(r, "IndexComboboxSelected", f"{selection}", "end_edit_index"))
                 if validation is not None:
                     selection = validation
-                self._set_cell_data(r, datarn = datarn, value = selection, redraw = not redraw)
+                self._set_cell_data_undo(r, datarn = datarn, value = selection, redraw = not redraw)
             elif self.extra_end_edit_cell_func is not None and not self.MT.edit_cell_validation:
-                self._set_cell_data(r, datarn = datarn, value = selection, redraw = not redraw)
+                self._set_cell_data_undo(r, datarn = datarn, value = selection, redraw = not redraw)
                 self.extra_end_edit_cell_func(EditIndexEvent(r, "IndexComboboxSelected", f"{selection}", "end_edit_index"))
             self.focus_set()
             self.MT.recreate_all_selection_boxes()
@@ -1713,19 +1721,16 @@ class RowIndex(tk.Canvas):
                 self.delete(self.cell_options[datarn_]['dropdown']['canvas_id'])
             except:
                 pass
-            
-    # r is datarn
-    def delete_dropdown(self, r):
-        self.destroy_opened_dropdown_window(datarn = r)
-        if r in self.cell_options and 'dropdown' in self.cell_options[r]:
-            del self.cell_options[r]['dropdown']
-            
-    # r is datarn
-    def delete_checkbox(self, r):
-        if r in self.cell_options and 'checkbox' in self.cell_options[r]:
-            del self.cell_options[r]['checkbox']
 
-    # r is datarn
-    def delete_dropdown_and_checkbox(self, r):
-        self.delete_dropdown(r)
-        self.delete_checkbox(r)
+    def delete_dropdown(self, datarn):
+        self.destroy_opened_dropdown_window(datarn = datarn)
+        if datarn in self.cell_options and 'dropdown' in self.cell_options[datarn]:
+            del self.cell_options[datarn]['dropdown']
+
+    def delete_checkbox(self, datarn):
+        if datarn in self.cell_options and 'checkbox' in self.cell_options[datarn]:
+            del self.cell_options[datarn]['checkbox']
+
+    def delete_dropdown_and_checkbox(self, datarn):
+        self.delete_dropdown(datarn)
+        self.delete_checkbox(datarn)

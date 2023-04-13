@@ -1456,7 +1456,7 @@ class ColumnHeaders(tk.Canvas):
         return "break"
     
     #internal event use
-    def _set_cell_data(self, c = 0, datacn = None, value = "", cell_resize = True, undo = True, redraw = True):
+    def _set_cell_data_undo(self, c = 0, datacn = None, value = "", cell_resize = True, undo = True, redraw = True):
         if datacn is None:
             datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
         if isinstance(self.MT._headers, list):
@@ -1477,7 +1477,14 @@ class ColumnHeaders(tk.Canvas):
             self.set_col_width_run_binding(c)
         if redraw:
             self.MT.refresh()
-        return True
+    
+    def _set_cell_data(self, datacn = None, value = ""):
+        if isinstance(self.MT._headers, list):
+            if datacn >= len(self.MT._headers):
+                self.MT._headers.extend(list(repeat("", datacn - len(self.MT._headers) + 1)))
+            self.MT._headers[datacn] = value
+        elif isinstance(self.MT._headers, int):
+            self.MT._set_cell_data(datarn = self.MT._headers, datacn = datacn, value = value)
     
     # displayed indexes
     def set_col_width_run_binding(self, c, width = None, only_set_if_too_small = True):
@@ -1502,31 +1509,35 @@ class ColumnHeaders(tk.Canvas):
         if redraw:
             self.MT.refresh()
 
-    def create_checkbox(self, c = 0, checked = False, state = "normal", redraw = False, check_function = None, text = ""):
-        if c in self.cell_options and any(x in self.cell_options[c] for x in ('dropdown', 'checkbox')):
-            self.delete_dropdown_and_checkbox(c)
-        self._set_cell_data(datacn = c, value = checked, cell_resize = False, undo = False) # only works because cell_resize and undo are false else needs c arg
-        if c not in self.cell_options:
-            self.cell_options[c] = {}
-        self.cell_options[c]['checkbox'] = {'check_function': check_function,
-                                            'state': state,
-                                            'text': text}
+    def create_checkbox(self, datacn = 0, checked = False, state = "normal", redraw = False, check_function = None, text = ""):
+        if datacn in self.cell_options and ('dropdown' in self.cell_options[datacn] or 
+                                            'checkbox' in self.cell_options[datacn]):
+            self.delete_dropdown_and_checkbox(datacn)
+        self._set_cell_data(datacn = c,
+                            value = checked)
+        if datacn not in self.cell_options:
+            self.cell_options[datacn] = {}
+        self.cell_options[datacn]['checkbox'] = {'check_function': check_function,
+                                                 'state': state,
+                                                 'text': text}
         if redraw:
             self.MT.refresh()
 
-    def create_dropdown(self, c = 0, values = [], set_value = None, state = "readonly", redraw = True, selection_function = None, modified_function = None):
-        if c in self.cell_options and any(x in self.cell_options[c] for x in ('dropdown', 'checkbox')):
-            self.delete_dropdown_and_checkbox(c)
-        self._set_cell_data(datacn = c, value = set_value if set_value is not None else values[0] if values else "", cell_resize = False, undo = False) # only works because cell_resize and undo are false else needs c arg
-        if c not in self.cell_options:
-            self.cell_options[c] = {}
-        self.cell_options[c]['dropdown'] = {'values': values,
-                                            'align': "w",
-                                            'window': "no dropdown open",
-                                            'canvas_id': "no dropdown open",
-                                            'select_function': selection_function,
-                                            'modified_function': modified_function,
-                                            'state': state}
+    def create_dropdown(self, datacn = 0, values = [], set_value = None, state = "readonly", redraw = True, selection_function = None, modified_function = None):
+        if datacn in self.cell_options and ('dropdown' in self.cell_options[datacn] or 
+                                            'checkbox' in self.cell_options[datacn]):
+            self.delete_dropdown_and_checkbox(datacn)
+        self._set_cell_data(datacn = datacn, 
+                            value = set_value if set_value is not None else values[0] if values else "")
+        if datacn not in self.cell_options:
+            self.cell_options[datacn] = {}
+        self.cell_options[datacn]['dropdown'] = {'values': values,
+                                                 'align': "w",
+                                                 'window': "no dropdown open",
+                                                 'canvas_id': "no dropdown open",
+                                                 'select_function': selection_function,
+                                                 'modified_function': modified_function,
+                                                 'state': state}
         if redraw:
             self.MT.refresh()
 
@@ -1551,8 +1562,7 @@ class ColumnHeaders(tk.Canvas):
         elif win_h > win_h2:
             win_h = win_h2
         return win_h, "nw"
-    
-    # data indexes
+
     def set_current_height_to_cell(self, datacn):
         x = self.MT.txt_measure_canvas.create_text(0,
                                                    0,
@@ -1565,8 +1575,7 @@ class ColumnHeaders(tk.Canvas):
         if new_height > space_bot:
             new_height = space_bot
         self.set_height(new_height, set_TL = True)
-            
-    # c is displayed col
+
     def display_dropdown_window(self, c, datacn = None, event = None):
         self.destroy_text_editor("Escape")
         self.destroy_opened_dropdown_window()
@@ -1617,8 +1626,7 @@ class ColumnHeaders(tk.Canvas):
         self.existing_dropdown_canvas_id = self.cell_options[datacn]['dropdown']['canvas_id']
         if redraw:
             self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = False, redraw_table = False)
-            
-    # c is displayed col
+
     def hide_dropdown_window(self, c = None, selection = None, redraw = True):
         if c is not None and selection is not None:
             datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
@@ -1680,19 +1688,16 @@ class ColumnHeaders(tk.Canvas):
                 self.delete(self.cell_options[datacn_]['dropdown']['canvas_id'])
             except:
                 pass
-            
-    # c is datacn
-    def delete_dropdown(self, c):
-        self.destroy_opened_dropdown_window(datacn = c)
-        if c in self.cell_options and 'dropdown' in self.cell_options[c]:
-            del self.cell_options[c]['dropdown']
-            
-    # c is datacn
-    def delete_checkbox(self, c):
-        if c in self.cell_options and 'checkbox' in self.cell_options[c]:
-            del self.cell_options[c]['checkbox']
 
-    # c is datacn
-    def delete_dropdown_and_checkbox(self, c):
-        self.delete_dropdown(datacn = c)
-        self.delete_checkbox(c)
+    def delete_dropdown(self, datacn):
+        self.destroy_opened_dropdown_window(datacn = c)
+        if datacn in self.cell_options and 'dropdown' in self.cell_options[datacn]:
+            del self.cell_options[datacn]['dropdown']
+
+    def delete_checkbox(self, datacn):
+        if datacn in self.cell_options and 'checkbox' in self.cell_options[datacn]:
+            del self.cell_options[datacn]['checkbox']
+
+    def delete_dropdown_and_checkbox(self, datacn):
+        self.delete_dropdown(datacn)
+        self.delete_checkbox(datacn)

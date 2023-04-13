@@ -10,12 +10,12 @@ def is_nonelike(n: Any):
     else:
         return False
 
-def to_int(x: Any):
+def to_int(x: Any, **kwargs):
     if isinstance(x, int):
         return x
     return int(float(x))
 
-def to_float(x: Any):
+def to_float(x: Any, **kwargs):
     if isinstance(x, float):
         return x
     if isinstance(x, str) and x.endswith('%'):
@@ -25,19 +25,17 @@ def to_float(x: Any):
             raise ValueError(f'Cannot map {x} to float')
     return float(x)
 
-def to_bool(val: Any):
+def to_bool(val: Any, **kwargs):
     if isinstance(val, bool):
         return val
-    if isinstance(val, (int, float)):
-        if val:
-            return True
-        return False
     if isinstance(val, str):
         v = val.lower()
-        if v in truthy:
-            return True
-        elif v in falsy:
-            return False
+    else:
+        v = val
+    if v in truthy:
+        return True
+    elif v in falsy:
+        return False
     raise ValueError(f'Cannot map "{val}" to bool.')
     
 def to_nullable_int(x: Any):
@@ -49,6 +47,158 @@ def to_nullable_float(x: Any):
 def to_nullable_bool(b: Any):
     return None if is_nonelike(b) else to_bool(b)
 
+def int_formatter_to_str(v: Any, 
+                         **kwargs: dict) -> str:
+    return f"{v}"
+
+def float_formatter_to_str(v: Any,
+                           **kwargs: dict) -> str:
+    if 'decimals' in kwargs:
+        if kwargs['decimals']:
+            return f"{round(v, kwargs['decimals'])}"
+        return f"{int(round(v, kwargs['decimals']))}"
+    if v.isinteger():
+        return f"{int(v)}"
+    return f"{v}"
+
+def percentage_formatter_to_str(v: Any,
+                                **kwargs: dict) -> str:
+    if 'decimals' in kwargs:
+        if kwargs['decimals']:
+            return f"{round(v * 100, kwargs['decimals'])}%"
+        return f"{int(round(v * 100, kwargs['decimals']))}%"
+    if v.isinteger():
+        return f"{int(v) * 100}%"
+    return f"{v * 100}%"
+
+def bool_formatter_to_str(v: Any,
+                          **kwargs: dict) -> str:
+    return f"{v}"
+
+def int_formatter_kwargs(datatypes = int,
+                         format_func = to_int,
+                         to_str_func = int_formatter_to_str,
+                         invalid_value = "NaN",
+                         **kwargs,
+                         ):
+    return {**dict(datatypes = datatypes,
+                   format_func = format_func,
+                   to_str_func = to_str_func,
+                   invalid_value = invalid_value),
+            **kwargs}
+
+def float_formatter_kwargs(datatypes = float,
+                           format_func = to_float,
+                           to_str_func = float_formatter_to_str,
+                           invalid_value = "NaN",
+                           decimals = 1,
+                           **kwargs,
+                           ):
+    return {**dict(datatypes = datatypes,
+                   format_func = format_func,
+                   to_str_func = to_str_func,
+                   invalid_value = invalid_value,
+                   decimals = decimals),
+            **kwargs}
+
+def percentage_formatter_kwargs(datatypes = float,
+                                format_func = to_float,
+                                to_str_func = percentage_formatter_to_str,
+                                invalid_value = "NaN",
+                                decimals = 0,
+                                **kwargs,
+                                ):
+    return {**dict(datatypes = datatypes,
+                   format_func = format_func,
+                   to_str_func = to_str_func,
+                   invalid_value = invalid_value,
+                   decimals = decimals),
+            **kwargs}
+
+def bool_formatter_kwargs(datatypes = bool,
+                          format_func = to_bool,
+                          to_str_func = bool_formatter_to_str,
+                          invalid_value = "NA",
+                          **kwargs,
+                          ):
+    return {**dict(datatypes = datatypes,
+                   format_func = format_func,
+                   to_str_func = to_str_func,
+                   invalid_value = invalid_value),
+            **kwargs}
+
+
+class Formatter:
+    def __init__(self,
+                 value,
+                 datatypes = int,
+                 format_func = to_int,
+                 to_str_func = int_formatter_to_str,
+                 nullable = True,
+                 invalid_value = "NaN",
+                 pre_format_func = None,
+                 post_format_func = None,
+                 clipboard_func = None,
+                 **kwargs,
+                 ):
+        if nullable:
+            if isinstance(datatypes, (list, tuple)):
+                datatypes = tuple({type_ for type_ in datatypes} | {type(None)})
+            else:
+                datatypes = (datatypes, type(None))
+        elif isinstance(datatypes, (list, tuple)) and type(None) in datatypes:
+            raise TypeError("Non-nullable cells cannot have NoneType as a datatype.")
+        elif datatypes is type(None):
+            raise TypeError("Non-nullable cells cannot have NoneType as a datatype.")
+        self.kwargs = kwargs
+        self.valid_datatypes = datatypes
+        self.format_func = format_func
+        self.to_str_func = to_str_func
+        self.nullable = nullable
+        self.invalid_value = invalid_value
+        self.pre_format_func = pre_format_func
+        self.post_format_func = post_format_func
+        self.clipboard_func = clipboard_func
+        try:
+            self.value = self._format(value)
+        except Exception as e:
+            self.value = f"{value}"
+
+    def __str__(self):
+        if not self.valid():
+            return self.invalid_value
+        if self.value is None and self.nullable:
+            return ""
+        return self.to_str_func(self.value, **self.kwargs)
+
+    def valid(self, value = None) -> bool:
+        if value is None:
+            value = self.value
+        if isinstance(value, self.valid_datatypes):
+            return True
+        else:
+            return False
+    
+    def _format(self, value):
+        if self.pre_format_func:
+            value = self.pre_format_func(value)
+        value = None if (self.nullable and is_nonelike(value)) else self.format_func(value, **self.kwargs)
+        if self.post_format_func and self.valid(value):
+            value = self.post_format_func(value)
+        return value
+
+    def data(self):
+        if self.valid():
+            return self.value
+        return self.invalid_value
+    
+    def clipboard(self):
+        if self.clipboard_func is not None:
+            return self.clipboard_func(self.value, **self.kwargs)
+        if isinstance(self.value, (int, float, bool)):
+            return self.value
+        return self.__str__()
+
 
 class AbstractFormatterClass(ABC):
     '''
@@ -56,24 +206,24 @@ class AbstractFormatterClass(ABC):
     Parameters:
         value: The value, usaually a string which is passed to the class on initialisaton. 
         datatypes: The target datatype(s) of the class. Used to validate itself by the data() method.
-        converter: A function that allows conversions between the input string value and the target datatype.
-        missing_values: The object used in place of data that cannot be convertered to the target datatype(s)
-        pre_conversion_func: A function run on the initial value BEFORE it reaches the converter
-        post_conversion_func: A function run on the value AFTER it reaches the converter IF the value has been correctly converted.
+        format_func: A function that allows formats between the input string value and the target datatype.
+        invalid_value: The object used in place of data that cannot be format_funced to the target datatype(s)
+        pre_format_func: A function run on the initial value BEFORE it reaches the format_func
+        post_format_func: A function run on the value AFTER it reaches the format_func IF the value has been correctly _formated.
 
     Methods:
-        value_is_valid: returns Bool. used to validate whether self.value has been correctly converted
-        data: Returns either the converted value or missing_values depending on whether self.value has been correctly converted
-        convert(value): Tried to convert value using self.converter.
+        valid: returns Bool. used to validate whether self.value has been correctly _formated
+        data: Returns either the _formated value or invalid_value depending on whether self.value has been correctly _formated
+        _format(value): Tried to _format value using self.format_func.
     '''
     def __init__(self, 
                  value, 
                  datatypes, 
-                 converter,
+                 format_func,
                  nullable = True,
-                 missing_values = "NA",
-                 pre_conversion_func = None,
-                 post_conversion_func = None,
+                 invalid_value = "NA",
+                 pre_format_func = None,
+                 post_format_func = None,
                  ):
         if nullable:
             if isinstance(datatypes, (list, tuple)):
@@ -87,24 +237,24 @@ class AbstractFormatterClass(ABC):
         elif datatypes is type(None):
             raise TypeError("Non-nullable cells cannot have NoneType as a datatype!")
         self.nullable = nullable
-        self.converter = converter
-        self.pre_conversion_func = pre_conversion_func
-        self.post_conversion_func = post_conversion_func
+        self.format_func = format_func
+        self.pre_format_func = pre_format_func
+        self.post_format_func = post_format_func
         self.valid_datatypes = datatypes
-        self.missing_values = missing_values
+        self.invalid_value = invalid_value
         try:
-            self.value = self.convert(value)
+            self.value = self._format(value)
         except (ValueError, TypeError):
             self.value = f"{value}"
 
     @abstractmethod
     def __str__(self):
-        if not self.value_is_valid():
-            return self.missing_values
+        if not self.valid():
+            return self.invalid_value
         if self.value is None and self.nullable:
             return ""
 
-    def value_is_valid(self, value = None) -> bool:
+    def valid(self, value = None) -> bool:
         if value is None:
             value = self.value
         if isinstance(value, self.valid_datatypes):
@@ -112,21 +262,26 @@ class AbstractFormatterClass(ABC):
         else:
             return False
     
-    def convert(self, value):
-        if self.pre_conversion_func:
-            value = self.pre_conversion_func(value)
+    def _format(self, value):
+        if self.pre_format_func:
+            value = self.pre_format_func(value)
         if self.nullable:
-            value = None if is_nonelike(value) else self.converter(value)
+            value = None if is_nonelike(value) else self.format_func(value)
         else:
-            value = self.converter(value)
-        if self.post_conversion_func and self.value_is_valid(value):
-            value = self.post_conversion_func(value)
+            value = self.format_func(value)
+        if self.post_format_func and self.valid(value):
+            value = self.post_format_func(value)
         return value
     
     def data(self):
-        if self.value_is_valid():
+        if self.valid():
             return self.value
-        return self.missing_values
+        return self.invalid_value
+    
+    def clipboard(self):
+        if isinstance(self.value, (int, float, bool)):
+            return self.value
+        return self.__str__()
     
 
 class CellFormatter(AbstractFormatterClass):
@@ -135,32 +290,32 @@ class CellFormatter(AbstractFormatterClass):
     Parameters:
         value: The value, usaually a string which is passed to the class on initialisaton. 
         datatypes: The target datatype(s) of the class. Used to validate itself by the data() method.
-        converter: A function that allows conversions between the input string value and the target datatype.
-        to_str: Function that converts between the datatype and a representative string
-        missing_values: The object used in place of data that cannot be convertered to the target datatype(s). Can be any type with a __str__ method.
+        format_func: A function that allows formats between the input string value and the target datatype.
+        to_str: Function that _formats between the datatype and a representative string
+        invalid_value: The object used in place of data that cannot be format_funced to the target datatype(s). Can be any type with a __str__ method.
         is_nullable: whether the None values can be stored in addtion to the other datatypes.
-        pre_conversion_func: A function run on the initial value BEFORE it reaches the converter
-        post_conversion_func: A function run on the value AFTER it reaches the converter IF the value has been correctly converted.
+        pre_format_func: A function run on the initial value BEFORE it reaches the format_func
+        post_format_func: A function run on the value AFTER it reaches the format_func IF the value has been correctly _formated.
     
     '''
 
     def __init__(self, 
                  value,
                  datatypes: Union[Type, tuple[Type]],
-                 converter: Callable[[Any], Any], 
+                 format_func: Callable[[Any], Any], 
                  to_str: Union[Callable[[Any], str], None] = None,
                  nullable = True,
-                 missing_values: Any = "NA",
-                 pre_conversion_func: Union[Callable, None] = None, 
-                 post_conversion_func: Union[Callable, None] = None
+                 invalid_value: Any = "NA",
+                 pre_format_func: Union[Callable, None] = None, 
+                 post_format_func: Union[Callable, None] = None
                  ):
         super().__init__(value, 
                          datatypes, 
-                         converter, 
+                         format_func, 
                          nullable, 
-                         missing_values, 
-                         pre_conversion_func, 
-                         post_conversion_func)
+                         invalid_value, 
+                         pre_format_func, 
+                         post_format_func)
         self.to_str = to_str
 
     def __str__(self):
@@ -177,19 +332,19 @@ class FloatFormatter(AbstractFormatterClass):
                  value, 
                  decimals = None,
                  nullable = True,
-                 missing_values = "NaN",
-                 converter = to_float,
-                 pre_conversion_func = None,
-                 post_conversion_func = None,
+                 invalid_value = "NaN",
+                 format_func = to_float,
+                 pre_format_func = None,
+                 post_format_func = None,
                  ):
         self.decimals = decimals
         super().__init__(value, 
                          float, 
-                         converter,
+                         format_func,
                          nullable,
-                         missing_values,
-                         pre_conversion_func,
-                         post_conversion_func,
+                         invalid_value,
+                         pre_format_func,
+                         post_format_func,
                          )
 
     def __str__(self):
@@ -206,19 +361,19 @@ class PercentageFormatter(AbstractFormatterClass):
                  value, 
                  decimals = None,
                  nullable = True,
-                 missing_values = "NaN",
-                 converter = to_float,
-                 pre_conversion_func = None,
-                 post_conversion_func = None,
+                 invalid_value = "NaN",
+                 format_func = to_float,
+                 pre_format_func = None,
+                 post_format_func = None,
                  ):
         self.decimals = decimals
         super().__init__(value, 
                          float, 
-                         converter,
+                         format_func,
                          nullable,
-                         missing_values,
-                         pre_conversion_func,
-                         post_conversion_func,
+                         invalid_value,
+                         pre_format_func,
+                         post_format_func,
                          )
 
     def __str__(self):
@@ -234,18 +389,18 @@ class IntFormatter(AbstractFormatterClass):
     def __init__(self, 
                  value,
                  nullable = True,
-                 missing_values = "NaN",
-                 converter = to_int,
-                 pre_conversion_func = None,
-                 post_conversion_func = None,
+                 invalid_value = "NaN",
+                 format_func = to_int,
+                 pre_format_func = None,
+                 post_format_func = None,
                  ):
         super().__init__(value, 
                          int, 
-                         converter,
+                         format_func,
                          nullable,
-                         missing_values,
-                         pre_conversion_func,
-                         post_conversion_func,
+                         invalid_value,
+                         pre_format_func,
+                         post_format_func,
                          )
 
     def __str__(self):
@@ -258,19 +413,19 @@ class IntFormatter(AbstractFormatterClass):
 class BoolFormatter(AbstractFormatterClass):
     def __init__(self, 
                  value,
-                 missing_values = "NA",
-                 converter = to_bool,
+                 invalid_value = "NA",
+                 format_func = to_bool,
                  nullable = True,
-                 pre_conversion_func = None,
-                 post_conversion_func = None,                 
+                 pre_format_func = None,
+                 post_format_func = None,                 
                  ):
         super().__init__(value, 
                          bool,
-                         converter,
+                         format_func,
                          nullable,
-                         missing_values,
-                         pre_conversion_func,
-                         post_conversion_func,
+                         invalid_value,
+                         pre_format_func,
+                         post_format_func,
                          )
     
     def __str__(self):
@@ -278,4 +433,3 @@ class BoolFormatter(AbstractFormatterClass):
         if s is not None:
             return s
         return f"{self.value}"
-    
