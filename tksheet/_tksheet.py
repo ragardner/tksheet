@@ -1905,7 +1905,7 @@ class Sheet(tk.Frame):
                 return f"{self.MT._row_index[rn]}"
 
     def get_sheet_data(self, 
-                       get_displayed = True, 
+                       get_displayed = False, 
                        get_header = False,
                        get_index = False,
                        default_index_for_empty = True,

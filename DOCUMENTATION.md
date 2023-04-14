@@ -426,9 +426,9 @@ ___
 
 Get sheet data and, if required, header and index data.
 ```python
-get_sheet_data(return_copy = False, get_header = False, get_index = False)
+get_displayed(return_copy = False, get_header = False, get_index = False)
 ```
- - `return_copy` (`bool`) if true will return a string copy of the data as it is displayed in the sheet, if false will return the actual data.
+ - `get_displayed` (`bool`) if true will return a string copy of the data as it is displayed in the sheet, if false will return the actual data.
 
 ___
 
