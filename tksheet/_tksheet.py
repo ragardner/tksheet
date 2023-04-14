@@ -1878,7 +1878,7 @@ class Sheet(tk.Frame):
             self.config(bg = theme_black['table_bg'])
         self.MT.recreate_all_selection_boxes()
 
-    def get_header_data(self, cn, get_displayed = True, default_for_empty = True):
+    def get_header_data(self, cn, get_displayed = False, default_for_empty = True):
         if isinstance(self.MT._headers, int) or not self.MT._headers or cn >= len(self.MT._headers) or not self.MT._headers[cn]:
             if default_for_empty:
                 return self.get_n2a(cn, self.CH.default_header)
@@ -1891,7 +1891,7 @@ class Sheet(tk.Frame):
             else:
                 return f"{self.MT._headers[cn]}"
                 
-    def get_index_data(self, rn, get_displayed = True, default_for_empty = True):
+    def get_index_data(self, rn, get_displayed = False, default_for_empty = True):
         if isinstance(self.MT._row_index, int) or not self.MT._row_index or rn >= len(self.MT._row_index) or not self.MT._row_index[rn]:
             if default_for_empty:
                 return self.get_n2a(rn, self.RI.default_index)
@@ -1937,7 +1937,7 @@ class Sheet(tk.Frame):
                                       default_index_for_empty = default_index_for_empty)
                     for rn in range(len(self.MT.data))]
     
-    def get_cell_data(self, r, c, get_displayed = True, **kwargs):
+    def get_cell_data(self, r, c, get_displayed = False, **kwargs):
         if get_displayed:
             try:
                 return f"{self.MT.data[r][c]}"
@@ -1949,7 +1949,7 @@ class Sheet(tk.Frame):
             except:
                 return ""
 
-    def get_row_data(self, r, get_displayed = True, get_index = False, default_index_for_empty = True, **kwargs):
+    def get_row_data(self, r, get_displayed = False, get_index = False, default_index_for_empty = True, **kwargs):
         if get_index:
             if r >= len(self.MT.data):
                 return [self.get_index_data(r, get_displayed = get_displayed, default_for_empty = default_index_for_empty)] + ["" for c in range(self.MT.total_data_cols())]
@@ -1969,7 +1969,7 @@ class Sheet(tk.Frame):
                 return [e.data() if ((r, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(r, c)]) else
                         f"{e}" for c, e in enumerate(self.MT.data[r])]
 
-    def get_column_data(self, c, get_displayed = True, get_header = False, default_header_for_empty = True, **kwargs):
+    def get_column_data(self, c, get_displayed = False, get_header = False, default_header_for_empty = True, **kwargs):
         data = [self.get_header_data(c, get_displayed = get_displayed, default_for_empty = default_header_for_empty)] if get_header else []
         if get_displayed:
             for rn, r in enumerate(self.MT.data):
@@ -1989,7 +1989,7 @@ class Sheet(tk.Frame):
         return data
     
     def yield_sheet_rows(self,
-                         get_displayed = True, 
+                         get_displayed = False, 
                          get_header = False,
                          get_index = False,
                          default_index_for_empty = True,

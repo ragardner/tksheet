@@ -11,22 +11,26 @@ pip install tksheet --upgrade
 ```
 
 ### Help
- - [Documentation](https://github.com/ragardner/tksheet/wiki)
- - [Changelog](https://github.com/ragardner/tksheet/blob/master/CHANGELOG.md)
+- [Documentation](https://github.com/ragardner/tksheet/wiki)
+- [Changelog](https://github.com/ragardner/tksheet/blob/master/CHANGELOG.md)
+- [Questions](https://github.com/ragardner/tksheet/wiki#asking-questions)
+- [Issues](https://github.com/ragardner/tksheet/wiki#issues)
+- [Suggestions](https://github.com/ragardner/tksheet/wiki#enhancements-or-suggestions)
+- This library is maintained by [@ragardner](https://github.com/ragardner) with the help of [many others](https://github.com/ragardner/tksheet/graphs/contributors), if you would like to contribute check out [this help section](https://github.com/ragardner/tksheet/wiki#contributing).
 
 ### Features
- - Display and modify tabular data
- - Stores its display data as a Python list of lists, sublists being rows
- - Runs smoothly even with millions of rows/columns
- - Edit cells directly
- - Drag and drop columns and rows
- - Multiple line headers and rows
- - Expand row heights and column widths
- - Change fonts and font size
- - Change any colors in the sheet
- - Create an unlimited number of high performance dropdown and check boxes
- - Left `"w"`, Center `"center"` or Right `"e"` text alignment
- - Cell values can be any class with a `str` method
+- Display and modify tabular data
+- Stores its display data as a Python list of lists, sublists being rows
+- Runs smoothly even with millions of rows/columns
+- Edit cells directly
+- Drag and drop columns and rows
+- Multiple line headers and rows
+- Expand row heights and column widths
+- Change fonts and font size
+- Change any colors in the sheet
+- Create an unlimited number of high performance dropdown and check boxes
+- Left `"w"`, Center `"center"` or Right `"e"` text alignment
+- Cell values can be any class with a `str` method
 
 ### Light Blue Theme
 

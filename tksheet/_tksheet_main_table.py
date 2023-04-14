@@ -5507,7 +5507,7 @@ class MainTable(tk.Canvas):
         else:
             v = self.data[datarn][datacn] if len(self.data) > datarn and len(self.data[datarn]) > datacn else ""
         self._set_cell_data(datarn, datacn, formatter_class(value = v, 
-                                                      **kwargs))
+                                                            **kwargs))
 
     def delete_format(self, datarn, datacn, clear_values = False):
         if isinstance(datarn, str) and datarn == "all":

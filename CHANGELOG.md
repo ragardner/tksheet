@@ -1,9 +1,8 @@
-### Latest version in release notes is current version
-
 ### Version 6.0.0
 #### Added:
- - Cell formatters credit [PR#158](https://github.com/ragardner/tksheet/pull/158)
+ - Cell formatters, thanks to [PR#158](https://github.com/ragardner/tksheet/pull/158)
  - `tests` folder with a few test files
+ - bindings `"up" "down" "left" "right" "prior" "next"` to enable arrowkey bindings individually use with `enable_bindings()`/`disable_bindings()`
 
 #### Changed:
  - `return_copy` arg in data getting functions is removed but will not generate error if used as keyword arg
