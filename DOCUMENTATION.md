@@ -22,14 +22,16 @@
 20. [Cell Text Editor](https://github.com/ragardner/tksheet/wiki#20-cell-text-editor)
 21. [Dropdown Boxes](https://github.com/ragardner/tksheet/wiki#21-dropdown-boxes)
 22. [Check Boxes](https://github.com/ragardner/tksheet/wiki#22-check-boxes)
-23. [Table Options and Other Functions](https://github.com/ragardner/tksheet/wiki#23-table-options-and-other-functions)
-24. [Example Loading Data from Excel](https://github.com/ragardner/tksheet/wiki#24-example-loading-data-from-excel)
-25. [Example Custom Right Click and Text Editor Validation](https://github.com/ragardner/tksheet/wiki#25-example-custom-right-click-and-text-editor-validation)
-26. [Example Displaying Selections](https://github.com/ragardner/tksheet/wiki#26-example-displaying-selections)
-27. [Example List Box](https://github.com/ragardner/tksheet/wiki#27-example-list-box)
-28. [Example Header Dropdown Boxes and Filtering](https://github.com/ragardner/tksheet/wiki#28-example-header-dropdown-boxes-and-filtering)
-29. [Example ReadMe Screenshot Code](https://github.com/ragardner/tksheet/wiki#29-example-readme-screenshot-code)
-30. [Example Saving tksheet as a csv File](https://github.com/ragardner/tksheet/wiki#30-example-saving-tksheet-as-a-csv-file)
+23. [Cell Formatters](https://github.com/ragardner/tksheet/wiki#23-cell-formatters)
+24. [Table Options and Other Functions](https://github.com/ragardner/tksheet/wiki#23-table-options-and-other-functions)
+25. [Example Loading Data from Excel](https://github.com/ragardner/tksheet/wiki#24-example-loading-data-from-excel)
+26. [Example Custom Right Click and Text Editor Validation](https://github.com/ragardner/tksheet/wiki#25-example-custom-right-click-and-text-editor-validation)
+27. [Example Displaying Selections](https://github.com/ragardner/tksheet/wiki#26-example-displaying-selections)
+28. [Example List Box](https://github.com/ragardner/tksheet/wiki#27-example-list-box)
+29. [Example Header Dropdown Boxes and Filtering](https://github.com/ragardner/tksheet/wiki#28-example-header-dropdown-boxes-and-filtering)
+30. [Example ReadMe Screenshot Code](https://github.com/ragardner/tksheet/wiki#29-example-readme-screenshot-code)
+31. [Example Saving tksheet as a csv File](https://github.com/ragardner/tksheet/wiki#30-example-saving-tksheet-as-a-csv-file)
+32. [Example Using and Creating Formatters](https://github.com/ragardner/tksheet/wiki#31-example-using-and-creating-formatters)
 
 ## 1 About tksheet
 
@@ -426,7 +428,7 @@ Get sheet data and, if required, header and index data.
 ```python
 get_sheet_data(return_copy = False, get_header = False, get_index = False)
 ```
- - `return_copy` (`bool`) will copy all cells if `True`, also copies header and index if they are `True`.
+ - `return_copy` (`bool`) if true will return a string copy of the data as it is displayed in the sheet, if false will return the actual data.
 
 ___
 
@@ -443,24 +445,24 @@ The name of the actual internal sheet data list.
 ```python
 .MT.data
 ```
- - You can use this to directly modify or retrieve the main table's data e.g. `cell_0_0 = my_sheet_name_here.MT.data[0][0]`
+ - You can use this to directly modify or retrieve the main table's data e.g. `cell_0_0 = my_sheet_name_here.MT.data[0][0]`. Note that this is the raw data and will include the cell's formatter class, as such it is not recommended to use this to retrieve or modify data unless you know what you are doing.
 
 ___
 
 ```python
-get_cell_data(r, c, return_copy = True)
+get_cell_data(r, c, return_copy = False)
 ```
 
 ___
 
 ```python
-get_row_data(r, return_copy = True)
+get_row_data(r, return_copy = False)
 ```
 
 ___
 
 ```python
-get_column_data(c, return_copy = True)
+get_column_data(c, return_copy = False)
 ```
 
 ___
@@ -1663,7 +1665,196 @@ index_checkbox(r,
  - If any arguments are not default they will be set for the chosen checkbox.
  - If all arguments are default a dictionary of all the checkboxes information will be returned.
 
-## 23 Table Options and Other Functions
+## 23 Cell Formatters
+
+While tksheet can store and display any datatype with a `__str__()` method, by default, tksheet stores all user inputted data as strings. This has obvious limitations. Cell formatters aim to provide greater functionality when working with different datatypes and provide strict typing for the sheet. A formatter is a special type of class that provides functionality for converting between user inputs (typically a string) and a target datatype. Additionally, formatters also provide their own `__str__()` method for displaying the data back to the table and logic for handling bad and missing data. tksheet has several basic built-in formatters amd provides functionality for creating your own custom formats as well. A demonstration of all the built-in and custom formatters can be found [section 32](https://github.com/ragardner/tksheet/wiki#31-example-using-and-creating-formatters).
+
+### Basic Intialisation
+
+Applying a format to cell:
+
+```python
+format_cell(r, c, formatter_options = {}, formatter_class = Formatter, **kwargs)
+```
+ - `r` (`int` or `"all"`) the row index to apply the formatter to.
+ - `c` (`int` or `"all"`) the column index to apply the formatter to.
+ - `formatter_options` (`dict`) a dictionary of keyword options/arguements to pass to the formatter.
+ - `formatter_class` (`class`) the formatter class to use. Defaults to `tksheet.Formatter`.
+ - `**kwargs` any additional keyword options/arguements to pass to the formatter.
+
+Clearing a format from a cell:
+
+```python
+delete_format(r, c, clear_values = False)
+```
+ - `r` (`int` or `"all"`) the row index to remove the cell formats from.
+ - `c` (`int` or `"all"`) the column index to remove the cell formats from.
+ - `clear_values` (`bool`) if true, the cell values will also be deleted.
+
+### Formatter Options and In-Built Formatters
+
+tksheet provides a number of in-built formatters, in addition to the base `formatter` funciton. These formatters are designed to provide a range of functionality for different datatypes. The following table lists the available formatters and their options.
+
+```python
+formatter(datatypes,
+          format_func,
+          to_str_func = to_str,
+          invalid_value = "NA",
+          nullable = True,
+          pre_format_func = None,
+          post_format_func = None,
+          clipboard_func = None,
+          **kwargs)
+```
+
+This is the generic formatter options interface. You can use this to create your own custom formatters. The following options are available. Note that all these options can also be passed to the `format_cell()` function as keyword arguments and are available as attributes for all formatters.
+
+ - `datatypes` (`list`) a list of datatypes that the formatter will accept. For example, `datatypes = [int, float]` will accept integers and floats.
+ - `format_func` (`function`) a function that takes a string and returns a value of the desired datatype. For example, `format_func = int` will convert a string to an integer.
+ - `to_str_func` (`function`) a function that takes a value of the desired datatype and returns a string. This determines how the formatter displays its data on the table. For example, `to_str_func = str` will convert an integer to a string. Defaults to `tksheet.to_str`.
+ - `invalid_value` (`any`) the value to return if the input string is invalid. For example, `invalid_value = "NA"` will return "NA" if the input string is invalid.
+ - `nullable` (`bool`) if true, the formatter will accept `None` as a valid input.
+ - `pre_format_func` (`function`) a function that takes a input string and returns a string. This function is called before the `format_func` and can be used to modify the input string before it is converted to the desired datatype. This can be useful if you want to strip out unwanted characters or convert a string to a different format before converting it to the desired datatype.
+ - `post_format_func` (`function`) a function that takes a value of the desired datatype and returns a value of the desired datatype. This function is called after the `format_func` and can be used to modify the output value after it is converted to the desired datatype. This can be useful if you want to round a float for example.
+ - `clipboard_func` (`function`) a function that takes a value of the desired datatype and returns a string. This function is called when the cell value is copied to the clipboard. This can be useful if you want to convert a value to a different format before it is copied to the clipboard.
+ - `**kwargs` any additional keyword options/arguements to pass to the formatter. These keyword argumenty will be passed to the `format_func`, `to_str_func`, and the `clipboard_func`. These can be useful if you want to specifiy any additional formatting options, such as the number of decimal places to round to.
+
+```python
+int_formatter(datatypes = int,
+              format_func = to_int,
+              to_str_func = to_str,
+              invalid_value = "NaN",
+              **kwargs,
+              ):
+```
+
+The `int_formatter` is the basic configuration for a simple interger formatter.
+
+ - `format_func` (`function`) a function that takes a string and returns an `int`. By default, this is set to the in-built `tksheet.to_int`. This function will always convert float-likes to its floor, for example `"5.9"` will be converted to `5`.
+ - `to_str_func` (`function`) By default, this is set to the in-built `tksheet.to_str`, which is a very basic function that will displace the default string representation of the value.
+
+Usage:
+
+```python
+sheet.format_cell(0, 0, formatter_class = tksheet.int_formatter)
+```
+
+```python
+float_formatter(datatypes = float,
+                format_func = to_float,
+                to_str_func = float_to_str,
+                invalid_value = "NaN",
+                decimals = 1,
+                **kwargs
+                )
+```
+
+The `float_formatter` is the basic configuration for a simple float formatter. It will always round float-likes to the specified number of decimal places, for example `"5.999"` will be converted to `"6.0"` if `decimals = 1`.
+
+ - `format_func` (`function`) a function that takes a string and returns a `float`. By default, this is set to the in-built `tksheet.to_float`. This function will always convert percentages to their decimal equivalent, for example `"5%"` will be converted to `0.05`.
+ - `to_str_func` (`function`) By default, this is set to the in-built `tksheet.float_to_str`, which will display the float to the specified number of decimal places.
+ - `decimals` (`int`) the number of decimal places to round to. Defaults to `1`.
+
+Usage:
+
+```python
+sheet.format_cell(0, 0, formatter_class = tksheet.float_formatter(decimals = 2)) # A float formatter with 2 decimal places
+```
+
+```python
+percentage_formatter(datatypes = float,
+                     format_func = to_float,
+                     to_str_func = percentage_to_str,
+                     invalid_value = "NaN",
+                     decimals = 0,
+                     **kwargs,
+                     )
+```
+
+The `percentage_formatter` is the basic configuration for a simple percentage formatter. It will always round float-likes as a percentage to the specified number of decimal places, for example `"5.999%"` will be converted to `"6.0%"` if `decimals = 1`.
+
+ - `format_func` (`function`) a function that takes a string and returns a `float`. By default, this is set to the in-built `tksheet.to_float`. This function will always convert percentages to their decimal equivalent, for example `"5%"` will be converted to `0.05`.
+ - `to_str_func` (`function`) By default, this is set to the in-built `tksheet.percentage_to_str`, which will display the float as a percentage to the specified number of decimal places. For example, `0.05` will be displayed as `"5.0%"`.
+ - `decimals` (`int`) the number of decimal places to round to. Defaults to `0`. 
+
+Useage:
+
+```python
+sheet.format_cell(0, 0, formatter_class = tksheet.percentage_formatter(decimals = 1)) # A percentage formatter with 1 decimal place
+```
+
+```python
+bool_formatter(datatypes = bool,
+               format_func = to_bool,
+               to_str_func = bool_to_str,
+               invalid_value = "NA",
+               truthy = truthy,
+               falsy = falsy,
+               **kwargs,
+               )
+```
+
+ - `format_func` (`function`) a function that takes a string and returns a `bool`. By default, this is set to the in-built `tksheet.to_bool`.
+ - `to_str_func` (`function`) By default, this is set to the in-built `tksheet.bool_to_str`, which will display the boolean as `"True"` or `"False"`.
+ - `truthy` (`list`) a list of values that will be converted to `True`. Defaults to the in-built `tksheet.truthy`.
+ - `falsy` (`list`) a list of values that will be converted to `False`. Defaults to the in-built `tksheet.falsy`.
+
+Usage:
+
+```python
+# A bool formatter with custom truthy and falsy values to account for aussie and kiwi slang
+sheet.format_cell(0, 0, formatter_class = tksheet.bool_formatter(truthy = tksheet.truthy+["nah yeah"], falsy = tksheet.falsy+["yeah nah"]))
+```
+
+### Datetime Formatters and Designing Your Own Custom Formatters
+
+You may have noticed that we have not included a datetime formatter. This is because python still lacks a sufficiently comprehensive native datetime parser which covers a wide enough range of possible datetime formats to be useful. Because tksheet is a strictly dependency-free package, we have cannot include a third-party datetime parser as a dependency. However, if you are willing to install a third-party package, we recommend the [dateparser](https://dateparser.readthedocs.io/en/latest/) package or the [dateutil](https://dateutil.readthedocs.io/en/stable/) package. Both of these packages have a very comprehensive datetime parser which can be used to create a custom datetime formatter for tksheet.
+
+Lets cover a simple example of how you might create a custom datetime formatter using the `dateutil` package.
+
+```python
+
+from tksheet import *
+from datetime import datetime, date
+from dateutil.parser import parse
+
+def to_local_datetime(dt, **kwargs):
+    '''
+    Our custom format_func, converts a string or a date to a datetime object in the local timezone.
+    '''
+    if isinstance(dt, datetime):
+        pass # Do nothing
+    elif isinstance(dt, date):
+        dt = datetime(dt.year, dt.month, dt.day) # Always good to account for unexpected inputs 
+    else:
+        try:
+            dt = parser.parse(dt)
+        except:
+            raise ValueError(f"Could not parse {dt} as a datetime")
+
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo = tzlocal()) # If no timezone is specified, assume local timezone
+    dt = dt.astimezone(tzlocal()) # Convert to local timezone
+    return dt
+
+def datetime_to_str(dt, **kwargs):
+    '''
+    Our custom to_str_func, converts a datetime object to a string with a format that can be specfied in kwargs.
+    '''
+    return dt.strftime(kwargs['format'])
+
+# Now we can create our custom formatter dictionary from the generic formatter interface in tksheet
+datetime_formatter = formatter(datatypes = datetime,
+                               format_func = to_local_datetime,
+                               to_str_func = datetime_to_str,
+                               invalid_value = "NaT",
+                               format = "%d/%m/%Y %H:%M:%S",
+                               )
+
+# From here we can pass our datetime_formatter into format_cells() just like any other formatter
+```
+
+## 24 Table Options and Other Functions
 
 The list of key word arguments available for `set_options()` are as follows, [see here](https://github.com/ragardner/tksheet/wiki#4-initialization-options) as a guide for what arguments to use.
 ```python
@@ -1809,7 +2000,7 @@ Refresh the table.
 refresh(redraw_header = True, redraw_row_index = True)
 ```
 
-## 24 Example Loading Data from Excel
+## 25 Example Loading Data from Excel
 
 Using `pandas` library, requires additional libraries:
  - `pandas`
@@ -1842,7 +2033,7 @@ app = demo()
 app.mainloop()
 ```
 
-## 25 Example Custom Right Click and Text Editor Validation
+## 26 Example Custom Right Click and Text Editor Validation
 
 This is to demonstrate adding your own commands to the in-built right click popup menu (or how you might start making your own right click menu functionality) and also validating text editor input. In this demonstration the validation removes spaces from user input.
 ```python
@@ -1896,7 +2087,7 @@ app.mainloop()
 ```
  - If you want a totally new right click menu you can use `self.sheet.bind("<3>", <function>)` with a `tk.Menu` of your own design (right click is `<2>` on MacOS) and don't use `"right_click_popup_menu"` with `enable_bindings()`.
 
-## 26 Example Displaying Selections
+## 27 Example Displaying Selections
 
 This is to demonstrate displaying what the user has selected in the sheet.
 ```python
@@ -1949,7 +2140,7 @@ app = demo()
 app.mainloop()
 ```
 
-## 27 Example List Box
+## 28 Example List Box
 
 This is to demonstrate some simple customization to make a different sort of widget (a list box).
 
@@ -2001,7 +2192,7 @@ app = demo()
 app.mainloop()
 ```
 
-## 28 Example Header Dropdown Boxes and Filtering
+## 29 Example Header Dropdown Boxes and Filtering
 
 A very simple demonstration of row filtering using header dropdown boxes.
 
@@ -2072,7 +2263,7 @@ app = demo()
 app.mainloop()
 ```
 
-## 29 Example Readme Screenshot Code
+## 30 Example Readme Screenshot Code
 
 The code used to make a screenshot for the readme file.
 
@@ -2164,7 +2355,7 @@ app = demo()
 app.mainloop()
 ```
 
-## 30 Example Saving tksheet as a csv File
+## 31 Example Saving tksheet as a csv File
 
 To both load a csv file and save tksheet data as a csv file not including headers and index.
 
@@ -2237,6 +2428,114 @@ class demo(tk.Tk):
                                                              skipinitialspace = False)])
         except:
             return
+
+
+app = demo()
+app.mainloop()
+```
+
+## 32 Example Using and Creating Formatters
+
+```python
+from tksheet import *
+import tkinter as tk
+from datetime import datetime, date, timedelta, time
+from dateutil import parser, tz
+from math import ceil
+
+
+# --------------------- Custom formatter methods ---------------------
+def round_up(x):
+    return float(ceil(x))
+
+def only_numeric(s):
+    return ''.join(n for n in s if n.isnumeric() or n == '.')
+
+def convert_to_local_datetime(dt: str, **kwargs):
+    if isinstance(dt, datetime):
+        pass
+    elif isinstance(dt, date):
+        dt = datetime(dt.year, dt.month, dt.day)
+    else:
+        try:
+            dt = parser.parse(dt)
+        except:
+            raise ValueError(f"Could not parse {dt} as a datetime")
+        
+    if dt.tzinfo is None:
+        dt.replace(tzinfo = tz.tzlocal())
+    dt = dt.astimezone(tz.tzlocal())
+    return dt.replace(tzinfo = None)
+
+def datetime_to_string(dt: datetime, **kwargs):
+    return dt.strftime('%d %b, %Y, %H:%M:%S')
+
+# --------------------- Custom Formatter with additional kwargs ---------------------
+
+def custom_datetime_to_str(dt: datetime, **kwargs):
+    return dt.strftime(kwargs['format'])
+
+
+class demo(tk.Tk):
+    def __init__(self):
+        tk.Tk.__init__(self)
+        self.grid_columnconfigure(0, weight = 1)
+        self.grid_rowconfigure(0, weight = 1)
+        self.frame = tk.Frame(self)
+        self.frame.grid_columnconfigure(0, weight = 1)
+        self.frame.grid_rowconfigure(0, weight = 1)
+        self.sheet = Sheet(self.frame,
+                           empty_vertical = 0,
+                           empty_horizontal = 0,
+                           data = [[f"{r}"]*11 for r in range(20)]
+                           )
+        self.sheet.enable_bindings()
+        self.frame.grid(row = 0, column = 0, sticky = "nswe")
+        self.sheet.grid(row = 0, column = 0, sticky = "nswe")
+        self.sheet.headers(['Non-Nullable Float Cell\n1 decimals places', 
+                            'Float Cell', 
+                            'Int Cell', 
+                            'Bool Cell', 
+                            'Percentage Cell\n0 decimal places', 
+                            'Custom Datetime Cell',
+                            'Custom Datetime Cell\nCustom Format String',
+                            'Float Cell that\nrounds up', 
+                            'Float cell that\n strips non-numeric', 
+                            'Dropdown Over Nullable\nPercentage Cell', 
+                            'Percentage Cell\n2 decimal places'])
+        
+        # ---------- Some examples of cell formatting --------
+        self.sheet.format_cell('all', 0, formatter_options = float_formatter(nullable = False))
+        self.sheet.format_cell('all', 1, formatter_options = float_formatter())
+        self.sheet.format_cell('all', 2, formatter_options = int_formatter())
+        self.sheet.format_cell('all', 3, formatter_options = bool_formatter(truthy = truthy+["nah yeah"], falsy = falsy+["yeah nah"]))
+        self.sheet.format_cell('all', 4, formatter_options = percentage_formatter())
+
+
+        # ---------------- Custom Formatters -----------------
+        # Custom using generic formatter interface
+        self.sheet.format_cell('all', 5, formatter_options = formatter(datatypes = datetime, 
+                                                                       format_func = convert_to_local_datetime, 
+                                                                       to_str_func = datetime_to_string, 
+                                                                       nullable = False,
+                                                                       invalid_value = 'NaT',
+                                                                       ))
+        # Custom format
+        self.sheet.format_cell('all', 6, datatypes = datetime, 
+                                         format_func = convert_to_local_datetime, 
+                                         to_str_func = custom_datetime_to_str, 
+                                         nullable = True,
+                                         invalid_value = 'NaT',
+                                         format = '(%Y-%m-%d) %H:%M %p'
+                                         )
+        
+        # Unique cell behaviour using the post_conversion_function
+        self.sheet.format_cell('all', 7, formatter_options = float_formatter(post_format_func = round_up))
+        self.sheet.format_cell('all', 8, formatter_options = float_formatter(), pre_format_func = only_numeric)
+
+        self.sheet.create_dropdown('all', 9, values = ['', '104%', .24, "300%", 'not a number'], set_value = 1)
+        self.sheet.format_cell('all', 9, formatter_options = percentage_formatter(), decimals = 0)
+        self.sheet.format_cell('all', 10, formatter_options = percentage_formatter(decimals = 5))
 
 
 app = demo()
