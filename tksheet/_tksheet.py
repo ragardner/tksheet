@@ -1905,7 +1905,7 @@ class Sheet(tk.Frame):
                 return f"{self.MT._row_index[rn]}"
 
     def get_sheet_data(self, 
-                       get_displayed = True, 
+                       get_displayed = False, 
                        get_header = False,
                        get_index = False,
                        default_index_for_empty = True,
@@ -2700,13 +2700,13 @@ class Sheet(tk.Frame):
     def format_cell(self,
                     r,
                     c,
-                    formatter = Formatter,
-                    formatter_kwargs = {},
+                    formatter_options = {},
+                    formatter_class = Formatter,
                     redraw = True,
                     **kwargs,
                     ):
-        _kwargs = {'formatter': formatter,
-                   **formatter_kwargs,
+        _kwargs = {'formatter': formatter_class,
+                   **formatter_options,
                    **kwargs}
         if isinstance(r, str) and r.lower() == 'all' and isinstance(c, int):
             for r_ in range(self.MT.total_data_rows()):
