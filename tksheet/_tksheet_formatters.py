@@ -32,6 +32,14 @@ def to_bool(val: Any, **kwargs):
         v = val.lower()
     else:
         v = val
+    if 'truthy' in kwargs:
+        truthy = kwargs['truthy']
+    else:
+        truthy = truthy
+    if 'falsy' in kwargs:
+        falsy = kwargs['falsy']
+    else:
+        falsy = falsy
     if v in truthy:
         return True
     elif v in falsy:
@@ -110,11 +118,15 @@ def bool_formatter(datatypes = bool,
                           format_func = to_bool,
                           to_str_func = bool_to_str,
                           invalid_value = "NA",
+                          truthy = truthy,
+                          falsy = falsy,
                           **kwargs,
                           ):
     return {**dict(datatypes = datatypes,
                    format_func = format_func,
                    to_str_func = to_str_func,
+                   truthy = truthy,
+                   falsy = falsy,
                    invalid_value = invalid_value),
             **kwargs}
 
