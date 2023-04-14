@@ -16,7 +16,7 @@ pip install tksheet --upgrade
 - [Questions](https://github.com/ragardner/tksheet/wiki#asking-questions)
 - [Issues](https://github.com/ragardner/tksheet/wiki#issues)
 - [Suggestions](https://github.com/ragardner/tksheet/wiki#enhancements-or-suggestions)
-- This library is maintained by [@ragardner](https://github.com/ragardner) with the help of [many others](https://github.com/ragardner/tksheet/graphs/contributors), if you would like to contribute check out [this help section](https://github.com/ragardner/tksheet/wiki#contributing).
+- This library is maintained by [@ragardner](https://github.com/ragardner) with the help of **[others](https://github.com/ragardner/tksheet/graphs/contributors)**, if you would like to contribute check out [this help section](https://github.com/ragardner/tksheet/wiki#contributing).
 
 ### Features
 - Display and modify tabular data
