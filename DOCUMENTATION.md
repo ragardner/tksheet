@@ -1736,7 +1736,7 @@ The `int_formatter` is the basic configuration for a simple interger formatter.
 Usage:
 
 ```python
-sheet.format_cell(0, 0, formatter_class = tksheet.int_formatter)
+sheet.format_cell(0, 0, formatter_options = tksheet.int_formatter)
 ```
 
 ```python
@@ -1758,7 +1758,7 @@ The `float_formatter` is the basic configuration for a simple float formatter. I
 Usage:
 
 ```python
-sheet.format_cell(0, 0, formatter_class = tksheet.float_formatter(decimals = 2)) # A float formatter with 2 decimal places
+sheet.format_cell(0, 0, formatter_options = tksheet.float_formatter(decimals = 2)) # A float formatter with 2 decimal places
 ```
 
 ```python
@@ -1780,7 +1780,7 @@ The `percentage_formatter` is the basic configuration for a simple percentage fo
 Useage:
 
 ```python
-sheet.format_cell(0, 0, formatter_class = tksheet.percentage_formatter(decimals = 1)) # A percentage formatter with 1 decimal place
+sheet.format_cell(0, 0, formatter_options = tksheet.percentage_formatter(decimals = 1)) # A percentage formatter with 1 decimal place
 ```
 
 ```python
@@ -1803,7 +1803,7 @@ Usage:
 
 ```python
 # A bool formatter with custom truthy and falsy values to account for aussie and kiwi slang
-sheet.format_cell(0, 0, formatter_class = tksheet.bool_formatter(truthy = tksheet.truthy+["nah yeah"], falsy = tksheet.falsy+["yeah nah"]))
+sheet.format_cell(0, 0, formatter_options = tksheet.bool_formatter(truthy = tksheet.truthy+["nah yeah"], falsy = tksheet.falsy+["yeah nah"]))
 ```
 
 ### Datetime Formatters and Designing Your Own Custom Formatters
@@ -1853,6 +1853,8 @@ datetime_formatter = formatter(datatypes = datetime,
 
 # From here we can pass our datetime_formatter into format_cells() just like any other formatter
 ```
+
+For those wanting even more customisation of their formatters you also have the option of creating a custom formatter class. This is a more advanced topic and is not covered here, but we reccomend inheriting the `tksheet.Formatter` class and overriding the methods you would like to customise. This custom class can then be passed into the `format_cells()` `formatter_class` argument. 
 
 ## 24 Table Options and Other Functions
 
