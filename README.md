@@ -32,10 +32,10 @@ pip install tksheet --upgrade
 - Left `"w"`, Center `"center"` or Right `"e"` text alignment
 - Cell values can be any class with a `str` method
 
-### Light Blue Theme
+### light blue theme
 
 ![alt text](https://i.imgur.com/ojU3IQi.jpeg)
 
-### Dark Theme
+### black theme
 
 ![alt text](https://i.imgur.com/JeF9vJe.jpeg)

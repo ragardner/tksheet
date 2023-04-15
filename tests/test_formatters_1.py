@@ -95,7 +95,7 @@ class demo(tk.Tk):
 
         self.sheet.create_dropdown('all', 9, values = ['', '104%', .24, "300%", 'not a number'], set_value = 1)
         self.sheet.format_cell('all', 9, formatter_options = percentage_formatter(), decimals = 0)
-        self.sheet.format_cell('all', 10, formatter_options = percentage_formatter(decimals = 5))
+        self.sheet.format_cell('all', 10, formatter_options = percentage_formatter(decimals = 5), formatter_class = Formatter)
 
 
 app = demo()

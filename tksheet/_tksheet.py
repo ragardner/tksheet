@@ -1938,56 +1938,23 @@ class Sheet(tk.Frame):
                     for rn in range(len(self.MT.data))]
     
     def get_cell_data(self, r, c, get_displayed = False, **kwargs):
-        if get_displayed:
-            try:
-                return f"{self.MT.data[r][c]}"
-            except:
-                return ""
-        else:
-            try:
-                return self.MT.data[r][c].data() if ((r, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(r, c)]) else f"{self.MT.data[r][c]}"
-            except:
-                return ""
+        return self.MT.get_cell_data(r, c, get_displayed)
 
     def get_row_data(self, r, get_displayed = False, get_index = False, default_index_for_empty = True, **kwargs):
         if get_index:
             if r >= len(self.MT.data):
                 return [self.get_index_data(r, get_displayed = get_displayed, default_for_empty = default_index_for_empty)] + ["" for c in range(self.MT.total_data_cols())]
-            if get_displayed:
-                return ([self.get_index_data(r, get_displayed = get_displayed, default_for_empty = default_index_for_empty)] +
-                        [f"{e}" for c, e in enumerate(self.MT.data[r])])
-            else:
-                return ([self.get_index_data(r, get_displayed = get_displayed, default_for_empty = default_index_for_empty)] +
-                        [e.data() if ((r, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(r, c)]) else 
-                         f"{e}" for c, e in enumerate(self.MT.data[r])])
+            return ([self.get_index_data(r, get_displayed = get_displayed, default_for_empty = default_index_for_empty)] +
+                    [self.MT.get_cell_data(r, c, get_displayed = get_displayed) for c in range(len(self.MT.data[r]))])
         else:
             if r >= len(self.MT.data):
                 return ["" for c in range(self.MT.total_data_cols())]
-            if get_displayed:
-                return [f"{e}" for c, e in enumerate(self.MT.data[r])]
-            else:
-                return [e.data() if ((r, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(r, c)]) else
-                        f"{e}" for c, e in enumerate(self.MT.data[r])]
+            return [self.MT.get_cell_data(r, c, get_displayed = get_displayed) for c in range(len(self.MT.data[r]))]
 
     def get_column_data(self, c, get_displayed = False, get_header = False, default_header_for_empty = True, **kwargs):
-        data = [self.get_header_data(c, get_displayed = get_displayed, default_for_empty = default_header_for_empty)] if get_header else []
-        if get_displayed:
-            for rn, r in enumerate(self.MT.data):
-                if c < len(r):
-                    data.append(f"{r[c]}")
-                else:
-                    data.append("")
-        else:
-            for rn, r in enumerate(self.MT.data):
-                if c < len(r):
-                    if (rn, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(rn, c)]:
-                        data.append(r[c].data())
-                    else:
-                        data.append(f"{r[c]}")
-                else:
-                    data.append("")
-        return data
-    
+        return (([self.get_header_data(c, get_displayed = get_displayed, default_for_empty = default_header_for_empty)] if get_header else []) + 
+                [self.MT.get_cell_data(rn, c, get_displayed = get_displayed) for rn in range(len(self.MT.data))])
+
     def yield_sheet_rows(self,
                          get_displayed = False, 
                          get_header = False,
@@ -2049,12 +2016,9 @@ class Sheet(tk.Frame):
                                       keep_formatting = keep_formatting)
 
     def set_cell_data(self, r, c, value = "", set_copy = True, redraw = False, keep_formatting = True):
-        if keep_formatting and (r, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(r, c)]:
-            self.MT.data[r][c] = self.MT.cell_options[(r, c)]['format']['formatter'](f"{value}" if set_copy else value, 
-                                                                                     **self.MT.cell_options[(r, c)]['format']['kwargs'])
-        else:
-            self.MT.data[r][c] = f"{value}" if set_copy else value
+        if not keep_formatting:
             self.MT.delete_format(r, c)
+        self.MT._set_cell_data(r, c, f"{value}" if set_copy else value)
         if redraw:
             self.set_refresh_timer()
             
@@ -2701,7 +2665,7 @@ class Sheet(tk.Frame):
                     r,
                     c,
                     formatter_options = {},
-                    formatter_class = Formatter,
+                    formatter_class = None,
                     redraw = True,
                     **kwargs,
                     ):

@@ -66,8 +66,7 @@ class MainTable(tk.Canvas):
                                  'highlight: (bg, fg),
                                  'align': "e",
                                  'readonly': True,
-                                 'format': {'formatter': Formatter,
-                                            'kwargs: {}}
+                                 'format': {}
                                 }
         """
         self.arrowkey_binding_functions = {"tab": self.tab_key,
@@ -390,13 +389,7 @@ class MainTable(tk.Canvas):
                         data_ref_rn = r1 + rn
                         for c in range(c1, c2):
                             datacn = c if self.all_columns_displayed else self.displayed_columns[c]
-                            try:
-                                if (data_ref_rn, datacn) in self.cell_options and 'format' in self.cell_options[(data_ref_rn, datacn)]:
-                                    row.append(self.data[data_ref_rn][datacn].clipboard())
-                                else:
-                                    row.append(f"{self.data[data_ref_rn][datacn]}")
-                            except:
-                                row.append("")
+                            row.append(self.get_cell_clipboard(data_ref_rn, datacn))
                     writer.writerow(row)
                     rows.append(row)
             else:
@@ -412,13 +405,7 @@ class MainTable(tk.Canvas):
                         data_ref_rn = r1 + rn
                         for c in range(c1, c2):
                             datacn = c if self.all_columns_displayed else self.displayed_columns[c]
-                            try:
-                                if (data_ref_rn, datacn) in self.cell_options and 'format' in self.cell_options[(data_ref_rn, datacn)]:
-                                    row.append(self.data[data_ref_rn][datacn].clipboard())
-                                else:
-                                    row.append(f"{self.data[data_ref_rn][datacn]}")
-                            except:
-                                row.append("")
+                            row.append(self.get_cell_clipboard(data_ref_rn, datacn))
                         writer.writerow(row)
                         rows.append(row)
             for r1, c1, r2, c2 in boxes:
@@ -451,25 +438,9 @@ class MainTable(tk.Canvas):
                         data_ref_rn = r1 + rn
                         for c in range(c1, c2):
                             datacn = c if self.all_columns_displayed else self.displayed_columns[c]
-                            try:
-                                if (data_ref_rn, datacn) in self.cell_options and 'format' in self.cell_options[(data_ref_rn, datacn)]:
-                                    try:
-                                        val = self.data[data_ref_rn][datacn].clipboard()
-                                    except:
-                                        val = self.data[data_ref_rn][datacn]
-                                else:
-                                    val = self.data[data_ref_rn][datacn]
-                                row.append(val)
-                                if self.undo_enabled:
-                                    if (data_ref_rn, datacn) in self.cell_options and 'format' in self.cell_options[(data_ref_rn, datacn)]:
-                                        try:
-                                            undo_storage[(data_ref_rn, datacn)] = self.data[data_ref_rn][datacn].data()
-                                        except:
-                                            undo_storage[(data_ref_rn, datacn)] = self.data[data_ref_rn][datacn]
-                                    else:
-                                        undo_storage[(data_ref_rn, datacn)] = self.data[data_ref_rn][datacn]
-                            except:
-                                row.append("")
+                            if self.undo_enabled:
+                                undo_storage[(data_ref_rn, datacn)] = self.get_cell_data(data_ref_rn, datacn)
+                            row.append(self.get_cell_clipboard(data_ref_rn, datacn))
                     writer.writerow(row)
                     rows.append(row)
                 for rn in range(maxrows):
@@ -507,25 +478,10 @@ class MainTable(tk.Canvas):
                         data_ref_rn = r1 + rn
                         for c in range(c1, c2):
                             datacn = c if self.all_columns_displayed else self.displayed_columns[c]
-                            try:
-                                if (data_ref_rn, datacn) in self.cell_options and 'format' in self.cell_options[(data_ref_rn, datacn)]:
-                                    try:
-                                        val = self.data[data_ref_rn][datacn].clipboard()
-                                    except:
-                                        val = self.data[data_ref_rn][datacn]
-                                else:
-                                    val = self.data[data_ref_rn][datacn]
-                                row.append(val)
-                                if self.undo_enabled:
-                                    if (data_ref_rn, datacn) in self.cell_options and 'format' in self.cell_options[(data_ref_rn, datacn)]:
-                                        try:
-                                            undo_storage[(data_ref_rn, datacn)] = self.data[data_ref_rn][datacn].data()
-                                        except:
-                                            undo_storage[(data_ref_rn, datacn)] = self.data[data_ref_rn][datacn]
-                                    else:
-                                        undo_storage[(data_ref_rn, datacn)] = self.data[data_ref_rn][datacn]
-                            except:
-                                row.append("")
+                            value = self.get_cell_data(data_ref_rn, datacn)
+                            if self.undo_enabled:
+                                undo_storage[(data_ref_rn, datacn)] = value
+                            row.append(value)
                         writer.writerow(row)
                         rows.append(row)
                 for r1, c1, r2, c2 in boxes:
@@ -671,20 +627,11 @@ class MainTable(tk.Canvas):
                      'dropdown' in self.cell_options[(datarn, datacn)] and
                      'format' not in self.cell_options[(datarn, datacn)] and
                      data[ndr][ndc] not in self.cell_options[(datarn, datacn)]['dropdown']['values'])
-                    ):
+                    ): # formatters deal with invalid values so not an issue if dropdown combined with format and invalid value input
                     continue
-                if (datarn, datacn) in self.cell_options and 'format' in self.cell_options[(datarn, datacn)]:
-                    if self.undo_enabled:
-                        try:
-                            undo_storage[(datarn, datacn)] = self.data[datarn][datacn].data()
-                        except:
-                            undo_storage[(datarn, datacn)] = self.data[datarn][datacn]
-                    self.data[datarn][datacn] = self.cell_options[(datarn, datacn)]['format']['formatter'](data[ndr][ndc], 
-                                                                                                           **self.cell_options[(datarn, datacn)]['format']['kwargs'])
-                else:
-                    if self.undo_enabled:
-                        undo_storage[(datarn, datacn)] = self.data[datarn][datacn]
-                    self.data[datarn][datacn] = data[ndr][ndc]
+                if self.undo_enabled:
+                    undo_storage[(datarn, datacn)] = self.get_cell_data(datarn, datacn)
+                self._set_cell_data(datarn, datacn, data[ndr][ndc])
         if self.expand_sheet_if_paste_too_big and self.undo_enabled:
             self.equalize_data_row_lengths()
         self.deselect("all")
@@ -736,18 +683,9 @@ class MainTable(tk.Canvas):
                             (datarn in self.row_options and 'readonly' in self.row_options[datarn])
                             ):
                             continue
-                        try:
-                            if self.undo_enabled:
-                                if (datarn, datacn) in self.cell_options and 'format' in self.cell_options[(datarn, datacn)]:
-                                    undo_storage[(datarn, datacn)] = self.data[datarn][datacn].data()
-                                else:
-                                    undo_storage[(datarn, datacn)] = self.data[datarn][datacn]
-                        except:
-                            pass
-                        try:
-                            self.data[datarn][datacn] = ""
-                        except:
-                            continue
+                        if self.undo_enabled:
+                            undo_storage[(datarn, datacn)] = self.get_cell_data(datarn, datacn)
+                        self._set_cell_data(datarn, datacn, "")
             if self.extra_end_delete_key_func is not None:
                 self.extra_end_delete_key_func(CtrlKeyEvent("end_delete_key", boxes, currently_selected, undo_storage))
             if self.undo_enabled:
@@ -1011,11 +949,7 @@ class MainTable(tk.Canvas):
                         
         if undo_storage[0] in ("edit_cells", "edit_cells_paste"):
             for (datarn, datacn), v in undo_storage[1].items():
-                if (datarn, datacn) in self.cell_options and 'format' in self.cell_options[(datarn, datacn)]:
-                    self.data[datarn][datacn] = self.cell_options[(datarn, datacn)]['format']['formatter'](value = v, 
-                                                                                                           **self.cell_options[(datarn, datacn)]['format']['kwargs'])
-                else:
-                    self.data[datarn][datacn] = v
+                self._set_cell_data(datarn, datacn, v)
             start_row = float("inf")
             start_col = float("inf")
             for box in undo_storage[2]:
@@ -3009,17 +2943,13 @@ class MainTable(tk.Canvas):
                        return_id = True,
                        keep_formatting = True):
         if isinstance(newdataref, (list, tuple)):
+            self.data = newdataref
             if keep_formatting:
                 for r, c in self.yield_formatted_cells():
-                    try: 
-                        formatter = self.cell_options[(r,c)]['format']['formatter']
-                        kwargs = self.cell_options[(r,c)]['format']['kwargs']
-                        newdataref[r][c] = formatter(newdataref[r][c], **kwargs)
-                    except IndexError:
-                        continue
+                    if len(self.data) > r and len(self.data[r]) > c:
+                        self._set_cell_data(r, c, value = self.data[r][c])
             else:
                 self.delete_format("all", clear_values = True)
-            self.data = newdataref
             self.undo_storage = deque(maxlen = self.max_undos)
             if reset_col_positions:
                 self.reset_col_positions()
@@ -4324,10 +4254,8 @@ class MainTable(tk.Canvas):
 
                         if (datarn, datacn) in self.cell_options and 'checkbox' in self.cell_options[(datarn, datacn)]:
                             lns = self.cell_options[(datarn, datacn)]['checkbox']['text'].split("\n") if isinstance(self.cell_options[(datarn, datacn)]['checkbox']['text'], str) else f"{self.cell_options[(datarn, datacn)]['checkbox']['text']}".split("\n")
-                        elif len(self.data) > datarn and len(self.data[datarn]) > datacn:
-                            lns = self.data[datarn][datacn].split("\n") if isinstance(self.data[datarn][datacn], str) else f"{self.data[datarn][datacn]}".split("\n")
                         else:
-                            continue
+                            lns = self.get_cell_data_check_valid(datarn, datacn, get_displayed = True).split("\n")
                         if lns != [''] and mw > self.txt_w and not ((align == "w" and draw_x > scrollpos_right) or
                                                                     (align == "e" and cleftgridln + 5 > scrollpos_right) or
                                                                     (align == "center" and stop > scrollpos_right)):
@@ -5128,16 +5056,8 @@ class MainTable(tk.Canvas):
                     extra_func_key = "F2"
             datarn = r if self.all_rows_displayed else self.displayed_rows[r]
             datacn = c if self.all_columns_displayed else self.displayed_columns[c]
-            if len(self.data) > datarn and len(self.data[datarn]) > datacn:
-                if (datarn, datacn) in self.cell_options and 'format' in self.cell_options[(datarn, datacn)]:
-                    try: # If the formatter value is None, then text editor should be empty not "None"
-                        text = f"{self.data[datarn][datacn].value}" if self.data[datarn][datacn].value is not None else ""
-                    except:
-                        text = f"{self.data[datarn][datacn]}"
-                else:
-                    text = f"{self.data[datarn][datacn]}"
-            else:
-                text = ""
+            text = self.get_cell_data(datarn, datacn)
+            text = "" if text is None else f"{text}"
         elif event is not None and (hasattr(event, 'keysym') and event.keysym == 'BackSpace'):
             extra_func_key = "BackSpace"
             text = ""
@@ -5425,14 +5345,10 @@ class MainTable(tk.Canvas):
         if self.undo_enabled and undo:
             if self.data[r][datacn] != value:
                 self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells",
-                                                                     {(datarn, datacn): self.data[datarn][datacn].data() if (datarn, datacn) in self.cell_options and 'format' in self.cell_options[(datarn, datacn)] else self.data[datarn][datacn]},
+                                                                     {(datarn, datacn): self.get_cell_data(datarn, datacn)},
                                                                      (((r, c, r + 1, c + 1), "cells"), ),
                                                                      self.currently_selected()))))
-        if (datarn, datacn) in self.cell_options and 'format' in self.cell_options[(datarn, datacn)]:
-            self.data[datarn][datacn] = self.cell_options[(datarn, datacn)]['format']['formatter'](value,
-                                                                                                   **self.cell_options[(datarn, datacn)]['format']['kwargs'])
-        else:
-            self.data[datarn][datacn] = value
+        self._set_cell_data(datarn, datacn, value)
         if cell_resize and self.cell_auto_resize_enabled:
             self.set_cell_size_to_text(r, c, only_set_if_too_small = True, redraw = redraw, run_binding = True)
         return True
@@ -5457,7 +5373,14 @@ class MainTable(tk.Canvas):
             self.data.extend([list(repeat("", datacn + 1)) for i in range((datarn + 1) - len(self.data))])
         elif datacn >= len(self.data[datarn]):
             self.data[datarn].extend(list(repeat("", (datacn + 1) - len(self.data[datarn]))))
-        self.data[datarn][datacn] = value
+        if (datarn, datacn) in self.cell_options and 'format' in self.cell_options[(datarn, datacn)]:
+            if self.cell_options[(datarn, datacn)]['format']['formatter'] is None:
+                self.data[datarn][datacn] = format_data(value = value, **self.cell_options[(datarn, datacn)]['format'])
+            else:
+                self.data[datarn][datacn] = self.cell_options[(datarn, datacn)]['format']['formatter'](value,
+                                                                                                       **self.cell_options[(datarn, datacn)]['format'])
+        else:
+            self.data[datarn][datacn] = value
 
     def create_checkbox(self, datarn = 0, datacn = 0, checked = False, state = "normal", redraw = False, check_function = None, text = ""):
         if (datarn, datacn) in self.cell_options and 'format' in self.cell_options[(datarn, datacn)]:
@@ -5494,50 +5417,99 @@ class MainTable(tk.Canvas):
     def format_cell(self,
                     datarn, 
                     datacn,
-                    formatter_class = Formatter,
                     **kwargs):
         if (datarn, datacn) in self.cell_options and 'checkbox' in self.cell_options[(datarn, datacn)]:
             return
         if (datarn, datacn) not in self.cell_options:
             self.cell_options[(datarn, datacn)] = {}
-        self.cell_options[(datarn, datacn)]['format'] = {'formatter': formatter_class,
-                                                         'kwargs': kwargs}
+        self.cell_options[(datarn, datacn)]['format'] = kwargs
         if 'value' in kwargs:
             v = kwargs['value']
         else:
             v = self.data[datarn][datacn] if len(self.data) > datarn and len(self.data[datarn]) > datacn else ""
-        self._set_cell_data(datarn, datacn, formatter_class(value = v, 
-                                                            **kwargs))
+        if kwargs['formatter'] is None:
+            if kwargs['nullable']:
+                if isinstance(kwargs['datatypes'], (list, tuple)):
+                    kwargs['datatypes'] = tuple(kwargs['datatypes']) + (type(None), )
+                else:
+                    kwargs['datatypes'] = (kwargs['datatypes'], type(None))
+            elif (isinstance(kwargs['datatypes'], (list, tuple)) and type(None) in kwargs['datatypes']) or kwargs['datatypes'] is type(None):
+                raise TypeError("Non-nullable cells cannot have NoneType as a datatype.")
+        self._set_cell_data(datarn, datacn, value = v)
 
     def delete_format(self, datarn, datacn, clear_values = False):
-        if isinstance(datarn, str) and datarn == "all":
+        if isinstance(datarn, str) and datarn.lower() == "all":
             for datarn, datacn in self.yield_formatted_cells():
-                del self.cell_options[(datarn, datacn)]['format']
                 try:
                     if clear_values:
                         self.data[datarn][datacn] = ""
                     else:
-                        self.data[datarn][datacn] = self.data[datarn][datacn].value
+                        self.data[datarn][datacn] = self.get_cell_data(datarn, datacn)
                 except:
                     continue
+                del self.cell_options[(datarn, datacn)]['format']
         else:
             try:
-                del self.cell_options[(datarn, datacn)]['format']
                 if clear_values:
                     self.data[datarn][datacn] = ""
                 else:
-                    self.data[datarn][datacn] = self.data[datarn][datacn].value
+                    self.data[datarn][datacn] = self.get_cell_data(datarn, datacn)
+                del self.cell_options[(datarn, datacn)]['format']
             except:
                 pass
-            
+
+    # deals with possibility of formatter class being in self.data cell
+    # if cell is formatted - possibly returns invalid_value kwarg if cell value is not in datatypes kwarg
+    def get_cell_data_check_valid(self, datarn, datacn, get_displayed = False):
+        value = self.data[datarn][datacn] if len(self.data) > datarn and len(self.data[datarn]) > datacn else ""
+        if (datarn, datacn) in self.cell_options and 'format' in self.cell_options[(datarn, datacn)]:
+            kwargs = self.cell_options[(datarn, datacn)]['format']
+            if kwargs['formatter'] is None:
+                if get_displayed:
+                    return data_to_str(value, **kwargs)
+                else:
+                    return get_data_with_valid_check(value, **kwargs)
+            else:
+                if get_displayed:
+                    return f"{value}" # assumed given formatter class has __str__() function
+                else:
+                    return value.data() # assumed given formatter class has data() function
+        return f"{value}"
+
+    def get_cell_data(self, datarn, datacn, get_displayed = False):
+        value = self.data[datarn][datacn] if len(self.data) > datarn and len(self.data[datarn]) > datacn else ""
+        if (datarn, datacn) in self.cell_options and 'format' in self.cell_options[(datarn, datacn)]:
+            kwargs = self.cell_options[(datarn, datacn)]['format']
+            if kwargs['formatter'] is None:
+                if get_displayed:
+                    return data_to_str(value, **kwargs)
+                else:
+                    return value
+            else:
+                if get_displayed:
+                    return f"{value}" # assumed given formatter class has __str__() function
+                else:
+                    return value.value # assumed given formatter class has value attribute
+        return f"{value}"
+
+    def get_cell_clipboard(self, datarn, datacn):
+        value = self.data[datarn][datacn] if len(self.data) > datarn and len(self.data[datarn]) > datacn else ""
+        if (datarn, datacn) in self.cell_options and 'format' in self.cell_options[(datarn, datacn)]:
+            kwargs = self.cell_options[(datarn, datacn)]['format']
+            if kwargs['formatter'] is None:
+                return get_clipboard_data(value, **kwargs)
+            else:
+                return value.clipboard() # assumed given formatter class has clipboard() function
+        return value
+
     def yield_formatted_cells(self, formatter = None):
         if formatter is not None:
-            yield from (cell for cell, options in self.cell_options.items() if 'format' in options and options['format'] == formatter)
+            yield from (cell for cell, options in self.cell_options.items() if 'format' in options and options['format']['formatter'] == formatter)
         yield from (cell for cell, options in self.cell_options.items() if 'format' in options and options['format'] is not None)
     
     def get_formatted_cells(self, formatter = None):
         if formatter is not None:
-            return {cell for cell, options in self.cell_options.items() if 'format' in options and options['format'] == formatter}
+            return {cell for cell, options in self.cell_options.items() if 'format' in options and options['format']['formatter'] == formatter}
         return {cell for cell, options in self.cell_options.items() if 'format' in options and options['format'] is not None}
     
     def formatted(self, datarn, datacn):

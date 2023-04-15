@@ -1,4 +1,3 @@
-from abc import ABC, abstractmethod
 from typing import Union, Any, Type, Callable
 from ._tksheet_vars import *
 
@@ -33,25 +32,24 @@ def to_bool(val: Any, **kwargs):
     else:
         v = val
     if 'truthy' in kwargs:
-        truthy = kwargs['truthy']
+        _truthy = kwargs['truthy']
     else:
-        truthy = truthy
+        _truthy = truthy
     if 'falsy' in kwargs:
-        falsy = kwargs['falsy']
+        _falsy = kwargs['falsy']
     else:
-        falsy = falsy
-    if v in truthy:
+        _falsy = falsy
+    if v in _truthy:
         return True
-    elif v in falsy:
+    elif v in _falsy:
         return False
     raise ValueError(f'Cannot map "{val}" to bool.')
 
-def to_str(v: Any, 
-                         **kwargs: dict) -> str:
+def to_str(v: Any, **kwargs: dict) -> str:
     return f"{v}"
 
 def float_to_str(v: Any,
-                           **kwargs: dict) -> str:
+                 **kwargs: dict) -> str:
     if 'decimals' in kwargs:
         if kwargs['decimals']:
             return f"{round(v, kwargs['decimals'])}"
@@ -60,8 +58,7 @@ def float_to_str(v: Any,
         return f"{int(v)}"
     return f"{v}"
 
-def percentage_to_str(v: Any,
-                                **kwargs: dict) -> str:
+def percentage_to_str(v: Any, **kwargs: dict) -> str:
     if 'decimals' in kwargs:
         if kwargs['decimals']:
             return f"{round(v * 100, kwargs['decimals'])}%"
@@ -70,65 +67,58 @@ def percentage_to_str(v: Any,
         return f"{int(v) * 100}%"
     return f"{v * 100}%"
 
-def bool_to_str(v: Any,
-                          **kwargs: dict) -> str:
+def bool_to_str(v: Any, **kwargs: dict) -> str:
     return f"{v}"
 
 def int_formatter(datatypes = int,
-                         format_func = to_int,
-                         to_str_func = to_str,
-                         invalid_value = "NaN",
-                         **kwargs,
-                         ):
-    return {**dict(datatypes = datatypes,
-                   format_func = format_func,
-                   to_str_func = to_str_func,
-                   invalid_value = invalid_value),
-            **kwargs}
+                  format_func = to_int,
+                  to_str_func = to_str,
+                  **kwargs,
+                  ):
+    return formatter(datatypes = datatypes,
+                     format_func = format_func,
+                     to_str_func = to_str_func,
+                     **kwargs)
 
 def float_formatter(datatypes = float,
-                           format_func = to_float,
-                           to_str_func = float_to_str,
-                           invalid_value = "NaN",
-                           decimals = 1,
-                           **kwargs,
-                           ):
-    return {**dict(datatypes = datatypes,
-                   format_func = format_func,
-                   to_str_func = to_str_func,
-                   invalid_value = invalid_value,
-                   decimals = decimals),
-            **kwargs}
+                    format_func = to_float,
+                    to_str_func = float_to_str,
+                    decimals = 1,
+                    **kwargs,
+                    ):
+    return formatter(datatypes = datatypes,
+                     format_func = format_func,
+                     to_str_func = to_str_func,
+                     decimals = decimals,
+                     **kwargs)
 
 def percentage_formatter(datatypes = float,
-                                format_func = to_float,
-                                to_str_func = percentage_to_str,
-                                invalid_value = "NaN",
-                                decimals = 0,
-                                **kwargs,
-                                ):
-    return {**dict(datatypes = datatypes,
-                   format_func = format_func,
-                   to_str_func = to_str_func,
-                   invalid_value = invalid_value,
-                   decimals = decimals),
-            **kwargs}
+                         format_func = to_float,
+                         to_str_func = percentage_to_str,
+                         decimals = 0,
+                         **kwargs,
+                         ):
+    return formatter(datatypes = datatypes,
+                     format_func = format_func,
+                     to_str_func = to_str_func,
+                     decimals = decimals,
+                     **kwargs)
 
 def bool_formatter(datatypes = bool,
-                          format_func = to_bool,
-                          to_str_func = bool_to_str,
-                          invalid_value = "NA",
-                          truthy = truthy,
-                          falsy = falsy,
-                          **kwargs,
-                          ):
-    return {**dict(datatypes = datatypes,
-                   format_func = format_func,
-                   to_str_func = to_str_func,
-                   truthy = truthy,
-                   falsy = falsy,
-                   invalid_value = invalid_value),
-            **kwargs}
+                   format_func = to_bool,
+                   to_str_func = bool_to_str,
+                   invalid_value = "NA",
+                   truthy_values = truthy,
+                   falsy_values = falsy,
+                   **kwargs,
+                   ):
+    return formatter(datatypes = datatypes,
+                     format_func = format_func,
+                     to_str_func = to_str_func,
+                     invalid_value = invalid_value,
+                     truthy_values = truthy_values,
+                     falsy_values = falsy_values,
+                     **kwargs)
 
 def formatter(datatypes,
               format_func,
@@ -148,6 +138,55 @@ def formatter(datatypes,
                    post_format_func = post_format_func,
                    clipboard_func = clipboard_func),
             **kwargs}
+    
+def format_data(value = "",
+                datatypes = int,
+                nullable = True,
+                pre_format_func = None,
+                format_func = to_int,
+                post_format_func = None,
+                **kwargs,
+                ):
+    if pre_format_func:
+        value = pre_format_func(value)
+    if nullable and is_nonelike(value):
+        value = None
+    else:
+        try:
+            value = format_func(value, **kwargs)
+        except Exception as error:
+            value = f"{value}"
+    if post_format_func and isinstance(value, datatypes):
+        value = post_format_func(value)
+    return value
+
+def data_to_str(value = "",
+                datatypes = int,
+                nullable = True,
+                invalid_value = "NaN",
+                to_str_func = None,
+                **kwargs):
+    if not isinstance(value, datatypes):
+        return invalid_value
+    if value is None and nullable:
+        return ""
+    return to_str_func(value, **kwargs)
+
+def get_data_with_valid_check(value = "", 
+                              datatypes = tuple(),
+                              invalid_value = "NaN"):
+    if isinstance(value, datatypes):
+        return value
+    return invalid_value
+
+def get_clipboard_data(value = "",
+                       clipboard_func = None,
+                       **kwargs):
+    if clipboard_func is not None:
+        return clipboard_func(value, **kwargs)
+    if isinstance(value, (int, float, bool)):
+        return value
+    return data_to_str(value, **kwargs)
 
 
 class Formatter:
