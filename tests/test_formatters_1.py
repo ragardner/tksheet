@@ -47,7 +47,7 @@ class demo(tk.Tk):
         self.sheet = Sheet(self.frame,
                            empty_vertical = 0,
                            empty_horizontal = 0,
-                           data = [[f"{r}"]*11 for r in range(20)]
+                           data = [[f"{r}"]*11 for r in range(10)]
                            )
         self.sheet.enable_bindings()
         self.frame.grid(row = 0, column = 0, sticky = "nswe")
@@ -96,6 +96,9 @@ class demo(tk.Tk):
         self.sheet.create_dropdown('all', 9, values = ['', '104%', .24, "300%", 'not a number'], set_value = 1)
         self.sheet.format_cell('all', 9, formatter_options = percentage_formatter(), decimals = 0)
         self.sheet.format_cell('all', 10, formatter_options = percentage_formatter(decimals = 5), formatter_class = Formatter)
+        
+        print (self.sheet.get_column_data(5))
+        print (self.sheet.get_sheet_data(get_displayed=True))
 
 
 app = demo()

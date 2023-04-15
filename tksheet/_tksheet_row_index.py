@@ -697,13 +697,7 @@ class RowIndex(tk.Canvas):
                     if (row, cn) in self.MT.cell_options and 'checkbox' in self.MT.cell_options[(row, cn)]:
                         txt = self.MT.cell_options[(row, cn)]['checkbox']['text']
                     else:
-                        try:
-                            if isinstance(self.MT.data[row][cn], str):
-                                txt = self.MT.data[row][cn]
-                            else:
-                                txt = f"{self.MT.data[row][cn]}"
-                        except:
-                            txt = ""
+                        txt = self.MT.get_cell_data_check_valid(datarn, datacn, get_displayed=True)
                     if txt:
                         h = self.MT.GetTextHeight(txt) + 5
                     else:
@@ -772,13 +766,7 @@ class RowIndex(tk.Canvas):
                 if (rn, c) in self.MT.cell_options and 'checkbox' in self.MT.cell_options[(rn, c)]:
                     txt = self.MT.cell_options[(rn, c)]['checkbox']['text']
                 else:
-                    try:
-                        if isinstance(row[c], str):
-                            txt = row[c]
-                        else:
-                            txt = f"{row[c]}"
-                    except:
-                        txt = ""
+                    txt = self.MT.get_cell_data_check_valid(rn, c, get_displayed=True)
                 if txt:
                     qconf(qtxtm, text = txt)
                     b = qbbox(qtxtm)
@@ -1134,7 +1122,7 @@ class RowIndex(tk.Canvas):
                 if r in self.cell_options and 'checkbox' in self.cell_options[r]:
                     lns = self.cell_options[r]['checkbox']['text'].split("\n") if isinstance(self.cell_options[r]['checkbox']['text'], str) else f"{self.cell_options[r]['checkbox']['text']}".split("\n")
                 elif isinstance(self.MT._row_index, int):
-                    lns = self.MT.data[r][self.MT._row_index].split("\n") if isinstance(self.MT.data[r][self.MT._row_index], str) else f"{self.MT.data[r][self.MT._row_index]}".split("\n")
+                    lns = self.MT.get_cell_data_check_valid(r, self.MT._row_index, get_displayed=True).split("\n")
                 else:
                     lns = self.MT._row_index[r].split("\n") if isinstance(self.MT._row_index[r], str) else f"{self.MT._row_index[r]}".split("\n")
                 got_idx = True
@@ -1284,10 +1272,7 @@ class RowIndex(tk.Canvas):
                     self.MT._row_index.extend(list(repeat("", datarn - len(self.MT._row_index) + 1)))
                 text = f"{self.MT._row_index[datarn]}"
             elif isinstance(self.MT._row_index, int):
-                try:
-                    text = f"{self.MT.data[self.MT._row_index][datarn]}"
-                except:
-                    text = ""
+                text = self.MT.get_cell_data_check_valid(datarn, self.MT._row_index, get_displayed=True)
         elif event is not None and ((hasattr(event, 'keysym') and event.keysym == 'BackSpace') or
                                   event.keycode in (8, 855638143)
                                   ):
@@ -1356,10 +1341,7 @@ class RowIndex(tk.Canvas):
                     self.MT._row_index.extend(list(repeat("", datarn - len(self.MT._row_index) + 1)))
                 text = f"{self.MT._row_index[datarn]}"
             elif isinstance(self.MT._row_index, int):
-                try:
-                    text = f"{self.MT.data[self.MT._row_index][datarn]}"
-                except:
-                    text = ""
+                text = self.MT.get_cell_data_check_valid(datarn, self.MT._row_index, get_displayed=True)
         bg, fg = self.index_bg, self.index_fg
         self.text_editor = TextEditor(self,
                                       text = text,

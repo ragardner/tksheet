@@ -11,6 +11,7 @@ import csv as csv_module
 import io
 import pickle
 import tkinter as tk
+from typing import Union, Any, Type, Callable
 import zlib
 
 
@@ -5056,11 +5057,11 @@ class MainTable(tk.Canvas):
                     extra_func_key = "F2"
             datarn = r if self.all_rows_displayed else self.displayed_rows[r]
             datacn = c if self.all_columns_displayed else self.displayed_columns[c]
-            text = self.get_cell_data(datarn, datacn)
-            text = "" if text is None else f"{text}"
-        elif event is not None and (hasattr(event, 'keysym') and event.keysym == 'BackSpace'):
-            extra_func_key = "BackSpace"
-            text = ""
+            if event is not None and (hasattr(event, 'keysym') and event.keysym == 'BackSpace'):
+                extra_func_key = "BackSpace"
+                text = ""
+            else:
+                text = f"{self.get_cell_data(datarn, datacn, none_to_empty_str=True)}"
         elif event is not None and ((hasattr(event, "char") and event.char.isalpha()) or
                                     (hasattr(event, "char") and event.char.isdigit()) or
                                     (hasattr(event, "char") and event.char in symbols_set)):
@@ -5125,7 +5126,9 @@ class MainTable(tk.Canvas):
         w = self.col_positions[c + 1] - x + 1
         h = self.row_positions[r + 1] - y + 1
         if text is None:
-            text = self.data[r if self.all_rows_displayed else self.displayed_rows[r]][c if self.all_columns_displayed else self.displayed_columns[c]]
+            text = f"""{self.get_cell_data(r if self.all_rows_displayed else self.displayed_rows[r],
+                                           c if self.all_columns_displayed else self.displayed_columns[c],
+                                           none_to_empty_str=True)}"""
         self.hide_current()
         bg, fg = self.table_bg, self.table_fg
         self.text_editor = TextEditor(self, 
@@ -5444,7 +5447,7 @@ class MainTable(tk.Canvas):
                     if clear_values:
                         self.data[datarn][datacn] = ""
                     else:
-                        self.data[datarn][datacn] = self.get_cell_data(datarn, datacn)
+                        self.data[datarn][datacn] = self.get_cell_data(datarn, datacn, none_to_empty_str=True)
                 except:
                     continue
                 del self.cell_options[(datarn, datacn)]['format']
@@ -5453,14 +5456,14 @@ class MainTable(tk.Canvas):
                 if clear_values:
                     self.data[datarn][datacn] = ""
                 else:
-                    self.data[datarn][datacn] = self.get_cell_data(datarn, datacn)
+                    self.data[datarn][datacn] = self.get_cell_data(datarn, datacn, none_to_empty_str=True)
                 del self.cell_options[(datarn, datacn)]['format']
             except:
                 pass
 
     # deals with possibility of formatter class being in self.data cell
     # if cell is formatted - possibly returns invalid_value kwarg if cell value is not in datatypes kwarg
-    def get_cell_data_check_valid(self, datarn, datacn, get_displayed = False):
+    def get_cell_data_check_valid(self, datarn, datacn, get_displayed=False) -> str:
         value = self.data[datarn][datacn] if len(self.data) > datarn and len(self.data[datarn]) > datacn else ""
         if (datarn, datacn) in self.cell_options and 'format' in self.cell_options[(datarn, datacn)]:
             kwargs = self.cell_options[(datarn, datacn)]['format']
@@ -5468,46 +5471,46 @@ class MainTable(tk.Canvas):
                 if get_displayed:
                     return data_to_str(value, **kwargs)
                 else:
-                    return get_data_with_valid_check(value, **kwargs)
+                    return f"{get_data_with_valid_check(value, **kwargs)}"
             else:
                 if get_displayed:
                     return f"{value}" # assumed given formatter class has __str__() function
                 else:
-                    return value.data() # assumed given formatter class has data() function
+                    return f"{value.data()}" # assumed given formatter class has data() function
         return f"{value}"
 
-    def get_cell_data(self, datarn, datacn, get_displayed = False):
+    def get_cell_data(self, datarn, datacn, get_displayed=False, none_to_empty_str=False) -> Any:
         value = self.data[datarn][datacn] if len(self.data) > datarn and len(self.data[datarn]) > datacn else ""
         if (datarn, datacn) in self.cell_options and 'format' in self.cell_options[(datarn, datacn)]:
             kwargs = self.cell_options[(datarn, datacn)]['format']
             if kwargs['formatter'] is None:
                 if get_displayed:
                     return data_to_str(value, **kwargs)
-                else:
-                    return value
+                #else:
+                #    return value
             else:
                 if get_displayed:
                     return f"{value}" # assumed given formatter class has __str__() function
                 else:
-                    return value.value # assumed given formatter class has value attribute
-        return f"{value}"
+                    value = value.value # assumed given formatter class has value attribute
+        return "" if (value is None and none_to_empty_str) else value
 
-    def get_cell_clipboard(self, datarn, datacn):
+    def get_cell_clipboard(self, datarn, datacn) -> Union[str, int, float, bool]:
         value = self.data[datarn][datacn] if len(self.data) > datarn and len(self.data[datarn]) > datacn else ""
         if (datarn, datacn) in self.cell_options and 'format' in self.cell_options[(datarn, datacn)]:
             kwargs = self.cell_options[(datarn, datacn)]['format']
             if kwargs['formatter'] is None:
                 return get_clipboard_data(value, **kwargs)
             else:
-                return value.clipboard() # assumed given formatter class has clipboard() function
-        return value
+                return value.clipboard() # assumed given formatter class has clipboard() function and it returns one of above type hints
+        return f"{value}"
 
-    def yield_formatted_cells(self, formatter = None):
+    def yield_formatted_cells(self, formatter=None):
         if formatter is not None:
             yield from (cell for cell, options in self.cell_options.items() if 'format' in options and options['format']['formatter'] == formatter)
         yield from (cell for cell, options in self.cell_options.items() if 'format' in options and options['format'] is not None)
     
-    def get_formatted_cells(self, formatter = None):
+    def get_formatted_cells(self, formatter=None):
         if formatter is not None:
             return {cell for cell, options in self.cell_options.items() if 'format' in options and options['format']['formatter'] == formatter}
         return {cell for cell, options in self.cell_options.items() if 'format' in options and options['format'] is not None}

@@ -681,55 +681,55 @@ class ColumnHeaders(tk.Canvas):
             else:
                 start_row, end_row = 0, None
             if self.MT.all_columns_displayed:
-                data_col = col
+                datacn = col
             else:
-                data_col = self.MT.displayed_columns[col]
+                datacn = self.MT.displayed_columns[col]
             # header
-            if data_col in self.cell_options and 'checkbox' in self.cell_options[data_col]:
-                qconf(qtxtm, text = self.cell_options[data_col]['checkbox']['text'], font = self.MT._hdr_font)
+            if datacn in self.cell_options and 'checkbox' in self.cell_options[datacn]:
+                qconf(qtxtm, text = self.cell_options[datacn]['checkbox']['text'], font = self.MT._hdr_font)
                 b = qbbox(qtxtm)
                 hw = b[2] - b[0] + 7 + self.MT.hdr_txt_h
             else:
                 txt = ""
-                if isinstance(self.MT._headers, int) or len(self.MT._headers) > data_col:
+                if isinstance(self.MT._headers, int) or len(self.MT._headers) > datacn:
                     if isinstance(self.MT._headers, int):
-                        txt = self.MT.data[self.MT._headers][data_col]
+                        txt = self.MT.get_cell_data_check_valid(self.MT._headers, datacn, get_displayed=True)
                     else:
-                        txt = self.MT._headers[data_col]
-                    if txt or (data_col in self.cell_options and 'dropdown' in self.cell_options[data_col]):
+                        txt = self.MT._headers[datacn]
+                    if txt or (datacn in self.cell_options and 'dropdown' in self.cell_options[datacn]):
                         qconf(qtxtm, text = txt, font = self.MT._hdr_font)
                         b = qbbox(qtxtm)
-                        if data_col in self.cell_options and 'dropdown' in self.cell_options[data_col]:
+                        if datacn in self.cell_options and 'dropdown' in self.cell_options[datacn]:
                             hw = b[2] - b[0] + 7 + self.MT.hdr_txt_h
                         else:
                             hw = b[2] - b[0] + 7
-                if not isinstance(self.MT._headers, int) and ((not txt and self.show_default_header_for_empty) or len(self.MT._headers) < data_col):
+                if not isinstance(self.MT._headers, int) and ((not txt and self.show_default_header_for_empty) or len(self.MT._headers) < datacn):
                     if self.default_header == "letters":
-                        hw = self.MT.GetHdrTextWidth(num2alpha(data_col)) + 7
+                        hw = self.MT.GetHdrTextWidth(num2alpha(datacn)) + 7
                     elif self.default_header == "numbers":
-                        hw = self.MT.GetHdrTextWidth(f"{data_col + 1}") + 7
+                        hw = self.MT.GetHdrTextWidth(f"{datacn + 1}") + 7
                     else:
-                        hw = self.MT.GetHdrTextWidth(f"{data_col + 1} {num2alpha(data_col)}") + 7
+                        hw = self.MT.GetHdrTextWidth(f"{datacn + 1} {num2alpha(datacn)}") + 7
             # table
             for rn, r in enumerate(islice(self.MT.data, start_row, end_row), start_row):
-                if (rn, data_col) in qclop and 'checkbox' in qclop[(rn, data_col)]:
-                    qconf(qtxtm, text = qclop[(rn, data_col)]['checkbox']['text'], font = qfont)
+                if (rn, datacn) in qclop and 'checkbox' in qclop[(rn, datacn)]:
+                    qconf(qtxtm, text = qclop[(rn, datacn)]['checkbox']['text'], font = qfont)
                     b = qbbox(qtxtm)
                     tw = qtxth + 7 + b[2] - b[0]
                     if tw > w:
                         w = tw
                 else:
                     try:
-                        if isinstance(r[data_col], str):
-                            txt = r[data_col]
+                        if isinstance(r[datacn], str):
+                            txt = r[datacn]
                         else:
-                            txt = f"{r[data_col]}"
+                            txt = f"{r[datacn]}"
                     except:
                         continue
                     if txt:
                         qconf(qtxtm, text = txt, font = qfont)
                         b = qbbox(qtxtm)
-                        tw = b[2] - b[0] + qtxth + 7 if (rn, data_col) in qclop and 'dropdown' in qclop[(rn, data_col)] else b[2] - b[0] + 7
+                        tw = b[2] - b[0] + qtxth + 7 if (rn, datacn) in qclop and 'dropdown' in qclop[(rn, datacn)] else b[2] - b[0] + 7
                         if tw > w:
                             w = tw
             if w > hw:
