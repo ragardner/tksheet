@@ -1695,7 +1695,7 @@ index_checkbox(r,
 ## **Cell Formatters**
 ----
 
-While tksheet can store and display any datatype with a `__str__()` method, by default tksheet stores all user inputted data as strings, this has some obvious limitations. Cell formatters aim to provide greater functionality when working with different datatypes and provide strict typing for the sheet. A formatter is a special type of class that provides functionality for converting between user inputs (typically a string) and a target datatype. Additionally, formatters also provide their own `__str__()` method for displaying the data back to the table and logic for handling bad and missing data. tksheet has several basic built-in formatters and provides functionality for creating your own custom formats as well. A demonstration of all the built-in and custom formatters can be found [here](https://github.com/ragardner/tksheet/wiki#example-using-and-creating-formatters).
+While tksheet can store and display any datatype with a `__str__()` method, by default tksheet stores all user inputted data as strings, this has some obvious limitations. Cell formatting aims to provide greater functionality when working with different datatypes and provide strict typing for the sheet. With formatting you can convert sheet data and user input to a specific datatype. Additionally, formatting also provides a function for displaying data on the table GUI (as a rounded float for example) and logic for handling invalid and missing data. tksheet has several basic built-in formatters and provides functionality for creating your own custom formats as well. A demonstration of all the built-in and custom formatters can be found [here](https://github.com/ragardner/tksheet/wiki#example-using-and-creating-formatters).
 
 ### **Basic Intialisation**
 ----
@@ -1703,12 +1703,12 @@ While tksheet can store and display any datatype with a `__str__()` method, by d
 Applying a format to cell:
 
 ```python
-format_cell(r, c, formatter_options = {}, formatter_class = Formatter, **kwargs)
+format_cell(r, c, formatter_options = {}, formatter_class = None, **kwargs)
 ```
 - `r` (`int` or `"all"`) the row index to apply the formatter to.
 - `c` (`int` or `"all"`) the column index to apply the formatter to.
 - `formatter_options` (`dict`) a dictionary of keyword options/arguements to pass to the formatter.
-- `formatter_class` (`class`) the formatter class to use. Defaults to `tksheet.Formatter`.
+- `formatter_class` (`class`) in case you want to use a custom class to store functions and information as opposed to using the built-in methods.
 - `**kwargs` any additional keyword options/arguements to pass to the formatter.
 
 Clearing a format from a cell:
@@ -2456,7 +2456,7 @@ class demo(tk.Tk):
                 writer = csv.writer(fh,
                                     dialect = csv.excel if filepath.lower().endswith(".csv") else csv.excel_tab,
                                     lineterminator = "\n")
-                writer.writerows(self.sheet.yield_sheet_rows(get_header = False, get_index = False))
+                writer.writerows(self.sheet.get_sheet_data(get_header = False, get_index = False))
         except:
             return
                 
