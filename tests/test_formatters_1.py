@@ -4,24 +4,35 @@ import tkinter as tk
 from datetime import datetime, date, timedelta, time
 from dateutil import parser, tz
 from math import ceil
+import re
 
+date_replace = re.compile('|'.join(['\(',
+                                    '\)',
+                                    '\[',
+                                    '\]',
+                                    '\<',
+                                    '\>',
+                                    ]))
 
 # --------------------- Custom formatter methods ---------------------
 def round_up(x):
     return float(ceil(x))
 
 def only_numeric(s):
-    return ''.join(n for n in s if n.isnumeric() or n == '.')
+    return ''.join(n for n in f"{s}" if n.isnumeric() or n == '.')
 
 def convert_to_local_datetime(dt: str, **kwargs):
     if isinstance(dt, datetime):
         pass
     elif isinstance(dt, date):
         dt = datetime(dt.year, dt.month, dt.day)
-    try:
-        dt = parser.parse(dt)
-    except:
-        return dt
+    else:
+        if isinstance(dt, str):
+            dt = date_replace.sub("", dt)
+        try:
+            dt = parser.parse(dt)
+        except:
+            raise ValueError(f"Could not parse {dt} as a datetime")
     if dt.tzinfo is None:
         dt.replace(tzinfo = tz.tzlocal())
     dt = dt.astimezone(tz.tzlocal())
@@ -47,7 +58,9 @@ class demo(tk.Tk):
         self.sheet = Sheet(self.frame,
                            empty_vertical = 0,
                            empty_horizontal = 0,
-                           data = [[f"{r}"]*11 for r in range(10)]
+                           data = [[f"{r}"]*11 for r in range(10)],
+                           #header = 0,
+                           theme = "black",
                            )
         self.sheet.enable_bindings()
         self.frame.grid(row = 0, column = 0, sticky = "nswe")
@@ -96,9 +109,6 @@ class demo(tk.Tk):
         self.sheet.create_dropdown('all', 9, values = ['', '104%', .24, "300%", 'not a number'], set_value = 1)
         self.sheet.format_cell('all', 9, formatter_options = percentage_formatter(), decimals = 0)
         self.sheet.format_cell('all', 10, formatter_options = percentage_formatter(decimals = 5), formatter_class = Formatter)
-        
-        print (self.sheet.get_column_data(5))
-        print (self.sheet.get_sheet_data(get_displayed=True))
 
 
 app = demo()

@@ -22,7 +22,7 @@
 - [Cell Text Editor](https://github.com/ragardner/tksheet/wiki#cell-text-editor)
 - [Dropdown Boxes](https://github.com/ragardner/tksheet/wiki#dropdown-boxes)
 - [Check Boxes](https://github.com/ragardner/tksheet/wiki#check-boxes)
-- [Cell Formatters](https://github.com/ragardner/tksheet/wiki#cell-formatters)
+- [Cell Formatting](https://github.com/ragardner/tksheet/wiki#cell-formatting)
 - [Table Options and Other Functions](https://github.com/ragardner/tksheet/wiki#table-options-and-other-functions)
 - [Example Loading Data from Excel](https://github.com/ragardner/tksheet/wiki#example-loading-data-from-excel)
 - [Example Custom Right Click and Text Editor Validation](https://github.com/ragardner/tksheet/wiki#example-custom-right-click-and-text-editor-validation)
@@ -1692,7 +1692,7 @@ index_checkbox(r,
 - If any arguments are not default they will be set for the chosen checkbox.
 - If all arguments are default a dictionary of all the checkboxes information will be returned.
 
-## **Cell Formatters**
+## **Cell Formatting**
 ----
 
 While tksheet can store and display any datatype with a `__str__()` method, by default tksheet stores all user inputted data as strings, this has some obvious limitations. Cell formatting aims to provide greater functionality when working with different datatypes and provide strict typing for the sheet. With formatting you can convert sheet data and user input to a specific datatype. Additionally, formatting also provides a function for displaying data on the table GUI (as a rounded float for example) and logic for handling invalid and missing data. tksheet has several basic built-in formatters and provides functionality for creating your own custom formats as well. A demonstration of all the built-in and custom formatters can be found [here](https://github.com/ragardner/tksheet/wiki#example-using-and-creating-formatters).
@@ -1774,7 +1774,7 @@ float_formatter(datatypes = float,
                 format_func = to_float,
                 to_str_func = float_to_str,
                 invalid_value = "NaN",
-                decimals = 1,
+                decimals = 2,
                 **kwargs
                 )
 ```
@@ -1783,12 +1783,12 @@ The `float_formatter` is the basic configuration for a simple float formatter. I
 
  - `format_func` (`function`) a function that takes a string and returns a `float`. By default, this is set to the in-built `tksheet.to_float`. This function will always convert percentages to their decimal equivalent, for example `"5%"` will be converted to `0.05`.
  - `to_str_func` (`function`) By default, this is set to the in-built `tksheet.float_to_str`, which will display the float to the specified number of decimal places.
- - `decimals` (`int`) the number of decimal places to round to. Defaults to `1`.
+ - `decimals` (`int`, `None`) the number of decimal places to round to. Defaults to `2`.
 
 Usage:
 
 ```python
-sheet.format_cell(0, 0, formatter_options = tksheet.float_formatter(decimals = 2)) # A float formatter with 2 decimal places
+sheet.format_cell(0, 0, formatter_options = tksheet.float_formatter(decimals = None)) # A float formatter with maximum float() decimal places
 ```
 
 ```python
@@ -2487,14 +2487,16 @@ import tkinter as tk
 from datetime import datetime, date, timedelta, time
 from dateutil import parser, tz
 from math import ceil
+import re
 
+date_replace = re.compile('|'.join(['\(', '\)', '\[', '\]', '\<', '\>']))
 
 # --------------------- Custom formatter methods ---------------------
 def round_up(x):
     return float(ceil(x))
 
 def only_numeric(s):
-    return ''.join(n for n in s if n.isnumeric() or n == '.')
+    return ''.join(n for n in f"{s}" if n.isnumeric() or n == '.')
 
 def convert_to_local_datetime(dt: str, **kwargs):
     if isinstance(dt, datetime):
@@ -2502,11 +2504,12 @@ def convert_to_local_datetime(dt: str, **kwargs):
     elif isinstance(dt, date):
         dt = datetime(dt.year, dt.month, dt.day)
     else:
+        if isinstance(dt, str):
+            dt = date_replace.sub("", dt)
         try:
             dt = parser.parse(dt)
         except:
             raise ValueError(f"Could not parse {dt} as a datetime")
-        
     if dt.tzinfo is None:
         dt.replace(tzinfo = tz.tzlocal())
     dt = dt.astimezone(tz.tzlocal())

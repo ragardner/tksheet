@@ -1,7 +1,7 @@
 # for mac bindings
 from platform import system as get_os
-USER_OS = f"{get_os()}".lower()
 
+USER_OS = f"{get_os()}".lower()
 ctrl_key = "Command" if USER_OS == "darwin" else "Control"
 symbols_set = set("""!#\$%&'()*+,-./:;"@[]^_`{|}~>?= """)
 nonelike = {'none', ''}

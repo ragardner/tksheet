@@ -18,10 +18,7 @@ def to_float(x: Any, **kwargs):
     if isinstance(x, float):
         return x
     if isinstance(x, str) and x.endswith('%'):
-        try:
-            return float(x.replace('%', "")) / 100
-        except:
-            raise ValueError(f'Cannot map {x} to float')
+        return float(x.replace('%', "")) / 100
     return float(x)
 
 def to_bool(val: Any, **kwargs):
@@ -48,22 +45,21 @@ def to_bool(val: Any, **kwargs):
 def to_str(v: Any, **kwargs: dict) -> str:
     return f"{v}"
 
-def float_to_str(v: Any,
-                 **kwargs: dict) -> str:
-    if 'decimals' in kwargs:
+def float_to_str(v: Union[int, float], **kwargs: dict) -> str:
+    if 'decimals' in kwargs and isinstance(kwargs['decimals'], int):
         if kwargs['decimals']:
             return f"{round(v, kwargs['decimals'])}"
         return f"{int(round(v, kwargs['decimals']))}"
-    if v.isinteger():
+    if v.is_integer():
         return f"{int(v)}"
     return f"{v}"
 
-def percentage_to_str(v: Any, **kwargs: dict) -> str:
-    if 'decimals' in kwargs:
+def percentage_to_str(v: Union[int, float], **kwargs: dict) -> str:
+    if 'decimals' in kwargs and isinstance(kwargs['decimals'], int):
         if kwargs['decimals']:
             return f"{round(v * 100, kwargs['decimals'])}%"
         return f"{int(round(v * 100, kwargs['decimals']))}%"
-    if v.isinteger():
+    if v.is_integer():
         return f"{int(v) * 100}%"
     return f"{v * 100}%"
 
@@ -83,7 +79,7 @@ def int_formatter(datatypes = int,
 def float_formatter(datatypes = float,
                     format_func = to_float,
                     to_str_func = float_to_str,
-                    decimals = 1,
+                    decimals = 2,
                     **kwargs,
                     ) -> dict:
     return formatter(datatypes = datatypes,

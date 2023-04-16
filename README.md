@@ -16,21 +16,21 @@ pip install tksheet --upgrade
 - [Questions](https://github.com/ragardner/tksheet/wiki#asking-questions)
 - [Issues](https://github.com/ragardner/tksheet/wiki#issues)
 - [Suggestions](https://github.com/ragardner/tksheet/wiki#enhancements-or-suggestions)
-- This library is maintained with the help of **[others](https://github.com/ragardner/tksheet/graphs/contributors)**. If you would like to contribute check out [this help section](https://github.com/ragardner/tksheet/wiki#contributing).
+- This library is maintained with the help of **[others](https://github.com/ragardner/tksheet/graphs/contributors)**. If you would like to contribute please read [this help section](https://github.com/ragardner/tksheet/wiki#contributing).
 
 ### Features
 - Display and modify tabular data
 - Stores its display data as a Python list of lists, sublists being rows
 - Runs smoothly even with millions of rows/columns
 - Edit cells directly
+- Cell values can potentially be [any class](https://github.com/ragardner/tksheet/wiki#cell-formatting) but the default is any class with a `__str__` method
 - Drag and drop columns and rows
-- Multiple line headers and rows
+- Multiple line header and index cells
 - Expand row heights and column widths
-- Change fonts and font size
+- Change fonts and font size (not for individual cells)
 - Change any colors in the sheet
 - Create an unlimited number of high performance dropdown and check boxes
-- Left `"w"`, Center `"center"` or Right `"e"` text alignment
-- Cell values can be any class with a `str` method
+- Left `"w"`, Center `"center"` or Right `"e"` text alignment for any cell/row/column
 
 ### light blue theme
 
