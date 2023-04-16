@@ -5346,7 +5346,7 @@ class MainTable(tk.Canvas):
         if datarn is None:
             datarn = r if self.all_rows_displayed else self.displayed_rows[r]
         if self.undo_enabled and undo:
-            if self.data[r][datacn] != value:
+            if (f"{self.data[r][datacn]}" if self.data[r][datacn] is not None else "") != value:
                 self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells",
                                                                      {(datarn, datacn): self.get_cell_data(datarn, datacn)},
                                                                      (((r, c, r + 1, c + 1), "cells"), ),
