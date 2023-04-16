@@ -127,8 +127,8 @@ class ColumnHeaders(tk.Canvas):
         maxlines = 0
         if isinstance(self.MT._headers, int):
             if len(self.MT.data) > self.MT._headers:
-                maxlines = max(len(self.MT.get_cell_data_check_valid(self.MT._headers, datacn, get_displayed = True).rstrip().split("\n")) for datacn in range(len(self.MT.data[self.MT._headers])))
-        elif self.MT._headers:
+                maxlines = max(len(self.MT.get_valid_cell_data_as_str(self.MT._headers, datacn, get_displayed = True).rstrip().split("\n")) for datacn in range(len(self.MT.data[self.MT._headers])))
+        elif isinstance(self.MT._headers, (list, tuple)):
             maxlines = max(len(e.rstrip().split("\n")) if isinstance(e, str) else len(f"{e}".rstrip().split("\n")) for e in self.MT._headers)
         if maxlines == 1:
             maxlines = 0
@@ -680,10 +680,7 @@ class ColumnHeaders(tk.Canvas):
                 start_row, end_row = self.MT.get_visible_rows(y1, y2)
             else:
                 start_row, end_row = 0, None
-            if self.MT.all_columns_displayed:
-                datacn = col
-            else:
-                datacn = self.MT.displayed_columns[col]
+            datacn = col if self.MT.all_columns_displayed else self.MT.displayed_columns[col]
             # header
             if datacn in self.cell_options and 'checkbox' in self.cell_options[datacn]:
                 qconf(qtxtm, text = self.cell_options[datacn]['checkbox']['text'], font = self.MT._hdr_font)
@@ -692,10 +689,7 @@ class ColumnHeaders(tk.Canvas):
             else:
                 txt = ""
                 if isinstance(self.MT._headers, int) or len(self.MT._headers) > datacn:
-                    if isinstance(self.MT._headers, int):
-                        txt = self.MT.get_cell_data_check_valid(self.MT._headers, datacn, get_displayed = True)
-                    else:
-                        txt = self.MT._headers[datacn]
+                    txt = self.get_valid_cell_data_as_str(datacn, fix = False)
                     if txt or (datacn in self.cell_options and 'dropdown' in self.cell_options[datacn]):
                         qconf(qtxtm, text = txt, font = self.MT._hdr_font)
                         b = qbbox(qtxtm)
@@ -719,7 +713,7 @@ class ColumnHeaders(tk.Canvas):
                     if tw > w:
                         w = tw
                 else:
-                    txt = self.MT.get_cell_data_check_valid(rn, datacn, get_displayed = True)
+                    txt = self.MT.get_valid_cell_data_as_str(rn, datacn, get_displayed = True)
                     if txt:
                         qconf(qtxtm, text = txt, font = qfont)
                         b = qbbox(qtxtm)
@@ -1071,7 +1065,7 @@ class ColumnHeaders(tk.Canvas):
             if datacn in self.cell_options and 'checkbox' in self.cell_options[datacn]:
                 lns = self.cell_options[datacn]['checkbox']['text'].split("\n") if isinstance(self.cell_options[datacn]['checkbox']['text'], str) else f"{self.cell_options[datacn]['checkbox']['text']}".split("\n")
             else:
-                lns = self.get_cell_data_check_valid(datacn, fix = False).split("\n")
+                lns = self.get_valid_cell_data_as_str(datacn, fix = False).split("\n")
             if lns == [""]:
                 if self.show_default_header_for_empty:
                     if self.default_header == "letters":
@@ -1212,7 +1206,7 @@ class ColumnHeaders(tk.Canvas):
                 elif hasattr(event, 'keysym') and event.keysym == 'F2':
                     extra_func_key = "F2"
             datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
-            text = self.get_cell_data_check_valid(datacn)
+            text = self.get_valid_cell_data_as_str(datacn)
         elif event is not None and ((hasattr(event, 'keysym') and event.keysym == 'BackSpace') or
                                     event.keycode in (8, 855638143)):
             extra_func_key = "BackSpace"
@@ -1277,7 +1271,7 @@ class ColumnHeaders(tk.Canvas):
         h = self.current_height + 1
         datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
         if text is None:
-            text = self.get_cell_data_check_valid(datacn)
+            text = self.get_valid_cell_data_as_str(datacn)
         bg, fg = self.header_bg, self.header_fg
         self.text_editor = TextEditor(self,
                                       text = text,
@@ -1409,15 +1403,15 @@ class ColumnHeaders(tk.Canvas):
             if c is None and editor_info is not None and len(editor_info) >= 2:
                 c = editor_info[0]
             if self.extra_end_edit_cell_func is None:
-                self._set_cell_data_undo(c, datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c], value = self.text_editor_value)
+                self.set_cell_data_undo(c, datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c], value = self.text_editor_value)
             elif self.extra_end_edit_cell_func is not None and not self.MT.edit_cell_validation:
-                self._set_cell_data_undo(c, datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c], value = self.text_editor_value)
+                self.set_cell_data_undo(c, datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c], value = self.text_editor_value)
                 self.extra_end_edit_cell_func(EditHeaderEvent(c, editor_info[1] if len(editor_info) >= 2 else "FocusOut", f"{self.text_editor_value}", "end_edit_header"))
             elif self.extra_end_edit_cell_func is not None and self.MT.edit_cell_validation:
                 validation = self.extra_end_edit_cell_func(EditHeaderEvent(c, editor_info[1] if len(editor_info) >= 2 else "FocusOut", f"{self.text_editor_value}", "end_edit_header"))
                 if validation is not None:
                     self.text_editor_value = validation
-                    self._set_cell_data_undo(c, datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c], value = self.text_editor_value)
+                    self.set_cell_data_undo(c, datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c], value = self.text_editor_value)
         if move_down:
             pass
         self.hide_dropdown_window(c)
@@ -1430,11 +1424,11 @@ class ColumnHeaders(tk.Canvas):
         return "break"
     
     #internal event use
-    def _set_cell_data_undo(self, c = 0, datacn = None, value = "", cell_resize = True, undo = True, redraw = True):
+    def set_cell_data_undo(self, c = 0, datacn = None, value = "", cell_resize = True, undo = True, redraw = True):
         if datacn is None:
             datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
         if isinstance(self.MT._headers, int):
-            self.MT._set_cell_data_undo(r = self.MT._headers, c = c, datacn = datacn, value = value, undo = True)
+            self.MT.set_cell_data_undo(r = self.MT._headers, c = c, datacn = datacn, value = value, undo = True)
         else:
             self.fix_header(datacn)
             if self.MT.undo_enabled and undo:
@@ -1451,16 +1445,16 @@ class ColumnHeaders(tk.Canvas):
         if redraw:
             self.MT.refresh()
     
-    def _set_cell_data(self, datacn = None, value = ""):
+    def set_cell_data(self, datacn = None, value = ""):
         if isinstance(self.MT._headers, int):
-            self.MT._set_cell_data(datarn = self.MT._headers, datacn = datacn, value = value)
+            self.MT.set_cell_data(datarn = self.MT._headers, datacn = datacn, value = value)
         else:
             self.fix_header(datacn)
             self.MT._headers[datacn] = value
             
-    def get_cell_data_check_valid(self, datacn, fix = True) -> str:
+    def get_valid_cell_data_as_str(self, datacn, fix = True) -> str:
         if isinstance(self.MT._headers, int):
-            return self.MT.get_cell_data_check_valid(self.MT._headers, datacn, get_displayed = True)
+            return self.MT.get_valid_cell_data_as_str(self.MT._headers, datacn, get_displayed = True)
         if fix:
             self.fix_header(datacn)
         try:
@@ -1495,13 +1489,15 @@ class ColumnHeaders(tk.Canvas):
             datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
         if self.cell_options[datacn]['checkbox']['state'] == "normal":
             if isinstance(self.MT._headers, list):
-                self._set_cell_data_undo(c, datacn = datacn,
-                                         value = not self.MT._headers[datacn] if type(self.MT._headers[datacn]) == bool else False, 
-                                         cell_resize = False)
+                value = not self.MT._headers[datacn] if type(self.MT._headers[datacn]) == bool else False
             elif isinstance(self.MT._headers, int):
-                self._set_cell_data_undo(c, datacn = datacn, 
-                                         value = not self.MT.data[self.MT._headers][datacn] if type(self.MT.data[self.MT._headers][datacn]) == bool else False, 
-                                         cell_resize = False)
+                value = not self.MT.data[self.MT._headers][datacn] if type(self.MT.data[self.MT._headers][datacn]) == bool else False
+            else:
+                value = False
+            self.set_cell_data_undo(c,
+                                     datacn = datacn, 
+                                     value = value, 
+                                     cell_resize = False)
             if self.cell_options[datacn]['checkbox']['check_function'] is not None:
                 self.cell_options[datacn]['checkbox']['check_function']((0,
                                                                          c, 
@@ -1519,7 +1515,7 @@ class ColumnHeaders(tk.Canvas):
         if datacn in self.cell_options and ('dropdown' in self.cell_options[datacn] or 
                                             'checkbox' in self.cell_options[datacn]):
             self.delete_dropdown_and_checkbox(datacn)
-        self._set_cell_data(datacn = datacn,
+        self.set_cell_data(datacn = datacn,
                             value = checked)
         if datacn not in self.cell_options:
             self.cell_options[datacn] = {}
@@ -1533,7 +1529,7 @@ class ColumnHeaders(tk.Canvas):
         if datacn in self.cell_options and ('dropdown' in self.cell_options[datacn] or 
                                             'checkbox' in self.cell_options[datacn]):
             self.delete_dropdown_and_checkbox(datacn)
-        self._set_cell_data(datacn = datacn, 
+        self.set_cell_data(datacn = datacn, 
                             value = set_value if set_value is not None else values[0] if values else "")
         if datacn not in self.cell_options:
             self.cell_options[datacn] = {}
@@ -1572,7 +1568,7 @@ class ColumnHeaders(tk.Canvas):
     def set_current_height_to_cell(self, datacn):
         x = self.MT.txt_measure_canvas.create_text(0,
                                                    0,
-                                                   text = self.MT.get_cell_data_check_valid(self.MT._headers, datacn, get_displayed = True) if isinstance(self.MT._headers, int) else self.MT._headers[datacn],
+                                                   text = self.MT.get_valid_cell_data_as_str(self.MT._headers, datacn, get_displayed = True) if isinstance(self.MT._headers, int) else self.MT._headers[datacn],
                                                    font = self.MT._hdr_font)
         b = self.MT.txt_measure_canvas.bbox(x)
         self.MT.txt_measure_canvas.delete(x)
@@ -1639,14 +1635,14 @@ class ColumnHeaders(tk.Canvas):
             if self.cell_options[datacn]['dropdown']['select_function'] is not None: # user has specified a selection function
                 self.cell_options[datacn]['dropdown']['select_function'](EditHeaderEvent(c, "HeaderComboboxSelected", f"{selection}", "end_edit_header"))
             if self.extra_end_edit_cell_func is None:
-                self._set_cell_data_undo(c, datacn = datacn, value = selection, redraw = not redraw)
+                self.set_cell_data_undo(c, datacn = datacn, value = selection, redraw = not redraw)
             elif self.extra_end_edit_cell_func is not None and self.MT.edit_cell_validation:
                 validation = self.extra_end_edit_cell_func(EditHeaderEvent(c, "HeaderComboboxSelected", f"{selection}", "end_edit_header"))
                 if validation is not None:
                     selection = validation
-                self._set_cell_data_undo(c, datacn = datacn, value = selection, redraw = not redraw)
+                self.set_cell_data_undo(c, datacn = datacn, value = selection, redraw = not redraw)
             elif self.extra_end_edit_cell_func is not None and not self.MT.edit_cell_validation:
-                self._set_cell_data_undo(c, datacn = datacn, value = selection, redraw = not redraw)
+                self.set_cell_data_undo(c, datacn = datacn, value = selection, redraw = not redraw)
                 self.extra_end_edit_cell_func(EditHeaderEvent(c, "HeaderComboboxSelected", f"{selection}", "end_edit_header"))
             self.focus_set()
             self.MT.recreate_all_selection_boxes()

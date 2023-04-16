@@ -2018,7 +2018,7 @@ class Sheet(tk.Frame):
     def set_cell_data(self, r, c, value = "", set_copy = True, redraw = False, keep_formatting = True):
         if not keep_formatting:
             self.MT.delete_format(r, c)
-        self.MT._set_cell_data(r, c, f"{value}" if set_copy else value)
+        self.MT.set_cell_data(r, c, f"{value}" if set_copy else value)
         if redraw:
             self.set_refresh_timer()
             

@@ -1,14 +1,14 @@
 ### Version 6.0.0
 #### Added:
- - Cell formatters, thanks to [PR#158](https://github.com/ragardner/tksheet/pull/158)
- - `tests` folder with a few test files
- - bindings `"up" "down" "left" "right" "prior" "next"` to enable arrowkey bindings individually use with `enable_bindings()`/`disable_bindings()`
+- Cell formatters, thanks to [PR#158](https://github.com/ragardner/tksheet/pull/158)
+- bindings `"up" "down" "left" "right" "prior" "next"` to enable arrowkey bindings individually use with `enable_bindings()`/`disable_bindings()`
 
 #### Changed:
- - `return_copy` arg in data getting functions is removed but will not generate error if used as keyword arg
- - `get_cell_data()`/`get_row_data()`/`get_column_data()` now return empty string/s if index is out of bounds (instead of `None`s)
- - Other modifications to data getting functions
- - Extra bindings delete key now returns dict instead of list for boxes
+- `return_copy` arg in data getting functions is removed but will not generate error if used as keyword arg
+- Checkbox click extra binding and edit cell extra binding (when associated with a checkbox click) return `bool` now, not `str`
+- `get_cell_data()`/`get_row_data()`/`get_column_data()` now return empty string/s if index is out of bounds (instead of `None`s)
+- Rename some internal functions for consistency
+- Extra bindings delete key now returns dict instead of list for boxes
 
 ### Version 5.6.8
 #### Fixed:

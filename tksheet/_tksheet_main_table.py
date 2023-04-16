@@ -632,7 +632,7 @@ class MainTable(tk.Canvas):
                     continue
                 if self.undo_enabled:
                     undo_storage[(datarn, datacn)] = self.get_cell_data(datarn, datacn)
-                self._set_cell_data(datarn, datacn, data[ndr][ndc])
+                self.set_cell_data(datarn, datacn, data[ndr][ndc])
         if self.expand_sheet_if_paste_too_big and self.undo_enabled:
             self.equalize_data_row_lengths()
         self.deselect("all")
@@ -686,7 +686,7 @@ class MainTable(tk.Canvas):
                             continue
                         if self.undo_enabled:
                             undo_storage[(datarn, datacn)] = self.get_cell_data(datarn, datacn)
-                        self._set_cell_data(datarn, datacn, "")
+                        self.set_cell_data(datarn, datacn, "")
             if self.extra_end_delete_key_func is not None:
                 self.extra_end_delete_key_func(CtrlKeyEvent("end_delete_key", boxes, currently_selected, undo_storage))
             if self.undo_enabled:
@@ -950,7 +950,7 @@ class MainTable(tk.Canvas):
                         
         if undo_storage[0] in ("edit_cells", "edit_cells_paste"):
             for (datarn, datacn), v in undo_storage[1].items():
-                self._set_cell_data(datarn, datacn, v)
+                self.set_cell_data(datarn, datacn, v)
             start_row = float("inf")
             start_col = float("inf")
             for box in undo_storage[2]:
@@ -2948,7 +2948,7 @@ class MainTable(tk.Canvas):
             if keep_formatting:
                 for r, c in self.yield_formatted_cells():
                     if len(self.data) > r and len(self.data[r]) > c:
-                        self._set_cell_data(r, c, value = self.data[r][c])
+                        self.set_cell_data(r, c, value = self.data[r][c])
             else:
                 self.delete_format("all", clear_values = True)
             self.undo_storage = deque(maxlen = self.max_undos)
@@ -4256,7 +4256,7 @@ class MainTable(tk.Canvas):
                         if (datarn, datacn) in self.cell_options and 'checkbox' in self.cell_options[(datarn, datacn)]:
                             lns = self.cell_options[(datarn, datacn)]['checkbox']['text'].split("\n") if isinstance(self.cell_options[(datarn, datacn)]['checkbox']['text'], str) else f"{self.cell_options[(datarn, datacn)]['checkbox']['text']}".split("\n")
                         else:
-                            lns = self.get_cell_data_check_valid(datarn, datacn, get_displayed = True).split("\n")
+                            lns = self.get_valid_cell_data_as_str(datarn, datacn, get_displayed = True).split("\n")
                         if lns != [''] and mw > self.txt_w and not ((align == "w" and draw_x > scrollpos_right) or
                                                                     (align == "e" and cleftgridln + 5 > scrollpos_right) or
                                                                     (align == "center" and stop > scrollpos_right)):
@@ -5242,15 +5242,15 @@ class MainTable(tk.Canvas):
             if r is None and c is None and editor_info:
                 r, c = editor_info[0], editor_info[1]
             if self.extra_end_edit_cell_func is None:
-                self._set_cell_data_undo(r, c, value = self.text_editor_value, redraw = False)
+                self.set_cell_data_undo(r, c, value = self.text_editor_value, redraw = False)
             elif self.extra_end_edit_cell_func is not None and not self.edit_cell_validation:
-                self._set_cell_data_undo(r, c, value = self.text_editor_value, redraw = False)
+                self.set_cell_data_undo(r, c, value = self.text_editor_value, redraw = False)
                 self.extra_end_edit_cell_func(EditCellEvent(r, c, editor_info[2] if len(editor_info) >= 3 else "FocusOut", f"{self.text_editor_value}", "end_edit_cell"))
             elif self.extra_end_edit_cell_func is not None and self.edit_cell_validation:
                 validation = self.extra_end_edit_cell_func(EditCellEvent(r, c, editor_info[2] if len(editor_info) >= 3 else "FocusOut", f"{self.text_editor_value}", "end_edit_cell"))
                 if validation is not None:
                     self.text_editor_value = validation
-                    self._set_cell_data_undo(r, c, value = self.text_editor_value, redraw = False)
+                    self.set_cell_data_undo(r, c, value = self.text_editor_value, redraw = False)
         if move_down:
             if r is None and c is None and editor_info:
                 r, c = editor_info[0], editor_info[1]
@@ -5340,7 +5340,7 @@ class MainTable(tk.Canvas):
         return "break"
 
     #internal event use
-    def _set_cell_data_undo(self, r = 0, c = 0, datarn = None, datacn = None, value = "", undo = True, cell_resize = True, redraw = True):
+    def set_cell_data_undo(self, r = 0, c = 0, datarn = None, datacn = None, value = "", undo = True, cell_resize = True, redraw = True):
         if datacn is None:
             datacn = c if self.all_columns_displayed else self.displayed_columns[c]
         if datarn is None:
@@ -5351,7 +5351,7 @@ class MainTable(tk.Canvas):
                                                                      {(datarn, datacn): self.get_cell_data(datarn, datacn)},
                                                                      (((r, c, r + 1, c + 1), "cells"), ),
                                                                      self.currently_selected()))))
-        self._set_cell_data(datarn, datacn, value)
+        self.set_cell_data(datarn, datacn, value)
         if cell_resize and self.cell_auto_resize_enabled:
             self.set_cell_size_to_text(r, c, only_set_if_too_small = True, redraw = redraw, run_binding = True)
         return True
@@ -5363,15 +5363,15 @@ class MainTable(tk.Canvas):
         if datacn is None:
             datacn = c if self.all_columns_displayed else self.displayed_columns[c]
         if self.cell_options[(datarn, datacn)]['checkbox']['state'] == "normal":
-            self._set_cell_data_undo(r, c, value = not self.data[datarn][datacn] if type(self.data[datarn][datacn]) == bool else False, undo = undo, cell_resize = False)
+            self.set_cell_data_undo(r, c, value = not self.data[datarn][datacn] if type(self.data[datarn][datacn]) == bool else False, undo = undo, cell_resize = False)
             if self.cell_options[(datarn, datacn)]['checkbox']['check_function'] is not None:
                 self.cell_options[(datarn, datacn)]['checkbox']['check_function']((r, c, "CheckboxClicked", self.data[datarn][datacn]))
             if self.extra_end_edit_cell_func is not None:
                 self.extra_end_edit_cell_func(EditCellEvent(r, c, "Return", self.data[datarn][datacn], "end_edit_cell"))
         if redraw:
             self.refresh()
-            
-    def _set_cell_data(self, datarn, datacn, value):
+
+    def set_cell_data(self, datarn, datacn, value):
         if datarn >= len(self.data):
             self.data.extend([list(repeat("", datacn + 1)) for i in range((datarn + 1) - len(self.data))])
         elif datacn >= len(self.data[datarn]):
@@ -5391,7 +5391,7 @@ class MainTable(tk.Canvas):
         if (datarn, datacn) in self.cell_options and ('dropdown' in self.cell_options[(datarn, datacn)] or 
                                                       'checkbox' in self.cell_options[(datarn, datacn)]):
             self.delete_dropdown_and_checkbox(datarn, datacn)
-        self._set_cell_data(datarn, datacn, checked)
+        self.set_cell_data(datarn, datacn, checked)
         if (datarn, datacn) not in self.cell_options:
             self.cell_options[(datarn, datacn)] = {}
         self.cell_options[(datarn, datacn)]['checkbox'] = {'check_function': check_function,
@@ -5404,7 +5404,7 @@ class MainTable(tk.Canvas):
         if (datarn, datacn) in self.cell_options and ('dropdown' in self.cell_options[(datarn, datacn)] or 
                                                       'checkbox' in self.cell_options[(datarn, datacn)]):
             self.delete_dropdown_and_checkbox(datarn, datacn)
-        self._set_cell_data(datarn, datacn, set_value if set_value is not None else values[0] if values else "")
+        self.set_cell_data(datarn, datacn, set_value if set_value is not None else values[0] if values else "")
         if (datarn, datacn) not in self.cell_options:
             self.cell_options[(datarn, datacn)] = {}
         self.cell_options[(datarn, datacn)]['dropdown'] = {'values': values,
@@ -5440,7 +5440,7 @@ class MainTable(tk.Canvas):
         if (datarn, datacn) not in self.cell_options:
             self.cell_options[(datarn, datacn)] = {}
         self.cell_options[(datarn, datacn)]['format'] = kwargs
-        self._set_cell_data(datarn, datacn, value = v)
+        self.set_cell_data(datarn, datacn, value = v)
 
     def delete_format(self, datarn, datacn, clear_values = False):
         if isinstance(datarn, str) and datarn.lower() == "all":
@@ -5466,7 +5466,7 @@ class MainTable(tk.Canvas):
     # deals with possibility of formatter class being in self.data cell
     # if cell is formatted - possibly returns invalid_value kwarg if cell value is not in datatypes kwarg
     # if get displayed is true then Nones are replaced by ""
-    def get_cell_data_check_valid(self, datarn, datacn, get_displayed = False) -> str:
+    def get_valid_cell_data_as_str(self, datarn, datacn, get_displayed = False) -> str:
         value = self.data[datarn][datacn] if len(self.data) > datarn and len(self.data[datarn]) > datacn else ""
         if (datarn, datacn) in self.cell_options and 'format' in self.cell_options[(datarn, datacn)]:
             kwargs = self.cell_options[(datarn, datacn)]['format']
@@ -5643,14 +5643,14 @@ class MainTable(tk.Canvas):
             if self.cell_options[(datarn, datacn)]['dropdown']['select_function'] is not None: # user has specified a selection function
                 self.cell_options[(datarn, datacn)]['dropdown']['select_function'](EditCellEvent(r, c, "ComboboxSelected", f"{selection}", "end_edit_cell"))
             if self.extra_end_edit_cell_func is None:
-                self._set_cell_data_undo(r, c, value = selection, redraw = not redraw)
+                self.set_cell_data_undo(r, c, value = selection, redraw = not redraw)
             elif self.extra_end_edit_cell_func is not None and self.edit_cell_validation:
                 validation = self.extra_end_edit_cell_func(EditCellEvent(r, c, "ComboboxSelected", f"{selection}", "end_edit_cell"))
                 if validation is not None:
                     selection = validation
-                self._set_cell_data_undo(r, c, value = selection, redraw = not redraw)
+                self.set_cell_data_undo(r, c, value = selection, redraw = not redraw)
             elif self.extra_end_edit_cell_func is not None and not self.edit_cell_validation:
-                self._set_cell_data_undo(r, c, value = selection, redraw = not redraw)
+                self.set_cell_data_undo(r, c, value = selection, redraw = not redraw)
                 self.extra_end_edit_cell_func(EditCellEvent(r, c, "ComboboxSelected", f"{selection}", "end_edit_cell"))
             self.focus_set()
             self.recreate_all_selection_boxes()
