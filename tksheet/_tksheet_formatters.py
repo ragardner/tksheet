@@ -74,7 +74,7 @@ def int_formatter(datatypes = int,
                   format_func = to_int,
                   to_str_func = to_str,
                   **kwargs,
-                  ):
+                  ) -> dict:
     return formatter(datatypes = datatypes,
                      format_func = format_func,
                      to_str_func = to_str_func,
@@ -85,7 +85,7 @@ def float_formatter(datatypes = float,
                     to_str_func = float_to_str,
                     decimals = 1,
                     **kwargs,
-                    ):
+                    ) -> dict:
     return formatter(datatypes = datatypes,
                      format_func = format_func,
                      to_str_func = to_str_func,
@@ -97,7 +97,7 @@ def percentage_formatter(datatypes = float,
                          to_str_func = percentage_to_str,
                          decimals = 0,
                          **kwargs,
-                         ):
+                         ) -> dict:
     return formatter(datatypes = datatypes,
                      format_func = format_func,
                      to_str_func = to_str_func,
@@ -111,7 +111,7 @@ def bool_formatter(datatypes = bool,
                    truthy_values = truthy,
                    falsy_values = falsy,
                    **kwargs,
-                   ):
+                   ) -> dict:
     return formatter(datatypes = datatypes,
                      format_func = format_func,
                      to_str_func = to_str_func,
@@ -128,7 +128,7 @@ def formatter(datatypes,
               pre_format_func = None,
               post_format_func = None,
               clipboard_func = None,
-              **kwargs):
+              **kwargs) -> dict:
     return {**dict(datatypes = datatypes,
                    format_func = format_func,
                    to_str_func = to_str_func,
@@ -146,7 +146,7 @@ def format_data(value = "",
                 format_func = to_int,
                 post_format_func = None,
                 **kwargs,
-                ):
+                ) -> Any:
     if pre_format_func:
         value = pre_format_func(value)
     if nullable and is_nonelike(value):
@@ -165,7 +165,7 @@ def data_to_str(value = "",
                 nullable = True,
                 invalid_value = "NaN",
                 to_str_func = None,
-                **kwargs):
+                **kwargs) -> str:
     if not isinstance(value, datatypes):
         return invalid_value
     if value is None and nullable:

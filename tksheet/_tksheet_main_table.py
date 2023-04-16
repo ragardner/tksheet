@@ -5365,9 +5365,9 @@ class MainTable(tk.Canvas):
         if self.cell_options[(datarn, datacn)]['checkbox']['state'] == "normal":
             self._set_cell_data_undo(r, c, value = not self.data[datarn][datacn] if type(self.data[datarn][datacn]) == bool else False, undo = undo, cell_resize = False)
             if self.cell_options[(datarn, datacn)]['checkbox']['check_function'] is not None:
-                self.cell_options[(datarn, datacn)]['checkbox']['check_function']((r, c, "CheckboxClicked", f"{self.data[datarn][datacn]}"))
+                self.cell_options[(datarn, datacn)]['checkbox']['check_function']((r, c, "CheckboxClicked", self.data[datarn][datacn]))
             if self.extra_end_edit_cell_func is not None:
-                self.extra_end_edit_cell_func(EditCellEvent(r, c, "Return", f"{self.data[datarn][datacn]}", "end_edit_cell"))
+                self.extra_end_edit_cell_func(EditCellEvent(r, c, "Return", self.data[datarn][datacn], "end_edit_cell"))
         if redraw:
             self.refresh()
             
@@ -5423,9 +5423,6 @@ class MainTable(tk.Canvas):
                     **kwargs):
         if (datarn, datacn) in self.cell_options and 'checkbox' in self.cell_options[(datarn, datacn)]:
             return
-        if (datarn, datacn) not in self.cell_options:
-            self.cell_options[(datarn, datacn)] = {}
-        self.cell_options[(datarn, datacn)]['format'] = kwargs
         if 'value' in kwargs:
             v = kwargs['value']
         else:
@@ -5438,6 +5435,11 @@ class MainTable(tk.Canvas):
                     kwargs['datatypes'] = (kwargs['datatypes'], type(None))
             elif (isinstance(kwargs['datatypes'], (list, tuple)) and type(None) in kwargs['datatypes']) or kwargs['datatypes'] is type(None):
                 raise TypeError("Non-nullable cells cannot have NoneType as a datatype.")
+        if not isinstance(kwargs['invalid_value'], str):
+            kwargs['invalid_value'] = f"{kwargs['invalid_value']}"
+        if (datarn, datacn) not in self.cell_options:
+            self.cell_options[(datarn, datacn)] = {}
+        self.cell_options[(datarn, datacn)]['format'] = kwargs
         self._set_cell_data(datarn, datacn, value = v)
 
     def delete_format(self, datarn, datacn, clear_values = False):
@@ -5447,7 +5449,7 @@ class MainTable(tk.Canvas):
                     if clear_values:
                         self.data[datarn][datacn] = ""
                     else:
-                        self.data[datarn][datacn] = self.get_cell_data(datarn, datacn, none_to_empty_str=True)
+                        self.data[datarn][datacn] = self.get_cell_data(datarn, datacn, none_to_empty_str = True)
                 except:
                     continue
                 del self.cell_options[(datarn, datacn)]['format']
@@ -5456,14 +5458,15 @@ class MainTable(tk.Canvas):
                 if clear_values:
                     self.data[datarn][datacn] = ""
                 else:
-                    self.data[datarn][datacn] = self.get_cell_data(datarn, datacn, none_to_empty_str=True)
+                    self.data[datarn][datacn] = self.get_cell_data(datarn, datacn, none_to_empty_str = True)
                 del self.cell_options[(datarn, datacn)]['format']
             except:
                 pass
 
     # deals with possibility of formatter class being in self.data cell
     # if cell is formatted - possibly returns invalid_value kwarg if cell value is not in datatypes kwarg
-    def get_cell_data_check_valid(self, datarn, datacn, get_displayed=False) -> str:
+    # if get displayed is true then Nones are replaced by ""
+    def get_cell_data_check_valid(self, datarn, datacn, get_displayed = False) -> str:
         value = self.data[datarn][datacn] if len(self.data) > datarn and len(self.data[datarn]) > datacn else ""
         if (datarn, datacn) in self.cell_options and 'format' in self.cell_options[(datarn, datacn)]:
             kwargs = self.cell_options[(datarn, datacn)]['format']
@@ -5479,7 +5482,7 @@ class MainTable(tk.Canvas):
                     return f"{value.data()}" # assumed given formatter class has data() function
         return f"{value}"
 
-    def get_cell_data(self, datarn, datacn, get_displayed=False, none_to_empty_str=False) -> Any:
+    def get_cell_data(self, datarn, datacn, get_displayed = False, none_to_empty_str = False) -> Any:
         value = self.data[datarn][datacn] if len(self.data) > datarn and len(self.data[datarn]) > datacn else ""
         if (datarn, datacn) in self.cell_options and 'format' in self.cell_options[(datarn, datacn)]:
             kwargs = self.cell_options[(datarn, datacn)]['format']
@@ -5505,12 +5508,12 @@ class MainTable(tk.Canvas):
                 return value.clipboard() # assumed given formatter class has clipboard() function and it returns one of above type hints
         return f"{value}"
 
-    def yield_formatted_cells(self, formatter=None):
+    def yield_formatted_cells(self, formatter = None):
         if formatter is not None:
             yield from (cell for cell, options in self.cell_options.items() if 'format' in options and options['format']['formatter'] == formatter)
         yield from (cell for cell, options in self.cell_options.items() if 'format' in options and options['format'] is not None)
     
-    def get_formatted_cells(self, formatter=None):
+    def get_formatted_cells(self, formatter = None):
         if formatter is not None:
             return {cell for cell, options in self.cell_options.items() if 'format' in options and options['format']['formatter'] == formatter}
         return {cell for cell, options in self.cell_options.items() if 'format' in options and options['format'] is not None}
