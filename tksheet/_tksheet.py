@@ -869,7 +869,7 @@ class Sheet(tk.Frame):
             if any(z < self.MT.min_cw or not isinstance(z, int) or isinstance(z, bool) for z in column_widths):
                 return False
         return True
-            
+
     def default_row_height(self, height = None):
         if height is not None:
             self.MT.default_rh = (height if isinstance(height, str) else "pixels", height if isinstance(height, int) else self.MT.GetLinesHeight(int(height)))
@@ -2015,14 +2015,14 @@ class Sheet(tk.Frame):
                                       return_id = False,
                                       keep_formatting = keep_formatting)
 
-    def set_cell_data(self, r, c, value = "", set_copy = True, redraw = False, keep_formatting = True):
+    def set_cell_data(self, r, c, value = "", redraw = False, keep_formatting = True):
         if not keep_formatting:
-            self.MT.delete_format(r, c)
-        self.MT.set_cell_data(r, c, f"{value}" if set_copy else value)
+            self.MT.delete_cell_format(r, c)
+        self.MT.set_cell_data(r, c, value)
         if redraw:
             self.set_refresh_timer()
             
-    def set_row_data(self, r, values = tuple(), add_columns = True, set_copy = True, redraw = False, keep_formatting = True):
+    def set_row_data(self, r, values = tuple(), add_columns = True, redraw = False, keep_formatting = True):
         if r >= len(self.MT.data):
             raise Exception("Row number is out of range")
         maxidx = len(self.MT.data[r]) - 1
@@ -2035,16 +2035,16 @@ class Sheet(tk.Frame):
                     if self.MT.all_columns_displayed and c >= len(self.MT.col_positions) - 1:
                         self.MT.insert_col_position("end")
                 else:
-                    self.set_cell_data(r = r, c = c, value = v, set_copy = set_copy, redraw = False, keep_formatting = keep_formatting)
+                    self.set_cell_data(r = r, c = c, value = v, redraw = False, keep_formatting = keep_formatting)
         else:
             for c, v in enumerate(values):
                 if c > maxidx:
                     self.MT.data[r].append(v)
                 else:
-                    self.set_cell_data(r = r, c = c, value = v, set_copy = set_copy, redraw = False, keep_formatting = keep_formatting)
+                    self.set_cell_data(r = r, c = c, value = v, redraw = False, keep_formatting = keep_formatting)
         self.set_refresh_timer(redraw)
 
-    def set_column_data(self, c, values = tuple(), set_copy = True, add_rows = True, redraw = False, keep_formatting = True):
+    def set_column_data(self, c, values = tuple(), add_rows = True, redraw = False, keep_formatting = True):
         if add_rows:
             maxidx = len(self.MT.data) - 1
             total_cols = None
@@ -2058,12 +2058,12 @@ class Sheet(tk.Frame):
                     maxidx += 1
                 if c >= len(self.MT.data[rn]):
                     self.MT.data[rn].extend(list(repeat("", c - len(self.MT.data[rn]))))
-                self.set_cell_data(r = rn, c = c, value = v, set_copy = set_copy, redraw = False, keep_formatting = keep_formatting)
+                self.set_cell_data(r = rn, c = c, value = v, redraw = False, keep_formatting = keep_formatting)
         else:
             for rn, v in enumerate(values):
                 if c >= len(self.MT.data[rn]):
                     self.MT.data[rn].extend(list(repeat("", c - len(self.MT.data[rn]))))
-                self.set_cell_data(r = rn, c = c, value = v, set_copy = set_copy, redraw = False, keep_formatting = keep_formatting)
+                self.set_cell_data(r = rn, c = c, value = v, redraw = False, keep_formatting = keep_formatting)
         self.set_refresh_timer(redraw)
 
     def insert_column(self,
@@ -2695,31 +2695,63 @@ class Sheet(tk.Frame):
         if redraw:
             self.MT.refresh()
             
-    def delete_format(self,
-                      r,
-                      c,
-                      clear_values = False,
-                      ):
+    def delete_cell_format(self,
+                           r,
+                           c,
+                           clear_values = False,
+                           ):
         if isinstance(r, str) and r.lower() == "all" and isinstance(c, int):
             for r_, c_ in self.MT.cell_options:
                 if 'format' in self.MT.cell_options[(r_, c)]:
-                    self.MT.delete_format(r_, c, clear_values = clear_values)
+                    self.MT.delete_cell_format(r_, c, clear_values = clear_values)
         elif isinstance(c, str) and c.lower() == "all" and isinstance(r, int):
             for r_, c_ in self.MT.cell_options:
                 if 'format' in self.MT.cell_options[(r, c_)]:
-                    self.MT.delete_format(r, c_, clear_values = clear_values)
+                    self.MT.delete_cell_format(r, c_, clear_values = clear_values)
         elif isinstance(r, str) and r.lower() == "all" and isinstance(c, str) and c.lower() == "all":
             for r_, c_ in self.MT.cell_options:
                 if 'format' in self.MT.cell_options[(r_, c_)]:
-                    self.MT.delete_format(r_, c_, clear_values = clear_values)
+                    self.MT.delete_cell_format(r_, c_, clear_values = clear_values)
         else:
-            self.MT.delete_format(r, c, clear_values = clear_values)
-            
-    def get_formatter(self,
-                      r,
-                      c,
+            self.MT.delete_cell_format(r, c, clear_values = clear_values)
+
+    def format_row(self,
+                   r, # int or iterable of ints
+                   formatter_options = {},
+                   formatter_class = None,
+                   redraw = True,
+                   **kwargs,
+                   ):
+        _kwargs = {'formatter': formatter_class,
+                   **formatter_options,
+                   **kwargs}
+        if is_iterable(r):
+            for r_ in r:
+                self.MT.format_row(r_, **_kwargs)
+        else:
+            self.MT.format_row(r, **_kwargs)
+
+    def format_column(self,
+                      c, # int or iterable of ints
+                      formatter_options = {},
+                      formatter_class = None,
+                      redraw = True,
+                      **kwargs,
                       ):
-        pass
+        _kwargs = {'formatter': formatter_class,
+                   **formatter_options,
+                   **kwargs}
+        if is_iterable(c):
+            for c_ in c:
+                self.MT.format_column(c_, **_kwargs)
+        else:
+            self.MT.format_column(c, **_kwargs)
+
+    def format_sheet(self, clear_values = False):
+        _kwargs = {'formatter': formatter_class,
+                   **formatter_options,
+                   **kwargs}
+        self.MT.format_sheet(**_kwargs)
 
     def create_dropdown(self,
                         r = 0,

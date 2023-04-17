@@ -1,10 +1,18 @@
 ### Version 6.0.0
+#### Fixed:
+- Undo added to stack when no changes made with cut, paste, delete
+- Using generator with `set_column_widths()`/`set_row_heights()` would result in lost first width/height
+
 #### Added:
 - Cell formatters, thanks to [PR#158](https://github.com/ragardner/tksheet/pull/158)
+- `format_cell()`, `format_row()`, `format_column()`, `format_sheet()`
 - bindings `"up" "down" "left" "right" "prior" "next"` to enable arrowkey bindings individually use with `enable_bindings()`/`disable_bindings()`
 
+#### Removed:
+- `set_copy` arg in `set_cell_data()`
+- `return_copy` arg in data getting functions but will not generate error if used as keyword arg
+
 #### Changed:
-- `return_copy` arg in data getting functions is removed but will not generate error if used as keyword arg
 - Checkbox click extra binding and edit cell extra binding (when associated with a checkbox click) return `bool` now, not `str`
 - `get_cell_data()`/`get_row_data()`/`get_column_data()` now return empty string/s if index is out of bounds (instead of `None`s)
 - Rename some internal functions for consistency

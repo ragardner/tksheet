@@ -65,17 +65,7 @@ class demo(tk.Tk):
         self.sheet.enable_bindings()
         self.frame.grid(row = 0, column = 0, sticky = "nswe")
         self.sheet.grid(row = 0, column = 0, sticky = "nswe")
-        self.sheet.headers(['Non-Nullable Float Cell\n1 decimals places', 
-                            'Float Cell', 
-                            'Int Cell', 
-                            'Bool Cell', 
-                            'Percentage Cell\n0 decimal places', 
-                            'Custom Datetime Cell',
-                            'Custom Datetime Cell\nCustom Format String',
-                            'Float Cell that\nrounds up', 
-                            'Float cell that\n strips non-numeric', 
-                            'Dropdown Over Nullable\nPercentage Cell', 
-                            'Percentage Cell\n2 decimal places'])
+
         
         # ---------- Some examples of cell formatting --------
         self.sheet.format_cell('all', 0, formatter_options = float_formatter(nullable = False))
@@ -107,7 +97,7 @@ class demo(tk.Tk):
         self.sheet.format_cell('all', 8, formatter_options = float_formatter(), pre_format_func = only_numeric)
 
         self.sheet.create_dropdown('all', 9, values = ['', '104%', .24, "300%", 'not a number'], set_value = 1)
-        self.sheet.format_cell('all', 9, formatter_options = percentage_formatter(), decimals = 0)
+        self.sheet.format_column(9, formatter_options = percentage_formatter(), decimals = 0)
         self.sheet.format_cell('all', 10, formatter_options = percentage_formatter(decimals = 5), formatter_class = Formatter)
 
 

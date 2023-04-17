@@ -26,8 +26,7 @@ def get_heading_font():
 
 def is_iterable(o):
     try:
-        for e in o:
-            break
+        iter(o)
         return True
     except:
         return False

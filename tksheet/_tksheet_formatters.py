@@ -134,7 +134,7 @@ def formatter(datatypes,
                    post_format_func = post_format_func,
                    clipboard_func = clipboard_func),
             **kwargs}
-    
+
 def format_data(value = "",
                 datatypes = int,
                 nullable = True,
@@ -170,7 +170,7 @@ def data_to_str(value = "",
 
 def get_data_with_valid_check(value = "", 
                               datatypes = tuple(),
-                              invalid_value = "NaN"):
+                              invalid_value = "NA"):
     if isinstance(value, datatypes):
         return value
     return invalid_value
@@ -217,7 +217,7 @@ class Formatter:
         self.post_format_func = post_format_func
         self.clipboard_func = clipboard_func
         try:
-            self.value = self._format(value)
+            self.value = self.format_data(value)
         except Exception as e:
             self.value = f"{value}"
 
@@ -233,10 +233,9 @@ class Formatter:
             value = self.value
         if isinstance(value, self.valid_datatypes):
             return True
-        else:
-            return False
+        return False
     
-    def _format(self, value):
+    def format_data(self, value):
         if self.pre_format_func:
             value = self.pre_format_func(value)
         value = None if (self.nullable and is_nonelike(value)) else self.format_func(value, **self.kwargs)
@@ -244,12 +243,12 @@ class Formatter:
             value = self.post_format_func(value)
         return value
 
-    def data(self):
+    def get_data_with_valid_check(self):
         if self.valid():
             return self.value
         return self.invalid_value
     
-    def clipboard(self):
+    def get_clipboard_data(self):
         if self.clipboard_func is not None:
             return self.clipboard_func(self.value, **self.kwargs)
         if isinstance(self.value, (int, float, bool)):
@@ -257,12 +256,18 @@ class Formatter:
         return self.__str__()
     
     def __eq__(self, __value: object) -> bool:
-        if isinstance(__value, Formatter): # if comparing to another formatter, compare the values
-            return self.value == __value.value
-        if isinstance(__value, str): # if comparing to a string, format the string and compare
+        # in case of custom formatter class
+        # compare the values
+        try: 
+            if hasattr(__value, "value"):
+                return self.value == __value.value
+        except:
+            pass
+         # if comparing to a string, format the string and compare
+        if isinstance(__value, str):
             try:
-                value = self._format(__value)
-                return self.value == value
+                return self.value == self.format_data(__value)
             except Exception as e:
                 pass
-        return f"{self.value}" == __value # if comparing to anything else, compare the values
+        # if comparing to anything else, compare the values
+        return self.value == __value 

@@ -56,6 +56,7 @@ class MainTable(tk.Canvas):
         self.cell_options = {}
         self.col_options = {}
         self.row_options = {}
+        self.sheet_options = {}
 
         """
         cell options dict looks like:
@@ -418,103 +419,102 @@ class MainTable(tk.Canvas):
                 self.extra_end_ctrl_c_func(CtrlKeyEvent("end_ctrl_c", boxes, currently_selected, rows))
             
     def ctrl_x(self, event = None):
-        if self.anything_selected():
-            undo_storage = {}
-            s = io.StringIO()
-            writer = csv_module.writer(s, dialect = csv_module.excel_tab, lineterminator = "\n")
-            currently_selected = self.currently_selected()
-            rows = []
-            if currently_selected.type_ in ("cell", "column"):
-                boxes, maxrows = self.get_ctrl_x_c_boxes()
-                if self.extra_begin_ctrl_x_func is not None:
-                    try:
-                        self.extra_begin_ctrl_x_func(CtrlKeyEvent("begin_ctrl_x", boxes, currently_selected, tuple()))
-                    except:
-                        return
-                for rn in range(maxrows):
-                    row = []
-                    for r1, c1, r2, c2 in boxes:
-                        if r2 - r1 < maxrows:
+        if not self.anything_selected():
+            return
+        undo_storage = {}
+        s = io.StringIO()
+        writer = csv_module.writer(s, dialect = csv_module.excel_tab, lineterminator = "\n")
+        currently_selected = self.currently_selected()
+        rows = []
+        changes = 0
+        if currently_selected.type_ in ("cell", "column"):
+            boxes, maxrows = self.get_ctrl_x_c_boxes()
+            if self.extra_begin_ctrl_x_func is not None:
+                try:
+                    self.extra_begin_ctrl_x_func(CtrlKeyEvent("begin_ctrl_x", boxes, currently_selected, tuple()))
+                except:
+                    return
+            for rn in range(maxrows):
+                row = []
+                for r1, c1, r2, c2 in boxes:
+                    if r2 - r1 < maxrows:
+                        continue
+                    data_ref_rn = r1 + rn
+                    for c in range(c1, c2):
+                        datacn = c if self.all_columns_displayed else self.displayed_columns[c]
+                        row.append(self.get_cell_clipboard(data_ref_rn, datacn))
+                writer.writerow(row)
+                rows.append(row)
+            for rn in range(maxrows):
+                for r1, c1, r2, c2 in boxes:
+                    if r2 - r1 < maxrows:
+                        continue
+                    data_ref_rn = r1 + rn
+                    if data_ref_rn in self.row_options and 'readonly' in self.row_options[data_ref_rn]:
+                        continue
+                    for c in range(c1, c2):
+                        datacn = c if self.all_columns_displayed else self.displayed_columns[c]
+                        if (
+                            ((data_ref_rn, datacn) in self.cell_options and ('readonly' in self.cell_options[(data_ref_rn, datacn)] or 'checkbox' in self.cell_options[(data_ref_rn, datacn)])) or
+                            (datacn in self.col_options and 'readonly' in self.col_options[datacn]) or
+                            self.cell_equal_to(data_ref_rn, datacn, "") or
+                            (not self.ctrl_keys_over_dropdowns_enabled and 
+                            (data_ref_rn, datacn) in self.cell_options and 
+                            'dropdown' in self.cell_options[(data_ref_rn, datacn)] and
+                            "" not in self.cell_options[(data_ref_rn, datacn)]['dropdown']['values'])
+                            ):
                             continue
-                        data_ref_rn = r1 + rn
-                        for c in range(c1, c2):
-                            datacn = c if self.all_columns_displayed else self.displayed_columns[c]
-                            if self.undo_enabled:
-                                undo_storage[(data_ref_rn, datacn)] = self.get_cell_data(data_ref_rn, datacn)
-                            row.append(self.get_cell_clipboard(data_ref_rn, datacn))
+                        if self.undo_enabled:
+                            undo_storage[(data_ref_rn, datacn)] = self.get_cell_data(data_ref_rn, datacn)
+                        self.set_cell_data(data_ref_rn, datacn, "")
+                        changes += 1
+        else:
+            boxes = self.get_ctrl_x_c_boxes()
+            if self.extra_begin_ctrl_x_func is not None:
+                try:
+                    self.extra_begin_ctrl_x_func(CtrlKeyEvent("begin_ctrl_x", boxes, currently_selected, tuple()))
+                except:
+                    return
+            for r1, c1, r2, c2 in boxes:
+                for rn in range(r2 - r1):
+                    row = []
+                    data_ref_rn = r1 + rn
+                    for c in range(c1, c2):
+                        datacn = c if self.all_columns_displayed else self.displayed_columns[c]
+                        row.append(self.get_cell_data(data_ref_rn, datacn))
                     writer.writerow(row)
                     rows.append(row)
-                for rn in range(maxrows):
-                    for r1, c1, r2, c2 in boxes:
-                        if r2 - r1 < maxrows:
-                            continue
-                        data_ref_rn = r1 + rn
-                        if data_ref_rn in self.row_options and 'readonly' in self.row_options[data_ref_rn]:
-                            continue
-                        for c in range(c1, c2):
-                            datacn = c if self.all_columns_displayed else self.displayed_columns[c]
-                            if (
-                                ((data_ref_rn, datacn) in self.cell_options and ('readonly' in self.cell_options[(data_ref_rn, datacn)] or 'checkbox' in self.cell_options[(data_ref_rn, datacn)])) or
-                                (datacn in self.col_options and 'readonly' in self.col_options[datacn]) or
-                                (not self.ctrl_keys_over_dropdowns_enabled and 
-                                (data_ref_rn, datacn) in self.cell_options and 
-                                'dropdown' in self.cell_options[(data_ref_rn, datacn)] and
-                                "" not in self.cell_options[(data_ref_rn, datacn)]['dropdown']['values'])
-                                ):
-                                continue
-                            try:
-                                self.data[data_ref_rn][datacn] = ""
-                            except:
-                                continue
-            else:
-                boxes = self.get_ctrl_x_c_boxes()
-                if self.extra_begin_ctrl_x_func is not None:
-                    try:
-                        self.extra_begin_ctrl_x_func(CtrlKeyEvent("begin_ctrl_x", boxes, currently_selected, tuple()))
-                    except:
-                        return
-                for r1, c1, r2, c2 in boxes:
-                    for rn in range(r2 - r1):
-                        row = []
-                        data_ref_rn = r1 + rn
-                        for c in range(c1, c2):
-                            datacn = c if self.all_columns_displayed else self.displayed_columns[c]
-                            value = self.get_cell_data(data_ref_rn, datacn)
-                            if self.undo_enabled:
-                                undo_storage[(data_ref_rn, datacn)] = value
-                            row.append(value)
-                        writer.writerow(row)
-                        rows.append(row)
-                for r1, c1, r2, c2 in boxes:
-                    for rn in range(r2 - r1):
-                        data_ref_rn = r1 + rn
-                        if data_ref_rn in self.row_options and 'readonly' in self.row_options[data_ref_rn]:
-                            continue
-                        for c in range(c1, c2):
-                            datacn = c if self.all_columns_displayed else self.displayed_columns[c]
-                            if (
-                                ((data_ref_rn, datacn) in self.cell_options and ('readonly' in self.cell_options[(data_ref_rn, datacn)] or 'checkbox' in self.cell_options[(data_ref_rn, datacn)])) or
-                                (datacn in self.col_options and 'readonly' in self.col_options[datacn]) or
-                                (not self.ctrl_keys_over_dropdowns_enabled and 
-                                (data_ref_rn, datacn) in self.cell_options and 
-                                'dropdown' in self.cell_options[(data_ref_rn, datacn)] and
-                                "" not in self.cell_options[(data_ref_rn, datacn)]['dropdown']['values'])
-                                ):
-                                continue
-                            try:
-                                self.data[data_ref_rn][datacn] = ""
-                            except:
-                                continue
-            if self.undo_enabled:
-                self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells", undo_storage, tuple(boxes.items()), currently_selected))))
-            self.clipboard_clear()
-            self.clipboard_append(s.getvalue())
-            self.update_idletasks()
-            self.refresh()
             for r1, c1, r2, c2 in boxes:
-                self.show_ctrl_outline(canvas = "table", start_cell = (c1, r1), end_cell = (c2, r2))
-            if self.extra_end_ctrl_x_func is not None:
-                self.extra_end_ctrl_x_func(CtrlKeyEvent("end_ctrl_x", boxes, currently_selected, rows))
+                for rn in range(r2 - r1):
+                    data_ref_rn = r1 + rn
+                    if data_ref_rn in self.row_options and 'readonly' in self.row_options[data_ref_rn]:
+                        continue
+                    for c in range(c1, c2):
+                        datacn = c if self.all_columns_displayed else self.displayed_columns[c]
+                        if (
+                            ((data_ref_rn, datacn) in self.cell_options and ('readonly' in self.cell_options[(data_ref_rn, datacn)] or 'checkbox' in self.cell_options[(data_ref_rn, datacn)])) or
+                            (datacn in self.col_options and 'readonly' in self.col_options[datacn]) or
+                            self.cell_equal_to(data_ref_rn, datacn, "") or
+                            (not self.ctrl_keys_over_dropdowns_enabled and 
+                            (data_ref_rn, datacn) in self.cell_options and 
+                            'dropdown' in self.cell_options[(data_ref_rn, datacn)] and
+                            "" not in self.cell_options[(data_ref_rn, datacn)]['dropdown']['values'])
+                            ):
+                            continue
+                        if self.undo_enabled:
+                            undo_storage[(data_ref_rn, datacn)] = self.get_cell_data(data_ref_rn, datacn)
+                        self.set_cell_data(data_ref_rn, datacn, "")
+                        changes += 1
+        if changes and self.undo_enabled:
+            self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells", undo_storage, tuple(boxes.items()), currently_selected))))
+        self.clipboard_clear()
+        self.clipboard_append(s.getvalue())
+        self.update_idletasks()
+        self.refresh()
+        for r1, c1, r2, c2 in boxes:
+            self.show_ctrl_outline(canvas = "table", start_cell = (c1, r1), end_cell = (c2, r2))
+        if self.extra_end_ctrl_x_func is not None:
+            self.extra_end_ctrl_x_func(CtrlKeyEvent("end_ctrl_x", boxes, currently_selected, rows))
 
     def find_last_selected_box_with_current(self, currently_selected):
         if currently_selected.type_ in ("cell", "column"):
@@ -609,19 +609,17 @@ class MainTable(tk.Canvas):
                 self.extra_begin_ctrl_v_func(PasteEvent("begin_ctrl_v", currently_selected, rows))
             except:
                 return
+        changes = 0
         for ndr, r in enumerate(range(selected_r, selected_r + numrows)):
             datarn = r if self.all_rows_displayed else self.displayed_rows[r]
             for ndc, c in enumerate(range(selected_c, selected_c + numcols)):
                 datacn = c if self.all_columns_displayed else self.displayed_columns[c]
-                if datarn >= len(self.data):
-                    self.data.extend([list(repeat("", datacn + 1)) for _i in range((datarn + 1) - len(self.data))])
-                elif datacn >= len(self.data[datarn]):
-                    self.data[datarn].extend(list(repeat("", (datacn + 1) - len(self.data[datarn]))))
                 if (
                     ((datarn, datacn) in self.cell_options and 'readonly' in self.cell_options[(datarn, datacn)]) or
                     ((datarn, datacn) in self.cell_options and 'checkbox' in self.cell_options[(datarn, datacn)]) or
                     (datacn in self.col_options and 'readonly' in self.col_options[datacn]) or
                     (datarn in self.row_options and 'readonly' in self.row_options[datarn]) or
+                    self.cell_equal_to(datarn, datacn, data[ndr][ndc]) or
                     # if pasting not allowed in dropdowns and paste value isn't in dropdown values
                     (not self.ctrl_keys_over_dropdowns_enabled and 
                      (datarn, datacn) in self.cell_options and 
@@ -633,10 +631,11 @@ class MainTable(tk.Canvas):
                 if self.undo_enabled:
                     undo_storage[(datarn, datacn)] = self.get_cell_data(datarn, datacn)
                 self.set_cell_data(datarn, datacn, data[ndr][ndc])
+                changes += 1
         if self.expand_sheet_if_paste_too_big and self.undo_enabled:
             self.equalize_data_row_lengths()
         self.deselect("all")
-        if self.undo_enabled:
+        if changes and self.undo_enabled:
             self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells_paste",
                                                                  undo_storage,
                                                                  (((selected_r, selected_c, selected_r + numrows, selected_c + numcols), "cells"), ), # boxes
@@ -668,6 +667,7 @@ class MainTable(tk.Canvas):
                     self.extra_begin_delete_key_func(CtrlKeyEvent("begin_delete_key", boxes, currently_selected, tuple()))
                 except:
                     return
+            changes = 0
             for r1, c1, r2, c2 in boxes:
                 for r in range(r1, r2):
                     datarn = r if self.all_rows_displayed else self.displayed_rows[r]
@@ -675,6 +675,7 @@ class MainTable(tk.Canvas):
                         datacn = c if self.all_columns_displayed else self.displayed_columns[c]
                         if (
                             ((datarn, datacn) in self.cell_options and ('readonly' in self.cell_options[(datarn, datacn)] or 'checkbox' in self.cell_options[(datarn, datacn)])) or
+                            self.cell_equal_to(datarn, datacn, "") or
                             # if del key not allowed in dropdowns and empty string isn't in dropdown values
                             (not self.ctrl_keys_over_dropdowns_enabled and 
                             (datarn, datacn) in self.cell_options and 
@@ -687,9 +688,10 @@ class MainTable(tk.Canvas):
                         if self.undo_enabled:
                             undo_storage[(datarn, datacn)] = self.get_cell_data(datarn, datacn)
                         self.set_cell_data(datarn, datacn, "")
+                        changes += 1
             if self.extra_end_delete_key_func is not None:
                 self.extra_end_delete_key_func(CtrlKeyEvent("end_delete_key", boxes, currently_selected, undo_storage))
-            if self.undo_enabled:
+            if changes and self.undo_enabled:
                 self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells", undo_storage, tuple(boxes.items()), currently_selected))))
             self.refresh()
             
@@ -2950,7 +2952,7 @@ class MainTable(tk.Canvas):
                     if len(self.data) > r and len(self.data[r]) > c:
                         self.set_cell_data(r, c, value = self.data[r][c])
             else:
-                self.delete_format("all", clear_values = True)
+                self.delete_cell_format("all", clear_values = True)
             self.undo_storage = deque(maxlen = self.max_undos)
             if reset_col_positions:
                 self.reset_col_positions()
@@ -5345,12 +5347,11 @@ class MainTable(tk.Canvas):
             datacn = c if self.all_columns_displayed else self.displayed_columns[c]
         if datarn is None:
             datarn = r if self.all_rows_displayed else self.displayed_rows[r]
-        if self.undo_enabled and undo:
-            if self.data[r][datacn] != value:
-                self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells",
-                                                                     {(datarn, datacn): self.get_cell_data(datarn, datacn)},
-                                                                     (((r, c, r + 1, c + 1), "cells"), ),
-                                                                     self.currently_selected()))))
+        if self.undo_enabled and undo and not self.cell_equal_to(datarn, datacn, value):
+            self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells",
+                                                                {(datarn, datacn): self.get_cell_data(datarn, datacn)},
+                                                                (((r, c, r + 1, c + 1), "cells"), ),
+                                                                self.currently_selected()))))
         self.set_cell_data(datarn, datacn, value)
         if cell_resize and self.cell_auto_resize_enabled:
             self.set_cell_size_to_text(r, c, only_set_if_too_small = True, redraw = redraw, run_binding = True)
@@ -5371,23 +5372,8 @@ class MainTable(tk.Canvas):
         if redraw:
             self.refresh()
 
-    def set_cell_data(self, datarn, datacn, value):
-        if datarn >= len(self.data):
-            self.data.extend([list(repeat("", datacn + 1)) for i in range((datarn + 1) - len(self.data))])
-        elif datacn >= len(self.data[datarn]):
-            self.data[datarn].extend(list(repeat("", (datacn + 1) - len(self.data[datarn]))))
-        if (datarn, datacn) in self.cell_options and 'format' in self.cell_options[(datarn, datacn)]:
-            if self.cell_options[(datarn, datacn)]['format']['formatter'] is None:
-                self.data[datarn][datacn] = format_data(value = value, **self.cell_options[(datarn, datacn)]['format'])
-            else:
-                self.data[datarn][datacn] = self.cell_options[(datarn, datacn)]['format']['formatter'](value,
-                                                                                                       **self.cell_options[(datarn, datacn)]['format'])
-        else:
-            self.data[datarn][datacn] = value
-
     def create_checkbox(self, datarn = 0, datacn = 0, checked = False, state = "normal", redraw = False, check_function = None, text = ""):
-        if (datarn, datacn) in self.cell_options and 'format' in self.cell_options[(datarn, datacn)]:
-            self.delete_format(datarn, datacn, clear_values = True)
+        self.delete_cell_format(datarn, datacn, clear_values = True)
         if (datarn, datacn) in self.cell_options and ('dropdown' in self.cell_options[(datarn, datacn)] or 
                                                       'checkbox' in self.cell_options[(datarn, datacn)]):
             self.delete_dropdown_and_checkbox(datarn, datacn)
@@ -5416,6 +5402,21 @@ class MainTable(tk.Canvas):
                                                            'state': state}
         if redraw:
             self.refresh()
+            
+    def set_cell_data(self, datarn, datacn, value, kwargs = {}):
+        if datarn >= len(self.data):
+            self.data.extend([list(repeat("", datacn + 1)) for i in range((datarn + 1) - len(self.data))])
+        elif datacn >= len(self.data[datarn]):
+            self.data[datarn].extend(list(repeat("", (datacn + 1) - len(self.data[datarn]))))
+        if not kwargs:
+            kwargs = self.get_format_kwargs(datarn, datacn)
+        if kwargs:
+            if kwargs['formatter'] is None:
+                self.data[datarn][datacn] = format_data(value = value, **kwargs)
+            else:
+                self.data[datarn][datacn] = kwargs['formatter'](value, **kwargs)
+        else:
+            self.data[datarn][datacn] = value
 
     def format_cell(self,
                     datarn, 
@@ -5426,7 +5427,46 @@ class MainTable(tk.Canvas):
         if 'value' in kwargs:
             v = kwargs['value']
         else:
-            v = self.data[datarn][datacn] if len(self.data) > datarn and len(self.data[datarn]) > datacn else ""
+            v = self.get_cell_data(datarn, datacn)
+        kwargs = self.format_fix_kwargs(kwargs)
+        if (datarn, datacn) not in self.cell_options:
+            self.cell_options[(datarn, datacn)] = {}
+        self.cell_options[(datarn, datacn)]['format'] = kwargs
+        self.set_cell_data(datarn, datacn, value = v, kwargs = kwargs)
+        
+    def format_row(self, datarn, **kwargs):
+        kwargs = self.format_fix_kwargs(kwargs)
+        if datarn not in self.row_options:
+            self.row_options[datarn] = {}
+        self.row_options[datarn]['format'] = kwargs
+        for datacn in range(self.total_data_cols()):
+            self.set_cell_data(datarn, 
+                               datacn,
+                               value = kwargs['value'] if 'value' in kwargs else self.get_cell_data(datarn, datacn),
+                               kwargs = kwargs)
+            
+    def format_column(self, datacn, **kwargs):
+        kwargs = self.format_fix_kwargs(kwargs)
+        if datacn not in self.col_options:
+            self.col_options[datacn] = {}
+        self.col_options[datacn]['format'] = kwargs
+        for datarn in range(self.total_data_rows()):
+            self.set_cell_data(datarn, 
+                               datacn,
+                               value = kwargs['value'] if 'value' in kwargs else self.get_cell_data(datarn, datacn),
+                               kwargs = kwargs)
+            
+    def format_sheet(self, **kwargs):
+        kwargs = self.format_fix_kwargs(kwargs)
+        self.sheet_options['format'] = kwargs
+        for datarn in range(self.total_data_rows()):
+            for datacn in range(self.total_data_cols()):
+                self.set_cell_data(datarn, 
+                                   datacn,
+                                   value = kwargs['value'] if 'value' in kwargs else self.get_cell_data(datarn, datacn),
+                                   kwargs = kwargs)
+
+    def format_fix_kwargs(self, kwargs):
         if kwargs['formatter'] is None:
             if kwargs['nullable']:
                 if isinstance(kwargs['datatypes'], (list, tuple)):
@@ -5437,39 +5477,62 @@ class MainTable(tk.Canvas):
                 raise TypeError("Non-nullable cells cannot have NoneType as a datatype.")
         if not isinstance(kwargs['invalid_value'], str):
             kwargs['invalid_value'] = f"{kwargs['invalid_value']}"
-        if (datarn, datacn) not in self.cell_options:
-            self.cell_options[(datarn, datacn)] = {}
-        self.cell_options[(datarn, datacn)]['format'] = kwargs
-        self.set_cell_data(datarn, datacn, value = v)
+        return kwargs
 
-    def delete_format(self, datarn, datacn, clear_values = False):
+    def delete_cell_format(self, datarn, datacn, clear_values = False, del_cell_options = True):
+        if not clear_values and not del_cell_options:
+            return
         if isinstance(datarn, str) and datarn.lower() == "all":
             for datarn, datacn in self.yield_formatted_cells():
-                try:
-                    if clear_values:
-                        self.data[datarn][datacn] = ""
-                    else:
-                        self.data[datarn][datacn] = self.get_cell_data(datarn, datacn, none_to_empty_str = True)
-                except:
-                    continue
-                del self.cell_options[(datarn, datacn)]['format']
-        else:
-            try:
                 if clear_values:
+                    try:
+                        self.data[datarn][datacn] = ""
+                    except:
+                        continue
+                if del_cell_options:
+                    del self.cell_options[(datarn, datacn)]['format']
+        else:
+            if clear_values:
+                try:
                     self.data[datarn][datacn] = ""
-                else:
-                    self.data[datarn][datacn] = self.get_cell_data(datarn, datacn, none_to_empty_str = True)
+                except:
+                    pass
+            if del_cell_options:
                 del self.cell_options[(datarn, datacn)]['format']
-            except:
-                pass
+            
+    def delete_row_format(self, datarn, clear_values = False):
+        if isinstance(datarn, str) and datarn.lower() == "all":
+            for datarn in self.yield_formatted_rows():
+                if clear_values:
+                    for datacn in range(len(self.data[datarn])):
+                        self.delete_cell_format(datarn, datacn, clear_values = clear_values, del_cell_options = False)
+                del self.row_options[datarn]['format']
+        else:
+            if clear_values:
+                for datacn in range(len(self.data[datarn])):
+                    self.delete_cell_format(datarn, datacn, clear_values = clear_values, del_cell_options = False)
+            del self.row_options[datarn]['format']
+            
+    def delete_column_format(self, datacn, clear_values = False):
+        if isinstance(datacn, str) and datacn.lower() == "all":
+            for datacn in self.yield_formatted_columns():
+                if clear_values:
+                    for datarn in range(len(self.data)):
+                        self.delete_cell_format(datarn, datacn, clear_values = clear_values, del_cell_options = False)
+                del self.col_options[datacn]['format']
+        else:
+            if clear_values:
+                for datarn in range(len(self.data)):
+                    self.delete_cell_format(datarn, datacn, clear_values = clear_values, del_cell_options = False)
+            del self.col_options[datacn]['format']
 
     # deals with possibility of formatter class being in self.data cell
     # if cell is formatted - possibly returns invalid_value kwarg if cell value is not in datatypes kwarg
     # if get displayed is true then Nones are replaced by ""
-    def get_valid_cell_data_as_str(self, datarn, datacn, get_displayed = False) -> str:
+    def get_valid_cell_data_as_str(self, datarn, datacn, get_displayed = False, **kwargs) -> str:
         value = self.data[datarn][datacn] if len(self.data) > datarn and len(self.data[datarn]) > datacn else ""
-        if (datarn, datacn) in self.cell_options and 'format' in self.cell_options[(datarn, datacn)]:
-            kwargs = self.cell_options[(datarn, datacn)]['format']
+        kwargs = self.get_format_kwargs(datarn, datacn)
+        if kwargs:
             if kwargs['formatter'] is None:
                 if get_displayed:
                     return data_to_str(value, **kwargs)
@@ -5479,18 +5542,16 @@ class MainTable(tk.Canvas):
                 if get_displayed:
                     return f"{value}" # assumed given formatter class has __str__() function
                 else:
-                    return f"{value.data()}" # assumed given formatter class has data() function
+                    return f"{value.get_data_with_valid_check()}" # assumed given formatter class has get_data_with_valid_check() function
         return f"{value}"
 
-    def get_cell_data(self, datarn, datacn, get_displayed = False, none_to_empty_str = False) -> Any:
+    def get_cell_data(self, datarn, datacn, get_displayed = False, none_to_empty_str = False, **kwargs) -> Any:
         value = self.data[datarn][datacn] if len(self.data) > datarn and len(self.data[datarn]) > datacn else ""
-        if (datarn, datacn) in self.cell_options and 'format' in self.cell_options[(datarn, datacn)]:
-            kwargs = self.cell_options[(datarn, datacn)]['format']
+        kwargs = self.get_format_kwargs(datarn, datacn)
+        if kwargs:
             if kwargs['formatter'] is None:
                 if get_displayed:
                     return data_to_str(value, **kwargs)
-                #else:
-                #    return value
             else:
                 if get_displayed:
                     return f"{value}" # assumed given formatter class has __str__() function
@@ -5498,30 +5559,69 @@ class MainTable(tk.Canvas):
                     value = value.value # assumed given formatter class has value attribute
         return "" if (value is None and none_to_empty_str) else value
 
+    def cell_equal_to(self, datarn, datacn, value, **kwargs):
+        v = self.get_cell_data(datarn, datacn)
+        kwargs = self.get_format_kwargs(datarn, datacn)
+        if kwargs and kwargs['formatter'] is None:
+            return v == format_data(value = value, **kwargs)
+        # assumed if there is a formatter class in cell then it has a __eq__() function anyway
+        # else if there is not a formatter class in cell and cell is not formatted
+        # then compare values as is
+        return v == value
+
     def get_cell_clipboard(self, datarn, datacn) -> Union[str, int, float, bool]:
         value = self.data[datarn][datacn] if len(self.data) > datarn and len(self.data[datarn]) > datacn else ""
-        if (datarn, datacn) in self.cell_options and 'format' in self.cell_options[(datarn, datacn)]:
-            kwargs = self.cell_options[(datarn, datacn)]['format']
+        kwargs = self.get_format_kwargs(datarn, datacn)
+        if kwargs:
             if kwargs['formatter'] is None:
                 return get_clipboard_data(value, **kwargs)
             else:
-                return value.clipboard() # assumed given formatter class has clipboard() function and it returns one of above type hints
+                return value.get_clipboard_data() # assumed given formatter class has get_clipboard_data() function and it returns one of above type hints
         return f"{value}"
 
-    def yield_formatted_cells(self, formatter = None):
-        if formatter is not None:
-            yield from (cell for cell, options in self.cell_options.items() if 'format' in options and options['format']['formatter'] == formatter)
-        yield from (cell for cell, options in self.cell_options.items() if 'format' in options and options['format'] is not None)
-    
-    def get_formatted_cells(self, formatter = None):
-        if formatter is not None:
-            return {cell for cell, options in self.cell_options.items() if 'format' in options and options['format']['formatter'] == formatter}
-        return {cell for cell, options in self.cell_options.items() if 'format' in options and options['format'] is not None}
-    
-    def formatted(self, datarn, datacn):
+    def yield_formatted_cells(self, formatter = None, get_all = False):
+        if get_all:
+            total_cols = self.total_data_cols(include_headers = False)
+            total_rows = len(self.data)
+        if formatter is None:
+            if get_all:
+                yield from chain((cell for cell, options in self.cell_options.items() if 'format' in options and options['format']['formatter'] == formatter),
+                                 ((r, c) for r in self.yield_formatted_rows(formatter = formatter) for c in range(total_cols) if not ((r, c) in self.cell_options and 'format' in self.cell_options[(r, c)])),
+                                 ((r, c) for c in self.yield_formatted_columns(formatter = formatter) for r in range(total_rows) if not ((r, c) in self.cell_options and 'format' in self.cell_options[(r, c)]) and not (r in self.row_options and 'format' in self.row_options[r]))
+                )
+            else:
+                yield from (cell for cell, options in self.cell_options.items() if 'format' in options and options['format']['formatter'] == formatter)
+        else:
+            if get_all:
+                yield from chain((cell for cell, options in self.cell_options.items() if 'format' in options),
+                                 ((r, c) for r in self.yield_formatted_rows() for c in range(total_cols) if not ((r, c) in self.cell_options and 'format' in self.cell_options[(r, c)])),
+                                 ((r, c) for c in self.yield_formatted_columns() for r in range(total_rows) if not ((r, c) in self.cell_options and 'format' in self.cell_options[(r, c)]) and not (r in self.row_options and 'format' in self.row_options[r]))
+                )
+            else:
+                yield from (cell for cell, options in self.cell_options.items() if 'format' in options)
+
+    def yield_formatted_rows(self, formatter = None):
+        if formatter is None:
+            yield from (r for r, options in self.row_options.items() if 'format' in options)
+        else:
+            yield from (r for r, options in self.row_options.items() if 'format' in options and options['format']['formatter'] == formatter)
+
+    def yield_formatted_columns(self, formatter = None):
+        if formatter is None:
+            yield from (c for c, options in self.col_options.items() if 'format' in options)
+        else:
+            yield from (c for c, options in self.col_options.items() if 'format' in options and options['format']['formatter'] == formatter)
+
+    def get_format_kwargs(self, datarn, datacn):
         if (datarn, datacn) in self.cell_options and 'format' in self.cell_options[(datarn, datacn)]:
-            return True
-        return False
+            return self.cell_options[(datarn, datacn)]['format']
+        elif datarn in self.row_options and 'format' in self.row_options[datarn]:
+            return self.row_options[datarn]['format']
+        elif datacn in self.col_options and 'format' in self.col_options[datacn]:
+            return self.col_options[datacn]['format']
+        elif 'format' in self.sheet_options:
+            return self.sheet_options['format']
+        return {}
 
     def get_space_bot(self, r, text_editor_h = None):
         if len(self.row_positions) <= 1:
