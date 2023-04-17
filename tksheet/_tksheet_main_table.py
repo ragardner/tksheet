@@ -2937,6 +2937,27 @@ class MainTable(tk.Canvas):
         
     def set_index_fnt_help(self):
         pass
+    
+    def reapply_formatting(self):
+        if 'format' in self.sheet_options:
+            for r in len(self.data):
+                for c in len(self.data[r]):
+                    if not ((r, c) in self.cell_options and 'format' in self.cell_options[(r, c)] or
+                            r in self.row_options and 'format' in self.row_options[r] or
+                            c in self.col_options and 'format' in self.col_options[c]):
+                        self.set_cell_data(r, c, value = self.data[r][c])
+        for c in self.yield_formatted_columns():
+            for r in len(self.data):
+                if not ((r, c) in self.cell_options and 'format' in self.cell_options[(r, c)] or
+                        r in self.row_options and 'format' in self.row_options[r]):
+                    self.set_cell_data(r, c, value = self.data[r][c])
+        for r in self.yield_formatted_rows():
+            for c in len(self.data[r]):
+                if not ((r, c) in self.cell_options and 'format' in self.cell_options[(r, c)]):
+                    self.set_cell_data(r, c, value = self.data[r][c])
+        for r, c in self.yield_formatted_cells():
+            if len(self.data) > r and len(self.data[r]) > c:
+                self.set_cell_data(r, c, value = self.data[r][c])
 
     def data_reference(self,
                        newdataref = None, 
@@ -2948,11 +2969,9 @@ class MainTable(tk.Canvas):
         if isinstance(newdataref, (list, tuple)):
             self.data = newdataref
             if keep_formatting:
-                for r, c in self.yield_formatted_cells():
-                    if len(self.data) > r and len(self.data[r]) > c:
-                        self.set_cell_data(r, c, value = self.data[r][c])
+                self.reapply_formatting()
             else:
-                self.delete_cell_format("all", clear_values = True)
+                self.delete_all_formatting(clear_values = False)
             self.undo_storage = deque(maxlen = self.max_undos)
             if reset_col_positions:
                 self.reset_col_positions()
@@ -5478,53 +5497,60 @@ class MainTable(tk.Canvas):
         if not isinstance(kwargs['invalid_value'], str):
             kwargs['invalid_value'] = f"{kwargs['invalid_value']}"
         return kwargs
+    
+    def delete_all_formatting(self, clear_values = False):
+        self.delete_cell_format("all", clear_values = clear_values)
+        self.delete_row_format("all", clear_values = clear_values)
+        self.delete_column_format("all", clear_values = clear_values)
+        self.delete_sheet_format(clear_values = clear_values)
+        
+    def delete_sheet_format(self, clear_values = False):
+        if 'format' in self.sheet_options:
+            del self.sheet_options['format']
+            if clear_values:
+                self.data = [list(repeat("", total_cols)) for i in range(len(self.data))]
 
-    def delete_cell_format(self, datarn, datacn, clear_values = False, del_cell_options = True):
+    def delete_cell_format(self, datarn, datacn, clear_values = False):
         if not clear_values and not del_cell_options:
             return
         if isinstance(datarn, str) and datarn.lower() == "all":
             for datarn, datacn in self.yield_formatted_cells():
-                if clear_values:
-                    try:
-                        self.data[datarn][datacn] = ""
-                    except:
-                        continue
-                if del_cell_options:
-                    del self.cell_options[(datarn, datacn)]['format']
-        else:
-            if clear_values:
-                try:
-                    self.data[datarn][datacn] = ""
-                except:
-                    pass
-            if del_cell_options:
                 del self.cell_options[(datarn, datacn)]['format']
-            
+                if clear_values:
+                    self.set_cell_data(datarn, datacn, "")
+        else:
+            if (datarn, datacn) in self.cell_options and 'format' in self.cell_options[(datarn, datacn)]:
+                del self.cell_options[(datarn, datacn)]['format']
+                if clear_values:
+                    self.set_cell_data(datarn, datacn, "")
+
     def delete_row_format(self, datarn, clear_values = False):
         if isinstance(datarn, str) and datarn.lower() == "all":
             for datarn in self.yield_formatted_rows():
+                del self.row_options[datarn]['format']
                 if clear_values:
                     for datacn in range(len(self.data[datarn])):
-                        self.delete_cell_format(datarn, datacn, clear_values = clear_values, del_cell_options = False)
-                del self.row_options[datarn]['format']
+                        self.set_cell_data(datarn, datacn, "")
         else:
-            if clear_values:
-                for datacn in range(len(self.data[datarn])):
-                    self.delete_cell_format(datarn, datacn, clear_values = clear_values, del_cell_options = False)
-            del self.row_options[datarn]['format']
+            if datarn in self.row_options and 'format' in self.row_options[datarn]:
+                del self.row_options[datarn]['format']
+                if clear_values:
+                    for datacn in range(len(self.data[datarn])):
+                        self.set_cell_data(datarn, datacn, "")
             
     def delete_column_format(self, datacn, clear_values = False):
         if isinstance(datacn, str) and datacn.lower() == "all":
             for datacn in self.yield_formatted_columns():
                 if clear_values:
                     for datarn in range(len(self.data)):
-                        self.delete_cell_format(datarn, datacn, clear_values = clear_values, del_cell_options = False)
+                        self.set_cell_data(datarn, datacn, "")
                 del self.col_options[datacn]['format']
         else:
-            if clear_values:
-                for datarn in range(len(self.data)):
-                    self.delete_cell_format(datarn, datacn, clear_values = clear_values, del_cell_options = False)
-            del self.col_options[datacn]['format']
+            if datacn in self.col_options and 'format' in self.col_options[datacn]:
+                del self.col_options[datacn]['format']
+                if clear_values:
+                    for datarn in range(len(self.data)):
+                        self.set_cell_data(datarn, datacn, "")
 
     # deals with possibility of formatter class being in self.data cell
     # if cell is formatted - possibly returns invalid_value kwarg if cell value is not in datatypes kwarg
@@ -5579,26 +5605,11 @@ class MainTable(tk.Canvas):
                 return value.get_clipboard_data() # assumed given formatter class has get_clipboard_data() function and it returns one of above type hints
         return f"{value}"
 
-    def yield_formatted_cells(self, formatter = None, get_all = False):
-        if get_all:
-            total_cols = self.total_data_cols(include_headers = False)
-            total_rows = len(self.data)
+    def yield_formatted_cells(self, formatter = None):
         if formatter is None:
-            if get_all:
-                yield from chain((cell for cell, options in self.cell_options.items() if 'format' in options and options['format']['formatter'] == formatter),
-                                 ((r, c) for r in self.yield_formatted_rows(formatter = formatter) for c in range(total_cols) if not ((r, c) in self.cell_options and 'format' in self.cell_options[(r, c)])),
-                                 ((r, c) for c in self.yield_formatted_columns(formatter = formatter) for r in range(total_rows) if not ((r, c) in self.cell_options and 'format' in self.cell_options[(r, c)]) and not (r in self.row_options and 'format' in self.row_options[r]))
-                )
-            else:
-                yield from (cell for cell, options in self.cell_options.items() if 'format' in options and options['format']['formatter'] == formatter)
+            yield from (cell for cell, options in self.cell_options.items() if 'format' in options and options['format']['formatter'] == formatter)
         else:
-            if get_all:
-                yield from chain((cell for cell, options in self.cell_options.items() if 'format' in options),
-                                 ((r, c) for r in self.yield_formatted_rows() for c in range(total_cols) if not ((r, c) in self.cell_options and 'format' in self.cell_options[(r, c)])),
-                                 ((r, c) for c in self.yield_formatted_columns() for r in range(total_rows) if not ((r, c) in self.cell_options and 'format' in self.cell_options[(r, c)]) and not (r in self.row_options and 'format' in self.row_options[r]))
-                )
-            else:
-                yield from (cell for cell, options in self.cell_options.items() if 'format' in options)
+            yield from (cell for cell, options in self.cell_options.items() if 'format' in options)
 
     def yield_formatted_rows(self, formatter = None):
         if formatter is None:
@@ -5825,4 +5836,3 @@ class MainTable(tk.Canvas):
     def delete_dropdown_and_checkbox(self, datarn, datacn):
         self.delete_dropdown(datarn, datacn)
         self.delete_checkbox(datarn, datacn)
-

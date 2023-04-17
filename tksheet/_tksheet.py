@@ -2003,9 +2003,8 @@ class Sheet(tk.Frame):
                        verify = False,
                        reset_highlights = False,
                        keep_formatting = True):
-        if verify:
-            if not isinstance(data, list) or not all(isinstance(row, list) for row in data):
-                raise ValueError("Data argument must be a list of lists, sublists being rows")
+        if verify and (not isinstance(data, list) or not all(isinstance(row, list) for row in data)):
+            raise ValueError("Data argument must be a list of lists, sublists being rows")
         if reset_highlights:
             self.dehighlight_all()
         return self.MT.data_reference(data,
@@ -2017,7 +2016,7 @@ class Sheet(tk.Frame):
 
     def set_cell_data(self, r, c, value = "", redraw = False, keep_formatting = True):
         if not keep_formatting:
-            self.MT.delete_cell_format(r, c)
+            self.MT.delete_cell_format(r, c, clear_values = False)
         self.MT.set_cell_data(r, c, value)
         if redraw:
             self.set_refresh_timer()
@@ -2025,6 +2024,8 @@ class Sheet(tk.Frame):
     def set_row_data(self, r, values = tuple(), add_columns = True, redraw = False, keep_formatting = True):
         if r >= len(self.MT.data):
             raise Exception("Row number is out of range")
+        if not keep_formatting:
+            self.MT.delete_row_format(r, clear_values = False)
         maxidx = len(self.MT.data[r]) - 1
         if not values:
             self.MT.data[r][:] = list(repeat("", len(self.MT.data[r])))
@@ -2045,6 +2046,8 @@ class Sheet(tk.Frame):
         self.set_refresh_timer(redraw)
 
     def set_column_data(self, c, values = tuple(), add_rows = True, redraw = False, keep_formatting = True):
+        if not keep_formatting:
+            self.MT.delete_column_format(c, clear_values = False)
         if add_rows:
             maxidx = len(self.MT.data) - 1
             total_cols = None
