@@ -5407,7 +5407,7 @@ class MainTable(tk.Canvas):
                 self.data.extend([list(repeat("", datacn + 1)) for i in range((datarn + 1) - len(self.data))])
             elif datacn >= len(self.data[datarn]):
                 self.data[datarn].extend(list(repeat("", (datacn + 1) - len(self.data[datarn]))))
-        elif len(self.data) > datarn and len(self.data[datarn]) > datacn:
+        if expand_sheet or (len(self.data) > datarn and len(self.data[datarn]) > datacn):
             if not kwargs:
                 kwargs = self.get_format_kwargs(datarn, datacn)
             if kwargs:

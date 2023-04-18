@@ -91,7 +91,7 @@ def float_formatter(datatypes = float,
 def percentage_formatter(datatypes = float,
                          format_function = to_float,
                          to_str_function = percentage_to_str,
-                         decimals = 0,
+                         decimals = 2,
                          **kwargs,
                          ) -> dict:
     return formatter(datatypes = datatypes,
@@ -150,7 +150,7 @@ def format_data(value = "",
     else:
         try:
             value = format_function(value, **kwargs)
-        except Exception as error:
+        except Exception as e:
             value = f"{value}"
     if post_format_function and isinstance(value, datatypes):
         value = post_format_function(value)

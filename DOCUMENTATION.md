@@ -1745,7 +1745,7 @@ Arguments:
 - `formatter_class` (`class`) in case you want to use a custom class to store functions and information as opposed to using the built-in methods.
 - `**kwargs` any additional keyword options/arguements to pass to the formatter.
 
-#### **Clearing a format from a cell:**
+#### **Clearing a format that was set by `format_cell`:**
 
 ```python
 delete_cell_format(r, c, clear_values = False)
@@ -1765,7 +1765,7 @@ format_row(r, formatter_options = {}, formatter_class = None, **kwargs)
 - `formatter_class` (`class`) in case you want to use a custom class to store functions and information as opposed to using the built-in methods.
 - `**kwargs` any additional keyword options/arguements to pass to the formatter.
 
-#### **Clearing a format from a row:**
+#### **Clearing a format that was set by `format_row`:**
 
 ```python
 delete_row_format(r, clear_values = False)
@@ -1784,7 +1784,7 @@ format_column(c, formatter_options = {}, formatter_class = None, **kwargs)
 - `formatter_class` (`class`) in case you want to use a custom class to store functions and information as opposed to using the built-in methods.
 - `**kwargs` any additional keyword options/arguements to pass to the formatter.
 
-#### **Clearing a format from a column:**
+#### **Clearing a format that was set by `format_column`:**
 
 ```python
 delete_column_format(c, clear_values = False)
@@ -1802,12 +1802,26 @@ format_sheet(formatter_options = {}, formatter_class = None, **kwargs)
 - `formatter_class` (`class`) in case you want to use a custom class to store functions and information as opposed to using the built-in methods.
 - `**kwargs` any additional keyword options/arguements to pass to the formatter.
 
-#### **Clearing a format from the whole sheet:**
+#### **Clearing a format that was set by `format_sheet`:**
 
 ```python
 delete_sheet_format(clear_values = False)
 ```
 - `clear_values` (`bool`) if true, all the sheets cell values will be set to `""`.
+
+#### **Delete all formatting, including cell, row, column and sheet formats:**
+
+```python
+delete_all_formatting(clear_values = False)
+```
+- `clear_values` (`bool`) if true, all the sheets cell values will be set to `""`.
+
+#### **Reapply formatting to entire sheet:**
+
+```python
+reapply_formatting()
+```
+- Useful if you have manually changed the entire sheets data using `sheet.MT.data = ` and want to reformat the sheet using any existing formatting you have set.
 
 ### **Formatter Options and In-Built Formatters**
 ----
@@ -2082,7 +2096,7 @@ get_cell_options(canvas = "table")
 
 ___
 
-Delete any alignments, dropdown boxes, checkboxes, highlights etc. that are larger than the sheets currently held data, includes row index and header in measurement of dimensions.
+Delete any formats, alignments, dropdown boxes, checkboxes, highlights etc. that are larger than the sheets currently held data, includes row index and header in measurement of dimensions.
 ```python
 delete_out_of_bounds_options()
 ```

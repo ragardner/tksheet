@@ -2754,9 +2754,15 @@ class Sheet(tk.Frame):
 
     def close_dropdown(self, r, c):
         self.MT.hide_dropdown_window(r, c)
+
+    def reapply_formatting(self):
+        self.MT.reapply_formatting()
         
     def reapply_formatting(self):
         self.MT.reapply_formatting()
+        
+    def delete_all_formatting(self, clear_values = False):
+        self.MT.delete_all_formatting(clear_values = clear_values)
 
     def format_cell(self,
                     r,
