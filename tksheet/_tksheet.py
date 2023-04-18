@@ -2246,8 +2246,11 @@ class Sheet(tk.Frame):
     def sheet_data_dimensions(self, total_rows = None, total_columns = None):
         self.MT.data_dimensions(total_rows, total_columns)
 
-    def get_total_rows(self):
-        return len(self.MT.data)
+    def get_total_rows(self, include_index = False):
+        return self.MT.total_data_rows(include_index = include_index)
+    
+    def get_total_columns(self, include_header = False):
+        return self.MT.total_data_cols(include_header = include_header)
 
     def equalize_data_row_lengths(self):
         return self.MT.equalize_data_row_lengths()
@@ -2664,98 +2667,6 @@ class Sheet(tk.Frame):
     def close_index_dropdown(self, r):
         self.RI.hide_dropdown_window(r)
 
-    def format_cell(self,
-                    r,
-                    c,
-                    formatter_options = {},
-                    formatter_class = None,
-                    redraw = True,
-                    **kwargs,
-                    ):
-        _kwargs = {'formatter': formatter_class,
-                   **formatter_options,
-                   **kwargs}
-        if isinstance(r, str) and r.lower() == 'all' and isinstance(c, int):
-            for r_ in range(self.MT.total_data_rows()):
-                self.MT.format_cell(datarn = r_,
-                                    datacn = c, 
-                                    **_kwargs)
-        elif isinstance(c, str) and c.lower() == 'all' and isinstance(r, int):
-            for c_ in range(self.MT.total_data_cols()):
-                self.MT.format_cell(datarn = r,
-                                    datacn = c_, 
-                                    **_kwargs)
-        elif isinstance(r, str) and r.lower() == 'all' and isinstance(c, str) and c.lower() == 'all':
-            for r_ in range(self.MT.total_data_rows()):
-                for c_ in range(self.MT.total_data_cols()):
-                    self.MT.format_cell(datarn = r_,
-                                        datacn = c_, 
-                                        **_kwargs)
-        else:
-            self.MT.format_cell(datarn = r,
-                                datacn = c, 
-                                **_kwargs)
-        if redraw:
-            self.MT.refresh()
-            
-    def delete_cell_format(self,
-                           r,
-                           c,
-                           clear_values = False,
-                           ):
-        if isinstance(r, str) and r.lower() == "all" and isinstance(c, int):
-            for r_, c_ in self.MT.cell_options:
-                if 'format' in self.MT.cell_options[(r_, c)]:
-                    self.MT.delete_cell_format(r_, c, clear_values = clear_values)
-        elif isinstance(c, str) and c.lower() == "all" and isinstance(r, int):
-            for r_, c_ in self.MT.cell_options:
-                if 'format' in self.MT.cell_options[(r, c_)]:
-                    self.MT.delete_cell_format(r, c_, clear_values = clear_values)
-        elif isinstance(r, str) and r.lower() == "all" and isinstance(c, str) and c.lower() == "all":
-            for r_, c_ in self.MT.cell_options:
-                if 'format' in self.MT.cell_options[(r_, c_)]:
-                    self.MT.delete_cell_format(r_, c_, clear_values = clear_values)
-        else:
-            self.MT.delete_cell_format(r, c, clear_values = clear_values)
-
-    def format_row(self,
-                   r, # int or iterable of ints
-                   formatter_options = {},
-                   formatter_class = None,
-                   redraw = True,
-                   **kwargs,
-                   ):
-        _kwargs = {'formatter': formatter_class,
-                   **formatter_options,
-                   **kwargs}
-        if is_iterable(r):
-            for r_ in r:
-                self.MT.format_row(r_, **_kwargs)
-        else:
-            self.MT.format_row(r, **_kwargs)
-
-    def format_column(self,
-                      c, # int or iterable of ints
-                      formatter_options = {},
-                      formatter_class = None,
-                      redraw = True,
-                      **kwargs,
-                      ):
-        _kwargs = {'formatter': formatter_class,
-                   **formatter_options,
-                   **kwargs}
-        if is_iterable(c):
-            for c_ in c:
-                self.MT.format_column(c_, **_kwargs)
-        else:
-            self.MT.format_column(c, **_kwargs)
-
-    def format_sheet(self, clear_values = False):
-        _kwargs = {'formatter': formatter_class,
-                   **formatter_options,
-                   **kwargs}
-        self.MT.format_sheet(**_kwargs)
-
     def create_dropdown(self,
                         r = 0,
                         c = 0,
@@ -2765,48 +2676,28 @@ class Sheet(tk.Frame):
                         redraw = False,
                         selection_function = None,
                         modified_function = None):
+        _kwargs = {'values': values, 'set_value': set_value, 'state': state, 'redraw': redraw, 'selection_function': selection_function, 'modified_function': modified_function}
         if isinstance(r, str) and r.lower() == "all" and isinstance(c, int):
             for r_ in range(self.MT.total_data_rows()):
                 self.MT.create_dropdown(datarn = r_,
                                         datacn = c,
-                                        values = values,
-                                        set_value = set_value,
-                                        state = state,
-                                        redraw = redraw,
-                                        selection_function = selection_function,
-                                        modified_function = modified_function)
+                                        **_kwargs)
         elif isinstance(c, str) and c.lower() == "all" and isinstance(r, int):
             for c_ in range(self.MT.total_data_cols()):
                 self.MT.create_dropdown(datarn = r,
                                         datacn = c_,
-                                        values = values,
-                                        set_value = set_value,
-                                        state = state,
-                                        redraw = redraw,
-                                        selection_function = selection_function,
-                                        modified_function = modified_function)
+                                        **_kwargs)
         elif isinstance(r, str) and r.lower() == "all" and isinstance(c, str) and c.lower() == "all":
             totalcols = self.MT.total_data_cols()
             for r_ in range(self.MT.total_data_rows()):
                 for c_ in range(totalcols):
                     self.MT.create_dropdown(datarn = r_,
                                             datacn = c_,
-                                            values = values,
-                                            set_value = set_value,
-                                            state = state,
-                                            redraw = redraw,
-                                            selection_function = selection_function,
-                                            modified_function = modified_function)
-        
+                                            **_kwargs)
         else:
             self.MT.create_dropdown(datarn = r,
                                     datacn = c,
-                                    values = values,
-                                    set_value = set_value,
-                                    state = state,
-                                    redraw = redraw,
-                                    selection_function = selection_function,
-                                    modified_function = modified_function)
+                                    **_kwargs)
 
     def get_dropdown_value(self, r, c):
         return self.get_cell_data(r, c)
@@ -2863,6 +2754,104 @@ class Sheet(tk.Frame):
 
     def close_dropdown(self, r, c):
         self.MT.hide_dropdown_window(r, c)
+        
+    def reapply_formatting(self):
+        self.MT.reapply_formatting()
+
+    def format_cell(self,
+                    r,
+                    c,
+                    formatter_options = {},
+                    formatter_class = None,
+                    redraw = True,
+                    **kwargs,
+                    ):
+        if isinstance(r, str) and r.lower() == 'all' and isinstance(c, int):
+            for r_ in range(self.MT.total_data_rows()):
+                self.MT.format_cell(datarn = r_,
+                                    datacn = c, 
+                                    **{'formatter': formatter_class, **formatter_options, **kwargs})
+        elif isinstance(c, str) and c.lower() == 'all' and isinstance(r, int):
+            for c_ in range(self.MT.total_data_cols()):
+                self.MT.format_cell(datarn = r,
+                                    datacn = c_, 
+                                    **{'formatter': formatter_class, **formatter_options, **kwargs})
+        elif isinstance(r, str) and r.lower() == 'all' and isinstance(c, str) and c.lower() == 'all':
+            for r_ in range(self.MT.total_data_rows()):
+                for c_ in range(self.MT.total_data_cols()):
+                    self.MT.format_cell(datarn = r_,
+                                        datacn = c_, 
+                                        **{'formatter': formatter_class, **formatter_options, **kwargs})
+        else:
+            self.MT.format_cell(datarn = r,
+                                datacn = c, 
+                                **{'formatter': formatter_class, **formatter_options, **kwargs})
+        if redraw:
+            self.MT.refresh()
+
+    def delete_cell_format(self,
+                           r,
+                           c,
+                           clear_values = False,
+                           ):
+        if isinstance(r, str) and r.lower() == "all" and isinstance(c, int):
+            for r_, c_ in self.MT.cell_options:
+                if 'format' in self.MT.cell_options[(r_, c)]:
+                    self.MT.delete_cell_format(r_, c, clear_values = clear_values)
+        elif isinstance(c, str) and c.lower() == "all" and isinstance(r, int):
+            for r_, c_ in self.MT.cell_options:
+                if 'format' in self.MT.cell_options[(r, c_)]:
+                    self.MT.delete_cell_format(r, c_, clear_values = clear_values)
+        elif isinstance(r, str) and r.lower() == "all" and isinstance(c, str) and c.lower() == "all":
+            for r_, c_ in self.MT.cell_options:
+                if 'format' in self.MT.cell_options[(r_, c_)]:
+                    self.MT.delete_cell_format(r_, c_, clear_values = clear_values)
+        else:
+            self.MT.delete_cell_format(r, c, clear_values = clear_values)
+
+    def format_row(self,
+                   r,
+                   formatter_options = {},
+                   formatter_class = None,
+                   redraw = True,
+                   **kwargs,
+                   ):
+        if isinstance(r, str) and r.lower() == "all":
+            for r_ in range(len(self.MT.data)):
+                self.MT.format_column(r_, **{'formatter': formatter_class, **formatter_options, **kwargs})
+        elif is_iterable(r):
+            for r_ in r:
+                self.MT.format_row(r_, **{'formatter': formatter_class, **formatter_options, **kwargs})
+        else:
+            self.MT.format_row(r, **{'formatter': formatter_class, **formatter_options, **kwargs})
+            
+    def delete_row_format(self, datarn, clear_values = False):
+        self.MT.delete_row_format(datarn, clear_values = clear_values)
+
+    def format_column(self,
+                      c,
+                      formatter_options = {},
+                      formatter_class = None,
+                      redraw = True,
+                      **kwargs,
+                      ):
+        if isinstance(c, str) and c.lower() == "all":
+            for c_ in range(self.MT.total_data_cols()):
+                self.MT.format_column(c_, **{'formatter': formatter_class, **formatter_options, **kwargs})
+        elif is_iterable(c):
+            for c_ in c:
+                self.MT.format_column(c_, **{'formatter': formatter_class, **formatter_options, **kwargs})
+        else:
+            self.MT.format_column(c, **{'formatter': formatter_class, **formatter_options, **kwargs})
+            
+    def delete_column_format(self, datacn, clear_values = False):
+        self.MT.delete_column_format(datacn, clear_values = clear_values)
+
+    def format_sheet(self, clear_values = False):
+        self.MT.format_sheet(**{'formatter': formatter_class, **formatter_options, **kwargs})
+        
+    def delete_sheet_format(self, clear_values = False):
+        self.MT.delete_sheet_format(clear_values = clear_values)
 
 
 class Sheet_Dropdown(Sheet):

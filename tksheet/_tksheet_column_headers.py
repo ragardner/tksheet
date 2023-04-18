@@ -1534,7 +1534,6 @@ class ColumnHeaders(tk.Canvas):
         if datacn not in self.cell_options:
             self.cell_options[datacn] = {}
         self.cell_options[datacn]['dropdown'] = {'values': values,
-                                                 'align': "w",
                                                  'window': "no dropdown open",
                                                  'canvas_id': "no dropdown open",
                                                  'select_function': selection_function,
@@ -1602,7 +1601,7 @@ class ColumnHeaders(tk.Canvas):
                                                     hide_dropdown_window = self.hide_dropdown_window,
                                                     arrowkey_RIGHT = self.MT.arrowkey_RIGHT,
                                                     arrowkey_LEFT = self.MT.arrowkey_LEFT,
-                                                    align = self.cell_options[datacn]['dropdown']['align'],
+                                                    align = "w",
                                                     single_index = "c")
         ypos = self.current_height - 1
         self.cell_options[datacn]['dropdown']['canvas_id'] = self.create_window((self.MT.col_positions[c], ypos),

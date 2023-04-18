@@ -421,16 +421,17 @@ If both arguments are `None` then table will reset to default tkinter canvas dim
 ## **Getting Table Data**
 ----
 
-Yield sheet rows one by one, includes default header and index if being used e.g. A, B, C, D, whereas `get_sheet_data()` does not.
+#### **Yield sheet rows one at a time.**
 ```python
 yield_sheet_rows(get_header = False, get_index = False)
 ```
+- Uses the function `get_sheet_data()`.
 - `get_header` (`bool`) will put the header as the first row if `True`.
 - `get_index` (`bool`) will put index items as the first item in every row.
 
 ___
 
-Get sheet data and, if required, header and index data.
+#### **Get sheet data and, if required, header and index data.**
 ```python
 get_sheet_data(get_displayed = False, get_header = False, get_index = False)
 ```
@@ -438,7 +439,7 @@ get_sheet_data(get_displayed = False, get_header = False, get_index = False)
 
 ___
 
-Returns the main table data, readonly.
+#### **Get the main table data, readonly.**
 ```python
 @property
 data()
@@ -447,7 +448,7 @@ data()
 
 ___
 
-The name of the actual internal sheet data list.
+#### **The name of the actual internal sheet data variable.**
 ```python
 .MT.data
 ```
@@ -473,15 +474,22 @@ get_column_data(c, get_displayed = False)
 
 ___
 
-Get number of rows in table data.
+#### **Get number of rows in table data.**
 ```python
-get_total_rows()
+get_total_rows(include_index = False)
+```
+
+___
+
+#### **Get number of columns in table data.**
+```python
+get_total_columns(include_header = False)
 ```
 
 ## **Bindings and Functionality**
 ----
 
-Enable table functionality and bindings.
+#### **Enable table functionality and bindings.**
 ```python
 enable_bindings(*bindings)
 ```
@@ -533,14 +541,14 @@ Notes:
 
 ___
 
-Disable table functionality and bindings, uses the same arguments as `enable_bindings()`
+#### **Disable table functionality and bindings, uses the same arguments as `enable_bindings()`.**
 ```python
 disable_bindings(*bindings)
 ```
 
 ___
 
-Bind various table functionality to your own functions. To unbind a function either set `func` argument to `None` or leave it as default e.g. `extra_bindings("begin_copy")` to unbind `"begin_copy"`.
+#### **Bind various table functionality to your own functions. To unbind a function either set `func` argument to `None` or leave it as default e.g. `extra_bindings("begin_copy")` to unbind** `"begin_copy"`.
 ```python
 extra_bindings(bindings, func = "None")
 ```
@@ -596,42 +604,43 @@ Arguments:
 
 ___
 
-Add commands to the in-built right click popup menu.
+#### **Add commands to the in-built right click popup menu.**
 ```python
 popup_menu_add_command(label, func, table_menu = True, index_menu = True, header_menu = True)
 ```
 
 ___
 
-Remove the custom commands added using the above function from the in-built right click popup menu, if `label` is `None` then it removes all.
+#### **Remove commands added using `popup_menu_add_command()` from the in-built right click popup menu.**
 ```python
 popup_menu_del_command(label = None)
 ```
+- If `label` is `None` then it removes all.
 
 ___
 
-Disable table functionality and bindings (uses the same options as `enable_bindings()`.
+#### **Disable table functionality and bindings (uses the same options as `enable_bindings()`).**
 ```python
 disable_bindings(bindings = "all")
 ```
 
 ___
 
-Enable or disable mousewheel, left click etc.
+#### **Enable or disable mousewheel, left click etc.**
 ```python
 basic_bindings(enable = False)
 ```
 
 ___
 
-Enable or disable cell edit functionality, including Undo.
+#### **Enable or disable cell edit functionality, including Undo.**
 ```python
 edit_bindings(enable = False)
 ```
 
 ___
 
-Enable or disable the ability to edit a specific cell.
+#### **Enable or disable the ability to edit a specific cell using the inbuilt text editor.**
 ```python
 cell_edit_binding(enable = False, keys = [])
 ```
@@ -684,7 +693,7 @@ identify_column(event, exclude_header = False, allow_end = True)
 
 ___
 
-Sheet control actions for binding your own keys to e.g. `sheet.bind("<Control-B>", sheet.paste)`
+#### **Sheet control actions for binding your own keys to e.g. `sheet.bind("<Control-B>", sheet.paste)`**
 ```python
 cut(self, event = None)
 copy(self, event = None)
@@ -803,7 +812,7 @@ row_index_align(align = None, redraw = True)
 
 ___
 
-Change the text alignment for **specific** rows, `"global"` resets to table setting.
+#### **Change the text alignment for specific rows, `"global"` resets to table setting.**
 ```python
 align_rows(rows = [], align = "global", align_index = False, redraw = True)
 ```
@@ -811,7 +820,7 @@ align_rows(rows = [], align = "global", align_index = False, redraw = True)
 
 ___
 
-Change the text alignment for **specific** columns, `"global"` resets to table setting.
+#### **Change the text alignment for specific columns, `"global"` resets to table setting.**
 ```python
 align_columns(columns = [], align = "global", align_header = False, redraw = True)
 ```
@@ -819,7 +828,7 @@ align_columns(columns = [], align = "global", align_header = False, redraw = Tru
 
 ___
 
-Change the text alignment for **specific** cells inside the table, `"global"` resets to table setting.
+#### **Change the text alignment for specific cells inside the table, `"global"` resets to table setting.**
 ```python
 align_cells(row = 0, column = 0, cells = [], align = "global", redraw = True)
 ```
@@ -827,14 +836,14 @@ align_cells(row = 0, column = 0, cells = [], align = "global", redraw = True)
 
 ___
 
-Change the text alignment for **specific** cells inside the header, `"global"` resets to header setting.
+#### **Change the text alignment for specific cells inside the header, `"global"` resets to header setting.**
 ```python
 align_header(columns = [], align = "global", redraw = True)
 ```
 
 ___
 
-Change the text alignment for **specific** cells inside the index, `"global"` resets to index setting.
+#### **Change the text alignment for specific cells inside the index, `"global"` resets to index setting.**
 ```python
 align_index(rows = [], align = "global", redraw = True)
 ```
@@ -860,7 +869,7 @@ get_column_alignments()
 ## **Row Heights and Column Widths**
 ----
 
-Set default column width in pixels.
+#### **Set default column width in pixels.**
 ```python
 default_column_width(width = None)
 ```
@@ -868,7 +877,7 @@ default_column_width(width = None)
 
 ___
 
-Set default row height in pixels or lines.
+#### **Set default row height in pixels or lines.**
 ```python
 default_row_height(height = None)
 ```
@@ -876,28 +885,29 @@ default_row_height(height = None)
 
 ___
 
-Set default header bar height in pixels or lines.
+#### **Set default header bar height in pixels or lines.**
 ```python
 default_header_height(height = None)
 ```
 - `height` (`int`, `str`) use a numerical `str` for number of lines e.g. `"3"` for a height that fits 3 lines or `int` for pixels.
 
 ___
-Set a specific cell size to its text
+
+#### **Set a specific cell size to its text.**
 ```python
 set_cell_size_to_text(row, column, only_set_if_too_small = False, redraw = True)
 ```
 
 ___
 
-Set all row heights and column widths to cell text sizes.
+#### **Set all row heights and column widths to cell text sizes.**
 ```python
 set_all_cell_sizes_to_text(redraw = True)
 ```
 
 ___
 
-Get the sheets column widths.
+#### **Get the sheets column widths.**
 ```python
 get_column_widths(canvas_positions = False)
 ```
@@ -905,7 +915,7 @@ get_column_widths(canvas_positions = False)
 
 ___
 
-Get the sheets row heights.
+#### **Get the sheets row heights.**
 ```python
 get_row_heights(canvas_positions = False)
 ```
@@ -913,21 +923,21 @@ get_row_heights(canvas_positions = False)
 
 ___
 
-Set all column widths to specific `width` in pixels (`int`) or leave `None` to set to cell text sizes for each column.
+#### **Set all column widths to specific `width` in pixels (`int`) or leave `None` to set to cell text sizes for each column.**
 ```python
 set_all_column_widths(width = None, only_set_if_too_small = False, redraw = True, recreate_selection_boxes = True)
 ```
 
 ___
 
-Set all row heights to specific `height` in pixels (`int`) or leave `None` to set to cell text sizes for each row.
+#### **Set all row heights to specific `height` in pixels (`int`) or leave `None` to set to cell text sizes for each row.**
 ```python
 set_all_row_heights(height = None, only_set_if_too_small = False, redraw = True, recreate_selection_boxes = True)
 ```
 
 ___
 
-Set a specific column width.
+#### **Set/get a specific column width.**
 ```python
 column_width(column = None, width = None, only_set_if_too_small = False, redraw = True)
 ```
@@ -946,6 +956,7 @@ set_width_of_index_to_text(recreate = True)
 
 ___
 
+#### **Set/get a specific row height.**
 ```python
 row_height(row = None, height = None, only_set_if_too_small = False, redraw = True)
 ```
@@ -1084,35 +1095,35 @@ get_all_selection_boxes_with_types()
 
 ___
 
-Check if cell is selected, returns `bool`.
+#### **Check if cell is selected, returns `bool`.**
 ```python
 cell_selected(r, c)
 ```
 
 ___
 
-Check if row is selected, returns `bool`.
+#### **Check if row is selected, returns `bool`.**
 ```python
 row_selected(r)
 ```
 
 ___
 
-Check if column is selected, returns `bool`.
+#### **Check if column is selected, returns `bool`.**
 ```python
 column_selected(c)
 ```
 
 ___
 
-Check if any cells, rows or columns are selected, there are options for exclusions, returns `bool`.
+#### **Check if any cells, rows or columns are selected, there are options for exclusions, returns `bool`.**
 ```python
 anything_selected(exclude_columns = False, exclude_rows = False, exclude_cells = False)
 ```
 
 ___
 
-Check if user has entire table selected, returns `bool`.
+#### **Check if user has the entire table selected, returns `bool`.**
 ```python
 all_selected()
 ```
@@ -1226,20 +1237,21 @@ deselect(row = None, column = None, cell = None, redraw = True)
 ## **Modifying and Getting Scroll Positions**
 ----
 
+#### **See / scroll to a specific cell on the sheet.**
 ```python
 see(row = 0, column = 0, keep_yscroll = False, keep_xscroll = False, bottom_right_corner = False, check_cell_visibility = True)
 ```
 
 ___
 
-Check if a cell has any part of it visible, returns `bool`.
+#### **Check if a cell has any part of it visible, returns `bool`.**
 ```python
 cell_visible(r, c)
 ```
 
 ___
 
-Check if a cell is totally visible, returns `bool`.
+#### **Check if a cell is totally visible, returns `bool`.**
 ```python
 cell_completely_visible(r, c, seperate_axes = False)
 ```
@@ -1315,7 +1327,7 @@ readonly_index(rows = [], readonly = True, redraw = True)
 ## **Hiding Columns**
 ----
 
-Display only certain columns.
+#### **Display only certain columns.**
 ```python
 display_columns(columns = None,
                 all_columns_displayed = None,
@@ -1329,7 +1341,7 @@ display_columns(columns = None,
 
 ___
 
-Hide specific columns.
+#### **Hide specific columns.**
 ```python
 hide_columns(columns = set(),
              refresh = True, 
@@ -1340,7 +1352,7 @@ hide_columns(columns = set(),
 ## **Hiding Table Elements**
 ----
 
-Hide parts of the table or all of it
+#### **Hide parts of the table or all of it.**
 ```python
 hide(canvas = "all")
 ```
@@ -1349,7 +1361,7 @@ hide(canvas = "all")
 
 ___
 
-Show parts of the table or all of it
+#### **Show parts of the table or all of it.**
 ```python
 show(canvas = "all")
 ```
@@ -1359,7 +1371,7 @@ show(canvas = "all")
 ## **Cell Text Editor**
 ----
 
-Open the currently selected cell in the main table.
+#### **Open the currently selected cell in the main table.**
 ```python
 open_cell(ignore_existing_editor = True)
 ```
@@ -1367,7 +1379,7 @@ open_cell(ignore_existing_editor = True)
 
 ___
 
-Open the currently selected cell but in the header.
+#### **Open the currently selected cell but in the header.**
 ```python
 open_header_cell(ignore_existing_editor = True)
 ```
@@ -1375,7 +1387,7 @@ open_header_cell(ignore_existing_editor = True)
 
 ___
 
-Open the currently selected cell but in the index.
+#### **Open the currently selected cell but in the index.**
 ```python
 open_index_cell(ignore_existing_editor = True)
 ```
@@ -1414,7 +1426,7 @@ unbind_key_text_editor(key)
 ## **Dropdown Boxes**
 ----
 
-Create a dropdown box (only creates the arrow and border and sets it up for usage, does not pop open the box).
+#### **Create a dropdown box (only creates the arrow and border and sets it up for usage, does not pop open the box).**
 ```python
 create_dropdown(r = 0,
                 c = 0,
@@ -1460,7 +1472,7 @@ Notes:
 
 ___
 
-Get chosen dropdown boxes values.
+#### **Get chosen dropdown boxes values.**
 ```python
 get_dropdown_values(r = 0, c = 0)
 ```
@@ -1475,7 +1487,7 @@ get_index_dropdown_values(r = 0)
 
 ___
 
-Set the values and displayed value of a chosen dropdown box.
+#### **Set the values and displayed value of a chosen dropdown box.**
 ```python
 set_dropdown_values(r = 0, c = 0, set_existing_dropdown = False, values = [], displayed = None)
 ```
@@ -1494,7 +1506,7 @@ set_index_dropdown_values(r = 0, set_existing_dropdown = False, values = [], dis
 
 ___
 
-Set and get bound dropdown functions.
+#### **Set and get bound dropdown functions.**
 ```python
 dropdown_functions(r, c, selection_function = "", modified_function = "")
 ```
@@ -1509,7 +1521,7 @@ index_dropdown_functions(r, selection_function = "", modified_function = "")
 
 ___
 
-Delete dropdown boxes.
+#### **Delete dropdown boxes.**
 ```python
 delete_dropdown(r = 0, c = 0)
 ```
@@ -1526,7 +1538,7 @@ delete_index_dropdown(r = 0)
 
 ___
 
-Get a dictionary of all dropdown boxes; keys: `(row int, column int)` and values: `(ttk combobox widget, tk canvas window object)`
+#### **Get a dictionary of all dropdown boxes**
 ```python
 get_dropdowns()
 ```
@@ -1538,10 +1550,19 @@ get_header_dropdowns()
 ```python
 get_index_dropdowns()
 ```
+Returns:
+```python
+{(row int, column int): {'values': values,
+                         'window': "no dropdown open",
+                         'canvas_id': "no dropdown open",
+                         'select_function': selection_function,
+                         'modified_function': modified_function,
+                         'state': state}}
+```
 
 ___
 
-Pop open a dropdown box.
+#### **Pop open a dropdown box.**
 ```python
 open_dropdown(r, c)
 ```
@@ -1556,7 +1577,7 @@ open_index_dropdown(r)
 
 ___
 
-Close an already open dropdown box.
+#### **Close an already open dropdown box.**
 ```python
 close_dropdown(r, c)
 ```
@@ -1574,7 +1595,7 @@ close_index_dropdown(r)
 ## **Check Boxes**
 ----
 
-Create a check box.
+#### **Create a check box.**
 ```python
 create_checkbox(r,
                 c,
@@ -1616,7 +1637,7 @@ Notes:
 
 ___
 
-Set or toggle a checkbox.
+#### **Set or toggle a checkbox.**
 ```python
 click_checkbox(r, c, checked = None)
 ```
@@ -1631,7 +1652,7 @@ click_index_checkbox(r, checked = None)
 
 ___
 
-Get a dictionary of all check box dictionaries.
+#### **Get a dictionary of all check box dictionaries.**
 ```python
 get_checkboxes()
 ```
@@ -1646,7 +1667,7 @@ get_index_checkboxes()
 
 ___
 
-Delete a checkbox.
+#### **Delete a checkbox.**
 ```python
 delete_checkbox(r = 0, c = 0)
 ```
@@ -1663,7 +1684,7 @@ delete_index_checkbox(r = 0)
 
 ___
 
-Set or get information about a particular checkbox.
+#### **Set or get information about a particular checkbox.**
 ```python
 checkbox(r,
          c,
@@ -1695,29 +1716,93 @@ index_checkbox(r,
 ## **Cell Formatting**
 ----
 
-While tksheet can store and display any datatype with a `__str__()` method, by default tksheet stores all user inputted data as strings, this has some obvious limitations. Cell formatting aims to provide greater functionality when working with different datatypes and provide strict typing for the sheet. With formatting you can convert sheet data and user input to a specific datatype. Additionally, formatting also provides a function for displaying data on the table GUI (as a rounded float for example) and logic for handling invalid and missing data. tksheet has several basic built-in formatters and provides functionality for creating your own custom formats as well. A demonstration of all the built-in and custom formatters can be found [here](https://github.com/ragardner/tksheet/wiki#example-using-and-creating-formatters).
+By default tksheet stores all user inputted data as strings and while tksheet can store and display any datatype with a `__str__()` method this has some obvious limitations. 
+
+Cell formatting aims to provide greater functionality when working with different datatypes and provide strict typing for the sheet. With formatting you can convert sheet data and user input to a specific datatype. 
+
+Additionally, formatting also provides a function for displaying data on the table GUI (as a rounded float for example) and logic for handling invalid and missing data. 
+
+tksheet has several basic built-in formatters and provides functionality for creating your own custom formats as well. 
+
+A demonstration of all the built-in and custom formatters can be found [here](https://github.com/ragardner/tksheet/wiki#example-using-and-creating-formatters).
 
 ### **Basic Intialisation**
 ----
 
-Applying a format to cell:
+#### **Applying a format to cell:**
 
 ```python
 format_cell(r, c, formatter_options = {}, formatter_class = None, **kwargs)
 ```
+Notes:
+- `format_cell()` using `all` will not make added cells (such as with a sheet expanding paste) formatted. For that you will have to use `format_row()`/`format_column()`/`format_sheet()`.
+
+Arguments:
 - `r` (`int` or `"all"`) the row index to apply the formatter to.
 - `c` (`int` or `"all"`) the column index to apply the formatter to.
 - `formatter_options` (`dict`) a dictionary of keyword options/arguements to pass to the formatter.
 - `formatter_class` (`class`) in case you want to use a custom class to store functions and information as opposed to using the built-in methods.
 - `**kwargs` any additional keyword options/arguements to pass to the formatter.
 
-Clearing a format from a cell:
+#### **Clearing a format from a cell:**
 
 ```python
-delete_format(r, c, clear_values = False)
+delete_cell_format(r, c, clear_values = False)
 ```
 - `r` (`int` or `"all"`) the row index to remove the cell formats from.
 - `c` (`int` or `"all"`) the column index to remove the cell formats from.
+- `clear_values` (`bool`) if true, the cell values will also be deleted.
+
+#### **Applying a format to a row:**
+
+```python
+format_row(r, formatter_options = {}, formatter_class = None, **kwargs)
+```
+- `r` (`int`, `Iterable[int]` or `"all"`) the row index to apply the formatter to.
+- `formatter_options` (`dict`) a dictionary of keyword options/arguements to pass to the formatter.
+- `formatter_class` (`class`) in case you want to use a custom class to store functions and information as opposed to using the built-in methods.
+- `**kwargs` any additional keyword options/arguements to pass to the formatter.
+
+#### **Clearing a format from a row:**
+
+```python
+delete_row_format(r, clear_values = False)
+```
+- `r` (`int`, `Iterable[int]` or `"all"`) the row index to remove the cell formats from.
+- `clear_values` (`bool`) if true, the cell values will also be deleted.
+
+#### **Applying a format to a column:**
+
+```python
+format_column(c, formatter_options = {}, formatter_class = None, **kwargs)
+```
+- `c` (`int`, `Iterable[int]` or `"all"`) the column index to apply the formatter to.
+- `formatter_options` (`dict`) a dictionary of keyword options/arguements to pass to the formatter.
+- `formatter_class` (`class`) in case you want to use a custom class to store functions and information as opposed to using the built-in methods.
+- `**kwargs` any additional keyword options/arguements to pass to the formatter.
+
+#### **Clearing a format from a column:**
+
+```python
+delete_column_format(c, clear_values = False)
+```
+- `c` (`int`, `Iterable[int]` or `"all"`) the column index to remove the cell formats from.
+- `clear_values` (`bool`) if true, the cell values will also be deleted.
+
+#### **Applying a format to the whole sheet:**
+
+```python
+format_sheet(formatter_options = {}, formatter_class = None, **kwargs)
+```
+- `formatter_options` (`dict`) a dictionary of keyword options/arguements to pass to the formatter.
+- `formatter_class` (`class`) in case you want to use a custom class to store functions and information as opposed to using the built-in methods.
+- `**kwargs` any additional keyword options/arguements to pass to the formatter.
+
+#### **Clearing a format from the whole sheet:**
+
+```python
+delete_sheet_format(clear_values = False)
+```
 - `clear_values` (`bool`) if true, the cell values will also be deleted.
 
 ### **Formatter Options and In-Built Formatters**
@@ -1727,32 +1812,34 @@ tksheet provides a number of in-built formatters, in addition to the base `forma
 
 ```python
 formatter(datatypes,
-          format_func,
-          to_str_func = to_str,
+          format_function,
+          to_str_function = to_str,
           invalid_value = "NA",
           nullable = True,
-          pre_format_func = None,
-          post_format_func = None,
-          clipboard_func = None,
+          pre_format_function = None,
+          post_format_function = None,
+          clipboard_function = None,
           **kwargs)
 ```
 
 This is the generic formatter options interface. You can use this to create your own custom formatters. The following options are available. Note that all these options can also be passed to the `format_cell()` function as keyword arguments and are available as attributes for all formatters. You can provide functions of your own creation for all the below arguments which take functions if you require.
 
 - `datatypes` (`list`) a list of datatypes that the formatter will accept. For example, `datatypes = [int, float]` will accept integers and floats.
-- `format_func` (`function`) a function that takes a string and returns a value of the desired datatype. For example, `format_func = int` will convert a string to an integer.
-- `to_str_func` (`function`) a function that takes a value of the desired datatype and returns a string. This determines how the formatter displays its data on the table. For example, `to_str_func = str` will convert an integer to a string. Defaults to `tksheet.to_str`.
+- `format_function` (`function`) a function that takes a string and returns a value of the desired datatype. For example, `format_function = int` will convert a string to an integer.
+- `to_str_function` (`function`) a function that takes a value of the desired datatype and returns a string. This determines how the formatter displays its data on the table. For example, `to_str_function = str` will convert an integer to a string. Defaults to `tksheet.to_str`.
 - `invalid_value` (`any`) the value to return if the input string is invalid. For example, `invalid_value = "NA"` will return "NA" if the input string is invalid.
 - `nullable` (`bool`) if true, the formatter will accept `None` as a valid input.
-- `pre_format_func` (`function`) a function that takes a input string and returns a string. This function is called before the `format_func` and can be used to modify the input string before it is converted to the desired datatype. This can be useful if you want to strip out unwanted characters or convert a string to a different format before converting it to the desired datatype.
-- `post_format_func` (`function`) a function that takes a value of the desired datatype and returns a value of the desired datatype. This function is called after the `format_func` and can be used to modify the output value after it is converted to the desired datatype. This can be useful if you want to round a float for example.
-- `clipboard_func` (`function`) a function that takes a value of the desired datatype and returns a string. This function is called when the cell value is copied to the clipboard. This can be useful if you want to convert a value to a different format before it is copied to the clipboard.
-- `**kwargs` any additional keyword options/arguements to pass to the formatter. These keyword arguments will be passed to the `format_func`, `to_str_func`, and the `clipboard_func`. These can be useful if you want to specifiy any additional formatting options, such as the number of decimal places to round to.
+- `pre_format_function` (`function`) a function that takes a input string and returns a string. This function is called before the `format_function` and can be used to modify the input string before it is converted to the desired datatype. This can be useful if you want to strip out unwanted characters or convert a string to a different format before converting it to the desired datatype.
+- `post_format_function` (`function`) a function that takes a value of the desired datatype and returns a value of the desired datatype. This function is called after the `format_function` and can be used to modify the output value after it is converted to the desired datatype. This can be useful if you want to round a float for example.
+- `clipboard_function` (`function`) a function that takes a value of the desired datatype and returns a string. This function is called when the cell value is copied to the clipboard. This can be useful if you want to convert a value to a different format before it is copied to the clipboard.
+- `**kwargs` any additional keyword options/arguements to pass to the formatter. These keyword arguments will be passed to the `format_function`, `to_str_function`, and the `clipboard_function`. These can be useful if you want to specifiy any additional formatting options, such as the number of decimal places to round to.
+
+#### **Int Formatter**
 
 ```python
 int_formatter(datatypes = int,
-              format_func = to_int,
-              to_str_func = to_str,
+              format_function = to_int,
+              to_str_function = to_str,
               invalid_value = "NaN",
               **kwargs,
               ):
@@ -1760,8 +1847,8 @@ int_formatter(datatypes = int,
 
 The `int_formatter` is the basic configuration for a simple interger formatter.
 
- - `format_func` (`function`) a function that takes a string and returns an `int`. By default, this is set to the in-built `tksheet.to_int`. This function will always convert float-likes to its floor, for example `"5.9"` will be converted to `5`.
- - `to_str_func` (`function`) By default, this is set to the in-built `tksheet.to_str`, which is a very basic function that will displace the default string representation of the value.
+ - `format_function` (`function`) a function that takes a string and returns an `int`. By default, this is set to the in-built `tksheet.to_int`. This function will always convert float-likes to its floor, for example `"5.9"` will be converted to `5`.
+ - `to_str_function` (`function`) By default, this is set to the in-built `tksheet.to_str`, which is a very basic function that will displace the default string representation of the value.
 
 Usage:
 
@@ -1769,10 +1856,12 @@ Usage:
 sheet.format_cell(0, 0, formatter_options = tksheet.int_formatter())
 ```
 
+#### **Float Formatter**
+
 ```python
 float_formatter(datatypes = float,
-                format_func = to_float,
-                to_str_func = float_to_str,
+                format_function = to_float,
+                to_str_function = float_to_str,
                 invalid_value = "NaN",
                 decimals = 2,
                 **kwargs
@@ -1781,8 +1870,8 @@ float_formatter(datatypes = float,
 
 The `float_formatter` is the basic configuration for a simple float formatter. It will always round float-likes to the specified number of decimal places, for example `"5.999"` will be converted to `"6.0"` if `decimals = 1`.
 
- - `format_func` (`function`) a function that takes a string and returns a `float`. By default, this is set to the in-built `tksheet.to_float`. This function will always convert percentages to their decimal equivalent, for example `"5%"` will be converted to `0.05`.
- - `to_str_func` (`function`) By default, this is set to the in-built `tksheet.float_to_str`, which will display the float to the specified number of decimal places.
+ - `format_function` (`function`) a function that takes a string and returns a `float`. By default, this is set to the in-built `tksheet.to_float`. This function will always convert percentages to their decimal equivalent, for example `"5%"` will be converted to `0.05`.
+ - `to_str_function` (`function`) By default, this is set to the in-built `tksheet.float_to_str`, which will display the float to the specified number of decimal places.
  - `decimals` (`int`, `None`) the number of decimal places to round to. Defaults to `2`.
 
 Usage:
@@ -1791,10 +1880,12 @@ Usage:
 sheet.format_cell(0, 0, formatter_options = tksheet.float_formatter(decimals = None)) # A float formatter with maximum float() decimal places
 ```
 
+#### **Percentage Formatter**
+
 ```python
 percentage_formatter(datatypes = float,
-                     format_func = to_float,
-                     to_str_func = percentage_to_str,
+                     format_function = to_float,
+                     to_str_function = percentage_to_str,
                      invalid_value = "NaN",
                      decimals = 0,
                      **kwargs,
@@ -1803,20 +1894,22 @@ percentage_formatter(datatypes = float,
 
 The `percentage_formatter` is the basic configuration for a simple percentage formatter. It will always round float-likes as a percentage to the specified number of decimal places, for example `"5.999%"` will be converted to `"6.0%"` if `decimals = 1`.
 
- - `format_func` (`function`) a function that takes a string and returns a `float`. By default, this is set to the in-built `tksheet.to_float`. This function will always convert percentages to their decimal equivalent, for example `"5%"` will be converted to `0.05`.
- - `to_str_func` (`function`) By default, this is set to the in-built `tksheet.percentage_to_str`, which will display the float as a percentage to the specified number of decimal places. For example, `0.05` will be displayed as `"5.0%"`.
+ - `format_function` (`function`) a function that takes a string and returns a `float`. By default, this is set to the in-built `tksheet.to_float`. This function will always convert percentages to their decimal equivalent, for example `"5%"` will be converted to `0.05`.
+ - `to_str_function` (`function`) By default, this is set to the in-built `tksheet.percentage_to_str`, which will display the float as a percentage to the specified number of decimal places. For example, `0.05` will be displayed as `"5.0%"`.
  - `decimals` (`int`) the number of decimal places to round to. Defaults to `0`. 
 
-Useage:
+Usage:
 
 ```python
 sheet.format_cell(0, 0, formatter_options = tksheet.percentage_formatter(decimals = 1)) # A percentage formatter with 1 decimal place
 ```
 
+#### **Bool Formatter**
+
 ```python
 bool_formatter(datatypes = bool,
-               format_func = to_bool,
-               to_str_func = bool_to_str,
+               format_function = to_bool,
+               to_str_function = bool_to_str,
                invalid_value = "NA",
                truthy = truthy,
                falsy = falsy,
@@ -1824,10 +1917,10 @@ bool_formatter(datatypes = bool,
                )
 ```
 
- - `format_func` (`function`) a function that takes a string and returns a `bool`. By default, this is set to the in-built `tksheet.to_bool`.
- - `to_str_func` (`function`) By default, this is set to the in-built `tksheet.bool_to_str`, which will display the boolean as `"True"` or `"False"`.
- - `truthy` (`list`) a list of values that will be converted to `True`. Defaults to the in-built `tksheet.truthy`.
- - `falsy` (`list`) a list of values that will be converted to `False`. Defaults to the in-built `tksheet.falsy`.
+ - `format_function` (`function`) a function that takes a string and returns a `bool`. By default, this is set to the in-built `tksheet.to_bool`.
+ - `to_str_function` (`function`) By default, this is set to the in-built `tksheet.bool_to_str`, which will display the boolean as `"True"` or `"False"`.
+ - `truthy` (`set`) a set of values that will be converted to `True`. Defaults to the in-built `tksheet.truthy`.
+ - `falsy` (`set`) a set of values that will be converted to `False`. Defaults to the in-built `tksheet.falsy`.
 
 Usage:
 
@@ -1839,7 +1932,7 @@ sheet.format_cell(0, 0, formatter_options = tksheet.bool_formatter(truthy = tksh
 ### **Datetime Formatters and Designing Your Own Custom Formatters**
 ----
 
-tksheet is for the time being a dependency-free library and so doesn't include a datetime parser as is (python lacks a sufficiently comprehensive native datetime parser which covers a wide enough range of possible datetime formats to be useful). 
+tksheet is at the moment a dependency free library and so doesn't include a datetime parser as is.
 
 You can however very easily make a datetime parser if you are willing to install a third-party package. Recommended are:
 
@@ -1857,7 +1950,7 @@ from dateutil.parser import parse
 
 def to_local_datetime(dt, **kwargs):
     '''
-    Our custom format_func, converts a string or a date to a datetime object in the local timezone.
+    Our custom format_function, converts a string or a date to a datetime object in the local timezone.
     '''
     if isinstance(dt, datetime):
         pass # Do nothing
@@ -1875,13 +1968,13 @@ def to_local_datetime(dt, **kwargs):
 
 def datetime_to_str(dt, **kwargs):
     '''
-    Our custom to_str_func, converts a datetime object to a string with a format that can be specfied in kwargs.
+    Our custom to_str_function, converts a datetime object to a string with a format that can be specfied in kwargs.
     '''
     return dt.strftime(kwargs['format'])
 # Now we can create our custom formatter dictionary from the generic formatter interface in tksheet
 datetime_formatter = formatter(datatypes = datetime,
-                               format_func = to_local_datetime,
-                               to_str_func = datetime_to_str,
+                               format_function = to_local_datetime,
+                               to_str_function = datetime_to_str,
                                invalid_value = "NaT",
                                format = "%d/%m/%Y %H:%M:%S",
                                )
@@ -2563,23 +2656,23 @@ class demo(tk.Tk):
         # ---------------- Custom Formatters -----------------
         # Custom using generic formatter interface
         self.sheet.format_cell('all', 5, formatter_options = formatter(datatypes = datetime, 
-                                                                       format_func = convert_to_local_datetime, 
-                                                                       to_str_func = datetime_to_string, 
+                                                                       format_function = convert_to_local_datetime, 
+                                                                       to_str_function = datetime_to_string, 
                                                                        nullable = False,
                                                                        invalid_value = 'NaT',
                                                                        ))
         # Custom format
         self.sheet.format_cell('all', 6, datatypes = datetime, 
-                                         format_func = convert_to_local_datetime, 
-                                         to_str_func = custom_datetime_to_str, 
+                                         format_function = convert_to_local_datetime, 
+                                         to_str_function = custom_datetime_to_str, 
                                          nullable = True,
                                          invalid_value = 'NaT',
                                          format = '(%Y-%m-%d) %H:%M %p'
                                          )
         
         # Unique cell behaviour using the post_conversion_function
-        self.sheet.format_cell('all', 7, formatter_options = float_formatter(post_format_func = round_up))
-        self.sheet.format_cell('all', 8, formatter_options = float_formatter(), pre_format_func = only_numeric)
+        self.sheet.format_cell('all', 7, formatter_options = float_formatter(post_format_function = round_up))
+        self.sheet.format_cell('all', 8, formatter_options = float_formatter(), pre_format_function = only_numeric)
 
         self.sheet.create_dropdown('all', 9, values = ['', '104%', .24, "300%", 'not a number'], set_value = 1)
         self.sheet.format_cell('all', 9, formatter_options = percentage_formatter(), decimals = 0)
