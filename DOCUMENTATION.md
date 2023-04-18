@@ -1723,12 +1723,18 @@ Cell formatting aims to provide greater functionality when working with differen
 
 Additionally, formatting also provides a function for displaying data on the table GUI (as a rounded float for example) and logic for handling invalid and missing data. 
 
-tksheet has several basic built-in formatters and provides functionality for creating your own custom formats as well. 
+tksheet has several basic built-in formatters and provides functionality for creating your own custom formats as well.
 
 A demonstration of all the built-in and custom formatters can be found [here](https://github.com/ragardner/tksheet/wiki#example-using-and-creating-formatters).
 
 ### **Basic Intialisation**
 ----
+
+Note when applying multiple overlapping formats with e.g. a formatted cell which overlaps a formatted row, the priority is as follows:
+- Cell formats first.
+- Row formats second.
+- Column formats third.
+- Sheet format (using `format_sheet()`) last.
 
 #### **Applying a format to cell:**
 

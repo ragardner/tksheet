@@ -12,6 +12,9 @@
 - `set_copy` arg in `set_cell_data()`
 - `return_copy` arg in data getting functions but will not generate error if used as keyword arg
 
+#### Improved:
+- `"dark"`/`"black"` themes
+
 #### Changed:
 - Checkbox click extra binding and edit cell extra binding (when associated with a checkbox click) return `bool` now, not `str`
 - `get_cell_data()`/`get_row_data()`/`get_column_data()` now return empty string/s if index is out of bounds (instead of `None`s)

@@ -624,7 +624,7 @@ class MainTable(tk.Canvas):
                     (not self.ctrl_keys_over_dropdowns_enabled and 
                      (datarn, datacn) in self.cell_options and 
                      'dropdown' in self.cell_options[(datarn, datacn)] and
-                     'format' not in self.cell_options[(datarn, datacn)] and
+                     not self.get_format_kwargs(datarn, datacn) and
                      data[ndr][ndc] not in self.cell_options[(datarn, datacn)]['dropdown']['values'])
                     ): # formatters deal with invalid values so not an issue if dropdown combined with format and invalid value input
                     continue

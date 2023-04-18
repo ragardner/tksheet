@@ -917,23 +917,24 @@ class Sheet(tk.Frame):
         if deselect_all:
             self.deselect("all", redraw = False)
         if isinstance(rows, set):
-            _rows = rows
+            to_del = rows
         else:
-            _rows = set(rows)
-        self.MT.data[:] = [row for r, row in enumerate(self.MT.data) if r not in _rows]
-        rhs = tuple(int(b - a) for a, b in zip(self.MT.row_positions, islice(self.MT.row_positions, 1, len(self.MT.row_positions))))
+            to_del = set(rows)
+        if not to_del:
+            return
+        self.MT.data[:] = [row for r, row in enumerate(self.MT.data) if r not in to_del]
         if self.MT.all_rows_displayed:
-            self.set_row_heights(row_heights = tuple(h for r, h in enumerate(rhs) if r not in _rows))
+            self.set_row_heights(row_heights = (h for r, h in enumerate(int(b - a) for a, b in zip(self.MT.row_positions, islice(self.MT.row_positions, 1, len(self.MT.row_positions)))) if r not in to_del))
         else:
             dispset = set(self.MT.displayed_rows)
             heights_to_del = {i for i, r in enumerate(to_bis) if r in dispset}
             if heights_to_del:
-                self.set_row_heights(row_heights = tuple(h for r, h in enumerate(rhs) if r not in heights_to_del))
-            self.MT.displayed_rows = [r for r in self.MT.displayed_rows if r not in _rows]
-        to_bis = sorted(_rows)
-        self.MT.cell_options = {(r if not bisect.bisect_left(to_bis, r) else r - bisect.bisect_left(to_bis, r), c): v for (r, c), v in self.MT.cell_options.items() if r not in _rows}
-        self.MT.row_options = {r if not bisect.bisect_left(to_bis, r) else r - bisect.bisect_left(to_bis, r): v for r, v in self.MT.row_options.items() if r not in _rows}
-        self.RI.cell_options = {r if not bisect.bisect_left(to_bis, r) else r - bisect.bisect_left(to_bis, r): v for r, v in self.RI.cell_options.items() if r not in _rows}
+                self.set_row_heights(row_heights = (h for r, h in enumerate(int(b - a) for a, b in zip(self.MT.row_positions, islice(self.MT.row_positions, 1, len(self.MT.row_positions)))) if r not in heights_to_del))
+            self.MT.displayed_rows = [r for r in self.MT.displayed_rows if r not in to_del]
+        to_bis = sorted(to_del)
+        self.MT.cell_options = {(r if not bisect.bisect_left(to_bis, r) else r - bisect.bisect_left(to_bis, r), c): v for (r, c), v in self.MT.cell_options.items() if r not in to_del}
+        self.MT.row_options = {r if not bisect.bisect_left(to_bis, r) else r - bisect.bisect_left(to_bis, r): v for r, v in self.MT.row_options.items() if r not in to_del}
+        self.RI.cell_options = {r if not bisect.bisect_left(to_bis, r) else r - bisect.bisect_left(to_bis, r): v for r, v in self.RI.cell_options.items() if r not in to_del}
         self.set_refresh_timer(redraw)
 
     def insert_row_position(self, idx = "end", height = None, deselect_all = False, redraw = False):
@@ -1025,16 +1026,18 @@ class Sheet(tk.Frame):
             to_del = columns
         else:
             to_del = set(columns)
+        if not to_del:
+            return
         self.MT.data[:] = [[e for c, e in enumerate(r) if c not in to_del] for r in self.MT.data]
         to_bis = sorted(to_del)
-        cws = tuple(int(b - a) for a, b in zip(self.MT.col_positions, islice(self.MT.col_positions, 1, len(self.MT.col_positions))))
+        cws = tuple()
         if self.MT.all_columns_displayed:
-            self.set_column_widths(column_widths = tuple(w for c, w in enumerate(cws) if c not in to_del))
+            self.set_column_widths(column_widths = (w for c, w in enumerate(int(b - a) for a, b in zip(self.MT.col_positions, islice(self.MT.col_positions, 1, len(self.MT.col_positions)))) if c not in to_del))
         else:
             dispset = set(self.MT.displayed_columns)
             widths_to_del = {i for i, c in enumerate(to_bis) if c in dispset}
             if widths_to_del:
-                self.set_column_widths(column_widths = tuple(w for c, w in enumerate(cws) if c not in widths_to_del))
+                self.set_column_widths(column_widths = (w for c, w in enumerate(int(b - a) for a, b in zip(self.MT.col_positions, islice(self.MT.col_positions, 1, len(self.MT.col_positions)))) if c not in widths_to_del))
             self.MT.displayed_columns = [c if not bisect.bisect_left(to_bis, c) else c - bisect.bisect_left(to_bis, c) for c in self.MT.displayed_columns if c not in to_del]
         self.MT.cell_options = {(r, c if not bisect.bisect_left(to_bis, c) else c - bisect.bisect_left(to_bis, c)): v for (r, c), v in self.MT.cell_options.items() if c not in to_del}
         self.MT.col_options = {c if not bisect.bisect_left(to_bis, c) else c - bisect.bisect_left(to_bis, c): v for c, v in self.MT.col_options.items() if c not in to_del}
@@ -2792,8 +2795,7 @@ class Sheet(tk.Frame):
             self.MT.format_cell(datarn = r,
                                 datacn = c, 
                                 **{'formatter': formatter_class, **formatter_options, **kwargs})
-        if redraw:
-            self.MT.refresh()
+        self.set_refresh_timer(redraw)
 
     def delete_cell_format(self,
                            r,
@@ -2830,6 +2832,7 @@ class Sheet(tk.Frame):
                 self.MT.format_row(r_, **{'formatter': formatter_class, **formatter_options, **kwargs})
         else:
             self.MT.format_row(r, **{'formatter': formatter_class, **formatter_options, **kwargs})
+        self.set_refresh_timer(redraw)
 
     def delete_row_format(self, r, clear_values = False):
         if is_iterable(r):
@@ -2853,6 +2856,7 @@ class Sheet(tk.Frame):
                 self.MT.format_column(c_, **{'formatter': formatter_class, **formatter_options, **kwargs})
         else:
             self.MT.format_column(c, **{'formatter': formatter_class, **formatter_options, **kwargs})
+        self.set_refresh_timer(redraw)
 
     def delete_column_format(self, c, clear_values = False):
         if is_iterable(c):
@@ -2861,8 +2865,13 @@ class Sheet(tk.Frame):
         else:
             self.MT.delete_column_format(c, clear_values = clear_values)
 
-    def format_sheet(self, clear_values = False):
+    def format_sheet(self, 
+                     formatter_options = {},
+                     formatter_class = None,
+                     redraw = True,
+                     **kwargs):
         self.MT.format_sheet(**{'formatter': formatter_class, **formatter_options, **kwargs})
+        self.set_refresh_timer(redraw)
         
     def delete_sheet_format(self, clear_values = False):
         self.MT.delete_sheet_format(clear_values = clear_values)

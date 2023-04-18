@@ -140,11 +140,11 @@ theme_black = {
 'top_left_fg': "#505054",
 'top_left_fg_highlight': "#FBB86C",
 'table_bg': "#000000",
-'table_grid_fg': "#505054",
-'table_fg': "#F2F2F2",
+'table_grid_fg': "#595959",
+'table_fg': "#E3E3E3",
 'table_selected_cells_border_fg': "#FBB86C",
-'table_selected_cells_bg': "#333333",
-'table_selected_cells_fg': "#FFFFFF",
+'table_selected_cells_bg': "#404040",
+'table_selected_cells_fg': "#F7F7F7",
 'resizing_line_fg': "white",
 'drag_and_drop_bg': "#ecf0f2",
 'outline_color': "gray95",
@@ -153,11 +153,11 @@ theme_black = {
 'index_selected_rows_bg': "#FBB86C",
 'index_selected_rows_fg': "#000000",
 'table_selected_rows_border_fg': "#FBB86C",
-'table_selected_rows_bg': "#333333",
-'table_selected_rows_fg': "#FFFFFF",
+'table_selected_rows_bg': "#404040",
+'table_selected_rows_fg': "#F7F7F7",
 'table_selected_columns_border_fg': "#FBB86C",
-'table_selected_columns_bg': "#333333",
-'table_selected_columns_fg': "#FFFFFF"
+'table_selected_columns_bg': "#404040",
+'table_selected_columns_fg': "#F7F7F7"
 }
 
 theme_dark = {
@@ -179,15 +179,15 @@ theme_dark = {
 'index_fg': "gray70",
 'index_selected_cells_bg': "#545454",
 'index_selected_cells_fg': "#6aa2fc",
-'top_left_bg': "#323232",
+'top_left_bg': "#141414",
 'top_left_fg': "#505054",
 'top_left_fg_highlight': "white",
-'table_bg': "#323232",
-'table_grid_fg': "#505054",
-'table_fg': "#F2F2F2",
+'table_bg': "#000000",
+'table_grid_fg': "#595959",
+'table_fg': "#E3E3E3",
 'table_selected_cells_border_fg': "#6aa2fc",
-'table_selected_cells_bg': "#141414",
-'table_selected_cells_fg': "#fafafa",
+'table_selected_cells_bg': "#404040",
+'table_selected_cells_fg': "#F7F7F7",
 'resizing_line_fg': "white",
 'drag_and_drop_bg': "#ecf0f2",
 'outline_color': "gray95",
@@ -196,11 +196,11 @@ theme_dark = {
 'index_selected_rows_bg': "#4489F7",
 'index_selected_rows_fg': "white",
 'table_selected_rows_border_fg': "#4489F7",
-'table_selected_rows_bg': "#141414",
-'table_selected_rows_fg': "#fafafa",
+'table_selected_rows_bg': "#404040",
+'table_selected_rows_fg': "#F7F7F7",
 'table_selected_columns_border_fg': "#4489F7",
-'table_selected_columns_bg': "#141414",
-'table_selected_columns_fg': "#fafafa"
+'table_selected_columns_bg': "#404040",
+'table_selected_columns_fg': "#F7F7F7"
 }
 
 theme_dark_blue = theme_black.copy()
