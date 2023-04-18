@@ -2248,13 +2248,13 @@ class Sheet(tk.Frame):
 
     def get_total_rows(self, include_index = False):
         return self.MT.total_data_rows(include_index = include_index)
-    
+
     def get_total_columns(self, include_header = False):
         return self.MT.total_data_cols(include_header = include_header)
 
     def equalize_data_row_lengths(self):
         return self.MT.equalize_data_row_lengths()
-                    
+
     def display_columns(self,
                         columns = None,
                         all_columns_displayed = None,
@@ -2824,9 +2824,13 @@ class Sheet(tk.Frame):
                 self.MT.format_row(r_, **{'formatter': formatter_class, **formatter_options, **kwargs})
         else:
             self.MT.format_row(r, **{'formatter': formatter_class, **formatter_options, **kwargs})
-            
-    def delete_row_format(self, datarn, clear_values = False):
-        self.MT.delete_row_format(datarn, clear_values = clear_values)
+
+    def delete_row_format(self, r, clear_values = False):
+        if is_iterable(r):
+            for r_ in r:
+                self.MT.delete_row_format(r_, clear_values = clear_values)
+        else:
+            self.MT.delete_row_format(r, clear_values = clear_values)
 
     def format_column(self,
                       c,
@@ -2843,9 +2847,13 @@ class Sheet(tk.Frame):
                 self.MT.format_column(c_, **{'formatter': formatter_class, **formatter_options, **kwargs})
         else:
             self.MT.format_column(c, **{'formatter': formatter_class, **formatter_options, **kwargs})
-            
-    def delete_column_format(self, datacn, clear_values = False):
-        self.MT.delete_column_format(datacn, clear_values = clear_values)
+
+    def delete_column_format(self, c, clear_values = False):
+        if is_iterable(c):
+            for c_ in c:
+                self.MT.delete_column_format(c_, clear_values = clear_values)
+        else:
+            self.MT.delete_column_format(c, clear_values = clear_values)
 
     def format_sheet(self, clear_values = False):
         self.MT.format_sheet(**{'formatter': formatter_class, **formatter_options, **kwargs})

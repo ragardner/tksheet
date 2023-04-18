@@ -101,7 +101,7 @@ app.mainloop()
 ## **Initialization Options**
 ----
 
-This is a full list of all the start up arguments, the only required argument is the sheets parent, everything else has default arguments.
+**This is a full list of all the start up arguments, the only required argument is the sheets parent, everything else has default arguments.**
 
 ```python
 Sheet(
@@ -225,7 +225,7 @@ You can change these settings after initialization using the `set_options()` fun
 ## **Header and Index**
 ----
 
-Set the header to something non-default (if new header is shorter than total columns then default headers e.g. letters will be used on the end.
+#### **Set the header.**
 ```python
 headers(newheaders = None, index = None, reset_col_positions = False, show_headers_if_not_sheet = True, redraw = False)
 ```
@@ -235,7 +235,7 @@ headers(newheaders = None, index = None, reset_col_positions = False, show_heade
 
 ___
 
-Set the index to something non-default (if new index is shorter than total rows then default index e.g. numbers will be used on the end.
+#### **Set the index.**
 ```python
 row_index(newindex = None, index = None, reset_row_positions = False, show_index_if_not_sheet = True, redraw = False)
 ```
@@ -246,7 +246,7 @@ row_index(newindex = None, index = None, reset_row_positions = False, show_index
 ## **Setting Table Data**
 ----
 
-Set sheet data, overwrites any existing data.
+#### **Set sheet data, overwrites any existing data.**
 ```python
 set_sheet_data(data = [[]],
                reset_col_positions = True,
@@ -263,7 +263,7 @@ set_sheet_data(data = [[]],
 
 ___
 
-Set cell data, overwrites any existing data.
+#### **Set cell data, overwrites any existing data.**
 ```python
 set_cell_data(r, c, value = "", set_copy = True, redraw = False)
 ```
@@ -271,7 +271,7 @@ set_cell_data(r, c, value = "", set_copy = True, redraw = False)
 
 ___
 
-Insert a row into the sheet.
+#### **Insert a row into the sheet.**
 ```python
 insert_row(values = None, idx = "end", height = None, deselect_all = False, add_columns = False,
            redraw = False)
@@ -282,7 +282,7 @@ insert_row(values = None, idx = "end", height = None, deselect_all = False, add_
 
 ___
 
-Set column data, overwrites any existing data.
+#### **Set column data, overwrites any existing data.**
 ```python
 set_column_data(c, values = tuple(), add_rows = True, redraw = False)
 ```
@@ -290,7 +290,7 @@ set_column_data(c, values = tuple(), add_rows = True, redraw = False)
 
 ___
 
-Insert a column into the sheet.
+#### **Insert a column into the sheet.**
 ```python
 insert_column(values = None, idx = "end", width = None, deselect_all = False, add_rows = True, equalize_data_row_lengths = True,
               mod_column_positions = True,
@@ -299,7 +299,7 @@ insert_column(values = None, idx = "end", width = None, deselect_all = False, ad
 
 ___
 
-Insert multiple columns into the sheet.
+#### **Insert multiple columns into the sheet.**
 ```python
 insert_columns(columns = 1, idx = "end", widths = None, deselect_all = False, add_rows = True, equalize_data_row_lengths = True,
                mod_column_positions = True,
@@ -309,14 +309,14 @@ insert_columns(columns = 1, idx = "end", widths = None, deselect_all = False, ad
 
 ___
 
-Set row data, overwrites any existing data.
+#### **Set row data, overwrites any existing data.**
 ```python
 set_row_data(r, values = tuple(), add_columns = True, redraw = False)
 ```
 
 ___
 
-Insert multiple rows into the sheet.
+#### **Insert multiple rows into the sheet.**
 ```python
 insert_rows(rows = 1, idx = "end", heights = None, deselect_all = False, add_columns = True,
             redraw = False)
@@ -403,10 +403,11 @@ move_columns(moveto: int, to_move_min: int, number_of_columns: int, move_data: b
 
 ___
 
-Make all data rows the same length (same number of columns), goes by longest row. This will only affect the data variable, not visible columns.
+#### **Make all data rows the same length.**
 ```python
 equalize_data_row_lengths()
 ```
+- Makes every list in the table have the same number of elements, goes by longest list. This will only affect the data variable, not visible columns.
 
 ___
 
@@ -1735,7 +1736,7 @@ A demonstration of all the built-in and custom formatters can be found [here](ht
 format_cell(r, c, formatter_options = {}, formatter_class = None, **kwargs)
 ```
 Notes:
-- `format_cell()` using `all` will not make added cells (such as with a sheet expanding paste) formatted. For that you will have to use `format_row()`/`format_column()`/`format_sheet()`.
+- `format_cell()` using `all` will not make added cells (such as with a sheet expanding paste or right click insert rows) formatted. For that you will have to use `format_row()`/`format_column()`/`format_sheet()`.
 
 Arguments:
 - `r` (`int` or `"all"`) the row index to apply the formatter to.
@@ -1749,9 +1750,10 @@ Arguments:
 ```python
 delete_cell_format(r, c, clear_values = False)
 ```
+- Using `"all"` will not clear formats set by `format_row()`/`format_column()`.
 - `r` (`int` or `"all"`) the row index to remove the cell formats from.
 - `c` (`int` or `"all"`) the column index to remove the cell formats from.
-- `clear_values` (`bool`) if true, the cell values will also be deleted.
+- `clear_values` (`bool`) if true, the cell values will be set to `""`.
 
 #### **Applying a format to a row:**
 
@@ -1768,8 +1770,9 @@ format_row(r, formatter_options = {}, formatter_class = None, **kwargs)
 ```python
 delete_row_format(r, clear_values = False)
 ```
+- Using `"all"` will not clear formats set by `format_sheet()`.
 - `r` (`int`, `Iterable[int]` or `"all"`) the row index to remove the cell formats from.
-- `clear_values` (`bool`) if true, the cell values will also be deleted.
+- `clear_values` (`bool`) if true, the cell values will be set to `""`.
 
 #### **Applying a format to a column:**
 
@@ -1786,8 +1789,9 @@ format_column(c, formatter_options = {}, formatter_class = None, **kwargs)
 ```python
 delete_column_format(c, clear_values = False)
 ```
+- Using `"all"` will not clear formats set by `format_sheet()`.
 - `c` (`int`, `Iterable[int]` or `"all"`) the column index to remove the cell formats from.
-- `clear_values` (`bool`) if true, the cell values will also be deleted.
+- `clear_values` (`bool`) if true, the cell values will be set to `""`.
 
 #### **Applying a format to the whole sheet:**
 
@@ -1803,7 +1807,7 @@ format_sheet(formatter_options = {}, formatter_class = None, **kwargs)
 ```python
 delete_sheet_format(clear_values = False)
 ```
-- `clear_values` (`bool`) if true, the cell values will also be deleted.
+- `clear_values` (`bool`) if true, all the sheets cell values will be set to `""`.
 
 ### **Formatter Options and In-Built Formatters**
 ----
