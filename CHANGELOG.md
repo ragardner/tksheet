@@ -9,7 +9,7 @@
 - `format_cell()`, `format_row()`, `format_column()`, `format_sheet()`
 - Bindings `"up" "down" "left" "right" "prior" "next"` to enable arrowkey bindings individually use with `enable_bindings()`/`disable_bindings()`
 = Dropdowns now have a search feature which searches their values after the entry box is modified (if dropdown is state `normal`)
-- Dropdown kwargs `search_enabled` and `validate_input`
+- Dropdown kwargs `search_function` and `validate_input`
 
 #### Removed:
 - Startup arg `ctrl_keys_over_dropdowns_enabled`, also removed in `set_options()`
