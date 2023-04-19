@@ -46,22 +46,24 @@ def to_str(v: Any, **kwargs: dict) -> str:
     return f"{v}"
 
 def float_to_str(v: Union[int, float], **kwargs: dict) -> str:
-    if v.is_integer():
-        return f"{int(v)}"
-    if 'decimals' in kwargs and isinstance(kwargs['decimals'], int):
-        if kwargs['decimals']:
-            return f"{round(v, kwargs['decimals'])}"
-        return f"{int(round(v, kwargs['decimals']))}"
+    if isinstance(v, float):
+        if v.is_integer():
+            return f"{int(v)}"
+        if 'decimals' in kwargs and isinstance(kwargs['decimals'], int):
+            if kwargs['decimals']:
+                return f"{round(v, kwargs['decimals'])}"
+            return f"{int(round(v, kwargs['decimals']))}"
     return f"{v}"
 
 def percentage_to_str(v: Union[int, float], **kwargs: dict) -> str:
     x = v * 100
-    if x.is_integer():
-        return f"{int(x)}%"
-    if 'decimals' in kwargs and isinstance(kwargs['decimals'], int):
-        if kwargs['decimals']:
-            return f"{round(x, kwargs['decimals'])}%"
-        return f"{int(round(x, kwargs['decimals']))}%"
+    if isinstance(x, float):
+        if x.is_integer():
+            return f"{int(x)}%"
+        if 'decimals' in kwargs and isinstance(kwargs['decimals'], int):
+            if kwargs['decimals']:
+                return f"{round(x, kwargs['decimals'])}%"
+            return f"{int(round(x, kwargs['decimals']))}%"
     return f"{x}%"
 
 def bool_to_str(v: Any, **kwargs: dict) -> str:

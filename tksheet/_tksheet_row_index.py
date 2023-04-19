@@ -692,7 +692,7 @@ class RowIndex(tk.Canvas):
                     if (datarn, cn) in self.MT.cell_options and 'checkbox' in self.MT.cell_options[(datarn, cn)]:
                         txt = self.MT.cell_options[(datarn, cn)]['checkbox']['text']
                     else:
-                        txt = self.MT.get_valid_cell_data_as_str(datarn, datacn, get_displayed = True)
+                        txt = self.MT.get_valid_cell_data_as_str(datarn, cn, get_displayed = True)
                     if txt:
                         h = self.MT.GetTextHeight(txt) + 5
                     else:

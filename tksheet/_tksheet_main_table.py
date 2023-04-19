@@ -5482,11 +5482,11 @@ class MainTable(tk.Canvas):
     def reapply_formatting(self):
         if 'format' in self.sheet_options:
             for r in range(len(self.data)):
-                for c in range(len(self.data[r])):
-                    if not ((r, c) in self.cell_options and 'format' in self.cell_options[(r, c)] or
-                            r in self.row_options and 'format' in self.row_options[r] or
-                            c in self.col_options and 'format' in self.col_options[c]):
-                        self.set_cell_data(r, c, value = self.data[r][c])
+                if r not in self.row_options:
+                    for c in range(len(self.data[r])):
+                        if not ((r, c) in self.cell_options and 'format' in self.cell_options[(r, c)] or
+                                c in self.col_options and 'format' in self.col_options[c]):
+                            self.set_cell_data(r, c, value = self.data[r][c])
         for c in self.yield_formatted_columns():
             for r in range(len(self.data)):
                 if not ((r, c) in self.cell_options and 'format' in self.cell_options[(r, c)] or
@@ -5593,7 +5593,7 @@ class MainTable(tk.Canvas):
             return v == format_data(value = value, **kwargs)
         # assumed if there is a formatter class in cell then it has a __eq__() function anyway
         # else if there is not a formatter class in cell and cell is not formatted
-        # then compare values as is
+        # then compare value as is
         return v == value
 
     def get_cell_clipboard(self, datarn, datacn) -> Union[str, int, float, bool]:
