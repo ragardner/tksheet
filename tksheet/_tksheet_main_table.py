@@ -153,7 +153,6 @@ class MainTable(tk.Canvas):
 
         self.single_selection_enabled = False
         self.toggle_selection_enabled = False # with this mode every left click adds the cell to selected cells
-        self.ctrl_keys_over_dropdowns_enabled = kwargs['ctrl_keys_over_dropdowns_enabled']
         self.show_dropdown_borders = kwargs['show_dropdown_borders']
         self.drag_selection_enabled = False
         self.select_all_enabled = False
@@ -455,13 +454,17 @@ class MainTable(tk.Canvas):
                     for c in range(c1, c2):
                         datacn = c if self.all_columns_displayed else self.displayed_columns[c]
                         if (
-                            ((data_ref_rn, datacn) in self.cell_options and ('readonly' in self.cell_options[(data_ref_rn, datacn)] or 'checkbox' in self.cell_options[(data_ref_rn, datacn)])) or
+                            ((data_ref_rn, datacn) in self.cell_options and ('readonly' in self.cell_options[(data_ref_rn, datacn)] or 
+                                                                             'checkbox' in self.cell_options[(data_ref_rn, datacn)])) or
                             (datacn in self.col_options and 'readonly' in self.col_options[datacn]) or
                             self.cell_equal_to(data_ref_rn, datacn, "") or
-                            (not self.ctrl_keys_over_dropdowns_enabled and 
-                            (data_ref_rn, datacn) in self.cell_options and 
-                            'dropdown' in self.cell_options[(data_ref_rn, datacn)] and
-                            "" not in self.cell_options[(data_ref_rn, datacn)]['dropdown']['values'])
+                            # if cell isn't formatted (deals with invalid values) and 
+                            # validate input in dropdowns and new value isn't in dropdown values
+                            (not self.get_format_kwargs(data_ref_rn, datacn) and
+                             (data_ref_rn, datacn) in self.cell_options and 
+                             'dropdown' in self.cell_options[(data_ref_rn, datacn)] and
+                             self.cell_options[(data_ref_rn, datacn)]['dropdown']['validate_input'] and
+                             "" not in self.cell_options[(data_ref_rn, datacn)]['dropdown']['values'])
                             ):
                             continue
                         if self.undo_enabled:
@@ -495,8 +498,7 @@ class MainTable(tk.Canvas):
                             ((data_ref_rn, datacn) in self.cell_options and ('readonly' in self.cell_options[(data_ref_rn, datacn)] or 'checkbox' in self.cell_options[(data_ref_rn, datacn)])) or
                             (datacn in self.col_options and 'readonly' in self.col_options[datacn]) or
                             self.cell_equal_to(data_ref_rn, datacn, "") or
-                            (not self.ctrl_keys_over_dropdowns_enabled and 
-                            (data_ref_rn, datacn) in self.cell_options and 
+                            ((data_ref_rn, datacn) in self.cell_options and 
                             'dropdown' in self.cell_options[(data_ref_rn, datacn)] and
                             "" not in self.cell_options[(data_ref_rn, datacn)]['dropdown']['values'])
                             ):
@@ -612,21 +614,23 @@ class MainTable(tk.Canvas):
         changes = 0
         for ndr, r in enumerate(range(selected_r, selected_r + numrows)):
             datarn = r if self.all_rows_displayed else self.displayed_rows[r]
+            if datarn in self.row_options and 'readonly' in self.row_options[datarn]:
+                continue
             for ndc, c in enumerate(range(selected_c, selected_c + numcols)):
                 datacn = c if self.all_columns_displayed else self.displayed_columns[c]
                 if (
-                    ((datarn, datacn) in self.cell_options and 'readonly' in self.cell_options[(datarn, datacn)]) or
-                    ((datarn, datacn) in self.cell_options and 'checkbox' in self.cell_options[(datarn, datacn)]) or
+                    ((datarn, datacn) in self.cell_options and ('readonly' in self.cell_options[(datarn, datacn)] or 
+                                                                'checkbox' in self.cell_options[(datarn, datacn)])) or
                     (datacn in self.col_options and 'readonly' in self.col_options[datacn]) or
-                    (datarn in self.row_options and 'readonly' in self.row_options[datarn]) or
                     self.cell_equal_to(datarn, datacn, data[ndr][ndc]) or
-                    # if pasting not allowed in dropdowns and paste value isn't in dropdown values
-                    (not self.ctrl_keys_over_dropdowns_enabled and 
+                    # if cell isn't formatted (deals with invalid values) and 
+                    # validate input in dropdowns and new value isn't in dropdown values
+                    (not self.get_format_kwargs(datarn, datacn) and
                      (datarn, datacn) in self.cell_options and 
                      'dropdown' in self.cell_options[(datarn, datacn)] and
-                     not self.get_format_kwargs(datarn, datacn) and
+                     self.cell_options[(datarn, datacn)]['dropdown']['validate_input'] and
                      data[ndr][ndc] not in self.cell_options[(datarn, datacn)]['dropdown']['values'])
-                    ): # formatters deal with invalid values so not an issue if dropdown combined with format and invalid value input
+                    ):
                     continue
                 if self.undo_enabled:
                     undo_storage[(datarn, datacn)] = self.get_cell_data(datarn, datacn)
@@ -671,18 +675,22 @@ class MainTable(tk.Canvas):
             for r1, c1, r2, c2 in boxes:
                 for r in range(r1, r2):
                     datarn = r if self.all_rows_displayed else self.displayed_rows[r]
+                    if datarn in self.row_options and 'readonly' in self.row_options[datarn]:
+                        continue
                     for c in range(c1, c2):
                         datacn = c if self.all_columns_displayed else self.displayed_columns[c]
                         if (
-                            ((datarn, datacn) in self.cell_options and ('readonly' in self.cell_options[(datarn, datacn)] or 'checkbox' in self.cell_options[(datarn, datacn)])) or
-                            self.cell_equal_to(datarn, datacn, "") or
-                            # if del key not allowed in dropdowns and empty string isn't in dropdown values
-                            (not self.ctrl_keys_over_dropdowns_enabled and 
-                            (datarn, datacn) in self.cell_options and 
-                            'dropdown' in self.cell_options[(datarn, datacn)] and
-                            "" not in self.cell_options[(datarn, datacn)]['dropdown']['values']) or
+                            ((datarn, datacn) in self.cell_options and ('readonly' in self.cell_options[(datarn, datacn)] or 
+                                                                        'checkbox' in self.cell_options[(datarn, datacn)])) or
                             (datacn in self.col_options and 'readonly' in self.col_options[datacn]) or
-                            (datarn in self.row_options and 'readonly' in self.row_options[datarn])
+                            self.cell_equal_to(datarn, datacn, "") or
+                            # if cell isn't formatted (deals with invalid values) and 
+                            # validate input in dropdowns and new value isn't in dropdown values
+                            (not self.get_format_kwargs(datarn, datacn) and
+                             (datarn, datacn) in self.cell_options and 
+                             'dropdown' in self.cell_options[(datarn, datacn)] and
+                             self.cell_options[(datarn, datacn)]['dropdown']['validate_input'] and
+                             "" not in self.cell_options[(datarn, datacn)]['dropdown']['values'])
                             ):
                             continue
                         if self.undo_enabled:
@@ -5027,7 +5035,7 @@ class MainTable(tk.Canvas):
         elif (datarn, datacn) in self.cell_options and ('dropdown' in self.cell_options[(datarn, datacn)] or 'checkbox' in self.cell_options[(datarn, datacn)]):
             if self.event_opens_dropdown_or_checkbox(event):
                 if 'dropdown' in self.cell_options[(datarn, datacn)]:
-                    self.display_dropdown_window(r, c, event = event)
+                    self.open_dropdown_window(r, c, event = event)
                 elif 'checkbox' in self.cell_options[(datarn, datacn)]:
                     self._click_checkbox(r = r, c = c, datarn = datarn, datacn = datacn)
         else:
@@ -5233,7 +5241,7 @@ class MainTable(tk.Canvas):
             return "break"
         if editor_info is not None and len(editor_info) >= 3 and editor_info[2] == "Escape":
             self.destroy_text_editor("Escape")
-            self.hide_dropdown_window(r, c)
+            self.close_dropdown_window(r, c)
             return "break"
         if self.text_editor is not None:
             self.text_editor_value = self.text_editor.get()
@@ -5301,7 +5309,7 @@ class MainTable(tk.Canvas):
                                 new_r = r + 1
                     self.create_current(new_r, new_c, type_ = currently_selected.type_, inside = True)
                     self.see(new_r, new_c, keep_xscroll = False, bottom_right_corner = True, check_cell_visibility = True)
-        self.hide_dropdown_window(r, c)
+        self.close_dropdown_window(r, c)
         if recreate:
             self.recreate_all_selection_boxes()
         if redraw:
@@ -5385,7 +5393,12 @@ class MainTable(tk.Canvas):
         if redraw:
             self.refresh()
 
-    def create_dropdown(self, datarn = 0, datacn = 0, values = [], set_value = None, state = "readonly", redraw = True, selection_function = None, modified_function = None):
+    def create_dropdown(self, 
+                        datarn = 0, datacn = 0, 
+                        values = [], set_value = None,
+                        state = "normal", redraw = True, 
+                        selection_function = None, modified_function = None,
+                        search_function = dropdown_search_function, validate_input = True):
         if (datarn, datacn) in self.cell_options and ('dropdown' in self.cell_options[(datarn, datacn)] or 
                                                       'checkbox' in self.cell_options[(datarn, datacn)]):
             self.delete_dropdown_and_checkbox(datarn, datacn)
@@ -5397,6 +5410,8 @@ class MainTable(tk.Canvas):
                                                            'canvas_id': "no dropdown open",
                                                            'select_function': selection_function,
                                                            'modified_function': modified_function,
+                                                           'search_function': search_function,
+                                                           'validate_input': validate_input,
                                                            'state': state}
         if redraw:
             self.refresh()
@@ -5686,7 +5701,7 @@ class MainTable(tk.Canvas):
         return win_h, anchor
 
     # c is displayed col
-    def display_dropdown_window(self, r, c, event = None):
+    def open_dropdown_window(self, r, c, event = None):
         self.destroy_text_editor("Escape")
         self.destroy_opened_dropdown_window()
         datarn = r if self.all_rows_displayed else self.displayed_rows[r]
@@ -5708,7 +5723,8 @@ class MainTable(tk.Canvas):
                                                  outline_color = self.table_selected_cells_border_fg,
                                                  outline_thickness = 2,
                                                  values = self.cell_options[(datarn, datacn)]['dropdown']['values'],
-                                                 hide_dropdown_window = self.hide_dropdown_window,
+                                                 close_dropdown_window = self.close_dropdown_window,
+                                                 search_function = self.cell_options[(datarn, datacn)]['dropdown']['search_function'],
                                                  arrowkey_RIGHT = self.arrowkey_RIGHT,
                                                  arrowkey_LEFT = self.arrowkey_LEFT,
                                                  align = "w")#self.get_cell_align(r, c)
@@ -5720,8 +5736,10 @@ class MainTable(tk.Canvas):
             self.cell_options[(datarn, datacn)]['dropdown']['canvas_id'] = self.create_window((self.col_positions[c], ypos),
                                                                                               window = window,
                                                                                               anchor = anchor)
+            self.text_editor.textedit.bind("<<TextModified>>", 
+                                           lambda x: window.search_and_see(DropDownModifiedEvent("ComboboxModified", r, c, self.text_editor.get())))
             if self.cell_options[(datarn, datacn)]['dropdown']['modified_function'] is not None:
-                self.text_editor.textedit.bind("<<TextModified>>", lambda x: self.cell_options[(datarn, datacn)]['dropdown']['modified_function'](DropDownModifiedEvent("ComboboxModified", r, c, self.text_editor.get())))
+                window.modified_function = self.cell_options[(datarn, datacn)]['dropdown']['modified_function']
             self.update_idletasks()
             try:
                 self.after(1, lambda: self.text_editor.textedit.focus())
@@ -5738,7 +5756,7 @@ class MainTable(tk.Canvas):
                                                                                               window = window,
                                                                                               anchor = anchor)
             self.update_idletasks()
-            window.bind("<FocusOut>", lambda x: self.hide_dropdown_window(r, c))
+            window.bind("<FocusOut>", lambda x: self.close_dropdown_window(r, c))
             window.focus()
             redraw = True
         self.existing_dropdown_window = window
@@ -5748,7 +5766,7 @@ class MainTable(tk.Canvas):
             self.main_table_redraw_grid_and_text(redraw_header = False, redraw_row_index = False)
 
     # displayed indexes, not data
-    def hide_dropdown_window(self, r = None, c = None, selection = None, redraw = True):
+    def close_dropdown_window(self, r = None, c = None, selection = None, redraw = True):
         if r is not None and c is not None and selection is not None:
             datacn = c if self.all_columns_displayed else self.displayed_columns[c]
             datarn = r if self.all_rows_displayed else self.displayed_rows[r]

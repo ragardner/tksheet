@@ -1243,7 +1243,7 @@ class RowIndex(tk.Canvas):
         elif datarn in self.cell_options and ('dropdown' in self.cell_options[datarn] or 'checkbox' in self.cell_options[datarn]):
             if self.MT.event_opens_dropdown_or_checkbox(event):
                 if 'dropdown' in self.cell_options[datarn]:
-                    self.display_dropdown_window(r, event = event)
+                    self.open_dropdown_window(r, event = event)
                 elif 'checkbox' in self.cell_options[datarn]:
                     self._click_checkbox(r, datarn)
         elif self.edit_cell_enabled:
@@ -1436,7 +1436,7 @@ class RowIndex(tk.Canvas):
             return "break"
         if editor_info is not None and len(editor_info) >= 2 and editor_info[1] == "Escape":
             self.destroy_text_editor("Escape")
-            self.hide_dropdown_window(r)
+            self.close_dropdown_window(r)
             return "break"
         if self.text_editor is not None:
             self.text_editor_value = self.text_editor.get()
@@ -1457,7 +1457,7 @@ class RowIndex(tk.Canvas):
                     self.set_cell_data_undo(r, datarn = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r], value = self.text_editor_value)
         if move_down:
             pass
-        self.hide_dropdown_window(r)
+        self.close_dropdown_window(r)
         if recreate:
             self.MT.recreate_all_selection_boxes()
         if redraw:
@@ -1565,7 +1565,12 @@ class RowIndex(tk.Canvas):
         if redraw:
             self.MT.refresh()
 
-    def create_dropdown(self, datarn = 0, values = [], set_value = None, state = "readonly", redraw = True, selection_function = None, modified_function = None):
+    def create_dropdown(self, 
+                        datarn = 0, 
+                        values = [], set_value = None, 
+                        state = "normal", redraw = True, 
+                        selection_function = None, modified_function = None,
+                        search_function = dropdown_search_function, validate_input = True):
         if datarn in self.cell_options and ('dropdown' in self.cell_options[datarn] or 
                                             'checkbox' in self.cell_options[datarn]):
             self.delete_dropdown_and_checkbox(datarn)
@@ -1578,6 +1583,8 @@ class RowIndex(tk.Canvas):
                                                  'canvas_id': "no dropdown open",
                                                  'select_function': selection_function,
                                                  'modified_function': modified_function,
+                                                 'search_function': search_function,
+                                                 'validate_input': validate_input,
                                                  'state': state}
         if redraw:
             self.MT.refresh()
@@ -1605,7 +1612,7 @@ class RowIndex(tk.Canvas):
         return win_h, "nw"
             
     # r is displayed row
-    def display_dropdown_window(self, r, datarn = None, event = None):
+    def open_dropdown_window(self, r, datarn = None, event = None):
         self.destroy_text_editor("Escape")
         self.destroy_opened_dropdown_window()
         if datarn is None:
@@ -1626,7 +1633,8 @@ class RowIndex(tk.Canvas):
                                                               'highlight_fg': self.MT.popup_menu_highlight_fg},
                                                     outline_color = self.MT.popup_menu_fg,
                                                     values = self.cell_options[datarn]['dropdown']['values'],
-                                                    hide_dropdown_window = self.hide_dropdown_window,
+                                                    close_dropdown_window = self.close_dropdown_window,
+                                                    search_function = self.cell_options[datarn]['dropdown']['search_function'],
                                                     arrowkey_RIGHT = self.MT.arrowkey_RIGHT,
                                                     arrowkey_LEFT = self.MT.arrowkey_LEFT,
                                                     align = "w",
@@ -1636,8 +1644,10 @@ class RowIndex(tk.Canvas):
                                                                                window = window,
                                                                                anchor = anchor)
         if self.cell_options[datarn]['dropdown']['state'] == "normal":
+            self.text_editor.textedit.bind("<<TextModified>>", 
+                                           lambda x: window.search_and_see(DropDownModifiedEvent("IndexComboboxModified", r, 0, self.text_editor.get())))
             if self.cell_options[datarn]['dropdown']['modified_function'] is not None:
-                self.text_editor.textedit.bind("<<TextModified>>", self.cell_options[datarn]['dropdown']['modified_function'])
+                window.modified_function = self.cell_options[datarn]['dropdown']['modified_function']
             self.update_idletasks()
             try:
                 self.after(1, lambda: self.text_editor.textedit.focus())
@@ -1646,7 +1656,7 @@ class RowIndex(tk.Canvas):
                 return
             redraw = False
         else:
-            window.bind("<FocusOut>", lambda x: self.hide_dropdown_window(r))
+            window.bind("<FocusOut>", lambda x: self.close_dropdown_window(r))
             self.update_idletasks()
             window.focus_set()
             redraw = True
@@ -1657,7 +1667,7 @@ class RowIndex(tk.Canvas):
             self.MT.main_table_redraw_grid_and_text(redraw_header = False, redraw_row_index = True, redraw_table = False)
             
     # r is displayed row
-    def hide_dropdown_window(self, r = None, selection = None, redraw = True):
+    def close_dropdown_window(self, r = None, selection = None, redraw = True):
         if r is not None and selection is not None:
             datarn = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r]
             if self.cell_options[datarn]['dropdown']['select_function'] is not None: # user has specified a selection function

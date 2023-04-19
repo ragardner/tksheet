@@ -4,7 +4,7 @@ from platform import system as get_os
 USER_OS = f"{get_os()}".lower()
 ctrl_key = "Command" if USER_OS == "darwin" else "Control"
 symbols_set = set("""!#\$%&'()*+,-./:;"@[]^_`{|}~>?= """)
-nonelike = {'none', '', None}
+nonelike = {None, 'none', ''}
 truthy = {True, "true", "t", "yes", "y", "on", "1", 1, 1.0}
 falsy = {False, "false", "f", "no", "n", "off", "0", 0, 0.0}
 arrowkey_bindings_helper = {"tab": "Tab",
@@ -30,6 +30,30 @@ def is_iterable(o):
         return True
     except:
         return False
+    
+def dropdown_search_function(search_for, data):
+    search_len = len(search_for)
+    best_match = {'rn': float("inf"),
+                  'st': float("inf"),
+                  'len_diff': float("inf")}
+    for rn, row in enumerate(data):
+        dd_val = fr"{row[0]}".lower()
+        st = dd_val.find(search_for)
+        if st > -1:
+            # priority is start index
+            # if there's already a matching start
+            # then compare the len difference
+            len_diff = len(dd_val) - search_len
+            if (st < best_match['st'] or
+                (st == best_match['st'] and
+                 len_diff < best_match['len_diff'])
+                ):
+                best_match['rn'] = rn
+                best_match['st'] = st
+                best_match['len_diff'] = len_diff
+    if best_match['rn'] != float("inf"):
+        return best_match['rn']
+    return None
 
 theme_light_blue = {
 'popup_menu_fg': "#000000",
@@ -120,7 +144,7 @@ theme_light_green = {
 theme_black = {
 'popup_menu_fg': "white",
 'popup_menu_bg': "gray15",
-'popup_menu_highlight_bg': "gray35",
+'popup_menu_highlight_bg': "gray40",
 'popup_menu_highlight_fg': "white",
 'index_hidden_rows_expander_bg': "gray30",
 'header_hidden_columns_expander_bg': "gray30",
@@ -163,7 +187,7 @@ theme_black = {
 theme_dark = {
 'popup_menu_fg': "white",
 'popup_menu_bg': "gray15",
-'popup_menu_highlight_bg': "gray35",
+'popup_menu_highlight_bg': "gray40",
 'popup_menu_highlight_fg': "white",
 'index_hidden_rows_expander_bg': "gray30",
 'header_hidden_columns_expander_bg': "gray30",

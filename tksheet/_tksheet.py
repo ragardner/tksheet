@@ -34,7 +34,6 @@ class Sheet(tk.Frame):
                  paste_insert_column_limit: int = None,
                  paste_insert_row_limit: int = None,
                  show_dropdown_borders: bool = False,
-                 ctrl_keys_over_dropdowns_enabled: bool = False,
                  arrow_key_down_right_scroll_page: bool = False,
                  enable_edit_cell_auto_resize: bool = True,
                  edit_cell_validation: bool = True,
@@ -190,7 +189,6 @@ class Sheet(tk.Frame):
                             expand_sheet_if_paste_too_big = expand_sheet_if_paste_too_big,
                             paste_insert_column_limit = paste_insert_column_limit,
                             paste_insert_row_limit = paste_insert_row_limit,
-                            ctrl_keys_over_dropdowns_enabled = ctrl_keys_over_dropdowns_enabled,
                             show_dropdown_borders = show_dropdown_borders,
                             arrow_key_down_right_scroll_page = arrow_key_down_right_scroll_page,
                             display_selected_fg_over_highlights = display_selected_fg_over_highlights,
@@ -1691,8 +1689,6 @@ class Sheet(tk.Frame):
             self.MT.show_dropdown_borders = kwargs['show_dropdown_borders']
         if 'edit_cell_validation' in kwargs:
             self.MT.edit_cell_validation = kwargs['edit_cell_validation']
-        if 'ctrl_keys_over_dropdowns_enabled' in kwargs:
-            self.MT.ctrl_keys_over_dropdowns_enabled = kwargs['ctrl_keys_over_dropdowns_enabled']
         if 'show_default_header_for_empty' in kwargs:
             self.CH.show_default_header_for_empty = kwargs['show_default_header_for_empty']
         if 'show_default_index_for_empty' in kwargs:
@@ -2527,32 +2523,26 @@ class Sheet(tk.Frame):
         if text is not None:
             self.MT.cell_options[(r, c)]['checkbox']['text'] = text
         return {**self.MT.cell_options[(r, c)]['checkbox'], 'checked': self.MT.data[r][c]}
-    
+
     def create_header_dropdown(self,
                                c = 0,
                                values = [],
                                set_value = None,
-                               state = "readonly",
+                               state = "normal",
                                redraw = False,
                                selection_function = None,
-                               modified_function = None):
+                               modified_function = None,
+                               search_function = dropdown_search_function,
+                               validate_input = True):
+        _kwargs = {'values': values, 'set_value': set_value, 'state': state, 'redraw': redraw, 'selection_function': selection_function,
+                   'modified_function': modified_function, 'search_function': dropdown_search_function, 'validate_input': validate_input}
         if isinstance(c, str) and c.lower() == "all":
             for c_ in range(self.MT.total_data_cols()):
                 self.CH.create_dropdown(datacn = c_,
-                                        values = values,
-                                        set_value = set_value,
-                                        state = state,
-                                        redraw = redraw,
-                                        selection_function = selection_function,
-                                        modified_function = modified_function)
+                                        **_kwargs)
         else:
             self.CH.create_dropdown(datacn = c,
-                                    values = values,
-                                    set_value = set_value,
-                                    state = state,
-                                    redraw = redraw,
-                                    selection_function = selection_function,
-                                    modified_function = modified_function)
+                                    **_kwargs)
 
     def get_header_dropdown_value(self, c):
         if 'dropdown' in self.CH.cell_options[c]:
@@ -2594,36 +2584,30 @@ class Sheet(tk.Frame):
         return {k: v['dropdown'] for k, v in self.CH.cell_options.items() if 'dropdown' in v}
     
     def open_header_dropdown(self, c):
-        self.CH.display_dropdown_window(c)
+        self.CH.open_dropdown_window(c)
 
     def close_header_dropdown(self, c):
-        self.CH.hide_dropdown_window(c)
+        self.CH.close_dropdown_window(c)
         
     def create_index_dropdown(self,
                               r = 0,
                               values = [],
                               set_value = None,
-                              state = "readonly",
+                              state = "normal",
                               redraw = False,
                               selection_function = None,
-                              modified_function = None):
+                              modified_function = None,
+                              search_function = dropdown_search_function,
+                              validate_input = True):
+        _kwargs = {'values': values, 'set_value': set_value, 'state': state, 'redraw': redraw, 'selection_function': selection_function,
+                   'modified_function': modified_function, 'search_function': dropdown_search_function, 'validate_input': validate_input}
         if isinstance(r, str) and r.lower() == "all":
             for r_ in range(self.MT.total_data_rows()):
                 self.RI.create_dropdown(datarn = r_,
-                                        values = values,
-                                        set_value = set_value,
-                                        state = state,
-                                        redraw = redraw,
-                                        selection_function = selection_function,
-                                        modified_function = modified_function)
+                                        **_kwargs)
         else:
             self.RI.create_dropdown(datarn = r,
-                                    values = values,
-                                    set_value = set_value,
-                                    state = state,
-                                    redraw = redraw,
-                                    selection_function = selection_function,
-                                    modified_function = modified_function)
+                                    **_kwargs)
 
     def get_index_dropdown_value(self, r):
         if 'dropdown' in self.RI.cell_options[r]:
@@ -2665,21 +2649,24 @@ class Sheet(tk.Frame):
         return {k: v['dropdown'] for k, v in self.RI.cell_options.items() if 'dropdown' in v}
     
     def open_index_dropdown(self, r):
-        self.RI.display_dropdown_window(r)
+        self.RI.open_dropdown_window(r)
 
     def close_index_dropdown(self, r):
-        self.RI.hide_dropdown_window(r)
+        self.RI.close_dropdown_window(r)
 
     def create_dropdown(self,
                         r = 0,
                         c = 0,
                         values = [],
                         set_value = None,
-                        state = "readonly",
+                        state = "normal",
                         redraw = False,
                         selection_function = None,
-                        modified_function = None):
-        _kwargs = {'values': values, 'set_value': set_value, 'state': state, 'redraw': redraw, 'selection_function': selection_function, 'modified_function': modified_function}
+                        modified_function = None,
+                        search_function = dropdown_search_function,
+                        validate_input = True):
+        _kwargs = {'values': values, 'set_value': set_value, 'state': state, 'redraw': redraw, 'selection_function': selection_function,
+                   'modified_function': modified_function, 'search_function': dropdown_search_function, 'validate_input': validate_input}
         if isinstance(r, str) and r.lower() == "all" and isinstance(c, int):
             for r_ in range(self.MT.total_data_rows()):
                 self.MT.create_dropdown(datarn = r_,
@@ -2753,10 +2740,10 @@ class Sheet(tk.Frame):
         return {k: v['dropdown'] for k, v in self.MT.cell_options.items() if 'dropdown' in v}
 
     def open_dropdown(self, r, c):
-        self.MT.display_dropdown_window(r, c)
+        self.MT.open_dropdown_window(r, c)
 
     def close_dropdown(self, r, c):
-        self.MT.hide_dropdown_window(r, c)
+        self.MT.close_dropdown_window(r, c)
 
     def reapply_formatting(self):
         self.MT.reapply_formatting()
@@ -2892,7 +2879,9 @@ class Sheet_Dropdown(Sheet):
                  outline_color = theme_light_blue['table_fg'],
                  outline_thickness = 2,
                  values = [],
-                 hide_dropdown_window = None,
+                 close_dropdown_window = None,
+                 modified_function = None,
+                 search_function = dropdown_search_function,
                  arrowkey_RIGHT = None,
                  arrowkey_LEFT = None,
                  align = "w",
@@ -2925,7 +2914,9 @@ class Sheet_Dropdown(Sheet):
                        table_fg = colors['fg'],
                        table_bg = colors['bg'])
         self.parent = parent
-        self.hide_dropdown_window = hide_dropdown_window
+        self.close_dropdown_window = close_dropdown_window
+        self.modified_function = modified_function
+        self.search_function = search_function
         self.arrowkey_RIGHT = arrowkey_RIGHT
         self.arrowkey_LEFT = arrowkey_LEFT
         self.h_ = height
@@ -2962,6 +2953,18 @@ class Sheet_Dropdown(Sheet):
             self.row += 1
         self.see(self.row, 0, redraw = False)
         self.select_row(self.row)
+        
+    def search_and_see(self, event = None):
+        if self.modified_function is not None:
+            self.modified_function(event)
+        if self.search_function is not None:
+            rn = self.search_function(search_for = fr"{event.value}".lower(), 
+                                      data = self.MT.data)
+            if rn is not None:
+                self.row = rn
+                self.deselect("all")
+                self.see(self.row, 0, redraw = False)
+                self.select_row(self.row)
 
     def mouse_motion(self, event = None):
         self.row = self.identify_row(event, exclude_index = True, allow_end = False)
@@ -2987,14 +2990,14 @@ class Sheet_Dropdown(Sheet):
             row = self.identify_row(event, exclude_index = True, allow_end = False)
         if self.single_index:
             if row is None:
-                self.hide_dropdown_window(self.r if self.single_index == "r" else self.c)
+                self.close_dropdown_window(self.r if self.single_index == "r" else self.c)
             else:
-                self.hide_dropdown_window(self.r if self.single_index == "r" else self.c, self.get_cell_data(row, 0))
+                self.close_dropdown_window(self.r if self.single_index == "r" else self.c, self.get_cell_data(row, 0))
         else:
             if row is None:
-                self.hide_dropdown_window(self.r, self.c)
+                self.close_dropdown_window(self.r, self.c)
             else:
-                self.hide_dropdown_window(self.r, self.c, self.get_cell_data(row, 0))
+                self.close_dropdown_window(self.r, self.c, self.get_cell_data(row, 0))
 
     def values(self, values = [], redraw = True):
         self.set_sheet_data([[v] for v in values],

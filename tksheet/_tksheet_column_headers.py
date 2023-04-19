@@ -1189,7 +1189,7 @@ class ColumnHeaders(tk.Canvas):
         elif datacn in self.cell_options and ('dropdown' in self.cell_options[datacn] or 'checkbox' in self.cell_options[datacn]):
             if self.MT.event_opens_dropdown_or_checkbox(event):
                 if 'dropdown' in self.cell_options[datacn]:
-                    self.display_dropdown_window(x1, event = event)
+                    self.open_dropdown_window(x1, event = event)
                 elif 'checkbox' in self.cell_options[datacn]:
                     self._click_checkbox(x1, datacn)
         elif self.edit_cell_enabled:
@@ -1393,7 +1393,7 @@ class ColumnHeaders(tk.Canvas):
             return
         if editor_info is not None and len(editor_info) >= 2 and editor_info[1] == "Escape":
             self.destroy_text_editor("Escape")
-            self.hide_dropdown_window(c)
+            self.close_dropdown_window(c)
             return
         if self.text_editor is not None:
             self.text_editor_value = self.text_editor.get()
@@ -1414,7 +1414,7 @@ class ColumnHeaders(tk.Canvas):
                     self.set_cell_data_undo(c, datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c], value = self.text_editor_value)
         if move_down:
             pass
-        self.hide_dropdown_window(c)
+        self.close_dropdown_window(c)
         if recreate:
             self.MT.recreate_all_selection_boxes()
         if redraw:
@@ -1525,7 +1525,12 @@ class ColumnHeaders(tk.Canvas):
         if redraw:
             self.MT.refresh()
 
-    def create_dropdown(self, datacn = 0, values = [], set_value = None, state = "readonly", redraw = True, selection_function = None, modified_function = None):
+    def create_dropdown(self, 
+                        datacn = 0, 
+                        values = [], set_value = None, 
+                        state = "normal", redraw = True, 
+                        selection_function = None, modified_function = None,
+                        search_function = dropdown_search_function, validate_input = True):
         if datacn in self.cell_options and ('dropdown' in self.cell_options[datacn] or 
                                             'checkbox' in self.cell_options[datacn]):
             self.delete_dropdown_and_checkbox(datacn)
@@ -1538,6 +1543,8 @@ class ColumnHeaders(tk.Canvas):
                                                  'canvas_id': "no dropdown open",
                                                  'select_function': selection_function,
                                                  'modified_function': modified_function,
+                                                 'search_function': search_function,
+                                                 'validate_input': validate_input,
                                                  'state': state}
         if redraw:
             self.MT.refresh()
@@ -1577,7 +1584,7 @@ class ColumnHeaders(tk.Canvas):
             new_height = space_bot
         self.set_height(new_height, set_TL = True)
 
-    def display_dropdown_window(self, c, datacn = None, event = None):
+    def open_dropdown_window(self, c, datacn = None, event = None):
         self.destroy_text_editor("Escape")
         self.destroy_opened_dropdown_window()
         if datacn is None:
@@ -1598,18 +1605,21 @@ class ColumnHeaders(tk.Canvas):
                                                               'highlight_fg': self.MT.popup_menu_highlight_fg},
                                                     outline_color = self.MT.popup_menu_fg,
                                                     values = self.cell_options[datacn]['dropdown']['values'],
-                                                    hide_dropdown_window = self.hide_dropdown_window,
+                                                    close_dropdown_window = self.close_dropdown_window,
+                                                    search_function = self.cell_options[datacn]['dropdown']['search_function'],
                                                     arrowkey_RIGHT = self.MT.arrowkey_RIGHT,
                                                     arrowkey_LEFT = self.MT.arrowkey_LEFT,
                                                     align = "w",
                                                     single_index = "c")
         ypos = self.current_height - 1
         self.cell_options[datacn]['dropdown']['canvas_id'] = self.create_window((self.MT.col_positions[c], ypos),
-                                                                               window = window,
-                                                                               anchor = anchor)
+                                                                                window = window,
+                                                                                anchor = anchor)
         if self.cell_options[datacn]['dropdown']['state'] == "normal":
+            self.text_editor.textedit.bind("<<TextModified>>", 
+                                           lambda x: window.search_and_see(DropDownModifiedEvent("HeaderComboboxModified", 0, c, self.text_editor.get())))
             if self.cell_options[datacn]['dropdown']['modified_function'] is not None:
-                self.text_editor.textedit.bind("<<TextModified>>", self.cell_options[datacn]['dropdown']['modified_function'])
+                window.modified_function = self.cell_options[datacn]['dropdown']['modified_function']
             self.update_idletasks()
             try:
                 self.after(1, lambda: self.text_editor.textedit.focus())
@@ -1618,7 +1628,7 @@ class ColumnHeaders(tk.Canvas):
                 return
             redraw = False
         else:
-            window.bind("<FocusOut>", lambda x: self.hide_dropdown_window(c))
+            window.bind("<FocusOut>", lambda x: self.close_dropdown_window(c))
             self.update_idletasks()
             window.focus_set()
             redraw = True
@@ -1628,7 +1638,7 @@ class ColumnHeaders(tk.Canvas):
         if redraw:
             self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = False, redraw_table = False)
 
-    def hide_dropdown_window(self, c = None, selection = None, redraw = True):
+    def close_dropdown_window(self, c = None, selection = None, redraw = True):
         if c is not None and selection is not None:
             datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
             if self.cell_options[datacn]['dropdown']['select_function'] is not None: # user has specified a selection function

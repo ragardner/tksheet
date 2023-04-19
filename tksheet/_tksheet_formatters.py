@@ -2,12 +2,12 @@ from typing import Union, Any, Type, Callable
 from ._tksheet_vars import *
 
 def is_nonelike(n: Any):
-    if n is None:
+    if (
+        (isinstance(n, str) and n.lower().replace(" ", "") in nonelike) or 
+        n in nonelike
+        ):
         return True
-    if isinstance(n, str):
-        return n.lower().replace(" ", "") in nonelike
-    else:
-        return False
+    return False
 
 def to_int(x: Any, **kwargs):
     if isinstance(x, int):
@@ -183,7 +183,7 @@ def get_clipboard_data(value = "",
                        **kwargs):
     if clipboard_function is not None:
         return clipboard_function(value, **kwargs)
-    if isinstance(value, (int, float, bool)):
+    if isinstance(value, (str, int, float, bool)):
         return value
     return data_to_str(value, **kwargs)
 

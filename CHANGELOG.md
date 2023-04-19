@@ -2,20 +2,23 @@
 #### Fixed:
 - Undo added to stack when no changes made with cut, paste, delete
 - Using generator with `set_column_widths()`/`set_row_heights()` would result in lost first width/height
+- Header/Index dropdown `modified_function` not sending modified event
 
 #### Added:
 - Cell formatters, thanks to [PR#158](https://github.com/ragardner/tksheet/pull/158)
 - `format_cell()`, `format_row()`, `format_column()`, `format_sheet()`
-- bindings `"up" "down" "left" "right" "prior" "next"` to enable arrowkey bindings individually use with `enable_bindings()`/`disable_bindings()`
+- Bindings `"up" "down" "left" "right" "prior" "next"` to enable arrowkey bindings individually use with `enable_bindings()`/`disable_bindings()`
+= Dropdowns now have a search feature which searches their values after the entry box is modified (if dropdown is state `normal`)
+- Dropdown kwargs `search_enabled` and `validate_input`
 
 #### Removed:
+- Startup arg `ctrl_keys_over_dropdowns_enabled`, also removed in `set_options()`
 - `set_copy` arg in `set_cell_data()`
 - `return_copy` arg in data getting functions but will not generate error if used as keyword arg
 
-#### Improved:
-- `"dark"`/`"black"` themes
-
 #### Changed:
+- `"dark"`/`"black"` themes
+- Dropdowns now default to state `"normal"` and validate input by default
 - Checkbox click extra binding and edit cell extra binding (when associated with a checkbox click) return `bool` now, not `str`
 - `get_cell_data()`/`get_row_data()`/`get_column_data()` now return empty string/s if index is out of bounds (instead of `None`s)
 - Rename some internal functions for consistency
