@@ -6,7 +6,7 @@ ctrl_key = "Command" if USER_OS == "darwin" else "Control"
 symbols_set = set("""!#\$%&'()*+,-./:;"@[]^_`{|}~>?= """)
 nonelike = {'none', '', None}
 truthy = {True, "true", "t", "yes", "y", "on", "1", 1, 1.0}
-falsy = {False, "false", "f", "no", "n", "off", "0", 0}
+falsy = {False, "false", "f", "no", "n", "off", "0", 0, 0.0}
 arrowkey_bindings_helper = {"tab": "Tab",
                             "up": "Up",
                             "right": "Right",

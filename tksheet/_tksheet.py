@@ -2798,8 +2798,8 @@ class Sheet(tk.Frame):
         self.set_refresh_timer(redraw)
 
     def delete_cell_format(self,
-                           r,
-                           c,
+                           r = "all",
+                           c = "all",
                            clear_values = False,
                            ):
         if isinstance(r, str) and r.lower() == "all" and isinstance(c, int):
@@ -2834,7 +2834,7 @@ class Sheet(tk.Frame):
             self.MT.format_row(r, **{'formatter': formatter_class, **formatter_options, **kwargs})
         self.set_refresh_timer(redraw)
 
-    def delete_row_format(self, r, clear_values = False):
+    def delete_row_format(self, r = "all", clear_values = False):
         if is_iterable(r):
             for r_ in r:
                 self.MT.delete_row_format(r_, clear_values = clear_values)
@@ -2858,7 +2858,7 @@ class Sheet(tk.Frame):
             self.MT.format_column(c, **{'formatter': formatter_class, **formatter_options, **kwargs})
         self.set_refresh_timer(redraw)
 
-    def delete_column_format(self, c, clear_values = False):
+    def delete_column_format(self, c = "all", clear_values = False):
         if is_iterable(c):
             for c_ in c:
                 self.MT.delete_column_format(c_, clear_values = clear_values)

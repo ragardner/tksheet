@@ -1754,7 +1754,7 @@ Arguments:
 #### **Clearing a format that was set by `format_cell`:**
 
 ```python
-delete_cell_format(r, c, clear_values = False)
+delete_cell_format(r = "all", c = "all", clear_values = False)
 ```
 - Using `"all"` will not clear formats set by `format_row()`/`format_column()`.
 - `r` (`int` or `"all"`) the row index to remove the cell formats from.
@@ -1774,7 +1774,7 @@ format_row(r, formatter_options = {}, formatter_class = None, **kwargs)
 #### **Clearing a format that was set by `format_row`:**
 
 ```python
-delete_row_format(r, clear_values = False)
+delete_row_format(r = "all", clear_values = False)
 ```
 - Using `"all"` will not clear formats set by `format_sheet()`.
 - `r` (`int`, `Iterable[int]` or `"all"`) the row index to remove the cell formats from.
@@ -1793,7 +1793,7 @@ format_column(c, formatter_options = {}, formatter_class = None, **kwargs)
 #### **Clearing a format that was set by `format_column`:**
 
 ```python
-delete_column_format(c, clear_values = False)
+delete_column_format(c = "all", clear_values = False)
 ```
 - Using `"all"` will not clear formats set by `format_sheet()`.
 - `c` (`int`, `Iterable[int]` or `"all"`) the column index to remove the cell formats from.
