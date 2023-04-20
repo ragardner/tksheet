@@ -987,11 +987,14 @@ class RowIndex(tk.Canvas):
                 t = self.create_polygon(points, fill = fill, outline = outline, tag = tag, smooth = True)
             self.disp_checkbox[t] = True
 
-    def redraw_grid_and_text(self, last_row_line_pos, scrollpos_top, y_stop, start_row, end_row, scrollpos_bot, selected_rows, selected_cols, actual_selected_rows):
-        self.configure(scrollregion = (0,
-                                       0,
-                                       self.current_width,
-                                       last_row_line_pos + self.MT.empty_vertical))
+    def redraw_grid_and_text(self, last_row_line_pos, scrollpos_top, y_stop, start_row, end_row, scrollpos_bot, selected_rows, selected_cols, actual_selected_rows, row_pos_exists):
+        try:
+            self.configure(scrollregion = (0,
+                                           0,
+                                           self.current_width,
+                                           last_row_line_pos + self.MT.empty_vertical))
+        except:
+            return
         for k, v in self.disp_text.items():
             if k in self.hidd_text:
                 self.hidd_text[k] = self.hidd_text[k] | self.disp_text[k]
@@ -1014,9 +1017,11 @@ class RowIndex(tk.Canvas):
         draw_y = self.MT.row_positions[start_row]
         xend = self.current_width - 6
         self.row_width_resize_bbox = (self.current_width - 2, scrollpos_top, self.current_width, scrollpos_bot)
-        if self.MT.show_horizontal_grid or self.height_resizing_enabled:
+        if (self.MT.show_horizontal_grid or self.height_resizing_enabled) and row_pos_exists:
             self.grid_cyc = cycle(self.grid_cyctup)
-            points = []
+            points = [self.current_width - 1, y_stop - 1, 
+                      self.current_width - 1, scrollpos_top - 1,
+                      -1, scrollpos_top - 1]
             for r in range(start_row + 1, end_row):
                 draw_y = self.MT.row_positions[r]
                 if self.height_resizing_enabled:
@@ -1032,8 +1037,6 @@ class RowIndex(tk.Canvas):
                                    -1, self.MT.row_positions[r + 1] if len(self.MT.row_positions) - 1 > r else draw_y])
                 if points:
                     self.redraw_gridline(points = points, fill = self.index_grid_fg, width = 1, tag = "h")
-        self.redraw_gridline(points = (0, draw_y, self.current_width, draw_y), width = 1, fill = self.index_grid_fg, tag = "fh")
-        self.redraw_gridline(points = (self.current_width - 1, scrollpos_top, self.current_width - 1, y_stop), width = 1, fill = self.index_border_fg, tag = "v")
         scrollpos_bot_add2 = scrollpos_bot + 2
         c_2 = self.index_selected_cells_bg if self.index_selected_cells_bg.startswith("#") else Color_Map_[self.index_selected_cells_bg]
         c_3 = self.index_selected_rows_bg if self.index_selected_rows_bg.startswith("#") else Color_Map_[self.index_selected_rows_bg]
@@ -1198,9 +1201,9 @@ class RowIndex(tk.Canvas):
                                     self.itemconfig(iid, text = txt)
                                     wd = self.bbox(iid)
                                 self.coords(iid, draw_x, draw_y)
-                            self.disp_text[config._replace(txt = txt)].add(DrawnItem(iid = iid, showing = 1))
+                            self.disp_text[config._replace(txt = txt)].add(DrawnItem(iid = iid, showing = True))
                         else:
-                            self.disp_text[config].add(DrawnItem(iid = iid, showing = 1))
+                            self.disp_text[config].add(DrawnItem(iid = iid, showing = True))
                         draw_y += self.MT.xtra_lines_increment
                         if draw_y + self.MT.half_txt_h - 1 > rbotgridln:
                             break
@@ -1210,13 +1213,13 @@ class RowIndex(tk.Canvas):
                 if namedtup.showing:
                     self.itemconfig(namedtup.iid, state = "hidden")
                     self.hidd_text[cfg].discard(namedtup)
-                    self.hidd_text[cfg].add(namedtup._replace(showing = 0))
+                    self.hidd_text[cfg].add(namedtup._replace(showing = False))
         for cfg, set_ in self.hidd_high.items():
             for namedtup in tuple(set_):
                 if namedtup.showing:
                     self.itemconfig(namedtup.iid, state = "hidden")
                     self.hidd_high[cfg].discard(namedtup)
-                    self.hidd_high[cfg].add(namedtup._replace(showing = 0))
+                    self.hidd_high[cfg].add(namedtup._replace(showing = False))
         for t, sh in self.hidd_grid.items():
             if sh:
                 self.itemconfig(t, state = "hidden")
@@ -1688,22 +1691,26 @@ class RowIndex(tk.Canvas):
         self.destroy_opened_dropdown_window(r)
         if redraw:
             self.MT.refresh()
+            
+    def get_existing_dropdown_coords(self):
+        if self.existing_dropdown_window is not None:
+            return int(self.existing_dropdown_window.r)
+        return None
         
     def mouseclick_outside_editor_or_dropdown(self):
-        if self.existing_dropdown_window is not None:
-            closed_dd_coords = int(self.existing_dropdown_window.r)
-        else:
-            closed_dd_coords = None
+        closed_dd_coords = self.get_existing_dropdown_coords()
         if self.text_editor_loc is not None and self.text_editor is not None:
             self.close_text_editor(editor_info = (self.text_editor_loc, "ButtonPress-1"))
         else:
             self.destroy_text_editor("Escape")
-        if closed_dd_coords:
+        if closed_dd_coords is not None:
             self.destroy_opened_dropdown_window(closed_dd_coords) #displayed coords not data, necessary for b1 function
         return closed_dd_coords
-            
+
     # r is displayed row, function can have two None args
     def destroy_opened_dropdown_window(self, r = None, datarn = None):
+        if r is None and datarn is None and self.existing_dropdown_window is not None:
+            r = self.get_existing_dropdown_coords()
         if r is not None or datarn is not None:
             if datarn is None:
                 datarn_ = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r]
@@ -1720,7 +1727,6 @@ class RowIndex(tk.Canvas):
             self.existing_dropdown_window.destroy()
         except:
             pass
-        self.existing_dropdown_window = None
         if datarn_ in self.cell_options and 'dropdown' in self.cell_options[datarn_]:
             self.cell_options[datarn_]['dropdown']['canvas_id'] = "no dropdown open"
             self.cell_options[datarn_]['dropdown']['window'] = "no dropdown open"
@@ -1728,6 +1734,7 @@ class RowIndex(tk.Canvas):
                 self.delete(self.cell_options[datarn_]['dropdown']['canvas_id'])
             except:
                 pass
+        self.existing_dropdown_window = None
 
     def delete_dropdown(self, datarn):
         self.destroy_opened_dropdown_window(datarn = datarn)

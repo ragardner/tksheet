@@ -1437,7 +1437,7 @@ create_dropdown(r = 0,
                 redraw = False,
                 selection_function = None,
                 modified_function = None,
-                search_enabled = True,
+                search_function = dropdown_search_function,
                 validate_input = True)
 ```
 
@@ -1449,7 +1449,7 @@ create_header_dropdown(c = 0,
                        redraw = False,
                        selection_function = None,
                        modified_function = None,
-                       search_enabled = True,
+                       search_function = dropdown_search_function,
                        validate_input = True)
 ```
 
@@ -1461,7 +1461,7 @@ create_index_dropdown(r = 0,
                       redraw = False,
                       selection_function = None,
                       modified_function = None,
-                      search_enabled = True,
+                      search_function = dropdown_search_function,
                       validate_input = True)
 ```
 
@@ -1476,7 +1476,7 @@ Notes:
 - `redraw` refreshes the sheet so the newly created box is visible.
 - `selection_function` can be used to trigger a specific function when an item from the dropdown box is selected, if you are using the above `extra_bindings()` as well it will also be triggered but after this function. e.g. `selection_function = my_function_name`
 - `modified_function` can be used to trigger a specific function when the `state` of the box is set to `"normal"` and there is an editable text window and a change of the text in that window has occurred. Note that this function occurs before the dropdown boxes search feature.
-- `search_enabled` (`bool`) when `True` will make modifying the text editor that appears with `state = "normal"` search the dropdown box's values.
+- `search_function` (`None`, `callable`) sets the function that will be used to search the dropdown boxes values upon a dropdown text editor modified event when the dropdowns state is `normal`. Set to `None` to disable the search feature or use your own function with the following keyword arguments: `(search_for, data):` and make it return an row number (e.g. select and see the first value would be `0`) if positive and `None` if negative.
 - `validate_input` (`bool`) when `True` will not allow cut, paste, delete or cell editor to input values to cell which are not in the dropdown boxes values.
 
 ___

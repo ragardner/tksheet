@@ -3,6 +3,7 @@
 - Undo added to stack when no changes made with cut, paste, delete
 - Using generator with `set_column_widths()`/`set_row_heights()` would result in lost first width/height
 - Header/Index dropdown `modified_function` not sending modified event
+- Escape out of dropdown box doesn't reset arrow orientation
 
 #### Added:
 - Cell formatters, thanks to [PR#158](https://github.com/ragardner/tksheet/pull/158)
@@ -17,6 +18,7 @@
 - `return_copy` arg in data getting functions but will not generate error if used as keyword arg
 
 #### Changed:
+- `index_border_fg` and `header_border_fg` no longer work, they now use the relevant grid foreground options
 - `"dark"`/`"black"` themes
 - Dropdowns now default to state `"normal"` and validate input by default
 - Checkbox click extra binding and edit cell extra binding (when associated with a checkbox click) return `bool` now, not `str`

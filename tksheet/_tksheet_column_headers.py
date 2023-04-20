@@ -939,11 +939,14 @@ class ColumnHeaders(tk.Canvas):
                 t = self.create_polygon(points, fill = fill, outline = outline, tag = tag, smooth = True)
             self.disp_checkbox[t] = True
 
-    def redraw_grid_and_text(self, last_col_line_pos, scrollpos_left, x_stop, start_col, end_col, selected_cols, selected_rows, actual_selected_cols):
-        self.configure(scrollregion = (0,
-                                       0,
-                                       last_col_line_pos + self.MT.empty_horizontal,
-                                       self.current_height))
+    def redraw_grid_and_text(self, last_col_line_pos, scrollpos_left, x_stop, start_col, end_col, scrollpos_right, selected_cols, selected_rows, actual_selected_cols, col_pos_exists):
+        try:
+            self.configure(scrollregion = (0,
+                                           0,
+                                           last_col_line_pos + self.MT.empty_horizontal,
+                                           self.current_height))
+        except:
+            return
         for k, v in self.disp_text.items():
             if k in self.hidd_text:
                 self.hidd_text[k] = self.hidd_text[k] | self.disp_text[k]
@@ -966,9 +969,11 @@ class ColumnHeaders(tk.Canvas):
         self.col_height_resize_bbox = (scrollpos_left, self.current_height - 2, x_stop, self.current_height)
         draw_x = self.MT.col_positions[start_col]
         yend = self.current_height - 5
-        if self.MT.show_vertical_grid or self.width_resizing_enabled:
+        if (self.MT.show_vertical_grid or self.width_resizing_enabled) and col_pos_exists:
             self.grid_cyc = cycle(self.grid_cyctup)
-            points = []
+            points = [x_stop - 1, self.current_height - 1, 
+                      scrollpos_left - 1, self.current_height - 1,
+                      scrollpos_left - 1, -1]
             for c in range(start_col + 1, end_col):
                 draw_x = self.MT.col_positions[c]
                 if self.width_resizing_enabled:
@@ -984,8 +989,6 @@ class ColumnHeaders(tk.Canvas):
                                    self.MT.col_positions[c + 1] if len(self.MT.col_positions) - 1 > c else draw_x, -1])
                 if points:
                     self.redraw_gridline(points = points, fill = self.header_grid_fg, width = 1, tag = "v")
-        self.redraw_gridline(points = (draw_x, 0, draw_x, self.current_height), fill = self.header_grid_fg, width = 1, tag = "fv")
-        self.redraw_gridline(points = (scrollpos_left, self.current_height - 1, x_stop, self.current_height - 1), fill = self.header_border_fg, width = 1, tag = "h")
         top = self.canvasy(0)
         c_2 = self.header_selected_cells_bg if self.header_selected_cells_bg.startswith("#") else Color_Map_[self.header_selected_cells_bg]
         c_3 = self.header_selected_columns_bg if self.header_selected_columns_bg.startswith("#") else Color_Map_[self.header_selected_columns_bg]
@@ -1144,9 +1147,9 @@ class ColumnHeaders(tk.Canvas):
                                     self.itemconfig(iid, text = txt)
                                     wd = self.bbox(iid)
                                 self.coords(iid, draw_x, draw_y)
-                            self.disp_text[config._replace(txt = txt)].add(DrawnItem(iid = iid, showing = 1))
+                            self.disp_text[config._replace(txt = txt)].add(DrawnItem(iid = iid, showing = True))
                         else:
-                            self.disp_text[config].add(DrawnItem(iid = iid, showing = 1))
+                            self.disp_text[config].add(DrawnItem(iid = iid, showing = True))
                     draw_y += self.MT.hdr_xtra_lines_increment
                     if draw_y - 1 > self.current_height:
                         break
@@ -1156,13 +1159,13 @@ class ColumnHeaders(tk.Canvas):
                 if namedtup.showing:
                     self.itemconfig(namedtup.iid, state = "hidden")
                     self.hidd_text[cfg].discard(namedtup)
-                    self.hidd_text[cfg].add(namedtup._replace(showing = 0))
+                    self.hidd_text[cfg].add(namedtup._replace(showing = False))
         for cfg, set_ in self.hidd_high.items():
             for namedtup in tuple(set_):
                 if namedtup.showing:
                     self.itemconfig(namedtup.iid, state = "hidden")
                     self.hidd_high[cfg].discard(namedtup)
-                    self.hidd_high[cfg].add(namedtup._replace(showing = 0))
+                    self.hidd_high[cfg].add(namedtup._replace(showing = False))
         for t, sh in self.hidd_grid.items():
             if sh:
                 self.itemconfig(t, state = "hidden")
@@ -1659,22 +1662,26 @@ class ColumnHeaders(tk.Canvas):
         self.destroy_opened_dropdown_window(c)
         if redraw:
             self.MT.refresh()
+            
+    def get_existing_dropdown_coords(self):
+        if self.existing_dropdown_window is not None:
+            return int(self.existing_dropdown_window.c)
+        return None
         
     def mouseclick_outside_editor_or_dropdown(self):
-        if self.existing_dropdown_window is not None:
-            closed_dd_coords = int(self.existing_dropdown_window.c)
-        else:
-            closed_dd_coords = None
+        closed_dd_coords = self.get_existing_dropdown_coords()
         if self.text_editor_loc is not None and self.text_editor is not None:
             self.close_text_editor(editor_info = (self.text_editor_loc, "ButtonPress-1"))
         else:
             self.destroy_text_editor("Escape")
-        if closed_dd_coords:
+        if closed_dd_coords is not None:
             self.destroy_opened_dropdown_window(closed_dd_coords) #displayed coords not data, necessary for b1 function
         return closed_dd_coords
             
     # function can receive two None args
     def destroy_opened_dropdown_window(self, c = None, datacn = None):
+        if c is None and datacn is None and self.existing_dropdown_window is not None:
+            c = self.get_existing_dropdown_coords()
         if c is not None or datacn is not None:
             if datacn is None:
                 datacn_ = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
@@ -1691,7 +1698,6 @@ class ColumnHeaders(tk.Canvas):
             self.existing_dropdown_window.destroy()
         except:
             pass
-        self.existing_dropdown_window = None
         if datacn_ in self.cell_options and 'dropdown' in self.cell_options[datacn_]:
             self.cell_options[datacn_]['dropdown']['canvas_id'] = "no dropdown open"
             self.cell_options[datacn_]['dropdown']['window'] = "no dropdown open"
@@ -1699,6 +1705,7 @@ class ColumnHeaders(tk.Canvas):
                 self.delete(self.cell_options[datacn_]['dropdown']['canvas_id'])
             except:
                 pass
+        self.existing_dropdown_window = None
 
     def delete_dropdown(self, datacn):
         self.destroy_opened_dropdown_window(datacn = datacn)
