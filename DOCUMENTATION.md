@@ -104,7 +104,7 @@ app.mainloop()
 **This is a full list of all the start up arguments, the only required argument is the sheets parent, everything else has default arguments.**
 
 ```python
-Sheet(
+(
 parent,
 show_table: bool = True,
 show_top_left: bool = True,
@@ -118,6 +118,10 @@ headers: list = None,
 header: list = None,
 default_header: str = "letters", #letters, numbers or both
 default_row_index: str = "numbers", #letters, numbers or both
+to_clipboard_delimiter = "\t",
+to_clipboard_quotechar = '"',
+to_clipboard_lineterminator = "\n",
+from_clipboard_delimiters = ["\t", ",", "|", ";"],
 show_default_header_for_empty: bool = True,
 show_default_index_for_empty: bool = True,
 page_up_down_select_row: bool = True,
@@ -125,7 +129,6 @@ expand_sheet_if_paste_too_big: bool = False,
 paste_insert_column_limit: int = None,
 paste_insert_row_limit: int = None,
 show_dropdown_borders: bool = False,
-ctrl_keys_over_dropdowns_enabled: bool = False,
 arrow_key_down_right_scroll_page: bool = False,
 enable_edit_cell_auto_resize: bool = True,
 edit_cell_validation: bool = True,
@@ -157,7 +160,7 @@ header_align: str = "center",
 row_index_align: str = "center",
 displayed_columns: list = [],
 all_columns_displayed: bool = True,
-max_undos: int = 20,
+max_undos: int = 30,
 outline_thickness: int = 0,
 outline_color: str = theme_light_blue['outline_color'],
 column_drag_and_drop_perform: bool = True,
@@ -265,9 +268,8 @@ ___
 
 #### **Set cell data, overwrites any existing data.**
 ```python
-set_cell_data(r, c, value = "", set_copy = True, redraw = False)
+set_cell_data(r, c, value = "", redraw = False)
 ```
-- `set_copy` means `str()` will be used on the value before setting.
 
 ___
 
@@ -2020,6 +2022,10 @@ For those wanting even more customisation of their formatters you also have the 
 
 The list of key word arguments available for `set_options()` are as follows, [see here](https://github.com/ragardner/tksheet/wiki#4-initialization-options) as a guide for what arguments to use.
 ```python
+to_clipboard_delimiter
+to_clipboard_quotechar
+to_clipboard_lineterminator
+from_clipboard_delimiters
 show_dropdown_borders
 edit_cell_validation
 show_default_header_for_empty
@@ -2032,7 +2038,6 @@ page_up_down_select_row
 expand_sheet_if_paste_too_big
 paste_insert_column_limit
 paste_insert_row_limit
-ctrl_keys_over_dropdowns_enabled
 arrow_key_down_right_scroll_page
 display_selected_fg_over_highlights
 empty_horizontal
