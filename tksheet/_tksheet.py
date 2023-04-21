@@ -27,6 +27,10 @@ class Sheet(tk.Frame):
                  header: list = None,
                  default_header: str = "letters", #letters, numbers or both
                  default_row_index: str = "numbers", #letters, numbers or both
+                 to_clipboard_delimiter = "\t",
+                 to_clipboard_quotechar = '"',
+                 to_clipboard_lineterminator = "\n",
+                 from_clipboard_delimiters = ["\t", ",", "|", ";"],
                  show_default_header_for_empty: bool = True,
                  show_default_index_for_empty: bool = True,
                  page_up_down_select_row: bool = True,
@@ -196,6 +200,10 @@ class Sheet(tk.Frame):
                             show_horizontal_grid = show_horizontal_grid,
                             column_width = column_width,
                             row_height = row_height,
+                            to_clipboard_delimiter = to_clipboard_delimiter,
+                            to_clipboard_quotechar = to_clipboard_quotechar,
+                            to_clipboard_lineterminator = to_clipboard_lineterminator,
+                            from_clipboard_delimiters = from_clipboard_delimiters,
                             column_headers_canvas = self.CH,
                             row_index_canvas = self.RI,
                             headers = headers,
@@ -1685,6 +1693,14 @@ class Sheet(tk.Frame):
     def set_options(self,
                     redraw = True,
                     **kwargs):
+        if 'to_clipboard_delimiter' in kwargs:
+            self.MT.to_clipboard_delimiter = kwargs['to_clipboard_delimiter']
+        if 'to_clipboard_quotechar' in kwargs:
+            self.MT.to_clipboard_quotechar = kwargs['to_clipboard_quotechar']
+        if 'to_clipboard_lineterminator' in kwargs:
+            self.MT.to_clipboard_lineterminator = kwargs['to_clipboard_lineterminator']
+        if 'from_clipboard_delimiters' in kwargs:
+            self.MT.from_clipboard_delimiters = kwargs['from_clipboard_delimiters']
         if 'show_dropdown_borders' in kwargs:
             self.MT.show_dropdown_borders = kwargs['show_dropdown_borders']
         if 'edit_cell_validation' in kwargs:

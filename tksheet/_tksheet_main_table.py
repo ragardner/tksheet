@@ -7,7 +7,7 @@ from itertools import islice, repeat, accumulate, chain, product, cycle
 from math import floor, ceil
 from tkinter import TclError
 import bisect
-import csv as csv_module
+import csv as csv
 import io
 import pickle
 import tkinter as tk
@@ -86,6 +86,10 @@ class MainTable(tk.Canvas):
         self.max_undos = kwargs['max_undos']
         self.undo_storage = deque(maxlen = kwargs['max_undos'])
 
+        self.to_clipboard_delimiter = kwargs['to_clipboard_delimiter']
+        self.to_clipboard_quotechar = kwargs['to_clipboard_quotechar']
+        self.to_clipboard_lineterminator = kwargs['to_clipboard_lineterminator']
+        self.from_clipboard_delimiters = kwargs['from_clipboard_delimiters'] if isinstance(kwargs['from_clipboard_delimiters'], str) else "".join(kwargs['from_clipboard_delimiters'])
         self.page_up_down_select_row = kwargs['page_up_down_select_row']
         self.expand_sheet_if_paste_too_big = kwargs['expand_sheet_if_paste_too_big']
         self.paste_insert_column_limit = kwargs['paste_insert_column_limit']
@@ -373,7 +377,11 @@ class MainTable(tk.Canvas):
         currently_selected = self.currently_selected()
         if currently_selected:
             s = io.StringIO()
-            writer = csv_module.writer(s, dialect = csv_module.excel_tab, lineterminator = "\n")
+            writer = csv.writer(s,
+                                dialect = csv.excel_tab, 
+                                delimiter = self.to_clipboard_delimiter,
+                                quotechar = self.to_clipboard_quotechar,
+                                lineterminator = self.to_clipboard_lineterminator)
             rows = []
             if currently_selected.type_ in ("cell", "column"):
                 boxes, maxrows = self.get_ctrl_x_c_boxes()
@@ -422,7 +430,11 @@ class MainTable(tk.Canvas):
             return
         undo_storage = {}
         s = io.StringIO()
-        writer = csv_module.writer(s, dialect = csv_module.excel_tab, lineterminator = "\n")
+        writer = csv.writer(s,
+                            dialect = csv.excel_tab, 
+                            delimiter = self.to_clipboard_delimiter,
+                            quotechar = self.to_clipboard_quotechar,
+                            lineterminator = self.to_clipboard_lineterminator)
         currently_selected = self.currently_selected()
         rows = []
         changes = 0
@@ -449,28 +461,13 @@ class MainTable(tk.Canvas):
                     if r2 - r1 < maxrows:
                         continue
                     data_ref_rn = r1 + rn
-                    if data_ref_rn in self.row_options and 'readonly' in self.row_options[data_ref_rn]:
-                        continue
                     for c in range(c1, c2):
                         datacn = c if self.all_columns_displayed else self.displayed_columns[c]
-                        if (
-                            ((data_ref_rn, datacn) in self.cell_options and ('readonly' in self.cell_options[(data_ref_rn, datacn)] or 
-                                                                             'checkbox' in self.cell_options[(data_ref_rn, datacn)])) or
-                            (datacn in self.col_options and 'readonly' in self.col_options[datacn]) or
-                            self.cell_equal_to(data_ref_rn, datacn, "") or
-                            # if cell isn't formatted (deals with invalid values) and 
-                            # validate input in dropdowns and new value isn't in dropdown values
-                            (not self.get_format_kwargs(data_ref_rn, datacn) and
-                             (data_ref_rn, datacn) in self.cell_options and 
-                             'dropdown' in self.cell_options[(data_ref_rn, datacn)] and
-                             self.cell_options[(data_ref_rn, datacn)]['dropdown']['validate_input'] and
-                             "" not in self.cell_options[(data_ref_rn, datacn)]['dropdown']['values'])
-                            ):
-                            continue
-                        if self.undo_enabled:
-                            undo_storage[(data_ref_rn, datacn)] = self.get_cell_data(data_ref_rn, datacn)
-                        self.set_cell_data(data_ref_rn, datacn, "")
-                        changes += 1
+                        if self.input_valid_for_cell(data_ref_rn, datacn, ""):
+                            if self.undo_enabled:
+                                undo_storage[(data_ref_rn, datacn)] = self.get_cell_data(data_ref_rn, datacn)
+                            self.set_cell_data(data_ref_rn, datacn, "")
+                            changes += 1
         else:
             boxes = self.get_ctrl_x_c_boxes()
             if self.extra_begin_ctrl_x_func is not None:
@@ -490,23 +487,13 @@ class MainTable(tk.Canvas):
             for r1, c1, r2, c2 in boxes:
                 for rn in range(r2 - r1):
                     data_ref_rn = r1 + rn
-                    if data_ref_rn in self.row_options and 'readonly' in self.row_options[data_ref_rn]:
-                        continue
                     for c in range(c1, c2):
                         datacn = c if self.all_columns_displayed else self.displayed_columns[c]
-                        if (
-                            ((data_ref_rn, datacn) in self.cell_options and ('readonly' in self.cell_options[(data_ref_rn, datacn)] or 'checkbox' in self.cell_options[(data_ref_rn, datacn)])) or
-                            (datacn in self.col_options and 'readonly' in self.col_options[datacn]) or
-                            self.cell_equal_to(data_ref_rn, datacn, "") or
-                            ((data_ref_rn, datacn) in self.cell_options and 
-                            'dropdown' in self.cell_options[(data_ref_rn, datacn)] and
-                            "" not in self.cell_options[(data_ref_rn, datacn)]['dropdown']['values'])
-                            ):
-                            continue
-                        if self.undo_enabled:
-                            undo_storage[(data_ref_rn, datacn)] = self.get_cell_data(data_ref_rn, datacn)
-                        self.set_cell_data(data_ref_rn, datacn, "")
-                        changes += 1
+                        if self.input_valid_for_cell(data_ref_rn, datacn, ""):
+                            if self.undo_enabled:
+                                undo_storage[(data_ref_rn, datacn)] = self.get_cell_data(data_ref_rn, datacn)
+                            self.set_cell_data(data_ref_rn, datacn, "")
+                            changes += 1
         if changes and self.undo_enabled:
             self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells", undo_storage, tuple(boxes.items()), currently_selected))))
         self.clipboard_clear()
@@ -532,6 +519,23 @@ class MainTable(tk.Canvas):
                 if (self.last_selected and self.last_selected == (r1, c1, r2, c2, type_)) or not self.last_selected:
                     return (r1, c1, r2, c2)
         return (currently_selected.row, currently_selected.column, currently_selected.row + 1, currently_selected.column + 1)
+    
+    def input_valid_for_cell(self, datarn, datacn, value):
+        # order of conditions is important
+        if (datarn, datacn) in self.cell_options and ('readonly' in self.cell_options[(datarn, datacn)] or 'checkbox' in self.cell_options[(datarn, datacn)]):
+            return False
+        if (datacn in self.col_options and 'readonly' in self.col_options[datacn]) or (datarn in self.row_options and 'readonly' in self.row_options[datarn]):
+            return False
+        if self.cell_equal_to(datarn, datacn, value):
+            return False
+        if self.get_format_kwargs(datarn, datacn):
+            return True
+        if ((datarn, datacn) in self.cell_options and 
+            'dropdown' in self.cell_options[(datarn, datacn)] and 
+            self.cell_options[(datarn, datacn)]['dropdown']['validate_input'] and 
+            value not in self.cell_options[(datarn, datacn)]['dropdown']['values']):
+            return False
+        return True
 
     def ctrl_v(self, event = None):
         if not self.expand_sheet_if_paste_too_big and (len(self.col_positions) == 1 or len(self.row_positions) == 1):
@@ -556,7 +560,13 @@ class MainTable(tk.Canvas):
             data = self.clipboard_get()
         except:
             return
-        data = list(csv_module.reader(io.StringIO(data), delimiter = "\t", quotechar = '"', skipinitialspace = True))
+        try:
+            dialect = csv.Sniffer().sniff(data, delimiters = self.from_clipboard_delimiters)
+        except:
+            dialect = csv.excel_tab
+        data = list(csv.reader(io.StringIO(data),
+                               dialect = dialect, 
+                               skipinitialspace = True))
         if not data:
             return
         numcols = len(max(data, key = len))
@@ -614,28 +624,13 @@ class MainTable(tk.Canvas):
         changes = 0
         for ndr, r in enumerate(range(selected_r, selected_r + numrows)):
             datarn = r if self.all_rows_displayed else self.displayed_rows[r]
-            if datarn in self.row_options and 'readonly' in self.row_options[datarn]:
-                continue
             for ndc, c in enumerate(range(selected_c, selected_c + numcols)):
                 datacn = c if self.all_columns_displayed else self.displayed_columns[c]
-                if (
-                    ((datarn, datacn) in self.cell_options and ('readonly' in self.cell_options[(datarn, datacn)] or 
-                                                                'checkbox' in self.cell_options[(datarn, datacn)])) or
-                    (datacn in self.col_options and 'readonly' in self.col_options[datacn]) or
-                    self.cell_equal_to(datarn, datacn, data[ndr][ndc]) or
-                    # if cell isn't formatted (deals with invalid values) and 
-                    # validate input in dropdowns and new value isn't in dropdown values
-                    (not self.get_format_kwargs(datarn, datacn) and
-                     (datarn, datacn) in self.cell_options and 
-                     'dropdown' in self.cell_options[(datarn, datacn)] and
-                     self.cell_options[(datarn, datacn)]['dropdown']['validate_input'] and
-                     data[ndr][ndc] not in self.cell_options[(datarn, datacn)]['dropdown']['values'])
-                    ):
-                    continue
-                if self.undo_enabled:
-                    undo_storage[(datarn, datacn)] = self.get_cell_data(datarn, datacn)
-                self.set_cell_data(datarn, datacn, data[ndr][ndc])
-                changes += 1
+                if self.input_valid_for_cell(datarn, datacn, data[ndr][ndc]):
+                    if self.undo_enabled:
+                        undo_storage[(datarn, datacn)] = self.get_cell_data(datarn, datacn)
+                    self.set_cell_data(datarn, datacn, data[ndr][ndc])
+                    changes += 1
         if self.expand_sheet_if_paste_too_big and self.undo_enabled:
             self.equalize_data_row_lengths()
         self.deselect("all")
@@ -675,28 +670,13 @@ class MainTable(tk.Canvas):
             for r1, c1, r2, c2 in boxes:
                 for r in range(r1, r2):
                     datarn = r if self.all_rows_displayed else self.displayed_rows[r]
-                    if datarn in self.row_options and 'readonly' in self.row_options[datarn]:
-                        continue
                     for c in range(c1, c2):
                         datacn = c if self.all_columns_displayed else self.displayed_columns[c]
-                        if (
-                            ((datarn, datacn) in self.cell_options and ('readonly' in self.cell_options[(datarn, datacn)] or 
-                                                                        'checkbox' in self.cell_options[(datarn, datacn)])) or
-                            (datacn in self.col_options and 'readonly' in self.col_options[datacn]) or
-                            self.cell_equal_to(datarn, datacn, "") or
-                            # if cell isn't formatted (deals with invalid values) and 
-                            # validate input in dropdowns and new value isn't in dropdown values
-                            (not self.get_format_kwargs(datarn, datacn) and
-                             (datarn, datacn) in self.cell_options and 
-                             'dropdown' in self.cell_options[(datarn, datacn)] and
-                             self.cell_options[(datarn, datacn)]['dropdown']['validate_input'] and
-                             "" not in self.cell_options[(datarn, datacn)]['dropdown']['values'])
-                            ):
-                            continue
-                        if self.undo_enabled:
-                            undo_storage[(datarn, datacn)] = self.get_cell_data(datarn, datacn)
-                        self.set_cell_data(datarn, datacn, "")
-                        changes += 1
+                        if self.input_valid_for_cell(data_ref_rn, datacn, ""):
+                            if self.undo_enabled:
+                                undo_storage[(datarn, datacn)] = self.get_cell_data(datarn, datacn)
+                            self.set_cell_data(datarn, datacn, "")
+                            changes += 1
             if self.extra_end_delete_key_func is not None:
                 self.extra_end_delete_key_func(CtrlKeyEvent("end_delete_key", boxes, currently_selected, undo_storage))
             if changes and self.undo_enabled:
@@ -4101,7 +4081,6 @@ class MainTable(tk.Canvas):
             y_stop = scrollpos_bot
         else:
             y_stop = last_row_line_pos
-        scrollpos_bot_add2 = scrollpos_bot + 2
         row_pos_exists = self.row_positions != [0] and self.row_positions
         col_pos_exists = self.col_positions != [0] and self.col_positions
         if self.show_horizontal_grid and row_pos_exists:
@@ -4189,8 +4168,6 @@ class MainTable(tk.Canvas):
                     rbotgridln = self.row_positions[r + 1]
                     if rbotgridln - rtopgridln < self.txt_h:
                         continue
-                    if rbotgridln > scrollpos_bot_add2:
-                        rbotgridln = scrollpos_bot_add2
                     cleftgridln = self.col_positions[c]
                     crightgridln = self.col_positions[c + 1]
                     
