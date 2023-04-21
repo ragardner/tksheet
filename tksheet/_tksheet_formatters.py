@@ -1,5 +1,6 @@
 from typing import Union, Any, Type, Callable
 from ._tksheet_vars import *
+from ._tksheet_other_classes import *
 
 def is_nonelike(n: Any):
     if (

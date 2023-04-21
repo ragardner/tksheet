@@ -1893,107 +1893,122 @@ class Sheet(tk.Frame):
             self.config(bg = theme_black['table_bg'])
         self.MT.recreate_all_selection_boxes()
 
-    def get_header_data(self, cn, get_displayed = False, default_for_empty = True):
-        if isinstance(self.MT._headers, int) or not self.MT._headers or cn >= len(self.MT._headers) or not self.MT._headers[cn]:
-            if default_for_empty:
-                return self.get_n2a(cn, self.CH.default_header)
-            else:
-                return ""
-        else:
-            #placeholder
-            if get_displayed:
-                return f"{self.MT._headers[cn]}"
-            else:
-                return f"{self.MT._headers[cn]}"
-                
-    def get_index_data(self, rn, get_displayed = False, default_for_empty = True):
-        if isinstance(self.MT._row_index, int) or not self.MT._row_index or rn >= len(self.MT._row_index) or not self.MT._row_index[rn]:
-            if default_for_empty:
-                return self.get_n2a(rn, self.RI.default_index)
-            else:
-                return ""
-        elif self.MT._row_index[rn]:
-            #placeholder
-            if get_displayed:
-                return f"{self.MT._row_index[rn]}"
-            else:
-                return f"{self.MT._row_index[rn]}"
+    def get_header_data(self, c, get_displayed = False):
+        return self.CH.get_cell_data(datacn = c, get_displayed = get_displayed)
+
+    def get_index_data(self, r, get_displayed = False):
+        return self.RI.get_cell_data(datarn = r, get_displayed = get_displayed)
 
     def get_sheet_data(self, 
                        get_displayed = False, 
                        get_header = False,
                        get_index = False,
-                       default_index_for_empty = True,
-                       default_header_for_empty = True,
+                       get_header_displayed = True,
+                       get_index_displayed = True,
+                       only_rows = None,
+                       only_columns = None,
                        **kwargs):
+        if only_rows is not None:
+            if isinstance(only_rows, int):
+                only_rows = (only_rows, )
+            elif not is_iterable(only_rows):
+                raise ValueError(f"Argument 'only_rows' must be either int or iterable or None. Not {type(only_rows)}")
+        if only_columns is not None:
+            if isinstance(only_columns, int):
+                only_columns = (only_columns, )
+            elif not is_iterable(only_columns):
+                raise ValueError(f"Argument 'only_columns' must be either int or iterable or None. Not {type(only_columns)}")
         if get_header:
             maxlen = len(self.MT._headers) if isinstance(self.MT._headers, (list, tuple)) else 0
             data = []
-        if get_index:
-            index_limit = len(self.MT._row_index)
-        if get_header and get_index:
-            for rn in range(len(self.MT.data)):
-                r = self.get_row_data(rn, get_displayed = get_displayed)
+            for rn in only_rows if only_rows is not None else range(len(self.MT.data)):
+                r = self.get_row_data(rn, get_displayed = get_displayed, only_columns = only_columns)
                 if len(r) > maxlen:
                     maxlen = len(r)
-                data.append([self.get_index_data(rn, get_displayed = get_displayed, default_for_empty = default_index_for_empty)] + r)
-            return [[""] + [self.get_header_data(cn, get_displayed = get_displayed, default_for_empty = default_header_for_empty) for cn in range(maxlen)]] + data
-        elif get_header and not get_index:
-            for rn in range(len(self.MT.data)):
-                r = self.get_row_data(rn, get_displayed = get_displayed)
-                if len(r) > maxlen:
-                    maxlen = len(r)
-                data.append(r)
-            return [[self.get_header_data(cn, get_displayed = get_displayed, default_for_empty = default_header_for_empty) for cn in range(maxlen)]] + data
+                if get_index:
+                    data.append([self.get_index_data(rn, get_displayed = get_index_displayed)] + r)
+                else:
+                    data.append(r)
+            iterable = only_columns if only_columns is not None else range(maxlen)
+            if get_index:
+                return [[""] + [self.get_header_data(cn, get_displayed = get_header_displayed) for cn in iterable]] + data
+            else:
+                return [[self.get_header_data(cn, get_displayed = get_header_displayed) for cn in iterable]] + data
         elif not get_header:
+            iterable = only_rows if only_rows is not None else range(len(self.MT.data))
             return [self.get_row_data(rn,
                                       get_displayed = get_displayed,
                                       get_index = get_index,
-                                      default_index_for_empty = default_index_for_empty)
-                    for rn in range(len(self.MT.data))]
+                                      get_index_displayed = get_index_displayed,
+                                      only_columns = only_columns)
+                    for rn in iterable]
     
     def get_cell_data(self, r, c, get_displayed = False, **kwargs):
         return self.MT.get_cell_data(r, c, get_displayed)
 
-    def get_row_data(self, r, get_displayed = False, get_index = False, default_index_for_empty = True, **kwargs):
+    def get_row_data(self, r, get_displayed = False, get_index = False, get_index_displayed = True, only_columns = None, **kwargs):
+        if only_columns is not None:
+            if isinstance(only_columns, int):
+                only_columns = (only_columns, )
+            elif not is_iterable(only_columns):
+                raise ValueError(f"Argument 'only_columns' must be either int or iterable or None. Not {type(only_columns)}")
+        if r >= self.MT.total_data_rows():
+            raise IndexError(f"Row #{r} is out of range.")
+        if r >= len(self.MT.data):
+            total_data_cols = self.MT.total_data_cols()
+            self.MT.data.extend([list(repeat("", total_data_cols)) for i in range((r + 1) - len(self.MT.data))])
+        iterable = only_columns if only_columns is not None else range(len(self.MT.data[r]))
         if get_index:
-            if r >= len(self.MT.data):
-                return [self.get_index_data(r, get_displayed = get_displayed, default_for_empty = default_index_for_empty)] + ["" for c in range(self.MT.total_data_cols())]
-            return ([self.get_index_data(r, get_displayed = get_displayed, default_for_empty = default_index_for_empty)] +
-                    [self.MT.get_cell_data(r, c, get_displayed = get_displayed) for c in range(len(self.MT.data[r]))])
+            return ([self.get_index_data(r, get_displayed = get_index_displayed)] +
+                    [self.MT.get_cell_data(r, c, get_displayed = get_displayed) for c in iterable])
         else:
-            if r >= len(self.MT.data):
-                return ["" for c in range(self.MT.total_data_cols())]
-            return [self.MT.get_cell_data(r, c, get_displayed = get_displayed) for c in range(len(self.MT.data[r]))]
+            return [self.MT.get_cell_data(r, c, get_displayed = get_displayed) for c in iterable]
 
-    def get_column_data(self, c, get_displayed = False, get_header = False, default_header_for_empty = True, **kwargs):
-        return (([self.get_header_data(c, get_displayed = get_displayed, default_for_empty = default_header_for_empty)] if get_header else []) + 
-                [self.MT.get_cell_data(rn, c, get_displayed = get_displayed) for rn in range(len(self.MT.data))])
+    def get_column_data(self, c, get_displayed = False, get_header = False, get_header_displayed = True, only_rows = None, **kwargs):
+        if only_rows is not None:
+            if isinstance(only_rows, int):
+                only_rows = (only_rows, )
+            elif not is_iterable(only_rows):
+                raise ValueError(f"Argument 'only_rows' must be either int or iterable or None. Not {type(only_rows)}")
+        iterable = only_rows if only_rows is not None else range(len(self.MT.data))
+        return (([self.get_header_data(c, get_displayed = get_header_displayed)] if get_header else []) + 
+                [self.MT.get_cell_data(r, c, get_displayed = get_displayed) for r in iterable])
 
     def yield_sheet_rows(self,
                          get_displayed = False, 
                          get_header = False,
                          get_index = False,
-                         default_index_for_empty = True,
-                         default_header_for_empty = True,
+                         get_index_displayed = True,
+                         get_header_displayed = True,
+                         only_rows = None,
+                         only_columns = None,
                          **kwargs):
-        yield from self.get_sheet_data(get_displayed = get_displayed, 
-                                       get_header = get_header,
+        if only_rows is not None:
+            if isinstance(only_rows, int):
+                only_rows = (only_rows, )
+            elif not is_iterable(only_rows):
+                raise ValueError(f"Argument 'only_rows' must be either int or iterable or None. Not {type(only_rows)}")
+        if only_columns is not None:
+            if isinstance(only_columns, int):
+                only_columns = (only_columns, )
+            elif not is_iterable(only_columns):
+                raise ValueError(f"Argument 'only_columns' must be either int or iterable or None. Not {type(only_columns)}")
+        if get_header:
+            maxlen = self.MT.total_data_cols()
+        if get_header:
+            iterable = only_columns if only_columns is not None else range(maxlen)
+            yield ([""] if get_index else []) + [self.get_header_data(c, get_displayed = get_header_displayed) for c in iterable]
+        iterable = only_rows if only_rows is not None else range(len(self.MT.data))
+        yield from  (self.get_row_data(r,
+                                       get_displayed = get_displayed,
                                        get_index = get_index,
-                                       default_index_for_empty = default_index_for_empty,
-                                       default_header_for_empty = default_header_for_empty)
+                                       get_index_displayed = get_index_displayed,
+                                       only_columns = only_columns) 
+                        for r in iterable)
 
     @property
     def data(self):
         return self.MT.data
-                
-    def get_n2a(self, n = 0, _type = "numbers"):
-        if _type == "letters":
-            return num2alpha(n)
-        elif _type == "numbers":
-            return f"{n + 1}"
-        else:
-            return f"{num2alpha(n)} {n + 1}"
         
     def formatted(self, r, c):
         if (r, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(r, c)]:
@@ -2549,9 +2564,10 @@ class Sheet(tk.Frame):
                                selection_function = None,
                                modified_function = None,
                                search_function = dropdown_search_function,
-                               validate_input = True):
+                               validate_input = True,
+                               text = None):
         _kwargs = {'values': values, 'set_value': set_value, 'state': state, 'redraw': redraw, 'selection_function': selection_function,
-                   'modified_function': modified_function, 'search_function': dropdown_search_function, 'validate_input': validate_input}
+                   'modified_function': modified_function, 'search_function': dropdown_search_function, 'validate_input': validate_input, 'text': text}
         if isinstance(c, str) and c.lower() == "all":
             for c_ in range(self.MT.total_data_cols()):
                 self.CH.create_dropdown(datacn = c_,
@@ -2614,9 +2630,10 @@ class Sheet(tk.Frame):
                               selection_function = None,
                               modified_function = None,
                               search_function = dropdown_search_function,
-                              validate_input = True):
+                              validate_input = True,
+                              text = None):
         _kwargs = {'values': values, 'set_value': set_value, 'state': state, 'redraw': redraw, 'selection_function': selection_function,
-                   'modified_function': modified_function, 'search_function': dropdown_search_function, 'validate_input': validate_input}
+                   'modified_function': modified_function, 'search_function': dropdown_search_function, 'validate_input': validate_input, 'text': text}
         if isinstance(r, str) and r.lower() == "all":
             for r_ in range(self.MT.total_data_rows()):
                 self.RI.create_dropdown(datarn = r_,
@@ -2680,9 +2697,10 @@ class Sheet(tk.Frame):
                         selection_function = None,
                         modified_function = None,
                         search_function = dropdown_search_function,
-                        validate_input = True):
+                        validate_input = True,
+                        text = None):
         _kwargs = {'values': values, 'set_value': set_value, 'state': state, 'redraw': redraw, 'selection_function': selection_function,
-                   'modified_function': modified_function, 'search_function': dropdown_search_function, 'validate_input': validate_input}
+                   'modified_function': modified_function, 'search_function': dropdown_search_function, 'validate_input': validate_input, 'text': text}
         if isinstance(r, str) and r.lower() == "all" and isinstance(c, int):
             for r_ in range(self.MT.total_data_rows()):
                 self.MT.create_dropdown(datarn = r_,

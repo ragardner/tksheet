@@ -24,37 +24,6 @@ def get_index_font():
 def get_heading_font():
     return ("Calibri", 13 if USER_OS == "darwin" else 11, "normal")
 
-def is_iterable(o):
-    try:
-        iter(o)
-        return True
-    except:
-        return False
-    
-def dropdown_search_function(search_for, data):
-    search_len = len(search_for)
-    best_match = {'rn': float("inf"),
-                  'st': float("inf"),
-                  'len_diff': float("inf")}
-    for rn, row in enumerate(data):
-        dd_val = fr"{row[0]}".lower()
-        st = dd_val.find(search_for)
-        if st > -1:
-            # priority is start index
-            # if there's already a matching start
-            # then compare the len difference
-            len_diff = len(dd_val) - search_len
-            if (st < best_match['st'] or
-                (st == best_match['st'] and
-                 len_diff < best_match['len_diff'])
-                ):
-                best_match['rn'] = rn
-                best_match['st'] = st
-                best_match['len_diff'] = len_diff
-    if best_match['rn'] != float("inf"):
-        return best_match['rn']
-    return None
-
 theme_light_blue = {
 'popup_menu_fg': "#000000",
 'popup_menu_bg': "#FFFFFF",

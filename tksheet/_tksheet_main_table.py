@@ -520,13 +520,13 @@ class MainTable(tk.Canvas):
                     return (r1, c1, r2, c2)
         return (currently_selected.row, currently_selected.column, currently_selected.row + 1, currently_selected.column + 1)
     
-    def input_valid_for_cell(self, datarn, datacn, value):
+    def input_valid_for_cell(self, datarn, datacn, value, check_equality = True):
         # order of conditions is important
         if (datarn, datacn) in self.cell_options and ('readonly' in self.cell_options[(datarn, datacn)] or 'checkbox' in self.cell_options[(datarn, datacn)]):
             return False
         if (datacn in self.col_options and 'readonly' in self.col_options[datacn]) or (datarn in self.row_options and 'readonly' in self.row_options[datarn]):
             return False
-        if self.cell_equal_to(datarn, datacn, value):
+        if check_equality and self.cell_equal_to(datarn, datacn, value):
             return False
         if self.get_format_kwargs(datarn, datacn):
             return True
@@ -5048,7 +5048,7 @@ class MainTable(tk.Canvas):
                 extra_func_key = "BackSpace"
                 text = ""
             else:
-                text = f"{self.get_cell_data(datarn, datacn, none_to_empty_str=True)}"
+                text = f"{self.get_cell_data(datarn, datacn, none_to_empty_str = True)}"
         elif event is not None and ((hasattr(event, "char") and event.char.isalpha()) or
                                     (hasattr(event, "char") and event.char.isdigit()) or
                                     (hasattr(event, "char") and event.char in symbols_set)):
@@ -5071,7 +5071,7 @@ class MainTable(tk.Canvas):
             self.set_cell_size_to_text(r, c, only_set_if_too_small = True, redraw = True, run_binding = True)
         if not self.currently_selected():
             self.select_cell(r = r, c = c, keep_other_selections = True)
-        self.create_text_editor(r = r, c = c, text = text, set_data_ref_on_destroy = True, dropdown = dropdown)
+        self.create_text_editor(r = r, c = c, text = text, set_data_on_close = True, dropdown = dropdown)
         return True
     
     # displayed indexes
@@ -5095,7 +5095,7 @@ class MainTable(tk.Canvas):
                            text = None,
                            state = "normal",
                            see = True,
-                           set_data_ref_on_destroy = False,
+                           set_data_on_close = False,
                            binding = None,
                            dropdown = False):
         if (r, c) == self.text_editor_loc and self.text_editor is not None:
@@ -5153,7 +5153,7 @@ class MainTable(tk.Canvas):
             self.text_editor.textedit.bind("<Return>", lambda x: binding((r, c, "Return")))
             self.text_editor.textedit.bind("<FocusOut>", lambda x: binding((r, c, "FocusOut")))
             self.text_editor.textedit.bind("<Escape>", lambda x: binding((r, c, "Escape")))
-        elif binding is None and set_data_ref_on_destroy:
+        elif binding is None and set_data_on_close:
             self.text_editor.textedit.bind("<Tab>", lambda x: self.close_text_editor((r, c, "Tab")))
             self.text_editor.textedit.bind("<Return>", lambda x: self.close_text_editor((r, c, "Return")))
             if not dropdown:
@@ -5214,7 +5214,7 @@ class MainTable(tk.Canvas):
             self.focus_set()
 
     # c is displayed col
-    def close_text_editor(self, editor_info = None, r = None, c = None, set_data_ref_on_destroy = True, event = None, destroy = True, move_down = True, redraw = True, recreate = True):
+    def close_text_editor(self, editor_info = None, r = None, c = None, set_data_on_close = True, event = None, destroy = True, move_down = True, redraw = True, recreate = True):
         if self.focus_get() is None and editor_info:
             return "break"
         if editor_info is not None and len(editor_info) >= 3 and editor_info[2] == "Escape":
@@ -5225,19 +5225,21 @@ class MainTable(tk.Canvas):
             self.text_editor_value = self.text_editor.get()
         if destroy:
             self.destroy_text_editor()
-        if set_data_ref_on_destroy:
+        if set_data_on_close:
             if r is None and c is None and editor_info:
                 r, c = editor_info[0], editor_info[1]
-            if self.extra_end_edit_cell_func is None:
-                self.set_cell_data_undo(r, c, value = self.text_editor_value, redraw = False)
-            elif self.extra_end_edit_cell_func is not None and not self.edit_cell_validation:
-                self.set_cell_data_undo(r, c, value = self.text_editor_value, redraw = False)
+            datarn = r if self.all_rows_displayed else self.displayed_rows[r]
+            datacn = c if self.all_columns_displayed else self.displayed_columns[c]
+            if self.extra_end_edit_cell_func is None and self.input_valid_for_cell(datarn, datacn, self.text_editor_value, check_equality = False):
+                self.set_cell_data_undo(r, c, datarn = datarn, datacn = datacn, value = self.text_editor_value, redraw = False)
+            elif self.extra_end_edit_cell_func is not None and not self.edit_cell_validation and self.input_valid_for_cell(datarn, datacn, self.text_editor_value, check_equality = False):
+                self.set_cell_data_undo(r, c, datarn = datarn, datacn = datacn, value = self.text_editor_value, redraw = False)
                 self.extra_end_edit_cell_func(EditCellEvent(r, c, editor_info[2] if len(editor_info) >= 3 else "FocusOut", f"{self.text_editor_value}", "end_edit_cell"))
             elif self.extra_end_edit_cell_func is not None and self.edit_cell_validation:
                 validation = self.extra_end_edit_cell_func(EditCellEvent(r, c, editor_info[2] if len(editor_info) >= 3 else "FocusOut", f"{self.text_editor_value}", "end_edit_cell"))
-                if validation is not None:
-                    self.text_editor_value = validation
-                    self.set_cell_data_undo(r, c, value = self.text_editor_value, redraw = False)
+                self.text_editor_value = validation
+                if validation is not None and self.input_valid_for_cell(datarn, datacn, self.text_editor_value, check_equality = False):
+                    self.set_cell_data_undo(r, c, datarn = datarn, datacn = datacn, value = self.text_editor_value, redraw = False)
         if move_down:
             if r is None and c is None and editor_info:
                 r, c = editor_info[0], editor_info[1]
@@ -5376,7 +5378,7 @@ class MainTable(tk.Canvas):
                         values = [], set_value = None,
                         state = "normal", redraw = True, 
                         selection_function = None, modified_function = None,
-                        search_function = dropdown_search_function, validate_input = True):
+                        search_function = dropdown_search_function, validate_input = True, text = None):
         if (datarn, datacn) in self.cell_options and ('dropdown' in self.cell_options[(datarn, datacn)] or 
                                                       'checkbox' in self.cell_options[(datarn, datacn)]):
             self.delete_dropdown_and_checkbox(datarn, datacn)
@@ -5390,6 +5392,7 @@ class MainTable(tk.Canvas):
                                                            'modified_function': modified_function,
                                                            'search_function': search_function,
                                                            'validate_input': validate_input,
+                                                           'text': text,
                                                            'state': state}
         if redraw:
             self.refresh()

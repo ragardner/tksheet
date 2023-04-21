@@ -1071,14 +1071,7 @@ class ColumnHeaders(tk.Canvas):
                 lns = self.get_valid_cell_data_as_str(datacn, fix = False).split("\n")
             if lns == [""]:
                 if self.show_default_header_for_empty:
-                    if self.default_header == "letters":
-                        lns = (num2alpha(datacn), )
-                    elif self.default_header == "numbers":
-                        lns = (f"{datacn + 1}", )
-                    elif self.default_header == "both":
-                        lns = (f"{datacn + 1} {num2alpha(datacn)}", )
-                    else:
-                        lns = (num2alpha(datacn), )
+                    lns = (get_n2a(datacn, self.default_header), )
                 else:
                     continue
             if mw > self.MT.hdr_txt_w and not ((align == "w" and (draw_x > x_stop)) or
@@ -1237,7 +1230,7 @@ class ColumnHeaders(tk.Canvas):
                 self.set_current_height_to_cell(datacn)
             self.set_col_width_run_binding(c)
         self.select_col(c = c, keep_other_selections = True)
-        self.create_text_editor(c = c, text = text, set_data_ref_on_destroy = True, dropdown = dropdown)
+        self.create_text_editor(c = c, text = text, set_data_on_close = True, dropdown = dropdown)
         return True
     
     # displayed indexes
@@ -1255,7 +1248,7 @@ class ColumnHeaders(tk.Canvas):
                            text = None,
                            state = "normal",
                            see = True,
-                           set_data_ref_on_destroy = False,
+                           set_data_on_close = False,
                            binding = None,
                            dropdown = False):
         if c == self.text_editor_loc and self.text_editor is not None:
@@ -1310,7 +1303,7 @@ class ColumnHeaders(tk.Canvas):
             self.text_editor.textedit.bind("<Return>", lambda x: binding((c, "Return")))
             self.text_editor.textedit.bind("<FocusOut>", lambda x: binding((c, "FocusOut")))
             self.text_editor.textedit.bind("<Escape>", lambda x: binding((c, "Escape")))
-        elif binding is None and set_data_ref_on_destroy:
+        elif binding is None and set_data_on_close:
             self.text_editor.textedit.bind("<Tab>", lambda x: self.close_text_editor((c, "Tab")))
             self.text_editor.textedit.bind("<Return>", lambda x: self.close_text_editor((c, "Return")))
             if not dropdown:
@@ -1391,7 +1384,7 @@ class ColumnHeaders(tk.Canvas):
             self.focus_set()
 
     # c is displayed col
-    def close_text_editor(self, editor_info = None, c = None, set_data_ref_on_destroy = True, event = None, destroy = True, move_down = True, redraw = True, recreate = True):
+    def close_text_editor(self, editor_info = None, c = None, set_data_on_close = True, event = None, destroy = True, move_down = True, redraw = True, recreate = True):
         if self.focus_get() is None and editor_info:
             return
         if editor_info is not None and len(editor_info) >= 2 and editor_info[1] == "Escape":
@@ -1402,19 +1395,21 @@ class ColumnHeaders(tk.Canvas):
             self.text_editor_value = self.text_editor.get()
         if destroy:
             self.destroy_text_editor()
-        if set_data_ref_on_destroy:
+        if set_data_on_close:
             if c is None and editor_info is not None and len(editor_info) >= 2:
                 c = editor_info[0]
-            if self.extra_end_edit_cell_func is None:
-                self.set_cell_data_undo(c, datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c], value = self.text_editor_value)
-            elif self.extra_end_edit_cell_func is not None and not self.MT.edit_cell_validation:
-                self.set_cell_data_undo(c, datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c], value = self.text_editor_value)
+            datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
+            if self.extra_end_edit_cell_func is None and self.input_valid_for_cell(datacn, self.text_editor_value, check_equality = False):
+                self.set_cell_data_undo(c, datacn = datacn, value = self.text_editor_value)
+            elif self.extra_end_edit_cell_func is not None and not self.MT.edit_cell_validation and self.input_valid_for_cell(datacn, self.text_editor_value, check_equality = False):
+                self.set_cell_data_undo(c, datacn = datacn, value = self.text_editor_value)
                 self.extra_end_edit_cell_func(EditHeaderEvent(c, editor_info[1] if len(editor_info) >= 2 else "FocusOut", f"{self.text_editor_value}", "end_edit_header"))
             elif self.extra_end_edit_cell_func is not None and self.MT.edit_cell_validation:
                 validation = self.extra_end_edit_cell_func(EditHeaderEvent(c, editor_info[1] if len(editor_info) >= 2 else "FocusOut", f"{self.text_editor_value}", "end_edit_header"))
                 if validation is not None:
                     self.text_editor_value = validation
-                    self.set_cell_data_undo(c, datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c], value = self.text_editor_value)
+                    if self.input_valid_for_cell(datacn, self.text_editor_value, check_equality = False):
+                        self.set_cell_data_undo(c, datacn = datacn, value = self.text_editor_value)
         if move_down:
             pass
         self.close_dropdown_window(c)
@@ -1454,10 +1449,43 @@ class ColumnHeaders(tk.Canvas):
         else:
             self.fix_header(datacn)
             self.MT._headers[datacn] = value
+    
+    def input_valid_for_cell(self, datacn, value, check_equality = True):
+        if datacn in self.cell_options and ('readonly' in self.cell_options[datacn] or 'checkbox' in self.cell_options[datacn]):
+            return False
+        if check_equality and self.cell_equal_to(datacn, value):
+            return False
+        if (datacn in self.cell_options and 
+            'dropdown' in self.cell_options[datacn] and 
+            self.cell_options[datacn]['dropdown']['validate_input'] and 
+            value not in self.cell_options[datacn]['dropdown']['values']):
+            return False
+        return True
+    
+    def cell_equal_to(self, datacn, value):
+        self.fix_header(datacn)
+        if isinstance(self.MT._headers, list):
+            return self.MT._headers[datacn] == value
+        elif isinstance(self.MT._headers, int):
+            return self.MT.cell_equal_to(datacn, self.MT._headers, value)
+            
+    def get_cell_data(self, datacn, get_displayed = False):
+        if isinstance(self.MT._headers, int) or not self.MT._headers or datacn >= len(self.MT._headers) or not self.MT._headers[datacn]:
+            if get_displayed and self.show_default_header_for_empty:
+                return get_n2a(datacn, self.default_header)
+            else:
+                return ""
+        elif self.MT._headers[datacn]:
+            if get_displayed:
+                if datacn in self.cell_options and 'dropdown' in self.cell_options[datacn] and self.cell_options[datacn]['dropdown']['text'] is not None:
+                    return self.cell_options[datacn]['dropdown']['text']
+            return self.MT._headers[datacn]
             
     def get_valid_cell_data_as_str(self, datacn, fix = True) -> str:
         if isinstance(self.MT._headers, int):
             return self.MT.get_valid_cell_data_as_str(self.MT._headers, datacn, get_displayed = True)
+        if datacn in self.cell_options and 'dropdown' in self.cell_options[datacn] and self.cell_options[datacn]['dropdown']['text'] is not None:
+            return f"{self.cell_options[datacn]['dropdown']['text']}"
         if fix:
             self.fix_header(datacn)
         try:
@@ -1533,7 +1561,7 @@ class ColumnHeaders(tk.Canvas):
                         values = [], set_value = None, 
                         state = "normal", redraw = True, 
                         selection_function = None, modified_function = None,
-                        search_function = dropdown_search_function, validate_input = True):
+                        search_function = dropdown_search_function, validate_input = True, text = None):
         if datacn in self.cell_options and ('dropdown' in self.cell_options[datacn] or 
                                             'checkbox' in self.cell_options[datacn]):
             self.delete_dropdown_and_checkbox(datacn)
@@ -1548,6 +1576,7 @@ class ColumnHeaders(tk.Canvas):
                                                  'modified_function': modified_function,
                                                  'search_function': search_function,
                                                  'validate_input': validate_input,
+                                                 'text': text,
                                                  'state': state}
         if redraw:
             self.MT.refresh()

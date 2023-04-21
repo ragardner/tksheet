@@ -1121,14 +1121,7 @@ class RowIndex(tk.Canvas):
                 lns = self.get_valid_cell_data_as_str(r, fix = False).split("\n")
             if lns == [""]:
                 if self.show_default_index_for_empty:
-                    if self.default_index == "letters":
-                        lns = (num2alpha(r), )
-                    elif self.default_index == "numbers":
-                        lns = (f"{r + 1}", )
-                    elif self.default_index == "both":
-                        lns = (f"{r + 1} {num2alpha(r)}", )
-                    else:
-                        lns = (num2alpha(r), )
+                    lns = (get_n2a(r, self.default_index), )
                 else:
                     continue
             draw_y = rtopgridln + self.MT.fl_ins
@@ -1289,7 +1282,7 @@ class RowIndex(tk.Canvas):
         if self.MT.cell_auto_resize_enabled:
             self.set_row_height_run_binding(r)
         self.select_row(r = r, keep_other_selections = True, redraw = not dropdown)
-        self.create_text_editor(r = r, text = text, set_data_ref_on_destroy = True, dropdown = dropdown)
+        self.create_text_editor(r = r, text = text, set_data_on_close = True, dropdown = dropdown)
         return True
     
     # displayed indexes
@@ -1307,7 +1300,7 @@ class RowIndex(tk.Canvas):
                            text = None,
                            state = "normal",
                            see = True,
-                           set_data_ref_on_destroy = False,
+                           set_data_on_close = False,
                            binding = None,
                            dropdown = False):
         if r == self.text_editor_loc and self.text_editor is not None:
@@ -1362,7 +1355,7 @@ class RowIndex(tk.Canvas):
             self.text_editor.textedit.bind("<Return>", lambda x: binding((r, "Return")))
             self.text_editor.textedit.bind("<FocusOut>", lambda x: binding((r, "FocusOut")))
             self.text_editor.textedit.bind("<Escape>", lambda x: binding((r, "Escape")))
-        elif binding is None and set_data_ref_on_destroy:
+        elif binding is None and set_data_on_close:
             self.text_editor.textedit.bind("<Tab>", lambda x: self.close_text_editor((r, "Tab")))
             self.text_editor.textedit.bind("<Return>", lambda x: self.close_text_editor((r, "Return")))
             if not dropdown:
@@ -1434,7 +1427,7 @@ class RowIndex(tk.Canvas):
             self.focus_set()
 
     # r is displayed row
-    def close_text_editor(self, editor_info = None, r = None, set_data_ref_on_destroy = True, event = None, destroy = True, move_down = True, redraw = True, recreate = True):
+    def close_text_editor(self, editor_info = None, r = None, set_data_on_close = True, event = None, destroy = True, move_down = True, redraw = True, recreate = True):
         if self.focus_get() is None and editor_info:
             return "break"
         if editor_info is not None and len(editor_info) >= 2 and editor_info[1] == "Escape":
@@ -1445,19 +1438,21 @@ class RowIndex(tk.Canvas):
             self.text_editor_value = self.text_editor.get()
         if destroy:
             self.destroy_text_editor()
-        if set_data_ref_on_destroy:
+        if set_data_on_close:
             if r is None and editor_info is not None and len(editor_info) >= 2:
                 r = editor_info[0]
-            if self.extra_end_edit_cell_func is None:
-                self.set_cell_data_undo(r, datarn = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r], value = self.text_editor_value)
-            elif self.extra_end_edit_cell_func is not None and not self.MT.edit_cell_validation:
-                self.set_cell_data_undo(r, datarn = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r], value = self.text_editor_value)
+            datarn = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r]
+            if self.extra_end_edit_cell_func is None and self.input_valid_for_cell(datarn, self.text_editor_value, check_equality = False):
+                self.set_cell_data_undo(r, datarn = datarn, value = self.text_editor_value)
+            elif self.extra_end_edit_cell_func is not None and not self.MT.edit_cell_validation and self.input_valid_for_cell(datarn, self.text_editor_value, check_equality = False):
+                self.set_cell_data_undo(r, datarn = datarn, value = self.text_editor_value)
                 self.extra_end_edit_cell_func(EditIndexEvent(r, editor_info[1] if len(editor_info) >= 2 else "FocusOut", f"{self.text_editor_value}", "end_edit_index"))
             elif self.extra_end_edit_cell_func is not None and self.MT.edit_cell_validation:
                 validation = self.extra_end_edit_cell_func(EditIndexEvent(r, editor_info[1] if len(editor_info) >= 2 else "FocusOut", f"{self.text_editor_value}", "end_edit_index"))
                 if validation is not None:
                     self.text_editor_value = validation
-                    self.set_cell_data_undo(r, datarn = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r], value = self.text_editor_value)
+                    if self.input_valid_for_cell(datarn, self.text_editor_value, check_equality = False):
+                        self.set_cell_data_undo(r, datarn = datarn, value = self.text_editor_value)
         if move_down:
             pass
         self.close_dropdown_window(r)
@@ -1496,9 +1491,42 @@ class RowIndex(tk.Canvas):
             self.fix_index(datarn)
             self.MT._row_index[datarn] = value
             
+    def input_valid_for_cell(self, datarn, value, check_equality = True):
+        if datarn in self.cell_options and ('readonly' in self.cell_options[datarn] or 'checkbox' in self.cell_options[datarn]):
+            return False
+        if check_equality and self.cell_equal_to(datarn, value):
+            return False
+        if (datarn in self.cell_options and 
+            'dropdown' in self.cell_options[datarn] and 
+            self.cell_options[datarn]['dropdown']['validate_input'] and 
+            value not in self.cell_options[datarn]['dropdown']['values']):
+            return False
+        return True
+    
+    def cell_equal_to(self, datarn, value):
+        self.fix_index(datarn)
+        if isinstance(self.MT._row_index, list):
+            return self.MT._row_index[datarn] == value
+        elif isinstance(self.MT._row_index, int):
+            return self.MT.cell_equal_to(datarn, self.MT._row_index, value)
+            
+    def get_cell_data(self, datarn, get_displayed = False):
+        if isinstance(self.MT._row_index, int) or not self.MT._row_index or datarn >= len(self.MT._row_index) or not self.MT._row_index[datarn]:
+            if get_displayed and self.show_default_index_for_empty:
+                return get_n2a(datarn, self.default_index)
+            else:
+                return ""
+        elif self.MT._row_index[datarn]:
+            if get_displayed:
+                if datarn in self.cell_options and 'dropdown' in self.cell_options[datarn] and self.cell_options[datarn]['dropdown']['text'] is not None:
+                    return self.cell_options[datarn]['dropdown']['text']
+            return self.MT._row_index[datarn]
+            
     def get_valid_cell_data_as_str(self, datarn, fix = True) -> str:
         if isinstance(self.MT._row_index, int):
             return self.MT.get_valid_cell_data_as_str(datarn, self.MT._row_index, get_displayed = True)
+        if datarn in self.cell_options and 'dropdown' in self.cell_options[datarn] and self.cell_options[datarn]['dropdown']['text'] is not None:
+            return f"{self.cell_options[datarn]['dropdown']['text']}"
         if fix:
             self.fix_index(datarn)
         try:
@@ -1573,7 +1601,7 @@ class RowIndex(tk.Canvas):
                         values = [], set_value = None, 
                         state = "normal", redraw = True, 
                         selection_function = None, modified_function = None,
-                        search_function = dropdown_search_function, validate_input = True):
+                        search_function = dropdown_search_function, validate_input = True, text = None):
         if datarn in self.cell_options and ('dropdown' in self.cell_options[datarn] or 
                                             'checkbox' in self.cell_options[datarn]):
             self.delete_dropdown_and_checkbox(datarn)
@@ -1588,6 +1616,7 @@ class RowIndex(tk.Canvas):
                                                  'modified_function': modified_function,
                                                  'search_function': search_function,
                                                  'validate_input': validate_input,
+                                                 'text': text,
                                                  'state': state}
         if redraw:
             self.MT.refresh()

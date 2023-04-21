@@ -424,21 +424,41 @@ If both arguments are `None` then table will reset to default tkinter canvas dim
 ## **Getting Table Data**
 ----
 
-#### **Yield sheet rows one at a time.**
-```python
-yield_sheet_rows(get_header = False, get_index = False)
-```
-- Uses the function `get_sheet_data()`.
-- `get_header` (`bool`) will put the header as the first row if `True`.
-- `get_index` (`bool`) will put index items as the first item in every row.
+#### **Yield / generate sheet rows one at a time.**
 
-___
-
-#### **Get sheet data and, if required, header and index data.**
+This is useful if your sheet is very large and you don't want to create an extra list in memory (it does actually generate one row at a time and not from a pre-built list).
 ```python
-get_sheet_data(get_displayed = False, get_header = False, get_index = False)
+yield_sheet_rows(get_displayed = False, 
+                 get_header = False,
+                 get_index = False,
+                 get_index_displayed = True,
+                 get_header_displayed = True,
+                 only_rows = None,
+                 only_columns = None)
 ```
-- `get_displayed` (`bool`) if true or there is not a cell formatter present it will return a string copy of the data as it is displayed in the sheet, if false and there is a cell formatter present it will return the formatter data e.g. an `int`.
+
+#### **Get sheet data as list of lists.**
+```python
+get_sheet_data(get_displayed = False, 
+               get_header = False,
+               get_index = False,
+               get_index_displayed = True,
+               get_header_displayed = True,
+               only_rows = None,
+               only_columns = None)
+```
+
+Note:
+- The following keyword arguments both behave the same way for `yield_sheet_rows()` and `get_sheet_data()`.
+
+Arguments:
+- `get_displayed` (`bool`) if `True` it will return cell values as they are displayed on the screen. If `False` it will return any underlying data, for example if the cell is formatted.
+- `get_header` (`bool`) if `True` it will return the header of the sheet even if there is not one.
+- `get_index` (`bool`) if `True` it will return the index of the sheet even if there is not one.
+- `get_index_displayed` (`bool`) if `True` it will return whatever index values are displayed on the screen, for example if there is a dropdown box with `text` set.
+- `get_header_displayed` (`bool`) if `True` it will return whatever header values are displayed on the screen, for example if there is a dropdown box with `text` set.
+- `only_rows` (`None`, `iterable`) with this argument you can supply an iterable of row indexes in any order to be the only rows that are returned.
+- `only_columns` (`None`, `iterable`) with this argument you can supply an iterable of column indexes in any order to be the only columns that are returned.
 
 ___
 
@@ -466,14 +486,24 @@ get_cell_data(r, c, get_displayed = False)
 ___
 
 ```python
-get_row_data(r, get_displayed = False)
+get_row_data(r, 
+             get_displayed = False, 
+             get_index = False, 
+             get_index_displayed = True, 
+             only_columns = None)
 ```
+- The above arguments behave the same way as for `get_sheet_data()`.
 
 ___
 
 ```python
-get_column_data(c, get_displayed = False)
+get_column_data(c,
+                get_displayed = False, 
+                get_header = False,
+                 get_header_displayed = True, 
+                 only_rows = None)
 ```
+- The above arguments behave the same way as for `get_sheet_data()`.
 
 ___
 
@@ -1440,7 +1470,8 @@ create_dropdown(r = 0,
                 selection_function = None,
                 modified_function = None,
                 search_function = dropdown_search_function,
-                validate_input = True)
+                validate_input = True,
+                text = None)
 ```
 
 ```python
@@ -1452,7 +1483,8 @@ create_header_dropdown(c = 0,
                        selection_function = None,
                        modified_function = None,
                        search_function = dropdown_search_function,
-                       validate_input = True)
+                       validate_input = True,
+                       text = None)
 ```
 
 ```python
@@ -1464,7 +1496,8 @@ create_index_dropdown(r = 0,
                       selection_function = None,
                       modified_function = None,
                       search_function = dropdown_search_function,
-                      validate_input = True)
+                      validate_input = True,
+                      text = None)
 ```
 
 Notes:
@@ -1480,6 +1513,7 @@ Notes:
 - `modified_function` can be used to trigger a specific function when the `state` of the box is set to `"normal"` and there is an editable text window and a change of the text in that window has occurred. Note that this function occurs before the dropdown boxes search feature.
 - `search_function` (`None`, `callable`) sets the function that will be used to search the dropdown boxes values upon a dropdown text editor modified event when the dropdowns state is `normal`. Set to `None` to disable the search feature or use your own function with the following keyword arguments: `(search_for, data):` and make it return an row number (e.g. select and see the first value would be `0`) if positive and `None` if negative.
 - `validate_input` (`bool`) when `True` will not allow cut, paste, delete or cell editor to input values to cell which are not in the dropdown boxes values.
+- `text` (`None`, `str`) can be set to something other than `None` to always display over whatever value is in the cell, this is useful when you want to display a Header name over a dropdown box selection.
 
 ___
 
