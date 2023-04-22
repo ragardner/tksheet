@@ -11,7 +11,7 @@
 - Options for changing output to clipboard delimiter, quotechar, lineterminator and option for setting paste delimiter detection
 - Bindings `"up" "down" "left" "right" "prior" "next"` to enable arrowkey bindings individually use with `enable_bindings()`/`disable_bindings()`
 = Dropdowns now have a search feature which searches their values after the entry box is modified (if dropdown is state `normal`)
-- Dropdown kwargs `search_function` and `validate_input`
+- Dropdown kwargs `search_function`, `validate_input` and `text`
 
 #### Removed:
 - Startup arg `ctrl_keys_over_dropdowns_enabled`, also removed in `set_options()`
@@ -22,8 +22,9 @@
 - `index_border_fg` and `header_border_fg` no longer work, they now use the relevant grid foreground options
 - `"dark"`/`"black"` themes
 - Dropdowns now default to state `"normal"` and validate input by default
+- `set_dropdown_values()`/`set_index_dropdown_values()`/`set_header_dropdown_values()` keyword argument `displayed` changed to `set_value` for clarity
 - Checkbox click extra binding and edit cell extra binding (when associated with a checkbox click) return `bool` now, not `str`
-- `get_cell_data()`/`get_row_data()`/`get_column_data()` now return empty string/s if index is out of bounds (instead of `None`s)
+- `get_cell_data()`/`get_row_data()`/`get_column_data()` have had an overhaul and have different keyword arguments, see documentation for more information. They also now return empty string/s if index is out of bounds (instead of `None`s)
 - Rename some internal functions for consistency
 - Extra bindings delete key now returns dict instead of list for boxes
 

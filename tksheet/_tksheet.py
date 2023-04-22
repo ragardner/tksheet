@@ -2560,7 +2560,7 @@ class Sheet(tk.Frame):
             self.CH.cell_options[c]['dropdown']['modified_function'] = modified_function
         return self.CH.cell_options[c]['dropdown']['select_function'], self.CH.cell_options[c]['dropdown']['modified_function']
 
-    def set_header_dropdown_values(self, c = 0, set_existing_dropdown = False, values = [], displayed = None):
+    def set_header_dropdown_values(self, c = 0, set_existing_dropdown = False, values = [], set_value = None):
         if set_existing_dropdown:
             if self.CH.existing_dropdown_window is not None:
                 c_ = self.CH.existing_dropdown_window.c
@@ -2571,8 +2571,8 @@ class Sheet(tk.Frame):
         self.CH.cell_options[c_]['dropdown']['values'] = values
         if self.CH.cell_options[c_]['dropdown']['window'] != "no dropdown open":
             self.CH.cell_options[c_]['dropdown']['window'].values(values)
-        if displayed is not None:
-            self.MT.headers(newheaders = displayed, index = c_)
+        if set_value is not None:
+            self.MT.headers(newheaders = set_value, index = c_)
 
     def delete_header_dropdown(self, c = 0):
         if c == "all":
@@ -2626,7 +2626,7 @@ class Sheet(tk.Frame):
             self.RI.cell_options[r]['dropdown']['modified_function'] = modified_function
         return self.RI.cell_options[r]['dropdown']['select_function'], self.RI.cell_options[r]['dropdown']['modified_function']
 
-    def set_index_dropdown_values(self, r = 0, set_existing_dropdown = False, values = [], displayed = None):
+    def set_index_dropdown_values(self, r = 0, set_existing_dropdown = False, values = [], set_value = None):
         if set_existing_dropdown:
             if self.RI.existing_dropdown_window is not None:
                 r_ = self.RI.existing_dropdown_window.r
@@ -2637,8 +2637,8 @@ class Sheet(tk.Frame):
         self.RI.cell_options[r_]['dropdown']['values'] = values
         if self.RI.cell_options[r_]['dropdown']['window'] != "no dropdown open":
             self.RI.cell_options[r_]['dropdown']['window'].values(values)
-        if displayed is not None:
-            self.MT.row_index(newindex = displayed, index = r_)
+        if set_value is not None:
+            self.MT.row_index(newindex = set_value, index = r_)
 
     def delete_index_dropdown(self, r = 0):
         if r == "all":
@@ -2706,7 +2706,7 @@ class Sheet(tk.Frame):
             self.MT.cell_options[(r, c)]['dropdown']['modified_function'] = modified_function
         return self.MT.cell_options[(r, c)]['dropdown']['select_function'], self.MT.cell_options[(r, c)]['dropdown']['modified_function']
 
-    def set_dropdown_values(self, r = 0, c = 0, set_existing_dropdown = False, values = [], displayed = None):
+    def set_dropdown_values(self, r = 0, c = 0, set_existing_dropdown = False, values = [], set_value = None):
         if set_existing_dropdown:
             if self.MT.existing_dropdown_window is not None:
                 r_ = self.MT.existing_dropdown_window.r
@@ -2719,10 +2719,10 @@ class Sheet(tk.Frame):
         self.MT.cell_options[(r_, c_)]['dropdown']['values'] = values
         if self.MT.cell_options[(r_, c_)]['dropdown']['window'] != "no dropdown open":
             self.MT.cell_options[(r_, c_)]['dropdown']['window'].values(values)
-        if displayed is not None:
-            self.set_cell_data(r_, c_, displayed)
+        if set_value is not None:
+            self.set_cell_data(r_, c_, set_value)
             if self.MT.cell_options[(r_, c_)]['dropdown']['window'] != "no dropdown open" and self.MT.text_editor_loc is not None and self.MT.text_editor is not None:
-                self.MT.text_editor.set_text(displayed)
+                self.MT.text_editor.set_text(set_value)
 
     def delete_dropdown(self, r = 0, c = 0):
         if isinstance(r, str) and r.lower() == "all" and isinstance(c, int):

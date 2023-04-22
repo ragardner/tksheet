@@ -500,8 +500,8 @@ ___
 get_column_data(c,
                 get_displayed = False, 
                 get_header = False,
-                 get_header_displayed = True, 
-                 only_rows = None)
+                get_header_displayed = True, 
+                only_rows = None)
 ```
 - The above arguments behave the same way as for `get_sheet_data()`.
 
@@ -1532,22 +1532,22 @@ get_index_dropdown_values(r = 0)
 
 ___
 
-#### **Set the values and displayed value of a chosen dropdown box.**
+#### **Set the values and cell value of a chosen dropdown box.**
 ```python
-set_dropdown_values(r = 0, c = 0, set_existing_dropdown = False, values = [], displayed = None)
+set_dropdown_values(r = 0, c = 0, set_existing_dropdown = False, values = [], set_value = None)
 ```
 
 ```python
-set_header_dropdown_values(c = 0, set_existing_dropdown = False, values = [], displayed = None)
+set_header_dropdown_values(c = 0, set_existing_dropdown = False, values = [], set_value = None)
 ```
 
 ```python
-set_index_dropdown_values(r = 0, set_existing_dropdown = False, values = [], displayed = None)
+set_index_dropdown_values(r = 0, set_existing_dropdown = False, values = [], set_value = None)
 ```
 
 - `set_existing_dropdown` if `True` takes priority over `r` and `c` and sets the values of the last popped open dropdown box (if one one is popped open, if not then an `Exception` is raised).
 - `values` (`list`, `tuple`)
-- `displayed` (`str`, `None`) if not `None` will try to set the displayed value of the chosen dropdown box to given argument.
+- `set_value` (`str`, `None`) if not `None` will try to set the value of the chosen cell to given argument.
 
 ___
 
@@ -1598,11 +1598,12 @@ get_index_dropdowns()
 Returns:
 ```python
 {(row int, column int): {'values': values,
-                         'window': "no dropdown open",
-                         'canvas_id': "no dropdown open",
+                         'window': "no dropdown open", #the actual frame object if one exists
+                         'canvas_id': "no dropdown open", #the canvas id of the frame object if one exists
                          'select_function': selection_function,
                          'modified_function': modified_function,
-                         'state': state}}
+                         'state': state,
+                         'text': text}}
 ```
 
 ___
@@ -2562,7 +2563,11 @@ class demo(tk.Tk):
         
     def all_extra_bindings(self, event = None):
         #print (event)
-        pass
+        try:
+            if hasattr(event, 'text'):
+                return event.text
+        except:
+            pass
 
         
 app = demo()
@@ -2727,7 +2732,7 @@ class demo(tk.Tk):
         self.sheet.format_cell('all', 0, formatter_options = float_formatter(nullable = False))
         self.sheet.format_cell('all', 1, formatter_options = float_formatter())
         self.sheet.format_cell('all', 2, formatter_options = int_formatter())
-        self.sheet.format_cell('all', 3, formatter_options = bool_formatter(truthy = truthy+["nah yeah"], falsy = falsy+["yeah nah"]))
+        self.sheet.format_cell('all', 3, formatter_options = bool_formatter(truthy = truthy | {"nah yeah"}, falsy = falsy | {"yeah nah"}))
         self.sheet.format_cell('all', 4, formatter_options = percentage_formatter())
 
 
