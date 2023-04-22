@@ -1,4 +1,5 @@
 from ._tksheet_vars import *
+from ._tksheet_formatters import *
 from ._tksheet_other_classes import *
 from ._tksheet_top_left_rectangle import *
 from ._tksheet_column_headers import *
@@ -26,6 +27,10 @@ class Sheet(tk.Frame):
                  header: list = None,
                  default_header: str = "letters", #letters, numbers or both
                  default_row_index: str = "numbers", #letters, numbers or both
+                 to_clipboard_delimiter = "\t",
+                 to_clipboard_quotechar = '"',
+                 to_clipboard_lineterminator = "\n",
+                 from_clipboard_delimiters = ["\t"],
                  show_default_header_for_empty: bool = True,
                  show_default_index_for_empty: bool = True,
                  page_up_down_select_row: bool = True,
@@ -33,7 +38,6 @@ class Sheet(tk.Frame):
                  paste_insert_column_limit: int = None,
                  paste_insert_row_limit: int = None,
                  show_dropdown_borders: bool = False,
-                 ctrl_keys_over_dropdowns_enabled: bool = False,
                  arrow_key_down_right_scroll_page: bool = False,
                  enable_edit_cell_auto_resize: bool = True,
                  edit_cell_validation: bool = True,
@@ -189,7 +193,6 @@ class Sheet(tk.Frame):
                             expand_sheet_if_paste_too_big = expand_sheet_if_paste_too_big,
                             paste_insert_column_limit = paste_insert_column_limit,
                             paste_insert_row_limit = paste_insert_row_limit,
-                            ctrl_keys_over_dropdowns_enabled = ctrl_keys_over_dropdowns_enabled,
                             show_dropdown_borders = show_dropdown_borders,
                             arrow_key_down_right_scroll_page = arrow_key_down_right_scroll_page,
                             display_selected_fg_over_highlights = display_selected_fg_over_highlights,
@@ -197,6 +200,10 @@ class Sheet(tk.Frame):
                             show_horizontal_grid = show_horizontal_grid,
                             column_width = column_width,
                             row_height = row_height,
+                            to_clipboard_delimiter = to_clipboard_delimiter,
+                            to_clipboard_quotechar = to_clipboard_quotechar,
+                            to_clipboard_lineterminator = to_clipboard_lineterminator,
+                            from_clipboard_delimiters = from_clipboard_delimiters,
                             column_headers_canvas = self.CH,
                             row_index_canvas = self.RI,
                             headers = headers,
@@ -868,7 +875,7 @@ class Sheet(tk.Frame):
             if any(z < self.MT.min_cw or not isinstance(z, int) or isinstance(z, bool) for z in column_widths):
                 return False
         return True
-            
+
     def default_row_height(self, height = None):
         if height is not None:
             self.MT.default_rh = (height if isinstance(height, str) else "pixels", height if isinstance(height, int) else self.MT.GetLinesHeight(int(height)))
@@ -916,23 +923,24 @@ class Sheet(tk.Frame):
         if deselect_all:
             self.deselect("all", redraw = False)
         if isinstance(rows, set):
-            _rows = rows
+            to_del = rows
         else:
-            _rows = set(rows)
-        self.MT.data[:] = [row for r, row in enumerate(self.MT.data) if r not in _rows]
-        rhs = tuple(int(b - a) for a, b in zip(self.MT.row_positions, islice(self.MT.row_positions, 1, len(self.MT.row_positions))))
+            to_del = set(rows)
+        if not to_del:
+            return
+        self.MT.data[:] = [row for r, row in enumerate(self.MT.data) if r not in to_del]
         if self.MT.all_rows_displayed:
-            self.set_row_heights(row_heights = tuple(h for r, h in enumerate(rhs) if r not in _rows))
+            self.set_row_heights(row_heights = (h for r, h in enumerate(int(b - a) for a, b in zip(self.MT.row_positions, islice(self.MT.row_positions, 1, len(self.MT.row_positions)))) if r not in to_del))
         else:
             dispset = set(self.MT.displayed_rows)
             heights_to_del = {i for i, r in enumerate(to_bis) if r in dispset}
             if heights_to_del:
-                self.set_row_heights(row_heights = tuple(h for r, h in enumerate(rhs) if r not in heights_to_del))
-            self.MT.displayed_rows = [r for r in self.MT.displayed_rows if r not in _rows]
-        to_bis = sorted(_rows)
-        self.MT.cell_options = {(r if not bisect.bisect_left(to_bis, r) else r - bisect.bisect_left(to_bis, r), c): v for (r, c), v in self.MT.cell_options.items() if r not in _rows}
-        self.MT.row_options = {r if not bisect.bisect_left(to_bis, r) else r - bisect.bisect_left(to_bis, r): v for r, v in self.MT.row_options.items() if r not in _rows}
-        self.RI.cell_options = {r if not bisect.bisect_left(to_bis, r) else r - bisect.bisect_left(to_bis, r): v for r, v in self.RI.cell_options.items() if r not in _rows}
+                self.set_row_heights(row_heights = (h for r, h in enumerate(int(b - a) for a, b in zip(self.MT.row_positions, islice(self.MT.row_positions, 1, len(self.MT.row_positions)))) if r not in heights_to_del))
+            self.MT.displayed_rows = [r for r in self.MT.displayed_rows if r not in to_del]
+        to_bis = sorted(to_del)
+        self.MT.cell_options = {(r if not bisect.bisect_left(to_bis, r) else r - bisect.bisect_left(to_bis, r), c): v for (r, c), v in self.MT.cell_options.items() if r not in to_del}
+        self.MT.row_options = {r if not bisect.bisect_left(to_bis, r) else r - bisect.bisect_left(to_bis, r): v for r, v in self.MT.row_options.items() if r not in to_del}
+        self.RI.cell_options = {r if not bisect.bisect_left(to_bis, r) else r - bisect.bisect_left(to_bis, r): v for r, v in self.RI.cell_options.items() if r not in to_del}
         self.set_refresh_timer(redraw)
 
     def insert_row_position(self, idx = "end", height = None, deselect_all = False, redraw = False):
@@ -1024,16 +1032,18 @@ class Sheet(tk.Frame):
             to_del = columns
         else:
             to_del = set(columns)
+        if not to_del:
+            return
         self.MT.data[:] = [[e for c, e in enumerate(r) if c not in to_del] for r in self.MT.data]
         to_bis = sorted(to_del)
-        cws = tuple(int(b - a) for a, b in zip(self.MT.col_positions, islice(self.MT.col_positions, 1, len(self.MT.col_positions))))
+        cws = tuple()
         if self.MT.all_columns_displayed:
-            self.set_column_widths(column_widths = tuple(w for c, w in enumerate(cws) if c not in to_del))
+            self.set_column_widths(column_widths = (w for c, w in enumerate(int(b - a) for a, b in zip(self.MT.col_positions, islice(self.MT.col_positions, 1, len(self.MT.col_positions)))) if c not in to_del))
         else:
             dispset = set(self.MT.displayed_columns)
             widths_to_del = {i for i, c in enumerate(to_bis) if c in dispset}
             if widths_to_del:
-                self.set_column_widths(column_widths = tuple(w for c, w in enumerate(cws) if c not in widths_to_del))
+                self.set_column_widths(column_widths = (w for c, w in enumerate(int(b - a) for a, b in zip(self.MT.col_positions, islice(self.MT.col_positions, 1, len(self.MT.col_positions)))) if c not in widths_to_del))
             self.MT.displayed_columns = [c if not bisect.bisect_left(to_bis, c) else c - bisect.bisect_left(to_bis, c) for c in self.MT.displayed_columns if c not in to_del]
         self.MT.cell_options = {(r, c if not bisect.bisect_left(to_bis, c) else c - bisect.bisect_left(to_bis, c)): v for (r, c), v in self.MT.cell_options.items() if c not in to_del}
         self.MT.col_options = {c if not bisect.bisect_left(to_bis, c) else c - bisect.bisect_left(to_bis, c): v for c, v in self.MT.col_options.items() if c not in to_del}
@@ -1683,12 +1693,18 @@ class Sheet(tk.Frame):
     def set_options(self,
                     redraw = True,
                     **kwargs):
+        if 'to_clipboard_delimiter' in kwargs:
+            self.MT.to_clipboard_delimiter = kwargs['to_clipboard_delimiter']
+        if 'to_clipboard_quotechar' in kwargs:
+            self.MT.to_clipboard_quotechar = kwargs['to_clipboard_quotechar']
+        if 'to_clipboard_lineterminator' in kwargs:
+            self.MT.to_clipboard_lineterminator = kwargs['to_clipboard_lineterminator']
+        if 'from_clipboard_delimiters' in kwargs:
+            self.MT.from_clipboard_delimiters = kwargs['from_clipboard_delimiters']
         if 'show_dropdown_borders' in kwargs:
             self.MT.show_dropdown_borders = kwargs['show_dropdown_borders']
         if 'edit_cell_validation' in kwargs:
             self.MT.edit_cell_validation = kwargs['edit_cell_validation']
-        if 'ctrl_keys_over_dropdowns_enabled' in kwargs:
-            self.MT.ctrl_keys_over_dropdowns_enabled = kwargs['ctrl_keys_over_dropdowns_enabled']
         if 'show_default_header_for_empty' in kwargs:
             self.CH.show_default_header_for_empty = kwargs['show_default_header_for_empty']
         if 'show_default_index_for_empty' in kwargs:
@@ -1770,7 +1786,7 @@ class Sheet(tk.Frame):
         if 'table_selected_columns_fg' in kwargs:
             self.MT.table_selected_columns_fg = kwargs['table_selected_columns_fg']
         if 'default_header' in kwargs:
-            self.CH.default_hdr = kwargs['default_header'].lower()
+            self.CH.default_header = kwargs['default_header'].lower()
         if 'default_row_index' in kwargs:
             self.RI.default_index = kwargs['default_row_index'].lower()
         if 'max_colwidth' in kwargs:
@@ -1876,7 +1892,128 @@ class Sheet(tk.Frame):
                              redraw = redraw)
             self.config(bg = theme_black['table_bg'])
         self.MT.recreate_all_selection_boxes()
-            
+
+    def get_header_data(self, c, get_displayed = False):
+        return self.CH.get_cell_data(datacn = c, get_displayed = get_displayed)
+
+    def get_index_data(self, r, get_displayed = False):
+        return self.RI.get_cell_data(datarn = r, get_displayed = get_displayed)
+
+    def get_sheet_data(self, 
+                       get_displayed = False, 
+                       get_header = False,
+                       get_index = False,
+                       get_header_displayed = True,
+                       get_index_displayed = True,
+                       only_rows = None,
+                       only_columns = None,
+                       **kwargs):
+        if only_rows is not None:
+            if isinstance(only_rows, int):
+                only_rows = (only_rows, )
+            elif not is_iterable(only_rows):
+                raise ValueError(f"Argument 'only_rows' must be either int or iterable or None. Not {type(only_rows)}")
+        if only_columns is not None:
+            if isinstance(only_columns, int):
+                only_columns = (only_columns, )
+            elif not is_iterable(only_columns):
+                raise ValueError(f"Argument 'only_columns' must be either int or iterable or None. Not {type(only_columns)}")
+        if get_header:
+            maxlen = len(self.MT._headers) if isinstance(self.MT._headers, (list, tuple)) else 0
+            data = []
+            for rn in only_rows if only_rows is not None else range(len(self.MT.data)):
+                r = self.get_row_data(rn, get_displayed = get_displayed, only_columns = only_columns)
+                if len(r) > maxlen:
+                    maxlen = len(r)
+                if get_index:
+                    data.append([self.get_index_data(rn, get_displayed = get_index_displayed)] + r)
+                else:
+                    data.append(r)
+            iterable = only_columns if only_columns is not None else range(maxlen)
+            if get_index:
+                return [[""] + [self.get_header_data(cn, get_displayed = get_header_displayed) for cn in iterable]] + data
+            else:
+                return [[self.get_header_data(cn, get_displayed = get_header_displayed) for cn in iterable]] + data
+        elif not get_header:
+            iterable = only_rows if only_rows is not None else range(len(self.MT.data))
+            return [self.get_row_data(rn,
+                                      get_displayed = get_displayed,
+                                      get_index = get_index,
+                                      get_index_displayed = get_index_displayed,
+                                      only_columns = only_columns)
+                    for rn in iterable]
+    
+    def get_cell_data(self, r, c, get_displayed = False, **kwargs):
+        return self.MT.get_cell_data(r, c, get_displayed)
+
+    def get_row_data(self, r, get_displayed = False, get_index = False, get_index_displayed = True, only_columns = None, **kwargs):
+        if only_columns is not None:
+            if isinstance(only_columns, int):
+                only_columns = (only_columns, )
+            elif not is_iterable(only_columns):
+                raise ValueError(f"Argument 'only_columns' must be either int or iterable or None. Not {type(only_columns)}")
+        if r >= self.MT.total_data_rows():
+            raise IndexError(f"Row #{r} is out of range.")
+        if r >= len(self.MT.data):
+            total_data_cols = self.MT.total_data_cols()
+            self.MT.data.extend([list(repeat("", total_data_cols)) for i in range((r + 1) - len(self.MT.data))])
+        iterable = only_columns if only_columns is not None else range(len(self.MT.data[r]))
+        if get_index:
+            return ([self.get_index_data(r, get_displayed = get_index_displayed)] +
+                    [self.MT.get_cell_data(r, c, get_displayed = get_displayed) for c in iterable])
+        else:
+            return [self.MT.get_cell_data(r, c, get_displayed = get_displayed) for c in iterable]
+
+    def get_column_data(self, c, get_displayed = False, get_header = False, get_header_displayed = True, only_rows = None, **kwargs):
+        if only_rows is not None:
+            if isinstance(only_rows, int):
+                only_rows = (only_rows, )
+            elif not is_iterable(only_rows):
+                raise ValueError(f"Argument 'only_rows' must be either int or iterable or None. Not {type(only_rows)}")
+        iterable = only_rows if only_rows is not None else range(len(self.MT.data))
+        return (([self.get_header_data(c, get_displayed = get_header_displayed)] if get_header else []) + 
+                [self.MT.get_cell_data(r, c, get_displayed = get_displayed) for r in iterable])
+
+    def yield_sheet_rows(self,
+                         get_displayed = False, 
+                         get_header = False,
+                         get_index = False,
+                         get_index_displayed = True,
+                         get_header_displayed = True,
+                         only_rows = None,
+                         only_columns = None,
+                         **kwargs):
+        if only_rows is not None:
+            if isinstance(only_rows, int):
+                only_rows = (only_rows, )
+            elif not is_iterable(only_rows):
+                raise ValueError(f"Argument 'only_rows' must be either int or iterable or None. Not {type(only_rows)}")
+        if only_columns is not None:
+            if isinstance(only_columns, int):
+                only_columns = (only_columns, )
+            elif not is_iterable(only_columns):
+                raise ValueError(f"Argument 'only_columns' must be either int or iterable or None. Not {type(only_columns)}")
+        if get_header:
+            maxlen = self.MT.total_data_cols()
+            iterable = only_columns if only_columns is not None else range(maxlen)
+            yield ([""] if get_index else []) + [self.get_header_data(c, get_displayed = get_header_displayed) for c in iterable]
+        iterable = only_rows if only_rows is not None else range(len(self.MT.data))
+        yield from  (self.get_row_data(r,
+                                       get_displayed = get_displayed,
+                                       get_index = get_index,
+                                       get_index_displayed = get_index_displayed,
+                                       only_columns = only_columns) 
+                        for r in iterable)
+
+    @property
+    def data(self):
+        return self.MT.data
+        
+    def formatted(self, r, c):
+        if (r, c) in self.MT.cell_options and 'format' in self.MT.cell_options[(r, c)]:
+            return True
+        return False
+    
     def data_reference(self,
                        newdataref = None,
                        reset_col_positions = True,
@@ -1893,117 +2030,53 @@ class Sheet(tk.Frame):
                        reset_row_positions = True,
                        redraw = True,
                        verify = False,
-                       reset_highlights = False):
-        if verify:
-            if not isinstance(data, list) or not all(isinstance(row, list) for row in data):
-                raise ValueError("Data argument must be a list of lists, sublists being rows")
+                       reset_highlights = False,
+                       keep_formatting = True):
+        if verify and (not isinstance(data, list) or not all(isinstance(row, list) for row in data)):
+            raise ValueError("Data argument must be a list of lists, sublists being rows")
         if reset_highlights:
             self.dehighlight_all()
         return self.MT.data_reference(data,
                                       reset_col_positions,
                                       reset_row_positions,
                                       redraw,
-                                      return_id = False)
+                                      return_id = False,
+                                      keep_formatting = keep_formatting)
 
-    def get_sheet_data(self, return_copy = False, get_header = False, get_index = False):
-        if return_copy:
-            if get_header and get_index:
-                index_limit = len(self.MT._row_index)
-                return [[""] + self.MT._headers.copy()] + [[f"{self.MT._row_index[rn]}"] + r.copy() if rn < index_limit else [""] + r.copy() for rn, r in enumerate(self.MT.data)]
-            elif get_header and not get_index:
-                return [self.MT._headers.copy()] + [r.copy() for r in self.MT.data]
-            elif get_index and not get_header:
-                index_limit = len(self.MT._row_index)
-                return [[f"{self.MT._row_index[rn]}"] + r.copy() if rn < index_limit else [""] + r.copy() for rn, r in enumerate(self.MT.data)]
-            elif not get_index and not get_header:
-                return [r.copy() for r in self.MT.data]
-        else:
-            if get_header and get_index:
-                index_limit = len(self.MT._row_index)
-                return [[""] + self.MT._headers] + [[self.MT._row_index[rn]] + r if rn < index_limit else [""] + r for rn, r in enumerate(self.MT.data)]
-            elif get_header and not get_index:
-                return [self.MT._headers] + self.MT.data
-            elif get_index and not get_header:
-                index_limit = len(self.MT._row_index)
-                return [[self.MT._row_index[rn]] + r if rn < index_limit else [""] + r for rn, r in enumerate(self.MT.data)]
-            elif not get_index and not get_header:
-                return self.MT.data
-
-    @property
-    def data(self):
-        return self.MT.data
+    def set_cell_data(self, r, c, value = "", redraw = False, keep_formatting = True):
+        if not keep_formatting:
+            self.MT.delete_cell_format(r, c, clear_values = False)
+        self.MT.set_cell_data(r, c, value)
+        if redraw:
+            self.set_refresh_timer()
             
-    def yield_sheet_rows(self, get_header = False, get_index = False):
-        if get_header:
-            if get_index:
-                yield [""] + [self.get_n2a(c, self.CH.default_hdr) for c in range(len(max(self.MT.data, key = len)))] if isinstance(self.MT._headers, int) or not self.MT._headers else self.MT._headers
-            else:
-                yield [self.get_n2a(c, self.CH.default_hdr) for c in range(len(max(self.MT.data, key = len)))] if isinstance(self.MT._headers, int) or not self.MT._headers else self.MT._headers
-        if get_index:
-            if isinstance(self.MT._row_index, int) or not self.MT._row_index:
-                for rn, r in enumerate(self.MT.data):
-                    yield [self.get_n2a(rn, self.RI.default_index)] + r
-            else:
-                index_limit = len(self.MT._row_index)
-                for rn, r in enumerate(self.MT.data):
-                    yield [self.MT._row_index[rn]] + r if rn < index_limit else [""] + r
+    def set_row_data(self, r, values = tuple(), add_columns = True, redraw = False, keep_formatting = True):
+        if r >= len(self.MT.data):
+            raise Exception("Row number is out of range")
+        if not keep_formatting:
+            self.MT.delete_row_format(r, clear_values = False)
+        maxidx = len(self.MT.data[r]) - 1
+        if not values:
+            self.MT.data[r][:] = list(repeat("", len(self.MT.data[r])))
+        if add_columns:
+            for c, v in enumerate(values):
+                if c > maxidx:
+                    self.MT.data[r].append(v)
+                    if self.MT.all_columns_displayed and c >= len(self.MT.col_positions) - 1:
+                        self.MT.insert_col_position("end")
+                else:
+                    self.set_cell_data(r = r, c = c, value = v, redraw = False, keep_formatting = keep_formatting)
         else:
-            yield from self.MT.data
-                
-    def get_n2a(self, n = 0, _type = "numbers"):
-        if _type == "letters":
-            return num2alpha(n)
-        elif _type == "numbers":
-            return f"{n + 1}"
-        else:
-            return f"{num2alpha(n)} {n + 1}"
-
-    def get_cell_data(self, r, c, return_copy = True):
-        if return_copy:
-            try:
-                return f"{self.MT.data[r][c]}"
-            except:
-                return None
-        else:
-            try:
-                return self.MT.data[r][c]
-            except:
-                return None
-
-    def get_row_data(self, r, return_copy = True):
-        if return_copy:
-            try:
-                return tuple(f"{e}" for e in self.MT.data[r])
-            except:
-                return None
-        else:
-            try:
-                return self.MT.data[r]
-            except:
-                return None
-
-    def get_column_data(self, c, return_copy = True):
-        res = []
-        if return_copy:
-            for r in self.MT.data:
-                try:
-                    res.append(f"{r[c]}")
-                except:
-                    continue
-            return tuple(res)
-        else:
-            for r in self.MT.data:
-                try:
-                    res.append(r[c])
-                except:
-                    continue
-            return res
-
-    def set_cell_data(self, r, c, value = "", set_copy = True, redraw = False):
-        self.MT.data[r][c] = f"{value}" if set_copy else value
+            for c, v in enumerate(values):
+                if c > maxidx:
+                    self.MT.data[r].append(v)
+                else:
+                    self.set_cell_data(r = r, c = c, value = v, redraw = False, keep_formatting = keep_formatting)
         self.set_refresh_timer(redraw)
 
-    def set_column_data(self, c, values = tuple(), add_rows = True, redraw = False):
+    def set_column_data(self, c, values = tuple(), add_rows = True, redraw = False, keep_formatting = True):
+        if not keep_formatting:
+            self.MT.delete_column_format(c, clear_values = False)
         if add_rows:
             maxidx = len(self.MT.data) - 1
             total_cols = None
@@ -2015,14 +2088,14 @@ class Sheet(tk.Frame):
                     self.MT.data.append(list(repeat("", total_cols)))
                     self.MT.insert_row_position("end", height = height)
                     maxidx += 1
-                if c > len(self.MT.data[rn]) - 1:
+                if c >= len(self.MT.data[rn]):
                     self.MT.data[rn].extend(list(repeat("", c - len(self.MT.data[rn]))))
-                self.MT.data[rn][c] = v
+                self.set_cell_data(r = rn, c = c, value = v, redraw = False, keep_formatting = keep_formatting)
         else:
             for rn, v in enumerate(values):
-                if c > len(self.MT.data[rn]) - 1:
+                if c >= len(self.MT.data[rn]):
                     self.MT.data[rn].extend(list(repeat("", c - len(self.MT.data[rn]))))
-                self.MT.data[rn][c] = v
+                self.set_cell_data(r = rn, c = c, value = v, redraw = False, keep_formatting = keep_formatting)
         self.set_refresh_timer(redraw)
 
     def insert_column(self,
@@ -2125,28 +2198,6 @@ class Sheet(tk.Frame):
             self.CH.cell_options = {cn if cn < idx else cn + num_add: t for cn, t in self.CH.cell_options.items()}
         self.set_refresh_timer(redraw)
 
-    def set_row_data(self, r, values = tuple(), add_columns = True, redraw = False):
-        if len(self.MT.data) - 1 < r:
-            raise Exception("Row number is out of range")
-        maxidx = len(self.MT.data[r]) - 1
-        if not values:
-            self.MT.data[r][:] = list(repeat("", len(self.MT.data[r])))
-        if add_columns:
-            for c, v in enumerate(values):
-                if c > maxidx:
-                    self.MT.data[r].append(v)
-                    if self.MT.all_columns_displayed and c >= len(self.MT.col_positions) - 1:
-                        self.MT.insert_col_position("end")
-                else:
-                    self.MT.data[r][c] = v
-        else:
-            for c, v in enumerate(values):
-                if c > maxidx:
-                    self.MT.data[r].append(v)
-                else:
-                    self.MT.data[r][c] = v
-        self.set_refresh_timer(redraw)
-
     def insert_row(self, values = None, idx = "end", height = None, deselect_all = False, add_columns = False,
                    redraw = False):
         self.MT.insert_row_position(idx = idx,
@@ -2224,12 +2275,15 @@ class Sheet(tk.Frame):
     def sheet_data_dimensions(self, total_rows = None, total_columns = None):
         self.MT.data_dimensions(total_rows, total_columns)
 
-    def get_total_rows(self):
-        return len(self.MT.data)
+    def get_total_rows(self, include_index = False):
+        return self.MT.total_data_rows(include_index = include_index)
+
+    def get_total_columns(self, include_header = False):
+        return self.MT.total_data_cols(include_header = include_header)
 
     def equalize_data_row_lengths(self):
         return self.MT.equalize_data_row_lengths()
-                    
+
     def display_columns(self,
                         columns = None,
                         all_columns_displayed = None,
@@ -2288,21 +2342,14 @@ class Sheet(tk.Frame):
                                redraw = False,
                                check_function = None,
                                text = ""):
+        _kwargs = {'checked': checked, 'state': state, 'redraw': redraw, 'check_function': check_function, 'text': text}
         if isinstance(c, str) and c.lower() == "all":
             for c_ in range(self.MT.total_data_cols()):
-                self.CH.create_checkbox(c = c_,
-                                        checked = checked,
-                                        state = state,
-                                        redraw = redraw,
-                                        check_function = check_function,
-                                        text = text)
+                self.CH.create_checkbox(datacn = c_,
+                                        **_kwargs)
         else:
-            self.CH.create_checkbox(c = c,
-                                    checked = checked,
-                                    state = state,
-                                    redraw = redraw,
-                                    check_function = check_function,
-                                    text = text)
+            self.CH.create_checkbox(datacn = c,
+                                    **_kwargs)
 
     def click_header_checkbox(self,
                               c,
@@ -2350,21 +2397,14 @@ class Sheet(tk.Frame):
                               redraw = False,
                               check_function = None,
                               text = ""):
+        _kwargs = {'checked': checked, 'state': state, 'redraw': redraw, 'check_function': check_function, 'text': text}
         if isinstance(r, str) and r.lower() == "all":
             for r_ in range(self.MT.total_data_rows()):
-                self.RI.create_checkbox(r = r_,
-                                        checked = checked,
-                                        state = state,
-                                        redraw = redraw,
-                                        check_function = check_function,
-                                        text = text)
+                self.RI.create_checkbox(datarn = r_,
+                                        **_kwargs)
         else:
-            self.RI.create_checkbox(r = r,
-                                    checked = checked,
-                                    state = state,
-                                    redraw = redraw,
-                                    check_function = check_function,
-                                    text = text)
+            self.RI.create_checkbox(datarn = r,
+                                    **_kwargs)
 
     def click_index_checkbox(self,
                              r,
@@ -2413,43 +2453,28 @@ class Sheet(tk.Frame):
                         redraw = False,
                         check_function = None,
                         text = ""):
+        _kwargs = {'checked': checked, 'state': state, 'redraw': redraw, 'check_function': check_function, 'text': text}
         if isinstance(r, str) and r.lower() == "all" and isinstance(c, int):
             for r_ in range(self.MT.total_data_rows()):
-                self.MT.create_checkbox(r = r_,
-                                        c = c,
-                                        checked = checked,
-                                        state = state,
-                                        redraw = redraw,
-                                        check_function = check_function,
-                                        text = text)
+                self.MT.create_checkbox(datarn = r_,
+                                        datacn = c,
+                                        **_kwargs)
         elif isinstance(c, str) and c.lower() == "all" and isinstance(r, int):
             for c_ in range(self.MT.total_data_cols()):
-                self.MT.create_checkbox(r = r,
-                                        c = c_,
-                                        checked = checked,
-                                        state = state,
-                                        redraw = redraw,
-                                        check_function = check_function,
-                                        text = text)
+                self.MT.create_checkbox(datarn = r,
+                                        datacn = c_,
+                                        **_kwargs)
         elif isinstance(r, str) and r.lower() == "all" and isinstance(c, str) and c.lower() == "all":
             totalcols = self.MT.total_data_cols()
             for r_ in range(self.MT.total_data_rows()):
                 for c_ in range(totalcols):
-                    self.MT.create_checkbox(r = r_,
-                                            c = c_,
-                                            checked = checked,
-                                            state = state,
-                                            redraw = redraw,
-                                            check_function = check_function,
-                                            text = text)
+                    self.MT.create_checkbox(datarn = r_,
+                                            datacn = c_,
+                                            **_kwargs)
         else:
-            self.MT.create_checkbox(r = r,
-                                    c = c,
-                                    checked = checked,
-                                    state = state,
-                                    redraw = redraw,
-                                    check_function = check_function,
-                                    text = text)
+            self.MT.create_checkbox(datarn = r,
+                                    datacn = c,
+                                    **_kwargs)
 
     def click_checkbox(self,
                        r,
@@ -2499,32 +2524,27 @@ class Sheet(tk.Frame):
         if text is not None:
             self.MT.cell_options[(r, c)]['checkbox']['text'] = text
         return {**self.MT.cell_options[(r, c)]['checkbox'], 'checked': self.MT.data[r][c]}
-    
+
     def create_header_dropdown(self,
                                c = 0,
                                values = [],
                                set_value = None,
-                               state = "readonly",
+                               state = "normal",
                                redraw = False,
                                selection_function = None,
-                               modified_function = None):
+                               modified_function = None,
+                               search_function = dropdown_search_function,
+                               validate_input = True,
+                               text = None):
+        _kwargs = {'values': values, 'set_value': set_value, 'state': state, 'redraw': redraw, 'selection_function': selection_function,
+                   'modified_function': modified_function, 'search_function': dropdown_search_function, 'validate_input': validate_input, 'text': text}
         if isinstance(c, str) and c.lower() == "all":
             for c_ in range(self.MT.total_data_cols()):
-                self.CH.create_dropdown(c = c_,
-                                        values = values,
-                                        set_value = set_value,
-                                        state = state,
-                                        redraw = redraw,
-                                        selection_function = selection_function,
-                                        modified_function = modified_function)
+                self.CH.create_dropdown(datacn = c_,
+                                        **_kwargs)
         else:
-            self.CH.create_dropdown(c = c,
-                                    values = values,
-                                    set_value = set_value,
-                                    state = state,
-                                    redraw = redraw,
-                                    selection_function = selection_function,
-                                    modified_function = modified_function)
+            self.CH.create_dropdown(datacn = c,
+                                    **_kwargs)
 
     def get_header_dropdown_value(self, c):
         if 'dropdown' in self.CH.cell_options[c]:
@@ -2540,7 +2560,7 @@ class Sheet(tk.Frame):
             self.CH.cell_options[c]['dropdown']['modified_function'] = modified_function
         return self.CH.cell_options[c]['dropdown']['select_function'], self.CH.cell_options[c]['dropdown']['modified_function']
 
-    def set_header_dropdown_values(self, c = 0, set_existing_dropdown = False, values = [], displayed = None):
+    def set_header_dropdown_values(self, c = 0, set_existing_dropdown = False, values = [], set_value = None):
         if set_existing_dropdown:
             if self.CH.existing_dropdown_window is not None:
                 c_ = self.CH.existing_dropdown_window.c
@@ -2551,8 +2571,8 @@ class Sheet(tk.Frame):
         self.CH.cell_options[c_]['dropdown']['values'] = values
         if self.CH.cell_options[c_]['dropdown']['window'] != "no dropdown open":
             self.CH.cell_options[c_]['dropdown']['window'].values(values)
-        if displayed is not None:
-            self.MT.headers(newheaders = displayed, index = c_)
+        if set_value is not None:
+            self.MT.headers(newheaders = set_value, index = c_)
 
     def delete_header_dropdown(self, c = 0):
         if c == "all":
@@ -2566,36 +2586,31 @@ class Sheet(tk.Frame):
         return {k: v['dropdown'] for k, v in self.CH.cell_options.items() if 'dropdown' in v}
     
     def open_header_dropdown(self, c):
-        self.CH.display_dropdown_window(c)
+        self.CH.open_dropdown_window(c)
 
     def close_header_dropdown(self, c):
-        self.CH.hide_dropdown_window(c)
+        self.CH.close_dropdown_window(c)
         
     def create_index_dropdown(self,
                               r = 0,
                               values = [],
                               set_value = None,
-                              state = "readonly",
+                              state = "normal",
                               redraw = False,
                               selection_function = None,
-                              modified_function = None):
+                              modified_function = None,
+                              search_function = dropdown_search_function,
+                              validate_input = True,
+                              text = None):
+        _kwargs = {'values': values, 'set_value': set_value, 'state': state, 'redraw': redraw, 'selection_function': selection_function,
+                   'modified_function': modified_function, 'search_function': dropdown_search_function, 'validate_input': validate_input, 'text': text}
         if isinstance(r, str) and r.lower() == "all":
             for r_ in range(self.MT.total_data_rows()):
-                self.RI.create_dropdown(r = r_,
-                                        values = values,
-                                        set_value = set_value,
-                                        state = state,
-                                        redraw = redraw,
-                                        selection_function = selection_function,
-                                        modified_function = modified_function)
+                self.RI.create_dropdown(datarn = r_,
+                                        **_kwargs)
         else:
-            self.RI.create_dropdown(r = r,
-                                    values = values,
-                                    set_value = set_value,
-                                    state = state,
-                                    redraw = redraw,
-                                    selection_function = selection_function,
-                                    modified_function = modified_function)
+            self.RI.create_dropdown(datarn = r,
+                                    **_kwargs)
 
     def get_index_dropdown_value(self, r):
         if 'dropdown' in self.RI.cell_options[r]:
@@ -2611,7 +2626,7 @@ class Sheet(tk.Frame):
             self.RI.cell_options[r]['dropdown']['modified_function'] = modified_function
         return self.RI.cell_options[r]['dropdown']['select_function'], self.RI.cell_options[r]['dropdown']['modified_function']
 
-    def set_index_dropdown_values(self, r = 0, set_existing_dropdown = False, values = [], displayed = None):
+    def set_index_dropdown_values(self, r = 0, set_existing_dropdown = False, values = [], set_value = None):
         if set_existing_dropdown:
             if self.RI.existing_dropdown_window is not None:
                 r_ = self.RI.existing_dropdown_window.r
@@ -2622,8 +2637,8 @@ class Sheet(tk.Frame):
         self.RI.cell_options[r_]['dropdown']['values'] = values
         if self.RI.cell_options[r_]['dropdown']['window'] != "no dropdown open":
             self.RI.cell_options[r_]['dropdown']['window'].values(values)
-        if displayed is not None:
-            self.MT.row_index(newindex = displayed, index = r_)
+        if set_value is not None:
+            self.MT.row_index(newindex = set_value, index = r_)
 
     def delete_index_dropdown(self, r = 0):
         if r == "all":
@@ -2637,62 +2652,46 @@ class Sheet(tk.Frame):
         return {k: v['dropdown'] for k, v in self.RI.cell_options.items() if 'dropdown' in v}
     
     def open_index_dropdown(self, r):
-        self.RI.display_dropdown_window(r)
+        self.RI.open_dropdown_window(r)
 
     def close_index_dropdown(self, r):
-        self.RI.hide_dropdown_window(r)
+        self.RI.close_dropdown_window(r)
 
     def create_dropdown(self,
                         r = 0,
                         c = 0,
                         values = [],
                         set_value = None,
-                        state = "readonly",
+                        state = "normal",
                         redraw = False,
                         selection_function = None,
-                        modified_function = None):
+                        modified_function = None,
+                        search_function = dropdown_search_function,
+                        validate_input = True,
+                        text = None):
+        _kwargs = {'values': values, 'set_value': set_value, 'state': state, 'redraw': redraw, 'selection_function': selection_function,
+                   'modified_function': modified_function, 'search_function': dropdown_search_function, 'validate_input': validate_input, 'text': text}
         if isinstance(r, str) and r.lower() == "all" and isinstance(c, int):
             for r_ in range(self.MT.total_data_rows()):
-                self.MT.create_dropdown(r = r_,
-                                        c = c,
-                                        values = values,
-                                        set_value = set_value,
-                                        state = state,
-                                        redraw = redraw,
-                                        selection_function = selection_function,
-                                        modified_function = modified_function)
+                self.MT.create_dropdown(datarn = r_,
+                                        datacn = c,
+                                        **_kwargs)
         elif isinstance(c, str) and c.lower() == "all" and isinstance(r, int):
             for c_ in range(self.MT.total_data_cols()):
-                self.MT.create_dropdown(r = r,
-                                        c = c_,
-                                        values = values,
-                                        set_value = set_value,
-                                        state = state,
-                                        redraw = redraw,
-                                        selection_function = selection_function,
-                                        modified_function = modified_function)
+                self.MT.create_dropdown(datarn = r,
+                                        datacn = c_,
+                                        **_kwargs)
         elif isinstance(r, str) and r.lower() == "all" and isinstance(c, str) and c.lower() == "all":
             totalcols = self.MT.total_data_cols()
             for r_ in range(self.MT.total_data_rows()):
                 for c_ in range(totalcols):
-                    self.MT.create_dropdown(r = r_,
-                                            c = c_,
-                                            values = values,
-                                            set_value = set_value,
-                                            state = state,
-                                            redraw = redraw,
-                                            selection_function = selection_function,
-                                            modified_function = modified_function)
-        
+                    self.MT.create_dropdown(datarn = r_,
+                                            datacn = c_,
+                                            **_kwargs)
         else:
-            self.MT.create_dropdown(r = r,
-                                    c = c,
-                                    values = values,
-                                    set_value = set_value,
-                                    state = state,
-                                    redraw = redraw,
-                                    selection_function = selection_function,
-                                    modified_function = modified_function)
+            self.MT.create_dropdown(datarn = r,
+                                    datacn = c,
+                                    **_kwargs)
 
     def get_dropdown_value(self, r, c):
         return self.get_cell_data(r, c)
@@ -2707,7 +2706,7 @@ class Sheet(tk.Frame):
             self.MT.cell_options[(r, c)]['dropdown']['modified_function'] = modified_function
         return self.MT.cell_options[(r, c)]['dropdown']['select_function'], self.MT.cell_options[(r, c)]['dropdown']['modified_function']
 
-    def set_dropdown_values(self, r = 0, c = 0, set_existing_dropdown = False, values = [], displayed = None):
+    def set_dropdown_values(self, r = 0, c = 0, set_existing_dropdown = False, values = [], set_value = None):
         if set_existing_dropdown:
             if self.MT.existing_dropdown_window is not None:
                 r_ = self.MT.existing_dropdown_window.r
@@ -2720,10 +2719,10 @@ class Sheet(tk.Frame):
         self.MT.cell_options[(r_, c_)]['dropdown']['values'] = values
         if self.MT.cell_options[(r_, c_)]['dropdown']['window'] != "no dropdown open":
             self.MT.cell_options[(r_, c_)]['dropdown']['window'].values(values)
-        if displayed is not None:
-            self.set_cell_data(r_, c_, displayed)
+        if set_value is not None:
+            self.set_cell_data(r_, c_, set_value)
             if self.MT.cell_options[(r_, c_)]['dropdown']['window'] != "no dropdown open" and self.MT.text_editor_loc is not None and self.MT.text_editor is not None:
-                self.MT.text_editor.set_text(displayed)
+                self.MT.text_editor.set_text(set_value)
 
     def delete_dropdown(self, r = 0, c = 0):
         if isinstance(r, str) and r.lower() == "all" and isinstance(c, int):
@@ -2745,10 +2744,128 @@ class Sheet(tk.Frame):
         return {k: v['dropdown'] for k, v in self.MT.cell_options.items() if 'dropdown' in v}
 
     def open_dropdown(self, r, c):
-        self.MT.display_dropdown_window(r, c)
+        self.MT.open_dropdown_window(r, c)
 
     def close_dropdown(self, r, c):
-        self.MT.hide_dropdown_window(r, c)
+        self.MT.close_dropdown_window(r, c)
+
+    def reapply_formatting(self):
+        self.MT.reapply_formatting()
+        
+    def reapply_formatting(self):
+        self.MT.reapply_formatting()
+        
+    def delete_all_formatting(self, clear_values = False):
+        self.MT.delete_all_formatting(clear_values = clear_values)
+
+    def format_cell(self,
+                    r,
+                    c,
+                    formatter_options = {},
+                    formatter_class = None,
+                    redraw = True,
+                    **kwargs,
+                    ):
+        if isinstance(r, str) and r.lower() == 'all' and isinstance(c, int):
+            for r_ in range(self.MT.total_data_rows()):
+                self.MT.format_cell(datarn = r_,
+                                    datacn = c, 
+                                    **{'formatter': formatter_class, **formatter_options, **kwargs})
+        elif isinstance(c, str) and c.lower() == 'all' and isinstance(r, int):
+            for c_ in range(self.MT.total_data_cols()):
+                self.MT.format_cell(datarn = r,
+                                    datacn = c_, 
+                                    **{'formatter': formatter_class, **formatter_options, **kwargs})
+        elif isinstance(r, str) and r.lower() == 'all' and isinstance(c, str) and c.lower() == 'all':
+            for r_ in range(self.MT.total_data_rows()):
+                for c_ in range(self.MT.total_data_cols()):
+                    self.MT.format_cell(datarn = r_,
+                                        datacn = c_, 
+                                        **{'formatter': formatter_class, **formatter_options, **kwargs})
+        else:
+            self.MT.format_cell(datarn = r,
+                                datacn = c, 
+                                **{'formatter': formatter_class, **formatter_options, **kwargs})
+        self.set_refresh_timer(redraw)
+
+    def delete_cell_format(self,
+                           r = "all",
+                           c = "all",
+                           clear_values = False,
+                           ):
+        if isinstance(r, str) and r.lower() == "all" and isinstance(c, int):
+            for r_, c_ in self.MT.cell_options:
+                if 'format' in self.MT.cell_options[(r_, c)]:
+                    self.MT.delete_cell_format(r_, c, clear_values = clear_values)
+        elif isinstance(c, str) and c.lower() == "all" and isinstance(r, int):
+            for r_, c_ in self.MT.cell_options:
+                if 'format' in self.MT.cell_options[(r, c_)]:
+                    self.MT.delete_cell_format(r, c_, clear_values = clear_values)
+        elif isinstance(r, str) and r.lower() == "all" and isinstance(c, str) and c.lower() == "all":
+            for r_, c_ in self.MT.cell_options:
+                if 'format' in self.MT.cell_options[(r_, c_)]:
+                    self.MT.delete_cell_format(r_, c_, clear_values = clear_values)
+        else:
+            self.MT.delete_cell_format(r, c, clear_values = clear_values)
+
+    def format_row(self,
+                   r,
+                   formatter_options = {},
+                   formatter_class = None,
+                   redraw = True,
+                   **kwargs,
+                   ):
+        if isinstance(r, str) and r.lower() == "all":
+            for r_ in range(len(self.MT.data)):
+                self.MT.format_column(r_, **{'formatter': formatter_class, **formatter_options, **kwargs})
+        elif is_iterable(r):
+            for r_ in r:
+                self.MT.format_row(r_, **{'formatter': formatter_class, **formatter_options, **kwargs})
+        else:
+            self.MT.format_row(r, **{'formatter': formatter_class, **formatter_options, **kwargs})
+        self.set_refresh_timer(redraw)
+
+    def delete_row_format(self, r = "all", clear_values = False):
+        if is_iterable(r):
+            for r_ in r:
+                self.MT.delete_row_format(r_, clear_values = clear_values)
+        else:
+            self.MT.delete_row_format(r, clear_values = clear_values)
+
+    def format_column(self,
+                      c,
+                      formatter_options = {},
+                      formatter_class = None,
+                      redraw = True,
+                      **kwargs,
+                      ):
+        if isinstance(c, str) and c.lower() == "all":
+            for c_ in range(self.MT.total_data_cols()):
+                self.MT.format_column(c_, **{'formatter': formatter_class, **formatter_options, **kwargs})
+        elif is_iterable(c):
+            for c_ in c:
+                self.MT.format_column(c_, **{'formatter': formatter_class, **formatter_options, **kwargs})
+        else:
+            self.MT.format_column(c, **{'formatter': formatter_class, **formatter_options, **kwargs})
+        self.set_refresh_timer(redraw)
+
+    def delete_column_format(self, c = "all", clear_values = False):
+        if is_iterable(c):
+            for c_ in c:
+                self.MT.delete_column_format(c_, clear_values = clear_values)
+        else:
+            self.MT.delete_column_format(c, clear_values = clear_values)
+
+    def format_sheet(self, 
+                     formatter_options = {},
+                     formatter_class = None,
+                     redraw = True,
+                     **kwargs):
+        self.MT.format_sheet(**{'formatter': formatter_class, **formatter_options, **kwargs})
+        self.set_refresh_timer(redraw)
+        
+    def delete_sheet_format(self, clear_values = False):
+        self.MT.delete_sheet_format(clear_values = clear_values)
 
 
 class Sheet_Dropdown(Sheet):
@@ -2766,7 +2883,9 @@ class Sheet_Dropdown(Sheet):
                  outline_color = theme_light_blue['table_fg'],
                  outline_thickness = 2,
                  values = [],
-                 hide_dropdown_window = None,
+                 close_dropdown_window = None,
+                 modified_function = None,
+                 search_function = dropdown_search_function,
                  arrowkey_RIGHT = None,
                  arrowkey_LEFT = None,
                  align = "w",
@@ -2799,7 +2918,9 @@ class Sheet_Dropdown(Sheet):
                        table_fg = colors['fg'],
                        table_bg = colors['bg'])
         self.parent = parent
-        self.hide_dropdown_window = hide_dropdown_window
+        self.close_dropdown_window = close_dropdown_window
+        self.modified_function = modified_function
+        self.search_function = search_function
         self.arrowkey_RIGHT = arrowkey_RIGHT
         self.arrowkey_LEFT = arrowkey_LEFT
         self.h_ = height
@@ -2836,6 +2957,18 @@ class Sheet_Dropdown(Sheet):
             self.row += 1
         self.see(self.row, 0, redraw = False)
         self.select_row(self.row)
+        
+    def search_and_see(self, event = None):
+        if self.modified_function is not None:
+            self.modified_function(event)
+        if self.search_function is not None:
+            rn = self.search_function(search_for = fr"{event.value}".lower(), 
+                                      data = self.MT.data)
+            if rn is not None:
+                self.row = rn
+                self.deselect("all")
+                self.see(self.row, 0, redraw = False)
+                self.select_row(self.row)
 
     def mouse_motion(self, event = None):
         self.row = self.identify_row(event, exclude_index = True, allow_end = False)
@@ -2861,14 +2994,14 @@ class Sheet_Dropdown(Sheet):
             row = self.identify_row(event, exclude_index = True, allow_end = False)
         if self.single_index:
             if row is None:
-                self.hide_dropdown_window(self.r if self.single_index == "r" else self.c)
+                self.close_dropdown_window(self.r if self.single_index == "r" else self.c)
             else:
-                self.hide_dropdown_window(self.r if self.single_index == "r" else self.c, self.get_cell_data(row, 0))
+                self.close_dropdown_window(self.r if self.single_index == "r" else self.c, self.get_cell_data(row, 0))
         else:
             if row is None:
-                self.hide_dropdown_window(self.r, self.c)
+                self.close_dropdown_window(self.r, self.c)
             else:
-                self.hide_dropdown_window(self.r, self.c, self.get_cell_data(row, 0))
+                self.close_dropdown_window(self.r, self.c, self.get_cell_data(row, 0))
 
     def values(self, values = [], redraw = True):
         self.set_sheet_data([[v] for v in values],

@@ -1,9 +1,20 @@
 # for mac bindings
 from platform import system as get_os
-USER_OS = f"{get_os()}".lower()
 
+USER_OS = f"{get_os()}".lower()
 ctrl_key = "Command" if USER_OS == "darwin" else "Control"
 symbols_set = set("""!#\$%&'()*+,-./:;"@[]^_`{|}~>?= """)
+nonelike = {None, 'none', ''}
+truthy = {True, "true", "t", "yes", "y", "on", "1", 1, 1.0}
+falsy = {False, "false", "f", "no", "n", "off", "0", 0, 0.0}
+
+arrowkey_bindings_helper = {"tab": "Tab",
+                            "up": "Up",
+                            "right": "Right",
+                            "left": "Left",
+                            "down": "Down",
+                            "prior": "Prior",
+                            "next": "Next"}
 
 def get_font():
     return ("Calibri", 13 if USER_OS == "darwin" else 11, "normal")
@@ -13,14 +24,6 @@ def get_index_font():
 
 def get_heading_font():
     return ("Calibri", 13 if USER_OS == "darwin" else 11, "normal")
-
-def is_iterable(o):
-    try:
-        for e in o:
-            break
-        return True
-    except:
-        return False
 
 theme_light_blue = {
 'popup_menu_fg': "#000000",
@@ -108,10 +111,53 @@ theme_light_green = {
 'table_selected_columns_fg': "black"
 }
 
+theme_dark = {
+'popup_menu_fg': "white",
+'popup_menu_bg': "gray15",
+'popup_menu_highlight_bg': "gray40",
+'popup_menu_highlight_fg': "white",
+'index_hidden_rows_expander_bg': "gray30",
+'header_hidden_columns_expander_bg': "gray30",
+'header_bg': "#141414",
+'header_border_fg': "#505054",
+'header_grid_fg': "#8C8C8C",
+'header_fg': "gray70",
+'header_selected_cells_bg': "#545454",
+'header_selected_cells_fg': "#6aa2fc",
+'index_bg': "#141414",
+'index_border_fg': "#505054",
+'index_grid_fg': "#8C8C8C",
+'index_fg': "gray70",
+'index_selected_cells_bg': "#545454",
+'index_selected_cells_fg': "#6aa2fc",
+'top_left_bg': "#141414",
+'top_left_fg': "#505054",
+'top_left_fg_highlight': "white",
+'table_bg': "#000000",
+'table_grid_fg': "#595959",
+'table_fg': "#E3E3E3",
+'table_selected_cells_border_fg': "#6aa2fc",
+'table_selected_cells_bg': "#404040",
+'table_selected_cells_fg': "#F7F7F7",
+'resizing_line_fg': "white",
+'drag_and_drop_bg': "#ecf0f2",
+'outline_color': "gray95",
+'header_selected_columns_bg': "#4489F7",
+'header_selected_columns_fg': "white",
+'index_selected_rows_bg': "#4489F7",
+'index_selected_rows_fg': "white",
+'table_selected_rows_border_fg': "#4489F7",
+'table_selected_rows_bg': "#404040",
+'table_selected_rows_fg': "#F7F7F7",
+'table_selected_columns_border_fg': "#4489F7",
+'table_selected_columns_bg': "#404040",
+'table_selected_columns_fg': "#F7F7F7"
+}
+
 theme_black = {
 'popup_menu_fg': "white",
 'popup_menu_bg': "gray15",
-'popup_menu_highlight_bg': "gray35",
+'popup_menu_highlight_bg': "gray40",
 'popup_menu_highlight_fg': "white",
 'index_hidden_rows_expander_bg': "gray30",
 'header_hidden_columns_expander_bg': "gray30",
@@ -131,11 +177,11 @@ theme_black = {
 'top_left_fg': "#505054",
 'top_left_fg_highlight': "#FBB86C",
 'table_bg': "#000000",
-'table_grid_fg': "#505054",
-'table_fg': "#F2F2F2",
+'table_grid_fg': "#595959",
+'table_fg': "#E3E3E3",
 'table_selected_cells_border_fg': "#FBB86C",
-'table_selected_cells_bg': "#333333",
-'table_selected_cells_fg': "#FFFFFF",
+'table_selected_cells_bg': "#404040",
+'table_selected_cells_fg': "#F7F7F7",
 'resizing_line_fg': "white",
 'drag_and_drop_bg': "#ecf0f2",
 'outline_color': "gray95",
@@ -144,54 +190,11 @@ theme_black = {
 'index_selected_rows_bg': "#FBB86C",
 'index_selected_rows_fg': "#000000",
 'table_selected_rows_border_fg': "#FBB86C",
-'table_selected_rows_bg': "#333333",
-'table_selected_rows_fg': "#FFFFFF",
+'table_selected_rows_bg': "#404040",
+'table_selected_rows_fg': "#F7F7F7",
 'table_selected_columns_border_fg': "#FBB86C",
-'table_selected_columns_bg': "#333333",
-'table_selected_columns_fg': "#FFFFFF"
-}
-
-theme_dark = {
-'popup_menu_fg': "white",
-'popup_menu_bg': "gray15",
-'popup_menu_highlight_bg': "gray35",
-'popup_menu_highlight_fg': "white",
-'index_hidden_rows_expander_bg': "gray30",
-'header_hidden_columns_expander_bg': "gray30",
-'header_bg': "#141414",
-'header_border_fg': "#505054",
-'header_grid_fg': "#8C8C8C",
-'header_fg': "gray70",
-'header_selected_cells_bg': "#545454",
-'header_selected_cells_fg': "#6aa2fc",
-'index_bg': "#141414",
-'index_border_fg': "#505054",
-'index_grid_fg': "#8C8C8C",
-'index_fg': "gray70",
-'index_selected_cells_bg': "#545454",
-'index_selected_cells_fg': "#6aa2fc",
-'top_left_bg': "#323232",
-'top_left_fg': "#505054",
-'top_left_fg_highlight': "white",
-'table_bg': "#323232",
-'table_grid_fg': "#505054",
-'table_fg': "#F2F2F2",
-'table_selected_cells_border_fg': "#6aa2fc",
-'table_selected_cells_bg': "#141414",
-'table_selected_cells_fg': "#fafafa",
-'resizing_line_fg': "white",
-'drag_and_drop_bg': "#ecf0f2",
-'outline_color': "gray95",
-'header_selected_columns_bg': "#4489F7",
-'header_selected_columns_fg': "white",
-'index_selected_rows_bg': "#4489F7",
-'index_selected_rows_fg': "white",
-'table_selected_rows_border_fg': "#4489F7",
-'table_selected_rows_bg': "#141414",
-'table_selected_rows_fg': "#fafafa",
-'table_selected_columns_border_fg': "#4489F7",
-'table_selected_columns_bg': "#141414",
-'table_selected_columns_fg': "#fafafa"
+'table_selected_columns_bg': "#404040",
+'table_selected_columns_fg': "#F7F7F7"
 }
 
 theme_dark_blue = theme_black.copy()

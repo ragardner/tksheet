@@ -1,4 +1,32 @@
-### Latest version in release notes is current version
+### Version 6.0.0
+#### Fixed:
+- Undo added to stack when no changes made with cut, paste, delete
+- Using generator with `set_column_widths()`/`set_row_heights()` would result in lost first width/height
+- Header/Index dropdown `modified_function` not sending modified event
+- Escape out of dropdown box doesn't reset arrow orientation
+
+#### Added:
+- Cell formatters, thanks to [PR#158](https://github.com/ragardner/tksheet/pull/158)
+- `format_cell()`, `format_row()`, `format_column()`, `format_sheet()`
+- Options for changing output to clipboard delimiter, quotechar, lineterminator and option for setting paste delimiter detection
+- Bindings `"up" "down" "left" "right" "prior" "next"` to enable arrowkey bindings individually use with `enable_bindings()`/`disable_bindings()`
+= Dropdowns now have a search feature which searches their values after the entry box is modified (if dropdown is state `normal`)
+- Dropdown kwargs `search_function`, `validate_input` and `text`
+
+#### Removed:
+- Startup arg `ctrl_keys_over_dropdowns_enabled`, also removed in `set_options()`
+- `set_copy` arg in `set_cell_data()`
+- `return_copy` arg in data getting functions but will not generate error if used as keyword arg
+
+#### Changed:
+- `index_border_fg` and `header_border_fg` no longer work, they now use the relevant grid foreground options
+- `"dark"`/`"black"` themes
+- Dropdowns now default to state `"normal"` and validate input by default
+- `set_dropdown_values()`/`set_index_dropdown_values()`/`set_header_dropdown_values()` keyword argument `displayed` changed to `set_value` for clarity
+- Checkbox click extra binding and edit cell extra binding (when associated with a checkbox click) return `bool` now, not `str`
+- `get_cell_data()`/`get_row_data()`/`get_column_data()` have had an overhaul and have different keyword arguments, see documentation for more information. They also now return empty string/s if index is out of bounds (instead of `None`s)
+- Rename some internal functions for consistency
+- Extra bindings delete key now returns dict instead of list for boxes
 
 ### Version 5.6.8
 #### Fixed:

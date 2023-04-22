@@ -138,23 +138,23 @@ class TextEditor_(tk.Text):
         self.rc_popup_menu.tk_popup(event.x_root, event.y_root)
         
     def select_all(self, event = None):
-        self.event_generate("<Command-a>" if is_mac() else "<Control-a>")
+        self.event_generate("<Command-a>" if on_mac() else "<Control-a>")
         return "break"
     
     def cut(self, event = None):
-        self.event_generate("<Command-x>" if is_mac() else "<Control-x>")
+        self.event_generate("<Command-x>" if on_mac() else "<Control-x>")
         return "break"
     
     def copy(self, event = None):
-        self.event_generate("<Command-c>" if is_mac() else "<Control-c>")
+        self.event_generate("<Command-c>" if on_mac() else "<Control-c>")
         return "break"
     
     def paste(self, event = None):
-        self.event_generate("<Command-v>" if is_mac() else "<Control-v>")
+        self.event_generate("<Command-v>" if on_mac() else "<Control-v>")
         return "break"
 
     def undo(self, event = None):
-        self.event_generate("<Command-z>" if is_mac() else "<Control-z>")
+        self.event_generate("<Command-z>" if on_mac() else "<Control-z>")
         return "break"
 
 
@@ -235,6 +235,37 @@ class GeneratedMouseEvent:
         self.num = 1
 
 
+def dropdown_search_function(search_for, data):
+    search_len = len(search_for)
+    best_match = {'rn': float("inf"),
+                  'st': float("inf"),
+                  'len_diff': float("inf")}
+    for rn, row in enumerate(data):
+        dd_val = fr"{row[0]}".lower()
+        st = dd_val.find(search_for)
+        if st > -1:
+            # priority is start index
+            # if there's already a matching start
+            # then compare the len difference
+            len_diff = len(dd_val) - search_len
+            if (st < best_match['st'] or
+                (st == best_match['st'] and
+                 len_diff < best_match['len_diff'])
+                ):
+                best_match['rn'] = rn
+                best_match['st'] = st
+                best_match['len_diff'] = len_diff
+    if best_match['rn'] != float("inf"):
+        return best_match['rn']
+    return None
+
+def is_iterable(o):
+    try:
+        iter(o)
+        return True
+    except:
+        return False
+
 def num2alpha(n):
     s = ""
     n += 1
@@ -242,6 +273,14 @@ def num2alpha(n):
         n, r = divmod(n - 1, 26)
         s = chr(65 + r) + s
     return s
+
+def get_n2a(n = 0, _type = "numbers"):
+    if _type == "letters":
+        return num2alpha(n)
+    elif _type == "numbers":
+        return f"{n + 1}"
+    else:
+        return f"{num2alpha(n)} {n + 1}"
 
 def get_index_of_gap_in_sorted_integer_seq_forward(seq, start = 0):
     prevn = seq[start]
@@ -259,7 +298,7 @@ def get_index_of_gap_in_sorted_integer_seq_reverse(seq, start = 0):
         prevn = n
     return None
 
-def is_mac():
+def on_mac():
     if USER_OS == "darwin":
         return True
     else:

@@ -31,8 +31,8 @@ class TopLeftRectangle(tk.Canvas):
         self.MT.TL = self
         self.RI.TL = self
         self.CH.TL = self
-        w = self.RI.current_width - 1
-        h = self.CH.current_height - 1
+        w = self.RI.current_width
+        h = self.CH.current_height
         self.create_rectangle(0, h - 5, w, h, fill = self.top_left_fg, outline = "", tag = "rw", state = "normal" if self.RI.width_resizing_enabled else "hidden")
         self.create_rectangle(w - 5, 0, w, h, fill = self.top_left_fg, outline = "", tag = "rh", state = "normal" if self.CH.height_resizing_enabled else "hidden")
         self.tag_bind("rw", "<Enter>", self.rw_enter)
@@ -86,12 +86,12 @@ class TopLeftRectangle(tk.Canvas):
         try:
             if new_w:
                 self.config(width = new_w)
-                w = new_w - 1
-                h = self.winfo_height() - 1
+                w = new_w
+                h = self.winfo_height()
             if new_h:
                 self.config(height = new_h)
-                w = self.winfo_width() - 1
-                h = new_h - 1
+                w = self.winfo_width()
+                h = new_h
         except:
             return
         self.coords("rw", 0, h - 5, w, h)
