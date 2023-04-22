@@ -1771,14 +1771,21 @@ tksheet has several basic built-in formatters and provides functionality for cre
 
 A demonstration of all the built-in and custom formatters can be found [here](https://github.com/ragardner/tksheet/wiki#example-using-and-creating-formatters).
 
-### **Basic Intialisation**
+### **To Note:**
 ----
 
-Note when applying multiple overlapping formats with e.g. a formatted cell which overlaps a formatted row, the priority is as follows:
+1. When applying multiple overlapping formats with e.g. a formatted cell which overlaps a formatted row, the priority is as follows:
 - Cell formats first.
 - Row formats second.
 - Column formats third.
 - Sheet format (using `format_sheet()`) last.
+
+2. Cell formatting will effectively override `validate_input = True` on cells with dropdown boxes.
+
+3. When getting data take careful note of the `get_displayed` options, as these are the difference between getting the actual formatted data and what is simply displayed on the table GUI.
+
+### **Basic Intialisation**
+----
 
 #### **Applying a format to cell:**
 

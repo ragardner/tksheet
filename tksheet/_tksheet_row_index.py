@@ -1256,7 +1256,7 @@ class RowIndex(tk.Canvas):
                 elif hasattr(event, 'keysym') and event.keysym == 'F2':
                     extra_func_key = "F2"
             datarn = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r]
-            text = self.get_cell_data(datarn)
+            text = self.get_cell_data(datarn, redirect_int = True)
         elif event is not None and ((hasattr(event, 'keysym') and event.keysym == 'BackSpace') or
                                     event.keycode in (8, 855638143)):
             extra_func_key = "BackSpace"
@@ -1521,7 +1521,9 @@ class RowIndex(tk.Canvas):
         elif isinstance(self.MT._row_index, int):
             return self.MT.cell_equal_to(datarn, self.MT._row_index, value)
             
-    def get_cell_data(self, datarn, get_displayed = False):
+    def get_cell_data(self, datarn, get_displayed = False, redirect_int = False):
+        if redirect_int and isinstance(self.MT._row_index, int):
+            return self.MT.get_cell_data(datarn, self.MT._row_index, none_to_empty_str = True)
         if isinstance(self.MT._row_index, int) or not self.MT._row_index or datarn >= len(self.MT._row_index) or not self.MT._row_index[datarn]:
             if get_displayed and self.show_default_index_for_empty:
                 return get_n2a(datarn, self.default_index)
@@ -1534,10 +1536,10 @@ class RowIndex(tk.Canvas):
             return self.MT._row_index[datarn]
             
     def get_valid_cell_data_as_str(self, datarn, fix = True) -> str:
-        if isinstance(self.MT._row_index, int):
-            return self.MT.get_valid_cell_data_as_str(datarn, self.MT._row_index, get_displayed = True)
         if datarn in self.cell_options and 'dropdown' in self.cell_options[datarn] and self.cell_options[datarn]['dropdown']['text'] is not None:
             return f"{self.cell_options[datarn]['dropdown']['text']}"
+        if isinstance(self.MT._row_index, int):
+            return self.MT.get_valid_cell_data_as_str(datarn, self.MT._row_index, get_displayed = True)
         if fix:
             self.fix_index(datarn)
         try:

@@ -1202,7 +1202,7 @@ class ColumnHeaders(tk.Canvas):
                 elif hasattr(event, 'keysym') and event.keysym == 'F2':
                     extra_func_key = "F2"
             datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
-            text = self.get_cell_data(datacn)
+            text = self.get_cell_data(datacn, redirect_int = True)
         elif event is not None and ((hasattr(event, 'keysym') and event.keysym == 'BackSpace') or
                                     event.keycode in (8, 855638143)):
             extra_func_key = "BackSpace"
@@ -1480,7 +1480,9 @@ class ColumnHeaders(tk.Canvas):
         elif isinstance(self.MT._headers, int):
             return self.MT.cell_equal_to(self.MT._headers, datacn, value)
             
-    def get_cell_data(self, datacn, get_displayed = False):
+    def get_cell_data(self, datacn, get_displayed = False, redirect_int = False):
+        if redirect_int and isinstance(self.MT._headers, int):
+            return self.MT.get_cell_data(self.MT._headers, datacn, none_to_empty_str = True)
         if isinstance(self.MT._headers, int) or not self.MT._headers or datacn >= len(self.MT._headers) or not self.MT._headers[datacn]:
             if get_displayed and self.show_default_header_for_empty:
                 return get_n2a(datacn, self.default_header)
@@ -1493,10 +1495,10 @@ class ColumnHeaders(tk.Canvas):
             return self.MT._headers[datacn]
             
     def get_valid_cell_data_as_str(self, datacn, fix = True) -> str:
-        if isinstance(self.MT._headers, int):
-            return self.MT.get_valid_cell_data_as_str(self.MT._headers, datacn, get_displayed = True)
         if datacn in self.cell_options and 'dropdown' in self.cell_options[datacn] and self.cell_options[datacn]['dropdown']['text'] is not None:
             return f"{self.cell_options[datacn]['dropdown']['text']}"
+        if isinstance(self.MT._headers, int):
+            return self.MT.get_valid_cell_data_as_str(self.MT._headers, datacn, get_displayed = True)
         if fix:
             self.fix_header(datacn)
         try:
