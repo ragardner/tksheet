@@ -1995,7 +1995,6 @@ class Sheet(tk.Frame):
                 raise ValueError(f"Argument 'only_columns' must be either int or iterable or None. Not {type(only_columns)}")
         if get_header:
             maxlen = self.MT.total_data_cols()
-        if get_header:
             iterable = only_columns if only_columns is not None else range(maxlen)
             yield ([""] if get_index else []) + [self.get_header_data(c, get_displayed = get_header_displayed) for c in iterable]
         iterable = only_rows if only_rows is not None else range(len(self.MT.data))

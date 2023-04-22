@@ -2628,14 +2628,16 @@ class MainTable(tk.Canvas):
                 datacn = c if self.all_columns_displayed else self.displayed_columns[c]
                 if (r, datacn) in self.cell_options and ('dropdown' in self.cell_options[(r, datacn)] or 'checkbox' in self.cell_options[(r, datacn)]):
                     canvasx = self.canvasx(event.x)
-                    if ((self.closed_dropdown != self.b1_pressed_loc and
+                    if (
+                        (self.closed_dropdown != self.b1_pressed_loc and
                          'dropdown' in self.cell_options[(r, datacn)] and
                          canvasx > self.col_positions[c + 1] - self.txt_h - 5 and
                          canvasx < self.col_positions[c + 1] - 1) 
                         or
                         ('checkbox' in self.cell_options[(r, datacn)] and 
-                         event.x < self.col_positions[c] + self.txt_h + 5 and
-                         event.y < self.row_positions[r] + self.txt_h + 5)):
+                         canvasx < self.col_positions[c] + self.txt_h + 5 and
+                         self.canvasy(event.y) < self.row_positions[r] + self.txt_h + 5)
+                        ):
                         self.open_cell(event)
             else:
                 self.mouseclick_outside_editor_or_dropdown_all_canvases()
