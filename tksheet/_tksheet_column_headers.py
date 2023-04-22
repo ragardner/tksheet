@@ -186,8 +186,7 @@ class ColumnHeaders(tk.Canvas):
                 return c
 
     def rc(self, event):
-        self.MT.mouseclick_outside_editor_or_dropdown()
-        self.mouseclick_outside_editor_or_dropdown()
+        self.mouseclick_outside_editor_or_dropdown_all_canvases()
         self.focus_set()
         popup_menu = None
         if self.MT.identify_col(x = event.x, allow_end = False) is None:
@@ -213,8 +212,7 @@ class ColumnHeaders(tk.Canvas):
             popup_menu.tk_popup(event.x_root, event.y_root)
 
     def shift_b1_press(self, event):
-        self.MT.mouseclick_outside_editor_or_dropdown()
-        self.mouseclick_outside_editor_or_dropdown()
+        self.mouseclick_outside_editor_or_dropdown_all_canvases()
         x = event.x
         c = self.MT.identify_col(x = x)
         if self.drag_and_drop_enabled or self.col_selection_enabled and self.rsz_h is None and self.rsz_w is None:
@@ -296,8 +294,7 @@ class ColumnHeaders(tk.Canvas):
             self.extra_motion_func(event)
 
     def double_b1(self, event = None):
-        self.MT.mouseclick_outside_editor_or_dropdown()
-        self.mouseclick_outside_editor_or_dropdown()
+        self.mouseclick_outside_editor_or_dropdown_all_canvases()
         self.focus_set()
         if self.double_click_resizing_enabled and self.width_resizing_enabled and self.rsz_w is not None and not self.currently_resizing_width:
             col = self.rsz_w - 1
@@ -326,8 +323,7 @@ class ColumnHeaders(tk.Canvas):
     def b1_press(self, event = None):
         self.MT.unbind("<MouseWheel>")
         self.focus_set()
-        self.MT.mouseclick_outside_editor_or_dropdown()
-        self.closed_dropdown = self.mouseclick_outside_editor_or_dropdown()
+        self.closed_dropdown = self.mouseclick_outside_editor_or_dropdown_all_canvases()
         x = self.canvasx(event.x)
         y = self.canvasy(event.y)
         c = self.MT.identify_col(x = event.x)
@@ -565,12 +561,21 @@ class ColumnHeaders(tk.Canvas):
             if c is not None and c == self.b1_pressed_loc and self.b1_pressed_loc != self.closed_dropdown:
                 datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
                 canvasx = self.canvasx(event.x)
-                if ((datacn in self.cell_options and 'dropdown' in self.cell_options[datacn] and canvasx < self.MT.col_positions[c + 1] and canvasx > self.MT.col_positions[c + 1] - self.MT.hdr_txt_h - 4) or
-                    (datacn in self.cell_options and 'checkbox' in self.cell_options[datacn] and canvasx < self.MT.col_positions[c] + self.MT.hdr_txt_h + 5)):
-                    if event.y < self.MT.hdr_txt_h + 5:
-                        self.open_cell(event)
+                if (event.y < self.MT.hdr_txt_h + 5 and
+                    (
+                     (datacn in self.cell_options and 
+                      'dropdown' in self.cell_options[datacn] and 
+                      canvasx < self.MT.col_positions[c + 1] and 
+                      canvasx > self.MT.col_positions[c + 1] - self.MT.hdr_txt_h - 4)
+                     or
+                     (datacn in self.cell_options and 
+                      'checkbox' in self.cell_options[datacn] and
+                      canvasx < self.MT.col_positions[c] + self.MT.hdr_txt_h + 5)
+                    )
+                ):
+                    self.open_cell(event)
             else:
-                self.mouseclick_outside_editor_or_dropdown()
+                self.mouseclick_outside_editor_or_dropdown_all_canvases()
             self.b1_pressed_loc = None
             self.closed_dropdown = None
         self.dragged_col = None
@@ -1312,7 +1317,7 @@ class ColumnHeaders(tk.Canvas):
         else:
             self.text_editor.textedit.bind("<Escape>", lambda x: self.destroy_text_editor("Escape"))
     
-    # displayed indexes                            #just here to receive text editor arg
+    # displayed indexes                             #just here to receive text editor arg
     def text_editor_has_wrapped(self, r = 0, c = 0, check_lines = None):
         if self.width_resizing_enabled:
             datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
@@ -1719,6 +1724,11 @@ class ColumnHeaders(tk.Canvas):
         if closed_dd_coords is not None:
             self.destroy_opened_dropdown_window(closed_dd_coords) #displayed coords not data, necessary for b1 function
         return closed_dd_coords
+    
+    def mouseclick_outside_editor_or_dropdown_all_canvases(self):
+        self.RI.mouseclick_outside_editor_or_dropdown()
+        self.MT.mouseclick_outside_editor_or_dropdown()
+        return self.mouseclick_outside_editor_or_dropdown()
             
     # function can receive two None args
     def destroy_opened_dropdown_window(self, c = None, datacn = None):

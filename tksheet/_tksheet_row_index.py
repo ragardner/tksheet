@@ -169,8 +169,7 @@ class RowIndex(tk.Canvas):
                 return r
 
     def rc(self, event):
-        self.MT.mouseclick_outside_editor_or_dropdown()
-        self.mouseclick_outside_editor_or_dropdown()
+        self.mouseclick_outside_editor_or_dropdown_all_canvases()
         self.focus_set()
         popup_menu = None
         if self.MT.identify_row(y = event.y, allow_end = False) is None:
@@ -196,8 +195,7 @@ class RowIndex(tk.Canvas):
             popup_menu.tk_popup(event.x_root, event.y_root)
 
     def shift_b1_press(self, event):
-        self.MT.mouseclick_outside_editor_or_dropdown()
-        self.mouseclick_outside_editor_or_dropdown()
+        self.mouseclick_outside_editor_or_dropdown_all_canvases()
         y = event.y
         r = self.MT.identify_row(y = y)
         if self.drag_and_drop_enabled or self.row_selection_enabled and self.rsz_h is None and self.rsz_w is None:
@@ -280,8 +278,7 @@ class RowIndex(tk.Canvas):
             self.extra_motion_func(event)
 
     def double_b1(self, event = None):
-        self.MT.mouseclick_outside_editor_or_dropdown()
-        self.mouseclick_outside_editor_or_dropdown()
+        self.mouseclick_outside_editor_or_dropdown_all_canvases()
         self.focus_set()
         if self.double_click_resizing_enabled and self.height_resizing_enabled and self.rsz_h is not None and not self.currently_resizing_height:
             row = self.rsz_h - 1
@@ -312,8 +309,7 @@ class RowIndex(tk.Canvas):
     def b1_press(self, event = None):
         self.MT.unbind("<MouseWheel>")
         self.focus_set()
-        self.MT.mouseclick_outside_editor_or_dropdown()
-        self.closed_dropdown = self.mouseclick_outside_editor_or_dropdown()
+        self.closed_dropdown = self.mouseclick_outside_editor_or_dropdown_all_canvases()
         x = self.canvasx(event.x)
         y = self.canvasy(event.y)
         r = self.MT.identify_row(y = event.y)
@@ -553,13 +549,21 @@ class RowIndex(tk.Canvas):
             r = self.MT.identify_row(y = event.y)
             if r is not None and r == self.b1_pressed_loc and self.b1_pressed_loc != self.closed_dropdown:
                 datarn = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r]
-                canvasy = self.canvasy(event.y)
-                if ((datarn in self.cell_options and 'dropdown' in self.cell_options[datarn] and event.x < self.current_width and event.x > self.current_width - self.MT.txt_h - 4) or
-                    (datarn in self.cell_options and 'checkbox' in self.cell_options[datarn] and event.x < self.MT.txt_h + 5)):
-                    if canvasy < self.MT.row_positions[r] + self.MT.txt_h:
-                        self.open_cell(event)
+                if (self.canvasy(event.y) < self.MT.row_positions[r] + self.MT.txt_h and
+                    (
+                     (datarn in self.cell_options and 
+                      'dropdown' in self.cell_options[datarn] and 
+                      event.x < self.current_width and 
+                      event.x > self.current_width - self.MT.txt_h - 4) 
+                    or
+                     (datarn in self.cell_options and 
+                      'checkbox' in self.cell_options[datarn] and
+                      event.x < self.MT.txt_h + 5)
+                     )
+                ):
+                    self.open_cell(event)
             else:
-                self.mouseclick_outside_editor_or_dropdown()
+                self.mouseclick_outside_editor_or_dropdown_all_canvases()
             self.b1_pressed_loc = None
             self.closed_dropdown = None    
         self.dragged_row = None
@@ -1748,6 +1752,11 @@ class RowIndex(tk.Canvas):
         if closed_dd_coords is not None:
             self.destroy_opened_dropdown_window(closed_dd_coords) #displayed coords not data, necessary for b1 function
         return closed_dd_coords
+    
+    def mouseclick_outside_editor_or_dropdown_all_canvases(self):
+        self.CH.mouseclick_outside_editor_or_dropdown()
+        self.MT.mouseclick_outside_editor_or_dropdown()
+        return self.mouseclick_outside_editor_or_dropdown()
 
     # r is displayed row, function can have two None args
     def destroy_opened_dropdown_window(self, r = None, datarn = None):

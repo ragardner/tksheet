@@ -655,7 +655,7 @@ class MainTable(tk.Canvas):
                     datarn = r if self.all_rows_displayed else self.displayed_rows[r]
                     for c in range(c1, c2):
                         datacn = c if self.all_columns_displayed else self.displayed_columns[c]
-                        if self.input_valid_for_cell(data_ref_rn, datacn, ""):
+                        if self.input_valid_for_cell(datarn, datacn, ""):
                             if self.undo_enabled:
                                 undo_storage[(datarn, datacn)] = self.get_cell_data(datarn, datacn)
                             self.set_cell_data(datarn, datacn, "")
@@ -2368,7 +2368,7 @@ class MainTable(tk.Canvas):
             self.extra_motion_func(event)
 
     def rc(self, event = None):
-        self.mouseclick_outside_editor_or_dropdown()
+        self.mouseclick_outside_editor_or_dropdown_all_canvases()
         self.focus_set()
         popup_menu = None
         if self.single_selection_enabled and all(v is None for v in (self.RI.rsz_h, self.RI.rsz_w, self.CH.rsz_h, self.CH.rsz_w)):
@@ -2417,7 +2417,7 @@ class MainTable(tk.Canvas):
             popup_menu.tk_popup(event.x_root, event.y_root)
 
     def b1_press(self, event = None):
-        self.closed_dropdown = self.mouseclick_outside_editor_or_dropdown()
+        self.closed_dropdown = self.mouseclick_outside_editor_or_dropdown_all_canvases()
         self.focus_set()
         x1, y1, x2, y2 = self.get_canvas_visible_area()
         if self.identify_col(x = event.x, allow_end = False) is None or self.identify_row(y = event.y, allow_end = False) is None:
@@ -2468,7 +2468,7 @@ class MainTable(tk.Canvas):
                 self.hidd_resize_lines[t] = False
 
     def shift_b1_press(self, event = None):
-        self.mouseclick_outside_editor_or_dropdown()
+        self.mouseclick_outside_editor_or_dropdown_all_canvases()
         self.focus_set()
         if self.drag_selection_enabled and all(v is None for v in (self.RI.rsz_h, self.RI.rsz_w, self.CH.rsz_h, self.CH.rsz_w)):
             self.b1_pressed_loc = None
@@ -2628,25 +2628,24 @@ class MainTable(tk.Canvas):
                 datacn = c if self.all_columns_displayed else self.displayed_columns[c]
                 if (r, datacn) in self.cell_options and ('dropdown' in self.cell_options[(r, datacn)] or 'checkbox' in self.cell_options[(r, datacn)]):
                     canvasx = self.canvasx(event.x)
-                    if (self.closed_dropdown != self.b1_pressed_loc and
-                        'dropdown' in self.cell_options[(r, datacn)] and
-                        canvasx > self.col_positions[c + 1] - self.txt_h - 5 and
-                        canvasx < self.col_positions[c + 1] - 1):
+                    if ((self.closed_dropdown != self.b1_pressed_loc and
+                         'dropdown' in self.cell_options[(r, datacn)] and
+                         canvasx > self.col_positions[c + 1] - self.txt_h - 5 and
+                         canvasx < self.col_positions[c + 1] - 1) 
+                        or
+                        ('checkbox' in self.cell_options[(r, datacn)] and 
+                         event.x < self.col_positions[c] + self.txt_h + 5 and
+                         event.y < self.row_positions[r] + self.txt_h + 5)):
                         self.open_cell(event)
-                    elif 'checkbox' in self.cell_options[(r, datacn)] and event.x < self.col_positions[c] + self.txt_h + 5 and event.y < self.row_positions[r] + self.txt_h + 5:
-                        self.open_cell(event)
-                        self.mouseclick_outside_editor_or_dropdown()
-                    else:
-                        self.mouseclick_outside_editor_or_dropdown()
             else:
-                self.mouseclick_outside_editor_or_dropdown()
+                self.mouseclick_outside_editor_or_dropdown_all_canvases()
         self.b1_pressed_loc = None
         self.closed_dropdown = None
         if self.extra_b1_release_func is not None:
             self.extra_b1_release_func(event)
 
     def double_b1(self, event = None):
-        self.mouseclick_outside_editor_or_dropdown()
+        self.mouseclick_outside_editor_or_dropdown_all_canvases()
         self.focus_set()
         x1, y1, x2, y2 = self.get_canvas_visible_area()
         if self.identify_col(x = event.x, allow_end = False) is None or self.identify_row(y = event.y, allow_end = False) is None:
@@ -5797,6 +5796,11 @@ class MainTable(tk.Canvas):
         if closed_dd_coords is not None:
             self.destroy_opened_dropdown_window(closed_dd_coords[0], closed_dd_coords[1]) #displayed coords not data, necessary for b1 function
         return closed_dd_coords
+    
+    def mouseclick_outside_editor_or_dropdown_all_canvases(self):
+        self.CH.mouseclick_outside_editor_or_dropdown()
+        self.RI.mouseclick_outside_editor_or_dropdown()
+        return self.mouseclick_outside_editor_or_dropdown()
 
     # function can receive 4 None args
     def destroy_opened_dropdown_window(self, r = None, c = None, datarn = None, datacn = None):
