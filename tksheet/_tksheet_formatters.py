@@ -2,7 +2,7 @@ from typing import Union, Any, Type, Callable
 from ._tksheet_vars import *
 from ._tksheet_other_classes import *
 
-def is_nonelike(n: Any):
+def is_none_like(n: Any):
     if (
         (isinstance(n, str) and n.lower().replace(" ", "") in nonelike) or 
         n in nonelike
@@ -23,7 +23,7 @@ def to_float(x: Any, **kwargs):
     return float(x)
 
 def to_bool(val: Any, **kwargs):
-    if isinstance(val, bool):
+    if type(val) == bool:
         return val
     if isinstance(val, str):
         v = val.lower()
@@ -42,6 +42,13 @@ def to_bool(val: Any, **kwargs):
     elif v in _falsy:
         return False
     raise ValueError(f'Cannot map "{val}" to bool.')
+
+def is_bool_like(v: Any, **kwargs):
+    try:
+        to_bool(v)
+        return True
+    except:
+        return False
 
 def to_str(v: Any, **kwargs: dict) -> str:
     return f"{v}"
@@ -149,7 +156,7 @@ def format_data(value = "",
                 ) -> Any:
     if pre_format_function:
         value = pre_format_function(value)
-    if nullable and is_nonelike(value):
+    if nullable and is_none_like(value):
         value = None
     else:
         try:
@@ -242,7 +249,7 @@ class Formatter:
     def format_data(self, value):
         if self.pre_format_function:
             value = self.pre_format_function(value)
-        value = None if (self.nullable and is_nonelike(value)) else self.format_function(value, **self.kwargs)
+        value = None if (self.nullable and is_none_like(value)) else self.format_function(value, **self.kwargs)
         if self.post_format_function and self.valid(value):
             value = self.post_format_function(value)
         return value

@@ -30,7 +30,7 @@ class Sheet(tk.Frame):
                  to_clipboard_delimiter = "\t",
                  to_clipboard_quotechar = '"',
                  to_clipboard_lineterminator = "\n",
-                 from_clipboard_delimiters = ["\t", ",", "|", ";"],
+                 from_clipboard_delimiters = ["\t"],
                  show_default_header_for_empty: bool = True,
                  show_default_index_for_empty: bool = True,
                  page_up_down_select_row: bool = True,
@@ -2343,21 +2343,14 @@ class Sheet(tk.Frame):
                                redraw = False,
                                check_function = None,
                                text = ""):
+        _kwargs = {'checked': checked, 'state': state, 'redraw': redraw, 'check_function': check_function, 'text': text}
         if isinstance(c, str) and c.lower() == "all":
             for c_ in range(self.MT.total_data_cols()):
                 self.CH.create_checkbox(datacn = c_,
-                                        checked = checked,
-                                        state = state,
-                                        redraw = redraw,
-                                        check_function = check_function,
-                                        text = text)
+                                        **_kwargs)
         else:
             self.CH.create_checkbox(datacn = c,
-                                    checked = checked,
-                                    state = state,
-                                    redraw = redraw,
-                                    check_function = check_function,
-                                    text = text)
+                                    **_kwargs)
 
     def click_header_checkbox(self,
                               c,
@@ -2405,21 +2398,14 @@ class Sheet(tk.Frame):
                               redraw = False,
                               check_function = None,
                               text = ""):
+        _kwargs = {'checked': checked, 'state': state, 'redraw': redraw, 'check_function': check_function, 'text': text}
         if isinstance(r, str) and r.lower() == "all":
             for r_ in range(self.MT.total_data_rows()):
                 self.RI.create_checkbox(datarn = r_,
-                                        checked = checked,
-                                        state = state,
-                                        redraw = redraw,
-                                        check_function = check_function,
-                                        text = text)
+                                        **_kwargs)
         else:
             self.RI.create_checkbox(datarn = r,
-                                    checked = checked,
-                                    state = state,
-                                    redraw = redraw,
-                                    check_function = check_function,
-                                    text = text)
+                                    **_kwargs)
 
     def click_index_checkbox(self,
                              r,
@@ -2468,43 +2454,28 @@ class Sheet(tk.Frame):
                         redraw = False,
                         check_function = None,
                         text = ""):
+        _kwargs = {'checked': checked, 'state': state, 'redraw': redraw, 'check_function': check_function, 'text': text}
         if isinstance(r, str) and r.lower() == "all" and isinstance(c, int):
             for r_ in range(self.MT.total_data_rows()):
                 self.MT.create_checkbox(datarn = r_,
                                         datacn = c,
-                                        checked = checked,
-                                        state = state,
-                                        redraw = redraw,
-                                        check_function = check_function,
-                                        text = text)
+                                        **_kwargs)
         elif isinstance(c, str) and c.lower() == "all" and isinstance(r, int):
             for c_ in range(self.MT.total_data_cols()):
                 self.MT.create_checkbox(datarn = r,
                                         datacn = c_,
-                                        checked = checked,
-                                        state = state,
-                                        redraw = redraw,
-                                        check_function = check_function,
-                                        text = text)
+                                        **_kwargs)
         elif isinstance(r, str) and r.lower() == "all" and isinstance(c, str) and c.lower() == "all":
             totalcols = self.MT.total_data_cols()
             for r_ in range(self.MT.total_data_rows()):
                 for c_ in range(totalcols):
                     self.MT.create_checkbox(datarn = r_,
                                             datacn = c_,
-                                            checked = checked,
-                                            state = state,
-                                            redraw = redraw,
-                                            check_function = check_function,
-                                            text = text)
+                                            **_kwargs)
         else:
             self.MT.create_checkbox(datarn = r,
                                     datacn = c,
-                                    checked = checked,
-                                    state = state,
-                                    redraw = redraw,
-                                    check_function = check_function,
-                                    text = text)
+                                    **_kwargs)
 
     def click_checkbox(self,
                        r,

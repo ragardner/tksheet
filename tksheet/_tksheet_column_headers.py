@@ -1202,7 +1202,7 @@ class ColumnHeaders(tk.Canvas):
                 elif hasattr(event, 'keysym') and event.keysym == 'F2':
                     extra_func_key = "F2"
             datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
-            text = self.get_valid_cell_data_as_str(datacn)
+            text = self.get_cell_data(datacn)
         elif event is not None and ((hasattr(event, 'keysym') and event.keysym == 'BackSpace') or
                                     event.keycode in (8, 855638143)):
             extra_func_key = "BackSpace"
@@ -1399,17 +1399,17 @@ class ColumnHeaders(tk.Canvas):
             if c is None and editor_info is not None and len(editor_info) >= 2:
                 c = editor_info[0]
             datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
-            if self.extra_end_edit_cell_func is None and self.input_valid_for_cell(datacn, self.text_editor_value, check_equality = False):
-                self.set_cell_data_undo(c, datacn = datacn, value = self.text_editor_value)
-            elif self.extra_end_edit_cell_func is not None and not self.MT.edit_cell_validation and self.input_valid_for_cell(datacn, self.text_editor_value, check_equality = False):
-                self.set_cell_data_undo(c, datacn = datacn, value = self.text_editor_value)
+            if self.extra_end_edit_cell_func is None and self.input_valid_for_cell(datacn, self.text_editor_value):
+                self.set_cell_data_undo(c, datacn = datacn, value = self.text_editor_value, check_input_valid = False)
+            elif self.extra_end_edit_cell_func is not None and not self.MT.edit_cell_validation and self.input_valid_for_cell(datacn, self.text_editor_value):
+                self.set_cell_data_undo(c, datacn = datacn, value = self.text_editor_value, check_input_valid = False)
                 self.extra_end_edit_cell_func(EditHeaderEvent(c, editor_info[1] if len(editor_info) >= 2 else "FocusOut", f"{self.text_editor_value}", "end_edit_header"))
             elif self.extra_end_edit_cell_func is not None and self.MT.edit_cell_validation:
                 validation = self.extra_end_edit_cell_func(EditHeaderEvent(c, editor_info[1] if len(editor_info) >= 2 else "FocusOut", f"{self.text_editor_value}", "end_edit_header"))
                 if validation is not None:
                     self.text_editor_value = validation
-                    if self.input_valid_for_cell(datacn, self.text_editor_value, check_equality = False):
-                        self.set_cell_data_undo(c, datacn = datacn, value = self.text_editor_value)
+                    if self.input_valid_for_cell(datacn, self.text_editor_value):
+                        self.set_cell_data_undo(c, datacn = datacn, value = self.text_editor_value, check_input_valid = False)
         if move_down:
             pass
         self.close_dropdown_window(c)
@@ -1422,20 +1422,20 @@ class ColumnHeaders(tk.Canvas):
         return "break"
     
     #internal event use
-    def set_cell_data_undo(self, c = 0, datacn = None, value = "", cell_resize = True, undo = True, redraw = True):
+    def set_cell_data_undo(self, c = 0, datacn = None, value = "", cell_resize = True, undo = True, redraw = True, check_input_valid = True):
         if datacn is None:
             datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
         if isinstance(self.MT._headers, int):
             self.MT.set_cell_data_undo(r = self.MT._headers, c = c, datacn = datacn, value = value, undo = True)
         else:
             self.fix_header(datacn)
-            if self.MT.undo_enabled and undo:
-                if self.MT._headers[datacn] != value:
+            if not check_input_valid or self.input_valid_for_cell(datacn, value):
+                if self.MT.undo_enabled and undo:
                     self.MT.undo_storage.append(zlib.compress(pickle.dumps(("edit_header",
-                                                                           {datacn: self.MT._headers[datacn]},
-                                                                           (((0, c, len(self.MT.row_positions) - 1, c + 1), "columns"), ),
-                                                                           self.MT.currently_selected()))))
-            self.MT._headers[datacn] = value
+                                                                            {datacn: self.MT._headers[datacn]},
+                                                                            (((0, c, len(self.MT.row_positions) - 1, c + 1), "columns"), ),
+                                                                            self.MT.currently_selected()))))
+                self.set_cell_data(datacn = datacn, value = value)
         if cell_resize and self.MT.cell_auto_resize_enabled:
             if self.height_resizing_enabled:
                 self.set_current_height_to_cell(datacn)
@@ -1448,12 +1448,18 @@ class ColumnHeaders(tk.Canvas):
             self.MT.set_cell_data(datarn = self.MT._headers, datacn = datacn, value = value)
         else:
             self.fix_header(datacn)
-            self.MT._headers[datacn] = value
+            if datacn in self.cell_options and 'checkbox' in self.cell_options[datacn]:
+                self.MT._headers[datacn] = to_bool(value)
+            else:
+                self.MT._headers[datacn] = value
     
-    def input_valid_for_cell(self, datacn, value, check_equality = True):
-        if datacn in self.cell_options and ('readonly' in self.cell_options[datacn] or 'checkbox' in self.cell_options[datacn]):
-            return False
-        if check_equality and self.cell_equal_to(datacn, value):
+    def input_valid_for_cell(self, datacn, value):
+        if datacn in self.cell_options:
+            if 'readonly' in self.cell_options[datacn]:
+                return False
+            if 'checkbox' in self.cell_options[datacn]:
+                return is_bool_like(value)
+        if self.cell_equal_to(datacn, value):
             return False
         if (datacn in self.cell_options and 
             'dropdown' in self.cell_options[datacn] and 
@@ -1465,9 +1471,14 @@ class ColumnHeaders(tk.Canvas):
     def cell_equal_to(self, datacn, value):
         self.fix_header(datacn)
         if isinstance(self.MT._headers, list):
+            if datacn in self.cell_options and 'checkbox' in self.cell_options[datacn]:
+                try:
+                    return to_bool(self.MT._headers[datacn]) == to_bool(value)
+                except:
+                    return False
             return self.MT._headers[datacn] == value
         elif isinstance(self.MT._headers, int):
-            return self.MT.cell_equal_to(datacn, self.MT._headers, value)
+            return self.MT.cell_equal_to(self.MT._headers, datacn, value)
             
     def get_cell_data(self, datacn, get_displayed = False):
         if isinstance(self.MT._headers, int) or not self.MT._headers or datacn >= len(self.MT._headers) or not self.MT._headers[datacn]:
@@ -1526,9 +1537,9 @@ class ColumnHeaders(tk.Canvas):
             else:
                 value = False
             self.set_cell_data_undo(c,
-                                     datacn = datacn, 
-                                     value = value, 
-                                     cell_resize = False)
+                                    datacn = datacn, 
+                                    value = value, 
+                                    cell_resize = False)
             if self.cell_options[datacn]['checkbox']['check_function'] is not None:
                 self.cell_options[datacn]['checkbox']['check_function']((0,
                                                                          c, 
