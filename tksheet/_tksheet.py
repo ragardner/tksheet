@@ -55,7 +55,7 @@ class Sheet(tk.Frame):
                  max_row_width: str = "inf", #str or int
                  row_index: list = None,
                  index: list = None,
-                 after_redraw_time_ms: int = 75,
+                 after_redraw_time_ms: int = 50,
                  row_index_width: int = 100,
                  auto_resize_default_row_index: bool = True,
                  set_all_heights_and_widths: bool = False,
@@ -1558,6 +1558,7 @@ class Sheet(tk.Frame):
 
     def set_progress_bar(self, r, c, pc: Union[None, float] = None, bg = None, fg = None, redraw = True):
         self.MT.highlight_cells(r = r, c = c, bg = bg, fg = fg, pc = pc, overwrite = False)
+        self.MT.update_idletasks()
         self.set_refresh_timer(redraw)
 
     def delete_progress_bar(self, r, c, redraw = True):

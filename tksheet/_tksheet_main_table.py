@@ -1431,7 +1431,7 @@ class MainTable(tk.Canvas):
                 self.cell_options[(row, column)]['readonly'] = True
 
     def highlight_cells(self, r = 0, c = 0, cells = tuple(), bg = None, fg = None, pc = None, redraw = False, overwrite = True):
-        if bg is None and fg is None:
+        if bg is None and fg is None and pc is None:
             return
         if cells:
             for r_, c_ in cells:
@@ -1467,7 +1467,7 @@ class MainTable(tk.Canvas):
             self.main_table_redraw_grid_and_text()
 
     def highlight_cols(self, cols = [], bg = None, fg = None, pc = None, highlight_header = False, redraw = False, overwrite = True):
-        if bg is None and fg is None:
+        if bg is None and fg is None and pc is None:
             return
         for c in (cols, ) if isinstance(cols, int) else cols:
             if c not in self.col_options:
@@ -1484,7 +1484,7 @@ class MainTable(tk.Canvas):
             self.main_table_redraw_grid_and_text(redraw_header = highlight_header)
 
     def highlight_rows(self, rows = [], bg = None, fg = None, pc = None, highlight_index = False, redraw = False, end_of_screen = False, overwrite = True):
-        if bg is None and fg is None:
+        if bg is None and fg is None and pc is None:
             return
         for r in (rows, ) if isinstance(rows, int) else rows:
             if r not in self.row_options:
@@ -3882,7 +3882,7 @@ class MainTable(tk.Canvas):
 
     def redraw_highlight(self, x1, y1, x2, y2, fill, pc, outline, tag, can_width = None):
         config = (fill, outline)
-        if type(pc) not in (float, int) or pc > 1 or pc < 0:
+        if type(pc) not in (float, int) or pc >= 0.999 or pc <= 0:
             coords = (x1 - 1 if outline else x1,
                       y1 - 1 if outline else y1,
                       x2 if can_width is None else x2 + can_width, 
@@ -3890,7 +3890,7 @@ class MainTable(tk.Canvas):
         else:
             coords = (x1,
                       y1,
-                      x2 - ((x2 - x1) / pc),
+                      (x2 - x1) * pc,
                       y2)
         k = None
         if config in self.hidd_high:
@@ -4177,8 +4177,8 @@ class MainTable(tk.Canvas):
                     datacn = c if self.all_columns_displayed else self.displayed_columns[c]
                     
                     fill, dd_drawn = self.redraw_highlight_get_text_fg(r, c, cleftgridln, rtopgridln, crightgridln, rbotgridln,
-                                                                        c_2_, c_3_, c_4_, selected_cells, actual_selected_rows, actual_selected_cols, 
-                                                                        datarn, datacn, can_width)
+                                                                       c_2_, c_3_, c_4_, selected_cells, actual_selected_rows, actual_selected_cols, 
+                                                                       datarn, datacn, can_width)
                         
                     if (datarn, datacn) in self.cell_options and 'align' in self.cell_options[(datarn, datacn)]:
                         align = self.cell_options[(datarn, datacn)]['align']
