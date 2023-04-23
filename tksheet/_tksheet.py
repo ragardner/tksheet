@@ -69,6 +69,8 @@ class Sheet(tk.Frame):
                  row_index_align: str = "center",
                  displayed_columns: list = [],
                  all_columns_displayed: bool = True,
+                 displayed_rows: list = [],
+                 all_rows_displayed: bool = True,
                  max_undos: int = 30,
                  outline_thickness: int = 0,
                  outline_color: str = theme_light_blue['outline_color'],
@@ -238,6 +240,8 @@ class Sheet(tk.Frame):
                             table_selected_columns_fg = table_selected_columns_fg,
                             displayed_columns = displayed_columns,
                             all_columns_displayed = all_columns_displayed,
+                            displayed_rows = displayed_rows,
+                            all_rows_displayed = all_rows_displayed,
                             selected_rows_to_end_of_window = selected_rows_to_end_of_window,
                             horizontal_grid_to_end_of_window = horizontal_grid_to_end_of_window,
                             vertical_grid_to_end_of_window = vertical_grid_to_end_of_window,
@@ -968,6 +972,8 @@ class Sheet(tk.Frame):
                 for r in range(number - len(self.MT.data)):
                     self.MT.insert_row_position("end", height)
         elif number < len(self.MT.data):
+            if not self.MT.all_rows_displayed:
+                self.MT.display_rows(enable = False, reset_row_positions = False, deselect_all = True)
             self.MT.row_positions[number + 1:] = []
         if mod_data:
             self.MT.data_dimensions(total_rows = number)
@@ -1009,14 +1015,6 @@ class Sheet(tk.Frame):
 
     def move_row(self, row: int, moveto: int):
         self.move_rows(moveto, row, 1)
-
-    def move_rows(self, moveto: int, to_move_min: int, number_of_rows: int, move_data: bool = True, index_type: str = "displayed", create_selections: bool = True, redraw = False):
-        if index_type.lower() == "displayed" or self.MT.all_rows_displayed:
-            new_selected, dispset = self.MT.move_rows_adjust_options_dict(moveto, to_move_min, number_of_rows, move_data, create_selections)
-        else:
-            new_selected, dispset = self.MT.move_rows_adjust_options_dict(moveto, to_move_min, number_of_rows, move_data, create_selections)
-        self.set_refresh_timer(redraw)
-        return new_selected, dispset
 
     def delete_column_position(self, idx: int, deselect_all = False):
         self.MT.del_col_position(idx,
@@ -1073,9 +1071,8 @@ class Sheet(tk.Frame):
     def move_columns(self, moveto: int, to_move_min: int, number_of_columns: int, move_data: bool = True, index_type: str = "displayed", create_selections: bool = True, redraw = False):
         if index_type.lower() == "displayed" or self.MT.all_columns_displayed:
             new_selected, dispset = self.MT.move_columns_adjust_options_dict(moveto, to_move_min, number_of_columns, move_data, create_selections)
-            self.set_refresh_timer(redraw)
-            return new_selected, dispset
         else:
+            dispset = {}
             c = int(moveto)
             to_move_max = to_move_min + number_of_columns
             totalcols = int(number_of_columns)
@@ -1146,8 +1143,84 @@ class Sheet(tk.Frame):
                     int(k): v for k, v in self.MT.col_options.items()
                 }
                 self.MT.displayed_columns = sorted(int(newcolsdct[k]) if k in newcolsdct else k - totalcols if k < c and k > to_move_min else int(k) for k in self.MT.displayed_columns)
-            self.set_refresh_timer(redraw)
-            return new_selected, {}
+        self.set_refresh_timer(redraw)
+        return new_selected, dispset
+        
+    def move_rows(self, moveto: int, to_move_min: int, number_of_rows: int, move_data: bool = True, index_type: str = "displayed", create_selections: bool = True, redraw = False):
+        if index_type.lower() == "displayed" or self.MT.all_rows_displayed:
+            new_selected, dispset = self.MT.move_rows_adjust_options_dict(moveto, to_move_min, number_of_rows, move_data, create_selections)
+        else:
+            dispset = {}
+            r = int(moveto)
+            to_move_max = to_move_min + number_of_rows
+            totalrows = int(number_of_rows)
+            to_del = to_move_max + number_of_rows
+            orig_selected = list(range(to_move_min, to_move_min + totalrows))
+            num_data_rows = self.MT.total_data_rows()
+            if r + totalrows > num_data_rows:
+                new_selected = tuple(range(num_data_rows - totalrows, num_data_rows))
+            else:
+                if to_move_min > r:
+                    new_selected = tuple(range(r, r + totalrows))
+                else:
+                    new_selected = tuple(range(r + 1 - totalrows, r + 1))
+            newrowsdct = {t1: t2 for t1, t2 in zip(orig_selected, new_selected)}
+            if to_move_min > r:
+                if len(self.MT.data) < to_move_max:
+                    self.MT.data.extend(list(repeat("", to_move_max - len(self.MT.data) + 1)))
+                self.MT.data[r:r] = self.MT.data[to_move_min:to_move_max]
+                self.MT.data[to_move_max:to_del] = []
+                if isinstance(self.MT._row_index, list) and self.MT._row_index:
+                    if len(self.MT._row_index) < to_move_max:
+                        self.MT._row_index.extend(list(repeat("", to_move_max - len(self.MT._row_index) + 1)))
+                    self.MT._row_index[r:r] = self.MT._row_index[to_move_min:to_move_max]
+                    self.MT._row_index[to_move_max:to_del] = []
+                self.RI.cell_options = {
+                    int(newrowsdct[k]) if k in newrowsdct else
+                    k + totalrows if k < to_move_min and k >= r else
+                    int(k): v for k, v in self.RI.cell_options.items()
+                }
+                self.MT.cell_options = {
+                    (int(newrowsdct[k[0]]), k[1]) if k[0] in newrowsdct else
+                    (k[0] + totalrows, k[1]) if k[0] < to_move_min and k[0] >= r else
+                    k: v for k, v in self.MT.cell_options.items()
+                }
+                self.MT.row_options = {
+                    int(newrowsdct[k]) if k in newrowsdct else
+                    k + totalrows if k < to_move_min and k >= r else
+                    int(k): v for k, v in self.MT.row_options.items()
+                }
+                self.MT.displayed_rows = sorted(int(newrowsdct[k]) if k in newrowsdct else k + totalrows if k < to_move_min and k >= r else int(k) for k in self.MT.displayed_rows)
+            else:
+                r += 1
+                if move_data:
+                    if len(self.MT.data) < r - 1:
+                        self.MT.data.extend(list(repeat("", r - len(self.MT.data))))
+                    self.MT.data[r:r] = self.MT.data[to_move_min:to_move_max]
+                    self.MT.data[to_move_min:to_move_max] = []
+                    if isinstance(self.MT._row_index, list) and self.MT._row_index:
+                        if len(self.MT._row_index) < r:
+                            self.MT._row_index.extend(list(repeat("", r - len(self.MT._row_index))))
+                        self.MT._row_index[r:r] = self.MT._row_index[to_move_min:to_move_max]
+                        self.MT._row_index[to_move_min:to_move_max] = []
+                self.RI.cell_options = {
+                    int(newrowsdct[k]) if k in newrowsdct else
+                    k - totalrows if k < r and k > to_move_min else
+                    int(k): v for k, v in self.RI.cell_options.items()
+                }
+                self.MT.cell_options = {
+                    (int(newrowsdct[k[0]]), k[1]) if k[0] in newrowsdct else
+                    (k[0] - totalrows, k[1]) if k[0] < r and k[0] > to_move_min else
+                    k: v for k, v in self.MT.cell_options.items()
+                }
+                self.MT.row_options = {
+                    int(newrowsdct[k]) if k in newrowsdct else
+                    k - totalrows if k < r and k > to_move_min else
+                    int(k): v for k, v in self.MT.row_options.items()
+                }
+                self.MT.displayed_rows = sorted(int(newrowsdct[k]) if k in newrowsdct else k - totalrows if k < r and k > to_move_min else int(k) for k in self.MT.displayed_rows)
+        self.set_refresh_timer(redraw)
+        return new_selected, dispset
 
     # works on currently selected box
     def open_cell(self, ignore_existing_editor = True):
@@ -2062,7 +2135,7 @@ class Sheet(tk.Frame):
             for c, v in enumerate(values):
                 if c > maxidx:
                     self.MT.data[r].append(v)
-                    if self.MT.all_columns_displayed and c >= len(self.MT.col_positions) - 1:
+                    if self.MT.all_columns_displayed:
                         self.MT.insert_col_position("end")
                 else:
                     self.set_cell_data(r = r, c = c, value = v, redraw = False, keep_formatting = keep_formatting)
@@ -2086,7 +2159,8 @@ class Sheet(tk.Frame):
                     if total_cols is None:
                         total_cols = self.MT.total_data_cols()
                     self.MT.data.append(list(repeat("", total_cols)))
-                    self.MT.insert_row_position("end", height = height)
+                    if self.MT.all_rows_displayed:
+                        self.MT.insert_row_position("end", height = height)
                     maxidx += 1
                 if c >= len(self.MT.data[rn]):
                     self.MT.data[rn].extend(list(repeat("", c - len(self.MT.data[rn]))))

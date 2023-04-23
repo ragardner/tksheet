@@ -240,6 +240,10 @@ class MainTable(tk.Canvas):
         self.displayed_rows = []
         self.col_positions = [0]
         self.row_positions = [0]
+        self.display_rows(rows = kwargs['displayed_rows'],
+                          all_rows_displayed = kwargs['all_rows_displayed'],
+                          reset_row_positions = False,
+                          deselect_all = False)
         self.reset_row_positions()
         self.display_columns(columns = kwargs['displayed_columns'],
                              all_columns_displayed = kwargs['all_columns_displayed'],
@@ -395,10 +399,10 @@ class MainTable(tk.Canvas):
                     for r1, c1, r2, c2 in boxes:
                         if r2 - r1 < maxrows:
                             continue
-                        data_ref_rn = r1 + rn
+                        datarn = r1 + rn if self.all_rows_displayed else self.displayed_rows[rn]
                         for c in range(c1, c2):
                             datacn = c if self.all_columns_displayed else self.displayed_columns[c]
-                            row.append(self.get_cell_clipboard(data_ref_rn, datacn))
+                            row.append(self.get_cell_clipboard(datarn, datacn))
                     writer.writerow(row)
                     rows.append(row)
             else:
@@ -411,10 +415,10 @@ class MainTable(tk.Canvas):
                 for r1, c1, r2, c2 in boxes:
                     for rn in range(r2 - r1):
                         row = []
-                        data_ref_rn = r1 + rn
+                        datarn = r1 + rn if self.all_rows_displayed else self.displayed_rows[rn]
                         for c in range(c1, c2):
                             datacn = c if self.all_columns_displayed else self.displayed_columns[c]
-                            row.append(self.get_cell_clipboard(data_ref_rn, datacn))
+                            row.append(self.get_cell_clipboard(datarn, datacn))
                         writer.writerow(row)
                         rows.append(row)
             for r1, c1, r2, c2 in boxes:
@@ -450,23 +454,23 @@ class MainTable(tk.Canvas):
                 for r1, c1, r2, c2 in boxes:
                     if r2 - r1 < maxrows:
                         continue
-                    data_ref_rn = r1 + rn
+                    datarn = r1 + rn if self.all_rows_displayed else self.displayed_rows[rn]
                     for c in range(c1, c2):
                         datacn = c if self.all_columns_displayed else self.displayed_columns[c]
-                        row.append(self.get_cell_clipboard(data_ref_rn, datacn))
+                        row.append(self.get_cell_clipboard(datarn, datacn))
                 writer.writerow(row)
                 rows.append(row)
             for rn in range(maxrows):
                 for r1, c1, r2, c2 in boxes:
                     if r2 - r1 < maxrows:
                         continue
-                    data_ref_rn = r1 + rn
+                    datarn = r1 + rn if self.all_rows_displayed else self.displayed_rows[rn]
                     for c in range(c1, c2):
                         datacn = c if self.all_columns_displayed else self.displayed_columns[c]
-                        if self.input_valid_for_cell(data_ref_rn, datacn, ""):
+                        if self.input_valid_for_cell(datarn, datacn, ""):
                             if self.undo_enabled:
-                                undo_storage[(data_ref_rn, datacn)] = self.get_cell_data(data_ref_rn, datacn)
-                            self.set_cell_data(data_ref_rn, datacn, "")
+                                undo_storage[(datarn, datacn)] = self.get_cell_data(datarn, datacn)
+                            self.set_cell_data(datarn, datacn, "")
                             changes += 1
         else:
             boxes = self.get_ctrl_x_c_boxes()
@@ -478,21 +482,21 @@ class MainTable(tk.Canvas):
             for r1, c1, r2, c2 in boxes:
                 for rn in range(r2 - r1):
                     row = []
-                    data_ref_rn = r1 + rn
+                    datarn = r1 + rn if self.all_rows_displayed else self.displayed_rows[rn]
                     for c in range(c1, c2):
                         datacn = c if self.all_columns_displayed else self.displayed_columns[c]
-                        row.append(self.get_cell_data(data_ref_rn, datacn))
+                        row.append(self.get_cell_data(datarn, datacn))
                     writer.writerow(row)
                     rows.append(row)
             for r1, c1, r2, c2 in boxes:
                 for rn in range(r2 - r1):
-                    data_ref_rn = r1 + rn
+                    datarn = r1 + rn if self.all_rows_displayed else self.displayed_rows[rn]
                     for c in range(c1, c2):
                         datacn = c if self.all_columns_displayed else self.displayed_columns[c]
-                        if self.input_valid_for_cell(data_ref_rn, datacn, ""):
+                        if self.input_valid_for_cell(datarn, datacn, ""):
                             if self.undo_enabled:
-                                undo_storage[(data_ref_rn, datacn)] = self.get_cell_data(data_ref_rn, datacn)
-                            self.set_cell_data(data_ref_rn, datacn, "")
+                                undo_storage[(datarn, datacn)] = self.get_cell_data(datarn, datacn)
+                            self.set_cell_data(datarn, datacn, "")
                             changes += 1
         if changes and self.undo_enabled:
             self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells", undo_storage, tuple(boxes.items()), currently_selected))))
@@ -590,6 +594,9 @@ class MainTable(tk.Canvas):
                     added_rows = self.paste_insert_row_limit - len(self.row_positions) - 1
                 if added_rows > 0:
                     self.insert_row_positions(heights = int(added_rows))
+                if not self.all_rows_displayed:
+                    total_data_rows = self.total_data_rows()
+                    self.displayed_rows.extend(list(range(total_data_rows, total_data_rows + added_rows)))
             added_rows_cols = (added_rows, added_cols)
         else:
             added_rows_cols = (0, 0)
@@ -838,56 +845,110 @@ class MainTable(tk.Canvas):
         if create_selections:
             self.create_current(int(new_selected[0]), 0, type_ = "row", inside = True)
         newrowsdct = {t1: t2 for t1, t2 in zip(orig_selected, new_selected)}
-        if to_move_min > r:
-            if move_data:
-                self.data[r:r] = self.data[to_move_min:to_move_max]
-                self.data[to_move_max:to_del] = []
-                if isinstance(self._row_index, list) and self._row_index:
-                    if len(self._row_index) < to_move_max:
-                        self._row_index.extend(list(repeat("", to_move_max - len(self._row_index) + 1)))
-                    self._row_index[r:r] = self._row_index[to_move_min:to_move_max]
-                    self._row_index[to_move_max:to_del] = []
-            self.RI.cell_options = {
-                newrowsdct[k] if k in newrowsdct else
-                k + num_rows if k < to_move_min and k >= r else
-                k: v for k, v in self.RI.cell_options.items()
-            }
-            self.cell_options = {
-                (newrowsdct[k[0]], k[1]) if k[0] in newrowsdct else
-                (k[0] + num_rows, k[1]) if k[0] < to_move_min and k[0] >= r else
-                k: v for k, v in self.cell_options.items()
-            }
-            self.row_options = {
-                newrowsdct[k] if k in newrowsdct else
-                k + num_rows if k < to_move_min and k >= r else
-                k: v for k, v in self.row_options.items()
-            }
+        if self.all_rows_displayed:
+            dispset = {}
+            if to_move_min > r:
+                if move_data:
+                    self.data[r:r] = self.data[to_move_min:to_move_max]
+                    self.data[to_move_max:to_del] = []
+                    if isinstance(self._row_index, list) and self._row_index:
+                        if len(self._row_index) < to_move_max:
+                            self._row_index.extend(list(repeat("", to_move_max - len(self._row_index) + 1)))
+                        self._row_index[r:r] = self._row_index[to_move_min:to_move_max]
+                        self._row_index[to_move_max:to_del] = []
+                self.RI.cell_options = {
+                    newrowsdct[k] if k in newrowsdct else
+                    k + num_rows if k < to_move_min and k >= r else
+                    k: v for k, v in self.RI.cell_options.items()
+                }
+                self.cell_options = {
+                    (newrowsdct[k[0]], k[1]) if k[0] in newrowsdct else
+                    (k[0] + num_rows, k[1]) if k[0] < to_move_min and k[0] >= r else
+                    k: v for k, v in self.cell_options.items()
+                }
+                self.row_options = {
+                    newrowsdct[k] if k in newrowsdct else
+                    k + num_rows if k < to_move_min and k >= r else
+                    k: v for k, v in self.row_options.items()
+                }
+            else:
+                r += 1
+                if move_data:
+                    self.data[r:r] = self.data[to_move_min:to_move_max]
+                    self.data[to_move_min:to_move_max] = []
+                    if isinstance(self._row_index, list) and self._row_index:
+                        if len(self._row_index) < r:
+                            self._row_index.extend(list(repeat("", r - len(self._row_index))))
+                        self._row_index[r:r] = self._row_index[to_move_min:to_move_max]
+                        self._row_index[to_move_min:to_move_max] = []
+                self.RI.cell_options = {
+                    newrowsdct[k] if k in newrowsdct else
+                    k - num_rows if k < r and k > to_move_min else
+                    k: v for k, v in self.RI.cell_options.items()
+                }
+                self.cell_options = {
+                    (newrowsdct[k[0]], k[1]) if k[0] in newrowsdct else 
+                    (k[0] - num_rows, k[1]) if k[0] < r and k[0] > to_move_min else 
+                    k: v for k, v in self.cell_options.items()
+                }
+                self.row_options = {
+                    newrowsdct[k] if k in newrowsdct else
+                    k - num_rows if k < r and k > to_move_min else
+                    k: v for k, v in self.row_options.items()
+                }
         else:
-            r += 1
+            # moves data around, not displayed rows indexes
+            # which remain sorted and the same after drop and drop
+            if to_move_min > r:
+                dispset = {a: b for a, b in zip(self.displayed_rows, (self.displayed_rows[:r] +
+                                                                      self.displayed_rows[to_move_min:to_move_min + num_rows] +
+                                                                      self.displayed_rows[r:to_move_min] +
+                                                                      self.displayed_rows[to_move_min + num_rows:]))}
+            else:
+                dispset = {a: b for a, b in zip(self.displayed_rows, (self.displayed_rows[:to_move_min] +
+                                                                      self.displayed_rows[to_move_min + num_rows:r + 1] +
+                                                                      self.displayed_rows[to_move_min:to_move_min + num_rows] +
+                                                                      self.displayed_rows[r + 1:]))}
+            # has to pick up rows from all over the place in the original sheet
+            # building an entirely new sheet is best due to permutations of hidden rows
             if move_data:
-                self.data[r:r] = self.data[to_move_min:to_move_max]
-                self.data[to_move_min:to_move_max] = []
+                max_idx = max(chain(dispset, dispset.values())) + 1
+                if len(self.data) < max_idx:
+                    self.data[:] = self.data + list(repeat("", max_idx - len(self.data)))
+                new = []
+                idx = 0
+                done = set()
+                while len(new) < len(self.data):
+                    if idx in dispset and idx not in done:
+                        new.append(self.data[dispset[idx]])
+                        done.add(idx)
+                    elif idx not in done:
+                        new.append(self.data[idx])
+                        idx += 1
+                    else:
+                        idx += 1
+                self.data = new
                 if isinstance(self._row_index, list) and self._row_index:
-                    if len(self._row_index) < r:
-                        self._row_index.extend(list(repeat("", r - len(self._row_index))))
-                    self._row_index[r:r] = self._row_index[to_move_min:to_move_max]
-                    self._row_index[to_move_min:to_move_max] = []
-            self.RI.cell_options = {
-                newrowsdct[k] if k in newrowsdct else
-                k - num_rows if k < r and k > to_move_min else
-                k: v for k, v in self.RI.cell_options.items()
-            }
-            self.cell_options = {
-                (newrowsdct[k[0]], k[1]) if k[0] in newrowsdct else 
-                (k[0] - num_rows, k[1]) if k[0] < r and k[0] > to_move_min else 
-                k: v for k, v in self.cell_options.items()
-            }
-            self.row_options = {
-                newrowsdct[k] if k in newrowsdct else
-                k - num_rows if k < r and k > to_move_min else
-                k: v for k, v in self.row_options.items()
-            }
-        return new_selected, {}
+                    if len(self._row_index) < max_idx:
+                        self._row_index[:] = self._row_index + list(repeat("", max_idx - len(self._row_index)))
+                    new = []
+                    idx = 0
+                    done = set()
+                    while len(new) < len(self._row_index):
+                        if idx in dispset and idx not in done:
+                            new.append(self._row_index[dispset[idx]])
+                            done.add(idx)
+                        elif idx not in done:
+                            new.append(self._row_index[idx])
+                            idx += 1
+                        else:
+                            idx += 1
+                    self._row_index = new
+            dispset = {b: a for a, b in dispset.items()}
+            self.RI.cell_options = {dispset[k] if k in dispset else k: v for k, v in self.RI.cell_options.items()}
+            self.cell_options = {(dispset[k[0]], k[1]) if k[0] in dispset else k: v for k, v in self.cell_options.items()}
+            self.row_options = {dispset[k] if k in dispset else k: v for k, v in self.row_options.items()}
+        return new_selected, dispset
 
     def ctrl_z(self, event = None):
         if not self.undo_storage:
@@ -975,6 +1036,7 @@ class MainTable(tk.Canvas):
             self.move_rows_adjust_options_dict(r, to_move_min, totalrows)
                     
         elif undo_storage[0] == "insert_row":
+            self.displayed_rows = undo_storage[1]['displayed_rows']
             self.data[undo_storage[1]['data_row_num']:undo_storage[1]['data_row_num'] + undo_storage[1]['numrows']] = []
             try:
                 self._row_index[undo_storage[1]['data_row_num']:undo_storage[1]['data_row_num'] + undo_storage[1]['numrows']] = []
@@ -1029,8 +1091,10 @@ class MainTable(tk.Canvas):
                 self.see(r = 0, c = start_col, keep_yscroll = False, keep_xscroll = False, bottom_right_corner = False, check_cell_visibility = True, redraw = False)
                 
         elif undo_storage[0] == "delete_rows":
-            for rn, r, h in reversed(undo_storage[1]['deleted_rows']):
+            self.displayed_rows = undo_storage[1]['displayed_rows']
+            for rn, r in reversed(undo_storage[1]['deleted_rows']):
                 self.data.insert(rn, r)
+            for rn, h in reversed(tuple(undo_storage[1]['rowheights'].items())):
                 self.insert_row_position(idx = rn, height = h)
             self.cell_options = undo_storage[1]['cell_options']
             self.row_options = undo_storage[1]['row_options']
@@ -3140,6 +3204,13 @@ class MainTable(tk.Canvas):
             self.col_positions = list(accumulate(chain([0], (colpos for c in range(ncols if ncols is not None else self.total_data_cols())))))
         else:
             self.col_positions = list(accumulate(chain([0], (colpos for c in range(ncols if ncols is not None else len(self.displayed_columns))))))
+            
+    def reset_row_positions(self, nrows = None):
+        rowpos = self.default_rh[1]
+        if self.all_rows_displayed:
+            self.row_positions = list(accumulate(chain([0], (rowpos for r in range(nrows if nrows is not None else self.total_data_rows())))))
+        else:
+            self.row_positions = list(accumulate(chain([0], (rowpos for r in range(nrows if nrows is not None else len(self.displayed_rows))))))
 
     def del_col_position(self, idx, deselect_all = False):
         if deselect_all:
@@ -3151,6 +3222,17 @@ class MainTable(tk.Canvas):
             idx += 1
             del self.col_positions[idx]
             self.col_positions[idx:] = [e - w for e in islice(self.col_positions, idx, len(self.col_positions))]
+            
+    def del_row_position(self, idx, deselect_all = False):
+        if deselect_all:
+            self.deselect("all", redraw = False)
+        if idx == "end" or len(self.row_positions) <= idx + 1:
+            del self.row_positions[-1]
+        else:
+            w = self.row_positions[idx + 1] - self.row_positions[idx]
+            idx += 1
+            del self.row_positions[idx]
+            self.row_positions[idx:] = [e - w for e in islice(self.row_positions, idx, len(self.row_positions))]
 
     def del_col_positions(self, idx, num = 1, deselect_all = False):
         if deselect_all:
@@ -3161,6 +3243,16 @@ class MainTable(tk.Canvas):
             cws = [int(b - a) for a, b in zip(self.col_positions, islice(self.col_positions, 1, len(self.col_positions)))]
             cws[idx:idx + num] = []
             self.col_positions = list(accumulate(chain([0], (width for width in cws))))
+
+    def del_row_positions(self, idx, numrows = 1, deselect_all = False):
+        if deselect_all:
+            self.deselect("all", redraw = False)
+        if idx == "end" or len(self.row_positions) <= idx + 1:
+            del self.row_positions[-1]
+        else:
+            rhs = [int(b - a) for a, b in zip(self.row_positions, islice(self.row_positions, 1, len(self.row_positions)))]
+            rhs[idx:idx + numrows] = []
+            self.row_positions = list(accumulate(chain([0], (height for height in rhs))))
 
     def insert_col_position(self, idx = "end", width = None, deselect_all = False):
         if deselect_all:
@@ -3176,6 +3268,21 @@ class MainTable(tk.Canvas):
             self.col_positions.insert(idx, self.col_positions[idx - 1] + w)
             idx += 1
             self.col_positions[idx:] = [e + w for e in islice(self.col_positions, idx, len(self.col_positions))]
+            
+    def insert_row_position(self, idx, height = None, deselect_all = False):
+        if deselect_all:
+            self.deselect("all", redraw = False)
+        if height is None:
+            h = self.default_rh[1]
+        else:
+            h = height
+        if idx == "end" or len(self.row_positions) == idx + 1:
+            self.row_positions.append(self.row_positions[-1] + h)
+        else:
+            idx += 1
+            self.row_positions.insert(idx, self.row_positions[idx - 1] + h)
+            idx += 1
+            self.row_positions[idx:] = [e + h for e in islice(self.row_positions, idx, len(self.row_positions))]
 
     def insert_col_positions(self, idx = "end", widths = None, deselect_all = False):
         if deselect_all:
@@ -3204,6 +3311,34 @@ class MainTable(tk.Canvas):
                 self.col_positions.insert(idx, self.col_positions[idx - 1] + w)
                 idx += 1
                 self.col_positions[idx:] = [e + w for e in islice(self.col_positions, idx, len(self.col_positions))]
+
+    def insert_row_positions(self, idx = "end", heights = None, deselect_all = False):
+        if deselect_all:
+            self.deselect("all", redraw = False)
+        if heights is None:
+            h = [self.default_rh[1]]
+        elif isinstance(heights, int):
+            h = list(repeat(self.default_rh[1], heights))
+        else:
+            h = heights
+        if idx == "end" or len(self.row_positions) == idx + 1:
+            if len(h) > 1:
+                self.row_positions += list(accumulate(chain([self.row_positions[-1] + h[0]], islice(h, 1, None))))
+            else:
+                self.row_positions.append(self.row_positions[-1] + h[0])
+        else:
+            if len(h) > 1:
+                idx += 1
+                self.row_positions[idx:idx] = list(accumulate(chain([self.row_positions[idx - 1] + h[0]], islice(h, 1, None))))
+                idx += len(h)
+                sumh = sum(h)
+                self.row_positions[idx:] = [e + sumh for e in islice(self.row_positions, idx, len(self.row_positions))]
+            else:
+                h = h[0]
+                idx += 1
+                self.row_positions.insert(idx, self.row_positions[idx - 1] + h)
+                idx += 1
+                self.row_positions[idx:] = [e + h for e in islice(self.row_positions, idx, len(self.row_positions))]
 
     def insert_col_rc(self, event = None):
         if self.anything_selected(exclude_rows = True, exclude_cells = True):
@@ -3343,64 +3478,33 @@ class MainTable(tk.Canvas):
                                 'colwidths': {},
                                 'deleted_hdr_values': {},
                                 'selection_boxes': self.get_boxes(),
-                                'displayed_columns': list(self.displayed_columns),
+                                'displayed_columns': list(self.displayed_columns) if not isinstance(self.displayed_columns, int) else int(self.displayed_columns),
                                 'cell_options': {k: v.copy() for k, v in self.cell_options.items()},
                                 'col_options': {k: v.copy() for k, v in self.col_options.items()},
                                 'CH_cell_options': {k: v.copy() for k, v in self.CH.cell_options.items()}}
-            if self.all_columns_displayed:
-                if self.undo_enabled:
-                    for c in reversed(seld_cols):
-                        undo_storage['colwidths'][c] = self.col_positions[c + 1] - self.col_positions[c]
-                        for rn in range(len(self.data)):
-                            if c not in undo_storage['deleted_cols']:
-                                undo_storage['deleted_cols'][c] = {}
-                            try:
-                                undo_storage['deleted_cols'][c][rn] = self.data[rn].pop(c)
-                            except:
-                                continue
-                    if self._headers and isinstance(self._headers, list):
-                        for c in reversed(seld_cols):
-                            try:
-                                undo_storage['deleted_hdr_values'][c] = self._headers.pop(c)
-                            except:
-                                continue
-                else:
+                for c in reversed(seld_cols):
+                    undo_storage['colwidths'][c] = self.col_positions[c + 1] - self.col_positions[c]
+                    datacn = c if self.all_columns_displayed else self.displayed_columns[c]
                     for rn in range(len(self.data)):
-                        for c in reversed(seld_cols):
-                            del self.data[rn][c]
-                    if self._headers and isinstance(self._headers, list):
-                        for c in reversed(seld_cols):
-                            try:
-                                del self._headers[c]
-                            except:
-                                continue
+                        if datacn not in undo_storage['deleted_cols']:
+                            undo_storage['deleted_cols'][datacn] = {}
+                        try:
+                            undo_storage['deleted_cols'][datacn][rn] = self.data[rn].pop(datacn)
+                        except:
+                            continue
+                    try:
+                        undo_storage['deleted_hdr_values'][datacn] = self._headers.pop(datacn)
+                    except:
+                        continue
             else:
-                if self.undo_enabled:
-                    for c in reversed(seld_cols):
-                        undo_storage['colwidths'][c] = self.col_positions[c + 1] - self.col_positions[c]
-                        for rn in range(len(self.data)):
-                            if self.displayed_columns[c] not in undo_storage['deleted_cols']:
-                                undo_storage['deleted_cols'][self.displayed_columns[c]] = {}
-                            try:
-                                undo_storage['deleted_cols'][self.displayed_columns[c]][rn] = self.data[rn].pop(self.displayed_columns[c])
-                            except:
-                                continue
-                    if self._headers and isinstance(self._headers, list):
-                        for c in reversed(seld_cols):
-                            try:
-                                undo_storage['deleted_hdr_values'][self.displayed_columns[c]] = self._headers.pop(self.displayed_columns[c])
-                            except:
-                                continue
-                else:
+                for c in reversed(seld_cols):
+                    datacn = c if self.all_columns_displayed else self.displayed_columns[c]
                     for rn in range(len(self.data)):
-                        for c in reversed(seld_cols):
-                            del self.data[rn][self.displayed_columns[c]]
-                    if self._headers and isinstance(self._headers, list):
-                        for c in reversed(seld_cols):
-                            try:
-                                del self._headers[self.displayed_columns[c]]
-                            except:
-                                continue
+                        del self.data[rn][datacn]
+                    try:
+                        del self._headers[datacn]
+                    except:
+                        continue
             if self.undo_enabled:
                 self.undo_storage.append(("delete_cols", undo_storage))
             self.del_cell_options(list_of_coords)
@@ -3427,12 +3531,6 @@ class MainTable(tk.Canvas):
             if self.extra_end_del_cols_rc_func is not None:
                 self.extra_end_del_cols_rc_func(DeleteRowColumnEvent("end_delete_columns", seld_cols))
 
-    def del_cell_options(self, list_of_coords):
-        for r, datacn in list_of_coords:
-            if (r, datacn) in self.cell_options and 'dropdown' in self.cell_options[(r, datacn)]:
-                self.delete_dropdown(r, datacn)
-            del self.cell_options[(r, datacn)]
-
     def del_rows_rc(self, event = None):
         seld_rows = sorted(self.get_selected_rows())
         if seld_rows:
@@ -3441,45 +3539,46 @@ class MainTable(tk.Canvas):
                     self.extra_begin_del_rows_rc_func(DeleteRowColumnEvent("begin_delete_rows", seld_rows))
                 except:
                     return
-            seldset = set(seld_rows)
+            seldset = set(seld_rows) if self.all_rows_displayed else set(self.displayed_rows[c] for r in seld_rows)
             list_of_coords = tuple((r, c) for (r, c) in self.cell_options if r in seldset)
             if self.undo_enabled:
                 undo_storage = {'deleted_rows': [],
+                                'rowheights': {},
                                 'deleted_index_values': [],
                                 'selection_boxes': self.get_boxes(),
+                                'displayed_rows': list(self.displayed_rows) if not isinstance(self.displayed_rows, int) else int(self.displayed_rows),
                                 'cell_options': {k: v.copy() for k, v in self.cell_options.items()},
                                 'row_options': {k: v.copy() for k, v in self.row_options.items()},
                                 'RI_cell_options': {k: v.copy() for k, v in self.RI.cell_options.items()}}
                 for r in reversed(seld_rows):
-                    undo_storage['deleted_rows'].append((r, self.data.pop(r), self.row_positions[r + 1] - self.row_positions[r]))
+                    undo_storage['rowheights'][r] = self.row_positions[r + 1] - self.row_positions[r]
+                    datarn = r if self.all_rows_displayed else self.displayed_rows[r]
+                    undo_storage['deleted_rows'].append((datarn, self.data.pop(datarn)))
+                    try:
+                        undo_storage['deleted_index_values'].append((datarn, self._row_index.pop(datarn)))
+                    except:
+                        continue
             else:
                 for r in reversed(seld_rows):
-                    del self.data[r]
-            if self._row_index and isinstance(self._row_index, list):
-                if self.undo_enabled:
-                    for r in reversed(seld_rows):
-                        try:
-                            undo_storage['deleted_index_values'].append((r, self._row_index.pop(r)))
-                        except:
-                            continue
-                else:
-                    for r in reversed(seld_rows):
-                        try:
-                            del self._row_index[r]
-                        except:
-                            continue
+                    datarn = r if self.all_rows_displayed else self.displayed_rows[r]
+                    del self.data[datarn]
+                    try:
+                        del self._row_index[datarn]
+                    except:
+                        continue
             if self.undo_enabled:
                 self.undo_storage.append(("delete_rows", undo_storage))
             self.del_cell_options(list_of_coords)
             for r in reversed(seld_rows):
+                datarn = r if self.all_rows_displayed else self.displayed_rows[r]
                 self.del_row_position(r,
                                       deselect_all = False)
-                if r in self.row_options:
-                    del self.row_options[r]
-                if r in self.RI.cell_options:
-                    del self.RI.cell_options[r]
+                if datarn in self.row_options:
+                    del self.row_options[datarn]
+                if datarn in self.RI.cell_options:
+                    del self.RI.cell_options[datarn]
             numrows = len(seld_rows)
-            idx = seld_rows[-1]
+            idx = seld_rows[-1] if self.all_rows_displayed else self.displayed_rows[seld_rows[-1]]
             self.cell_options = {(rn if rn < idx else rn - numrows, cn): t2 for (rn, cn), t2 in self.cell_options.items()}
             self.row_options = {rn if rn < idx else rn - numrows: t for rn, t in self.row_options.items()}
             self.RI.cell_options = {rn if rn < idx else rn - numrows: t for rn, t in self.RI.cell_options.items()}
@@ -3488,74 +3587,6 @@ class MainTable(tk.Canvas):
             self.refresh()
             if self.extra_end_del_rows_rc_func is not None:
                 self.extra_end_del_rows_rc_func(DeleteRowColumnEvent("end_delete_rows", seld_rows))
-
-    def reset_row_positions(self):
-        rowpos = self.default_rh[1]
-        self.row_positions = list(accumulate(chain([0], (rowpos for r in range(self.total_data_rows())))))
-
-    def del_row_position(self, idx, deselect_all = False):
-        if deselect_all:
-            self.deselect("all", redraw = False)
-        if idx == "end" or len(self.row_positions) <= idx + 1:
-            del self.row_positions[-1]
-        else:
-            w = self.row_positions[idx + 1] - self.row_positions[idx]
-            idx += 1
-            del self.row_positions[idx]
-            self.row_positions[idx:] = [e - w for e in islice(self.row_positions, idx, len(self.row_positions))]
-
-    def del_row_positions(self, idx, numrows = 1, deselect_all = False):
-        if deselect_all:
-            self.deselect("all", redraw = False)
-        if idx == "end" or len(self.row_positions) <= idx + 1:
-            del self.row_positions[-1]
-        else:
-            rhs = [int(b - a) for a, b in zip(self.row_positions, islice(self.row_positions, 1, len(self.row_positions)))]
-            rhs[idx:idx + numrows] = []
-            self.row_positions = list(accumulate(chain([0], (height for height in rhs))))
-
-    def insert_row_position(self, idx, height = None, deselect_all = False):
-        if deselect_all:
-            self.deselect("all", redraw = False)
-        if height is None:
-            h = self.default_rh[1]
-        else:
-            h = height
-        if idx == "end" or len(self.row_positions) == idx + 1:
-            self.row_positions.append(self.row_positions[-1] + h)
-        else:
-            idx += 1
-            self.row_positions.insert(idx, self.row_positions[idx - 1] + h)
-            idx += 1
-            self.row_positions[idx:] = [e + h for e in islice(self.row_positions, idx, len(self.row_positions))]
-
-    def insert_row_positions(self, idx = "end", heights = None, deselect_all = False):
-        if deselect_all:
-            self.deselect("all", redraw = False)
-        if heights is None:
-            h = [self.default_rh[1]]
-        elif isinstance(heights, int):
-            h = list(repeat(self.default_rh[1], heights))
-        else:
-            h = heights
-        if idx == "end" or len(self.row_positions) == idx + 1:
-            if len(h) > 1:
-                self.row_positions += list(accumulate(chain([self.row_positions[-1] + h[0]], islice(h, 1, None))))
-            else:
-                self.row_positions.append(self.row_positions[-1] + h[0])
-        else:
-            if len(h) > 1:
-                idx += 1
-                self.row_positions[idx:idx] = list(accumulate(chain([self.row_positions[idx - 1] + h[0]], islice(h, 1, None))))
-                idx += len(h)
-                sumh = sum(h)
-                self.row_positions[idx:] = [e + sumh for e in islice(self.row_positions, idx, len(self.row_positions))]
-            else:
-                h = h[0]
-                idx += 1
-                self.row_positions.insert(idx, self.row_positions[idx - 1] + h)
-                idx += 1
-                self.row_positions[idx:] = [e + h for e in islice(self.row_positions, idx, len(self.row_positions))]
 
     def move_row_position(self, idx1, idx2):
         if not len(self.row_positions) <= 2:
@@ -3586,6 +3617,29 @@ class MainTable(tk.Canvas):
                 for i in range(idx2 + 2, idx1 + 2):
                     self.col_positions[i] += width
                 self.col_positions[idx2 + 1] = self.col_positions[idx2] + width
+                
+    def display_rows(self, rows = None, all_rows_displayed = None, reset_col_positions = True, deselect_all = True):
+        if rows is None and all_rows_displayed is None:
+            return list(range(self.total_data_rows())) if self.all_rows_displayed else self.displayed_rows
+        total_data_cols = None
+        if (
+            (rows is not None and rows != self.displayed_rows) or 
+            (all_rows_displayed and not self.all_rows_displayed)
+            ):
+            self.undo_storage = deque(maxlen = self.max_undos)
+        if rows is not None and rows != self.displayed_rows:
+            self.displayed_rows = sorted(rows)
+        if all_rows_displayed:
+            if not self.all_rows_displayed:
+                total_data_rows = self.total_data_rows()
+                self.displayed_rows = list(range(total_data_rows))
+            self.all_rows_displayed = True
+        elif all_rows_displayed is not None and not all_rows_displayed:
+            self.all_rows_displayed = False
+        if reset_row_positions:
+            self.reset_row_positions(nrows = total_data_rows)
+        if deselect_all:
+            self.deselect("all", redraw = False)
 
     def display_columns(self, columns = None, all_columns_displayed = None, reset_col_positions = True, deselect_all = True):
         if columns is None and all_columns_displayed is None:
@@ -3663,7 +3717,11 @@ class MainTable(tk.Canvas):
                 self.reset_row_positions()
             elif show_index_if_not_sheet and isinstance(self._row_index, list) and (self.row_positions == [0] or not self.row_positions):
                 rowpos = self.default_rh[1]
-                self.row_positions = list(accumulate(chain([0], (rowpos for c in range(len(self._row_index))))))
+                if self.all_rows_displayed:
+                    self.row_positions = list(accumulate(chain([0], (rowpos for r in range(len(self._row_index))))))
+                else:
+                    self.row_positions = list(accumulate(chain([0], (rowpos for r in range(len(self.displayed_rows))))))
+                
             if redraw:
                 self.refresh()
         else:
@@ -4225,11 +4283,7 @@ class MainTable(tk.Canvas):
                                                     rtopgridln + self.txt_h + 3,
                                                     fill = fill if self.cell_options[(datarn, datacn)]['checkbox']['state'] == "normal" else self.table_grid_fg,
                                                     outline = "", tag = "cb", draw_check = draw_check)
-
-                    if (datarn, datacn) in self.cell_options and 'checkbox' in self.cell_options[(datarn, datacn)]:
-                        lns = self.cell_options[(datarn, datacn)]['checkbox']['text'].split("\n") if isinstance(self.cell_options[(datarn, datacn)]['checkbox']['text'], str) else f"{self.cell_options[(datarn, datacn)]['checkbox']['text']}".split("\n")
-                    else:
-                        lns = self.get_valid_cell_data_as_str(datarn, datacn, get_displayed = True).split("\n")
+                    lns = self.get_valid_cell_data_as_str(datarn, datacn, get_displayed = True).split("\n")
                     if lns != [''] and mw > self.txt_w and not ((align == "w" and draw_x > scrollpos_right) or
                                                                 (align == "e" and cleftgridln + 5 > scrollpos_right) or
                                                                 (align == "center" and stop > scrollpos_right)):
@@ -5537,11 +5591,22 @@ class MainTable(tk.Canvas):
             if clear_values:
                 total_cols = self.total_data_cols()
                 self.data = [list(repeat("", total_cols)) for i in range(len(self.data))]
+                
+    def del_cell_options(self, list_of_coords):
+        for r, datacn in list_of_coords:
+            if (r, datacn) in self.cell_options and 'dropdown' in self.cell_options[(r, datacn)]:
+                self.delete_dropdown(r, datacn)
+            del self.cell_options[(r, datacn)]
 
     # deals with possibility of formatter class being in self.data cell
     # if cell is formatted - possibly returns invalid_value kwarg if cell value is not in datatypes kwarg
     # if get displayed is true then Nones are replaced by ""
     def get_valid_cell_data_as_str(self, datarn, datacn, get_displayed = False, **kwargs) -> str:
+        if get_displayed and (datarn, datacn) in self.cell_options:
+            if 'dropdown' in self.cell_options[(datarn, datacn)] and self.cell_options[(datarn, datacn)]['dropdown']['text'] is not None:
+                return f"{self.cell_options[(datarn, datacn)]['dropdown']['text']}"
+            if 'checkbox' in self.cell_options[(datarn, datacn)]:
+                return f"{self.cell_options[(datarn, datacn)]['checkbox']['text']}"
         value = self.data[datarn][datacn] if len(self.data) > datarn and len(self.data[datarn]) > datacn else ""
         kwargs = self.get_format_kwargs(datarn, datacn)
         if kwargs:

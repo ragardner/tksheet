@@ -687,44 +687,33 @@ class ColumnHeaders(tk.Canvas):
                 start_row, end_row = 0, None
             datacn = col if self.MT.all_columns_displayed else self.MT.displayed_columns[col]
             # header
-            if datacn in self.cell_options and 'checkbox' in self.cell_options[datacn]:
-                qconf(qtxtm, text = self.cell_options[datacn]['checkbox']['text'], font = self.MT._hdr_font)
-                b = qbbox(qtxtm)
-                hw = b[2] - b[0] + 7 + self.MT.hdr_txt_h
-            else:
-                txt = ""
-                if isinstance(self.MT._headers, int) or len(self.MT._headers) > datacn:
-                    txt = self.get_valid_cell_data_as_str(datacn, fix = False)
-                    if txt or (datacn in self.cell_options and 'dropdown' in self.cell_options[datacn]):
-                        qconf(qtxtm, text = txt, font = self.MT._hdr_font)
-                        b = qbbox(qtxtm)
-                        if datacn in self.cell_options and 'dropdown' in self.cell_options[datacn]:
-                            hw = b[2] - b[0] + 7 + self.MT.hdr_txt_h
-                        else:
-                            hw = b[2] - b[0] + 7
-                if not isinstance(self.MT._headers, int) and ((not txt and self.show_default_header_for_empty) or len(self.MT._headers) < datacn):
-                    if self.default_header == "letters":
-                        hw = self.MT.GetHdrTextWidth(num2alpha(datacn)) + 7
-                    elif self.default_header == "numbers":
-                        hw = self.MT.GetHdrTextWidth(f"{datacn + 1}") + 7
-                    else:
-                        hw = self.MT.GetHdrTextWidth(f"{datacn + 1} {num2alpha(datacn)}") + 7
+            txt = ""
+            if isinstance(self.MT._headers, int) or len(self.MT._headers) > datacn:
+                txt = self.get_valid_cell_data_as_str(datacn, fix = False)
+                if txt:
+                    qconf(qtxtm, text = txt, font = self.MT._hdr_font)
+                    b = qbbox(qtxtm)
+                    hw = b[2] - b[0] + 7
+                else:
+                    hw = 7
+                if datacn in self.cell_options and ('dropdown' in self.cell_options[datacn] or 'checkbox' in self.cell_options[datacn]):
+                    hw += self.MT.hdr_txt_h
+            if not isinstance(self.MT._headers, int) and ((not txt and self.show_default_header_for_empty) or len(self.MT._headers) < datacn):
+                if self.default_header == "letters":
+                    hw = self.MT.GetHdrTextWidth(num2alpha(datacn)) + 7
+                elif self.default_header == "numbers":
+                    hw = self.MT.GetHdrTextWidth(f"{datacn + 1}") + 7
+                else:
+                    hw = self.MT.GetHdrTextWidth(f"{datacn + 1} {num2alpha(datacn)}") + 7
             # table
             for rn, r in enumerate(islice(self.MT.data, start_row, end_row), start_row):
-                if (rn, datacn) in qclop and 'checkbox' in qclop[(rn, datacn)]:
-                    qconf(qtxtm, text = qclop[(rn, datacn)]['checkbox']['text'], font = qfont)
+                txt = self.MT.get_valid_cell_data_as_str(rn, datacn, get_displayed = True)
+                if txt:
+                    qconf(qtxtm, text = txt, font = qfont)
                     b = qbbox(qtxtm)
-                    tw = qtxth + 7 + b[2] - b[0]
+                    tw = b[2] - b[0] + qtxth + 7 if (rn, datacn) in qclop and ('dropdown' in qclop[(rn, datacn)] or 'checkbox' in qclop[(rn, datacn)]) else b[2] - b[0] + 7
                     if tw > w:
                         w = tw
-                else:
-                    txt = self.MT.get_valid_cell_data_as_str(rn, datacn, get_displayed = True)
-                    if txt:
-                        qconf(qtxtm, text = txt, font = qfont)
-                        b = qbbox(qtxtm)
-                        tw = b[2] - b[0] + qtxth + 7 if (rn, datacn) in qclop and 'dropdown' in qclop[(rn, datacn)] else b[2] - b[0] + 7
-                        if tw > w:
-                            w = tw
             if w > hw:
                 new_width = w
             else:
@@ -1272,7 +1261,7 @@ class ColumnHeaders(tk.Canvas):
         h = self.current_height + 1
         datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
         if text is None:
-            text = self.get_valid_cell_data_as_str(datacn)
+            text = self.get_cell_data(datacn)
         bg, fg = self.header_bg, self.header_fg
         self.text_editor = TextEditor(self,
                                       text = text,
@@ -1489,7 +1478,7 @@ class ColumnHeaders(tk.Canvas):
         if get_displayed and datacn in self.cell_options:
             if 'dropdown' in self.cell_options[datacn] and self.cell_options[datacn]['dropdown']['text'] is not None:
                 return self.cell_options[datacn]['dropdown']['text']
-            if 'checkbox' in self.cell_options[datacn] and self.cell_options[datacn]['checkbox']['text'] is not None:
+            if 'checkbox' in self.cell_options[datacn]:
                 return self.cell_options[datacn]['checkbox']['text']
         if redirect_int and isinstance(self.MT._headers, int):
             return self.MT.get_cell_data(self.MT._headers, datacn, none_to_empty_str = True)
@@ -1501,8 +1490,11 @@ class ColumnHeaders(tk.Canvas):
         return self.MT._headers[datacn]
             
     def get_valid_cell_data_as_str(self, datacn, fix = True) -> str:
-        if datacn in self.cell_options and 'dropdown' in self.cell_options[datacn] and self.cell_options[datacn]['dropdown']['text'] is not None:
-            return f"{self.cell_options[datacn]['dropdown']['text']}"
+        if datacn in self.cell_options:
+            if 'dropdown' in self.cell_options[datacn] and self.cell_options[datacn]['dropdown']['text'] is not None:
+                return f"{self.cell_options[datacn]['dropdown']['text']}"
+            if 'checkbox' in self.cell_options[datacn]:
+                return f"{self.cell_options[datacn]['checkbox']['text']}"
         if isinstance(self.MT._headers, int):
             return self.MT.get_valid_cell_data_as_str(self.MT._headers, datacn, get_displayed = True)
         if fix:
