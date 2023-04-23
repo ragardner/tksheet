@@ -558,7 +558,7 @@ class ColumnHeaders(tk.Canvas):
                         self.ch_extra_end_drag_drop_func(EndDragDropEvent("end_column_header_drag_drop", tuple(orig_selected), new_selected, int(c)))
         elif self.b1_pressed_loc is not None and self.rsz_w is None and self.rsz_h is None:
             c = self.MT.identify_col(x = event.x)
-            if c is not None and c == self.b1_pressed_loc and self.b1_pressed_loc != self.closed_dropdown:
+            if c is not None and c < len(self.MT.col_positions) - 1 and c == self.b1_pressed_loc and self.b1_pressed_loc != self.closed_dropdown:
                 datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
                 canvasx = self.canvasx(event.x)
                 if (event.y < self.MT.hdr_txt_h + 5 and
@@ -913,7 +913,7 @@ class ColumnHeaders(tk.Canvas):
                 t = self.create_line(points, fill = fill, width = 2, capstyle = tk.ROUND, joinstyle = tk.ROUND, tag = tag)
             self.disp_dropdown[t] = True
             
-    def redraw_checkbox(self, datacn, x1, y1, x2, y2, fill, outline, tag, draw_check = False):
+    def redraw_checkbox(self, x1, y1, x2, y2, fill, outline, tag, draw_check = False):
         points = self.MT.get_checkbox_points(x1, y1, x2, y2)
         if self.hidd_checkbox:
             t, sh = self.hidd_checkbox.popitem()
@@ -1003,10 +1003,7 @@ class ColumnHeaders(tk.Canvas):
             draw_y = self.MT.hdr_fl_ins
             cleftgridln = self.MT.col_positions[c]
             crightgridln = self.MT.col_positions[c + 1]
-            if self.MT.all_columns_displayed:
-                datacn = c
-            else:
-                datacn = self.MT.displayed_columns[c]
+            datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
             fill, dd_drawn = self.redraw_highlight_get_text_fg(cleftgridln, crightgridln, c, c_2, c_3, selected_cols, selected_rows, actual_selected_cols, datacn)
 
             if datacn in self.cell_options and 'align' in self.cell_options[datacn]:
@@ -1062,8 +1059,7 @@ class ColumnHeaders(tk.Canvas):
                         draw_check = self.MT._headers[datacn] if isinstance(self.MT._headers, (list, tuple)) else self.MT.data[self.MT._headers][datacn]
                     except:
                         draw_check = False
-                    self.redraw_checkbox(datacn,
-                                         cleftgridln + 2,
+                    self.redraw_checkbox(cleftgridln + 2,
                                          2,
                                          cleftgridln + self.MT.hdr_txt_h + 3,
                                          self.MT.hdr_txt_h + 3,

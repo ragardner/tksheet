@@ -55,7 +55,7 @@ class Sheet(tk.Frame):
                  max_row_width: str = "inf", #str or int
                  row_index: list = None,
                  index: list = None,
-                 after_redraw_time_ms: int = 100,
+                 after_redraw_time_ms: int = 75,
                  row_index_width: int = 100,
                  auto_resize_default_row_index: bool = True,
                  set_all_heights_and_widths: bool = False,
@@ -763,14 +763,12 @@ class Sheet(tk.Frame):
 
     def set_all_cell_sizes_to_text(self, redraw = True):
         self.MT.set_all_cell_sizes_to_text()
-        if redraw:
-            self.refresh()
+        self.set_refresh_timer(redraw)
         return self.MT.row_positions, self.MT.col_positions
 
     def set_all_column_widths(self, width = None, only_set_if_too_small = False, redraw = True, recreate_selection_boxes = True):
         self.CH.set_width_of_all_cols(width = width, only_set_if_too_small = only_set_if_too_small, recreate = recreate_selection_boxes)
-        if redraw:
-            self.refresh()
+        self.set_refresh_timer(redraw)
 
     def column_width(self, column = None, width = None, only_set_if_too_small = False, redraw = True):
         if column == "all":
@@ -787,8 +785,7 @@ class Sheet(tk.Frame):
             self.CH.set_col_width(col = column, width = width, only_set_if_too_small = only_set_if_too_small)
         elif column is not None:
             return int(self.MT.col_positions[column + 1] - self.MT.col_positions[column])
-        if redraw:
-            self.refresh()
+        self.set_refresh_timer(redraw)
 
     def set_column_widths(self, column_widths = None, canvas_positions = False, reset = False, verify = False):
         cwx = None
@@ -806,13 +803,11 @@ class Sheet(tk.Frame):
 
     def set_all_row_heights(self, height = None, only_set_if_too_small = False, redraw = True, recreate_selection_boxes = True):
         self.RI.set_height_of_all_rows(height = height, only_set_if_too_small = only_set_if_too_small, recreate = recreate_selection_boxes)
-        if redraw:
-            self.refresh()
+        self.set_refresh_timer(redraw)
 
     def set_cell_size_to_text(self, row, column, only_set_if_too_small = False, redraw = True):
         self.MT.set_cell_size_to_text(r = row, c = column, only_set_if_too_small = only_set_if_too_small)
-        if redraw:
-            self.refresh()
+        self.set_refresh_timer(redraw)
 
     def set_width_of_index_to_text(self, recreate = True):
         self.RI.set_width_of_index_to_text(recreate = recreate)
@@ -832,8 +827,7 @@ class Sheet(tk.Frame):
             self.RI.set_row_height(row = row, height = height, only_set_if_too_small = only_set_if_too_small)
         elif row is not None:
             return int(self.MT.row_positions[row + 1] - self.MT.row_positions[row])
-        if redraw:
-            self.refresh()
+        self.set_refresh_timer(redraw)
 
     def set_row_heights(self, row_heights = None, canvas_positions = False, reset = False, verify = False):
         if reset:
@@ -921,7 +915,8 @@ class Sheet(tk.Frame):
                                  deselect_all = deselect_all)
 
     def delete_row(self, idx = 0, deselect_all = False, redraw = True):
-        self.delete_rows(rows = {idx}, deselect_all = deselect_all, redraw = redraw)
+        self.delete_rows(rows = {idx}, deselect_all = deselect_all, redraw = False)
+        self.set_refresh_timer(redraw)
 
     def delete_rows(self, rows: set = set(), deselect_all = False, redraw = True):
         if deselect_all:
@@ -1019,7 +1014,8 @@ class Sheet(tk.Frame):
                                  deselect_all = deselect_all)
 
     def delete_column(self, idx = 0, deselect_all = False, redraw = True):
-        self.delete_columns(columns = {idx}, deselect_all = deselect_all, redraw = redraw)
+        self.delete_columns(columns = {idx}, deselect_all = deselect_all, redraw = False)
+        self.set_refresh_timer(redraw)
         
     def delete_columns(self, columns: set = set(), deselect_all = False, redraw = True):
         if deselect_all:
@@ -1281,45 +1277,56 @@ class Sheet(tk.Frame):
         self.MT.set_view(x_args, y_args)
 
     def see(self, row = 0, column = 0, keep_yscroll = False, keep_xscroll = False, bottom_right_corner = False, check_cell_visibility = True, redraw = True):
-        self.MT.see(row, column, keep_yscroll, keep_xscroll, bottom_right_corner, check_cell_visibility = check_cell_visibility, redraw = redraw)
+        self.MT.see(row, column, keep_yscroll, keep_xscroll, bottom_right_corner, check_cell_visibility = check_cell_visibility, redraw = False)
+        self.set_refresh_timer(redraw)
 
     def select_row(self, row, redraw = True):
-        self.RI.select_row(int(row) if not isinstance(row, int) else row, redraw = redraw)
+        self.RI.select_row(int(row) if not isinstance(row, int) else row, redraw = False)
+        self.set_refresh_timer(redraw)
 
     def select_column(self, column, redraw = True):
-        self.CH.select_col(int(column) if not isinstance(column, int) else column, redraw = redraw)
+        self.CH.select_col(int(column) if not isinstance(column, int) else column, redraw = False)
+        self.set_refresh_timer(redraw)
 
     def select_cell(self, row, column, redraw = True):
         self.MT.select_cell(int(row) if not isinstance(row, int) else row,
                             int(column) if not isinstance(column, int) else column,
-                            redraw = redraw)
+                            redraw = False)
+        self.set_refresh_timer(redraw)
 
     def select_all(self, redraw = True, run_binding_func = True):
-        self.MT.select_all(redraw = redraw, run_binding_func = run_binding_func)
+        self.MT.select_all(redraw = False, run_binding_func = run_binding_func)
+        self.set_refresh_timer(redraw)
 
     def move_down(self):
         self.MT.move_down()
 
     def add_cell_selection(self, row, column, redraw = True, run_binding_func = True, set_as_current = True):
-        self.MT.add_selection(r = row, c = column, redraw = redraw, run_binding_func = run_binding_func, set_as_current = set_as_current)
+        self.MT.add_selection(r = row, c = column, redraw = False, run_binding_func = run_binding_func, set_as_current = set_as_current)
+        self.set_refresh_timer(redraw)
 
     def add_row_selection(self, row, redraw = True, run_binding_func = True, set_as_current = True):
-        self.RI.add_selection(r = row, redraw = redraw, run_binding_func = run_binding_func, set_as_current = set_as_current)
+        self.RI.add_selection(r = row, redraw = False, run_binding_func = run_binding_func, set_as_current = set_as_current)
+        self.set_refresh_timer(redraw)
 
     def add_column_selection(self, column, redraw = True, run_binding_func = True, set_as_current = True):
-        self.CH.add_selection(c = column, redraw = redraw, run_binding_func = run_binding_func, set_as_current = set_as_current)
+        self.CH.add_selection(c = column, redraw = False, run_binding_func = run_binding_func, set_as_current = set_as_current)
+        self.set_refresh_timer(redraw)
 
     def toggle_select_cell(self, row, column, add_selection = True, redraw = True, run_binding_func = True, set_as_current = True):
-        self.MT.toggle_select_cell(row = row, column = column, add_selection = add_selection, redraw = redraw, run_binding_func = run_binding_func, set_as_current = set_as_current)
+        self.MT.toggle_select_cell(row = row, column = column, add_selection = add_selection, redraw = False, run_binding_func = run_binding_func, set_as_current = set_as_current)
+        self.set_refresh_timer(redraw)
 
     def toggle_select_row(self, row, add_selection = True, redraw = True, run_binding_func = True, set_as_current = True):
-        self.RI.toggle_select_row(row = row, add_selection = add_selection, redraw = redraw, run_binding_func = run_binding_func, set_as_current = set_as_current)
+        self.RI.toggle_select_row(row = row, add_selection = add_selection, redraw = False, run_binding_func = run_binding_func, set_as_current = set_as_current)
+        self.set_refresh_timer(redraw)
 
     def toggle_select_column(self, column, add_selection = True, redraw = True, run_binding_func = True, set_as_current = True):
-        self.CH.toggle_select_col(column = column, add_selection = add_selection, redraw = redraw, run_binding_func = run_binding_func, set_as_current = set_as_current)
+        self.CH.toggle_select_col(column = column, add_selection = add_selection, redraw = False, run_binding_func = run_binding_func, set_as_current = set_as_current)
+        self.set_refresh_timer(redraw)
 
     def deselect(self, row = None, column = None, cell = None, redraw = True):
-        self.MT.deselect(r = row, c = column, cell = cell, redraw = redraw)
+        self.MT.deselect(r = row, c = column, cell = cell, redraw = False)
 
     # (row, column, type_) e.g. (0, 0, "column") as a named tuple
     def get_currently_selected(self):
@@ -1509,7 +1516,7 @@ class Sheet(tk.Frame):
                                fg = fg,
                                pc = pc,
                                highlight_header = highlight_header,
-                               redraw = redraw,
+                               redraw = False,
                                overwrite = overwrite)
         self.set_refresh_timer(redraw)
 
@@ -1711,8 +1718,7 @@ class Sheet(tk.Frame):
                                     column = column,
                                     cells = cells,
                                     align = align if align == "global" else self.convert_align(align))
-        if redraw:
-            self.redraw()
+        self.set_refresh_timer(redraw)
 
     def align_header(self, columns = [], align = "global", redraw = True):
         if align == "global" or self.convert_align(align):
@@ -1723,8 +1729,7 @@ class Sheet(tk.Frame):
             else:
                 self.CH.align_cells(columns = columns,
                                     align = align if align == "global" else self.convert_align(align))
-        if redraw:
-            self.redraw()
+        self.set_refresh_timer(redraw)
 
     def align_index(self, rows = [], align = "global", redraw = True):
         if align == "global" or self.convert_align(align):
@@ -1735,8 +1740,7 @@ class Sheet(tk.Frame):
             else:
                 self.RI.align_cells(rows = rows,
                                     align = align if align == "global" else self.convert_align(align))
-        if redraw:
-            self.redraw()
+        self.set_refresh_timer(redraw)
 
     def align(self, align: str = None, redraw = True):
         if align is None:
@@ -1745,8 +1749,7 @@ class Sheet(tk.Frame):
             self.MT.align = self.convert_align(align)
         else:
             raise ValueError("Align must be one of the following values: c, center, w, west, e, east")
-        if redraw:
-            self.refresh()
+        self.set_refresh_timer(redraw)
 
     def header_align(self, align: str = None, redraw = True):
         if align is None:
@@ -1755,8 +1758,7 @@ class Sheet(tk.Frame):
             self.CH.align = self.convert_align(align)
         else:
             raise ValueError("Align must be one of the following values: c, center, w, west, e, east")
-        if redraw:
-            self.refresh()
+        self.set_refresh_timer(redraw)
 
     def row_index_align(self, align: str = None, redraw = True):
         if align is None:
@@ -1765,8 +1767,7 @@ class Sheet(tk.Frame):
             self.RI.align = self.convert_align(align)
         else:
             raise ValueError("Align must be one of the following values: c, center, w, west, e, east")
-        if redraw:
-            self.refresh()
+        self.set_refresh_timer(redraw)
 
     def font(self, newfont = None, reset_row_positions = True):
         self.MT.font(newfont, reset_row_positions = reset_row_positions)
@@ -1947,35 +1948,35 @@ class Sheet(tk.Frame):
         if 'outline_color' in kwargs:
             self.config(highlightbackground = kwargs['outline_color'], highlightcolor = kwargs['outline_color'])
         self.MT.create_rc_menus()
-        if redraw:
-            self.refresh()
+        self.set_refresh_timer(redraw)
 
     def change_theme(self, theme = "light blue", redraw = True):
         if theme.lower() in ("light blue", "light_blue"):
             self.set_options(**theme_light_blue,
-                             redraw = redraw)
+                             redraw = False)
             self.config(bg = theme_light_blue['table_bg'])
         elif theme.lower() == "dark":
             self.set_options(**theme_dark,
-                             redraw = redraw)
+                             redraw = False)
             self.config(bg = theme_dark['table_bg'])
         elif theme.lower() in ("light green", "light_green"):
             self.set_options(**theme_light_green,
-                             redraw = redraw)
+                             redraw = False)
             self.config(bg = theme_light_green['table_bg'])
         elif theme.lower() in ("dark blue", "dark_blue"):
             self.set_options(**theme_dark_blue,
-                             redraw = redraw)
+                             redraw = False)
             self.config(bg = theme_dark_blue['table_bg'])
         elif theme.lower() in ("dark green", "dark_green"):
             self.set_options(**theme_dark_green,
-                             redraw = redraw)
+                             redraw = False)
             self.config(bg = theme_dark_green['table_bg'])
         elif theme.lower() == "black":
             self.set_options(**theme_black,
-                             redraw = redraw)
+                             redraw = False)
             self.config(bg = theme_black['table_bg'])
         self.MT.recreate_all_selection_boxes()
+        self.set_refresh_timer(redraw)
 
     def get_header_data(self, c, get_displayed = False):
         return self.CH.get_cell_data(datacn = c, get_displayed = get_displayed)
@@ -2381,7 +2382,7 @@ class Sheet(tk.Frame):
                                       reset_col_positions = reset_col_positions,
                                       deselect_all = deselect_all)
         if refresh or redraw:
-            self.refresh()
+            self.set_refresh_timer(redraw if redraw else refresh)
         return res
     
     def hide_columns(self, columns = set(), refresh = True, deselect_all = True):
@@ -2395,6 +2396,33 @@ class Sheet(tk.Frame):
                              all_columns_displayed = False,
                              refresh = refresh, 
                              deselect_all = deselect_all)
+        
+    def display_rows(self,
+                     rows = None,
+                     all_rows_displayed = None,
+                     reset_row_positions = True,
+                     refresh = False,
+                     redraw = False,
+                     deselect_all = True):
+        res = self.MT.display_rows(rows = None if isinstance(rows, str) and rows.lower() == "all" else rows,
+                                   all_rows_displayed = True if isinstance(rows, str) and rows.lower() == "all" else all_rows_displayed,
+                                   reset_row_positions = reset_row_positions,
+                                   deselect_all = deselect_all)
+        if refresh or redraw:
+            self.set_refresh_timer(redraw if redraw else refresh)
+        return res
+    
+    def hide_rows(self, rows = set(), refresh = True, deselect_all = True):
+        if isinstance(rows, int):
+            _rows = {rows}
+        elif isinstance(rows, set):
+            _rows = rows
+        else:
+            _rows = set(rows)
+        self.display_rows(rows = [r for r in range(self.MT.total_data_rows()) if r not in _rows] if self.MT.all_rows_displayed else [r for r in self.MT.displayed_rows if r not in _rows],
+                          all_rows_displayed = False,
+                          refresh = refresh, 
+                          deselect_all = deselect_all)
 
     def show_ctrl_outline(self, canvas = "table", start_cell = (0, 0), end_cell = (1, 1)):
         self.MT.show_ctrl_outline(canvas = canvas, start_cell = start_cell, end_cell = end_cell)
@@ -2406,10 +2434,12 @@ class Sheet(tk.Frame):
         return self.MT.get_selected_min_max()
         
     def headers(self, newheaders = None, index = None, reset_col_positions = False, show_headers_if_not_sheet = True, redraw = False):
-        return self.MT.headers(newheaders, index, reset_col_positions = reset_col_positions, show_headers_if_not_sheet = show_headers_if_not_sheet, redraw = redraw)
-        
+        self.set_refresh_timer(redraw)
+        return self.MT.headers(newheaders, index, reset_col_positions = reset_col_positions, show_headers_if_not_sheet = show_headers_if_not_sheet, redraw = False)
+
     def row_index(self, newindex = None, index = None, reset_row_positions = False, show_index_if_not_sheet = True, redraw = False):
-        return self.MT.row_index(newindex, index, reset_row_positions = reset_row_positions, show_index_if_not_sheet = show_index_if_not_sheet, redraw = redraw)
+        self.set_refresh_timer(redraw)
+        return self.MT.row_index(newindex, index, reset_row_positions = reset_row_positions, show_index_if_not_sheet = show_index_if_not_sheet, redraw = False)
 
     def reset_undos(self):
         self.MT.undo_storage = deque(maxlen = self.MT.max_undos)

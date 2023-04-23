@@ -399,7 +399,7 @@ class MainTable(tk.Canvas):
                     for r1, c1, r2, c2 in boxes:
                         if r2 - r1 < maxrows:
                             continue
-                        datarn = r1 + rn if self.all_rows_displayed else self.displayed_rows[rn]
+                        datarn = (r1 if self.all_rows_displayed else self.displayed_rows[r1]) + rn
                         for c in range(c1, c2):
                             datacn = c if self.all_columns_displayed else self.displayed_columns[c]
                             row.append(self.get_cell_clipboard(datarn, datacn))
@@ -415,7 +415,7 @@ class MainTable(tk.Canvas):
                 for r1, c1, r2, c2 in boxes:
                     for rn in range(r2 - r1):
                         row = []
-                        datarn = r1 + rn if self.all_rows_displayed else self.displayed_rows[rn]
+                        datarn = (r1 if self.all_rows_displayed else self.displayed_rows[r1]) + rn
                         for c in range(c1, c2):
                             datacn = c if self.all_columns_displayed else self.displayed_columns[c]
                             row.append(self.get_cell_clipboard(datarn, datacn))
@@ -454,7 +454,7 @@ class MainTable(tk.Canvas):
                 for r1, c1, r2, c2 in boxes:
                     if r2 - r1 < maxrows:
                         continue
-                    datarn = r1 + rn if self.all_rows_displayed else self.displayed_rows[rn]
+                    datarn = (r1 if self.all_rows_displayed else self.displayed_rows[r1]) + rn
                     for c in range(c1, c2):
                         datacn = c if self.all_columns_displayed else self.displayed_columns[c]
                         row.append(self.get_cell_clipboard(datarn, datacn))
@@ -464,7 +464,7 @@ class MainTable(tk.Canvas):
                 for r1, c1, r2, c2 in boxes:
                     if r2 - r1 < maxrows:
                         continue
-                    datarn = r1 + rn if self.all_rows_displayed else self.displayed_rows[rn]
+                    datarn = (r1 if self.all_rows_displayed else self.displayed_rows[r1]) + rn
                     for c in range(c1, c2):
                         datacn = c if self.all_columns_displayed else self.displayed_columns[c]
                         if self.input_valid_for_cell(datarn, datacn, ""):
@@ -482,7 +482,7 @@ class MainTable(tk.Canvas):
             for r1, c1, r2, c2 in boxes:
                 for rn in range(r2 - r1):
                     row = []
-                    datarn = r1 + rn if self.all_rows_displayed else self.displayed_rows[rn]
+                    datarn = (r1 if self.all_rows_displayed else self.displayed_rows[r1]) + rn
                     for c in range(c1, c2):
                         datacn = c if self.all_columns_displayed else self.displayed_columns[c]
                         row.append(self.get_cell_data(datarn, datacn))
@@ -490,7 +490,7 @@ class MainTable(tk.Canvas):
                     rows.append(row)
             for r1, c1, r2, c2 in boxes:
                 for rn in range(r2 - r1):
-                    datarn = r1 + rn if self.all_rows_displayed else self.displayed_rows[rn]
+                    datarn = (r1 if self.all_rows_displayed else self.displayed_rows[r1]) + rn
                     for c in range(c1, c2):
                         datacn = c if self.all_columns_displayed else self.displayed_columns[c]
                         if self.input_valid_for_cell(datarn, datacn, ""):
@@ -2693,16 +2693,17 @@ class MainTable(tk.Canvas):
             r = self.identify_row(y = event.y, allow_end = False)
             c = self.identify_col(x = event.x, allow_end = False)
             if r is not None and c is not None and (r, c) == self.b1_pressed_loc:
+                datarn = r if self.all_rows_displayed else self.displayed_rows[r]
                 datacn = c if self.all_columns_displayed else self.displayed_columns[c]
-                if (r, datacn) in self.cell_options and ('dropdown' in self.cell_options[(r, datacn)] or 'checkbox' in self.cell_options[(r, datacn)]):
+                if (datarn, datacn) in self.cell_options and ('dropdown' in self.cell_options[(datarn, datacn)] or 'checkbox' in self.cell_options[(datarn, datacn)]):
                     canvasx = self.canvasx(event.x)
                     if (
                         (self.closed_dropdown != self.b1_pressed_loc and
-                         'dropdown' in self.cell_options[(r, datacn)] and
+                         'dropdown' in self.cell_options[(datarn, datacn)] and
                          canvasx > self.col_positions[c + 1] - self.txt_h - 5 and
                          canvasx < self.col_positions[c + 1] - 1) 
                         or
-                        ('checkbox' in self.cell_options[(r, datacn)] and 
+                        ('checkbox' in self.cell_options[(datarn, datacn)] and 
                          canvasx < self.col_positions[c] + self.txt_h + 5 and
                          self.canvasy(event.y) < self.row_positions[r] + self.txt_h + 5)
                         ):
@@ -3563,7 +3564,7 @@ class MainTable(tk.Canvas):
     def display_rows(self, rows = None, all_rows_displayed = None, reset_row_positions = True, deselect_all = True):
         if rows is None and all_rows_displayed is None:
             return list(range(self.total_data_rows())) if self.all_rows_displayed else self.displayed_rows
-        total_data_cols = None
+        total_data_rows = None
         if (
             (rows is not None and rows != self.displayed_rows) or 
             (all_rows_displayed and not self.all_rows_displayed)
@@ -4237,11 +4238,11 @@ class MainTable(tk.Canvas):
                             except:
                                 draw_check = False
                             self.redraw_checkbox(cleftgridln + 2,
-                                                    rtopgridln + 2,
-                                                    cleftgridln + self.txt_h + 3,
-                                                    rtopgridln + self.txt_h + 3,
-                                                    fill = fill if self.cell_options[(datarn, datacn)]['checkbox']['state'] == "normal" else self.table_grid_fg,
-                                                    outline = "", tag = "cb", draw_check = draw_check)
+                                                 rtopgridln + 2,
+                                                 cleftgridln + self.txt_h + 3,
+                                                 rtopgridln + self.txt_h + 3,
+                                                 fill = fill if self.cell_options[(datarn, datacn)]['checkbox']['state'] == "normal" else self.table_grid_fg,
+                                                 outline = "", tag = "cb", draw_check = draw_check)
                     lns = self.get_valid_cell_data_as_str(datarn, datacn, get_displayed = True).split("\n")
                     if lns != [''] and mw > self.txt_w and not ((align == "w" and draw_x > scrollpos_right) or
                                                                 (align == "e" and cleftgridln + 5 > scrollpos_right) or
