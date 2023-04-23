@@ -1,3 +1,7 @@
+### Version 6.0.1
+#### Fixed:
+- Data getting with `get_displayed = True` not returning checkbox text and also in the main table dropdown box text
+
 ### Version 6.0.0
 #### Fixed:
 - Undo added to stack when no changes made with cut, paste, delete

@@ -1526,8 +1526,11 @@ class RowIndex(tk.Canvas):
             return self.MT.cell_equal_to(datarn, self.MT._row_index, value)
             
     def get_cell_data(self, datarn, get_displayed = False, redirect_int = False):
-        if datarn in self.cell_options and 'dropdown' in self.cell_options[datarn] and self.cell_options[datarn]['dropdown']['text'] is not None and get_displayed:
-            return self.cell_options[datarn]['dropdown']['text']
+        if get_displayed and datarn in self.cell_options:
+            if 'dropdown' in self.cell_options[datarn] and self.cell_options[datarn]['dropdown']['text'] is not None:
+                return self.cell_options[datarn]['dropdown']['text']
+            if 'checkbox' in self.cell_options[datarn] and self.cell_options[datarn]['checkbox']['text'] is not None:
+                return self.cell_options[datarn]['checkbox']['text']
         if redirect_int and isinstance(self.MT._row_index, int):
             return self.MT.get_cell_data(datarn, self.MT._row_index, none_to_empty_str = True)
         if isinstance(self.MT._row_index, int) or not self.MT._row_index or datarn >= len(self.MT._row_index) or not self.MT._row_index[datarn]:

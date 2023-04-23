@@ -1486,8 +1486,11 @@ class ColumnHeaders(tk.Canvas):
             return self.MT.cell_equal_to(self.MT._headers, datacn, value)
             
     def get_cell_data(self, datacn, get_displayed = False, redirect_int = False):
-        if datacn in self.cell_options and 'dropdown' in self.cell_options[datacn] and self.cell_options[datacn]['dropdown']['text'] is not None and get_displayed:
-            return self.cell_options[datacn]['dropdown']['text']
+        if get_displayed and datacn in self.cell_options:
+            if 'dropdown' in self.cell_options[datacn] and self.cell_options[datacn]['dropdown']['text'] is not None:
+                return self.cell_options[datacn]['dropdown']['text']
+            if 'checkbox' in self.cell_options[datacn] and self.cell_options[datacn]['checkbox']['text'] is not None:
+                return self.cell_options[datacn]['checkbox']['text']
         if redirect_int and isinstance(self.MT._headers, int):
             return self.MT.get_cell_data(self.MT._headers, datacn, none_to_empty_str = True)
         if isinstance(self.MT._headers, int) or not self.MT._headers or datacn >= len(self.MT._headers) or not self.MT._headers[datacn]:

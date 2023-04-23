@@ -5558,6 +5558,11 @@ class MainTable(tk.Canvas):
         return f"{value}"
 
     def get_cell_data(self, datarn, datacn, get_displayed = False, none_to_empty_str = False, **kwargs) -> Any:
+        if get_displayed and (datarn, datacn) in self.cell_options:
+            if 'dropdown' in self.cell_options[(datarn, datacn)] and self.cell_options[(datarn, datacn)]['dropdown']['text'] is not None:
+                return self.cell_options[(datarn, datacn)]['dropdown']['text']
+            if 'checkbox' in self.cell_options[(datarn, datacn)] and self.cell_options[(datarn, datacn)]['checkbox']['text'] is not None:
+                return self.cell_options[(datarn, datacn)]['checkbox']['text']
         value = self.data[datarn][datacn] if len(self.data) > datarn and len(self.data[datarn]) > datacn else ""
         kwargs = self.get_format_kwargs(datarn, datacn)
         if kwargs:
