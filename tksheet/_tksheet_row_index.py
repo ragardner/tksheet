@@ -590,7 +590,7 @@ class RowIndex(tk.Canvas):
                     self.cell_options[r] = {}
                 self.cell_options[r]['readonly'] = True
 
-    def highlight_cells(self, r = 0, cells = tuple(), bg = None, fg = None, redraw = False, overwrite = True):
+    def highlight_cells(self, r = 0, cells = tuple(), bg = None, fg = None, pc = None, redraw = False, overwrite = True):
         if bg is None and fg is None:
             return
         if cells and not isinstance(cells, int):
@@ -603,10 +603,11 @@ class RowIndex(tk.Canvas):
             if r_ not in self.cell_options:
                 self.cell_options[r_] = {}
             if 'highlight' in self.cell_options[r_] and not overwrite:
-                self.cell_options[r_]['highlight'] = (self.cell_options[r_]['highlight'][0] if bg is None else bg,
-                                                        self.cell_options[r_]['highlight'][1] if fg is None else fg)
+                self.cell_options[r_]['highlight'] = Highlight(self.cell_options[r_]['highlight'].bg if bg is None else bg,
+                                                               self.cell_options[r_]['highlight'].fg if fg is None else fg,
+                                                               self.cell_options[r_]['highlight'].pc if pc is None else pc)
             else:
-                self.cell_options[r_]['highlight'] = (bg, fg)
+                self.cell_options[r_]['highlight'] = Highlight(bg, fg, pc)
         if redraw:
             self.MT.main_table_redraw_grid_and_text(False, True)
 
@@ -655,6 +656,20 @@ class RowIndex(tk.Canvas):
             self.MT.main_table_redraw_grid_and_text(redraw_header = False, redraw_row_index = True)
         if self.selection_binding_func is not None and run_binding_func:
             self.selection_binding_func(("select_row", int(r)))
+            
+    def get_cell_dimensions(self, datarn):
+        txt = self.get_valid_cell_data_as_str(datarn, fix = False)
+        if txt:
+            self.MT.txt_measure_canvas.itemconfig(self.MT.txt_measure_canvas_text, text = txt, font = self.MT._font)
+            b = self.MT.txt_measure_canvas.bbox(self.MT.txt_measure_canvas_text)
+            w = b[2] - b[0] + 7
+            h = b[3] - b[1] + 5
+        else:
+            w = self.default_width
+            h = self.MT.min_rh
+        if datarn in self.cell_options and ('dropdown' in self.cell_options[datarn] or 'checkbox' in self.cell_options[datarn]):
+            return w + self.MT.txt_h, h
+        return w, h
 
     def set_row_height(self, row, height = None, only_set_if_too_small = False, recreate = True, return_new_height = False, displayed_only = False):
         r_norm = row + 1
@@ -677,11 +692,7 @@ class RowIndex(tk.Canvas):
                     start_col, end_col = 0, len(self.MT.displayed_columns)
                 iterable = self.MT.displayed_columns[start_col:end_col]
             new_height = int(min_rh)
-            txt = self.get_valid_cell_data_as_str(datarn, fix = False)
-            if txt:
-                h = self.MT.GetTextHeight(txt) + 5
-            else:
-                h = min_rh
+            w_, h = self.get_cell_dimensions(datarn)
             if h < min_rh:
                 h = int(min_rh)
             elif h > self.max_rh:
@@ -689,8 +700,8 @@ class RowIndex(tk.Canvas):
             if h > new_height:
                 new_height = h
             if self.MT.data:
-                for cn in iterable:
-                    txt = self.MT.get_valid_cell_data_as_str(datarn, cn, get_displayed = True)
+                for datacn in iterable:
+                    txt = self.MT.get_valid_cell_data_as_str(datarn, datacn, get_displayed = True)
                     if txt:
                         h = self.MT.GetTextHeight(txt) + 5
                     else:
@@ -725,38 +736,31 @@ class RowIndex(tk.Canvas):
         qbbox = self.MT.txt_measure_canvas.bbox
         qtxtm = self.MT.txt_measure_canvas_text
         new_width = int(self.MT.min_cw)
+        self.fix_index()
+        if self.MT.all_rows_displayed:
+            if isinstance(self.MT._row_index, list):
+                iterable = range(len(self.MT._row_index))
+            else:
+                iterable = range(len(self.MT.data))
+        else:
+            iterable = self.MT.displayed_rows
         if isinstance(self.MT._row_index, list):
-            for rn, row in enumerate(self.MT._row_index):
-                if rn in self.cell_options and 'checkbox' in self.cell_options[rn]:
-                    txt = self.cell_options[rn]['checkbox']['text']
-                else:
-                    try:
-                        if isinstance(row, str):
-                            txt = row
-                        else:
-                            txt = f"{row}"
-                    except:
-                        txt = ""
-                if txt:
-                    qconf(qtxtm, text = txt)
-                    b = qbbox(qtxtm)
-                    w = b[2] - b[0] + 10
-                else:
-                    w = self.default_width
+            for datarn in iterable:
+                w, h_ = self.get_cell_dimensions(datarn)
                 if w < self.MT.min_cw:
                     w = int(self.MT.min_cw)
                 elif w > self.max_row_width:
                     w = int(self.max_row_width)
-                if rn in self.cell_options and 'checkbox' in self.cell_options[rn]:
+                if datarn in self.cell_options and 'checkbox' in self.cell_options[datarn]:
                     w += self.MT.txt_h + 6
-                elif rn in self.cell_options and 'dropdown' in self.cell_options[rn]:
+                elif datarn in self.cell_options and 'dropdown' in self.cell_options[datarn]:
                     w += self.MT.txt_h + 4
                 if w > new_width:
                     new_width = w
         elif isinstance(self.MT._row_index, int):
-            c = self.MT._row_index
-            for rn, row in enumerate(self.MT.data):
-                txt = self.MT.get_valid_cell_data_as_str(rn, c, get_displayed = True)
+            datacn = self.MT._row_index
+            for datarn in iterable:
+                txt = self.MT.get_valid_cell_data_as_str(datarn, datacn, get_displayed = True)
                 if txt:
                     qconf(qtxtm, text = txt)
                     b = qbbox(qtxtm)

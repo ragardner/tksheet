@@ -602,7 +602,7 @@ class ColumnHeaders(tk.Canvas):
                     self.cell_options[c] = {}
                 self.cell_options[c]['readonly'] = True
 
-    def highlight_cells(self, c = 0, cells = tuple(), bg = None, fg = None, redraw = False, overwrite = True):
+    def highlight_cells(self, c = 0, cells = tuple(), bg = None, fg = None, pc = None, redraw = False, overwrite = True):
         if bg is None and fg is None:
             return
         if cells and not isinstance(cells, int):
@@ -615,10 +615,11 @@ class ColumnHeaders(tk.Canvas):
             if c_ not in self.cell_options:
                 self.cell_options[c_] = {}
             if 'highlight' in self.cell_options[c_] and not overwrite:
-                self.cell_options[c_]['highlight'] = (self.cell_options[c_]['highlight'][0] if bg is None else bg,
-                                                      self.cell_options[c_]['highlight'][1] if fg is None else fg)
+                self.cell_options[c_]['highlight'] = Highlight(self.cell_options[c_]['highlight'].bg if bg is None else bg,
+                                                               self.cell_options[c_]['highlight'].fg if fg is None else fg,
+                                                               self.cell_options[c_]['highlight'].pc if pc is None else pc)
             else:
-                self.cell_options[c_]['highlight'] = (bg, fg)
+                self.cell_options[c_]['highlight'] = Highlight(bg, fg, pc)
         if redraw:
             self.MT.main_table_redraw_grid_and_text(True, False)
 
@@ -667,6 +668,20 @@ class ColumnHeaders(tk.Canvas):
             self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
         if self.selection_binding_func is not None and run_binding_func:
             self.selection_binding_func(("select_column", int(c)))
+            
+    def get_cell_dimensions(self, datacn):
+        txt = self.get_valid_cell_data_as_str(datacn, fix = False)
+        if txt:
+            self.MT.txt_measure_canvas.itemconfig(self.MT.txt_measure_canvas_text, text = txt, font = self.MT._hdr_font)
+            b = self.MT.txt_measure_canvas.bbox(self.MT.txt_measure_canvas_text)
+            w = b[2] - b[0] + 7
+            h = b[3] - b[1] + 5
+        else:
+            w = self.MT.min_cw
+            h = self.MT.hdr_min_rh
+        if datacn in self.cell_options and ('dropdown' in self.cell_options[datacn] or 'checkbox' in self.cell_options[datacn]):
+            return w + self.MT.hdr_txt_h, h
+        return w, h
 
     def set_col_width(self, col, width = None, only_set_if_too_small = False, displayed_only = False, recreate = True, return_new_width = False):
         if col < 0:
@@ -677,43 +692,40 @@ class ColumnHeaders(tk.Canvas):
         qtxth = self.MT.txt_h
         qclop = self.MT.cell_options
         qfont = self.MT._font
+        self.fix_header()
         if width is None:
             w = self.MT.min_cw
             hw = self.MT.min_cw
-            if displayed_only:
-                x1, y1, x2, y2 = self.MT.get_canvas_visible_area()
-                start_row, end_row = self.MT.get_visible_rows(y1, y2)
+            if self.MT.all_rows_displayed:
+                if displayed_only:
+                    x1, y1, x2, y2 = self.MT.get_canvas_visible_area()
+                    start_row, end_row = self.MT.get_visible_rows(y1, y2)
+                else:
+                    start_row, end_row = 0, len(self.MT.data)
+                iterable = range(start_row, end_row)
             else:
-                start_row, end_row = 0, None
+                if displayed_only:
+                    x1, y1, x2, y2 = self.MT.get_canvas_visible_area()
+                    start_row, end_row = self.MT.get_visible_rows(y1, y2)
+                else:
+                    start_row, end_row = 0, len(self.MT.displayed_rows)
+                iterable = self.MT.displayed_rows[start_row:end_row]
             datacn = col if self.MT.all_columns_displayed else self.MT.displayed_columns[col]
             # header
-            txt = ""
-            if isinstance(self.MT._headers, int) or len(self.MT._headers) > datacn:
-                txt = self.get_valid_cell_data_as_str(datacn, fix = False)
-                if txt:
-                    qconf(qtxtm, text = txt, font = self.MT._hdr_font)
-                    b = qbbox(qtxtm)
-                    hw = b[2] - b[0] + 7
-                else:
-                    hw = 7
-                if datacn in self.cell_options and ('dropdown' in self.cell_options[datacn] or 'checkbox' in self.cell_options[datacn]):
-                    hw += self.MT.hdr_txt_h
-            if not isinstance(self.MT._headers, int) and ((not txt and self.show_default_header_for_empty) or len(self.MT._headers) < datacn):
-                if self.default_header == "letters":
-                    hw = self.MT.GetHdrTextWidth(num2alpha(datacn)) + 7
-                elif self.default_header == "numbers":
-                    hw = self.MT.GetHdrTextWidth(f"{datacn + 1}") + 7
-                else:
-                    hw = self.MT.GetHdrTextWidth(f"{datacn + 1} {num2alpha(datacn)}") + 7
+            hw, hh_ = self.get_cell_dimensions(datacn)
             # table
-            for rn, r in enumerate(islice(self.MT.data, start_row, end_row), start_row):
-                txt = self.MT.get_valid_cell_data_as_str(rn, datacn, get_displayed = True)
-                if txt:
-                    qconf(qtxtm, text = txt, font = qfont)
-                    b = qbbox(qtxtm)
-                    tw = b[2] - b[0] + qtxth + 7 if (rn, datacn) in qclop and ('dropdown' in qclop[(rn, datacn)] or 'checkbox' in qclop[(rn, datacn)]) else b[2] - b[0] + 7
-                    if tw > w:
-                        w = tw
+            if self.MT.data:
+                for datarn in iterable:
+                    txt = self.MT.get_valid_cell_data_as_str(datarn, datacn, get_displayed = True)
+                    if txt:
+                        qconf(qtxtm, text = txt, font = qfont)
+                        b = qbbox(qtxtm)
+                        if (datarn, datacn) in qclop and ('dropdown' in qclop[(datarn, datacn)] or 'checkbox' in qclop[(datarn, datacn)]):
+                            tw = b[2] - b[0] + qtxth + 7
+                        else:
+                            tw = b[2] - b[0] + 7
+                        if tw > w:
+                            w = tw
             if w > hw:
                 new_width = w
             else:
@@ -1059,10 +1071,7 @@ class ColumnHeaders(tk.Canvas):
                                          outline = "",
                                          tag = "cb", 
                                          draw_check = draw_check)
-            if datacn in self.cell_options and 'checkbox' in self.cell_options[datacn]:
-                lns = self.cell_options[datacn]['checkbox']['text'].split("\n") if isinstance(self.cell_options[datacn]['checkbox']['text'], str) else f"{self.cell_options[datacn]['checkbox']['text']}".split("\n")
-            else:
-                lns = self.get_valid_cell_data_as_str(datacn, fix = False).split("\n")
+            lns = self.get_valid_cell_data_as_str(datacn, fix = False).split("\n")
             if lns == [""]:
                 if self.show_default_header_for_empty:
                     lns = (get_n2a(datacn, self.default_header), )

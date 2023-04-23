@@ -951,15 +951,13 @@ class Sheet(tk.Frame):
         self.MT.insert_row_position(idx = idx,
                                     height = height,
                                     deselect_all = deselect_all)
-        if redraw:
-            self.redraw()
+        self.set_refresh_timer(redraw)
 
     def insert_row_positions(self, idx = "end", heights = None, deselect_all = False, redraw = False):
         self.MT.insert_row_positions(idx = idx,
                                      heights = heights,
                                      deselect_all = deselect_all)
-        if redraw:
-            self.redraw()
+        self.set_refresh_timer(redraw)
 
     def total_rows(self, number = None, mod_positions = True, mod_data = True):
         if number is None:
@@ -1052,15 +1050,13 @@ class Sheet(tk.Frame):
         self.MT.insert_col_position(idx = idx,
                                     width = width,
                                     deselect_all = deselect_all)
-        if redraw:
-            self.redraw()
+        self.set_refresh_timer(redraw)
 
     def insert_column_positions(self, idx = "end", widths = None, deselect_all = False, redraw = False):
         self.MT.insert_col_positions(idx = idx,
                                      widths = widths,
                                      deselect_all = deselect_all)
-        if redraw:
-            self.redraw()
+        self.set_refresh_timer(redraw)
 
     def move_column_position(self, column: int, moveto: int):
         self.MT.move_col_position(column, moveto)
@@ -1400,34 +1396,29 @@ class Sheet(tk.Frame):
     def readonly_rows(self, rows = [], readonly = True, redraw = False):
         self.MT.readonly_rows(rows = rows,
                               readonly = readonly)
-        if redraw:
-            self.redraw()
+        self.set_refresh_timer(redraw)
 
     def readonly_columns(self, columns = [], readonly = True, redraw = False):
         self.MT.readonly_columns(columns = columns,
                                  readonly = readonly)
-        if redraw:
-            self.redraw()
+        self.set_refresh_timer(redraw)
 
     def readonly_cells(self, row = 0, column = 0, cells = [], readonly = True, redraw = False):
         self.MT.readonly_cells(row = row,
                                column = column,
                                cells = cells,
                                readonly = readonly)
-        if redraw:
-            self.redraw()
+        self.set_refresh_timer(redraw)
             
     def readonly_header(self, columns = [], readonly = True, redraw = False):
         self.CH.readonly_header(columns = columns,
                                 readonly = readonly)
-        if redraw:
-            self.redraw()
+        self.set_refresh_timer(redraw)
             
     def readonly_index(self, rows = [], readonly = True, redraw = False):
         self.RI.readonly_index(rows = rows,
                                readonly = readonly)
-        if redraw:
-            self.redraw()
+        self.set_refresh_timer(redraw)
 
     def dehighlight_all(self):
         for k in self.MT.cell_options:
@@ -1499,49 +1490,72 @@ class Sheet(tk.Frame):
                     del self.CH.cell_options[c]['highlight']
                 except:
                     pass
-        if redraw:
-            self.refresh(True, True)
+        self.set_refresh_timer(redraw)
             
-    def highlight_rows(self, rows = [], bg = None, fg = None, highlight_index = True, redraw = False, end_of_screen = False, overwrite = True):
+    def highlight_rows(self, rows = [], bg = None, fg = None, pc: Union[None, float] = None, highlight_index = True, redraw = False, end_of_screen = False, overwrite = True):
         self.MT.highlight_rows(rows = rows,
                                bg = bg,
                                fg = fg,
+                               pc = pc,
                                highlight_index = highlight_index,
-                               redraw = redraw,
+                               redraw = False,
                                end_of_screen = end_of_screen,
                                overwrite = overwrite)
+        self.set_refresh_timer(redraw)
 
-    def highlight_columns(self, columns = [], bg = None, fg = None, highlight_header = True, redraw = False, overwrite = True):
+    def highlight_columns(self, columns = [], bg = None, fg = None, pc: Union[None, float] = None, highlight_header = True, redraw = False, overwrite = True):
         self.MT.highlight_cols(cols = columns,
                                bg = bg,
                                fg = fg,
+                               pc = pc,
                                highlight_header = highlight_header,
                                redraw = redraw,
                                overwrite = overwrite)
+        self.set_refresh_timer(redraw)
 
-    def highlight_cells(self, row = 0, column = 0, cells = [], canvas = "table", bg = None, fg = None, redraw = False, overwrite = True):
+    def highlight_cells(self, row = 0, column = 0, cells = [], canvas = "table", bg = None, fg = None, pc: Union[None, float] = None, redraw = False, overwrite = True):
         if canvas == "table":
             self.MT.highlight_cells(r = row,
                                     c = column,
                                     cells = cells,
                                     bg = bg,
                                     fg = fg,
-                                    redraw = redraw,
+                                    pc = pc,
+                                    redraw = False,
                                     overwrite = overwrite)
         elif canvas in ("row_index", "index"):
             self.RI.highlight_cells(r = row,
                                     cells = cells,
                                     bg = bg,
                                     fg = fg,
-                                    redraw = redraw,
+                                    pc = pc,
+                                    redraw = False,
                                     overwrite = overwrite)
         elif canvas == "header":
             self.CH.highlight_cells(c = column,
                                     cells = cells,
                                     bg = bg,
                                     fg = fg,
-                                    redraw = redraw,
+                                    pc = pc,
+                                    redraw = False,
                                     overwrite = overwrite)
+        self.set_refresh_timer(redraw)
+
+    def create_progress_bar(self, r, c, bg, fg, pc: float = 0.0, redraw = True):
+        self.MT.highlight_cells(r = r,
+                                c = c,
+                                bg = bg,
+                                fg = fg,
+                                pc = pc)
+        self.set_refresh_timer(redraw)
+
+    def set_progress_bar(self, r, c, pc: Union[None, float] = None, bg = None, fg = None, redraw = True):
+        self.MT.highlight_cells(r = r, c = c, bg = bg, fg = fg, pc = pc, overwrite = False)
+        self.set_refresh_timer(redraw)
+
+    def delete_progress_bar(self, r, c, redraw = True):
+        self.dehighlight_cells(row = r, column = c)
+        self.set_refresh_timer(redraw)
 
     def dehighlight_cells(self, row = 0, column = 0, cells = [], canvas = "table", all_ = False, redraw = True):
         if row == "all" and canvas == "table":
@@ -1598,8 +1612,7 @@ class Sheet(tk.Frame):
                 for c in self.CH.cell_options:
                     if 'highlight' in self.CH.cell_options[c]:
                         del self.CH.cell_options[c]['highlight']
-        if redraw:
-            self.refresh(True, True)
+        self.set_refresh_timer(redraw)
             
     def delete_out_of_bounds_options(self):
         maxc = self.total_columns()
@@ -1670,8 +1683,7 @@ class Sheet(tk.Frame):
                 self.MT.align_rows(rows = rows,
                                    align = align if align == "global" else self.convert_align(align),
                                    align_index = align_index)
-        if redraw:
-            self.redraw()
+        self.set_refresh_timer(redraw)
         
     def align_columns(self, columns = [], align = "global", align_header = False, redraw = True): #"center", "w", "e" or "global"
         if align == "global" or self.convert_align(align):
@@ -1684,8 +1696,7 @@ class Sheet(tk.Frame):
                 self.MT.align_columns(columns = columns,
                                       align = align if align == "global" else self.convert_align(align),
                                       align_header = align_header)
-        if redraw:
-            self.redraw()
+        self.set_refresh_timer(redraw)
 
     def align_cells(self, row = 0, column = 0, cells = [], align = "global", redraw = True): #"center", "w", "e" or "global"
         if align == "global" or self.convert_align(align):
@@ -2305,7 +2316,7 @@ class Sheet(tk.Frame):
             self.MT.row_options = {rn if rn < idx else rn + 1: t for rn, t in self.MT.row_options.items()}
             self.RI.cell_options = {rn if rn < idx else rn + 1: t for rn, t in self.RI.cell_options.items()}
         self.set_refresh_timer(redraw)
-
+#here
     def insert_rows(self, rows = 1, idx = "end", heights = None, deselect_all = False, add_columns = True,
                     redraw = False):
         total_cols = None
