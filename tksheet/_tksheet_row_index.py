@@ -1508,11 +1508,6 @@ class RowIndex(tk.Canvas):
     def cell_equal_to(self, datarn, value):
         self.fix_index(datarn)
         if isinstance(self.MT._row_index, list):
-            if datarn in self.cell_options and 'checkbox' in self.cell_options[datarn]:
-                try:
-                    return to_bool(self.MT._row_index[datarn]) == to_bool(value)
-                except:
-                    return False
             return self.MT._row_index[datarn] == value
         elif isinstance(self.MT._row_index, int):
             return self.MT.cell_equal_to(datarn, self.MT._row_index, value)
@@ -1599,13 +1594,12 @@ class RowIndex(tk.Canvas):
         if datarn in self.cell_options and ('dropdown' in self.cell_options[datarn] or 
                                             'checkbox' in self.cell_options[datarn]):
             self.delete_dropdown_and_checkbox(datarn)
-        self.set_cell_data(datarn = datarn, 
-                            value = checked)
         if datarn not in self.cell_options:
             self.cell_options[datarn] = {}
         self.cell_options[datarn]['checkbox'] = {'check_function': check_function,
                                                  'state': state,
                                                  'text': text}
+        self.set_cell_data(datarn = datarn, value = checked)
         if redraw:
             self.MT.refresh()
 
@@ -1618,8 +1612,6 @@ class RowIndex(tk.Canvas):
         if datarn in self.cell_options and ('dropdown' in self.cell_options[datarn] or 
                                             'checkbox' in self.cell_options[datarn]):
             self.delete_dropdown_and_checkbox(datarn)
-        self.set_cell_data(datarn = datarn, 
-                            value = set_value if set_value is not None else values[0] if values else "")
         if datarn not in self.cell_options:
             self.cell_options[datarn] = {}
         self.cell_options[datarn]['dropdown'] = {'values': values,
@@ -1631,6 +1623,8 @@ class RowIndex(tk.Canvas):
                                                  'validate_input': validate_input,
                                                  'text': text,
                                                  'state': state}
+        self.set_cell_data(datarn = datarn, 
+                           value = set_value if set_value is not None else values[0] if values else "")
         if redraw:
             self.MT.refresh()
     

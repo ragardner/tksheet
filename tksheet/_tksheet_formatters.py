@@ -64,14 +64,15 @@ def float_to_str(v: Union[int, float], **kwargs: dict) -> str:
     return f"{v}"
 
 def percentage_to_str(v: Union[int, float], **kwargs: dict) -> str:
-    x = v * 100
-    if isinstance(x, float):
-        if x.is_integer():
-            return f"{int(x)}%"
-        if 'decimals' in kwargs and isinstance(kwargs['decimals'], int):
-            if kwargs['decimals']:
-                return f"{round(x, kwargs['decimals'])}%"
-            return f"{int(round(x, kwargs['decimals']))}%"
+    if isinstance(v, (int, float)):
+        x = v * 100
+        if isinstance(x, float):
+            if x.is_integer():
+                return f"{int(x)}%"
+            if 'decimals' in kwargs and isinstance(kwargs['decimals'], int):
+                if kwargs['decimals']:
+                    return f"{round(x, kwargs['decimals'])}%"
+                return f"{int(round(x, kwargs['decimals']))}%"
     return f"{x}%"
 
 def bool_to_str(v: Any, **kwargs: dict) -> str:
@@ -162,7 +163,7 @@ def format_data(value = "",
         try:
             value = format_function(value, **kwargs)
         except Exception as e:
-            value = f"{value}"
+            pass
     if post_format_function and isinstance(value, datatypes):
         value = post_format_function(value)
     return value

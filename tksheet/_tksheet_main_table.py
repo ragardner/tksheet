@@ -3011,16 +3011,18 @@ class MainTable(tk.Canvas):
             w = b[2] - b[0] + 7
             h = b[3] - b[1] + 5
         else:
-            w = min_cw
-            h = min_rh
+            w = self.min_cw
+            h = self.min_rh
         if (datarn, datacn) in self.cell_options and ('dropdown' in self.cell_options[(datarn, datacn)] or 
                                                       'checkbox' in self.cell_options[(datarn, datacn)]):
             return w + self.txt_h, h
         return w, h
 
     def set_cell_size_to_text(self, r, c, only_set_if_too_small = False, redraw = True, run_binding = False):
-        min_cw = self.min_cw
-        min_rh = self.min_rh
+        min_cw = int(self.min_cw)
+        min_rh = int(self.min_rh)
+        w = min_cw
+        h = min_rh
         datacn = c if self.all_columns_displayed else self.displayed_columns[c]
         datarn = r if self.all_rows_displayed else self.displayed_rows[r]
         tw, h = self.get_cell_dimensions(datarn, datacn)
@@ -3073,8 +3075,10 @@ class MainTable(tk.Canvas):
                 return False
 
     def set_all_cell_sizes_to_text(self, include_index = False):
-        min_cw = self.min_cw
-        min_rh = self.min_rh
+        min_cw = int(self.min_cw)
+        min_rh = int(self.min_rh)
+        w = min_cw
+        h = min_rh
         rhs = defaultdict(lambda: int(min_rh))
         cws = []
         x = self.txt_measure_canvas.create_text(0, 0, text = "", font = self._font)
@@ -5345,17 +5349,19 @@ class MainTable(tk.Canvas):
             elif datacn >= len(self.data[datarn]):
                 self.data[datarn].extend(list(repeat("", (datacn + 1) - len(self.data[datarn]))))
         if expand_sheet or (len(self.data) > datarn and len(self.data[datarn]) > datacn):
-            if not kwargs:
-                kwargs = self.get_format_kwargs(datarn, datacn)
-            if kwargs:
-                if kwargs['formatter'] is None:
-                    self.data[datarn][datacn] = format_data(value = value, **kwargs)
-                else:
-                    self.data[datarn][datacn] = kwargs['formatter'](value, **kwargs)
-            elif (datarn, datacn) in self.cell_options and 'checkbox' in self.cell_options[(datarn, datacn)]:
+            if (datarn, datacn) in self.cell_options and 'checkbox' in self.cell_options[(datarn, datacn)]:
                 self.data[datarn][datacn] = to_bool(value)
             else:
-                self.data[datarn][datacn] = value
+                if not kwargs:
+                    kwargs = self.get_format_kwargs(datarn, datacn)
+                if kwargs:
+                    if kwargs['formatter'] is None:
+                        self.data[datarn][datacn] = format_data(value = value, **kwargs)
+                    else:
+                        self.data[datarn][datacn] = kwargs['formatter'](value, **kwargs)
+                
+                else:
+                    self.data[datarn][datacn] = value
 
     #internal event use
     def _click_checkbox(self, r, c, datarn = None, datacn = None, undo = True, redraw = True):
@@ -5379,12 +5385,12 @@ class MainTable(tk.Canvas):
         if (datarn, datacn) in self.cell_options and ('dropdown' in self.cell_options[(datarn, datacn)] or 
                                                       'checkbox' in self.cell_options[(datarn, datacn)]):
             self.delete_dropdown_and_checkbox(datarn, datacn)
-        self.set_cell_data(datarn, datacn, checked)
         if (datarn, datacn) not in self.cell_options:
             self.cell_options[(datarn, datacn)] = {}
         self.cell_options[(datarn, datacn)]['checkbox'] = {'check_function': check_function,
                                                            'state': state,
                                                            'text': text}
+        self.set_cell_data(datarn, datacn, checked)
         if redraw:
             self.refresh()
 
@@ -5397,7 +5403,6 @@ class MainTable(tk.Canvas):
         if (datarn, datacn) in self.cell_options and ('dropdown' in self.cell_options[(datarn, datacn)] or 
                                                       'checkbox' in self.cell_options[(datarn, datacn)]):
             self.delete_dropdown_and_checkbox(datarn, datacn)
-        self.set_cell_data(datarn, datacn, set_value if set_value is not None else values[0] if values else "")
         if (datarn, datacn) not in self.cell_options:
             self.cell_options[(datarn, datacn)] = {}
         self.cell_options[(datarn, datacn)]['dropdown'] = {'values': values,
@@ -5409,6 +5414,7 @@ class MainTable(tk.Canvas):
                                                            'validate_input': validate_input,
                                                            'text': text,
                                                            'state': state}
+        self.set_cell_data(datarn, datacn, set_value if set_value is not None else values[0] if values else "")
         if redraw:
             self.refresh()
 
@@ -5607,7 +5613,7 @@ class MainTable(tk.Canvas):
             return False
         if self.get_format_kwargs(datarn, datacn):
             return True
-        if (datarn, datacn) in self.cell_options: 
+        if (datarn, datacn) in self.cell_options:
             if 'checkbox' in self.cell_options[(datarn, datacn)]:
                 return is_bool_like(value)
             if ('dropdown' in self.cell_options[(datarn, datacn)] and 
@@ -5624,11 +5630,6 @@ class MainTable(tk.Canvas):
         # assumed if there is a formatter class in cell then it has a __eq__() function anyway
         # else if there is not a formatter class in cell and cell is not formatted
         # then compare value as is
-        if (datarn, datacn) in self.cell_options and 'checkbox' in self.cell_options[(datarn, datacn)]:
-            try:
-                return to_bool(v) == to_bool(value)
-            except:
-                return False
         return v == value
 
     def get_cell_clipboard(self, datarn, datacn) -> Union[str, int, float, bool]:
