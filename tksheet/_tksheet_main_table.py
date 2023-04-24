@@ -1430,19 +1430,18 @@ class MainTable(tk.Canvas):
                     self.cell_options[(row, column)] = {}
                 self.cell_options[(row, column)]['readonly'] = True
 
-    def highlight_cells(self, r = 0, c = 0, cells = tuple(), bg = None, fg = None, pc = None, redraw = False, overwrite = True):
-        if bg is None and fg is None and pc is None:
+    def highlight_cells(self, r = 0, c = 0, cells = tuple(), bg = None, fg = None, redraw = False, overwrite = True):
+        if bg is None and fg is None:
             return
         if cells:
             for r_, c_ in cells:
                 if (r_, c_) not in self.cell_options:
                     self.cell_options[(r_, c_)] = {}
                 if 'highlight' in self.cell_options[(r_, c_)] and not overwrite:
-                    self.cell_options[(r_, c_)]['highlight'] = Highlight(self.cell_options[(r_, c_)]['highlight'].bg if bg is None else bg,
-                                                                         self.cell_options[(r_, c_)]['highlight'].fg if fg is None else fg,
-                                                                         self.cell_options[(r_, c_)]['highlight'].pc if pc is None else pc)
+                    self.cell_options[(r_, c_)]['highlight'] = (self.cell_options[(r_, c_)]['highlight'][0] if bg is None else bg,
+                                                                self.cell_options[(r_, c_)]['highlight'][1] if fg is None else fg)
                 else:
-                    self.cell_options[(r_, c_)]['highlight'] = Highlight(bg, fg, pc)
+                    self.cell_options[(r_, c_)]['highlight'] = (bg, fg)
         else:
             if isinstance(r, str) and r.lower() == "all" and isinstance(c, int):
                 riter = range(self.total_data_rows())
@@ -1458,46 +1457,43 @@ class MainTable(tk.Canvas):
                     if (r_, c_) not in self.cell_options:
                         self.cell_options[(r_, c_)] = {}
                     if 'highlight' in self.cell_options[(r_, c_)] and not overwrite:
-                        self.cell_options[(r_, c_)]['highlight'] = Highlight(self.cell_options[(r_, c_)]['highlight'].bg if bg is None else bg,
-                                                                             self.cell_options[(r_, c_)]['highlight'].fg if fg is None else fg,
-                                                                             self.cell_options[(r_, c_)]['highlight'].pc if pc is None else pc)
+                        self.cell_options[(r_, c_)]['highlight'] = (self.cell_options[(r_, c_)]['highlight'][0] if bg is None else bg,
+                                                                    self.cell_options[(r_, c_)]['highlight'][1] if fg is None else fg)
                     else:
-                        self.cell_options[(r_, c_)]['highlight'] = Highlight(bg, fg, pc)
+                        self.cell_options[(r_, c_)]['highlight'] = (bg, fg)
         if redraw:
             self.main_table_redraw_grid_and_text()
 
-    def highlight_cols(self, cols = [], bg = None, fg = None, pc = None, highlight_header = False, redraw = False, overwrite = True):
-        if bg is None and fg is None and pc is None:
+    def highlight_cols(self, cols = [], bg = None, fg = None, highlight_header = False, redraw = False, overwrite = True):
+        if bg is None and fg is None:
             return
         for c in (cols, ) if isinstance(cols, int) else cols:
             if c not in self.col_options:
                 self.col_options[c] = {}
             if 'highlight' in self.col_options[c] and not overwrite:
-                self.col_options[c]['highlight'] = Highlight(self.col_options[c]['highlight'].bg if bg is None else bg,
-                                                             self.col_options[c]['highlight'].fg if fg is None else fg,
-                                                             self.col_options[c]['highlight'].pc if pc is None else pc)
+                self.col_options[c]['highlight'] = (self.col_options[c]['highlight'][0] if bg is None else bg,
+                                                    self.col_options[c]['highlight'][1] if fg is None else fg)
             else:
-                self.col_options[c]['highlight'] = Highlight(bg, fg, pc)
+                self.col_options[c]['highlight'] = (bg, fg)
         if highlight_header:
-            self.CH.highlight_cells(cells = cols, bg = bg, fg = fg, pc = pc)
+            self.CH.highlight_cells(cells = cols, bg = bg, fg = fg)
         if redraw:
             self.main_table_redraw_grid_and_text(redraw_header = highlight_header)
 
-    def highlight_rows(self, rows = [], bg = None, fg = None, pc = None, highlight_index = False, redraw = False, end_of_screen = False, overwrite = True):
-        if bg is None and fg is None and pc is None:
+    def highlight_rows(self, rows = [], bg = None, fg = None, highlight_index = False, redraw = False, end_of_screen = False, overwrite = True):
+        if bg is None and fg is None:
             return
         for r in (rows, ) if isinstance(rows, int) else rows:
             if r not in self.row_options:
                 self.row_options[r] = {}
             if 'highlight' in self.row_options[r] and not overwrite:
-                self.row_options[r]['highlight'] = RowHighlight(self.row_options[r]['highlight'].bg if bg is None else bg,
-                                                                self.row_options[r]['highlight'].fg if fg is None else fg,
-                                                                self.row_options[r]['highlight'].pc if pc is None else pc,
-                                                                self.row_options[r]['highlight'].endofscreen if self.row_options[r]['highlight'].endofscreen != end_of_screen else end_of_screen)
+                self.row_options[r]['highlight'] = (self.row_options[r]['highlight'][0] if bg is None else bg,
+                                                    self.row_options[r]['highlight'][1] if fg is None else fg,
+                                                    self.row_options[r]['highlight'][2] if self.row_options[r]['highlight'][2] != end_of_screen else end_of_screen)
             else:
-                self.row_options[r]['highlight'] = RowHighlight(bg, fg, pc, end_of_screen)
+                self.row_options[r]['highlight'] = (bg, fg, end_of_screen)
         if highlight_index:
-            self.RI.highlight_cells(cells = rows, bg = bg, fg = fg, pc = pc)
+            self.RI.highlight_cells(cells = rows, bg = bg, fg = fg)
         if redraw:
             self.main_table_redraw_grid_and_text(redraw_row_index = highlight_index)
 
@@ -3633,9 +3629,8 @@ class MainTable(tk.Canvas):
             if redraw:
                 self.refresh()
         else:
-            if index is not None:
-                if isinstance(index, int):
-                    return self._headers[index]
+            if not isinstance(self._headers, int) and index is not None and isinstance(index, int):
+                return self._headers[index]
             else:
                 return self._headers
 
@@ -3668,9 +3663,8 @@ class MainTable(tk.Canvas):
             if redraw:
                 self.refresh()
         else:
-            if index is not None:
-                if isinstance(index, int):
-                    return self._row_index[index]
+            if not isinstance(self._row_index, int) and index is not None and isinstance(index, int):
+                return self._row_index[index]
             else:
                 return self._row_index
 
@@ -3744,7 +3738,6 @@ class MainTable(tk.Canvas):
                 redrawn = self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_2_[0]) / 2):02X}" +
                                                                                 f"{int((int(c_1[3:5], 16) + c_2_[1]) / 2):02X}" +
                                                                                 f"{int((int(c_1[5:], 16) + c_2_[2]) / 2):02X}"), 
-                                                pc = self.cell_options[(datarn, datacn)]['highlight'].pc,
                                                 outline = self.table_fg if (datarn, datacn) in self.cell_options and 'dropdown' in self.cell_options[(datarn, datacn)] and self.show_dropdown_borders else "", 
                                                 tag = "hi")
             
@@ -3755,7 +3748,6 @@ class MainTable(tk.Canvas):
                 redrawn = self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_2_[0]) / 2):02X}" +
                                                                                 f"{int((int(c_1[3:5], 16) + c_2_[1]) / 2):02X}" +
                                                                                 f"{int((int(c_1[5:], 16) + c_2_[2]) / 2):02X}"),
-                                                pc = self.row_options[datarn]['highlight'].pc,
                                                 outline = self.table_fg if (datarn, datacn) in self.cell_options and 'dropdown' in self.cell_options[(datarn, datacn)] and self.show_dropdown_borders else "", 
                                                 tag = "hi",
                                                 can_width = can_width if self.row_options[datarn]['highlight'].endofscreen else None)
@@ -3767,7 +3759,6 @@ class MainTable(tk.Canvas):
                 redrawn = self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_2_[0]) / 2):02X}" +
                                                                                 f"{int((int(c_1[3:5], 16) + c_2_[1]) / 2):02X}" +
                                                                                 f"{int((int(c_1[5:], 16) + c_2_[2]) / 2):02X}"),
-                                                pc = self.col_options[datacn]['highlight'].pc,
                                                 outline = self.table_fg if (datarn, datacn) in self.cell_options and 'dropdown' in self.cell_options[(datarn, datacn)] and self.show_dropdown_borders else "", 
                                                 tag = "hi")
             
@@ -3779,7 +3770,6 @@ class MainTable(tk.Canvas):
                 redrawn = self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_4_[0]) / 2):02X}" +
                                                                                 f"{int((int(c_1[3:5], 16) + c_4_[1]) / 2):02X}" +
                                                                                 f"{int((int(c_1[5:], 16) + c_4_[2]) / 2):02X}"),
-                                                pc = self.cell_options[(datarn, datacn)]['highlight'].pc,
                                                 outline = self.table_fg if (datarn, datacn) in self.cell_options and 'dropdown' in self.cell_options[(datarn, datacn)] and self.show_dropdown_borders else "", 
                                                 tag = "hi")
             
@@ -3790,7 +3780,6 @@ class MainTable(tk.Canvas):
                 redrawn = self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_4_[0]) / 2):02X}" +
                                                                                 f"{int((int(c_1[3:5], 16) + c_4_[1]) / 2):02X}" +
                                                                                 f"{int((int(c_1[5:], 16) + c_4_[2]) / 2):02X}"),
-                                                pc = self.row_options[datarn]['highlight'].pc,
                                                 outline = self.table_fg if (datarn, datacn) in self.cell_options and 'dropdown' in self.cell_options[(datarn, datacn)] and self.show_dropdown_borders else "", 
                                                 tag = "hi",
                                                 can_width = can_width if self.row_options[r]['highlight'][2] else None)
@@ -3802,7 +3791,6 @@ class MainTable(tk.Canvas):
                 redrawn = self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_4_[0]) / 2):02X}" +
                                                                                 f"{int((int(c_1[3:5], 16) + c_4_[1]) / 2):02X}" +
                                                                                 f"{int((int(c_1[5:], 16) + c_4_[2]) / 2):02X}"),
-                                                pc = self.col_options[datacn]['highlight'].pc,
                                                 outline = self.table_fg if (datarn, datacn) in self.cell_options and 'dropdown' in self.cell_options[(datarn, datacn)] and self.show_dropdown_borders else "",
                                                 tag = "hi")
             
@@ -3814,7 +3802,6 @@ class MainTable(tk.Canvas):
                 redrawn = self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_3_[0]) / 2):02X}" +
                                                                                 f"{int((int(c_1[3:5], 16) + c_3_[1]) / 2):02X}" +
                                                                                 f"{int((int(c_1[5:], 16) + c_3_[2]) / 2):02X}"),
-                                                pc = self.cell_options[(datarn, datacn)]['highlight'].pc,
                                                 outline = self.table_fg if (datarn, datacn) in self.cell_options and 'dropdown' in self.cell_options[(datarn, datacn)] and self.show_dropdown_borders else "",
                                                 tag = "hi")
             
@@ -3825,7 +3812,6 @@ class MainTable(tk.Canvas):
                 redrawn = self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_3_[0]) / 2):02X}" +
                                                                                 f"{int((int(c_1[3:5], 16) + c_3_[1]) / 2):02X}" +
                                                                                 f"{int((int(c_1[5:], 16) + c_3_[2]) / 2):02X}"),
-                                                pc = self.row_options[datarn]['highlight'].pc,
                                                 outline = self.table_fg if (datarn, datacn) in self.cell_options and 'dropdown' in self.cell_options[(datarn, datacn)] and self.show_dropdown_borders else "", 
                                                 tag = "hi",
                                                 can_width = can_width if self.row_options[datarn]['highlight'].endofscreen else None)
@@ -3837,7 +3823,6 @@ class MainTable(tk.Canvas):
                 redrawn = self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_3_[0]) / 2):02X}" +
                                                                                 f"{int((int(c_1[3:5], 16) + c_3_[1]) / 2):02X}" +
                                                                                 f"{int((int(c_1[5:], 16) + c_3_[2]) / 2):02X}"),
-                                                pc = self.col_options[datacn]['highlight'].pc,
                                                 outline = self.table_fg if (datarn, datacn) in self.cell_options and 'dropdown' in self.cell_options[(datarn, datacn)] and self.show_dropdown_borders else "",
                                                 tag = "hi")
 
@@ -3846,7 +3831,6 @@ class MainTable(tk.Canvas):
             tf = self.table_fg if self.cell_options[(datarn, datacn)]['highlight'].fg is None else self.cell_options[(datarn, datacn)]['highlight'].fg
             if self.cell_options[(datarn, datacn)]['highlight'].bg is not None:
                 redrawn = self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = self.cell_options[(datarn, datacn)]['highlight'].bg,
-                                                pc = self.cell_options[(datarn, datacn)]['highlight'].pc,
                                                 outline = self.table_fg if (datarn, datacn) in self.cell_options and 'dropdown' in self.cell_options[(datarn, datacn)] and self.show_dropdown_borders else "", 
                                                 tag = "hi")
             
@@ -3854,7 +3838,6 @@ class MainTable(tk.Canvas):
             tf = self.table_fg if self.row_options[datarn]['highlight'].fg is None else self.row_options[datarn]['highlight'].fg
             if self.row_options[datarn]['highlight'].bg is not None:
                 redrawn = self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = self.row_options[datarn]['highlight'].bg,
-                                                pc = self.row_options[datarn]['highlight'].pc,
                                                 outline = self.table_fg if (datarn, datacn) in self.cell_options and 'dropdown' in self.cell_options[(datarn, datacn)] and self.show_dropdown_borders else "", 
                                                 tag = "hi",
                                                 can_width = can_width if self.row_options[datarn]['highlight'].endofscreen else None)
@@ -3863,7 +3846,6 @@ class MainTable(tk.Canvas):
             tf = self.table_fg if self.col_options[datacn]['highlight'].fg is None else self.col_options[datacn]['highlight'].fg
             if self.col_options[datacn]['highlight'].bg is not None:
                 redrawn = self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = self.col_options[datacn]['highlight'].bg,
-                                                pc = self.col_options[datacn]['highlight'].pc,
                                                 outline = self.table_fg if (datarn, datacn) in self.cell_options and 'dropdown' in self.cell_options[(datarn, datacn)] and self.show_dropdown_borders else "",
                                                 tag = "hi")
         
@@ -3880,9 +3862,9 @@ class MainTable(tk.Canvas):
             tf = self.table_fg
         return tf, redrawn
 
-    def redraw_highlight(self, x1, y1, x2, y2, fill, pc, outline, tag, can_width = None):
+    def redraw_highlight(self, x1, y1, x2, y2, fill, outline, tag, can_width = None, pc = None):
         config = (fill, outline)
-        if type(pc) not in (float, int) or pc >= 0.999 or pc <= 0:
+        if type(pc) != int or pc >= 100 or pc <= 0:
             coords = (x1 - 1 if outline else x1,
                       y1 - 1 if outline else y1,
                       x2 if can_width is None else x2 + can_width, 
@@ -3890,7 +3872,7 @@ class MainTable(tk.Canvas):
         else:
             coords = (x1,
                       y1,
-                      (x2 - x1) * pc,
+                      (x2 - x1) * (pc / 100),
                       y2)
         k = None
         if config in self.hidd_high:
@@ -5351,7 +5333,7 @@ class MainTable(tk.Canvas):
                 self.data[datarn].extend(list(repeat("", (datacn + 1) - len(self.data[datarn]))))
         if expand_sheet or (len(self.data) > datarn and len(self.data[datarn]) > datacn):
             if (datarn, datacn) in self.cell_options and 'checkbox' in self.cell_options[(datarn, datacn)]:
-                self.data[datarn][datacn] = to_bool(value)
+                self.data[datarn][datacn] = try_to_bool(value)
             else:
                 if not kwargs:
                     kwargs = self.get_format_kwargs(datarn, datacn)
@@ -5360,7 +5342,6 @@ class MainTable(tk.Canvas):
                         self.data[datarn][datacn] = format_data(value = value, **kwargs)
                     else:
                         self.data[datarn][datacn] = kwargs['formatter'](value, **kwargs)
-                
                 else:
                     self.data[datarn][datacn] = value
 
@@ -5582,7 +5563,7 @@ class MainTable(tk.Canvas):
                     return f"{value}" # assumed given formatter class has __str__() function
                 else:
                     return f"{value.get_data_with_valid_check()}" # assumed given formatter class has get_data_with_valid_check() function
-        return f"{value}"
+        return "" if value is None else f"{value}"
 
     def get_cell_data(self, datarn, datacn, get_displayed = False, none_to_empty_str = False, **kwargs) -> Any:
         if get_displayed and (datarn, datacn) in self.cell_options:
@@ -5601,7 +5582,7 @@ class MainTable(tk.Canvas):
                     return f"{value}" # assumed given formatter class has __str__() function
                 else:
                     value = value.value # assumed given formatter class has value attribute
-        return "" if (value is None and none_to_empty_str) else value
+        return "" if (value is None and (none_to_empty_str or get_displayed)) else value
     
     def input_valid_for_cell(self, datarn, datacn, value):
         if (datarn, datacn) in self.cell_options and 'readonly' in self.cell_options[(datarn, datacn)]:

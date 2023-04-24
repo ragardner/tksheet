@@ -602,7 +602,7 @@ class ColumnHeaders(tk.Canvas):
                     self.cell_options[c] = {}
                 self.cell_options[c]['readonly'] = True
 
-    def highlight_cells(self, c = 0, cells = tuple(), bg = None, fg = None, pc = None, redraw = False, overwrite = True):
+    def highlight_cells(self, c = 0, cells = tuple(), bg = None, fg = None, redraw = False, overwrite = True):
         if bg is None and fg is None:
             return
         if cells and not isinstance(cells, int):
@@ -615,11 +615,10 @@ class ColumnHeaders(tk.Canvas):
             if c_ not in self.cell_options:
                 self.cell_options[c_] = {}
             if 'highlight' in self.cell_options[c_] and not overwrite:
-                self.cell_options[c_]['highlight'] = Highlight(self.cell_options[c_]['highlight'].bg if bg is None else bg,
-                                                               self.cell_options[c_]['highlight'].fg if fg is None else fg,
-                                                               self.cell_options[c_]['highlight'].pc if pc is None else pc)
+                self.cell_options[c_]['highlight'] = (self.cell_options[c_]['highlight'][0] if bg is None else bg,
+                                                      self.cell_options[c_]['highlight'][1] if fg is None else fg)
             else:
-                self.cell_options[c_]['highlight'] = Highlight(bg, fg, pc)
+                self.cell_options[c_]['highlight'] = (bg, fg)
         if redraw:
             self.MT.main_table_redraw_grid_and_text(True, False)
 
@@ -1448,7 +1447,7 @@ class ColumnHeaders(tk.Canvas):
         else:
             self.fix_header(datacn)
             if datacn in self.cell_options and 'checkbox' in self.cell_options[datacn]:
-                self.MT._headers[datacn] = to_bool(value)
+                self.MT._headers[datacn] = try_to_bool(value)
             else:
                 self.MT._headers[datacn] = value
     
@@ -1487,7 +1486,7 @@ class ColumnHeaders(tk.Canvas):
                 return get_n2a(datacn, self.default_header)
             else:
                 return ""
-        return self.MT._headers[datacn]
+        return "" if self.MT._headers[datacn] is None and get_displayed else self.MT._headers[datacn]
             
     def get_valid_cell_data_as_str(self, datacn, fix = True) -> str:
         if datacn in self.cell_options:
@@ -1500,7 +1499,7 @@ class ColumnHeaders(tk.Canvas):
         if fix:
             self.fix_header(datacn)
         try:
-            return f"{self.MT._headers[datacn]}"
+            return "" if self.MT._headers[datacn] is None else f"{self.MT._headers[datacn]}"
         except:
             return ""
             

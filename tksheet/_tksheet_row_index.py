@@ -590,7 +590,7 @@ class RowIndex(tk.Canvas):
                     self.cell_options[r] = {}
                 self.cell_options[r]['readonly'] = True
 
-    def highlight_cells(self, r = 0, cells = tuple(), bg = None, fg = None, pc = None, redraw = False, overwrite = True):
+    def highlight_cells(self, r = 0, cells = tuple(), bg = None, fg = None, redraw = False, overwrite = True):
         if bg is None and fg is None:
             return
         if cells and not isinstance(cells, int):
@@ -603,11 +603,10 @@ class RowIndex(tk.Canvas):
             if r_ not in self.cell_options:
                 self.cell_options[r_] = {}
             if 'highlight' in self.cell_options[r_] and not overwrite:
-                self.cell_options[r_]['highlight'] = Highlight(self.cell_options[r_]['highlight'].bg if bg is None else bg,
-                                                               self.cell_options[r_]['highlight'].fg if fg is None else fg,
-                                                               self.cell_options[r_]['highlight'].pc if pc is None else pc)
+                self.cell_options[r_]['highlight'] = (self.cell_options[r_]['highlight'][0] if bg is None else bg,
+                                                        self.cell_options[r_]['highlight'][1] if fg is None else fg)
             else:
-                self.cell_options[r_]['highlight'] = Highlight(bg, fg, pc)
+                self.cell_options[r_]['highlight'] = (bg, fg)
         if redraw:
             self.MT.main_table_redraw_grid_and_text(False, True)
 
@@ -1479,7 +1478,7 @@ class RowIndex(tk.Canvas):
         else:
             self.fix_index(datarn)
             if datarn in self.cell_options and 'checkbox' in self.cell_options[datarn]:
-                self.MT._row_index[datarn] = to_bool(value)
+                self.MT._row_index[datarn] = try_to_bool(value)
             else:
                 self.MT._row_index[datarn] = value
             
@@ -1518,7 +1517,7 @@ class RowIndex(tk.Canvas):
                 return get_n2a(datarn, self.default_index)
             else:
                 return ""
-        return self.MT._row_index[datarn]
+        return "" if self.MT._row_index[datarn] is None and get_displayed else self.MT._row_index[datarn]
             
     def get_valid_cell_data_as_str(self, datarn, fix = True) -> str:
         if datarn in self.cell_options:
@@ -1531,7 +1530,7 @@ class RowIndex(tk.Canvas):
         if fix:
             self.fix_index(datarn)
         try:
-            return f"{self.MT._row_index[datarn]}"
+            return "" if self.MT._row_index[datarn] is None else f"{self.MT._row_index[datarn]}"
         except:
             return ""
             

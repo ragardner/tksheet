@@ -24,8 +24,7 @@ ResizeEvent = namedtuple("ResizeEvent", "eventname index oldsize newsize")
 DropDownModifiedEvent = namedtuple("DropDownModifiedEvent", "eventname row column value")
 DrawnItem = namedtuple("DrawnItem", "iid showing")
 TextCfg = namedtuple("TextCfg", "txt tf font align")
-Highlight = namedtuple("Highlight", "bg fg pc")
-RowHighlight = namedtuple("Highlight", "bg fg pc endofscreen")
+ProgressBar = namedtuple("ProgressBar", "bg fg pc name")
 
 
 class TextEditor_(tk.Text):

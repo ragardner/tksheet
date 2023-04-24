@@ -43,6 +43,12 @@ def to_bool(val: Any, **kwargs):
         return False
     raise ValueError(f'Cannot map "{val}" to bool.')
 
+def try_to_bool(val: Any, **kwargs):
+    try:
+        return to_bool(val)
+    except:
+        return val
+
 def is_bool_like(v: Any, **kwargs):
     try:
         to_bool(v)

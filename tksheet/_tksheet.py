@@ -415,6 +415,12 @@ class Sheet(tk.Frame):
             self.RI.focus_set()
         elif canvas == "topleft":
             self.TL.focus_set()
+            
+    def displayed_column_to_data(self, c):
+        return c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
+    
+    def displayed_row_to_data(self, r):
+        return r if self.MT.all_rows_displayed else self.MT.displayed_rows[r]
 
     def popup_menu_add_command(self, label, func, table_menu = True, index_menu = True, header_menu = True, empty_space_menu = True):
         if label not in self.MT.extra_table_rc_menu_funcs and table_menu:
@@ -1427,28 +1433,25 @@ class Sheet(tk.Frame):
                                readonly = readonly)
         self.set_refresh_timer(redraw)
 
-    def dehighlight_all(self):
+    def dehighlight_all(self, redraw = True):
         for k in self.MT.cell_options:
             if 'highlight' in self.MT.cell_options[k]:
                 del self.MT.cell_options[k]['highlight']
-                
         for k in self.MT.row_options:
             if 'highlight' in self.MT.row_options[k]:
                 del self.MT.row_options[k]['highlight']
-                
         for k in self.MT.col_options:
             if 'highlight' in self.MT.col_options[k]:
                 del self.MT.col_options[k]['highlight']
-                
         for k in self.RI.cell_options:
             if 'highlight' in self.RI.cell_options[k]:
                 del self.RI.cell_options[k]['highlight']
-                
         for k in self.CH.cell_options:
             if 'highlight' in self.CH.cell_options[k]:
                 del self.CH.cell_options[k]['highlight']
+        self.set_refresh_timer(redraw)
 
-    def dehighlight_rows(self, rows = [], redraw = False):
+    def dehighlight_rows(self, rows = [], redraw = True):
         if isinstance(rows, int):
             rows_ = [rows]
         else:
@@ -1471,10 +1474,9 @@ class Sheet(tk.Frame):
                     del self.RI.cell_options[r]['highlight']
                 except:
                     pass
-        if redraw:
-            self.refresh(True, True)
+        self.set_refresh_timer(redraw)
 
-    def dehighlight_columns(self, columns = [], redraw = False):
+    def dehighlight_columns(self, columns = [], redraw = True):
         if isinstance(columns, int):
             columns_ = [columns]
         else:
@@ -1499,35 +1501,32 @@ class Sheet(tk.Frame):
                     pass
         self.set_refresh_timer(redraw)
             
-    def highlight_rows(self, rows = [], bg = None, fg = None, pc: Union[None, float] = None, highlight_index = True, redraw = False, end_of_screen = False, overwrite = True):
+    def highlight_rows(self, rows = [], bg = None, fg = None, highlight_index = True, redraw = True, end_of_screen = False, overwrite = True):
         self.MT.highlight_rows(rows = rows,
                                bg = bg,
                                fg = fg,
-                               pc = pc,
                                highlight_index = highlight_index,
                                redraw = False,
                                end_of_screen = end_of_screen,
                                overwrite = overwrite)
         self.set_refresh_timer(redraw)
 
-    def highlight_columns(self, columns = [], bg = None, fg = None, pc: Union[None, float] = None, highlight_header = True, redraw = False, overwrite = True):
+    def highlight_columns(self, columns = [], bg = None, fg = None, highlight_header = True, redraw = True, overwrite = True):
         self.MT.highlight_cols(cols = columns,
                                bg = bg,
                                fg = fg,
-                               pc = pc,
                                highlight_header = highlight_header,
                                redraw = False,
                                overwrite = overwrite)
         self.set_refresh_timer(redraw)
 
-    def highlight_cells(self, row = 0, column = 0, cells = [], canvas = "table", bg = None, fg = None, pc: Union[None, float] = None, redraw = False, overwrite = True):
+    def highlight_cells(self, row = 0, column = 0, cells = [], canvas = "table", bg = None, fg = None, redraw = True, overwrite = True):
         if canvas == "table":
             self.MT.highlight_cells(r = row,
                                     c = column,
                                     cells = cells,
                                     bg = bg,
                                     fg = fg,
-                                    pc = pc,
                                     redraw = False,
                                     overwrite = overwrite)
         elif canvas in ("row_index", "index"):
@@ -1535,7 +1534,6 @@ class Sheet(tk.Frame):
                                     cells = cells,
                                     bg = bg,
                                     fg = fg,
-                                    pc = pc,
                                     redraw = False,
                                     overwrite = overwrite)
         elif canvas == "header":
@@ -1543,26 +1541,8 @@ class Sheet(tk.Frame):
                                     cells = cells,
                                     bg = bg,
                                     fg = fg,
-                                    pc = pc,
                                     redraw = False,
                                     overwrite = overwrite)
-        self.set_refresh_timer(redraw)
-
-    def create_progress_bar(self, r, c, bg, fg, pc: float = 0.0, redraw = True):
-        self.MT.highlight_cells(r = r,
-                                c = c,
-                                bg = bg,
-                                fg = fg,
-                                pc = pc)
-        self.set_refresh_timer(redraw)
-
-    def set_progress_bar(self, r, c, pc: Union[None, float] = None, bg = None, fg = None, redraw = True):
-        self.MT.highlight_cells(r = r, c = c, bg = bg, fg = fg, pc = pc, overwrite = False)
-        self.MT.update_idletasks()
-        self.set_refresh_timer(redraw)
-
-    def delete_progress_bar(self, r, c, redraw = True):
-        self.dehighlight_cells(row = r, column = c)
         self.set_refresh_timer(redraw)
 
     def dehighlight_cells(self, row = 0, column = 0, cells = [], canvas = "table", all_ = False, redraw = True):

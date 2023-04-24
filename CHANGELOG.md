@@ -1,6 +1,7 @@
 ### Version 6.0.1
 #### Fixed:
 - Data getting with `get_displayed = True` not returning checkbox text and also in the main table dropdown box text
+- None being displayed on table instead of empty string
 
 ### Version 6.0.0
 #### Fixed:
