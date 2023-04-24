@@ -547,7 +547,7 @@ class RowIndex(tk.Canvas):
                         
         elif self.b1_pressed_loc is not None and self.rsz_w is None and self.rsz_h is None:
             r = self.MT.identify_row(y = event.y)
-            if r is not None and r == self.b1_pressed_loc and self.b1_pressed_loc != self.closed_dropdown:
+            if r is not None and r < len(self.MT.row_positions) - 1 and r == self.b1_pressed_loc and self.b1_pressed_loc != self.closed_dropdown:
                 datarn = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r]
                 if (self.canvasy(event.y) < self.MT.row_positions[r] + self.MT.txt_h and
                     (
@@ -655,6 +655,20 @@ class RowIndex(tk.Canvas):
             self.MT.main_table_redraw_grid_and_text(redraw_header = False, redraw_row_index = True)
         if self.selection_binding_func is not None and run_binding_func:
             self.selection_binding_func(("select_row", int(r)))
+            
+    def get_cell_dimensions(self, datarn):
+        txt = self.get_valid_cell_data_as_str(datarn, fix = False)
+        if txt:
+            self.MT.txt_measure_canvas.itemconfig(self.MT.txt_measure_canvas_text, text = txt, font = self.MT._font)
+            b = self.MT.txt_measure_canvas.bbox(self.MT.txt_measure_canvas_text)
+            w = b[2] - b[0] + 7
+            h = b[3] - b[1] + 5
+        else:
+            w = self.default_width
+            h = self.MT.min_rh
+        if datarn in self.cell_options and ('dropdown' in self.cell_options[datarn] or 'checkbox' in self.cell_options[datarn]):
+            return w + self.MT.txt_h, h
+        return w, h
 
     def set_row_height(self, row, height = None, only_set_if_too_small = False, recreate = True, return_new_height = False, displayed_only = False):
         r_norm = row + 1
@@ -677,14 +691,7 @@ class RowIndex(tk.Canvas):
                     start_col, end_col = 0, len(self.MT.displayed_columns)
                 iterable = self.MT.displayed_columns[start_col:end_col]
             new_height = int(min_rh)
-            if datarn in self.cell_options and 'checkbox' in self.cell_options[datarn]:
-                txt = self.cell_options[datarn]['checkbox']['text']
-            else:
-                txt = self.get_valid_cell_data_as_str(datarn, fix = False)
-            if txt:
-                h = self.MT.GetTextHeight(txt) + 5
-            else:
-                h = min_rh
+            w_, h = self.get_cell_dimensions(datarn)
             if h < min_rh:
                 h = int(min_rh)
             elif h > self.max_rh:
@@ -692,11 +699,8 @@ class RowIndex(tk.Canvas):
             if h > new_height:
                 new_height = h
             if self.MT.data:
-                for cn in iterable:
-                    if (datarn, cn) in self.MT.cell_options and 'checkbox' in self.MT.cell_options[(datarn, cn)]:
-                        txt = self.MT.cell_options[(datarn, cn)]['checkbox']['text']
-                    else:
-                        txt = self.MT.get_valid_cell_data_as_str(datarn, cn, get_displayed = True)
+                for datacn in iterable:
+                    txt = self.MT.get_valid_cell_data_as_str(datarn, datacn, get_displayed = True)
                     if txt:
                         h = self.MT.GetTextHeight(txt) + 5
                     else:
@@ -731,41 +735,31 @@ class RowIndex(tk.Canvas):
         qbbox = self.MT.txt_measure_canvas.bbox
         qtxtm = self.MT.txt_measure_canvas_text
         new_width = int(self.MT.min_cw)
+        self.fix_index()
+        if self.MT.all_rows_displayed:
+            if isinstance(self.MT._row_index, list):
+                iterable = range(len(self.MT._row_index))
+            else:
+                iterable = range(len(self.MT.data))
+        else:
+            iterable = self.MT.displayed_rows
         if isinstance(self.MT._row_index, list):
-            for rn, row in enumerate(self.MT._row_index):
-                if rn in self.cell_options and 'checkbox' in self.cell_options[rn]:
-                    txt = self.cell_options[rn]['checkbox']['text']
-                else:
-                    try:
-                        if isinstance(row, str):
-                            txt = row
-                        else:
-                            txt = f"{row}"
-                    except:
-                        txt = ""
-                if txt:
-                    qconf(qtxtm, text = txt)
-                    b = qbbox(qtxtm)
-                    w = b[2] - b[0] + 10
-                else:
-                    w = self.default_width
+            for datarn in iterable:
+                w, h_ = self.get_cell_dimensions(datarn)
                 if w < self.MT.min_cw:
                     w = int(self.MT.min_cw)
                 elif w > self.max_row_width:
                     w = int(self.max_row_width)
-                if rn in self.cell_options and 'checkbox' in self.cell_options[rn]:
+                if datarn in self.cell_options and 'checkbox' in self.cell_options[datarn]:
                     w += self.MT.txt_h + 6
-                elif rn in self.cell_options and 'dropdown' in self.cell_options[rn]:
+                elif datarn in self.cell_options and 'dropdown' in self.cell_options[datarn]:
                     w += self.MT.txt_h + 4
                 if w > new_width:
                     new_width = w
         elif isinstance(self.MT._row_index, int):
-            c = self.MT._row_index
-            for rn, row in enumerate(self.MT.data):
-                if (rn, c) in self.MT.cell_options and 'checkbox' in self.MT.cell_options[(rn, c)]:
-                    txt = self.MT.cell_options[(rn, c)]['checkbox']['text']
-                else:
-                    txt = self.MT.get_valid_cell_data_as_str(rn, c, get_displayed = True)
+            datacn = self.MT._row_index
+            for datarn in iterable:
+                txt = self.MT.get_valid_cell_data_as_str(datarn, datacn, get_displayed = True)
                 if txt:
                     qconf(qtxtm, text = txt)
                     b = qbbox(qtxtm)
@@ -959,7 +953,7 @@ class RowIndex(tk.Canvas):
                 t = self.create_line(points, fill = fill, width = 2, capstyle = tk.ROUND, joinstyle = tk.ROUND, tag = tag)
             self.disp_dropdown[t] = True
             
-    def redraw_checkbox(self, r, x1, y1, x2, y2, fill, outline, tag, draw_check = False):
+    def redraw_checkbox(self, x1, y1, x2, y2, fill, outline, tag, draw_check = False):
         points = self.MT.get_checkbox_points(x1, y1, x2, y2)
         if self.hidd_checkbox:
             t, sh = self.hidd_checkbox.popitem()
@@ -1041,7 +1035,6 @@ class RowIndex(tk.Canvas):
                                    -1, self.MT.row_positions[r + 1] if len(self.MT.row_positions) - 1 > r else draw_y])
                 if points:
                     self.redraw_gridline(points = points, fill = self.index_grid_fg, width = 1, tag = "h")
-        scrollpos_bot_add2 = scrollpos_bot + 2
         c_2 = self.index_selected_cells_bg if self.index_selected_cells_bg.startswith("#") else Color_Map_[self.index_selected_cells_bg]
         c_3 = self.index_selected_rows_bg if self.index_selected_rows_bg.startswith("#") else Color_Map_[self.index_selected_rows_bg]
         font = self.MT._font
@@ -1050,52 +1043,47 @@ class RowIndex(tk.Canvas):
             rbotgridln = self.MT.row_positions[r + 1]
             if rbotgridln - rtopgridln < self.MT.txt_h:
                 continue
-            if rbotgridln > scrollpos_bot_add2:
-                rbotgridln = scrollpos_bot_add2
-            if self.MT.all_rows_displayed:
-                datarn = r
-            else:
-                datarn = self.MT.displayed_rows[r]
+            datarn = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r]
             fill, dd_drawn = self.redraw_highlight_get_text_fg(rtopgridln, rbotgridln, r, c_2, c_3, selected_rows, selected_cols, actual_selected_rows, datarn)
             
-            if r in self.cell_options and 'align' in self.cell_options[r]:
-                align = self.cell_options[r]['align']
+            if datarn in self.cell_options and 'align' in self.cell_options[datarn]:
+                align = self.cell_options[datarn]['align']
             else:
                 align = self.align
                 
             if align == "w":
                 draw_x = 3
-                if r in self.cell_options and 'dropdown' in self.cell_options[r]:
+                if datarn in self.cell_options and 'dropdown' in self.cell_options[datarn]:
                     mw = self.current_width - self.MT.txt_h - 2
                     self.redraw_dropdown(0, rtopgridln, self.current_width - 1, rbotgridln - 1, 
                                          fill = fill, outline = fill, tag = "dd", draw_outline = not dd_drawn, draw_arrow = mw >= 5,
-                                         dd_is_open = self.cell_options[r]['dropdown']['window'] != "no dropdown open")
+                                         dd_is_open = self.cell_options[datarn]['dropdown']['window'] != "no dropdown open")
                 else:
                     mw = self.current_width - 2
 
             elif align == "e":
-                if r in self.cell_options and 'dropdown' in self.cell_options[r]:
+                if datarn in self.cell_options and 'dropdown' in self.cell_options[datarn]:
                     mw = self.current_width - self.MT.txt_h - 2
                     draw_x = self.current_width - 5 - self.MT.txt_h
                     self.redraw_dropdown(0, rtopgridln, self.current_width - 1, rbotgridln - 1, 
                                          fill = fill, outline = fill, tag = "dd", draw_outline = not dd_drawn, draw_arrow = mw >= 5,
-                                         dd_is_open = self.cell_options[r]['dropdown']['window'] != "no dropdown open")
+                                         dd_is_open = self.cell_options[datarn]['dropdown']['window'] != "no dropdown open")
                 else:
                     mw = self.current_width - 2
                     draw_x = self.current_width - 3
 
             elif align == "center":
-                if r in self.cell_options and 'dropdown' in self.cell_options[r]:
+                if datarn in self.cell_options and 'dropdown' in self.cell_options[datarn]:
                     mw = self.current_width - self.MT.txt_h - 2
                     draw_x = ceil((self.current_width - self.MT.txt_h) / 2)
                     self.redraw_dropdown(0, rtopgridln, self.current_width - 1, rbotgridln - 1, 
                                          fill = fill, outline = fill, tag = "dd", draw_outline = not dd_drawn, draw_arrow = mw >= 5,
-                                         dd_is_open = self.cell_options[r]['dropdown']['window'] != "no dropdown open")
+                                         dd_is_open = self.cell_options[datarn]['dropdown']['window'] != "no dropdown open")
                 else:
                     mw = self.current_width - 1
                     draw_x = floor(self.current_width / 2)
 
-            if r in self.cell_options and 'checkbox' in self.cell_options[r]:
+            if datarn in self.cell_options and 'checkbox' in self.cell_options[datarn]:
                 if mw > + 2:
                     box_w = self.MT.txt_h + 1
                     mw -= box_w
@@ -1107,22 +1095,18 @@ class RowIndex(tk.Canvas):
                     else:
                         mw -= 3
                     try:
-                        draw_check = self.MT._row_index[r] if isinstance(self.MT._row_index, (list, tuple)) else self.MT.data[r][self.MT._row_index]
+                        draw_check = self.MT._row_index[datarn] if isinstance(self.MT._row_index, (list, tuple)) else self.MT.data[datarn][self.MT._row_index]
                     except:
                         draw_check = False
-                    self.redraw_checkbox(r,
-                                         2,
+                    self.redraw_checkbox(2,
                                          rtopgridln + 2,
                                          self.MT.txt_h + 3,
                                          rtopgridln + self.MT.txt_h + 3,
-                                         fill = fill if self.cell_options[r]['checkbox']['state'] == "normal" else self.index_grid_fg,
+                                         fill = fill if self.cell_options[datarn]['checkbox']['state'] == "normal" else self.index_grid_fg,
                                          outline = "",
                                          tag = "cb",
                                          draw_check = draw_check)
-            if r in self.cell_options and 'checkbox' in self.cell_options[r]:
-                lns = self.cell_options[r]['checkbox']['text'].split("\n") if isinstance(self.cell_options[r]['checkbox']['text'], str) else f"{self.cell_options[r]['checkbox']['text']}".split("\n")
-            else:
-                lns = self.get_valid_cell_data_as_str(r, fix = False).split("\n")
+            lns = self.get_valid_cell_data_as_str(datarn, fix = False).split("\n")
             if lns == [""]:
                 if self.show_default_index_for_empty:
                     lns = (get_n2a(r, self.default_index), )
@@ -1323,7 +1307,7 @@ class RowIndex(tk.Canvas):
         h = self.MT.row_positions[r + 1] - y
         datarn = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r]
         if text is None:
-            text = self.get_valid_cell_data_as_str(datarn)
+            text = self.get_cell_data(datarn)
         bg, fg = self.index_bg, self.index_fg
         self.text_editor = TextEditor(self,
                                       text = text,
@@ -1494,7 +1478,7 @@ class RowIndex(tk.Canvas):
         else:
             self.fix_index(datarn)
             if datarn in self.cell_options and 'checkbox' in self.cell_options[datarn]:
-                self.MT._row_index[datarn] = to_bool(value)
+                self.MT._row_index[datarn] = try_to_bool(value)
             else:
                 self.MT._row_index[datarn] = value
             
@@ -1516,18 +1500,16 @@ class RowIndex(tk.Canvas):
     def cell_equal_to(self, datarn, value):
         self.fix_index(datarn)
         if isinstance(self.MT._row_index, list):
-            if datarn in self.cell_options and 'checkbox' in self.cell_options[datarn]:
-                try:
-                    return to_bool(self.MT._row_index[datarn]) == to_bool(value)
-                except:
-                    return False
             return self.MT._row_index[datarn] == value
         elif isinstance(self.MT._row_index, int):
             return self.MT.cell_equal_to(datarn, self.MT._row_index, value)
             
     def get_cell_data(self, datarn, get_displayed = False, redirect_int = False):
-        if datarn in self.cell_options and 'dropdown' in self.cell_options[datarn] and self.cell_options[datarn]['dropdown']['text'] is not None and get_displayed:
-            return self.cell_options[datarn]['dropdown']['text']
+        if get_displayed and datarn in self.cell_options:
+            if 'dropdown' in self.cell_options[datarn] and self.cell_options[datarn]['dropdown']['text'] is not None:
+                return self.cell_options[datarn]['dropdown']['text']
+            if 'checkbox' in self.cell_options[datarn]:
+                return self.cell_options[datarn]['checkbox']['text']
         if redirect_int and isinstance(self.MT._row_index, int):
             return self.MT.get_cell_data(datarn, self.MT._row_index, none_to_empty_str = True)
         if isinstance(self.MT._row_index, int) or not self.MT._row_index or datarn >= len(self.MT._row_index) or not self.MT._row_index[datarn]:
@@ -1535,17 +1517,20 @@ class RowIndex(tk.Canvas):
                 return get_n2a(datarn, self.default_index)
             else:
                 return ""
-        return self.MT._row_index[datarn]
+        return "" if self.MT._row_index[datarn] is None and get_displayed else self.MT._row_index[datarn]
             
     def get_valid_cell_data_as_str(self, datarn, fix = True) -> str:
-        if datarn in self.cell_options and 'dropdown' in self.cell_options[datarn] and self.cell_options[datarn]['dropdown']['text'] is not None:
-            return f"{self.cell_options[datarn]['dropdown']['text']}"
+        if datarn in self.cell_options:
+            if 'dropdown' in self.cell_options[datarn] and self.cell_options[datarn]['dropdown']['text'] is not None:
+                return f"{self.cell_options[datarn]['dropdown']['text']}"
+            if 'checkbox' in self.cell_options[datarn]:
+                return f"{self.cell_options[datarn]['checkbox']['text']}"
         if isinstance(self.MT._row_index, int):
             return self.MT.get_valid_cell_data_as_str(datarn, self.MT._row_index, get_displayed = True)
         if fix:
             self.fix_index(datarn)
         try:
-            return f"{self.MT._row_index[datarn]}"
+            return "" if self.MT._row_index[datarn] is None else f"{self.MT._row_index[datarn]}"
         except:
             return ""
             
@@ -1577,7 +1562,7 @@ class RowIndex(tk.Canvas):
             if isinstance(self.MT._row_index, list):
                 value = not self.MT._row_index[datarn] if type(self.MT._row_index[datarn]) == bool else False
             elif isinstance(self.MT._row_index, int):
-                value = not self.MT.data[self.MT._row_index][datarn] if type(self.MT.data[self.MT._row_index][datarn]) == bool else False
+                value = not self.MT.data[datarn][self.MT._row_index] if type(self.MT.data[datarn][self.MT._row_index]) == bool else False
             else:
                 value = False
             self.set_cell_data_undo(r, 
@@ -1601,13 +1586,12 @@ class RowIndex(tk.Canvas):
         if datarn in self.cell_options and ('dropdown' in self.cell_options[datarn] or 
                                             'checkbox' in self.cell_options[datarn]):
             self.delete_dropdown_and_checkbox(datarn)
-        self.set_cell_data(datarn = datarn, 
-                            value = checked)
         if datarn not in self.cell_options:
             self.cell_options[datarn] = {}
         self.cell_options[datarn]['checkbox'] = {'check_function': check_function,
                                                  'state': state,
                                                  'text': text}
+        self.set_cell_data(datarn = datarn, value = checked)
         if redraw:
             self.MT.refresh()
 
@@ -1620,8 +1604,6 @@ class RowIndex(tk.Canvas):
         if datarn in self.cell_options and ('dropdown' in self.cell_options[datarn] or 
                                             'checkbox' in self.cell_options[datarn]):
             self.delete_dropdown_and_checkbox(datarn)
-        self.set_cell_data(datarn = datarn, 
-                            value = set_value if set_value is not None else values[0] if values else "")
         if datarn not in self.cell_options:
             self.cell_options[datarn] = {}
         self.cell_options[datarn]['dropdown'] = {'values': values,
@@ -1633,6 +1615,8 @@ class RowIndex(tk.Canvas):
                                                  'validate_input': validate_input,
                                                  'text': text,
                                                  'state': state}
+        self.set_cell_data(datarn = datarn, 
+                           value = set_value if set_value is not None else values[0] if values else "")
         if redraw:
             self.MT.refresh()
     

@@ -1,3 +1,16 @@
+### Version 6.0.1
+#### Fixed:
+- Data getting with `get_displayed = True` not returning checkbox text and also in the main table dropdown box text
+- None being displayed on table instead of empty string
+- `insert_columns()`/`insert_rows()` with hidden columns/rows not working quite right
+
+#### Added:
+- Hidden rows capability use `display_rows()`/`hide_rows()` and read the documentation for more info
+
+#### Changed:
+- `hide_rows()`/`hide_columns()` `refresh` arg changed to `redraw`
+- `hide_rows()`/`hide_columns()` now uses displayed indexes not data
+
 ### Version 6.0.0
 #### Fixed:
 - Undo added to stack when no changes made with cut, paste, delete
