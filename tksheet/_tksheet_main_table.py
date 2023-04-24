@@ -2918,6 +2918,7 @@ class MainTable(tk.Canvas):
                        return_id = True,
                        keep_formatting = True):
         if isinstance(newdataref, (list, tuple)):
+            newdataref = [["" if c is None else c for c in row] for row in newdataref]        
             self.data = newdataref
             if keep_formatting:
                 self.reapply_formatting()
