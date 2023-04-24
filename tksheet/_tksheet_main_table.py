@@ -2918,6 +2918,7 @@ class MainTable(tk.Canvas):
                        return_id = True,
                        keep_formatting = True):
         if isinstance(newdataref, (list, tuple)):
+            newdataref = [["" if c is None else c for c in row] for row in newdataref]        
             self.data = newdataref
             if keep_formatting:
                 self.reapply_formatting()
@@ -5330,6 +5331,8 @@ class MainTable(tk.Canvas):
         return True
     
     def set_cell_data(self, datarn, datacn, value, kwargs = {}, expand_sheet = True):
+        if value is None:
+            value = ""
         if expand_sheet:
             if datarn >= len(self.data):
                 self.data.extend([list(repeat("", datacn + 1)) for i in range((datarn + 1) - len(self.data))])
