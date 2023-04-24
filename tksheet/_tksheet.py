@@ -2166,27 +2166,17 @@ class Sheet(tk.Frame):
         self.set_refresh_timer(redraw)
 
     def insert_column(self,
-                      values = None, 
-                      idx = "end", 
+                      values: Union[list, tuple, int, None] = None, 
+                      idx: Union[str, int] = "end", 
                       width = None, 
                       deselect_all = False, 
                       add_rows = True, 
                       equalize_data_row_lengths = True,
                       mod_column_positions = True,
-                      redraw = False):
-        if isinstance(values, (list, tuple)):
-            _values = (values, )
-        elif values is None:
-            _values = 1
-        else:
-            _values = values
-        if isinstance(width, int):
-            _width = (width, )
-        elif width is None:
-            _width = width
-        self.insert_columns(_values,
+                      redraw = True):
+        self.insert_columns((values, ) if isinstance(values, (list, tuple)) else 1 if values is None else values,
                             idx,
-                            _width,
+                            (width, ) if isinstance(width, int) else width,
                             deselect_all, 
                             add_rows, 
                             equalize_data_row_lengths,
@@ -2194,38 +2184,41 @@ class Sheet(tk.Frame):
                             redraw)
 
     def insert_columns(self, 
-                       columns = 1, 
-                       idx = "end", 
+                       columns: Union[list, tuple, int, None] = 1, 
+                       idx: Union[str, int] = "end", 
                        widths = None, 
                        deselect_all = False, 
                        add_rows = True, 
                        equalize_data_row_lengths = True,
                        mod_column_positions = True,
-                       redraw = False):
-        if mod_column_positions:
-            self.MT.insert_col_positions(idx = idx,
-                                         widths = columns if isinstance(columns, int) and widths is None else widths,
-                                         deselect_all = deselect_all)
+                       redraw = True):
         if equalize_data_row_lengths:
             old_total = self.MT.equalize_data_row_lengths()
         else:
             old_total = self.MT.total_data_cols()
         if isinstance(columns, int):
+            if columns < 1:
+                raise ValueError(f"columns arg must be greater than 0, not {columns}")
             total_rows = self.MT.total_data_rows()
             data = [list(repeat("", total_rows)) for i in range(columns)]
             numcols = columns
         else:
             data = columns
             numcols = len(columns)
-        if not self.MT.all_columns_displayed:
+        if self.MT.all_columns_displayed:
+            if mod_column_positions:
+                self.MT.insert_col_positions(idx = idx,
+                                             widths = columns if isinstance(columns, int) and widths is None else widths,
+                                             deselect_all = deselect_all)
+        elif not self.MT.all_columns_displayed:
             if idx != "end":
                 self.MT.displayed_columns = [c if c < idx else c + numcols for c in self.MT.displayed_columns]
             if mod_column_positions:
-                try:
-                    disp_next = max(self.MT.displayed_columns) + 1
-                except:
-                    disp_next = 0
-                self.MT.displayed_columns.extend(list(range(disp_next, disp_next + numcols)))
+                inspos = bisect.bisect_left(self.MT.displayed_columns, idx)
+                self.MT.displayed_columns[inspos:inspos] = list(range(idx, idx + numcols))
+                self.MT.insert_col_positions(idx = inspos,
+                                             widths = columns if isinstance(columns, int) and widths is None else widths,
+                                             deselect_all = deselect_all)
         maxidx = len(self.MT.data) - 1
         if add_rows:
             height = self.MT.default_rh[1]
@@ -2234,7 +2227,8 @@ class Sheet(tk.Frame):
                     for rn, v in enumerate(values):
                         if rn > maxidx:
                             self.MT.data.append(list(repeat("", old_total)))
-                            self.MT.insert_row_position("end", height = height)
+                            if self.MT.all_rows_displayed:
+                                self.MT.insert_row_position("end", height = height)
                             maxidx += 1
                         self.MT.data[rn].append(v)
             else:
@@ -2242,7 +2236,8 @@ class Sheet(tk.Frame):
                     for rn, v in enumerate(values):
                         if rn > maxidx:
                             self.MT.data.append(list(repeat("", old_total)))
-                            self.MT.insert_row_position("end", height = height)
+                            if self.MT.all_rows_displayed:
+                                self.MT.insert_row_position("end", height = height)
                             maxidx += 1
                         self.MT.data[rn].insert(idx, v)
         else:
@@ -2265,19 +2260,22 @@ class Sheet(tk.Frame):
             self.CH.cell_options = {cn if cn < idx else cn + num_add: t for cn, t in self.CH.cell_options.items()}
         self.set_refresh_timer(redraw)
 
-    def insert_row(self, values = None, idx = "end", height = None, deselect_all = False, add_columns = False,
-                   redraw = False):
-        self.MT.insert_row_position(idx = idx,
-                                    height = height,
-                                    deselect_all = deselect_all)
+    def insert_row(self, 
+                   values: Union[list, int, None] = None, 
+                   idx: Union[str, int] = "end", 
+                   height = None, 
+                   deselect_all = False, 
+                   add_columns = False,
+                   mod_row_positions = True,
+                   redraw = True):
         total_cols = None
         if values is None:
             total_cols = self.MT.total_data_cols()
             data = list(repeat("", total_cols))
-        elif isinstance(values, list):
-            data = values
-        else:
+        elif not isinstance(values, list):
             data = list(values)
+        else:
+            data = values
         if add_columns:
             if total_cols is None:
                 total_cols = self.MT.total_data_cols()
@@ -2290,6 +2288,16 @@ class Sheet(tk.Frame):
                     self.MT.col_positions = [0]
                 if len(data) > len(self.MT.col_positions) - 1:
                     self.insert_column_positions("end", len(data) - (len(self.MT.col_positions) - 1))
+        if self.MT.all_rows_displayed and mod_row_positions:
+            inspos = idx
+        if not self.MT.all_rows_displayed:
+            if idx != "end":
+                self.MT.displayed_rows = [r if r < idx else r + 1 for r in self.MT.displayed_rows]
+            if mod_row_positions:
+                inspos = bisect.bisect_left(self.MT.displayed_rows, idx)
+                self.MT.displayed_rows[inspos:inspos] = list(range(idx, idx + 1))
+        if mod_row_positions:
+            self.MT.insert_row_position(idx = inspos, height = height, deselect_all = deselect_all)
         if isinstance(idx, str) and idx.lower() == "end":
             self.MT.data.append(data)
         else:
@@ -2298,24 +2306,29 @@ class Sheet(tk.Frame):
             self.MT.row_options = {rn if rn < idx else rn + 1: t for rn, t in self.MT.row_options.items()}
             self.RI.cell_options = {rn if rn < idx else rn + 1: t for rn, t in self.RI.cell_options.items()}
         self.set_refresh_timer(redraw)
-#here
-    def insert_rows(self, rows = 1, idx = "end", heights = None, deselect_all = False, add_columns = True,
-                    redraw = False):
+
+    def insert_rows(self, 
+                    rows: Union[list, int] = 1, 
+                    idx: Union[str, int] = "end", 
+                    heights = None, 
+                    deselect_all = False, 
+                    add_columns = True,
+                    mod_row_positions = True, 
+                    redraw = True):
         total_cols = None
         if isinstance(rows, int):
+            if rows < 1:
+                raise ValueError(f"rows arg must be greater than 0, not {rows}")
             total_cols = self.MT.total_data_cols()
             data = [list(repeat("", total_cols)) for i in range(rows)]
-        elif isinstance(rows, list):
-            data = rows
-        else:
+        elif not isinstance(rows, list):
             data = list(rows)
-        if heights is None:
-            heights_ = len(data)
         else:
-            heights_ = heights
-        self.MT.insert_row_positions(idx = idx,
-                                     heights = heights_,
-                                     deselect_all = deselect_all)
+            data = rows
+        try:
+            data = [r if isinstance(r, list) else list(r) for r in data]
+        except Exception as msg:
+            raise ValueError(f"rows arg must be int or list of lists. {msg}")
         if add_columns:
             if total_cols is None:
                 total_cols = self.MT.total_data_cols()
@@ -2329,6 +2342,17 @@ class Sheet(tk.Frame):
                     self.MT.col_positions = [0]
                 if data_max_cols > len(self.MT.col_positions) - 1:
                     self.insert_column_positions("end", data_max_cols - (len(self.MT.col_positions) - 1))
+        if self.MT.all_rows_displayed and mod_row_positions:
+            inspos = idx
+        if not self.MT.all_rows_displayed:
+            numrows = len(data)
+            if idx != "end":
+                self.MT.displayed_rows = [r if r < idx else r + numrows for r in self.MT.displayed_rows]
+            if mod_row_positions:
+                inspos = bisect.bisect_left(self.MT.displayed_rows, idx)
+                self.MT.displayed_rows[inspos:inspos] = list(range(idx, idx + numrows))
+        if mod_row_positions:
+            self.MT.insert_row_positions(idx = inspos, heights = len(data) if heights is None else heights, deselect_all = deselect_all)
         if isinstance(idx, str) and idx.lower() == "end":
             self.MT.data.extend(data)
         else:
@@ -2366,7 +2390,7 @@ class Sheet(tk.Frame):
             self.set_refresh_timer(redraw if redraw else refresh)
         return res
     
-    def hide_columns(self, columns = set(), refresh = True, deselect_all = True):
+    def hide_columns(self, columns = set(), redraw = True, deselect_all = True):
         if isinstance(columns, int):
             _columns = {columns}
         elif isinstance(columns, set):
@@ -2375,7 +2399,7 @@ class Sheet(tk.Frame):
             _columns = set(columns)
         self.display_columns(columns = [c for c in range(self.MT.total_data_cols()) if c not in _columns] if self.MT.all_columns_displayed else [c for c in self.MT.displayed_columns if c not in _columns],
                              all_columns_displayed = False,
-                             refresh = refresh, 
+                             redraw = redraw, 
                              deselect_all = deselect_all)
         
     def display_rows(self,
@@ -2393,7 +2417,7 @@ class Sheet(tk.Frame):
             self.set_refresh_timer(redraw if redraw else refresh)
         return res
     
-    def hide_rows(self, rows = set(), refresh = True, deselect_all = True):
+    def hide_rows(self, rows = set(), redraw = True, deselect_all = True):
         if isinstance(rows, int):
             _rows = {rows}
         elif isinstance(rows, set):
@@ -2402,7 +2426,7 @@ class Sheet(tk.Frame):
             _rows = set(rows)
         self.display_rows(rows = [r for r in range(self.MT.total_data_rows()) if r not in _rows] if self.MT.all_rows_displayed else [r for r in self.MT.displayed_rows if r not in _rows],
                           all_rows_displayed = False,
-                          refresh = refresh, 
+                          redraw = redraw, 
                           deselect_all = deselect_all)
 
     def show_ctrl_outline(self, canvas = "table", start_cell = (0, 0), end_cell = (1, 1)):

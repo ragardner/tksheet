@@ -2,6 +2,13 @@
 #### Fixed:
 - Data getting with `get_displayed = True` not returning checkbox text and also in the main table dropdown box text
 - None being displayed on table instead of empty string
+- `insert_columns()`/`insert_rows()` with hidden columns/rows not working quite right
+
+#### Added:
+- Hidden rows capability use `display_rows()`/`hide_rows()` and read the documentation for more info
+
+#### Changed:
+- `hide_rows()`/`hide_columns()` `refresh` arg changed to `redraw`
 
 ### Version 6.0.0
 #### Fixed:

@@ -3732,9 +3732,9 @@ class MainTable(tk.Canvas):
         redrawn = False
         # ________________________ CELL IS HIGHLIGHTED AND IN SELECTED CELLS ________________________
         if (datarn, datacn) in self.cell_options and 'highlight' in self.cell_options[(datarn, datacn)] and (r, c) in selected_cells:
-            tf = self.table_selected_cells_fg if self.cell_options[(datarn, datacn)]['highlight'].fg is None or self.display_selected_fg_over_highlights else self.cell_options[(datarn, datacn)]['highlight'].fg
-            if self.cell_options[(datarn, datacn)]['highlight'].bg is not None:
-                c_1 = self.cell_options[(datarn, datacn)]['highlight'].bg if self.cell_options[(datarn, datacn)]['highlight'].bg.startswith("#") else Color_Map_[self.cell_options[(datarn, datacn)]['highlight'].bg]
+            tf = self.table_selected_cells_fg if self.cell_options[(datarn, datacn)]['highlight'][1] is None or self.display_selected_fg_over_highlights else self.cell_options[(datarn, datacn)]['highlight'][1]
+            if self.cell_options[(datarn, datacn)]['highlight'][0] is not None:
+                c_1 = self.cell_options[(datarn, datacn)]['highlight'][0] if self.cell_options[(datarn, datacn)]['highlight'][0].startswith("#") else Color_Map_[self.cell_options[(datarn, datacn)]['highlight'][0]]
                 redrawn = self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_2_[0]) / 2):02X}" +
                                                                                 f"{int((int(c_1[3:5], 16) + c_2_[1]) / 2):02X}" +
                                                                                 f"{int((int(c_1[5:], 16) + c_2_[2]) / 2):02X}"), 
@@ -3742,20 +3742,20 @@ class MainTable(tk.Canvas):
                                                 tag = "hi")
             
         elif datarn in self.row_options and 'highlight' in self.row_options[datarn] and (r, c) in selected_cells:
-            tf = self.table_selected_cells_fg if self.row_options[datarn]['highlight'].fg is None or self.display_selected_fg_over_highlights else self.row_options[datarn]['highlight'].fg
-            if self.row_options[datarn]['highlight'].bg is not None:
-                c_1 = self.row_options[datarn]['highlight'].bg if self.row_options[datarn]['highlight'].bg.startswith("#") else Color_Map_[self.row_options[datarn]['highlight'].bg]
+            tf = self.table_selected_cells_fg if self.row_options[datarn]['highlight'][1] is None or self.display_selected_fg_over_highlights else self.row_options[datarn]['highlight'][1]
+            if self.row_options[datarn]['highlight'][0] is not None:
+                c_1 = self.row_options[datarn]['highlight'][0] if self.row_options[datarn]['highlight'][0].startswith("#") else Color_Map_[self.row_options[datarn]['highlight'][0]]
                 redrawn = self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_2_[0]) / 2):02X}" +
                                                                                 f"{int((int(c_1[3:5], 16) + c_2_[1]) / 2):02X}" +
                                                                                 f"{int((int(c_1[5:], 16) + c_2_[2]) / 2):02X}"),
                                                 outline = self.table_fg if (datarn, datacn) in self.cell_options and 'dropdown' in self.cell_options[(datarn, datacn)] and self.show_dropdown_borders else "", 
                                                 tag = "hi",
-                                                can_width = can_width if self.row_options[datarn]['highlight'].endofscreen else None)
+                                                can_width = can_width if self.row_options[datarn]['highlight'][2] else None)
             
         elif datacn in self.col_options and 'highlight' in self.col_options[datacn] and (r, c) in selected_cells:
-            tf = self.table_selected_cells_fg if self.col_options[datacn]['highlight'].fg is None or self.display_selected_fg_over_highlights else self.col_options[datacn]['highlight'].fg
-            if self.col_options[datacn]['highlight'].bg is not None:
-                c_1 = self.col_options[datacn]['highlight'].bg if self.col_options[datacn]['highlight'].bg.startswith("#") else Color_Map_[self.col_options[datacn]['highlight'].bg]
+            tf = self.table_selected_cells_fg if self.col_options[datacn]['highlight'][1] is None or self.display_selected_fg_over_highlights else self.col_options[datacn]['highlight'][1]
+            if self.col_options[datacn]['highlight'][0] is not None:
+                c_1 = self.col_options[datacn]['highlight'][0] if self.col_options[datacn]['highlight'][0].startswith("#") else Color_Map_[self.col_options[datacn]['highlight'][0]]
                 redrawn = self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_2_[0]) / 2):02X}" +
                                                                                 f"{int((int(c_1[3:5], 16) + c_2_[1]) / 2):02X}" +
                                                                                 f"{int((int(c_1[5:], 16) + c_2_[2]) / 2):02X}"),
@@ -3764,9 +3764,9 @@ class MainTable(tk.Canvas):
             
         # ________________________ CELL IS HIGHLIGHTED AND IN SELECTED ROWS ________________________
         elif (datarn, datacn) in self.cell_options and 'highlight' in self.cell_options[(datarn, datacn)] and r in actual_selected_rows:
-            tf = self.table_selected_rows_fg if self.cell_options[(datarn, datacn)]['highlight'].fg is None or self.display_selected_fg_over_highlights else self.cell_options[(datarn, datacn)]['highlight'].fg
-            if self.cell_options[(datarn, datacn)]['highlight'].bg is not None:
-                c_1 = self.cell_options[(datarn, datacn)]['highlight'].bg if self.cell_options[(datarn, datacn)]['highlight'].bg.startswith("#") else Color_Map_[self.cell_options[(datarn, datacn)]['highlight'].bg]
+            tf = self.table_selected_rows_fg if self.cell_options[(datarn, datacn)]['highlight'][1] is None or self.display_selected_fg_over_highlights else self.cell_options[(datarn, datacn)]['highlight'][1]
+            if self.cell_options[(datarn, datacn)]['highlight'][0] is not None:
+                c_1 = self.cell_options[(datarn, datacn)]['highlight'][0] if self.cell_options[(datarn, datacn)]['highlight'][0].startswith("#") else Color_Map_[self.cell_options[(datarn, datacn)]['highlight'][0]]
                 redrawn = self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_4_[0]) / 2):02X}" +
                                                                                 f"{int((int(c_1[3:5], 16) + c_4_[1]) / 2):02X}" +
                                                                                 f"{int((int(c_1[5:], 16) + c_4_[2]) / 2):02X}"),
@@ -3774,9 +3774,9 @@ class MainTable(tk.Canvas):
                                                 tag = "hi")
             
         elif datarn in self.row_options and 'highlight' in self.row_options[datarn] and r in actual_selected_rows:
-            tf = self.table_selected_rows_fg if self.row_options[datarn]['highlight'].fg is None or self.display_selected_fg_over_highlights else self.row_options[datarn]['highlight'].fg
-            if self.row_options[datarn]['highlight'].bg is not None:
-                c_1 = self.row_options[datarn]['highlight'].bg if self.row_options[datarn]['highlight'].bg.startswith("#") else Color_Map_[self.row_options[datarn]['highlight'].bg]
+            tf = self.table_selected_rows_fg if self.row_options[datarn]['highlight'][1] is None or self.display_selected_fg_over_highlights else self.row_options[datarn]['highlight'][1]
+            if self.row_options[datarn]['highlight'][0] is not None:
+                c_1 = self.row_options[datarn]['highlight'][0] if self.row_options[datarn]['highlight'][0].startswith("#") else Color_Map_[self.row_options[datarn]['highlight'][0]]
                 redrawn = self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_4_[0]) / 2):02X}" +
                                                                                 f"{int((int(c_1[3:5], 16) + c_4_[1]) / 2):02X}" +
                                                                                 f"{int((int(c_1[5:], 16) + c_4_[2]) / 2):02X}"),
@@ -3785,9 +3785,9 @@ class MainTable(tk.Canvas):
                                                 can_width = can_width if self.row_options[r]['highlight'][2] else None)
             
         elif datacn in self.col_options and 'highlight' in self.col_options[datacn] and r in actual_selected_rows:
-            tf = self.table_selected_rows_fg if self.col_options[datacn]['highlight'].fg is None or self.display_selected_fg_over_highlights else self.col_options[datacn]['highlight'].fg
-            if self.col_options[datacn]['highlight'].bg is not None:
-                c_1 = self.col_options[datacn]['highlight'].bg if self.col_options[datacn]['highlight'].bg.startswith("#") else Color_Map_[self.col_options[datacn]['highlight'].bg]
+            tf = self.table_selected_rows_fg if self.col_options[datacn]['highlight'][1] is None or self.display_selected_fg_over_highlights else self.col_options[datacn]['highlight'][1]
+            if self.col_options[datacn]['highlight'][0] is not None:
+                c_1 = self.col_options[datacn]['highlight'][0] if self.col_options[datacn]['highlight'][0].startswith("#") else Color_Map_[self.col_options[datacn]['highlight'][0]]
                 redrawn = self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_4_[0]) / 2):02X}" +
                                                                                 f"{int((int(c_1[3:5], 16) + c_4_[1]) / 2):02X}" +
                                                                                 f"{int((int(c_1[5:], 16) + c_4_[2]) / 2):02X}"),
@@ -3796,9 +3796,9 @@ class MainTable(tk.Canvas):
             
         # ________________________ CELL IS HIGHLIGHTED AND IN SELECTED COLUMNS ________________________
         elif (datarn, datacn) in self.cell_options and 'highlight' in self.cell_options[(datarn, datacn)] and c in actual_selected_cols:
-            tf = self.table_selected_columns_fg if self.cell_options[(datarn, datacn)]['highlight'].fg is None or self.display_selected_fg_over_highlights else self.cell_options[(datarn, datacn)]['highlight'].fg
-            if self.cell_options[(datarn, datacn)]['highlight'].bg is not None:
-                c_1 = self.cell_options[(datarn, datacn)]['highlight'].bg if self.cell_options[(datarn, datacn)]['highlight'].bg.startswith("#") else Color_Map_[self.cell_options[(datarn, datacn)]['highlight'].bg]
+            tf = self.table_selected_columns_fg if self.cell_options[(datarn, datacn)]['highlight'][1] is None or self.display_selected_fg_over_highlights else self.cell_options[(datarn, datacn)]['highlight'][1]
+            if self.cell_options[(datarn, datacn)]['highlight'][0] is not None:
+                c_1 = self.cell_options[(datarn, datacn)]['highlight'][0] if self.cell_options[(datarn, datacn)]['highlight'][0].startswith("#") else Color_Map_[self.cell_options[(datarn, datacn)]['highlight'][0]]
                 redrawn = self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_3_[0]) / 2):02X}" +
                                                                                 f"{int((int(c_1[3:5], 16) + c_3_[1]) / 2):02X}" +
                                                                                 f"{int((int(c_1[5:], 16) + c_3_[2]) / 2):02X}"),
@@ -3806,20 +3806,20 @@ class MainTable(tk.Canvas):
                                                 tag = "hi")
             
         elif datarn in self.row_options and 'highlight' in self.row_options[datarn] and c in actual_selected_cols:
-            tf = self.table_selected_columns_fg if self.row_options[datarn]['highlight'].fg is None or self.display_selected_fg_over_highlights else self.row_options[datarn]['highlight'].fg
-            if self.row_options[datarn]['highlight'].bg is not None:
-                c_1 = self.row_options[datarn]['highlight'].bg if self.row_options[datarn]['highlight'].bg.startswith("#") else Color_Map_[self.row_options[datarn]['highlight'].bg]
+            tf = self.table_selected_columns_fg if self.row_options[datarn]['highlight'][1] is None or self.display_selected_fg_over_highlights else self.row_options[datarn]['highlight'][1]
+            if self.row_options[datarn]['highlight'][0] is not None:
+                c_1 = self.row_options[datarn]['highlight'][0] if self.row_options[datarn]['highlight'][0].startswith("#") else Color_Map_[self.row_options[datarn]['highlight'][0]]
                 redrawn = self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_3_[0]) / 2):02X}" +
                                                                                 f"{int((int(c_1[3:5], 16) + c_3_[1]) / 2):02X}" +
                                                                                 f"{int((int(c_1[5:], 16) + c_3_[2]) / 2):02X}"),
                                                 outline = self.table_fg if (datarn, datacn) in self.cell_options and 'dropdown' in self.cell_options[(datarn, datacn)] and self.show_dropdown_borders else "", 
                                                 tag = "hi",
-                                                can_width = can_width if self.row_options[datarn]['highlight'].endofscreen else None)
+                                                can_width = can_width if self.row_options[datarn]['highlight'][2] else None)
             
         elif datacn in self.col_options and 'highlight' in self.col_options[datacn] and c in actual_selected_cols:
-            tf = self.table_selected_columns_fg if self.col_options[datacn]['highlight'].fg is None or self.display_selected_fg_over_highlights else self.col_options[datacn]['highlight'].fg
-            if self.col_options[datacn]['highlight'].bg is not None:
-                c_1 = self.col_options[datacn]['highlight'].bg if self.col_options[datacn]['highlight'].bg.startswith("#") else Color_Map_[self.col_options[datacn]['highlight'].bg]
+            tf = self.table_selected_columns_fg if self.col_options[datacn]['highlight'][1] is None or self.display_selected_fg_over_highlights else self.col_options[datacn]['highlight'][1]
+            if self.col_options[datacn]['highlight'][0] is not None:
+                c_1 = self.col_options[datacn]['highlight'][0] if self.col_options[datacn]['highlight'][0].startswith("#") else Color_Map_[self.col_options[datacn]['highlight'][0]]
                 redrawn = self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = (f"#{int((int(c_1[1:3], 16) + c_3_[0]) / 2):02X}" +
                                                                                 f"{int((int(c_1[3:5], 16) + c_3_[1]) / 2):02X}" +
                                                                                 f"{int((int(c_1[5:], 16) + c_3_[2]) / 2):02X}"),
@@ -3828,24 +3828,24 @@ class MainTable(tk.Canvas):
 
         # ________________________ CELL IS HIGHLIGHTED AND NOT SELECTED ________________________
         elif (datarn, datacn) in self.cell_options and 'highlight' in self.cell_options[(datarn, datacn)] and (r, c) not in selected_cells and r not in actual_selected_rows and c not in actual_selected_cols:
-            tf = self.table_fg if self.cell_options[(datarn, datacn)]['highlight'].fg is None else self.cell_options[(datarn, datacn)]['highlight'].fg
-            if self.cell_options[(datarn, datacn)]['highlight'].bg is not None:
-                redrawn = self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = self.cell_options[(datarn, datacn)]['highlight'].bg,
+            tf = self.table_fg if self.cell_options[(datarn, datacn)]['highlight'][1] is None else self.cell_options[(datarn, datacn)]['highlight'][1]
+            if self.cell_options[(datarn, datacn)]['highlight'][0] is not None:
+                redrawn = self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = self.cell_options[(datarn, datacn)]['highlight'][0],
                                                 outline = self.table_fg if (datarn, datacn) in self.cell_options and 'dropdown' in self.cell_options[(datarn, datacn)] and self.show_dropdown_borders else "", 
                                                 tag = "hi")
             
         elif datarn in self.row_options and 'highlight' in self.row_options[datarn] and (r, c) not in selected_cells and r not in actual_selected_rows and c not in actual_selected_cols:
-            tf = self.table_fg if self.row_options[datarn]['highlight'].fg is None else self.row_options[datarn]['highlight'].fg
-            if self.row_options[datarn]['highlight'].bg is not None:
-                redrawn = self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = self.row_options[datarn]['highlight'].bg,
+            tf = self.table_fg if self.row_options[datarn]['highlight'][1] is None else self.row_options[datarn]['highlight'][1]
+            if self.row_options[datarn]['highlight'][0] is not None:
+                redrawn = self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = self.row_options[datarn]['highlight'][0],
                                                 outline = self.table_fg if (datarn, datacn) in self.cell_options and 'dropdown' in self.cell_options[(datarn, datacn)] and self.show_dropdown_borders else "", 
                                                 tag = "hi",
-                                                can_width = can_width if self.row_options[datarn]['highlight'].endofscreen else None)
+                                                can_width = can_width if self.row_options[datarn]['highlight'][2] else None)
             
         elif datacn in self.col_options and 'highlight' in self.col_options[datacn] and (r, c) not in selected_cells and r not in actual_selected_rows and c not in actual_selected_cols:
-            tf = self.table_fg if self.col_options[datacn]['highlight'].fg is None else self.col_options[datacn]['highlight'].fg
-            if self.col_options[datacn]['highlight'].bg is not None:
-                redrawn = self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = self.col_options[datacn]['highlight'].bg,
+            tf = self.table_fg if self.col_options[datacn]['highlight'][1] is None else self.col_options[datacn]['highlight'][1]
+            if self.col_options[datacn]['highlight'][0] is not None:
+                redrawn = self.redraw_highlight(fc + 1, fr + 1, sc, sr, fill = self.col_options[datacn]['highlight'][0],
                                                 outline = self.table_fg if (datarn, datacn) in self.cell_options and 'dropdown' in self.cell_options[(datarn, datacn)] and self.show_dropdown_borders else "",
                                                 tag = "hi")
         
