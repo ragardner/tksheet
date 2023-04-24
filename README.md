@@ -34,6 +34,7 @@ pip install tksheet --upgrade
 - Change fonts and font size (not for individual cells)
 - Change any colors in the sheet
 - Create an unlimited number of high performance dropdown and check boxes
+- [Hide rows and/or columns](https://github.com/ragardner/tksheet/wiki#example-header-dropdown-boxes-and-row-filtering)
 - Left `"w"`, Center `"center"` or Right `"e"` text alignment for any cell/row/column
 
 ### **light blue theme**

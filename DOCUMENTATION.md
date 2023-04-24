@@ -50,7 +50,6 @@ Some examples of things that are not possible with tksheet:
 - Changing font for individual cells
 - Different fonts for index and table
 - Mouse drag copy cells
-- Hide rows
 - Cell highlight borders
 - Highlighting continuous multiple cells with a single border
 
