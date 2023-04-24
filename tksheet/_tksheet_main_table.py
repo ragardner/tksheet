@@ -5330,6 +5330,8 @@ class MainTable(tk.Canvas):
         return True
     
     def set_cell_data(self, datarn, datacn, value, kwargs = {}, expand_sheet = True):
+        if value is None:
+            value = ""
         if expand_sheet:
             if datarn >= len(self.data):
                 self.data.extend([list(repeat("", datacn + 1)) for i in range((datarn + 1) - len(self.data))])
