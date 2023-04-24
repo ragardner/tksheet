@@ -9,6 +9,7 @@
 
 #### Changed:
 - `hide_rows()`/`hide_columns()` `refresh` arg changed to `redraw`
+- `hide_rows()`/`hide_columns()` now uses displayed indexes not data
 
 ### Version 6.0.0
 #### Fixed:

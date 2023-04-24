@@ -2374,33 +2374,6 @@ class Sheet(tk.Frame):
 
     def equalize_data_row_lengths(self):
         return self.MT.equalize_data_row_lengths()
-
-    def display_columns(self,
-                        columns = None,
-                        all_columns_displayed = None,
-                        reset_col_positions = True,
-                        refresh = False,
-                        redraw = False,
-                        deselect_all = True):
-        res = self.MT.display_columns(columns = None if isinstance(columns, str) and columns.lower() == "all" else columns,
-                                      all_columns_displayed = True if isinstance(columns, str) and columns.lower() == "all" else all_columns_displayed,
-                                      reset_col_positions = reset_col_positions,
-                                      deselect_all = deselect_all)
-        if refresh or redraw:
-            self.set_refresh_timer(redraw if redraw else refresh)
-        return res
-    
-    def hide_columns(self, columns = set(), redraw = True, deselect_all = True):
-        if isinstance(columns, int):
-            _columns = {columns}
-        elif isinstance(columns, set):
-            _columns = columns
-        else:
-            _columns = set(columns)
-        self.display_columns(columns = [c for c in range(self.MT.total_data_cols()) if c not in _columns] if self.MT.all_columns_displayed else [c for c in self.MT.displayed_columns if c not in _columns],
-                             all_columns_displayed = False,
-                             redraw = redraw, 
-                             deselect_all = deselect_all)
         
     def display_rows(self,
                      rows = None,
@@ -2408,7 +2381,10 @@ class Sheet(tk.Frame):
                      reset_row_positions = True,
                      refresh = False,
                      redraw = False,
-                     deselect_all = True):
+                     deselect_all = True,
+                     **kwargs):
+        if 'all_displayed' in kwargs:
+            all_rows_displayed = kwargs['all_displayed']
         res = self.MT.display_rows(rows = None if isinstance(rows, str) and rows.lower() == "all" else rows,
                                    all_rows_displayed = True if isinstance(rows, str) and rows.lower() == "all" else all_rows_displayed,
                                    reset_row_positions = reset_row_positions,
@@ -2417,6 +2393,37 @@ class Sheet(tk.Frame):
             self.set_refresh_timer(redraw if redraw else refresh)
         return res
     
+    def display_columns(self,
+                        columns = None,
+                        all_columns_displayed = None,
+                        reset_col_positions = True,
+                        refresh = False,
+                        redraw = False,
+                        deselect_all = True,
+                        **kwargs):
+        if 'all_displayed' in kwargs:
+            all_columns_displayed = kwargs['all_displayed']
+        res = self.MT.display_columns(columns = None if isinstance(columns, str) and columns.lower() == "all" else columns,
+                                      all_columns_displayed = True if isinstance(columns, str) and columns.lower() == "all" else all_columns_displayed,
+                                      reset_col_positions = reset_col_positions,
+                                      deselect_all = deselect_all)
+        if refresh or redraw:
+            self.set_refresh_timer(redraw if redraw else refresh)
+        return res
+
+    def all_rows_displayed(self, a = None):
+        v = bool(self.MT.all_rows_displayed)
+        if type(a) == bool:
+            self.MT.all_rows_displayed = a
+        return v
+    
+    def all_columns_displayed(self, a = None):
+        v = bool(self.MT.all_columns_displayed)
+        if type(a) == bool:
+            self.MT.all_columns_displayed = a
+        return v
+    
+    # uses displayed indexes
     def hide_rows(self, rows = set(), redraw = True, deselect_all = True):
         if isinstance(rows, int):
             _rows = {rows}
@@ -2424,10 +2431,35 @@ class Sheet(tk.Frame):
             _rows = rows
         else:
             _rows = set(rows)
-        self.display_rows(rows = [r for r in range(self.MT.total_data_rows()) if r not in _rows] if self.MT.all_rows_displayed else [r for r in self.MT.displayed_rows if r not in _rows],
+        if not _rows:
+            return
+        if self.MT.all_rows_displayed:
+            _rows = [r for r in range(self.MT.total_data_rows()) if r not in _rows]
+        else:
+            _rows = [e for r, e in enumerate(self.MT.displayed_rows) if r not in _rows]
+        self.display_rows(rows = _rows,
                           all_rows_displayed = False,
                           redraw = redraw, 
                           deselect_all = deselect_all)
+    
+    # uses displayed indexes
+    def hide_columns(self, columns = set(), redraw = True, deselect_all = True):
+        if isinstance(columns, int):
+            _columns = {columns}
+        elif isinstance(columns, set):
+            _columns = columns
+        else:
+            _columns = set(columns)
+        if not _columns:
+            return
+        if self.MT.all_columns_displayed:
+            _columns = [c for c in range(self.MT.total_data_cols()) if c not in _columns]
+        else:
+            _columns = [e for c, e in enumerate(self.MT.displayed_columns) if c not in _columns]
+        self.display_columns(columns = _columns,
+                             all_columns_displayed = False,
+                             redraw = redraw, 
+                             deselect_all = deselect_all)
 
     def show_ctrl_outline(self, canvas = "table", start_cell = (0, 0), end_cell = (1, 1)):
         self.MT.show_ctrl_outline(canvas = canvas, start_cell = start_cell, end_cell = end_cell)

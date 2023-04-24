@@ -1389,13 +1389,21 @@ display_columns(columns = None,
 
 ___
 
+#### **Get all columns displayed boolean.**
+```python
+all_columns_displayed(a = None)
+```
+- `a` (`bool`, `None`) Either set by using `bool` or get by leaving `None` e.g. `all_columns_displayed()`.
+
+___
+
 #### **Hide specific columns.**
 ```python
 hide_columns(columns = set(),
              redraw = True, 
              deselect_all = True)
 ```
-- `columns` (`int`) uses data indexes not displayed, e.g. if you already have column 0 hidden and you want to hide the first column shown in the sheet you would use argument `columns = 1`.
+- **NOTE**: `columns` (`int`) uses displayed column indexes, not data indexes. In other words the indexes of the columns displayed on the screen are the ones that are hidden, this is useful when uses in conjunction with `get_selected_columns()`.
 
 ## **Hiding Rows**
 ----
@@ -1416,6 +1424,15 @@ display_rows(rows = None,
 - Example usage to display all rows: `sheet.display_rows("all")`.
 - Example usage to display specific rows only: `sheet.display_rows([2, 4, 7], all_displayed = False)`.
 - [This is a very simple example of row filtering](https://github.com/ragardner/tksheet/wiki#example-header-dropdown-boxes-and-row-filtering) using this function.
+
+___
+
+#### **Get all rows displayed boolean.**
+```python
+all_rows_displayed(a = None)
+```
+- `a` (`bool`, `None`) Either set by using `bool` or get by leaving `None` e.g. `all_rows_displayed()`.
+
 ___
 
 #### **Hide specific rows.**
@@ -1424,7 +1441,7 @@ hide_rows(rows = set(),
           redraw = True, 
           deselect_all = True)
 ```
-- `rows` (`int`) uses data indexes not displayed, e.g. if you already have row 0 hidden and you want to hide the first row shown in the sheet you would use argument `rows = 1`.
+- **NOTE**: `rows` (`int`) uses displayed row indexes, not data indexes. In other words the indexes of the rows displayed on the screen are the ones that are hidden, this is useful when uses in conjunction with `get_selected_rows()`.
 
 ## **Hiding Table Elements**
 ----
@@ -2552,8 +2569,11 @@ class demo(tk.Tk):
                            theme = "black",
                            height = 520,
                            width = 930)
-        self.sheet.enable_bindings()
-        self.sheet.enable_bindings("edit_header")
+        self.sheet.enable_bindings("all", "edit_index", "edit header")
+        self.sheet.popup_menu_add_command("Hide Rows", self.hide_rows, table_menu = False, header_menu = False, empty_space_menu = False)
+        self.sheet.popup_menu_add_command("Show All Rows", self.show_rows, table_menu = False, header_menu = False, empty_space_menu = False)
+        self.sheet.popup_menu_add_command("Hide Columns", self.hide_columns, table_menu = False, index_menu = False, empty_space_menu = False)
+        self.sheet.popup_menu_add_command("Show All Columns", self.show_columns, table_menu = False, index_menu = False, empty_space_menu = False)
         self.frame.grid(row = 0, column = 0, sticky = "nswe")
         self.sheet.grid(row = 0, column = 0, sticky = "nswe")
         colors = ("#509f56",
@@ -2606,6 +2626,22 @@ class demo(tk.Tk):
                                    fg = "purple")
         self.sheet.set_all_column_widths()
         self.sheet.extra_bindings("all", self.all_extra_bindings)
+        
+    def hide_rows(self, event = None):
+        rows = self.sheet.get_selected_rows()
+        if rows:
+            self.sheet.hide_rows(rows)
+        
+    def show_rows(self, event = None):
+        self.sheet.display_rows("all", redraw = True)
+        
+    def hide_columns(self, event = None):
+        columns = self.sheet.get_selected_columns()
+        if columns:
+            self.sheet.hide_columns(columns)
+        
+    def show_columns(self, event = None):
+        self.sheet.display_columns("all", redraw = True)
         
     def all_extra_bindings(self, event = None):
         #print (event)
