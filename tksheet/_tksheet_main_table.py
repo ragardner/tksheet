@@ -3479,7 +3479,7 @@ class MainTable(tk.Canvas):
                     self.extra_begin_del_rows_rc_func(DeleteRowColumnEvent("begin_delete_rows", seld_rows))
                 except:
                     return
-            seldset = set(seld_rows) if self.all_rows_displayed else set(self.displayed_rows[c] for r in seld_rows)
+            seldset = set(seld_rows) if self.all_rows_displayed else set(self.displayed_rows[r] for r in seld_rows)
             list_of_coords = tuple((r, c) for (r, c) in self.cell_options if r in seldset)
             if self.undo_enabled:
                 undo_storage = {'deleted_rows': [],
@@ -5324,6 +5324,7 @@ class MainTable(tk.Canvas):
             self.set_cell_data(datarn, datacn, value)
         if cell_resize and self.cell_auto_resize_enabled:
             self.set_cell_size_to_text(r, c, only_set_if_too_small = True, redraw = redraw, run_binding = True)
+        self.generate_event('<<SheetDataChangeEvent>>')
         return True
     
     def set_cell_data(self, datarn, datacn, value, kwargs = {}, expand_sheet = True):
