@@ -8,6 +8,7 @@
 - Hidden rows capability use `display_rows()`/`hide_rows()` and read the documentation for more info
 
 #### Changed:
+- Some functions have had their `redraw` keyword argument defaulted to `True` instead of `False` such as `highlight_cells()`
 - `hide_rows()`/`hide_columns()` `refresh` arg changed to `redraw`
 - `hide_rows()`/`hide_columns()` now uses displayed indexes not data
 
