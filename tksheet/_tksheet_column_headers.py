@@ -1615,6 +1615,10 @@ class ColumnHeaders(tk.Canvas):
         return win_h, "nw"
 
     def set_current_height_to_cell(self, datacn):
+        new_height = self.get_cell_height(datacn)
+        self.set_height(new_height, set_TL = True)
+
+    def get_cell_height(self, datacn):
         if isinstance(self.MT._headers, int):
             text = self.MT.get_cell_data(self.MT._headers, datacn)
         elif len(self.MT._headers) != 0:
@@ -1631,7 +1635,21 @@ class ColumnHeaders(tk.Canvas):
         space_bot = self.MT.get_space_bot(0)
         if new_height > space_bot:
             new_height = space_bot
-        self.set_height(new_height, set_TL = True)
+        return new_height
+    
+    def auto_set_header_height(self):
+        if not self.height_resizing_enabled:
+            return
+        current_height = self.current_height
+        if self.MT.all_columns_displayed:
+            _columns = [c for c in range(self.MT.total_data_cols())]
+        else:
+            _columns = [e for c, e in enumerate(self.MT.displayed_columns)]
+        for c in _columns:
+            new_height = self.get_cell_height(c)
+            if new_height > current_height:
+                current_height = new_height
+        self.set_height(current_height, set_TL=True)
 
     def open_dropdown_window(self, c, datacn = None, event = None):
         self.destroy_text_editor("Escape")
