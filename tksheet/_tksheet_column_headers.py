@@ -1226,7 +1226,7 @@ class ColumnHeaders(tk.Canvas):
         text = "" if text is None else text
         if self.MT.cell_auto_resize_enabled:
             if self.height_resizing_enabled:
-                self.set_current_height_to_text(text)
+                self.set_current_height_to_text(text, datacn)
             self.set_col_width_run_binding(c)
         self.select_col(c = c, keep_other_selections = True)
         self.create_text_editor(c = c, text = text, set_data_on_close = True, dropdown = dropdown)
@@ -1437,7 +1437,7 @@ class ColumnHeaders(tk.Canvas):
                 self.set_cell_data(datacn = datacn, value = value)
         if cell_resize and self.MT.cell_auto_resize_enabled:
             if self.height_resizing_enabled:
-                self.set_current_height_to_text(value)
+                self.set_current_height_to_text(value, datacn)
             self.set_col_width_run_binding(c)
         if redraw:
             self.MT.refresh()
@@ -1614,10 +1614,10 @@ class ColumnHeaders(tk.Canvas):
             win_h = win_h2
         return win_h, "nw"
 
-    def set_current_height_to_text(self, text):
+    def set_current_height_to_text(self, text, datacn):
         x = self.MT.txt_measure_canvas.create_text(0,
                                                    0,
-                                                   text = self.MT.get_valid_cell_data_as_str(text) if isinstance(self.MT._headers, int) else text,
+                                                   text = self.MT.get_valid_cell_data_as_str(self.MT._headers, datacn, get_displayed = True) if isinstance(self.MT._headers, int) else text,
                                                    font = self.MT._hdr_font)
         b = self.MT.txt_measure_canvas.bbox(x)
         self.MT.txt_measure_canvas.delete(x)
