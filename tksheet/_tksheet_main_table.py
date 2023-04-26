@@ -508,6 +508,7 @@ class MainTable(tk.Canvas):
             self.show_ctrl_outline(canvas = "table", start_cell = (c1, r1), end_cell = (c2, r2))
         if self.extra_end_ctrl_x_func is not None:
             self.extra_end_ctrl_x_func(CtrlKeyEvent("end_ctrl_x", boxes, currently_selected, rows))
+        self.event_generate("<<SheetDataChangeEvent>>")
 
     def find_last_selected_box_with_current(self, currently_selected):
         if currently_selected.type_ in ("cell", "column"):
@@ -636,6 +637,7 @@ class MainTable(tk.Canvas):
         self.refresh()
         if self.extra_end_ctrl_v_func is not None:
             self.extra_end_ctrl_v_func(PasteEvent("end_ctrl_v", currently_selected, rows))
+        self.event_generate("<<SheetDataChangeEvent>>")
 
     def delete_key(self, event = None):
         if self.anything_selected():
@@ -672,6 +674,7 @@ class MainTable(tk.Canvas):
             if changes and self.undo_enabled:
                 self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells", undo_storage, tuple(boxes.items()), currently_selected))))
             self.refresh()
+            self.event_generate("<<SheetDataChangeEvent>>")
             
     def move_columns_adjust_options_dict(self, col, to_move_min, num_cols, move_data = True, create_selections = True):
         c = int(col)
@@ -1128,6 +1131,7 @@ class MainTable(tk.Canvas):
         self.refresh()
         if self.extra_end_ctrl_z_func is not None:
             self.extra_end_ctrl_z_func(UndoEvent("end_ctrl_z", undo_storage[0], undo_storage))
+        self.event_generate("<<SheetDataChangeEvent>>")
 
     def bind_arrowkeys(self, keys: dict = {}):
         for canvas in (self, self.parentframe, self.CH, self.RI, self.TL):
@@ -3353,6 +3357,7 @@ class MainTable(tk.Canvas):
         self.refresh()
         if self.extra_end_insert_cols_rc_func is not None:
             self.extra_end_insert_cols_rc_func(InsertEvent("end_insert_columns", data_ins_col, displayed_ins_col, numcols))
+        self.event_generate("<<SheetDataChangeEvent>>")
 
     def insert_row_rc(self, event = None):
         if self.anything_selected(exclude_columns = True, exclude_cells = True):
@@ -3402,6 +3407,7 @@ class MainTable(tk.Canvas):
         self.refresh()
         if self.extra_end_insert_rows_rc_func is not None:
             self.extra_end_insert_rows_rc_func(InsertEvent("end_insert_rows", stidx, posidx, numrows))
+        self.event_generate("<<SheetDataChangeEvent>>")
             
     def del_cols_rc(self, event = None):
         seld_cols = sorted(self.get_selected_cols())
@@ -3470,6 +3476,7 @@ class MainTable(tk.Canvas):
             self.refresh()
             if self.extra_end_del_cols_rc_func is not None:
                 self.extra_end_del_cols_rc_func(DeleteRowColumnEvent("end_delete_columns", seld_cols))
+            self.event_generate('<<SheetDataChangeEvent>>')
 
     def del_rows_rc(self, event = None):
         seld_rows = sorted(self.get_selected_rows())
@@ -3527,6 +3534,7 @@ class MainTable(tk.Canvas):
             self.refresh()
             if self.extra_end_del_rows_rc_func is not None:
                 self.extra_end_del_rows_rc_func(DeleteRowColumnEvent("end_delete_rows", seld_rows))
+            self.event_generate('<<SheetDataChangeEvent>>')
 
     def move_row_position(self, idx1, idx2):
         if not len(self.row_positions) <= 2:
@@ -5324,7 +5332,7 @@ class MainTable(tk.Canvas):
             self.set_cell_data(datarn, datacn, value)
         if cell_resize and self.cell_auto_resize_enabled:
             self.set_cell_size_to_text(r, c, only_set_if_too_small = True, redraw = redraw, run_binding = True)
-        self.generate_event('<<SheetDataChangeEvent>>')
+        self.event_generate('<<SheetDataChangeEvent>>')
         return True
     
     def set_cell_data(self, datarn, datacn, value, kwargs = {}, expand_sheet = True):
@@ -5419,6 +5427,7 @@ class MainTable(tk.Canvas):
             self.cell_options[(datarn, datacn)] = {}
         self.cell_options[(datarn, datacn)]['format'] = kwargs
         self.set_cell_data(datarn, datacn, value = v, kwargs = kwargs)
+        self.event_generate('<<SheetDataChangeEvent>>')
         
     def format_row(self, datarn, **kwargs):
         kwargs = self.format_fix_kwargs(kwargs)
@@ -5430,6 +5439,7 @@ class MainTable(tk.Canvas):
                                datacn,
                                value = kwargs['value'] if 'value' in kwargs else self.get_cell_data(datarn, datacn),
                                kwargs = kwargs)
+        self.event_generate('<<SheetDataChangeEvent>>')
             
     def format_column(self, datacn, **kwargs):
         kwargs = self.format_fix_kwargs(kwargs)
@@ -5441,6 +5451,7 @@ class MainTable(tk.Canvas):
                                datacn,
                                value = kwargs['value'] if 'value' in kwargs else self.get_cell_data(datarn, datacn),
                                kwargs = kwargs)
+        self.event_generate('<<SheetDataChangeEvent>>')
             
     def format_sheet(self, **kwargs):
         kwargs = self.format_fix_kwargs(kwargs)
@@ -5451,6 +5462,7 @@ class MainTable(tk.Canvas):
                                    datacn,
                                    value = kwargs['value'] if 'value' in kwargs else self.get_cell_data(datarn, datacn),
                                    kwargs = kwargs)
+        self.event_generate('<<SheetDataChangeEvent>>')
 
     def format_fix_kwargs(self, kwargs):
         if kwargs['formatter'] is None:
