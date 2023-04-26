@@ -1,3 +1,7 @@
+### Version 6.0.2
+#### Fixed:
+- Right click delete rows bug [PR#171](https://github.com/ragardner/tksheet/pull/171)
+
 ### Version 6.0.1
 #### Fixed:
 - Data getting with `get_displayed = True` not returning checkbox text and also in the main table dropdown box text
