@@ -4354,6 +4354,7 @@ class MainTable(tk.Canvas):
             self.CH.redraw_grid_and_text(last_col_line_pos, scrollpos_left, x_stop, start_col, end_col, scrollpos_right, selected_cols, actual_selected_rows, actual_selected_cols, col_pos_exists)
         if redraw_row_index and self.show_index:
             self.RI.redraw_grid_and_text(last_row_line_pos, scrollpos_top, y_stop, start_row, end_row + 1, scrollpos_bot, selected_rows, actual_selected_cols, actual_selected_rows, row_pos_exists)
+        self.event_generate("<<RedrawSheet>>")
         return True
 
     def get_all_selection_items(self):
