@@ -382,7 +382,8 @@ class RowIndex(tk.Canvas):
         elif self.row_selection_enabled and self.rsz_h is None and self.rsz_w is None:
             r = self.MT.identify_row(y = event.y)
             if r < len(self.MT.row_positions) - 1:
-                if self.MT.row_selected(r):
+                datarn = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r]
+                if self.MT.row_selected(r) and not self.event_over_dropdown(r, datarn, event, y) and not self.event_over_checkbox(r, datarn, event, y):
                     self.dragged_row = DraggedRowColumn(dragged = r, to_move = get_seq_without_gaps_at_index(sorted(self.MT.get_selected_rows()), r))
                 else:
                     self.being_drawn_rect = (r, 0, r + 1, len(self.MT.col_positions) - 1, "rows")
@@ -560,6 +561,20 @@ class RowIndex(tk.Canvas):
         if len(ycheck) > 1 and ycheck[1] > 1:
             self.MT.set_yviews("moveto", 1)
             
+    def event_over_dropdown(self, r, datarn, event, canvasy):
+        if (canvasy < self.MT.row_positions[r] + self.MT.txt_h and
+            self.get_cell_kwargs(datarn, key = 'dropdown') and 
+            event.x > self.current_width - self.MT.txt_h - 4):
+            return True
+        return False
+  
+    def event_over_checkbox(self, r, datarn, event, canvasy):
+        if (canvasy < self.MT.row_positions[r] + self.MT.txt_h and
+            self.get_cell_kwargs(datarn, key = 'checkbox') and
+            event.x < self.MT.txt_h + 4):
+            return True
+        return False
+            
     def b1_release(self, event = None):
         if self.being_drawn_rect is not None:
             self.MT.delete_selected(*self.being_drawn_rect)
@@ -623,16 +638,8 @@ class RowIndex(tk.Canvas):
             r = self.MT.identify_row(y = event.y)
             if r is not None and r < len(self.MT.row_positions) - 1 and r == self.b1_pressed_loc and self.b1_pressed_loc != self.closed_dropdown:
                 datarn = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r]
-                if (self.canvasy(event.y) < self.MT.row_positions[r] + self.MT.txt_h and
-                    (
-                     (self.get_cell_kwargs(datarn, key = 'dropdown') and 
-                      event.x < self.current_width and 
-                      event.x > self.current_width - self.MT.txt_h - 4) 
-                    or
-                     (self.get_cell_kwargs(datarn, key = 'checkbox') and
-                      event.x < self.MT.txt_h + 5)
-                     )
-                ):
+                canvasy = self.canvasy(event.y)
+                if self.event_over_dropdown(r, datarn, event, canvasy) or self.event_over_checkbox(r, datarn, event, canvasy):
                     self.open_cell(event)
             else:
                 self.mouseclick_outside_editor_or_dropdown_all_canvases()

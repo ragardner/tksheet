@@ -393,7 +393,8 @@ class ColumnHeaders(tk.Canvas):
             self.MT.deselect("all")
         elif self.col_selection_enabled and self.rsz_w is None and self.rsz_h is None:
             if c < len(self.MT.col_positions) - 1:
-                if self.MT.col_selected(c):
+                datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
+                if self.MT.col_selected(c) and not self.event_over_dropdown(c, datacn, event, x) and not self.event_over_checkbox(c, datacn, event, x):
                     self.dragged_col = DraggedRowColumn(dragged = c, to_move = get_seq_without_gaps_at_index(sorted(self.MT.get_selected_cols()), c))
                 else:
                     self.being_drawn_rect = (0, c, len(self.MT.row_positions) - 1, c + 1, "columns")
@@ -571,6 +572,21 @@ class ColumnHeaders(tk.Canvas):
         elif len(xcheck) > 1 and xcheck[1] > 1:
             self.MT.set_xviews("moveto", 1)
             
+    def event_over_dropdown(self, c, datacn, event, canvasx):
+        if (event.y < self.MT.hdr_txt_h + 5 and
+            self.get_cell_kwargs(datacn, key = 'dropdown') and 
+            canvasx < self.MT.col_positions[c + 1] and 
+            canvasx > self.MT.col_positions[c + 1] - self.MT.hdr_txt_h - 4):
+            return True
+        return False
+                    
+    def event_over_checkbox(self, c, datacn, event, canvasx):
+        if (event.y < self.MT.hdr_txt_h + 5 and
+            self.get_cell_kwargs(datacn, key = 'checkbox') and
+            canvasx < self.MT.col_positions[c] + self.MT.hdr_txt_h + 4):
+            return True
+        return False
+            
     def b1_release(self, event = None):
         if self.being_drawn_rect is not None:
             self.MT.delete_selected(*self.being_drawn_rect)
@@ -638,16 +654,7 @@ class ColumnHeaders(tk.Canvas):
             if c is not None and c < len(self.MT.col_positions) - 1 and c == self.b1_pressed_loc and self.b1_pressed_loc != self.closed_dropdown:
                 datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
                 canvasx = self.canvasx(event.x)
-                if (event.y < self.MT.hdr_txt_h + 5 and
-                    (
-                     (self.get_cell_kwargs(datacn, key = 'dropdown') and 
-                      canvasx < self.MT.col_positions[c + 1] and 
-                      canvasx > self.MT.col_positions[c + 1] - self.MT.hdr_txt_h - 4)
-                     or
-                     (self.get_cell_kwargs(datacn, key = 'checkbox') and
-                      canvasx < self.MT.col_positions[c] + self.MT.hdr_txt_h + 5)
-                    )
-                ):
+                if self.event_over_dropdown(c, datacn, event, canvasx) or self.event_over_checkbox(c, datacn, event, canvasx):
                     self.open_cell(event)
             else:
                 self.mouseclick_outside_editor_or_dropdown_all_canvases()

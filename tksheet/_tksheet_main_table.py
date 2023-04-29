@@ -391,9 +391,9 @@ class MainTable(tk.Canvas):
                 if r2 - r1 > maxrows:
                     maxrows = r2 - r1
             curr_box = self.find_last_selected_box_with_current_from_boxes(currently_selected, boxes)
-            for r1, c1, r2, c2 in tuple(boxes):
-                if r2 - r1 < maxrows and box != curr_box:
-                    del boxes[(r1, c1, r2, c2)]
+            for box in tuple(boxes):
+                if box[2] - box[0] < maxrows and box != curr_box:
+                    del boxes[box]
             return boxes, maxrows
         else:
             for item in self.find_withtag("RowSelectFill"):
@@ -2660,12 +2660,12 @@ class MainTable(tk.Canvas):
                     if (
                         (self.closed_dropdown != self.b1_pressed_loc and
                          self.get_cell_kwargs(datarn, datacn, key = 'dropdown') and
-                         canvasx > self.col_positions[c + 1] - self.txt_h - 5 and
+                         canvasx > self.col_positions[c + 1] - self.txt_h - 4 and
                          canvasx < self.col_positions[c + 1] - 1) 
                         or
                         (self.get_cell_kwargs(datarn, datacn, key = 'checkbox') and 
-                         canvasx < self.col_positions[c] + self.txt_h + 5 and
-                         self.canvasy(event.y) < self.row_positions[r] + self.txt_h + 5)
+                         canvasx < self.col_positions[c] + self.txt_h + 4 and
+                         self.canvasy(event.y) < self.row_positions[r] + self.txt_h + 4)
                         ):
                         self.open_cell(event)
             else:
