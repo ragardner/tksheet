@@ -107,8 +107,8 @@ class MainTable(tk.Canvas):
         self.empty_vertical = kwargs['empty_vertical']
         self.show_vertical_grid = kwargs['show_vertical_grid']
         self.show_horizontal_grid = kwargs['show_horizontal_grid']
-        self.min_rh = 0
-        self.hdr_min_rh = 0
+        self.min_row_height = 0
+        self.min_header_height = 0
         self.being_drawn_rect = None
         self.extra_motion_func = None
         self.extra_b1_press_func = None
@@ -190,30 +190,41 @@ class MainTable(tk.Canvas):
         self.all_columns_displayed = True
         self.all_rows_displayed = True
         self.align = kwargs['align']
-        self._font = kwargs['font']
-        self.fnt_fam = kwargs['font'][0]
-        self.fnt_sze = kwargs['font'][1]
-        self.fnt_wgt = kwargs['font'][2]
-        self._index_font = kwargs['index_font']
-        self.index_fnt_fam = kwargs['index_font'][0]
-        self.index_fnt_sze = kwargs['index_font'][1]
-        self.index_fnt_wgt = kwargs['index_font'][2]
-        self._hdr_font = kwargs['header_font']
-        self.hdr_fnt_fam = kwargs['header_font'][0]
-        self.hdr_fnt_sze = kwargs['header_font'][1]
-        self.hdr_fnt_wgt = kwargs['header_font'][2]
+        self.table_font = kwargs['font']
+        self.font_fam = kwargs['font'][0]
+        self.font_sze = kwargs['font'][1]
+        self.font_wgt = kwargs['font'][2]
+        self.index_font = kwargs['index_font']
+        self.index_font_fam = kwargs['index_font'][0]
+        self.index_font_sze = kwargs['index_font'][1]
+        self.index_font_wgt = kwargs['index_font'][2]
+        self.header_font = kwargs['header_font']
+        self.header_font_fam = kwargs['header_font'][0]
+        self.header_font_sze = kwargs['header_font'][1]
+        self.header_font_wgt = kwargs['header_font'][2]
         self.txt_measure_canvas = tk.Canvas(self)
-        self.txt_measure_canvas_text = self.txt_measure_canvas.create_text(0, 0, text = "", font = self._font)
+        self.txt_measure_canvas_text = self.txt_measure_canvas.create_text(0, 0, text = "", font = self.table_font)
         self.text_editor = None
         self.text_editor_id = None
-        self.default_cw = kwargs['column_width']
-        self.default_rh = (kwargs['row_height'] if isinstance(kwargs['row_height'], str) else "pixels",
-                           kwargs['row_height'] if isinstance(kwargs['row_height'], int) else self.GetLinesHeight(int(kwargs['row_height'])))
-        self.default_hh = (kwargs['header_height'] if isinstance(kwargs['header_height'], str) else "pixels",
-                           kwargs['header_height'] if isinstance(kwargs['header_height'], int) else self.GetHdrLinesHeight(int(kwargs['header_height'])))
-        self.set_fnt_help()
-        self.set_hdr_fnt_help()
-        self.set_index_fnt_help()
+        
+        self.max_row_height = float(kwargs['max_row_height'])
+        self.max_index_width = float(kwargs['max_index_width'])
+        self.max_column_width = float(kwargs['max_column_width'])
+        self.max_header_height = float(kwargs['max_header_height'])
+        if kwargs['row_index_width'] is None:
+            self.RI.set_width(70)
+            self.default_index_width = 70
+        else:
+            self.RI.set_width(kwargs['row_index_width'])
+            self.default_index_width = kwargs['row_index_width']
+        self.default_header_height = (kwargs['header_height'] if isinstance(kwargs['header_height'], str) else "pixels",
+                                      kwargs['header_height'] if isinstance(kwargs['header_height'], int) else self.get_lines_cell_height(int(kwargs['header_height']), font = self.header_font))
+        self.default_column_width = kwargs['column_width']
+        self.default_row_height = (kwargs['row_height'] if isinstance(kwargs['row_height'], str) else "pixels",
+                                   kwargs['row_height'] if isinstance(kwargs['row_height'], int) else self.get_lines_cell_height(int(kwargs['row_height'])))
+        self.set_font_help()
+        self.set_header_font_help()
+        self.set_index_font_help()
         self.data = kwargs['data_reference']
         if isinstance(self.data, (list, tuple)):
             self.data = kwargs['data_reference']
@@ -1139,7 +1150,7 @@ class MainTable(tk.Canvas):
                         self.data[rn].insert(cn, v)
                     except:
                         continue
-            for cn, v in reversed(tuple(undo_storage[1]['deleted_hdr_values'].items())):
+            for cn, v in reversed(tuple(undo_storage[1]['deleted_header_values'].items())):
                 try:
                     self._headers.insert(cn, v)
                 except:
@@ -2567,8 +2578,8 @@ class MainTable(tk.Canvas):
                 self.create_resize_line(x, y1, x, y2, width = 1, fill = self.RI.resizing_line_fg, tag = "rwl")
             else:
                 x = self.RI.current_width + event.x
-                if x < self.min_cw:
-                    x = int(self.min_cw)
+                if x < self.min_column_width:
+                    x = int(self.min_column_width)
                 self.new_row_width = x
                 self.RI.create_resize_line(x, y1, x, y2, width = 1, fill = self.RI.resizing_line_fg, tag = "rwl")
         elif self.CH.height_resizing_enabled and self.CH.rsz_h is not None and self.CH.currently_resizing_height:
@@ -2580,8 +2591,8 @@ class MainTable(tk.Canvas):
                 self.create_resize_line(x1, y, x2, y, width = 1, fill = self.RI.resizing_line_fg, tag = "rhl")
             else:
                 y = self.CH.current_height + event.y
-                if y < self.hdr_min_rh:
-                    y = int(self.hdr_min_rh)
+                if y < self.min_header_height:
+                    y = int(self.min_header_height)
                 self.new_header_height = y
                 self.CH.create_resize_line(x1, y, x2, y, width = 1, fill = self.RI.resizing_line_fg, tag = "rhl")
         if self.extra_b1_motion_func is not None:
@@ -2813,72 +2824,30 @@ class MainTable(tk.Canvas):
             self.CH.xview_scroll(-1, "units")
         self.main_table_redraw_grid_and_text(redraw_header = True)
 
-    def GetWidthChars(self, width):
-        char_w = self.GetTextWidth("_")
-        return int(width / char_w)
-
-    def GetTextWidth(self, txt):
-        self.txt_measure_canvas.itemconfig(self.txt_measure_canvas_text, text = txt, font = self._font)
+    def get_txt_w(self, txt, font = None):
+        self.txt_measure_canvas.itemconfig(self.txt_measure_canvas_text, text = txt, font = self.table_font if font is None else font)
         b = self.txt_measure_canvas.bbox(self.txt_measure_canvas_text)
         return b[2] - b[0]
 
-    def GetTextHeight(self, txt):
-        self.txt_measure_canvas.itemconfig(self.txt_measure_canvas_text, text = txt, font = self._font)
-        b = self.txt_measure_canvas.bbox(self.txt_measure_canvas_text)
-        return b[3] - b[1]
-
-    def GetHdrTextWidth(self, txt):
-        self.txt_measure_canvas.itemconfig(self.txt_measure_canvas_text, text = txt, font = self._hdr_font)
-        b = self.txt_measure_canvas.bbox(self.txt_measure_canvas_text)
-        return b[2] - b[0]
-
-    def GetHdrTextHeight(self, txt):
-        self.txt_measure_canvas.itemconfig(self.txt_measure_canvas_text, text = txt, font = self._hdr_font)
+    def get_txt_h(self, txt, font = None):
+        self.txt_measure_canvas.itemconfig(self.txt_measure_canvas_text, text = txt, font = self.table_font if font is None else font)
         b = self.txt_measure_canvas.bbox(self.txt_measure_canvas_text)
         return b[3] - b[1]
     
-    def GetLinesHeight(self, n, old_method = False):
-        if old_method:
-            if n == 1:
-                return int(self.min_rh)
-            else:
-                return int(self.fl_ins) + (self.xtra_lines_increment * n) - 2
-        else:
-            x = self.txt_measure_canvas.create_text(0, 0,
-                                                    text = "\n".join(["j^|" for lines in range(n)]) if n > 1 else "j^|",
-                                                    font = self._font)
-            b = self.txt_measure_canvas.bbox(x)
-            h = b[3] - b[1] + 5
-            self.txt_measure_canvas.delete(x)
-            return h
+    def get_txt_dimensions(self, txt, font = None):
+        self.txt_measure_canvas.itemconfig(self.txt_measure_canvas_text, text = txt, font = self.table_font if font is None else font)
+        b = self.txt_measure_canvas.bbox(self.txt_measure_canvas_text)
+        return b[2] - b[0], b[3] - b[1]
+    
+    def get_lines_cell_height(self, n, font = None):
+        return self.get_txt_h(txt = "\n".join(["j^|" for lines in range(n)]) if n > 1 else "j^|", font = self.table_font if font is None else font) + 5
 
-    def GetHdrLinesHeight(self, n, old_method = False):
-        if old_method:
-            if n == 1:
-                return int(self.hdr_min_rh)
-            else:
-                return int(self.hdr_fl_ins) + (self.hdr_xtra_lines_increment * n) - 2
-        else:
-            x = self.txt_measure_canvas.create_text(0, 0,
-                                                    text = "\n".join(["j^|" for lines in range(n)]) if n > 1 else "j^|",
-                                                    font = self._hdr_font)
-            b = self.txt_measure_canvas.bbox(x)
-            h = b[3] - b[1] + 5
-            self.txt_measure_canvas.delete(x)
-            return h
-
-    def set_min_cw(self):
-        #w1 = self.GetHdrTextWidth("X") + 5
-        #w2 = self.GetTextWidth("X") + 5
-        #if w1 >= w2:
-        #    self.min_cw = w1
-        #else:
-        #    self.min_cw = w2
-        self.min_cw = 5
-        if self.min_cw > self.CH.max_cw:
-            self.CH.max_cw = self.min_cw + 20
-        if self.min_cw > self.default_cw:
-            self.default_cw = self.min_cw + 20
+    def set_min_column_width(self):
+        self.min_column_width = 5
+        if self.min_column_width > self.max_column_width:
+            self.max_column_width = self.min_column_width + 20
+        if self.min_column_width > self.default_column_width:
+            self.default_column_width = self.min_column_width + 20
 
     def font(self, newfont = None, reset_row_positions = False):
         if newfont:
@@ -2892,34 +2861,32 @@ class MainTable(tk.Canvas):
                 not isinstance(newfont[2], str)
                 ):
                 raise ValueError("Argument must be font, size and 'normal', 'bold' or 'italic' e.g. ('Carlito',12,'normal')")
-            else:
-                self._font = newfont
-            self.fnt_fam = newfont[0]
-            self.fnt_sze = newfont[1]
-            self.fnt_wgt = newfont[2]
-            self.set_fnt_help()
+            self.table_font = newfont
+            self.font_fam = newfont[0]
+            self.font_sze = newfont[1]
+            self.font_wgt = newfont[2]
+            self.set_font_help()
             if reset_row_positions:
                 self.reset_row_positions()
         else:
-            return self._font
+            return self.table_font
 
-    def set_fnt_help(self):
-        self.txt_h = self.GetTextHeight("|ZXjy*'^")
-        self.txt_w = self.GetTextWidth("|")
+    def set_font_help(self):
+        self.txt_h = self.get_txt_h("|ZXjy*'^")
+        self.txt_w = self.get_txt_w("|")
         self.half_txt_h = ceil(self.txt_h / 2)
         if self.half_txt_h % 2 == 0:
             self.fl_ins = self.half_txt_h + 2
         else:
             self.fl_ins = self.half_txt_h + 3
         self.xtra_lines_increment = int(self.txt_h)
-        self.min_rh = self.txt_h + 5
-        if self.min_rh < 12:
-            self.min_rh = 12
-        #self.min_rh = 5
-        if self.default_rh[0] != "pixels":
-            self.default_rh = (self.default_rh[0] if self.default_rh[0] != "pixels" else "pixels",
-                               self.GetLinesHeight(int(self.default_rh[0])) if self.default_rh[0] != "pixels" else self.default_rh[1])
-        self.set_min_cw()
+        self.min_row_height = self.txt_h + 5
+        if self.min_row_height < 12:
+            self.min_row_height = 12
+        if self.default_row_height[0] != "pixels":
+            self.default_row_height = (self.default_row_height[0] if self.default_row_height[0] != "pixels" else "pixels",
+                                       self.get_lines_cell_height(int(self.default_row_height[0])) if self.default_row_height[0] != "pixels" else self.default_row_height[1])
+        self.set_min_column_width()
         
     def header_font(self, newfont = None):
         if newfont:
@@ -2933,32 +2900,30 @@ class MainTable(tk.Canvas):
                 not isinstance(newfont[2], str)
                 ):
                 raise ValueError("Argument must be font, size and 'normal', 'bold' or 'italic' e.g. ('Carlito', 12, 'normal')")
-            else:
-                self._hdr_font = newfont
-            self.hdr_fnt_fam = newfont[0]
-            self.hdr_fnt_sze = newfont[1]
-            self.hdr_fnt_wgt = newfont[2]
-            self.set_hdr_fnt_help()
+            self.header_font = newfont
+            self.header_font_fam = newfont[0]
+            self.header_font_sze = newfont[1]
+            self.header_font_wgt = newfont[2]
+            self.set_header_font_help()
         else:
-            return self._hdr_font
+            return self.header_font
 
-    def set_hdr_fnt_help(self):
-        self.hdr_txt_h = self.GetHdrTextHeight("|ZXj*'^")
-        self.hdr_txt_w = self.GetHdrTextWidth("|")
-        self.hdr_half_txt_h = ceil(self.hdr_txt_h / 2)
-        if self.hdr_half_txt_h % 2 == 0:
-            self.hdr_fl_ins = self.hdr_half_txt_h + 2
+    def set_header_font_help(self):
+        self.header_txt_w, self.header_txt_h = self.get_txt_dimensions("|", self.header_font)
+        self.header_half_txt_h = ceil(self.header_txt_h / 2)
+        if self.header_half_txt_h % 2 == 0:
+            self.header_fl_ins = self.header_half_txt_h + 2
         else:
-            self.hdr_fl_ins = self.hdr_half_txt_h + 3
-        self.hdr_xtra_lines_increment = self.hdr_txt_h
-        self.hdr_min_rh = self.hdr_txt_h + 5
-        if self.default_hh[0] != "pixels":
-            self.default_hh = (self.default_hh[0] if self.default_hh[0] != "pixels" else "pixels",
-                               self.GetHdrLinesHeight(int(self.default_hh[0])) if self.default_hh[0] != "pixels" else self.default_hh[1])
-        self.set_min_cw()
-        self.CH.set_height(self.default_hh[1])
+            self.header_fl_ins = self.header_half_txt_h + 3
+        self.header_xtra_lines_increment = self.header_txt_h
+        self.min_header_height = self.header_txt_h + 5
+        if self.default_header_height[0] != "pixels":
+            self.default_header_height = (self.default_header_height[0] if self.default_header_height[0] != "pixels" else "pixels",
+                                     self.get_lines_cell_height(int(self.default_header_height[0]), font = self.header_font) if self.default_header_height[0] != "pixels" else self.default_header_height[1])
+        self.set_min_column_width()
+        self.CH.set_height(self.default_header_height[1])
         
-    def set_index_fnt_help(self):
+    def set_index_font_help(self):
         pass
 
     def data_reference(self,
@@ -2989,21 +2954,21 @@ class MainTable(tk.Canvas):
     def get_cell_dimensions(self, datarn, datacn):
         txt = self.get_valid_cell_data_as_str(datarn, datacn, get_displayed = True)
         if txt:
-            self.txt_measure_canvas.itemconfig(self.txt_measure_canvas_text, text = txt, font = self._font)
+            self.txt_measure_canvas.itemconfig(self.txt_measure_canvas_text, text = txt, font = self.table_font)
             b = self.txt_measure_canvas.bbox(self.txt_measure_canvas_text)
             w = b[2] - b[0] + 7
             h = b[3] - b[1] + 5
         else:
-            w = self.min_cw
-            h = self.min_rh
+            w = self.min_column_width
+            h = self.min_row_height
         if self.get_cell_kwargs(datarn, datacn, key = 'dropdown') or self.get_cell_kwargs(datarn, datacn, key = 'checkbox'):
             return w + self.txt_h, h
         return w, h
 
     def set_cell_size_to_text(self, r, c, only_set_if_too_small = False, redraw = True, run_binding = False):
-        min_cw = int(self.min_cw)
-        min_rh = int(self.min_rh)
-        w = min_cw
+        min_column_width = int(self.min_column_width)
+        min_rh = int(self.min_row_height)
+        w = min_column_width
         h = min_rh
         datacn = c if self.all_columns_displayed else self.displayed_columns[c]
         datarn = r if self.all_rows_displayed else self.displayed_rows[r]
@@ -3012,12 +2977,12 @@ class MainTable(tk.Canvas):
             w = tw
         if h < min_rh:
             h = int(min_rh)
-        elif h > self.RI.max_rh:
-            h = int(self.RI.max_rh)
-        if w < min_cw:
-            w = int(min_cw)
-        elif w > self.CH.max_cw:
-            w = int(self.CH.max_cw)
+        elif h > self.max_row_height:
+            h = int(self.max_row_height)
+        if w < min_column_width:
+            w = int(min_column_width)
+        elif w > self.max_column_width:
+            w = int(self.max_column_width)
         cell_needs_resize_w = False
         cell_needs_resize_h = False
         if only_set_if_too_small:
@@ -3057,14 +3022,14 @@ class MainTable(tk.Canvas):
                 return False
 
     def set_all_cell_sizes_to_text(self, include_index = False):
-        min_cw = int(self.min_cw)
-        min_rh = int(self.min_rh)
-        w = min_cw
+        min_column_width = int(self.min_column_width)
+        min_rh = int(self.min_row_height)
+        w = min_column_width
         h = min_rh
         rhs = defaultdict(lambda: int(min_rh))
         cws = []
-        x = self.txt_measure_canvas.create_text(0, 0, text = "", font = self._font)
-        x2 = self.txt_measure_canvas.create_text(0, 0, text = "", font = self._hdr_font)
+        x = self.txt_measure_canvas.create_text(0, 0, text = "", font = self.table_font)
+        x2 = self.txt_measure_canvas.create_text(0, 0, text = "", font = self.header_font)
         itmcon = self.txt_measure_canvas.itemconfig
         itmbbx = self.txt_measure_canvas.bbox
         if self.all_columns_displayed:
@@ -3080,8 +3045,8 @@ class MainTable(tk.Canvas):
                 w_, h = self.RI.get_cell_dimensions(datarn)
                 if h < min_rh:
                     h = int(min_rh)
-                elif h > self.RI.max_rh:
-                    h = int(self.RI.max_rh)
+                elif h > self.max_row_height:
+                    h = int(self.max_row_height)
                 if h > rhs[datarn]:
                     rhs[datarn] = h
         for datacn in itercols:
@@ -3097,7 +3062,7 @@ class MainTable(tk.Canvas):
                     tw = b[2] - b[0] + 7
                     h = b[3] - b[1] + 5
                 else:
-                    tw = min_cw
+                    tw = min_column_width
                     h = min_rh
                 if self.get_cell_kwargs(datarn, datacn, key = 'dropdown') or self.get_cell_kwargs(datarn, datacn, key = 'checkbox'):
                     tw += self.txt_h
@@ -3105,14 +3070,14 @@ class MainTable(tk.Canvas):
                     w = tw
                 if h < min_rh:
                     h = int(min_rh)
-                elif h > self.RI.max_rh:
-                    h = int(self.RI.max_rh)
+                elif h > self.max_row_height:
+                    h = int(self.max_row_height)
                 if h > rhs[datarn]:
                     rhs[datarn] = h
-            if w < min_cw:
-                w = int(min_cw)
-            elif w > self.CH.max_cw:
-                w = int(self.CH.max_cw)
+            if w < min_column_width:
+                w = int(min_column_width)
+            elif w > self.max_column_width:
+                w = int(self.max_column_width)
             cws.append(w)
         self.txt_measure_canvas.delete(x)
         self.txt_measure_canvas.delete(x2)
@@ -3122,14 +3087,14 @@ class MainTable(tk.Canvas):
         return self.row_positions, self.col_positions
 
     def reset_col_positions(self, ncols = None):
-        colpos = int(self.default_cw)
+        colpos = int(self.default_column_width)
         if self.all_columns_displayed:
             self.col_positions = list(accumulate(chain([0], (colpos for c in range(ncols if ncols is not None else self.total_data_cols())))))
         else:
             self.col_positions = list(accumulate(chain([0], (colpos for c in range(ncols if ncols is not None else len(self.displayed_columns))))))
             
     def reset_row_positions(self, nrows = None):
-        rowpos = self.default_rh[1]
+        rowpos = self.default_row_height[1]
         if self.all_rows_displayed:
             self.row_positions = list(accumulate(chain([0], (rowpos for r in range(nrows if nrows is not None else self.total_data_rows())))))
         else:
@@ -3181,7 +3146,7 @@ class MainTable(tk.Canvas):
         if deselect_all:
             self.deselect("all", redraw = False)
         if width is None:
-            w = self.default_cw
+            w = self.default_column_width
         else:
             w = width
         if idx == "end" or len(self.col_positions) == idx + 1:
@@ -3196,7 +3161,7 @@ class MainTable(tk.Canvas):
         if deselect_all:
             self.deselect("all", redraw = False)
         if height is None:
-            h = self.default_rh[1]
+            h = self.default_row_height[1]
         else:
             h = height
         if idx == "end" or len(self.row_positions) == idx + 1:
@@ -3211,9 +3176,9 @@ class MainTable(tk.Canvas):
         if deselect_all:
             self.deselect("all", redraw = False)
         if widths is None:
-            w = [self.default_cw]
+            w = [self.default_column_width]
         elif isinstance(widths, int):
-            w = list(repeat(self.default_cw, widths))
+            w = list(repeat(self.default_column_width, widths))
         else:
             w = widths
         if idx == "end" or len(self.col_positions) == idx + 1:
@@ -3239,9 +3204,9 @@ class MainTable(tk.Canvas):
         if deselect_all:
             self.deselect("all", redraw = False)
         if heights is None:
-            h = [self.default_rh[1]]
+            h = [self.default_row_height[1]]
         elif isinstance(heights, int):
-            h = list(repeat(self.default_rh[1], heights))
+            h = list(repeat(self.default_row_height[1], heights))
         else:
             h = heights
         if idx == "end" or len(self.row_positions) == idx + 1:
@@ -3319,7 +3284,7 @@ class MainTable(tk.Canvas):
                 self._headers[data_ins_col:data_ins_col] = self.CH.get_empty_header_seq(end = data_ins_col + numcols, start = data_ins_col, c_ops = False)
         if self.row_positions == [0] and not self.data:
             self.insert_row_position(idx = "end",
-                                     height = int(self.min_rh),
+                                     height = int(self.min_row_height),
                                      deselect_all = False)
             self.data.append(self.get_empty_row_seq(0, end = data_ins_col + numcols, start = data_ins_col, c_ops = False))
         else:
@@ -3425,7 +3390,7 @@ class MainTable(tk.Canvas):
         if self.undo_enabled:
             undo_storage = {'deleted_cols': {},
                             'colwidths': {},
-                            'deleted_hdr_values': {},
+                            'deleted_header_values': {},
                             'selection_boxes': self.get_boxes(),
                             'displayed_columns': list(self.displayed_columns) if not isinstance(self.displayed_columns, int) else int(self.displayed_columns),
                             'cell_options': {k: v.copy() for k, v in self.cell_options.items()},
@@ -3442,7 +3407,7 @@ class MainTable(tk.Canvas):
                     except:
                         continue
                 try:
-                    undo_storage['deleted_hdr_values'][datacn] = self._headers.pop(datacn)
+                    undo_storage['deleted_header_values'][datacn] = self._headers.pop(datacn)
                 except:
                     continue
         else:
@@ -3619,7 +3584,7 @@ class MainTable(tk.Canvas):
             if reset_col_positions:
                 self.reset_col_positions()
             elif show_headers_if_not_sheet and isinstance(self._headers, list) and (self.col_positions == [0] or not self.col_positions):
-                colpos = int(self.default_cw)
+                colpos = int(self.default_column_width)
                 if self.all_columns_displayed:
                     self.col_positions = list(accumulate(chain([0], (colpos for c in range(len(self._headers))))))
                 else:
@@ -3635,7 +3600,7 @@ class MainTable(tk.Canvas):
     def row_index(self, newindex = None, index = None, reset_row_positions = False, show_index_if_not_sheet = True, redraw = False):
         if newindex is not None:
             if not self._row_index and not isinstance(self._row_index, int):
-                self.RI.set_width(self.RI.default_width, set_TL = True)
+                self.RI.set_width(self.RI.default_index_width, set_TL = True)
             if isinstance(newindex, (list, tuple)):
                 self._row_index = list(newindex) if isinstance(newindex, tuple) else newindex
             elif isinstance(newindex, int):
@@ -3652,7 +3617,7 @@ class MainTable(tk.Canvas):
             if reset_row_positions:
                 self.reset_row_positions()
             elif show_index_if_not_sheet and isinstance(self._row_index, list) and (self.row_positions == [0] or not self.row_positions):
-                rowpos = self.default_rh[1]
+                rowpos = self.default_row_height[1]
                 if self.all_rows_displayed:
                     self.row_positions = list(accumulate(chain([0], (rowpos for r in range(len(self._row_index))))))
                 else:
@@ -3807,7 +3772,7 @@ class MainTable(tk.Canvas):
             self.redraw_highlight(x1 + 1, y1 + 1, x2, y2, fill = "", outline = self.table_fg, tag = tag)
         if draw_arrow:
             topysub = floor(self.half_txt_h / 2)
-            mid_y = y1 + floor(self.min_rh / 2)
+            mid_y = y1 + floor(self.min_row_height / 2)
             if mid_y + topysub + 1 >= y1 + self.txt_h - 1:
                 mid_y -= 1
             if mid_y - topysub + 2 <= y1 + 4 + topysub:
@@ -4037,7 +4002,7 @@ class MainTable(tk.Canvas):
         c_4_ = (int(c_4[1:3], 16), int(c_4[3:5], 16), int(c_4[5:], 16))
         rows_ = tuple(range(start_row, end_row))
         selected_cells, selected_rows, selected_cols, actual_selected_rows, actual_selected_cols = self.get_redraw_selections((start_row, start_col, end_row, end_col - 1))
-        font = self._font
+        font = self.table_font
         if redraw_table:
             for c in range(start_col, end_col - 1):
                 for r in rows_:
@@ -5001,7 +4966,7 @@ class MainTable(tk.Canvas):
         bg, fg = self.table_bg, self.table_fg
         self.text_editor = TextEditor(self, 
                                       text = text, 
-                                      font = self._font, 
+                                      font = self.table_font, 
                                       state = state, 
                                       width = w, 
                                       height = h, 
@@ -5048,7 +5013,7 @@ class MainTable(tk.Canvas):
         datarn = r if self.all_rows_displayed else self.displayed_rows[r]
         datacn = c if self.all_columns_displayed else self.displayed_columns[c]
         curr_height = self.text_editor.winfo_height()
-        if not check_lines or self.GetLinesHeight(self.text_editor.get_num_lines() + 1) > curr_height:
+        if not check_lines or self.get_lines_cell_height(self.text_editor.get_num_lines() + 1) > curr_height:
             new_height = curr_height + self.xtra_lines_increment
             space_bot = self.get_space_bot(r)
             if new_height > space_bot:
@@ -5634,7 +5599,7 @@ class MainTable(tk.Canvas):
             if v_numlines > 1:
                 win_h += self.fl_ins + (v_numlines * self.xtra_lines_increment) + 5 # end of cell
             else:
-                win_h += self.min_rh
+                win_h += self.min_row_height
             if i == 5:
                 break
         if win_h > 500:
@@ -5672,7 +5637,7 @@ class MainTable(tk.Canvas):
                                                  c,
                                                  width = self.col_positions[c + 1] - self.col_positions[c] + 1,
                                                  height = win_h,
-                                                 font = self._font,
+                                                 font = self.table_font,
                                                  colors = {'bg': self.popup_menu_bg, 
                                                            'fg': self.popup_menu_fg, 
                                                            'highlight_bg': self.popup_menu_highlight_bg,

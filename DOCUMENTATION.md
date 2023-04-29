@@ -998,8 +998,16 @@ set_column_widths(column_widths = None, canvas_positions = False, reset = False,
 ___
 
 ```python
-set_width_of_index_to_text(recreate = True)
+set_width_of_index_to_text(text = None)
 ```
+- `text` (`str`, `None`) provide a `str` to set the width to or use `None` to set it to existing values in the index.
+
+___
+
+```python
+set_height_of_header_to_text(text = None)
+```
+- `text` (`str`, `None`) provide a `str` to set the height to or use `None` to set it to existing values in the header.
 
 ___
 

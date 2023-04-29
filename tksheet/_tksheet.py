@@ -49,10 +49,10 @@ class Sheet(tk.Frame):
                  total_rows: int = None,
                  column_width: int = 120,
                  header_height: str = "1", #str or int
-                 max_colwidth: str = "inf", #str or int
-                 max_rh: str = "inf", #str or int
+                 max_column_width: str = "inf", #str or int
+                 max_row_height: str = "inf", #str or int
                  max_header_height: str = "inf", #str or int
-                 max_row_width: str = "inf", #str or int
+                 max_index_width: str = "inf", #str or int
                  row_index: list = None,
                  index: list = None,
                  after_redraw_time_ms: int = 50,
@@ -149,9 +149,6 @@ class Sheet(tk.Frame):
         self.grid_columnconfigure(1, weight = 1)
         self.grid_rowconfigure(1, weight = 1)
         self.RI = RowIndex(parentframe = self,
-                           max_rh = max_rh,
-                           max_row_width = max_row_width,
-                           row_index_width = row_index_width,
                            row_index_align = self.convert_align(row_index_align),
                            index_bg = index_bg,
                            index_border_fg = index_border_fg,
@@ -169,8 +166,6 @@ class Sheet(tk.Frame):
                            auto_resize_width = auto_resize_default_row_index,
                            show_default_index_for_empty = show_default_index_for_empty)
         self.CH = ColumnHeaders(parentframe = self,
-                                max_colwidth = max_colwidth,
-                                max_header_height = max_header_height,
                                 default_header = default_header,
                                 header_align = self.convert_align(header_align),
                                 header_bg = header_bg,
@@ -187,6 +182,14 @@ class Sheet(tk.Frame):
                                 resizing_line_fg = resizing_line_fg,
                                 show_default_header_for_empty = show_default_header_for_empty)
         self.MT = MainTable(parentframe = self,
+                            max_column_width = max_column_width,
+                            max_header_height = max_header_height,
+                            max_row_height = max_row_height,
+                            max_index_width = max_index_width,
+                            row_index_width = row_index_width,
+                            header_height = header_height,
+                            column_width = column_width,
+                            row_height = row_height,
                             show_index = show_row_index,
                             show_header = show_header,
                             enable_edit_cell_auto_resize = enable_edit_cell_auto_resize,
@@ -200,8 +203,6 @@ class Sheet(tk.Frame):
                             display_selected_fg_over_highlights = display_selected_fg_over_highlights,
                             show_vertical_grid = show_vertical_grid,
                             show_horizontal_grid = show_horizontal_grid,
-                            column_width = column_width,
-                            row_height = row_height,
                             to_clipboard_delimiter = to_clipboard_delimiter,
                             to_clipboard_quotechar = to_clipboard_quotechar,
                             to_clipboard_lineterminator = to_clipboard_lineterminator,
@@ -210,7 +211,6 @@ class Sheet(tk.Frame):
                             row_index_canvas = self.RI,
                             headers = headers,
                             header = header,
-                            header_height = header_height,
                             data_reference = data if data_reference is None else data_reference,
                             total_cols = total_columns,
                             total_rows = total_rows,
@@ -747,13 +747,13 @@ class Sheet(tk.Frame):
                 return self.MT.identify_col(x = event.x, allow_end = allow_end)
 
     def get_example_canvas_column_widths(self, total_cols = None):
-        colpos = int(self.MT.default_cw)
+        colpos = int(self.MT.default_column_width)
         if total_cols is not None:
             return list(accumulate(chain([0], (colpos for c in range(total_cols)))))
         return list(accumulate(chain([0], (colpos for c in range(len(self.MT.col_positions) - 1)))))
 
     def get_example_canvas_row_heights(self, total_rows = None):
-        rowpos = self.MT.default_rh[1]
+        rowpos = self.MT.default_row_height[1]
         if total_rows is not None:
             return list(accumulate(chain([0], (rowpos for c in range(total_rows)))))
         return list(accumulate(chain([0], (rowpos for c in range(len(self.MT.row_positions) - 1)))))
@@ -815,9 +815,12 @@ class Sheet(tk.Frame):
     def set_cell_size_to_text(self, row, column, only_set_if_too_small = False, redraw = True):
         self.MT.set_cell_size_to_text(r = row, c = column, only_set_if_too_small = only_set_if_too_small)
         self.set_refresh_timer(redraw)
-
-    def set_width_of_index_to_text(self, recreate = True):
-        self.RI.set_width_of_index_to_text(recreate = recreate)
+                                                      # backwards compatibility
+    def set_width_of_index_to_text(self, text = None, *args, **kwargs):
+        self.RI.set_width_of_index_to_text(text = text)
+        
+    def set_height_of_header_to_text(self, text = None):
+        self.CH.set_height_of_header_to_text(text = text)
 
     def row_height(self, row = None, height = None, only_set_if_too_small = False, redraw = True):
         if row == "all":
@@ -841,7 +844,7 @@ class Sheet(tk.Frame):
             self.MT.reset_row_positions()
             return
         if is_iterable(row_heights):
-            qmin = self.MT.min_rh
+            qmin = self.MT.min_row_height
             if canvas_positions and isinstance(row_heights, list):
                 if verify:
                     self.MT.row_positions = list(accumulate(chain([0], (height if qmin < height else qmin
@@ -861,10 +864,10 @@ class Sheet(tk.Frame):
         if not isinstance(row_heights, list):
             return False
         if canvas_positions:
-            if any(x - z < self.MT.min_rh or not isinstance(x, int) or isinstance(x, bool) for z, x in zip(islice(row_heights, 0, None), islice(row_heights, 1, None))):
+            if any(x - z < self.MT.min_row_height or not isinstance(x, int) or isinstance(x, bool) for z, x in zip(islice(row_heights, 0, None), islice(row_heights, 1, None))):
                 return False
         elif not canvas_positions:
-            if any(z < self.MT.min_rh or not isinstance(z, int) or isinstance(z, bool) for z in row_heights):
+            if any(z < self.MT.min_row_height or not isinstance(z, int) or isinstance(z, bool) for z in row_heights):
                 return False
         return True
 
@@ -874,30 +877,32 @@ class Sheet(tk.Frame):
         if not isinstance(column_widths, list):
             return False
         if canvas_positions:
-            if any(x - z < self.MT.min_cw or not isinstance(x, int) or isinstance(x, bool) for z, x in zip(islice(column_widths, 0, None), islice(column_widths, 1, None))):
+            if any(x - z < self.MT.min_column_width or not isinstance(x, int) or isinstance(x, bool) for z, x in zip(islice(column_widths, 0, None), islice(column_widths, 1, None))):
                 return False
         elif not canvas_positions:
-            if any(z < self.MT.min_cw or not isinstance(z, int) or isinstance(z, bool) for z in column_widths):
+            if any(z < self.MT.min_column_width or not isinstance(z, int) or isinstance(z, bool) for z in column_widths):
                 return False
         return True
 
     def default_row_height(self, height = None):
         if height is not None:
-            self.MT.default_rh = (height if isinstance(height, str) else "pixels", height if isinstance(height, int) else self.MT.GetLinesHeight(int(height)))
-        return self.MT.default_rh[1]
+            self.MT.default_row_height = (height if isinstance(height, str) else "pixels", 
+                                     height if isinstance(height, int) else self.MT.get_lines_cell_height(int(height)))
+        return self.MT.default_row_height[1]
 
     def default_header_height(self, height = None):
         if height is not None:
-            self.MT.default_hh = (height if isinstance(height, str) else "pixels", height if isinstance(height, int) else self.MT.GetHdrLinesHeight(int(height)))
-        return self.MT.default_hh[1]
+            self.MT.default_header_height = (height if isinstance(height, str) else "pixels", 
+                                        height if isinstance(height, int) else self.MT.get_lines_cell_height(int(height), font = self.MT.header_font))
+        return self.MT.default_header_height[1]
 
     def default_column_width(self, width = None):
         if width is not None:
-            if width < self.MT.min_cw:
-                self.MT.default_cw = self.MT.min_cw + 20
+            if width < self.MT.min_column_width:
+                self.MT.default_column_width = self.MT.min_column_width + 20
             else:
-                self.MT.default_cw = int(width)
-        return self.MT.default_cw
+                self.MT.default_column_width = int(width)
+        return self.MT.default_column_width
 
     def cut(self, event = None):
         self.MT.ctrl_x()
@@ -968,7 +973,7 @@ class Sheet(tk.Frame):
             raise ValueError("number argument must be integer and > 0")
         if number > len(self.MT.data):
             if mod_positions:
-                height = self.MT.GetLinesHeight(int(self.MT.default_rh[0]))
+                height = self.MT.get_lines_cell_height(int(self.MT.default_row_height[0]))
                 for r in range(number - len(self.MT.data)):
                     self.MT.insert_row_position("end", height)
         elif number < len(self.MT.data):
@@ -986,7 +991,7 @@ class Sheet(tk.Frame):
             raise ValueError("number argument must be integer and > 0")
         if number > total_cols:
             if mod_positions:
-                width = self.MT.default_cw
+                width = self.MT.default_column_width
                 for c in range(number - total_cols):
                     self.MT.insert_col_position("end", width)
         elif number < total_cols:
@@ -1000,10 +1005,10 @@ class Sheet(tk.Frame):
         if total_rows is None and total_columns is None:
             return len(self.MT.row_positions) - 1, len(self.MT.col_positions) - 1
         if total_rows is not None:
-            height = self.MT.GetLinesHeight(self.MT.default_rh)
+            height = self.MT.get_lines_cell_height(int(self.MT.default_row_height[0]))
             self.MT.row_positions = list(accumulate(chain([0], (height for row in range(total_rows)))))
         if total_columns is not None:
-            width = self.MT.default_cw
+            width = self.MT.default_column_width
             self.MT.col_positions = list(accumulate(chain([0], (width for column in range(total_columns)))))
 
     def set_sheet_data_and_display_dimensions(self, total_rows = None, total_columns = None):
@@ -1747,11 +1752,11 @@ class Sheet(tk.Frame):
         if 'empty_vertical' in kwargs:
             self.MT.empty_vertical = kwargs['empty_vertical']
         if 'row_height' in kwargs:
-            self.MT.default_rh = (kwargs['row_height'] if isinstance(kwargs['row_height'], str) else "pixels", kwargs['row_height'] if isinstance(kwargs['row_height'], int) else self.MT.GetLinesHeight(int(kwargs['row_height'])))
+            self.MT.default_row_height = (kwargs['row_height'] if isinstance(kwargs['row_height'], str) else "pixels", kwargs['row_height'] if isinstance(kwargs['row_height'], int) else self.MT.get_lines_cell_height(int(kwargs['row_height'])))
         if 'column_width' in kwargs:
-            self.MT.default_cw = self.MT.min_cw + 20 if kwargs['column_width'] < self.MT.min_cw else int(kwargs['column_width'])
+            self.MT.default_column_width = self.MT.min_column_width + 20 if kwargs['column_width'] < self.MT.min_column_width else int(kwargs['column_width'])
         if 'header_height' in kwargs:
-            self.MT.default_hh = (kwargs['header_height'] if isinstance(kwargs['header_height'], str) else "pixels", kwargs['header_height'] if isinstance(kwargs['header_height'], int) else self.MT.GetHdrLinesHeight(int(kwargs['header_height'])))
+            self.MT.default_header_height = (kwargs['header_height'] if isinstance(kwargs['header_height'], str) else "pixels", kwargs['header_height'] if isinstance(kwargs['header_height'], int) else self.MT.get_lines_cell_height(int(kwargs['header_height']), font = self.MT.header_font))
         if 'row_drag_and_drop_perform' in kwargs:
             self.RI.row_drag_and_drop_perform = kwargs['row_drag_and_drop_perform']
         if 'column_drag_and_drop_perform' in kwargs:
@@ -1794,18 +1799,20 @@ class Sheet(tk.Frame):
             self.CH.default_header = kwargs['default_header'].lower()
         if 'default_row_index' in kwargs:
             self.RI.default_index = kwargs['default_row_index'].lower()
-        if 'max_colwidth' in kwargs:
-            self.CH.max_cw = float(kwargs['max_colwidth'])
+        if 'max_column_width' in kwargs:
+            self.MT.max_column_width = float(kwargs['max_column_width'])
         if 'max_row_height' in kwargs:
-            self.RI.max_rh = float(kwargs['max_row_height'])
+            self.MT.max_row_height = float(kwargs['max_row_height'])
         if 'max_header_height' in kwargs:
-            self.CH.max_header_height = float(kwargs['max_header_height'])
-        if 'max_row_width' in kwargs:
-            self.RI.max_row_width = float(kwargs['max_row_width'])
+            self.MT.max_header_height = float(kwargs['max_header_height'])
+        if 'max_index_width' in kwargs:
+            self.MT.max_index_width = float(kwargs['max_index_width'])
         if 'font' in kwargs:
             self.MT.font(kwargs['font'])
         if 'header_font' in kwargs:
             self.MT.header_font(kwargs['header_font'])
+        if 'index_font' in kwargs:
+            self.MT.index_font(kwargs['index_font'])
         if 'theme' in kwargs:
             self.change_theme(kwargs['theme'])
         if 'show_selected_cells_border' in kwargs:
@@ -2085,7 +2092,7 @@ class Sheet(tk.Frame):
         if add_rows:
             maxidx = len(self.MT.data) - 1
             total_cols = None
-            height = self.MT.default_rh[1]
+            height = self.MT.default_row_height[1]
             for rn, v in enumerate(values):
                 if rn > maxidx:
                     if total_cols is None:
@@ -2161,7 +2168,7 @@ class Sheet(tk.Frame):
                                              deselect_all = deselect_all)
         maxidx = len(self.MT.data) - 1
         if add_rows:
-            height = self.MT.default_rh[1]
+            height = self.MT.default_row_height[1]
             if idx == "end":
                 for values in reversed(data):
                     for rn, v in enumerate(values):

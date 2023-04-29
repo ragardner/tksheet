@@ -13,6 +13,9 @@
 - [PR#171](https://github.com/ragardner/tksheet/pull/171) `<<SheetModifiedEvent>>` is now emitted when the sheet is modified by a user action such as right click delete/insert rows/columns or editing cells
 
 #### Changed:
+- Initialization argument `max_rh` renamed `max_row_height`
+- Initialization argument `max_colwidth` renamed `max_column_width`
+- Initialization argument `max_row_width` renamed `max_index_width`
 - `header_dropdown_functions`/`index_dropdown_functions`/`dropdown_functions` now return dict
 - Rename internal function `create_text_editor()`
 - Select all now maintains existing currently selected cell when using Control/Command - a

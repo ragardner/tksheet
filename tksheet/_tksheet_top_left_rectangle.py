@@ -114,10 +114,10 @@ class TopLeftRectangle(tk.Canvas):
                 self.MT.deselect("all")
         elif rect[0] == 1:
             if self.RI.width_resizing_enabled:
-                self.RI.set_width(self.RI.default_width, set_TL = True)
+                self.RI.set_width(self.RI.default_index_width, set_TL = True)
         elif rect[0] == 2:
             if self.CH.height_resizing_enabled:
-                self.CH.set_height(self.MT.default_hh[1], set_TL = True)
+                self.CH.set_height(self.MT.default_header_h[1], set_TL = True)
         self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
         if self.extra_b1_press_func is not None:
             self.extra_b1_press_func(event)

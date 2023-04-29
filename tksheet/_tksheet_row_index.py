@@ -87,14 +87,6 @@ class RowIndex(tk.Canvas):
         self.hidd_checkbox = {}
         
         self.row_drag_and_drop_perform = kwargs['row_drag_and_drop_perform']
-        if kwargs['row_index_width'] is None:
-            self.set_width(70)
-            self.default_width = 70
-        else:
-            self.set_width(kwargs['row_index_width'])
-            self.default_width = kwargs['row_index_width']
-        self.max_rh = float(kwargs['max_rh'])
-        self.max_row_width = float(kwargs['max_row_width'])
         self.index_fg = kwargs['index_fg']
         self.index_grid_fg = kwargs['index_grid_fg']
         self.index_border_fg = kwargs['index_border_fg']
@@ -373,8 +365,8 @@ class RowIndex(tk.Canvas):
             self.currently_resizing_width = True
             x1, y1, x2, y2 = self.MT.get_canvas_visible_area()
             x = int(event.x)
-            if x < self.MT.min_cw:
-                x = int(self.MT.min_cw)
+            if x < self.MT.min_column_width:
+                x = int(self.MT.min_column_width)
             self.new_row_width = x
             self.create_resize_line(x, y1, x, y2, width = 1, fill = self.resizing_line_fg, tag = "rwl")
         elif self.MT.identify_row(y = event.y, allow_end = False) is None:
@@ -399,7 +391,7 @@ class RowIndex(tk.Canvas):
         if self.height_resizing_enabled and self.rsz_h is not None and self.currently_resizing_height:
             y = self.canvasy(event.y)
             size = y - self.MT.row_positions[self.rsz_h - 1]
-            if size >= self.MT.min_rh and size < self.max_rh:
+            if size >= self.MT.min_row_height and size < self.MT.max_row_height:
                 self.delete_all_resize_and_ctrl_lines(ctrl_lines = False)
                 line2y = self.MT.row_positions[self.rsz_h - 1]
                 self.create_resize_line(0, y, self.current_width, y, width = 1, fill = self.resizing_line_fg, tag = "rhl")
@@ -411,15 +403,15 @@ class RowIndex(tk.Canvas):
             self.delete_all_resize_and_ctrl_lines(ctrl_lines = False)
             if evx > self.current_width:
                 x = self.MT.canvasx(evx - self.current_width)
-                if evx > self.max_row_width:
-                    evx = int(self.max_row_width)
+                if evx > self.MT.max_index_width:
+                    evx = int(self.MT.max_index_width)
                     x = self.MT.canvasx(evx - self.current_width)
                 self.new_row_width = evx
                 self.MT.create_resize_line(x, y1, x, y2, width = 1, fill = self.resizing_line_fg, tag = "rwl")
             else:
                 x = evx
-                if x < self.MT.min_cw:
-                    x = int(self.MT.min_cw)
+                if x < self.MT.min_column_width:
+                    x = int(self.MT.min_column_width)
                 self.new_row_width = x
                 self.create_resize_line(x, y1, x, y2, width = 1, fill = self.resizing_line_fg, tag = "rwl")
         if self.drag_and_drop_enabled and self.row_selection_enabled and self.rsz_h is None and self.rsz_w is None and self.dragged_row is not None and self.MT.anything_selected(exclude_cells = True, exclude_columns = True):
@@ -588,10 +580,10 @@ class RowIndex(tk.Canvas):
             self.delete_all_resize_and_ctrl_lines(ctrl_lines = False)
             old_height = self.MT.row_positions[self.rsz_h] - self.MT.row_positions[self.rsz_h - 1]
             size = new_row_pos - self.MT.row_positions[self.rsz_h - 1]
-            if size < self.MT.min_rh:
-                new_row_pos = ceil(self.MT.row_positions[self.rsz_h - 1] + self.MT.min_rh)
-            elif size > self.max_rh:
-                new_row_pos = floor(self.MT.row_positions[self.rsz_h - 1] + self.max_rh)
+            if size < self.MT.min_row_height:
+                new_row_pos = ceil(self.MT.row_positions[self.rsz_h - 1] + self.MT.min_row_height)
+            elif size > self.MT.max_row_height:
+                new_row_pos = floor(self.MT.row_positions[self.rsz_h - 1] + self.MT.max_row_height)
             increment = new_row_pos - self.MT.row_positions[self.rsz_h]
             self.MT.row_positions[self.rsz_h + 1:] = [e + increment for e in islice(self.MT.row_positions, self.rsz_h + 1, len(self.MT.row_positions))]
             self.MT.row_positions[self.rsz_h] = new_row_pos
@@ -712,13 +704,13 @@ class RowIndex(tk.Canvas):
     def get_cell_dimensions(self, datarn):
         txt = self.get_valid_cell_data_as_str(datarn, fix = False)
         if txt:
-            self.MT.txt_measure_canvas.itemconfig(self.MT.txt_measure_canvas_text, text = txt, font = self.MT._font)
+            self.MT.txt_measure_canvas.itemconfig(self.MT.txt_measure_canvas_text, text = txt, font = self.MT.table_font)
             b = self.MT.txt_measure_canvas.bbox(self.MT.txt_measure_canvas_text)
             w = b[2] - b[0] + 7
             h = b[3] - b[1] + 5
         else:
-            w = self.default_width
-            h = self.MT.min_rh
+            w = self.MT.default_index_width
+            h = self.MT.min_row_height
         if self.get_cell_kwargs(datarn, key = 'dropdown') or self.get_cell_kwargs(datarn, key = 'checkbox'):
             return w + self.MT.txt_h, h
         return w, h
@@ -726,7 +718,7 @@ class RowIndex(tk.Canvas):
     def set_row_height(self, row, height = None, only_set_if_too_small = False, recreate = True, return_new_height = False, displayed_only = False):
         r_norm = row + 1
         r_extra = row + 2
-        min_rh = self.MT.min_rh
+        min_rh = self.MT.min_row_height
         datarn = row if self.MT.all_rows_displayed else self.MT.displayed_rows[row]
         if height is None:
             if self.MT.all_columns_displayed:
@@ -747,29 +739,29 @@ class RowIndex(tk.Canvas):
             w_, h = self.get_cell_dimensions(datarn)
             if h < min_rh:
                 h = int(min_rh)
-            elif h > self.max_rh:
-                h = int(self.max_rh)
+            elif h > self.MT.max_row_height:
+                h = int(self.MT.max_row_height)
             if h > new_height:
                 new_height = h
             if self.MT.data:
                 for datacn in iterable:
                     txt = self.MT.get_valid_cell_data_as_str(datarn, datacn, get_displayed = True)
                     if txt:
-                        h = self.MT.GetTextHeight(txt) + 5
+                        h = self.MT.get_txt_h(txt) + 5
                     else:
                         h = min_rh
                     if h < min_rh:
                         h = int(min_rh)
-                    elif h > self.max_rh:
-                        h = int(self.max_rh)
+                    elif h > self.MT.max_row_height:
+                        h = int(self.MT.max_row_height)
                     if h > new_height:
                         new_height = h
         else:
             new_height = int(height)
         if new_height < min_rh:
             new_height = int(min_rh)
-        elif new_height > self.max_rh:
-            new_height = int(self.max_rh)
+        elif new_height > self.MT.max_row_height:
+            new_height = int(self.MT.max_row_height)
         if only_set_if_too_small and new_height <= self.MT.row_positions[row + 1] - self.MT.row_positions[row]:
             return self.MT.row_positions[row + 1] - self.MT.row_positions[row]
         if not return_new_height:
@@ -781,55 +773,63 @@ class RowIndex(tk.Canvas):
                 self.MT.recreate_all_selection_boxes()
         return new_height
 
-    def set_width_of_index_to_text(self, recreate = True):
-        if not self.MT._row_index and isinstance(self.MT._row_index, list):
+    def set_width_of_index_to_text(self, text = None):
+        if text is None and not self.MT._row_index and isinstance(self.MT._row_index, list):
             return
         qconf = self.MT.txt_measure_canvas.itemconfig
         qbbox = self.MT.txt_measure_canvas.bbox
         qtxtm = self.MT.txt_measure_canvas_text
-        new_width = int(self.MT.min_cw)
+        new_width = int(self.MT.min_column_width)
         self.fix_index()
-        if self.MT.all_rows_displayed:
-            if isinstance(self.MT._row_index, list):
-                iterable = range(len(self.MT._row_index))
+        if text is not None:
+            if text:
+                qconf(qtxtm, text = text)
+                b = qbbox(qtxtm)
+                w = b[2] - b[0] + 10
+                if w > new_width:
+                    new_width = w
             else:
-                iterable = range(len(self.MT.data))
+                w = self.MT.default_index_width
         else:
-            iterable = self.MT.displayed_rows
-        if isinstance(self.MT._row_index, list):
-            for datarn in iterable:
-                w, h_ = self.get_cell_dimensions(datarn)
-                if w < self.MT.min_cw:
-                    w = int(self.MT.min_cw)
-                elif w > self.max_row_width:
-                    w = int(self.max_row_width)
-                if self.get_cell_kwargs(datarn, key = 'checkbox'):
-                    w += self.MT.txt_h + 6
-                elif self.get_cell_kwargs(datarn, key = 'dropdown'):
-                    w += self.MT.txt_h + 4
-                if w > new_width:
-                    new_width = w
-        elif isinstance(self.MT._row_index, int):
-            datacn = self.MT._row_index
-            for datarn in iterable:
-                txt = self.MT.get_valid_cell_data_as_str(datarn, datacn, get_displayed = True)
-                if txt:
-                    qconf(qtxtm, text = txt)
-                    b = qbbox(qtxtm)
-                    w = b[2] - b[0] + 10
+            if self.MT.all_rows_displayed:
+                if isinstance(self.MT._row_index, list):
+                    iterable = range(len(self.MT._row_index))
                 else:
-                    w = self.default_width
-                if w < self.MT.min_cw:
-                    w = int(self.MT.min_cw)
-                elif w > self.max_row_width:
-                    w = int(self.max_row_width)
-                if w > new_width:
-                    new_width = w
-        if new_width == self.MT.min_cw:
-            new_width = self.MT.min_cw + 10
+                    iterable = range(len(self.MT.data))
+            else:
+                iterable = self.MT.displayed_rows
+            if isinstance(self.MT._row_index, list):
+                for datarn in iterable:
+                    w, h_ = self.get_cell_dimensions(datarn)
+                    if w < self.MT.min_column_width:
+                        w = int(self.MT.min_column_width)
+                    elif w > self.MT.max_index_width:
+                        w = int(self.MT.max_index_width)
+                    if self.get_cell_kwargs(datarn, key = 'checkbox'):
+                        w += self.MT.txt_h + 6
+                    elif self.get_cell_kwargs(datarn, key = 'dropdown'):
+                        w += self.MT.txt_h + 4
+                    if w > new_width:
+                        new_width = w
+            elif isinstance(self.MT._row_index, int):
+                datacn = self.MT._row_index
+                for datarn in iterable:
+                    txt = self.MT.get_valid_cell_data_as_str(datarn, datacn, get_displayed = True)
+                    if txt:
+                        qconf(qtxtm, text = txt)
+                        b = qbbox(qtxtm)
+                        w = b[2] - b[0] + 10
+                    else:
+                        w = self.MT.default_index_width
+                    if w < self.MT.min_column_width:
+                        w = int(self.MT.min_column_width)
+                    elif w > self.MT.max_index_width:
+                        w = int(self.MT.max_index_width)
+                    if w > new_width:
+                        new_width = w
+        if new_width == self.MT.min_column_width:
+            new_width = self.MT.min_column_width + 10
         self.set_width(new_width, set_TL = True)
-        if recreate:
-            self.MT.recreate_all_selection_boxes()
         self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
 
     def set_height_of_all_rows(self, height = None, only_set_if_too_small = False, recreate = True):
@@ -858,17 +858,17 @@ class RowIndex(tk.Canvas):
     def auto_set_index_width(self, end_row):
         if not self.MT._row_index and not isinstance(self.MT._row_index, int) and self.auto_resize_width:
             if self.default_index == "letters":
-                new_w = self.MT.GetTextWidth(f"{num2alpha(end_row)}") + 20
+                new_w = self.MT.get_txt_w(f"{num2alpha(end_row)}") + 20
                 if self.current_width - new_w > 15 or new_w - self.current_width > 5:
                     self.set_width(new_w, set_TL = True)
                     return True
             elif self.default_index == "numbers":
-                new_w = self.MT.GetTextWidth(f"{end_row}") + 20
+                new_w = self.MT.get_txt_w(f"{end_row}") + 20
                 if self.current_width - new_w > 15 or new_w - self.current_width > 5:
                     self.set_width(new_w, set_TL = True)
                     return True
             elif self.default_index == "both":
-                new_w = self.MT.GetTextWidth(f"{end_row + 1} {num2alpha(end_row)}") + 20
+                new_w = self.MT.get_txt_w(f"{end_row + 1} {num2alpha(end_row)}") + 20
                 if self.current_width - new_w > 15 or new_w - self.current_width > 5:
                     self.set_width(new_w, set_TL = True)
                     return True
@@ -963,7 +963,7 @@ class RowIndex(tk.Canvas):
             self.redraw_highlight(x1 + 1, y1 + 1, x2, y2, fill = "", outline = self.index_fg, tag = tag)
         if draw_arrow:
             topysub = floor(self.MT.half_txt_h / 2)
-            mid_y = y1 + floor(self.MT.min_rh / 2)
+            mid_y = y1 + floor(self.MT.min_row_height / 2)
             if mid_y + topysub + 1 >= y1 + self.MT.txt_h - 1:
                 mid_y -= 1
             if mid_y - topysub + 2 <= y1 + 4 + topysub:
@@ -1079,7 +1079,7 @@ class RowIndex(tk.Canvas):
                     self.redraw_gridline(points = points, fill = self.index_grid_fg, width = 1, tag = "h")
         c_2 = self.index_selected_cells_bg if self.index_selected_cells_bg.startswith("#") else Color_Map_[self.index_selected_cells_bg]
         c_3 = self.index_selected_rows_bg if self.index_selected_rows_bg.startswith("#") else Color_Map_[self.index_selected_rows_bg]
-        font = self.MT._font
+        font = self.MT.table_font
         for r in range(start_row, end_row - 1):
             rtopgridln = self.MT.row_positions[r]
             rbotgridln = self.MT.row_positions[r + 1]
@@ -1353,7 +1353,7 @@ class RowIndex(tk.Canvas):
         bg, fg = self.index_bg, self.index_fg
         self.text_editor = TextEditor(self,
                                       text = text,
-                                      font = self.MT._font,
+                                      font = self.MT.table_font,
                                       state = state,
                                       width = w,
                                       height = h,
@@ -1398,7 +1398,7 @@ class RowIndex(tk.Canvas):
         if self.height_resizing_enabled:
             datarn = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r]
             curr_height = self.text_editor.winfo_height()
-            if not check_lines or self.MT.GetLinesHeight(self.text_editor.get_num_lines() + 1) > curr_height:
+            if not check_lines or self.MT.get_lines_cell_height(self.text_editor.get_num_lines() + 1, font = self.MT.index_font) > curr_height:
                 new_height = curr_height + self.MT.xtra_lines_increment
                 space_bot = self.MT.get_space_bot(r)
                 if new_height > space_bot:
@@ -1695,7 +1695,7 @@ class RowIndex(tk.Canvas):
             if v_numlines > 1:
                 win_h += self.MT.fl_ins + (v_numlines * self.MT.xtra_lines_increment) + 5 # end of cell
             else:
-                win_h += self.MT.min_rh
+                win_h += self.MT.min_row_height
             if i == 5:
                 break
         if win_h > 500:
@@ -1726,7 +1726,7 @@ class RowIndex(tk.Canvas):
                                                     0,
                                                     width = self.current_width,
                                                     height = win_h,
-                                                    font = self.MT._font,
+                                                    font = self.MT.table_font,
                                                     colors = {'bg': self.MT.popup_menu_bg, 
                                                               'fg': self.MT.popup_menu_fg, 
                                                               'highlight_bg': self.MT.popup_menu_highlight_bg,

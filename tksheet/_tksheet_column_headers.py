@@ -89,8 +89,6 @@ class ColumnHeaders(tk.Canvas):
         
         self.column_drag_and_drop_perform = kwargs['column_drag_and_drop_perform']
         self.default_header = kwargs['default_header'].lower()
-        self.max_cw = float(kwargs['max_colwidth'])
-        self.max_header_height = float(kwargs['max_header_height'])
         self.header_bg = kwargs['header_bg']
         self.header_fg = kwargs['header_fg']
         self.header_grid_fg = kwargs['header_grid_fg']
@@ -385,8 +383,8 @@ class ColumnHeaders(tk.Canvas):
             x1, y1, x2, y2 = self.MT.get_canvas_visible_area()
             self.currently_resizing_height = True
             y = event.y
-            if y < self.MT.hdr_min_rh:
-                y = int(self.MT.hdr_min_rh)
+            if y < self.MT.min_header_height:
+                y = int(self.MT.min_header_height)
             self.new_col_height = y
             self.create_resize_line(x1, y, x2, y, width = 1, fill = self.resizing_line_fg, tag = "rhl")
         elif self.MT.identify_col(x = event.x, allow_end = False) is None:
@@ -410,7 +408,7 @@ class ColumnHeaders(tk.Canvas):
         if self.width_resizing_enabled and self.rsz_w is not None and self.currently_resizing_width:
             x = self.canvasx(event.x)
             size = x - self.MT.col_positions[self.rsz_w - 1]
-            if size >= self.MT.min_cw and size < self.max_cw:
+            if size >= self.MT.min_column_width and size < self.MT.max_column_width:
                 self.delete_all_resize_and_ctrl_lines(ctrl_lines = False)
                 line2x = self.MT.col_positions[self.rsz_w - 1]
                 self.create_resize_line(x, 0, x, self.current_height, width = 1, fill = self.resizing_line_fg, tag = "rwl")
@@ -422,15 +420,15 @@ class ColumnHeaders(tk.Canvas):
             self.delete_all_resize_and_ctrl_lines(ctrl_lines = False)
             if evy > self.current_height:
                 y = self.MT.canvasy(evy - self.current_height)
-                if evy > self.max_header_height:
-                    evy = int(self.max_header_height)
+                if evy > self.MT.max_header_height:
+                    evy = int(self.MT.max_header_height)
                     y = self.MT.canvasy(evy - self.current_height)
                 self.new_col_height = evy
                 self.MT.create_resize_line(x1, y, x2, y, width = 1, fill = self.resizing_line_fg, tag = "rhl")
             else:
                 y = evy
-                if y < self.MT.hdr_min_rh:
-                    y = int(self.MT.hdr_min_rh)
+                if y < self.MT.min_header_height:
+                    y = int(self.MT.min_header_height)
                 self.new_col_height = y
                 self.create_resize_line(x1, y, x2, y, width = 1, fill = self.resizing_line_fg, tag = "rhl")
         elif self.drag_and_drop_enabled and self.col_selection_enabled and self.MT.anything_selected(exclude_cells = True, exclude_rows = True) and self.rsz_h is None and self.rsz_w is None and self.dragged_col is not None:
@@ -573,17 +571,17 @@ class ColumnHeaders(tk.Canvas):
             self.MT.set_xviews("moveto", 1)
             
     def event_over_dropdown(self, c, datacn, event, canvasx):
-        if (event.y < self.MT.hdr_txt_h + 5 and
+        if (event.y < self.MT.header_txt_h + 5 and
             self.get_cell_kwargs(datacn, key = 'dropdown') and 
             canvasx < self.MT.col_positions[c + 1] and 
-            canvasx > self.MT.col_positions[c + 1] - self.MT.hdr_txt_h - 4):
+            canvasx > self.MT.col_positions[c + 1] - self.MT.header_txt_h - 4):
             return True
         return False
                     
     def event_over_checkbox(self, c, datacn, event, canvasx):
-        if (event.y < self.MT.hdr_txt_h + 5 and
+        if (event.y < self.MT.header_txt_h + 5 and
             self.get_cell_kwargs(datacn, key = 'checkbox') and
-            canvasx < self.MT.col_positions[c] + self.MT.hdr_txt_h + 4):
+            canvasx < self.MT.col_positions[c] + self.MT.header_txt_h + 4):
             return True
         return False
             
@@ -600,10 +598,10 @@ class ColumnHeaders(tk.Canvas):
             self.delete_all_resize_and_ctrl_lines(ctrl_lines = False)
             old_width = self.MT.col_positions[self.rsz_w] - self.MT.col_positions[self.rsz_w - 1]
             size = new_col_pos - self.MT.col_positions[self.rsz_w - 1]
-            if size < self.MT.min_cw:
-                new_col_pos = ceil(self.MT.col_positions[self.rsz_w - 1] + self.MT.min_cw)
-            elif size > self.max_cw:
-                new_col_pos = floor(self.MT.col_positions[self.rsz_w - 1] + self.max_cw)
+            if size < self.MT.min_column_width:
+                new_col_pos = ceil(self.MT.col_positions[self.rsz_w - 1] + self.MT.min_column_width)
+            elif size > self.MT.max_column_width:
+                new_col_pos = floor(self.MT.col_positions[self.rsz_w - 1] + self.MT.max_column_width)
             increment = new_col_pos - self.MT.col_positions[self.rsz_w]
             self.MT.col_positions[self.rsz_w + 1:] = [e + increment for e in islice(self.MT.col_positions, self.rsz_w + 1, len(self.MT.col_positions))]
             self.MT.col_positions[self.rsz_w] = new_col_pos
@@ -615,7 +613,7 @@ class ColumnHeaders(tk.Canvas):
         elif self.height_resizing_enabled and self.rsz_h is not None and self.currently_resizing_height:
             self.currently_resizing_height = False
             self.delete_all_resize_and_ctrl_lines(ctrl_lines = False)
-            self.set_height(self.new_col_height,set_TL = True)
+            self.set_height(self.new_col_height, set_TL = True)
             self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
         elif self.drag_and_drop_enabled and self.col_selection_enabled and self.MT.anything_selected(exclude_cells = True, exclude_rows = True) and self.rsz_h is None and self.rsz_w is None and self.dragged_col is not None:
             self.delete_all_resize_and_ctrl_lines()
@@ -727,16 +725,85 @@ class ColumnHeaders(tk.Canvas):
     def get_cell_dimensions(self, datacn):
         txt = self.get_valid_cell_data_as_str(datacn, fix = False)
         if txt:
-            self.MT.txt_measure_canvas.itemconfig(self.MT.txt_measure_canvas_text, text = txt, font = self.MT._hdr_font)
+            self.MT.txt_measure_canvas.itemconfig(self.MT.txt_measure_canvas_text, text = txt, font = self.MT.header_font)
             b = self.MT.txt_measure_canvas.bbox(self.MT.txt_measure_canvas_text)
             w = b[2] - b[0] + 7
             h = b[3] - b[1] + 5
         else:
-            w = self.MT.min_cw
-            h = self.MT.hdr_min_rh
+            w = self.MT.min_column_width
+            h = self.MT.min_header_height
         if datacn in self.cell_options and (self.get_cell_kwargs(datacn, key = 'dropdown') or self.get_cell_kwargs(datacn, key = 'checkbox')):
-            return w + self.MT.hdr_txt_h, h
+            return w + self.MT.header_txt_h, h
         return w, h
+    
+    def set_height_of_header_to_text(self, text = None):
+        if text is None and not self.MT._headers and isinstance(self.MT._headers, list):
+            return
+        qconf = self.MT.txt_measure_canvas.itemconfig
+        qbbox = self.MT.txt_measure_canvas.bbox
+        qtxtm = self.MT.txt_measure_canvas_text
+        new_height = self.MT.min_header_height
+        self.fix_header()
+        if text is not None:
+            if text:
+                qconf(qtxtm, text = text)
+                b = qbbox(qtxtm)
+                h = b[3] - b[1] + 10
+                if h > new_height:
+                    new_height = h
+        else:
+            if self.MT.all_columns_displayed:
+                if isinstance(self.MT._headers, list):
+                    iterable = range(len(self.MT._headers))
+                else:
+                    iterable = range(len(self.MT.data))
+            else:
+                iterable = self.MT.displayed_columns
+            if isinstance(self.MT._headers, list):
+                for datarn in iterable:
+                    w, h_ = self.get_cell_dimensions(datarn)
+                    if w < self.MT.min_column_width:
+                        w = int(self.MT.min_column_width)
+                    elif w > self.MT.max_column_width:
+                        w = int(self.MT.max_column_width)
+                    if self.get_cell_kwargs(datarn, key = 'checkbox'):
+                        w += self.MT.txt_h + 6
+                    elif self.get_cell_kwargs(datarn, key = 'dropdown'):
+                        w += self.MT.txt_h + 4
+                    if w > new_width:
+                        new_width = w
+            elif isinstance(self.MT._headers, int):
+                datacn = self.MT._headers
+                for datarn in iterable:
+                    txt = self.MT.get_valid_cell_data_as_str(datarn, datacn, get_displayed = True)
+                    if txt:
+                        qconf(qtxtm, text = txt)
+                        b = qbbox(qtxtm)
+                        w = b[2] - b[0] + 10
+                    else:
+                        w = self.default_index_width
+                    if w < self.MT.min_column_width:
+                        w = int(self.MT.min_column_width)
+                    elif w > self.MT.max_column_width:
+                        w = int(self.MT.max_column_width)
+                    if w > new_width:
+                        new_width = w
+        if new_width == self.MT.min_column_width:
+            new_width = self.MT.min_column_width + 10
+        space_bot = self.MT.get_space_bot(0)
+        if new_height > space_bot:
+            new_height = space_bot
+        self.set_height(new_height, set_TL = True)
+        self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
+        
+        
+        
+        
+        
+        
+        
+        
+        return new_height
 
     def set_col_width(self, col, width = None, only_set_if_too_small = False, displayed_only = False, recreate = True, return_new_width = False):
         if col < 0:
@@ -746,11 +813,11 @@ class ColumnHeaders(tk.Canvas):
         qtxtm = self.MT.txt_measure_canvas_text
         qtxth = self.MT.txt_h
         qclop = self.MT.cell_options
-        qfont = self.MT._font
+        qfont = self.MT.table_font
         self.fix_header()
         if width is None:
-            w = self.MT.min_cw
-            hw = self.MT.min_cw
+            w = self.MT.min_column_width
+            hw = self.MT.min_column_width
             if self.MT.all_rows_displayed:
                 if displayed_only:
                     x1, y1, x2, y2 = self.MT.get_canvas_visible_area()
@@ -787,10 +854,10 @@ class ColumnHeaders(tk.Canvas):
                 new_width = hw
         else:
             new_width = int(width)
-        if new_width <= self.MT.min_cw:
-            new_width = int(self.MT.min_cw)
-        elif new_width > self.max_cw:
-            new_width = int(self.max_cw)
+        if new_width <= self.MT.min_column_width:
+            new_width = int(self.MT.min_column_width)
+        elif new_width > self.MT.max_column_width:
+            new_width = int(self.MT.max_column_width)
         if only_set_if_too_small:
             if new_width <= self.MT.col_positions[col + 1] - self.MT.col_positions[col]:
                 return self.MT.col_positions[col + 1] - self.MT.col_positions[col]
@@ -924,9 +991,9 @@ class ColumnHeaders(tk.Canvas):
         if draw_outline and self.MT.show_dropdown_borders:
             self.redraw_highlight(x1 + 1, y1 + 1, x2, y2, fill = "", outline = self.header_fg, tag = tag)
         if draw_arrow:
-            topysub = floor(self.MT.hdr_half_txt_h / 2)
-            mid_y = y1 + floor(self.MT.hdr_min_rh / 2)
-            if mid_y + topysub + 1 >= y1 + self.MT.hdr_txt_h - 1:
+            topysub = floor(self.MT.header_half_txt_h / 2)
+            mid_y = y1 + floor(self.MT.min_header_height / 2)
+            if mid_y + topysub + 1 >= y1 + self.MT.header_txt_h - 1:
                 mid_y -= 1
             if mid_y - topysub + 2 <= y1 + 4 + topysub:
                 mid_y -= 1
@@ -937,8 +1004,8 @@ class ColumnHeaders(tk.Canvas):
                 ty1 = mid_y + topysub + 1 if dd_is_open else mid_y - topysub + 2
                 ty2 = mid_y - topysub + 2 if dd_is_open else mid_y + topysub + 1
                 ty3 = mid_y + topysub + 1 if dd_is_open else mid_y - topysub + 2
-            tx1 = x2 - self.MT.hdr_txt_h + 1
-            tx2 = x2 - self.MT.hdr_half_txt_h - 1
+            tx1 = x2 - self.MT.header_txt_h + 1
+            tx2 = x2 - self.MT.header_half_txt_h - 1
             tx3 = x2 - 3
             if tx2 - tx1 > tx3 - tx2:
                 tx1 += (tx2 - tx1) - (tx3 - tx2)
@@ -1042,9 +1109,9 @@ class ColumnHeaders(tk.Canvas):
         top = self.canvasy(0)
         c_2 = self.header_selected_cells_bg if self.header_selected_cells_bg.startswith("#") else Color_Map_[self.header_selected_cells_bg]
         c_3 = self.header_selected_columns_bg if self.header_selected_columns_bg.startswith("#") else Color_Map_[self.header_selected_columns_bg]
-        font = self.MT._hdr_font
+        font = self.MT.header_font
         for c in range(start_col, end_col - 1):
-            draw_y = self.MT.hdr_fl_ins
+            draw_y = self.MT.header_fl_ins
             cleftgridln = self.MT.col_positions[c]
             crightgridln = self.MT.col_positions[c + 1]
             datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
@@ -1059,7 +1126,7 @@ class ColumnHeaders(tk.Canvas):
             if align == "w":
                 draw_x = cleftgridln + 3
                 if kwargs:
-                    mw = crightgridln - cleftgridln - self.MT.hdr_txt_h - 2
+                    mw = crightgridln - cleftgridln - self.MT.header_txt_h - 2
                     self.redraw_dropdown(cleftgridln, 0, crightgridln, self.current_height - 1, 
                                          fill = fill, outline = fill, tag = "dd", draw_outline = not dd_drawn, draw_arrow = mw >= 5,
                                          dd_is_open = kwargs['window'] != "no dropdown open")
@@ -1068,8 +1135,8 @@ class ColumnHeaders(tk.Canvas):
 
             elif align == "e":
                 if kwargs:
-                    mw = crightgridln - cleftgridln - self.MT.hdr_txt_h - 2
-                    draw_x = crightgridln - 5 - self.MT.hdr_txt_h
+                    mw = crightgridln - cleftgridln - self.MT.header_txt_h - 2
+                    draw_x = crightgridln - 5 - self.MT.header_txt_h
                     self.redraw_dropdown(cleftgridln, 0, crightgridln, self.current_height - 1,
                                          fill = fill, outline = fill, tag = "dd", draw_outline = not dd_drawn, draw_arrow = mw >= 5,
                                          dd_is_open = kwargs['window'] != "no dropdown open")
@@ -1080,8 +1147,8 @@ class ColumnHeaders(tk.Canvas):
             elif align == "center":
                 #stop = cleftgridln + 5
                 if kwargs:
-                    mw = crightgridln - cleftgridln - self.MT.hdr_txt_h - 2
-                    draw_x = cleftgridln + ceil((crightgridln - cleftgridln - self.MT.hdr_txt_h) / 2)
+                    mw = crightgridln - cleftgridln - self.MT.header_txt_h - 2
+                    draw_x = cleftgridln + ceil((crightgridln - cleftgridln - self.MT.header_txt_h) / 2)
                     self.redraw_dropdown(cleftgridln, 0, crightgridln, self.current_height - 1, 
                                          fill = fill, outline = fill, tag = "dd", draw_outline = not dd_drawn, draw_arrow = mw >= 5,
                                          dd_is_open = kwargs['window'] != "no dropdown open")
@@ -1090,8 +1157,8 @@ class ColumnHeaders(tk.Canvas):
                     draw_x = cleftgridln + floor((crightgridln - cleftgridln) / 2)
             kwargs = self.get_cell_kwargs(datacn, key = 'checkbox')
             if kwargs:
-                if mw > self.MT.hdr_txt_h + 2:
-                    box_w = self.MT.hdr_txt_h + 1
+                if mw > self.MT.header_txt_h + 2:
+                    box_w = self.MT.header_txt_h + 1
                     mw -= box_w
                     if align == "w":
                         draw_x += box_w + 1
@@ -1106,8 +1173,8 @@ class ColumnHeaders(tk.Canvas):
                         draw_check = False
                     self.redraw_checkbox(cleftgridln + 2,
                                          2,
-                                         cleftgridln + self.MT.hdr_txt_h + 3,
-                                         self.MT.hdr_txt_h + 3,
+                                         cleftgridln + self.MT.header_txt_h + 3,
+                                         self.MT.header_txt_h + 3,
                                          fill = fill if kwargs['state'] == "normal" else self.header_grid_fg,
                                          outline = "",
                                          tag = "cb", 
@@ -1118,7 +1185,7 @@ class ColumnHeaders(tk.Canvas):
                     lns = (get_n2a(datacn, self.default_header), )
                 else:
                     continue
-            if mw > self.MT.hdr_txt_w and not ((align == "w" and (draw_x > x_stop)) or
+            if mw > self.MT.header_txt_w and not ((align == "w" and (draw_x > x_stop)) or
                                                (align == "e" and (draw_x > x_stop)) or
                                                (align == "center" and (cleftgridln + 5 > x_stop))):
                 for txt in islice(lns, self.lines_start_at if self.lines_start_at < len(lns) else len(lns) - 1, None):
@@ -1187,7 +1254,7 @@ class ColumnHeaders(tk.Canvas):
                             self.disp_text[config._replace(txt = txt)].add(DrawnItem(iid = iid, showing = True))
                         else:
                             self.disp_text[config].add(DrawnItem(iid = iid, showing = True))
-                    draw_y += self.MT.hdr_xtra_lines_increment
+                    draw_y += self.MT.header_xtra_lines_increment
                     if draw_y - 1 > self.current_height:
                         break
         self.tag_raise("t")
@@ -1271,7 +1338,7 @@ class ColumnHeaders(tk.Canvas):
         text = "" if text is None else text
         if self.MT.cell_auto_resize_enabled:
             if self.height_resizing_enabled:
-                self.set_current_height_to_text(text)
+                self.set_height_of_header_to_text(text)
             self.set_col_width_run_binding(c)
         self.select_col(c = c, keep_other_selections = True)
         self.open_text_editor(c = c, text = text, set_data_on_close = True, dropdown = dropdown)
@@ -1315,7 +1382,7 @@ class ColumnHeaders(tk.Canvas):
         bg, fg = self.header_bg, self.header_fg
         self.text_editor = TextEditor(self,
                                       text = text,
-                                      font = self.MT._hdr_font,
+                                      font = self.MT.header_font,
                                       state = state,
                                       width = w,
                                       height = h,
@@ -1361,7 +1428,7 @@ class ColumnHeaders(tk.Canvas):
         if self.width_resizing_enabled:
             datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
             curr_width = self.text_editor.winfo_width()
-            new_width = curr_width + (self.MT.hdr_txt_h * 2)
+            new_width = curr_width + (self.MT.header_txt_h * 2)
             if new_width != curr_width:
                 self.text_editor.config(width = new_width)
                 self.set_col_width_run_binding(c, width = new_width, only_set_if_too_small = False)
@@ -1378,8 +1445,8 @@ class ColumnHeaders(tk.Canvas):
         if self.height_resizing_enabled:
             datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
             curr_height = self.text_editor.winfo_height()
-            if not check_lines or self.MT.GetHdrLinesHeight(self.text_editor.get_num_lines() + 1) > curr_height:
-                new_height = curr_height + self.MT.hdr_xtra_lines_increment
+            if not check_lines or self.MT.get_lines_cell_height(self.text_editor.get_num_lines() + 1, font = self.MT.header_font) > curr_height:
+                new_height = curr_height + self.MT.header_xtra_lines_increment
                 space_bot = self.MT.get_space_bot(0)
                 if new_height > space_bot:
                     new_height = space_bot
@@ -1484,7 +1551,7 @@ class ColumnHeaders(tk.Canvas):
                 self.set_cell_data(datacn = datacn, value = value)
         if cell_resize and self.MT.cell_auto_resize_enabled:
             if self.height_resizing_enabled:
-                self.set_current_height_to_text(self.get_valid_cell_data_as_str(datacn, fix = False))
+                self.set_height_of_header_to_text(self.get_valid_cell_data_as_str(datacn, fix = False))
             self.set_col_width_run_binding(c)
         if redraw:
             self.MT.refresh()
@@ -1668,9 +1735,9 @@ class ColumnHeaders(tk.Canvas):
         for i, v in enumerate(self.get_cell_kwargs(datacn, key = 'dropdown')['values']):
             v_numlines = len(v.split("\n") if isinstance(v, str) else f"{v}".split("\n"))
             if v_numlines > 1:
-                win_h += self.MT.hdr_fl_ins + (v_numlines * self.MT.hdr_xtra_lines_increment) + 5 # end of cell
+                win_h += self.MT.header_fl_ins + (v_numlines * self.MT.header_xtra_lines_increment) + 5 # end of cell
             else:
-                win_h += self.MT.hdr_min_rh
+                win_h += self.MT.min_header_height
             if i == 5:
                 break
         if win_h > 500:
@@ -1679,24 +1746,11 @@ class ColumnHeaders(tk.Canvas):
         win_h2 = int(win_h)
         if win_h > space_bot:
             win_h = space_bot - 1
-        if win_h < self.MT.hdr_txt_h + 5:
-            win_h = self.MT.hdr_txt_h + 5
+        if win_h < self.MT.header_txt_h + 5:
+            win_h = self.MT.header_txt_h + 5
         elif win_h > win_h2:
             win_h = win_h2
         return win_h, "nw"
-
-    def set_current_height_to_text(self, text):
-        x = self.MT.txt_measure_canvas.create_text(0,
-                                                   0,
-                                                   text = text,
-                                                   font = self.MT._hdr_font)
-        b = self.MT.txt_measure_canvas.bbox(x)
-        self.MT.txt_measure_canvas.delete(x)
-        new_height = b[3] - b[1] + 5
-        space_bot = self.MT.get_space_bot(0)
-        if new_height > space_bot:
-            new_height = space_bot
-        self.set_height(new_height, set_TL = True)
 
     def open_dropdown_window(self, c, datacn = None, event = None):
         self.destroy_text_editor("Escape")
@@ -1713,7 +1767,7 @@ class ColumnHeaders(tk.Canvas):
                                                     c,
                                                     width = self.MT.col_positions[c + 1] - self.MT.col_positions[c] + 1,
                                                     height = win_h,
-                                                    font = self.MT._hdr_font,
+                                                    font = self.MT.header_font,
                                                     colors = {'bg': self.MT.popup_menu_bg, 
                                                               'fg': self.MT.popup_menu_fg, 
                                                               'highlight_bg': self.MT.popup_menu_highlight_bg,
