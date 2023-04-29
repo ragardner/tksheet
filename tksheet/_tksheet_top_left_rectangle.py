@@ -44,7 +44,7 @@ class TopLeftRectangle(tk.Canvas):
         self.bind("<B1-Motion>", self.b1_motion)
         self.bind("<ButtonRelease-1>", self.b1_release)
         self.bind("<Double-Button-1>", self.double_b1)
-        self.bind(get_rc_binding(), self.rc)
+        self.bind(rc_binding, self.rc)
 
     def rw_state(self, state = "normal"):
         self.itemconfig("rw", state = state)
@@ -73,14 +73,14 @@ class TopLeftRectangle(tk.Canvas):
             self.bind("<B1-Motion>", self.b1_motion)
             self.bind("<ButtonRelease-1>", self.b1_release)
             self.bind("<Double-Button-1>", self.double_b1)
-            self.bind(get_rc_binding(), self.rc)
+            self.bind(rc_binding, self.rc)
         else:
             self.unbind("<Motion>")
             self.unbind("<ButtonPress-1>")
             self.unbind("<B1-Motion>")
             self.unbind("<ButtonRelease-1>")
             self.unbind("<Double-Button-1>")
-            self.unbind(get_rc_binding())
+            self.unbind(rc_binding)
 
     def set_dimensions(self, new_w = None, new_h = None):
         try:
@@ -107,7 +107,8 @@ class TopLeftRectangle(tk.Canvas):
         self.focus_set()
         rect = self.find_overlapping(event.x, event.y, event.x, event.y)
         if not rect:
-            if self.MT.select_all_enabled and not self.MT.all_selected():
+            if self.MT.select_all_enabled:
+                self.MT.deselect("all")
                 self.MT.select_all()
             else:
                 self.MT.deselect("all")

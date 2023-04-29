@@ -565,7 +565,8 @@ enable_bindings(*bindings)
 	- "rc_delete_column"
 	- "rc_insert_row"
 	- "rc_delete_row"
-	- "hide_columns"
+    - "ctrl_click_select"
+    - "ctrl_select"
 	- "copy"
 	- "cut"
 	- "paste"
@@ -576,11 +577,14 @@ enable_bindings(*bindings)
     - "edit_index"
 
 Notes:
-- Dragging and dropping rows / columns is bound to shift - mouse left click and hold and drag.
-- `"edit_header"` and `"edit_index"` are not enabled by `bindings = "all"` and has to be enabled individually, double click or right click (if enabled) on header/index cells to edit.
+- `"edit_header"`, `"edit_index"`, `"ctrl_select"` and `"ctrl_click_select"` are not enabled by `bindings = "all"` and have to be enabled individually, double click or right click (if enabled) on header/index cells to edit.
+- `"ctrl_select"` and `"ctrl_click_select"` are the same and you can use either one.
 - To allow table expansion when pasting data which doesn't fit in the table use either:
    - `expand_sheet_if_paste_too_big = True` in sheet initialization arguments or
    - `sheet.set_options(expand_sheet_if_paste_too_big = True)`
+
+Example:
+- `sheet.enable_bindings("all", "edit_header", "edit_index", "ctrl_select")` to enable absolutely everything.
 
 ___
 
@@ -1519,45 +1523,19 @@ unbind_key_text_editor(key)
 ## **Dropdown Boxes**
 ----
 
-#### **Create a dropdown box (only creates the arrow and border and sets it up for usage, does not pop open the box).**
-```python
-create_dropdown(r = 0,
-                c = 0,
-                values = [],
-                set_value = None,
-                state = "normal",
-                redraw = False,
-                selection_function = None,
-                modified_function = None,
-                search_function = dropdown_search_function,
-                validate_input = True,
-                text = None)
-```
+#### **Dropdown box creation**
 
+When using the functions to create dropdown boxes these are the default arguments:
 ```python
-create_header_dropdown(c = 0,
-                       values = [],
-                       set_value = None,
-                       state = "normal",
-                       redraw = False,
-                       selection_function = None,
-                       modified_function = None,
-                       search_function = dropdown_search_function,
-                       validate_input = True,
-                       text = None)
-```
-
-```python
-create_index_dropdown(r = 0,
-                      values = [],
-                      set_value = None,
-                      state = "normal",
-                      redraw = False,
-                      selection_function = None,
-                      modified_function = None,
-                      search_function = dropdown_search_function,
-                      validate_input = True,
-                      text = None)
+values = [],
+set_value = None,
+state = "normal",
+redraw = True,
+selection_function = None,
+modified_function = None,
+search_function = dropdown_search_function,
+validate_input = True,
+text = None
 ```
 
 Notes:
@@ -1565,7 +1543,6 @@ Notes:
 - When a user selects an item from the dropdown box the sheet will set the underlying cells data to the selected item, to bind this event use either the `selection_function` argument or see the function `extra_bindings()` with binding `"end_edit_cell"` [here](https://github.com/ragardner/tksheet/wiki#7-bindings-and-functionality).
 
  Arguments:
-- `r` and `c` (`int`, `str`) can be set to `"all"`
 - `values` are the values to appear when the dropdown box is popped open.
 - `state` determines whether or not there is also an editable text window at the top of the dropdown box when it is open.
 - `redraw` refreshes the sheet so the newly created box is visible.
@@ -1574,6 +1551,50 @@ Notes:
 - `search_function` (`None`, `callable`) sets the function that will be used to search the dropdown boxes values upon a dropdown text editor modified event when the dropdowns state is `normal`. Set to `None` to disable the search feature or use your own function with the following keyword arguments: `(search_for, data):` and make it return an row number (e.g. select and see the first value would be `0`) if positive and `None` if negative.
 - `validate_input` (`bool`) when `True` will not allow cut, paste, delete or cell editor to input values to cell which are not in the dropdown boxes values.
 - `text` (`None`, `str`) can be set to something other than `None` to always display over whatever value is in the cell, this is useful when you want to display a Header name over a dropdown box selection.
+
+Box creation functions:
+```python
+create_dropdown(r = 0, c = 0, *args, **kwargs)
+dropdown_cell(r = 0, c = 0, *args, **kwargs)
+```
+- `r` and `c` (`int`, `"all"`) can be set to `"all"` or `int`.
+
+```python
+dropdown_row(r = 0, *args, **kwargs)
+```
+- `r` (`int`, `"all"`, `iterable`) can be set to `"all"`, `int` or any `iterable` of `int`s.
+
+```python
+dropdown_column(c = 0, *args, **kwargs)
+```
+- `c` (`int`, `"all"`, `iterable`) can be set to `"all"`, `int` or any `iterable` of `int`s.
+
+```python
+dropdown_sheet(*args, **kwargs)
+```
+- Sets the entire sheet to always have a dropdown box in every cell with the specified arguments.
+
+```python
+create_index_dropdown(r = 0, *args, **kwargs)
+```
+- `r` (`int`, `None`, `iterable`) use `None` to set the entire index to always having dropdown boxes with the chosen args/kwargs.
+
+```python
+create_header_dropdown(c = 0, *args, **kwargs)
+```
+- `c` (`int`, `None`, `iterable`) use `None` to set the entire header to always having dropdown boxes with the chosen args/kwargs.
+
+Examples:
+```python
+# dropdown boxes all the way down column index 5
+sheet.dropdown_column(5, values = ["ON", "OFF"])
+
+# dropdown boxes all the way across rows 0 and 1
+sheet.dropdown_row(range(2), values = ["1", "2", "3"])
+
+# headers always have dropdown boxes with the same values
+sheet.create_header_dropdown(c = None, values = ["val 1", "val 2"])
+```
 
 ___
 
@@ -1627,19 +1648,42 @@ index_dropdown_functions(r, selection_function = "", modified_function = "")
 ___
 
 #### **Delete dropdown boxes.**
-```python
-delete_dropdown(r = 0, c = 0)
-```
 
 ```python
-delete_header_dropdown(c = 0)
+delete_dropdown(r = 0, c = 0)
+delete_cell_dropdown(r = 0, c = 0)
 ```
+- Deletes dropdown boxes created by `create_dropdown()`/`dropdown_cell()`.
+- `r` and `c` (`int`, `"all"`).
+
+```python
+delete_row_dropdown(r = 0)
+```
+- Deletes dropdown boxes created by `dropdown_row()`.
+- `r` (`int`, `"all"`, `iterable`).
+
+```python
+delete_column_dropdown(c = 0)
+```
+- Deletes dropdown boxes created by `dropdown_column()`.
+- `c` (`int`, `"all"`, `iterable`).
+
+```python
+delete_sheet_dropdown()
+```
+- Deletes dropdown boxes created by `dropdown_sheet()`.
 
 ```python
 delete_index_dropdown(r = 0)
 ```
+- Deletes dropdown boxes created by `create_header_dropdown()`.
+- `r` (`int`, `"all"`, `None`). Use `None` to delete dropdowns created using `None`.
 
-- Set first argument to `"all"` to delete all dropdown boxes on the sheet.
+```python
+delete_header_dropdown(c = 0)
+```
+- Deletes dropdown boxes created by `create_header_dropdown()`.
+- `c` (`int`, `"all"`, `None`). Use `None` to delete dropdowns created using `None`.
 
 ___
 
@@ -1665,6 +1709,7 @@ Returns:
                          'state': state,
                          'text': text}}
 ```
+- **Note:** This dictionary will also contain a key named `"dropdown"` if you have used `dropdown_sheet()`/`create_index_dropdown(None)`/`create_header_dropdown(None)`.
 
 ___
 
@@ -1683,7 +1728,7 @@ open_index_dropdown(r)
 
 ___
 
-#### **Close an already open dropdown box.**
+#### **Close an open dropdown box.**
 ```python
 close_dropdown(r, c)
 ```
@@ -1695,39 +1740,20 @@ close_header_dropdown(c)
 ```python
 close_index_dropdown(r)
 ```
-
 - Also destroys any opened text editor windows.
 
 ## **Check Boxes**
 ----
 
-#### **Create a check box.**
-```python
-create_checkbox(r,
-                c,
-                checked = False,
-                state = "normal",
-                redraw = False,
-                check_function = None,
-                text = "")
-```
+#### **Checkbox creation.**
 
+When using the functions to create checkboxes these are the default arguments:
 ```python
-create_header_checkbox(c,
-                       checked = False,
-                       state = "normal",
-                       redraw = False,
-                       check_function = None,
-                       text = "")
-```
-
-```python
-create_index_checkbox(r,
-                      checked = False,
-                      state = "normal",
-                      redraw = False,
-                      check_function = None,
-                      text = "")
+checked = False,
+state = "normal",
+redraw = False,
+check_function = None,
+text = ""
 ```
 
 Notes:
@@ -1736,10 +1762,55 @@ Notes:
 - Check boxes are always left aligned despite any align settings.
 
  Arguments:
-- `r` and `c` (`int`, `str`) can be set to `"all"`
-- `text` displays text next to the checkbox in the cell, but will not be used as data, data will either be `True` or `False`
+- `r` and `c` (`int`, `str`) can be set to `"all"`.
+- `checked` is the initial creation value to set the box to.
+- `text` displays text next to the checkbox in the cell, but will not be used as data, data will either be `True` or `False`.
 - `check_function` can be used to trigger a function when the user clicks a checkbox.
 - `state` can be `"normal"` or `"disabled"`. If `"disabled"` then color will be same as table grid lines, else it will be the cells text color.
+
+Box creation functions:
+```python
+create_checkbox(r = 0, c = 0, *args, **kwargs)
+checkbox_cell(r = 0, c = 0, *args, **kwargs)
+```
+- `r` and `c` (`int`, `"all"`) can be set to `"all"` or `int`.
+
+```python
+checkbox_row(r = 0, *args, **kwargs)
+```
+- `r` (`int`, `"all"`, `iterable`) can be set to `"all"`, `int` or any `iterable` of `int`s.
+
+```python
+checkbox_column(c = 0, *args, **kwargs)
+```
+- `c` (`int`, `"all"`, `iterable`) can be set to `"all"`, `int` or any `iterable` of `int`s.
+
+```python
+checkbox_sheet(*args, **kwargs)
+```
+- Sets the entire sheet to always have a checkboxbox in every cell with the specified arguments.
+
+```python
+create_index_checkbox(r = 0, *args, **kwargs)
+```
+- `r` (`int`, `None`, `iterable`) use `None` to set the entire index to always having checkboxes with the chosen args/kwargs.
+
+```python
+create_header_checkbox(c = 0, *args, **kwargs)
+```
+- `c` (`int`, `None`, `iterable`) use `None` to set the entire header to always having checkboxes boxes with the chosen args/kwargs.
+
+Examples:
+```python
+# boxes all the way down column index 5
+sheet.checkbox_column(5, text = "Enabled", check_function = my_function)
+
+# boxes all the way across rows 0 and 1
+sheet.checkbox_row(range(2), text = "Row Checkbox" checked = True)
+
+# headers always have boxes with the same values
+sheet.create_header_checkbox(c = None, text = "Header Checkbox")
+```
 
 ___
 
@@ -1785,7 +1856,6 @@ delete_header_checkbox(c = 0)
 ```python
 delete_index_checkbox(r = 0)
 ```
-
 - Set first argument to `"all"` to delete all check boxes.
 
 ___
@@ -1815,7 +1885,6 @@ index_checkbox(r,
                check_function = "",
                text = None)
 ```
-
 - If any arguments are not default they will be set for the chosen checkbox.
 - If all arguments are default a dictionary of all the checkboxes information will be returned.
 

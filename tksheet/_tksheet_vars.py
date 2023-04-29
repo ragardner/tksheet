@@ -3,6 +3,7 @@ from platform import system as get_os
 
 USER_OS = f"{get_os()}".lower()
 ctrl_key = "Command" if USER_OS == "darwin" else "Control"
+rc_binding = "<2>" if USER_OS == "darwin" else "<3>"
 symbols_set = set("""!#\$%&'()*+,-./:;"@[]^_`{|}~>?= """)
 nonelike = {None, 'none', ''}
 truthy = {True, "true", "t", "yes", "y", "on", "1", 1, 1.0}

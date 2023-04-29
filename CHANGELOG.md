@@ -1,3 +1,24 @@
+### Version 6.0.3
+#### Fixed:
+- `disable_bindings()` disable all bindings not disabling edit header/index capability
+- Undo not recreating all former selection boxes with cell edits
+- Undoing paste where sheet was expanded and rows were hidden didn't remove added rows
+- Bug with hidden rows and index highlights
+- Bug with hidden rows and text editor newline binding in main table
+- Bug with hidden rows and drag and drop rows
+
+#### Added:
+- Control / Command selecting multiple non-consecutive boxes
+- [PR#171](https://github.com/ragardner/tksheet/pull/171) `<<SheetModifiedEvent>>` is now emitted when the sheet is modified by a user action such as right click delete/insert rows/columns or editing cells
+
+#### Changed:
+- `header_dropdown_functions`/`index_dropdown_functions`/`dropdown_functions` now return dict
+- Rename internal function `create_text_editor()`
+- Select all now maintains existing currently selected cell when using Control/Command - a
+- Renamed internal functions `check_views()` `check_xview()` `check_yview()`
+- Default argument `redraw` changed to `True` for dropdown/checkbox creation functions
+- Better graphical indicators for which columns/rows are being moved when dragging and dropping
+
 ### Version 6.0.2
 #### Fixed:
 - Right click delete rows bug [PR#171](https://github.com/ragardner/tksheet/pull/171)

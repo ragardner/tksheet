@@ -1,4 +1,5 @@
 from ._tksheet_vars import *
+import bisect
 from collections import namedtuple
 from itertools import islice
 import tkinter as tk
@@ -24,7 +25,8 @@ ResizeEvent = namedtuple("ResizeEvent", "eventname index oldsize newsize")
 DropDownModifiedEvent = namedtuple("DropDownModifiedEvent", "eventname row column value")
 DrawnItem = namedtuple("DrawnItem", "iid showing")
 TextCfg = namedtuple("TextCfg", "txt tf font align")
-ProgressBar = namedtuple("ProgressBar", "bg fg pc name")
+DraggedRowColumn = namedtuple("DraggedRowColumn", "dragged to_move")
+_ProgBar = namedtuple("_ProgBar", "bg fg pc name")
 
 
 class TextEditor_(tk.Text):
@@ -111,10 +113,7 @@ class TextEditor_(tk.Text):
                                        activeforeground = popup_menu_highlight_fg,
                                        command = self.undo)
         self.bind("<1>", lambda event: self.focus_set())
-        if USER_OS == "darwin":
-            self.bind("<2>", self.rc)
-        else:
-            self.bind("<3>", self.rc)
+        self.bind(rc_binding, self.rc)
         self._orig = self._w + "_orig"
         self.tk.call("rename", self._w, self._orig)
         self.tk.createcommand(self._w, self._proxy)
@@ -139,23 +138,23 @@ class TextEditor_(tk.Text):
         self.rc_popup_menu.tk_popup(event.x_root, event.y_root)
         
     def select_all(self, event = None):
-        self.event_generate("<Command-a>" if on_mac() else "<Control-a>")
+        self.event_generate(f"<{ctrl_key}-a>")
         return "break"
     
     def cut(self, event = None):
-        self.event_generate("<Command-x>" if on_mac() else "<Control-x>")
+        self.event_generate(f"<{ctrl_key}-x>")
         return "break"
     
     def copy(self, event = None):
-        self.event_generate("<Command-c>" if on_mac() else "<Control-c>")
+        self.event_generate(f"<{ctrl_key}-c>")
         return "break"
     
     def paste(self, event = None):
-        self.event_generate("<Command-v>" if on_mac() else "<Control-v>")
+        self.event_generate(f"<{ctrl_key}-v>")
         return "break"
 
     def undo(self, event = None):
-        self.event_generate("<Command-z>" if on_mac() else "<Control-z>")
+        self.event_generate(f"<{ctrl_key}-z>")
         return "break"
 
 
@@ -260,7 +259,44 @@ def dropdown_search_function(search_for, data):
         return best_match['rn']
     return None
 
+def get_dropdown_kwargs(values = [],
+                        set_value = None,
+                        state = "normal",
+                        redraw = True,
+                        selection_function = None,
+                        modified_function = None,
+                        search_function = dropdown_search_function,
+                        validate_input = True,
+                        text = None,
+                        **kwargs):
+    return {'values': values, 'set_value': set_value, 'state': state, 'redraw': redraw, 'selection_function': selection_function,
+            'modified_function': modified_function, 'search_function': search_function, 'validate_input': validate_input, 'text': text}
+    
+def get_dropdown_dict(**kwargs):
+    return {'values': kwargs['values'],
+            'window': "no dropdown open",
+            'canvas_id': "no dropdown open",
+            'select_function': kwargs['selection_function'],
+            'modified_function': kwargs['modified_function'],
+            'search_function': kwargs['search_function'],
+            'validate_input': kwargs['validate_input'],
+            'text': kwargs['text'],
+            'state': kwargs['state']}
+    
+def get_checkbox_kwargs(checked = False,
+                        state = "normal",
+                        redraw = True,
+                        check_function = None,
+                        text = "",
+                        **kwargs):
+    return {'checked': checked, 'state': state, 'redraw': redraw, 'check_function': check_function, 'text': text}
+
+def get_checkbox_dict(**kwargs):
+    return {'check_function': kwargs['check_function'], 'state': kwargs['state'], 'text': kwargs['text']}
+
 def is_iterable(o):
+    if isinstance(o, str):
+        return False
     try:
         iter(o)
         return True
@@ -299,15 +335,13 @@ def get_index_of_gap_in_sorted_integer_seq_reverse(seq, start = 0):
         prevn = n
     return None
 
-def on_mac():
-    if USER_OS == "darwin":
-        return True
-    else:
-        return False
-
-def get_rc_binding():
-    if USER_OS == "darwin":
-        return "<2>"
-    else:
-        return "<3>"
+def get_seq_without_gaps_at_index(seq, position):
+    start_idx = bisect.bisect_left(seq, position)
+    forward_gap = get_index_of_gap_in_sorted_integer_seq_forward(seq, start_idx)
+    reverse_gap = get_index_of_gap_in_sorted_integer_seq_reverse(seq, start_idx)
+    if forward_gap is not None:
+        seq[:] = seq[:forward_gap]
+    if reverse_gap is not None:
+        seq[:] = seq[reverse_gap:]
+    return seq
         
