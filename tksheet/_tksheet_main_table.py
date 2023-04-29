@@ -522,7 +522,7 @@ class MainTable(tk.Canvas):
                             self.set_cell_data(datarn, datacn, "")
                             changes += 1
         if changes and self.undo_enabled:
-            self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells", undo_storage, tuple(boxes.items()), currently_selected))))
+            self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells", undo_storage, boxes, currently_selected))))
         self.clipboard_clear()
         self.clipboard_append(s.getvalue())
         self.update_idletasks()
@@ -654,7 +654,7 @@ class MainTable(tk.Canvas):
         if changes and self.undo_enabled:
             self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells_paste",
                                                                  undo_storage,
-                                                                 (((selected_r, selected_c, selected_r + numrows, selected_c + numcols), "cells"), ), # boxes
+                                                                 {(selected_r, selected_c, selected_r + numrows, selected_c + numcols): "cells"}, # boxes
                                                                  currently_selected,
                                                                  added_rows_cols))))
         self.create_selected(selected_r, selected_c, selected_r + numrows, selected_c + numcols, "cells")
@@ -698,7 +698,7 @@ class MainTable(tk.Canvas):
             if self.extra_end_delete_key_func is not None:
                 self.extra_end_delete_key_func(CtrlKeyEvent("end_delete_key", boxes, currently_selected, undo_storage))
             if changes and self.undo_enabled:
-                self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells", undo_storage, tuple(boxes.items()), currently_selected))))
+                self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells", undo_storage, boxes, currently_selected))))
             self.refresh()
             
     def move_columns_adjust_options_dict(self, col, to_move_min, num_cols, move_data = True, create_selections = True, index_type = "displayed"):
@@ -1000,19 +1000,13 @@ class MainTable(tk.Canvas):
         if undo_storage[0] in ("edit_header", ):
             for c, v in undo_storage[1].items():
                 self._headers[c] = v
-            for box in undo_storage[2]:
-                r1, c1, r2, c2 = box[0]
-                if not self.expand_sheet_if_paste_too_big:
-                    self.create_selected(r1, c1, r2, c2, box[1])
+            self.reselect_from_get_boxes(undo_storage[2])
             self.create_current(0, undo_storage[3][1], type_ = "column", inside = True)
             
         if undo_storage[0] in ("edit_index", ):
             for r, v in undo_storage[1].items():
                 self._row_index[r] = v
-            for box in undo_storage[2]:
-                r1, c1, r2, c2 = box[0]
-                if not self.expand_sheet_if_paste_too_big:
-                    self.create_selected(r1, c1, r2, c2, box[1])
+            self.reselect_from_get_boxes(undo_storage[2])
             self.create_current(0, undo_storage[3][1], type_ = "row", inside = True)
                         
         if undo_storage[0] in ("edit_cells", "edit_cells_paste"):
@@ -1033,14 +1027,7 @@ class MainTable(tk.Canvas):
                         self.data[rn][:] = self.data[rn][:-quick_added_cols]
                     if not self.all_columns_displayed:
                         self.displayed_columns[:] = self.displayed_columns[:-quick_added_cols]
-            for box in undo_storage[2]:
-                r1, c1, r2, c2 = box[0]
-                if r2 < len(self.row_positions) and c2 < len(self.col_positions):
-                    self.create_selected(r1, c1, r2, c2, box[1])
-                if r1 < start_row:
-                    start_row = r1
-                if c1 < start_col:
-                    start_col = c1
+            self.reselect_from_get_boxes(undo_storage[2])
             if undo_storage[3]:
                 self.create_current(undo_storage[3].row,
                                     undo_storage[3].column, 
@@ -4250,7 +4237,7 @@ class MainTable(tk.Canvas):
     def get_all_selection_items(self):
         return sorted(self.find_withtag("CellSelectFill") + self.find_withtag("RowSelectFill") + self.find_withtag("ColSelectFill") + self.find_withtag("Current_Inside") + self.find_withtag("Current_Outside"))
 
-    def get_boxes(self):
+    def get_boxes(self, include_current = True):
         boxes = {}
         for item in self.get_all_selection_items():
             alltags = self.gettags(item)
@@ -4260,23 +4247,24 @@ class MainTable(tk.Canvas):
                 boxes[tuple(int(e) for e in alltags[1].split("_") if e)] = "rows"
             elif alltags[0] == "ColSelectFill":
                 boxes[tuple(int(e) for e in alltags[1].split("_") if e)] = "columns"
-            elif alltags[0] == "Current_Inside":
+            elif include_current and alltags[0] == "Current_Inside":
                 boxes[tuple(int(e) for e in alltags[1].split("_") if e)] = f"{alltags[2]}_inside"
-            elif alltags[0] == "Current_Outside":
+            elif include_current and alltags[0] == "Current_Outside":
                 boxes[tuple(int(e) for e in alltags[1].split("_") if e)] = f"{alltags[2]}_outside"
         return boxes
 
     def reselect_from_get_boxes(self, boxes):
-        for k, v in boxes.items():
-            if v == "cells":
-                self.create_selected(k[0], k[1], k[2], k[3], "cells")
-            elif v == "rows":
-                self.create_selected(k[0], k[1], k[2], k[3], "rows")
-            elif v == "columns":
-                self.create_selected(k[0], k[1], k[2], k[3], "columns")
-            elif v in ("cell_inside", "cell_outside", "row_inside", "row_outside", "col_outside", "col_inside"): #currently selected
-                x = v.split("_")
-                self.create_current(k[0], k[1], type_ = x[0], inside = True if x[1] == "inside" else False)
+        for (r1, c1, r2, c2), v in boxes.items():
+            if r2 < len(self.row_positions) and c2 < len(self.col_positions):
+                if v == "cells":
+                    self.create_selected(r1, c1, r2, c2, "cells")
+                elif v == "rows":
+                    self.create_selected(r1, c1, r2, c2, "rows")
+                elif v == "columns":
+                    self.create_selected(r1, c1, r2, c2, "columns")
+                elif v in ("cell_inside", "cell_outside", "row_inside", "row_outside", "col_outside", "col_inside"): #currently selected
+                    x = v.split("_")
+                    self.create_current(r1, c1, type_ = x[0], inside = True if x[1] == "inside" else False)
                 
     def delete_selected(self, r1 = None, c1 = None, r2 = None, c2 = None, type_ = None):
         deleted_boxes = {}
@@ -5231,7 +5219,7 @@ class MainTable(tk.Canvas):
             if self.undo_enabled and undo:
                 self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells",
                                                                     {(datarn, datacn): self.get_cell_data(datarn, datacn)},
-                                                                    (((r, c, r + 1, c + 1), "cells"), ),
+                                                                    self.get_boxes(include_current = False),
                                                                     self.currently_selected()))))
             self.set_cell_data(datarn, datacn, value)
         if cell_resize and self.cell_auto_resize_enabled:
@@ -5244,7 +5232,7 @@ class MainTable(tk.Canvas):
             if datarn >= len(self.data):
                 self.fix_data_len(datarn, datacn)
             elif datacn >= len(self.data[datarn]):
-                self.data[datarn].extend(self.get_empty_row_seq(datarn, end = datacn + datacn + 1 - len(self.data[datarn]), start = datacn))
+                self.data[datarn].extend(self.get_empty_row_seq(datarn, end = datacn + 1, start = len(self.data[datarn])))
         if expand_sheet or (len(self.data) > datarn and len(self.data[datarn]) > datacn):
             if (datarn, datacn) in self.cell_options and 'checkbox' in self.cell_options[(datarn, datacn)]:
                 self.data[datarn][datacn] = try_to_bool(value)

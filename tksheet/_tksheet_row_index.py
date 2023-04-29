@@ -1507,7 +1507,7 @@ class RowIndex(tk.Canvas):
                 if self.MT.undo_enabled and undo:
                     self.MT.undo_storage.append(zlib.compress(pickle.dumps(("edit_index",
                                                                             {datarn: self.MT._row_index[datarn]},
-                                                                            (((r, 0, r + 1, len(self.MT.col_positions) - 1), "rows"), ),
+                                                                            self.MT.get_boxes(include_current = False),
                                                                             self.MT.currently_selected()))))
                 self.set_cell_data(datarn = datarn, value = value)
         if cell_resize and self.MT.cell_auto_resize_enabled:
@@ -1597,7 +1597,7 @@ class RowIndex(tk.Canvas):
             except:
                 self.MT._row_index = []
         if isinstance(datarn, int) and datarn >= len(self.MT._row_index):
-            self.MT._row_index.extend([self.get_value_for_empty_cell(rn) for rn in range(datarn, datarn - len(self.MT._row_index) + 1)])
+            self.MT._row_index.extend(self.get_empty_index_seq(end = datarn + 1, start = len(self.MT._row_index)))
         if fix_values:
             for rn, v in enumerate(islice(self.MT._row_index, fix_values[0], fix_values[1])):
                 if not self.input_valid_for_cell(rn, v):

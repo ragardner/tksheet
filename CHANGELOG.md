@@ -6,6 +6,7 @@
 - Bug with hidden rows and index highlights
 - Bug with hidden rows and text editor newline binding in main table
 - Bug with hidden rows and drag and drop rows
+- Issue where columns/rows that where selected already would not open dropdown boxes or toggle checkboxes
 
 #### Added:
 - Control / Command selecting multiple non-consecutive boxes
@@ -18,6 +19,7 @@
 - Renamed internal functions `check_views()` `check_xview()` `check_yview()`
 - Default argument `redraw` changed to `True` for dropdown/checkbox creation functions
 - Better graphical indicators for which columns/rows are being moved when dragging and dropping
+- Better retainment of selection boxes after undo cell edits
 
 ### Version 6.0.2
 #### Fixed:

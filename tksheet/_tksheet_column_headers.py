@@ -1478,9 +1478,9 @@ class ColumnHeaders(tk.Canvas):
             if not check_input_valid or self.input_valid_for_cell(datacn, value):
                 if self.MT.undo_enabled and undo:
                     self.MT.undo_storage.append(zlib.compress(pickle.dumps(("edit_header",
-                                                                            {datacn: self.MT._headers[datacn]},
-                                                                            (((0, c, len(self.MT.row_positions) - 1, c + 1), "columns"), ),
-                                                                            self.MT.currently_selected()))))
+                                                                           {datacn: self.MT._headers[datacn]},
+                                                                           self.MT.get_boxes(include_current = False),
+                                                                           self.MT.currently_selected()))))
                 self.set_cell_data(datacn = datacn, value = value)
         if cell_resize and self.MT.cell_auto_resize_enabled:
             if self.height_resizing_enabled:
@@ -1571,7 +1571,7 @@ class ColumnHeaders(tk.Canvas):
             except:
                 self.MT._headers = []
         if isinstance(datacn, int) and datacn >= len(self.MT._headers):
-            self.MT._headers.extend([self.get_value_for_empty_cell(cn) for cn in range(datacn, datacn + 1 - len(self.MT._headers))])
+            self.MT._headers.extend(self.get_empty_header_seq(end = datacn + 1, start = len(self.MT._headers)))
         if fix_values:
             for cn, v in enumerate(islice(self.MT._headers, fix_values[0], fix_values[1])):
                 if not self.input_valid_for_cell(cn, v):
