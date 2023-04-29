@@ -774,7 +774,9 @@ class RowIndex(tk.Canvas):
         return new_height
 
     def set_width_of_index_to_text(self, text = None):
-        if text is None and not self.MT._row_index and isinstance(self.MT._row_index, list):
+        if (text is None and not self.MT._row_index and isinstance(self.MT._row_index, list) or
+            isinstance(self.MT._row_index, int) and self.MT._row_index >= len(self.MT.data)
+            ):
             return
         qconf = self.MT.txt_measure_canvas.itemconfig
         qbbox = self.MT.txt_measure_canvas.bbox

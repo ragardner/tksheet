@@ -55,8 +55,8 @@ class Sheet(tk.Frame):
                  max_index_width: str = "inf", #str or int
                  row_index: list = None,
                  index: list = None,
-                 after_redraw_time_ms: int = 50,
-                 row_index_width: int = 100,
+                 after_redraw_time_ms: int = 20,
+                 row_index_width: int = None,
                  auto_resize_default_row_index: bool = True,
                  set_all_heights_and_widths: bool = False,
                  row_height: str = "1", #str or int
@@ -887,13 +887,13 @@ class Sheet(tk.Frame):
     def default_row_height(self, height = None):
         if height is not None:
             self.MT.default_row_height = (height if isinstance(height, str) else "pixels", 
-                                     height if isinstance(height, int) else self.MT.get_lines_cell_height(int(height)))
+                                          height if isinstance(height, int) else self.MT.get_lines_cell_height(int(height)))
         return self.MT.default_row_height[1]
 
     def default_header_height(self, height = None):
         if height is not None:
             self.MT.default_header_height = (height if isinstance(height, str) else "pixels", 
-                                        height if isinstance(height, int) else self.MT.get_lines_cell_height(int(height), font = self.MT.header_font))
+                                             height if isinstance(height, int) else self.MT.get_lines_cell_height(int(height), font = self.MT.header_font))
         return self.MT.default_header_height[1]
 
     def default_column_width(self, width = None):

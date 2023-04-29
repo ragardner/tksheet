@@ -737,7 +737,9 @@ class ColumnHeaders(tk.Canvas):
         return w, h
     
     def set_height_of_header_to_text(self, text = None):
-        if text is None and not self.MT._headers and isinstance(self.MT._headers, list):
+        if (text is None and not self.MT._headers and isinstance(self.MT._headers, list) or 
+            isinstance(self.MT._headers, int) and self.MT._headers >= len(self.MT.data)
+            ):
             return
         qconf = self.MT.txt_measure_canvas.itemconfig
         qbbox = self.MT.txt_measure_canvas.bbox
@@ -748,7 +750,7 @@ class ColumnHeaders(tk.Canvas):
             if text:
                 qconf(qtxtm, text = text)
                 b = qbbox(qtxtm)
-                h = b[3] - b[1] + 10
+                h = b[3] - b[1] + 5
                 if h > new_height:
                     new_height = h
         else:
@@ -756,53 +758,39 @@ class ColumnHeaders(tk.Canvas):
                 if isinstance(self.MT._headers, list):
                     iterable = range(len(self.MT._headers))
                 else:
-                    iterable = range(len(self.MT.data))
+                    iterable = range(len(self.MT.data[self.MT._headers]))
             else:
                 iterable = self.MT.displayed_columns
             if isinstance(self.MT._headers, list):
-                for datarn in iterable:
-                    w, h_ = self.get_cell_dimensions(datarn)
-                    if w < self.MT.min_column_width:
-                        w = int(self.MT.min_column_width)
-                    elif w > self.MT.max_column_width:
-                        w = int(self.MT.max_column_width)
-                    if self.get_cell_kwargs(datarn, key = 'checkbox'):
-                        w += self.MT.txt_h + 6
-                    elif self.get_cell_kwargs(datarn, key = 'dropdown'):
-                        w += self.MT.txt_h + 4
-                    if w > new_width:
-                        new_width = w
+                for datacn in iterable:
+                    w_, h = self.get_cell_dimensions(datarn)
+                    if h < self.MT.min_header_height:
+                        h = int(self.MT.min_header_height)
+                    elif h > self.MT.max_header_height:
+                        h = int(self.MT.max_header_height)
+                    if h > new_height:
+                        new_height = h
             elif isinstance(self.MT._headers, int):
-                datacn = self.MT._headers
-                for datarn in iterable:
+                datarn = self.MT._headers
+                for datacn in iterable:
                     txt = self.MT.get_valid_cell_data_as_str(datarn, datacn, get_displayed = True)
                     if txt:
                         qconf(qtxtm, text = txt)
                         b = qbbox(qtxtm)
-                        w = b[2] - b[0] + 10
+                        h = b[3] - b[1] + 5
                     else:
-                        w = self.default_index_width
-                    if w < self.MT.min_column_width:
-                        w = int(self.MT.min_column_width)
-                    elif w > self.MT.max_column_width:
-                        w = int(self.MT.max_column_width)
-                    if w > new_width:
-                        new_width = w
-        if new_width == self.MT.min_column_width:
-            new_width = self.MT.min_column_width + 10
+                        h = self.default_header_height
+                    if h < self.MT.min_header_height:
+                        h = int(self.MT.min_header_height)
+                    elif h > self.MT.max_header_height:
+                        h = int(self.MT.max_header_height)
+                    if h > new_height:
+                        new_height = h
         space_bot = self.MT.get_space_bot(0)
         if new_height > space_bot:
             new_height = space_bot
         self.set_height(new_height, set_TL = True)
         self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
-        
-        
-        
-        
-        
-        
-        
-        
         return new_height
 
     def set_col_width(self, col, width = None, only_set_if_too_small = False, displayed_only = False, recreate = True, return_new_width = False):

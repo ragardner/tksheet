@@ -2919,7 +2919,7 @@ class MainTable(tk.Canvas):
         self.min_header_height = self.header_txt_h + 5
         if self.default_header_height[0] != "pixels":
             self.default_header_height = (self.default_header_height[0] if self.default_header_height[0] != "pixels" else "pixels",
-                                     self.get_lines_cell_height(int(self.default_header_height[0]), font = self.header_font) if self.default_header_height[0] != "pixels" else self.default_header_height[1])
+                                          self.get_lines_cell_height(int(self.default_header_height[0]), font = self.header_font) if self.default_header_height[0] != "pixels" else self.default_header_height[1])
         self.set_min_column_width()
         self.CH.set_height(self.default_header_height[1])
         
