@@ -3600,7 +3600,7 @@ class MainTable(tk.Canvas):
     def row_index(self, newindex = None, index = None, reset_row_positions = False, show_index_if_not_sheet = True, redraw = False):
         if newindex is not None:
             if not self._row_index and not isinstance(self._row_index, int):
-                self.RI.set_width(self.RI.default_index_width, set_TL = True)
+                self.RI.set_width(self.default_index_width, set_TL = True)
             if isinstance(newindex, (list, tuple)):
                 self._row_index = list(newindex) if isinstance(newindex, tuple) else newindex
             elif isinstance(newindex, int):

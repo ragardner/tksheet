@@ -704,7 +704,7 @@ class RowIndex(tk.Canvas):
     def get_cell_dimensions(self, datarn):
         txt = self.get_valid_cell_data_as_str(datarn, fix = False)
         if txt:
-            self.MT.txt_measure_canvas.itemconfig(self.MT.txt_measure_canvas_text, text = txt, font = self.MT.table_font)
+            self.MT.txt_measure_canvas.itemconfig(self.MT.txt_measure_canvas_text, text = txt, font = self.MT.index_font)
             b = self.MT.txt_measure_canvas.bbox(self.MT.txt_measure_canvas_text)
             w = b[2] - b[0] + 7
             h = b[3] - b[1] + 5
@@ -1081,7 +1081,7 @@ class RowIndex(tk.Canvas):
                     self.redraw_gridline(points = points, fill = self.index_grid_fg, width = 1, tag = "h")
         c_2 = self.index_selected_cells_bg if self.index_selected_cells_bg.startswith("#") else Color_Map_[self.index_selected_cells_bg]
         c_3 = self.index_selected_rows_bg if self.index_selected_rows_bg.startswith("#") else Color_Map_[self.index_selected_rows_bg]
-        font = self.MT.table_font
+        font = self.MT.index_font
         for r in range(start_row, end_row - 1):
             rtopgridln = self.MT.row_positions[r]
             rbotgridln = self.MT.row_positions[r + 1]
@@ -1355,7 +1355,7 @@ class RowIndex(tk.Canvas):
         bg, fg = self.index_bg, self.index_fg
         self.text_editor = TextEditor(self,
                                       text = text,
-                                      font = self.MT.table_font,
+                                      font = self.MT.index_font,
                                       state = state,
                                       width = w,
                                       height = h,
@@ -1728,7 +1728,7 @@ class RowIndex(tk.Canvas):
                                                     0,
                                                     width = self.current_width,
                                                     height = win_h,
-                                                    font = self.MT.table_font,
+                                                    font = self.MT.index_font,
                                                     colors = {'bg': self.MT.popup_menu_bg, 
                                                               'fg': self.MT.popup_menu_fg, 
                                                               'highlight_bg': self.MT.popup_menu_highlight_bg,
