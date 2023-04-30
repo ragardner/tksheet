@@ -677,40 +677,42 @@ class MainTable(tk.Canvas):
         self.parentframe.emit_modified_event()
 
     def delete_key(self, event = None):
-        if self.anything_selected():
-            currently_selected = self.currently_selected()
-            undo_storage = {}
-            boxes = {}
-            for item in chain(self.find_withtag("CellSelectFill"), self.find_withtag("RowSelectFill"), self.find_withtag("ColSelectFill"), self.find_withtag("Current_Outside")):
-                alltags = self.gettags(item)
-                box = tuple(int(e) for e in alltags[1].split("_") if e)
-                if alltags[0] in ("CellSelectFill", "Current_Outside"):
-                    boxes[box] = "cells"
-                elif alltags[0] == "ColSelectFill":
-                    boxes[box] = "columns"
-                elif alltags[0] == "RowSelectFill":
-                    boxes[box] = "rows"
-            if self.extra_begin_delete_key_func is not None:
-                try:
-                    self.extra_begin_delete_key_func(CtrlKeyEvent("begin_delete_key", boxes, currently_selected, tuple()))
-                except:
-                    return
-            changes = 0
-            for r1, c1, r2, c2 in boxes:
-                for r in range(r1, r2):
-                    datarn = r if self.all_rows_displayed else self.displayed_rows[r]
-                    for c in range(c1, c2):
-                        datacn = c if self.all_columns_displayed else self.displayed_columns[c]
-                        if self.input_valid_for_cell(datarn, datacn, ""):
-                            if self.undo_enabled:
-                                undo_storage[(datarn, datacn)] = self.get_cell_data(datarn, datacn)
-                            self.set_cell_data(datarn, datacn, "")
-                            changes += 1
-            if self.extra_end_delete_key_func is not None:
-                self.extra_end_delete_key_func(CtrlKeyEvent("end_delete_key", boxes, currently_selected, undo_storage))
-            if changes and self.undo_enabled:
-                self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells", undo_storage, boxes, currently_selected))))
-            self.refresh()
+        if not self.anything_selected():
+            return
+        currently_selected = self.currently_selected()
+        undo_storage = {}
+        boxes = {}
+        for item in chain(self.find_withtag("CellSelectFill"), self.find_withtag("RowSelectFill"), self.find_withtag("ColSelectFill"), self.find_withtag("Current_Outside")):
+            alltags = self.gettags(item)
+            box = tuple(int(e) for e in alltags[1].split("_") if e)
+            if alltags[0] in ("CellSelectFill", "Current_Outside"):
+                boxes[box] = "cells"
+            elif alltags[0] == "ColSelectFill":
+                boxes[box] = "columns"
+            elif alltags[0] == "RowSelectFill":
+                boxes[box] = "rows"
+        if self.extra_begin_delete_key_func is not None:
+            try:
+                self.extra_begin_delete_key_func(CtrlKeyEvent("begin_delete_key", boxes, currently_selected, tuple()))
+            except:
+                return
+        changes = 0
+        for r1, c1, r2, c2 in boxes:
+            for r in range(r1, r2):
+                datarn = r if self.all_rows_displayed else self.displayed_rows[r]
+                for c in range(c1, c2):
+                    datacn = c if self.all_columns_displayed else self.displayed_columns[c]
+                    if self.input_valid_for_cell(datarn, datacn, ""):
+                        if self.undo_enabled:
+                            undo_storage[(datarn, datacn)] = self.get_cell_data(datarn, datacn)
+                        self.set_cell_data(datarn, datacn, "")
+                        changes += 1
+        if self.extra_end_delete_key_func is not None:
+            self.extra_end_delete_key_func(CtrlKeyEvent("end_delete_key", boxes, currently_selected, undo_storage))
+        if changes and self.undo_enabled:
+            self.undo_storage.append(zlib.compress(pickle.dumps(("edit_cells", undo_storage, boxes, currently_selected))))
+        self.refresh()
+        self.parentframe.emit_modified_event()
             
     def move_columns_adjust_options_dict(self, col, to_move_min, num_cols, move_data = True, create_selections = True, index_type = "displayed"):
         c = int(col)

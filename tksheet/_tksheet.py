@@ -321,9 +321,6 @@ class Sheet(tk.Frame):
     def after_redraw(self, redraw_header = True, redraw_row_index = True):
         self.MT.main_table_redraw_grid_and_text(redraw_header = redraw_header, redraw_row_index = redraw_row_index)
         self.after_redraw_id = None
-        
-    def emit_modified_event(self):
-        self.event_generate("<<SheetModifiedEvent>>")
 
     def show(self, canvas = "all"):
         if canvas == "all":
@@ -454,6 +451,9 @@ class Sheet(tk.Frame):
         self.MT.create_rc_menus()
 
     def extra_bindings(self, bindings, func = None):
+        if func is not None and isinstance(bindings, str) and bindings.lower() in emitted_events:
+            self.bind_event(bindings, func)
+        
         if isinstance(bindings, str) and bindings.lower() in ("all", "bind_all", "unbind_all"):
             self.MT.extra_begin_ctrl_c_func = func
             self.MT.extra_begin_ctrl_x_func = func
@@ -617,6 +617,21 @@ class Sheet(tk.Frame):
                     self.CH.ctrl_selection_binding_func = func
                 if binding == "deselect":
                     self.MT.deselection_binding_func = func
+
+    def emit_modified_event(self, data = {}):
+        self.event_generate("<<SheetModified>>", data = data)
+
+    def bind_event(self, sequence, func, add = None):
+        widget = self
+        def _substitute(*args):
+            e = lambda: None 
+            e.data = eval(args[0])
+            e.widget = widget
+            return (e,)
+
+        funcid = widget._register(func, _substitute, needcleanup = 1)
+        cmd = '{0}if {{"[{1} %d]" == "break"}} break\n'.format('+' if add else '', funcid)
+        widget.tk.call('bind', widget._w, sequence, cmd)
 
     def bind(self, binding, func, add = None):
         if binding == "<ButtonPress-1>":

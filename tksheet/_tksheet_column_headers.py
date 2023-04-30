@@ -761,7 +761,7 @@ class ColumnHeaders(tk.Canvas):
                 iterable = self.MT.displayed_columns
             if isinstance(self.MT._headers, list):
                 for datacn in iterable:
-                    w_, h = self.get_cell_dimensions(datarn)
+                    w_, h = self.get_cell_dimensions(datacn)
                     if h < self.MT.min_header_height:
                         h = int(self.MT.min_header_height)
                     elif h > self.MT.max_header_height:

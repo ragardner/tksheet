@@ -16,6 +16,7 @@ arrowkey_bindings_helper = {"tab": "Tab",
                             "down": "Down",
                             "prior": "Prior",
                             "next": "Next"}
+emitted_events = {"<<SheetModified>>", }
 
 def get_font():
     return ("Calibri", 13 if USER_OS == "darwin" else 11, "normal")

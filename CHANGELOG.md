@@ -10,7 +10,6 @@
 
 #### Added:
 - Control / Command selecting multiple non-consecutive boxes
-- [PR#171](https://github.com/ragardner/tksheet/pull/171) `<<SheetModifiedEvent>>` is now emitted when the sheet is modified by a user action such as right click delete/insert rows/columns or editing cells
 
 #### Changed:
 - `extra_bindings()` undo event type `"insert_row"` renamed `"insert_rows"`, `"insert_column"` renamed `"insert_columns"`
@@ -23,6 +22,8 @@
 - Select all now maintains existing currently selected cell when using Control/Command - a
 - Renamed internal functions `check_views()` `check_xview()` `check_yview()`
 - Default argument `redraw` changed to `True` for dropdown/checkbox creation functions
+- Internal function `open_text_editor()` keyword argument `set_data_on_close` defaulted to `True`
+- Merge internal functions `edit_cell_()` and `open_text_editor()`, remove function `edit_cell_()`
 - Better graphical indicators for which columns/rows are being moved when dragging and dropping
 - Better retainment of selection boxes after undo cell edits
 
