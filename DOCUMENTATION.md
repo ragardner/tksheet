@@ -1635,7 +1635,6 @@ set_header_dropdown_values(c = 0, set_existing_dropdown = False, values = [], se
 ```python
 set_index_dropdown_values(r = 0, set_existing_dropdown = False, values = [], set_value = None)
 ```
-
 - `set_existing_dropdown` if `True` takes priority over `r` and `c` and sets the values of the last popped open dropdown box (if one one is popped open, if not then an `Exception` is raised).
 - `values` (`list`, `tuple`)
 - `set_value` (`str`, `None`) if not `None` will try to set the value of the chosen cell to given argument.

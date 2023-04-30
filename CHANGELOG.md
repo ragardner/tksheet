@@ -8,8 +8,12 @@
 - Bug with hidden rows and drag and drop rows
 - Issue where columns/rows that where selected already would not open dropdown boxes or toggle checkboxes
 
+#### Removed:
+- External function `edit_cell()`, use `open_cell()` and `set_currently_selected()` as alternative
+
 #### Added:
 - Control / Command selecting multiple non-consecutive boxes
+- Functions `checkbox_cell`, `checkbox_row`, `checkbox_column`, `checkbox_sheet`, `dropdown_cell`, `dropdown_row`, `dropdown_column`, `dropdown_sheet` and their related deletion functions
 
 #### Changed:
 - `extra_bindings()` undo event type `"insert_row"` renamed `"insert_rows"`, `"insert_col"` renamed `"insert_cols"`

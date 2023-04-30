@@ -933,9 +933,6 @@ class Sheet(tk.Frame):
     def undo(self, event = None):
         self.MT.ctrl_z()
 
-    def edit_cell(self, event = None, dropdown = False):
-        self.MT.edit_cell_(event = event, dropdown = dropdown)
-
     def delete_row_position(self, idx: int, deselect_all = False):
         self.MT.del_row_position(idx = idx,
                                  deselect_all = deselect_all)
