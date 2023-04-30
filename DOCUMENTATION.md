@@ -1853,19 +1853,43 @@ get_index_checkboxes()
 
 ___
 
-#### **Delete a checkbox.**
-```python
-delete_checkbox(r = 0, c = 0)
-```
+#### **Delete checkboxes.**
 
 ```python
-delete_header_checkbox(c = 0)
+delete_checkbox(r = 0, c = 0)
+delete_cell_checkbox(r = 0, c = 0)
 ```
+- Deletes checkboxes created by `create_checkbox()`/`checkbox_cell()`.
+- `r` and `c` (`int`, `"all"`).
+
+```python
+delete_row_checkbox(r = 0)
+```
+- Deletes checkboxes created by `checkbox_row()`.
+- `r` (`int`, `"all"`, `iterable`).
+
+```python
+delete_column_checkbox(c = 0)
+```
+- Deletes checkboxes created by `checkbox_column()`.
+- `c` (`int`, `"all"`, `iterable`).
+
+```python
+delete_sheet_checkbox()
+```
+- Deletes checkboxes created by `checkbox_sheet()`.
 
 ```python
 delete_index_checkbox(r = 0)
 ```
-- Set first argument to `"all"` to delete all check boxes.
+- Deletes checkboxes created by `create_header_checkbox()`.
+- `r` (`int`, `"all"`, `None`). Use `None` to delete checkboxes created using `None`.
+
+```python
+delete_header_checkbox(c = 0)
+```
+- Deletes checkboxes created by `create_header_checkbox()`.
+- `c` (`int`, `"all"`, `None`). Use `None` to delete checkboxes created using `None`.
 
 ___
 
