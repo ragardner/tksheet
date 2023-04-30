@@ -644,10 +644,12 @@ Arguments:
 	- "shift_row_select"
 	- "shift_column_select"
 	- "deselect"
-	- "all_select_events"
+	- "all_select_events", "select", "selectevents", "select_events"
+    - "all_modified_events", "sheetmodified", "sheet_modified" "modified_events", "modified"
 	- "bind_all"
 	- "unbind_all"
 - `func` argument is the function you want to send the binding event to.
+- Using one of the following `"all_modified_events", "sheetmodified", "sheet_modified" "modified_events", "modified"` will make any insert, delete or cell edit including pastes and undos send an event to your function. Please **note** that this will mean your function will have to return a value to use for cell edits unless the setting `edit_cell_validation` is `False`.
 
 ___
 

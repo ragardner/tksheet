@@ -13,6 +13,8 @@
 - [PR#171](https://github.com/ragardner/tksheet/pull/171) `<<SheetModifiedEvent>>` is now emitted when the sheet is modified by a user action such as right click delete/insert rows/columns or editing cells
 
 #### Changed:
+- `extra_bindings()` undo event type `"insert_row"` renamed `"insert_rows"`, `"insert_column"` renamed `"insert_columns"`
+- `extra_bindings()` undo event `.storeddata` has changed for row/column drag drop undo events to `("move_cols" or "move_rows", original_indexes, new_indexes)`
 - Initialization argument `max_rh` renamed `max_row_height`
 - Initialization argument `max_colwidth` renamed `max_column_width`
 - Initialization argument `max_row_width` renamed `max_index_width`

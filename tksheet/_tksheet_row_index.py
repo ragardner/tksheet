@@ -44,6 +44,7 @@ class RowIndex(tk.Canvas):
         self.extra_rc_func = None
         self.selection_binding_func = None
         self.shift_selection_binding_func = None
+        self.ctrl_selection_binding_func = None
         self.drag_selection_binding_func = None
         self.ri_extra_begin_drag_drop_func = None
         self.ri_extra_end_drag_drop_func = None
@@ -615,16 +616,16 @@ class RowIndex(tk.Canvas):
                         extra_func_success = False
                 if extra_func_success:
                     new_selected, dispset = self.MT.move_rows_adjust_options_dict(r, 
-                                                                                  rm1start, totalrows, move_data = self.row_drag_and_drop_perform)
+                                                                                  rm1start, 
+                                                                                  totalrows, 
+                                                                                  move_data = self.row_drag_and_drop_perform)
                     if self.MT.undo_enabled:
                         self.MT.undo_storage.append(zlib.compress(pickle.dumps(("move_rows",
-                                                                                min(orig_selected),
-                                                                                new_selected[0],
-                                                                                new_selected[-1],
-                                                                                sorted(orig_selected)))))
+                                                                                orig_selected,
+                                                                                new_selected))))
                     self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
                     if self.ri_extra_end_drag_drop_func is not None:
-                        self.ri_extra_end_drag_drop_func(EndDragDropEvent("end_row_index_drag_drop", tuple(orig_selected), new_selected, int(r)))
+                        self.ri_extra_end_drag_drop_func(EndDragDropEvent("end_row_index_drag_drop", orig_selected, new_selected, int(r)))
                     self.parentframe.emit_modified_event()
         elif self.b1_pressed_loc is not None and self.rsz_w is None and self.rsz_h is None:
             r = self.MT.identify_row(y = event.y)
@@ -1328,13 +1329,13 @@ class RowIndex(tk.Canvas):
 
     # r is displayed row
     def open_text_editor(self,
-                           r = 0,
-                           text = None,
-                           state = "normal",
-                           see = True,
-                           set_data_on_close = False,
-                           binding = None,
-                           dropdown = False):
+                         r = 0,
+                         text = None,
+                         state = "normal",
+                         see = True,
+                         set_data_on_close = False,
+                         binding = None,
+                         dropdown = False):
         if r == self.text_editor_loc and self.text_editor is not None:
             self.text_editor.set_text(self.text_editor.get() + "" if not isinstance(text, str) else text)
             return

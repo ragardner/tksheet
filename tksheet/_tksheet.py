@@ -466,31 +466,13 @@ class Sheet(tk.Frame):
             self.MT.extra_begin_del_cols_rc_func = func
             self.MT.extra_begin_insert_cols_rc_func = func
             self.MT.extra_begin_insert_rows_rc_func = func
-            
-            self.MT.extra_end_ctrl_c_func = func
-            self.MT.extra_end_ctrl_x_func = func
-            self.MT.extra_end_ctrl_v_func = func
-            self.MT.extra_end_ctrl_z_func = func
-            self.MT.extra_end_delete_key_func = func
-            
             self.MT.extra_begin_edit_cell_func = func
-            self.MT.extra_end_edit_cell_func = func
             self.CH.extra_begin_edit_cell_func = func
-            self.CH.extra_end_edit_cell_func = func
             self.RI.extra_begin_edit_cell_func = func
-            self.RI.extra_end_edit_cell_func = func
-            
-            self.RI.ri_extra_end_drag_drop_func = func
-            self.CH.ch_extra_end_drag_drop_func = func
-            self.MT.extra_end_del_rows_rc_func = func
-            self.MT.extra_end_del_cols_rc_func = func
-            self.MT.extra_end_insert_cols_rc_func = func
-            self.MT.extra_end_insert_rows_rc_func = func
-            
             self.CH.column_width_resize_func = func
             self.RI.row_height_resize_func = func
             
-        if isinstance(bindings, str) and bindings.lower() in ("all", "bind_all", "unbind_all", "all_select_events"):
+        if isinstance(bindings, str) and bindings.lower() in ("all", "bind_all", "unbind_all", "all_select_events", "select", "selectevents", "select_events"):
             self.MT.selection_binding_func = func
             self.MT.select_all_binding_func = func
             self.RI.selection_binding_func = func
@@ -505,6 +487,23 @@ class Sheet(tk.Frame):
             self.RI.ctrl_selection_binding_func = func
             self.CH.ctrl_selection_binding_func = func
             self.MT.deselection_binding_func = func
+            
+        if isinstance(bindings, str) and bindings.lower() in ("all", "bind_all", "unbind_all", "all_modified_events", 
+                                                              "sheetmodified", "sheet_modified" "modified_events", "modified"):
+            self.MT.extra_end_ctrl_c_func = func
+            self.MT.extra_end_ctrl_x_func = func
+            self.MT.extra_end_ctrl_v_func = func
+            self.MT.extra_end_ctrl_z_func = func
+            self.MT.extra_end_delete_key_func = func
+            self.RI.ri_extra_end_drag_drop_func = func
+            self.CH.ch_extra_end_drag_drop_func = func
+            self.MT.extra_end_del_rows_rc_func = func
+            self.MT.extra_end_del_cols_rc_func = func
+            self.MT.extra_end_insert_cols_rc_func = func
+            self.MT.extra_end_insert_rows_rc_func = func
+            self.MT.extra_end_edit_cell_func = func
+            self.CH.extra_end_edit_cell_func = func
+            self.RI.extra_end_edit_cell_func = func
             
         else:
             if isinstance(bindings[0], str) and not isinstance(bindings, str):

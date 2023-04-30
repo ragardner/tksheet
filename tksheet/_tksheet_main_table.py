@@ -1050,18 +1050,18 @@ class MainTable(tk.Canvas):
                 self.see(r = start_row, c = start_col, keep_yscroll = False, keep_xscroll = False, bottom_right_corner = False, check_cell_visibility = True, redraw = False)
         
         elif undo_storage[0] == "move_cols":
-            c = undo_storage[1]
-            to_move_min = undo_storage[2]
-            totalcols = len(undo_storage[4])
+            c = undo_storage[1][0]
+            to_move_min = undo_storage[2][0]
+            totalcols = len(undo_storage[2])
             if to_move_min < c:
                 c += totalcols - 1
             self.move_columns_adjust_options_dict(c, to_move_min, totalcols)
         
         elif undo_storage[0] == "move_rows":
             rhs = [int(b - a) for a, b in zip(self.row_positions, islice(self.row_positions, 1, len(self.row_positions)))]
-            r = undo_storage[1]
-            to_move_min = undo_storage[2]
-            totalrows = len(undo_storage[4])
+            r = undo_storage[1][0]
+            to_move_min = undo_storage[2][0]
+            totalrows = len(undo_storage[2])
             if to_move_min < r:
                 r += totalrows - 1
             self.move_rows_adjust_options_dict(r, to_move_min, totalrows)
@@ -1106,7 +1106,7 @@ class MainTable(tk.Canvas):
                                     undo_storage[1]['numcols'],
                                     deselect_all = False)
             for c in range(undo_storage[1]['sheet_col_num'],
-                            undo_storage[1]['sheet_col_num'] + undo_storage[1]['numcols']):
+                           undo_storage[1]['sheet_col_num'] + undo_storage[1]['numcols']):
                 if c in self.col_options:
                     del self.col_options[c]
                 if c in self.CH.cell_options:
@@ -4936,14 +4936,14 @@ class MainTable(tk.Canvas):
 
     # displayed indexes
     def open_text_editor(self,
-                           r = 0,
-                           c = 0,
-                           text = None,
-                           state = "normal",
-                           see = True,
-                           set_data_on_close = False,
-                           binding = None,
-                           dropdown = False):
+                         r = 0,
+                         c = 0,
+                         text = None,
+                         state = "normal",
+                         see = True,
+                         set_data_on_close = False,
+                         binding = None,
+                         dropdown = False):
         if (r, c) == self.text_editor_loc and self.text_editor is not None:
             self.text_editor.set_text(self.text_editor.get() + "" if not isinstance(text, str) else text)
             return
