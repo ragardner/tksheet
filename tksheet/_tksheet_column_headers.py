@@ -1286,10 +1286,27 @@ class ColumnHeaders(tk.Canvas):
                 elif self.get_cell_kwargs(datacn, key = 'checkbox'):
                     self.click_checkbox(x1, datacn)
         elif self.edit_cell_enabled:
-            self.edit_cell_(event, c = x1, dropdown = False)
+            self.open_text_editor(event = event, c = x1, dropdown = False)
+    
+    # displayed indexes
+    def get_cell_align(self, c):
+        datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
+        if datacn in self.cell_options and 'align' in self.cell_options[datacn]:
+            align = self.cell_options[datacn]['align']
+        else:
+            align = self.align
+        return align
 
     # c is displayed col
-    def edit_cell_(self, event = None, c = None, dropdown = False):
+    def open_text_editor(self,
+                         event = None,
+                         c = 0,
+                         text = None,
+                         state = "normal",
+                         see = True,
+                         set_data_on_close = True,
+                         binding = None,
+                         dropdown = False):
         text = None
         extra_func_key = "??"
         if event is None or self.MT.event_opens_dropdown_or_checkbox(event):
@@ -1327,27 +1344,7 @@ class ColumnHeaders(tk.Canvas):
                 self.set_height_of_header_to_text(text)
             self.set_col_width_run_binding(c)
         self.select_col(c = c, keep_other_selections = True)
-        self.open_text_editor(c = c, text = text, set_data_on_close = True, dropdown = dropdown)
-        return True
-    
-    # displayed indexes
-    def get_cell_align(self, c):
-        datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
-        if datacn in self.cell_options and 'align' in self.cell_options[datacn]:
-            align = self.cell_options[datacn]['align']
-        else:
-            align = self.align
-        return align
-
-    # c is displayed col
-    def open_text_editor(self,
-                         c = 0,
-                         text = None,
-                         state = "normal",
-                         see = True,
-                         set_data_on_close = False,
-                         binding = None,
-                         dropdown = False):
+        
         if c == self.text_editor_loc and self.text_editor is not None:
             self.text_editor.set_text(self.text_editor.get() + "" if not isinstance(text, str) else text)
             return
@@ -1408,6 +1405,7 @@ class ColumnHeaders(tk.Canvas):
             self.text_editor.textedit.bind("<Escape>", lambda x: self.close_text_editor((c, "Escape")))
         else:
             self.text_editor.textedit.bind("<Escape>", lambda x: self.destroy_text_editor("Escape"))
+        return True
     
     # displayed indexes                             #just here to receive text editor arg
     def text_editor_has_wrapped(self, r = 0, c = 0, check_lines = None):
@@ -1745,7 +1743,7 @@ class ColumnHeaders(tk.Canvas):
             datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
         kwargs = self.get_cell_kwargs(datacn, key = 'dropdown')
         if kwargs['state'] == "normal":
-            if not self.edit_cell_(c = c, dropdown = True, event = event):
+            if not self.open_text_editor(event = event, c = c, dropdown = True):
                 return
         win_h, anchor = self.get_dropdown_height_anchor(datacn)
         window = self.MT.parentframe.dropdown_class(self.MT.winfo_toplevel(),

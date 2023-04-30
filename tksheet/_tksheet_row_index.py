@@ -1276,10 +1276,27 @@ class RowIndex(tk.Canvas):
                 elif self.get_cell_kwargs(datarn, key = 'checkbox'):
                     self.click_checkbox(r, datarn)
         elif self.edit_cell_enabled:
-            self.edit_cell_(event, r = r, dropdown = False)
+            self.open_text_editor(event = event, r = r, dropdown = False)
+    
+    # displayed indexes
+    def get_cell_align(self, r):
+        datarn = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r]
+        if datarn in self.cell_options and 'align' in self.cell_options[datarn]:
+            align = self.cell_options[datarn]['align']
+        else:
+            align = self.align
+        return align
 
     # r is displayed row
-    def edit_cell_(self, event = None, r = None, dropdown = False):
+    def open_text_editor(self,
+                         event = None,
+                         r = 0,
+                         text = None,
+                         state = "normal",
+                         see = True,
+                         set_data_on_close = True,
+                         binding = None,
+                         dropdown = False):
         text = None
         extra_func_key = "??"
         if event is None or self.MT.event_opens_dropdown_or_checkbox(event):
@@ -1315,27 +1332,7 @@ class RowIndex(tk.Canvas):
         if self.MT.cell_auto_resize_enabled:
             self.set_row_height_run_binding(r)
         self.select_row(r = r, keep_other_selections = True, redraw = not dropdown)
-        self.open_text_editor(r = r, text = text, set_data_on_close = True, dropdown = dropdown)
-        return True
-    
-    # displayed indexes
-    def get_cell_align(self, r):
-        datarn = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r]
-        if datarn in self.cell_options and 'align' in self.cell_options[datarn]:
-            align = self.cell_options[datarn]['align']
-        else:
-            align = self.align
-        return align
-
-    # r is displayed row
-    def open_text_editor(self,
-                         r = 0,
-                         text = None,
-                         state = "normal",
-                         see = True,
-                         set_data_on_close = False,
-                         binding = None,
-                         dropdown = False):
+        
         if r == self.text_editor_loc and self.text_editor is not None:
             self.text_editor.set_text(self.text_editor.get() + "" if not isinstance(text, str) else text)
             return
@@ -1396,6 +1393,7 @@ class RowIndex(tk.Canvas):
             self.text_editor.textedit.bind("<Escape>", lambda x: self.close_text_editor((r, "Escape")))
         else:
             self.text_editor.textedit.bind("<Escape>", lambda x: self.destroy_text_editor("Escape"))
+        return True
             
     def text_editor_newline_binding(self, r = 0, c = 0, event = None, check_lines = True):
         if self.height_resizing_enabled:
@@ -1721,7 +1719,7 @@ class RowIndex(tk.Canvas):
             datarn = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r]
         kwargs = self.get_cell_kwargs(datarn, key = 'dropdown')
         if kwargs['state'] == "normal":
-            if not self.edit_cell_(r = r, dropdown = True, event = event):
+            if not self.open_text_editor(event = event, r = r, dropdown = True):
                 return
         win_h, anchor = self.get_dropdown_height_anchor(datarn)
         window = self.MT.parentframe.dropdown_class(self.MT.winfo_toplevel(),
