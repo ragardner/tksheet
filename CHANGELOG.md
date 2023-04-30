@@ -12,7 +12,7 @@
 - Control / Command selecting multiple non-consecutive boxes
 
 #### Changed:
-- `extra_bindings()` undo event type `"insert_row"` renamed `"insert_rows"`, `"insert_column"` renamed `"insert_columns"`
+- `extra_bindings()` undo event type `"insert_row"` renamed `"insert_rows"`, `"insert_col"` renamed `"insert_cols"`
 - `extra_bindings()` undo event `.storeddata` has changed for row/column drag drop undo events to `("move_cols" or "move_rows", original_indexes, new_indexes)`
 - Initialization argument `max_rh` renamed `max_row_height`
 - Initialization argument `max_colwidth` renamed `max_column_width`
