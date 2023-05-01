@@ -298,15 +298,15 @@ class Sheet(tk.Frame):
             try:
                 if startup_select[-1] == "cells":
                     self.MT.create_selected(*startup_select)
-                    self.MT.create_current(startup_select[0], startup_select[1], type_ = "cell", inside = True)
+                    self.MT.set_currently_selected(startup_select[0], startup_select[1], type_ = "cell", inside = True)
                     self.see(startup_select[0], startup_select[1])
                 elif startup_select[-1] == "rows":
                     self.MT.create_selected(startup_select[0], 0, startup_select[1], len(self.MT.col_positions) - 1, "rows")
-                    self.MT.create_current(startup_select[0], 0, type_ = "row", inside = True)
+                    self.MT.set_currently_selected(startup_select[0], 0, type_ = "row", inside = True)
                     self.see(startup_select[0], 0)
                 elif startup_select[-1] in ("cols", "columns"):
                     self.MT.create_selected(0, startup_select[0], len(self.MT.row_positions) - 1, startup_select[1], "columns")
-                    self.MT.create_current(0, startup_select[0], type_ = "column", inside = True)
+                    self.MT.set_currently_selected(0, startup_select[0], type_ = "column", inside = True)
                     self.see(0, startup_select[0])
             except:
                 pass
@@ -1212,10 +1212,10 @@ class Sheet(tk.Frame):
         return self.MT.currently_selected()
 
     def set_currently_selected(self, row, column, type_ = "cell", selection_binding = True):
-        self.MT.create_current(r = row,
-                               c = column,
-                               type_ = type_,
-                               inside = True if self.MT.cell_selected(row, column) else False)
+        self.MT.set_currently_selected(r = row,
+                                       c = column,
+                                       type_ = type_,
+                                       inside = True if self.MT.cell_selected(row, column) else False)
         if selection_binding and self.MT.selection_binding_func is not None:
             self.MT.selection_binding_func(SelectCellEvent("select_cell", row, column))
 

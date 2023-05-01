@@ -680,16 +680,6 @@ class ColumnHeaders(tk.Canvas):
                     self.cell_options[c] = {}
                 self.cell_options[c]['readonly'] = True
 
-    def select_col(self, c, redraw = False, keep_other_selections = False):
-        if not keep_other_selections:
-            self.MT.delete_selection_rects()
-        self.MT.create_current(0, c, type_ = "column", inside = True)
-        self.MT.create_selected(0, c, len(self.MT.row_positions) - 1, c + 1, "columns")
-        if redraw:
-            self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
-        if self.selection_binding_func is not None:
-            self.selection_binding_func(SelectColumnEvent("select_column", int(c)))
-
     def toggle_select_col(self, column, add_selection = True, redraw = True, run_binding_func = True, set_as_current = True):
         if add_selection:
             if self.MT.col_selected(column):
@@ -701,19 +691,20 @@ class ColumnHeaders(tk.Canvas):
                 self.MT.deselect(c = column, redraw = redraw)
             else:
                 self.select_col(column, redraw = redraw)
+                
+    def select_col(self, c, redraw = False):
+        self.MT.delete_selection_rects()
+        self.MT.create_selected(0, c, len(self.MT.row_positions) - 1, c + 1, "columns")
+        self.MT.set_currently_selected(0, c, type_ = "column")
+        if redraw:
+            self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
+        if self.selection_binding_func is not None:
+            self.selection_binding_func(SelectColumnEvent("select_column", int(c)))
 
     def add_selection(self, c, redraw = False, run_binding_func = True, set_as_current = True):
         c = int(c)
         if set_as_current:
-            create_new_sel = False
-            current = self.MT.get_tags_of_current()
-            if current:
-                if current[0] == "Current_Outside":
-                    create_new_sel = True
-            self.MT.create_current(0, c, type_ = "column", inside = True)
-            if create_new_sel:
-                r1, c1, r2, c2 = tuple(int(e) for e in current[1].split("_") if e)
-                self.MT.create_selected(r1, c1, r2, c2, current[2] + "s")
+            self.MT.set_currently_selected(0, c, type_ = "column")
         self.MT.create_selected(0, c, len(self.MT.row_positions) - 1, c + 1, "columns")
         if redraw:
             self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
@@ -886,17 +877,17 @@ class ColumnHeaders(tk.Canvas):
                     self.cell_options[c] = {}
                 self.cell_options[c]['align'] = align
 
-    def redraw_highlight_get_text_fg(self, fc, sc, c, c_2, c_3, selected_cols, selected_rows, actual_selected_cols, datacn):
+    def redraw_highlight_get_text_fg(self, fc, sc, c, c_2, c_3, selections, datacn):
         redrawn = False
         kwargs = self.get_cell_kwargs(datacn, key = 'highlight')
         if kwargs:
             if kwargs[0] is not None:
                 c_1 = kwargs[0] if kwargs[0].startswith("#") else Color_Map_[kwargs[0]]
-            if c in actual_selected_cols:
+            if self._is_col_sel(c, selections):
                 tf = self.header_selected_columns_fg if kwargs[1] is None or self.MT.display_selected_fg_over_highlights else kwargs[1]
                 if kwargs[0] is not None:
                     fill = f"#{int((int(c_1[1:3], 16) + int(c_3[1:3], 16)) / 2):02X}" + f"{int((int(c_1[3:5], 16) + int(c_3[3:5], 16)) / 2):02X}" + f"{int((int(c_1[5:], 16) + int(c_3[5:], 16)) / 2):02X}"
-            elif (c in selected_cols or selected_rows):
+            elif self._is_cell_sel(c, selections):
                 tf = self.header_selected_cells_fg if kwargs[1] is None or self.MT.display_selected_fg_over_highlights else kwargs[1]
                 if kwargs[0] is not None:
                     fill = f"#{int((int(c_1[1:3], 16) + int(c_2[1:3], 16)) / 2):02X}" + f"{int((int(c_1[3:5], 16) + int(c_2[3:5], 16)) / 2):02X}" + f"{int((int(c_1[5:], 16) + int(c_2[5:], 16)) / 2):02X}"
@@ -913,9 +904,9 @@ class ColumnHeaders(tk.Canvas):
                                                 outline = self.header_fg if self.get_cell_kwargs(datacn, key = 'dropdown') and self.MT.show_dropdown_borders else "",
                                                 tag = "hi")
         elif not kwargs:
-            if c in actual_selected_cols:
+            if self._is_col_sel(c, selections):
                 tf = self.header_selected_columns_fg
-            elif c in selected_cols or selected_rows:
+            elif self._is_cell_sel(c, selections):
                 tf = self.header_selected_cells_fg
             else:
                 tf = self.header_fg
@@ -1042,7 +1033,7 @@ class ColumnHeaders(tk.Canvas):
                 t = self.create_polygon(points, fill = fill, outline = outline, tag = tag, smooth = True)
             self.disp_checkbox[t] = True
 
-    def redraw_grid_and_text(self, last_col_line_pos, scrollpos_left, x_stop, start_col, end_col, scrollpos_right, selected_cols, selected_rows, actual_selected_cols, col_pos_exists):
+    def redraw_grid_and_text(self, last_col_line_pos, scrollpos_left, x_stop, start_col, end_col, scrollpos_right, col_pos_exists):
         try:
             self.configure(scrollregion = (0,
                                            0,
@@ -1096,12 +1087,13 @@ class ColumnHeaders(tk.Canvas):
         c_2 = self.header_selected_cells_bg if self.header_selected_cells_bg.startswith("#") else Color_Map_[self.header_selected_cells_bg]
         c_3 = self.header_selected_columns_bg if self.header_selected_columns_bg.startswith("#") else Color_Map_[self.header_selected_columns_bg]
         font = self.MT.header_font
+        selections = self.get_redraw_selections()
         for c in range(start_col, end_col - 1):
             draw_y = self.MT.header_fl_ins
             cleftgridln = self.MT.col_positions[c]
             crightgridln = self.MT.col_positions[c + 1]
             datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
-            fill, dd_drawn = self.redraw_highlight_get_text_fg(cleftgridln, crightgridln, c, c_2, c_3, selected_cols, selected_rows, actual_selected_cols, datacn)
+            fill, dd_drawn = self.redraw_highlight_get_text_fg(cleftgridln, crightgridln, c, c_2, c_3, selections, datacn)
 
             if datacn in self.cell_options and 'align' in self.cell_options[datacn]:
                 align = self.cell_options[datacn]['align']
@@ -1187,6 +1179,7 @@ class ColumnHeaders(tk.Canvas):
                                 option = 0 if showing else 2
                             else:
                                 option = 1 if showing else 3
+                            self.tag_raise(iid)
                         elif self.hidd_text:
                             k = next(iter(self.hidd_text))
                             iid, showing = self.hidd_text[k].pop()
@@ -1196,6 +1189,7 @@ class ColumnHeaders(tk.Canvas):
                                 option = 2 if showing else 3
                             else:
                                 option = 3
+                            self.tag_raise(iid)
                         else:
                             iid, showing, option = self.create_text(draw_x, draw_y, text = txt, fill = fill, font = font, anchor = align, tag = "t"), 1, 4
                         if option in (1, 3):
@@ -1243,7 +1237,6 @@ class ColumnHeaders(tk.Canvas):
                     draw_y += self.MT.header_xtra_lines_increment
                     if draw_y - 1 > self.current_height:
                         break
-        self.tag_raise("t")
         for cfg, set_ in self.hidd_text.items():
             for namedtup in tuple(set_):
                 if namedtup.showing:
@@ -1268,6 +1261,31 @@ class ColumnHeaders(tk.Canvas):
             if sh:
                 self.itemconfig(t, state = "hidden")
                 self.hidd_checkbox[t] = False
+                
+    def get_redraw_selections(self):
+        d = defaultdict(list)
+        for item in chain(self.find_withtag("cells"), self.find_withtag("columns")):
+            tags = self.gettags(item)
+            d[tags[0]].append(tuple(int(e) for e in tags[1].split("_") if e))
+        return d
+    
+    # internal for redrawing
+    def _is_cell_sel(self, c, d):
+        if 'cells' not in d:
+            return False
+        for r1, c1, r2, c2 in d['cells']:
+            if c1 <= c and c2 > c:
+                return True
+        return False
+    
+    # internal for redrawing
+    def _is_col_sel(self, c, d):
+        if 'columns' not in d:
+            return False
+        for r1, c1, r2, c2 in d['columns']:
+            if c1 <= c and c2 > c:
+                return True
+        return False
                 
     def open_cell(self, event = None, ignore_existing_editor = False):
         if not self.MT.anything_selected()  or (not ignore_existing_editor and self.text_editor_id is not None):
@@ -1343,7 +1361,6 @@ class ColumnHeaders(tk.Canvas):
             if self.height_resizing_enabled:
                 self.set_height_of_header_to_text(text)
             self.set_col_width_run_binding(c)
-        self.select_col(c = c, keep_other_selections = True)
         
         if c == self.text_editor_loc and self.text_editor is not None:
             self.text_editor.set_text(self.text_editor.get() + "" if not isinstance(text, str) else text)
