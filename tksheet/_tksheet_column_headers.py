@@ -224,6 +224,8 @@ class ColumnHeaders(tk.Canvas):
                         self.ctrl_selection_binding_func(SelectionBoxEvent("ctrl_select_columns", (c, c + 1)))
                 elif c_selected:
                     self.dragged_col = DraggedRowColumn(dragged = c, to_move = get_seq_without_gaps_at_index(sorted(self.MT.get_selected_cols()), c))
+        elif not self.MT.ctrl_select_enabled:
+            self.b1_press(event)
                     
     def ctrl_shift_b1_press(self, event):
         self.mouseclick_outside_editor_or_dropdown_all_canvases()
@@ -251,6 +253,8 @@ class ColumnHeaders(tk.Canvas):
                         self.ctrl_selection_binding_func(SelectionBoxEvent("ctrl_select_columns", func_event))
                 elif c_selected:
                     self.dragged_col = DraggedRowColumn(dragged = c, to_move = get_seq_without_gaps_at_index(sorted(self.MT.get_selected_cols()), c))
+        elif not self.MT.ctrl_select_enabled:
+            self.shift_b1_press(event)
 
     def shift_b1_press(self, event):
         self.mouseclick_outside_editor_or_dropdown_all_canvases()
@@ -494,6 +498,8 @@ class ColumnHeaders(tk.Canvas):
                     need_redraw = True
             if need_redraw:
                 self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = False)
+        elif not self.MT.ctrl_select_enabled:
+            self.b1_motion(event)
                 
     def drag_and_drop_motion(self, event):
         x = event.x
@@ -768,7 +774,7 @@ class ColumnHeaders(tk.Canvas):
                         b = qbbox(qtxtm)
                         h = b[3] - b[1] + 5
                     else:
-                        h = self.default_header_height
+                        h = self.MT.default_header_height
                     if h < self.MT.min_header_height:
                         h = int(self.MT.min_header_height)
                     elif h > self.MT.max_header_height:
@@ -883,11 +889,11 @@ class ColumnHeaders(tk.Canvas):
         if kwargs:
             if kwargs[0] is not None:
                 c_1 = kwargs[0] if kwargs[0].startswith("#") else Color_Map_[kwargs[0]]
-            if self._is_col_sel(c, selections):
+            if 'columns' in selections and c in selections['columns']:
                 tf = self.header_selected_columns_fg if kwargs[1] is None or self.MT.display_selected_fg_over_highlights else kwargs[1]
                 if kwargs[0] is not None:
                     fill = f"#{int((int(c_1[1:3], 16) + int(c_3[1:3], 16)) / 2):02X}" + f"{int((int(c_1[3:5], 16) + int(c_3[3:5], 16)) / 2):02X}" + f"{int((int(c_1[5:], 16) + int(c_3[5:], 16)) / 2):02X}"
-            elif self._is_cell_sel(c, selections):
+            elif 'cells' in selections and c in selections['cells']:
                 tf = self.header_selected_cells_fg if kwargs[1] is None or self.MT.display_selected_fg_over_highlights else kwargs[1]
                 if kwargs[0] is not None:
                     fill = f"#{int((int(c_1[1:3], 16) + int(c_2[1:3], 16)) / 2):02X}" + f"{int((int(c_1[3:5], 16) + int(c_2[3:5], 16)) / 2):02X}" + f"{int((int(c_1[5:], 16) + int(c_2[5:], 16)) / 2):02X}"
@@ -904,9 +910,9 @@ class ColumnHeaders(tk.Canvas):
                                                 outline = self.header_fg if self.get_cell_kwargs(datacn, key = 'dropdown') and self.MT.show_dropdown_borders else "",
                                                 tag = "hi")
         elif not kwargs:
-            if self._is_col_sel(c, selections):
+            if 'columns' in selections and c in selections['columns']:
                 tf = self.header_selected_columns_fg
-            elif self._is_cell_sel(c, selections):
+            elif 'cells' in selections and c in selections['cells']:
                 tf = self.header_selected_cells_fg
             else:
                 tf = self.header_fg
@@ -1087,7 +1093,7 @@ class ColumnHeaders(tk.Canvas):
         c_2 = self.header_selected_cells_bg if self.header_selected_cells_bg.startswith("#") else Color_Map_[self.header_selected_cells_bg]
         c_3 = self.header_selected_columns_bg if self.header_selected_columns_bg.startswith("#") else Color_Map_[self.header_selected_columns_bg]
         font = self.MT.header_font
-        selections = self.get_redraw_selections()
+        selections = self.get_redraw_selections(start_col, end_col)
         for c in range(start_col, end_col - 1):
             draw_y = self.MT.header_fl_ins
             cleftgridln = self.MT.col_positions[c]
@@ -1262,30 +1268,17 @@ class ColumnHeaders(tk.Canvas):
                 self.itemconfig(t, state = "hidden")
                 self.hidd_checkbox[t] = False
                 
-    def get_redraw_selections(self):
+    def get_redraw_selections(self, startc, endc):
         d = defaultdict(list)
         for item in chain(self.find_withtag("cells"), self.find_withtag("columns")):
             tags = self.gettags(item)
             d[tags[0]].append(tuple(int(e) for e in tags[1].split("_") if e))
-        return d
-    
-    # internal for redrawing
-    def _is_cell_sel(self, c, d):
-        if 'cells' not in d:
-            return False
-        for r1, c1, r2, c2 in d['cells']:
-            if c1 <= c and c2 > c:
-                return True
-        return False
-    
-    # internal for redrawing
-    def _is_col_sel(self, c, d):
-        if 'columns' not in d:
-            return False
-        for r1, c1, r2, c2 in d['columns']:
-            if c1 <= c and c2 > c:
-                return True
-        return False
+        d2 = {}
+        if 'cells' in d:
+            d2['cells'] = {c for c in range(startc, endc) for r1, c1, r2, c2 in d['cells'] if c1 <= c and c2 > c}
+        if 'columns' in d:
+            d2['columns'] = {c for c in range(startc, endc) for r1, c1, r2, c2 in d['columns'] if c1 <= c and c2 > c}
+        return d2
                 
     def open_cell(self, event = None, ignore_existing_editor = False):
         if not self.MT.anything_selected()  or (not ignore_existing_editor and self.text_editor_id is not None):

@@ -201,6 +201,8 @@ class RowIndex(tk.Canvas):
                         self.ctrl_selection_binding_func(SelectionBoxEvent("ctrl_select_rows", (r, r + 1)))
                 elif r_selected:
                     self.dragged_row = DraggedRowColumn(dragged = r, to_move = get_seq_without_gaps_at_index(sorted(self.MT.get_selected_rows()), r))
+        elif not self.MT.ctrl_select_enabled:
+            self.b1_press(event)
                     
     def ctrl_shift_b1_press(self, event):
         self.mouseclick_outside_editor_or_dropdown_all_canvases()
@@ -228,6 +230,8 @@ class RowIndex(tk.Canvas):
                         self.ctrl_selection_binding_func(SelectionBoxEvent("ctrl_select_rows", func_event))
                 elif r_selected:
                     self.dragged_row = DraggedRowColumn(dragged = r, to_move = get_seq_without_gaps_at_index(sorted(self.MT.get_selected_rows()), r))
+        elif not self.MT.ctrl_select_enabled:
+            self.shift_b1_press(event)
 
     def shift_b1_press(self, event):
         self.mouseclick_outside_editor_or_dropdown_all_canvases()
@@ -477,6 +481,8 @@ class RowIndex(tk.Canvas):
                 need_redraw = True
             if need_redraw:
                 self.MT.main_table_redraw_grid_and_text(redraw_header = False, redraw_row_index = True)
+        elif not self.MT.ctrl_select_enabled:
+            self.b1_motion(event)
                 
     def drag_and_drop_motion(self, event):
         y = event.y
@@ -874,11 +880,11 @@ class RowIndex(tk.Canvas):
         if kwargs:
             if kwargs[0] is not None:
                 c_1 = kwargs[0] if kwargs[0].startswith("#") else Color_Map_[kwargs[0]]
-            if self._is_row_sel(r, selections):
+            if 'rows' in selections and r in selections['rows']:
                 tf = self.index_selected_rows_fg if kwargs[1] is None or self.MT.display_selected_fg_over_highlights else kwargs[1]
                 if kwargs[0] is not None:
                     fill = f"#{int((int(c_1[1:3], 16) + int(c_3[1:3], 16)) / 2):02X}" + f"{int((int(c_1[3:5], 16) + int(c_3[3:5], 16)) / 2):02X}" + f"{int((int(c_1[5:], 16) + int(c_3[5:], 16)) / 2):02X}"
-            elif self._is_cell_sel(r, selections):
+            elif 'cells' in selections and r in selections['cells']:
                 tf = self.index_selected_cells_fg if kwargs[1] is None or self.MT.display_selected_fg_over_highlights else kwargs[1]
                 if kwargs[0] is not None:
                     fill = f"#{int((int(c_1[1:3], 16) + int(c_2[1:3], 16)) / 2):02X}" + f"{int((int(c_1[3:5], 16) + int(c_2[3:5], 16)) / 2):02X}" + f"{int((int(c_1[5:], 16) + int(c_2[5:], 16)) / 2):02X}"
@@ -895,9 +901,9 @@ class RowIndex(tk.Canvas):
                                                 outline = self.index_fg if self.get_cell_kwargs(datarn, key = 'dropdown') and self.MT.show_dropdown_borders else "",
                                                 tag = "s")
         elif not kwargs:
-            if self._is_row_sel(r, selections):
+            if 'rows' in selections and r in selections['rows']:
                 tf = self.index_selected_rows_fg
-            elif self._is_cell_sel(r, selections):
+            elif 'cells' in selections and r in selections['cells']:
                 tf = self.index_selected_cells_fg
             else:
                 tf = self.index_fg
@@ -1074,7 +1080,7 @@ class RowIndex(tk.Canvas):
         c_2 = self.index_selected_cells_bg if self.index_selected_cells_bg.startswith("#") else Color_Map_[self.index_selected_cells_bg]
         c_3 = self.index_selected_rows_bg if self.index_selected_rows_bg.startswith("#") else Color_Map_[self.index_selected_rows_bg]
         font = self.MT.index_font
-        selections = self.get_redraw_selections()
+        selections = self.get_redraw_selections(start_row, end_row)
         for r in range(start_row, end_row - 1):
             rtopgridln = self.MT.row_positions[r]
             rbotgridln = self.MT.row_positions[r + 1]
@@ -1251,31 +1257,18 @@ class RowIndex(tk.Canvas):
             if sh:
                 self.itemconfig(t, state = "hidden")
                 self.hidd_checkbox[t] = False
-                
-    def get_redraw_selections(self):
+    
+    def get_redraw_selections(self, startr, endr):
         d = defaultdict(list)
         for item in chain(self.find_withtag("cells"), self.find_withtag("rows")):
             tags = self.gettags(item)
             d[tags[0]].append(tuple(int(e) for e in tags[1].split("_") if e))
-        return d
-                
-    # internal for redrawing
-    def _is_cell_sel(self, r, d):
-        if 'cells' not in d:
-            return False
-        for r1, c1, r2, c2 in d['cells']:
-            if r1 <= r and r2 > r:
-                return True
-        return False
-    
-    # internal for redrawing
-    def _is_row_sel(self, r, d):
-        if 'rows' not in d:
-            return False
-        for r1, c1, r2, c2 in d['rows']:
-            if r1 <= r and r2 > r:
-                return True
-        return False
+        d2 = {}
+        if 'cells' in d:
+            d2['cells'] = {r for r in range(startr, endr) for r1, c1, r2, c2 in d['cells'] if r1 <= r and r2 > r}
+        if 'rows' in d:
+            d2['rows'] = {r for r in range(startr, endr) for r1, c1, r2, c2 in d['rows'] if r1 <= r and r2 > r}
+        return d2
                 
     def open_cell(self, event = None, ignore_existing_editor = False):
         if not self.MT.anything_selected() or (not ignore_existing_editor and self.text_editor_id is not None):

@@ -1,3 +1,12 @@
+### Version 6.0.4
+#### Fixed:
+- Bug with setting header height when header is set to `int`
+- Bug with clicking top left rectangle bars to reset header height / index width
+- Wrong colors showing when having rows and columns selected at the same time
+- Wrong colors showing for particular selection scenarios
+- Control select enabled when using `enable_bindings("all")` when it should only be enabled if using `enable_bindings("ctrl_select")`
+- When control select was disabled holding control/command would disable basic sheet bindings
+
 ### Version 6.0.3
 #### Fixed:
 - `disable_bindings()` disable all bindings not disabling edit header/index capability

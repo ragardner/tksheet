@@ -2094,7 +2094,6 @@ class MainTable(tk.Canvas):
             self.rc_insert_row_enabled = True
             self.rc_popup_menus_enabled = True
             self.rc_select_enabled = True
-            self.ctrl_select_enabled = True
             self.TL.rh_state()
             self.TL.rw_state()
         elif binding in ("single", "single_selection_mode", "single_select"):
@@ -2429,6 +2428,8 @@ class MainTable(tk.Canvas):
                 self.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True, redraw_table = True)
                 if self.ctrl_selection_binding_func is not None:
                     self.ctrl_selection_binding_func(SelectionBoxEvent("ctrl_select_cells", (rowsel, colsel, rowsel + 1, colsel + 1)))
+        elif not self.ctrl_select_enabled:
+            self.b1_press(event)
                     
     def ctrl_shift_b1_press(self, event = None):
         self.mouseclick_outside_editor_or_dropdown_all_canvases()
@@ -2457,6 +2458,8 @@ class MainTable(tk.Canvas):
                 self.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True, redraw_table = True)
                 if self.shift_selection_binding_func is not None:
                     self.shift_selection_binding_func(SelectionBoxEvent("shift_select_cells", last_selected))
+        elif not self.ctrl_select_enabled:
+            self.shift_b1_press(event)
 
     def shift_b1_press(self, event = None):
         self.mouseclick_outside_editor_or_dropdown_all_canvases()
@@ -2584,6 +2587,8 @@ class MainTable(tk.Canvas):
                 need_redraw = True
             if need_redraw:
                 self.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True, redraw_table = True)
+        elif not self.ctrl_select_enabled:
+            self.b1_motion(event)
 
     def b1_release(self, event = None):
         if self.being_drawn_rect is not None and (self.being_drawn_rect[2] - self.being_drawn_rect[0] > 1 or self.being_drawn_rect[3] - self.being_drawn_rect[1] > 1):
@@ -3656,15 +3661,15 @@ class MainTable(tk.Canvas):
         if kwargs:
             if kwargs[0] is not None:
                 c_1 = kwargs[0] if kwargs[0].startswith("#") else Color_Map_[kwargs[0]]
-            if self._is_cell_sel(r, c, selections):
+            if 'cells' in selections and (r, c) in selections['cells']:
                 tf = self.table_selected_cells_fg if kwargs[1] is None or self.display_selected_fg_over_highlights else kwargs[1]
                 if kwargs[0] is not None:
                     fill = f"#{int((int(c_1[1:3], 16) + c_2_[0]) / 2):02X}" + f"{int((int(c_1[3:5], 16) + c_2_[1]) / 2):02X}" + f"{int((int(c_1[5:], 16) + c_2_[2]) / 2):02X}"
-            elif self._is_row_sel(r, selections):
+            elif 'rows' in selections and r in selections['rows']:
                 tf = self.table_selected_rows_fg if kwargs[1] is None or self.display_selected_fg_over_highlights else kwargs[1]
                 if kwargs[0] is not None:
                     fill = f"#{int((int(c_1[1:3], 16) + c_4_[0]) / 2):02X}" + f"{int((int(c_1[3:5], 16) + c_4_[1]) / 2):02X}" + f"{int((int(c_1[5:], 16) + c_4_[2]) / 2):02X}"
-            elif self._is_col_sel(c, selections):
+            elif 'columns' in selections and c in selections['columns']:
                 tf = self.table_selected_columns_fg if kwargs[1] is None or self.display_selected_fg_over_highlights else kwargs[1]
                 if kwargs[0] is not None:
                     fill = f"#{int((int(c_1[1:3], 16) + c_3_[0]) / 2):02X}" + f"{int((int(c_1[3:5], 16) + c_3_[1]) / 2):02X}" + f"{int((int(c_1[5:], 16) + c_3_[2]) / 2):02X}"
@@ -3678,11 +3683,11 @@ class MainTable(tk.Canvas):
                                                 tag = "hi",
                                                 can_width = can_width if (len(kwargs) > 2 and kwargs[2]) else None)
         elif not kwargs:
-            if self._is_cell_sel(r, c, selections):
+            if 'cells' in selections and (r, c) in selections['cells']:
                 tf = self.table_selected_cells_fg
-            elif self._is_row_sel(r, selections):
+            elif 'rows' in selections and r in selections['rows']:
                 tf = self.table_selected_rows_fg
-            elif self._is_col_sel(c, selections):
+            elif 'columns' in selections and c in selections['columns']:
                 tf = self.table_selected_columns_fg
             else:
                 tf = self.table_fg
@@ -3953,7 +3958,7 @@ class MainTable(tk.Canvas):
         if start_col > 0:
             start_col -= 1
         end_row -= 1
-        selections = self.get_redraw_selections()
+        selections = self.get_redraw_selections(start_row, end_row, start_col, end_col)
         c_2 = self.table_selected_cells_bg if self.table_selected_cells_bg.startswith("#") else Color_Map_[self.table_selected_cells_bg]
         c_2_ = (int(c_2[1:3], 16), int(c_2[3:5], 16), int(c_2[5:], 16))
         c_3 = self.table_selected_columns_bg if self.table_selected_columns_bg.startswith("#") else Color_Map_[self.table_selected_columns_bg]
@@ -4416,40 +4421,20 @@ class MainTable(tk.Canvas):
         self.CH.tag_lower("cells")
         if not self.show_selected_cells_border:
             self.tag_lower("currently")
-
-    def get_redraw_selections(self):
+    
+    def get_redraw_selections(self, startr, endr, startc, endc):
         d = defaultdict(list)
         for item in chain(self.find_withtag("cells"), self.find_withtag("rows"), self.find_withtag("columns")):
             tags = self.gettags(item)
             d[tags[0]].append(tuple(int(e) for e in tags[1].split("_") if e))
-        return d
-    
-    # internal for redrawing
-    def _is_cell_sel(self, r, c, d):
-        if 'cells' not in d:
-            return False
-        for r1, c1, r2, c2 in d['cells']:
-            if r1 <= r and c1 <= c and r2 > r and c2 > c:
-                return True
-        return False
-    
-    # internal for redrawing
-    def _is_col_sel(self, c, d):
-        if 'columns' not in d:
-            return False
-        for r1, c1, r2, c2 in d['columns']:
-            if c1 <= c and c2 > c:
-                return True
-        return False
-    
-    # internal for redrawing
-    def _is_row_sel(self, r, d):
-        if 'rows' not in d:
-            return False
-        for r1, c1, r2, c2 in d['rows']:
-            if r1 <= r and r2 > r:
-                return True
-        return False
+        d2 = {}
+        if 'cells' in d:
+            d2['cells'] = {(r, c) for r in range(startr, endr) for c in range(startc, endc) for r1, c1, r2, c2 in d['cells'] if r1 <= r and c1 <= c and r2 > r and c2 > c}
+        if 'rows' in d:
+            d2['rows'] = {r for r in range(startr, endr) for r1, c1, r2, c2 in d['rows'] if r1 <= r and r2 > r}
+        if 'columns' in d:
+            d2['columns'] = {c for c in range(startc, endc) for r1, c1, r2, c2 in d['columns'] if c1 <= c and c2 > c}
+        return d2
 
     def get_selected_min_max(self):
         min_x = float("inf")
