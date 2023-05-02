@@ -2068,7 +2068,7 @@ This is the generic formatter options interface. You can use this to create your
 - `invalid_value` (`any`) the value to return if the input string is invalid. For example, `invalid_value = "NA"` will return "NA" if the input string is invalid.
 - `nullable` (`bool`) if true, the formatter will accept `None` as a valid input.
 - `pre_format_function` (`function`) a function that takes a input string and returns a string. This function is called before the `format_function` and can be used to modify the input string before it is converted to the desired datatype. This can be useful if you want to strip out unwanted characters or convert a string to a different format before converting it to the desired datatype.
-- `post_format_function` (`function`) a function that takes a value of the desired datatype and returns a value of the desired datatype. This function is called after the `format_function` and can be used to modify the output value after it is converted to the desired datatype. This can be useful if you want to round a float for example.
+- `post_format_function` (`function`) a function that takes a value **which might not be of the desired datatype, e.g. `None` if the cell is nullable and empty** and if successful returns a value of the desired datatype or if not successful returns the input value. This function is called after the `format_function` and can be used to modify the output value after it is converted to the desired datatype. This can be useful if you want to round a float for example.
 - `clipboard_function` (`function`) a function that takes a value of the desired datatype and returns a string. This function is called when the cell value is copied to the clipboard. This can be useful if you want to convert a value to a different format before it is copied to the clipboard.
 - `**kwargs` any additional keyword options/arguements to pass to the formatter. These keyword arguments will be passed to the `format_function`, `to_str_function`, and the `clipboard_function`. These can be useful if you want to specifiy any additional formatting options, such as the number of decimal places to round to.
 
@@ -2852,7 +2852,10 @@ date_replace = re.compile('|'.join(['\(', '\)', '\[', '\]', '\<', '\>']))
 
 # --------------------- Custom formatter methods ---------------------
 def round_up(x):
-    return float(ceil(x))
+    try: # might not be a number if empty
+        return float(ceil(x))
+    except:
+        return x
 
 def only_numeric(s):
     return ''.join(n for n in f"{s}" if n.isnumeric() or n == '.')

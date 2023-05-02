@@ -618,8 +618,8 @@ class Sheet(tk.Frame):
                 if binding == "deselect":
                     self.MT.deselection_binding_func = func
 
-    def emit_modified_event(self, data = {}):
-        self.event_generate("<<SheetModified>>", data = data)
+    def emit_event(self, event, data = {}):
+        self.event_generate(event, data = data)
 
     def bind_event(self, sequence, func, add = None):
         widget = self

@@ -632,7 +632,7 @@ class RowIndex(tk.Canvas):
                     self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
                     if self.ri_extra_end_drag_drop_func is not None:
                         self.ri_extra_end_drag_drop_func(EndDragDropEvent("end_row_index_drag_drop", orig_selected, new_selected, int(r)))
-                    self.parentframe.emit_modified_event()
+                    self.parentframe.emit_event("<<SheetModified>>")
         elif self.b1_pressed_loc is not None and self.rsz_w is None and self.rsz_h is None:
             r = self.MT.identify_row(y = event.y)
             if r is not None and r < len(self.MT.row_positions) - 1 and r == self.b1_pressed_loc and self.b1_pressed_loc != self.closed_dropdown:
@@ -1525,7 +1525,7 @@ class RowIndex(tk.Canvas):
             self.set_row_height_run_binding(r, only_set_if_too_small = False)
         if redraw:
             self.MT.refresh()
-        self.parentframe.emit_modified_event()
+        self.parentframe.emit_event("<<SheetModified>>")
 
     def set_cell_data(self, datarn = None, value = ""):
         if isinstance(self.MT._row_index, int):

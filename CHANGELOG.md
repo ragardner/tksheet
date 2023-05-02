@@ -7,6 +7,9 @@
 - Control select enabled when using `enable_bindings("all")` when it should only be enabled if using `enable_bindings("ctrl_select")`
 - When control select was disabled holding control/command would disable basic sheet bindings
 
+#### Added:
+- Add additional binding for `sheet.bind_event()`. `"<<SheetModified>>"` and `"<<SheetRedrawn>>"` are the two existing event options but currently only an empty dict is the associated data
+
 ### Version 6.0.3
 #### Fixed:
 - `disable_bindings()` disable all bindings not disabling edit header/index capability

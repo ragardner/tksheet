@@ -650,7 +650,7 @@ class ColumnHeaders(tk.Canvas):
                     self.MT.main_table_redraw_grid_and_text(redraw_header = True, redraw_row_index = True)
                     if self.ch_extra_end_drag_drop_func is not None:
                         self.ch_extra_end_drag_drop_func(EndDragDropEvent("end_column_header_drag_drop", orig_selected, new_selected, int(c)))
-                    self.parentframe.emit_modified_event()
+                    self.parentframe.emit_event("<<SheetModified>>")
         elif self.b1_pressed_loc is not None and self.rsz_w is None and self.rsz_h is None:
             c = self.MT.identify_col(x = event.x)
             if c is not None and c < len(self.MT.col_positions) - 1 and c == self.b1_pressed_loc and self.b1_pressed_loc != self.closed_dropdown:
@@ -1549,7 +1549,7 @@ class ColumnHeaders(tk.Canvas):
             self.set_col_width_run_binding(c)
         if redraw:
             self.MT.refresh()
-        self.parentframe.emit_modified_event()
+        self.parentframe.emit_event("<<SheetModified>>")
     
     def set_cell_data(self, datacn = None, value = ""):
         if isinstance(self.MT._headers, int):
