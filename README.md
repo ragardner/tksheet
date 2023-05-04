@@ -13,7 +13,9 @@ pip install tksheet --upgrade
 ```
 
 ## **Help**
+
 ----
+
 - [Documentation](https://github.com/ragardner/tksheet/wiki)
 - [Changelog](https://github.com/ragardner/tksheet/blob/master/CHANGELOG.md)
 - [Questions](https://github.com/ragardner/tksheet/wiki#asking-questions)
@@ -22,7 +24,9 @@ pip install tksheet --upgrade
 - This library is maintained with the help of **[others](https://github.com/ragardner/tksheet/graphs/contributors)**. If you would like to contribute please read [this help section](https://github.com/ragardner/tksheet/wiki#contributing).
 
 ## **Features**
+
 ----
+
 - Display and modify tabular data
 - Stores its display data as a Python list of lists, sublists being rows
 - Runs smoothly even with millions of rows/columns
@@ -38,11 +42,13 @@ pip install tksheet --upgrade
 - Left `"w"`, Center `"center"` or Right `"e"` text alignment for any cell/row/column
 
 ### **light blue theme**
+
 ----
 
-![alt text](https://i.imgur.com/ojU3IQi.jpeg)
+![tksheet light blue theme](https://i.imgur.com/ojU3IQi.jpeg)
 
 ### **black theme**
+
 ----
 
-![alt text](https://i.imgur.com/JeF9vJe.jpeg)
+![tksheet black theme](https://i.imgur.com/JeF9vJe.jpeg)
