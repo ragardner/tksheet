@@ -1,3 +1,16 @@
+### Version 6.0.5
+#### Fixed:
+- Bugs with using `None` to create dropdowns/checkboxes for entire header/index
+- Bug with creating dropdowns in row index
+- Bug with opening dropdowns in row index
+- Bug with `insert_rows()` if `rows` had more columns than existing sheet
+- Bug with `delete_column_dropdown()`
+- Bug with using external move rows/columns functions where `index_type` wasn't `"displayed"`
+- Bug with hidden rows and cutting/copying
+
+#### Changed:
+- Formatted code using `Black`
+
 ### Version 6.0.4
 #### Fixed:
 - Bug with setting header height when header is set to `int`
