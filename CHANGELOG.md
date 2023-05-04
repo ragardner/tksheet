@@ -1,3 +1,7 @@
+### Version 6.1.0
+#### Fixed:
+- Error with using `None` to create a dropdown for the entire index when index is not `int`
+
 ### Version 6.0.5
 #### Fixed:
 - Bugs with using `None` to create dropdowns/checkboxes for entire header/index

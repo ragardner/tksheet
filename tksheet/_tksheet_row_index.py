@@ -2427,7 +2427,7 @@ class RowIndex(tk.Canvas):
         else:
             for datarn in range(total_rows):
                 self.set_cell_data(
-                    datarn=datarn, datacn=self.MT._row_index, value=value
+                    datarn=datarn, value=value
                 )
 
     def create_checkbox(self, datarn=0, **kwargs):
