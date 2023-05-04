@@ -947,7 +947,7 @@ show_vertical_grid #grid lines for main table
 ### Version 4.2.5
  - Fix bug where highlighted background or foreground might not be in the correct column when displaying a subset of columns
  - Change colors of selected rows and columns
- - Add color options: 
+ - Add color options:
 ```python
 header_select_column_bg
 header_select_column_fg
@@ -962,7 +962,7 @@ selected_columns_foreground
 ```
  - Fix various issues with displaying correct colors in certain circumstances
  - Change dark theme colors slightly
-                              
+
 ### Version 4.2.4
  - Fix PyPi release version
 

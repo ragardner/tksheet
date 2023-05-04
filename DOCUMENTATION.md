@@ -182,7 +182,7 @@ popup_menu_highlight_fg            = theme_light_blue['popup_menu_highlight_fg']
 frame_bg                           = theme_light_blue['table_bg'],
 table_grid_fg                      = theme_light_blue['table_grid_fg'],
 table_bg                           = theme_light_blue['table_bg'],
-table_fg                           = theme_light_blue['table_fg'], 
+table_fg                           = theme_light_blue['table_fg'],
 table_selected_cells_border_fg     = theme_light_blue['table_selected_cells_border_fg'],
 table_selected_cells_bg            = theme_light_blue['table_selected_cells_bg'],
 table_selected_cells_fg            = theme_light_blue['table_selected_cells_fg'],
@@ -275,10 +275,10 @@ ___
 
 #### **Insert a row into the sheet.**
 ```python
-insert_row(values: Union[list, int, None] = None, 
-           idx: Union[str, int] = "end", 
-           height = None, 
-           deselect_all = False, 
+insert_row(values: Union[list, int, None] = None,
+           idx: Union[str, int] = "end",
+           height = None,
+           deselect_all = False,
            add_columns = False,
            mod_row_positions = True,
            redraw = True)
@@ -325,12 +325,12 @@ ___
 
 #### **Insert multiple rows into the sheet.**
 ```python
-insert_rows(rows: Union[list, int] = 1, 
-            idx: Union[str, int] = "end", 
-            heights = None, 
-            deselect_all = False, 
+insert_rows(rows: Union[list, int] = 1,
+            idx: Union[str, int] = "end",
+            heights = None,
+            deselect_all = False,
             add_columns = True,
-            mod_row_positions = True, 
+            mod_row_positions = True,
             redraw = True)
 ```
 - `rows` can be either `int` or iterable of iterables.
@@ -438,7 +438,7 @@ If both arguments are `None` then table will reset to default tkinter canvas dim
 
 This is useful if your sheet is very large and you don't want to create an extra list in memory (it does actually generate one row at a time and not from a pre-built list).
 ```python
-yield_sheet_rows(get_displayed = False, 
+yield_sheet_rows(get_displayed = False,
                  get_header = False,
                  get_index = False,
                  get_index_displayed = True,
@@ -449,7 +449,7 @@ yield_sheet_rows(get_displayed = False,
 
 #### **Get sheet data as list of lists.**
 ```python
-get_sheet_data(get_displayed = False, 
+get_sheet_data(get_displayed = False,
                get_header = False,
                get_index = False,
                get_index_displayed = True,
@@ -496,10 +496,10 @@ get_cell_data(r, c, get_displayed = False)
 ___
 
 ```python
-get_row_data(r, 
-             get_displayed = False, 
-             get_index = False, 
-             get_index_displayed = True, 
+get_row_data(r,
+             get_displayed = False,
+             get_index = False,
+             get_index_displayed = True,
              only_columns = None)
 ```
 - The above arguments behave the same way as for `get_sheet_data()`.
@@ -508,9 +508,9 @@ ___
 
 ```python
 get_column_data(c,
-                get_displayed = False, 
+                get_displayed = False,
                 get_header = False,
-                get_header_displayed = True, 
+                get_header_displayed = True,
                 only_rows = None)
 ```
 - The above arguments behave the same way as for `get_sheet_data()`.
@@ -1413,7 +1413,7 @@ ___
 #### **Hide specific columns.**
 ```python
 hide_columns(columns = set(),
-             redraw = True, 
+             redraw = True,
              deselect_all = True)
 ```
 - **NOTE**: `columns` (`int`) uses displayed column indexes, not data indexes. In other words the indexes of the columns displayed on the screen are the ones that are hidden, this is useful when uses in conjunction with `get_selected_columns()`.
@@ -1451,7 +1451,7 @@ ___
 #### **Hide specific rows.**
 ```python
 hide_rows(rows = set(),
-          redraw = True, 
+          redraw = True,
           deselect_all = True)
 ```
 - **NOTE**: `rows` (`int`) uses displayed row indexes, not data indexes. In other words the indexes of the rows displayed on the screen are the ones that are hidden, this is useful when uses in conjunction with `get_selected_rows()`.
@@ -1924,11 +1924,11 @@ index_checkbox(r,
 ## **Cell Formatting**
 ----
 
-By default tksheet stores all user inputted data as strings and while tksheet can store and display any datatype with a `__str__()` method this has some obvious limitations. 
+By default tksheet stores all user inputted data as strings and while tksheet can store and display any datatype with a `__str__()` method this has some obvious limitations.
 
-Cell formatting aims to provide greater functionality when working with different datatypes and provide strict typing for the sheet. With formatting you can convert sheet data and user input to a specific datatype. 
+Cell formatting aims to provide greater functionality when working with different datatypes and provide strict typing for the sheet. With formatting you can convert sheet data and user input to a specific datatype.
 
-Additionally, formatting also provides a function for displaying data on the table GUI (as a rounded float for example) and logic for handling invalid and missing data. 
+Additionally, formatting also provides a function for displaying data on the table GUI (as a rounded float for example) and logic for handling invalid and missing data.
 
 tksheet has several basic built-in formatters and provides functionality for creating your own custom formats as well.
 
@@ -2134,7 +2134,7 @@ The `percentage_formatter` is the basic configuration for a simple percentage fo
 
  - `format_function` (`function`) a function that takes a string and returns a `float`. By default, this is set to the in-built `tksheet.to_float`. This function will always convert percentages to their decimal equivalent, for example `"5%"` will be converted to `0.05`.
  - `to_str_function` (`function`) By default, this is set to the in-built `tksheet.percentage_to_str`, which will display the float as a percentage to the specified number of decimal places. For example, `0.05` will be displayed as `"5.0%"`.
- - `decimals` (`int`) the number of decimal places to round to. Defaults to `0`. 
+ - `decimals` (`int`) the number of decimal places to round to. Defaults to `0`.
 
 Usage:
 
@@ -2193,7 +2193,7 @@ def to_local_datetime(dt, **kwargs):
     if isinstance(dt, datetime):
         pass # Do nothing
     elif isinstance(dt, date):
-        dt = datetime(dt.year, dt.month, dt.day) # Always good to account for unexpected inputs 
+        dt = datetime(dt.year, dt.month, dt.day) # Always good to account for unexpected inputs
     else:
         try:
             dt = parser.parse(dt)
@@ -2546,7 +2546,7 @@ class Sheet_Listbox(Sheet):
                             redraw = False,
                             verify = False)
         self.set_all_cell_sizes_to_text()
-        
+
 
 class demo(tk.Tk):
     def __init__(self):
@@ -2562,7 +2562,7 @@ class demo(tk.Tk):
                           sticky = "nswe")
         #self.listbox.values([f"new values {i}" for i in range(50)]) set values
 
-        
+
 app = demo()
 app.mainloop()
 ```
@@ -2607,7 +2607,7 @@ class demo(tk.Tk):
                                    "select_all")
         self.frame.grid(row = 0, column = 0, sticky = "nswe")
         self.sheet.grid(row = 0, column = 0, sticky = "nswe")
-        
+
         self.sheet.create_header_dropdown(c = 0,
                                           values = ["all", "1", "2", "3"],
                                           set_value = "all",
@@ -2636,7 +2636,7 @@ class demo(tk.Tk):
             self.sheet.display_rows(rows = rows,
                                     all_displayed = False)
         self.sheet.redraw()
-    
+
 app = demo()
 app.mainloop()
 ```
@@ -2727,23 +2727,23 @@ class demo(tk.Tk):
                                    fg = "purple")
         self.sheet.set_all_column_widths()
         self.sheet.extra_bindings("all", self.all_extra_bindings)
-        
+
     def hide_rows(self, event = None):
         rows = self.sheet.get_selected_rows()
         if rows:
             self.sheet.hide_rows(rows)
-        
+
     def show_rows(self, event = None):
         self.sheet.display_rows("all", redraw = True)
-        
+
     def hide_columns(self, event = None):
         columns = self.sheet.get_selected_columns()
         if columns:
             self.sheet.hide_columns(columns)
-        
+
     def show_columns(self, event = None):
         self.sheet.display_columns("all", redraw = True)
-        
+
     def all_extra_bindings(self, event = None):
         #print (event)
         try:
@@ -2752,7 +2752,7 @@ class demo(tk.Tk):
         except:
             pass
 
-        
+
 app = demo()
 app.mainloop()
 ```
@@ -2790,7 +2790,7 @@ class demo(tk.Tk):
         self.sheet.popup_menu_add_command("Save sheet", self.save_sheet)
         self.sheet.set_all_cell_sizes_to_text()
         self.sheet.change_theme("light green")
-        
+
         # center the window and unhide
         self.update_idletasks()
         w = self.winfo_screenwidth() - 20
@@ -2818,7 +2818,7 @@ class demo(tk.Tk):
                 writer.writerows(self.sheet.get_sheet_data(get_header = False, get_index = False))
         except:
             return
-                
+
     def open_csv(self):
         filepath = filedialog.askopenfilename(parent = self, title = "Select a csv file")
         if not filepath or not filepath.lower().endswith((".csv", ".tsv")):
@@ -2902,18 +2902,18 @@ class demo(tk.Tk):
         self.sheet.enable_bindings()
         self.frame.grid(row = 0, column = 0, sticky = "nswe")
         self.sheet.grid(row = 0, column = 0, sticky = "nswe")
-        self.sheet.headers(['Non-Nullable Float Cell\n1 decimals places', 
-                            'Float Cell', 
-                            'Int Cell', 
-                            'Bool Cell', 
-                            'Percentage Cell\n0 decimal places', 
+        self.sheet.headers(['Non-Nullable Float Cell\n1 decimals places',
+                            'Float Cell',
+                            'Int Cell',
+                            'Bool Cell',
+                            'Percentage Cell\n0 decimal places',
                             'Custom Datetime Cell',
                             'Custom Datetime Cell\nCustom Format String',
-                            'Float Cell that\nrounds up', 
-                            'Float cell that\n strips non-numeric', 
-                            'Dropdown Over Nullable\nPercentage Cell', 
+                            'Float Cell that\nrounds up',
+                            'Float cell that\n strips non-numeric',
+                            'Dropdown Over Nullable\nPercentage Cell',
                             'Percentage Cell\n2 decimal places'])
-        
+
         # ---------- Some examples of cell formatting --------
         self.sheet.format_cell('all', 0, formatter_options = float_formatter(nullable = False))
         self.sheet.format_cell('all', 1, formatter_options = float_formatter())
@@ -2924,21 +2924,21 @@ class demo(tk.Tk):
 
         # ---------------- Custom Formatters -----------------
         # Custom using generic formatter interface
-        self.sheet.format_cell('all', 5, formatter_options = formatter(datatypes = datetime, 
-                                                                       format_function = convert_to_local_datetime, 
-                                                                       to_str_function = datetime_to_string, 
+        self.sheet.format_cell('all', 5, formatter_options = formatter(datatypes = datetime,
+                                                                       format_function = convert_to_local_datetime,
+                                                                       to_str_function = datetime_to_string,
                                                                        nullable = False,
                                                                        invalid_value = 'NaT',
                                                                        ))
         # Custom format
-        self.sheet.format_cell('all', 6, datatypes = datetime, 
-                                         format_function = convert_to_local_datetime, 
-                                         to_str_function = custom_datetime_to_str, 
+        self.sheet.format_cell('all', 6, datatypes = datetime,
+                                         format_function = convert_to_local_datetime,
+                                         to_str_function = custom_datetime_to_str,
                                          nullable = True,
                                          invalid_value = 'NaT',
                                          format = '(%Y-%m-%d) %H:%M %p'
                                          )
-        
+
         # Unique cell behaviour using the post_conversion_function
         self.sheet.format_cell('all', 7, formatter_options = float_formatter(post_format_function = round_up))
         self.sheet.format_cell('all', 8, formatter_options = float_formatter(), pre_format_function = only_numeric)
