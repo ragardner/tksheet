@@ -232,7 +232,8 @@ theme_dark_green["index_selected_rows_bg"] = "#66FFBF"
 theme_dark_green["table_selected_rows_border_fg"] = "#66FFBF"
 theme_dark_green["table_selected_columns_border_fg"] = "#66FFBF"
 
-Color_Map_ = {
+
+Color_Map = {
     "alice blue": "#F0F8FF",
     "ALICE BLUE": "#F0F8FF",
     "AliceBlue": "#F0F8FF",

@@ -5,9 +5,25 @@ from collections import defaultdict
 from itertools import accumulate, chain, cycle, islice
 from math import ceil, floor
 
-from ._tksheet_formatters import *
-from ._tksheet_other_classes import *
-from ._tksheet_vars import *
+from ._tksheet_formatters import is_bool_like, try_to_bool
+from ._tksheet_other_classes import (
+    BeginDragDropEvent,
+    DraggedRowColumn,
+    DrawnItem,
+    DropDownModifiedEvent,
+    EditHeaderEvent,
+    EndDragDropEvent,
+    ResizeEvent,
+    SelectColumnEvent,
+    SelectionBoxEvent,
+    TextCfg,
+    TextEditor,
+    get_checkbox_dict,
+    get_dropdown_dict,
+    get_n2a,
+    get_seq_without_gaps_at_index,
+)
+from ._tksheet_vars import USER_OS, Color_Map, rc_binding, symbols_set
 
 
 class ColumnHeaders(tk.Canvas):
@@ -19,9 +35,7 @@ class ColumnHeaders(tk.Canvas):
             highlightthickness=0,
         )
         self.parentframe = kwargs["parentframe"]
-        self.current_height = (
-            None  # is set from within MainTable() __init__ or from Sheet parameters
-        )
+        self.current_height = None  # is set from within MainTable() __init__ or from Sheet parameters
         self.MT = None  # is set from within MainTable() __init__
         self.RI = None  # is set from within MainTable() __init__
         self.TL = None  # is set from within TopLeftRectangle() __init__
@@ -99,9 +113,7 @@ class ColumnHeaders(tk.Canvas):
         self.header_selected_cells_fg = kwargs["header_selected_cells_fg"]
         self.header_selected_columns_bg = kwargs["header_selected_columns_bg"]
         self.header_selected_columns_fg = kwargs["header_selected_columns_fg"]
-        self.header_hidden_columns_expander_bg = kwargs[
-            "header_hidden_columns_expander_bg"
-        ]
+        self.header_hidden_columns_expander_bg = kwargs["header_hidden_columns_expander_bg"]
         self.show_default_header_for_empty = kwargs["show_default_header_for_empty"]
         self.drag_and_drop_bg = kwargs["drag_and_drop_bg"]
         self.resizing_line_fg = kwargs["resizing_line_fg"]
@@ -132,9 +144,7 @@ class ColumnHeaders(tk.Canvas):
             if len(self.MT.data) > self.MT._headers:
                 maxlines = max(
                     len(
-                        self.MT.get_valid_cell_data_as_str(
-                            self.MT._headers, datacn, get_displayed=True
-                        )
+                        self.MT.get_valid_cell_data_as_str(self.MT._headers, datacn, get_displayed=True)
                         .rstrip()
                         .split("\n")
                     )
@@ -142,9 +152,7 @@ class ColumnHeaders(tk.Canvas):
                 )
         elif isinstance(self.MT._headers, (list, tuple)):
             maxlines = max(
-                len(e.rstrip().split("\n"))
-                if isinstance(e, str)
-                else len(f"{e}".rstrip().split("\n"))
+                len(e.rstrip().split("\n")) if isinstance(e, str) else len(f"{e}".rstrip().split("\n"))
                 for e in self.MT._headers
             )
         if maxlines == 1:
@@ -155,9 +163,7 @@ class ColumnHeaders(tk.Canvas):
             self.lines_start_at += 1
         elif (event.delta >= 0 or event.num == 4) and self.lines_start_at > 0:
             self.lines_start_at -= 1
-        self.MT.main_table_redraw_grid_and_text(
-            redraw_header=True, redraw_row_index=False, redraw_table=False
-        )
+        self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=False, redraw_table=False)
 
     def set_height(self, new_height, set_TL=False):
         self.current_height = new_height
@@ -209,11 +215,7 @@ class ColumnHeaders(tk.Canvas):
             self.MT.deselect("all")
             if self.MT.rc_popup_menus_enabled:
                 popup_menu = self.MT.empty_rc_popup_menu
-        elif (
-            self.col_selection_enabled
-            and not self.currently_resizing_width
-            and not self.currently_resizing_height
-        ):
+        elif self.col_selection_enabled and not self.currently_resizing_width and not self.currently_resizing_height:
             c = self.MT.identify_col(x=event.x)
             if c < len(self.MT.col_positions) - 1:
                 if self.MT.col_selected(c):
@@ -243,20 +245,15 @@ class ColumnHeaders(tk.Canvas):
             if c < len(self.MT.col_positions) - 1:
                 c_selected = self.MT.col_selected(c)
                 if not c_selected and self.col_selection_enabled:
-                    self.add_selection(c, set_as_current=True)
-                    self.MT.main_table_redraw_grid_and_text(
-                        redraw_header=True, redraw_row_index=True
-                    )
+                    self.being_drawn_rect = True
+                    self.being_drawn_rect = self.add_selection(c, set_as_current=True)
+                    self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
                     if self.ctrl_selection_binding_func is not None:
-                        self.ctrl_selection_binding_func(
-                            SelectionBoxEvent("ctrl_select_columns", (c, c + 1))
-                        )
+                        self.ctrl_selection_binding_func(SelectionBoxEvent("ctrl_select_columns", (c, c + 1)))
                 elif c_selected:
                     self.dragged_col = DraggedRowColumn(
                         dragged=c,
-                        to_move=get_seq_without_gaps_at_index(
-                            sorted(self.MT.get_selected_cols()), c
-                        ),
+                        to_move=get_seq_without_gaps_at_index(sorted(self.MT.get_selected_cols()), c),
                     )
         elif not self.MT.ctrl_select_enabled:
             self.b1_press(event)
@@ -276,9 +273,9 @@ class ColumnHeaders(tk.Canvas):
                 if not c_selected and self.col_selection_enabled:
                     currently_selected = self.MT.currently_selected()
                     if currently_selected and currently_selected.type_ == "column":
-                        min_c = int(currently_selected[1])
+                        min_c = currently_selected[1]
                         if c > min_c:
-                            self.MT.create_selected(
+                            self.MT.create_selection_box(
                                 0,
                                 min_c,
                                 len(self.MT.row_positions) - 1,
@@ -287,7 +284,7 @@ class ColumnHeaders(tk.Canvas):
                             )
                             func_event = tuple(range(min_c, c + 1))
                         elif c < min_c:
-                            self.MT.create_selected(
+                            self.MT.create_selection_box(
                                 0,
                                 c,
                                 len(self.MT.row_positions) - 1,
@@ -298,19 +295,13 @@ class ColumnHeaders(tk.Canvas):
                     else:
                         self.add_selection(c, set_as_current=True)
                         func_event = (c,)
-                    self.MT.main_table_redraw_grid_and_text(
-                        redraw_header=True, redraw_row_index=True
-                    )
+                    self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
                     if self.ctrl_selection_binding_func is not None:
-                        self.ctrl_selection_binding_func(
-                            SelectionBoxEvent("ctrl_select_columns", func_event)
-                        )
+                        self.ctrl_selection_binding_func(SelectionBoxEvent("ctrl_select_columns", func_event))
                 elif c_selected:
                     self.dragged_col = DraggedRowColumn(
                         dragged=c,
-                        to_move=get_seq_without_gaps_at_index(
-                            sorted(self.MT.get_selected_cols()), c
-                        ),
+                        to_move=get_seq_without_gaps_at_index(sorted(self.MT.get_selected_cols()), c),
                     )
         elif not self.MT.ctrl_select_enabled:
             self.shift_b1_press(event)
@@ -319,20 +310,16 @@ class ColumnHeaders(tk.Canvas):
         self.mouseclick_outside_editor_or_dropdown_all_canvases()
         x = event.x
         c = self.MT.identify_col(x=x)
-        if (
-            (self.drag_and_drop_enabled or self.col_selection_enabled)
-            and self.rsz_h is None
-            and self.rsz_w is None
-        ):
+        if (self.drag_and_drop_enabled or self.col_selection_enabled) and self.rsz_h is None and self.rsz_w is None:
             if c < len(self.MT.col_positions) - 1:
                 c_selected = self.MT.col_selected(c)
                 if not c_selected and self.col_selection_enabled:
                     currently_selected = self.MT.currently_selected()
                     if currently_selected and currently_selected.type_ == "column":
-                        min_c = int(currently_selected[1])
-                        self.MT.delete_selection_rects(delete_current=False)
+                        min_c = currently_selected[1]
+                        self.MT.delete_selection_rects()
                         if c > min_c:
-                            self.MT.create_selected(
+                            self.MT.create_selection_box(
                                 0,
                                 min_c,
                                 len(self.MT.row_positions) - 1,
@@ -341,7 +328,7 @@ class ColumnHeaders(tk.Canvas):
                             )
                             func_event = tuple(range(min_c, c + 1))
                         elif c < min_c:
-                            self.MT.create_selected(
+                            self.MT.create_selection_box(
                                 0,
                                 c,
                                 len(self.MT.row_positions) - 1,
@@ -352,19 +339,13 @@ class ColumnHeaders(tk.Canvas):
                     else:
                         self.select_col(c)
                         func_event = (c,)
-                    self.MT.main_table_redraw_grid_and_text(
-                        redraw_header=True, redraw_row_index=True
-                    )
+                    self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
                     if self.shift_selection_binding_func is not None:
-                        self.shift_selection_binding_func(
-                            SelectionBoxEvent("shift_select_columns", func_event)
-                        )
+                        self.shift_selection_binding_func(SelectionBoxEvent("shift_select_columns", func_event))
                 elif c_selected:
                     self.dragged_col = DraggedRowColumn(
                         dragged=c,
-                        to_move=get_seq_without_gaps_at_index(
-                            sorted(self.MT.get_selected_cols()), c
-                        ),
+                        to_move=get_seq_without_gaps_at_index(sorted(self.MT.get_selected_cols()), c),
                     )
 
     def create_resize_line(self, x1, y1, x2, y2, width, fill, tag):
@@ -436,18 +417,11 @@ class ColumnHeaders(tk.Canvas):
             and not self.currently_resizing_width
         ):
             col = self.rsz_w - 1
-            old_width = (
-                self.MT.col_positions[self.rsz_w]
-                - self.MT.col_positions[self.rsz_w - 1]
-            )
+            old_width = self.MT.col_positions[self.rsz_w] - self.MT.col_positions[self.rsz_w - 1]
             new_width = self.set_col_width(col)
-            self.MT.main_table_redraw_grid_and_text(
-                redraw_header=True, redraw_row_index=True
-            )
+            self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
             if self.column_width_resize_func is not None and old_width != new_width:
-                self.column_width_resize_func(
-                    ResizeEvent("column_width_resize", col, old_width, new_width)
-                )
+                self.column_width_resize_func(ResizeEvent("column_width_resize", col, old_width, new_width))
         elif self.col_selection_enabled and self.rsz_h is None and self.rsz_w is None:
             c = self.MT.identify_col(x=event.x)
             if c < len(self.MT.col_positions) - 1:
@@ -455,9 +429,7 @@ class ColumnHeaders(tk.Canvas):
                     self.select_col(c, redraw=True)
                 elif self.MT.toggle_selection_enabled:
                     self.toggle_select_col(c, redraw=True)
-                datacn = (
-                    c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
-                )
+                datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
                 if (
                     self.get_cell_kwargs(datacn, key="dropdown")
                     or self.get_cell_kwargs(datacn, key="checkbox")
@@ -493,9 +465,7 @@ class ColumnHeaders(tk.Canvas):
                 fill=self.resizing_line_fg,
                 tag="rwl",
             )
-            self.MT.create_resize_line(
-                x, y1, x, y2, width=1, fill=self.resizing_line_fg, tag="rwl"
-            )
+            self.MT.create_resize_line(x, y1, x, y2, width=1, fill=self.resizing_line_fg, tag="rwl")
             self.create_resize_line(
                 line2x,
                 0,
@@ -505,30 +475,20 @@ class ColumnHeaders(tk.Canvas):
                 fill=self.resizing_line_fg,
                 tag="rwl2",
             )
-            self.MT.create_resize_line(
-                line2x, y1, line2x, y2, width=1, fill=self.resizing_line_fg, tag="rwl2"
-            )
-        elif (
-            self.height_resizing_enabled
-            and self.rsz_w is None
-            and self.rsz_h is not None
-        ):
+            self.MT.create_resize_line(line2x, y1, line2x, y2, width=1, fill=self.resizing_line_fg, tag="rwl2")
+        elif self.height_resizing_enabled and self.rsz_w is None and self.rsz_h is not None:
             x1, y1, x2, y2 = self.MT.get_canvas_visible_area()
             self.currently_resizing_height = True
             y = event.y
             if y < self.MT.min_header_height:
                 y = int(self.MT.min_header_height)
             self.new_col_height = y
-            self.create_resize_line(
-                x1, y, x2, y, width=1, fill=self.resizing_line_fg, tag="rhl"
-            )
+            self.create_resize_line(x1, y, x2, y, width=1, fill=self.resizing_line_fg, tag="rhl")
         elif self.MT.identify_col(x=event.x, allow_end=False) is None:
             self.MT.deselect("all")
         elif self.col_selection_enabled and self.rsz_w is None and self.rsz_h is None:
             if c < len(self.MT.col_positions) - 1:
-                datacn = (
-                    c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
-                )
+                datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
                 if (
                     self.MT.col_selected(c)
                     and not self.event_over_dropdown(c, datacn, event, x)
@@ -536,20 +496,12 @@ class ColumnHeaders(tk.Canvas):
                 ):
                     self.dragged_col = DraggedRowColumn(
                         dragged=c,
-                        to_move=get_seq_without_gaps_at_index(
-                            sorted(self.MT.get_selected_cols()), c
-                        ),
+                        to_move=get_seq_without_gaps_at_index(sorted(self.MT.get_selected_cols()), c),
                     )
                 else:
-                    self.being_drawn_rect = (
-                        0,
-                        c,
-                        len(self.MT.row_positions) - 1,
-                        c + 1,
-                        "columns",
-                    )
                     if self.MT.single_selection_enabled:
-                        self.select_col(c, redraw=True)
+                        self.being_drawn_rect = True
+                        self.being_drawn_rect = self.select_col(c, redraw=True)
                     elif self.MT.toggle_selection_enabled:
                         self.toggle_select_col(c, redraw=True)
         if self.extra_b1_press_func is not None:
@@ -557,11 +509,7 @@ class ColumnHeaders(tk.Canvas):
 
     def b1_motion(self, event):
         x1, y1, x2, y2 = self.MT.get_canvas_visible_area()
-        if (
-            self.width_resizing_enabled
-            and self.rsz_w is not None
-            and self.currently_resizing_width
-        ):
+        if self.width_resizing_enabled and self.rsz_w is not None and self.currently_resizing_width:
             x = self.canvasx(event.x)
             size = x - self.MT.col_positions[self.rsz_w - 1]
             if size >= self.MT.min_column_width and size < self.MT.max_column_width:
@@ -576,9 +524,7 @@ class ColumnHeaders(tk.Canvas):
                     fill=self.resizing_line_fg,
                     tag="rwl",
                 )
-                self.MT.create_resize_line(
-                    x, y1, x, y2, width=1, fill=self.resizing_line_fg, tag="rwl"
-                )
+                self.MT.create_resize_line(x, y1, x, y2, width=1, fill=self.resizing_line_fg, tag="rwl")
                 self.create_resize_line(
                     line2x,
                     0,
@@ -597,11 +543,7 @@ class ColumnHeaders(tk.Canvas):
                     fill=self.resizing_line_fg,
                     tag="rwl2",
                 )
-        elif (
-            self.height_resizing_enabled
-            and self.rsz_h is not None
-            and self.currently_resizing_height
-        ):
+        elif self.height_resizing_enabled and self.rsz_h is not None and self.currently_resizing_height:
             evy = event.y
             self.delete_all_resize_and_ctrl_lines(ctrl_lines=False)
             if evy > self.current_height:
@@ -610,17 +552,13 @@ class ColumnHeaders(tk.Canvas):
                     evy = int(self.MT.max_header_height)
                     y = self.MT.canvasy(evy - self.current_height)
                 self.new_col_height = evy
-                self.MT.create_resize_line(
-                    x1, y, x2, y, width=1, fill=self.resizing_line_fg, tag="rhl"
-                )
+                self.MT.create_resize_line(x1, y, x2, y, width=1, fill=self.resizing_line_fg, tag="rhl")
             else:
                 y = evy
                 if y < self.MT.min_header_height:
                     y = int(self.MT.min_header_height)
                 self.new_col_height = y
-                self.create_resize_line(
-                    x1, y, x2, y, width=1, fill=self.resizing_line_fg, tag="rhl"
-                )
+                self.create_resize_line(x1, y, x2, y, width=1, fill=self.resizing_line_fg, tag="rhl")
         elif (
             self.drag_and_drop_enabled
             and self.col_selection_enabled
@@ -639,52 +577,51 @@ class ColumnHeaders(tk.Canvas):
                     self.dragged_col.to_move[-1],
                 )
         elif (
-            self.MT.drag_selection_enabled
-            and self.col_selection_enabled
-            and self.rsz_h is None
-            and self.rsz_w is None
+            self.MT.drag_selection_enabled and self.col_selection_enabled and self.rsz_h is None and self.rsz_w is None
         ):
             need_redraw = False
             end_col = self.MT.identify_col(x=event.x)
             currently_selected = self.MT.currently_selected()
             if end_col < len(self.MT.col_positions) - 1 and currently_selected:
                 if currently_selected.type_ == "column":
-                    start_col = currently_selected[1]
-                    if end_col >= start_col:
-                        rect = (
-                            0,
-                            start_col,
-                            len(self.MT.row_positions) - 1,
-                            end_col + 1,
-                            "columns",
-                        )
-                        func_event = tuple(range(start_col, end_col + 1))
-                    elif end_col < start_col:
-                        rect = (
-                            0,
-                            end_col,
-                            len(self.MT.row_positions) - 1,
-                            start_col + 1,
-                            "columns",
-                        )
-                        func_event = tuple(range(end_col, start_col + 1))
-                    if self.being_drawn_rect != rect:
+                    rect = self.get_b1_motion_rect(currently_selected.column, end_col)
+                    if (
+                        rect is not None
+                        and self.being_drawn_rect is not None
+                        and self.MT.get_create_selection_box_args_from_item(self.being_drawn_rect) != rect
+                    ):
+                        self.MT.delete_selection_rects()
+                        if rect[3] - rect[1] != 1:
+                            self.being_drawn_rect = self.MT.create_selection_box(*rect)
+                        else:
+                            self.being_drawn_rect = self.select_col(currently_selected.column)
                         need_redraw = True
-                        self.MT.delete_selection_rects(delete_current=False)
-                        self.MT.create_selected(*rect)
-                        self.being_drawn_rect = rect
                         if self.drag_selection_binding_func is not None:
-                            self.drag_selection_binding_func(
-                                SelectionBoxEvent("drag_select_columns", func_event)
-                            )
+                            self.drag_selection_binding_func(SelectionBoxEvent("drag_select_columns", rect[:-1]))
                 if self.scroll_if_event_offscreen(event):
                     need_redraw = True
             if need_redraw:
-                self.MT.main_table_redraw_grid_and_text(
-                    redraw_header=True, redraw_row_index=False
-                )
+                self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=False)
         if self.extra_b1_motion_func is not None:
             self.extra_b1_motion_func(event)
+
+    def get_b1_motion_rect(self, start_col, end_col):
+        if end_col >= start_col:
+            return (
+                0,
+                start_col,
+                len(self.MT.row_positions) - 1,
+                end_col + 1,
+                "columns",
+            )
+        elif end_col < start_col:
+            return (
+                0,
+                end_col,
+                len(self.MT.row_positions) - 1,
+                start_col + 1,
+                "columns",
+            )
 
     def ctrl_b1_motion(self, event):
         x1, y1, x2, y2 = self.MT.get_canvas_visible_area()
@@ -717,41 +654,24 @@ class ColumnHeaders(tk.Canvas):
             currently_selected = self.MT.currently_selected()
             if end_col < len(self.MT.col_positions) - 1 and currently_selected:
                 if currently_selected.type_ == "column":
-                    start_col = currently_selected[1]
-                    if end_col >= start_col:
-                        rect = (
-                            0,
-                            start_col,
-                            len(self.MT.row_positions) - 1,
-                            end_col + 1,
-                            "columns",
-                        )
-                        func_event = tuple(range(start_col, end_col + 1))
-                    elif end_col < start_col:
-                        rect = (
-                            0,
-                            end_col,
-                            len(self.MT.row_positions) - 1,
-                            start_col + 1,
-                            "columns",
-                        )
-                        func_event = tuple(range(end_col, start_col + 1))
-                    if self.being_drawn_rect != rect:
+                    rect = self.get_b1_motion_rect(currently_selected.column, end_col)
+                    if (
+                        rect is not None
+                        and self.being_drawn_rect is not None
+                        and self.MT.get_create_selection_box_args_from_item(self.being_drawn_rect) != rect
+                    ):
+                        self.MT.delete_item(self.being_drawn_rect)
+                        if rect[3] - rect[1] != 1:
+                            self.being_drawn_rect = self.MT.create_selection_box(*rect)
+                        else:
+                            self.being_drawn_rect = self.add_selection(currently_selected.column)
                         need_redraw = True
-                        if self.being_drawn_rect is not None:
-                            self.MT.delete_selected(*self.being_drawn_rect)
-                        self.MT.create_selected(*rect)
-                        self.being_drawn_rect = rect
                         if self.drag_selection_binding_func is not None:
-                            self.drag_selection_binding_func(
-                                SelectionBoxEvent("drag_select_columns", func_event)
-                            )
+                            self.drag_selection_binding_func(SelectionBoxEvent("drag_select_columns", rect[:-1]))
                 if self.scroll_if_event_offscreen(event):
                     need_redraw = True
             if need_redraw:
-                self.MT.main_table_redraw_grid_and_text(
-                    redraw_header=True, redraw_row_index=False
-                )
+                self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=False)
         elif not self.MT.ctrl_select_enabled:
             self.b1_motion(event)
 
@@ -798,9 +718,7 @@ class ColumnHeaders(tk.Canvas):
             fill=self.drag_and_drop_bg,
             tag="dd",
         )
-        self.MT.create_resize_line(
-            xpos, y1, xpos, y2, width=3, fill=self.drag_and_drop_bg, tag="dd"
-        )
+        self.MT.create_resize_line(xpos, y1, xpos, y2, width=3, fill=self.drag_and_drop_bg, tag="dd")
         self.MT.show_ctrl_outline(
             start_cell=(start_col, 0),
             end_cell=(end_col + 1, len(self.MT.row_positions) - 1),
@@ -826,12 +744,7 @@ class ColumnHeaders(tk.Canvas):
                 pass
             self.fix_xview()
             need_redraw = True
-        elif (
-            event.x < 0
-            and self.canvasx(self.winfo_width()) > 0
-            and xcheck
-            and xcheck[0] > 0
-        ):
+        elif event.x < 0 and self.canvasx(self.winfo_width()) > 0 and xcheck and xcheck[0] > 0:
             try:
                 self.xview_scroll(-1, "units")
                 self.MT.xview_scroll(-1, "units")
@@ -850,84 +763,55 @@ class ColumnHeaders(tk.Canvas):
 
     def event_over_dropdown(self, c, datacn, event, canvasx):
         if (
-            event.y < self.MT.header_txt_h + 5
+            event.y < self.MT.header_txt_height + 5
             and self.get_cell_kwargs(datacn, key="dropdown")
             and canvasx < self.MT.col_positions[c + 1]
-            and canvasx > self.MT.col_positions[c + 1] - self.MT.header_txt_h - 4
+            and canvasx > self.MT.col_positions[c + 1] - self.MT.header_txt_height - 4
         ):
             return True
         return False
 
     def event_over_checkbox(self, c, datacn, event, canvasx):
         if (
-            event.y < self.MT.header_txt_h + 5
+            event.y < self.MT.header_txt_height + 5
             and self.get_cell_kwargs(datacn, key="checkbox")
-            and canvasx < self.MT.col_positions[c] + self.MT.header_txt_h + 4
+            and canvasx < self.MT.col_positions[c] + self.MT.header_txt_height + 4
         ):
             return True
         return False
 
     def b1_release(self, event=None):
         if self.being_drawn_rect is not None:
-            self.MT.delete_selected(*self.being_drawn_rect)
-            to_sel = tuple(self.being_drawn_rect)
+            to_sel = self.MT.get_create_selection_box_args_from_item(self.being_drawn_rect)
+            self.MT.delete_item(self.being_drawn_rect)
             self.being_drawn_rect = None
-            self.MT.create_selected(*to_sel)
+            self.MT.create_selection_box(*to_sel)
         self.MT.bind("<MouseWheel>", self.MT.mousewheel)
-        if (
-            self.width_resizing_enabled
-            and self.rsz_w is not None
-            and self.currently_resizing_width
-        ):
+        if self.width_resizing_enabled and self.rsz_w is not None and self.currently_resizing_width:
             self.currently_resizing_width = False
             new_col_pos = int(self.coords("rwl")[0])
             self.delete_all_resize_and_ctrl_lines(ctrl_lines=False)
-            old_width = (
-                self.MT.col_positions[self.rsz_w]
-                - self.MT.col_positions[self.rsz_w - 1]
-            )
+            old_width = self.MT.col_positions[self.rsz_w] - self.MT.col_positions[self.rsz_w - 1]
             size = new_col_pos - self.MT.col_positions[self.rsz_w - 1]
             if size < self.MT.min_column_width:
-                new_col_pos = ceil(
-                    self.MT.col_positions[self.rsz_w - 1] + self.MT.min_column_width
-                )
+                new_col_pos = ceil(self.MT.col_positions[self.rsz_w - 1] + self.MT.min_column_width)
             elif size > self.MT.max_column_width:
-                new_col_pos = floor(
-                    self.MT.col_positions[self.rsz_w - 1] + self.MT.max_column_width
-                )
+                new_col_pos = floor(self.MT.col_positions[self.rsz_w - 1] + self.MT.max_column_width)
             increment = new_col_pos - self.MT.col_positions[self.rsz_w]
             self.MT.col_positions[self.rsz_w + 1 :] = [
-                e + increment
-                for e in islice(
-                    self.MT.col_positions, self.rsz_w + 1, len(self.MT.col_positions)
-                )
+                e + increment for e in islice(self.MT.col_positions, self.rsz_w + 1, len(self.MT.col_positions))
             ]
             self.MT.col_positions[self.rsz_w] = new_col_pos
-            new_width = (
-                self.MT.col_positions[self.rsz_w]
-                - self.MT.col_positions[self.rsz_w - 1]
-            )
+            new_width = self.MT.col_positions[self.rsz_w] - self.MT.col_positions[self.rsz_w - 1]
             self.MT.recreate_all_selection_boxes()
-            self.MT.main_table_redraw_grid_and_text(
-                redraw_header=True, redraw_row_index=True
-            )
+            self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
             if self.column_width_resize_func is not None and old_width != new_width:
-                self.column_width_resize_func(
-                    ResizeEvent(
-                        "column_width_resize", self.rsz_w - 1, old_width, new_width
-                    )
-                )
-        elif (
-            self.height_resizing_enabled
-            and self.rsz_h is not None
-            and self.currently_resizing_height
-        ):
+                self.column_width_resize_func(ResizeEvent("column_width_resize", self.rsz_w - 1, old_width, new_width))
+        elif self.height_resizing_enabled and self.rsz_h is not None and self.currently_resizing_height:
             self.currently_resizing_height = False
             self.delete_all_resize_and_ctrl_lines(ctrl_lines=False)
             self.set_height(self.new_col_height, set_TL=True)
-            self.MT.main_table_redraw_grid_and_text(
-                redraw_header=True, redraw_row_index=True
-            )
+            self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
         elif (
             self.drag_and_drop_enabled
             and self.col_selection_enabled
@@ -943,9 +827,7 @@ class ColumnHeaders(tk.Canvas):
             if (
                 c != self.dragged_col.dragged
                 and c is not None
-                and (
-                    c < self.dragged_col.to_move[0] or c > self.dragged_col.to_move[-1]
-                )
+                and (c < self.dragged_col.to_move[0] or c > self.dragged_col.to_move[-1])
                 and len(orig_selected) != len(self.MT.col_positions) - 1
             ):
                 rm1start = orig_selected[0]
@@ -973,13 +855,9 @@ class ColumnHeaders(tk.Canvas):
                     )
                     if self.MT.undo_enabled:
                         self.MT.undo_storage.append(
-                            zlib.compress(
-                                pickle.dumps(("move_cols", orig_selected, new_selected))
-                            )
+                            zlib.compress(pickle.dumps(("move_cols", orig_selected, new_selected)))
                         )
-                    self.MT.main_table_redraw_grid_and_text(
-                        redraw_header=True, redraw_row_index=True
-                    )
+                    self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
                     if self.ch_extra_end_drag_drop_func is not None:
                         self.ch_extra_end_drag_drop_func(
                             EndDragDropEvent(
@@ -990,11 +868,7 @@ class ColumnHeaders(tk.Canvas):
                             )
                         )
                     self.parentframe.emit_event("<<SheetModified>>")
-        elif (
-            self.b1_pressed_loc is not None
-            and self.rsz_w is None
-            and self.rsz_h is None
-        ):
+        elif self.b1_pressed_loc is not None and self.rsz_w is None and self.rsz_h is None:
             c = self.MT.identify_col(x=event.x)
             if (
                 c is not None
@@ -1002,13 +876,11 @@ class ColumnHeaders(tk.Canvas):
                 and c == self.b1_pressed_loc
                 and self.b1_pressed_loc != self.closed_dropdown
             ):
-                datacn = (
-                    c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
-                )
+                datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
                 canvasx = self.canvasx(event.x)
-                if self.event_over_dropdown(
+                if self.event_over_dropdown(c, datacn, event, canvasx) or self.event_over_checkbox(
                     c, datacn, event, canvasx
-                ) or self.event_over_checkbox(c, datacn, event, canvasx):
+                ):
                     self.open_cell(event)
             else:
                 self.mouseclick_outside_editor_or_dropdown_all_canvases()
@@ -1048,9 +920,9 @@ class ColumnHeaders(tk.Canvas):
     ):
         if add_selection:
             if self.MT.col_selected(column):
-                self.MT.deselect(c=column, redraw=redraw)
+                fill_iid = self.MT.deselect(c=column, redraw=redraw)
             else:
-                self.add_selection(
+                fill_iid = self.add_selection(
                     c=column,
                     redraw=redraw,
                     run_binding_func=run_binding_func,
@@ -1058,40 +930,35 @@ class ColumnHeaders(tk.Canvas):
                 )
         else:
             if self.MT.col_selected(column):
-                self.MT.deselect(c=column, redraw=redraw)
+                fill_iid = self.MT.deselect(c=column, redraw=redraw)
             else:
-                self.select_col(column, redraw=redraw)
+                fill_iid = self.select_col(column, redraw=redraw)
+        return fill_iid
 
     def select_col(self, c, redraw=False):
         self.MT.delete_selection_rects()
-        self.MT.create_selected(0, c, len(self.MT.row_positions) - 1, c + 1, "columns")
+        fill_iid = self.MT.create_selection_box(0, c, len(self.MT.row_positions) - 1, c + 1, "columns")
         self.MT.set_currently_selected(0, c, type_="column")
         if redraw:
-            self.MT.main_table_redraw_grid_and_text(
-                redraw_header=True, redraw_row_index=True
-            )
+            self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
         if self.selection_binding_func is not None:
-            self.selection_binding_func(SelectColumnEvent("select_column", int(c)))
+            self.selection_binding_func(SelectColumnEvent("select_column", c))
+        return fill_iid
 
-    def add_selection(
-        self, c, redraw=False, run_binding_func=True, set_as_current=True
-    ):
+    def add_selection(self, c, redraw=False, run_binding_func=True, set_as_current=True):
         if set_as_current:
             self.MT.set_currently_selected(0, c, type_="column")
-        self.MT.create_selected(0, c, len(self.MT.row_positions) - 1, c + 1, "columns")
+        fill_iid = self.MT.create_selection_box(0, c, len(self.MT.row_positions) - 1, c + 1, "columns")
         if redraw:
-            self.MT.main_table_redraw_grid_and_text(
-                redraw_header=True, redraw_row_index=True
-            )
+            self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
         if self.selection_binding_func is not None and run_binding_func:
             self.selection_binding_func(("select_column", c))
+        return fill_iid
 
     def get_cell_dimensions(self, datacn):
         txt = self.get_valid_cell_data_as_str(datacn, fix=False)
         if txt:
-            self.MT.txt_measure_canvas.itemconfig(
-                self.MT.txt_measure_canvas_text, text=txt, font=self.MT.header_font
-            )
+            self.MT.txt_measure_canvas.itemconfig(self.MT.txt_measure_canvas_text, text=txt, font=self.MT.header_font)
             b = self.MT.txt_measure_canvas.bbox(self.MT.txt_measure_canvas_text)
             w = b[2] - b[0] + 7
             h = b[3] - b[1] + 5
@@ -1099,10 +966,9 @@ class ColumnHeaders(tk.Canvas):
             w = self.MT.min_column_width
             h = self.MT.min_header_height
         if datacn in self.cell_options and (
-            self.get_cell_kwargs(datacn, key="dropdown")
-            or self.get_cell_kwargs(datacn, key="checkbox")
+            self.get_cell_kwargs(datacn, key="dropdown") or self.get_cell_kwargs(datacn, key="checkbox")
         ):
-            return w + self.MT.header_txt_h, h
+            return w + self.MT.header_txt_height, h
         return w, h
 
     def set_height_of_header_to_text(self, text=None):
@@ -1146,9 +1012,7 @@ class ColumnHeaders(tk.Canvas):
             elif isinstance(self.MT._headers, int):
                 datarn = self.MT._headers
                 for datacn in iterable:
-                    txt = self.MT.get_valid_cell_data_as_str(
-                        datarn, datacn, get_displayed=True
-                    )
+                    txt = self.MT.get_valid_cell_data_as_str(datarn, datacn, get_displayed=True)
                     if txt:
                         qconf(qtxtm, text=txt)
                         b = qbbox(qtxtm)
@@ -1165,9 +1029,7 @@ class ColumnHeaders(tk.Canvas):
         if new_height > space_bot:
             new_height = space_bot
         self.set_height(new_height, set_TL=True)
-        self.MT.main_table_redraw_grid_and_text(
-            redraw_header=True, redraw_row_index=True
-        )
+        self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
         return new_height
 
     def set_col_width(
@@ -1184,7 +1046,7 @@ class ColumnHeaders(tk.Canvas):
         qconf = self.MT.txt_measure_canvas.itemconfig
         qbbox = self.MT.txt_measure_canvas.bbox
         qtxtm = self.MT.txt_measure_canvas_text
-        qtxth = self.MT.txt_h
+        qtxth = self.MT.table_txt_height
         qfont = self.MT.table_font
         self.fix_header()
         if width is None:
@@ -1204,23 +1066,19 @@ class ColumnHeaders(tk.Canvas):
                 else:
                     start_row, end_row = 0, len(self.MT.displayed_rows)
                 iterable = self.MT.displayed_rows[start_row:end_row]
-            datacn = (
-                col if self.MT.all_columns_displayed else self.MT.displayed_columns[col]
-            )
+            datacn = col if self.MT.all_columns_displayed else self.MT.displayed_columns[col]
             # header
             hw, hh_ = self.get_cell_dimensions(datacn)
             # table
             if self.MT.data:
                 for datarn in iterable:
-                    txt = self.MT.get_valid_cell_data_as_str(
-                        datarn, datacn, get_displayed=True
-                    )
+                    txt = self.MT.get_valid_cell_data_as_str(datarn, datacn, get_displayed=True)
                     if txt:
                         qconf(qtxtm, text=txt, font=qfont)
                         b = qbbox(qtxtm)
-                        if self.MT.get_cell_kwargs(
-                            datarn, datacn, key="dropdown"
-                        ) or self.MT.get_cell_kwargs(datarn, datacn, key="checkbox"):
+                        if self.MT.get_cell_kwargs(datarn, datacn, key="dropdown") or self.MT.get_cell_kwargs(
+                            datarn, datacn, key="checkbox"
+                        ):
                             tw = b[2] - b[0] + qtxth + 7
                         else:
                             tw = b[2] - b[0] + 7
@@ -1243,19 +1101,14 @@ class ColumnHeaders(tk.Canvas):
             new_col_pos = self.MT.col_positions[col] + new_width
             increment = new_col_pos - self.MT.col_positions[col + 1]
             self.MT.col_positions[col + 2 :] = [
-                e + increment
-                for e in islice(
-                    self.MT.col_positions, col + 2, len(self.MT.col_positions)
-                )
+                e + increment for e in islice(self.MT.col_positions, col + 2, len(self.MT.col_positions))
             ]
             self.MT.col_positions[col + 1] = new_col_pos
             if recreate:
                 self.MT.recreate_all_selection_boxes()
         return new_width
 
-    def set_width_of_all_cols(
-        self, width=None, only_set_if_too_small=False, recreate=True
-    ):
+    def set_width_of_all_cols(self, width=None, only_set_if_too_small=False, recreate=True):
         if width is None:
             if self.MT.all_columns_displayed:
                 iterable = range(self.MT.total_data_cols())
@@ -1279,18 +1132,10 @@ class ColumnHeaders(tk.Canvas):
             )
         elif width is not None:
             if self.MT.all_columns_displayed:
-                self.MT.col_positions = list(
-                    accumulate(
-                        chain([0], (width for cn in range(self.MT.total_data_cols())))
-                    )
-                )
+                self.MT.col_positions = list(accumulate(chain([0], (width for cn in range(self.MT.total_data_cols())))))
             else:
                 self.MT.col_positions = list(
-                    accumulate(
-                        chain(
-                            [0], (width for cn in range(len(self.MT.displayed_columns)))
-                        )
-                    )
+                    accumulate(chain([0], (width for cn in range(len(self.MT.displayed_columns)))))
                 )
         if recreate:
             self.MT.recreate_all_selection_boxes()
@@ -1315,7 +1160,7 @@ class ColumnHeaders(tk.Canvas):
         kwargs = self.get_cell_kwargs(datacn, key="highlight")
         if kwargs:
             if kwargs[0] is not None:
-                c_1 = kwargs[0] if kwargs[0].startswith("#") else Color_Map_[kwargs[0]]
+                c_1 = kwargs[0] if kwargs[0].startswith("#") else Color_Map[kwargs[0]]
             if "columns" in selections and c in selections["columns"]:
                 tf = (
                     self.header_selected_columns_fg
@@ -1352,8 +1197,7 @@ class ColumnHeaders(tk.Canvas):
                     self.current_height - 1,
                     fill=fill,
                     outline=self.header_fg
-                    if self.get_cell_kwargs(datacn, key="dropdown")
-                    and self.MT.show_dropdown_borders
+                    if self.get_cell_kwargs(datacn, key="dropdown") and self.MT.show_dropdown_borders
                     else "",
                     tag="hi",
                 )
@@ -1373,9 +1217,7 @@ class ColumnHeaders(tk.Canvas):
         if config in self.hidd_high:
             k = config
             iid, showing = self.hidd_high[k].pop()
-            if all(
-                int(crd1) == int(crd2) for crd1, crd2 in zip(self.coords(iid), coords)
-            ):
+            if all(int(crd1) == int(crd2) for crd1, crd2 in zip(self.coords(iid), coords)):
                 option = 0 if showing else 2
             else:
                 option = 1 if showing else 3
@@ -1383,9 +1225,7 @@ class ColumnHeaders(tk.Canvas):
         elif self.hidd_high:
             k = next(iter(self.hidd_high))
             iid, showing = self.hidd_high[k].pop()
-            if all(
-                int(crd1) == int(crd2) for crd1, crd2 in zip(self.coords(iid), coords)
-            ):
+            if all(int(crd1) == int(crd2) for crd1, crd2 in zip(self.coords(iid), coords)):
                 option = 2 if showing else 3
             else:
                 option = 3
@@ -1403,9 +1243,7 @@ class ColumnHeaders(tk.Canvas):
             if showing:
                 self.itemconfig(iid, fill=fill, outline=outline)
             else:
-                self.itemconfig(
-                    iid, fill=fill, outline=outline, tag=tag, state="normal"
-                )
+                self.itemconfig(iid, fill=fill, outline=outline, tag=tag, state="normal")
 
         if k is not None and not self.hidd_high[k]:
             del self.hidd_high[k]
@@ -1438,9 +1276,7 @@ class ColumnHeaders(tk.Canvas):
                 )
             self.disp_grid[t] = True
         else:
-            self.disp_grid[
-                self.create_line(points, fill=fill, width=width, tag=tag)
-            ] = True
+            self.disp_grid[self.create_line(points, fill=fill, width=width, tag=tag)] = True
 
     def redraw_dropdown(
         self,
@@ -1456,13 +1292,11 @@ class ColumnHeaders(tk.Canvas):
         dd_is_open=False,
     ):
         if draw_outline and self.MT.show_dropdown_borders:
-            self.redraw_highlight(
-                x1 + 1, y1 + 1, x2, y2, fill="", outline=self.header_fg, tag=tag
-            )
+            self.redraw_highlight(x1 + 1, y1 + 1, x2, y2, fill="", outline=self.header_fg, tag=tag)
         if draw_arrow:
-            topysub = floor(self.MT.header_half_txt_h / 2)
+            topysub = floor(self.MT.header_half_txt_height / 2)
             mid_y = y1 + floor(self.MT.min_header_height / 2)
-            if mid_y + topysub + 1 >= y1 + self.MT.header_txt_h - 1:
+            if mid_y + topysub + 1 >= y1 + self.MT.header_txt_height - 1:
                 mid_y -= 1
             if mid_y - topysub + 2 <= y1 + 4 + topysub:
                 mid_y -= 1
@@ -1473,8 +1307,8 @@ class ColumnHeaders(tk.Canvas):
                 ty1 = mid_y + topysub + 1 if dd_is_open else mid_y - topysub + 2
                 ty2 = mid_y - topysub + 2 if dd_is_open else mid_y + topysub + 1
                 ty3 = mid_y + topysub + 1 if dd_is_open else mid_y - topysub + 2
-            tx1 = x2 - self.MT.header_txt_h + 1
-            tx2 = x2 - self.MT.header_half_txt_h - 1
+            tx1 = x2 - self.MT.header_txt_height + 1
+            tx2 = x2 - self.MT.header_half_txt_height - 1
             tx3 = x2 - 3
             if tx2 - tx1 > tx3 - tx2:
                 tx1 += (tx2 - tx1) - (tx3 - tx2)
@@ -1511,9 +1345,7 @@ class ColumnHeaders(tk.Canvas):
                 self.itemconfig(t, fill=outline, outline=fill, tag=tag, state="normal")
             self.lift(t)
         else:
-            t = self.create_polygon(
-                points, fill=outline, outline=fill, tag=tag, smooth=True
-            )
+            t = self.create_polygon(points, fill=outline, outline=fill, tag=tag, smooth=True)
         self.disp_checkbox[t] = True
         if draw_check:
             # draw filled box
@@ -1528,14 +1360,10 @@ class ColumnHeaders(tk.Canvas):
                 if sh:
                     self.itemconfig(t, fill=fill, outline=outline)
                 else:
-                    self.itemconfig(
-                        t, fill=fill, outline=outline, tag=tag, state="normal"
-                    )
+                    self.itemconfig(t, fill=fill, outline=outline, tag=tag, state="normal")
                 self.lift(t)
             else:
-                t = self.create_polygon(
-                    points, fill=fill, outline=outline, tag=tag, smooth=True
-                )
+                t = self.create_polygon(points, fill=fill, outline=outline, tag=tag, smooth=True)
             self.disp_checkbox[t] = True
 
     def redraw_grid_and_text(
@@ -1586,9 +1414,7 @@ class ColumnHeaders(tk.Canvas):
         )
         draw_x = self.MT.col_positions[start_col]
         yend = self.current_height - 5
-        if (
-            self.MT.show_vertical_grid or self.width_resizing_enabled
-        ) and col_pos_exists:
+        if (self.MT.show_vertical_grid or self.width_resizing_enabled) and col_pos_exists:
             self.grid_cyc = cycle(self.grid_cyctup)
             points = [
                 x_stop - 1,
@@ -1610,9 +1436,7 @@ class ColumnHeaders(tk.Canvas):
                             -1,
                             draw_x,
                             self.current_height,
-                            self.MT.col_positions[c + 1]
-                            if len(self.MT.col_positions) - 1 > c
-                            else draw_x,
+                            self.MT.col_positions[c + 1] if len(self.MT.col_positions) - 1 > c else draw_x,
                             self.current_height,
                         ]
                     )
@@ -1623,36 +1447,30 @@ class ColumnHeaders(tk.Canvas):
                             self.current_height,
                             draw_x,
                             -1,
-                            self.MT.col_positions[c + 1]
-                            if len(self.MT.col_positions) - 1 > c
-                            else draw_x,
+                            self.MT.col_positions[c + 1] if len(self.MT.col_positions) - 1 > c else draw_x,
                             -1,
                         ]
                     )
                 if points:
-                    self.redraw_gridline(
-                        points=points, fill=self.header_grid_fg, width=1, tag="v"
-                    )
+                    self.redraw_gridline(points=points, fill=self.header_grid_fg, width=1, tag="v")
         top = self.canvasy(0)
         c_2 = (
             self.header_selected_cells_bg
             if self.header_selected_cells_bg.startswith("#")
-            else Color_Map_[self.header_selected_cells_bg]
+            else Color_Map[self.header_selected_cells_bg]
         )
         c_3 = (
             self.header_selected_columns_bg
             if self.header_selected_columns_bg.startswith("#")
-            else Color_Map_[self.header_selected_columns_bg]
+            else Color_Map[self.header_selected_columns_bg]
         )
         font = self.MT.header_font
         selections = self.get_redraw_selections(start_col, end_col)
         for c in range(start_col, end_col - 1):
-            draw_y = self.MT.header_fl_ins
+            draw_y = self.MT.header_first_ln_ins
             cleftgridln = self.MT.col_positions[c]
             crightgridln = self.MT.col_positions[c + 1]
-            datacn = (
-                c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
-            )
+            datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
             fill, dd_drawn = self.redraw_highlight_get_text_fg(
                 cleftgridln, crightgridln, c, c_2, c_3, selections, datacn
             )
@@ -1666,7 +1484,7 @@ class ColumnHeaders(tk.Canvas):
             if align == "w":
                 draw_x = cleftgridln + 3
                 if kwargs:
-                    mw = crightgridln - cleftgridln - self.MT.header_txt_h - 2
+                    mw = crightgridln - cleftgridln - self.MT.header_txt_height - 2
                     self.redraw_dropdown(
                         cleftgridln,
                         0,
@@ -1684,8 +1502,8 @@ class ColumnHeaders(tk.Canvas):
 
             elif align == "e":
                 if kwargs:
-                    mw = crightgridln - cleftgridln - self.MT.header_txt_h - 2
-                    draw_x = crightgridln - 5 - self.MT.header_txt_h
+                    mw = crightgridln - cleftgridln - self.MT.header_txt_height - 2
+                    draw_x = crightgridln - 5 - self.MT.header_txt_height
                     self.redraw_dropdown(
                         cleftgridln,
                         0,
@@ -1705,10 +1523,8 @@ class ColumnHeaders(tk.Canvas):
             elif align == "center":
                 # stop = cleftgridln + 5
                 if kwargs:
-                    mw = crightgridln - cleftgridln - self.MT.header_txt_h - 2
-                    draw_x = cleftgridln + ceil(
-                        (crightgridln - cleftgridln - self.MT.header_txt_h) / 2
-                    )
+                    mw = crightgridln - cleftgridln - self.MT.header_txt_height - 2
+                    draw_x = cleftgridln + ceil((crightgridln - cleftgridln - self.MT.header_txt_height) / 2)
                     self.redraw_dropdown(
                         cleftgridln,
                         0,
@@ -1725,53 +1541,48 @@ class ColumnHeaders(tk.Canvas):
                     mw = crightgridln - cleftgridln - 1
                     draw_x = cleftgridln + floor((crightgridln - cleftgridln) / 2)
             kwargs = self.get_cell_kwargs(datacn, key="checkbox")
-            if kwargs:
-                if mw > self.MT.header_txt_h + 2:
-                    box_w = self.MT.header_txt_h + 1
-                    mw -= box_w
-                    if align == "w":
-                        draw_x += box_w + 1
-                    elif align == "center":
-                        draw_x += ceil(box_w / 2) + 1
-                        mw -= 1
-                    else:
-                        mw -= 3
-                    try:
-                        draw_check = (
-                            self.MT._headers[datacn]
-                            if isinstance(self.MT._headers, (list, tuple))
-                            else self.MT.data[self.MT._headers][datacn]
-                        )
-                    except Exception:
-                        draw_check = False
-                    self.redraw_checkbox(
-                        cleftgridln + 2,
-                        2,
-                        cleftgridln + self.MT.header_txt_h + 3,
-                        self.MT.header_txt_h + 3,
-                        fill=fill
-                        if kwargs["state"] == "normal"
-                        else self.header_grid_fg,
-                        outline="",
-                        tag="cb",
-                        draw_check=draw_check,
+            if kwargs and mw > self.MT.header_txt_height + 1:
+                box_w = self.MT.header_txt_height + 1
+                if align == "w":
+                    draw_x += box_w + 3
+                    mw -= box_w + 3
+                elif align == "center":
+                    draw_x += ceil(box_w / 2) + 1
+                    mw -= box_w + 2
+                else:
+                    mw -= box_w + 1
+                try:
+                    draw_check = (
+                        self.MT._headers[datacn]
+                        if isinstance(self.MT._headers, (list, tuple))
+                        else self.MT.data[self.MT._headers][datacn]
                     )
+                except Exception:
+                    draw_check = False
+                self.redraw_checkbox(
+                    cleftgridln + 2,
+                    2,
+                    cleftgridln + self.MT.header_txt_height + 3,
+                    self.MT.header_txt_height + 3,
+                    fill=fill if kwargs["state"] == "normal" else self.header_grid_fg,
+                    outline="",
+                    tag="cb",
+                    draw_check=draw_check,
+                )
             lns = self.get_valid_cell_data_as_str(datacn, fix=False).split("\n")
             if lns == [""]:
                 if self.show_default_header_for_empty:
                     lns = (get_n2a(datacn, self.default_header),)
                 else:
                     continue
-            if mw > self.MT.header_txt_w and not (
+            if mw > self.MT.header_txt_width and not (
                 (align == "w" and (draw_x > x_stop))
                 or (align == "e" and (draw_x > x_stop))
                 or (align == "center" and (cleftgridln + 5 > x_stop))
             ):
                 for txt in islice(
                     lns,
-                    self.lines_start_at
-                    if self.lines_start_at < len(lns)
-                    else len(lns) - 1,
+                    self.lines_start_at if self.lines_start_at < len(lns) else len(lns) - 1,
                     None,
                 ):
                     if draw_y > top:
@@ -1813,9 +1624,7 @@ class ColumnHeaders(tk.Canvas):
                             self.coords(iid, draw_x, draw_y)
                         if option in (2, 3):
                             if showing:
-                                self.itemconfig(
-                                    iid, text=txt, fill=fill, font=font, anchor=align
-                                )
+                                self.itemconfig(iid, text=txt, fill=fill, font=font, anchor=align)
                             else:
                                 self.itemconfig(
                                     iid,
@@ -1847,9 +1656,7 @@ class ColumnHeaders(tk.Canvas):
                                     self.itemconfig(iid, text=txt)
                                     wd = self.bbox(iid)
                             elif align == "center":
-                                self.c_align_cyc = cycle(
-                                    self.centre_alignment_text_mod_indexes
-                                )
+                                self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
                                 tmod = ceil((len(txt) - int(len(txt) * (mw / wd))) / 2)
                                 txt = txt[tmod - 1 : -tmod]
                                 self.itemconfig(iid, text=txt)
@@ -1859,9 +1666,7 @@ class ColumnHeaders(tk.Canvas):
                                     self.itemconfig(iid, text=txt)
                                     wd = self.bbox(iid)
                                 self.coords(iid, draw_x, draw_y)
-                            self.disp_text[config._replace(txt=txt)].add(
-                                DrawnItem(iid=iid, showing=True)
-                            )
+                            self.disp_text[config._replace(txt=txt)].add(DrawnItem(iid=iid, showing=True))
                         else:
                             self.disp_text[config].add(DrawnItem(iid=iid, showing=True))
                     draw_y += self.MT.header_xtra_lines_increment
@@ -1899,36 +1704,22 @@ class ColumnHeaders(tk.Canvas):
             d[tags[0]].append(tuple(int(e) for e in tags[1].split("_") if e))
         d2 = {}
         if "cells" in d:
-            d2["cells"] = {
-                c
-                for c in range(startc, endc)
-                for r1, c1, r2, c2 in d["cells"]
-                if c1 <= c and c2 > c
-            }
+            d2["cells"] = {c for c in range(startc, endc) for r1, c1, r2, c2 in d["cells"] if c1 <= c and c2 > c}
         if "columns" in d:
-            d2["columns"] = {
-                c
-                for c in range(startc, endc)
-                for r1, c1, r2, c2 in d["columns"]
-                if c1 <= c and c2 > c
-            }
+            d2["columns"] = {c for c in range(startc, endc) for r1, c1, r2, c2 in d["columns"] if c1 <= c and c2 > c}
         return d2
 
     def open_cell(self, event=None, ignore_existing_editor=False):
-        if not self.MT.anything_selected() or (
-            not ignore_existing_editor and self.text_editor_id is not None
-        ):
+        if not self.MT.anything_selected() or (not ignore_existing_editor and self.text_editor_id is not None):
             return
         currently_selected = self.MT.currently_selected()
         if not currently_selected:
             return
-        x1 = int(currently_selected[1])
+        x1 = currently_selected[1]
         datacn = x1 if self.MT.all_columns_displayed else self.MT.displayed_columns[x1]
         if self.get_cell_kwargs(datacn, key="readonly"):
             return
-        elif self.get_cell_kwargs(datacn, key="dropdown") or self.get_cell_kwargs(
-            datacn, key="checkbox"
-        ):
+        elif self.get_cell_kwargs(datacn, key="dropdown") or self.get_cell_kwargs(datacn, key="checkbox"):
             if self.MT.event_opens_dropdown_or_checkbox(event):
                 if self.get_cell_kwargs(datacn, key="dropdown"):
                     self.open_dropdown_window(x1, event=event)
@@ -1966,13 +1757,10 @@ class ColumnHeaders(tk.Canvas):
                     extra_func_key = "Return"
                 elif hasattr(event, "keysym") and event.keysym == "F2":
                     extra_func_key = "F2"
-            datacn = (
-                c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
-            )
+            datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
             text = self.get_cell_data(datacn, none_to_empty_str=True, redirect_int=True)
         elif event is not None and (
-            (hasattr(event, "keysym") and event.keysym == "BackSpace")
-            or event.keycode in (8, 855638143)
+            (hasattr(event, "keysym") and event.keysym == "BackSpace") or event.keycode in (8, 855638143)
         ):
             extra_func_key = "BackSpace"
             text = ""
@@ -1988,9 +1776,7 @@ class ColumnHeaders(tk.Canvas):
         self.text_editor_loc = c
         if self.extra_begin_edit_cell_func is not None:
             try:
-                text = self.extra_begin_edit_cell_func(
-                    EditHeaderEvent(c, extra_func_key, text, "begin_edit_header")
-                )
+                text = self.extra_begin_edit_cell_func(EditHeaderEvent(c, extra_func_key, text, "begin_edit_header"))
             except Exception:
                 return False
             if text is None:
@@ -2004,16 +1790,12 @@ class ColumnHeaders(tk.Canvas):
             self.set_col_width_run_binding(c)
 
         if c == self.text_editor_loc and self.text_editor is not None:
-            self.text_editor.set_text(
-                self.text_editor.get() + "" if not isinstance(text, str) else text
-            )
+            self.text_editor.set_text(self.text_editor.get() + "" if not isinstance(text, str) else text)
             return
         if self.text_editor is not None:
             self.destroy_text_editor()
         if see:
-            has_redrawn = self.MT.see(
-                r=0, c=c, keep_yscroll=True, check_cell_visibility=True
-            )
+            has_redrawn = self.MT.see(r=0, c=c, keep_yscroll=True, check_cell_visibility=True)
             if not has_redrawn:
                 self.MT.refresh()
         self.text_editor_loc = c
@@ -2047,82 +1829,54 @@ class ColumnHeaders(tk.Canvas):
             newline_binding=self.text_editor_has_wrapped,
         )
         self.text_editor.update_idletasks()
-        self.text_editor_id = self.create_window(
-            (x, y), window=self.text_editor, anchor="nw"
-        )
+        self.text_editor_id = self.create_window((x, y), window=self.text_editor, anchor="nw")
         if not dropdown:
             self.text_editor.textedit.focus_set()
             self.text_editor.scroll_to_bottom()
-        self.text_editor.textedit.bind(
-            "<Alt-Return>", lambda x: self.text_editor_newline_binding(c=c)
-        )
+        self.text_editor.textedit.bind("<Alt-Return>", lambda x: self.text_editor_newline_binding(c=c))
         if USER_OS == "darwin":
-            self.text_editor.textedit.bind(
-                "<Option-Return>", lambda x: self.text_editor_newline_binding(c=c)
-            )
+            self.text_editor.textedit.bind("<Option-Return>", lambda x: self.text_editor_newline_binding(c=c))
         for key, func in self.MT.text_editor_user_bound_keys.items():
             self.text_editor.textedit.bind(key, func)
         if binding is not None:
             self.text_editor.textedit.bind("<Tab>", lambda x: binding((c, "Tab")))
             self.text_editor.textedit.bind("<Return>", lambda x: binding((c, "Return")))
-            self.text_editor.textedit.bind(
-                "<FocusOut>", lambda x: binding((c, "FocusOut"))
-            )
+            self.text_editor.textedit.bind("<FocusOut>", lambda x: binding((c, "FocusOut")))
             self.text_editor.textedit.bind("<Escape>", lambda x: binding((c, "Escape")))
         elif binding is None and set_data_on_close:
-            self.text_editor.textedit.bind(
-                "<Tab>", lambda x: self.close_text_editor((c, "Tab"))
-            )
-            self.text_editor.textedit.bind(
-                "<Return>", lambda x: self.close_text_editor((c, "Return"))
-            )
+            self.text_editor.textedit.bind("<Tab>", lambda x: self.close_text_editor((c, "Tab")))
+            self.text_editor.textedit.bind("<Return>", lambda x: self.close_text_editor((c, "Return")))
             if not dropdown:
-                self.text_editor.textedit.bind(
-                    "<FocusOut>", lambda x: self.close_text_editor((c, "FocusOut"))
-                )
-            self.text_editor.textedit.bind(
-                "<Escape>", lambda x: self.close_text_editor((c, "Escape"))
-            )
+                self.text_editor.textedit.bind("<FocusOut>", lambda x: self.close_text_editor((c, "FocusOut")))
+            self.text_editor.textedit.bind("<Escape>", lambda x: self.close_text_editor((c, "Escape")))
         else:
-            self.text_editor.textedit.bind(
-                "<Escape>", lambda x: self.destroy_text_editor("Escape")
-            )
+            self.text_editor.textedit.bind("<Escape>", lambda x: self.destroy_text_editor("Escape"))
         return True
 
-    # displayed indexes                             #just here to receive text editor arg
+    # displayed indexes                         #just here to receive text editor arg
     def text_editor_has_wrapped(self, r=0, c=0, check_lines=None):
         if self.width_resizing_enabled:
-            datacn = (
-                c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
-            )
+            datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
             curr_width = self.text_editor.winfo_width()
-            new_width = curr_width + (self.MT.header_txt_h * 2)
+            new_width = curr_width + (self.MT.header_txt_height * 2)
             if new_width != curr_width:
                 self.text_editor.config(width=new_width)
-                self.set_col_width_run_binding(
-                    c, width=new_width, only_set_if_too_small=False
-                )
+                self.set_col_width_run_binding(c, width=new_width, only_set_if_too_small=False)
                 kwargs = self.get_cell_kwargs(datacn, key="dropdown")
                 if kwargs:
                     self.itemconfig(kwargs["canvas_id"], width=new_width)
                     kwargs["window"].update_idletasks()
                     kwargs["window"]._reselect()
-                self.MT.main_table_redraw_grid_and_text(
-                    redraw_header=True, redraw_row_index=False, redraw_table=True
-                )
+                self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=False, redraw_table=True)
 
     # displayed indexes
     def text_editor_newline_binding(self, r=0, c=0, event=None, check_lines=True):
         if self.height_resizing_enabled:
-            datacn = (
-                c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
-            )
+            datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
             curr_height = self.text_editor.winfo_height()
             if (
                 not check_lines
-                or self.MT.get_lines_cell_height(
-                    self.text_editor.get_num_lines() + 1, font=self.MT.header_font
-                )
+                or self.MT.get_lines_cell_height(self.text_editor.get_num_lines() + 1, font=self.MT.header_font)
                 > curr_height
             ):
                 new_height = curr_height + self.MT.header_xtra_lines_increment
@@ -2134,17 +1888,13 @@ class ColumnHeaders(tk.Canvas):
                     self.set_height(new_height, set_TL=True)
                     kwargs = self.get_cell_kwargs(datacn, key="dropdown")
                     if kwargs:
-                        win_h, anchor = self.get_dropdown_height_anchor(
-                            datacn, new_height
-                        )
+                        win_h, anchor = self.get_dropdown_height_anchor(datacn, new_height)
                         self.coords(
                             kwargs["canvas_id"],
                             self.MT.col_positions[c],
                             new_height - 1,
                         )
-                        self.itemconfig(
-                            kwargs["canvas_id"], anchor=anchor, height=win_h
-                        )
+                        self.itemconfig(kwargs["canvas_id"], anchor=anchor, height=win_h)
 
     def bind_cell_edit(self, enable=True):
         if enable:
@@ -2159,15 +1909,9 @@ class ColumnHeaders(tk.Canvas):
         self.text_editor.textedit.focus_set()
 
     def destroy_text_editor(self, event=None):
-        if (
-            event is not None
-            and self.extra_end_edit_cell_func is not None
-            and self.text_editor_loc is not None
-        ):
+        if event is not None and self.extra_end_edit_cell_func is not None and self.text_editor_loc is not None:
             self.extra_end_edit_cell_func(
-                EditHeaderEvent(
-                    int(self.text_editor_loc), "Escape", None, "escape_edit_header"
-                )
+                EditHeaderEvent(int(self.text_editor_loc), "Escape", None, "escape_edit_header")
             )
         self.text_editor_loc = None
         try:
@@ -2197,11 +1941,7 @@ class ColumnHeaders(tk.Canvas):
     ):
         if self.focus_get() is None and editor_info:
             return
-        if (
-            editor_info is not None
-            and len(editor_info) >= 2
-            and editor_info[1] == "Escape"
-        ):
+        if editor_info is not None and len(editor_info) >= 2 and editor_info[1] == "Escape":
             self.destroy_text_editor("Escape")
             self.close_dropdown_window(c)
             return
@@ -2212,12 +1952,8 @@ class ColumnHeaders(tk.Canvas):
         if set_data_on_close:
             if c is None and editor_info is not None and len(editor_info) >= 2:
                 c = editor_info[0]
-            datacn = (
-                c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
-            )
-            if self.extra_end_edit_cell_func is None and self.input_valid_for_cell(
-                datacn, self.text_editor_value
-            ):
+            datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
+            if self.extra_end_edit_cell_func is None and self.input_valid_for_cell(datacn, self.text_editor_value):
                 self.set_cell_data_undo(
                     c,
                     datacn=datacn,
@@ -2243,10 +1979,7 @@ class ColumnHeaders(tk.Canvas):
                         "end_edit_header",
                     )
                 )
-            elif (
-                self.extra_end_edit_cell_func is not None
-                and self.MT.edit_cell_validation
-            ):
+            elif self.extra_end_edit_cell_func is not None and self.MT.edit_cell_validation:
                 validation = self.extra_end_edit_cell_func(
                     EditHeaderEvent(
                         c,
@@ -2271,11 +2004,7 @@ class ColumnHeaders(tk.Canvas):
             self.MT.recreate_all_selection_boxes()
         if redraw:
             self.MT.refresh()
-        if (
-            editor_info is not None
-            and len(editor_info) >= 2
-            and editor_info[1] != "FocusOut"
-        ):
+        if editor_info is not None and len(editor_info) >= 2 and editor_info[1] != "FocusOut":
             self.focus_set()
         return "break"
 
@@ -2291,13 +2020,9 @@ class ColumnHeaders(tk.Canvas):
         check_input_valid=True,
     ):
         if datacn is None:
-            datacn = (
-                c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
-            )
+            datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
         if isinstance(self.MT._headers, int):
-            self.MT.set_cell_data_undo(
-                r=self.MT._headers, c=c, datacn=datacn, value=value, undo=True
-            )
+            self.MT.set_cell_data_undo(r=self.MT._headers, c=c, datacn=datacn, value=value, undo=True)
         else:
             self.fix_header(datacn)
             if not check_input_valid or self.input_valid_for_cell(datacn, value):
@@ -2317,9 +2042,7 @@ class ColumnHeaders(tk.Canvas):
                 self.set_cell_data(datacn=datacn, value=value)
         if cell_resize and self.MT.cell_auto_resize_enabled:
             if self.height_resizing_enabled:
-                self.set_height_of_header_to_text(
-                    self.get_valid_cell_data_as_str(datacn, fix=False)
-                )
+                self.set_height_of_header_to_text(self.get_valid_cell_data_as_str(datacn, fix=False))
             self.set_col_width_run_binding(c)
         if redraw:
             self.MT.refresh()
@@ -2354,15 +2077,11 @@ class ColumnHeaders(tk.Canvas):
         elif isinstance(self.MT._headers, int):
             return self.MT.cell_equal_to(self.MT._headers, datacn, value)
 
-    def get_cell_data(
-        self, datacn, get_displayed=False, none_to_empty_str=False, redirect_int=False
-    ):
+    def get_cell_data(self, datacn, get_displayed=False, none_to_empty_str=False, redirect_int=False):
         if get_displayed:
             return self.get_valid_cell_data_as_str(datacn, fix=False)
         if redirect_int and isinstance(self.MT._headers, int):  # internal use
-            return self.MT.get_cell_data(
-                self.MT._headers, datacn, none_to_empty_str=True
-            )
+            return self.MT.get_cell_data(self.MT._headers, datacn, none_to_empty_str=True)
         if (
             isinstance(self.MT._headers, int)
             or not self.MT._headers
@@ -2380,17 +2099,11 @@ class ColumnHeaders(tk.Canvas):
         if kwargs:
             return f"{kwargs['text']}"
         if isinstance(self.MT._headers, int):
-            return self.MT.get_valid_cell_data_as_str(
-                self.MT._headers, datacn, get_displayed=True
-            )
+            return self.MT.get_valid_cell_data_as_str(self.MT._headers, datacn, get_displayed=True)
         if fix:
             self.fix_header(datacn)
         try:
-            return (
-                ""
-                if self.MT._headers[datacn] is None
-                else f"{self.MT._headers[datacn]}"
-            )
+            return "" if self.MT._headers[datacn] is None else f"{self.MT._headers[datacn]}"
         except Exception:
             return ""
 
@@ -2403,10 +2116,7 @@ class ColumnHeaders(tk.Canvas):
         return ""
 
     def get_empty_header_seq(self, end, start=0, c_ops=True):
-        return [
-            self.get_value_for_empty_cell(datacn, c_ops=c_ops)
-            for datacn in range(start, end)
-        ]
+        return [self.get_value_for_empty_cell(datacn, c_ops=c_ops) for datacn in range(start, end)]
 
     def fix_header(self, datacn=None, fix_values=tuple()):
         if isinstance(self.MT._headers, int):
@@ -2420,41 +2130,27 @@ class ColumnHeaders(tk.Canvas):
             except Exception:
                 self.MT._headers = []
         if isinstance(datacn, int) and datacn >= len(self.MT._headers):
-            self.MT._headers.extend(
-                self.get_empty_header_seq(end=datacn + 1, start=len(self.MT._headers))
-            )
+            self.MT._headers.extend(self.get_empty_header_seq(end=datacn + 1, start=len(self.MT._headers)))
         if fix_values:
-            for cn, v in enumerate(
-                islice(self.MT._headers, fix_values[0], fix_values[1])
-            ):
+            for cn, v in enumerate(islice(self.MT._headers, fix_values[0], fix_values[1])):
                 if not self.input_valid_for_cell(cn, v):
                     self.MT._headers[cn] = self.get_value_for_empty_cell(cn)
 
     # displayed indexes
     def set_col_width_run_binding(self, c, width=None, only_set_if_too_small=True):
         old_width = self.MT.col_positions[c + 1] - self.MT.col_positions[c]
-        new_width = self.set_col_width(
-            c, width=width, only_set_if_too_small=only_set_if_too_small
-        )
+        new_width = self.set_col_width(c, width=width, only_set_if_too_small=only_set_if_too_small)
         if self.column_width_resize_func is not None and old_width != new_width:
-            self.column_width_resize_func(
-                ResizeEvent("column_width_resize", c, old_width, new_width)
-            )
+            self.column_width_resize_func(ResizeEvent("column_width_resize", c, old_width, new_width))
 
     # internal event use
     def click_checkbox(self, c, datacn=None, undo=True, redraw=True):
         if datacn is None:
-            datacn = (
-                c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
-            )
+            datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
         kwargs = self.get_cell_kwargs(datacn, key="checkbox")
         if kwargs["state"] == "normal":
             if isinstance(self.MT._headers, list):
-                value = (
-                    not self.MT._headers[datacn]
-                    if type(self.MT._headers[datacn]) == bool
-                    else False
-                )
+                value = not self.MT._headers[datacn] if type(self.MT._headers[datacn]) == bool else False
             elif isinstance(self.MT._headers, int):
                 value = (
                     not self.MT.data[self.MT._headers][datacn]
@@ -2499,9 +2195,7 @@ class ColumnHeaders(tk.Canvas):
         total_cols = self.MT.total_data_cols()
         if isinstance(self.MT._headers, int):
             for datacn in range(total_cols):
-                self.MT.set_cell_data(
-                    datarn=self.MT._headers, datacn=datacn, value=kwargs["checked"]
-                )
+                self.MT.set_cell_data(datarn=self.MT._headers, datacn=datacn, value=kwargs["checked"])
         else:
             for datacn in range(total_cols):
                 self.set_cell_data(datacn=datacn, value=kwargs["checked"])
@@ -2515,25 +2209,18 @@ class ColumnHeaders(tk.Canvas):
         self.options["dropdown"] = get_dropdown_dict(**kwargs)
         total_cols = self.MT.total_data_cols()
         value = (
-            kwargs["set_value"]
-            if kwargs["set_value"] is not None
-            else kwargs["values"][0]
-            if kwargs["values"]
-            else ""
+            kwargs["set_value"] if kwargs["set_value"] is not None else kwargs["values"][0] if kwargs["values"] else ""
         )
         if isinstance(self.MT._headers, int):
             for datacn in range(total_cols):
-                self.MT.set_cell_data(
-                    datarn=self.MT._headers, datacn=datacn, value=value
-                )
+                self.MT.set_cell_data(datarn=self.MT._headers, datacn=datacn, value=value)
         else:
             for datacn in range(total_cols):
                 self.set_cell_data(datacn=datacn, value=value)
 
     def create_checkbox(self, datacn=0, **kwargs):
         if datacn in self.cell_options and (
-            "dropdown" in self.cell_options[datacn]
-            or "checkbox" in self.cell_options[datacn]
+            "dropdown" in self.cell_options[datacn] or "checkbox" in self.cell_options[datacn]
         ):
             self.delete_cell_options_dropdown_and_checkbox(datacn)
         if datacn not in self.cell_options:
@@ -2543,8 +2230,7 @@ class ColumnHeaders(tk.Canvas):
 
     def create_dropdown(self, datacn=0, **kwargs):
         if datacn in self.cell_options and (
-            "dropdown" in self.cell_options[datacn]
-            or "checkbox" in self.cell_options[datacn]
+            "dropdown" in self.cell_options[datacn] or "checkbox" in self.cell_options[datacn]
         ):
             self.delete_cell_options_dropdown_and_checkbox(datacn)
         if datacn not in self.cell_options:
@@ -2562,14 +2248,10 @@ class ColumnHeaders(tk.Canvas):
     def get_dropdown_height_anchor(self, datacn, text_editor_h=None):
         win_h = 5
         for i, v in enumerate(self.get_cell_kwargs(datacn, key="dropdown")["values"]):
-            v_numlines = len(
-                v.split("\n") if isinstance(v, str) else f"{v}".split("\n")
-            )
+            v_numlines = len(v.split("\n") if isinstance(v, str) else f"{v}".split("\n"))
             if v_numlines > 1:
                 win_h += (
-                    self.MT.header_fl_ins
-                    + (v_numlines * self.MT.header_xtra_lines_increment)
-                    + 5
+                    self.MT.header_first_ln_ins + (v_numlines * self.MT.header_xtra_lines_increment) + 5
                 )  # end of cell
             else:
                 win_h += self.MT.min_header_height
@@ -2581,8 +2263,8 @@ class ColumnHeaders(tk.Canvas):
         win_h2 = int(win_h)
         if win_h > space_bot:
             win_h = space_bot - 1
-        if win_h < self.MT.header_txt_h + 5:
-            win_h = self.MT.header_txt_h + 5
+        if win_h < self.MT.header_txt_height + 5:
+            win_h = self.MT.header_txt_height + 5
         elif win_h > win_h2:
             win_h = win_h2
         return win_h, "nw"
@@ -2591,9 +2273,7 @@ class ColumnHeaders(tk.Canvas):
         self.destroy_text_editor("Escape")
         self.destroy_opened_dropdown_window()
         if datacn is None:
-            datacn = (
-                c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
-            )
+            datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
         kwargs = self.get_cell_kwargs(datacn, key="dropdown")
         if kwargs["state"] == "normal":
             if not self.open_text_editor(event=event, c=c, dropdown=True):
@@ -2622,16 +2302,12 @@ class ColumnHeaders(tk.Canvas):
             single_index="c",
         )
         ypos = self.current_height - 1
-        kwargs["canvas_id"] = self.create_window(
-            (self.MT.col_positions[c], ypos), window=window, anchor=anchor
-        )
+        kwargs["canvas_id"] = self.create_window((self.MT.col_positions[c], ypos), window=window, anchor=anchor)
         if kwargs["state"] == "normal":
             self.text_editor.textedit.bind(
                 "<<TextModified>>",
                 lambda x: window.search_and_see(
-                    DropDownModifiedEvent(
-                        "HeaderComboboxModified", 0, c, self.text_editor.get()
-                    )
+                    DropDownModifiedEvent("HeaderComboboxModified", 0, c, self.text_editor.get())
                 ),
             )
             if kwargs["modified_function"] is not None:
@@ -2652,53 +2328,29 @@ class ColumnHeaders(tk.Canvas):
         kwargs["window"] = window
         self.existing_dropdown_canvas_id = kwargs["canvas_id"]
         if redraw:
-            self.MT.main_table_redraw_grid_and_text(
-                redraw_header=True, redraw_row_index=False, redraw_table=False
-            )
+            self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=False, redraw_table=False)
 
     def close_dropdown_window(self, c=None, selection=None, redraw=True):
         if c is not None and selection is not None:
-            datacn = (
-                c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
-            )
+            datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
             kwargs = self.get_cell_kwargs(datacn, key="dropdown")
-            if (
-                kwargs["select_function"] is not None
-            ):  # user has specified a selection function
+            if kwargs["select_function"] is not None:  # user has specified a selection function
                 kwargs["select_function"](
-                    EditHeaderEvent(
-                        c, "HeaderComboboxSelected", f"{selection}", "end_edit_header"
-                    )
+                    EditHeaderEvent(c, "HeaderComboboxSelected", f"{selection}", "end_edit_header")
                 )
             if self.extra_end_edit_cell_func is None:
-                self.set_cell_data_undo(
-                    c, datacn=datacn, value=selection, redraw=not redraw
-                )
-            elif (
-                self.extra_end_edit_cell_func is not None
-                and self.MT.edit_cell_validation
-            ):
+                self.set_cell_data_undo(c, datacn=datacn, value=selection, redraw=not redraw)
+            elif self.extra_end_edit_cell_func is not None and self.MT.edit_cell_validation:
                 validation = self.extra_end_edit_cell_func(
-                    EditHeaderEvent(
-                        c, "HeaderComboboxSelected", f"{selection}", "end_edit_header"
-                    )
+                    EditHeaderEvent(c, "HeaderComboboxSelected", f"{selection}", "end_edit_header")
                 )
                 if validation is not None:
                     selection = validation
-                self.set_cell_data_undo(
-                    c, datacn=datacn, value=selection, redraw=not redraw
-                )
-            elif (
-                self.extra_end_edit_cell_func is not None
-                and not self.MT.edit_cell_validation
-            ):
-                self.set_cell_data_undo(
-                    c, datacn=datacn, value=selection, redraw=not redraw
-                )
+                self.set_cell_data_undo(c, datacn=datacn, value=selection, redraw=not redraw)
+            elif self.extra_end_edit_cell_func is not None and not self.MT.edit_cell_validation:
+                self.set_cell_data_undo(c, datacn=datacn, value=selection, redraw=not redraw)
                 self.extra_end_edit_cell_func(
-                    EditHeaderEvent(
-                        c, "HeaderComboboxSelected", f"{selection}", "end_edit_header"
-                    )
+                    EditHeaderEvent(c, "HeaderComboboxSelected", f"{selection}", "end_edit_header")
                 )
             self.focus_set()
             self.MT.recreate_all_selection_boxes()
@@ -2735,9 +2387,7 @@ class ColumnHeaders(tk.Canvas):
             c = self.get_existing_dropdown_coords()
         if c is not None or datacn is not None:
             if datacn is None:
-                datacn_ = (
-                    c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
-                )
+                datacn_ = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
             else:
                 datacn_ = datacn
         else:

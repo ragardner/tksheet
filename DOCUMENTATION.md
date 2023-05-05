@@ -157,7 +157,8 @@ index_font: tuple = get_index_font(), #currently has no effect
 popup_menu_font: tuple = get_font(),
 align: str = "w",
 header_align: str = "center",
-row_index_align: str = "center",
+row_index_align: None,
+index_align: str = "center", # same as row_index_align
 displayed_columns: list = [],
 all_columns_displayed: bool = True,
 max_undos: int = 30,
@@ -230,6 +231,12 @@ You can change these settings after initialization using the `set_options()` fun
 
 #### **Set the header.**
 ```python
+set_header_data(value, c = None, redraw = True)
+```
+- `value` (`iterable`, `int`, `Any`) if `c` is left as `None` then it attempts to set the whole header as the `value` (converting a generator to a list). If `value` is `int` it sets the header to display the row with that position.
+- `c` (`iterable`, `int`, `None`) if both `value` and `c` are iterables it assumes `c` is an iterable of positions and `value` is an iterable of values and attempts to set each value to each position. If `c` is `int` it attempts to set the value at that position.
+
+```python
 headers(newheaders = None, index = None, reset_col_positions = False, show_headers_if_not_sheet = True, redraw = False)
 ```
 - Using an integer `int` for argument `newheaders` makes the sheet use that row as a header e.g. `headers(0)` means the first row will be used as a header (the first row will not be hidden in the sheet though), this is sort of equivalent to freezing the row.
@@ -239,6 +246,12 @@ headers(newheaders = None, index = None, reset_col_positions = False, show_heade
 ___
 
 #### **Set the index.**
+```python
+set_index_data(value, r = None, redraw = True)
+```
+- `value` (`iterable`, `int`, `Any`) if `r` is left as `None` then it attempts to set the whole index as the `value` (converting a generator to a list). If `value` is `int` it sets the index to display the row with that position.
+- `r` (`iterable`, `int`, `None`) if both `value` and `r` are iterables it assumes `r` is an iterable of positions and `value` is an iterable of values and attempts to set each value to each position. If `r` is `int` it attempts to set the value at that position.
+
 ```python
 row_index(newindex = None, index = None, reset_row_positions = False, show_index_if_not_sheet = True, redraw = False)
 ```
@@ -256,19 +269,24 @@ set_sheet_data(data = [[]],
                reset_row_positions = True,
                redraw = True,
                verify = False,
-               reset_highlights = False)
+               reset_highlights = False,
+               delete_options = False,
+               keep_formatting = True,
+               delete_options = False)
 ```
 - `data` (`list`) has to be a list of lists for full functionality, for display only a list of tuples or a tuple of tuples will work.
 - `reset_col_positions` and `reset_row_positions` (`bool`) when `True` will reset column widths and row heights.
 - `redraw` (`bool`) refreshes the table after setting new data.
 - `verify` (`bool`) goes through `data` and checks if it is a list of lists, will raise error if not, disabled by default.
 - `reset_highlights` (`bool`) resets all table cell highlights.
+- `keep_formatting` (`bool`) if `False` deletes all previously set cell/row/column/sheet formatting.
+- `delete_options` (`bool`) deletes all table options such as dropdown boxes, checkboxes, highlights, specific cell alignments etc. Overrides `keep_formatting`.
 
 ___
 
 #### **Set cell data, overwrites any existing data.**
 ```python
-set_cell_data(r, c, value = "", redraw = False)
+set_cell_data(r, c, value = "", redraw = True)
 ```
 
 ___
@@ -857,6 +875,9 @@ ___
 
 ```python
 row_index_align(align = None, redraw = True)
+
+#same as row_index_align()
+index_align(align = None, redraw = True)
 ```
 
 ___
