@@ -7259,11 +7259,7 @@ class MainTable(tk.Canvas):
             if datarn >= len(self.data):
                 self.fix_data_len(datarn, datacn)
             elif datacn >= len(self.data[datarn]):
-                self.data[datarn].extend(
-                    self.get_empty_row_seq(
-                        datarn, end=datacn + 1, start=len(self.data[datarn])
-                    )
-                )
+                self.fix_row_len(datarn, datacn)
         if expand_sheet or (
             len(self.data) > datarn and len(self.data[datarn]) > datacn
         ):
@@ -7314,12 +7310,9 @@ class MainTable(tk.Canvas):
         ]
 
     def fix_row_len(self, datarn, datacn):
-        self.data[datarn].extend(
-            [
-                self.get_value_for_empty_cell(datarn, cn)
-                for cn in range(datacn + 1 - len(self.data[datarn]))
-            ]
-        )
+        self.data[datarn].extend(self.get_empty_row_seq(datarn, 
+                                                        end = datacn + 1, 
+                                                        start = len(self.data[datarn])))
 
     def fix_row_values(self, datarn, start=None, end=None):
         if datarn < len(self.data):
@@ -7331,12 +7324,8 @@ class MainTable(tk.Canvas):
 
     def fix_data_len(self, datarn, datacn):
         ncols = self.total_data_cols() if datacn is None else datacn + 1
-        self.data.extend(
-            [
-                [self.get_value_for_empty_cell(rn, cn) for cn in range(ncols)]
-                for rn in range(datarn + 1 - len(self.data))
-            ]
-        )
+        self.data.extend([self.get_empty_row_seq(rn, end = ncols, start = 0) 
+                          for rn in range(len(self.data), datarn + 1)])
 
     # internal event use
     def click_checkbox(self, r, c, datarn=None, datacn=None, undo=True, redraw=True):

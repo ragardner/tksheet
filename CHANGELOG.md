@@ -1,3 +1,7 @@
+### Version 6.1.1
+#### Fixed:
+- [#177](https://github.com/ragardner/tksheet/issues/177)
+
 ### Version 6.1.0
 #### Fixed:
 - Error with using `None` to create a dropdown for the entire index when index is not `int`
