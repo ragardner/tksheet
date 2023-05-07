@@ -1,3 +1,9 @@
+### Version 6.1.2
+#### Fixed:
+- Further potential issues with moving columns where row lengths are uneven
+- Potential issues with using `move_rows()` where the provided index is larger than the number of rows
+- `dropdown_sheet()` causing error
+
 ### Version 6.1.1
 #### Fixed:
 - [#177](https://github.com/ragardner/tksheet/issues/177)

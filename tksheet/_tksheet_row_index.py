@@ -390,7 +390,7 @@ class RowIndex(tk.Canvas):
                 self.row_height_resize_func(
                     ResizeEvent("row_height_resize", row, old_height, new_height)
                 )
-        elif self.width_resizing_enabled and self.rsz_h is None and self.rsz_w == True:
+        elif self.width_resizing_enabled and self.rsz_h is None and self.rsz_w:
             self.set_width_of_index_to_text()
         elif self.row_selection_enabled and self.rsz_h is None and self.rsz_w is None:
             r = self.MT.identify_row(y=event.y)
@@ -457,7 +457,7 @@ class RowIndex(tk.Canvas):
             self.MT.create_resize_line(
                 x1, line2y, x2, line2y, width=1, fill=self.resizing_line_fg, tag="rhl2"
             )
-        elif self.width_resizing_enabled and self.rsz_h is None and self.rsz_w == True:
+        elif self.width_resizing_enabled and self.rsz_h is None and self.rsz_w:
             self.currently_resizing_width = True
             x1, y1, x2, y2 = self.MT.get_canvas_visible_area()
             x = int(event.x)

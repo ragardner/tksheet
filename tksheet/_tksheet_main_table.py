@@ -519,7 +519,11 @@ class MainTable(tk.Canvas):
                     for r1, c1, r2, c2 in boxes:
                         if r2 - r1 < maxrows:
                             continue
-                        datarn = (r1 + rn) if self.all_rows_displayed else self.displayed_rows[r1 + rn]
+                        datarn = (
+                            (r1 + rn)
+                            if self.all_rows_displayed
+                            else self.displayed_rows[r1 + rn]
+                        )
                         for c in range(c1, c2):
                             datacn = (
                                 c
@@ -543,7 +547,11 @@ class MainTable(tk.Canvas):
                 for r1, c1, r2, c2 in boxes:
                     for rn in range(r2 - r1):
                         row = []
-                        datarn = (r1 + rn) if self.all_rows_displayed else self.displayed_rows[r1 + rn]
+                        datarn = (
+                            (r1 + rn)
+                            if self.all_rows_displayed
+                            else self.displayed_rows[r1 + rn]
+                        )
                         for c in range(c1, c2):
                             datacn = (
                                 c
@@ -594,7 +602,11 @@ class MainTable(tk.Canvas):
                 for r1, c1, r2, c2 in boxes:
                     if r2 - r1 < maxrows:
                         continue
-                    datarn = (r1 + rn) if self.all_rows_displayed else self.displayed_rows[r1 + rn]
+                    datarn = (
+                        (r1 + rn)
+                        if self.all_rows_displayed
+                        else self.displayed_rows[r1 + rn]
+                    )
                     for c in range(c1, c2):
                         datacn = (
                             c
@@ -608,7 +620,11 @@ class MainTable(tk.Canvas):
                 for r1, c1, r2, c2 in boxes:
                     if r2 - r1 < maxrows:
                         continue
-                    datarn = (r1 + rn) if self.all_rows_displayed else self.displayed_rows[r1 + rn]
+                    datarn = (
+                        (r1 + rn)
+                        if self.all_rows_displayed
+                        else self.displayed_rows[r1 + rn]
+                    )
                     for c in range(c1, c2):
                         datacn = (
                             c
@@ -634,7 +650,11 @@ class MainTable(tk.Canvas):
             for r1, c1, r2, c2 in boxes:
                 for rn in range(r2 - r1):
                     row = []
-                    datarn = (r1 + rn) if self.all_rows_displayed else self.displayed_rows[r1 + rn]
+                    datarn = (
+                        (r1 + rn)
+                        if self.all_rows_displayed
+                        else self.displayed_rows[r1 + rn]
+                    )
                     for c in range(c1, c2):
                         datacn = (
                             c
@@ -646,7 +666,11 @@ class MainTable(tk.Canvas):
                     rows.append(row)
             for r1, c1, r2, c2 in boxes:
                 for rn in range(r2 - r1):
-                    datarn = (r1 + rn) if self.all_rows_displayed else self.displayed_rows[r1 + rn]
+                    datarn = (
+                        (r1 + rn)
+                        if self.all_rows_displayed
+                        else self.displayed_rows[r1 + rn]
+                    )
                     for c in range(c1, c2):
                         datacn = (
                             c
@@ -970,43 +994,58 @@ class MainTable(tk.Canvas):
                 cws[c + 1 : c + 1] = cws[to_move_min:to_move_max]
                 cws[to_move_min:to_move_max] = []
             self.col_positions = list(accumulate(chain([0], (width for width in cws))))
-        if c + num_cols > len(self.col_positions):
-            new_selected = tuple(
-                range(
-                    len(self.col_positions) - 1 - num_cols, len(self.col_positions) - 1
-                )
-            )
-            if create_selections and index_type == "displayed":
-                self.create_selected(
-                    0,
-                    len(self.col_positions) - 1 - num_cols,
-                    len(self.row_positions) - 1,
-                    len(self.col_positions) - 1,
-                    "columns",
-                )
-        else:
-            if to_move_min > c:
-                new_selected = tuple(range(c, c + num_cols))
-                if create_selections and index_type == "displayed":
-                    self.create_selected(
-                        0, c, len(self.row_positions) - 1, c + num_cols, "columns"
+            if c + num_cols > len(self.col_positions):
+                new_selected = tuple(
+                    range(
+                        len(self.col_positions) - 1 - num_cols,
+                        len(self.col_positions) - 1,
                     )
-            else:
-                new_selected = tuple(range(c + 1 - num_cols, c + 1))
-                if create_selections and index_type == "displayed":
+                )
+                if create_selections:
                     self.create_selected(
                         0,
-                        c + 1 - num_cols,
+                        len(self.col_positions) - 1 - num_cols,
                         len(self.row_positions) - 1,
-                        c + 1,
+                        len(self.col_positions) - 1,
                         "columns",
                     )
-        if create_selections and index_type == "displayed":
-            self.set_currently_selected(0, int(new_selected[0]), type_="column")
+            else:
+                if to_move_min > c:
+                    new_selected = tuple(range(c, c + num_cols))
+                    if create_selections:
+                        self.create_selected(
+                            0, c, len(self.row_positions) - 1, c + num_cols, "columns"
+                        )
+                else:
+                    new_selected = tuple(range(c + 1 - num_cols, c + 1))
+                    if create_selections:
+                        self.create_selected(
+                            0,
+                            c + 1 - num_cols,
+                            len(self.row_positions) - 1,
+                            c + 1,
+                            "columns",
+                        )
+        elif index_type == "data":
+            if to_move_min > c:
+                new_selected = tuple(range(c, c + num_cols))
+            else:
+                new_selected = tuple(range(c + 1 - num_cols, c + 1))
         newcolsdct = {t1: t2 for t1, t2 in zip(orig_selected, new_selected)}
         if self.all_columns_displayed or index_type != "displayed":
             dispset = {}
             if to_move_min > c:
+                if move_data:
+                    extend_idx = to_move_max - 1
+                    for rn in range(len(self.data)):
+                        if to_move_max > len(self.data[rn]):
+                            self.fix_row_len(rn, extend_idx)
+                        self.data[rn][c:c] = self.data[rn][to_move_min:to_move_max]
+                        self.data[rn][to_move_max:to_del] = []
+                    self.CH.fix_header(extend_idx)
+                    if isinstance(self._headers, list) and self._headers:
+                        self._headers[c:c] = self._headers[to_move_min:to_move_max]
+                        self._headers[to_move_max:to_del] = []
                 self.CH.cell_options = {
                     newcolsdct[k]
                     if k in newcolsdct
@@ -1031,16 +1070,6 @@ class MainTable(tk.Canvas):
                     else k: v
                     for k, v in self.col_options.items()
                 }
-                if move_data:
-                    for rn in range(len(self.data)):
-                        if to_move_max >= len(self.data[rn]):
-                            self.fix_row_len(rn, to_move_max)
-                        self.data[rn][c:c] = self.data[rn][to_move_min:to_move_max]
-                        self.data[rn][to_move_max:to_del] = []
-                    self.CH.fix_header(to_move_max)
-                    if isinstance(self._headers, list) and self._headers:
-                        self._headers[c:c] = self._headers[to_move_min:to_move_max]
-                        self._headers[to_move_max:to_del] = []
                 if index_type != "displayed":
                     self.displayed_columns = sorted(
                         int(newcolsdct[k])
@@ -1052,6 +1081,17 @@ class MainTable(tk.Canvas):
                     )
             else:
                 c += 1
+                if move_data:
+                    extend_idx = c - 1
+                    for rn in range(len(self.data)):
+                        if c > len(self.data[rn]):
+                            self.fix_row_len(rn, extend_idx)
+                        self.data[rn][c:c] = self.data[rn][to_move_min:to_move_max]
+                        self.data[rn][to_move_min:to_move_max] = []
+                    self.CH.fix_header(extend_idx)
+                    if isinstance(self._headers, list) and self._headers:
+                        self._headers[c:c] = self._headers[to_move_min:to_move_max]
+                        self._headers[to_move_min:to_move_max] = []
                 self.CH.cell_options = {
                     newcolsdct[k]
                     if k in newcolsdct
@@ -1076,16 +1116,6 @@ class MainTable(tk.Canvas):
                     else k: v
                     for k, v in self.col_options.items()
                 }
-                if move_data:
-                    for rn in range(len(self.data)):
-                        if c >= len(self.data[rn]):
-                            self.fix_row_len(rn, c)
-                        self.data[rn][c:c] = self.data[rn][to_move_min:to_move_max]
-                        self.data[rn][to_move_min:to_move_max] = []
-                    self.CH.fix_header(c)
-                    if isinstance(self._headers, list) and self._headers:
-                        self._headers[c:c] = self._headers[to_move_min:to_move_max]
-                        self._headers[to_move_min:to_move_max] = []
                 if index_type != "displayed":
                     self.displayed_columns = sorted(
                         int(newcolsdct[k])
@@ -1100,7 +1130,7 @@ class MainTable(tk.Canvas):
             # which remain sorted and the same after drop and drop
             if to_move_min > c:
                 dispset = {
-                    b: a
+                    a: b
                     for a, b in zip(
                         self.displayed_columns,
                         (
@@ -1115,7 +1145,7 @@ class MainTable(tk.Canvas):
                 }
             else:
                 dispset = {
-                    b: a
+                    a: b
                     for a, b in zip(
                         self.displayed_columns,
                         (
@@ -1130,19 +1160,6 @@ class MainTable(tk.Canvas):
                 }
             # has to pick up elements from all over the place in the original row
             # building an entirely new row is best due to permutations of hidden columns
-            self.CH.cell_options = {
-                dispset[k] if k in dispset else k: v
-                for k, v in self.CH.cell_options.items()
-            }
-            self.cell_options = {
-                (k[0], dispset[k[1]]) if k[1] in dispset else k: v
-                for k, v in self.cell_options.items()
-            }
-            self.col_options = {
-                dispset[k] if k in dispset else k: v
-                for k, v in self.col_options.items()
-            }
-            dispset = {b: a for a, b in dispset.items()}
             if move_data:
                 max_len = max(chain(dispset, dispset.values())) + 1
                 max_idx = max_len - 1
@@ -1177,6 +1194,19 @@ class MainTable(tk.Canvas):
                         else:
                             idx += 1
                     self._headers = new
+                dispset = {b: a for a, b in dispset.items()}
+                self.CH.cell_options = {
+                    dispset[k] if k in dispset else k: v
+                    for k, v in self.CH.cell_options.items()
+                }
+                self.cell_options = {
+                    (k[0], dispset[k[1]]) if k[1] in dispset else k: v
+                    for k, v in self.cell_options.items()
+                }
+                self.col_options = {
+                    dispset[k] if k in dispset else k: v
+                    for k, v in self.col_options.items()
+                }
         return new_selected, {b: a for a, b in dispset.items()}
 
     def move_rows_adjust_options_dict(
@@ -1210,39 +1240,57 @@ class MainTable(tk.Canvas):
             self.row_positions = list(
                 accumulate(chain([0], (height for height in rhs)))
             )
-        if r + num_rows > len(self.row_positions):
-            new_selected = tuple(
-                range(
-                    len(self.row_positions) - 1 - num_rows, len(self.row_positions) - 1
+            if r + num_rows > len(self.row_positions):
+                new_selected = tuple(
+                    range(
+                        len(self.row_positions) - 1 - num_rows,
+                        len(self.row_positions) - 1,
+                    )
                 )
-            )
-            if create_selections and index_type == "displayed":
-                self.create_selected(
-                    len(self.row_positions) - 1 - num_rows,
-                    0,
-                    len(self.row_positions) - 1,
-                    len(self.col_positions) - 1,
-                    "rows",
-                )
-        else:
-            if to_move_min > r:
-                new_selected = tuple(range(r, r + num_rows))
-                if create_selections and index_type == "displayed":
+                if create_selections:
                     self.create_selected(
-                        r, 0, r + num_rows, len(self.col_positions) - 1, "rows"
+                        len(self.row_positions) - 1 - num_rows,
+                        0,
+                        len(self.row_positions) - 1,
+                        len(self.col_positions) - 1,
+                        "rows",
                     )
             else:
+                if to_move_min > r:
+                    new_selected = tuple(range(r, r + num_rows))
+                    if create_selections:
+                        self.create_selected(
+                            r, 0, r + num_rows, len(self.col_positions) - 1, "rows"
+                        )
+                else:
+                    new_selected = tuple(range(r + 1 - num_rows, r + 1))
+                    if create_selections:
+                        self.create_selected(
+                            r + 1 - num_rows,
+                            0,
+                            r + 1,
+                            len(self.col_positions) - 1,
+                            "rows",
+                        )
+        elif index_type == "data":
+            if to_move_min > r:
+                new_selected = tuple(range(r, r + num_rows))
+            else:
                 new_selected = tuple(range(r + 1 - num_rows, r + 1))
-                if create_selections and index_type == "displayed":
-                    self.create_selected(
-                        r + 1 - num_rows, 0, r + 1, len(self.col_positions) - 1, "rows"
-                    )
-        if create_selections and index_type == "displayed":
-            self.set_currently_selected(int(new_selected[0]), 0, type_="row")
         newrowsdct = {t1: t2 for t1, t2 in zip(orig_selected, new_selected)}
         if self.all_rows_displayed or index_type != "displayed":
             dispset = {}
             if to_move_min > r:
+                if move_data:
+                    extend_idx = to_move_max - 1
+                    if to_move_max > len(self.data):
+                        self.fix_data_len(extend_idx)
+                    self.data[r:r] = self.data[to_move_min:to_move_max]
+                    self.data[to_move_max:to_del] = []
+                    self.RI.fix_index(extend_idx)
+                    if isinstance(self._row_index, list) and self._row_index:
+                        self._row_index[r:r] = self._row_index[to_move_min:to_move_max]
+                        self._row_index[to_move_max:to_del] = []
                 self.RI.cell_options = {
                     newrowsdct[k]
                     if k in newrowsdct
@@ -1267,13 +1315,6 @@ class MainTable(tk.Canvas):
                     else k: v
                     for k, v in self.row_options.items()
                 }
-                if move_data:
-                    self.data[r:r] = self.data[to_move_min:to_move_max]
-                    self.data[to_move_max:to_del] = []
-                    self.RI.fix_index(to_move_max)
-                    if isinstance(self._row_index, list) and self._row_index:
-                        self._row_index[r:r] = self._row_index[to_move_min:to_move_max]
-                        self._row_index[to_move_max:to_del] = []
                 if index_type != "displayed":
                     self.displayed_rows = sorted(
                         int(newrowsdct[k])
@@ -1285,6 +1326,16 @@ class MainTable(tk.Canvas):
                     )
             else:
                 r += 1
+                if move_data:
+                    extend_idx = r - 1
+                    if r > len(self.data):
+                        self.fix_data_len(extend_idx)
+                    self.data[r:r] = self.data[to_move_min:to_move_max]
+                    self.data[to_move_min:to_move_max] = []
+                    self.RI.fix_index(extend_idx)
+                    if isinstance(self._row_index, list) and self._row_index:
+                        self._row_index[r:r] = self._row_index[to_move_min:to_move_max]
+                        self._row_index[to_move_min:to_move_max] = []
                 self.RI.cell_options = {
                     newrowsdct[k]
                     if k in newrowsdct
@@ -1309,13 +1360,6 @@ class MainTable(tk.Canvas):
                     else k: v
                     for k, v in self.row_options.items()
                 }
-                if move_data:
-                    self.data[r:r] = self.data[to_move_min:to_move_max]
-                    self.data[to_move_min:to_move_max] = []
-                    self.RI.fix_index(r)
-                    if isinstance(self._row_index, list) and self._row_index:
-                        self._row_index[r:r] = self._row_index[to_move_min:to_move_max]
-                        self._row_index[to_move_min:to_move_max] = []
                 if index_type != "displayed":
                     self.displayed_rows = sorted(
                         int(newrowsdct[k])
@@ -1330,7 +1374,7 @@ class MainTable(tk.Canvas):
             # which remain sorted and the same after drop and drop
             if to_move_min > r:
                 dispset = {
-                    b: a
+                    a: b
                     for a, b in zip(
                         self.displayed_rows,
                         (
@@ -1343,7 +1387,7 @@ class MainTable(tk.Canvas):
                 }
             else:
                 dispset = {
-                    b: a
+                    a: b
                     for a, b in zip(
                         self.displayed_rows,
                         (
@@ -1356,19 +1400,6 @@ class MainTable(tk.Canvas):
                 }
             # has to pick up rows from all over the place in the original sheet
             # building an entirely new sheet is best due to permutations of hidden rows
-            self.RI.cell_options = {
-                dispset[k] if k in dispset else k: v
-                for k, v in self.RI.cell_options.items()
-            }
-            self.cell_options = {
-                (dispset[k[0]], k[1]) if k[0] in dispset else k: v
-                for k, v in self.cell_options.items()
-            }
-            self.row_options = {
-                dispset[k] if k in dispset else k: v
-                for k, v in self.row_options.items()
-            }
-            dispset = {b: a for a, b in dispset.items()}
             if move_data:
                 max_len = max(chain(dispset, dispset.values())) + 1
                 if len(self.data) < max_len:
@@ -1401,6 +1432,19 @@ class MainTable(tk.Canvas):
                         else:
                             idx += 1
                     self._row_index = new
+                dispset = {b: a for a, b in dispset.items()}
+                self.RI.cell_options = {
+                    dispset[k] if k in dispset else k: v
+                    for k, v in self.RI.cell_options.items()
+                }
+                self.cell_options = {
+                    (dispset[k[0]], k[1]) if k[0] in dispset else k: v
+                    for k, v in self.cell_options.items()
+                }
+                self.row_options = {
+                    dispset[k] if k in dispset else k: v
+                    for k, v in self.row_options.items()
+                }
         return new_selected, {b: a for a, b in dispset.items()}
 
     def ctrl_z(self, event=None):
@@ -1494,6 +1538,15 @@ class MainTable(tk.Canvas):
             if to_move_min < c:
                 c += totalcols - 1
             self.move_columns_adjust_options_dict(c, to_move_min, totalcols)
+            self.see(
+                r=0,
+                c=c,
+                keep_yscroll=False,
+                keep_xscroll=False,
+                bottom_right_corner=False,
+                check_cell_visibility=True,
+                redraw=False,
+            )
 
         elif undo_storage[0] == "move_rows":
             r = undo_storage[1][0]
@@ -1502,6 +1555,15 @@ class MainTable(tk.Canvas):
             if to_move_min < r:
                 r += totalrows - 1
             self.move_rows_adjust_options_dict(r, to_move_min, totalrows)
+            self.see(
+                r=r,
+                c=0,
+                keep_yscroll=False,
+                keep_xscroll=False,
+                bottom_right_corner=False,
+                check_cell_visibility=True,
+                redraw=False,
+            )
 
         elif undo_storage[0] == "insert_rows":
             self.displayed_rows = undo_storage[1]["displayed_rows"]
@@ -3189,7 +3251,7 @@ class MainTable(tk.Canvas):
             self.RI.width_resizing_enabled
             and self.show_index
             and self.RI.rsz_h is None
-            and self.RI.rsz_w == True
+            and self.RI.rsz_w
         ):
             self.RI.currently_resizing_width = True
             self.new_row_width = self.RI.current_width + event.x
@@ -3201,7 +3263,7 @@ class MainTable(tk.Canvas):
             self.CH.height_resizing_enabled
             and self.show_header
             and self.CH.rsz_w is None
-            and self.CH.rsz_h == True
+            and self.CH.rsz_h
         ):
             self.CH.currently_resizing_height = True
             self.new_header_height = self.CH.current_height + event.y
@@ -7310,9 +7372,9 @@ class MainTable(tk.Canvas):
         ]
 
     def fix_row_len(self, datarn, datacn):
-        self.data[datarn].extend(self.get_empty_row_seq(datarn, 
-                                                        end = datacn + 1, 
-                                                        start = len(self.data[datarn])))
+        self.data[datarn].extend(
+            self.get_empty_row_seq(datarn, end=datacn + 1, start=len(self.data[datarn]))
+        )
 
     def fix_row_values(self, datarn, start=None, end=None):
         if datarn < len(self.data):
@@ -7324,8 +7386,12 @@ class MainTable(tk.Canvas):
 
     def fix_data_len(self, datarn, datacn):
         ncols = self.total_data_cols() if datacn is None else datacn + 1
-        self.data.extend([self.get_empty_row_seq(rn, end = ncols, start = 0) 
-                          for rn in range(len(self.data), datarn + 1)])
+        self.data.extend(
+            [
+                self.get_empty_row_seq(rn, end=ncols, start=0)
+                for rn in range(len(self.data), datarn + 1)
+            ]
+        )
 
     # internal event use
     def click_checkbox(self, r, c, datarn=None, datacn=None, undo=True, redraw=True):
@@ -7465,7 +7531,7 @@ class MainTable(tk.Canvas):
 
     def dropdown_sheet(self, **kwargs):
         if "dropdown" in self.options or "checkbox" in self.options:
-            self.delete_cell_options_dropdown_and_checkbox(datarn, datacn)
+            self.delete_options_dropdown_and_checkbox()
         self.options["dropdown"] = get_dropdown_dict(**kwargs)
         value = (
             kwargs["set_value"]
