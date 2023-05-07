@@ -15,8 +15,7 @@ from ._tksheet_other_classes import (
     EditIndexEvent,
     EndDragDropEvent,
     ResizeEvent,
-    SelectionBoxEvent,
-    SelectRowEvent,
+    SelectEvent,
     TextCfg,
     TextEditor,
     get_checkbox_dict,
@@ -53,7 +52,7 @@ class RowIndex(tk.Canvas):
         self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
         self.grid_cyctup = ("st", "end")
         self.grid_cyc = cycle(self.grid_cyctup)
-        self.being_drawn_rect = None
+        self.being_drawn_item = None
         self.extra_motion_func = None
         self.extra_b1_press_func = None
         self.extra_b1_motion_func = None
@@ -204,21 +203,16 @@ class RowIndex(tk.Canvas):
 
     def ctrl_b1_press(self, event=None):
         self.mouseclick_outside_editor_or_dropdown_all_canvases()
-        if (
-            (self.drag_and_drop_enabled or self.row_selection_enabled)
-            and self.MT.ctrl_select_enabled
-            and self.rsz_h is None
-            and self.rsz_w is None
-        ):
+        if (self.drag_and_drop_enabled or self.row_selection_enabled) and self.MT.ctrl_select_enabled and self.rsz_h is None and self.rsz_w is None:
             r = self.MT.identify_row(y=event.y)
             if r < len(self.MT.row_positions) - 1:
                 r_selected = self.MT.row_selected(r)
                 if not r_selected and self.row_selection_enabled:
-                    self.being_drawn_rect = True
-                    self.being_drawn_rect = self.add_selection(r, set_as_current=True)
+                    self.being_drawn_item = True
+                    self.being_drawn_item = self.add_selection(r, set_as_current=True, run_binding_func=False)
                     self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
                     if self.ctrl_selection_binding_func is not None:
-                        self.ctrl_selection_binding_func(SelectionBoxEvent("ctrl_select_rows", (r, r + 1)))
+                        self.ctrl_selection_binding_func(SelectEvent(self.MT.get_box_from_item(self.being_drawn_item, get_dict=True)))
                 elif r_selected:
                     self.dragged_row = DraggedRowColumn(
                         dragged=r,
@@ -231,30 +225,20 @@ class RowIndex(tk.Canvas):
         self.mouseclick_outside_editor_or_dropdown_all_canvases()
         y = event.y
         r = self.MT.identify_row(y=y)
-        if (
-            (self.drag_and_drop_enabled or self.row_selection_enabled)
-            and self.MT.ctrl_select_enabled
-            and self.rsz_h is None
-            and self.rsz_w is None
-        ):
+        if (self.drag_and_drop_enabled or self.row_selection_enabled) and self.MT.ctrl_select_enabled and self.rsz_h is None and self.rsz_w is None:
             if r < len(self.MT.row_positions) - 1:
                 r_selected = self.MT.row_selected(r)
                 if not r_selected and self.row_selection_enabled:
                     currently_selected = self.MT.currently_selected()
                     if currently_selected and currently_selected.type_ == "row":
-                        min_r = int(currently_selected.row)
-                        if r > min_r:
-                            self.MT.create_selection_box(min_r, 0, r + 1, len(self.MT.col_positions) - 1, "rows")
-                            func_event = tuple(range(min_r, r + 1))
-                        elif r < min_r:
-                            self.MT.create_selection_box(r, 0, min_r + 1, len(self.MT.col_positions) - 1, "rows")
-                            func_event = tuple(range(r, min_r + 1))
+                        box = self.get_shift_select_box(r, currently_selected.row)
+                        self.being_drawn_item = self.MT.create_selection_box(*box, set_current=currently_selected)
                     else:
-                        self.add_selection(r, set_as_current=True)
-                        func_event = (r,)
+                        self.being_drawn_item = self.add_selection(r, run_binding_func=False, set_as_current=True)
+                        box = self.MT.get_box_from_item(self.being_drawn_item, get_dict=True)
                     self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
                     if self.ctrl_selection_binding_func is not None:
-                        self.ctrl_selection_binding_func(SelectionBoxEvent("ctrl_select_rows", func_event))
+                        self.ctrl_selection_binding_func(SelectEvent("select", {box[:-1]: box[-1]}))
                 elif r_selected:
                     self.dragged_row = DraggedRowColumn(
                         dragged=r,
@@ -273,25 +257,26 @@ class RowIndex(tk.Canvas):
                 if not r_selected and self.row_selection_enabled:
                     currently_selected = self.MT.currently_selected()
                     if currently_selected and currently_selected.type_ == "row":
-                        min_r = int(currently_selected.row)
-                        self.MT.delete_selection_rects()
-                        if r > min_r:
-                            self.MT.create_selection_box(min_r, 0, r + 1, len(self.MT.col_positions) - 1, "rows")
-                            func_event = tuple(range(min_r, r + 1))
-                        elif r < min_r:
-                            self.MT.create_selection_box(r, 0, min_r + 1, len(self.MT.col_positions) - 1, "rows")
-                            func_event = tuple(range(r, min_r + 1))
+                        self.MT.deselect("all")
+                        box = self.get_shift_select_box(r, currently_selected.row)
+                        self.being_drawn_item = self.MT.create_selection_box(*box, set_current=currently_selected)
                     else:
-                        self.select_row(r)
-                        func_event = (r,)
+                        self.being_drawn_item = self.add_selection(r, run_binding_func=False, set_as_current=True)
+                        box = self.MT.get_box_from_item(self.being_drawn_item, get_dict=True)
                     self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
                     if self.shift_selection_binding_func is not None:
-                        self.shift_selection_binding_func(SelectionBoxEvent("shift_select_rows", func_event))
+                        self.shift_selection_binding_func(SelectEvent("select", {box[:-1]: box[-1]}))
                 elif r_selected:
                     self.dragged_row = DraggedRowColumn(
                         dragged=r,
                         to_move=get_seq_without_gaps_at_index(sorted(self.MT.get_selected_rows()), r),
                     )
+
+    def get_shift_selection_box(self, r, min_r):
+        if r > min_r:
+            return (min_r, 0, r + 1, len(self.MT.col_positions) - 1, "rows")
+        elif r < min_r:
+            return (r, 0, min_r + 1, len(self.MT.col_positions) - 1, "rows")
 
     def create_resize_line(self, x1, y1, x2, y2, width, fill, tag):
         if self.hidd_resize_lines:
@@ -356,12 +341,7 @@ class RowIndex(tk.Canvas):
     def double_b1(self, event=None):
         self.mouseclick_outside_editor_or_dropdown_all_canvases()
         self.focus_set()
-        if (
-            self.double_click_resizing_enabled
-            and self.height_resizing_enabled
-            and self.rsz_h is not None
-            and not self.currently_resizing_height
-        ):
+        if self.double_click_resizing_enabled and self.height_resizing_enabled and self.rsz_h is not None and not self.currently_resizing_height:
             row = self.rsz_h - 1
             old_height = self.MT.row_positions[self.rsz_h] - self.MT.row_positions[self.rsz_h - 1]
             new_height = self.set_row_height(row)
@@ -378,11 +358,7 @@ class RowIndex(tk.Canvas):
                 elif self.MT.toggle_selection_enabled:
                     self.toggle_select_row(r, redraw=True)
                 datarn = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r]
-                if (
-                    self.get_cell_kwargs(datarn, key="dropdown")
-                    or self.get_cell_kwargs(datarn, key="checkbox")
-                    or self.edit_cell_enabled
-                ):
+                if self.get_cell_kwargs(datarn, key="dropdown") or self.get_cell_kwargs(datarn, key="checkbox") or self.edit_cell_enabled:
                     self.open_cell(event)
         self.rsz_h = None
         self.mouse_motion(event)
@@ -399,12 +375,7 @@ class RowIndex(tk.Canvas):
         self.b1_pressed_loc = r
         if self.check_mouse_position_height_resizers(x, y) is None:
             self.rsz_h = None
-        if (
-            not x >= self.row_width_resize_bbox[0]
-            and y >= self.row_width_resize_bbox[1]
-            and x <= self.row_width_resize_bbox[2]
-            and y <= self.row_width_resize_bbox[3]
-        ):
+        if not x >= self.row_width_resize_bbox[0] and y >= self.row_width_resize_bbox[1] and x <= self.row_width_resize_bbox[2] and y <= self.row_width_resize_bbox[3]:
             self.rsz_w = None
         if self.height_resizing_enabled and self.rsz_h is not None:
             self.currently_resizing_height = True
@@ -445,19 +416,15 @@ class RowIndex(tk.Canvas):
             r = self.MT.identify_row(y=event.y)
             if r < len(self.MT.row_positions) - 1:
                 datarn = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r]
-                if (
-                    self.MT.row_selected(r)
-                    and not self.event_over_dropdown(r, datarn, event, y)
-                    and not self.event_over_checkbox(r, datarn, event, y)
-                ):
+                if self.MT.row_selected(r) and not self.event_over_dropdown(r, datarn, event, y) and not self.event_over_checkbox(r, datarn, event, y):
                     self.dragged_row = DraggedRowColumn(
                         dragged=r,
                         to_move=get_seq_without_gaps_at_index(sorted(self.MT.get_selected_rows()), r),
                     )
                 else:
                     if self.MT.single_selection_enabled:
-                        self.being_drawn_rect = True
-                        self.being_drawn_rect = self.select_row(r, redraw=True)
+                        self.being_drawn_item = True
+                        self.being_drawn_item = self.select_row(r, redraw=True)
                     elif self.MT.toggle_selection_enabled:
                         self.toggle_select_row(r, redraw=True)
         if self.extra_b1_press_func is not None:
@@ -532,36 +499,30 @@ class RowIndex(tk.Canvas):
                     self.dragged_row.to_move[0],
                     self.dragged_row.to_move[-1],
                 )
-        elif (
-            self.MT.drag_selection_enabled and self.row_selection_enabled and self.rsz_h is None and self.rsz_w is None
-        ):
+        elif self.MT.drag_selection_enabled and self.row_selection_enabled and self.rsz_h is None and self.rsz_w is None:
             need_redraw = False
             end_row = self.MT.identify_row(y=event.y)
             currently_selected = self.MT.currently_selected()
             if end_row < len(self.MT.row_positions) - 1 and currently_selected:
                 if currently_selected.type_ == "row":
-                    rect = self.get_b1_motion_rect(currently_selected.row, end_row)
-                    if (
-                        rect is not None
-                        and self.being_drawn_rect is not None
-                        and self.MT.get_create_selection_box_args_from_item(self.being_drawn_rect) != rect
-                    ):
-                        self.MT.delete_selection_rects()
-                        if rect[2] - rect[0] != 1:
-                            self.being_drawn_rect = self.MT.create_selection_box(*rect)
+                    box = self.get_b1_motion_box(currently_selected.row, end_row)
+                    if box is not None and self.being_drawn_item is not None and self.MT.get_box_from_item(self.being_drawn_item) != box:
+                        self.MT.deselect("all")
+                        if box[2] - box[0] != 1:
+                            self.being_drawn_item = self.MT.create_selection_box(*box, set_current=currently_selected)
                         else:
-                            self.being_drawn_rect = self.select_row(currently_selected.row)
+                            self.being_drawn_item = self.select_row(currently_selected.row, run_binding_func=False)
                         need_redraw = True
                         if self.drag_selection_binding_func is not None:
-                            self.drag_selection_binding_func(SelectionBoxEvent("drag_select_rows", rect[:-1]))
-            if self.scroll_if_event_offscreen(event):
-                need_redraw = True
+                            self.drag_selection_binding_func(SelectEvent("select", {box[:-1]: box[-1]}))
+                if self.scroll_if_event_offscreen(event):
+                    need_redraw = True
             if need_redraw:
                 self.MT.main_table_redraw_grid_and_text(redraw_header=False, redraw_row_index=True)
         if self.extra_b1_motion_func is not None:
             self.extra_b1_motion_func(event)
 
-    def get_b1_motion_rect(self, start_row, end_row):
+    def get_b1_motion_box(self, start_row, end_row):
         if end_row >= start_row:
             return (start_row, 0, end_row + 1, len(self.MT.col_positions) - 1, "rows")
         elif end_row < start_row:
@@ -586,34 +547,24 @@ class RowIndex(tk.Canvas):
                     self.dragged_row.to_move[0],
                     self.dragged_row.to_move[-1],
                 )
-        elif (
-            self.MT.ctrl_select_enabled
-            and self.row_selection_enabled
-            and self.MT.drag_selection_enabled
-            and self.rsz_h is None
-            and self.rsz_w is None
-        ):
+        elif self.MT.ctrl_select_enabled and self.row_selection_enabled and self.MT.drag_selection_enabled and self.rsz_h is None and self.rsz_w is None:
             need_redraw = False
             end_row = self.MT.identify_row(y=event.y)
             currently_selected = self.MT.currently_selected()
             if end_row < len(self.MT.row_positions) - 1 and currently_selected:
                 if currently_selected.type_ == "row":
-                    rect = self.get_b1_motion_rect(currently_selected.row, end_row)
-                    if (
-                        rect is not None
-                        and self.being_drawn_rect is not None
-                        and self.MT.get_create_selection_box_args_from_item(self.being_drawn_rect) != rect
-                    ):
-                        self.MT.delete_item(self.being_drawn_rect)
-                        if rect[2] - rect[0] != 1:
-                            self.being_drawn_rect = self.MT.create_selection_box(*rect)
+                    box = self.get_b1_motion_box(currently_selected.row, end_row)
+                    if box is not None and self.being_drawn_item is not None and self.MT.get_box_from_item(self.being_drawn_item) != box:
+                        self.MT.delete_item(self.being_drawn_item)
+                        if box[2] - box[0] != 1:
+                            self.being_drawn_item = self.MT.create_selection_box(*box, set_current=currently_selected)
                         else:
-                            self.being_drawn_rect = self.add_selection(currently_selected.row)
+                            self.being_drawn_item = self.add_selection(currently_selected.row, run_binding_func=False)
                         need_redraw = True
                         if self.drag_selection_binding_func is not None:
-                            self.drag_selection_binding_func(SelectionBoxEvent("drag_select_rows", rect[:-1]))
-            if self.scroll_if_event_offscreen(event):
-                need_redraw = True
+                            self.drag_selection_binding_func(SelectEvent("select", {box[:-1]: box[-1]}))
+                if self.scroll_if_event_offscreen(event):
+                    need_redraw = True
             if need_redraw:
                 self.MT.main_table_redraw_grid_and_text(redraw_header=False, redraw_row_index=True)
         elif not self.MT.ctrl_select_enabled:
@@ -706,29 +657,22 @@ class RowIndex(tk.Canvas):
             self.MT.set_yviews("moveto", 1)
 
     def event_over_dropdown(self, r, datarn, event, canvasy):
-        if (
-            canvasy < self.MT.row_positions[r] + self.MT.index_txt_height
-            and self.get_cell_kwargs(datarn, key="dropdown")
-            and event.x > self.current_width - self.MT.index_txt_height - 4
-        ):
+        if canvasy < self.MT.row_positions[r] + self.MT.index_txt_height and self.get_cell_kwargs(datarn, key="dropdown") and event.x > self.current_width - self.MT.index_txt_height - 4:
             return True
         return False
 
     def event_over_checkbox(self, r, datarn, event, canvasy):
-        if (
-            canvasy < self.MT.row_positions[r] + self.MT.index_txt_height
-            and self.get_cell_kwargs(datarn, key="checkbox")
-            and event.x < self.MT.index_txt_height + 4
-        ):
+        if canvasy < self.MT.row_positions[r] + self.MT.index_txt_height and self.get_cell_kwargs(datarn, key="checkbox") and event.x < self.MT.index_txt_height + 4:
             return True
         return False
 
     def b1_release(self, event=None):
-        if self.being_drawn_rect is not None:
-            to_sel = self.MT.get_create_selection_box_args_from_item(self.being_drawn_rect)
-            self.MT.delete_item(self.being_drawn_rect)
-            self.being_drawn_rect = None
-            self.MT.create_selection_box(*to_sel)
+        if self.being_drawn_item is not None:
+            currently_selected = self.MT.currently_selected()
+            to_sel = self.MT.get_box_from_item(self.being_drawn_item)
+            self.MT.delete_item(self.being_drawn_item)
+            self.being_drawn_item = None
+            self.MT.create_selection_box(*to_sel, set_current=currently_selected)
         self.MT.bind("<MouseWheel>", self.MT.mousewheel)
         if self.height_resizing_enabled and self.rsz_h is not None and self.currently_resizing_height:
             self.currently_resizing_height = False
@@ -741,9 +685,7 @@ class RowIndex(tk.Canvas):
             elif size > self.MT.max_row_height:
                 new_row_pos = floor(self.MT.row_positions[self.rsz_h - 1] + self.MT.max_row_height)
             increment = new_row_pos - self.MT.row_positions[self.rsz_h]
-            self.MT.row_positions[self.rsz_h + 1 :] = [
-                e + increment for e in islice(self.MT.row_positions, self.rsz_h + 1, len(self.MT.row_positions))
-            ]
+            self.MT.row_positions[self.rsz_h + 1 :] = [e + increment for e in islice(self.MT.row_positions, self.rsz_h + 1, len(self.MT.row_positions))]
             self.MT.row_positions[self.rsz_h] = new_row_pos
             new_height = self.MT.row_positions[self.rsz_h] - self.MT.row_positions[self.rsz_h - 1]
             self.MT.recreate_all_selection_boxes()
@@ -767,12 +709,7 @@ class RowIndex(tk.Canvas):
             y = event.y
             r = self.MT.identify_row(y=y)
             orig_selected = self.dragged_row.to_move
-            if (
-                r != self.dragged_row
-                and r is not None
-                and (r < self.dragged_row.to_move[0] or r > self.dragged_row.to_move[-1])
-                and len(orig_selected) != (len(self.MT.row_positions) - 1)
-            ):
+            if r != self.dragged_row and r is not None and (r < self.dragged_row.to_move[0] or r > self.dragged_row.to_move[-1]) and len(orig_selected) != (len(self.MT.row_positions) - 1):
                 rm1start = orig_selected[0]
                 totalrows = len(orig_selected)
                 extra_func_success = True
@@ -790,13 +727,9 @@ class RowIndex(tk.Canvas):
                     except Exception:
                         extra_func_success = False
                 if extra_func_success:
-                    new_selected, dispset = self.MT.move_rows_adjust_options_dict(
-                        r, rm1start, totalrows, move_data=self.row_drag_and_drop_perform
-                    )
+                    new_selected, dispset = self.MT.move_rows_adjust_options_dict(r, rm1start, totalrows, move_data=self.row_drag_and_drop_perform)
                     if self.MT.undo_enabled:
-                        self.MT.undo_storage.append(
-                            zlib.compress(pickle.dumps(("move_rows", orig_selected, new_selected)))
-                        )
+                        self.MT.undo_storage.append(zlib.compress(pickle.dumps(("move_rows", orig_selected, new_selected))))
                     self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
                     if self.ri_extra_end_drag_drop_func is not None:
                         self.ri_extra_end_drag_drop_func(
@@ -810,17 +743,10 @@ class RowIndex(tk.Canvas):
                     self.parentframe.emit_event("<<SheetModified>>")
         elif self.b1_pressed_loc is not None and self.rsz_w is None and self.rsz_h is None:
             r = self.MT.identify_row(y=event.y)
-            if (
-                r is not None
-                and r < len(self.MT.row_positions) - 1
-                and r == self.b1_pressed_loc
-                and self.b1_pressed_loc != self.closed_dropdown
-            ):
+            if r is not None and r < len(self.MT.row_positions) - 1 and r == self.b1_pressed_loc and self.b1_pressed_loc != self.closed_dropdown:
                 datarn = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r]
                 canvasy = self.canvasy(event.y)
-                if self.event_over_dropdown(r, datarn, event, canvasy) or self.event_over_checkbox(
-                    r, datarn, event, canvasy
-                ):
+                if self.event_over_dropdown(r, datarn, event, canvasy) or self.event_over_checkbox(r, datarn, event, canvasy):
                     self.open_cell(event)
             else:
                 self.mouseclick_outside_editor_or_dropdown_all_canvases()
@@ -875,24 +801,23 @@ class RowIndex(tk.Canvas):
                 fill_iid = self.select_row(row, redraw=redraw)
         return fill_iid
 
-    def select_row(self, r, redraw=False):
-        self.MT.delete_selection_rects()
-        fill_iid = self.MT.create_selection_box(r, 0, r + 1, len(self.MT.col_positions) - 1, "rows")
-        self.MT.set_currently_selected(r, 0, type_="row")
+    def select_row(self, r, redraw=False, run_binding_func=True):
+        self.MT.deselect("all")
+        box = (r, 0, r + 1, len(self.MT.col_positions) - 1, "rows")
+        fill_iid = self.MT.create_selection_box(*box)
         if redraw:
             self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
-        if self.selection_binding_func is not None:
-            self.selection_binding_func(SelectRowEvent("select_row", r))
+        if self.selection_binding_func is not None and run_binding_func:
+            self.selection_binding_func(SelectEvent("select", {box[:-1]: box[-1]}))
         return fill_iid
 
     def add_selection(self, r, redraw=False, run_binding_func=True, set_as_current=True):
-        if set_as_current:
-            self.MT.set_currently_selected(r, 0, type_="row")
-        fill_iid = self.MT.create_selection_box(r, 0, r + 1, len(self.MT.col_positions) - 1, "rows")
+        box = (r, 0, r + 1, len(self.MT.col_positions) - 1, "rows")
+        fill_iid = self.MT.create_selection_box(*box, set_current=set_as_current)
         if redraw:
             self.MT.main_table_redraw_grid_and_text(redraw_header=False, redraw_row_index=True)
         if self.selection_binding_func is not None and run_binding_func:
-            self.selection_binding_func(("select_row", r))
+            self.selection_binding_func(SelectEvent("select", {box[:-1]: box[-1]}))
         return fill_iid
 
     def get_cell_dimensions(self, datarn):
@@ -972,22 +897,14 @@ class RowIndex(tk.Canvas):
         if not return_new_height:
             new_row_pos = self.MT.row_positions[row] + new_height
             increment = new_row_pos - self.MT.row_positions[r_norm]
-            self.MT.row_positions[r_extra:] = [
-                e + increment for e in islice(self.MT.row_positions, r_extra, len(self.MT.row_positions))
-            ]
+            self.MT.row_positions[r_extra:] = [e + increment for e in islice(self.MT.row_positions, r_extra, len(self.MT.row_positions))]
             self.MT.row_positions[r_norm] = new_row_pos
             if recreate:
                 self.MT.recreate_all_selection_boxes()
         return new_height
 
     def set_width_of_index_to_text(self, text=None):
-        if (
-            text is None
-            and not self.MT._row_index
-            and isinstance(self.MT._row_index, list)
-            or isinstance(self.MT._row_index, int)
-            and self.MT._row_index >= len(self.MT.data)
-        ):
+        if text is None and not self.MT._row_index and isinstance(self.MT._row_index, list) or isinstance(self.MT._row_index, int) and self.MT._row_index >= len(self.MT.data):
             return
         qconf = self.MT.txt_measure_canvas.itemconfig
         qbbox = self.MT.txt_measure_canvas.bbox
@@ -1068,21 +985,6 @@ class RowIndex(tk.Canvas):
         if recreate:
             self.MT.recreate_all_selection_boxes()
 
-    def align_cells(self, rows=[], align="global"):
-        if isinstance(rows, int):
-            rows = [rows]
-        else:
-            rows = rows
-        if align == "global":
-            for r in rows:
-                if r in self.cell_options and "align" in self.cell_options[r]:
-                    del self.cell_options[r]["align"]
-        else:
-            for r in rows:
-                if r not in self.cell_options:
-                    self.cell_options[r] = {}
-                self.cell_options[r]["align"] = align
-
     def auto_set_index_width(self, end_row):
         if not self.MT._row_index and not isinstance(self.MT._row_index, int) and self.auto_resize_width:
             if self.default_index == "letters":
@@ -1109,28 +1011,16 @@ class RowIndex(tk.Canvas):
             if kwargs[0] is not None:
                 c_1 = kwargs[0] if kwargs[0].startswith("#") else Color_Map[kwargs[0]]
             if "rows" in selections and r in selections["rows"]:
-                tf = (
-                    self.index_selected_rows_fg
-                    if kwargs[1] is None or self.MT.display_selected_fg_over_highlights
-                    else kwargs[1]
-                )
+                tf = self.index_selected_rows_fg if kwargs[1] is None or self.MT.display_selected_fg_over_highlights else kwargs[1]
                 if kwargs[0] is not None:
                     fill = (
-                        f"#{int((int(c_1[1:3], 16) + int(c_3[1:3], 16)) / 2):02X}"
-                        + f"{int((int(c_1[3:5], 16) + int(c_3[3:5], 16)) / 2):02X}"
-                        + f"{int((int(c_1[5:], 16) + int(c_3[5:], 16)) / 2):02X}"
+                        f"#{int((int(c_1[1:3], 16) + int(c_3[1:3], 16)) / 2):02X}" + f"{int((int(c_1[3:5], 16) + int(c_3[3:5], 16)) / 2):02X}" + f"{int((int(c_1[5:], 16) + int(c_3[5:], 16)) / 2):02X}"
                     )
             elif "cells" in selections and r in selections["cells"]:
-                tf = (
-                    self.index_selected_cells_fg
-                    if kwargs[1] is None or self.MT.display_selected_fg_over_highlights
-                    else kwargs[1]
-                )
+                tf = self.index_selected_cells_fg if kwargs[1] is None or self.MT.display_selected_fg_over_highlights else kwargs[1]
                 if kwargs[0] is not None:
                     fill = (
-                        f"#{int((int(c_1[1:3], 16) + int(c_2[1:3], 16)) / 2):02X}"
-                        + f"{int((int(c_1[3:5], 16) + int(c_2[3:5], 16)) / 2):02X}"
-                        + f"{int((int(c_1[5:], 16) + int(c_2[5:], 16)) / 2):02X}"
+                        f"#{int((int(c_1[1:3], 16) + int(c_2[1:3], 16)) / 2):02X}" + f"{int((int(c_1[3:5], 16) + int(c_2[3:5], 16)) / 2):02X}" + f"{int((int(c_1[5:], 16) + int(c_2[5:], 16)) / 2):02X}"
                     )
             else:
                 tf = self.index_fg if kwargs[1] is None else kwargs[1]
@@ -1143,9 +1033,7 @@ class RowIndex(tk.Canvas):
                     self.current_width - 1,
                     sr,
                     fill=fill,
-                    outline=self.index_fg
-                    if self.get_cell_kwargs(datarn, key="dropdown") and self.MT.show_dropdown_borders
-                    else "",
+                    outline=self.index_fg if self.get_cell_kwargs(datarn, key="dropdown") and self.MT.show_dropdown_borders else "",
                     tag="s",
                 )
         elif not kwargs:
@@ -1385,16 +1273,8 @@ class RowIndex(tk.Canvas):
                     )
                 if points:
                     self.redraw_gridline(points=points, fill=self.index_grid_fg, width=1, tag="h")
-        c_2 = (
-            self.index_selected_cells_bg
-            if self.index_selected_cells_bg.startswith("#")
-            else Color_Map[self.index_selected_cells_bg]
-        )
-        c_3 = (
-            self.index_selected_rows_bg
-            if self.index_selected_rows_bg.startswith("#")
-            else Color_Map[self.index_selected_rows_bg]
-        )
+        c_2 = self.index_selected_cells_bg if self.index_selected_cells_bg.startswith("#") else Color_Map[self.index_selected_cells_bg]
+        c_3 = self.index_selected_rows_bg if self.index_selected_rows_bg.startswith("#") else Color_Map[self.index_selected_rows_bg]
         font = self.MT.index_font
         selections = self.get_redraw_selections(start_row, end_row)
         for r in range(start_row, end_row - 1):
@@ -1480,11 +1360,7 @@ class RowIndex(tk.Canvas):
                 else:
                     mw -= box_w + 1
                 try:
-                    draw_check = (
-                        self.MT._row_index[datarn]
-                        if isinstance(self.MT._row_index, (list, tuple))
-                        else self.MT.data[datarn][self.MT._row_index]
-                    )
+                    draw_check = self.MT._row_index[datarn] if isinstance(self.MT._row_index, (list, tuple)) else self.MT.data[datarn][self.MT._row_index]
                 except Exception:
                     draw_check = False
                 self.redraw_checkbox(
@@ -1627,7 +1503,8 @@ class RowIndex(tk.Canvas):
         d = defaultdict(list)
         for item in chain(self.find_withtag("cells"), self.find_withtag("rows")):
             tags = self.gettags(item)
-            d[tags[0]].append(tuple(int(e) for e in tags[1].split("_") if e))
+            if tags:
+                d[tags[0]].append(tuple(int(e) for e in tags[1].split("_") if e))
         d2 = {}
         if "cells" in d:
             d2["cells"] = {r for r in range(startr, endr) for r1, c1, r2, c2 in d["cells"] if r1 <= r and r2 > r}
@@ -1685,16 +1562,10 @@ class RowIndex(tk.Canvas):
                     extra_func_key = "F2"
             datarn = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r]
             text = self.get_cell_data(datarn, none_to_empty_str=True, redirect_int=True)
-        elif event is not None and (
-            (hasattr(event, "keysym") and event.keysym == "BackSpace") or event.keycode in (8, 855638143)
-        ):
+        elif event is not None and ((hasattr(event, "keysym") and event.keysym == "BackSpace") or event.keycode in (8, 855638143)):
             extra_func_key = "BackSpace"
             text = ""
-        elif event is not None and (
-            (hasattr(event, "char") and event.char.isalpha())
-            or (hasattr(event, "char") and event.char.isdigit())
-            or (hasattr(event, "char") and event.char in symbols_set)
-        ):
+        elif event is not None and ((hasattr(event, "char") and event.char.isalpha()) or (hasattr(event, "char") and event.char.isdigit()) or (hasattr(event, "char") and event.char in symbols_set)):
             extra_func_key = event.char
             text = event.char
         else:
@@ -1781,11 +1652,7 @@ class RowIndex(tk.Canvas):
         if self.height_resizing_enabled:
             datarn = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r]
             curr_height = self.text_editor.winfo_height()
-            if (
-                not check_lines
-                or self.MT.get_lines_cell_height(self.text_editor.get_num_lines() + 1, font=self.MT.index_font)
-                > curr_height
-            ):
+            if not check_lines or self.MT.get_lines_cell_height(self.text_editor.get_num_lines() + 1, font=self.MT.index_font) > curr_height:
                 new_height = curr_height + self.MT.index_xtra_lines_increment
                 space_bot = self.MT.get_space_bot(r)
                 if new_height > space_bot:
@@ -1827,9 +1694,7 @@ class RowIndex(tk.Canvas):
 
     def destroy_text_editor(self, event=None):
         if event is not None and self.extra_end_edit_cell_func is not None and self.text_editor_loc is not None:
-            self.extra_end_edit_cell_func(
-                EditHeaderEvent(int(self.text_editor_loc), "Escape", None, "escape_edit_index")
-            )
+            self.extra_end_edit_cell_func(EditHeaderEvent(int(self.text_editor_loc), "Escape", None, "escape_edit_index"))
         self.text_editor_loc = None
         try:
             self.delete(self.text_editor_id)
@@ -1877,11 +1742,7 @@ class RowIndex(tk.Canvas):
                     value=self.text_editor_value,
                     check_input_valid=False,
                 )
-            elif (
-                self.extra_end_edit_cell_func is not None
-                and not self.MT.edit_cell_validation
-                and self.input_valid_for_cell(datarn, self.text_editor_value)
-            ):
+            elif self.extra_end_edit_cell_func is not None and not self.MT.edit_cell_validation and self.input_valid_for_cell(datarn, self.text_editor_value):
                 self.set_cell_data_undo(
                     r,
                     datarn=datarn,
@@ -1950,8 +1811,7 @@ class RowIndex(tk.Canvas):
                                 (
                                     "edit_index",
                                     {datarn: self.MT._row_index[datarn]},
-                                    self.MT.get_boxes(include_current=False),
-                                    self.MT.currently_selected(),
+                                    self.MT.get_boxes(),
                                 )
                             )
                         )
@@ -1997,12 +1857,7 @@ class RowIndex(tk.Canvas):
             return self.get_valid_cell_data_as_str(datarn, fix=False)
         if redirect_int and isinstance(self.MT._row_index, int):  # internal use
             return self.MT.get_cell_data(datarn, self.MT._row_index, none_to_empty_str=True)
-        if (
-            isinstance(self.MT._row_index, int)
-            or not self.MT._row_index
-            or datarn >= len(self.MT._row_index)
-            or (self.MT._row_index[datarn] is None and none_to_empty_str)
-        ):
+        if isinstance(self.MT._row_index, int) or not self.MT._row_index or datarn >= len(self.MT._row_index) or (self.MT._row_index[datarn] is None and none_to_empty_str):
             return ""
         return self.MT._row_index[datarn]
 
@@ -2066,11 +1921,7 @@ class RowIndex(tk.Canvas):
             if isinstance(self.MT._row_index, list):
                 value = not self.MT._row_index[datarn] if type(self.MT._row_index[datarn]) == bool else False
             elif isinstance(self.MT._row_index, int):
-                value = (
-                    not self.MT.data[datarn][self.MT._row_index]
-                    if type(self.MT.data[datarn][self.MT._row_index]) == bool
-                    else False
-                )
+                value = not self.MT.data[datarn][self.MT._row_index] if type(self.MT.data[datarn][self.MT._row_index]) == bool else False
             else:
                 value = False
             self.set_cell_data_undo(r, datarn=datarn, value=value, cell_resize=False)
@@ -2080,9 +1931,7 @@ class RowIndex(tk.Canvas):
                         r,
                         0,
                         "IndexCheckboxClicked",
-                        self.MT._row_index[datarn]
-                        if isinstance(self.MT._row_index, list)
-                        else self.MT.get_cell_data(datarn, self.MT._row_index),
+                        self.MT._row_index[datarn] if isinstance(self.MT._row_index, list) else self.MT.get_cell_data(datarn, self.MT._row_index),
                     )
                 )
             if self.extra_end_edit_cell_func is not None:
@@ -2090,9 +1939,7 @@ class RowIndex(tk.Canvas):
                     EditIndexEvent(
                         r,
                         "Return",
-                        self.MT._row_index[datarn]
-                        if isinstance(self.MT._row_index, list)
-                        else self.MT.get_cell_data(datarn, self.MT._row_index),
+                        self.MT._row_index[datarn] if isinstance(self.MT._row_index, list) else self.MT.get_cell_data(datarn, self.MT._row_index),
                         "end_edit_index",
                     )
                 )
@@ -2122,9 +1969,7 @@ class RowIndex(tk.Canvas):
             self.options["dropdown"] = {}
         self.options["dropdown"] = get_dropdown_dict(**kwargs)
         total_rows = self.MT.total_data_rows()
-        value = (
-            kwargs["set_value"] if kwargs["set_value"] is not None else kwargs["values"][0] if kwargs["values"] else ""
-        )
+        value = kwargs["set_value"] if kwargs["set_value"] is not None else kwargs["values"][0] if kwargs["values"] else ""
         if isinstance(self.MT._row_index, int):
             for datarn in range(total_rows):
                 self.MT.set_cell_data(datarn=datarn, datacn=self.MT._row_index, value=value)
@@ -2133,9 +1978,7 @@ class RowIndex(tk.Canvas):
                 self.set_cell_data(datarn=datarn, value=value)
 
     def create_checkbox(self, datarn=0, **kwargs):
-        if datarn in self.cell_options and (
-            "dropdown" in self.cell_options[datarn] or "checkbox" in self.cell_options[datarn]
-        ):
+        if datarn in self.cell_options and ("dropdown" in self.cell_options[datarn] or "checkbox" in self.cell_options[datarn]):
             self.delete_cell_options_dropdown_and_checkbox(datarn)
         if datarn not in self.cell_options:
             self.cell_options[datarn] = {}
@@ -2143,20 +1986,14 @@ class RowIndex(tk.Canvas):
         self.set_cell_data(datarn=datarn, value=kwargs["checked"])
 
     def create_dropdown(self, datarn, **kwargs):
-        if datarn in self.cell_options and (
-            "dropdown" in self.cell_options[datarn] or "checkbox" in self.cell_options[datarn]
-        ):
+        if datarn in self.cell_options and ("dropdown" in self.cell_options[datarn] or "checkbox" in self.cell_options[datarn]):
             self.delete_cell_options_dropdown_and_checkbox(datarn)
         if datarn not in self.cell_options:
             self.cell_options[datarn] = {}
         self.cell_options[datarn]["dropdown"] = get_dropdown_dict(**kwargs)
         self.set_cell_data(
             datarn=datarn,
-            value=kwargs["set_value"]
-            if kwargs["set_value"] is not None
-            else kwargs["values"][0]
-            if kwargs["values"]
-            else "",
+            value=kwargs["set_value"] if kwargs["set_value"] is not None else kwargs["values"][0] if kwargs["values"] else "",
         )
 
     def get_dropdown_height_anchor(self, datarn, text_editor_h=None):
@@ -2164,9 +2001,7 @@ class RowIndex(tk.Canvas):
         for i, v in enumerate(self.get_cell_kwargs(datarn, key="dropdown")["values"]):
             v_numlines = len(v.split("\n") if isinstance(v, str) else f"{v}".split("\n"))
             if v_numlines > 1:
-                win_h += (
-                    self.MT.index_first_ln_ins + (v_numlines * self.MT.index_xtra_lines_increment) + 5
-                )  # end of cell
+                win_h += self.MT.index_first_ln_ins + (v_numlines * self.MT.index_xtra_lines_increment) + 5  # end of cell
             else:
                 win_h += self.MT.min_row_height
             if i == 5:
@@ -2221,9 +2056,7 @@ class RowIndex(tk.Canvas):
         if kwargs["state"] == "normal":
             self.text_editor.textedit.bind(
                 "<<TextModified>>",
-                lambda x: window.search_and_see(
-                    DropDownModifiedEvent("IndexComboboxModified", r, 0, self.text_editor.get())
-                ),
+                lambda x: window.search_and_see(DropDownModifiedEvent("IndexComboboxModified", r, 0, self.text_editor.get())),
             )
             if kwargs["modified_function"] is not None:
                 window.modified_function = kwargs["modified_function"]
@@ -2255,17 +2088,13 @@ class RowIndex(tk.Canvas):
             if self.extra_end_edit_cell_func is None:
                 self.set_cell_data_undo(r, datarn=datarn, value=selection, redraw=not redraw)
             elif self.extra_end_edit_cell_func is not None and self.MT.edit_cell_validation:
-                validation = self.extra_end_edit_cell_func(
-                    EditIndexEvent(r, "IndexComboboxSelected", f"{selection}", "end_edit_index")
-                )
+                validation = self.extra_end_edit_cell_func(EditIndexEvent(r, "IndexComboboxSelected", f"{selection}", "end_edit_index"))
                 if validation is not None:
                     selection = validation
                 self.set_cell_data_undo(r, datarn=datarn, value=selection, redraw=not redraw)
             elif self.extra_end_edit_cell_func is not None and not self.MT.edit_cell_validation:
                 self.set_cell_data_undo(r, datarn=datarn, value=selection, redraw=not redraw)
-                self.extra_end_edit_cell_func(
-                    EditIndexEvent(r, "IndexComboboxSelected", f"{selection}", "end_edit_index")
-                )
+                self.extra_end_edit_cell_func(EditIndexEvent(r, "IndexComboboxSelected", f"{selection}", "end_edit_index"))
             self.focus_set()
             self.MT.recreate_all_selection_boxes()
         self.destroy_text_editor("Escape")
@@ -2285,9 +2114,7 @@ class RowIndex(tk.Canvas):
         else:
             self.destroy_text_editor("Escape")
         if closed_dd_coords is not None:
-            self.destroy_opened_dropdown_window(
-                closed_dd_coords
-            )  # displayed coords not data, necessary for b1 function
+            self.destroy_opened_dropdown_window(closed_dd_coords)  # displayed coords not data, necessary for b1 function
         return closed_dd_coords
 
     def mouseclick_outside_editor_or_dropdown_all_canvases(self):
