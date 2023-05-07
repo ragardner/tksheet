@@ -378,7 +378,7 @@ def get_index_of_gap_in_sorted_integer_seq_reverse(seq, start=0):
     return None
 
 
-def get_seq_without_gaps_at_index(seq, position):
+def get_seq_without_gaps_at_index(seq, position, get_st_end=False):
     start_idx = bisect.bisect_left(seq, position)
     forward_gap = get_index_of_gap_in_sorted_integer_seq_forward(seq, start_idx)
     reverse_gap = get_index_of_gap_in_sorted_integer_seq_reverse(seq, start_idx)
@@ -386,4 +386,6 @@ def get_seq_without_gaps_at_index(seq, position):
         seq[:] = seq[:forward_gap]
     if reverse_gap is not None:
         seq[:] = seq[reverse_gap:]
+    if get_st_end:
+        return seq[0], seq[-1]
     return seq

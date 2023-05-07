@@ -214,10 +214,7 @@ class RowIndex(tk.Canvas):
                     if self.ctrl_selection_binding_func is not None:
                         self.ctrl_selection_binding_func(SelectEvent(self.MT.get_box_from_item(self.being_drawn_item, get_dict=True)))
                 elif r_selected:
-                    self.dragged_row = DraggedRowColumn(
-                        dragged=r,
-                        to_move=get_seq_without_gaps_at_index(sorted(self.MT.get_selected_rows()), r),
-                    )
+                    self.MT.deselect(r=r)
         elif not self.MT.ctrl_select_enabled:
             self.b1_press(event)
 
@@ -230,6 +227,7 @@ class RowIndex(tk.Canvas):
                 r_selected = self.MT.row_selected(r)
                 if not r_selected and self.row_selection_enabled:
                     currently_selected = self.MT.currently_selected()
+                    self.MT.delete_item(self.MT.currently_selected(get_tags=True)[2])
                     if currently_selected and currently_selected.type_ == "row":
                         box = self.get_shift_select_box(r, currently_selected.row)
                         self.being_drawn_item = self.MT.create_selection_box(*box, set_current=currently_selected)
@@ -242,7 +240,7 @@ class RowIndex(tk.Canvas):
                 elif r_selected:
                     self.dragged_row = DraggedRowColumn(
                         dragged=r,
-                        to_move=get_seq_without_gaps_at_index(sorted(self.MT.get_selected_rows()), r),
+                        to_move=get_seq_without_gaps_at_index(sorted(self.MT.get_selected_rows()), r, get_st_end=True),
                     )
         elif not self.MT.ctrl_select_enabled:
             self.shift_b1_press(event)
@@ -269,7 +267,7 @@ class RowIndex(tk.Canvas):
                 elif r_selected:
                     self.dragged_row = DraggedRowColumn(
                         dragged=r,
-                        to_move=get_seq_without_gaps_at_index(sorted(self.MT.get_selected_rows()), r),
+                        to_move=get_seq_without_gaps_at_index(sorted(self.MT.get_selected_rows()), r, get_st_end=True),
                     )
 
     def get_shift_selection_box(self, r, min_r):
@@ -419,7 +417,7 @@ class RowIndex(tk.Canvas):
                 if self.MT.row_selected(r) and not self.event_over_dropdown(r, datarn, event, y) and not self.event_over_checkbox(r, datarn, event, y):
                     self.dragged_row = DraggedRowColumn(
                         dragged=r,
-                        to_move=get_seq_without_gaps_at_index(sorted(self.MT.get_selected_rows()), r),
+                        to_move=get_seq_without_gaps_at_index(sorted(self.MT.get_selected_rows()), r, get_st_end=True),
                     )
                 else:
                     if self.MT.single_selection_enabled:
@@ -599,7 +597,7 @@ class RowIndex(tk.Canvas):
             if row < self.dragged_row.to_move[0]:
                 ypos = self.MT.row_positions[row]
             else:
-                ypos = self.MT.row_positions[row + 1]
+                ypos = self.MT.row_positions[row + 1] if len(self.MT.row_positions) - 1 > row else self.MT.row_positions[row]
         return ypos
 
     def show_drag_and_drop_indicators(self, ypos, x1, x2, start_row, end_row):
@@ -708,10 +706,8 @@ class RowIndex(tk.Canvas):
             self.delete_all_resize_and_ctrl_lines()
             y = event.y
             r = self.MT.identify_row(y=y)
-            orig_selected = self.dragged_row.to_move
-            if r != self.dragged_row and r is not None and (r < self.dragged_row.to_move[0] or r > self.dragged_row.to_move[-1]) and len(orig_selected) != (len(self.MT.row_positions) - 1):
-                rm1start = orig_selected[0]
-                totalrows = len(orig_selected)
+            totalrows = self.dragged_row.to_move[-1] - self.dragged_row.to_move[0] + 1
+            if r != self.dragged_row and r is not None and (r < self.dragged_row.to_move[0] or r > self.dragged_row.to_move[-1]) and totalrows != (len(self.MT.row_positions) - 1):
                 extra_func_success = True
                 if r >= len(self.MT.row_positions) - 1:
                     r -= 1
@@ -720,24 +716,24 @@ class RowIndex(tk.Canvas):
                         self.ri_extra_begin_drag_drop_func(
                             BeginDragDropEvent(
                                 "begin_row_index_drag_drop",
-                                tuple(orig_selected),
+                                tuple(self.dragged_row.to_move),
                                 int(r),
                             )
                         )
                     except Exception:
                         extra_func_success = False
                 if extra_func_success:
-                    new_selected, dispset = self.MT.move_rows_adjust_options_dict(r, rm1start, totalrows, move_data=self.row_drag_and_drop_perform)
+                    new_selected, dispset = self.MT.move_rows_adjust_options_dict(r, self.dragged_row.to_move[0], totalrows, move_data=self.row_drag_and_drop_perform)
                     if self.MT.undo_enabled:
-                        self.MT.undo_storage.append(zlib.compress(pickle.dumps(("move_rows", orig_selected, new_selected))))
+                        self.MT.undo_storage.append(zlib.compress(pickle.dumps(("move_rows", self.dragged_row.to_move, new_selected))))
                     self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
                     if self.ri_extra_end_drag_drop_func is not None:
                         self.ri_extra_end_drag_drop_func(
                             EndDragDropEvent(
                                 "end_row_index_drag_drop",
-                                orig_selected,
+                                tuple(range(self.dragged_row.to_move[0], self.dragged_row.to_move[0] + totalrows)),
                                 new_selected,
-                                int(r),
+                                r,
                             )
                         )
                     self.parentframe.emit_event("<<SheetModified>>")

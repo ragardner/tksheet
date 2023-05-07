@@ -235,10 +235,7 @@ class ColumnHeaders(tk.Canvas):
                     if self.ctrl_selection_binding_func is not None:
                         self.ctrl_selection_binding_func(SelectEvent("select", self.MT.get_box_from_item(self.being_drawn_item, get_dict=True)))
                 elif c_selected:
-                    self.dragged_col = DraggedRowColumn(
-                        dragged=c,
-                        to_move=get_seq_without_gaps_at_index(sorted(self.MT.get_selected_cols()), c),
-                    )
+                    self.MT.deselect(c=c)
         elif not self.MT.ctrl_select_enabled:
             self.b1_press(event)
 
@@ -251,6 +248,7 @@ class ColumnHeaders(tk.Canvas):
                 c_selected = self.MT.col_selected(c)
                 if not c_selected and self.col_selection_enabled:
                     currently_selected = self.MT.currently_selected()
+                    self.MT.delete_item(self.MT.currently_selected(get_tags=True)[2])
                     if currently_selected and currently_selected.type_ == "column":
                         box = self.get_shift_select_box(c, currently_selected.column)
                         self.being_drawn_item = self.MT.create_selection_box(*box, set_current=currently_selected)
@@ -263,7 +261,7 @@ class ColumnHeaders(tk.Canvas):
                 elif c_selected:
                     self.dragged_col = DraggedRowColumn(
                         dragged=c,
-                        to_move=get_seq_without_gaps_at_index(sorted(self.MT.get_selected_cols()), c),
+                        to_move=get_seq_without_gaps_at_index(sorted(self.MT.get_selected_cols()), c, get_st_end=True),
                     )
         elif not self.MT.ctrl_select_enabled:
             self.shift_b1_press(event)
@@ -290,7 +288,7 @@ class ColumnHeaders(tk.Canvas):
                 elif c_selected:
                     self.dragged_col = DraggedRowColumn(
                         dragged=c,
-                        to_move=get_seq_without_gaps_at_index(sorted(self.MT.get_selected_cols()), c),
+                        to_move=get_seq_without_gaps_at_index(sorted(self.MT.get_selected_cols()), c, get_st_end=True),
                     )
 
     def get_shift_select_box(self, c, min_c):
@@ -434,7 +432,7 @@ class ColumnHeaders(tk.Canvas):
                 if self.MT.col_selected(c) and not self.event_over_dropdown(c, datacn, event, x) and not self.event_over_checkbox(c, datacn, event, x):
                     self.dragged_col = DraggedRowColumn(
                         dragged=c,
-                        to_move=get_seq_without_gaps_at_index(sorted(self.MT.get_selected_cols()), c),
+                        to_move=get_seq_without_gaps_at_index(sorted(self.MT.get_selected_cols()), c, get_st_end=True),
                     )
                 else:
                     if self.MT.single_selection_enabled:
@@ -740,10 +738,8 @@ class ColumnHeaders(tk.Canvas):
             self.delete_all_resize_and_ctrl_lines()
             x = event.x
             c = self.MT.identify_col(x=x)
-            orig_selected = self.dragged_col.to_move
-            if c != self.dragged_col.dragged and c is not None and (c < self.dragged_col.to_move[0] or c > self.dragged_col.to_move[-1]) and len(orig_selected) != len(self.MT.col_positions) - 1:
-                rm1start = orig_selected[0]
-                totalcols = len(orig_selected)
+            totalcols = self.dragged_col.to_move[-1] - self.dragged_col.to_move[0] + 1
+            if c != self.dragged_col.dragged and c is not None and (c < self.dragged_col.to_move[0] or c > self.dragged_col.to_move[-1]) and totalcols != len(self.MT.col_positions) - 1:
                 extra_func_success = True
                 if c >= len(self.MT.col_positions) - 1:
                     c -= 1
@@ -752,7 +748,7 @@ class ColumnHeaders(tk.Canvas):
                         self.ch_extra_begin_drag_drop_func(
                             BeginDragDropEvent(
                                 "begin_column_header_drag_drop",
-                                tuple(orig_selected),
+                                tuple(self.dragged_col.to_move),
                                 int(c),
                             )
                         )
@@ -761,20 +757,20 @@ class ColumnHeaders(tk.Canvas):
                 if extra_func_success:
                     new_selected, dispset = self.MT.move_columns_adjust_options_dict(
                         c,
-                        rm1start,
+                        self.dragged_col.to_move[0],
                         totalcols,
                         move_data=self.column_drag_and_drop_perform,
                     )
                     if self.MT.undo_enabled:
-                        self.MT.undo_storage.append(zlib.compress(pickle.dumps(("move_cols", orig_selected, new_selected))))
+                        self.MT.undo_storage.append(zlib.compress(pickle.dumps(("move_cols", self.dragged_col.to_move, new_selected))))
                     self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
                     if self.ch_extra_end_drag_drop_func is not None:
                         self.ch_extra_end_drag_drop_func(
                             EndDragDropEvent(
                                 "end_column_header_drag_drop",
-                                orig_selected,
+                                tuple(range(self.dragged_col.to_move[0], self.dragged_col.to_move[0] + totalcols)),
                                 new_selected,
-                                int(c),
+                                c,
                             )
                         )
                     self.parentframe.emit_event("<<SheetModified>>")

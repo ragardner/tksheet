@@ -789,7 +789,6 @@ class MainTable(tk.Canvas):
         c = int(col)
         to_move_max = to_move_min + num_cols
         to_del = to_move_max + num_cols
-        orig_selected = list(range(to_move_min, to_move_min + num_cols))
         if index_type == "displayed":
             self.deselect("all", redraw=False)
             cws = [
@@ -841,7 +840,7 @@ class MainTable(tk.Canvas):
                 new_selected = tuple(range(c, c + num_cols))
             else:
                 new_selected = tuple(range(c + 1 - num_cols, c + 1))
-        newcolsdct = {t1: t2 for t1, t2 in zip(orig_selected, new_selected)}
+        newcolsdct = {t1: t2 for t1, t2 in zip(range(to_move_min, to_move_min + num_cols), new_selected)}
         if self.all_columns_displayed or index_type != "displayed":
             dispset = {}
             if to_move_min > c:
@@ -962,7 +961,6 @@ class MainTable(tk.Canvas):
         r = int(row)
         to_move_max = to_move_min + num_rows
         to_del = to_move_max + num_rows
-        orig_selected = list(range(to_move_min, to_move_min + num_rows))
         if index_type == "displayed":
             self.deselect("all", redraw=False)
             rhs = [
@@ -1014,7 +1012,7 @@ class MainTable(tk.Canvas):
                 new_selected = tuple(range(r, r + num_rows))
             else:
                 new_selected = tuple(range(r + 1 - num_rows, r + 1))
-        newrowsdct = {t1: t2 for t1, t2 in zip(orig_selected, new_selected)}
+        newrowsdct = {t1: t2 for t1, t2 in zip(range(to_move_min, to_move_min + num_rows), new_selected)}
         if self.all_rows_displayed or index_type != "displayed":
             dispset = {}
             if to_move_min > r:
@@ -1174,7 +1172,7 @@ class MainTable(tk.Canvas):
         elif undo_storage[0] == "move_cols":
             c = undo_storage[1][0]
             to_move_min = undo_storage[2][0]
-            totalcols = len(undo_storage[2])
+            totalcols = undo_storage[2][-1] - undo_storage[2][0] + 1
             if to_move_min < c:
                 c += totalcols - 1
             self.move_columns_adjust_options_dict(c, to_move_min, totalcols)
@@ -1191,7 +1189,7 @@ class MainTable(tk.Canvas):
         elif undo_storage[0] == "move_rows":
             r = undo_storage[1][0]
             to_move_min = undo_storage[2][0]
-            totalrows = len(undo_storage[2])
+            totalrows = undo_storage[2][-1] - undo_storage[2][0] + 1
             if to_move_min < r:
                 r += totalrows - 1
             self.move_rows_adjust_options_dict(r, to_move_min, totalrows)
@@ -1506,56 +1504,67 @@ class MainTable(tk.Canvas):
 
     def deselect(self, r: int | None = None, c: int | None = None, cell: tuple[int] | None = None, redraw: bool = True, run_binding_func: bool = True):
         deleted_boxes = {}
-        set_curr = True
+        set_curr = False
+        current = self.currently_selected(get_tags=True)
         if r == "all" or (r is None and c is None and cell is None):
             for item in self.get_selection_items(current=False):
                 tags = self.gettags(item)
                 deleted_boxes[tuple(int(e) for e in tags[1].split("_") if e)] = tags[0]
                 self.delete_item(item)
-        elif r == "allrows":
-            for item in self.get_selection_items(columns=False, cells=False, current=False):
-                deleted_boxes[tuple(int(e) for e in self.gettags(item)[1].split("_") if e)] = "rows"
+        elif r in ("allrows", "allcols"):
+            for item in self.get_selection_items(columns=r == "allcols", rows=r == "allrows", cells=False, current=False):
+                tags = self.gettags(item)
+                r1, c1, r2, c2 = tuple(int(e) for e in tags[1].split("_") if e)
+                deleted_boxes[(r1, c1, r2, c2)] = tags[0]
                 self.delete_item(item)
-        elif r == "allcols":
-            for item in self.get_selection_items(rows=False, cells=False, current=False):
-                deleted_boxes[tuple(int(e) for e in self.gettags(item)[1].split("_") if e)] = "columns"
-                self.delete_item(item)
+                if current[2] == tags[2]:
+                    set_curr = True
         elif r is not None and c is None and cell is None:
-            set_curr = False
             for item in self.get_selection_items(columns=False, cells=False, current=False):
                 tags = self.gettags(item)
                 r1, c1, r2, c2 = tuple(int(e) for e in tags[1].split("_") if e)
                 if r >= r1 and r < r2:
-                    current = self.currently_selected()
-                    deleted_boxes[r1, c1, r2, c2] = "rows"
+                    deleted_boxes[(r1, c1, r2, c2)] = tags[0]
                     self.delete_item(item)
-                    if current and current.type_ == "row" and current.row >= r1 and current.row < r2 and current.column >= c1 and current.column < c2:
+                    if current[2] == tags[2]:
                         set_curr = True
+                    if r2 - r1 != 1:
+                        if r == r1:
+                            self.create_selection_box(r1 + 1, 0, r2, len(self.col_positions) - 1, "rows", set_current=False)
+                        elif r == r2 - 1:
+                            self.create_selection_box(r1, 0, r2 - 1, len(self.col_positions) - 1, "rows", set_current=False)
+                        else:
+                            self.create_selection_box(r1, 0, r, len(self.col_positions) - 1, "rows", set_current=False)
+                            self.create_selection_box(r + 1, 0, r2, len(self.col_positions) - 1, "rows", set_current=False)
                     break
         elif c is not None and r is None and cell is None:
-            set_curr = False
             for item in self.get_selection_items(rows=False, cells=False, current=False):
                 tags = self.gettags(item)
                 r1, c1, r2, c2 = tuple(int(e) for e in tags[1].split("_") if e)
                 if c >= c1 and c < c2:
-                    current = self.currently_selected()
-                    deleted_boxes[r1, c1, r2, c2] = "columns"
+                    deleted_boxes[(r1, c1, r2, c2)] = tags[0]
                     self.delete_item(item)
-                    if current and current.type_ == "column" and current.row >= r1 and current.row < r2 and current.column >= c1 and current.column < c2:
+                    if current[2] == tags[2]:
                         set_curr = True
+                    if c2 - c1 != 1:
+                        if c == c1:
+                            self.create_selection_box(0, c1 + 1, len(self.row_positions) - 1, c2, "columns", set_current=False)
+                        elif c == c2 - 1:
+                            self.create_selection_box(0, c1, len(self.row_positions) - 1, c2 - 1, "columns", set_current=False)
+                        else:
+                            self.create_selection_box(0, c1, len(self.row_positions) - 1, c, "columns", set_current=False)
+                            self.create_selection_box(0, c + 1, len(self.row_positions) - 1, c2, "columns", set_current=False)
                     break
         elif (r is not None and c is not None and cell is None) or cell is not None:
-            set_curr = False
             if cell is not None:
                 r, c = cell[0], cell[1]
-            for item in self.get_selection_items(reverse=True):
+            for item in self.get_selection_items(current=False, reverse=True):
                 tags = self.gettags(item)
                 r1, c1, r2, c2 = tuple(int(e) for e in tags[1].split("_") if e)
                 if r >= r1 and c >= c1 and r < r2 and c < c2:
-                    current = self.currently_selected()
                     deleted_boxes[(r1, c1, r2, c2)] = tags[0]
                     self.delete_item(item)
-                    if current and tags[0].startswith(current.type_) and current.row >= r1 and current.row < r2 and current.column >= c1 and current.column < c2:
+                    if current[2] == tags[2]:
                         set_curr = True
                     break
         if set_curr:
@@ -2612,7 +2621,10 @@ class MainTable(tk.Canvas):
             rowsel = int(self.identify_row(y=event.y))
             colsel = int(self.identify_col(x=event.x))
             if rowsel < len(self.row_positions) - 1 and colsel < len(self.col_positions) - 1:
-                self.being_drawn_item = self.add_selection(rowsel, colsel, set_as_current=True, run_binding_func=False)
+                if self.cell_selected(rowsel, colsel):
+                    self.deselect(rowsel, colsel)
+                else:
+                    self.being_drawn_item = self.add_selection(rowsel, colsel, set_as_current=True, run_binding_func=False)
                 self.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True, redraw_table=True)
                 if self.ctrl_selection_binding_func is not None:
                     self.ctrl_selection_binding_func(
@@ -2633,6 +2645,7 @@ class MainTable(tk.Canvas):
             colsel = int(self.identify_col(x=event.x))
             if rowsel < len(self.row_positions) - 1 and colsel < len(self.col_positions) - 1:
                 currently_selected = self.currently_selected()
+                self.delete_item(self.currently_selected(get_tags=True)[2])
                 box = self.get_shift_select_box(currently_selected.row, rowsel, currently_selected.column, colsel)
                 if currently_selected and currently_selected.type_ == "cell":
                     self.being_drawn_item = self.create_selection_box(*box, set_current=currently_selected)
@@ -4212,7 +4225,7 @@ class MainTable(tk.Canvas):
             y1,
         ]
 
-    def redraw_checkbox(self, x1, y1, x2, y2, fill, outline, tag, draw_check=False):
+    def redraw_checkbox(self, x1: int | float, y1: int | float, x2: int | float, y2: int | float, fill: str, outline: str, tag: str | tuple, draw_check: bool = False):
         points = self.get_checkbox_points(x1, y1, x2, y2)
         if self.hidd_checkbox:
             t, sh = self.hidd_checkbox.popitem()
@@ -4243,7 +4256,7 @@ class MainTable(tk.Canvas):
                 t = self.create_polygon(points, fill=fill, outline=outline, tag=tag, smooth=True)
             self.disp_checkbox[t] = True
 
-    def main_table_redraw_grid_and_text(self, redraw_header=False, redraw_row_index=False, redraw_table=True):
+    def main_table_redraw_grid_and_text(self, redraw_header: bool = False, redraw_row_index: bool = False, redraw_table: bool = True):
         last_col_line_pos = self.col_positions[-1] + 1
         last_row_line_pos = self.row_positions[-1] + 1
         try:
@@ -4756,7 +4769,7 @@ class MainTable(tk.Canvas):
         self.parentframe.emit_event("<<SheetRedrawn>>")
         return True
 
-    def get_selection_items(self, cells=True, rows=True, columns=True, current=True, reverse=False):  # here
+    def get_selection_items(self, cells: bool = True, rows: bool = True, columns: bool = True, current: bool = True, reverse: bool = False):
         return sorted(
             (self.find_withtag("cells") if cells else tuple())
             + (self.find_withtag("rows") if rows else tuple())
@@ -4765,14 +4778,14 @@ class MainTable(tk.Canvas):
             reverse=reverse,
         )
 
-    def get_boxes(self, include_current=True):
+    def get_boxes(self, include_current: bool = True):
         boxes = {}
         for item in self.get_selection_items(current=include_current):
             tags = self.gettags(item)
             boxes[tuple(int(e) for e in tags[1].split("_") if e)] = tags[0] if tags[0] != "selected" else tags
         return boxes
 
-    def reselect_from_get_boxes(self, boxes):
+    def reselect_from_get_boxes(self, boxes: dict):
         curr_tags = tuple()
         for (r1, c1, r2, c2), v in boxes.items():
             if r2 < len(self.row_positions) and c2 < len(self.col_positions):
@@ -4784,10 +4797,10 @@ class MainTable(tk.Canvas):
         # "selected" box might not have been stored
         # maybe just other boxes but
         # create selection box will be creating currently
-        # anyway so there will be one
+        # selected box anyway
         self.set_currently_selected(tags=curr_tags)
 
-    def currently_selected(self, get_tags=False):
+    def currently_selected(self, get_tags: bool = False):
         items = self.get_selection_items(cells=False, rows=False, columns=False)
         if not items:
             return items
@@ -4801,13 +4814,14 @@ class MainTable(tk.Canvas):
         type_ = tags[4].split("_")[1][:-1]
         return CurrentlySelectedClass(r, c, type_)
 
-    def move_currently_selected_within_box(self, r, c):
+    def move_currently_selected_within_box(self, r: int, c: int):
         curr_tags = self.currently_selected(get_tags=True)
         self.set_currently_selected(r=r, c=c, item=int(curr_tags[2].split("_")[1]), tags=curr_tags)
 
-    def set_currently_selected(self, r=None, c=None, **kwargs):
-        # if r and c are provided it will atempt to put currently box
+    def set_currently_selected(self, r: int | None = None, c: int | None = None, **kwargs):
+        # if r and c are provided it will attempt to put currently box
         # at that coordinate
+        # -
         # currently selected is pointed at a specific selection box "item"
         if "tags" in kwargs and kwargs["tags"]:
             r_, c_ = tuple(int(e) for e in kwargs["tags"][3].split("_") if e)
@@ -4869,16 +4883,22 @@ class MainTable(tk.Canvas):
     def set_current_to_last(self):
         items = self.get_selection_items(current=False)
         if items:
-            self.set_currently_selected(item=items[-1])
+            item = items[-1]
+            r1, c1, r2, c2, type_ = self.get_box_from_item(item)
+            if r2 - r1 == 1 and c2 - c1 == 1:
+                self.itemconfig(item, state = "hidden")
+            self.set_currently_selected(item=item)
 
-    def delete_item(self, item: int, set_current=True):
+    def delete_item(self, item: int, set_current: bool = True):
         if item is None:
             return
+        if isinstance(item, str):
+            item = int(item.split("_")[1])
         self.delete(f"iid_{item}")
         self.RI.delete(f"iid_{item}")
         self.CH.delete(f"iid_{item}")
 
-    def get_box_from_item(self, item, get_dict=False):
+    def get_box_from_item(self, item: int, get_dict: bool = False):
         if item is None:
             return
         # it's in the form of an item tag f"iid_{item}"
@@ -4931,9 +4951,6 @@ class MainTable(tk.Canvas):
                 tags=tags,
             )
         return iid
-
-    def delete_box_containing_current(self):
-        tags = self.currently_selected(get_tags=True)
 
     def create_selection_box(
         self,
