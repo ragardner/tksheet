@@ -1518,12 +1518,14 @@ class MainTable(tk.Canvas):
                 self._headers[c] = v
             self.reselect_from_get_boxes(undo_storage[2])
             self.set_currently_selected(0, undo_storage[3][1], type_="column")
+            event_data['modified']['cols'] = list(undo_storage[1].keys())
 
         if undo_storage[0] in ("edit_index",):
             for r, v in undo_storage[1].items():
                 self._row_index[r] = v
             self.reselect_from_get_boxes(undo_storage[2])
             self.set_currently_selected(0, undo_storage[3][1], type_="row")
+            event_data['modified']['rows'] = list(undo_storage[1].keys())
 
         if undo_storage[0] in ("edit_cells", "edit_cells_paste"):
             cells = []
