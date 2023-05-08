@@ -16,7 +16,7 @@ class Sheet(tk.Frame):
     def __init__(
         self,
         parent,
-        name: str = "tksheet",
+        name: str = "!sheet",
         show_table: bool = True,
         show_top_left: bool = True,
         show_row_index: bool = True,
