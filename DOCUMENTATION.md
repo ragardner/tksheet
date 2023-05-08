@@ -720,7 +720,7 @@ undo(event = None)
 ## **Identifying Bound Event Mouse Position**
 ----
 
-The below functions require a mouse click event, for example you could bind right click, example [here](https://github.com/ragardner/tksheet/wiki/Version-6#24-example-custom-right-click-and-text-editor-functionality), and then identify where the user has clicked.
+The below functions require a mouse click event, for example you could bind right click, example [here](https://github.com/ragardner/tksheet/wiki/Version-6#example-custom-right-click-and-text-editor-functionality), and then identify where the user has clicked.
 
 ___
 
@@ -755,9 +755,9 @@ edit_cell(self, event = None, dropdown = False)
 ## **Table Colors**
 ----
 
-To change the colors of individual cells, rows or columns use the functions listed under [highlighting cells](https://github.com/ragardner/tksheet/wiki/Version-6#11-highlighting-cells).
+To change the colors of individual cells, rows or columns use the functions listed under [highlighting cells](https://github.com/ragardner/tksheet/wiki/Version-6#highlighting-cells).
 
-For the colors of specific parts of the table such as gridlines and backgrounds use the function `set_options()`, arguments can be found [here](https://github.com/ragardner/tksheet/wiki/Version-6#22-table-options-and-other-functions). Most of the `set_options()` arguments are the same as the sheet initialization arguments.
+For the colors of specific parts of the table such as gridlines and backgrounds use the function `set_options()`, arguments can be found [here](https://github.com/ragardner/tksheet/wiki/Version-6#table-options-and-other-functions). Most of the `set_options()` arguments are the same as the sheet initialization arguments.
 
 Otherwise you can change the theme using the below function.
 ```python
