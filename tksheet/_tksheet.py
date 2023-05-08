@@ -16,6 +16,7 @@ class Sheet(tk.Frame):
     def __init__(
         self,
         parent,
+        name: str = "tksheet",
         show_table: bool = True,
         show_top_left: bool = True,
         show_row_index: bool = True,
@@ -141,7 +142,9 @@ class Sheet(tk.Frame):
             highlightthickness=outline_thickness,
             highlightbackground=outline_color,
             highlightcolor=outline_color,
+            name=name,
         )
+        self.name = name
         self.C = parent
         self.dropdown_class = Sheet_Dropdown
         self.after_redraw_id = None
@@ -719,6 +722,7 @@ class Sheet(tk.Frame):
                     self.MT.deselection_binding_func = func
 
     def emit_event(self, event, data={}):
+        data['name']=self.name
         self.event_generate(event, data=data)
 
     def bind_event(self, sequence, func, add=None):
