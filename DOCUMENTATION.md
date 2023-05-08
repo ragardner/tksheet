@@ -1,39 +1,39 @@
 # Table of Contents
 
-- [About tksheet](https://github.com/ragardner/tksheet/wiki#about-tksheet)
-- [Installation and Requirements](https://github.com/ragardner/tksheet/wiki#installation-and-requirements)
-- [Basic Initialization](https://github.com/ragardner/tksheet/wiki#basic-initialization)
-- [Initialization Options](https://github.com/ragardner/tksheet/wiki#initialization-options)
-- [Header and Index](https://github.com/ragardner/tksheet/wiki#header-and-index)
-- [Setting Table Data](https://github.com/ragardner/tksheet/wiki#setting-table-data)
-- [Getting Table Data](https://github.com/ragardner/tksheet/wiki#getting-table-data)
-- [Bindings and Functionality](https://github.com/ragardner/tksheet/wiki#bindings-and-functionality)
-- [Identifying Bound Event Mouse Position](https://github.com/ragardner/tksheet/wiki#identifying-bound-event-mouse-position)
-- [Table Colors](https://github.com/ragardner/tksheet/wiki#table-colors)
-- [Highlighting Cells](https://github.com/ragardner/tksheet/wiki#highlighting-cells)
-- [Text Font and Alignment](https://github.com/ragardner/tksheet/wiki#text-font-and-alignment)
-- [Row Heights and Column Widths](https://github.com/ragardner/tksheet/wiki#row-heights-and-column-widths)
-- [Getting Selected Cells](https://github.com/ragardner/tksheet/wiki#getting-selected-cells)
-- [Modifying Selected Cells](https://github.com/ragardner/tksheet/wiki#modifying-selected-cells)
-- [Modifying and Getting Scroll Positions](https://github.com/ragardner/tksheet/wiki#modifying-and-getting-scroll-positions)
-- [Readonly Cells](https://github.com/ragardner/tksheet/wiki#readonly-cells)
-- [Hiding Columns](https://github.com/ragardner/tksheet/wiki#hiding-columns)
-- [Hiding Rows](https://github.com/ragardner/tksheet/wiki#hiding-rows)
-- [Hiding Table Elements](https://github.com/ragardner/tksheet/wiki#hiding-table-elements)
-- [Cell Text Editor](https://github.com/ragardner/tksheet/wiki#cell-text-editor)
-- [Dropdown Boxes](https://github.com/ragardner/tksheet/wiki#dropdown-boxes)
-- [Check Boxes](https://github.com/ragardner/tksheet/wiki#check-boxes)
-- [Cell Formatting](https://github.com/ragardner/tksheet/wiki#cell-formatting)
-- [Table Options and Other Functions](https://github.com/ragardner/tksheet/wiki#table-options-and-other-functions)
-- [Example Loading Data from Excel](https://github.com/ragardner/tksheet/wiki#example-loading-data-from-excel)
-- [Example Custom Right Click and Text Editor Validation](https://github.com/ragardner/tksheet/wiki#example-custom-right-click-and-text-editor-validation)
-- [Example Displaying Selections](https://github.com/ragardner/tksheet/wiki#example-displaying-selections)
-- [Example List Box](https://github.com/ragardner/tksheet/wiki#example-list-box)
-- [Example Header Dropdown Boxes and Row Filtering](https://github.com/ragardner/tksheet/wiki#example-header-dropdown-boxes-and-row-filtering)
-- [Example ReadMe Screenshot Code](https://github.com/ragardner/tksheet/wiki#example-readme-screenshot-code)
-- [Example Saving tksheet as a csv File](https://github.com/ragardner/tksheet/wiki#example-saving-tksheet-as-a-csv-file)
-- [Example Using and Creating Formatters](https://github.com/ragardner/tksheet/wiki#example-using-and-creating-formatters)
-- [Contributing](https://github.com/ragardner/tksheet/wiki#contributing)
+- [About tksheet](https://github.com/ragardner/tksheet/wiki/Version-6#about-tksheet)
+- [Installation and Requirements](https://github.com/ragardner/tksheet/wiki/Version-6#installation-and-requirements)
+- [Basic Initialization](https://github.com/ragardner/tksheet/wiki/Version-6#basic-initialization)
+- [Initialization Options](https://github.com/ragardner/tksheet/wiki/Version-6#initialization-options)
+- [Header and Index](https://github.com/ragardner/tksheet/wiki/Version-6#header-and-index)
+- [Setting Table Data](https://github.com/ragardner/tksheet/wiki/Version-6#setting-table-data)
+- [Getting Table Data](https://github.com/ragardner/tksheet/wiki/Version-6#getting-table-data)
+- [Bindings and Functionality](https://github.com/ragardner/tksheet/wiki/Version-6#bindings-and-functionality)
+- [Identifying Bound Event Mouse Position](https://github.com/ragardner/tksheet/wiki/Version-6#identifying-bound-event-mouse-position)
+- [Table Colors](https://github.com/ragardner/tksheet/wiki/Version-6#table-colors)
+- [Highlighting Cells](https://github.com/ragardner/tksheet/wiki/Version-6#highlighting-cells)
+- [Text Font and Alignment](https://github.com/ragardner/tksheet/wiki/Version-6#text-font-and-alignment)
+- [Row Heights and Column Widths](https://github.com/ragardner/tksheet/wiki/Version-6#row-heights-and-column-widths)
+- [Getting Selected Cells](https://github.com/ragardner/tksheet/wiki/Version-6#getting-selected-cells)
+- [Modifying Selected Cells](https://github.com/ragardner/tksheet/wiki/Version-6#modifying-selected-cells)
+- [Modifying and Getting Scroll Positions](https://github.com/ragardner/tksheet/wiki/Version-6#modifying-and-getting-scroll-positions)
+- [Readonly Cells](https://github.com/ragardner/tksheet/wiki/Version-6#readonly-cells)
+- [Hiding Columns](https://github.com/ragardner/tksheet/wiki/Version-6#hiding-columns)
+- [Hiding Rows](https://github.com/ragardner/tksheet/wiki/Version-6#hiding-rows)
+- [Hiding Table Elements](https://github.com/ragardner/tksheet/wiki/Version-6#hiding-table-elements)
+- [Cell Text Editor](https://github.com/ragardner/tksheet/wiki/Version-6#cell-text-editor)
+- [Dropdown Boxes](https://github.com/ragardner/tksheet/wiki/Version-6#dropdown-boxes)
+- [Check Boxes](https://github.com/ragardner/tksheet/wiki/Version-6#check-boxes)
+- [Cell Formatting](https://github.com/ragardner/tksheet/wiki/Version-6#cell-formatting)
+- [Table Options and Other Functions](https://github.com/ragardner/tksheet/wiki/Version-6#table-options-and-other-functions)
+- [Example Loading Data from Excel](https://github.com/ragardner/tksheet/wiki/Version-6#example-loading-data-from-excel)
+- [Example Custom Right Click and Text Editor Validation](https://github.com/ragardner/tksheet/wiki/Version-6#example-custom-right-click-and-text-editor-validation)
+- [Example Displaying Selections](https://github.com/ragardner/tksheet/wiki/Version-6#example-displaying-selections)
+- [Example List Box](https://github.com/ragardner/tksheet/wiki/Version-6#example-list-box)
+- [Example Header Dropdown Boxes and Row Filtering](https://github.com/ragardner/tksheet/wiki/Version-6#example-header-dropdown-boxes-and-row-filtering)
+- [Example ReadMe Screenshot Code](https://github.com/ragardner/tksheet/wiki/Version-6#example-readme-screenshot-code)
+- [Example Saving tksheet as a csv File](https://github.com/ragardner/tksheet/wiki/Version-6#example-saving-tksheet-as-a-csv-file)
+- [Example Using and Creating Formatters](https://github.com/ragardner/tksheet/wiki/Version-6#example-using-and-creating-formatters)
+- [Contributing](https://github.com/ragardner/tksheet/wiki/Version-6#contributing)
 
 ## **About tksheet**
 ----
@@ -720,7 +720,7 @@ undo(event = None)
 ## **Identifying Bound Event Mouse Position**
 ----
 
-The below functions require a mouse click event, for example you could bind right click, example [here](https://github.com/ragardner/tksheet/wiki#24-example-custom-right-click-and-text-editor-functionality), and then identify where the user has clicked.
+The below functions require a mouse click event, for example you could bind right click, example [here](https://github.com/ragardner/tksheet/wiki/Version-6#example-custom-right-click-and-text-editor-functionality), and then identify where the user has clicked.
 
 ___
 
@@ -755,9 +755,9 @@ edit_cell(self, event = None, dropdown = False)
 ## **Table Colors**
 ----
 
-To change the colors of individual cells, rows or columns use the functions listed under [highlighting cells](https://github.com/ragardner/tksheet/wiki#11-highlighting-cells).
+To change the colors of individual cells, rows or columns use the functions listed under [highlighting cells](https://github.com/ragardner/tksheet/wiki/Version-6#highlighting-cells).
 
-For the colors of specific parts of the table such as gridlines and backgrounds use the function `set_options()`, arguments can be found [here](https://github.com/ragardner/tksheet/wiki#22-table-options-and-other-functions). Most of the `set_options()` arguments are the same as the sheet initialization arguments.
+For the colors of specific parts of the table such as gridlines and backgrounds use the function `set_options()`, arguments can be found [here](https://github.com/ragardner/tksheet/wiki/Version-6#table-options-and-other-functions). Most of the `set_options()` arguments are the same as the sheet initialization arguments.
 
 Otherwise you can change the theme using the below function.
 ```python
@@ -1436,7 +1436,7 @@ display_rows(rows = None,
 - You can also use the keyword argument `all_displayed` instead of `all_rows_displayed`.
 - Example usage to display all rows: `sheet.display_rows("all")`.
 - Example usage to display specific rows only: `sheet.display_rows([2, 4, 7], all_displayed = False)`.
-- [This is a very simple example of row filtering](https://github.com/ragardner/tksheet/wiki#example-header-dropdown-boxes-and-row-filtering) using this function.
+- [This is a very simple example of row filtering](https://github.com/ragardner/tksheet/wiki/Version-6#example-header-dropdown-boxes-and-row-filtering) using this function.
 
 ___
 
@@ -1550,7 +1550,7 @@ text = None
 
 Notes:
 - Use `selection_function`/`modified_function` like so `selection_function = my_function_name`. The function you use needs at least one argument because tksheet will send information to your function about the triggered dropdown.
-- When a user selects an item from the dropdown box the sheet will set the underlying cells data to the selected item, to bind this event use either the `selection_function` argument or see the function `extra_bindings()` with binding `"end_edit_cell"` [here](https://github.com/ragardner/tksheet/wiki#7-bindings-and-functionality).
+- When a user selects an item from the dropdown box the sheet will set the underlying cells data to the selected item, to bind this event use either the `selection_function` argument or see the function `extra_bindings()` with binding `"end_edit_cell"` [here](https://github.com/ragardner/tksheet/wiki/Version-6#bindings-and-functionality).
 
  Arguments:
 - `values` are the values to appear when the dropdown box is popped open.
@@ -1932,7 +1932,7 @@ Additionally, formatting also provides a function for displaying data on the tab
 
 tksheet has several basic built-in formatters and provides functionality for creating your own custom formats as well.
 
-A demonstration of all the built-in and custom formatters can be found [here](https://github.com/ragardner/tksheet/wiki#example-using-and-creating-formatters).
+A demonstration of all the built-in and custom formatters can be found [here](https://github.com/ragardner/tksheet/wiki/Version-6#example-using-and-creating-formatters).
 
 ### **To Note:**
 ----
@@ -2224,7 +2224,7 @@ For those wanting even more customisation of their formatters you also have the 
 ## **Table Options and Other Functions**
 ----
 
-The list of key word arguments available for `set_options()` are as follows, [see here](https://github.com/ragardner/tksheet/wiki#4-initialization-options) as a guide for what arguments to use.
+The list of key word arguments available for `set_options()` are as follows, [see here](https://github.com/ragardner/tksheet/wiki/Version-6#initialization-options) as a guide for what arguments to use.
 ```python
 to_clipboard_delimiter
 to_clipboard_quotechar
