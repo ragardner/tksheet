@@ -421,15 +421,15 @@ def sheet_modified_event_data(
         },
         "deleted": {
             "rows": deleted_rows,
-            "cols": modified_cols,
+            "cols": deleted_cols,
         },
         "added": {
             "rows": added_rows,
-            "cols": modified_cols,
+            "cols": added_cols,
         },
         "moved": {
             "rows": moved_rows,
-            "cols": modified_cols,
+            "cols": moved_cols,
         },
     }
 
