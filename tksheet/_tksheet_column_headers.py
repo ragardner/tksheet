@@ -989,9 +989,16 @@ class ColumnHeaders(tk.Canvas):
                                 int(c),
                             )
                         )
+                    moved_cols = [(start, end) for start, end in zip(orig_selected, new_selected) if start != end]
+                    modified_cols=list(range(min(list(orig_selected)+list(new_selected)), max(list(orig_selected)+list(new_selected))+1))
+                    direction = -1 if c < rm1start else 1
+                    displacement = -direction * totalcols
+                    displaced_cols = [(start, start+displacement) for start in modified_cols if start not in orig_selected]
+                    moved_cols += displaced_cols
                     event_data = sheet_modified_event_data(
                         action="move_cols",
-                        modified_cols=list(range(min(list(orig_selected)+list(new_selected)), max(list(orig_selected)+list(new_selected))+1)),
+                        modified_cols=modified_cols,
+                        moved_cols=moved_cols,
                     )
                     self.parentframe.emit_event("<<SheetModified>>", event_data)
         elif (

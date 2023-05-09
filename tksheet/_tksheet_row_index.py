@@ -929,9 +929,16 @@ class RowIndex(tk.Canvas):
                                 int(r),
                             )
                         )
+                    moved_rows = [(start, end) for start, end in zip(orig_selected, new_selected) if start != end]
+                    modified_rows = list(range(min(list(orig_selected)+list(new_selected)), max(list(orig_selected)+list(new_selected))+1))
+                    direction = -1 if r < rm1start else 1
+                    displacement = -direction * totalrows
+                    displaced_rows = [(start, start+displacement) for start in modified_rows if start not in orig_selected]
+                    moved_rows += displaced_rows
                     event_data = sheet_modified_event_data(
                         action="move_rows",
-                        modified_rows=list(range(min(list(orig_selected)+list(new_selected)), max(list(orig_selected)+list(new_selected))+1)),
+                        modified_rows=modified_rows,
+                        moved_rows=moved_rows,
                     )
                     self.parentframe.emit_event("<<SheetModified>>", event_data)
         elif (

@@ -1590,12 +1590,22 @@ class MainTable(tk.Canvas):
 
         elif undo_storage[0] == "move_cols":
             c = undo_storage[1][0]
+            origin = c
             to_move_min = undo_storage[2][0]
             totalcols = len(undo_storage[2])
             if to_move_min < c:
                 c += totalcols - 1
             self.move_columns_adjust_options_dict(c, to_move_min, totalcols)
-            event_data['modified']['cols'] = list(range(to_move_min, to_move_min+totalcols+1))
+            moved_cols = [(start, end) for start, end in zip(range(to_move_min, to_move_min+totalcols), range(origin, origin+totalcols))]
+            start_of_diplacement = min(to_move_min, origin)
+            end_of_diplacement = max(to_move_min, origin) + totalcols
+            modified_cols = list(range(start_of_diplacement, end_of_diplacement))
+            direction = -1 if to_move_min > origin else 1
+            displacement = -direction * totalcols
+            displaced_cols = [(start, start+displacement) for start in modified_cols if start not in range(to_move_min, to_move_min+totalcols)]
+            moved_cols += displaced_cols
+            event_data['modified']['cols'] = modified_cols
+            event_data['moved']['cols'] = moved_cols
             self.see(
                 r=0,
                 c=c,
@@ -1608,12 +1618,22 @@ class MainTable(tk.Canvas):
 
         elif undo_storage[0] == "move_rows":
             r = undo_storage[1][0]
+            origin = r
             to_move_min = undo_storage[2][0]
             totalrows = len(undo_storage[2])
             if to_move_min < r:
                 r += totalrows - 1
             self.move_rows_adjust_options_dict(r, to_move_min, totalrows)
-            event_data['modified']['rows'] = list(range(to_move_min, to_move_min+totalrows+1))
+            moved_rows = [(start, end) for start, end in zip(range(to_move_min, to_move_min+totalrows), range(origin, origin+totalrows))]
+            start_of_diplacement = min(to_move_min, origin)
+            end_of_diplacement = max(to_move_min, origin) + totalrows
+            modified_rows = list(range(start_of_diplacement, end_of_diplacement))
+            direction = -1 if to_move_min > origin else 1
+            displacement = -direction * totalrows
+            displaced_rows = [(start, start+displacement) for start in modified_rows if start not in range(to_move_min, to_move_min+totalrows)]
+            moved_rows += displaced_rows
+            event_data['modified']['rows'] = modified_rows
+            event_data['moved']['rows'] = moved_rows
             self.see(
                 r=r,
                 c=0,
@@ -1665,8 +1685,11 @@ class MainTable(tk.Canvas):
                 for rn, t in self.RI.cell_options.items()
                 if rn not in to_del
             }
+            modified_rows = list(range(undo_storage[1]["sheet_row_num"], len(self.row_positions)-1))
+            moved_rows = [(end+len(to_del), end) for end in modified_rows]
             event_data['deleted']['rows'] = list(to_del)
-            event_data['modified']['rows'] = list(range(undo_storage[1]["sheet_row_num"], len(self.row_positions)-1))
+            event_data['modified']['rows'] = modified_rows
+            event_data['moved']['rows'] = moved_rows
             if len(self.row_positions) > 1:
                 start_row = (
                     undo_storage[1]["sheet_row_num"]
@@ -1722,8 +1745,11 @@ class MainTable(tk.Canvas):
                 for cn, t in self.CH.cell_options.items()
                 if cn not in to_del
             }
+            modified_cols = list(range(undo_storage[1]["sheet_col_num"], len(self.col_positions)-1))
+            moved_cols = [(end+len(to_del), end) for end in modified_cols]
             event_data['deleted']['columns'] = list(to_del)
-            event_data['modified']['columns'] = list(range(undo_storage[1]["sheet_col_num"], len(self.col_positions)-1))
+            event_data['modified']['columns'] = modified_cols
+            event_data['moved']['columns'] = moved_cols
             if len(self.col_positions) > 1:
                 start_col = (
                     undo_storage[1]["sheet_col_num"]
@@ -1758,8 +1784,12 @@ class MainTable(tk.Canvas):
                 except Exception:
                     continue
             self.reselect_from_get_boxes(undo_storage[1]["selection_boxes"])
-            event_data['added']['rows'] = list(deleted_rows)
-            event_data['modified']['rows'] = list(range(min(deleted_rows), len(self.row_positions)-1))
+            modified_rows = list(range(min(deleted_rows), len(self.row_positions)-1))
+            added_rows = deleted_rows
+            moved_rows = [(end-len(deleted_rows), end) for end in modified_rows if end not in deleted_rows]
+            event_data['added']['rows'] = added_rows
+            event_data['modified']['rows'] = modified_rows
+            event_data['moved']['rows'] = moved_rows
 
         elif undo_storage[0] == "delete_cols":
             self.displayed_columns = undo_storage[1]["displayed_columns"]
@@ -1784,8 +1814,12 @@ class MainTable(tk.Canvas):
                 except Exception:
                     continue
             self.reselect_from_get_boxes(undo_storage[1]["selection_boxes"])
-            event_data['added']['columns'] = list(deleted_cols)
-            event_data['modified']['columns'] = list(range(min(deleted_cols), len(self.col_positions)-1))
+            modified_cols = list(range(min(deleted_cols), len(self.col_positions)-1))
+            added_cols = deleted_cols
+            moved_cols = [(end-len(deleted_cols), end) for end in modified_cols if end not in deleted_cols]
+            event_data['added']['columns'] = added_cols
+            event_data['modified']['columns'] = modified_cols
+            event_data['moved']['columns'] = moved_cols
         self.refresh()
         if self.extra_end_ctrl_z_func is not None:
             self.extra_end_ctrl_z_func(
@@ -4597,10 +4631,16 @@ class MainTable(tk.Canvas):
                     "end_insert_columns", data_ins_col, displayed_ins_col, numcols
                 )
             )
+        added_cols = list(range(data_ins_col, data_ins_col + numcols))
+        modified_cols = list(range(data_ins_col, len(self.col_positions) - 1))
+        displacement = numcols
+        old_col_positions = list(range(data_ins_col, len(self.col_positions) - 1 - numcols))
+        moved_cols = [(cn, cn + displacement) for cn in old_col_positions]
         event_data = sheet_modified_event_data(
             action="insert_cols",
-            added_cols=list(range(data_ins_col, data_ins_col + numcols)),
-            modified_cols=list(range(data_ins_col, len(self.col_positions) - 1)),
+            added_cols=added_cols,
+            modified_cols=modified_cols,
+            moved_cols=moved_cols,
         )
         self.parentframe.emit_event("<<SheetModified>>", event_data)
 
@@ -4735,10 +4775,16 @@ class MainTable(tk.Canvas):
             self.extra_end_insert_rows_rc_func(
                 InsertEvent("end_insert_rows", data_ins_row, displayed_ins_row, numrows)
             )
+        add_rows = list(range(data_ins_row, data_ins_row + numrows))
+        modified_rows = list(range(data_ins_row, len(self.row_positions) - 1))
+        displacement = numrows
+        old_row_positions = list(range(data_ins_row, len(self.row_positions) - 1 - numrows))
+        moved_rows = [(start, start + displacement) for start in old_row_positions]
         event_data = sheet_modified_event_data(
             action="insert_rows",
-            modified_rows = list(range(data_ins_row, len(self.row_positions)-1)),
-            added_rows = list(range(data_ins_row, data_ins_row + numrows)),
+            modified_rows=modified_rows,
+            moved_rows=moved_rows,
+            added_rows=add_rows,
         )
         self.parentframe.emit_event("<<SheetModified>>", event_data)
 
@@ -4838,10 +4884,14 @@ class MainTable(tk.Canvas):
             self.extra_end_del_cols_rc_func(
                 DeleteRowColumnEvent("end_delete_columns", seld_cols)
             )
+        deleted_cols = seld_cols
+        modified_cols = list(range(min(seld_cols), len(self.col_positions) - 1))
+        moved_cols = [(end+len(seld_cols), end) for end in modified_cols]
         event_data = sheet_modified_event_data(
             action="delete_cols",
-            modified_cols = list(range(min(seld_cols), len(self.col_positions)-1)),
-            deleted_cols = seld_cols,
+            modified_cols = modified_cols,
+            deleted_cols = deleted_cols,
+            moved_cols = moved_cols,
         )
         self.parentframe.emit_event("<<SheetModified>>", event_data)
 
@@ -4928,10 +4978,14 @@ class MainTable(tk.Canvas):
             self.extra_end_del_rows_rc_func(
                 DeleteRowColumnEvent("end_delete_rows", seld_rows)
             )
+        deleted_rows = seld_rows
+        modified_rows = list(range(min(seld_rows), len(self.row_positions)-1))
+        moved_rows = [(end+len(seld_rows), end) for end in modified_rows]
         event_data = sheet_modified_event_data(
             action="delete_rows",
-            modified_rows = list(range(min(seld_rows), len(self.row_positions)-1)),
-            deleted_rows = seld_rows,
+            modified_rows = modified_rows,
+            deleted_rows = deleted_rows,
+            moved_rows = moved_rows,
         )
         self.parentframe.emit_event("<<SheetModified>>", event_data)
 
