@@ -397,3 +397,39 @@ def get_seq_without_gaps_at_index(seq, position):
     if reverse_gap is not None:
         seq[:] = seq[reverse_gap:]
     return seq
+
+def sheet_modified_event_data(
+        name: str = None,
+        action: str = None,
+        modified_cells: list[tuple] = [],
+        modified_rows: list = [],
+        modified_cols: list = [],
+        deleted_rows: list = [],
+        deleted_cols: list = [],
+        added_rows: list = [],
+        added_cols: list = [],
+        moved_rows: list[tuple] = [],
+        moved_cols: list[tuple] = []
+    ) -> dict:
+    return {
+        "name": name,
+        "action": action,
+        "modified": {
+            "cells": modified_cells,
+            "rows": modified_rows,
+            "cols": modified_cols,
+        },
+        "deleted": {
+            "rows": deleted_rows,
+            "cols": modified_cols,
+        },
+        "added": {
+            "rows": added_rows,
+            "cols": modified_cols,
+        },
+        "moved": {
+            "rows": moved_rows,
+            "cols": modified_cols,
+        },
+    }
+

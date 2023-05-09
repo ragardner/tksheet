@@ -696,15 +696,15 @@ class MainTable(tk.Canvas):
         self.clipboard_append(s.getvalue())
         self.update_idletasks()
         self.refresh()
-        event_data = {'action': 'cut', 
-                      'modified': {'cells': [], 'rows': [], 'cols': []}, 
-                      'deleted': {'rows': [], 'cols': []}, 
-                      'added': {'rows': [], 'cols': []}}
+        event_data = sheet_modified_event_data(action="edit_cells")
+        event_data['modified']['cells'] = []
+        event_data['modified']['rows'] = []
+        event_data['modified']['cols'] = []
         for (r1, c1, r2, c2), type_ in boxes.items():
             self.show_ctrl_outline(
                 canvas="table", start_cell=(c1, r1), end_cell=(c2, r2)
             )
-            if type_ == "cell":
+            if type_ == "cells":
                 rows = list(range(r1, r2))
                 columns = list(range(c1, c2))
                 cells = [(r, c) for r in rows for c in columns]
@@ -928,10 +928,7 @@ class MainTable(tk.Canvas):
             self.extra_end_ctrl_v_func(
                 PasteEvent("end_ctrl_v", currently_selected, rows)
             )
-        event_data = {'action': 'paste', 
-                      'modified': {'cells': [], 'rows': [], 'cols': []}, 
-                      'deleted': {'rows': [], 'cols': []}, 
-                      'added': {'rows': [], 'cols': []}}
+        event_data = sheet_modified_event_data(action="edit_cells_paste")
         if added_rows_cols != (0, 0):
             rows = [r for r in range(len(self.row_positions)-added_rows-1, len(self.row_positions)-1)]
             event_data['modified']['rows'] = rows
@@ -994,10 +991,10 @@ class MainTable(tk.Canvas):
                 )
             )
         self.refresh()
-        event_data = {'action': 'clear_cells', 
-                      'modified': {'cells': [], 'rows': [], 'cols': []}, 
-                      'deleted': {'rows': [], 'cols': []}, 
-                      'added': {'rows': [], 'cols': []}}
+        event_data = sheet_modified_event_data(action='edit_cells')
+        event_data['modified']['cells'] = []
+        event_data['modified']['rows'] = []
+        event_data['modified']['cols'] = []
         for (r1, c1, r2, c2), type_ in boxes.items():
             if type_ == 'cells':
                 rows = [r for r in range(r1, r2)]
@@ -1501,10 +1498,7 @@ class MainTable(tk.Canvas):
         else:
             undo_storage = self.undo_storage[-1]
         self.deselect("all")
-        event_data = {'action': f'undo_{undo_storage[0]}', 
-                      'modified': {'cells': [], 'rows': [], 'cols': []}, 
-                      'deleted': {'rows': [], 'cols': []}, 
-                      'added': {'rows': [], 'cols': []}}
+        event_data = sheet_modified_event_data(action=f"undo_{undo_storage[0]}")
         if self.extra_begin_ctrl_z_func is not None:
             try:
                 self.extra_begin_ctrl_z_func(
@@ -4603,12 +4597,11 @@ class MainTable(tk.Canvas):
                     "end_insert_columns", data_ins_col, displayed_ins_col, numcols
                 )
             )
-        event_data = {'action': 'insert_cols', 
-                      'modified': {'cells': [], 'rows': [], 'cols': []}, 
-                      'deleted': {'rows': [], 'cols': []}, 
-                      'added': {'rows': [], 'cols': []}}
-        event_data['added']['cols'] = list(range(data_ins_col, data_ins_col + numcols))
-        event_data['modified']['cols'] = list(range(data_ins_col, len(self.col_positions)-1))
+        event_data = sheet_modified_event_data(
+            action="insert_cols",
+            added_cols=list(range(data_ins_col, data_ins_col + numcols)),
+            modified_cols=list(range(data_ins_col, len(self.col_positions) - 1)),
+        )
         self.parentframe.emit_event("<<SheetModified>>", event_data)
 
     def insert_rows_rc(self, event=None):
@@ -4742,12 +4735,11 @@ class MainTable(tk.Canvas):
             self.extra_end_insert_rows_rc_func(
                 InsertEvent("end_insert_rows", data_ins_row, displayed_ins_row, numrows)
             )
-        event_data = {'action': 'insert_rows', 
-                      'modified': {'cells': [], 'rows': [], 'cols': []}, 
-                      'deleted': {'rows': [], 'cols': []}, 
-                      'added': {'rows': [], 'cols': []}}
-        event_data['added']['rows'] = list(range(data_ins_row, data_ins_row + numrows))
-        event_data['modified']['rows'] = list(range(data_ins_row, len(self.row_positions)-1))
+        event_data = sheet_modified_event_data(
+            action="insert_rows",
+            modified_rows = list(range(data_ins_row, len(self.row_positions)-1)),
+            added_rows = list(range(data_ins_row, data_ins_row + numrows)),
+        )
         self.parentframe.emit_event("<<SheetModified>>", event_data)
 
     def del_cols_rc(self, event=None):
@@ -4846,12 +4838,11 @@ class MainTable(tk.Canvas):
             self.extra_end_del_cols_rc_func(
                 DeleteRowColumnEvent("end_delete_columns", seld_cols)
             )
-        event_data = {'action': 'delete_cols', 
-                      'modified': {'cells': [], 'rows': [], 'cols': []}, 
-                      'deleted': {'rows': [], 'cols': []}, 
-                      'added': {'rows': [], 'cols': []}}
-        event_data['deleted']['cols'] = seld_cols
-        event_data['modified']['cols'] = list(range(min(seld_cols), len(self.col_positions)-1))
+        event_data = sheet_modified_event_data(
+            action="delete_cols",
+            modified_cols = list(range(min(seld_cols), len(self.col_positions)-1)),
+            deleted_cols = seld_cols,
+        )
         self.parentframe.emit_event("<<SheetModified>>", event_data)
 
     def del_rows_rc(self, event=None):
@@ -4937,12 +4928,11 @@ class MainTable(tk.Canvas):
             self.extra_end_del_rows_rc_func(
                 DeleteRowColumnEvent("end_delete_rows", seld_rows)
             )
-        event_data = {'action': 'delete_rows', 
-                      'modified': {'cells': [], 'rows': [], 'cols': []}, 
-                      'deleted': {'rows': [], 'cols': []}, 
-                      'added': {'rows': [], 'cols': []}}
-        event_data['deleted']['rows'] = seld_rows
-        event_data['modified']['rows'] = list(range(min(seld_rows), len(self.row_positions)-1))
+        event_data = sheet_modified_event_data(
+            action="delete_rows",
+            modified_rows = list(range(min(seld_rows), len(self.row_positions)-1)),
+            deleted_rows = seld_rows,
+        )
         self.parentframe.emit_event("<<SheetModified>>", event_data)
 
     def move_row_position(self, idx1, idx2):
@@ -7415,10 +7405,10 @@ class MainTable(tk.Canvas):
             self.set_cell_size_to_text(
                 r, c, only_set_if_too_small=True, redraw=redraw, run_binding=True
             )
-        event_data = {'action': 'edit_cells', 
-                      'modified': {'cells': [(datarn, datacn)], 'rows': [], 'cols': []}, 
-                      'deleted': {'rows': [], 'cols': []}, 
-                      'added': {'rows': [], 'cols': []}}
+        event_data = sheet_modified_event_data(
+            action="edit_cells",
+            modified_cells=[(datarn, datacn)],
+        )
         self.parentframe.emit_event("<<SheetModified>>", event_data)
         return True
 
