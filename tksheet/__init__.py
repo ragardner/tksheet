@@ -1,7 +1,7 @@
 # ruff: noqa: F401
-from ._tksheet import Sheet
-from ._tksheet_column_headers import ColumnHeaders
-from ._tksheet_formatters import (
+from .sheet import Sheet, Dropdown
+from .column_headers import ColumnHeaders
+from .formatters import (
     Formatter,
     bool_formatter,
     data_to_str,
@@ -22,33 +22,21 @@ from ._tksheet_formatters import (
     to_str,
     try_to_bool,
 )
-from ._tksheet_main_table import MainTable
-from ._tksheet_other_classes import (
-    BeginDragDropEvent,
+from .main_table import MainTable
+from .other_classes import (
     CtrlKeyEvent,
     CurrentlySelectedClass,
-    DeleteRowColumnEvent,
-    DeselectionEvent,
+    DeselectEvent,
     DraggedRowColumn,
     DrawnItem,
-    DropDownModifiedEvent,
-    EditCellEvent,
-    EditHeaderEvent,
-    EditIndexEvent,
-    EndDragDropEvent,
     GeneratedMouseEvent,
-    InsertEvent,
-    PasteEvent,
     ResizeEvent,
-    SelectCellEvent,
-    SelectColumnEvent,
-    SelectionBoxEvent,
-    SelectRowEvent,
+    SelectEvent,
     TextCfg,
     TextEditor,
     TextEditor_,
-    UndoEvent,
     dropdown_search_function,
+    event_dict,
     get_checkbox_dict,
     get_checkbox_kwargs,
     get_dropdown_dict,
@@ -61,9 +49,9 @@ from ._tksheet_other_classes import (
     num2alpha,
     tksheet_type_error,
 )
-from ._tksheet_row_index import RowIndex
-from ._tksheet_top_left_rectangle import TopLeftRectangle
-from ._tksheet_vars import (
+from .row_index import RowIndex
+from .top_left_rectangle import TopLeftRectangle
+from .vars import (
     USER_OS,
     Color_Map,
     arrowkey_bindings_helper,
@@ -71,7 +59,7 @@ from ._tksheet_vars import (
     emitted_events,
     falsy,
     get_font,
-    get_heading_font,
+    get_header_font,
     get_index_font,
     nonelike,
     rc_binding,

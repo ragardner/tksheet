@@ -1,6 +1,6 @@
-from typing import Any, Union
+from typing import Any, Union, Callable
 
-from ._tksheet_vars import falsy, nonelike, truthy
+from .vars import falsy, nonelike, truthy
 
 
 def is_none_like(n: Any):
@@ -228,7 +228,7 @@ def get_data_with_valid_check(value="", datatypes=tuple(), invalid_value="NA"):
     return invalid_value
 
 
-def get_clipboard_data(value="", clipboard_function=None, **kwargs):
+def get_clipboard_data(value: Any = "", clipboard_function: Union[Callable, None] = None, **kwargs: dict) -> Any :
     if clipboard_function is not None:
         return clipboard_function(value, **kwargs)
     if isinstance(value, (str, int, float, bool)):
@@ -239,15 +239,15 @@ def get_clipboard_data(value="", clipboard_function=None, **kwargs):
 class Formatter:
     def __init__(
         self,
-        value,
-        datatypes=int,
-        format_function=to_int,
-        to_str_function=to_str,
-        nullable=True,
-        invalid_value="NaN",
-        pre_format_function=None,
-        post_format_function=None,
-        clipboard_function=None,
+        value: Any,
+        datatypes: Any = int,
+        format_function: Callable = to_int,
+        to_str_function: Callable = to_str,
+        nullable: bool = True,
+        invalid_value: str = "NaN",
+        pre_format_function: Union[Callable, None] = None,
+        post_format_function: Union[Callable, None] = None,
+        clipboard_function: Union[Callable, None] = None,
         **kwargs,
     ):
         if nullable:
