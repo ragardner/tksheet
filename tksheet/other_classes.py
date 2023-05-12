@@ -281,91 +281,50 @@ def dropdown_search_function(search_for, data):
 
 
 def event_dict(
-    n: int = 1,
-    name: str = "",
+    name: str = None,
     boxes: Union[None, dict, tuple] = None,
-    cells_table: dict = {},
-    cells_header: dict = {},
-    cells_index: dict = {},
-    selected: tuple = tuple(),
-    data: Any = [],
-    key: str = "",
+    cells_table: Union[None, dict] = None,
+    cells_header: Union[None, dict] = None,
+    cells_index: Union[None, dict] = None,
+    selected: Union[None, tuple] = None,
+    data: Any = None,
+    key: Union[None, str] = None,
     value: Any = None,
-    location: Union[int, tuple] = tuple(),
+    location: Union[None, int, tuple] = None,
     **kwargs,
 ) -> dict:
-    if boxes is None:
-        boxes = {}
-    elif isinstance(boxes, tuple):
-        boxes = {boxes[:-1]: boxes[-1]}
-    dicts = [
-        {
-            "eventname": name,
-            
-            "cells": {
-                "table": cells_table,
-                "header": cells_header,
-                "index": cells_index,
-            },
-            "moved": {"rows": {}, "columns": {}},
-            "added": {"rows": {}, "columns": {}},
-            "deleted": {"rows": {}, "columns": {}, "header": {}, "index": {}, "column_widths": {}, "row_heights": {}, "options": {}, "old_displayed_columns": None, "old_displayed_rows": None},
-            "selection_boxes": boxes,
-            "selected": selected,
-            "data": data,
-            "key": key,
-            "value": value,
-            "location": location,
-        }
-        for _ in range(n)
-    ]
-    return dicts if len(dicts) > 1 else dicts[0]
-
-
-def sheet_modified_dict(
-    name: str = "",
-    cells_table: dict = {},
-    cells_index: dict = {},
-    cells_header: dict = {},
-    deleted_rows: dict = {},
-    deleted_cols: dict = {},
-    deleted_header: dict = {},
-    deleted_index: dict = {},
-    added_rows: dict = {},
-    added_cols: dict = {},
-    moved_rows: dict = {},
-    moved_cols: dict = {},
-    selected: tuple = tuple(),
-    boxes: Union[None, dict, tuple] = None,
-) -> dict:
-    if boxes is None:
-        boxes = {}
-    elif isinstance(boxes, tuple):
-        boxes = {boxes[:-1]: boxes[-1]}
     return {
-        "eventname": name,
+        "eventname": "" if name is None else name,
         "cells": {
-            "table": cells_table,
-            "header": cells_header,
-            "index": cells_index,
-        },
-        "deleted": {
-            "rows": deleted_rows,
-            "columns": deleted_cols,
-            "header": deleted_header,
-            "index": deleted_index,
-        },
-        "added": {
-            "rows": added_rows,
-            "columns": added_cols,
+            "table": {} if cells_table is None else cells_table,
+            "header": {} if cells_header is None else cells_header,
+            "index": {} if cells_index is None else cells_index,
         },
         "moved": {
-            "rows": moved_rows,
-            "columns": moved_cols,
+            "rows": {},
+            "columns": {},
         },
-        "selected": selected,
-        "selection_boxes": boxes,
-        
+        "added": {
+            "rows": {},
+            "columns": {},
+        },
+        "deleted": {
+            "rows": {},
+            "columns": {},
+            "header": {},
+            "index": {},
+            "column_widths": {},
+            "row_heights": {},
+            "options": {},
+            "old_displayed_columns": None,
+            "old_displayed_rows": None,
+        },
+        "selection_boxes": {} if boxes is None else {boxes[:-1]: boxes[-1]} if isinstance(boxes, tuple) else boxes,
+        "selected": tuple() if selected is None else selected,
+        "data": [] if data is None else data,
+        "key": "" if key is None else key,
+        "value": None if value is None else value,
+        "location": tuple() if location is None else location,
     }
 
 

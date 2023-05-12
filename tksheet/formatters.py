@@ -228,7 +228,7 @@ def get_data_with_valid_check(value="", datatypes=tuple(), invalid_value="NA"):
     return invalid_value
 
 
-def get_clipboard_data(value: Any = "", clipboard_function: Union[Callable, None] = None, **kwargs: dict) -> Any :
+def get_clipboard_data(value: Any = "", clipboard_function: Union[Callable, None] = None, **kwargs: dict) -> Any:
     if clipboard_function is not None:
         return clipboard_function(value, **kwargs)
     if isinstance(value, (str, int, float, bool)):

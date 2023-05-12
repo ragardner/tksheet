@@ -37,6 +37,7 @@ class Sheet(tk.Frame):
     def __init__(
         self,
         parent,
+        name: str = "!sheet",
         show_table: bool = True,
         show_top_left: bool = True,
         show_row_index: bool = True,
@@ -161,6 +162,7 @@ class Sheet(tk.Frame):
             highlightcolor=outline_color,
         )
         self.C = parent
+        self.name = name
         self.dropdown_class = Dropdown
         self.after_redraw_id = None
         self.after_redraw_time_ms = after_redraw_time_ms
@@ -359,15 +361,15 @@ class Sheet(tk.Frame):
         if startup_focus:
             self.MT.focus_set()
 
-    def set_refresh_timer(self, redraw: bool = True):
+    def set_refresh_timer(self, redraw: bool = True) -> None:
         if redraw and self.after_redraw_id is None:
             self.after_redraw_id = self.after(self.after_redraw_time_ms, self.after_redraw)
 
-    def after_redraw(self, redraw_header: bool = True, redraw_row_index: bool = True):
+    def after_redraw(self, redraw_header: bool = True, redraw_row_index: bool = True) -> None:
         self.MT.main_table_redraw_grid_and_text(redraw_header=redraw_header, redraw_row_index=redraw_row_index)
         self.after_redraw_id = None
 
-    def show(self, canvas="all"):
+    def show(self, canvas:str="all") -> None:
         if canvas == "all":
             self.hide()
             self.TL.grid(row=0, column=0)
@@ -406,7 +408,7 @@ class Sheet(tk.Frame):
             self.yscroll_disabled = False
         self.MT.update_idletasks()
 
-    def hide(self, canvas="all"):
+    def hide(self, canvas:str="all") -> None:
         if canvas.lower() == "all":
             self.TL.grid_forget()
             self.RI.grid_forget()
@@ -441,7 +443,7 @@ class Sheet(tk.Frame):
             self.yscroll_showing = False
             self.yscroll_disabled = True
 
-    def height_and_width(self, height: Union[int, None] = None, width: Union[int, None] = None):
+    def height_and_width(self, height: Union[int, None] = None, width: Union[int, None] = None) -> None:
         if width is not None or height is not None:
             self.grid_propagate(0)
         elif width is None and height is None:
@@ -451,7 +453,7 @@ class Sheet(tk.Frame):
         if height is not None:
             self.config(height=height)
 
-    def focus_set(self, canvas="table"):
+    def focus_set(self, canvas: str="table") -> None:
         if canvas == "table":
             self.MT.focus_set()
         elif canvas == "header":
@@ -461,21 +463,21 @@ class Sheet(tk.Frame):
         elif canvas == "topleft":
             self.TL.focus_set()
 
-    def displayed_column_to_data(self, c):
+    def displayed_column_to_data(self, c:int)  -> int:
         return c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
 
-    def displayed_row_to_data(self, r):
+    def displayed_row_to_data(self, r:int) -> int:
         return r if self.MT.all_rows_displayed else self.MT.displayed_rows[r]
 
     def popup_menu_add_command(
         self,
-        label,
-        func,
+        label: str,
+        func: Callable,
         table_menu: bool = True,
         index_menu: bool = True,
         header_menu: bool = True,
         empty_space_menu: bool = True,
-    ):
+    ) -> None:
         if label not in self.MT.extra_table_rc_menu_funcs and table_menu:
             self.MT.extra_table_rc_menu_funcs[label] = func
         if label not in self.MT.extra_index_rc_menu_funcs and index_menu:
@@ -486,7 +488,7 @@ class Sheet(tk.Frame):
             self.MT.extra_empty_space_rc_menu_funcs[label] = func
         self.MT.create_rc_menus()
 
-    def popup_menu_del_command(self, label: Union[str, None] = None):
+    def popup_menu_del_command(self, label: Union[str, None] = None) -> None:
         if label is None:
             self.MT.extra_table_rc_menu_funcs = {}
             self.MT.extra_index_rc_menu_funcs = {}
@@ -503,7 +505,7 @@ class Sheet(tk.Frame):
                 del self.MT.extra_empty_space_rc_menu_funcs[label]
         self.MT.create_rc_menus()
 
-    def extra_bindings(self, bindings, func: Union[Callable, None] = None):
+    def extra_bindings(self, bindings: Union[str, list, tuple], func: Union[Callable, None] = None) -> None:
         if func is not None and isinstance(bindings, str) and bindings.lower() in emitted_events:
             self.bind_event(bindings, func)
 
@@ -729,14 +731,15 @@ class Sheet(tk.Frame):
                 if binding == "deselect":
                     self.MT.deselection_binding_func = func
 
-    def emit_event(self, event, data={}):
-        self.event_generate(event, data=data)
+    def emit_event(self, event: str, data: Union[None, dict] = None) -> None:
+        data["sheetname"] = self.name
+        self.event_generate(event, data={} if data is None else data)
 
-    def bind_event(self, sequence, func, add=None):
+    def bind_event(self, sequence: str, func: Callable, add: Union[str, None]=None) -> None:
         widget = self
 
-        def _substitute(*args):
-            def e():
+        def _substitute(*args) -> tuple[None]:
+            def e() -> None:
                 return None
 
             e.data = args[0]
@@ -747,7 +750,7 @@ class Sheet(tk.Frame):
         cmd = '{0}if {{"[{1} %d]" == "break"}} break\n'.format("+" if add else "", funcid)
         widget.tk.call("bind", widget._w, sequence, cmd)
 
-    def bind(self, binding, func, add=None):
+    def bind(self, binding: str, func: Callable, add: Union[str, None]=None) -> None:
         if binding == "<ButtonPress-1>":
             self.MT.extra_b1_press_func = func
             self.CH.extra_b1_press_func = func
@@ -784,7 +787,7 @@ class Sheet(tk.Frame):
             self.RI.bind(binding, func, add=add)
             self.TL.bind(binding, func, add=add)
 
-    def unbind(self, binding):
+    def unbind(self, binding: str) -> None:
         if binding == "<ButtonPress-1>":
             self.MT.extra_b1_press_func = None
             self.CH.extra_b1_press_func = None
@@ -821,26 +824,26 @@ class Sheet(tk.Frame):
             self.RI.unbind(binding)
             self.TL.unbind(binding)
 
-    def enable_bindings(self, *bindings):
+    def enable_bindings(self, *bindings) -> None:
         self.MT.enable_bindings(bindings)
 
-    def disable_bindings(self, *bindings):
+    def disable_bindings(self, *bindings) -> None:
         self.MT.disable_bindings(bindings)
 
-    def basic_bindings(self, enable: bool = False):
+    def basic_bindings(self, enable: bool = False) -> None:
         for canvas in (self.MT, self.CH, self.RI, self.TL):
             canvas.basic_bindings(enable)
 
-    def edit_bindings(self, enable: bool = False):
+    def edit_bindings(self, enable: bool = False) -> None:
         if enable:
             self.MT.edit_bindings(True)
         elif not enable:
             self.MT.edit_bindings(False)
 
-    def cell_edit_binding(self, enable: bool = False, keys=[]):
-        self.MT.bind_cell_edit(enable, keys=[])
+    def cell_edit_binding(self, enable: bool = False, keys: list=[]) -> None:
+        self.MT.bind_cell_edit(enable, keys=keys)
 
-    def identify_region(self, event):
+    def identify_region(self, event) -> str:
         if event.widget == self.MT:
             return "table"
         elif event.widget == self.RI:
@@ -850,7 +853,7 @@ class Sheet(tk.Frame):
         elif event.widget == self.TL:
             return "top left"
 
-    def identify_row(self, event, exclude_index: bool = False, allow_end: bool = True):
+    def identify_row(self, event, exclude_index: bool = False, allow_end: bool = True) -> Union[int, None]:
         ev_w = event.widget
         if ev_w == self.MT:
             return self.MT.identify_row(y=event.y, allow_end=allow_end)
@@ -862,7 +865,7 @@ class Sheet(tk.Frame):
         elif ev_w == self.CH or ev_w == self.TL:
             return None
 
-    def identify_column(self, event, exclude_header: bool = False, allow_end: bool = True):
+    def identify_column(self, event, exclude_header: bool = False, allow_end: bool = True) -> Union[int, None]:
         ev_w = event.widget
         if ev_w == self.MT:
             return self.MT.identify_col(x=event.x, allow_end=allow_end)
@@ -874,7 +877,7 @@ class Sheet(tk.Frame):
             else:
                 return self.MT.identify_col(x=event.x, allow_end=allow_end)
 
-    def get_example_canvas_column_widths(self, total_cols=None):
+    def get_example_canvas_column_widths(self, total_cols: Union[int, None]=None) -> list:
         colpos = int(self.MT.default_column_width)
         if total_cols is not None:
             return list(accumulate(chain([0], (colpos for c in range(total_cols)))))
@@ -2605,7 +2608,7 @@ class Sheet(tk.Frame):
 
     def set_sheet_data(
         self,
-        data=[[]],
+        data=None,
         reset_col_positions: bool = True,
         reset_row_positions: bool = True,
         redraw: bool = True,
@@ -2614,6 +2617,8 @@ class Sheet(tk.Frame):
         keep_formatting: bool = True,
         delete_options: bool = False,
     ):
+        if data is None:
+            data = [[]]
         if verify and (not isinstance(data, list) or not all(isinstance(row, list) for row in data)):
             raise ValueError("Data argument must be a list of lists, sublists being rows")
         if delete_options:
