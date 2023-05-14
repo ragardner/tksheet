@@ -2,7 +2,8 @@ import bisect
 import tkinter as tk
 from itertools import accumulate, chain, islice
 from tkinter import ttk
-from typing import Callable, Union, Any
+from typing import Callable, Union, Any, Generator
+from collections.abc import Iterable
 
 from .column_headers import ColumnHeaders
 from .main_table import MainTable
@@ -83,6 +84,8 @@ class Sheet(tk.Frame):
         after_redraw_time_ms: int = 20,
         row_index_width: int = None,
         auto_resize_default_row_index: bool = True,
+        auto_resize_columns: Union[int, None] = 120,
+        auto_resize_rows: Union[int, None] = None,
         set_all_heights_and_widths: bool = False,
         row_height: str = "1",  # str or int
         font: tuple = get_font(),
@@ -120,6 +123,9 @@ class Sheet(tk.Frame):
         table_grid_fg: str = theme_light_blue["table_grid_fg"],
         table_bg: str = theme_light_blue["table_bg"],
         table_fg: str = theme_light_blue["table_fg"],
+        table_selected_box_cells_fg: str = theme_light_blue["table_selected_box_cells_fg"],
+        table_selected_box_rows_fg: str = theme_light_blue["table_selected_box_rows_fg"],
+        table_selected_box_columns_fg: str = theme_light_blue["table_selected_box_columns_fg"],
         table_selected_cells_border_fg: str = theme_light_blue["table_selected_cells_border_fg"],
         table_selected_cells_bg: str = theme_light_blue["table_selected_cells_bg"],
         table_selected_cells_fg: str = theme_light_blue["table_selected_cells_fg"],
@@ -247,6 +253,8 @@ class Sheet(tk.Frame):
             headers=headers,
             header=header,
             data_reference=data if data_reference is None else data_reference,
+            auto_resize_columns=auto_resize_columns,
+            auto_resize_rows=auto_resize_rows,
             total_cols=total_columns,
             total_rows=total_rows,
             row_index=row_index,
@@ -264,6 +272,9 @@ class Sheet(tk.Frame):
             table_grid_fg=table_grid_fg,
             table_fg=table_fg,
             show_selected_cells_border=show_selected_cells_border,
+            table_selected_box_cells_fg=table_selected_box_cells_fg,
+            table_selected_box_rows_fg=table_selected_box_rows_fg,
+            table_selected_box_columns_fg=table_selected_box_columns_fg,
             table_selected_cells_border_fg=table_selected_cells_border_fg,
             table_selected_cells_bg=table_selected_cells_bg,
             table_selected_cells_fg=table_selected_cells_fg,
@@ -732,8 +743,10 @@ class Sheet(tk.Frame):
                     self.MT.deselection_binding_func = func
 
     def emit_event(self, event: str, data: Union[None, dict] = None) -> None:
+        if data is None:
+            data = {}
         data["sheetname"] = self.name
-        self.event_generate(event, data={} if data is None else data)
+        self.event_generate(event, data=data)
 
     def bind_event(self, sequence: str, func: Callable, add: Union[str, None]=None) -> None:
         widget = self
@@ -1617,7 +1630,7 @@ class Sheet(tk.Frame):
     def all_selected(self):
         return self.MT.all_selected()
 
-    def readonly_rows(self, rows=[], readonly: bool = True, redraw: bool = False):
+    def readonly_rows(self, rows: Union[Generator, Iterable]=[], readonly: bool = True, redraw: bool = False) -> None:
         if isinstance(rows, int):
             rows_ = [rows]
         else:
@@ -1633,7 +1646,7 @@ class Sheet(tk.Frame):
                 self.MT.row_options[r]["readonly"] = True
         self.set_refresh_timer(redraw)
 
-    def readonly_columns(self, columns=[], readonly: bool = True, redraw: bool = False):
+    def readonly_columns(self, columns: Union[Generator, Iterable]=[], readonly: bool = True, redraw: bool = False):
         if isinstance(columns, int):
             cols_ = [columns]
         else:
@@ -1649,7 +1662,7 @@ class Sheet(tk.Frame):
                 self.MT.col_options[c]["readonly"] = True
         self.set_refresh_timer(redraw)
 
-    def readonly_cells(self, row=0, column=0, cells=[], readonly: bool = True, redraw: bool = False):
+    def readonly_cells(self, row=0, column=0, cells: Union[Generator, Iterable]=[], readonly: bool = True, redraw: bool = False):
         if not readonly:
             if cells:
                 for r, c in cells:
@@ -1877,7 +1890,7 @@ class Sheet(tk.Frame):
                     self.CH.cell_options[c_]["highlight"] = (bg, fg)
         self.set_refresh_timer(redraw)
 
-    def dehighlight_cells(self, row=0, column=0, cells=[], canvas="table", all_: bool = False, redraw: bool = True):
+    def dehighlight_cells(self, row=0, column=0, cells=[], canvas: str="table", all_: bool = False, redraw: bool = True) -> None:
         if row == "all" and canvas == "table":
             for k, v in self.MT.cell_options.items():
                 if "highlight" in v:
@@ -1937,7 +1950,7 @@ class Sheet(tk.Frame):
                         del self.CH.cell_options[c]["highlight"]
         self.set_refresh_timer(redraw)
 
-    def delete_out_of_bounds_options(self):
+    def delete_out_of_bounds_options(self) -> None:
         maxc = self.total_columns()
         maxr = self.total_rows()
         self.MT.cell_options = {k: v for k, v in self.MT.cell_options.items() if k[0] < maxr and k[1] < maxc}
@@ -1946,7 +1959,7 @@ class Sheet(tk.Frame):
         self.MT.col_options = {k: v for k, v in self.MT.col_options.items() if k < maxc}
         self.MT.row_options = {k: v for k, v in self.MT.row_options.items() if k < maxr}
 
-    def reset_all_options(self):
+    def reset_all_options(self) -> None:
         self.MT.cell_options = {}
         self.RI.cell_options = {}
         self.CH.cell_options = {}
@@ -1956,7 +1969,7 @@ class Sheet(tk.Frame):
         self.RI.options = {}
         self.CH.options = {}
 
-    def get_cell_options(self, canvas="table"):
+    def get_cell_options(self, canvas: str="table") -> dict:
         if canvas == "table":
             return self.MT.cell_options
         elif canvas == "row_index":
@@ -1964,7 +1977,7 @@ class Sheet(tk.Frame):
         elif canvas == "header":
             return self.CH.cell_options
 
-    def get_highlighted_cells(self, canvas="table"):
+    def get_highlighted_cells(self, canvas: str="table") -> dict:
         if canvas == "table":
             return {k: v["highlight"] for k, v in self.MT.cell_options.items() if "highlight" in v}
         elif canvas == "row_index":
@@ -1972,13 +1985,13 @@ class Sheet(tk.Frame):
         elif canvas == "header":
             return {k: v["highlight"] for k, v in self.CH.cell_options.items() if "highlight" in v}
 
-    def get_frame_y(self, y: int):
+    def get_frame_y(self, y: int) -> int:
         return y + self.CH.current_height
 
-    def get_frame_x(self, x: int):
+    def get_frame_x(self, x: int) -> int:
         return x + self.RI.current_width
 
-    def convert_align(self, align: str):
+    def convert_align(self, align: str) -> str:
         a = align.lower()
         if a in ("c", "center", "centre"):
             return "center"
@@ -1988,16 +2001,16 @@ class Sheet(tk.Frame):
             return "e"
         raise ValueError(("Align must be one of the following values: c, " "center, w, west, left, e, east, right"))
 
-    def get_cell_alignments(self):
+    def get_cell_alignments(self) -> dict:
         return {(r, c): v["align"] for (r, c), v in self.MT.cell_options.items() if "align" in v}
 
-    def get_column_alignments(self):
+    def get_column_alignments(self) -> dict:
         return {c: v["align"] for c, v in self.MT.col_options.items() if "align" in v}
 
-    def get_row_alignments(self):
+    def get_row_alignments(self) -> dict:
         return {r: v["align"] for r, v in self.MT.row_options.items() if "align" in v}
 
-    def align_rows(self, rows=[], align="global", align_index: bool = False, redraw: bool = True):  # "center", "w", "e" or "global"
+    def align_rows(self, rows=[], align: str="global", align_index: bool = False, redraw: bool = True):  # "center", "w", "e" or "global"
         if align == "global" or self.convert_align(align):
             if isinstance(rows, dict):
                 for k, v in rows.items():
@@ -2010,7 +2023,7 @@ class Sheet(tk.Frame):
                 )
         self.set_refresh_timer(redraw)
 
-    def align_rows_(self, rows=[], align="global", align_index: bool = False):  # "center", "w", "e" or "global"
+    def align_rows_(self, rows=[], align: str="global", align_index: bool = False):  # "center", "w", "e" or "global"
         if isinstance(rows, str) and rows.lower() == "all" and align == "global":
             for r in self.MT.row_options:
                 if "align" in self.MT.row_options[r]:
@@ -2042,7 +2055,7 @@ class Sheet(tk.Frame):
                         self.RI.cell_options[r] = {}
                     self.RI.cell_options[r]["align"] = align
 
-    def align_columns(self, columns=[], align="global", align_header: bool = False, redraw: bool = True):  # "center", "w", "e" or "global"
+    def align_columns(self, columns=[], align: str="global", align_header: bool = False, redraw: bool = True):  # "center", "w", "e" or "global"
         if align == "global" or self.convert_align(align):
             if isinstance(columns, dict):
                 for k, v in columns.items():
@@ -2055,7 +2068,7 @@ class Sheet(tk.Frame):
                 )
         self.set_refresh_timer(redraw)
 
-    def align_columns_(self, columns=[], align="global", align_header: bool = False):  # "center", "w", "e" or "global"
+    def align_columns_(self, columns=[], align: str="global", align_header: bool = False):  # "center", "w", "e" or "global"
         if isinstance(columns, str) and columns.lower() == "all" and align == "global":
             for c in self.MT.col_options:
                 if "align" in self.MT.col_options[c]:
@@ -2087,7 +2100,7 @@ class Sheet(tk.Frame):
                         self.CH.cell_options[c] = {}
                     self.CH.cell_options[c]["align"] = align
 
-    def align_cells(self, row=0, column=0, cells=[], align="global", redraw: bool = True):  # "center", "w", "e" or "global"
+    def align_cells(self, row=0, column=0, cells=[], align: str="global", redraw: bool = True):  # "center", "w", "e" or "global"
         if align == "global" or self.convert_align(align):
             if isinstance(cells, dict):
                 for (r, c), v in cells.items():
@@ -2101,7 +2114,7 @@ class Sheet(tk.Frame):
                 )
         self.set_refresh_timer(redraw)
 
-    def align_cells_(self, row=0, column=0, cells=[], align="global"):  # "center", "w", "e" or "global"
+    def align_cells_(self, row=0, column=0, cells=[], align: str="global"):  # "center", "w", "e" or "global"
         if isinstance(row, str) and row.lower() == "all" and align == "global":
             for r, c in self.MT.cell_options:
                 if "align" in self.MT.cell_options[(r, c)]:
@@ -2126,7 +2139,7 @@ class Sheet(tk.Frame):
                     self.MT.cell_options[(row, column)] = {}
                 self.MT.cell_options[(row, column)]["align"] = align
 
-    def align_header(self, columns=[], align="global", redraw: bool = True):
+    def align_header(self, columns=[], align: str="global", redraw: bool = True):
         if align == "global" or self.convert_align(align):
             if isinstance(columns, dict):
                 for k, v in columns.items():
@@ -2138,7 +2151,7 @@ class Sheet(tk.Frame):
                 )
         self.set_refresh_timer(redraw)
 
-    def align_header_(self, columns=[], align="global"):
+    def align_header_(self, columns=[], align: str="global"):
         if isinstance(columns, int):
             cols = [columns]
         else:
@@ -2153,7 +2166,7 @@ class Sheet(tk.Frame):
                     self.CH.cell_options[c] = {}
                 self.CH.cell_options[c]["align"] = align
 
-    def align_index(self, rows=[], align="global", redraw: bool = True):
+    def align_index(self, rows=[], align: str="global", redraw: bool = True):
         if align == "global" or self.convert_align(align):
             if isinstance(rows, dict):
                 for k, v in rows.items():
@@ -2165,7 +2178,7 @@ class Sheet(tk.Frame):
                 )
         self.set_refresh_timer(redraw)
 
-    def align_index_(self, rows=[], align="global"):
+    def align_index_(self, rows: Union[int, list] = [], align: str="global"):
         if isinstance(rows, int):
             rows = [rows]
         else:
@@ -2216,7 +2229,11 @@ class Sheet(tk.Frame):
     def header_font(self, newfont: Union[tuple, None] = None) -> tuple:
         return self.MT.set_header_font(newfont)
 
-    def set_options(self, redraw: bool = True, **kwargs):
+    def set_options(self, redraw: bool = True, **kwargs) -> None:
+        if "auto_resize_columns" in kwargs:
+            self.MT.auto_resize_columns = kwargs["auto_resize_columns"]
+        if "auto_resize_rows" in kwargs:
+            self.MT.auto_resize_rows = kwargs["auto_resize_rows"]
         if "to_clipboard_delimiter" in kwargs:
             self.MT.to_clipboard_delimiter = kwargs["to_clipboard_delimiter"]
         if "to_clipboard_quotechar" in kwargs:
@@ -2378,6 +2395,8 @@ class Sheet(tk.Frame):
             self.MT.table_grid_fg = kwargs["table_grid_fg"]
         if "table_fg" in kwargs:
             self.MT.table_fg = kwargs["table_fg"]
+        if "table_selected_box_cells_fg" in kwargs:
+            self.MT.table_selected_box_cells_fg = kwargs["table_selected_box_cells_fg"]
         if "table_selected_cells_border_fg" in kwargs:
             self.MT.table_selected_cells_border_fg = kwargs["table_selected_cells_border_fg"]
         if "table_selected_cells_bg" in kwargs:
@@ -4125,7 +4144,7 @@ class Dropdown(Sheet):
         self.bind("<Next>", self.arrowkey_DOWN)
         self.bind("<Return>", self.b1)
         if values:
-            self.values(values, redraw=False)
+            self.values(values)
 
     def arrowkey_UP(self, event=None):
         self.deselect("all")
@@ -4150,14 +4169,14 @@ class Dropdown(Sheet):
             rn = self.search_function(search_for=rf"{event['value']}".lower(), data=self.MT.data)
             if rn is not None:
                 self.row = rn
-                self.deselect("all")
                 self.see(self.row, 0, redraw=False)
                 self.select_row(self.row)
 
     def mouse_motion(self, event=None):
-        self.row = self.identify_row(event, exclude_index=True, allow_end=False)
-        self.deselect("all")
-        if self.row is not None:
+        row = self.identify_row(event, exclude_index=True, allow_end=False)
+        if row is not None and row != self.row:
+            self.row = row
+            self.deselect("all", redraw=False)
             self.select_row(self.row)
 
     def _reselect(self):
@@ -4198,4 +4217,4 @@ class Dropdown(Sheet):
             redraw=False,
             verify=False,
         )
-        self.set_all_cell_sizes_to_text(redraw=True)
+        self.set_all_cell_sizes_to_text(redraw=redraw)

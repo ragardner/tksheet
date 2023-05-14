@@ -61,6 +61,9 @@ theme_light_blue = {
     "table_bg": "#FFFFFF",
     "table_grid_fg": "#E1E1E1",
     "table_fg": "black",
+    "table_selected_box_cells_fg": "#0B57D0",
+    "table_selected_box_rows_fg": "#0B57D0",
+    "table_selected_box_columns_fg": "#0B57D0",
     "table_selected_cells_border_fg": "#0B57D0",
     "table_selected_cells_bg": "#E6EFFD",
     "table_selected_cells_fg": "black",
@@ -104,6 +107,9 @@ theme_light_green = {
     "table_bg": "#FFFFFF",
     "table_grid_fg": "#bfbfbf",
     "table_fg": "black",
+    "table_selected_box_cells_fg": "#217346",
+    "table_selected_box_rows_fg": "#217346",
+    "table_selected_box_columns_fg": "#217346",
     "table_selected_cells_border_fg": "#217346",
     "table_selected_cells_bg": "#E3E3E3",
     "table_selected_cells_fg": "black",
@@ -147,6 +153,9 @@ theme_dark = {
     "table_bg": "#000000",
     "table_grid_fg": "#595959",
     "table_fg": "#E3E3E3",
+    "table_selected_box_cells_fg": "#6aa2fc",
+    "table_selected_box_rows_fg": "#6aa2fc",
+    "table_selected_box_columns_fg": "#6aa2fc",
     "table_selected_cells_border_fg": "#6aa2fc",
     "table_selected_cells_bg": "#404040",
     "table_selected_cells_fg": "#F7F7F7",
@@ -190,6 +199,9 @@ theme_black = {
     "table_bg": "#000000",
     "table_grid_fg": "#595959",
     "table_fg": "#E3E3E3",
+    "table_selected_box_cells_fg": "#FBB86C",
+    "table_selected_box_rows_fg": "#FBB86C",
+    "table_selected_box_columns_fg": "#FBB86C",
     "table_selected_cells_border_fg": "#FBB86C",
     "table_selected_cells_bg": "#404040",
     "table_selected_cells_fg": "#F7F7F7",
@@ -214,6 +226,9 @@ theme_dark_blue["header_selected_cells_fg"] = "#6ACAD8"
 theme_dark_blue["index_fg"] = "#6ACAD8"
 theme_dark_blue["index_selected_cells_fg"] = "#6ACAD8"
 theme_dark_blue["top_left_fg_highlight"] = "#6ACAD8"
+theme_dark_blue["table_selected_box_cells_fg"] = "#6ACAD8"
+theme_dark_blue["table_selected_box_rows_fg"] = "#6ACAD8"
+theme_dark_blue["table_selected_box_columns_fg"] = "#6ACAD8"
 theme_dark_blue["table_selected_cells_border_fg"] = "#6ACAD8"
 theme_dark_blue["header_selected_columns_bg"] = "#6ACAD8"
 theme_dark_blue["index_selected_rows_bg"] = "#6ACAD8"
@@ -226,6 +241,9 @@ theme_dark_green["header_selected_cells_fg"] = "#66FFBF"
 theme_dark_green["index_fg"] = "#66FFBF"
 theme_dark_green["index_selected_cells_fg"] = "#66FFBF"
 theme_dark_green["top_left_fg_highlight"] = "#66FFBF"
+theme_dark_green["table_selected_box_cells_fg"] = "#66FFBF"
+theme_dark_blue["table_selected_box_rows_fg"] = "#66FFBF"
+theme_dark_blue["table_selected_box_columns_fg"] = "#66FFBF"
 theme_dark_green["table_selected_cells_border_fg"] = "#66FFBF"
 theme_dark_green["header_selected_columns_bg"] = "#66FFBF"
 theme_dark_green["index_selected_rows_bg"] = "#66FFBF"

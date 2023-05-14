@@ -268,14 +268,17 @@ def dropdown_search_function(search_for, data):
 
 """
 {
-    "eventname": "" if "name" not in kwargs else kwargs["name"],
+    "eventname": "",
     "cells": {"table": {}, "header": {}, "index": {}},
     "moved": {"rows": {"old_indexes": tuple(), "new_indexes": tuple()}, "columns": {"old_indexes": tuple(), "new_indexes": tuple()}},
     "added": {"rows": {}, "columns": {}},
     "deleted": {"rows": {}, "columns": {}, "header": {}, "index": {}, "column_widths": {}, "row_heights": {}, "old_displayed_columns": None, "old_displayed_rows": None},
     "selection_boxes": {},
-    "selected": tuple() if "selected" not in kwargs else kwargs["selected"],
+    "selected": tuple(),
     "data": [],
+    "key": "",
+    "value": None,
+    "location": tuple(),
 }
 """
 

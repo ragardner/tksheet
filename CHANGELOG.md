@@ -1,3 +1,28 @@
+### Version 6.2.0
+#### Fixed:
+- Issue with copy and cut not getting the correct boxes
+- Error with `delete_rows()`
+- Bug with hidden rows and undo right click insert rows
+- Bug with hidden columns and undo right click insert columns
+- Error with setting/getting fonts
+
+#### Changed:
+- Totally overhaul event data sent to functions bound by `extra_bindings()`
+- Rename tksheet files
+- Remove wildcard imports
+- Added redo functionality, enabled when undo is enabled with ctrl/cmd shift z
+- Pressing escape on text editors no longer generates an edit cell/header/index event
+
+### Version 6.1.2
+#### Fixed:
+- Further potential issues with moving columns where row lengths are uneven
+- Potential issues with using `move_rows()` where the provided index is larger than the number of rows
+- `dropdown_sheet()` causing error
+
+### Version 6.1.1
+#### Fixed:
+- [#177](https://github.com/ragardner/tksheet/issues/177)
+
 ### Version 6.1.0
 #### Fixed:
 - Error with using `None` to create a dropdown for the entire index when index is not `int`

@@ -8,7 +8,7 @@ from collections import defaultdict, deque
 from itertools import accumulate, chain, cycle, islice, product, repeat
 from math import ceil, floor
 from tkinter import TclError
-from typing import Any, Callable, Union
+from typing import Any, Callable, Union, Hashable
 
 from .formatters import (
     data_to_str,
@@ -49,6 +49,8 @@ class MainTable(tk.Canvas):
             highlightthickness=0,
         )
         self.parentframe = kwargs["parentframe"]
+        self.parentframe_width = 0
+        self.parentframe_height = 0
         self.b1_pressed_loc = None
         self.existing_dropdown_canvas_id = None
         self.existing_dropdown_window = None
@@ -110,6 +112,11 @@ class MainTable(tk.Canvas):
         self.paste_insert_row_limit = kwargs["paste_insert_row_limit"]
         self.arrow_key_down_right_scroll_page = kwargs["arrow_key_down_right_scroll_page"]
         self.cell_auto_resize_enabled = kwargs["enable_edit_cell_auto_resize"]
+        self.auto_resize_columns = kwargs["auto_resize_columns"]
+        self.allow_auto_resize_columns = True
+        self.allow_auto_resize_rows = True
+        self.auto_resize_rows = kwargs["auto_resize_rows"]
+        self.user_resized_row = False
         self.edit_cell_validation = kwargs["edit_cell_validation"]
         self.display_selected_fg_over_highlights = kwargs["display_selected_fg_over_highlights"]
         self.show_index = kwargs["show_index"]
@@ -288,6 +295,9 @@ class MainTable(tk.Canvas):
         self.reset_col_positions()
         self.table_grid_fg = kwargs["table_grid_fg"]
         self.table_fg = kwargs["table_fg"]
+        self.table_selected_box_cells_fg = kwargs["table_selected_box_cells_fg"]
+        self.table_selected_box_rows_fg = kwargs["table_selected_box_rows_fg"]
+        self.table_selected_box_columns_fg = kwargs["table_selected_box_columns_fg"]
         self.table_selected_cells_border_fg = kwargs["table_selected_cells_border_fg"]
         self.table_selected_cells_bg = kwargs["table_selected_cells_bg"]
         self.table_selected_cells_fg = kwargs["table_selected_cells_fg"]
@@ -308,12 +318,23 @@ class MainTable(tk.Canvas):
         self.basic_bindings()
         self.create_rc_menus()
 
-    def refresh(self, event=None):
+    def refresh(self, event=None) -> None:
         self.main_table_redraw_grid_and_text(True, True)
 
-    def basic_bindings(self, enable=True):
+    def window_configured(self, event) -> None:
+        w = self.parentframe.winfo_width()
+        if w != self.parentframe_width:
+            self.parentframe_width = w
+            self.allow_auto_resize_columns = True
+        h = self.parentframe.winfo_height()
+        if h != self.parentframe_height:
+            self.parentframe_height = h
+            self.allow_auto_resize_rows = True
+        self.main_table_redraw_grid_and_text(True, True)
+
+    def basic_bindings(self, enable=True) -> None:
         if enable:
-            self.bind("<Configure>", self.refresh)
+            self.bind("<Configure>", self.window_configured)
             self.bind("<Motion>", self.mouse_motion)
             self.bind("<ButtonPress-1>", self.b1_press)
             self.bind("<B1-Motion>", self.b1_motion)
@@ -377,13 +398,13 @@ class MainTable(tk.Canvas):
 
     def show_ctrl_outline(
         self,
-        canvas="table",
-        start_cell=(0, 0),
-        end_cell=(0, 0),
-        dash=(20, 20),
-        outline=None,
-        delete_on_timer=True,
-    ):
+        canvas: str = "table",
+        start_cell: tuple[int] = (0, 0),
+        end_cell: tuple[int] = (0, 0),
+        dash: tuple[int] = (20, 20),
+        outline: Union[str, None] = None,
+        delete_on_timer: bool = True,
+    ) -> None:
         self.create_ctrl_outline(
             self.col_positions[start_cell[0]] + 1,
             self.row_positions[start_cell[1]] + 1,
@@ -398,7 +419,7 @@ class MainTable(tk.Canvas):
         if delete_on_timer:
             self.after(1500, self.delete_ctrl_outlines)
 
-    def create_ctrl_outline(self, x1, y1, x2, y2, fill, dash, width, outline, tag):
+    def create_ctrl_outline(self, x1: int, y1: int, x2: int, y2: int, fill: str, dash: tuple[int], width: int, outline: str, tag: Union[str, tuple[str]]) -> None:
         if self.hidd_ctrl_outline:
             t, sh = self.hidd_ctrl_outline.popitem()
             self.coords(t, x1, y1, x2, y2)
@@ -429,7 +450,7 @@ class MainTable(tk.Canvas):
             )
         self.disp_ctrl_outline[t] = True
 
-    def delete_ctrl_outlines(self):
+    def delete_ctrl_outlines(self) -> None:
         self.hidd_ctrl_outline.update(self.disp_ctrl_outline)
         self.disp_ctrl_outline = {}
         for t, sh in self.hidd_ctrl_outline.items():
@@ -437,7 +458,7 @@ class MainTable(tk.Canvas):
                 self.itemconfig(t, state="hidden")
                 self.hidd_ctrl_outline[t] = False
 
-    def get_ctrl_x_c_boxes(self):
+    def get_ctrl_x_c_boxes(self) -> tuple[dict, int]:
         currently_selected = self.currently_selected()
         boxes = {}
         maxrows = 0
@@ -454,7 +475,7 @@ class MainTable(tk.Canvas):
                 boxes[tuple(int(e) for e in self.gettags(item)[1].split("_") if e)] = "rows"
         return boxes, maxrows
 
-    def ctrl_c(self, event=None):
+    def ctrl_c(self, event=None) -> None:
         if not self.anything_selected():
             return
         currently_selected = self.currently_selected()
@@ -506,7 +527,7 @@ class MainTable(tk.Canvas):
         if self.extra_end_ctrl_c_func is not None:
             self.extra_end_ctrl_c_func(event_data)
 
-    def ctrl_x(self, event=None):
+    def ctrl_x(self, event=None) -> None:
         if not self.anything_selected():
             return
         currently_selected = self.currently_selected()
@@ -566,11 +587,11 @@ class MainTable(tk.Canvas):
             self.extra_end_ctrl_x_func({**event_data, **{"eventname": "end_ctrl_x"}})
         self.sheet_modified(event_data)
 
-    def get_box_containing_current(self):
+    def get_box_containing_current(self) -> tuple[int]:
         item = self.get_selection_items(cells=False, rows=False, columns=False)[-1]
         return tuple(int(e) for e in self.gettags(item)[1].split("_") if e)
 
-    def ctrl_v(self, event=None):
+    def ctrl_v(self, event=None) -> None:
         if not self.expand_sheet_if_paste_too_big and (len(self.col_positions) == 1 or len(self.row_positions) == 1):
             return
         currently_selected = self.currently_selected()
@@ -699,7 +720,7 @@ class MainTable(tk.Canvas):
             self.extra_end_ctrl_v_func({**event_data, **{"eventname": "end_ctrl_v"}})
         self.sheet_modified(event_data)
 
-    def delete_key(self, event=None):
+    def delete_key(self, event=None) -> None:
         if not self.anything_selected():
             return
         currently_selected = self.currently_selected()
@@ -728,12 +749,12 @@ class MainTable(tk.Canvas):
 
     def move_columns_adjust_options_dict(
         self,
-        col,
-        to_move_min,
-        num_cols,
-        move_data=True,
-        create_selections=True,
-        index_type="displayed",
+        col: int,
+        to_move_min: int,
+        num_cols: int,
+        move_data: bool = True,
+        create_selections: bool = True,
+        index_type: str = "displayed",
     ):
         c = int(col)
         to_move_max = to_move_min + num_cols
@@ -1402,7 +1423,7 @@ class MainTable(tk.Canvas):
 
     def select_all(self, redraw=True, run_binding_func=True):
         currently_selected = self.currently_selected()
-        self.deselect("all")
+        self.deselect("all", redraw=False)
         if len(self.row_positions) > 1 and len(self.col_positions) > 1:
             item = self.create_selection_box(
                 0,
@@ -1426,7 +1447,7 @@ class MainTable(tk.Canvas):
                 )
 
     def select_cell(self, r: int, c: int, redraw: bool = False, run_binding_func: bool = True):
-        self.deselect("all")
+        self.deselect("all", redraw=False)
         fill_iid = self.create_selection_box(r, c, r + 1, c + 1, state="hidden")
         if redraw:
             self.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
@@ -2648,7 +2669,7 @@ class MainTable(tk.Canvas):
                 currently_selected = self.currently_selected()
                 box = self.get_shift_select_box(currently_selected.row, rowsel, currently_selected.column, colsel)
                 if currently_selected and currently_selected.type_ == "cell":
-                    self.deselect("all")
+                    self.deselect("all", redraw=False)
                     self.being_drawn_item = self.create_selection_box(*box, set_current=currently_selected)
                 else:
                     self.being_drawn_item = self.select_cell(rowsel, colsel, redraw=False, run_binding_func=False)
@@ -2721,7 +2742,7 @@ class MainTable(tk.Canvas):
                     )
                 )
                 if box is not None and self.being_drawn_item is not None and self.get_box_from_item(self.being_drawn_item) != box:
-                    self.deselect("all")
+                    self.deselect("all", redraw=False)
                     if box[2] - box[0] != 1 or box[3] - box[1] != 1:
                         self.being_drawn_item = self.create_selection_box(*box, set_current=currently_selected)
                     else:
@@ -3020,6 +3041,8 @@ class MainTable(tk.Canvas):
             self.max_column_width = self.min_column_width + 20
         if self.min_column_width > self.default_column_width:
             self.default_column_width = self.min_column_width + 20
+        if isinstance(self.auto_resize_columns, (int, float)) and self.auto_resize_columns < self.min_column_width:
+            self.auto_resize_columns = self.min_column_width
 
     def set_table_font(self, newfont: Union[tuple, None] = None, reset_row_positions: bool = False) -> tuple:
         if newfont:
@@ -4208,7 +4231,7 @@ class MainTable(tk.Canvas):
         outline: str,
         tag: Union[str, tuple],
         draw_check: bool = False,
-    ):
+    ) -> None:
         points = get_checkbox_points(x1, y1, x2, y2)
         if self.hidd_checkbox:
             t, sh = self.hidd_checkbox.popitem()
@@ -4239,44 +4262,89 @@ class MainTable(tk.Canvas):
                 t = self.create_polygon(points, fill=fill, outline=outline, tag=tag, smooth=True)
             self.disp_checkbox[t] = True
 
-    def main_table_redraw_grid_and_text(self, redraw_header: bool = False, redraw_row_index: bool = False, redraw_table: bool = True):
-        last_col_line_pos = self.col_positions[-1] + 1
-        last_row_line_pos = self.row_positions[-1] + 1
+    def main_table_redraw_grid_and_text(self, redraw_header: bool = False, redraw_row_index: bool = False, redraw_table: bool = True) -> bool:
         try:
             can_width = self.winfo_width()
             can_height = self.winfo_height()
-            self.configure(
-                scrollregion=(
-                    0,
-                    0,
-                    last_col_line_pos + self.empty_horizontal,
-                    last_row_line_pos + self.empty_vertical,
-                )
-            )
         except Exception:
-            return
+            return False
+        row_pos_exists = self.row_positions != [0] and self.row_positions
+        col_pos_exists = self.col_positions != [0] and self.col_positions
+        resized_cols = False
+        resized_rows = False  # noqa: F841
+        if self.auto_resize_columns and self.allow_auto_resize_columns and col_pos_exists:
+            max_w = int(can_width)
+            max_w -= self.empty_horizontal
+            if (len(self.col_positions) - 1) * self.auto_resize_columns < max_w:
+                resized_cols = True
+                change = int((max_w - self.col_positions[-1]) / (len(self.col_positions) - 1))
+                widths = [int(b - a) + change - 1 for a, b in zip(self.col_positions, islice(self.col_positions, 1, len(self.col_positions)))]
+                diffs = {}
+                for i, w in enumerate(widths):
+                    if w < self.auto_resize_columns:
+                        diffs[i] = self.auto_resize_columns - w
+                        widths[i] = self.auto_resize_columns
+                if diffs and len(diffs) < len(widths):
+                    change = sum(diffs.values()) / (len(widths) - len(diffs))
+                    for i, w in enumerate(widths):
+                        if i not in diffs:
+                            widths[i] -= change
+                self.col_positions = list(accumulate(chain([0], widths)))
+        if self.auto_resize_rows and self.allow_auto_resize_rows and row_pos_exists:
+            max_h = int(can_height)
+            max_h -= self.empty_vertical
+            if (len(self.row_positions) - 1) * self.auto_resize_rows < max_h:
+                resized_rows = True
+                change = int((max_h - self.row_positions[-1]) / (len(self.row_positions) - 1))
+                heights = [int(b - a) + change - 1 for a, b in zip(self.row_positions, islice(self.row_positions, 1, len(self.row_positions)))]
+                diffs = {}
+                for i, h in enumerate(heights):
+                    if h < self.auto_resize_rows:
+                        diffs[i] = self.auto_resize_rows - h
+                        heights[i] = self.auto_resize_rows
+                if diffs and len(diffs) < len(heights):
+                    change = sum(diffs.values()) / (len(heights) - len(diffs))
+                    for i, h in enumerate(heights):
+                        if i not in diffs:
+                            heights[i] -= change
+                self.row_positions = list(accumulate(chain([0], heights)))
+        if resized_cols or resized_rows:
+            self.recreate_all_selection_boxes()
+        last_col_line_pos = self.col_positions[-1] + 1
+        last_row_line_pos = self.row_positions[-1] + 1
         if can_width >= last_col_line_pos + self.empty_horizontal and self.parentframe.xscroll_showing:
             self.parentframe.xscroll.grid_forget()
             self.parentframe.xscroll_showing = False
-        elif can_width < last_col_line_pos + self.empty_horizontal and not self.parentframe.xscroll_showing and not self.parentframe.xscroll_disabled and can_height > 45:
+        elif can_width < last_col_line_pos + self.empty_horizontal and not self.parentframe.xscroll_showing and not self.parentframe.xscroll_disabled and can_height > 40:
             self.parentframe.xscroll.grid(row=2, column=0, columnspan=2, sticky="nswe")
             self.parentframe.xscroll_showing = True
         if can_height >= last_row_line_pos + self.empty_vertical and self.parentframe.yscroll_showing:
             self.parentframe.yscroll.grid_forget()
             self.parentframe.yscroll_showing = False
-        elif can_height < last_row_line_pos + self.empty_vertical and not self.parentframe.yscroll_showing and not self.parentframe.yscroll_disabled and can_width > 45:
+        elif can_height < last_row_line_pos + self.empty_vertical and not self.parentframe.yscroll_showing and not self.parentframe.yscroll_disabled and can_width > 40:
             self.parentframe.yscroll.grid(row=0, column=2, rowspan=3, sticky="nswe")
             self.parentframe.yscroll_showing = True
+        self.configure(
+            scrollregion=(
+                0,
+                0,
+                last_col_line_pos + self.empty_horizontal,
+                last_row_line_pos + self.empty_vertical,
+            )
+        )
         scrollpos_bot = self.canvasy(can_height)
         end_row = bisect.bisect_right(self.row_positions, scrollpos_bot)
         if not scrollpos_bot >= self.row_positions[-1]:
             end_row += 1
         if redraw_row_index and self.show_index:
             self.RI.auto_set_index_width(end_row - 1)
+            # return
         scrollpos_left = self.canvasx(0)
         scrollpos_top = self.canvasy(0)
         scrollpos_right = self.canvasx(can_width)
         start_row = bisect.bisect_left(self.row_positions, scrollpos_top)
+        start_col = bisect.bisect_left(self.col_positions, scrollpos_left)
+        end_col = bisect.bisect_right(self.col_positions, scrollpos_right)
         self.row_width_resize_bbox = (
             scrollpos_left,
             scrollpos_top,
@@ -4307,8 +4375,7 @@ class MainTable(tk.Canvas):
         self.disp_dropdown = {}
         self.hidd_checkbox.update(self.disp_checkbox)
         self.disp_checkbox = {}
-        start_col = bisect.bisect_left(self.col_positions, scrollpos_left)
-        end_col = bisect.bisect_right(self.col_positions, scrollpos_right)
+
         if not scrollpos_right >= self.col_positions[-1]:
             end_col += 1
         if last_col_line_pos > scrollpos_right:
@@ -4319,8 +4386,6 @@ class MainTable(tk.Canvas):
             y_stop = scrollpos_bot
         else:
             y_stop = last_row_line_pos
-        row_pos_exists = self.row_positions != [0] and self.row_positions
-        col_pos_exists = self.col_positions != [0] and self.col_positions
         if self.show_horizontal_grid and row_pos_exists:
             self.grid_cyc = cycle(self.grid_cyctup)
             points = []
@@ -4749,10 +4814,11 @@ class MainTable(tk.Canvas):
                 scrollpos_bot,
                 row_pos_exists,
             )
-        self.parentframe.emit_event("<<SheetRedrawn>>")
+        event_data = {"header": redraw_header, "row_index": redraw_row_index, "table": redraw_table}
+        self.parentframe.emit_event("<<SheetRedrawn>>", data=event_data)
         return True
 
-    def get_selection_items(self, cells: bool = True, rows: bool = True, columns: bool = True, current: bool = True, reverse: bool = False):
+    def get_selection_items(self, cells: bool = True, rows: bool = True, columns: bool = True, current: bool = True, reverse: bool = False) -> list:
         return sorted(
             (self.find_withtag("cells") if cells else tuple())
             + (self.find_withtag("rows") if rows else tuple())
@@ -4761,42 +4827,44 @@ class MainTable(tk.Canvas):
             reverse=reverse,
         )
 
-    def get_boxes(self):
+    def get_boxes(self) -> dict:
         boxes = {}
         for item in self.get_selection_items(current=False):
             tags = self.gettags(item)
             boxes[tuple(int(e) for e in tags[1].split("_") if e)] = tags[0]
         return boxes
 
-    def reselect_from_get_boxes(self, boxes: dict, curr: tuple = tuple()):
+    def reselect_from_get_boxes(self, boxes: dict, curr: tuple = tuple()) -> None:
         for (r1, c1, r2, c2), v in boxes.items():
             if r2 < len(self.row_positions) and c2 < len(self.col_positions):
                 self.create_selection_box(r1, c1, r2, c2, v)
         if curr:
             self.set_currently_selected(tags=curr.tags)
 
-    def currently_selected(self):
+    def currently_selected(self, get_item: bool = False) -> Union[int, tuple, CurrentlySelectedClass]:
         items = self.get_selection_items(cells=False, rows=False, columns=False)
         if not items:
             return tuple()
         # more than one currently selected box shouldn't be allowed
         # but just to make sure we get the most recent one anyway
+        if get_item:
+            return items[-1]
         tags = self.gettags(items[-1])
         r, c = tuple(int(e) for e in tags[3].split("_") if e)
         # remove "s" from end
         type_ = tags[4].split("_")[1][:-1]
         return CurrentlySelectedClass(r, c, type_, tags)
 
-    def move_currently_selected_within_box(self, r: int, c: int):
+    def move_currently_selected_within_box(self, r: int, c: int) -> None:
         curr = self.currently_selected()
         if curr:
-            self.set_currently_selected(r=r, c=c, item=int(curr.tags[2].split("_")[1]), tags=curr.tags)
+            self.set_currently_selected(r=r, c=c, item=self.to_item_int(curr.tags), tags=curr.tags)
 
-    def set_currently_selected(self, r: Union[int, None] = None, c: Union[int, None] = None, **kwargs):
-        # if r and c are provided it will attempt to put currently box
-        # at that coordinate
-        # -
-        # currently selected is pointed at a specific selection box "item"
+    def set_currently_selected(self, r: Union[int, None] = None, c: Union[int, None] = None, **kwargs) -> None:
+        # if r and c are provided it will attempt to
+        # put currently box at that coordinate
+        # _________
+        # "selected" tags have the most information about the box
         if "tags" in kwargs and kwargs["tags"]:
             r_, c_ = tuple(int(e) for e in kwargs["tags"][3].split("_") if e)
             if r is None:
@@ -4808,8 +4876,9 @@ class MainTable(tk.Canvas):
             else:
                 self.set_currently_selected(r=r, c=c, box=tuple(int(e) for e in kwargs["tags"][1].split("_") if e))
             return
+        # place at item if r and c are in bounds
         if "item" in kwargs:
-            tags = self.gettags(kwargs["item"])
+            tags = self.gettags(self.to_item_int(kwargs["item"]))
             if tags:
                 r1, c1, r2, c2 = tuple(int(e) for e in tags[1].split("_") if e)
                 if r is None:
@@ -4831,7 +4900,8 @@ class MainTable(tk.Canvas):
                 c = kwargs["box"][1]
             for item in self.get_selection_items(current=False):
                 tags = self.gettags(item)
-                if kwargs["box"] == tuple(int(e) for e in tags[1].split("_") if e):
+                r1, c1, r2, c2 = tuple(int(e) for e in tags[1].split("_") if e)
+                if kwargs["box"] == (r1, c1, r2, c2) and r1 <= r and c1 <= c and r2 > r and c2 > c:
                     self.create_currently_selected_box(
                         r,
                         c,
@@ -4854,7 +4924,7 @@ class MainTable(tk.Canvas):
             # wasn't provided an item and couldn't find a box at coords so select cell
             self.select_cell(r, c, redraw=True)
 
-    def set_current_to_last(self):
+    def set_current_to_last(self) -> None:
         items = self.get_selection_items(current=False)
         if items:
             item = items[-1]
@@ -4863,21 +4933,19 @@ class MainTable(tk.Canvas):
                 self.itemconfig(item, state="hidden")
             self.set_currently_selected(item=item)
 
-    def delete_item(self, item: int, set_current: bool = True):
+    def delete_item(self, item: int, set_current: bool = True) -> None:
         if item is None:
             return
-        if isinstance(item, str):
-            item = int(item.split("_")[1])
+        item = self.to_item_int(item)
         self.delete(f"iid_{item}")
         self.RI.delete(f"iid_{item}")
         self.CH.delete(f"iid_{item}")
 
-    def get_box_from_item(self, item: int, get_dict: bool = False):
+    def get_box_from_item(self, item: int, get_dict: bool = False) -> Union[dict, tuple[int]]:
         if item is None:
             return
         # it's in the form of an item tag f"iid_{item}"
-        if isinstance(item, str):
-            item = int(item.split("_")[1])
+        item = self.to_item_int(item)
         tags = self.gettags(item)
         if tags:
             if get_dict:
@@ -4891,51 +4959,79 @@ class MainTable(tk.Canvas):
                 else:
                     return tuple(int(e) for e in tags[1].split("_") if e) + (tags[0],)
 
-    def create_currently_selected_box(self, r: int, c: int, tags: tuple):
-        self.delete("selected")
-        type_ = tags[4].split("_")[1]
+    def get_selected_box_bg_fg(self, type_: str) -> tuple:
         if type_ == "cells":
-            fill = self.table_selected_cells_bg
-            outline = self.table_selected_cells_border_fg
+            return self.table_selected_cells_bg, self.table_selected_box_cells_fg
         elif type_ == "rows":
-            fill = self.table_selected_rows_bg
-            outline = self.table_selected_rows_border_fg
+            return self.table_selected_rows_bg, self.table_selected_box_rows_fg
         elif type_ == "columns":
-            fill = self.table_selected_columns_bg
-            outline = self.table_selected_columns_border_fg
-        if self.show_selected_cells_border:
-            iid = self.create_rectangle(
+            return self.table_selected_columns_bg, self.table_selected_box_columns_fg
+
+    def create_currently_selected_box(self, r: int, c: int, tags: tuple) -> int:
+        type_ = tags[4].split("_")[1]
+        fill, outline = self.get_selected_box_bg_fg(type_=type_)
+        iid = self.currently_selected(get_item=True)
+        if isinstance(iid, int):
+            self.coords(
+                iid,
                 self.col_positions[c] + 1,
                 self.row_positions[r] + 1,
                 self.col_positions[c + 1],
                 self.row_positions[r + 1],
-                fill="",
-                outline=outline,
-                width=2,
-                tags=tags,
             )
+            if self.show_selected_cells_border:
+                self.itemconfig(
+                    iid,
+                    fill="",
+                    outline=outline,
+                    width=2,
+                    tags=tags,
+                )
+                self.tag_raise(iid)
+            else:
+                self.itemconfig(
+                    iid,
+                    fill=fill,
+                    outline="",
+                    tags=tags,
+                )
         else:
-            iid = self.create_rectangle(
-                self.col_positions[c],
-                self.row_positions[r],
-                self.col_positions[c + 1],
-                self.row_positions[r + 1],
-                fill=fill,
-                outline="",
-                tags=tags,
-            )
+            if self.show_selected_cells_border:
+                iid = self.create_rectangle(
+                    self.col_positions[c] + 1,
+                    self.row_positions[r] + 1,
+                    self.col_positions[c + 1],
+                    self.row_positions[r + 1],
+                    fill="",
+                    outline=outline,
+                    width=2,
+                    tags=tags,
+                )
+            else:
+                iid = self.create_rectangle(
+                    self.col_positions[c],
+                    self.row_positions[r],
+                    self.col_positions[c + 1],
+                    self.row_positions[r + 1],
+                    fill=fill,
+                    outline="",
+                    tags=tags,
+                )
+        if not self.show_selected_cells_border:
+            self.tag_lower(iid)
+            self.lower_selection_boxes()
         return iid
 
     def create_selection_box(
         self,
-        r1: Union[int, None] = None,
-        c1: Union[int, None] = None,
-        r2: Union[int, None] = None,
-        c2: Union[int, None] = None,
+        r1: int,
+        c1: int,
+        r2: int,
+        c2: int,
         type_: str = "cells",
         state: str = "normal",
         set_current: Union[bool, tuple[int]] = True,
-    ):
+    ) -> int:
         if self.col_positions == [0]:
             c1 = 0
             c2 = 0
@@ -4968,7 +5064,6 @@ class MainTable(tk.Canvas):
             state=state,
             tags=fill_tags,
         )
-
         tag_addon = f"iid_{fill_iid}"
         self.addtag_withtag(tag_addon, fill_iid)
         self.last_selected = fill_iid
@@ -5020,6 +5115,10 @@ class MainTable(tk.Canvas):
                 outline=mt_border_col,
                 tags=border_tags,
             )
+        self.lower_selection_boxes()
+        return fill_iid
+
+    def lower_selection_boxes(self) -> None:
         self.tag_lower("rows")
         self.RI.tag_lower("rows")
         self.tag_lower("columns")
@@ -5027,33 +5126,128 @@ class MainTable(tk.Canvas):
         self.tag_lower("cells")
         self.RI.tag_lower("cells")
         self.CH.tag_lower("cells")
-        return fill_iid
+        self.tag_raise("selected")
 
-    def recreate_all_selection_boxes(self):
-        boxes = {}
+    def recreate_selection_box(
+        self,
+        r1: int,
+        c1: int,
+        r2: int,
+        c2: int,
+        fill_iid: int,
+    ) -> None:
+        alltags = self.gettags(fill_iid)
+        type_ = alltags[0]
+        tag_addon = f"iid_{fill_iid}"
+        if type_ == "cells":
+            fill_tags = ("cells", f"{r1}_{c1}_{r2}_{c2}", tag_addon)
+            border_tags = ("cellsbd", f"{r1}_{c1}_{r2}_{c2}", tag_addon)
+            mt_bg = self.table_selected_cells_bg
+            mt_border_col = self.table_selected_cells_border_fg
+        elif type_ == "rows":
+            fill_tags = ("rows", f"{r1}_{c1}_{r2}_{c2}", tag_addon)
+            border_tags = ("rowsbd", f"{r1}_{c1}_{r2}_{c2}", tag_addon)
+            mt_bg = self.table_selected_rows_bg
+            mt_border_col = self.table_selected_rows_border_fg
+        elif type_ == "columns":
+            fill_tags = ("columns", f"{r1}_{c1}_{r2}_{c2}", tag_addon)
+            border_tags = ("columnsbd", f"{r1}_{c1}_{r2}_{c2}", tag_addon)
+            mt_bg = self.table_selected_columns_bg
+            mt_border_col = self.table_selected_columns_border_fg
+        self.coords(
+            fill_iid,
+            self.col_positions[c1],
+            self.row_positions[r1],
+            self.canvasx(self.winfo_width()) if self.selected_rows_to_end_of_window else self.col_positions[c2],
+            self.row_positions[r2],
+        )
+        self.itemconfig(
+            fill_iid,
+            fill=mt_bg,
+            outline="",
+            tags=fill_tags,
+        )
+        tag_index_header_type = fill_tags
+        tag_index_header = ("cells", f"{r1}_{c1}_{r2}_{c2}", tag_addon)
+        ch_tags = tag_index_header if type_ == "rows" else tag_index_header_type
+        ri_tags = tag_index_header if type_ == "columns" else tag_index_header_type
+        self.RI.coords(
+            tag_addon,
+            0,
+            self.row_positions[r1],
+            self.RI.current_width - 1,
+            self.row_positions[r2],
+        )
+        self.RI.itemconfig(
+            tag_addon,
+            fill=self.RI.index_selected_rows_bg if type_ == "rows" else self.RI.index_selected_cells_bg,
+            outline="",
+            tags=ri_tags,
+        )
+        self.CH.coords(
+            tag_addon,
+            self.col_positions[c1],
+            0,
+            self.col_positions[c2],
+            self.CH.current_height - 1,
+        )
+        self.CH.itemconfig(
+            tag_addon,
+            fill=self.CH.header_selected_columns_bg if type_ == "columns" else self.CH.header_selected_cells_bg,
+            outline="",
+            tags=ch_tags,
+        )
+        # check for border of selection box which is a separate item
+        border_item = [item for item in self.find_withtag(tag_addon) if self.gettags(item)[0].endswith("bd")]
+        if border_item:
+            border_item = border_item[0]
+            if self.show_selected_cells_border:
+                self.coords(
+                    border_item,
+                    self.col_positions[c1],
+                    self.row_positions[r1],
+                    self.col_positions[c2],
+                    self.row_positions[r2],
+                )
+                self.itemconfig(
+                    border_item,
+                    fill="",
+                    outline=mt_border_col,
+                    tags=border_tags,
+                )
+            else:
+                self.delete(border_item)
+
+    def recreate_all_selection_boxes(self) -> None:
         curr = self.currently_selected()
         if not curr:
             return
-        for (r1, c1, r2, c2), t in self.get_boxes().items():
+        for item in self.get_selection_items(current=False):
+            tags = self.gettags(item)
+            r1, c1, r2, c2 = tuple(int(e) for e in tags[1].split("_") if e)
             if r1 >= len(self.row_positions) - 1 or c1 >= len(self.col_positions) - 1:
+                self.delete_item(item)
                 continue
             if r2 > len(self.row_positions) - 1:
                 r2 = len(self.row_positions) - 1
             if c2 > len(self.col_positions) - 1:
                 c2 = len(self.col_positions) - 1
-            boxes[(r1, c1, r2, c2)] = t
-        self.reselect_from_get_boxes(boxes, curr=curr)
-        self.tag_lower("rows")
-        self.RI.tag_lower("rows")
-        self.tag_lower("columns")
-        self.CH.tag_lower("columns")
-        self.tag_lower("cells")
-        self.RI.tag_lower("cells")
-        self.CH.tag_lower("cells")
-        if not self.show_selected_cells_border:
-            self.tag_lower("selected")
+            self.recreate_selection_box(r1, c1, r2, c2, item)
+        self.set_currently_selected(tags=curr.tags)
 
-    def get_redraw_selections(self, startr: int, endr: int, startc: int, endc: int):
+    def to_item_int(self, item: Union[int, str, tuple]) -> int:
+        # item arg is a tuple of tags
+        if isinstance(item, tuple):
+            if isinstance(item, CurrentlySelectedClass):
+                return int(item[3][2].split("_")[1])
+            return int(item[2].split("_")[1])
+        # item arg is one of those tags
+        if isinstance(item, str):
+            return int(item.split("_")[1])
+        # item is probably an int
+        return item
+
+    def get_redraw_selections(self, startr: int, endr: int, startc: int, endc: int) -> dict:
         d = defaultdict(list)
         for item in self.get_selection_items(current=False):
             tags = self.gettags(item)
@@ -5067,7 +5261,7 @@ class MainTable(tk.Canvas):
             d2["columns"] = {c for c in range(startc, endc) for r1, c1, r2, c2 in d["columns"] if c1 <= c and c2 > c}
         return d2
 
-    def get_selected_min_max(self):
+    def get_selected_min_max(self) -> tuple[Union[int, None]]:
         min_x = float("inf")
         min_y = float("inf")
         max_x = 0
@@ -5084,10 +5278,9 @@ class MainTable(tk.Canvas):
                 max_x = c2
         if min_x != float("inf") and min_y != float("inf") and max_x > 0 and max_y > 0:
             return min_y, min_x, max_y, max_x
-        else:
-            return None, None, None, None
+        return None, None, None, None
 
-    def get_selected_rows(self, get_cells: bool = False, within_range: Union[tuple, None] = None, get_cells_as_rows: bool = False):
+    def get_selected_rows(self, get_cells: bool = False, within_range: Union[tuple, None] = None, get_cells_as_rows: bool = False) -> Union[set[int], set[tuple[int]]]:
         s = set()
         if within_range is not None:
             within_r1 = within_range[0]
@@ -5103,18 +5296,10 @@ class MainTable(tk.Canvas):
                 for item in self.get_selection_items(cells=False, columns=False, current=False):
                     r1, c1, r2, c2 = tuple(int(e) for e in self.gettags(item)[1].split("_") if e)
                     if r1 >= within_r1 or r2 <= within_r2:
-                        if r1 > within_r1:
-                            start_row = r1
-                        else:
-                            start_row = within_r1
-                        if r2 < within_r2:
-                            end_row = r2
-                        else:
-                            end_row = within_r2
                         s.update(
                             set(
                                 product(
-                                    range(start_row, end_row),
+                                    range(r1 if r1 > within_r1 else within_r1, r2 if r2 < within_r2 else within_r2),
                                     range(0, len(self.col_positions) - 1),
                                 )
                             )
@@ -5141,15 +5326,7 @@ class MainTable(tk.Canvas):
                 for item in self.get_selection_items(cells=False, columns=False, current=False):
                     r1, c1, r2, c2 = tuple(int(e) for e in self.gettags(item)[1].split("_") if e)
                     if r1 >= within_r1 or r2 <= within_r2:
-                        if r1 > within_r1:
-                            start_row = r1
-                        else:
-                            start_row = within_r1
-                        if r2 < within_r2:
-                            end_row = r2
-                        else:
-                            end_row = within_r2
-                        s.update(set(range(start_row, end_row)))
+                        s.update(set(range(r1 if r1 > within_r1 else within_r1, r2 if r2 < within_r2 else within_r2)))
                 if get_cells_as_rows:
                     s.update(
                         set(
@@ -5166,7 +5343,7 @@ class MainTable(tk.Canvas):
                     )
         return s
 
-    def get_selected_cols(self, get_cells: bool = False, within_range: Union[tuple, None] = None, get_cells_as_cols: bool = False):
+    def get_selected_cols(self, get_cells: bool = False, within_range: Union[tuple, None] = None, get_cells_as_cols: bool = False) -> Union[set[int], set[tuple[int]]]:
         s = set()
         if within_range is not None:
             within_c1 = within_range[0]
@@ -5182,18 +5359,10 @@ class MainTable(tk.Canvas):
                 for item in self.get_selection_items(cells=False, rows=False, current=False):
                     r1, c1, r2, c2 = tuple(int(e) for e in self.gettags(item)[1].split("_") if e)
                     if c1 >= within_c1 or c2 <= within_c2:
-                        if c1 > within_c1:
-                            start_col = c1
-                        else:
-                            start_col = within_c1
-                        if c2 < within_c2:
-                            end_col = c2
-                        else:
-                            end_col = within_c2
                         s.update(
                             set(
                                 product(
-                                    range(start_col, end_col),
+                                    range(c1 if c1 > within_c1 else within_c1, c2 if c2 < within_c2 else within_c2),
                                     range(0, len(self.row_positions) - 1),
                                 )
                             )
@@ -5220,15 +5389,7 @@ class MainTable(tk.Canvas):
                 for item in self.get_selection_items(cells=False, rows=False, current=False):
                     r1, c1, r2, c2 = tuple(int(e) for e in self.gettags(item)[1].split("_") if e)
                     if c1 >= within_c1 or c2 <= within_c2:
-                        if c1 > within_c1:
-                            start_col = c1
-                        else:
-                            start_col = within_c1
-                        if c2 < within_c2:
-                            end_col = c2
-                        else:
-                            end_col = within_c2
-                        s.update(set(range(start_col, end_col)))
+                        s.update(set(range(c1 if c1 > within_c1 else within_c1, c2 if c2 < within_c2 else within_c2)))
                 if get_cells_as_cols:
                     s.update(
                         set(
@@ -5245,7 +5406,7 @@ class MainTable(tk.Canvas):
                     )
         return s
 
-    def get_selected_cells(self, get_rows: bool = False, get_cols: bool = False, within_range: bool = None):
+    def get_selected_cells(self, get_rows: bool = False, get_cols: bool = False, within_range: bool = None) -> set[tuple[int]]:
         s = set()
         if within_range is not None:
             within_r1 = within_range[0]
@@ -5260,36 +5421,22 @@ class MainTable(tk.Canvas):
             for item in self.get_selection_items(rows=get_rows, columns=get_cols, current=False):
                 r1, c1, r2, c2 = tuple(int(e) for e in self.gettags(item)[1].split("_") if e)
                 if r1 >= within_r1 or c1 >= within_c1 or r2 <= within_r2 or c2 <= within_c2:
-                    if r1 > within_r1:
-                        start_row = r1
-                    else:
-                        start_row = within_r1
-                    if c1 > within_c1:
-                        start_col = c1
-                    else:
-                        start_col = within_c1
-                    if r2 < within_r2:
-                        end_row = r2
-                    else:
-                        end_row = within_r2
-                    if c2 < within_c2:
-                        end_col = c2
-                    else:
-                        end_col = within_c2
-                    s.update(set(product(range(start_row, end_row), range(start_col, end_col))))
+                    s.update(
+                        set(product(range(r1 if r1 > within_r1 else within_r1, r2 if r2 < within_r2 else within_r2), range(c1 if c1 > within_c1 else within_c1, c2 if c2 < within_c2 else within_c2)))
+                    )
         return s
 
-    def get_all_selection_boxes(self):
+    def get_all_selection_boxes(self) -> tuple[tuple[int]]:
         return tuple(tuple(int(e) for e in self.gettags(item)[1].split("_") if e) for item in self.get_selection_items(current=False))
 
-    def get_all_selection_boxes_with_types(self):
+    def get_all_selection_boxes_with_types(self) -> dict:
         boxes = []
         for item in self.get_selection_items(current=False):
             tags = self.gettags(item)
             boxes.append((tuple(int(e) for e in tags[1].split("_") if e), tags[0]))
         return boxes
 
-    def all_selected(self):
+    def all_selected(self) -> bool:
         for r1, c1, r2, c2 in self.get_all_selection_boxes():
             if not r1 and not c1 and r2 == len(self.row_positions) - 1 and c2 == len(self.col_positions) - 1:
                 return True
@@ -5297,7 +5444,7 @@ class MainTable(tk.Canvas):
 
     # don't have to use "selected" because you can't
     # have a current without a selection box
-    def cell_selected(self, r: int, c: int, inc_cols: bool = False, inc_rows: bool = False):
+    def cell_selected(self, r: int, c: int, inc_cols: bool = False, inc_rows: bool = False) -> bool:
         if not isinstance(r, int) or not isinstance(c, int):
             return False
         for item in self.get_selection_items(rows=inc_rows, columns=inc_cols, current=False):
@@ -5306,7 +5453,7 @@ class MainTable(tk.Canvas):
                 return True
         return False
 
-    def col_selected(self, c: int):
+    def col_selected(self, c: int) -> bool:
         if not isinstance(c, int):
             return False
         for item in self.get_selection_items(cells=False, rows=False, current=False):
@@ -5315,7 +5462,7 @@ class MainTable(tk.Canvas):
                 return True
         return False
 
-    def row_selected(self, r: int):
+    def row_selected(self, r: int) -> bool:
         if not isinstance(r, int):
             return False
         for item in self.get_selection_items(cells=False, columns=False, current=False):
@@ -5324,7 +5471,7 @@ class MainTable(tk.Canvas):
                 return True
         return False
 
-    def anything_selected(self, exclude_columns: bool = False, exclude_rows: bool = False, exclude_cells: bool = False):
+    def anything_selected(self, exclude_columns: bool = False, exclude_rows: bool = False, exclude_cells: bool = False) -> list[int]:
         return self.get_selection_items(
             columns=not exclude_columns,
             rows=not exclude_rows,
@@ -5332,7 +5479,7 @@ class MainTable(tk.Canvas):
             current=False,
         )
 
-    def open_cell(self, event=None, ignore_existing_editor: bool = False):
+    def open_cell(self, event=None, ignore_existing_editor: bool = False) -> None:
         if not self.anything_selected() or (not ignore_existing_editor and self.text_editor_id is not None):
             return
         currently_selected = self.currently_selected()
@@ -5352,7 +5499,7 @@ class MainTable(tk.Canvas):
         else:
             self.open_text_editor(event=event, r=r, c=c, dropdown=False)
 
-    def event_opens_dropdown_or_checkbox(self, event=None):
+    def event_opens_dropdown_or_checkbox(self, event=None) -> bool:
         if event is None:
             return False
         elif event == "rc":
@@ -5368,7 +5515,7 @@ class MainTable(tk.Canvas):
             return False
 
     # displayed indexes
-    def get_cell_align(self, r: int, c: int):
+    def get_cell_align(self, r: int, c: int) -> str:
         datarn = r if self.all_rows_displayed else self.displayed_rows[r]
         datacn = c if self.all_columns_displayed else self.displayed_columns[c]
         cell_alignment = self.get_cell_kwargs(datarn, datacn, key="align")
@@ -5388,7 +5535,7 @@ class MainTable(tk.Canvas):
         set_data_on_close: bool = True,
         binding: Union[Callable, None] = None,
         dropdown: bool = False,
-    ):
+    ) -> bool:
         text = None
         extra_func_key = "??"
         datarn = r if self.all_rows_displayed else self.displayed_rows[r]
@@ -5458,7 +5605,7 @@ class MainTable(tk.Canvas):
             state=state,
             width=w,
             height=h,
-            border_color=self.table_selected_cells_border_fg,
+            border_color=self.get_selected_box_bg_fg(type_="cells")[1],
             show_border=self.show_selected_cells_border,
             bg=bg,
             fg=fg,
@@ -5499,7 +5646,7 @@ class MainTable(tk.Canvas):
         return True
 
     # displayed indexes
-    def text_editor_newline_binding(self, r: int = 0, c: int = 0, event: Any = None, check_lines: bool = True):
+    def text_editor_newline_binding(self, r: int = 0, c: int = 0, event: Any = None, check_lines: bool = True) -> None:
         datarn = r if self.all_rows_displayed else self.displayed_rows[r]
         datacn = c if self.all_columns_displayed else self.displayed_columns[c]
         curr_height = self.text_editor.winfo_height()
@@ -5529,7 +5676,7 @@ class MainTable(tk.Canvas):
                         )
                         self.itemconfig(kwargs["canvas_id"], anchor=anchor, height=win_h)
 
-    def destroy_text_editor(self, event: Any = None):
+    def destroy_text_editor(self, event: Any = None) -> None:
         self.text_editor_loc = None
         try:
             self.delete(self.text_editor_id)
@@ -5556,7 +5703,7 @@ class MainTable(tk.Canvas):
         move_down: bool = True,
         redraw: bool = True,
         recreate: bool = True,
-    ):
+    ) -> str:
         if self.focus_get() is None and editor_info:
             return "break"
         if editor_info is not None and len(editor_info) >= 3 and editor_info[2] == "Escape":
@@ -5692,7 +5839,7 @@ class MainTable(tk.Canvas):
             self.focus_set()
         return "break"
 
-    def tab_key(self, event: Any = None):
+    def tab_key(self, event: Any = None) -> str:
         currently_selected = self.currently_selected()
         if not currently_selected:
             return
@@ -5727,326 +5874,6 @@ class MainTable(tk.Canvas):
             check_cell_visibility=True,
         )
         return "break"
-
-    # internal event use
-    def set_cell_data_undo(
-        self,
-        r: int = 0,
-        c: int = 0,
-        datarn: Union[int, None] = None,
-        datacn: Union[int, None] = None,
-        value: str = "",
-        undo: bool = True,
-        cell_resize: bool = True,
-        redraw: bool = True,
-        check_input_valid: bool = True,
-    ):
-        if datacn is None:
-            datacn = c if self.all_columns_displayed else self.displayed_columns[c]
-        if datarn is None:
-            datarn = r if self.all_rows_displayed else self.displayed_rows[r]
-        event_data = event_dict(
-            name="edit_table",
-            cells_table={(datarn, datacn): self.get_cell_data(datarn, datacn)},
-            boxes=self.get_boxes(),
-            selected=self.currently_selected(),
-        )
-        if not check_input_valid or self.input_valid_for_cell(datarn, datacn, value):
-            if self.undo_enabled and undo:
-                self.undo_stack.append(zlib.compress(pickle.dumps(event_data)))
-            self.set_cell_data(datarn, datacn, value)
-        if cell_resize and self.cell_auto_resize_enabled:
-            self.set_cell_size_to_text(r, c, only_set_if_too_small=True, redraw=redraw, run_binding=True)
-        self.sheet_modified(event_data)
-        return True
-
-    def set_cell_data(self, datarn: int, datacn: int, value: Any, kwargs: dict = {}, expand_sheet: bool = True):
-        if expand_sheet:
-            if datarn >= len(self.data):
-                self.fix_data_len(datarn, datacn)
-            elif datacn >= len(self.data[datarn]):
-                self.fix_row_len(datarn, datacn)
-        if expand_sheet or (len(self.data) > datarn and len(self.data[datarn]) > datacn):
-            if (
-                datarn,
-                datacn,
-            ) in self.cell_options and "checkbox" in self.cell_options[(datarn, datacn)]:
-                self.data[datarn][datacn] = try_to_bool(value)
-            else:
-                if not kwargs:
-                    kwargs = self.get_cell_kwargs(datarn, datacn, key="format")
-                if kwargs:
-                    if kwargs["formatter"] is None:
-                        self.data[datarn][datacn] = format_data(value=value, **kwargs)
-                    else:
-                        self.data[datarn][datacn] = kwargs["formatter"](value, **kwargs)
-                else:
-                    self.data[datarn][datacn] = value
-
-    def get_value_for_empty_cell(self, datarn: int, datacn: int, r_ops: bool = True, c_ops: bool = True):
-        if self.get_cell_kwargs(
-            datarn,
-            datacn,
-            key="checkbox",
-            cell=r_ops and c_ops,
-            row=r_ops,
-            column=c_ops,
-        ):
-            return False
-        kwargs = self.get_cell_kwargs(
-            datarn,
-            datacn,
-            key="dropdown",
-            cell=r_ops and c_ops,
-            row=r_ops,
-            column=c_ops,
-        )
-        if kwargs and kwargs["validate_input"] and kwargs["values"]:
-            return kwargs["values"][0]
-        return ""
-
-    def get_empty_row_seq(self, datarn: int, end: int, start: int = 0, r_ops: bool = True, c_ops: bool = True):
-        return [self.get_value_for_empty_cell(datarn, datacn, r_ops=r_ops, c_ops=c_ops) for datacn in range(start, end)]
-
-    def fix_row_len(self, datarn: int, datacn: int):
-        self.data[datarn].extend(self.get_empty_row_seq(datarn, end=datacn + 1, start=len(self.data[datarn])))
-
-    def fix_row_values(self, datarn: int, start: Union[int, None] = None, end: Union[int, None] = None):
-        if datarn < len(self.data):
-            for datacn, v in enumerate(islice(self.data[datarn], start, end)):
-                if not self.input_valid_for_cell(datarn, datacn, v):
-                    self.data[datarn][datacn] = self.get_value_for_empty_cell(datarn, datacn)
-
-    def fix_data_len(self, datarn: int, datacn: Union[int, None] = None):
-        ncols = self.total_data_cols() if datacn is None else datacn + 1
-        self.data.extend([self.get_empty_row_seq(rn, end=ncols, start=0) for rn in range(len(self.data), datarn + 1)])
-
-    # internal event use
-    def click_checkbox(
-        self,
-        r: int,
-        c: int,
-        datarn: Union[int, None] = None,
-        datacn: Union[int, None] = None,
-        undo: bool = True,
-        redraw: bool = True,
-    ):
-        if datarn is None:
-            datarn = r if self.all_rows_displayed else self.displayed_rows[r]
-        if datacn is None:
-            datacn = c if self.all_columns_displayed else self.displayed_columns[c]
-        kwargs = self.get_cell_kwargs(datarn, datacn, key="checkbox")
-        if kwargs["state"] == "normal":
-            pre_edit_value = self.get_cell_data(datarn, datacn)
-            value = not self.data[datarn][datacn] if type(self.data[datarn][datacn]) == bool else False
-            self.set_cell_data_undo(
-                r,
-                c,
-                value=value,
-                undo=undo,
-                cell_resize=False,
-                check_input_valid=False,
-            )
-            event_data = event_dict(
-                name="end_edit_table",
-                cells_table={(datarn, datacn): pre_edit_value},
-                key="??",
-                value=value,
-                location=(r, c),
-                boxes=self.get_boxes(),
-                selected=self.currently_selected(),
-            )
-            if kwargs["check_function"] is not None:
-                kwargs["check_function"](event_data)
-            if self.extra_end_edit_cell_func is not None:
-                self.extra_end_edit_cell_func(event_data)
-        if redraw:
-            self.refresh()
-
-    def reapply_formatting(self):
-        if "format" in self.options:
-            for r in range(len(self.data)):
-                if r not in self.row_options:
-                    for c in range(len(self.data[r])):
-                        if not ((r, c) in self.cell_options and "format" in self.cell_options[(r, c)] or c in self.col_options and "format" in self.col_options[c]):
-                            self.set_cell_data(r, c, value=self.data[r][c])
-        for c in self.yield_formatted_columns():
-            for r in range(len(self.data)):
-                if not ((r, c) in self.cell_options and "format" in self.cell_options[(r, c)] or r in self.row_options and "format" in self.row_options[r]):
-                    self.set_cell_data(r, c, value=self.data[r][c])
-        for r in self.yield_formatted_rows():
-            for c in range(len(self.data[r])):
-                if not ((r, c) in self.cell_options and "format" in self.cell_options[(r, c)]):
-                    self.set_cell_data(r, c, value=self.data[r][c])
-        for r, c in self.yield_formatted_cells():
-            if len(self.data) > r and len(self.data[r]) > c:
-                self.set_cell_data(r, c, value=self.data[r][c])
-
-    def delete_all_formatting(self, clear_values: bool = False):
-        self.delete_cell_format("all", clear_values=clear_values)
-        self.delete_row_format("all", clear_values=clear_values)
-        self.delete_column_format("all", clear_values=clear_values)
-        self.delete_sheet_format(clear_values=clear_values)
-
-    def delete_cell_format(self, datarn: Union[str, int] = "all", datacn: int = 0, clear_values: bool = False):
-        if isinstance(datarn, str) and datarn.lower() == "all":
-            for datarn, datacn in self.yield_formatted_cells():
-                del self.cell_options[(datarn, datacn)]["format"]
-                if clear_values:
-                    self.set_cell_data(datarn, datacn, "", expand_sheet=False)
-        else:
-            if (datarn, datacn) in self.cell_options and "format" in self.cell_options[(datarn, datacn)]:
-                del self.cell_options[(datarn, datacn)]["format"]
-                if clear_values:
-                    self.set_cell_data(datarn, datacn, "", expand_sheet=False)
-
-    def delete_row_format(self, datarn: Union[str, int] = "all", clear_values: bool = False):
-        if isinstance(datarn, str) and datarn.lower() == "all":
-            for datarn in self.yield_formatted_rows():
-                del self.row_options[datarn]["format"]
-                if clear_values:
-                    for datacn in range(len(self.data[datarn])):
-                        self.set_cell_data(datarn, datacn, "", expand_sheet=False)
-        else:
-            if datarn in self.row_options and "format" in self.row_options[datarn]:
-                del self.row_options[datarn]["format"]
-                if clear_values:
-                    for datacn in range(len(self.data[datarn])):
-                        self.set_cell_data(datarn, datacn, "", expand_sheet=False)
-
-    def delete_column_format(self, datacn: Union[str, int] = "all", clear_values: bool = False):
-        if isinstance(datacn, str) and datacn.lower() == "all":
-            for datacn in self.yield_formatted_columns():
-                del self.col_options[datacn]["format"]
-                if clear_values:
-                    for datarn in range(len(self.data)):
-                        self.set_cell_data(datarn, datacn, "", expand_sheet=False)
-        else:
-            if datacn in self.col_options and "format" in self.col_options[datacn]:
-                del self.col_options[datacn]["format"]
-                if clear_values:
-                    for datarn in range(len(self.data)):
-                        self.set_cell_data(datarn, datacn, "", expand_sheet=False)
-
-    def delete_sheet_format(self, clear_values: bool = False):
-        if "format" in self.options:
-            del self.options["format"]
-            if clear_values:
-                total_cols = self.total_data_cols()
-                self.data = [[self.get_value_for_empty_cell(r, c) for c in range(total_cols)] for r in range(self.total_data_rows())]
-
-    # deals with possibility of formatter class being in self.data cell
-    # if cell is formatted - possibly returns invalid_value kwarg if
-    # cell value is not in datatypes kwarg
-    # if get displayed is true then Nones are replaced by ""
-    def get_valid_cell_data_as_str(self, datarn: int, datacn: int, get_displayed: bool = False, **kwargs) -> str:
-        if get_displayed:
-            kwargs = self.get_cell_kwargs(datarn, datacn, key="dropdown")
-            if kwargs and kwargs["text"] is not None:
-                return f"{kwargs['text']}"
-            kwargs = self.get_cell_kwargs(datarn, datacn, key="checkbox")
-            if kwargs:
-                return f"{kwargs['text']}"
-        value = self.data[datarn][datacn] if len(self.data) > datarn and len(self.data[datarn]) > datacn else ""
-        kwargs = self.get_cell_kwargs(datarn, datacn, key="format")
-        if kwargs:
-            if kwargs["formatter"] is None:
-                if get_displayed:
-                    return data_to_str(value, **kwargs)
-                else:
-                    return f"{get_data_with_valid_check(value, **kwargs)}"
-            else:
-                if get_displayed:
-                    # assumed given formatter class has __str__()
-                    return f"{value}"
-                else:
-                    # assumed given formatter class has get_data_with_valid_check()
-                    return f"{value.get_data_with_valid_check()}"
-        return "" if value is None else f"{value}"
-
-    def get_cell_data(self, datarn: int, datacn: int, get_displayed: bool = False, none_to_empty_str: bool = False, **kwargs) -> Any:
-        if get_displayed:
-            return self.get_valid_cell_data_as_str(datarn, datacn, get_displayed=True)
-        value = self.data[datarn][datacn] if len(self.data) > datarn and len(self.data[datarn]) > datacn else ""
-        kwargs = self.get_cell_kwargs(datarn, datacn, key="format")
-        if kwargs and kwargs["formatter"] is not None:
-            value = value.value  # assumed given formatter class has value attribute
-        return "" if (value is None and none_to_empty_str) else value
-
-    def input_valid_for_cell(self, datarn, datacn, value) -> bool:
-        if self.get_cell_kwargs(datarn, datacn, key="readonly"):
-            return False
-        if self.cell_equal_to(datarn, datacn, value):
-            return False
-        if self.get_cell_kwargs(datarn, datacn, key="format"):
-            return True
-        if self.get_cell_kwargs(datarn, datacn, key="checkbox"):
-            return is_bool_like(value)
-        kwargs = self.get_cell_kwargs(datarn, datacn, key="dropdown")
-        if kwargs and kwargs["validate_input"] and value not in kwargs["values"]:
-            return False
-        return True
-
-    def cell_equal_to(self, datarn, datacn, value, **kwargs) -> bool:
-        v = self.get_cell_data(datarn, datacn)
-        kwargs = self.get_cell_kwargs(datarn, datacn, key="format")
-        if kwargs and kwargs["formatter"] is None:
-            return v == format_data(value=value, **kwargs)
-        # assumed if there is a formatter class in cell then it has a
-        # __eq__() function anyway
-        # else if there is not a formatter class in cell and cell is not formatted
-        # then compare value as is
-        return v == value
-
-    def get_cell_clipboard(self, datarn, datacn) -> Union[str, int, float, bool]:
-        value = self.data[datarn][datacn] if len(self.data) > datarn and len(self.data[datarn]) > datacn else ""
-        kwargs = self.get_cell_kwargs(datarn, datacn, key="format")
-        if kwargs:
-            if kwargs["formatter"] is None:
-                return get_clipboard_data(value, **kwargs)
-            else:
-                # assumed given formatter class has get_clipboard_data() function
-                # and it returns one of above type hints
-                return value.get_clipboard_data()
-        return f"{value}"
-
-    def yield_formatted_cells(self, formatter: Any = None) -> tuple:
-        if formatter is None:
-            yield from (cell for cell, options in self.cell_options.items() if "format" in options and options["format"]["formatter"] == formatter)
-        else:
-            yield from (cell for cell, options in self.cell_options.items() if "format" in options)
-
-    def yield_formatted_rows(self, formatter: Any = None) -> int:
-        if formatter is None:
-            yield from (r for r, options in self.row_options.items() if "format" in options)
-        else:
-            yield from (r for r, options in self.row_options.items() if "format" in options and options["format"]["formatter"] == formatter)
-
-    def yield_formatted_columns(self, formatter: Any = None) -> int:
-        if formatter is None:
-            yield from (c for c, options in self.col_options.items() if "format" in options)
-        else:
-            yield from (c for c, options in self.col_options.items() if "format" in options and options["format"]["formatter"] == formatter)
-
-    def get_cell_kwargs(
-        self,
-        datarn,
-        datacn,
-        key="format",
-        cell=True,
-        row=True,
-        column=True,
-        entire=True,
-    ) -> dict:
-        if cell and (datarn, datacn) in self.cell_options and key in self.cell_options[(datarn, datacn)]:
-            return self.cell_options[(datarn, datacn)][key]
-        if row and datarn in self.row_options and key in self.row_options[datarn]:
-            return self.row_options[datarn][key]
-        if column and datacn in self.col_options and key in self.col_options[datacn]:
-            return self.col_options[datacn][key]
-        if entire and key in self.options:
-            return self.options[key]
-        return {}
 
     def get_space_bot(self, r: int, text_editor_h: Union[int, None] = None) -> int:
         if len(self.row_positions) <= 1:
@@ -6122,7 +5949,7 @@ class MainTable(tk.Canvas):
                 "highlight_bg": self.popup_menu_highlight_bg,
                 "highlight_fg": self.popup_menu_highlight_fg,
             },
-            outline_color=self.table_selected_cells_border_fg,
+            outline_color=self.get_selected_box_bg_fg(type_="cells")[1],
             outline_thickness=2,
             values=kwargs["values"],
             close_dropdown_window=self.close_dropdown_window,
@@ -6267,8 +6094,327 @@ class MainTable(tk.Canvas):
                 pass
         self.existing_dropdown_window = None
 
-    def datacn(self, c) -> int:
+    def click_checkbox(
+        self,
+        r: int,
+        c: int,
+        datarn: Union[int, None] = None,
+        datacn: Union[int, None] = None,
+        undo: bool = True,
+        redraw: bool = True,
+    ) -> None:
+        if datarn is None:
+            datarn = r if self.all_rows_displayed else self.displayed_rows[r]
+        if datacn is None:
+            datacn = c if self.all_columns_displayed else self.displayed_columns[c]
+        kwargs = self.get_cell_kwargs(datarn, datacn, key="checkbox")
+        if kwargs["state"] == "normal":
+            pre_edit_value = self.get_cell_data(datarn, datacn)
+            value = not self.data[datarn][datacn] if type(self.data[datarn][datacn]) == bool else False
+            self.set_cell_data_undo(
+                r,
+                c,
+                value=value,
+                undo=undo,
+                cell_resize=False,
+                check_input_valid=False,
+            )
+            event_data = event_dict(
+                name="end_edit_table",
+                cells_table={(datarn, datacn): pre_edit_value},
+                key="??",
+                value=value,
+                location=(r, c),
+                boxes=self.get_boxes(),
+                selected=self.currently_selected(),
+            )
+            if kwargs["check_function"] is not None:
+                kwargs["check_function"](event_data)
+            if self.extra_end_edit_cell_func is not None:
+                self.extra_end_edit_cell_func(event_data)
+        if redraw:
+            self.refresh()
+
+    # internal event use
+    def set_cell_data_undo(
+        self,
+        r: int = 0,
+        c: int = 0,
+        datarn: Union[int, None] = None,
+        datacn: Union[int, None] = None,
+        value: str = "",
+        undo: bool = True,
+        cell_resize: bool = True,
+        redraw: bool = True,
+        check_input_valid: bool = True,
+    ) -> bool:
+        if datacn is None:
+            datacn = c if self.all_columns_displayed else self.displayed_columns[c]
+        if datarn is None:
+            datarn = r if self.all_rows_displayed else self.displayed_rows[r]
+        event_data = event_dict(
+            name="edit_table",
+            cells_table={(datarn, datacn): self.get_cell_data(datarn, datacn)},
+            boxes=self.get_boxes(),
+            selected=self.currently_selected(),
+        )
+        if not check_input_valid or self.input_valid_for_cell(datarn, datacn, value):
+            if self.undo_enabled and undo:
+                self.undo_stack.append(zlib.compress(pickle.dumps(event_data)))
+            self.set_cell_data(datarn, datacn, value)
+        if cell_resize and self.cell_auto_resize_enabled:
+            self.set_cell_size_to_text(r, c, only_set_if_too_small=True, redraw=redraw, run_binding=True)
+        self.sheet_modified(event_data)
+        return True
+
+    def set_cell_data(self, datarn: int, datacn: int, value: Any, kwargs: dict = {}, expand_sheet: bool = True) -> None:
+        if expand_sheet:
+            if datarn >= len(self.data):
+                self.fix_data_len(datarn, datacn)
+            elif datacn >= len(self.data[datarn]):
+                self.fix_row_len(datarn, datacn)
+        if expand_sheet or (len(self.data) > datarn and len(self.data[datarn]) > datacn):
+            if (
+                datarn,
+                datacn,
+            ) in self.cell_options and "checkbox" in self.cell_options[(datarn, datacn)]:
+                self.data[datarn][datacn] = try_to_bool(value)
+            else:
+                if not kwargs:
+                    kwargs = self.get_cell_kwargs(datarn, datacn, key="format")
+                if kwargs:
+                    if kwargs["formatter"] is None:
+                        self.data[datarn][datacn] = format_data(value=value, **kwargs)
+                    else:
+                        self.data[datarn][datacn] = kwargs["formatter"](value, **kwargs)
+                else:
+                    self.data[datarn][datacn] = value
+
+    def get_value_for_empty_cell(self, datarn: int, datacn: int, r_ops: bool = True, c_ops: bool = True) -> Any:
+        if self.get_cell_kwargs(
+            datarn,
+            datacn,
+            key="checkbox",
+            cell=r_ops and c_ops,
+            row=r_ops,
+            column=c_ops,
+        ):
+            return False
+        kwargs = self.get_cell_kwargs(
+            datarn,
+            datacn,
+            key="dropdown",
+            cell=r_ops and c_ops,
+            row=r_ops,
+            column=c_ops,
+        )
+        if kwargs and kwargs["validate_input"] and kwargs["values"]:
+            return kwargs["values"][0]
+        return ""
+
+    def get_empty_row_seq(self, datarn: int, end: int, start: int = 0, r_ops: bool = True, c_ops: bool = True) -> list[Any]:
+        return [self.get_value_for_empty_cell(datarn, datacn, r_ops=r_ops, c_ops=c_ops) for datacn in range(start, end)]
+
+    def fix_row_len(self, datarn: int, datacn: int) -> None:
+        self.data[datarn].extend(self.get_empty_row_seq(datarn, end=datacn + 1, start=len(self.data[datarn])))
+
+    def fix_row_values(self, datarn: int, start: Union[int, None] = None, end: Union[int, None] = None):
+        if datarn < len(self.data):
+            for datacn, v in enumerate(islice(self.data[datarn], start, end)):
+                if not self.input_valid_for_cell(datarn, datacn, v):
+                    self.data[datarn][datacn] = self.get_value_for_empty_cell(datarn, datacn)
+
+    def fix_data_len(self, datarn: int, datacn: Union[int, None] = None) -> None:
+        ncols = self.total_data_cols() if datacn is None else datacn + 1
+        self.data.extend([self.get_empty_row_seq(rn, end=ncols, start=0) for rn in range(len(self.data), datarn + 1)])
+
+    def reapply_formatting(self) -> None:
+        if "format" in self.options:
+            for r in range(len(self.data)):
+                if r not in self.row_options:
+                    for c in range(len(self.data[r])):
+                        if not ((r, c) in self.cell_options and "format" in self.cell_options[(r, c)] or c in self.col_options and "format" in self.col_options[c]):
+                            self.set_cell_data(r, c, value=self.data[r][c])
+        for c in self.yield_formatted_columns():
+            for r in range(len(self.data)):
+                if not ((r, c) in self.cell_options and "format" in self.cell_options[(r, c)] or r in self.row_options and "format" in self.row_options[r]):
+                    self.set_cell_data(r, c, value=self.data[r][c])
+        for r in self.yield_formatted_rows():
+            for c in range(len(self.data[r])):
+                if not ((r, c) in self.cell_options and "format" in self.cell_options[(r, c)]):
+                    self.set_cell_data(r, c, value=self.data[r][c])
+        for r, c in self.yield_formatted_cells():
+            if len(self.data) > r and len(self.data[r]) > c:
+                self.set_cell_data(r, c, value=self.data[r][c])
+
+    def delete_all_formatting(self, clear_values: bool = False) -> None:
+        self.delete_cell_format("all", clear_values=clear_values)
+        self.delete_row_format("all", clear_values=clear_values)
+        self.delete_column_format("all", clear_values=clear_values)
+        self.delete_sheet_format(clear_values=clear_values)
+
+    def delete_cell_format(self, datarn: Union[str, int] = "all", datacn: int = 0, clear_values: bool = False) -> None:
+        if isinstance(datarn, str) and datarn.lower() == "all":
+            for datarn, datacn in self.yield_formatted_cells():
+                del self.cell_options[(datarn, datacn)]["format"]
+                if clear_values:
+                    self.set_cell_data(datarn, datacn, "", expand_sheet=False)
+        else:
+            if (datarn, datacn) in self.cell_options and "format" in self.cell_options[(datarn, datacn)]:
+                del self.cell_options[(datarn, datacn)]["format"]
+                if clear_values:
+                    self.set_cell_data(datarn, datacn, "", expand_sheet=False)
+
+    def delete_row_format(self, datarn: Union[str, int] = "all", clear_values: bool = False) -> None:
+        if isinstance(datarn, str) and datarn.lower() == "all":
+            for datarn in self.yield_formatted_rows():
+                del self.row_options[datarn]["format"]
+                if clear_values:
+                    for datacn in range(len(self.data[datarn])):
+                        self.set_cell_data(datarn, datacn, "", expand_sheet=False)
+        else:
+            if datarn in self.row_options and "format" in self.row_options[datarn]:
+                del self.row_options[datarn]["format"]
+                if clear_values:
+                    for datacn in range(len(self.data[datarn])):
+                        self.set_cell_data(datarn, datacn, "", expand_sheet=False)
+
+    def delete_column_format(self, datacn: Union[str, int] = "all", clear_values: bool = False) -> None:
+        if isinstance(datacn, str) and datacn.lower() == "all":
+            for datacn in self.yield_formatted_columns():
+                del self.col_options[datacn]["format"]
+                if clear_values:
+                    for datarn in range(len(self.data)):
+                        self.set_cell_data(datarn, datacn, "", expand_sheet=False)
+        else:
+            if datacn in self.col_options and "format" in self.col_options[datacn]:
+                del self.col_options[datacn]["format"]
+                if clear_values:
+                    for datarn in range(len(self.data)):
+                        self.set_cell_data(datarn, datacn, "", expand_sheet=False)
+
+    def delete_sheet_format(self, clear_values: bool = False) -> None:
+        if "format" in self.options:
+            del self.options["format"]
+            if clear_values:
+                total_cols = self.total_data_cols()
+                self.data = [[self.get_value_for_empty_cell(r, c) for c in range(total_cols)] for r in range(self.total_data_rows())]
+
+    # deals with possibility of formatter class being in self.data cell
+    # if cell is formatted - possibly returns invalid_value kwarg if
+    # cell value is not in datatypes kwarg
+    # if get displayed is true then Nones are replaced by ""
+    def get_valid_cell_data_as_str(self, datarn: int, datacn: int, get_displayed: bool = False, **kwargs) -> str:
+        if get_displayed:
+            kwargs = self.get_cell_kwargs(datarn, datacn, key="dropdown")
+            if kwargs and kwargs["text"] is not None:
+                return f"{kwargs['text']}"
+            kwargs = self.get_cell_kwargs(datarn, datacn, key="checkbox")
+            if kwargs:
+                return f"{kwargs['text']}"
+        value = self.data[datarn][datacn] if len(self.data) > datarn and len(self.data[datarn]) > datacn else ""
+        kwargs = self.get_cell_kwargs(datarn, datacn, key="format")
+        if kwargs:
+            if kwargs["formatter"] is None:
+                if get_displayed:
+                    return data_to_str(value, **kwargs)
+                else:
+                    return f"{get_data_with_valid_check(value, **kwargs)}"
+            else:
+                if get_displayed:
+                    # assumed given formatter class has __str__()
+                    return f"{value}"
+                else:
+                    # assumed given formatter class has get_data_with_valid_check()
+                    return f"{value.get_data_with_valid_check()}"
+        return "" if value is None else f"{value}"
+
+    def get_cell_data(self, datarn: int, datacn: int, get_displayed: bool = False, none_to_empty_str: bool = False, **kwargs) -> Any:
+        if get_displayed:
+            return self.get_valid_cell_data_as_str(datarn, datacn, get_displayed=True)
+        value = self.data[datarn][datacn] if len(self.data) > datarn and len(self.data[datarn]) > datacn else ""
+        kwargs = self.get_cell_kwargs(datarn, datacn, key="format")
+        if kwargs and kwargs["formatter"] is not None:
+            value = value.value  # assumed given formatter class has value attribute
+        return "" if (value is None and none_to_empty_str) else value
+
+    def input_valid_for_cell(self, datarn: int, datacn: int, value: Any) -> bool:
+        if self.get_cell_kwargs(datarn, datacn, key="readonly"):
+            return False
+        if self.cell_equal_to(datarn, datacn, value):
+            return False
+        if self.get_cell_kwargs(datarn, datacn, key="format"):
+            return True
+        if self.get_cell_kwargs(datarn, datacn, key="checkbox"):
+            return is_bool_like(value)
+        kwargs = self.get_cell_kwargs(datarn, datacn, key="dropdown")
+        if kwargs and kwargs["validate_input"] and value not in kwargs["values"]:
+            return False
+        return True
+
+    def cell_equal_to(self, datarn: int, datacn: int, value: Any, **kwargs) -> bool:
+        v = self.get_cell_data(datarn, datacn)
+        kwargs = self.get_cell_kwargs(datarn, datacn, key="format")
+        if kwargs and kwargs["formatter"] is None:
+            return v == format_data(value=value, **kwargs)
+        # assumed if there is a formatter class in cell then it has a
+        # __eq__() function anyway
+        # else if there is not a formatter class in cell and cell is not formatted
+        # then compare value as is
+        return v == value
+
+    def get_cell_clipboard(self, datarn: int, datacn: int) -> Union[str, int, float, bool]:
+        value = self.data[datarn][datacn] if len(self.data) > datarn and len(self.data[datarn]) > datacn else ""
+        kwargs = self.get_cell_kwargs(datarn, datacn, key="format")
+        if kwargs:
+            if kwargs["formatter"] is None:
+                return get_clipboard_data(value, **kwargs)
+            else:
+                # assumed given formatter class has get_clipboard_data() function
+                # and it returns one of above type hints
+                return value.get_clipboard_data()
+        return f"{value}"
+
+    def yield_formatted_cells(self, formatter: Any = None) -> tuple:
+        if formatter is None:
+            yield from (cell for cell, options in self.cell_options.items() if "format" in options and options["format"]["formatter"] == formatter)
+        else:
+            yield from (cell for cell, options in self.cell_options.items() if "format" in options)
+
+    def yield_formatted_rows(self, formatter: Any = None) -> int:
+        if formatter is None:
+            yield from (r for r, options in self.row_options.items() if "format" in options)
+        else:
+            yield from (r for r, options in self.row_options.items() if "format" in options and options["format"]["formatter"] == formatter)
+
+    def yield_formatted_columns(self, formatter: Any = None) -> int:
+        if formatter is None:
+            yield from (c for c, options in self.col_options.items() if "format" in options)
+        else:
+            yield from (c for c, options in self.col_options.items() if "format" in options and options["format"]["formatter"] == formatter)
+
+    def get_cell_kwargs(
+        self,
+        datarn: int,
+        datacn: int,
+        key: Hashable = "format",
+        cell: bool = True,
+        row: bool = True,
+        column: bool = True,
+        entire: bool = True,
+    ) -> dict:
+        if cell and (datarn, datacn) in self.cell_options and key in self.cell_options[(datarn, datacn)]:
+            return self.cell_options[(datarn, datacn)][key]
+        if row and datarn in self.row_options and key in self.row_options[datarn]:
+            return self.row_options[datarn][key]
+        if column and datacn in self.col_options and key in self.col_options[datacn]:
+            return self.col_options[datacn][key]
+        if entire and key in self.options:
+            return self.options[key]
+        return {}
+
+    def datacn(self, c: int) -> int:
         return c if self.all_columns_displayed else self.displayed_columns[c]
 
-    def datarn(self, r) -> int:
+    def datarn(self, r: int) -> int:
         return r if self.all_rows_displayed else self.displayed_rows[r]

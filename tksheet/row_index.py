@@ -250,7 +250,7 @@ class RowIndex(tk.Canvas):
                 if not r_selected and self.row_selection_enabled:
                     currently_selected = self.MT.currently_selected()
                     if currently_selected and currently_selected.type_ == "row":
-                        self.MT.deselect("all")
+                        self.MT.deselect("all", redraw=False)
                         box = self.get_shift_select_box(r, currently_selected.row)
                         self.being_drawn_item = self.MT.create_selection_box(*box, set_current=currently_selected)
                     else:
@@ -338,6 +338,7 @@ class RowIndex(tk.Canvas):
             row = self.rsz_h - 1
             old_height = self.MT.row_positions[self.rsz_h] - self.MT.row_positions[self.rsz_h - 1]
             new_height = self.set_row_height(row)
+            self.MT.allow_auto_resize_rows = False
             self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
             if self.row_height_resize_func is not None and old_height != new_height:
                 self.row_height_resize_func(ResizeEvent("row_height_resize", row, old_height, new_height))
@@ -500,7 +501,7 @@ class RowIndex(tk.Canvas):
                 if currently_selected.type_ == "row":
                     box = self.get_b1_motion_box(currently_selected.row, end_row)
                     if box is not None and self.being_drawn_item is not None and self.MT.get_box_from_item(self.being_drawn_item) != box:
-                        self.MT.deselect("all")
+                        self.MT.deselect("all", redraw=False)
                         if box[2] - box[0] != 1:
                             self.being_drawn_item = self.MT.create_selection_box(*box, set_current=currently_selected)
                         else:
@@ -681,6 +682,7 @@ class RowIndex(tk.Canvas):
             self.MT.row_positions[self.rsz_h + 1 :] = [e + increment for e in islice(self.MT.row_positions, self.rsz_h + 1, len(self.MT.row_positions))]
             self.MT.row_positions[self.rsz_h] = new_row_pos
             new_height = self.MT.row_positions[self.rsz_h] - self.MT.row_positions[self.rsz_h - 1]
+            self.MT.allow_auto_resize_rows = False
             self.MT.recreate_all_selection_boxes()
             self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
             if self.row_height_resize_func is not None and old_height != new_height:
@@ -787,7 +789,7 @@ class RowIndex(tk.Canvas):
         return fill_iid
 
     def select_row(self, r, redraw=False, run_binding_func=True):
-        self.MT.deselect("all")
+        self.MT.deselect("all", redraw=False)
         box = (r, 0, r + 1, len(self.MT.col_positions) - 1, "rows")
         fill_iid = self.MT.create_selection_box(*box)
         if redraw:
@@ -1483,6 +1485,7 @@ class RowIndex(tk.Canvas):
             if sh:
                 self.itemconfig(t, state="hidden")
                 self.hidd_checkbox[t] = False
+        return True
 
     def get_redraw_selections(self, startr, endr):
         d = defaultdict(list)
