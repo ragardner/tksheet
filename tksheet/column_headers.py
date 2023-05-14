@@ -1223,7 +1223,7 @@ class ColumnHeaders(tk.Canvas):
                 scrollregion=(
                     0,
                     0,
-                    last_col_line_pos + self.MT.empty_horizontal,
+                    last_col_line_pos + self.MT.empty_horizontal + 2,
                     self.current_height,
                 )
             )

@@ -1189,7 +1189,7 @@ class RowIndex(tk.Canvas):
                     0,
                     0,
                     self.current_width,
-                    last_row_line_pos + self.MT.empty_vertical,
+                    last_row_line_pos + self.MT.empty_vertical + 2,
                 )
             )
         except Exception:

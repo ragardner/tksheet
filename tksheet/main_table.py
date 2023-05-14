@@ -1111,7 +1111,7 @@ class MainTable(tk.Canvas):
                 self.extra_begin_ctrl_z_func({**modification, **{"eventname": "begin_redo"}})
             except Exception:
                 return
-        self.undo_stack.append(self.undo_modification_invert_event(modification))
+        self.undo_stack.append(self.undo_modification_invert_event(modification, name="redo"))
         self.redo_stack.pop()
         if self.extra_end_ctrl_z_func is not None:
             self.extra_end_ctrl_z_func({**modification, **{"eventname": "end_redo"}})
@@ -1123,16 +1123,20 @@ class MainTable(tk.Canvas):
 
     def edit_cells_using_modification(self, modification: dict, event_data: dict) -> dict:
         for datarn, v in modification["cells"]["index"].items():
-            event_data["cells"]["index"][datarn] = self.RI.get_cell_data(datarn)
             self._row_index[datarn] = v
-
+        for datacn, v in modification["cells"]["header"].items():
+            self._headers[datacn] = v
+        for (datarn, datacn), v in modification["cells"]["table"].items():
+            self.set_cell_data(datarn, datacn, v)
+        return event_data
+    
+    def save_cells_using_modification(self, modification: dict, event_data: dict) -> dict:
+        for datarn, v in modification["cells"]["index"].items():
+            event_data["cells"]["index"][datarn] = self.RI.get_cell_data(datarn)
         for datacn, v in modification["cells"]["header"].items():
             event_data["cells"]["header"][datacn] = self.CH.get_cell_data(datacn)
-            self._headers[datacn] = v
-
         for (datarn, datacn), v in modification["cells"]["table"].items():
             event_data["cells"]["table"][(datarn, datacn)] = self.get_cell_data(datarn, datacn)
-            self.set_cell_data(datarn, datacn, v)
         return event_data
 
     def undo_modification_invert_event(self, modification: dict, name: str = "undo") -> Union[bytes, dict]:
@@ -1140,9 +1144,11 @@ class MainTable(tk.Canvas):
         event_data = event_dict(name=modification["eventname"])
         event_data["selection_boxes"] = modification["selection_boxes"]
         event_data["selected"] = modification["selected"]
+        saved_cells = False
 
         if modification["added"]["rows"] or modification["added"]["columns"]:
-            event_data = self.edit_cells_using_modification(modification, event_data)
+            event_data = self.save_cells_using_modification(modification, event_data)
+            saved_cells = True
 
         if modification["moved"]["columns"]:
             c = modification["moved"]["columns"]["old_indexes"][0]
@@ -1281,6 +1287,8 @@ class MainTable(tk.Canvas):
             self.reselect_from_get_boxes(modification["selection_boxes"], modification["selected"])
 
         if modification["eventname"].startswith("edit"):
+            if not saved_cells:
+                event_data = self.save_cells_using_modification(modification, event_data)
             event_data = self.edit_cells_using_modification(modification, event_data)
             if not modification["deleted"]["columns"] and not modification["deleted"]["rows"]:
                 self.reselect_from_get_boxes(modification["selection_boxes"], modification["selected"])
@@ -4328,8 +4336,8 @@ class MainTable(tk.Canvas):
             scrollregion=(
                 0,
                 0,
-                last_col_line_pos + self.empty_horizontal,
-                last_row_line_pos + self.empty_vertical,
+                last_col_line_pos + self.empty_horizontal + 2,
+                last_row_line_pos + self.empty_vertical + 2,
             )
         )
         scrollpos_bot = self.canvasy(can_height)
