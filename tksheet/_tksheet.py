@@ -2117,10 +2117,10 @@ class Sheet(tk.Frame):
         self.set_refresh_timer(redraw)
 
     def font(self, newfont=None, reset_row_positions=True):
-        self.MT.font(newfont, reset_row_positions=reset_row_positions)
+        return self.MT.set_table_font(newfont, reset_row_positions=reset_row_positions)
 
     def header_font(self, newfont=None):
-        self.MT.header_font(newfont)
+        return self.MT.set_header_font(newfont)
 
     def set_options(self, redraw=True, **kwargs):
         if "to_clipboard_delimiter" in kwargs:
@@ -2242,11 +2242,11 @@ class Sheet(tk.Frame):
         if "max_index_width" in kwargs:
             self.MT.max_index_width = float(kwargs["max_index_width"])
         if "font" in kwargs:
-            self.MT.font(kwargs["font"])
+            self.MT.set_table_font(kwargs["font"])
         if "header_font" in kwargs:
-            self.MT.header_font(kwargs["header_font"])
+            self.MT.set_header_font(kwargs["header_font"])
         if "index_font" in kwargs:
-            self.MT.index_font(kwargs["index_font"])
+            self.MT.set_index_font(kwargs["index_font"])
         if "theme" in kwargs:
             self.change_theme(kwargs["theme"])
         if "show_selected_cells_border" in kwargs:

@@ -1,4 +1,9 @@
 ### Version 6.1.4
+#### Fixed:
+- Error with setting/getting header font
+- Setting fonts with `set_options()` not working
+- Setting fonts after table initialization didn't refresh selection boxes or top left rectangle dimensions
+
 #### Changed:
 - Replaced wildcard imports
 - Format code with 120 line length

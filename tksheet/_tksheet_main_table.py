@@ -91,19 +91,6 @@ class MainTable(tk.Canvas):
         self.row_options = {}
         self.options = {}
 
-        """
-        cell options dict looks like:
-        {(row int, column int): {'dropdown': {'values': values,
-                                              'window': "no dropdown open",
-                                              'select_function': selection_function,
-                                              'keypress_function': keypress_function,
-                                              'state': state},
-                                 'highlight: (bg, fg),
-                                 'align': "e",
-                                 'readonly': True,
-                                 'format': {}
-                                }
-        """
         self.arrowkey_binding_functions = {
             "tab": self.tab_key,
             "up": self.arrowkey_UP,
@@ -196,7 +183,8 @@ class MainTable(tk.Canvas):
         self.select_all_binding_func = None
 
         self.single_selection_enabled = False
-        self.toggle_selection_enabled = False  # with this mode every left click adds the cell to selected cells
+        # with this mode every left click adds the cell to selected cells
+        self.toggle_selection_enabled = False
         self.show_dropdown_borders = kwargs["show_dropdown_borders"]
         self.drag_selection_enabled = False
         self.select_all_enabled = False
@@ -3420,7 +3408,7 @@ class MainTable(tk.Canvas):
         if self.min_column_width > self.default_column_width:
             self.default_column_width = self.min_column_width + 20
 
-    def font(self, newfont=None, reset_row_positions=False):
+    def set_table_font(self, newfont=None, reset_row_positions=False):
         if newfont:
             if not isinstance(newfont, tuple):
                 raise ValueError("Argument must be tuple e.g. ('Carlito',12,'normal')")
@@ -3437,6 +3425,7 @@ class MainTable(tk.Canvas):
             self.set_font_help()
             if reset_row_positions:
                 self.reset_row_positions()
+            self.recreate_all_selection_boxes()
         else:
             return self.table_font
 
@@ -3461,7 +3450,7 @@ class MainTable(tk.Canvas):
             )
         self.set_min_column_width()
 
-    def header_font(self, newfont=None):
+    def set_header_font(self, newfont=None):
         if newfont:
             if not isinstance(newfont, tuple):
                 raise ValueError("Argument must be tuple e.g. ('Carlito', 12, 'normal')")
@@ -3476,6 +3465,7 @@ class MainTable(tk.Canvas):
             self.header_font_sze = newfont[1]
             self.header_font_wgt = newfont[2]
             self.set_header_font_help()
+            self.recreate_all_selection_boxes()
         else:
             return self.header_font
 
@@ -3496,10 +3486,34 @@ class MainTable(tk.Canvas):
                 else self.default_header_height[1],
             )
         self.set_min_column_width()
-        self.CH.set_height(self.default_header_height[1])
+        self.CH.set_height(self.default_header_height[1], set_TL=True)
+
+    def set_index_font(self, newfont: Union[tuple, None] = None) -> tuple:
+        if newfont:
+            if not isinstance(newfont, tuple):
+                raise ValueError("Argument must be tuple e.g. ('Carlito', 12, 'normal')")
+            if len(newfont) != 3:
+                raise ValueError("Argument must be three-tuple")
+            if not isinstance(newfont[0], str) or not isinstance(newfont[1], int) or not isinstance(newfont[2], str):
+                raise ValueError(
+                    "Argument must be font, size and 'normal', 'bold' or" "'italic' e.g. ('Carlito',12,'normal')"
+                )
+            self.index_font = newfont
+            self.index_font_fam = newfont[0]
+            self.index_font_sze = newfont[1]
+            self.index_font_wgt = newfont[2]
+            self.set_index_font_help()
+        return self.index_font
 
     def set_index_font_help(self):
-        pass
+        self.index_txt_width, self.index_txt_height = self.get_txt_dimensions("|", self.index_font)
+        self.index_half_txt_height = ceil(self.index_txt_height / 2)
+        if self.index_half_txt_height % 2 == 0:
+            self.index_first_ln_ins = self.index_half_txt_height + 2
+        else:
+            self.index_first_ln_ins = self.index_half_txt_height + 3
+        self.index_xtra_lines_increment = self.index_txt_height
+        self.min_index_width = 5
 
     def data_reference(
         self,
@@ -6742,10 +6756,10 @@ class MainTable(tk.Canvas):
                     return f"{get_data_with_valid_check(value, **kwargs)}"
             else:
                 if get_displayed:
-                      # assumed given formatter class has __str__() function
+                    # assumed given formatter class has __str__() function
                     return f"{value}"
                 else:
-                      # assumed given formatter class has get_data_with_valid_check() function
+                    # assumed given formatter class has get_data_with_valid_check() function
                     return f"{value.get_data_with_valid_check()}"
         return "" if value is None else f"{value}"
 
@@ -6789,8 +6803,8 @@ class MainTable(tk.Canvas):
             if kwargs["formatter"] is None:
                 return get_clipboard_data(value, **kwargs)
             else:
-                  # assumed given formatter class has get_clipboard_data()
-                  # function and it returns one of above type hints
+                # assumed given formatter class has get_clipboard_data()
+                # function and it returns one of above type hints
                 return value.get_clipboard_data()
         return f"{value}"
 

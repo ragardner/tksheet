@@ -179,7 +179,7 @@ class ColumnHeaders(tk.Canvas):
             self.config(height=new_height)
         except Exception:
             return
-        if set_TL:
+        if set_TL and self.TL is not None:
             self.TL.set_dimensions(new_h=new_height)
 
     def enable_bindings(self, binding):
