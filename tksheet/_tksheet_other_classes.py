@@ -3,12 +3,14 @@ import tkinter as tk
 from collections import namedtuple
 from itertools import islice
 
-from ._tksheet_vars import *
+from ._tksheet_vars import (
+    ctrl_key,
+    get_font,
+    rc_binding,
+)
 
 CurrentlySelectedClass = namedtuple("CurrentlySelectedClass", "row column type_")
-CtrlKeyEvent = namedtuple(
-    "CtrlKeyEvent", "eventname selectionboxes currentlyselected rows"
-)
+CtrlKeyEvent = namedtuple("CtrlKeyEvent", "eventname selectionboxes currentlyselected rows")
 PasteEvent = namedtuple("PasteEvent", "eventname currentlyselected rows")
 UndoEvent = namedtuple("UndoEvent", "eventname type storeddata")
 SelectCellEvent = namedtuple("SelectCellEvent", "eventname row column")
@@ -22,13 +24,9 @@ EditCellEvent = namedtuple("EditCellEvent", "row column key text eventname")
 EditHeaderEvent = namedtuple("EditHeaderEvent", "column key text eventname")
 EditIndexEvent = namedtuple("EditIndexEvent", "row key text eventname")
 BeginDragDropEvent = namedtuple("BeginDragDropEvent", "eventname columnstomove movedto")
-EndDragDropEvent = namedtuple(
-    "EndDragDropEvent", "eventname oldindexes newindexes movedto"
-)
+EndDragDropEvent = namedtuple("EndDragDropEvent", "eventname oldindexes newindexes movedto")
 ResizeEvent = namedtuple("ResizeEvent", "eventname index oldsize newsize")
-DropDownModifiedEvent = namedtuple(
-    "DropDownModifiedEvent", "eventname row column value"
-)
+DropDownModifiedEvent = namedtuple("DropDownModifiedEvent", "eventname row column value")
 DrawnItem = namedtuple("DrawnItem", "iid showing")
 TextCfg = namedtuple("TextCfg", "txt tf font align")
 DraggedRowColumn = namedtuple("DraggedRowColumn", "dragged to_move")
@@ -150,9 +148,7 @@ class TextEditor_(tk.Text):
             if args and len(args) > 1 and args[1] != "\n":
                 out_of_bounds = self.yview()
                 if out_of_bounds != (0.0, 1.0) and self.newline_bindng is not None:
-                    self.newline_bindng(
-                        r=self.parent.r, c=self.parent.c, check_lines=False
-                    )
+                    self.newline_bindng(r=self.parent.r, c=self.parent.c, check_lines=False)
         return result
 
     def rc(self, event):
@@ -272,9 +268,7 @@ def dropdown_search_function(search_for, data):
             # if there's already a matching start
             # then compare the len difference
             len_diff = len(dd_val) - search_len
-            if st < best_match["st"] or (
-                st == best_match["st"] and len_diff < best_match["len_diff"]
-            ):
+            if st < best_match["st"] or (st == best_match["st"] and len_diff < best_match["len_diff"]):
                 best_match["rn"] = rn
                 best_match["st"] = st
                 best_match["len_diff"] = len_diff
@@ -322,9 +316,7 @@ def get_dropdown_dict(**kwargs):
     }
 
 
-def get_checkbox_kwargs(
-    checked=False, state="normal", redraw=True, check_function=None, text="", **kwargs
-):
+def get_checkbox_kwargs(checked=False, state="normal", redraw=True, check_function=None, text="", **kwargs):
     return {
         "checked": checked,
         "state": state,

@@ -1,7 +1,8 @@
 import tkinter as tk
 
-from ._tksheet_other_classes import *
-from ._tksheet_vars import *
+from ._tksheet_vars import (
+    rc_binding,
+)
 
 
 class TopLeftRectangle(tk.Canvas):
@@ -136,9 +137,7 @@ class TopLeftRectangle(tk.Canvas):
         elif rect[0] == 2:
             if self.CH.height_resizing_enabled:
                 self.CH.set_height(self.MT.default_header_height[1], set_TL=True)
-        self.MT.main_table_redraw_grid_and_text(
-            redraw_header=True, redraw_row_index=True
-        )
+        self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
         if self.extra_b1_press_func is not None:
             self.extra_b1_press_func(event)
 

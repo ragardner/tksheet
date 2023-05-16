@@ -1,3 +1,8 @@
+### Version 6.1.4
+#### Changed:
+- Replaced wildcard imports
+- Format code with 120 line length
+
 ### Version 6.1.3
 #### Fixed:
 - Missing imports

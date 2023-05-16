@@ -1,7 +1,10 @@
 from typing import Any, Union
 
-from ._tksheet_other_classes import *
-from ._tksheet_vars import *
+from ._tksheet_vars import (
+    falsy,
+    nonelike,
+    truthy,
+)
 
 
 def is_none_like(n: Any):
@@ -291,11 +294,7 @@ class Formatter:
     def format_data(self, value):
         if self.pre_format_function:
             value = self.pre_format_function(value)
-        value = (
-            None
-            if (self.nullable and is_none_like(value))
-            else self.format_function(value, **self.kwargs)
-        )
+        value = None if (self.nullable and is_none_like(value)) else self.format_function(value, **self.kwargs)
         if self.post_format_function and self.valid(value):
             value = self.post_format_function(value)
         return value
