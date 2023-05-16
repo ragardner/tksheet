@@ -257,7 +257,7 @@ class MainTable(tk.Canvas):
             if isinstance(kwargs["row_height"], int)
             else self.get_lines_cell_height(int(kwargs["row_height"])),
         )
-        self.set_font_help()
+        self.set_table_font_help()
         self.set_header_font_help()
         self.set_index_font_help()
         self.data = kwargs["data_reference"]
@@ -3422,14 +3422,14 @@ class MainTable(tk.Canvas):
             self.font_fam = newfont[0]
             self.font_sze = newfont[1]
             self.font_wgt = newfont[2]
-            self.set_font_help()
+            self.set_table_font_help()
             if reset_row_positions:
                 self.reset_row_positions()
             self.recreate_all_selection_boxes()
         else:
             return self.table_font
 
-    def set_font_help(self):
+    def set_table_font_help(self):
         self.txt_h = self.get_txt_h("|ZXjy*'^")
         self.txt_w = self.get_txt_w("|")
         self.half_txt_h = ceil(self.txt_h / 2)
