@@ -473,15 +473,12 @@ class MainTable(tk.Canvas):
             for item in chain(self.find_withtag("cells"), self.find_withtag("columns")):
                 alltags = self.gettags(item)
                 boxes[tuple(int(e) for e in alltags[1].split("_") if e)] = alltags[0]
-            maxrows = 0
-            for r1, c1, r2, c2 in boxes:
-                if r2 - r1 > maxrows:
-                    maxrows = r2 - r1
             curr_box = self.find_last_selected_box_with_current_from_boxes(
                 currently_selected, boxes
             )
+            maxrows = curr_box[2] - curr_box[0]
             for box in tuple(boxes):
-                if box[2] - box[0] < maxrows and box != curr_box:
+                if box[2] - box[0] != maxrows:
                     del boxes[box]
             return boxes, maxrows
         else:
@@ -4665,6 +4662,7 @@ class MainTable(tk.Canvas):
         seld_cols = sorted(self.get_selected_cols())
         if not seld_cols:
             return
+        seldmax = seld_cols[-1] if self.all_columns_displayed else self.displayed_columns[seld_cols[-1]]
         if self.extra_begin_del_cols_rc_func is not None:
             try:
                 self.extra_begin_del_cols_rc_func(
@@ -4726,19 +4724,19 @@ class MainTable(tk.Canvas):
         for c in reversed(seld_cols):
             self.del_col_position(c, deselect_all=False)
         numcols = len(seld_cols)
-        idx = seld_cols[-1]
+        
         self.cell_options = {
-            (rn, cn if cn < idx else cn - numcols): t2
+            (rn, cn if cn < seldmax else cn - numcols): t2
             for (rn, cn), t2 in self.cell_options.items()
             if cn not in seldset
         }
         self.col_options = {
-            cn if cn < idx else cn - numcols: t
+            cn if cn < seldmax else cn - numcols: t
             for cn, t in self.col_options.items()
             if cn not in seldset
         }
         self.CH.cell_options = {
-            cn if cn < idx else cn - numcols: t
+            cn if cn < seldmax else cn - numcols: t
             for cn, t in self.CH.cell_options.items()
             if cn not in seldset
         }
@@ -4763,6 +4761,7 @@ class MainTable(tk.Canvas):
         seld_rows = sorted(self.get_selected_rows())
         if not seld_rows:
             return
+        seldmax = seld_rows[-1] if self.all_rows_displayed else self.displayed_rows[seld_rows[-1]]
         if self.extra_begin_del_rows_rc_func is not None:
             try:
                 self.extra_begin_del_rows_rc_func(
@@ -4815,23 +4814,19 @@ class MainTable(tk.Canvas):
         for r in reversed(seld_rows):
             self.del_row_position(r, deselect_all=False)
         numrows = len(seld_rows)
-        idx = (
-            seld_rows[-1]
-            if self.all_rows_displayed
-            else self.displayed_rows[seld_rows[-1]]
-        )
+        
         self.cell_options = {
-            (rn if rn < idx else rn - numrows, cn): t2
+            (rn if rn < seldmax else rn - numrows, cn): t2
             for (rn, cn), t2 in self.cell_options.items()
             if rn not in seldset
         }
         self.row_options = {
-            rn if rn < idx else rn - numrows: t
+            rn if rn < seldmax else rn - numrows: t
             for rn, t in self.row_options.items()
             if rn not in seldset
         }
         self.RI.cell_options = {
-            rn if rn < idx else rn - numrows: t
+            rn if rn < seldmax else rn - numrows: t
             for rn, t in self.RI.cell_options.items()
             if rn not in seldset
         }
@@ -5104,7 +5099,7 @@ class MainTable(tk.Canvas):
                 r[:total_columns]
                 if len(r) > total_columns
                 else r
-                + self.get_empty_row_seq(rn, end=len(r) + total_columns, start=len(r))
+                + self.get_empty_row_seq(rn, end=len(r) + total_columns - len(r), start=len(r))
                 for rn, r in enumerate(self.data)
             ]
 
@@ -5115,7 +5110,7 @@ class MainTable(tk.Canvas):
         if include_header and total_columns > len(self._headers):
             self.CH.fix_header(total_columns)
         self.data[:] = [
-            (r + self.get_empty_row_seq(rn, end=len(r) + total_columns, start=len(r)))
+            (r + self.get_empty_row_seq(rn, end=len(r) + total_columns - len(r), start=len(r)))
             if total_columns > len(r)
             else r
             for rn, r in enumerate(self.data)

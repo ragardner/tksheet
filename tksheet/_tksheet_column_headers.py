@@ -784,7 +784,7 @@ class ColumnHeaders(tk.Canvas):
             if col < self.dragged_col.to_move[0]:
                 xpos = self.MT.col_positions[col]
             else:
-                xpos = self.MT.col_positions[col + 1]
+                xpos = self.MT.col_positions[col + 1] if len(self.MT.col_positions) - 1 > col else self.MT.col_positions[col]
         return xpos
 
     def show_drag_and_drop_indicators(self, xpos, y1, y2, start_col, end_col):

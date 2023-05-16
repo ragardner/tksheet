@@ -1,3 +1,14 @@
+### Version 6.1.3
+#### Fixed:
+- Missing imports
+- Bug with `delete_rows()`
+- Bug with hidden columns, cell options and deleting columns with the inbuilt right click menu
+- Bug with a paste that expands the sheet where row lengths are uneven
+- Poor box selection for cut and copy with multiple selected boxes
+- Bug with `insert_columns()` with uneven row lengths
+- Bug with `insert_rows()` if new data contains row lengths that are longer than sheet data
+- Errors that occur when dragging and dropping rows/columns beyond the window
+
 ### Version 6.1.2
 #### Fixed:
 - Further potential issues with moving columns where row lengths are uneven

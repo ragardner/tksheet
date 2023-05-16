@@ -2,6 +2,8 @@ import tkinter as tk
 from collections import deque
 from itertools import accumulate, chain, islice
 from tkinter import ttk
+import bisect
+from typing import Union
 
 from ._tksheet_column_headers import *
 from ._tksheet_formatters import *
@@ -1177,6 +1179,7 @@ class Sheet(tk.Frame):
         if not to_del:
             return
         self.MT.data[:] = [row for r, row in enumerate(self.MT.data) if r not in to_del]
+        to_bis = sorted(to_del)
         if self.MT.all_rows_displayed:
             self.set_row_heights(
                 row_heights=(
@@ -1215,7 +1218,6 @@ class Sheet(tk.Frame):
             self.MT.displayed_rows = [
                 r for r in self.MT.displayed_rows if r not in to_del
             ]
-        to_bis = sorted(to_del)
         self.MT.cell_options = {
             (
                 r
@@ -3895,9 +3897,6 @@ class Sheet(tk.Frame):
 
     def close_index_dropdown(self, r):
         self.RI.close_dropdown_window(r)
-
-    def reapply_formatting(self):
-        self.MT.reapply_formatting()
 
     def reapply_formatting(self):
         self.MT.reapply_formatting()

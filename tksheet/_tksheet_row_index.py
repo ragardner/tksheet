@@ -728,7 +728,7 @@ class RowIndex(tk.Canvas):
             if row < self.dragged_row.to_move[0]:
                 ypos = self.MT.row_positions[row]
             else:
-                ypos = self.MT.row_positions[row + 1]
+                ypos = self.MT.row_positions[row + 1] if len(self.MT.row_positions) - 1 > row else self.MT.row_positions[row]
         return ypos
 
     def show_drag_and_drop_indicators(self, ypos, x1, x2, start_row, end_row):
