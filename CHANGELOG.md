@@ -1,3 +1,8 @@
+### Version 6.1.5
+#### Fixed:
+- `extra_bindings()` not binding functions
+- [#181](https://github.com/ragardner/tksheet/issues/181)
+
 ### Version 6.1.4
 #### Fixed:
 - Error with setting/getting header font

@@ -595,59 +595,70 @@ disable_bindings(*bindings)
 
 ___
 
-#### **Bind various table functionality to your own functions. To unbind a function either set `func` argument to `None` or leave it as default e.g. `extra_bindings("begin_copy")` to unbind** `"begin_copy"`.
+#### **Bind various table functionality to your own functions.**
 ```python
-extra_bindings(bindings, func = "None")
+extra_bindings(bindings, func = None)
 ```
-
 Notes:
+- There are several ways to use this function:
+    - `bindings` as a `str` and `func` as either `None` or a function. Using `None` with `func` will effectively unbind the function.
+        - `extra_bindings("edit_cell", func=my_function)`
+    - `bindings` as an `iterable` of `str`s and `func` as either `None` or a function. Using `None` with `func` will effectively unbind the function.
+        - `extra_bindings(["all_select_events", "copy", "cut"], func=my_function)`
+    - `bindings` as an `iterable` of `list`s or `tuple`s with length of two, e.g.
+        - `extra_bindings([(binding, function), (binding, function), ...])` In this example you could also use `None` in the place of `function` to unbind the binding.
+        - In this case the arg `func` is totally ignored.
 - Upon an event being triggered the bound function will be sent a [namedtuple](https://docs.python.org/3/library/collections.html#collections.namedtuple) containing variables relevant to that event, use `print()` or similar to see all the variable names in the event. Each event contains different variable names with the exception of `eventname` e.g. `event.eventname`
 - For most of the `"end_..."` events the bound function is run before the value is set.
 - The bound function for `"end_edit_cell"` is run before the cell data is set in order that a return value can set the cell instead of the user input. Using the event you can assess the user input and if needed override it with a return value which is not `None`. If `None` is the return value then the user input will NOT be overridden. The setting `edit_cell_validation` (see initialization or the function `set_options()`) can be used to turn off this return value checking. The `edit_cell` bindings also run if header/index editing is turned on.
 
 Arguments:
 - `bindings` (`str`) options are:
-	- "begin_copy"
-	- "end_copy"
-	- "begin_cut"
-	- "end_cut"
-	- "begin_paste"
-	- "end_paste"
-	- "begin_undo"
-	- "end_undo"
-	- "begin_delete"
-	- "end_delete"
-	- "begin_edit_cell"
-	- "end_edit_cell"
-	- "begin_row_index_drag_drop"
-	- "end_row_index_drag_drop"
-	- "begin_column_header_drag_drop"
-	- "end_column_header_drag_drop"
-	- "begin_delete_rows"
-	- "end_delete_rows"
-	- "begin_delete_columns"
-	- "end_delete_columns"
-	- "begin_insert_columns"
-	- "end_insert_columns"
-	- "begin_insert_rows"
-	- "end_insert_rows"
-    - "row_height_resize"
-    - "column_width_resize"
-	- "cell_select"
-	- "select_all"
-	- "row_select"
-	- "column_select"
-	- "drag_select_cells"
-	- "drag_select_rows"
-	- "drag_select_columns"
-	- "shift_cell_select"
-	- "shift_row_select"
-	- "shift_column_select"
-	- "deselect"
-	- "all_select_events", "select", "selectevents", "select_events"
-    - "all_modified_events", "sheetmodified", "sheet_modified" "modified_events", "modified"
-	- "bind_all"
-	- "unbind_all"
+	- `"begin_copy", "begin_ctrl_c"`
+	- `"ctrl_c", "end_copy", "end_ctrl_c", "copy"`
+	- `"begin_cut", "begin_ctrl_x"`
+	- `"ctrl_x", "end_cut", "end_ctrl_x", "cut"`
+	- `"begin_paste", "begin_ctrl_v"`
+	- `"ctrl_v", "end_paste", "end_ctrl_v", "paste"`
+	- `"begin_undo", "begin_ctrl_z"`
+	- `"ctrl_z", "end_undo", "end_ctrl_z", "undo"`
+	- `"begin_delete_key", "begin_delete"`
+	- `"delete_key", "end_delete", "end_delete_key", "delete"`
+	- `"begin_edit_cell", "begin_edit_table"`
+	- `"end_edit_cell", "edit_cell", "edit_table"`
+	- `"begin_edit_header"`
+    - `"end_edit_header", "edit_header"`
+    - `"begin_edit_index"`
+	- `"end_edit_index", "edit_index"`
+    - `"begin_row_index_drag_drop", "begin_move_rows"`
+	- `"row_index_drag_drop", "move_rows", "end_move_rows", "end_row_index_drag_drop"`
+	- `"begin_column_header_drag_drop", "begin_move_columns"`
+	- `"column_header_drag_drop", "move_columns", "end_move_columns", "end_column_header_drag_drop"`
+	- `"begin_rc_delete_row", "begin_delete_rows"`
+	- `"rc_delete_row", "end_rc_delete_row", "end_delete_rows", "delete_rows"`
+	- `"begin_rc_delete_column", "begin_delete_columns"`
+	- `"rc_delete_column", "end_rc_delete_column","end_delete_columns", "delete_columns"`
+	- `"begin_rc_insert_column", "begin_insert_column", "begin_insert_columns", "begin_add_column","begin_rc_add_column", "begin_add_columns"`
+	- `"rc_insert_column", "end_rc_insert_column", "end_insert_column", "end_insert_columns", "rc_add_column", "end_rc_add_column", "end_add_column", "end_add_columns"`
+	- `"begin_rc_insert_row", "begin_insert_row", "begin_insert_rows", "begin_rc_add_row", "begin_add_row", "begin_add_rows"`
+    - `"rc_insert_row", "end_rc_insert_row", "end_insert_row", "end_insert_rows", "rc_add_row", "end_rc_add_row", "end_add_row", "end_add_rows"`
+    - `"row_height_resize"`
+    - `"column_width_resize"`
+	- `"cell_select"`
+	- `"select_all"`
+	- `"row_select"`
+	- `"column_select"`
+	- `"drag_select_cells"`
+	- `"drag_select_rows"`
+	- `"drag_select_columns"`
+	- `"shift_cell_select"`
+	- `"shift_row_select"`
+	- `"shift_column_select"`
+	- `"deselect"`
+	- `"all_select_events", "select", "selectevents", "select_events"`
+    - `"all_modified_events", "sheetmodified", "sheet_modified" "modified_events", "modified"`
+	- `"bind_all"`
+	- `"unbind_all"`
 - `func` argument is the function you want to send the binding event to.
 - Using one of the following `"all_modified_events", "sheetmodified", "sheet_modified" "modified_events", "modified"` will make any insert, delete or cell edit including pastes and undos send an event to your function. Please **note** that this will mean your function will have to return a value to use for cell edits unless the setting `edit_cell_validation` is `False`.
 
@@ -1395,7 +1406,7 @@ display_columns(columns = None,
                 **kwargs)
 ```
 - `columns` (`int`, `iterable`, `"all"`) are the columns to be displayed, omit the columns to be hidden.
-- Use argument `True` with `all_columns_displayed` to display all columns, however, there's no need to use `False` when `columns` is not `None`.
+- Use argument `True` with `all_columns_displayed` to display all columns, use `False` to display only the columns you've set using the `columns` arg.
 - You can also use the keyword argument `all_displayed` instead of `all_columns_displayed`.
 - Example usage to display all columns: `sheet.display_columns("all")`.
 - Example usage to display specific columns only: `sheet.display_columns([2, 4, 7], all_displayed = False)`.
@@ -1432,7 +1443,7 @@ display_rows(rows = None,
              **kwargs)
 ```
 - `rows` (`int`, `iterable`, `"all"`) are the rows to be displayed, omit the rows to be hidden.
-- Use argument `True` with `all_rows_displayed` to display all rows, however, there's no need to use `False` when `rows` is not `None`.
+- Use argument `True` with `all_rows_displayed` to display all rows, use `False` to display only the rows you've set using the `rows` arg.
 - You can also use the keyword argument `all_displayed` instead of `all_rows_displayed`.
 - Example usage to display all rows: `sheet.display_rows("all")`.
 - Example usage to display specific rows only: `sheet.display_rows([2, 4, 7], all_displayed = False)`.
