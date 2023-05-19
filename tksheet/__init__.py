@@ -24,14 +24,10 @@ from .formatters import (
 )
 from .main_table import MainTable
 from .other_classes import (
-    CtrlKeyEvent,
     CurrentlySelectedClass,
-    DeselectEvent,
     DraggedRowColumn,
     DrawnItem,
     GeneratedMouseEvent,
-    ResizeEvent,
-    SelectEvent,
     TextCfg,
     TextEditor,
     TextEditor_,

@@ -1,39 +1,39 @@
 # Table of Contents
 
-- [About tksheet](https://github.com/ragardner/tksheet/wiki/Version-7#about-tksheet)
-- [Installation and Requirements](https://github.com/ragardner/tksheet/wiki/Version-7#installation-and-requirements)
-- [Basic Initialization](https://github.com/ragardner/tksheet/wiki/Version-7#basic-initialization)
-- [Initialization Options](https://github.com/ragardner/tksheet/wiki/Version-7#initialization-options)
-- [Header and Index](https://github.com/ragardner/tksheet/wiki/Version-7#header-and-index)
-- [Setting Table Data](https://github.com/ragardner/tksheet/wiki/Version-7#setting-table-data)
-- [Getting Table Data](https://github.com/ragardner/tksheet/wiki/Version-7#getting-table-data)
-- [Bindings and Functionality](https://github.com/ragardner/tksheet/wiki/Version-7#bindings-and-functionality)
-- [Identifying Bound Event Mouse Position](https://github.com/ragardner/tksheet/wiki/Version-7#identifying-bound-event-mouse-position)
-- [Table Colors](https://github.com/ragardner/tksheet/wiki/Version-7#table-colors)
-- [Highlighting Cells](https://github.com/ragardner/tksheet/wiki/Version-7#highlighting-cells)
-- [Text Font and Alignment](https://github.com/ragardner/tksheet/wiki/Version-7#text-font-and-alignment)
-- [Row Heights and Column Widths](https://github.com/ragardner/tksheet/wiki/Version-7#row-heights-and-column-widths)
-- [Getting Selected Cells](https://github.com/ragardner/tksheet/wiki/Version-7#getting-selected-cells)
-- [Modifying Selected Cells](https://github.com/ragardner/tksheet/wiki/Version-7#modifying-selected-cells)
-- [Modifying and Getting Scroll Positions](https://github.com/ragardner/tksheet/wiki/Version-7#modifying-and-getting-scroll-positions)
-- [Readonly Cells](https://github.com/ragardner/tksheet/wiki/Version-7#readonly-cells)
-- [Hiding Columns](https://github.com/ragardner/tksheet/wiki/Version-7#hiding-columns)
-- [Hiding Rows](https://github.com/ragardner/tksheet/wiki/Version-7#hiding-rows)
-- [Hiding Table Elements](https://github.com/ragardner/tksheet/wiki/Version-7#hiding-table-elements)
-- [Cell Text Editor](https://github.com/ragardner/tksheet/wiki/Version-7#cell-text-editor)
-- [Dropdown Boxes](https://github.com/ragardner/tksheet/wiki/Version-7#dropdown-boxes)
-- [Check Boxes](https://github.com/ragardner/tksheet/wiki/Version-7#check-boxes)
-- [Cell Formatting](https://github.com/ragardner/tksheet/wiki/Version-7#cell-formatting)
-- [Table Options and Other Functions](https://github.com/ragardner/tksheet/wiki/Version-7#table-options-and-other-functions)
-- [Example Loading Data from Excel](https://github.com/ragardner/tksheet/wiki/Version-7#example-loading-data-from-excel)
-- [Example Custom Right Click and Text Editor Validation](https://github.com/ragardner/tksheet/wiki/Version-7#example-custom-right-click-and-text-editor-validation)
-- [Example Displaying Selections](https://github.com/ragardner/tksheet/wiki/Version-7#example-displaying-selections)
-- [Example List Box](https://github.com/ragardner/tksheet/wiki/Version-7#example-list-box)
-- [Example Header Dropdown Boxes and Row Filtering](https://github.com/ragardner/tksheet/wiki/Version-7#example-header-dropdown-boxes-and-row-filtering)
-- [Example ReadMe Screenshot Code](https://github.com/ragardner/tksheet/wiki/Version-7#example-readme-screenshot-code)
-- [Example Saving tksheet as a csv File](https://github.com/ragardner/tksheet/wiki/Version-7#example-saving-tksheet-as-a-csv-file)
-- [Example Using and Creating Formatters](https://github.com/ragardner/tksheet/wiki/Version-7#example-using-and-creating-formatters)
-- [Contributing](https://github.com/ragardner/tksheet/wiki/Version-7#contributing)
+- [About tksheet](https://github.com/ragardner/tksheet/wiki/Version-6#about-tksheet)
+- [Installation and Requirements](https://github.com/ragardner/tksheet/wiki/Version-6#installation-and-requirements)
+- [Basic Initialization](https://github.com/ragardner/tksheet/wiki/Version-6#basic-initialization)
+- [Initialization Options](https://github.com/ragardner/tksheet/wiki/Version-6#initialization-options)
+- [Header and Index](https://github.com/ragardner/tksheet/wiki/Version-6#header-and-index)
+- [Setting Table Data](https://github.com/ragardner/tksheet/wiki/Version-6#setting-table-data)
+- [Getting Table Data](https://github.com/ragardner/tksheet/wiki/Version-6#getting-table-data)
+- [Bindings and Functionality](https://github.com/ragardner/tksheet/wiki/Version-6#bindings-and-functionality)
+- [Identifying Bound Event Mouse Position](https://github.com/ragardner/tksheet/wiki/Version-6#identifying-bound-event-mouse-position)
+- [Table Colors](https://github.com/ragardner/tksheet/wiki/Version-6#table-colors)
+- [Highlighting Cells](https://github.com/ragardner/tksheet/wiki/Version-6#highlighting-cells)
+- [Text Font and Alignment](https://github.com/ragardner/tksheet/wiki/Version-6#text-font-and-alignment)
+- [Row Heights and Column Widths](https://github.com/ragardner/tksheet/wiki/Version-6#row-heights-and-column-widths)
+- [Getting Selected Cells](https://github.com/ragardner/tksheet/wiki/Version-6#getting-selected-cells)
+- [Modifying Selected Cells](https://github.com/ragardner/tksheet/wiki/Version-6#modifying-selected-cells)
+- [Modifying and Getting Scroll Positions](https://github.com/ragardner/tksheet/wiki/Version-6#modifying-and-getting-scroll-positions)
+- [Readonly Cells](https://github.com/ragardner/tksheet/wiki/Version-6#readonly-cells)
+- [Hiding Columns](https://github.com/ragardner/tksheet/wiki/Version-6#hiding-columns)
+- [Hiding Rows](https://github.com/ragardner/tksheet/wiki/Version-6#hiding-rows)
+- [Hiding Table Elements](https://github.com/ragardner/tksheet/wiki/Version-6#hiding-table-elements)
+- [Cell Text Editor](https://github.com/ragardner/tksheet/wiki/Version-6#cell-text-editor)
+- [Dropdown Boxes](https://github.com/ragardner/tksheet/wiki/Version-6#dropdown-boxes)
+- [Check Boxes](https://github.com/ragardner/tksheet/wiki/Version-6#check-boxes)
+- [Cell Formatting](https://github.com/ragardner/tksheet/wiki/Version-6#cell-formatting)
+- [Table Options and Other Functions](https://github.com/ragardner/tksheet/wiki/Version-6#table-options-and-other-functions)
+- [Example Loading Data from Excel](https://github.com/ragardner/tksheet/wiki/Version-6#example-loading-data-from-excel)
+- [Example Custom Right Click and Text Editor Validation](https://github.com/ragardner/tksheet/wiki/Version-6#example-custom-right-click-and-text-editor-validation)
+- [Example Displaying Selections](https://github.com/ragardner/tksheet/wiki/Version-6#example-displaying-selections)
+- [Example List Box](https://github.com/ragardner/tksheet/wiki/Version-6#example-list-box)
+- [Example Header Dropdown Boxes and Row Filtering](https://github.com/ragardner/tksheet/wiki/Version-6#example-header-dropdown-boxes-and-row-filtering)
+- [Example ReadMe Screenshot Code](https://github.com/ragardner/tksheet/wiki/Version-6#example-readme-screenshot-code)
+- [Example Saving tksheet as a csv File](https://github.com/ragardner/tksheet/wiki/Version-6#example-saving-tksheet-as-a-csv-file)
+- [Example Using and Creating Formatters](https://github.com/ragardner/tksheet/wiki/Version-6#example-using-and-creating-formatters)
+- [Contributing](https://github.com/ragardner/tksheet/wiki/Version-6#contributing)
 
 ## **About tksheet**
 ----
@@ -106,6 +106,7 @@ app.mainloop()
 ```python
 (
 parent,
+name: str = "!sheet",
 show_table: bool = True,
 show_top_left: bool = True,
 show_row_index: bool = True,
@@ -116,12 +117,12 @@ width: int = None,
 height: int = None,
 headers: list = None,
 header: list = None,
-default_header: str = "letters", #letters, numbers or both
-default_row_index: str = "numbers", #letters, numbers or both
-to_clipboard_delimiter = "\t",
-to_clipboard_quotechar = '"',
-to_clipboard_lineterminator = "\n",
-from_clipboard_delimiters = ["\t"],
+default_header: str = "letters",  # letters, numbers or both
+default_row_index: str = "numbers",  # letters, numbers or both
+to_clipboard_delimiter="\t",
+to_clipboard_quotechar='"',
+to_clipboard_lineterminator="\n",
+from_clipboard_delimiters=["\t"],
 show_default_header_for_empty: bool = True,
 show_default_index_for_empty: bool = True,
 page_up_down_select_row: bool = True,
@@ -134,40 +135,46 @@ enable_edit_cell_auto_resize: bool = True,
 edit_cell_validation: bool = True,
 data_reference: list = None,
 data: list = None,
-startup_select: tuple = None, #either (start row, end row, "rows"), (start column, end column, "rows") or (cells start row, cells start column, cells end row, cells end column, "cells")
+# either (start row, end row, "rows"), (start column, end column, "rows") or
+# (cells start row, cells start column, cells end row, cells end column, "cells")  # noqa: E501
+startup_select: tuple = None,
 startup_focus: bool = True,
 total_columns: int = None,
 total_rows: int = None,
 column_width: int = 120,
-header_height: str = "1", #str or int
-max_colwidth: str = "inf", #str or int
-max_rh: str = "inf", #str or int
-max_header_height: str = "inf", #str or int
-max_row_width: str = "inf", #str or int
+header_height: str = "1",  # str or int
+max_column_width: str = "inf",  # str or int
+max_row_height: str = "inf",  # str or int
+max_header_height: str = "inf",  # str or int
+max_index_width: str = "inf",  # str or int
 row_index: list = None,
 index: list = None,
-after_redraw_time_ms: int = 100,
-row_index_width: int = 100,
+after_redraw_time_ms: int = 20,
+row_index_width: int = None,
 auto_resize_default_row_index: bool = True,
+auto_resize_columns: Union[int, None] = 120,
+auto_resize_rows: Union[int, None] = None,
 set_all_heights_and_widths: bool = False,
-row_height: str = "1", #str or int
+row_height: str = "1",  # str or int
 font: tuple = get_font(),
-header_font: tuple = get_heading_font(),
-index_font: tuple = get_index_font(), #currently has no effect
+header_font: tuple = get_header_font(),
+index_font: tuple = get_index_font(),  # currently has no effect
 popup_menu_font: tuple = get_font(),
 align: str = "w",
 header_align: str = "center",
-row_index_align: None,
-index_align: str = "center", # same as row_index_align
+row_index_align: Union[str, None] = None,
+index_align: str = "center",
 displayed_columns: list = [],
 all_columns_displayed: bool = True,
+displayed_rows: list = [],
+all_rows_displayed: bool = True,
 max_undos: int = 30,
 outline_thickness: int = 0,
-outline_color: str = theme_light_blue['outline_color'],
+outline_color: str = theme_light_blue["outline_color"],
 column_drag_and_drop_perform: bool = True,
 row_drag_and_drop_perform: bool = True,
-empty_horizontal: int = 150,
-empty_vertical: int = 100,
+empty_horizontal: int = 50,
+empty_vertical: int = 50,
 selected_rows_to_end_of_window: bool = False,
 horizontal_grid_to_end_of_window: bool = False,
 vertical_grid_to_end_of_window: bool = False,
@@ -175,48 +182,53 @@ show_vertical_grid: bool = True,
 show_horizontal_grid: bool = True,
 display_selected_fg_over_highlights: bool = False,
 show_selected_cells_border: bool = True,
-theme                              = "light blue",
-popup_menu_fg                      = theme_light_blue['popup_menu_fg'],
-popup_menu_bg                      = theme_light_blue['popup_menu_bg'],
-popup_menu_highlight_bg            = theme_light_blue['popup_menu_highlight_bg'],
-popup_menu_highlight_fg            = theme_light_blue['popup_menu_highlight_fg'],
-frame_bg                           = theme_light_blue['table_bg'],
-table_grid_fg                      = theme_light_blue['table_grid_fg'],
-table_bg                           = theme_light_blue['table_bg'],
-table_fg                           = theme_light_blue['table_fg'], 
-table_selected_cells_border_fg     = theme_light_blue['table_selected_cells_border_fg'],
-table_selected_cells_bg            = theme_light_blue['table_selected_cells_bg'],
-table_selected_cells_fg            = theme_light_blue['table_selected_cells_fg'],
-table_selected_rows_border_fg      = theme_light_blue['table_selected_rows_border_fg'],
-table_selected_rows_bg             = theme_light_blue['table_selected_rows_bg'],
-table_selected_rows_fg             = theme_light_blue['table_selected_rows_fg'],
-table_selected_columns_border_fg   = theme_light_blue['table_selected_columns_border_fg'],
-table_selected_columns_bg          = theme_light_blue['table_selected_columns_bg'],
-table_selected_columns_fg          = theme_light_blue['table_selected_columns_fg'],
-resizing_line_fg                   = theme_light_blue['resizing_line_fg'],
-drag_and_drop_bg                   = theme_light_blue['drag_and_drop_bg'],
-index_bg                           = theme_light_blue['index_bg'],
-index_border_fg                    = theme_light_blue['index_border_fg'],
-index_grid_fg                      = theme_light_blue['index_grid_fg'],
-index_fg                           = theme_light_blue['index_fg'],
-index_selected_cells_bg            = theme_light_blue['index_selected_cells_bg'],
-index_selected_cells_fg            = theme_light_blue['index_selected_cells_fg'],
-index_selected_rows_bg             = theme_light_blue['index_selected_rows_bg'],
-index_selected_rows_fg             = theme_light_blue['index_selected_rows_fg'],
-index_hidden_rows_expander_bg      = theme_light_blue['index_hidden_rows_expander_bg'],
-header_bg                          = theme_light_blue['header_bg'],
-header_border_fg                   = theme_light_blue['header_border_fg'],
-header_grid_fg                     = theme_light_blue['header_grid_fg'],
-header_fg                          = theme_light_blue['header_fg'],
-header_selected_cells_bg           = theme_light_blue['header_selected_cells_bg'],
-header_selected_cells_fg           = theme_light_blue['header_selected_cells_fg'],
-header_selected_columns_bg         = theme_light_blue['header_selected_columns_bg'],
-header_selected_columns_fg         = theme_light_blue['header_selected_columns_fg'],
-header_hidden_columns_expander_bg  = theme_light_blue['header_hidden_columns_expander_bg'],
-top_left_bg                        = theme_light_blue['top_left_bg'],
-top_left_fg                        = theme_light_blue['top_left_fg'],
-top_left_fg_highlight              = theme_light_blue['top_left_fg_highlight'])
+theme: str = "light blue",
+popup_menu_fg: str = theme_light_blue["popup_menu_fg"],
+popup_menu_bg: str = theme_light_blue["popup_menu_bg"],
+popup_menu_highlight_bg: str = theme_light_blue["popup_menu_highlight_bg"],
+popup_menu_highlight_fg: str = theme_light_blue["popup_menu_highlight_fg"],
+frame_bg: str = theme_light_blue["table_bg"],
+table_grid_fg: str = theme_light_blue["table_grid_fg"],
+table_bg: str = theme_light_blue["table_bg"],
+table_fg: str = theme_light_blue["table_fg"],
+table_selected_box_cells_fg: str = theme_light_blue["table_selected_box_cells_fg"],
+table_selected_box_rows_fg: str = theme_light_blue["table_selected_box_rows_fg"],
+table_selected_box_columns_fg: str = theme_light_blue["table_selected_box_columns_fg"],
+table_selected_cells_border_fg: str = theme_light_blue["table_selected_cells_border_fg"],
+table_selected_cells_bg: str = theme_light_blue["table_selected_cells_bg"],
+table_selected_cells_fg: str = theme_light_blue["table_selected_cells_fg"],
+table_selected_rows_border_fg: str = theme_light_blue["table_selected_rows_border_fg"],
+table_selected_rows_bg: str = theme_light_blue["table_selected_rows_bg"],
+table_selected_rows_fg: str = theme_light_blue["table_selected_rows_fg"],
+table_selected_columns_border_fg: str = theme_light_blue["table_selected_columns_border_fg"],
+table_selected_columns_bg: str = theme_light_blue["table_selected_columns_bg"],
+table_selected_columns_fg: str = theme_light_blue["table_selected_columns_fg"],
+resizing_line_fg: str = theme_light_blue["resizing_line_fg"],
+drag_and_drop_bg: str = theme_light_blue["drag_and_drop_bg"],
+index_bg: str = theme_light_blue["index_bg"],
+index_border_fg: str = theme_light_blue["index_border_fg"],
+index_grid_fg: str = theme_light_blue["index_grid_fg"],
+index_fg: str = theme_light_blue["index_fg"],
+index_selected_cells_bg: str = theme_light_blue["index_selected_cells_bg"],
+index_selected_cells_fg: str = theme_light_blue["index_selected_cells_fg"],
+index_selected_rows_bg: str = theme_light_blue["index_selected_rows_bg"],
+index_selected_rows_fg: str = theme_light_blue["index_selected_rows_fg"],
+index_hidden_rows_expander_bg: str = theme_light_blue["index_hidden_rows_expander_bg"],
+header_bg: str = theme_light_blue["header_bg"],
+header_border_fg: str = theme_light_blue["header_border_fg"],
+header_grid_fg: str = theme_light_blue["header_grid_fg"],
+header_fg: str = theme_light_blue["header_fg"],
+header_selected_cells_bg: str = theme_light_blue["header_selected_cells_bg"],
+header_selected_cells_fg: str = theme_light_blue["header_selected_cells_fg"],
+header_selected_columns_bg: str = theme_light_blue["header_selected_columns_bg"],
+header_selected_columns_fg: str = theme_light_blue["header_selected_columns_fg"],
+header_hidden_columns_expander_bg: str = theme_light_blue["header_hidden_columns_expander_bg"],
+top_left_bg: str = theme_light_blue["top_left_bg"],
+top_left_fg: str = theme_light_blue["top_left_fg"],
+top_left_fg_highlight: str = theme_light_blue["top_left_fg_highlight"],
+)
 ```
+- `name` setting a name for the sheet is useful when you have multiple sheets and you need to determine which one an event came from.
 - `startup_select` selects cells, rows or columns at initialization by using a `tuple` e.g. `(0, 0, "cells")` for cell A0 or `(0, 5, "rows")` for rows 0 to 5.
 - `data_reference` and `data` are essentially the same.
 - `row_index` and `index` are the same, `index` takes priority, same as with `headers` and `header`.
@@ -613,61 +625,260 @@ disable_bindings(*bindings)
 
 ___
 
-#### **Bind various table functionality to your own functions. To unbind a function either set `func` argument to `None` or leave it as default e.g. `extra_bindings("begin_copy")` to unbind** `"begin_copy"`.
+#### **Bind specific table functionality.**
+
+This function allows you to bind very specific table functionality to your own functions. If you want less specificity in event names you can also bind all sheet modifying events to a single function, [see here](https://github.com/ragardner/tksheet/wiki/Version-6#sheet-modified-events).
+
 ```python
-extra_bindings(bindings, func = "None")
+extra_bindings(bindings, func = None)
 ```
 
 Notes:
-- Upon an event being triggered the bound function will be sent a [namedtuple](https://docs.python.org/3/library/collections.html#collections.namedtuple) containing variables relevant to that event, use `print()` or similar to see all the variable names in the event. Each event contains different variable names with the exception of `eventname` e.g. `event.eventname`
+- There are several ways to use this function:
+    - `bindings` as a `str` and `func` as either `None` or a function. Using `None` with `func` will effectively unbind the function.
+        - `extra_bindings("edit_cell", func=my_function)`
+    - `bindings` as an `iterable` of `str`s and `func` as either `None` or a function. Using `None` with `func` will effectively unbind the function.
+        - `extra_bindings(["all_select_events", "copy", "cut"], func=my_function)`
+    - `bindings` as an `iterable` of `list`s or `tuple`s with length of two, e.g.
+        - `extra_bindings([(binding, function), (binding, function), ...])` In this example you could also use `None` in the place of `function` to unbind the binding.
+        - In this case the arg `func` is totally ignored.
 - For most of the `"end_..."` events the bound function is run before the value is set.
+- **To unbind** a function either set `func` argument to `None` or leave it as default e.g. `extra_bindings("begin_copy")` to unbind `"begin_copy"`.
 - The bound function for `"end_edit_cell"` is run before the cell data is set in order that a return value can set the cell instead of the user input. Using the event you can assess the user input and if needed override it with a return value which is not `None`. If `None` is the return value then the user input will NOT be overridden. The setting `edit_cell_validation` (see initialization or the function `set_options()`) can be used to turn off this return value checking. The `edit_cell` bindings also run if header/index editing is turned on.
 
 Arguments:
 - `bindings` (`str`) options are:
-	- "begin_copy"
-	- "end_copy"
-	- "begin_cut"
-	- "end_cut"
-	- "begin_paste"
-	- "end_paste"
-	- "begin_undo"
-	- "end_undo"
-	- "begin_delete"
-	- "end_delete"
-	- "begin_edit_cell"
-	- "end_edit_cell"
-	- "begin_row_index_drag_drop"
-	- "end_row_index_drag_drop"
-	- "begin_column_header_drag_drop"
-	- "end_column_header_drag_drop"
-	- "begin_delete_rows"
-	- "end_delete_rows"
-	- "begin_delete_columns"
-	- "end_delete_columns"
-	- "begin_insert_columns"
-	- "end_insert_columns"
-	- "begin_insert_rows"
-	- "end_insert_rows"
-    - "row_height_resize"
-    - "column_width_resize"
-	- "cell_select"
-	- "select_all"
-	- "row_select"
-	- "column_select"
-	- "drag_select_cells"
-	- "drag_select_rows"
-	- "drag_select_columns"
-	- "shift_cell_select"
-	- "shift_row_select"
-	- "shift_column_select"
-	- "deselect"
-	- "all_select_events", "select", "selectevents", "select_events"
-    - "all_modified_events", "sheetmodified", "sheet_modified" "modified_events", "modified"
-	- "bind_all"
-	- "unbind_all"
+	- `"begin_copy", "begin_ctrl_c"`
+	- `"ctrl_c", "end_copy", "end_ctrl_c", "copy"`
+	- `"begin_cut", "begin_ctrl_x"`
+	- `"ctrl_x", "end_cut", "end_ctrl_x", "cut"`
+	- `"begin_paste", "begin_ctrl_v"`
+	- `"ctrl_v", "end_paste", "end_ctrl_v", "paste"`
+	- `"begin_undo", "begin_ctrl_z"`
+	- `"ctrl_z", "end_undo", "end_ctrl_z", "undo"`
+	- `"begin_delete_key", "begin_delete"`
+	- `"delete_key", "end_delete", "end_delete_key", "delete"`
+	- `"begin_edit_cell", "begin_edit_table"`
+	- `"end_edit_cell", "edit_cell", "edit_table"`
+	- `"begin_edit_header"`
+    - `"end_edit_header", "edit_header"`
+    - `"begin_edit_index"`
+	- `"end_edit_index", "edit_index"`
+    - `"begin_row_index_drag_drop", "begin_move_rows"`
+	- `"row_index_drag_drop", "move_rows", "end_move_rows", "end_row_index_drag_drop"`
+	- `"begin_column_header_drag_drop", "begin_move_columns"`
+	- `"column_header_drag_drop", "move_columns", "end_move_columns", "end_column_header_drag_drop"`
+	- `"begin_rc_delete_row", "begin_delete_rows"`
+	- `"rc_delete_row", "end_rc_delete_row", "end_delete_rows", "delete_rows"`
+	- `"begin_rc_delete_column", "begin_delete_columns"`
+	- `"rc_delete_column", "end_rc_delete_column","end_delete_columns", "delete_columns"`
+	- `"begin_rc_insert_column", "begin_insert_column", "begin_insert_columns", "begin_add_column","begin_rc_add_column", "begin_add_columns"`
+	- `"rc_insert_column", "end_rc_insert_column", "end_insert_column", "end_insert_columns", "rc_add_column", "end_rc_add_column", "end_add_column", "end_add_columns"`
+	- `"begin_rc_insert_row", "begin_insert_row", "begin_insert_rows", "begin_rc_add_row", "begin_add_row", "begin_add_rows"`
+    - `"rc_insert_row", "end_rc_insert_row", "end_insert_row", "end_insert_rows", "rc_add_row", "end_rc_add_row", "end_add_row", "end_add_rows"`
+    - `"row_height_resize"`
+    - `"column_width_resize"`
+	- `"cell_select"`
+	- `"select_all"`
+	- `"row_select"`
+	- `"column_select"`
+	- `"drag_select_cells"`
+	- `"drag_select_rows"`
+	- `"drag_select_columns"`
+	- `"shift_cell_select"`
+	- `"shift_row_select"`
+	- `"shift_column_select"`
+	- `"deselect"`
+	- `"all_select_events", "select", "selectevents", "select_events"`
+    - `"all_modified_events", "sheetmodified", "sheet_modified" "modified_events", "modified"`
+	- `"bind_all"`
+	- `"unbind_all"`
 - `func` argument is the function you want to send the binding event to.
 - Using one of the following `"all_modified_events", "sheetmodified", "sheet_modified" "modified_events", "modified"` will make any insert, delete or cell edit including pastes and undos send an event to your function. Please **note** that this will mean your function will have to return a value to use for cell edits unless the setting `edit_cell_validation` is `False`.
+
+**For tksheet versions earlier than `6.2.0`:**
+- Upon an event being triggered the bound function will be sent a [namedtuple](https://docs.python.org/3/library/collections.html#collections.namedtuple) containing variables relevant to that event, use `print()` or similar to see all the variable names in the event. Each event contains different variable names with the exception of `eventname` e.g. `event.eventname`.
+
+**For tksheet versions `6.2.0`+:**
+
+#### **Event Data:**
+- Using `extra_bindings()` the function you bind needs to have at least one argument which will receive a `dict` containing information about the event that has just happened. When empty it looks like the following:
+
+```python
+{
+"eventname": "",
+"sheetname": "",
+"cells": {
+    "table": {},
+    "header": {},
+    "index": {},
+},
+"moved": {
+    "rows": {},
+    "columns": {},
+},
+"added": {
+    "rows": {},
+    "columns": {},
+},
+"deleted": {
+    "rows": {},
+    "columns": {},
+    "header": {},
+    "index": {},
+    "column_widths": {},
+    "row_heights": {},
+    "options": {},
+    "old_displayed_columns": None,
+    "old_displayed_rows": None,
+},
+"selection_boxes": {},
+"selected": tuple(),
+"data": [],
+"key": "",
+"value": None,
+"location": tuple(),
+"resized": {
+    "rows": {},
+    "columns": {},
+}
+}
+```
+
+Keys:
+- Key **`["eventname"]`** will be one of the following:
+    - `"begin_ctrl_c"`
+    - `"end_ctrl_c"`
+    - `"begin_ctrl_x"`
+    - `"end_ctrl_x"`
+    - `"begin_ctrl_v"`
+    - `"end_ctrl_v"`
+    - `"begin_delete"`
+    - `"end_delete"`
+    - `"begin_undo"`
+    - `"end_undo"`
+    - `"begin_add_columns"`
+    - `"end_add_columns"`
+    - `"begin_add_rows"`
+    - `"end_add_rows"`
+    - `"begin_delete_columns"`
+    - `"end_delete_columns"`
+    - `"begin_delete_rows"`
+    - `"end_delete_rows"`
+    - `"begin_edit_table"`
+    - `"end_edit_table"`
+    - `"begin_edit_index"`
+    - `"end_edit_index"`
+    - `"begin_edit_header"`
+    - `"end_edit_header"`
+    - `"begin_move_rows"`
+    - `"end_move_rows"`
+    - `"begin_move_columns"`
+    - `"end_move_columns"`
+    - `"select"`
+    - `"deselect"`
+    - `"resize"`
+- Key **`["sheetname"]`** is the [name given to the sheet widget on initialization](https://github.com/ragardner/tksheet/wiki/Version-6#initialization-options), useful if you have multiple sheets to determine which one emitted the event.
+- Key **`["cells"]["table"]`** if any table cells have been modified by cut, paste, delete, cell editors, dropdown boxes, checkboxes, undo or redo this will be a `dict` with `tuple` keys of `(data row index: int, data column index: int)` and the values will be the cell values at that location **prior** to the change. The `dict` will be empty if no such changes have taken place.
+- Key **`["cells"]["header"]`** if any header cells have been modified by cell editors, dropdown boxes, checkboxes, undo or redo this will be a `dict` with keys of `int: data column index` and the values will be the cell values at that location **prior** to the change. The `dict` will be empty if no such changes have taken place.
+- Key **`["cells"]["index"]`** if any index cells have been modified by cell editors, dropdown boxes, checkboxes, undo or redo this will be a `dict` with keys of `int: data column index` and the values will be the cell values at that location **prior** to the change. The `dict` will be empty if no such changes have taken place.
+- Key **`["moved"]["rows"]`** if any rows have been moved by dragging and dropping or undoing/redoing of dragging and dropping rows this will be a `dict` with the following keys:
+    - `{"old_indexes": tuple(), "new_indexes": tuple()}` 
+        - `"old_indexes"` will be a `tuple` of two values. These are the minimum and maximum indexes of where the rows used to be.
+        - `"new_indexes"` will be a `tuple` of two values. These are the minimum and maximum indexes of where the rows have moved to.
+        - The minimum and maximum indexes will always represent consecutive rows, without gaps.
+        - If no rows have been moved the `dict` will be empty.
+- Key **`["moved"]["columns"]`** if any columns have been moved by dragging and dropping or undoing/redoing of dragging and dropping columns this will be a `dict` with the following keys:
+    - `{"old_indexes": tuple(), "new_indexes": tuple()}` 
+        - `"old_indexes"` will be a `tuple` of two values. These are the minimum and maximum indexes of where the columns used to be.
+        - `"new_indexes"` will be a `tuple` of two values. These are the minimum and maximum indexes of where the columns have moved to.
+        - The minimum and maximum indexes will always represent consecutive columns, without gaps.
+        - If no columns have been moved the `dict` will be empty.
+- Key **`["added"]["rows"]`** if any rows have been added by the inbuilt popup menu insert rows or by a paste which expands the sheet then this will be a `dict` with the following keys:
+    - `{"data_index": int, "displayed_index": int, "num": int, "displayed": []}`
+        - `"data_index"` is an `int` representing the row where the rows were added in the data.
+        - `"displayed_index"` is an `int` representing the displayed table index where the rows were added (which will be different from the data index if there are hidden rows).
+        - `"displayed"` is simply a copied list of the `Sheet()`s displayed rows immediately prior to the change.
+        - If no rows have been added the `dict` will be empty.
+- Key **`["added"]["columns"]`** if any columns have been added by the inbuilt popup menu insert columns or by a paste which expands the sheet then this will be a `dict` with the following keys:
+    - `{"data_index": int, "displayed_index": int, "num": int, "displayed": []}`
+        - `"data_index"` is an `int` representing the column where the columns were added in the data.
+        - `"displayed_index"` is an `int` representing the displayed table index where the columns were added (which will be different from the data index if there are hidden columns).
+        - `"displayed"` is simply a copied list of the `Sheet()`s displayed columns immediately prior to the change.
+        - If no columns have been added the `dict` will be empty.
+- Key **`["deleted"]["columns"]`** if any columns have been deleted by the inbuilt popup menu delete columns or by undoing a paste which added columns then this will be a `dict`. This `dict` will look like the following:
+    - `{[column data index]: {[row data index]: cell value, [row data index]: cell value}, [column data index]: {...} ...}`
+    - If no columns have been deleted then the `dict` value for `["deleted"]["columns"]` will be empty.
+- Key **`["deleted"]["rows"]`** if any rows have been deleted by the inbuilt popup menu delete rows or by undoing a paste which added rows then this will be a `dict`. This `dict` will look like the following:
+    - `{[row data index]: {[column data index]: cell value, [column data index]: cell value}, [row data index]: {...} ...}`
+    - If no rows have been deleted then the `dict` value for `["deleted"]["rows"]` will be empty.
+- Key **`["deleted"]["header"]`** if any header values have been deleted by the inbuilt popup menu delete columns or by undoing a paste which added columns and header values then this will be a `dict`. This `dict` will look like the following:
+    - `{[column data index]: header cell value, [column data index]: header cell value, ...}`
+    - If no columns have been deleted by the mentioned methods then the `dict` value for `["deleted"]["header"]` will be empty.
+- Key **`["deleted"]["index"]`** if any index values have been deleted by the inbuilt popup menu delete rows or by undoing a paste which added rows and index values then this will be a `dict`. This `dict` will look like the following:
+    - `{[row data index]: index cell value, [row data index]: index cell value, ...}`
+    - If no index values have been deleted by the mentioned methods then the `dict` value for `["deleted"]["index"]` will be empty.
+- Key **`["deleted"]["column_widths"]`** if any columns have been deleted by the inbuilt popup menu delete columns or by undoing a paste which added columns then this will be a `dict`. This `dict` will look like the following:
+    - `{[column data index]: column width, [column data index]: column width, ...}`
+    - If no columns have been deleted then the `dict` value for `["deleted"]["column_widths"]` will be empty.
+- Key **`["deleted"]["row_heights"]`** if any rows have been deleted by the inbuilt popup menu delete rows or by undoing a paste which added rows then this will be a `dict`. This `dict` will look like the following:
+    - `{[row data index]: row height, [row data index]: row height, ...}`
+    - If no rows have been deleted then the `dict` value for `["deleted"]["row_heights"]` will be empty.
+- Key **`["deleted"]["options"]`** if any rows or columns have been deleted by the inbuilt popup menu delete rows/columns or by undoing a paste which added rows/columns then this will be a `dict`. This `dict` serves as storage for the `Sheet()`s options such as highlights, formatting, alignments, dropdown boxes, checkboxes etc. and is more for intenal use than anything else.
+- Key **`["deleted"]["old_displayed_columns"]`**  if any columns have been deleted by the inbuilt popup menu delete columns or by undoing a paste which added columns then this will be a `list`. This `list` stores the displayed columns (the columns that are showing when others are hidden) immediately prior to the change. It is more for internal use than anything else.
+- Key **`["deleted"]["old_displayed_rows"]`**  if any rows have been deleted by the inbuilt popup menu delete rows or by undoing a paste which added rows then this will be a `list`. This `list` stores the displayed rows (the rows that are showing when others are hidden) immediately prior to the change. It is more for internal use than anything else.
+- Key **`["selection_boxes"]`** the value of this is for selection boxes relevant to the event, the nature of the stored selection boxes will vary depending on the event. Below is an explanation:
+    - No matter the event the layout is always: `"selection_boxes": {(start row, start column, up to but not including end row, up to but not including end column): selection box type}`
+        - The row/column indexes are `int`s and the selection box type is a `str` either `"cells"`, `"rows"` or `"columns"`.
+    - The `dict` will be empty if there are no relevant selection boxes.
+    - `"select"` events have the box that was last selected.
+    - `"deselect"` events have all the boxes that were deselected.
+    - Cut, paste, delete events have the boxes that were cut, pasted into and deleted.
+    - For moving, adding and deleting rows/columns and also cell editing events such as with the inbuilt text editor the selection boxes are every existing box immediately prior to the event.
+- Key **`["selected"]`** the value of this when there is something selected on the sheet is a `namedtuple` which contains the values: `(row: int, column: int, type_: str (either "cell", "row" or "column"), tags: tuple)`
+    - The `tags` in this `namedtuple` are the tags of the rectangle on the canvas. They are the following:
+        - Index `[0]` - `"selected"`.
+        - Index `[1]` - `f"{start row}_{start column}_{up to row}_{up to column}"` - the dimensions of the box it's attached to.
+        - Index `[2]` - `int` - the canvas id of the box it's attached to.
+        - Index `[3]` - `f"{current box row}_{current box column}"` - the displayed position of currently selected box.
+        - Index `[4]` - `f"type_{type_}"` - the type of the box it's attached to (either "cells", "rows" or "columns").
+    - When nothing is selected or the event is not relevant to the currently selected box, such as a resize event it will be an empty `tuple`.
+- Key **`["data"]`** is primarily used for `paste` and it will contain the pasted data if any.
+- Key **`["key"]`** - `str` - is primarily used for cell edit events where a key press has occurred. For `"begin_edit..."` events the value is the actual key which was pressed (or `"??"` for using the mouse to open a cell). It also might be one of the following for end edit events:
+    - `"Return"` - enter key.
+    - `"FocusOut"` - the editor or box lost focus, perhaps by mouse clicking elsewhere.
+    - `"Tab"` - tab key.
+- Key **`["value"]`** is used primarily by cell editing events. For `"begin_edit..."` events it's the value displayed in he text editor when it opens. For `"end_edit..."` events it's the value in the text editor when it was closed, for example by hitting `Return`.
+- Key **`["location"]`** is for cell editing events to show the displayed (not data, in the case of hidden columns/rows) coordinates of the event. It will be a tuple of `(int displayed row index, int displayed column index)`.
+- Key **`["resized"]["rows"]`** is for row height resizing events, it will be a `dict` with the following layout:
+    - `{int displayed row index: {"old_size": old_height, "new_size": new_height}}`.
+    - If no rows have been resized then the value for `["resized"]["rows"]` will be an empty `dict`.
+- Key **`["resized"]["columns"]`** is for column width resizing events, it will be a `dict` with the following layout:
+    - `{int displayed column index: {"old_size": old_width, "new_size": new_width}}`.
+    - If no columns have been resized then the value for `["resized"]["columns"]` will be an empty `dict`.
+
+___
+
+#### **Sheet modified events**
+
+```python
+bind_event(event: str, func: Callable)
+```
+- **Note** that while an event emitted after a paste/undo/redo might have the event name `"edit_table"` it also might have added/deleted rows/columns, refer to the docs on the event data dict for more info.
+- `event` the two events emitted currently are:
+    - `"<<SheetModified>>"` emitted whenever the sheet was modified by the end user by editing cells or adding or deleting rows/columns. The function you bind to this event must be able to receive a `dict` argument which will be the same as [the event data dict](https://github.com/ragardner/tksheet/wiki/Version-6#event-data) but with less specific event names. The possible event names are listed below:
+        - `"edit_table"` when a user has cut, paste, delete or any cell edits including using dropdown boxes etc. in the table.
+        - `"edit_index"` when a user has edited a index cell.
+        - `"edit_header"` when a user has edited a header cell.
+        - `"add_columns"` when a user has inserted columns.
+        - `"add_rows"` when a user has inserted rows.
+        - `"delete_columns"` when a user has deleted columns.
+        - `"delete_rows"` when a user has deleted rows.
+        - `"move_columns"` when a user has dragged and dropped columns.
+        - `"move_rows"` when a user has dragged and dropped rows.
+    - `"<<SheetRedrawn>>"` emitted whenever the sheet GUI was refreshed (redrawn). The data for this event will be different than the usual event data, it is simply:
+        - `{"sheetname": name of your sheet, "header": bool True if the header was redrawn, "row_index": bool True if the index was redrawn, "table": bool True if the the table was redrawn}`
+- Example usage where `my_sheet_was_modified` is your function: `my_sheet.bind_event("<<SheetModified>>", my_sheet_was_modified)`.
 
 ___
 
@@ -683,13 +894,6 @@ ___
 popup_menu_del_command(label = None)
 ```
 - If `label` is `None` then it removes all.
-
-___
-
-#### **Disable table functionality and bindings (uses the same options as `enable_bindings()`).**
-```python
-disable_bindings(bindings = "all")
-```
 
 ___
 
@@ -711,14 +915,14 @@ ___
 ```python
 cell_edit_binding(enable = False, keys = [])
 ```
-- `keys` can be used to bind more keys to open a cell edit window
+- `keys` can be used to bind more keys to open a cell edit window.
 
 ___
 
 ```python
 bind(binding, func, add = None)
 ```
-- `add` will only work for bindings which are not the following: `"<ButtonPress-1>"`, `"<ButtonMotion-1>"`, `"<ButtonRelease-1>"`, `"<Double-Button-1>"`, `"<Motion>"` and lastly whichever is your operating systems right mouse click button
+- `add` will only work for bindings which are not the following: `"<ButtonPress-1>"`, `"<ButtonMotion-1>"`, `"<ButtonRelease-1>"`, `"<Double-Button-1>"`, `"<Motion>"` and lastly whichever is your operating systems right mouse click button.
 ___
 
 ```python
@@ -738,7 +942,7 @@ undo(event = None)
 ## **Identifying Bound Event Mouse Position**
 ----
 
-The below functions require a mouse click event, for example you could bind right click, example [here](https://github.com/ragardner/tksheet/wiki/Version-7#example-custom-right-click-and-text-editor-functionality), and then identify where the user has clicked.
+The below functions require a mouse click event, for example you could bind right click, example [here](https://github.com/ragardner/tksheet/wiki/Version-6#example-custom-right-click-and-text-editor-functionality), and then identify where the user has clicked.
 
 ___
 
@@ -773,9 +977,9 @@ edit_cell(self, event = None, dropdown = False)
 ## **Table Colors**
 ----
 
-To change the colors of individual cells, rows or columns use the functions listed under [highlighting cells](https://github.com/ragardner/tksheet/wiki/Version-7#highlighting-cells).
+To change the colors of individual cells, rows or columns use the functions listed under [highlighting cells](https://github.com/ragardner/tksheet/wiki/Version-6#highlighting-cells).
 
-For the colors of specific parts of the table such as gridlines and backgrounds use the function `set_options()`, arguments can be found [here](https://github.com/ragardner/tksheet/wiki/Version-7#table-options-and-other-functions). Most of the `set_options()` arguments are the same as the sheet initialization arguments.
+For the colors of specific parts of the table such as gridlines and backgrounds use the function `set_options()`, arguments can be found [here](https://github.com/ragardner/tksheet/wiki/Version-6#table-options-and-other-functions). Most of the `set_options()` arguments are the same as the sheet initialization arguments.
 
 Otherwise you can change the theme using the below function.
 ```python
@@ -1416,7 +1620,7 @@ display_columns(columns = None,
                 **kwargs)
 ```
 - `columns` (`int`, `iterable`, `"all"`) are the columns to be displayed, omit the columns to be hidden.
-- Use argument `True` with `all_columns_displayed` to display all columns, however, there's no need to use `False` when `columns` is not `None`.
+- Use argument `True` with `all_columns_displayed` to display all columns, use `False` to display only the columns you've set using the `columns` arg.
 - You can also use the keyword argument `all_displayed` instead of `all_columns_displayed`.
 - Example usage to display all columns: `sheet.display_columns("all")`.
 - Example usage to display specific columns only: `sheet.display_columns([2, 4, 7], all_displayed = False)`.
@@ -1453,11 +1657,11 @@ display_rows(rows = None,
              **kwargs)
 ```
 - `rows` (`int`, `iterable`, `"all"`) are the rows to be displayed, omit the rows to be hidden.
-- Use argument `True` with `all_rows_displayed` to display all rows, however, there's no need to use `False` when `rows` is not `None`.
+- Use argument `True` with `all_rows_displayed` to display all rows, use `False` to display only the rows you've set using the `rows` arg.
 - You can also use the keyword argument `all_displayed` instead of `all_rows_displayed`.
 - Example usage to display all rows: `sheet.display_rows("all")`.
 - Example usage to display specific rows only: `sheet.display_rows([2, 4, 7], all_displayed = False)`.
-- [This is a very simple example of row filtering](https://github.com/ragardner/tksheet/wiki/Version-7#example-header-dropdown-boxes-and-row-filtering) using this function.
+- [This is a very simple example of row filtering](https://github.com/ragardner/tksheet/wiki/Version-6#example-header-dropdown-boxes-and-row-filtering) using this function.
 
 ___
 
@@ -1571,7 +1775,7 @@ text = None
 
 Notes:
 - Use `selection_function`/`modified_function` like so `selection_function = my_function_name`. The function you use needs at least one argument because tksheet will send information to your function about the triggered dropdown.
-- When a user selects an item from the dropdown box the sheet will set the underlying cells data to the selected item, to bind this event use either the `selection_function` argument or see the function `extra_bindings()` with binding `"end_edit_cell"` [here](https://github.com/ragardner/tksheet/wiki/Version-7#bindings-and-functionality).
+- When a user selects an item from the dropdown box the sheet will set the underlying cells data to the selected item, to bind this event use either the `selection_function` argument or see the function `extra_bindings()` with binding `"end_edit_cell"` [here](https://github.com/ragardner/tksheet/wiki/Version-6#bindings-and-functionality).
 
  Arguments:
 - `values` are the values to appear when the dropdown box is popped open.
@@ -1953,7 +2157,7 @@ Additionally, formatting also provides a function for displaying data on the tab
 
 tksheet has several basic built-in formatters and provides functionality for creating your own custom formats as well.
 
-A demonstration of all the built-in and custom formatters can be found [here](https://github.com/ragardner/tksheet/wiki/Version-7#example-using-and-creating-formatters).
+A demonstration of all the built-in and custom formatters can be found [here](https://github.com/ragardner/tksheet/wiki/Version-6#example-using-and-creating-formatters).
 
 ### **To Note:**
 ----
@@ -2245,8 +2449,14 @@ For those wanting even more customisation of their formatters you also have the 
 ## **Table Options and Other Functions**
 ----
 
-The list of key word arguments available for `set_options()` are as follows, [see here](https://github.com/ragardner/tksheet/wiki/Version-7#initialization-options) as a guide for what arguments to use.
 ```python
+set_options(redraw: bool = True, **kwargs)
+```
+
+The list of key word arguments available for `set_options()` are as follows, [see here](https://github.com/ragardner/tksheet/wiki/Version-6#initialization-options) as a guide for what arguments to use.
+```python
+auto_resize_columns
+auto_resize_rows
 to_clipboard_delimiter
 to_clipboard_quotechar
 to_clipboard_lineterminator
@@ -2255,62 +2465,34 @@ show_dropdown_borders
 edit_cell_validation
 show_default_header_for_empty
 show_default_index_for_empty
-enable_edit_cell_auto_resize
 selected_rows_to_end_of_window
 horizontal_grid_to_end_of_window
 vertical_grid_to_end_of_window
-page_up_down_select_row
-expand_sheet_if_paste_too_big
 paste_insert_column_limit
 paste_insert_row_limit
+expand_sheet_if_paste_too_big
 arrow_key_down_right_scroll_page
+enable_edit_cell_auto_resize
+header_hidden_columns_expander_bg
+index_hidden_rows_expander_bg
+page_up_down_select_row
 display_selected_fg_over_highlights
-empty_horizontal
-empty_vertical
 show_horizontal_grid
 show_vertical_grid
-top_left_fg_highlight
-auto_resize_default_row_index
-font
-default_header
-default_row_index
-header_font
-show_selected_cells_border
-theme
-max_colwidth
-max_row_height
-max_header_height
-max_row_width
-header_height
+empty_horizontal
+empty_vertical
 row_height
 column_width
-header_bg
-header_border_fg
-header_grid_fg
-header_fg
-header_selected_cells_bg
-header_selected_cells_fg
-header_hidden_columns_expander_bg
-index_bg
-index_border_fg
-index_grid_fg
-index_fg
-index_selected_cells_bg
-index_selected_cells_fg
-index_hidden_rows_expander_bg
-top_left_bg
-top_left_fg
-frame_bg
-table_bg
-table_grid_fg
-table_fg
-table_selected_cells_border_fg
-table_selected_cells_bg
-table_selected_cells_fg
-resizing_line_fg
-drag_and_drop_bg
-outline_thickness
-outline_color
+header_height
+row_drag_and_drop_perform
+column_drag_and_drop_perform
+popup_menu_font
+popup_menu_fg
+popup_menu_bg
+popup_menu_highlight_bg
+popup_menu_highlight_fg
+top_left_fg_highlight
+auto_resize_default_row_index
 header_selected_columns_bg
 header_selected_columns_fg
 index_selected_rows_bg
@@ -2321,14 +2503,45 @@ table_selected_rows_fg
 table_selected_columns_border_fg
 table_selected_columns_bg
 table_selected_columns_fg
-popup_menu_font
-popup_menu_fg
-popup_menu_bg
-popup_menu_highlight_bg
-popup_menu_highlight_fg
-row_drag_and_drop_perform
-column_drag_and_drop_perform
-redraw
+default_header
+default_row_index
+max_column_width
+max_row_height
+max_header_height
+max_index_width
+font
+header_font
+index_font
+theme
+show_selected_cells_border
+header_bg
+header_border_fg
+header_grid_fg
+header_fg
+header_selected_cells_bg
+header_selected_cells_fg
+index_bg
+index_border_fg
+index_grid_fg
+index_fg
+index_selected_cells_bg
+index_selected_cells_fg
+top_left_bg
+top_left_fg
+frame_bg
+table_bg
+table_grid_fg
+table_fg
+table_selected_box_cells_fg
+table_selected_box_rows_fg
+table_selected_box_columns_fg
+table_selected_cells_border_fg
+table_selected_cells_bg
+table_selected_cells_fg
+resizing_line_fg
+drag_and_drop_bg
+outline_thickness
+outline_color
 ```
 
 ___
@@ -2484,7 +2697,58 @@ app.mainloop()
 ## **Example Displaying Selections**
 ----
 
-This is to demonstrate displaying what the user has selected in the sheet.
+**This example applies to tksheet versions earlier than `6.2.0`.**
+```python
+from tksheet import Sheet
+import tkinter as tk
+
+
+class demo(tk.Tk):
+    def __init__(self):
+        tk.Tk.__init__(self)
+        self.grid_columnconfigure(0, weight = 1)
+        self.grid_rowconfigure(0, weight = 1)
+        self.frame = tk.Frame(self)
+        self.frame.grid_columnconfigure(0, weight = 1)
+        self.frame.grid_rowconfigure(0, weight = 1)
+        self.sheet = Sheet(self.frame,
+                           data = [[f"Row {r}, Column {c}\nnewline1\nnewline2" for c in range(50)] for r in range(500)])
+        self.sheet.enable_bindings()
+        self.sheet.extra_bindings([("all_select_events", self.sheet_select_event)])
+        self.show_selections = tk.Label(self)
+        self.frame.grid(row = 0, column = 0, sticky = "nswe")
+        self.sheet.grid(row = 0, column = 0, sticky = "nswe")
+        self.show_selections.grid(row = 1, column = 0, sticky = "nswe")
+
+    def sheet_select_event(self, event = None):
+        try:
+            len(event)
+        except:
+            return
+        try:
+            if event[0] == "select_cell":
+                self.show_selections.config(text = f"Cells: ({event[1] + 1},{event[2] + 1}) : ({event[1] + 1},{event[2] + 1})")
+            elif "cells" in event[0]:
+                self.show_selections.config(text = f"Cells: ({event.selectionboxes[0] + 1},{event.selectionboxes[1] + 1}) : ({event.selectionboxes[2]},{event.selectionboxes[3]})")
+            elif event[0] == "select_column":
+                self.show_selections.config(text = f"Columns: {event[1] + 1} : {event[1] + 1}")
+            elif "columns" in event[0]:
+                self.show_selections.config(text = f"Columns: {event[1][0] + 1} : {event[1][-1] + 1}")
+            elif event[0] == "select_row":
+                self.show_selections.config(text = f"Rows: {event[1] + 1} : {event[1] + 1}")
+            elif "rows" in event[0]:
+                self.show_selections.config(text = f"Rows: {event[1][0] + 1} : {event[1][-1] + 1}")
+            else:
+                self.show_selections.config(text = "")
+        except:
+            self.show_selections.config(text = "")
+
+
+app = demo()
+app.mainloop()
+```
+
+**This example applies to tksheet versions after `6.2.0`.**
 ```python
 from tksheet import Sheet
 import tkinter as tk

@@ -1,17 +1,40 @@
 ### Version 6.2.0
 #### Fixed:
-- Issue with copy and cut not getting the correct boxes
-- Error with `delete_rows()`
-- Bug with hidden rows and undo right click insert rows
-- Bug with hidden columns and undo right click insert columns
-- Error with setting/getting fonts
+- Deselect events firing when not necessary
 
 #### Changed:
-- Totally overhaul event data sent to functions bound by `extra_bindings()`
+- Overhaul and totally change event data sent to functions bound by `extra_bindings()`
+- Overhaul internal selection box workings
 - Rename tksheet files
-- Remove wildcard imports
-- Added redo functionality, enabled when undo is enabled with ctrl/cmd shift z
 - Pressing escape on text editors no longer generates an edit cell/header/index event
+- Currently selected box will now still show despite 
+
+#### Added:
+- Redo, which is enabled when undo is enabled, use by pressing ctrl/cmd + shift + z
+- Ctrl/cmd click deselect
+- Ability to make currently selected box border different color to selection box border
+
+### Version 6.1.5
+#### Fixed:
+- `extra_bindings()` not binding functions
+- [#181](https://github.com/ragardner/tksheet/issues/181)
+
+### Version 6.1.4
+#### Changed:
+- Replaced wildcard imports
+- Format code with 120 line length
+- Error with setting/getting fonts
+
+### Version 6.1.3
+#### Fixed:
+- Missing imports
+- Bug with `delete_rows()`
+- Bug with hidden columns, cell options and deleting columns with the inbuilt right click menu
+- Bug with a paste that expands the sheet where row lengths are uneven
+- Poor box selection for cut and copy with multiple selected boxes
+- Bug with `insert_columns()` with uneven row lengths
+- Bug with `insert_rows()` if new data contains row lengths that are longer than sheet data
+- Errors that occur when dragging and dropping rows/columns beyond the window
 
 ### Version 6.1.2
 #### Fixed:

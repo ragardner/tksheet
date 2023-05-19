@@ -9,8 +9,6 @@ from .formatters import is_bool_like, try_to_bool
 from .other_classes import (
     DraggedRowColumn,
     DrawnItem,
-    ResizeEvent,
-    SelectEvent,
     TextCfg,
     TextEditor,
     event_dict,
@@ -207,7 +205,14 @@ class RowIndex(tk.Canvas):
                     self.being_drawn_item = self.add_selection(r, set_as_current=True, run_binding_func=False)
                     self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
                     if self.ctrl_selection_binding_func is not None:
-                        self.ctrl_selection_binding_func(SelectEvent("select", self.MT.get_box_from_item(self.being_drawn_item, get_dict=True)))
+                        self.ctrl_selection_binding_func(
+                            event_dict(
+                                name="select",
+                                sheet=self.parentframe.name,
+                                selected=self.MT.currently_selected(),
+                                boxes=self.MT.get_box_from_item(self.being_drawn_item, get_dict=True),
+                            )
+                        )
                 elif r_selected:
                     self.MT.deselect(r=r)
         elif not self.MT.ctrl_select_enabled:
@@ -231,7 +236,14 @@ class RowIndex(tk.Canvas):
                         box = self.MT.get_box_from_item(self.being_drawn_item, get_dict=True)
                     self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
                     if self.ctrl_selection_binding_func is not None:
-                        self.ctrl_selection_binding_func(SelectEvent("select", {box[:-1]: box[-1]}))
+                        self.ctrl_selection_binding_func(
+                            event_dict(
+                                name="select",
+                                sheet=self.parentframe.name,
+                                selected=self.MT.currently_selected(),
+                                boxes={box[:-1]: box[-1]},
+                            )
+                        )
                 elif r_selected:
                     self.dragged_row = DraggedRowColumn(
                         dragged=r,
@@ -258,7 +270,14 @@ class RowIndex(tk.Canvas):
                         box = self.MT.get_box_from_item(self.being_drawn_item, get_dict=True)
                     self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
                     if self.shift_selection_binding_func is not None:
-                        self.shift_selection_binding_func(SelectEvent("select", {box[:-1]: box[-1]}))
+                        self.shift_selection_binding_func(
+                            event_dict(
+                                name="select",
+                                sheet=self.parentframe.name,
+                                selected=self.MT.currently_selected(),
+                                boxes={box[:-1]: box[-1]},
+                            )
+                        )
                 elif r_selected:
                     self.dragged_row = DraggedRowColumn(
                         dragged=r,
@@ -341,7 +360,13 @@ class RowIndex(tk.Canvas):
             self.MT.allow_auto_resize_rows = False
             self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
             if self.row_height_resize_func is not None and old_height != new_height:
-                self.row_height_resize_func(ResizeEvent("row_height_resize", row, old_height, new_height))
+                self.row_height_resize_func(
+                    event_dict(
+                        name="resize",
+                        sheet=self.parentframe.name,
+                        resized_rows={row: {"old_size": old_height, "new_size": new_height}},
+                    )
+                )
         elif self.width_resizing_enabled and self.rsz_h is None and self.rsz_w is True:
             self.set_width_of_index_to_text()
         elif self.row_selection_enabled and self.rsz_h is None and self.rsz_w is None:
@@ -508,7 +533,14 @@ class RowIndex(tk.Canvas):
                             self.being_drawn_item = self.select_row(currently_selected.row, run_binding_func=False)
                         need_redraw = True
                         if self.drag_selection_binding_func is not None:
-                            self.drag_selection_binding_func(SelectEvent("select", {box[:-1]: box[-1]}))
+                            self.drag_selection_binding_func(
+                                event_dict(
+                                    name="select",
+                                    sheet=self.parentframe.name,
+                                    selected=self.MT.currently_selected(),
+                                    boxes={box[:-1]: box[-1]},
+                                )
+                            )
                 if self.scroll_if_event_offscreen(event):
                     need_redraw = True
             if need_redraw:
@@ -556,7 +588,14 @@ class RowIndex(tk.Canvas):
                             self.being_drawn_item = self.add_selection(currently_selected.row, run_binding_func=False)
                         need_redraw = True
                         if self.drag_selection_binding_func is not None:
-                            self.drag_selection_binding_func(SelectEvent("select", {box[:-1]: box[-1]}))
+                            self.drag_selection_binding_func(
+                                event_dict(
+                                    name="select",
+                                    sheet=self.parentframe.name,
+                                    selected=self.MT.currently_selected(),
+                                    boxes={box[:-1]: box[-1]},
+                                )
+                            )
                 if self.scroll_if_event_offscreen(event):
                     need_redraw = True
             if need_redraw:
@@ -686,7 +725,13 @@ class RowIndex(tk.Canvas):
             self.MT.recreate_all_selection_boxes()
             self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
             if self.row_height_resize_func is not None and old_height != new_height:
-                self.row_height_resize_func(ResizeEvent("row_height_resize", self.rsz_h - 1, old_height, new_height))
+                self.row_height_resize_func(
+                    event_dict(
+                        name="resize",
+                        sheet=self.parentframe.name,
+                        resized_rows={self.rsz_h - 1: {"old_size": old_height, "new_size": new_height}},
+                    )
+                )
         elif self.width_resizing_enabled and self.rsz_w is not None and self.currently_resizing_width:
             self.currently_resizing_width = False
             self.delete_all_resize_and_ctrl_lines(ctrl_lines=False)
@@ -706,7 +751,7 @@ class RowIndex(tk.Canvas):
             totalrows = self.dragged_row.to_move[-1] - self.dragged_row.to_move[0] + 1
             if r != self.dragged_row and r is not None and (r < self.dragged_row.to_move[0] or r > self.dragged_row.to_move[-1]) and totalrows != (len(self.MT.row_positions) - 1):
                 extra_func_success = True
-                event_data = event_dict(name="move_rows", boxes=self.MT.get_boxes(), selected=self.MT.currently_selected())
+                event_data = event_dict(name="move_rows", sheet=self.parentframe.name, boxes=self.MT.get_boxes(), selected=self.MT.currently_selected(),)
                 if r >= len(self.MT.row_positions) - 1:
                     r -= 1
                 if self.ri_extra_begin_drag_drop_func is not None:
@@ -795,7 +840,14 @@ class RowIndex(tk.Canvas):
         if redraw:
             self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
         if self.selection_binding_func is not None and run_binding_func:
-            self.selection_binding_func(SelectEvent("select", {box[:-1]: box[-1]}))
+            self.selection_binding_func(
+                event_dict(
+                    name="select",
+                    sheet=self.parentframe.name,
+                    selected=self.MT.currently_selected(),
+                    boxes={box[:-1]: box[-1]},
+                )
+            )
         return fill_iid
 
     def add_selection(self, r, redraw=False, run_binding_func=True, set_as_current=True):
@@ -804,7 +856,14 @@ class RowIndex(tk.Canvas):
         if redraw:
             self.MT.main_table_redraw_grid_and_text(redraw_header=False, redraw_row_index=True)
         if self.selection_binding_func is not None and run_binding_func:
-            self.selection_binding_func(SelectEvent("select", {box[:-1]: box[-1]}))
+            self.selection_binding_func(
+                event_dict(
+                    name="select",
+                    sheet=self.parentframe.name,
+                    selected=self.MT.currently_selected(),
+                    boxes={box[:-1]: box[-1]},
+                )
+            )
         return fill_iid
 
     def get_cell_dimensions(self, datarn):
@@ -1564,6 +1623,7 @@ class RowIndex(tk.Canvas):
                 text = self.extra_begin_edit_cell_func(
                     event_dict(
                         name="begin_edit_index",
+                        sheet=self.parentframe.name,
                         key=extra_func_key,
                         value=text,
                         location=r,
@@ -1731,6 +1791,7 @@ class RowIndex(tk.Canvas):
             datarn = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r]
             event_data = event_dict(
                 name="end_edit_index",
+                sheet=self.parentframe.name,
                 cells_index={datarn: self.get_cell_data(datarn)},
                 key=editor_info[1] if len(editor_info) >= 2 else "FocusOut",
                 value=self.text_editor_value,
@@ -1790,6 +1851,7 @@ class RowIndex(tk.Canvas):
             datarn = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r]
         event_data = event_dict(
             name="edit_index",
+            sheet=self.parentframe.name,
             cells_index={datarn: self.get_cell_data(datarn)},
             boxes=self.MT.get_boxes(),
             selected=self.MT.currently_selected(),
@@ -1895,7 +1957,13 @@ class RowIndex(tk.Canvas):
         old_height = self.MT.row_positions[r + 1] - self.MT.row_positions[r]
         new_height = self.set_row_height(r, only_set_if_too_small=only_set_if_too_small)
         if self.row_height_resize_func is not None and old_height != new_height:
-            self.row_height_resize_func(ResizeEvent("row_height_resize", r, old_height, new_height))
+            self.row_height_resize_func(
+                event_dict(
+                    name="resize",
+                    sheet=self.parentframe.name,
+                    resized_rows={r: {"old_size": old_height, "new_size": new_height}},
+                )
+            )
 
     # internal event use
     def click_checkbox(self, r, datarn=None, undo=True, redraw=True):
@@ -1913,6 +1981,7 @@ class RowIndex(tk.Canvas):
             self.set_cell_data_undo(r, datarn=datarn, value=value, cell_resize=False)
             event_data = event_dict(
                 name="end_edit_index",
+                sheet=self.parentframe.name,
                 cells_index={datarn: pre_edit_value},
                 key="??",
                 value=value,
@@ -1990,6 +2059,7 @@ class RowIndex(tk.Canvas):
                 lambda x: window.search_and_see(
                     event_dict(
                         name="index_dropdown_modified",
+                        sheet=self.parentframe.name,
                         value=self.text_editor.get(),
                         location=r,
                         boxes=self.MT.get_boxes(),
@@ -2025,6 +2095,7 @@ class RowIndex(tk.Canvas):
             pre_edit_value = self.get_cell_data(datarn)
             event_data = event_dict(
                 name="end_edit_index",
+                sheet=self.parentframe.name,
                 cells_header={datarn: pre_edit_value},
                 key="??",
                 value=selection,

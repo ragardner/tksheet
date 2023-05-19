@@ -7,10 +7,6 @@ from typing import Any, Union
 from .vars import ctrl_key, get_font, rc_binding
 
 CurrentlySelectedClass = namedtuple("CurrentlySelectedClass", "row column type_ tags")
-SelectEvent = namedtuple("SelectEvent", "eventname selectionboxes")
-DeselectEvent = namedtuple("DeselectEvent", "eventname selectionboxes")
-ResizeEvent = namedtuple("ResizeEvent", "eventname index oldsize newsize")
-CtrlKeyEvent = namedtuple("CtrlKeyEvent", "eventname selectionboxes currentlyselected rows")
 DrawnItem = namedtuple("DrawnItem", "iid showing")
 TextCfg = namedtuple("TextCfg", "txt tf font align")
 DraggedRowColumn = namedtuple("DraggedRowColumn", "dragged to_move")
@@ -266,25 +262,9 @@ def dropdown_search_function(search_for, data):
     return None
 
 
-"""
-{
-    "eventname": "",
-    "cells": {"table": {}, "header": {}, "index": {}},
-    "moved": {"rows": {"old_indexes": tuple(), "new_indexes": tuple()}, "columns": {"old_indexes": tuple(), "new_indexes": tuple()}},
-    "added": {"rows": {}, "columns": {}},
-    "deleted": {"rows": {}, "columns": {}, "header": {}, "index": {}, "column_widths": {}, "row_heights": {}, "old_displayed_columns": None, "old_displayed_rows": None},
-    "selection_boxes": {},
-    "selected": tuple(),
-    "data": [],
-    "key": "",
-    "value": None,
-    "location": tuple(),
-}
-"""
-
-
 def event_dict(
     name: str = None,
+    sheet: Any = None,
     boxes: Union[None, dict, tuple] = None,
     cells_table: Union[None, dict] = None,
     cells_header: Union[None, dict] = None,
@@ -293,11 +273,16 @@ def event_dict(
     data: Any = None,
     key: Union[None, str] = None,
     value: Any = None,
-    location: Union[None, int, tuple] = None,
+    location: Union[None, int, tuple[int]] = None,
+    resized_rows: Union[None, dict] = None,
+    resized_columns: Union[None, dict] = None,
+    #resized_index: Union[None, dict] = None,
+    #resized_header: Union[None, dict] = None,
     **kwargs,
 ) -> dict:
     return {
         "eventname": "" if name is None else name,
+        "sheetname": "!sheet" if sheet is None else sheet,
         "cells": {
             "table": {} if cells_table is None else cells_table,
             "header": {} if cells_header is None else cells_header,
@@ -328,6 +313,12 @@ def event_dict(
         "key": "" if key is None else key,
         "value": None if value is None else value,
         "location": tuple() if location is None else location,
+        "resized": {
+            "rows": {} if resized_rows is None else resized_rows,
+            "columns": {} if resized_columns is None else resized_columns,
+            #"header": {} if resized_header is None else resized_header,
+            #"index": {} if resized_index is None else resized_index,
+        }
     }
 
 

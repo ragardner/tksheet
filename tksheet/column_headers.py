@@ -9,8 +9,6 @@ from .formatters import is_bool_like, try_to_bool
 from .other_classes import (
     DraggedRowColumn,
     DrawnItem,
-    ResizeEvent,
-    SelectEvent,
     TextCfg,
     TextEditor,
     event_dict,
@@ -156,7 +154,7 @@ class ColumnHeaders(tk.Canvas):
             self.config(height=new_height)
         except Exception:
             return
-        if set_TL:
+        if set_TL and self.TL is not None:
             self.TL.set_dimensions(new_h=new_height)
 
     def enable_bindings(self, binding):
@@ -229,7 +227,14 @@ class ColumnHeaders(tk.Canvas):
                     self.being_drawn_item = self.add_selection(c, set_as_current=True, run_binding_func=False)
                     self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
                     if self.ctrl_selection_binding_func is not None:
-                        self.ctrl_selection_binding_func(SelectEvent("select", self.MT.get_box_from_item(self.being_drawn_item, get_dict=True)))
+                        self.ctrl_selection_binding_func(
+                            event_dict(
+                                name="select",
+                                sheet=self.parentframe.name,
+                                selected=self.MT.currently_selected(),
+                                boxes=self.MT.get_box_from_item(self.being_drawn_item, get_dict=True),
+                            )
+                        )
                 elif c_selected:
                     self.MT.deselect(c=c)
         elif not self.MT.ctrl_select_enabled:
@@ -253,7 +258,14 @@ class ColumnHeaders(tk.Canvas):
                         box = self.MT.get_box_from_item(self.being_drawn_item)
                     self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
                     if self.ctrl_selection_binding_func is not None:
-                        self.ctrl_selection_binding_func(SelectEvent("select", {box[:-1]: box[-1]}))
+                        self.ctrl_selection_binding_func(
+                            event_dict(
+                                name="select",
+                                sheet=self.parentframe.name,
+                                selected=self.MT.currently_selected(),
+                                boxes={box[:-1]: box[-1]},
+                            )
+                        )
                 elif c_selected:
                     self.dragged_col = DraggedRowColumn(
                         dragged=c,
@@ -280,7 +292,14 @@ class ColumnHeaders(tk.Canvas):
                         box = self.MT.get_box_from_item(self.being_drawn_item)
                     self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
                     if self.shift_selection_binding_func is not None:
-                        self.shift_selection_binding_func(SelectEvent("select", {box[:-1]: box[-1]}))
+                        self.shift_selection_binding_func(
+                            event_dict(
+                                name="select",
+                                sheet=self.parentframe.name,
+                                selected=self.MT.currently_selected(),
+                                boxes={box[:-1]: box[-1]},
+                            )
+                        )
                 elif c_selected:
                     self.dragged_col = DraggedRowColumn(
                         dragged=c,
@@ -362,7 +381,13 @@ class ColumnHeaders(tk.Canvas):
             self.MT.allow_auto_resize_columns = False
             self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
             if self.column_width_resize_func is not None and old_width != new_width:
-                self.column_width_resize_func(ResizeEvent("column_width_resize", col, old_width, new_width))
+                self.column_width_resize_func(
+                    event_dict(
+                        name="resize",
+                        sheet=self.parentframe.name,
+                        resized_columns={col: {"old_size": old_width, "new_size": new_width}},
+                    )
+                )
         elif self.col_selection_enabled and self.rsz_h is None and self.rsz_w is None:
             c = self.MT.identify_col(x=event.x)
             if c < len(self.MT.col_positions) - 1:
@@ -524,7 +549,14 @@ class ColumnHeaders(tk.Canvas):
                             self.being_drawn_item = self.select_col(currently_selected.column, run_binding_func=False)
                         need_redraw = True
                         if self.drag_selection_binding_func is not None:
-                            self.drag_selection_binding_func(SelectEvent("select", {box[:-1]: box[-1]}))
+                            self.drag_selection_binding_func(
+                                event_dict(
+                                    name="select",
+                                    sheet=self.parentframe.name,
+                                    selected=self.MT.currently_selected(),
+                                    boxes={box[:-1]: box[-1]},
+                                )
+                            )
                 if self.scroll_if_event_offscreen(event):
                     need_redraw = True
             if need_redraw:
@@ -584,7 +616,14 @@ class ColumnHeaders(tk.Canvas):
                             self.being_drawn_item = self.add_selection(currently_selected.column, run_binding_func=False)
                         need_redraw = True
                         if self.drag_selection_binding_func is not None:
-                            self.drag_selection_binding_func(SelectEvent("select", {box[:-1]: box[-1]}))
+                            self.drag_selection_binding_func(
+                                event_dict(
+                                    name="select",
+                                    sheet=self.parentframe.name,
+                                    selected=self.MT.currently_selected(),
+                                    boxes={box[:-1]: box[-1]},
+                                )
+                            )
                 if self.scroll_if_event_offscreen(event):
                     need_redraw = True
             if need_redraw:
@@ -719,7 +758,13 @@ class ColumnHeaders(tk.Canvas):
             self.MT.recreate_all_selection_boxes()
             self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
             if self.column_width_resize_func is not None and old_width != new_width:
-                self.column_width_resize_func(ResizeEvent("column_width_resize", self.rsz_w - 1, old_width, new_width))
+                self.column_width_resize_func(
+                    event_dict(
+                        name="resize",
+                        sheet=self.parentframe.name,
+                        resized_columns={self.rsz_w - 1: {"old_size": old_width, "new_size": new_width}},
+                    )
+                )
         elif self.height_resizing_enabled and self.rsz_h is not None and self.currently_resizing_height:
             self.currently_resizing_height = False
             self.delete_all_resize_and_ctrl_lines(ctrl_lines=False)
@@ -739,7 +784,7 @@ class ColumnHeaders(tk.Canvas):
             totalcols = self.dragged_col.to_move[-1] - self.dragged_col.to_move[0] + 1
             if c != self.dragged_col.dragged and c is not None and (c < self.dragged_col.to_move[0] or c > self.dragged_col.to_move[-1]) and totalcols != len(self.MT.col_positions) - 1:
                 extra_func_success = True
-                event_data = event_dict(name="move_columns", boxes=self.MT.get_boxes(), selected=self.MT.currently_selected())
+                event_data = event_dict(name="move_columns", sheet=self.parentframe.name, boxes=self.MT.get_boxes(), selected=self.MT.currently_selected(),)
                 if c >= len(self.MT.col_positions) - 1:
                     c -= 1
                 if self.ch_extra_begin_drag_drop_func is not None:
@@ -828,7 +873,14 @@ class ColumnHeaders(tk.Canvas):
         if redraw:
             self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
         if self.selection_binding_func is not None and run_binding_func:
-            self.selection_binding_func(SelectEvent("select", {box[:-1]: box[-1]}))
+            self.selection_binding_func(
+                event_dict(
+                    name="select",
+                    sheet=self.parentframe.name,
+                    selected=self.MT.currently_selected(),
+                    boxes={box[:-1]: box[-1]},
+                )
+            )
         return fill_iid
 
     def add_selection(self, c, redraw=False, run_binding_func=True, set_as_current=True):
@@ -837,7 +889,14 @@ class ColumnHeaders(tk.Canvas):
         if redraw:
             self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
         if self.selection_binding_func is not None and run_binding_func:
-            self.selection_binding_func(SelectEvent("select", {box[:-1]: box[-1]}))
+            self.selection_binding_func(
+                event_dict(
+                    name="select",
+                    sheet=self.parentframe.name,
+                    selected=self.MT.currently_selected(),
+                    boxes={box[:-1]: box[-1]},
+                )
+            )
         return fill_iid
 
     def get_cell_dimensions(self, datacn):
@@ -1599,6 +1658,7 @@ class ColumnHeaders(tk.Canvas):
                 text = self.extra_begin_edit_cell_func(
                     event_dict(
                         name="begin_edit_header",
+                        sheet=self.parentframe.name,
                         key=extra_func_key,
                         value=text,
                         location=c,
@@ -1775,6 +1835,7 @@ class ColumnHeaders(tk.Canvas):
             datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
             event_data = event_dict(
                 name="end_edit_header",
+                sheet=self.parentframe.name,
                 cells_header={datacn: self.get_cell_data(datacn)},
                 key=editor_info[1] if len(editor_info) >= 2 else "FocusOut",
                 value=self.text_editor_value,
@@ -1834,6 +1895,7 @@ class ColumnHeaders(tk.Canvas):
             datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
         event_data = event_dict(
             name="edit_header",
+            sheet=self.parentframe.name,
             cells_header={datacn: self.get_cell_data(datacn)},
             boxes=self.MT.get_boxes(),
             selected=self.MT.currently_selected(),
@@ -1942,7 +2004,13 @@ class ColumnHeaders(tk.Canvas):
         old_width = self.MT.col_positions[c + 1] - self.MT.col_positions[c]
         new_width = self.set_col_width(c, width=width, only_set_if_too_small=only_set_if_too_small)
         if self.column_width_resize_func is not None and old_width != new_width:
-            self.column_width_resize_func(ResizeEvent("column_width_resize", c, old_width, new_width))
+            self.column_width_resize_func(
+                event_dict(
+                    name="resize",
+                    sheet=self.parentframe.name,
+                    resized_columns={c: {"old_size": old_width, "new_size": new_width}},
+                )
+            )
 
     # internal event use
     def click_checkbox(self, c, datacn=None, undo=True, redraw=True):
@@ -1960,6 +2028,7 @@ class ColumnHeaders(tk.Canvas):
             self.set_cell_data_undo(c, datacn=datacn, value=value, cell_resize=False)
             event_data = event_dict(
                 name="end_edit_header",
+                sheet=self.parentframe.name,
                 cells_header={datacn: pre_edit_value},
                 key="??",
                 value=value,
@@ -2036,6 +2105,7 @@ class ColumnHeaders(tk.Canvas):
                 lambda x: window.search_and_see(
                     event_dict(
                         name="header_dropdown_modified",
+                        sheet=self.parentframe.name,
                         value=self.text_editor.get(),
                         location=c,
                         boxes=self.MT.get_boxes(),
@@ -2070,6 +2140,7 @@ class ColumnHeaders(tk.Canvas):
             pre_edit_value = self.get_cell_data(datacn)
             event_data = event_dict(
                 name="end_edit_header",
+                sheet=self.parentframe.name,
                 cells_header={datacn: pre_edit_value},
                 key="??",
                 value=selection,
