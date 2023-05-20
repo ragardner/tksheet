@@ -4,8 +4,6 @@
 
 ## **Help**
 
----
-
 - [Installation](https://github.com/ragardner/tksheet/wiki/Version-6#installation-and-requirements)
 - [Documentation](https://github.com/ragardner/tksheet/wiki/Version-6)
 - [Changelog](https://github.com/ragardner/tksheet/blob/master/CHANGELOG.md)
@@ -15,8 +13,6 @@
 - This library is maintained with the help of **[others](https://github.com/ragardner/tksheet/graphs/contributors)**. If you would like to contribute please read [this help section](https://github.com/ragardner/tksheet/wiki/Version-6#contributing).
 
 ## **Notable Changes:**
-
----
 
 **Versions >= `5.5.0`:**
 
@@ -29,8 +25,6 @@
 - Support for Python version `3.6` is being dropped.
 
 ## **Features**
-
----
 
 - Display and modify tabular data
 - Stores its display data as a Python list of lists, sublists being rows
@@ -48,12 +42,8 @@
 
 ### **light blue theme**
 
----
-
 ![tksheet light blue theme](https://i.imgur.com/ojU3IQi.jpeg)
 
 ### **black theme**
-
----
 
 ![tksheet black theme](https://i.imgur.com/JeF9vJe.jpeg)
