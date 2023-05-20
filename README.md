@@ -2,7 +2,7 @@
 
 ## **Python tkinter table widget**
 
-----
+---
 
 ```python
 #To install using pip
@@ -14,7 +14,7 @@ pip install tksheet --upgrade
 
 ## **Help**
 
-----
+---
 
 - [Documentation](https://github.com/ragardner/tksheet/wiki/Version-6)
 - [Changelog](https://github.com/ragardner/tksheet/blob/master/CHANGELOG.md)
@@ -23,15 +23,23 @@ pip install tksheet --upgrade
 - [Suggestions](https://github.com/ragardner/tksheet/wiki/Version-6#enhancements-or-suggestions)
 - This library is maintained with the help of **[others](https://github.com/ragardner/tksheet/graphs/contributors)**. If you would like to contribute please read [this help section](https://github.com/ragardner/tksheet/wiki/Version-6#contributing).
 
-### **NOTICE:** 
-With versions `5.5.0`+ if you use `extra_bindings()` with `"edit_cell"`/`"end_edit_cell"` you must provide a return value in your bound function to set the cell value to. To disable this behavior in these versions use option `edit_cell_validation = False` in your `Sheet()` initialisation arguments or use `set_options(edit_cell_validation = False)`. [See here](https://github.com/ragardner/tksheet/issues/170#issuecomment-1522236289) for more information on this issue and if you need to *very* directly set the cell data.
+## **Notable Changes:**
 
-### **NOTICE:**
-With versions `6.2.0`+ all `extra_bindings()` event objects have totally changed, [see here](https://github.com/ragardner/tksheet/wiki/Version-6#bind-various-table-functionality-to-your-own-functions) for more information. `tksheet` file names have also changed.
+---
+
+**Versions >= `5.5.0`:**
+
+- If you use `extra_bindings()` with `"edit_cell"`/`"end_edit_cell"` you must provide a return value in your bound function to set the cell value to. To disable this behavior in these versions use option `edit_cell_validation = False` in your `Sheet()` initialisation arguments or use `set_options(edit_cell_validation = False)`. [See here](https://github.com/ragardner/tksheet/issues/170#issuecomment-1522236289) for more information on this issue and if you need to *very* directly set the cell data.
+
+**Versions >= `6.2.0`:**
+
+- All `extra_bindings()` event objects have changed, [see here](https://github.com/ragardner/tksheet/wiki/Version-6#bind-specific-table-functionality) for more information. 
+- `tksheet` file names have been changed.
+- Support for Python version `3.6` is being dropped.
 
 ## **Features**
 
-----
+---
 
 - Display and modify tabular data
 - Stores its display data as a Python list of lists, sublists being rows
@@ -49,12 +57,12 @@ With versions `6.2.0`+ all `extra_bindings()` event objects have totally changed
 
 ### **light blue theme**
 
-----
+---
 
 ![tksheet light blue theme](https://i.imgur.com/ojU3IQi.jpeg)
 
 ### **black theme**
 
-----
+---
 
 ![tksheet black theme](https://i.imgur.com/JeF9vJe.jpeg)

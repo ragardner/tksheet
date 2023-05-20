@@ -8,7 +8,6 @@
 - Overhaul internal selection box workings
 - Rename tksheet files
 - Pressing escape on text editors no longer generates an edit cell/header/index event
-- Currently selected box will now still show despite 
 
 #### Added:
 - Redo, which is enabled when undo is enabled, use by pressing ctrl/cmd + shift + z

@@ -229,6 +229,8 @@ top_left_fg_highlight: str = theme_light_blue["top_left_fg_highlight"],
 )
 ```
 - `name` setting a name for the sheet is useful when you have multiple sheets and you need to determine which one an event came from.
+- `auto_resize_columns` (`int`, `None`) if set as an `int` the columns will automatically resize to fit the width of the window, the `int` value being the minimum of each column in pixels.
+- `auto_resize_rows` (`int`, `None`) if set as an `int` the rows will automatically resize to fit the height of the window, the `int` value being the minimum height of each row in pixels.
 - `startup_select` selects cells, rows or columns at initialization by using a `tuple` e.g. `(0, 0, "cells")` for cell A0 or `(0, 5, "rows")` for rows 0 to 5.
 - `data_reference` and `data` are essentially the same.
 - `row_index` and `index` are the same, `index` takes priority, same as with `headers` and `header`.
@@ -1145,6 +1147,24 @@ get_column_alignments()
 
 ## **Row Heights and Column Widths**
 ----
+
+#### **Auto resize column widths to fit the window.**
+
+```python
+set_options(auto_resize_columns)
+```
+- `auto_resize_columns` (`int`, `None`) if set as an `int` the columns will automatically resize to fit the width of the window, the `int` value being the minimum of each column in pixels.
+
+___
+
+#### **Auto resize row heights to fit the window.**
+
+```python
+set_options(auto_resize_rows)
+```
+- `auto_resize_rows` (`int`, `None`) if set as an `int` the rows will automatically resize to fit the height of the window, the `int` value being the minimum height of each row in pixels.
+
+___
 
 #### **Set default column width in pixels.**
 ```python
@@ -2720,10 +2740,10 @@ class demo(tk.Tk):
         )
         self.sheet.enable_bindings("all", "ctrl_select")
         self.sheet.extra_bindings("select_events", self.sheet_select_event)
-        self.show_selections = tk.Label(self, text="0R x 0C", font=("Calibri", 12, "bold"))
+        self.show_selections = tk.Label(self, text="0R x 0C", font=("Calibri", 13, "bold"))
         self.frame.grid(row=0, column=0, sticky="nswe")
         self.sheet.grid(row=0, column=0, sticky="nswe")
-        self.show_selections.grid(row=1, column=0, sticky="nswe")
+        self.show_selections.grid(row=1, column=0, padx=(20, 0), sticky="w")
 
     def sheet_select_event(self, event=None):
         print (event)

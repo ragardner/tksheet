@@ -5609,7 +5609,8 @@ class MainTable(tk.Canvas):
         self.tag_lower("cells")
         self.RI.tag_lower("cells")
         self.CH.tag_lower("cells")
-        self.tag_raise("selected")
+        if self.show_selected_cells_border:
+            self.tag_raise("selected")
 
     def recreate_selection_box(
         self,
