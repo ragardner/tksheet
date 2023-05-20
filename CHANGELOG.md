@@ -11,6 +11,7 @@
 
 #### Added:
 - Redo, which is enabled when undo is enabled, use by pressing ctrl/cmd + shift + z
+- `auto_resize_columns`, `auto_resize_rows` in initialization or with `set_options()`
 - Ctrl/cmd click deselect
 - Ability to make currently selected box border different color to selection box border
 
