@@ -58,6 +58,14 @@ Some examples of things that are not possible with tksheet:
 
 `tksheet` is available through PyPi (Python package index) and can be installed by using Pip through the command line `pip install tksheet`
 
+```python
+#To install using pip
+pip install tksheet
+
+#To update using pip
+pip install tksheet --upgrade
+```
+
 Alternatively you can download the source code and (inside the tksheet directory) use the command line `python setup.py develop`
 
 `tksheet` requires a Python version of `3.6` or higher.
