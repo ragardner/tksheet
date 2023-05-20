@@ -152,7 +152,7 @@ index: list = None,
 after_redraw_time_ms: int = 20,
 row_index_width: int = None,
 auto_resize_default_row_index: bool = True,
-auto_resize_columns: Union[int, None] = 120,
+auto_resize_columns: Union[int, None] = None,
 auto_resize_rows: Union[int, None] = None,
 set_all_heights_and_widths: bool = False,
 row_height: str = "1",  # str or int
@@ -699,7 +699,7 @@ Arguments:
 **For tksheet versions earlier than `6.2.0`:**
 - Upon an event being triggered the bound function will be sent a [namedtuple](https://docs.python.org/3/library/collections.html#collections.namedtuple) containing variables relevant to that event, use `print()` or similar to see all the variable names in the event. Each event contains different variable names with the exception of `eventname` e.g. `event.eventname`.
 
-**For tksheet versions `6.2.0`+:**
+**For tksheet versions >= `6.2.0`:**
 
 #### **Event Data:**
 - Using `extra_bindings()` the function you bind needs to have at least one argument which will receive a `dict` containing information about the event that has just happened. When empty it looks like the following:
@@ -734,6 +734,7 @@ Arguments:
 },
 "selection_boxes": {},
 "selected": tuple(),
+"being_selected": tuple(),
 "data": [],
 "key": "",
 "value": None,
@@ -776,7 +777,6 @@ Keys:
     - `"begin_move_columns"`
     - `"end_move_columns"`
     - `"select"`
-    - `"deselect"`
     - `"resize"`
 - Key **`["sheetname"]`** is the [name given to the sheet widget on initialization](https://github.com/ragardner/tksheet/wiki/Version-6#initialization-options), useful if you have multiple sheets to determine which one emitted the event.
 - Key **`["cells"]["table"]`** if any table cells have been modified by cut, paste, delete, cell editors, dropdown boxes, checkboxes, undo or redo this will be a `dict` with `tuple` keys of `(data row index: int, data column index: int)` and the values will be the cell values at that location **prior** to the change. The `dict` will be empty if no such changes have taken place.
@@ -827,14 +827,11 @@ Keys:
 - Key **`["deleted"]["options"]`** if any rows or columns have been deleted by the inbuilt popup menu delete rows/columns or by undoing a paste which added rows/columns then this will be a `dict`. This `dict` serves as storage for the `Sheet()`s options such as highlights, formatting, alignments, dropdown boxes, checkboxes etc. and is more for intenal use than anything else.
 - Key **`["deleted"]["old_displayed_columns"]`**  if any columns have been deleted by the inbuilt popup menu delete columns or by undoing a paste which added columns then this will be a `list`. This `list` stores the displayed columns (the columns that are showing when others are hidden) immediately prior to the change. It is more for internal use than anything else.
 - Key **`["deleted"]["old_displayed_rows"]`**  if any rows have been deleted by the inbuilt popup menu delete rows or by undoing a paste which added rows then this will be a `list`. This `list` stores the displayed rows (the rows that are showing when others are hidden) immediately prior to the change. It is more for internal use than anything else.
-- Key **`["selection_boxes"]`** the value of this is for selection boxes relevant to the event, the nature of the stored selection boxes will vary depending on the event. Below is an explanation:
-    - No matter the event the layout is always: `"selection_boxes": {(start row, start column, up to but not including end row, up to but not including end column): selection box type}`
+- Key **`["selection_boxes"]`** the value of this is all selection boxes on the sheet in the form of a `dict` as shown below:
+    - For every event except `"select"` events the selection boxes are those immediately prior to the modification, for `"select"` events they are the current selection boxes.
+    - The layout is always: `"selection_boxes": {(start row, start column, up to but not including row, up to but not including column): selection box type}`.
         - The row/column indexes are `int`s and the selection box type is a `str` either `"cells"`, `"rows"` or `"columns"`.
-    - The `dict` will be empty if there are no relevant selection boxes.
-    - `"select"` events have the box that was last selected.
-    - `"deselect"` events have all the boxes that were deselected.
-    - Cut, paste, delete events have the boxes that were cut, pasted into and deleted.
-    - For moving, adding and deleting rows/columns and also cell editing events such as with the inbuilt text editor the selection boxes are every existing box immediately prior to the event.
+    - The `dict` will be empty if there is nothing selected.
 - Key **`["selected"]`** the value of this when there is something selected on the sheet is a `namedtuple` which contains the values: `(row: int, column: int, type_: str (either "cell", "row" or "column"), tags: tuple)`
     - The `tags` in this `namedtuple` are the tags of the rectangle on the canvas. They are the following:
         - Index `[0]` - `"selected"`.
@@ -843,6 +840,11 @@ Keys:
         - Index `[3]` - `f"{current box row}_{current box column}"` - the displayed position of currently selected box.
         - Index `[4]` - `f"type_{type_}"` - the type of the box it's attached to (either "cells", "rows" or "columns").
     - When nothing is selected or the event is not relevant to the currently selected box, such as a resize event it will be an empty `tuple`.
+- Key **`["being_selected"]`** if any selection box is in the process of being drawn by holding down mouse button 1 and dragging then this will be a tuple with the following layout:
+    - `(start row, start column, up to but not including row, up to but not including column, selection box type)`.
+        - The selection box type is a `str` either `"cells"`, `"rows"` or `"columns"`.
+    - If no box is in the process of being created then this will be a an empty `tuple`.
+    - [See here](https://github.com/ragardner/tksheet/wiki/Version-6#example-displaying-selections) for an example of the usage of this information.
 - Key **`["data"]`** is primarily used for `paste` and it will contain the pasted data if any.
 - Key **`["key"]`** - `str` - is primarily used for cell edit events where a key press has occurred. For `"begin_edit..."` events the value is the actual key which was pressed (or `"??"` for using the mouse to open a cell). It also might be one of the following for end edit events:
     - `"Return"` - enter key.
@@ -859,13 +861,14 @@ Keys:
 
 ___
 
-#### **Sheet modified events**
+#### **tksheet tkinter events**
 
 ```python
 bind_event(event: str, func: Callable)
 ```
+- `tksheet` emits custom tkinter events, one for whenever the user has modified the sheet and another for whenever the sheet was refreshed.
 - **Note** that while an event emitted after a paste/undo/redo might have the event name `"edit_table"` it also might have added/deleted rows/columns, refer to the docs on the event data dict for more info.
-- `event` the two events emitted currently are:
+- `event` the two emitted events are:
     - `"<<SheetModified>>"` emitted whenever the sheet was modified by the end user by editing cells or adding or deleting rows/columns. The function you bind to this event must be able to receive a `dict` argument which will be the same as [the event data dict](https://github.com/ragardner/tksheet/wiki/Version-6#event-data) but with less specific event names. The possible event names are listed below:
         - `"edit_table"` when a user has cut, paste, delete or any cell edits including using dropdown boxes etc. in the table.
         - `"edit_index"` when a user has edited a index cell.
@@ -2697,58 +2700,48 @@ app.mainloop()
 ## **Example Displaying Selections**
 ----
 
-**This example applies to tksheet versions earlier than `6.2.0`.**
+**This example applies to tksheet versions >= `6.2.0`.**
 ```python
-from tksheet import Sheet
+from tksheet import Sheet, get_n2a
 import tkinter as tk
 
 
 class demo(tk.Tk):
     def __init__(self):
         tk.Tk.__init__(self)
-        self.grid_columnconfigure(0, weight = 1)
-        self.grid_rowconfigure(0, weight = 1)
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(0, weight=1)
         self.frame = tk.Frame(self)
-        self.frame.grid_columnconfigure(0, weight = 1)
-        self.frame.grid_rowconfigure(0, weight = 1)
-        self.sheet = Sheet(self.frame,
-                           data = [[f"Row {r}, Column {c}\nnewline1\nnewline2" for c in range(50)] for r in range(500)])
-        self.sheet.enable_bindings()
-        self.sheet.extra_bindings([("all_select_events", self.sheet_select_event)])
-        self.show_selections = tk.Label(self)
-        self.frame.grid(row = 0, column = 0, sticky = "nswe")
-        self.sheet.grid(row = 0, column = 0, sticky = "nswe")
-        self.show_selections.grid(row = 1, column = 0, sticky = "nswe")
+        self.frame.grid_columnconfigure(0, weight=1)
+        self.frame.grid_rowconfigure(0, weight=1)
+        self.sheet = Sheet(
+            self.frame,
+            data=[[f"Row {r}, Column {c}\nnewline1\nnewline2" for c in range(5)] for r in range(500)],
+        )
+        self.sheet.enable_bindings("all", "ctrl_select")
+        self.sheet.extra_bindings("select_events", self.sheet_select_event)
+        self.show_selections = tk.Label(self, text="0R x 0C", font=("Calibri", 12, "bold"))
+        self.frame.grid(row=0, column=0, sticky="nswe")
+        self.sheet.grid(row=0, column=0, sticky="nswe")
+        self.show_selections.grid(row=1, column=0, sticky="nswe")
 
-    def sheet_select_event(self, event = None):
-        try:
-            len(event)
-        except:
-            return
-        try:
-            if event[0] == "select_cell":
-                self.show_selections.config(text = f"Cells: ({event[1] + 1},{event[2] + 1}) : ({event[1] + 1},{event[2] + 1})")
-            elif "cells" in event[0]:
-                self.show_selections.config(text = f"Cells: ({event.selectionboxes[0] + 1},{event.selectionboxes[1] + 1}) : ({event.selectionboxes[2]},{event.selectionboxes[3]})")
-            elif event[0] == "select_column":
-                self.show_selections.config(text = f"Columns: {event[1] + 1} : {event[1] + 1}")
-            elif "columns" in event[0]:
-                self.show_selections.config(text = f"Columns: {event[1][0] + 1} : {event[1][-1] + 1}")
-            elif event[0] == "select_row":
-                self.show_selections.config(text = f"Rows: {event[1] + 1} : {event[1] + 1}")
-            elif "rows" in event[0]:
-                self.show_selections.config(text = f"Rows: {event[1][0] + 1} : {event[1][-1] + 1}")
-            else:
-                self.show_selections.config(text = "")
-        except:
-            self.show_selections.config(text = "")
+    def sheet_select_event(self, event=None):
+        print (event)
+        if event["being_selected"]:
+            nrows = event["being_selected"][2] - event["being_selected"][0]
+            ncols = event["being_selected"][3] - event["being_selected"][1]
+            self.show_selections.config(text=f"{nrows}R x {ncols}C")
+        elif event["selected"]:
+            self.show_selections.config(text=f"{get_n2a(event['selected'].column, 'letters')}{event['selected'].row + 1}")
+        else:
+            self.show_selections.config(text="0R x 0C")
 
 
 app = demo()
 app.mainloop()
 ```
 
-**This example applies to tksheet versions after `6.2.0`.**
+**This example applies to tksheet versions earlier than `6.2.0`.**
 ```python
 from tksheet import Sheet
 import tkinter as tk

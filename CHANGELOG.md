@@ -4,6 +4,7 @@
 
 #### Changed:
 - Overhaul and totally change event data sent to functions bound by `extra_bindings()`
+- Deselect events are now labelled as "select" events, see the docs on `"selection_boxes"` for more information
 - Overhaul internal selection box workings
 - Rename tksheet files
 - Pressing escape on text editors no longer generates an edit cell/header/index event

@@ -278,6 +278,7 @@ def event_dict(
     resized_columns: Union[None, dict] = None,
     #resized_index: Union[None, dict] = None,
     #resized_header: Union[None, dict] = None,
+    being_selected: Union[None, tuple] = None,
     **kwargs,
 ) -> dict:
     return {
@@ -309,6 +310,7 @@ def event_dict(
         },
         "selection_boxes": {} if boxes is None else {boxes[:-1]: boxes[-1]} if isinstance(boxes, tuple) else boxes,
         "selected": tuple() if selected is None else selected,
+        "being_selected": tuple() if being_selected is None else being_selected,
         "data": [] if data is None else data,
         "key": "" if key is None else key,
         "value": None if value is None else value,

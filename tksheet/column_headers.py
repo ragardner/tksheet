@@ -228,12 +228,7 @@ class ColumnHeaders(tk.Canvas):
                     self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
                     if self.ctrl_selection_binding_func is not None:
                         self.ctrl_selection_binding_func(
-                            event_dict(
-                                name="select",
-                                sheet=self.parentframe.name,
-                                selected=self.MT.currently_selected(),
-                                boxes=self.MT.get_box_from_item(self.being_drawn_item, get_dict=True),
-                            )
+                            self.MT.get_select_event(being_drawn_item=self.being_drawn_item),
                         )
                 elif c_selected:
                     self.MT.deselect(c=c)
@@ -259,12 +254,7 @@ class ColumnHeaders(tk.Canvas):
                     self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
                     if self.ctrl_selection_binding_func is not None:
                         self.ctrl_selection_binding_func(
-                            event_dict(
-                                name="select",
-                                sheet=self.parentframe.name,
-                                selected=self.MT.currently_selected(),
-                                boxes={box[:-1]: box[-1]},
-                            )
+                            self.MT.get_select_event(being_drawn_item=self.being_drawn_item),
                         )
                 elif c_selected:
                     self.dragged_col = DraggedRowColumn(
@@ -293,12 +283,7 @@ class ColumnHeaders(tk.Canvas):
                     self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
                     if self.shift_selection_binding_func is not None:
                         self.shift_selection_binding_func(
-                            event_dict(
-                                name="select",
-                                sheet=self.parentframe.name,
-                                selected=self.MT.currently_selected(),
-                                boxes={box[:-1]: box[-1]},
-                            )
+                            self.MT.get_select_event(being_drawn_item=self.being_drawn_item),
                         )
                 elif c_selected:
                     self.dragged_col = DraggedRowColumn(
@@ -550,12 +535,7 @@ class ColumnHeaders(tk.Canvas):
                         need_redraw = True
                         if self.drag_selection_binding_func is not None:
                             self.drag_selection_binding_func(
-                                event_dict(
-                                    name="select",
-                                    sheet=self.parentframe.name,
-                                    selected=self.MT.currently_selected(),
-                                    boxes={box[:-1]: box[-1]},
-                                )
+                                self.MT.get_select_event(being_drawn_item=self.being_drawn_item),
                             )
                 if self.scroll_if_event_offscreen(event):
                     need_redraw = True
@@ -617,12 +597,7 @@ class ColumnHeaders(tk.Canvas):
                         need_redraw = True
                         if self.drag_selection_binding_func is not None:
                             self.drag_selection_binding_func(
-                                event_dict(
-                                    name="select",
-                                    sheet=self.parentframe.name,
-                                    selected=self.MT.currently_selected(),
-                                    boxes={box[:-1]: box[-1]},
-                                )
+                                self.MT.get_select_event(being_drawn_item=self.being_drawn_item),
                             )
                 if self.scroll_if_event_offscreen(event):
                     need_redraw = True
@@ -739,6 +714,10 @@ class ColumnHeaders(tk.Canvas):
             self.MT.delete_item(self.being_drawn_item)
             self.being_drawn_item = None
             self.MT.create_selection_box(*to_sel, set_current=currently_selected)
+            if self.drag_selection_binding_func is not None:
+                self.drag_selection_binding_func(
+                    self.MT.get_select_event(being_drawn_item=self.being_drawn_item),
+                )
         self.MT.bind("<MouseWheel>", self.MT.mousewheel)
         if self.width_resizing_enabled and self.rsz_w is not None and self.currently_resizing_width:
             self.currently_resizing_width = False
@@ -874,12 +853,7 @@ class ColumnHeaders(tk.Canvas):
             self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
         if self.selection_binding_func is not None and run_binding_func:
             self.selection_binding_func(
-                event_dict(
-                    name="select",
-                    sheet=self.parentframe.name,
-                    selected=self.MT.currently_selected(),
-                    boxes={box[:-1]: box[-1]},
-                )
+                self.MT.get_select_event(being_drawn_item=self.being_drawn_item),
             )
         return fill_iid
 
@@ -890,12 +864,7 @@ class ColumnHeaders(tk.Canvas):
             self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
         if self.selection_binding_func is not None and run_binding_func:
             self.selection_binding_func(
-                event_dict(
-                    name="select",
-                    sheet=self.parentframe.name,
-                    selected=self.MT.currently_selected(),
-                    boxes={box[:-1]: box[-1]},
-                )
+                self.MT.get_select_event(being_drawn_item=self.being_drawn_item),
             )
         return fill_iid
 

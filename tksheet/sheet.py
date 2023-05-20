@@ -84,7 +84,7 @@ class Sheet(tk.Frame):
         after_redraw_time_ms: int = 20,
         row_index_width: int = None,
         auto_resize_default_row_index: bool = True,
-        auto_resize_columns: Union[int, None] = 120,
+        auto_resize_columns: Union[int, None] = None,
         auto_resize_rows: Union[int, None] = None,
         set_all_heights_and_widths: bool = False,
         row_height: str = "1",  # str or int
