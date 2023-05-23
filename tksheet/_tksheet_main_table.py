@@ -36,6 +36,7 @@ from ._tksheet_other_classes import (
     UndoEvent,
     get_checkbox_dict,
     get_dropdown_dict,
+    get_seq_without_gaps_at_index,
     is_iterable,
 )
 from ._tksheet_vars import (
@@ -4090,8 +4091,18 @@ class MainTable(tk.Canvas):
 
     def del_cols_rc(self, event=None):
         seld_cols = sorted(self.get_selected_cols())
-        if not seld_cols:
+        curr = self.currently_selected()
+        if not seld_cols or not curr:
             return
+        seld_cols = get_seq_without_gaps_at_index(seld_cols, curr.column)
+        self.deselect("all")
+        self.create_selected(
+                        0,
+                        seld_cols[0],
+                        len(self.row_positions) - 1,
+                        seld_cols[-1] + 1,
+                        "columns",
+                    )
         seldmax = seld_cols[-1] if self.all_columns_displayed else self.displayed_columns[seld_cols[-1]]
         if self.extra_begin_del_cols_rc_func is not None:
             try:
@@ -4140,7 +4151,6 @@ class MainTable(tk.Canvas):
         for c in reversed(seld_cols):
             self.del_col_position(c, deselect_all=False)
         numcols = len(seld_cols)
-
         self.cell_options = {
             (rn, cn if cn < seldmax else cn - numcols): t2
             for (rn, cn), t2 in self.cell_options.items()
@@ -4165,8 +4175,18 @@ class MainTable(tk.Canvas):
 
     def del_rows_rc(self, event=None):
         seld_rows = sorted(self.get_selected_rows())
-        if not seld_rows:
+        curr = self.currently_selected()
+        if not seld_rows or not curr:
             return
+        seld_rows = get_seq_without_gaps_at_index(seld_rows, curr.row)
+        self.deselect("all")
+        self.create_selected(
+                        seld_rows[0],
+                        0,
+                        seld_rows[-1] + 1,
+                        len(self.col_positions) - 1,
+                        "rows",
+                    )
         seldmax = seld_rows[-1] if self.all_rows_displayed else self.displayed_rows[seld_rows[-1]]
         if self.extra_begin_del_rows_rc_func is not None:
             try:
@@ -4208,7 +4228,6 @@ class MainTable(tk.Canvas):
         for r in reversed(seld_rows):
             self.del_row_position(r, deselect_all=False)
         numrows = len(seld_rows)
-
         self.cell_options = {
             (rn if rn < seldmax else rn - numrows, cn): t2
             for (rn, cn), t2 in self.cell_options.items()

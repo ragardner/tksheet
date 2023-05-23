@@ -1,3 +1,7 @@
+### Version 6.1.6
+#### Fixed:
+- [#183](https://github.com/ragardner/tksheet/issues/183)
+
 ### Version 6.1.5
 #### Fixed:
 - `extra_bindings()` not binding functions
