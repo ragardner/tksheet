@@ -374,6 +374,7 @@ class RowIndex(tk.Canvas):
             row = self.rsz_h - 1
             old_height = self.MT.row_positions[self.rsz_h] - self.MT.row_positions[self.rsz_h - 1]
             new_height = self.set_row_height(row)
+            self.MT.allow_auto_resize_rows = False
             self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
             if self.row_height_resize_func is not None and old_height != new_height:
                 self.row_height_resize_func(ResizeEvent("row_height_resize", row, old_height, new_height))
@@ -783,6 +784,7 @@ class RowIndex(tk.Canvas):
                 e + increment for e in islice(self.MT.row_positions, self.rsz_h + 1, len(self.MT.row_positions))
             ]
             self.MT.row_positions[self.rsz_h] = new_row_pos
+            self.MT.allow_auto_resize_rows = False
             new_height = self.MT.row_positions[self.rsz_h] - self.MT.row_positions[self.rsz_h - 1]
             self.MT.recreate_all_selection_boxes()
             self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)

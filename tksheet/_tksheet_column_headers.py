@@ -428,6 +428,7 @@ class ColumnHeaders(tk.Canvas):
             col = self.rsz_w - 1
             old_width = self.MT.col_positions[self.rsz_w] - self.MT.col_positions[self.rsz_w - 1]
             new_width = self.set_col_width(col)
+            self.MT.allow_auto_resize_columns = False
             self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
             if self.column_width_resize_func is not None and old_width != new_width:
                 self.column_width_resize_func(ResizeEvent("column_width_resize", col, old_width, new_width))
@@ -829,6 +830,7 @@ class ColumnHeaders(tk.Canvas):
             ]
             self.MT.col_positions[self.rsz_w] = new_col_pos
             new_width = self.MT.col_positions[self.rsz_w] - self.MT.col_positions[self.rsz_w - 1]
+            self.MT.allow_auto_resize_columns = False
             self.MT.recreate_all_selection_boxes()
             self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
             if self.column_width_resize_func is not None and old_width != new_width:

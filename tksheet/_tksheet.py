@@ -86,6 +86,8 @@ class Sheet(tk.Frame):
         after_redraw_time_ms: int = 20,
         row_index_width: int = None,
         auto_resize_default_row_index: bool = True,
+        auto_resize_columns: Union[int, None] = None,
+        auto_resize_rows: Union[int, None] = None,
         set_all_heights_and_widths: bool = False,
         row_height: str = "1",  # str or int
         font: tuple = get_font(),
@@ -248,6 +250,8 @@ class Sheet(tk.Frame):
             headers=headers,
             header=header,
             data_reference=data if data_reference is None else data_reference,
+            auto_resize_columns=auto_resize_columns,
+            auto_resize_rows=auto_resize_rows,
             total_cols=total_columns,
             total_rows=total_rows,
             row_index=row_index,
@@ -2227,6 +2231,10 @@ class Sheet(tk.Frame):
         return self.MT.set_header_font(newfont)
 
     def set_options(self, redraw=True, **kwargs):
+        if "auto_resize_columns" in kwargs:
+            self.MT.auto_resize_columns = kwargs["auto_resize_columns"]
+        if "auto_resize_rows" in kwargs:
+            self.MT.auto_resize_rows = kwargs["auto_resize_rows"]
         if "to_clipboard_delimiter" in kwargs:
             self.MT.to_clipboard_delimiter = kwargs["to_clipboard_delimiter"]
         if "to_clipboard_quotechar" in kwargs:

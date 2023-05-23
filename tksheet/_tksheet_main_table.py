@@ -58,6 +58,8 @@ class MainTable(tk.Canvas):
             highlightthickness=0,
         )
         self.parentframe = kwargs["parentframe"]
+        self.parentframe_width = 0
+        self.parentframe_height = 0
         self.b1_pressed_loc = None
         self.existing_dropdown_canvas_id = None
         self.existing_dropdown_window = None
@@ -123,6 +125,10 @@ class MainTable(tk.Canvas):
         self.paste_insert_row_limit = kwargs["paste_insert_row_limit"]
         self.arrow_key_down_right_scroll_page = kwargs["arrow_key_down_right_scroll_page"]
         self.cell_auto_resize_enabled = kwargs["enable_edit_cell_auto_resize"]
+        self.auto_resize_columns = kwargs["auto_resize_columns"]
+        self.auto_resize_rows = kwargs["auto_resize_rows"]
+        self.allow_auto_resize_columns = True
+        self.allow_auto_resize_rows = True
         self.edit_cell_validation = kwargs["edit_cell_validation"]
         self.display_selected_fg_over_highlights = kwargs["display_selected_fg_over_highlights"]
         self.show_index = kwargs["show_index"]
@@ -330,12 +336,23 @@ class MainTable(tk.Canvas):
         self.basic_bindings()
         self.create_rc_menus()
 
-    def refresh(self, event=None):
+    def refresh(self, event=None) -> None:
+        self.main_table_redraw_grid_and_text(True, True)
+
+    def window_configured(self, event) -> None:
+        w = self.parentframe.winfo_width()
+        if w != self.parentframe_width:
+            self.parentframe_width = w
+            self.allow_auto_resize_columns = True
+        h = self.parentframe.winfo_height()
+        if h != self.parentframe_height:
+            self.parentframe_height = h
+            self.allow_auto_resize_rows = True
         self.main_table_redraw_grid_and_text(True, True)
 
     def basic_bindings(self, enable=True):
         if enable:
-            self.bind("<Configure>", self.refresh)
+            self.bind("<Configure>", self.window_configured)
             self.bind("<Motion>", self.mouse_motion)
             self.bind("<ButtonPress-1>", self.b1_press)
             self.bind("<B1-Motion>", self.b1_motion)
@@ -4768,22 +4785,62 @@ class MainTable(tk.Canvas):
                 t = self.create_polygon(points, fill=fill, outline=outline, tag=tag, smooth=True)
             self.disp_checkbox[t] = True
 
-    def main_table_redraw_grid_and_text(self, redraw_header=False, redraw_row_index=False, redraw_table=True):
-        last_col_line_pos = self.col_positions[-1] + 1
-        last_row_line_pos = self.row_positions[-1] + 1
+    def main_table_redraw_grid_and_text(self, redraw_header=False, redraw_row_index=False, redraw_table=True,):
         try:
             can_width = self.winfo_width()
             can_height = self.winfo_height()
-            self.configure(
-                scrollregion=(
-                    0,
-                    0,
-                    last_col_line_pos + self.empty_horizontal,
-                    last_row_line_pos + self.empty_vertical,
-                )
-            )
         except Exception:
-            return
+            return False
+        row_pos_exists = self.row_positions != [0] and self.row_positions
+        col_pos_exists = self.col_positions != [0] and self.col_positions
+        resized_cols = False
+        resized_rows = False
+        if self.auto_resize_columns and self.allow_auto_resize_columns and col_pos_exists:
+            max_w = int(can_width)
+            max_w -= self.empty_horizontal
+            if (len(self.col_positions) - 1) * self.auto_resize_columns < max_w:
+                resized_cols = True
+                change = int((max_w - self.col_positions[-1]) / (len(self.col_positions) - 1))
+                widths = [
+                    int(b - a) + change - 1
+                    for a, b in zip(self.col_positions, islice(self.col_positions, 1, len(self.col_positions)))
+                ]
+                diffs = {}
+                for i, w in enumerate(widths):
+                    if w < self.auto_resize_columns:
+                        diffs[i] = self.auto_resize_columns - w
+                        widths[i] = self.auto_resize_columns
+                if diffs and len(diffs) < len(widths):
+                    change = sum(diffs.values()) / (len(widths) - len(diffs))
+                    for i, w in enumerate(widths):
+                        if i not in diffs:
+                            widths[i] -= change
+                self.col_positions = list(accumulate(chain([0], widths)))
+        if self.auto_resize_rows and self.allow_auto_resize_rows and row_pos_exists:
+            max_h = int(can_height)
+            max_h -= self.empty_vertical
+            if (len(self.row_positions) - 1) * self.auto_resize_rows < max_h:
+                resized_rows = True
+                change = int((max_h - self.row_positions[-1]) / (len(self.row_positions) - 1))
+                heights = [
+                    int(b - a) + change - 1
+                    for a, b in zip(self.row_positions, islice(self.row_positions, 1, len(self.row_positions)))
+                ]
+                diffs = {}
+                for i, h in enumerate(heights):
+                    if h < self.auto_resize_rows:
+                        diffs[i] = self.auto_resize_rows - h
+                        heights[i] = self.auto_resize_rows
+                if diffs and len(diffs) < len(heights):
+                    change = sum(diffs.values()) / (len(heights) - len(diffs))
+                    for i, h in enumerate(heights):
+                        if i not in diffs:
+                            heights[i] -= change
+                self.row_positions = list(accumulate(chain([0], heights)))
+        if resized_cols or resized_rows:
+            self.recreate_all_selection_boxes()
+        last_col_line_pos = self.col_positions[-1] + 1
+        last_row_line_pos = self.row_positions[-1] + 1
         if can_width >= last_col_line_pos + self.empty_horizontal and self.parentframe.xscroll_showing:
             self.parentframe.xscroll.grid_forget()
             self.parentframe.xscroll_showing = False
@@ -4791,7 +4848,7 @@ class MainTable(tk.Canvas):
             can_width < last_col_line_pos + self.empty_horizontal
             and not self.parentframe.xscroll_showing
             and not self.parentframe.xscroll_disabled
-            and can_height > 45
+            and can_height > 40
         ):
             self.parentframe.xscroll.grid(row=2, column=0, columnspan=2, sticky="nswe")
             self.parentframe.xscroll_showing = True
@@ -4802,20 +4859,31 @@ class MainTable(tk.Canvas):
             can_height < last_row_line_pos + self.empty_vertical
             and not self.parentframe.yscroll_showing
             and not self.parentframe.yscroll_disabled
-            and can_width > 45
+            and can_width > 40
         ):
             self.parentframe.yscroll.grid(row=0, column=2, rowspan=3, sticky="nswe")
             self.parentframe.yscroll_showing = True
+        self.configure(
+            scrollregion=(
+                0,
+                0,
+                last_col_line_pos + self.empty_horizontal + 2,
+                last_row_line_pos + self.empty_vertical + 2,
+            )
+        )
         scrollpos_bot = self.canvasy(can_height)
         end_row = bisect.bisect_right(self.row_positions, scrollpos_bot)
         if not scrollpos_bot >= self.row_positions[-1]:
             end_row += 1
         if redraw_row_index and self.show_index:
             self.RI.auto_set_index_width(end_row - 1)
+            # return
         scrollpos_left = self.canvasx(0)
         scrollpos_top = self.canvasy(0)
         scrollpos_right = self.canvasx(can_width)
         start_row = bisect.bisect_left(self.row_positions, scrollpos_top)
+        start_col = bisect.bisect_left(self.col_positions, scrollpos_left)
+        end_col = bisect.bisect_right(self.col_positions, scrollpos_right)
         self.row_width_resize_bbox = (
             scrollpos_left,
             scrollpos_top,
@@ -4846,8 +4914,7 @@ class MainTable(tk.Canvas):
         self.disp_dropdown = {}
         self.hidd_checkbox.update(self.disp_checkbox)
         self.disp_checkbox = {}
-        start_col = bisect.bisect_left(self.col_positions, scrollpos_left)
-        end_col = bisect.bisect_right(self.col_positions, scrollpos_right)
+
         if not scrollpos_right >= self.col_positions[-1]:
             end_col += 1
         if last_col_line_pos > scrollpos_right:
@@ -4858,8 +4925,6 @@ class MainTable(tk.Canvas):
             y_stop = scrollpos_bot
         else:
             y_stop = last_row_line_pos
-        row_pos_exists = self.row_positions != [0] and self.row_positions
-        col_pos_exists = self.col_positions != [0] and self.col_positions
         if self.show_horizontal_grid and row_pos_exists:
             self.grid_cyc = cycle(self.grid_cyctup)
             points = []

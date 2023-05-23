@@ -149,6 +149,8 @@ index: list = None,
 after_redraw_time_ms: int = 100,
 row_index_width: int = 100,
 auto_resize_default_row_index: bool = True,
+auto_resize_columns: Union[int, None] = None,
+auto_resize_rows: Union[int, None] = None,
 set_all_heights_and_widths: bool = False,
 row_height: str = "1", #str or int
 font: tuple = get_font(),
@@ -216,6 +218,8 @@ top_left_bg                        = theme_light_blue['top_left_bg'],
 top_left_fg                        = theme_light_blue['top_left_fg'],
 top_left_fg_highlight              = theme_light_blue['top_left_fg_highlight'])
 ```
+- `auto_resize_columns` (`int`, `None`) if set as an `int` the columns will automatically resize to fit the width of the window, the `int` value being the minimum of each column in pixels.
+- `auto_resize_rows` (`int`, `None`) if set as an `int` the rows will automatically resize to fit the height of the window, the `int` value being the minimum height of each row in pixels.
 - `startup_select` selects cells, rows or columns at initialization by using a `tuple` e.g. `(0, 0, "cells")` for cell A0 or `(0, 5, "rows")` for rows 0 to 5.
 - `data_reference` and `data` are essentially the same.
 - `row_index` and `index` are the same, `index` takes priority, same as with `headers` and `header`.
@@ -928,6 +932,24 @@ get_column_alignments()
 
 ## **Row Heights and Column Widths**
 ----
+
+#### **Auto resize column widths to fit the window.**
+
+```python
+set_options(auto_resize_columns)
+```
+- `auto_resize_columns` (`int`, `None`) if set as an `int` the columns will automatically resize to fit the width of the window, the `int` value being the minimum of each column in pixels.
+
+___
+
+#### **Auto resize row heights to fit the window.**
+
+```python
+set_options(auto_resize_rows)
+```
+- `auto_resize_rows` (`int`, `None`) if set as an `int` the rows will automatically resize to fit the height of the window, the `int` value being the minimum height of each row in pixels.
+
+___
 
 #### **Set default column width in pixels.**
 ```python
@@ -2237,6 +2259,8 @@ For those wanting even more customisation of their formatters you also have the 
 
 The list of key word arguments available for `set_options()` are as follows, [see here](https://github.com/ragardner/tksheet/wiki/Version-6#initialization-options) as a guide for what arguments to use.
 ```python
+auto_resize_columns
+auto_resize_rows
 to_clipboard_delimiter
 to_clipboard_quotechar
 to_clipboard_lineterminator
