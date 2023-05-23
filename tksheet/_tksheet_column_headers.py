@@ -47,6 +47,7 @@ class ColumnHeaders(tk.Canvas):
         self.MT = None  # is set from within MainTable() __init__
         self.RI = None  # is set from within MainTable() __init__
         self.TL = None  # is set from within TopLeftRectangle() __init__
+        self.popup_menu_loc = None
         self.extra_begin_edit_cell_func = None
         self.extra_end_edit_cell_func = None
         self.text_editor = None
@@ -239,6 +240,7 @@ class ColumnHeaders(tk.Canvas):
         if self.extra_rc_func is not None:
             self.extra_rc_func(event)
         if popup_menu is not None:
+            self.popup_menu_loc = c
             popup_menu.tk_popup(event.x_root, event.y_root)
 
     def ctrl_b1_press(self, event=None):

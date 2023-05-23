@@ -4089,13 +4089,17 @@ class MainTable(tk.Canvas):
             self.extra_end_insert_rows_rc_func(InsertEvent("end_insert_rows", data_ins_row, displayed_ins_row, numrows))
         self.parentframe.emit_event("<<SheetModified>>")
 
-    def del_cols_rc(self, event=None):
+    def del_cols_rc(self, event=None, c=None):
         seld_cols = sorted(self.get_selected_cols())
         curr = self.currently_selected()
         if not seld_cols or not curr:
             return
-        seld_cols = get_seq_without_gaps_at_index(seld_cols, curr.column)
-        self.deselect("all")
+        if self.CH.popup_menu_loc is None or self.CH.popup_menu_loc < seld_cols[0] or self.CH.popup_menu_loc > seld_cols[-1]:
+            c = seld_cols[0]
+        else:
+            c = self.CH.popup_menu_loc
+        seld_cols = get_seq_without_gaps_at_index(seld_cols, c)
+        self.deselect("all", redraw=False)
         self.create_selected(
                         0,
                         seld_cols[0],
@@ -4103,6 +4107,7 @@ class MainTable(tk.Canvas):
                         seld_cols[-1] + 1,
                         "columns",
                     )
+        self.set_currently_selected(0, seld_cols[0], type_="column")
         seldmax = seld_cols[-1] if self.all_columns_displayed else self.displayed_columns[seld_cols[-1]]
         if self.extra_begin_del_cols_rc_func is not None:
             try:
@@ -4162,8 +4167,7 @@ class MainTable(tk.Canvas):
         self.CH.cell_options = {
             cn if cn < seldmax else cn - numcols: t for cn, t in self.CH.cell_options.items() if cn not in seldset
         }
-        self.deselect("allcols", redraw=False)
-        self.set_current_to_last()
+        self.deselect("all", redraw=False)
         if not self.all_columns_displayed:
             self.displayed_columns = [c for c in self.displayed_columns if c not in seldset]
             for c in sorted(seldset):
@@ -4173,13 +4177,17 @@ class MainTable(tk.Canvas):
             self.extra_end_del_cols_rc_func(DeleteRowColumnEvent("end_delete_columns", seld_cols))
         self.parentframe.emit_event("<<SheetModified>>")
 
-    def del_rows_rc(self, event=None):
+    def del_rows_rc(self, event=None, r=None):
         seld_rows = sorted(self.get_selected_rows())
         curr = self.currently_selected()
         if not seld_rows or not curr:
             return
-        seld_rows = get_seq_without_gaps_at_index(seld_rows, curr.row)
-        self.deselect("all")
+        if self.RI.popup_menu_loc is None or self.RI.popup_menu_loc < seld_rows[0] or self.RI.popup_menu_loc > seld_rows[-1]:
+            r = seld_rows[0]
+        else:
+            r = self.RI.popup_menu_loc
+        seld_rows = get_seq_without_gaps_at_index(seld_rows, r)
+        self.deselect("all", redraw=False)
         self.create_selected(
                         seld_rows[0],
                         0,
@@ -4187,6 +4195,7 @@ class MainTable(tk.Canvas):
                         len(self.col_positions) - 1,
                         "rows",
                     )
+        self.set_currently_selected(seld_rows[0], 0, type_="row")
         seldmax = seld_rows[-1] if self.all_rows_displayed else self.displayed_rows[seld_rows[-1]]
         if self.extra_begin_del_rows_rc_func is not None:
             try:
@@ -4239,8 +4248,11 @@ class MainTable(tk.Canvas):
         self.RI.cell_options = {
             rn if rn < seldmax else rn - numrows: t for rn, t in self.RI.cell_options.items() if rn not in seldset
         }
-        self.deselect("allrows", redraw=False)
-        self.set_current_to_last()
+        self.deselect("all", redraw=False)
+        if not self.all_rows_displayed:
+            self.displayed_rows = [r for r in self.displayed_rows if r not in seldset]
+            for r in sorted(seldset):
+                self.displayed_rows = [dr if r > dr else dr - 1 for dr in self.displayed_rows]
         self.refresh()
         if self.extra_end_del_rows_rc_func is not None:
             self.extra_end_del_rows_rc_func(DeleteRowColumnEvent("end_delete_rows", seld_rows))
