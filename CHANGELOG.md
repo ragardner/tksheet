@@ -1,4 +1,4 @@
-### Version 6.1.7
+### Version 6.1.8
 #### Added:
 - [#180](https://github.com/ragardner/tksheet/issues/180)
 
