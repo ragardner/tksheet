@@ -1,3 +1,7 @@
+### Version 6.1.9
+#### Fixed:
+- Issues that follow selection boxes being recreated such as resizing columns/rows
+
 ### Version 6.1.8
 #### Added:
 - [#180](https://github.com/ragardner/tksheet/issues/180)

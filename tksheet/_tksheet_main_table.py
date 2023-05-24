@@ -1814,7 +1814,7 @@ class MainTable(tk.Canvas):
                 self.delete_current()
             deselected = ("deselect_all_cols", deleted_boxes)
         elif r is not None and c is None and cell is None:
-            current = self.find_withtag("currently")
+            current = self.find_withtag("selected")
             current_tags = self.gettags(current[0]) if current else tuple()
             if current:
                 curr_r1, curr_c1, curr_r2, curr_c2 = tuple(int(e) for e in current_tags[1].split("_") if e)
@@ -1836,7 +1836,7 @@ class MainTable(tk.Canvas):
                 self.set_current_to_last()
             deselected = ("deselect_row", deleted_boxes)
         elif c is not None and r is None and cell is None:
-            current = self.find_withtag("currently")
+            current = self.find_withtag("selected")
             current_tags = self.gettags(current[0]) if current else tuple()
             if current:
                 curr_r1, curr_c1, curr_r2, curr_c2 = tuple(int(e) for e in current_tags[1].split("_") if e)
@@ -1865,7 +1865,7 @@ class MainTable(tk.Canvas):
                 self.find_withtag("cells"),
                 self.find_withtag("rows"),
                 self.find_withtag("columns"),
-                self.find_withtag("currently"),
+                self.find_withtag("selected"),
             ):
                 alltags = self.gettags(item)
                 if alltags:
@@ -3054,7 +3054,7 @@ class MainTable(tk.Canvas):
                 else:
                     self.select_cell(rowsel, colsel, redraw=False)
                     last_selected = tuple(
-                        int(e) for e in self.gettags(self.find_withtag("currently"))[1].split("_") if e
+                        int(e) for e in self.gettags(self.find_withtag("selected"))[1].split("_") if e
                     )
                 self.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True, redraw_table=True)
                 if self.shift_selection_binding_func is not None:
@@ -5346,7 +5346,7 @@ class MainTable(tk.Canvas):
                     self.hidd_checkbox[t] = False
             if self.show_selected_cells_border:
                 self.tag_raise("cellsbd")
-                self.tag_raise("currently")
+                self.tag_raise("selected")
                 self.tag_raise("rowsbd")
                 self.tag_raise("columnsbd")
         if redraw_header and self.show_header:
@@ -5377,7 +5377,7 @@ class MainTable(tk.Canvas):
             self.find_withtag("cells")
             + self.find_withtag("rows")
             + self.find_withtag("columns")
-            + self.find_withtag("currently")
+            + self.find_withtag("selected")
         )
 
     def get_boxes(self, include_current=True):
@@ -5390,7 +5390,7 @@ class MainTable(tk.Canvas):
                 boxes[tuple(int(e) for e in alltags[1].split("_") if e)] = "rows"
             elif alltags[0] == "columns":
                 boxes[tuple(int(e) for e in alltags[1].split("_") if e)] = "columns"
-            elif include_current and alltags[0] == "currently":
+            elif include_current and alltags[0] == "selected":
                 boxes[tuple(int(e) for e in alltags[1].split("_") if e)] = f"{alltags[2]}"
         return boxes
 
@@ -5467,13 +5467,13 @@ class MainTable(tk.Canvas):
             self.RI.delete("columns", "columnsbd")
             self.CH.delete("columns", "columnsbd")
         if delete_current:
-            self.delete("currently")
-            self.RI.delete("currently")
-            self.CH.delete("currently")
+            self.delete("selected")
+            self.RI.delete("selected")
+            self.CH.delete("selected")
         return deleted_boxes
 
     def currently_selected(self):
-        items = self.find_withtag("currently")
+        items = self.find_withtag("selected")
         if not items:
             return tuple()
         alltags = self.gettags(items[0])
@@ -5481,7 +5481,7 @@ class MainTable(tk.Canvas):
         return CurrentlySelectedClass(box[0], box[1], alltags[2])
 
     def get_tags_of_current(self):
-        items = self.find_withtag("currently")
+        items = self.find_withtag("selected")
         if items:
             return self.gettags(items[0])
         else:
@@ -5489,16 +5489,16 @@ class MainTable(tk.Canvas):
 
     def set_currently_selected(self, r, c, type_="cell"):  # cell, column or row
         r1, c1, r2, c2 = r, c, r + 1, c + 1
-        self.delete("currently")
-        self.RI.delete("currently")
-        self.CH.delete("currently")
+        self.delete("selected")
+        self.RI.delete("selected")
+        self.CH.delete("selected")
         if self.col_positions == [0]:
             c1 = 0
             c2 = 0
         if self.row_positions == [0]:
             r1 = 0
             r2 = 0
-        tagr = ("currently", f"{r1}_{c1}_{r2}_{c2}", type_)
+        tagr = ("selected", f"{r1}_{c1}_{r2}_{c2}", type_)
         tag_index_header = ("cells", f"{r1}_{c1}_{r2}_{c2}")
         if type_ == "cell":
             outline = self.table_selected_cells_border_fg
@@ -5566,9 +5566,9 @@ class MainTable(tk.Canvas):
         return tuple()
 
     def delete_current(self):
-        self.delete("currently")
-        self.RI.delete("currently")
-        self.CH.delete("currently")
+        self.delete("selected")
+        self.RI.delete("selected")
+        self.CH.delete("selected")
 
     def create_selected(
         self,
@@ -5655,15 +5655,16 @@ class MainTable(tk.Canvas):
         return r, b
 
     def recreate_all_selection_boxes(self):
+        curr = self.currently_selected()
         for item in chain(
             self.find_withtag("cells"),
             self.find_withtag("rows"),
             self.find_withtag("columns"),
-            self.find_withtag("currently"),
         ):
             tags = self.gettags(item)
             if tags:
                 r1, c1, r2, c2 = tuple(int(e) for e in tags[1].split("_") if e)
+                state = self.itemcget(item, "state")
                 self.delete(f"{r1}_{c1}_{r2}_{c2}")
                 self.RI.delete(f"{r1}_{c1}_{r2}_{c2}")
                 self.CH.delete(f"{r1}_{c1}_{r2}_{c2}")
@@ -5673,10 +5674,9 @@ class MainTable(tk.Canvas):
                     r2 = len(self.row_positions) - 1
                 if c2 > len(self.col_positions) - 1:
                     c2 = len(self.col_positions) - 1
-                if tags[0] == "currently":
-                    self.set_currently_selected(r1, c1, tags[2])
-                else:
-                    self.create_selected(r1, c1, r2, c2, tags[0])
+                self.create_selected(r1, c1, r2, c2, tags[0], state=state)
+        if curr:
+            self.set_currently_selected(curr.row, curr.column, curr.type_)
         self.tag_lower("rows")
         self.RI.tag_lower("rows")
         self.tag_lower("columns")
@@ -5685,7 +5685,7 @@ class MainTable(tk.Canvas):
         self.RI.tag_lower("cells")
         self.CH.tag_lower("cells")
         if not self.show_selected_cells_border:
-            self.tag_lower("currently")
+            self.tag_lower("selected")
 
     def get_redraw_selections(self, startr, endr, startc, endc):
         d = defaultdict(list)
@@ -5720,7 +5720,7 @@ class MainTable(tk.Canvas):
             self.find_withtag("cells"),
             self.find_withtag("rows"),
             self.find_withtag("columns"),
-            self.find_withtag("currently"),
+            self.find_withtag("selected"),
         ):
             r1, c1, r2, c2 = tuple(int(e) for e in self.gettags(item)[1].split("_") if e)
             if r1 < min_y:
@@ -5963,7 +5963,7 @@ class MainTable(tk.Canvas):
                 return True
         return False
 
-    # don't have to use "currently" because you can't have a current without a selection box
+    # don't have to use "selected" because you can't have a current without a selection box
     def cell_selected(self, r, c, inc_cols=False, inc_rows=False):
         if not isinstance(r, int) or not isinstance(c, int):
             return False
@@ -6024,11 +6024,11 @@ class MainTable(tk.Canvas):
         return tuple()
 
     def hide_current(self):
-        for item in self.find_withtag("currently"):
+        for item in self.find_withtag("selected"):
             self.itemconfig(item, state="hidden")
 
     def show_current(self):
-        for item in self.find_withtag("currently"):
+        for item in self.find_withtag("selected"):
             self.itemconfig(item, state="normal")
 
     def open_cell(self, event=None, ignore_existing_editor=False):
