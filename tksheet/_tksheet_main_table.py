@@ -3628,6 +3628,8 @@ class MainTable(tk.Canvas):
                 self.RI.row_height_resize_func(ResizeEvent("row_height_resize", r, old_height, new_height))
         if cell_needs_resize_w or cell_needs_resize_h:
             self.recreate_all_selection_boxes()
+            self.allow_auto_resize_columns = not cell_needs_resize_w
+            self.allow_auto_resize_rows = not cell_needs_resize_h
             if redraw:
                 self.refresh()
                 return True
@@ -5499,7 +5501,7 @@ class MainTable(tk.Canvas):
             r1 = 0
             r2 = 0
         tagr = ("selected", f"{r1}_{c1}_{r2}_{c2}", type_)
-        tag_index_header = ("cells", f"{r1}_{c1}_{r2}_{c2}")
+        tag_index_header = ("cells", f"{r1}_{c1}_{r2}_{c2}", "selected")
         if type_ == "cell":
             outline = self.table_selected_cells_border_fg
         elif type_ == "row":
@@ -5581,21 +5583,22 @@ class MainTable(tk.Canvas):
         state="normal",
     ):
         self.itemconfig("cells", state="normal")
+        coords = f"{r1}_{c1}_{r2}_{c2}"
         if type_ == "cells":
-            tagr = ("cells", f"{r1}_{c1}_{r2}_{c2}")
-            tagb = ("cellsbd", f"{r1}_{c1}_{r2}_{c2}")
+            tagr = ("cells", coords)
+            tagb = ("cellsbd", coords)
             mt_bg = self.table_selected_cells_bg
             mt_border_col = self.table_selected_cells_border_fg
         elif type_ == "rows":
-            tagr = ("rows", f"{r1}_{c1}_{r2}_{c2}")
-            tagb = ("rowsbd", f"{r1}_{c1}_{r2}_{c2}")
-            tag_index_header = ("cells", f"{r1}_{c1}_{r2}_{c2}")
+            tagr = ("rows", coords)
+            tagb = ("rowsbd", coords)
+            tag_index_header = ("cells", coords)
             mt_bg = self.table_selected_rows_bg
             mt_border_col = self.table_selected_rows_border_fg
         elif type_ == "columns":
-            tagr = ("columns", f"{r1}_{c1}_{r2}_{c2}")
-            tagb = ("columnsbd", f"{r1}_{c1}_{r2}_{c2}")
-            tag_index_header = ("cells", f"{r1}_{c1}_{r2}_{c2}")
+            tagr = ("columns", coords)
+            tagb = ("columnsbd", coords)
+            tag_index_header = ("cells", coords)
             mt_bg = self.table_selected_columns_bg
             mt_border_col = self.table_selected_columns_border_fg
         self.last_selected = (r1, c1, r2, c2, type_)
