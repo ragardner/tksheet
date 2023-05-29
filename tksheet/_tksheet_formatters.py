@@ -1,4 +1,4 @@
-from typing import Any, Union
+from typing import Any, Union, Dict
 
 from ._tksheet_vars import (
     falsy,
@@ -64,11 +64,11 @@ def is_bool_like(v: Any, **kwargs):
         return False
 
 
-def to_str(v: Any, **kwargs: dict) -> str:
+def to_str(v: Any, **kwargs: Dict) -> str:
     return f"{v}"
 
 
-def float_to_str(v: Union[int, float], **kwargs: dict) -> str:
+def float_to_str(v: Union[int, float], **kwargs: Dict) -> str:
     if isinstance(v, float):
         if v.is_integer():
             return f"{int(v)}"
@@ -79,7 +79,7 @@ def float_to_str(v: Union[int, float], **kwargs: dict) -> str:
     return f"{v}"
 
 
-def percentage_to_str(v: Union[int, float], **kwargs: dict) -> str:
+def percentage_to_str(v: Union[int, float], **kwargs: Dict) -> str:
     if isinstance(v, (int, float)):
         x = v * 100
         if isinstance(x, float):
@@ -92,7 +92,7 @@ def percentage_to_str(v: Union[int, float], **kwargs: dict) -> str:
     return f"{x}%"
 
 
-def bool_to_str(v: Any, **kwargs: dict) -> str:
+def bool_to_str(v: Any, **kwargs: Dict) -> str:
     return f"{v}"
 
 
@@ -101,7 +101,7 @@ def int_formatter(
     format_function=to_int,
     to_str_function=to_str,
     **kwargs,
-) -> dict:
+) -> Dict:
     return formatter(
         datatypes=datatypes,
         format_function=format_function,
@@ -116,7 +116,7 @@ def float_formatter(
     to_str_function=float_to_str,
     decimals=2,
     **kwargs,
-) -> dict:
+) -> Dict:
     return formatter(
         datatypes=datatypes,
         format_function=format_function,
@@ -132,7 +132,7 @@ def percentage_formatter(
     to_str_function=percentage_to_str,
     decimals=2,
     **kwargs,
-) -> dict:
+) -> Dict:
     return formatter(
         datatypes=datatypes,
         format_function=format_function,
@@ -150,7 +150,7 @@ def bool_formatter(
     truthy_values=truthy,
     falsy_values=falsy,
     **kwargs,
-) -> dict:
+) -> Dict:
     return formatter(
         datatypes=datatypes,
         format_function=format_function,
@@ -172,7 +172,7 @@ def formatter(
     post_format_function=None,
     clipboard_function=None,
     **kwargs,
-) -> dict:
+) -> Dict:
     return {
         **dict(
             datatypes=datatypes,
@@ -311,7 +311,7 @@ class Formatter:
             return self.value
         return self.__str__()
 
-    def __eq__(self, __value: object) -> bool:
+    def __eq__(self, __value) -> bool:
         # in case of custom formatter class
         # compare the values
         try:

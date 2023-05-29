@@ -9,7 +9,6 @@ from itertools import accumulate, chain, cycle, islice, product, repeat
 from math import ceil, floor
 from tkinter import TclError
 from typing import Any, Union
-
 from ._tksheet_formatters import (
     data_to_str,
     format_data,
@@ -336,10 +335,10 @@ class MainTable(tk.Canvas):
         self.basic_bindings()
         self.create_rc_menus()
 
-    def refresh(self, event=None) -> None:
+    def refresh(self, event=None):
         self.main_table_redraw_grid_and_text(True, True)
 
-    def window_configured(self, event) -> None:
+    def window_configured(self, event):
         w = self.parentframe.winfo_width()
         if w != self.parentframe_width:
             self.parentframe_width = w
@@ -3506,7 +3505,7 @@ class MainTable(tk.Canvas):
         self.set_min_column_width()
         self.CH.set_height(self.default_header_height[1], set_TL=True)
 
-    def set_index_font(self, newfont: Union[tuple, None] = None) -> tuple:
+    def set_index_font(self, newfont=None):
         if newfont:
             if not isinstance(newfont, tuple):
                 raise ValueError("Argument must be tuple e.g. ('Carlito', 12, 'normal')")

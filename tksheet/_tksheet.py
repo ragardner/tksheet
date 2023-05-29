@@ -3,7 +3,7 @@ from collections import deque
 from itertools import accumulate, chain, islice
 from tkinter import ttk
 import bisect
-from typing import Union, Callable
+from typing import Union, Callable, List, Set, Tuple
 
 from ._tksheet_column_headers import ColumnHeaders
 from ._tksheet_main_table import MainTable
@@ -44,8 +44,8 @@ class Sheet(tk.Frame):
         show_y_scrollbar: bool = True,
         width: int = None,
         height: int = None,
-        headers: list = None,
-        header: list = None,
+        headers: List = None,
+        header: List = None,
         default_header: str = "letters",  # letters, numbers or both
         default_row_index: str = "numbers",  # letters, numbers or both
         to_clipboard_delimiter="\t",
@@ -62,8 +62,8 @@ class Sheet(tk.Frame):
         arrow_key_down_right_scroll_page: bool = False,
         enable_edit_cell_auto_resize: bool = True,
         edit_cell_validation: bool = True,
-        data_reference: list = None,
-        data: list = None,
+        data_reference: List = None,
+        data: List = None,
         # either (start row, end row, "rows"),
         #     or (start column, end column, "columns")
         # or (cells start row,
@@ -71,7 +71,7 @@ class Sheet(tk.Frame):
         #     cells end row,
         #     cells end column,
         #     "cells")
-        startup_select: tuple = None,
+        startup_select: Tuple = None,
         startup_focus: bool = True,
         total_columns: int = None,
         total_rows: int = None,
@@ -81,8 +81,8 @@ class Sheet(tk.Frame):
         max_row_height: str = "inf",  # str or int
         max_header_height: str = "inf",  # str or int
         max_index_width: str = "inf",  # str or int
-        row_index: list = None,
-        index: list = None,
+        row_index: List = None,
+        index: List = None,
         after_redraw_time_ms: int = 20,
         row_index_width: int = None,
         auto_resize_default_row_index: bool = True,
@@ -90,16 +90,16 @@ class Sheet(tk.Frame):
         auto_resize_rows: Union[int, None] = None,
         set_all_heights_and_widths: bool = False,
         row_height: str = "1",  # str or int
-        font: tuple = get_font(),
-        header_font: tuple = get_heading_font(),
-        index_font: tuple = get_index_font(),  # currently has no effect
-        popup_menu_font: tuple = get_font(),
+        font: Tuple = get_font(),
+        header_font: Tuple = get_heading_font(),
+        index_font: Tuple = get_index_font(),  # currently has no effect
+        popup_menu_font: Tuple = get_font(),
         align: str = "w",
         header_align: str = "center",
         row_index_align: str = "center",
-        displayed_columns: list = [],
+        displayed_columns: List = [],
         all_columns_displayed: bool = True,
-        displayed_rows: list = [],
+        displayed_rows: List = [],
         all_rows_displayed: bool = True,
         max_undos: int = 30,
         outline_thickness: int = 0,
@@ -835,7 +835,7 @@ class Sheet(tk.Frame):
     def bind_event(self, sequence: str, func: Callable, add: Union[str, None] = None) -> None:
         widget = self
 
-        def _substitute(*args) -> tuple[None]:
+        def _substitute(*args) -> Tuple[None]:
             def e() -> None:
                 return None
 
@@ -1135,7 +1135,7 @@ class Sheet(tk.Frame):
                 else:
                     self.MT.row_positions = list(accumulate(chain([0], (height for height in row_heights))))
 
-    def verify_row_heights(self, row_heights: list, canvas_positions=False):
+    def verify_row_heights(self, row_heights: List, canvas_positions=False):
         if row_heights[0] != 0 or isinstance(row_heights[0], bool):
             return False
         if not isinstance(row_heights, list):
@@ -1151,7 +1151,7 @@ class Sheet(tk.Frame):
                 return False
         return True
 
-    def verify_column_widths(self, column_widths: list, canvas_positions=False):
+    def verify_column_widths(self, column_widths: List, canvas_positions=False):
         if column_widths[0] != 0 or isinstance(column_widths[0], bool):
             return False
         if not isinstance(column_widths, list):
@@ -1217,7 +1217,7 @@ class Sheet(tk.Frame):
         self.delete_rows(rows={idx}, deselect_all=deselect_all, redraw=False)
         self.set_refresh_timer(redraw)
 
-    def delete_rows(self, rows: set = set(), deselect_all=False, redraw=True):
+    def delete_rows(self, rows: Set = set(), deselect_all=False, redraw=True):
         if deselect_all:
             self.deselect("all", redraw=False)
         if isinstance(rows, set):
@@ -1350,7 +1350,7 @@ class Sheet(tk.Frame):
         self.delete_columns(columns={idx}, deselect_all=deselect_all, redraw=False)
         self.set_refresh_timer(redraw)
 
-    def delete_columns(self, columns: set = set(), deselect_all=False, redraw=True):
+    def delete_columns(self, columns: Set = set(), deselect_all=False, redraw=True):
         if deselect_all:
             self.deselect("all", redraw=False)
         if isinstance(columns, set):
@@ -2697,7 +2697,7 @@ class Sheet(tk.Frame):
 
     def insert_column(
         self,
-        values: Union[list, tuple, int, None] = None,
+        values: Union[List, Tuple, int, None] = None,
         idx: Union[str, int] = "end",
         width=None,
         deselect_all=False,
@@ -2719,7 +2719,7 @@ class Sheet(tk.Frame):
 
     def insert_columns(
         self,
-        columns: Union[list, tuple, int, None] = 1,
+        columns: Union[List, Tuple, int, None] = 1,
         idx: Union[str, int] = "end",
         widths=None,
         deselect_all=False,
@@ -2808,7 +2808,7 @@ class Sheet(tk.Frame):
 
     def insert_row(
         self,
-        values: Union[list, None] = None,
+        values: Union[List, None] = None,
         idx: Union[str, int] = "end",
         height=None,
         deselect_all=False,
@@ -2828,7 +2828,7 @@ class Sheet(tk.Frame):
 
     def insert_rows(
         self,
-        rows: Union[list, int] = 1,
+        rows: Union[List, int] = 1,
         idx: Union[str, int] = "end",
         heights=None,
         deselect_all=False,

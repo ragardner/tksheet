@@ -1,3 +1,7 @@
+### Version 6.2.0
+#### Fixed:
+- Removed some type hinting that was only available to python versions >= 3.9
+
 ### Version 6.1.9
 #### Fixed:
 - Issues that follow selection boxes being recreated such as resizing columns/rows
