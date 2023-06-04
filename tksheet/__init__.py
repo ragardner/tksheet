@@ -1,5 +1,4 @@
 # ruff: noqa: F401
-from .sheet import Sheet, Dropdown
 from .column_headers import ColumnHeaders
 from .formatters import (
     Formatter,
@@ -22,6 +21,29 @@ from .formatters import (
     to_str,
     try_to_bool,
 )
+from .functions import (
+    consecutive_chunks,
+    convert_data_to_displayed_indexes,
+    convert_displayed_to_data_indexes,
+    dropdown_search_function,
+    event_dict,
+    get_checkbox_dict,
+    get_checkbox_kwargs,
+    get_checkbox_points,
+    get_dropdown_dict,
+    get_dropdown_kwargs,
+    get_index_of_gap_in_sorted_integer_seq_forward,
+    get_index_of_gap_in_sorted_integer_seq_reverse,
+    get_n2a,
+    get_new_indexes,
+    get_seq_without_gaps_at_index,
+    is_iterable,
+    move_elements_by_mapping,
+    move_elements_to,
+    named_span_dict,
+    num2alpha,
+    tksheet_type_error,
+)
 from .main_table import MainTable
 from .other_classes import (
     CurrentlySelectedClass,
@@ -31,21 +53,9 @@ from .other_classes import (
     TextCfg,
     TextEditor,
     TextEditor_,
-    dropdown_search_function,
-    event_dict,
-    get_checkbox_dict,
-    get_checkbox_kwargs,
-    get_dropdown_dict,
-    get_dropdown_kwargs,
-    get_index_of_gap_in_sorted_integer_seq_forward,
-    get_index_of_gap_in_sorted_integer_seq_reverse,
-    get_n2a,
-    get_seq_without_gaps_at_index,
-    is_iterable,
-    num2alpha,
-    tksheet_type_error,
 )
 from .row_index import RowIndex
+from .sheet import Dropdown, Sheet
 from .top_left_rectangle import TopLeftRectangle
 from .vars import (
     USER_OS,

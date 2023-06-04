@@ -8,6 +8,7 @@ symbols_set = set("""!#\$%&'()*+,-./:;"@[]^_`{|}~>?= """)
 nonelike = {None, "none", ""}
 truthy = {True, "true", "t", "yes", "y", "on", "1", 1, 1.0}
 falsy = {False, "false", "f", "no", "n", "off", "0", 0, 0.0}
+val_modifying_options = {"checkbox", "format", "dropdown"}
 
 arrowkey_bindings_helper = {
     "tab": "Tab",

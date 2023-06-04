@@ -12,13 +12,17 @@ class TopLeftRectangle(tk.Canvas):
             highlightthickness=0,
         )
         self.parentframe = kwargs["parentframe"]
+        self.top_left_bg = kwargs["top_left_bg"]
         self.top_left_fg = kwargs["top_left_fg"]
         self.top_left_fg_highlight = kwargs["top_left_fg_highlight"]
         self.MT = kwargs["main_canvas"]
         self.RI = kwargs["row_index_canvas"]
         self.CH = kwargs["header_canvas"]
         try:
-            self.config(width=self.RI.current_width, height=self.CH.current_height)
+            self.config(
+                width=self.RI.current_width,
+                height=self.CH.current_height,
+            )
         except Exception:
             return
         self.extra_motion_func = None
@@ -32,7 +36,7 @@ class TopLeftRectangle(tk.Canvas):
         self.CH.TL = self
         w = self.RI.current_width
         h = self.CH.current_height
-        self.create_rectangle(
+        self.rw_box = self.create_rectangle(
             0,
             h - 5,
             w,
@@ -42,7 +46,7 @@ class TopLeftRectangle(tk.Canvas):
             tag="rw",
             state="normal" if self.RI.width_resizing_enabled else "hidden",
         )
-        self.create_rectangle(
+        self.rh_box = self.create_rectangle(
             w - 5,
             0,
             w,
@@ -52,10 +56,34 @@ class TopLeftRectangle(tk.Canvas):
             tag="rh",
             state="normal" if self.CH.height_resizing_enabled else "hidden",
         )
+        self.select_all_box = self.create_rectangle(
+            0,
+            0,
+            w - 5,
+            h - 5,
+            fill=self.top_left_bg,
+            outline="",
+            tag="sa",
+            state="normal" if self.MT.select_all_enabled else "hidden",
+        )
+        self.select_all_tri = self.create_polygon(
+            w - 7,
+            h - 7 - 10,
+            w - 7,
+            h - 7,
+            w - 7 - 10,
+            h - 7,
+            fill=self.top_left_fg,
+            outline="",
+            tag="sa",
+            state="normal" if self.MT.select_all_enabled else "hidden",
+        )
         self.tag_bind("rw", "<Enter>", self.rw_enter)
         self.tag_bind("rh", "<Enter>", self.rh_enter)
+        self.tag_bind("sa", "<Enter>", self.sa_enter)
         self.tag_bind("rw", "<Leave>", self.rw_leave)
         self.tag_bind("rh", "<Leave>", self.rh_leave)
+        self.tag_bind("sa", "<Leave>", self.sa_leave)
         self.bind("<Motion>", self.mouse_motion)
         self.bind("<ButtonPress-1>", self.b1_press)
         self.bind("<B1-Motion>", self.b1_motion)
@@ -69,19 +97,41 @@ class TopLeftRectangle(tk.Canvas):
     def rh_state(self, state="normal"):
         self.itemconfig("rh", state=state)
 
+    def sa_state(self, state="normal"):
+        self.itemconfig("sa", state=state)
+
     def rw_enter(self, event=None):
         if self.RI.width_resizing_enabled:
-            self.itemconfig("rw", fill=self.top_left_fg_highlight)
+            self.itemconfig(
+                "rw",
+                fill=self.top_left_fg_highlight,
+            )
+
+    def sa_enter(self, event=None):
+        if self.MT.select_all_enabled:
+            self.itemconfig(
+                self.select_all_tri,
+                fill=self.top_left_fg_highlight,
+            )
 
     def rh_enter(self, event=None):
         if self.CH.height_resizing_enabled:
-            self.itemconfig("rh", fill=self.top_left_fg_highlight)
+            self.itemconfig(
+                "rh",
+                fill=self.top_left_fg_highlight,
+            )
 
     def rw_leave(self, event=None):
         self.itemconfig("rw", fill=self.top_left_fg)
 
     def rh_leave(self, event=None):
         self.itemconfig("rh", fill=self.top_left_fg)
+
+    def sa_leave(self, event=None):
+        self.itemconfig(
+            self.select_all_tri,
+            fill=self.top_left_fg,
+        )
 
     def basic_bindings(self, enable=True):
         if enable:
@@ -111,8 +161,18 @@ class TopLeftRectangle(tk.Canvas):
                 h = new_h
         except Exception:
             return
-        self.coords("rw", 0, h - 5, w, h)
-        self.coords("rh", w - 5, 0, w, h)
+        self.coords(self.rw_box, 0, h - 5, w, h)
+        self.coords(self.rh_box, w - 5, 0, w, h)
+        self.coords(
+            self.select_all_tri,
+            w - 7,
+            h - 7 - 10,
+            w - 7,
+            h - 7,
+            w - 7 - 10,
+            h - 7,
+        )
+        self.coords(self.select_all_box, 0, 0, w - 5, h - 5)
         self.MT.recreate_all_selection_boxes()
 
     def mouse_motion(self, event=None):
@@ -123,19 +183,31 @@ class TopLeftRectangle(tk.Canvas):
     def b1_press(self, event=None):
         self.focus_set()
         rect = self.find_overlapping(event.x, event.y, event.x, event.y)
-        if not rect:
+        if not rect or rect[0] in (
+            self.select_all_box,
+            self.select_all_tri,
+        ):
             if self.MT.select_all_enabled:
                 self.MT.deselect("all")
                 self.MT.select_all()
             else:
                 self.MT.deselect("all")
-        elif rect[0] == 1:
+        elif rect[0] == self.rw_box:
             if self.RI.width_resizing_enabled:
-                self.RI.set_width(self.MT.default_index_width, set_TL=True)
-        elif rect[0] == 2:
+                self.RI.set_width(
+                    self.MT.default_index_width,
+                    set_TL=True,
+                )
+        elif rect[0] == self.rh_box:
             if self.CH.height_resizing_enabled:
-                self.CH.set_height(self.MT.default_header_height[1], set_TL=True)
-        self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
+                self.CH.set_height(
+                    self.MT.default_header_height[1],
+                    set_TL=True,
+                )
+        self.MT.main_table_redraw_grid_and_text(
+            redraw_header=True,
+            redraw_row_index=True,
+        )
         if self.extra_b1_press_func is not None:
             self.extra_b1_press_func(event)
 

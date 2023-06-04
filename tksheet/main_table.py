@@ -1,14 +1,36 @@
-import bisect
+from __future__ import annotations
+
 import csv as csv
 import io
-import pickle
 import tkinter as tk
-import zlib
-from collections import defaultdict, deque
-from itertools import accumulate, chain, cycle, islice, product, repeat
-from math import ceil, floor
+from bisect import (
+    bisect_left,
+    bisect_right,
+)
+from collections import (
+    defaultdict,
+    deque,
+)
+from collections.abc import (
+    Callable,
+    Generator,
+    Hashable,
+    Iterator,
+    Sequence,
+)
+from itertools import (
+    accumulate,
+    chain,
+    cycle,
+    islice,
+    product,
+    repeat,
+)
+from math import (
+    ceil,
+    floor,
+)
 from tkinter import TclError
-from typing import Any, Callable, Union, Hashable
 
 from .formatters import (
     data_to_str,
@@ -18,14 +40,30 @@ from .formatters import (
     is_bool_like,
     try_to_bool,
 )
+from .functions import (
+    diff_gen,
+    diff_list,
+    consecutive_chunks,
+    decompress_load,
+    ev_stack_dict,
+    event_dict,
+    get_checkbox_points,
+    get_new_indexes,
+    get_seq_without_gaps_at_index,
+    is_iterable,
+    len_to_idx,
+    move_elements_by_mapping,
+    # move_elements_to,
+    # convert_data_to_displayed_indexes,
+    # convert_displayed_to_data_indexes,
+    pickle_obj,
+    unpickle_obj,
+)
 from .other_classes import (
     CurrentlySelectedClass,
     DrawnItem,
     TextCfg,
     TextEditor,
-    event_dict,
-    get_checkbox_points,
-    is_iterable,
 )
 from .vars import (
     USER_OS,
@@ -34,6 +72,7 @@ from .vars import (
     ctrl_key,
     rc_binding,
     symbols_set,
+    val_modifying_options,
 )
 
 
@@ -77,6 +116,7 @@ class MainTable(tk.Canvas):
         self.hidd_dropdown = {}
         self.hidd_checkbox = {}
 
+        self.named_spans = {}
         self.cell_options = {}
         self.col_options = {}
         self.row_options = {}
@@ -114,10 +154,9 @@ class MainTable(tk.Canvas):
         self.arrow_key_down_right_scroll_page = kwargs["arrow_key_down_right_scroll_page"]
         self.cell_auto_resize_enabled = kwargs["enable_edit_cell_auto_resize"]
         self.auto_resize_columns = kwargs["auto_resize_columns"]
+        self.auto_resize_rows = kwargs["auto_resize_rows"]
         self.allow_auto_resize_columns = True
         self.allow_auto_resize_rows = True
-        self.auto_resize_rows = kwargs["auto_resize_rows"]
-        self.user_resized_row = False
         self.edit_cell_validation = kwargs["edit_cell_validation"]
         self.display_selected_fg_over_highlights = kwargs["display_selected_fg_over_highlights"]
         self.show_index = kwargs["show_index"]
@@ -287,8 +326,8 @@ class MainTable(tk.Canvas):
                 self._row_index = []
         self.displayed_columns = []
         self.displayed_rows = []
-        self.col_positions = [0]
-        self.row_positions = [0]
+        self.set_col_positions(itr=[])
+        self.set_row_positions(itr=[])
         self.display_rows(
             rows=kwargs["displayed_rows"],
             all_rows_displayed=kwargs["all_rows_displayed"],
@@ -409,10 +448,10 @@ class MainTable(tk.Canvas):
     def show_ctrl_outline(
         self,
         canvas: str = "table",
-        start_cell: tuple[int] = (0, 0),
-        end_cell: tuple[int] = (0, 0),
-        dash: tuple[int] = (20, 20),
-        outline: Union[str, None] = None,
+        start_cell: tuple[int, int] = (0, 0),
+        end_cell: tuple[int, int] = (0, 0),
+        dash: tuple[int, int] = (20, 20),
+        outline: str | None = None,
         delete_on_timer: bool = True,
     ) -> None:
         self.create_ctrl_outline(
@@ -436,10 +475,10 @@ class MainTable(tk.Canvas):
         x2: int,
         y2: int,
         fill: str,
-        dash: tuple[int],
+        dash: tuple[int, int],
         width: int,
         outline: str,
-        tag: Union[str, tuple[str]],
+        tag: str | tuple[str, ...],
     ) -> None:
         if self.hidd_ctrl_outline:
             t, sh = self.hidd_ctrl_outline.popitem()
@@ -526,7 +565,7 @@ class MainTable(tk.Canvas):
                 for r1, c1, r2, c2 in boxes:
                     datarn = (r1 + rn) if self.all_rows_displayed else self.displayed_rows[r1 + rn]
                     for c in range(c1, c2):
-                        datacn = c if self.all_columns_displayed else self.displayed_columns[c]
+                        datacn = self.datacn(c)
                         v = self.get_cell_clipboard(datarn, datacn)
                         event_data["cells"]["table"][(datarn, datacn)] = v
                         row.append(v)
@@ -537,7 +576,7 @@ class MainTable(tk.Canvas):
                     row = []
                     datarn = (r1 + rn) if self.all_rows_displayed else self.displayed_rows[r1 + rn]
                     for c in range(c1, c2):
-                        datacn = c if self.all_columns_displayed else self.displayed_columns[c]
+                        datacn = self.datacn(c)
                         v = self.get_cell_clipboard(datarn, datacn)
                         event_data["cells"]["table"][(datarn, datacn)] = v
                         row.append(v)
@@ -583,7 +622,7 @@ class MainTable(tk.Canvas):
                         continue
                     datarn = (r1 + rn) if self.all_rows_displayed else self.displayed_rows[r1 + rn]
                     for c in range(c1, c2):
-                        datacn = c if self.all_columns_displayed else self.displayed_columns[c]
+                        datacn = self.datacn(c)
                         v = self.get_cell_clipboard(datarn, datacn)
                         row.append(v)
                         if self.input_valid_for_cell(datarn, datacn, ""):
@@ -596,7 +635,7 @@ class MainTable(tk.Canvas):
                     row = []
                     datarn = (r1 + rn) if self.all_rows_displayed else self.displayed_rows[r1 + rn]
                     for c in range(c1, c2):
-                        datacn = c if self.all_columns_displayed else self.displayed_columns[c]
+                        datacn = self.datacn(c)
                         v = self.get_cell_clipboard(datarn, datacn)
                         row.append(v)
                         if self.input_valid_for_cell(datarn, datacn, ""):
@@ -604,7 +643,7 @@ class MainTable(tk.Canvas):
                             self.set_cell_data(datarn, datacn, "")
                     writer.writerow(row)
         if event_data["cells"]["table"]:
-            self.undo_stack.append(zlib.compress(pickle.dumps(event_data)))
+            self.undo_stack.append(ev_stack_dict(event_data))
         self.clipboard_clear()
         self.clipboard_append(s.getvalue())
         self.update_idletasks()
@@ -615,7 +654,7 @@ class MainTable(tk.Canvas):
             self.extra_end_ctrl_x_func({**event_data, **{"eventname": "end_ctrl_x"}})
         self.sheet_modified(event_data)
 
-    def get_box_containing_current(self) -> tuple[int]:
+    def get_box_containing_current(self) -> tuple[int, int, int, int]:
         item = self.get_selection_items(cells=False, rows=False, columns=False)[-1]
         return tuple(int(e) for e in self.gettags(item)[1].split("_") if e)
 
@@ -684,8 +723,7 @@ class MainTable(tk.Canvas):
             added_cols = 0
             # check if columns need adding / add columns
             if selected_c + numcols > len(self.col_positions) - 1:
-                total_data_cols = self.total_data_cols()
-                self.equalize_data_row_lengths(total_columns=total_data_cols)
+                total_data_cols = self.equalize_data_row_lengths()
                 added_cols = selected_c + numcols - len(self.col_positions) + 1
                 if (
                     isinstance(self.paste_insert_column_limit, int)
@@ -694,11 +732,8 @@ class MainTable(tk.Canvas):
                     added_cols = self.paste_insert_column_limit - len(self.col_positions) - 1
                 if added_cols > 0:
                     event_data = self.add_columns(
-                        data_ins_col=total_data_cols,
-                        displayed_ins_col=len(self.col_positions) - 1,
-                        numcols=added_cols,
+                        *self.get_args_for_add_columns(total_data_cols, len(self.col_positions) - 1, added_cols),
                         event_data=event_data,
-                        rowlen=total_data_cols,
                     )
             # check if rows need adding / add rows
             if selected_r + numrows > len(self.row_positions) - 1:
@@ -710,9 +745,7 @@ class MainTable(tk.Canvas):
                     added_rows = self.paste_insert_row_limit - len(self.row_positions) - 1
                 if added_rows > 0:
                     event_data = self.add_rows(
-                        data_ins_row=len(self.data),
-                        displayed_ins_row=len(self.row_positions) - 1,
-                        numrows=added_rows,
+                        *self.get_args_for_add_rows(len(self.data), len(self.row_positions) - 1, added_rows),
                         event_data=event_data,
                     )
         if selected_c + numcols > len(self.col_positions) - 1:
@@ -734,16 +767,23 @@ class MainTable(tk.Canvas):
             except Exception:
                 return
         for ndr, r in enumerate(range(selected_r, selected_r + numrows)):
-            datarn = r if self.all_rows_displayed else self.displayed_rows[r]
+            datarn = self.datarn(r)
             for ndc, c in enumerate(range(selected_c, selected_c + numcols)):
-                datacn = c if self.all_columns_displayed else self.displayed_columns[c]
+                datacn = self.datacn(c)
                 if self.input_valid_for_cell(datarn, datacn, data[ndr][ndc]):
                     event_data["cells"]["table"][(datarn, datacn)] = self.get_cell_data(datarn, datacn)
                     self.set_cell_data(datarn, datacn, data[ndr][ndc])
         self.deselect("all", redraw=False)
         if event_data["cells"]["table"]:
-            self.undo_stack.append(zlib.compress(pickle.dumps(event_data)))
-        self.create_selection_box(selected_r, selected_c, selected_r + numrows, selected_c + numcols, "cells")
+            self.undo_stack.append(ev_stack_dict(event_data))
+        self.create_selection_box(
+            selected_r,
+            selected_c,
+            selected_r + numrows,
+            selected_c + numcols,
+            "cells",
+            run_binding=True,
+        )
         self.see(
             r=selected_r,
             c=selected_c,
@@ -776,442 +816,455 @@ class MainTable(tk.Canvas):
                 return
         for r1, c1, r2, c2 in boxes:
             for r in range(r1, r2):
-                datarn = r if self.all_rows_displayed else self.displayed_rows[r]
+                datarn = self.datarn(r)
                 for c in range(c1, c2):
-                    datacn = c if self.all_columns_displayed else self.displayed_columns[c]
+                    datacn = self.datacn(c)
                     if self.input_valid_for_cell(datarn, datacn, ""):
                         event_data["cells"]["table"][(datarn, datacn)] = self.get_cell_data(datarn, datacn)
                         self.set_cell_data(datarn, datacn, "")
         if event_data["cells"]["table"]:
-            self.undo_stack.append(zlib.compress(pickle.dumps(event_data)))
+            self.undo_stack.append(ev_stack_dict(event_data))
         if self.extra_end_delete_key_func is not None:
             self.extra_end_delete_key_func({**event_data, **{"eventname": "end_delete"}})
         self.refresh()
         self.sheet_modified(event_data)
 
+    def get_args_for_move_columns(
+        self,
+        move_to: int,
+        to_move: list[int],
+        index_type: str = "displayed",
+    ) -> tuple:
+        if index_type == "displayed" or self.all_columns_displayed:
+            disp_new_idxs = get_new_indexes(
+                seqlen=len(self.col_positions) - 1,
+                move_to=move_to,
+                to_move=to_move,
+            )
+        totalcols = self.equalize_data_row_lengths(at_least_cols=move_to + 1)
+        if self.all_columns_displayed or index_type != "displayed":
+            data_new_idxs = get_new_indexes(seqlen=totalcols, move_to=move_to, to_move=to_move)
+        elif not self.all_columns_displayed and index_type == "displayed":
+            data_new_idxs = get_new_indexes(seqlen=len(self.displayed_columns), move_to=move_to, to_move=to_move)
+            data_old_idxs = dict(zip(data_new_idxs.values(), data_new_idxs))
+            data_new_idxs = dict(
+                zip(
+                    move_elements_by_mapping(self.displayed_columns, data_new_idxs, data_old_idxs),
+                    self.displayed_columns,
+                )
+            )
+        return data_new_idxs, dict(zip(data_new_idxs.values(), data_new_idxs)), totalcols, disp_new_idxs
+
     def move_columns_adjust_options_dict(
         self,
-        col: int,
-        to_move_min: int,
-        num_cols: int,
+        data_new_idxs: dict,
+        data_old_idxs: dict,
+        totalcols: int | None,
+        disp_new_idxs: None | dict = None,
         move_data: bool = True,
         create_selections: bool = True,
         index_type: str = "displayed",
+        event_data: dict | None = None,
     ):
-        c = int(col)
-        to_move_max = to_move_min + num_cols
-        to_del = to_move_max + num_cols
-        if index_type == "displayed":
-            self.deselect("all", redraw=False)
-            cws = [
-                int(b - a)
-                for a, b in zip(
-                    self.col_positions,
-                    islice(self.col_positions, 1, len(self.col_positions)),
+        if not isinstance(totalcols, int):
+            totalcols = max(data_new_idxs.values(), default=0)
+            if totalcols:
+                totalcols += 1
+            totalcols = self.equalize_data_row_lengths(at_least_cols=totalcols)
+        if event_data is None:
+            event_data = event_dict(
+                name="move_columns",
+                sheet=self.parentframe.name,
+                boxes=self.get_boxes(),
+                selected=self.currently_selected(),
+            )
+            event_data["moved"]["columns"] = {
+                "data": data_new_idxs,
+                "displayed": {} if disp_new_idxs is None else disp_new_idxs,
+            }
+        event_data["named_spans"] = pickle_obj(self.named_spans)
+        if disp_new_idxs is not None and (index_type == "displayed" or self.all_columns_displayed):
+            self.deselect("all", run_binding=False, redraw=False)
+            self.set_col_positions(
+                itr=move_elements_by_mapping(
+                    self.get_column_widths(),
+                    disp_new_idxs,
+                    dict(
+                        zip(
+                            disp_new_idxs.values(),
+                            disp_new_idxs,
+                        )
+                    ),
                 )
-            ]
-            if to_move_min > c:
-                cws[c:c] = cws[to_move_min:to_move_max]
-                cws[to_move_max:to_del] = []
-            else:
-                cws[c + 1 : c + 1] = cws[to_move_min:to_move_max]
-                cws[to_move_min:to_move_max] = []
-            self.col_positions = list(accumulate(chain([0], (width for width in cws))))
-            if c + num_cols > len(self.col_positions):
-                new_selected = tuple(
-                    range(
-                        len(self.col_positions) - 1 - num_cols,
-                        len(self.col_positions) - 1,
-                    )
-                )
-                if create_selections:
+            )
+            if create_selections:
+                for chunk in consecutive_chunks(sorted(disp_new_idxs.values())):
                     self.create_selection_box(
                         0,
-                        len(self.col_positions) - 1 - num_cols,
+                        chunk[0],
                         len(self.row_positions) - 1,
-                        len(self.col_positions) - 1,
+                        chunk[-1] + 1,
                         "columns",
+                        run_binding=True,
                     )
-            else:
-                if to_move_min > c:
-                    new_selected = tuple(range(c, c + num_cols))
-                    if create_selections:
-                        self.create_selection_box(0, c, len(self.row_positions) - 1, c + num_cols, "columns")
+        if move_data:
+            self.data[:] = [
+                move_elements_by_mapping(
+                    r,
+                    data_new_idxs,
+                    data_old_idxs,
+                )
+                for rn, r in enumerate(self.data)
+            ]
+            maxidx = len_to_idx(totalcols)
+            self.CH.fix_header(maxidx)
+            if isinstance(self._headers, list) and self._headers:
+                self._headers = move_elements_by_mapping(self._headers, data_new_idxs, data_old_idxs)
+            maxidx = self.get_max_column_idx(maxidx)
+            full_new_idxs = self.get_full_new_idxs(
+                max_idx=maxidx,
+                new_idxs=data_new_idxs,
+                old_idxs=data_old_idxs,
+            )
+            full_old_idxs = dict(zip(full_new_idxs.values(), full_new_idxs))
+            self.cell_options = {(k[0], full_new_idxs[k[1]]): v for k, v in self.cell_options.items()}
+            self.col_options = {full_new_idxs[k]: v for k, v in self.col_options.items()}
+            self.CH.cell_options = {full_new_idxs[k]: v for k, v in self.CH.cell_options.items()}
+            for name, span in self.named_spans.items():
+                # span is neither a cell options nor col options span, continue
+                if not isinstance(span["from_c"], int) or not isinstance(span["upto_c"], int):
+                    continue
+                idx_0, idx_end = int(span["from_c"]), int(span["upto_c"]) - 1
+                if full_new_idxs[idx_end] < full_new_idxs[idx_0]:
+                    newfrom = full_new_idxs[idx_end]
+                    newupto = full_new_idxs[idx_0] + 1
                 else:
-                    new_selected = tuple(range(c + 1 - num_cols, c + 1))
-                    if create_selections:
-                        self.create_selection_box(
-                            0,
-                            c + 1 - num_cols,
-                            len(self.row_positions) - 1,
-                            c + 1,
-                            "columns",
-                        )
-        elif index_type == "data":
-            if to_move_min > c:
-                new_selected = tuple(range(c, c + num_cols))
-            else:
-                new_selected = tuple(range(c + 1 - num_cols, c + 1))
-        newcolsdct = {t1: t2 for t1, t2 in zip(range(to_move_min, to_move_min + num_cols), new_selected)}
-        if self.all_columns_displayed or index_type != "displayed":
-            dispset = {}
-            if to_move_min > c:
-                if move_data:
-                    extend_idx = to_move_max - 1
-                    for rn in range(len(self.data)):
-                        if to_move_max > len(self.data[rn]):
-                            self.fix_row_len(rn, extend_idx)
-                        self.data[rn][c:c] = self.data[rn][to_move_min:to_move_max]
-                        self.data[rn][to_move_max:to_del] = []
-                    self.CH.fix_header(extend_idx)
-                    if isinstance(self._headers, list) and self._headers:
-                        self._headers[c:c] = self._headers[to_move_min:to_move_max]
-                        self._headers[to_move_max:to_del] = []
-                self.CH.cell_options = {
-                    newcolsdct[k] if k in newcolsdct else k + num_cols if k < to_move_min and k >= c else k: v
-                    for k, v in self.CH.cell_options.items()
-                }
-                self.cell_options = {
-                    (k[0], newcolsdct[k[1]])
-                    if k[1] in newcolsdct
-                    else (k[0], k[1] + num_cols)
-                    if k[1] < to_move_min and k[1] >= c
-                    else k: v
-                    for k, v in self.cell_options.items()
-                }
-                self.col_options = {
-                    newcolsdct[k] if k in newcolsdct else k + num_cols if k < to_move_min and k >= c else k: v
-                    for k, v in self.col_options.items()
-                }
-                if index_type != "displayed":
-                    self.displayed_columns = sorted(
-                        int(newcolsdct[k])
-                        if k in newcolsdct
-                        else k + num_cols
-                        if k < to_move_min and k >= c
-                        else int(k)
-                        for k in self.displayed_columns
-                    )
-            else:
-                c += 1
-                if move_data:
-                    extend_idx = c - 1
-                    for rn in range(len(self.data)):
-                        if c > len(self.data[rn]):
-                            self.fix_row_len(rn, extend_idx)
-                        self.data[rn][c:c] = self.data[rn][to_move_min:to_move_max]
-                        self.data[rn][to_move_min:to_move_max] = []
-                    self.CH.fix_header(extend_idx)
-                    if isinstance(self._headers, list) and self._headers:
-                        self._headers[c:c] = self._headers[to_move_min:to_move_max]
-                        self._headers[to_move_min:to_move_max] = []
-                self.CH.cell_options = {
-                    newcolsdct[k] if k in newcolsdct else k - num_cols if k < c and k > to_move_min else k: v
-                    for k, v in self.CH.cell_options.items()
-                }
-                self.cell_options = {
-                    (k[0], newcolsdct[k[1]])
-                    if k[1] in newcolsdct
-                    else (k[0], k[1] - num_cols)
-                    if k[1] < c and k[1] > to_move_min
-                    else k: v
-                    for k, v in self.cell_options.items()
-                }
-                self.col_options = {
-                    newcolsdct[k] if k in newcolsdct else k - num_cols if k < c and k > to_move_min else k: v
-                    for k, v in self.col_options.items()
-                }
-                if index_type != "displayed":
-                    self.displayed_columns = sorted(
-                        int(newcolsdct[k]) if k in newcolsdct else k - num_cols if k < c and k > to_move_min else int(k)
-                        for k in self.displayed_columns
-                    )
-        else:
-            # moves data around, not displayed columns indexes
-            # which remain sorted and the same after drop and drop
-            if to_move_min > c:
-                dispset = {
-                    a: b
-                    for a, b in zip(
-                        self.displayed_columns,
-                        (
-                            self.displayed_columns[:c]
-                            + self.displayed_columns[to_move_min : to_move_min + num_cols]
-                            + self.displayed_columns[c:to_move_min]
-                            + self.displayed_columns[to_move_min + num_cols :]
-                        ),
-                    )
-                }
-            else:
-                dispset = {
-                    a: b
-                    for a, b in zip(
-                        self.displayed_columns,
-                        (
-                            self.displayed_columns[:to_move_min]
-                            + self.displayed_columns[to_move_min + num_cols : c + 1]
-                            + self.displayed_columns[to_move_min : to_move_min + num_cols]
-                            + self.displayed_columns[c + 1 :]
-                        ),
-                    )
-                }
-            # has to pick up elements from all over the place in the original row
-            # building an entirely new row is best due to permutations of hidden columns
-            if move_data:
-                max_len = max(chain(dispset, dispset.values())) + 1
-                max_idx = max_len - 1
-                for rn in range(len(self.data)):
-                    if max_len > len(self.data[rn]):
-                        self.fix_row_len(rn, max_idx)
-                    new = []
-                    idx = 0
-                    done = set()
-                    while len(new) < len(self.data[rn]):
-                        if idx in dispset and idx not in done:
-                            new.append(self.data[rn][dispset[idx]])
-                            done.add(idx)
-                        elif idx not in done:
-                            new.append(self.data[rn][idx])
-                            idx += 1
+                    newfrom = full_new_idxs[idx_0]
+                    newupto = full_new_idxs[idx_end] + 1
+                # add cell/col kwargs for columns that are new to the span
+                old_span_idxs = set(full_new_idxs[k] for k in range(span["from_c"], span["upto_c"]))
+                for k in range(newfrom, newupto):
+                    if k not in old_span_idxs:
+                        oldidx = full_old_idxs[k]
+                        # event_data is used to preserve old cell value
+                        # in case cells are modified by
+                        # formatting, checkboxes, dropdown boxes
+                        if (
+                            span["type_"] in val_modifying_options
+                            and span["header"]
+                            and oldidx not in event_data["cells"]["header"]
+                        ):
+                            event_data["cells"]["header"][oldidx] = self.CH.get_cell_data(k)
+                        # the span targets columns
+                        if span["from_r"] is None or span["upto_r"] is None:
+                            if span["type_"] in val_modifying_options:
+                                for datarn in range(len(self.data)):
+                                    if (datarn, oldidx) not in event_data["cells"]["table"]:
+                                        event_data["cells"]["table"][(datarn, oldidx)] = self.get_cell_data(datarn, k)
+                            # create new col_options
+                            self.parentframe.create_table_kwargs(
+                                r=None,
+                                c=k,
+                                type_=span["type_"],
+                                **span["kwargs"],
+                            )
+                        # the span targets cells
                         else:
-                            idx += 1
-                    self.data[rn] = new
-                self.CH.fix_header(max_idx)
-                if isinstance(self._headers, list) and self._headers:
-                    new = []
-                    idx = 0
-                    done = set()
-                    while len(new) < len(self._headers):
-                        if idx in dispset and idx not in done:
-                            new.append(self._headers[dispset[idx]])
-                            done.add(idx)
-                        elif idx not in done:
-                            new.append(self._headers[idx])
-                            idx += 1
+                            for datarn in range(span["from_r"], span["upto_r"]):
+                                if (
+                                    span["type_"] in val_modifying_options
+                                    and (datarn, oldidx) not in event_data["cells"]["table"]
+                                ):
+                                    event_data["cells"]["table"][(datarn, oldidx)] = self.get_cell_data(datarn, k)
+                                # create new cell_options
+                                self.parentframe.create_table_kwargs(
+                                    r=datarn,
+                                    c=k,
+                                    type_=span["type_"],
+                                    **span["kwargs"],
+                                )
+                # remove span specific kwargs from cells/columns
+                # that are no longer in the span,
+                # cell options/col options keys are new idxs
+                for k in range(span["from_c"], span["upto_c"]):
+                    # has it moved outside of new span coords
+                    if full_new_idxs[k] < newfrom or full_new_idxs[k] >= newupto:
+                        # span includes header
+                        if (
+                            span["header"]
+                            and full_new_idxs[k] in self.CH.cell_options
+                            and span["type_"] in self.CH.cell_options
+                        ):
+                            del self.CH.cell_options[full_new_idxs[k]][span["type_"]]
+                        # span is for cell options
+                        if isinstance(span["from_r"], int) and isinstance(span["upto_r"], int):
+                            for r in range(span["from_r"], span["upto_r"]):
+                                if (r, full_new_idxs[k]) in self.cell_options and span["type_"] in self.cell_options[
+                                    (r, full_new_idxs[k])
+                                ]:
+                                    del self.cell_options[(r, full_new_idxs[k])][span["type_"]]
+                        # span is for col options
                         else:
-                            idx += 1
-                    self._headers = new
-                dispset = {b: a for a, b in dispset.items()}
-                self.CH.cell_options = {dispset[k] if k in dispset else k: v for k, v in self.CH.cell_options.items()}
-                self.cell_options = {
-                    (k[0], dispset[k[1]]) if k[1] in dispset else k: v for k, v in self.cell_options.items()
-                }
-                self.col_options = {dispset[k] if k in dispset else k: v for k, v in self.col_options.items()}
-        return new_selected, {b: a for a, b in dispset.items()}
+                            if (
+                                full_new_idxs[k] in self.col_options
+                                and span["type_"] in self.col_options[full_new_idxs[k]]
+                            ):
+                                del self.col_options[full_new_idxs[k]][span["type_"]]
+                # finally, change the span coords
+                span["from_c"], span["upto_c"] = newfrom, newupto
+            if index_type != "displayed":
+                self.displayed_columns = sorted(full_new_idxs[k] for k in self.displayed_columns)
+        return data_new_idxs, disp_new_idxs, event_data
+
+    def get_max_column_idx(self, maxidx: int | None = None) -> int:
+        if maxidx is None:
+            maxidx = len_to_idx(self.total_data_cols())
+        # max column number in cell_options
+        if maxidx < (maxk := max(self.cell_options, key=lambda k: k[1], default=(0, 0))[1]):
+            maxidx = maxk
+        # max column number in column_options, index cell options
+        for d in (self.col_options, self.CH.cell_options):
+            if maxidx < (maxk := max(d, default=0)):
+                maxidx = maxk
+        # max column number in named spans
+        if maxidx < (
+            maxk := max(
+                (d["upto_c"] for d in self.named_spans.values() if isinstance(d["upto_c"], int)),
+                default=0,
+            )
+        ):
+            maxidx = maxk
+        return maxidx
+
+    def get_args_for_move_rows(
+        self,
+        move_to: int,
+        to_move: list[int],
+        index_type: str = "displayed",
+    ) -> tuple:
+        if index_type == "displayed" or self.all_rows_displayed:
+            disp_new_idxs = get_new_indexes(
+                seqlen=len(self.row_positions) - 1,
+                move_to=move_to,
+                to_move=to_move,
+            )
+        totalrows = self.fix_data_len(move_to)
+        if self.all_rows_displayed or index_type != "displayed":
+            data_new_idxs = get_new_indexes(seqlen=totalrows, move_to=move_to, to_move=to_move)
+        elif not self.all_rows_displayed and index_type == "displayed":
+            data_new_idxs = get_new_indexes(seqlen=len(self.displayed_rows), move_to=move_to, to_move=to_move)
+            data_old_idxs = dict(zip(data_new_idxs.values(), data_new_idxs))
+            data_new_idxs = dict(
+                zip(
+                    move_elements_by_mapping(self.displayed_rows, data_new_idxs, data_old_idxs),
+                    self.displayed_rows,
+                )
+            )
+        return data_new_idxs, dict(zip(data_new_idxs.values(), data_new_idxs)), totalrows, disp_new_idxs
 
     def move_rows_adjust_options_dict(
         self,
-        row,
-        to_move_min,
-        num_rows,
-        move_data=True,
-        create_selections=True,
-        index_type="displayed",
+        data_new_idxs: dict,
+        data_old_idxs: dict,
+        totalrows: int | None,
+        disp_new_idxs: None | dict = None,
+        move_data: bool = True,
+        create_selections: bool = True,
+        index_type: str = "displayed",
+        event_data: dict | None = None,
     ):
-        r = int(row)
-        to_move_max = to_move_min + num_rows
-        to_del = to_move_max + num_rows
-        if index_type == "displayed":
-            self.deselect("all", redraw=False)
-            rhs = [
-                int(b - a)
-                for a, b in zip(
-                    self.row_positions,
-                    islice(self.row_positions, 1, len(self.row_positions)),
+        if not isinstance(totalrows, int):
+            totalrows = self.fix_data_len(max(data_new_idxs.values(), default=0))
+        if event_data is None:
+            event_data = event_dict(
+                name="move_rows",
+                sheet=self.parentframe.name,
+                boxes=self.get_boxes(),
+                selected=self.currently_selected(),
+            )
+            event_data["moved"]["rows"] = {
+                "data": data_new_idxs,
+                "displayed": {} if disp_new_idxs is None else disp_new_idxs,
+            }
+        event_data["named_spans"] = pickle_obj(self.named_spans)
+        if disp_new_idxs and (index_type == "displayed" or self.all_rows_displayed):
+            self.deselect("all", run_binding=False, redraw=False)
+            self.set_row_positions(
+                itr=move_elements_by_mapping(
+                    self.get_row_heights(),
+                    disp_new_idxs,
+                    dict(
+                        zip(
+                            disp_new_idxs.values(),
+                            disp_new_idxs,
+                        )
+                    ),
                 )
-            ]
-            if to_move_min > r:
-                rhs[r:r] = rhs[to_move_min:to_move_max]
-                rhs[to_move_max:to_del] = []
-            else:
-                rhs[r + 1 : r + 1] = rhs[to_move_min:to_move_max]
-                rhs[to_move_min:to_move_max] = []
-            self.row_positions = list(accumulate(chain([0], (height for height in rhs))))
-            if r + num_rows > len(self.row_positions):
-                new_selected = tuple(
-                    range(
-                        len(self.row_positions) - 1 - num_rows,
-                        len(self.row_positions) - 1,
-                    )
-                )
-                if create_selections:
+            )
+            if create_selections:
+                for chunk in consecutive_chunks(sorted(disp_new_idxs.values())):
                     self.create_selection_box(
-                        len(self.row_positions) - 1 - num_rows,
+                        chunk[0],
                         0,
-                        len(self.row_positions) - 1,
+                        chunk[-1] + 1,
                         len(self.col_positions) - 1,
                         "rows",
+                        run_binding=True,
                     )
-            else:
-                if to_move_min > r:
-                    new_selected = tuple(range(r, r + num_rows))
-                    if create_selections:
-                        self.create_selection_box(r, 0, r + num_rows, len(self.col_positions) - 1, "rows")
+        if move_data:
+            self.data[:] = move_elements_by_mapping(
+                self.data,
+                data_new_idxs,
+                data_old_idxs,
+            )
+            maxidx = len_to_idx(totalrows)
+            self.RI.fix_index(maxidx)
+            if isinstance(self._row_index, list) and self._row_index:
+                self._row_index = move_elements_by_mapping(self._row_index, data_new_idxs, data_old_idxs)
+            maxidx = self.get_max_row_idx(maxidx)
+            full_new_idxs = self.get_full_new_idxs(
+                max_idx=maxidx,
+                new_idxs=data_new_idxs,
+                old_idxs=data_old_idxs,
+            )
+            full_old_idxs = dict(zip(full_new_idxs.values(), full_new_idxs))
+            self.cell_options = {(full_new_idxs[k[0]], k[1]): v for k, v in self.cell_options.items()}
+            self.row_options = {full_new_idxs[k]: v for k, v in self.row_options.items()}
+            self.RI.cell_options = {full_new_idxs[k]: v for k, v in self.RI.cell_options.items()}
+            for name, span in self.named_spans.items():
+                # span is neither a cell options nor row options span, continue
+                if not isinstance(span["from_r"], int) or not isinstance(span["upto_r"], int):
+                    continue
+                idx_0, idx_end = int(span["from_r"]), int(span["upto_r"]) - 1
+                if full_new_idxs[idx_end] < full_new_idxs[idx_0]:
+                    newfrom = full_new_idxs[idx_end]
+                    newupto = full_new_idxs[idx_0] + 1
                 else:
-                    new_selected = tuple(range(r + 1 - num_rows, r + 1))
-                    if create_selections:
-                        self.create_selection_box(
-                            r + 1 - num_rows,
-                            0,
-                            r + 1,
-                            len(self.col_positions) - 1,
-                            "rows",
-                        )
-        elif index_type == "data":
-            if to_move_min > r:
-                new_selected = tuple(range(r, r + num_rows))
-            else:
-                new_selected = tuple(range(r + 1 - num_rows, r + 1))
-        newrowsdct = {t1: t2 for t1, t2 in zip(range(to_move_min, to_move_min + num_rows), new_selected)}
-        if self.all_rows_displayed or index_type != "displayed":
-            dispset = {}
-            if to_move_min > r:
-                if move_data:
-                    extend_idx = to_move_max - 1
-                    if to_move_max > len(self.data):
-                        self.fix_data_len(extend_idx)
-                    self.data[r:r] = self.data[to_move_min:to_move_max]
-                    self.data[to_move_max:to_del] = []
-                    self.RI.fix_index(extend_idx)
-                    if isinstance(self._row_index, list) and self._row_index:
-                        self._row_index[r:r] = self._row_index[to_move_min:to_move_max]
-                        self._row_index[to_move_max:to_del] = []
-                self.RI.cell_options = {
-                    newrowsdct[k] if k in newrowsdct else k + num_rows if k < to_move_min and k >= r else k: v
-                    for k, v in self.RI.cell_options.items()
-                }
-                self.cell_options = {
-                    (newrowsdct[k[0]], k[1])
-                    if k[0] in newrowsdct
-                    else (k[0] + num_rows, k[1])
-                    if k[0] < to_move_min and k[0] >= r
-                    else k: v
-                    for k, v in self.cell_options.items()
-                }
-                self.row_options = {
-                    newrowsdct[k] if k in newrowsdct else k + num_rows if k < to_move_min and k >= r else k: v
-                    for k, v in self.row_options.items()
-                }
-                if index_type != "displayed":
-                    self.displayed_rows = sorted(
-                        int(newrowsdct[k])
-                        if k in newrowsdct
-                        else k + num_rows
-                        if k < to_move_min and k >= r
-                        else int(k)
-                        for k in self.displayed_rows
-                    )
-            else:
-                r += 1
-                if move_data:
-                    extend_idx = r - 1
-                    if r > len(self.data):
-                        self.fix_data_len(extend_idx)
-                    self.data[r:r] = self.data[to_move_min:to_move_max]
-                    self.data[to_move_min:to_move_max] = []
-                    self.RI.fix_index(extend_idx)
-                    if isinstance(self._row_index, list) and self._row_index:
-                        self._row_index[r:r] = self._row_index[to_move_min:to_move_max]
-                        self._row_index[to_move_min:to_move_max] = []
-                self.RI.cell_options = {
-                    newrowsdct[k] if k in newrowsdct else k - num_rows if k < r and k > to_move_min else k: v
-                    for k, v in self.RI.cell_options.items()
-                }
-                self.cell_options = {
-                    (newrowsdct[k[0]], k[1])
-                    if k[0] in newrowsdct
-                    else (k[0] - num_rows, k[1])
-                    if k[0] < r and k[0] > to_move_min
-                    else k: v
-                    for k, v in self.cell_options.items()
-                }
-                self.row_options = {
-                    newrowsdct[k] if k in newrowsdct else k - num_rows if k < r and k > to_move_min else k: v
-                    for k, v in self.row_options.items()
-                }
-                if index_type != "displayed":
-                    self.displayed_rows = sorted(
-                        int(newrowsdct[k]) if k in newrowsdct else k - num_rows if k < r and k > to_move_min else int(k)
-                        for k in self.displayed_rows
-                    )
-        else:
-            # moves data around, not displayed rows indexes
-            # which remain sorted and the same after drop and drop
-            if to_move_min > r:
-                dispset = {
-                    a: b
-                    for a, b in zip(
-                        self.displayed_rows,
-                        (
-                            self.displayed_rows[:r]
-                            + self.displayed_rows[to_move_min : to_move_min + num_rows]
-                            + self.displayed_rows[r:to_move_min]
-                            + self.displayed_rows[to_move_min + num_rows :]
-                        ),
-                    )
-                }
-            else:
-                dispset = {
-                    a: b
-                    for a, b in zip(
-                        self.displayed_rows,
-                        (
-                            self.displayed_rows[:to_move_min]
-                            + self.displayed_rows[to_move_min + num_rows : r + 1]
-                            + self.displayed_rows[to_move_min : to_move_min + num_rows]
-                            + self.displayed_rows[r + 1 :]
-                        ),
-                    )
-                }
-            # has to pick up rows from all over the place in the original sheet
-            # building an entirely new sheet is best due to permutations of hidden rows
-            if move_data:
-                max_len = max(chain(dispset, dispset.values())) + 1
-                if len(self.data) < max_len:
-                    self.fix_data_len(max_len - 1)
-                new = []
-                idx = 0
-                done = set()
-                while len(new) < len(self.data):
-                    if idx in dispset and idx not in done:
-                        new.append(self.data[dispset[idx]])
-                        done.add(idx)
-                    elif idx not in done:
-                        new.append(self.data[idx])
-                        idx += 1
-                    else:
-                        idx += 1
-                self.data = new
-                self.RI.fix_index(max_len - 1)
-                if isinstance(self._row_index, list) and self._row_index:
-                    new = []
-                    idx = 0
-                    done = set()
-                    while len(new) < len(self._row_index):
-                        if idx in dispset and idx not in done:
-                            new.append(self._row_index[dispset[idx]])
-                            done.add(idx)
-                        elif idx not in done:
-                            new.append(self._row_index[idx])
-                            idx += 1
+                    newfrom = full_new_idxs[idx_0]
+                    newupto = full_new_idxs[idx_end] + 1
+                # add cell/row kwargs for rows that are new to the span
+                old_span_idxs = set(full_new_idxs[k] for k in range(span["from_r"], span["upto_r"]))
+                for k in range(newfrom, newupto):
+                    if k not in old_span_idxs:
+                        oldidx = full_old_idxs[k]
+                        # event_data is used to preserve old cell value
+                        # in case cells are modified by
+                        # formatting, checkboxes, dropdown boxes
+                        if (
+                            span["type_"] in val_modifying_options
+                            and span["index"]
+                            and oldidx not in event_data["cells"]["index"]
+                        ):
+                            event_data["cells"]["index"][oldidx] = self.RI.get_cell_data(k)
+                        # the span targets rows
+                        if span["from_c"] is None or span["upto_c"] is None:
+                            if span["type_"] in val_modifying_options:
+                                for datacn in range(len(self.data[k])):
+                                    if (oldidx, datacn) not in event_data["cells"]["table"]:
+                                        event_data["cells"]["table"][(oldidx, datacn)] = self.get_cell_data(k, datacn)
+                            # create new row_options
+                            self.parentframe.create_table_kwargs(
+                                r=k,
+                                c=None,
+                                type_=span["type_"],
+                                **span["kwargs"],
+                            )
+                        # the span targets cells
                         else:
-                            idx += 1
-                    self._row_index = new
-                dispset = {b: a for a, b in dispset.items()}
-                self.RI.cell_options = {dispset[k] if k in dispset else k: v for k, v in self.RI.cell_options.items()}
-                self.cell_options = {
-                    (dispset[k[0]], k[1]) if k[0] in dispset else k: v for k, v in self.cell_options.items()
-                }
-                self.row_options = {dispset[k] if k in dispset else k: v for k, v in self.row_options.items()}
-        return new_selected, {b: a for a, b in dispset.items()}
+                            for datacn in range(span["from_c"], span["upto_c"]):
+                                if (
+                                    span["type_"] in val_modifying_options
+                                    and (oldidx, datacn) not in event_data["cells"]["table"]
+                                ):
+                                    event_data["cells"]["table"][(oldidx, datacn)] = self.get_cell_data(k, datacn)
+                                # create new cell_options
+                                self.parentframe.create_table_kwargs(
+                                    r=k,
+                                    c=datacn,
+                                    type_=span["type_"],
+                                    **span["kwargs"],
+                                )
+                # remove span specific kwargs from cells/rows
+                # that are no longer in the span,
+                # cell options/row options keys are new idxs
+                for k in range(span["from_r"], span["upto_r"]):
+                    # has it moved outside of new span coords
+                    if full_new_idxs[k] < newfrom or full_new_idxs[k] >= newupto:
+                        # span includes index
+                        if (
+                            span["index"]
+                            and full_new_idxs[k] in self.RI.cell_options
+                            and span["type_"] in self.RI.cell_options
+                        ):
+                            del self.RI.cell_options[full_new_idxs[k]][span["type_"]]
+                        # span is for cell options
+                        if isinstance(span["from_c"], int) and isinstance(span["upto_c"], int):
+                            for c in range(span["from_c"], span["upto_c"]):
+                                if (full_new_idxs[k], c) in self.cell_options and span["type_"] in self.cell_options[
+                                    (full_new_idxs[k], c)
+                                ]:
+                                    del self.cell_options[(full_new_idxs[k], c)][span["type_"]]
+                        # span is for row options
+                        else:
+                            if (
+                                full_new_idxs[k] in self.row_options
+                                and span["type_"] in self.row_options[full_new_idxs[k]]
+                            ):
+                                del self.row_options[full_new_idxs[k]][span["type_"]]
+                # finally, change the span coords
+                span["from_r"], span["upto_r"] = newfrom, newupto
+            if index_type != "displayed":
+                self.displayed_rows = sorted(full_new_idxs[k] for k in self.displayed_rows)
+        return data_new_idxs, disp_new_idxs, event_data
+
+    def get_max_row_idx(self, maxidx: int | None = None) -> int:
+        if maxidx is None:
+            maxidx = len_to_idx(self.total_data_rows())
+        # max row number in cell_options
+        if maxidx < (maxk := max(self.cell_options, key=lambda k: k[0], default=(0, 0))[0]):
+            maxidx = maxk
+        # max row number in row_options, index cell options
+        for d in (self.row_options, self.RI.cell_options):
+            if maxidx < (maxk := max(d, default=0)):
+                maxidx = maxk
+        # max row number in named spans
+        if maxidx < (
+            maxk := max(
+                (d["upto_r"] for d in self.named_spans.values() if isinstance(d["upto_r"], int)),
+                default=0,
+            )
+        ):
+            maxidx = maxk
+        return maxidx
+
+    def get_full_new_idxs(
+        self,
+        max_idx: int,
+        new_idxs: dict,
+        old_idxs: None | dict = None,
+    ) -> dict:
+        # return a dict of all row or column indexes
+        # old indexes and new indexes, not just the
+        # ones that were moved e.g.
+        # {old index: new index, ...}
+        # all the way from 0 to max_idx
+        if old_idxs is None:
+            old_idxs = dict(zip(new_idxs.values(), new_idxs))
+        seq = tuple(range(max_idx + 1))
+        return dict(
+            zip(
+                move_elements_by_mapping(seq, new_idxs, old_idxs),
+                seq,
+            )
+        )
 
     def undo(self, event=None) -> None:
         if not self.undo_stack:
             return
-        if isinstance(self.undo_stack[-1], dict):
-            modification = self.undo_stack[-1]
+        if isinstance(self.undo_stack[-1]["data"], dict):
+            modification = self.undo_stack[-1]["data"]
         else:
-            modification = pickle.loads(zlib.decompress(self.undo_stack[-1]))
+            modification = decompress_load(self.undo_stack[-1]["data"])
         if self.extra_begin_ctrl_z_func is not None:
             try:
                 self.extra_begin_ctrl_z_func({**modification, **{"eventname": "begin_undo"}})
@@ -1225,10 +1278,10 @@ class MainTable(tk.Canvas):
     def redo(self, event=None) -> None:
         if not self.redo_stack:
             return
-        if isinstance(self.redo_stack[-1], dict):
-            modification = self.redo_stack[-1]
+        if isinstance(self.redo_stack[-1]["data"], dict):
+            modification = self.redo_stack[-1]["data"]
         else:
-            modification = pickle.loads(zlib.decompress(self.redo_stack[-1]))
+            modification = decompress_load(self.redo_stack[-1]["data"])
         if self.extra_begin_ctrl_z_func is not None:
             try:
                 self.extra_begin_ctrl_z_func({**modification, **{"eventname": "begin_redo"}})
@@ -1262,7 +1315,7 @@ class MainTable(tk.Canvas):
             event_data["cells"]["table"][(datarn, datacn)] = self.get_cell_data(datarn, datacn)
         return event_data
 
-    def undo_modification_invert_event(self, modification: dict, name: str = "undo") -> Union[bytes, dict]:
+    def undo_modification_invert_event(self, modification: dict, name: str = "undo") -> bytes | dict:
         self.deselect("all", redraw=False)
         event_data = event_dict(
             name=modification["eventname"],
@@ -1271,185 +1324,148 @@ class MainTable(tk.Canvas):
         event_data["selection_boxes"] = modification["selection_boxes"]
         event_data["selected"] = modification["selected"]
         saved_cells = False
+        curr = tuple()
 
         if modification["added"]["rows"] or modification["added"]["columns"]:
             event_data = self.save_cells_using_modification(modification, event_data)
             saved_cells = True
 
         if modification["moved"]["columns"]:
-            c = modification["moved"]["columns"]["old_indexes"][0]
-            to_move_min = modification["moved"]["columns"]["new_indexes"][0]
-            totalcols = (
-                modification["moved"]["columns"]["new_indexes"][-1]
-                - modification["moved"]["columns"]["new_indexes"][0]
-                + 1
+            totalcols = self.equalize_data_row_lengths()
+            if totalcols < (mx_k := max(modification["moved"]["columns"]["data"].values())):
+                totalcols = mx_k
+            data_new_idxs, disp_new_idxs, event_data = self.move_columns_adjust_options_dict(
+                data_new_idxs=dict(
+                    zip(
+                        modification["moved"]["columns"]["data"].values(),
+                        modification["moved"]["columns"]["data"],
+                    )
+                ),
+                data_old_idxs=modification["moved"]["columns"]["data"],
+                totalcols=totalcols,
+                disp_new_idxs=dict(
+                    zip(
+                        modification["moved"]["columns"]["displayed"].values(),
+                        modification["moved"]["columns"]["displayed"],
+                    )
+                ),
+                event_data=event_data,
             )
-            if to_move_min < c:
-                c += totalcols - 1
-            new_selected, dispset = self.move_columns_adjust_options_dict(c, to_move_min, totalcols)
+            self.named_spans = unpickle_obj(modification["named_spans"])
             event_data["moved"]["columns"] = {
-                "old_indexes": modification["moved"]["columns"]["new_indexes"],
-                "new_indexes": (new_selected[0], new_selected[-1]),
+                "data": data_new_idxs,
+                "displayed": disp_new_idxs,
             }
-            self.see(
-                r=0,
-                c=c,
-                keep_yscroll=False,
-                keep_xscroll=False,
-                bottom_right_corner=False,
-                check_cell_visibility=True,
-                redraw=False,
-            )
+            curr = self.currently_selected()
 
         if modification["moved"]["rows"]:
-            r = modification["moved"]["rows"]["old_indexes"][0]
-            to_move_min = modification["moved"]["rows"]["new_indexes"][0]
-            totalrows = (
-                modification["moved"]["rows"]["new_indexes"][-1] - modification["moved"]["rows"]["new_indexes"][0] + 1
+            totalrows = self.total_data_rows()
+            if totalrows < (mx_k := max(modification["moved"]["rows"]["data"].values())):
+                totalrows = mx_k
+            data_new_idxs, disp_new_idxs, event_data = self.move_rows_adjust_options_dict(
+                data_new_idxs=dict(
+                    zip(
+                        modification["moved"]["rows"]["data"].values(),
+                        modification["moved"]["rows"]["data"],
+                    )
+                ),
+                data_old_idxs=modification["moved"]["rows"]["data"],
+                totalrows=totalrows,
+                disp_new_idxs=dict(
+                    zip(
+                        modification["moved"]["rows"]["displayed"].values(),
+                        modification["moved"]["rows"]["displayed"],
+                    )
+                ),
+                event_data=event_data,
             )
-            if to_move_min < r:
-                r += totalrows - 1
-            new_selected, dispset = self.move_rows_adjust_options_dict(r, to_move_min, totalrows)
+            self.named_spans = unpickle_obj(modification["named_spans"])
             event_data["moved"]["rows"] = {
-                "old_indexes": modification["moved"]["rows"]["new_indexes"],
-                "new_indexes": (new_selected[0], new_selected[-1]),
+                "data": data_new_idxs,
+                "displayed": disp_new_idxs,
             }
-            self.see(
-                r=r,
-                c=0,
-                keep_yscroll=False,
-                keep_xscroll=False,
-                bottom_right_corner=False,
-                check_cell_visibility=True,
-                redraw=False,
-            )
+            curr = self.currently_selected()
 
         if modification["added"]["rows"]:
+            self.deselect("all", run_binding=False, redraw=False)
             event_data = self.delete_rows(
-                seld_rows=list(
-                    range(
-                        modification["added"]["rows"]["displayed_index"],
-                        modification["added"]["rows"]["displayed_index"] + modification["added"]["rows"]["num"],
-                    )
-                ),
+                seld_rows=list(reversed(modification["added"]["rows"]["row_heights"])),
                 event_data=event_data,
             )
-            self.displayed_rows = modification["added"]["rows"]["displayed"]
+            self.displayed_rows = modification["added"]["rows"]["displayed_rows"]
             if len(self.row_positions) > 1:
-                start_row = (
-                    modification["added"]["rows"]["displayed_index"]
-                    if modification["added"]["rows"]["displayed_index"] < len(self.row_positions) - 1
-                    else modification["added"]["rows"]["displayed_index"] - 1
+                self.reselect_from_get_boxes(
+                    modification["selection_boxes"],
+                    modification["selected"],
                 )
-                self.RI.select_row(start_row)
-                self.see(
-                    r=start_row,
-                    c=0,
-                    keep_yscroll=False,
-                    keep_xscroll=False,
-                    bottom_right_corner=False,
-                    check_cell_visibility=True,
-                    redraw=False,
-                )
+                if modification["selected"]:
+                    self.see(
+                        r=0,
+                        c=modification["selected"].row,
+                        keep_yscroll=False,
+                        keep_xscroll=False,
+                        bottom_right_corner=False,
+                        check_cell_visibility=True,
+                        redraw=False,
+                    )
 
         if modification["added"]["columns"]:
+            self.deselect("all", run_binding=False, redraw=False)
             event_data = self.delete_columns(
-                seld_cols=list(
-                    range(
-                        modification["added"]["columns"]["displayed_index"],
-                        modification["added"]["columns"]["displayed_index"] + modification["added"]["columns"]["num"],
-                    )
-                ),
+                seld_cols=list(reversed(modification["added"]["columns"]["column_widths"])),
                 event_data=event_data,
             )
-            self.displayed_columns = modification["added"]["columns"]["displayed"]
+            self.displayed_columns = modification["added"]["columns"]["displayed_columns"]
             if len(self.col_positions) > 1:
-                start_col = (
-                    modification["added"]["columns"]["displayed_index"]
-                    if modification["added"]["columns"]["displayed_index"] < len(self.col_positions) - 1
-                    else modification["added"]["columns"]["displayed_index"] - 1
+                self.reselect_from_get_boxes(
+                    modification["selection_boxes"],
+                    modification["selected"],
                 )
-                self.CH.select_col(start_col)
-                self.see(
-                    r=0,
-                    c=start_col,
-                    keep_yscroll=False,
-                    keep_xscroll=False,
-                    bottom_right_corner=False,
-                    check_cell_visibility=True,
-                    redraw=False,
-                )
+                if modification["selected"]:
+                    self.see(
+                        r=0,
+                        c=modification["selected"].column,
+                        keep_yscroll=False,
+                        keep_xscroll=False,
+                        bottom_right_corner=False,
+                        check_cell_visibility=True,
+                        redraw=False,
+                    )
 
         if modification["deleted"]["rows"]:
-            data_ins_row = next(reversed(modification["deleted"]["rows"]))
-            displayed_ins_row = next(reversed(modification["deleted"]["row_heights"]))
-            numrows = len(modification["deleted"]["rows"])
-            event_data["added"]["rows"] = {
-                "data_index": data_ins_row,
-                "displayed_index": displayed_ins_row,
-                "num": numrows,
-                "displayed": list(self.displayed_rows),
-            }
-            if modification["deleted"]["old_displayed_rows"] is not None:
-                self.displayed_rows = modification["deleted"]["old_displayed_rows"]
-            for rn, r in reversed(modification["deleted"]["rows"].items()):
-                self.data.insert(rn, r)
-            for rn, h in reversed(tuple(modification["deleted"]["row_heights"].items())):
-                self.insert_row_position(idx=rn, height=h)
-            for rn, r in reversed(modification["deleted"]["index"].items()):
-                try:
-                    self._row_index.insert(rn, r)
-                except Exception:
-                    continue
-            self.adjust_options_post_add_rows(
-                datarn=data_ins_row, numrows=numrows, to_add=modification["deleted"]["options"]
+            self.add_rows(
+                rows=modification["deleted"]["rows"],
+                index=modification["deleted"]["index"],
+                row_heights=modification["deleted"]["row_heights"],
+                event_data=event_data,
+                displayed_rows=modification["deleted"]["displayed_rows"],
+                options_to_add=unpickle_obj(modification["deleted"]["options"]),
             )
-            self.reselect_from_get_boxes(modification["selection_boxes"], modification["selected"])
 
         if modification["deleted"]["columns"]:
-            data_ins_col = next(reversed(modification["deleted"]["columns"]))
-            displayed_ins_col = next(reversed(modification["deleted"]["column_widths"]))
-            numcols = len(modification["deleted"]["columns"])
-            event_data["added"]["columns"] = {
-                "data_index": data_ins_col,
-                "displayed_index": displayed_ins_col,
-                "num": numcols,
-                "displayed": list(self.displayed_columns),
-            }
-            if modification["deleted"]["old_displayed_columns"] is not None:
-                self.displayed_columns = modification["deleted"]["old_displayed_columns"]
-            for cn, w in reversed(tuple(modification["deleted"]["column_widths"].items())):
-                self.insert_col_position(idx=cn, width=w)
-            for cn, rowdict in reversed(tuple(modification["deleted"]["columns"].items())):
-                for rn, v in rowdict.items():
-                    if len(self.data) >= rn and len(self.data[rn]) >= cn:
-                        self.data[rn].insert(cn, v)
-            if isinstance(self._headers, list):
-                for cn, v in reversed(tuple(modification["deleted"]["header"].items())):
-                    if len(self._headers) >= cn:
-                        self._headers.insert(cn, v)
-            self.adjust_options_post_add_columns(
-                datacn=data_ins_col, numcols=numcols, to_add=modification["deleted"]["options"]
+            self.add_columns(
+                columns=modification["deleted"]["columns"],
+                header=modification["deleted"]["header"],
+                column_widths=modification["deleted"]["column_widths"],
+                event_data=event_data,
+                displayed_columns=modification["deleted"]["displayed_columns"],
+                options_to_add=unpickle_obj(modification["deleted"]["options"]),
             )
-            self.reselect_from_get_boxes(modification["selection_boxes"], modification["selected"])
 
-        if modification["eventname"].startswith("edit"):
+        if modification["eventname"].startswith(("edit", "move")):
             if not saved_cells:
                 event_data = self.save_cells_using_modification(modification, event_data)
             event_data = self.edit_cells_using_modification(modification, event_data)
-            if not modification["deleted"]["columns"] and not modification["deleted"]["rows"]:
-                self.reselect_from_get_boxes(modification["selection_boxes"], modification["selected"])
-            curr = self.currently_selected()
-            if curr:
-                self.see(
-                    r=curr.row,
-                    c=curr.column,
-                    keep_yscroll=False,
-                    keep_xscroll=False,
-                    bottom_right_corner=False,
-                    check_cell_visibility=True,
-                    redraw=False,
+            if (
+                not modification["deleted"]["columns"]
+                and not modification["deleted"]["rows"]
+                and not modification["eventname"].startswith("move")
+            ):
+                self.reselect_from_get_boxes(
+                    modification["selection_boxes"],
+                    modification["selected"],
                 )
+            curr = self.currently_selected()
 
         elif modification["eventname"].startswith("add"):
             event_data["eventname"] = modification["eventname"].replace("add", "delete")
@@ -1457,9 +1473,20 @@ class MainTable(tk.Canvas):
         elif modification["eventname"].startswith("delete"):
             event_data["eventname"] = modification["eventname"].replace("delete", "add")
 
+        if curr:
+            self.see(
+                r=curr.row,
+                c=curr.column,
+                keep_yscroll=False,
+                keep_xscroll=False,
+                bottom_right_corner=False,
+                check_cell_visibility=True,
+                redraw=False,
+            )
+
         self.sheet_modified(event_data, purge_redo=False)
         self.refresh()
-        return event_data if event_data["eventname"].startswith("delete") else zlib.compress(pickle.dumps(event_data))
+        return ev_stack_dict(event_data)
 
     def bind_arrowkeys(self, keys: dict = {}):
         for canvas in (self, self.parentframe, self.CH, self.RI, self.TL):
@@ -1585,7 +1612,7 @@ class MainTable(tk.Canvas):
                 0,
                 len(self.row_positions) - 1,
                 len(self.col_positions) - 1,
-                current=False,
+                set_current=False,
             )
             if currently_selected:
                 self.set_currently_selected(currently_selected.row, currently_selected.column, item=item)
@@ -1594,29 +1621,38 @@ class MainTable(tk.Canvas):
             if redraw:
                 self.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
             if self.select_all_binding_func is not None and run_binding_func:
-                self.select_all_binding_func(self.get_select_event(being_drawn_item=self.being_drawn_item),)
+                self.select_all_binding_func(
+                    self.get_select_event(being_drawn_item=self.being_drawn_item),
+                )
 
-    def select_cell(self, r: int, c: int, redraw: bool = False, run_binding_func: bool = True):
+    def select_cell(
+        self,
+        r: int,
+        c: int,
+        redraw: bool = False,
+        run_binding_func: bool = True,
+    ) -> int:
         self.deselect("all", redraw=False)
         fill_iid = self.create_selection_box(r, c, r + 1, c + 1, state="hidden")
         if redraw:
             self.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
-        if self.selection_binding_func is not None and run_binding_func:
-            self.selection_binding_func(
-                self.get_select_event(being_drawn_item=self.being_drawn_item),
-            )
+        if run_binding_func:
+            self.run_selection_binding("cells")
         return fill_iid
 
     def add_selection(
-        self, r: int, c: int, redraw: bool = False, run_binding_func: bool = True, set_as_current: bool = False
-    ):
+        self,
+        r: int,
+        c: int,
+        redraw: bool = False,
+        run_binding_func: bool = True,
+        set_as_current: bool = False,
+    ) -> int:
         fill_iid = self.create_selection_box(r, c, r + 1, c + 1, state="hidden", set_current=set_as_current)
         if redraw:
             self.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
-        if self.selection_binding_func is not None and run_binding_func:
-            self.selection_binding_func(
-                self.get_select_event(being_drawn_item=self.being_drawn_item),
-            )
+        if run_binding_func:
+            self.run_selection_binding("cells")
         return fill_iid
 
     def toggle_select_cell(
@@ -1627,7 +1663,7 @@ class MainTable(tk.Canvas):
         redraw: bool = True,
         run_binding_func: bool = True,
         set_as_current: bool = True,
-    ):
+    ) -> int:
         if add_selection:
             if self.cell_selected(row, column, inc_rows=True, inc_cols=True):
                 fill_iid = self.deselect(r=row, c=column, redraw=redraw)
@@ -1645,8 +1681,8 @@ class MainTable(tk.Canvas):
             else:
                 fill_iid = self.select_cell(row, column, redraw=redraw)
         return fill_iid
-    
-    def get_select_event(self, being_drawn_item: Union[None, int]) -> dict:
+
+    def get_select_event(self, being_drawn_item: None | int) -> dict:
         return event_dict(
             name="select",
             sheet=self.parentframe.name,
@@ -1657,16 +1693,16 @@ class MainTable(tk.Canvas):
 
     def deselect(
         self,
-        r: Union[int, None] = None,
-        c: Union[int, None] = None,
-        cell: Union[tuple[int], None] = None,
+        r: int | None = None,
+        c: int | None = None,
+        cell: tuple[int, int] | None = None,
         redraw: bool = True,
-        run_binding_func: bool = True,
+        run_binding: bool = True,
     ):
         deleted_boxes = {}
         if not self.anything_selected():
             return deleted_boxes
-        #saved_current = self.currently_selected()
+        # saved_current = self.currently_selected()
         set_curr = False
         current = self.currently_selected().tags
         if r == "all" or (r is None and c is None and cell is None):
@@ -1750,7 +1786,7 @@ class MainTable(tk.Canvas):
             self.set_current_to_last()
         if redraw:
             self.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
-        if run_binding_func and self.deselection_binding_func is not None:
+        if run_binding and self.deselection_binding_func is not None:
             self.deselection_binding_func(
                 self.get_select_event(being_drawn_item=self.being_drawn_item),
                 # event_dict(
@@ -1769,7 +1805,7 @@ class MainTable(tk.Canvas):
         if scrollto < 0:
             scrollto = 0
         if self.page_up_down_select_row:
-            r = bisect.bisect_left(self.row_positions, scrollto)
+            r = bisect_left(self.row_positions, scrollto)
             current = self.currently_selected()
             if current and current[0] == r:
                 r -= 1
@@ -1797,7 +1833,7 @@ class MainTable(tk.Canvas):
         top = self.canvasy(0)
         scrollto = top + height
         if self.page_up_down_select_row and self.RI.row_selection_enabled:
-            r = bisect.bisect_left(self.row_positions, scrollto) - 1
+            r = bisect_left(self.row_positions, scrollto) - 1
             current = self.currently_selected()
             if current and current[0] == r:
                 r += 1
@@ -2300,7 +2336,7 @@ class MainTable(tk.Canvas):
                 background=self.popup_menu_bg,
                 activebackground=self.popup_menu_highlight_bg,
                 activeforeground=self.popup_menu_highlight_fg,
-                command=self.del_cols_rc,
+                command=self.rc_delete_columns,
             )
         if self.rc_insert_column_enabled:
             self.menu_add_command(
@@ -2311,7 +2347,7 @@ class MainTable(tk.Canvas):
                 background=self.popup_menu_bg,
                 activebackground=self.popup_menu_highlight_bg,
                 activeforeground=self.popup_menu_highlight_fg,
-                command=lambda: self.add_columns_rc("left"),
+                command=lambda: self.rc_add_columns("left"),
             )
             self.menu_add_command(
                 self.empty_rc_popup_menu,
@@ -2321,7 +2357,7 @@ class MainTable(tk.Canvas):
                 background=self.popup_menu_bg,
                 activebackground=self.popup_menu_highlight_bg,
                 activeforeground=self.popup_menu_highlight_fg,
-                command=lambda: self.add_columns_rc("left"),
+                command=lambda: self.rc_add_columns("left"),
             )
             self.menu_add_command(
                 self.CH.ch_rc_popup_menu,
@@ -2331,7 +2367,7 @@ class MainTable(tk.Canvas):
                 background=self.popup_menu_bg,
                 activebackground=self.popup_menu_highlight_bg,
                 activeforeground=self.popup_menu_highlight_fg,
-                command=lambda: self.add_columns_rc("right"),
+                command=lambda: self.rc_add_columns("right"),
             )
         if self.rc_delete_row_enabled:
             self.menu_add_command(
@@ -2342,7 +2378,7 @@ class MainTable(tk.Canvas):
                 background=self.popup_menu_bg,
                 activebackground=self.popup_menu_highlight_bg,
                 activeforeground=self.popup_menu_highlight_fg,
-                command=self.del_rows_rc,
+                command=self.rc_delete_rows,
             )
         if self.rc_insert_row_enabled:
             self.menu_add_command(
@@ -2353,7 +2389,7 @@ class MainTable(tk.Canvas):
                 background=self.popup_menu_bg,
                 activebackground=self.popup_menu_highlight_bg,
                 activeforeground=self.popup_menu_highlight_fg,
-                command=lambda: self.add_rows_rc("above"),
+                command=lambda: self.rc_add_rows("above"),
             )
             self.menu_add_command(
                 self.RI.ri_rc_popup_menu,
@@ -2363,7 +2399,7 @@ class MainTable(tk.Canvas):
                 background=self.popup_menu_bg,
                 activebackground=self.popup_menu_highlight_bg,
                 activeforeground=self.popup_menu_highlight_fg,
-                command=lambda: self.add_rows_rc("below"),
+                command=lambda: self.rc_add_rows("below"),
             )
             self.menu_add_command(
                 self.empty_rc_popup_menu,
@@ -2373,7 +2409,7 @@ class MainTable(tk.Canvas):
                 background=self.popup_menu_bg,
                 activebackground=self.popup_menu_highlight_bg,
                 activeforeground=self.popup_menu_highlight_fg,
-                command=lambda: self.add_rows_rc("below"),
+                command=lambda: self.rc_add_rows("below"),
             )
         for label, func in self.extra_table_rc_menu_funcs.items():
             self.menu_add_command(
@@ -2492,6 +2528,7 @@ class MainTable(tk.Canvas):
             self.rc_select_enabled = True
             self.TL.rh_state()
             self.TL.rw_state()
+            self.TL.sa_state()
         elif binding in ("single", "single_selection_mode", "single_select"):
             self.single_selection_enabled = True
             self.toggle_selection_enabled = False
@@ -2502,6 +2539,7 @@ class MainTable(tk.Canvas):
             self.drag_selection_enabled = True
         elif binding == "select_all":
             self.enable_disable_select_all(True)
+            self.TL.sa_state()
         elif binding == "column_width_resize":
             self.CH.enable_bindings("column_width_resize")
         elif binding == "column_select":
@@ -2598,6 +2636,7 @@ class MainTable(tk.Canvas):
             self.ctrl_select_enabled = False
             self.TL.rh_state("hidden")
             self.TL.rw_state("hidden")
+            self.TL.sa_state("hidden")
         elif binding in ("single", "single_selection_mode", "single_select"):
             self.single_selection_enabled = False
         elif binding in ("toggle", "toggle_selection_mode", "toggle_select"):
@@ -2606,6 +2645,7 @@ class MainTable(tk.Canvas):
             self.drag_selection_enabled = False
         elif binding == "select_all":
             self.enable_disable_select_all(False)
+            self.TL.sa_state("hidden")
         elif binding == "column_width_resize":
             self.CH.disable_bindings("column_width_resize")
         elif binding == "column_select":
@@ -2961,7 +3001,13 @@ class MainTable(tk.Canvas):
                 self.new_header_height = y
                 self.CH.create_resize_line(x1, y, x2, y, width=1, fill=self.RI.resizing_line_fg, tag="rhl")
         elif self.drag_selection_enabled and all(
-            v is None for v in (self.RI.rsz_h, self.RI.rsz_w, self.CH.rsz_h, self.CH.rsz_w)
+            v is None
+            for v in (
+                self.RI.rsz_h,
+                self.RI.rsz_w,
+                self.CH.rsz_h,
+                self.CH.rsz_w,
+            )
         ):
             need_redraw = False
             end_row = self.identify_row(y=event.y)
@@ -3046,7 +3092,9 @@ class MainTable(tk.Canvas):
                         )
                     need_redraw = True
                     if self.drag_selection_binding_func is not None:
-                        self.drag_selection_binding_func(self.get_select_event(being_drawn_item=self.being_drawn_item),)
+                        self.drag_selection_binding_func(
+                            self.get_select_event(being_drawn_item=self.being_drawn_item),
+                        )
             if self.scroll_if_event_offscreen(event):
                 need_redraw = True
             if need_redraw:
@@ -3089,8 +3137,8 @@ class MainTable(tk.Canvas):
             r = self.identify_row(y=event.y, allow_end=False)
             c = self.identify_col(x=event.x, allow_end=False)
             if r is not None and c is not None and (r, c) == self.b1_pressed_loc:
-                datarn = r if self.all_rows_displayed else self.displayed_rows[r]
-                datacn = c if self.all_columns_displayed else self.displayed_columns[c]
+                datarn = self.datarn(r)
+                datacn = self.datacn(c)
                 if self.get_cell_kwargs(datarn, datacn, key="dropdown") or self.get_cell_kwargs(
                     datarn, datacn, key="checkbox"
                 ):
@@ -3148,7 +3196,7 @@ class MainTable(tk.Canvas):
             y2 = self.canvasy(y)
         elif y is None:
             y2 = self.canvasy(event.y)
-        r = bisect.bisect_left(self.row_positions, y2)
+        r = bisect_left(self.row_positions, y2)
         if r != 0:
             r -= 1
         if not allow_end and r >= len(self.row_positions) - 1:
@@ -3160,7 +3208,7 @@ class MainTable(tk.Canvas):
             x2 = self.canvasx(x)
         elif x is None:
             x2 = self.canvasx(event.x)
-        c = bisect.bisect_left(self.col_positions, x2)
+        c = bisect_left(self.col_positions, x2)
         if c != 0:
             c -= 1
         if not allow_end and c >= len(self.col_positions) - 1:
@@ -3303,14 +3351,14 @@ class MainTable(tk.Canvas):
     def get_lines_cell_height(self, n, font=None):
         return (
             self.get_txt_h(
-                txt="\n".join(["j^|" for lines in range(n)]) if n > 1 else "j^|",
+                txt="\n".join("|" for lines in range(n)) if n > 1 else "|",
                 font=self.table_font if font is None else font,
             )
             + 5
         )
 
     def set_min_column_width(self):
-        self.min_column_width = 5
+        self.min_column_width = 1
         if self.min_column_width > self.max_column_width:
             self.max_column_width = self.min_column_width + 20
         if self.min_column_width > self.default_column_width:
@@ -3318,7 +3366,7 @@ class MainTable(tk.Canvas):
         if isinstance(self.auto_resize_columns, (int, float)) and self.auto_resize_columns < self.min_column_width:
             self.auto_resize_columns = self.min_column_width
 
-    def set_table_font(self, newfont: Union[tuple, None] = None, reset_row_positions: bool = False) -> tuple:
+    def set_table_font(self, newfont: tuple | None = None, reset_row_positions: bool = False) -> tuple:
         if newfont:
             if not isinstance(newfont, tuple):
                 raise ValueError("Argument must be tuple e.g. " "('Carlito', 12, 'normal')")
@@ -3358,7 +3406,7 @@ class MainTable(tk.Canvas):
             )
         self.set_min_column_width()
 
-    def set_header_font(self, newfont: Union[tuple, None] = None) -> tuple:
+    def set_header_font(self, newfont: tuple | None = None) -> tuple:
         if newfont:
             if not isinstance(newfont, tuple):
                 raise ValueError("Argument must be tuple e.g. ('Carlito', 12, 'normal')")
@@ -3395,7 +3443,7 @@ class MainTable(tk.Canvas):
         self.set_min_column_width()
         self.CH.set_height(self.default_header_height[1])
 
-    def set_index_font(self, newfont: Union[tuple, None] = None) -> tuple:
+    def set_index_font(self, newfont: tuple | None = None) -> tuple:
         if newfont:
             if not isinstance(newfont, tuple):
                 raise ValueError("Argument must be tuple e.g. ('Carlito', 12, 'normal')")
@@ -3475,8 +3523,8 @@ class MainTable(tk.Canvas):
         min_rh = int(self.min_row_height)
         w = min_column_width
         h = min_rh
-        datacn = c if self.all_columns_displayed else self.displayed_columns[c]
-        datarn = r if self.all_rows_displayed else self.displayed_rows[r]
+        datacn = self.datacn(c)
+        datarn = self.datarn(r)
         tw, h = self.get_cell_dimensions(datarn, datacn)
         if tw > w:
             w = tw
@@ -3542,7 +3590,7 @@ class MainTable(tk.Canvas):
             else:
                 return False
 
-    def set_all_cell_sizes_to_text(self, include_index: bool = False) -> tuple[list]:
+    def set_all_cell_sizes_to_text(self, include_index: bool = False) -> tuple[list[float, ...], list[float, ...]]:
         min_column_width = int(self.min_column_width)
         min_rh = int(self.min_row_height)
         w = min_column_width
@@ -3553,12 +3601,13 @@ class MainTable(tk.Canvas):
         x2 = self.txt_measure_canvas.create_text(0, 0, text="", font=self.header_font)
         itmcon = self.txt_measure_canvas.itemconfig
         itmbbx = self.txt_measure_canvas.bbox
+        numrows = self.total_data_rows()
         if self.all_columns_displayed:
             itercols = range(self.total_data_cols())
         else:
             itercols = self.displayed_columns
         if self.all_rows_displayed:
-            iterrows = range(self.total_data_rows())
+            iterrows = range(numrows)
         else:
             iterrows = self.displayed_rows
         if is_iterable(self._row_index):
@@ -3574,7 +3623,7 @@ class MainTable(tk.Canvas):
             w, h_ = self.CH.get_cell_dimensions(datacn)
             if self.all_rows_displayed:
                 # refresh range generator if needed
-                iterrows = range(self.total_data_rows())
+                iterrows = range(numrows)
             for datarn in iterrows:
                 txt = self.get_valid_cell_data_as_str(datarn, datacn, get_displayed=True)
                 if txt:
@@ -3604,51 +3653,33 @@ class MainTable(tk.Canvas):
             cws.append(w)
         self.txt_measure_canvas.delete(x)
         self.txt_measure_canvas.delete(x2)
-        self.row_positions = list(accumulate(chain([0], (height for height in rhs.values()))))
-        self.col_positions = list(accumulate(chain([0], (width for width in cws))))
+        self.set_row_positions(itr=(height for height in rhs.values()))
+        self.set_col_positions(itr=(width for width in cws))
         self.recreate_all_selection_boxes()
         return self.row_positions, self.col_positions
 
-    def reset_col_positions(self, ncols: Union[int, None] = None):
+    def set_col_positions(self, itr: Iterator[float, ...]) -> None:
+        self.col_positions = list(accumulate(chain([0], itr)))
+
+    def reset_col_positions(self, ncols: int | None = None):
         colpos = int(self.default_column_width)
         if self.all_columns_displayed:
-            self.col_positions = list(
-                accumulate(
-                    chain(
-                        [0],
-                        (colpos for c in range(ncols if ncols is not None else self.total_data_cols())),
-                    )
-                )
-            )
+            self.set_col_positions(itr=(colpos for c in range(ncols if ncols is not None else self.total_data_cols())))
         else:
-            self.col_positions = list(
-                accumulate(
-                    chain(
-                        [0],
-                        (colpos for c in range(ncols if ncols is not None else len(self.displayed_columns))),
-                    )
-                )
+            self.set_col_positions(
+                itr=(colpos for c in range(ncols if ncols is not None else len(self.displayed_columns)))
             )
 
-    def reset_row_positions(self, nrows: Union[int, None] = None):
+    def set_row_positions(self, itr: Iterator[float, ...]) -> None:
+        self.row_positions = list(accumulate(chain([0], itr)))
+
+    def reset_row_positions(self, nrows: int | None = None):
         rowpos = self.default_row_height[1]
         if self.all_rows_displayed:
-            self.row_positions = list(
-                accumulate(
-                    chain(
-                        [0],
-                        (rowpos for r in range(nrows if nrows is not None else self.total_data_rows())),
-                    )
-                )
-            )
+            self.set_row_positions(itr=(rowpos for r in range(nrows if nrows is not None else self.total_data_rows())))
         else:
-            self.row_positions = list(
-                accumulate(
-                    chain(
-                        [0],
-                        (rowpos for r in range(nrows if nrows is not None else len(self.displayed_rows))),
-                    )
-                )
+            self.set_row_positions(
+                itr=(rowpos for r in range(nrows if nrows is not None else len(self.displayed_rows)))
             )
 
     def del_col_position(self, idx: int, deselect_all: bool = False):
@@ -3673,21 +3704,27 @@ class MainTable(tk.Canvas):
             del self.row_positions[idx]
             self.row_positions[idx:] = [e - w for e in islice(self.row_positions, idx, len(self.row_positions))]
 
+    def get_column_widths(self) -> list[int, ...]:
+        return diff_list(self.col_positions)
+
+    def get_row_heights(self) -> list[int, ...]:
+        return diff_list(self.row_positions)
+
+    def gen_column_widths(self) -> Generator[int, ...]:
+        return diff_gen(self.col_positions)
+
+    def gen_row_heights(self) -> Generator[int, ...]:
+        return diff_gen(self.row_positions)
+
     def del_col_positions(self, idx: int, num: int = 1, deselect_all: bool = False):
         if deselect_all:
             self.deselect("all", redraw=False)
         if idx == "end" or len(self.col_positions) <= idx + 1:
             del self.col_positions[-1]
         else:
-            cws = [
-                int(b - a)
-                for a, b in zip(
-                    self.col_positions,
-                    islice(self.col_positions, 1, len(self.col_positions)),
-                )
-            ]
+            cws = self.get_column_widths()
             cws[idx : idx + num] = []
-            self.col_positions = list(accumulate(chain([0], (width for width in cws))))
+            self.set_col_positions(itr=(width for width in cws))
 
     def del_row_positions(self, idx: int, numrows: int = 1, deselect_all: bool = False):
         if deselect_all:
@@ -3706,7 +3743,10 @@ class MainTable(tk.Canvas):
             self.row_positions = list(accumulate(chain([0], (height for height in rhs))))
 
     def insert_col_position(
-        self, idx: Union[str, int] = "end", width: Union[int, None] = None, deselect_all: bool = False
+        self,
+        idx: str | int = "end",
+        width: int | None = None,
+        deselect_all: bool = False,
     ):
         if deselect_all:
             self.deselect("all", redraw=False)
@@ -3723,7 +3763,10 @@ class MainTable(tk.Canvas):
             self.col_positions[idx:] = [e + w for e in islice(self.col_positions, idx, len(self.col_positions))]
 
     def insert_row_position(
-        self, idx: Union[str, int] = "end", height: Union[int, None] = None, deselect_all: bool = False
+        self,
+        idx: str | int = "end",
+        height: int | None = None,
+        deselect_all: bool = False,
     ):
         if deselect_all:
             self.deselect("all", redraw=False)
@@ -3739,7 +3782,12 @@ class MainTable(tk.Canvas):
             idx += 1
             self.row_positions[idx:] = [e + h for e in islice(self.row_positions, idx, len(self.row_positions))]
 
-    def insert_col_positions(self, idx: Union[str, int] = "end", widths: Any = None, deselect_all: bool = False):
+    def insert_col_positions(
+        self,
+        idx: str | int = "end",
+        widths: Sequence[float, ...] | int = None,
+        deselect_all: bool = False,
+    ):
         if deselect_all:
             self.deselect("all", redraw=False)
         if widths is None:
@@ -3769,7 +3817,12 @@ class MainTable(tk.Canvas):
                 idx += 1
                 self.col_positions[idx:] = [e + w for e in islice(self.col_positions, idx, len(self.col_positions))]
 
-    def insert_row_positions(self, idx: Union[str, int] = "end", heights: Any = None, deselect_all: bool = False):
+    def insert_row_positions(
+        self,
+        idx: str | int = "end",
+        heights: Sequence[float, ...] | int = None,
+        deselect_all: bool = False,
+    ):
         if deselect_all:
             self.deselect("all", redraw=False)
         if heights is None:
@@ -3799,168 +3852,354 @@ class MainTable(tk.Canvas):
                 idx += 1
                 self.row_positions[idx:] = [e + h for e in islice(self.row_positions, idx, len(self.row_positions))]
 
-    def adjust_options_post_add_columns(self, datacn: int, numcols: int, to_add: dict = {}):
+    def named_span_coords(self, name: str | dict) -> tuple[int, None, ...]:
+        dct = self.named_spans[name] if isinstance(name, str) else name
+        return (
+            dct["from_r"],
+            dct["from_c"],
+            dct["upto_r"],
+            dct["upto_c"],
+        )
+
+    def adjust_options_post_add_columns(
+        self,
+        cols: list | tuple,
+        to_add: None | dict = None,
+    ) -> None:
         if to_add and "cell_options" in to_add:
-            self.cell_options = {
-                **{(rn, cn if cn < datacn else cn + numcols): t2 for (rn, cn), t2 in self.cell_options.items()},
-                **to_add["cell_options"],
-            }
+            self.cell_options = dict(to_add["cell_options"])
         else:
             self.cell_options = {
-                (rn, cn if cn < datacn else cn + numcols): t2 for (rn, cn), t2 in self.cell_options.items()
+                (r, c if not (num := bisect_right(cols, c)) else c + num): v for (r, c), v in self.cell_options.items()
             }
-        if to_add and "col_options" in to_add:
+
+        if to_add and "column_options" in to_add:
+            self.col_options = dict(to_add["column_options"])
+        else:
             self.col_options = {
-                **{cn if cn < datacn else cn + numcols: t for cn, t in self.col_options.items()},
-                **to_add["col_options"],
+                c if not (num := bisect_right(cols, c)) else c + num: v for c, v in self.col_options.items()
             }
-        else:
-            self.col_options = {cn if cn < datacn else cn + numcols: t for cn, t in self.col_options.items()}
+
         if to_add and "CH_cell_options" in to_add:
+            self.CH.cell_options = dict(to_add["CH_cell_options"])
+        else:
             self.CH.cell_options = {
-                **{cn if cn < datacn else cn + numcols: t for cn, t in self.CH.cell_options.items()},
-                **to_add["CH_cell_options"],
+                c if not (num := bisect_right(cols, c)) else c + num: v for c, v in self.CH.cell_options.items()
             }
-        else:
-            self.CH.cell_options = {cn if cn < datacn else cn + numcols: t for cn, t in self.CH.cell_options.items()}
+        # if there are named spans where columns were added
+        # add options to gap which was created by adding columns
+        for name, dct in self.named_spans.items():
+            r1, c1, r2, c2 = self.named_span_coords(dct)
+            if isinstance(c1, int) and isinstance(c2, int):
+                for datacn in cols:
+                    if c1 > datacn:
+                        dct["from_c"] += 1
+                        dct["upto_c"] += 1
+                    elif c1 <= datacn and c2 > datacn:
+                        dct["upto_c"] += 1
+                        # if to_add then it's an undo/redo and don't
+                        # need to create fresh options
+                        if not to_add:
+                            # if rows are none it's a column options dct
+                            if dct["from_r"] is None or dct["upto_r"] is None:
+                                self.parentframe.create_table_kwargs(
+                                    r=None,
+                                    c=datacn,
+                                    type_=dct["type_"],
+                                    **dct["kwargs"],
+                                )
+                            # cells
+                            else:
+                                for rn in range(r1, r2):
+                                    self.parentframe.create_table_kwargs(
+                                        r=rn,
+                                        c=datacn,
+                                        type_=dct["type_"],
+                                        **dct["kwargs"],
+                                    )
+        if to_add and "named_spans" in to_add:
+            self.named_spans = {
+                **self.named_spans,
+                **to_add["named_spans"],
+            }
 
-    def adjust_options_post_add_rows(self, datarn: int, numrows: int, to_add: dict = {}):
+    def adjust_options_post_add_rows(
+        self,
+        rows: list | tuple,
+        to_add: None | dict = None,
+    ) -> None:
         if to_add and "cell_options" in to_add:
-            self.cell_options = {
-                **{(rn if rn < datarn else rn + numrows, cn): t2 for (rn, cn), t2 in self.cell_options.items()},
-                **to_add["cell_options"],
-            }
+            self.cell_options = dict(to_add["cell_options"])
         else:
             self.cell_options = {
-                (rn if rn < datarn else rn + numrows, cn): t2 for (rn, cn), t2 in self.cell_options.items()
+                (r if not (num := bisect_right(rows, r)) else r + num, c): v for (r, c), v in self.cell_options.items()
             }
-        if to_add and "row_options" in to_add:
-            self.row_options = {
-                **{rn if rn < datarn else rn + numrows: t for rn, t in self.row_options.items()},
-                **to_add["row_options"],
-            }
-        else:
-            self.row_options = {rn if rn < datarn else rn + numrows: t for rn, t in self.row_options.items()}
-        if to_add and "RI_cell_options" in to_add:
-            self.RI.cell_options = {
-                **{rn if rn < datarn else rn + numrows: t for rn, t in self.RI.cell_options.items()},
-                **to_add["RI_cell_options"],
-            }
-        else:
-            self.RI.cell_options = {rn if rn < datarn else rn + numrows: t for rn, t in self.RI.cell_options.items()}
 
-    def adjust_options_post_delete_columns(self, datacn: int, numcols: int, to_del: set = set()):
+        if to_add and "row_options" in to_add:
+            self.row_options = dict(to_add["row_options"])
+        else:
+            self.row_options = {
+                r if not (num := bisect_right(rows, r)) else r + num: v for r, v in self.row_options.items()
+            }
+
+        if to_add and "RI_cell_options" in to_add:
+            self.RI.cell_options = dict(to_add["RI_cell_options"])
+        else:
+            self.RI.cell_options = {
+                r if not (num := bisect_right(rows, r)) else r + num: v for r, v in self.RI.cell_options.items()
+            }
+        # if there are named spans where rows were added
+        # add options to gap which was created by adding rows
+        for name, dct in self.named_spans.items():
+            r1, c1, r2, c2 = self.named_span_coords(dct)
+            if isinstance(r1, int) and isinstance(r2, int):
+                for datarn in rows:
+                    if r1 > datarn:
+                        dct["from_r"] += 1
+                        dct["upto_r"] += 1
+                    elif r1 <= datarn and r2 > datarn:
+                        dct["upto_r"] += 1
+                        # if to_add then it's an undo/redo and don't
+                        # need to create fresh options
+                        if not to_add:
+                            # if rows are none it's a row options dct
+                            if dct["from_c"] is None or dct["upto_c"] is None:
+                                self.parentframe.create_table_kwargs(
+                                    r=datarn,
+                                    c=None,
+                                    type_=dct["type_"],
+                                    **dct["kwargs"],
+                                )
+                            # cells
+                            else:
+                                for cn in range(c1, c2):
+                                    self.parentframe.create_table_kwargs(
+                                        r=datarn,
+                                        c=cn,
+                                        type_=dct["type_"],
+                                        **dct["kwargs"],
+                                    )
+        if to_add and "named_spans" in to_add:
+            self.named_spans = {
+                **self.named_spans,
+                **to_add["named_spans"],
+            }
+
+    def adjust_options_post_delete_columns(
+        self,
+        to_del: None | set = None,
+        to_bis: None | list = None,
+        named_spans: None | set = None,
+    ) -> list[int]:
+        if to_del is None:
+            to_del = set()
+        if not to_bis:
+            to_bis = sorted(to_del)
         self.cell_options = {
-            (rn, cn if cn < datacn else cn - numcols): t2
-            for (rn, cn), t2 in self.cell_options.items()
-            if cn not in to_del
+            (
+                r,
+                c if not (num := bisect_left(to_bis, c)) else c - num,
+            ): v
+            for (r, c), v in self.cell_options.items()
+            if c not in to_del
         }
         self.col_options = {
-            cn if cn < datacn else cn - numcols: t for cn, t in self.col_options.items() if cn not in to_del
+            c if not (num := bisect_left(to_bis, c)) else c - num: v
+            for c, v in self.col_options.items()
+            if c not in to_del
         }
         self.CH.cell_options = {
-            cn if cn < datacn else cn - numcols: t for cn, t in self.CH.cell_options.items() if cn not in to_del
+            c if not (num := bisect_left(to_bis, c)) else c - num: v
+            for c, v in self.CH.cell_options.items()
+            if c not in to_del
         }
+        self.del_columns_from_named_spans(
+            to_del=to_del,
+            to_bis=to_bis,
+            named_spans=named_spans,
+        )
+        return to_bis
 
-    def adjust_options_post_delete_rows(self, datarn: int, numrows: int, to_del: set = set()):
+    def del_columns_from_named_spans(
+        self,
+        to_del: set,
+        to_bis: list,
+        named_spans: None | set = None,
+    ) -> None:
+        if named_spans is None:
+            named_spans = self.named_spans_to_del(
+                to_del=to_del,
+                axis="c",
+            )
+        for name in named_spans:
+            del self.named_spans[name]
+        for name, dct in self.named_spans.items():
+            r1, c1, r2, c2 = self.named_span_coords(dct)
+            for c in to_bis:
+                if isinstance(c1, int) and isinstance(c2, int):
+                    if c1 > c:
+                        dct["from_c"] -= 1
+                        dct["upto_c"] -= 1
+                    elif c1 <= c and c2 > c:
+                        dct["upto_c"] -= 1
+
+    def adjust_options_post_delete_rows(
+        self,
+        to_del: None | set = None,
+        to_bis: None | list = None,
+        named_spans: None | set = None,
+    ) -> list[int]:
+        if to_del is None:
+            to_del = set()
+        if not to_bis:
+            to_bis = sorted(to_del)
         self.cell_options = {
-            (rn if rn < datarn else rn - numrows, cn): t2
-            for (rn, cn), t2 in self.cell_options.items()
-            if rn not in to_del
+            (
+                r if not (num := bisect_left(to_bis, r)) else r - num,
+                c,
+            ): v
+            for (r, c), v in self.cell_options.items()
+            if r not in to_del
         }
         self.row_options = {
-            rn if rn < datarn else rn - numrows: t for rn, t in self.row_options.items() if rn not in to_del
+            r if not (num := bisect_left(to_bis, r)) else r - num: v
+            for r, v in self.row_options.items()
+            if r not in to_del
         }
         self.RI.cell_options = {
-            rn if rn < datarn else rn - numrows: t for rn, t in self.RI.cell_options.items() if rn not in to_del
+            r if not (num := bisect_left(to_bis, r)) else r - num: v
+            for r, v in self.RI.cell_options.items()
+            if r not in to_del
         }
+        self.del_rows_from_named_spans(
+            to_del=to_del,
+            to_bis=to_bis,
+            named_spans=named_spans,
+        )
+        return to_bis
+
+    def del_rows_from_named_spans(
+        self,
+        to_del: set,
+        to_bis: list,
+        named_spans: None | set = None,
+    ) -> None:
+        if named_spans is None:
+            named_spans = self.named_spans_to_del(to_del=to_del)
+        for name in named_spans:
+            del self.named_spans[name]
+        for name, dct in self.named_spans.items():
+            r1, c1, r2, c2 = self.named_span_coords(dct)
+            for r in to_bis:
+                if isinstance(r1, int) and isinstance(r2, int):
+                    if r1 > r:
+                        dct["from_r"] -= 1
+                        dct["upto_r"] -= 1
+                    elif r1 <= r and r2 > r:
+                        dct["upto_r"] -= 1
+
+    def named_spans_to_del(
+        self,
+        to_del: set,
+        axis: str = "r",
+    ) -> set:
+        spans_to_del = set()
+        for name, dct in self.named_spans.items():
+            r1, c1, r2, c2 = self.named_span_coords(dct)
+            if axis == "r":
+                if isinstance(r1, int) and isinstance(r2, int) and all(r in to_del for r in range(r1, r2)):
+                    spans_to_del.add(name)
+            elif axis == "c":
+                if isinstance(c1, int) and isinstance(c2, int) and all(c in to_del for c in range(c1, c2)):
+                    spans_to_del.add(name)
+        return spans_to_del
 
     def add_columns(
         self,
-        data_ins_col: int,
-        displayed_ins_col: int,
-        numcols: int,
+        columns: dict,
+        header: dict,
+        column_widths: dict,
         event_data: dict,
-        options_to_add: Union[None, dict] = None,
-        rowlen: Union[int, None] = None,
+        displayed_columns: None | list[int, ...] = None,
+        options_to_add: None | dict = None,
+        create_selections: bool = True,
     ) -> dict:
         if options_to_add is None:
             options_to_add = {}
-        if rowlen is None:
-            rowlen = self.equalize_data_row_lengths(include_header=False)
         saved_displayed_columns = list(self.displayed_columns)
-        if not self.all_columns_displayed:
-            if displayed_ins_col == len(self.col_positions) - 1:
-                self.displayed_columns += list(range(rowlen, rowlen + numcols))
-            else:
-                if displayed_ins_col > len(self.displayed_columns) - 1:
-                    adj_ins = displayed_ins_col - 1
-                else:
-                    adj_ins = displayed_ins_col
-                part1 = self.displayed_columns[:adj_ins]
-                part2 = list(
-                    range(
-                        self.displayed_columns[adj_ins],
-                        self.displayed_columns[adj_ins] + numcols + 1,
-                    )
-                )
-                part3 = (
-                    []
-                    if displayed_ins_col > len(self.displayed_columns) - 1
-                    else [cn + numcols for cn in islice(self.displayed_columns, adj_ins + 1, None)]
-                )
-                self.displayed_columns = part1 + part2 + part3
-        self.insert_col_positions(idx=displayed_ins_col, widths=numcols, deselect_all=True)
-        self.adjust_options_post_add_columns(data_ins_col, numcols, options_to_add)
-        self.CH.fix_header()
-        if self._headers and isinstance(self._headers, list):
-            if data_ins_col >= len(self._headers):
-                self.CH.fix_header(
-                    datacn=data_ins_col,
-                    fix_values=(data_ins_col, data_ins_col + numcols),
-                )
-            else:
-                self._headers[data_ins_col:data_ins_col] = self.CH.get_empty_header_seq(
-                    end=data_ins_col + numcols, start=data_ins_col, c_ops=False
-                )
-        if self.row_positions == [0] and not self.data:
+        if isinstance(displayed_columns, list):
+            self.displayed_columns = displayed_columns
+        elif not self.all_columns_displayed:
+            # push displayed indexes by one for every inserted column
+            self.displayed_columns.sort()
+            # highest index is first in columns
+            up_to = len(self.displayed_columns)
+            for cn in columns:
+                self.displayed_columns.insert((last_ins := bisect_left(self.displayed_columns, cn)), cn)
+                self.displayed_columns[last_ins + 1 : up_to] = [
+                    i + 1 for i in islice(self.displayed_columns, last_ins + 1, up_to)
+                ]
+                up_to = last_ins
+        # there are column widths to be added but no row positions
+        if column_widths and self.row_positions == [0]:
             self.insert_row_position(idx="end", height=int(self.min_row_height), deselect_all=False)
-            self.data.append(self.get_empty_row_seq(0, end=data_ins_col + numcols, start=data_ins_col, c_ops=False))
-        else:
-            end = data_ins_col + numcols
-            for rn in range(len(self.data)):
-                self.data[rn][data_ins_col:data_ins_col] = self.get_empty_row_seq(rn, end, data_ins_col, c_ops=False)
-        self.create_selection_box(
-            0,
-            displayed_ins_col,
-            len(self.row_positions) - 1,
-            displayed_ins_col + numcols,
-            "columns",
+        cws = self.get_column_widths()
+        for cn, w in reversed(column_widths.items()):
+            cws.insert(cn, w)
+        self.set_col_positions(itr=cws)
+        for cn, rowdict in reversed(columns.items()):
+            for rn, v in rowdict.items():
+                if len(self.data) >= rn and len(self.data[rn]) >= cn:
+                    self.data[rn].insert(cn, v)
+        if isinstance(self._headers, list):
+            for cn, v in reversed(header.items()):
+                if len(self._headers) >= cn:
+                    self._headers.insert(cn, v)
+        self.adjust_options_post_add_columns(
+            cols=tuple(reversed(columns)),
+            to_add=options_to_add,
         )
+        if create_selections:
+            self.deselect("all")
+            for chunk in consecutive_chunks(tuple(reversed(column_widths))):
+                self.create_selection_box(
+                    0,
+                    chunk[0],
+                    len(self.row_positions) - 1,
+                    chunk[-1] + 1,
+                    "columns",
+                    run_binding=True,
+                )
         event_data["added"]["columns"] = {
-            "data_index": data_ins_col,
-            "displayed_index": displayed_ins_col,
-            "num": numcols,
-            "displayed": saved_displayed_columns,
+            "table": columns,
+            "header": header,
+            "column_widths": column_widths,
+            "displayed_columns": saved_displayed_columns,
         }
         return event_data
 
-    def add_columns_rc(self, event=None):
+    def rc_add_columns(self, event=None):
         rowlen = self.equalize_data_row_lengths(include_header=False)
-        if self.anything_selected(exclude_rows=True, exclude_cells=True):
-            selcols = self.get_selected_cols()
+        selcols = sorted(self.get_selected_cols())
+        if (
+            selcols
+            and isinstance(self.CH.popup_menu_loc, int)
+            and selcols[0] <= self.CH.popup_menu_loc
+            and selcols[-1] >= self.CH.popup_menu_loc
+        ):
+            selcols = get_seq_without_gaps_at_index(selcols, self.CH.popup_menu_loc)
             numcols = len(selcols)
-            displayed_ins_col = min(selcols) if event == "left" else max(selcols) + 1
+            displayed_ins_col = selcols[0] if event == "left" else selcols[-1] + 1
             if self.all_columns_displayed:
                 data_ins_col = int(displayed_ins_col)
             else:
                 if displayed_ins_col == len(self.col_positions) - 1:
                     data_ins_col = rowlen
                 else:
-                    try:
+                    if len(self.displayed_columns) > displayed_ins_col:
                         data_ins_col = int(self.displayed_columns[displayed_ins_col])
-                    except Exception:
-                        data_ins_col = int(self.displayed_columns[displayed_ins_col - 1])
+                    else:
+                        data_ins_col = int(self.displayed_columns[-1])
         else:
             numcols = 1
             displayed_ins_col = len(self.col_positions) - 1
@@ -3984,105 +4223,148 @@ class MainTable(tk.Canvas):
             except Exception:
                 return
         event_data = self.add_columns(
-            data_ins_col=data_ins_col,
-            displayed_ins_col=displayed_ins_col,
-            numcols=numcols,
+            *self.get_args_for_add_columns(data_ins_col, displayed_ins_col, numcols),
             event_data=event_data,
-            rowlen=rowlen,
         )
         if self.undo_enabled:
-            self.undo_stack.append(zlib.compress(pickle.dumps(event_data)))
+            self.undo_stack.append(ev_stack_dict(event_data))
         self.refresh()
         if self.extra_end_insert_cols_rc_func is not None:
             self.extra_end_insert_cols_rc_func({**event_data, **{"eventname": "end_add_columns"}})
         self.sheet_modified(event_data)
 
+    def get_args_for_add_columns(
+        self,
+        data_ins_col: int,
+        displayed_ins_col: int,
+        numcols: int,
+        columns: list | None = None,
+        widths: list | None = None,
+        headers: bool = False,
+    ) -> tuple[dict, dict, dict]:
+        if columns is None:
+            columns = {
+                datacn: {
+                    datarn: self.get_value_for_empty_cell(datarn, datacn, c_ops=False)
+                    for datarn in range(len(self.data))
+                }
+                for datacn in reversed(range(data_ins_col, data_ins_col + numcols))
+            }
+        else:
+            if headers:
+                start = 1
+            else:
+                start = 0
+            columns = {
+                datacn: {datarn: v for datarn, v in enumerate(islice(column, start, None))}
+                for datacn, column in zip(reversed(range(data_ins_col, data_ins_col + numcols)), reversed(columns))
+            }
+        if isinstance(self._headers, list):
+            if headers:
+                headers = {
+                    datacn: v
+                    for datacn, v in zip(reversed(range(data_ins_col, data_ins_col + numcols)), reversed(headers))
+                }
+            else:
+                headers = {
+                    datacn: self.CH.get_value_for_empty_cell(datacn, c_ops=False)
+                    for datacn in reversed(range(data_ins_col, data_ins_col + numcols))
+                }
+        else:
+            headers = {}
+        if widths is None:
+            widths = {
+                c: self.default_column_width for c in reversed(range(displayed_ins_col, displayed_ins_col + numcols))
+            }
+        else:
+            widths = {
+                c: width
+                for c, width in zip(reversed(range(displayed_ins_col, displayed_ins_col + numcols)), reversed(widths))
+            }
+        return columns, headers, widths
+
     def add_rows(
         self,
-        data_ins_row: int,
-        displayed_ins_row: int,
-        numrows: int,
+        rows: dict,
+        index: dict,
+        row_heights: dict,
         event_data: dict,
-        options_to_add: Union[None, dict] = None,
+        displayed_rows: None | list[int, ...] = None,
+        options_to_add: None | dict = None,
     ) -> dict:
         if options_to_add is None:
-            options_to_add = None
+            options_to_add = {}
         saved_displayed_rows = list(self.displayed_rows)
-        datalen = len(self.data)
-        if not self.all_rows_displayed:
-            if displayed_ins_row == len(self.row_positions) - 1:
-                self.displayed_rows += list(range(datalen, datalen + numrows))
-            else:
-                if displayed_ins_row > len(self.displayed_rows) - 1:
-                    adj_ins = displayed_ins_row - 1
-                else:
-                    adj_ins = displayed_ins_row
-                part1 = self.displayed_rows[:adj_ins]
-                part2 = list(
-                    range(
-                        self.displayed_rows[adj_ins],
-                        self.displayed_rows[adj_ins] + numrows + 1,
-                    )
-                )
-                part3 = (
-                    []
-                    if displayed_ins_row > len(self.displayed_rows) - 1
-                    else [rn + numrows for rn in islice(self.displayed_rows, adj_ins + 1, None)]
-                )
-                self.displayed_rows = part1 + part2 + part3
-        self.insert_row_positions(idx=displayed_ins_row, heights=numrows, deselect_all=True)
-        self.adjust_options_post_add_rows(data_ins_row, numrows, options_to_add)
-        self.RI.fix_index()
-        if self._row_index and isinstance(self._row_index, list):
-            if data_ins_row >= len(self._row_index):
-                self.RI.fix_index(
-                    datarn=data_ins_row,
-                    fix_values=(data_ins_row, data_ins_row + numrows),
-                )
-            else:
-                self._row_index[data_ins_row:data_ins_row] = self.RI.get_empty_index_seq(
-                    data_ins_row + numrows, data_ins_row, r_ops=False
-                )
-        if self.col_positions == [0] and not self.data:
-            self.insert_col_position(idx="end", width=None, deselect_all=False)
-            self.data.append(self.get_empty_row_seq(0, end=data_ins_row + numrows, start=data_ins_row, r_ops=False))
-        else:
-            total_data_cols = self.total_data_cols()
-            self.data[data_ins_row:data_ins_row] = [
-                self.get_empty_row_seq(rn, total_data_cols, r_ops=False)
-                for rn in range(data_ins_row, data_ins_row + numrows)
-            ]
-        self.create_selection_box(
-            displayed_ins_row,
-            0,
-            displayed_ins_row + numrows,
-            len(self.col_positions) - 1,
-            "rows",
+        if isinstance(displayed_rows, list):
+            self.displayed_rows = displayed_rows
+        elif not self.all_rows_displayed:
+            # push displayed indexes by one for every inserted column
+            self.displayed_rows.sort()
+            # highest index is first in rows
+            up_to = len(self.displayed_rows)
+            for rn in rows:
+                self.displayed_rows.insert((last_ins := bisect_left(self.displayed_rows, rn)), rn)
+                self.displayed_rows[last_ins + 1 : up_to] = [
+                    i + 1 for i in islice(self.displayed_rows, last_ins + 1, up_to)
+                ]
+                up_to = last_ins
+        # there are column widths to be added but no row positions
+        if row_heights and self.col_positions == [0]:
+            self.insert_col_position(idx="end", width=int(self.min_column_width), deselect_all=False)
+        rhs = self.get_row_heights()
+        for rn, h in reversed(row_heights.items()):
+            rhs.insert(rn, h)
+        self.set_row_positions(itr=rhs)
+        for rn, row in reversed(rows.items()):
+            self.data.insert(rn, row)
+        if isinstance(self.row_index, list):
+            for rn, v in reversed(index.items()):
+                if len(self.row_index) >= rn:
+                    self._row_index.insert(rn, v)
+        self.adjust_options_post_add_rows(
+            rows=tuple(reversed(rows)),
+            to_add=options_to_add,
         )
+        self.deselect("all")
+        for chunk in consecutive_chunks(tuple(reversed(row_heights))):
+            self.create_selection_box(
+                chunk[0],
+                0,
+                chunk[-1] + 1,
+                len(self.col_positions) - 1,
+                "rows",
+                run_binding=True,
+            )
         event_data["added"]["rows"] = {
-            "data_index": data_ins_row,
-            "displayed_index": displayed_ins_row,
-            "num": numrows,
-            "displayed": saved_displayed_rows,
+            "table": rows,
+            "index": index,
+            "row_heights": row_heights,
+            "displayed_rows": saved_displayed_rows,
         }
         return event_data
 
-    def add_rows_rc(self, event=None):
-        if self.anything_selected(exclude_columns=True, exclude_cells=True):
-            selrows = self.get_selected_rows()
+    def rc_add_rows(self, event=None):
+        total_data_rows = self.total_data_rows()
+        selrows = sorted(self.get_selected_rows())
+        if (
+            selrows
+            and isinstance(self.RI.popup_menu_loc, int)
+            and selrows[0] <= self.RI.popup_menu_loc
+            and selrows[-1] >= self.RI.popup_menu_loc
+        ):
+            selrows = get_seq_without_gaps_at_index(selrows, self.RI.popup_menu_loc)
             numrows = len(selrows)
-            displayed_ins_row = min(selrows) if event == "above" else max(selrows) + 1
+            displayed_ins_row = selrows[0] if event == "above" else selrows[-1] + 1
             if self.all_rows_displayed:
                 data_ins_row = int(displayed_ins_row)
             else:
                 if displayed_ins_row == len(self.row_positions) - 1:
-                    datalen = len(self.data)
-                    data_ins_row = datalen
+                    data_ins_row = total_data_rows
                 else:
-                    try:
+                    if len(self.displayed_rows) > displayed_ins_row:
                         data_ins_row = int(self.displayed_rows[displayed_ins_row])
-                    except Exception:
-                        data_ins_row = int(self.displayed_rows[displayed_ins_row - 1])
+                    else:
+                        data_ins_row = int(self.displayed_rows[-1])
         else:
             numrows = 1
             displayed_ins_row = len(self.row_positions) - 1
@@ -4103,29 +4385,54 @@ class MainTable(tk.Canvas):
             except Exception:
                 return
         event_data = self.add_rows(
-            data_ins_row=data_ins_row, displayed_ins_row=displayed_ins_row, numrows=numrows, event_data=event_data
+            *self.get_args_for_add_rows(data_ins_row, displayed_ins_row, numrows),
+            event_data=event_data,
         )
         if self.undo_enabled:
-            self.undo_stack.append(zlib.compress(pickle.dumps(event_data)))
+            self.undo_stack.append(ev_stack_dict(event_data))
         self.refresh()
         if self.extra_end_insert_rows_rc_func is not None:
             self.extra_end_insert_rows_rc_func({**event_data, **{"eventname": "end_add_rows"}})
         self.sheet_modified(event_data)
 
+    def get_args_for_add_rows(
+        self,
+        data_ins_row: int,
+        displayed_ins_row: int,
+        numrows: int,
+    ) -> tuple:
+        total_data_cols = self.total_data_cols()
+        rows = {
+            r: [self.get_value_for_empty_cell(r, c, c_ops=False) for c in range(total_data_cols)]
+            for r in reversed(range(data_ins_row, data_ins_row + numrows))
+        }
+        if isinstance(self._row_index, list):
+            index = {
+                r: self.RI.get_value_for_empty_cell(r, r_ops=False)
+                for r in reversed(range(data_ins_row, data_ins_row + numrows))
+            }
+        else:
+            index = {}
+        row_heights = {
+            r: self.default_row_height[1] for r in reversed(range(displayed_ins_row, displayed_ins_row + numrows))
+        }
+        return rows, index, row_heights
+
     def delete_columns(self, seld_cols: list, event_data: dict) -> dict:
-        seldmax = seld_cols[-1] if self.all_columns_displayed else self.displayed_columns[seld_cols[-1]]
-        seldset = set(seld_cols) if self.all_columns_displayed else set(self.displayed_columns[c] for c in seld_cols)
-        event_data["deleted"]["old_displayed_columns"] = (
+        event_data["deleted"]["displayed_columns"] = (
             list(self.displayed_columns) if not isinstance(self.displayed_columns, int) else int(self.displayed_columns)
         )
-        event_data["deleted"]["options"] = {
-            "cell_options": {k: v for k, v in self.cell_options.items() if k[1] in seldset},
-            "column_options": {k: v for k, v in self.col_options.items() if k in seldset},
-            "CH_cell_options": {k: v for k, v in self.CH.cell_options.items() if k in seldset},
-        }
+        event_data["deleted"]["options"] = pickle_obj(
+            {
+                "cell_options": self.cell_options,
+                "column_options": self.col_options,
+                "CH_cell_options": self.CH.cell_options,
+                "named_spans": self.named_spans,
+            }
+        )
         for c in reversed(seld_cols):
             event_data["deleted"]["column_widths"][c] = self.col_positions[c + 1] - self.col_positions[c]
-            datacn = c if self.all_columns_displayed else self.displayed_columns[c]
+            datacn = self.datacn(c)
             for rn in range(len(self.data)):
                 if datacn not in event_data["deleted"]["columns"]:
                     event_data["deleted"]["columns"][datacn] = {}
@@ -4137,19 +4444,26 @@ class MainTable(tk.Canvas):
                 event_data["deleted"]["header"][datacn] = self._headers.pop(datacn)
             except Exception:
                 continue
-        for c in reversed(seld_cols):
-            self.del_col_position(c, deselect_all=False)
-        self.adjust_options_post_delete_columns(seldmax, len(seld_cols), to_del=seldset)
+        self.set_col_positions(itr=(width for c, width in enumerate(self.gen_column_widths()) if c not in seld_cols))
+        data_seld = seld_cols if self.all_columns_displayed else [self.displayed_columns[c] for c in seld_cols]
+        data_seldset = set(data_seld)
+        self.adjust_options_post_delete_columns(
+            to_del=data_seldset,
+            to_bis=data_seld,
+            named_spans=self.named_spans_to_del(to_del=data_seldset, axis="c"),
+        )
         if not self.all_columns_displayed:
-            self.displayed_columns = [c for c in self.displayed_columns if c not in seldset]
-            for c in sorted(seldset):
+            self.displayed_columns = [c for c in self.displayed_columns if c not in data_seldset]
+            for c in data_seld:
                 self.displayed_columns = [dc if c > dc else dc - 1 for dc in self.displayed_columns]
         return event_data
 
-    def del_cols_rc(self, event=None):
+    def rc_delete_columns(self, event=None):
         seld_cols = sorted(self.get_selected_cols())
-        if not seld_cols:
+        curr = self.currently_selected()
+        if not seld_cols or not curr:
             return
+        self.mouseclick_outside_editor_or_dropdown_all_canvases()
         event_data = event_dict(
             name="delete_columns",
             sheet=self.parentframe.name,
@@ -4163,44 +4477,52 @@ class MainTable(tk.Canvas):
                 return
         event_data = self.delete_columns(seld_cols, event_data)
         if self.undo_enabled:
-            self.undo_stack.append(event_data)
-        self.deselect("allcols", redraw=True)
+            self.undo_stack.append(ev_stack_dict(event_data))
+        self.deselect("all")
         if self.extra_end_del_cols_rc_func is not None:
             self.extra_end_del_cols_rc_func({**event_data, **{"eventname": "end_delete_columns"}})
         self.sheet_modified(event_data)
 
     def delete_rows(self, seld_rows: list, event_data: dict) -> dict:
-        seldmax = seld_rows[-1] if self.all_rows_displayed else self.displayed_rows[seld_rows[-1]]
-        seldset = set(seld_rows) if self.all_rows_displayed else set(self.displayed_rows[r] for r in seld_rows)
-        event_data["deleted"]["old_displayed_rows"] = (
+        event_data["deleted"]["displayed_rows"] = (
             list(self.displayed_rows) if not isinstance(self.displayed_rows, int) else int(self.displayed_rows)
         )
-        event_data["deleted"]["options"] = {
-            "cell_options": {k: v for k, v in self.cell_options.items() if k[0] in seldset},
-            "row_options": {k: v for k, v in self.row_options.items() if k in seldset},
-            "RI_cell_options": {k: v for k, v in self.RI.cell_options.items() if k in seldset},
-        }
+        event_data["deleted"]["options"] = pickle_obj(
+            {
+                "cell_options": self.cell_options,
+                "row_options": self.row_options,
+                "RI_cell_options": self.RI.cell_options,
+                "named_spans": self.named_spans,
+            }
+        )
         for r in reversed(seld_rows):
             event_data["deleted"]["row_heights"][r] = self.row_positions[r + 1] - self.row_positions[r]
-            datarn = r if self.all_rows_displayed else self.displayed_rows[r]
+            datarn = self.datarn(r)
             event_data["deleted"]["rows"][datarn] = self.data.pop(datarn)
             try:
                 event_data["deleted"]["index"][datarn] = self._row_index.pop(datarn)
             except Exception:
                 continue
-        for r in reversed(seld_rows):
-            self.del_row_position(r, deselect_all=False)
-        self.adjust_options_post_delete_rows(seldmax, len(seld_rows), to_del=seldset)
+        self.set_row_positions(itr=(height for r, height in enumerate(self.gen_row_heights()) if r not in seld_rows))
+        data_seld = seld_rows if self.all_rows_displayed else [self.displayed_rows[r] for r in seld_rows]
+        data_seldset = set(data_seld)
+        self.adjust_options_post_delete_rows(
+            to_del=data_seldset,
+            to_bis=data_seld,
+            named_spans=self.named_spans_to_del(to_del=data_seldset, axis="r"),
+        )
         if not self.all_rows_displayed:
-            self.displayed_rows = [r for r in self.displayed_rows if r not in seldset]
-            for r in sorted(seldset):
+            self.displayed_rows = [r for r in self.displayed_rows if r not in data_seldset]
+            for r in data_seld:
                 self.displayed_rows = [dr if r > dr else dr - 1 for dr in self.displayed_rows]
         return event_data
 
-    def del_rows_rc(self, event=None):
+    def rc_delete_rows(self, event=None):
         seld_rows = sorted(self.get_selected_rows())
-        if not seld_rows:
+        curr = self.currently_selected()
+        if not seld_rows or not curr:
             return
+        self.mouseclick_outside_editor_or_dropdown_all_canvases()
         event_data = event_dict(
             name="delete_rows",
             sheet=self.parentframe.name,
@@ -4214,8 +4536,8 @@ class MainTable(tk.Canvas):
                 return
         event_data = self.delete_rows(seld_rows, event_data)
         if self.undo_enabled:
-            self.undo_stack.append(event_data)
-        self.deselect("allrows", redraw=True)
+            self.undo_stack.append(ev_stack_dict(event_data))
+        self.deselect("all")
         if self.extra_end_del_rows_rc_func is not None:
             self.extra_end_del_rows_rc_func({**event_data, **{"eventname": "end_delete_rows"}})
         self.sheet_modified(event_data)
@@ -4252,11 +4574,11 @@ class MainTable(tk.Canvas):
 
     def display_rows(
         self,
-        rows: Union[int, list, None] = None,
-        all_rows_displayed: Union[bool, None] = None,
+        rows: int | list | None = None,
+        all_rows_displayed: bool | None = None,
         reset_row_positions: bool = True,
         deselect_all: bool = True,
-    ) -> Union[list, None]:
+    ) -> list | None:
         if rows is None and all_rows_displayed is None:
             return list(range(self.total_data_rows())) if self.all_rows_displayed else self.displayed_rows
         total_data_rows = None
@@ -4278,11 +4600,11 @@ class MainTable(tk.Canvas):
 
     def display_columns(
         self,
-        columns: Union[int, list, None] = None,
-        all_columns_displayed: Union[bool, None] = None,
+        columns: int | list | None = None,
+        all_columns_displayed: bool | None = None,
         reset_col_positions: bool = True,
         deselect_all: bool = True,
-    ) -> Union[list, None]:
+    ) -> list | None:
         if columns is None and all_columns_displayed is None:
             return list(range(self.total_data_cols())) if self.all_columns_displayed else self.displayed_columns
         total_data_cols = None
@@ -4306,12 +4628,12 @@ class MainTable(tk.Canvas):
 
     def headers(
         self,
-        newheaders: Any = None,
-        index: Union[int, None] = None,
+        newheaders: object = None,
+        index: int | None = None,
         reset_col_positions: bool = False,
         show_headers_if_not_sheet: bool = True,
         redraw: bool = False,
-    ) -> Any:
+    ) -> object:
         if newheaders is not None:
             if isinstance(newheaders, (list, tuple)):
                 self._headers = list(newheaders) if isinstance(newheaders, tuple) else newheaders
@@ -4340,16 +4662,9 @@ class MainTable(tk.Canvas):
             ):
                 colpos = int(self.default_column_width)
                 if self.all_columns_displayed:
-                    self.col_positions = list(accumulate(chain([0], (colpos for c in range(len(self._headers))))))
+                    self.set_col_positions(itr=(colpos for c in range(len(self._headers))))
                 else:
-                    self.col_positions = list(
-                        accumulate(
-                            chain(
-                                [0],
-                                (colpos for c in range(len(self.displayed_columns))),
-                            )
-                        )
-                    )
+                    self.set_col_positions(itr=(colpos for c in range(len(self.displayed_columns))))
             if redraw:
                 self.refresh()
         else:
@@ -4360,12 +4675,12 @@ class MainTable(tk.Canvas):
 
     def row_index(
         self,
-        newindex: Any = None,
-        index: Union[int, None] = None,
+        newindex: object = None,
+        index: int | None = None,
         reset_row_positions: bool = False,
         show_index_if_not_sheet: bool = True,
         redraw: bool = False,
-    ) -> Any:
+    ) -> object:
         if newindex is not None:
             if not self._row_index and not isinstance(self._row_index, int):
                 self.RI.set_width(self.default_index_width, set_TL=True)
@@ -4429,7 +4744,7 @@ class MainTable(tk.Canvas):
         d_total = len(self.data)
         return i_total if i_total > d_total else d_total
 
-    def data_dimensions(self, total_rows: Union[int, None] = None, total_columns: Union[int, None] = None):
+    def data_dimensions(self, total_rows: int | None = None, total_columns: int | None = None):
         if total_rows is None and total_columns is None:
             return self.total_data_rows(), self.total_data_cols()
         if total_rows is not None:
@@ -4441,21 +4756,32 @@ class MainTable(tk.Canvas):
         if total_columns is not None:
             self.data[:] = [
                 r[:total_columns]
-                if len(r) > total_columns
-                else r + self.get_empty_row_seq(rn, end=len(r) + total_columns - len(r), start=len(r))
+                if (lnr := len(r)) > total_columns
+                else r + self.get_empty_row_seq(rn, end=lnr + total_columns - lnr, start=lnr)
                 for rn, r in enumerate(self.data)
             ]
 
-    def equalize_data_row_lengths(self, include_header: bool = False, total_columns: bool = None) -> int:
-        total_columns = self.total_data_cols(include_header=include_header) if total_columns is None else total_columns
-        if include_header and total_columns > len(self._headers):
-            self.CH.fix_header(total_columns)
-        for rn, r in enumerate(self.data):
-            if total_columns > len(r):
-                self.data[rn] += self.get_empty_row_seq(rn, end=len(r) + total_columns - len(r), start=len(r))
-        return total_columns
+    def equalize_data_row_lengths(
+        self,
+        include_header: bool = False,
+        total_data_cols: int | None = None,
+        at_least_cols: int | None = None,
+    ) -> int:
+        if not isinstance(total_data_cols, int):
+            total_data_cols = self.total_data_cols(include_header=include_header)
+        if isinstance(at_least_cols, int) and at_least_cols > total_data_cols:
+            total_data_cols = at_least_cols
+        if include_header and total_data_cols > len(self._headers):
+            self.CH.fix_header(total_data_cols)
+        self.data[:] = [
+            r.extend(self.get_empty_row_seq(rn, end=lnr + total_data_cols - lnr, start=lnr))
+            if total_data_cols > (lnr := len(r))
+            else r
+            for rn, r in enumerate(self.data)
+        ]
+        return total_data_cols
 
-    def get_canvas_visible_area(self) -> tuple[int, float]:
+    def get_canvas_visible_area(self) -> tuple[float, float, float, float]:
         return (
             self.canvasx(0),
             self.canvasy(0),
@@ -4463,16 +4789,16 @@ class MainTable(tk.Canvas):
             self.canvasy(self.winfo_height()),
         )
 
-    def get_visible_rows(self, y1: Union[int, float], y2: Union[int, float]) -> tuple[int]:
-        start_row = bisect.bisect_left(self.row_positions, y1)
-        end_row = bisect.bisect_right(self.row_positions, y2)
+    def get_visible_rows(self, y1: int | float, y2: int | float) -> tuple[int, int]:
+        start_row = bisect_left(self.row_positions, y1)
+        end_row = bisect_right(self.row_positions, y2)
         if not y2 >= self.row_positions[-1]:
             end_row += 1
         return start_row, end_row
 
-    def get_visible_columns(self, x1: Union[int, float], x2: Union[int, float]) -> tuple[int]:
-        start_col = bisect.bisect_left(self.col_positions, x1)
-        end_col = bisect.bisect_right(self.col_positions, x2)
+    def get_visible_columns(self, x1: int | float, x2: int | float) -> tuple[int, int]:
+        start_col = bisect_left(self.col_positions, x1)
+        end_col = bisect_right(self.col_positions, x2)
         if not x2 >= self.col_positions[-1]:
             end_col += 1
         return start_col, end_col
@@ -4481,17 +4807,17 @@ class MainTable(tk.Canvas):
         self,
         r: int,
         c: int,
-        fc: Union[int, float],
-        fr: Union[int, float],
-        sc: Union[int, float],
-        sr: Union[int, float],
-        c_2_: tuple[int],
-        c_3_: tuple[int],
-        c_4_: tuple[int],
+        fc: int | float,
+        fr: int | float,
+        sc: int | float,
+        sr: int | float,
+        c_2_: tuple[int, int, int],
+        c_3_: tuple[int, int, int],
+        c_4_: tuple[int, int, int],
         selections: dict,
         datarn: int,
         datacn: int,
-        can_width: Union[int, None],
+        can_width: int | None,
     ) -> str:
         redrawn = False
         kwargs = self.get_cell_kwargs(datarn, datacn, key="highlight")
@@ -4664,13 +4990,13 @@ class MainTable(tk.Canvas):
 
     def redraw_checkbox(
         self,
-        x1: Union[int, float],
-        y1: Union[int, float],
-        x2: Union[int, float],
-        y2: Union[int, float],
+        x1: int | float,
+        y1: int | float,
+        x2: int | float,
+        y2: int | float,
         fill: str,
         outline: str,
-        tag: Union[str, tuple],
+        tag: str | tuple,
         draw_check: bool = False,
     ) -> None:
         points = get_checkbox_points(x1, y1, x2, y2)
@@ -4704,7 +5030,10 @@ class MainTable(tk.Canvas):
             self.disp_checkbox[t] = True
 
     def main_table_redraw_grid_and_text(
-        self, redraw_header: bool = False, redraw_row_index: bool = False, redraw_table: bool = True
+        self,
+        redraw_header: bool = False,
+        redraw_row_index: bool = False,
+        redraw_table: bool = True,
     ) -> bool:
         try:
             can_width = self.winfo_width()
@@ -4714,11 +5043,15 @@ class MainTable(tk.Canvas):
         row_pos_exists = self.row_positions != [0] and self.row_positions
         col_pos_exists = self.col_positions != [0] and self.col_positions
         resized_cols = False
-        resized_rows = False  # noqa: F841
+        resized_rows = False
         if self.auto_resize_columns and self.allow_auto_resize_columns and col_pos_exists:
             max_w = int(can_width)
             max_w -= self.empty_horizontal
-            if (len(self.col_positions) - 1) * self.auto_resize_columns < max_w:
+            if self.auto_resize_columns < self.min_column_width:
+                min_column_width = self.column_width
+            else:
+                min_column_width = self.auto_resize_columns
+            if (len(self.col_positions) - 1) * min_column_width < max_w:
                 resized_cols = True
                 change = int((max_w - self.col_positions[-1]) / (len(self.col_positions) - 1))
                 widths = [
@@ -4727,19 +5060,23 @@ class MainTable(tk.Canvas):
                 ]
                 diffs = {}
                 for i, w in enumerate(widths):
-                    if w < self.auto_resize_columns:
-                        diffs[i] = self.auto_resize_columns - w
-                        widths[i] = self.auto_resize_columns
+                    if w < min_column_width:
+                        diffs[i] = min_column_width - w
+                        widths[i] = min_column_width
                 if diffs and len(diffs) < len(widths):
                     change = sum(diffs.values()) / (len(widths) - len(diffs))
                     for i, w in enumerate(widths):
                         if i not in diffs:
                             widths[i] -= change
-                self.col_positions = list(accumulate(chain([0], widths)))
+                self.set_col_positions(itr=widths)
         if self.auto_resize_rows and self.allow_auto_resize_rows and row_pos_exists:
             max_h = int(can_height)
             max_h -= self.empty_vertical
-            if (len(self.row_positions) - 1) * self.auto_resize_rows < max_h:
+            if self.auto_resize_rows < self.min_row_height:
+                min_row_height = self.min_row_height
+            else:
+                min_row_height = self.auto_resize_rows
+            if (len(self.row_positions) - 1) * min_row_height < max_h:
                 resized_rows = True
                 change = int((max_h - self.row_positions[-1]) / (len(self.row_positions) - 1))
                 heights = [
@@ -4748,9 +5085,9 @@ class MainTable(tk.Canvas):
                 ]
                 diffs = {}
                 for i, h in enumerate(heights):
-                    if h < self.auto_resize_rows:
-                        diffs[i] = self.auto_resize_rows - h
-                        heights[i] = self.auto_resize_rows
+                    if h < min_row_height:
+                        diffs[i] = min_row_height - h
+                        heights[i] = min_row_height
                 if diffs and len(diffs) < len(heights):
                     change = sum(diffs.values()) / (len(heights) - len(diffs))
                     for i, h in enumerate(heights):
@@ -4792,7 +5129,7 @@ class MainTable(tk.Canvas):
             )
         )
         scrollpos_bot = self.canvasy(can_height)
-        end_row = bisect.bisect_right(self.row_positions, scrollpos_bot)
+        end_row = bisect_right(self.row_positions, scrollpos_bot)
         if not scrollpos_bot >= self.row_positions[-1]:
             end_row += 1
         if redraw_row_index and self.show_index:
@@ -4801,9 +5138,9 @@ class MainTable(tk.Canvas):
         scrollpos_left = self.canvasx(0)
         scrollpos_top = self.canvasy(0)
         scrollpos_right = self.canvasx(can_width)
-        start_row = bisect.bisect_left(self.row_positions, scrollpos_top)
-        start_col = bisect.bisect_left(self.col_positions, scrollpos_left)
-        end_col = bisect.bisect_right(self.col_positions, scrollpos_right)
+        start_row = bisect_left(self.row_positions, scrollpos_top)
+        start_col = bisect_left(self.col_positions, scrollpos_left)
+        end_col = bisect_right(self.col_positions, scrollpos_right)
         self.row_width_resize_bbox = (
             scrollpos_left,
             scrollpos_top,
@@ -5017,8 +5354,8 @@ class MainTable(tk.Canvas):
                     cleftgridln = self.col_positions[c]
                     crightgridln = self.col_positions[c + 1]
 
-                    datarn = r if self.all_rows_displayed else self.displayed_rows[r]
-                    datacn = c if self.all_columns_displayed else self.displayed_columns[c]
+                    datarn = self.datarn(r)
+                    datacn = self.datacn(c)
 
                     fill, dd_drawn = self.redraw_highlight_get_text_fg(
                         r,
@@ -5311,14 +5648,18 @@ class MainTable(tk.Canvas):
             boxes[tuple(int(e) for e in tags[1].split("_") if e)] = tags[0]
         return boxes
 
-    def reselect_from_get_boxes(self, boxes: dict, curr: tuple = tuple()) -> None:
+    def reselect_from_get_boxes(
+        self,
+        boxes: dict,
+        curr: tuple = tuple(),
+    ) -> None:
         for (r1, c1, r2, c2), v in boxes.items():
             if r2 < len(self.row_positions) and c2 < len(self.col_positions):
-                self.create_selection_box(r1, c1, r2, c2, v)
+                self.create_selection_box(r1, c1, r2, c2, v, run_binding=True)
         if curr:
             self.set_currently_selected(tags=curr.tags)
 
-    def currently_selected(self, get_item: bool = False) -> Union[int, tuple, CurrentlySelectedClass]:
+    def currently_selected(self, get_item: bool = False) -> int | tuple | CurrentlySelectedClass:
         items = self.get_selection_items(cells=False, rows=False, columns=False)
         if not items:
             return tuple()
@@ -5337,7 +5678,7 @@ class MainTable(tk.Canvas):
         if curr:
             self.set_currently_selected(r=r, c=c, item=self.to_item_int(curr.tags), tags=curr.tags)
 
-    def set_currently_selected(self, r: Union[int, None] = None, c: Union[int, None] = None, **kwargs) -> None:
+    def set_currently_selected(self, r: int | None = None, c: int | None = None, **kwargs) -> None:
         # if r and c are provided it will attempt to
         # put currently box at that coordinate
         # _________
@@ -5420,7 +5761,7 @@ class MainTable(tk.Canvas):
         self.RI.delete(f"iid_{item}")
         self.CH.delete(f"iid_{item}")
 
-    def get_box_from_item(self, item: int, get_dict: bool = False) -> Union[dict, tuple]:
+    def get_box_from_item(self, item: int, get_dict: bool = False) -> dict | tuple:
         if item is None or item is True:
             return tuple()
         # it's in the form of an item tag f"iid_{item}"
@@ -5510,7 +5851,8 @@ class MainTable(tk.Canvas):
         c2: int,
         type_: str = "cells",
         state: str = "normal",
-        set_current: Union[bool, tuple[int]] = True,
+        set_current: bool | tuple[int, int] = True,
+        run_binding: bool = False,
     ) -> int:
         if self.col_positions == [0]:
             c1 = 0
@@ -5599,6 +5941,8 @@ class MainTable(tk.Canvas):
                 tags=border_tags,
             )
         self.lower_selection_boxes()
+        if run_binding:
+            self.run_selection_binding(type_)
         return fill_iid
 
     def lower_selection_boxes(self) -> None:
@@ -5619,6 +5963,7 @@ class MainTable(tk.Canvas):
         r2: int,
         c2: int,
         fill_iid: int,
+        run_binding: bool = False,
     ) -> None:
         alltags = self.gettags(fill_iid)
         type_ = alltags[0]
@@ -5701,6 +6046,25 @@ class MainTable(tk.Canvas):
                 )
             else:
                 self.delete(border_item)
+        if run_binding:
+            self.run_selection_binding(type_)
+
+    def run_selection_binding(self, type_: str) -> None:
+        if type_ == "cells":
+            if self.selection_binding_func is not None:
+                self.selection_binding_func(
+                    self.get_select_event(being_drawn_item=self.being_drawn_item),
+                )
+        elif type_ == "rows":
+            if self.RI.selection_binding_func is not None:
+                self.RI.selection_binding_func(
+                    self.get_select_event(being_drawn_item=self.RI.being_drawn_item),
+                )
+        elif type_ == "columns":
+            if self.CH.selection_binding_func is not None:
+                self.CH.selection_binding_func(
+                    self.get_select_event(being_drawn_item=self.CH.being_drawn_item),
+                )
 
     def recreate_all_selection_boxes(self) -> None:
         curr = self.currently_selected()
@@ -5719,7 +6083,7 @@ class MainTable(tk.Canvas):
             self.recreate_selection_box(r1, c1, r2, c2, item)
         self.set_currently_selected(tags=curr.tags)
 
-    def to_item_int(self, item: Union[int, str, tuple]) -> int:
+    def to_item_int(self, item: int | str | tuple) -> int:
         # item arg is a tuple of tags
         if isinstance(item, tuple):
             if isinstance(item, CurrentlySelectedClass):
@@ -5751,7 +6115,7 @@ class MainTable(tk.Canvas):
             d2["columns"] = {c for c in range(startc, endc) for r1, c1, r2, c2 in d["columns"] if c1 <= c and c2 > c}
         return d2
 
-    def get_selected_min_max(self) -> tuple[Union[int, None]]:
+    def get_selected_min_max(self) -> tuple[int, None, ...]:
         min_x = float("inf")
         min_y = float("inf")
         max_x = 0
@@ -5773,9 +6137,9 @@ class MainTable(tk.Canvas):
     def get_selected_rows(
         self,
         get_cells: bool = False,
-        within_range: Union[tuple, None] = None,
+        within_range: tuple | None = None,
         get_cells_as_rows: bool = False,
-    ) -> Union[set[int], set[tuple[int]]]:
+    ) -> set[int] | set[tuple[int, int]]:
         s = set()
         if within_range is not None:
             within_r1 = within_range[0]
@@ -5841,9 +6205,9 @@ class MainTable(tk.Canvas):
     def get_selected_cols(
         self,
         get_cells: bool = False,
-        within_range: Union[tuple, None] = None,
+        within_range: tuple | None = None,
         get_cells_as_cols: bool = False,
-    ) -> Union[set[int], set[tuple[int]]]:
+    ) -> set[int] | set[tuple[int, int]]:
         s = set()
         if within_range is not None:
             within_c1 = within_range[0]
@@ -5911,7 +6275,7 @@ class MainTable(tk.Canvas):
         get_rows: bool = False,
         get_cols: bool = False,
         within_range: bool = None,
-    ) -> set[tuple[int]]:
+    ) -> set[tuple[int, int]]:
         s = set()
         if within_range is not None:
             within_r1 = within_range[0]
@@ -5936,7 +6300,7 @@ class MainTable(tk.Canvas):
                     )
         return s
 
-    def get_all_selection_boxes(self) -> tuple[tuple[int]]:
+    def get_all_selection_boxes(self) -> tuple[tuple[int, int, int, int]]:
         return tuple(
             tuple(int(e) for e in self.gettags(item)[1].split("_") if e)
             for item in self.get_selection_items(current=False)
@@ -6014,8 +6378,8 @@ class MainTable(tk.Canvas):
         if not currently_selected:
             return
         r, c = int(currently_selected[0]), int(currently_selected[1])
-        datacn = c if self.all_columns_displayed else self.displayed_columns[c]
-        datarn = r if self.all_rows_displayed else self.displayed_rows[r]
+        datacn = self.datacn(c)
+        datarn = self.datarn(r)
         if self.get_cell_kwargs(datarn, datacn, key="readonly"):
             return
         elif self.get_cell_kwargs(datarn, datacn, key="dropdown") or self.get_cell_kwargs(
@@ -6052,8 +6416,8 @@ class MainTable(tk.Canvas):
 
     # displayed indexes
     def get_cell_align(self, r: int, c: int) -> str:
-        datarn = r if self.all_rows_displayed else self.displayed_rows[r]
-        datacn = c if self.all_columns_displayed else self.displayed_columns[c]
+        datarn = self.datarn(r)
+        datacn = self.datacn(c)
         cell_alignment = self.get_cell_kwargs(datarn, datacn, key="align")
         if cell_alignment:
             return cell_alignment
@@ -6062,20 +6426,20 @@ class MainTable(tk.Canvas):
     # displayed indexes
     def open_text_editor(
         self,
-        event: Any = None,
+        event: object = None,
         r: int = 0,
         c: int = 0,
-        text: Union[str, None] = None,
+        text: str | None = None,
         state: str = "normal",
         see: bool = True,
         set_data_on_close: bool = True,
-        binding: Union[Callable, None] = None,
+        binding: Callable | None = None,
         dropdown: bool = False,
     ) -> bool:
         text = None
         extra_func_key = "??"
-        datarn = r if self.all_rows_displayed else self.displayed_rows[r]
-        datacn = c if self.all_columns_displayed else self.displayed_columns[c]
+        datarn = self.datarn(r)
+        datacn = self.datacn(c)
         if event is None or self.event_opens_dropdown_or_checkbox(event):
             if event is not None:
                 if hasattr(event, "keysym") and event.keysym == "Return":
@@ -6187,9 +6551,11 @@ class MainTable(tk.Canvas):
         return True
 
     # displayed indexes
-    def text_editor_newline_binding(self, r: int = 0, c: int = 0, event: Any = None, check_lines: bool = True) -> None:
-        datarn = r if self.all_rows_displayed else self.displayed_rows[r]
-        datacn = c if self.all_columns_displayed else self.displayed_columns[c]
+    def text_editor_newline_binding(
+        self, r: int = 0, c: int = 0, event: object = None, check_lines: bool = True
+    ) -> None:
+        datarn = self.datarn(r)
+        datacn = self.datacn(c)
         curr_height = self.text_editor.winfo_height()
         if not check_lines or self.get_lines_cell_height(self.text_editor.get_num_lines() + 1) > curr_height:
             new_height = curr_height + self.table_xtra_lines_increment
@@ -6217,7 +6583,7 @@ class MainTable(tk.Canvas):
                         )
                         self.itemconfig(kwargs["canvas_id"], anchor=anchor, height=win_h)
 
-    def destroy_text_editor(self, event: Any = None) -> None:
+    def destroy_text_editor(self, event: object = None) -> None:
         self.text_editor_loc = None
         try:
             self.delete(self.text_editor_id)
@@ -6235,11 +6601,11 @@ class MainTable(tk.Canvas):
     # c is displayed col
     def close_text_editor(
         self,
-        editor_info: Union[tuple, None] = None,
-        r: Union[int, None] = None,
-        c: Union[int, None] = None,
+        editor_info: tuple | None = None,
+        r: int | None = None,
+        c: int | None = None,
         set_data_on_close: bool = True,
-        event: Any = None,
+        event: object = None,
         destroy: bool = True,
         move_down: bool = True,
         redraw: bool = True,
@@ -6259,8 +6625,8 @@ class MainTable(tk.Canvas):
         if set_data_on_close:
             if r is None and c is None and editor_info:
                 r, c = editor_info[0], editor_info[1]
-            datarn = r if self.all_rows_displayed else self.displayed_rows[r]
-            datacn = c if self.all_columns_displayed else self.displayed_columns[c]
+            datarn = self.datarn(r)
+            datacn = self.datacn(c)
             event_data = event_dict(
                 name="end_edit_table",
                 sheet=self.parentframe.name,
@@ -6387,7 +6753,7 @@ class MainTable(tk.Canvas):
             self.focus_set()
         return "break"
 
-    def tab_key(self, event: Any = None) -> str:
+    def tab_key(self, event: object = None) -> str:
         currently_selected = self.currently_selected()
         if not currently_selected:
             return
@@ -6423,7 +6789,7 @@ class MainTable(tk.Canvas):
         )
         return "break"
 
-    def get_space_bot(self, r: int, text_editor_h: Union[int, None] = None) -> int:
+    def get_space_bot(self, r: int, text_editor_h: int | None = None) -> int:
         if len(self.row_positions) <= 1:
             if text_editor_h is None:
                 win_h = int(self.winfo_height())
@@ -6446,7 +6812,7 @@ class MainTable(tk.Canvas):
             sheet_h -= 1
         return win_h if win_h >= sheet_h else sheet_h
 
-    def get_dropdown_height_anchor(self, datarn: int, datacn: int, text_editor_h: Union[int, None] = None) -> tuple:
+    def get_dropdown_height_anchor(self, datarn: int, datacn: int, text_editor_h: int | None = None) -> tuple:
         win_h = 5
         for i, v in enumerate(self.get_cell_kwargs(datarn, datacn, key="dropdown")["values"]):
             v_numlines = len(v.split("\n") if isinstance(v, str) else f"{v}".split("\n"))
@@ -6476,11 +6842,16 @@ class MainTable(tk.Canvas):
         return win_h, anchor
 
     # c is displayed col
-    def open_dropdown_window(self, r: int, c: int, event: Any = None):
+    def open_dropdown_window(
+        self,
+        r: int,
+        c: int,
+        event: object = None,
+    ) -> None:
         self.destroy_text_editor("Escape")
         self.destroy_opened_dropdown_window()
-        datarn = r if self.all_rows_displayed else self.displayed_rows[r]
-        datacn = c if self.all_columns_displayed else self.displayed_columns[c]
+        datarn = self.datarn(r)
+        datacn = self.datacn(c)
         kwargs = self.get_cell_kwargs(datarn, datacn, key="dropdown")
         if kwargs["state"] == "normal":
             if not self.open_text_editor(event=event, r=r, c=c, dropdown=True):
@@ -6514,7 +6885,6 @@ class MainTable(tk.Canvas):
             else:
                 ypos = self.row_positions[r]
             kwargs["canvas_id"] = self.create_window((self.col_positions[c], ypos), window=window, anchor=anchor)
-
             self.text_editor.textedit.bind(
                 "<<TextModified>>",
                 lambda x: window.search_and_see(
@@ -6555,11 +6925,15 @@ class MainTable(tk.Canvas):
 
     # displayed indexes, not data
     def close_dropdown_window(
-        self, r: Union[int, None] = None, c: Union[int, None] = None, selection: Any = None, redraw: bool = True
-    ):
+        self,
+        r: int | None = None,
+        c: int | None = None,
+        selection: object = None,
+        redraw: bool = True,
+    ) -> None:
         if r is not None and c is not None and selection is not None:
-            datacn = c if self.all_columns_displayed else self.displayed_columns[c]
-            datarn = r if self.all_rows_displayed else self.displayed_rows[r]
+            datacn = self.datacn(c)
+            datarn = self.datarn(r)
             kwargs = self.get_cell_kwargs(datarn, datacn, key="dropdown")
             pre_edit_value = self.get_cell_data(datarn, datacn)
             event_data = event_dict(
@@ -6591,7 +6965,7 @@ class MainTable(tk.Canvas):
         if redraw:
             self.refresh()
 
-    def get_existing_dropdown_coords(self) -> Union[tuple[int], None]:
+    def get_existing_dropdown_coords(self) -> tuple[int, int] | None:
         if self.existing_dropdown_window is not None:
             return int(self.existing_dropdown_window.r), int(self.existing_dropdown_window.c)
         return None
@@ -6616,10 +6990,10 @@ class MainTable(tk.Canvas):
     # function can receive 4 None args
     def destroy_opened_dropdown_window(
         self,
-        r: Union[int, None] = None,
-        c: Union[int, None] = None,
-        datarn: Union[int, None] = None,
-        datacn: Union[int, None] = None,
+        r: int | None = None,
+        c: int | None = None,
+        datarn: int | None = None,
+        datacn: int | None = None,
     ):
         if r is None and datarn is None and c is None and datacn is None and self.existing_dropdown_window is not None:
             r, c = self.get_existing_dropdown_coords()
@@ -6660,15 +7034,15 @@ class MainTable(tk.Canvas):
         self,
         r: int,
         c: int,
-        datarn: Union[int, None] = None,
-        datacn: Union[int, None] = None,
+        datarn: int | None = None,
+        datacn: int | None = None,
         undo: bool = True,
         redraw: bool = True,
     ) -> None:
         if datarn is None:
-            datarn = r if self.all_rows_displayed else self.displayed_rows[r]
+            datarn = self.datarn(r)
         if datacn is None:
-            datacn = c if self.all_columns_displayed else self.displayed_columns[c]
+            datacn = self.datacn(c)
         kwargs = self.get_cell_kwargs(datarn, datacn, key="checkbox")
         if kwargs["state"] == "normal":
             pre_edit_value = self.get_cell_data(datarn, datacn)
@@ -6703,8 +7077,8 @@ class MainTable(tk.Canvas):
         self,
         r: int = 0,
         c: int = 0,
-        datarn: Union[int, None] = None,
-        datacn: Union[int, None] = None,
+        datarn: int | None = None,
+        datacn: int | None = None,
         value: str = "",
         undo: bool = True,
         cell_resize: bool = True,
@@ -6712,9 +7086,9 @@ class MainTable(tk.Canvas):
         check_input_valid: bool = True,
     ) -> bool:
         if datacn is None:
-            datacn = c if self.all_columns_displayed else self.displayed_columns[c]
+            datacn = self.datacn(c)
         if datarn is None:
-            datarn = r if self.all_rows_displayed else self.displayed_rows[r]
+            datarn = self.datarn(r)
         event_data = event_dict(
             name="edit_table",
             sheet=self.parentframe.name,
@@ -6724,14 +7098,16 @@ class MainTable(tk.Canvas):
         )
         if not check_input_valid or self.input_valid_for_cell(datarn, datacn, value):
             if self.undo_enabled and undo:
-                self.undo_stack.append(zlib.compress(pickle.dumps(event_data)))
+                self.undo_stack.append(ev_stack_dict(event_data))
             self.set_cell_data(datarn, datacn, value)
         if cell_resize and self.cell_auto_resize_enabled:
             self.set_cell_size_to_text(r, c, only_set_if_too_small=True, redraw=redraw, run_binding=True)
         self.sheet_modified(event_data)
         return True
 
-    def set_cell_data(self, datarn: int, datacn: int, value: Any, kwargs: dict = {}, expand_sheet: bool = True) -> None:
+    def set_cell_data(
+        self, datarn: int, datacn: int, value: object, kwargs: dict = {}, expand_sheet: bool = True
+    ) -> None:
         if expand_sheet:
             if datarn >= len(self.data):
                 self.fix_data_len(datarn, datacn)
@@ -6754,7 +7130,7 @@ class MainTable(tk.Canvas):
                 else:
                     self.data[datarn][datacn] = value
 
-    def get_value_for_empty_cell(self, datarn: int, datacn: int, r_ops: bool = True, c_ops: bool = True) -> Any:
+    def get_value_for_empty_cell(self, datarn: int, datacn: int, r_ops: bool = True, c_ops: bool = True) -> object:
         if self.get_cell_kwargs(
             datarn,
             datacn,
@@ -6778,21 +7154,22 @@ class MainTable(tk.Canvas):
 
     def get_empty_row_seq(
         self, datarn: int, end: int, start: int = 0, r_ops: bool = True, c_ops: bool = True
-    ) -> list[Any]:
+    ) -> list[object]:
         return [self.get_value_for_empty_cell(datarn, datacn, r_ops=r_ops, c_ops=c_ops) for datacn in range(start, end)]
 
     def fix_row_len(self, datarn: int, datacn: int) -> None:
         self.data[datarn].extend(self.get_empty_row_seq(datarn, end=datacn + 1, start=len(self.data[datarn])))
 
-    def fix_row_values(self, datarn: int, start: Union[int, None] = None, end: Union[int, None] = None):
+    def fix_row_values(self, datarn: int, start: int | None = None, end: int | None = None):
         if datarn < len(self.data):
             for datacn, v in enumerate(islice(self.data[datarn], start, end)):
                 if not self.input_valid_for_cell(datarn, datacn, v):
                     self.data[datarn][datacn] = self.get_value_for_empty_cell(datarn, datacn)
 
-    def fix_data_len(self, datarn: int, datacn: Union[int, None] = None) -> None:
+    def fix_data_len(self, datarn: int, datacn: int | None = None) -> int:
         ncols = self.total_data_cols() if datacn is None else datacn + 1
         self.data.extend([self.get_empty_row_seq(rn, end=ncols, start=0) for rn in range(len(self.data), datarn + 1)])
+        return len(self.data)
 
     def reapply_formatting(self) -> None:
         if "format" in self.options:
@@ -6829,7 +7206,7 @@ class MainTable(tk.Canvas):
         self.delete_column_format("all", clear_values=clear_values)
         self.delete_sheet_format(clear_values=clear_values)
 
-    def delete_cell_format(self, datarn: Union[str, int] = "all", datacn: int = 0, clear_values: bool = False) -> None:
+    def delete_cell_format(self, datarn: str | int = "all", datacn: int = 0, clear_values: bool = False) -> None:
         if isinstance(datarn, str) and datarn.lower() == "all":
             for datarn, datacn in self.yield_formatted_cells():
                 del self.cell_options[(datarn, datacn)]["format"]
@@ -6841,7 +7218,7 @@ class MainTable(tk.Canvas):
                 if clear_values:
                     self.set_cell_data(datarn, datacn, "", expand_sheet=False)
 
-    def delete_row_format(self, datarn: Union[str, int] = "all", clear_values: bool = False) -> None:
+    def delete_row_format(self, datarn: str | int = "all", clear_values: bool = False) -> None:
         if isinstance(datarn, str) and datarn.lower() == "all":
             for datarn in self.yield_formatted_rows():
                 del self.row_options[datarn]["format"]
@@ -6855,7 +7232,7 @@ class MainTable(tk.Canvas):
                     for datacn in range(len(self.data[datarn])):
                         self.set_cell_data(datarn, datacn, "", expand_sheet=False)
 
-    def delete_column_format(self, datacn: Union[str, int] = "all", clear_values: bool = False) -> None:
+    def delete_column_format(self, datacn: str | int = "all", clear_values: bool = False) -> None:
         if isinstance(datacn, str) and datacn.lower() == "all":
             for datacn in self.yield_formatted_columns():
                 del self.col_options[datacn]["format"]
@@ -6873,9 +7250,9 @@ class MainTable(tk.Canvas):
         if "format" in self.options:
             del self.options["format"]
             if clear_values:
-                total_cols = self.total_data_cols()
+                totalcols = self.total_data_cols()
                 self.data = [
-                    [self.get_value_for_empty_cell(r, c) for c in range(total_cols)]
+                    [self.get_value_for_empty_cell(r, c) for c in range(totalcols)]
                     for r in range(self.total_data_rows())
                 ]
 
@@ -6910,7 +7287,7 @@ class MainTable(tk.Canvas):
 
     def get_cell_data(
         self, datarn: int, datacn: int, get_displayed: bool = False, none_to_empty_str: bool = False, **kwargs
-    ) -> Any:
+    ) -> object:
         if get_displayed:
             return self.get_valid_cell_data_as_str(datarn, datacn, get_displayed=True)
         value = self.data[datarn][datacn] if len(self.data) > datarn and len(self.data[datarn]) > datacn else ""
@@ -6919,7 +7296,7 @@ class MainTable(tk.Canvas):
             value = value.value  # assumed given formatter class has value attribute
         return "" if (value is None and none_to_empty_str) else value
 
-    def input_valid_for_cell(self, datarn: int, datacn: int, value: Any) -> bool:
+    def input_valid_for_cell(self, datarn: int, datacn: int, value: object) -> bool:
         if self.get_cell_kwargs(datarn, datacn, key="readonly"):
             return False
         if self.cell_equal_to(datarn, datacn, value):
@@ -6933,7 +7310,7 @@ class MainTable(tk.Canvas):
             return False
         return True
 
-    def cell_equal_to(self, datarn: int, datacn: int, value: Any, **kwargs) -> bool:
+    def cell_equal_to(self, datarn: int, datacn: int, value: object, **kwargs) -> bool:
         v = self.get_cell_data(datarn, datacn)
         kwargs = self.get_cell_kwargs(datarn, datacn, key="format")
         if kwargs and kwargs["formatter"] is None:
@@ -6944,7 +7321,7 @@ class MainTable(tk.Canvas):
         # then compare value as is
         return v == value
 
-    def get_cell_clipboard(self, datarn: int, datacn: int) -> Union[str, int, float, bool]:
+    def get_cell_clipboard(self, datarn: int, datacn: int) -> str | int | float | bool:
         value = self.data[datarn][datacn] if len(self.data) > datarn and len(self.data[datarn]) > datacn else ""
         kwargs = self.get_cell_kwargs(datarn, datacn, key="format")
         if kwargs:
@@ -6956,7 +7333,7 @@ class MainTable(tk.Canvas):
                 return value.get_clipboard_data()
         return f"{value}"
 
-    def yield_formatted_cells(self, formatter: Any = None) -> tuple:
+    def yield_formatted_cells(self, formatter: object = None) -> tuple:
         if formatter is None:
             yield from (
                 cell
@@ -6966,7 +7343,7 @@ class MainTable(tk.Canvas):
         else:
             yield from (cell for cell, options in self.cell_options.items() if "format" in options)
 
-    def yield_formatted_rows(self, formatter: Any = None) -> int:
+    def yield_formatted_rows(self, formatter: object = None) -> int:
         if formatter is None:
             yield from (r for r, options in self.row_options.items() if "format" in options)
         else:
@@ -6976,7 +7353,7 @@ class MainTable(tk.Canvas):
                 if "format" in options and options["format"]["formatter"] == formatter
             )
 
-    def yield_formatted_columns(self, formatter: Any = None) -> int:
+    def yield_formatted_columns(self, formatter: object = None) -> int:
         if formatter is None:
             yield from (c for c, options in self.col_options.items() if "format" in options)
         else:

@@ -40,11 +40,12 @@
 
 `tksheet` is a Python tkinter table widget written in pure python. It is licensed under the [MIT license](https://github.com/ragardner/tksheet/blob/master/LICENSE.txt).
 
-It works using tkinter canvases and moves lines, text and rectangles around for only the visible portion of the table.
+It works by using tkinter canvases and moving lines, text and rectangles around for only the visible portion of the table.
 
-Cell values can be any class with a `str` method.
+### **Limitations**
 
 Some examples of things that are not possible with tksheet:
+- Deleting non-consecutive columns/rows
 - Cell merging
 - Cell text wrap
 - Changing font for individual cells
@@ -68,7 +69,9 @@ pip install tksheet --upgrade
 
 Alternatively you can download the source code and (inside the tksheet directory) use the command line `python setup.py develop`
 
-`tksheet` requires a Python version of `3.6` or higher.
+`tksheet` versions < `6.5.0` require a Python version of `3.6` or higher.
+
+`tksheet` versions >= `6.5.0` require a Python version of `3.8` or higher.
 
 ## **Basic Initialization**
 ----
@@ -315,10 +318,10 @@ ___
 
 #### **Insert a row into the sheet.**
 ```python
-insert_row(values: Union[list, int, None] = None, 
-           idx: Union[str, int] = "end", 
-           height = None, 
-           deselect_all = False, 
+insert_row(values: Union[list, int, None] = None,
+           idx: Union[str, int] = "end",
+           height = None,
+           deselect_all = False,
            add_columns = False,
            mod_row_positions = True,
            redraw = True)
@@ -365,12 +368,12 @@ ___
 
 #### **Insert multiple rows into the sheet.**
 ```python
-insert_rows(rows: Union[list, int] = 1, 
-            idx: Union[str, int] = "end", 
-            heights = None, 
-            deselect_all = False, 
+insert_rows(rows: Union[list, int] = 1,
+            idx: Union[str, int] = "end",
+            heights = None,
+            deselect_all = False,
             add_columns = True,
-            mod_row_positions = True, 
+            mod_row_positions = True,
             redraw = True)
 ```
 - `rows` can be either `int` or iterable of iterables.
@@ -478,7 +481,7 @@ If both arguments are `None` then table will reset to default tkinter canvas dim
 
 This is useful if your sheet is very large and you don't want to create an extra list in memory (it does actually generate one row at a time and not from a pre-built list).
 ```python
-yield_sheet_rows(get_displayed = False, 
+yield_sheet_rows(get_displayed = False,
                  get_header = False,
                  get_index = False,
                  get_index_displayed = True,
@@ -489,7 +492,7 @@ yield_sheet_rows(get_displayed = False,
 
 #### **Get sheet data as list of lists.**
 ```python
-get_sheet_data(get_displayed = False, 
+get_sheet_data(get_displayed = False,
                get_header = False,
                get_index = False,
                get_index_displayed = True,
@@ -536,10 +539,10 @@ get_cell_data(r, c, get_displayed = False)
 ___
 
 ```python
-get_row_data(r, 
-             get_displayed = False, 
-             get_index = False, 
-             get_index_displayed = True, 
+get_row_data(r,
+             get_displayed = False,
+             get_index = False,
+             get_index_displayed = True,
              only_columns = None)
 ```
 - The above arguments behave the same way as for `get_sheet_data()`.
@@ -548,9 +551,9 @@ ___
 
 ```python
 get_column_data(c,
-                get_displayed = False, 
+                get_displayed = False,
                 get_header = False,
-                get_header_displayed = True, 
+                get_header_displayed = True,
                 only_rows = None)
 ```
 - The above arguments behave the same way as for `get_sheet_data()`.
@@ -705,6 +708,7 @@ Arguments:
 	- `"unbind_all"`
 - `func` argument is the function you want to send the binding event to.
 - Using one of the following `"all_modified_events", "sheetmodified", "sheet_modified" "modified_events", "modified"` will make any insert, delete or cell edit including pastes and undos send an event to your function. Please **note** that this will mean your function will have to return a value to use for cell edits unless the setting `edit_cell_validation` is `False`.
+- For events `"begin_move_columns"`/`"begin_move_rows"` the point where columns/rows will be moved to will be under the `event_data` key `"value"`.
 
 **For tksheet versions earlier than `6.2.0`:**
 - Upon an event being triggered the bound function will be sent a [namedtuple](https://docs.python.org/3/library/collections.html#collections.namedtuple) containing variables relevant to that event, use `print()` or similar to see all the variable names in the event. Each event contains different variable names with the exception of `eventname` e.g. `event.eventname`.
@@ -739,9 +743,10 @@ Arguments:
     "column_widths": {},
     "row_heights": {},
     "options": {},
-    "old_displayed_columns": None,
-    "old_displayed_rows": None,
+    "displayed_columns": None,
+    "displayed_rows": None,
 },
+"named_ranges": {},
 "selection_boxes": {},
 "selected": tuple(),
 "being_selected": tuple(),
@@ -788,22 +793,23 @@ Keys:
     - `"end_move_columns"`
     - `"select"`
     - `"resize"`
+- For events `"begin_move_columns"`/`"begin_move_rows"` the point where columns/rows will be moved to will be under the `event_data` key `"value"`.
 - Key **`["sheetname"]`** is the [name given to the sheet widget on initialization](https://github.com/ragardner/tksheet/wiki/Version-6#initialization-options), useful if you have multiple sheets to determine which one emitted the event.
 - Key **`["cells"]["table"]`** if any table cells have been modified by cut, paste, delete, cell editors, dropdown boxes, checkboxes, undo or redo this will be a `dict` with `tuple` keys of `(data row index: int, data column index: int)` and the values will be the cell values at that location **prior** to the change. The `dict` will be empty if no such changes have taken place.
 - Key **`["cells"]["header"]`** if any header cells have been modified by cell editors, dropdown boxes, checkboxes, undo or redo this will be a `dict` with keys of `int: data column index` and the values will be the cell values at that location **prior** to the change. The `dict` will be empty if no such changes have taken place.
 - Key **`["cells"]["index"]`** if any index cells have been modified by cell editors, dropdown boxes, checkboxes, undo or redo this will be a `dict` with keys of `int: data column index` and the values will be the cell values at that location **prior** to the change. The `dict` will be empty if no such changes have taken place.
 - Key **`["moved"]["rows"]`** if any rows have been moved by dragging and dropping or undoing/redoing of dragging and dropping rows this will be a `dict` with the following keys:
-    - `{"old_indexes": tuple(), "new_indexes": tuple()}` 
-        - `"old_indexes"` will be a `tuple` of two values. These are the minimum and maximum indexes of where the rows used to be.
-        - `"new_indexes"` will be a `tuple` of two values. These are the minimum and maximum indexes of where the rows have moved to.
-        - The minimum and maximum indexes will always represent consecutive rows, without gaps.
-        - If no rows have been moved the `dict` will be empty.
+    - `{"data": {old data index: new data index, ...}, "displayed": {old displayed index: new displayed index, ...}}`
+        - `"data"` will be a `dict` where the keys are the old data indexes of the rows and the values are the data indexes they have moved to.
+        - `"displayed"` will be a `dict` where the keys are the old displayed indexes of the rows and the values are the displayed indexes they have moved to.
+        - If no rows have been moved the `dict` under `["moved"]["rows"]` will be empty.
+    - For events `"begin_move_rows"` the point where rows will be moved to will be under the `event_data` key `"value"`.
 - Key **`["moved"]["columns"]`** if any columns have been moved by dragging and dropping or undoing/redoing of dragging and dropping columns this will be a `dict` with the following keys:
-    - `{"old_indexes": tuple(), "new_indexes": tuple()}` 
-        - `"old_indexes"` will be a `tuple` of two values. These are the minimum and maximum indexes of where the columns used to be.
-        - `"new_indexes"` will be a `tuple` of two values. These are the minimum and maximum indexes of where the columns have moved to.
-        - The minimum and maximum indexes will always represent consecutive columns, without gaps.
-        - If no columns have been moved the `dict` will be empty.
+    - `{"data": {old data index: new data index, ...}, "displayed": {old displayed index: new displayed index, ...}}`
+        - `"data"` will be a `dict` where the keys are the old data indexes of the columns and the values are the data indexes they have moved to.
+        - `"displayed"` will be a `dict` where the keys are the old displayed indexes of the columns and the values are the displayed indexes they have moved to.
+        - If no columns have been moved the `dict` under `["moved"]["columns"]` will be empty.
+    - For events `"begin_move_columns"` the point where columns will be moved to will be under the `event_data` key `"value"`.
 - Key **`["added"]["rows"]`** if any rows have been added by the inbuilt popup menu insert rows or by a paste which expands the sheet then this will be a `dict` with the following keys:
     - `{"data_index": int, "displayed_index": int, "num": int, "displayed": []}`
         - `"data_index"` is an `int` representing the row where the rows were added in the data.
@@ -835,8 +841,9 @@ Keys:
     - `{[row data index]: row height, [row data index]: row height, ...}`
     - If no rows have been deleted then the `dict` value for `["deleted"]["row_heights"]` will be empty.
 - Key **`["deleted"]["options"]`** if any rows or columns have been deleted by the inbuilt popup menu delete rows/columns or by undoing a paste which added rows/columns then this will be a `dict`. This `dict` serves as storage for the `Sheet()`s options such as highlights, formatting, alignments, dropdown boxes, checkboxes etc. and is more for intenal use than anything else.
-- Key **`["deleted"]["old_displayed_columns"]`**  if any columns have been deleted by the inbuilt popup menu delete columns or by undoing a paste which added columns then this will be a `list`. This `list` stores the displayed columns (the columns that are showing when others are hidden) immediately prior to the change. It is more for internal use than anything else.
-- Key **`["deleted"]["old_displayed_rows"]`**  if any rows have been deleted by the inbuilt popup menu delete rows or by undoing a paste which added rows then this will be a `list`. This `list` stores the displayed rows (the rows that are showing when others are hidden) immediately prior to the change. It is more for internal use than anything else.
+- Key **`["deleted"]["displayed_columns"]`**  if any columns have been deleted by the inbuilt popup menu delete columns or by undoing a paste which added columns then this will be a `list`. This `list` stores the displayed columns (the columns that are showing when others are hidden) immediately prior to the change. It is more for internal use than anything else.
+- Key **`["deleted"]["displayed_rows"]`**  if any rows have been deleted by the inbuilt popup menu delete rows or by undoing a paste which added rows then this will be a `list`. This `list` stores the displayed rows (the rows that are showing when others are hidden) immediately prior to the change. It is more for internal use than anything else.
+- Key **`["named_ranges"]`** is used for storing existing named ranges prior to a relevant change so that any named ranges deleted during the change can be restored upon an undo. This stored value is a `dict` which has been pickled using `pickle.dumps()` and then compressed using `zlib.compress()`.
 - Key **`["selection_boxes"]`** the value of this is all selection boxes on the sheet in the form of a `dict` as shown below:
     - For every event except `"select"` events the selection boxes are those immediately prior to the modification, for `"select"` events they are the current selection boxes.
     - The layout is always: `"selection_boxes": {(start row, start column, up to but not including row, up to but not including column): selection box type}`.
@@ -860,7 +867,7 @@ Keys:
     - `"Return"` - enter key.
     - `"FocusOut"` - the editor or box lost focus, perhaps by mouse clicking elsewhere.
     - `"Tab"` - tab key.
-- Key **`["value"]`** is used primarily by cell editing events. For `"begin_edit..."` events it's the value displayed in he text editor when it opens. For `"end_edit..."` events it's the value in the text editor when it was closed, for example by hitting `Return`.
+- Key **`["value"]`** is used primarily by cell editing events. For `"begin_edit..."` events it's the value displayed in he text editor when it opens. For `"end_edit..."` events it's the value in the text editor when it was closed, for example by hitting `Return`. It also used by `"begin_move_columns"`/`"begin_move_rows"` - the point where columns/rows will be moved to will be under the `event_data` key `"value"`.
 - Key **`["location"]`** is for cell editing events to show the displayed (not data, in the case of hidden columns/rows) coordinates of the event. It will be a tuple of `(int displayed row index, int displayed column index)`.
 - Key **`["resized"]["rows"]`** is for row height resizing events, it will be a `dict` with the following layout:
     - `{int displayed row index: {"old_size": old_height, "new_size": new_height}}`.
@@ -1669,7 +1676,7 @@ ___
 #### **Hide specific columns.**
 ```python
 hide_columns(columns = set(),
-             redraw = True, 
+             redraw = True,
              deselect_all = True)
 ```
 - **NOTE**: `columns` (`int`) uses displayed column indexes, not data indexes. In other words the indexes of the columns displayed on the screen are the ones that are hidden, this is useful when uses in conjunction with `get_selected_columns()`.
@@ -1707,7 +1714,7 @@ ___
 #### **Hide specific rows.**
 ```python
 hide_rows(rows = set(),
-          redraw = True, 
+          redraw = True,
           deselect_all = True)
 ```
 - **NOTE**: `rows` (`int`) uses displayed row indexes, not data indexes. In other words the indexes of the rows displayed on the screen are the ones that are hidden, this is useful when uses in conjunction with `get_selected_rows()`.
@@ -2180,11 +2187,11 @@ index_checkbox(r,
 ## **Cell Formatting**
 ----
 
-By default tksheet stores all user inputted data as strings and while tksheet can store and display any datatype with a `__str__()` method this has some obvious limitations. 
+By default tksheet stores all user inputted data as strings and while tksheet can store and display any datatype with a `__str__()` method this has some obvious limitations.
 
-Cell formatting aims to provide greater functionality when working with different datatypes and provide strict typing for the sheet. With formatting you can convert sheet data and user input to a specific datatype. 
+Cell formatting aims to provide greater functionality when working with different datatypes and provide strict typing for the sheet. With formatting you can convert sheet data and user input to a specific datatype.
 
-Additionally, formatting also provides a function for displaying data on the table GUI (as a rounded float for example) and logic for handling invalid and missing data. 
+Additionally, formatting also provides a function for displaying data on the table GUI (as a rounded float for example) and logic for handling invalid and missing data.
 
 tksheet has several basic built-in formatters and provides functionality for creating your own custom formats as well.
 
@@ -2390,7 +2397,7 @@ The `percentage_formatter` is the basic configuration for a simple percentage fo
 
  - `format_function` (`function`) a function that takes a string and returns a `float`. By default, this is set to the in-built `tksheet.to_float`. This function will always convert percentages to their decimal equivalent, for example `"5%"` will be converted to `0.05`.
  - `to_str_function` (`function`) By default, this is set to the in-built `tksheet.percentage_to_str`, which will display the float as a percentage to the specified number of decimal places. For example, `0.05` will be displayed as `"5.0%"`.
- - `decimals` (`int`) the number of decimal places to round to. Defaults to `0`. 
+ - `decimals` (`int`) the number of decimal places to round to. Defaults to `0`.
 
 Usage:
 
@@ -2449,7 +2456,7 @@ def to_local_datetime(dt, **kwargs):
     if isinstance(dt, datetime):
         pass # Do nothing
     elif isinstance(dt, date):
-        dt = datetime(dt.year, dt.month, dt.day) # Always good to account for unexpected inputs 
+        dt = datetime(dt.year, dt.month, dt.day) # Always good to account for unexpected inputs
     else:
         try:
             dt = parser.parse(dt)
@@ -2617,9 +2624,18 @@ show_ctrl_outline(canvas = "table", start_cell = (0, 0), end_cell = (1, 1))
 
 ___
 
-Reset table undo storage.
+Various functions related to the Sheets internal undo and redo stacks.
 ```python
+# clears both undos and redos
 reset_undos()
+
+# get the Sheets modifiable deque variables which store changes for undo and redo
+get_undo_stack() -> deque:
+get_redo_stack() -> deque:
+
+# set the Sheets undo and redo stacks, returns Sheet widget
+set_undo_stack(stack: deque) -> Sheet:
+set_redo_stack(stack: deque) -> Sheet:
 ```
 
 ___
@@ -2852,7 +2868,7 @@ class Sheet_Listbox(Sheet):
                             redraw = False,
                             verify = False)
         self.set_all_cell_sizes_to_text()
-        
+
 
 class demo(tk.Tk):
     def __init__(self):
@@ -2868,7 +2884,7 @@ class demo(tk.Tk):
                           sticky = "nswe")
         #self.listbox.values([f"new values {i}" for i in range(50)]) set values
 
-        
+
 app = demo()
 app.mainloop()
 ```
@@ -2913,7 +2929,7 @@ class demo(tk.Tk):
                                    "select_all")
         self.frame.grid(row = 0, column = 0, sticky = "nswe")
         self.sheet.grid(row = 0, column = 0, sticky = "nswe")
-        
+
         self.sheet.create_header_dropdown(c = 0,
                                           values = ["all", "1", "2", "3"],
                                           set_value = "all",
@@ -2942,7 +2958,7 @@ class demo(tk.Tk):
             self.sheet.display_rows(rows = rows,
                                     all_displayed = False)
         self.sheet.redraw()
-    
+
 app = demo()
 app.mainloop()
 ```
@@ -3033,23 +3049,23 @@ class demo(tk.Tk):
                                    fg = "purple")
         self.sheet.set_all_column_widths()
         self.sheet.extra_bindings("all", self.all_extra_bindings)
-        
+
     def hide_rows(self, event = None):
         rows = self.sheet.get_selected_rows()
         if rows:
             self.sheet.hide_rows(rows)
-        
+
     def show_rows(self, event = None):
         self.sheet.display_rows("all", redraw = True)
-        
+
     def hide_columns(self, event = None):
         columns = self.sheet.get_selected_columns()
         if columns:
             self.sheet.hide_columns(columns)
-        
+
     def show_columns(self, event = None):
         self.sheet.display_columns("all", redraw = True)
-        
+
     def all_extra_bindings(self, event = None):
         #print (event)
         try:
@@ -3058,7 +3074,7 @@ class demo(tk.Tk):
         except:
             pass
 
-        
+
 app = demo()
 app.mainloop()
 ```
@@ -3096,7 +3112,7 @@ class demo(tk.Tk):
         self.sheet.popup_menu_add_command("Save sheet", self.save_sheet)
         self.sheet.set_all_cell_sizes_to_text()
         self.sheet.change_theme("light green")
-        
+
         # center the window and unhide
         self.update_idletasks()
         w = self.winfo_screenwidth() - 20
@@ -3124,7 +3140,7 @@ class demo(tk.Tk):
                 writer.writerows(self.sheet.get_sheet_data(get_header = False, get_index = False))
         except:
             return
-                
+
     def open_csv(self):
         filepath = filedialog.askopenfilename(parent = self, title = "Select a csv file")
         if not filepath or not filepath.lower().endswith((".csv", ".tsv")):
@@ -3208,18 +3224,18 @@ class demo(tk.Tk):
         self.sheet.enable_bindings()
         self.frame.grid(row = 0, column = 0, sticky = "nswe")
         self.sheet.grid(row = 0, column = 0, sticky = "nswe")
-        self.sheet.headers(['Non-Nullable Float Cell\n1 decimals places', 
-                            'Float Cell', 
-                            'Int Cell', 
-                            'Bool Cell', 
-                            'Percentage Cell\n0 decimal places', 
+        self.sheet.headers(['Non-Nullable Float Cell\n1 decimals places',
+                            'Float Cell',
+                            'Int Cell',
+                            'Bool Cell',
+                            'Percentage Cell\n0 decimal places',
                             'Custom Datetime Cell',
                             'Custom Datetime Cell\nCustom Format String',
-                            'Float Cell that\nrounds up', 
-                            'Float cell that\n strips non-numeric', 
-                            'Dropdown Over Nullable\nPercentage Cell', 
+                            'Float Cell that\nrounds up',
+                            'Float cell that\n strips non-numeric',
+                            'Dropdown Over Nullable\nPercentage Cell',
                             'Percentage Cell\n2 decimal places'])
-        
+
         # ---------- Some examples of cell formatting --------
         self.sheet.format_cell('all', 0, formatter_options = float_formatter(nullable = False))
         self.sheet.format_cell('all', 1, formatter_options = float_formatter())
@@ -3230,21 +3246,21 @@ class demo(tk.Tk):
 
         # ---------------- Custom Formatters -----------------
         # Custom using generic formatter interface
-        self.sheet.format_cell('all', 5, formatter_options = formatter(datatypes = datetime, 
-                                                                       format_function = convert_to_local_datetime, 
-                                                                       to_str_function = datetime_to_string, 
+        self.sheet.format_cell('all', 5, formatter_options = formatter(datatypes = datetime,
+                                                                       format_function = convert_to_local_datetime,
+                                                                       to_str_function = datetime_to_string,
                                                                        nullable = False,
                                                                        invalid_value = 'NaT',
                                                                        ))
         # Custom format
-        self.sheet.format_cell('all', 6, datatypes = datetime, 
-                                         format_function = convert_to_local_datetime, 
-                                         to_str_function = custom_datetime_to_str, 
+        self.sheet.format_cell('all', 6, datatypes = datetime,
+                                         format_function = convert_to_local_datetime,
+                                         to_str_function = custom_datetime_to_str,
                                          nullable = True,
                                          invalid_value = 'NaT',
                                          format = '(%Y-%m-%d) %H:%M %p'
                                          )
-        
+
         # Unique cell behaviour using the post_conversion_function
         self.sheet.format_cell('all', 7, formatter_options = float_formatter(post_format_function = round_up))
         self.sheet.format_cell('all', 8, formatter_options = float_formatter(), pre_format_function = only_numeric)

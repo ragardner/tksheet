@@ -1,8 +1,13 @@
-### Version 6.2.0
+### Version 6.5.0
+#### Removed:
+- `insert_column()`
+- `insert_row()`
+
 #### Fixed:
 - Deselect events firing when not necessary
 
 #### Changed:
+- `move_columns()` and `move_rows()` arguments
 - Overhaul and totally change event data sent to functions bound by `extra_bindings()`
 - Deselect events are now labelled as "select" events, see the docs on `"selection_boxes"` for more information
 - Overhaul internal selection box workings
@@ -11,9 +16,23 @@
 
 #### Added:
 - Redo, which is enabled when undo is enabled, use by pressing ctrl/cmd + shift + z
+- named ranges for options
 - `auto_resize_columns`, `auto_resize_rows` in initialization or with `set_options()`
 - Ctrl/cmd click deselect
 - Ability to make currently selected box border different color to selection box border
+
+### Version 6.1.9
+#### Fixed:
+- Issues that follow selection boxes being recreated such as resizing columns/rows
+
+### Version 6.1.8
+#### Added:
+- [#180](https://github.com/ragardner/tksheet/issues/180)
+
+### Version 6.1.7
+#### Fixed:
+- [#183](https://github.com/ragardner/tksheet/issues/183)
+- [#184](https://github.com/ragardner/tksheet/issues/184)
 
 ### Version 6.1.5
 #### Fixed:
@@ -21,10 +40,14 @@
 - [#181](https://github.com/ragardner/tksheet/issues/181)
 
 ### Version 6.1.4
+#### Fixed:
+- Error with setting/getting header font
+- Setting fonts with `set_options()` not working
+- Setting fonts after table initialization didn't refresh selection boxes or top left rectangle dimensions
+
 #### Changed:
 - Replaced wildcard imports
 - Format code with 120 line length
-- Error with setting/getting fonts
 
 ### Version 6.1.3
 #### Fixed:
@@ -1013,7 +1036,7 @@ show_vertical_grid #grid lines for main table
 ### Version 4.2.5
  - Fix bug where highlighted background or foreground might not be in the correct column when displaying a subset of columns
  - Change colors of selected rows and columns
- - Add color options: 
+ - Add color options:
 ```python
 header_select_column_bg
 header_select_column_fg
@@ -1028,7 +1051,7 @@ selected_columns_foreground
 ```
  - Fix various issues with displaying correct colors in certain circumstances
  - Change dark theme colors slightly
-                              
+
 ### Version 4.2.4
  - Fix PyPi release version
 

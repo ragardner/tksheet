@@ -1,21 +1,21 @@
-from typing import Any, Union, Callable
+from collections.abc import Callable
 
 from .vars import falsy, nonelike, truthy
 
 
-def is_none_like(n: Any):
+def is_none_like(n: object):
     if (isinstance(n, str) and n.lower().replace(" ", "") in nonelike) or n in nonelike:
         return True
     return False
 
 
-def to_int(x: Any, **kwargs):
+def to_int(x: object, **kwargs):
     if isinstance(x, int):
         return x
     return int(float(x))
 
 
-def to_float(x: Any, **kwargs):
+def to_float(x: object, **kwargs):
     if isinstance(x, float):
         return x
     if isinstance(x, str) and x.endswith("%"):
@@ -23,7 +23,7 @@ def to_float(x: Any, **kwargs):
     return float(x)
 
 
-def to_bool(val: Any, **kwargs):
+def to_bool(val: object, **kwargs):
     if type(val) == bool:
         return val
     if isinstance(val, str):
@@ -45,14 +45,14 @@ def to_bool(val: Any, **kwargs):
     raise ValueError(f'Cannot map "{val}" to bool.')
 
 
-def try_to_bool(val: Any, **kwargs):
+def try_to_bool(val: object, **kwargs):
     try:
         return to_bool(val)
     except Exception:
         return val
 
 
-def is_bool_like(v: Any, **kwargs):
+def is_bool_like(v: object, **kwargs):
     try:
         to_bool(v)
         return True
@@ -60,11 +60,11 @@ def is_bool_like(v: Any, **kwargs):
         return False
 
 
-def to_str(v: Any, **kwargs: dict) -> str:
+def to_str(v: object, **kwargs: dict) -> str:
     return f"{v}"
 
 
-def float_to_str(v: Union[int, float], **kwargs: dict) -> str:
+def float_to_str(v: int | float, **kwargs: dict) -> str:
     if isinstance(v, float):
         if v.is_integer():
             return f"{int(v)}"
@@ -75,7 +75,7 @@ def float_to_str(v: Union[int, float], **kwargs: dict) -> str:
     return f"{v}"
 
 
-def percentage_to_str(v: Union[int, float], **kwargs: dict) -> str:
+def percentage_to_str(v: int | float, **kwargs: dict) -> str:
     if isinstance(v, (int, float)):
         x = v * 100
         if isinstance(x, float):
@@ -88,7 +88,7 @@ def percentage_to_str(v: Union[int, float], **kwargs: dict) -> str:
     return f"{x}%"
 
 
-def bool_to_str(v: Any, **kwargs: dict) -> str:
+def bool_to_str(v: object, **kwargs: dict) -> str:
     return f"{v}"
 
 
@@ -192,7 +192,7 @@ def format_data(
     format_function=to_int,
     post_format_function=None,
     **kwargs,
-) -> Any:
+) -> object:
     if pre_format_function:
         value = pre_format_function(value)
     if nullable and is_none_like(value):
@@ -228,7 +228,7 @@ def get_data_with_valid_check(value="", datatypes=tuple(), invalid_value="NA"):
     return invalid_value
 
 
-def get_clipboard_data(value: Any = "", clipboard_function: Union[Callable, None] = None, **kwargs: dict) -> Any:
+def get_clipboard_data(value: object = "", clipboard_function: Callable | None = None, **kwargs: dict) -> object:
     if clipboard_function is not None:
         return clipboard_function(value, **kwargs)
     if isinstance(value, (str, int, float, bool)):
@@ -239,15 +239,15 @@ def get_clipboard_data(value: Any = "", clipboard_function: Union[Callable, None
 class Formatter:
     def __init__(
         self,
-        value: Any,
-        datatypes: Any = int,
+        value: object,
+        datatypes: object = int,
         format_function: Callable = to_int,
         to_str_function: Callable = to_str,
         nullable: bool = True,
         invalid_value: str = "NaN",
-        pre_format_function: Union[Callable, None] = None,
-        post_format_function: Union[Callable, None] = None,
-        clipboard_function: Union[Callable, None] = None,
+        pre_format_function: Callable | None = None,
+        post_format_function: Callable | None = None,
+        clipboard_function: Callable | None = None,
         **kwargs,
     ):
         if nullable:
