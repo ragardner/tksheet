@@ -46,6 +46,7 @@ from .functions import (
     consecutive_chunks,
     decompress_load,
     ev_stack_dict,
+    insert_items,
     event_dict,
     get_checkbox_points,
     get_new_indexes,
@@ -1732,16 +1733,38 @@ class MainTable(tk.Canvas):
                     if r2 - r1 != 1:
                         if r == r1:
                             self.create_selection_box(
-                                r1 + 1, 0, r2, len(self.col_positions) - 1, "rows", set_current=False
+                                r1 + 1,
+                                0,
+                                r2,
+                                len(self.col_positions) - 1,
+                                "rows",
+                                set_current=False,
                             )
                         elif r == r2 - 1:
                             self.create_selection_box(
-                                r1, 0, r2 - 1, len(self.col_positions) - 1, "rows", set_current=False
+                                r1,
+                                0,
+                                r2 - 1,
+                                len(self.col_positions) - 1,
+                                "rows",
+                                set_current=False,
                             )
                         else:
-                            self.create_selection_box(r1, 0, r, len(self.col_positions) - 1, "rows", set_current=False)
                             self.create_selection_box(
-                                r + 1, 0, r2, len(self.col_positions) - 1, "rows", set_current=False
+                                r1,
+                                0,
+                                r,
+                                len(self.col_positions) - 1,
+                                "rows",
+                                set_current=False,
+                            )
+                            self.create_selection_box(
+                                r + 1,
+                                0,
+                                r2,
+                                len(self.col_positions) - 1,
+                                "rows",
+                                set_current=False,
                             )
                     break
         elif c is not None and r is None and cell is None:
@@ -1756,18 +1779,38 @@ class MainTable(tk.Canvas):
                     if c2 - c1 != 1:
                         if c == c1:
                             self.create_selection_box(
-                                0, c1 + 1, len(self.row_positions) - 1, c2, "columns", set_current=False
+                                0,
+                                c1 + 1,
+                                len(self.row_positions) - 1,
+                                c2,
+                                "columns",
+                                set_current=False,
                             )
                         elif c == c2 - 1:
                             self.create_selection_box(
-                                0, c1, len(self.row_positions) - 1, c2 - 1, "columns", set_current=False
+                                0,
+                                c1,
+                                len(self.row_positions) - 1,
+                                c2 - 1,
+                                "columns",
+                                set_current=False,
                             )
                         else:
                             self.create_selection_box(
-                                0, c1, len(self.row_positions) - 1, c, "columns", set_current=False
+                                0,
+                                c1,
+                                len(self.row_positions) - 1,
+                                c,
+                                "columns",
+                                set_current=False,
                             )
                             self.create_selection_box(
-                                0, c + 1, len(self.row_positions) - 1, c2, "columns", set_current=False
+                                0,
+                                c + 1,
+                                len(self.row_positions) - 1,
+                                c2,
+                                "columns",
+                                set_current=False,
                             )
                     break
         elif (r is not None and c is not None and cell is None) or cell is not None:
@@ -4124,6 +4167,7 @@ class MainTable(tk.Canvas):
         options_to_add: None | dict = None,
         create_selections: bool = True,
     ) -> dict:
+        print (columns)
         if options_to_add is None:
             options_to_add = {}
         saved_displayed_columns = list(self.displayed_columns)
@@ -4140,21 +4184,35 @@ class MainTable(tk.Canvas):
                     i + 1 for i in islice(self.displayed_columns, last_ins + 1, up_to)
                 ]
                 up_to = last_ins
-        # there are column widths to be added but no row positions
-        if column_widths and self.row_positions == [0]:
-            self.insert_row_position(idx="end", height=int(self.min_row_height), deselect_all=False)
         cws = self.get_column_widths()
-        for cn, w in reversed(column_widths.items()):
-            cws.insert(cn, w)
-        self.set_col_positions(itr=cws)
+        if column_widths and next(reversed(column_widths)) > len(cws):
+            cws.extend([self.default_column_width for i in range(next(reversed(column_widths)) - len(cws))])
+        self.set_col_positions(
+            itr=insert_items(
+                cws,
+                column_widths,
+            )
+        )
+        # we're inserting so we can use indexes == len
+        # for fix functions the values will go on the end
+        maxrn = 0
         for cn, rowdict in reversed(columns.items()):
             for rn, v in rowdict.items():
-                if len(self.data) >= rn and len(self.data[rn]) >= cn:
-                    self.data[rn].insert(cn, v)
+                if rn > len(self.data):
+                    self.fix_data_len(rn - 1, cn - 1)
+                if rn > maxrn:
+                    maxrn = rn
+                self.data[rn].insert(cn, v)
+        # if not hiding rows then we can extend row positions if necessary
+        if self.all_rows_displayed and maxrn + 1 > len(self.row_positions) - 1:
+            self.set_row_positions(
+                itr=chain(
+                    self.gen_row_heights(),
+                    (self.default_row_height[1] for i in range(len(self.row_positions) - 1, maxrn + 1)),
+                )
+            )
         if isinstance(self._headers, list):
-            for cn, v in reversed(header.items()):
-                if len(self._headers) >= cn:
-                    self._headers.insert(cn, v)
+            self._headers = insert_items(self._headers, header, self.CH.fix_header)
         self.adjust_options_post_add_columns(
             cols=tuple(reversed(columns)),
             to_add=options_to_add,
@@ -4217,6 +4275,7 @@ class MainTable(tk.Canvas):
             boxes=self.get_boxes(),
             selected=self.currently_selected(),
         )
+
         if self.extra_begin_insert_cols_rc_func is not None:
             try:
                 self.extra_begin_insert_cols_rc_func({**event_data, **{"eventname": "begin_add_columns"}})
@@ -4255,15 +4314,16 @@ class MainTable(tk.Canvas):
                 start = 1
             else:
                 start = 0
+            print (columns)
             columns = {
                 datacn: {datarn: v for datarn, v in enumerate(islice(column, start, None))}
                 for datacn, column in zip(reversed(range(data_ins_col, data_ins_col + numcols)), reversed(columns))
             }
         if isinstance(self._headers, list):
-            if headers:
+            if headers and columns:
                 headers = {
-                    datacn: v
-                    for datacn, v in zip(reversed(range(data_ins_col, data_ins_col + numcols)), reversed(headers))
+                    datacn: column[0]
+                    for datacn, column in zip(reversed(range(data_ins_col, data_ins_col + numcols)), reversed(columns))
                 }
             else:
                 headers = {
@@ -4308,19 +4368,33 @@ class MainTable(tk.Canvas):
                     i + 1 for i in islice(self.displayed_rows, last_ins + 1, up_to)
                 ]
                 up_to = last_ins
-        # there are column widths to be added but no row positions
-        if row_heights and self.col_positions == [0]:
-            self.insert_col_position(idx="end", width=int(self.min_column_width), deselect_all=False)
         rhs = self.get_row_heights()
-        for rn, h in reversed(row_heights.items()):
-            rhs.insert(rn, h)
-        self.set_row_positions(itr=rhs)
+        if row_heights and next(reversed(row_heights)) > len(rhs):
+            rhs.extend([self.default_row_height[1] for i in range(next(reversed(row_heights)) - len(rhs))])
+        self.set_row_positions(
+            itr=insert_items(
+                rhs,
+                row_heights,
+            )
+        )
+        maxcn = 0
         for rn, row in reversed(rows.items()):
+            cn = len(row) - 1
+            if rn > len(self.data):
+                self.fix_data_len(rn - 1, cn)
             self.data.insert(rn, row)
+            if cn > maxcn:
+                maxcn = cn
         if isinstance(self.row_index, list):
-            for rn, v in reversed(index.items()):
-                if len(self.row_index) >= rn:
-                    self._row_index.insert(rn, v)
+            self._row_index = insert_items(self._row_index, index, self.RI.fix_index)
+        # if not hiding columns then we can extend col positions if necessary
+        if self.all_columns_displayed and maxcn + 1 > len(self.col_positions) - 1:
+            self.set_col_positions(
+                itr=chain(
+                    self.gen_column_widths(),
+                    (self.default_column_width for i in range(len(self.col_positions) - 1, maxcn + 1)),
+                )
+            )
         self.adjust_options_post_add_rows(
             rows=tuple(reversed(rows)),
             to_add=options_to_add,
@@ -4400,23 +4474,52 @@ class MainTable(tk.Canvas):
         data_ins_row: int,
         displayed_ins_row: int,
         numrows: int,
+        rows: list | None = None,
+        heights: list | None = None,
+        row_index: bool = False,
     ) -> tuple:
         total_data_cols = self.total_data_cols()
-        rows = {
-            r: [self.get_value_for_empty_cell(r, c, c_ops=False) for c in range(total_data_cols)]
-            for r in reversed(range(data_ins_row, data_ins_row + numrows))
-        }
-        if isinstance(self._row_index, list):
-            index = {
-                r: self.RI.get_value_for_empty_cell(r, r_ops=False)
-                for r in reversed(range(data_ins_row, data_ins_row + numrows))
+        if rows is None:
+            rows = {
+                datarn: [self.get_value_for_empty_cell(datarn, c, c_ops=False) for c in range(total_data_cols)]
+                for datarn in reversed(range(data_ins_row, data_ins_row + numrows))
             }
         else:
-            index = {}
-        row_heights = {
-            r: self.default_row_height[1] for r in reversed(range(displayed_ins_row, displayed_ins_row + numrows))
-        }
-        return rows, index, row_heights
+            if row_index:
+                start = 1
+            else:
+                start = 0
+            rows = {
+                datarn: v[start:] if start and v else v
+                for datarn, v in zip(
+                    reversed(range(data_ins_row, data_ins_row + numrows)), reversed(rows)
+                )
+            }
+        if isinstance(self._row_index, list):
+            if row_index and rows:
+                row_index = {
+                    datarn: v[0]
+                    for datarn, v in zip(
+                        reversed(range(data_ins_row, data_ins_row + numrows)), reversed(rows)
+                    )
+                }
+            else:
+                row_index = {
+                    datarn: self.RI.get_value_for_empty_cell(datarn, r_ops=False)
+                    for datarn in reversed(range(data_ins_row, data_ins_row + numrows))
+                }
+        else:
+            row_index = {}
+        if heights is None:
+            heights = {
+                r: self.default_row_height[1] for r in reversed(range(displayed_ins_row, displayed_ins_row + numrows))
+            }
+        else:
+            heights = {
+                r: height
+                for r, height in zip(reversed(range(displayed_ins_row, displayed_ins_row + numrows)), reversed(heights))
+            }
+        return rows, row_index, heights
 
     def delete_columns(self, seld_cols: list, event_data: dict) -> dict:
         event_data["deleted"]["displayed_columns"] = (

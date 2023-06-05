@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import tkinter as tk
 
 from .vars import rc_binding

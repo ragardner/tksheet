@@ -1,9 +1,14 @@
 from __future__ import annotations
+
 import tkinter as tk
 from collections import namedtuple
 from collections.abc import Iterator
 
-from .vars import ctrl_key, get_font, rc_binding
+from .vars import (
+    ctrl_key,
+    get_font,
+    rc_binding,
+)
 
 CurrentlySelectedClass = namedtuple(
     "CurrentlySelectedClass",

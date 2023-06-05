@@ -4,6 +4,7 @@ import bisect
 import pickle
 import zlib
 from collections.abc import (
+    Callable,
     Generator,
 )
 from functools import partial
@@ -324,6 +325,7 @@ def move_elements_by_mapping(
     # then to fill remaining spots with remaining elements
 
     # fill new indexes in res
+
     if len(new_idxs) > int(len(seq) / 2) - 1:
         # if moving a lot of items better to do comprehension
         return [
@@ -336,7 +338,6 @@ def move_elements_by_mapping(
             res[new] = seq[old]
         # fill remaining indexes
         return [next(remaining) if i not in old_idxs else e for i, e in enumerate(res)]
-
 
 def move_elements_to(
     seq: list[...],
@@ -374,6 +375,24 @@ def get_new_indexes(
     if get_inverse:
         return new_idxs, dict(zip(new_idxs.values(), new_idxs))
     return new_idxs
+
+
+def insert_items(seq: list | tuple, to_insert: dict, seq_len_func: Callable | None = None) -> list:
+    # faster method of inserting many items into a list
+    # using a dict of reverse sorted order of
+    # {index: value, index: value, ...}
+    res = []
+    extended = 0
+    for i, (idx, v) in enumerate(reversed(to_insert.items())):
+        # need to extend seq if it's not long enough
+        if seq_len_func and idx - i > len(seq):
+            seq_len_func(idx - i - 1)
+        res.extend(seq[extended : idx - i])
+        extended += idx - i - extended
+        res.append(v)
+    res.extend(seq[extended:])
+    seq = res
+    return seq
 
 
 def convert_data_to_displayed_indexes(

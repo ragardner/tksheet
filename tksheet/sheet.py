@@ -3158,7 +3158,7 @@ class Sheet(tk.Frame):
 
     def insert_columns(
         self,
-        columns: list | tuple | int | None = 1,
+        columns: list | tuple | int = 1,
         idx: str | int = "end",
         widths: list | None = None,
         headers: bool = False,
@@ -3172,20 +3172,22 @@ class Sheet(tk.Frame):
                 raise ValueError(f"columns arg must be greater than 0, not {columns}")
             total_rows = self.MT.total_data_rows()
             start = old_total if idx == "end" else idx
+            # should be a list of lists where each list is a column
             data = [
-                self.MT.get_empty_row_seq(rn, end=start + columns, start=start, c_ops=idx == "end")
-                for rn in range(total_rows)
+                [self.MT.get_value_for_empty_cell(datarn, datacn, c_ops=idx == "end") for datarn in range(total_rows)]
+                for datacn in range(start, start + columns)
             ]
             numcols = columns
         else:
             data = columns
             numcols = len(columns)
+        idx = old_total if idx == "end" else idx
         if self.MT.all_columns_displayed:
             displayed_ins_idx = idx
         elif not self.MT.all_columns_displayed:
             displayed_ins_idx = bisect_left(self.MT.displayed_columns, idx)
-        event_data = self.add_columns(
-            *self.get_args_for_add_columns(
+        event_data = self.MT.add_columns(
+            *self.MT.get_args_for_add_columns(
                 data_ins_col=idx,
                 displayed_ins_col=displayed_ins_idx,
                 numcols=numcols,
@@ -3205,43 +3207,23 @@ class Sheet(tk.Frame):
         self.set_refresh_timer(redraw)
         return event_data
 
-    def insert_row(
-        self,
-        values: list | None = None,
-        idx: str | int = "end",
-        height=None,
-        deselect_all: bool = False,
-        add_columns: bool = False,
-        mod_row_positions: bool = True,
-        redraw: bool = True,
-    ):
-        self.insert_rows(
-            rows=1 if values is None else [values],
-            idx=idx,
-            heights=height if height is None else [height],
-            deselect_all=deselect_all,
-            add_columns=add_columns,
-            mod_row_positions=mod_row_positions,
-            redraw=redraw,
-        )
-
     def insert_rows(
         self,
-        rows: list | int = 1,
+        rows: list | tuple | int = 1,
         idx: str | int = "end",
         heights=None,
-        deselect_all: bool = False,
-        add_columns: bool = True,
-        mod_row_positions: bool = True,
+        row_index: bool = False,
+        create_selections: bool = True,
+        undo: bool = False,
         redraw: bool = True,
     ):
         total_cols = None
-        datarn = len(self.MT.data) if idx == "end" else idx
+        idx = len(self.MT.data) if idx == "end" else idx
         if isinstance(rows, int):
             if rows < 1:
                 raise ValueError(f"rows arg must be greater than 0, not {rows}")
             total_cols = self.MT.total_data_cols()
-            data = [self.MT.get_empty_row_seq(datarn + i, total_cols, r_ops=False) for i in range(rows)]
+            data = [self.MT.get_empty_row_seq(idx + i, total_cols, r_ops=False) for i in range(rows)]
         elif not isinstance(rows, list):
             data = list(rows)
         else:
@@ -3250,46 +3232,31 @@ class Sheet(tk.Frame):
             data = [r if isinstance(r, list) else list(r) for r in data]
         except Exception as msg:
             raise ValueError(f"rows arg must be int or list of lists. {msg}")
-        if add_columns:
-            if total_cols is None:
-                total_cols = self.MT.total_data_cols()
-            data_max_cols = len(max(data, key=len))
-            if data_max_cols > total_cols:
-                self.MT.equalize_data_row_lengths(
-                    total_data_cols=total_cols,
-                    at_least_cols=data_max_cols,
-                )
-            elif total_cols > data_max_cols:
-                data[:] = [
-                    data[i] + self.MT.get_empty_row_seq(datarn + i, end=total_cols, start=data_max_cols, r_ops=False)
-                    for i in range(len(data))
-                ]
-            if self.MT.all_columns_displayed:
-                if not self.MT.col_positions:
-                    self.MT.col_positions = [0]
-                if data_max_cols > len(self.MT.col_positions) - 1:
-                    self.insert_column_positions("end", data_max_cols - (len(self.MT.col_positions) - 1))
-        if self.MT.all_rows_displayed and mod_row_positions:
-            inspos = idx
-        if not self.MT.all_rows_displayed:
-            numrows = len(data)
-            if idx != "end":
-                self.MT.displayed_rows = [r if r < idx else r + numrows for r in self.MT.displayed_rows]
-            if mod_row_positions:
-                inspos = bisect_left(self.MT.displayed_rows, idx)
-                self.MT.displayed_rows[inspos:inspos] = list(range(idx, idx + numrows))
-        if mod_row_positions:
-            self.MT.insert_row_positions(
-                idx=inspos,
-                heights=len(data) if heights is None else heights,
-                deselect_all=deselect_all,
-            )
-        if isinstance(idx, str) and idx.lower() == "end":
-            self.MT.data.extend(data)
+        numrows = len(data)
+        if self.MT.all_rows_displayed:
+            displayed_ins_idx = idx
         else:
-            self.MT.data[idx:idx] = data
-            self.MT.adjust_options_post_add_rows(datarn=idx, numrows=len(data))
+            displayed_ins_idx = bisect_left(self.MT.displayed_rows, idx)
+        event_data = self.MT.add_rows(
+            *self.MT.get_args_for_add_rows(
+                data_ins_row=idx,
+                displayed_ins_row=displayed_ins_idx,
+                numrows=numrows,
+                rows=data,
+                heights=heights,
+                row_index=row_index,
+            ),
+            event_data=event_dict(
+                name="add_rows",
+                sheet=self.name,
+                boxes=self.MT.get_boxes(),
+                selected=self.MT.currently_selected(),
+            ),
+        )
+        if undo:
+            self.MT.undo_stack.append(ev_stack_dict(event_data))
         self.set_refresh_timer(redraw)
+        return event_data
 
     def sheet_data_dimensions(self, total_rows=None, total_columns=None):
         self.MT.data_dimensions(total_rows, total_columns)
