@@ -1,3 +1,8 @@
+### Version 6.2.1
+#### Fixed:
+- Editing header and overflowing text editor so text wraps while using `auto_resize_columns` causes text editor to be out of position
+- `insert_columns()` when using an `int` for number of blank columns creates incorrect list layout
+
 ### Version 6.2.0
 #### Fixed:
 - Removed some type hinting that was only available to python versions >= 3.9

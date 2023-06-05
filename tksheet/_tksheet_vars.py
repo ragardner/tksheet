@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 # for mac bindings
 from platform import system as get_os
 

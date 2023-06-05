@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import pickle
 import tkinter as tk
 import zlib
@@ -1894,6 +1896,7 @@ class ColumnHeaders(tk.Canvas):
                     kwargs["window"].update_idletasks()
                     kwargs["window"]._reselect()
                 self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=False, redraw_table=True)
+                self.coords(self.text_editor_id, self.MT.col_positions[c] + 1, 0)
 
     # displayed indexes
     def text_editor_newline_binding(self, r=0, c=0, event=None, check_lines=True):

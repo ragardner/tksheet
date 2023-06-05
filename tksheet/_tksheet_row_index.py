@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import pickle
 import tkinter as tk
 import zlib
@@ -1832,6 +1834,7 @@ class RowIndex(tk.Canvas):
                     self.set_row_height(datarn, new_height)
                     self.MT.refresh()
                     self.text_editor.config(height=new_height)
+                    self.coords(self.text_editor_id, 0, self.MT.row_positions[r] + 1)
                     kwargs = self.get_cell_kwargs(datarn, key="dropdown")
                     if kwargs:
                         text_editor_h = self.text_editor.winfo_height()

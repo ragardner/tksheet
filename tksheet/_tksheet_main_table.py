@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import bisect
 import csv as csv
 import io
@@ -4112,19 +4114,23 @@ class MainTable(tk.Canvas):
         curr = self.currently_selected()
         if not seld_cols or not curr:
             return
-        if self.CH.popup_menu_loc is None or self.CH.popup_menu_loc < seld_cols[0] or self.CH.popup_menu_loc > seld_cols[-1]:
+        if (
+            self.CH.popup_menu_loc is None
+            or self.CH.popup_menu_loc < seld_cols[0]
+            or self.CH.popup_menu_loc > seld_cols[-1]
+        ):
             c = seld_cols[0]
         else:
             c = self.CH.popup_menu_loc
         seld_cols = get_seq_without_gaps_at_index(seld_cols, c)
         self.deselect("all", redraw=False)
         self.create_selected(
-                        0,
-                        seld_cols[0],
-                        len(self.row_positions) - 1,
-                        seld_cols[-1] + 1,
-                        "columns",
-                    )
+            0,
+            seld_cols[0],
+            len(self.row_positions) - 1,
+            seld_cols[-1] + 1,
+            "columns",
+        )
         self.set_currently_selected(0, seld_cols[0], type_="column")
         seldmax = seld_cols[-1] if self.all_columns_displayed else self.displayed_columns[seld_cols[-1]]
         if self.extra_begin_del_cols_rc_func is not None:
@@ -4200,19 +4206,23 @@ class MainTable(tk.Canvas):
         curr = self.currently_selected()
         if not seld_rows or not curr:
             return
-        if self.RI.popup_menu_loc is None or self.RI.popup_menu_loc < seld_rows[0] or self.RI.popup_menu_loc > seld_rows[-1]:
+        if (
+            self.RI.popup_menu_loc is None
+            or self.RI.popup_menu_loc < seld_rows[0]
+            or self.RI.popup_menu_loc > seld_rows[-1]
+        ):
             r = seld_rows[0]
         else:
             r = self.RI.popup_menu_loc
         seld_rows = get_seq_without_gaps_at_index(seld_rows, r)
         self.deselect("all", redraw=False)
         self.create_selected(
-                        seld_rows[0],
-                        0,
-                        seld_rows[-1] + 1,
-                        len(self.col_positions) - 1,
-                        "rows",
-                    )
+            seld_rows[0],
+            0,
+            seld_rows[-1] + 1,
+            len(self.col_positions) - 1,
+            "rows",
+        )
         self.set_currently_selected(seld_rows[0], 0, type_="row")
         seldmax = seld_rows[-1] if self.all_rows_displayed else self.displayed_rows[seld_rows[-1]]
         if self.extra_begin_del_rows_rc_func is not None:
@@ -4786,7 +4796,12 @@ class MainTable(tk.Canvas):
                 t = self.create_polygon(points, fill=fill, outline=outline, tag=tag, smooth=True)
             self.disp_checkbox[t] = True
 
-    def main_table_redraw_grid_and_text(self, redraw_header=False, redraw_row_index=False, redraw_table=True,):
+    def main_table_redraw_grid_and_text(
+        self,
+        redraw_header=False,
+        redraw_row_index=False,
+        redraw_table=True,
+    ):
         try:
             can_width = self.winfo_width()
             can_height = self.winfo_height()

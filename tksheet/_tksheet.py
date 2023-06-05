@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import tkinter as tk
 from collections import deque
 from itertools import accumulate, chain, islice
@@ -2738,8 +2740,8 @@ class Sheet(tk.Frame):
             total_rows = self.MT.total_data_rows()
             start = old_total if idx == "end" else idx
             data = [
-                self.MT.get_empty_row_seq(rn, end=start + columns, start=start, c_ops=idx == "end")
-                for rn in range(total_rows)
+                [self.MT.get_value_for_empty_cell(datarn, datacn, c_ops=idx == "end") for datarn in range(total_rows)]
+                for datacn in range(start, start + columns)
             ]
             numcols = columns
         else:

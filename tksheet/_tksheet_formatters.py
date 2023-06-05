@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Any, Union, Dict
 
 from ._tksheet_vars import (

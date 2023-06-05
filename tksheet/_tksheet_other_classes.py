@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import bisect
 import tkinter as tk
 from collections import namedtuple
