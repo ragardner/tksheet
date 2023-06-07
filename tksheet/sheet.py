@@ -13,6 +13,7 @@ from tkinter import ttk
 
 from .column_headers import ColumnHeaders
 from .functions import (
+    alpha2num,
     data_to_displayed_idxs,
     dropdown_search_function,
     ev_stack_dict,
@@ -25,6 +26,7 @@ from .functions import (
     named_span_dict,
     num2alpha,
     tksheet_type_error,
+    str_to_int,
 )
 from .main_table import MainTable
 from .other_classes import (
@@ -3056,7 +3058,46 @@ class Sheet(tk.Frame):
                 self.MT._row_index[r_] = v
         self.set_refresh_timer(redraw)
 
-    def set_data(self, span: tuple, ):
+    def __getitem__(self, key: str | int | slice) -> object:
+        """
+        Get data from sheet
+
+        If getting a single cell:
+            Returns that cells value
+
+        If getting more than one cell:
+            Returns a list of lists where each sublist is from a single row
+
+        Key can be either:
+            [int] - Get whole row at that index
+            [str] - Get whole column at that index - "A" is converted to 0
+            [int:int] - Get a range of rows up to and including stop index
+            [str:str] - Either e.g.
+                ["0":"2"] - Rows 0, 1, 2
+                ["A":"C"] - Columns 0, 1, 2
+                ["A:C"] - Columns 0, 1, 2
+                ["A1":"C1"] - Cells (0, 0), (0, 1), (0, 2)
+                ["A1:C1"] - Cells (0, 0), (0, 1), (0, 2)
+        """
+        if isinstance(key, int):
+            return self.MT.data[key]
+
+        elif isinstance(key, str):
+            # cell
+            if ":" in key:
+                ...
+            # columns
+            elif key.isalpha() and (c := alpha2num(key)) is not None:
+                return [self.MT.get_cell_data(r, c, get_displayed=False) for r in range(len(self.MT.data))]
+            # rows
+            elif (r := str_to_int(key)) is not None:
+                return [self.MT.get_cell_data(r, c, get_displayed=False) for c in range(len(self.MT.data[r]))]
+
+
+        elif isinstance(key, slice):
+            ...
+
+    def set_data(self, span: tuple, ) -> Sheet:
         ...
 
     def set_sheet_data(

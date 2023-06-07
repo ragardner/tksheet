@@ -9,6 +9,7 @@ from collections.abc import (
 )
 from functools import partial
 from itertools import islice
+import re
 
 compress = partial(zlib.compress, level=1)
 pickle_obj = partial(pickle.dumps, protocol=pickle.HIGHEST_PROTOCOL)
@@ -196,7 +197,14 @@ def get_dropdown_dict(**kwargs):
     }
 
 
-def get_checkbox_kwargs(checked=False, state="normal", redraw=True, check_function=None, text="", **kwargs):
+def get_checkbox_kwargs(
+    checked=False,
+    state="normal",
+    redraw=True,
+    check_function=None,
+    text="",
+    **kwargs,
+):
     return {
         "checked": checked,
         "state": state,
@@ -206,7 +214,7 @@ def get_checkbox_kwargs(checked=False, state="normal", redraw=True, check_functi
     }
 
 
-def get_checkbox_dict(**kwargs):
+def get_checkbox_dict(**kwargs) -> dict:
     return {
         "check_function": kwargs["check_function"],
         "state": kwargs["state"],
@@ -214,7 +222,7 @@ def get_checkbox_dict(**kwargs):
     }
 
 
-def is_iterable(o):
+def is_iterable(o: object) -> bool:
     if isinstance(o, str):
         return False
     try:
@@ -228,25 +236,31 @@ def str_to_coords(s: str) -> None | tuple[int, ...]:
     s = s.split(":")
 
 
-def alpha2num(a: str) -> int:
-    a = a.upper()
-    n = 0
-    orda = ord("A")
-    for c in a:
-        n = n * 26 + ord(c) - orda + 1
-    return n - 1
+def alpha2num(a: str) -> int | None:
+    try:
+        a = a.upper()
+        n = 0
+        orda = ord("A")
+        for c in a:
+            n = n * 26 + ord(c) - orda + 1
+        return n - 1
+    except Exception:
+        return None
 
 
-def num2alpha(n: int) -> str:
-    s = ""
-    n += 1
-    while n > 0:
-        n, r = divmod(n - 1, 26)
-        s = chr(65 + r) + s
-    return s
+def num2alpha(n: int) -> str | None:
+    try:
+        s = ""
+        n += 1
+        while n > 0:
+            n, r = divmod(n - 1, 26)
+            s = chr(65 + r) + s
+        return s
+    except Exception:
+        return None
 
 
-def get_n2a(n=0, _type="numbers"):
+def get_n2a(n: int = 0, _type: str = "numbers") -> str:
     if _type == "letters":
         return num2alpha(n)
     elif _type == "numbers":
@@ -342,6 +356,7 @@ def move_elements_by_mapping(
             res[new] = seq[old]
         # fill remaining indexes
         return [next(remaining) if i not in old_idxs else e for i, e in enumerate(res)]
+
 
 def move_elements_to(
     seq: list[...],
@@ -461,18 +476,30 @@ def get_checkbox_points(x1, y1, x2, y2, radius=8):
 
 def diff_list(seq: list[float, ...]) -> list[int, ...]:
     return [
-            int(b - a)
-            for a, b in zip(
-                seq,
-                islice(seq, 1, None),
-            )
-        ]
+        int(b - a)
+        for a, b in zip(
+            seq,
+            islice(seq, 1, None),
+        )
+    ]
+
 
 def diff_gen(seq: list[float, ...]) -> Generator[int, ...]:
     return (
-            int(b - a)
-            for a, b in zip(
-                seq,
-                islice(seq, 1, None),
-            )
+        int(b - a)
+        for a, b in zip(
+            seq,
+            islice(seq, 1, None),
+        )
     )
+
+
+def str_to_int(s: str) -> int | None:
+    if s.startswith(("-", "+")):
+        if s.isdigit():
+            return int(s)
+        return None
+    elif not s.startswith(("-", "+")):
+        if s[1:].isdigit():
+            return int(s)
+        return None
