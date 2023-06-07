@@ -23,8 +23,8 @@ from .formatters import (
 )
 from .functions import (
     consecutive_chunks,
-    convert_data_to_displayed_indexes,
-    convert_displayed_to_data_indexes,
+    data_to_displayed_idxs,
+    displayed_to_data_idxs,
     dropdown_search_function,
     event_dict,
     get_checkbox_dict,

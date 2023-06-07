@@ -41,22 +41,20 @@ from .formatters import (
     try_to_bool,
 )
 from .functions import (
-    diff_gen,
-    diff_list,
+    change_eventname,
     consecutive_chunks,
     decompress_load,
+    diff_gen,
+    diff_list,
     ev_stack_dict,
-    insert_items,
     event_dict,
     get_checkbox_points,
     get_new_indexes,
     get_seq_without_gaps_at_index,
+    insert_items,
     is_iterable,
     len_to_idx,
     move_elements_by_mapping,
-    # move_elements_to,
-    # convert_data_to_displayed_indexes,
-    # convert_displayed_to_data_indexes,
     pickle_obj,
     unpickle_obj,
 )
@@ -612,7 +610,7 @@ class MainTable(tk.Canvas):
         )
         if self.extra_begin_ctrl_x_func is not None:
             try:
-                self.extra_begin_ctrl_x_func({**event_data, **{"eventname": "begin_ctrl_x"}})
+                self.extra_begin_ctrl_x_func(change_eventname(event_data, "begin_ctrl_x"))
             except Exception:
                 return
         if currently_selected.type_ in ("cell", "column"):
@@ -624,11 +622,8 @@ class MainTable(tk.Canvas):
                     datarn = (r1 + rn) if self.all_rows_displayed else self.displayed_rows[r1 + rn]
                     for c in range(c1, c2):
                         datacn = self.datacn(c)
-                        v = self.get_cell_clipboard(datarn, datacn)
-                        row.append(v)
-                        if self.input_valid_for_cell(datarn, datacn, ""):
-                            event_data["cells"]["table"][(datarn, datacn)] = self.get_cell_data(datarn, datacn)
-                            self.set_cell_data(datarn, datacn, "")
+                        row.append(self.get_cell_clipboard(datarn, datacn))
+                        event_data = self.event_data_clear_cell(datarn, datacn, event_data)
                 writer.writerow(row)
         else:
             for r1, c1, r2, c2 in boxes:
@@ -637,11 +632,8 @@ class MainTable(tk.Canvas):
                     datarn = (r1 + rn) if self.all_rows_displayed else self.displayed_rows[r1 + rn]
                     for c in range(c1, c2):
                         datacn = self.datacn(c)
-                        v = self.get_cell_clipboard(datarn, datacn)
-                        row.append(v)
-                        if self.input_valid_for_cell(datarn, datacn, ""):
-                            event_data["cells"]["table"][(datarn, datacn)] = self.get_cell_data(datarn, datacn)
-                            self.set_cell_data(datarn, datacn, "")
+                        row.append(self.get_cell_clipboard(datarn, datacn))
+                        event_data = self.event_data_clear_cell(datarn, datacn, event_data)
                     writer.writerow(row)
         if event_data["cells"]["table"]:
             self.undo_stack.append(ev_stack_dict(event_data))
@@ -652,7 +644,7 @@ class MainTable(tk.Canvas):
         for r1, c1, r2, c2 in boxes:
             self.show_ctrl_outline(canvas="table", start_cell=(c1, r1), end_cell=(c2, r2))
         if self.extra_end_ctrl_x_func is not None:
-            self.extra_end_ctrl_x_func({**event_data, **{"eventname": "end_ctrl_x"}})
+            self.extra_end_ctrl_x_func(change_eventname(event_data, "end_ctrl_x"))
         self.sheet_modified(event_data)
 
     def get_box_containing_current(self) -> tuple[int, int, int, int]:
@@ -764,16 +756,17 @@ class MainTable(tk.Canvas):
         event_data["selection_boxes"] = boxes
         if self.extra_begin_ctrl_v_func is not None:
             try:
-                self.extra_begin_ctrl_v_func({**event_data, **{"eventname": "begin_ctrl_v"}})
+                self.extra_begin_ctrl_v_func(change_eventname(event_data, "begin_ctrl_v"))
             except Exception:
                 return
         for ndr, r in enumerate(range(selected_r, selected_r + numrows)):
-            datarn = self.datarn(r)
             for ndc, c in enumerate(range(selected_c, selected_c + numcols)):
-                datacn = self.datacn(c)
-                if self.input_valid_for_cell(datarn, datacn, data[ndr][ndc]):
-                    event_data["cells"]["table"][(datarn, datacn)] = self.get_cell_data(datarn, datacn)
-                    self.set_cell_data(datarn, datacn, data[ndr][ndc])
+                self.event_data_set_cell(
+                    datarn=self.datarn(r),
+                    datacn=self.datacn(c),
+                    value=data[ndr][ndc],
+                    event_data=event_data,
+                )
         self.deselect("all", redraw=False)
         if event_data["cells"]["table"]:
             self.undo_stack.append(ev_stack_dict(event_data))
@@ -796,7 +789,7 @@ class MainTable(tk.Canvas):
         )
         self.refresh()
         if self.extra_end_ctrl_v_func is not None:
-            self.extra_end_ctrl_v_func({**event_data, **{"eventname": "end_ctrl_v"}})
+            self.extra_end_ctrl_v_func(change_eventname(event_data, "end_ctrl_v"))
         self.sheet_modified(event_data)
 
     def delete_key(self, event=None) -> None:
@@ -812,28 +805,37 @@ class MainTable(tk.Canvas):
         event_data["selection_boxes"] = boxes
         if self.extra_begin_delete_key_func is not None:
             try:
-                self.extra_begin_delete_key_func({**event_data, **{"eventname": "begin_delete"}})
+                self.extra_begin_delete_key_func(change_eventname(event_data, "begin_delete"))
             except Exception:
                 return
         for r1, c1, r2, c2 in boxes:
             for r in range(r1, r2):
-                datarn = self.datarn(r)
                 for c in range(c1, c2):
-                    datacn = self.datacn(c)
-                    if self.input_valid_for_cell(datarn, datacn, ""):
-                        event_data["cells"]["table"][(datarn, datacn)] = self.get_cell_data(datarn, datacn)
-                        self.set_cell_data(datarn, datacn, "")
+                    event_data = self.event_data_clear_cell(self.datarn(r), self.datacn(c), event_data)
         if event_data["cells"]["table"]:
             self.undo_stack.append(ev_stack_dict(event_data))
         if self.extra_end_delete_key_func is not None:
-            self.extra_end_delete_key_func({**event_data, **{"eventname": "end_delete"}})
+            self.extra_end_delete_key_func(change_eventname(event_data, "end_delete"))
         self.refresh()
         self.sheet_modified(event_data)
+
+    def event_data_clear_cell(self, datarn: int, datacn: int, event_data: dict) -> dict:
+        val = self.get_value_for_empty_cell(datarn, datacn)
+        if self.cell_equal_to(datarn, datacn, val):
+            event_data["cells"]["table"][(datarn, datacn)] = self.get_cell_data(datarn, datacn)
+            self.set_cell_data(datarn, datacn, val)
+        return event_data
+
+    def event_data_set_cell(self, datarn: int, datacn: int, value: object, event_data: dict) -> dict:
+        if self.input_valid_for_cell(datarn, datacn, value):
+            event_data["cells"]["table"][(datarn, datacn)] = self.get_cell_data(datarn, datacn)
+            self.set_cell_data(datarn, datacn, value)
+        return event_data
 
     def get_args_for_move_columns(
         self,
         move_to: int,
-        to_move: list[int],
+        to_move: list[int, ...],
         index_type: str = "displayed",
     ) -> tuple:
         if index_type == "displayed" or self.all_columns_displayed:
@@ -842,6 +844,8 @@ class MainTable(tk.Canvas):
                 move_to=move_to,
                 to_move=to_move,
             )
+        else:
+            disp_new_idxs = {}
         totalcols = self.equalize_data_row_lengths(at_least_cols=move_to + 1)
         if self.all_columns_displayed or index_type != "displayed":
             data_new_idxs = get_new_indexes(seqlen=totalcols, move_to=move_to, to_move=to_move)
@@ -884,7 +888,7 @@ class MainTable(tk.Canvas):
                 "displayed": {} if disp_new_idxs is None else disp_new_idxs,
             }
         event_data["named_spans"] = pickle_obj(self.named_spans)
-        if disp_new_idxs is not None and (index_type == "displayed" or self.all_columns_displayed):
+        if disp_new_idxs and (index_type == "displayed" or self.all_columns_displayed):
             self.deselect("all", run_binding=False, redraw=False)
             self.set_col_positions(
                 itr=move_elements_by_mapping(
@@ -1040,7 +1044,7 @@ class MainTable(tk.Canvas):
     def get_args_for_move_rows(
         self,
         move_to: int,
-        to_move: list[int],
+        to_move: list[int, ...],
         index_type: str = "displayed",
     ) -> tuple:
         if index_type == "displayed" or self.all_rows_displayed:
@@ -1049,6 +1053,8 @@ class MainTable(tk.Canvas):
                 move_to=move_to,
                 to_move=to_move,
             )
+        else:
+            disp_new_idxs = {}
         totalrows = self.fix_data_len(move_to)
         if self.all_rows_displayed or index_type != "displayed":
             data_new_idxs = get_new_indexes(seqlen=totalrows, move_to=move_to, to_move=to_move)
@@ -1268,13 +1274,13 @@ class MainTable(tk.Canvas):
             modification = decompress_load(self.undo_stack[-1]["data"])
         if self.extra_begin_ctrl_z_func is not None:
             try:
-                self.extra_begin_ctrl_z_func({**modification, **{"eventname": "begin_undo"}})
+                self.extra_begin_ctrl_z_func(change_eventname(modification, "begin_undo"))
             except Exception:
                 return
         self.redo_stack.append(self.undo_modification_invert_event(modification))
         self.undo_stack.pop()
         if self.extra_end_ctrl_z_func is not None:
-            self.extra_end_ctrl_z_func({**modification, **{"eventname": "end_undo"}})
+            self.extra_end_ctrl_z_func(change_eventname(modification, "end_undo"))
 
     def redo(self, event=None) -> None:
         if not self.redo_stack:
@@ -1285,13 +1291,13 @@ class MainTable(tk.Canvas):
             modification = decompress_load(self.redo_stack[-1]["data"])
         if self.extra_begin_ctrl_z_func is not None:
             try:
-                self.extra_begin_ctrl_z_func({**modification, **{"eventname": "begin_redo"}})
+                self.extra_begin_ctrl_z_func(change_eventname(modification, "begin_redo"))
             except Exception:
                 return
         self.undo_stack.append(self.undo_modification_invert_event(modification, name="redo"))
         self.redo_stack.pop()
         if self.extra_end_ctrl_z_func is not None:
-            self.extra_end_ctrl_z_func({**modification, **{"eventname": "end_redo"}})
+            self.extra_end_ctrl_z_func(change_eventname(modification, "end_redo"))
 
     def sheet_modified(self, event_data: dict, purge_redo: bool = True) -> None:
         self.parentframe.emit_event("<<SheetModified>>", event_data)
@@ -1389,8 +1395,12 @@ class MainTable(tk.Canvas):
 
         if modification["added"]["rows"]:
             self.deselect("all", run_binding=False, redraw=False)
-            event_data = self.delete_rows(
-                seld_rows=list(reversed(modification["added"]["rows"]["row_heights"])),
+            event_data = self.delete_rows_data(
+                rows=tuple(reversed(modification["added"]["rows"]["table"])),
+                event_data=event_data,
+            )
+            event_data = self.delete_rows_displayed(
+                rows=tuple(reversed(modification["added"]["rows"]["row_heights"])),
                 event_data=event_data,
             )
             self.displayed_rows = modification["added"]["rows"]["displayed_rows"]
@@ -1412,8 +1422,12 @@ class MainTable(tk.Canvas):
 
         if modification["added"]["columns"]:
             self.deselect("all", run_binding=False, redraw=False)
-            event_data = self.delete_columns(
-                seld_cols=list(reversed(modification["added"]["columns"]["column_widths"])),
+            event_data = self.delete_columns_data(
+                cols=tuple(reversed(modification["added"]["columns"]["table"])),
+                event_data=event_data,
+            )
+            event_data = self.delete_columns_displayed(
+                cols=tuple(reversed(modification["added"]["columns"]["column_widths"])),
                 event_data=event_data,
             )
             self.displayed_columns = modification["added"]["columns"]["displayed_columns"]
@@ -4167,7 +4181,6 @@ class MainTable(tk.Canvas):
         options_to_add: None | dict = None,
         create_selections: bool = True,
     ) -> dict:
-        print (columns)
         if options_to_add is None:
             options_to_add = {}
         saved_displayed_columns = list(self.displayed_columns)
@@ -4193,8 +4206,8 @@ class MainTable(tk.Canvas):
                 column_widths,
             )
         )
-        # we're inserting so we can use indexes == len
-        # for fix functions the values will go on the end
+        # we're inserting so we can use indexes == len for
+        # fix functions, the values will go on the end
         maxrn = 0
         for cn, rowdict in reversed(columns.items()):
             for rn, v in rowdict.items():
@@ -4278,7 +4291,7 @@ class MainTable(tk.Canvas):
 
         if self.extra_begin_insert_cols_rc_func is not None:
             try:
-                self.extra_begin_insert_cols_rc_func({**event_data, **{"eventname": "begin_add_columns"}})
+                self.extra_begin_insert_cols_rc_func(change_eventname(event_data, "begin_add_columns"))
             except Exception:
                 return
         event_data = self.add_columns(
@@ -4289,7 +4302,7 @@ class MainTable(tk.Canvas):
             self.undo_stack.append(ev_stack_dict(event_data))
         self.refresh()
         if self.extra_end_insert_cols_rc_func is not None:
-            self.extra_end_insert_cols_rc_func({**event_data, **{"eventname": "end_add_columns"}})
+            self.extra_end_insert_cols_rc_func(change_eventname(event_data, "end_add_columns"))
         self.sheet_modified(event_data)
 
     def get_args_for_add_columns(
@@ -4314,7 +4327,6 @@ class MainTable(tk.Canvas):
                 start = 1
             else:
                 start = 0
-            print (columns)
             columns = {
                 datacn: {datarn: v for datarn, v in enumerate(islice(column, start, None))}
                 for datacn, column in zip(reversed(range(data_ins_col, data_ins_col + numcols)), reversed(columns))
@@ -4455,7 +4467,7 @@ class MainTable(tk.Canvas):
         )
         if self.extra_begin_insert_rows_rc_func is not None:
             try:
-                self.extra_begin_insert_rows_rc_func({**event_data, **{"eventname": "begin_add_rows"}})
+                self.extra_begin_insert_rows_rc_func(change_eventname(event_data, "begin_add_rows"))
             except Exception:
                 return
         event_data = self.add_rows(
@@ -4466,7 +4478,7 @@ class MainTable(tk.Canvas):
             self.undo_stack.append(ev_stack_dict(event_data))
         self.refresh()
         if self.extra_end_insert_rows_rc_func is not None:
-            self.extra_end_insert_rows_rc_func({**event_data, **{"eventname": "end_add_rows"}})
+            self.extra_end_insert_rows_rc_func(change_eventname(event_data, "end_add_rows"))
         self.sheet_modified(event_data)
 
     def get_args_for_add_rows(
@@ -4491,17 +4503,13 @@ class MainTable(tk.Canvas):
                 start = 0
             rows = {
                 datarn: v[start:] if start and v else v
-                for datarn, v in zip(
-                    reversed(range(data_ins_row, data_ins_row + numrows)), reversed(rows)
-                )
+                for datarn, v in zip(reversed(range(data_ins_row, data_ins_row + numrows)), reversed(rows))
             }
         if isinstance(self._row_index, list):
             if row_index and rows:
                 row_index = {
                     datarn: v[0]
-                    for datarn, v in zip(
-                        reversed(range(data_ins_row, data_ins_row + numrows)), reversed(rows)
-                    )
+                    for datarn, v in zip(reversed(range(data_ins_row, data_ins_row + numrows)), reversed(rows))
                 }
             else:
                 row_index = {
@@ -4521,7 +4529,8 @@ class MainTable(tk.Canvas):
             }
         return rows, row_index, heights
 
-    def delete_columns(self, seld_cols: list, event_data: dict) -> dict:
+    def delete_columns_data(self, cols: list, event_data: dict) -> dict:
+        self.mouseclick_outside_editor_or_dropdown_all_canvases()
         event_data["deleted"]["displayed_columns"] = (
             list(self.displayed_columns) if not isinstance(self.displayed_columns, int) else int(self.displayed_columns)
         )
@@ -4533,9 +4542,7 @@ class MainTable(tk.Canvas):
                 "named_spans": self.named_spans,
             }
         )
-        for c in reversed(seld_cols):
-            event_data["deleted"]["column_widths"][c] = self.col_positions[c + 1] - self.col_positions[c]
-            datacn = self.datacn(c)
+        for datacn in reversed(cols):
             for rn in range(len(self.data)):
                 if datacn not in event_data["deleted"]["columns"]:
                     event_data["deleted"]["columns"][datacn] = {}
@@ -4547,26 +4554,30 @@ class MainTable(tk.Canvas):
                 event_data["deleted"]["header"][datacn] = self._headers.pop(datacn)
             except Exception:
                 continue
-        self.set_col_positions(itr=(width for c, width in enumerate(self.gen_column_widths()) if c not in seld_cols))
-        data_seld = seld_cols if self.all_columns_displayed else [self.displayed_columns[c] for c in seld_cols]
-        data_seldset = set(data_seld)
+        cols_set = set(cols)
         self.adjust_options_post_delete_columns(
-            to_del=data_seldset,
-            to_bis=data_seld,
-            named_spans=self.named_spans_to_del(to_del=data_seldset, axis="c"),
+            to_del=cols_set,
+            to_bis=cols,
+            named_spans=self.named_spans_to_del(to_del=cols_set, axis="c"),
         )
         if not self.all_columns_displayed:
-            self.displayed_columns = [c for c in self.displayed_columns if c not in data_seldset]
-            for c in data_seld:
+            self.displayed_columns = [c for c in self.displayed_columns if c not in cols_set]
+            for c in cols:
                 self.displayed_columns = [dc if c > dc else dc - 1 for dc in self.displayed_columns]
         return event_data
 
+    def delete_columns_displayed(self, cols: list, event_data: dict) -> dict:
+        cols_set = set(cols)
+        for c in reversed(cols):
+            event_data["deleted"]["column_widths"][c] = self.col_positions[c + 1] - self.col_positions[c]
+        self.set_col_positions(itr=(width for c, width in enumerate(self.gen_column_widths()) if c not in cols_set))
+        return event_data
+
     def rc_delete_columns(self, event=None):
-        seld_cols = sorted(self.get_selected_cols())
+        selected = sorted(self.get_selected_cols())
         curr = self.currently_selected()
-        if not seld_cols or not curr:
+        if not selected or not curr:
             return
-        self.mouseclick_outside_editor_or_dropdown_all_canvases()
         event_data = event_dict(
             name="delete_columns",
             sheet=self.parentframe.name,
@@ -4575,18 +4586,21 @@ class MainTable(tk.Canvas):
         )
         if self.extra_begin_del_cols_rc_func is not None:
             try:
-                self.extra_begin_del_cols_rc_func({**event_data, **{"eventname": "begin_delete_columns"}})
+                self.extra_begin_del_cols_rc_func(change_eventname(event_data, "begin_delete_columns"))
             except Exception:
                 return
-        event_data = self.delete_columns(seld_cols, event_data)
+        event_data = self.delete_columns_displayed(selected, event_data)
+        data_cols = selected if self.all_columns_displayed else [self.displayed_columns[c] for c in selected]
+        event_data = self.delete_columns_data(data_cols, event_data)
         if self.undo_enabled:
             self.undo_stack.append(ev_stack_dict(event_data))
         self.deselect("all")
         if self.extra_end_del_cols_rc_func is not None:
-            self.extra_end_del_cols_rc_func({**event_data, **{"eventname": "end_delete_columns"}})
+            self.extra_end_del_cols_rc_func(change_eventname(event_data, "end_delete_columns"))
         self.sheet_modified(event_data)
 
-    def delete_rows(self, seld_rows: list, event_data: dict) -> dict:
+    def delete_rows_data(self, rows: list, event_data: dict) -> dict:
+        self.mouseclick_outside_editor_or_dropdown_all_canvases()
         event_data["deleted"]["displayed_rows"] = (
             list(self.displayed_rows) if not isinstance(self.displayed_rows, int) else int(self.displayed_rows)
         )
@@ -4598,34 +4612,36 @@ class MainTable(tk.Canvas):
                 "named_spans": self.named_spans,
             }
         )
-        for r in reversed(seld_rows):
-            event_data["deleted"]["row_heights"][r] = self.row_positions[r + 1] - self.row_positions[r]
-            datarn = self.datarn(r)
+        for datarn in reversed(rows):
             event_data["deleted"]["rows"][datarn] = self.data.pop(datarn)
             try:
                 event_data["deleted"]["index"][datarn] = self._row_index.pop(datarn)
             except Exception:
                 continue
-        self.set_row_positions(itr=(height for r, height in enumerate(self.gen_row_heights()) if r not in seld_rows))
-        data_seld = seld_rows if self.all_rows_displayed else [self.displayed_rows[r] for r in seld_rows]
-        data_seldset = set(data_seld)
+        rows_set = set(rows)
         self.adjust_options_post_delete_rows(
-            to_del=data_seldset,
-            to_bis=data_seld,
-            named_spans=self.named_spans_to_del(to_del=data_seldset, axis="r"),
+            to_del=rows_set,
+            to_bis=rows,
+            named_spans=self.named_spans_to_del(to_del=rows_set, axis="r"),
         )
         if not self.all_rows_displayed:
-            self.displayed_rows = [r for r in self.displayed_rows if r not in data_seldset]
-            for r in data_seld:
+            self.displayed_rows = [r for r in self.displayed_rows if r not in rows_set]
+            for r in rows:
                 self.displayed_rows = [dr if r > dr else dr - 1 for dr in self.displayed_rows]
         return event_data
 
+    def delete_rows_displayed(self, rows: list, event_data: dict) -> dict:
+        rows_set = set(rows)
+        for r in reversed(rows):
+            event_data["deleted"]["row_heights"][r] = self.row_positions[r + 1] - self.row_positions[r]
+        self.set_row_positions(itr=(height for r, height in enumerate(self.gen_row_heights()) if r not in rows_set))
+        return event_data
+
     def rc_delete_rows(self, event=None):
-        seld_rows = sorted(self.get_selected_rows())
+        selected = sorted(self.get_selected_rows())
         curr = self.currently_selected()
-        if not seld_rows or not curr:
+        if not selected or not curr:
             return
-        self.mouseclick_outside_editor_or_dropdown_all_canvases()
         event_data = event_dict(
             name="delete_rows",
             sheet=self.parentframe.name,
@@ -4634,15 +4650,17 @@ class MainTable(tk.Canvas):
         )
         if self.extra_begin_del_rows_rc_func is not None:
             try:
-                self.extra_begin_del_rows_rc_func({**event_data, **{"eventname": "begin_delete_rows"}})
+                self.extra_begin_del_rows_rc_func(change_eventname(event_data, "begin_delete_rows"))
             except Exception:
                 return
-        event_data = self.delete_rows(seld_rows, event_data)
+        event_data = self.delete_rows_displayed(selected, event_data)
+        data_rows = selected if self.all_rows_displayed else [self.displayed_rows[r] for r in selected]
+        event_data = self.delete_rows_data(data_rows, event_data)
         if self.undo_enabled:
             self.undo_stack.append(ev_stack_dict(event_data))
         self.deselect("all")
         if self.extra_end_del_rows_rc_func is not None:
-            self.extra_end_del_rows_rc_func({**event_data, **{"eventname": "end_delete_rows"}})
+            self.extra_end_del_rows_rc_func(change_eventname(event_data, "end_delete_rows"))
         self.sheet_modified(event_data)
 
     def move_row_position(self, idx1: int, idx2: int):

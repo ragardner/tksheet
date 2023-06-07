@@ -17,6 +17,7 @@ from .formatters import (
     try_to_bool,
 )
 from .functions import (
+    change_eventname,
     consecutive_chunks,
     ev_stack_dict,
     event_dict,
@@ -854,7 +855,7 @@ class ColumnHeaders(tk.Canvas):
                 )
                 if self.ch_extra_begin_drag_drop_func is not None:
                     try:
-                        self.ch_extra_begin_drag_drop_func({**event_data, **{"eventname": "begin_move_columns"}})
+                        self.ch_extra_begin_drag_drop_func(change_eventname(event_data, "begin_move_columns"))
                     except Exception:
                         extra_func_success = False
                 if extra_func_success:
@@ -874,7 +875,7 @@ class ColumnHeaders(tk.Canvas):
                         self.MT.undo_stack.append(ev_stack_dict(event_data))
                     self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
                     if self.ch_extra_end_drag_drop_func is not None:
-                        self.ch_extra_end_drag_drop_func({**event_data, **{"eventname": "end_move_columns"}})
+                        self.ch_extra_end_drag_drop_func(change_eventname(event_data, "end_move_columns"))
                     self.MT.sheet_modified(event_data)
         elif self.b1_pressed_loc is not None and self.rsz_w is None and self.rsz_h is None:
             c = self.MT.identify_col(x=event.x)

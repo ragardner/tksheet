@@ -3,12 +3,17 @@ from __future__ import annotations
 import tkinter as tk
 from bisect import bisect_left
 from collections import deque
-from collections.abc import Callable, Iterator, Sequence
+from collections.abc import (
+    Callable,
+    Iterator,
+    Sequence,
+)
 from itertools import accumulate, chain, islice
 from tkinter import ttk
 
 from .column_headers import ColumnHeaders
 from .functions import (
+    data_to_displayed_idxs,
     dropdown_search_function,
     ev_stack_dict,
     event_dict,
@@ -1251,79 +1256,8 @@ class Sheet(tk.Frame):
     def delete_row_position(self, idx: int, deselect_all: bool = False):
         self.MT.del_row_position(idx=idx, deselect_all=deselect_all)
 
-    def delete_row(self, idx=0, deselect_all: bool = False, redraw: bool = True):
-        self.delete_rows(rows={idx}, deselect_all=deselect_all, redraw=redraw)
-
-    def delete_rows(
-        self,
-        rows: set = set(),
-        deselect_all: bool = False,
-        redraw: bool = True,
-    ):
-        if deselect_all:
-            self.deselect("all", redraw=False)
-        if isinstance(rows, set):
-            to_del = rows
-        else:
-            to_del = set(rows)
-        if not to_del:
-            return
-        self.MT.data[:] = [row for r, row in enumerate(self.MT.data) if r not in to_del]
-        to_bis = sorted(to_del)
-        if self.MT.all_rows_displayed:
-            self.set_row_heights(
-                row_heights=(
-                    h
-                    for r, h in enumerate(
-                        int(b - a)
-                        for a, b in zip(
-                            self.MT.row_positions,
-                            islice(self.MT.row_positions, 1, len(self.MT.row_positions)),
-                        )
-                    )
-                    if r not in to_del
-                )
-            )
-        else:
-            dispset = set(self.MT.displayed_rows)
-            heights_to_del = {i for i, r in enumerate(to_bis) if r in dispset}
-            if heights_to_del:
-                self.set_row_heights(
-                    row_heights=(
-                        h
-                        for r, h in enumerate(
-                            int(b - a)
-                            for a, b in zip(
-                                self.MT.row_positions,
-                                islice(self.MT.row_positions, 1, len(self.MT.row_positions)),
-                            )
-                        )
-                        if r not in heights_to_del
-                    )
-                )
-            self.MT.displayed_rows = [r for r in self.MT.displayed_rows if r not in to_del]
-        self.MT.adjust_options_post_delete_rows(to_del=to_del, to_bis=to_bis)
-        self.set_refresh_timer(redraw)
-
-    def insert_row_position(
-        self,
-        idx="end",
-        height=None,
-        deselect_all: bool = False,
-        redraw: bool = False,
-    ):
-        self.MT.insert_row_position(idx=idx, height=height, deselect_all=deselect_all)
-        self.set_refresh_timer(redraw)
-
-    def insert_row_positions(
-        self,
-        idx="end",
-        heights=None,
-        deselect_all: bool = False,
-        redraw: bool = False,
-    ):
-        self.MT.insert_row_positions(idx=idx, heights=heights, deselect_all=deselect_all)
-        self.set_refresh_timer(redraw)
+    def delete_column_position(self, idx: int, deselect_all: bool = False):
+        self.MT.del_col_position(idx, deselect_all=deselect_all)
 
     def total_rows(
         self,
@@ -1392,69 +1326,105 @@ class Sheet(tk.Frame):
         self.sheet_display_dimensions(total_rows=total_rows, total_columns=total_columns)
         self.MT.data_dimensions(total_rows=total_rows, total_columns=total_columns)
 
-    def move_row_position(self, row: int, moveto: int):
-        self.MT.move_row_position(row, moveto)
+    def delete_row(
+        self,
+        idx: int = 0,
+        index_type: str = "displayed",
+        undo=undo,
+        redraw: bool = True,
+    ):
+        self.delete_rows(
+            rows=idx,
+            index_type=index_type,
+            undo=undo,
+            redraw=redraw,
+        )
 
-    def delete_column_position(self, idx: int, deselect_all: bool = False):
-        self.MT.del_col_position(idx, deselect_all=deselect_all)
+    def delete_rows(
+        self,
+        rows: int | Iterator,
+        index_type: str = "displayed",
+        undo: bool = False,
+        redraw: bool = True,
+    ):
+        rows = [rows] if isinstance(rows, int) else sorted(rows)
+        event_data = event_dict(
+            name="delete_rows",
+            sheet=self.name,
+            boxes=self.MT.get_boxes(),
+            selected=self.MT.currently_selected(),
+        )
+        if "displayed" in index_type.lower():
+            event_data = self.MT.delete_rows_displayed(rows, event_data)
+            event_data = self.MT.delete_rows_data(
+                rows if self.MT.all_rows_displayed else [self.MT.displayed_rows[r] for r in rows],
+                event_data,
+            )
+        else:
+            if self.MT.all_rows_displayed:
+                rows = rows
+            else:
+                rows = data_to_displayed_idxs(rows, self.MT.displayed_rows)
+            event_data = self.MT.delete_rows_data(rows, event_data)
+            event_data = self.MT.delete_rows_displayed(
+                rows,
+                event_data,
+            )
+        if undo:
+            self.MT.undo_stack.append(ev_stack_dict(event_data))
+        self.MT.deselect("all", redraw=False)
+        self.set_refresh_timer(redraw)
+        return event_data
 
-    def delete_column(self, idx=0, deselect_all: bool = False, redraw: bool = True):
-        self.delete_columns(columns={idx}, deselect_all=deselect_all, redraw=redraw)
+    def delete_column(
+        self,
+        idx: int = 0,
+        index_type: str = "displayed",
+        undo: bool = False,
+        redraw: bool = True,
+    ):
+        self.delete_columns(
+            columns=idx,
+            index_type=index_type,
+            undo=undo,
+            redraw=redraw,
+        )
 
     def delete_columns(
         self,
-        columns: set = set(),
-        deselect_all: bool = False,
+        columns: int | Iterator,
+        index_type: str = "displayed",
+        undo: bool = False,
         redraw: bool = True,
     ):
-        if deselect_all:
-            self.deselect("all", redraw=False)
-        if isinstance(columns, set):
-            to_del = columns
-        else:
-            to_del = set(columns)
-        if not to_del:
-            return
-        self.MT.data[:] = [[e for c, e in enumerate(r) if c not in to_del] for r in self.MT.data]
-        to_bis = sorted(to_del)
-        if self.MT.all_columns_displayed:
-            self.set_column_widths(
-                column_widths=(
-                    w
-                    for c, w in enumerate(
-                        int(b - a)
-                        for a, b in zip(
-                            self.MT.col_positions,
-                            islice(self.MT.col_positions, 1, len(self.MT.col_positions)),
-                        )
-                    )
-                    if c not in to_del
-                )
+        columns = [columns] if isinstance(columns, int) else sorted(columns)
+        event_data = event_dict(
+            name="delete_columns",
+            sheet=self.name,
+            boxes=self.MT.get_boxes(),
+            selected=self.MT.currently_selected(),
+        )
+        if "displayed" in index_type.lower():
+            event_data = self.MT.delete_columns_displayed(columns, event_data)
+            event_data = self.MT.delete_columns_data(
+                columns if self.MT.all_columns_displayed else [self.MT.displayed_columns[c] for c in columns],
+                event_data,
             )
         else:
-            dispset = set(self.MT.displayed_columns)
-            widths_to_del = {i for i, c in enumerate(to_bis) if c in dispset}
-            if widths_to_del:
-                self.set_column_widths(
-                    column_widths=(
-                        w
-                        for c, w in enumerate(
-                            int(b - a)
-                            for a, b in zip(
-                                self.MT.col_positions,
-                                islice(self.MT.col_positions, 1, len(self.MT.col_positions)),
-                            )
-                        )
-                        if c not in widths_to_del
-                    )
-                )
-            self.MT.displayed_columns = [
-                c if not bisect_left(to_bis, c) else c - bisect_left(to_bis, c)
-                for c in self.MT.displayed_columns
-                if c not in to_del
-            ]
-        self.MT.adjust_options_post_delete_columns(to_del=to_del, to_bis=to_bis)
+            if self.MT.all_columns_displayed:
+                columns = columns
+            else:
+                columns = data_to_displayed_idxs(columns, self.MT.displayed_columns)
+            event_data = self.MT.delete_columns_data(columns, event_data)
+            event_data = self.MT.delete_columns_displayed(
+                columns,
+                event_data,
+            )
+        if undo:
+            self.MT.undo_stack.append(ev_stack_dict(event_data))
+        self.MT.deselect("all", redraw=False)
         self.set_refresh_timer(redraw)
+        return event_data
 
     def insert_column_position(
         self,
@@ -1476,6 +1446,29 @@ class Sheet(tk.Frame):
         self.MT.insert_col_positions(idx=idx, widths=widths, deselect_all=deselect_all)
         self.set_refresh_timer(redraw)
 
+    def insert_row_position(
+        self,
+        idx="end",
+        height=None,
+        deselect_all: bool = False,
+        redraw: bool = False,
+    ):
+        self.MT.insert_row_position(idx=idx, height=height, deselect_all=deselect_all)
+        self.set_refresh_timer(redraw)
+
+    def insert_row_positions(
+        self,
+        idx="end",
+        heights=None,
+        deselect_all: bool = False,
+        redraw: bool = False,
+    ):
+        self.MT.insert_row_positions(idx=idx, heights=heights, deselect_all=deselect_all)
+        self.set_refresh_timer(redraw)
+
+    def move_row_position(self, row: int, moveto: int):
+        self.MT.move_row_position(row, moveto)
+
     def move_column_position(self, column: int, moveto: int):
         self.MT.move_col_position(column, moveto)
 
@@ -1486,6 +1479,7 @@ class Sheet(tk.Frame):
         move_data: bool = True,
         create_selections: bool = True,
         index_type: str = "displayed",
+        undo: bool = False,
         redraw: bool = True,
     ):
         data_idxs, disp_idxs, event_data = self.MT.move_columns_adjust_options_dict(
@@ -1497,6 +1491,8 @@ class Sheet(tk.Frame):
             create_selections=create_selections,
             index_type=index_type,
         )
+        if undo:
+            self.MT.undo_stack.append(ev_stack_dict(event_data))
         self.set_refresh_timer(redraw)
         return data_idxs, disp_idxs, event_data
 
@@ -1507,6 +1503,7 @@ class Sheet(tk.Frame):
         move_data: bool = True,
         index_type: str = "displayed",
         create_selections: bool = True,
+        undo: bool = False,
         redraw: bool = True,
     ):
         data_idxs, disp_idxs, event_data = self.MT.move_columns_adjust_options_dict(
@@ -1515,15 +1512,17 @@ class Sheet(tk.Frame):
                 to_move=to_move,
                 index_type=index_type,
             ),
-            move_data=self.move_data,
+            move_data=move_data,
             create_selections=create_selections,
             index_type=index_type,
         )
+        if undo:
+            self.MT.undo_stack.append(ev_stack_dict(event_data))
         self.set_refresh_timer(redraw)
         return data_idxs, disp_idxs, event_data
 
     def move_column(self, column: int, moveto: int):
-        self.move_columns(moveto, column, 1)
+        self.move_columns(moveto, column)
 
     def move_rows_using_mapping(
         self,
@@ -1532,6 +1531,7 @@ class Sheet(tk.Frame):
         move_data: bool = True,
         create_selections: bool = True,
         index_type: str = "displayed",
+        undo: bool = False,
         redraw: bool = True,
     ):
         data_idxs, disp_idxs, event_data = self.MT.move_rows_adjust_options_dict(
@@ -1543,6 +1543,8 @@ class Sheet(tk.Frame):
             create_selections=create_selections,
             index_type=index_type,
         )
+        if undo:
+            self.MT.undo_stack.append(ev_stack_dict(event_data))
         self.set_refresh_timer(redraw)
         return data_idxs, disp_idxs, event_data
 
@@ -1553,6 +1555,7 @@ class Sheet(tk.Frame):
         move_data: bool = True,
         index_type: str = "displayed",
         create_selections: bool = True,
+        undo: bool = False,
         redraw: bool = True,
     ):
         data_idxs, disp_idxs, event_data = self.MT.move_rows_adjust_options_dict(
@@ -1561,15 +1564,17 @@ class Sheet(tk.Frame):
                 to_move=to_move,
                 index_type=index_type,
             ),
-            move_data=self.move_data,
+            move_data=move_data,
             create_selections=create_selections,
             index_type=index_type,
         )
+        if undo:
+            self.MT.undo_stack.append(ev_stack_dict(event_data))
         self.set_refresh_timer(redraw)
         return data_idxs, disp_idxs, event_data
 
     def move_row(self, row: int, moveto: int):
-        self.move_rows(moveto, row, 1)
+        self.move_rows(moveto, row)
 
     # works on currently selected box
     def open_cell(self, ignore_existing_editor: bool = True):
@@ -3051,6 +3056,9 @@ class Sheet(tk.Frame):
                 self.MT._row_index[r_] = v
         self.set_refresh_timer(redraw)
 
+    def set_data(self, span: tuple, ):
+        ...
+
     def set_sheet_data(
         self,
         data=None,
@@ -3156,6 +3164,26 @@ class Sheet(tk.Frame):
                 self.set_cell_data(r=rn, c=c, value=v, redraw=False, keep_formatting=keep_formatting)
         self.set_refresh_timer(redraw)
 
+    def insert_column(
+        self,
+        column: list | tuple | None = None,
+        idx: str | int = "end",
+        width: int | None = None,
+        headers: bool = False,
+        create_selections: bool = True,
+        undo: bool = False,
+        redraw: bool = True,
+    ):
+        self.insert_columns(
+            columns=1 if column is None else [column] if isinstance(column, (list, tuple)) else column,
+            idx=idx,
+            widths=[width] if isinstance(width, int) else width,
+            headers=headers,
+            create_selections=create_selections,
+            undo=undo,
+            redraw=redraw,
+        )
+
     def insert_columns(
         self,
         columns: list | tuple | int = 1,
@@ -3207,11 +3235,31 @@ class Sheet(tk.Frame):
         self.set_refresh_timer(redraw)
         return event_data
 
+    def insert_row(
+        self,
+        row: list | tuple | None = None,
+        idx: str | int = "end",
+        height: int | None = None,
+        row_index: bool = False,
+        create_selections: bool = True,
+        undo: bool = False,
+        redraw: bool = True,
+    ):
+        self.insert_rows(
+            rows=1 if row is None else [row] if isinstance(row, (list, tuple)) else row,
+            idx=idx,
+            heights=[height] if isinstance(height, int) else height,
+            row_index=row_index,
+            create_selections=create_selections,
+            undo=undo,
+            redraw=redraw,
+        )
+
     def insert_rows(
         self,
         rows: list | tuple | int = 1,
         idx: str | int = "end",
-        heights=None,
+        heights: list | tuple | None = None,
         row_index: bool = False,
         create_selections: bool = True,
         undo: bool = False,
@@ -3231,7 +3279,7 @@ class Sheet(tk.Frame):
         try:
             data = [r if isinstance(r, list) else list(r) for r in data]
         except Exception as msg:
-            raise ValueError(f"rows arg must be int or list of lists. {msg}")
+            raise ValueError(f"'rows' arg must be int or list of lists. {msg}")
         numrows = len(data)
         if self.MT.all_rows_displayed:
             displayed_ins_idx = idx

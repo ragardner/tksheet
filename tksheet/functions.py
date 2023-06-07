@@ -114,6 +114,10 @@ def event_dict(
     }
 
 
+def change_eventname(event_dict: dict, newname: str) -> dict:
+    return {**event_dict, **{"eventname": newname}}
+
+
 def ev_stack_dict(d):
     return {
         "name": d["eventname"],
@@ -395,7 +399,7 @@ def insert_items(seq: list | tuple, to_insert: dict, seq_len_func: Callable | No
     return seq
 
 
-def convert_data_to_displayed_indexes(
+def data_to_displayed_idxs(
     to_convert: list[int],
     displayed: list[int],
 ) -> list[int]:
@@ -403,7 +407,7 @@ def convert_data_to_displayed_indexes(
     return [i for i, e in enumerate(displayed) if e in data_indexes]
 
 
-def convert_displayed_to_data_indexes(
+def displayed_to_data_idxs(
     to_convert: list[int],
     displayed: list[int],
 ) -> list[int]:
