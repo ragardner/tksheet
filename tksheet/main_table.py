@@ -41,13 +41,13 @@ from .formatters import (
     try_to_bool,
 )
 from .functions import (
-    change_eventname,
     consecutive_chunks,
     decompress_load,
     diff_gen,
     diff_list,
     ev_stack_dict,
     event_dict,
+    gen_formatted,
     get_checkbox_points,
     get_new_indexes,
     get_seq_without_gaps_at_index,
@@ -57,6 +57,7 @@ from .functions import (
     move_elements_by_mapping,
     pickle_obj,
     unpickle_obj,
+    try_binding,
 )
 from .other_classes import (
     CurrentlySelectedClass,
@@ -534,6 +535,17 @@ class MainTable(tk.Canvas):
                 boxes[tuple(int(e) for e in self.gettags(item)[1].split("_") if e)] = "rows"
         return boxes, maxrows
 
+    def io_csv_writer(self) -> tuple[io.StringIO, csv.writer]:
+        s = io.StringIO()
+        writer = csv.writer(
+            s,
+            dialect=csv.excel_tab,
+            delimiter=self.to_clipboard_delimiter,
+            quotechar=self.to_clipboard_quotechar,
+            lineterminator=self.to_clipboard_lineterminator,
+        )
+        return s, writer
+
     def ctrl_c(self, event=None) -> None:
         if not self.anything_selected():
             return
@@ -545,19 +557,9 @@ class MainTable(tk.Canvas):
         event_data["eventname"] = "begin_ctrl_c"
         boxes, maxrows = self.get_ctrl_x_c_boxes()
         event_data["selection_boxes"] = boxes
-        s = io.StringIO()
-        writer = csv.writer(
-            s,
-            dialect=csv.excel_tab,
-            delimiter=self.to_clipboard_delimiter,
-            quotechar=self.to_clipboard_quotechar,
-            lineterminator=self.to_clipboard_lineterminator,
-        )
-        if self.extra_begin_ctrl_c_func is not None:
-            try:
-                self.extra_begin_ctrl_c_func(event_data)
-            except Exception:
-                return
+        s, writer = self.io_csv_writer()
+        if not try_binding(self.extra_begin_ctrl_c_func, event_data):
+            return
         if currently_selected.type_ in ("cell", "column"):
             for rn in range(maxrows):
                 row = []
@@ -585,9 +587,7 @@ class MainTable(tk.Canvas):
         self.clipboard_clear()
         self.clipboard_append(s.getvalue())
         self.update_idletasks()
-        event_data["eventname"] = "end_ctrl_c"
-        if self.extra_end_ctrl_c_func is not None:
-            self.extra_end_ctrl_c_func(event_data)
+        try_binding(self.extra_end_ctrl_c_func, event_data, "end_ctrl_c")
 
     def ctrl_x(self, event=None) -> None:
         if not self.anything_selected():
@@ -600,19 +600,9 @@ class MainTable(tk.Canvas):
         )
         boxes, maxrows = self.get_ctrl_x_c_boxes()
         event_data["selection_boxes"] = boxes
-        s = io.StringIO()
-        writer = csv.writer(
-            s,
-            dialect=csv.excel_tab,
-            delimiter=self.to_clipboard_delimiter,
-            quotechar=self.to_clipboard_quotechar,
-            lineterminator=self.to_clipboard_lineterminator,
-        )
-        if self.extra_begin_ctrl_x_func is not None:
-            try:
-                self.extra_begin_ctrl_x_func(change_eventname(event_data, "begin_ctrl_x"))
-            except Exception:
-                return
+        s, writer = self.io_csv_writer()
+        if not try_binding(self.extra_begin_ctrl_x_func, event_data, "begin_ctrl_x"):
+            return
         if currently_selected.type_ in ("cell", "column"):
             for rn in range(maxrows):
                 row = []
@@ -643,8 +633,7 @@ class MainTable(tk.Canvas):
         self.refresh()
         for r1, c1, r2, c2 in boxes:
             self.show_ctrl_outline(canvas="table", start_cell=(c1, r1), end_cell=(c2, r2))
-        if self.extra_end_ctrl_x_func is not None:
-            self.extra_end_ctrl_x_func(change_eventname(event_data, "end_ctrl_x"))
+        try_binding(self.extra_end_ctrl_x_func, event_data, "end_ctrl_x")
         self.sheet_modified(event_data)
 
     def get_box_containing_current(self) -> tuple[int, int, int, int]:
@@ -754,11 +743,8 @@ class MainTable(tk.Canvas):
             ): "cells"
         }
         event_data["selection_boxes"] = boxes
-        if self.extra_begin_ctrl_v_func is not None:
-            try:
-                self.extra_begin_ctrl_v_func(change_eventname(event_data, "begin_ctrl_v"))
-            except Exception:
-                return
+        if not try_binding(self.extra_begin_ctrl_v_func, event_data, "begin_ctrl_v"):
+            return
         for ndr, r in enumerate(range(selected_r, selected_r + numrows)):
             for ndc, c in enumerate(range(selected_c, selected_c + numcols)):
                 self.event_data_set_cell(
@@ -788,8 +774,7 @@ class MainTable(tk.Canvas):
             redraw=False,
         )
         self.refresh()
-        if self.extra_end_ctrl_v_func is not None:
-            self.extra_end_ctrl_v_func(change_eventname(event_data, "end_ctrl_v"))
+        try_binding(self.extra_end_ctrl_v_func, event_data, "end_ctrl_v")
         self.sheet_modified(event_data)
 
     def delete_key(self, event=None) -> None:
@@ -803,25 +788,21 @@ class MainTable(tk.Canvas):
         )
         boxes = self.get_boxes()
         event_data["selection_boxes"] = boxes
-        if self.extra_begin_delete_key_func is not None:
-            try:
-                self.extra_begin_delete_key_func(change_eventname(event_data, "begin_delete"))
-            except Exception:
-                return
+        if not try_binding(self.extra_begin_delete_key_func, event_data, "begin_delete"):
+            return
         for r1, c1, r2, c2 in boxes:
             for r in range(r1, r2):
                 for c in range(c1, c2):
                     event_data = self.event_data_clear_cell(self.datarn(r), self.datacn(c), event_data)
         if event_data["cells"]["table"]:
             self.undo_stack.append(ev_stack_dict(event_data))
-        if self.extra_end_delete_key_func is not None:
-            self.extra_end_delete_key_func(change_eventname(event_data, "end_delete"))
+        try_binding(self.extra_end_delete_key_func, event_data, "end_delete")
         self.refresh()
         self.sheet_modified(event_data)
 
     def event_data_clear_cell(self, datarn: int, datacn: int, event_data: dict) -> dict:
         val = self.get_value_for_empty_cell(datarn, datacn)
-        if self.cell_equal_to(datarn, datacn, val):
+        if not self.cell_equal_to(datarn, datacn, val):
             event_data["cells"]["table"][(datarn, datacn)] = self.get_cell_data(datarn, datacn)
             self.set_cell_data(datarn, datacn, val)
         return event_data
@@ -1272,15 +1253,11 @@ class MainTable(tk.Canvas):
             modification = self.undo_stack[-1]["data"]
         else:
             modification = decompress_load(self.undo_stack[-1]["data"])
-        if self.extra_begin_ctrl_z_func is not None:
-            try:
-                self.extra_begin_ctrl_z_func(change_eventname(modification, "begin_undo"))
-            except Exception:
-                return
+        if not try_binding(self.extra_begin_ctrl_z_func, modification, "begin_undo"):
+            return
         self.redo_stack.append(self.undo_modification_invert_event(modification))
         self.undo_stack.pop()
-        if self.extra_end_ctrl_z_func is not None:
-            self.extra_end_ctrl_z_func(change_eventname(modification, "end_undo"))
+        try_binding(self.extra_end_ctrl_z_func, modification, "end_undo")
 
     def redo(self, event=None) -> None:
         if not self.redo_stack:
@@ -1289,15 +1266,11 @@ class MainTable(tk.Canvas):
             modification = self.redo_stack[-1]["data"]
         else:
             modification = decompress_load(self.redo_stack[-1]["data"])
-        if self.extra_begin_ctrl_z_func is not None:
-            try:
-                self.extra_begin_ctrl_z_func(change_eventname(modification, "begin_redo"))
-            except Exception:
-                return
+        if not try_binding(self.extra_begin_ctrl_z_func, modification, "begin_redo"):
+            return
         self.undo_stack.append(self.undo_modification_invert_event(modification, name="redo"))
         self.redo_stack.pop()
-        if self.extra_end_ctrl_z_func is not None:
-            self.extra_end_ctrl_z_func(change_eventname(modification, "end_redo"))
+        try_binding(self.extra_end_ctrl_z_func, modification, "end_redo")
 
     def sheet_modified(self, event_data: dict, purge_redo: bool = True) -> None:
         self.parentframe.emit_event("<<SheetModified>>", event_data)
@@ -3009,25 +2982,25 @@ class MainTable(tk.Canvas):
 
     def get_shift_select_box(self, min_r: int, rowsel: int, min_c: int, colsel: int):
         if rowsel >= min_r and colsel >= min_c:
-            return (min_r, min_c, rowsel + 1, colsel + 1, "cells")
+            return min_r, min_c, rowsel + 1, colsel + 1, "cells"
         elif rowsel >= min_r and min_c >= colsel:
-            return (min_r, colsel, rowsel + 1, min_c + 1, "cells")
+            return min_r, colsel, rowsel + 1, min_c + 1, "cells"
         elif min_r >= rowsel and colsel >= min_c:
-            return (rowsel, min_c, min_r + 1, colsel + 1, "cells")
+            return rowsel, min_c, min_r + 1, colsel + 1, "cells"
         elif min_r >= rowsel and min_c >= colsel:
-            return (rowsel, colsel, min_r + 1, min_c + 1, "cells")
+            return rowsel, colsel, min_r + 1, min_c + 1, "cells"
 
     def get_b1_motion_box(self, start_row: int, start_col: int, end_row: int, end_col: int):
         if end_row >= start_row and end_col >= start_col and (end_row - start_row or end_col - start_col):
-            return (start_row, start_col, end_row + 1, end_col + 1, "cells")
+            return start_row, start_col, end_row + 1, end_col + 1, "cells"
         elif end_row >= start_row and end_col < start_col and (end_row - start_row or start_col - end_col):
-            return (start_row, end_col, end_row + 1, start_col + 1, "cells")
+            return start_row, end_col, end_row + 1, start_col + 1, "cells"
         elif end_row < start_row and end_col >= start_col and (start_row - end_row or end_col - start_col):
-            return (end_row, start_col, start_row + 1, end_col + 1, "cells")
+            return end_row, start_col, start_row + 1, end_col + 1, "cells"
         elif end_row < start_row and end_col < start_col and (start_row - end_row or start_col - end_col):
-            return (end_row, end_col, start_row + 1, start_col + 1, "cells")
+            return end_row, end_col, start_row + 1, start_col + 1, "cells"
         else:
-            return (start_row, start_col, start_row + 1, start_col + 1, "cells")
+            return start_row, start_col, start_row + 1, start_col + 1, "cells"
 
     def b1_motion(self, event):
         x1, y1, x2, y2 = self.get_canvas_visible_area()
@@ -4288,12 +4261,8 @@ class MainTable(tk.Canvas):
             boxes=self.get_boxes(),
             selected=self.currently_selected(),
         )
-
-        if self.extra_begin_insert_cols_rc_func is not None:
-            try:
-                self.extra_begin_insert_cols_rc_func(change_eventname(event_data, "begin_add_columns"))
-            except Exception:
-                return
+        if not try_binding(self.extra_begin_insert_cols_rc_func, event_data, "begin_add_columns"):
+            return
         event_data = self.add_columns(
             *self.get_args_for_add_columns(data_ins_col, displayed_ins_col, numcols),
             event_data=event_data,
@@ -4301,8 +4270,7 @@ class MainTable(tk.Canvas):
         if self.undo_enabled:
             self.undo_stack.append(ev_stack_dict(event_data))
         self.refresh()
-        if self.extra_end_insert_cols_rc_func is not None:
-            self.extra_end_insert_cols_rc_func(change_eventname(event_data, "end_add_columns"))
+        try_binding(self.extra_end_insert_cols_rc_func, event_data, "end_add_columns")
         self.sheet_modified(event_data)
 
     def get_args_for_add_columns(
@@ -4465,11 +4433,8 @@ class MainTable(tk.Canvas):
             boxes=self.get_boxes(),
             selected=self.currently_selected(),
         )
-        if self.extra_begin_insert_rows_rc_func is not None:
-            try:
-                self.extra_begin_insert_rows_rc_func(change_eventname(event_data, "begin_add_rows"))
-            except Exception:
-                return
+        if not try_binding(self.extra_begin_insert_rows_rc_func, event_data, "begin_add_rows"):
+            return
         event_data = self.add_rows(
             *self.get_args_for_add_rows(data_ins_row, displayed_ins_row, numrows),
             event_data=event_data,
@@ -4477,8 +4442,7 @@ class MainTable(tk.Canvas):
         if self.undo_enabled:
             self.undo_stack.append(ev_stack_dict(event_data))
         self.refresh()
-        if self.extra_end_insert_rows_rc_func is not None:
-            self.extra_end_insert_rows_rc_func(change_eventname(event_data, "end_add_rows"))
+        try_binding(self.extra_end_insert_rows_rc_func, event_data, "end_add_rows")
         self.sheet_modified(event_data)
 
     def get_args_for_add_rows(
@@ -4584,19 +4548,15 @@ class MainTable(tk.Canvas):
             boxes=self.get_boxes(),
             selected=self.currently_selected(),
         )
-        if self.extra_begin_del_cols_rc_func is not None:
-            try:
-                self.extra_begin_del_cols_rc_func(change_eventname(event_data, "begin_delete_columns"))
-            except Exception:
-                return
+        if not try_binding(self.extra_begin_del_cols_rc_func, event_data, "begin_delete_columns"):
+            return
         event_data = self.delete_columns_displayed(selected, event_data)
         data_cols = selected if self.all_columns_displayed else [self.displayed_columns[c] for c in selected]
         event_data = self.delete_columns_data(data_cols, event_data)
         if self.undo_enabled:
             self.undo_stack.append(ev_stack_dict(event_data))
         self.deselect("all")
-        if self.extra_end_del_cols_rc_func is not None:
-            self.extra_end_del_cols_rc_func(change_eventname(event_data, "end_delete_columns"))
+        try_binding(self.extra_end_del_cols_rc_func, event_data, "end_delete_columns")
         self.sheet_modified(event_data)
 
     def delete_rows_data(self, rows: list, event_data: dict) -> dict:
@@ -4648,19 +4608,15 @@ class MainTable(tk.Canvas):
             boxes=self.get_boxes(),
             selected=self.currently_selected(),
         )
-        if self.extra_begin_del_rows_rc_func is not None:
-            try:
-                self.extra_begin_del_rows_rc_func(change_eventname(event_data, "begin_delete_rows"))
-            except Exception:
-                return
+        if not try_binding(self.extra_begin_del_rows_rc_func, event_data, "begin_delete_rows"):
+            return
         event_data = self.delete_rows_displayed(selected, event_data)
         data_rows = selected if self.all_rows_displayed else [self.displayed_rows[r] for r in selected]
         event_data = self.delete_rows_data(data_rows, event_data)
         if self.undo_enabled:
             self.undo_stack.append(ev_stack_dict(event_data))
         self.deselect("all")
-        if self.extra_end_del_rows_rc_func is not None:
-            self.extra_end_del_rows_rc_func(change_eventname(event_data, "end_delete_rows"))
+        try_binding(self.extra_end_del_rows_rc_func, event_data, "end_delete_rows")
         self.sheet_modified(event_data)
 
     def move_row_position(self, idx1: int, idx2: int):
@@ -5752,7 +5708,12 @@ class MainTable(tk.Canvas):
         return True
 
     def get_selection_items(
-        self, cells: bool = True, rows: bool = True, columns: bool = True, current: bool = True, reverse: bool = False
+        self,
+        cells: bool = True,
+        rows: bool = True,
+        columns: bool = True,
+        current: bool = True,
+        reverse: bool = False,
     ) -> list:
         return sorted(
             (self.find_withtag("cells") if cells else tuple())
@@ -7188,8 +7149,7 @@ class MainTable(tk.Canvas):
             )
             if kwargs["check_function"] is not None:
                 kwargs["check_function"](event_data)
-            if self.extra_end_edit_cell_func is not None:
-                self.extra_end_edit_cell_func(event_data)
+            try_binding(self.extra_end_edit_cell_func, event_data)
         if redraw:
             self.refresh()
 
@@ -7304,7 +7264,7 @@ class MainTable(tk.Canvas):
                             and "format" in self.col_options[c]
                         ):
                             self.set_cell_data(r, c, value=self.data[r][c])
-        for c in self.yield_formatted_columns():
+        for c in gen_formatted(self.col_options):
             for r in range(len(self.data)):
                 if not (
                     (r, c) in self.cell_options
@@ -7313,11 +7273,11 @@ class MainTable(tk.Canvas):
                     and "format" in self.row_options[r]
                 ):
                     self.set_cell_data(r, c, value=self.data[r][c])
-        for r in self.yield_formatted_rows():
+        for r in gen_formatted(self.row_options):
             for c in range(len(self.data[r])):
                 if not ((r, c) in self.cell_options and "format" in self.cell_options[(r, c)]):
                     self.set_cell_data(r, c, value=self.data[r][c])
-        for r, c in self.yield_formatted_cells():
+        for r, c in gen_formatted(self.cell_options):
             if len(self.data) > r and len(self.data[r]) > c:
                 self.set_cell_data(r, c, value=self.data[r][c])
 
@@ -7329,7 +7289,7 @@ class MainTable(tk.Canvas):
 
     def delete_cell_format(self, datarn: str | int = "all", datacn: int = 0, clear_values: bool = False) -> None:
         if isinstance(datarn, str) and datarn.lower() == "all":
-            for datarn, datacn in self.yield_formatted_cells():
+            for datarn, datacn in gen_formatted(self.cell_options):
                 del self.cell_options[(datarn, datacn)]["format"]
                 if clear_values:
                     self.set_cell_data(datarn, datacn, "", expand_sheet=False)
@@ -7341,7 +7301,7 @@ class MainTable(tk.Canvas):
 
     def delete_row_format(self, datarn: str | int = "all", clear_values: bool = False) -> None:
         if isinstance(datarn, str) and datarn.lower() == "all":
-            for datarn in self.yield_formatted_rows():
+            for datarn in gen_formatted(self.row_options):
                 del self.row_options[datarn]["format"]
                 if clear_values:
                     for datacn in range(len(self.data[datarn])):
@@ -7355,7 +7315,7 @@ class MainTable(tk.Canvas):
 
     def delete_column_format(self, datacn: str | int = "all", clear_values: bool = False) -> None:
         if isinstance(datacn, str) and datacn.lower() == "all":
-            for datacn in self.yield_formatted_columns():
+            for datacn in gen_formatted(self.col_options):
                 del self.col_options[datacn]["format"]
                 if clear_values:
                     for datarn in range(len(self.data)):
@@ -7453,36 +7413,6 @@ class MainTable(tk.Canvas):
                 # and it returns one of above type hints
                 return value.get_clipboard_data()
         return f"{value}"
-
-    def yield_formatted_cells(self, formatter: object = None) -> tuple:
-        if formatter is None:
-            yield from (
-                cell
-                for cell, options in self.cell_options.items()
-                if "format" in options and options["format"]["formatter"] == formatter
-            )
-        else:
-            yield from (cell for cell, options in self.cell_options.items() if "format" in options)
-
-    def yield_formatted_rows(self, formatter: object = None) -> int:
-        if formatter is None:
-            yield from (r for r, options in self.row_options.items() if "format" in options)
-        else:
-            yield from (
-                r
-                for r, options in self.row_options.items()
-                if "format" in options and options["format"]["formatter"] == formatter
-            )
-
-    def yield_formatted_columns(self, formatter: object = None) -> int:
-        if formatter is None:
-            yield from (c for c, options in self.col_options.items() if "format" in options)
-        else:
-            yield from (
-                c
-                for c, options in self.col_options.items()
-                if "format" in options and options["format"]["formatter"] == formatter
-            )
 
     def get_cell_kwargs(
         self,

@@ -17,7 +17,7 @@ from .formatters import (
     try_to_bool,
 )
 from .functions import (
-    change_eventname,
+    try_binding,
     consecutive_chunks,
     ev_stack_dict,
     event_dict,
@@ -803,7 +803,6 @@ class RowIndex(tk.Canvas):
             ):
                 if r >= len(self.MT.row_positions) - 1:
                     r -= 1
-                extra_func_success = True
                 event_data = event_dict(
                     name="move_rows",
                     sheet=self.parentframe.name,
@@ -811,12 +810,7 @@ class RowIndex(tk.Canvas):
                     selected=self.MT.currently_selected(),
                     value=r,
                 )
-                if self.ri_extra_begin_drag_drop_func is not None:
-                    try:
-                        self.ri_extra_begin_drag_drop_func(change_eventname(event_data, "begin_move_rows"))
-                    except Exception:
-                        extra_func_success = False
-                if extra_func_success:
+                if try_binding(self.ri_extra_begin_drag_drop_func, event_data, "begin_move_rows"):
                     data_new_idxs, disp_new_idxs, event_data = self.MT.move_rows_adjust_options_dict(
                         *self.MT.get_args_for_move_rows(
                             move_to=r,
@@ -832,8 +826,7 @@ class RowIndex(tk.Canvas):
                     if self.MT.undo_enabled:
                         self.MT.undo_stack.append(ev_stack_dict(event_data))
                     self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
-                    if self.ri_extra_end_drag_drop_func is not None:
-                        self.ri_extra_end_drag_drop_func(change_eventname(event_data, "end_move_rows"))
+                    try_binding(self.ri_extra_end_drag_drop_func, event_data, "end_move_rows")
                     self.MT.sheet_modified(event_data)
         elif self.b1_pressed_loc is not None and self.rsz_w is None and self.rsz_h is None:
             r = self.MT.identify_row(y=event.y)
@@ -2084,8 +2077,7 @@ class RowIndex(tk.Canvas):
             )
             if kwargs["check_function"] is not None:
                 kwargs["check_function"](event_data)
-            if self.extra_end_edit_cell_func is not None:
-                self.extra_end_edit_cell_func(event_data)
+            try_binding(self.extra_end_edit_cell_func, event_data)
         if redraw:
             self.MT.refresh()
 

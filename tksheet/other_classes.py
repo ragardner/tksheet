@@ -35,79 +35,11 @@ class CanUseKeys:
         else:
             raise ValueError(f"Key must be type 'str' not '{type(key)}'.")
 
-
-class SheetEvent(CanUseKeys):
-    def __init__(
-        self,
-        name: str = None,
-        sheet: object = None,
-        boxes: None | dict | tuple = None,
-        cells_table: None | dict = None,
-        cells_header: None | dict = None,
-        cells_index: None | dict = None,
-        selected: None | tuple = None,
-        data: object = None,
-        key: None | str = None,
-        value: object = None,
-        location: None | int | tuple[int] = None,
-        resized_rows: None | dict = None,
-        resized_columns: None | dict = None,
-        # resized_index: None, dict] = None,
-        # resized_header: None, dict] = None,
-        being_selected: None | tuple = None,
-        named_spans: None | dict = None,
-        **kwargs,
-    ):
-        self.eventname = "" if name is None else name
-        self.sheetname = "!sheet" if sheet is None else sheet
-        self.cells = CanUseKeys(
-            table={} if cells_table is None else cells_table,
-            header={} if cells_header is None else cells_header,
-            index={} if cells_index is None else cells_index,
-        )
-        self.moved = CanUseKeys(
-            rows=CanUseKeys(
-                data={},
-                displayed={},
-            ),
-            columns=CanUseKeys(
-                data={},
-                displayed={},
-            ),
-        )
-        self.added = CanUseKeys(
-            rows=CanUseKeys(table={},
-                            header={},
-                            row_heights={},
-                            displayed_rows={},),
-            columns=CanUseKeys(table={},
-                               header={},
-                               column_widths={},
-                               displayed_columns={},),
-        )
-        self.deleted = CanUseKeys(
-            rows={},
-            columns={},
-            header={},
-            index={},
-            column_widths={},
-            row_heights={},
-            options={},
-            displayed_rows=None,
-            displayed_columns=None,
-        )
-        self.named_spans = {} if named_spans is None else named_spans
-        self.selection_boxes = {} if boxes is None else {boxes[:-1]: boxes[-1]} if isinstance(boxes, tuple) else boxes
-        self.selected = tuple() if selected is None else selected
-        self.being_selected = tuple() if being_selected is None else being_selected
-        self.data = [] if data is None else data
-        self.key = "" if key is None else key
-        self.value = None if value is None else value
-        self.location = tuple() if location is None else location
-        self.resized = CanUseKeys(
-            rows={} if resized_rows is None else resized_rows,
-            columns={} if resized_columns is None else resized_columns,
-        )
+    def __setitem__(self, key: str, value: object) -> None:
+        if isinstance(key, str):
+            setattr(self, key, value)
+        else:
+            raise ValueError(f"Key must be type 'str' not '{type(key)}'.")
 
 
 class Span(CanUseKeys):

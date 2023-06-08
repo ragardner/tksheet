@@ -1,18 +1,23 @@
 from __future__ import annotations
 
-# for mac bindings
 from platform import system as get_os
+from typing import TYPE_CHECKING
 
-USER_OS = f"{get_os()}".lower()
-ctrl_key = "Command" if USER_OS == "darwin" else "Control"
-rc_binding = "<2>" if USER_OS == "darwin" else "<3>"
-symbols_set = set("""!#\$%&'()*+,-./:;"@[]^_`{|}~>?= """)
-nonelike = {None, "none", ""}
-truthy = {True, "true", "t", "yes", "y", "on", "1", 1, 1.0}
-falsy = {False, "false", "f", "no", "n", "off", "0", 0, 0.0}
-val_modifying_options = {"checkbox", "format", "dropdown"}
+from .types import Font
 
-arrowkey_bindings_helper = {
+if TYPE_CHECKING:
+    from tksheet.types import Theme
+
+USER_OS: str = f"{get_os()}".lower()
+ctrl_key: str = "Command" if USER_OS == "darwin" else "Control"
+rc_binding: str = "<2>" if USER_OS == "darwin" else "<3>"
+symbols_set: set[str, ...] = set("""!#\$%&'()*+,-./:;"@[]^_`{|}~>?= """)
+nonelike: set[object, ...] = {None, "none", ""}
+truthy: set[object, ...] = {True, "true", "t", "yes", "y", "on", "1", 1, 1.0}
+falsy: set[object, ...] = {False, "false", "f", "no", "n", "off", "0", 0, 0.0}
+val_modifying_options: set[str, str, str] = {"checkbox", "format", "dropdown"}
+
+arrowkey_bindings_helper: dict[str, str] = {
     "tab": "Tab",
     "up": "Up",
     "right": "Right",
@@ -21,25 +26,25 @@ arrowkey_bindings_helper = {
     "prior": "Prior",
     "next": "Next",
 }
-emitted_events = {
+emitted_events: set[str, ...] = {
     "<<SheetModified>>",
     "<<SheetRedrawn>>",
 }
 
 
-def get_font():
+def get_font() -> Font:
     return ("Calibri", 13 if USER_OS == "darwin" else 11, "normal")
 
 
-def get_index_font():
+def get_index_font() -> Font:
     return ("Calibri", 13 if USER_OS == "darwin" else 11, "normal")
 
 
-def get_header_font():
+def get_header_font() -> Font:
     return ("Calibri", 13 if USER_OS == "darwin" else 11, "normal")
 
 
-theme_light_blue = {
+theme_light_blue: Theme = {
     "popup_menu_fg": "#000000",
     "popup_menu_bg": "#FFFFFF",
     "popup_menu_highlight_bg": "#DCDEE0",
@@ -85,7 +90,7 @@ theme_light_blue = {
     "table_selected_columns_fg": "black",
 }
 
-theme_light_green = {
+theme_light_green: Theme = {
     "popup_menu_fg": "#000000",
     "popup_menu_bg": "#FFFFFF",
     "popup_menu_highlight_bg": "#DCDEE0",
@@ -131,7 +136,7 @@ theme_light_green = {
     "table_selected_columns_fg": "black",
 }
 
-theme_dark = {
+theme_dark: Theme = {
     "popup_menu_fg": "white",
     "popup_menu_bg": "gray15",
     "popup_menu_highlight_bg": "gray40",
@@ -177,7 +182,7 @@ theme_dark = {
     "table_selected_columns_fg": "#F7F7F7",
 }
 
-theme_black = {
+theme_black: Theme = {
     "popup_menu_fg": "white",
     "popup_menu_bg": "gray15",
     "popup_menu_highlight_bg": "gray40",
@@ -223,7 +228,7 @@ theme_black = {
     "table_selected_columns_fg": "#F7F7F7",
 }
 
-theme_dark_blue = theme_black.copy()
+theme_dark_blue: Theme = theme_black.copy()
 theme_dark_blue["header_fg"] = "#6ACAD8"
 theme_dark_blue["header_selected_cells_fg"] = "#6ACAD8"
 theme_dark_blue["index_fg"] = "#6ACAD8"
@@ -238,7 +243,7 @@ theme_dark_blue["index_selected_rows_bg"] = "#6ACAD8"
 theme_dark_blue["table_selected_rows_border_fg"] = "#6ACAD8"
 theme_dark_blue["table_selected_columns_border_fg"] = "#6ACAD8"
 
-theme_dark_green = theme_black.copy()
+theme_dark_green: Theme = theme_black.copy()
 theme_dark_green["header_fg"] = "#66FFBF"
 theme_dark_green["header_selected_cells_fg"] = "#66FFBF"
 theme_dark_green["index_fg"] = "#66FFBF"
@@ -254,7 +259,7 @@ theme_dark_green["table_selected_rows_border_fg"] = "#66FFBF"
 theme_dark_green["table_selected_columns_border_fg"] = "#66FFBF"
 
 
-Color_Map = {
+Color_Map: dict[str, str] = {
     "alice blue": "#F0F8FF",
     "ALICE BLUE": "#F0F8FF",
     "AliceBlue": "#F0F8FF",

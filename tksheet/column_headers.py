@@ -17,7 +17,7 @@ from .formatters import (
     try_to_bool,
 )
 from .functions import (
-    change_eventname,
+    try_binding,
     consecutive_chunks,
     ev_stack_dict,
     event_dict,
@@ -845,7 +845,6 @@ class ColumnHeaders(tk.Canvas):
             ):
                 if c >= len(self.MT.col_positions) - 1:
                     c -= 1
-                extra_func_success = True
                 event_data = event_dict(
                     name="move_columns",
                     sheet=self.parentframe.name,
@@ -853,12 +852,7 @@ class ColumnHeaders(tk.Canvas):
                     selected=self.MT.currently_selected(),
                     value=c,
                 )
-                if self.ch_extra_begin_drag_drop_func is not None:
-                    try:
-                        self.ch_extra_begin_drag_drop_func(change_eventname(event_data, "begin_move_columns"))
-                    except Exception:
-                        extra_func_success = False
-                if extra_func_success:
+                if try_binding(self.ch_extra_begin_drag_drop_func, event_data, "begin_move_columns"):
                     data_new_idxs, disp_new_idxs, event_data = self.MT.move_columns_adjust_options_dict(
                         *self.MT.get_args_for_move_columns(
                             move_to=c,
@@ -874,8 +868,7 @@ class ColumnHeaders(tk.Canvas):
                     if self.MT.undo_enabled:
                         self.MT.undo_stack.append(ev_stack_dict(event_data))
                     self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
-                    if self.ch_extra_end_drag_drop_func is not None:
-                        self.ch_extra_end_drag_drop_func(change_eventname(event_data, "end_move_columns"))
+                    try_binding(self.ch_extra_end_drag_drop_func, event_data, "end_move_columns")
                     self.MT.sheet_modified(event_data)
         elif self.b1_pressed_loc is not None and self.rsz_w is None and self.rsz_h is None:
             c = self.MT.identify_col(x=event.x)
@@ -2150,8 +2143,7 @@ class ColumnHeaders(tk.Canvas):
             )
             if kwargs["check_function"] is not None:
                 kwargs["check_function"](event_data)
-            if self.extra_end_edit_cell_func is not None:
-                self.extra_end_edit_cell_func(event_data)
+            try_binding(self.extra_end_edit_cell_func, event_data)
         if redraw:
             self.MT.refresh()
 

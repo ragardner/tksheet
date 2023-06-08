@@ -127,35 +127,9 @@ def ev_stack_dict(d):
 
 
 def len_to_idx(n: int) -> int:
-    if not n:
+    if n < 1:
         return 0
     return n - 1
-
-
-def named_span_dict(
-    from_r: int | None = None,
-    from_c: int | None = None,
-    upto_r: int | None = None,
-    upto_c: int | None = None,
-    type_: str | None = None,
-    name: str | None = None,
-    table: bool | None = None,
-    header: bool | None = None,
-    index: bool | None = None,
-    kwargs: dict | None = None,
-) -> dict:
-    return {
-        "from_r": None if from_r is None else from_r,
-        "from_c": None if from_c is None else from_c,
-        "upto_r": None if upto_r is None else upto_r,
-        "upto_c": None if upto_c is None else upto_c,
-        "type_": "" if type_ is None else type_,
-        "name": "" if name is None else name,
-        "table": True if table is None else table,
-        "header": False if header is None else header,
-        "index": False if index is None else index,
-        "kwargs": {} if kwargs is None else kwargs,
-    }
 
 
 def get_dropdown_kwargs(
@@ -503,3 +477,78 @@ def str_to_int(s: str) -> int | None:
         if s[1:].isdigit():
             return int(s)
         return None
+
+
+def gen_formatted(
+    self,
+    options: dict,
+    formatter: object = None,
+) -> Generator[tuple[int, int], ...] | Generator[int, ...]:
+    if formatter is None:
+        return (k for k, dct in options.items() if "format" in dct)
+    else:
+        return (k for k, dct in options.items() if "format" in dct and dct["format"]["formatter"] == formatter)
+
+
+def try_binding(
+    binding: None | Callable,
+    event: dict,
+    new_name: None | str = None,
+) -> bool:
+    if binding is not None:
+        try:
+            if new_name is None:
+                binding(event)
+            else:
+                binding(change_eventname(event, new_name))
+        except Exception:
+            return False
+    return True
+
+
+def named_span_dict(
+    from_r: int | None = None,
+    from_c: int | None = None,
+    upto_r: int | None = None,
+    upto_c: int | None = None,
+    type_: str | None = None,
+    name: str | None = None,
+    table: bool | None = None,
+    header: bool | None = None,
+    index: bool | None = None,
+    kwargs: dict | None = None,
+) -> dict:
+    return {
+        "from_r": None if from_r is None else from_r,
+        "from_c": None if from_c is None else from_c,
+        "upto_r": None if upto_r is None else upto_r,
+        "upto_c": None if upto_c is None else upto_c,
+        "type_": "" if type_ is None else type_,
+        "name": "" if name is None else name,
+        "table": True if table is None else table,
+        "header": False if header is None else header,
+        "index": False if index is None else index,
+        "kwargs": {} if kwargs is None else kwargs,
+    }
+
+
+# def key_to_span(
+#     key: str,
+# ) -> dict:
+#     if isinstance(key, int):
+#         return self.MT.data[key]
+
+#     elif isinstance(key, str):
+#         # cell
+#         if ":" in key:
+#             ...
+#         # columns
+#         elif key.isalpha() and (c := alpha2num(key)) is not None:
+#             return [self.MT.get_cell_data(r, c, get_displayed=False) for r in range(len(self.MT.data))]
+#         # rows
+#         elif (r := str_to_int(key)) is not None:
+#             return [self.MT.get_cell_data(r, c, get_displayed=False) for c in range(len(self.MT.data[r]))]
+
+
+#     elif isinstance(key, slice):
+#         ...

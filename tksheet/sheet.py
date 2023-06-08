@@ -3060,6 +3060,10 @@ class Sheet(tk.Frame):
 
     def __getitem__(self, key: str | int | slice) -> object:
         """
+        Convert key to span dict
+        Send span dict to get_data function
+        Retrieve data
+
         Get data from sheet
 
         If getting a single cell:
@@ -3097,7 +3101,12 @@ class Sheet(tk.Frame):
         elif isinstance(key, slice):
             ...
 
-    def set_data(self, span: tuple, ) -> Sheet:
+    def __setitem__(self, key: str | int | slice, value: object) -> None:
+        """
+        Convert key to span dict
+        Send span dict to set_data function
+        Set data
+        """
         ...
 
     def set_sheet_data(
