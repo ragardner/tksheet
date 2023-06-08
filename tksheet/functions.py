@@ -7,6 +7,9 @@ from collections.abc import (
     Callable,
     Generator,
 )
+from .types import (
+    NamedSpan,
+)
 from functools import partial
 from itertools import islice
 import re
@@ -517,8 +520,8 @@ def named_span_dict(
     header: bool | None = None,
     index: bool | None = None,
     kwargs: dict | None = None,
-) -> dict:
-    return {
+) -> NamedSpan:
+    d: NamedSpan = {
         "from_r": None if from_r is None else from_r,
         "from_c": None if from_c is None else from_c,
         "upto_r": None if upto_r is None else upto_r,
@@ -530,25 +533,108 @@ def named_span_dict(
         "index": False if index is None else index,
         "kwargs": {} if kwargs is None else kwargs,
     }
+    return d
 
 
-# def key_to_span(
-#     key: str,
-# ) -> dict:
-#     if isinstance(key, int):
-#         return self.MT.data[key]
+def coords_to_span(
+    from_r: int | None = None,
+    from_c: int | None = None,
+    upto_r: int | None = None,
+    upto_c: int | None = None,
+    name: str | None = None,
+    spans: dict[str, NamedSpan] | None = None,
+) -> NamedSpan:
+    if isinstance(name, str) and isinstance(spans, dict) and name in spans:
+        return spans[name]
+    return named_span_dict(
+        from_r=from_r,
+        from_c=from_c,
+        upto_r=upto_r,
+        upto_c=upto_c,
+    )
 
-#     elif isinstance(key, str):
-#         # cell
-#         if ":" in key:
-#             ...
-#         # columns
-#         elif key.isalpha() and (c := alpha2num(key)) is not None:
-#             return [self.MT.get_cell_data(r, c, get_displayed=False) for r in range(len(self.MT.data))]
-#         # rows
-#         elif (r := str_to_int(key)) is not None:
-#             return [self.MT.get_cell_data(r, c, get_displayed=False) for c in range(len(self.MT.data[r]))]
+
+def key_to_span(
+    key: str | int | slice,
+    spans: dict[str, NamedSpan] | None = None,
+) -> NamedSpan:
+    if not isinstance(key, (str, int, slice)):
+        return None
+
+    """
+    Key can be either:
+        [int] - Get whole row at that index
+        [slice] - Get rows up to and including slice stop
+        [str] - Either:
+            ["<name>"] - When surrounded by "<" ">" get cells from a named range
+            ["A"] - Get whole column at that index - "A" is converted to 0
+            ["0:2"] - Rows 0, 1
+            ["A:C"] - Columns 0, 1
+            ["A1:C1"] - Cells (0, 0), (0, 1)
+    """
+
+    # [int]
+    if isinstance(key, int):
+        return named_span_dict(
+            from_r=key,
+            from_c=None,
+            upto_r=key + 1,
+            upto_c=None,
+        )
+
+    elif isinstance(key, slice):
+        return named_span_dict(
+            from_r=key.start,
+            from_c=None,
+            upto_r=key.stop,
+            upto_c=None,
+        )
+
+    elif isinstance(key, str):
+        ...
+
+        # ["<name>"]
+        if key.startswith("<") and key.endswith(">") and (key := key[1:-1]) in spans:
+            return spans[key]
 
 
-#     elif isinstance(key, slice):
-#         ...
+        # A:A -> column index 0
+        # 1:1 -> row index 0
+        # A1:B1 cells ->
+        # (row 0, col 0), (row 0, col 1)
+        try:
+
+            key = key.split(":")
+            if len(key) > 2:
+                raise Exception()
+            m1 = re.search(r"\d", key[0])
+            m2 = re.search(r"\d", key[1])
+            # there are digits in one coord
+            # but not in the other
+            if (m1 and not m2) or (m2 and not m1):
+                raise Exception()
+
+            # no digits, must be columns
+            # e.g. A:A
+            if not m1 and not m2:
+                return None, alpha2num(key[0]), None, alpha2num(key[1])
+
+            m1start = m1.start()
+            m2start = m2.start()
+            # digits start at index 0 in one
+            # coord but not in the other
+            if (not m1start and m2start) or (not m2start and m1start):
+                raise Exception()
+
+            # both digits start at 0
+            # must be rows e.g. 1:1
+            if not m1start and not m2start:
+                return int()
+
+            # both digits start later
+            # than 0, must be cells
+            if m1start and m2start:
+                ...
+
+        except ValueError(f"Value: '{key}' cannot be converted to span"):
+            return None

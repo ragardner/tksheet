@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-from typing import NamedTuple, Union
-
-from typing_extensions import Literal, TypeAlias, TypedDict
+from typing import NamedTuple, Literal, TypeAlias, TypedDict
 
 
 class Font(NamedTuple):
@@ -104,7 +102,7 @@ Binding: TypeAlias = Literal[
 
 Canvas: TypeAlias = Literal["all", "row_index", "header", "top_left", "x_scrollbar", "y_scrollbar"]
 Align: TypeAlias = Literal["nw", "n", "ne", "w", "center", "e", "sw", "s", "se"]
-ScreenUnits: TypeAlias = Union[str, float]
+ScreenUnits: TypeAlias = str | float
 State: TypeAlias = Literal["normal", "disabled"]
 
 

@@ -3948,10 +3948,7 @@ class MainTable(tk.Canvas):
                                         **dct["kwargs"],
                                     )
         if to_add and "named_spans" in to_add:
-            self.named_spans = {
-                **self.named_spans,
-                **to_add["named_spans"],
-            }
+            self.named_spans = to_add["named_spans"]
 
     def adjust_options_post_add_rows(
         self,
@@ -4010,10 +4007,7 @@ class MainTable(tk.Canvas):
                                         **dct["kwargs"],
                                     )
         if to_add and "named_spans" in to_add:
-            self.named_spans = {
-                **self.named_spans,
-                **to_add["named_spans"],
-            }
+            self.named_spans = to_add["named_spans"]
 
     def adjust_options_post_delete_columns(
         self,
