@@ -3059,11 +3059,13 @@ class Sheet(tk.Frame):
 
     def __getitem__(self, key: str | int | slice) -> object:
         span = key_to_span(key, self.MT.named_spans)
-        ...
+        if isinstance(span, str):
+            raise ValueError(span)
 
     def __setitem__(self, key: str | int | slice, value: object) -> None:
         span = key_to_span(key, self.MT.named_spans)
-        ...
+        if isinstance(span, str):
+            raise ValueError(span)
 
     def set_sheet_data(
         self,

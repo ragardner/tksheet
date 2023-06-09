@@ -556,68 +556,224 @@ def coords_to_span(
 
 def key_to_span(
     key: str | int | slice,
-    spans: dict[str, NamedSpan] | None = None,
+    total_rows: int | Callable,
+    total_cols: int | Callable,
+    spans: dict[str, NamedSpan],
 ) -> NamedSpan:
     if not isinstance(key, (str, int, slice)):
-        return None
+        return f"Key type must be either str, int or slice, not '{type(key)}'."
+
+
+    if not isinstance(total_cols, int):
+        total_cols = total_cols()
 
     """
     Key can be either:
-        [int] - Get whole row at that index
-        [slice] - Get rows up to and including slice stop
+        [int]
+        x   [1] - Row 0
+        [slice] - Either:
+        x   [:] - All cells
+        x   [1:3] - Rows 0, 1, 2
+        x   [:2] - Rows up to and including 2
+        x   [2:] - Rows starting from and including 2
         [str] - Either:
-            ["<name>"] - When surrounded by "<" ">" get cells from a named range
-            ["A"] - Get whole column at that index - "A" is converted to 0
-            ["0:2"] - Rows 0, 1
-            ["A:C"] - Columns 0, 1
-            ["A1:C1"] - Cells (0, 0), (0, 1)
+        x   [":"] - All cells
+        x   ["<name>"] - When surrounded by "<" ">" cells from a named range
+        x   ["1"] - Row 0
+        x   ["A"] - Column 0
+        x   ["A1"] - Cell (0, 0)
+           ["1:2"] - Rows 0, 1
+           [":2"] - Rows up to and including 2
+           ["2:"] - Rows starting from and including 2
+           ["A:C"] - Columns 0, 1
+           [":C"] - Columns up to and including 2
+           ["C:"] - Columns starting from and including 2
+           ["A1:C1"] - Cells (0, 0), (0, 1), (0, 2)
+           [":C1"] - Cells (0, 0), (0, 1)
+           ["A1:"] - Cells starting from and including (0, 0)
     """
-
-    # [int]
     if isinstance(key, int):
+        """
+        [int] - Whole row at that index
+        """
         return named_span_dict(
-            from_r=key,
+            from_r=key - 1,
             from_c=None,
-            upto_r=key + 1,
+            upto_r=key,
             upto_c=None,
         )
 
     elif isinstance(key, slice):
+        """
+        [slice]
+        """
+        """
+        [:] - All cells
+        """
+        if key.start is None and key.stop is None:
+            """
+            [:]
+            """
+            if not isinstance(total_rows, int):
+                total_rows = total_rows()
+            if not isinstance(total_cols, int):
+                total_cols = total_cols()
+            return named_span_dict(
+                from_r=0,
+                from_c=0,
+                upto_r=total_rows,
+                upto_c=total_cols,
+            )
+        """
+        [1:3] - Rows 1, 2
+        [:2] - Rows up to but not including 2
+        [2:] - Rows starting from and including 2
+        """
+        start = 0 if key.start is None else key.start - 1
+        if key.stop is None:
+            if not isinstance(total_rows, int):
+                total_rows = total_rows()
+            stop = total_rows
+        else:
+            stop = key.stop
         return named_span_dict(
-            from_r=key.start,
+            from_r=start,
             from_c=None,
-            upto_r=key.stop,
+            upto_r=stop,
             upto_c=None,
         )
 
     elif isinstance(key, str):
-        ...
+        if not key:
+            return f"Key cannot be an empty string."  # noqa: F541
 
-        # ["<name>"]
-        if key.startswith("<") and key.endswith(">") and (key := key[1:-1]) in spans:
-            return spans[key]
+        if key.startswith("<") and key.endswith(">"):
+            if (key := key[1:-1]) in spans:
+                """
+                ["<name>"] - Surrounded by "<" ">" cells from a named range
+                """
+                return spans[key]
+            return f"'{key}' not in named spans."
 
-
-        # A:A -> column index 0
-        # 1:1 -> row index 0
-        # A1:B1 cells ->
-        # (row 0, col 0), (row 0, col 1)
         try:
+            if key.isdigit():
+                """
+                ["1"] - Row 0
+                """
+                return named_span_dict(
+                    from_r=int(key) - 1,
+                    from_c=None,
+                    upto_r=int(key),
+                    upto_c=None,
+                )
+
+            if key.isalpha():
+                """
+                ["A"] - Column 0
+                """
+                return named_span_dict(
+                    from_r=None,
+                    from_c=alpha2num(key),
+                    upto_r=None,
+                    upto_c=alpha2num(key) + 1,
+                )
+
+            """
+            ["A1"] - Cell (0, 0)
+            """
+            keys_digits = re.search(r"\d", key)
+            if keys_digits:
+                digits_start = keys_digits.start()
+                if not digits_start:
+                    return f"'{key}' could not be converted to span."
+                if digits_start:
+                    key_row = key[digits_start:]
+                    key_column = key[:digits_start]
+                    return named_span_dict(
+                        from_r=int(key_row) - 1,
+                        from_c=alpha2num(key_column),
+                        upto_r=int(key_row),
+                        upto_c=alpha2num(key_column) + 1,
+                    )
 
             key = key.split(":")
             if len(key) > 2:
-                raise Exception()
+                return f"'{key}' could not be converted to span."
+
+            if not key[0] and not key[1]:
+                """
+                [":"] - All cells
+                """
+                if not isinstance(total_rows, int):
+                    total_rows = total_rows()
+                if not isinstance(total_cols, int):
+                    total_cols = total_cols()
+                return named_span_dict(
+                    from_r=0,
+                    from_c=0,
+                    upto_r=total_rows,
+                    upto_c=total_cols,
+                )
+
+            if key[0].isdigit() and not key[1]:
+                """
+                ["2:"] - Rows starting from and including 2
+                """
+                if not isinstance(total_rows, int):
+                    total_rows = total_rows()
+                return named_span_dict(
+                    from_r=int(key[0]) - 1,
+                    from_c=None,
+                    upto_r=total_rows,
+                    upto_c=None,
+                )
+
+            if key[1].isdigit() and not key[0]:
+                """
+                [":2"] - Rows up to and including 2
+                """
+                return named_span_dict(
+                    from_r=0,
+                    from_c=None,
+                    upto_r=int(key[1]) + 1,
+                    upto_c=None,
+                )
+
+
             m1 = re.search(r"\d", key[0])
             m2 = re.search(r"\d", key[1])
-            # there are digits in one coord
-            # but not in the other
+
+            # keys cannot have digits in one key and not in the other
+            # except where key is
             if (m1 and not m2) or (m2 and not m1):
-                raise Exception()
+                return None
+
+            # keys cannot start with a digit and sometime thereafter have chars
+            # split key[0]/[1] by digit index check isalpha isdigit
+            #
+
+
+            #
 
             # no digits, must be columns
-            # e.g. A:A
             if not m1 and not m2:
-                return None, alpha2num(key[0]), None, alpha2num(key[1])
+                """
+                ["A:C"] - Columns 0, 1
+                [":C"] - Columns up to but not including 2
+                ["C:"] - Columns starting from and including 2
+                """
+                if not key[0]:
+                    key[0] = "A"
+                if not key[1]:
+                    if not isinstance(total_cols, int):
+                        total_cols = total_cols()
+                    key[1] = total_cols
+                return named_span_dict(
+                    from_r=None,
+                    from_c=alpha2num(key[0]),
+                    upto_r=None,
+                    upto_c=alpha2num(key[1]),
+                )
 
             m1start = m1.start()
             m2start = m2.start()
@@ -629,6 +785,9 @@ def key_to_span(
             # both digits start at 0
             # must be rows e.g. 1:1
             if not m1start and not m2start:
+                """
+                ["0:2"] - Rows 0, 1
+                """
                 return int()
 
             # both digits start later
@@ -636,5 +795,5 @@ def key_to_span(
             if m1start and m2start:
                 ...
 
-        except ValueError(f"Value: '{key}' cannot be converted to span"):
-            return None
+        except ValueError as error:
+            return f"'{key}' could not be converted to span. Error: {error}"

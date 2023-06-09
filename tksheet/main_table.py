@@ -1428,6 +1428,7 @@ class MainTable(tk.Canvas):
                 event_data=event_data,
                 displayed_rows=modification["deleted"]["displayed_rows"],
                 options_to_add=unpickle_obj(modification["deleted"]["options"]),
+                add_col_positions=False,
             )
 
         if modification["deleted"]["columns"]:
@@ -1438,6 +1439,7 @@ class MainTable(tk.Canvas):
                 event_data=event_data,
                 displayed_columns=modification["deleted"]["displayed_columns"],
                 options_to_add=unpickle_obj(modification["deleted"]["options"]),
+                add_row_positions=False,
             )
 
         if modification["eventname"].startswith(("edit", "move")):
@@ -4147,6 +4149,7 @@ class MainTable(tk.Canvas):
         displayed_columns: None | list[int, ...] = None,
         options_to_add: None | dict = None,
         create_selections: bool = True,
+        add_row_positions: bool = True,
     ) -> dict:
         if options_to_add is None:
             options_to_add = {}
@@ -4166,7 +4169,8 @@ class MainTable(tk.Canvas):
                 up_to = last_ins
         cws = self.get_column_widths()
         if column_widths and next(reversed(column_widths)) > len(cws):
-            cws.extend([self.default_column_width for i in range(next(reversed(column_widths)) - len(cws))])
+            for i in reversed(range(len(cws), len(cws) + next(reversed(column_widths)) - len(cws))):
+                column_widths[i] = self.default_column_width
         self.set_col_positions(
             itr=insert_items(
                 cws,
@@ -4184,7 +4188,7 @@ class MainTable(tk.Canvas):
                     maxrn = rn
                 self.data[rn].insert(cn, v)
         # if not hiding rows then we can extend row positions if necessary
-        if self.all_rows_displayed and maxrn + 1 > len(self.row_positions) - 1:
+        if add_row_positions and self.all_rows_displayed and maxrn + 1 > len(self.row_positions) - 1:
             self.set_row_positions(
                 itr=chain(
                     self.gen_row_heights(),
@@ -4325,6 +4329,7 @@ class MainTable(tk.Canvas):
         event_data: dict,
         displayed_rows: None | list[int, ...] = None,
         options_to_add: None | dict = None,
+        add_col_positions: bool = True,
     ) -> dict:
         if options_to_add is None:
             options_to_add = {}
@@ -4344,7 +4349,8 @@ class MainTable(tk.Canvas):
                 up_to = last_ins
         rhs = self.get_row_heights()
         if row_heights and next(reversed(row_heights)) > len(rhs):
-            rhs.extend([self.default_row_height[1] for i in range(next(reversed(row_heights)) - len(rhs))])
+            for i in reversed(range(len(rhs), len(rhs) + next(reversed(row_heights)) - len(rhs))):
+                row_heights[i] = self.default_row_height[1]
         self.set_row_positions(
             itr=insert_items(
                 rhs,
@@ -4362,7 +4368,7 @@ class MainTable(tk.Canvas):
         if isinstance(self.row_index, list):
             self._row_index = insert_items(self._row_index, index, self.RI.fix_index)
         # if not hiding columns then we can extend col positions if necessary
-        if self.all_columns_displayed and maxcn + 1 > len(self.col_positions) - 1:
+        if add_col_positions and self.all_columns_displayed and maxcn + 1 > len(self.col_positions) - 1:
             self.set_col_positions(
                 itr=chain(
                     self.gen_column_widths(),
