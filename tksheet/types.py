@@ -106,7 +106,7 @@ ScreenUnits: TypeAlias = str | float
 State: TypeAlias = Literal["normal", "disabled"]
 
 
-class NamedSpan(TypedDict):
+class Span(TypedDict):
     from_r: int | None
     from_c: int | None
     upto_r: int | None

@@ -916,20 +916,29 @@ class MainTable(tk.Canvas):
             self.cell_options = {(k[0], full_new_idxs[k[1]]): v for k, v in self.cell_options.items()}
             self.col_options = {full_new_idxs[k]: v for k, v in self.col_options.items()}
             self.CH.cell_options = {full_new_idxs[k]: v for k, v in self.CH.cell_options.items()}
+            totalrows = self.total_data_rows()
             for name, span in self.named_spans.items():
                 # span is neither a cell options nor col options span, continue
-                if not isinstance(span["from_c"], int) or not isinstance(span["upto_c"], int):
+                if not isinstance(span["from_c"], int):
                     continue
-                idx_0, idx_end = int(span["from_c"]), int(span["upto_c"]) - 1
-                if full_new_idxs[idx_end] < full_new_idxs[idx_0]:
-                    newfrom = full_new_idxs[idx_end]
-                    newupto = full_new_idxs[idx_0] + 1
+                if isinstance(span["upto_c"], int):
+                    idx_0, idx_end = int(span["from_c"]), int(span["upto_c"]) - 1
+                    if full_new_idxs[idx_end] < full_new_idxs[idx_0]:
+                        newfrom = full_new_idxs[idx_end]
+                        newupto = full_new_idxs[idx_0] + 1
+                    else:
+                        newfrom = full_new_idxs[idx_0]
+                        newupto = full_new_idxs[idx_end] + 1
+                    oldupto_colrange = int(span["upto_c"])
+                    newupto_colrange = newupto
                 else:
-                    newfrom = full_new_idxs[idx_0]
-                    newupto = full_new_idxs[idx_end] + 1
+                    newfrom = full_new_idxs[int(span["from_c"])]
+                    newupto = None
+                    oldupto_colrange = totalcols
+                    newupto_colrange = oldupto_colrange
                 # add cell/col kwargs for columns that are new to the span
-                old_span_idxs = set(full_new_idxs[k] for k in range(span["from_c"], span["upto_c"]))
-                for k in range(newfrom, newupto):
+                old_span_idxs = set(full_new_idxs[k] for k in range(span["from_c"], oldupto_colrange))
+                for k in range(newfrom, newupto_colrange):
                     if k not in old_span_idxs:
                         oldidx = full_old_idxs[k]
                         # event_data is used to preserve old cell value
@@ -942,7 +951,7 @@ class MainTable(tk.Canvas):
                         ):
                             event_data["cells"]["header"][oldidx] = self.CH.get_cell_data(k)
                         # the span targets columns
-                        if span["from_r"] is None or span["upto_r"] is None:
+                        if span["from_r"] is None:
                             if span["type_"] in val_modifying_options:
                                 for datarn in range(len(self.data)):
                                     if (datarn, oldidx) not in event_data["cells"]["table"]:
@@ -956,7 +965,8 @@ class MainTable(tk.Canvas):
                             )
                         # the span targets cells
                         else:
-                            for datarn in range(span["from_r"], span["upto_r"]):
+                            rng_upto_r = totalrows if span["upto_r"] is None else span["upto_r"]
+                            for datarn in range(span["from_r"], rng_upto_r):
                                 if (
                                     span["type_"] in val_modifying_options
                                     and (datarn, oldidx) not in event_data["cells"]["table"]
@@ -972,9 +982,11 @@ class MainTable(tk.Canvas):
                 # remove span specific kwargs from cells/columns
                 # that are no longer in the span,
                 # cell options/col options keys are new idxs
-                for k in range(span["from_c"], span["upto_c"]):
+                for k in range(span["from_c"], oldupto_colrange):
                     # has it moved outside of new span coords
-                    if full_new_idxs[k] < newfrom or full_new_idxs[k] >= newupto:
+                    if (isinstance(newupto, int) and (full_new_idxs[k] < newfrom or full_new_idxs[k] >= newupto)) or (
+                        newupto is None and full_new_idxs[k] < newfrom
+                    ):
                         # span includes header
                         if (
                             span["header"]
@@ -982,20 +994,21 @@ class MainTable(tk.Canvas):
                             and span["type_"] in self.CH.cell_options
                         ):
                             del self.CH.cell_options[full_new_idxs[k]][span["type_"]]
-                        # span is for cell options
-                        if isinstance(span["from_r"], int) and isinstance(span["upto_r"], int):
-                            for r in range(span["from_r"], span["upto_r"]):
-                                if (r, full_new_idxs[k]) in self.cell_options and span["type_"] in self.cell_options[
-                                    (r, full_new_idxs[k])
-                                ]:
-                                    del self.cell_options[(r, full_new_idxs[k])][span["type_"]]
                         # span is for col options
-                        else:
+                        if span["from_r"] is None:
                             if (
                                 full_new_idxs[k] in self.col_options
                                 and span["type_"] in self.col_options[full_new_idxs[k]]
                             ):
                                 del self.col_options[full_new_idxs[k]][span["type_"]]
+                        # span is for cell options
+                        else:
+                            rng_upto_r = totalrows if span["upto_r"] is None else span["upto_r"]
+                            for r in range(span["from_r"], rng_upto_r):
+                                if (r, full_new_idxs[k]) in self.cell_options and span["type_"] in self.cell_options[
+                                    (r, full_new_idxs[k])
+                                ]:
+                                    del self.cell_options[(r, full_new_idxs[k])][span["type_"]]
                 # finally, change the span coords
                 span["from_c"], span["upto_c"] = newfrom, newupto
             if index_type != "displayed":
@@ -1119,20 +1132,29 @@ class MainTable(tk.Canvas):
             self.cell_options = {(full_new_idxs[k[0]], k[1]): v for k, v in self.cell_options.items()}
             self.row_options = {full_new_idxs[k]: v for k, v in self.row_options.items()}
             self.RI.cell_options = {full_new_idxs[k]: v for k, v in self.RI.cell_options.items()}
+            totalcols = self.total_data_cols()
             for name, span in self.named_spans.items():
                 # span is neither a cell options nor row options span, continue
-                if not isinstance(span["from_r"], int) or not isinstance(span["upto_r"], int):
+                if not isinstance(span["from_r"], int):
                     continue
-                idx_0, idx_end = int(span["from_r"]), int(span["upto_r"]) - 1
-                if full_new_idxs[idx_end] < full_new_idxs[idx_0]:
-                    newfrom = full_new_idxs[idx_end]
-                    newupto = full_new_idxs[idx_0] + 1
+                if isinstance(span["upto_r"], int):
+                    idx_0, idx_end = int(span["from_r"]), int(span["upto_r"]) - 1
+                    if full_new_idxs[idx_end] < full_new_idxs[idx_0]:
+                        newfrom = full_new_idxs[idx_end]
+                        newupto = full_new_idxs[idx_0] + 1
+                    else:
+                        newfrom = full_new_idxs[idx_0]
+                        newupto = full_new_idxs[idx_end] + 1
+                    oldupto_rowrange = int(span["upto_r"])
+                    newupto_rowrange = newupto
                 else:
-                    newfrom = full_new_idxs[idx_0]
-                    newupto = full_new_idxs[idx_end] + 1
+                    newfrom = full_new_idxs[int(span["from_r"])]
+                    newupto = None
+                    oldupto_rowrange = totalrows
+                    newupto_rowrange = oldupto_rowrange
                 # add cell/row kwargs for rows that are new to the span
-                old_span_idxs = set(full_new_idxs[k] for k in range(span["from_r"], span["upto_r"]))
-                for k in range(newfrom, newupto):
+                old_span_idxs = set(full_new_idxs[k] for k in range(span["from_r"], oldupto_rowrange))
+                for k in range(newfrom, newupto_rowrange):
                     if k not in old_span_idxs:
                         oldidx = full_old_idxs[k]
                         # event_data is used to preserve old cell value
@@ -1145,7 +1167,7 @@ class MainTable(tk.Canvas):
                         ):
                             event_data["cells"]["index"][oldidx] = self.RI.get_cell_data(k)
                         # the span targets rows
-                        if span["from_c"] is None or span["upto_c"] is None:
+                        if span["from_c"] is None:
                             if span["type_"] in val_modifying_options:
                                 for datacn in range(len(self.data[k])):
                                     if (oldidx, datacn) not in event_data["cells"]["table"]:
@@ -1159,7 +1181,8 @@ class MainTable(tk.Canvas):
                             )
                         # the span targets cells
                         else:
-                            for datacn in range(span["from_c"], span["upto_c"]):
+                            rng_upto_c = totalcols if span["upto_c"] is None else span["upto_c"]
+                            for datacn in range(span["from_c"], rng_upto_c):
                                 if (
                                     span["type_"] in val_modifying_options
                                     and (oldidx, datacn) not in event_data["cells"]["table"]
@@ -1175,9 +1198,11 @@ class MainTable(tk.Canvas):
                 # remove span specific kwargs from cells/rows
                 # that are no longer in the span,
                 # cell options/row options keys are new idxs
-                for k in range(span["from_r"], span["upto_r"]):
+                for k in range(span["from_r"], oldupto_rowrange):
                     # has it moved outside of new span coords
-                    if full_new_idxs[k] < newfrom or full_new_idxs[k] >= newupto:
+                    if (isinstance(newupto, int) and (full_new_idxs[k] < newfrom or full_new_idxs[k] >= newupto)) or (
+                        newupto is None and full_new_idxs[k] < newfrom
+                    ):
                         # span includes index
                         if (
                             span["index"]
@@ -1185,20 +1210,21 @@ class MainTable(tk.Canvas):
                             and span["type_"] in self.RI.cell_options
                         ):
                             del self.RI.cell_options[full_new_idxs[k]][span["type_"]]
-                        # span is for cell options
-                        if isinstance(span["from_c"], int) and isinstance(span["upto_c"], int):
-                            for c in range(span["from_c"], span["upto_c"]):
-                                if (full_new_idxs[k], c) in self.cell_options and span["type_"] in self.cell_options[
-                                    (full_new_idxs[k], c)
-                                ]:
-                                    del self.cell_options[(full_new_idxs[k], c)][span["type_"]]
                         # span is for row options
-                        else:
+                        if span["from_c"] is None:
                             if (
                                 full_new_idxs[k] in self.row_options
                                 and span["type_"] in self.row_options[full_new_idxs[k]]
                             ):
                                 del self.row_options[full_new_idxs[k]][span["type_"]]
+                        # span is for cell options
+                        else:
+                            rng_upto_c = totalcols if span["upto_c"] is None else span["upto_c"]
+                            for c in range(span["from_c"], rng_upto_c):
+                                if (full_new_idxs[k], c) in self.cell_options and span["type_"] in self.cell_options[
+                                    (full_new_idxs[k], c)
+                                ]:
+                                    del self.cell_options[(full_new_idxs[k], c)][span["type_"]]
                 # finally, change the span coords
                 span["from_r"], span["upto_r"] = newfrom, newupto
             if index_type != "displayed":
@@ -3920,20 +3946,24 @@ class MainTable(tk.Canvas):
             }
         # if there are named spans where columns were added
         # add options to gap which was created by adding columns
+        totalrows = None
         for name, dct in self.named_spans.items():
-            r1, c1, r2, c2 = self.named_span_coords(dct)
-            if isinstance(c1, int) and isinstance(c2, int):
+            if isinstance(dct["from_c"], int):
                 for datacn in cols:
-                    if c1 > datacn:
+                    if dct["from_c"] > datacn:
                         dct["from_c"] += 1
-                        dct["upto_c"] += 1
-                    elif c1 <= datacn and c2 > datacn:
-                        dct["upto_c"] += 1
+                        if isinstance(dct["upto_c"], int):
+                            dct["upto_c"] += 1
+                    elif dct["from_c"] <= datacn and (
+                        (isinstance(dct["upto_c"], int) and dct["upto_c"] > datacn) or dct["upto_c"] is None
+                    ):
+                        if isinstance(dct["upto_c"], int):
+                            dct["upto_c"] += 1
                         # if to_add then it's an undo/redo and don't
                         # need to create fresh options
                         if not to_add:
                             # if rows are none it's a column options dct
-                            if dct["from_r"] is None or dct["upto_r"] is None:
+                            if dct["from_r"] is None:
                                 self.parentframe.create_table_kwargs(
                                     r=None,
                                     c=datacn,
@@ -3942,7 +3972,10 @@ class MainTable(tk.Canvas):
                                 )
                             # cells
                             else:
-                                for rn in range(r1, r2):
+                                if totalrows is None:
+                                    totalrows = self.total_data_rows()
+                                rng_upto_r = totalrows if dct["upto_r"] is None else dct["upto_r"]
+                                for rn in range(dct["from_r"], rng_upto_r):
                                     self.parentframe.create_table_kwargs(
                                         r=rn,
                                         c=datacn,
@@ -3979,20 +4012,24 @@ class MainTable(tk.Canvas):
             }
         # if there are named spans where rows were added
         # add options to gap which was created by adding rows
+        totalcols = None
         for name, dct in self.named_spans.items():
-            r1, c1, r2, c2 = self.named_span_coords(dct)
-            if isinstance(r1, int) and isinstance(r2, int):
+            if isinstance(dct["from_r"], int):
                 for datarn in rows:
-                    if r1 > datarn:
+                    if dct["from_r"] > datarn:
                         dct["from_r"] += 1
-                        dct["upto_r"] += 1
-                    elif r1 <= datarn and r2 > datarn:
-                        dct["upto_r"] += 1
+                        if isinstance(dct["upto_r"], int):
+                            dct["upto_r"] += 1
+                    elif dct["from_r"] <= datarn and (
+                        (isinstance(dct["upto_r"], int) and dct["upto_r"] > datarn) or dct["upto_r"] is None
+                    ):
+                        if isinstance(dct["upto_r"], int):
+                            dct["upto_r"] += 1
                         # if to_add then it's an undo/redo and don't
                         # need to create fresh options
                         if not to_add:
                             # if rows are none it's a row options dct
-                            if dct["from_c"] is None or dct["upto_c"] is None:
+                            if dct["from_c"] is None:
                                 self.parentframe.create_table_kwargs(
                                     r=datarn,
                                     c=None,
@@ -4001,7 +4038,10 @@ class MainTable(tk.Canvas):
                                 )
                             # cells
                             else:
-                                for cn in range(c1, c2):
+                                if totalcols is None:
+                                    totalcols = self.total_data_cols()
+                                rng_upto_c = totalcols if dct["upto_c"] is None else dct["upto_c"]
+                                for cn in range(dct["from_c"], rng_upto_c):
                                     self.parentframe.create_table_kwargs(
                                         r=datarn,
                                         c=cn,
@@ -4059,15 +4099,25 @@ class MainTable(tk.Canvas):
             )
         for name in named_spans:
             del self.named_spans[name]
-        for name, dct in self.named_spans.items():
-            r1, c1, r2, c2 = self.named_span_coords(dct)
-            for c in to_bis:
-                if isinstance(c1, int) and isinstance(c2, int):
-                    if c1 > c:
-                        dct["from_c"] -= 1
-                        dct["upto_c"] -= 1
-                    elif c1 <= c and c2 > c:
-                        dct["upto_c"] -= 1
+        for name, span in self.named_spans.items():
+            if isinstance(span["from_c"], int):
+                for c in to_bis:
+                    if span["from_c"] > c:
+                        span["from_c"] -= 1
+                    if isinstance(span["upto_c"], int) and span["upto_c"] > c:
+                        span["upto_c"] -= 1
+
+    def get_spans_to_del_from_cols(
+        self,
+        cols: set,
+    ) -> set:
+        total = self.total_data_cols()
+        return {
+            nm
+            for nm, sp in self.named_spans.items()
+            if isinstance(sp["from_c"], int)
+            and all(c in cols for c in range(sp["from_c"], total if sp["upto_c"] is None else sp["upto_c"]))
+        }
 
     def adjust_options_post_delete_rows(
         self,
@@ -4114,31 +4164,25 @@ class MainTable(tk.Canvas):
             named_spans = self.named_spans_to_del(to_del=to_del)
         for name in named_spans:
             del self.named_spans[name]
-        for name, dct in self.named_spans.items():
-            r1, c1, r2, c2 = self.named_span_coords(dct)
-            for r in to_bis:
-                if isinstance(r1, int) and isinstance(r2, int):
-                    if r1 > r:
-                        dct["from_r"] -= 1
-                        dct["upto_r"] -= 1
-                    elif r1 <= r and r2 > r:
-                        dct["upto_r"] -= 1
+        for name, span in self.named_spans.items():
+            if isinstance(span["from_r"], int):
+                for r in to_bis:
+                    if span["from_r"] > r:
+                        span["from_r"] -= 1
+                    if isinstance(span["upto_r"], int) and span["upto_r"] > r:
+                        span["upto_r"] -= 1
 
-    def named_spans_to_del(
+    def get_spans_to_del_from_rows(
         self,
-        to_del: set,
-        axis: str = "r",
+        rows: set,
     ) -> set:
-        spans_to_del = set()
-        for name, dct in self.named_spans.items():
-            r1, c1, r2, c2 = self.named_span_coords(dct)
-            if axis == "r":
-                if isinstance(r1, int) and isinstance(r2, int) and all(r in to_del for r in range(r1, r2)):
-                    spans_to_del.add(name)
-            elif axis == "c":
-                if isinstance(c1, int) and isinstance(c2, int) and all(c in to_del for c in range(c1, c2)):
-                    spans_to_del.add(name)
-        return spans_to_del
+        total = self.total_data_rows()
+        return {
+            nm
+            for nm, sp in self.named_spans.items()
+            if isinstance(sp["from_r"], int)
+            and all(r in rows for r in range(sp["from_r"], total if sp["upto_r"] is None else sp["upto_r"]))
+        }
 
     def add_columns(
         self,
@@ -4806,10 +4850,9 @@ class MainTable(tk.Canvas):
         if include_header:
             if isinstance(self._headers, (list, tuple)):
                 h_total = len(self._headers)
-        try:
-            d_total = len(max(self.data, key=len))
-        except Exception:
-            pass
+        # map() for some reason is 15% faster than max(key=len)
+        # python 3.11 windows 11
+        d_total = max(map(len, self.data), default=0)
         return h_total if h_total > d_total else d_total
 
     def total_data_rows(self, include_index: bool = True) -> int:
@@ -4851,7 +4894,7 @@ class MainTable(tk.Canvas):
         if include_header and total_data_cols > len(self._headers):
             self.CH.fix_header(total_data_cols)
         self.data[:] = [
-            r.extend(self.get_empty_row_seq(rn, end=lnr + total_data_cols - lnr, start=lnr))
+            (r + self.get_empty_row_seq(rn, end=lnr + total_data_cols - lnr, start=lnr))
             if total_data_cols > (lnr := len(r))
             else r
             for rn, r in enumerate(self.data)

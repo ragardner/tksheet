@@ -14,6 +14,8 @@ from tkinter import ttk
 from .column_headers import ColumnHeaders
 from .functions import (
     data_to_displayed_idxs,
+    del_named_span_options,
+    del_named_span_options_nested,
     dropdown_search_function,
     ev_stack_dict,
     event_dict,
@@ -30,10 +32,12 @@ from .functions import (
 from .main_table import MainTable
 from .other_classes import (
     GeneratedMouseEvent,
-    Span,
 )
 from .row_index import RowIndex
 from .top_left_rectangle import TopLeftRectangle
+from .types import (
+    Span,
+)
 from .vars import (
     emitted_events,
     get_font,
@@ -3059,11 +3063,13 @@ class Sheet(tk.Frame):
 
     def __getitem__(self, key: str | int | slice) -> object:
         span = key_to_span(key, self.MT.named_spans)
+        print(span)
         if isinstance(span, str):
             raise ValueError(span)
 
     def __setitem__(self, key: str | int | slice, value: object) -> None:
         span = key_to_span(key, self.MT.named_spans)
+        print(span)
         if isinstance(span, str):
             raise ValueError(span)
 
@@ -3494,20 +3500,6 @@ class Sheet(tk.Frame):
     def refresh(self, redraw_header: bool = True, redraw_row_index: bool = True):
         self.MT.main_table_redraw_grid_and_text(redraw_header=redraw_header, redraw_row_index=redraw_row_index)
 
-    def span(
-        self,
-        cells: Iterator[tuple[int, int]] | str | None = None,
-        rows: Iterator[int] | None = None,
-        cols: Iterator[int] | None = None,
-        name: str | None = None,
-    ):
-        return Span(
-            cells,
-            rows,
-            cols,
-            name,
-        )
-
     def set_named_spans(self, named_spans: None | dict = None) -> Sheet:
         if named_spans is None:
             named_spans = {}
@@ -3524,8 +3516,51 @@ class Sheet(tk.Frame):
     def get_named_span(self, name: str) -> dict:
         return self.MT.named_spans[name]
 
-    def create_named_span(
+    def add_span(
         self,
+        span: Span,
+    ) -> Sheet:
+        if not isinstance(span["name"], str):
+            raise ValueError(f"A named span name must be type 'str' not '{type(span['name'])}'.")
+        if span["name"] in self.MT.named_spans:
+            raise ValueError(f"Span '{span['name']}' already exists.")
+        self.MT.named_spans[span["name"]] = span
+        totalrows = self.MT.total_data_rows()
+        totalcols = self.MT.total_data_cols()
+        rng_from_r = 0 if span["from_r"] is None else span["from_r"]
+        rng_from_c = 0 if span["from_c"] is None else span["from_c"]
+        rng_upto_r = totalrows if span["upto_r"] is None else span["upto_r"]
+        rng_upto_c = totalcols if span["upto_c"] is None else span["upto_c"]
+        # if from_c is None it MUST be a row options span
+        if span["from_c"] is None:
+            for r in range(span["from_r"], rng_upto_r):
+                if span["table"]:
+                    self.create_table_kwargs(r, c=None, type_=span["type_"], **span["kwargs"])
+                if span["index"]:
+                    self.create_index_kwargs(r, span["type_"], **span["kwargs"])
+        # if from_r is None it MUST be a col options span
+        elif span["from_r"] is None:
+            for c in range(span["from_c"], rng_upto_c):
+                if span["table"]:
+                    self.create_table_kwargs(r=None, c=c, type_=span["type_"], **span["kwargs"])
+                if span["header"]:
+                    self.create_header_kwargs(c, span["type_"], **span["kwargs"])
+        # else its a cell options span but maybe with upto Nones
+        else:
+            for r in range(rng_from_r, rng_upto_r):
+                if span["index"]:
+                    self.create_index_kwargs(r, span["type_"], **span["kwargs"])
+                for c in range(rng_from_c, rng_upto_c):
+                    if span["table"]:
+                        self.create_table_kwargs(r, c, span["type_"], **span["kwargs"])
+            if span["header"]:
+                for c in range(rng_from_c, rng_upto_c):
+                    self.create_header_kwargs(c, span["type_"], **span["kwargs"])
+        return self
+
+    def span(
+        self,
+        key: int | str | slice | None = None,
         from_r: None | int = None,
         from_c: None | int = None,
         upto_r: None | int = None,
@@ -3536,91 +3571,91 @@ class Sheet(tk.Frame):
         header: bool = False,
         index: bool = False,
         **kwargs,
-    ) -> str:
-        if name is None:
+    ) -> Span:
+        """
+        Create / get a span
+        If the span has a name and a type_ then it goes into named spans
+        """
+        if name in self.MT.named_spans:
+            return self.MT.named_spans[name]
+        if isinstance(name, str) and not name:
             name = f"{num2alpha(self.named_span_id)}"
             self.named_span_id += 1
-        if name in self.MT.named_spans:
-            raise ValueError(f"Name: '{name}' already exists, delete before re-use.")
         type_ = type_.lower()
-        if from_c is None or upto_c is None:
-            for r in range(from_r, upto_r):
-                if table:
-                    self.create_table_kwargs(r, c=None, type_=type_, **kwargs)
-                if index:
-                    self.create_index_kwargs(r, type_, **kwargs)
-        elif from_r is None or upto_r is None:
-            for c in range(from_c, upto_c):
-                if table:
-                    self.create_table_kwargs(r=None, c=c, type_=type_, **kwargs)
-                if header:
-                    self.create_header_kwargs(c, type_, **kwargs)
+        if isinstance(key, (int, str, slice)):
+            span = key_to_span(key, self.MT.named_spans)
+            for k, v in {
+                "type_": type_,
+                "name": name,
+                "table": table,
+                "header": header,
+                "index": index,
+                "kwargs": kwargs,
+            }.items():
+                span[k] = v
+            from_r, from_c, upto_r, upto_c = span["from_r"], span["from_c"], span["upto_r"], span["upto_c"]
         else:
-            for r in range(from_r, upto_r):
-                if index:
-                    self.create_index_kwargs(r, type_, **kwargs)
-                for c in range(from_c, upto_c):
-                    if table:
-                        self.create_table_kwargs(r, c, type_, **kwargs)
-            if header:
-                for c in range(from_c, upto_c):
-                    self.create_header_kwargs(c, type_, **kwargs)
-        self.MT.named_spans[name] = named_span_dict(
-            from_r=from_r,
-            from_c=from_c,
-            upto_r=upto_r,
-            upto_c=upto_c,
-            type_=type_,
-            name=name,
-            table=table,
-            header=header,
-            index=index,
-            kwargs=kwargs,
-        )
-        return name
+            span = named_span_dict(
+                from_r=from_r,
+                from_c=from_c,
+                upto_r=upto_r,
+                upto_c=upto_c,
+                type_=type_,
+                name=name,
+                table=table,
+                header=header,
+                index=index,
+                kwargs=kwargs,
+            )
+        if span["name"] and span["type"]:
+            self.add_span(span)
+        return span
 
     def delete_named_span(self, name: str) -> None:
         if name not in self.MT.named_spans:
             return
-        r1, c1, r2, c2 = self.MT.named_span_coords(name)
-        # check header
-        if isinstance(c1, int) and isinstance(c2, int):
-            for type_, span in self.MT.named_spans[name].items():
-                if span["header"]:
-                    for c in range(c1, c2):
-                        if c in self.CH.cell_options:
-                            if type_ in self.CH.cell_options[c]:
-                                del self.CH.cell_options[c][type_]
-        if isinstance(r1, int) and isinstance(r2, int):
-            # check index
-            for type_, span in self.MT.named_spans[name].items():
-                if span["index"]:
-                    for r in range(r1, r2):
-                        if r in self.RI.cell_options:
-                            if type_ in self.RI.cell_options[r]:
-                                del self.RI.cell_options[r][type_]
-            if isinstance(c1, int) and isinstance(c2, int):
-                # check table cell options
-                for type_, span in self.MT.named_spans[name].items():
-                    for r in range(r1, r2):
-                        for c in range(c1, c2):
-                            if (r, c) in self.MT.cell_options:
-                                if type_ in self.MT.cell_options[(r, c)]:
-                                    del self.MT.cell_options[(r, c)][type_]
-            else:
-                # check row options
-                for type_, span in self.MT.named_spans[name].items():
-                    for r in range(r1, r2):
-                        if r in self.MT.row_options:
-                            if type_ in self.MT.row_options[r]:
-                                del self.MT.row_options[r][type_]
-        else:
-            # check col options
-            for type_, span in self.MT.named_spans[name].items():
-                for c in range(c1, c2):
-                    if c in self.MT.col_options:
-                        if type_ in self.MT.col_options[c]:
-                            del self.MT.col_options[c][type_]
+        from_r, from_c, upto_r, upto_c = self.MT.named_span_coords(name)
+        totalrows = self.MT.get_max_row_idx() + 1
+        totalcols = self.MT.get_max_column_idx() + 1
+        for type_, span in self.MT.named_spans[name].items():
+            rng_from_r = 0 if from_r is None else from_r
+            rng_from_c = 0 if from_c is None else from_c
+            rng_upto_r = totalrows if upto_r is None else upto_r
+            rng_upto_c = totalcols if upto_c is None else upto_c
+            if span["header"]:
+                del_named_span_options(
+                    self.CH.cell_options,
+                    range(rng_from_c, rng_upto_c),
+                    type_,
+                )
+            if span["index"]:
+                del_named_span_options(
+                    self.RI.cell_options,
+                    range(rng_from_r, rng_upto_r),
+                    type_,
+                )
+            # col options
+            if from_r is None:
+                del_named_span_options(
+                    self.MT.col_options,
+                    range(rng_from_c, rng_upto_c),
+                    type_,
+                )
+            # row options
+            elif from_c is None:
+                del_named_span_options(
+                    self.MT.row_options,
+                    range(rng_from_r, rng_upto_r),
+                    type_,
+                )
+            # cell options
+            elif isinstance(from_r, int) and isinstance(from_c, int):
+                del_named_span_options_nested(
+                    self.MT.cell_options,
+                    range(rng_from_r, rng_upto_r),
+                    range(rng_from_c, rng_upto_c),
+                    type_,
+                )
         del self.MT.named_spans[name]
 
     def create_table_kwargs(self, r: None | int, c: None | int, type_: str, **kwargs):
