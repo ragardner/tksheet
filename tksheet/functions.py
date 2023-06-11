@@ -214,7 +214,7 @@ def str_to_coords(s: str) -> None | tuple[int, ...]:
     s = s.split(":")
 
 
-def alpha2num(a: str) -> int | None:
+def alpha2idx(a: str) -> int | None:
     try:
         a = a.upper()
         n = 0
@@ -224,6 +224,11 @@ def alpha2num(a: str) -> int | None:
         return n - 1
     except Exception:
         return None
+
+
+def alpha2num(a: str) -> int | None:
+    n = alpha2idx(a)
+    return n if n is None else n + 1
 
 
 def num2alpha(n: int) -> str | None:
@@ -474,11 +479,11 @@ def diff_gen(seq: list[float, ...]) -> Generator[int, ...]:
 
 def str_to_int(s: str) -> int | None:
     if s.startswith(("-", "+")):
-        if s.isdigit():
+        if s[1:].isdigit():
             return int(s)
         return None
     elif not s.startswith(("-", "+")):
-        if s[1:].isdigit():
+        if s.isdigit():
             return int(s)
         return None
 
@@ -599,7 +604,7 @@ def key_to_span(
         return named_span_dict(
             from_r=start,
             from_c=None,
-            upto_r=None,
+            upto_r=key.stop,
             upto_c=None,
         )
 
@@ -614,6 +619,8 @@ def key_to_span(
                 """
                 return spans[key]
             return f"'{key}' not in named spans."
+
+        key = key.upper()
 
         try:
             if key.isdigit():
@@ -633,9 +640,9 @@ def key_to_span(
                 """
                 return named_span_dict(
                     from_r=None,
-                    from_c=alpha2num(key),
+                    from_c=alpha2idx(key),
                     upto_r=None,
-                    upto_c=alpha2num(key) + 1,
+                    upto_c=alpha2idx(key) + 1,
                 )
 
             key = key.split(":")
@@ -656,9 +663,9 @@ def key_to_span(
                         key_column = key[:digits_start]
                         return named_span_dict(
                             from_r=int(key_row) - 1,
-                            from_c=alpha2num(key_column),
+                            from_c=alpha2idx(key_column),
                             upto_r=int(key_row),
-                            upto_c=alpha2num(key_column) + 1,
+                            upto_c=alpha2idx(key_column) + 1,
                         )
 
             if not key[0] and not key[1]:
@@ -711,7 +718,7 @@ def key_to_span(
                 """
                 return named_span_dict(
                     from_r=None,
-                    from_c=alpha2num(key[0]),
+                    from_c=alpha2idx(key[0]),
                     upto_r=None,
                     upto_c=None,
                 )
@@ -724,7 +731,7 @@ def key_to_span(
                     from_r=None,
                     from_c=0,
                     upto_r=None,
-                    upto_c=alpha2num(key[1]) + 1,
+                    upto_c=alpha2idx(key[1]) + 1,
                 )
 
             if key[0].isalpha() and key[1].isalpha():
@@ -733,41 +740,41 @@ def key_to_span(
                 """
                 return named_span_dict(
                     from_r=None,
-                    from_c=alpha2num(key[0]),
+                    from_c=alpha2idx(key[0]),
                     upto_r=None,
-                    upto_c=alpha2num(key[1]) + 1,
+                    upto_c=alpha2idx(key[1]) + 1,
                 )
 
             m1 = re.search(r"\d", key[0])
             m2 = re.search(r"\d", key[1])
-            m1start = m1.start()
-            m2start = m2.start()
+            m1start = m1.start() if m1 else None
+            m2start = m2.start() if m2 else None
             if m1start and m2start:
                 """
                 ["A1:B1"] - Cells (0, 0), (0, 1)
                 """
                 c1 = key[0][:m1start]
                 r1 = key[0][m1start:]
-                c2 = key[1][:m1start]
-                r2 = key[1][m1start:]
+                c2 = key[1][:m2start]
+                r2 = key[1][m2start:]
                 return named_span_dict(
                     from_r=int(r1) - 1,
-                    from_c=alpha2num(c1),
+                    from_c=alpha2idx(c1),
                     upto_r=int(r2),
-                    upto_c=alpha2num(c2) + 1,
+                    upto_c=alpha2idx(c2) + 1,
                 )
 
             if not key[0] and m2start:
                 """
                 [":B1"] - Cells (0, 0), (0, 1)
                 """
-                c2 = key[1][:m1start]
-                r2 = key[1][m1start:]
+                c2 = key[1][:m2start]
+                r2 = key[1][m2start:]
                 return named_span_dict(
                     from_r=0,
                     from_c=0,
                     upto_r=int(r2),
-                    upto_c=alpha2num(c2) + 1,
+                    upto_c=alpha2idx(c2) + 1,
                 )
 
             if not key[1] and m1start:
@@ -778,8 +785,53 @@ def key_to_span(
                 r1 = key[0][m1start:]
                 return named_span_dict(
                     from_r=int(r1) - 1,
-                    from_c=alpha2num(c1),
+                    from_c=alpha2idx(c1),
                     upto_r=None,
+                    upto_c=None,
+                )
+
+            if m1start and key[1].isalpha():
+                """
+                ["A1:B"] - All the cells starting from (0, 0)
+                           expanding out to include column 1
+                           but not including cells beyond column
+                           1 and expanding down to include all rows
+                    A   B   C   D
+                1   x   x
+                2   x   x
+                3   x   x
+                4   x   x
+                ...
+                """
+                c1 = key[0][:m1start]
+                r1 = key[0][m1start:]
+                return named_span_dict(
+                    from_r=int(r1) - 1,
+                    from_c=alpha2idx(c1),
+                    upto_r=None,
+                    upto_c=alpha2idx(key[1]) + 1,
+                )
+
+            if m1start and key[1].isdigit():
+                """
+                ["A1:2"] - All the cells starting from (0, 0)
+                           expanding down to include row 1
+                           but not including cells beyond row
+                           1 and expanding out to include all
+                           columns
+                    A   B   C   D
+                1   x   x   x   x
+                2   x   x   x   x
+                3
+                4
+                ...
+                """
+                c1 = key[0][:m1start]
+                r1 = key[0][m1start:]
+                return named_span_dict(
+                    from_r=int(r1) - 1,
+                    from_c=alpha2idx(c1),
+                    upto_r=int(key[1]),
                     upto_c=None,
                 )
 

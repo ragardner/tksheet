@@ -675,7 +675,7 @@ class MainTable(tk.Canvas):
         data = list(csv.reader(io.StringIO(data), dialect=dialect, skipinitialspace=True))
         if not data:
             return
-        numcols = len(max(data, key=len))
+        numcols = max(map(len, data))
         numrows = len(data)
         for rn, r in enumerate(data):
             if len(r) < numcols:
@@ -4093,10 +4093,7 @@ class MainTable(tk.Canvas):
         named_spans: None | set = None,
     ) -> None:
         if named_spans is None:
-            named_spans = self.named_spans_to_del(
-                to_del=to_del,
-                axis="c",
-            )
+            named_spans = self.get_spans_to_del_from_cols(cols=to_del)
         for name in named_spans:
             del self.named_spans[name]
         for name, span in self.named_spans.items():
@@ -4161,7 +4158,7 @@ class MainTable(tk.Canvas):
         named_spans: None | set = None,
     ) -> None:
         if named_spans is None:
-            named_spans = self.named_spans_to_del(to_del=to_del)
+            named_spans = self.get_spans_to_del_from_rows(rows=to_del)
         for name in named_spans:
             del self.named_spans[name]
         for name, span in self.named_spans.items():
@@ -4566,7 +4563,7 @@ class MainTable(tk.Canvas):
         self.adjust_options_post_delete_columns(
             to_del=cols_set,
             to_bis=cols,
-            named_spans=self.named_spans_to_del(to_del=cols_set, axis="c"),
+            named_spans=self.get_spans_to_del_from_cols(cols=cols_set),
         )
         if not self.all_columns_displayed:
             self.displayed_columns = [c for c in self.displayed_columns if c not in cols_set]
@@ -4626,7 +4623,7 @@ class MainTable(tk.Canvas):
         self.adjust_options_post_delete_rows(
             to_del=rows_set,
             to_bis=rows,
-            named_spans=self.named_spans_to_del(to_del=rows_set, axis="r"),
+            named_spans=self.get_spans_to_del_from_rows(rows=rows_set),
         )
         if not self.all_rows_displayed:
             self.displayed_rows = [r for r in self.displayed_rows if r not in rows_set]
@@ -4851,7 +4848,7 @@ class MainTable(tk.Canvas):
             if isinstance(self._headers, (list, tuple)):
                 h_total = len(self._headers)
         # map() for some reason is 15% faster than max(key=len)
-        # python 3.11 windows 11
+        # using python 3.11 windows 11
         d_total = max(map(len, self.data), default=0)
         return h_total if h_total > d_total else d_total
 

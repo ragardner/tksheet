@@ -2877,6 +2877,16 @@ class Sheet(tk.Frame):
     def get_index_data(self, r: int, get_displayed: bool = False):
         return self.RI.get_cell_data(datarn=r, get_displayed=get_displayed)
 
+    def data(
+        self,
+        span: Span,
+
+    ) -> object:
+
+
+
+        ...
+
     def get_sheet_data(
         self,
         get_displayed: bool = False,
@@ -2998,8 +3008,7 @@ class Sheet(tk.Frame):
             elif not is_iterable(only_columns):
                 raise ValueError(tksheet_type_error("only_columns", ["int", "iterable", "None"], only_columns))
         if get_header:
-            maxlen = self.MT.total_data_cols()
-            iterable = only_columns if only_columns is not None else range(maxlen)
+            iterable = only_columns if only_columns is not None else range(self.MT.total_data_cols())
             yield ([""] if get_index else []) + [
                 self.get_header_data(c, get_displayed=get_header_displayed) for c in iterable
             ]
@@ -3014,10 +3023,6 @@ class Sheet(tk.Frame):
             )
             for r in iterable
         )
-
-    @property
-    def data(self):
-        return self.MT.data
 
     def formatted(self, r, c):
         if (r, c) in self.MT.cell_options and "format" in self.MT.cell_options[(r, c)]:
@@ -3607,11 +3612,11 @@ class Sheet(tk.Frame):
                 index=index,
                 kwargs=kwargs,
             )
-        if span["name"] and span["type"]:
+        if span["name"] and span["type_"]:
             self.add_span(span)
         return span
 
-    def delete_named_span(self, name: str) -> None:
+    def delete_span(self, name: str) -> None:
         if name not in self.MT.named_spans:
             return
         from_r, from_c, upto_r, upto_c = self.MT.named_span_coords(name)
