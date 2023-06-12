@@ -25,12 +25,15 @@ from .functions import (
     get_dropdown_kwargs,
     is_iterable,
     key_to_span,
-    named_span_dict,
+    span_dict,
+    span_ranges,
     num2alpha,
     tksheet_type_error,
 )
 from .main_table import MainTable
 from .other_classes import (
+    CurrentlySelectedClass,  # noqa: F401
+    DotDict,
     GeneratedMouseEvent,
 )
 from .row_index import RowIndex
@@ -867,7 +870,7 @@ class Sheet(tk.Frame):
             def e() -> None:
                 return None
 
-            e.data = args[0]
+            e.data = DotDict(eval(args[0]))
             e.widget = widget
             return (e,)
 
@@ -2871,21 +2874,114 @@ class Sheet(tk.Frame):
         self.MT.recreate_all_selection_boxes()
         self.set_refresh_timer(redraw)
 
+    def formatted(self, r, c):
+        if (r, c) in self.MT.cell_options and "format" in self.MT.cell_options[(r, c)]:
+            return True
+        return False
+
+    def data_reference(
+        self,
+        newdataref=None,
+        reset_col_positions: bool = True,
+        reset_row_positions: bool = True,
+        redraw: bool = False,
+    ):
+        return self.MT.data_reference(newdataref, reset_col_positions, reset_row_positions, redraw)
+
+    def set_header_data(self, value, c=None, redraw: bool = True):
+        if c is None:
+            if not isinstance(value, int) and not is_iterable(value):
+                raise ValueError(("Argument 'value' must be non-string iterable or int, " f"not {type(value)} type."))
+            if not isinstance(value, list) and not isinstance(value, int):
+                value = list(value)
+            self.MT._headers = value
+        elif isinstance(c, int):
+            self.MT._headers[c] = value
+        elif is_iterable(value) and is_iterable(c):
+            for c_, v in zip(c, value):
+                self.MT._headers[c_] = v
+        self.set_refresh_timer(redraw)
+
+    def set_index_data(self, value, r=None, redraw: bool = True):
+        if r is None:
+            if not isinstance(value, int) and not is_iterable(value):
+                raise ValueError(("Argument 'value' must be non-string iterable or int, " f"not {type(value)} type."))
+            if not isinstance(value, list) and not isinstance(value, int):
+                value = list(value)
+            self.MT._row_index = value
+        elif isinstance(r, int):
+            self.MT._row_index[r] = value
+        elif is_iterable(value) and is_iterable(r):
+            for r_, v in zip(r, value):
+                self.MT._row_index[r_] = v
+        self.set_refresh_timer(redraw)
+
+    def __bool__(self) -> bool:
+        if self.MT.data not in ([[]], [], ((),), ()):
+            return True
+        return False
+
+    def __len__(self) -> int:
+        return self.MT.data.__len__()
+
+    def __iter__(self) -> Iterator:
+        return self.MT.data.__iter__()
+
+    def __reversed__(self) -> Iterator:
+        return reversed(self.MT.data)
+
+    def __contains__(self, key) -> bool:
+        if isinstance(key, (list, tuple)):
+            return key in self.MT.data
+        return any(key in row for row in self.MT.data)
+
+    def __getitem__(self, key: str | int | slice) -> object:
+        if isinstance(key, dict):
+            span = key
+        else:
+            span = key_to_span(key, self.MT.named_spans)
+        if isinstance(span, str):
+            raise ValueError(span)
+        rows, cols = span_ranges(
+            span,
+            totalrows=self.MT.total_data_rows,
+            totalcols=self.MT.total_data_cols,
+        )
+        res = self.get_sheet_data(
+            get_displayed=span.displayed,
+            get_header=span.header,
+            get_index=span.index,
+            get_header_displayed=span.displayed,
+            get_index_displayed=span.displayed,
+            only_rows=rows,
+            only_columns=cols,
+        )
+        if len(res) == 1 and len(res[0]) == 1:
+            return res[0][0]
+        return res
+
+    def __setitem__(self, key: str | int | slice, value: object) -> None:
+        if isinstance(key, dict):
+            span = key
+        else:
+            span = key_to_span(key, self.MT.named_spans)
+        if isinstance(span, str):
+            raise ValueError(span)
+        rows, cols = span_ranges(
+            span,
+            totalrows=self.MT.total_data_rows,
+            totalcols=self.MT.total_data_cols,
+        )
+
+    def set_data(self, key: str | int | slice | Span, data: object) -> None:
+
+        ...
+
     def get_header_data(self, c: int, get_displayed: bool = False):
         return self.CH.get_cell_data(datacn=c, get_displayed=get_displayed)
 
     def get_index_data(self, r: int, get_displayed: bool = False):
         return self.RI.get_cell_data(datarn=r, get_displayed=get_displayed)
-
-    def data(
-        self,
-        span: Span,
-
-    ) -> object:
-
-
-
-        ...
 
     def get_sheet_data(
         self,
@@ -3023,60 +3119,6 @@ class Sheet(tk.Frame):
             )
             for r in iterable
         )
-
-    def formatted(self, r, c):
-        if (r, c) in self.MT.cell_options and "format" in self.MT.cell_options[(r, c)]:
-            return True
-        return False
-
-    def data_reference(
-        self,
-        newdataref=None,
-        reset_col_positions: bool = True,
-        reset_row_positions: bool = True,
-        redraw: bool = False,
-    ):
-        return self.MT.data_reference(newdataref, reset_col_positions, reset_row_positions, redraw)
-
-    def set_header_data(self, value, c=None, redraw: bool = True):
-        if c is None:
-            if not isinstance(value, int) and not is_iterable(value):
-                raise ValueError(("Argument 'value' must be non-string iterable or int, " f"not {type(value)} type."))
-            if not isinstance(value, list) and not isinstance(value, int):
-                value = list(value)
-            self.MT._headers = value
-        elif isinstance(c, int):
-            self.MT._headers[c] = value
-        elif is_iterable(value) and is_iterable(c):
-            for c_, v in zip(c, value):
-                self.MT._headers[c_] = v
-        self.set_refresh_timer(redraw)
-
-    def set_index_data(self, value, r=None, redraw: bool = True):
-        if r is None:
-            if not isinstance(value, int) and not is_iterable(value):
-                raise ValueError(("Argument 'value' must be non-string iterable or int, " f"not {type(value)} type."))
-            if not isinstance(value, list) and not isinstance(value, int):
-                value = list(value)
-            self.MT._row_index = value
-        elif isinstance(r, int):
-            self.MT._row_index[r] = value
-        elif is_iterable(value) and is_iterable(r):
-            for r_, v in zip(r, value):
-                self.MT._row_index[r_] = v
-        self.set_refresh_timer(redraw)
-
-    def __getitem__(self, key: str | int | slice) -> object:
-        span = key_to_span(key, self.MT.named_spans)
-        print(span)
-        if isinstance(span, str):
-            raise ValueError(span)
-
-    def __setitem__(self, key: str | int | slice, value: object) -> None:
-        span = key_to_span(key, self.MT.named_spans)
-        print(span)
-        if isinstance(span, str):
-            raise ValueError(span)
 
     def set_sheet_data(
         self,
@@ -3575,44 +3617,52 @@ class Sheet(tk.Frame):
         table: bool = True,
         header: bool = False,
         index: bool = False,
+        displayed: bool = False,
+        widget: object = None,
         **kwargs,
     ) -> Span:
         """
         Create / get a span
-        If the span has a name and a type_ then it goes into named spans
+        If the span has a type_ then it goes into named spans
         """
         if name in self.MT.named_spans:
             return self.MT.named_spans[name]
-        if isinstance(name, str) and not name:
+        if not name:
             name = f"{num2alpha(self.named_span_id)}"
             self.named_span_id += 1
         type_ = type_.lower()
         if isinstance(key, (int, str, slice)):
             span = key_to_span(key, self.MT.named_spans)
+            if isinstance(span, str):
+                raise ValueError(span)
             for k, v in {
                 "type_": type_,
                 "name": name,
+                "kwargs": kwargs,
                 "table": table,
                 "header": header,
                 "index": index,
-                "kwargs": kwargs,
+                "displayed": displayed,
+                "widget": self if widget is None else widget,
             }.items():
                 span[k] = v
             from_r, from_c, upto_r, upto_c = span["from_r"], span["from_c"], span["upto_r"], span["upto_c"]
         else:
-            span = named_span_dict(
+            span = span_dict(
                 from_r=from_r,
                 from_c=from_c,
                 upto_r=upto_r,
                 upto_c=upto_c,
                 type_=type_,
                 name=name,
+                kwargs=kwargs,
                 table=table,
                 header=header,
                 index=index,
-                kwargs=kwargs,
+                displayed=displayed,
+                widget=self if widget is None else widget,
             )
-        if span["name"] and span["type_"]:
+        if span["type_"]:
             self.add_span(span)
         return span
 

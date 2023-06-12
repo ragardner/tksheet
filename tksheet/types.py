@@ -113,10 +113,12 @@ class Span(TypedDict):
     upto_c: int | None
     type_: str | None
     name: str | None
-    table: bool | None
-    header: bool | None
-    index: bool | None
     kwargs: dict | None
+    table: bool
+    header: bool
+    index: bool
+    displayed: bool
+    widget: object
 
 
 class Theme(TypedDict):

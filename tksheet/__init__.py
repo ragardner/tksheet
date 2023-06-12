@@ -40,7 +40,8 @@ from .functions import (
     is_iterable,
     move_elements_by_mapping,
     move_elements_to,
-    named_span_dict,
+    span_dict,
+    alpha2idx,
     num2alpha,
     tksheet_type_error,
 )

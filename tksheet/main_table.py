@@ -7227,7 +7227,12 @@ class MainTable(tk.Canvas):
         return True
 
     def set_cell_data(
-        self, datarn: int, datacn: int, value: object, kwargs: dict = {}, expand_sheet: bool = True
+        self,
+        datarn: int,
+        datacn: int,
+        value: object,
+        kwargs: dict = {},
+        expand_sheet: bool = True,
     ) -> None:
         if expand_sheet:
             if datarn >= len(self.data):
@@ -7407,7 +7412,12 @@ class MainTable(tk.Canvas):
         return "" if value is None else f"{value}"
 
     def get_cell_data(
-        self, datarn: int, datacn: int, get_displayed: bool = False, none_to_empty_str: bool = False, **kwargs
+        self,
+        datarn: int,
+        datacn: int,
+        get_displayed: bool = False,
+        none_to_empty_str: bool = False,
+        **kwargs,
     ) -> object:
         if get_displayed:
             return self.get_valid_cell_data_as_str(datarn, datacn, get_displayed=True)

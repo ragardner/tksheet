@@ -11,6 +11,10 @@ from collections.abc import (
 from .types import (
     Span,
 )
+from .other_classes import (
+    DotDict,
+    SpanDict,
+)
 from functools import partial
 from itertools import islice
 import re
@@ -75,48 +79,50 @@ def event_dict(
     named_spans: None | dict = None,
     **kwargs,
 ) -> dict:
-    return {
-        "eventname": "" if name is None else name,
-        "sheetname": "!sheet" if sheet is None else sheet,
-        "cells": {
-            "table": {} if cells_table is None else cells_table,
-            "header": {} if cells_header is None else cells_header,
-            "index": {} if cells_index is None else cells_index,
-        },
-        "moved": {
-            "rows": {},
-            "columns": {},
-        },
-        "added": {
-            "rows": {},
-            "columns": {},
-        },
-        "deleted": {
-            "rows": {},
-            "columns": {},
-            "header": {},
-            "index": {},
-            "column_widths": {},
-            "row_heights": {},
-            "options": {},
-            "displayed_rows": None,
-            "displayed_columns": None,
-        },
-        "named_spans": {} if named_spans is None else named_spans,
-        "selection_boxes": {} if boxes is None else {boxes[:-1]: boxes[-1]} if isinstance(boxes, tuple) else boxes,
-        "selected": tuple() if selected is None else selected,
-        "being_selected": tuple() if being_selected is None else being_selected,
-        "data": [] if data is None else data,
-        "key": "" if key is None else key,
-        "value": None if value is None else value,
-        "location": tuple() if location is None else location,
-        "resized": {
-            "rows": {} if resized_rows is None else resized_rows,
-            "columns": {} if resized_columns is None else resized_columns,
-            # "header": {} if resized_header is None else resized_header,
-            # "index": {} if resized_index is None else resized_index,
-        },
-    }
+    return DotDict(
+        {
+            "eventname": "" if name is None else name,
+            "sheetname": "!sheet" if sheet is None else sheet,
+            "cells": {
+                "table": {} if cells_table is None else cells_table,
+                "header": {} if cells_header is None else cells_header,
+                "index": {} if cells_index is None else cells_index,
+            },
+            "moved": {
+                "rows": {},
+                "columns": {},
+            },
+            "added": {
+                "rows": {},
+                "columns": {},
+            },
+            "deleted": {
+                "rows": {},
+                "columns": {},
+                "header": {},
+                "index": {},
+                "column_widths": {},
+                "row_heights": {},
+                "options": {},
+                "displayed_rows": None,
+                "displayed_columns": None,
+            },
+            "named_spans": {} if named_spans is None else named_spans,
+            "selection_boxes": {} if boxes is None else {boxes[:-1]: boxes[-1]} if isinstance(boxes, tuple) else boxes,
+            "selected": tuple() if selected is None else selected,
+            "being_selected": tuple() if being_selected is None else being_selected,
+            "data": [] if data is None else data,
+            "key": "" if key is None else key,
+            "value": None if value is None else value,
+            "location": tuple() if location is None else location,
+            "resized": {
+                "rows": {} if resized_rows is None else resized_rows,
+                "columns": {} if resized_columns is None else resized_columns,
+                # "header": {} if resized_header is None else resized_header,
+                # "index": {} if resized_index is None else resized_index,
+            },
+        }
+    )
 
 
 def change_eventname(event_dict: dict, newname: str) -> dict:
@@ -124,10 +130,12 @@ def change_eventname(event_dict: dict, newname: str) -> dict:
 
 
 def ev_stack_dict(d):
-    return {
-        "name": d["eventname"],
-        "data": pickle_compress(d),
-    }
+    return DotDict(
+        {
+            "name": d["eventname"],
+            "data": pickle_compress(d),
+        }
+    )
 
 
 def len_to_idx(n: int) -> int:
@@ -515,30 +523,36 @@ def try_binding(
     return True
 
 
-def named_span_dict(
+def span_dict(
     from_r: int | None = None,
     from_c: int | None = None,
     upto_r: int | None = None,
     upto_c: int | None = None,
     type_: str | None = None,
     name: str | None = None,
-    table: bool | None = None,
-    header: bool | None = None,
-    index: bool | None = None,
     kwargs: dict | None = None,
+    table: bool = True,
+    header: bool = False,
+    index: bool = False,
+    displayed: bool = False,
+    widget: object = None,
 ) -> Span:
-    d: Span = {
-        "from_r": None if from_r is None else from_r,
-        "from_c": None if from_c is None else from_c,
-        "upto_r": None if upto_r is None else upto_r,
-        "upto_c": None if upto_c is None else upto_c,
-        "type_": "" if type_ is None else type_,
-        "name": "" if name is None else name,
-        "table": True if table is None else table,
-        "header": False if header is None else header,
-        "index": False if index is None else index,
-        "kwargs": {} if kwargs is None else kwargs,
-    }
+    d: Span = SpanDict(
+        {
+            "from_r": None if from_r is None else from_r,
+            "from_c": None if from_c is None else from_c,
+            "upto_r": None if upto_r is None else upto_r,
+            "upto_c": None if upto_c is None else upto_c,
+            "type_": "" if type_ is None else type_,
+            "name": "" if name is None else name,
+            "kwargs": {} if kwargs is None else kwargs,
+            "table": table,
+            "header": header,
+            "index": index,
+            "displayed": displayed,
+            "widget": widget,
+        }
+    )
     return d
 
 
@@ -552,7 +566,7 @@ def coords_to_span(
 ) -> Span:
     if isinstance(name, str) and isinstance(spans, dict) and name in spans:
         return spans[name]
-    return named_span_dict(
+    return span_dict(
         from_r=from_r,
         from_c=from_c,
         upto_r=upto_r,
@@ -571,7 +585,7 @@ def key_to_span(
         """
         [int] - Whole row at that index
         """
-        return named_span_dict(
+        return span_dict(
             from_r=key - 1,
             from_c=None,
             upto_r=key,
@@ -589,7 +603,7 @@ def key_to_span(
             """
             [:]
             """
-            return named_span_dict(
+            return span_dict(
                 from_r=0,
                 from_c=0,
                 upto_r=None,
@@ -601,7 +615,7 @@ def key_to_span(
         [2:] - Rows starting from and including 2
         """
         start = 0 if key.start is None else key.start - 1
-        return named_span_dict(
+        return span_dict(
             from_r=start,
             from_c=None,
             upto_r=key.stop,
@@ -627,7 +641,7 @@ def key_to_span(
                 """
                 ["1"] - Row 0
                 """
-                return named_span_dict(
+                return span_dict(
                     from_r=int(key) - 1,
                     from_c=None,
                     upto_r=int(key),
@@ -638,159 +652,159 @@ def key_to_span(
                 """
                 ["A"] - Column 0
                 """
-                return named_span_dict(
+                return span_dict(
                     from_r=None,
                     from_c=alpha2idx(key),
                     upto_r=None,
                     upto_c=alpha2idx(key) + 1,
                 )
 
-            key = key.split(":")
-            if len(key) > 2:
+            splitk = key.split(":")
+            if len(splitk) > 2:
                 return f"'{key}' could not be converted to span."
 
-            if len(key) == 1 and not key[0].isdigit() and not key[0].isalpha() and not key[0][0].isdigit():
+            if len(splitk) == 1 and not splitk[0].isdigit() and not splitk[0].isalpha() and not splitk[0][0].isdigit():
                 """
                 ["A1"] - Cell (0, 0)
                 """
-                keys_digits = re.search(r"\d", key)
+                keys_digits = re.search(r"\d", splitk[0])
                 if keys_digits:
                     digits_start = keys_digits.start()
                     if not digits_start:
                         return f"'{key}' could not be converted to span."
                     if digits_start:
-                        key_row = key[digits_start:]
-                        key_column = key[:digits_start]
-                        return named_span_dict(
+                        key_row = splitk[0][digits_start:]
+                        key_column = splitk[0][:digits_start]
+                        return span_dict(
                             from_r=int(key_row) - 1,
                             from_c=alpha2idx(key_column),
                             upto_r=int(key_row),
                             upto_c=alpha2idx(key_column) + 1,
                         )
 
-            if not key[0] and not key[1]:
+            if not splitk[0] and not splitk[1]:
                 """
                 [":"] - All cells
                 """
-                return named_span_dict(
+                return span_dict(
                     from_r=0,
                     from_c=0,
                     upto_r=None,
                     upto_c=None,
                 )
 
-            if key[0].isdigit() and not key[1]:
+            if splitk[0].isdigit() and not splitk[1]:
                 """
                 ["2:"] - Rows starting from and including 1
                 """
-                return named_span_dict(
-                    from_r=int(key[0]) - 1,
+                return span_dict(
+                    from_r=int(splitk[0]) - 1,
                     from_c=None,
                     upto_r=None,
                     upto_c=None,
                 )
 
-            if key[1].isdigit() and not key[0]:
+            if splitk[1].isdigit() and not splitk[0]:
                 """
                 [":2"] - Rows up to and including 1
                 """
-                return named_span_dict(
+                return span_dict(
                     from_r=0,
                     from_c=None,
-                    upto_r=int(key[1]),
+                    upto_r=int(splitk[1]),
                     upto_c=None,
                 )
 
-            if key[0].isdigit() and key[1].isdigit():
+            if splitk[0].isdigit() and splitk[1].isdigit():
                 """
                 ["1:2"] - Rows 0, 1
                 """
-                return named_span_dict(
-                    from_r=int(key[0]) - 1,
+                return span_dict(
+                    from_r=int(splitk[0]) - 1,
                     from_c=None,
-                    upto_r=int(key[1]),
+                    upto_r=int(splitk[1]),
                     upto_c=None,
                 )
 
-            if key[0].isalpha() and not key[1]:
+            if splitk[0].isalpha() and not splitk[1]:
                 """
                 ["B:"] - Columns starting from and including 2
                 """
-                return named_span_dict(
+                return span_dict(
                     from_r=None,
-                    from_c=alpha2idx(key[0]),
+                    from_c=alpha2idx(splitk[0]),
                     upto_r=None,
                     upto_c=None,
                 )
 
-            if key[1].isalpha() and not key[0]:
+            if splitk[1].isalpha() and not splitk[0]:
                 """
                 [":B"] - Columns up to and including 2
                 """
-                return named_span_dict(
+                return span_dict(
                     from_r=None,
                     from_c=0,
                     upto_r=None,
-                    upto_c=alpha2idx(key[1]) + 1,
+                    upto_c=alpha2idx(splitk[1]) + 1,
                 )
 
-            if key[0].isalpha() and key[1].isalpha():
+            if splitk[0].isalpha() and splitk[1].isalpha():
                 """
                 ["A:B"] - Columns 0, 1
                 """
-                return named_span_dict(
+                return span_dict(
                     from_r=None,
-                    from_c=alpha2idx(key[0]),
+                    from_c=alpha2idx(splitk[0]),
                     upto_r=None,
-                    upto_c=alpha2idx(key[1]) + 1,
+                    upto_c=alpha2idx(splitk[1]) + 1,
                 )
 
-            m1 = re.search(r"\d", key[0])
-            m2 = re.search(r"\d", key[1])
+            m1 = re.search(r"\d", splitk[0])
+            m2 = re.search(r"\d", splitk[1])
             m1start = m1.start() if m1 else None
             m2start = m2.start() if m2 else None
             if m1start and m2start:
                 """
                 ["A1:B1"] - Cells (0, 0), (0, 1)
                 """
-                c1 = key[0][:m1start]
-                r1 = key[0][m1start:]
-                c2 = key[1][:m2start]
-                r2 = key[1][m2start:]
-                return named_span_dict(
+                c1 = splitk[0][:m1start]
+                r1 = splitk[0][m1start:]
+                c2 = splitk[1][:m2start]
+                r2 = splitk[1][m2start:]
+                return span_dict(
                     from_r=int(r1) - 1,
                     from_c=alpha2idx(c1),
                     upto_r=int(r2),
                     upto_c=alpha2idx(c2) + 1,
                 )
 
-            if not key[0] and m2start:
+            if not splitk[0] and m2start:
                 """
                 [":B1"] - Cells (0, 0), (0, 1)
                 """
-                c2 = key[1][:m2start]
-                r2 = key[1][m2start:]
-                return named_span_dict(
+                c2 = splitk[1][:m2start]
+                r2 = splitk[1][m2start:]
+                return span_dict(
                     from_r=0,
                     from_c=0,
                     upto_r=int(r2),
                     upto_c=alpha2idx(c2) + 1,
                 )
 
-            if not key[1] and m1start:
+            if not splitk[1] and m1start:
                 """
                 ["A1:"] - Cells starting from and including (0, 0)
                 """
-                c1 = key[0][:m1start]
-                r1 = key[0][m1start:]
-                return named_span_dict(
+                c1 = splitk[0][:m1start]
+                r1 = splitk[0][m1start:]
+                return span_dict(
                     from_r=int(r1) - 1,
                     from_c=alpha2idx(c1),
                     upto_r=None,
                     upto_c=None,
                 )
 
-            if m1start and key[1].isalpha():
+            if m1start and splitk[1].isalpha():
                 """
                 ["A1:B"] - All the cells starting from (0, 0)
                            expanding out to include column 1
@@ -803,16 +817,16 @@ def key_to_span(
                 4   x   x
                 ...
                 """
-                c1 = key[0][:m1start]
-                r1 = key[0][m1start:]
-                return named_span_dict(
+                c1 = splitk[0][:m1start]
+                r1 = splitk[0][m1start:]
+                return span_dict(
                     from_r=int(r1) - 1,
                     from_c=alpha2idx(c1),
                     upto_r=None,
-                    upto_c=alpha2idx(key[1]) + 1,
+                    upto_c=alpha2idx(splitk[1]) + 1,
                 )
 
-            if m1start and key[1].isdigit():
+            if m1start and splitk[1].isdigit():
                 """
                 ["A1:2"] - All the cells starting from (0, 0)
                            expanding down to include row 1
@@ -826,17 +840,61 @@ def key_to_span(
                 4
                 ...
                 """
-                c1 = key[0][:m1start]
-                r1 = key[0][m1start:]
-                return named_span_dict(
+                c1 = splitk[0][:m1start]
+                r1 = splitk[0][m1start:]
+                return span_dict(
                     from_r=int(r1) - 1,
                     from_c=alpha2idx(c1),
-                    upto_r=int(key[1]),
+                    upto_r=int(splitk[1]),
                     upto_c=None,
                 )
 
         except ValueError as error:
-            return f"'{key}' could not be converted to span. Error: {error}"
+            return f"Error, '{key}' could not be converted to span: {error}"
+
+        else:
+            return f"'{key}' could not be converted to span."
+
+
+def span_is_cell(span: Span) -> bool:
+    if (
+        isinstance(span["from_r"], int)
+        and isinstance(span["from_c"], int)
+        and isinstance(span["upto_r"], int)
+        and isinstance(span["upto_c"], int)
+        and span["upto_r"] - span["from_r"] == 1
+        and span["upto_c"] - span["from_c"] == 1
+    ):
+        return True
+    return False
+
+
+def span_to_cell(span: Span) -> tuple[int, int]:
+    # assumed that span arg has been tested by 'span_is_cell()'
+    return (span["from_r"], span["from_c"])
+
+
+def span_ranges(
+    span: Span,
+    totalrows: int | Callable,
+    totalcols: int | Callable,
+) -> tuple[Generator, Generator] | tuple[Generator, None] | tuple[None, Generator]:
+    if span.upto_r is None:
+        rng_upto_r = totalrows() if isinstance(totalrows, Callable) else totalrows
+    else:
+        rng_upto_r = span.upto_r
+    if span.upto_c is None:
+        rng_upto_c = totalcols() if isinstance(totalcols, Callable) else totalcols
+    else:
+        rng_upto_c = span.upto_c
+    if span.from_r is None:
+        # it's a column range
+        return None, range(span.from_c, rng_upto_c)
+    if span.from_c is None:
+        # it's a row range
+        return range(span.from_r, rng_upto_r), None
+    # it's a cell range, return two ranges
+    return range(span.from_r, rng_upto_r), range(span.from_c, rng_upto_c)
 
 
 def del_named_span_options(options: dict, itr: Iterator, type_: str) -> None:

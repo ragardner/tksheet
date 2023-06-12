@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import tkinter as tk
 from collections import namedtuple
-from collections.abc import Iterator
+from collections.abc import Hashable
 
 from .vars import (
     ctrl_key,
@@ -42,32 +42,54 @@ class CanUseKeys:
             raise ValueError(f"Key must be type 'str' not '{type(key)}'.")
 
 
-class Span(CanUseKeys):
-    def __init__(
-        self,
-        cells: tuple[int, int] | Iterator[tuple[int, int]] | str | None = None,
-        rows: Iterator[int, ...] | None = None,
-        cols: Iterator[int, ...] | None = None,
-        indexes: Iterator[int, ...] | None = None,
-        headers: Iterator[int, ...] | None = None,
-        index: bool = False,
-        header: bool = False,
-        name: str | int | None = None,
-    ) -> None:
-        __slots__ = (  # noqa: F841
-            "cells",
-            "rows",
-            "cols",
-            "indexes" "headers" "index" "header" "name",
-        )
-        self.cells = cells
-        self.rows = rows
-        self.cols = cols
-        self.indexes = indexes
-        self.headers = headers
-        self.index = index
-        self.header = header
-        self.name = name if name is None else f"{name}"
+class DotDict(dict):
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        # Recursively turn nested dicts into DotDicts
+        for key, value in self.items():
+            if type(value) is dict:
+                self[key] = DotDict(value)
+
+    def __setitem__(self, key: Hashable, item: object) -> None:
+        if type(item) is dict:
+            super().__setitem__(key, DotDict(item))
+        else:
+            super().__setitem__(key, item)
+
+    __setattr__ = __setitem__
+    __getattr__ = dict.__getitem__
+    __delattr__ = dict.__delitem__
+
+
+class SpanDict(dict):
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.__getattr__ = self.__getitem__
+        # Recursively turn nested dicts into DotDicts
+        for key, value in self.items():
+            if key in ("value", "data",):
+                self["widget"].__setitem__(self, value)
+            elif type(value) is dict:
+                self[key] = DotDict(value)
+
+    def __getitem__(self, key: Hashable) -> object:
+        if key in ("value", "data",):
+            return self["widget"].__getitem__(self)
+        else:
+            return super().__getitem__(key)
+
+    def __setitem__(self, key: Hashable, item: object) -> None:
+        if key in ("value", "data",):
+            self["widget"].__setitem__(self, item)
+        else:
+            if type(item) is dict:
+                super().__setitem__(key, DotDict(item))
+            else:
+                super().__setitem__(key, item)
+
+    __setattr__ = __setitem__
+    __getattr__ = __getitem__
+    __delattr__ = dict.__delitem__
 
 
 class TextEditor_(tk.Text):
