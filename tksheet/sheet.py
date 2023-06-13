@@ -2874,10 +2874,8 @@ class Sheet(tk.Frame):
         self.MT.recreate_all_selection_boxes()
         self.set_refresh_timer(redraw)
 
-    def formatted(self, r, c):
-        if (r, c) in self.MT.cell_options and "format" in self.MT.cell_options[(r, c)]:
-            return True
-        return False
+    def formatted(self, r: int, c: int) -> dict:
+        return self.MT.get_cell_kwargs(r, c, key="format")
 
     def data_reference(
         self,
@@ -2935,7 +2933,15 @@ class Sheet(tk.Frame):
             return key in self.MT.data
         return any(key in row for row in self.MT.data)
 
-    def __getitem__(self, key: str | int | slice) -> object:
+    @property
+    def data(self):
+        return self.MT.data
+
+    @data.setter
+    def data(self, value):
+        self.data_reference(value)
+
+    def get_data(self, key: Span | str | int | slice) -> object:
         if isinstance(key, dict):
             span = key
         else:
@@ -2947,20 +2953,70 @@ class Sheet(tk.Frame):
             totalrows=self.MT.total_data_rows,
             totalcols=self.MT.total_data_cols,
         )
-        res = self.get_sheet_data(
-            get_displayed=span.displayed,
-            get_header=span.header,
-            get_index=span.index,
-            get_header_displayed=span.displayed,
-            get_index_displayed=span.displayed,
-            only_rows=rows,
-            only_columns=cols,
-        )
-        if len(res) == 1 and len(res[0]) == 1:
-            return res[0][0]
+        """
+        sheet["A1"].expand().transpose().options(dataframe, index=True, header=True, displayed=True).data
+
+        must deal with
+        - transpose
+        - index
+        - header
+        - displayed
+        - convert - just sends the data to the converter?
+
+        tranpose
+        - make sublists become columns rather than rows
+        - no effect on single cell
+        - probably just switch order of ranges?
+
+        index
+        - gets index data in addition to table data, is at the beginning
+          of each row normally and becomes its own column if transposed
+
+        header
+        - get header data in addition to table data, is its own row
+          normally and goes at the top of each column if transposed
+
+        displayed
+        - if True gets displayed sheet values instead of data for
+          table/index/header
+
+        convert
+        - instead of returning data normally it returns
+          convert(data)
+
+        """
+        disp = span.displayed
+        # it's a column span
+        if rows is None:
+            totalrows = self.MT.total_data_rows()
+            if span.transpose:
+                res = []
+                if span.index:
+                    res.append([self.get_index_data(r, get_displayed=disp) for r in range(totalrows)])
+                for c in cols:
+                    if span.header:
+                        res.append(
+                            [self.get_header_data(c, get_displayed=disp)]
+                            + [self.MT.get_cell_data(r, c, get_displayed=disp) for r in range(totalrows)]
+                        )
+                    else:
+                        res.append([self.MT.get_cell_data(r, c, get_displayed=disp) for r in range(totalrows)])
+            else:
+                res = []
+
+        # it's a row span
+        elif cols is None:
+            ...
+
+        # it's a cell span
+        else:
+            ...
+
+        if span.convert:
+            return span.convert(res)
         return res
 
-    def __setitem__(self, key: str | int | slice, value: object) -> None:
+    def set_data(self, key: str | int | slice | Span, data: object) -> None:
         if isinstance(key, dict):
             span = key
         else:
@@ -2973,9 +3029,17 @@ class Sheet(tk.Frame):
             totalcols=self.MT.total_data_cols,
         )
 
-    def set_data(self, key: str | int | slice | Span, data: object) -> None:
+    def __getitem__(self, key: str | int | slice) -> Span:
+        span = key_to_span(key, self.MT.named_spans)
+        if isinstance(span, str):
+            raise ValueError(span)
+        return span
 
-        ...
+    def __setitem__(self, key: str | int | slice, item: object) -> None:
+        span = key_to_span(key, self.MT.named_spans)
+        if isinstance(span, str):
+            raise ValueError(span)
+        return span
 
     def get_header_data(self, c: int, get_displayed: bool = False):
         return self.CH.get_cell_data(datacn=c, get_displayed=get_displayed)
@@ -3563,15 +3627,14 @@ class Sheet(tk.Frame):
     def get_named_span(self, name: str) -> dict:
         return self.MT.named_spans[name]
 
-    def add_span(
+    def span_to_options(
         self,
         span: Span,
     ) -> Sheet:
-        if not isinstance(span["name"], str):
-            raise ValueError(f"A named span name must be type 'str' not '{type(span['name'])}'.")
         if span["name"] in self.MT.named_spans:
             raise ValueError(f"Span '{span['name']}' already exists.")
-        self.MT.named_spans[span["name"]] = span
+        if span["name"]:
+            self.MT.named_spans[span["name"]] = span
         totalrows = self.MT.total_data_rows()
         totalcols = self.MT.total_data_cols()
         rng_from_r = 0 if span["from_r"] is None else span["from_r"]
@@ -3618,6 +3681,8 @@ class Sheet(tk.Frame):
         header: bool = False,
         index: bool = False,
         displayed: bool = False,
+        transpose: bool = False,
+        convert: object = None,
         widget: object = None,
         **kwargs,
     ) -> Span:
@@ -3627,7 +3692,7 @@ class Sheet(tk.Frame):
         """
         if name in self.MT.named_spans:
             return self.MT.named_spans[name]
-        if not name:
+        if isinstance(name, str) and not name:
             name = f"{num2alpha(self.named_span_id)}"
             self.named_span_id += 1
         type_ = type_.lower()
@@ -3635,35 +3700,28 @@ class Sheet(tk.Frame):
             span = key_to_span(key, self.MT.named_spans)
             if isinstance(span, str):
                 raise ValueError(span)
-            for k, v in {
-                "type_": type_,
-                "name": name,
-                "kwargs": kwargs,
-                "table": table,
-                "header": header,
-                "index": index,
-                "displayed": displayed,
-                "widget": self if widget is None else widget,
-            }.items():
-                span[k] = v
-            from_r, from_c, upto_r, upto_c = span["from_r"], span["from_c"], span["upto_r"], span["upto_c"]
         else:
             span = span_dict(
                 from_r=from_r,
                 from_c=from_c,
                 upto_r=upto_r,
                 upto_c=upto_c,
-                type_=type_,
-                name=name,
-                kwargs=kwargs,
-                table=table,
-                header=header,
-                index=index,
-                displayed=displayed,
-                widget=self if widget is None else widget,
             )
+        for k, v in {
+            "type_": type_,
+            "name": name,
+            "kwargs": kwargs,
+            "table": table,
+            "header": header,
+            "index": index,
+            "displayed": displayed,
+            "transpose": transpose,
+            "convert": convert,
+            "widget": self if widget is None else widget,
+        }.items():
+            span[k] = v
         if span["type_"]:
-            self.add_span(span)
+            self.span_to_options(span)
         return span
 
     def delete_span(self, name: str) -> None:

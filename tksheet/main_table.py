@@ -3680,7 +3680,6 @@ class MainTable(tk.Canvas):
         for datacn in itercols:
             w, h_ = self.CH.get_cell_dimensions(datacn)
             if self.all_rows_displayed:
-                # refresh range generator if needed
                 iterrows = range(numrows)
             for datarn in iterrows:
                 txt = self.get_valid_cell_data_as_str(datarn, datacn, get_displayed=True)

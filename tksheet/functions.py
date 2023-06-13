@@ -535,6 +535,7 @@ def span_dict(
     header: bool = False,
     index: bool = False,
     displayed: bool = False,
+    convert: object = None,
     widget: object = None,
 ) -> Span:
     d: Span = SpanDict(
@@ -550,6 +551,7 @@ def span_dict(
             "header": header,
             "index": index,
             "displayed": displayed,
+            "convert": convert,
             "widget": widget,
         }
     )

@@ -64,28 +64,50 @@ class DotDict(dict):
 class SpanDict(dict):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.__getattr__ = self.__getitem__
         # Recursively turn nested dicts into DotDicts
-        for key, value in self.items():
-            if key in ("value", "data",):
-                self["widget"].__setitem__(self, value)
-            elif type(value) is dict:
-                self[key] = DotDict(value)
+        for key, item in self.items():
+            if key == "data":
+                self["widget"].set_data(self, item)
+            elif type(item) is dict:
+                self[key] = DotDict(item)
 
     def __getitem__(self, key: Hashable) -> object:
-        if key in ("value", "data",):
-            return self["widget"].__getitem__(self)
+        if key == "data":
+            return self["widget"].get_data(self)
         else:
             return super().__getitem__(key)
 
     def __setitem__(self, key: Hashable, item: object) -> None:
-        if key in ("value", "data",):
-            self["widget"].__setitem__(self, item)
+        if key == "data":
+            self["widget"].set_data(self, item)
+        elif type(item) is dict:
+            super().__setitem__(key, DotDict(item))
         else:
-            if type(item) is dict:
-                super().__setitem__(key, DotDict(item))
-            else:
-                super().__setitem__(key, item)
+            super().__setitem__(key, item)
+
+    def options(self, convert: object = None, **kwargs) -> SpanDict:
+        if "expand" in kwargs:
+            self.expand(kwargs["expand"])
+        for k in ("name", "index", "header", "table", "transpose", "displayed"):
+            if k in kwargs:
+                self[k] = kwargs[k]
+        if "formatter" in kwargs:
+            self["type_"] = "format"
+            self["kwargs"] = kwargs["formatter"]
+        if "format" in kwargs:
+            self["type_"] = "format"
+            self["kwargs"] = kwargs["format"]
+        if convert != self["convert"]:
+            self["convert"] = convert
+        return self
+
+    def expand(self, direction: str) -> SpanDict:
+        ...
+        return self
+
+    def transpose(self, transpose: bool) -> SpanDict:
+        ...
+        return self
 
     __setattr__ = __setitem__
     __getattr__ = __getitem__

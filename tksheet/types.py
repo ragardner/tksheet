@@ -118,6 +118,8 @@ class Span(TypedDict):
     header: bool
     index: bool
     displayed: bool
+    transpose: bool
+    convert: object
     widget: object
 
 
