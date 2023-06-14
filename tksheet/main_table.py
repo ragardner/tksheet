@@ -754,7 +754,7 @@ class MainTable(tk.Canvas):
                     event_data=event_data,
                 )
         self.deselect("all", redraw=False)
-        if event_data["cells"]["table"]:
+        if event_data["cells"]["table"] or event_data["added"]["rows"] or event_data["added"]["columns"]:
             self.undo_stack.append(ev_stack_dict(event_data))
         self.create_selection_box(
             selected_r,
@@ -7416,7 +7416,7 @@ class MainTable(tk.Canvas):
         datacn: int,
         get_displayed: bool = False,
         none_to_empty_str: bool = False,
-        format_kwargs: dict | None = None,
+        fmt_kw: dict | None = None,
         **kwargs,
     ) -> object:
         if get_displayed:
@@ -7425,8 +7425,8 @@ class MainTable(tk.Canvas):
         kwargs = self.get_cell_kwargs(datarn, datacn, key="format")
         if kwargs and kwargs["formatter"] is not None:
             value = value.value  # assumed given formatter class has value attribute
-        if isinstance(format_kwargs, dict):
-            value = format_data(value=value, **format_kwargs)
+        if isinstance(fmt_kw, dict):
+            value = format_data(value=value, **fmt_kw)
         return "" if (value is None and none_to_empty_str) else value
 
     def input_valid_for_cell(self, datarn: int, datacn: int, value: object) -> bool:

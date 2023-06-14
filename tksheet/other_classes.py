@@ -85,10 +85,26 @@ class SpanDict(dict):
         else:
             super().__setitem__(key, item)
 
+    def clear(self, undo: bool | None = None, redraw: bool = True) -> SpanDict:
+        if undo is not None:
+            self["widget"].clear(self, undo=undo, redraw=redraw)
+        else:
+            self["widget"].clear(self, redraw=redraw)
+        return self
+
     def options(self, convert: object = None, **kwargs) -> SpanDict:
         if "expand" in kwargs:
             self.expand(kwargs["expand"])
-        for k in ("name", "index", "header", "table", "transpose", "ndim", "displayed"):
+        for k in (
+            "name",
+            "index",
+            "header",
+            "table",
+            "transpose",
+            "ndim",
+            "displayed",
+            "undo",
+        ):
             if k in kwargs:
                 self[k] = kwargs[k]
         if (k := "formatter") in kwargs or (k := "format") in kwargs:
@@ -106,6 +122,14 @@ class SpanDict(dict):
         elif direction == "right":
             self["upto_c"] = None
         return self
+
+    @property
+    def kind(self) -> str:
+        if self["from_r"] is None:
+            return "column"
+        if self["from_c"] is None:
+            return "row"
+        return "cell"
 
     __setattr__ = __setitem__
     __getattr__ = __getitem__

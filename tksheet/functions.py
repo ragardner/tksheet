@@ -540,6 +540,7 @@ def span_dict(
     transpose: bool = False,
     ndim: int | None = None,
     convert: object = None,
+    undo: bool = False,
     widget: object = None,
 ) -> Span:
     d: Span = SpanDict(
@@ -560,6 +561,7 @@ def span_dict(
             "transpose": transpose,
             "ndim": ndim,
             "convert": convert,
+            "undo": undo,
             "widget": widget,
         }
     )
@@ -587,6 +589,7 @@ def coords_to_span(
 def key_to_span(
     key: str | int | slice,
     spans: dict[str, Span],
+    widget: object = None,
 ) -> Span:
     if not isinstance(key, (str, int, slice)):
         return f"Key type must be either str, int or slice, not '{type(key)}'."
@@ -600,6 +603,7 @@ def key_to_span(
             from_c=None,
             upto_r=key,
             upto_c=None,
+            widget=widget,
         )
 
     elif isinstance(key, slice):
@@ -618,6 +622,7 @@ def key_to_span(
                 from_c=0,
                 upto_r=None,
                 upto_c=None,
+                widget=widget,
             )
         """
         [1:3] - Rows 1, 2
@@ -630,6 +635,7 @@ def key_to_span(
             from_c=None,
             upto_r=key.stop,
             upto_c=None,
+            widget=widget,
         )
 
     elif isinstance(key, str):
@@ -656,6 +662,7 @@ def key_to_span(
                     from_c=None,
                     upto_r=int(key),
                     upto_c=None,
+                    widget=widget,
                 )
 
             if key.isalpha():
@@ -667,6 +674,7 @@ def key_to_span(
                     from_c=alpha2idx(key),
                     upto_r=None,
                     upto_c=alpha2idx(key) + 1,
+                    widget=widget,
                 )
 
             splitk = key.split(":")
@@ -690,6 +698,7 @@ def key_to_span(
                             from_c=alpha2idx(key_column),
                             upto_r=int(key_row),
                             upto_c=alpha2idx(key_column) + 1,
+                            widget=widget,
                         )
 
             if not splitk[0] and not splitk[1]:
@@ -701,6 +710,7 @@ def key_to_span(
                     from_c=0,
                     upto_r=None,
                     upto_c=None,
+                    widget=widget,
                 )
 
             if splitk[0].isdigit() and not splitk[1]:
@@ -712,6 +722,7 @@ def key_to_span(
                     from_c=None,
                     upto_r=None,
                     upto_c=None,
+                    widget=widget,
                 )
 
             if splitk[1].isdigit() and not splitk[0]:
@@ -723,6 +734,7 @@ def key_to_span(
                     from_c=None,
                     upto_r=int(splitk[1]),
                     upto_c=None,
+                    widget=widget,
                 )
 
             if splitk[0].isdigit() and splitk[1].isdigit():
@@ -734,6 +746,7 @@ def key_to_span(
                     from_c=None,
                     upto_r=int(splitk[1]),
                     upto_c=None,
+                    widget=widget,
                 )
 
             if splitk[0].isalpha() and not splitk[1]:
@@ -745,6 +758,7 @@ def key_to_span(
                     from_c=alpha2idx(splitk[0]),
                     upto_r=None,
                     upto_c=None,
+                    widget=widget,
                 )
 
             if splitk[1].isalpha() and not splitk[0]:
@@ -756,6 +770,7 @@ def key_to_span(
                     from_c=0,
                     upto_r=None,
                     upto_c=alpha2idx(splitk[1]) + 1,
+                    widget=widget,
                 )
 
             if splitk[0].isalpha() and splitk[1].isalpha():
@@ -767,6 +782,7 @@ def key_to_span(
                     from_c=alpha2idx(splitk[0]),
                     upto_r=None,
                     upto_c=alpha2idx(splitk[1]) + 1,
+                    widget=widget,
                 )
 
             m1 = re.search(r"\d", splitk[0])
@@ -786,6 +802,7 @@ def key_to_span(
                     from_c=alpha2idx(c1),
                     upto_r=int(r2),
                     upto_c=alpha2idx(c2) + 1,
+                    widget=widget,
                 )
 
             if not splitk[0] and m2start:
@@ -799,6 +816,7 @@ def key_to_span(
                     from_c=0,
                     upto_r=int(r2),
                     upto_c=alpha2idx(c2) + 1,
+                    widget=widget,
                 )
 
             if not splitk[1] and m1start:
@@ -812,6 +830,7 @@ def key_to_span(
                     from_c=alpha2idx(c1),
                     upto_r=None,
                     upto_c=None,
+                    widget=widget,
                 )
 
             if m1start and splitk[1].isalpha():
@@ -834,6 +853,7 @@ def key_to_span(
                     from_c=alpha2idx(c1),
                     upto_r=None,
                     upto_c=alpha2idx(splitk[1]) + 1,
+                    widget=widget,
                 )
 
             if m1start and splitk[1].isdigit():
@@ -857,6 +877,7 @@ def key_to_span(
                     from_c=alpha2idx(c1),
                     upto_r=int(splitk[1]),
                     upto_c=None,
+                    widget=widget,
                 )
 
         except ValueError as error:
@@ -888,7 +909,7 @@ def span_ranges(
     span: Span,
     totalrows: int | Callable,
     totalcols: int | Callable,
-) -> tuple[Generator, Generator] | tuple[Generator, None] | tuple[None, Generator]:
+) -> tuple[Generator, Generator]:
 
     rng_from_r = 0 if span.from_r is None else span.from_r
     rng_from_c = 0 if span.from_c is None else span.from_c

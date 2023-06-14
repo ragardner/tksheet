@@ -123,6 +123,7 @@ class Span(TypedDict):
     transpose: bool
     ndim: int | None
     convert: object
+    undo: bool
     widget: object
 
 

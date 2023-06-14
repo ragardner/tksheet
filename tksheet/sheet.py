@@ -5,6 +5,7 @@ from bisect import bisect_left
 from collections import deque
 from collections.abc import (
     Callable,
+    Generator,
     Iterator,
     Sequence,
 )
@@ -2942,19 +2943,10 @@ class Sheet(tk.Frame):
         self.data_reference(value)
 
     def get_data(self, key: Span | str | int | slice) -> object:
-        if isinstance(key, dict):
-            span = key
-        else:
-            span = key_to_span(key, self.MT.named_spans)
-        if isinstance(span, str):
-            raise ValueError(span)
-        rows, cols = span_ranges(
-            span,
-            totalrows=self.MT.total_data_rows,
-            totalcols=self.MT.total_data_cols,
-        )
+        span = self.span_from_key(key)
+        rows, cols = self.ranges_from_span(span)
         """
-        e.g.
+        e.g. retrieves entire table as pandas dataframe
         sheet["A1"].expand().options(pandas.DataFrame).data
 
         must deal with
@@ -3009,128 +3001,146 @@ class Sheet(tk.Frame):
           convert(data)
 
         """
-        tdisp = span.tdisp
-        idisp = span.idisp
-        hdisp = span.hdisp
-        index = span.index
-        header = span.header
-        fmkw = span.kwargs if span.type_ == "format" and span.kwargs else None
+        tdisp, idisp, hdisp = span.tdisp, span.idisp, span.hdisp
+        index, header = span.index, span.header
+        fmt_kw = span.kwargs if span.type_ == "format" and span.kwargs else None
+        quick_tdata, quick_idata, quick_hdata = self.MT.get_cell_data, self.RI.get_cell_data, self.CH.get_cell_data
         if span.transpose:
             res = []
             if index:
                 if index and header:
-                    res.append([""] + [self.get_index_data(r, get_displayed=idisp) for r in rows])
+                    res.append([""] + [quick_idata(r, get_displayed=idisp) for r in rows])
                 else:
-                    res.append([self.get_index_data(r, get_displayed=idisp) for r in rows])
+                    res.append([quick_idata(r, get_displayed=idisp) for r in rows])
             if header:
                 res.extend(
                     [
-                        [self.get_header_data(c, get_displayed=hdisp)]
-                        + [
-                            self.MT.get_cell_data(
-                                r,
-                                c,
-                                get_displayed=tdisp,
-                                format_kwargs=fmkw,
-                            )
-                            for r in rows
-                        ]
+                        [quick_hdata(c, get_displayed=hdisp)]
+                        + [quick_tdata(r, c, get_displayed=tdisp, fmt_kw=fmt_kw) for r in rows]
                         for c in cols
                     ]
                 )
             else:
-                res.extend(
-                    [
-                        [
-                            self.MT.get_cell_data(
-                                r,
-                                c,
-                                get_displayed=tdisp,
-                                format_kwargs=fmkw,
-                            )
-                            for r in rows
-                        ]
-                        for c in cols
-                    ]
-                )
+                res.extend([[quick_tdata(r, c, get_displayed=tdisp, fmt_kw=fmt_kw) for r in rows] for c in cols])
         elif not span.transpose:
             res = []
             if header:
                 if header and index:
-                    res.append([""] + [self.get_header_data(c, get_displayed=hdisp) for c in cols])
+                    res.append([""] + [quick_hdata(c, get_displayed=hdisp) for c in cols])
                 else:
-                    res.append([self.get_header_data(c, get_displayed=hdisp) for c in cols])
+                    res.append([quick_hdata(c, get_displayed=hdisp) for c in cols])
             if index:
                 res.extend(
                     [
-                        [self.get_index_data(r, get_displayed=idisp)]
-                        + [
-                            self.MT.get_cell_data(
-                                r,
-                                c,
-                                get_displayed=tdisp,
-                                format_kwargs=fmkw,
-                            )
-                            for c in cols
-                        ]
+                        [quick_idata(r, get_displayed=idisp)]
+                        + [quick_tdata(r, c, get_displayed=tdisp, fmt_kw=fmt_kw) for c in cols]
                         for r in rows
                     ]
                 )
             else:
-                res.extend(
-                    [
-                        [
-                            self.MT.get_cell_data(
-                                r,
-                                c,
-                                get_displayed=tdisp,
-                                format_kwargs=fmkw,
-                            )
-                            for c in cols
-                        ]
-                        for r in rows
-                    ]
-                )
+                res.extend([[quick_tdata(r, c, get_displayed=tdisp, fmt_kw=fmt_kw) for c in cols] for r in rows])
         if span.ndim is None:
+            # it's a cell
             if len(res) == 1 and len(res[0]) == 1:
                 res = res[0][0]
+            # it's a row
             elif len(res) == 1:
                 res = res[0]
+            # it's a column
+            elif res and not span.transpose and len(res[0]) == 1:
+                res = list(chain.from_iterable(res))
         elif span.ndim == 1:
+            # flatten sublists
             if len(res) == 1 and len(res[0]) == 1:
                 res = res[0]
             else:
                 res = list(chain.from_iterable(res))
-        # if span.ndim == 2 res keeps its current dimensions
-        # as a list of lists
+        # if span.ndim == 2 res keeps its current
+        # dimensionsas a list of lists
         if span.convert is not None:
             return span.convert(res)
         return res
 
     def set_data(self, key: str | int | slice | Span, data: object) -> None:
+        span = self.span_from_key(key)
+        rows, cols = self.ranges_from_span(span)
+        """
+        e.g.
+        df = pandas.DataFrame([[1, 2, 3], [4, 5, 6]])
+        sheet["A1"] = df.values.tolist()
+
+        can't use slices must use a cell
+        just uses the from_r, from_c values
+
+        expands sheet if required
+
+        must deal with
+        transpose
+        - switches range orientation
+        - a single list will go to row without transpose
+        - multi lists will go to rows without transpose
+        - with transpose a single list will go to column
+        - with transpose multi lists will go to columns
+
+        header
+        - assumes there's a header, sets header cell data as well
+
+        index
+        - assumes there's an index, sets index cell data as well
+
+        undo
+        - if True adds to undo stack which if undo is enabled
+          for end user they can undo/redo the change
+
+        """
+        index = span.index
+        header = span.header
+        if span.transpose:
+            ...
+
+        elif not span.transpose:
+            ...
+
+    def clear(
+        self,
+        key: str | int | slice | Span,
+        undo: bool | None = None,
+        redraw: bool = True,
+    ) -> dict:
+        span = self.span_from_key(key)
+        rows, cols = self.ranges_from_span(span)
+        quick_clear = self.MT.event_data_clear_cell
+        event_data = event_dict(
+            name="edit_table",
+            sheet=self.name,
+            selected=self.MT.currently_selected(),
+        )
+        for r in rows:
+            for c in cols:
+                event_data = quick_clear(r, c, event_data)
+        if undo is True or (undo is None and span.undo):
+            self.MT.undo_stack.append(ev_stack_dict(event_data))
+        self.set_refresh_timer(redraw)
+        return event_data
+
+    def span_from_key(self, key: str | int | slice | Span) -> None | Span:
         if isinstance(key, dict):
             span = key
         else:
-            span = key_to_span(key, self.MT.named_spans)
+            span = key_to_span(key, self.MT.named_spans, self)
         if isinstance(span, str):
             raise ValueError(span)
-        rows, cols = span_ranges(
+        return span
+
+    def ranges_from_span(self, span: Span) -> tuple[Generator, Generator]:
+        return span_ranges(
             span,
             totalrows=self.MT.total_data_rows,
             totalcols=self.MT.total_data_cols,
         )
 
     def __getitem__(self, key: str | int | slice) -> Span:
-        span = key_to_span(key, self.MT.named_spans)
-        if isinstance(span, str):
-            raise ValueError(span)
-        return span
-
-    def __setitem__(self, key: str | int | slice, item: object) -> None:
-        span = key_to_span(key, self.MT.named_spans)
-        if isinstance(span, str):
-            raise ValueError(span)
-        return span
+        return self.span_from_key(key)
 
     def get_header_data(self, c: int, get_displayed: bool = False):
         return self.CH.get_cell_data(datacn=c, get_displayed=get_displayed)
@@ -3522,16 +3532,20 @@ class Sheet(tk.Frame):
         self.set_refresh_timer(redraw)
         return event_data
 
-    def sheet_data_dimensions(self, total_rows=None, total_columns=None):
+    def sheet_data_dimensions(
+        self,
+        total_rows: int | None = None,
+        total_columns: int | None = None,
+    ) -> None:
         self.MT.data_dimensions(total_rows, total_columns)
 
-    def get_total_rows(self, include_index: bool = False):
+    def get_total_rows(self, include_index: bool = False) -> int:
         return self.MT.total_data_rows(include_index=include_index)
 
-    def get_total_columns(self, include_header: bool = False):
+    def get_total_columns(self, include_header: bool = False) -> int:
         return self.MT.total_data_cols(include_header=include_header)
 
-    def equalize_data_row_lengths(self, include_header: bool = False):
+    def equalize_data_row_lengths(self, include_header: bool = False) -> int:
         return self.MT.equalize_data_row_lengths(include_header=include_header)
 
     def display_rows(
@@ -3777,6 +3791,7 @@ class Sheet(tk.Frame):
         transpose: bool = False,
         ndim: int | None = None,
         convert: object = None,
+        undo: bool = False,
         widget: object = None,
         **kwargs,
     ) -> Span:
@@ -3791,9 +3806,7 @@ class Sheet(tk.Frame):
             self.named_span_id += 1
         type_ = type_.lower()
         if isinstance(key, (int, str, slice)):
-            span = key_to_span(key, self.MT.named_spans)
-            if isinstance(span, str):
-                raise ValueError(span)
+            span = self.span_from_key(key)
         else:
             span = span_dict(
                 from_r=from_r,
@@ -3814,6 +3827,7 @@ class Sheet(tk.Frame):
             "transpose": transpose,
             "ndim": ndim,
             "convert": convert,
+            "undo": undo,
             "widget": self if widget is None else widget,
         }.items():
             span[k] = v
