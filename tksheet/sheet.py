@@ -2957,11 +2957,19 @@ class Sheet(tk.Frame):
         sheet["A1"].expand().transpose().options(dataframe, index=True, header=True, displayed=True).data
 
         must deal with
+        - format
         - transpose
         - index
         - header
         - displayed
         - convert - just sends the data to the converter?
+
+        format
+        - if span.type_ == "format" and span.kwargs
+        - does not format the sheets internal data, only data being returned
+        - formats the data before retrieval with specified formatter function e.g.
+        - format=int_formatter() -> returns kwargs, span["kwargs"] now has formatter kwargs
+        - on every table cell use format_data(value=cell, **span["kwargs"])
 
         tranpose
         - make sublists become columns rather than rows
@@ -2985,33 +2993,90 @@ class Sheet(tk.Frame):
           convert(data)
 
         """
-        disp = span.displayed
-        # it's a column span
-        if rows is None:
-            totalrows = self.MT.total_data_rows()
-            if span.transpose:
-                res = []
-                if span.index:
-                    res.append([self.get_index_data(r, get_displayed=disp) for r in range(totalrows)])
-                for c in cols:
-                    if span.header:
-                        res.append(
-                            [self.get_header_data(c, get_displayed=disp)]
-                            + [self.MT.get_cell_data(r, c, get_displayed=disp) for r in range(totalrows)]
-                        )
-                    else:
-                        res.append([self.MT.get_cell_data(r, c, get_displayed=disp) for r in range(totalrows)])
+        tdisp = span.tdisp
+        idisp = span.idisp
+        hdisp = span.hdisp
+        index = span.index
+        header = span.header
+        fmkw = span.kwargs if span.type_ == "format" and span.kwargs else None
+        if span.transpose:
+            res = []
+            if index:
+                if index and header:
+                    res.append([""] + [self.get_index_data(r, get_displayed=idisp) for r in rows])
+                else:
+                    res.append([self.get_index_data(r, get_displayed=idisp) for r in rows])
+            if header:
+                res.extend(
+                    [
+                        [self.get_header_data(c, get_displayed=hdisp)]
+                        + [
+                            self.MT.get_cell_data(
+                                r,
+                                c,
+                                get_displayed=tdisp,
+                                format_kwargs=fmkw,
+                            )
+                            for r in rows
+                        ]
+                        for c in cols
+                    ]
+                )
             else:
-                res = []
-
-        # it's a row span
-        elif cols is None:
-            ...
-
-        # it's a cell span
-        else:
-            ...
-
+                res.extend(
+                    [
+                        [
+                            self.MT.get_cell_data(
+                                r,
+                                c,
+                                get_displayed=tdisp,
+                                format_kwargs=fmkw,
+                            )
+                            for r in rows
+                        ]
+                        for c in cols
+                    ]
+                )
+        elif not span.transpose:
+            res = []
+            if header:
+                if header and index:
+                    res.append([""] + [self.get_header_data(c, get_displayed=hdisp) for c in cols])
+                else:
+                    res.append([self.get_header_data(c, get_displayed=hdisp) for c in cols])
+            if index:
+                res.extend(
+                    [
+                        [self.get_index_data(r, get_displayed=idisp)]
+                        + [
+                            self.MT.get_cell_data(
+                                r,
+                                c,
+                                get_displayed=tdisp,
+                                format_kwargs=fmkw,
+                            )
+                            for c in cols
+                        ]
+                        for r in rows
+                    ]
+                )
+            else:
+                res.extend(
+                    [
+                        [
+                            self.MT.get_cell_data(
+                                r,
+                                c,
+                                get_displayed=tdisp,
+                                format_kwargs=fmkw,
+                            )
+                            for c in cols
+                        ]
+                        for r in rows
+                    ]
+                )
+        if not span.convert and len(res) == 1 and len(res[0]) == 1:
+            return res[0][0]
         if span.convert:
             return span.convert(res)
         return res
@@ -3680,7 +3745,9 @@ class Sheet(tk.Frame):
         table: bool = True,
         header: bool = False,
         index: bool = False,
-        displayed: bool = False,
+        tdisp: bool = False,
+        idisp: bool = True,
+        hdisp: bool = True,
         transpose: bool = False,
         convert: object = None,
         widget: object = None,
@@ -3714,7 +3781,9 @@ class Sheet(tk.Frame):
             "table": table,
             "header": header,
             "index": index,
-            "displayed": displayed,
+            "tdisp": tdisp,
+            "idisp": idisp,
+            "hdisp": hdisp,
             "transpose": transpose,
             "convert": convert,
             "widget": self if widget is None else widget,

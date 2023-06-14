@@ -7416,6 +7416,7 @@ class MainTable(tk.Canvas):
         datacn: int,
         get_displayed: bool = False,
         none_to_empty_str: bool = False,
+        format_kwargs: dict | None = None,
         **kwargs,
     ) -> object:
         if get_displayed:
@@ -7424,6 +7425,8 @@ class MainTable(tk.Canvas):
         kwargs = self.get_cell_kwargs(datarn, datacn, key="format")
         if kwargs and kwargs["formatter"] is not None:
             value = value.value  # assumed given formatter class has value attribute
+        if isinstance(format_kwargs, dict):
+            value = format_data(value=value, **format_kwargs)
         return "" if (value is None and none_to_empty_str) else value
 
     def input_valid_for_cell(self, datarn: int, datacn: int, value: object) -> bool:

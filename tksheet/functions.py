@@ -534,23 +534,29 @@ def span_dict(
     table: bool = True,
     header: bool = False,
     index: bool = False,
-    displayed: bool = False,
+    tdisp: bool = False,
+    idisp: bool = True,
+    hdisp: bool = True,
+    transpose: bool = False,
     convert: object = None,
     widget: object = None,
 ) -> Span:
     d: Span = SpanDict(
         {
-            "from_r": None if from_r is None else from_r,
-            "from_c": None if from_c is None else from_c,
-            "upto_r": None if upto_r is None else upto_r,
-            "upto_c": None if upto_c is None else upto_c,
+            "from_r": from_r,
+            "from_c": from_c,
+            "upto_r": upto_r,
+            "upto_c": upto_c,
             "type_": "" if type_ is None else type_,
             "name": "" if name is None else name,
             "kwargs": {} if kwargs is None else kwargs,
             "table": table,
             "header": header,
             "index": index,
-            "displayed": displayed,
+            "tdisp": tdisp,
+            "idisp": idisp,
+            "hdisp": hdisp,
+            "transpose": transpose,
             "convert": convert,
             "widget": widget,
         }
@@ -881,22 +887,21 @@ def span_ranges(
     totalrows: int | Callable,
     totalcols: int | Callable,
 ) -> tuple[Generator, Generator] | tuple[Generator, None] | tuple[None, Generator]:
+
+    rng_from_r = 0 if span.from_r is None else span.from_r
+    rng_from_c = 0 if span.from_c is None else span.from_c
+
     if span.upto_r is None:
         rng_upto_r = totalrows() if isinstance(totalrows, Callable) else totalrows
     else:
         rng_upto_r = span.upto_r
+
     if span.upto_c is None:
         rng_upto_c = totalcols() if isinstance(totalcols, Callable) else totalcols
     else:
         rng_upto_c = span.upto_c
-    if span.from_r is None:
-        # it's a column range
-        return None, range(span.from_c, rng_upto_c)
-    if span.from_c is None:
-        # it's a row range
-        return range(span.from_r, rng_upto_r), None
-    # it's a cell range, return two ranges
-    return range(span.from_r, rng_upto_r), range(span.from_c, rng_upto_c)
+
+    return range(rng_from_r, rng_upto_r), range(rng_from_c, rng_upto_c)
 
 
 def del_named_span_options(options: dict, itr: Iterator, type_: str) -> None:

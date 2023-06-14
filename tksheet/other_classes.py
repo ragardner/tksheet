@@ -91,22 +91,20 @@ class SpanDict(dict):
         for k in ("name", "index", "header", "table", "transpose", "displayed"):
             if k in kwargs:
                 self[k] = kwargs[k]
-        if "formatter" in kwargs:
+        if (k := "formatter") in kwargs or (k := "format") in kwargs:
             self["type_"] = "format"
-            self["kwargs"] = kwargs["formatter"]
-        if "format" in kwargs:
-            self["type_"] = "format"
-            self["kwargs"] = kwargs["format"]
+            self["kwargs"] = kwargs[k]
         if convert != self["convert"]:
             self["convert"] = convert
         return self
 
-    def expand(self, direction: str) -> SpanDict:
-        ...
-        return self
-
-    def transpose(self, transpose: bool) -> SpanDict:
-        ...
+    def expand(self, direction: str = "both") -> SpanDict:
+        if direction == "both" or direction == "table":
+            self["upto_r"], self["upto_c"] = None, None
+        elif direction == "down":
+            self["upto_r"] = None
+        elif direction == "right":
+            self["upto_c"] = None
         return self
 
     __setattr__ = __setitem__

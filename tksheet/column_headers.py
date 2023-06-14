@@ -1533,12 +1533,10 @@ class ColumnHeaders(tk.Canvas):
                     tag="cb",
                     draw_check=draw_check,
                 )
-            lns = self.get_valid_cell_data_as_str(datacn, fix=False).split("\n")
-            if lns == [""]:
-                if self.show_default_header_for_empty:
-                    lns = (get_n2a(datacn, self.default_header),)
-                else:
-                    continue
+            lns = self.get_valid_cell_data_as_str(datacn, fix=False)
+            if not lns:
+                continue
+            lns = lns.split("\n")
             if mw > self.MT.header_txt_width and not (
                 (align == "w" and (draw_x > x_stop))
                 or (align == "e" and (draw_x > x_stop))
@@ -2067,9 +2065,12 @@ class ColumnHeaders(tk.Canvas):
         if fix:
             self.fix_header(datacn)
         try:
-            return "" if self.MT._headers[datacn] is None else f"{self.MT._headers[datacn]}"
+            value = "" if self.MT._headers[datacn] is None else f"{self.MT._headers[datacn]}"
         except Exception:
-            return ""
+            value = ""
+        if not value and self.show_default_header_for_empty:
+            value = get_n2a(datacn, self.default_header)
+        return value
 
     def get_value_for_empty_cell(self, datacn, c_ops=True):
         if self.get_cell_kwargs(datacn, key="checkbox", cell=c_ops):

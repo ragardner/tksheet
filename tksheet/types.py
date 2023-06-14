@@ -117,7 +117,9 @@ class Span(TypedDict):
     table: bool
     header: bool
     index: bool
-    displayed: bool
+    tdisp: bool
+    idisp: bool
+    hdisp: bool
     transpose: bool
     convert: object
     widget: object

@@ -1481,12 +1481,10 @@ class RowIndex(tk.Canvas):
                     tag="cb",
                     draw_check=draw_check,
                 )
-            lns = self.get_valid_cell_data_as_str(datarn, fix=False).split("\n")
-            if lns == [""]:
-                if self.show_default_index_for_empty:
-                    lns = (get_n2a(r, self.default_index),)
-                else:
-                    continue
+            lns = self.get_valid_cell_data_as_str(datarn, fix=False)
+            if not lns:
+                continue
+            lns = lns.split("\n")
             draw_y = rtopgridln + self.MT.index_first_ln_ins
             if mw > 5:
                 draw_y = rtopgridln + self.MT.index_first_ln_ins
@@ -2002,9 +2000,12 @@ class RowIndex(tk.Canvas):
         if fix:
             self.fix_index(datarn)
         try:
-            return "" if self.MT._row_index[datarn] is None else f"{self.MT._row_index[datarn]}"
+            value = "" if self.MT._row_index[datarn] is None else f"{self.MT._row_index[datarn]}"
         except Exception:
-            return ""
+            value = ""
+        if not value and self.show_default_index_for_empty:
+            value = get_n2a(datarn, self.default_index)
+        return value
 
     def get_value_for_empty_cell(self, datarn, r_ops=True):
         if self.get_cell_kwargs(datarn, key="checkbox", cell=r_ops):
