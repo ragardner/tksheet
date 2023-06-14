@@ -2954,14 +2954,18 @@ class Sheet(tk.Frame):
             totalcols=self.MT.total_data_cols,
         )
         """
-        sheet["A1"].expand().transpose().options(dataframe, index=True, header=True, displayed=True).data
+        e.g.
+        sheet["A1"].expand().options(pandas.DataFrame).data
 
         must deal with
         - format
         - transpose
+        - ndim
         - index
         - header
-        - displayed
+        - tdisp
+        - idisp
+        - hdisp
         - convert - just sends the data to the converter?
 
         format
@@ -2974,7 +2978,14 @@ class Sheet(tk.Frame):
         tranpose
         - make sublists become columns rather than rows
         - no effect on single cell
-        - probably just switch order of ranges?
+
+        ndim
+        - defaults to None
+        - when None it will follow rules:
+            - if single cell in a list of lists return single cell
+            - if single sublist in a list of lists then return single list
+        - when ndim == 1 force single list
+        - when ndim == 2 force list of lists
 
         index
         - gets index data in addition to table data, is at the beginning
@@ -2984,9 +2995,14 @@ class Sheet(tk.Frame):
         - get header data in addition to table data, is its own row
           normally and goes at the top of each column if transposed
 
-        displayed
-        - if True gets displayed sheet values instead of data for
-          table/index/header
+        tdisp
+        - if True gets displayed sheet values instead of actual data
+
+        idisp
+        - if True gets displayed index values instead of actual data
+
+        hdisp
+        - if True gets displayed header values instead of actual data
 
         convert
         - instead of returning data normally it returns
@@ -3075,9 +3091,19 @@ class Sheet(tk.Frame):
                         for r in rows
                     ]
                 )
-        if not span.convert and len(res) == 1 and len(res[0]) == 1:
-            return res[0][0]
-        if span.convert:
+        if span.ndim is None:
+            if len(res) == 1 and len(res[0]) == 1:
+                res = res[0][0]
+            elif len(res) == 1:
+                res = res[0]
+        elif span.ndim == 1:
+            if len(res) == 1 and len(res[0]) == 1:
+                res = res[0]
+            else:
+                res = list(chain.from_iterable(res))
+        # if span.ndim == 2 res keeps its current dimensions
+        # as a list of lists
+        if span.convert is not None:
             return span.convert(res)
         return res
 
@@ -3749,6 +3775,7 @@ class Sheet(tk.Frame):
         idisp: bool = True,
         hdisp: bool = True,
         transpose: bool = False,
+        ndim: int | None = None,
         convert: object = None,
         widget: object = None,
         **kwargs,
@@ -3785,6 +3812,7 @@ class Sheet(tk.Frame):
             "idisp": idisp,
             "hdisp": hdisp,
             "transpose": transpose,
+            "ndim": ndim,
             "convert": convert,
             "widget": self if widget is None else widget,
         }.items():

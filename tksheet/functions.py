@@ -538,6 +538,7 @@ def span_dict(
     idisp: bool = True,
     hdisp: bool = True,
     transpose: bool = False,
+    ndim: int | None = None,
     convert: object = None,
     widget: object = None,
 ) -> Span:
@@ -557,6 +558,7 @@ def span_dict(
             "idisp": idisp,
             "hdisp": hdisp,
             "transpose": transpose,
+            "ndim": ndim,
             "convert": convert,
             "widget": widget,
         }

@@ -66,19 +66,19 @@ class SpanDict(dict):
         super().__init__(*args, **kwargs)
         # Recursively turn nested dicts into DotDicts
         for key, item in self.items():
-            if key == "data":
+            if key == "data" or key == "value":
                 self["widget"].set_data(self, item)
             elif type(item) is dict:
                 self[key] = DotDict(item)
 
     def __getitem__(self, key: Hashable) -> object:
-        if key == "data":
+        if key == "data" or key == "value":
             return self["widget"].get_data(self)
         else:
             return super().__getitem__(key)
 
     def __setitem__(self, key: Hashable, item: object) -> None:
-        if key == "data":
+        if key == "data" or key == "value":
             self["widget"].set_data(self, item)
         elif type(item) is dict:
             super().__setitem__(key, DotDict(item))
@@ -88,7 +88,7 @@ class SpanDict(dict):
     def options(self, convert: object = None, **kwargs) -> SpanDict:
         if "expand" in kwargs:
             self.expand(kwargs["expand"])
-        for k in ("name", "index", "header", "table", "transpose", "displayed"):
+        for k in ("name", "index", "header", "table", "transpose", "ndim", "displayed"):
             if k in kwargs:
                 self[k] = kwargs[k]
         if (k := "formatter") in kwargs or (k := "format") in kwargs:

@@ -121,6 +121,7 @@ class Span(TypedDict):
     idisp: bool
     hdisp: bool
     transpose: bool
+    ndim: int | None
     convert: object
     widget: object
 
