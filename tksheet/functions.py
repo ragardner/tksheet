@@ -910,7 +910,6 @@ def span_ranges(
     totalrows: int | Callable,
     totalcols: int | Callable,
 ) -> tuple[Generator, Generator]:
-
     rng_from_r = 0 if span.from_r is None else span.from_r
     rng_from_c = 0 if span.from_c is None else span.from_c
 
@@ -927,6 +926,14 @@ def span_ranges(
     return range(rng_from_r, rng_upto_r), range(rng_from_c, rng_upto_c)
 
 
+def span_froms(
+    span: Span,
+) -> tuple[int, int]:
+    from_r = 0 if span.from_r is None else span.from_r
+    from_c = 0 if span.from_c is None else span.from_c
+    return from_r, from_c
+
+
 def del_named_span_options(options: dict, itr: Iterator, type_: str) -> None:
     for k in itr:
         if k in options and type_ in options[k]:
@@ -939,3 +946,7 @@ def del_named_span_options_nested(options: dict, itr1: Iterator, itr2: Iterator,
             k = (k1, k2)
             if k in options and type_ in options[k]:
                 del options[k][type_]
+
+
+def coords_tag_to_int_tuple(s: str) -> tuple[int, int, int, int] | tuple[int, int]:
+    return tuple(map(int, filter(None, s.split("_"))))

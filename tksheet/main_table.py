@@ -3,33 +3,11 @@ from __future__ import annotations
 import csv as csv
 import io
 import tkinter as tk
-from bisect import (
-    bisect_left,
-    bisect_right,
-)
-from collections import (
-    defaultdict,
-    deque,
-)
-from collections.abc import (
-    Callable,
-    Generator,
-    Hashable,
-    Iterator,
-    Sequence,
-)
-from itertools import (
-    accumulate,
-    chain,
-    cycle,
-    islice,
-    product,
-    repeat,
-)
-from math import (
-    ceil,
-    floor,
-)
+from bisect import bisect_left, bisect_right
+from collections import defaultdict, deque
+from collections.abc import Callable, Generator, Hashable, Iterator, Sequence
+from itertools import accumulate, chain, cycle, islice, product, repeat
+from math import ceil, floor
 from tkinter import TclError
 
 from .formatters import (
@@ -42,6 +20,7 @@ from .formatters import (
 )
 from .functions import (
     consecutive_chunks,
+    coords_tag_to_int_tuple,
     decompress_load,
     diff_gen,
     diff_list,
@@ -56,24 +35,11 @@ from .functions import (
     len_to_idx,
     move_elements_by_mapping,
     pickle_obj,
-    unpickle_obj,
     try_binding,
+    unpickle_obj,
 )
-from .other_classes import (
-    CurrentlySelectedClass,
-    DrawnItem,
-    TextCfg,
-    TextEditor,
-)
-from .vars import (
-    USER_OS,
-    Color_Map,
-    arrowkey_bindings_helper,
-    ctrl_key,
-    rc_binding,
-    symbols_set,
-    val_modifying_options,
-)
+from .other_classes import CurrentlySelectedClass, DrawnItem, TextCfg, TextEditor
+from .vars import USER_OS, Color_Map, arrowkey_bindings_helper, ctrl_key, rc_binding, symbols_set, val_modifying_options
 
 
 class MainTable(tk.Canvas):
@@ -527,12 +493,12 @@ class MainTable(tk.Canvas):
             maxrows = curr_box[2] - curr_box[0]
             for item in self.get_selection_items(rows=False, current=False):
                 tags = self.gettags(item)
-                box = tuple(int(e) for e in tags[1].split("_") if e)
+                box = coords_tag_to_int_tuple(tags[1])
                 if maxrows >= box[2] - box[0]:
                     boxes[box] = tags[0]
         else:
             for item in self.get_selection_items(columns=False, cells=False, current=False):
-                boxes[tuple(int(e) for e in self.gettags(item)[1].split("_") if e)] = "rows"
+                boxes[coords_tag_to_int_tuple(self.gettags(item)[1])] = "rows"
         return boxes, maxrows
 
     def io_csv_writer(self) -> tuple[io.StringIO, csv.writer]:
@@ -638,7 +604,7 @@ class MainTable(tk.Canvas):
 
     def get_box_containing_current(self) -> tuple[int, int, int, int]:
         item = self.get_selection_items(cells=False, rows=False, columns=False)[-1]
-        return tuple(int(e) for e in self.gettags(item)[1].split("_") if e)
+        return coords_tag_to_int_tuple(self.gettags(item)[1])
 
     def ctrl_v(self, event=None) -> None:
         if not self.expand_sheet_if_paste_too_big and (len(self.col_positions) == 1 or len(self.row_positions) == 1):
@@ -745,14 +711,9 @@ class MainTable(tk.Canvas):
         event_data["selection_boxes"] = boxes
         if not try_binding(self.extra_begin_ctrl_v_func, event_data, "begin_ctrl_v"):
             return
-        for ndr, r in enumerate(range(selected_r, selected_r + numrows)):
-            for ndc, c in enumerate(range(selected_c, selected_c + numcols)):
-                self.event_data_set_cell(
-                    datarn=self.datarn(r),
-                    datacn=self.datacn(c),
-                    value=data[ndr][ndc],
-                    event_data=event_data,
-                )
+        event_data = self.event_data_set_data(
+            range(selected_r, selected_r + numrows), range(selected_c, selected_c + numcols), data, event_data
+        )
         self.deselect("all", redraw=False)
         if event_data["cells"]["table"] or event_data["added"]["rows"] or event_data["added"]["columns"]:
             self.undo_stack.append(ev_stack_dict(event_data))
@@ -799,6 +760,23 @@ class MainTable(tk.Canvas):
         try_binding(self.extra_end_delete_key_func, event_data, "end_delete")
         self.refresh()
         self.sheet_modified(event_data)
+
+    def event_data_set_data(
+        self,
+        row_range: Generator[int, ...],
+        col_range: Generator[int, ...],
+        data: list[list[object, ...]],
+        event_data: dict,
+    ) -> dict:
+        for ndr, r in enumerate(row_range):
+            for ndc, c in enumerate(col_range):
+                event_data = self.event_data_set_cell(
+                    datarn=self.datarn(r),
+                    datacn=self.datacn(c),
+                    value=data[ndr][ndc],
+                    event_data=event_data,
+                )
+        return event_data
 
     def event_data_clear_cell(self, datarn: int, datacn: int, event_data: dict) -> dict:
         val = self.get_value_for_empty_cell(datarn, datacn)
@@ -900,7 +878,7 @@ class MainTable(tk.Canvas):
                     data_new_idxs,
                     data_old_idxs,
                 )
-                for rn, r in enumerate(self.data)
+                for r in self.data
             ]
             maxidx = len_to_idx(totalcols)
             self.CH.fix_header(maxidx)
@@ -1026,6 +1004,13 @@ class MainTable(tk.Canvas):
             if maxidx < (maxk := max(d, default=0)):
                 maxidx = maxk
         # max column number in named spans
+        if maxidx < (
+            maxk := max(
+                (d["from_c"] for d in self.named_spans.values() if isinstance(d["from_c"], int)),
+                default=0,
+            )
+        ):
+            maxidx = maxk
         if maxidx < (
             maxk := max(
                 (d["upto_c"] for d in self.named_spans.values() if isinstance(d["upto_c"], int)),
@@ -1242,6 +1227,13 @@ class MainTable(tk.Canvas):
             if maxidx < (maxk := max(d, default=0)):
                 maxidx = maxk
         # max row number in named spans
+        if maxidx < (
+            maxk := max(
+                (d["from_r"] for d in self.named_spans.values() if isinstance(d["from_r"], int)),
+                default=0,
+            )
+        ):
+            maxidx = maxk
         if maxidx < (
             maxk := max(
                 (d["upto_r"] for d in self.named_spans.values() if isinstance(d["upto_r"], int)),
@@ -1724,14 +1716,14 @@ class MainTable(tk.Canvas):
         if r == "all" or (r is None and c is None and cell is None):
             for item in self.get_selection_items(current=False):
                 tags = self.gettags(item)
-                deleted_boxes[tuple(int(e) for e in tags[1].split("_") if e)] = tags[0]
+                deleted_boxes[coords_tag_to_int_tuple(tags[1])] = tags[0]
                 self.delete_item(item)
         elif r in ("allrows", "allcols"):
             for item in self.get_selection_items(
                 columns=r == "allcols", rows=r == "allrows", cells=False, current=False
             ):
                 tags = self.gettags(item)
-                r1, c1, r2, c2 = tuple(int(e) for e in tags[1].split("_") if e)
+                r1, c1, r2, c2 = coords_tag_to_int_tuple(tags[1])
                 deleted_boxes[(r1, c1, r2, c2)] = tags[0]
                 self.delete_item(item)
                 if current[2] == tags[2]:
@@ -1739,7 +1731,7 @@ class MainTable(tk.Canvas):
         elif r is not None and c is None and cell is None:
             for item in self.get_selection_items(columns=False, cells=False, current=False):
                 tags = self.gettags(item)
-                r1, c1, r2, c2 = tuple(int(e) for e in tags[1].split("_") if e)
+                r1, c1, r2, c2 = coords_tag_to_int_tuple(tags[1])
                 if r >= r1 and r < r2:
                     deleted_boxes[(r1, c1, r2, c2)] = tags[0]
                     self.delete_item(item)
@@ -1785,7 +1777,7 @@ class MainTable(tk.Canvas):
         elif c is not None and r is None and cell is None:
             for item in self.get_selection_items(rows=False, cells=False, current=False):
                 tags = self.gettags(item)
-                r1, c1, r2, c2 = tuple(int(e) for e in tags[1].split("_") if e)
+                r1, c1, r2, c2 = coords_tag_to_int_tuple(tags[1])
                 if c >= c1 and c < c2:
                     deleted_boxes[(r1, c1, r2, c2)] = tags[0]
                     self.delete_item(item)
@@ -1833,7 +1825,7 @@ class MainTable(tk.Canvas):
                 r, c = cell[0], cell[1]
             for item in self.get_selection_items(current=False, reverse=True):
                 tags = self.gettags(item)
-                r1, c1, r2, c2 = tuple(int(e) for e in tags[1].split("_") if e)
+                r1, c1, r2, c2 = coords_tag_to_int_tuple(tags[1])
                 if r >= r1 and c >= c1 and r < r2 and c < c2:
                     deleted_boxes[(r1, c1, r2, c2)] = tags[0]
                     self.delete_item(item)
@@ -3781,7 +3773,7 @@ class MainTable(tk.Canvas):
         else:
             cws = self.get_column_widths()
             cws[idx : idx + num] = []
-            self.set_col_positions(itr=(width for width in cws))
+            self.set_col_positions(itr=cws)
 
     def del_row_positions(self, idx: int, numrows: int = 1, deselect_all: bool = False):
         if deselect_all:
@@ -3789,15 +3781,9 @@ class MainTable(tk.Canvas):
         if idx == "end" or len(self.row_positions) <= idx + 1:
             del self.row_positions[-1]
         else:
-            rhs = [
-                int(b - a)
-                for a, b in zip(
-                    self.row_positions,
-                    islice(self.row_positions, 1, len(self.row_positions)),
-                )
-            ]
+            rhs = self.get_row_heights()
             rhs[idx : idx + numrows] = []
-            self.row_positions = list(accumulate(chain([0], (height for height in rhs))))
+            self.set_row_positions(itr=rhs)
 
     def insert_col_position(
         self,
@@ -4779,9 +4765,9 @@ class MainTable(tk.Canvas):
             ):
                 colpos = int(self.default_column_width)
                 if self.all_columns_displayed:
-                    self.set_col_positions(itr=(colpos for c in range(len(self._headers))))
+                    self.set_col_positions(itr=repeat(colpos, len(self._headers)))
                 else:
-                    self.set_col_positions(itr=(colpos for c in range(len(self.displayed_columns))))
+                    self.set_col_positions(itr=repeat(colpos, len(self.displayed_columns)))
             if redraw:
                 self.refresh()
         else:
@@ -4828,10 +4814,9 @@ class MainTable(tk.Canvas):
             ):
                 rowpos = self.default_row_height[1]
                 if self.all_rows_displayed:
-                    self.row_positions = list(accumulate(chain([0], (rowpos for r in range(len(self._row_index))))))
+                    self.set_row_positions(itr=repeat(rowpos, len(self._row_index)))
                 else:
-                    self.row_positions = list(accumulate(chain([0], (rowpos for r in range(len(self.displayed_rows))))))
-
+                    self.set_row_positions(itr=repeat(rowpos, len(self.displayed_rows)))
             if redraw:
                 self.refresh()
         else:
@@ -5762,11 +5747,12 @@ class MainTable(tk.Canvas):
             reverse=reverse,
         )
 
+
     def get_boxes(self) -> dict:
         boxes = {}
         for item in self.get_selection_items(current=False):
             tags = self.gettags(item)
-            boxes[tuple(int(e) for e in tags[1].split("_") if e)] = tags[0]
+            boxes[coords_tag_to_int_tuple(tags[1])] = tags[0]
         return boxes
 
     def reselect_from_get_boxes(
@@ -5789,7 +5775,7 @@ class MainTable(tk.Canvas):
         if get_item:
             return items[-1]
         tags = self.gettags(items[-1])
-        r, c = tuple(int(e) for e in tags[3].split("_") if e)
+        r, c = coords_tag_to_int_tuple(tags[3])
         # remove "s" from end
         type_ = tags[4].split("_")[1][:-1]
         return CurrentlySelectedClass(r, c, type_, tags)
@@ -5805,23 +5791,23 @@ class MainTable(tk.Canvas):
         # _________
         # "selected" tags have the most information about the box
         if "tags" in kwargs and kwargs["tags"]:
-            r_, c_ = tuple(int(e) for e in kwargs["tags"][3].split("_") if e)
+            r_, c_ = coords_tag_to_int_tuple(kwargs["tags"][3])
             if r is None:
                 r = r_
             if c is None:
                 c = c_
             if "item" in kwargs:
                 self.set_currently_selected(
-                    r=r, c=c, item=kwargs["item"], box=tuple(int(e) for e in kwargs["tags"][1].split("_") if e)
+                    r=r, c=c, item=kwargs["item"], box=coords_tag_to_int_tuple(kwargs["tags"][1])
                 )
             else:
-                self.set_currently_selected(r=r, c=c, box=tuple(int(e) for e in kwargs["tags"][1].split("_") if e))
+                self.set_currently_selected(r=r, c=c, box=coords_tag_to_int_tuple(kwargs["tags"][1]))
             return
         # place at item if r and c are in bounds
         if "item" in kwargs:
             tags = self.gettags(self.to_item_int(kwargs["item"]))
             if tags:
-                r1, c1, r2, c2 = tuple(int(e) for e in tags[1].split("_") if e)
+                r1, c1, r2, c2 = coords_tag_to_int_tuple(tags[1])
                 if r is None:
                     r = r1
                 if c is None:
@@ -5841,7 +5827,7 @@ class MainTable(tk.Canvas):
                 c = kwargs["box"][1]
             for item in self.get_selection_items(current=False):
                 tags = self.gettags(item)
-                r1, c1, r2, c2 = tuple(int(e) for e in tags[1].split("_") if e)
+                r1, c1, r2, c2 = coords_tag_to_int_tuple(tags[1])
                 if kwargs["box"] == (r1, c1, r2, c2) and r1 <= r and c1 <= c and r2 > r and c2 > c:
                     self.create_currently_selected_box(
                         r,
@@ -5854,7 +5840,7 @@ class MainTable(tk.Canvas):
         if r is not None and c is not None:
             for item in self.get_selection_items(current=False):
                 tags = self.gettags(item)
-                r1, c1, r2, c2 = tuple(int(e) for e in tags[1].split("_") if e)
+                r1, c1, r2, c2 = coords_tag_to_int_tuple(tags[1])
                 if r1 <= r and c1 <= c and r2 > r and c2 > c:
                     self.create_currently_selected_box(
                         r,
@@ -5891,14 +5877,14 @@ class MainTable(tk.Canvas):
         if tags:
             if get_dict:
                 if tags[0] == "selected":
-                    return {tuple(int(e) for e in tags[1].split("_") if e): tags[4].split("_")[1]}
+                    return {coords_tag_to_int_tuple(tags[1]): tags[4].split("_")[1]}
                 else:
-                    return {tuple(int(e) for e in tags[1].split("_") if e): tags[0]}
+                    return {coords_tag_to_int_tuple(tags[1]): tags[0]}
             else:
                 if tags[0] == "selected":
-                    return tuple(int(e) for e in tags[1].split("_") if e) + (tags[4].split("_")[1],)
+                    return coords_tag_to_int_tuple(tags[1]) + (tags[4].split("_")[1],)
                 else:
-                    return tuple(int(e) for e in tags[1].split("_") if e) + (tags[0],)
+                    return coords_tag_to_int_tuple(tags[1]) + (tags[0],)
         return tuple()
 
     def get_selected_box_bg_fg(self, type_: str) -> tuple:
@@ -6193,7 +6179,7 @@ class MainTable(tk.Canvas):
             return
         for item in self.get_selection_items(current=False):
             tags = self.gettags(item)
-            r1, c1, r2, c2 = tuple(int(e) for e in tags[1].split("_") if e)
+            r1, c1, r2, c2 = coords_tag_to_int_tuple(tags[1])
             if r1 >= len(self.row_positions) - 1 or c1 >= len(self.col_positions) - 1:
                 self.delete_item(item)
                 continue
@@ -6220,7 +6206,7 @@ class MainTable(tk.Canvas):
         d = defaultdict(list)
         for item in self.get_selection_items(current=False):
             tags = self.gettags(item)
-            d[tags[0]].append(tuple(int(e) for e in tags[1].split("_") if e))
+            d[tags[0]].append(coords_tag_to_int_tuple(tags[1]))
         d2 = {}
         if "cells" in d:
             d2["cells"] = {
@@ -6242,7 +6228,7 @@ class MainTable(tk.Canvas):
         max_x = 0
         max_y = 0
         for item in self.get_selection_items():
-            r1, c1, r2, c2 = tuple(int(e) for e in self.gettags(item)[1].split("_") if e)
+            r1, c1, r2, c2 = coords_tag_to_int_tuple(self.gettags(item)[1])
             if r1 < min_y:
                 min_y = r1
             if c1 < min_x:
@@ -6268,13 +6254,13 @@ class MainTable(tk.Canvas):
         if get_cells:
             if within_range is None:
                 for item in self.get_selection_items(cells=False, columns=False, current=False):
-                    r1, c1, r2, c2 = tuple(int(e) for e in self.gettags(item)[1].split("_") if e)
+                    r1, c1, r2, c2 = coords_tag_to_int_tuple(self.gettags(item)[1])
                     s.update(set(product(range(r1, r2), range(0, len(self.col_positions) - 1))))
                 if get_cells_as_rows:
                     s.update(self.get_selected_cells())
             else:
                 for item in self.get_selection_items(cells=False, columns=False, current=False):
-                    r1, c1, r2, c2 = tuple(int(e) for e in self.gettags(item)[1].split("_") if e)
+                    r1, c1, r2, c2 = coords_tag_to_int_tuple(self.gettags(item)[1])
                     if r1 >= within_r1 or r2 <= within_r2:
                         s.update(
                             set(
@@ -6298,13 +6284,13 @@ class MainTable(tk.Canvas):
         else:
             if within_range is None:
                 for item in self.get_selection_items(cells=False, columns=False, current=False):
-                    r1, c1, r2, c2 = tuple(int(e) for e in self.gettags(item)[1].split("_") if e)
+                    r1, c1, r2, c2 = coords_tag_to_int_tuple(self.gettags(item)[1])
                     s.update(set(range(r1, r2)))
                 if get_cells_as_rows:
                     s.update(set(tup[0] for tup in self.get_selected_cells()))
             else:
                 for item in self.get_selection_items(cells=False, columns=False, current=False):
-                    r1, c1, r2, c2 = tuple(int(e) for e in self.gettags(item)[1].split("_") if e)
+                    r1, c1, r2, c2 = coords_tag_to_int_tuple(self.gettags(item)[1])
                     if r1 >= within_r1 or r2 <= within_r2:
                         s.update(set(range(r1 if r1 > within_r1 else within_r1, r2 if r2 < within_r2 else within_r2)))
                 if get_cells_as_rows:
@@ -6336,13 +6322,13 @@ class MainTable(tk.Canvas):
         if get_cells:
             if within_range is None:
                 for item in self.get_selection_items(cells=False, rows=False, current=False):
-                    r1, c1, r2, c2 = tuple(int(e) for e in self.gettags(item)[1].split("_") if e)
+                    r1, c1, r2, c2 = coords_tag_to_int_tuple(self.gettags(item)[1])
                     s.update(set(product(range(c1, c2), range(0, len(self.row_positions) - 1))))
                 if get_cells_as_cols:
                     s.update(self.get_selected_cells())
             else:
                 for item in self.get_selection_items(cells=False, rows=False, current=False):
-                    r1, c1, r2, c2 = tuple(int(e) for e in self.gettags(item)[1].split("_") if e)
+                    r1, c1, r2, c2 = coords_tag_to_int_tuple(self.gettags(item)[1])
                     if c1 >= within_c1 or c2 <= within_c2:
                         s.update(
                             set(
@@ -6366,13 +6352,13 @@ class MainTable(tk.Canvas):
         else:
             if within_range is None:
                 for item in self.get_selection_items(cells=False, rows=False, current=False):
-                    r1, c1, r2, c2 = tuple(int(e) for e in self.gettags(item)[1].split("_") if e)
+                    r1, c1, r2, c2 = coords_tag_to_int_tuple(self.gettags(item)[1])
                     s.update(set(range(c1, c2)))
                 if get_cells_as_cols:
                     s.update(set(tup[1] for tup in self.get_selected_cells()))
             else:
                 for item in self.get_selection_items(cells=False, rows=False, current=False):
-                    r1, c1, r2, c2 = tuple(int(e) for e in self.gettags(item)[1].split("_") if e)
+                    r1, c1, r2, c2 = coords_tag_to_int_tuple(self.gettags(item)[1])
                     if c1 >= within_c1 or c2 <= within_c2:
                         s.update(set(range(c1 if c1 > within_c1 else within_c1, c2 if c2 < within_c2 else within_c2)))
                 if get_cells_as_cols:
@@ -6405,11 +6391,11 @@ class MainTable(tk.Canvas):
             within_c2 = within_range[3]
         if within_range is None:
             for item in self.get_selection_items(rows=get_rows, columns=get_cols, current=False):
-                r1, c1, r2, c2 = tuple(int(e) for e in self.gettags(item)[1].split("_") if e)
+                r1, c1, r2, c2 = coords_tag_to_int_tuple(self.gettags(item)[1])
                 s.update(set(product(range(r1, r2), range(c1, c2))))
         else:
             for item in self.get_selection_items(rows=get_rows, columns=get_cols, current=False):
-                r1, c1, r2, c2 = tuple(int(e) for e in self.gettags(item)[1].split("_") if e)
+                r1, c1, r2, c2 = coords_tag_to_int_tuple(self.gettags(item)[1])
                 if r1 >= within_r1 or c1 >= within_c1 or r2 <= within_r2 or c2 <= within_c2:
                     s.update(
                         set(
@@ -6423,7 +6409,7 @@ class MainTable(tk.Canvas):
 
     def get_all_selection_boxes(self) -> tuple[tuple[int, int, int, int]]:
         return tuple(
-            tuple(int(e) for e in self.gettags(item)[1].split("_") if e)
+            coords_tag_to_int_tuple(self.gettags(item)[1])
             for item in self.get_selection_items(current=False)
         )
 
@@ -6431,7 +6417,7 @@ class MainTable(tk.Canvas):
         boxes = []
         for item in self.get_selection_items(current=False):
             tags = self.gettags(item)
-            boxes.append((tuple(int(e) for e in tags[1].split("_") if e), tags[0]))
+            boxes.append((coords_tag_to_int_tuple(tags[1]), tags[0]))
         return boxes
 
     def all_selected(self) -> bool:
@@ -6452,7 +6438,7 @@ class MainTable(tk.Canvas):
         if not isinstance(r, int) or not isinstance(c, int):
             return False
         for item in self.get_selection_items(rows=inc_rows, columns=inc_cols, current=False):
-            r1, c1, r2, c2 = tuple(int(e) for e in self.gettags(item)[1].split("_") if e)
+            r1, c1, r2, c2 = coords_tag_to_int_tuple(self.gettags(item)[1])
             if r1 <= r and c1 <= c and r2 > r and c2 > c:
                 return True
         return False
@@ -6461,7 +6447,7 @@ class MainTable(tk.Canvas):
         if not isinstance(c, int):
             return False
         for item in self.get_selection_items(cells=False, rows=False, current=False):
-            r1, c1, r2, c2 = tuple(int(e) for e in self.gettags(item)[1].split("_") if e)
+            r1, c1, r2, c2 = coords_tag_to_int_tuple(self.gettags(item)[1])
             if c1 <= c and c2 > c:
                 return True
         return False
@@ -6470,7 +6456,7 @@ class MainTable(tk.Canvas):
         if not isinstance(r, int):
             return False
         for item in self.get_selection_items(cells=False, columns=False, current=False):
-            r1, c1, r2, c2 = tuple(int(e) for e in self.gettags(item)[1].split("_") if e)
+            r1, c1, r2, c2 = coords_tag_to_int_tuple(self.gettags(item)[1])
             if r1 <= r and r2 > r:
                 return True
         return False

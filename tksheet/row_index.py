@@ -17,14 +17,15 @@ from .formatters import (
     try_to_bool,
 )
 from .functions import (
-    try_binding,
     consecutive_chunks,
+    coords_tag_to_int_tuple,
     ev_stack_dict,
     event_dict,
     get_checkbox_points,
     get_n2a,
     is_contiguous,
     num2alpha,
+    try_binding,
 )
 from .other_classes import (
     DraggedRowColumn,
@@ -667,7 +668,13 @@ class RowIndex(tk.Canvas):
             self.MT.main_table_redraw_grid_and_text(redraw_row_index=True)
         return self.MT.row_positions[self.MT.identify_row(y=y)]
 
-    def show_drag_and_drop_indicators(self, ypos, x1, x2, rows,):
+    def show_drag_and_drop_indicators(
+        self,
+        ypos,
+        x1,
+        x2,
+        rows,
+    ):
         self.delete_all_resize_and_ctrl_lines()
         self.create_resize_line(
             0,
@@ -1611,7 +1618,7 @@ class RowIndex(tk.Canvas):
         for item in chain(self.find_withtag("cells"), self.find_withtag("rows")):
             tags = self.gettags(item)
             if tags:
-                d[tags[0]].append(tuple(int(e) for e in tags[1].split("_") if e))
+                d[tags[0]].append(coords_tag_to_int_tuple(tags[1]))
         d2 = {}
         if "cells" in d:
             d2["cells"] = {r for r in range(startr, endr) for r1, c1, r2, c2 in d["cells"] if r1 <= r and r2 > r}

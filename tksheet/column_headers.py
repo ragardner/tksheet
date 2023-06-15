@@ -2,41 +2,22 @@ from __future__ import annotations
 
 import tkinter as tk
 from collections import defaultdict
-from itertools import (
-    chain,
-    cycle,
-    islice,
-)
-from math import (
-    ceil,
-    floor,
-)
+from itertools import chain, cycle, islice
+from math import ceil, floor
 
-from .formatters import (
-    is_bool_like,
-    try_to_bool,
-)
+from .formatters import is_bool_like, try_to_bool
 from .functions import (
-    try_binding,
     consecutive_chunks,
+    coords_tag_to_int_tuple,
     ev_stack_dict,
     event_dict,
     get_checkbox_points,
     get_n2a,
     is_contiguous,
+    try_binding,
 )
-from .other_classes import (
-    DraggedRowColumn,
-    DrawnItem,
-    TextCfg,
-    TextEditor,
-)
-from .vars import (
-    USER_OS,
-    Color_Map,
-    rc_binding,
-    symbols_set,
-)
+from .other_classes import DraggedRowColumn, DrawnItem, TextCfg, TextEditor
+from .vars import USER_OS, Color_Map, rc_binding, symbols_set
 
 
 class ColumnHeaders(tk.Canvas):
@@ -1665,7 +1646,7 @@ class ColumnHeaders(tk.Canvas):
         for item in chain(self.find_withtag("cells"), self.find_withtag("columns")):
             tags = self.gettags(item)
             if tags:
-                d[tags[0]].append(tuple(int(e) for e in tags[1].split("_") if e))
+                d[tags[0]].append(coords_tag_to_int_tuple(tags[1]))
         d2 = {}
         if "cells" in d:
             d2["cells"] = {c for c in range(startc, endc) for r1, c1, r2, c2 in d["cells"] if c1 <= c and c2 > c}

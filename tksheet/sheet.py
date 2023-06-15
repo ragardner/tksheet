@@ -9,6 +9,7 @@ from collections.abc import (
     Iterator,
     Sequence,
 )
+from functools import partial
 from itertools import accumulate, chain, islice
 from tkinter import ttk
 
@@ -26,9 +27,10 @@ from .functions import (
     get_dropdown_kwargs,
     is_iterable,
     key_to_span,
-    span_dict,
-    span_ranges,
     num2alpha,
+    span_dict,
+    span_froms,
+    span_ranges,
     tksheet_type_error,
 )
 from .main_table import MainTable
@@ -3061,7 +3063,13 @@ class Sheet(tk.Frame):
             return span.convert(res)
         return res
 
-    def set_data(self, key: str | int | slice | Span, data: object) -> None:
+    def set_data(
+        self,
+        key: str | int | slice | Span,
+        data: object,
+        undo: bool | None = None,
+        redraw: bool = True,
+    ) -> None:
         span = self.span_from_key(key)
         rows, cols = self.ranges_from_span(span)
         """
@@ -3072,9 +3080,9 @@ class Sheet(tk.Frame):
         can't use slices must use a cell
         just uses the from_r, from_c values
 
-        expands sheet if required
+        expands sheet if required but cannot
+        undo expansion for performance reasons
 
-        must deal with
         transpose
         - switches range orientation
         - a single list will go to row without transpose
@@ -3093,13 +3101,108 @@ class Sheet(tk.Frame):
           for end user they can undo/redo the change
 
         """
+        startr, startc = span_froms(span)
         index = span.index
         header = span.header
-        if span.transpose:
-            ...
-
-        elif not span.transpose:
-            ...
+        transpose = span.transpose
+        maxr = startr
+        maxc = startc
+        event_data = event_dict(
+            name="edit_table",
+            sheet=self.name,
+            selected=self.MT.currently_selected(),
+        )
+        quick_set = self.MT.event_data_set_cell
+        indexslice = partial(islice, start=1 if index else 0, stop=None, step=1)
+        headerslice = partial(islice, start=1 if header else 0, stop=None, step=1)
+        # data is list
+        if isinstance(data, (list, tuple)):
+            if not data:
+                return
+            # data is list of lists
+            if isinstance(data[0], (list, tuple)):
+                if transpose:
+                    """
+                    - sublists are columns
+                        1  2  3
+                    A [[1, 2, 3],
+                    B  [1, 2, 3],
+                    C  [1, 2, 3],]
+                    """
+                    # if header
+                    # first value in sublist is header
+                    # if index
+                    # first row is index
+                    # if both
+                    # top left value is bogus
+                    if index:
+                        if header:
+                            ...
+                        else:
+                            ...
+                    else:
+                        ...
+                    if header:
+                        if index:
+                            ...
+                        else:
+                            ...
+                    else:
+                        ...
+                    for c, sl in enumerate(indexslice(data), start=startc):
+                        maxc = c
+                        for r, e in enumerate(headerslice(sl), start=startr):
+                            event_data = quick_set(r, c, e, event_data)
+                            maxr = r
+                else:
+                    """
+                    - sublists are rows
+                        A  B  C
+                    1 [[1, 1, 1],
+                    2  [2, 2, 2],
+                    3  [3, 3, 3],]
+                    """
+                    for r, e in enumerate(sl, start=startr):
+                        maxr = r
+                        for c, sl in enumerate(data, start=startc):
+                            maxc = c
+                            event_data = quick_set(r, c, e, event_data)
+            # data is list of values
+            else:
+                if transpose:
+                    """
+                    - single list is column
+                        1  2  3
+                    A  [1, 2, 3]
+                    """
+                    for r, e in enumerate(data, start=startr):
+                        maxr = r
+                        event_data = quick_set(r, startc, e, event_data)
+                else:
+                    """
+                    - single list is row
+                        A  B  C
+                    1  [1, 1, 1]
+                    """
+                    for c, e in enumerate(data, start=startc):
+                        maxc = c
+                        event_data = quick_set(startr, c, e, event_data)
+        # data is a value
+        else:
+            """
+                A
+            1   "value"
+            """
+            event_data = quick_set(startr, startc, data, event_data)
+        if event_data["cells"]["table"] and (undo is True or (undo is None and span.undo)):
+            self.MT.undo_stack.append(ev_stack_dict(event_data))
+        # add to sheet rows/cols if required but user cannot undo added rows/cols, only values
+        if self.MT.all_columns_displayed and maxc >= (ncols := len(self.MT.col_positions) - 1):
+            self.MT.insert_col_positions(widths=maxc + 1 - ncols)
+        if self.MT.all_rows_displayed and maxr >= (nrows := len(self.MT.row_positions) - 1):
+            self.MT.insert_row_positions(heights=maxr + 1 - nrows)
+        self.set_refresh_timer(redraw)
+        return event_data
 
     def clear(
         self,
@@ -3118,7 +3221,7 @@ class Sheet(tk.Frame):
         for r in rows:
             for c in cols:
                 event_data = quick_clear(r, c, event_data)
-        if undo is True or (undo is None and span.undo):
+        if event_data["cells"]["table"] and (undo is True or (undo is None and span.undo)):
             self.MT.undo_stack.append(ev_stack_dict(event_data))
         self.set_refresh_timer(redraw)
         return event_data
