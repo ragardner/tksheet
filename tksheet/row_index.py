@@ -1962,8 +1962,8 @@ class RowIndex(tk.Canvas):
             else:
                 self.MT._row_index[datarn] = value
 
-    def input_valid_for_cell(self, datarn, value):
-        if self.get_cell_kwargs(datarn, key="readonly"):
+    def input_valid_for_cell(self, datarn: int, value: object, check_readonly: bool = True) -> bool:
+        if check_readonly and self.get_cell_kwargs(datarn, key="readonly"):
             return False
         if self.get_cell_kwargs(datarn, key="checkbox"):
             return is_bool_like(value)

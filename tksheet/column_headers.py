@@ -2001,8 +2001,8 @@ class ColumnHeaders(tk.Canvas):
             else:
                 self.MT._headers[datacn] = value
 
-    def input_valid_for_cell(self, datacn, value):
-        if self.get_cell_kwargs(datacn, key="readonly"):
+    def input_valid_for_cell(self, datacn: int, value: object, check_readonly: bool = True) -> bool:
+        if check_readonly and self.get_cell_kwargs(datacn, key="readonly"):
             return False
         if self.get_cell_kwargs(datacn, key="checkbox"):
             return is_bool_like(value)

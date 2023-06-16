@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from platform import system as get_os
 from typing import TYPE_CHECKING
+from collections import namedtuple
 
 from .types import Font
 
@@ -30,18 +31,18 @@ emitted_events: set[str, ...] = {
     "<<SheetModified>>",
     "<<SheetRedrawn>>",
 }
-
+FontTuple = namedtuple("FontTuple", "family size style")
 
 def get_font() -> Font:
-    return ("Calibri", 13 if USER_OS == "darwin" else 11, "normal")
+    return FontTuple("Calibri", 13 if USER_OS == "darwin" else 11, "normal")
 
 
 def get_index_font() -> Font:
-    return ("Calibri", 13 if USER_OS == "darwin" else 11, "normal")
+    return FontTuple("Calibri", 13 if USER_OS == "darwin" else 11, "normal")
 
 
 def get_header_font() -> Font:
-    return ("Calibri", 13 if USER_OS == "darwin" else 11, "normal")
+    return FontTuple("Calibri", 13 if USER_OS == "darwin" else 11, "normal")
 
 
 theme_light_blue: Theme = {

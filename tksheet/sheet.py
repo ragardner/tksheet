@@ -3,13 +3,7 @@ from __future__ import annotations
 import tkinter as tk
 from bisect import bisect_left
 from collections import deque
-from collections.abc import (
-    Callable,
-    Generator,
-    Iterator,
-    Sequence,
-)
-from functools import partial
+from collections.abc import Callable, Generator, Iterator, Sequence
 from itertools import accumulate, chain, islice
 from tkinter import ttk
 
@@ -34,16 +28,11 @@ from .functions import (
     tksheet_type_error,
 )
 from .main_table import MainTable
-from .other_classes import (
-    CurrentlySelectedClass,  # noqa: F401
-    DotDict,
-    GeneratedMouseEvent,
-)
+from .other_classes import CurrentlySelectedClass  # noqa: F401
+from .other_classes import DotDict, GeneratedMouseEvent
 from .row_index import RowIndex
 from .top_left_rectangle import TopLeftRectangle
-from .types import (
-    Span,
-)
+from .types import Span
 from .vars import (
     emitted_events,
     get_font,
@@ -2889,7 +2878,7 @@ class Sheet(tk.Frame):
     ):
         return self.MT.data_reference(newdataref, reset_col_positions, reset_row_positions, redraw)
 
-    def set_header_data(self, value, c=None, redraw: bool = True):
+    def set_header_data(self, value: object, c: int | None | Iterator = None, redraw: bool = True):
         if c is None:
             if not isinstance(value, int) and not is_iterable(value):
                 raise ValueError(("Argument 'value' must be non-string iterable or int, " f"not {type(value)} type."))
@@ -2897,13 +2886,13 @@ class Sheet(tk.Frame):
                 value = list(value)
             self.MT._headers = value
         elif isinstance(c, int):
-            self.MT._headers[c] = value
+            self.CH.set_cell_data(c, value)
         elif is_iterable(value) and is_iterable(c):
             for c_, v in zip(c, value):
-                self.MT._headers[c_] = v
+                self.CH.set_cell_data(c_, v)
         self.set_refresh_timer(redraw)
 
-    def set_index_data(self, value, r=None, redraw: bool = True):
+    def set_index_data(self, value: object, r: int | None | Iterator = None, redraw: bool = True):
         if r is None:
             if not isinstance(value, int) and not is_iterable(value):
                 raise ValueError(("Argument 'value' must be non-string iterable or int, " f"not {type(value)} type."))
@@ -2911,10 +2900,10 @@ class Sheet(tk.Frame):
                 value = list(value)
             self.MT._row_index = value
         elif isinstance(r, int):
-            self.MT._row_index[r] = value
+            self.RI.set_cell_data(r, value)
         elif is_iterable(value) and is_iterable(r):
             for r_, v in zip(r, value):
-                self.MT._row_index[r_] = v
+                self.RI.set_cell_data(r_, v)
         self.set_refresh_timer(redraw)
 
     def __bool__(self) -> bool:
@@ -2942,7 +2931,8 @@ class Sheet(tk.Frame):
 
     @data.setter
     def data(self, value):
-        self.data_reference(value)
+        ...
+        # self.data_reference(value)
 
     def get_data(self, key: Span | str | int | slice) -> object:
         span = self.span_from_key(key)
@@ -2967,7 +2957,7 @@ class Sheet(tk.Frame):
         - does not format the sheets internal data, only data being returned
         - formats the data before retrieval with specified formatter function e.g.
         - format=int_formatter() -> returns kwargs, span["kwargs"] now has formatter kwargs
-        - on every table cell use format_data(value=cell, **span["kwargs"])
+        - uses format_data(value=cell, **span["kwargs"]) on every table cell returned
 
         tranpose
         - make sublists become columns rather than rows
@@ -3058,7 +3048,7 @@ class Sheet(tk.Frame):
             else:
                 res = list(chain.from_iterable(res))
         # if span.ndim == 2 res keeps its current
-        # dimensionsas a list of lists
+        # dimensions as a list of lists
         if span.convert is not None:
             return span.convert(res)
         return res
@@ -3080,8 +3070,37 @@ class Sheet(tk.Frame):
         can't use slices must use a cell
         just uses the from_r, from_c values
 
-        expands sheet if required but cannot
-        undo expansion for performance reasons
+        'data' is a list of lists:
+        - assumes there is table data
+        - option of having either or both
+          header and index data included and
+          setting those at the same time
+
+        'data' is a list of values
+        - assumes there is table data
+        - when transposed there's option of having
+          header data included and setting
+          headers at the same time
+        - when not transposed there's option of
+          having index data included and setting
+          indexes at the same time
+
+        'data' is not a list or tuple
+        - can have all three of the below set at the same time
+          or just one or two:
+            - if span.table then sets table cell
+            - if span.index then sets index cell
+            - if span.header than sets header cell
+
+        expands sheet if required but can only undo any added
+        displayed row/column positions, not expanded MT.data list
+
+        format
+        - if span.type_ == "format" and span.kwargs
+        - does not format the sheets internal data, only data being returned
+        - formats the data before setting with specified formatter function e.g.
+        - format=int_formatter() -> returns kwargs, span["kwargs"] now has formatter kwargs
+        - uses format_data(value=cell, **span["kwargs"]) on every set cell
 
         transpose
         - switches range orientation
@@ -3097,24 +3116,29 @@ class Sheet(tk.Frame):
         - assumes there's an index, sets index cell data as well
 
         undo
-        - if True adds to undo stack which if undo is enabled
+        - if True adds to undo stack and if undo is enabled
           for end user they can undo/redo the change
+
+        in the table comments below -
+        - t stands for table
+        - i stands for index
+        - h stands for header
 
         """
         startr, startc = span_froms(span)
-        index = span.index
-        header = span.header
+        table, index, header = span.table, span.index, span.header
+        fmt_kw = span.kwargs if span.type_ == "format" and span.kwargs else None
         transpose = span.transpose
-        maxr = startr
-        maxc = startc
+        maxr, maxc = startr, startc
         event_data = event_dict(
             name="edit_table",
             sheet=self.name,
             selected=self.MT.currently_selected(),
         )
-        quick_set = self.MT.event_data_set_cell
-        indexslice = partial(islice, start=1 if index else 0, stop=None, step=1)
-        headerslice = partial(islice, start=1 if header else 0, stop=None, step=1)
+        set_t = self.event_data_set_table_cell
+        set_i, set_h = self.event_data_set_index_cell, self.event_data_set_header_cell
+        istart = 1 if index else 0
+        hstart = 1 if header else 0
         # data is list
         if isinstance(data, (list, tuple)):
             if not data:
@@ -3125,83 +3149,159 @@ class Sheet(tk.Frame):
                     """
                     - sublists are columns
                         1  2  3
-                    A [[1, 2, 3],
-                    B  [1, 2, 3],
-                    C  [1, 2, 3],]
+                    A [[-, i, i],
+                    B  [h, t, t],
+                    C  [h, t, t],]
                     """
-                    # if header
-                    # first value in sublist is header
-                    # if index
-                    # first row is index
-                    # if both
-                    # top left value is bogus
                     if index:
-                        if header:
-                            ...
-                        else:
-                            ...
-                    else:
-                        ...
+                        for r, v in enumerate(islice(data[0], hstart, None)):
+                            maxr = r
+                            event_data = set_i(r, v, event_data)
                     if header:
-                        if index:
-                            ...
-                        else:
-                            ...
-                    else:
-                        ...
-                    for c, sl in enumerate(indexslice(data), start=startc):
+                        for c, sl in enumerate(islice(data, istart, None), start=startc):
+                            maxc = c
+                            for v in islice(sl, 0, 1):
+                                event_data = set_h(c, v, event_data)
+                    for c, sl in enumerate(islice(data, istart, None), start=startc):
                         maxc = c
-                        for r, e in enumerate(headerslice(sl), start=startr):
-                            event_data = quick_set(r, c, e, event_data)
+                        for r, v in enumerate(islice(sl, hstart, None), start=startr):
+                            event_data = set_t(r, c, v, event_data, fmt_kw)
                             maxr = r
                 else:
                     """
                     - sublists are rows
                         A  B  C
-                    1 [[1, 1, 1],
-                    2  [2, 2, 2],
-                    3  [3, 3, 3],]
+                    1 [[-, h, h],
+                    2  [i, t, t],
+                    3  [i, t, t],]
                     """
-                    for r, e in enumerate(sl, start=startr):
-                        maxr = r
-                        for c, sl in enumerate(data, start=startc):
+                    if index:
+                        for r, sl in enumerate(islice(data, hstart, None), start=startr):
+                            maxr = r
+                            for v in islice(sl, 0, 1):
+                                event_data = set_i(r, v, event_data)
+                    if header:
+                        for c, v in enumerate(islice(data[0], istart, None)):
                             maxc = c
-                            event_data = quick_set(r, c, e, event_data)
+                            event_data = set_h(c, v, event_data)
+                    for r, sl in enumerate(islice(data, hstart, None), start=startr):
+                        maxr = r
+                        for c, v in enumerate(islice(sl, istart, None), start=startc):
+                            maxc = c
+                            event_data = set_t(r, c, v, event_data, fmt_kw)
             # data is list of values
             else:
                 if transpose:
                     """
-                    - single list is column
+                    - single list is column, span.index ignored
                         1  2  3
-                    A  [1, 2, 3]
+                    A  [h, t, t]
                     """
-                    for r, e in enumerate(data, start=startr):
+                    if header:
+                        event_data = set_h(startc, data[0], event_data)
+                    for r, v in enumerate(islice(data, hstart, None), start=startr):
                         maxr = r
-                        event_data = quick_set(r, startc, e, event_data)
+                        event_data = set_t(r, startc, v, event_data, fmt_kw)
                 else:
                     """
-                    - single list is row
+                    - single list is row, span.header ignored
                         A  B  C
-                    1  [1, 1, 1]
+                    1  [i, t, t]
                     """
-                    for c, e in enumerate(data, start=startc):
+                    if index:
+                        event_data = set_i(startr, data[0], event_data)
+                    for c, v in enumerate(islice(data, istart, None), start=startc):
                         maxc = c
-                        event_data = quick_set(startr, c, e, event_data)
+                        event_data = set_t(startr, c, v, event_data, fmt_kw)
         # data is a value
         else:
             """
-                A
-            1   "value"
+                  A
+            1   t/i/h
             """
-            event_data = quick_set(startr, startc, data, event_data)
-        if event_data["cells"]["table"] and (undo is True or (undo is None and span.undo)):
-            self.MT.undo_stack.append(ev_stack_dict(event_data))
+            if table:
+                event_data = set_t(startr, startc, data, event_data, fmt_kw)
+            if index:
+                event_data = set_i(startr, data, event_data)
+            if header:
+                event_data = set_h(startc, data, event_data)
+
         # add to sheet rows/cols if required but user cannot undo added rows/cols, only values
         if self.MT.all_columns_displayed and maxc >= (ncols := len(self.MT.col_positions) - 1):
-            self.MT.insert_col_positions(widths=maxc + 1 - ncols)
+            event_data = self.MT.add_columns(
+                *self.MT.get_args_for_add_columns(
+                    data_ins_col=len(self.MT.col_positions) - 1,
+                    displayed_ins_col=len(self.MT.col_positions) - 1,
+                    numcols=maxc + 1 - ncols,
+                    columns={},
+                    widths=None,
+                    headers=False,
+                ),
+                event_data=event_data,
+                create_selections=False,
+            )
+            # self.MT.insert_col_positions(widths=maxc + 1 - ncols)
         if self.MT.all_rows_displayed and maxr >= (nrows := len(self.MT.row_positions) - 1):
-            self.MT.insert_row_positions(heights=maxr + 1 - nrows)
+            event_data = self.MT.add_rows(
+                *self.MT.get_args_for_add_rows(
+                    data_ins_row=len(self.MT.row_positions) - 1,
+                    displayed_ins_row=len(self.MT.row_positions) - 1,
+                    numrows=maxr + 1 - nrows,
+                    rows={},
+                    heights=None,
+                    row_index=False,
+                ),
+                event_data=event_data,
+                create_selections=False,
+            )
+            # self.MT.insert_row_positions(heights=maxr + 1 - nrows)
+        if (
+            event_data["cells"]["table"]
+            or event_data["cells"]["index"]
+            or event_data["cells"]["header"]
+            or event_data["added"]["columns"]["column_widths"]
+            or event_data["added"]["rows"]["row_heights"]
+        ) and (undo is True or (undo is None and span.undo)):
+            self.MT.undo_stack.append(ev_stack_dict(event_data))
         self.set_refresh_timer(redraw)
+        return event_data
+
+    def event_data_set_table_cell(
+        self,
+        datarn: int,
+        datacn: int,
+        value: object,
+        event_data: dict,
+        fmt_kw: dict | None = None,
+        check_readonly: bool = False,
+    ) -> dict:
+        if fmt_kw is not None or self.MT.input_valid_for_cell(datarn, datacn, value, check_readonly=check_readonly):
+            event_data["cells"]["table"][(datarn, datacn)] = self.MT.get_cell_data(datarn, datacn)
+            self.MT.set_cell_data(datarn, datacn, value, kwargs=fmt_kw)
+        return event_data
+
+    def event_data_set_index_cell(
+        self,
+        datarn: int,
+        value: object,
+        event_data: dict,
+        check_readonly: bool = False,
+    ) -> dict:
+        if self.RI.input_valid_for_cell(datarn, value, check_readonly=check_readonly):
+            event_data["cells"]["index"][datarn] = self.RI.get_cell_data(datarn)
+            self.RI.set_cell_data(datarn, value)
+        return event_data
+
+    def event_data_set_header_cell(
+        self,
+        datacn: int,
+        value: object,
+        event_data: dict,
+        check_readonly: bool = False,
+    ) -> dict:
+        if self.CH.input_valid_for_cell(datacn, value, check_readonly=check_readonly):
+            event_data["cells"]["header"][datacn] = self.CH.get_cell_data(datacn)
+            self.CH.set_cell_data(datacn, value)
         return event_data
 
     def clear(
@@ -3212,15 +3312,28 @@ class Sheet(tk.Frame):
     ) -> dict:
         span = self.span_from_key(key)
         rows, cols = self.ranges_from_span(span)
-        quick_clear = self.MT.event_data_clear_cell
+        clear_t = self.event_data_set_table_cell
+        clear_i = self.event_data_set_index_cell
+        clear_h = self.event_data_set_header_cell
+        quick_tval = self.MT.get_value_for_empty_cell
+        quick_ival = self.RI.get_value_for_empty_cell
+        quick_hval = self.CH.get_value_for_empty_cell
+        table, index, header = span.index, span.header, span.table
         event_data = event_dict(
             name="edit_table",
             sheet=self.name,
             selected=self.MT.currently_selected(),
         )
-        for r in rows:
+        if index:
+            for r in rows:
+                event_data = clear_i(r, quick_ival(r), event_data)
+        if header:
             for c in cols:
-                event_data = quick_clear(r, c, event_data)
+                event_data = clear_h(c, quick_hval(c), event_data)
+        if table:
+            for r in rows:
+                for c in cols:
+                    event_data = clear_t(r, c, quick_tval(r, c), event_data)
         if event_data["cells"]["table"] and (undo is True or (undo is None and span.undo)):
             self.MT.undo_stack.append(ev_stack_dict(event_data))
         self.set_refresh_timer(redraw)

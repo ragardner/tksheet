@@ -579,7 +579,9 @@ class MainTable(tk.Canvas):
                     for c in range(c1, c2):
                         datacn = self.datacn(c)
                         row.append(self.get_cell_clipboard(datarn, datacn))
-                        event_data = self.event_data_clear_cell(datarn, datacn, event_data)
+                        event_data = self.event_data_set_cell(
+                            datarn, datacn, self.get_value_for_empty_cell(datarn, datacn), event_data
+                        )
                 writer.writerow(row)
         else:
             for r1, c1, r2, c2 in boxes:
@@ -589,7 +591,9 @@ class MainTable(tk.Canvas):
                     for c in range(c1, c2):
                         datacn = self.datacn(c)
                         row.append(self.get_cell_clipboard(datarn, datacn))
-                        event_data = self.event_data_clear_cell(datarn, datacn, event_data)
+                        event_data = self.event_data_set_cell(
+                            datarn, datacn, self.get_value_for_empty_cell(datarn, datacn), event_data
+                        )
                     writer.writerow(row)
         if event_data["cells"]["table"]:
             self.undo_stack.append(ev_stack_dict(event_data))
@@ -754,7 +758,10 @@ class MainTable(tk.Canvas):
         for r1, c1, r2, c2 in boxes:
             for r in range(r1, r2):
                 for c in range(c1, c2):
-                    event_data = self.event_data_clear_cell(self.datarn(r), self.datacn(c), event_data)
+                    datarn, datacn = self.datarn(r), self.datacn(c)
+                    event_data = self.event_data_set_cell(
+                        datarn, datacn, self.get_value_for_empty_cell(datarn, datacn), event_data
+                    )
         if event_data["cells"]["table"]:
             self.undo_stack.append(ev_stack_dict(event_data))
         try_binding(self.extra_end_delete_key_func, event_data, "end_delete")
@@ -776,13 +783,6 @@ class MainTable(tk.Canvas):
                     value=data[ndr][ndc],
                     event_data=event_data,
                 )
-        return event_data
-
-    def event_data_clear_cell(self, datarn: int, datacn: int, event_data: dict) -> dict:
-        val = self.get_value_for_empty_cell(datarn, datacn)
-        if not self.cell_equal_to(datarn, datacn, val):
-            event_data["cells"]["table"][(datarn, datacn)] = self.get_cell_data(datarn, datacn)
-            self.set_cell_data(datarn, datacn, val)
         return event_data
 
     def event_data_set_cell(self, datarn: int, datacn: int, value: object, event_data: dict) -> dict:
@@ -4355,6 +4355,7 @@ class MainTable(tk.Canvas):
         event_data: dict,
         displayed_rows: None | list[int, ...] = None,
         options_to_add: None | dict = None,
+        create_selections: bool = True,
         add_col_positions: bool = True,
     ) -> dict:
         if options_to_add is None:
@@ -4405,16 +4406,17 @@ class MainTable(tk.Canvas):
             rows=tuple(reversed(rows)),
             to_add=options_to_add,
         )
-        self.deselect("all")
-        for chunk in consecutive_chunks(tuple(reversed(row_heights))):
-            self.create_selection_box(
-                chunk[0],
-                0,
-                chunk[-1] + 1,
-                len(self.col_positions) - 1,
-                "rows",
-                run_binding=True,
-            )
+        if create_selections:
+            self.deselect("all")
+            for chunk in consecutive_chunks(tuple(reversed(row_heights))):
+                self.create_selection_box(
+                    chunk[0],
+                    0,
+                    chunk[-1] + 1,
+                    len(self.col_positions) - 1,
+                    "rows",
+                    run_binding=True,
+                )
         event_data["added"]["rows"] = {
             "table": rows,
             "index": index,
@@ -5747,7 +5749,6 @@ class MainTable(tk.Canvas):
             reverse=reverse,
         )
 
-
     def get_boxes(self) -> dict:
         boxes = {}
         for item in self.get_selection_items(current=False):
@@ -6408,10 +6409,7 @@ class MainTable(tk.Canvas):
         return s
 
     def get_all_selection_boxes(self) -> tuple[tuple[int, int, int, int]]:
-        return tuple(
-            coords_tag_to_int_tuple(self.gettags(item)[1])
-            for item in self.get_selection_items(current=False)
-        )
+        return tuple(coords_tag_to_int_tuple(self.gettags(item)[1]) for item in self.get_selection_items(current=False))
 
     def get_all_selection_boxes_with_types(self) -> dict:
         boxes = []
@@ -7415,13 +7413,19 @@ class MainTable(tk.Canvas):
             value = format_data(value=value, **fmt_kw)
         return "" if (value is None and none_to_empty_str) else value
 
-    def input_valid_for_cell(self, datarn: int, datacn: int, value: object) -> bool:
-        if self.get_cell_kwargs(datarn, datacn, key="readonly"):
-            return False
-        if self.cell_equal_to(datarn, datacn, value):
+    def input_valid_for_cell(
+        self,
+        datarn: int,
+        datacn: int,
+        value: object,
+        check_readonly: bool = True,
+    ) -> bool:
+        if check_readonly and self.get_cell_kwargs(datarn, datacn, key="readonly"):
             return False
         if self.get_cell_kwargs(datarn, datacn, key="format"):
             return True
+        if self.cell_equal_to(datarn, datacn, value):
+            return False
         if self.get_cell_kwargs(datarn, datacn, key="checkbox"):
             return is_bool_like(value)
         kwargs = self.get_cell_kwargs(datarn, datacn, key="dropdown")

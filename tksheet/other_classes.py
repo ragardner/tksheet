@@ -107,11 +107,17 @@ class SpanDict(dict):
         ):
             if k in kwargs:
                 self[k] = kwargs[k]
+        if "invert" in kwargs:
+            self["transpose"] = kwargs["invert"]
         if (k := "formatter") in kwargs or (k := "format") in kwargs:
             self["type_"] = "format"
-            self["kwargs"] = kwargs[k]
+            self["kwargs"] = {"formatter": None, **kwargs[k]}
         if convert != self["convert"]:
             self["convert"] = convert
+        return self
+
+    def invert(self, invert: bool = True) -> SpanDict:
+        self["transpose"] = invert
         return self
 
     def expand(self, direction: str = "both") -> SpanDict:

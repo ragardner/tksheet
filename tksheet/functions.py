@@ -599,9 +599,9 @@ def key_to_span(
         [int] - Whole row at that index
         """
         return span_dict(
-            from_r=key - 1,
+            from_r=key,
             from_c=None,
-            upto_r=key,
+            upto_r=key + 1,
             upto_c=None,
             widget=widget,
         )
@@ -629,7 +629,7 @@ def key_to_span(
         [:2] - Rows up to but not including 2
         [2:] - Rows starting from and including 2
         """
-        start = 0 if key.start is None else key.start - 1
+        start = 0 if key.start is None else key.start
         return span_dict(
             from_r=start,
             from_c=None,
