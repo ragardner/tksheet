@@ -7,6 +7,7 @@ from collections.abc import (
     Callable,
     Iterator,
     Generator,
+    Sequence,
 )
 from .types import (
     Span,
@@ -14,9 +15,10 @@ from .types import (
 from .other_classes import (
     DotDict,
     SpanDict,
+    Highlight,
 )
 from functools import partial
-from itertools import islice
+from itertools import islice, repeat
 import re
 
 compress = partial(zlib.compress, level=1)
@@ -80,61 +82,57 @@ def event_dict(
     **kwargs,
 ) -> dict:
     return DotDict(
-        {
-            "eventname": "" if name is None else name,
-            "sheetname": "!sheet" if sheet is None else sheet,
-            "cells": {
-                "table": {} if cells_table is None else cells_table,
-                "header": {} if cells_header is None else cells_header,
-                "index": {} if cells_index is None else cells_index,
-            },
-            "moved": {
-                "rows": {},
-                "columns": {},
-            },
-            "added": {
-                "rows": {},
-                "columns": {},
-            },
-            "deleted": {
-                "rows": {},
-                "columns": {},
-                "header": {},
-                "index": {},
-                "column_widths": {},
-                "row_heights": {},
-                "options": {},
-                "displayed_rows": None,
-                "displayed_columns": None,
-            },
-            "named_spans": {} if named_spans is None else named_spans,
-            "selection_boxes": {} if boxes is None else {boxes[:-1]: boxes[-1]} if isinstance(boxes, tuple) else boxes,
-            "selected": tuple() if selected is None else selected,
-            "being_selected": tuple() if being_selected is None else being_selected,
-            "data": [] if data is None else data,
-            "key": "" if key is None else key,
-            "value": None if value is None else value,
-            "location": tuple() if location is None else location,
-            "resized": {
-                "rows": {} if resized_rows is None else resized_rows,
-                "columns": {} if resized_columns is None else resized_columns,
-                # "header": {} if resized_header is None else resized_header,
-                # "index": {} if resized_index is None else resized_index,
-            },
-        }
+        eventname="" if name is None else name,
+        sheetname="!sheet" if sheet is None else sheet,
+        cells=DotDict(
+            table=DotDict() if cells_table is None else cells_table,
+            header=DotDict() if cells_header is None else cells_header,
+            index=DotDict() if cells_index is None else cells_index,
+        ),
+        moved=DotDict(
+            rows=DotDict(),
+            columns=DotDict(),
+        ),
+        added=DotDict(
+            rows=DotDict(),
+            columns=DotDict(),
+        ),
+        deleted=DotDict(
+            rows=DotDict(),
+            columns=DotDict(),
+            header=DotDict(),
+            index=DotDict(),
+            column_widths=DotDict(),
+            row_heights=DotDict(),
+            options=DotDict(),
+            displayed_rows=None,
+            displayed_columns=None,
+        ),
+        named_spans=DotDict() if named_spans is None else named_spans,
+        selection_boxes=DotDict() if boxes is None else {boxes[:-1]: boxes[-1]} if isinstance(boxes, tuple) else boxes,
+        selected=tuple() if selected is None else selected,
+        being_selected=tuple() if being_selected is None else being_selected,
+        data=[] if data is None else data,
+        key="" if key is None else key,
+        value=None if value is None else value,
+        location=tuple() if location is None else location,
+        resized=DotDict(
+            rows=DotDict() if resized_rows is None else resized_rows,
+            columns=DotDict() if resized_columns is None else resized_columns,
+            # "header": DotDict() if resized_header is None else resized_header,
+            # "index": DotDict() if resized_index is None else resized_index,
+        ),
     )
 
 
 def change_eventname(event_dict: dict, newname: str) -> dict:
-    return {**event_dict, **{"eventname": newname}}
+    return DotDict({**event_dict, **{"eventname": newname}})
 
 
 def ev_stack_dict(d):
     return DotDict(
-        {
-            "name": d["eventname"],
-            "data": pickle_compress(d),
-        }
+        name=d["eventname"],
+        data=pickle_compress(d),
     )
 
 
@@ -485,6 +483,10 @@ def diff_gen(seq: list[float, ...]) -> Generator[int, ...]:
     )
 
 
+def zip_fill_2nd_value(x: Iterator, o: object) -> Generator[object, object]:
+    return zip(x, repeat(o))
+
+
 def str_to_int(s: str) -> int | None:
     if s.startswith(("-", "+")):
         if s[1:].isdigit():
@@ -497,7 +499,6 @@ def str_to_int(s: str) -> int | None:
 
 
 def gen_formatted(
-    self,
     options: dict,
     formatter: object = None,
 ) -> Generator[tuple[int, int], ...] | Generator[int, ...]:
@@ -544,26 +545,24 @@ def span_dict(
     widget: object = None,
 ) -> Span:
     d: Span = SpanDict(
-        {
-            "from_r": from_r,
-            "from_c": from_c,
-            "upto_r": upto_r,
-            "upto_c": upto_c,
-            "type_": "" if type_ is None else type_,
-            "name": "" if name is None else name,
-            "kwargs": {} if kwargs is None else kwargs,
-            "table": table,
-            "header": header,
-            "index": index,
-            "tdisp": tdisp,
-            "idisp": idisp,
-            "hdisp": hdisp,
-            "transpose": transpose,
-            "ndim": ndim,
-            "convert": convert,
-            "undo": undo,
-            "widget": widget,
-        }
+        from_r=from_r,
+        from_c=from_c,
+        upto_r=upto_r,
+        upto_c=upto_c,
+        type_="" if type_ is None else type_,
+        name="" if name is None else name,
+        kwargs={} if kwargs is None else kwargs,
+        table=table,
+        header=header,
+        index=index,
+        tdisp=tdisp,
+        idisp=idisp,
+        hdisp=hdisp,
+        transpose=transpose,
+        ndim=ndim,
+        convert=convert,
+        undo=undo,
+        widget=widget,
     )
     return d
 
@@ -587,72 +586,71 @@ def coords_to_span(
 
 
 def key_to_span(
-    key: str | int | slice,
+    key: str | int | slice | Sequence[int, int] | Sequence[Sequence[int, int], Sequence[int, int]],
     spans: dict[str, Span],
     widget: object = None,
 ) -> Span:
-    if not isinstance(key, (str, int, slice)):
-        return f"Key type must be either str, int or slice, not '{type(key)}'."
-
-    if isinstance(key, int):
-        """
-        [int] - Whole row at that index
-        """
-        return span_dict(
-            from_r=key,
-            from_c=None,
-            upto_r=key + 1,
-            upto_c=None,
-            widget=widget,
-        )
-
-    elif isinstance(key, slice):
-        """
-        [slice]
-        """
-        """
-        [:] - All cells
-        """
-        if key.start is None and key.stop is None:
+    if not isinstance(key, (str, int, slice, Sequence)):
+        return f"Key type must be either str, int, Sequence or slice, not '{type(key)}'."
+    try:
+        if isinstance(key, int):
             """
-            [:]
+            [int] - Whole row at that index
             """
             return span_dict(
-                from_r=0,
-                from_c=0,
-                upto_r=None,
+                from_r=key,
+                from_c=None,
+                upto_r=key + 1,
                 upto_c=None,
                 widget=widget,
             )
-        """
-        [1:3] - Rows 1, 2
-        [:2] - Rows up to but not including 2
-        [2:] - Rows starting from and including 2
-        """
-        start = 0 if key.start is None else key.start
-        return span_dict(
-            from_r=start,
-            from_c=None,
-            upto_r=key.stop,
-            upto_c=None,
-            widget=widget,
-        )
 
-    elif isinstance(key, str):
-        if not key:
-            return f"Key cannot be an empty string."  # noqa: F541
-
-        if key.startswith("<") and key.endswith(">"):
-            if (key := key[1:-1]) in spans:
+        elif isinstance(key, slice):
+            """
+            [slice]
+            """
+            """
+            [:] - All cells
+            """
+            if key.start is None and key.stop is None:
                 """
-                ["<name>"] - Surrounded by "<" ">" cells from a named range
+                [:]
                 """
-                return spans[key]
-            return f"'{key}' not in named spans."
+                return span_dict(
+                    from_r=0,
+                    from_c=0,
+                    upto_r=None,
+                    upto_c=None,
+                    widget=widget,
+                )
+            """
+            [1:3] - Rows 1, 2
+            [:2] - Rows up to but not including 2
+            [2:] - Rows starting from and including 2
+            """
+            start = 0 if key.start is None else key.start
+            return span_dict(
+                from_r=start,
+                from_c=None,
+                upto_r=key.stop,
+                upto_c=None,
+                widget=widget,
+            )
 
-        key = key.upper()
+        elif isinstance(key, str):
+            if not key:
+                return f"Key cannot be an empty string."  # noqa: F541
 
-        try:
+            if key.startswith("<") and key.endswith(">"):
+                if (key := key[1:-1]) in spans:
+                    """
+                    ["<name>"] - Surrounded by "<" ">" cells from a named range
+                    """
+                    return spans[key]
+                return f"'{key}' not in named spans."
+
+            key = key.upper()
+
             if key.isdigit():
                 """
                 ["1"] - Row 0
@@ -836,9 +834,9 @@ def key_to_span(
             if m1start and splitk[1].isalpha():
                 """
                 ["A1:B"] - All the cells starting from (0, 0)
-                           expanding out to include column 1
-                           but not including cells beyond column
-                           1 and expanding down to include all rows
+                        expanding out to include column 1
+                        but not including cells beyond column
+                        1 and expanding down to include all rows
                     A   B   C   D
                 1   x   x
                 2   x   x
@@ -859,10 +857,10 @@ def key_to_span(
             if m1start and splitk[1].isdigit():
                 """
                 ["A1:2"] - All the cells starting from (0, 0)
-                           expanding down to include row 1
-                           but not including cells beyond row
-                           1 and expanding out to include all
-                           columns
+                        expanding down to include row 1
+                        but not including cells beyond row
+                        1 and expanding out to include all
+                        columns
                     A   B   C   D
                 1   x   x   x   x
                 2   x   x   x   x
@@ -880,11 +878,38 @@ def key_to_span(
                     widget=widget,
                 )
 
-        except ValueError as error:
-            return f"Error, '{key}' could not be converted to span: {error}"
+        elif isinstance(key, Sequence):
+            if isinstance(key[0], int):
+                """
+                (int, int) - (row, column) - Specific cell
+                """
+                return span_dict(
+                    from_r=key[0],
+                    from_c=key[1],
+                    upto_r=key[0] + 1,
+                    upto_c=key[1] + 1,
+                    widget=widget,
+                )
 
-        else:
-            return f"'{key}' could not be converted to span."
+            elif isinstance(key[0], Sequence):
+                """
+                ((int, int), (int, int))
+
+                First Sequence is start row and column
+                Second Sequence is up to but not including row and column
+                """
+                return span_dict(
+                    from_r=key[0][0],
+                    from_c=key[0][1],
+                    upto_r=key[1][0],
+                    upto_c=key[1][1],
+                    widget=widget,
+                )
+
+    except ValueError as error:
+        return f"Error, '{key}' could not be converted to span: {error}"
+    else:
+        return f"'{key}' could not be converted to span."
 
 
 def span_is_cell(span: Span) -> bool:
@@ -950,3 +975,75 @@ def del_named_span_options_nested(options: dict, itr1: Iterator, itr2: Iterator,
 
 def coords_tag_to_int_tuple(s: str) -> tuple[int, int, int, int] | tuple[int, int]:
     return tuple(map(int, filter(None, s.split("_"))))
+
+
+def add_highlight(
+    options: dict,
+    key: int | tuple[int, int],
+    bg: bool | None | str = False,
+    fg: bool | None | str = False,
+    end: bool | None = None,
+    overwrite: bool = True,
+) -> dict:
+    if key not in options:
+        options[key] = {}
+    if overwrite or "highlight" not in options[key]:
+        options[key]["highlight"] = Highlight(
+            bg=None if bg is False else bg,
+            fg=None if fg is False else fg,
+            end=False if end is None else end,
+        )
+    else:
+        options[key]["highlight"] = Highlight(
+            bg=options[key]["highlight"].bg if bg is False else bg,
+            fg=options[key]["highlight"].fg if fg is False else fg,
+            end=options[key]["highlight"].end if end is None else end,
+        )
+    return options
+
+
+def set_readonly(
+    options: dict,
+    key: int | tuple[int, int],
+    readonly: bool = True,
+) -> dict:
+    if readonly:
+        if key not in options:
+            options[key] = {}
+        options[key]["readonly"] = True
+    else:
+        if key in options and "readonly" in options[key]:
+            del options[key]["readonly"]
+    return options
+
+
+def set_align(
+    options: dict,
+    key: int | tuple[int, int],
+    align: str | None = None,
+) -> dict:
+    if align:
+        if key not in options:
+            options[key] = {}
+        options[key]["align"] = align
+    else:
+        if key in options and "align" in options[key]:
+            del options[key]["align"]
+
+
+def del_from_options(
+    options: dict,
+    key: str,
+    coords: int | Iterator | None = None,
+) -> dict:
+    if isinstance(coords, int):
+        if coords in options and key in options[coords]:
+            del options[coords]
+    elif is_iterable(coords):
+        for coord in coords:
+            if coord in options and key in options[coord]:
+                del options[coord]
+    else:
+        for d in options.values():
+            if key in d:
+                del d[key]

@@ -3,12 +3,39 @@
 from __future__ import annotations
 
 from typing import NamedTuple, Literal, TypeAlias, TypedDict
+from collections.abc import Sequence
 
 
 class Font(NamedTuple):
     family: str
     size: int
     style: str
+
+
+class Span(TypedDict):
+    from_r: int | None
+    from_c: int | None
+    upto_r: int | None
+    upto_c: int | None
+    type_: str | None
+    name: str | None
+    kwargs: dict | None
+    table: bool
+    header: bool
+    index: bool
+    tdisp: bool
+    idisp: bool
+    hdisp: bool
+    transpose: bool
+    ndim: int | None
+    convert: object
+    undo: bool
+    widget: object
+
+
+CreateSpanTypes: TypeAlias = (
+    str | int | slice | Sequence[int, int] | Sequence[Sequence[int, int], Sequence[int, int]] | Span
+)
 
 
 Binding: TypeAlias = Literal[
@@ -106,27 +133,6 @@ ScreenUnits: TypeAlias = str | float
 State: TypeAlias = Literal["normal", "disabled"]
 
 
-class Span(TypedDict):
-    from_r: int | None
-    from_c: int | None
-    upto_r: int | None
-    upto_c: int | None
-    type_: str | None
-    name: str | None
-    kwargs: dict | None
-    table: bool
-    header: bool
-    index: bool
-    tdisp: bool
-    idisp: bool
-    hdisp: bool
-    transpose: bool
-    ndim: int | None
-    convert: object
-    undo: bool
-    widget: object
-
-
 class Theme(TypedDict):
     popup_menu_fg: str
     popup_menu_bg: str
@@ -171,5 +177,3 @@ class Theme(TypedDict):
     table_selected_columns_border_fg: str
     table_selected_columns_bg: str
     table_selected_columns_fg: str
-
-

@@ -14,6 +14,19 @@ CurrentlySelectedClass = namedtuple(
     "CurrentlySelectedClass",
     "row column type_ tags",
 )
+Highlight = namedtuple(
+    "Highlight",
+    (
+        "bg",
+        "fg",
+        "end", # only used for row options highlights
+    ),
+    defaults=(
+        None,
+        None,
+        False,
+    ),
+)
 DrawnItem = namedtuple("DrawnItem", "iid showing")
 TextCfg = namedtuple("TextCfg", "txt tf font align")
 DraggedRowColumn = namedtuple("DraggedRowColumn", "dragged to_move")
@@ -80,10 +93,36 @@ class SpanDict(dict):
     def __setitem__(self, key: Hashable, item: object) -> None:
         if key == "data" or key == "value":
             self["widget"].set_data(self, item)
+        elif key == "bg":
+            self["widget"].highlight(self, bg=item)
+        elif key == "fg":
+            self["widget"].highlight(self, fg=item)
         elif type(item) is dict:
             super().__setitem__(key, DotDict(item))
         else:
             super().__setitem__(key, item)
+
+    def highlight(self, **kwargs) -> SpanDict:
+        """
+        myspan.highlight(bg="green", fg="white")
+        """
+        self["widget"].highlight(self, **kwargs)
+        return self
+
+    def dehighlight(self, redraw: bool = True) -> SpanDict:
+        """
+        myspan.dehighlight()
+        myspan.dehighlight(redraw=False)
+        """
+        self["widget"].dehighlight(self, redraw=redraw)
+
+    def readonly(self, readonly: bool = True) -> SpanDict:
+        """
+        myspan.readonly()
+        myspan.readonly(False)
+        """
+        self["widget"].readonly(self, readonly=readonly)
+        return self
 
     def clear(self, undo: bool | None = None, redraw: bool = True) -> SpanDict:
         if undo is not None:
