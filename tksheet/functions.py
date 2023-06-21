@@ -332,7 +332,6 @@ def move_elements_by_mapping(
     # then to fill remaining spots with remaining elements
 
     # fill new indexes in res
-
     if len(new_idxs) > int(len(seq) / 2) - 1:
         # if moving a lot of items better to do comprehension
         return [
@@ -508,6 +507,13 @@ def gen_formatted(
         return (k for k, dct in options.items() if "format" in dct and dct["format"]["formatter"] == formatter)
 
 
+def options_with_key(
+    options: dict,
+    key: str,
+) -> Generator[tuple[int, int], ...] | Generator[int, ...]:
+    return (k for k, dct in options.items() if key in dct)
+
+
 def try_binding(
     binding: None | Callable,
     event: dict,
@@ -590,10 +596,38 @@ def key_to_span(
     spans: dict[str, Span],
     widget: object = None,
 ) -> Span:
-    if not isinstance(key, (str, int, slice, Sequence)):
-        return f"Key type must be either str, int, Sequence or slice, not '{type(key)}'."
+    if not isinstance(key, (str, int, slice, list, tuple)):
+        return f"Key type must be either str, int, list, tuple or slice, not '{type(key)}'."
     try:
-        if isinstance(key, int):
+        if isinstance(key, (list, tuple)):
+            if isinstance(key[0], int):
+                """
+                (int, int) - (row, column) - Specific cell
+                """
+                return span_dict(
+                    from_r=key[0],
+                    from_c=key[1],
+                    upto_r=key[0] + 1,
+                    upto_c=key[1] + 1,
+                    widget=widget,
+                )
+
+            elif isinstance(key[0], (list, tuple)):
+                """
+                ((int, int), (int, int))
+
+                First Sequence is start row and column
+                Second Sequence is up to but not including row and column
+                """
+                return span_dict(
+                    from_r=key[0][0],
+                    from_c=key[0][1],
+                    upto_r=key[1][0],
+                    upto_c=key[1][1],
+                    widget=widget,
+                )
+
+        elif isinstance(key, int):
             """
             [int] - Whole row at that index
             """
@@ -878,34 +912,6 @@ def key_to_span(
                     widget=widget,
                 )
 
-        elif isinstance(key, Sequence):
-            if isinstance(key[0], int):
-                """
-                (int, int) - (row, column) - Specific cell
-                """
-                return span_dict(
-                    from_r=key[0],
-                    from_c=key[1],
-                    upto_r=key[0] + 1,
-                    upto_c=key[1] + 1,
-                    widget=widget,
-                )
-
-            elif isinstance(key[0], Sequence):
-                """
-                ((int, int), (int, int))
-
-                First Sequence is start row and column
-                Second Sequence is up to but not including row and column
-                """
-                return span_dict(
-                    from_r=key[0][0],
-                    from_c=key[0][1],
-                    upto_r=key[1][0],
-                    upto_c=key[1][1],
-                    widget=widget,
-                )
-
     except ValueError as error:
         return f"Error, '{key}' could not be converted to span: {error}"
     else:
@@ -1047,3 +1053,30 @@ def del_from_options(
         for d in options.values():
             if key in d:
                 del d[key]
+
+
+def add_to_options(
+    options: dict,
+    coords: int | tuple[int, int],
+    key: str,
+    value: object,
+) -> dict:
+    if coords not in options:
+        options[coords] = {}
+    options[coords][key] = value
+
+
+def fix_format_kwargs(kwargs: dict) -> dict:
+    if kwargs["formatter"] is None:
+        if kwargs["nullable"]:
+            if isinstance(kwargs["datatypes"], (list, tuple)):
+                kwargs["datatypes"] = tuple(kwargs["datatypes"]) + (type(None),)
+            else:
+                kwargs["datatypes"] = (kwargs["datatypes"], type(None))
+        elif (isinstance(kwargs["datatypes"], (list, tuple)) and type(None) in kwargs["datatypes"]) or kwargs[
+            "datatypes"
+        ] is type(None):
+            raise TypeError("Non-nullable cells cannot have NoneType as a datatype.")
+    if not isinstance(kwargs["invalid_value"], str):
+        kwargs["invalid_value"] = f"{kwargs['invalid_value']}"
+    return kwargs

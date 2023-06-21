@@ -7317,52 +7317,57 @@ class MainTable(tk.Canvas):
 
     def delete_cell_format(self, datarn: str | int = "all", datacn: int = 0, clear_values: bool = False) -> None:
         if isinstance(datarn, str) and datarn.lower() == "all":
-            for datarn, datacn in gen_formatted(self.cell_options):
-                del self.cell_options[(datarn, datacn)]["format"]
-                if clear_values:
-                    self.set_cell_data(datarn, datacn, "", expand_sheet=False)
+            itr = gen_formatted(self.cell_options)
         else:
-            if (datarn, datacn) in self.cell_options and "format" in self.cell_options[(datarn, datacn)]:
-                del self.cell_options[(datarn, datacn)]["format"]
-                if clear_values:
-                    self.set_cell_data(datarn, datacn, "", expand_sheet=False)
+            itr = ((datarn, datacn),)
+        get_val = self.get_value_for_empty_cell
+        for key in itr:
+            try:
+                del self.cell_options[key]["format"]
+            except Exception:
+                continue
+            if clear_values:
+                self.set_cell_data(*key, get_val(*key), expand_sheet=False)
 
     def delete_row_format(self, datarn: str | int = "all", clear_values: bool = False) -> None:
         if isinstance(datarn, str) and datarn.lower() == "all":
-            for datarn in gen_formatted(self.row_options):
-                del self.row_options[datarn]["format"]
-                if clear_values:
-                    for datacn in range(len(self.data[datarn])):
-                        self.set_cell_data(datarn, datacn, "", expand_sheet=False)
+            itr = gen_formatted(self.row_options)
         else:
-            if datarn in self.row_options and "format" in self.row_options[datarn]:
+            itr = (datarn,)
+        get_val = self.get_value_for_empty_cell
+        for datarn in itr:
+            try:
                 del self.row_options[datarn]["format"]
-                if clear_values:
-                    for datacn in range(len(self.data[datarn])):
-                        self.set_cell_data(datarn, datacn, "", expand_sheet=False)
+            except Exception:
+                continue
+            if clear_values:
+                for datacn in range(len(self.data[datarn])):
+                    self.set_cell_data(datarn, datacn, get_val(datarn, datacn), expand_sheet=False)
 
     def delete_column_format(self, datacn: str | int = "all", clear_values: bool = False) -> None:
         if isinstance(datacn, str) and datacn.lower() == "all":
-            for datacn in gen_formatted(self.col_options):
-                del self.col_options[datacn]["format"]
-                if clear_values:
-                    for datarn in range(len(self.data)):
-                        self.set_cell_data(datarn, datacn, "", expand_sheet=False)
+            itr = gen_formatted(self.col_options)
         else:
-            if datacn in self.col_options and "format" in self.col_options[datacn]:
+            itr = (datacn,)
+        get_val = self.get_value_for_empty_cell
+        for datacn in itr:
+            try:
                 del self.col_options[datacn]["format"]
-                if clear_values:
-                    for datarn in range(len(self.data)):
-                        self.set_cell_data(datarn, datacn, "", expand_sheet=False)
+            except Exception:
+                continue
+            if clear_values:
+                for datarn in range(len(self.data)):
+                    self.set_cell_data(datarn, datacn, get_val(datarn, datacn), expand_sheet=False)
 
     def delete_sheet_format(self, clear_values: bool = False) -> None:
         if "format" in self.options:
             del self.options["format"]
             if clear_values:
-                totalcols = self.total_data_cols()
+                totalcols = range(self.total_data_cols())
+                totalrows = range(self.total_data_rows())
                 self.data = [
-                    [self.get_value_for_empty_cell(r, c) for c in range(totalcols)]
-                    for r in range(self.total_data_rows())
+                    [self.get_value_for_empty_cell(r, c) for c in totalcols]
+                    for r in totalrows
                 ]
 
     # deals with possibility of formatter class being in self.data cell

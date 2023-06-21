@@ -19,7 +19,7 @@ Highlight = namedtuple(
     (
         "bg",
         "fg",
-        "end", # only used for row options highlights
+        "end",  # only used for row options highlights
     ),
     defaults=(
         None,
@@ -102,27 +102,54 @@ class SpanDict(dict):
         else:
             super().__setitem__(key, item)
 
+    def format(
+        self,
+        formatter_options={},
+        formatter_class=None,
+        redraw: bool = True,
+        **kwargs,
+    ) -> SpanDict:
+        self["widget"].format(
+            self,
+            formatter_options={"formatter": formatter_class, **formatter_options, **kwargs},
+            formatter_class=formatter_class,
+            redraw=redraw,
+            **kwargs,
+        )
+        return self
+
+    def delete_format(self) -> SpanDict:
+        self["widget"].delete_format(self)
+        return self
+
     def highlight(self, **kwargs) -> SpanDict:
-        """
-        myspan.highlight(bg="green", fg="white")
-        """
         self["widget"].highlight(self, **kwargs)
         return self
 
     def dehighlight(self, redraw: bool = True) -> SpanDict:
-        """
-        myspan.dehighlight()
-        myspan.dehighlight(redraw=False)
-        """
         self["widget"].dehighlight(self, redraw=redraw)
 
     def readonly(self, readonly: bool = True) -> SpanDict:
-        """
-        myspan.readonly()
-        myspan.readonly(False)
-        """
         self["widget"].readonly(self, readonly=readonly)
         return self
+
+    def dropdown(self, *args, **kwargs) -> SpanDict:
+        self["widget"].dropdown(self, *args, **kwargs)
+
+    def delete_dropdown(self) -> SpanDict:
+        self["widget"].delete_dropdown(self)
+
+    def checkbox(self, *args, **kwargs) -> SpanDict:
+        self["widget"].dropdown(self, *args, **kwargs)
+
+    def delete_checkbox(self) -> SpanDict:
+        self["widget"].delete_checkbox(self)
+
+    def align(self, align: str | None, redraw: bool = True) -> SpanDict:
+        self["widget"].align(self, align=align, redraw=redraw)
+
+    def delete_align(self, redraw: bool = True) -> SpanDict:
+        self["widget"].delete_align(self, redraw=redraw)
 
     def clear(self, undo: bool | None = None, redraw: bool = True) -> SpanDict:
         if undo is not None:
