@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import tkinter as tk
 from collections import namedtuple
-from collections.abc import Hashable
+from collections.abc import Hashable, Generator, Iterator
 
 from .vars import (
     ctrl_key,
@@ -72,6 +72,33 @@ class DotDict(dict):
     __setattr__ = __setitem__
     __getattr__ = dict.__getitem__
     __delattr__ = dict.__delitem__
+
+
+class SpanRange:
+    def __init__(self, from_: int, upto_: int) -> None:
+        __slots__ = ("from_", "upto_")  # noqa: F841
+        self.from_ = from_
+        self.upto_ = upto_
+
+    def __iter__(self) -> Iterator:
+        return iter(range(self.from_, self.upto_))
+
+    def __reversed__(self) -> Iterator:
+        return reversed(range(self.from_, self.upto_))
+
+    def __contains__(self, n: int) -> bool:
+        if n >= self.from_ and n < self.upto_:
+            return True
+        return False
+
+    def __eq__(self, v: SpanRange) -> bool:
+        return self.from_ == v.from_ and self.upto_ == v.upto_
+
+    def __ne__(self, v: SpanRange) -> bool:
+        return self.from_ != v.from_ or self.upto_ != v.upto_
+
+    def __len__(self) -> int:
+        return self.upto_ - self.from_
 
 
 class SpanDict(dict):
@@ -202,6 +229,38 @@ class SpanDict(dict):
         if self["from_c"] is None:
             return "row"
         return "cell"
+
+    @property
+    def rows(self) -> Generator[int, ...]:
+        rng_from_r = 0 if self["from_r"] is None else self["from_r"]
+        if self["upto_r"] is None:
+            rng_upto_r = self["widget"].total_rows()
+        else:
+            rng_upto_r = self["upto_r"]
+        return SpanRange(rng_from_r, rng_upto_r)
+
+    @property
+    def columns(self) -> Generator[int, ...]:
+        rng_from_c = 0 if self["from_c"] is None else self["from_c"]
+        if self["upto_c"] is None:
+            rng_upto_c = self["widget"].total_columns()
+        else:
+            rng_upto_c = self["upto_c"]
+        return SpanRange(rng_from_c, rng_upto_c)
+
+    @property
+    def ranges(self) -> tuple[Generator[int, ...], Generator[int, ...]]:
+        rng_from_r = 0 if self["from_r"] is None else self["from_r"]
+        rng_from_c = 0 if self["from_c"] is None else self["from_c"]
+        if self["upto_r"] is None:
+            rng_upto_r = self["widget"].total_rows()
+        else:
+            rng_upto_r = self["upto_r"]
+        if self["upto_c"] is None:
+            rng_upto_c = self["widget"].total_columns()
+        else:
+            rng_upto_c = self["upto_c"]
+        return SpanRange(rng_from_r, rng_upto_r), SpanRange(rng_from_c, rng_upto_c)
 
     __setattr__ = __setitem__
     __getattr__ = __getitem__

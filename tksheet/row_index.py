@@ -83,7 +83,6 @@ class RowIndex(tk.Canvas):
         self.row_height_resize_func = None
         self.new_row_width = 0
         self.cell_options = {}
-        self.options = {}
         self.drag_and_drop_enabled = False
         self.dragged_row = None
         self.width_resizing_enabled = False
@@ -2272,6 +2271,4 @@ class RowIndex(tk.Canvas):
     def get_cell_kwargs(self, datarn, key="dropdown", cell=True, entire=True):
         if cell and datarn in self.cell_options and key in self.cell_options[datarn]:
             return self.cell_options[datarn][key]
-        if entire and key in self.options:
-            return self.options[key]
         return {}

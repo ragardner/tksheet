@@ -35,7 +35,7 @@ from .functions import (
 )
 from .main_table import MainTable
 from .other_classes import CurrentlySelectedClass  # noqa: F401
-from .other_classes import DotDict, GeneratedMouseEvent
+from .other_classes import DotDict, GeneratedMouseEvent, SpanDict
 from .row_index import RowIndex
 from .top_left_rectangle import TopLeftRectangle
 from .types import Span, CreateSpanTypes
@@ -1982,194 +1982,6 @@ class Sheet(tk.Frame):
     def all_selected(self):
         return self.MT.all_selected()
 
-    def align(
-        self,
-        key: CreateSpanTypes,
-        align: str | None = None,
-        redraw: bool = True,
-    ) -> Span:
-        span = self.span_from_key(key)
-        rows, cols = self.ranges_from_span(span)
-        table, index, header = span.table, span.index, span.header
-        if span.kind == "cell":
-            if header:
-                for c in cols:
-                    set_align(self.CH.cell_options, c, align)
-            for r in rows:
-                if index:
-                    set_align(self.RI.cell_options, r, align)
-                if table:
-                    for c in cols:
-                        set_align(self.MT.cell_options, (r, c), align)
-        elif span.kind == "row":
-            for r in rows:
-                if index:
-                    set_align(self.RI.cell_options, r, align)
-                if table:
-                    set_align(self.MT.row_options, r, align)
-        elif span.kind == "column":
-            for c in cols:
-                if header:
-                    set_align(self.CH.cell_options, c, align)
-                if table:
-                    set_align(self.MT.col_options, c, align)
-        self.set_refresh_timer(redraw)
-        return span
-
-    def delete_align(
-        self,
-        key: CreateSpanTypes,
-        redraw: bool = True,
-    ) -> Span:
-        span = self.span_from_key(key)
-        self.del_options_using_span(span, "align")
-        self.set_refresh_timer(redraw)
-        return span
-
-    def readonly(
-        self,
-        key: CreateSpanTypes,
-        readonly: bool = True,
-    ):
-        span = self.span_from_key(key)
-        rows, cols = self.ranges_from_span(span)
-        table, index, header = span.table, span.index, span.header
-        if span.kind == "cell":
-            if header:
-                for c in cols:
-                    set_readonly(self.CH.cell_options, c, readonly)
-            for r in rows:
-                if index:
-                    set_readonly(self.RI.cell_options, r, readonly)
-                if table:
-                    for c in cols:
-                        set_readonly(self.MT.cell_options, (r, c), readonly)
-        elif span.kind == "row":
-            for r in rows:
-                set_readonly(self.MT.row_options, r, readonly)
-        elif span.kind == "column":
-            for c in cols:
-                set_readonly(self.MT.col_options, c, readonly)
-        return span
-
-    def highlight(
-        self,
-        key: CreateSpanTypes,
-        bg: bool | None | str = False,
-        fg: bool | None | str = False,
-        end: bool | None = None,
-        overwrite: bool = False,
-        redraw: bool = True,
-    ) -> Span:
-        span = self.span_from_key(key)
-        if bg is False and fg is False and end is None:
-            return span
-        rows, cols = self.ranges_from_span(span)
-        table, index, header = span.table, span.index, span.header
-        if span.kind == "cell":
-            if header:
-                for c in cols:
-                    add_highlight(self.CH.cell_options, c, bg, fg, end, overwrite)
-            for r in rows:
-                if index:
-                    add_highlight(self.RI.cell_options, r, bg, fg, end, overwrite)
-                if table:
-                    for c in cols:
-                        add_highlight(self.MT.cell_options, (r, c), bg, fg, end, overwrite)
-        elif span.kind == "row":
-            for r in rows:
-                if index:
-                    add_highlight(self.RI.cell_options, r, bg, fg, end, overwrite)
-                if table:
-                    add_highlight(self.MT.row_options, r, bg, fg, end, overwrite)
-        elif span.kind == "column":
-            for c in cols:
-                if header:
-                    add_highlight(self.CH.cell_options, c, bg, fg, end, overwrite)
-                if table:
-                    add_highlight(self.MT.col_options, c, bg, fg, end, overwrite)
-        self.set_refresh_timer(redraw)
-        return span
-
-    def highlight_header(
-        self,
-        columns: Iterator | int,
-        bg: str | None = None,
-        fg: str | None = None,
-        overwrite: bool = True,
-        redraw: bool = True,
-    ) -> Sheet:
-        columns = (columns,) if isinstance(columns, int) else columns
-        for c in columns:
-            add_highlight(self.CH.cell_options, c, bg, fg, None, overwrite)
-        self.set_refresh_timer(redraw)
-        return self
-
-    def highlight_index(
-        self,
-        rows: Iterator | int,
-        bg: str | None = None,
-        fg: str | None = None,
-        overwrite: bool = True,
-        redraw: bool = True,
-    ) -> Sheet:
-        rows = (rows,) if isinstance(rows, int) else rows
-        for r in rows:
-            add_highlight(self.RI.cell_options, r, bg, fg, None, overwrite)
-        self.set_refresh_timer(redraw)
-        return self
-
-    def del_options_using_span(
-        self,
-        span: Span,
-        key: str,
-        redraw: bool = True,
-    ) -> Span:
-        rows, cols = self.ranges_from_span(span)
-        table, index, header = span.table, span.index, span.header
-        if header and span.kind in ("cell", "column"):
-            del_from_options(self.CH.cell_options, key, cols)
-        if index and span.kind in ("cell", "row"):
-            del_from_options(self.RI.cell_options, key, rows)
-        if table and span.kind == "cell":
-            del_from_options(self.MT.cell_options, key, product(rows, cols))
-        elif table and span.kind == "row":
-            del_from_options(self.MT.row_options, key, rows)
-        elif table and span.kind == "column":
-            del_from_options(self.MT.col_options, key, cols)
-
-    def dehighlight(
-        self,
-        key: CreateSpanTypes,
-        redraw: bool = True,
-    ) -> Span:
-        span = self.span_from_key(key)
-        self.del_options_using_span(span, "highlight")
-        self.set_refresh_timer(redraw)
-        return span
-
-    def dehighlight_all(
-        self,
-        cells=True,
-        rows=True,
-        columns=True,
-        header=True,
-        index=True,
-        redraw: bool = True,
-    ) -> Sheet:
-        if cells:
-            del_from_options(self.MT.cell_options, "highlight")
-        if rows:
-            del_from_options(self.MT.row_options, "highlight")
-        if columns:
-            del_from_options(self.MT.col_options, "highlight")
-        if index:
-            del_from_options(self.RI.cell_options, "highlight")
-        if header:
-            del_from_options(self.CH.cell_options, "highlight")
-        self.set_refresh_timer(redraw)
-        return self
-
     def delete_out_of_bounds_options(self) -> Sheet:
         maxc = self.total_columns()
         maxr = self.total_rows()
@@ -2189,9 +2001,6 @@ class Sheet(tk.Frame):
         self.CH.cell_options = {}
         self.MT.col_options = {}
         self.MT.row_options = {}
-        self.MT.options = {}
-        self.RI.options = {}
-        self.CH.options = {}
         return self
 
     def get_cell_options(self, key: None | str = None, canvas: str = "table") -> dict:
@@ -2528,9 +2337,6 @@ class Sheet(tk.Frame):
         self.MT.recreate_all_selection_boxes()
         self.set_refresh_timer(redraw)
         return self
-
-    def formatted(self, r: int, c: int) -> dict:
-        return self.MT.get_cell_kwargs(r, c, key="format")
 
     def data_reference(
         self,
@@ -3663,7 +3469,7 @@ class Sheet(tk.Frame):
             name = f"{num2alpha(self.named_span_id)}"
             self.named_span_id += 1
         type_ = type_.lower()
-        if isinstance(key, (int, str, slice)):
+        if isinstance(key, (int, str, slice, list, tuple)):
             span = self.span_from_key(key)
         else:
             span = span_dict(
@@ -3672,23 +3478,25 @@ class Sheet(tk.Frame):
                 upto_r=upto_r,
                 upto_c=upto_c,
             )
-        for k, v in {
-            "type_": type_,
-            "name": name,
-            "kwargs": kwargs,
-            "table": table,
-            "header": header,
-            "index": index,
-            "tdisp": tdisp,
-            "idisp": idisp,
-            "hdisp": hdisp,
-            "transpose": transpose,
-            "ndim": ndim,
-            "convert": convert,
-            "undo": undo,
-            "widget": self if widget is None else widget,
-        }.items():
-            span[k] = v
+        span = SpanDict(
+            {**span,
+            **{
+                "type_": type_,
+                "name": name,
+                "kwargs": kwargs,
+                "table": table,
+                "header": header,
+                "index": index,
+                "tdisp": tdisp,
+                "idisp": idisp,
+                "hdisp": hdisp,
+                "transpose": transpose,
+                "ndim": ndim,
+                "convert": convert,
+                "undo": undo,
+                "widget": self if widget is None else widget,
+            }},
+        )
         if span["type_"]:
             self.create_named_span(span)
         return span
@@ -3750,38 +3558,177 @@ class Sheet(tk.Frame):
             raise ValueError(f"Span '{span['name']}' already exists.")
         if span["name"]:
             self.MT.named_spans[span["name"]] = span
-        rows, cols = self.ranges_from_span(span)
-        # if from_c is None it MUST be a row options span
-        if span.kind == "row":
-            for r in rows:
-                if span["table"]:
-                    self.create_table_kwargs(r, c=None, type_=span["type_"], **span["kwargs"])
-                if span["index"]:
-                    self.create_index_kwargs(r, span["type_"], **span["kwargs"])
-        # if from_r is None it MUST be a col options span
-        elif span.kind == "column":
-            for c in cols:
-                if span["table"]:
-                    self.create_table_kwargs(r=None, c=c, type_=span["type_"], **span["kwargs"])
-                if span["header"]:
-                    self.create_header_kwargs(c, span["type_"], **span["kwargs"])
-        # else its a cell options span but maybe with upto Nones
-        elif span.kind == "cell":
-            for r in rows:
-                if span["index"]:
-                    self.create_index_kwargs(r, span["type_"], **span["kwargs"])
-                for c in cols:
-                    if span["table"]:
-                        self.create_table_kwargs(r, c, span["type_"], **span["kwargs"])
-            if span["header"]:
-                for c in cols:
-                    self.create_header_kwargs(c, span["type_"], **span["kwargs"])
+        self.create_options_from_span(span)
         return self
 
     def create_options_from_span(self, span: Span) -> Sheet:
-        func = getattr(self, span.type)
-        func(span, **span.kwargs)
+        print (span)
+        getattr(self, span.type_)(span, **span.kwargs)
         return self
+
+    def align(
+        self,
+        key: CreateSpanTypes,
+        align: str | None = None,
+        redraw: bool = True,
+    ) -> Span:
+        span = self.span_from_key(key)
+        rows, cols = self.ranges_from_span(span)
+        table, index, header = span.table, span.index, span.header
+        if span.kind == "cell":
+            if header:
+                for c in cols:
+                    set_align(self.CH.cell_options, c, align)
+            for r in rows:
+                if index:
+                    set_align(self.RI.cell_options, r, align)
+                if table:
+                    for c in cols:
+                        set_align(self.MT.cell_options, (r, c), align)
+        elif span.kind == "row":
+            for r in rows:
+                if index:
+                    set_align(self.RI.cell_options, r, align)
+                if table:
+                    set_align(self.MT.row_options, r, align)
+        elif span.kind == "column":
+            for c in cols:
+                if header:
+                    set_align(self.CH.cell_options, c, align)
+                if table:
+                    set_align(self.MT.col_options, c, align)
+        self.set_refresh_timer(redraw)
+        return span
+
+    def delete_align(
+        self,
+        key: CreateSpanTypes,
+        redraw: bool = True,
+    ) -> Span:
+        span = self.span_from_key(key)
+        self.del_options_using_span(span, "align")
+        self.set_refresh_timer(redraw)
+        return span
+
+    def readonly(
+        self,
+        key: CreateSpanTypes,
+        readonly: bool = True,
+    ):
+        span = self.span_from_key(key)
+        rows, cols = self.ranges_from_span(span)
+        table, index, header = span.table, span.index, span.header
+        if span.kind == "cell":
+            if header:
+                for c in cols:
+                    set_readonly(self.CH.cell_options, c, readonly)
+            for r in rows:
+                if index:
+                    set_readonly(self.RI.cell_options, r, readonly)
+                if table:
+                    for c in cols:
+                        set_readonly(self.MT.cell_options, (r, c), readonly)
+        elif span.kind == "row":
+            for r in rows:
+                set_readonly(self.MT.row_options, r, readonly)
+        elif span.kind == "column":
+            for c in cols:
+                set_readonly(self.MT.col_options, c, readonly)
+        return span
+
+    def highlight(
+        self,
+        key: CreateSpanTypes,
+        bg: bool | None | str = False,
+        fg: bool | None | str = False,
+        end: bool | None = None,
+        overwrite: bool = False,
+        redraw: bool = True,
+    ) -> Span:
+        span = self.span_from_key(key)
+        if bg is False and fg is False and end is None:
+            return span
+        rows, cols = self.ranges_from_span(span)
+        table, index, header = span.table, span.index, span.header
+        if span.kind == "cell":
+            if header:
+                for c in cols:
+                    add_highlight(self.CH.cell_options, c, bg, fg, end, overwrite)
+            for r in rows:
+                if index:
+                    add_highlight(self.RI.cell_options, r, bg, fg, end, overwrite)
+                if table:
+                    for c in cols:
+                        add_highlight(self.MT.cell_options, (r, c), bg, fg, end, overwrite)
+        elif span.kind == "row":
+            for r in rows:
+                if index:
+                    add_highlight(self.RI.cell_options, r, bg, fg, end, overwrite)
+                if table:
+                    add_highlight(self.MT.row_options, r, bg, fg, end, overwrite)
+        elif span.kind == "column":
+            for c in cols:
+                if header:
+                    add_highlight(self.CH.cell_options, c, bg, fg, end, overwrite)
+                if table:
+                    add_highlight(self.MT.col_options, c, bg, fg, end, overwrite)
+        self.set_refresh_timer(redraw)
+        return span
+
+    def dehighlight(
+        self,
+        key: CreateSpanTypes,
+        redraw: bool = True,
+    ) -> Span:
+        span = self.span_from_key(key)
+        self.del_options_using_span(span, "highlight")
+        self.set_refresh_timer(redraw)
+        return span
+
+    def dehighlight_all(
+        self,
+        cells=True,
+        rows=True,
+        columns=True,
+        header=True,
+        index=True,
+        redraw: bool = True,
+    ) -> Sheet:
+        if cells:
+            del_from_options(self.MT.cell_options, "highlight")
+        if rows:
+            del_from_options(self.MT.row_options, "highlight")
+        if columns:
+            del_from_options(self.MT.col_options, "highlight")
+        if index:
+            del_from_options(self.RI.cell_options, "highlight")
+        if header:
+            del_from_options(self.CH.cell_options, "highlight")
+        self.set_refresh_timer(redraw)
+        return self
+
+    def del_options_using_span(
+        self,
+        span: Span,
+        key: str,
+        redraw: bool = True,
+    ) -> Span:
+        rows, cols = self.ranges_from_span(span)
+        table, index, header = span.table, span.index, span.header
+        # index header
+        if header and span.kind in ("cell", "column"):
+            self.CH.destroy_opened_dropdown_window()
+            del_from_options(self.CH.cell_options, key, cols)
+        if index and span.kind in ("cell", "row"):
+            self.RI.destroy_opened_dropdown_window()
+            del_from_options(self.RI.cell_options, key, rows)
+        # table
+        if table and span.kind == "cell":
+            del_from_options(self.MT.cell_options, key, product(rows, cols))
+        elif table and span.kind == "row":
+            del_from_options(self.MT.row_options, key, rows)
+        elif table and span.kind == "column":
+            del_from_options(self.MT.col_options, key, cols)
 
     def checkbox(
         self,
@@ -3816,7 +3763,6 @@ class Sheet(tk.Frame):
                         add_to_options(self.MT.cell_options, (r, c), "checkbox", d)
                         set_tdata(r, c, v)
         elif span.kind == "row":
-            totalcols = range(self.MT.total_data_cols())
             for r in rows:
                 if index:
                     self.delete_index_cell_options_dropdown_and_checkbox(r)
@@ -3826,10 +3772,9 @@ class Sheet(tk.Frame):
                     self.MT.delete_row_format(r, clear_values=False)
                     self.delete_row_options_dropdown_and_checkbox(r)
                     add_to_options(self.MT.row_options, r, "checkbox", d)
-                    for c in totalcols:
+                    for c in cols:
                         set_tdata(r, c, v)
         elif span.kind == "column":
-            totalrows = range(self.MT.total_data_rows())
             for c in cols:
                 if header:
                     self.delete_header_cell_options_dropdown_and_checkbox(c)
@@ -3839,7 +3784,7 @@ class Sheet(tk.Frame):
                     self.MT.delete_column_format(r, clear_values=False)
                     self.delete_column_options_dropdown_and_checkbox(c)
                     add_to_options(self.MT.col_options, c, "checkbox", d)
-                    for r in totalrows:
+                    for r in rows:
                         set_tdata(r, c, v)
         self.set_refresh_timer(kwargs["redraw"])
         return span
@@ -3854,82 +3799,56 @@ class Sheet(tk.Frame):
         self.set_refresh_timer(redraw)
         return span
 
-    def checkbox_header(self, **kwargs):
-        self.CH.destroy_opened_dropdown_window()
-        if "dropdown" in self.CH.options or "checkbox" in self.CH.options:
-            self.delete_header_options_dropdown_and_checkbox()
-        if "checkbox" not in self.CH.options:
-            self.CH.options["checkbox"] = {}
-        self.CH.options["checkbox"] = get_checkbox_dict(**kwargs)
-        total_cols = self.MT.total_data_cols()
-        if isinstance(self.MT._headers, int):
-            for datacn in range(total_cols):
-                self.MT.set_cell_data(datarn=self.MT._headers, datacn=datacn, value=kwargs["checked"])
-        else:
-            for datacn in range(total_cols):
-                self.CH.set_cell_data(datacn=datacn, value=kwargs["checked"])
-
-    def checkbox_index(self, **kwargs):
-        self.RI.destroy_opened_dropdown_window()
-        if "dropdown" in self.RI.options or "checkbox" in self.RI.options:
-            self.delete_index_options_dropdown_and_checkbox()
-        if "checkbox" not in self.RI.options:
-            self.RI.options["checkbox"] = {}
-        self.RI.options["checkbox"] = get_checkbox_dict(**kwargs)
-        total_rows = self.MT.total_data_rows()
-        if isinstance(self.MT._row_index, int):
-            for datarn in range(total_rows):
-                self.MT.set_cell_data(datarn=datarn, datacn=self.MT._row_index, value=kwargs["checked"])
-        else:
-            for datarn in range(total_rows):
-                self.RI.set_cell_data(datarn=datarn, value=kwargs["checked"])
-
-    def checkbox_sheet(self, *args, **kwargs):
-        kwargs = get_checkbox_kwargs(*args, **kwargs)
-        self.MT.delete_sheet_format(clear_values=False)
-        if "dropdown" in self.MT.options or "checkbox" in self.MT.options:
-            self.delete_table_options_dropdown_and_checkbox()
-        self.MT.options["checkbox"] = get_checkbox_dict(**kwargs)
-        total_cols = range(self.MT.total_data_cols())
-        for datarn in range(self.MT.total_data_rows()):
-            for datacn in total_cols:
-                self.MT.set_cell_data(datarn, datacn, kwargs["checked"])
-
-    def delete_sheet_checkbox(self):
-        self.delete_table_options_checkbox()
-
-    def click_checkbox(self, r, c, checked=None):
-        kwargs = self.MT.get_cell_kwargs(r, c, key="checkbox")
-        if kwargs:
-            if not type(self.MT.data[r][c]) == bool:
-                if checked is None:
-                    self.MT.data[r][c] = False
-                else:
-                    self.MT.data[r][c] = bool(checked)
-            else:
-                self.MT.data[r][c] = not self.MT.data[r][c]
-
-    def click_header_checkbox(self, c, checked=None):
-        kwargs = self.CH.get_cell_kwargs(c, key="checkbox")
-        if kwargs:
-            if not type(self.MT._headers[c]) == bool:
-                if checked is None:
-                    self.MT._headers[c] = False
-                else:
-                    self.MT._headers[c] = bool(checked)
-            else:
-                self.MT._headers[c] = not self.MT._headers[c]
-
-    def click_index_checkbox(self, r, checked=None):
-        kwargs = self.RI.get_cell_kwargs(r, key="checkbox")
-        if kwargs:
-            if not type(self.MT._row_index[r]) == bool:
-                if checked is None:
-                    self.MT._row_index[r] = False
-                else:
-                    self.MT._row_index[r] = bool(checked)
-            else:
-                self.MT._row_index[r] = not self.MT._row_index[r]
+    def click_checkbox(
+        self,
+        key: CreateSpanTypes,
+        checked: bool | None = None,
+        redraw: bool = True,
+    ):
+        span = self.span_from_key(key)
+        rows, cols = self.ranges_from_span(span)
+        table, index, header = span.table, span.index, span.header
+        set_tdata = self.MT.set_cell_data
+        set_idata = self.RI.set_cell_data
+        set_hdata = self.CH.set_cell_data
+        get_tdata = self.MT.get_cell_data
+        get_idata = self.RI.get_cell_data
+        get_hdata = self.CH.get_cell_data
+        get_tkw = self.MT.get_cell_kwargs
+        get_ikw = self.RI.get_cell_kwargs
+        get_hkw = self.CH.get_cell_kwargs
+        if span.kind == "cell":
+            if header:
+                for c in cols:
+                    if get_hkw(c, key="checkbox"):
+                        set_hdata(c, not get_hdata(c) if checked is None else bool(checked))
+            for r in rows:
+                if index and get_ikw(r, key="checkbox"):
+                    set_idata(r, not get_idata(r) if checked is None else bool(checked))
+                if table:
+                    for c in cols:
+                        if get_tkw(r, c, key="checkbox"):
+                            set_tdata(r, c, not get_tdata(r, c) if checked is None else bool(checked))
+        elif span.kind == "row":
+            totalcols = range(self.MT.total_data_cols())
+            for r in rows:
+                if index and get_ikw(r, key="checkbox"):
+                    set_idata(r, not get_idata(r) if checked is None else bool(checked))
+                if table:
+                    for c in totalcols:
+                        if get_tkw(r, c, key="checkbox"):
+                            set_tdata(r, c, not get_tdata(r, c) if checked is None else bool(checked))
+        elif span.kind == "column":
+            totalrows = range(self.MT.total_data_rows())
+            for c in cols:
+                if header and get_hkw(c, key="checkbox"):
+                    set_hdata(c, not get_hdata(c) if checked is None else bool(checked))
+                if table:
+                    for r in totalrows:
+                        if get_tkw(r, c, key="checkbox"):
+                            set_tdata(r, c, not get_tdata(r, c) if checked is None else bool(checked))
+        self.set_refresh_timer(redraw)
+        return span
 
     def dropdown(
         self,
@@ -3946,95 +3865,37 @@ class Sheet(tk.Frame):
         set_tdata = self.MT.set_cell_data
         set_idata = self.RI.set_cell_data
         set_hdata = self.CH.set_cell_data
-        if span.kind == "cell":
-            if header:
-                for c in cols:
-                    self.delete_header_cell_options_dropdown_and_checkbox(c)
-                    add_to_options(self.CH.cell_options, c, "dropdown", d)
-                    set_hdata(c, v)
+        if index:
             for r in rows:
-                if index:
-                    self.delete_index_cell_options_dropdown_and_checkbox(r)
-                    add_to_options(self.RI.cell_options, r, "dropdown", d)
-                    set_idata(r, v)
-                if table:
+                self.delete_index_cell_options_dropdown_and_checkbox(r)
+                add_to_options(self.RI.cell_options, r, "dropdown", d)
+                set_idata(r, v)
+        if header:
+            for c in cols:
+                self.delete_header_cell_options_dropdown_and_checkbox(c)
+                add_to_options(self.CH.cell_options, c, "dropdown", d)
+                set_hdata(c, v)
+        if table:
+            if span.kind == "cell":
+                for r in rows:
                     for c in cols:
                         self.delete_table_cell_options_dropdown_and_checkbox(r, c)
                         add_to_options(self.MT.cell_options, (r, c), "dropdown", d)
                         set_tdata(r, c, v)
-        elif span.kind == "row":
-            totalcols = range(self.MT.total_data_cols())
-            for r in rows:
-                if index:
-                    self.delete_index_cell_options_dropdown_and_checkbox(r)
-                    add_to_options(self.RI.cell_options, r, "dropdown", d)
-                    set_idata(r, v)
-                if table:
+            elif span.kind == "row":
+                for r in rows:
                     self.delete_row_options_dropdown_and_checkbox(r)
                     add_to_options(self.MT.row_options, r, "dropdown", d)
-                    for c in totalcols:
+                    for c in cols:
                         set_tdata(r, c, v)
-        elif span.kind == "column":
-            totalrows = range(self.MT.total_data_rows())
-            for c in cols:
-                if header:
-                    self.delete_header_cell_options_dropdown_and_checkbox(c)
-                    add_to_options(self.CH.cell_options, c, "dropdown", d)
-                    set_hdata(c, v)
-                if table:
+            elif span.kind == "column":
+                for c in cols:
                     self.delete_column_options_dropdown_and_checkbox(c)
                     add_to_options(self.MT.col_options, c, "dropdown", d)
-                    for r in totalrows:
+                    for r in rows:
                         set_tdata(r, c, v)
         self.set_refresh_timer(kwargs["redraw"])
         return span
-
-    def dropdown_sheet(self, *args, **kwargs):
-        kwargs = get_dropdown_kwargs(*args, **kwargs)
-        if "dropdown" in self.MT.options or "checkbox" in self.MT.options:
-            self.delete_table_options_dropdown_and_checkbox()
-        self.MT.options["dropdown"] = get_dropdown_dict(**kwargs)
-        v = kwargs["set_value"] if kwargs["set_value"] is not None else kwargs["values"][0] if kwargs["values"] else ""
-        total_cols = self.MT.total_data_cols()
-        set_tdata = self.MT.set_cell_data
-        for datarn in range(self.MT.total_data_rows()):
-            for datacn in range(total_cols):
-                set_tdata(datarn, datacn, v)
-        self.set_refresh_timer(kwargs["redraw"])
-
-    def dropdown_header(self, redraw: bool = True, **kwargs):
-        self.CH.destroy_opened_dropdown_window()
-        if "dropdown" in self.CH.options or "checkbox" in self.CH.options:
-            self.delete_header_options_dropdown_and_checkbox()
-        if "dropdown" not in self.CH.options:
-            self.CH.options["dropdown"] = {}
-        self.CH.options["dropdown"] = get_dropdown_dict(**kwargs)
-        total_cols = self.MT.total_data_cols()
-        v = kwargs["set_value"] if kwargs["set_value"] is not None else kwargs["values"][0] if kwargs["values"] else ""
-        if isinstance(self.MT._headers, int):
-            for datacn in range(total_cols):
-                self.MT.set_cell_data(datarn=self.MT._headers, datacn=datacn, value=v)
-        else:
-            for datacn in range(total_cols):
-                self.CH.set_cell_data(datacn=datacn, value=v)
-        self.set_refresh_timer(redraw)
-
-    def dropdown_index(self, redraw: bool = True, **kwargs):
-        self.RI.destroy_opened_dropdown_window()
-        if "dropdown" in self.RI.options or "checkbox" in self.RI.options:
-            self.delete_index_options_dropdown_and_checkbox()
-        if "dropdown" not in self.RI.options:
-            self.RI.options["dropdown"] = {}
-        self.RI.options["dropdown"] = get_dropdown_dict(**kwargs)
-        total_rows = range(self.MT.total_data_rows())
-        v = kwargs["set_value"] if kwargs["set_value"] is not None else kwargs["values"][0] if kwargs["values"] else ""
-        if isinstance(self.MT._row_index, int):
-            for datarn in total_rows:
-                self.MT.set_cell_data(datarn=datarn, datacn=self.MT._row_index, value=v)
-        else:
-            for datarn in total_rows:
-                self.RI.set_cell_data(datarn=datarn, value=v)
-        self.set_refresh_timer(redraw)
 
     def delete_dropdown(
         self,
@@ -4042,19 +3903,15 @@ class Sheet(tk.Frame):
         redraw: bool = True,
     ) -> Span:
         span = self.span_from_key(key)
+        if span.table:
+            self.MT.destroy_opened_dropdown_window()
+        if span.index:
+            self.RI.destroy_opened_dropdown_window()
+        if span.header:
+            self.CH.destroy_opened_dropdown_window()
         self.del_options_using_span(span, "dropdown")
-        self.MT.destroy_opened_dropdown_window()
         self.set_refresh_timer(redraw)
         return span
-
-    def delete_sheet_dropdown(self):
-        self.delete_table_options_dropdown()
-
-    def delete_header_dropdown(self):
-        self.delete_header_options_dropdown()
-
-    def delete_index_dropdown(self):
-        self.delete_index_options_dropdown()
 
     def set_dropdown_values(self, r=0, c=0, set_existing_dropdown: bool = False, values=[], set_value=None):
         if set_existing_dropdown:
@@ -4135,6 +3992,9 @@ class Sheet(tk.Frame):
     def delete_all_formatting(self, clear_values: bool = False):
         self.MT.delete_all_formatting(clear_values=clear_values)
 
+    def formatted(self, r: int, c: int) -> dict:
+        return self.MT.get_cell_kwargs(r, c, key="format")
+
     def format(
         self,
         key: CreateSpanTypes,
@@ -4159,13 +4019,12 @@ class Sheet(tk.Frame):
                         kwargs=kwargs,
                     )
         elif span.kind == "row":
-            totalcols = range(self.MT.total_data_cols())
             for r in rows:
                 if r in self.MT.row_options and "checkbox" in self.MT.row_options[r]:
                     self.delete_row_options_checkbox(r)
                 kwargs = fix_format_kwargs(kwargs)
                 add_to_options(self.MT.row_options, r, "format", kwargs)
-                for c in totalcols:
+                for c in cols:
                     self.MT.set_cell_data(
                         r,
                         c,
@@ -4173,13 +4032,12 @@ class Sheet(tk.Frame):
                         kwargs=kwargs,
                     )
         elif span.kind == "column":
-            totalrows = range(self.MT.total_data_rows())
             for c in cols:
                 if c in self.MT.col_options and "checkbox" in self.MT.col_options[c]:
                     self.delete_column_options_checkbox(c)
                 kwargs = fix_format_kwargs(kwargs)
                 add_to_options(self.MT.col_options, c, "format", kwargs)
-                for r in totalrows:
+                for r in rows:
                     self.MT.set_cell_data(
                         r,
                         c,
@@ -4209,23 +4067,6 @@ class Sheet(tk.Frame):
                     self.MT.delete_column_format(c, clear_values=clear_values)
             self.set_refresh_timer(redraw)
         return span
-
-    def format_sheet(self, formatter_options={}, formatter_class=None, redraw: bool = True, **kwargs):
-        kwargs = fix_format_kwargs({"formatter": formatter_class, **formatter_options, **kwargs})
-        self.MT.options["format"] = kwargs
-        totalcols = range(self.MT.total_data_cols())
-        for datarn in range(self.MT.total_data_rows()):
-            for datacn in totalcols:
-                self.MT.set_cell_data(
-                    datarn,
-                    datacn,
-                    value=kwargs["value"] if "value" in kwargs else self.MT.get_cell_data(datarn, datacn),
-                    kwargs=kwargs,
-                )
-        self.set_refresh_timer(redraw)
-
-    def delete_sheet_format(self, clear_values: bool = False):
-        self.MT.delete_sheet_format(clear_values=clear_values)
 
     #  ##########       TABLE       ##########
 
@@ -4268,33 +4109,7 @@ class Sheet(tk.Frame):
         self.delete_column_options_dropdown(datacn)
         self.delete_column_options_checkbox(datacn)
 
-    def delete_table_options_dropdown(self):
-        self.MT.destroy_opened_dropdown_window()
-        if "dropdown" in self.MT.options:
-            del self.MT.options["dropdown"]
-
-    def delete_table_options_checkbox(self):
-        if "checkbox" in self.MT.options:
-            del self.MT.options["checkbox"]
-
-    def delete_table_options_dropdown_and_checkbox(self):
-        self.delete_table_options_dropdown()
-        self.delete_table_options_checkbox()
-
     #  ##########       INDEX       ##########
-
-    def delete_index_options_dropdown(self):
-        self.RI.destroy_opened_dropdown_window()
-        if "dropdown" in self.RI.options:
-            del self.RI.options["dropdown"]
-
-    def delete_index_options_checkbox(self):
-        if "checkbox" in self.RI.options:
-            del self.RI.options["checkbox"]
-
-    def delete_index_options_dropdown_and_checkbox(self):
-        self.delete_index_options_dropdown()
-        self.delete_index_options_checkbox()
 
     def delete_index_cell_options_dropdown(self, datarn):
         self.RI.destroy_opened_dropdown_window(datarn=datarn)
@@ -4311,21 +4126,8 @@ class Sheet(tk.Frame):
 
     #  ##########       HEADER       ##########
 
-    def delete_header_options_dropdown(self):
-        self.destroy_opened_dropdown_window()
-        if "dropdown" in self.CH.options:
-            del self.CH.options["dropdown"]
-
-    def delete_header_options_checkbox(self):
-        if "checkbox" in self.CH.options:
-            del self.CH.options["checkbox"]
-
-    def delete_header_options_dropdown_and_checkbox(self):
-        self.delete_header_options_dropdown()
-        self.delete_header_options_checkbox()
-
     def delete_header_cell_options_dropdown(self, datacn):
-        self.destroy_opened_dropdown_window(datacn=datacn)
+        self.CH.destroy_opened_dropdown_window(datacn=datacn)
         if datacn in self.CH.cell_options and "dropdown" in self.CH.cell_options[datacn]:
             del self.CH.cell_options[datacn]["dropdown"]
 

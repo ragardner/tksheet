@@ -74,7 +74,6 @@ class ColumnHeaders(tk.Canvas):
         self.visible_col_dividers = {}
         self.col_height_resize_bbox = tuple()
         self.cell_options = {}
-        self.options = {}
         self.rsz_w = None
         self.rsz_h = None
         self.new_col_height = 0
@@ -2307,9 +2306,7 @@ class ColumnHeaders(tk.Canvas):
                 pass
         self.existing_dropdown_window = None
 
-    def get_cell_kwargs(self, datacn, key="dropdown", cell=True, entire=True):
+    def get_cell_kwargs(self, datacn, key="dropdown", cell=True):
         if cell and datacn in self.cell_options and key in self.cell_options[datacn]:
             return self.cell_options[datacn][key]
-        if entire and key in self.options:
-            return self.options[key]
         return {}

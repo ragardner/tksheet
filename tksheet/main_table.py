@@ -62,6 +62,7 @@ class MainTable(tk.Canvas):
         self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
         self.grid_cyctup = ("st", "end")
         self.grid_cyc = cycle(self.grid_cyctup)
+        self.span = self.parentframe.span
 
         self.disp_ctrl_outline = {}
         self.disp_text = defaultdict(set)
@@ -86,7 +87,6 @@ class MainTable(tk.Canvas):
         self.cell_options = {}
         self.col_options = {}
         self.row_options = {}
-        self.options = {}
 
         self.arrowkey_binding_functions = {
             "tab": self.tab_key,
@@ -895,10 +895,19 @@ class MainTable(tk.Canvas):
             self.col_options = {full_new_idxs[k]: v for k, v in self.col_options.items()}
             self.CH.cell_options = {full_new_idxs[k]: v for k, v in self.CH.cell_options.items()}
             totalrows = self.total_data_rows()
+            new_ops = self.parentframe.create_options_from_span
+            new_span = self.span
             for name, span in self.named_spans.items():
                 # span is neither a cell options nor col options span, continue
                 if not isinstance(span["from_c"], int):
                     continue
+                span_kws = {
+                    "type_": span.type_,
+                    "table": span.table,
+                    "index": span.index,
+                    "header": span.header,
+                    **span["kwargs"],
+                }
                 if isinstance(span["upto_c"], int):
                     idx_0, idx_end = int(span["from_c"]), int(span["upto_c"]) - 1
                     if full_new_idxs[idx_end] < full_new_idxs[idx_0]:
@@ -935,12 +944,7 @@ class MainTable(tk.Canvas):
                                     if (datarn, oldidx) not in event_data["cells"]["table"]:
                                         event_data["cells"]["table"][(datarn, oldidx)] = self.get_cell_data(datarn, k)
                             # create new col_options
-                            self.parentframe.create_table_kwargs(
-                                r=None,
-                                c=k,
-                                type_=span["type_"],
-                                **span["kwargs"],
-                            )
+                            new_ops(new_span(from_c=k, upto_c=k + 1, **span_kws))
                         # the span targets cells
                         else:
                             rng_upto_r = totalrows if span["upto_r"] is None else span["upto_r"]
@@ -951,12 +955,7 @@ class MainTable(tk.Canvas):
                                 ):
                                     event_data["cells"]["table"][(datarn, oldidx)] = self.get_cell_data(datarn, k)
                                 # create new cell_options
-                                self.parentframe.create_table_kwargs(
-                                    r=datarn,
-                                    c=k,
-                                    type_=span["type_"],
-                                    **span["kwargs"],
-                                )
+                                new_ops(new_span(from_r=datarn, upto_r=datarn + 1, from_c=k, upto_c=k + 1, **span_kws))
                 # remove span specific kwargs from cells/columns
                 # that are no longer in the span,
                 # cell options/col options keys are new idxs
@@ -1118,10 +1117,19 @@ class MainTable(tk.Canvas):
             self.row_options = {full_new_idxs[k]: v for k, v in self.row_options.items()}
             self.RI.cell_options = {full_new_idxs[k]: v for k, v in self.RI.cell_options.items()}
             totalcols = self.total_data_cols()
+            new_ops = self.parentframe.create_options_from_span
+            new_span = self.span
             for name, span in self.named_spans.items():
                 # span is neither a cell options nor row options span, continue
                 if not isinstance(span["from_r"], int):
                     continue
+                span_kws = {
+                    "type_": span.type_,
+                    "table": span.table,
+                    "index": span.index,
+                    "header": span.header,
+                    **span["kwargs"],
+                }
                 if isinstance(span["upto_r"], int):
                     idx_0, idx_end = int(span["from_r"]), int(span["upto_r"]) - 1
                     if full_new_idxs[idx_end] < full_new_idxs[idx_0]:
@@ -1158,12 +1166,7 @@ class MainTable(tk.Canvas):
                                     if (oldidx, datacn) not in event_data["cells"]["table"]:
                                         event_data["cells"]["table"][(oldidx, datacn)] = self.get_cell_data(k, datacn)
                             # create new row_options
-                            self.parentframe.create_table_kwargs(
-                                r=k,
-                                c=None,
-                                type_=span["type_"],
-                                **span["kwargs"],
-                            )
+                            new_ops(new_span(from_r=k, upto_r=k + 1, **span_kws))
                         # the span targets cells
                         else:
                             rng_upto_c = totalcols if span["upto_c"] is None else span["upto_c"]
@@ -1174,12 +1177,7 @@ class MainTable(tk.Canvas):
                                 ):
                                     event_data["cells"]["table"][(oldidx, datacn)] = self.get_cell_data(k, datacn)
                                 # create new cell_options
-                                self.parentframe.create_table_kwargs(
-                                    r=k,
-                                    c=datacn,
-                                    type_=span["type_"],
-                                    **span["kwargs"],
-                                )
+                                new_ops(new_span(from_r=k, upto_r=k + 1, from_c=datacn, upto_c=datacn + 1, **span_kws))
                 # remove span specific kwargs from cells/rows
                 # that are no longer in the span,
                 # cell options/row options keys are new idxs
@@ -3932,40 +3930,41 @@ class MainTable(tk.Canvas):
         # if there are named spans where columns were added
         # add options to gap which was created by adding columns
         totalrows = None
-        for name, dct in self.named_spans.items():
-            if isinstance(dct["from_c"], int):
+        new_ops = self.parentframe.create_options_from_span
+        new_span = self.span
+        for name, span in self.named_spans.items():
+            if isinstance(span["from_c"], int):
+                span_kws = {
+                    "type_": span.type_,
+                    "table": span.table,
+                    "index": span.index,
+                    "header": span.header,
+                    **span["kwargs"],
+                }
                 for datacn in cols:
-                    if dct["from_c"] > datacn:
-                        dct["from_c"] += 1
-                        if isinstance(dct["upto_c"], int):
-                            dct["upto_c"] += 1
-                    elif dct["from_c"] <= datacn and (
-                        (isinstance(dct["upto_c"], int) and dct["upto_c"] > datacn) or dct["upto_c"] is None
+                    if span["from_c"] > datacn:
+                        span["from_c"] += 1
+                        if isinstance(span["upto_c"], int):
+                            span["upto_c"] += 1
+                    elif span["from_c"] <= datacn and (
+                        (isinstance(span["upto_c"], int) and span["upto_c"] > datacn) or span["upto_c"] is None
                     ):
-                        if isinstance(dct["upto_c"], int):
-                            dct["upto_c"] += 1
+                        if isinstance(span["upto_c"], int):
+                            span["upto_c"] += 1
                         # if to_add then it's an undo/redo and don't
                         # need to create fresh options
                         if not to_add:
-                            # if rows are none it's a column options dct
-                            if dct["from_r"] is None:
-                                self.parentframe.create_table_kwargs(
-                                    r=None,
-                                    c=datacn,
-                                    type_=dct["type_"],
-                                    **dct["kwargs"],
-                                )
+                            # if rows are none it's a column options span
+                            if span["from_r"] is None:
+                                new_ops(new_span(from_c=datacn, upto_c=datacn + 1, **span_kws))
                             # cells
                             else:
                                 if totalrows is None:
                                     totalrows = self.total_data_rows()
-                                rng_upto_r = totalrows if dct["upto_r"] is None else dct["upto_r"]
-                                for rn in range(dct["from_r"], rng_upto_r):
-                                    self.parentframe.create_table_kwargs(
-                                        r=rn,
-                                        c=datacn,
-                                        type_=dct["type_"],
-                                        **dct["kwargs"],
+                                rng_upto_r = totalrows if span["upto_r"] is None else span["upto_r"]
+                                for rn in range(span["from_r"], rng_upto_r):
+                                    new_ops(
+                                        new_span(from_r=rn, upto_r=rn + 1, from_c=datacn, upto_c=datacn + 1, **span_kws)
                                     )
         if to_add and "named_spans" in to_add:
             self.named_spans = to_add["named_spans"]
@@ -3998,40 +3997,41 @@ class MainTable(tk.Canvas):
         # if there are named spans where rows were added
         # add options to gap which was created by adding rows
         totalcols = None
-        for name, dct in self.named_spans.items():
-            if isinstance(dct["from_r"], int):
+        new_ops = self.parentframe.create_options_from_span
+        new_span = self.span
+        for name, span in self.named_spans.items():
+            if isinstance(span["from_r"], int):
+                span_kws = {
+                    "type_": span.type_,
+                    "table": span.table,
+                    "index": span.index,
+                    "header": span.header,
+                    **span["kwargs"],
+                }
                 for datarn in rows:
-                    if dct["from_r"] > datarn:
-                        dct["from_r"] += 1
-                        if isinstance(dct["upto_r"], int):
-                            dct["upto_r"] += 1
-                    elif dct["from_r"] <= datarn and (
-                        (isinstance(dct["upto_r"], int) and dct["upto_r"] > datarn) or dct["upto_r"] is None
+                    if span["from_r"] > datarn:
+                        span["from_r"] += 1
+                        if isinstance(span["upto_r"], int):
+                            span["upto_r"] += 1
+                    elif span["from_r"] <= datarn and (
+                        (isinstance(span["upto_r"], int) and span["upto_r"] > datarn) or span["upto_r"] is None
                     ):
-                        if isinstance(dct["upto_r"], int):
-                            dct["upto_r"] += 1
+                        if isinstance(span["upto_r"], int):
+                            span["upto_r"] += 1
                         # if to_add then it's an undo/redo and don't
                         # need to create fresh options
                         if not to_add:
-                            # if rows are none it's a row options dct
-                            if dct["from_c"] is None:
-                                self.parentframe.create_table_kwargs(
-                                    r=datarn,
-                                    c=None,
-                                    type_=dct["type_"],
-                                    **dct["kwargs"],
-                                )
+                            # if rows are none it's a row options span
+                            if span["from_c"] is None:
+                                new_ops(new_span(from_r=datarn, upto_r=datarn + 1, **span_kws))
                             # cells
                             else:
                                 if totalcols is None:
                                     totalcols = self.total_data_cols()
-                                rng_upto_c = totalcols if dct["upto_c"] is None else dct["upto_c"]
-                                for cn in range(dct["from_c"], rng_upto_c):
-                                    self.parentframe.create_table_kwargs(
-                                        r=datarn,
-                                        c=cn,
-                                        type_=dct["type_"],
-                                        **dct["kwargs"],
+                                rng_upto_c = totalcols if span["upto_c"] is None else span["upto_c"]
+                                for cn in range(span["from_c"], rng_upto_c):
+                                    new_ops(
+                                        new_span(from_r=datarn, upto_r=datarn + 1, from_c=cn, upto_c=cn + 1, **span_kws)
                                     )
         if to_add and "named_spans" in to_add:
             self.named_spans = to_add["named_spans"]
@@ -7281,17 +7281,6 @@ class MainTable(tk.Canvas):
         return len(self.data)
 
     def reapply_formatting(self) -> None:
-        if "format" in self.options:
-            for r in range(len(self.data)):
-                if r not in self.row_options:
-                    for c in range(len(self.data[r])):
-                        if not (
-                            (r, c) in self.cell_options
-                            and "format" in self.cell_options[(r, c)]
-                            or c in self.col_options
-                            and "format" in self.col_options[c]
-                        ):
-                            self.set_cell_data(r, c, value=self.data[r][c])
         for c in gen_formatted(self.col_options):
             for r in range(len(self.data)):
                 if not (
@@ -7313,7 +7302,6 @@ class MainTable(tk.Canvas):
         self.delete_cell_format("all", clear_values=clear_values)
         self.delete_row_format("all", clear_values=clear_values)
         self.delete_column_format("all", clear_values=clear_values)
-        self.delete_sheet_format(clear_values=clear_values)
 
     def delete_cell_format(self, datarn: str | int = "all", datacn: int = 0, clear_values: bool = False) -> None:
         if isinstance(datarn, str) and datarn.lower() == "all":
@@ -7358,17 +7346,6 @@ class MainTable(tk.Canvas):
             if clear_values:
                 for datarn in range(len(self.data)):
                     self.set_cell_data(datarn, datacn, get_val(datarn, datacn), expand_sheet=False)
-
-    def delete_sheet_format(self, clear_values: bool = False) -> None:
-        if "format" in self.options:
-            del self.options["format"]
-            if clear_values:
-                totalcols = range(self.total_data_cols())
-                totalrows = range(self.total_data_rows())
-                self.data = [
-                    [self.get_value_for_empty_cell(r, c) for c in totalcols]
-                    for r in totalrows
-                ]
 
     # deals with possibility of formatter class being in self.data cell
     # if cell is formatted - possibly returns invalid_value kwarg if
@@ -7469,7 +7446,6 @@ class MainTable(tk.Canvas):
         cell: bool = True,
         row: bool = True,
         column: bool = True,
-        entire: bool = True,
     ) -> dict:
         if cell and (datarn, datacn) in self.cell_options and key in self.cell_options[(datarn, datacn)]:
             return self.cell_options[(datarn, datacn)][key]
@@ -7477,8 +7453,6 @@ class MainTable(tk.Canvas):
             return self.row_options[datarn][key]
         if column and datacn in self.col_options and key in self.col_options[datacn]:
             return self.col_options[datacn][key]
-        if entire and key in self.options:
-            return self.options[key]
         return {}
 
     def datacn(self, c: int) -> int:
