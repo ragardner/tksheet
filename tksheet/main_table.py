@@ -35,6 +35,7 @@ from .functions import (
     len_to_idx,
     move_elements_by_mapping,
     pickle_obj,
+    span_idxs_post_move,
     try_binding,
     unpickle_obj,
 )
@@ -846,7 +847,7 @@ class MainTable(tk.Canvas):
                 "data": data_new_idxs,
                 "displayed": {} if disp_new_idxs is None else disp_new_idxs,
             }
-        event_data["named_spans"] = pickle_obj(self.named_spans)
+        event_data["named_spans"] = {k: span.pickle_self() for k, span in self.named_spans.items()}
         if disp_new_idxs and (index_type == "displayed" or self.all_columns_displayed):
             self.deselect("all", run_binding=False, redraw=False)
             self.set_col_positions(
@@ -908,21 +909,13 @@ class MainTable(tk.Canvas):
                     "header": span.header,
                     **span["kwargs"],
                 }
-                if isinstance(span["upto_c"], int):
-                    idx_0, idx_end = int(span["from_c"]), int(span["upto_c"]) - 1
-                    if full_new_idxs[idx_end] < full_new_idxs[idx_0]:
-                        newfrom = full_new_idxs[idx_end]
-                        newupto = full_new_idxs[idx_0] + 1
-                    else:
-                        newfrom = full_new_idxs[idx_0]
-                        newupto = full_new_idxs[idx_end] + 1
-                    oldupto_colrange = int(span["upto_c"])
-                    newupto_colrange = newupto
-                else:
-                    newfrom = full_new_idxs[int(span["from_c"])]
-                    newupto = None
-                    oldupto_colrange = totalcols
-                    newupto_colrange = oldupto_colrange
+                oldupto_colrange, newupto_colrange, newfrom, newupto = span_idxs_post_move(
+                    data_new_idxs,
+                    full_new_idxs,
+                    totalcols,
+                    span,
+                    "c",
+                )
                 # add cell/col kwargs for columns that are new to the span
                 old_span_idxs = set(full_new_idxs[k] for k in range(span["from_c"], oldupto_colrange))
                 for k in range(newfrom, newupto_colrange):
@@ -968,7 +961,7 @@ class MainTable(tk.Canvas):
                         if (
                             span["header"]
                             and full_new_idxs[k] in self.CH.cell_options
-                            and span["type_"] in self.CH.cell_options
+                            and span["type_"] in self.CH.cell_options[full_new_idxs[k]]
                         ):
                             del self.CH.cell_options[full_new_idxs[k]][span["type_"]]
                         # span is for col options
@@ -1071,7 +1064,7 @@ class MainTable(tk.Canvas):
                 "data": data_new_idxs,
                 "displayed": {} if disp_new_idxs is None else disp_new_idxs,
             }
-        event_data["named_spans"] = pickle_obj(self.named_spans)
+        event_data["named_spans"] = {k: span.pickle_self() for k, span in self.named_spans.items()}
         if disp_new_idxs and (index_type == "displayed" or self.all_rows_displayed):
             self.deselect("all", run_binding=False, redraw=False)
             self.set_row_positions(
@@ -1130,21 +1123,13 @@ class MainTable(tk.Canvas):
                     "header": span.header,
                     **span["kwargs"],
                 }
-                if isinstance(span["upto_r"], int):
-                    idx_0, idx_end = int(span["from_r"]), int(span["upto_r"]) - 1
-                    if full_new_idxs[idx_end] < full_new_idxs[idx_0]:
-                        newfrom = full_new_idxs[idx_end]
-                        newupto = full_new_idxs[idx_0] + 1
-                    else:
-                        newfrom = full_new_idxs[idx_0]
-                        newupto = full_new_idxs[idx_end] + 1
-                    oldupto_rowrange = int(span["upto_r"])
-                    newupto_rowrange = newupto
-                else:
-                    newfrom = full_new_idxs[int(span["from_r"])]
-                    newupto = None
-                    oldupto_rowrange = totalrows
-                    newupto_rowrange = oldupto_rowrange
+                oldupto_rowrange, newupto_rowrange, newfrom, newupto = span_idxs_post_move(
+                    data_new_idxs,
+                    full_new_idxs,
+                    totalrows,
+                    span,
+                    "r",
+                )
                 # add cell/row kwargs for rows that are new to the span
                 old_span_idxs = set(full_new_idxs[k] for k in range(span["from_r"], oldupto_rowrange))
                 for k in range(newfrom, newupto_rowrange):
@@ -1190,7 +1175,7 @@ class MainTable(tk.Canvas):
                         if (
                             span["index"]
                             and full_new_idxs[k] in self.RI.cell_options
-                            and span["type_"] in self.RI.cell_options
+                            and span["type_"] in self.RI.cell_options[full_new_idxs[k]]
                         ):
                             del self.RI.cell_options[full_new_idxs[k]][span["type_"]]
                         # span is for row options

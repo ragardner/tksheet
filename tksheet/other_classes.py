@@ -1,14 +1,18 @@
 from __future__ import annotations
 
+import pickle
 import tkinter as tk
 from collections import namedtuple
-from collections.abc import Hashable, Generator, Iterator
+from collections.abc import Generator, Hashable, Iterator
+from functools import partial
 
 from .vars import (
     ctrl_key,
     get_font,
     rc_binding,
 )
+
+pickle_obj = partial(pickle.dumps, protocol=pickle.HIGHEST_PROTOCOL)
 
 CurrentlySelectedClass = namedtuple(
     "CurrentlySelectedClass",
@@ -261,6 +265,13 @@ class SpanDict(dict):
         else:
             rng_upto_c = self["upto_c"]
         return SpanRange(rng_from_r, rng_upto_r), SpanRange(rng_from_c, rng_upto_c)
+
+    def pickle_self(self) -> bytes:
+        x = self["widget"]
+        self["widget"] = None
+        p = pickle_obj(self)
+        self["widget"] = x
+        return p
 
     __setattr__ = __setitem__
     __getattr__ = __getitem__

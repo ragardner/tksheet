@@ -34,6 +34,8 @@ def decompress_load(b: bytes) -> object:
     return pickle.loads(zlib.decompress(b))
 
 
+
+
 def tksheet_type_error(kwarg, valid_types, not_type):
     valid_types = ", ".join(f"{type_}" for type_ in valid_types)
     return f"Argument '{kwarg}' must be one of the following types: {valid_types}, " f"not {type(not_type)}."
@@ -1080,3 +1082,38 @@ def fix_format_kwargs(kwargs: dict) -> dict:
     if not isinstance(kwargs["invalid_value"], str):
         kwargs["invalid_value"] = f"{kwargs['invalid_value']}"
     return kwargs
+
+
+def span_idxs_post_move(
+    new_idxs: dict[int, int],
+    full_new_idxs: dict[int, int],
+    total: int,
+    span: Span,
+    axis: str,
+) -> tuple[int, None]:
+    if isinstance(span[f"upto_{axis}"], int):
+        oldfrom, oldupto = int(span[f"from_{axis}"]), int(span[f"upto_{axis}"]) - 1
+        # oldfrom has moved to somewhere inside the span
+        if full_new_idxs[oldfrom] >= oldfrom and full_new_idxs[oldfrom] <= oldupto:
+            newfrom = oldfrom
+        else:
+            newfrom = full_new_idxs[oldfrom]
+        if full_new_idxs[oldupto] < full_new_idxs[oldfrom]:
+            newfrom = full_new_idxs[oldupto]
+            newupto = full_new_idxs[oldfrom] + 1
+        else:
+            newfrom = full_new_idxs[oldfrom]
+            newupto = full_new_idxs[oldupto] + 1
+        oldupto_colrange = int(span[f"upto_{axis}"])
+        newupto_colrange = newupto
+    else:
+        oldfrom = int(span[f"from_{axis}"])
+        if full_new_idxs[oldfrom] > oldfrom:
+            newfrom = oldfrom
+        else:
+            newfrom = full_new_idxs[oldfrom]
+        newupto = None
+        oldupto_colrange = total
+        newupto_colrange = oldupto_colrange
+
+    return oldupto_colrange, newupto_colrange, newfrom, newupto
