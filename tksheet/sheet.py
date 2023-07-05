@@ -3562,7 +3562,6 @@ class Sheet(tk.Frame):
         return self
 
     def create_options_from_span(self, span: Span) -> Sheet:
-        print (span)
         getattr(self, span.type_)(span, **span.kwargs)
         return self
 

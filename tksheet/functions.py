@@ -34,8 +34,6 @@ def decompress_load(b: bytes) -> object:
     return pickle.loads(zlib.decompress(b))
 
 
-
-
 def tksheet_type_error(kwarg, valid_types, not_type):
     valid_types = ", ".join(f"{type_}" for type_ in valid_types)
     return f"Argument '{kwarg}' must be one of the following types: {valid_types}, " f"not {type(not_type)}."
@@ -106,11 +104,11 @@ def event_dict(
             index=DotDict(),
             column_widths=DotDict(),
             row_heights=DotDict(),
-            options=DotDict(),
             displayed_rows=None,
             displayed_columns=None,
         ),
         named_spans=DotDict() if named_spans is None else named_spans,
+        options=DotDict(),
         selection_boxes=DotDict() if boxes is None else {boxes[:-1]: boxes[-1]} if isinstance(boxes, tuple) else boxes,
         selected=tuple() if selected is None else selected,
         being_selected=tuple() if being_selected is None else being_selected,
@@ -1091,29 +1089,50 @@ def span_idxs_post_move(
     span: Span,
     axis: str,
 ) -> tuple[int, None]:
+    """
+    Calculates the position of a span after moving rows/columns
+    """
     if isinstance(span[f"upto_{axis}"], int):
         oldfrom, oldupto = int(span[f"from_{axis}"]), int(span[f"upto_{axis}"]) - 1
-        # oldfrom has moved to somewhere inside the span
-        if full_new_idxs[oldfrom] >= oldfrom and full_new_idxs[oldfrom] <= oldupto:
-            newfrom = oldfrom
-        else:
+        # if the span is greater than one in length
+        if oldupto - oldfrom > 1:
             newfrom = full_new_idxs[oldfrom]
-        if full_new_idxs[oldupto] < full_new_idxs[oldfrom]:
-            newfrom = full_new_idxs[oldupto]
-            newupto = full_new_idxs[oldfrom] + 1
+            newupto = full_new_idxs[oldupto]
+            if newfrom > newupto:
+                newfrom, newupto = newupto, newfrom
+            newupto += 1
+        # span has one row/column
         else:
-            newfrom = full_new_idxs[oldfrom]
-            newupto = full_new_idxs[oldupto] + 1
+            newupto = full_new_idxs[oldupto]
+            newfrom, newupto = newupto, newupto + 1
         oldupto_colrange = int(span[f"upto_{axis}"])
         newupto_colrange = newupto
     else:
         oldfrom = int(span[f"from_{axis}"])
-        if full_new_idxs[oldfrom] > oldfrom:
-            newfrom = oldfrom
-        else:
-            newfrom = full_new_idxs[oldfrom]
+        newfrom = new_idxs[oldfrom]
         newupto = None
         oldupto_colrange = total
         newupto_colrange = oldupto_colrange
-
     return oldupto_colrange, newupto_colrange, newfrom, newupto
+
+
+def mod_span(
+    span: Span,
+    from_r: int | None = None,
+    from_c: int | None = None,
+    upto_r: int | None = None,
+    upto_c: int | None = None,
+    kws: dict | None = None,
+) -> Span:
+    if kws is None:
+        kws = {}
+    span.from_r = from_r
+    span.from_c = from_c
+    span.upto_r = upto_r
+    span.upto_c = upto_c
+    span.type_ = kws["type_"]
+    span.table = kws["table"]
+    span.index = kws["index"]
+    span.header = ["header"]
+    span.kwargs = kws["kwargs"]
+    return span

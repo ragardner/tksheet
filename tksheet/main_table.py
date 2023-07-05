@@ -33,6 +33,7 @@ from .functions import (
     insert_items,
     is_iterable,
     len_to_idx,
+    mod_span,
     move_elements_by_mapping,
     pickle_obj,
     span_idxs_post_move,
@@ -847,6 +848,7 @@ class MainTable(tk.Canvas):
                 "data": data_new_idxs,
                 "displayed": {} if disp_new_idxs is None else disp_new_idxs,
             }
+        event_data["options"] = self.pickle_options()
         event_data["named_spans"] = {k: span.pickle_self() for k, span in self.named_spans.items()}
         if disp_new_idxs and (index_type == "displayed" or self.all_columns_displayed):
             self.deselect("all", run_binding=False, redraw=False)
@@ -897,7 +899,7 @@ class MainTable(tk.Canvas):
             self.CH.cell_options = {full_new_idxs[k]: v for k, v in self.CH.cell_options.items()}
             totalrows = self.total_data_rows()
             new_ops = self.parentframe.create_options_from_span
-            new_span = self.span
+            qkspan = self.span()
             for name, span in self.named_spans.items():
                 # span is neither a cell options nor col options span, continue
                 if not isinstance(span["from_c"], int):
@@ -907,7 +909,7 @@ class MainTable(tk.Canvas):
                     "table": span.table,
                     "index": span.index,
                     "header": span.header,
-                    **span["kwargs"],
+                    "kwargs": span.kwargs,
                 }
                 oldupto_colrange, newupto_colrange, newfrom, newupto = span_idxs_post_move(
                     data_new_idxs,
@@ -937,7 +939,7 @@ class MainTable(tk.Canvas):
                                     if (datarn, oldidx) not in event_data["cells"]["table"]:
                                         event_data["cells"]["table"][(datarn, oldidx)] = self.get_cell_data(datarn, k)
                             # create new col_options
-                            new_ops(new_span(from_c=k, upto_c=k + 1, **span_kws))
+                            new_ops(mod_span(span=qkspan, from_c=k, upto_c=k + 1, kws=span_kws))
                         # the span targets cells
                         else:
                             rng_upto_r = totalrows if span["upto_r"] is None else span["upto_r"]
@@ -948,7 +950,16 @@ class MainTable(tk.Canvas):
                                 ):
                                     event_data["cells"]["table"][(datarn, oldidx)] = self.get_cell_data(datarn, k)
                                 # create new cell_options
-                                new_ops(new_span(from_r=datarn, upto_r=datarn + 1, from_c=k, upto_c=k + 1, **span_kws))
+                                new_ops(
+                                    mod_span(
+                                        span=qkspan,
+                                        from_r=datarn,
+                                        upto_r=datarn + 1,
+                                        from_c=k,
+                                        upto_c=k + 1,
+                                        kws=span_kws,
+                                    )
+                                )
                 # remove span specific kwargs from cells/columns
                 # that are no longer in the span,
                 # cell options/col options keys are new idxs
@@ -1064,6 +1075,7 @@ class MainTable(tk.Canvas):
                 "data": data_new_idxs,
                 "displayed": {} if disp_new_idxs is None else disp_new_idxs,
             }
+        event_data["options"] = self.pickle_options()
         event_data["named_spans"] = {k: span.pickle_self() for k, span in self.named_spans.items()}
         if disp_new_idxs and (index_type == "displayed" or self.all_rows_displayed):
             self.deselect("all", run_binding=False, redraw=False)
@@ -1111,7 +1123,7 @@ class MainTable(tk.Canvas):
             self.RI.cell_options = {full_new_idxs[k]: v for k, v in self.RI.cell_options.items()}
             totalcols = self.total_data_cols()
             new_ops = self.parentframe.create_options_from_span
-            new_span = self.span
+            qkspan = self.span()
             for name, span in self.named_spans.items():
                 # span is neither a cell options nor row options span, continue
                 if not isinstance(span["from_r"], int):
@@ -1151,7 +1163,7 @@ class MainTable(tk.Canvas):
                                     if (oldidx, datacn) not in event_data["cells"]["table"]:
                                         event_data["cells"]["table"][(oldidx, datacn)] = self.get_cell_data(k, datacn)
                             # create new row_options
-                            new_ops(new_span(from_r=k, upto_r=k + 1, **span_kws))
+                            new_ops(mod_span(span=qkspan, from_r=k, upto_r=k + 1, kws=span_kws))
                         # the span targets cells
                         else:
                             rng_upto_c = totalcols if span["upto_c"] is None else span["upto_c"]
@@ -1162,7 +1174,16 @@ class MainTable(tk.Canvas):
                                 ):
                                     event_data["cells"]["table"][(oldidx, datacn)] = self.get_cell_data(k, datacn)
                                 # create new cell_options
-                                new_ops(new_span(from_r=k, upto_r=k + 1, from_c=datacn, upto_c=datacn + 1, **span_kws))
+                                new_ops(
+                                    mod_span(
+                                        span=qkspan,
+                                        from_r=k,
+                                        upto_r=k + 1,
+                                        from_c=datacn,
+                                        upto_c=datacn + 1,
+                                        kws=span_kws,
+                                    )
+                                )
                 # remove span specific kwargs from cells/rows
                 # that are no longer in the span,
                 # cell options/row options keys are new idxs
@@ -1296,6 +1317,21 @@ class MainTable(tk.Canvas):
             event_data["cells"]["table"][(datarn, datacn)] = self.get_cell_data(datarn, datacn)
         return event_data
 
+    def restore_options_named_spans(self, modification: dict) -> None:
+        if not isinstance(modification["options"], dict):
+            modification["options"] = unpickle_obj(modification["options"])
+        if "cell_options" in modification["options"]:
+            self.cell_options = modification["options"]["cell_options"]
+        if "column_options" in modification["options"]:
+            self.col_options = modification["options"]["column_options"]
+        if "row_options" in modification["options"]:
+            self.row_options = modification["options"]["row_options"]
+        if "CH_cell_options" in modification["options"]:
+            self.CH.cell_options = modification["options"]["CH_cell_options"]
+        if "RI_cell_options" in modification["options"]:
+            self.RI.cell_options = modification["options"]["RI_cell_options"]
+        self.named_spans = {k: unpickle_obj(v) for k, v in modification["named_spans"].items()}
+
     def undo_modification_invert_event(self, modification: dict, name: str = "undo") -> bytes | dict:
         self.deselect("all", redraw=False)
         event_data = event_dict(
@@ -1332,11 +1368,11 @@ class MainTable(tk.Canvas):
                 ),
                 event_data=event_data,
             )
-            self.named_spans = unpickle_obj(modification["named_spans"])
             event_data["moved"]["columns"] = {
                 "data": data_new_idxs,
                 "displayed": disp_new_idxs,
             }
+            self.restore_options_named_spans(modification)
             curr = self.currently_selected()
 
         if modification["moved"]["rows"]:
@@ -1360,11 +1396,11 @@ class MainTable(tk.Canvas):
                 ),
                 event_data=event_data,
             )
-            self.named_spans = unpickle_obj(modification["named_spans"])
             event_data["moved"]["rows"] = {
                 "data": data_new_idxs,
                 "displayed": disp_new_idxs,
             }
+            self.restore_options_named_spans(modification)
             curr = self.currently_selected()
 
         if modification["added"]["rows"]:
@@ -1428,9 +1464,10 @@ class MainTable(tk.Canvas):
                 row_heights=modification["deleted"]["row_heights"],
                 event_data=event_data,
                 displayed_rows=modification["deleted"]["displayed_rows"],
-                options_to_add=unpickle_obj(modification["deleted"]["options"]),
+                create_ops=False,
                 add_col_positions=False,
             )
+            self.restore_options_named_spans(modification)
 
         if modification["deleted"]["columns"]:
             self.add_columns(
@@ -1439,9 +1476,10 @@ class MainTable(tk.Canvas):
                 column_widths=modification["deleted"]["column_widths"],
                 event_data=event_data,
                 displayed_columns=modification["deleted"]["displayed_columns"],
-                options_to_add=unpickle_obj(modification["deleted"]["options"]),
+                create_ops=False,
                 add_row_positions=False,
             )
+            self.restore_options_named_spans(modification)
 
         if modification["eventname"].startswith(("edit", "move")):
             if not saved_cells:
@@ -3890,28 +3928,18 @@ class MainTable(tk.Canvas):
     def adjust_options_post_add_columns(
         self,
         cols: list | tuple,
-        to_add: None | dict = None,
+        create_ops: bool = True,
     ) -> None:
-        if to_add and "cell_options" in to_add:
-            self.cell_options = dict(to_add["cell_options"])
-        else:
-            self.cell_options = {
-                (r, c if not (num := bisect_right(cols, c)) else c + num): v for (r, c), v in self.cell_options.items()
-            }
-
-        if to_add and "column_options" in to_add:
-            self.col_options = dict(to_add["column_options"])
-        else:
-            self.col_options = {
-                c if not (num := bisect_right(cols, c)) else c + num: v for c, v in self.col_options.items()
-            }
-
-        if to_add and "CH_cell_options" in to_add:
-            self.CH.cell_options = dict(to_add["CH_cell_options"])
-        else:
-            self.CH.cell_options = {
-                c if not (num := bisect_right(cols, c)) else c + num: v for c, v in self.CH.cell_options.items()
-            }
+        # self.cell_options = dict(to_add["cell_options"]) here
+        self.cell_options = {
+            (r, c if not (num := bisect_right(cols, c)) else c + num): v for (r, c), v in self.cell_options.items()
+        }
+        self.col_options = {
+            c if not (num := bisect_right(cols, c)) else c + num: v for c, v in self.col_options.items()
+        }
+        self.CH.cell_options = {
+            c if not (num := bisect_right(cols, c)) else c + num: v for c, v in self.CH.cell_options.items()
+        }
         # if there are named spans where columns were added
         # add options to gap which was created by adding columns
         totalrows = None
@@ -3938,7 +3966,7 @@ class MainTable(tk.Canvas):
                             span["upto_c"] += 1
                         # if to_add then it's an undo/redo and don't
                         # need to create fresh options
-                        if not to_add:
+                        if create_ops:
                             # if rows are none it's a column options span
                             if span["from_r"] is None:
                                 new_ops(new_span(from_c=datacn, upto_c=datacn + 1, **span_kws))
@@ -3951,34 +3979,21 @@ class MainTable(tk.Canvas):
                                     new_ops(
                                         new_span(from_r=rn, upto_r=rn + 1, from_c=datacn, upto_c=datacn + 1, **span_kws)
                                     )
-        if to_add and "named_spans" in to_add:
-            self.named_spans = to_add["named_spans"]
 
     def adjust_options_post_add_rows(
         self,
         rows: list | tuple,
-        to_add: None | dict = None,
+        create_ops: bool = True,
     ) -> None:
-        if to_add and "cell_options" in to_add:
-            self.cell_options = dict(to_add["cell_options"])
-        else:
-            self.cell_options = {
-                (r if not (num := bisect_right(rows, r)) else r + num, c): v for (r, c), v in self.cell_options.items()
-            }
-
-        if to_add and "row_options" in to_add:
-            self.row_options = dict(to_add["row_options"])
-        else:
-            self.row_options = {
-                r if not (num := bisect_right(rows, r)) else r + num: v for r, v in self.row_options.items()
-            }
-
-        if to_add and "RI_cell_options" in to_add:
-            self.RI.cell_options = dict(to_add["RI_cell_options"])
-        else:
-            self.RI.cell_options = {
-                r if not (num := bisect_right(rows, r)) else r + num: v for r, v in self.RI.cell_options.items()
-            }
+        self.cell_options = {
+            (r if not (num := bisect_right(rows, r)) else r + num, c): v for (r, c), v in self.cell_options.items()
+        }
+        self.row_options = {
+            r if not (num := bisect_right(rows, r)) else r + num: v for r, v in self.row_options.items()
+        }
+        self.RI.cell_options = {
+            r if not (num := bisect_right(rows, r)) else r + num: v for r, v in self.RI.cell_options.items()
+        }
         # if there are named spans where rows were added
         # add options to gap which was created by adding rows
         totalcols = None
@@ -4005,7 +4020,7 @@ class MainTable(tk.Canvas):
                             span["upto_r"] += 1
                         # if to_add then it's an undo/redo and don't
                         # need to create fresh options
-                        if not to_add:
+                        if create_ops:
                             # if rows are none it's a row options span
                             if span["from_c"] is None:
                                 new_ops(new_span(from_r=datarn, upto_r=datarn + 1, **span_kws))
@@ -4018,8 +4033,6 @@ class MainTable(tk.Canvas):
                                     new_ops(
                                         new_span(from_r=datarn, upto_r=datarn + 1, from_c=cn, upto_c=cn + 1, **span_kws)
                                     )
-        if to_add and "named_spans" in to_add:
-            self.named_spans = to_add["named_spans"]
 
     def adjust_options_post_delete_columns(
         self,
@@ -4158,12 +4171,10 @@ class MainTable(tk.Canvas):
         column_widths: dict,
         event_data: dict,
         displayed_columns: None | list[int, ...] = None,
-        options_to_add: None | dict = None,
+        create_ops: bool = True,
         create_selections: bool = True,
         add_row_positions: bool = True,
     ) -> dict:
-        if options_to_add is None:
-            options_to_add = {}
         saved_displayed_columns = list(self.displayed_columns)
         if isinstance(displayed_columns, list):
             self.displayed_columns = displayed_columns
@@ -4210,7 +4221,7 @@ class MainTable(tk.Canvas):
             self._headers = insert_items(self._headers, header, self.CH.fix_header)
         self.adjust_options_post_add_columns(
             cols=tuple(reversed(columns)),
-            to_add=options_to_add,
+            create_ops=create_ops,
         )
         if create_selections:
             self.deselect("all")
@@ -4339,12 +4350,10 @@ class MainTable(tk.Canvas):
         row_heights: dict,
         event_data: dict,
         displayed_rows: None | list[int, ...] = None,
-        options_to_add: None | dict = None,
+        create_ops: bool = True,
         create_selections: bool = True,
         add_col_positions: bool = True,
     ) -> dict:
-        if options_to_add is None:
-            options_to_add = {}
         saved_displayed_rows = list(self.displayed_rows)
         if isinstance(displayed_rows, list):
             self.displayed_rows = displayed_rows
@@ -4389,7 +4398,7 @@ class MainTable(tk.Canvas):
             )
         self.adjust_options_post_add_rows(
             rows=tuple(reversed(rows)),
-            to_add=options_to_add,
+            create_ops=create_ops,
         )
         if create_selections:
             self.deselect("all")
@@ -4506,19 +4515,23 @@ class MainTable(tk.Canvas):
             }
         return rows, row_index, heights
 
+    def pickle_options(self) -> bytes:
+        return pickle_obj(
+            {
+                "cell_options": self.cell_options,
+                "column_options": self.col_options,
+                "row_options": self.row_options,
+                "CH_cell_options": self.CH.cell_options,
+                "RI_cell_options": self.RI.cell_options,
+            })
+
     def delete_columns_data(self, cols: list, event_data: dict) -> dict:
         self.mouseclick_outside_editor_or_dropdown_all_canvases()
         event_data["deleted"]["displayed_columns"] = (
             list(self.displayed_columns) if not isinstance(self.displayed_columns, int) else int(self.displayed_columns)
         )
-        event_data["deleted"]["options"] = pickle_obj(
-            {
-                "cell_options": self.cell_options,
-                "column_options": self.col_options,
-                "CH_cell_options": self.CH.cell_options,
-                "named_spans": self.named_spans,
-            }
-        )
+        event_data["options"] = self.pickle_options()
+        event_data["named_spans"] = {k: span.pickle_self() for k, span in self.named_spans.items()}
         for datacn in reversed(cols):
             for rn in range(len(self.data)):
                 if datacn not in event_data["deleted"]["columns"]:
@@ -4577,14 +4590,8 @@ class MainTable(tk.Canvas):
         event_data["deleted"]["displayed_rows"] = (
             list(self.displayed_rows) if not isinstance(self.displayed_rows, int) else int(self.displayed_rows)
         )
-        event_data["deleted"]["options"] = pickle_obj(
-            {
-                "cell_options": self.cell_options,
-                "row_options": self.row_options,
-                "RI_cell_options": self.RI.cell_options,
-                "named_spans": self.named_spans,
-            }
-        )
+        event_data["options"] = self.pickle_options()
+        event_data["named_spans"] = {k: span.pickle_self() for k, span in self.named_spans.items()}
         for datarn in reversed(rows):
             event_data["deleted"]["rows"][datarn] = self.data.pop(datarn)
             try:
