@@ -326,7 +326,7 @@ class RowIndex(tk.Canvas):
         self.disp_resize_lines = {}
         for t, sh in self.hidd_resize_lines.items():
             if sh:
-                self.itemconfig(t, state="hidden")
+                self.itemconfig(t, tags=("",), state="hidden")
                 self.hidd_resize_lines[t] = False
 
     def mouse_motion(self, event):
@@ -665,7 +665,19 @@ class RowIndex(tk.Canvas):
                 self.yview_scroll(-2, "units")
             self.fix_yview()
             self.MT.main_table_redraw_grid_and_text(redraw_row_index=True)
-        return self.MT.row_positions[self.MT.identify_row(y=y)]
+        row = self.MT.identify_row(y=y)
+        if row == len(self.MT.row_positions) - 1:
+            row -= 1
+        if (
+            row >= self.dragged_row.to_move[0]
+            and row <= self.dragged_row.to_move[-1]
+        ):
+            if is_contiguous(self.dragged_row.to_move):
+                return self.MT.row_positions[self.dragged_row.to_move[0]]
+            return self.MT.row_positions[row]
+        elif row > self.dragged_row.to_move[-1]:
+            return self.MT.row_positions[row + 1]
+        return self.MT.row_positions[row]
 
     def show_drag_and_drop_indicators(
         self,
@@ -682,9 +694,9 @@ class RowIndex(tk.Canvas):
             ypos,
             width=3,
             fill=self.drag_and_drop_bg,
-            tag="dd",
+            tag="move_rows",
         )
-        self.MT.create_resize_line(x1, ypos, x2, ypos, width=3, fill=self.drag_and_drop_bg, tag="dd")
+        self.MT.create_resize_line(x1, ypos, x2, ypos, width=3, fill=self.drag_and_drop_bg, tag="move_rows")
         for chunk in consecutive_chunks(rows):
             self.MT.show_ctrl_outline(
                 start_cell=(0, chunk[0]),
@@ -797,15 +809,19 @@ class RowIndex(tk.Canvas):
             and self.rsz_h is None
             and self.rsz_w is None
             and self.dragged_row is not None
+            and self.find_withtag("move_rows")
         ):
             self.delete_all_resize_and_ctrl_lines()
-            y = event.y
-            r = self.MT.identify_row(y=y)
+            r = self.MT.identify_row(y=event.y)
             totalrows = len(self.dragged_row.to_move)
             if (
                 r is not None
-                and totalrows != (len(self.MT.row_positions) - 1)
-                and not (r == self.dragged_row.to_move[0] and is_contiguous(self.dragged_row.to_move))
+                and totalrows != len(self.MT.row_positions) - 1
+                and not (
+                    r >= self.dragged_row.to_move[0]
+                    and r <= self.dragged_row.to_move[-1]
+                    and is_contiguous(self.dragged_row.to_move)
+                )
             ):
                 if r >= len(self.MT.row_positions) - 1:
                     r -= 1

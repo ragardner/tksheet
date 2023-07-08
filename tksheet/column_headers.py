@@ -338,7 +338,7 @@ class ColumnHeaders(tk.Canvas):
         self.disp_resize_lines = {}
         for t, sh in self.hidd_resize_lines.items():
             if sh:
-                self.itemconfig(t, state="hidden")
+                self.itemconfig(t, tags=("",), state="hidden")
                 self.hidd_resize_lines[t] = False
 
     def mouse_motion(self, event):
@@ -680,7 +680,19 @@ class ColumnHeaders(tk.Canvas):
                 self.xview_scroll(-2, "units")
             self.fix_xview()
             self.MT.main_table_redraw_grid_and_text(redraw_header=True)
-        return self.MT.col_positions[self.MT.identify_col(x=x)]
+        col = self.MT.identify_col(x=x)
+        if col == len(self.MT.col_positions) - 1:
+            col -= 1
+        if (
+            col >= self.dragged_col.to_move[0]
+            and col <= self.dragged_col.to_move[-1]
+        ):
+            if is_contiguous(self.dragged_col.to_move):
+                return self.MT.col_positions[self.dragged_col.to_move[0]]
+            return self.MT.col_positions[col]
+        elif col > self.dragged_col.to_move[-1]:
+            return self.MT.col_positions[col + 1]
+        return self.MT.col_positions[col]
 
     def show_drag_and_drop_indicators(
         self,
@@ -697,9 +709,9 @@ class ColumnHeaders(tk.Canvas):
             self.current_height,
             width=3,
             fill=self.drag_and_drop_bg,
-            tag="dd",
+            tag="move_columns",
         )
-        self.MT.create_resize_line(xpos, y1, xpos, y2, width=3, fill=self.drag_and_drop_bg, tag="dd")
+        self.MT.create_resize_line(xpos, y1, xpos, y2, width=3, fill=self.drag_and_drop_bg, tag="move_columns")
         for chunk in consecutive_chunks(cols):
             self.MT.show_ctrl_outline(
                 start_cell=(chunk[0], 0),
@@ -813,15 +825,19 @@ class ColumnHeaders(tk.Canvas):
             and self.rsz_h is None
             and self.rsz_w is None
             and self.dragged_col is not None
+            and self.find_withtag("move_columns")
         ):
             self.delete_all_resize_and_ctrl_lines()
-            x = event.x
-            c = self.MT.identify_col(x=x)
+            c = self.MT.identify_col(x=event.x)
             totalcols = len(self.dragged_col.to_move)
             if (
                 c is not None
                 and totalcols != len(self.MT.col_positions) - 1
-                and not (c == self.dragged_col.to_move[0] and is_contiguous(self.dragged_col.to_move))
+                and not (
+                    c >= self.dragged_col.to_move[0]
+                    and c <= self.dragged_col.to_move[-1]
+                    and is_contiguous(self.dragged_col.to_move)
+                )
             ):
                 if c >= len(self.MT.col_positions) - 1:
                     c -= 1

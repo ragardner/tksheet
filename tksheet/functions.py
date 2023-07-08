@@ -304,7 +304,7 @@ def consecutive_chunks(seq: list) -> list:
             yield seq[start : len(seq)]
 
 
-def is_contiguous(seq: list[int]) -> bool:
+def is_contiguous(seq: list[int, ...]) -> bool:
     itr = iter(seq)
     prev = next(itr)
     if not all(i == (prev := prev + 1) for i in itr):
@@ -349,7 +349,7 @@ def move_elements_by_mapping(
 def move_elements_to(
     seq: list[...],
     move_to: int,
-    to_move: list[int],
+    to_move: list[int, ...],
 ) -> list[...]:
     return move_elements_by_mapping(
         seq,
@@ -365,20 +365,18 @@ def move_elements_to(
 def get_new_indexes(
     seqlen: int,
     move_to: int,
-    to_move: list[int],
+    to_move: list[int, ...],
     keep_len: bool = True,
     get_inverse: bool = False,
 ) -> tuple[dict]:
     # returns
     # {old idx: new idx, ...}
-
-    # if new indexes have to be pushed back by
-    # moving elements towards the end of the list
-    if keep_len and len(to_move) > seqlen - move_to:
-        offset = len(to_move) - 1
-        new_idxs = {to_move[i]: move_to - offset + i for i in range(len(to_move))}
+    offset = len(to_move) - 1
+    if move_to <= to_move[0]:
+        new_idxs = range(move_to, move_to + len(to_move))
     else:
-        new_idxs = {to_move[i]: move_to + i for i in range(len(to_move))}
+        new_idxs = range(move_to - offset, move_to - offset + len(to_move))
+    new_idxs = {old: new for old, new in zip(to_move, new_idxs)}
     if get_inverse:
         return new_idxs, dict(zip(new_idxs.values(), new_idxs))
     return new_idxs
@@ -1092,24 +1090,23 @@ def span_idxs_post_move(
     """
     Calculates the position of a span after moving rows/columns
     """
+    # i should be able to move either end within the span and keep the span
+    # but how do i know what the new end of the span is?
+    # if some columns are moving in and some out
+
     if isinstance(span[f"upto_{axis}"], int):
         oldfrom, oldupto = int(span[f"from_{axis}"]), int(span[f"upto_{axis}"]) - 1
         # if the span is greater than one in length
-        if oldupto - oldfrom > 1:
-            newfrom = full_new_idxs[oldfrom]
-            newupto = full_new_idxs[oldupto]
-            if newfrom > newupto:
-                newfrom, newupto = newupto, newfrom
-            newupto += 1
-        # span has one row/column
-        else:
-            newupto = full_new_idxs[oldupto]
-            newfrom, newupto = newupto, newupto + 1
+        newfrom = full_new_idxs[oldfrom]
+        newupto = full_new_idxs[oldupto]
+        if newfrom > newupto:
+            newfrom, newupto = newupto, newfrom
+        newupto += 1
         oldupto_colrange = int(span[f"upto_{axis}"])
         newupto_colrange = newupto
     else:
         oldfrom = int(span[f"from_{axis}"])
-        newfrom = new_idxs[oldfrom]
+        newfrom = full_new_idxs[oldfrom]
         newupto = None
         oldupto_colrange = total
         newupto_colrange = oldupto_colrange
@@ -1133,6 +1130,6 @@ def mod_span(
     span.type_ = kws["type_"]
     span.table = kws["table"]
     span.index = kws["index"]
-    span.header = ["header"]
+    span.header = kws["header"]
     span.kwargs = kws["kwargs"]
     return span

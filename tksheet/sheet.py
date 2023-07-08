@@ -35,7 +35,7 @@ from .functions import (
 )
 from .main_table import MainTable
 from .other_classes import CurrentlySelectedClass  # noqa: F401
-from .other_classes import DotDict, GeneratedMouseEvent, SpanDict
+from .other_classes import DotDict, GeneratedMouseEvent
 from .row_index import RowIndex
 from .top_left_rectangle import TopLeftRectangle
 from .types import Span, CreateSpanTypes
@@ -1985,13 +1985,20 @@ class Sheet(tk.Frame):
     def delete_out_of_bounds_options(self) -> Sheet:
         maxc = self.total_columns()
         maxr = self.total_rows()
+        for name in tuple(self.MT.named_spans):
+            span = self.MT.named_spans[name]
+            if (
+                (isinstance(span.upto_r, int) and span.upto_r > maxr)
+                or (isinstance(span.upto_c, int) and span.upto_c > maxc)
+                or span.from_r >= maxr
+                or span.from_c >= maxc
+            ):
+                self.delete_named_span(name)
         self.MT.cell_options = {k: v for k, v in self.MT.cell_options.items() if k[0] < maxr and k[1] < maxc}
         self.RI.cell_options = {k: v for k, v in self.RI.cell_options.items() if k < maxr}
         self.CH.cell_options = {k: v for k, v in self.CH.cell_options.items() if k < maxc}
         self.MT.col_options = {k: v for k, v in self.MT.col_options.items() if k < maxc}
         self.MT.row_options = {k: v for k, v in self.MT.row_options.items() if k < maxr}
-        # needs to handle named ranges that are out of bounds
-        # here
         return self
 
     def reset_all_options(self) -> Sheet:
@@ -3478,25 +3485,20 @@ class Sheet(tk.Frame):
                 upto_r=upto_r,
                 upto_c=upto_c,
             )
-        span = SpanDict(
-            {**span,
-            **{
-                "type_": type_,
-                "name": name,
-                "kwargs": kwargs,
-                "table": table,
-                "header": header,
-                "index": index,
-                "tdisp": tdisp,
-                "idisp": idisp,
-                "hdisp": hdisp,
-                "transpose": transpose,
-                "ndim": ndim,
-                "convert": convert,
-                "undo": undo,
-                "widget": self if widget is None else widget,
-            }},
-        )
+        span.type_ = type_
+        span.name = name
+        span.kwargs = kwargs
+        span.table = table
+        span.header = header
+        span.index = index
+        span.tdisp = tdisp
+        span.idisp = idisp
+        span.hdisp = hdisp
+        span.transpose = transpose
+        span.ndim = ndim
+        span.convert = convert
+        span.undo = undo
+        span.widget = self if widget is None else widget
         if span["type_"]:
             self.create_named_span(span)
         return span
@@ -3728,6 +3730,7 @@ class Sheet(tk.Frame):
             del_from_options(self.MT.row_options, key, rows)
         elif table and span.kind == "column":
             del_from_options(self.MT.col_options, key, cols)
+        return span
 
     def checkbox(
         self,
