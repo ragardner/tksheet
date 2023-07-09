@@ -848,6 +848,26 @@ class Sheet(tk.Frame):
         funcid = widget._register(func, _substitute, needcleanup=1)
         cmd = '{0}if {{"[{1} %d]" == "break"}} break\n'.format("+" if add else "", funcid)
         widget.tk.call("bind", widget._w, sequence, cmd)
+        
+    def sync_scroll(self, widget: object) -> Sheet:
+        if widget is self:
+            return self
+        self.MT.synced_scrolls.add(widget)
+        if isinstance(widget, Sheet):
+            widget.MT.synced_scrolls.add(self)
+        return self
+        
+    def unsync_scroll(self, widget: None | Sheet = None) -> Sheet:
+        if widget is None:
+            for widget in self.MT.synced_scrolls:
+                if isinstance(widget, Sheet):
+                    widget.MT.synced_scrolls.discard(self)
+            self.MT.synced_scrolls = set()
+        else:
+            if isinstance(widget, Sheet) and self in widget.MT.synced_scrolls:
+                widget.MT.synced_scrolls.discard(self)
+            self.MT.synced_scrolls.discard(widget)
+        return self
 
     def bind(self, binding, func, add=None):
         if binding == "<ButtonPress-1>":

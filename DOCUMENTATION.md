@@ -1327,6 +1327,20 @@ deselect(row = None, column = None, cell = None, redraw = True)
 ## **Modifying and Getting Scroll Positions**
 ----
 
+#### **Sync scroll positions between widgets.**
+
+```python
+sync_scroll(widget: object)
+```
+- Sync scroll positions between `Sheet`s, may or may not work with other widgets. Uses scrollbar positions.
+
+#### **Unsync scroll positions between widgets.**
+
+```python
+unsync_scroll(widget: None | Sheet = None)
+```
+- Leaving `widget` as `None` unsyncs all previously synced widgets.
+
 #### **See / scroll to a specific cell on the sheet.**
 ```python
 see(row = 0, column = 0, keep_yscroll = False, keep_xscroll = False, bottom_right_corner = False, check_cell_visibility = True)

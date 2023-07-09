@@ -668,6 +668,7 @@ class RowIndex(tk.Canvas):
                 self.MT.yview_scroll(1, "units")
                 self.yview_scroll(1, "units")
             self.fix_yview()
+            self.MT.y_move_synced_scrolls("moveto", self.MT.yview()[0])
             self.MT.main_table_redraw_grid_and_text(redraw_row_index=True)
         elif y <= 0 and len(ycheck) > 1 and ycheck[0] > 0:
             if y >= -15:
@@ -677,6 +678,7 @@ class RowIndex(tk.Canvas):
                 self.MT.yview_scroll(-2, "units")
                 self.yview_scroll(-2, "units")
             self.fix_yview()
+            self.MT.y_move_synced_scrolls("moveto", self.MT.yview()[0])
             self.MT.main_table_redraw_grid_and_text(redraw_row_index=True)
         row = self.MT.identify_row(y=event.y)
         if row >= self.dragged_row.to_move[0] and row <= self.dragged_row.to_move[-1]:
@@ -728,6 +730,7 @@ class RowIndex(tk.Canvas):
             except Exception:
                 pass
             self.fix_yview()
+            self.MT.y_move_synced_scrolls("moveto", self.MT.yview()[0])
             need_redraw = True
         elif event.y < 0 and self.canvasy(self.winfo_height()) > 0 and ycheck and ycheck[0] > 0:
             try:
@@ -736,6 +739,7 @@ class RowIndex(tk.Canvas):
             except Exception:
                 pass
             self.fix_yview()
+            self.MT.y_move_synced_scrolls("moveto", self.MT.yview()[0])
             need_redraw = True
         return need_redraw
 
@@ -1353,7 +1357,7 @@ class RowIndex(tk.Canvas):
                     0,
                     0,
                     self.current_width,
-                    last_row_line_pos + self.MT.empty_vertical,
+                    last_row_line_pos + self.MT.empty_vertical + 2,
                 )
             )
         except Exception:

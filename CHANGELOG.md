@@ -1,3 +1,11 @@
+### Version 6.2.2
+#### Fixed:
+- 2 pixel misalignment of index/header and table when scrolling
+- Undo cell edit not scrolling window
+
+#### Added:
+- Functionality to scroll multiple Sheets when scrolling one particular Sheet
+
 ### Version 6.2.1
 #### Fixed:
 - Editing header and overflowing text editor so text wraps while using `auto_resize_columns` causes text editor to be out of position
