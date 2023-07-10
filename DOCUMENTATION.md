@@ -1334,6 +1334,24 @@ sync_scroll(widget: object)
 ```
 - Sync scroll positions between `Sheet`s, may or may not work with other widgets. Uses scrollbar positions.
 
+Example usage, syncing two sheets:
+```python
+self.sheet1.sync_scroll(self.sheet2)
+self.sheet1.sync_scroll(self.sheet3)
+```
+
+Example usage, syncing three sheets:
+```python
+# syncs sheet 1 and 2 between each other
+self.sheet1.sync_scroll(self.sheet2)
+
+# syncs sheet 1 and 3 between each other
+self.sheet1.sync_scroll(self.sheet3)
+
+# syncs sheet 2 and 3 between each other
+self.sheet2.sync_scroll(self.sheet3)
+```
+
 #### **Unsync scroll positions between widgets.**
 
 ```python
