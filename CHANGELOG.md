@@ -1,12 +1,12 @@
-### Version 6.5.0
+### Version 7.0.0
 #### Removed:
-- `insert_column()`
-- `insert_row()`
+-
 
 #### Fixed:
 - Deselect events firing when not necessary
 
 #### Changed:
+- `align()` renamed `table_align()`
 - `move_columns()` and `move_rows()` arguments
 - Overhaul and totally change event data sent to functions bound by `extra_bindings()`
 - Deselect events are now labelled as "select" events, see the docs on `"selection_boxes"` for more information
@@ -20,6 +20,23 @@
 - `auto_resize_columns`, `auto_resize_rows` in initialization or with `set_options()`
 - Ctrl/cmd click deselect
 - Ability to make currently selected box border different color to selection box border
+
+### Version 6.2.2
+#### Fixed:
+- 2 pixel misalignment of index/header and table when scrolling
+- Undo cell edit not scrolling window
+
+#### Added:
+- Functionality to scroll multiple Sheets when scrolling one particular Sheet
+
+### Version 6.2.1
+#### Fixed:
+- Editing header and overflowing text editor so text wraps while using `auto_resize_columns` causes text editor to be out of position
+- `insert_columns()` when using an `int` for number of blank columns creates incorrect list layout
+
+### Version 6.2.0
+#### Fixed:
+- Removed some type hinting that was only available to python versions >= 3.9
 
 ### Version 6.1.9
 #### Fixed:

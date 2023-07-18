@@ -670,6 +670,7 @@ class ColumnHeaders(tk.Canvas):
                 self.MT.xview_scroll(1, "units")
                 self.xview_scroll(1, "units")
             self.fix_xview()
+            self.MT.x_move_synced_scrolls("moveto", self.MT.xview()[0])
             self.MT.main_table_redraw_grid_and_text(redraw_header=True)
         elif x <= 0 and len(xcheck) > 1 and xcheck[0] > 0:
             if x >= -15:
@@ -679,14 +680,12 @@ class ColumnHeaders(tk.Canvas):
                 self.MT.xview_scroll(-2, "units")
                 self.xview_scroll(-2, "units")
             self.fix_xview()
+            self.MT.x_move_synced_scrolls("moveto", self.MT.xview()[0])
             self.MT.main_table_redraw_grid_and_text(redraw_header=True)
         col = self.MT.identify_col(x=x)
         if col == len(self.MT.col_positions) - 1:
             col -= 1
-        if (
-            col >= self.dragged_col.to_move[0]
-            and col <= self.dragged_col.to_move[-1]
-        ):
+        if col >= self.dragged_col.to_move[0] and col <= self.dragged_col.to_move[-1]:
             if is_contiguous(self.dragged_col.to_move):
                 return self.MT.col_positions[self.dragged_col.to_move[0]]
             return self.MT.col_positions[col]
@@ -737,6 +736,7 @@ class ColumnHeaders(tk.Canvas):
             except Exception:
                 pass
             self.fix_xview()
+            self.MT.x_move_synced_scrolls("moveto", self.MT.xview()[0])
             need_redraw = True
         elif event.x < 0 and self.canvasx(self.winfo_width()) > 0 and xcheck and xcheck[0] > 0:
             try:
@@ -745,6 +745,7 @@ class ColumnHeaders(tk.Canvas):
             except Exception:
                 pass
             self.fix_xview()
+            self.MT.x_move_synced_scrolls("moveto", self.MT.xview()[0])
             need_redraw = True
         return need_redraw
 
@@ -2035,7 +2036,13 @@ class ColumnHeaders(tk.Canvas):
         elif isinstance(self.MT._headers, int):
             return self.MT.cell_equal_to(self.MT._headers, datacn, value)
 
-    def get_cell_data(self, datacn, get_displayed=False, none_to_empty_str=False, redirect_int=False):
+    def get_cell_data(
+        self,
+        datacn,
+        get_displayed=False,
+        none_to_empty_str=False,
+        redirect_int=False,
+    ):
         if get_displayed:
             return self.get_valid_cell_data_as_str(datacn, fix=False)
         if redirect_int and isinstance(self.MT._headers, int):  # internal use

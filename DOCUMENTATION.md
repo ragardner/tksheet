@@ -224,7 +224,6 @@ index_selected_cells_bg: str = theme_light_blue["index_selected_cells_bg"],
 index_selected_cells_fg: str = theme_light_blue["index_selected_cells_fg"],
 index_selected_rows_bg: str = theme_light_blue["index_selected_rows_bg"],
 index_selected_rows_fg: str = theme_light_blue["index_selected_rows_fg"],
-index_hidden_rows_expander_bg: str = theme_light_blue["index_hidden_rows_expander_bg"],
 header_bg: str = theme_light_blue["header_bg"],
 header_border_fg: str = theme_light_blue["header_border_fg"],
 header_grid_fg: str = theme_light_blue["header_grid_fg"],
@@ -233,7 +232,6 @@ header_selected_cells_bg: str = theme_light_blue["header_selected_cells_bg"],
 header_selected_cells_fg: str = theme_light_blue["header_selected_cells_fg"],
 header_selected_columns_bg: str = theme_light_blue["header_selected_columns_bg"],
 header_selected_columns_fg: str = theme_light_blue["header_selected_columns_fg"],
-header_hidden_columns_expander_bg: str = theme_light_blue["header_hidden_columns_expander_bg"],
 top_left_bg: str = theme_light_blue["top_left_bg"],
 top_left_fg: str = theme_light_blue["top_left_fg"],
 top_left_fg_highlight: str = theme_light_blue["top_left_fg_highlight"],
@@ -710,10 +708,10 @@ Arguments:
 - Using one of the following `"all_modified_events", "sheetmodified", "sheet_modified" "modified_events", "modified"` will make any insert, delete or cell edit including pastes and undos send an event to your function. Please **note** that this will mean your function will have to return a value to use for cell edits unless the setting `edit_cell_validation` is `False`.
 - For events `"begin_move_columns"`/`"begin_move_rows"` the point where columns/rows will be moved to will be under the `event_data` key `"value"`.
 
-**For tksheet versions earlier than `6.2.0`:**
+**For tksheet versions earlier than `7.0.0`:**
 - Upon an event being triggered the bound function will be sent a [namedtuple](https://docs.python.org/3/library/collections.html#collections.namedtuple) containing variables relevant to that event, use `print()` or similar to see all the variable names in the event. Each event contains different variable names with the exception of `eventname` e.g. `event.eventname`.
 
-**For tksheet versions >= `6.2.0`:**
+**For tksheet versions >= `7.0.0`:**
 
 #### **Event Data:**
 - Using `extra_bindings()` the function you bind needs to have at least one argument which will receive a `dict` containing information about the event that has just happened. When empty it looks like the following:
@@ -746,7 +744,7 @@ Arguments:
     "displayed_columns": None,
     "displayed_rows": None,
 },
-"named_ranges": {},
+"named_spans": {},
 "selection_boxes": {},
 "selected": tuple(),
 "being_selected": tuple(),
@@ -840,10 +838,10 @@ Keys:
 - Key **`["deleted"]["row_heights"]`** if any rows have been deleted by the inbuilt popup menu delete rows or by undoing a paste which added rows then this will be a `dict`. This `dict` will look like the following:
     - `{[row data index]: row height, [row data index]: row height, ...}`
     - If no rows have been deleted then the `dict` value for `["deleted"]["row_heights"]` will be empty.
-- Key **`["deleted"]["options"]`** if any rows or columns have been deleted by the inbuilt popup menu delete rows/columns or by undoing a paste which added rows/columns then this will be a `dict`. This `dict` serves as storage for the `Sheet()`s options such as highlights, formatting, alignments, dropdown boxes, checkboxes etc. and is more for intenal use than anything else.
-- Key **`["deleted"]["displayed_columns"]`**  if any columns have been deleted by the inbuilt popup menu delete columns or by undoing a paste which added columns then this will be a `list`. This `list` stores the displayed columns (the columns that are showing when others are hidden) immediately prior to the change. It is more for internal use than anything else.
-- Key **`["deleted"]["displayed_rows"]`**  if any rows have been deleted by the inbuilt popup menu delete rows or by undoing a paste which added rows then this will be a `list`. This `list` stores the displayed rows (the rows that are showing when others are hidden) immediately prior to the change. It is more for internal use than anything else.
-- Key **`["named_ranges"]`** is used for storing existing named ranges prior to a relevant change so that any named ranges deleted during the change can be restored upon an undo. This stored value is a `dict` which has been pickled using `pickle.dumps()` and then compressed using `zlib.compress()`.
+- Key **`["deleted"]["displayed_columns"]`**  if any columns have been deleted by the inbuilt popup menu delete columns or by undoing a paste which added columns then this will be a `list`. This `list` stores the displayed columns (the columns that are showing when others are hidden) immediately prior to the change.
+- Key **`["deleted"]["displayed_rows"]`**  if any rows have been deleted by the inbuilt popup menu delete rows or by undoing a paste which added rows then this will be a `list`. This `list` stores the displayed rows (the rows that are showing when others are hidden) immediately prior to the change.
+- Key **`["options"]`** This serves as storage for the `Sheet()`s options such as highlights, formatting, alignments, dropdown boxes, checkboxes etc. It is a Python pickled `dict` where the values are the sheets internal cell/row/column options `dicts`.
+- Key **`["named_spans"]`** This `dict` serves as storage for the `Sheet()`s named spans. Each value in the `dict` is a pickled `span` object.
 - Key **`["selection_boxes"]`** the value of this is all selection boxes on the sheet in the form of a `dict` as shown below:
     - For every event except `"select"` events the selection boxes are those immediately prior to the modification, for `"select"` events they are the current selection boxes.
     - The layout is always: `"selection_boxes": {(start row, start column, up to but not including row, up to but not including column): selection box type}`.
@@ -884,7 +882,7 @@ ___
 bind_event(event: str, func: Callable)
 ```
 - `tksheet` emits custom tkinter events, one for whenever the user has modified the sheet and another for whenever the sheet was refreshed.
-- **Note** that while an event emitted after a paste/undo/redo might have the event name `"edit_table"` it also might have added/deleted rows/columns, refer to the docs on the event data dict for more info.
+- **Note** that while an event emitted after a paste/undo/redo might have the event name `"edit_table"` it also might have added/deleted rows/columns, refer to the docs on the event data `dict` for more info.
 - `event` the two emitted events are:
     - `"<<SheetModified>>"` emitted whenever the sheet was modified by the end user by editing cells or adding or deleting rows/columns. The function you bind to this event must be able to receive a `dict` argument which will be the same as [the event data dict](https://github.com/ragardner/tksheet/wiki/Version-6#event-data) but with less specific event names. The possible event names are listed below:
         - `"edit_table"` when a user has cut, paste, delete or any cell edits including using dropdown boxes etc. in the table.
@@ -999,7 +997,67 @@ edit_cell(self, event = None, dropdown = False)
 
 To change the colors of individual cells, rows or columns use the functions listed under [highlighting cells](https://github.com/ragardner/tksheet/wiki/Version-6#highlighting-cells).
 
-For the colors of specific parts of the table such as gridlines and backgrounds use the function `set_options()`, arguments can be found [here](https://github.com/ragardner/tksheet/wiki/Version-6#table-options-and-other-functions). Most of the `set_options()` arguments are the same as the sheet initialization arguments.
+For the colors of specific parts of the table such as gridlines and backgrounds use the function `set_options()`, keyword arguments specific to table colors are listed below. All the other `set_options()` arguments can be found [here](https://github.com/ragardner/tksheet/wiki/Version-6#table-options-and-other-functions).
+
+Use a tkinter color or a hex string e.g.
+
+```python
+my_sheet_widget.set_options(table_bg="black")
+my_sheet_widget.set_options(table_bg="#000000")
+```
+
+```python
+set_options(
+top_left_bg
+top_left_fg
+top_left_fg_highlight
+
+table_bg
+table_grid_fg
+table_fg
+table_selected_box_cells_fg
+table_selected_box_rows_fg
+table_selected_box_columns_fg
+table_selected_cells_border_fg
+table_selected_cells_bg
+table_selected_cells_fg
+table_selected_rows_border_fg
+table_selected_rows_bg
+table_selected_rows_fg
+table_selected_columns_border_fg
+table_selected_columns_bg
+table_selected_columns_fg
+
+header_bg
+header_border_fg
+header_grid_fg
+header_fg
+header_selected_cells_bg
+header_selected_cells_fg
+header_selected_columns_bg
+header_selected_columns_fg
+
+index_bg
+index_border_fg
+index_grid_fg
+index_fg
+index_selected_cells_bg
+index_selected_cells_fg
+index_selected_rows_bg
+index_selected_rows_fg
+
+resizing_line_fg
+drag_and_drop_bg
+outline_thickness
+outline_color
+frame_bg
+popup_menu_font
+popup_menu_fg
+popup_menu_bg
+popup_menu_highlight_bg
+popup_menu_highlight_fg
+)
+```
 
 Otherwise you can change the theme using the below function.
 ```python
@@ -1556,6 +1614,37 @@ deselect(row = None, column = None, cell = None, redraw = True)
 
 ## **Modifying and Getting Scroll Positions**
 ----
+
+#### **Sync scroll positions between widgets.**
+
+```python
+sync_scroll(widget: object)
+```
+- Sync scroll positions between `Sheet`s, may or may not work with other widgets. Uses scrollbar positions.
+
+Example usage, syncing two sheets:
+```python
+self.sheet1.sync_scroll(self.sheet2)
+```
+
+Example usage, syncing three sheets:
+```python
+# syncs sheet 1 and 2 between each other
+self.sheet1.sync_scroll(self.sheet2)
+
+# syncs sheet 1 and 3 between each other
+self.sheet1.sync_scroll(self.sheet3)
+
+# syncs sheet 2 and 3 between each other
+self.sheet2.sync_scroll(self.sheet3)
+```
+
+#### **Unsync scroll positions between widgets.**
+
+```python
+unsync_scroll(widget: None | Sheet = None)
+```
+- Leaving `widget` as `None` unsyncs all previously synced widgets.
 
 #### **See / scroll to a specific cell on the sheet.**
 ```python
@@ -2511,8 +2600,6 @@ paste_insert_row_limit
 expand_sheet_if_paste_too_big
 arrow_key_down_right_scroll_page
 enable_edit_cell_auto_resize
-header_hidden_columns_expander_bg
-index_hidden_rows_expander_bg
 page_up_down_select_row
 display_selected_fg_over_highlights
 show_horizontal_grid
@@ -2524,23 +2611,7 @@ column_width
 header_height
 row_drag_and_drop_perform
 column_drag_and_drop_perform
-popup_menu_font
-popup_menu_fg
-popup_menu_bg
-popup_menu_highlight_bg
-popup_menu_highlight_fg
-top_left_fg_highlight
 auto_resize_default_row_index
-header_selected_columns_bg
-header_selected_columns_fg
-index_selected_rows_bg
-index_selected_rows_fg
-table_selected_rows_border_fg
-table_selected_rows_bg
-table_selected_rows_fg
-table_selected_columns_border_fg
-table_selected_columns_bg
-table_selected_columns_fg
 default_header
 default_row_index
 max_column_width
@@ -2550,23 +2621,13 @@ max_index_width
 font
 header_font
 index_font
-theme
+
 show_selected_cells_border
-header_bg
-header_border_fg
-header_grid_fg
-header_fg
-header_selected_cells_bg
-header_selected_cells_fg
-index_bg
-index_border_fg
-index_grid_fg
-index_fg
-index_selected_cells_bg
-index_selected_cells_fg
+theme
 top_left_bg
 top_left_fg
-frame_bg
+top_left_fg_highlight
+
 table_bg
 table_grid_fg
 table_fg
@@ -2576,10 +2637,41 @@ table_selected_box_columns_fg
 table_selected_cells_border_fg
 table_selected_cells_bg
 table_selected_cells_fg
+table_selected_rows_border_fg
+table_selected_rows_bg
+table_selected_rows_fg
+table_selected_columns_border_fg
+table_selected_columns_bg
+table_selected_columns_fg
+
+header_bg
+header_border_fg
+header_grid_fg
+header_fg
+header_selected_cells_bg
+header_selected_cells_fg
+header_selected_columns_bg
+header_selected_columns_fg
+
+index_bg
+index_border_fg
+index_grid_fg
+index_fg
+index_selected_cells_bg
+index_selected_cells_fg
+index_selected_rows_bg
+index_selected_rows_fg
+
 resizing_line_fg
 drag_and_drop_bg
 outline_thickness
 outline_color
+frame_bg
+popup_menu_font
+popup_menu_fg
+popup_menu_bg
+popup_menu_highlight_bg
+popup_menu_highlight_fg
 ```
 
 ___
@@ -2744,7 +2836,7 @@ app.mainloop()
 ## **Example Displaying Selections**
 ----
 
-**This example applies to tksheet versions >= `6.2.0`.**
+**This example applies to tksheet versions >= `7.0.0`.**
 ```python
 from tksheet import Sheet, get_n2a
 import tkinter as tk
@@ -2785,7 +2877,7 @@ app = demo()
 app.mainloop()
 ```
 
-**This example applies to tksheet versions earlier than `6.2.0`.**
+**This example applies to tksheet versions earlier than `7.0.0`.**
 ```python
 from tksheet import Sheet
 import tkinter as tk

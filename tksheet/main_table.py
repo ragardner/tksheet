@@ -65,6 +65,7 @@ class MainTable(tk.Canvas):
         self.grid_cyctup = ("st", "end")
         self.grid_cyc = cycle(self.grid_cyctup)
         self.span = self.parentframe.span
+        self.synced_scrolls = set()
 
         self.disp_ctrl_outline = {}
         self.disp_text = defaultdict(set)
@@ -1556,8 +1557,7 @@ class MainTable(tk.Canvas):
                     )
                     if args[1] > 1:
                         args[1] = args[1] - 1
-                    self.yview(*args)
-                    self.RI.yview(*args)
+                    self.set_yviews(*args, redraw=False)
                     need_redraw = True
             else:
                 if r is not None and not keep_yscroll:
@@ -1567,8 +1567,7 @@ class MainTable(tk.Canvas):
                     )
                     if args[1] > 1:
                         args[1] = args[1] - 1
-                    self.yview(*args)
-                    self.RI.yview(*args)
+                    self.set_yviews(*args, redraw=False)
                     need_redraw = True
         if not xvis:
             if bottom_right_corner:
@@ -1582,8 +1581,7 @@ class MainTable(tk.Canvas):
                         "moveto",
                         x / (self.col_positions[-1] + self.empty_horizontal),
                     )
-                    self.xview(*args)
-                    self.CH.xview(*args)
+                    self.set_xviews(*args, redraw=False)
                     need_redraw = True
             else:
                 if c is not None and not keep_xscroll:
@@ -1591,8 +1589,7 @@ class MainTable(tk.Canvas):
                         "moveto",
                         self.col_positions[c] / (self.col_positions[-1] + self.empty_horizontal),
                     )
-                    self.xview(*args)
-                    self.CH.xview(*args)
+                    self.set_xviews(*args, redraw=False)
                     need_redraw = True
         if redraw and need_redraw:
             self.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
@@ -3290,21 +3287,21 @@ class MainTable(tk.Canvas):
         xcheck = self.xview()
         ycheck = self.yview()
         if xcheck and xcheck[0] <= 0:
-            self.xview(*("moveto", 0))
+            self.xview("moveto", 0)
             if self.show_header:
-                self.CH.xview(*("moveto", 0))
+                self.CH.xview("moveto", 0)
         elif len(xcheck) > 1 and xcheck[1] >= 1:
-            self.xview(*("moveto", 1))
+            self.xview("moveto", 1)
             if self.show_header:
-                self.CH.xview(*("moveto", 1))
+                self.CH.xview("moveto", 1)
         if ycheck and ycheck[0] <= 0:
-            self.yview(*("moveto", 0))
+            self.yview("moveto", 0)
             if self.show_index:
-                self.RI.yview(*("moveto", 0))
+                self.RI.yview("moveto", 0)
         elif len(ycheck) > 1 and ycheck[1] >= 1:
-            self.yview(*("moveto", 1))
+            self.yview("moveto", 1)
             if self.show_index:
-                self.RI.yview(*("moveto", 1))
+                self.RI.yview("moveto", 1)
 
     def scroll_if_event_offscreen(self, event):
         need_redraw = False
@@ -3341,21 +3338,49 @@ class MainTable(tk.Canvas):
                 need_redraw = True
         if need_redraw:
             self.fix_views()
+            self.x_move_synced_scrolls("moveto", self.xview()[0])
+            self.y_move_synced_scrolls("moveto", self.yview()[0])
         return need_redraw
 
-    def set_xviews(self, *args):
+    def x_move_synced_scrolls(self, *args, redraw=True):
+        for widget in self.synced_scrolls:
+            # try:
+            if hasattr(widget, "MT"):
+                widget.MT.set_xviews(*args, move_synced=False, redraw=redraw)
+            else:
+                widget.xview(*args)
+            # except Exception:
+            #     continue
+
+    def y_move_synced_scrolls(self, *args, redraw=True):
+        for widget in self.synced_scrolls:
+            # try:
+            if hasattr(widget, "MT"):
+                widget.MT.set_yviews(*args, move_synced=False, redraw=redraw)
+            else:
+                widget.yview(*args)
+            # except Exception:
+            #     continue
+
+    def set_xviews(self, *args, move_synced=True, redraw=True):
         self.xview(*args)
         if self.show_header:
             self.CH.xview(*args)
+        if move_synced:
+            self.x_move_synced_scrolls(*args)
         self.fix_views()
-        self.main_table_redraw_grid_and_text(redraw_header=True if self.show_header else False)
+        if redraw:
+            self.main_table_redraw_grid_and_text(redraw_header=True if self.show_header else False)
 
-    def set_yviews(self, *args):
+    def set_yviews(self, *args, move_synced=True, redraw=True):
         self.yview(*args)
         if self.show_index:
             self.RI.yview(*args)
+        if move_synced:
+            self.y_move_synced_scrolls(*args)
         self.fix_views()
-        self.main_table_redraw_grid_and_text(redraw_row_index=True if self.show_index else False)
+        if redraw:
+            self.main_table_redraw_grid_and_text(redraw_row_index=True if self.show_index else False)
 
     def set_view(self, x_args, y_args):
         self.xview(*x_args)
@@ -3364,6 +3389,8 @@ class MainTable(tk.Canvas):
         self.yview(*y_args)
         if self.show_index:
             self.RI.yview(*y_args)
+        self.x_move_synced_scrolls(*x_args)
+        self.y_move_synced_scrolls(*y_args)
         self.fix_views()
         self.main_table_redraw_grid_and_text(
             redraw_row_index=True if self.show_index else False,
@@ -3374,22 +3401,26 @@ class MainTable(tk.Canvas):
         if event.delta < 0 or event.num == 5:
             self.yview_scroll(1, "units")
             self.RI.yview_scroll(1, "units")
+            self.y_move_synced_scrolls("moveto", self.yview()[0])
         elif event.delta >= 0 or event.num == 4:
             if self.canvasy(0) <= 0:
                 return
             self.yview_scroll(-1, "units")
             self.RI.yview_scroll(-1, "units")
+            self.y_move_synced_scrolls("moveto", self.yview()[0])
         self.main_table_redraw_grid_and_text(redraw_row_index=True)
 
     def shift_mousewheel(self, event=None):
         if event.delta < 0 or event.num == 5:
             self.xview_scroll(1, "units")
             self.CH.xview_scroll(1, "units")
+            self.x_move_synced_scrolls("moveto", self.xview()[0])
         elif event.delta >= 0 or event.num == 4:
             if self.canvasx(0) <= 0:
                 return
             self.xview_scroll(-1, "units")
             self.CH.xview_scroll(-1, "units")
+            self.x_move_synced_scrolls("moveto", self.xview()[0])
         self.main_table_redraw_grid_and_text(redraw_header=True)
 
     def get_txt_w(self, txt, font=None):
@@ -4523,7 +4554,8 @@ class MainTable(tk.Canvas):
                 "row_options": self.row_options,
                 "CH_cell_options": self.CH.cell_options,
                 "RI_cell_options": self.RI.cell_options,
-            })
+            }
+        )
 
     def delete_columns_data(self, cols: list, event_data: dict) -> dict:
         self.mouseclick_outside_editor_or_dropdown_all_canvases()

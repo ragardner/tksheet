@@ -1093,7 +1093,6 @@ def span_idxs_post_move(
     # i should be able to move either end within the span and keep the span
     # but how do i know what the new end of the span is?
     # if some columns are moving in and some out
-
     if isinstance(span[f"upto_{axis}"], int):
         oldfrom, oldupto = int(span[f"from_{axis}"]), int(span[f"upto_{axis}"]) - 1
         # if the span is greater than one in length

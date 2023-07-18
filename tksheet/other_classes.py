@@ -59,25 +59,6 @@ class CanUseKeys:
             raise ValueError(f"Key must be type 'str' not '{type(key)}'.")
 
 
-class DotDict(dict):
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-        # Recursively turn nested dicts into DotDicts
-        for key, value in self.items():
-            if type(value) is dict:
-                self[key] = DotDict(value)
-
-    def __setitem__(self, key: Hashable, item: object) -> None:
-        if type(item) is dict:
-            super().__setitem__(key, DotDict(item))
-        else:
-            super().__setitem__(key, item)
-
-    __setattr__ = __setitem__
-    __getattr__ = dict.__getitem__
-    __delattr__ = dict.__delitem__
-
-
 class SpanRange:
     def __init__(self, from_: int, upto_: int) -> None:
         __slots__ = ("from_", "upto_")  # noqa: F841
@@ -105,6 +86,31 @@ class SpanRange:
         return self.upto_ - self.from_
 
 
+class DotDict(dict):
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        # Recursively turn nested dicts into DotDicts
+        for key, value in self.items():
+            if type(value) is dict:
+                self[key] = DotDict(value)
+
+    def __getstate__(self) -> SpanDict:
+        return self
+
+    def __setstate__(self, state: DotDict) -> None:
+        self.update(state)
+
+    def __setitem__(self, key: Hashable, item: object) -> None:
+        if type(item) is dict:
+            super().__setitem__(key, DotDict(item))
+        else:
+            super().__setitem__(key, item)
+
+    __setattr__ = __setitem__
+    __getattr__ = dict.__getitem__
+    __delattr__ = dict.__delitem__
+
+
 class SpanDict(dict):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -114,6 +120,12 @@ class SpanDict(dict):
                 self["widget"].set_data(self, item)
             elif type(item) is dict:
                 self[key] = DotDict(item)
+
+    def __getstate__(self) -> SpanDict:
+        return self
+
+    def __setstate__(self, state: SpanDict) -> None:
+        self.update(state)
 
     def __getitem__(self, key: Hashable) -> object:
         if key == "data" or key == "value":
