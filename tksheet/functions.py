@@ -216,7 +216,7 @@ def is_iterable(o: object) -> bool:
         return False
 
 
-def str_to_coords(s: str) -> None | tuple[int, ...]:
+def str_to_coords(s: str) -> None | tuple[int]:
     s = s.split(":")
 
 
@@ -304,7 +304,7 @@ def consecutive_chunks(seq: list) -> list:
             yield seq[start : len(seq)]
 
 
-def is_contiguous(seq: list[int, ...]) -> bool:
+def is_contiguous(seq: list[int]) -> bool:
     itr = iter(seq)
     prev = next(itr)
     if not all(i == (prev := prev + 1) for i in itr):
@@ -313,10 +313,10 @@ def is_contiguous(seq: list[int, ...]) -> bool:
 
 
 def move_elements_by_mapping(
-    seq: list[...],
+    seq: list[object],
     new_idxs: dict,
     old_idxs: dict,
-) -> list[...]:
+) -> list[object]:
     # move elements of a list around, displacing
     # other elements based on mapping
     # of {old index: new index, ...}
@@ -347,10 +347,10 @@ def move_elements_by_mapping(
 
 
 def move_elements_to(
-    seq: list[...],
+    seq: list[object],
     move_to: int,
-    to_move: list[int, ...],
-) -> list[...]:
+    to_move: list[int],
+) -> list[object]:
     return move_elements_by_mapping(
         seq,
         *get_new_indexes(
@@ -365,7 +365,7 @@ def move_elements_to(
 def get_new_indexes(
     seqlen: int,
     move_to: int,
-    to_move: list[int, ...],
+    to_move: list[int],
     keep_len: bool = True,
     get_inverse: bool = False,
 ) -> tuple[dict]:
@@ -460,7 +460,7 @@ def get_checkbox_points(x1, y1, x2, y2, radius=8):
     ]
 
 
-def diff_list(seq: list[float, ...]) -> list[int, ...]:
+def diff_list(seq: list[float]) -> list[int]:
     return [
         int(b - a)
         for a, b in zip(
@@ -470,7 +470,7 @@ def diff_list(seq: list[float, ...]) -> list[int, ...]:
     ]
 
 
-def diff_gen(seq: list[float, ...]) -> Generator[int, ...]:
+def diff_gen(seq: list[float]) -> Generator[int]:
     return (
         int(b - a)
         for a, b in zip(
@@ -498,7 +498,7 @@ def str_to_int(s: str) -> int | None:
 def gen_formatted(
     options: dict,
     formatter: object = None,
-) -> Generator[tuple[int, int], ...] | Generator[int, ...]:
+) -> Generator[tuple[int, int]] | Generator[int]:
     if formatter is None:
         return (k for k, dct in options.items() if "format" in dct)
     else:
@@ -508,7 +508,7 @@ def gen_formatted(
 def options_with_key(
     options: dict,
     key: str,
-) -> Generator[tuple[int, int], ...] | Generator[int, ...]:
+) -> Generator[tuple[int, int]] | Generator[int]:
     return (k for k, dct in options.items() if key in dct)
 
 
@@ -938,7 +938,7 @@ def span_ranges(
     span: Span,
     totalrows: int | Callable,
     totalcols: int | Callable,
-) -> tuple[Generator, Generator]:
+) -> tuple[Generator[int], Generator[int]]:
     rng_from_r = 0 if span.from_r is None else span.from_r
     rng_from_c = 0 if span.from_c is None else span.from_c
 
@@ -1086,7 +1086,7 @@ def span_idxs_post_move(
     total: int,
     span: Span,
     axis: str,
-) -> tuple[int, None]:
+) -> tuple[int | None]:
     """
     Calculates the position of a span after moving rows/columns
     """

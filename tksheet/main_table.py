@@ -336,10 +336,10 @@ class MainTable(tk.Canvas):
         self.basic_bindings()
         self.create_rc_menus()
 
-    def refresh(self, event=None) -> None:
+    def refresh(self, event: object = None) -> None:
         self.main_table_redraw_grid_and_text(True, True)
 
-    def window_configured(self, event) -> None:
+    def window_configured(self, event: object) -> None:
         w = self.parentframe.winfo_width()
         if w != self.parentframe_width:
             self.parentframe_width = w
@@ -773,9 +773,9 @@ class MainTable(tk.Canvas):
 
     def event_data_set_data(
         self,
-        row_range: Generator[int, ...],
-        col_range: Generator[int, ...],
-        data: list[list[object, ...]],
+        row_range: Generator[int],
+        col_range: Generator[int],
+        data: list[list[object]],
         event_data: dict,
     ) -> dict:
         for ndr, r in enumerate(row_range):
@@ -797,7 +797,7 @@ class MainTable(tk.Canvas):
     def get_args_for_move_columns(
         self,
         move_to: int,
-        to_move: list[int, ...],
+        to_move: list[int],
         index_type: str = "displayed",
     ) -> tuple:
         if index_type == "displayed" or self.all_columns_displayed:
@@ -1027,7 +1027,7 @@ class MainTable(tk.Canvas):
     def get_args_for_move_rows(
         self,
         move_to: int,
-        to_move: list[int, ...],
+        to_move: list[int],
         index_type: str = "displayed",
     ) -> tuple:
         if index_type == "displayed" or self.all_rows_displayed:
@@ -2774,7 +2774,7 @@ class MainTable(tk.Canvas):
             self.edit_bindings(False, "edit_index")
         self.create_rc_menus()
 
-    def reset_mouse_motion_creations(self, event=None):
+    def reset_mouse_motion_creations(self) -> None:
         self.config(cursor="")
         self.RI.config(cursor="")
         self.CH.config(cursor="")
@@ -2783,7 +2783,7 @@ class MainTable(tk.Canvas):
         self.CH.rsz_w = None
         self.CH.rsz_h = None
 
-    def mouse_motion(self, event):
+    def mouse_motion(self, event: object):
         if (
             not self.RI.currently_resizing_height
             and not self.RI.currently_resizing_width
@@ -3040,7 +3040,7 @@ class MainTable(tk.Canvas):
         else:
             return start_row, start_col, start_row + 1, start_col + 1, "cells"
 
-    def b1_motion(self, event):
+    def b1_motion(self, event: object):
         x1, y1, x2, y2 = self.get_canvas_visible_area()
         if self.RI.width_resizing_enabled and self.RI.rsz_w is not None and self.RI.currently_resizing_width:
             self.RI.delete_resize_lines()
@@ -3119,7 +3119,7 @@ class MainTable(tk.Canvas):
         if self.extra_b1_motion_func is not None:
             self.extra_b1_motion_func(event)
 
-    def ctrl_b1_motion(self, event):
+    def ctrl_b1_motion(self, event: object):
         x1, y1, x2, y2 = self.get_canvas_visible_area()
         if (
             self.ctrl_select_enabled
@@ -3303,7 +3303,7 @@ class MainTable(tk.Canvas):
             if self.show_index:
                 self.RI.yview("moveto", 1)
 
-    def scroll_if_event_offscreen(self, event):
+    def scroll_if_event_offscreen(self, event: object):
         need_redraw = False
         if self.data:
             xcheck = self.xview()
@@ -3397,7 +3397,7 @@ class MainTable(tk.Canvas):
             redraw_header=True if self.show_header else False,
         )
 
-    def mousewheel(self, event=None):
+    def mousewheel(self, event: object):
         if event.delta < 0 or event.num == 5:
             self.yview_scroll(1, "units")
             self.RI.yview_scroll(1, "units")
@@ -3410,7 +3410,7 @@ class MainTable(tk.Canvas):
             self.y_move_synced_scrolls("moveto", self.yview()[0])
         self.main_table_redraw_grid_and_text(redraw_row_index=True)
 
-    def shift_mousewheel(self, event=None):
+    def shift_mousewheel(self, event: object):
         if event.delta < 0 or event.num == 5:
             self.xview_scroll(1, "units")
             self.CH.xview_scroll(1, "units")
@@ -3692,7 +3692,7 @@ class MainTable(tk.Canvas):
             else:
                 return False
 
-    def set_all_cell_sizes_to_text(self, include_index: bool = False) -> tuple[list[float, ...], list[float, ...]]:
+    def set_all_cell_sizes_to_text(self, include_index: bool = False) -> tuple[list[float], list[float]]:
         min_column_width = int(self.min_column_width)
         min_rh = int(self.min_row_height)
         w = min_column_width
@@ -3759,7 +3759,7 @@ class MainTable(tk.Canvas):
         self.recreate_all_selection_boxes()
         return self.row_positions, self.col_positions
 
-    def set_col_positions(self, itr: Iterator[float, ...]) -> None:
+    def set_col_positions(self, itr: Iterator[float]) -> None:
         self.col_positions = list(accumulate(chain([0], itr)))
 
     def reset_col_positions(self, ncols: int | None = None):
@@ -3771,7 +3771,7 @@ class MainTable(tk.Canvas):
                 itr=(colpos for c in range(ncols if ncols is not None else len(self.displayed_columns)))
             )
 
-    def set_row_positions(self, itr: Iterator[float, ...]) -> None:
+    def set_row_positions(self, itr: Iterator[float]) -> None:
         self.row_positions = list(accumulate(chain([0], itr)))
 
     def reset_row_positions(self, nrows: int | None = None):
@@ -3805,16 +3805,16 @@ class MainTable(tk.Canvas):
             del self.row_positions[idx]
             self.row_positions[idx:] = [e - w for e in islice(self.row_positions, idx, len(self.row_positions))]
 
-    def get_column_widths(self) -> list[int, ...]:
+    def get_column_widths(self) -> list[int]:
         return diff_list(self.col_positions)
 
-    def get_row_heights(self) -> list[int, ...]:
+    def get_row_heights(self) -> list[int]:
         return diff_list(self.row_positions)
 
-    def gen_column_widths(self) -> Generator[int, ...]:
+    def gen_column_widths(self) -> Generator[int]:
         return diff_gen(self.col_positions)
 
-    def gen_row_heights(self) -> Generator[int, ...]:
+    def gen_row_heights(self) -> Generator[int]:
         return diff_gen(self.row_positions)
 
     def del_col_positions(self, idx: int, num: int = 1, deselect_all: bool = False):
@@ -3880,7 +3880,7 @@ class MainTable(tk.Canvas):
     def insert_col_positions(
         self,
         idx: str | int = "end",
-        widths: Sequence[float, ...] | int = None,
+        widths: Sequence[float] | int = None,
         deselect_all: bool = False,
     ):
         if deselect_all:
@@ -3915,7 +3915,7 @@ class MainTable(tk.Canvas):
     def insert_row_positions(
         self,
         idx: str | int = "end",
-        heights: Sequence[float, ...] | int = None,
+        heights: Sequence[float] | int = None,
         deselect_all: bool = False,
     ):
         if deselect_all:
@@ -3947,7 +3947,7 @@ class MainTable(tk.Canvas):
                 idx += 1
                 self.row_positions[idx:] = [e + h for e in islice(self.row_positions, idx, len(self.row_positions))]
 
-    def named_span_coords(self, name: str | dict) -> tuple[int, None, ...]:
+    def named_span_coords(self, name: str | dict) -> tuple[int, int, int | None, int | None]:
         dct = self.named_spans[name] if isinstance(name, str) else name
         return (
             dct["from_r"],
@@ -4201,7 +4201,7 @@ class MainTable(tk.Canvas):
         header: dict,
         column_widths: dict,
         event_data: dict,
-        displayed_columns: None | list[int, ...] = None,
+        displayed_columns: None | list[int] = None,
         create_ops: bool = True,
         create_selections: bool = True,
         add_row_positions: bool = True,
@@ -4273,7 +4273,7 @@ class MainTable(tk.Canvas):
         }
         return event_data
 
-    def rc_add_columns(self, event=None):
+    def rc_add_columns(self, event: object = None):
         rowlen = self.equalize_data_row_lengths(include_header=False)
         selcols = sorted(self.get_selected_cols())
         if (
@@ -4380,7 +4380,7 @@ class MainTable(tk.Canvas):
         index: dict,
         row_heights: dict,
         event_data: dict,
-        displayed_rows: None | list[int, ...] = None,
+        displayed_rows: None | list[int] = None,
         create_ops: bool = True,
         create_selections: bool = True,
         add_col_positions: bool = True,
@@ -4450,7 +4450,7 @@ class MainTable(tk.Canvas):
         }
         return event_data
 
-    def rc_add_rows(self, event=None):
+    def rc_add_rows(self, event: object = None):
         total_data_rows = self.total_data_rows()
         selrows = sorted(self.get_selected_rows())
         if (
@@ -4595,7 +4595,7 @@ class MainTable(tk.Canvas):
         self.set_col_positions(itr=(width for c, width in enumerate(self.gen_column_widths()) if c not in cols_set))
         return event_data
 
-    def rc_delete_columns(self, event=None):
+    def rc_delete_columns(self, event: object = None):
         selected = sorted(self.get_selected_cols())
         curr = self.currently_selected()
         if not selected or not curr:
@@ -4649,7 +4649,7 @@ class MainTable(tk.Canvas):
         self.set_row_positions(itr=(height for r, height in enumerate(self.gen_row_heights()) if r not in rows_set))
         return event_data
 
-    def rc_delete_rows(self, event=None):
+    def rc_delete_rows(self, event: object = None):
         selected = sorted(self.get_selected_rows())
         curr = self.currently_selected()
         if not selected or not curr:
@@ -6247,7 +6247,7 @@ class MainTable(tk.Canvas):
             d2["columns"] = {c for c in range(startc, endc) for r1, c1, r2, c2 in d["columns"] if c1 <= c and c2 > c}
         return d2
 
-    def get_selected_min_max(self) -> tuple[int, None, ...]:
+    def get_selected_min_max(self) -> tuple[int | None, int | None, int | None, int | None]:
         min_x = float("inf")
         min_y = float("inf")
         max_x = 0
@@ -6498,7 +6498,7 @@ class MainTable(tk.Canvas):
 
     def open_cell(
         self,
-        event=None,
+        event: object = None,
         ignore_existing_editor: bool = False,
     ) -> None:
         if not self.anything_selected() or (not ignore_existing_editor and self.text_editor_id is not None):
@@ -6681,7 +6681,11 @@ class MainTable(tk.Canvas):
 
     # displayed indexes
     def text_editor_newline_binding(
-        self, r: int = 0, c: int = 0, event: object = None, check_lines: bool = True
+        self,
+        r: int = 0,
+        c: int = 0,
+        event: object = None,
+        check_lines: bool = True,
     ) -> None:
         datarn = self.datarn(r)
         datacn = self.datacn(c)

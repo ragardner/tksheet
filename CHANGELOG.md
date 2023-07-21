@@ -1,13 +1,34 @@
 ### Version 7.0.0
 #### Removed:
--
+- Removed functions (use `span`s instead for the same purpose):
+    - `header_checkbox`
+    - `index_checkbox`
+    - `format_sheet`
+    - `delete_sheet_format`
+    - `dropdown_sheet`
+    - `delete_sheet_dropdown`
+    - `checkbox_sheet`
+    - `delete_sheet_checkbox`
 
 #### Fixed:
 - Deselect events firing when not necessary
 
 #### Changed:
-- `align()` renamed `table_align()`
-- `move_columns()` and `move_rows()` arguments
+- Changed functions:
+    - Arguments and behavior:
+        - `checkbox`
+        - `delete_header_dropdown` default argument changed to required argument and can no longer delete a header wide dropdown
+        - `delete_index_dropdown` default argument changed to required argument and can no longer delete an index wide dropdown
+
+    - Just arguments:
+        - `move_columns`
+        - `move_rows`
+        - `click_checkbox`
+
+    - Renamed:
+        - `align` -> `table_align`
+
+#### Other Changes:
 - Overhaul and totally change event data sent to functions bound by `extra_bindings()`
 - Deselect events are now labelled as "select" events, see the docs on `"selection_boxes"` for more information
 - Overhaul internal selection box workings
@@ -16,7 +37,7 @@
 
 #### Added:
 - Redo, which is enabled when undo is enabled, use by pressing ctrl/cmd + shift + z
-- named ranges for options
+- named spans for options
 - `auto_resize_columns`, `auto_resize_rows` in initialization or with `set_options()`
 - Ctrl/cmd click deselect
 - Ability to make currently selected box border different color to selection box border

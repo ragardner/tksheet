@@ -189,7 +189,7 @@ class RowIndex(tk.Canvas):
             if x >= x1 and y >= y1 and x <= x2 and y <= y2:
                 return r
 
-    def rc(self, event):
+    def rc(self, event: object):
         self.mouseclick_outside_editor_or_dropdown_all_canvases()
         self.focus_set()
         popup_menu = None
@@ -217,7 +217,7 @@ class RowIndex(tk.Canvas):
             self.popup_menu_loc = r
             popup_menu.tk_popup(event.x_root, event.y_root)
 
-    def ctrl_b1_press(self, event=None):
+    def ctrl_b1_press(self, event: object):
         self.mouseclick_outside_editor_or_dropdown_all_canvases()
         if (
             (self.drag_and_drop_enabled or self.row_selection_enabled)
@@ -241,7 +241,7 @@ class RowIndex(tk.Canvas):
         elif not self.MT.ctrl_select_enabled:
             self.b1_press(event)
 
-    def ctrl_shift_b1_press(self, event):
+    def ctrl_shift_b1_press(self, event: object):
         self.mouseclick_outside_editor_or_dropdown_all_canvases()
         y = event.y
         r = self.MT.identify_row(y=y)
@@ -275,7 +275,7 @@ class RowIndex(tk.Canvas):
         elif not self.MT.ctrl_select_enabled:
             self.shift_b1_press(event)
 
-    def shift_b1_press(self, event):
+    def shift_b1_press(self, event: object):
         self.mouseclick_outside_editor_or_dropdown_all_canvases()
         y = event.y
         r = self.MT.identify_row(y=y)
@@ -329,7 +329,7 @@ class RowIndex(tk.Canvas):
                 self.itemconfig(t, tags=("",), state="hidden")
                 self.hidd_resize_lines[t] = False
 
-    def mouse_motion(self, event):
+    def mouse_motion(self, event: object):
         if not self.currently_resizing_height and not self.currently_resizing_width:
             x = self.canvasx(event.x)
             y = self.canvasy(event.y)
@@ -368,7 +368,7 @@ class RowIndex(tk.Canvas):
         if self.extra_motion_func is not None:
             self.extra_motion_func(event)
 
-    def double_b1(self, event=None):
+    def double_b1(self, event: object):
         self.mouseclick_outside_editor_or_dropdown_all_canvases()
         self.focus_set()
         if (
@@ -411,7 +411,7 @@ class RowIndex(tk.Canvas):
         if self.extra_double_b1_func is not None:
             self.extra_double_b1_func(event)
 
-    def b1_press(self, event=None):
+    def b1_press(self, event: object):
         self.MT.unbind("<MouseWheel>")
         self.focus_set()
         self.closed_dropdown = self.mouseclick_outside_editor_or_dropdown_all_canvases()
@@ -485,7 +485,7 @@ class RowIndex(tk.Canvas):
         if self.extra_b1_press_func is not None:
             self.extra_b1_press_func(event)
 
-    def b1_motion(self, event):
+    def b1_motion(self, event: object):
         x1, y1, x2, y2 = self.MT.get_canvas_visible_area()
         if self.height_resizing_enabled and self.rsz_h is not None and self.currently_resizing_height:
             y = self.canvasy(event.y)
@@ -590,7 +590,7 @@ class RowIndex(tk.Canvas):
         elif end_row < start_row:
             return (end_row, 0, start_row + 1, len(self.MT.col_positions) - 1, "rows")
 
-    def ctrl_b1_motion(self, event):
+    def ctrl_b1_motion(self, event: object):
         x1, y1, x2, y2 = self.MT.get_canvas_visible_area()
         if (
             self.drag_and_drop_enabled
@@ -643,7 +643,7 @@ class RowIndex(tk.Canvas):
         elif not self.MT.ctrl_select_enabled:
             self.b1_motion(event)
 
-    def drag_and_drop_motion(self, event):
+    def drag_and_drop_motion(self, event: object):
         y = event.y
         hend = self.winfo_height()
         ycheck = self.yview()
@@ -711,7 +711,7 @@ class RowIndex(tk.Canvas):
         if ctrl_lines:
             self.MT.delete_ctrl_outlines()
 
-    def scroll_if_event_offscreen(self, event):
+    def scroll_if_event_offscreen(self, event: object):
         ycheck = self.yview()
         need_redraw = False
         if event.y > self.winfo_height() and len(ycheck) > 1 and ycheck[1] < 1:
@@ -741,7 +741,7 @@ class RowIndex(tk.Canvas):
         if len(ycheck) > 1 and ycheck[1] > 1:
             self.MT.set_yviews("moveto", 1)
 
-    def event_over_dropdown(self, r, datarn, event, canvasy):
+    def event_over_dropdown(self, r, datarn, event: object, canvasy):
         if (
             canvasy < self.MT.row_positions[r] + self.MT.index_txt_height
             and self.get_cell_kwargs(datarn, key="dropdown")
@@ -750,7 +750,7 @@ class RowIndex(tk.Canvas):
             return True
         return False
 
-    def event_over_checkbox(self, r, datarn, event, canvasy):
+    def event_over_checkbox(self, r, datarn, event: object, canvasy):
         if (
             canvasy < self.MT.row_positions[r] + self.MT.index_txt_height
             and self.get_cell_kwargs(datarn, key="checkbox")
@@ -759,7 +759,7 @@ class RowIndex(tk.Canvas):
             return True
         return False
 
-    def b1_release(self, event=None):
+    def b1_release(self, event: object):
         if self.being_drawn_item is not None:
             currently_selected = self.MT.currently_selected()
             to_sel = self.MT.get_box_from_item(self.being_drawn_item)
@@ -1642,7 +1642,7 @@ class RowIndex(tk.Canvas):
             d2["rows"] = {r for r in range(startr, endr) for r1, c1, r2, c2 in d["rows"] if r1 <= r and r2 > r}
         return d2
 
-    def open_cell(self, event=None, ignore_existing_editor=False):
+    def open_cell(self, event: object = None, ignore_existing_editor=False):
         if not self.MT.anything_selected() or (not ignore_existing_editor and self.text_editor_id is not None):
             return
         currently_selected = self.MT.currently_selected()
@@ -1673,7 +1673,7 @@ class RowIndex(tk.Canvas):
     # r is displayed row
     def open_text_editor(
         self,
-        event=None,
+        event: object = None,
         r=0,
         text=None,
         state="normal",
@@ -1793,7 +1793,7 @@ class RowIndex(tk.Canvas):
             self.text_editor.textedit.bind("<Escape>", lambda x: self.destroy_text_editor("Escape"))
         return True
 
-    def text_editor_newline_binding(self, r=0, c=0, event=None, check_lines=True):
+    def text_editor_newline_binding(self, r=0, c=0, event: object = None, check_lines=True):
         if self.height_resizing_enabled:
             datarn = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r]
             curr_height = self.text_editor.winfo_height()
@@ -1842,7 +1842,7 @@ class RowIndex(tk.Canvas):
         self.text_editor.textedit.bind("<Escape>", lambda x: binding((r, "Escape")))
         self.text_editor.textedit.focus_set()
 
-    def destroy_text_editor(self, event=None):
+    def destroy_text_editor(self, event: object = None):
         self.text_editor_loc = None
         try:
             self.delete(self.text_editor_id)
@@ -1863,7 +1863,7 @@ class RowIndex(tk.Canvas):
         editor_info=None,
         r=None,
         set_data_on_close=True,
-        event=None,
+        event: object = None,
         destroy=True,
         move_down=True,
         redraw=True,
@@ -2136,7 +2136,7 @@ class RowIndex(tk.Canvas):
         return win_h, "nw"
 
     # r is displayed row
-    def open_dropdown_window(self, r, datarn=None, event=None):
+    def open_dropdown_window(self, r, datarn=None, event: object = None):
         self.destroy_text_editor("Escape")
         self.destroy_opened_dropdown_window()
         if datarn is None:
