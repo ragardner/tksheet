@@ -1466,6 +1466,7 @@ class MainTable(tk.Canvas):
                 event_data=event_data,
                 displayed_rows=modification["deleted"]["displayed_rows"],
                 create_ops=False,
+                create_selections=not modification["eventname"].startswith("edit"),
                 add_col_positions=False,
             )
             self.restore_options_named_spans(modification)
@@ -1478,9 +1479,19 @@ class MainTable(tk.Canvas):
                 event_data=event_data,
                 displayed_columns=modification["deleted"]["displayed_columns"],
                 create_ops=False,
+                create_selections=not modification["eventname"].startswith("edit"),
                 add_row_positions=False,
             )
             self.restore_options_named_spans(modification)
+
+        if modification["eventname"].startswith("edit") and (
+            modification["deleted"]["columns"] or modification["deleted"]["rows"]
+        ):
+            self.reselect_from_get_boxes(
+                modification["selection_boxes"],
+                modification["selected"],
+            )
+            curr = self.currently_selected()
 
         if modification["eventname"].startswith(("edit", "move")):
             if not saved_cells:
