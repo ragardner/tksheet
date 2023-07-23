@@ -3682,7 +3682,7 @@ class Sheet(tk.Frame):
     ):
         if isinstance(r, str) and r.lower() == "all":
             for r_ in range(len(self.MT.data)):
-                self.MT.format_column(r_, **{"formatter": formatter_class, **formatter_options, **kwargs})
+                self.MT.format_row(r_, **{"formatter": formatter_class, **formatter_options, **kwargs})
         elif is_iterable(r):
             for r_ in r:
                 self.MT.format_row(r_, **{"formatter": formatter_class, **formatter_options, **kwargs})
