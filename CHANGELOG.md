@@ -1,3 +1,7 @@
+### Version 6.2.3
+#### Fixed:
+- Bug with `format_row` using "all"
+
 ### Version 6.2.2
 #### Fixed:
 - 2 pixel misalignment of index/header and table when scrolling
