@@ -4042,8 +4042,7 @@ class Sheet(tk.Frame):
         if span.kind == "cell" and span.table:
             for r in rows:
                 for c in cols:
-                    if (r, c) in self.MT.cell_options and "checkbox" in self.MT.cell_options[(r, c)]:
-                        self.del_cell_options_checkbox(r, c)
+                    self.del_cell_options_checkbox(r, c)
                     add_to_options(self.MT.cell_options, (r, c), "format", kwargs)
                     self.MT.set_cell_data(
                         r,
@@ -4053,8 +4052,7 @@ class Sheet(tk.Frame):
                     )
         elif span.kind == "row":
             for r in rows:
-                if r in self.MT.row_options and "checkbox" in self.MT.row_options[r]:
-                    self.del_row_options_checkbox(r)
+                self.del_row_options_checkbox(r)
                 kwargs = fix_format_kwargs(kwargs)
                 add_to_options(self.MT.row_options, r, "format", kwargs)
                 for c in cols:
@@ -4066,8 +4064,7 @@ class Sheet(tk.Frame):
                     )
         elif span.kind == "column":
             for c in cols:
-                if c in self.MT.col_options and "checkbox" in self.MT.col_options[c]:
-                    self.del_column_options_checkbox(c)
+                self.del_column_options_checkbox(c)
                 kwargs = fix_format_kwargs(kwargs)
                 add_to_options(self.MT.col_options, c, "format", kwargs)
                 for r in rows:
@@ -4566,76 +4563,107 @@ class Sheet(tk.Frame):
         self.set_refresh_timer(redraw)
 
     def create_checkbox(self, r=0, c=0, *args, **kwargs):
-        _kwargs = get_checkbox_kwargs(*args, **kwargs)
+        kwargs = get_checkbox_kwargs(*args, **kwargs)
+        d = get_checkbox_dict(**kwargs)
         if isinstance(r, str) and r.lower() == "all" and isinstance(c, int):
             for r_ in range(self.MT.total_data_rows()):
-                self.MT.create_checkbox(datarn=r_, datacn=c, **_kwargs)
+                self._create_checkbox(r_, c, d)
         elif isinstance(c, str) and c.lower() == "all" and isinstance(r, int):
             for c_ in range(self.MT.total_data_cols()):
-                self.MT.create_checkbox(datarn=r, datacn=c_, **_kwargs)
+                self._create_checkbox(r, c_, d)
         elif isinstance(r, str) and r.lower() == "all" and isinstance(c, str) and c.lower() == "all":
             totalcols = self.MT.total_data_cols()
             for r_ in range(self.MT.total_data_rows()):
                 for c_ in range(totalcols):
-                    self.MT.create_checkbox(datarn=r_, datacn=c_, **_kwargs)
+                    self._create_checkbox(r_, c_, d)
         elif isinstance(r, int) and isinstance(c, int):
-            self.MT.create_checkbox(datarn=r, datacn=c, **_kwargs)
-        self.set_refresh_timer(_kwargs["redraw"])
+            self._create_checkbox(r, c, d)
+        self.set_refresh_timer(kwargs["redraw"])
+
+    def _create_checkbox(self, r, c, v, d):
+        self.MT.delete_cell_format(r, c, clear_values=False)
+        self.delete_cell_options_dropdown_and_checkbox(r, c)
+        add_to_options(self.MT.cell_options, (r, c), "checkbox", d)
+        self.MT.set_cell_data(r, c, v)
 
     def checkbox_cell(self, r=0, c=0, *args, **kwargs):
         self.create_checkbox(r=r, c=c, **get_checkbox_kwargs(*args, **kwargs))
 
-    def create_header_checkbox(self, c=0, *args, **kwargs):
-        _kwargs = get_checkbox_kwargs(*args, **kwargs)
-        if isinstance(c, str) and c.lower() == "all":
-            for c_ in range(self.MT.total_data_cols()):
-                self.CH.create_checkbox(datacn=c_, **_kwargs)
-        elif isinstance(c, int):
-            self.CH.create_checkbox(datacn=c, **_kwargs)
-        elif is_iterable(c):
-            for c_ in c:
-                self.CH.create_checkbox(datacn=c_, **_kwargs)
-        else:
-            self.CH.checkbox_header(**_kwargs)
-        self.set_refresh_timer(_kwargs["redraw"])
-
-    def create_index_checkbox(self, r=0, *args, **kwargs):
-        _kwargs = get_checkbox_kwargs(*args, **kwargs)
-        if isinstance(r, str) and r.lower() == "all":
-            for r_ in range(self.MT.total_data_rows()):
-                self.RI.create_checkbox(datarn=r_, **_kwargs)
-        elif isinstance(r, int):
-            self.RI.create_checkbox(datarn=r, **_kwargs)
-        elif is_iterable(r):
-            for r_ in r:
-                self.RI.create_checkbox(datarn=r_, **_kwargs)
-        else:
-            self.RI.checkbox_index(**_kwargs)
-        self.set_refresh_timer(_kwargs["redraw"])
-
     def checkbox_row(self, r=0, *args, **kwargs):
-        _kwargs = get_checkbox_kwargs(*args, **kwargs)
+        kwargs = get_checkbox_kwargs(*args, **kwargs)
+        d = get_checkbox_dict(**kwargs)
         if isinstance(r, str) and r.lower() == "all":
             for r_ in range(self.MT.total_data_rows()):
-                self.MT.checkbox_row(datarn=r_, **_kwargs)
+                self._checkbox_row(r_, kwargs["checked"], d)
         elif isinstance(r, int):
-            self.MT.checkbox_row(datarn=r, **_kwargs)
+            self._checkbox_row(r, kwargs["checked"], d)
         elif is_iterable(r):
             for r_ in r:
-                self.MT.checkbox_row(datarn=r_, **_kwargs)
-        self.set_refresh_timer(_kwargs["redraw"])
+                self._checkbox_row(r_, kwargs["checked"], d)
+        self.set_refresh_timer(kwargs["redraw"])
+
+    def _checkbox_row(self, r, v, d):
+        self.MT.delete_row_format(r, clear_values=False)
+        self.del_row_options_dropdown_and_checkbox(r)
+        add_to_options(self.MT.row_options, r, "checkbox", d)
+        for c in range(self.MT.total_data_cols()):
+            self.MT.set_cell_data(r, c, v)
 
     def checkbox_column(self, c=0, *args, **kwargs):
-        _kwargs = get_checkbox_kwargs(*args, **kwargs)
+        kwargs = get_checkbox_kwargs(*args, **kwargs)
+        d = get_checkbox_dict(**kwargs)
         if isinstance(c, str) and c.lower() == "all":
             for c in range(self.MT.total_data_cols()):
-                self.MT.checkbox_column(datacn=c, **_kwargs)
+                self._checkbox_column(c, kwargs["checked"], d)
         elif isinstance(c, int):
-            self.MT.checkbox_column(datacn=c, **_kwargs)
+            self._checkbox_column(c, kwargs["checked"], d)
         elif is_iterable(c):
             for c_ in c:
-                self.MT.checkbox_column(datacn=c_, **_kwargs)
-        self.set_refresh_timer(_kwargs["redraw"])
+                self._checkbox_column(c_, kwargs["checked"], d)
+        self.set_refresh_timer(kwargs["redraw"])
+
+    def _checkbox_column(self, c, v, d):
+        self.MT.delete_column_format(c, clear_values=False)
+        self.del_column_options_dropdown_and_checkbox(c)
+        add_to_options(self.MT.col_options, c, "checkbox", d)
+        for r in range(self.MT.total_data_rows()):
+            self.MT.set_cell_data(r, c, v)
+
+    def create_header_checkbox(self, c=0, *args, **kwargs):
+        kwargs = get_checkbox_kwargs(*args, **kwargs)
+        d = get_checkbox_dict(**kwargs)
+        if isinstance(c, str) and c.lower() == "all":
+            for c_ in range(self.MT.total_data_cols()):
+                self._create_header_checkbox(c_, kwargs["checked"], d)
+        elif isinstance(c, int):
+            self._create_header_checkbox(c, kwargs["checked"], d)
+        elif is_iterable(c):
+            for c_ in c:
+                self._create_header_checkbox(c_, kwargs["checked"], d)
+        self.set_refresh_timer(kwargs["redraw"])
+
+    def _create_header_checkbox(self, c, v, d):
+        self.del_header_cell_options_dropdown_and_checkbox(c)
+        add_to_options(self.CH.cell_options, c, "checkbox", d)
+        self.CH.set_cell_data(c, v)
+
+    def create_index_checkbox(self, r=0, *args, **kwargs):
+        kwargs = get_checkbox_kwargs(*args, **kwargs)
+        d = get_checkbox_dict(**kwargs)
+        if isinstance(r, str) and r.lower() == "all":
+            for r_ in range(self.MT.total_data_rows()):
+                self._create_index_checkbox(r_, kwargs["checked"], d)
+        elif isinstance(r, int):
+            self._create_index_checkbox(r, kwargs["checked"], d)
+        elif is_iterable(r):
+            for r_ in r:
+                self._create_index_checkbox(r_, kwargs["checked"], d)
+        self.set_refresh_timer(kwargs["redraw"])
+
+    def _create_index_checkbox(self, r, v, d):
+        self.del_index_cell_options_dropdown_and_checkbox(r)
+        add_to_options(self.RI.cell_options, r, "checkbox", d)
+        self.RI.set_cell_data(r, v)
 
     def delete_checkbox(self, r=0, c=0):
         if isinstance(r, str) and r.lower() == "all" and isinstance(c, int):
@@ -4741,76 +4769,109 @@ class Sheet(tk.Frame):
         return d
 
     def create_dropdown(self, r=0, c=0, *args, **kwargs):
-        _kwargs = get_dropdown_kwargs(*args, **kwargs)
+        kwargs = get_dropdown_kwargs(*args, **kwargs)
+        d = get_dropdown_dict(**kwargs)
+        v = kwargs["set_value"] if kwargs["set_value"] is not None else kwargs["values"][0] if kwargs["values"] else ""
         if isinstance(r, str) and r.lower() == "all" and isinstance(c, int):
             for r_ in range(self.MT.total_data_rows()):
-                self.MT.create_dropdown(datarn=r_, datacn=c, **_kwargs)
+                self._create_dropdown(r_, c, v, d)
         elif isinstance(c, str) and c.lower() == "all" and isinstance(r, int):
             for c_ in range(self.MT.total_data_cols()):
-                self.MT.create_dropdown(datarn=r, datacn=c_, **_kwargs)
+                self._create_dropdown(r, c_, v, d)
         elif isinstance(r, str) and r.lower() == "all" and isinstance(c, str) and c.lower() == "all":
             totalcols = self.MT.total_data_cols()
             for r_ in range(self.MT.total_data_rows()):
                 for c_ in range(totalcols):
-                    self.MT.create_dropdown(datarn=r_, datacn=c_, **_kwargs)
+                    self._create_dropdown(r_, c_, v, d)
         elif isinstance(r, int) and isinstance(c, int):
-            self.MT.create_dropdown(datarn=r, datacn=c, **_kwargs)
-        self.set_refresh_timer(_kwargs["redraw"])
+            self._create_dropdown(r, c, v, d)
+        self.set_refresh_timer(kwargs["redraw"])
+
+    def _create_dropdown(self, r, c, v, d):
+        self.del_cell_options_dropdown_and_checkbox(r, c)
+        add_to_options(self.MT.cell_options, (r, c), "dropdown", d)
+        self.MT.set_cell_data(r, c, v)
 
     def dropdown_cell(self, r=0, c=0, *args, **kwargs):
         self.create_dropdown(r=r, c=c, **get_dropdown_kwargs(*args, **kwargs))
 
     def dropdown_row(self, r=0, *args, **kwargs):
-        _kwargs = get_dropdown_kwargs(*args, **kwargs)
+        kwargs = get_dropdown_kwargs(*args, **kwargs)
+        d = get_dropdown_dict(**kwargs)
+        v = kwargs["set_value"] if kwargs["set_value"] is not None else kwargs["values"][0] if kwargs["values"] else ""
         if isinstance(r, str) and r.lower() == "all":
             for r_ in range(self.MT.total_data_rows()):
-                self.MT.dropdown_row(datarn=r_, **_kwargs)
+                self._dropdown_row(r_, v, d)
         elif isinstance(r, int):
-            self.MT.dropdown_row(datarn=r, **_kwargs)
+            self._dropdown_row(r, v, d)
         elif is_iterable(r):
             for r_ in r:
-                self.MT.dropdown_row(datarn=r_, **_kwargs)
-        self.set_refresh_timer(_kwargs["redraw"])
+                self._dropdown_row(r_, v, d)
+        self.set_refresh_timer(kwargs["redraw"])
+
+    def _dropdown_row(self, r, v, d):
+        self.del_row_options_dropdown_and_checkbox(r)
+        add_to_options(self.MT.row_options, r, "dropdown", d)
+        for c in range(self.MT.total_data_cols()):
+            self.MT.set_cell_data(r, c, v)
 
     def dropdown_column(self, c=0, *args, **kwargs):
-        _kwargs = get_dropdown_kwargs(*args, **kwargs)
+        kwargs = get_dropdown_kwargs(*args, **kwargs)
+        d = get_dropdown_dict(**kwargs)
+        v = kwargs["set_value"] if kwargs["set_value"] is not None else kwargs["values"][0] if kwargs["values"] else ""
         if isinstance(c, str) and c.lower() == "all":
             for c_ in range(self.MT.total_data_cols()):
-                self.MT.dropdown_column(datacn=c_, **_kwargs)
+                self._dropdown_column(c_, v, d)
         elif isinstance(c, int):
-            self.MT.dropdown_column(datacn=c, **_kwargs)
+            self._dropdown_column(c, v, d)
         elif is_iterable(c):
             for c_ in c:
-                self.MT.dropdown_column(datacn=c_, **_kwargs)
-        self.set_refresh_timer(_kwargs["redraw"])
+                self._dropdown_column(c_, v, d)
+        self.set_refresh_timer(kwargs["redraw"])
+
+    def _dropdown_column(self, c, v, d):
+        self.del_column_options_dropdown_and_checkbox(c)
+        add_to_options(self.MT.col_options, c, "dropdown", d)
+        for r in range(self.MT.total_data_rows()):
+            self.MT.set_cell_data(r, c, v)
 
     def create_header_dropdown(self, c=0, *args, **kwargs):
-        _kwargs = get_dropdown_kwargs(*args, **kwargs)
+        kwargs = get_dropdown_kwargs(*args, **kwargs)
+        d = get_dropdown_dict(**kwargs)
+        v = kwargs["set_value"] if kwargs["set_value"] is not None else kwargs["values"][0] if kwargs["values"] else ""
         if isinstance(c, str) and c.lower() == "all":
             for c_ in range(self.MT.total_data_cols()):
-                self.CH.create_dropdown(datacn=c_, **_kwargs)
+                self._create_header_dropdown(c_, v, d)
         elif isinstance(c, int):
-            self.CH.create_dropdown(datacn=c, **_kwargs)
+            self._create_header_dropdown(c, v, d)
         elif is_iterable(c):
             for c_ in c:
-                self.CH.create_dropdown(datacn=c_, **_kwargs)
-        elif c is None:
-            self.CH.dropdown_header(**_kwargs)
-        self.set_refresh_timer(_kwargs["redraw"])
+                self._create_header_dropdown(c_, v, d)
+        self.set_refresh_timer(kwargs["redraw"])
+
+    def _create_header_dropdown(self, c, v, d):
+        self.del_header_cell_options_dropdown_and_checkbox(c)
+        add_to_options(self.CH.cell_options, c, "dropdown", d)
+        self.CH.set_cell_data(c, v)
 
     def create_index_dropdown(self, r=0, *args, **kwargs):
-        _kwargs = get_dropdown_kwargs(*args, **kwargs)
+        kwargs = get_dropdown_kwargs(*args, **kwargs)
+        d = get_dropdown_dict(**kwargs)
+        v = kwargs["set_value"] if kwargs["set_value"] is not None else kwargs["values"][0] if kwargs["values"] else ""
         if isinstance(r, str) and r.lower() == "all":
             for r_ in range(self.MT.total_data_rows()):
-                self.RI.create_dropdown(datarn=r_, **_kwargs)
+                self._create_index_dropdown(r_, v, d)
         elif isinstance(r, int):
-            self.RI.create_dropdown(datarn=r, **_kwargs)
+            self._create_index_dropdown(r, v, d)
         elif is_iterable(r):
             for r_ in r:
-                self.RI.create_dropdown(datarn=r_, **_kwargs)
-        elif r is None:
-            self.RI.dropdown_index(**_kwargs)
-        self.set_refresh_timer(_kwargs["redraw"])
+                self._create_index_dropdown(r_, v, d)
+        self.set_refresh_timer(kwargs["redraw"])
+
+    def _create_index_dropdown(self, r, v, d):
+        self.del_index_cell_options_dropdown_and_checkbox(r)
+        add_to_options(self.RI.cell_options, r, "dropdown", d)
+        self.RI.set_cell_data(r, v)
 
     def delete_dropdown(self, r=0, c=0):
         if isinstance(r, str) and r.lower() == "all" and isinstance(c, int):
@@ -4835,12 +4896,12 @@ class Sheet(tk.Frame):
         if isinstance(r, str) and r.lower() == "all":
             for r_ in self.MT.row_options:
                 if "dropdown" in self.MT.row_options[r_]:
-                    self.del_table_row_options_dropdown(datarn=r_)
+                    self.del_table_row_options_dropdown(r_)
         elif isinstance(r, int):
-            self.del_table_row_options_dropdown(datarn=r)
+            self.del_table_row_options_dropdown(r)
         elif is_iterable(r):
             for r_ in r:
-                self.del_table_row_options_dropdown(datarn=r_)
+                self.del_table_row_options_dropdown(r_)
 
     def delete_column_dropdown(self, c="all"):
         if isinstance(c, str) and c.lower() == "all":
@@ -5016,35 +5077,26 @@ class Sheet(tk.Frame):
         redraw=True,
         **kwargs,
     ):
+        kwargs = fix_format_kwargs({"formatter": formatter_class, **formatter_options, **kwargs})
         if isinstance(r, str) and r.lower() == "all" and isinstance(c, int):
             for r_ in range(self.MT.total_data_rows()):
-                self.MT.format_cell(
-                    datarn=r_,
-                    datacn=c,
-                    **{"formatter": formatter_class, **formatter_options, **kwargs},
-                )
+                self._format_cell(r_, c, kwargs)
         elif isinstance(c, str) and c.lower() == "all" and isinstance(r, int):
             for c_ in range(self.MT.total_data_cols()):
-                self.MT.format_cell(
-                    datarn=r,
-                    datacn=c_,
-                    **{"formatter": formatter_class, **formatter_options, **kwargs},
-                )
+                self._format_cell(r, c_, kwargs)
         elif isinstance(r, str) and r.lower() == "all" and isinstance(c, str) and c.lower() == "all":
             for r_ in range(self.MT.total_data_rows()):
                 for c_ in range(self.MT.total_data_cols()):
-                    self.MT.format_cell(
-                        datarn=r_,
-                        datacn=c_,
-                        **{"formatter": formatter_class, **formatter_options, **kwargs},
-                    )
+                    self._format_cell(r_, c_, kwargs)
         else:
-            self.MT.format_cell(
-                datarn=r,
-                datacn=c,
-                **{"formatter": formatter_class, **formatter_options, **kwargs},
-            )
+            self._format_cell(r, c, kwargs)
         self.set_refresh_timer(redraw)
+
+    def _format_cell(self, r, c, d):
+        v = d["value"] if "value" in d else self.MT.get_cell_data(r, c)
+        self.del_cell_options_checkbox(r, c)
+        add_to_options(self.MT.cell_options, (r, c), "format", d)
+        self.MT.set_cell_data(r, c, value=v, kwargs=d)
 
     def delete_cell_format(
         self,
@@ -5075,15 +5127,27 @@ class Sheet(tk.Frame):
         redraw=True,
         **kwargs,
     ):
+        kwargs = fix_format_kwargs({"formatter": formatter_class, **formatter_options, **kwargs})
         if isinstance(r, str) and r.lower() == "all":
             for r_ in range(len(self.MT.data)):
-                self.MT.format_column(r_, **{"formatter": formatter_class, **formatter_options, **kwargs})
+                self._format_row(r_, kwargs)
         elif is_iterable(r):
             for r_ in r:
-                self.MT.format_row(r_, **{"formatter": formatter_class, **formatter_options, **kwargs})
+                self._format_row(r_, kwargs)
         else:
-            self.MT.format_row(r, **{"formatter": formatter_class, **formatter_options, **kwargs})
+            self._format_row(r, kwargs)
         self.set_refresh_timer(redraw)
+
+    def _format_row(self, r, d):
+        self.del_row_options_checkbox(r)
+        add_to_options(self.MT.row_options, r, "format", d)
+        for c in range(self.MT.total_data_cols()):
+            self.MT.set_cell_data(
+                r,
+                c,
+                value=d["value"] if "value" in d else self.MT.get_cell_data(r, c),
+                kwargs=d,
+            )
 
     def delete_row_format(self, r="all", clear_values=False):
         if is_iterable(r):
@@ -5100,15 +5164,27 @@ class Sheet(tk.Frame):
         redraw=True,
         **kwargs,
     ):
+        kwargs = fix_format_kwargs({"formatter": formatter_class, **formatter_options, **kwargs})
         if isinstance(c, str) and c.lower() == "all":
             for c_ in range(self.MT.total_data_cols()):
-                self.MT.format_column(c_, **{"formatter": formatter_class, **formatter_options, **kwargs})
+                self._format_column(c_, kwargs)
         elif is_iterable(c):
             for c_ in c:
-                self.MT.format_column(c_, **{"formatter": formatter_class, **formatter_options, **kwargs})
+                self._format_column(c_, kwargs)
         else:
-            self.MT.format_column(c, **{"formatter": formatter_class, **formatter_options, **kwargs})
+            self._format_column(c, kwargs)
         self.set_refresh_timer(redraw)
+
+    def _format_column(self, c, d):
+        self.del_column_options_checkbox(c)
+        add_to_options(self.MT.col_options, c, "format", d)
+        for r in range(self.MT.total_data_rows()):
+            self.MT.set_cell_data(
+                r,
+                c,
+                value=d["value"] if "value" in d else self.MT.get_cell_data(r, c),
+                kwargs=d,
+            )
 
     def delete_column_format(self, c="all", clear_values=False):
         if is_iterable(c):
