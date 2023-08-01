@@ -3652,6 +3652,7 @@ class Sheet(tk.Frame):
         span = self.span_from_key(key)
         rows, cols = self.ranges_from_span(span)
         table, index, header = span.table, span.index, span.header
+        align = self.convert_align(align)
         if span.kind == "cell":
             if header:
                 for c in cols:
@@ -4074,6 +4075,7 @@ class Sheet(tk.Frame):
                         value=kwargs["value"] if "value" in kwargs else self.MT.get_cell_data(r, c),
                         kwargs=kwargs,
                     )
+        self.set_refresh_timer(redraw)
         return span
 
     def del_format(
@@ -4496,70 +4498,107 @@ class Sheet(tk.Frame):
     def get_row_alignments(self):
         return {r: v["align"] for r, v in self.MT.row_options.items() if "align" in v}
 
-    def align_rows(self, rows=[], align="global", align_index=False, redraw=True):  # "center", "w", "e" or "global"
-        if align == "global" or self.convert_align(align):
-            if isinstance(rows, dict):
-                for k, v in rows.items():
-                    self.MT.align_rows(rows=k, align=v, align_index=align_index)
-            else:
-                self.MT.align_rows(
-                    rows=rows,
-                    align=align if align == "global" else self.convert_align(align),
-                    align_index=align_index,
-                )
+    def align_rows(
+        self,
+        rows: list | dict | int = [],
+        align: str | None = "global",
+        align_index: bool = False,
+        redraw: bool = True,
+    ) -> None:
+        if isinstance(rows, dict):
+            for k, v in rows.items():
+                align = self.convert_align(v)
+                set_align(self.MT.row_options, k, align)
+                if align_index:
+                    set_align(self.RI.cell_options, k, align)
+        elif is_iterable(rows):
+            align = self.convert_align(align)
+            for k in rows:
+                set_align(self.MT.row_options, k, align)
+                if align_index:
+                    set_align(self.RI.cell_options, k, align)
+        elif isinstance(rows, int):
+            set_align(self.MT.row_options, rows, self.convert_align(align))
+            if align_index:
+                set_align(self.RI.cell_options, rows, align)
         self.set_refresh_timer(redraw)
 
     def align_columns(
-        self, columns=[], align="global", align_header=False, redraw=True
-    ):  # "center", "w", "e" or "global"
-        if align == "global" or self.convert_align(align):
-            if isinstance(columns, dict):
-                for k, v in columns.items():
-                    self.MT.align_columns(columns=k, align=v, align_header=align_header)
-            else:
-                self.MT.align_columns(
-                    columns=columns,
-                    align=align if align == "global" else self.convert_align(align),
-                    align_header=align_header,
-                )
+        self,
+        columns: list | dict | int = [],
+        align: str | None = "global",
+        align_header: bool = False,
+        redraw: bool = True,
+    ) -> None:
+        if isinstance(columns, dict):
+            for k, v in columns.items():
+                align = self.convert_align(v)
+                set_align(self.MT.col_options, k, align)
+                if align_header:
+                    set_align(self.CH.cell_options, k, align)
+        elif is_iterable(columns):
+            align = self.convert_align(align)
+            for k in columns:
+                set_align(self.MT.col_options, k, align)
+                if align_header:
+                    set_align(self.CH.cell_options, k, align)
+        elif isinstance(columns, int):
+            set_align(self.MT.col_options, columns, self.convert_align(align))
+            if align_header:
+                set_align(self.CH.cell_options, columns, align)
         self.set_refresh_timer(redraw)
 
-    def align_cells(self, row=0, column=0, cells=[], align="global", redraw=True):  # "center", "w", "e" or "global"
-        if align == "global" or self.convert_align(align):
-            if isinstance(cells, dict):
-                for (r, c), v in cells.items():
-                    self.MT.align_cells(row=r, column=c, cells=[], align=v)
-            else:
-                self.MT.align_cells(
-                    row=row,
-                    column=column,
-                    cells=cells,
-                    align=align if align == "global" else self.convert_align(align),
-                )
+    def align_cells(
+        self,
+        row: int = 0,
+        column: int = 0,
+        cells: list = [],
+        align: str | None = "global",
+        redraw: bool = True,
+    ) -> None:
+        if isinstance(cells, dict):
+            for k, v in cells.items():
+                set_align(self.MT.cell_options, k, self.convert_align(v))
+        elif cells:
+            align = self.convert_align(align)
+            for k in cells:
+                set_align(self.MT.cell_options, k, align)
+        else:
+            set_align(self.MT.cell_options, (row, column), self.convert_align(align))
         self.set_refresh_timer(redraw)
 
-    def align_header(self, columns=[], align="global", redraw=True):
-        if align == "global" or self.convert_align(align):
-            if isinstance(columns, dict):
-                for k, v in columns.items():
-                    self.CH.align_cells(columns=k, align=v)
-            else:
-                self.CH.align_cells(
-                    columns=columns,
-                    align=align if align == "global" else self.convert_align(align),
-                )
+    def align_header(
+        self,
+        columns: list | dict | int = [],
+        align: str | None = "global",
+        redraw: bool = True,
+    ) -> None:
+        if isinstance(columns, dict):
+            for k, v in columns.items():
+                set_align(self.CH.cell_options, k, self.convert_align(v))
+        elif is_iterable(columns):
+            align = self.convert_align(align)
+            for k in columns:
+                set_align(self.CH.cell_options, k, align)
+        elif isinstance(columns, int):
+            set_align(self.CH.cell_options, columns, self.convert_align(align))
         self.set_refresh_timer(redraw)
 
-    def align_index(self, rows=[], align="global", redraw=True):
-        if align == "global" or self.convert_align(align):
-            if isinstance(rows, dict):
-                for k, v in rows.items():
-                    self.RI.align_cells(rows=rows, align=v)
-            else:
-                self.RI.align_cells(
-                    rows=rows,
-                    align=align if align == "global" else self.convert_align(align),
-                )
+    def align_index(
+        self,
+        rows: list | dict | int = [],
+        align: str | None = "global",
+        redraw: bool = True,
+    ) -> None:
+        if isinstance(rows, dict):
+            for k, v in rows.items():
+                set_align(self.RI.cell_options, k, self.convert_align(v))
+        elif is_iterable(rows):
+            align = self.convert_align(align)
+            for k in rows:
+                set_align(self.RI.cell_options, k, align)
+        elif isinstance(rows, int):
+            set_align(self.RI.cell_options, rows, self.convert_align(align))
         self.set_refresh_timer(redraw)
 
     def create_checkbox(self, r=0, c=0, *args, **kwargs):
