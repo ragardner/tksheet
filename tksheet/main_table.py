@@ -940,7 +940,14 @@ class MainTable(tk.Canvas):
                                     if (datarn, oldidx) not in event_data["cells"]["table"]:
                                         event_data["cells"]["table"][(datarn, oldidx)] = self.get_cell_data(datarn, k)
                             # create new col_options
-                            new_ops(mod_span(span=qkspan, from_c=k, upto_c=k + 1, kws=span_kws))
+                            new_ops(
+                                mod_span(
+                                    span=qkspan,
+                                    kws=span_kws,
+                                    from_c=k,
+                                    upto_c=k + 1,
+                                )
+                            )
                         # the span targets cells
                         else:
                             rng_upto_r = totalrows if span["upto_r"] is None else span["upto_r"]
@@ -954,11 +961,11 @@ class MainTable(tk.Canvas):
                                 new_ops(
                                     mod_span(
                                         span=qkspan,
+                                        kws=span_kws,
                                         from_r=datarn,
                                         upto_r=datarn + 1,
                                         from_c=k,
                                         upto_c=k + 1,
-                                        kws=span_kws,
                                     )
                                 )
                 # remove span specific kwargs from cells/columns
@@ -1164,7 +1171,14 @@ class MainTable(tk.Canvas):
                                     if (oldidx, datacn) not in event_data["cells"]["table"]:
                                         event_data["cells"]["table"][(oldidx, datacn)] = self.get_cell_data(k, datacn)
                             # create new row_options
-                            new_ops(mod_span(span=qkspan, from_r=k, upto_r=k + 1, kws=span_kws))
+                            new_ops(
+                                mod_span(
+                                    span=qkspan,
+                                    kws=span_kws,
+                                    from_r=k,
+                                    upto_r=k + 1,
+                                )
+                            )
                         # the span targets cells
                         else:
                             rng_upto_c = totalcols if span["upto_c"] is None else span["upto_c"]
@@ -1178,11 +1192,11 @@ class MainTable(tk.Canvas):
                                 new_ops(
                                     mod_span(
                                         span=qkspan,
+                                        kws=span_kws,
                                         from_r=k,
                                         upto_r=k + 1,
                                         from_c=datacn,
                                         upto_c=datacn + 1,
-                                        kws=span_kws,
                                     )
                                 )
                 # remove span specific kwargs from cells/rows

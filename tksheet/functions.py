@@ -590,7 +590,12 @@ def coords_to_span(
 
 
 def key_to_span(
-    key: str | int | slice | Sequence[int, int] | Sequence[Sequence[int, int], Sequence[int, int]],
+    key: str
+    | int
+    | slice
+    | Sequence[int, int]
+    | Sequence[int, int, int, int]
+    | Sequence[Sequence[int, int], Sequence[int, int]],
     spans: dict[str, Span],
     widget: object = None,
 ) -> Span:
@@ -599,16 +604,29 @@ def key_to_span(
     try:
         if isinstance(key, (list, tuple)):
             if isinstance(key[0], int):
-                """
-                (int, int) - (row, column) - Specific cell
-                """
-                return span_dict(
-                    from_r=key[0],
-                    from_c=key[1],
-                    upto_r=key[0] + 1,
-                    upto_c=key[1] + 1,
-                    widget=widget,
-                )
+                if len(key) == 2:
+                    """
+                    (int, int) - (row, column) - Specific cell
+                    """
+                    return span_dict(
+                        from_r=key[0],
+                        from_c=key[1],
+                        upto_r=key[0] + 1,
+                        upto_c=key[1] + 1,
+                        widget=widget,
+                    )
+
+                elif len(key) == 4:
+                    """
+                    (int, int, int, int) - (from row, from column, up to row, up to column) - span of cells
+                    """
+                    return span_dict(
+                        from_r=key[0],
+                        from_c=key[1],
+                        upto_r=key[2],
+                        upto_c=key[3],
+                        widget=widget,
+                    )
 
             elif isinstance(key[0], (list, tuple)):
                 """
@@ -941,17 +959,14 @@ def span_ranges(
 ) -> tuple[Generator[int], Generator[int]]:
     rng_from_r = 0 if span.from_r is None else span.from_r
     rng_from_c = 0 if span.from_c is None else span.from_c
-
     if span.upto_r is None:
         rng_upto_r = totalrows() if isinstance(totalrows, Callable) else totalrows
     else:
         rng_upto_r = span.upto_r
-
     if span.upto_c is None:
         rng_upto_c = totalcols() if isinstance(totalcols, Callable) else totalcols
     else:
         rng_upto_c = span.upto_c
-
     return range(rng_from_r, rng_upto_r), range(rng_from_c, rng_upto_c)
 
 
@@ -1090,12 +1105,8 @@ def span_idxs_post_move(
     """
     Calculates the position of a span after moving rows/columns
     """
-    # i should be able to move either end within the span and keep the span
-    # but how do i know what the new end of the span is?
-    # if some columns are moving in and some out
     if isinstance(span[f"upto_{axis}"], int):
         oldfrom, oldupto = int(span[f"from_{axis}"]), int(span[f"upto_{axis}"]) - 1
-        # if the span is greater than one in length
         newfrom = full_new_idxs[oldfrom]
         newupto = full_new_idxs[oldupto]
         if newfrom > newupto:
@@ -1114,14 +1125,12 @@ def span_idxs_post_move(
 
 def mod_span(
     span: Span,
+    kws: dict,
     from_r: int | None = None,
     from_c: int | None = None,
     upto_r: int | None = None,
     upto_c: int | None = None,
-    kws: dict | None = None,
 ) -> Span:
-    if kws is None:
-        kws = {}
     span.from_r = from_r
     span.from_c = from_c
     span.upto_r = upto_r
