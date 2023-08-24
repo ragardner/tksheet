@@ -1,0 +1,39 @@
+{% set name = "tksheet" %}
+{% set version = "6.2.3" %}
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source:
+  url: https://github.com/ragardner/tksheet/archive/{{ version }}.tar.gz
+  sha256: c370e2a1f2c63f364271d44fd811ab2dfbdba204ba6f9cb3bdb1a82b99cc0c65
+
+build:
+  noarch: python
+  script: {{ PYTHON }} -m pip install . -vv
+  number: 0
+
+requirements:
+  host:
+    - python >=3.6
+    - pip
+  run:
+    - python >=3.6
+
+test:
+  imports:
+    - tksheet
+  commands:
+    - pip check
+  requires:
+    - pip
+
+about:
+  home: https://github.com/ragardner/tksheet
+  license: MIT
+  license_file: LICENSE.txt
+
+extra:
+  recipe-maintainers:
+    - ragardner

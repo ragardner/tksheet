@@ -1,0 +1,15 @@
+name: publish_conda
+
+on:
+  release:
+    types: [published]
+    
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3.1.0
+    - name: publish-to-conda
+      uses: fcakyon/conda-publish-action@v1.3
+      with:
+        AnacondaToken: ${{ secrets.ANACONDA_TOKEN }}
