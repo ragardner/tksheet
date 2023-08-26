@@ -6,6 +6,7 @@ package:
   version: {{ version }}
 
 source:
+  url: https://github.com/ragardner/tksheet/releases/download/{{ version }}/tksheet-{{ version }}.tar.gz
   url: https://github.com/ragardner/tksheet/archive/{{ version }}.tar.gz
   sha256: c370e2a1f2c63f364271d44fd811ab2dfbdba204ba6f9cb3bdb1a82b99cc0c65
 
@@ -20,6 +21,7 @@ requirements:
     - pip
   run:
     - python >=3.6
+    - tk >=8.6
 
 test:
   imports:
@@ -31,8 +33,14 @@ test:
 
 about:
   home: https://github.com/ragardner/tksheet
+  summary: Python 3.6+ tkinter table widget for displaying tabular data
+  description: |
+    A Tkinter spreadsheet widget for Python 3.6+.
   license: MIT
+  license_family: MIT
   license_file: LICENSE.txt
+  doc_url: https://github.com/ragardner/tksheet/wiki
+  dev_url: https://github.com/ragardner/tksheet
 
 extra:
   recipe-maintainers:
