@@ -26,7 +26,7 @@ def to_float(x: object, **kwargs):
 
 
 def to_bool(val: object, **kwargs):
-    if type(val) == bool:
+    if isinstance(val, bool):
         return val
     if isinstance(val, str):
         v = val.lower()

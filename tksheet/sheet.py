@@ -189,6 +189,8 @@ class Sheet(tk.Frame):
         )
         self.C = parent
         self.name = name
+        self.last_event_data = DotDict()
+        self.bound_events = DotDict({k: [] for k in emitted_events})
         self.dropdown_class = Dropdown
         self.after_redraw_id = None
         self.after_redraw_time_ms = after_redraw_time_ms
@@ -575,7 +577,7 @@ class Sheet(tk.Frame):
             b = b.lower()
 
             if func is not None and b in emitted_events:
-                self.bind_event(b, f)
+                self.bind(b, f)
 
             if b in (
                 "all",
@@ -880,31 +882,17 @@ class Sheet(tk.Frame):
         event: str,
         data: None | dict = None,
     ) -> None:
+        # data is a DotDict
         if data is None:
-            data = {}
+            data = DotDict()
         data["sheetname"] = self.name
-        self.event_generate(event, data=data)
+        self.last_event_data = data
+        for func in self.bound_events[event]:
+            func(data)
 
-    def bind_event(
-        self,
-        sequence: str,
-        func: Callable,
-        add: str | None = None,
-    ) -> Sheet:
-        widget = self
-
-        def _substitute(*args) -> tuple[None]:
-            def e() -> None:
-                return None
-
-            e.data = DotDict(eval(args[0]))
-            e.widget = widget
-            return (e,)
-
-        funcid = widget._register(func, _substitute, needcleanup=1)
-        cmd = '{0}if {{"[{1} %d]" == "break"}} break\n'.format("+" if add else "", funcid)
-        widget.tk.call("bind", widget._w, sequence, cmd)
-        return self
+    @property
+    def event(self) -> DotDict:
+        return self.last_event_data
 
     def sync_scroll(self, widget: object) -> Sheet:
         if widget is self:
@@ -932,7 +920,12 @@ class Sheet(tk.Frame):
         func: Callable,
         add: str | None = None,
     ) -> Sheet:
-        if binding == "<ButtonPress-1>":
+        if binding in emitted_events:
+            if add:
+                self.bound_events[binding].append(func)
+            else:
+                self.bound_events[binding] = [func]
+        elif binding == "<ButtonPress-1>":
             self.MT.extra_b1_press_func = func
             self.CH.extra_b1_press_func = func
             self.RI.extra_b1_press_func = func
@@ -970,7 +963,9 @@ class Sheet(tk.Frame):
         return self
 
     def unbind(self, binding: str) -> Sheet:
-        if binding == "<ButtonPress-1>":
+        if binding in emitted_events:
+            self.bound_events[binding] = []
+        elif binding == "<ButtonPress-1>":
             self.MT.extra_b1_press_func = None
             self.CH.extra_b1_press_func = None
             self.RI.extra_b1_press_func = None
@@ -2618,7 +2613,6 @@ class Sheet(tk.Frame):
         redraw: bool = True,
     ) -> None:
         span = self.span_from_key(key)
-        rows, cols = self.ranges_from_span(span)
         """
         e.g.
         df = pandas.DataFrame([[1, 2, 3], [4, 5, 6]])
@@ -3378,13 +3372,13 @@ class Sheet(tk.Frame):
 
     def all_rows_displayed(self, a: bool | None = None) -> bool:
         v = bool(self.MT.all_rows_displayed)
-        if type(a) == bool:
+        if isinstance(a, bool):
             self.MT.all_rows_displayed = a
         return v
 
     def all_columns_displayed(self, a: bool | None = None) -> bool:
         v = bool(self.MT.all_columns_displayed)
-        if type(a) == bool:
+        if isinstance(a, bool):
             self.MT.all_columns_displayed = a
         return v
 
@@ -4808,7 +4802,7 @@ class Sheet(tk.Frame):
     def click_header_checkbox(self, c: int, checked: bool | None = None) -> None:
         kwargs = self.CH.get_cell_kwargs(c, key="checkbox")
         if kwargs:
-            if not type(self.MT._headers[c]) == bool:
+            if not isinstance(self.MT._headers[c], bool):
                 if checked is None:
                     self.MT._headers[c] = False
                 else:
@@ -4819,7 +4813,7 @@ class Sheet(tk.Frame):
     def click_index_checkbox(self, r: int, checked: bool | None = None) -> None:
         kwargs = self.RI.get_cell_kwargs(r, key="checkbox")
         if kwargs:
-            if not type(self.MT._row_index[r]) == bool:
+            if not isinstance(self.MT._row_index[r], bool):
                 if checked is None:
                     self.MT._row_index[r] = False
                 else:

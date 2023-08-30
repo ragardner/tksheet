@@ -20,13 +20,22 @@
         - `delete_header_dropdown` default argument changed to required argument and can no longer delete a header wide dropdown
         - `delete_index_dropdown` default argument changed to required argument and can no longer delete an index wide dropdown
 
-    - Just arguments:
+    - Arguments only:
         - `move_columns`
         - `move_rows`
         - `click_checkbox`
 
     - Renamed:
         - `align` -> `table_align`
+
+#### Added:
+- New methods for getting and setting data
+- `bind` now also accepts `"<<SheetModified>>"` and `"<<SheetRedrawn>>"` arguments
+- Redo, which is enabled when undo is enabled, use by pressing ctrl/cmd + shift + z
+- named spans for sheet options such as highlight, format
+- `auto_resize_columns`, `auto_resize_rows` in initialization or with `set_options()`
+- Ctrl/cmd click deselect
+- Ability to make currently selected box border different color to selection box border
 
 #### Other Changes:
 - Overhaul and totally change event data sent to functions bound by `extra_bindings()`
@@ -35,12 +44,9 @@
 - Rename tksheet files
 - Pressing escape on text editors no longer generates an edit cell/header/index event
 
-#### Added:
-- Redo, which is enabled when undo is enabled, use by pressing ctrl/cmd + shift + z
-- named spans for options
-- `auto_resize_columns`, `auto_resize_rows` in initialization or with `set_options()`
-- Ctrl/cmd click deselect
-- Ability to make currently selected box border different color to selection box border
+### Version 6.2.3
+#### Fixed:
+- Bug with `format_row` using "all"
 
 ### Version 6.2.2
 #### Fixed:

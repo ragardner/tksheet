@@ -91,7 +91,7 @@ class DotDict(dict):
         super().__init__(*args, **kwargs)
         # Recursively turn nested dicts into DotDicts
         for key, value in self.items():
-            if type(value) is dict:
+            if type(value) is dict:  # noqa: E721
                 self[key] = DotDict(value)
 
     def __getstate__(self) -> SpanDict:
@@ -101,7 +101,7 @@ class DotDict(dict):
         self.update(state)
 
     def __setitem__(self, key: Hashable, item: object) -> None:
-        if type(item) is dict:
+        if type(item) is dict:  # noqa: E721
             super().__setitem__(key, DotDict(item))
         else:
             super().__setitem__(key, item)
@@ -118,7 +118,7 @@ class SpanDict(dict):
         for key, item in self.items():
             if key == "data" or key == "value":
                 self["widget"].set_data(self, item)
-            elif type(item) is dict:
+            elif type(item) is dict: # noqa: E721
                 self[key] = DotDict(item)
 
     def __getstate__(self) -> SpanDict:
@@ -140,7 +140,7 @@ class SpanDict(dict):
             self["widget"].highlight(self, bg=item)
         elif key == "fg":
             self["widget"].highlight(self, fg=item)
-        elif type(item) is dict:
+        elif type(item) is dict: # noqa: E721
             super().__setitem__(key, DotDict(item))
         else:
             super().__setitem__(key, item)
@@ -247,7 +247,7 @@ class SpanDict(dict):
         return "cell"
 
     @property
-    def rows(self) -> Generator[int, ...]:
+    def rows(self) -> Generator[int]:
         rng_from_r = 0 if self["from_r"] is None else self["from_r"]
         if self["upto_r"] is None:
             rng_upto_r = self["widget"].total_rows()
@@ -256,7 +256,7 @@ class SpanDict(dict):
         return SpanRange(rng_from_r, rng_upto_r)
 
     @property
-    def columns(self) -> Generator[int, ...]:
+    def columns(self) -> Generator[int]:
         rng_from_c = 0 if self["from_c"] is None else self["from_c"]
         if self["upto_c"] is None:
             rng_upto_c = self["widget"].total_columns()
@@ -265,7 +265,7 @@ class SpanDict(dict):
         return SpanRange(rng_from_c, rng_upto_c)
 
     @property
-    def ranges(self) -> tuple[Generator[int, ...], Generator[int, ...]]:
+    def ranges(self) -> tuple[Generator[int], Generator[int]]:
         rng_from_r = 0 if self["from_r"] is None else self["from_r"]
         rng_from_c = 0 if self["from_c"] is None else self["from_c"]
         if self["upto_r"] is None:

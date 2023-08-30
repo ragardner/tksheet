@@ -2125,11 +2125,11 @@ class ColumnHeaders(tk.Canvas):
         if kwargs["state"] == "normal":
             pre_edit_value = self.get_cell_data(datacn)
             if isinstance(self.MT._headers, list):
-                value = not self.MT._headers[datacn] if type(self.MT._headers[datacn]) == bool else False
+                value = not self.MT._headers[datacn] if isinstance(self.MT._headers[datacn], bool) else False
             elif isinstance(self.MT._headers, int):
                 value = (
                     not self.MT.data[self.MT._headers][datacn]
-                    if type(self.MT.data[self.MT._headers][datacn]) == bool
+                    if isinstance(self.MT.data[self.MT._headers][datacn], bool)
                     else False
                 )
             else:

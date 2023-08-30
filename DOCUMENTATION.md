@@ -45,14 +45,12 @@ It works by using tkinter canvases and moving lines, text and rectangles around 
 ### **Limitations**
 
 Some examples of things that are not possible with tksheet:
-- Deleting non-consecutive columns/rows
 - Cell merging
 - Cell text wrap
 - Changing font for individual cells
 - Different fonts for index and table
 - Mouse drag copy cells
 - Cell highlight borders
-- Highlighting continuous multiple cells with a single border
 
 ## **Installation and Requirements**
 ----
@@ -69,9 +67,9 @@ pip install tksheet --upgrade
 
 Alternatively you can download the source code and (inside the tksheet directory) use the command line `python setup.py develop`
 
-`tksheet` versions < `6.5.0` require a Python version of `3.6` or higher.
+`tksheet` versions < `7.0.0` require a Python version of `3.6` or higher.
 
-`tksheet` versions >= `6.5.0` require a Python version of `3.8` or higher.
+`tksheet` versions >= `7.0.0` require a Python version of `3.8` or higher.
 
 ## **Basic Initialization**
 ----
@@ -163,8 +161,8 @@ index: list = None,
 after_redraw_time_ms: int = 20,
 row_index_width: int = None,
 auto_resize_default_row_index: bool = True,
-auto_resize_columns: Union[int, None] = None,
-auto_resize_rows: Union[int, None] = None,
+auto_resize_columns = None,
+auto_resize_rows = None,
 set_all_heights_and_widths: bool = False,
 row_height: str = "1",  # str or int
 font: tuple = get_font(),
@@ -173,7 +171,7 @@ index_font: tuple = get_index_font(),  # currently has no effect
 popup_menu_font: tuple = get_font(),
 align: str = "w",
 header_align: str = "center",
-row_index_align: Union[str, None] = None,
+row_index_align = None,
 index_align: str = "center",
 displayed_columns: list = [],
 all_columns_displayed: bool = True,
@@ -285,39 +283,43 @@ row_index(newindex = None, index = None, reset_row_positions = False, show_index
 ## **Setting Table Data**
 ----
 
-#### **Set sheet data, overwrites any existing data.**
+Fundamentally, there are two ways to set data in the table. One way overwrites the entire table and sets the internal data object to a new object. The other edits the internal data.
+
+#### **Overwriting the entire table**
+
 ```python
 set_sheet_data(data = [[]],
                reset_col_positions = True,
                reset_row_positions = True,
                redraw = True,
                verify = False,
-               reset_highlights = False,
-               delete_options = False,
-               keep_formatting = True,
-               delete_options = False)
+               reset_highlights = False)
 ```
 - `data` (`list`) has to be a list of lists for full functionality, for display only a list of tuples or a tuple of tuples will work.
 - `reset_col_positions` and `reset_row_positions` (`bool`) when `True` will reset column widths and row heights.
 - `redraw` (`bool`) refreshes the table after setting new data.
 - `verify` (`bool`) goes through `data` and checks if it is a list of lists, will raise error if not, disabled by default.
 - `reset_highlights` (`bool`) resets all table cell highlights.
-- `keep_formatting` (`bool`) if `False` deletes all previously set cell/row/column/sheet formatting.
-- `delete_options` (`bool`) deletes all table options such as dropdown boxes, checkboxes, highlights, specific cell alignments etc. Overrides `keep_formatting`.
 
 ___
 
-#### **Set cell data, overwrites any existing data.**
 ```python
-set_cell_data(r, c, value = "", redraw = True)
+@data.setter
+data(value: object)
 ```
+- Acts like setting an attribute e.g. `sheet.data = [[1, 2, 3], [4, 5, 6]]`
+- Uses default arguments for `set_sheet_data()`
 
 ___
+
+#### **dfg**
+
+
 
 #### **Insert a row into the sheet.**
 ```python
-insert_row(values: Union[list, int, None] = None,
-           idx: Union[str, int] = "end",
+insert_row(values = None,
+           idx = "end",
            height = None,
            deselect_all = False,
            add_columns = False,
@@ -330,17 +332,14 @@ insert_row(values: Union[list, int, None] = None,
 
 ___
 
-#### **Set column data, overwrites any existing data.**
-```python
-set_column_data(c, values = tuple(), add_rows = True, redraw = False)
-```
-- `add_rows` adds extra rows to the sheet if the column data doesn't fit within current sheet dimensions.
-
-___
-
 #### **Insert a column into the sheet.**
 ```python
-insert_column(values = None, idx = "end", width = None, deselect_all = False, add_rows = True, equalize_data_row_lengths = True,
+insert_column(values = None,
+              idx = "end",
+              width = None,
+              deselect_all = False,
+              add_rows = True,
+              equalize_data_row_lengths = True,
               mod_column_positions = True,
               redraw = False)
 ```
@@ -357,17 +356,10 @@ insert_columns(columns = 1, idx = "end", widths = None, deselect_all = False, ad
 
 ___
 
-#### **Set row data, overwrites any existing data.**
-```python
-set_row_data(r, values = tuple(), add_columns = True, redraw = False)
-```
-
-___
-
 #### **Insert multiple rows into the sheet.**
 ```python
-insert_rows(rows: Union[list, int] = 1,
-            idx: Union[str, int] = "end",
+insert_rows(rows = 1,
+            idx = "end",
             heights = None,
             deselect_all = False,
             add_columns = True,
@@ -646,9 +638,9 @@ extra_bindings(bindings, func = None)
 
 Notes:
 - There are several ways to use this function:
-    - `bindings` as a `str` and `func` as either `None` or a function. Using `None` with `func` will effectively unbind the function.
+    - `bindings` as a `str` and `func` as either `None` or a function. Using `None` as an argument for `func` will effectively unbind the function.
         - `extra_bindings("edit_cell", func=my_function)`
-    - `bindings` as an `iterable` of `str`s and `func` as either `None` or a function. Using `None` with `func` will effectively unbind the function.
+    - `bindings` as an `iterable` of `str`s and `func` as either `None` or a function. Using `None` as an argument for `func` will effectively unbind the function.
         - `extra_bindings(["all_select_events", "copy", "cut"], func=my_function)`
     - `bindings` as an `iterable` of `list`s or `tuple`s with length of two, e.g.
         - `extra_bindings([(binding, function), (binding, function), ...])` In this example you could also use `None` in the place of `function` to unbind the binding.
@@ -714,7 +706,7 @@ Arguments:
 **For tksheet versions >= `7.0.0`:**
 
 #### **Event Data:**
-- Using `extra_bindings()` the function you bind needs to have at least one argument which will receive a `dict` containing information about the event that has just happened. When empty it looks like the following:
+- Using `extra_bindings()` the function you bind needs to have at least one argument which will receive a `dict` which has the following layout:
 
 ```python
 {
@@ -879,9 +871,9 @@ ___
 #### **tksheet tkinter events**
 
 ```python
-bind_event(event: str, func: Callable)
+bind(event: str, func: Callable, add: str | None = None)
 ```
-- `tksheet` emits custom tkinter events, one for whenever the user has modified the sheet and another for whenever the sheet was refreshed.
+- `tksheet` emits custom tkinter events, one for whenever the user has modified the sheet and another for whenever the sheet was redrawn/refreshed.
 - **Note** that while an event emitted after a paste/undo/redo might have the event name `"edit_table"` it also might have added/deleted rows/columns, refer to the docs on the event data `dict` for more info.
 - `event` the two emitted events are:
     - `"<<SheetModified>>"` emitted whenever the sheet was modified by the end user by editing cells or adding or deleting rows/columns. The function you bind to this event must be able to receive a `dict` argument which will be the same as [the event data dict](https://github.com/ragardner/tksheet/wiki/Version-6#event-data) but with less specific event names. The possible event names are listed below:
@@ -896,7 +888,7 @@ bind_event(event: str, func: Callable)
         - `"move_rows"` when a user has dragged and dropped rows.
     - `"<<SheetRedrawn>>"` emitted whenever the sheet GUI was refreshed (redrawn). The data for this event will be different than the usual event data, it is simply:
         - `{"sheetname": name of your sheet, "header": bool True if the header was redrawn, "row_index": bool True if the index was redrawn, "table": bool True if the the table was redrawn}`
-- Example usage where `my_sheet_was_modified` is your function: `my_sheet.bind_event("<<SheetModified>>", my_sheet_was_modified)`.
+- Example usage where `my_sheet_was_modified` is your function: `my_sheet.bind("<<SheetModified>>", my_sheet_was_modified)`.
 
 ___
 

@@ -216,6 +216,10 @@ def is_iterable(o: object) -> bool:
         return False
 
 
+def is_type_int(o: object) -> bool:
+    return isinstance(o, int) and not isinstance(o, bool)
+
+
 def str_to_coords(s: str) -> None | tuple[int]:
     s = s.split(":")
 
@@ -594,8 +598,8 @@ def key_to_span(
     | int
     | slice
     | Sequence[int, int]
-    | Sequence[int, int, int, int]
-    | Sequence[Sequence[int, int], Sequence[int, int]],
+    | Sequence[int, int, int | None, int | None]
+    | Sequence[Sequence[int, int], Sequence[int | None, int | None]],
     spans: dict[str, Span],
     widget: object = None,
 ) -> Span:

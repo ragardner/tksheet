@@ -2085,11 +2085,11 @@ class RowIndex(tk.Canvas):
         if kwargs["state"] == "normal":
             pre_edit_value = self.get_cell_data(datarn)
             if isinstance(self.MT._row_index, list):
-                value = not self.MT._row_index[datarn] if type(self.MT._row_index[datarn]) == bool else False
+                value = not self.MT._row_index[datarn] if isinstance(self.MT._row_index[datarn], bool) else False
             elif isinstance(self.MT._row_index, int):
                 value = (
                     not self.MT.data[datarn][self.MT._row_index]
-                    if type(self.MT.data[datarn][self.MT._row_index]) == bool
+                    if type(self.MT.data[datarn][self.MT._row_index], bool)
                     else False
                 )
             else:

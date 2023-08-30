@@ -32,6 +32,7 @@ from .functions import (
     get_seq_without_gaps_at_index,
     insert_items,
     is_iterable,
+    is_type_int,
     len_to_idx,
     mod_span,
     move_elements_by_mapping,
@@ -366,6 +367,11 @@ class MainTable(tk.Canvas):
                 for canvas in (self, self.CH):
                     canvas.bind("<Shift-Button-4>", self.shift_mousewheel)
                     canvas.bind("<Shift-Button-5>", self.shift_mousewheel)
+                for canvas in (self, self.RI, self.CH):
+                    canvas.bind("<Control-Button-4>", self.ctrl_mousewheel)
+                    canvas.bind("<Control-Button-5>", self.ctrl_mousewheel)
+            for canvas in (self, self.RI, self.CH):
+                canvas.bind("<Control-MouseWheel>", self.ctrl_mousewheel)
             self.bind("<Shift-MouseWheel>", self.shift_mousewheel)
             self.bind("<Shift-ButtonPress-1>", self.shift_b1_press)
             self.CH.bind("<Shift-ButtonPress-1>", self.CH.shift_b1_press)
@@ -3422,7 +3428,7 @@ class MainTable(tk.Canvas):
             redraw_header=True if self.show_header else False,
         )
 
-    def mousewheel(self, event: object):
+    def mousewheel(self, event: object) -> None:
         if event.delta < 0 or event.num == 5:
             self.yview_scroll(1, "units")
             self.RI.yview_scroll(1, "units")
@@ -3435,7 +3441,7 @@ class MainTable(tk.Canvas):
             self.y_move_synced_scrolls("moveto", self.yview()[0])
         self.main_table_redraw_grid_and_text(redraw_row_index=True)
 
-    def shift_mousewheel(self, event: object):
+    def shift_mousewheel(self, event: object) -> None:
         if event.delta < 0 or event.num == 5:
             self.xview_scroll(1, "units")
             self.CH.xview_scroll(1, "units")
@@ -3447,6 +3453,42 @@ class MainTable(tk.Canvas):
             self.CH.xview_scroll(-1, "units")
             self.x_move_synced_scrolls("moveto", self.xview()[0])
         self.main_table_redraw_grid_and_text(redraw_header=True)
+
+    def ctrl_mousewheel(self, event: object) -> None:
+        if event.delta < 0 or event.num == 5:
+            if self.table_font[1] < 2 or self.index_font[1] < 2 or self.header_font[1] < 2:
+                return
+            self.zoom_out()
+        elif event.delta >= 0 or event.num == 4:
+            self.zoom_in()
+        self.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
+
+    def zoom_in(self) -> None:
+        self.zoom_font((self.table_font[0], self.table_font[1] + 1, self.table_font[2]),
+                       (self.header_font[0], self.header_font[1] + 1, self.header_font[2]))
+
+    def zoom_out(self) -> None:
+        self.zoom_font((self.table_font[0], self.table_font[1] - 1, self.table_font[2]),
+                       (self.header_font[0], self.header_font[1] - 1, self.header_font[2]))
+
+    def zoom_font(self, table_font: tuple, header_font: tuple) -> None:
+        rhs = self.get_row_heights()
+        old_min_row_height = int(self.min_row_height)
+        old_default_row_height = int(self.default_row_height[1])
+        self.set_table_font(
+            table_font,
+            reset_row_positions=False,
+        )
+        self.set_index_font(table_font)
+        self.set_header_font(header_font)
+        for i, h in enumerate(rhs):
+            if h == old_min_row_height:
+                rhs[i] = self.min_row_height
+            elif h == old_default_row_height:
+                rhs[i] = self.default_row_height[1]
+            elif h < self.min_row_height:
+                rhs[i] = self.min_row_height
+        self.set_row_positions(itr=rhs)
 
     def get_txt_w(self, txt, font=None):
         self.txt_measure_canvas.itemconfig(
@@ -3509,8 +3551,11 @@ class MainTable(tk.Canvas):
             self.table_font_wgt = newfont[2]
             self.set_table_font_help()
             if reset_row_positions:
-                self.reset_row_positions()
-            self.recreate_all_selection_boxes()
+                if isinstance(reset_row_positions, bool):
+                    self.reset_row_positions()
+                else:
+                    self.set_row_positions(itr=reset_row_positions)
+                self.recreate_all_selection_boxes()
         return self.table_font
 
     def set_table_font_help(self):
@@ -3568,7 +3613,7 @@ class MainTable(tk.Canvas):
                 else self.default_header_height[1],
             )
         self.set_min_column_width()
-        self.CH.set_height(self.default_header_height[1])
+        self.CH.set_height(self.default_header_height[1], set_TL=True)
 
     def set_index_font(self, newfont: tuple | None = None) -> tuple:
         if newfont:
@@ -5042,7 +5087,7 @@ class MainTable(tk.Canvas):
 
     def redraw_highlight(self, x1, y1, x2, y2, fill, outline, tag, can_width=None, pc=None):
         config = (fill, outline)
-        if type(pc) != int or pc >= 100 or pc <= 0:
+        if not is_type_int(pc) or pc >= 100 or pc <= 0:
             coords = (
                 x1 - 1 if outline else x1,
                 y1 - 1 if outline else y1,
@@ -7204,7 +7249,7 @@ class MainTable(tk.Canvas):
         kwargs = self.get_cell_kwargs(datarn, datacn, key="checkbox")
         if kwargs["state"] == "normal":
             pre_edit_value = self.get_cell_data(datarn, datacn)
-            value = not self.data[datarn][datacn] if type(self.data[datarn][datacn]) == bool else False
+            value = not self.data[datarn][datacn] if isinstance(self.data[datarn][datacn], bool) else False
             self.set_cell_data_undo(
                 r,
                 c,
@@ -7257,6 +7302,7 @@ class MainTable(tk.Canvas):
             if self.undo_enabled and undo:
                 self.undo_stack.append(ev_stack_dict(event_data))
             self.set_cell_data(datarn, datacn, value)
+
         if cell_resize and self.cell_auto_resize_enabled:
             self.set_cell_size_to_text(r, c, only_set_if_too_small=True, redraw=redraw, run_binding=True)
         self.sheet_modified(event_data)

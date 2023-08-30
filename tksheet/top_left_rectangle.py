@@ -153,13 +153,15 @@ class TopLeftRectangle(tk.Canvas):
 
     def set_dimensions(self, new_w=None, new_h=None):
         try:
+            if new_h is None:
+                h = self.winfo_height()
+            if new_w is None:
+                w = self.winfo_width()
             if new_w:
                 self.config(width=new_w)
                 w = new_w
-                h = self.winfo_height()
             if new_h:
                 self.config(height=new_h)
-                w = self.winfo_width()
                 h = new_h
         except Exception:
             return
