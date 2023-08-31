@@ -1960,8 +1960,7 @@ class Sheet(tk.Frame):
     ):
         if return_tuple:
             return tuple(self.MT.get_selected_rows(get_cells=get_cells, get_cells_as_rows=get_cells_as_rows))
-        else:
-            return self.MT.get_selected_rows(get_cells=get_cells, get_cells_as_rows=get_cells_as_rows)
+        return self.MT.get_selected_rows(get_cells=get_cells, get_cells_as_rows=get_cells_as_rows)
 
     def get_selected_columns(
         self,
@@ -1971,8 +1970,7 @@ class Sheet(tk.Frame):
     ):
         if return_tuple:
             return tuple(self.MT.get_selected_cols(get_cells=get_cells, get_cells_as_cols=get_cells_as_columns))
-        else:
-            return self.MT.get_selected_cols(get_cells=get_cells, get_cells_as_cols=get_cells_as_columns)
+        return self.MT.get_selected_cols(get_cells=get_cells, get_cells_as_cols=get_cells_as_columns)
 
     def get_selected_cells(
         self,
@@ -1997,8 +1995,7 @@ class Sheet(tk.Frame):
                 self.MT.get_selected_cells(get_rows=get_rows, get_cols=get_columns),
                 key=lambda t: t[1],
             )
-        else:
-            return self.MT.get_selected_cells(get_rows=get_rows, get_cols=get_columns)
+        return self.MT.get_selected_cells(get_rows=get_rows, get_cols=get_columns)
 
     def get_all_selection_boxes(self):
         return self.MT.get_all_selection_boxes()

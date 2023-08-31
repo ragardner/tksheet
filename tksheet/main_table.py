@@ -351,74 +351,65 @@ class MainTable(tk.Canvas):
             self.allow_auto_resize_rows = True
         self.main_table_redraw_grid_and_text(True, True)
 
-    def basic_bindings(self, enable=True) -> None:
+    def basic_bindings(self, enable: bool = True) -> None:
+        bindings = (
+            ("<Configure>", self, self.window_configured),
+            ("<Motion>", self, self.mouse_motion),
+            ("<ButtonPress-1>", self, self.b1_press),
+            ("<B1-Motion>", self, self.b1_motion),
+            ("<ButtonRelease-1>", self, self.b1_release),
+            ("<Double-Button-1>", self, self.double_b1),
+            ("<MouseWheel>", self, self.mousewheel),
+            ("<Shift-ButtonPress-1>", self, self.shift_b1_press),
+            ("<Shift-ButtonPress-1>", self.CH, self.CH.shift_b1_press),
+            ("<Shift-ButtonPress-1>", self.RI, self.RI.shift_b1_press),
+            ("<MouseWheel>", self.RI, self.mousewheel),
+            (rc_binding, self, self.rc),
+            (f"<{ctrl_key}-ButtonPress-1>", self, self.ctrl_b1_press),
+            (f"<{ctrl_key}-ButtonPress-1>", self.CH, self.CH.ctrl_b1_press),
+            (f"<{ctrl_key}-ButtonPress-1>", self.RI, self.RI.ctrl_b1_press),
+            (f"<{ctrl_key}-Shift-ButtonPress-1>", self, self.ctrl_shift_b1_press),
+            (f"<{ctrl_key}-Shift-ButtonPress-1>", self.CH, self.CH.ctrl_shift_b1_press),
+            (f"<{ctrl_key}-Shift-ButtonPress-1>", self.RI, self.RI.ctrl_shift_b1_press),
+            (f"<{ctrl_key}-B1-Motion>", self, self.ctrl_b1_motion),
+            (f"<{ctrl_key}-B1-Motion>", self.CH, self.CH.ctrl_b1_motion),
+            (f"<{ctrl_key}-B1-Motion>", self.RI, self.RI.ctrl_b1_motion),
+        )
+        all_canvas_bindings = (
+            ("<Shift-MouseWheel>", self.shift_mousewheel),
+            ("<Control-MouseWheel>", self.ctrl_mousewheel),
+            ("<Control-plus>", self.zoom_in),
+            ("<Control-equal>", self.zoom_in),
+            ("<Control-minus>", self.zoom_out),
+        )
+        all_canvas_linux_bindings = {
+            ("<Button-4>", self.mousewheel),
+            ("<Button-5>", self.mousewheel),
+            ("<Shift-Button-4>", self.shift_mousewheel),
+            ("<Shift-Button-5>", self.shift_mousewheel),
+            ("<Control-Button-4>", self.ctrl_mousewheel),
+            ("<Control-Button-5>", self.ctrl_mousewheel),
+        }
         if enable:
-            self.bind("<Configure>", self.window_configured)
-            self.bind("<Motion>", self.mouse_motion)
-            self.bind("<ButtonPress-1>", self.b1_press)
-            self.bind("<B1-Motion>", self.b1_motion)
-            self.bind("<ButtonRelease-1>", self.b1_release)
-            self.bind("<Double-Button-1>", self.double_b1)
-            self.bind("<MouseWheel>", self.mousewheel)
-            if USER_OS == "linux":
-                for canvas in (self, self.RI):
-                    canvas.bind("<Button-4>", self.mousewheel)
-                    canvas.bind("<Button-5>", self.mousewheel)
-                for canvas in (self, self.CH):
-                    canvas.bind("<Shift-Button-4>", self.shift_mousewheel)
-                    canvas.bind("<Shift-Button-5>", self.shift_mousewheel)
+            for b in bindings:
+                b[1].bind(b[0], b[2])
+            for b in all_canvas_bindings:
                 for canvas in (self, self.RI, self.CH):
-                    canvas.bind("<Control-Button-4>", self.ctrl_mousewheel)
-                    canvas.bind("<Control-Button-5>", self.ctrl_mousewheel)
-            for canvas in (self, self.RI, self.CH):
-                canvas.bind("<Control-MouseWheel>", self.ctrl_mousewheel)
-            self.bind("<Shift-MouseWheel>", self.shift_mousewheel)
-            self.bind("<Shift-ButtonPress-1>", self.shift_b1_press)
-            self.CH.bind("<Shift-ButtonPress-1>", self.CH.shift_b1_press)
-            self.RI.bind("<Shift-ButtonPress-1>", self.RI.shift_b1_press)
-            self.CH.bind("<Shift-MouseWheel>", self.shift_mousewheel)
-            self.RI.bind("<MouseWheel>", self.mousewheel)
-            self.bind(rc_binding, self.rc)
-            self.bind(f"<{ctrl_key}-ButtonPress-1>", self.ctrl_b1_press)
-            self.CH.bind(f"<{ctrl_key}-ButtonPress-1>", self.CH.ctrl_b1_press)
-            self.RI.bind(f"<{ctrl_key}-ButtonPress-1>", self.RI.ctrl_b1_press)
-            self.bind(f"<{ctrl_key}-Shift-ButtonPress-1>", self.ctrl_shift_b1_press)
-            self.CH.bind(f"<{ctrl_key}-Shift-ButtonPress-1>", self.CH.ctrl_shift_b1_press)
-            self.RI.bind(f"<{ctrl_key}-Shift-ButtonPress-1>", self.RI.ctrl_shift_b1_press)
-            self.bind(f"<{ctrl_key}-B1-Motion>", self.ctrl_b1_motion)
-            self.CH.bind(f"<{ctrl_key}-B1-Motion>", self.CH.ctrl_b1_motion)
-            self.RI.bind(f"<{ctrl_key}-B1-Motion>", self.RI.ctrl_b1_motion)
-        else:
-            self.unbind("<Configure>")
-            self.unbind("<Motion>")
-            self.unbind("<ButtonPress-1>")
-            self.unbind("<B1-Motion>")
-            self.unbind("<ButtonRelease-1>")
-            self.unbind("<Double-Button-1>")
-            self.unbind("<MouseWheel>")
+                    canvas.bind(b[0], b[1])
             if USER_OS == "linux":
-                for canvas in (self, self.RI):
-                    canvas.unbind("<Button-4>")
-                    canvas.unbind("<Button-5>")
-                for canvas in (self, self.CH):
-                    canvas.unbind("<Shift-Button-4>")
-                    canvas.unbind("<Shift-Button-5>")
-            self.unbind("<Shift-ButtonPress-1>")
-            self.CH.unbind("<Shift-ButtonPress-1>")
-            self.RI.unbind("<Shift-ButtonPress-1>")
-            self.unbind("<Shift-MouseWheel>")
-            self.CH.unbind("<Shift-MouseWheel>")
-            self.RI.unbind("<MouseWheel>")
-            self.unbind(rc_binding)
-            self.unbind(f"<{ctrl_key}-ButtonPress-1>")
-            self.CH.unbind(f"<{ctrl_key}-ButtonPress-1>")
-            self.RI.unbind(f"<{ctrl_key}-ButtonPress-1>")
-            self.unbind(f"<{ctrl_key}-Shift-ButtonPress-1>")
-            self.CH.unbind(f"<{ctrl_key}-Shift-ButtonPress-1>")
-            self.RI.unbind(f"<{ctrl_key}-Shift-ButtonPress-1>")
-            self.unbind(f"<{ctrl_key}-B1-Motion>")
-            self.CH.unbind(f"<{ctrl_key}-B1-Motion>")
-            self.RI.unbind(f"<{ctrl_key}-B1-Motion>")
+                for b in all_canvas_linux_bindings:
+                    for canvas in (self, self.RI, self.CH):
+                        canvas.bind(b[0], b[1])
+        else:
+            for b in bindings:
+                b[1].unbind(b[0])
+            for b in all_canvas_bindings:
+                for canvas in (self, self.RI, self.CH):
+                    canvas.unbind(b[0])
+            if USER_OS == "linux":
+                for b in all_canvas_linux_bindings:
+                    for canvas in (self, self.RI, self.CH):
+                        canvas.unbind(b[0])
 
     def show_ctrl_outline(
         self,
@@ -3463,32 +3454,39 @@ class MainTable(tk.Canvas):
             self.zoom_in()
         self.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
 
-    def zoom_in(self) -> None:
-        self.zoom_font((self.table_font[0], self.table_font[1] + 1, self.table_font[2]),
-                       (self.header_font[0], self.header_font[1] + 1, self.header_font[2]))
+    def zoom_in(self, event: object = None) -> None:
+        self.zoom_font(
+            (self.table_font[0], self.table_font[1] + 1, self.table_font[2]),
+            (self.header_font[0], self.header_font[1] + 1, self.header_font[2]),
+        )
 
-    def zoom_out(self) -> None:
-        self.zoom_font((self.table_font[0], self.table_font[1] - 1, self.table_font[2]),
-                       (self.header_font[0], self.header_font[1] - 1, self.header_font[2]))
+    def zoom_out(self, event: object = None) -> None:
+        self.zoom_font(
+            (self.table_font[0], self.table_font[1] - 1, self.table_font[2]),
+            (self.header_font[0], self.header_font[1] - 1, self.header_font[2]),
+        )
 
     def zoom_font(self, table_font: tuple, header_font: tuple) -> None:
-        rhs = self.get_row_heights()
         old_min_row_height = int(self.min_row_height)
         old_default_row_height = int(self.default_row_height[1])
         self.set_table_font(
             table_font,
             reset_row_positions=False,
         )
+        self.set_row_positions(
+            itr=(
+                self.min_row_height
+                if h == old_min_row_height
+                else self.default_row_height[1]
+                if h == old_default_row_height
+                else self.min_row_height
+                if h < self.min_row_height
+                else h
+                for h in self.gen_row_heights()
+            )
+        )
         self.set_index_font(table_font)
         self.set_header_font(header_font)
-        for i, h in enumerate(rhs):
-            if h == old_min_row_height:
-                rhs[i] = self.min_row_height
-            elif h == old_default_row_height:
-                rhs[i] = self.default_row_height[1]
-            elif h < self.min_row_height:
-                rhs[i] = self.min_row_height
-        self.set_row_positions(itr=rhs)
 
     def get_txt_w(self, txt, font=None):
         self.txt_measure_canvas.itemconfig(
