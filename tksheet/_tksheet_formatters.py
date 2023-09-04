@@ -30,7 +30,7 @@ def to_float(x: Any, **kwargs):
 
 
 def to_bool(val: Any, **kwargs):
-    if type(val) == bool:
+    if isinstance(val, bool):
         return val
     if isinstance(val, str):
         v = val.lower()

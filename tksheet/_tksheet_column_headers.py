@@ -1928,6 +1928,40 @@ class ColumnHeaders(tk.Canvas):
                             new_height - 1,
                         )
                         self.itemconfig(kwargs["canvas_id"], anchor=anchor, height=win_h)
+    
+    def refresh_open_window_positions(self):
+        if self.text_editor is not None:
+            c = self.text_editor_loc
+            self.text_editor.config(height=self.MT.col_positions[c + 1] - self.MT.col_positions[c])
+            self.coords(
+                self.text_editor_id,
+                0,
+                self.MT.col_positions[c],
+            )
+        if self.existing_dropdown_window is not None:
+            c = self.get_existing_dropdown_coords()
+            datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
+            if self.text_editor is None:
+                text_editor_h = self.MT.col_positions[c + 1] - self.MT.col_positions[c]
+                anchor = self.itemcget(self.existing_dropdown_canvas_id, "anchor")
+                win_h = 0
+            else:
+                text_editor_h = self.text_editor.winfo_height()
+                win_h, anchor = self.get_dropdown_height_anchor(datacn, text_editor_h)
+            if anchor == "nw":
+                self.coords(
+                    self.existing_dropdown_canvas_id,
+                    0,
+                    self.MT.col_positions[c] + text_editor_h - 1,
+                )
+                #self.itemconfig(self.existing_dropdown_canvas_id, anchor=anchor, height=win_h)
+            elif anchor == "sw":
+                self.coords(
+                    self.existing_dropdown_canvas_id,
+                    0,
+                    self.MT.col_positions[c],
+                )
+                #self.itemconfig(self.existing_dropdown_canvas_id, anchor=anchor, height=win_h)
 
     def bind_cell_edit(self, enable=True):
         if enable:
@@ -2183,11 +2217,11 @@ class ColumnHeaders(tk.Canvas):
         kwargs = self.get_cell_kwargs(datacn, key="checkbox")
         if kwargs["state"] == "normal":
             if isinstance(self.MT._headers, list):
-                value = not self.MT._headers[datacn] if type(self.MT._headers[datacn]) == bool else False
+                value = not self.MT._headers[datacn] if isinstance(self.MT._headers[datacn], bool) else False
             elif isinstance(self.MT._headers, int):
                 value = (
                     not self.MT.data[self.MT._headers][datacn]
-                    if type(self.MT.data[self.MT._headers][datacn]) == bool
+                    if isinstance(self.MT.data[self.MT._headers][datacn], bool)
                     else False
                 )
             else:

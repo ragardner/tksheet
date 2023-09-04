@@ -1129,17 +1129,35 @@ class RowIndex(tk.Canvas):
     def auto_set_index_width(self, end_row):
         if not self.MT._row_index and not isinstance(self.MT._row_index, int) and self.auto_resize_width:
             if self.default_index == "letters":
-                new_w = self.MT.get_txt_w(f"{num2alpha(end_row)}") + 20
+                new_w = (
+                    self.MT.get_txt_w(
+                        f"{num2alpha(end_row)}",
+                        font=self.MT.index_font,
+                    )
+                    + 20
+                )
                 if self.current_width - new_w > 15 or new_w - self.current_width > 5:
                     self.set_width(new_w, set_TL=True)
                     return True
             elif self.default_index == "numbers":
-                new_w = self.MT.get_txt_w(f"{end_row}") + 20
+                new_w = (
+                    self.MT.get_txt_w(
+                        f"{end_row}",
+                        font=self.MT.index_font,
+                    )
+                    + 20
+                )
                 if self.current_width - new_w > 15 or new_w - self.current_width > 5:
                     self.set_width(new_w, set_TL=True)
                     return True
             elif self.default_index == "both":
-                new_w = self.MT.get_txt_w(f"{end_row + 1} {num2alpha(end_row)}") + 20
+                new_w = (
+                    self.MT.get_txt_w(
+                        f"{end_row + 1} {num2alpha(end_row)}",
+                        font=self.MT.index_font,
+                    )
+                    + 20
+                )
                 if self.current_width - new_w > 15 or new_w - self.current_width > 5:
                     self.set_width(new_w, set_TL=True)
                     return True
@@ -1846,17 +1864,51 @@ class RowIndex(tk.Canvas):
                         if anchor == "nw":
                             self.coords(
                                 kwargs["canvas_id"],
-                                self.MT.col_positions[c],
+                                0,
                                 self.MT.row_positions[r] + text_editor_h - 1,
                             )
                             self.itemconfig(kwargs["canvas_id"], anchor=anchor, height=win_h)
                         elif anchor == "sw":
                             self.coords(
                                 kwargs["canvas_id"],
-                                self.MT.col_positions[c],
+                                0,
                                 self.MT.row_positions[r],
                             )
                             self.itemconfig(kwargs["canvas_id"], anchor=anchor, height=win_h)
+
+    def refresh_open_window_positions(self):
+        if self.text_editor is not None:
+            r = self.text_editor_loc
+            self.text_editor.config(height=self.MT.row_positions[r + 1] - self.MT.row_positions[r])
+            self.coords(
+                self.text_editor_id,
+                0,
+                self.MT.row_positions[r],
+            )
+        if self.existing_dropdown_window is not None:
+            r = self.get_existing_dropdown_coords()
+            datarn = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r]
+            if self.text_editor is None:
+                text_editor_h = self.MT.row_positions[r + 1] - self.MT.row_positions[r]
+                anchor = self.itemcget(self.existing_dropdown_canvas_id, "anchor")
+                win_h = 0
+            else:
+                text_editor_h = self.text_editor.winfo_height()
+                win_h, anchor = self.get_dropdown_height_anchor(datarn, text_editor_h)
+            if anchor == "nw":
+                self.coords(
+                    self.existing_dropdown_canvas_id,
+                    0,
+                    self.MT.row_positions[r] + text_editor_h - 1,
+                )
+                # self.itemconfig(self.existing_dropdown_canvas_id, anchor=anchor, height=win_h)
+            elif anchor == "sw":
+                self.coords(
+                    self.existing_dropdown_canvas_id,
+                    0,
+                    self.MT.row_positions[r],
+                )
+                # self.itemconfig(self.existing_dropdown_canvas_id, anchor=anchor, height=win_h)
 
     def bind_cell_edit(self, enable=True):
         if enable:
@@ -2109,11 +2161,11 @@ class RowIndex(tk.Canvas):
         kwargs = self.get_cell_kwargs(datarn, key="checkbox")
         if kwargs["state"] == "normal":
             if isinstance(self.MT._row_index, list):
-                value = not self.MT._row_index[datarn] if type(self.MT._row_index[datarn]) == bool else False
+                value = not self.MT._row_index[datarn] if isinstance(self.MT._row_index[datarn], bool) else False
             elif isinstance(self.MT._row_index, int):
                 value = (
                     not self.MT.data[datarn][self.MT._row_index]
-                    if type(self.MT.data[datarn][self.MT._row_index]) == bool
+                    if isinstance(self.MT.data[datarn][self.MT._row_index], bool)
                     else False
                 )
             else:

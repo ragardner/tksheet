@@ -71,6 +71,7 @@ class MainTable(tk.Canvas):
         self.grid_cyctup = ("st", "end")
         self.grid_cyc = cycle(self.grid_cyctup)
         self.synced_scrolls = set()
+        self.set_cell_sizes_on_zoom = kwargs["set_cell_sizes_on_zoom"]
 
         self.disp_ctrl_outline = {}
         self.disp_text = defaultdict(set)
@@ -352,69 +353,65 @@ class MainTable(tk.Canvas):
             self.allow_auto_resize_rows = True
         self.main_table_redraw_grid_and_text(True, True)
 
-    def basic_bindings(self, enable=True):
+    def basic_bindings(self, enable: bool = True) -> None:
+        bindings = (
+            ("<Configure>", self, self.window_configured),
+            ("<Motion>", self, self.mouse_motion),
+            ("<ButtonPress-1>", self, self.b1_press),
+            ("<B1-Motion>", self, self.b1_motion),
+            ("<ButtonRelease-1>", self, self.b1_release),
+            ("<Double-Button-1>", self, self.double_b1),
+            ("<MouseWheel>", self, self.mousewheel),
+            ("<Shift-ButtonPress-1>", self, self.shift_b1_press),
+            ("<Shift-ButtonPress-1>", self.CH, self.CH.shift_b1_press),
+            ("<Shift-ButtonPress-1>", self.RI, self.RI.shift_b1_press),
+            ("<MouseWheel>", self.RI, self.mousewheel),
+            (rc_binding, self, self.rc),
+            (f"<{ctrl_key}-ButtonPress-1>", self, self.ctrl_b1_press),
+            (f"<{ctrl_key}-ButtonPress-1>", self.CH, self.CH.ctrl_b1_press),
+            (f"<{ctrl_key}-ButtonPress-1>", self.RI, self.RI.ctrl_b1_press),
+            (f"<{ctrl_key}-Shift-ButtonPress-1>", self, self.ctrl_shift_b1_press),
+            (f"<{ctrl_key}-Shift-ButtonPress-1>", self.CH, self.CH.ctrl_shift_b1_press),
+            (f"<{ctrl_key}-Shift-ButtonPress-1>", self.RI, self.RI.ctrl_shift_b1_press),
+            (f"<{ctrl_key}-B1-Motion>", self, self.ctrl_b1_motion),
+            (f"<{ctrl_key}-B1-Motion>", self.CH, self.CH.ctrl_b1_motion),
+            (f"<{ctrl_key}-B1-Motion>", self.RI, self.RI.ctrl_b1_motion),
+        )
+        all_canvas_bindings = (
+            ("<Shift-MouseWheel>", self.shift_mousewheel),
+            (f"<{ctrl_key}-MouseWheel>", self.ctrl_mousewheel),
+            (f"<{ctrl_key}-plus>", self.zoom_in),
+            (f"<{ctrl_key}-equal>", self.zoom_in),
+            (f"<{ctrl_key}-minus>", self.zoom_out),
+        )
+        all_canvas_linux_bindings = {
+            ("<Button-4>", self.mousewheel),
+            ("<Button-5>", self.mousewheel),
+            ("<Shift-Button-4>", self.shift_mousewheel),
+            ("<Shift-Button-5>", self.shift_mousewheel),
+            (f"<{ctrl_key}-Button-4>", self.ctrl_mousewheel),
+            (f"<{ctrl_key}-Button-5>", self.ctrl_mousewheel),
+        }
         if enable:
-            self.bind("<Configure>", self.window_configured)
-            self.bind("<Motion>", self.mouse_motion)
-            self.bind("<ButtonPress-1>", self.b1_press)
-            self.bind("<B1-Motion>", self.b1_motion)
-            self.bind("<ButtonRelease-1>", self.b1_release)
-            self.bind("<Double-Button-1>", self.double_b1)
-            self.bind("<MouseWheel>", self.mousewheel)
+            for b in bindings:
+                b[1].bind(b[0], b[2])
+            for b in all_canvas_bindings:
+                for canvas in (self, self.RI, self.CH):
+                    canvas.bind(b[0], b[1])
             if USER_OS == "linux":
-                for canvas in (self, self.RI):
-                    canvas.bind("<Button-4>", self.mousewheel)
-                    canvas.bind("<Button-5>", self.mousewheel)
-                for canvas in (self, self.CH):
-                    canvas.bind("<Shift-Button-4>", self.shift_mousewheel)
-                    canvas.bind("<Shift-Button-5>", self.shift_mousewheel)
-            self.bind("<Shift-MouseWheel>", self.shift_mousewheel)
-            self.bind("<Shift-ButtonPress-1>", self.shift_b1_press)
-            self.CH.bind("<Shift-ButtonPress-1>", self.CH.shift_b1_press)
-            self.RI.bind("<Shift-ButtonPress-1>", self.RI.shift_b1_press)
-            self.CH.bind("<Shift-MouseWheel>", self.shift_mousewheel)
-            self.RI.bind("<MouseWheel>", self.mousewheel)
-            self.bind(rc_binding, self.rc)
-            self.bind(f"<{ctrl_key}-ButtonPress-1>", self.ctrl_b1_press)
-            self.CH.bind(f"<{ctrl_key}-ButtonPress-1>", self.CH.ctrl_b1_press)
-            self.RI.bind(f"<{ctrl_key}-ButtonPress-1>", self.RI.ctrl_b1_press)
-            self.bind(f"<{ctrl_key}-Shift-ButtonPress-1>", self.ctrl_shift_b1_press)
-            self.CH.bind(f"<{ctrl_key}-Shift-ButtonPress-1>", self.CH.ctrl_shift_b1_press)
-            self.RI.bind(f"<{ctrl_key}-Shift-ButtonPress-1>", self.RI.ctrl_shift_b1_press)
-            self.bind(f"<{ctrl_key}-B1-Motion>", self.ctrl_b1_motion)
-            self.CH.bind(f"<{ctrl_key}-B1-Motion>", self.CH.ctrl_b1_motion)
-            self.RI.bind(f"<{ctrl_key}-B1-Motion>", self.RI.ctrl_b1_motion)
+                for b in all_canvas_linux_bindings:
+                    for canvas in (self, self.RI, self.CH):
+                        canvas.bind(b[0], b[1])
         else:
-            self.unbind("<Configure>")
-            self.unbind("<Motion>")
-            self.unbind("<ButtonPress-1>")
-            self.unbind("<B1-Motion>")
-            self.unbind("<ButtonRelease-1>")
-            self.unbind("<Double-Button-1>")
-            self.unbind("<MouseWheel>")
+            for b in bindings:
+                b[1].unbind(b[0])
+            for b in all_canvas_bindings:
+                for canvas in (self, self.RI, self.CH):
+                    canvas.unbind(b[0])
             if USER_OS == "linux":
-                for canvas in (self, self.RI):
-                    canvas.unbind("<Button-4>")
-                    canvas.unbind("<Button-5>")
-                for canvas in (self, self.CH):
-                    canvas.unbind("<Shift-Button-4>")
-                    canvas.unbind("<Shift-Button-5>")
-            self.unbind("<Shift-ButtonPress-1>")
-            self.CH.unbind("<Shift-ButtonPress-1>")
-            self.RI.unbind("<Shift-ButtonPress-1>")
-            self.unbind("<Shift-MouseWheel>")
-            self.CH.unbind("<Shift-MouseWheel>")
-            self.RI.unbind("<MouseWheel>")
-            self.unbind(rc_binding)
-            self.unbind(f"<{ctrl_key}-ButtonPress-1>")
-            self.CH.unbind(f"<{ctrl_key}-ButtonPress-1>")
-            self.RI.unbind(f"<{ctrl_key}-ButtonPress-1>")
-            self.unbind(f"<{ctrl_key}-Shift-ButtonPress-1>")
-            self.CH.unbind(f"<{ctrl_key}-Shift-ButtonPress-1>")
-            self.RI.unbind(f"<{ctrl_key}-Shift-ButtonPress-1>")
-            self.unbind(f"<{ctrl_key}-B1-Motion>")
-            self.CH.unbind(f"<{ctrl_key}-B1-Motion>")
-            self.RI.unbind(f"<{ctrl_key}-B1-Motion>")
+                for b in all_canvas_linux_bindings:
+                    for canvas in (self, self.RI, self.CH):
+                        canvas.unbind(b[0])
 
     def show_ctrl_outline(
         self,
@@ -863,13 +860,7 @@ class MainTable(tk.Canvas):
         orig_selected = list(range(to_move_min, to_move_min + num_cols))
         if index_type == "displayed":
             self.deselect("all", redraw=False)
-            cws = [
-                int(b - a)
-                for a, b in zip(
-                    self.col_positions,
-                    islice(self.col_positions, 1, len(self.col_positions)),
-                )
-            ]
+            cws = list(self.diff_gen(self.col_positions))
             if to_move_min > c:
                 cws[c:c] = cws[to_move_min:to_move_max]
                 cws[to_move_max:to_del] = []
@@ -1074,13 +1065,7 @@ class MainTable(tk.Canvas):
         orig_selected = list(range(to_move_min, to_move_min + num_rows))
         if index_type == "displayed":
             self.deselect("all", redraw=False)
-            rhs = [
-                int(b - a)
-                for a, b in zip(
-                    self.row_positions,
-                    islice(self.row_positions, 1, len(self.row_positions)),
-                )
-            ]
+            rhs = list(self.diff_gen(self.row_positions))
             if to_move_min > r:
                 rhs[r:r] = rhs[to_move_min:to_move_max]
                 rhs[to_move_max:to_del] = []
@@ -1524,12 +1509,13 @@ class MainTable(tk.Canvas):
         bottom_right_corner=False,
         check_cell_visibility=True,
         redraw=True,
+        r_pc=0.0,
+        c_pc=0.0,
     ):
         need_redraw = False
+        yvis, xvis = False, False
         if check_cell_visibility:
             yvis, xvis = self.cell_completely_visible(r=r, c=c, separate_axes=True)
-        else:
-            yvis, xvis = False, False
         if not yvis:
             if bottom_right_corner:
                 if r is not None and not keep_yscroll:
@@ -1538,20 +1524,21 @@ class MainTable(tk.Canvas):
                         y = self.row_positions[r]
                     else:
                         y = self.row_positions[r + 1] + 1 - winfo_height
-                    args = (
+                    args = [
                         "moveto",
                         y / (self.row_positions[-1] + self.empty_vertical),
-                    )
+                    ]
                     if args[1] > 1:
                         args[1] = args[1] - 1
                     self.set_yviews(*args, redraw=False)
                     need_redraw = True
             else:
                 if r is not None and not keep_yscroll:
-                    args = (
+                    y = self.row_positions[r] + ((self.row_positions[r + 1] - self.row_positions[r]) * r_pc)
+                    args = [
                         "moveto",
-                        self.row_positions[r] / (self.row_positions[-1] + self.empty_vertical),
-                    )
+                        y / (self.row_positions[-1] + self.empty_vertical),
+                    ]
                     if args[1] > 1:
                         args[1] = args[1] - 1
                     self.set_yviews(*args, redraw=False)
@@ -1564,25 +1551,25 @@ class MainTable(tk.Canvas):
                         x = self.col_positions[c]
                     else:
                         x = self.col_positions[c + 1] + 1 - winfo_width
-                    args = (
+                    args = [
                         "moveto",
                         x / (self.col_positions[-1] + self.empty_horizontal),
-                    )
+                    ]
                     self.set_xviews(*args, redraw=False)
                     need_redraw = True
             else:
                 if c is not None and not keep_xscroll:
-                    args = (
+                    x = self.col_positions[c] + ((self.col_positions[c + 1] - self.col_positions[c]) * c_pc)
+                    args = [
                         "moveto",
-                        self.col_positions[c] / (self.col_positions[-1] + self.empty_horizontal),
-                    )
+                        x / (self.col_positions[-1] + self.empty_horizontal),
+                    ]
                     self.set_xviews(*args, redraw=False)
                     need_redraw = True
         if redraw and need_redraw:
             self.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
             return True
-        else:
-            return False
+        return False
 
     def get_cell_coords(self, r=None, c=None):
         return (
@@ -3409,6 +3396,79 @@ class MainTable(tk.Canvas):
             self.CH.xview_scroll(-1, "units")
             self.x_move_synced_scrolls("moveto", self.xview()[0])
         self.main_table_redraw_grid_and_text(redraw_header=True)
+        
+    def ctrl_mousewheel(self, event):
+        if event.delta < 0 or event.num == 5:
+            if self.table_font[1] < 2 or self.index_font[1] < 2 or self.header_font[1] < 2:
+                return
+            self.zoom_out()
+        elif event.delta >= 0 or event.num == 4:
+            self.zoom_in()
+
+    def zoom_in(self, event=None):
+        self.zoom_font(
+            (self.table_font[0], self.table_font[1] + 1, self.table_font[2]),
+            (self.header_font[0], self.header_font[1] + 1, self.header_font[2]),
+        )
+
+    def zoom_out(self, event=None):
+        self.zoom_font(
+            (self.table_font[0], self.table_font[1] - 1, self.table_font[2]),
+            (self.header_font[0], self.header_font[1] - 1, self.header_font[2]),
+        )
+
+    def zoom_font(self, table_font: tuple, header_font: tuple):
+        # should record position prior to change and then see after change
+        y = self.canvasy(0)
+        x = self.canvasx(0)
+        r = self.identify_row(y=0)
+        c = self.identify_col(x=0)
+        try:
+            r_pc = (y - self.row_positions[r]) / (self.row_positions[r + 1] - self.row_positions[r])
+        except Exception:
+            r_pc = 0.0
+        try:
+            c_pc = (x - self.col_positions[c]) / (self.col_positions[c + 1] - self.col_positions[c])
+        except Exception:
+            c_pc = 0.0
+        old_min_row_height = int(self.min_row_height)
+        old_default_row_height = int(self.default_row_height[1])
+        self.set_table_font(
+            table_font,
+            reset_row_positions=False,
+        )
+        self.set_index_font(table_font)
+        self.set_header_font(header_font)
+        if self.set_cell_sizes_on_zoom:
+            self.set_all_cell_sizes_to_text()
+            self.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
+        elif not self.set_cell_sizes_on_zoom:
+            self.row_positions = list(accumulate(chain([0], (
+                    self.min_row_height
+                    if h == old_min_row_height
+                    else self.default_row_height[1]
+                    if h == old_default_row_height
+                    else self.min_row_height
+                    if h < self.min_row_height
+                    else h
+                    for h in self.diff_gen(self.row_positions)
+                )
+            )))
+            self.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
+            self.recreate_all_selection_boxes()
+        self.refresh_open_window_positions()
+        self.RI.refresh_open_window_positions()
+        self.CH.refresh_open_window_positions()
+        self.see(r, c, check_cell_visibility=False, redraw=True, r_pc=r_pc, c_pc=c_pc,)
+        
+    def diff_gen(self, seq):
+        return (
+            int(b - a)
+            for a, b in zip(
+                seq,
+                islice(seq, 1, None),
+            )
+        )
 
     def get_txt_w(self, txt, font=None):
         self.txt_measure_canvas.itemconfig(
@@ -3800,13 +3860,7 @@ class MainTable(tk.Canvas):
         if idx == "end" or len(self.col_positions) <= idx + 1:
             del self.col_positions[-1]
         else:
-            cws = [
-                int(b - a)
-                for a, b in zip(
-                    self.col_positions,
-                    islice(self.col_positions, 1, len(self.col_positions)),
-                )
-            ]
+            cws = list(self.diff_gen(self.col_positions))
             cws[idx : idx + num] = []
             self.col_positions = list(accumulate(chain([0], (width for width in cws))))
 
@@ -3816,13 +3870,7 @@ class MainTable(tk.Canvas):
         if idx == "end" or len(self.row_positions) <= idx + 1:
             del self.row_positions[-1]
         else:
-            rhs = [
-                int(b - a)
-                for a, b in zip(
-                    self.row_positions,
-                    islice(self.row_positions, 1, len(self.row_positions)),
-                )
-            ]
+            rhs = list(self.diff_gen(self.row_positions))
             rhs[idx : idx + numrows] = []
             self.row_positions = list(accumulate(chain([0], (height for height in rhs))))
 
@@ -4649,7 +4697,7 @@ class MainTable(tk.Canvas):
 
     def redraw_highlight(self, x1, y1, x2, y2, fill, outline, tag, can_width=None, pc=None):
         config = (fill, outline)
-        if type(pc) != int or pc >= 100 or pc <= 0:
+        if type(pc) != int or pc >= 100 or pc <= 0:  # noqa: E721
             coords = (
                 x1 - 1 if outline else x1,
                 y1 - 1 if outline else y1,
@@ -6274,6 +6322,41 @@ class MainTable(tk.Canvas):
                             self.row_positions[r],
                         )
                         self.itemconfig(kwargs["canvas_id"], anchor=anchor, height=win_h)
+                        
+    def refresh_open_window_positions(self):
+        if self.text_editor is not None:
+            r, c = self.text_editor_loc
+            datarn = r if self.all_rows_displayed else self.displayed_rows[r]
+            datacn = c if self.all_columns_displayed else self.displayed_columns[c]
+            self.text_editor.config(height=self.row_positions[r + 1] - self.row_positions[r])
+            self.coords(
+                self.text_editor_id,
+                self.col_positions[c],
+                self.row_positions[r],
+            )
+        if self.existing_dropdown_window is not None:
+            r, c = self.get_existing_dropdown_coords()
+            if self.text_editor is None:
+                text_editor_h = self.row_positions[r + 1] - self.row_positions[r]
+                anchor = self.itemcget(self.existing_dropdown_canvas_id, "anchor")
+                win_h = 0
+            else:
+                text_editor_h = self.text_editor.winfo_height()
+                win_h, anchor = self.get_dropdown_height_anchor(datarn, datacn, text_editor_h)
+            if anchor == "nw":
+                self.coords(
+                    self.existing_dropdown_canvas_id,
+                    self.col_positions[c],
+                    self.row_positions[r] + text_editor_h - 1,
+                )
+                #self.itemconfig(self.existing_dropdown_canvas_id, anchor=anchor, height=win_h)
+            elif anchor == "sw":
+                self.coords(
+                    self.existing_dropdown_canvas_id,
+                    self.col_positions[c],
+                    self.row_positions[r],
+                )
+                #self.itemconfig(self.existing_dropdown_canvas_id, anchor=anchor, height=win_h)
 
     def destroy_text_editor(self, event=None):
         if event is not None and self.extra_end_edit_cell_func is not None and self.text_editor_loc is not None:
@@ -6607,7 +6690,7 @@ class MainTable(tk.Canvas):
             self.set_cell_data_undo(
                 r,
                 c,
-                value=not self.data[datarn][datacn] if type(self.data[datarn][datacn]) == bool else False,
+                value=not self.data[datarn][datacn] if isinstance(self.data[datarn][datacn], bool) else False,
                 undo=undo,
                 cell_resize=False,
                 check_input_valid=False,

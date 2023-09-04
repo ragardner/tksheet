@@ -152,6 +152,7 @@ auto_resize_default_row_index: bool = True,
 auto_resize_columns: Union[int, None] = None,
 auto_resize_rows: Union[int, None] = None,
 set_all_heights_and_widths: bool = False,
+set_cell_sizes_on_zoom: bool = False,
 row_height: str = "1", #str or int
 font: tuple = get_font(),
 header_font: tuple = get_heading_font(),
@@ -694,6 +695,7 @@ ___
 ```python
 basic_bindings(enable = False)
 ```
+- Also disables zoom in / out.
 
 ___
 
@@ -2293,6 +2295,7 @@ The list of key word arguments available for `set_options()` are as follows, [se
 ```python
 auto_resize_columns
 auto_resize_rows
+set_cell_sizes_on_zoom
 to_clipboard_delimiter
 to_clipboard_quotechar
 to_clipboard_lineterminator

@@ -91,6 +91,7 @@ class Sheet(tk.Frame):
         auto_resize_columns: Union[int, None] = None,
         auto_resize_rows: Union[int, None] = None,
         set_all_heights_and_widths: bool = False,
+        set_cell_sizes_on_zoom: bool = False,
         row_height: str = "1",  # str or int
         font: Tuple = get_font(),
         header_font: Tuple = get_heading_font(),
@@ -254,6 +255,7 @@ class Sheet(tk.Frame):
             data_reference=data if data_reference is None else data_reference,
             auto_resize_columns=auto_resize_columns,
             auto_resize_rows=auto_resize_rows,
+            set_cell_sizes_on_zoom=set_cell_sizes_on_zoom,
             total_cols=total_columns,
             total_rows=total_rows,
             row_index=row_index,
@@ -2253,6 +2255,8 @@ class Sheet(tk.Frame):
         return self.MT.set_header_font(newfont)
 
     def set_options(self, redraw=True, **kwargs):
+        if "set_cell_sizes_on_zoom" in kwargs:
+            self.MT.set_cell_sizes_on_zoom = kwargs["set_cell_sizes_on_zoom"]
         if "auto_resize_columns" in kwargs:
             self.MT.auto_resize_columns = kwargs["auto_resize_columns"]
         if "auto_resize_rows" in kwargs:
@@ -2976,13 +2980,13 @@ class Sheet(tk.Frame):
 
     def all_rows_displayed(self, a=None):
         v = bool(self.MT.all_rows_displayed)
-        if type(a) == bool:
+        if isinstance(a, bool):
             self.MT.all_rows_displayed = a
         return v
 
     def all_columns_displayed(self, a=None):
         v = bool(self.MT.all_columns_displayed)
-        if type(a) == bool:
+        if isinstance(a, bool):
             self.MT.all_columns_displayed = a
         return v
 
@@ -3222,7 +3226,7 @@ class Sheet(tk.Frame):
     def click_checkbox(self, r, c, checked=None):
         kwargs = self.MT.get_cell_kwargs(r, c, key="checkbox")
         if kwargs:
-            if not type(self.MT.data[r][c]) == bool:
+            if not isinstance(self.MT.data[r][c], bool):
                 if checked is None:
                     self.MT.data[r][c] = False
                 else:
@@ -3233,7 +3237,7 @@ class Sheet(tk.Frame):
     def click_header_checkbox(self, c, checked=None):
         kwargs = self.CH.get_cell_kwargs(c, key="checkbox")
         if kwargs:
-            if not type(self.MT._headers[c]) == bool:
+            if not isinstance(self.MT._headers[c], bool):
                 if checked is None:
                     self.MT._headers[c] = False
                 else:
@@ -3244,7 +3248,7 @@ class Sheet(tk.Frame):
     def click_index_checkbox(self, r, checked=None):
         kwargs = self.RI.get_cell_kwargs(r, key="checkbox")
         if kwargs:
-            if not type(self.MT._row_index[r]) == bool:
+            if not isinstance(self.MT._row_index[r], bool):
                 if checked is None:
                     self.MT._row_index[r] = False
                 else:
@@ -3275,7 +3279,7 @@ class Sheet(tk.Frame):
         return d
 
     def checkbox(self, r, c, checked=None, state=None, check_function="", text=None):
-        if type(checked) == bool:
+        if isinstance(checked, bool):
             self.set_cell_data(r, c, checked)
         kwargs = self.MT.get_cell_kwargs(r, c, key="checkbox")
         if check_function != "":
@@ -3287,7 +3291,7 @@ class Sheet(tk.Frame):
         return {**kwargs, "checked": self.MT.data[r][c]}
 
     def header_checkbox(self, c, checked=None, state=None, check_function="", text=None):
-        if type(checked) == bool:
+        if isinstance(checked, bool):
             self.headers(newheaders=checked, index=c)
         kwargs = self.CH.get_cell_kwargs(c, key="checkbox")
         if kwargs:
@@ -3300,7 +3304,7 @@ class Sheet(tk.Frame):
             return {**kwargs, "checked": self.MT._headers[c]}
 
     def index_checkbox(self, r, checked=None, state=None, check_function="", text=None):
-        if type(checked) == bool:
+        if isinstance(checked, bool):
             self.row_index(newindex=checked, index=r)
         kwargs = self.RI.get_cell_kwargs(r, key="checkbox")
         if kwargs:
@@ -3773,6 +3777,7 @@ class Sheet_Dropdown(Sheet):
             empty_vertical=0,
             selected_rows_to_end_of_window=True,
             horizontal_grid_to_end_of_window=True,
+            set_cell_sizes_on_zoom=True,
             show_selected_cells_border=False,
             table_selected_cells_border_fg=colors["fg"],
             table_selected_cells_bg=colors["highlight_bg"],
