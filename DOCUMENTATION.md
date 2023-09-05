@@ -695,7 +695,7 @@ ___
 ```python
 basic_bindings(enable = False)
 ```
-- Also disables zoom in / out.
+- Also enables/disables zoom in/out.
 
 ___
 

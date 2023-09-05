@@ -1002,7 +1002,7 @@ class ColumnHeaders(tk.Canvas):
             return w + self.MT.header_txt_h, h
         return w, h
 
-    def set_height_of_header_to_text(self, text=None):
+    def set_height_of_header_to_text(self, text=None, only_increase=False):
         if (
             text is None
             and not self.MT._headers
@@ -1059,8 +1059,9 @@ class ColumnHeaders(tk.Canvas):
         space_bot = self.MT.get_space_bot(0)
         if new_height > space_bot:
             new_height = space_bot
-        self.set_height(new_height, set_TL=True)
-        self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
+        if not only_increase or (only_increase and new_height > self.current_height):
+            self.set_height(new_height, set_TL=True)
+            self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
         return new_height
 
     def set_col_width(
@@ -1818,7 +1819,7 @@ class ColumnHeaders(tk.Canvas):
         text = "" if text is None else text
         if self.MT.cell_auto_resize_enabled:
             if self.height_resizing_enabled:
-                self.set_height_of_header_to_text(text)
+                self.set_height_of_header_to_text(text, only_increase=True)
             self.set_col_width_run_binding(c)
 
         if c == self.text_editor_loc and self.text_editor is not None:
