@@ -1,3 +1,7 @@
+### Version 6.2.5
+#### Fixed:
+- Error when zooming with unpopulated table
+
 ### Version 6.2.4
 #### Added:
 - Zoom in/out bindings control + mousewheel

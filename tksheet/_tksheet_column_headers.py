@@ -1929,7 +1929,7 @@ class ColumnHeaders(tk.Canvas):
                             new_height - 1,
                         )
                         self.itemconfig(kwargs["canvas_id"], anchor=anchor, height=win_h)
-    
+
     def refresh_open_window_positions(self):
         if self.text_editor is not None:
             c = self.text_editor_loc
@@ -1955,14 +1955,14 @@ class ColumnHeaders(tk.Canvas):
                     0,
                     self.MT.col_positions[c] + text_editor_h - 1,
                 )
-                #self.itemconfig(self.existing_dropdown_canvas_id, anchor=anchor, height=win_h)
+                # self.itemconfig(self.existing_dropdown_canvas_id, anchor=anchor, height=win_h)
             elif anchor == "sw":
                 self.coords(
                     self.existing_dropdown_canvas_id,
                     0,
                     self.MT.col_positions[c],
                 )
-                #self.itemconfig(self.existing_dropdown_canvas_id, anchor=anchor, height=win_h)
+                # self.itemconfig(self.existing_dropdown_canvas_id, anchor=anchor, height=win_h)
 
     def bind_cell_edit(self, enable=True):
         if enable:
