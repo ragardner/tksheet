@@ -1,6 +1,6 @@
 ### Version 6.2.5
 #### Fixed:
-- Error when zooming with unpopulated table
+- Error when zooming or using `see()` with empty table
 
 ### Version 6.2.4
 #### Added:
