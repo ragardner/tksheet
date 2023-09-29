@@ -93,6 +93,7 @@ class Sheet(tk.Frame):
         set_all_heights_and_widths: bool = False,
         set_cell_sizes_on_zoom: bool = False,
         row_height: str = "1",  # str or int
+        zoom: int = 100,
         font: Tuple = get_font(),
         header_font: Tuple = get_heading_font(),
         index_font: Tuple = get_index_font(),  # currently has no effect
@@ -260,6 +261,7 @@ class Sheet(tk.Frame):
             total_rows=total_rows,
             row_index=row_index,
             index=index,
+            zoom=zoom,
             font=font,
             header_font=header_font,
             index_font=index_font,

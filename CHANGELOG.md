@@ -1,6 +1,7 @@
 ### Version 6.2.5
 #### Fixed:
 - Error when zooming or using `see()` with empty table
+- Add initialization option `zoom` which is an `int` representing a percentage of the font size, `100` being no change
 
 ### Version 6.2.4
 #### Added:

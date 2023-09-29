@@ -227,18 +227,31 @@ class MainTable(tk.Canvas):
         self.all_columns_displayed = True
         self.all_rows_displayed = True
         self.align = kwargs["align"]
-        self.table_font = kwargs["font"]
-        self.font_fam = kwargs["font"][0]
-        self.font_sze = kwargs["font"][1]
-        self.font_wgt = kwargs["font"][2]
-        self.index_font = kwargs["index_font"]
-        self.index_font_fam = kwargs["index_font"][0]
-        self.index_font_sze = kwargs["index_font"][1]
-        self.index_font_wgt = kwargs["index_font"][2]
-        self.header_font = kwargs["header_font"]
-        self.header_font_fam = kwargs["header_font"][0]
-        self.header_font_sze = kwargs["header_font"][1]
-        self.header_font_wgt = kwargs["header_font"][2]
+
+        self.table_font = [
+            kwargs["font"][0],
+            int(kwargs["font"][1] * kwargs["zoom"] / 100),
+            kwargs["font"][2],
+        ]
+
+        self.index_font = [
+            kwargs["index_font"][0],
+            int(kwargs["index_font"][1] * kwargs["zoom"] / 100),
+            kwargs["index_font"][2],
+        ]
+
+        self.header_font = [
+            kwargs["header_font"][0],
+            int(kwargs["header_font"][1] * kwargs["zoom"] / 100),
+            kwargs["header_font"][2],
+        ]
+        for fnt in (self.table_font, self.index_font, self.header_font):
+            if fnt[1] < 1:
+                fnt[1] = 1
+        self.table_font = tuple(self.table_font)
+        self.index_font = tuple(self.index_font)
+        self.header_font = tuple(self.header_font)
+
         self.txt_measure_canvas = tk.Canvas(self)
         self.txt_measure_canvas_text = self.txt_measure_canvas.create_text(0, 0, text="", font=self.table_font)
         self.text_editor = None
@@ -3538,9 +3551,6 @@ class MainTable(tk.Canvas):
                     "Argument must be font, size and 'normal', 'bold' or 'italic' e.g. ('Carlito',12,'normal')"
                 )
             self.table_font = newfont
-            self.font_fam = newfont[0]
-            self.font_sze = newfont[1]
-            self.font_wgt = newfont[2]
             self.set_table_font_help()
             if reset_row_positions:
                 self.reset_row_positions()
@@ -3580,9 +3590,6 @@ class MainTable(tk.Canvas):
                     "Argument must be font, size and 'normal', 'bold' or 'italic' e.g. ('Carlito', 12, 'normal')"
                 )
             self.header_font = newfont
-            self.header_font_fam = newfont[0]
-            self.header_font_sze = newfont[1]
-            self.header_font_wgt = newfont[2]
             self.set_header_font_help()
             self.recreate_all_selection_boxes()
         else:
@@ -3618,9 +3625,6 @@ class MainTable(tk.Canvas):
                     "Argument must be font, size and 'normal', 'bold' or" "'italic' e.g. ('Carlito',12,'normal')"
                 )
             self.index_font = newfont
-            self.index_font_fam = newfont[0]
-            self.index_font_sze = newfont[1]
-            self.index_font_wgt = newfont[2]
             self.set_index_font_help()
         return self.index_font
 

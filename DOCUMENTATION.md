@@ -154,6 +154,7 @@ auto_resize_rows: Union[int, None] = None,
 set_all_heights_and_widths: bool = False,
 set_cell_sizes_on_zoom: bool = False,
 row_height: str = "1", #str or int
+zoom: int = 100,
 font: tuple = get_font(),
 header_font: tuple = get_heading_font(),
 index_font: tuple = get_index_font(), #currently has no effect
