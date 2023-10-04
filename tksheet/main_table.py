@@ -67,6 +67,7 @@ class MainTable(tk.Canvas):
         self.grid_cyc = cycle(self.grid_cyctup)
         self.span = self.parentframe.span
         self.synced_scrolls = set()
+        self.set_cell_sizes_on_zoom = kwargs["set_cell_sizes_on_zoom"]
 
         self.disp_ctrl_outline = {}
         self.disp_text = defaultdict(set)
@@ -1559,13 +1560,14 @@ class MainTable(tk.Canvas):
         bottom_right_corner=False,
         check_cell_visibility=True,
         redraw=True,
+        r_pc=0.0,
+        c_pc=0.0,
     ):
         need_redraw = False
+        yvis, xvis = False, False
         if check_cell_visibility:
             yvis, xvis = self.cell_completely_visible(r=r, c=c, separate_axes=True)
-        else:
-            yvis, xvis = False, False
-        if not yvis:
+        if not yvis and len(self.row_positions) > 1:
             if bottom_right_corner:
                 if r is not None and not keep_yscroll:
                     winfo_height = self.winfo_height()
@@ -1573,25 +1575,26 @@ class MainTable(tk.Canvas):
                         y = self.row_positions[r]
                     else:
                         y = self.row_positions[r + 1] + 1 - winfo_height
-                    args = (
+                    args = [
                         "moveto",
                         y / (self.row_positions[-1] + self.empty_vertical),
-                    )
+                    ]
                     if args[1] > 1:
                         args[1] = args[1] - 1
                     self.set_yviews(*args, redraw=False)
                     need_redraw = True
             else:
                 if r is not None and not keep_yscroll:
-                    args = (
+                    y = self.row_positions[r] + ((self.row_positions[r + 1] - self.row_positions[r]) * r_pc)
+                    args = [
                         "moveto",
-                        self.row_positions[r] / (self.row_positions[-1] + self.empty_vertical),
-                    )
+                        y / (self.row_positions[-1] + self.empty_vertical),
+                    ]
                     if args[1] > 1:
                         args[1] = args[1] - 1
                     self.set_yviews(*args, redraw=False)
                     need_redraw = True
-        if not xvis:
+        if not xvis and len(self.col_positions) > 1:
             if bottom_right_corner:
                 if c is not None and not keep_xscroll:
                     winfo_width = self.winfo_width()
@@ -1599,25 +1602,25 @@ class MainTable(tk.Canvas):
                         x = self.col_positions[c]
                     else:
                         x = self.col_positions[c + 1] + 1 - winfo_width
-                    args = (
+                    args = [
                         "moveto",
                         x / (self.col_positions[-1] + self.empty_horizontal),
-                    )
+                    ]
                     self.set_xviews(*args, redraw=False)
                     need_redraw = True
             else:
                 if c is not None and not keep_xscroll:
-                    args = (
+                    x = self.col_positions[c] + ((self.col_positions[c + 1] - self.col_positions[c]) * c_pc)
+                    args = [
                         "moveto",
-                        self.col_positions[c] / (self.col_positions[-1] + self.empty_horizontal),
-                    )
+                        x / (self.col_positions[-1] + self.empty_horizontal),
+                    ]
                     self.set_xviews(*args, redraw=False)
                     need_redraw = True
         if redraw and need_redraw:
             self.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
             return True
-        else:
-            return False
+        return False
 
     def get_cell_coords(self, r=None, c=None):
         return (
@@ -3445,48 +3448,83 @@ class MainTable(tk.Canvas):
             self.x_move_synced_scrolls("moveto", self.xview()[0])
         self.main_table_redraw_grid_and_text(redraw_header=True)
 
-    def ctrl_mousewheel(self, event: object) -> None:
+    def ctrl_mousewheel(self, event):
         if event.delta < 0 or event.num == 5:
             if self.table_font[1] < 2 or self.index_font[1] < 2 or self.header_font[1] < 2:
                 return
             self.zoom_out()
         elif event.delta >= 0 or event.num == 4:
             self.zoom_in()
-        self.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
 
-    def zoom_in(self, event: object = None) -> None:
+    def zoom_in(self, event=None):
         self.zoom_font(
             (self.table_font[0], self.table_font[1] + 1, self.table_font[2]),
             (self.header_font[0], self.header_font[1] + 1, self.header_font[2]),
         )
 
-    def zoom_out(self, event: object = None) -> None:
+    def zoom_out(self, event=None):
         self.zoom_font(
             (self.table_font[0], self.table_font[1] - 1, self.table_font[2]),
             (self.header_font[0], self.header_font[1] - 1, self.header_font[2]),
         )
 
-    def zoom_font(self, table_font: tuple, header_font: tuple) -> None:
+    def zoom_font(self, table_font: tuple, header_font: tuple):
+        # should record position prior to change and then see after change
+        y = self.canvasy(0)
+        x = self.canvasx(0)
+        r = self.identify_row(y=0)
+        c = self.identify_col(x=0)
+        try:
+            r_pc = (y - self.row_positions[r]) / (self.row_positions[r + 1] - self.row_positions[r])
+        except Exception:
+            r_pc = 0.0
+        try:
+            c_pc = (x - self.col_positions[c]) / (self.col_positions[c + 1] - self.col_positions[c])
+        except Exception:
+            c_pc = 0.0
         old_min_row_height = int(self.min_row_height)
         old_default_row_height = int(self.default_row_height[1])
         self.set_table_font(
             table_font,
             reset_row_positions=False,
         )
-        self.set_row_positions(
-            itr=(
-                self.min_row_height
-                if h == old_min_row_height
-                else self.default_row_height[1]
-                if h == old_default_row_height
-                else self.min_row_height
-                if h < self.min_row_height
-                else h
-                for h in self.gen_row_heights()
-            )
-        )
         self.set_index_font(table_font)
         self.set_header_font(header_font)
+        if self.set_cell_sizes_on_zoom:
+            self.set_all_cell_sizes_to_text()
+            self.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
+        elif not self.set_cell_sizes_on_zoom:
+            self.row_positions = list(
+                accumulate(
+                    chain(
+                        [0],
+                        (
+                            self.min_row_height
+                            if h == old_min_row_height
+                            else self.default_row_height[1]
+                            if h == old_default_row_height
+                            else self.min_row_height
+                            if h < self.min_row_height
+                            else h
+                            for h in self.gen_row_heights()
+                        ),
+                    )
+                )
+            )
+            self.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
+            self.recreate_all_selection_boxes()
+        self.refresh_open_window_positions()
+        self.RI.refresh_open_window_positions()
+        self.CH.refresh_open_window_positions()
+        self.see(
+            r,
+            c,
+            check_cell_visibility=False,
+            redraw=False,
+            r_pc=r_pc,
+            c_pc=c_pc,
+        )
+        self.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
 
     def get_txt_w(self, txt, font=None):
         self.txt_measure_canvas.itemconfig(
@@ -6783,6 +6821,41 @@ class MainTable(tk.Canvas):
                             self.row_positions[r],
                         )
                         self.itemconfig(kwargs["canvas_id"], anchor=anchor, height=win_h)
+
+    def refresh_open_window_positions(self):
+        if self.text_editor is not None:
+            r, c = self.text_editor_loc
+            datarn = r if self.all_rows_displayed else self.displayed_rows[r]
+            datacn = c if self.all_columns_displayed else self.displayed_columns[c]
+            self.text_editor.config(height=self.row_positions[r + 1] - self.row_positions[r])
+            self.coords(
+                self.text_editor_id,
+                self.col_positions[c],
+                self.row_positions[r],
+            )
+        if self.existing_dropdown_window is not None:
+            r, c = self.get_existing_dropdown_coords()
+            if self.text_editor is None:
+                text_editor_h = self.row_positions[r + 1] - self.row_positions[r]
+                anchor = self.itemcget(self.existing_dropdown_canvas_id, "anchor")
+                win_h = 0
+            else:
+                text_editor_h = self.text_editor.winfo_height()
+                win_h, anchor = self.get_dropdown_height_anchor(datarn, datacn, text_editor_h)
+            if anchor == "nw":
+                self.coords(
+                    self.existing_dropdown_canvas_id,
+                    self.col_positions[c],
+                    self.row_positions[r] + text_editor_h - 1,
+                )
+                # self.itemconfig(self.existing_dropdown_canvas_id, anchor=anchor, height=win_h)
+            elif anchor == "sw":
+                self.coords(
+                    self.existing_dropdown_canvas_id,
+                    self.col_positions[c],
+                    self.row_positions[r],
+                )
+                # self.itemconfig(self.existing_dropdown_canvas_id, anchor=anchor, height=win_h)
 
     def destroy_text_editor(self, event: object = None) -> None:
         self.text_editor_loc = None

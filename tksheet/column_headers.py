@@ -954,7 +954,7 @@ class ColumnHeaders(tk.Canvas):
             return w + self.MT.header_txt_height, h
         return w, h
 
-    def set_height_of_header_to_text(self, text=None):
+    def set_height_of_header_to_text(self, text=None, only_increase=False):
         if (
             text is None
             and not self.MT._headers
@@ -1011,8 +1011,9 @@ class ColumnHeaders(tk.Canvas):
         space_bot = self.MT.get_space_bot(0)
         if new_height > space_bot:
             new_height = space_bot
-        self.set_height(new_height, set_TL=True)
-        self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
+        if not only_increase or (only_increase and new_height > self.current_height):
+            self.set_height(new_height, set_TL=True)
+            self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
         return new_height
 
     def set_col_width(
@@ -1866,6 +1867,40 @@ class ColumnHeaders(tk.Canvas):
                             new_height - 1,
                         )
                         self.itemconfig(kwargs["canvas_id"], anchor=anchor, height=win_h)
+
+    def refresh_open_window_positions(self):
+        if self.text_editor is not None:
+            c = self.text_editor_loc
+            self.text_editor.config(height=self.MT.col_positions[c + 1] - self.MT.col_positions[c])
+            self.coords(
+                self.text_editor_id,
+                0,
+                self.MT.col_positions[c],
+            )
+        if self.existing_dropdown_window is not None:
+            c = self.get_existing_dropdown_coords()
+            datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
+            if self.text_editor is None:
+                text_editor_h = self.MT.col_positions[c + 1] - self.MT.col_positions[c]
+                anchor = self.itemcget(self.existing_dropdown_canvas_id, "anchor")
+                win_h = 0
+            else:
+                text_editor_h = self.text_editor.winfo_height()
+                win_h, anchor = self.get_dropdown_height_anchor(datacn, text_editor_h)
+            if anchor == "nw":
+                self.coords(
+                    self.existing_dropdown_canvas_id,
+                    0,
+                    self.MT.col_positions[c] + text_editor_h - 1,
+                )
+                # self.itemconfig(self.existing_dropdown_canvas_id, anchor=anchor, height=win_h)
+            elif anchor == "sw":
+                self.coords(
+                    self.existing_dropdown_canvas_id,
+                    0,
+                    self.MT.col_positions[c],
+                )
+                # self.itemconfig(self.existing_dropdown_canvas_id, anchor=anchor, height=win_h)
 
     def bind_cell_edit(self, enable=True):
         if enable:

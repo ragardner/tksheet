@@ -107,7 +107,9 @@ class Sheet(tk.Frame):
         auto_resize_columns: int | None = None,
         auto_resize_rows: int | None = None,
         set_all_heights_and_widths: bool = False,
+        set_cell_sizes_on_zoom: bool = False,
         row_height: str = "1",  # str or int
+        zoom: int = 100,
         font: Font = get_font(),
         header_font: Font = get_header_font(),
         index_font: Font = get_index_font(),  # currently has no effect
@@ -280,6 +282,7 @@ class Sheet(tk.Frame):
             data_reference=data if data_reference is None else data_reference,
             auto_resize_columns=auto_resize_columns,
             auto_resize_rows=auto_resize_rows,
+            set_cell_sizes_on_zoom=set_cell_sizes_on_zoom,
             total_cols=total_columns,
             total_rows=total_rows,
             row_index=row_index,
@@ -2186,6 +2189,8 @@ class Sheet(tk.Frame):
         return self.MT.set_header_font(newfont)
 
     def set_options(self, redraw: bool = True, **kwargs) -> Sheet:
+        if "set_cell_sizes_on_zoom" in kwargs:
+            self.MT.set_cell_sizes_on_zoom = kwargs["set_cell_sizes_on_zoom"]
         if "auto_resize_columns" in kwargs:
             self.MT.auto_resize_columns = kwargs["auto_resize_columns"]
         if "auto_resize_rows" in kwargs:
@@ -5345,6 +5350,7 @@ class Dropdown(Sheet):
             empty_vertical=0,
             selected_rows_to_end_of_window=True,
             horizontal_grid_to_end_of_window=True,
+            set_cell_sizes_on_zoom=True,
             show_selected_cells_border=False,
             table_selected_cells_border_fg=colors["fg"],
             table_selected_cells_bg=colors["highlight_bg"],

@@ -44,6 +44,20 @@
 - Rename tksheet files
 - Pressing escape on text editors no longer generates an edit cell/header/index event
 
+### Version 6.2.5
+#### Fixed:
+- Error when zooming or using `see()` with empty table
+- Add initialization option `zoom` which is an `int` representing a percentage of the font size, `100` being no change
+
+#### Removed:
+- Some unnecessary internal variables
+
+### Version 6.2.4
+#### Added:
+- Zoom in/out bindings control + mousewheel
+- Zoom in bindings control + equals, control + plus
+- Zoom out binding control + minus
+
 ### Version 6.2.3
 #### Fixed:
 - Bug with `format_row` using "all"

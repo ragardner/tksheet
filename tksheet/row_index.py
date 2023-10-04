@@ -1830,6 +1830,40 @@ class RowIndex(tk.Canvas):
                             )
                             self.itemconfig(kwargs["canvas_id"], anchor=anchor, height=win_h)
 
+    def refresh_open_window_positions(self):
+        if self.text_editor is not None:
+            r = self.text_editor_loc
+            self.text_editor.config(height=self.MT.row_positions[r + 1] - self.MT.row_positions[r])
+            self.coords(
+                self.text_editor_id,
+                0,
+                self.MT.row_positions[r],
+            )
+        if self.existing_dropdown_window is not None:
+            r = self.get_existing_dropdown_coords()
+            datarn = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r]
+            if self.text_editor is None:
+                text_editor_h = self.MT.row_positions[r + 1] - self.MT.row_positions[r]
+                anchor = self.itemcget(self.existing_dropdown_canvas_id, "anchor")
+                win_h = 0
+            else:
+                text_editor_h = self.text_editor.winfo_height()
+                win_h, anchor = self.get_dropdown_height_anchor(datarn, text_editor_h)
+            if anchor == "nw":
+                self.coords(
+                    self.existing_dropdown_canvas_id,
+                    0,
+                    self.MT.row_positions[r] + text_editor_h - 1,
+                )
+                # self.itemconfig(self.existing_dropdown_canvas_id, anchor=anchor, height=win_h)
+            elif anchor == "sw":
+                self.coords(
+                    self.existing_dropdown_canvas_id,
+                    0,
+                    self.MT.row_positions[r],
+                )
+                # self.itemconfig(self.existing_dropdown_canvas_id, anchor=anchor, height=win_h)
+
     def bind_cell_edit(self, enable=True):
         if enable:
             self.edit_cell_enabled = True
