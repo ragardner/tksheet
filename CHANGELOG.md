@@ -3,6 +3,9 @@
 - Error when zooming or using `see()` with empty table
 - Add initialization option `zoom` which is an `int` representing a percentage of the font size, `100` being no change
 
+#### Removed:
+- Some unnecessary internal variables
+
 ### Version 6.2.4
 #### Added:
 - Zoom in/out bindings control + mousewheel
