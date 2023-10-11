@@ -4,13 +4,13 @@
 
 ## **Help**
 
-- [Installation](https://github.com/ragardner/tksheet/wiki/Version-6#installation-and-requirements)
-- [Documentation](https://github.com/ragardner/tksheet/wiki/Version-6)
+- [Installation](https://github.com/ragardner/tksheet/wiki/Version-7#installation-and-requirements)
+- [Documentation](https://github.com/ragardner/tksheet/wiki/Version-7)
 - [Changelog](https://github.com/ragardner/tksheet/blob/master/CHANGELOG.md)
-- [Questions](https://github.com/ragardner/tksheet/wiki/Version-6#asking-questions)
-- [Issues](https://github.com/ragardner/tksheet/wiki/Version-6#issues)
-- [Suggestions](https://github.com/ragardner/tksheet/wiki/Version-6#enhancements-or-suggestions)
-- This library is maintained with the help of **[others](https://github.com/ragardner/tksheet/graphs/contributors)**. If you would like to contribute please read [this help section](https://github.com/ragardner/tksheet/wiki/Version-6#contributing).
+- [Questions](https://github.com/ragardner/tksheet/wiki/Version-7#asking-questions)
+- [Issues](https://github.com/ragardner/tksheet/wiki/Version-7#issues)
+- [Suggestions](https://github.com/ragardner/tksheet/wiki/Version-7#enhancements-or-suggestions)
+- This library is maintained with the help of **[others](https://github.com/ragardner/tksheet/graphs/contributors)**. If you would like to contribute please read [this help section](https://github.com/ragardner/tksheet/wiki/Version-7#contributing).
 
 ## **Notable Changes:**
 
@@ -20,7 +20,7 @@
 
 **Versions >= `7.0.0`:**
 
-- All `extra_bindings()` event objects have changed, [see here](https://github.com/ragardner/tksheet/wiki/Version-6#bind-specific-table-functionality) for more information.
+- All `extra_bindings()` event objects have changed, [see here](https://github.com/ragardner/tksheet/wiki/Version-7#bind-specific-table-functionality) for more information.
 - `tksheet` file names have been changed.
 - `tksheet` will only support Python versions >= `3.8`.
 
@@ -30,14 +30,14 @@
 - Stores its display data as a Python list of lists, sublists being rows
 - Runs smoothly even with millions of rows/columns
 - Edit cells directly
-- Cell values can potentially be [any class](https://github.com/ragardner/tksheet/wiki/Version-6#cell-formatting), the default is any class with a `__str__` method
+- Cell values can potentially be [any class](https://github.com/ragardner/tksheet/wiki/Version-7#data-formatting), the default is any class with a `__str__` method
 - Drag and drop columns and rows
 - Multiple line header and index cells
 - Expand row heights and column widths
 - Change fonts and font size (not for individual cells)
 - Change any colors in the sheet
 - Create an unlimited number of high performance dropdown and check boxes
-- [Hide rows and/or columns](https://github.com/ragardner/tksheet/wiki/Version-6#example-header-dropdown-boxes-and-row-filtering)
+- [Hide rows and/or columns](https://github.com/ragardner/tksheet/wiki/Version-7#example-header-dropdown-boxes-and-row-filtering)
 - Left `"w"`, Center `"center"` or Right `"e"` text alignment for any cell/row/column
 
 ### **light blue theme**

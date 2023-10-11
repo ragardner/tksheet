@@ -1,6 +1,6 @@
 ### Version 7.0.0
 #### Removed:
-- Removed functions (use `span`s instead for the same purpose):
+- Functions (use `span`s instead for the same purpose):
     - `header_checkbox`
     - `index_checkbox`
     - `format_sheet`
@@ -9,6 +9,10 @@
     - `delete_sheet_dropdown`
     - `checkbox_sheet`
     - `delete_sheet_checkbox`
+
+- Old unused and deprecated parameters for:
+    - `get_cell_data()`, `get_sheet_data()`, `get_row_data()`, `get_column_data()`, `yield_sheet_rows()`
+    - All checkbox and dropdown creation functions
 
 #### Fixed:
 - Deselect events firing when not necessary

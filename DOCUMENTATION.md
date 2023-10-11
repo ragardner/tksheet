@@ -1,42 +1,49 @@
 # Table of Contents
 
-- [About tksheet](https://github.com/ragardner/tksheet/wiki/Version-6#about-tksheet)
-- [Installation and Requirements](https://github.com/ragardner/tksheet/wiki/Version-6#installation-and-requirements)
-- [Basic Initialization](https://github.com/ragardner/tksheet/wiki/Version-6#basic-initialization)
-- [Initialization Options](https://github.com/ragardner/tksheet/wiki/Version-6#initialization-options)
-- [Header and Index](https://github.com/ragardner/tksheet/wiki/Version-6#header-and-index)
-- [Setting Table Data](https://github.com/ragardner/tksheet/wiki/Version-6#setting-table-data)
-- [Getting Table Data](https://github.com/ragardner/tksheet/wiki/Version-6#getting-table-data)
-- [Bindings and Functionality](https://github.com/ragardner/tksheet/wiki/Version-6#bindings-and-functionality)
-- [Identifying Bound Event Mouse Position](https://github.com/ragardner/tksheet/wiki/Version-6#identifying-bound-event-mouse-position)
-- [Table Colors](https://github.com/ragardner/tksheet/wiki/Version-6#table-colors)
-- [Highlighting Cells](https://github.com/ragardner/tksheet/wiki/Version-6#highlighting-cells)
-- [Text Font and Alignment](https://github.com/ragardner/tksheet/wiki/Version-6#text-font-and-alignment)
-- [Row Heights and Column Widths](https://github.com/ragardner/tksheet/wiki/Version-6#row-heights-and-column-widths)
-- [Getting Selected Cells](https://github.com/ragardner/tksheet/wiki/Version-6#getting-selected-cells)
-- [Modifying Selected Cells](https://github.com/ragardner/tksheet/wiki/Version-6#modifying-selected-cells)
-- [Modifying and Getting Scroll Positions](https://github.com/ragardner/tksheet/wiki/Version-6#modifying-and-getting-scroll-positions)
-- [Readonly Cells](https://github.com/ragardner/tksheet/wiki/Version-6#readonly-cells)
-- [Hiding Columns](https://github.com/ragardner/tksheet/wiki/Version-6#hiding-columns)
-- [Hiding Rows](https://github.com/ragardner/tksheet/wiki/Version-6#hiding-rows)
-- [Hiding Table Elements](https://github.com/ragardner/tksheet/wiki/Version-6#hiding-table-elements)
-- [Cell Text Editor](https://github.com/ragardner/tksheet/wiki/Version-6#cell-text-editor)
-- [Dropdown Boxes](https://github.com/ragardner/tksheet/wiki/Version-6#dropdown-boxes)
-- [Check Boxes](https://github.com/ragardner/tksheet/wiki/Version-6#check-boxes)
-- [Cell Formatting](https://github.com/ragardner/tksheet/wiki/Version-6#cell-formatting)
-- [Table Options and Other Functions](https://github.com/ragardner/tksheet/wiki/Version-6#table-options-and-other-functions)
-- [Example Loading Data from Excel](https://github.com/ragardner/tksheet/wiki/Version-6#example-loading-data-from-excel)
-- [Example Custom Right Click and Text Editor Validation](https://github.com/ragardner/tksheet/wiki/Version-6#example-custom-right-click-and-text-editor-validation)
-- [Example Displaying Selections](https://github.com/ragardner/tksheet/wiki/Version-6#example-displaying-selections)
-- [Example List Box](https://github.com/ragardner/tksheet/wiki/Version-6#example-list-box)
-- [Example Header Dropdown Boxes and Row Filtering](https://github.com/ragardner/tksheet/wiki/Version-6#example-header-dropdown-boxes-and-row-filtering)
-- [Example ReadMe Screenshot Code](https://github.com/ragardner/tksheet/wiki/Version-6#example-readme-screenshot-code)
-- [Example Saving tksheet as a csv File](https://github.com/ragardner/tksheet/wiki/Version-6#example-saving-tksheet-as-a-csv-file)
-- [Example Using and Creating Formatters](https://github.com/ragardner/tksheet/wiki/Version-6#example-using-and-creating-formatters)
-- [Contributing](https://github.com/ragardner/tksheet/wiki/Version-6#contributing)
+- [About tksheet](https://github.com/ragardner/tksheet/wiki/Version-7#about-tksheet)
+- [Installation and Requirements](https://github.com/ragardner/tksheet/wiki/Version-7#installation-and-requirements)
+- [Basic Initialization](https://github.com/ragardner/tksheet/wiki/Version-7#basic-initialization)
+- [Initialization Options](https://github.com/ragardner/tksheet/wiki/Version-7#initialization-options)
+---
+- [Table Colors](https://github.com/ragardner/tksheet/wiki/Version-7#table-colors)
+- [Header and Index](https://github.com/ragardner/tksheet/wiki/Version-7#header-and-index)
+- [Bindings and Functionality](https://github.com/ragardner/tksheet/wiki/Version-7#bindings-and-functionality)
+---
+- [Setting Table Data](https://github.com/ragardner/tksheet/wiki/Version-7#setting-table-data)
+- [Getting Table Data](https://github.com/ragardner/tksheet/wiki/Version-7#getting-table-data)
+---
+- [Highlighting Cells](https://github.com/ragardner/tksheet/wiki/Version-7#highlighting-cells)
+- [Dropdown Boxes](https://github.com/ragardner/tksheet/wiki/Version-7#dropdown-boxes)
+- [Check Boxes](https://github.com/ragardner/tksheet/wiki/Version-7#check-boxes)
+- [Data Formatting](https://github.com/ragardner/tksheet/wiki/Version-7#data-formatting)
+- [Readonly Cells](https://github.com/ragardner/tksheet/wiki/Version-7#readonly-cells)
+- [Text Font and Alignment](https://github.com/ragardner/tksheet/wiki/Version-7#text-font-and-alignment)
+---
+- [Getting Selected Cells](https://github.com/ragardner/tksheet/wiki/Version-7#getting-selected-cells)
+- [Modifying Selected Cells](https://github.com/ragardner/tksheet/wiki/Version-7#modifying-selected-cells)
+- [Row Heights and Column Widths](https://github.com/ragardner/tksheet/wiki/Version-7#row-heights-and-column-widths)
+- [Identifying Bound Event Mouse Position](https://github.com/ragardner/tksheet/wiki/Version-7#identifying-bound-event-mouse-position)
+- [Modifying and Getting Scroll Positions](https://github.com/ragardner/tksheet/wiki/Version-7#modifying-and-getting-scroll-positions)
+---
+- [Hiding Columns](https://github.com/ragardner/tksheet/wiki/Version-7#hiding-columns)
+- [Hiding Rows](https://github.com/ragardner/tksheet/wiki/Version-7#hiding-rows)
+- [Hiding Table Elements](https://github.com/ragardner/tksheet/wiki/Version-7#hiding-table-elements)
+---
+- [Cell Text Editor](https://github.com/ragardner/tksheet/wiki/Version-7#cell-text-editor)
+- [Table Options and Other Functions](https://github.com/ragardner/tksheet/wiki/Version-7#table-options-and-other-functions)
+---
+- [Example Loading Data from Excel](https://github.com/ragardner/tksheet/wiki/Version-7#example-loading-data-from-excel)
+- [Example Custom Right Click and Text Editor Validation](https://github.com/ragardner/tksheet/wiki/Version-7#example-custom-right-click-and-text-editor-validation)
+- [Example Displaying Selections](https://github.com/ragardner/tksheet/wiki/Version-7#example-displaying-selections)
+- [Example List Box](https://github.com/ragardner/tksheet/wiki/Version-7#example-list-box)
+- [Example Header Dropdown Boxes and Row Filtering](https://github.com/ragardner/tksheet/wiki/Version-7#example-header-dropdown-boxes-and-row-filtering)
+- [Example ReadMe Screenshot Code](https://github.com/ragardner/tksheet/wiki/Version-7#example-readme-screenshot-code)
+- [Example Saving tksheet as a csv File](https://github.com/ragardner/tksheet/wiki/Version-7#example-saving-tksheet-as-a-csv-file)
+- [Example Using and Creating Formatters](https://github.com/ragardner/tksheet/wiki/Version-7#example-using-and-creating-formatters)
+- [Contributing](https://github.com/ragardner/tksheet/wiki/Version-7#contributing)
 
-## **About tksheet**
-----
+---
+# **About tksheet**
 
 `tksheet` is a Python tkinter table widget written in pure python. It is licensed under the [MIT license](https://github.com/ragardner/tksheet/blob/master/LICENSE.txt).
 
@@ -52,8 +59,8 @@ Some examples of things that are not possible with tksheet:
 - Mouse drag copy cells
 - Cell highlight borders
 
-## **Installation and Requirements**
-----
+---
+# **Installation and Requirements**
 
 `tksheet` is available through PyPi (Python package index) and can be installed by using Pip through the command line `pip install tksheet`
 
@@ -71,8 +78,8 @@ Alternatively you can download the source code and (inside the tksheet directory
 
 `tksheet` versions >= `7.0.0` require a Python version of `3.8` or higher.
 
-## **Basic Initialization**
-----
+---
+# **Basic Initialization**
 
 Like other tkinter widgets you need only the `Sheet()`s parent as an argument to initialize a `Sheet()` e.g.
 ```python
@@ -107,8 +114,8 @@ app = demo()
 app.mainloop()
 ```
 
-## **Initialization Options**
-----
+---
+# **Initialization Options**
 
 **This is a full list of all the start up arguments, the only required argument is the sheets parent, everything else has default arguments.**
 
@@ -247,8 +254,81 @@ top_left_fg_highlight: str = theme_light_blue["top_left_fg_highlight"],
 
 You can change these settings after initialization using the `set_options()` function.
 
-## **Header and Index**
-----
+---
+# **Table Colors**
+
+To change the colors of individual cells, rows or columns use the functions listed under [highlighting cells](https://github.com/ragardner/tksheet/wiki/Version-7#highlighting-cells).
+
+For the colors of specific parts of the table such as gridlines and backgrounds use the function `set_options()`, keyword arguments specific to table colors are listed below. All the other `set_options()` arguments can be found [here](https://github.com/ragardner/tksheet/wiki/Version-7#table-options-and-other-functions).
+
+Use a tkinter color or a hex string e.g.
+
+```python
+my_sheet_widget.set_options(table_bg="black")
+my_sheet_widget.set_options(table_bg="#000000")
+```
+
+```python
+set_options(
+top_left_bg
+top_left_fg
+top_left_fg_highlight
+
+table_bg
+table_grid_fg
+table_fg
+table_selected_box_cells_fg
+table_selected_box_rows_fg
+table_selected_box_columns_fg
+table_selected_cells_border_fg
+table_selected_cells_bg
+table_selected_cells_fg
+table_selected_rows_border_fg
+table_selected_rows_bg
+table_selected_rows_fg
+table_selected_columns_border_fg
+table_selected_columns_bg
+table_selected_columns_fg
+
+header_bg
+header_border_fg
+header_grid_fg
+header_fg
+header_selected_cells_bg
+header_selected_cells_fg
+header_selected_columns_bg
+header_selected_columns_fg
+
+index_bg
+index_border_fg
+index_grid_fg
+index_fg
+index_selected_cells_bg
+index_selected_cells_fg
+index_selected_rows_bg
+index_selected_rows_fg
+
+resizing_line_fg
+drag_and_drop_bg
+outline_thickness
+outline_color
+frame_bg
+popup_menu_font
+popup_menu_fg
+popup_menu_bg
+popup_menu_highlight_bg
+popup_menu_highlight_fg
+)
+```
+
+Otherwise you can change the theme using the below function.
+```python
+change_theme(theme = "light blue", redraw = True)
+```
+- `theme` (`str`) options (themes) are `light blue`, `light green`, `dark`, `dark blue` and `dark green`.
+
+---
+# **Header and Index**
 
 #### **Set the header.**
 ```python
@@ -280,8 +360,395 @@ row_index(newindex = None, index = None, reset_row_positions = False, show_index
 - Leaving `newindex` as `None` and using the `index` argument returns the existing row index value in that index.
 - Leaving all arguments as default e.g. `row_index()` returns the existing row index.
 
-## **Setting Table Data**
-----
+---
+# **Bindings and Functionality**
+
+#### **Enable table functionality and bindings.**
+```python
+enable_bindings(*bindings)
+```
+- `bindings` (`str`) options are (rc stands for right click):
+	- "all"
+	- "single_select"
+	- "toggle_select"
+	- "drag_select"
+       - "select_all"
+	- "column_drag_and_drop"
+	- "row_drag_and_drop"
+	- "column_select"
+	- "row_select"
+	- "column_width_resize"
+	- "double_click_column_resize"
+	- "row_width_resize"
+	- "column_height_resize"
+	- "arrowkeys" # all arrowkeys including page up and down
+    - "up"
+    - "down"
+    - "left"
+    - "right"
+    - "prior" # page up
+    - "next" # page down
+	- "row_height_resize"
+	- "double_click_row_resize"
+	- "right_click_popup_menu"
+	- "rc_select"
+	- "rc_insert_column"
+	- "rc_delete_column"
+	- "rc_insert_row"
+	- "rc_delete_row"
+    - "ctrl_click_select"
+    - "ctrl_select"
+	- "copy"
+	- "cut"
+	- "paste"
+	- "delete"
+	- "undo"
+	- "edit_cell"
+    - "edit_header"
+    - "edit_index"
+
+Notes:
+- `"edit_header"`, `"edit_index"`, `"ctrl_select"` and `"ctrl_click_select"` are not enabled by `bindings = "all"` and have to be enabled individually, double click or right click (if enabled) on header/index cells to edit.
+- `"ctrl_select"` and `"ctrl_click_select"` are the same and you can use either one.
+- To allow table expansion when pasting data which doesn't fit in the table use either:
+   - `expand_sheet_if_paste_too_big = True` in sheet initialization arguments or
+   - `sheet.set_options(expand_sheet_if_paste_too_big = True)`
+
+Example:
+- `sheet.enable_bindings("all", "edit_header", "edit_index", "ctrl_select")` to enable absolutely everything.
+
+___
+
+#### **Disable table functionality and bindings, uses the same arguments as `enable_bindings()`.**
+```python
+disable_bindings(*bindings)
+```
+
+___
+
+#### **Bind specific table functionality.**
+
+This function allows you to bind very specific table functionality to your own functions. If you want less specificity in event names you can also bind all sheet modifying events to a single function, [see here](https://github.com/ragardner/tksheet/wiki/Version-7#sheet-modified-events).
+
+```python
+extra_bindings(bindings, func = None)
+```
+
+Notes:
+- There are several ways to use this function:
+    - `bindings` as a `str` and `func` as either `None` or a function. Using `None` as an argument for `func` will effectively unbind the function.
+        - `extra_bindings("edit_cell", func=my_function)`
+    - `bindings` as an `iterable` of `str`s and `func` as either `None` or a function. Using `None` as an argument for `func` will effectively unbind the function.
+        - `extra_bindings(["all_select_events", "copy", "cut"], func=my_function)`
+    - `bindings` as an `iterable` of `list`s or `tuple`s with length of two, e.g.
+        - `extra_bindings([(binding, function), (binding, function), ...])` In this example you could also use `None` in the place of `function` to unbind the binding.
+        - In this case the arg `func` is totally ignored.
+- For most of the `"end_..."` events the bound function is run before the value is set.
+- **To unbind** a function either set `func` argument to `None` or leave it as default e.g. `extra_bindings("begin_copy")` to unbind `"begin_copy"`.
+- The bound function for `"end_edit_cell"` is run before the cell data is set in order that a return value can set the cell instead of the user input. Using the event you can assess the user input and if needed override it with a return value which is not `None`. If `None` is the return value then the user input will NOT be overridden. The setting `edit_cell_validation` (see initialization or the function `set_options()`) can be used to turn off this return value checking. The `edit_cell` bindings also run if header/index editing is turned on.
+
+Arguments:
+- `bindings` (`str`) options are:
+	- `"begin_copy", "begin_ctrl_c"`
+	- `"ctrl_c", "end_copy", "end_ctrl_c", "copy"`
+	- `"begin_cut", "begin_ctrl_x"`
+	- `"ctrl_x", "end_cut", "end_ctrl_x", "cut"`
+	- `"begin_paste", "begin_ctrl_v"`
+	- `"ctrl_v", "end_paste", "end_ctrl_v", "paste"`
+	- `"begin_undo", "begin_ctrl_z"`
+	- `"ctrl_z", "end_undo", "end_ctrl_z", "undo"`
+	- `"begin_delete_key", "begin_delete"`
+	- `"delete_key", "end_delete", "end_delete_key", "delete"`
+	- `"begin_edit_cell", "begin_edit_table"`
+	- `"end_edit_cell", "edit_cell", "edit_table"`
+	- `"begin_edit_header"`
+    - `"end_edit_header", "edit_header"`
+    - `"begin_edit_index"`
+	- `"end_edit_index", "edit_index"`
+    - `"begin_row_index_drag_drop", "begin_move_rows"`
+	- `"row_index_drag_drop", "move_rows", "end_move_rows", "end_row_index_drag_drop"`
+	- `"begin_column_header_drag_drop", "begin_move_columns"`
+	- `"column_header_drag_drop", "move_columns", "end_move_columns", "end_column_header_drag_drop"`
+	- `"begin_rc_delete_row", "begin_delete_rows"`
+	- `"rc_delete_row", "end_rc_delete_row", "end_delete_rows", "delete_rows"`
+	- `"begin_rc_delete_column", "begin_delete_columns"`
+	- `"rc_delete_column", "end_rc_delete_column","end_delete_columns", "delete_columns"`
+	- `"begin_rc_insert_column", "begin_insert_column", "begin_insert_columns", "begin_add_column","begin_rc_add_column", "begin_add_columns"`
+	- `"rc_insert_column", "end_rc_insert_column", "end_insert_column", "end_insert_columns", "rc_add_column", "end_rc_add_column", "end_add_column", "end_add_columns"`
+	- `"begin_rc_insert_row", "begin_insert_row", "begin_insert_rows", "begin_rc_add_row", "begin_add_row", "begin_add_rows"`
+    - `"rc_insert_row", "end_rc_insert_row", "end_insert_row", "end_insert_rows", "rc_add_row", "end_rc_add_row", "end_add_row", "end_add_rows"`
+    - `"row_height_resize"`
+    - `"column_width_resize"`
+	- `"cell_select"`
+	- `"select_all"`
+	- `"row_select"`
+	- `"column_select"`
+	- `"drag_select_cells"`
+	- `"drag_select_rows"`
+	- `"drag_select_columns"`
+	- `"shift_cell_select"`
+	- `"shift_row_select"`
+	- `"shift_column_select"`
+	- `"deselect"`
+	- `"all_select_events", "select", "selectevents", "select_events"`
+    - `"all_modified_events", "sheetmodified", "sheet_modified" "modified_events", "modified"`
+	- `"bind_all"`
+	- `"unbind_all"`
+- `func` argument is the function you want to send the binding event to.
+- Using one of the following `"all_modified_events", "sheetmodified", "sheet_modified" "modified_events", "modified"` will make any insert, delete or cell edit including pastes and undos send an event to your function. Please **note** that this will mean your function will have to return a value to use for cell edits unless the setting `edit_cell_validation` is `False`.
+- For events `"begin_move_columns"`/`"begin_move_rows"` the point where columns/rows will be moved to will be under the `event_data` key `"value"`.
+
+**For tksheet versions earlier than `7.0.0`:**
+- Upon an event being triggered the bound function will be sent a [namedtuple](https://docs.python.org/3/library/collections.html#collections.namedtuple) containing variables relevant to that event, use `print()` or similar to see all the variable names in the event. Each event contains different variable names with the exception of `eventname` e.g. `event.eventname`.
+
+**For tksheet versions >= `7.0.0`:**
+
+#### **Event Data:**
+- Using `extra_bindings()` the function you bind needs to have at least one argument which will receive a `dict` which has the following layout:
+
+```python
+{
+"eventname": "",
+"sheetname": "",
+"cells": {
+    "table": {},
+    "header": {},
+    "index": {},
+},
+"moved": {
+    "rows": {},
+    "columns": {},
+},
+"added": {
+    "rows": {},
+    "columns": {},
+},
+"deleted": {
+    "rows": {},
+    "columns": {},
+    "header": {},
+    "index": {},
+    "column_widths": {},
+    "row_heights": {},
+    "options": {},
+    "displayed_columns": None,
+    "displayed_rows": None,
+},
+"named_spans": {},
+"selection_boxes": {},
+"selected": tuple(),
+"being_selected": tuple(),
+"data": [],
+"key": "",
+"value": None,
+"location": tuple(),
+"resized": {
+    "rows": {},
+    "columns": {},
+}
+}
+```
+
+Keys:
+- Key **`["eventname"]`** will be one of the following:
+    - `"begin_ctrl_c"`
+    - `"end_ctrl_c"`
+    - `"begin_ctrl_x"`
+    - `"end_ctrl_x"`
+    - `"begin_ctrl_v"`
+    - `"end_ctrl_v"`
+    - `"begin_delete"`
+    - `"end_delete"`
+    - `"begin_undo"`
+    - `"end_undo"`
+    - `"begin_add_columns"`
+    - `"end_add_columns"`
+    - `"begin_add_rows"`
+    - `"end_add_rows"`
+    - `"begin_delete_columns"`
+    - `"end_delete_columns"`
+    - `"begin_delete_rows"`
+    - `"end_delete_rows"`
+    - `"begin_edit_table"`
+    - `"end_edit_table"`
+    - `"begin_edit_index"`
+    - `"end_edit_index"`
+    - `"begin_edit_header"`
+    - `"end_edit_header"`
+    - `"begin_move_rows"`
+    - `"end_move_rows"`
+    - `"begin_move_columns"`
+    - `"end_move_columns"`
+    - `"select"`
+    - `"resize"`
+- For events `"begin_move_columns"`/`"begin_move_rows"` the point where columns/rows will be moved to will be under the `event_data` key `"value"`.
+- Key **`["sheetname"]`** is the [name given to the sheet widget on initialization](https://github.com/ragardner/tksheet/wiki/Version-7#initialization-options), useful if you have multiple sheets to determine which one emitted the event.
+- Key **`["cells"]["table"]`** if any table cells have been modified by cut, paste, delete, cell editors, dropdown boxes, checkboxes, undo or redo this will be a `dict` with `tuple` keys of `(data row index: int, data column index: int)` and the values will be the cell values at that location **prior** to the change. The `dict` will be empty if no such changes have taken place.
+- Key **`["cells"]["header"]`** if any header cells have been modified by cell editors, dropdown boxes, checkboxes, undo or redo this will be a `dict` with keys of `int: data column index` and the values will be the cell values at that location **prior** to the change. The `dict` will be empty if no such changes have taken place.
+- Key **`["cells"]["index"]`** if any index cells have been modified by cell editors, dropdown boxes, checkboxes, undo or redo this will be a `dict` with keys of `int: data column index` and the values will be the cell values at that location **prior** to the change. The `dict` will be empty if no such changes have taken place.
+- Key **`["moved"]["rows"]`** if any rows have been moved by dragging and dropping or undoing/redoing of dragging and dropping rows this will be a `dict` with the following keys:
+    - `{"data": {old data index: new data index, ...}, "displayed": {old displayed index: new displayed index, ...}}`
+        - `"data"` will be a `dict` where the keys are the old data indexes of the rows and the values are the data indexes they have moved to.
+        - `"displayed"` will be a `dict` where the keys are the old displayed indexes of the rows and the values are the displayed indexes they have moved to.
+        - If no rows have been moved the `dict` under `["moved"]["rows"]` will be empty.
+    - For events `"begin_move_rows"` the point where rows will be moved to will be under the `event_data` key `"value"`.
+- Key **`["moved"]["columns"]`** if any columns have been moved by dragging and dropping or undoing/redoing of dragging and dropping columns this will be a `dict` with the following keys:
+    - `{"data": {old data index: new data index, ...}, "displayed": {old displayed index: new displayed index, ...}}`
+        - `"data"` will be a `dict` where the keys are the old data indexes of the columns and the values are the data indexes they have moved to.
+        - `"displayed"` will be a `dict` where the keys are the old displayed indexes of the columns and the values are the displayed indexes they have moved to.
+        - If no columns have been moved the `dict` under `["moved"]["columns"]` will be empty.
+    - For events `"begin_move_columns"` the point where columns will be moved to will be under the `event_data` key `"value"`.
+- Key **`["added"]["rows"]`** if any rows have been added by the inbuilt popup menu insert rows or by a paste which expands the sheet then this will be a `dict` with the following keys:
+    - `{"data_index": int, "displayed_index": int, "num": int, "displayed": []}`
+        - `"data_index"` is an `int` representing the row where the rows were added in the data.
+        - `"displayed_index"` is an `int` representing the displayed table index where the rows were added (which will be different from the data index if there are hidden rows).
+        - `"displayed"` is simply a copied list of the `Sheet()`s displayed rows immediately prior to the change.
+        - If no rows have been added the `dict` will be empty.
+- Key **`["added"]["columns"]`** if any columns have been added by the inbuilt popup menu insert columns or by a paste which expands the sheet then this will be a `dict` with the following keys:
+    - `{"data_index": int, "displayed_index": int, "num": int, "displayed": []}`
+        - `"data_index"` is an `int` representing the column where the columns were added in the data.
+        - `"displayed_index"` is an `int` representing the displayed table index where the columns were added (which will be different from the data index if there are hidden columns).
+        - `"displayed"` is simply a copied list of the `Sheet()`s displayed columns immediately prior to the change.
+        - If no columns have been added the `dict` will be empty.
+- Key **`["deleted"]["columns"]`** if any columns have been deleted by the inbuilt popup menu delete columns or by undoing a paste which added columns then this will be a `dict`. This `dict` will look like the following:
+    - `{[column data index]: {[row data index]: cell value, [row data index]: cell value}, [column data index]: {...} ...}`
+    - If no columns have been deleted then the `dict` value for `["deleted"]["columns"]` will be empty.
+- Key **`["deleted"]["rows"]`** if any rows have been deleted by the inbuilt popup menu delete rows or by undoing a paste which added rows then this will be a `dict`. This `dict` will look like the following:
+    - `{[row data index]: {[column data index]: cell value, [column data index]: cell value}, [row data index]: {...} ...}`
+    - If no rows have been deleted then the `dict` value for `["deleted"]["rows"]` will be empty.
+- Key **`["deleted"]["header"]`** if any header values have been deleted by the inbuilt popup menu delete columns or by undoing a paste which added columns and header values then this will be a `dict`. This `dict` will look like the following:
+    - `{[column data index]: header cell value, [column data index]: header cell value, ...}`
+    - If no columns have been deleted by the mentioned methods then the `dict` value for `["deleted"]["header"]` will be empty.
+- Key **`["deleted"]["index"]`** if any index values have been deleted by the inbuilt popup menu delete rows or by undoing a paste which added rows and index values then this will be a `dict`. This `dict` will look like the following:
+    - `{[row data index]: index cell value, [row data index]: index cell value, ...}`
+    - If no index values have been deleted by the mentioned methods then the `dict` value for `["deleted"]["index"]` will be empty.
+- Key **`["deleted"]["column_widths"]`** if any columns have been deleted by the inbuilt popup menu delete columns or by undoing a paste which added columns then this will be a `dict`. This `dict` will look like the following:
+    - `{[column data index]: column width, [column data index]: column width, ...}`
+    - If no columns have been deleted then the `dict` value for `["deleted"]["column_widths"]` will be empty.
+- Key **`["deleted"]["row_heights"]`** if any rows have been deleted by the inbuilt popup menu delete rows or by undoing a paste which added rows then this will be a `dict`. This `dict` will look like the following:
+    - `{[row data index]: row height, [row data index]: row height, ...}`
+    - If no rows have been deleted then the `dict` value for `["deleted"]["row_heights"]` will be empty.
+- Key **`["deleted"]["displayed_columns"]`**  if any columns have been deleted by the inbuilt popup menu delete columns or by undoing a paste which added columns then this will be a `list`. This `list` stores the displayed columns (the columns that are showing when others are hidden) immediately prior to the change.
+- Key **`["deleted"]["displayed_rows"]`**  if any rows have been deleted by the inbuilt popup menu delete rows or by undoing a paste which added rows then this will be a `list`. This `list` stores the displayed rows (the rows that are showing when others are hidden) immediately prior to the change.
+- Key **`["options"]`** This serves as storage for the `Sheet()`s options such as highlights, formatting, alignments, dropdown boxes, checkboxes etc. It is a Python pickled `dict` where the values are the sheets internal cell/row/column options `dicts`.
+- Key **`["named_spans"]`** This `dict` serves as storage for the `Sheet()`s named spans. Each value in the `dict` is a pickled `span` object.
+- Key **`["selection_boxes"]`** the value of this is all selection boxes on the sheet in the form of a `dict` as shown below:
+    - For every event except `"select"` events the selection boxes are those immediately prior to the modification, for `"select"` events they are the current selection boxes.
+    - The layout is always: `"selection_boxes": {(start row, start column, up to but not including row, up to but not including column): selection box type}`.
+        - The row/column indexes are `int`s and the selection box type is a `str` either `"cells"`, `"rows"` or `"columns"`.
+    - The `dict` will be empty if there is nothing selected.
+- Key **`["selected"]`** the value of this when there is something selected on the sheet is a `namedtuple` which contains the values: `(row: int, column: int, type_: str (either "cell", "row" or "column"), tags: tuple)`
+    - The `tags` in this `namedtuple` are the tags of the rectangle on the canvas. They are the following:
+        - Index `[0]` - `"selected"`.
+        - Index `[1]` - `f"{start row}_{start column}_{up to row}_{up to column}"` - the dimensions of the box it's attached to.
+        - Index `[2]` - `int` - the canvas id of the box it's attached to.
+        - Index `[3]` - `f"{current box row}_{current box column}"` - the displayed position of currently selected box.
+        - Index `[4]` - `f"type_{type_}"` - the type of the box it's attached to (either "cells", "rows" or "columns").
+    - When nothing is selected or the event is not relevant to the currently selected box, such as a resize event it will be an empty `tuple`.
+- Key **`["being_selected"]`** if any selection box is in the process of being drawn by holding down mouse button 1 and dragging then this will be a tuple with the following layout:
+    - `(start row, start column, up to but not including row, up to but not including column, selection box type)`.
+        - The selection box type is a `str` either `"cells"`, `"rows"` or `"columns"`.
+    - If no box is in the process of being created then this will be a an empty `tuple`.
+    - [See here](https://github.com/ragardner/tksheet/wiki/Version-7#example-displaying-selections) for an example of the usage of this information.
+- Key **`["data"]`** is primarily used for `paste` and it will contain the pasted data if any.
+- Key **`["key"]`** - `str` - is primarily used for cell edit events where a key press has occurred. For `"begin_edit..."` events the value is the actual key which was pressed (or `"??"` for using the mouse to open a cell). It also might be one of the following for end edit events:
+    - `"Return"` - enter key.
+    - `"FocusOut"` - the editor or box lost focus, perhaps by mouse clicking elsewhere.
+    - `"Tab"` - tab key.
+- Key **`["value"]`** is used primarily by cell editing events. For `"begin_edit..."` events it's the value displayed in he text editor when it opens. For `"end_edit..."` events it's the value in the text editor when it was closed, for example by hitting `Return`. It also used by `"begin_move_columns"`/`"begin_move_rows"` - the point where columns/rows will be moved to will be under the `event_data` key `"value"`.
+- Key **`["location"]`** is for cell editing events to show the displayed (not data, in the case of hidden columns/rows) coordinates of the event. It will be a tuple of `(int displayed row index, int displayed column index)`.
+- Key **`["resized"]["rows"]`** is for row height resizing events, it will be a `dict` with the following layout:
+    - `{int displayed row index: {"old_size": old_height, "new_size": new_height}}`.
+    - If no rows have been resized then the value for `["resized"]["rows"]` will be an empty `dict`.
+- Key **`["resized"]["columns"]`** is for column width resizing events, it will be a `dict` with the following layout:
+    - `{int displayed column index: {"old_size": old_width, "new_size": new_width}}`.
+    - If no columns have been resized then the value for `["resized"]["columns"]` will be an empty `dict`.
+
+___
+
+#### **tksheet tkinter events**
+
+```python
+bind(event: str, func: Callable, add: str | None = None)
+```
+- `tksheet` emits custom tkinter events, one for whenever the user has modified the sheet and another for whenever the sheet was redrawn/refreshed.
+- **Note** that while an event emitted after a paste/undo/redo might have the event name `"edit_table"` it also might have added/deleted rows/columns, refer to the docs on the event data `dict` for more info.
+- `event` the two emitted events are:
+    - `"<<SheetModified>>"` emitted whenever the sheet was modified by the end user by editing cells or adding or deleting rows/columns. The function you bind to this event must be able to receive a `dict` argument which will be the same as [the event data dict](https://github.com/ragardner/tksheet/wiki/Version-7#event-data) but with less specific event names. The possible event names are listed below:
+        - `"edit_table"` when a user has cut, paste, delete or any cell edits including using dropdown boxes etc. in the table.
+        - `"edit_index"` when a user has edited a index cell.
+        - `"edit_header"` when a user has edited a header cell.
+        - `"add_columns"` when a user has inserted columns.
+        - `"add_rows"` when a user has inserted rows.
+        - `"delete_columns"` when a user has deleted columns.
+        - `"delete_rows"` when a user has deleted rows.
+        - `"move_columns"` when a user has dragged and dropped columns.
+        - `"move_rows"` when a user has dragged and dropped rows.
+    - `"<<SheetRedrawn>>"` emitted whenever the sheet GUI was refreshed (redrawn). The data for this event will be different than the usual event data, it is simply:
+        - `{"sheetname": name of your sheet, "header": bool True if the header was redrawn, "row_index": bool True if the index was redrawn, "table": bool True if the the table was redrawn}`
+- Example usage where `my_sheet_was_modified` is your function: `my_sheet.bind("<<SheetModified>>", my_sheet_was_modified)`.
+
+___
+
+#### **Add commands to the in-built right click popup menu.**
+```python
+popup_menu_add_command(label, func, table_menu = True, index_menu = True, header_menu = True)
+```
+
+___
+
+#### **Remove commands added using `popup_menu_add_command()` from the in-built right click popup menu.**
+```python
+popup_menu_del_command(label = None)
+```
+- If `label` is `None` then it removes all.
+
+___
+
+#### **Enable or disable mousewheel, left click etc.**
+```python
+basic_bindings(enable = False)
+```
+
+___
+
+#### **Enable or disable cell edit functionality, including Undo.**
+```python
+edit_bindings(enable = False)
+```
+
+___
+
+#### **Enable or disable the ability to edit a specific cell using the inbuilt text editor.**
+```python
+cell_edit_binding(enable = False, keys = [])
+```
+- `keys` can be used to bind more keys to open a cell edit window.
+
+___
+
+```python
+bind(binding, func, add = None)
+```
+- `add` will only work for bindings which are not the following: `"<ButtonPress-1>"`, `"<ButtonMotion-1>"`, `"<ButtonRelease-1>"`, `"<Double-Button-1>"`, `"<Motion>"` and lastly whichever is your operating systems right mouse click button.
+___
+
+```python
+unbind(binding)
+```
+
+___
+
+```python
+cut(event = None)
+copy(event = None)
+paste(event = None)
+delete(event = None)
+undo(event = None)
+```
+
+---
+# **Setting Table Data**
 
 Fundamentally, there are two ways to set data in the table. One way overwrites the entire table and sets the internal data object to a new object. The other edits the internal data.
 
@@ -464,8 +931,8 @@ height_and_width(height = None, width = None)
 - `width` (`int`) set a width in pixels
 If both arguments are `None` then table will reset to default tkinter canvas dimensions.
 
-## **Getting Table Data**
-----
+---
+# **Getting Table Data**
 
 #### **Yield / generate sheet rows one at a time.**
 
@@ -562,503 +1029,8 @@ ___
 get_total_columns(include_header = False)
 ```
 
-## **Bindings and Functionality**
-----
-
-#### **Enable table functionality and bindings.**
-```python
-enable_bindings(*bindings)
-```
-- `bindings` (`str`) options are (rc stands for right click):
-	- "all"
-	- "single_select"
-	- "toggle_select"
-	- "drag_select"
-       - "select_all"
-	- "column_drag_and_drop"
-	- "row_drag_and_drop"
-	- "column_select"
-	- "row_select"
-	- "column_width_resize"
-	- "double_click_column_resize"
-	- "row_width_resize"
-	- "column_height_resize"
-	- "arrowkeys" # all arrowkeys including page up and down
-    - "up"
-    - "down"
-    - "left"
-    - "right"
-    - "prior" # page up
-    - "next" # page down
-	- "row_height_resize"
-	- "double_click_row_resize"
-	- "right_click_popup_menu"
-	- "rc_select"
-	- "rc_insert_column"
-	- "rc_delete_column"
-	- "rc_insert_row"
-	- "rc_delete_row"
-    - "ctrl_click_select"
-    - "ctrl_select"
-	- "copy"
-	- "cut"
-	- "paste"
-	- "delete"
-	- "undo"
-	- "edit_cell"
-    - "edit_header"
-    - "edit_index"
-
-Notes:
-- `"edit_header"`, `"edit_index"`, `"ctrl_select"` and `"ctrl_click_select"` are not enabled by `bindings = "all"` and have to be enabled individually, double click or right click (if enabled) on header/index cells to edit.
-- `"ctrl_select"` and `"ctrl_click_select"` are the same and you can use either one.
-- To allow table expansion when pasting data which doesn't fit in the table use either:
-   - `expand_sheet_if_paste_too_big = True` in sheet initialization arguments or
-   - `sheet.set_options(expand_sheet_if_paste_too_big = True)`
-
-Example:
-- `sheet.enable_bindings("all", "edit_header", "edit_index", "ctrl_select")` to enable absolutely everything.
-
-___
-
-#### **Disable table functionality and bindings, uses the same arguments as `enable_bindings()`.**
-```python
-disable_bindings(*bindings)
-```
-
-___
-
-#### **Bind specific table functionality.**
-
-This function allows you to bind very specific table functionality to your own functions. If you want less specificity in event names you can also bind all sheet modifying events to a single function, [see here](https://github.com/ragardner/tksheet/wiki/Version-6#sheet-modified-events).
-
-```python
-extra_bindings(bindings, func = None)
-```
-
-Notes:
-- There are several ways to use this function:
-    - `bindings` as a `str` and `func` as either `None` or a function. Using `None` as an argument for `func` will effectively unbind the function.
-        - `extra_bindings("edit_cell", func=my_function)`
-    - `bindings` as an `iterable` of `str`s and `func` as either `None` or a function. Using `None` as an argument for `func` will effectively unbind the function.
-        - `extra_bindings(["all_select_events", "copy", "cut"], func=my_function)`
-    - `bindings` as an `iterable` of `list`s or `tuple`s with length of two, e.g.
-        - `extra_bindings([(binding, function), (binding, function), ...])` In this example you could also use `None` in the place of `function` to unbind the binding.
-        - In this case the arg `func` is totally ignored.
-- For most of the `"end_..."` events the bound function is run before the value is set.
-- **To unbind** a function either set `func` argument to `None` or leave it as default e.g. `extra_bindings("begin_copy")` to unbind `"begin_copy"`.
-- The bound function for `"end_edit_cell"` is run before the cell data is set in order that a return value can set the cell instead of the user input. Using the event you can assess the user input and if needed override it with a return value which is not `None`. If `None` is the return value then the user input will NOT be overridden. The setting `edit_cell_validation` (see initialization or the function `set_options()`) can be used to turn off this return value checking. The `edit_cell` bindings also run if header/index editing is turned on.
-
-Arguments:
-- `bindings` (`str`) options are:
-	- `"begin_copy", "begin_ctrl_c"`
-	- `"ctrl_c", "end_copy", "end_ctrl_c", "copy"`
-	- `"begin_cut", "begin_ctrl_x"`
-	- `"ctrl_x", "end_cut", "end_ctrl_x", "cut"`
-	- `"begin_paste", "begin_ctrl_v"`
-	- `"ctrl_v", "end_paste", "end_ctrl_v", "paste"`
-	- `"begin_undo", "begin_ctrl_z"`
-	- `"ctrl_z", "end_undo", "end_ctrl_z", "undo"`
-	- `"begin_delete_key", "begin_delete"`
-	- `"delete_key", "end_delete", "end_delete_key", "delete"`
-	- `"begin_edit_cell", "begin_edit_table"`
-	- `"end_edit_cell", "edit_cell", "edit_table"`
-	- `"begin_edit_header"`
-    - `"end_edit_header", "edit_header"`
-    - `"begin_edit_index"`
-	- `"end_edit_index", "edit_index"`
-    - `"begin_row_index_drag_drop", "begin_move_rows"`
-	- `"row_index_drag_drop", "move_rows", "end_move_rows", "end_row_index_drag_drop"`
-	- `"begin_column_header_drag_drop", "begin_move_columns"`
-	- `"column_header_drag_drop", "move_columns", "end_move_columns", "end_column_header_drag_drop"`
-	- `"begin_rc_delete_row", "begin_delete_rows"`
-	- `"rc_delete_row", "end_rc_delete_row", "end_delete_rows", "delete_rows"`
-	- `"begin_rc_delete_column", "begin_delete_columns"`
-	- `"rc_delete_column", "end_rc_delete_column","end_delete_columns", "delete_columns"`
-	- `"begin_rc_insert_column", "begin_insert_column", "begin_insert_columns", "begin_add_column","begin_rc_add_column", "begin_add_columns"`
-	- `"rc_insert_column", "end_rc_insert_column", "end_insert_column", "end_insert_columns", "rc_add_column", "end_rc_add_column", "end_add_column", "end_add_columns"`
-	- `"begin_rc_insert_row", "begin_insert_row", "begin_insert_rows", "begin_rc_add_row", "begin_add_row", "begin_add_rows"`
-    - `"rc_insert_row", "end_rc_insert_row", "end_insert_row", "end_insert_rows", "rc_add_row", "end_rc_add_row", "end_add_row", "end_add_rows"`
-    - `"row_height_resize"`
-    - `"column_width_resize"`
-	- `"cell_select"`
-	- `"select_all"`
-	- `"row_select"`
-	- `"column_select"`
-	- `"drag_select_cells"`
-	- `"drag_select_rows"`
-	- `"drag_select_columns"`
-	- `"shift_cell_select"`
-	- `"shift_row_select"`
-	- `"shift_column_select"`
-	- `"deselect"`
-	- `"all_select_events", "select", "selectevents", "select_events"`
-    - `"all_modified_events", "sheetmodified", "sheet_modified" "modified_events", "modified"`
-	- `"bind_all"`
-	- `"unbind_all"`
-- `func` argument is the function you want to send the binding event to.
-- Using one of the following `"all_modified_events", "sheetmodified", "sheet_modified" "modified_events", "modified"` will make any insert, delete or cell edit including pastes and undos send an event to your function. Please **note** that this will mean your function will have to return a value to use for cell edits unless the setting `edit_cell_validation` is `False`.
-- For events `"begin_move_columns"`/`"begin_move_rows"` the point where columns/rows will be moved to will be under the `event_data` key `"value"`.
-
-**For tksheet versions earlier than `7.0.0`:**
-- Upon an event being triggered the bound function will be sent a [namedtuple](https://docs.python.org/3/library/collections.html#collections.namedtuple) containing variables relevant to that event, use `print()` or similar to see all the variable names in the event. Each event contains different variable names with the exception of `eventname` e.g. `event.eventname`.
-
-**For tksheet versions >= `7.0.0`:**
-
-#### **Event Data:**
-- Using `extra_bindings()` the function you bind needs to have at least one argument which will receive a `dict` which has the following layout:
-
-```python
-{
-"eventname": "",
-"sheetname": "",
-"cells": {
-    "table": {},
-    "header": {},
-    "index": {},
-},
-"moved": {
-    "rows": {},
-    "columns": {},
-},
-"added": {
-    "rows": {},
-    "columns": {},
-},
-"deleted": {
-    "rows": {},
-    "columns": {},
-    "header": {},
-    "index": {},
-    "column_widths": {},
-    "row_heights": {},
-    "options": {},
-    "displayed_columns": None,
-    "displayed_rows": None,
-},
-"named_spans": {},
-"selection_boxes": {},
-"selected": tuple(),
-"being_selected": tuple(),
-"data": [],
-"key": "",
-"value": None,
-"location": tuple(),
-"resized": {
-    "rows": {},
-    "columns": {},
-}
-}
-```
-
-Keys:
-- Key **`["eventname"]`** will be one of the following:
-    - `"begin_ctrl_c"`
-    - `"end_ctrl_c"`
-    - `"begin_ctrl_x"`
-    - `"end_ctrl_x"`
-    - `"begin_ctrl_v"`
-    - `"end_ctrl_v"`
-    - `"begin_delete"`
-    - `"end_delete"`
-    - `"begin_undo"`
-    - `"end_undo"`
-    - `"begin_add_columns"`
-    - `"end_add_columns"`
-    - `"begin_add_rows"`
-    - `"end_add_rows"`
-    - `"begin_delete_columns"`
-    - `"end_delete_columns"`
-    - `"begin_delete_rows"`
-    - `"end_delete_rows"`
-    - `"begin_edit_table"`
-    - `"end_edit_table"`
-    - `"begin_edit_index"`
-    - `"end_edit_index"`
-    - `"begin_edit_header"`
-    - `"end_edit_header"`
-    - `"begin_move_rows"`
-    - `"end_move_rows"`
-    - `"begin_move_columns"`
-    - `"end_move_columns"`
-    - `"select"`
-    - `"resize"`
-- For events `"begin_move_columns"`/`"begin_move_rows"` the point where columns/rows will be moved to will be under the `event_data` key `"value"`.
-- Key **`["sheetname"]`** is the [name given to the sheet widget on initialization](https://github.com/ragardner/tksheet/wiki/Version-6#initialization-options), useful if you have multiple sheets to determine which one emitted the event.
-- Key **`["cells"]["table"]`** if any table cells have been modified by cut, paste, delete, cell editors, dropdown boxes, checkboxes, undo or redo this will be a `dict` with `tuple` keys of `(data row index: int, data column index: int)` and the values will be the cell values at that location **prior** to the change. The `dict` will be empty if no such changes have taken place.
-- Key **`["cells"]["header"]`** if any header cells have been modified by cell editors, dropdown boxes, checkboxes, undo or redo this will be a `dict` with keys of `int: data column index` and the values will be the cell values at that location **prior** to the change. The `dict` will be empty if no such changes have taken place.
-- Key **`["cells"]["index"]`** if any index cells have been modified by cell editors, dropdown boxes, checkboxes, undo or redo this will be a `dict` with keys of `int: data column index` and the values will be the cell values at that location **prior** to the change. The `dict` will be empty if no such changes have taken place.
-- Key **`["moved"]["rows"]`** if any rows have been moved by dragging and dropping or undoing/redoing of dragging and dropping rows this will be a `dict` with the following keys:
-    - `{"data": {old data index: new data index, ...}, "displayed": {old displayed index: new displayed index, ...}}`
-        - `"data"` will be a `dict` where the keys are the old data indexes of the rows and the values are the data indexes they have moved to.
-        - `"displayed"` will be a `dict` where the keys are the old displayed indexes of the rows and the values are the displayed indexes they have moved to.
-        - If no rows have been moved the `dict` under `["moved"]["rows"]` will be empty.
-    - For events `"begin_move_rows"` the point where rows will be moved to will be under the `event_data` key `"value"`.
-- Key **`["moved"]["columns"]`** if any columns have been moved by dragging and dropping or undoing/redoing of dragging and dropping columns this will be a `dict` with the following keys:
-    - `{"data": {old data index: new data index, ...}, "displayed": {old displayed index: new displayed index, ...}}`
-        - `"data"` will be a `dict` where the keys are the old data indexes of the columns and the values are the data indexes they have moved to.
-        - `"displayed"` will be a `dict` where the keys are the old displayed indexes of the columns and the values are the displayed indexes they have moved to.
-        - If no columns have been moved the `dict` under `["moved"]["columns"]` will be empty.
-    - For events `"begin_move_columns"` the point where columns will be moved to will be under the `event_data` key `"value"`.
-- Key **`["added"]["rows"]`** if any rows have been added by the inbuilt popup menu insert rows or by a paste which expands the sheet then this will be a `dict` with the following keys:
-    - `{"data_index": int, "displayed_index": int, "num": int, "displayed": []}`
-        - `"data_index"` is an `int` representing the row where the rows were added in the data.
-        - `"displayed_index"` is an `int` representing the displayed table index where the rows were added (which will be different from the data index if there are hidden rows).
-        - `"displayed"` is simply a copied list of the `Sheet()`s displayed rows immediately prior to the change.
-        - If no rows have been added the `dict` will be empty.
-- Key **`["added"]["columns"]`** if any columns have been added by the inbuilt popup menu insert columns or by a paste which expands the sheet then this will be a `dict` with the following keys:
-    - `{"data_index": int, "displayed_index": int, "num": int, "displayed": []}`
-        - `"data_index"` is an `int` representing the column where the columns were added in the data.
-        - `"displayed_index"` is an `int` representing the displayed table index where the columns were added (which will be different from the data index if there are hidden columns).
-        - `"displayed"` is simply a copied list of the `Sheet()`s displayed columns immediately prior to the change.
-        - If no columns have been added the `dict` will be empty.
-- Key **`["deleted"]["columns"]`** if any columns have been deleted by the inbuilt popup menu delete columns or by undoing a paste which added columns then this will be a `dict`. This `dict` will look like the following:
-    - `{[column data index]: {[row data index]: cell value, [row data index]: cell value}, [column data index]: {...} ...}`
-    - If no columns have been deleted then the `dict` value for `["deleted"]["columns"]` will be empty.
-- Key **`["deleted"]["rows"]`** if any rows have been deleted by the inbuilt popup menu delete rows or by undoing a paste which added rows then this will be a `dict`. This `dict` will look like the following:
-    - `{[row data index]: {[column data index]: cell value, [column data index]: cell value}, [row data index]: {...} ...}`
-    - If no rows have been deleted then the `dict` value for `["deleted"]["rows"]` will be empty.
-- Key **`["deleted"]["header"]`** if any header values have been deleted by the inbuilt popup menu delete columns or by undoing a paste which added columns and header values then this will be a `dict`. This `dict` will look like the following:
-    - `{[column data index]: header cell value, [column data index]: header cell value, ...}`
-    - If no columns have been deleted by the mentioned methods then the `dict` value for `["deleted"]["header"]` will be empty.
-- Key **`["deleted"]["index"]`** if any index values have been deleted by the inbuilt popup menu delete rows or by undoing a paste which added rows and index values then this will be a `dict`. This `dict` will look like the following:
-    - `{[row data index]: index cell value, [row data index]: index cell value, ...}`
-    - If no index values have been deleted by the mentioned methods then the `dict` value for `["deleted"]["index"]` will be empty.
-- Key **`["deleted"]["column_widths"]`** if any columns have been deleted by the inbuilt popup menu delete columns or by undoing a paste which added columns then this will be a `dict`. This `dict` will look like the following:
-    - `{[column data index]: column width, [column data index]: column width, ...}`
-    - If no columns have been deleted then the `dict` value for `["deleted"]["column_widths"]` will be empty.
-- Key **`["deleted"]["row_heights"]`** if any rows have been deleted by the inbuilt popup menu delete rows or by undoing a paste which added rows then this will be a `dict`. This `dict` will look like the following:
-    - `{[row data index]: row height, [row data index]: row height, ...}`
-    - If no rows have been deleted then the `dict` value for `["deleted"]["row_heights"]` will be empty.
-- Key **`["deleted"]["displayed_columns"]`**  if any columns have been deleted by the inbuilt popup menu delete columns or by undoing a paste which added columns then this will be a `list`. This `list` stores the displayed columns (the columns that are showing when others are hidden) immediately prior to the change.
-- Key **`["deleted"]["displayed_rows"]`**  if any rows have been deleted by the inbuilt popup menu delete rows or by undoing a paste which added rows then this will be a `list`. This `list` stores the displayed rows (the rows that are showing when others are hidden) immediately prior to the change.
-- Key **`["options"]`** This serves as storage for the `Sheet()`s options such as highlights, formatting, alignments, dropdown boxes, checkboxes etc. It is a Python pickled `dict` where the values are the sheets internal cell/row/column options `dicts`.
-- Key **`["named_spans"]`** This `dict` serves as storage for the `Sheet()`s named spans. Each value in the `dict` is a pickled `span` object.
-- Key **`["selection_boxes"]`** the value of this is all selection boxes on the sheet in the form of a `dict` as shown below:
-    - For every event except `"select"` events the selection boxes are those immediately prior to the modification, for `"select"` events they are the current selection boxes.
-    - The layout is always: `"selection_boxes": {(start row, start column, up to but not including row, up to but not including column): selection box type}`.
-        - The row/column indexes are `int`s and the selection box type is a `str` either `"cells"`, `"rows"` or `"columns"`.
-    - The `dict` will be empty if there is nothing selected.
-- Key **`["selected"]`** the value of this when there is something selected on the sheet is a `namedtuple` which contains the values: `(row: int, column: int, type_: str (either "cell", "row" or "column"), tags: tuple)`
-    - The `tags` in this `namedtuple` are the tags of the rectangle on the canvas. They are the following:
-        - Index `[0]` - `"selected"`.
-        - Index `[1]` - `f"{start row}_{start column}_{up to row}_{up to column}"` - the dimensions of the box it's attached to.
-        - Index `[2]` - `int` - the canvas id of the box it's attached to.
-        - Index `[3]` - `f"{current box row}_{current box column}"` - the displayed position of currently selected box.
-        - Index `[4]` - `f"type_{type_}"` - the type of the box it's attached to (either "cells", "rows" or "columns").
-    - When nothing is selected or the event is not relevant to the currently selected box, such as a resize event it will be an empty `tuple`.
-- Key **`["being_selected"]`** if any selection box is in the process of being drawn by holding down mouse button 1 and dragging then this will be a tuple with the following layout:
-    - `(start row, start column, up to but not including row, up to but not including column, selection box type)`.
-        - The selection box type is a `str` either `"cells"`, `"rows"` or `"columns"`.
-    - If no box is in the process of being created then this will be a an empty `tuple`.
-    - [See here](https://github.com/ragardner/tksheet/wiki/Version-6#example-displaying-selections) for an example of the usage of this information.
-- Key **`["data"]`** is primarily used for `paste` and it will contain the pasted data if any.
-- Key **`["key"]`** - `str` - is primarily used for cell edit events where a key press has occurred. For `"begin_edit..."` events the value is the actual key which was pressed (or `"??"` for using the mouse to open a cell). It also might be one of the following for end edit events:
-    - `"Return"` - enter key.
-    - `"FocusOut"` - the editor or box lost focus, perhaps by mouse clicking elsewhere.
-    - `"Tab"` - tab key.
-- Key **`["value"]`** is used primarily by cell editing events. For `"begin_edit..."` events it's the value displayed in he text editor when it opens. For `"end_edit..."` events it's the value in the text editor when it was closed, for example by hitting `Return`. It also used by `"begin_move_columns"`/`"begin_move_rows"` - the point where columns/rows will be moved to will be under the `event_data` key `"value"`.
-- Key **`["location"]`** is for cell editing events to show the displayed (not data, in the case of hidden columns/rows) coordinates of the event. It will be a tuple of `(int displayed row index, int displayed column index)`.
-- Key **`["resized"]["rows"]`** is for row height resizing events, it will be a `dict` with the following layout:
-    - `{int displayed row index: {"old_size": old_height, "new_size": new_height}}`.
-    - If no rows have been resized then the value for `["resized"]["rows"]` will be an empty `dict`.
-- Key **`["resized"]["columns"]`** is for column width resizing events, it will be a `dict` with the following layout:
-    - `{int displayed column index: {"old_size": old_width, "new_size": new_width}}`.
-    - If no columns have been resized then the value for `["resized"]["columns"]` will be an empty `dict`.
-
-___
-
-#### **tksheet tkinter events**
-
-```python
-bind(event: str, func: Callable, add: str | None = None)
-```
-- `tksheet` emits custom tkinter events, one for whenever the user has modified the sheet and another for whenever the sheet was redrawn/refreshed.
-- **Note** that while an event emitted after a paste/undo/redo might have the event name `"edit_table"` it also might have added/deleted rows/columns, refer to the docs on the event data `dict` for more info.
-- `event` the two emitted events are:
-    - `"<<SheetModified>>"` emitted whenever the sheet was modified by the end user by editing cells or adding or deleting rows/columns. The function you bind to this event must be able to receive a `dict` argument which will be the same as [the event data dict](https://github.com/ragardner/tksheet/wiki/Version-6#event-data) but with less specific event names. The possible event names are listed below:
-        - `"edit_table"` when a user has cut, paste, delete or any cell edits including using dropdown boxes etc. in the table.
-        - `"edit_index"` when a user has edited a index cell.
-        - `"edit_header"` when a user has edited a header cell.
-        - `"add_columns"` when a user has inserted columns.
-        - `"add_rows"` when a user has inserted rows.
-        - `"delete_columns"` when a user has deleted columns.
-        - `"delete_rows"` when a user has deleted rows.
-        - `"move_columns"` when a user has dragged and dropped columns.
-        - `"move_rows"` when a user has dragged and dropped rows.
-    - `"<<SheetRedrawn>>"` emitted whenever the sheet GUI was refreshed (redrawn). The data for this event will be different than the usual event data, it is simply:
-        - `{"sheetname": name of your sheet, "header": bool True if the header was redrawn, "row_index": bool True if the index was redrawn, "table": bool True if the the table was redrawn}`
-- Example usage where `my_sheet_was_modified` is your function: `my_sheet.bind("<<SheetModified>>", my_sheet_was_modified)`.
-
-___
-
-#### **Add commands to the in-built right click popup menu.**
-```python
-popup_menu_add_command(label, func, table_menu = True, index_menu = True, header_menu = True)
-```
-
-___
-
-#### **Remove commands added using `popup_menu_add_command()` from the in-built right click popup menu.**
-```python
-popup_menu_del_command(label = None)
-```
-- If `label` is `None` then it removes all.
-
-___
-
-#### **Enable or disable mousewheel, left click etc.**
-```python
-basic_bindings(enable = False)
-```
-
-___
-
-#### **Enable or disable cell edit functionality, including Undo.**
-```python
-edit_bindings(enable = False)
-```
-
-___
-
-#### **Enable or disable the ability to edit a specific cell using the inbuilt text editor.**
-```python
-cell_edit_binding(enable = False, keys = [])
-```
-- `keys` can be used to bind more keys to open a cell edit window.
-
-___
-
-```python
-bind(binding, func, add = None)
-```
-- `add` will only work for bindings which are not the following: `"<ButtonPress-1>"`, `"<ButtonMotion-1>"`, `"<ButtonRelease-1>"`, `"<Double-Button-1>"`, `"<Motion>"` and lastly whichever is your operating systems right mouse click button.
-___
-
-```python
-unbind(binding)
-```
-
-___
-
-```python
-cut(event = None)
-copy(event = None)
-paste(event = None)
-delete(event = None)
-undo(event = None)
-```
-
-## **Identifying Bound Event Mouse Position**
-----
-
-The below functions require a mouse click event, for example you could bind right click, example [here](https://github.com/ragardner/tksheet/wiki/Version-6#example-custom-right-click-and-text-editor-functionality), and then identify where the user has clicked.
-
-___
-
-```python
-identify_region(event)
-```
-
-___
-
-```python
-identify_row(event, exclude_index = False, allow_end = True)
-```
-
-___
-
-```python
-identify_column(event, exclude_header = False, allow_end = True)
-```
-
-___
-
-#### **Sheet control actions for binding your own keys to e.g. `sheet.bind("<Control-B>", sheet.paste)`**
-```python
-cut(self, event = None)
-copy(self, event = None)
-paste(self, event = None)
-delete(self, event = None)
-undo(self, event = None)
-edit_cell(self, event = None, dropdown = False)
-```
-
-## **Table Colors**
-----
-
-To change the colors of individual cells, rows or columns use the functions listed under [highlighting cells](https://github.com/ragardner/tksheet/wiki/Version-6#highlighting-cells).
-
-For the colors of specific parts of the table such as gridlines and backgrounds use the function `set_options()`, keyword arguments specific to table colors are listed below. All the other `set_options()` arguments can be found [here](https://github.com/ragardner/tksheet/wiki/Version-6#table-options-and-other-functions).
-
-Use a tkinter color or a hex string e.g.
-
-```python
-my_sheet_widget.set_options(table_bg="black")
-my_sheet_widget.set_options(table_bg="#000000")
-```
-
-```python
-set_options(
-top_left_bg
-top_left_fg
-top_left_fg_highlight
-
-table_bg
-table_grid_fg
-table_fg
-table_selected_box_cells_fg
-table_selected_box_rows_fg
-table_selected_box_columns_fg
-table_selected_cells_border_fg
-table_selected_cells_bg
-table_selected_cells_fg
-table_selected_rows_border_fg
-table_selected_rows_bg
-table_selected_rows_fg
-table_selected_columns_border_fg
-table_selected_columns_bg
-table_selected_columns_fg
-
-header_bg
-header_border_fg
-header_grid_fg
-header_fg
-header_selected_cells_bg
-header_selected_cells_fg
-header_selected_columns_bg
-header_selected_columns_fg
-
-index_bg
-index_border_fg
-index_grid_fg
-index_fg
-index_selected_cells_bg
-index_selected_cells_fg
-index_selected_rows_bg
-index_selected_rows_fg
-
-resizing_line_fg
-drag_and_drop_bg
-outline_thickness
-outline_color
-frame_bg
-popup_menu_font
-popup_menu_fg
-popup_menu_bg
-popup_menu_highlight_bg
-popup_menu_highlight_fg
-)
-```
-
-Otherwise you can change the theme using the below function.
-```python
-change_theme(theme = "light blue", redraw = True)
-```
-- `theme` (`str`) options (themes) are `light blue`, `light green`, `dark`, `dark blue` and `dark green`.
-
-## **Highlighting Cells**
-----
+---
+# **Highlighting Cells**
 
 - `bg` and `fg` arguments use either a tkinter color or a hex `str` color.
 - Highlighting cells, rows or columns will also change the colors of dropdown boxes and check boxes.
@@ -1115,8 +1087,726 @@ ___
 dehighlight_columns(columns = [], redraw = True)
 ```
 
-## **Text Font and Alignment**
-----
+---
+# **Dropdown Boxes**
+
+#### **Dropdown box creation**
+
+When using the functions to create dropdown boxes these are the default arguments:
+```python
+values = [],
+set_value = None,
+state = "normal",
+redraw = True,
+selection_function = None,
+modified_function = None,
+search_function = dropdown_search_function,
+validate_input = True,
+text = None
+```
+
+Notes:
+- Use `selection_function`/`modified_function` like so `selection_function = my_function_name`. The function you use needs at least one argument because tksheet will send information to your function about the triggered dropdown.
+- When a user selects an item from the dropdown box the sheet will set the underlying cells data to the selected item, to bind this event use either the `selection_function` argument or see the function `extra_bindings()` with binding `"end_edit_cell"` [here](https://github.com/ragardner/tksheet/wiki/Version-7#bindings-and-functionality).
+
+ Arguments:
+- `values` are the values to appear when the dropdown box is popped open.
+- `state` determines whether or not there is also an editable text window at the top of the dropdown box when it is open.
+- `redraw` refreshes the sheet so the newly created box is visible.
+- `selection_function` can be used to trigger a specific function when an item from the dropdown box is selected, if you are using the above `extra_bindings()` as well it will also be triggered but after this function. e.g. `selection_function = my_function_name`
+- `modified_function` can be used to trigger a specific function when the `state` of the box is set to `"normal"` and there is an editable text window and a change of the text in that window has occurred. Note that this function occurs before the dropdown boxes search feature.
+- `search_function` (`None`, `callable`) sets the function that will be used to search the dropdown boxes values upon a dropdown text editor modified event when the dropdowns state is `normal`. Set to `None` to disable the search feature or use your own function with the following keyword arguments: `(search_for, data):` and make it return an row number (e.g. select and see the first value would be `0`) if positive and `None` if negative.
+- `validate_input` (`bool`) when `True` will not allow cut, paste, delete or cell editor to input values to cell which are not in the dropdown boxes values.
+- `text` (`None`, `str`) can be set to something other than `None` to always display over whatever value is in the cell, this is useful when you want to display a Header name over a dropdown box selection.
+
+Box creation functions:
+```python
+create_dropdown(r = 0, c = 0, *args, **kwargs)
+dropdown_cell(r = 0, c = 0, *args, **kwargs)
+```
+- `r` and `c` (`int`, `"all"`) can be set to `"all"` or `int`.
+
+```python
+dropdown_row(r = 0, *args, **kwargs)
+```
+- `r` (`int`, `"all"`, `iterable`) can be set to `"all"`, `int` or any `iterable` of `int`s.
+
+```python
+dropdown_column(c = 0, *args, **kwargs)
+```
+- `c` (`int`, `"all"`, `iterable`) can be set to `"all"`, `int` or any `iterable` of `int`s.
+
+```python
+dropdown_sheet(*args, **kwargs)
+```
+- Sets the entire sheet to always have a dropdown box in every cell with the specified arguments.
+
+```python
+create_index_dropdown(r = 0, *args, **kwargs)
+```
+- `r` (`int`, `None`, `iterable`) use `None` to set the entire index to always having dropdown boxes with the chosen args/kwargs.
+
+```python
+create_header_dropdown(c = 0, *args, **kwargs)
+```
+- `c` (`int`, `None`, `iterable`) use `None` to set the entire header to always having dropdown boxes with the chosen args/kwargs.
+
+Examples:
+```python
+# dropdown boxes all the way down column index 5
+sheet.dropdown_column(5, values = ["ON", "OFF"])
+
+# dropdown boxes all the way across rows 0 and 1
+sheet.dropdown_row(range(2), values = ["1", "2", "3"])
+
+# headers always have dropdown boxes with the same values
+sheet.create_header_dropdown(c = None, values = ["val 1", "val 2"])
+```
+
+___
+
+#### **Get chosen dropdown boxes values.**
+```python
+get_dropdown_values(r = 0, c = 0)
+```
+
+```python
+get_header_dropdown_values(c = 0)
+```
+
+```python
+get_index_dropdown_values(r = 0)
+```
+
+___
+
+#### **Set the values and cell value of a chosen dropdown box.**
+```python
+set_dropdown_values(r = 0, c = 0, set_existing_dropdown = False, values = [], set_value = None)
+```
+
+```python
+set_header_dropdown_values(c = 0, set_existing_dropdown = False, values = [], set_value = None)
+```
+
+```python
+set_index_dropdown_values(r = 0, set_existing_dropdown = False, values = [], set_value = None)
+```
+- `set_existing_dropdown` if `True` takes priority over `r` and `c` and sets the values of the last popped open dropdown box (if one one is popped open, if not then an `Exception` is raised).
+- `values` (`list`, `tuple`)
+- `set_value` (`str`, `None`) if not `None` will try to set the value of the chosen cell to given argument.
+
+___
+
+#### **Set and get bound dropdown functions.**
+```python
+dropdown_functions(r, c, selection_function = "", modified_function = "")
+```
+
+```python
+header_dropdown_functions(c, selection_function = "", modified_function = "")
+```
+
+```python
+index_dropdown_functions(r, selection_function = "", modified_function = "")
+```
+
+___
+
+#### **Delete dropdown boxes.**
+
+```python
+delete_dropdown(r = 0, c = 0)
+delete_cell_dropdown(r = 0, c = 0)
+```
+- Deletes dropdown boxes created by `create_dropdown()`/`dropdown_cell()`.
+- `r` and `c` (`int`, `"all"`).
+
+```python
+delete_row_dropdown(r = 0)
+```
+- Deletes dropdown boxes created by `dropdown_row()`.
+- `r` (`int`, `"all"`, `iterable`).
+
+```python
+delete_column_dropdown(c = 0)
+```
+- Deletes dropdown boxes created by `dropdown_column()`.
+- `c` (`int`, `"all"`, `iterable`).
+
+```python
+delete_sheet_dropdown()
+```
+- Deletes dropdown boxes created by `dropdown_sheet()`.
+
+```python
+delete_index_dropdown(r = 0)
+```
+- Deletes dropdown boxes created by `create_header_dropdown()`.
+- `r` (`int`, `"all"`, `None`). Use `None` to delete dropdowns created using `None`.
+
+```python
+delete_header_dropdown(c = 0)
+```
+- Deletes dropdown boxes created by `create_header_dropdown()`.
+- `c` (`int`, `"all"`, `None`). Use `None` to delete dropdowns created using `None`.
+
+___
+
+#### **Get a dictionary of all dropdown boxes**
+```python
+get_dropdowns()
+```
+
+```python
+get_header_dropdowns()
+```
+
+```python
+get_index_dropdowns()
+```
+Returns:
+```python
+{(row int, column int): {'values': values,
+                         'window': "no dropdown open", #the actual frame object if one exists
+                         'canvas_id': "no dropdown open", #the canvas id of the frame object if one exists
+                         'select_function': selection_function,
+                         'modified_function': modified_function,
+                         'state': state,
+                         'text': text}}
+```
+- **Note:** This dictionary will also contain a key named `"dropdown"` if you have used `dropdown_sheet()`/`create_index_dropdown(None)`/`create_header_dropdown(None)`.
+
+___
+
+#### **Pop open a dropdown box.**
+```python
+open_dropdown(r, c)
+```
+
+```python
+open_header_dropdown(c)
+```
+
+```python
+open_index_dropdown(r)
+```
+
+___
+
+#### **Close an open dropdown box.**
+```python
+close_dropdown(r, c)
+```
+
+```python
+close_header_dropdown(c)
+```
+
+```python
+close_index_dropdown(r)
+```
+- Also destroys any opened text editor windows.
+
+---
+# **Check Boxes**
+
+#### **Checkbox creation.**
+
+When using the functions to create checkboxes these are the default arguments:
+```python
+checked = False,
+state = "normal",
+redraw = False,
+check_function = None,
+text = ""
+```
+
+Notes:
+- Use `check_function` like so `check_function = my_function_name`. The function you use needs at least one argument because when the checkbox is clicked it will send information to your function about the clicked checkbox.
+- Use `highlight_cells()` or rows or columns to change the color of the checkbox.
+- Check boxes are always left aligned despite any align settings.
+
+ Arguments:
+- `r` and `c` (`int`, `str`) can be set to `"all"`.
+- `checked` is the initial creation value to set the box to.
+- `text` displays text next to the checkbox in the cell, but will not be used as data, data will either be `True` or `False`.
+- `check_function` can be used to trigger a function when the user clicks a checkbox.
+- `state` can be `"normal"` or `"disabled"`. If `"disabled"` then color will be same as table grid lines, else it will be the cells text color.
+
+Box creation functions:
+```python
+create_checkbox(r = 0, c = 0, *args, **kwargs)
+checkbox_cell(r = 0, c = 0, *args, **kwargs)
+```
+- `r` and `c` (`int`, `"all"`) can be set to `"all"` or `int`.
+
+```python
+checkbox_row(r = 0, *args, **kwargs)
+```
+- `r` (`int`, `"all"`, `iterable`) can be set to `"all"`, `int` or any `iterable` of `int`s.
+
+```python
+checkbox_column(c = 0, *args, **kwargs)
+```
+- `c` (`int`, `"all"`, `iterable`) can be set to `"all"`, `int` or any `iterable` of `int`s.
+
+```python
+checkbox_sheet(*args, **kwargs)
+```
+- Sets the entire sheet to always have a checkboxbox in every cell with the specified arguments.
+
+```python
+create_index_checkbox(r = 0, *args, **kwargs)
+```
+- `r` (`int`, `None`, `iterable`) use `None` to set the entire index to always having checkboxes with the chosen args/kwargs.
+
+```python
+create_header_checkbox(c = 0, *args, **kwargs)
+```
+- `c` (`int`, `None`, `iterable`) use `None` to set the entire header to always having checkboxes boxes with the chosen args/kwargs.
+
+Examples:
+```python
+# boxes all the way down column index 5
+sheet.checkbox_column(5, text = "Enabled", check_function = my_function)
+
+# boxes all the way across rows 0 and 1
+sheet.checkbox_row(range(2), text = "Row Checkbox" checked = True)
+
+# headers always have boxes with the same values
+sheet.create_header_checkbox(c = None, text = "Header Checkbox")
+```
+
+___
+
+#### **Set or toggle a checkbox.**
+```python
+click_checkbox(r, c, checked = None)
+```
+
+```python
+click_header_checkbox(c, checked = None)
+```
+
+```python
+click_index_checkbox(r, checked = None)
+```
+
+___
+
+#### **Get a dictionary of all check box dictionaries.**
+```python
+get_checkboxes()
+```
+
+```python
+get_header_checkboxes()
+```
+
+```python
+get_index_checkboxes()
+```
+
+___
+
+#### **Delete checkboxes.**
+
+```python
+delete_checkbox(r = 0, c = 0)
+delete_cell_checkbox(r = 0, c = 0)
+```
+- Deletes checkboxes created by `create_checkbox()`/`checkbox_cell()`.
+- `r` and `c` (`int`, `"all"`).
+
+```python
+delete_row_checkbox(r = 0)
+```
+- Deletes checkboxes created by `checkbox_row()`.
+- `r` (`int`, `"all"`, `iterable`).
+
+```python
+delete_column_checkbox(c = 0)
+```
+- Deletes checkboxes created by `checkbox_column()`.
+- `c` (`int`, `"all"`, `iterable`).
+
+```python
+delete_sheet_checkbox()
+```
+- Deletes checkboxes created by `checkbox_sheet()`.
+
+```python
+delete_index_checkbox(r = 0)
+```
+- Deletes checkboxes created by `create_header_checkbox()`.
+- `r` (`int`, `"all"`, `None`). Use `None` to delete checkboxes created using `None`.
+
+```python
+delete_header_checkbox(c = 0)
+```
+- Deletes checkboxes created by `create_header_checkbox()`.
+- `c` (`int`, `"all"`, `None`). Use `None` to delete checkboxes created using `None`.
+
+___
+
+#### **Set or get information about a particular checkbox.**
+```python
+checkbox(r,
+         c,
+         checked = None,
+         state = None,
+         check_function = "",
+         text = None)
+```
+
+```python
+header_checkbox(c,
+                checked = None,
+                state = None,
+                check_function = "",
+                text = None)
+```
+
+```python
+index_checkbox(r,
+               checked = None,
+               state = None,
+               check_function = "",
+               text = None)
+```
+- If any arguments are not default they will be set for the chosen checkbox.
+- If all arguments are default a dictionary of all the checkboxes information will be returned.
+
+---
+# **Data Formatting**
+
+By default tksheet stores all user inputted data as strings and while tksheet can store and display any datatype with a `__str__()` method this has some obvious limitations.
+
+Data formatting aims to provide greater functionality when working with different datatypes and provide strict typing for the sheet. With formatting you can convert sheet data and user input to a specific datatype.
+
+Additionally, formatting also provides a function for displaying data on the table GUI (as a rounded float for example) and logic for handling invalid and missing data.
+
+tksheet has several basic built-in formatters and provides functionality for creating your own custom formats as well.
+
+A demonstration of all the built-in and custom formatters can be found [here](https://github.com/ragardner/tksheet/wiki/Version-7#example-using-and-creating-formatters).
+
+### **To Note:**
+
+1. When applying multiple overlapping formats with e.g. a formatted cell which overlaps a formatted row, the priority is as follows:
+- Cell formats first.
+- Row formats second.
+- Column formats third.
+- Sheet format (using `format_sheet()`) last.
+
+2. Data formatting will effectively override `validate_input = True` on cells with dropdown boxes.
+
+3. When getting data take careful note of the `get_displayed` options, as these are the difference between getting the actual formatted data and what is simply displayed on the table GUI.
+
+### **Basic Intialisation**
+
+#### **Applying a format to cell:**
+
+```python
+format_cell(r, c, formatter_options = {}, formatter_class = None, **kwargs)
+```
+Notes:
+- `format_cell()` using `all` will not make added cells (such as with a sheet expanding paste or right click insert rows) formatted. For that you will have to use `format_row()`/`format_column()`/`format_sheet()`.
+
+Arguments:
+- `r` (`int` or `"all"`) the row index to apply the formatter to.
+- `c` (`int` or `"all"`) the column index to apply the formatter to.
+- `formatter_options` (`dict`) a dictionary of keyword options/arguements to pass to the formatter.
+- `formatter_class` (`class`) in case you want to use a custom class to store functions and information as opposed to using the built-in methods.
+- `**kwargs` any additional keyword options/arguements to pass to the formatter.
+
+#### **Clearing a format that was set by `format_cell`:**
+
+```python
+delete_cell_format(r = "all", c = "all", clear_values = False)
+```
+- Using `"all"` will not clear formats set by `format_row()`/`format_column()`.
+- `r` (`int` or `"all"`) the row index to remove the cell formats from.
+- `c` (`int` or `"all"`) the column index to remove the cell formats from.
+- `clear_values` (`bool`) if true, the cell values will be set to `""`.
+
+#### **Applying a format to a row:**
+
+```python
+format_row(r, formatter_options = {}, formatter_class = None, **kwargs)
+```
+- `r` (`int`, `Iterable[int]` or `"all"`) the row index to apply the formatter to.
+- `formatter_options` (`dict`) a dictionary of keyword options/arguements to pass to the formatter.
+- `formatter_class` (`class`) in case you want to use a custom class to store functions and information as opposed to using the built-in methods.
+- `**kwargs` any additional keyword options/arguements to pass to the formatter.
+
+#### **Clearing a format that was set by `format_row`:**
+
+```python
+delete_row_format(r = "all", clear_values = False)
+```
+- Using `"all"` will not clear formats set by `format_sheet()`.
+- `r` (`int`, `Iterable[int]` or `"all"`) the row index to remove the cell formats from.
+- `clear_values` (`bool`) if true, the cell values will be set to `""`.
+
+#### **Applying a format to a column:**
+
+```python
+format_column(c, formatter_options = {}, formatter_class = None, **kwargs)
+```
+- `c` (`int`, `Iterable[int]` or `"all"`) the column index to apply the formatter to.
+- `formatter_options` (`dict`) a dictionary of keyword options/arguements to pass to the formatter.
+- `formatter_class` (`class`) in case you want to use a custom class to store functions and information as opposed to using the built-in methods.
+- `**kwargs` any additional keyword options/arguements to pass to the formatter.
+
+#### **Clearing a format that was set by `format_column`:**
+
+```python
+delete_column_format(c = "all", clear_values = False)
+```
+- Using `"all"` will not clear formats set by `format_sheet()`.
+- `c` (`int`, `Iterable[int]` or `"all"`) the column index to remove the cell formats from.
+- `clear_values` (`bool`) if true, the cell values will be set to `""`.
+
+#### **Applying a format to the whole sheet:**
+
+```python
+format_sheet(formatter_options = {}, formatter_class = None, **kwargs)
+```
+- `formatter_options` (`dict`) a dictionary of keyword options/arguements to pass to the formatter.
+- `formatter_class` (`class`) in case you want to use a custom class to store functions and information as opposed to using the built-in methods.
+- `**kwargs` any additional keyword options/arguements to pass to the formatter.
+
+#### **Clearing a format that was set by `format_sheet`:**
+
+```python
+delete_sheet_format(clear_values = False)
+```
+- `clear_values` (`bool`) if true, all the sheets cell values will be set to `""`.
+
+#### **Delete all formatting, including cell, row, column and sheet formats:**
+
+```python
+delete_all_formatting(clear_values = False)
+```
+- `clear_values` (`bool`) if true, all the sheets cell values will be set to `""`.
+
+#### **Reapply formatting to entire sheet:**
+
+```python
+reapply_formatting()
+```
+- Useful if you have manually changed the entire sheets data using `sheet.MT.data = ` and want to reformat the sheet using any existing formatting you have set.
+
+### **Formatter Options and In-Built Formatters**
+
+tksheet provides a number of in-built formatters, in addition to the base `formatter` function. These formatters are designed to provide a range of functionality for different datatypes. The following table lists the available formatters and their options.
+
+```python
+formatter(datatypes,
+          format_function,
+          to_str_function = to_str,
+          invalid_value = "NA",
+          nullable = True,
+          pre_format_function = None,
+          post_format_function = None,
+          clipboard_function = None,
+          **kwargs)
+```
+
+This is the generic formatter options interface. You can use this to create your own custom formatters. The following options are available. Note that all these options can also be passed to the `format_cell()` function as keyword arguments and are available as attributes for all formatters. You can provide functions of your own creation for all the below arguments which take functions if you require.
+
+- `datatypes` (`list`) a list of datatypes that the formatter will accept. For example, `datatypes = [int, float]` will accept integers and floats.
+- `format_function` (`function`) a function that takes a string and returns a value of the desired datatype. For example, `format_function = int` will convert a string to an integer.
+- `to_str_function` (`function`) a function that takes a value of the desired datatype and returns a string. This determines how the formatter displays its data on the table. For example, `to_str_function = str` will convert an integer to a string. Defaults to `tksheet.to_str`.
+- `invalid_value` (`any`) the value to return if the input string is invalid. For example, `invalid_value = "NA"` will return "NA" if the input string is invalid.
+- `nullable` (`bool`) if true, the formatter will accept `None` as a valid input.
+- `pre_format_function` (`function`) a function that takes a input string and returns a string. This function is called before the `format_function` and can be used to modify the input string before it is converted to the desired datatype. This can be useful if you want to strip out unwanted characters or convert a string to a different format before converting it to the desired datatype.
+- `post_format_function` (`function`) a function that takes a value **which might not be of the desired datatype, e.g. `None` if the cell is nullable and empty** and if successful returns a value of the desired datatype or if not successful returns the input value. This function is called after the `format_function` and can be used to modify the output value after it is converted to the desired datatype. This can be useful if you want to round a float for example.
+- `clipboard_function` (`function`) a function that takes a value of the desired datatype and returns a string. This function is called when the cell value is copied to the clipboard. This can be useful if you want to convert a value to a different format before it is copied to the clipboard.
+- `**kwargs` any additional keyword options/arguements to pass to the formatter. These keyword arguments will be passed to the `format_function`, `to_str_function`, and the `clipboard_function`. These can be useful if you want to specifiy any additional formatting options, such as the number of decimal places to round to.
+
+#### **Int Formatter**
+
+```python
+int_formatter(datatypes = int,
+              format_function = to_int,
+              to_str_function = to_str,
+              invalid_value = "NaN",
+              **kwargs,
+              ):
+```
+
+The `int_formatter` is the basic configuration for a simple interger formatter.
+
+ - `format_function` (`function`) a function that takes a string and returns an `int`. By default, this is set to the in-built `tksheet.to_int`. This function will always convert float-likes to its floor, for example `"5.9"` will be converted to `5`.
+ - `to_str_function` (`function`) By default, this is set to the in-built `tksheet.to_str`, which is a very basic function that will displace the default string representation of the value.
+
+Usage:
+
+```python
+sheet.format_cell(0, 0, formatter_options = tksheet.int_formatter())
+```
+
+#### **Float Formatter**
+
+```python
+float_formatter(datatypes = float,
+                format_function = to_float,
+                to_str_function = float_to_str,
+                invalid_value = "NaN",
+                decimals = 2,
+                **kwargs
+                )
+```
+
+The `float_formatter` is the basic configuration for a simple float formatter. It will always round float-likes to the specified number of decimal places, for example `"5.999"` will be converted to `"6.0"` if `decimals = 1`.
+
+ - `format_function` (`function`) a function that takes a string and returns a `float`. By default, this is set to the in-built `tksheet.to_float`. This function will always convert percentages to their decimal equivalent, for example `"5%"` will be converted to `0.05`.
+ - `to_str_function` (`function`) By default, this is set to the in-built `tksheet.float_to_str`, which will display the float to the specified number of decimal places.
+ - `decimals` (`int`, `None`) the number of decimal places to round to. Defaults to `2`.
+
+Usage:
+
+```python
+sheet.format_cell(0, 0, formatter_options = tksheet.float_formatter(decimals = None)) # A float formatter with maximum float() decimal places
+```
+
+#### **Percentage Formatter**
+
+```python
+percentage_formatter(datatypes = float,
+                     format_function = to_float,
+                     to_str_function = percentage_to_str,
+                     invalid_value = "NaN",
+                     decimals = 0,
+                     **kwargs,
+                     )
+```
+
+The `percentage_formatter` is the basic configuration for a simple percentage formatter. It will always round float-likes as a percentage to the specified number of decimal places, for example `"5.999%"` will be converted to `"6.0%"` if `decimals = 1`.
+
+ - `format_function` (`function`) a function that takes a string and returns a `float`. By default, this is set to the in-built `tksheet.to_float`. This function will always convert percentages to their decimal equivalent, for example `"5%"` will be converted to `0.05`.
+ - `to_str_function` (`function`) By default, this is set to the in-built `tksheet.percentage_to_str`, which will display the float as a percentage to the specified number of decimal places. For example, `0.05` will be displayed as `"5.0%"`.
+ - `decimals` (`int`) the number of decimal places to round to. Defaults to `0`.
+
+Usage:
+
+```python
+sheet.format_cell(0, 0, formatter_options = tksheet.percentage_formatter(decimals = 1)) # A percentage formatter with 1 decimal place
+```
+
+#### **Bool Formatter**
+
+```python
+bool_formatter(datatypes = bool,
+               format_function = to_bool,
+               to_str_function = bool_to_str,
+               invalid_value = "NA",
+               truthy = truthy,
+               falsy = falsy,
+               **kwargs,
+               )
+```
+
+ - `format_function` (`function`) a function that takes a string and returns a `bool`. By default, this is set to the in-built `tksheet.to_bool`.
+ - `to_str_function` (`function`) By default, this is set to the in-built `tksheet.bool_to_str`, which will display the boolean as `"True"` or `"False"`.
+ - `truthy` (`set`) a set of values that will be converted to `True`. Defaults to the in-built `tksheet.truthy`.
+ - `falsy` (`set`) a set of values that will be converted to `False`. Defaults to the in-built `tksheet.falsy`.
+
+Usage:
+
+```python
+# A bool formatter with custom truthy and falsy values to account for aussie and kiwi slang
+sheet.format_cell(0, 0, formatter_options = tksheet.bool_formatter(truthy = tksheet.truthy | {"nah yeah"}, falsy = tksheet.falsy | {"yeah nah"}))
+```
+
+### **Datetime Formatters and Designing Your Own Custom Formatters**
+
+tksheet is at the moment a dependency free library and so doesn't include a datetime parser as is.
+
+You can however very easily make a datetime parser if you are willing to install a third-party package. Recommended are:
+
+- [dateparser](https://dateparser.readthedocs.io/en/latest/)
+- [dateutil](https://dateutil.readthedocs.io/en/stable/)
+
+Both of these packages have a very comprehensive datetime parser which can be used to create a custom datetime formatter for tksheet.
+
+Below is a simple example of how you might create a custom datetime formatter using the `dateutil` package.
+
+```python
+from tksheet import *
+from datetime import datetime, date
+from dateutil.parser import parse
+
+def to_local_datetime(dt, **kwargs):
+    '''
+    Our custom format_function, converts a string or a date to a datetime object in the local timezone.
+    '''
+    if isinstance(dt, datetime):
+        pass # Do nothing
+    elif isinstance(dt, date):
+        dt = datetime(dt.year, dt.month, dt.day) # Always good to account for unexpected inputs
+    else:
+        try:
+            dt = parser.parse(dt)
+        except:
+            raise ValueError(f"Could not parse {dt} as a datetime")
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo = tzlocal()) # If no timezone is specified, assume local timezone
+    dt = dt.astimezone(tzlocal()) # Convert to local timezone
+    return dt
+
+def datetime_to_str(dt, **kwargs):
+    '''
+    Our custom to_str_function, converts a datetime object to a string with a format that can be specfied in kwargs.
+    '''
+    return dt.strftime(kwargs['format'])
+# Now we can create our custom formatter dictionary from the generic formatter interface in tksheet
+datetime_formatter = formatter(datatypes = datetime,
+                               format_function = to_local_datetime,
+                               to_str_function = datetime_to_str,
+                               invalid_value = "NaT",
+                               format = "%d/%m/%Y %H:%M:%S",
+                               )
+# From here we can pass our datetime_formatter into format_cells() just like any other formatter
+```
+
+For those wanting even more customisation of their formatters you also have the option of creating a custom formatter class. This is a more advanced topic and is not covered here, but it's recommended to create a new class which is a subclass of the `tksheet.Formatter` class and overriding the methods you would like to customise. This custom class can then be passed into the `format_cells()` `formatter_class` argument.
+
+---
+# **Readonly Cells**
+
+```python
+readonly_rows(rows = [], readonly = True, redraw = True)
+```
+
+___
+
+```python
+readonly_columns(columns = [], readonly = True, redraw = True)
+```
+
+___
+
+```python
+readonly_cells(row = 0, column = 0, cells = [], readonly = True, redraw = True)
+```
+
+___
+
+```python
+readonly_header(columns = [], readonly = True, redraw = True)
+```
+
+___
+
+```python
+readonly_index(rows = [], readonly = True, redraw = True)
+```
+
+---
+# **Text Font and Alignment**
 
 - `newfont` arguments require a three tuple e.g. `("Arial", 12, "normal")`
 - `align` arguments (`str`) options are `w`, `e` or `center`.
@@ -1210,8 +1900,197 @@ ___
 get_column_alignments()
 ```
 
-## **Row Heights and Column Widths**
-----
+---
+# **Getting Selected Cells**
+
+```python
+get_currently_selected()
+```
+- Returns `namedtuple` of `(row, column, type_)` e.g. `(0, 0, "column")`
+   - `type_` can be `"row"`, `"column"` or `"cell"`
+
+Usage example below:
+```python
+currently_selected = self.sheet.get_currently_selected()
+if currently_selected:
+    row = currently_selected.row
+    column = currently_selected.column
+    type_ = currently_selected.type_
+```
+
+___
+
+```python
+get_selected_rows(get_cells = False, get_cells_as_rows = False, return_tuple = False)
+```
+
+___
+
+```python
+get_selected_columns(get_cells = False, get_cells_as_columns = False, return_tuple = False)
+```
+
+___
+
+```python
+get_selected_cells(get_rows = False, get_columns = False, sort_by_row = False, sort_by_column = False)
+```
+
+___
+
+```python
+get_all_selection_boxes()
+```
+
+___
+
+```python
+get_all_selection_boxes_with_types()
+```
+
+___
+
+#### **Check if cell is selected, returns `bool`.**
+```python
+cell_selected(r, c)
+```
+
+___
+
+#### **Check if row is selected, returns `bool`.**
+```python
+row_selected(r)
+```
+
+___
+
+#### **Check if column is selected, returns `bool`.**
+```python
+column_selected(c)
+```
+
+___
+
+#### **Check if any cells, rows or columns are selected, there are options for exclusions, returns `bool`.**
+```python
+anything_selected(exclude_columns = False, exclude_rows = False, exclude_cells = False)
+```
+
+___
+
+#### **Check if user has the entire table selected, returns `bool`.**
+```python
+all_selected()
+```
+
+___
+
+```python
+get_ctrl_x_c_boxes()
+```
+
+___
+
+```python
+get_selected_min_max()
+```
+- returns `(min_y, min_x, max_y, max_x)` of any selections including rows/columns.
+
+---
+# **Modifying Selected Cells**
+
+```python
+set_currently_selected(row, column, type_ = "cell", selection_binding = True)
+```
+- `type_` (`str`) either `"cell"`, `"row"` or `"column"`.
+- `selection_binding` if `True` runs extra bindings selection function if one has been specified using `extra_bindings()`.
+
+___
+
+```python
+select_row(row, redraw = True)
+```
+
+___
+
+```python
+select_column(column, redraw = True)
+```
+
+___
+
+```python
+select_cell(row, column, redraw = True)
+```
+
+___
+
+```python
+select_all(redraw = True, run_binding_func = True)
+```
+
+___
+
+```python
+move_down()
+```
+
+___
+
+```python
+add_cell_selection(row, column, redraw = True, run_binding_func = True, set_as_current = True)
+```
+
+___
+
+```python
+add_row_selection(row, redraw = True, run_binding_func = True, set_as_current = True)
+```
+
+___
+
+```python
+add_column_selection(column, redraw = True, run_binding_func = True, set_as_current = True)
+```
+
+___
+
+```python
+toggle_select_cell(row, column, add_selection = True, redraw = True, run_binding_func = True, set_as_current = True)
+```
+
+___
+
+```python
+toggle_select_row(row, add_selection = True, redraw = True, run_binding_func = True, set_as_current = True)
+```
+
+___
+
+```python
+toggle_select_column(column, add_selection = True, redraw = True, run_binding_func = True, set_as_current = True)
+```
+
+___
+
+```python
+create_selection_box(r1, c1, r2, c2, type_ = "cells")
+```
+
+___
+
+```python
+recreate_all_selection_boxes()
+```
+
+___
+
+```python
+deselect(row = None, column = None, cell = None, redraw = True)
+```
+
+---
+# **Row Heights and Column Widths**
 
 #### **Auto resize column widths to fit the window.**
 
@@ -1415,197 +2294,43 @@ ___
 verify_column_widths(column_widths, canvas_positions = False)
 ```
 
-## **Getting Selected Cells**
-----
+---
+# **Identifying Bound Event Mouse Position**
+
+The below functions require a mouse click event, for example you could bind right click, example [here](https://github.com/ragardner/tksheet/wiki/Version-7#example-custom-right-click-and-text-editor-functionality), and then identify where the user has clicked.
+
+___
 
 ```python
-get_currently_selected()
-```
-- Returns `namedtuple` of `(row, column, type_)` e.g. `(0, 0, "column")`
-   - `type_` can be `"row"`, `"column"` or `"cell"`
-
-Usage example below:
-```python
-currently_selected = self.sheet.get_currently_selected()
-if currently_selected:
-    row = currently_selected.row
-    column = currently_selected.column
-    type_ = currently_selected.type_
+identify_region(event)
 ```
 
 ___
 
 ```python
-get_selected_rows(get_cells = False, get_cells_as_rows = False, return_tuple = False)
+identify_row(event, exclude_index = False, allow_end = True)
 ```
 
 ___
 
 ```python
-get_selected_columns(get_cells = False, get_cells_as_columns = False, return_tuple = False)
+identify_column(event, exclude_header = False, allow_end = True)
 ```
 
 ___
 
+#### **Sheet control actions for binding your own keys to e.g. `sheet.bind("<Control-B>", sheet.paste)`**
 ```python
-get_selected_cells(get_rows = False, get_columns = False, sort_by_row = False, sort_by_column = False)
+cut(self, event = None)
+copy(self, event = None)
+paste(self, event = None)
+delete(self, event = None)
+undo(self, event = None)
+edit_cell(self, event = None, dropdown = False)
 ```
 
-___
-
-```python
-get_all_selection_boxes()
-```
-
-___
-
-```python
-get_all_selection_boxes_with_types()
-```
-
-___
-
-#### **Check if cell is selected, returns `bool`.**
-```python
-cell_selected(r, c)
-```
-
-___
-
-#### **Check if row is selected, returns `bool`.**
-```python
-row_selected(r)
-```
-
-___
-
-#### **Check if column is selected, returns `bool`.**
-```python
-column_selected(c)
-```
-
-___
-
-#### **Check if any cells, rows or columns are selected, there are options for exclusions, returns `bool`.**
-```python
-anything_selected(exclude_columns = False, exclude_rows = False, exclude_cells = False)
-```
-
-___
-
-#### **Check if user has the entire table selected, returns `bool`.**
-```python
-all_selected()
-```
-
-___
-
-```python
-get_ctrl_x_c_boxes()
-```
-
-___
-
-```python
-get_selected_min_max()
-```
-- returns `(min_y, min_x, max_y, max_x)` of any selections including rows/columns.
-
-## **Modifying Selected Cells**
-----
-
-```python
-set_currently_selected(row, column, type_ = "cell", selection_binding = True)
-```
-- `type_` (`str`) either `"cell"`, `"row"` or `"column"`.
-- `selection_binding` if `True` runs extra bindings selection function if one has been specified using `extra_bindings()`.
-
-___
-
-```python
-select_row(row, redraw = True)
-```
-
-___
-
-```python
-select_column(column, redraw = True)
-```
-
-___
-
-```python
-select_cell(row, column, redraw = True)
-```
-
-___
-
-```python
-select_all(redraw = True, run_binding_func = True)
-```
-
-___
-
-```python
-move_down()
-```
-
-___
-
-```python
-add_cell_selection(row, column, redraw = True, run_binding_func = True, set_as_current = True)
-```
-
-___
-
-```python
-add_row_selection(row, redraw = True, run_binding_func = True, set_as_current = True)
-```
-
-___
-
-```python
-add_column_selection(column, redraw = True, run_binding_func = True, set_as_current = True)
-```
-
-___
-
-```python
-toggle_select_cell(row, column, add_selection = True, redraw = True, run_binding_func = True, set_as_current = True)
-```
-
-___
-
-```python
-toggle_select_row(row, add_selection = True, redraw = True, run_binding_func = True, set_as_current = True)
-```
-
-___
-
-```python
-toggle_select_column(column, add_selection = True, redraw = True, run_binding_func = True, set_as_current = True)
-```
-
-___
-
-```python
-create_selection_box(r1, c1, r2, c2, type_ = "cells")
-```
-
-___
-
-```python
-recreate_all_selection_boxes()
-```
-
-___
-
-```python
-deselect(row = None, column = None, cell = None, redraw = True)
-```
-
-## **Modifying and Getting Scroll Positions**
-----
+---
+# **Modifying and Getting Scroll Positions**
 
 #### **Sync scroll positions between widgets.**
 
@@ -1694,39 +2419,8 @@ ___
 move_down()
 ```
 
-## **Readonly Cells**
-----
-
-```python
-readonly_rows(rows = [], readonly = True, redraw = True)
-```
-
-___
-
-```python
-readonly_columns(columns = [], readonly = True, redraw = True)
-```
-
-___
-
-```python
-readonly_cells(row = 0, column = 0, cells = [], readonly = True, redraw = True)
-```
-
-___
-
-```python
-readonly_header(columns = [], readonly = True, redraw = True)
-```
-
-___
-
-```python
-readonly_index(rows = [], readonly = True, redraw = True)
-```
-
-## **Hiding Columns**
-----
+---
+# **Hiding Columns**
 
 #### **Display only certain columns.**
 ```python
@@ -1762,8 +2456,8 @@ hide_columns(columns = set(),
 ```
 - **NOTE**: `columns` (`int`) uses displayed column indexes, not data indexes. In other words the indexes of the columns displayed on the screen are the ones that are hidden, this is useful when uses in conjunction with `get_selected_columns()`.
 
-## **Hiding Rows**
-----
+---
+# **Hiding Rows**
 
 #### **Display only certain rows.**
 ```python
@@ -1780,7 +2474,7 @@ display_rows(rows = None,
 - You can also use the keyword argument `all_displayed` instead of `all_rows_displayed`.
 - Example usage to display all rows: `sheet.display_rows("all")`.
 - Example usage to display specific rows only: `sheet.display_rows([2, 4, 7], all_displayed = False)`.
-- [This is a very simple example of row filtering](https://github.com/ragardner/tksheet/wiki/Version-6#example-header-dropdown-boxes-and-row-filtering) using this function.
+- [This is a very simple example of row filtering](https://github.com/ragardner/tksheet/wiki/Version-7#example-header-dropdown-boxes-and-row-filtering) using this function.
 
 ___
 
@@ -1800,8 +2494,8 @@ hide_rows(rows = set(),
 ```
 - **NOTE**: `rows` (`int`) uses displayed row indexes, not data indexes. In other words the indexes of the rows displayed on the screen are the ones that are hidden, this is useful when uses in conjunction with `get_selected_rows()`.
 
-## **Hiding Table Elements**
-----
+---
+# **Hiding Table Elements**
 
 #### **Hide parts of the table or all of it.**
 ```python
@@ -1819,8 +2513,8 @@ show(canvas = "all")
 - `canvas` (`str`) options are `all`, `row_index`, `header`, `top_left`, `x_scrollbar`, `y_scrollbar`
 	- `all` shows the entire table and is the default.
 
-## **Cell Text Editor**
-----
+---
+# **Cell Text Editor**
 
 #### **Open the currently selected cell in the main table.**
 ```python
@@ -1874,705 +2568,14 @@ ___
 unbind_key_text_editor(key)
 ```
 
-## **Dropdown Boxes**
-----
-
-#### **Dropdown box creation**
-
-When using the functions to create dropdown boxes these are the default arguments:
-```python
-values = [],
-set_value = None,
-state = "normal",
-redraw = True,
-selection_function = None,
-modified_function = None,
-search_function = dropdown_search_function,
-validate_input = True,
-text = None
-```
-
-Notes:
-- Use `selection_function`/`modified_function` like so `selection_function = my_function_name`. The function you use needs at least one argument because tksheet will send information to your function about the triggered dropdown.
-- When a user selects an item from the dropdown box the sheet will set the underlying cells data to the selected item, to bind this event use either the `selection_function` argument or see the function `extra_bindings()` with binding `"end_edit_cell"` [here](https://github.com/ragardner/tksheet/wiki/Version-6#bindings-and-functionality).
-
- Arguments:
-- `values` are the values to appear when the dropdown box is popped open.
-- `state` determines whether or not there is also an editable text window at the top of the dropdown box when it is open.
-- `redraw` refreshes the sheet so the newly created box is visible.
-- `selection_function` can be used to trigger a specific function when an item from the dropdown box is selected, if you are using the above `extra_bindings()` as well it will also be triggered but after this function. e.g. `selection_function = my_function_name`
-- `modified_function` can be used to trigger a specific function when the `state` of the box is set to `"normal"` and there is an editable text window and a change of the text in that window has occurred. Note that this function occurs before the dropdown boxes search feature.
-- `search_function` (`None`, `callable`) sets the function that will be used to search the dropdown boxes values upon a dropdown text editor modified event when the dropdowns state is `normal`. Set to `None` to disable the search feature or use your own function with the following keyword arguments: `(search_for, data):` and make it return an row number (e.g. select and see the first value would be `0`) if positive and `None` if negative.
-- `validate_input` (`bool`) when `True` will not allow cut, paste, delete or cell editor to input values to cell which are not in the dropdown boxes values.
-- `text` (`None`, `str`) can be set to something other than `None` to always display over whatever value is in the cell, this is useful when you want to display a Header name over a dropdown box selection.
-
-Box creation functions:
-```python
-create_dropdown(r = 0, c = 0, *args, **kwargs)
-dropdown_cell(r = 0, c = 0, *args, **kwargs)
-```
-- `r` and `c` (`int`, `"all"`) can be set to `"all"` or `int`.
-
-```python
-dropdown_row(r = 0, *args, **kwargs)
-```
-- `r` (`int`, `"all"`, `iterable`) can be set to `"all"`, `int` or any `iterable` of `int`s.
-
-```python
-dropdown_column(c = 0, *args, **kwargs)
-```
-- `c` (`int`, `"all"`, `iterable`) can be set to `"all"`, `int` or any `iterable` of `int`s.
-
-```python
-dropdown_sheet(*args, **kwargs)
-```
-- Sets the entire sheet to always have a dropdown box in every cell with the specified arguments.
-
-```python
-create_index_dropdown(r = 0, *args, **kwargs)
-```
-- `r` (`int`, `None`, `iterable`) use `None` to set the entire index to always having dropdown boxes with the chosen args/kwargs.
-
-```python
-create_header_dropdown(c = 0, *args, **kwargs)
-```
-- `c` (`int`, `None`, `iterable`) use `None` to set the entire header to always having dropdown boxes with the chosen args/kwargs.
-
-Examples:
-```python
-# dropdown boxes all the way down column index 5
-sheet.dropdown_column(5, values = ["ON", "OFF"])
-
-# dropdown boxes all the way across rows 0 and 1
-sheet.dropdown_row(range(2), values = ["1", "2", "3"])
-
-# headers always have dropdown boxes with the same values
-sheet.create_header_dropdown(c = None, values = ["val 1", "val 2"])
-```
-
-___
-
-#### **Get chosen dropdown boxes values.**
-```python
-get_dropdown_values(r = 0, c = 0)
-```
-
-```python
-get_header_dropdown_values(c = 0)
-```
-
-```python
-get_index_dropdown_values(r = 0)
-```
-
-___
-
-#### **Set the values and cell value of a chosen dropdown box.**
-```python
-set_dropdown_values(r = 0, c = 0, set_existing_dropdown = False, values = [], set_value = None)
-```
-
-```python
-set_header_dropdown_values(c = 0, set_existing_dropdown = False, values = [], set_value = None)
-```
-
-```python
-set_index_dropdown_values(r = 0, set_existing_dropdown = False, values = [], set_value = None)
-```
-- `set_existing_dropdown` if `True` takes priority over `r` and `c` and sets the values of the last popped open dropdown box (if one one is popped open, if not then an `Exception` is raised).
-- `values` (`list`, `tuple`)
-- `set_value` (`str`, `None`) if not `None` will try to set the value of the chosen cell to given argument.
-
-___
-
-#### **Set and get bound dropdown functions.**
-```python
-dropdown_functions(r, c, selection_function = "", modified_function = "")
-```
-
-```python
-header_dropdown_functions(c, selection_function = "", modified_function = "")
-```
-
-```python
-index_dropdown_functions(r, selection_function = "", modified_function = "")
-```
-
-___
-
-#### **Delete dropdown boxes.**
-
-```python
-delete_dropdown(r = 0, c = 0)
-delete_cell_dropdown(r = 0, c = 0)
-```
-- Deletes dropdown boxes created by `create_dropdown()`/`dropdown_cell()`.
-- `r` and `c` (`int`, `"all"`).
-
-```python
-delete_row_dropdown(r = 0)
-```
-- Deletes dropdown boxes created by `dropdown_row()`.
-- `r` (`int`, `"all"`, `iterable`).
-
-```python
-delete_column_dropdown(c = 0)
-```
-- Deletes dropdown boxes created by `dropdown_column()`.
-- `c` (`int`, `"all"`, `iterable`).
-
-```python
-delete_sheet_dropdown()
-```
-- Deletes dropdown boxes created by `dropdown_sheet()`.
-
-```python
-delete_index_dropdown(r = 0)
-```
-- Deletes dropdown boxes created by `create_header_dropdown()`.
-- `r` (`int`, `"all"`, `None`). Use `None` to delete dropdowns created using `None`.
-
-```python
-delete_header_dropdown(c = 0)
-```
-- Deletes dropdown boxes created by `create_header_dropdown()`.
-- `c` (`int`, `"all"`, `None`). Use `None` to delete dropdowns created using `None`.
-
-___
-
-#### **Get a dictionary of all dropdown boxes**
-```python
-get_dropdowns()
-```
-
-```python
-get_header_dropdowns()
-```
-
-```python
-get_index_dropdowns()
-```
-Returns:
-```python
-{(row int, column int): {'values': values,
-                         'window': "no dropdown open", #the actual frame object if one exists
-                         'canvas_id': "no dropdown open", #the canvas id of the frame object if one exists
-                         'select_function': selection_function,
-                         'modified_function': modified_function,
-                         'state': state,
-                         'text': text}}
-```
-- **Note:** This dictionary will also contain a key named `"dropdown"` if you have used `dropdown_sheet()`/`create_index_dropdown(None)`/`create_header_dropdown(None)`.
-
-___
-
-#### **Pop open a dropdown box.**
-```python
-open_dropdown(r, c)
-```
-
-```python
-open_header_dropdown(c)
-```
-
-```python
-open_index_dropdown(r)
-```
-
-___
-
-#### **Close an open dropdown box.**
-```python
-close_dropdown(r, c)
-```
-
-```python
-close_header_dropdown(c)
-```
-
-```python
-close_index_dropdown(r)
-```
-- Also destroys any opened text editor windows.
-
-## **Check Boxes**
-----
-
-#### **Checkbox creation.**
-
-When using the functions to create checkboxes these are the default arguments:
-```python
-checked = False,
-state = "normal",
-redraw = False,
-check_function = None,
-text = ""
-```
-
-Notes:
-- Use `check_function` like so `check_function = my_function_name`. The function you use needs at least one argument because when the checkbox is clicked it will send information to your function about the clicked checkbox.
-- Use `highlight_cells()` or rows or columns to change the color of the checkbox.
-- Check boxes are always left aligned despite any align settings.
-
- Arguments:
-- `r` and `c` (`int`, `str`) can be set to `"all"`.
-- `checked` is the initial creation value to set the box to.
-- `text` displays text next to the checkbox in the cell, but will not be used as data, data will either be `True` or `False`.
-- `check_function` can be used to trigger a function when the user clicks a checkbox.
-- `state` can be `"normal"` or `"disabled"`. If `"disabled"` then color will be same as table grid lines, else it will be the cells text color.
-
-Box creation functions:
-```python
-create_checkbox(r = 0, c = 0, *args, **kwargs)
-checkbox_cell(r = 0, c = 0, *args, **kwargs)
-```
-- `r` and `c` (`int`, `"all"`) can be set to `"all"` or `int`.
-
-```python
-checkbox_row(r = 0, *args, **kwargs)
-```
-- `r` (`int`, `"all"`, `iterable`) can be set to `"all"`, `int` or any `iterable` of `int`s.
-
-```python
-checkbox_column(c = 0, *args, **kwargs)
-```
-- `c` (`int`, `"all"`, `iterable`) can be set to `"all"`, `int` or any `iterable` of `int`s.
-
-```python
-checkbox_sheet(*args, **kwargs)
-```
-- Sets the entire sheet to always have a checkboxbox in every cell with the specified arguments.
-
-```python
-create_index_checkbox(r = 0, *args, **kwargs)
-```
-- `r` (`int`, `None`, `iterable`) use `None` to set the entire index to always having checkboxes with the chosen args/kwargs.
-
-```python
-create_header_checkbox(c = 0, *args, **kwargs)
-```
-- `c` (`int`, `None`, `iterable`) use `None` to set the entire header to always having checkboxes boxes with the chosen args/kwargs.
-
-Examples:
-```python
-# boxes all the way down column index 5
-sheet.checkbox_column(5, text = "Enabled", check_function = my_function)
-
-# boxes all the way across rows 0 and 1
-sheet.checkbox_row(range(2), text = "Row Checkbox" checked = True)
-
-# headers always have boxes with the same values
-sheet.create_header_checkbox(c = None, text = "Header Checkbox")
-```
-
-___
-
-#### **Set or toggle a checkbox.**
-```python
-click_checkbox(r, c, checked = None)
-```
-
-```python
-click_header_checkbox(c, checked = None)
-```
-
-```python
-click_index_checkbox(r, checked = None)
-```
-
-___
-
-#### **Get a dictionary of all check box dictionaries.**
-```python
-get_checkboxes()
-```
-
-```python
-get_header_checkboxes()
-```
-
-```python
-get_index_checkboxes()
-```
-
-___
-
-#### **Delete checkboxes.**
-
-```python
-delete_checkbox(r = 0, c = 0)
-delete_cell_checkbox(r = 0, c = 0)
-```
-- Deletes checkboxes created by `create_checkbox()`/`checkbox_cell()`.
-- `r` and `c` (`int`, `"all"`).
-
-```python
-delete_row_checkbox(r = 0)
-```
-- Deletes checkboxes created by `checkbox_row()`.
-- `r` (`int`, `"all"`, `iterable`).
-
-```python
-delete_column_checkbox(c = 0)
-```
-- Deletes checkboxes created by `checkbox_column()`.
-- `c` (`int`, `"all"`, `iterable`).
-
-```python
-delete_sheet_checkbox()
-```
-- Deletes checkboxes created by `checkbox_sheet()`.
-
-```python
-delete_index_checkbox(r = 0)
-```
-- Deletes checkboxes created by `create_header_checkbox()`.
-- `r` (`int`, `"all"`, `None`). Use `None` to delete checkboxes created using `None`.
-
-```python
-delete_header_checkbox(c = 0)
-```
-- Deletes checkboxes created by `create_header_checkbox()`.
-- `c` (`int`, `"all"`, `None`). Use `None` to delete checkboxes created using `None`.
-
-___
-
-#### **Set or get information about a particular checkbox.**
-```python
-checkbox(r,
-         c,
-         checked = None,
-         state = None,
-         check_function = "",
-         text = None)
-```
-
-```python
-header_checkbox(c,
-                checked = None,
-                state = None,
-                check_function = "",
-                text = None)
-```
-
-```python
-index_checkbox(r,
-               checked = None,
-               state = None,
-               check_function = "",
-               text = None)
-```
-- If any arguments are not default they will be set for the chosen checkbox.
-- If all arguments are default a dictionary of all the checkboxes information will be returned.
-
-## **Cell Formatting**
-----
-
-By default tksheet stores all user inputted data as strings and while tksheet can store and display any datatype with a `__str__()` method this has some obvious limitations.
-
-Cell formatting aims to provide greater functionality when working with different datatypes and provide strict typing for the sheet. With formatting you can convert sheet data and user input to a specific datatype.
-
-Additionally, formatting also provides a function for displaying data on the table GUI (as a rounded float for example) and logic for handling invalid and missing data.
-
-tksheet has several basic built-in formatters and provides functionality for creating your own custom formats as well.
-
-A demonstration of all the built-in and custom formatters can be found [here](https://github.com/ragardner/tksheet/wiki/Version-6#example-using-and-creating-formatters).
-
-### **To Note:**
-----
-
-1. When applying multiple overlapping formats with e.g. a formatted cell which overlaps a formatted row, the priority is as follows:
-- Cell formats first.
-- Row formats second.
-- Column formats third.
-- Sheet format (using `format_sheet()`) last.
-
-2. Cell formatting will effectively override `validate_input = True` on cells with dropdown boxes.
-
-3. When getting data take careful note of the `get_displayed` options, as these are the difference between getting the actual formatted data and what is simply displayed on the table GUI.
-
-### **Basic Intialisation**
-----
-
-#### **Applying a format to cell:**
-
-```python
-format_cell(r, c, formatter_options = {}, formatter_class = None, **kwargs)
-```
-Notes:
-- `format_cell()` using `all` will not make added cells (such as with a sheet expanding paste or right click insert rows) formatted. For that you will have to use `format_row()`/`format_column()`/`format_sheet()`.
-
-Arguments:
-- `r` (`int` or `"all"`) the row index to apply the formatter to.
-- `c` (`int` or `"all"`) the column index to apply the formatter to.
-- `formatter_options` (`dict`) a dictionary of keyword options/arguements to pass to the formatter.
-- `formatter_class` (`class`) in case you want to use a custom class to store functions and information as opposed to using the built-in methods.
-- `**kwargs` any additional keyword options/arguements to pass to the formatter.
-
-#### **Clearing a format that was set by `format_cell`:**
-
-```python
-delete_cell_format(r = "all", c = "all", clear_values = False)
-```
-- Using `"all"` will not clear formats set by `format_row()`/`format_column()`.
-- `r` (`int` or `"all"`) the row index to remove the cell formats from.
-- `c` (`int` or `"all"`) the column index to remove the cell formats from.
-- `clear_values` (`bool`) if true, the cell values will be set to `""`.
-
-#### **Applying a format to a row:**
-
-```python
-format_row(r, formatter_options = {}, formatter_class = None, **kwargs)
-```
-- `r` (`int`, `Iterable[int]` or `"all"`) the row index to apply the formatter to.
-- `formatter_options` (`dict`) a dictionary of keyword options/arguements to pass to the formatter.
-- `formatter_class` (`class`) in case you want to use a custom class to store functions and information as opposed to using the built-in methods.
-- `**kwargs` any additional keyword options/arguements to pass to the formatter.
-
-#### **Clearing a format that was set by `format_row`:**
-
-```python
-delete_row_format(r = "all", clear_values = False)
-```
-- Using `"all"` will not clear formats set by `format_sheet()`.
-- `r` (`int`, `Iterable[int]` or `"all"`) the row index to remove the cell formats from.
-- `clear_values` (`bool`) if true, the cell values will be set to `""`.
-
-#### **Applying a format to a column:**
-
-```python
-format_column(c, formatter_options = {}, formatter_class = None, **kwargs)
-```
-- `c` (`int`, `Iterable[int]` or `"all"`) the column index to apply the formatter to.
-- `formatter_options` (`dict`) a dictionary of keyword options/arguements to pass to the formatter.
-- `formatter_class` (`class`) in case you want to use a custom class to store functions and information as opposed to using the built-in methods.
-- `**kwargs` any additional keyword options/arguements to pass to the formatter.
-
-#### **Clearing a format that was set by `format_column`:**
-
-```python
-delete_column_format(c = "all", clear_values = False)
-```
-- Using `"all"` will not clear formats set by `format_sheet()`.
-- `c` (`int`, `Iterable[int]` or `"all"`) the column index to remove the cell formats from.
-- `clear_values` (`bool`) if true, the cell values will be set to `""`.
-
-#### **Applying a format to the whole sheet:**
-
-```python
-format_sheet(formatter_options = {}, formatter_class = None, **kwargs)
-```
-- `formatter_options` (`dict`) a dictionary of keyword options/arguements to pass to the formatter.
-- `formatter_class` (`class`) in case you want to use a custom class to store functions and information as opposed to using the built-in methods.
-- `**kwargs` any additional keyword options/arguements to pass to the formatter.
-
-#### **Clearing a format that was set by `format_sheet`:**
-
-```python
-delete_sheet_format(clear_values = False)
-```
-- `clear_values` (`bool`) if true, all the sheets cell values will be set to `""`.
-
-#### **Delete all formatting, including cell, row, column and sheet formats:**
-
-```python
-delete_all_formatting(clear_values = False)
-```
-- `clear_values` (`bool`) if true, all the sheets cell values will be set to `""`.
-
-#### **Reapply formatting to entire sheet:**
-
-```python
-reapply_formatting()
-```
-- Useful if you have manually changed the entire sheets data using `sheet.MT.data = ` and want to reformat the sheet using any existing formatting you have set.
-
-### **Formatter Options and In-Built Formatters**
-----
-
-tksheet provides a number of in-built formatters, in addition to the base `formatter` function. These formatters are designed to provide a range of functionality for different datatypes. The following table lists the available formatters and their options.
-
-```python
-formatter(datatypes,
-          format_function,
-          to_str_function = to_str,
-          invalid_value = "NA",
-          nullable = True,
-          pre_format_function = None,
-          post_format_function = None,
-          clipboard_function = None,
-          **kwargs)
-```
-
-This is the generic formatter options interface. You can use this to create your own custom formatters. The following options are available. Note that all these options can also be passed to the `format_cell()` function as keyword arguments and are available as attributes for all formatters. You can provide functions of your own creation for all the below arguments which take functions if you require.
-
-- `datatypes` (`list`) a list of datatypes that the formatter will accept. For example, `datatypes = [int, float]` will accept integers and floats.
-- `format_function` (`function`) a function that takes a string and returns a value of the desired datatype. For example, `format_function = int` will convert a string to an integer.
-- `to_str_function` (`function`) a function that takes a value of the desired datatype and returns a string. This determines how the formatter displays its data on the table. For example, `to_str_function = str` will convert an integer to a string. Defaults to `tksheet.to_str`.
-- `invalid_value` (`any`) the value to return if the input string is invalid. For example, `invalid_value = "NA"` will return "NA" if the input string is invalid.
-- `nullable` (`bool`) if true, the formatter will accept `None` as a valid input.
-- `pre_format_function` (`function`) a function that takes a input string and returns a string. This function is called before the `format_function` and can be used to modify the input string before it is converted to the desired datatype. This can be useful if you want to strip out unwanted characters or convert a string to a different format before converting it to the desired datatype.
-- `post_format_function` (`function`) a function that takes a value **which might not be of the desired datatype, e.g. `None` if the cell is nullable and empty** and if successful returns a value of the desired datatype or if not successful returns the input value. This function is called after the `format_function` and can be used to modify the output value after it is converted to the desired datatype. This can be useful if you want to round a float for example.
-- `clipboard_function` (`function`) a function that takes a value of the desired datatype and returns a string. This function is called when the cell value is copied to the clipboard. This can be useful if you want to convert a value to a different format before it is copied to the clipboard.
-- `**kwargs` any additional keyword options/arguements to pass to the formatter. These keyword arguments will be passed to the `format_function`, `to_str_function`, and the `clipboard_function`. These can be useful if you want to specifiy any additional formatting options, such as the number of decimal places to round to.
-
-#### **Int Formatter**
-
-```python
-int_formatter(datatypes = int,
-              format_function = to_int,
-              to_str_function = to_str,
-              invalid_value = "NaN",
-              **kwargs,
-              ):
-```
-
-The `int_formatter` is the basic configuration for a simple interger formatter.
-
- - `format_function` (`function`) a function that takes a string and returns an `int`. By default, this is set to the in-built `tksheet.to_int`. This function will always convert float-likes to its floor, for example `"5.9"` will be converted to `5`.
- - `to_str_function` (`function`) By default, this is set to the in-built `tksheet.to_str`, which is a very basic function that will displace the default string representation of the value.
-
-Usage:
-
-```python
-sheet.format_cell(0, 0, formatter_options = tksheet.int_formatter())
-```
-
-#### **Float Formatter**
-
-```python
-float_formatter(datatypes = float,
-                format_function = to_float,
-                to_str_function = float_to_str,
-                invalid_value = "NaN",
-                decimals = 2,
-                **kwargs
-                )
-```
-
-The `float_formatter` is the basic configuration for a simple float formatter. It will always round float-likes to the specified number of decimal places, for example `"5.999"` will be converted to `"6.0"` if `decimals = 1`.
-
- - `format_function` (`function`) a function that takes a string and returns a `float`. By default, this is set to the in-built `tksheet.to_float`. This function will always convert percentages to their decimal equivalent, for example `"5%"` will be converted to `0.05`.
- - `to_str_function` (`function`) By default, this is set to the in-built `tksheet.float_to_str`, which will display the float to the specified number of decimal places.
- - `decimals` (`int`, `None`) the number of decimal places to round to. Defaults to `2`.
-
-Usage:
-
-```python
-sheet.format_cell(0, 0, formatter_options = tksheet.float_formatter(decimals = None)) # A float formatter with maximum float() decimal places
-```
-
-#### **Percentage Formatter**
-
-```python
-percentage_formatter(datatypes = float,
-                     format_function = to_float,
-                     to_str_function = percentage_to_str,
-                     invalid_value = "NaN",
-                     decimals = 0,
-                     **kwargs,
-                     )
-```
-
-The `percentage_formatter` is the basic configuration for a simple percentage formatter. It will always round float-likes as a percentage to the specified number of decimal places, for example `"5.999%"` will be converted to `"6.0%"` if `decimals = 1`.
-
- - `format_function` (`function`) a function that takes a string and returns a `float`. By default, this is set to the in-built `tksheet.to_float`. This function will always convert percentages to their decimal equivalent, for example `"5%"` will be converted to `0.05`.
- - `to_str_function` (`function`) By default, this is set to the in-built `tksheet.percentage_to_str`, which will display the float as a percentage to the specified number of decimal places. For example, `0.05` will be displayed as `"5.0%"`.
- - `decimals` (`int`) the number of decimal places to round to. Defaults to `0`.
-
-Usage:
-
-```python
-sheet.format_cell(0, 0, formatter_options = tksheet.percentage_formatter(decimals = 1)) # A percentage formatter with 1 decimal place
-```
-
-#### **Bool Formatter**
-
-```python
-bool_formatter(datatypes = bool,
-               format_function = to_bool,
-               to_str_function = bool_to_str,
-               invalid_value = "NA",
-               truthy = truthy,
-               falsy = falsy,
-               **kwargs,
-               )
-```
-
- - `format_function` (`function`) a function that takes a string and returns a `bool`. By default, this is set to the in-built `tksheet.to_bool`.
- - `to_str_function` (`function`) By default, this is set to the in-built `tksheet.bool_to_str`, which will display the boolean as `"True"` or `"False"`.
- - `truthy` (`set`) a set of values that will be converted to `True`. Defaults to the in-built `tksheet.truthy`.
- - `falsy` (`set`) a set of values that will be converted to `False`. Defaults to the in-built `tksheet.falsy`.
-
-Usage:
-
-```python
-# A bool formatter with custom truthy and falsy values to account for aussie and kiwi slang
-sheet.format_cell(0, 0, formatter_options = tksheet.bool_formatter(truthy = tksheet.truthy | {"nah yeah"}, falsy = tksheet.falsy | {"yeah nah"}))
-```
-
-### **Datetime Formatters and Designing Your Own Custom Formatters**
-----
-
-tksheet is at the moment a dependency free library and so doesn't include a datetime parser as is.
-
-You can however very easily make a datetime parser if you are willing to install a third-party package. Recommended are:
-
-- [dateparser](https://dateparser.readthedocs.io/en/latest/)
-- [dateutil](https://dateutil.readthedocs.io/en/stable/)
-
-Both of these packages have a very comprehensive datetime parser which can be used to create a custom datetime formatter for tksheet.
-
-Below is a simple example of how you might create a custom datetime formatter using the `dateutil` package.
-
-```python
-from tksheet import *
-from datetime import datetime, date
-from dateutil.parser import parse
-
-def to_local_datetime(dt, **kwargs):
-    '''
-    Our custom format_function, converts a string or a date to a datetime object in the local timezone.
-    '''
-    if isinstance(dt, datetime):
-        pass # Do nothing
-    elif isinstance(dt, date):
-        dt = datetime(dt.year, dt.month, dt.day) # Always good to account for unexpected inputs
-    else:
-        try:
-            dt = parser.parse(dt)
-        except:
-            raise ValueError(f"Could not parse {dt} as a datetime")
-    if dt.tzinfo is None:
-        dt = dt.replace(tzinfo = tzlocal()) # If no timezone is specified, assume local timezone
-    dt = dt.astimezone(tzlocal()) # Convert to local timezone
-    return dt
-
-def datetime_to_str(dt, **kwargs):
-    '''
-    Our custom to_str_function, converts a datetime object to a string with a format that can be specfied in kwargs.
-    '''
-    return dt.strftime(kwargs['format'])
-# Now we can create our custom formatter dictionary from the generic formatter interface in tksheet
-datetime_formatter = formatter(datatypes = datetime,
-                               format_function = to_local_datetime,
-                               to_str_function = datetime_to_str,
-                               invalid_value = "NaT",
-                               format = "%d/%m/%Y %H:%M:%S",
-                               )
-# From here we can pass our datetime_formatter into format_cells() just like any other formatter
-```
-
-For those wanting even more customisation of their formatters you also have the option of creating a custom formatter class. This is a more advanced topic and is not covered here, but it's recommended to create a new class which is a subclass of the `tksheet.Formatter` class and overriding the methods you would like to customise. This custom class can then be passed into the `format_cells()` `formatter_class` argument.
-
-## **Table Options and Other Functions**
-----
+---
+# **Table Options and Other Functions**
 
 ```python
 set_options(redraw: bool = True, **kwargs)
 ```
 
-The list of key word arguments available for `set_options()` are as follows, [see here](https://github.com/ragardner/tksheet/wiki/Version-6#initialization-options) as a guide for what arguments to use.
+The list of key word arguments available for `set_options()` are as follows, [see here](https://github.com/ragardner/tksheet/wiki/Version-7#initialization-options) as a guide for what arguments to use.
 ```python
 auto_resize_columns
 auto_resize_rows
@@ -2736,8 +2739,8 @@ Refresh the table.
 refresh(redraw_header = True, redraw_row_index = True)
 ```
 
-## **Example Loading Data from Excel**
-----
+---
+# **Example Loading Data from Excel**
 
 Using `pandas` library, requires additional libraries:
 - `pandas`
@@ -2770,8 +2773,8 @@ app = demo()
 app.mainloop()
 ```
 
-## **Example Custom Right Click and Text Editor Validation**
-----
+---
+# **Example Custom Right Click and Text Editor Validation**
 
 This is to demonstrate adding your own commands to the in-built right click popup menu (or how you might start making your own right click menu functionality) and also validating text editor input. In this demonstration the validation removes spaces from user input.
 ```python
@@ -2825,8 +2828,8 @@ app.mainloop()
 ```
 - If you want a totally new right click menu you can use `self.sheet.bind("<3>", <function>)` with a `tk.Menu` of your own design (right click is `<2>` on MacOS) and don't use `"right_click_popup_menu"` with `enable_bindings()`.
 
-## **Example Displaying Selections**
-----
+---
+# **Example Displaying Selections**
 
 **This example applies to tksheet versions >= `7.0.0`.**
 ```python
@@ -2920,8 +2923,8 @@ app = demo()
 app.mainloop()
 ```
 
-## **Example List Box**
-----
+---
+# **Example List Box**
 
 This is to demonstrate some simple customization to make a different sort of widget (a list box).
 
@@ -2973,8 +2976,8 @@ app = demo()
 app.mainloop()
 ```
 
-## **Example Header Dropdown Boxes and Row Filtering**
-----
+---
+# **Example Header Dropdown Boxes and Row Filtering**
 
 A very simple demonstration of row filtering using header dropdown boxes.
 
@@ -3047,8 +3050,8 @@ app = demo()
 app.mainloop()
 ```
 
-## **Example Readme Screenshot Code**
-----
+---
+# **Example Readme Screenshot Code**
 
 The code used to make a screenshot for the readme file.
 
@@ -3163,8 +3166,8 @@ app = demo()
 app.mainloop()
 ```
 
-## **Example Saving tksheet as a csv File**
-----
+---
+# **Example Saving tksheet as a csv File**
 
 To both load a csv file and save tksheet data as a csv file not including headers and index.
 
@@ -3243,8 +3246,8 @@ app = demo()
 app.mainloop()
 ```
 
-## **Example Using and Creating Formatters**
-----
+---
+# **Example Using and Creating Formatters**
 
 ```python
 from tksheet import *
@@ -3256,7 +3259,7 @@ import re
 
 date_replace = re.compile('|'.join(['\(', '\)', '\[', '\]', '\<', '\>']))
 
-# --------------------- Custom formatter methods ---------------------
+# Custom formatter methods
 def round_up(x):
     try: # might not be a number if empty
         return float(ceil(x))
@@ -3286,7 +3289,7 @@ def convert_to_local_datetime(dt: str, **kwargs):
 def datetime_to_string(dt: datetime, **kwargs):
     return dt.strftime('%d %b, %Y, %H:%M:%S')
 
-# --------------------- Custom Formatter with additional kwargs ---------------------
+# Custom Formatter with additional kwargs
 
 def custom_datetime_to_str(dt: datetime, **kwargs):
     return dt.strftime(kwargs['format'])
@@ -3320,7 +3323,7 @@ class demo(tk.Tk):
                             'Dropdown Over Nullable\nPercentage Cell',
                             'Percentage Cell\n2 decimal places'])
 
-        # ---------- Some examples of cell formatting --------
+        # Some examples of data formatting
         self.sheet.format_cell('all', 0, formatter_options = float_formatter(nullable = False))
         self.sheet.format_cell('all', 1, formatter_options = float_formatter())
         self.sheet.format_cell('all', 2, formatter_options = int_formatter())
@@ -3328,7 +3331,7 @@ class demo(tk.Tk):
         self.sheet.format_cell('all', 4, formatter_options = percentage_formatter())
 
 
-        # ---------------- Custom Formatters -----------------
+        # Custom Formatters
         # Custom using generic formatter interface
         self.sheet.format_cell('all', 5, formatter_options = formatter(datatypes = datetime,
                                                                        format_function = convert_to_local_datetime,
@@ -3358,8 +3361,8 @@ app = demo()
 app.mainloop()
 ```
 
-## **Contributing**
-----
+---
+# **Contributing**
 
 Welcome and thank you for your interest in `tksheet`!
 

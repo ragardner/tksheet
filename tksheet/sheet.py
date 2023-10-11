@@ -2934,7 +2934,6 @@ class Sheet(tk.Frame):
         get_index_displayed: bool = True,
         only_rows: Iterator | int | None = None,
         only_columns: Iterator | int | None = None,
-        **kwargs,
     ) -> list:
         if only_rows is not None:
             if isinstance(only_rows, int):
@@ -2975,7 +2974,7 @@ class Sheet(tk.Frame):
                 for rn in iterable
             ]
 
-    def get_cell_data(self, r, c, get_displayed: bool = False, **kwargs):
+    def get_cell_data(self, r, c, get_displayed: bool = False):
         return self.MT.get_cell_data(r, c, get_displayed)
 
     def get_row_data(
@@ -2985,7 +2984,6 @@ class Sheet(tk.Frame):
         get_index: bool = False,
         get_index_displayed: bool = True,
         only_columns=None,
-        **kwargs,
     ):
         if only_columns is not None:
             if isinstance(only_columns, int):
@@ -3012,7 +3010,6 @@ class Sheet(tk.Frame):
         get_header: bool = False,
         get_header_displayed: bool = True,
         only_rows=None,
-        **kwargs,
     ):
         if only_rows is not None:
             if isinstance(only_rows, int):
@@ -3033,7 +3030,6 @@ class Sheet(tk.Frame):
         get_header_displayed: bool = True,
         only_rows=None,
         only_columns=None,
-        **kwargs,
     ):
         if only_rows is not None:
             if isinstance(only_rows, int):

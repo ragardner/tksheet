@@ -152,7 +152,6 @@ def get_dropdown_kwargs(
     search_function=dropdown_search_function,
     validate_input=True,
     text=None,
-    **kwargs,
 ):
     return {
         "values": values,
@@ -187,7 +186,6 @@ def get_checkbox_kwargs(
     redraw=True,
     check_function=None,
     text="",
-    **kwargs,
 ):
     return {
         "checked": checked,
