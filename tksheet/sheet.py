@@ -4324,18 +4324,7 @@ class Sheet(tk.Frame):
         if bg is None and fg is None:
             return
         for r in (rows,) if isinstance(rows, int) else rows:
-            if r not in self.MT.row_options:
-                self.MT.row_options[r] = {}
-            if "highlight" in self.MT.row_options[r] and not overwrite:
-                self.MT.row_options[r]["highlight"] = (
-                    self.MT.row_options[r]["highlight"][0] if bg is None else bg,
-                    self.MT.row_options[r]["highlight"][1] if fg is None else fg,
-                    self.MT.row_options[r]["highlight"][2]
-                    if self.MT.row_options[r]["highlight"][2] != end_of_screen
-                    else end_of_screen,
-                )
-            else:
-                self.MT.row_options[r]["highlight"] = (bg, fg, end_of_screen)
+            add_highlight(self.MT.row_options, r, bg, fg, end_of_screen, overwrite)
         if highlight_index:
             self.highlight_cells(cells=rows, canvas="index", bg=bg, fg=fg, redraw=False)
         self.set_refresh_timer(redraw)
@@ -4343,24 +4332,16 @@ class Sheet(tk.Frame):
     def highlight_columns(
         self,
         columns: list = [],
-        bg: None | str = None,
-        fg: None | str = None,
+        bg: bool | None | str = False,
+        fg: bool | None | str = False,
         highlight_header: bool = True,
         redraw: bool = True,
         overwrite: bool = True,
     ) -> None:
-        if bg is None and fg is None:
+        if bg is False and fg is False:
             return
         for c in (columns,) if isinstance(columns, int) else columns:
-            if c not in self.MT.col_options:
-                self.MT.col_options[c] = {}
-            if "highlight" in self.MT.col_options[c] and not overwrite:
-                self.MT.col_options[c]["highlight"] = (
-                    self.MT.col_options[c]["highlight"][0] if bg is None else bg,
-                    self.MT.col_options[c]["highlight"][1] if fg is None else fg,
-                )
-            else:
-                self.MT.col_options[c]["highlight"] = (bg, fg)
+            add_highlight(self.MT.col_options, c, bg, fg, None, overwrite)
         if highlight_header:
             self.highlight_cells(cells=columns, canvas="header", bg=bg, fg=fg, redraw=False)
         self.set_refresh_timer(redraw)
@@ -4371,25 +4352,17 @@ class Sheet(tk.Frame):
         column: int = 0,
         cells: list = [],
         canvas: str = "table",
-        bg: None | str = None,
-        fg: None | str = None,
+        bg: bool | None | str = False,
+        fg: bool | None | str = False,
         redraw: bool = True,
         overwrite: bool = True,
     ) -> None:
-        if bg is None and fg is None:
+        if bg is False and fg is False:
             return
         if canvas == "table":
             if cells:
                 for r_, c_ in cells:
-                    if (r_, c_) not in self.MT.cell_options:
-                        self.MT.cell_options[(r_, c_)] = {}
-                    if "highlight" in self.MT.cell_options[(r_, c_)] and not overwrite:
-                        self.MT.cell_options[(r_, c_)]["highlight"] = (
-                            self.MT.cell_options[(r_, c_)]["highlight"][0] if bg is None else bg,
-                            self.MT.cell_options[(r_, c_)]["highlight"][1] if fg is None else fg,
-                        )
-                    else:
-                        self.MT.cell_options[(r_, c_)]["highlight"] = (bg, fg)
+                    add_highlight(self.MT.cell_options, (r_, c_), bg, fg, None, overwrite)
             else:
                 if isinstance(row, str) and row.lower() == "all" and isinstance(column, int):
                     riter = range(self.MT.total_data_rows())
@@ -4402,47 +4375,19 @@ class Sheet(tk.Frame):
                     citer = (column,)
                 for r_ in riter:
                     for c_ in citer:
-                        if (r_, c_) not in self.MT.cell_options:
-                            self.MT.cell_options[(r_, c_)] = {}
-                        if "highlight" in self.MT.cell_options[(r_, c_)] and not overwrite:
-                            self.MT.cell_options[(r_, c_)]["highlight"] = (
-                                self.MT.cell_options[(r_, c_)]["highlight"][0] if bg is None else bg,
-                                self.MT.cell_options[(r_, c_)]["highlight"][1] if fg is None else fg,
-                            )
-                        else:
-                            self.MT.cell_options[(r_, c_)]["highlight"] = (bg, fg)
+                        add_highlight(self.MT.cell_options, (r_, c_), bg, fg, None, overwrite)
         elif canvas in ("row_index", "index"):
-            if bg is None and fg is None:
-                return
             iterable = (
                 cells if (cells and not isinstance(cells, int)) else (cells,) if isinstance(cells, int) else (row,)
             )
             for r_ in iterable:
-                if r_ not in self.RI.cell_options:
-                    self.RI.cell_options[r_] = {}
-                if "highlight" in self.RI.cell_options[r_] and not overwrite:
-                    self.RI.cell_options[r_]["highlight"] = (
-                        self.RI.cell_options[r_]["highlight"][0] if bg is None else bg,
-                        self.RI.cell_options[r_]["highlight"][1] if fg is None else fg,
-                    )
-                else:
-                    self.RI.cell_options[r_]["highlight"] = (bg, fg)
+                add_highlight(self.RI.cell_options, r_, bg, fg, None, overwrite)
         elif canvas == "header":
-            if bg is None and fg is None:
-                return
             iterable = (
                 cells if (cells and not isinstance(cells, int)) else (cells,) if isinstance(cells, int) else (column,)
             )
             for c_ in iterable:
-                if c_ not in self.CH.cell_options:
-                    self.CH.cell_options[c_] = {}
-                if "highlight" in self.CH.cell_options[c_] and not overwrite:
-                    self.CH.cell_options[c_]["highlight"] = (
-                        self.CH.cell_options[c_]["highlight"][0] if bg is None else bg,
-                        self.CH.cell_options[c_]["highlight"][1] if fg is None else fg,
-                    )
-                else:
-                    self.CH.cell_options[c_]["highlight"] = (bg, fg)
+                add_highlight(self.CH.cell_options, c_, bg, fg, None, overwrite)
         self.set_refresh_timer(redraw)
 
     def dehighlight_cells(
