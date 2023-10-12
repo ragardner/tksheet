@@ -15,7 +15,8 @@
     - All checkbox and dropdown creation functions
 
 #### Fixed:
-- Deselect events firing when not necessary
+- Grid lines now properly raised above highlighted rows/columns
+- Deselect events firing when unnecessary
 
 #### Changed:
 - Changed functions:

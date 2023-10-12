@@ -5415,7 +5415,8 @@ class MainTable(tk.Canvas):
             y_stop = scrollpos_bot
         else:
             y_stop = last_row_line_pos
-        if self.show_horizontal_grid and row_pos_exists:
+        horizontal_grid_iid = None
+        if redraw_table and self.show_horizontal_grid and row_pos_exists:
             self.grid_cyc = cycle(self.grid_cyctup)
             points = []
             if self.horizontal_grid_to_end_of_window:
@@ -5452,11 +5453,11 @@ class MainTable(tk.Canvas):
                     )
             if points:
                 if self.hidd_grid:
-                    t, sh = self.hidd_grid.popitem()
-                    self.coords(t, points)
+                    horizontal_grid_iid, sh = self.hidd_grid.popitem()
+                    self.coords(horizontal_grid_iid, points)
                     if sh:
                         self.itemconfig(
-                            t,
+                            horizontal_grid_iid,
                             fill=self.table_grid_fg,
                             capstyle=tk.BUTT,
                             joinstyle=tk.ROUND,
@@ -5464,26 +5465,26 @@ class MainTable(tk.Canvas):
                         )
                     else:
                         self.itemconfig(
-                            t,
+                            horizontal_grid_iid,
                             fill=self.table_grid_fg,
                             capstyle=tk.BUTT,
                             joinstyle=tk.ROUND,
                             width=1,
                             state="normal",
                         )
-                    self.disp_grid[t] = True
+                    self.disp_grid[horizontal_grid_iid] = True
                 else:
-                    self.disp_grid[
-                        self.create_line(
-                            points,
-                            fill=self.table_grid_fg,
-                            capstyle=tk.BUTT,
-                            joinstyle=tk.ROUND,
-                            width=1,
-                            tag="g",
-                        )
-                    ] = True
-        if self.show_vertical_grid and col_pos_exists:
+                    horizontal_grid_iid = self.create_line(
+                        points,
+                        fill=self.table_grid_fg,
+                        capstyle=tk.BUTT,
+                        joinstyle=tk.ROUND,
+                        width=1,
+                        tag="g",
+                    )
+                    self.disp_grid[horizontal_grid_iid] = True
+        vertical_grid_iid = None
+        if redraw_table and self.show_vertical_grid and col_pos_exists:
             self.grid_cyc = cycle(self.grid_cyctup)
             points = []
             if self.vertical_grid_to_end_of_window:
@@ -5520,11 +5521,11 @@ class MainTable(tk.Canvas):
                     )
             if points:
                 if self.hidd_grid:
-                    t, sh = self.hidd_grid.popitem()
-                    self.coords(t, points)
+                    vertical_grid_iid, sh = self.hidd_grid.popitem()
+                    self.coords(vertical_grid_iid, points)
                     if sh:
                         self.itemconfig(
-                            t,
+                            vertical_grid_iid,
                             fill=self.table_grid_fg,
                             capstyle=tk.BUTT,
                             joinstyle=tk.ROUND,
@@ -5532,25 +5533,24 @@ class MainTable(tk.Canvas):
                         )
                     else:
                         self.itemconfig(
-                            t,
+                            vertical_grid_iid,
                             fill=self.table_grid_fg,
                             capstyle=tk.BUTT,
                             joinstyle=tk.ROUND,
                             width=1,
                             state="normal",
                         )
-                    self.disp_grid[t] = True
+                    self.disp_grid[vertical_grid_iid] = True
                 else:
-                    self.disp_grid[
-                        self.create_line(
-                            points,
-                            fill=self.table_grid_fg,
-                            capstyle=tk.BUTT,
-                            joinstyle=tk.ROUND,
-                            width=1,
-                            tag="g",
-                        )
-                    ] = True
+                    vertical_grid_iid = self.create_line(
+                        points,
+                        fill=self.table_grid_fg,
+                        capstyle=tk.BUTT,
+                        joinstyle=tk.ROUND,
+                        width=1,
+                        tag="g",
+                    )
+                    self.disp_grid[vertical_grid_iid] = True
         if start_row > 0:
             start_row -= 1
         if start_col > 0:
@@ -5839,6 +5839,10 @@ class MainTable(tk.Canvas):
                 self.tag_raise("selected")
                 self.tag_raise("rowsbd")
                 self.tag_raise("columnsbd")
+                if horizontal_grid_iid is not None:
+                    self.tag_raise(horizontal_grid_iid)
+                if vertical_grid_iid is not None:
+                    self.tag_raise(vertical_grid_iid)
         if redraw_header and self.show_header:
             self.CH.redraw_grid_and_text(
                 last_col_line_pos,
