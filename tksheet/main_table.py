@@ -3687,13 +3687,13 @@ class MainTable(tk.Canvas):
 
     def data_reference(
         self,
-        newdataref=None,
-        reset_col_positions=True,
-        reset_row_positions=True,
-        redraw=False,
-        return_id=True,
-        keep_formatting=True,
-    ):
+        newdataref: list | tuple | None = None,
+        reset_col_positions: bool = True,
+        reset_row_positions: bool = True,
+        redraw: bool = False,
+        return_id: bool = True,
+        keep_formatting: bool = True,
+    ) -> object:
         if isinstance(newdataref, (list, tuple)):
             self.data = newdataref
             if keep_formatting:

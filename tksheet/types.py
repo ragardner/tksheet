@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from typing import NamedTuple, Literal, TypeAlias, TypedDict
-from collections.abc import Sequence
+from collections.abc import Sequence, Callable
 
 
 class Font(NamedTuple):
@@ -28,13 +28,13 @@ class Span(TypedDict):
     hdisp: bool
     transpose: bool
     ndim: int | None
-    convert: object
+    convert: Callable | None
     undo: bool
     widget: object
 
 
 CreateSpanTypes: TypeAlias = (
-    str | int | slice | Sequence[int, int] | Sequence[Sequence[int, int], Sequence[int, int]] | Span
+    str | int | slice | Sequence[int | None, int | None] | Sequence[Sequence[int | None, int | None], Sequence[int | None, int | None]] | Span
 )
 
 

@@ -3,12 +3,15 @@
 - [About tksheet](https://github.com/ragardner/tksheet/wiki/Version-7#about-tksheet)
 - [Installation and Requirements](https://github.com/ragardner/tksheet/wiki/Version-7#installation-and-requirements)
 - [Basic Initialization](https://github.com/ragardner/tksheet/wiki/Version-7#basic-initialization)
+- [Basic Use](https://github.com/ragardner/tksheet/wiki/Version-7#basic-use)
 - [Initialization Options](https://github.com/ragardner/tksheet/wiki/Version-7#initialization-options)
 ---
 - [Table Colors](https://github.com/ragardner/tksheet/wiki/Version-7#table-colors)
 - [Header and Index](https://github.com/ragardner/tksheet/wiki/Version-7#header-and-index)
 - [Bindings and Functionality](https://github.com/ragardner/tksheet/wiki/Version-7#bindings-and-functionality)
 ---
+- [Span Objects](https://github.com/ragardner/tksheet/wiki/Version-7#span-objects)
+- [Named Spans](https://github.com/ragardner/tksheet/wiki/Version-7#named-spans)
 - [Setting Table Data](https://github.com/ragardner/tksheet/wiki/Version-7#setting-table-data)
 - [Getting Table Data](https://github.com/ragardner/tksheet/wiki/Version-7#getting-table-data)
 ---
@@ -112,6 +115,13 @@ class demo(tk.Tk):
 
 app = demo()
 app.mainloop()
+```
+
+---
+# **Basic Use**
+
+```python
+# here
 ```
 
 ---
@@ -431,7 +441,7 @@ ___
 This function allows you to bind very specific table functionality to your own functions. If you want less specificity in event names you can also bind all sheet modifying events to a single function, [see here](https://github.com/ragardner/tksheet/wiki/Version-7#sheet-modified-events).
 
 ```python
-extra_bindings(bindings, func = None)
+extra_bindings(bindings, func=None)
 ```
 
 Notes:
@@ -495,7 +505,7 @@ Arguments:
 	- `"bind_all"`
 	- `"unbind_all"`
 - `func` argument is the function you want to send the binding event to.
-- Using one of the following `"all_modified_events", "sheetmodified", "sheet_modified" "modified_events", "modified"` will make any insert, delete or cell edit including pastes and undos send an event to your function. Please **note** that this will mean your function will have to return a value to use for cell edits unless the setting `edit_cell_validation` is `False`.
+- Using one of the following `"all_modified_events"`, `"sheetmodified"`, `"sheet_modified"`, `"modified_events"`, `"modified"` will make any insert, delete or cell edit including pastes and undos send an event to your function. Please **note** that this will mean your function will have to return a value to use for cell edits unless the setting `edit_cell_validation` is `False`.
 - For events `"begin_move_columns"`/`"begin_move_rows"` the point where columns/rows will be moved to will be under the `event_data` key `"value"`.
 
 **For tksheet versions earlier than `7.0.0`:**
@@ -630,8 +640,8 @@ Keys:
     - If no rows have been deleted then the `dict` value for `["deleted"]["row_heights"]` will be empty.
 - Key **`["deleted"]["displayed_columns"]`**  if any columns have been deleted by the inbuilt popup menu delete columns or by undoing a paste which added columns then this will be a `list`. This `list` stores the displayed columns (the columns that are showing when others are hidden) immediately prior to the change.
 - Key **`["deleted"]["displayed_rows"]`**  if any rows have been deleted by the inbuilt popup menu delete rows or by undoing a paste which added rows then this will be a `list`. This `list` stores the displayed rows (the rows that are showing when others are hidden) immediately prior to the change.
-- Key **`["options"]`** This serves as storage for the `Sheet()`s options such as highlights, formatting, alignments, dropdown boxes, checkboxes etc. It is a Python pickled `dict` where the values are the sheets internal cell/row/column options `dicts`.
 - Key **`["named_spans"]`** This `dict` serves as storage for the `Sheet()`s named spans. Each value in the `dict` is a pickled `span` object.
+- Key **`["options"]`** This serves as storage for the `Sheet()`s options such as highlights, formatting, alignments, dropdown boxes, checkboxes etc. It is a Python pickled `dict` where the values are the sheets internal cell/row/column options `dicts`.
 - Key **`["selection_boxes"]`** the value of this is all selection boxes on the sheet in the form of a `dict` as shown below:
     - For every event except `"select"` events the selection boxes are those immediately prior to the modification, for `"select"` events they are the current selection boxes.
     - The layout is always: `"selection_boxes": {(start row, start column, up to but not including row, up to but not including column): selection box type}`.
@@ -666,13 +676,14 @@ Keys:
 
 ___
 
-#### **tksheet tkinter events**
+#### **Bind tkinter events**
 
+With this function you can bind things in the usual way you would in tkinter and they will bind to all the `tksheet` canvases. There are also two special `tksheet` events you can bind, `"<<SheetModified>>"` and `"<<SheetRedrawn>>"`.
 ```python
 bind(event: str, func: Callable, add: str | None = None)
 ```
-- `tksheet` emits custom tkinter events, one for whenever the user has modified the sheet and another for whenever the sheet was redrawn/refreshed.
-- **Note** that while an event emitted after a paste/undo/redo might have the event name `"edit_table"` it also might have added/deleted rows/columns, refer to the docs on the event data `dict` for more info.
+- `add` may or may not work for various bindings depending on whether they are already in use by `tksheet`.
+- **Note** that while a bound event after a paste/undo/redo might have the event name `"edit_table"` it also might have added/deleted rows/columns, refer to the docs on the event data `dict` for more info.
 - `event` the two emitted events are:
     - `"<<SheetModified>>"` emitted whenever the sheet was modified by the end user by editing cells or adding or deleting rows/columns. The function you bind to this event must be able to receive a `dict` argument which will be the same as [the event data dict](https://github.com/ragardner/tksheet/wiki/Version-7#event-data) but with less specific event names. The possible event names are listed below:
         - `"edit_table"` when a user has cut, paste, delete or any cell edits including using dropdown boxes etc. in the table.
@@ -687,6 +698,12 @@ bind(event: str, func: Callable, add: str | None = None)
     - `"<<SheetRedrawn>>"` emitted whenever the sheet GUI was refreshed (redrawn). The data for this event will be different than the usual event data, it is simply:
         - `{"sheetname": name of your sheet, "header": bool True if the header was redrawn, "row_index": bool True if the index was redrawn, "table": bool True if the the table was redrawn}`
 - Example usage where `my_sheet_was_modified` is your function: `my_sheet.bind("<<SheetModified>>", my_sheet_was_modified)`.
+
+___
+
+```python
+unbind(binding)
+```
 
 ___
 
@@ -728,18 +745,6 @@ cell_edit_binding(enable = False, keys = [])
 ___
 
 ```python
-bind(binding, func, add = None)
-```
-- `add` will only work for bindings which are not the following: `"<ButtonPress-1>"`, `"<ButtonMotion-1>"`, `"<ButtonRelease-1>"`, `"<Double-Button-1>"`, `"<Motion>"` and lastly whichever is your operating systems right mouse click button.
-___
-
-```python
-unbind(binding)
-```
-
-___
-
-```python
 cut(event = None)
 copy(event = None)
 paste(event = None)
@@ -748,25 +753,253 @@ undo(event = None)
 ```
 
 ---
-# **Setting Table Data**
+# **Span Objects**
 
-Fundamentally, there are two ways to set data in the table. One way overwrites the entire table and sets the internal data object to a new object. The other edits the internal data.
+In `tksheet` versions > `7` there are functions which utilise an object named `SpanDict`. These objects are a subclass of `dict` but with various additions and dot notation attribute access.
 
-#### **Overwriting the entire table**
+Spans store:
+- A reference to the `Sheet()` they were created with.
+- Variables which represent a particular range of cells.
+- Variables which represent options for those cells.
+- Methods which can modify the above variables.
+- Methods which can act upon the table using the above variables.
+
+### **Creating a span**
+
+You can create a span by using the `span()` function or square brackets on a Sheet object `sheet["A1"]`, examples below.
 
 ```python
-set_sheet_data(data = [[]],
-               reset_col_positions = True,
-               reset_row_positions = True,
-               redraw = True,
-               verify = False,
-               reset_highlights = False)
+span(*key: CreateSpanTypes | None,
+     type_: str = "",
+     name: None | str = None,
+     table: bool = True,
+     header: bool = False,
+     index: bool = False,
+     tdisp: bool = False,
+     idisp: bool = True,
+     hdisp: bool = True,
+     transpose: bool = False,
+     ndim: int | None = None,
+     convert: Callable | None = None,
+     undo: bool = False,
+     widget: object = None,
+)
+```
+- `key` can be one of the following types:
+    - `str` e.g. `sheet.span("A1:F1")`
+    - `int` e.g. `sheet.span(0)`
+    - `slice` e.g. `sheet.span(slice(0, 4))`
+    - `Sequence[int | None, int | None]` e.g. `sheet.span(0, 0)`
+    - `Sequence[Sequence[int | None, int | None], Sequence[int | None, int | None]]` e.g. `sheet.span(0, 0, 1, 1)`
+    - `SpanDict` e.g `sheet.span(another_span)`
+- `type_` (`str`) is used when the span is a named span, see [here](https://github.com/ragardner/tksheet/wiki/Version-7#named-spans) for more information.
+- `name` (`None`, `str`) is used to create a named span or if `name` is used but not `type_` then simply to store an identifier.
+- `table` (`bool`) when `True` will make all functions used with the span target the main table as well as the header/index is those are `True`.
+- `header` (`bool`) when `True` will make all functions used with the span target the header as well as the table/index if those are `True`.
+- `index` (`bool`) when `True` will make all functions used with the span target the index as well as the table/header if those are `True`.
+- `tdisp` (`bool`) is used by data getting functions that utilize spans and when `True` will make the function retrieve screen displayed data for the table, not underlying cell data.
+- `idisp` (`bool`) is used by data getting functions that utilize spans and when `True` will make the function retrieve screen displayed data for the index, not underlying cell data.
+- `hdisp` (`bool`) is used by data getting functions that utilize spans and when `True` will make the function retrieve screen displayed data for the header, not underlying cell data.
+- `transpose` (`bool`) is used by data getting and setting functions that utilize spans.
+    - When `True` returned sublists from data getting functions will represent columns rather than rows.
+    - When `True` data setting functions will assume that a single sequence is a column rather than row and that a list of lists is a list of columns rather than a list of rows.
+- `ndim` (`int`, `None`) is used by data getting functions that utilize spans, it must be either falsy e.g. `None`/`0` or `1` or `2`.
+    - `None` is the default setting which will make the return value vary based on what it is. For example if the gathered data is only a single cell it will return a value instead of a list of lists with a single list containing a single value. A single row will be a single list.
+    - `1` will force the return of a single list as opposed to a list of lists.
+    - `2` will force the return of a list of lists.
+- `convert` (`None`, `Callable`) can be used to modify the data using a function before returning it. The data sent to the `convert` function will be as it was before normally returning (after `ndim` has modified it).
+- `undo` (`bool`) is used by data modifying functions that utilize spans. When `True` and if undo is enabled for the sheet then the end user will be able to undo/redo the modification.
+- `widget` (`object`) is the reference to the original sheet which created the span. This can be changed to a different sheet if required e.g. `my_span.widget = new_sheet`
+
+#### **Span creation syntax**
+
+**When creating a span using the below methods:**
+- `str`s use excel syntax and the indexing rule of up to **AND** including.
+- `int`s use python syntax and the indexing rule of up to but **NOT** including.
+
+For example python index `0` as in `[0]` is the first whereas excel index `1` as in `"A1"` is the first.
+
+```python
+"""
+EXAMPLES USING SQUARE BRACKETS
+"""
+
+span = sheet[0] # first row
+span = sheet["1"] # first row
+
+span = sheet[0:2] # first two rows
+span = sheet["1:2"] # first two rows
+
+span = sheet[:] # entire sheet
+span = sheet[":"] # entire sheet
+
+span = sheet[:2] # first two rows
+span = sheet[":2"] # first two rows
+
+""" THESE TWO HAVE DIFFERENT OUTCOMES """
+span = sheet[2:] # all rows after and not inlcuding python index 1
+span = sheet["2:"] # all rows after and not including python index 0
+
+span = sheet["A"] # first column
+span = sheet["A:C"] # first three columns
+span = sheet["A1:C1"] # cells A1, B1, C1
+
+span = sheet["A1:2"]
+"""
+["A1:2"]
+All the cells starting from (0, 0)
+expanding down to include row 1
+but not including cells beyond row
+1 and expanding out to include all
+columns
+
+    A   B   C   D
+1   x   x   x   x
+2   x   x   x   x
+3
+4
+...
+"""
+
+span = sheet["A1:B"]
+"""
+["A1:B"]
+All the cells starting from (0, 0)
+expanding out to include column 1
+but not including cells beyond column
+1 and expanding down to include all
+rows
+
+    A   B   C   D
+1   x   x
+2   x   x
+3   x   x
+4   x   x
+...
+"""
+
+"""
+EXAMPLES USING span()
+"""
+
+"""
+USING ONE ARGUMENT
+
+str or int or slice()
+"""
+
+# with one argument you can use the same string syntax used for square bracket span creation
+sheet.span("A1")
+sheet.span(0) # row at python index 0, all columns
+sheet.span(slice(0, 2)) # rows at python indexes 0 and 1, all columns
+
+"""
+USING TWO ARGUMENTS
+int | None, int | None
+
+or
+
+(int | None, int | None), (int | None, int | None)
+"""
+sheet.span(0, 0) # row 0, column 0 - the first cell
+sheet.span(0, None) # row 0, all columns
+sheet.span(None, 0) # column 0, all rows
+
+sheet.span((0, 0), (1, 1)) # row 0, column 0 - the first cell
+sheet.span((0, 0), (None, 2)) # rows 0 - end, columns 0 and 1
+
+"""
+USING FOUR ARGUMENTS
+int | None, int | None, int | None, int | None
+"""
+
+sheet.span(0, 0, 1, 1) # row 0, column 0 - the first cell
+sheet.span(0, 0, None, 2) # rows 0 - end, columns 0 and 1
+```
+
+#### **Span methods**
+
+Spans have the following methods all of which utilise the spans stored cell range and options:
+
+#### `options()`
+
+Sets the spans attributes.
+
+```python
+options(**kwargs)
+```
+All possible keyword arguments:
+-
+
+#### `format()`
+
+Formats table data, see the help on [formatting](https://github.com/ragardner/tksheet/wiki/Version-7#data-formatting) for more information.
+
+```python
+format(formatter_options={},
+       formatter_class=None,
+       redraw: bool = True,
+       **kwargs,
+)
+```
+
+Example:
+
+Formats the entire sheet (not including header and index) as `int`.
+```python
+sheet["A1"].expand().format(int_formatter())
+```
+
+Delete the
+
+- `del_format`
+- `highlight`
+- `dehighlight`
+- `readonly`
+- `dropdown`
+- `del_dropdown`
+- `checkbox`
+- `del_checkbox`
+- `clear`
+- `options`
+- `invert`
+- `expand`
+
+Spans have the following properties (`@property` functions):
+- `kind`
+-
+
+---
+# **Named Spans**
+
+
+
+
+---
+# **Setting Table Data**
+
+Fundamentally, there are two ways to set data in the table. One way overwrites the entire table and sets the `tksheet` data object to a new object. The other edits the existing data object.
+
+#### **Overwriting the table**
+
+```python
+set_sheet_data(data: list | tuple | None = None,
+               reset_col_positions: bool = True,
+               reset_row_positions: bool = True,
+               redraw: bool = True,
+               verify: bool = False,
+               reset_highlights: bool = False,
+               keep_formatting: bool = True,
+               delete_options: bool = False,
+)
 ```
 - `data` (`list`) has to be a list of lists for full functionality, for display only a list of tuples or a tuple of tuples will work.
 - `reset_col_positions` and `reset_row_positions` (`bool`) when `True` will reset column widths and row heights.
 - `redraw` (`bool`) refreshes the table after setting new data.
 - `verify` (`bool`) goes through `data` and checks if it is a list of lists, will raise error if not, disabled by default.
 - `reset_highlights` (`bool`) resets all table cell highlights.
+- `keep_formatting` (`bool`) when `True` re-applies any prior formatting rules to the new data, if `False` all prior formatting rules are deleted.
+- `delete_options` (`bool`) when `True` all table options such as dropdowns, checkboxes, formatting, highlighting etc. are deleted.
 
 ___
 
@@ -779,9 +1012,11 @@ data(value: object)
 
 ___
 
-#### **dfg**
+#### **Modifying table data**
 
-
+There are various ways to modify table data:
+- The functions which existed prior to `tksheet` version 7 such as `set_cell_data`, `set_row_data` and `set_column_data`, for which the documentation can be found [here](https://github.com/ragardner/tksheet/wiki/Version-6#setting-table-data)
+- Using assignment with square brackets, explained [here](https://github.com/ragardner/tksheet/wiki/Version-7#span-objects)
 
 #### **Insert a row into the sheet.**
 ```python

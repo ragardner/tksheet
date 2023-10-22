@@ -546,7 +546,7 @@ def span_dict(
     hdisp: bool = True,
     transpose: bool = False,
     ndim: int | None = None,
-    convert: object = None,
+    convert: Callable | None = None,
     undo: bool = False,
     widget: object = None,
 ) -> Span:
@@ -595,9 +595,9 @@ def key_to_span(
     key: str
     | int
     | slice
-    | Sequence[int, int]
-    | Sequence[int, int, int | None, int | None]
-    | Sequence[Sequence[int, int], Sequence[int | None, int | None]],
+    | Sequence[int | None, int | None]
+    | Sequence[int | None, int | None, int | None, int | None]
+    | Sequence[Sequence[int | None, int | None], Sequence[int | None, int | None]],
     spans: dict[str, Span],
     widget: object = None,
 ) -> Span:
@@ -605,41 +605,45 @@ def key_to_span(
         return f"Key type must be either str, int, list, tuple or slice, not '{type(key)}'."
     try:
         if isinstance(key, (list, tuple)):
-            if isinstance(key[0], int):
+            if isinstance(key[0], int) or key[0] is None:
                 if len(key) == 2:
                     """
-                    (int, int) - (row, column) - Specific cell
+                    (int | None, int | None) -
+                    (0, 0) - row 0, column 0 - the first cell
+                    (0, None) - row 0, all columns
+                    (None, 0) - column 0, all rows
                     """
                     return span_dict(
-                        from_r=key[0],
-                        from_c=key[1],
-                        upto_r=key[0] + 1,
-                        upto_c=key[1] + 1,
+                        from_r=key[0] if isinstance(key[0], int) else 0,
+                        from_c=key[1] if isinstance(key[1], int) else 0,
+                        upto_r=(key[0] + 1) if isinstance(key[0], int) else None,
+                        upto_c=(key[1] + 1) if isinstance(key[1], int) else None,
                         widget=widget,
                     )
 
                 elif len(key) == 4:
                     """
-                    (int, int, int, int) - (from row, from column, up to row, up to column) - span of cells
+                    (int | None, int | None, int | None, int | None) -
+                    (from row,  from column, up to row, up to column) - span of cells
                     """
                     return span_dict(
-                        from_r=key[0],
-                        from_c=key[1],
-                        upto_r=key[2],
-                        upto_c=key[3],
+                        from_r=key[0] if isinstance(key[0], int) else 0,
+                        from_c=key[1] if isinstance(key[1], int) else 0,
+                        upto_r=key[2] if isinstance(key[2], int) else None,
+                        upto_c=key[3] if isinstance(key[3], int) else None,
                         widget=widget,
                     )
 
             elif isinstance(key[0], (list, tuple)):
                 """
-                ((int, int), (int, int))
+                ((int | None, int | None), (int | None, int | None))
 
                 First Sequence is start row and column
                 Second Sequence is up to but not including row and column
                 """
                 return span_dict(
-                    from_r=key[0][0],
-                    from_c=key[0][1],
+                    from_r=key[0][0] if isinstance(key[0][0], int) else 0,
+                    from_c=key[0][1] if isinstance(key[0][1], int) else 0,
                     upto_r=key[1][0],
                     upto_c=key[1][1],
                     widget=widget,

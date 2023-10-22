@@ -161,8 +161,8 @@ class SpanDict(dict):
         )
         return self
 
-    def delete_format(self) -> SpanDict:
-        self["widget"].delete_format(self)
+    def del_format(self) -> SpanDict:
+        self["widget"].del_format(self)
         return self
 
     def highlight(self, **kwargs) -> SpanDict:
@@ -179,20 +179,20 @@ class SpanDict(dict):
     def dropdown(self, *args, **kwargs) -> SpanDict:
         self["widget"].dropdown(self, *args, **kwargs)
 
-    def delete_dropdown(self) -> SpanDict:
-        self["widget"].delete_dropdown(self)
+    def del_dropdown(self) -> SpanDict:
+        self["widget"].del_dropdown(self)
 
     def checkbox(self, *args, **kwargs) -> SpanDict:
         self["widget"].dropdown(self, *args, **kwargs)
 
-    def delete_checkbox(self) -> SpanDict:
-        self["widget"].delete_checkbox(self)
+    def del_checkbox(self) -> SpanDict:
+        self["widget"].del_checkbox(self)
 
     def align(self, align: str | None, redraw: bool = True) -> SpanDict:
         self["widget"].align(self, align=align, redraw=redraw)
 
-    def delete_align(self, redraw: bool = True) -> SpanDict:
-        self["widget"].delete_align(self, redraw=redraw)
+    def del_align(self, redraw: bool = True) -> SpanDict:
+        self["widget"].del_align(self, redraw=redraw)
 
     def clear(self, undo: bool | None = None, redraw: bool = True) -> SpanDict:
         if undo is not None:
@@ -236,6 +236,8 @@ class SpanDict(dict):
             self["upto_r"] = None
         elif direction == "right":
             self["upto_c"] = None
+        else:
+            raise ValueError(f"Expand argument must be either 'both', 'table', 'down' or 'right'. Not {direction}")
         return self
 
     @property

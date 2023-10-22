@@ -28,14 +28,17 @@ from .functions import (
     num2alpha,
     set_align,
     set_readonly,
-    span_dict,
     span_froms,
     span_ranges,
     tksheet_type_error,
 )
 from .main_table import MainTable
-from .other_classes import CurrentlySelectedClass  # noqa: F401
-from .other_classes import DotDict, GeneratedMouseEvent
+from .other_classes import (
+    DotDict,
+    GeneratedMouseEvent,
+    SpanDict,
+    CurrentlySelectedClass, # noqa: F401
+)
 from .row_index import RowIndex
 from .top_left_rectangle import TopLeftRectangle
 from .types import Span, CreateSpanTypes, Font, Align
@@ -2585,7 +2588,7 @@ class Sheet(tk.Frame):
                 )
             else:
                 res.extend([[quick_tdata(r, c, get_displayed=tdisp, fmt_kw=fmt_kw) for c in cols] for r in rows])
-        if span.ndim is None:
+        if not span.ndim:
             # it's a cell
             if len(res) == 1 and len(res[0]) == 1:
                 res = res[0][0]
@@ -2898,7 +2901,7 @@ class Sheet(tk.Frame):
         self,
         key: CreateSpanTypes,
     ) -> None | Span:
-        if isinstance(key, dict):
+        if isinstance(key, SpanDict):
             span = key
         else:
             span = key_to_span(key, self.MT.named_spans, self)
@@ -3060,7 +3063,7 @@ class Sheet(tk.Frame):
 
     def set_sheet_data(
         self,
-        data=None,
+        data: list | tuple | None = None,
         reset_col_positions: bool = True,
         reset_row_positions: bool = True,
         redraw: bool = True,
@@ -3068,7 +3071,7 @@ class Sheet(tk.Frame):
         reset_highlights: bool = False,
         keep_formatting: bool = True,
         delete_options: bool = False,
-    ):
+    ) -> object:
         if data is None:
             data = [[]]
         if verify and (not isinstance(data, list) or not all(isinstance(row, list) for row in data)):
@@ -3088,12 +3091,12 @@ class Sheet(tk.Frame):
 
     def set_cell_data(
         self,
-        r,
-        c,
-        value="",
+        r: int,
+        c: int,
+        value: object = "",
         redraw: bool = True,
         keep_formatting: bool = True,
-    ):
+    ) -> None:
         if not keep_formatting:
             self.MT.delete_cell_format(r, c, clear_values=False)
         self.MT.set_cell_data(r, c, value)
@@ -3514,11 +3517,7 @@ class Sheet(tk.Frame):
 
     def span(
         self,
-        key: CreateSpanTypes | None = None,
-        from_r: None | int = None,
-        from_c: None | int = None,
-        upto_r: None | int = None,
-        upto_c: None | int = None,
+        *key: CreateSpanTypes | None,
         type_: str = "",
         name: None | str = None,
         table: bool = True,
@@ -3535,8 +3534,9 @@ class Sheet(tk.Frame):
         **kwargs,
     ) -> Span:
         """
-        Create / get a span
-        If the span has a type_ then it goes into named spans
+        Create a span / get an existing span
+        If the span has a string name and a type_ then
+        it is turned into a named span
         """
         if name in self.MT.named_spans:
             return self.MT.named_spans[name]
@@ -3544,15 +3544,9 @@ class Sheet(tk.Frame):
             name = f"{num2alpha(self.named_span_id)}"
             self.named_span_id += 1
         type_ = type_.lower()
-        if isinstance(key, (int, str, slice, list, tuple)):
-            span = self.span_from_key(key)
-        else:
-            span = span_dict(
-                from_r=from_r,
-                from_c=from_c,
-                upto_r=upto_r,
-                upto_c=upto_c,
-            )
+        if len(key) == 1:
+            key = key[0]
+        span = self.span_from_key(key)
         span.type_ = type_
         span.name = name
         span.kwargs = kwargs

@@ -5,24 +5,24 @@ from collections.abc import Callable
 from .vars import falsy, nonelike, truthy
 
 
-def is_none_like(n: object):
-    if (isinstance(n, str) and n.lower().replace(" ", "") in nonelike) or n in nonelike:
+def is_none_like(o: object):
+    if (isinstance(o, str) and o.lower().replace(" ", "") in nonelike) or o in nonelike:
         return True
     return False
 
 
-def to_int(x: object, **kwargs):
-    if isinstance(x, int):
-        return x
-    return int(float(x))
+def to_int(o: object, **kwargs):
+    if isinstance(o, int):
+        return o
+    return int(float(o))
 
 
-def to_float(x: object, **kwargs):
-    if isinstance(x, float):
-        return x
-    if isinstance(x, str) and x.endswith("%"):
-        return float(x.replace("%", "")) / 100
-    return float(x)
+def to_float(o: object, **kwargs):
+    if isinstance(o, float):
+        return o
+    if isinstance(o, str) and o.endswith("%"):
+        return float(o.replace("%", "")) / 100
+    return float(o)
 
 
 def to_bool(val: object, **kwargs):
@@ -47,23 +47,23 @@ def to_bool(val: object, **kwargs):
     raise ValueError(f'Cannot map "{val}" to bool.')
 
 
-def try_to_bool(val: object, **kwargs):
+def try_to_bool(o: object, **kwargs):
     try:
-        return to_bool(val)
+        return to_bool(o)
     except Exception:
-        return val
+        return o
 
 
-def is_bool_like(v: object, **kwargs):
+def is_bool_like(o: object, **kwargs):
     try:
-        to_bool(v)
+        to_bool(o)
         return True
     except Exception:
         return False
 
 
-def to_str(v: object, **kwargs: dict) -> str:
-    return f"{v}"
+def to_str(o: object, **kwargs: dict) -> str:
+    return f"{o}"
 
 
 def float_to_str(v: int | float, **kwargs: dict) -> str:
