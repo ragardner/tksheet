@@ -757,12 +757,14 @@ undo(event = None)
 
 In `tksheet` versions > `7` there are functions which utilise an object named `SpanDict`. These objects are a subclass of `dict` but with various additions and dot notation attribute access.
 
+Spans basically represent an area of the sheet.
+
 Spans store:
 - A reference to the `Sheet()` they were created with.
-- Variables which represent a particular range of cells.
+- Variables which represent a particular range of cells and properties for accessing these ranges.
 - Variables which represent options for those cells.
 - Methods which can modify the above variables.
-- Methods which can act upon the table using the above variables.
+- Methods which can act upon the table using the above variables such as `highlight`, `format`, etc.
 
 ### **Creating a span**
 
@@ -779,7 +781,7 @@ span(*key: CreateSpanTypes | None,
      idisp: bool = True,
      hdisp: bool = True,
      transpose: bool = False,
-     ndim: int | None = None,
+     ndim: int = 0,
      convert: Callable | None = None,
      undo: bool = False,
      widget: object = None,
@@ -797,17 +799,17 @@ span(*key: CreateSpanTypes | None,
 - `table` (`bool`) when `True` will make all functions used with the span target the main table as well as the header/index is those are `True`.
 - `header` (`bool`) when `True` will make all functions used with the span target the header as well as the table/index if those are `True`.
 - `index` (`bool`) when `True` will make all functions used with the span target the index as well as the table/header if those are `True`.
-- `tdisp` (`bool`) is used by data getting functions that utilize spans and when `True` will make the function retrieve screen displayed data for the table, not underlying cell data.
-- `idisp` (`bool`) is used by data getting functions that utilize spans and when `True` will make the function retrieve screen displayed data for the index, not underlying cell data.
-- `hdisp` (`bool`) is used by data getting functions that utilize spans and when `True` will make the function retrieve screen displayed data for the header, not underlying cell data.
-- `transpose` (`bool`) is used by data getting and setting functions that utilize spans.
-    - When `True` returned sublists from data getting functions will represent columns rather than rows.
-    - When `True` data setting functions will assume that a single sequence is a column rather than row and that a list of lists is a list of columns rather than a list of rows.
-- `ndim` (`int`, `None`) is used by data getting functions that utilize spans, it must be either falsy e.g. `None`/`0` or `1` or `2`.
-    - `None` is the default setting which will make the return value vary based on what it is. For example if the gathered data is only a single cell it will return a value instead of a list of lists with a single list containing a single value. A single row will be a single list.
+- `tdisp` (`bool`) is used by data getting functions that utilize spans and when `True` the function retrieve screen displayed data for the table, not underlying cell data.
+- `idisp` (`bool`) is used by data getting functions that utilize spans and when `True` the function retrieve screen displayed data for the index, not underlying cell data.
+- `hdisp` (`bool`) is used by data getting functions that utilize spans and when `True` the function retrieve screen displayed data for the header, not underlying cell data.
+- `transpose` (`bool`) is used by data getting and setting functions that utilize spans. When `True`:
+    - Returned sublists from data getting functions will represent columns rather than rows.
+    - Data setting functions will assume that a single sequence is a column rather than row and that a list of lists is a list of columns rather than a list of rows.
+- `ndim` (`int`) is used by data getting functions that utilize spans, it must be either `0` or `1` or `2`.
+    - `0` is the default setting which will make the return value vary based on what it is. For example if the gathered data is only a single cell it will return a value instead of a list of lists with a single list containing a single value. A single row will be a single list.
     - `1` will force the return of a single list as opposed to a list of lists.
     - `2` will force the return of a list of lists.
-- `convert` (`None`, `Callable`) can be used to modify the data using a function before returning it. The data sent to the `convert` function will be as it was before normally returning (after `ndim` has modified it).
+- `convert` (`None`, `Callable`) can be used to modify the data using a function before returning it. The data sent to the `convert` function will be as it was before normally returning (after `ndim` has potentially modified it).
 - `undo` (`bool`) is used by data modifying functions that utilize spans. When `True` and if undo is enabled for the sheet then the end user will be able to undo/redo the modification.
 - `widget` (`object`) is the reference to the original sheet which created the span. This can be changed to a different sheet if required e.g. `my_span.widget = new_sheet`
 
@@ -926,10 +928,41 @@ Spans have the following methods all of which utilise the spans stored cell rang
 Sets the spans attributes.
 
 ```python
-options(**kwargs)
+options(
+expand: None | str = None,
+convert: None | Callable = None,
+name: None | str | bool = False,
+table: bool | None = None,
+index: bool | None = None,
+header: bool | None = None,
+transpose: bool | None = None,
+ndim: int | None = None,
+displayed: bool | None = None,
+undo: bool | None = None,
+formatter_options: dict | None = None,
+)
 ```
-All possible keyword arguments:
--
+- `expand` (`None`, `str`) must be either `None` or:
+    - `"table"`/`"both"` expand the span both down and right from the span start to the ends of the table.
+    - `"right"` expand the span right to the end of the table `x` axis.
+    - `"down"` expand the span downwards to the bottom of the table `y` axis.
+```python
+# entire sheet
+span = sheet["A1"].options(expand="both")
+
+# column A
+span = sheet["A1"].options(expand="down")
+
+# row 0
+span = sheet["A1"].options(expand="right",
+                           ndim=1, # to return a single list when getting data
+                           )
+```
+
+- `formatter_options` (`dict`, `None`) must be either `None` or `dict`. If providing a `dict` it must be the same structure as used in format functions, see [here](https://github.com/ragardner/tksheet/wiki/Version-7#data-formatting) for more information. Used to turn the span into a format type span which:
+    - When using `get_data()` will format the returned data.
+    - When using `set_data()` will format the data being set but **NOT** create a new formatting rule on the sheet.
+- See [here](https://github.com/ragardner/tksheet/wiki/Version-7#creating-a-span) for explanations of the other paramters.
 
 #### `format()`
 
@@ -962,7 +995,6 @@ Delete the
 - `del_checkbox`
 - `clear`
 - `options`
-- `invert`
 - `expand`
 
 Spans have the following properties (`@property` functions):
@@ -1873,7 +1905,6 @@ int_formatter(datatypes = int,
 ```
 
 The `int_formatter` is the basic configuration for a simple interger formatter.
-
  - `format_function` (`function`) a function that takes a string and returns an `int`. By default, this is set to the in-built `tksheet.to_int`. This function will always convert float-likes to its floor, for example `"5.9"` will be converted to `5`.
  - `to_str_function` (`function`) By default, this is set to the in-built `tksheet.to_str`, which is a very basic function that will displace the default string representation of the value.
 

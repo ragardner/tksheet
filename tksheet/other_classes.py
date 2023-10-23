@@ -3,7 +3,7 @@ from __future__ import annotations
 import pickle
 import tkinter as tk
 from collections import namedtuple
-from collections.abc import Generator, Hashable, Iterator
+from collections.abc import Generator, Hashable, Iterator, Callable
 from functools import partial
 
 from .vars import (
@@ -118,7 +118,7 @@ class SpanDict(dict):
         for key, item in self.items():
             if key == "data" or key == "value":
                 self["widget"].set_data(self, item)
-            elif type(item) is dict: # noqa: E721
+            elif type(item) is dict:  # noqa: E721
                 self[key] = DotDict(item)
 
     def __getstate__(self) -> SpanDict:
@@ -140,7 +140,7 @@ class SpanDict(dict):
             self["widget"].highlight(self, bg=item)
         elif key == "fg":
             self["widget"].highlight(self, fg=item)
-        elif type(item) is dict: # noqa: E721
+        elif type(item) is dict:  # noqa: E721
             super().__setitem__(key, DotDict(item))
         else:
             super().__setitem__(key, item)
@@ -201,33 +201,55 @@ class SpanDict(dict):
             self["widget"].clear(self, redraw=redraw)
         return self
 
-    def options(self, convert: object = None, **kwargs) -> SpanDict:
-        if "expand" in kwargs:
-            self.expand(kwargs["expand"])
-        for k in (
-            "name",
-            "index",
-            "header",
-            "table",
-            "transpose",
-            "ndim",
-            "displayed",
-            "undo",
-        ):
-            if k in kwargs:
-                self[k] = kwargs[k]
-        if "invert" in kwargs:
-            self["transpose"] = kwargs["invert"]
-        if (k := "formatter") in kwargs or (k := "format") in kwargs:
-            self["type_"] = "format"
-            self["kwargs"] = {"formatter": None, **kwargs[k]}
-        if convert != self["convert"]:
+    def options(
+        self,
+        expand: None | str = None,
+        convert: None | Callable = None,
+        name: None | str | bool = False,
+        table: bool | None = None,
+        index: bool | None = None,
+        header: bool | None = None,
+        transpose: bool | None = None,
+        ndim: int | None = None,
+        displayed: bool | None = None,
+        undo: bool | None = None,
+        formatter_options: dict | None = None,
+    ) -> SpanDict:
+        if isinstance(expand, str) and expand.lower() in ("down", "right", "both", "table"):
+            self.expand(expand)
+
+        if isinstance(convert, Callable):
             self["convert"] = convert
+
+        if isinstance(name, str) or name is None:
+            self["name"] = name
+
+        if isinstance(table, bool):
+            self["table"] = table
+        if isinstance(index, bool):
+            self["index"] = index
+        if isinstance(header, bool):
+            self["header"] = header
+        if isinstance(transpose, bool):
+            self["transpose"] = transpose
+        if isinstance(displayed, bool):
+            self["displayed"] = displayed
+        if isinstance(undo, bool):
+            self["undo"] = undo
+
+        if isinstance(ndim, int) and ndim in (0, 1, 2):
+            self["ndim"] = ndim
+
+        if isinstance(formatter_options, dict):
+            self["type_"] = "format"
+            self["kwargs"] = {"formatter": None, **formatter_options}
         return self
 
-    def invert(self, invert: bool = True) -> SpanDict:
-        self["transpose"] = invert
-        return self
+    def transpose(self, *args) -> SpanDict:
+        if not args:
+            self["transpose"] = True
+        else:
+            self["transpose"] = bool(args[0])
 
     def expand(self, direction: str = "both") -> SpanDict:
         if direction == "both" or direction == "table":

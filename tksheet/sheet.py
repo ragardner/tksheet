@@ -2653,7 +2653,6 @@ class Sheet(tk.Frame):
 
         format
         - if span.type_ == "format" and span.kwargs
-        - does not format the sheets internal data, only data being returned
         - formats the data before setting with specified formatter function e.g.
         - format=int_formatter() -> returns kwargs, span["kwargs"] now has formatter kwargs
         - uses format_data(value=cell, **span["kwargs"]) on every set cell
@@ -3527,7 +3526,7 @@ class Sheet(tk.Frame):
         idisp: bool = True,
         hdisp: bool = True,
         transpose: bool = False,
-        ndim: int | None = None,
+        ndim: int = 0,
         convert: object = None,
         undo: bool = False,
         widget: object = None,
