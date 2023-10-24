@@ -2554,7 +2554,7 @@ class Sheet(tk.Frame):
         index, header = span.index, span.header
         fmt_kw = span.kwargs if span.type_ == "format" and span.kwargs else None
         quick_tdata, quick_idata, quick_hdata = self.MT.get_cell_data, self.RI.get_cell_data, self.CH.get_cell_data
-        if span.transpose:
+        if span.transposed:
             res = []
             if index:
                 if index and header:
@@ -2571,7 +2571,7 @@ class Sheet(tk.Frame):
                 )
             else:
                 res.extend([[quick_tdata(r, c, get_displayed=tdisp, fmt_kw=fmt_kw) for r in rows] for c in cols])
-        elif not span.transpose:
+        elif not span.transposed:
             res = []
             if header:
                 if header and index:
@@ -2596,7 +2596,7 @@ class Sheet(tk.Frame):
             elif len(res) == 1:
                 res = res[0]
             # it's a column
-            elif res and not span.transpose and len(res[0]) == 1:
+            elif res and not span.transposed and len(res[0]) == 1:
                 res = list(chain.from_iterable(res))
         elif span.ndim == 1:
             # flatten sublists
@@ -2683,7 +2683,7 @@ class Sheet(tk.Frame):
         startr, startc = span_froms(span)
         table, index, header = span.table, span.index, span.header
         fmt_kw = span.kwargs if span.type_ == "format" and span.kwargs else None
-        transpose = span.transpose
+        transposed = span.transposed
         maxr, maxc = startr, startc
         event_data = event_dict(
             name="edit_table",
@@ -2700,7 +2700,7 @@ class Sheet(tk.Frame):
                 return
             # data is list of lists
             if isinstance(data[0], (list, tuple)):
-                if transpose:
+                if transposed:
                     """
                     - sublists are columns
                         1  2  3
@@ -2746,7 +2746,7 @@ class Sheet(tk.Frame):
                             event_data = set_t(r, c, v, event_data, fmt_kw)
             # data is list of values
             else:
-                if transpose:
+                if transposed:
                     """
                     - single list is column, span.index ignored
                         1  2  3
@@ -3525,7 +3525,7 @@ class Sheet(tk.Frame):
         tdisp: bool = False,
         idisp: bool = True,
         hdisp: bool = True,
-        transpose: bool = False,
+        transposed: bool = False,
         ndim: int = 0,
         convert: object = None,
         undo: bool = False,
@@ -3555,7 +3555,7 @@ class Sheet(tk.Frame):
         span.tdisp = tdisp
         span.idisp = idisp
         span.hdisp = hdisp
-        span.transpose = transpose
+        span.transposed = transposed
         span.ndim = ndim
         span.convert = convert
         span.undo = undo

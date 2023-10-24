@@ -757,7 +757,10 @@ undo(event = None)
 
 In `tksheet` versions > `7` there are functions which utilise an object named `SpanDict`. These objects are a subclass of `dict` but with various additions and dot notation attribute access.
 
-Spans basically represent an area of the sheet.
+Spans basically represent an area of the sheet. They can be one of three kinds:
+- `"cell"`
+- `"row"`
+- `"column"`
 
 Spans store:
 - A reference to the `Sheet()` they were created with.
@@ -780,7 +783,7 @@ span(*key: CreateSpanTypes | None,
      tdisp: bool = False,
      idisp: bool = True,
      hdisp: bool = True,
-     transpose: bool = False,
+     transposed: bool = False,
      ndim: int = 0,
      convert: Callable | None = None,
      undo: bool = False,
@@ -802,7 +805,7 @@ span(*key: CreateSpanTypes | None,
 - `tdisp` (`bool`) is used by data getting functions that utilize spans and when `True` the function retrieve screen displayed data for the table, not underlying cell data.
 - `idisp` (`bool`) is used by data getting functions that utilize spans and when `True` the function retrieve screen displayed data for the index, not underlying cell data.
 - `hdisp` (`bool`) is used by data getting functions that utilize spans and when `True` the function retrieve screen displayed data for the header, not underlying cell data.
-- `transpose` (`bool`) is used by data getting and setting functions that utilize spans. When `True`:
+- `transposed` (`bool`) is used by data getting and setting functions that utilize spans. When `True`:
     - Returned sublists from data getting functions will represent columns rather than rows.
     - Data setting functions will assume that a single sequence is a column rather than row and that a list of lists is a list of columns rather than a list of rows.
 - `ndim` (`int`) is used by data getting functions that utilize spans, it must be either `0` or `1` or `2`.
@@ -813,7 +816,7 @@ span(*key: CreateSpanTypes | None,
 - `undo` (`bool`) is used by data modifying functions that utilize spans. When `True` and if undo is enabled for the sheet then the end user will be able to undo/redo the modification.
 - `widget` (`object`) is the reference to the original sheet which created the span. This can be changed to a different sheet if required e.g. `my_span.widget = new_sheet`
 
-#### **Span creation syntax**
+### **Span creation syntax**
 
 **When creating a span using the below methods:**
 - `str`s use excel syntax and the indexing rule of up to **AND** including.
@@ -919,11 +922,85 @@ sheet.span(0, 0, 1, 1) # row 0, column 0 - the first cell
 sheet.span(0, 0, None, 2) # rows 0 - end, columns 0 and 1
 ```
 
-#### **Span methods**
+### **Span properties**
+
+Spans have the following properties:
+
+#### `span.kind`
+
+Returns either `"cell"`, `"row"` or `"column"`.
+
+```python
+span = sheet.span("A1:C4")
+print (span.kind)
+# prints "cell"
+
+span = sheet.span(":")
+print (span.kind)
+# prints "cell"
+
+span = sheet.span("1:3")
+print (span.kind)
+# prints "row"
+
+span = sheet.span("A:C")
+print (span.kind)
+# prints "column"
+```
+
+#### `span.rows` / `span.columns`
+
+Returns a `SpanRange` object. The below examples are for `span.rows` but you can use `span.columns` for the spans columns exactly the same way.
+
+```python
+# use as an iterator
+span = sheet.span("A1:C4")
+for row in span.rows:
+    pass
+# use as a reversed iterator
+for row in reversed(span.rows):
+    pass
+
+# check row membership
+span = sheet.span("A1:C4")
+print (2 in span.rows)
+# prints True
+
+# check span.rows equality, also can do not equal
+span = self.sheet["A1:C4"]
+span2 = self.sheet["1:4"]
+print (span.rows == span2.rows)
+# prints True
+
+# check len
+span = self.sheet["A1:C4"]
+print (len(span.rows))
+# prints 4
+```
+
+#### `span.ranges`
+
+Returns a two tuple of SpanRange objects, the first being span.rows the second being span.columns.
+
+```python
+rows, cols = self.sheet["A1:C2"].ranges
+for r in rows:
+    for c in cols:
+        print (r, c)
+# prints:
+# 0 0
+# 0 1
+# 0 2
+# 1 0
+# 1 1
+# 1 2
+```
+
+### **Span methods**
 
 Spans have the following methods all of which utilise the spans stored cell range and options:
 
-#### `options()`
+#### `span.options()`
 
 Sets the spans attributes.
 
@@ -935,7 +1012,7 @@ name: None | str | bool = False,
 table: bool | None = None,
 index: bool | None = None,
 header: bool | None = None,
-transpose: bool | None = None,
+transposed: bool | None = None,
 ndim: int | None = None,
 displayed: bool | None = None,
 undo: bool | None = None,
@@ -958,15 +1035,14 @@ span = sheet["A1"].options(expand="right",
                            ndim=1, # to return a single list when getting data
                            )
 ```
-
 - `formatter_options` (`dict`, `None`) must be either `None` or `dict`. If providing a `dict` it must be the same structure as used in format functions, see [here](https://github.com/ragardner/tksheet/wiki/Version-7#data-formatting) for more information. Used to turn the span into a format type span which:
     - When using `get_data()` will format the returned data.
     - When using `set_data()` will format the data being set but **NOT** create a new formatting rule on the sheet.
 - See [here](https://github.com/ragardner/tksheet/wiki/Version-7#creating-a-span) for explanations of the other paramters.
 
-#### `format()`
+#### `span.format()`
 
-Formats table data, see the help on [formatting](https://github.com/ragardner/tksheet/wiki/Version-7#data-formatting) for more information.
+Formats table data, see the help on [formatting](https://github.com/ragardner/tksheet/wiki/Version-7#data-formatting) for more information. Note that using this function also creates a format rule for the affected table cells.
 
 ```python
 format(formatter_options={},
@@ -977,29 +1053,221 @@ format(formatter_options={},
 ```
 
 Example:
-
-Formats the entire sheet (not including header and index) as `int`.
 ```python
-sheet["A1"].expand().format(int_formatter())
+sheet[":"].format(int_formatter())
+```
+This example shows the formatting of the entire sheet (not including header and index) as `int` and creates a format rule for all currently existing cells. [Named spans](https://github.com/ragardner/tksheet/wiki/Version-7#named-spans) are required to create a rule for all future existing cells as well, for example those created by the end user inserting rows or columns.
+
+
+#### `span.del_format()`
+
+Delete any currently existing format rules for parts of the table that are covered by the span. Should not be used where there are rules created by named spans, see [Named spans](https://github.com/ragardner/tksheet/wiki/Version-7#named-spans) for more information.
+
+Example:
+```python
+span1 = sheet[2:4]
+span1.format(float_formatter())
+span1.del_format()
 ```
 
-Delete the
+#### `span.highlight()`
 
-- `del_format`
-- `highlight`
-- `dehighlight`
-- `readonly`
-- `dropdown`
-- `del_dropdown`
-- `checkbox`
-- `del_checkbox`
-- `clear`
-- `options`
-- `expand`
+Create a highlight rule for parts of the table that are covered by the span.
 
-Spans have the following properties (`@property` functions):
-- `kind`
--
+```python
+highlight(
+bg: bool | None | str = False,
+fg: bool | None | str = False,
+end: bool | None = None,
+overwrite: bool = False,
+redraw: bool = True,
+)
+```
+
+Example:
+```python
+sheet["A"].highlight(bg="red", fg="black")
+
+# or
+
+sheet["A"].bg = "red"
+sheet["A"].fg = "black"
+```
+
+#### `span.dehighlight()`
+
+Delete any currently existing highlight rules for parts of the table that are covered by the span. Should not be used where there are rules created by named spans, see [Named spans](https://github.com/ragardner/tksheet/wiki/Version-7#named-spans) for more information.
+
+```python
+dehighlight()
+```
+
+Example:
+```python
+span1 = sheet[2:4].highlight(bg="red", fg="black")
+span1.dehighlight()
+```
+
+#### `span.readonly()`
+
+Create a readonly rule for parts of the table that are covered by the span.
+
+```python
+readonly(readonly: bool = True)
+```
+- Using `span.readonly(False)` deletes any existing readonly rules for the span.
+
+#### `span.dropdown()`
+
+Create a dropdown box rule for parts of the table that are covered by the span.
+
+```python
+dropdown(
+values=[],
+set_value=None,
+state="normal",
+redraw=True,
+selection_function=None,
+modified_function=None,
+search_function=dropdown_search_function,
+validate_input=True,
+text=None,
+)
+```
+
+Example:
+```python
+sheet["D"].dropdown(values=["on", "off"],
+                    set_value="off",)
+```
+
+#### `span.del_dropdown()`
+
+Delete any currently existing dropdown rules for parts of the table that are covered by the span. Should not be used where there are rules created by named spans, see [Named spans](https://github.com/ragardner/tksheet/wiki/Version-7#named-spans) for more information.
+
+```python
+del_dropdown()
+```
+
+Example:
+```python
+dropdown_span = sheet["D"].dropdown(values=["on", "off"],
+                                    set_value="off",)
+dropdown_span.del_dropdown()
+```
+
+#### `span.checkbox()`
+
+Create a checkbox rule for parts of the table that are covered by the span.
+
+```python
+checkbox(
+checked=False,
+state="normal",
+redraw=True,
+check_function=None,
+text="",
+)
+```
+
+Example:
+```python
+sheet["D"].checkbox(checked=True,
+                    text="Switch")
+```
+
+#### `span.del_checkbox()`
+
+Delete any currently existing checkbox rules for parts of the table that are covered by the span. Should not be used where there are rules created by named spans, see [Named spans](https://github.com/ragardner/tksheet/wiki/Version-7#named-spans) for more information.
+
+```python
+del_checkbox()
+```
+
+Example:
+```python
+checkbox_span = sheet["D"].checkbox(checked=True,
+                                    text="Switch")
+checkbox_span.del_checkbox()
+```
+
+#### `span.align()`
+
+Create a cell text alignment rule for parts of the table that are covered by the span.
+
+```python
+align(
+align: str | None,
+redraw: bool = True,
+)
+```
+- `align` (`str`, `None`) must be either:
+    - `None` - clears the alignment rule
+    - `"c"`, `"center"`, `"centre"`
+    - `"w"`, `"west"`, `"left"`
+    - `"e"`, `"east"`, `"right"`
+
+Example:
+```python
+sheet["D"].align("right")
+```
+
+#### `span.del_align()`
+
+Delete any currently existing cell text alignment rules for parts of the table that are covered by the span. Should not be used where there are rules created by named spans, see [Named spans](https://github.com/ragardner/tksheet/wiki/Version-7#named-spans) for more information.
+
+```python
+del_align()
+```
+
+Example:
+```python
+align_span = sheet["D"].align("right")
+align_span.del_align()
+```
+
+#### `span.clear()`
+
+Clears cell data from all cells that are covered by the span.
+
+```python
+clear(undo: bool | None = None, redraw: bool = True)
+```
+- `undo` (`bool`, `None`) When `True` if undo is enabled for the end user they will be able to undo the clear change.
+
+Example:
+```python
+# clears column D
+sheet["D"].clear()
+```
+
+#### `span.transpose()`
+
+**Toggles** the span attribute `transposed`. If the attribute is already `True` it will make it `False` and vice versa.
+
+```python
+span = sheet["A:D"].transpose()
+# this span is now transposed
+print (span.transposed)
+# prints True
+
+span.transpose()
+# this span is no longer transposed
+print (span.transposed)
+# prints False
+```
+
+#### `span.expand()`
+
+Expands the spans area.
+
+```python
+expand(direction: str = "both")
+```
+- `direction` (`None`, `str`) must be either `None` or:
+    - `"table"`/`"both"` expand the span both down and right from the span start to the ends of the table.
+    - `"right"` expand the span right to the end of the table `x` axis.
+    - `"down"` expand the span downwards to the bottom of the table `y` axis.
 
 ---
 # **Named Spans**

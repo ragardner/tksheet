@@ -3145,7 +3145,6 @@ class MainTable(tk.Canvas):
             self.extra_b1_motion_func(event)
 
     def ctrl_b1_motion(self, event: object):
-        x1, y1, x2, y2 = self.get_canvas_visible_area()
         if (
             self.ctrl_select_enabled
             and self.drag_selection_enabled

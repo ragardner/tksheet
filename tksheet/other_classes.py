@@ -165,12 +165,28 @@ class SpanDict(dict):
         self["widget"].del_format(self)
         return self
 
-    def highlight(self, **kwargs) -> SpanDict:
-        self["widget"].highlight(self, **kwargs)
+    def highlight(
+        self,
+        bg: bool | None | str = False,
+        fg: bool | None | str = False,
+        end: bool | None = None,
+        overwrite: bool = False,
+        redraw: bool = True,
+    ) -> SpanDict:
+        self["widget"].highlight(
+            self,
+            bg=bg,
+            fg=fg,
+            end=end,
+            overwrite=overwrite,
+            redraw=redraw,
+        )
         return self
 
     def dehighlight(self, redraw: bool = True) -> SpanDict:
         self["widget"].dehighlight(self, redraw=redraw)
+
+    del_highlight = dehighlight
 
     def readonly(self, readonly: bool = True) -> SpanDict:
         self["widget"].readonly(self, readonly=readonly)
@@ -209,7 +225,7 @@ class SpanDict(dict):
         table: bool | None = None,
         index: bool | None = None,
         header: bool | None = None,
-        transpose: bool | None = None,
+        transposed: bool | None = None,
         ndim: int | None = None,
         displayed: bool | None = None,
         undo: bool | None = None,
@@ -230,8 +246,8 @@ class SpanDict(dict):
             self["index"] = index
         if isinstance(header, bool):
             self["header"] = header
-        if isinstance(transpose, bool):
-            self["transpose"] = transpose
+        if isinstance(transposed, bool):
+            self["transposed"] = transposed
         if isinstance(displayed, bool):
             self["displayed"] = displayed
         if isinstance(undo, bool):
@@ -245,11 +261,9 @@ class SpanDict(dict):
             self["kwargs"] = {"formatter": None, **formatter_options}
         return self
 
-    def transpose(self, *args) -> SpanDict:
-        if not args:
-            self["transpose"] = True
-        else:
-            self["transpose"] = bool(args[0])
+    def transpose(self) -> SpanDict:
+        self["transposed"] = not self["transposed"]
+        return self
 
     def expand(self, direction: str = "both") -> SpanDict:
         if direction == "both" or direction == "table":
@@ -290,17 +304,7 @@ class SpanDict(dict):
 
     @property
     def ranges(self) -> tuple[Generator[int], Generator[int]]:
-        rng_from_r = 0 if self["from_r"] is None else self["from_r"]
-        rng_from_c = 0 if self["from_c"] is None else self["from_c"]
-        if self["upto_r"] is None:
-            rng_upto_r = self["widget"].total_rows()
-        else:
-            rng_upto_r = self["upto_r"]
-        if self["upto_c"] is None:
-            rng_upto_c = self["widget"].total_columns()
-        else:
-            rng_upto_c = self["upto_c"]
-        return SpanRange(rng_from_r, rng_upto_r), SpanRange(rng_from_c, rng_upto_c)
+        return self.rows, self.columns
 
     def pickle_self(self) -> bytes:
         x = self["widget"]

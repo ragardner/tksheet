@@ -256,8 +256,7 @@ def get_n2a(n: int = 0, _type: str = "numbers") -> str:
         return num2alpha(n)
     elif _type == "numbers":
         return f"{n + 1}"
-    else:
-        return f"{num2alpha(n)} {n + 1}"
+    return f"{num2alpha(n)} {n + 1}"
 
 
 def get_index_of_gap_in_sorted_integer_seq_forward(seq, start=0):
@@ -503,8 +502,7 @@ def gen_formatted(
 ) -> Generator[tuple[int, int]] | Generator[int]:
     if formatter is None:
         return (k for k, dct in options.items() if "format" in dct)
-    else:
-        return (k for k, dct in options.items() if "format" in dct and dct["format"]["formatter"] == formatter)
+    return (k for k, dct in options.items() if "format" in dct and dct["format"]["formatter"] == formatter)
 
 
 def options_with_key(
@@ -544,7 +542,7 @@ def span_dict(
     tdisp: bool = False,
     idisp: bool = True,
     hdisp: bool = True,
-    transpose: bool = False,
+    transposed: bool = False,
     ndim: int | None = None,
     convert: Callable | None = None,
     undo: bool = False,
@@ -564,7 +562,7 @@ def span_dict(
         tdisp=tdisp,
         idisp=idisp,
         hdisp=hdisp,
-        transpose=transpose,
+        transposed=transposed,
         ndim=ndim,
         convert=convert,
         undo=undo,
