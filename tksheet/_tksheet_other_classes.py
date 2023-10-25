@@ -32,7 +32,6 @@ DropDownModifiedEvent = namedtuple("DropDownModifiedEvent", "eventname row colum
 DrawnItem = namedtuple("DrawnItem", "iid showing")
 TextCfg = namedtuple("TextCfg", "txt tf font align")
 DraggedRowColumn = namedtuple("DraggedRowColumn", "dragged to_move")
-_ProgBar = namedtuple("_ProgBar", "bg fg pc name")
 
 
 class TextEditor_(tk.Text):

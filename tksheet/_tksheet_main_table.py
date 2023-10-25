@@ -5009,13 +5009,15 @@ class MainTable(tk.Canvas):
                 self.hidd_text[k] = self.hidd_text[k] | self.disp_text[k]
             else:
                 self.hidd_text[k] = v
-        self.disp_text = defaultdict(set)
         for k, v in self.disp_high.items():
             if k in self.hidd_high:
                 self.hidd_high[k] = self.hidd_high[k] | self.disp_high[k]
             else:
                 self.hidd_high[k] = v
+        self.disp_text = defaultdict(set)
         self.disp_high = defaultdict(set)
+        self.hidd_text = {k: v for k, v in self.hidd_text.items() if v}
+        self.hidd_high = {k: v for k, v in self.hidd_high.items() if v}
         self.hidd_grid.update(self.disp_grid)
         self.disp_grid = {}
         self.hidd_dropdown.update(self.disp_dropdown)
