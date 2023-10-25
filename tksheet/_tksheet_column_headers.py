@@ -106,8 +106,8 @@ class ColumnHeaders(tk.Canvas):
         self.disp_resize_lines = {}
         self.disp_dropdown = {}
         self.disp_checkbox = {}
-        self.hidd_text = defaultdict(set)
-        self.hidd_high = defaultdict(set)
+        self.hidd_text = {}
+        self.hidd_high = {}
         self.hidd_grid = {}
         self.hidd_fill_sels = {}
         self.hidd_resize_lines = {}
@@ -1620,10 +1620,10 @@ class ColumnHeaders(tk.Canvas):
                 ):
                     if draw_y > top:
                         config = TextCfg(txt, fill, font, align)
-                        k = None
                         if config in self.hidd_text:
-                            k = config
-                            iid, showing = self.hidd_text[k].pop()
+                            iid, showing = self.hidd_text[config].pop()
+                            if not self.hidd_text[config]:
+                                del self.hidd_text[config]
                             cc1, cc2 = self.coords(iid)
                             if int(cc1) == int(draw_x) and int(cc2) == int(draw_y):
                                 option = 0 if showing else 2
@@ -1633,6 +1633,8 @@ class ColumnHeaders(tk.Canvas):
                         elif self.hidd_text:
                             k = next(iter(self.hidd_text))
                             iid, showing = self.hidd_text[k].pop()
+                            if not self.hidd_text[k]:
+                                del self.hidd_text[k]
                             cc1, cc2 = self.coords(iid)
                             if int(cc1) == int(draw_x) and int(cc2) == int(draw_y):
                                 option = 2 if showing else 3
@@ -1667,8 +1669,6 @@ class ColumnHeaders(tk.Canvas):
                                     anchor=align,
                                     state="normal",
                                 )
-                        if k is not None and not self.hidd_text[k]:
-                            del self.hidd_text[k]
                         wd = self.bbox(iid)
                         wd = wd[2] - wd[0]
                         if wd > mw:
