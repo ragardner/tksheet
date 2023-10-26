@@ -14,14 +14,12 @@ from ._tksheet_formatters import (
 from ._tksheet_other_classes import (
     BeginDragDropEvent,
     DraggedRowColumn,
-    DrawnItem,
     DropDownModifiedEvent,
     EditHeaderEvent,
     EndDragDropEvent,
     ResizeEvent,
     SelectColumnEvent,
     SelectionBoxEvent,
-    TextCfg,
     TextEditor,
     get_checkbox_dict,
     get_dropdown_dict,
@@ -99,8 +97,8 @@ class ColumnHeaders(tk.Canvas):
         self.currently_resizing_height = False
         self.ch_rc_popup_menu = None
 
-        self.disp_text = defaultdict(set)
-        self.disp_high = defaultdict(set)
+        self.disp_text = {}
+        self.disp_high = {}
         self.disp_grid = {}
         self.disp_fill_sels = {}
         self.disp_resize_lines = {}
@@ -1243,44 +1241,18 @@ class ColumnHeaders(tk.Canvas):
         return tf, redrawn
 
     def redraw_highlight(self, x1, y1, x2, y2, fill, outline, tag):
-        config = (fill, outline)
         coords = (x1 - 1 if outline else x1, y1 - 1 if outline else y1, x2, y2)
-        k = None
-        if config in self.hidd_high:
-            k = config
-            iid, showing = self.hidd_high[k].pop()
-            if all(int(crd1) == int(crd2) for crd1, crd2 in zip(self.coords(iid), coords)):
-                option = 0 if showing else 2
-            else:
-                option = 1 if showing else 3
-
-        elif self.hidd_high:
-            k = next(iter(self.hidd_high))
-            iid, showing = self.hidd_high[k].pop()
-            if all(int(crd1) == int(crd2) for crd1, crd2 in zip(self.coords(iid), coords)):
-                option = 2 if showing else 3
-            else:
-                option = 3
-
-        else:
-            iid, showing, option = (
-                self.create_rectangle(coords, fill=fill, outline=outline, tag=tag),
-                1,
-                4,
-            )
-
-        if option in (1, 3):
-            self.coords(iid, coords)
-        if option in (2, 3):
+        if self.hidd_high:
+            iid, showing = self.hidd_high.popitem()
+            if any(int(crd1) != int(crd2) for crd1, crd2 in zip(self.coords(iid), coords)):
+                self.coords(iid, coords)
             if showing:
                 self.itemconfig(iid, fill=fill, outline=outline)
             else:
                 self.itemconfig(iid, fill=fill, outline=outline, tag=tag, state="normal")
-
-        if k is not None and not self.hidd_high[k]:
-            del self.hidd_high[k]
-
-        self.disp_high[config].add(DrawnItem(iid=iid, showing=1))
+        else:
+            iid = self.create_rectangle(coords, fill=fill, outline=outline, tag=tag)
+        self.disp_high[iid] = True
         return True
 
     def redraw_gridline(self, points, fill, width, tag):
@@ -1419,20 +1391,10 @@ class ColumnHeaders(tk.Canvas):
             )
         except Exception:
             return
-        for k, v in self.disp_text.items():
-            if k in self.hidd_text:
-                self.hidd_text[k] = self.hidd_text[k] | self.disp_text[k]
-            else:
-                self.hidd_text[k] = v
-        for k, v in self.disp_high.items():
-            if k in self.hidd_high:
-                self.hidd_high[k] = self.hidd_high[k] | self.disp_high[k]
-            else:
-                self.hidd_high[k] = v
-        self.disp_text = defaultdict(set)
-        self.disp_high = defaultdict(set)
-        self.hidd_text = {k: v for k, v in self.hidd_text.items() if v}
-        self.hidd_high = {k: v for k, v in self.hidd_high.items() if v}
+        self.hidd_text.update(self.disp_text)
+        self.disp_text = {}
+        self.hidd_high.update(self.disp_high)
+        self.disp_high = {}
         self.hidd_grid.update(self.disp_grid)
         self.disp_grid = {}
         self.hidd_dropdown.update(self.disp_dropdown)
@@ -1621,47 +1583,19 @@ class ColumnHeaders(tk.Canvas):
                     None,
                 ):
                     if draw_y > top:
-                        config = TextCfg(txt, fill, font, align)
-                        if config in self.hidd_text:
-                            iid, showing = self.hidd_text[config].pop()
-                            if not self.hidd_text[config]:
-                                del self.hidd_text[config]
-                            cc1, cc2 = self.coords(iid)
-                            if int(cc1) == int(draw_x) and int(cc2) == int(draw_y):
-                                option = 0 if showing else 2
-                            else:
-                                option = 1 if showing else 3
-                            self.tag_raise(iid)
-                        elif self.hidd_text:
-                            k = next(iter(self.hidd_text))
-                            iid, showing = self.hidd_text[k].pop()
-                            if not self.hidd_text[k]:
-                                del self.hidd_text[k]
-                            cc1, cc2 = self.coords(iid)
-                            if int(cc1) == int(draw_x) and int(cc2) == int(draw_y):
-                                option = 2 if showing else 3
-                            else:
-                                option = 3
-                            self.tag_raise(iid)
-                        else:
-                            iid, showing, option = (
-                                self.create_text(
-                                    draw_x,
-                                    draw_y,
+                        if self.hidd_text:
+                            iid, showing = self.hidd_text.popitem()
+                            iidx, iidy = self.coords(iid)
+                            if int(iidx) != int(draw_x) or int(iidy) != int(draw_y):
+                                self.coords(iid, draw_x, draw_y)
+                            if showing:
+                                self.itemconfig(
+                                    iid,
                                     text=txt,
                                     fill=fill,
                                     font=font,
                                     anchor=align,
-                                    tag="t",
-                                ),
-                                1,
-                                4,
-                            )
-                        if option in (1, 3):
-                            self.coords(iid, draw_x, draw_y)
-                        if option in (2, 3):
-                            if showing:
-                                self.itemconfig(iid, text=txt, fill=fill, font=font, anchor=align)
+                                )
                             else:
                                 self.itemconfig(
                                     iid,
@@ -1671,6 +1605,18 @@ class ColumnHeaders(tk.Canvas):
                                     anchor=align,
                                     state="normal",
                                 )
+                            self.tag_raise(iid)
+                        else:
+                            iid = self.create_text(
+                                draw_x,
+                                draw_y,
+                                text=txt,
+                                fill=fill,
+                                font=font,
+                                anchor=align,
+                                tag="t",
+                            )
+                        self.disp_text[iid] = True
                         wd = self.bbox(iid)
                         wd = wd[2] - wd[0]
                         if wd > mw:
@@ -1701,36 +1647,14 @@ class ColumnHeaders(tk.Canvas):
                                     self.itemconfig(iid, text=txt)
                                     wd = self.bbox(iid)
                                 self.coords(iid, draw_x, draw_y)
-                            self.disp_text[config._replace(txt=txt)].add(DrawnItem(iid=iid, showing=True))
-                        else:
-                            self.disp_text[config].add(DrawnItem(iid=iid, showing=True))
                     draw_y += self.MT.header_xtra_lines_increment
                     if draw_y - 1 > self.current_height:
                         break
-        for cfg, set_ in self.hidd_text.items():
-            for namedtup in tuple(set_):
-                if namedtup.showing:
-                    self.itemconfig(namedtup.iid, state="hidden")
-                    self.hidd_text[cfg].discard(namedtup)
-                    self.hidd_text[cfg].add(namedtup._replace(showing=False))
-        for cfg, set_ in self.hidd_high.items():
-            for namedtup in tuple(set_):
-                if namedtup.showing:
-                    self.itemconfig(namedtup.iid, state="hidden")
-                    self.hidd_high[cfg].discard(namedtup)
-                    self.hidd_high[cfg].add(namedtup._replace(showing=False))
-        for t, sh in self.hidd_grid.items():
-            if sh:
-                self.itemconfig(t, state="hidden")
-                self.hidd_grid[t] = False
-        for t, sh in self.hidd_dropdown.items():
-            if sh:
-                self.itemconfig(t, state="hidden")
-                self.hidd_dropdown[t] = False
-        for t, sh in self.hidd_checkbox.items():
-            if sh:
-                self.itemconfig(t, state="hidden")
-                self.hidd_checkbox[t] = False
+        for dct in (self.hidd_text, self.hidd_high, self.hidd_grid, self.hidd_dropdown, self.hidd_checkbox):
+            for iid, showing in dct.items():
+                if showing:
+                    self.itemconfig(iid, state="hidden")
+                    dct[iid] = False
 
     def get_redraw_selections(self, startc, endc):
         d = defaultdict(list)

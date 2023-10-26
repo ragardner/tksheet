@@ -29,8 +29,6 @@ BeginDragDropEvent = namedtuple("BeginDragDropEvent", "eventname columnstomove m
 EndDragDropEvent = namedtuple("EndDragDropEvent", "eventname oldindexes newindexes movedto")
 ResizeEvent = namedtuple("ResizeEvent", "eventname index oldsize newsize")
 DropDownModifiedEvent = namedtuple("DropDownModifiedEvent", "eventname row column value")
-DrawnItem = namedtuple("DrawnItem", "iid showing")
-TextCfg = namedtuple("TextCfg", "txt tf font align")
 DraggedRowColumn = namedtuple("DraggedRowColumn", "dragged to_move")
 
 
