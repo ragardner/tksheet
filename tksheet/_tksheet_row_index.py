@@ -60,8 +60,6 @@ class RowIndex(tk.Canvas):
         self.closed_dropdown = None
         self.centre_alignment_text_mod_indexes = (slice(1, None), slice(None, -1))
         self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
-        self.grid_cyctup = ("st", "end")
-        self.grid_cyc = cycle(self.grid_cyctup)
         self.being_drawn_rect = None
         self.extra_motion_func = None
         self.extra_b1_press_func = None
@@ -1372,7 +1370,6 @@ class RowIndex(tk.Canvas):
             scrollpos_bot,
         )
         if (self.MT.show_horizontal_grid or self.height_resizing_enabled) and row_pos_exists:
-            self.grid_cyc = cycle(self.grid_cyctup)
             points = [
                 self.current_width - 1,
                 y_stop - 1,
@@ -1385,31 +1382,19 @@ class RowIndex(tk.Canvas):
                 draw_y = self.MT.row_positions[r]
                 if self.height_resizing_enabled:
                     self.visible_row_dividers[r] = (1, draw_y - 2, xend, draw_y + 2)
-                st_or_end = next(self.grid_cyc)
-                if st_or_end == "st":
-                    points.extend(
-                        [
-                            -1,
-                            draw_y,
-                            self.current_width,
-                            draw_y,
-                            self.current_width,
-                            self.MT.row_positions[r + 1] if len(self.MT.row_positions) - 1 > r else draw_y,
-                        ]
-                    )
-                elif st_or_end == "end":
-                    points.extend(
-                        [
-                            self.current_width,
-                            draw_y,
-                            -1,
-                            draw_y,
-                            -1,
-                            self.MT.row_positions[r + 1] if len(self.MT.row_positions) - 1 > r else draw_y,
-                        ]
-                    )
-                if points:
-                    self.redraw_gridline(points=points, fill=self.index_grid_fg, width=1, tag="h")
+                points.extend(
+                    [
+                        -1,
+                        draw_y,
+                        self.current_width,
+                        draw_y,
+                        -1,
+                        draw_y,
+                        -1,
+                        self.MT.row_positions[r + 1] if len(self.MT.row_positions) - 1 > r else draw_y,
+                    ]
+                )
+            self.redraw_gridline(points=points, fill=self.index_grid_fg, width=1, tag="h")
         c_2 = (
             self.index_selected_cells_bg
             if self.index_selected_cells_bg.startswith("#")

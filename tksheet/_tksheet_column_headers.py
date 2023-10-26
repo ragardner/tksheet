@@ -55,8 +55,6 @@ class ColumnHeaders(tk.Canvas):
         self.text_editor_loc = None
         self.centre_alignment_text_mod_indexes = (slice(1, None), slice(None, -1))
         self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
-        self.grid_cyctup = ("st", "end")
-        self.grid_cyc = cycle(self.grid_cyctup)
         self.b1_pressed_loc = None
         self.existing_dropdown_canvas_id = None
         self.existing_dropdown_window = None
@@ -1411,7 +1409,6 @@ class ColumnHeaders(tk.Canvas):
         draw_x = self.MT.col_positions[start_col]
         yend = self.current_height - 5
         if (self.MT.show_vertical_grid or self.width_resizing_enabled) and col_pos_exists:
-            self.grid_cyc = cycle(self.grid_cyctup)
             points = [
                 x_stop - 1,
                 self.current_height - 1,
@@ -1424,31 +1421,19 @@ class ColumnHeaders(tk.Canvas):
                 draw_x = self.MT.col_positions[c]
                 if self.width_resizing_enabled:
                     self.visible_col_dividers[c] = (draw_x - 2, 1, draw_x + 2, yend)
-                st_or_end = next(self.grid_cyc)
-                if st_or_end == "st":
-                    points.extend(
-                        [
-                            draw_x,
-                            -1,
-                            draw_x,
-                            self.current_height,
-                            self.MT.col_positions[c + 1] if len(self.MT.col_positions) - 1 > c else draw_x,
-                            self.current_height,
-                        ]
-                    )
-                elif st_or_end == "end":
-                    points.extend(
-                        [
-                            draw_x,
-                            self.current_height,
-                            draw_x,
-                            -1,
-                            self.MT.col_positions[c + 1] if len(self.MT.col_positions) - 1 > c else draw_x,
-                            -1,
-                        ]
-                    )
-                if points:
-                    self.redraw_gridline(points=points, fill=self.header_grid_fg, width=1, tag="v")
+                points.extend(
+                    [
+                        draw_x,
+                        -1,
+                        draw_x,
+                        self.current_height,
+                        draw_x,
+                        -1,
+                        self.MT.col_positions[c + 1] if len(self.MT.col_positions) - 1 > c else draw_x,
+                        -1,
+                    ]
+                )
+            self.redraw_gridline(points=points, fill=self.header_grid_fg, width=1, tag="v")
         top = self.canvasy(0)
         c_2 = (
             self.header_selected_cells_bg

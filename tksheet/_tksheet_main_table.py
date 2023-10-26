@@ -66,8 +66,6 @@ class MainTable(tk.Canvas):
         self.last_selected = tuple()
         self.centre_alignment_text_mod_indexes = (slice(1, None), slice(None, -1))
         self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
-        self.grid_cyctup = ("st", "end")
-        self.grid_cyc = cycle(self.grid_cyctup)
         self.synced_scrolls = set()
         self.set_cell_sizes_on_zoom = kwargs["set_cell_sizes_on_zoom"]
 
@@ -4991,7 +4989,6 @@ class MainTable(tk.Canvas):
         self.disp_dropdown = {}
         self.hidd_checkbox.update(self.disp_checkbox)
         self.disp_checkbox = {}
-
         if not scrollpos_right >= self.col_positions[-1]:
             end_col += 1
         if last_col_line_pos > scrollpos_right:
@@ -5003,8 +5000,6 @@ class MainTable(tk.Canvas):
         else:
             y_stop = last_row_line_pos
         if self.show_horizontal_grid and row_pos_exists:
-            self.grid_cyc = cycle(self.grid_cyctup)
-            points = []
             if self.horizontal_grid_to_end_of_window:
                 x_grid_stop = scrollpos_right + can_width
             else:
@@ -5012,31 +5007,23 @@ class MainTable(tk.Canvas):
                     x_grid_stop = x_stop + 1
                 else:
                     x_grid_stop = x_stop - 1
-            for r in range(start_row - 1, end_row):
-                draw_y = self.row_positions[r]
-                st_or_end = next(self.grid_cyc)
-                if st_or_end == "st":
-                    points.extend(
+            points = list(
+                chain.from_iterable(
+                    [
                         [
                             self.canvasx(0) - 1,
-                            draw_y,
+                            self.row_positions[r],
                             x_grid_stop,
-                            draw_y,
-                            x_grid_stop,
-                            self.row_positions[r + 1] if len(self.row_positions) - 1 > r else draw_y,
-                        ]
-                    )
-                elif st_or_end == "end":
-                    points.extend(
-                        [
-                            x_grid_stop,
-                            draw_y,
+                            self.row_positions[r],
                             self.canvasx(0) - 1,
-                            draw_y,
+                            self.row_positions[r],
                             self.canvasx(0) - 1,
-                            self.row_positions[r + 1] if len(self.row_positions) - 1 > r else draw_y,
+                            self.row_positions[r + 1] if len(self.row_positions) - 1 > r else self.row_positions[r],
                         ]
-                    )
+                        for r in range(start_row - 1, end_row)
+                    ]
+                )
+            )
             if points:
                 if self.hidd_grid:
                     t, sh = self.hidd_grid.popitem()
@@ -5058,21 +5045,17 @@ class MainTable(tk.Canvas):
                             width=1,
                             state="normal",
                         )
-                    self.disp_grid[t] = True
                 else:
-                    self.disp_grid[
-                        self.create_line(
-                            points,
-                            fill=self.table_grid_fg,
-                            capstyle=tk.BUTT,
-                            joinstyle=tk.ROUND,
-                            width=1,
-                            tag="g",
-                        )
-                    ] = True
+                    t = self.create_line(
+                        points,
+                        fill=self.table_grid_fg,
+                        capstyle=tk.BUTT,
+                        joinstyle=tk.ROUND,
+                        width=1,
+                        tag="g",
+                    )
+                self.disp_grid[t] = True
         if self.show_vertical_grid and col_pos_exists:
-            self.grid_cyc = cycle(self.grid_cyctup)
-            points = []
             if self.vertical_grid_to_end_of_window:
                 y_grid_stop = scrollpos_bot + can_height
             else:
@@ -5080,31 +5063,23 @@ class MainTable(tk.Canvas):
                     y_grid_stop = y_stop + 1
                 else:
                     y_grid_stop = y_stop - 1
-            for c in range(start_col - 1, end_col):
-                draw_x = self.col_positions[c]
-                st_or_end = next(self.grid_cyc)
-                if st_or_end == "st":
-                    points.extend(
+            points = list(
+                chain.from_iterable(
+                    [
                         [
-                            draw_x,
+                            self.col_positions[c],
                             scrollpos_top - 1,
-                            draw_x,
+                            self.col_positions[c],
                             y_grid_stop,
-                            self.col_positions[c + 1] if len(self.col_positions) - 1 > c else draw_x,
-                            y_grid_stop,
-                        ]
-                    )
-                elif st_or_end == "end":
-                    points.extend(
-                        [
-                            draw_x,
-                            y_grid_stop,
-                            draw_x,
+                            self.col_positions[c],
                             scrollpos_top - 1,
-                            self.col_positions[c + 1] if len(self.col_positions) - 1 > c else draw_x,
+                            self.col_positions[c + 1] if len(self.col_positions) - 1 > c else self.col_positions[c],
                             scrollpos_top - 1,
                         ]
-                    )
+                        for c in range(start_col - 1, end_col)
+                    ]
+                )
+            )
             if points:
                 if self.hidd_grid:
                     t, sh = self.hidd_grid.popitem()
@@ -5126,18 +5101,16 @@ class MainTable(tk.Canvas):
                             width=1,
                             state="normal",
                         )
-                    self.disp_grid[t] = True
                 else:
-                    self.disp_grid[
-                        self.create_line(
-                            points,
-                            fill=self.table_grid_fg,
-                            capstyle=tk.BUTT,
-                            joinstyle=tk.ROUND,
-                            width=1,
-                            tag="g",
-                        )
-                    ] = True
+                    t = self.create_line(
+                        points,
+                        fill=self.table_grid_fg,
+                        capstyle=tk.BUTT,
+                        joinstyle=tk.ROUND,
+                        width=1,
+                        tag="g",
+                    )
+                self.disp_grid[t] = True
         if start_row > 0:
             start_row -= 1
         if start_col > 0:
