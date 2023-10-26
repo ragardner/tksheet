@@ -1383,7 +1383,7 @@ class RowIndex(tk.Canvas):
                 if self.height_resizing_enabled:
                     self.visible_row_dividers[r] = (1, draw_y - 2, xend, draw_y + 2)
                 points.extend(
-                    [
+                    (
                         -1,
                         draw_y,
                         self.current_width,
@@ -1392,7 +1392,7 @@ class RowIndex(tk.Canvas):
                         draw_y,
                         -1,
                         self.MT.row_positions[r + 1] if len(self.MT.row_positions) - 1 > r else draw_y,
-                    ]
+                    )
                 )
             self.redraw_gridline(points=points, fill=self.index_grid_fg, width=1, tag="h")
         c_2 = (
@@ -1479,35 +1479,34 @@ class RowIndex(tk.Canvas):
                     mw = self.current_width - 1
                     draw_x = floor(self.current_width / 2)
             checkbox_kwargs = self.get_cell_kwargs(datarn, key="checkbox")
-            if checkbox_kwargs:
-                if mw > +2:
-                    box_w = self.MT.txt_h + 1
-                    mw -= box_w
-                    if align == "w":
-                        draw_x += box_w + 1
-                    elif align == "center":
-                        draw_x += ceil(box_w / 2) + 1
-                        mw -= 1
-                    else:
-                        mw -= 3
-                    try:
-                        draw_check = (
-                            self.MT._row_index[datarn]
-                            if isinstance(self.MT._row_index, (list, tuple))
-                            else self.MT.data[datarn][self.MT._row_index]
-                        )
-                    except Exception:
-                        draw_check = False
-                    self.redraw_checkbox(
-                        2,
-                        rtopgridln + 2,
-                        self.MT.txt_h + 3,
-                        rtopgridln + self.MT.txt_h + 3,
-                        fill=fill if checkbox_kwargs["state"] == "normal" else self.index_grid_fg,
-                        outline="",
-                        tag="cb",
-                        draw_check=draw_check,
+            if not dropdown_kwargs and checkbox_kwargs and mw > 2:
+                box_w = self.MT.txt_h + 1
+                mw -= box_w
+                if align == "w":
+                    draw_x += box_w + 1
+                elif align == "center":
+                    draw_x += ceil(box_w / 2) + 1
+                    mw -= 1
+                else:
+                    mw -= 3
+                try:
+                    draw_check = (
+                        self.MT._row_index[datarn]
+                        if isinstance(self.MT._row_index, (list, tuple))
+                        else self.MT.data[datarn][self.MT._row_index]
                     )
+                except Exception:
+                    draw_check = False
+                self.redraw_checkbox(
+                    2,
+                    rtopgridln + 2,
+                    self.MT.txt_h + 3,
+                    rtopgridln + self.MT.txt_h + 3,
+                    fill=fill if checkbox_kwargs["state"] == "normal" else self.index_grid_fg,
+                    outline="",
+                    tag="cb",
+                    draw_check=draw_check,
+                )
             lns = self.get_valid_cell_data_as_str(datarn, fix=False).split("\n")
             if lns == [""]:
                 if self.show_default_index_for_empty:
@@ -2016,11 +2015,13 @@ class RowIndex(tk.Canvas):
 
     def get_valid_cell_data_as_str(self, datarn, fix=True) -> str:
         kwargs = self.get_cell_kwargs(datarn, key="dropdown")
-        if kwargs and kwargs["text"] is not None:
-            return f"{kwargs['text']}"
-        kwargs = self.get_cell_kwargs(datarn, key="checkbox")
         if kwargs:
-            return f"{kwargs['text']}"
+            if kwargs["text"] is not None:
+                return f"{kwargs['text']}"
+        else:
+            kwargs = self.get_cell_kwargs(datarn, key="checkbox")
+            if kwargs:
+                return f"{kwargs['text']}"
         if isinstance(self.MT._row_index, int):
             return self.MT.get_valid_cell_data_as_str(datarn, self.MT._row_index, get_displayed=True)
         if fix:

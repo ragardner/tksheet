@@ -5010,7 +5010,7 @@ class MainTable(tk.Canvas):
             points = list(
                 chain.from_iterable(
                     [
-                        [
+                        (
                             self.canvasx(0) - 1,
                             self.row_positions[r],
                             x_grid_stop,
@@ -5019,7 +5019,7 @@ class MainTable(tk.Canvas):
                             self.row_positions[r],
                             self.canvasx(0) - 1,
                             self.row_positions[r + 1] if len(self.row_positions) - 1 > r else self.row_positions[r],
-                        ]
+                        )
                         for r in range(start_row - 1, end_row)
                     ]
                 )
@@ -5066,7 +5066,7 @@ class MainTable(tk.Canvas):
             points = list(
                 chain.from_iterable(
                     [
-                        [
+                        (
                             self.col_positions[c],
                             scrollpos_top - 1,
                             self.col_positions[c],
@@ -5075,7 +5075,7 @@ class MainTable(tk.Canvas):
                             scrollpos_top - 1,
                             self.col_positions[c + 1] if len(self.col_positions) - 1 > c else self.col_positions[c],
                             scrollpos_top - 1,
-                        ]
+                        )
                         for c in range(start_col - 1, end_col)
                     ]
                 )
@@ -5228,9 +5228,9 @@ class MainTable(tk.Canvas):
                         else:
                             mw = crightgridln - cleftgridln - 1
                             draw_x = cleftgridln + floor((crightgridln - cleftgridln) / 2)
-                    kwargs = self.get_cell_kwargs(datarn, datacn, key="checkbox")
-                    if kwargs:
-                        if mw > self.txt_h + 2:
+                    if not kwargs:
+                        kwargs = self.get_cell_kwargs(datarn, datacn, key="checkbox")
+                        if kwargs and mw > self.txt_h + 2:
                             box_w = self.txt_h + 1
                             mw -= box_w
                             if align == "w":
@@ -6873,11 +6873,13 @@ class MainTable(tk.Canvas):
     def get_valid_cell_data_as_str(self, datarn, datacn, get_displayed=False, **kwargs) -> str:
         if get_displayed:
             kwargs = self.get_cell_kwargs(datarn, datacn, key="dropdown")
-            if kwargs and kwargs["text"] is not None:
-                return f"{kwargs['text']}"
-            kwargs = self.get_cell_kwargs(datarn, datacn, key="checkbox")
             if kwargs:
-                return f"{kwargs['text']}"
+                if kwargs["text"] is not None:
+                    return f"{kwargs['text']}"
+            else:
+                kwargs = self.get_cell_kwargs(datarn, datacn, key="checkbox")
+                if kwargs:
+                    return f"{kwargs['text']}"
         value = self.data[datarn][datacn] if len(self.data) > datarn and len(self.data[datarn]) > datacn else ""
         kwargs = self.get_cell_kwargs(datarn, datacn, key="format")
         if kwargs:

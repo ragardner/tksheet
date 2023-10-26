@@ -1422,7 +1422,7 @@ class ColumnHeaders(tk.Canvas):
                 if self.width_resizing_enabled:
                     self.visible_col_dividers[c] = (draw_x - 2, 1, draw_x + 2, yend)
                 points.extend(
-                    [
+                    (
                         draw_x,
                         -1,
                         draw_x,
@@ -1431,7 +1431,7 @@ class ColumnHeaders(tk.Canvas):
                         -1,
                         self.MT.col_positions[c + 1] if len(self.MT.col_positions) - 1 > c else draw_x,
                         -1,
-                    ]
+                    )
                 )
             self.redraw_gridline(points=points, fill=self.header_grid_fg, width=1, tag="v")
         top = self.canvasy(0)
@@ -1521,9 +1521,9 @@ class ColumnHeaders(tk.Canvas):
                 else:
                     mw = crightgridln - cleftgridln - 1
                     draw_x = cleftgridln + floor((crightgridln - cleftgridln) / 2)
-            kwargs = self.get_cell_kwargs(datacn, key="checkbox")
-            if kwargs:
-                if mw > self.MT.header_txt_h + 2:
+            if not kwargs:
+                kwargs = self.get_cell_kwargs(datacn, key="checkbox")
+                if kwargs and mw > self.MT.header_txt_h + 2:
                     box_w = self.MT.header_txt_h + 1
                     mw -= box_w
                     if align == "w":
@@ -2072,11 +2072,13 @@ class ColumnHeaders(tk.Canvas):
 
     def get_valid_cell_data_as_str(self, datacn, fix=True) -> str:
         kwargs = self.get_cell_kwargs(datacn, key="dropdown")
-        if kwargs and kwargs["text"] is not None:
-            return f"{kwargs['text']}"
-        kwargs = self.get_cell_kwargs(datacn, key="checkbox")
         if kwargs:
-            return f"{kwargs['text']}"
+            if kwargs["text"] is not None:
+                return f"{kwargs['text']}"
+        else:
+            kwargs = self.get_cell_kwargs(datacn, key="checkbox")
+            if kwargs:
+                return f"{kwargs['text']}"
         if isinstance(self.MT._headers, int):
             return self.MT.get_valid_cell_data_as_str(self.MT._headers, datacn, get_displayed=True)
         if fix:
