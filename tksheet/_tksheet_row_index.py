@@ -1564,7 +1564,7 @@ class RowIndex(tk.Canvas):
                                     txt = txt[:-1]
                                     self.itemconfig(iid, text=txt)
                                     wd = self.bbox(iid)
-                            elif align == "e" and dropdown_kwargs:
+                            elif align == "e" and (dropdown_kwargs or checkbox_kwargs):
                                 txt = txt[len(txt) - int(len(txt) * (mw / wd)) :]
                                 self.itemconfig(iid, text=txt)
                                 wd = self.bbox(iid)

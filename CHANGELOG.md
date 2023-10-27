@@ -3,6 +3,7 @@
 - [#201](https://github.com/ragardner/tksheet/issues/201)
 - The ends of grid lines were incorrectly displaying connections with one another when only showing horizontal or vertical grid
 - When a cell dropdown and a row checkbox were in the same cell both would be drawn but only one would function, this has been changed to give dropdown boxes priority
+- Index text overlapping checkbox when alignment is `"right"`/`"e"`/`"east"` and index is not wide enough
 
 #### Added:
 - [#200](https://github.com/ragardner/tksheet/issues/200)
