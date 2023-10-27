@@ -16,6 +16,7 @@ from ._tksheet_other_classes import (
     get_checkbox_kwargs,
     get_dropdown_kwargs,
     is_iterable,
+    show_kwargs_warning,
 )
 from ._tksheet_row_index import RowIndex
 from ._tksheet_top_left_rectangle import TopLeftRectangle
@@ -2493,6 +2494,8 @@ class Sheet(tk.Frame):
         only_columns=None,
         **kwargs,
     ):
+        if kwargs:
+            show_kwargs_warning(kwargs, "get_sheet_data")
         if only_rows is not None:
             if isinstance(only_rows, int):
                 only_rows = (only_rows,)
@@ -2535,6 +2538,8 @@ class Sheet(tk.Frame):
             ]
 
     def get_cell_data(self, r, c, get_displayed=False, **kwargs):
+        if kwargs:
+            show_kwargs_warning(kwargs, "get_cell_data")
         return self.MT.get_cell_data(r, c, get_displayed)
 
     def get_row_data(
@@ -2546,6 +2551,8 @@ class Sheet(tk.Frame):
         only_columns=None,
         **kwargs,
     ):
+        if kwargs:
+            show_kwargs_warning(kwargs, "get_row_data")
         if only_columns is not None:
             if isinstance(only_columns, int):
                 only_columns = (only_columns,)
@@ -2575,6 +2582,8 @@ class Sheet(tk.Frame):
         only_rows=None,
         **kwargs,
     ):
+        if kwargs:
+            show_kwargs_warning(kwargs, "get_column_data")
         if only_rows is not None:
             if isinstance(only_rows, int):
                 only_rows = (only_rows,)
@@ -2596,6 +2605,8 @@ class Sheet(tk.Frame):
         only_columns=None,
         **kwargs,
     ):
+        if kwargs:
+            show_kwargs_warning(kwargs, "yield_sheet_rows")
         if only_rows is not None:
             if isinstance(only_rows, int):
                 only_rows = (only_rows,)

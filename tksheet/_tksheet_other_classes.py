@@ -4,12 +4,18 @@ import bisect
 import tkinter as tk
 from collections import namedtuple
 from itertools import islice
-
 from ._tksheet_vars import (
     ctrl_key,
     get_font,
     rc_binding,
 )
+import warnings
+
+
+def show_kwargs_warning(kwargs, name):
+    for kw in kwargs:
+        warnings.warn(f"Argument '{kw}' for function '{name}' is not valid or has been deprecated", stacklevel=2)
+
 
 CurrentlySelectedClass = namedtuple("CurrentlySelectedClass", "row column type_")
 CtrlKeyEvent = namedtuple("CtrlKeyEvent", "eventname selectionboxes currentlyselected rows")
@@ -288,6 +294,8 @@ def get_dropdown_kwargs(
     text=None,
     **kwargs,
 ):
+    if kwargs:
+        show_kwargs_warning(kwargs, "get_dropdown_kwargs")
     return {
         "values": values,
         "set_value": set_value,
@@ -316,6 +324,8 @@ def get_dropdown_dict(**kwargs):
 
 
 def get_checkbox_kwargs(checked=False, state="normal", redraw=True, check_function=None, text="", **kwargs):
+    if kwargs:
+        show_kwargs_warning(kwargs, "get_checkbox_kwargs")
     return {
         "checked": checked,
         "state": state,

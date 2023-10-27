@@ -1242,8 +1242,7 @@ class ColumnHeaders(tk.Canvas):
         coords = (x1 - 1 if outline else x1, y1 - 1 if outline else y1, x2, y2)
         if self.hidd_high:
             iid, showing = self.hidd_high.popitem()
-            if any(int(crd1) != int(crd2) for crd1, crd2 in zip(self.coords(iid), coords)):
-                self.coords(iid, coords)
+            self.coords(iid, coords)
             if showing:
                 self.itemconfig(iid, fill=fill, outline=outline)
             else:
@@ -1570,9 +1569,7 @@ class ColumnHeaders(tk.Canvas):
                     if draw_y > top:
                         if self.hidd_text:
                             iid, showing = self.hidd_text.popitem()
-                            iidx, iidy = self.coords(iid)
-                            if int(iidx) != int(draw_x) or int(iidy) != int(draw_y):
-                                self.coords(iid, draw_x, draw_y)
+                            self.coords(iid, draw_x, draw_y)
                             if showing:
                                 self.itemconfig(
                                     iid,
