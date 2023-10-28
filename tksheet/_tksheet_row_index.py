@@ -1509,7 +1509,7 @@ class RowIndex(tk.Canvas):
             lns = self.get_valid_cell_data_as_str(datarn, fix=False).split("\n")
             if lns == [""]:
                 if self.show_default_index_for_empty:
-                    lns = (get_n2a(r, self.default_index),)
+                    lns = (get_n2a(datarn, self.default_index),)
                 else:
                     continue
             draw_y = rtopgridln + self.MT.fl_ins

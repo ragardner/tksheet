@@ -1,3 +1,7 @@
+### Version 6.2.7
+#### Fixed:
+- [#202](https://github.com/ragardner/tksheet/issues/202)
+
 ### Version 6.2.6
 #### Fixed:
 - [#201](https://github.com/ragardner/tksheet/issues/201)

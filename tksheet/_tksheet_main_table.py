@@ -4730,6 +4730,44 @@ class MainTable(tk.Canvas):
             iid = self.create_rectangle(coords, fill=fill, outline=outline, tag=tag)
         self.disp_high[iid] = True
         return True
+    
+    def redraw_gridline(
+        self,
+        points,
+        fill,
+        width,
+        tag,
+    ):
+        if self.hidd_grid:
+            t, sh = self.hidd_grid.popitem()
+            self.coords(t, points)
+            if sh:
+                self.itemconfig(
+                    t,
+                    fill=fill,
+                    width=width,
+                    capstyle=tk.BUTT,
+                    joinstyle=tk.ROUND,
+                )
+            else:
+                self.itemconfig(
+                    t,
+                    fill=fill,
+                    width=width,
+                    capstyle=tk.BUTT,
+                    joinstyle=tk.ROUND,
+                    state="normal",
+                )
+        else:
+            t = self.create_line(
+                points,
+                fill=fill,
+                width=width,
+                capstyle=tk.BUTT,
+                joinstyle=tk.ROUND,
+                tag=tag,
+            )
+        self.disp_grid[t] = True
 
     def redraw_dropdown(
         self,
@@ -5024,36 +5062,12 @@ class MainTable(tk.Canvas):
                 )
             )
             if points:
-                if self.hidd_grid:
-                    t, sh = self.hidd_grid.popitem()
-                    self.coords(t, points)
-                    if sh:
-                        self.itemconfig(
-                            t,
-                            fill=self.table_grid_fg,
-                            capstyle=tk.BUTT,
-                            joinstyle=tk.ROUND,
-                            width=1,
-                        )
-                    else:
-                        self.itemconfig(
-                            t,
-                            fill=self.table_grid_fg,
-                            capstyle=tk.BUTT,
-                            joinstyle=tk.ROUND,
-                            width=1,
-                            state="normal",
-                        )
-                else:
-                    t = self.create_line(
-                        points,
-                        fill=self.table_grid_fg,
-                        capstyle=tk.BUTT,
-                        joinstyle=tk.ROUND,
-                        width=1,
-                        tag="g",
-                    )
-                self.disp_grid[t] = True
+                self.redraw_gridline(
+                    points=points,
+                    fill=self.table_grid_fg,
+                    width=1,
+                    tag="g",
+                )
         if self.show_vertical_grid and col_pos_exists:
             if self.vertical_grid_to_end_of_window:
                 y_grid_stop = scrollpos_bot + can_height
@@ -5080,36 +5094,12 @@ class MainTable(tk.Canvas):
                 )
             )
             if points:
-                if self.hidd_grid:
-                    t, sh = self.hidd_grid.popitem()
-                    self.coords(t, points)
-                    if sh:
-                        self.itemconfig(
-                            t,
-                            fill=self.table_grid_fg,
-                            capstyle=tk.BUTT,
-                            joinstyle=tk.ROUND,
-                            width=1,
-                        )
-                    else:
-                        self.itemconfig(
-                            t,
-                            fill=self.table_grid_fg,
-                            capstyle=tk.BUTT,
-                            joinstyle=tk.ROUND,
-                            width=1,
-                            state="normal",
-                        )
-                else:
-                    t = self.create_line(
-                        points,
-                        fill=self.table_grid_fg,
-                        capstyle=tk.BUTT,
-                        joinstyle=tk.ROUND,
-                        width=1,
-                        tag="g",
-                    )
-                self.disp_grid[t] = True
+                self.redraw_gridline(
+                    points=points,
+                    fill=self.table_grid_fg,
+                    width=1,
+                    tag="g",
+                )
         if start_row > 0:
             start_row -= 1
         if start_col > 0:
