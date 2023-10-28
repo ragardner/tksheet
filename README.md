@@ -2,8 +2,6 @@
 
 ## **Python tkinter table widget**
 
-----
-
 ```python
 #To install using pip
 pip install tksheet
@@ -14,8 +12,6 @@ pip install tksheet --upgrade
 
 ## **Help**
 
-----
-
 - [Documentation](https://github.com/ragardner/tksheet/wiki/Version-6)
 - [Changelog](https://github.com/ragardner/tksheet/blob/master/CHANGELOG.md)
 - [Questions](https://github.com/ragardner/tksheet/wiki/Version-6#asking-questions)
@@ -23,12 +19,11 @@ pip install tksheet --upgrade
 - [Suggestions](https://github.com/ragardner/tksheet/wiki/Version-6#enhancements-or-suggestions)
 - This library is maintained with the help of **[others](https://github.com/ragardner/tksheet/graphs/contributors)**. If you would like to contribute please read [this help section](https://github.com/ragardner/tksheet/wiki/Version-6#contributing).
 
-### **NOTICE:** 
+### **NOTICE:**
+
 With versions `5.5.0`+ if you use `extra_bindings()` with `"edit_cell"`/`"end_edit_cell"` you must provide a return value in your bound function to set the cell value to. To disable this behavior in these versions use option `edit_cell_validation = False` in your `Sheet()` initialisation arguments or use `set_options(edit_cell_validation = False)`. [See here](https://github.com/ragardner/tksheet/issues/170#issuecomment-1522236289) for more information on this issue and if you need to *very* directly set the cell data.
 
 ## **Features**
-
-----
 
 - Display and modify tabular data
 - Stores its display data as a Python list of lists, sublists being rows
@@ -46,12 +41,8 @@ With versions `5.5.0`+ if you use `extra_bindings()` with `"edit_cell"`/`"end_ed
 
 ### **light blue theme**
 
-----
-
 ![tksheet light blue theme](https://i.imgur.com/ojU3IQi.jpeg)
 
 ### **black theme**
-
-----
 
 ![tksheet black theme](https://i.imgur.com/JeF9vJe.jpeg)
