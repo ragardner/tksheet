@@ -29,8 +29,6 @@ from .functions import (
 )
 from .other_classes import (
     DraggedRowColumn,
-    DrawnItem,
-    TextCfg,
     TextEditor,
 )
 from .vars import (
@@ -65,8 +63,6 @@ class RowIndex(tk.Canvas):
         self.closed_dropdown = None
         self.centre_alignment_text_mod_indexes = (slice(1, None), slice(None, -1))
         self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
-        self.grid_cyctup = ("st", "end")
-        self.grid_cyc = cycle(self.grid_cyctup)
         self.being_drawn_item = None
         self.extra_motion_func = None
         self.extra_b1_press_func = None
@@ -100,16 +96,16 @@ class RowIndex(tk.Canvas):
         self.currently_resizing_height = False
         self.ri_rc_popup_menu = None
 
-        self.disp_text = defaultdict(set)
-        self.disp_high = defaultdict(set)
+        self.disp_text = {}
+        self.disp_high = {}
         self.disp_grid = {}
         self.disp_fill_sels = {}
         self.disp_bord_sels = {}
         self.disp_resize_lines = {}
         self.disp_dropdown = {}
         self.disp_checkbox = {}
-        self.hidd_text = defaultdict(set)
-        self.hidd_high = defaultdict(set)
+        self.hidd_text = {}
+        self.hidd_high = {}
         self.hidd_grid = {}
         self.hidd_fill_sels = {}
         self.hidd_bord_sels = {}
@@ -1165,44 +1161,17 @@ class RowIndex(tk.Canvas):
         return tf, redrawn
 
     def redraw_highlight(self, x1, y1, x2, y2, fill, outline, tag):
-        config = (fill, outline)
         coords = (x1, y1, x2, y2)
-        k = None
-        if config in self.hidd_high:
-            k = config
-            iid, showing = self.hidd_high[k].pop()
-            if all(int(crd1) == int(crd2) for crd1, crd2 in zip(self.coords(iid), coords)):
-                option = 0 if showing else 2
-            else:
-                option = 1 if showing else 3
-
-        elif self.hidd_high:
-            k = next(iter(self.hidd_high))
-            iid, showing = self.hidd_high[k].pop()
-            if all(int(crd1) == int(crd2) for crd1, crd2 in zip(self.coords(iid), coords)):
-                option = 2 if showing else 3
-            else:
-                option = 3
-
-        else:
-            iid, showing, option = (
-                self.create_rectangle(coords, fill=fill, outline=outline, tag=tag),
-                1,
-                4,
-            )
-
-        if option in (1, 3):
+        if self.hidd_high:
+            iid, showing = self.hidd_high.popitem()
             self.coords(iid, coords)
-        if option in (2, 3):
             if showing:
                 self.itemconfig(iid, fill=fill, outline=outline)
             else:
                 self.itemconfig(iid, fill=fill, outline=outline, tag=tag, state="normal")
-
-        if k is not None and not self.hidd_high[k]:
-            del self.hidd_high[k]
-
-        self.disp_high[config].add(DrawnItem(iid=iid, showing=1))
+        else:
+            iid = self.create_rectangle(coords, fill=fill, outline=outline, tag=tag)
+        self.disp_high[iid] = True
         return True
 
     def redraw_gridline(self, points, fill, width, tag):
@@ -1326,18 +1295,10 @@ class RowIndex(tk.Canvas):
             )
         except Exception:
             return
-        for k, v in self.disp_text.items():
-            if k in self.hidd_text:
-                self.hidd_text[k] = self.hidd_text[k] | self.disp_text[k]
-            else:
-                self.hidd_text[k] = v
-        self.disp_text = defaultdict(set)
-        for k, v in self.disp_high.items():
-            if k in self.hidd_high:
-                self.hidd_high[k] = self.hidd_high[k] | self.disp_high[k]
-            else:
-                self.hidd_high[k] = v
-        self.disp_high = defaultdict(set)
+        self.hidd_text.update(self.disp_text)
+        self.disp_text = {}
+        self.hidd_high.update(self.disp_high)
+        self.disp_high = {}
         self.hidd_grid.update(self.disp_grid)
         self.disp_grid = {}
         self.hidd_dropdown.update(self.disp_dropdown)
@@ -1354,7 +1315,6 @@ class RowIndex(tk.Canvas):
             scrollpos_bot,
         )
         if (self.MT.show_horizontal_grid or self.height_resizing_enabled) and row_pos_exists:
-            self.grid_cyc = cycle(self.grid_cyctup)
             points = [
                 self.current_width - 1,
                 y_stop - 1,
@@ -1367,31 +1327,19 @@ class RowIndex(tk.Canvas):
                 draw_y = self.MT.row_positions[r]
                 if self.height_resizing_enabled:
                     self.visible_row_dividers[r] = (1, draw_y - 2, xend, draw_y + 2)
-                st_or_end = next(self.grid_cyc)
-                if st_or_end == "st":
-                    points.extend(
-                        [
-                            -1,
-                            draw_y,
-                            self.current_width,
-                            draw_y,
-                            self.current_width,
-                            self.MT.row_positions[r + 1] if len(self.MT.row_positions) - 1 > r else draw_y,
-                        ]
+                points.extend(
+                    (
+                        -1,
+                        draw_y,
+                        self.current_width,
+                        draw_y,
+                        -1,
+                        draw_y,
+                        -1,
+                        self.MT.row_positions[r + 1] if len(self.MT.row_positions) - 1 > r else draw_y,
                     )
-                elif st_or_end == "end":
-                    points.extend(
-                        [
-                            self.current_width,
-                            draw_y,
-                            -1,
-                            draw_y,
-                            -1,
-                            self.MT.row_positions[r + 1] if len(self.MT.row_positions) - 1 > r else draw_y,
-                        ]
-                    )
-                if points:
-                    self.redraw_gridline(points=points, fill=self.index_grid_fg, width=1, tag="h")
+                )
+            self.redraw_gridline(points=points, fill=self.index_grid_fg, width=1, tag="h")
         c_2 = (
             self.index_selected_cells_bg
             if self.index_selected_cells_bg.startswith("#")
@@ -1476,7 +1424,7 @@ class RowIndex(tk.Canvas):
                     mw = self.current_width - 1
                     draw_x = floor(self.current_width / 2)
             checkbox_kwargs = self.get_cell_kwargs(datarn, key="checkbox")
-            if checkbox_kwargs and mw > self.MT.index_txt_height + 1:
+            if checkbox_kwargs and not dropdown_kwargs and mw > self.MT.index_txt_height + 1:
                 box_w = self.MT.index_txt_height + 1
                 if align == "w":
                     draw_x += box_w + 3
@@ -1517,45 +1465,17 @@ class RowIndex(tk.Canvas):
                 draw_y += start_ln * self.MT.index_xtra_lines_increment
                 if draw_y + self.MT.index_half_txt_height - 1 <= rbotgridln and len(lns) > start_ln:
                     for txt in islice(lns, start_ln, None):
-                        config = TextCfg(txt, fill, font, align)
-                        k = None
-                        if config in self.hidd_text:
-                            k = config
-                            iid, showing = self.hidd_text[k].pop()
-                            cc1, cc2 = self.coords(iid)
-                            if int(cc1) == int(draw_x) and int(cc2) == int(draw_y):
-                                option = 0 if showing else 2
-                            else:
-                                option = 1 if showing else 3
-                            self.tag_raise(iid)
-                        elif self.hidd_text:
-                            k = next(iter(self.hidd_text))
-                            iid, showing = self.hidd_text[k].pop()
-                            cc1, cc2 = self.coords(iid)
-                            if int(cc1) == int(draw_x) and int(cc2) == int(draw_y):
-                                option = 2 if showing else 3
-                            else:
-                                option = 3
-                            self.tag_raise(iid)
-                        else:
-                            iid, showing, option = (
-                                self.create_text(
-                                    draw_x,
-                                    draw_y,
+                        if self.hidd_text:
+                            iid, showing = self.hidd_text.popitem()
+                            self.coords(iid, draw_x, draw_y)
+                            if showing:
+                                self.itemconfig(
+                                    iid,
                                     text=txt,
                                     fill=fill,
                                     font=font,
                                     anchor=align,
-                                    tag="t",
-                                ),
-                                1,
-                                4,
-                            )
-                        if option in (1, 3):
-                            self.coords(iid, draw_x, draw_y)
-                        if option in (2, 3):
-                            if showing:
-                                self.itemconfig(iid, text=txt, fill=fill, font=font, anchor=align)
+                                )
                             else:
                                 self.itemconfig(
                                     iid,
@@ -1565,8 +1485,18 @@ class RowIndex(tk.Canvas):
                                     anchor=align,
                                     state="normal",
                                 )
-                        if k is not None and not self.hidd_text[k]:
-                            del self.hidd_text[k]
+                            self.tag_raise(iid)
+                        else:
+                            iid = self.create_text(
+                                draw_x,
+                                draw_y,
+                                text=txt,
+                                fill=fill,
+                                font=font,
+                                anchor=align,
+                                tag="t",
+                            )
+                        self.disp_text[iid] = True
                         wd = self.bbox(iid)
                         wd = wd[2] - wd[0]
                         if wd > mw:
@@ -1578,7 +1508,7 @@ class RowIndex(tk.Canvas):
                                     txt = txt[:-1]
                                     self.itemconfig(iid, text=txt)
                                     wd = self.bbox(iid)
-                            elif align == "e" and dropdown_kwargs:
+                            elif align == "e" and (dropdown_kwargs or checkbox_kwargs):
                                 txt = txt[len(txt) - int(len(txt) * (mw / wd)) :]
                                 self.itemconfig(iid, text=txt)
                                 wd = self.bbox(iid)
@@ -1597,36 +1527,14 @@ class RowIndex(tk.Canvas):
                                     self.itemconfig(iid, text=txt)
                                     wd = self.bbox(iid)
                                 self.coords(iid, draw_x, draw_y)
-                            self.disp_text[config._replace(txt=txt)].add(DrawnItem(iid=iid, showing=True))
-                        else:
-                            self.disp_text[config].add(DrawnItem(iid=iid, showing=True))
                         draw_y += self.MT.index_xtra_lines_increment
                         if draw_y + self.MT.index_half_txt_height - 1 > rbotgridln:
                             break
-        for cfg, set_ in self.hidd_text.items():
-            for namedtup in tuple(set_):
-                if namedtup.showing:
-                    self.itemconfig(namedtup.iid, state="hidden")
-                    self.hidd_text[cfg].discard(namedtup)
-                    self.hidd_text[cfg].add(namedtup._replace(showing=False))
-        for cfg, set_ in self.hidd_high.items():
-            for namedtup in tuple(set_):
-                if namedtup.showing:
-                    self.itemconfig(namedtup.iid, state="hidden")
-                    self.hidd_high[cfg].discard(namedtup)
-                    self.hidd_high[cfg].add(namedtup._replace(showing=False))
-        for t, sh in self.hidd_grid.items():
-            if sh:
-                self.itemconfig(t, state="hidden")
-                self.hidd_grid[t] = False
-        for t, sh in self.hidd_dropdown.items():
-            if sh:
-                self.itemconfig(t, state="hidden")
-                self.hidd_dropdown[t] = False
-        for t, sh in self.hidd_checkbox.items():
-            if sh:
-                self.itemconfig(t, state="hidden")
-                self.hidd_checkbox[t] = False
+        for dct in (self.hidd_text, self.hidd_high, self.hidd_grid, self.hidd_dropdown, self.hidd_checkbox):
+            for iid, showing in dct.items():
+                if showing:
+                    self.itemconfig(iid, state="hidden")
+                    dct[iid] = False
         return True
 
     def get_redraw_selections(self, startr, endr):
@@ -2053,11 +1961,13 @@ class RowIndex(tk.Canvas):
 
     def get_valid_cell_data_as_str(self, datarn, fix=True) -> str:
         kwargs = self.get_cell_kwargs(datarn, key="dropdown")
-        if kwargs and kwargs["text"] is not None:
-            return f"{kwargs['text']}"
-        kwargs = self.get_cell_kwargs(datarn, key="checkbox")
         if kwargs:
-            return f"{kwargs['text']}"
+            if kwargs["text"] is not None:
+                return f"{kwargs['text']}"
+        else:
+            kwargs = self.get_cell_kwargs(datarn, key="checkbox")
+            if kwargs:
+                return f"{kwargs['text']}"
         if isinstance(self.MT._row_index, int):
             return self.MT.get_valid_cell_data_as_str(datarn, self.MT._row_index, get_displayed=True)
         if fix:

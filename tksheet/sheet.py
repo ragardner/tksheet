@@ -37,7 +37,7 @@ from .other_classes import (
     DotDict,
     GeneratedMouseEvent,
     SpanDict,
-    CurrentlySelectedClass, # noqa: F401
+    CurrentlySelectedClass,  # noqa: F401
 )
 from .row_index import RowIndex
 from .top_left_rectangle import TopLeftRectangle
@@ -2936,7 +2936,7 @@ class Sheet(tk.Frame):
         get_index_displayed: bool = True,
         only_rows: Iterator | int | None = None,
         only_columns: Iterator | int | None = None,
-    ) -> list:
+    ) -> list[object]:
         if only_rows is not None:
             if isinstance(only_rows, int):
                 only_rows = (only_rows,)
@@ -2976,17 +2976,17 @@ class Sheet(tk.Frame):
                 for rn in iterable
             ]
 
-    def get_cell_data(self, r, c, get_displayed: bool = False):
+    def get_cell_data(self, r: int, c: int, get_displayed: bool = False) -> object:
         return self.MT.get_cell_data(r, c, get_displayed)
 
     def get_row_data(
         self,
-        r,
+        r: int,
         get_displayed: bool = False,
         get_index: bool = False,
         get_index_displayed: bool = True,
-        only_columns=None,
-    ):
+        only_columns: int | Iterator | None = None,
+    ) -> list[object]:
         if only_columns is not None:
             if isinstance(only_columns, int):
                 only_columns = (only_columns,)
@@ -3007,12 +3007,12 @@ class Sheet(tk.Frame):
 
     def get_column_data(
         self,
-        c,
+        c: int,
         get_displayed: bool = False,
         get_header: bool = False,
         get_header_displayed: bool = True,
-        only_rows=None,
-    ):
+        only_rows: int | Iterator | None = None,
+    ) -> list[object]:
         if only_rows is not None:
             if isinstance(only_rows, int):
                 only_rows = (only_rows,)
@@ -3030,9 +3030,9 @@ class Sheet(tk.Frame):
         get_index: bool = False,
         get_index_displayed: bool = True,
         get_header_displayed: bool = True,
-        only_rows=None,
-        only_columns=None,
-    ):
+        only_rows: int | Iterator | None = None,
+        only_columns: int | Iterator | None = None,
+    ) -> Iterator[list[object]]:
         if only_rows is not None:
             if isinstance(only_rows, int):
                 only_rows = (only_rows,)
@@ -3103,12 +3103,12 @@ class Sheet(tk.Frame):
 
     def set_row_data(
         self,
-        r,
+        r: int,
         values=tuple(),
         add_columns: bool = True,
         redraw: bool = True,
         keep_formatting: bool = True,
-    ):
+    ) -> None:
         if r >= len(self.MT.data):
             raise Exception("Row number is out of range")
         if not keep_formatting:
@@ -3135,12 +3135,12 @@ class Sheet(tk.Frame):
 
     def set_column_data(
         self,
-        c,
+        c: int,
         values=tuple(),
         add_rows: bool = True,
         redraw: bool = True,
         keep_formatting: bool = True,
-    ):
+    ) -> None:
         if not keep_formatting:
             self.MT.delete_column_format(c, clear_values=False)
         if add_rows:

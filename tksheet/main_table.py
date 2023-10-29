@@ -3,11 +3,33 @@ from __future__ import annotations
 import csv as csv
 import io
 import tkinter as tk
-from bisect import bisect_left, bisect_right
-from collections import defaultdict, deque
-from collections.abc import Callable, Generator, Hashable, Iterator, Sequence
-from itertools import accumulate, chain, cycle, islice, product, repeat
-from math import ceil, floor
+from bisect import (
+    bisect_left,
+    bisect_right,
+)
+from collections import (
+    defaultdict,
+    deque,
+)
+from collections.abc import (
+    Callable,
+    Generator,
+    Hashable,
+    Iterator,
+    Sequence,
+)
+from itertools import (
+    accumulate,
+    chain,
+    cycle,
+    islice,
+    product,
+    repeat,
+)
+from math import (
+    ceil,
+    floor,
+)
 from tkinter import TclError
 
 from .formatters import (
@@ -41,8 +63,19 @@ from .functions import (
     try_binding,
     unpickle_obj,
 )
-from .other_classes import CurrentlySelectedClass, DrawnItem, TextCfg, TextEditor
-from .vars import USER_OS, Color_Map, arrowkey_bindings_helper, ctrl_key, rc_binding, symbols_set, val_modifying_options
+from .other_classes import (
+    CurrentlySelectedClass,
+    TextEditor,
+)
+from .vars import (
+    USER_OS,
+    Color_Map,
+    arrowkey_bindings_helper,
+    ctrl_key,
+    rc_binding,
+    symbols_set,
+    val_modifying_options,
+)
 
 
 class MainTable(tk.Canvas):
@@ -63,15 +96,13 @@ class MainTable(tk.Canvas):
         self.last_selected = None
         self.centre_alignment_text_mod_indexes = (slice(1, None), slice(None, -1))
         self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
-        self.grid_cyctup = ("st", "end")
-        self.grid_cyc = cycle(self.grid_cyctup)
         self.span = self.parentframe.span
         self.synced_scrolls = set()
         self.set_cell_sizes_on_zoom = kwargs["set_cell_sizes_on_zoom"]
 
         self.disp_ctrl_outline = {}
-        self.disp_text = defaultdict(set)
-        self.disp_high = defaultdict(set)
+        self.disp_text = {}
+        self.disp_high = {}
         self.disp_grid = {}
         self.disp_fill_sels = {}
         self.disp_bord_sels = {}
@@ -79,8 +110,8 @@ class MainTable(tk.Canvas):
         self.disp_dropdown = {}
         self.disp_checkbox = {}
         self.hidd_ctrl_outline = {}
-        self.hidd_text = defaultdict(set)
-        self.hidd_high = defaultdict(set)
+        self.hidd_text = {}
+        self.hidd_high = {}
         self.hidd_grid = {}
         self.hidd_fill_sels = {}
         self.hidd_bord_sels = {}
@@ -5121,7 +5152,6 @@ class MainTable(tk.Canvas):
         return tf, redrawn
 
     def redraw_highlight(self, x1, y1, x2, y2, fill, outline, tag, can_width=None, pc=None):
-        config = (fill, outline)
         if not is_type_int(pc) or pc >= 100 or pc <= 0:
             coords = (
                 x1 - 1 if outline else x1,
@@ -5131,38 +5161,56 @@ class MainTable(tk.Canvas):
             )
         else:
             coords = (x1, y1, (x2 - x1) * (pc / 100), y2)
-        k = None
-        if config in self.hidd_high:
-            k = config
-            iid, showing = self.hidd_high[k].pop()
-            if all(int(crd1) == int(crd2) for crd1, crd2 in zip(self.coords(iid), coords)):
-                option = 0 if showing else 2
-            else:
-                option = 1 if showing else 3
-        elif self.hidd_high:
-            k = next(iter(self.hidd_high))
-            iid, showing = self.hidd_high[k].pop()
-            if all(int(crd1) == int(crd2) for crd1, crd2 in zip(self.coords(iid), coords)):
-                option = 2 if showing else 3
-            else:
-                option = 3
-        else:
-            iid, showing, option = (
-                self.create_rectangle(coords, fill=fill, outline=outline, tag=tag),
-                1,
-                4,
-            )
-        if option in (1, 3):
+        if self.hidd_high:
+            iid, showing = self.hidd_high.popitem()
             self.coords(iid, coords)
-        if option in (2, 3):
             if showing:
                 self.itemconfig(iid, fill=fill, outline=outline)
             else:
                 self.itemconfig(iid, fill=fill, outline=outline, tag=tag, state="normal")
-        if k is not None and not self.hidd_high[k]:
-            del self.hidd_high[k]
-        self.disp_high[config].add(DrawnItem(iid=iid, showing=1))
+        else:
+            iid = self.create_rectangle(coords, fill=fill, outline=outline, tag=tag)
+        self.disp_high[iid] = True
         return True
+
+    def redraw_gridline(
+        self,
+        points,
+        fill,
+        width,
+        tag,
+    ):
+        if self.hidd_grid:
+            iid, sh = self.hidd_grid.popitem()
+            self.coords(iid, points)
+            if sh:
+                self.itemconfig(
+                    iid,
+                    fill=fill,
+                    width=width,
+                    capstyle=tk.BUTT,
+                    joinstyle=tk.ROUND,
+                )
+            else:
+                self.itemconfig(
+                    iid,
+                    fill=fill,
+                    width=width,
+                    capstyle=tk.BUTT,
+                    joinstyle=tk.ROUND,
+                    state="normal",
+                )
+        else:
+            iid = self.create_line(
+                points,
+                fill=fill,
+                width=width,
+                capstyle=tk.BUTT,
+                joinstyle=tk.ROUND,
+                tag=tag,
+            )
+        self.disp_grid[iid] = True
+        return iid
 
     def redraw_dropdown(
         self,
@@ -5385,25 +5433,16 @@ class MainTable(tk.Canvas):
             scrollpos_right,
             scrollpos_top + 2,
         )
-        for k, v in self.disp_text.items():
-            if k in self.hidd_text:
-                self.hidd_text[k] = self.hidd_text[k] | self.disp_text[k]
-            else:
-                self.hidd_text[k] = v
-        self.disp_text = defaultdict(set)
-        for k, v in self.disp_high.items():
-            if k in self.hidd_high:
-                self.hidd_high[k] = self.hidd_high[k] | self.disp_high[k]
-            else:
-                self.hidd_high[k] = v
-        self.disp_high = defaultdict(set)
+        self.hidd_text.update(self.disp_text)
+        self.disp_text = {}
+        self.hidd_high.update(self.disp_high)
+        self.disp_high = {}
         self.hidd_grid.update(self.disp_grid)
         self.disp_grid = {}
         self.hidd_dropdown.update(self.disp_dropdown)
         self.disp_dropdown = {}
         self.hidd_checkbox.update(self.disp_checkbox)
         self.disp_checkbox = {}
-
         if not scrollpos_right >= self.col_positions[-1]:
             end_col += 1
         if last_col_line_pos > scrollpos_right:
@@ -5416,8 +5455,6 @@ class MainTable(tk.Canvas):
             y_stop = last_row_line_pos
         horizontal_grid_iid = None
         if redraw_table and self.show_horizontal_grid and row_pos_exists:
-            self.grid_cyc = cycle(self.grid_cyctup)
-            points = []
             if self.horizontal_grid_to_end_of_window:
                 x_grid_stop = scrollpos_right + can_width
             else:
@@ -5425,67 +5462,32 @@ class MainTable(tk.Canvas):
                     x_grid_stop = x_stop + 1
                 else:
                     x_grid_stop = x_stop - 1
-            for r in range(start_row - 1, end_row):
-                draw_y = self.row_positions[r]
-                st_or_end = next(self.grid_cyc)
-                if st_or_end == "st":
-                    points.extend(
-                        [
+            points = list(
+                chain.from_iterable(
+                    [
+                        (
                             self.canvasx(0) - 1,
-                            draw_y,
+                            self.row_positions[r],
                             x_grid_stop,
-                            draw_y,
-                            x_grid_stop,
-                            self.row_positions[r + 1] if len(self.row_positions) - 1 > r else draw_y,
-                        ]
-                    )
-                elif st_or_end == "end":
-                    points.extend(
-                        [
-                            x_grid_stop,
-                            draw_y,
+                            self.row_positions[r],
                             self.canvasx(0) - 1,
-                            draw_y,
+                            self.row_positions[r],
                             self.canvasx(0) - 1,
-                            self.row_positions[r + 1] if len(self.row_positions) - 1 > r else draw_y,
-                        ]
-                    )
+                            self.row_positions[r + 1] if len(self.row_positions) - 1 > r else self.row_positions[r],
+                        )
+                        for r in range(start_row - 1, end_row)
+                    ]
+                )
+            )
             if points:
-                if self.hidd_grid:
-                    horizontal_grid_iid, sh = self.hidd_grid.popitem()
-                    self.coords(horizontal_grid_iid, points)
-                    if sh:
-                        self.itemconfig(
-                            horizontal_grid_iid,
-                            fill=self.table_grid_fg,
-                            capstyle=tk.BUTT,
-                            joinstyle=tk.ROUND,
-                            width=1,
-                        )
-                    else:
-                        self.itemconfig(
-                            horizontal_grid_iid,
-                            fill=self.table_grid_fg,
-                            capstyle=tk.BUTT,
-                            joinstyle=tk.ROUND,
-                            width=1,
-                            state="normal",
-                        )
-                    self.disp_grid[horizontal_grid_iid] = True
-                else:
-                    horizontal_grid_iid = self.create_line(
-                        points,
-                        fill=self.table_grid_fg,
-                        capstyle=tk.BUTT,
-                        joinstyle=tk.ROUND,
-                        width=1,
-                        tag="g",
-                    )
-                    self.disp_grid[horizontal_grid_iid] = True
+                horizontal_grid_iid = self.redraw_gridline(
+                    points=points,
+                    fill=self.table_grid_fg,
+                    width=1,
+                    tag="g",
+                )
         vertical_grid_iid = None
         if redraw_table and self.show_vertical_grid and col_pos_exists:
-            self.grid_cyc = cycle(self.grid_cyctup)
-            points = []
             if self.vertical_grid_to_end_of_window:
                 y_grid_stop = scrollpos_bot + can_height
             else:
@@ -5493,63 +5495,30 @@ class MainTable(tk.Canvas):
                     y_grid_stop = y_stop + 1
                 else:
                     y_grid_stop = y_stop - 1
-            for c in range(start_col - 1, end_col):
-                draw_x = self.col_positions[c]
-                st_or_end = next(self.grid_cyc)
-                if st_or_end == "st":
-                    points.extend(
-                        [
-                            draw_x,
+            points = list(
+                chain.from_iterable(
+                    [
+                        (
+                            self.col_positions[c],
                             scrollpos_top - 1,
-                            draw_x,
+                            self.col_positions[c],
                             y_grid_stop,
-                            self.col_positions[c + 1] if len(self.col_positions) - 1 > c else draw_x,
-                            y_grid_stop,
-                        ]
-                    )
-                elif st_or_end == "end":
-                    points.extend(
-                        [
-                            draw_x,
-                            y_grid_stop,
-                            draw_x,
+                            self.col_positions[c],
                             scrollpos_top - 1,
-                            self.col_positions[c + 1] if len(self.col_positions) - 1 > c else draw_x,
+                            self.col_positions[c + 1] if len(self.col_positions) - 1 > c else self.col_positions[c],
                             scrollpos_top - 1,
-                        ]
-                    )
+                        )
+                        for c in range(start_col - 1, end_col)
+                    ]
+                )
+            )
             if points:
-                if self.hidd_grid:
-                    vertical_grid_iid, sh = self.hidd_grid.popitem()
-                    self.coords(vertical_grid_iid, points)
-                    if sh:
-                        self.itemconfig(
-                            vertical_grid_iid,
-                            fill=self.table_grid_fg,
-                            capstyle=tk.BUTT,
-                            joinstyle=tk.ROUND,
-                            width=1,
-                        )
-                    else:
-                        self.itemconfig(
-                            vertical_grid_iid,
-                            fill=self.table_grid_fg,
-                            capstyle=tk.BUTT,
-                            joinstyle=tk.ROUND,
-                            width=1,
-                            state="normal",
-                        )
-                    self.disp_grid[vertical_grid_iid] = True
-                else:
-                    vertical_grid_iid = self.create_line(
-                        points,
-                        fill=self.table_grid_fg,
-                        capstyle=tk.BUTT,
-                        joinstyle=tk.ROUND,
-                        width=1,
-                        tag="g",
-                    )
-                    self.disp_grid[vertical_grid_iid] = True
+                vertical_grid_iid = self.redraw_gridline(
+                    points=points,
+                    fill=self.table_grid_fg,
+                    width=1,
+                    tag="g",
+                )
         if start_row > 0:
             start_row -= 1
         if start_col > 0:
@@ -5667,31 +5636,32 @@ class MainTable(tk.Canvas):
                         else:
                             mw = crightgridln - cleftgridln - 1
                             draw_x = cleftgridln + floor((crightgridln - cleftgridln) / 2)
-                    kwargs = self.get_cell_kwargs(datarn, datacn, key="checkbox")
-                    if kwargs and mw > self.table_txt_height + 1:
-                        box_w = self.table_txt_height + 1
-                        if align == "w":
-                            draw_x += box_w + 3
-                            mw -= box_w + 3
-                        elif align == "center":
-                            draw_x += ceil(box_w / 2) + 1
-                            mw -= box_w + 2
-                        else:
-                            mw -= box_w + 1
-                        try:
-                            draw_check = self.data[datarn][datacn]
-                        except Exception:
-                            draw_check = False
-                        self.redraw_checkbox(
-                            cleftgridln + 2,
-                            rtopgridln + 2,
-                            cleftgridln + self.table_txt_height + 3,
-                            rtopgridln + self.table_txt_height + 3,
-                            fill=fill if kwargs["state"] == "normal" else self.table_grid_fg,
-                            outline="",
-                            tag="cb",
-                            draw_check=draw_check,
-                        )
+                    if not kwargs:
+                        kwargs = self.get_cell_kwargs(datarn, datacn, key="checkbox")
+                        if kwargs and mw > self.table_txt_height + 1:
+                            box_w = self.table_txt_height + 1
+                            if align == "w":
+                                draw_x += box_w + 3
+                                mw -= box_w + 3
+                            elif align == "center":
+                                draw_x += ceil(box_w / 2) + 1
+                                mw -= box_w + 2
+                            else:
+                                mw -= box_w + 1
+                            try:
+                                draw_check = self.data[datarn][datacn]
+                            except Exception:
+                                draw_check = False
+                            self.redraw_checkbox(
+                                cleftgridln + 2,
+                                rtopgridln + 2,
+                                cleftgridln + self.table_txt_height + 3,
+                                rtopgridln + self.table_txt_height + 3,
+                                fill=fill if kwargs["state"] == "normal" else self.table_grid_fg,
+                                outline="",
+                                tag="cb",
+                                draw_check=draw_check,
+                            )
                     lns = self.get_valid_cell_data_as_str(datarn, datacn, get_displayed=True).split("\n")
                     if (
                         lns != [""]
@@ -5709,50 +5679,9 @@ class MainTable(tk.Canvas):
                         draw_y += start_ln * self.table_xtra_lines_increment
                         if draw_y + self.table_half_txt_height - 1 <= rbotgridln and len(lns) > start_ln:
                             for txt in islice(lns, start_ln, None):
-                                # for performance improvements in redrawing especially
-                                # when just selecting cells
-                                # option 0: text doesn't need moving or config
-                                # option 1: text needs new x, y but has same config
-                                # option 2: text needs new config but has same x, y
-                                # option 3: text needs new x, y and new config
-                                # option 4: text needs to be created
-                                config = TextCfg(txt, fill, font, align)
-                                k = None
-                                if config in self.hidd_text:
-                                    k = config
-                                    iid, showing = self.hidd_text[k].pop()
-                                    cc1, cc2 = self.coords(iid)
-                                    if int(cc1) == int(draw_x) and int(cc2) == int(draw_y):
-                                        option = 0 if showing else 2
-                                    else:
-                                        option = 1 if showing else 3
-                                    self.tag_raise(iid)
-                                elif self.hidd_text:
-                                    k = next(iter(self.hidd_text))
-                                    iid, showing = self.hidd_text[k].pop()
-                                    cc1, cc2 = self.coords(iid)
-                                    if int(cc1) == int(draw_x) and int(cc2) == int(draw_y):
-                                        option = 2 if showing else 3
-                                    else:
-                                        option = 3
-                                    self.tag_raise(iid)
-                                else:
-                                    iid, showing, option = (
-                                        self.create_text(
-                                            draw_x,
-                                            draw_y,
-                                            text=txt,
-                                            fill=fill,
-                                            font=font,
-                                            anchor=align,
-                                            tag="t",
-                                        ),
-                                        1,
-                                        4,
-                                    )
-                                if option in (1, 3):
+                                if self.hidd_text:
+                                    iid, showing = self.hidd_text.popitem()
                                     self.coords(iid, draw_x, draw_y)
-                                if option in (2, 3):
                                     if showing:
                                         self.itemconfig(
                                             iid,
@@ -5770,8 +5699,18 @@ class MainTable(tk.Canvas):
                                             anchor=align,
                                             state="normal",
                                         )
-                                if k is not None and not self.hidd_text[k]:
-                                    del self.hidd_text[k]
+                                    self.tag_raise(iid)
+                                else:
+                                    iid = self.create_text(
+                                        draw_x,
+                                        draw_y,
+                                        text=txt,
+                                        fill=fill,
+                                        font=font,
+                                        anchor=align,
+                                        tag="t",
+                                    )
+                                self.disp_text[iid] = True
                                 wd = self.bbox(iid)
                                 wd = wd[2] - wd[0]
                                 if wd > mw:
@@ -5802,37 +5741,15 @@ class MainTable(tk.Canvas):
                                             self.itemconfig(iid, text=txt)
                                             wd = self.bbox(iid)
                                         self.coords(iid, draw_x, draw_y)
-                                    self.disp_text[config._replace(txt=txt)].add(DrawnItem(iid=iid, showing=True))
-                                else:
-                                    self.disp_text[config].add(DrawnItem(iid=iid, showing=True))
                                 draw_y += self.table_xtra_lines_increment
                                 if draw_y + self.table_half_txt_height - 1 > rbotgridln:
                                     break
         if redraw_table:
-            for cfg, set_ in self.hidd_text.items():
-                for namedtup in tuple(set_):
-                    if namedtup.showing:
-                        self.itemconfig(namedtup.iid, state="hidden")
-                        self.hidd_text[cfg].discard(namedtup)
-                        self.hidd_text[cfg].add(namedtup._replace(showing=False))
-            for cfg, set_ in self.hidd_high.items():
-                for namedtup in tuple(set_):
-                    if namedtup.showing:
-                        self.itemconfig(namedtup.iid, state="hidden")
-                        self.hidd_high[cfg].discard(namedtup)
-                        self.hidd_high[cfg].add(namedtup._replace(showing=False))
-            for t, sh in self.hidd_grid.items():
-                if sh:
-                    self.itemconfig(t, state="hidden")
-                    self.hidd_grid[t] = False
-            for t, sh in self.hidd_dropdown.items():
-                if sh:
-                    self.itemconfig(t, state="hidden")
-                    self.hidd_dropdown[t] = False
-            for t, sh in self.hidd_checkbox.items():
-                if sh:
-                    self.itemconfig(t, state="hidden")
-                    self.hidd_checkbox[t] = False
+            for dct in (self.hidd_text, self.hidd_high, self.hidd_grid, self.hidd_dropdown, self.hidd_checkbox):
+                for iid, showing in dct.items():
+                    if showing:
+                        self.itemconfig(iid, state="hidden")
+                        dct[iid] = False
             if self.show_selected_cells_border:
                 self.tag_raise("cellsbd")
                 self.tag_raise("selected")
@@ -7527,11 +7444,13 @@ class MainTable(tk.Canvas):
     def get_valid_cell_data_as_str(self, datarn: int, datacn: int, get_displayed: bool = False, **kwargs) -> str:
         if get_displayed:
             kwargs = self.get_cell_kwargs(datarn, datacn, key="dropdown")
-            if kwargs and kwargs["text"] is not None:
-                return f"{kwargs['text']}"
-            kwargs = self.get_cell_kwargs(datarn, datacn, key="checkbox")
             if kwargs:
-                return f"{kwargs['text']}"
+                if kwargs["text"] is not None:
+                    return f"{kwargs['text']}"
+            else:
+                kwargs = self.get_cell_kwargs(datarn, datacn, key="checkbox")
+                if kwargs:
+                    return f"{kwargs['text']}"
         value = self.data[datarn][datacn] if len(self.data) > datarn and len(self.data[datarn]) > datacn else ""
         kwargs = self.get_cell_kwargs(datarn, datacn, key="format")
         if kwargs:
