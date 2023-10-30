@@ -8,7 +8,7 @@ with open(path.join(this_directory, 'README.md'), encoding = 'utf-8') as f:
 setup(
   name = 'tksheet',
   packages = ['tksheet'],
-  version = '6.2.7',
+  version = '6.2.8',
   python_requires = '>=3.6',
   license = 'MIT',
   description = 'Tkinter table / sheet widget',
@@ -17,7 +17,7 @@ setup(
   author = 'ragardner',
   author_email = 'github@ragardner.simplelogin.com',
   url = 'https://github.com/ragardner/tksheet',
-  download_url = 'https://github.com/ragardner/tksheet/archive/6.2.7.tar.gz',
+  download_url = 'https://github.com/ragardner/tksheet/archive/6.2.8.tar.gz',
   keywords = ['tkinter', 'table', 'widget', 'sheet', 'grid', 'tk'],
   install_requires = [],
   classifiers = [

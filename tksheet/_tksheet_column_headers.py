@@ -1830,7 +1830,7 @@ class ColumnHeaders(tk.Canvas):
                     self.set_height(new_height, set_TL=True)
                     kwargs = self.get_cell_kwargs(datacn, key="dropdown")
                     if kwargs:
-                        win_h, anchor = self.get_dropdown_height_anchor(datacn, new_height)
+                        win_h, anchor = self.get_dropdown_height_anchor(c, new_height)
                         self.coords(
                             kwargs["canvas_id"],
                             self.MT.col_positions[c],
@@ -1849,14 +1849,13 @@ class ColumnHeaders(tk.Canvas):
             )
         if self.existing_dropdown_window is not None:
             c = self.get_existing_dropdown_coords()
-            datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
             if self.text_editor is None:
                 text_editor_h = self.MT.col_positions[c + 1] - self.MT.col_positions[c]
                 anchor = self.itemcget(self.existing_dropdown_canvas_id, "anchor")
                 win_h = 0
             else:
                 text_editor_h = self.text_editor.winfo_height()
-                win_h, anchor = self.get_dropdown_height_anchor(datacn, text_editor_h)
+                win_h, anchor = self.get_dropdown_height_anchor(c, text_editor_h)
             if anchor == "nw":
                 self.coords(
                     self.existing_dropdown_canvas_id,
@@ -2223,8 +2222,9 @@ class ColumnHeaders(tk.Canvas):
             else "",
         )
 
-    def get_dropdown_height_anchor(self, datacn, text_editor_h=None):
+    def get_dropdown_height_anchor(self, c, text_editor_h=None):
         win_h = 5
+        datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
         for i, v in enumerate(self.get_cell_kwargs(datacn, key="dropdown")["values"]):
             v_numlines = len(v.split("\n") if isinstance(v, str) else f"{v}".split("\n"))
             if v_numlines > 1:
@@ -2254,7 +2254,7 @@ class ColumnHeaders(tk.Canvas):
         if kwargs["state"] == "normal":
             if not self.open_text_editor(event=event, c=c, dropdown=True):
                 return
-        win_h, anchor = self.get_dropdown_height_anchor(datacn)
+        win_h, anchor = self.get_dropdown_height_anchor(c)
         window = self.MT.parentframe.dropdown_class(
             self.MT.winfo_toplevel(),
             0,
