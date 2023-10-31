@@ -1,3 +1,7 @@
+### Version 6.2.9
+#### Fixed:
+- Incorrect row being targeted with hidden rows and text editor newline binding (potential error)
+
 ### Version 6.2.8
 #### Fixed:
 - [#203](https://github.com/ragardner/tksheet/issues/203)

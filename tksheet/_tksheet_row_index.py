@@ -1760,7 +1760,7 @@ class RowIndex(tk.Canvas):
                 if new_height > space_bot:
                     new_height = space_bot
                 if new_height != curr_height:
-                    self.set_row_height(datarn, new_height)
+                    self.set_row_height(r, new_height)
                     self.MT.refresh()
                     self.text_editor.config(height=new_height)
                     self.coords(self.text_editor_id, 0, self.MT.row_positions[r] + 1)
