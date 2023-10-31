@@ -6726,7 +6726,7 @@ class MainTable(tk.Canvas):
                 kwargs = self.get_cell_kwargs(datarn, datacn, key="dropdown")
                 if kwargs:
                     text_editor_h = self.text_editor.winfo_height()
-                    win_h, anchor = self.get_dropdown_height_anchor(datarn, datacn, text_editor_h)
+                    win_h, anchor = self.get_dropdown_height_anchor(r, c, text_editor_h)
                     if anchor == "nw":
                         self.coords(
                             kwargs["canvas_id"],
@@ -6745,8 +6745,6 @@ class MainTable(tk.Canvas):
     def refresh_open_window_positions(self):
         if self.text_editor is not None:
             r, c = self.text_editor_loc
-            datarn = r if self.all_rows_displayed else self.displayed_rows[r]
-            datacn = c if self.all_columns_displayed else self.displayed_columns[c]
             self.text_editor.config(height=self.row_positions[r + 1] - self.row_positions[r])
             self.coords(
                 self.text_editor_id,
@@ -6761,7 +6759,7 @@ class MainTable(tk.Canvas):
                 win_h = 0
             else:
                 text_editor_h = self.text_editor.winfo_height()
-                win_h, anchor = self.get_dropdown_height_anchor(datarn, datacn, text_editor_h)
+                win_h, anchor = self.get_dropdown_height_anchor(r, c, text_editor_h)
             if anchor == "nw":
                 self.coords(
                     self.existing_dropdown_canvas_id,
@@ -7006,8 +7004,9 @@ class MainTable(tk.Canvas):
             sheet_h -= 1
         return win_h if win_h >= sheet_h else sheet_h
 
-    def get_dropdown_height_anchor(self, datarn: int, datacn: int, text_editor_h: int | None = None) -> tuple:
+    def get_dropdown_height_anchor(self, r: int, c: int, text_editor_h: int | None = None) -> tuple:
         win_h = 5
+        datarn, datacn = self.datarn(r), self.datacn(c)
         for i, v in enumerate(self.get_cell_kwargs(datarn, datacn, key="dropdown")["values"]):
             v_numlines = len(v.split("\n") if isinstance(v, str) else f"{v}".split("\n"))
             if v_numlines > 1:
@@ -7018,8 +7017,8 @@ class MainTable(tk.Canvas):
                 break
         if win_h > 500:
             win_h = 500
-        space_bot = self.get_space_bot(datarn, text_editor_h)
-        space_top = int(self.row_positions[datarn])
+        space_bot = self.get_space_bot(r, text_editor_h)
+        space_top = int(self.row_positions[r])
         anchor = "nw"
         win_h2 = int(win_h)
         if win_h > space_bot:
@@ -7050,7 +7049,7 @@ class MainTable(tk.Canvas):
         if kwargs["state"] == "normal":
             if not self.open_text_editor(event=event, r=r, c=c, dropdown=True):
                 return
-        win_h, anchor = self.get_dropdown_height_anchor(datarn, datacn)
+        win_h, anchor = self.get_dropdown_height_anchor(r, c)
         window = self.parentframe.dropdown_class(
             self.winfo_toplevel(),
             r,
