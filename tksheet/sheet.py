@@ -2419,6 +2419,7 @@ class Sheet(tk.Frame):
             self.config(bg=theme_black["table_bg"])
         self.MT.recreate_all_selection_boxes()
         self.set_refresh_timer(redraw)
+        self.TL.redraw()
         return self
 
     def data_reference(
@@ -3324,6 +3325,10 @@ class Sheet(tk.Frame):
     def equalize_data_row_lengths(self, include_header: bool = False) -> int:
         return self.MT.equalize_data_row_lengths(include_header=include_header)
 
+    @property
+    def displayed_rows(self) -> list | tuple:
+        return self.MT.displayed_rows
+
     def display_rows(
         self,
         rows=None,
@@ -3345,6 +3350,10 @@ class Sheet(tk.Frame):
         if refresh or redraw:
             self.set_refresh_timer(redraw if redraw else refresh)
         return res
+
+    @property
+    def displayed_columns(self) -> list | tuple:
+        return self.MT.displayed_columns
 
     def display_columns(
         self,

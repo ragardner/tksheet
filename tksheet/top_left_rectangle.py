@@ -93,6 +93,14 @@ class TopLeftRectangle(tk.Canvas):
         self.bind("<Double-Button-1>", self.double_b1)
         self.bind(rc_binding, self.rc)
 
+    def redraw(self):
+        self.itemconfig("rw", fill=self.top_left_fg)
+        self.itemconfig("rh", fill=self.top_left_fg)
+        self.itemconfig(
+            self.select_all_tri,
+            fill=self.top_left_fg,
+        )
+
     def rw_state(self, state="normal"):
         self.itemconfig("rw", state=state)
 

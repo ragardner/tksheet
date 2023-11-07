@@ -677,11 +677,11 @@ class MainTable(tk.Canvas):
         data = list(csv.reader(io.StringIO(data), dialect=dialect, skipinitialspace=True))
         if not data:
             return
-        numcols = max(map(len, data))
-        numrows = len(data)
+        new_data_numcols = max(map(len, data))
+        new_data_numrows = len(data)
         for rn, r in enumerate(data):
-            if len(r) < numcols:
-                data[rn].extend(list(repeat("", numcols - len(r))))
+            if len(r) < new_data_numcols:
+                data[rn].extend(list(repeat("", new_data_numcols - len(r))))
         (
             lastbox_r1,
             lastbox_c1,
@@ -690,74 +690,140 @@ class MainTable(tk.Canvas):
         ) = self.get_box_containing_current()
         lastbox_numrows = lastbox_r2 - lastbox_r1
         lastbox_numcols = lastbox_c2 - lastbox_c1
-        if lastbox_numrows > numrows and lastbox_numrows % numrows == 0:
+        if lastbox_numrows > new_data_numrows and not lastbox_numrows % new_data_numrows:
             nd = []
-            for times in range(int(lastbox_numrows / numrows)):
+            for _ in range(int(lastbox_numrows / new_data_numrows)):
                 nd.extend([r.copy() for r in data])
             data.extend(nd)
-            numrows *= int(lastbox_numrows / numrows)
-        if lastbox_numcols > numcols and lastbox_numcols % numcols == 0:
+            new_data_numrows *= int(lastbox_numrows / new_data_numrows)
+
+        if lastbox_numcols > new_data_numcols and not lastbox_numcols % new_data_numcols:
             for rn, r in enumerate(data):
-                for times in range(int(lastbox_numcols / numcols)):
+                for _ in range(int(lastbox_numcols / new_data_numcols)):
                     data[rn].extend(r.copy())
-            numcols *= int(lastbox_numcols / numcols)
+            new_data_numcols *= int(lastbox_numcols / new_data_numcols)
         event_data["data"] = data
+        added_rows = 0
+        added_cols = 0
+        total_data_cols = None
         if self.expand_sheet_if_paste_too_big:
-            added_rows = 0
-            added_cols = 0
-            # check if columns need adding / add columns
-            if selected_c + numcols > len(self.col_positions) - 1:
+            # determine number of columns and/or rows to add to sheet
+            if selected_c + new_data_numcols > len(self.col_positions) - 1:
                 total_data_cols = self.equalize_data_row_lengths()
-                added_cols = selected_c + numcols - len(self.col_positions) + 1
+                added_cols = selected_c + new_data_numcols - len(self.col_positions) + 1
                 if (
                     isinstance(self.paste_insert_column_limit, int)
                     and self.paste_insert_column_limit < len(self.col_positions) - 1 + added_cols
                 ):
                     added_cols = self.paste_insert_column_limit - len(self.col_positions) - 1
-                if added_cols > 0:
-                    event_data = self.add_columns(
-                        *self.get_args_for_add_columns(total_data_cols, len(self.col_positions) - 1, added_cols),
-                        event_data=event_data,
-                    )
-            # check if rows need adding / add rows
-            if selected_r + numrows > len(self.row_positions) - 1:
-                added_rows = selected_r + numrows - len(self.row_positions) + 1
+            if selected_r + new_data_numrows > len(self.row_positions) - 1:
+                added_rows = selected_r + new_data_numrows - len(self.row_positions) + 1
                 if (
                     isinstance(self.paste_insert_row_limit, int)
                     and self.paste_insert_row_limit < len(self.row_positions) - 1 + added_rows
                 ):
                     added_rows = self.paste_insert_row_limit - len(self.row_positions) - 1
-                if added_rows > 0:
-                    event_data = self.add_rows(
-                        *self.get_args_for_add_rows(len(self.data), len(self.row_positions) - 1, added_rows),
-                        event_data=event_data,
-                    )
-        if selected_c + numcols > len(self.col_positions) - 1:
-            numcols = len(self.col_positions) - 1 - selected_c
-        if selected_r + numrows > len(self.row_positions) - 1:
-            numrows = len(self.row_positions) - 1 - selected_r
+        if selected_c + new_data_numcols > len(self.col_positions) - 1:
+            adjusted_new_data_numcols = len(self.col_positions) - 1 - selected_c
+        else:
+            adjusted_new_data_numcols = new_data_numcols
+        if selected_r + new_data_numrows > len(self.row_positions) - 1:
+            adjusted_new_data_numrows = len(self.row_positions) - 1 - selected_r
+        else:
+            adjusted_new_data_numrows = new_data_numrows
         boxes = {
             (
                 selected_r,
                 selected_c,
-                selected_r + numrows,
-                selected_c + numcols,
+                selected_r + adjusted_new_data_numrows,
+                selected_c + adjusted_new_data_numcols,
             ): "cells"
         }
         event_data["selection_boxes"] = boxes
         if not try_binding(self.extra_begin_ctrl_v_func, event_data, "begin_ctrl_v"):
             return
-        event_data = self.event_data_set_data(
-            range(selected_r, selected_r + numrows), range(selected_c, selected_c + numcols), data, event_data
-        )
+        # edit existing sheet
+        for ndr, r in enumerate(range(selected_r, selected_r + adjusted_new_data_numrows)):
+            for ndc, c in enumerate(range(selected_c, selected_c + adjusted_new_data_numcols)):
+                print(r, c)
+                event_data = self.event_data_set_cell(
+                    datarn=self.datarn(r),
+                    datacn=self.datacn(c),
+                    value=data[ndr][ndc],
+                    event_data=event_data,
+                )
+        if added_rows > 0:
+            data_ins_row = len(self.data)
+            displayed_ins_row = len(self.row_positions) - 1
+            if total_data_cols is None:
+                total_data_cols = self.total_data_cols()
+            rows, index, row_heights = self.get_args_for_add_rows(
+                data_ins_row=data_ins_row,
+                displayed_ins_row=displayed_ins_row,
+                numrows=added_rows,
+            )
+            for ndr, r in zip(
+                range(
+                    adjusted_new_data_numrows,
+                    new_data_numrows,
+                ),
+                range(
+                    selected_r + adjusted_new_data_numrows,
+                    selected_r + adjusted_new_data_numrows + added_rows,
+                ),
+            ):
+                for ndc, c in enumerate(
+                    range(
+                        selected_c,
+                        selected_c + adjusted_new_data_numcols,
+                    )
+                ):
+                    rows[self.datarn(r)][self.datacn(c)] = data[ndr][ndc]
+            event_data = self.add_rows(
+                rows=rows,
+                index=index,
+                row_heights=row_heights,
+                event_data=event_data,
+            )
+        if added_cols > 0:
+            data_ins_col = total_data_cols
+            displayed_ins_col = len(self.col_positions) - 1
+            columns, headers, column_widths = self.get_args_for_add_columns(
+                data_ins_col=data_ins_col,
+                displayed_ins_col=displayed_ins_col,
+                numcols=added_cols,
+            )
+            for ndr, r in enumerate(
+                    range(
+                        selected_r,
+                        selected_r + new_data_numrows,
+                    )
+                ):
+                for ndc, c in zip(
+                    range(
+                        adjusted_new_data_numcols,
+                        new_data_numcols,
+                    ),
+                    range(
+                        selected_c + adjusted_new_data_numcols,
+                        selected_c + adjusted_new_data_numcols + added_cols,
+                    ),
+                ):
+                    columns[self.datacn(c)][self.datarn(r)] = data[ndr][ndc]
+            event_data = self.add_columns(
+                columns=columns,
+                header=headers,
+                column_widths=column_widths,
+                event_data=event_data,
+            )
         self.deselect("all", redraw=False)
         if event_data["cells"]["table"] or event_data["added"]["rows"] or event_data["added"]["columns"]:
             self.undo_stack.append(ev_stack_dict(event_data))
         self.create_selection_box(
             selected_r,
             selected_c,
-            selected_r + numrows,
-            selected_c + numcols,
+            selected_r + adjusted_new_data_numrows,
+            selected_c + adjusted_new_data_numcols,
             "cells",
             run_binding=True,
         )
@@ -799,23 +865,6 @@ class MainTable(tk.Canvas):
         try_binding(self.extra_end_delete_key_func, event_data, "end_delete")
         self.refresh()
         self.sheet_modified(event_data)
-
-    def event_data_set_data(
-        self,
-        row_range: Generator[int],
-        col_range: Generator[int],
-        data: list[list[object]],
-        event_data: dict,
-    ) -> dict:
-        for ndr, r in enumerate(row_range):
-            for ndc, c in enumerate(col_range):
-                event_data = self.event_data_set_cell(
-                    datarn=self.datarn(r),
-                    datacn=self.datacn(c),
-                    value=data[ndr][ndc],
-                    event_data=event_data,
-                )
-        return event_data
 
     def event_data_set_cell(self, datarn: int, datacn: int, value: object, event_data: dict) -> dict:
         if self.input_valid_for_cell(datarn, datacn, value):
@@ -1463,16 +1512,7 @@ class MainTable(tk.Canvas):
                     modification["selection_boxes"],
                     modification["selected"],
                 )
-                if modification["selected"]:
-                    self.see(
-                        r=0,
-                        c=modification["selected"].row,
-                        keep_yscroll=False,
-                        keep_xscroll=False,
-                        bottom_right_corner=False,
-                        check_cell_visibility=True,
-                        redraw=False,
-                    )
+                curr = self.currently_selected()
 
         if modification["added"]["columns"]:
             self.deselect("all", run_binding=False, redraw=False)
@@ -1490,16 +1530,7 @@ class MainTable(tk.Canvas):
                     modification["selection_boxes"],
                     modification["selected"],
                 )
-                if modification["selected"]:
-                    self.see(
-                        r=0,
-                        c=modification["selected"].column,
-                        keep_yscroll=False,
-                        keep_xscroll=False,
-                        bottom_right_corner=False,
-                        check_cell_visibility=True,
-                        redraw=False,
-                    )
+                curr = self.currently_selected()
 
         if modification["deleted"]["rows"]:
             self.add_rows(
@@ -4642,9 +4673,11 @@ class MainTable(tk.Canvas):
         rows: list | None = None,
         heights: list | None = None,
         row_index: bool = False,
+        total_data_cols=None,
     ) -> tuple:
-        total_data_cols = self.total_data_cols()
         if rows is None:
+            if total_data_cols is None:
+                total_data_cols = self.total_data_cols()
             rows = {
                 datarn: [self.get_value_for_empty_cell(datarn, c, c_ops=False) for c in range(total_data_cols)]
                 for datarn in reversed(range(data_ins_row, data_ins_row + numrows))
