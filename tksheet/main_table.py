@@ -745,7 +745,6 @@ class MainTable(tk.Canvas):
         # edit existing sheet
         for ndr, r in enumerate(range(selected_r, selected_r + adjusted_new_data_numrows)):
             for ndc, c in enumerate(range(selected_c, selected_c + adjusted_new_data_numcols)):
-                print(r, c)
                 event_data = self.event_data_set_cell(
                     datarn=self.datarn(r),
                     datacn=self.datacn(c),
@@ -767,10 +766,7 @@ class MainTable(tk.Canvas):
                     adjusted_new_data_numrows,
                     new_data_numrows,
                 ),
-                range(
-                    selected_r + adjusted_new_data_numrows,
-                    selected_r + adjusted_new_data_numrows + added_rows,
-                ),
+                reversed(rows),
             ):
                 for ndc, c in enumerate(
                     range(
@@ -778,7 +774,7 @@ class MainTable(tk.Canvas):
                         selected_c + adjusted_new_data_numcols,
                     )
                 ):
-                    rows[self.datarn(r)][self.datacn(c)] = data[ndr][ndc]
+                    rows[r][c] = data[ndr][ndc]
             event_data = self.add_rows(
                 rows=rows,
                 index=index,
@@ -804,12 +800,9 @@ class MainTable(tk.Canvas):
                         adjusted_new_data_numcols,
                         new_data_numcols,
                     ),
-                    range(
-                        selected_c + adjusted_new_data_numcols,
-                        selected_c + adjusted_new_data_numcols + added_cols,
-                    ),
+                    reversed(columns),
                 ):
-                    columns[self.datacn(c)][self.datarn(r)] = data[ndr][ndc]
+                    columns[c][r] = data[ndr][ndc]
             event_data = self.add_columns(
                 columns=columns,
                 header=headers,
