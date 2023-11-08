@@ -742,7 +742,13 @@ class MainTable(tk.Canvas):
         event_data["selection_boxes"] = boxes
         if not try_binding(self.extra_begin_ctrl_v_func, event_data, "begin_ctrl_v"):
             return
-        # edit existing sheet
+        # the order of actions here is important:
+        # edit existing sheet (not including any added rows/columns)
+
+        # then if there are any added rows/columns:
+        # create empty rows/columns dicts for any added rows/columns
+        # edit those dicts with so far unused cells of data from clipboard
+        # instead of editing table using set cell data, add any new rows then columns with pasted data
         for ndr, r in enumerate(range(selected_r, selected_r + adjusted_new_data_numrows)):
             for ndc, c in enumerate(range(selected_c, selected_c + adjusted_new_data_numcols)):
                 event_data = self.event_data_set_cell(
@@ -774,7 +780,7 @@ class MainTable(tk.Canvas):
                         selected_c + adjusted_new_data_numcols,
                     )
                 ):
-                    rows[r][c] = data[ndr][ndc]
+                    rows[r][self.datacn(c)] = data[ndr][ndc]
             event_data = self.add_rows(
                 rows=rows,
                 index=index,
@@ -802,7 +808,7 @@ class MainTable(tk.Canvas):
                     ),
                     reversed(columns),
                 ):
-                    columns[c][r] = data[ndr][ndc]
+                    columns[c][self.datarn(r)] = data[ndr][ndc]
             event_data = self.add_columns(
                 columns=columns,
                 header=headers,
