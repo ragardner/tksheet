@@ -731,12 +731,14 @@ class MainTable(tk.Canvas):
             adjusted_new_data_numrows = len(self.row_positions) - 1 - selected_r
         else:
             adjusted_new_data_numrows = new_data_numrows
+        selected_r_adjusted_new_data_numrows = selected_r + adjusted_new_data_numrows
+        selected_c_adjusted_new_data_numcols = selected_c + adjusted_new_data_numcols
         boxes = {
             (
                 selected_r,
                 selected_c,
-                selected_r + adjusted_new_data_numrows,
-                selected_c + adjusted_new_data_numcols,
+                selected_r_adjusted_new_data_numrows,
+                selected_c_adjusted_new_data_numcols,
             ): "cells"
         }
         event_data["selection_boxes"] = boxes
@@ -749,8 +751,8 @@ class MainTable(tk.Canvas):
         # create empty rows/columns dicts for any added rows/columns
         # edit those dicts with so far unused cells of data from clipboard
         # instead of editing table using set cell data, add any new rows then columns with pasted data
-        for ndr, r in enumerate(range(selected_r, selected_r + adjusted_new_data_numrows)):
-            for ndc, c in enumerate(range(selected_c, selected_c + adjusted_new_data_numcols)):
+        for ndr, r in enumerate(range(selected_r, selected_r_adjusted_new_data_numrows)):
+            for ndc, c in enumerate(range(selected_c, selected_c_adjusted_new_data_numcols)):
                 event_data = self.event_data_set_cell(
                     datarn=self.datarn(r),
                     datacn=self.datacn(c),
@@ -777,7 +779,7 @@ class MainTable(tk.Canvas):
                 for ndc, c in enumerate(
                     range(
                         selected_c,
-                        selected_c + adjusted_new_data_numcols,
+                        selected_c_adjusted_new_data_numcols,
                     )
                 ):
                     rows[r][self.datacn(c)] = data[ndr][ndc]
@@ -796,11 +798,11 @@ class MainTable(tk.Canvas):
                 numcols=added_cols,
             )
             for ndr, r in enumerate(
-                    range(
-                        selected_r,
-                        selected_r + new_data_numrows,
-                    )
-                ):
+                range(
+                    selected_r,
+                    selected_r + new_data_numrows,
+                )
+            ):
                 for ndc, c in zip(
                     range(
                         adjusted_new_data_numcols,
@@ -821,8 +823,8 @@ class MainTable(tk.Canvas):
         self.create_selection_box(
             selected_r,
             selected_c,
-            selected_r + adjusted_new_data_numrows,
-            selected_c + adjusted_new_data_numcols,
+            selected_r_adjusted_new_data_numrows,
+            selected_c_adjusted_new_data_numcols,
             "cells",
             run_binding=True,
         )
@@ -982,13 +984,6 @@ class MainTable(tk.Canvas):
                 # span is neither a cell options nor col options span, continue
                 if not isinstance(span["from_c"], int):
                     continue
-                span_kws = {
-                    "type_": span.type_,
-                    "table": span.table,
-                    "index": span.index,
-                    "header": span.header,
-                    "kwargs": span.kwargs,
-                }
                 oldupto_colrange, newupto_colrange, newfrom, newupto = span_idxs_post_move(
                     data_new_idxs,
                     full_new_idxs,
@@ -1016,11 +1011,11 @@ class MainTable(tk.Canvas):
                                 for datarn in range(len(self.data)):
                                     if (datarn, oldidx) not in event_data["cells"]["table"]:
                                         event_data["cells"]["table"][(datarn, oldidx)] = self.get_cell_data(datarn, k)
-                            # create new col_options
+                            # create new col options
                             new_ops(
                                 mod_span(
-                                    span=qkspan,
-                                    kws=span_kws,
+                                    qkspan,
+                                    span,
                                     from_c=k,
                                     upto_c=k + 1,
                                 )
@@ -1034,11 +1029,11 @@ class MainTable(tk.Canvas):
                                     and (datarn, oldidx) not in event_data["cells"]["table"]
                                 ):
                                     event_data["cells"]["table"][(datarn, oldidx)] = self.get_cell_data(datarn, k)
-                                # create new cell_options
+                                # create new cell options
                                 new_ops(
                                     mod_span(
-                                        span=qkspan,
-                                        kws=span_kws,
+                                        qkspan,
+                                        span,
                                         from_r=datarn,
                                         upto_r=datarn + 1,
                                         from_c=k,
@@ -1213,13 +1208,6 @@ class MainTable(tk.Canvas):
                 # span is neither a cell options nor row options span, continue
                 if not isinstance(span["from_r"], int):
                     continue
-                span_kws = {
-                    "type_": span.type_,
-                    "table": span.table,
-                    "index": span.index,
-                    "header": span.header,
-                    **span["kwargs"],
-                }
                 oldupto_rowrange, newupto_rowrange, newfrom, newupto = span_idxs_post_move(
                     data_new_idxs,
                     full_new_idxs,
@@ -1247,11 +1235,11 @@ class MainTable(tk.Canvas):
                                 for datacn in range(len(self.data[k])):
                                     if (oldidx, datacn) not in event_data["cells"]["table"]:
                                         event_data["cells"]["table"][(oldidx, datacn)] = self.get_cell_data(k, datacn)
-                            # create new row_options
+                            # create new row options
                             new_ops(
                                 mod_span(
-                                    span=qkspan,
-                                    kws=span_kws,
+                                    qkspan,
+                                    span,
                                     from_r=k,
                                     upto_r=k + 1,
                                 )
@@ -1265,11 +1253,11 @@ class MainTable(tk.Canvas):
                                     and (oldidx, datacn) not in event_data["cells"]["table"]
                                 ):
                                     event_data["cells"]["table"][(oldidx, datacn)] = self.get_cell_data(k, datacn)
-                                # create new cell_options
+                                # create new cell options
                                 new_ops(
                                     mod_span(
-                                        span=qkspan,
-                                        kws=span_kws,
+                                        qkspan,
+                                        span,
                                         from_r=k,
                                         upto_r=k + 1,
                                         from_c=datacn,
@@ -4141,16 +4129,9 @@ class MainTable(tk.Canvas):
         # add options to gap which was created by adding columns
         totalrows = None
         new_ops = self.parentframe.create_options_from_span
-        new_span = self.span
+        qkspan = self.span()
         for name, span in self.named_spans.items():
             if isinstance(span["from_c"], int):
-                span_kws = {
-                    "type_": span.type_,
-                    "table": span.table,
-                    "index": span.index,
-                    "header": span.header,
-                    **span["kwargs"],
-                }
                 for datacn in cols:
                     if span["from_c"] > datacn:
                         span["from_c"] += 1
@@ -4166,7 +4147,14 @@ class MainTable(tk.Canvas):
                         if create_ops:
                             # if rows are none it's a column options span
                             if span["from_r"] is None:
-                                new_ops(new_span(from_c=datacn, upto_c=datacn + 1, **span_kws))
+                                new_ops(
+                                    mod_span(
+                                        qkspan,
+                                        span,
+                                        from_c=datacn,
+                                        upto_c=datacn + 1,
+                                    )
+                                )
                             # cells
                             else:
                                 if totalrows is None:
@@ -4174,7 +4162,14 @@ class MainTable(tk.Canvas):
                                 rng_upto_r = totalrows if span["upto_r"] is None else span["upto_r"]
                                 for rn in range(span["from_r"], rng_upto_r):
                                     new_ops(
-                                        new_span(from_r=rn, upto_r=rn + 1, from_c=datacn, upto_c=datacn + 1, **span_kws)
+                                        mod_span(
+                                            qkspan,
+                                            span,
+                                            from_r=rn,
+                                            from_c=datacn,
+                                            upto_r=rn + 1,
+                                            upto_c=datacn + 1,
+                                        )
                                     )
 
     def adjust_options_post_add_rows(
@@ -4195,16 +4190,9 @@ class MainTable(tk.Canvas):
         # add options to gap which was created by adding rows
         totalcols = None
         new_ops = self.parentframe.create_options_from_span
-        new_span = self.span
+        qkspan = self.span()
         for name, span in self.named_spans.items():
             if isinstance(span["from_r"], int):
-                span_kws = {
-                    "type_": span.type_,
-                    "table": span.table,
-                    "index": span.index,
-                    "header": span.header,
-                    **span["kwargs"],
-                }
                 for datarn in rows:
                     if span["from_r"] > datarn:
                         span["from_r"] += 1
@@ -4220,7 +4208,14 @@ class MainTable(tk.Canvas):
                         if create_ops:
                             # if rows are none it's a row options span
                             if span["from_c"] is None:
-                                new_ops(new_span(from_r=datarn, upto_r=datarn + 1, **span_kws))
+                                new_ops(
+                                    mod_span(
+                                        qkspan,
+                                        span,
+                                        from_r=datarn,
+                                        upto_r=datarn + 1,
+                                    )
+                                )
                             # cells
                             else:
                                 if totalcols is None:
@@ -4228,7 +4223,14 @@ class MainTable(tk.Canvas):
                                 rng_upto_c = totalcols if span["upto_c"] is None else span["upto_c"]
                                 for cn in range(span["from_c"], rng_upto_c):
                                     new_ops(
-                                        new_span(from_r=datarn, upto_r=datarn + 1, from_c=cn, upto_c=cn + 1, **span_kws)
+                                        mod_span(
+                                            qkspan,
+                                            span,
+                                            from_r=datarn,
+                                            from_c=cn,
+                                            upto_r=datarn + 1,
+                                            upto_c=cn + 1,
+                                        )
                                     )
 
     def adjust_options_post_delete_columns(

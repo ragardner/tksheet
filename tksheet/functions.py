@@ -557,8 +557,8 @@ def span_dict(
         name="" if name is None else name,
         kwargs={} if kwargs is None else kwargs,
         table=table,
-        header=header,
         index=index,
+        header=header,
         tdisp=tdisp,
         idisp=idisp,
         hdisp=hdisp,
@@ -1128,20 +1128,20 @@ def span_idxs_post_move(
 
 
 def mod_span(
-    span: Span,
-    kws: dict,
+    to_set_to: Span,
+    to_set_from: Span,
     from_r: int | None = None,
     from_c: int | None = None,
     upto_r: int | None = None,
     upto_c: int | None = None,
 ) -> Span:
-    span.from_r = from_r
-    span.from_c = from_c
-    span.upto_r = upto_r
-    span.upto_c = upto_c
-    span.type_ = kws["type_"]
-    span.table = kws["table"]
-    span.index = kws["index"]
-    span.header = kws["header"]
-    span.kwargs = kws["kwargs"]
-    return span
+    to_set_to.kwargs = to_set_from.kwargs
+    to_set_to.type_ = to_set_from.type_
+    to_set_to.table = to_set_from.table
+    to_set_to.index = to_set_from.index
+    to_set_to.header = to_set_from.header
+    to_set_to.from_r = from_r
+    to_set_to.from_c = from_c
+    to_set_to.upto_r = upto_r
+    to_set_to.upto_c = upto_c
+    return to_set_to

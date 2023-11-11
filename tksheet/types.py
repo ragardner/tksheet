@@ -21,12 +21,12 @@ class Span(TypedDict):
     name: str | None
     kwargs: dict | None
     table: bool
-    header: bool
     index: bool
+    header: bool
     tdisp: bool
     idisp: bool
     hdisp: bool
-    transpose: bool
+    transposed: bool
     ndim: int | None
     convert: Callable | None
     undo: bool

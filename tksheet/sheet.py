@@ -3525,12 +3525,12 @@ class Sheet(tk.Frame):
 
     def span(
         self,
-        *key: CreateSpanTypes | None,
+        *key: tuple[CreateSpanTypes | None],
         type_: str = "",
         name: None | str = None,
         table: bool = True,
-        header: bool = False,
         index: bool = False,
+        header: bool = False,
         tdisp: bool = False,
         idisp: bool = True,
         hdisp: bool = True,
@@ -3539,6 +3539,8 @@ class Sheet(tk.Frame):
         convert: object = None,
         undo: bool = False,
         widget: object = None,
+        expand: None | str = None,
+        formatter_options: dict | None = None,
         **kwargs,
     ) -> Span:
         """
@@ -3548,6 +3550,8 @@ class Sheet(tk.Frame):
         """
         if name in self.MT.named_spans:
             return self.MT.named_spans[name]
+        if not key:
+            key = (None, None, None, None)
         if isinstance(name, str) and not name:
             name = f"{num2alpha(self.named_span_id)}"
             self.named_span_id += 1
@@ -3555,9 +3559,15 @@ class Sheet(tk.Frame):
         if len(key) == 1:
             key = key[0]
         span = self.span_from_key(key)
-        span.type_ = type_
+        if expand is not None:
+            span.expand(expand)
         span.name = name
-        span.kwargs = kwargs
+        if isinstance(formatter_options, dict):
+            span.type_ = "format"
+            span.kwargs = {"formatter": None, **formatter_options}
+        else:
+            span.type_ = type_
+            span.kwargs = kwargs
         span.table = table
         span.header = header
         span.index = index

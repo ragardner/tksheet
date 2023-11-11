@@ -5,7 +5,6 @@ import tkinter as tk
 from collections import namedtuple
 from collections.abc import Generator, Hashable, Iterator, Callable
 from functools import partial
-
 from .vars import (
     ctrl_key,
     get_font,
@@ -37,26 +36,16 @@ DraggedRowColumn = namedtuple("DraggedRowColumn", "dragged to_move")
 ProgressBar = namedtuple("ProgressBar", "bg fg pc name")
 
 
-class CanUseKeys:
-    def __init__(self, **kwargs) -> None:
-        self.__dict__.update(kwargs)
-
-    def __bool__(self) -> bool:
-        if any(value for value in self.__dict__.values()):
-            return True
-        return False
-
-    def __getitem__(self, key: str) -> object:
-        if isinstance(key, str):
-            return getattr(self, key)
-        else:
-            raise ValueError(f"Key must be type 'str' not '{type(key)}'.")
-
-    def __setitem__(self, key: str, value: object) -> None:
-        if isinstance(key, str):
-            setattr(self, key, value)
-        else:
-            raise ValueError(f"Key must be type 'str' not '{type(key)}'.")
+def num2alpha(n: int) -> str | None:
+    try:
+        s = ""
+        n += 1
+        while n > 0:
+            n, r = divmod(n - 1, 26)
+            s = chr(65 + r) + s
+        return s
+    except Exception:
+        return None
 
 
 class SpanRange:
@@ -219,17 +208,22 @@ class SpanDict(dict):
 
     def options(
         self,
-        expand: None | str = None,
-        convert: None | Callable = None,
+        type_: str = "",
         name: None | str | bool = False,
         table: bool | None = None,
         index: bool | None = None,
         header: bool | None = None,
+        tdisp: bool | None = False,
+        idisp: bool | None  = True,
+        hdisp: bool | None  = True,
         transposed: bool | None = None,
         ndim: int | None = None,
-        displayed: bool | None = None,
+        convert: None | Callable = None,
         undo: bool | None = None,
+        widget: object = None,
+        expand: None | str = None,
         formatter_options: dict | None = None,
+        **kwargs,
     ) -> SpanDict:
         if isinstance(expand, str) and expand.lower() in ("down", "right", "both", "table"):
             self.expand(expand)
@@ -237,7 +231,13 @@ class SpanDict(dict):
         if isinstance(convert, Callable):
             self["convert"] = convert
 
+        if type_ and isinstance(type_, str):
+            self["type_"] = type_.lower()
+
         if isinstance(name, str) or name is None:
+            if isinstance(name, str) and not name:
+                name = f"{num2alpha(self['widget'].named_span_id)}"
+                self['widget'].named_span_id += 1
             self["name"] = name
 
         if isinstance(table, bool):
@@ -248,8 +248,12 @@ class SpanDict(dict):
             self["header"] = header
         if isinstance(transposed, bool):
             self["transposed"] = transposed
-        if isinstance(displayed, bool):
-            self["displayed"] = displayed
+        if isinstance(tdisp, bool):
+            self["tdisp"] = tdisp
+        if isinstance(idisp, bool):
+            self["idisp"] = idisp
+        if isinstance(hdisp, bool):
+            self["hdisp"] = hdisp
         if isinstance(undo, bool):
             self["undo"] = undo
 
@@ -259,6 +263,33 @@ class SpanDict(dict):
         if isinstance(formatter_options, dict):
             self["type_"] = "format"
             self["kwargs"] = {"formatter": None, **formatter_options}
+
+        elif kwargs:
+            self["kwargs"] = kwargs
+
+        if widget is not None:
+            self["widget"] = widget
+        return self
+
+    def create_named(
+        self,
+        type_: str = "",
+        name: str | None = None,
+        **kwargs,
+    ) -> SpanDict:
+        if not type_ or not isinstance(type_, str):
+            raise ValueError("Argument 'type_' must be either 'format', 'highlight', 'dropdown', 'checkbox', 'readonly' or 'align'.")
+        # only overwrite existing attributes if given new values
+        if type_ and isinstance(type_, str):
+            self["type_"] = type_.lower()
+        if isinstance(name, str):
+            if not name:
+                name = f"{num2alpha(self['widget'].named_span_id)}"
+                self['widget'].named_span_id += 1
+            self["name"] = name
+        if kwargs:
+            self["kwargs"] = kwargs
+        self["widget"].create_named_span(self)
         return self
 
     def transpose(self) -> SpanDict:
@@ -301,10 +332,6 @@ class SpanDict(dict):
         else:
             rng_upto_c = self["upto_c"]
         return SpanRange(rng_from_c, rng_upto_c)
-
-    @property
-    def ranges(self) -> tuple[Generator[int], Generator[int]]:
-        return self.rows, self.columns
 
     def pickle_self(self) -> bytes:
         x = self["widget"]
