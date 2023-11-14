@@ -34,19 +34,24 @@ from .functions import (
 )
 from .main_table import MainTable
 from .other_classes import (
+    CurrentlySelectedClass,  # noqa: F401
     DotDict,
     GeneratedMouseEvent,
-    SpanDict,
-    CurrentlySelectedClass,  # noqa: F401
+    Span,
 )
 from .row_index import RowIndex
 from .top_left_rectangle import TopLeftRectangle
-from .types import Span, CreateSpanTypes, Font, Align
+from .types import (
+    Align,
+    CreateSpanTypes,
+    Font,
+)
 from .vars import (
     emitted_events,
     get_font,
     get_header_font,
     get_index_font,
+    named_span_types,
     rc_binding,
     theme_black,
     theme_dark,
@@ -2476,7 +2481,7 @@ class Sheet(tk.Frame):
     def __reversed__(self) -> Iterator:
         return reversed(self.MT.data)
 
-    def __contains__(self, key) -> bool:
+    def __contains__(self, key: object) -> bool:
         if isinstance(key, (list, tuple)):
             return key in self.MT.data
         return any(key in row for row in self.MT.data)
@@ -2901,7 +2906,7 @@ class Sheet(tk.Frame):
         self,
         key: CreateSpanTypes,
     ) -> None | Span:
-        if isinstance(key, SpanDict):
+        if isinstance(key, Span):
             span = key
         else:
             span = key_to_span(key, self.MT.named_spans, self)
@@ -3525,9 +3530,9 @@ class Sheet(tk.Frame):
 
     def span(
         self,
-        *key: tuple[CreateSpanTypes | None],
+        *key: tuple[()] | tuple[CreateSpanTypes | None],
         type_: str = "",
-        name: None | str = None,
+        name: str = "",
         table: bool = True,
         index: bool = False,
         header: bool = False,
@@ -3544,29 +3549,30 @@ class Sheet(tk.Frame):
         **kwargs,
     ) -> Span:
         """
-        Create a span / get an existing span
-        If the span has a string name and a type_ then
-        it is turned into a named span
+        Create a span / get an existing span by name
+        Returns the created span
         """
-        if name in self.MT.named_spans:
+        if name and name in self.MT.named_spans:
             return self.MT.named_spans[name]
+        elif not name:
+            name = num2alpha(self.named_span_id)
+            self.named_span_id += 1
+            while name in self.MT.named_spans:
+                name = num2alpha(self.named_span_id)
+                self.named_span_id += 1
         if not key:
             key = (None, None, None, None)
-        if isinstance(name, str) and not name:
-            name = f"{num2alpha(self.named_span_id)}"
-            self.named_span_id += 1
-        type_ = type_.lower()
-        if len(key) == 1:
+        elif len(key) == 1:
             key = key[0]
         span = self.span_from_key(key)
+        span.name = name
         if expand is not None:
             span.expand(expand)
-        span.name = name
         if isinstance(formatter_options, dict):
             span.type_ = "format"
             span.kwargs = {"formatter": None, **formatter_options}
         else:
-            span.type_ = type_
+            span.type_ = type_.lower()
             span.kwargs = kwargs
         span.table = table
         span.header = header
@@ -3579,72 +3585,73 @@ class Sheet(tk.Frame):
         span.convert = convert
         span.undo = undo
         span.widget = self if widget is None else widget
-        if span["type_"]:
-            self.create_named_span(span)
         return span
 
-    def del_named_span(self, name: str) -> Sheet:
-        if name not in self.MT.named_spans:
-            return
-        from_r, from_c, upto_r, upto_c = self.MT.named_span_coords(name)
-        totalrows = self.MT.get_max_row_idx() + 1
-        totalcols = self.MT.get_max_column_idx() + 1
-        for type_, span in self.MT.named_spans[name].items():
-            rng_from_r = 0 if from_r is None else from_r
-            rng_from_c = 0 if from_c is None else from_c
-            rng_upto_r = totalrows if upto_r is None else upto_r
-            rng_upto_c = totalcols if upto_c is None else upto_c
-            if span["header"]:
-                del_named_span_options(
-                    self.CH.cell_options,
-                    range(rng_from_c, rng_upto_c),
-                    type_,
-                )
-            if span["index"]:
-                del_named_span_options(
-                    self.RI.cell_options,
-                    range(rng_from_r, rng_upto_r),
-                    type_,
-                )
-            # col options
-            if from_r is None:
-                del_named_span_options(
-                    self.MT.col_options,
-                    range(rng_from_c, rng_upto_c),
-                    type_,
-                )
-            # row options
-            elif from_c is None:
-                del_named_span_options(
-                    self.MT.row_options,
-                    range(rng_from_r, rng_upto_r),
-                    type_,
-                )
-            # cell options
-            elif isinstance(from_r, int) and isinstance(from_c, int):
-                del_named_span_options_nested(
-                    self.MT.cell_options,
-                    range(rng_from_r, rng_upto_r),
-                    range(rng_from_c, rng_upto_c),
-                    type_,
-                )
-        del self.MT.named_spans[name]
-        return self
-
-    def create_named_span(
+    def named_span(
         self,
-        key: CreateSpanTypes,
-    ) -> Sheet:
-        span = self.span_from_key(key)
-        if span["name"] in self.MT.named_spans:
-            raise ValueError(f"Span '{span['name']}' already exists.")
-        if span["name"]:
-            self.MT.named_spans[span["name"]] = span
+        span: Span,
+    ) -> Span:
+        if span.name in self.MT.named_spans:
+            raise ValueError(f"Span '{span.name}' already exists.")
+        if not span.name:
+            raise ValueError("Span must have a name.")
+        if span.type_ not in named_span_types:
+            raise ValueError(f"Span 'type_' must be one of the following: {', '.join(named_span_types)}.")
+        self.MT.named_spans[span.name] = span
         self.create_options_from_span(span)
-        return self
+        return span
 
     def create_options_from_span(self, span: Span) -> Sheet:
         getattr(self, span.type_)(span, **span.kwargs)
+        return self
+
+    def del_named_span(self, name: str) -> Sheet:
+        if name not in self.MT.named_spans:
+            raise ValueError(f"Span '{name}' does not exist.")
+        span = self.MT.named_spans[name]
+        type_ = span.type_
+        from_r, from_c, upto_r, upto_c = self.MT.named_span_coords(name)
+        totalrows = self.MT.get_max_row_idx() + 1
+        totalcols = self.MT.get_max_column_idx() + 1
+        rng_from_r = 0 if from_r is None else from_r
+        rng_from_c = 0 if from_c is None else from_c
+        rng_upto_r = totalrows if upto_r is None else upto_r
+        rng_upto_c = totalcols if upto_c is None else upto_c
+        if span["header"]:
+            del_named_span_options(
+                self.CH.cell_options,
+                range(rng_from_c, rng_upto_c),
+                type_,
+            )
+        if span["index"]:
+            del_named_span_options(
+                self.RI.cell_options,
+                range(rng_from_r, rng_upto_r),
+                type_,
+            )
+        # col options
+        if from_r is None:
+            del_named_span_options(
+                self.MT.col_options,
+                range(rng_from_c, rng_upto_c),
+                type_,
+            )
+        # row options
+        elif from_c is None:
+            del_named_span_options(
+                self.MT.row_options,
+                range(rng_from_r, rng_upto_r),
+                type_,
+            )
+        # cell options
+        elif isinstance(from_r, int) and isinstance(from_c, int):
+            del_named_span_options_nested(
+                self.MT.cell_options,
+                range(rng_from_r, rng_upto_r),
+                range(rng_from_c, rng_upto_c),
+                type_,
+            )
+        del self.MT.named_spans[name]
         return self
 
     def align(

@@ -17,6 +17,14 @@ nonelike: set[object] = {None, "none", ""}
 truthy: set[object] = {True, "true", "t", "yes", "y", "on", "1", 1, 1.0}
 falsy: set[object] = {False, "false", "f", "no", "n", "off", "0", 0, 0.0}
 val_modifying_options: set[str, str, str] = {"checkbox", "format", "dropdown"}
+named_span_types = (
+    "format",
+    "highlight",
+    "dropdown",
+    "checkbox",
+    "readonly",
+    "align",
+)
 
 arrowkey_bindings_helper: dict[str, str] = {
     "tab": "Tab",

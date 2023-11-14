@@ -12,13 +12,18 @@ class Font(NamedTuple):
     style: str
 
 
-class Span(TypedDict):
+NamedSpanTypes: TypeAlias = Literal[
+    "", "format", "highlight", "dropdown", "checkbox", "readonly", "align",
+]
+
+
+class SpanDict(TypedDict):
     from_r: int | None
     from_c: int | None
     upto_r: int | None
     upto_c: int | None
-    type_: str | None
-    name: str | None
+    type_: NamedSpanTypes | None
+    name: str
     kwargs: dict | None
     table: bool
     index: bool
@@ -34,7 +39,7 @@ class Span(TypedDict):
 
 
 CreateSpanTypes: TypeAlias = (
-    str | int | slice | Sequence[int | None, int | None] | Sequence[Sequence[int | None, int | None], Sequence[int | None, int | None]] | Span
+    None | str | int | slice | Sequence[int | None, int | None] | Sequence[Sequence[int | None, int | None], Sequence[int | None, int | None]] | SpanDict
 )
 
 

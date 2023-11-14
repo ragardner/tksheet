@@ -9,12 +9,9 @@ from collections.abc import (
     Generator,
     Sequence,
 )
-from .types import (
-    Span,
-)
 from .other_classes import (
     DotDict,
-    SpanDict,
+    Span,
     Highlight,
 )
 from functools import partial
@@ -548,7 +545,7 @@ def span_dict(
     undo: bool = False,
     widget: object = None,
 ) -> Span:
-    d: Span = SpanDict(
+    d: Span = Span(
         from_r=from_r,
         from_c=from_c,
         upto_r=upto_r,
@@ -572,20 +569,28 @@ def span_dict(
 
 
 def coords_to_span(
+    widget: object,
     from_r: int | None = None,
     from_c: int | None = None,
     upto_r: int | None = None,
     upto_c: int | None = None,
-    name: str | None = None,
-    spans: dict[str, Span] | None = None,
 ) -> Span:
-    if isinstance(name, str) and isinstance(spans, dict) and name in spans:
-        return spans[name]
+    if not isinstance(from_r, int) and from_r is not None:
+        from_r = None
+    if not isinstance(from_c, int) and from_c is not None:
+        from_c = None
+    if not isinstance(upto_r, int) and upto_r is not None:
+        upto_r = None
+    if not isinstance(upto_c, int) and upto_c is not None:
+        upto_c = None
+    if from_r is None and from_c is None:
+        from_r = 0
     return span_dict(
         from_r=from_r,
         from_c=from_c,
         upto_r=upto_r,
         upto_c=upto_c,
+        widget=widget,
     )
 
 
@@ -622,15 +627,22 @@ def key_to_span(
                 elif len(key) == 4:
                     """
                     (int | None, int | None, int | None, int | None) -
-                    (from row,  from column, up to row, up to column) - span of cells
+                    (from row,  from column, up to row, up to column)
                     """
-                    return span_dict(
-                        from_r=key[0] if isinstance(key[0], int) else 0,
-                        from_c=key[1] if isinstance(key[1], int) else 0,
-                        upto_r=key[2] if isinstance(key[2], int) else None,
-                        upto_c=key[3] if isinstance(key[3], int) else None,
+                    return coords_to_span(
                         widget=widget,
+                        from_r=key[0],
+                        from_c=key[1],
+                        upto_r=key[2],
+                        upto_c=key[3],
                     )
+                    # return span_dict(
+                    #     from_r=key[0] if isinstance(key[0], int) else 0,
+                    #     from_c=key[1] if isinstance(key[1], int) else 0,
+                    #     upto_r=key[2] if isinstance(key[2], int) else None,
+                    #     upto_c=key[3] if isinstance(key[3], int) else None,
+                    #     widget=widget,
+                    # )
 
             elif isinstance(key[0], (list, tuple)):
                 """
@@ -639,13 +651,20 @@ def key_to_span(
                 First Sequence is start row and column
                 Second Sequence is up to but not including row and column
                 """
-                return span_dict(
-                    from_r=key[0][0] if isinstance(key[0][0], int) else 0,
-                    from_c=key[0][1] if isinstance(key[0][1], int) else 0,
+                return coords_to_span(
+                    widget=widget,
+                    from_r=key[0][0],
+                    from_c=key[0][1],
                     upto_r=key[1][0],
                     upto_c=key[1][1],
-                    widget=widget,
                 )
+                # return span_dict(
+                #     from_r=key[0][0] if isinstance(key[0][0], int) else 0,
+                #     from_c=key[0][1] if isinstance(key[0][1], int) else 0,
+                #     upto_r=key[1][0],
+                #     upto_c=key[1][1],
+                #     widget=widget,
+                # )
 
         elif isinstance(key, int):
             """
@@ -664,7 +683,7 @@ def key_to_span(
             [slice]
             """
             """
-            [:] - All cells
+            [:] - All rows
             """
             if key.start is None and key.stop is None:
                 """
@@ -672,7 +691,7 @@ def key_to_span(
                 """
                 return span_dict(
                     from_r=0,
-                    from_c=0,
+                    from_c=None,
                     upto_r=None,
                     upto_c=None,
                     widget=widget,
@@ -755,11 +774,11 @@ def key_to_span(
 
             if not splitk[0] and not splitk[1]:
                 """
-                [":"] - All cells
+                [":"] - All rows
                 """
                 return span_dict(
                     from_r=0,
-                    from_c=0,
+                    from_c=None,
                     upto_r=None,
                     upto_c=None,
                     widget=widget,
@@ -1104,7 +1123,7 @@ def span_idxs_post_move(
     full_new_idxs: dict[int, int],
     total: int,
     span: Span,
-    axis: str,
+    axis: str, # 'r' or 'c'
 ) -> tuple[int | None]:
     """
     Calculates the position of a span after moving rows/columns
@@ -1120,7 +1139,10 @@ def span_idxs_post_move(
         newupto_colrange = newupto
     else:
         oldfrom = int(span[f"from_{axis}"])
-        newfrom = full_new_idxs[oldfrom]
+        if not oldfrom:
+            newfrom = 0
+        else:
+            newfrom = full_new_idxs[oldfrom]
         newupto = None
         oldupto_colrange = total
         newupto_colrange = oldupto_colrange

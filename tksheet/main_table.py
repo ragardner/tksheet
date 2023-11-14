@@ -30,6 +30,7 @@ from math import (
     ceil,
     floor,
 )
+from operator import itemgetter
 from tkinter import TclError
 
 from .formatters import (
@@ -1080,7 +1081,7 @@ class MainTable(tk.Canvas):
         if maxidx is None:
             maxidx = len_to_idx(self.total_data_cols())
         # max column number in cell_options
-        if maxidx < (maxk := max(self.cell_options, key=lambda k: k[1], default=(0, 0))[1]):
+        if maxidx < (maxk := max(self.cell_options, key=itemgetter(1), default=(0, 0))[1]):
             maxidx = maxk
         # max column number in column_options, index cell options
         for d in (self.col_options, self.CH.cell_options):
@@ -1303,8 +1304,7 @@ class MainTable(tk.Canvas):
     def get_max_row_idx(self, maxidx: int | None = None) -> int:
         if maxidx is None:
             maxidx = len_to_idx(self.total_data_rows())
-        # max row number in cell_options
-        if maxidx < (maxk := max(self.cell_options, key=lambda k: k[0], default=(0, 0))[0]):
+        if maxidx < (maxk := max(self.cell_options, key=itemgetter(0), default=(0, 0))[0]):
             maxidx = maxk
         # max row number in row_options, index cell options
         for d in (self.row_options, self.RI.cell_options):

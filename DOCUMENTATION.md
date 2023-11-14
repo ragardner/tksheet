@@ -12,8 +12,8 @@
 ---
 - [Span Objects](https://github.com/ragardner/tksheet/wiki/Version-7#span-objects)
 - [Named Spans](https://github.com/ragardner/tksheet/wiki/Version-7#named-spans)
-- [Setting Table Data](https://github.com/ragardner/tksheet/wiki/Version-7#setting-table-data)
 - [Getting Table Data](https://github.com/ragardner/tksheet/wiki/Version-7#getting-table-data)
+- [Setting Table Data](https://github.com/ragardner/tksheet/wiki/Version-7#setting-table-data)
 ---
 - [Highlighting Cells](https://github.com/ragardner/tksheet/wiki/Version-7#highlighting-cells)
 - [Dropdown Boxes](https://github.com/ragardner/tksheet/wiki/Version-7#dropdown-boxes)
@@ -755,9 +755,9 @@ undo(event = None)
 ---
 # **Span Objects**
 
-In `tksheet` versions > `7` there are functions which utilise an object named `SpanDict`. These objects are a subclass of `dict` but with various additions and dot notation attribute access.
+In `tksheet` versions > `7` there are functions which utilise an object named `Span`. These objects are a subclass of `dict` but with various additions and dot notation attribute access.
 
-Spans basically represent an uninterrupted area of the sheet. They can be **one** of three **kinds**:
+Spans basically represent an **contiguous** area of the sheet. They can be **one** of three **kinds**:
 - `"cell"`
 - `"row"`
 - `"column"`
@@ -775,13 +775,13 @@ Whether cells, rows or columns are affected will depend on the spans [`kind`](ht
 
 ### **Creating a span**
 
-You can create a span by using the `span()` function or square brackets on a Sheet object `sheet["A1"]`.
+You can create a span by using the `span()` function or square brackets on a Sheet object `sheet["A1"]`, both return the span object.
 
 ```python
 span(
-*key: CreateSpanTypes | None,
+*key: tuple[()] | tuple[CreateSpanTypes | None],
 type_: str = "",
-name: None | str = None,
+name: str = "",
 table: bool = True,
 index: bool = False,
 header: bool = False,
@@ -797,18 +797,21 @@ expand: None | str = None,
 formatter_options: dict | None = None,
 **kwargs,
 )
+"""
+Create a span / get an existing span by name
+Returns the created span
+"""
 ```
-**Note:** If a span is given a `name`, a `type_` and the keyword arguments relevant to its type (e.g. for creating dropdown boxes) it becomes a named span but [certain methods](https://github.com/ragardner/tksheet/wiki/Version-7#creating-a-named-span) must be used to add the named span to the table.
-
-- `key` can be one of the following types:
+- `key` you do not have to provide an argument for `key`, if no argument is provided then the span will be a full sheet span. Otherwise `key` can be the following types:
+    - `None`
     - `str` e.g. `sheet.span("A1:F1")`
     - `int` e.g. `sheet.span(0)`
     - `slice` e.g. `sheet.span(slice(0, 4))`
-    - `Sequence[int | None, int | None]` e.g. `sheet.span(0, 0)`
-    - `Sequence[Sequence[int | None, int | None], Sequence[int | None, int | None]]` e.g. `sheet.span(0, 0, 1, 1)`
-    - `SpanDict` e.g `sheet.span(another_span)`
+    - `Sequence[int | None, int | None]` representing a cell of `row, column` e.g. `sheet.span(0, 0)`
+    - `Sequence[Sequence[int | None, int | None], Sequence[int | None, int | None]]` representing `sheet.span(start row, start column, up to but not including row, up to but not including column)` e.g. `sheet.span(0, 0, 2, 2)`
+    - `Span` e.g `sheet.span(another_span)`
 - `type_` (`str`) must be either an empty string `""` or one of the following: `"format"`, `"highlight"`, `"dropdown"`, `"checkbox"`, `"readonly"`, `"align"`.
-- `name` (`None`, `str`, `bool`) used for named spans or for identification.
+- `name` (`str`) used for named spans or for identification. If no name is provided then a name is generated for the span which is based on an internal integer ticker and then converted to a string in the same way column names are, e.g. `0` is `"A"`.
 - `table` (`bool`) when `True` will make all functions used with the span target the main table as well as the header/index is those are `True`.
 - `index` (`bool`) when `True` will make all functions used with the span target the index as well as the table/header if those are `True`.
 - `header` (`bool`) when `True` will make all functions used with the span target the header as well as the table/index if those are `True`.
@@ -833,6 +836,8 @@ formatter_options: dict | None = None,
     - When using `get_data()` will format the returned data.
     - When using `set_data()` will format the data being set but **NOT** create a new formatting rule on the sheet.
 - `**kwargs` you can provide additional keyword arguments to the function for example those used in `span.highlight()` or `span.dropdown()` which are used when applying a named span to a table.
+
+To create a named span see [here](https://github.com/ragardner/tksheet/wiki/Version-7#named-spans).
 
 ### **Span creation syntax**
 
@@ -1012,52 +1017,44 @@ Spans have the following methods:
 
 ```python
 span.options(
-type_: str = "",
-name: None | str | bool = False,
+type_: str | None = None,
+name: str | None = None,
 table: bool | None = None,
 index: bool | None = None,
 header: bool | None = None,
-tdisp: bool | None = False,
-idisp: bool | None  = True,
-hdisp: bool | None  = True,
+tdisp: bool | None = None,
+idisp: bool | None  = None,
+hdisp: bool | None  = None,
 transposed: bool | None = None,
 ndim: int | None = None,
-convert: None | Callable = None,
+convert: Callable | None = None,
 undo: bool | None = None,
 widget: object = None,
-expand: None | str = None,
+expand: str | None = None,
 formatter_options: dict | None = None,
 **kwargs,
 )
 ```
-**Note:** If a span is given a `name`, a `type_` and the keyword arguments relevant to its type (e.g. for creating dropdown boxes) it becomes a named span but [certain methods](https://github.com/ragardner/tksheet/wiki/Version-7#creating-a-named-span) must be used to add the named span to the table.
-
-- `key` can be one of the following types:
-    - `str` e.g. `sheet.span("A1:F1")`
-    - `int` e.g. `sheet.span(0)`
-    - `slice` e.g. `sheet.span(slice(0, 4))`
-    - `Sequence[int | None, int | None]` e.g. `sheet.span(0, 0)`
-    - `Sequence[Sequence[int | None, int | None], Sequence[int | None, int | None]]` e.g. `sheet.span(0, 0, 1, 1)`
-    - `SpanDict` e.g `sheet.span(another_span)`
-- `type_` (`str`) must be either an empty string `""` or one of the following: `"format"`, `"highlight"`, `"dropdown"`, `"checkbox"`, `"readonly"`, `"align"`.
-- `name` (`None`, `str`, `bool`) used for named spans or for identification.
-- `table` (`bool`) when `True` will make all functions used with the span target the main table as well as the header/index is those are `True`.
-- `index` (`bool`) when `True` will make all functions used with the span target the index as well as the table/header if those are `True`.
-- `header` (`bool`) when `True` will make all functions used with the span target the header as well as the table/index if those are `True`.
-- `tdisp` (`bool`) is used by data getting functions that utilize spans and when `True` the function retrieve screen displayed data for the table, not underlying cell data.
-- `idisp` (`bool`) is used by data getting functions that utilize spans and when `True` the function retrieve screen displayed data for the index, not underlying cell data.
-- `hdisp` (`bool`) is used by data getting functions that utilize spans and when `True` the function retrieve screen displayed data for the header, not underlying cell data.
-- `transposed` (`bool`) is used by data getting and setting functions that utilize spans. When `True`:
+**Note:** that if `None` is used for any of the following parameters then that `Span`s attribute will be unchanged.
+- `type_` (`str`, `None`) if not `None` then must be either an empty string `""` or one of the following: `"format"`, `"highlight"`, `"dropdown"`, `"checkbox"`, `"readonly"`, `"align"`.
+- `name` (`str`, `None`) is used for named spans or for identification.
+- `table` (`bool`, `None`) when `True` will make all functions used with the span target the main table as well as the header/index is those are `True`.
+- `index` (`bool`, `None`) when `True` will make all functions used with the span target the index as well as the table/header if those are `True`.
+- `header` (`bool`, `None`) when `True` will make all functions used with the span target the header as well as the table/index if those are `True`.
+- `tdisp` (`bool`, `None`) is used by data getting functions that utilize spans and when `True` the function retrieve screen displayed data for the table, not underlying cell data.
+- `idisp` (`bool`, `None`) is used by data getting functions that utilize spans and when `True` the function retrieve screen displayed data for the index, not underlying cell data.
+- `hdisp` (`bool`, `None`) is used by data getting functions that utilize spans and when `True` the function retrieve screen displayed data for the header, not underlying cell data.
+- `transposed` (`bool`, `None`) is used by data getting and setting functions that utilize spans. When `True`:
     - Returned sublists from data getting functions will represent columns rather than rows.
     - Data setting functions will assume that a single sequence is a column rather than row and that a list of lists is a list of columns rather than a list of rows.
-- `ndim` (`int`) is used by data getting functions that utilize spans, it must be either `0` or `1` or `2`.
+- `ndim` (`int`, `None`) is used by data getting functions that utilize spans, it must be either `0` or `1` or `2`.
     - `0` is the default setting which will make the return value vary based on what it is. For example if the gathered data is only a single cell it will return a value instead of a list of lists with a single list containing a single value. A single row will be a single list.
     - `1` will force the return of a single list as opposed to a list of lists.
     - `2` will force the return of a list of lists.
-- `convert` (`None`, `Callable`) can be used to modify the data using a function before returning it. The data sent to the `convert` function will be as it was before normally returning (after `ndim` has potentially modified it).
-- `undo` (`bool`) is used by data modifying functions that utilize spans. When `True` and if undo is enabled for the sheet then the end user will be able to undo/redo the modification.
+- `convert` (`Callable`, `None`) can be used to modify the data using a function before returning it. The data sent to the `convert` function will be as it was before normally returning (after `ndim` has potentially modified it).
+- `undo` (`bool`, `None`) is used by data modifying functions that utilize spans. When `True` and if undo is enabled for the sheet then the end user will be able to undo/redo the modification.
 - `widget` (`object`) is the reference to the original sheet which created the span. This can be changed to a different sheet if required e.g. `my_span.widget = new_sheet`.
-- `expand` (`None`, `str`) must be either `None` or:
+- `expand` (`str`, `None`) must be either `None` or:
     - `"table"`/`"both"` expand the span both down and right from the span start to the ends of the table.
     - `"right"` expand the span right to the end of the table `x` axis.
     - `"down"` expand the span downwards to the bottom of the table `y` axis.
@@ -1327,52 +1324,175 @@ span.expand(direction: str = "both")
     - `"right"` expand the span right to the end of the table x axis.
     - `"down"` expand the span downwards to the bottom of the table y axis.
 
-#### **Turn a span into a named span**
-
-Turns the span into a named span and adds the option (rule) to the sheet. For example if the `type_` is `"highlight"` and the span has a name and the keyword argument `bg="red"` it would add a highlight rule to the sheet.
-
-```python
-span.create_named(
-type_: str = "",
-name: str | None = None,
-**kwargs,
-)
-```
-- `type_` (`str`) must be either an empty string `""` or one of the following: `"format"`, `"highlight"`, `"dropdown"`, `"checkbox"`, `"readonly"`, `"align"`. If a span has a name, a type_ and the relevant keyword arguments it is a named span.
-
-Example:
-```python
-# a row span of rows 1, 2, 3, 4
-span = sheet[1:5]
-
-span.create_named(
-    type_="highlight",
-    name="my highlight span",
-    bg="red",
-)
-```
-
 ---
 # **Named Spans**
 
-Named spans are like spans but with a name, a type and some keyword arguments saved in `span.kwargs`. Named spans can be used to:
+Named spans are like spans but with a type, some keyword arguments saved in `span.kwargs` and then created by using a `Sheet()` function. Like spans, named spans are also **contiguous** areas of the sheet.
+
+Named spans can be used to:
 - Create options (rules) for the sheet which will expand/contract when new cells are added/removed. For example if a user were to insert rows in the middle of some already highlighted rows:
-    - With an ordinary row highlights the newly inserted rows would **NOT** be highlighted.
+    - With ordinary row highlights the newly inserted rows would **NOT** be highlighted.
     - With named span row highlights the newly inserted rows would also be highlighted.
-- Quickly delete an existing rule from the table whereas an ordinary span would not keep track of where the rules cells have been moved.
+- Quickly delete an existing option from the table whereas an ordinary span would not keep track of where the options have been moved.
+
+**Note** that generally when a user moves rows/columns around the dimensions of the named span essentially move with either end of the span:
+- The new start of the span will be wherever the start row/column moves.
+- The new end of the span will be wherever the end row/column moves.
+The exceptions to this rule are when a span is expanded or has been created with `None`s or the start of `0` and no end or end of `None`.
+
+For the end user, when a span is just a single row/column (and is not expanded/unlimited) it cannot be expanded but it can be deleted if the row/column is deleted.
 
 #### **Creating a named span**
 
-To actually add a named span to the table a span not only needs a `name`, a `type_` and the relevant keyword arguments but one of the following functions must be used.
+For a span to become a named span it needs:
+- One of the following `type_`s: `"format"`, `"highlight"`, `"dropdown"`, `"checkbox"`, `"readonly"`, `"align"`.
+- Relevant keyword arguments e.g. if the `type_` is `"highlight"` then arguments for `sheet.highlight()` found [here](https://github.com/ragardner/tksheet/wiki/Version-7#highlighting-cells).
 
-1. [`sheet.span()`](https://github.com/ragardner/tksheet/wiki/Version-7#creating-a-span)
-2. [`span.create_named()`](https://github.com/ragardner/tksheet/wiki/Version-7#span.create_named())
+After a span has the above items the following function has to be used to make it a named span and create the options on the sheet:
 
+```python
+named_span(
+span: Span,
+)
+"""
+Adds a named span to the sheet
+Returns the span
+"""
+```
+- `span` must be an existing span with:
+    - a `name` (a `name` is automatically generated upon span creation if one is not provided).
+    - a `type_` as described above.
+    - keyword arguments as described above.
+
+Example of creating a named span which will always keep the entire sheet formatted as `int` no matter how many rows/columns are inserted:
+```python
+span = self.sheet.span(
+":",
+# you don't have to provide a `type_` when using the `formatter_kwargs` argument
+formatter_options=int_formatter(),
+)
+self.sheet.named_span(span)
+```
+
+#### **Deleting a named span**
+
+To delete a named span you simply have to provide the name.
+
+```python
+del_named_span(name: str)
+```
+
+Example, creating and deleting a span:
+```python
+# span covers the entire sheet
+self.sheet.named_span(
+    self.sheet.span(
+        name="my highlight span",
+        type_="highlight",
+        bg="dark green",
+        fg="#FFFFFF",
+    )
+)
+self.sheet.del_named_span("my highlight span")
+
+# ValueError is raised if name does not exist
+self.sheet.del_named_span("this name doesnt exist")
+# ValueError: Span 'B' does not exist.
+```
+
+---
+# **Getting Table Data**
+
+#### **Generate sheet rows one at a time.**
+
+This function is useful if you need row data, one row at a time.
+
+```python
+yield_sheet_rows(get_displayed = False,
+                 get_header = False,
+                 get_index = False,
+                 get_index_displayed = True,
+                 get_header_displayed = True,
+                 only_rows = None,
+                 only_columns = None)
+```
+Note:
+- The following keyword arguments both behave the same way for `yield_sheet_rows()` and `get_sheet_data()`.
+
+Arguments:
+- `get_displayed` (`bool`) if `True` it will return cell values as they are displayed on the screen. If `False` it will return any underlying data, for example if the cell is formatted.
+- `get_header` (`bool`) if `True` it will return the header of the sheet even if there is not one.
+- `get_index` (`bool`) if `True` it will return the index of the sheet even if there is not one.
+- `get_index_displayed` (`bool`) if `True` it will return whatever index values are displayed on the screen, for example if there is a dropdown box with `text` set.
+- `get_header_displayed` (`bool`) if `True` it will return whatever header values are displayed on the screen, for example if there is a dropdown box with `text` set.
+- `only_rows` (`None`, `iterable`) with this argument you can supply an iterable of row indexes in any order to be the only rows that are returned.
+- `only_columns` (`None`, `iterable`) with this argument you can supply an iterable of column indexes in any order to be the only columns that are returned.
+
+___
+
+#### **Get the main table data, readonly.**
+```python
+@property
+data()
+```
+- e.g. `self.sheet.data`
+
+___
+
+#### **The name of the actual internal sheet data variable.**
+```python
+.MT.data
+```
+- You can use this to directly modify or retrieve the main table's data e.g. `cell_0_0 = my_sheet_name_here.MT.data[0][0]`. Note that this is the raw data and if there are cell formatters it will include the cell's formatter class, as such it is not recommended to use this to retrieve or modify data unless you know what you are doing.
+
+___
+
+```python
+get_cell_data(r, c, get_displayed = False)
+```
+
+___
+
+```python
+get_row_data(r,
+             get_displayed = False,
+             get_index = False,
+             get_index_displayed = True,
+             only_columns = None)
+```
+- The above arguments behave the same way as for `get_sheet_data()`.
+
+___
+
+```python
+get_column_data(c,
+                get_displayed = False,
+                get_header = False,
+                get_header_displayed = True,
+                only_rows = None)
+```
+- The above arguments behave the same way as for `get_sheet_data()`.
+
+___
+
+#### **Get number of rows in table data.**
+```python
+get_total_rows(include_index = False)
+```
+
+___
+
+#### **Get number of columns in table data.**
+```python
+get_total_columns(include_header = False)
+```
 
 ---
 # **Setting Table Data**
 
-Fundamentally, there are two ways to set table data. One way overwrites the entire table and sets the `tksheet` data to a new object. The other edits the existing data object.
+Fundamentally, there are two ways to set table data:
+- Overwriting the entire table and setting the table data to a new object.
+- Modifying the existing data.
 
 #### **Overwriting the table**
 
@@ -1395,6 +1515,8 @@ set_sheet_data(data: list | tuple | None = None,
 - `keep_formatting` (`bool`) when `True` re-applies any prior formatting rules to the new data, if `False` all prior formatting rules are deleted.
 - `delete_options` (`bool`) when `True` all table options such as dropdowns, checkboxes, formatting, highlighting etc. are deleted.
 
+**Note:** this function does not impact the sheet header or index.
+
 ___
 
 ```python
@@ -1409,8 +1531,9 @@ ___
 #### **Modifying table data**
 
 There are various ways to modify table data:
-- The functions which existed prior to `tksheet` version 7 such as `set_cell_data`, `set_row_data` and `set_column_data`, for which the documentation can be found [here](https://github.com/ragardner/tksheet/wiki/Version-6#setting-table-data)
-- Using assignment with square brackets, explained [here](https://github.com/ragardner/tksheet/wiki/Version-7#span-objects)
+- Using assignment with square brackets, explained [here](https://github.com/ragardner/tksheet/wiki/Version-7#span-objects).
+- Using
+- Older version functions such as `set_cell_data`, `set_row_data` and `set_column_data`, for which the documentation can be found [here](https://github.com/ragardner/tksheet/wiki/Version-6#setting-table-data).
 
 #### **Insert a row into the sheet.**
 ```python
@@ -1559,104 +1682,6 @@ height_and_width(height = None, width = None)
 - `height` (`int`) set a height in pixels
 - `width` (`int`) set a width in pixels
 If both arguments are `None` then table will reset to default tkinter canvas dimensions.
-
----
-# **Getting Table Data**
-
-#### **Yield / generate sheet rows one at a time.**
-
-This is useful if your sheet is very large and you don't want to create an extra list in memory (it does actually generate one row at a time and not from a pre-built list).
-```python
-yield_sheet_rows(get_displayed = False,
-                 get_header = False,
-                 get_index = False,
-                 get_index_displayed = True,
-                 get_header_displayed = True,
-                 only_rows = None,
-                 only_columns = None)
-```
-
-#### **Get sheet data as list of lists.**
-```python
-get_sheet_data(get_displayed = False,
-               get_header = False,
-               get_index = False,
-               get_index_displayed = True,
-               get_header_displayed = True,
-               only_rows = None,
-               only_columns = None)
-```
-
-Note:
-- The following keyword arguments both behave the same way for `yield_sheet_rows()` and `get_sheet_data()`.
-
-Arguments:
-- `get_displayed` (`bool`) if `True` it will return cell values as they are displayed on the screen. If `False` it will return any underlying data, for example if the cell is formatted.
-- `get_header` (`bool`) if `True` it will return the header of the sheet even if there is not one.
-- `get_index` (`bool`) if `True` it will return the index of the sheet even if there is not one.
-- `get_index_displayed` (`bool`) if `True` it will return whatever index values are displayed on the screen, for example if there is a dropdown box with `text` set.
-- `get_header_displayed` (`bool`) if `True` it will return whatever header values are displayed on the screen, for example if there is a dropdown box with `text` set.
-- `only_rows` (`None`, `iterable`) with this argument you can supply an iterable of row indexes in any order to be the only rows that are returned.
-- `only_columns` (`None`, `iterable`) with this argument you can supply an iterable of column indexes in any order to be the only columns that are returned.
-
-___
-
-#### **Get the main table data, readonly.**
-```python
-@property
-data()
-```
-- e.g. `self.sheet.data`
-
-___
-
-#### **The name of the actual internal sheet data variable.**
-```python
-.MT.data
-```
-- You can use this to directly modify or retrieve the main table's data e.g. `cell_0_0 = my_sheet_name_here.MT.data[0][0]`. Note that this is the raw data and if there are cell formatters it will include the cell's formatter class, as such it is not recommended to use this to retrieve or modify data unless you know what you are doing.
-
-___
-
-```python
-get_cell_data(r, c, get_displayed = False)
-```
-
-___
-
-```python
-get_row_data(r,
-             get_displayed = False,
-             get_index = False,
-             get_index_displayed = True,
-             only_columns = None)
-```
-- The above arguments behave the same way as for `get_sheet_data()`.
-
-___
-
-```python
-get_column_data(c,
-                get_displayed = False,
-                get_header = False,
-                get_header_displayed = True,
-                only_rows = None)
-```
-- The above arguments behave the same way as for `get_sheet_data()`.
-
-___
-
-#### **Get number of rows in table data.**
-```python
-get_total_rows(include_index = False)
-```
-
-___
-
-#### **Get number of columns in table data.**
-```python
-get_total_columns(include_header = False)
-```
 
 ---
 # **Highlighting Cells**

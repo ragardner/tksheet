@@ -83,7 +83,7 @@ class DotDict(dict):
             if type(value) is dict:  # noqa: E721
                 self[key] = DotDict(value)
 
-    def __getstate__(self) -> SpanDict:
+    def __getstate__(self) -> DotDict:
         return self
 
     def __setstate__(self, state: DotDict) -> None:
@@ -100,7 +100,7 @@ class DotDict(dict):
     __delattr__ = dict.__delitem__
 
 
-class SpanDict(dict):
+class Span(dict):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         # Recursively turn nested dicts into DotDicts
@@ -110,10 +110,10 @@ class SpanDict(dict):
             elif type(item) is dict:  # noqa: E721
                 self[key] = DotDict(item)
 
-    def __getstate__(self) -> SpanDict:
+    def __getstate__(self) -> Span:
         return self
 
-    def __setstate__(self, state: SpanDict) -> None:
+    def __setstate__(self, state: Span) -> None:
         self.update(state)
 
     def __getitem__(self, key: Hashable) -> object:
@@ -140,7 +140,7 @@ class SpanDict(dict):
         formatter_class=None,
         redraw: bool = True,
         **kwargs,
-    ) -> SpanDict:
+    ) -> Span:
         self["widget"].format(
             self,
             formatter_options={"formatter": formatter_class, **formatter_options, **kwargs},
@@ -150,7 +150,7 @@ class SpanDict(dict):
         )
         return self
 
-    def del_format(self) -> SpanDict:
+    def del_format(self) -> Span:
         self["widget"].del_format(self)
         return self
 
@@ -161,7 +161,7 @@ class SpanDict(dict):
         end: bool | None = None,
         overwrite: bool = False,
         redraw: bool = True,
-    ) -> SpanDict:
+    ) -> Span:
         self["widget"].highlight(
             self,
             bg=bg,
@@ -172,34 +172,34 @@ class SpanDict(dict):
         )
         return self
 
-    def dehighlight(self, redraw: bool = True) -> SpanDict:
+    def dehighlight(self, redraw: bool = True) -> Span:
         self["widget"].dehighlight(self, redraw=redraw)
 
     del_highlight = dehighlight
 
-    def readonly(self, readonly: bool = True) -> SpanDict:
+    def readonly(self, readonly: bool = True) -> Span:
         self["widget"].readonly(self, readonly=readonly)
         return self
 
-    def dropdown(self, *args, **kwargs) -> SpanDict:
+    def dropdown(self, *args, **kwargs) -> Span:
         self["widget"].dropdown(self, *args, **kwargs)
 
-    def del_dropdown(self) -> SpanDict:
+    def del_dropdown(self) -> Span:
         self["widget"].del_dropdown(self)
 
-    def checkbox(self, *args, **kwargs) -> SpanDict:
+    def checkbox(self, *args, **kwargs) -> Span:
         self["widget"].dropdown(self, *args, **kwargs)
 
-    def del_checkbox(self) -> SpanDict:
+    def del_checkbox(self) -> Span:
         self["widget"].del_checkbox(self)
 
-    def align(self, align: str | None, redraw: bool = True) -> SpanDict:
+    def align(self, align: str | None, redraw: bool = True) -> Span:
         self["widget"].align(self, align=align, redraw=redraw)
 
-    def del_align(self, redraw: bool = True) -> SpanDict:
+    def del_align(self, redraw: bool = True) -> Span:
         self["widget"].del_align(self, redraw=redraw)
 
-    def clear(self, undo: bool | None = None, redraw: bool = True) -> SpanDict:
+    def clear(self, undo: bool | None = None, redraw: bool = True) -> Span:
         if undo is not None:
             self["widget"].clear(self, undo=undo, redraw=redraw)
         else:
@@ -208,33 +208,33 @@ class SpanDict(dict):
 
     def options(
         self,
-        type_: str = "",
-        name: None | str | bool = False,
+        type_: str | None = None,
+        name: str | None = None,
         table: bool | None = None,
         index: bool | None = None,
         header: bool | None = None,
-        tdisp: bool | None = False,
-        idisp: bool | None  = True,
-        hdisp: bool | None  = True,
+        tdisp: bool | None = None,
+        idisp: bool | None  = None,
+        hdisp: bool | None  = None,
         transposed: bool | None = None,
         ndim: int | None = None,
-        convert: None | Callable = None,
+        convert: Callable | None = None,
         undo: bool | None = None,
         widget: object = None,
-        expand: None | str = None,
+        expand: str | None = None,
         formatter_options: dict | None = None,
         **kwargs,
-    ) -> SpanDict:
+    ) -> Span:
         if isinstance(expand, str) and expand.lower() in ("down", "right", "both", "table"):
             self.expand(expand)
 
         if isinstance(convert, Callable):
             self["convert"] = convert
 
-        if type_ and isinstance(type_, str):
+        if isinstance(type_, str):
             self["type_"] = type_.lower()
 
-        if isinstance(name, str) or name is None:
+        if isinstance(name, str):
             if isinstance(name, str) and not name:
                 name = f"{num2alpha(self['widget'].named_span_id)}"
                 self['widget'].named_span_id += 1
@@ -271,32 +271,11 @@ class SpanDict(dict):
             self["widget"] = widget
         return self
 
-    def create_named(
-        self,
-        type_: str = "",
-        name: str | None = None,
-        **kwargs,
-    ) -> SpanDict:
-        if not type_ or not isinstance(type_, str):
-            raise ValueError("Argument 'type_' must be either 'format', 'highlight', 'dropdown', 'checkbox', 'readonly' or 'align'.")
-        # only overwrite existing attributes if given new values
-        if type_ and isinstance(type_, str):
-            self["type_"] = type_.lower()
-        if isinstance(name, str):
-            if not name:
-                name = f"{num2alpha(self['widget'].named_span_id)}"
-                self['widget'].named_span_id += 1
-            self["name"] = name
-        if kwargs:
-            self["kwargs"] = kwargs
-        self["widget"].create_named_span(self)
-        return self
-
-    def transpose(self) -> SpanDict:
+    def transpose(self) -> Span:
         self["transposed"] = not self["transposed"]
         return self
 
-    def expand(self, direction: str = "both") -> SpanDict:
+    def expand(self, direction: str = "both") -> Span:
         if direction == "both" or direction == "table":
             self["upto_r"], self["upto_c"] = None, None
         elif direction == "down":
