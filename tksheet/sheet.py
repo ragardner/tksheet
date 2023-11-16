@@ -2534,13 +2534,16 @@ class Sheet(tk.Frame):
         - when ndim == 1 force single list
         - when ndim == 2 force list of lists
 
+        table
+        - gets table data, if false table data will not be included
+
         index
-        - gets index data in addition to table data, is at the beginning
-          of each row normally and becomes its own column if transposed
+        - gets index data, is at the beginning of each row normally
+          becomes its own column if transposed
 
         header
-        - get header data in addition to table data, is its own row
-          normally and goes at the top of each column if transposed
+        - get header data, is its own row normally
+          goes at the top of each column if transposed
 
         tdisp
         - if True gets displayed sheet values instead of actual data
@@ -2557,42 +2560,53 @@ class Sheet(tk.Frame):
 
         """
         tdisp, idisp, hdisp = span.tdisp, span.idisp, span.hdisp
-        index, header = span.index, span.header
+        table, index, header = span.table, span.index, span.header
         fmt_kw = span.kwargs if span.type_ == "format" and span.kwargs else None
         quick_tdata, quick_idata, quick_hdata = self.MT.get_cell_data, self.RI.get_cell_data, self.CH.get_cell_data
+        res = []
         if span.transposed:
-            res = []
             if index:
                 if index and header:
-                    res.append([""] + [quick_idata(r, get_displayed=idisp) for r in rows])
+                    if table:
+                        res.append([""] + [quick_idata(r, get_displayed=idisp) for r in rows])
+                    else:
+                        res.append([quick_idata(r, get_displayed=idisp) for r in rows])
                 else:
                     res.append([quick_idata(r, get_displayed=idisp) for r in rows])
             if header:
-                res.extend(
-                    [
-                        [quick_hdata(c, get_displayed=hdisp)]
-                        + [quick_tdata(r, c, get_displayed=tdisp, fmt_kw=fmt_kw) for r in rows]
-                        for c in cols
-                    ]
-                )
-            else:
+                if table:
+                    res.extend(
+                        [
+                            [quick_hdata(c, get_displayed=hdisp)]
+                            + [quick_tdata(r, c, get_displayed=tdisp, fmt_kw=fmt_kw) for r in rows]
+                            for c in cols
+                        ]
+                    )
+                else:
+                    res.extend([[quick_hdata(c, get_displayed=hdisp)] for c in cols])
+            elif table:
                 res.extend([[quick_tdata(r, c, get_displayed=tdisp, fmt_kw=fmt_kw) for r in rows] for c in cols])
         elif not span.transposed:
-            res = []
             if header:
                 if header and index:
-                    res.append([""] + [quick_hdata(c, get_displayed=hdisp) for c in cols])
+                    if table:
+                        res.append([""] + [quick_hdata(c, get_displayed=hdisp) for c in cols])
+                    else:
+                        res.append([quick_hdata(c, get_displayed=hdisp) for c in cols])
                 else:
                     res.append([quick_hdata(c, get_displayed=hdisp) for c in cols])
             if index:
-                res.extend(
-                    [
-                        [quick_idata(r, get_displayed=idisp)]
-                        + [quick_tdata(r, c, get_displayed=tdisp, fmt_kw=fmt_kw) for c in cols]
-                        for r in rows
-                    ]
-                )
-            else:
+                if table:
+                    res.extend(
+                        [
+                            [quick_idata(r, get_displayed=idisp)]
+                            + [quick_tdata(r, c, get_displayed=tdisp, fmt_kw=fmt_kw) for c in cols]
+                            for r in rows
+                        ]
+                    )
+                else:
+                    res.extend([[quick_idata(r, get_displayed=idisp)] for r in rows])
+            elif table:
                 res.extend([[quick_tdata(r, c, get_displayed=tdisp, fmt_kw=fmt_kw) for c in cols] for r in rows])
         if not span.ndim:
             # it's a cell
@@ -2602,7 +2616,7 @@ class Sheet(tk.Frame):
             elif len(res) == 1:
                 res = res[0]
             # it's a column
-            elif res and not span.transposed and len(res[0]) == 1:
+            elif table and res and not span.transposed and len(res[0]) == 1:
                 res = list(chain.from_iterable(res))
         elif span.ndim == 1:
             # flatten sublists
@@ -2704,76 +2718,154 @@ class Sheet(tk.Frame):
         if isinstance(data, (list, tuple)):
             if not data:
                 return
-            # data is list of lists
+            # data is a list of lists
             if isinstance(data[0], (list, tuple)):
                 if transposed:
-                    """
-                    - sublists are columns
-                        1  2  3
-                    A [[-, i, i],
-                    B  [h, t, t],
-                    C  [h, t, t],]
-                    """
-                    if index:
-                        for r, v in enumerate(islice(data[0], hstart, None)):
-                            maxr = r
-                            event_data = set_i(r, v, event_data)
-                    if header:
+                    if table:
+                        """
+                        - sublists are columns
+                            1  2  3
+                        A [[-, i, i],
+                        B  [h, t, t],
+                        C  [h, t, t],]
+                        """
+                        if index:
+                            for r, v in enumerate(islice(data[0], hstart, None)):
+                                maxr = r
+                                event_data = set_i(r, v, event_data)
+                        if header:
+                            for c, sl in enumerate(islice(data, istart, None), start=startc):
+                                maxc = c
+                                for v in islice(sl, 0, 1):
+                                    event_data = set_h(c, v, event_data)
                         for c, sl in enumerate(islice(data, istart, None), start=startc):
                             maxc = c
-                            for v in islice(sl, 0, 1):
+                            for r, v in enumerate(islice(sl, hstart, None), start=startr):
+                                event_data = set_t(r, c, v, event_data, fmt_kw)
+                                maxr = r
+                    elif not table:
+                        if index and header:
+                            """
+                            - first sublist is index, rest are headers
+                            [['1', '2', '3'], ['A'], ['B'], ['C']]
+                            """
+                            for r, v in enumerate(data[0], start=startr):
+                                maxr = r
+                                event_data = set_i(r, v, event_data)
+                            for c, sl in enumerate(islice(data, 1, None), start=startc):
+                                maxc = c
+                                if sl:
+                                    event_data = set_h(c, sl[0], event_data)
+                        elif index:
+                            """
+                            ['1', '2', '3']
+                            """
+                            for r, v in enumerate(data, start=startr):
+                                maxr = r
+                                event_data = set_i(r, v, event_data)
+                        elif header:
+                            """
+                            [['A'], ['B'], ['C']]
+                            """
+                            for c, sl in enumerate(data, start=startc):
+                                maxc = c
+                                if sl:
+                                    event_data = set_h(c, sl[0], event_data)
+                elif not transposed:
+                    if table:
+                        """
+                        - sublists are rows
+                            A  B  C
+                        1 [[-, h, h],
+                        2  [i, t, t],
+                        3  [i, t, t],]
+                        """
+                        if index:
+                            for r, sl in enumerate(islice(data, hstart, None), start=startr):
+                                maxr = r
+                                for v in islice(sl, 0, 1):
+                                    event_data = set_i(r, v, event_data)
+                        if header:
+                            for c, v in enumerate(islice(data[0], istart, None)):
+                                maxc = c
                                 event_data = set_h(c, v, event_data)
-                    for c, sl in enumerate(islice(data, istart, None), start=startc):
-                        maxc = c
-                        for r, v in enumerate(islice(sl, hstart, None), start=startr):
-                            event_data = set_t(r, c, v, event_data, fmt_kw)
-                            maxr = r
-                else:
-                    """
-                    - sublists are rows
-                        A  B  C
-                    1 [[-, h, h],
-                    2  [i, t, t],
-                    3  [i, t, t],]
-                    """
-                    if index:
                         for r, sl in enumerate(islice(data, hstart, None), start=startr):
                             maxr = r
-                            for v in islice(sl, 0, 1):
-                                event_data = set_i(r, v, event_data)
-                    if header:
-                        for c, v in enumerate(islice(data[0], istart, None)):
-                            maxc = c
-                            event_data = set_h(c, v, event_data)
-                    for r, sl in enumerate(islice(data, hstart, None), start=startr):
-                        maxr = r
-                        for c, v in enumerate(islice(sl, istart, None), start=startc):
-                            maxc = c
-                            event_data = set_t(r, c, v, event_data, fmt_kw)
+                            for c, v in enumerate(islice(sl, istart, None), start=startc):
+                                maxc = c
+                                event_data = set_t(r, c, v, event_data, fmt_kw)
+                    elif not table:
+                        if index and header:
+                            """
+                            - first sublist is headers, rest are index values
+                            [['A', 'B', 'C'], ['1'], ['2'], ['3']]
+                            """
+                            for c, v in enumerate(data[0], start=startc):
+                                maxc = c
+                                event_data = set_h(c, v, event_data)
+                            for r, sl in enumerate(islice(data, 1, None), start=startr):
+                                maxr = r
+                                if sl:
+                                    event_data = set_i(r, sl[0], event_data)
+                        elif index:
+                            """
+                            [['1'], ['2'], ['3']]
+                            """
+                            for r, sl in enumerate(data, start=startr):
+                                maxr = r
+                                if sl:
+                                    event_data = set_i(r, sl[0], event_data)
+                        elif header:
+                            """
+                            ['A', 'B', 'C']
+                            """
+                            for c, v in enumerate(data, start=startc):
+                                maxc = c
+                                event_data = set_h(c, v, event_data)
             # data is list of values
             else:
-                if transposed:
+                # setting a list of index values, ignore transposed
+                if index and not table:
                     """
-                    - single list is column, span.index ignored
-                        1  2  3
-                    A  [h, t, t]
+                     1  2  3
+                    [i, i, i]
                     """
-                    if header:
-                        event_data = set_h(startc, data[0], event_data)
-                    for r, v in enumerate(islice(data, hstart, None), start=startr):
+                    for r, v in enumerate(data, start=startr):
                         maxr = r
-                        event_data = set_t(r, startc, v, event_data, fmt_kw)
-                else:
+                        event_data = set_i(r, v, event_data)
+                # setting a list of header values, ignore transposed
+                elif header and not table:
                     """
-                    - single list is row, span.header ignored
-                        A  B  C
-                    1  [i, t, t]
+                     A  B  C
+                    [h, h, h]
                     """
-                    if index:
-                        event_data = set_i(startr, data[0], event_data)
-                    for c, v in enumerate(islice(data, istart, None), start=startc):
+                    for c, v in enumerate(data, start=startc):
                         maxc = c
-                        event_data = set_t(startr, c, v, event_data, fmt_kw)
+                        event_data = set_h(c, v, event_data)
+                # includes table values, transposed taken into account
+                elif table:
+                    if transposed:
+                        """
+                        - single list is column, span.index ignored
+                            1  2  3
+                        A  [h, t, t]
+                        """
+                        if header:
+                            event_data = set_h(startc, data[0], event_data)
+                        for r, v in enumerate(islice(data, hstart, None), start=startr):
+                            maxr = r
+                            event_data = set_t(r, startc, v, event_data, fmt_kw)
+                    elif not transposed:
+                        """
+                        - single list is row, span.header ignored
+                            A  B  C
+                        1  [i, t, t]
+                        """
+                        if index:
+                            event_data = set_i(startr, data[0], event_data)
+                        for c, v in enumerate(islice(data, istart, None), start=startc):
+                            maxc = c
+                            event_data = set_t(startr, c, v, event_data, fmt_kw)
         # data is a value
         else:
             """
@@ -2787,7 +2879,7 @@ class Sheet(tk.Frame):
             if header:
                 event_data = set_h(startc, data, event_data)
 
-        # add to sheet rows/cols if required but user cannot undo added rows/cols, only values
+        # add rows/cols to sheet if required but user cannot undo added rows/cols, only values
         if self.MT.all_columns_displayed and maxc >= (ncols := len(self.MT.col_positions) - 1):
             event_data = self.MT.add_columns(
                 *self.MT.get_args_for_add_columns(

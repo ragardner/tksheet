@@ -12,8 +12,8 @@
 ---
 - [Span Objects](https://github.com/ragardner/tksheet/wiki/Version-7#span-objects)
 - [Named Spans](https://github.com/ragardner/tksheet/wiki/Version-7#named-spans)
-- [Getting Table Data](https://github.com/ragardner/tksheet/wiki/Version-7#getting-table-data)
-- [Setting Table Data](https://github.com/ragardner/tksheet/wiki/Version-7#setting-table-data)
+- [Getting Sheet Data](https://github.com/ragardner/tksheet/wiki/Version-7#getting-sheet-data)
+- [Setting Sheet Data](https://github.com/ragardner/tksheet/wiki/Version-7#setting-sheet-data)
 ---
 - [Highlighting Cells](https://github.com/ragardner/tksheet/wiki/Version-7#highlighting-cells)
 - [Dropdown Boxes](https://github.com/ragardner/tksheet/wiki/Version-7#dropdown-boxes)
@@ -127,7 +127,7 @@ app.mainloop()
 ---
 # **Initialization Options**
 
-**This is a full list of all the start up arguments, the only required argument is the sheets parent, everything else has default arguments.**
+This is a full list of all the start up arguments, the only required argument is the sheets parent, everything else has default arguments.
 
 ```python
 (
@@ -340,7 +340,7 @@ change_theme(theme = "light blue", redraw = True)
 ---
 # **Header and Index**
 
-#### **Set the header.**
+#### **Set the header**
 ```python
 set_header_data(value, c = None, redraw = True)
 ```
@@ -356,7 +356,7 @@ headers(newheaders = None, index = None, reset_col_positions = False, show_heade
 
 ___
 
-#### **Set the index.**
+#### **Set the index**
 ```python
 set_index_data(value, r = None, redraw = True)
 ```
@@ -373,7 +373,7 @@ row_index(newindex = None, index = None, reset_row_positions = False, show_index
 ---
 # **Bindings and Functionality**
 
-#### **Enable table functionality and bindings.**
+#### **Enable table functionality and bindings**
 ```python
 enable_bindings(*bindings)
 ```
@@ -429,14 +429,14 @@ Example:
 
 ___
 
-#### **Disable table functionality and bindings, uses the same arguments as `enable_bindings()`.**
+#### **Disable table functionality and bindings, uses the same arguments as `enable_bindings()`**
 ```python
 disable_bindings(*bindings)
 ```
 
 ___
 
-#### **Bind specific table functionality.**
+#### **Bind specific table functionality**
 
 This function allows you to bind very specific table functionality to your own functions. If you want less specificity in event names you can also bind all sheet modifying events to a single function, [see here](https://github.com/ragardner/tksheet/wiki/Version-7#sheet-modified-events).
 
@@ -707,14 +707,14 @@ unbind(binding)
 
 ___
 
-#### **Add commands to the in-built right click popup menu.**
+#### **Add commands to the in-built right click popup menu**
 ```python
 popup_menu_add_command(label, func, table_menu = True, index_menu = True, header_menu = True)
 ```
 
 ___
 
-#### **Remove commands added using `popup_menu_add_command()` from the in-built right click popup menu.**
+#### **Remove commands added using `popup_menu_add_command()` from the in-built right click popup menu**
 ```python
 popup_menu_del_command(label = None)
 ```
@@ -722,21 +722,21 @@ popup_menu_del_command(label = None)
 
 ___
 
-#### **Enable or disable mousewheel, left click etc.**
+#### **Enable or disable mousewheel, left click etc**
 ```python
 basic_bindings(enable = False)
 ```
 
 ___
 
-#### **Enable or disable cell edit functionality, including Undo.**
+#### **Enable or disable cell edit functionality, including Undo**
 ```python
 edit_bindings(enable = False)
 ```
 
 ___
 
-#### **Enable or disable the ability to edit a specific cell using the inbuilt text editor.**
+#### **Enable or disable the ability to edit a specific cell using the inbuilt text editor**
 ```python
 cell_edit_binding(enable = False, keys = [])
 ```
@@ -779,23 +779,23 @@ You can create a span by using the `span()` function or square brackets on a She
 
 ```python
 span(
-*key: tuple[()] | tuple[CreateSpanTypes | None],
-type_: str = "",
-name: str = "",
-table: bool = True,
-index: bool = False,
-header: bool = False,
-tdisp: bool = False,
-idisp: bool = True,
-hdisp: bool = True,
-transposed: bool = False,
-ndim: int = 0,
-convert: object = None,
-undo: bool = False,
-widget: object = None,
-expand: None | str = None,
-formatter_options: dict | None = None,
-**kwargs,
+    *key: tuple[()] | tuple[CreateSpanTypes | None],
+    type_: str = "",
+    name: str = "",
+    table: bool = True,
+    index: bool = False,
+    header: bool = False,
+    tdisp: bool = False,
+    idisp: bool = True,
+    hdisp: bool = True,
+    transposed: bool = False,
+    ndim: int = 0,
+    convert: object = None,
+    undo: bool = False,
+    widget: object = None,
+    expand: None | str = None,
+    formatter_options: dict | None = None,
+    **kwargs,
 )
 """
 Create a span / get an existing span by name
@@ -812,12 +812,12 @@ Returns the created span
     - `Span` e.g `sheet.span(another_span)`
 - `type_` (`str`) must be either an empty string `""` or one of the following: `"format"`, `"highlight"`, `"dropdown"`, `"checkbox"`, `"readonly"`, `"align"`.
 - `name` (`str`) used for named spans or for identification. If no name is provided then a name is generated for the span which is based on an internal integer ticker and then converted to a string in the same way column names are, e.g. `0` is `"A"`.
-- `table` (`bool`) when `True` will make all functions used with the span target the main table as well as the header/index is those are `True`.
+- `table` (`bool`) when `True` will make all functions used with the span target the main table as well as the header/index if those are `True`.
 - `index` (`bool`) when `True` will make all functions used with the span target the index as well as the table/header if those are `True`.
 - `header` (`bool`) when `True` will make all functions used with the span target the header as well as the table/index if those are `True`.
-- `tdisp` (`bool`) is used by data getting functions that utilize spans and when `True` the function retrieve screen displayed data for the table, not underlying cell data.
-- `idisp` (`bool`) is used by data getting functions that utilize spans and when `True` the function retrieve screen displayed data for the index, not underlying cell data.
-- `hdisp` (`bool`) is used by data getting functions that utilize spans and when `True` the function retrieve screen displayed data for the header, not underlying cell data.
+- `tdisp` (`bool`) is used by data getting functions that utilize spans and when `True` the function retrieves screen displayed data for the table, not underlying cell data.
+- `idisp` (`bool`) is used by data getting functions that utilize spans and when `True` the function retrieves screen displayed data for the index, not underlying cell data.
+- `hdisp` (`bool`) is used by data getting functions that utilize spans and when `True` the function retrieves screen displayed data for the header, not underlying cell data.
 - `transposed` (`bool`) is used by data getting and setting functions that utilize spans. When `True`:
     - Returned sublists from data getting functions will represent columns rather than rows.
     - Data setting functions will assume that a single sequence is a column rather than row and that a list of lists is a list of columns rather than a list of rows.
@@ -1017,33 +1017,33 @@ Spans have the following methods:
 
 ```python
 span.options(
-type_: str | None = None,
-name: str | None = None,
-table: bool | None = None,
-index: bool | None = None,
-header: bool | None = None,
-tdisp: bool | None = None,
-idisp: bool | None  = None,
-hdisp: bool | None  = None,
-transposed: bool | None = None,
-ndim: int | None = None,
-convert: Callable | None = None,
-undo: bool | None = None,
-widget: object = None,
-expand: str | None = None,
-formatter_options: dict | None = None,
-**kwargs,
+    type_: str | None = None,
+    name: str | None = None,
+    table: bool | None = None,
+    index: bool | None = None,
+    header: bool | None = None,
+    tdisp: bool | None = None,
+    idisp: bool | None  = None,
+    hdisp: bool | None  = None,
+    transposed: bool | None = None,
+    ndim: int | None = None,
+    convert: Callable | None = None,
+    undo: bool | None = None,
+    widget: object = None,
+    expand: str | None = None,
+    formatter_options: dict | None = None,
+    **kwargs,
 )
 ```
 **Note:** that if `None` is used for any of the following parameters then that `Span`s attribute will be unchanged.
 - `type_` (`str`, `None`) if not `None` then must be either an empty string `""` or one of the following: `"format"`, `"highlight"`, `"dropdown"`, `"checkbox"`, `"readonly"`, `"align"`.
 - `name` (`str`, `None`) is used for named spans or for identification.
-- `table` (`bool`, `None`) when `True` will make all functions used with the span target the main table as well as the header/index is those are `True`.
+- `table` (`bool`, `None`) when `True` will make all functions used with the span target the main table as well as the header/index if those are `True`.
 - `index` (`bool`, `None`) when `True` will make all functions used with the span target the index as well as the table/header if those are `True`.
 - `header` (`bool`, `None`) when `True` will make all functions used with the span target the header as well as the table/index if those are `True`.
-- `tdisp` (`bool`, `None`) is used by data getting functions that utilize spans and when `True` the function retrieve screen displayed data for the table, not underlying cell data.
-- `idisp` (`bool`, `None`) is used by data getting functions that utilize spans and when `True` the function retrieve screen displayed data for the index, not underlying cell data.
-- `hdisp` (`bool`, `None`) is used by data getting functions that utilize spans and when `True` the function retrieve screen displayed data for the header, not underlying cell data.
+- `tdisp` (`bool`, `None`) is used by data getting functions that utilize spans and when `True` the function retrieves screen displayed data for the table, not underlying cell data.
+- `idisp` (`bool`, `None`) is used by data getting functions that utilize spans and when `True` the function retrieves screen displayed data for the index, not underlying cell data.
+- `hdisp` (`bool`, `None`) is used by data getting functions that utilize spans and when `True` the function retrieves screen displayed data for the header, not underlying cell data.
 - `transposed` (`bool`, `None`) is used by data getting and setting functions that utilize spans. When `True`:
     - Returned sublists from data getting functions will represent columns rather than rows.
     - Data setting functions will assume that a single sequence is a column rather than row and that a list of lists is a list of columns rather than a list of rows.
@@ -1071,9 +1071,10 @@ span = sheet["A1"].options(expand="both")
 span = sheet["A1"].options(expand="down")
 
 # row 0
-span = sheet["A1"].options(expand="right",
-                           ndim=1, # to return a single list when getting data
-                           )
+span = sheet["A1"].options(
+    expand="right",
+    ndim=1, # to return a single list when getting data
+)
 ```
 
 #### **Using a span to format table data**
@@ -1082,10 +1083,10 @@ Formats table data, see the help on [formatting](https://github.com/ragardner/tk
 
 ```python
 span.format(
-formatter_options={},
-formatter_class=None,
-redraw: bool = True,
-**kwargs,
+    formatter_options={},
+    formatter_class=None,
+    redraw: bool = True,
+    **kwargs,
 )
 ```
 
@@ -1119,11 +1120,11 @@ span1.del_format()
 
 ```python
 span.highlight(
-bg: bool | None | str = False,
-fg: bool | None | str = False,
-end: bool | None = None,
-overwrite: bool = False,
-redraw: bool = True,
+    bg: bool | None | str = False,
+    fg: bool | None | str = False,
+    end: bool | None = None,
+    overwrite: bool = False,
+    redraw: bool = True,
 )
 ```
 
@@ -1168,22 +1169,24 @@ Creates dropdown boxes for parts of the sheet that are covered by the span.
 
 ```python
 span.dropdown(
-values=[],
-set_value=None,
-state="normal",
-redraw=True,
-selection_function=None,
-modified_function=None,
-search_function=dropdown_search_function,
-validate_input=True,
-text=None,
+    values=[],
+    set_value=None,
+    state="normal",
+    redraw=True,
+    selection_function=None,
+    modified_function=None,
+    search_function=dropdown_search_function,
+    validate_input=True,
+    text=None,
 )
 ```
 
 Example:
 ```python
-sheet["D"].dropdown(values=["on", "off"],
-                    set_value="off",)
+sheet["D"].dropdown(
+    values=["on", "off"],
+    set_value="off",
+)
 ```
 
 #### **Using a span to delete dropdown boxes**
@@ -1207,18 +1210,20 @@ Create checkboxes for parts of the sheet that are covered by the span.
 
 ```python
 span.checkbox(
-checked=False,
-state="normal",
-redraw=True,
-check_function=None,
-text="",
+    checked=False,
+    state="normal",
+    redraw=True,
+    check_function=None,
+    text="",
 )
 ```
 
 Example:
 ```python
-sheet["D"].checkbox(checked=True,
-                    text="Switch")
+sheet["D"].checkbox(
+    checked=True,
+    text="Switch",
+)
 ```
 
 #### **Using a span to delete check boxes**
@@ -1242,8 +1247,8 @@ Create a text alignment rule for parts of the sheet that are covered by the span
 
 ```python
 span.align(
-align: str | None,
-redraw: bool = True,
+    align: str | None,
+    redraw: bool = True,
 )
 ```
 - `align` (`str`, `None`) must be either:
@@ -1276,7 +1281,10 @@ align_span.del_align()
 Clear cell data from all cells that are covered by the span.
 
 ```python
-span.clear(undo: bool | None = None, redraw: bool = True)
+span.clear(
+    undo: bool | None = None,
+    redraw: bool = True,
+)
 ```
 - `undo` (`bool`, `None`) When `True` if undo is enabled for the end user they will be able to undo the clear change.
 
@@ -1351,9 +1359,7 @@ For a span to become a named span it needs:
 After a span has the above items the following function has to be used to make it a named span and create the options on the sheet:
 
 ```python
-named_span(
-span: Span,
-)
+named_span(span: Span)
 """
 Adds a named span to the sheet
 Returns the span
@@ -1367,9 +1373,9 @@ Returns the span
 Example of creating a named span which will always keep the entire sheet formatted as `int` no matter how many rows/columns are inserted:
 ```python
 span = self.sheet.span(
-":",
-# you don't have to provide a `type_` when using the `formatter_kwargs` argument
-formatter_options=int_formatter(),
+    ":",
+    # you don't have to provide a `type_` when using the `formatter_kwargs` argument
+    formatter_options=int_formatter(),
 )
 self.sheet.named_span(span)
 ```
@@ -1401,11 +1407,72 @@ self.sheet.del_named_span("this name doesnt exist")
 ```
 
 ---
-# **Getting Table Data**
+# **Getting Sheet Data**
 
-#### **Generate sheet rows one at a time.**
+#### **Using a span to get sheet data**
 
-This function is useful if you need row data, one row at a time.
+A `Span` object (more information [here](https://github.com/ragardner/tksheet/wiki/Version-7#span-objects)) is returned when using square brackets on a `Sheet` like so:
+
+```python
+span = self.sheet["A1"]
+```
+
+The above span represents the cell `A1` or row 0, column 0. A reserved span attribute can then be used to retrieve the data for cell `A1`, example below:
+
+```python
+span = self.sheet["A1"]
+cell_a1_data = span.data
+```
+
+The data that is retrieved entirely depends on the area the span represents. You can also use `span.value` to the same effect.
+
+There are also certain other span attributes which have an impact on the data returned, explained below:
+- `table` (`bool`) when `True` will make all functions used with the span target the main table as well as the header/index if those are `True`.
+- `index` (`bool`) when `True` will make all functions used with the span target the index as well as the table/header if those are `True`.
+- `header` (`bool`) when `True` will make all functions used with the span target the header as well as the table/index if those are `True`.
+- `tdisp` (`bool`) when `True` the function retrieves screen displayed data for the table, not underlying cell data.
+- `idisp` (`bool`) when `True` the function retrieves screen displayed data for the index, not underlying cell data.
+- `hdisp` (`bool`) when `True` the function retrieves screen displayed data for the header, not underlying cell data.
+- `transposed` (`bool`) is used by data getting and setting functions that utilize spans. When `True`:
+    - Returned sublists from **data getting** functions will represent columns rather than rows.
+    - Data setting functions will assume that a single sequence is a column rather than row and that a list of lists is a list of columns rather than a list of rows.
+- `ndim` (`int`) is used by data getting functions that utilize spans, it must be either `0` or `1` or `2`.
+    - `0` is the default setting which will make the return value vary based on what it is. For example if the gathered data is only a single cell it will return a value instead of a list of lists with a single list containing a single value. A single row will be a single list.
+    - `1` will force the return of a single list as opposed to a list of lists.
+    - `2` will force the return of a list of lists.
+- `convert` (`None`, `Callable`) can be used to modify the data using a function before returning it. The data sent to the `convert` function will be as it was before normally returning (after `ndim` has potentially modified it).
+- `widget` (`object`) is the reference to the original sheet which created the span (this is the widget that data is retrieved from). This can be changed to a different sheet if required e.g. `my_span.widget = new_sheet`.
+
+Some more complex examples:
+
+```python
+"single cell"
+cell_a1_data = self.sheet["A1"].data
+
+"entire sheet including headers and index"
+entire_sheet_data = self.sheet["A1"].expand().options(header=True, index=True).data
+
+"header data, no table or index data"
+# a list of displayed header cells
+header_data = self.sheet["A:C"].options(table=False, header=True).data
+
+# a header value
+header_data = self.sheet["A"].options(table=False, hdisp=False, header=True).data
+
+"index data, no table or header data"
+# a list of displayed index cells
+index_data = self.sheet[:3].transpose().options(table=False, index=True).data
+
+# an index value
+index_data = self.sheet[3].options(table=False, idisp=False, index=True).data
+
+"sheet data as columns instead of rows, with actual header data (not displayed)"
+sheet_data = self.sheet[:].transpose().options(hdisp=False, header=True).data
+```
+
+#### **Generate sheet rows one at a time**
+
+This function is useful if you need row data, one row at a time. It does not use spans.
 
 ```python
 yield_sheet_rows(get_displayed = False,
@@ -1430,7 +1497,7 @@ Arguments:
 
 ___
 
-#### **Get the main table data, readonly.**
+#### **Get the main table data, readonly**
 ```python
 @property
 data()
@@ -1439,7 +1506,7 @@ data()
 
 ___
 
-#### **The name of the actual internal sheet data variable.**
+#### **The name of the actual internal sheet data variable**
 ```python
 .MT.data
 ```
@@ -1447,12 +1514,18 @@ ___
 
 ___
 
+#### **Sheet methods**
+
+___
+
+#### **Other data getting functions**
+
+Get a single cell:
 ```python
 get_cell_data(r, c, get_displayed = False)
 ```
 
-___
-
+Get a row:
 ```python
 get_row_data(r,
              get_displayed = False,
@@ -1460,10 +1533,8 @@ get_row_data(r,
              get_index_displayed = True,
              only_columns = None)
 ```
-- The above arguments behave the same way as for `get_sheet_data()`.
 
-___
-
+Get a column:
 ```python
 get_column_data(c,
                 get_displayed = False,
@@ -1471,18 +1542,18 @@ get_column_data(c,
                 get_header_displayed = True,
                 only_rows = None)
 ```
-- The above arguments behave the same way as for `get_sheet_data()`.
+- The above arguments behave the same way as for `yield_sheet_rows()`.
 
 ___
 
-#### **Get number of rows in table data.**
+#### **Get the number of rows in table data**
 ```python
 get_total_rows(include_index = False)
 ```
 
 ___
 
-#### **Get number of columns in table data.**
+#### **Get the number of columns in table data**
 ```python
 get_total_columns(include_header = False)
 ```
@@ -1535,7 +1606,7 @@ There are various ways to modify table data:
 - Using
 - Older version functions such as `set_cell_data`, `set_row_data` and `set_column_data`, for which the documentation can be found [here](https://github.com/ragardner/tksheet/wiki/Version-6#setting-table-data).
 
-#### **Insert a row into the sheet.**
+#### **Insert a row into the sheet**
 ```python
 insert_row(values = None,
            idx = "end",
@@ -1551,7 +1622,7 @@ insert_row(values = None,
 
 ___
 
-#### **Insert a column into the sheet.**
+#### **Insert a column into the sheet**
 ```python
 insert_column(values = None,
               idx = "end",
@@ -1565,7 +1636,7 @@ insert_column(values = None,
 
 ___
 
-#### **Insert multiple columns into the sheet.**
+#### **Insert multiple columns into the sheet**
 ```python
 insert_columns(columns = 1, idx = "end", widths = None, deselect_all = False, add_rows = True, equalize_data_row_lengths = True,
                mod_column_positions = True,
@@ -1575,7 +1646,7 @@ insert_columns(columns = 1, idx = "end", widths = None, deselect_all = False, ad
 
 ___
 
-#### **Insert multiple rows into the sheet.**
+#### **Insert multiple rows into the sheet**
 ```python
 insert_rows(rows = 1,
             idx = "end",
@@ -1667,7 +1738,7 @@ move_columns(moveto: int, to_move_min: int, number_of_columns: int, move_data: b
 
 ___
 
-#### **Make all data rows the same length.**
+#### **Make all data rows the same length**
 ```python
 equalize_data_row_lengths()
 ```
@@ -1819,7 +1890,7 @@ sheet.create_header_dropdown(c = None, values = ["val 1", "val 2"])
 
 ___
 
-#### **Get chosen dropdown boxes values.**
+#### **Get chosen dropdown boxes values**
 ```python
 get_dropdown_values(r = 0, c = 0)
 ```
@@ -1834,7 +1905,7 @@ get_index_dropdown_values(r = 0)
 
 ___
 
-#### **Set the values and cell value of a chosen dropdown box.**
+#### **Set the values and cell value of a chosen dropdown box**
 ```python
 set_dropdown_values(r = 0, c = 0, set_existing_dropdown = False, values = [], set_value = None)
 ```
@@ -1852,7 +1923,7 @@ set_index_dropdown_values(r = 0, set_existing_dropdown = False, values = [], set
 
 ___
 
-#### **Set and get bound dropdown functions.**
+#### **Set and get bound dropdown functions**
 ```python
 dropdown_functions(r, c, selection_function = "", modified_function = "")
 ```
@@ -1867,7 +1938,7 @@ index_dropdown_functions(r, selection_function = "", modified_function = "")
 
 ___
 
-#### **Delete dropdown boxes.**
+#### **Delete dropdown boxes**
 
 ```python
 delete_dropdown(r = 0, c = 0)
@@ -1933,7 +2004,7 @@ Returns:
 
 ___
 
-#### **Pop open a dropdown box.**
+#### **Pop open a dropdown box**
 ```python
 open_dropdown(r, c)
 ```
@@ -1948,7 +2019,7 @@ open_index_dropdown(r)
 
 ___
 
-#### **Close an open dropdown box.**
+#### **Close an open dropdown box**
 ```python
 close_dropdown(r, c)
 ```
@@ -1965,7 +2036,7 @@ close_index_dropdown(r)
 ---
 # **Check Boxes**
 
-#### **Checkbox creation.**
+#### **Checkbox creation**
 
 When using the functions to create checkboxes these are the default arguments:
 ```python
@@ -2034,7 +2105,7 @@ sheet.create_header_checkbox(c = None, text = "Header Checkbox")
 
 ___
 
-#### **Set or toggle a checkbox.**
+#### **Set or toggle a checkbox**
 ```python
 click_checkbox(r, c, checked = None)
 ```
@@ -2049,7 +2120,7 @@ click_index_checkbox(r, checked = None)
 
 ___
 
-#### **Get a dictionary of all check box dictionaries.**
+#### **Get a dictionary of all check box dictionaries**
 ```python
 get_checkboxes()
 ```
@@ -2064,7 +2135,7 @@ get_index_checkboxes()
 
 ___
 
-#### **Delete checkboxes.**
+#### **Delete checkboxes**
 
 ```python
 delete_checkbox(r = 0, c = 0)
@@ -2104,7 +2175,7 @@ delete_header_checkbox(c = 0)
 
 ___
 
-#### **Set or get information about a particular checkbox.**
+#### **Set or get information about a particular checkbox**
 ```python
 checkbox(r,
          c,
@@ -2499,7 +2570,7 @@ index_align(align = None, redraw = True)
 
 ___
 
-#### **Change the text alignment for specific rows, `"global"` resets to table setting.**
+#### **Change the text alignment for specific rows, `"global"` resets to table setting**
 ```python
 align_rows(rows = [], align = "global", align_index = False, redraw = True)
 ```
@@ -2507,7 +2578,7 @@ align_rows(rows = [], align = "global", align_index = False, redraw = True)
 
 ___
 
-#### **Change the text alignment for specific columns, `"global"` resets to table setting.**
+#### **Change the text alignment for specific columns, `"global"` resets to table setting**
 ```python
 align_columns(columns = [], align = "global", align_header = False, redraw = True)
 ```
@@ -2515,7 +2586,7 @@ align_columns(columns = [], align = "global", align_header = False, redraw = Tru
 
 ___
 
-#### **Change the text alignment for specific cells inside the table, `"global"` resets to table setting.**
+#### **Change the text alignment for specific cells inside the table, `"global"` resets to table setting**
 ```python
 align_cells(row = 0, column = 0, cells = [], align = "global", redraw = True)
 ```
@@ -2523,14 +2594,14 @@ align_cells(row = 0, column = 0, cells = [], align = "global", redraw = True)
 
 ___
 
-#### **Change the text alignment for specific cells inside the header, `"global"` resets to header setting.**
+#### **Change the text alignment for specific cells inside the header, `"global"` resets to header setting**
 ```python
 align_header(columns = [], align = "global", redraw = True)
 ```
 
 ___
 
-#### **Change the text alignment for specific cells inside the index, `"global"` resets to index setting.**
+#### **Change the text alignment for specific cells inside the index, `"global"` resets to index setting**
 ```python
 align_index(rows = [], align = "global", redraw = True)
 ```
@@ -2603,38 +2674,43 @@ get_all_selection_boxes_with_types()
 
 ___
 
-#### **Check if cell is selected, returns `bool`.**
+#### **Check if cell is selected**
 ```python
 cell_selected(r, c)
 ```
+- Returns `bool`.
 
 ___
 
-#### **Check if row is selected, returns `bool`.**
+#### **Check if row is selected**
 ```python
 row_selected(r)
 ```
+- Returns `bool`.
 
 ___
 
-#### **Check if column is selected, returns `bool`.**
+#### **Check if column is selected**
 ```python
 column_selected(c)
 ```
+- Returns `bool`.
 
 ___
 
-#### **Check if any cells, rows or columns are selected, there are options for exclusions, returns `bool`.**
+#### **Check if any cells, rows or columns are selected, there are options for exclusions**
 ```python
 anything_selected(exclude_columns = False, exclude_rows = False, exclude_cells = False)
 ```
+- Returns `bool`.
 
 ___
 
-#### **Check if user has the entire table selected, returns `bool`.**
+#### **Check if user has the entire table selected**
 ```python
 all_selected()
 ```
+- Returns `bool`.
 
 ___
 
@@ -2745,7 +2821,7 @@ deselect(row = None, column = None, cell = None, redraw = True)
 ---
 # **Row Heights and Column Widths**
 
-#### **Auto resize column widths to fit the window.**
+#### **Auto resize column widths to fit the window**
 
 ```python
 set_options(auto_resize_columns)
@@ -2754,7 +2830,7 @@ set_options(auto_resize_columns)
 
 ___
 
-#### **Auto resize row heights to fit the window.**
+#### **Auto resize row heights to fit the window**
 
 ```python
 set_options(auto_resize_rows)
@@ -2763,7 +2839,7 @@ set_options(auto_resize_rows)
 
 ___
 
-#### **Set default column width in pixels.**
+#### **Set default column width in pixels**
 ```python
 default_column_width(width = None)
 ```
@@ -2771,7 +2847,7 @@ default_column_width(width = None)
 
 ___
 
-#### **Set default row height in pixels or lines.**
+#### **Set default row height in pixels or lines**
 ```python
 default_row_height(height = None)
 ```
@@ -2779,7 +2855,7 @@ default_row_height(height = None)
 
 ___
 
-#### **Set default header bar height in pixels or lines.**
+#### **Set default header bar height in pixels or lines**
 ```python
 default_header_height(height = None)
 ```
@@ -2787,21 +2863,21 @@ default_header_height(height = None)
 
 ___
 
-#### **Set a specific cell size to its text.**
+#### **Set a specific cell size to its text**
 ```python
 set_cell_size_to_text(row, column, only_set_if_too_small = False, redraw = True)
 ```
 
 ___
 
-#### **Set all row heights and column widths to cell text sizes.**
+#### **Set all row heights and column widths to cell text sizes**
 ```python
 set_all_cell_sizes_to_text(redraw = True)
 ```
 
 ___
 
-#### **Get the sheets column widths.**
+#### **Get the sheets column widths**
 ```python
 get_column_widths(canvas_positions = False)
 ```
@@ -2809,7 +2885,7 @@ get_column_widths(canvas_positions = False)
 
 ___
 
-#### **Get the sheets row heights.**
+#### **Get the sheets row heights**
 ```python
 get_row_heights(canvas_positions = False)
 ```
@@ -2817,21 +2893,21 @@ get_row_heights(canvas_positions = False)
 
 ___
 
-#### **Set all column widths to specific `width` in pixels (`int`) or leave `None` to set to cell text sizes for each column.**
+#### **Set all column widths to specific `width` in pixels (`int`) or leave `None` to set to cell text sizes for each column**
 ```python
 set_all_column_widths(width = None, only_set_if_too_small = False, redraw = True, recreate_selection_boxes = True)
 ```
 
 ___
 
-#### **Set all row heights to specific `height` in pixels (`int`) or leave `None` to set to cell text sizes for each row.**
+#### **Set all row heights to specific `height` in pixels (`int`) or leave `None` to set to cell text sizes for each row**
 ```python
 set_all_row_heights(height = None, only_set_if_too_small = False, redraw = True, recreate_selection_boxes = True)
 ```
 
 ___
 
-#### **Set/get a specific column width.**
+#### **Set/get a specific column width**
 ```python
 column_width(column = None, width = None, only_set_if_too_small = False, redraw = True)
 ```
@@ -2858,7 +2934,7 @@ set_height_of_header_to_text(text = None)
 
 ___
 
-#### **Set/get a specific row height.**
+#### **Set/get a specific row height**
 ```python
 row_height(row = None, height = None, only_set_if_too_small = False, redraw = True)
 ```
@@ -2985,7 +3061,7 @@ edit_cell(self, event = None, dropdown = False)
 ---
 # **Modifying and Getting Scroll Positions**
 
-#### **Sync scroll positions between widgets.**
+#### **Sync scroll positions between widgets**
 
 ```python
 sync_scroll(widget: object)
@@ -3009,31 +3085,33 @@ self.sheet1.sync_scroll(self.sheet3)
 self.sheet2.sync_scroll(self.sheet3)
 ```
 
-#### **Unsync scroll positions between widgets.**
+#### **Unsync scroll positions between widgets**
 
 ```python
 unsync_scroll(widget: None | Sheet = None)
 ```
 - Leaving `widget` as `None` unsyncs all previously synced widgets.
 
-#### **See / scroll to a specific cell on the sheet.**
+#### **See / scroll to a specific cell on the sheet**
 ```python
 see(row = 0, column = 0, keep_yscroll = False, keep_xscroll = False, bottom_right_corner = False, check_cell_visibility = True)
 ```
 
 ___
 
-#### **Check if a cell has any part of it visible, returns `bool`.**
+#### **Check if a cell has any part of it visible**
 ```python
 cell_visible(r, c)
 ```
+- Returns `bool`.
 
 ___
 
-#### **Check if a cell is totally visible, returns `bool`.**
+#### **Check if a cell is totally visible**
 ```python
 cell_completely_visible(r, c, seperate_axes = False)
 ```
+- Returns `bool`.
 - `separate_axes` returns tuple of bools e.g. `(cell y axis is visible, cell x axis is visible)`
 
 ___
@@ -3075,7 +3153,7 @@ move_down()
 ---
 # **Hiding Columns**
 
-#### **Display only certain columns.**
+#### **Display only certain columns**
 ```python
 display_columns(columns = None,
                 all_columns_displayed = None,
@@ -3093,7 +3171,7 @@ display_columns(columns = None,
 
 ___
 
-#### **Get all columns displayed boolean.**
+#### **Get all columns displayed boolean**
 ```python
 all_columns_displayed(a = None)
 ```
@@ -3101,7 +3179,7 @@ all_columns_displayed(a = None)
 
 ___
 
-#### **Hide specific columns.**
+#### **Hide specific columns**
 ```python
 hide_columns(columns = set(),
              redraw = True,
@@ -3112,7 +3190,7 @@ hide_columns(columns = set(),
 ---
 # **Hiding Rows**
 
-#### **Display only certain rows.**
+#### **Display only certain rows**
 ```python
 display_rows(rows = None,
              all_rows_displayed = None,
@@ -3131,7 +3209,7 @@ display_rows(rows = None,
 
 ___
 
-#### **Get all rows displayed boolean.**
+#### **Get all rows displayed boolean**
 ```python
 all_rows_displayed(a = None)
 ```
@@ -3139,7 +3217,7 @@ all_rows_displayed(a = None)
 
 ___
 
-#### **Hide specific rows.**
+#### **Hide specific rows**
 ```python
 hide_rows(rows = set(),
           redraw = True,
@@ -3150,7 +3228,7 @@ hide_rows(rows = set(),
 ---
 # **Hiding Table Elements**
 
-#### **Hide parts of the table or all of it.**
+#### **Hide parts of the table or all of it**
 ```python
 hide(canvas = "all")
 ```
@@ -3159,7 +3237,7 @@ hide(canvas = "all")
 
 ___
 
-#### **Show parts of the table or all of it.**
+#### **Show parts of the table or all of it**
 ```python
 show(canvas = "all")
 ```
@@ -3169,7 +3247,7 @@ show(canvas = "all")
 ---
 # **Cell Text Editor**
 
-#### **Open the currently selected cell in the main table.**
+#### **Open the currently selected cell in the main table**
 ```python
 open_cell(ignore_existing_editor = True)
 ```
@@ -3177,7 +3255,7 @@ open_cell(ignore_existing_editor = True)
 
 ___
 
-#### **Open the currently selected cell but in the header.**
+#### **Open the currently selected cell but in the header**
 ```python
 open_header_cell(ignore_existing_editor = True)
 ```
@@ -3185,7 +3263,7 @@ open_header_cell(ignore_existing_editor = True)
 
 ___
 
-#### **Open the currently selected cell but in the index.**
+#### **Open the currently selected cell but in the index**
 ```python
 open_index_cell(ignore_existing_editor = True)
 ```
@@ -3484,7 +3562,7 @@ app.mainloop()
 ---
 # **Example Displaying Selections**
 
-**This example applies to tksheet versions >= `7.0.0`.**
+**This example applies to tksheet versions >= `7.0.0`**
 ```python
 from tksheet import Sheet, get_n2a
 import tkinter as tk
@@ -3525,7 +3603,7 @@ app = demo()
 app.mainloop()
 ```
 
-**This example applies to tksheet versions earlier than `7.0.0`.**
+**This example applies to tksheet versions earlier than `7.0.0`**
 ```python
 from tksheet import Sheet
 import tkinter as tk
