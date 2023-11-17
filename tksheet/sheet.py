@@ -1272,38 +1272,32 @@ class Sheet(tk.Frame):
         return self
 
     def verify_row_heights(self, row_heights: list, canvas_positions: bool = False):
-        if row_heights[0] != 0 or isinstance(row_heights[0], bool):
-            return False
         if not isinstance(row_heights, list):
             return False
         if canvas_positions:
-            if any(
+            if row_heights[0] != 0:
+                return False
+            return not any(
                 x - z < self.MT.min_row_height or not isinstance(x, int) or isinstance(x, bool)
                 for z, x in zip(islice(row_heights, 0, None), islice(row_heights, 1, None))
-            ):
-                return False
-        elif not canvas_positions:
-            if any(z < self.MT.min_row_height or not isinstance(z, int) or isinstance(z, bool) for z in row_heights):
-                return False
-        return True
+            )
+        return not any(
+            z < self.MT.min_row_height or not isinstance(z, int) or isinstance(z, bool) for z in row_heights
+        )
 
     def verify_column_widths(self, column_widths: list, canvas_positions: bool = False):
-        if column_widths[0] != 0 or isinstance(column_widths[0], bool):
-            return False
         if not isinstance(column_widths, list):
             return False
         if canvas_positions:
-            if any(
+            if column_widths[0] != 0:
+                return False
+            return not any(
                 x - z < self.MT.min_column_width or not isinstance(x, int) or isinstance(x, bool)
                 for z, x in zip(islice(column_widths, 0, None), islice(column_widths, 1, None))
-            ):
-                return False
-        elif not canvas_positions:
-            if any(
-                z < self.MT.min_column_width or not isinstance(z, int) or isinstance(z, bool) for z in column_widths
-            ):
-                return False
-        return True
+            )
+        return not any(
+            z < self.MT.min_column_width or not isinstance(z, int) or isinstance(z, bool) for z in column_widths
+        )
 
     def default_row_height(self, height=None):
         if height is not None:
@@ -2468,9 +2462,7 @@ class Sheet(tk.Frame):
         return self
 
     def __bool__(self) -> bool:
-        if self.MT.data not in ([[]], [], ((),), ()):
-            return True
-        return False
+        return any(self.MT.data)
 
     def __len__(self) -> int:
         return self.MT.data.__len__()
@@ -2612,11 +2604,18 @@ class Sheet(tk.Frame):
             # it's a cell
             if len(res) == 1 and len(res[0]) == 1:
                 res = res[0][0]
-            # it's a row
+            # it's a single list
             elif len(res) == 1:
                 res = res[0]
-            # it's a column
-            elif table and res and not span.transposed and len(res[0]) == 1:
+            # retrieving a list of index cells or
+            elif (index and not span.transposed and not table and not header) or (
+                # it's a column that's spread across sublists
+                table
+                and res
+                and not span.transposed
+                and len(res[0]) == 1
+                and len(res[-1]) == 1
+            ):
                 res = list(chain.from_iterable(res))
         elif span.ndim == 1:
             # flatten sublists
@@ -2646,27 +2645,15 @@ class Sheet(tk.Frame):
         can't use slices or expand
         just uses the from_r, from_c values
 
-        'data' is a list of lists:
-        - assumes there is table data
-        - option of having either or both
-          header and index data included and
-          setting those at the same time
-
-        'data' is a list of values
-        - assumes there is table data
-        - when transposed there's option of having
-          header data included and setting
-          headers at the same time
-        - when not transposed there's option of
-          having index data included and setting
-          indexes at the same time
-
-        'data' is not a list or tuple
-        - can have all three of the below set at the same time
-          or just one or two:
-            - if span.table then sets table cell
-            - if span.index then sets index cell
-            - if span.header than sets header cell
+        'data' parameter could be:
+        - list of lists
+        - list of values
+        - not a list or tuple
+            - can have all three of the below set at the same time
+            or just one or two:
+                - if span.table then sets table cell
+                - if span.index then sets index cell
+                - if span.header than sets header cell
 
         expands sheet if required but can only undo any added
         displayed row/column positions, not expanded MT.data list
@@ -2677,12 +2664,12 @@ class Sheet(tk.Frame):
         - format=int_formatter() -> returns kwargs, span["kwargs"] now has formatter kwargs
         - uses format_data(value=cell, **span["kwargs"]) on every set cell
 
-        transpose
+        transposed
         - switches range orientation
-        - a single list will go to row without transpose
-        - multi lists will go to rows without transpose
-        - with transpose a single list will go to column
-        - with transpose multi lists will go to columns
+        - a single list will go to row without transposed
+        - multi lists will go to rows without transposed
+        - with transposed a single list will go to column
+        - with transposed multi lists will go to columns
 
         header
         - assumes there's a header, sets header cell data as well

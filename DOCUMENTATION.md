@@ -1417,7 +1417,7 @@ A `Span` object (more information [here](https://github.com/ragardner/tksheet/wi
 span = self.sheet["A1"]
 ```
 
-The above span represents the cell `A1` or row 0, column 0. A reserved span attribute can then be used to retrieve the data for cell `A1`, example below:
+The above span represents the cell `A1` or row 0, column 0. A reserved span attribute named `data` can then be used to retrieve the data for cell `A1`, example below:
 
 ```python
 span = self.sheet["A1"]
@@ -1461,18 +1461,20 @@ header_data = self.sheet["A"].options(table=False, hdisp=False, header=True).dat
 
 "index data, no table or header data"
 # a list of displayed index cells
-index_data = self.sheet[:3].transpose().options(table=False, index=True).data
+index_data = self.sheet[:3].options(table=False, index=True).data
 
 # an index value
 index_data = self.sheet[3].options(table=False, idisp=False, index=True).data
 
-"sheet data as columns instead of rows, with actual header data (not displayed)"
+"sheet data as columns instead of rows, with actual header data"
 sheet_data = self.sheet[:].transpose().options(hdisp=False, header=True).data
 ```
 
+___
+
 #### **Generate sheet rows one at a time**
 
-This function is useful if you need row data, one row at a time. It does not use spans.
+This function is useful if you need a lot of sheet data, and can use one row at a time (may save memory use in certain scenarios). It does not use spans.
 
 ```python
 yield_sheet_rows(get_displayed = False,
@@ -1497,24 +1499,59 @@ Arguments:
 
 ___
 
-#### **Get the main table data, readonly**
+#### **Get table data, readonly**
+
 ```python
 @property
 data()
 ```
 - e.g. `self.sheet.data`
+- Doesn't include header or index data.
 
 ___
 
 #### **The name of the actual internal sheet data variable**
+
 ```python
 .MT.data
 ```
-- You can use this to directly modify or retrieve the main table's data e.g. `cell_0_0 = my_sheet_name_here.MT.data[0][0]`. Note that this is the raw data and if there are cell formatters it will include the cell's formatter class, as such it is not recommended to use this to retrieve or modify data unless you know what you are doing.
+- You can use this to directly modify or retrieve the main table's data e.g. `cell_0_0 = my_sheet_name_here.MT.data[0][0]` but only do so if you know what you're doing.
 
 ___
 
 #### **Sheet methods**
+
+`Sheet` objects also have some functions similar to lists. **Note** that none of these functions include the sheets header or index, only the table.
+
+Check if the table has data:
+```python
+if my_sheet:
+    print ("The sheets main table is not empty!")
+```
+- **Note:** that this function doesn't check if cells are empty or Falsy only if there are any rows or rows with any elements in the data `list`.
+
+Check how many rows the table has:
+```python
+num_rows = len(my_sheet)
+```
+
+Iterate over table rows:
+```python
+for row in my_sheet:
+    print (row)
+
+# and in reverse
+for row in reversed(my_sheet):
+    print (row)
+```
+
+Check if the table has a particular value (membership):
+```python
+# returns True or False
+search_value = "the cell value I'm looking for"
+print (search_value in my_sheet)
+```
+- Can also check if a row is in the sheet.
 
 ___
 
@@ -1546,14 +1583,14 @@ get_column_data(c,
 
 ___
 
-#### **Get the number of rows in table data**
+#### **Get the number of rows in the sheet**
 ```python
 get_total_rows(include_index = False)
 ```
 
 ___
 
-#### **Get the number of columns in table data**
+#### **Get the number of columns in the sheet**
 ```python
 get_total_columns(include_header = False)
 ```
@@ -3448,12 +3485,12 @@ Various functions related to the Sheets internal undo and redo stacks.
 reset_undos()
 
 # get the Sheets modifiable deque variables which store changes for undo and redo
-get_undo_stack() -> deque:
-get_redo_stack() -> deque:
+get_undo_stack()
+get_redo_stack()
 
 # set the Sheets undo and redo stacks, returns Sheet widget
-set_undo_stack(stack: deque) -> Sheet:
-set_redo_stack(stack: deque) -> Sheet:
+set_undo_stack(stack: deque)
+set_redo_stack(stack: deque)
 ```
 
 ___

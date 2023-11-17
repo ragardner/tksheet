@@ -305,9 +305,7 @@ def consecutive_chunks(seq: list) -> list:
 def is_contiguous(seq: list[int]) -> bool:
     itr = iter(seq)
     prev = next(itr)
-    if not all(i == (prev := prev + 1) for i in itr):
-        return False
-    return True
+    return all(i == (prev := prev + 1) for i in itr)
 
 
 def move_elements_by_mapping(
@@ -958,16 +956,14 @@ def key_to_span(
 
 
 def span_is_cell(span: Span) -> bool:
-    if (
+    return (
         isinstance(span["from_r"], int)
         and isinstance(span["from_c"], int)
         and isinstance(span["upto_r"], int)
         and isinstance(span["upto_c"], int)
         and span["upto_r"] - span["from_r"] == 1
         and span["upto_c"] - span["from_c"] == 1
-    ):
-        return True
-    return False
+    )
 
 
 def span_to_cell(span: Span) -> tuple[int, int]:
@@ -1123,7 +1119,7 @@ def span_idxs_post_move(
     full_new_idxs: dict[int, int],
     total: int,
     span: Span,
-    axis: str, # 'r' or 'c'
+    axis: str,  # 'r' or 'c'
 ) -> tuple[int | None]:
     """
     Calculates the position of a span after moving rows/columns

@@ -2902,13 +2902,14 @@ class MainTable(tk.Canvas):
         if self.extra_motion_func is not None:
             self.extra_motion_func(event)
 
+    def not_currently_resizing(self) -> bool:
+        return all(v is None for v in (self.RI.rsz_h, self.RI.rsz_w, self.CH.rsz_h, self.CH.rsz_w))
+
     def rc(self, event=None):
         self.mouseclick_outside_editor_or_dropdown_all_canvases()
         self.focus_set()
         popup_menu = None
-        if self.single_selection_enabled and all(
-            v is None for v in (self.RI.rsz_h, self.RI.rsz_w, self.CH.rsz_h, self.CH.rsz_w)
-        ):
+        if self.single_selection_enabled and self.not_currently_resizing():
             r = self.identify_row(y=event.y)
             c = self.identify_col(x=event.x)
             if r < len(self.row_positions) - 1 and c < len(self.col_positions) - 1:
@@ -2928,9 +2929,7 @@ class MainTable(tk.Canvas):
                         popup_menu = self.rc_popup_menu
             else:
                 popup_menu = self.empty_rc_popup_menu
-        elif self.toggle_selection_enabled and all(
-            v is None for v in (self.RI.rsz_h, self.RI.rsz_w, self.CH.rsz_h, self.CH.rsz_w)
-        ):
+        elif self.toggle_selection_enabled and self.not_currently_resizing():
             r = self.identify_row(y=event.y)
             c = self.identify_col(x=event.x)
             if r < len(self.row_positions) - 1 and c < len(self.col_positions) - 1:
@@ -2966,14 +2965,10 @@ class MainTable(tk.Canvas):
             self.deselect("all")
         r = self.identify_row(y=event.y)
         c = self.identify_col(x=event.x)
-        if self.single_selection_enabled and all(
-            v is None for v in (self.RI.rsz_h, self.RI.rsz_w, self.CH.rsz_h, self.CH.rsz_w)
-        ):
+        if self.single_selection_enabled and self.not_currently_resizing():
             if r < len(self.row_positions) - 1 and c < len(self.col_positions) - 1:
                 self.being_drawn_item = self.select_cell(r, c, redraw=True)
-        elif self.toggle_selection_enabled and all(
-            v is None for v in (self.RI.rsz_h, self.RI.rsz_w, self.CH.rsz_h, self.CH.rsz_w)
-        ):
+        elif self.toggle_selection_enabled and self.not_currently_resizing():
             r = self.identify_row(y=event.y)
             c = self.identify_col(x=event.x)
             if r < len(self.row_positions) - 1 and c < len(self.col_positions) - 1:
@@ -3016,9 +3011,7 @@ class MainTable(tk.Canvas):
     def ctrl_b1_press(self, event=None):
         self.mouseclick_outside_editor_or_dropdown_all_canvases()
         self.focus_set()
-        if self.ctrl_select_enabled and all(
-            v is None for v in (self.RI.rsz_h, self.RI.rsz_w, self.CH.rsz_h, self.CH.rsz_w)
-        ):
+        if self.ctrl_select_enabled and self.not_currently_resizing():
             self.b1_pressed_loc = None
             rowsel = int(self.identify_row(y=event.y))
             colsel = int(self.identify_col(x=event.x))
@@ -3045,7 +3038,7 @@ class MainTable(tk.Canvas):
         if (
             self.ctrl_select_enabled
             and self.drag_selection_enabled
-            and all(v is None for v in (self.RI.rsz_h, self.RI.rsz_w, self.CH.rsz_h, self.CH.rsz_w))
+            and self.not_currently_resizing()
         ):
             self.b1_pressed_loc = None
             rowsel = int(self.identify_row(y=event.y))
@@ -3072,9 +3065,7 @@ class MainTable(tk.Canvas):
     def shift_b1_press(self, event=None):
         self.mouseclick_outside_editor_or_dropdown_all_canvases()
         self.focus_set()
-        if self.drag_selection_enabled and all(
-            v is None for v in (self.RI.rsz_h, self.RI.rsz_w, self.CH.rsz_h, self.CH.rsz_w)
-        ):
+        if self.drag_selection_enabled and self.not_currently_resizing():
             self.b1_pressed_loc = None
             rowsel = int(self.identify_row(y=event.y))
             colsel = int(self.identify_col(x=event.x))
@@ -3197,7 +3188,7 @@ class MainTable(tk.Canvas):
         if (
             self.ctrl_select_enabled
             and self.drag_selection_enabled
-            and all(v is None for v in (self.RI.rsz_h, self.RI.rsz_w, self.CH.rsz_h, self.CH.rsz_w))
+            and self.not_currently_resizing()
         ):
             need_redraw = False
             end_row = self.identify_row(y=event.y)
@@ -3311,18 +3302,14 @@ class MainTable(tk.Canvas):
             or self.identify_row(y=event.y, allow_end=False) is None
         ):
             self.deselect("all")
-        elif self.single_selection_enabled and all(
-            v is None for v in (self.RI.rsz_h, self.RI.rsz_w, self.CH.rsz_h, self.CH.rsz_w)
-        ):
+        elif self.single_selection_enabled and self.not_currently_resizing():
             r = self.identify_row(y=event.y)
             c = self.identify_col(x=event.x)
             if r < len(self.row_positions) - 1 and c < len(self.col_positions) - 1:
                 self.select_cell(r, c, redraw=True)
                 if self.edit_cell_enabled:
                     self.open_cell(event)
-        elif self.toggle_selection_enabled and all(
-            v is None for v in (self.RI.rsz_h, self.RI.rsz_w, self.CH.rsz_h, self.CH.rsz_w)
-        ):
+        elif self.toggle_selection_enabled and self.not_currently_resizing():
             r = self.identify_row(y=event.y)
             c = self.identify_col(x=event.x)
             if r < len(self.row_positions) - 1 and c < len(self.col_positions) - 1:
