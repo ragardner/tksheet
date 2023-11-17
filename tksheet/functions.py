@@ -308,6 +308,14 @@ def is_contiguous(seq: list[int]) -> bool:
     return all(i == (prev := prev + 1) for i in itr)
 
 
+def index_exists(seq: Sequence, index: int) -> bool:
+    try:
+        seq[index]
+        return True
+    except Exception:
+        return False
+
+
 def move_elements_by_mapping(
     seq: list[object],
     new_idxs: dict,

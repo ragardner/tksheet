@@ -53,6 +53,7 @@ from .functions import (
     get_checkbox_points,
     get_new_indexes,
     get_seq_without_gaps_at_index,
+    index_exists,
     insert_items,
     is_iterable,
     is_type_int,
@@ -3035,11 +3036,7 @@ class MainTable(tk.Canvas):
     def ctrl_shift_b1_press(self, event=None):
         self.mouseclick_outside_editor_or_dropdown_all_canvases()
         self.focus_set()
-        if (
-            self.ctrl_select_enabled
-            and self.drag_selection_enabled
-            and self.not_currently_resizing()
-        ):
+        if self.ctrl_select_enabled and self.drag_selection_enabled and self.not_currently_resizing():
             self.b1_pressed_loc = None
             rowsel = int(self.identify_row(y=event.y))
             colsel = int(self.identify_col(x=event.x))
@@ -3185,11 +3182,7 @@ class MainTable(tk.Canvas):
             self.extra_b1_motion_func(event)
 
     def ctrl_b1_motion(self, event: object):
-        if (
-            self.ctrl_select_enabled
-            and self.drag_selection_enabled
-            and self.not_currently_resizing()
-        ):
+        if self.ctrl_select_enabled and self.drag_selection_enabled and self.not_currently_resizing():
             need_redraw = False
             end_row = self.identify_row(y=event.y)
             end_col = self.identify_col(x=event.x)
@@ -5971,13 +5964,17 @@ class MainTable(tk.Canvas):
         type_ = tags[4].split("_")[1]
         fill, outline = self.get_selected_box_bg_fg(type_=type_)
         iid = self.currently_selected(get_item=True)
+        x1 = self.col_positions[c] + 1
+        y1 = self.row_positions[r] + 1
+        x2 = self.col_positions[c + 1] if index_exists(self.col_positions, c + 1) else self.col_positions[c]
+        y2 = self.row_positions[r + 1] if index_exists(self.row_positions, r + 1) else self.row_positions[r]
         if isinstance(iid, int):
             self.coords(
                 iid,
-                self.col_positions[c] + 1,
-                self.row_positions[r] + 1,
-                self.col_positions[c + 1],
-                self.row_positions[r + 1],
+                x1,
+                y1,
+                x2,
+                y2,
             )
             if self.show_selected_cells_border:
                 self.itemconfig(
@@ -5998,10 +5995,10 @@ class MainTable(tk.Canvas):
         else:
             if self.show_selected_cells_border:
                 iid = self.create_rectangle(
-                    self.col_positions[c] + 1,
-                    self.row_positions[r] + 1,
-                    self.col_positions[c + 1],
-                    self.row_positions[r + 1],
+                    x1,
+                    y1,
+                    x2,
+                    y2,
                     fill="",
                     outline=outline,
                     width=2,
@@ -6009,10 +6006,10 @@ class MainTable(tk.Canvas):
                 )
             else:
                 iid = self.create_rectangle(
-                    self.col_positions[c],
-                    self.row_positions[r],
-                    self.col_positions[c + 1],
-                    self.row_positions[r + 1],
+                    x1,
+                    y1,
+                    x2,
+                    y2,
                     fill=fill,
                     outline="",
                     tags=tags,
