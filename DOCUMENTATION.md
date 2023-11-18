@@ -523,6 +523,42 @@ get_column_data(c,
 
 ___
 
+#### **Sheet methods**
+
+`Sheet` objects also have some functions similar to lists. **Note** that these functions do **not** include the header or index.
+
+Check if the table has data:
+```python
+if my_sheet:
+    print ("The sheets main table is not empty!")
+```
+- **Note:** that this function doesn't check if cells are empty or Falsy only if there are any rows or rows with any elements in the data `list`.
+
+Check how many rows the table has:
+```python
+num_rows = len(my_sheet)
+```
+
+Iterate over table rows:
+```python
+for row in my_sheet:
+    print (row)
+
+# and in reverse
+for row in reversed(my_sheet):
+    print (row)
+```
+
+Check if the table has a particular value (membership):
+```python
+# returns True or False
+search_value = "the cell value I'm looking for"
+print (search_value in my_sheet)
+```
+- Can also check if a row is in the sheet.
+
+___
+
 #### **Get number of rows in table data.**
 ```python
 get_total_rows(include_index = False)

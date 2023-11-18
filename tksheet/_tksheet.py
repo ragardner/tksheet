@@ -2639,6 +2639,23 @@ class Sheet(tk.Frame):
         if (r, c) in self.MT.cell_options and "format" in self.MT.cell_options[(r, c)]:
             return True
         return False
+    
+    def __bool__(self):
+        return any(self.MT.data)
+
+    def __len__(self):
+        return self.MT.data.__len__()
+
+    def __iter__(self):
+        return self.MT.data.__iter__()
+
+    def __reversed__(self):
+        return reversed(self.MT.data)
+
+    def __contains__(self, key):
+        if isinstance(key, (list, tuple)):
+            return key in self.MT.data
+        return any(key in row for row in self.MT.data)
 
     def data_reference(
         self,
