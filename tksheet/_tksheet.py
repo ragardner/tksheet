@@ -1163,38 +1163,32 @@ class Sheet(tk.Frame):
                     self.MT.row_positions = list(accumulate(chain([0], (height for height in row_heights))))
 
     def verify_row_heights(self, row_heights: List, canvas_positions=False):
-        if row_heights[0] != 0 or isinstance(row_heights[0], bool):
-            return False
         if not isinstance(row_heights, list):
             return False
         if canvas_positions:
-            if any(
+            if row_heights[0] != 0:
+                return False
+            return not any(
                 x - z < self.MT.min_row_height or not isinstance(x, int) or isinstance(x, bool)
                 for z, x in zip(islice(row_heights, 0, None), islice(row_heights, 1, None))
-            ):
-                return False
-        elif not canvas_positions:
-            if any(z < self.MT.min_row_height or not isinstance(z, int) or isinstance(z, bool) for z in row_heights):
-                return False
-        return True
+            )
+        return not any(
+            z < self.MT.min_row_height or not isinstance(z, int) or isinstance(z, bool) for z in row_heights
+        )
 
     def verify_column_widths(self, column_widths: List, canvas_positions=False):
-        if column_widths[0] != 0 or isinstance(column_widths[0], bool):
-            return False
         if not isinstance(column_widths, list):
             return False
         if canvas_positions:
-            if any(
+            if column_widths[0] != 0:
+                return False
+            return not any(
                 x - z < self.MT.min_column_width or not isinstance(x, int) or isinstance(x, bool)
                 for z, x in zip(islice(column_widths, 0, None), islice(column_widths, 1, None))
-            ):
-                return False
-        elif not canvas_positions:
-            if any(
-                z < self.MT.min_column_width or not isinstance(z, int) or isinstance(z, bool) for z in column_widths
-            ):
-                return False
-        return True
+            )
+        return not any(
+            z < self.MT.min_column_width or not isinstance(z, int) or isinstance(z, bool) for z in column_widths
+        )
 
     def default_row_height(self, height=None):
         if height is not None:
