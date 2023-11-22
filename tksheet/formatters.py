@@ -95,9 +95,9 @@ def bool_to_str(v: object, **kwargs: dict) -> str:
 
 
 def int_formatter(
-    datatypes=int,
-    format_function=to_int,
-    to_str_function=to_str,
+    datatypes: tuple[object] | object = int,
+    format_function: Callable = to_int,
+    to_str_function: Callable = to_str,
     **kwargs,
 ) -> dict:
     return formatter(
@@ -109,10 +109,10 @@ def int_formatter(
 
 
 def float_formatter(
-    datatypes=float,
-    format_function=to_float,
-    to_str_function=float_to_str,
-    decimals=2,
+    datatypes: tuple[object] | object = float,
+    format_function: Callable = to_float,
+    to_str_function: Callable = float_to_str,
+    decimals: int = 2,
     **kwargs,
 ) -> dict:
     return formatter(
@@ -125,10 +125,10 @@ def float_formatter(
 
 
 def percentage_formatter(
-    datatypes=float,
-    format_function=to_float,
-    to_str_function=percentage_to_str,
-    decimals=2,
+    datatypes: tuple[object] | object = float,
+    format_function: Callable = to_float,
+    to_str_function: Callable = percentage_to_str,
+    decimals: int = 2,
     **kwargs,
 ) -> dict:
     return formatter(
@@ -141,12 +141,12 @@ def percentage_formatter(
 
 
 def bool_formatter(
-    datatypes=bool,
-    format_function=to_bool,
-    to_str_function=bool_to_str,
-    invalid_value="NA",
-    truthy_values=truthy,
-    falsy_values=falsy,
+    datatypes: tuple[object] | object = bool,
+    format_function: Callable = to_bool,
+    to_str_function: Callable = bool_to_str,
+    invalid_value: object = "NA",
+    truthy_values: set[object] = truthy,
+    falsy_values: set[object] = falsy,
     **kwargs,
 ) -> dict:
     return formatter(
@@ -161,14 +161,14 @@ def bool_formatter(
 
 
 def formatter(
-    datatypes,
-    format_function,
-    to_str_function=to_str,
-    invalid_value="NaN",
-    nullable=True,
-    pre_format_function=None,
-    post_format_function=None,
-    clipboard_function=None,
+    datatypes: tuple[object] | object,
+    format_function: Callable,
+    to_str_function: Callable = to_str,
+    invalid_value: object = "NaN",
+    nullable: bool = True,
+    pre_format_function: Callable | None = None,
+    post_format_function: Callable | None = None,
+    clipboard_function: Callable | None = None,
     **kwargs,
 ) -> dict:
     return {
@@ -187,12 +187,12 @@ def formatter(
 
 
 def format_data(
-    value="",
-    datatypes=int,
-    nullable=True,
-    pre_format_function=None,
-    format_function=to_int,
-    post_format_function=None,
+    value: object = "",
+    datatypes: tuple[object] | object = int,
+    nullable: bool = True,
+    pre_format_function: Callable | None = None,
+    format_function: Callable | None = to_int,
+    post_format_function: Callable | None = None,
     **kwargs,
 ) -> object:
     if pre_format_function:
@@ -210,11 +210,11 @@ def format_data(
 
 
 def data_to_str(
-    value="",
-    datatypes=int,
-    nullable=True,
-    invalid_value="NaN",
-    to_str_function=None,
+    value: object = "",
+    datatypes: tuple[object] | object = int,
+    nullable: bool = True,
+    invalid_value: object = "NaN",
+    to_str_function: Callable | None = None,
     **kwargs,
 ) -> str:
     if not isinstance(value, datatypes):
@@ -224,7 +224,7 @@ def data_to_str(
     return to_str_function(value, **kwargs)
 
 
-def get_data_with_valid_check(value="", datatypes=tuple(), invalid_value="NA"):
+def get_data_with_valid_check(value="", datatypes: tuple[()] | tuple[object] | object = tuple(), invalid_value="NA"):
     if isinstance(value, datatypes):
         return value
     return invalid_value
@@ -242,7 +242,8 @@ class Formatter:
     def __init__(
         self,
         value: object,
-        datatypes: object = int,
+        datatypes: tuple[object],
+        object=int,
         format_function: Callable = to_int,
         to_str_function: Callable = to_str,
         nullable: bool = True,
@@ -251,7 +252,7 @@ class Formatter:
         post_format_function: Callable | None = None,
         clipboard_function: Callable | None = None,
         **kwargs,
-    ):
+    ) -> None:
         if nullable:
             if isinstance(datatypes, (list, tuple)):
                 datatypes = tuple({type_ for type_ in datatypes} | {type(None)})
@@ -275,21 +276,21 @@ class Formatter:
         except Exception:
             self.value = f"{value}"
 
-    def __str__(self):
+    def __str__(self) -> object:
         if not self.valid():
             return self.invalid_value
         if self.value is None and self.nullable:
             return ""
         return self.to_str_function(self.value, **self.kwargs)
 
-    def valid(self, value=None) -> bool:
+    def valid(self, value: object = None) -> bool:
         if value is None:
             value = self.value
         if isinstance(value, self.valid_datatypes):
             return True
         return False
 
-    def format_data(self, value):
+    def format_data(self, value: object) -> object:
         if self.pre_format_function:
             value = self.pre_format_function(value)
         value = None if (self.nullable and is_none_like(value)) else self.format_function(value, **self.kwargs)
@@ -297,12 +298,12 @@ class Formatter:
             value = self.post_format_function(value)
         return value
 
-    def get_data_with_valid_check(self):
+    def get_data_with_valid_check(self) -> object:
         if self.valid():
             return self.value
         return self.invalid_value
 
-    def get_clipboard_data(self):
+    def get_clipboard_data(self) -> object:
         if self.clipboard_function is not None:
             return self.clipboard_function(self.value, **self.kwargs)
         if isinstance(self.value, (int, float, bool)):

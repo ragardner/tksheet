@@ -22,6 +22,8 @@ from .formatters import (
     try_to_bool,
 )
 from .functions import (
+    alpha2idx,
+    alpha2num,
     consecutive_chunks,
     data_to_displayed_idxs,
     displayed_to_data_idxs,
@@ -40,9 +42,8 @@ from .functions import (
     is_iterable,
     move_elements_by_mapping,
     move_elements_to,
-    span_dict,
-    alpha2idx,
     num2alpha,
+    span_dict,
     tksheet_type_error,
 )
 from .main_table import MainTable

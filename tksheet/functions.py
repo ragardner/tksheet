@@ -31,12 +31,15 @@ def decompress_load(b: bytes) -> object:
     return pickle.loads(zlib.decompress(b))
 
 
-def tksheet_type_error(kwarg, valid_types, not_type):
+def tksheet_type_error(kwarg: str, valid_types: list[str], not_type: object) -> str:
     valid_types = ", ".join(f"{type_}" for type_ in valid_types)
     return f"Argument '{kwarg}' must be one of the following types: {valid_types}, " f"not {type(not_type)}."
 
 
-def dropdown_search_function(search_for, data):
+def dropdown_search_function(
+    search_for: object,
+    data: Sequence[object],
+) -> int | None:
     search_len = len(search_for)
     match_rn = float("inf")
     match_st = float("inf")
@@ -126,7 +129,7 @@ def change_eventname(event_dict: dict, newname: str) -> dict:
     return DotDict({**event_dict, **{"eventname": newname}})
 
 
-def ev_stack_dict(d):
+def ev_stack_dict(d) -> DotDict:
     return DotDict(
         name=d["eventname"],
         data=pickle_compress(d),
@@ -140,16 +143,16 @@ def len_to_idx(n: int) -> int:
 
 
 def get_dropdown_kwargs(
-    values=[],
-    set_value=None,
-    state="normal",
-    redraw=True,
-    selection_function=None,
-    modified_function=None,
-    search_function=dropdown_search_function,
-    validate_input=True,
-    text=None,
-):
+    values: list = [],
+    set_value: object = None,
+    state: str = "normal",
+    redraw: bool = True,
+    selection_function: Callable | None = None,
+    modified_function: Callable | None = None,
+    search_function: Callable = dropdown_search_function,
+    validate_input: bool = True,
+    text: None | str = None,
+) -> dict:
     return {
         "values": values,
         "set_value": set_value,
@@ -163,7 +166,7 @@ def get_dropdown_kwargs(
     }
 
 
-def get_dropdown_dict(**kwargs):
+def get_dropdown_dict(**kwargs) -> dict:
     return {
         "values": kwargs["values"],
         "window": "no dropdown open",
@@ -178,12 +181,12 @@ def get_dropdown_dict(**kwargs):
 
 
 def get_checkbox_kwargs(
-    checked=False,
-    state="normal",
-    redraw=True,
-    check_function=None,
-    text="",
-):
+    checked: bool = False,
+    state: str = "normal",
+    redraw: bool = True,
+    check_function: Callable | None = None,
+    text: str = "",
+) -> dict:
     return {
         "checked": checked,
         "state": state,
