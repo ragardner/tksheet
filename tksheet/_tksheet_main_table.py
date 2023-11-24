@@ -6292,12 +6292,18 @@ class MainTable(tk.Canvas):
         redraw=True,
         recreate=True,
     ):
-        if self.focus_get() is None and editor_info:
+        focused = self.focus_get()
+        try:
+            if focused == self.text_editor.textedit.rc_popup_menu:
+                return "break"
+        except Exception:
+            pass
+        if focused is None and editor_info:
             return "break"
         if editor_info is not None and len(editor_info) >= 3 and editor_info[2] == "Escape":
             self.destroy_text_editor("Escape")
             self.close_dropdown_window(r, c)
-            return "break"
+            return
         if self.text_editor is not None:
             self.text_editor_value = self.text_editor.get()
         if destroy:

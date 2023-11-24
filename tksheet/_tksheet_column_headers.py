@@ -1914,8 +1914,14 @@ class ColumnHeaders(tk.Canvas):
         redraw=True,
         recreate=True,
     ):
-        if self.focus_get() is None and editor_info:
-            return
+        focused = self.focus_get()
+        try:
+            if focused == self.text_editor.textedit.rc_popup_menu:
+                return "break"
+        except Exception:
+            pass
+        if focused is None and editor_info:
+            return "break"
         if editor_info is not None and len(editor_info) >= 2 and editor_info[1] == "Escape":
             self.destroy_text_editor("Escape")
             self.close_dropdown_window(c)

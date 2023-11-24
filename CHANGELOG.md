@@ -1,3 +1,16 @@
+### Version 6.3.0
+#### Fixed:
+- Cell editor right click not working
+- Cell editor select all not working
+
+#### Added:
+- Some methods to `Sheet` objects, see [documentation](https://github.com/ragardner/tksheet/wiki/Version-6#sheet-methods) for more information.
+    - __bool__
+    - __len__
+    - __iter__
+    - __reversed__
+    - __contains__
+
 ### Version 6.2.9
 #### Fixed:
 - Incorrect row being targeted with hidden rows and text editor newline binding (potential error)
