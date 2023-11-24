@@ -523,6 +523,16 @@ get_column_data(c,
 
 ___
 
+Get an empty value for a specific cell.
+```python
+get_value_for_empty_cell(
+    r,
+    c,
+    r_ops=True,
+    c_ops=True,
+)
+```
+
 #### **Sheet methods**
 
 `Sheet` objects also have some functions similar to lists. **Note** that these functions do **not** include the header or index.

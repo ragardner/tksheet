@@ -1172,9 +1172,7 @@ class Sheet(tk.Frame):
                 x - z < self.MT.min_row_height or not isinstance(x, int) or isinstance(x, bool)
                 for z, x in zip(islice(row_heights, 0, None), islice(row_heights, 1, None))
             )
-        return not any(
-            z < self.MT.min_row_height or not isinstance(z, int) or isinstance(z, bool) for z in row_heights
-        )
+        return not any(z < self.MT.min_row_height or not isinstance(z, int) or isinstance(z, bool) for z in row_heights)
 
     def verify_column_widths(self, column_widths: List, canvas_positions=False):
         if not isinstance(column_widths, list):
@@ -2531,6 +2529,15 @@ class Sheet(tk.Frame):
                 for rn in iterable
             ]
 
+    def get_value_for_empty_cell(
+        self,
+        r,
+        c,
+        r_ops=True,
+        c_ops=True,
+    ):
+        return self.MT.get_value_for_empty_cell(r, c, r_ops, c_ops)
+
     def get_cell_data(self, r, c, get_displayed=False, **kwargs):
         if kwargs:
             show_kwargs_warning(kwargs, "get_cell_data")
@@ -2639,7 +2646,7 @@ class Sheet(tk.Frame):
         if (r, c) in self.MT.cell_options and "format" in self.MT.cell_options[(r, c)]:
             return True
         return False
-    
+
     def __bool__(self):
         return any(self.MT.data)
 
