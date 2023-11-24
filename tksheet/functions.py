@@ -2,21 +2,23 @@ from __future__ import annotations
 
 import bisect
 import pickle
+import re
 import zlib
 from collections.abc import (
     Callable,
-    Iterator,
     Generator,
+    Iterator,
     Sequence,
-)
-from .other_classes import (
-    DotDict,
-    Span,
-    Highlight,
 )
 from functools import partial
 from itertools import islice, repeat
-import re
+
+from .other_classes import (
+    Box_nt,
+    DotDict,
+    Highlight,
+    Span,
+)
 
 compress = partial(zlib.compress, level=1)
 pickle_obj = partial(pickle.dumps, protocol=pickle.HIGHEST_PROTOCOL)
@@ -59,6 +61,10 @@ def dropdown_search_function(
     if match_rn != float("inf"):
         return match_rn
     return None
+
+
+def selection_box_tup_to_dict(box: tuple) -> dict:
+    return {Box_nt(*box[:-1]): box[-1]}
 
 
 def event_dict(
@@ -109,7 +115,7 @@ def event_dict(
         ),
         named_spans=DotDict() if named_spans is None else named_spans,
         options=DotDict(),
-        selection_boxes=DotDict() if boxes is None else {boxes[:-1]: boxes[-1]} if isinstance(boxes, tuple) else boxes,
+        selection_boxes={} if boxes is None else selection_box_tup_to_dict(boxes) if isinstance(boxes, tuple) else boxes,
         selected=tuple() if selected is None else selected,
         being_selected=tuple() if being_selected is None else being_selected,
         data=[] if data is None else data,
@@ -1024,6 +1030,10 @@ def del_named_span_options_nested(options: dict, itr1: Iterator, itr2: Iterator,
 
 def coords_tag_to_int_tuple(s: str) -> tuple[int, int, int, int] | tuple[int, int]:
     return tuple(map(int, filter(None, s.split("_"))))
+
+
+def coords_tag_to_box_nt(s: str) -> Box_nt[int, int, int, int]:
+    return Box_nt(*(map(int, filter(None, s.split("_")))))
 
 
 def add_highlight(

@@ -3,8 +3,9 @@ from __future__ import annotations
 import pickle
 import tkinter as tk
 from collections import namedtuple
-from collections.abc import Generator, Hashable, Iterator, Callable
+from collections.abc import Callable, Generator, Hashable, Iterator
 from functools import partial
+
 from .vars import (
     ctrl_key,
     get_font,
@@ -17,6 +18,15 @@ CurrentlySelectedClass = namedtuple(
     "CurrentlySelectedClass",
     "row column type_ tags",
 )
+Box_nt = namedtuple(
+    "Box_nt",
+    "from_r from_c upto_r upto_c",
+)
+Box_t = namedtuple(
+    "Box_t",
+    "from_r from_c upto_r upto_c type_",
+)
+
 Highlight = namedtuple(
     "Highlight",
     (

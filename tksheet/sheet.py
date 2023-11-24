@@ -4678,25 +4678,26 @@ class Sheet(tk.Frame):
 
     def create_checkbox(self, r: int | str = 0, c: int | str = 0, *args, **kwargs) -> None:
         kwargs = get_checkbox_kwargs(*args, **kwargs)
+        v = kwargs["checked"]
         d = get_checkbox_dict(**kwargs)
         if isinstance(r, str) and r.lower() == "all" and isinstance(c, int):
             for r_ in range(self.MT.total_data_rows()):
-                self._create_checkbox(r_, c, d)
+                self._create_checkbox(r_, c, v, d)
         elif isinstance(c, str) and c.lower() == "all" and isinstance(r, int):
             for c_ in range(self.MT.total_data_cols()):
-                self._create_checkbox(r, c_, d)
+                self._create_checkbox(r, c_, v, d)
         elif isinstance(r, str) and r.lower() == "all" and isinstance(c, str) and c.lower() == "all":
             totalcols = self.MT.total_data_cols()
             for r_ in range(self.MT.total_data_rows()):
                 for c_ in range(totalcols):
-                    self._create_checkbox(r_, c_, d)
+                    self._create_checkbox(r_, c_, v, d)
         elif isinstance(r, int) and isinstance(c, int):
-            self._create_checkbox(r, c, d)
+            self._create_checkbox(r, c, v, d)
         self.set_refresh_timer(kwargs["redraw"])
 
     def _create_checkbox(self, r: int, c: int, v: bool, d: dict) -> None:
         self.MT.delete_cell_format(r, c, clear_values=False)
-        self.delete_cell_options_dropdown_and_checkbox(r, c)
+        self.del_cell_options_dropdown_and_checkbox(r, c)
         add_to_options(self.MT.cell_options, (r, c), "checkbox", d)
         self.MT.set_cell_data(r, c, v)
 

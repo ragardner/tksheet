@@ -438,7 +438,7 @@ ___
 
 #### **Bind specific table functionality**
 
-This function allows you to bind very specific table functionality to your own functions. If you want less specificity in event names you can also bind all sheet modifying events to a single function, [see here](https://github.com/ragardner/tksheet/wiki/Version-7#sheet-modified-events).
+This function allows you to bind very specific table functionality to your own functions. If you want less specificity in event names you can also bind all sheet modifying events to a single function, [see here](https://github.com/ragardner/tksheet/wiki/Version-7#bind-tkinter-events).
 
 ```python
 extra_bindings(bindings, func=None)
@@ -513,7 +513,7 @@ Parameters:
 
 **For tksheet versions >= `7.0.0`:**
 
-#### **Event Data:**
+#### **Event Data**
 - Using `extra_bindings()` the function you bind needs to have at least one argument which will receive a `dict` which has the following layout:
 
 ```python
@@ -1085,6 +1085,38 @@ span = sheet["A1"].options(
     expand="right",
     ndim=1, # to return a single list when getting data
 )
+```
+
+All of a spans modifiable attributes are listed here:
+- `from_r` (`int`) represents which row the span starts at, must be a positive `int`.
+- `from_c` (`int`) represents which column the span starts at, must be a positive `int`.
+- `upto_r` (`int`, `None`) represents which row the span ends at, must be a positive `int` or `None`. `None` means always up to and including the last row.
+- `upto_c` (`int`, `None`) represents which column the span ends at, must be a positive `int` or `None`. `None` means always up to and including the last column.
+- `type_` (`str`) must be either an empty string `""` or one of the following: `"format"`, `"highlight"`, `"dropdown"`, `"checkbox"`, `"readonly"`, `"align"`.
+- `name` (`str`) used for named spans or for identification. If no name is provided then a name is generated for the span which is based on an internal integer ticker and then converted to a string in the same way column names are, e.g. `0` is `"A"`.
+- `table` (`bool`) when `True` will make all functions used with the span target the main table as well as the header/index if those are `True`.
+- `index` (`bool`) when `True` will make all functions used with the span target the index as well as the table/header if those are `True`.
+- `header` (`bool`) when `True` will make all functions used with the span target the header as well as the table/index if those are `True`.
+- `tdisp` (`bool`) is used by data getting functions that utilize spans and when `True` the function retrieves screen displayed data for the table, not underlying cell data.
+- `idisp` (`bool`) is used by data getting functions that utilize spans and when `True` the function retrieves screen displayed data for the index, not underlying cell data.
+- `hdisp` (`bool`) is used by data getting functions that utilize spans and when `True` the function retrieves screen displayed data for the header, not underlying cell data.
+- `transposed` (`bool`) is used by data getting and setting functions that utilize spans. When `True`:
+    - Returned sublists from data getting functions will represent columns rather than rows.
+    - Data setting functions will assume that a single sequence is a column rather than row and that a list of lists is a list of columns rather than a list of rows.
+- `ndim` (`int`) is used by data getting functions that utilize spans, it must be either `0` or `1` or `2`.
+    - `0` is the default setting which will make the return value vary based on what it is. For example if the gathered data is only a single cell it will return a value instead of a list of lists with a single list containing a single value. A single row will be a single list.
+    - `1` will force the return of a single list as opposed to a list of lists.
+    - `2` will force the return of a list of lists.
+- `convert` (`None`, `Callable`) can be used to modify the data using a function before returning it. The data sent to the `convert` function will be as it was before normally returning (after `ndim` has potentially modified it).
+- `undo` (`bool`) is used by data modifying functions that utilize spans. When `True` and if undo is enabled for the sheet then the end user will be able to undo/redo the modification.
+- `widget` (`object`) is the reference to the original sheet which created the span. This can be changed to a different sheet if required e.g. `my_span.widget = new_sheet`.
+- `kwargs` a `dict` containing keyword arguments relevant for functions such as `span.highlight()` or `span.dropdown()` which are used when applying a named span to a table.
+
+If necessary you can also modify these attributes the same way you would an objects. e.g.
+
+```python
+span = self.sheet("A")
+span.upto_c = None
 ```
 
 #### **Using a span to format data**
@@ -1905,6 +1937,8 @@ highlight(
 - `overwrite` (`bool`) when `True` overwrites the any previous highlight for that cell/row/column, whereas `False` will only impact the keyword arguments used.
 - Highlighting cells, rows or columns will also change the colors of dropdown boxes and check boxes.
 
+___
+
 #### **Deleting highlights**
 
 If the highlights were created by a named span then the named span must be deleted, more information [here](https://github.com/ragardner/tksheet/wiki/Version-7#deleting-a-named-span).
@@ -2191,6 +2225,8 @@ tksheet has several basic built-in formatters and provides functionality for cre
 
 A demonstration of all the built-in and custom formatters can be found [here](https://github.com/ragardner/tksheet/wiki/Version-7#example-using-and-creating-formatters).
 
+### **Creation and deletion of data formatting rules**
+
 #### **Creating a data format rule**
 
 `Span` objects (more information [here](https://github.com/ragardner/tksheet/wiki/Version-7#span-objects)) can be used to format data for cells, rows, columns, the entire sheet, headers and the index.
@@ -2223,7 +2259,7 @@ Notes:
 
 Parameters:
 - `key` (`CreateSpanTypes`) either a span or a type which can create a span. See [here](https://github.com/ragardner/tksheet/wiki/Version-7#creating-a-span) for more information on the types that can create a span.
-- `formatter_options` (`dict`) a dictionary of keyword options/arguements to pass to the formatter, see [here](https://github.com/ragardner/tksheet/wiki/Version-7#tksheet-formatters) for information on what argument to use.
+- `formatter_options` (`dict`) a dictionary of keyword options/arguements to pass to the formatter, see [here](https://github.com/ragardner/tksheet/wiki/Version-7#formatters) for information on what argument to use.
 - `formatter_class` (`class`) in case you want to use a custom class to store functions and information as opposed to using the built-in methods.
 - `**kwargs` any additional keyword options/arguements to pass to the formatter.
 
@@ -2252,14 +2288,14 @@ del_all_formatting(clear_values: bool = False)
 ```
 - `clear_values` (`bool`) if true, all the sheets cell values will be cleared.
 
-#### **Reapply formatting to entire sheet:**
+#### **Reapply formatting to entire sheet**
 
 ```python
 reapply_formatting()
 ```
 - Useful if you have manually changed the entire sheets data using `sheet.MT.data = ` and want to reformat the sheet using any existing formatting you have set.
 
-### **tksheet Formatters**
+### **Formatters**
 
 `tksheet` provides a number of in-built formatters, in addition to the base `formatter` function. These formatters are designed to provide a range of functionality for different datatypes. The following table lists the available formatters and their options.
 
@@ -2480,7 +2516,7 @@ ___
 If the readonly rule was created by a named span then the named span must be deleted, more information [here](https://github.com/ragardner/tksheet/wiki/Version-7#deleting-a-named-span).
 
 Otherwise you can use either of the following methods to delete/remove readonly rules:
-- Using a span method e.g. `span.readonly()` with the keyword argument `readonly=False` more information [here](https://github.com/ragardner/tksheet/wiki/Version-7#using-a-span-to-delete-check-boxes).
+- Using a span method e.g. `span.readonly()` with the keyword argument `readonly=False` more information [here](https://github.com/ragardner/tksheet/wiki/Version-7#using-a-span-to-set-cells-to-read-only).
 - Using a sheet method e.g. `sheet.readonly(Span)` with the keyword argument `readonly=False` details below:
 
 ```python
@@ -2497,35 +2533,45 @@ readonly(
 ---
 # **Text Font and Alignment**
 
-- `newfont` arguments require a three tuple e.g. `("Arial", 12, "normal")`
-- `align` arguments (`str`) options are `w`, `e` or `center`.
+### **Font**
 
-___
+- Font arguments require a three tuple e.g. `("Arial", 12, "normal")` or `("Arial", 12, "bold")` or `("Arial", 12, "italic")`
+- The table and index currently share a font, it's not possible to change the index font separate from the table font.
 
+**Set the table and index font:**
 ```python
 font(newfont = None, reset_row_positions = True)
 ```
 
-___
-
+**Set the header font:**
 ```python
 header_font(newfont = None)
 ```
 
-___
+### **Text Alignment**
 
+There are functions to set the text alignment for specific cells/rows/columns and also functions to set the text alignment for a whole part of the sheet (table/index/header).
+
+- Alignment argument (`str`) options are:
+    - `"w"`, `"west"`, `"left"`
+    - `"e"`, `"east"`, `"right"`
+    - `"c"`, `"center"`, `"centre"`
+
+Unfortunately vertical alignment is not available.
+
+#### **Whole widget text alignment**
+
+Set the text alignment for the whole of the table (doesn't include index/header).
 ```python
-align(align = None, redraw = True)
+table_align(align = None, redraw = True)
 ```
 
-___
-
+Set the text alignment for the whole of the header.
 ```python
 header_align(align = None, redraw = True)
 ```
 
-___
-
+Set the text alignment for the whole of the index.
 ```python
 row_index_align(align = None, redraw = True)
 
@@ -2533,58 +2579,66 @@ row_index_align(align = None, redraw = True)
 index_align(align = None, redraw = True)
 ```
 
-___
+#### **Creating a specific cell row or column text alignment rule**
 
-#### **Change the text alignment for specific rows, `"global"` resets to table setting**
+The following function is for setting text alignment for specific cells, rows or columns in the table, header and index.
+
+`Span` objects (more information [here](https://github.com/ragardner/tksheet/wiki/Version-7#span-objects)) can be used to create text alignment rules for cells, rows, columns, the entire sheet, headers and the index.
+
+You can use either of the following methods:
+- Using a span method e.g. `span.align()` more information [here](https://github.com/ragardner/tksheet/wiki/Version-7#using-a-span-to-create-text-alignment-rules).
+- Using a sheet method e.g. `sheet.align(Span)`
+
+Or if you need user inserted row/columns in the middle of areas with an alignment rule to also have an alignment rule you can use named spans, more information [here](https://github.com/ragardner/tksheet/wiki/Version-7#named-spans).
+
+Whether cells, rows or columns are affected depends on the [`kind`](https://github.com/ragardner/tksheet/wiki/Version-7#get-a-spans-kind) of span.
+
 ```python
-align_rows(rows = [], align = "global", align_index = False, redraw = True)
-```
-- Use argument `"all"` for `rows` e.g. `align_rows("all")` to clear all specific row alignments.
-
-___
-
-#### **Change the text alignment for specific columns, `"global"` resets to table setting**
-```python
-align_columns(columns = [], align = "global", align_header = False, redraw = True)
-```
-- Use argument `"all"` for `columns` e.g. `align_columns("all")` to clear all specific column alignments.
-
-___
-
-#### **Change the text alignment for specific cells inside the table, `"global"` resets to table setting**
-```python
-align_cells(row = 0, column = 0, cells = [], align = "global", redraw = True)
-```
-- Use argument `"all"` for `row` e.g. `align_cells("all")` to clear all specific cell alignments.
-
-___
-
-#### **Change the text alignment for specific cells inside the header, `"global"` resets to header setting**
-```python
-align_header(columns = [], align = "global", redraw = True)
+align(
+    key: CreateSpanTypes,
+    align: str | None = None,
+    redraw: bool = True,
+)
 ```
 
-___
+ Parameters:
+- `key` (`CreateSpanTypes`) either a span or a type which can create a span. See [here](https://github.com/ragardner/tksheet/wiki/Version-7#creating-a-span) for more information on the types that can create a span.
+- `align` (`str`, `None`) must be one of the following:
+    - `"w"`, `"west"`, `"left"`
+    - `"e"`, `"east"`, `"right"`
+    - `"c"`, `"center"`, `"centre"`
 
-#### **Change the text alignment for specific cells inside the index, `"global"` resets to index setting**
+#### **Deleting a specific text alignment rule**
+
+If the text alignment rule was created by a named span then the named span must be deleted, more information [here](https://github.com/ragardner/tksheet/wiki/Version-7#deleting-a-named-span).
+
+Otherwise you can use either of the following methods to delete/remove specific text alignment rules:
+- Using a span method e.g. `span.del_align()` more information [here](https://github.com/ragardner/tksheet/wiki/Version-7#using-a-span-to-delete-text-alignment-rules).
+- Using a sheet method e.g. `sheet.del_align(Span)` details below:
+
 ```python
-align_index(rows = [], align = "global", redraw = True)
+del_align(
+    key: CreateSpanTypes,
+    redraw: bool = True,
+)
 ```
 
-___
+ Parameters:
+- `key` (`CreateSpanTypes`) either a span or a type which can create a span. See [here](https://github.com/ragardner/tksheet/wiki/Version-7#creating-a-span) for more information on the types that can create a span.
 
+#### **Get existing specific text alignments**
+
+Cell text alignments:
 ```python
 get_cell_alignments()
 ```
 
-___
-
+Row text alignments:
 ```python
 get_row_alignments()
 ```
 
-___
-
+Column text alignments:
 ```python
 get_column_alignments()
 ```
@@ -2595,8 +2649,21 @@ get_column_alignments()
 ```python
 get_currently_selected()
 ```
-- Returns `namedtuple` of `(row, column, type_)` e.g. `(0, 0, "column")`
+- Returns `namedtuple` of `(row, column, type_, tags)` e.g. `(0, 0, "column", (tags))`
    - `type_` can be `"row"`, `"column"` or `"cell"`
+   - `tags` resembles the following:
+```python
+"""
+As an example of currently selected tags
+"""
+(
+    "selected",  # name
+    "0_0_1_1",  # dimensions of box it's attached to
+    250,  # canvas item id of currently selected rectangle
+    "0_0",  # coordinates "row_column" of currently selected box
+    "type_cells",  # type of box it's attached to, "type_cells", "type_rows" or "type_columns"
+)
+```
 
 Usage example below:
 ```python
@@ -3472,7 +3539,10 @@ app.mainloop()
 ---
 # **Example Custom Right Click and Text Editor Validation**
 
-This is to demonstrate adding your own commands to the in-built right click popup menu (or how you might start making your own right click menu functionality) and also validating text editor input. In this demonstration the validation removes spaces from user input.
+This is to demonstrate:
+- Adding your own commands to the in-built right click popup menu (or how you might start making your own right click menu functionality)
+- Validating text editor input; in this demonstration the validation removes spaces from user input.
+
 ```python
 from tksheet import Sheet
 import tkinter as tk
@@ -3529,39 +3599,40 @@ app.mainloop()
 
 **This example applies to tksheet versions >= `7.0.0`**
 ```python
-from tksheet import Sheet, get_n2a
+from tksheet import Sheet, num2alpha
 import tkinter as tk
 
 
 class demo(tk.Tk):
     def __init__(self):
         tk.Tk.__init__(self)
-        self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight = 1)
+        self.grid_rowconfigure(0, weight = 1)
         self.frame = tk.Frame(self)
-        self.frame.grid_columnconfigure(0, weight=1)
-        self.frame.grid_rowconfigure(0, weight=1)
-        self.sheet = Sheet(
-            self.frame,
-            data=[[f"Row {r}, Column {c}\nnewline1\nnewline2" for c in range(5)] for r in range(500)],
-        )
+        self.frame.grid_columnconfigure(0, weight = 1)
+        self.frame.grid_rowconfigure(0, weight = 1)
+        self.sheet = Sheet(self.frame,
+                           data = [[f"Row {r}, Column {c}\nnewline1\nnewline2" for c in range(50)] for r in range(500)])
         self.sheet.enable_bindings("all", "ctrl_select")
-        self.sheet.extra_bindings("select_events", self.sheet_select_event)
-        self.show_selections = tk.Label(self, text="0R x 0C", font=("Calibri", 13, "bold"))
-        self.frame.grid(row=0, column=0, sticky="nswe")
-        self.sheet.grid(row=0, column=0, sticky="nswe")
-        self.show_selections.grid(row=1, column=0, padx=(20, 0), sticky="w")
+        self.sheet.extra_bindings([("all_select_events", self.sheet_select_event)])
+        self.show_selections = tk.Label(self)
+        self.frame.grid(row = 0, column = 0, sticky = "nswe")
+        self.sheet.grid(row = 0, column = 0, sticky = "nswe")
+        self.show_selections.grid(row = 1, column = 0, sticky = "nsw")
 
-    def sheet_select_event(self, event=None):
-        print (event)
-        if event["being_selected"]:
-            nrows = event["being_selected"][2] - event["being_selected"][0]
-            ncols = event["being_selected"][3] - event["being_selected"][1]
-            self.show_selections.config(text=f"{nrows}R x {ncols}C")
-        elif event["selected"]:
-            self.show_selections.config(text=f"{get_n2a(event['selected'].column, 'letters')}{event['selected'].row + 1}")
+    def sheet_select_event(self, event = None):
+        if event.eventname == "select" and event.selection_boxes and event.selected:
+            # get the most recently selected box in case there are multiple
+            box = next(reversed(event.selection_boxes))
+            type_ = event.selection_boxes[box]
+            if type_ == "cells":
+                self.show_selections.config(text=f"{type_.capitalize()}: {box.from_r + 1},{box.from_c + 1} : {box.upto_r},{box.upto_c}")
+            elif type_ == "rows":
+                self.show_selections.config(text=f"{type_.capitalize()}: {box.from_r + 1} : {box.upto_r}")
+            elif type_ == "columns":
+                self.show_selections.config(text=f"{type_.capitalize()}: {num2alpha(box.from_c)} : {num2alpha(box.upto_c - 1)}")
         else:
-            self.show_selections.config(text="0R x 0C")
+            self.show_selections.config(text="")
 
 
 app = demo()
@@ -3677,70 +3748,89 @@ app.mainloop()
 
 A very simple demonstration of row filtering using header dropdown boxes.
 
+**This example applies to tksheet versions >= `7.0.0`**
 ```python
-from tksheet import Sheet
+from tksheet import (
+    Sheet,
+    num2alpha as n2a,
+)
 import tkinter as tk
 
 
 class demo(tk.Tk):
     def __init__(self):
         tk.Tk.__init__(self)
-        self.grid_columnconfigure(0, weight = 1)
-        self.grid_rowconfigure(0, weight = 1)
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(0, weight=1)
         self.frame = tk.Frame(self)
-        self.frame.grid_columnconfigure(0, weight = 1)
-        self.frame.grid_rowconfigure(0, weight = 1)
-        self.data = ([["3", "c", "z"],
-                      ["1", "a", "x"],
-                      ["1", "b", "y"],
-                      ["2", "b", "y"],
-                      ["2", "c", "z"]])
-        self.sheet = Sheet(self.frame,
-                           data = self.data,
-                           theme = "dark",
-                           height = 700,
-                           width = 1100)
-        self.sheet.enable_bindings("copy",
-                                   "rc_select",
-                                   "arrowkeys",
-                                   "double_click_column_resize",
-                                   "column_width_resize",
-                                   "column_select",
-                                   "row_select",
-                                   "drag_select",
-                                   "single_select",
-                                   "select_all")
-        self.frame.grid(row = 0, column = 0, sticky = "nswe")
-        self.sheet.grid(row = 0, column = 0, sticky = "nswe")
+        self.frame.grid_columnconfigure(0, weight=1)
+        self.frame.grid_rowconfigure(0, weight=1)
+        self.data = [
+            ["3", "c", "z"],
+            ["1", "a", "x"],
+            ["1", "b", "y"],
+            ["2", "b", "y"],
+            ["2", "c", "z"],
+        ]
+        self.sheet = Sheet(
+            self.frame,
+            data=self.data,
+            column_width=180,
+            theme="dark",
+            height=700,
+            width=1100,
+        )
+        self.sheet.enable_bindings(
+            "copy",
+            "rc_select",
+            "arrowkeys",
+            "double_click_column_resize",
+            "column_width_resize",
+            "column_select",
+            "row_select",
+            "drag_select",
+            "single_select",
+            "select_all",
+        )
+        self.frame.grid(row=0, column=0, sticky="nswe")
+        self.sheet.grid(row=0, column=0, sticky="nswe")
 
-        self.sheet.create_header_dropdown(c = 0,
-                                          values = ["all", "1", "2", "3"],
-                                          set_value = "all",
-                                          selection_function = self.header_dropdown_selected,
-                                          text = "Header A Name")
-        self.sheet.create_header_dropdown(c = 1,
-                                          values = ["all", "a", "b", "c"],
-                                          set_value = "all",
-                                          selection_function = self.header_dropdown_selected,
-                                          text = "Header B Name")
-        self.sheet.create_header_dropdown(c = 2,
-                                          values = ["all", "x", "y", "z"],
-                                          set_value = "all",
-                                          selection_function = self.header_dropdown_selected,
-                                          text = "Header C Name")
+        self.sheet.dropdown(
+            self.sheet.span(n2a(0), header=True, table=False),
+            values=["all", "1", "2", "3"],
+            set_value="all",
+            selection_function=self.header_dropdown_selected,
+            text="Header A Name",
+        )
+        self.sheet.dropdown(
+            self.sheet.span(n2a(1), header=True, table=False),
+            values=["all", "a", "b", "c"],
+            set_value="all",
+            selection_function=self.header_dropdown_selected,
+            text="Header B Name",
+        )
+        self.sheet.dropdown(
+            self.sheet.span(n2a(2), header=True, table=False),
+            values=["all", "x", "y", "z"],
+            set_value="all",
+            selection_function=self.header_dropdown_selected,
+            text="Header C Name",
+        )
 
-    def header_dropdown_selected(self, event = None):
+    def header_dropdown_selected(self, event=None):
         hdrs = self.sheet.headers()
         # this function is run before header cell data is set by dropdown selection
         # so we have to get the new value from the event
-        hdrs[event.column] = event.text
+        hdrs[event.location] = event.value
         if all(dd == "all" for dd in hdrs):
             self.sheet.display_rows("all")
         else:
-            rows = [rn for rn, row in enumerate(self.data) if all(row[c] == e or e == "all" for c, e in enumerate(hdrs))]
-            self.sheet.display_rows(rows = rows,
-                                    all_displayed = False)
+            rows = [
+                rn for rn, row in enumerate(self.data) if all(row[c] == e or e == "all" for c, e in enumerate(hdrs))
+            ]
+            self.sheet.display_rows(rows=rows, all_displayed=False)
         self.sheet.redraw()
+
 
 app = demo()
 app.mainloop()
@@ -3759,103 +3849,120 @@ import tkinter as tk
 class demo(tk.Tk):
     def __init__(self):
         tk.Tk.__init__(self)
-        self.grid_columnconfigure(0, weight = 1)
-        self.grid_rowconfigure(0, weight = 1)
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(0, weight=1)
         self.frame = tk.Frame(self)
-        self.frame.grid_columnconfigure(0, weight = 1)
-        self.frame.grid_rowconfigure(0, weight = 1)
-        self.sheet = Sheet(self.frame,
-                           expand_sheet_if_paste_too_big = True,
-                           empty_horizontal = 0,
-                           empty_vertical = 0,
-                           align = "w",
-                           header_align = "c",
-                           data = [[f"Row {r}, Column {c}\nnewline 1\nnewline 2" for c in range(6)] for r in range(21)],
-                           headers = ["Dropdown Column", "Checkbox Column", "Center Aligned Column", "East Aligned Column", "", ""],
-                           theme = "black",
-                           height = 520,
-                           width = 930)
+        self.frame.grid_columnconfigure(0, weight=1)
+        self.frame.grid_rowconfigure(0, weight=1)
+        self.sheet = Sheet(
+            self.frame,
+            expand_sheet_if_paste_too_big=True,
+            empty_horizontal=0,
+            empty_vertical=0,
+            align="w",
+            header_align="c",
+            data=[[f"Row {r}, Column {c}\nnewline 1\nnewline 2" for c in range(6)] for r in range(21)],
+            headers=[
+                "Dropdown Column",
+                "Checkbox Column",
+                "Center Aligned Column",
+                "East Aligned Column",
+                "",
+                "",
+            ],
+            theme="black",
+            height=520,
+            width=930,
+        )
         self.sheet.enable_bindings("all", "edit_index", "edit header")
-        self.sheet.popup_menu_add_command("Hide Rows", self.hide_rows, table_menu = False, header_menu = False, empty_space_menu = False)
-        self.sheet.popup_menu_add_command("Show All Rows", self.show_rows, table_menu = False, header_menu = False, empty_space_menu = False)
-        self.sheet.popup_menu_add_command("Hide Columns", self.hide_columns, table_menu = False, index_menu = False, empty_space_menu = False)
-        self.sheet.popup_menu_add_command("Show All Columns", self.show_columns, table_menu = False, index_menu = False, empty_space_menu = False)
-        self.frame.grid(row = 0, column = 0, sticky = "nswe")
-        self.sheet.grid(row = 0, column = 0, sticky = "nswe")
-        colors = ("#509f56",
-                  "#64a85b",
-                  "#78b160",
-                  "#8cba66",
-                  "#a0c36c",
-                  "#b4cc71",
-                  "#c8d576",
-                  "#dcde7c",
-                  "#f0e782",
-                  "#ffec87",
-                  "#ffe182",
-                  "#ffdc7d",
-                  "#ffd77b",
-                  "#ffc873",
-                  "#ffb469",
-                  "#fea05f",
-                  "#fc8c55",
-                  "#fb784b",
-                  "#fa6441",
-                  "#f85037")
-        self.sheet.align_columns(columns = 2, align = "c")
-        self.sheet.align_columns(columns = 3, align = "e")
-        self.sheet.create_dropdown(r = "all",
-                                   c = 0,
-                                   values = ["Dropdown"] + [f"{i}" for i in range(15)])
-        self.sheet.create_checkbox(r = "all", c = 1, checked = True, text = "Checkbox")
-        self.sheet.create_header_dropdown(c = 0, values = ["Header Dropdown"] + [f"{i}" for i in range(15)])
-        self.sheet.create_header_checkbox(c = 1, checked = True, text = "Header Checkbox")
-        self.sheet.align_cells(5, 0, align = "c")
-        self.sheet.highlight_cells(5, 0, bg = "gray50", fg = "blue")
-        self.sheet.highlight_cells(17, canvas = "index", bg = "yellow", fg = "black")
-        self.sheet.highlight_cells(12, 1, bg = "gray90", fg = "purple")
+        self.sheet.popup_menu_add_command(
+            "Hide Rows",
+            self.hide_rows,
+            table_menu=False,
+            header_menu=False,
+            empty_space_menu=False,
+        )
+        self.sheet.popup_menu_add_command(
+            "Show All Rows",
+            self.show_rows,
+            table_menu=False,
+            header_menu=False,
+            empty_space_menu=False,
+        )
+        self.sheet.popup_menu_add_command(
+            "Hide Columns",
+            self.hide_columns,
+            table_menu=False,
+            index_menu=False,
+            empty_space_menu=False,
+        )
+        self.sheet.popup_menu_add_command(
+            "Show All Columns",
+            self.show_columns,
+            table_menu=False,
+            index_menu=False,
+            empty_space_menu=False,
+        )
+        self.frame.grid(row=0, column=0, sticky="nswe")
+        self.sheet.grid(row=0, column=0, sticky="nswe")
+        colors = (
+            "#509f56",
+            "#64a85b",
+            "#78b160",
+            "#8cba66",
+            "#a0c36c",
+            "#b4cc71",
+            "#c8d576",
+            "#dcde7c",
+            "#f0e782",
+            "#ffec87",
+            "#ffe182",
+            "#ffdc7d",
+            "#ffd77b",
+            "#ffc873",
+            "#ffb469",
+            "#fea05f",
+            "#fc8c55",
+            "#fb784b",
+            "#fa6441",
+            "#f85037",
+        )
+        self.sheet.align_columns(columns=2, align="c")
+        self.sheet.align_columns(columns=3, align="e")
+        self.sheet.create_dropdown(r="all", c=0, values=["Dropdown"] + [f"{i}" for i in range(15)])
+        self.sheet.create_checkbox(r="all", c=1, checked=True, text="Checkbox")
+        self.sheet.create_header_dropdown(c=0, values=["Header Dropdown"] + [f"{i}" for i in range(15)])
+        self.sheet.create_header_checkbox(c=1, checked=True, text="Header Checkbox")
+        self.sheet.align_cells(5, 0, align="c")
+        self.sheet.highlight_cells(5, 0, bg="gray50", fg="blue")
+        self.sheet.highlight_cells(17, canvas="index", bg="yellow", fg="black")
+        self.sheet.highlight_cells(12, 1, bg="gray90", fg="purple")
         for r in range(len(colors)):
-            self.sheet.highlight_cells(row = r,
-                                       column = 3,
-                                       fg = colors[r])
-            self.sheet.highlight_cells(row = r,
-                                       column = 4,
-                                       bg = colors[r],
-                                       fg = "black")
-            self.sheet.highlight_cells(row = r,
-                                       column = 5,
-                                       bg = colors[r],
-                                       fg = "purple")
-        self.sheet.highlight_cells(column = 5,
-                                   canvas = "header",
-                                   bg = "white",
-                                   fg = "purple")
+            self.sheet.highlight_cells(row=r, column=3, fg=colors[r])
+            self.sheet.highlight_cells(row=r, column=4, bg=colors[r], fg="black")
+            self.sheet.highlight_cells(row=r, column=5, bg=colors[r], fg="purple")
+        self.sheet.highlight_cells(column=5, canvas="header", bg="white", fg="purple")
         self.sheet.set_all_column_widths()
         self.sheet.extra_bindings("all", self.all_extra_bindings)
 
-    def hide_rows(self, event = None):
+    def hide_rows(self, event=None):
         rows = self.sheet.get_selected_rows()
         if rows:
             self.sheet.hide_rows(rows)
 
-    def show_rows(self, event = None):
-        self.sheet.display_rows("all", redraw = True)
+    def show_rows(self, event=None):
+        self.sheet.display_rows("all", redraw=True)
 
-    def hide_columns(self, event = None):
+    def hide_columns(self, event=None):
         columns = self.sheet.get_selected_columns()
         if columns:
             self.sheet.hide_columns(columns)
 
-    def show_columns(self, event = None):
-        self.sheet.display_columns("all", redraw = True)
+    def show_columns(self, event=None):
+        self.sheet.display_columns("all", redraw=True)
 
-    def all_extra_bindings(self, event = None):
-        #print (event)
-        try:
-            if hasattr(event, 'text'):
-                return event.text
-        except:
-            pass
+    def all_extra_bindings(self, event=None):
+        return event.value
 
 
 app = demo()
