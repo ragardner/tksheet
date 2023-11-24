@@ -1,6 +1,6 @@
 ### Version 7.0.0
 #### Removed:
-- Functions (use `span`s instead for the same purpose):
+- Functions (use spans instead for the same purpose):
     - `header_checkbox`
     - `index_checkbox`
     - `format_sheet`
@@ -21,7 +21,7 @@
 #### Changed:
 - Changed functions:
     - Arguments and behavior:
-        - `checkbox`
+        - `checkbox` now is used to create checkboxes and utilises spans
         - `delete_header_dropdown` default argument changed to required argument and can no longer delete a header wide dropdown
         - `delete_index_dropdown` default argument changed to required argument and can no longer delete an index wide dropdown
 
@@ -38,7 +38,6 @@
 - `bind` now also accepts `"<<SheetModified>>"` and `"<<SheetRedrawn>>"` arguments
 - Redo, which is enabled when undo is enabled, use by pressing ctrl/cmd + shift + z
 - named spans for sheet options such as highlight, format
-- `auto_resize_columns`, `auto_resize_rows` in initialization or with `set_options()`
 - Ctrl/cmd click deselect
 - Ability to make currently selected box border different color to selection box border
 
@@ -48,6 +47,27 @@
 - Overhaul internal selection box workings
 - Rename tksheet files
 - Pressing escape on text editors no longer generates an edit cell/header/index event
+
+### Version 6.3.0
+#### Fixed:
+- Cell editor right click not working
+- Cell editor select all not working
+
+#### Added:
+- Some methods to `Sheet` objects, see [documentation](https://github.com/ragardner/tksheet/wiki/Version-6#sheet-methods) for more information.
+    - __bool__
+    - __len__
+    - __iter__
+    - __reversed__
+    - __contains__
+
+### Version 6.2.9
+#### Fixed:
+- Incorrect row being targeted with hidden rows and text editor newline binding (potential error)
+
+### Version 6.2.8
+#### Fixed:
+- [#203](https://github.com/ragardner/tksheet/issues/203)
 
 ### Version 6.2.7
 #### Fixed:

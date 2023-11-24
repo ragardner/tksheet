@@ -433,6 +433,8 @@ class TextEditor_(tk.Text):
         )
         self.bind("<1>", lambda event: self.focus_set())
         self.bind(rc_binding, self.rc)
+        self.bind(f"<{ctrl_key}-a>", self.select_all)
+        self.bind(f"<{ctrl_key}-A>", self.select_all)
         self._orig = self._w + "_orig"
         self.tk.call("rename", self._w, self._orig)
         self.tk.createcommand(self._w, self._proxy)
@@ -465,7 +467,9 @@ class TextEditor_(tk.Text):
         self.rc_popup_menu.tk_popup(event.x_root, event.y_root)
 
     def select_all(self, event=None):
-        self.event_generate(f"<{ctrl_key}-a>")
+        self.tag_add(tk.SEL, "1.0", tk.END)
+        self.mark_set(tk.INSERT, tk.END)
+        # self.see(tk.INSERT)
         return "break"
 
     def cut(self, event=None):
