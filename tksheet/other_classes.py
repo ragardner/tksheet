@@ -116,7 +116,7 @@ class Span(dict):
         # Recursively turn nested dicts into DotDicts
         for key, item in self.items():
             if key == "data" or key == "value":
-                self["widget"].set_data(self, item)
+                self["widget"].set_data(self, data=item)
             elif type(item) is dict:  # noqa: E721
                 self[key] = DotDict(item)
 
@@ -134,7 +134,7 @@ class Span(dict):
 
     def __setitem__(self, key: Hashable, item: object) -> None:
         if key == "data" or key == "value":
-            self["widget"].set_data(self, item)
+            self["widget"].set_data(self, data=item)
         elif key == "bg":
             self["widget"].highlight(self, bg=item)
         elif key == "fg":

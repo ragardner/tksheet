@@ -1540,7 +1540,7 @@ cell_a1_data = span.data
 
 The data that is retrieved entirely depends on the area the span represents. You can also use `span.value` to the same effect.
 
-There are also certain other span attributes which have an impact on the data returned, explained below:
+There are certain other span attributes which have an impact on the data returned, explained below:
 - `table` (`bool`) when `True` will make all functions used with the span target the main table as well as the header/index if those are `True`.
 - `index` (`bool`) when `True` will make all functions used with the span target the index as well as the table/header if those are `True`.
 - `header` (`bool`) when `True` will make all functions used with the span target the header as well as the table/index if those are `True`.
@@ -1688,7 +1688,7 @@ Check if the table has a particular value (membership):
 search_value = "the cell value I'm looking for"
 print (search_value in self.sheet)
 ```
-- Can also check if a row is in the sheet.
+- Can also check if a row is in the sheet if a `list` is used.
 
 ___
 
@@ -1870,6 +1870,34 @@ self.sheet["B2"].data = [["B2 new val", "C2 new val"],
 # or instead using sheet.span() cells B2, C2, B3, C3 get new values
 self.sheet.span("B2").data = [["B2 new val", "C2 new val"],
                               ["B3 new val", "C3 new val"]]
+```
+
+You can also use the `Sheet` function `set_data()` using the same methodology as above.
+
+```python
+set_data(
+    *key: CreateSpanTypes,
+    data: object = None,
+    undo: bool | None = None,
+    redraw: bool = True,
+) -> None
+```
+
+Example:
+```python
+# create a span which encompasses the entire table, header and index
+# all data values, no displayed values
+self.sheet_span = self.sheet.span(
+    header=True,
+    index=True,
+    hdisp=False,
+    idisp=False,
+)
+
+# set data for the span which was created above
+self.sheet_span.data = [["",  "A",  "B",  "C"]
+                        ["1", "A1", "B1", "C1"],
+                        ["2", "A2", "B2", "C2"]]
 ```
 
 #### **Insert a row into the sheet**
@@ -4190,65 +4218,82 @@ class demo(tk.Tk):
         tk.Tk.__init__(self)
         self.withdraw()
         self.title("tksheet")
-        self.grid_columnconfigure(0, weight = 1)
-        self.grid_rowconfigure(0, weight = 1)
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(0, weight=1)
         self.frame = tk.Frame(self)
-        self.frame.grid_columnconfigure(0, weight = 1)
-        self.frame.grid_rowconfigure(0, weight = 1)
-        self.sheet = Sheet(self.frame,
-                           data = [[f"Row {r}, Column {c}" for c in range(6)] for r in range(21)])
+        self.frame.grid_columnconfigure(0, weight=1)
+        self.frame.grid_rowconfigure(0, weight=1)
+        self.sheet = Sheet(self.frame, data=[[f"Row {r}, Column {c}" for c in range(6)] for r in range(21)])
         self.sheet.enable_bindings("all", "edit_header", "edit_index")
-        self.frame.grid(row = 0, column = 0, sticky = "nswe")
-        self.sheet.grid(row = 0, column = 0, sticky = "nswe")
+        self.frame.grid(row=0, column=0, sticky="nswe")
+        self.sheet.grid(row=0, column=0, sticky="nswe")
         self.sheet.popup_menu_add_command("Open csv", self.open_csv)
         self.sheet.popup_menu_add_command("Save sheet", self.save_sheet)
         self.sheet.set_all_cell_sizes_to_text()
         self.sheet.change_theme("light green")
+
+        # create a span which encompasses the table, header and index
+        # all data values, no displayed values
+        self.sheet_span = self.sheet.span(
+            header=True,
+            index=True,
+            hdisp=False,
+            idisp=False,
+        )
 
         # center the window and unhide
         self.update_idletasks()
         w = self.winfo_screenwidth() - 20
         h = self.winfo_screenheight() - 70
         size = (900, 500)
-        x = (w/2 - size[0]/2)
-        y = h/2 - size[1]/2
-        self.geometry("%dx%d+%d+%d" % (size + ((w/2 - size[0]/2), h/2 - size[1]/2)))
+        self.geometry("%dx%d+%d+%d" % (size + ((w / 2 - size[0] / 2), h / 2 - size[1] / 2)))
         self.deiconify()
 
     def save_sheet(self):
-        filepath = filedialog.asksaveasfilename(parent = self,
-                                                title = "Save sheet as",
-                                                filetypes = [('CSV File','.csv'),
-                                                             ('TSV File','.tsv')],
-                                                defaultextension = ".csv",
-                                                confirmoverwrite = True)
+        filepath = filedialog.asksaveasfilename(
+            parent=self,
+            title="Save sheet as",
+            filetypes=[("CSV File", ".csv"), ("TSV File", ".tsv")],
+            defaultextension=".csv",
+            confirmoverwrite=True,
+        )
         if not filepath or not filepath.lower().endswith((".csv", ".tsv")):
             return
         try:
-            with open(normpath(filepath), "w", newline = "", encoding = "utf-8") as fh:
-                writer = csv.writer(fh,
-                                    dialect = csv.excel if filepath.lower().endswith(".csv") else csv.excel_tab,
-                                    lineterminator = "\n")
-                writer.writerows(self.sheet.get_sheet_data(get_header = False, get_index = False))
-        except:
+            with open(normpath(filepath), "w", newline="", encoding="utf-8") as fh:
+                writer = csv.writer(
+                    fh,
+                    dialect=csv.excel if filepath.lower().endswith(".csv") else csv.excel_tab,
+                    lineterminator="\n",
+                )
+                writer.writerows(self.sheet_span.data)
+        except Exception as error:
+            print(error)
             return
 
     def open_csv(self):
-        filepath = filedialog.askopenfilename(parent = self, title = "Select a csv file")
+        filepath = filedialog.askopenfilename(parent=self, title="Select a csv file")
         if not filepath or not filepath.lower().endswith((".csv", ".tsv")):
             return
         try:
             with open(normpath(filepath), "r") as filehandle:
                 filedata = filehandle.read()
-            self.sheet.set_sheet_data([r for r in csv.reader(io.StringIO(filedata),
-                                                             dialect = csv.Sniffer().sniff(filedata),
-                                                             skipinitialspace = False)])
-        except:
+            self.sheet_span.data = [
+                r
+                for r in csv.reader(
+                    io.StringIO(filedata),
+                    dialect=csv.Sniffer().sniff(filedata),
+                    skipinitialspace=False,
+                )
+            ]
+        except Exception as error:
+            print(error)
             return
 
 
 app = demo()
 app.mainloop()
+
 ```
 
 ---

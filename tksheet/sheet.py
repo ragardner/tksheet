@@ -2635,6 +2635,8 @@ class Sheet(tk.Frame):
         redraw: bool = True,
     ) -> None:
         span = self.span_from_key(*key)
+        if data is None:
+            data = []
         """
         e.g.
         df = pandas.DataFrame([[1, 2, 3], [4, 5, 6]])
