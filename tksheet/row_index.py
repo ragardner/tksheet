@@ -1623,7 +1623,7 @@ class RowIndex(tk.Canvas):
                         sheet=self.parentframe.name,
                         key=extra_func_key,
                         value=text,
-                        location=r,
+                        loc=r,
                         boxes=self.MT.get_boxes(),
                         selected=self.MT.currently_selected(),
                     )
@@ -1836,7 +1836,7 @@ class RowIndex(tk.Canvas):
                 cells_index={datarn: self.get_cell_data(datarn)},
                 key=editor_info[1] if len(editor_info) >= 2 else "FocusOut",
                 value=self.text_editor_value,
-                location=r,
+                loc=r,
                 boxes=self.MT.get_boxes(),
                 selected=self.MT.currently_selected(),
             )
@@ -2050,7 +2050,7 @@ class RowIndex(tk.Canvas):
                 cells_index={datarn: pre_edit_value},
                 key="??",
                 value=value,
-                location=r,
+                loc=r,
                 boxes=self.MT.get_boxes(),
                 selected=self.MT.currently_selected(),
             )
@@ -2128,7 +2128,7 @@ class RowIndex(tk.Canvas):
                         name="index_dropdown_modified",
                         sheet=self.parentframe.name,
                         value=self.text_editor.get(),
-                        location=r,
+                        loc=r,
                         boxes=self.MT.get_boxes(),
                         selected=self.MT.currently_selected(),
                     )
@@ -2166,7 +2166,7 @@ class RowIndex(tk.Canvas):
                 cells_header={datarn: pre_edit_value},
                 key="??",
                 value=selection,
-                location=r,
+                loc=r,
                 boxes=self.MT.get_boxes(),
                 selected=self.MT.currently_selected(),
             )

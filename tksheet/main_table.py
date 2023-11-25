@@ -6645,7 +6645,7 @@ class MainTable(tk.Canvas):
                         sheet=self.parentframe.name,
                         key=extra_func_key,
                         value=text,
-                        location=tuple(self.text_editor_loc),
+                        loc=tuple(self.text_editor_loc),
                         boxes=self.get_boxes(),
                         selected=self.currently_selected(),
                     )
@@ -6852,7 +6852,7 @@ class MainTable(tk.Canvas):
                 cells_table={(datarn, datacn): self.text_editor_value},
                 key=editor_info[2] if len(editor_info) >= 3 else "FocusOut",
                 value=self.text_editor_value,
-                location=(r, c),
+                loc=(r, c),
                 boxes=self.get_boxes(),
                 selected=currently_selected,
             )
@@ -7112,7 +7112,7 @@ class MainTable(tk.Canvas):
                         name="table_dropdown_modified",
                         sheet=self.parentframe.name,
                         value=self.text_editor.get(),
-                        location=(r, c),
+                        loc=(r, c),
                         boxes=self.get_boxes(),
                         selected=self.currently_selected(),
                     )
@@ -7162,7 +7162,7 @@ class MainTable(tk.Canvas):
                 cells_table={(datarn, datacn): pre_edit_value},
                 key="??",
                 value=selection,
-                location=(r, c),
+                loc=(r, c),
                 boxes=self.get_boxes(),
                 selected=self.currently_selected(),
             )
@@ -7281,7 +7281,7 @@ class MainTable(tk.Canvas):
                 cells_table={(datarn, datacn): pre_edit_value},
                 key="??",
                 value=value,
-                location=(r, c),
+                loc=(r, c),
                 boxes=self.get_boxes(),
                 selected=self.currently_selected(),
             )

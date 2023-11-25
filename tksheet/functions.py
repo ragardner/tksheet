@@ -78,7 +78,7 @@ def event_dict(
     data: object = None,
     key: None | str = None,
     value: object = None,
-    location: None | int | tuple[int] = None,
+    loc: None | int | tuple[int] = None,
     resized_rows: None | dict = None,
     resized_columns: None | dict = None,
     # resized_index: None, dict] = None,
@@ -121,7 +121,7 @@ def event_dict(
         data=[] if data is None else data,
         key="" if key is None else key,
         value=None if value is None else value,
-        location=tuple() if location is None else location,
+        loc=tuple() if loc is None else loc,
         resized=DotDict(
             rows=DotDict() if resized_rows is None else resized_rows,
             columns=DotDict() if resized_columns is None else resized_columns,
@@ -619,7 +619,9 @@ def key_to_span(
     spans: dict[str, Span],
     widget: object = None,
 ) -> Span:
-    if not isinstance(key, (str, int, slice, list, tuple)):
+    if isinstance(key, Span):
+        return key
+    elif not isinstance(key, (str, int, slice, list, tuple)):
         return f"Key type must be either str, int, list, tuple or slice, not '{type(key)}'."
     try:
         if isinstance(key, (list, tuple)):

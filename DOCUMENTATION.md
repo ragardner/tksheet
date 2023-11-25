@@ -551,7 +551,7 @@ Parameters:
 "data": [],
 "key": "",
 "value": None,
-"location": tuple(),
+"loc": tuple(),
 "resized": {
     "rows": {},
     "columns": {},
@@ -659,14 +659,16 @@ Keys:
     - `(start row, start column, up to but not including row, up to but not including column, selection box type)`.
         - The selection box type is a `str` either `"cells"`, `"rows"` or `"columns"`.
     - If no box is in the process of being created then this will be a an empty `tuple`.
-    - [See here](https://github.com/ragardner/tksheet/wiki/Version-7#example-displaying-selections) for an example of the usage of this information.
+    - [See here](https://github.com/ragardner/tksheet/wiki/Version-7#example-displaying-selections) for an example.
 - Key **`["data"]`** is primarily used for `paste` and it will contain the pasted data if any.
 - Key **`["key"]`** - `str` - is primarily used for cell edit events where a key press has occurred. For `"begin_edit..."` events the value is the actual key which was pressed (or `"??"` for using the mouse to open a cell). It also might be one of the following for end edit events:
     - `"Return"` - enter key.
     - `"FocusOut"` - the editor or box lost focus, perhaps by mouse clicking elsewhere.
     - `"Tab"` - tab key.
 - Key **`["value"]`** is used primarily by cell editing events. For `"begin_edit..."` events it's the value displayed in he text editor when it opens. For `"end_edit..."` events it's the value in the text editor when it was closed, for example by hitting `Return`. It also used by `"begin_move_columns"`/`"begin_move_rows"` - the point where columns/rows will be moved to will be under the `event_data` key `"value"`.
-- Key **`["location"]`** is for cell editing events to show the displayed (not data, in the case of hidden columns/rows) coordinates of the event. It will be a tuple of `(int displayed row index, int displayed column index)`.
+- Key **`["loc"]`** is for cell editing events to show the displayed (not data) coordinates of the event. It will be **either:**
+    - A tuple of `(int displayed row index, int displayed column index)` in the case of editing table cells.
+    - A single `int` in the case of editing index/header cells.
 - Key **`["resized"]["rows"]`** is for row height resizing events, it will be a `dict` with the following layout:
     - `{int displayed row index: {"old_size": old_height, "new_size": new_height}}`.
     - If no rows have been resized then the value for `["resized"]["rows"]` will be an empty `dict`.
@@ -680,7 +682,11 @@ ___
 
 With this function you can bind things in the usual way you would in tkinter and they will bind to all the `tksheet` canvases. There are also two special `tksheet` events you can bind, `"<<SheetModified>>"` and `"<<SheetRedrawn>>"`.
 ```python
-bind(event: str, func: Callable, add: str | None = None)
+bind(
+    event: str,
+    func: Callable,
+    add: str | None = None,
+)
 ```
 - `add` may or may not work for various bindings depending on whether they are already in use by `tksheet`.
 - **Note** that while a bound event after a paste/undo/redo might have the event name `"edit_table"` it also might have added/deleted rows/columns, refer to the docs on the event data `dict` for more info.
@@ -697,10 +703,16 @@ bind(event: str, func: Callable, add: str | None = None)
         - `"move_rows"` when a user has dragged and dropped rows.
     - `"<<SheetRedrawn>>"` emitted whenever the sheet GUI was refreshed (redrawn). The data for this event will be different than the usual event data, it is simply:
         - `{"sheetname": name of your sheet, "header": bool True if the header was redrawn, "row_index": bool True if the index was redrawn, "table": bool True if the the table was redrawn}`
-- Example usage where `my_sheet_was_modified` is your function: `my_sheet.bind("<<SheetModified>>", my_sheet_was_modified)`.
+
+Example:
+```python
+# self.sheet_was_modified is your function
+self.sheet.bind("<<SheetModified>>", self.sheet_was_modified)
+```
 
 ___
 
+With this function you can unbind things you have bound using the `bind()` function.
 ```python
 unbind(binding)
 ```
@@ -855,6 +867,20 @@ To create a named span see [here](https://github.com/ragardner/tksheet/wiki/Vers
 
 For example python index `0` as in `[0]` is the first whereas excel index `1` as in `"A1"` is the first.
 
+If you need to convert python indexes into column letters you can use the function `num2alpha` importable from `tksheet`:
+
+```python
+from tksheet import (
+    Sheet,
+    num2alpha as n2a,
+)
+
+# column index five as a letter
+n2a(5)
+```
+
+#### **Span creation examples using square brackets**
+
 ```python
 """
 EXAMPLES USING SQUARE BRACKETS
@@ -878,9 +904,16 @@ span = sheet["2:"] # all rows after and not including python index 0
 
 span = sheet["A"] # first column
 span = sheet["A:C"] # first three columns
+
+""" SOME CELL AREA EXAMPLES """
 span = sheet["A1:C1"] # cells A1, B1, C1
+span = sheet[0, 0, 1, 3] # cells A1, B1, C1
+span = sheet[(0, 0, 1, 3)] # cells A1, B1, C1
+span = sheet[(0, 0), (1, 3)] # cells A1, B1, C1
+span = sheet[((0, 0), (1, 3))] # cells A1, B1, C1
 
 span = sheet["A1:2"]
+span = sheet[0, 0, 2, None]
 """
 ["A1:2"]
 All the cells starting from (0, 0)
@@ -898,6 +931,7 @@ columns
 """
 
 span = sheet["A1:B"]
+span = sheet[0, 0, None, 2]
 """
 ["A1:B"]
 All the cells starting from (0, 0)
@@ -914,9 +948,22 @@ rows
 ...
 """
 
+""" GETTING AN EXISTING NAMED SPAN """
+# you can retrieve an existing named span quickly by surrounding its name in <> e.g.
+named_span_retrieval = sheet["<the name of the span goes here>"]
+```
+
+#### **Span creation examples using sheet.span()**
+
+```python
 """
 EXAMPLES USING span()
 """
+
+"""
+USING NO ARGUMENTS
+"""
+sheet.span() # entire sheet, in this case not including header or index
 
 """
 USING ONE ARGUMENT
@@ -928,6 +975,7 @@ str or int or slice()
 sheet.span("A1")
 sheet.span(0) # row at python index 0, all columns
 sheet.span(slice(0, 2)) # rows at python indexes 0 and 1, all columns
+sheet.span(":") # entire sheet
 
 """
 USING TWO ARGUMENTS
@@ -1132,16 +1180,16 @@ span.format(
 )
 ```
 
-Examples:
+Example:
 ```python
-sheet[":"].format(int_formatter())
-```
-or
-```python
+# using square brackets
+sheet[:].format(int_formatter())
+
+# or instead using sheet.span()
 sheet.span(":").format(int_formatter())
 ```
-These examples show the formatting of the entire sheet (not including header and index) as `int` and creates a format rule for all currently existing cells. [Named spans](https://github.com/ragardner/tksheet/wiki/Version-7#named-spans) are required to create a rule for all future existing cells as well, for example those created by the end user inserting rows or columns.
 
+These examples show the formatting of the entire sheet (not including header and index) as `int` and creates a format rule for all currently existing cells. [Named spans](https://github.com/ragardner/tksheet/wiki/Version-7#named-spans) are required to create a rule for all future existing cells as well, for example those created by the end user inserting rows or columns.
 
 #### **Using a span to delete data format rules**
 
@@ -1233,7 +1281,7 @@ span.del_dropdown()
 Example:
 ```python
 dropdown_span = sheet["D"].dropdown(values=["on", "off"],
-                                    set_value="off",)
+                                    set_value="off")
 dropdown_span.del_dropdown()
 ```
 
@@ -1448,6 +1496,24 @@ self.sheet.del_named_span("this name doesnt exist")
 # ValueError: Span 'B' does not exist.
 ```
 
+#### **Other named span functions**
+
+Sets the `Sheet`s internal dict of named spans:
+```python
+set_named_spans(named_spans: None | dict = None) -> Sheet
+```
+- Using `None` deletes all existing named spans
+
+Get an existing named span:
+```python
+get_named_span(name: str) -> dict
+```
+
+Get all existing named spans:
+```python
+get_named_spans() -> dict
+```
+
 ---
 # **Getting Sheet Data**
 
@@ -1457,6 +1523,12 @@ A `Span` object (more information [here](https://github.com/ragardner/tksheet/wi
 
 ```python
 span = self.sheet["A1"]
+```
+
+You can also use `sheet.span()`:
+
+```python
+span = self.sheet.span("A1")
 ```
 
 The above span represents the cell `A1` - row 0, column 0. A reserved span attribute named `data` can then be used to retrieve the data for cell `A1`, example below:
@@ -1485,7 +1557,7 @@ There are also certain other span attributes which have an impact on the data re
 - `convert` (`None`, `Callable`) can be used to modify the data using a function before returning it. The data sent to the `convert` function will be as it was before normally returning (after `ndim` has potentially modified it).
 - `widget` (`object`) is the reference to the original sheet which created the span (this is the widget that data is retrieved from). This can be changed to a different sheet if required e.g. `my_span.widget = new_sheet`.
 
-Some more complex examples:
+Some more complex examples of data retrieval:
 
 ```python
 "single cell"
@@ -1505,11 +1577,34 @@ header_data = self.sheet["A"].options(table=False, hdisp=False, header=True).dat
 # a list of displayed index cells
 index_data = self.sheet[:3].options(table=False, index=True).data
 
+# or using sheet.span() a list of displayed index cells
+index_data = self.sheet.span(slice(None, 3), table=False, index=True).data
+
 # a row index value
 index_data = self.sheet[3].options(table=False, idisp=False, index=True).data
 
 "sheet data as columns instead of rows, with actual header data"
 sheet_data = self.sheet[:].transpose().options(hdisp=False, header=True).data
+
+# or instead using sheet.span() with only kwargs
+sheet_data = self.sheet.span(transposed=True, hdisp=False, header=True).data
+```
+
+There is also a `Sheet()` function for data retrieval (it is used internally by the above data getting methods):
+
+```python
+sheet.get_data(
+    *key: CreateSpanTypes,
+) -> object
+```
+
+Examples:
+```python
+data = self.sheet.get_data("A1")
+data = self.sheet.get_data(0, 0, 3, 3)
+data = self.sheet.get_data(
+    self.sheet.span(":D", transposed=True)
+)
 ```
 
 ___
@@ -1567,23 +1662,23 @@ ___
 
 Check if the table has data:
 ```python
-if my_sheet:
+if self.sheet:
     print ("The sheets main table is not empty!")
 ```
 - **Note:** that this function doesn't check if cells are empty or Falsy only if there are any rows or rows with any elements in the data `list`.
 
 Check how many rows the table has:
 ```python
-num_rows = len(my_sheet)
+num_rows = len(self.sheet)
 ```
 
 Iterate over table rows:
 ```python
-for row in my_sheet:
+for row in self.sheet:
     print (row)
 
 # and in reverse
-for row in reversed(my_sheet):
+for row in reversed(self.sheet):
     print (row)
 ```
 
@@ -1591,7 +1686,7 @@ Check if the table has a particular value (membership):
 ```python
 # returns True or False
 search_value = "the cell value I'm looking for"
-print (search_value in my_sheet)
+print (search_value in self.sheet)
 ```
 - Can also check if a row is in the sheet.
 
@@ -1686,6 +1781,12 @@ A `Span` object (more information [here](https://github.com/ragardner/tksheet/wi
 span = self.sheet["A1"]
 ```
 
+You can also use `sheet.span()`:
+
+```python
+span = self.sheet.span("A1")
+```
+
 The above span represents the cell `A1` - row 0, column 0. A reserved span attribute named `data` (you can also use `.value`) can then be used to modify sheet data **starting** from cell `A1`, example below:
 
 ```python
@@ -1694,6 +1795,9 @@ span.data = "new value for cell A1"
 
 # or even shorter:
 self.sheet["A1"].data = "new value for cell A1"
+
+# or with sheet.span()
+self.sheet.span("A1").data = "new value for cell A1"
 ```
 
 If you provide a list or tuple it will set more than one cell, starting from the spans start cell. In the example below three cells are set in the first row:
@@ -1704,7 +1808,7 @@ self.sheet["B1"].data = ["row 0, column 1 new value (B1)",
                          "row 0, column 3 new value (D1)"]
 ```
 
-You can set in column orientation with a transposed span:
+You can set data in column orientation with a transposed span:
 
 ```python
 self.sheet["B1"].transpose().data = ["row 0, column 1 new value (B1)",
@@ -1727,7 +1831,7 @@ These are the span attributes which have an impact on the data set:
     - **Data setting** functions will assume that a single sequence is a column rather than row and that a list of lists is a list of columns rather than a list of rows.
 - `widget` (`object`) is the reference to the original sheet which created the span (this is the widget that data is set to). This can be changed to a different sheet if required e.g. `my_span.widget = new_sheet`.
 
-Some more complex examples:
+Some more complex examples of setting data:
 
 ```python
 """
@@ -1735,6 +1839,9 @@ SETTING ROW DATA
 """
 # first row gets some new values and the index gets a new value also
 self.sheet[0].options(index=True).data = ["index val", "row 0 col 0", "row 0 col 1", "row 0 col 2"]
+
+# or instead using sheet.span() first row gets some new values and the index gets a new value also
+self.sheet.span(0, index=True).data = ["index val", "row 0 col 0", "row 0 col 1", "row 0 col 2"]
 
 # first two rows get some new values, index included
 self.sheet[0].options(index=True).data = [["index 0", "row 0 col 0", "row 0 col 1", "row 0 col 2"],
@@ -1746,6 +1853,9 @@ SETTING COLUMN DATA
 # first column gets some new values and the header gets a new value also
 self.sheet["A"].options(transposed=True, header=True).data = ["header val", "row 0 col 0", "row 1 col 0", "row 2 col 0"]
 
+# or instead using sheet.span() first column gets some new values and the header gets a new value also
+self.sheet.span("A", transposed=True, header=True).data = ["header val", "row 0 col 0", "row 1 col 0", "row 2 col 0"]
+
 # first two columns get some new values, header included
 self.sheet["A"].options(transposed=True, header=True).data = [["header 0", "row 0 col 0", "row 1 col 0", "row 2 col 0"],
                                                               ["header 1", "row 0 col 1", "row 1 col 1", "row 2 col 1"]]
@@ -1756,6 +1866,10 @@ SETTING CELL AREA DATA
 # cells B2, C2, B3, C3 get new values
 self.sheet["B2"].data = [["B2 new val", "C2 new val"],
                          ["B3 new val", "C3 new val"]]
+
+# or instead using sheet.span() cells B2, C2, B3, C3 get new values
+self.sheet.span("B2").data = [["B2 new val", "C2 new val"],
+                              ["B3 new val", "C3 new val"]]
 ```
 
 #### **Insert a row into the sheet**
@@ -1923,7 +2037,7 @@ Whether cells, rows or columns are highlighted depends on the [`kind`](https://g
 
 ```python
 highlight(
-    key: CreateSpanTypes,
+    *key: CreateSpanTypes,
     bg: bool | None | str = False,
     fg: bool | None | str = False,
     end: bool | None = None,
@@ -1931,11 +2045,29 @@ highlight(
     redraw: bool = True,
 ) -> Span
 ```
+
+Parameters:
 - `key` (`CreateSpanTypes`) either a span or a type which can create a span. See [here](https://github.com/ragardner/tksheet/wiki/Version-7#creating-a-span) for more information on the types that can create a span.
 - `bg` and `fg` arguments use either a tkinter color or a hex `str` color.
 - `end` (`bool`) is used for row highlighting where `True` makes the highlight go to the end of the Sheet window on the x axis.
 - `overwrite` (`bool`) when `True` overwrites the any previous highlight for that cell/row/column, whereas `False` will only impact the keyword arguments used.
 - Highlighting cells, rows or columns will also change the colors of dropdown boxes and check boxes.
+
+Example:
+```python
+# highlight cell - row 3, column 5
+self.sheet.highlight(
+    (3, 5),
+    bg="dark green",
+    fg="white",
+)
+
+# or
+
+# same cells, background red, text color black
+sheet[3, 5].bg = "red"
+sheet[3, 5].fg = "black"
+```
 
 ___
 
@@ -1949,11 +2081,26 @@ Otherwise you can use either of the following methods to delete/remove highlight
 
 ```python
 dehighlight(
-    key: CreateSpanTypes,
+    *key: CreateSpanTypes,
     redraw: bool = True,
 ) -> Span
 ```
+
+Parameters:
 - `key` (`CreateSpanTypes`) either a span or a type which can create a span. See [here](https://github.com/ragardner/tksheet/wiki/Version-7#creating-a-span) for more information on the types that can create a span.
+
+Example:
+```python
+# highlight column B
+self.sheet.highlight(
+    "B",
+    bg="dark green",
+    fg="white",
+)
+
+# dehighlight column B
+self.sheet.dehighlight("B")
+```
 
 ---
 # **Dropdown Boxes**
@@ -1972,7 +2119,7 @@ Whether dropdown boxes are created for cells, rows or columns depends on the [`k
 
 ```python
 dropdown(
-    key: CreateSpanTypes,
+    *key: CreateSpanTypes,
     values: list = [],
     set_value: object = None,
     state: str = "normal",
@@ -2000,6 +2147,15 @@ Parameters:
 - `validate_input` (`bool`) when `True` will not allow cut, paste, delete or cell editor to input values to cell which are not in the dropdown boxes values.
 - `text` (`None`, `str`) can be set to something other than `None` to always display over whatever value is in the cell, this is useful when you want to display a Header name over a dropdown box selection.
 
+Example:
+```python
+# create dropdown boxes in column "D"
+self.sheet.dropdown(
+    "D",
+    values=[0, 1, 2, 3, 4],
+)
+```
+
 ___
 
 #### **Deleting dropdown boxes**
@@ -2012,11 +2168,25 @@ Otherwise you can use either of the following methods to delete/remove dropdown 
 
 ```python
 del_dropdown(
-    key: CreateSpanTypes,
+    *key: CreateSpanTypes,
     redraw: bool = True,
 ) -> Span
 ```
+
+Parameters:
 - `key` (`CreateSpanTypes`) either a span or a type which can create a span. See [here](https://github.com/ragardner/tksheet/wiki/Version-7#creating-a-span) for more information on the types that can create a span.
+
+Example:
+```python
+# create dropdown boxes in column "D"
+self.sheet.dropdown(
+    "D",
+    values=[0, 1, 2, 3, 4],
+)
+
+# delete dropdown boxes in column "D"
+self.sheet.del_dropdown("D")
+```
 
 ___
 
@@ -2145,7 +2315,7 @@ Whether check boxes are created for cells, rows or columns depends on the [`kind
 
 ```python
 checkbox(
-    key: CreateSpanTypes,
+    *key: CreateSpanTypes,
     checked: bool = False,
     state: str = "normal",
     redraw: bool = True,
@@ -2166,6 +2336,14 @@ Notes:
 - `check_function` can be used to trigger a function when the user clicks a checkbox.
 - `state` can be `"normal"` or `"disabled"`. If `"disabled"` then color will be same as table grid lines, else it will be the cells text color.
 
+Example:
+```python
+self.sheet.checkbox(
+    "D",
+    checked=True,
+)
+```
+
 ___
 
 #### **Deleting check boxes**
@@ -2178,11 +2356,25 @@ Otherwise you can use either of the following methods to delete/remove check box
 
 ```python
 del_checkbox(
-    key: CreateSpanTypes,
+    *key: CreateSpanTypes,
     redraw: bool = True,
 ) -> Span
 ```
+
+Parameters:
 - `key` (`CreateSpanTypes`) either a span or a type which can create a span. See [here](https://github.com/ragardner/tksheet/wiki/Version-7#creating-a-span) for more information on the types that can create a span.
+
+Example:
+```python
+# creating checkboxes in column D
+self.sheet.checkbox(
+    "D",
+    checked=True,
+)
+
+# deleting checkboxes in column D
+self.sheet.del_checkbox("D")
+```
 
 #### **Set or toggle a check box**
 ```python
@@ -2241,7 +2433,7 @@ Whether data is formatted for cells, rows or columns depends on the [`kind`](htt
 
 ```python
 format(
-    key: CreateSpanTypes,
+    *key: CreateSpanTypes,
     formatter_options: dict = {},
     formatter_class: object = None,
     redraw: bool = True,
@@ -2273,7 +2465,7 @@ Otherwise you can use either of the following methods to delete/remove data form
 
 ```python
 del_format(
-    key: CreateSpanTypes,
+    *key: CreateSpanTypes,
     clear_values: bool = False,
     redraw: bool = True,
 ) -> Span
@@ -2395,8 +2587,7 @@ Parameters:
  - `to_str_function` (`function`) By default, this is set to the in-built `tksheet.percentage_to_str`, which will display the float as a percentage to the specified number of decimal places. For example, `0.05` will be displayed as `"5.0%"`.
  - `decimals` (`int`) the number of decimal places to round to. Defaults to `0`.
 
-Usage:
-
+Example:
 ```python
 sheet.format_cell(0, 0, formatter_options = tksheet.percentage_formatter(decimals = 1)) # A percentage formatter with 1 decimal place
 ```
@@ -2421,8 +2612,7 @@ Parameters:
  - `truthy` (`set`) a set of values that will be converted to `True`. Defaults to the in-built `tksheet.truthy`.
  - `falsy` (`set`) a set of values that will be converted to `False`. Defaults to the in-built `tksheet.falsy`.
 
-Usage:
-
+Example:
 ```python
 # A bool formatter with custom truthy and falsy values to account for aussie and kiwi slang
 sheet.format_cell(0, 0, formatter_options = tksheet.bool_formatter(truthy = tksheet.truthy | {"nah yeah"}, falsy = tksheet.falsy | {"yeah nah"}))
@@ -2500,7 +2690,7 @@ Whether cells, rows or columns are readonly depends on the [`kind`](https://gith
 
 ```python
 readonly(
-    key: CreateSpanTypes,
+    *key: CreateSpanTypes,
     readonly: bool = True,
 )
 ```
@@ -2517,12 +2707,19 @@ If the readonly rule was created by a named span then the named span must be del
 
 Otherwise you can use either of the following methods to delete/remove readonly rules:
 - Using a span method e.g. `span.readonly()` with the keyword argument `readonly=False` more information [here](https://github.com/ragardner/tksheet/wiki/Version-7#using-a-span-to-set-cells-to-read-only).
-- Using a sheet method e.g. `sheet.readonly(Span)` with the keyword argument `readonly=False` details below:
+- Using a sheet method e.g. `sheet.readonly(Span)` with the keyword argument `readonly=False` example below:
 
 ```python
-readonly(
-    key: CreateSpanTypes,
-    readonly: bool = True,
+# creating a readonly rule
+self.sheet.readonly(
+    self.sheet.span("A", header=True),
+    readonly=True,
+)
+
+# deleting the readonly rule
+self.sheet.readonly(
+    self.sheet.span("A", header=True),
+    readonly=False,
 )
 ```
 
@@ -2595,7 +2792,7 @@ Whether cells, rows or columns are affected depends on the [`kind`](https://gith
 
 ```python
 align(
-    key: CreateSpanTypes,
+    *key: CreateSpanTypes,
     align: str | None = None,
     redraw: bool = True,
 )
@@ -2618,7 +2815,7 @@ Otherwise you can use either of the following methods to delete/remove specific 
 
 ```python
 del_align(
-    key: CreateSpanTypes,
+    *key: CreateSpanTypes,
     redraw: bool = True,
 )
 ```
@@ -2665,7 +2862,7 @@ As an example of currently selected tags
 )
 ```
 
-Usage example below:
+Example:
 ```python
 currently_selected = self.sheet.get_currently_selected()
 if currently_selected:
@@ -2863,7 +3060,6 @@ set_options(auto_resize_columns)
 ___
 
 #### **Auto resize row heights to fit the window**
-
 ```python
 set_options(auto_resize_rows)
 ```
@@ -3100,12 +3296,12 @@ sync_scroll(widget: object)
 ```
 - Sync scroll positions between `Sheet`s, may or may not work with other widgets. Uses scrollbar positions.
 
-Example usage, syncing two sheets:
+Syncing two sheets:
 ```python
 self.sheet1.sync_scroll(self.sheet2)
 ```
 
-Example usage, syncing three sheets:
+Syncing three sheets:
 ```python
 # syncs sheet 1 and 2 between each other
 self.sheet1.sync_scroll(self.sheet2)
@@ -3126,7 +3322,15 @@ unsync_scroll(widget: None | Sheet = None)
 
 #### **See / scroll to a specific cell on the sheet**
 ```python
-see(row = 0, column = 0, keep_yscroll = False, keep_xscroll = False, bottom_right_corner = False, check_cell_visibility = True)
+see(
+    row: int = 0,
+    column: int = 0,
+    keep_yscroll: bool = False,
+    keep_xscroll: bool = False,
+    bottom_right_corner: bool = False,
+    check_cell_visibility: bool = True,
+    redraw: bool = True,
+) -> Sheet
 ```
 
 ___
@@ -3195,11 +3399,19 @@ display_columns(columns = None,
                 deselect_all = True,
                 **kwargs)
 ```
+Parameters:
 - `columns` (`int`, `iterable`, `"all"`) are the columns to be displayed, omit the columns to be hidden.
 - Use argument `True` with `all_columns_displayed` to display all columns, use `False` to display only the columns you've set using the `columns` arg.
 - You can also use the keyword argument `all_displayed` instead of `all_columns_displayed`.
-- Example usage to display all columns: `sheet.display_columns("all")`.
-- Example usage to display specific columns only: `sheet.display_columns([2, 4, 7], all_displayed = False)`.
+
+Examples:
+```python
+# display all columns
+self.sheet.display_columns("all")
+
+# displaying specific columns only
+self.sheet.display_columns([2, 4, 7], all_displayed = False)
+```
 
 ___
 
@@ -3232,12 +3444,21 @@ display_rows(rows = None,
              deselect_all = True,
              **kwargs)
 ```
+Parameters:
 - `rows` (`int`, `iterable`, `"all"`) are the rows to be displayed, omit the rows to be hidden.
 - Use argument `True` with `all_rows_displayed` to display all rows, use `False` to display only the rows you've set using the `rows` arg.
 - You can also use the keyword argument `all_displayed` instead of `all_rows_displayed`.
-- Example usage to display all rows: `sheet.display_rows("all")`.
-- Example usage to display specific rows only: `sheet.display_rows([2, 4, 7], all_displayed = False)`.
-- [This is a very simple example of row filtering](https://github.com/ragardner/tksheet/wiki/Version-7#example-header-dropdown-boxes-and-row-filtering) using this function.
+
+Examples:
+- An example of row filtering using this function can be found [here](https://github.com/ragardner/tksheet/wiki/Version-7#example-header-dropdown-boxes-and-row-filtering).
+- More examples below:
+```python
+# display all rows
+self.sheet.display_rows("all")
+
+# display specific rows only
+self.sheet.display_rows([2, 4, 7], all_displayed = False)
+```
 
 ___
 
@@ -3581,12 +3802,12 @@ class demo(tk.Tk):
         print ("Hello World!")
 
     def begin_edit_cell(self, event = None):
-        return event.text
+        return event.value
 
     def end_edit_cell(self, event = None):
         # remove spaces from user input
-        if event.text is not None:
-            return event.text.replace(" ", "")
+        if event.value is not None:
+            return event.value.replace(" ", "")
 
 
 app = demo()
@@ -3597,9 +3818,11 @@ app.mainloop()
 ---
 # **Example Displaying Selections**
 
-**This example applies to tksheet versions >= `7.0.0`**
 ```python
-from tksheet import Sheet, num2alpha
+from tksheet import (
+    Sheet,
+    num2alpha,
+)
 import tkinter as tk
 
 
@@ -3633,57 +3856,6 @@ class demo(tk.Tk):
                 self.show_selections.config(text=f"{type_.capitalize()}: {num2alpha(box.from_c)} : {num2alpha(box.upto_c - 1)}")
         else:
             self.show_selections.config(text="")
-
-
-app = demo()
-app.mainloop()
-```
-
-**This example applies to tksheet versions earlier than `7.0.0`**
-```python
-from tksheet import Sheet
-import tkinter as tk
-
-
-class demo(tk.Tk):
-    def __init__(self):
-        tk.Tk.__init__(self)
-        self.grid_columnconfigure(0, weight = 1)
-        self.grid_rowconfigure(0, weight = 1)
-        self.frame = tk.Frame(self)
-        self.frame.grid_columnconfigure(0, weight = 1)
-        self.frame.grid_rowconfigure(0, weight = 1)
-        self.sheet = Sheet(self.frame,
-                           data = [[f"Row {r}, Column {c}\nnewline1\nnewline2" for c in range(50)] for r in range(500)])
-        self.sheet.enable_bindings()
-        self.sheet.extra_bindings([("all_select_events", self.sheet_select_event)])
-        self.show_selections = tk.Label(self)
-        self.frame.grid(row = 0, column = 0, sticky = "nswe")
-        self.sheet.grid(row = 0, column = 0, sticky = "nswe")
-        self.show_selections.grid(row = 1, column = 0, sticky = "nswe")
-
-    def sheet_select_event(self, event = None):
-        try:
-            len(event)
-        except:
-            return
-        try:
-            if event[0] == "select_cell":
-                self.show_selections.config(text = f"Cells: ({event[1] + 1},{event[2] + 1}) : ({event[1] + 1},{event[2] + 1})")
-            elif "cells" in event[0]:
-                self.show_selections.config(text = f"Cells: ({event.selectionboxes[0] + 1},{event.selectionboxes[1] + 1}) : ({event.selectionboxes[2]},{event.selectionboxes[3]})")
-            elif event[0] == "select_column":
-                self.show_selections.config(text = f"Columns: {event[1] + 1} : {event[1] + 1}")
-            elif "columns" in event[0]:
-                self.show_selections.config(text = f"Columns: {event[1][0] + 1} : {event[1][-1] + 1}")
-            elif event[0] == "select_row":
-                self.show_selections.config(text = f"Rows: {event[1] + 1} : {event[1] + 1}")
-            elif "rows" in event[0]:
-                self.show_selections.config(text = f"Rows: {event[1][0] + 1} : {event[1][-1] + 1}")
-            else:
-                self.show_selections.config(text = "")
-        except:
-            self.show_selections.config(text = "")
 
 
 app = demo()
@@ -3748,7 +3920,6 @@ app.mainloop()
 
 A very simple demonstration of row filtering using header dropdown boxes.
 
-**This example applies to tksheet versions >= `7.0.0`**
 ```python
 from tksheet import (
     Sheet,
@@ -3821,7 +3992,7 @@ class demo(tk.Tk):
         hdrs = self.sheet.headers()
         # this function is run before header cell data is set by dropdown selection
         # so we have to get the new value from the event
-        hdrs[event.location] = event.value
+        hdrs[event.loc] = event.value
         if all(dd == "all" for dd in hdrs):
             self.sheet.display_rows("all")
         else:
@@ -3842,7 +4013,10 @@ app.mainloop()
 The code used to make a screenshot for the readme file.
 
 ```python
-from tksheet import Sheet
+from tksheet import (
+    Sheet,
+    num2alpha as n2a,
+)
 import tkinter as tk
 
 
@@ -3927,21 +4101,49 @@ class demo(tk.Tk):
             "#fa6441",
             "#f85037",
         )
-        self.sheet.align_columns(columns=2, align="c")
-        self.sheet.align_columns(columns=3, align="e")
-        self.sheet.create_dropdown(r="all", c=0, values=["Dropdown"] + [f"{i}" for i in range(15)])
-        self.sheet.create_checkbox(r="all", c=1, checked=True, text="Checkbox")
-        self.sheet.create_header_dropdown(c=0, values=["Header Dropdown"] + [f"{i}" for i in range(15)])
-        self.sheet.create_header_checkbox(c=1, checked=True, text="Header Checkbox")
-        self.sheet.align_cells(5, 0, align="c")
-        self.sheet.highlight_cells(5, 0, bg="gray50", fg="blue")
-        self.sheet.highlight_cells(17, canvas="index", bg="yellow", fg="black")
-        self.sheet.highlight_cells(12, 1, bg="gray90", fg="purple")
+        # self.sheet.align_columns(columns=2, align="c")
+        # self.sheet.align_columns(columns=3, align="e")
+        # self.sheet.create_dropdown(r="all", c=0, values=["Dropdown"] + [f"{i}" for i in range(15)])
+        # self.sheet.create_checkbox(r="all", c=1, checked=True, text="Checkbox")
+        # self.sheet.create_header_dropdown(c=0, values=["Header Dropdown"] + [f"{i}" for i in range(15)])
+        # self.sheet.create_header_checkbox(c=1, checked=True, text="Header Checkbox")
+        # self.sheet.align_cells(5, 0, align="c")
+        # self.sheet.highlight_cells(5, 0, bg="gray50", fg="blue")
+        # self.sheet.highlight_cells(17, canvas="index", bg="yellow", fg="black")
+        # self.sheet.highlight_cells(12, 1, bg="gray90", fg="purple")
+        # for r in range(len(colors)):
+        #     self.sheet.highlight_cells(row=r, column=3, fg=colors[r])
+        #     self.sheet.highlight_cells(row=r, column=4, bg=colors[r], fg="black")
+        #     self.sheet.highlight_cells(row=r, column=5, bg=colors[r], fg="purple")
+        # self.sheet.highlight_cells(column=5, canvas="header", bg="white", fg="purple")
+        self.sheet.align(n2a(2), align="c")
+        self.sheet.align(n2a(3), align="e")
+        self.sheet.dropdown(
+            self.sheet.span("A", header=True),
+            values=["Dropdown"] + [f"{i}" for i in range(15)],
+        )
+        self.sheet.checkbox(
+            self.sheet.span("B", header=True),
+            checked=True,
+            text="Checkbox",
+        )
+        self.sheet.align(5, 0, align="c")
+        self.sheet.highlight(5, 0, bg="gray50", fg="blue")
+        self.sheet.highlight(
+            self.sheet.span(17, index=True, table=False),
+            bg="yellow",
+            fg="black",
+        )
+        self.sheet.highlight(12, 1, bg="gray90", fg="purple")
         for r in range(len(colors)):
-            self.sheet.highlight_cells(row=r, column=3, fg=colors[r])
-            self.sheet.highlight_cells(row=r, column=4, bg=colors[r], fg="black")
-            self.sheet.highlight_cells(row=r, column=5, bg=colors[r], fg="purple")
-        self.sheet.highlight_cells(column=5, canvas="header", bg="white", fg="purple")
+            self.sheet.highlight(r, 3, fg=colors[r])
+            self.sheet.highlight(r, 4, bg=colors[r], fg="black")
+            self.sheet.highlight(r, 5, bg=colors[r], fg="purple")
+        self.sheet.highlight(
+            self.sheet.span(n2a(5), header=True, table=False),
+            bg="white",
+            fg="purple",
+        )
         self.sheet.set_all_column_widths()
         self.sheet.extra_bindings("all", self.all_extra_bindings)
 
@@ -4222,4 +4424,5 @@ If you have an idea for a new feature, improvement or change, please follow thes
 
 - Submit your suggestion as an issue in the [Issues tab](https://github.com/ragardner/tksheet/issues).
 - Include a clear and concise description of your idea, including any relevant details, screenshots, or mock-ups that can help contributors understand your suggestion better.
-- You're also welcomed to become a contributor yourself and help implement your idea!
+- You're also welcome to become a contributor yourself and help implement your idea!
+

@@ -1769,8 +1769,8 @@ class Sheet(tk.Frame):
 
     def see(
         self,
-        row=0,
-        column=0,
+        row: int = 0,
+        column: int = 0,
         keep_yscroll: bool = False,
         keep_xscroll: bool = False,
         bottom_right_corner: bool = False,
@@ -2486,9 +2486,9 @@ class Sheet(tk.Frame):
 
     def get_data(
         self,
-        key: CreateSpanTypes,
+        *key: CreateSpanTypes,
     ) -> object:
-        span = self.span_from_key(key)
+        span = self.span_from_key(*key)
         rows, cols = self.ranges_from_span(span)
         """
         e.g. retrieves entire table as pandas dataframe
@@ -2503,7 +2503,7 @@ class Sheet(tk.Frame):
         - tdisp
         - idisp
         - hdisp
-        - convert - just sends the data to the converter?
+        - convert
 
         format
         - if span.type_ == "format" and span.kwargs
@@ -2546,7 +2546,7 @@ class Sheet(tk.Frame):
 
         convert
         - instead of returning data normally it returns
-          convert(data)
+          convert(data) - sends the data to an optional convert function
 
         """
         tdisp, idisp, hdisp = span.tdisp, span.idisp, span.hdisp
@@ -2629,12 +2629,12 @@ class Sheet(tk.Frame):
 
     def set_data(
         self,
-        key: CreateSpanTypes,
-        data: object,
+        *key: CreateSpanTypes,
+        data: object = None,
         undo: bool | None = None,
         redraw: bool = True,
     ) -> None:
-        span = self.span_from_key(key)
+        span = self.span_from_key(*key)
         """
         e.g.
         df = pandas.DataFrame([[1, 2, 3], [4, 5, 6]])
@@ -2944,11 +2944,11 @@ class Sheet(tk.Frame):
 
     def clear(
         self,
-        key: CreateSpanTypes,
+        *key: CreateSpanTypes,
         undo: bool | None = None,
         redraw: bool = True,
     ) -> dict:
-        span = self.span_from_key(key)
+        span = self.span_from_key(*key)
         rows, cols = self.ranges_from_span(span)
         clear_t = self.event_data_set_table_cell
         clear_i = self.event_data_set_index_cell
@@ -2981,12 +2981,11 @@ class Sheet(tk.Frame):
 
     def span_from_key(
         self,
-        key: CreateSpanTypes,
+        *key: CreateSpanTypes,
     ) -> None | Span:
-        if isinstance(key, Span):
-            span = key
-        else:
-            span = key_to_span(key, self.MT.named_spans, self)
+        if not key:
+            key = (None, None, None, None)
+        span = key_to_span(key if len(key) != 1 else key[0], self.MT.named_spans, self)
         if isinstance(span, str):
             raise ValueError(span)
         return span
@@ -3000,9 +2999,9 @@ class Sheet(tk.Frame):
 
     def __getitem__(
         self,
-        key: CreateSpanTypes,
+        *key: CreateSpanTypes,
     ) -> Span:
-        return self.span_from_key(key)
+        return self.span_from_key(*key)
 
     def get_header_data(self, c: int, get_displayed: bool = False):
         return self.CH.get_cell_data(datacn=c, get_displayed=get_displayed)
@@ -3179,83 +3178,6 @@ class Sheet(tk.Frame):
             return_id=False,
             keep_formatting=keep_formatting,
         )
-
-    def set_cell_data(
-        self,
-        r: int,
-        c: int,
-        value: object = "",
-        redraw: bool = True,
-        keep_formatting: bool = True,
-    ) -> None:
-        if not keep_formatting:
-            self.MT.delete_cell_format(r, c, clear_values=False)
-        self.MT.set_cell_data(r, c, value)
-        self.set_refresh_timer(redraw)
-
-    def set_row_data(
-        self,
-        r: int,
-        values=tuple(),
-        add_columns: bool = True,
-        redraw: bool = True,
-        keep_formatting: bool = True,
-    ) -> None:
-        if r >= len(self.MT.data):
-            raise Exception("Row number is out of range")
-        if not keep_formatting:
-            self.MT.delete_row_format(r, clear_values=False)
-        maxidx = len(self.MT.data[r]) - 1
-        if not values:
-            self.MT.data[r][:] = self.MT.get_empty_row_seq(r, len(self.MT.data[r]))
-        else:
-            if add_columns:
-                for c, v in enumerate(values):
-                    if c > maxidx:
-                        self.MT.data[r].append(v)
-                        if self.MT.all_columns_displayed:
-                            self.MT.insert_col_position("end")
-                    else:
-                        self.set_cell_data(r=r, c=c, value=v, redraw=False, keep_formatting=keep_formatting)
-            else:
-                for c, v in enumerate(values):
-                    if c > maxidx:
-                        self.MT.data[r].append(v)
-                    else:
-                        self.set_cell_data(r=r, c=c, value=v, redraw=False, keep_formatting=keep_formatting)
-        self.set_refresh_timer(redraw)
-
-    def set_column_data(
-        self,
-        c: int,
-        values=tuple(),
-        add_rows: bool = True,
-        redraw: bool = True,
-        keep_formatting: bool = True,
-    ) -> None:
-        if not keep_formatting:
-            self.MT.delete_column_format(c, clear_values=False)
-        if add_rows:
-            maxidx = len(self.MT.data) - 1
-            total_cols = None
-            height = self.MT.default_row_height[1]
-            for rn, v in enumerate(values):
-                if rn > maxidx:
-                    if total_cols is None:
-                        total_cols = self.MT.total_data_cols()
-                    self.MT.fix_data_len(rn, total_cols - 1)
-                    if self.MT.all_rows_displayed:
-                        self.MT.insert_row_position("end", height=height)
-                    maxidx += 1
-                if c >= len(self.MT.data[rn]):
-                    self.MT.fix_row_len(rn, c)
-                self.set_cell_data(r=rn, c=c, value=v, redraw=False, keep_formatting=keep_formatting)
-        else:
-            for rn, v in enumerate(values):
-                if c >= len(self.MT.data[rn]):
-                    self.MT.fix_row_len(rn, c)
-                self.set_cell_data(r=rn, c=c, value=v, redraw=False, keep_formatting=keep_formatting)
-        self.set_refresh_timer(redraw)
 
     def insert_column(
         self,
@@ -3600,12 +3522,10 @@ class Sheet(tk.Frame):
 
     def set_named_spans(self, named_spans: None | dict = None) -> Sheet:
         if named_spans is None:
+            for name in self.MT.named_spans:
+                self.del_named_span(name)
             named_spans = {}
         self.MT.named_spans = named_spans
-        return self
-
-    def set_named_span(self, name: str, named_span: dict) -> Sheet:
-        self.MT.named_spans[name] = named_span
         return self
 
     def get_named_spans(self) -> dict:
@@ -3646,11 +3566,9 @@ class Sheet(tk.Frame):
             while name in self.MT.named_spans:
                 name = num2alpha(self.named_span_id)
                 self.named_span_id += 1
-        if not key:
-            key = (None, None, None, None)
-        elif len(key) == 1:
-            key = key[0]
-        span = self.span_from_key(key)
+        #if not key:
+            #key = (None, None, None, None)
+        span = self.span_from_key(*key)
         span.name = name
         if expand is not None:
             span.expand(expand)
@@ -3740,87 +3658,16 @@ class Sheet(tk.Frame):
         del self.MT.named_spans[name]
         return self
 
-    def align(
-        self,
-        key: CreateSpanTypes,
-        align: str | None = None,
-        redraw: bool = True,
-    ) -> Span:
-        span = self.span_from_key(key)
-        rows, cols = self.ranges_from_span(span)
-        table, index, header = span.table, span.index, span.header
-        align = self.convert_align(align)
-        if span.kind == "cell":
-            if header:
-                for c in cols:
-                    set_align(self.CH.cell_options, c, align)
-            for r in rows:
-                if index:
-                    set_align(self.RI.cell_options, r, align)
-                if table:
-                    for c in cols:
-                        set_align(self.MT.cell_options, (r, c), align)
-        elif span.kind == "row":
-            for r in rows:
-                if index:
-                    set_align(self.RI.cell_options, r, align)
-                if table:
-                    set_align(self.MT.row_options, r, align)
-        elif span.kind == "column":
-            for c in cols:
-                if header:
-                    set_align(self.CH.cell_options, c, align)
-                if table:
-                    set_align(self.MT.col_options, c, align)
-        self.set_refresh_timer(redraw)
-        return span
-
-    def del_align(
-        self,
-        key: CreateSpanTypes,
-        redraw: bool = True,
-    ) -> Span:
-        span = self.span_from_key(key)
-        self.del_options_using_span(span, "align")
-        self.set_refresh_timer(redraw)
-        return span
-
-    def readonly(
-        self,
-        key: CreateSpanTypes,
-        readonly: bool = True,
-    ):
-        span = self.span_from_key(key)
-        rows, cols = self.ranges_from_span(span)
-        table, index, header = span.table, span.index, span.header
-        if span.kind == "cell":
-            if header:
-                for c in cols:
-                    set_readonly(self.CH.cell_options, c, readonly)
-            for r in rows:
-                if index:
-                    set_readonly(self.RI.cell_options, r, readonly)
-                if table:
-                    for c in cols:
-                        set_readonly(self.MT.cell_options, (r, c), readonly)
-        elif span.kind == "row":
-            for r in rows:
-                set_readonly(self.MT.row_options, r, readonly)
-        elif span.kind == "column":
-            for c in cols:
-                set_readonly(self.MT.col_options, c, readonly)
-        return span
-
     def highlight(
         self,
-        key: CreateSpanTypes,
+        *key: CreateSpanTypes,
         bg: bool | None | str = False,
         fg: bool | None | str = False,
         end: bool | None = None,
         overwrite: bool = False,
         redraw: bool = True,
     ) -> Span:
-        span = self.span_from_key(key)
+        span = self.span_from_key(*key)
         if bg is False and fg is False and end is None:
             return span
         rows, cols = self.ranges_from_span(span)
@@ -3852,10 +3699,10 @@ class Sheet(tk.Frame):
 
     def dehighlight(
         self,
-        key: CreateSpanTypes,
+        *key: CreateSpanTypes,
         redraw: bool = True,
     ) -> Span:
-        span = self.span_from_key(key)
+        span = self.span_from_key(*key)
         self.del_options_using_span(span, "highlight")
         self.set_refresh_timer(redraw)
         return span
@@ -3881,6 +3728,77 @@ class Sheet(tk.Frame):
             del_from_options(self.CH.cell_options, "highlight")
         self.set_refresh_timer(redraw)
         return self
+
+    def align(
+        self,
+        *key: CreateSpanTypes,
+        align: str | None = None,
+        redraw: bool = True,
+    ) -> Span:
+        span = self.span_from_key(*key)
+        rows, cols = self.ranges_from_span(span)
+        table, index, header = span.table, span.index, span.header
+        align = self.convert_align(align)
+        if span.kind == "cell":
+            if header:
+                for c in cols:
+                    set_align(self.CH.cell_options, c, align)
+            for r in rows:
+                if index:
+                    set_align(self.RI.cell_options, r, align)
+                if table:
+                    for c in cols:
+                        set_align(self.MT.cell_options, (r, c), align)
+        elif span.kind == "row":
+            for r in rows:
+                if index:
+                    set_align(self.RI.cell_options, r, align)
+                if table:
+                    set_align(self.MT.row_options, r, align)
+        elif span.kind == "column":
+            for c in cols:
+                if header:
+                    set_align(self.CH.cell_options, c, align)
+                if table:
+                    set_align(self.MT.col_options, c, align)
+        self.set_refresh_timer(redraw)
+        return span
+
+    def del_align(
+        self,
+        *key: CreateSpanTypes,
+        redraw: bool = True,
+    ) -> Span:
+        span = self.span_from_key(*key)
+        self.del_options_using_span(span, "align")
+        self.set_refresh_timer(redraw)
+        return span
+
+    def readonly(
+        self,
+        *key: CreateSpanTypes,
+        readonly: bool = True,
+    ) -> Span:
+        span = self.span_from_key(*key)
+        rows, cols = self.ranges_from_span(span)
+        table, index, header = span.table, span.index, span.header
+        if span.kind == "cell":
+            if header:
+                for c in cols:
+                    set_readonly(self.CH.cell_options, c, readonly)
+            for r in rows:
+                if index:
+                    set_readonly(self.RI.cell_options, r, readonly)
+                if table:
+                    for c in cols:
+                        set_readonly(self.MT.cell_options, (r, c), readonly)
+        elif span.kind == "row":
+            for r in rows:
+                set_readonly(self.MT.row_options, r, readonly)
+        elif span.kind == "column":
+            for c in cols:
+                set_readonly(self.MT.col_options, c, readonly)
+        return span
 
     def del_options_using_span(
         self,
@@ -3909,14 +3827,13 @@ class Sheet(tk.Frame):
 
     def checkbox(
         self,
-        key: CreateSpanTypes,
-        *args,
+        *key: CreateSpanTypes,
         **kwargs,
     ) -> Span:
-        kwargs = get_checkbox_kwargs(*args, **kwargs)
+        kwargs = get_checkbox_kwargs(**kwargs)
         v = kwargs["checked"]
         d = get_checkbox_dict(**kwargs)
-        span = self.span_from_key(key)
+        span = self.span_from_key(*key)
         rows, cols = self.ranges_from_span(span)
         table, index, header = span.table, span.index, span.header
         set_tdata = self.MT.set_cell_data
@@ -3958,7 +3875,7 @@ class Sheet(tk.Frame):
                     add_to_options(self.CH.cell_options, c, "checkbox", d)
                     set_hdata(c, v)
                 if table:
-                    self.MT.delete_column_format(r, clear_values=False)
+                    self.MT.delete_column_format(c, clear_values=False)
                     self.del_column_options_dropdown_and_checkbox(c)
                     add_to_options(self.MT.col_options, c, "checkbox", d)
                     for r in rows:
@@ -3968,21 +3885,21 @@ class Sheet(tk.Frame):
 
     def del_checkbox(
         self,
-        key: CreateSpanTypes,
+        *key: CreateSpanTypes,
         redraw: bool = True,
     ) -> Span:
-        span = self.span_from_key(key)
+        span = self.span_from_key(*key)
         self.del_options_using_span(span, "checkbox")
         self.set_refresh_timer(redraw)
         return span
 
     def click_checkbox(
         self,
-        key: CreateSpanTypes,
+        *key: CreateSpanTypes,
         checked: bool | None = None,
         redraw: bool = True,
-    ):
-        span = self.span_from_key(key)
+    ) -> Span:
+        span = self.span_from_key(*key)
         rows, cols = self.ranges_from_span(span)
         table, index, header = span.table, span.index, span.header
         set_tdata = self.MT.set_cell_data
@@ -4029,14 +3946,13 @@ class Sheet(tk.Frame):
 
     def dropdown(
         self,
-        key: CreateSpanTypes,
-        *args,
+        *key: CreateSpanTypes,
         **kwargs,
     ) -> Span:
-        kwargs = get_dropdown_kwargs(*args, **kwargs)
+        kwargs = get_dropdown_kwargs(**kwargs)
         v = kwargs["set_value"] if kwargs["set_value"] is not None else kwargs["values"][0] if kwargs["values"] else ""
         d = get_dropdown_dict(**kwargs)
-        span = self.span_from_key(key)
+        span = self.span_from_key(*key)
         rows, cols = self.ranges_from_span(span)
         table, index, header = span.table, span.index, span.header
         set_tdata = self.MT.set_cell_data
@@ -4076,10 +3992,10 @@ class Sheet(tk.Frame):
 
     def del_dropdown(
         self,
-        key: CreateSpanTypes,
+        *key: CreateSpanTypes,
         redraw: bool = True,
     ) -> Span:
-        span = self.span_from_key(key)
+        span = self.span_from_key(*key)
         if span.table:
             self.MT.destroy_opened_dropdown_window()
         if span.index:
@@ -4129,13 +4045,13 @@ class Sheet(tk.Frame):
 
     def format(
         self,
-        key: CreateSpanTypes,
+        *key: CreateSpanTypes,
         formatter_options: dict = {},
         formatter_class: object = None,
         redraw: bool = True,
         **kwargs,
     ) -> Span:
-        span = self.span_from_key(key)
+        span = self.span_from_key(*key)
         rows, cols = self.ranges_from_span(span)
         kwargs = fix_format_kwargs({"formatter": formatter_class, **formatter_options, **kwargs})
         if span.kind == "cell" and span.table:
@@ -4178,11 +4094,11 @@ class Sheet(tk.Frame):
 
     def del_format(
         self,
-        key: CreateSpanTypes,
+        *key: CreateSpanTypes,
         clear_values: bool = False,
         redraw: bool = True,
     ) -> Span:
-        span = self.span_from_key(key)
+        span = self.span_from_key(*key)
         rows, cols = self.ranges_from_span(span)
         if span.table:
             if span.kind == "cell":
@@ -4270,6 +4186,83 @@ class Sheet(tk.Frame):
         self.del_header_cell_options_checkbox(datacn)
 
     # ##########       OLD FUNCTIONS       ##########
+
+    def set_cell_data(
+        self,
+        r: int,
+        c: int,
+        value: object = "",
+        redraw: bool = True,
+        keep_formatting: bool = True,
+    ) -> None:
+        if not keep_formatting:
+            self.MT.delete_cell_format(r, c, clear_values=False)
+        self.MT.set_cell_data(r, c, value)
+        self.set_refresh_timer(redraw)
+
+    def set_row_data(
+        self,
+        r: int,
+        values=tuple(),
+        add_columns: bool = True,
+        redraw: bool = True,
+        keep_formatting: bool = True,
+    ) -> None:
+        if r >= len(self.MT.data):
+            raise Exception("Row number is out of range")
+        if not keep_formatting:
+            self.MT.delete_row_format(r, clear_values=False)
+        maxidx = len(self.MT.data[r]) - 1
+        if not values:
+            self.MT.data[r][:] = self.MT.get_empty_row_seq(r, len(self.MT.data[r]))
+        else:
+            if add_columns:
+                for c, v in enumerate(values):
+                    if c > maxidx:
+                        self.MT.data[r].append(v)
+                        if self.MT.all_columns_displayed:
+                            self.MT.insert_col_position("end")
+                    else:
+                        self.set_cell_data(r=r, c=c, value=v, redraw=False, keep_formatting=keep_formatting)
+            else:
+                for c, v in enumerate(values):
+                    if c > maxidx:
+                        self.MT.data[r].append(v)
+                    else:
+                        self.set_cell_data(r=r, c=c, value=v, redraw=False, keep_formatting=keep_formatting)
+        self.set_refresh_timer(redraw)
+
+    def set_column_data(
+        self,
+        c: int,
+        values=tuple(),
+        add_rows: bool = True,
+        redraw: bool = True,
+        keep_formatting: bool = True,
+    ) -> None:
+        if not keep_formatting:
+            self.MT.delete_column_format(c, clear_values=False)
+        if add_rows:
+            maxidx = len(self.MT.data) - 1
+            total_cols = None
+            height = self.MT.default_row_height[1]
+            for rn, v in enumerate(values):
+                if rn > maxidx:
+                    if total_cols is None:
+                        total_cols = self.MT.total_data_cols()
+                    self.MT.fix_data_len(rn, total_cols - 1)
+                    if self.MT.all_rows_displayed:
+                        self.MT.insert_row_position("end", height=height)
+                    maxidx += 1
+                if c >= len(self.MT.data[rn]):
+                    self.MT.fix_row_len(rn, c)
+                self.set_cell_data(r=rn, c=c, value=v, redraw=False, keep_formatting=keep_formatting)
+        else:
+            for rn, v in enumerate(values):
+                if c >= len(self.MT.data[rn]):
+                    self.MT.fix_row_len(rn, c)
+                self.set_cell_data(r=rn, c=c, value=v, redraw=False, keep_formatting=keep_formatting)
+        self.set_refresh_timer(redraw)
 
     def readonly_rows(
         self,

@@ -1667,7 +1667,7 @@ class ColumnHeaders(tk.Canvas):
                         sheet=self.parentframe.name,
                         key=extra_func_key,
                         value=text,
-                        location=c,
+                        loc=c,
                         boxes=self.MT.get_boxes(),
                         selected=self.MT.currently_selected(),
                     )
@@ -1889,7 +1889,7 @@ class ColumnHeaders(tk.Canvas):
                 cells_header={datacn: self.get_cell_data(datacn)},
                 key=editor_info[1] if len(editor_info) >= 2 else "FocusOut",
                 value=self.text_editor_value,
-                location=c,
+                loc=c,
                 boxes=self.MT.get_boxes(),
                 selected=self.MT.currently_selected(),
             )
@@ -2106,7 +2106,7 @@ class ColumnHeaders(tk.Canvas):
                 cells_header={datacn: pre_edit_value},
                 key="??",
                 value=value,
-                location=c,
+                loc=c,
                 boxes=self.MT.get_boxes(),
                 selected=self.MT.currently_selected(),
             )
@@ -2183,7 +2183,7 @@ class ColumnHeaders(tk.Canvas):
                         name="header_dropdown_modified",
                         sheet=self.parentframe.name,
                         value=self.text_editor.get(),
-                        location=c,
+                        loc=c,
                         boxes=self.MT.get_boxes(),
                         selected=self.MT.currently_selected(),
                     )
@@ -2220,7 +2220,7 @@ class ColumnHeaders(tk.Canvas):
                 cells_header={datacn: pre_edit_value},
                 key="??",
                 value=selection,
-                location=c,
+                loc=c,
                 boxes=self.MT.get_boxes(),
                 selected=self.MT.currently_selected(),
             )
