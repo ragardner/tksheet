@@ -1446,6 +1446,7 @@ class ColumnHeaders(tk.Canvas):
         )
         font = self.MT.header_font
         selections = self.get_redraw_selections(start_col, end_col)
+        dd_coords = self.get_existing_dropdown_coords()
         for c in range(start_col, end_col - 1):
             draw_y = self.MT.header_fl_ins
             cleftgridln = self.MT.col_positions[c]
@@ -1475,7 +1476,7 @@ class ColumnHeaders(tk.Canvas):
                         tag="dd",
                         draw_outline=not dd_drawn,
                         draw_arrow=mw >= 5,
-                        dd_is_open=kwargs["window"] != "no dropdown open",
+                        dd_is_open=dd_coords == c,
                     )
                 else:
                     mw = crightgridln - cleftgridln - 1
@@ -1494,7 +1495,7 @@ class ColumnHeaders(tk.Canvas):
                         tag="dd",
                         draw_outline=not dd_drawn,
                         draw_arrow=mw >= 5,
-                        dd_is_open=kwargs["window"] != "no dropdown open",
+                        dd_is_open=dd_coords == c,
                     )
                 else:
                     mw = crightgridln - cleftgridln - 1
@@ -1515,7 +1516,7 @@ class ColumnHeaders(tk.Canvas):
                         tag="dd",
                         draw_outline=not dd_drawn,
                         draw_arrow=mw >= 5,
-                        dd_is_open=kwargs["window"] != "no dropdown open",
+                        dd_is_open=dd_coords == c,
                     )
                 else:
                     mw = crightgridln - cleftgridln - 1

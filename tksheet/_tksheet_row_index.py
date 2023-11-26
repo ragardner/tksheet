@@ -1405,6 +1405,7 @@ class RowIndex(tk.Canvas):
         )
         font = self.MT.index_font
         selections = self.get_redraw_selections(start_row, end_row)
+        dd_coords = self.get_existing_dropdown_coords()
         for r in range(start_row, end_row - 1):
             rtopgridln = self.MT.row_positions[r]
             rbotgridln = self.MT.row_positions[r + 1]
@@ -1432,7 +1433,7 @@ class RowIndex(tk.Canvas):
                         tag="dd",
                         draw_outline=not dd_drawn,
                         draw_arrow=mw >= 5,
-                        dd_is_open=dropdown_kwargs["window"] != "no dropdown open",
+                        dd_is_open=dd_coords == r,
                     )
                 else:
                     mw = self.current_width - 2
@@ -1451,7 +1452,7 @@ class RowIndex(tk.Canvas):
                         tag="dd",
                         draw_outline=not dd_drawn,
                         draw_arrow=mw >= 5,
-                        dd_is_open=dropdown_kwargs["window"] != "no dropdown open",
+                        dd_is_open=dd_coords == r,
                     )
                 else:
                     mw = self.current_width - 2
@@ -1471,7 +1472,7 @@ class RowIndex(tk.Canvas):
                         tag="dd",
                         draw_outline=not dd_drawn,
                         draw_arrow=mw >= 5,
-                        dd_is_open=dropdown_kwargs["window"] != "no dropdown open",
+                        dd_is_open=dd_coords == r,
                     )
                 else:
                     mw = self.current_width - 1

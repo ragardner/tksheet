@@ -5105,29 +5105,29 @@ class MainTable(tk.Canvas):
         if start_col > 0:
             start_col -= 1
         end_row -= 1
-        selections = self.get_redraw_selections(start_row, end_row, start_col, end_col)
-        c_2 = (
-            self.table_selected_cells_bg
-            if self.table_selected_cells_bg.startswith("#")
-            else Color_Map_[self.table_selected_cells_bg]
-        )
-        c_2_ = (int(c_2[1:3], 16), int(c_2[3:5], 16), int(c_2[5:], 16))
-        c_3 = (
-            self.table_selected_columns_bg
-            if self.table_selected_columns_bg.startswith("#")
-            else Color_Map_[self.table_selected_columns_bg]
-        )
-        c_3_ = (int(c_3[1:3], 16), int(c_3[3:5], 16), int(c_3[5:], 16))
-        c_4 = (
-            self.table_selected_rows_bg
-            if self.table_selected_rows_bg.startswith("#")
-            else Color_Map_[self.table_selected_rows_bg]
-        )
-        c_4_ = (int(c_4[1:3], 16), int(c_4[3:5], 16), int(c_4[5:], 16))
-        rows_ = tuple(range(start_row, end_row))
-        font = self.table_font
-        dd_coords = self.get_existing_dropdown_coords()
         if redraw_table:
+            selections = self.get_redraw_selections(start_row, end_row, start_col, end_col)
+            c_2 = (
+                self.table_selected_cells_bg
+                if self.table_selected_cells_bg.startswith("#")
+                else Color_Map_[self.table_selected_cells_bg]
+            )
+            c_2_ = (int(c_2[1:3], 16), int(c_2[3:5], 16), int(c_2[5:], 16))
+            c_3 = (
+                self.table_selected_columns_bg
+                if self.table_selected_columns_bg.startswith("#")
+                else Color_Map_[self.table_selected_columns_bg]
+            )
+            c_3_ = (int(c_3[1:3], 16), int(c_3[3:5], 16), int(c_3[5:], 16))
+            c_4 = (
+                self.table_selected_rows_bg
+                if self.table_selected_rows_bg.startswith("#")
+                else Color_Map_[self.table_selected_rows_bg]
+            )
+            c_4_ = (int(c_4[1:3], 16), int(c_4[3:5], 16), int(c_4[5:], 16))
+            rows_ = tuple(range(start_row, end_row))
+            dd_coords = self.get_existing_dropdown_coords()
+            font = self.table_font
             for c in range(start_col, end_col - 1):
                 for r in rows_:
                     rtopgridln = self.row_positions[r]
@@ -6553,7 +6553,9 @@ class MainTable(tk.Canvas):
             kwargs["canvas_id"] = self.create_window((self.col_positions[c], ypos), window=window, anchor=anchor)
             self.text_editor.textedit.bind(
                 "<<TextModified>>",
-                lambda _x: window.search_and_see(DropDownModifiedEvent("ComboboxModified", r, c, self.text_editor.get())),
+                lambda _x: window.search_and_see(
+                    DropDownModifiedEvent("ComboboxModified", r, c, self.text_editor.get())
+                ),
             )
             if kwargs["modified_function"] is not None:
                 window.modified_function = kwargs["modified_function"]
