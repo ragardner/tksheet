@@ -1,3 +1,14 @@
+### Version 6.3.1
+#### Fixed:
+- Two `EditCellEvent`s being emitted, removed the one with `None` as `text` attribute
+- Selection box and currently selected box in different places when tab key pressed with single cell selected
+- Return key not working in dropdown box when mouse pointer is outside of dropdown
+- Visual issue: Dropdown arrow staying up when clicking on same cell with readonly dropdown state
+- Visual issue: Dropdown row/column all arrows in up position when one box is open
+
+#### Removed:
+- Many parameters from internal functions dealing with text editor to simplify code
+
 ### Version 6.3.0
 #### Fixed:
 - Cell editor right click not working

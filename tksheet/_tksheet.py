@@ -1595,9 +1595,6 @@ class Sheet(tk.Frame):
         self.MT.select_all(redraw=False, run_binding_func=run_binding_func)
         self.set_refresh_timer(redraw)
 
-    def move_down(self):
-        self.MT.move_down()
-
     def add_cell_selection(self, row, column, redraw=True, run_binding_func=True, set_as_current=True):
         self.MT.add_selection(
             r=row,
@@ -3887,7 +3884,7 @@ class Sheet_Dropdown(Sheet):
     def b1(self, event=None):
         if event is None:
             row = None
-        elif event.keycode == 13:
+        elif event.keysym == "Return":
             row = self.get_selected_rows()
             if not row:
                 row = None
