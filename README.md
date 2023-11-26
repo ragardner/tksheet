@@ -19,9 +19,17 @@ pip install tksheet --upgrade
 - [Suggestions](https://github.com/ragardner/tksheet/wiki/Version-6#enhancements-or-suggestions)
 - This library is maintained with the help of **[others](https://github.com/ragardner/tksheet/graphs/contributors)**. If you would like to contribute please read [this help section](https://github.com/ragardner/tksheet/wiki/Version-6#contributing).
 
-### **NOTICE:**
+## **Notice:**
 
-With versions `5.5.0`+ if you use `extra_bindings()` with `"edit_cell"`/`"end_edit_cell"` you must provide a return value in your bound function to set the cell value to. To disable this behavior in these versions use option `edit_cell_validation = False` in your `Sheet()` initialisation arguments or use `set_options(edit_cell_validation = False)`. [See here](https://github.com/ragardner/tksheet/issues/170#issuecomment-1522236289) for more information on this issue and if you need to *very* directly set the cell data.
+### **Changes coming soon for versions >= `7.0.0`:**
+
+- **ALL** `extra_bindings()` event objects will be changed, [see here](https://github.com/ragardner/tksheet/wiki/Version-7#bind-specific-table-functionality) for more information. If you use the `extra_bindings()` function and plan to upgrade to version `7` when it's released you will need to change code that deals with the event object.
+- Only Python versions >= `3.8` are supported.
+- `tksheet` file names will be changed.
+
+### **Changes for versions >= `5.5.0`:**
+
+- If you use `extra_bindings()` with `"edit_cell"`/`"end_edit_cell"` you must provide a return value in your bound function to set the cell value to. To disable this behavior in these versions use option `edit_cell_validation = False` in your `Sheet()` initialisation arguments or use `set_options(edit_cell_validation = False)`. [See here](https://github.com/ragardner/tksheet/issues/170#issuecomment-1522236289) for more information on this issue and if you need to *very* directly set the cell data.
 
 ## **Features**
 
