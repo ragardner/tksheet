@@ -266,21 +266,41 @@ class GeneratedMouseEvent:
 
 def dropdown_search_function(search_for, data):
     search_len = len(search_for)
-    best_match = {"rn": float("inf"), "st": float("inf"), "len_diff": float("inf")}
+    # search_for in data
+    match_rn = float("inf")
+    match_st = float("inf")
+    match_len_diff = float("inf")
+    # data in search_for in case no match
+    match_data_rn = float("inf")
+    match_data_st = float("inf")
+    match_data_len_diff = float("inf")
     for rn, row in enumerate(data):
         dd_val = rf"{row[0]}".lower()
+        # checking if search text is in dropdown row
         st = dd_val.find(search_for)
         if st > -1:
             # priority is start index
             # if there's already a matching start
             # then compare the len difference
             len_diff = len(dd_val) - search_len
-            if st < best_match["st"] or (st == best_match["st"] and len_diff < best_match["len_diff"]):
-                best_match["rn"] = rn
-                best_match["st"] = st
-                best_match["len_diff"] = len_diff
-    if best_match["rn"] != float("inf"):
-        return best_match["rn"]
+            if st < match_st or (st == match_st and len_diff < match_len_diff):
+                match_rn = rn
+                match_st = st
+                match_len_diff = len_diff
+        # in case of no existing match fall back on
+        # checking if dropdown row text is in search text
+        elif match_rn == float("inf"):
+            st = search_for.find(dd_val)
+            if st > -1:
+                len_diff = len(dd_val) - search_len
+                if st < match_data_st or (st == match_data_st and len_diff < match_data_len_diff):
+                    match_data_rn = rn
+                    match_data_st = st
+                    match_data_len_diff = len_diff
+    if match_rn != float("inf"):
+        return match_rn
+    elif match_data_rn != float("inf"):
+        return match_data_rn
     return None
 
 

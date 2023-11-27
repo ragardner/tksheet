@@ -6511,6 +6511,11 @@ class MainTable(tk.Canvas):
         elif win_h > win_h2:
             win_h = win_h2
         return win_h, anchor
+    
+    def dropdown_text_editor_modified(self, dd_window, event, modified_func):
+        if modified_func:
+            modified_func(event)
+        dd_window.search_and_see(event)
 
     # c is displayed col
     def open_dropdown_window(self, r, c, event=None):
@@ -6553,12 +6558,12 @@ class MainTable(tk.Canvas):
             kwargs["canvas_id"] = self.create_window((self.col_positions[c], ypos), window=window, anchor=anchor)
             self.text_editor.textedit.bind(
                 "<<TextModified>>",
-                lambda _x: window.search_and_see(
-                    DropDownModifiedEvent("ComboboxModified", r, c, self.text_editor.get())
+                lambda _x: self.dropdown_text_editor_modified(
+                    window,
+                    DropDownModifiedEvent("ComboboxModified", r, c, self.text_editor.get()),
+                    kwargs["modified_function"],
                 ),
             )
-            if kwargs["modified_function"] is not None:
-                window.modified_function = kwargs["modified_function"]
             self.update_idletasks()
             try:
                 self.after(1, lambda: self.text_editor.textedit.focus())

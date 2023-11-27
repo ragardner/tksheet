@@ -1930,6 +1930,11 @@ class RowIndex(tk.Canvas):
         elif win_h > win_h2:
             win_h = win_h2
         return win_h, "nw"
+    
+    def dropdown_text_editor_modified(self, dd_window, event, modified_func):
+        if modified_func:
+            modified_func(event)
+        dd_window.search_and_see(event)
 
     # r is displayed row
     def open_dropdown_window(self, r, datarn=None, event=None):
@@ -1969,17 +1974,17 @@ class RowIndex(tk.Canvas):
         if kwargs["state"] == "normal":
             self.text_editor.textedit.bind(
                 "<<TextModified>>",
-                lambda _x: window.search_and_see(
+                lambda _x: self.dropdown_text_editor_modified(
+                    window,
                     DropDownModifiedEvent(
                         "IndexComboboxModified",
                         r,
                         0,
                         self.text_editor.get(),
-                    )
+                    ),
+                    kwargs["modified_function"],
                 ),
             )
-            if kwargs["modified_function"] is not None:
-                window.modified_function = kwargs["modified_function"]
             self.update_idletasks()
             try:
                 self.after(1, lambda: self.text_editor.textedit.focus())
