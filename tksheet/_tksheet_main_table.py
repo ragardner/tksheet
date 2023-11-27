@@ -637,7 +637,7 @@ class MainTable(tk.Canvas):
         self.refresh()
         for r1, c1, r2, c2 in boxes:
             self.show_ctrl_outline(canvas="table", start_cell=(c1, r1), end_cell=(c2, r2))
-        if self.extra_end_ctrl_x_func is not None:
+        if changes and self.extra_end_ctrl_x_func is not None:
             self.extra_end_ctrl_x_func(CtrlKeyEvent("end_ctrl_x", boxes, currently_selected, rows))
         self.parentframe.emit_event("<<SheetModified>>")
 
@@ -811,7 +811,7 @@ class MainTable(tk.Canvas):
             redraw=False,
         )
         self.refresh()
-        if self.extra_end_ctrl_v_func is not None:
+        if changes and self.extra_end_ctrl_v_func is not None:
             self.extra_end_ctrl_v_func(PasteEvent("end_ctrl_v", currently_selected, rows))
         self.parentframe.emit_event("<<SheetModified>>")
 
@@ -845,7 +845,7 @@ class MainTable(tk.Canvas):
                             undo_storage[(datarn, datacn)] = self.get_cell_data(datarn, datacn)
                         self.set_cell_data(datarn, datacn, "")
                         changes += 1
-        if self.extra_end_delete_key_func is not None:
+        if changes and self.extra_end_delete_key_func is not None:
             self.extra_end_delete_key_func(CtrlKeyEvent("end_delete_key", boxes, currently_selected, undo_storage))
         if changes and self.undo_enabled:
             self.undo_storage.append(
