@@ -6288,12 +6288,13 @@ class MainTable(tk.Canvas):
         r, c = editor_info[0], editor_info[1]
         datarn = r if self.all_rows_displayed else self.displayed_rows[r]
         datacn = c if self.all_columns_displayed else self.displayed_columns[c]
+        move_down = False
         if self.extra_end_edit_cell_func is None and self.input_valid_for_cell(
             datarn,
             datacn,
             text_editor_value,
         ):
-            self.set_cell_data_undo(
+            move_down = self.set_cell_data_undo(
                 r,
                 c,
                 datarn=datarn,
@@ -6307,7 +6308,7 @@ class MainTable(tk.Canvas):
             and not self.edit_cell_validation
             and self.input_valid_for_cell(datarn, datacn, text_editor_value)
         ):
-            self.set_cell_data_undo(
+            move_down = self.set_cell_data_undo(
                 r,
                 c,
                 datarn=datarn,
@@ -6337,7 +6338,7 @@ class MainTable(tk.Canvas):
             )
             text_editor_value = validation
             if validation is not None and self.input_valid_for_cell(datarn, datacn, text_editor_value):
-                self.set_cell_data_undo(
+                move_down = self.set_cell_data_undo(
                     r,
                     c,
                     datarn=datarn,
@@ -6347,73 +6348,72 @@ class MainTable(tk.Canvas):
                     check_input_valid=False,
                 )
         # move down or across
-        if r is None and c is None and editor_info:
-            r, c = editor_info[0], editor_info[1]
-        currently_selected = self.currently_selected()
-        if (
-            r is not None
-            and c is not None
-            and currently_selected
-            and r == currently_selected[0]
-            and c == currently_selected[1]
-            and (self.single_selection_enabled or self.toggle_selection_enabled)
-        ):
-            r1, c1, r2, c2 = self.find_last_selected_box_with_current(currently_selected)
-            numcols = c2 - c1
-            numrows = r2 - r1
-            if numcols == 1 and numrows == 1:
-                if editor_info is not None and len(editor_info) >= 3 and editor_info[2] == "Return":
-                    self.select_cell(r + 1 if r < len(self.row_positions) - 2 else r, c)
-                    self.see(
-                        r + 1 if r < len(self.row_positions) - 2 else r,
-                        c,
-                        keep_xscroll=True,
-                        bottom_right_corner=True,
-                        check_cell_visibility=True,
-                    )
-                elif editor_info is not None and len(editor_info) >= 3 and editor_info[2] == "Tab":
-                    self.select_cell(r, c + 1 if c < len(self.col_positions) - 2 else c)
-                    self.see(
-                        r,
-                        c + 1 if c < len(self.col_positions) - 2 else c,
-                        keep_xscroll=True,
-                        bottom_right_corner=True,
-                        check_cell_visibility=True,
-                    )
-            else:
-                moved = False
-                new_r = r
-                new_c = c
-                if editor_info is not None and len(editor_info) >= 3 and editor_info[2] == "Return":
-                    if r + 1 == r2:
-                        new_r = r1
-                    elif numrows > 1:
-                        new_r = r + 1
-                        moved = True
-                    if not moved:
-                        if c + 1 == c2:
-                            new_c = c1
-                        elif numcols > 1:
-                            new_c = c + 1
-                elif editor_info is not None and len(editor_info) >= 3 and editor_info[2] == "Tab":
-                    if c + 1 == c2:
-                        new_c = c1
-                    elif numcols > 1:
-                        new_c = c + 1
-                        moved = True
-                    if not moved:
+        if move_down:
+            currently_selected = self.currently_selected()
+            if (
+                r is not None
+                and c is not None
+                and currently_selected
+                and r == currently_selected[0]
+                and c == currently_selected[1]
+                and (self.single_selection_enabled or self.toggle_selection_enabled)
+            ):
+                r1, c1, r2, c2 = self.find_last_selected_box_with_current(currently_selected)
+                numcols = c2 - c1
+                numrows = r2 - r1
+                if numcols == 1 and numrows == 1:
+                    if editor_info is not None and len(editor_info) >= 3 and editor_info[2] == "Return":
+                        self.select_cell(r + 1 if r < len(self.row_positions) - 2 else r, c)
+                        self.see(
+                            r + 1 if r < len(self.row_positions) - 2 else r,
+                            c,
+                            keep_xscroll=True,
+                            bottom_right_corner=True,
+                            check_cell_visibility=True,
+                        )
+                    elif editor_info is not None and len(editor_info) >= 3 and editor_info[2] == "Tab":
+                        self.select_cell(r, c + 1 if c < len(self.col_positions) - 2 else c)
+                        self.see(
+                            r,
+                            c + 1 if c < len(self.col_positions) - 2 else c,
+                            keep_xscroll=True,
+                            bottom_right_corner=True,
+                            check_cell_visibility=True,
+                        )
+                else:
+                    moved = False
+                    new_r = r
+                    new_c = c
+                    if editor_info is not None and len(editor_info) >= 3 and editor_info[2] == "Return":
                         if r + 1 == r2:
                             new_r = r1
                         elif numrows > 1:
                             new_r = r + 1
-                self.set_currently_selected(new_r, new_c, type_=currently_selected.type_)
-                self.see(
-                    new_r,
-                    new_c,
-                    keep_xscroll=False,
-                    bottom_right_corner=True,
-                    check_cell_visibility=True,
-                )
+                            moved = True
+                        if not moved:
+                            if c + 1 == c2:
+                                new_c = c1
+                            elif numcols > 1:
+                                new_c = c + 1
+                    elif editor_info is not None and len(editor_info) >= 3 and editor_info[2] == "Tab":
+                        if c + 1 == c2:
+                            new_c = c1
+                        elif numcols > 1:
+                            new_c = c + 1
+                            moved = True
+                        if not moved:
+                            if r + 1 == r2:
+                                new_r = r1
+                            elif numrows > 1:
+                                new_r = r + 1
+                    self.set_currently_selected(new_r, new_c, type_=currently_selected.type_)
+                    self.see(
+                        new_r,
+                        new_c,
+                        keep_xscroll=False,
+                        bottom_right_corner=True,
+                        check_cell_visibility=True,
+                    )
         self.close_dropdown_window(r, c)
         self.recreate_all_selection_boxes()
         self.refresh()
