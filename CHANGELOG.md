@@ -13,6 +13,9 @@
 - Cell selection doesn't move on Return key when cell edit using text editor was invalid
 - Events for `extra_bindings()` end cut, delete and paste are no longer emitted if no changes were made
 
+#### Improved:
+- Term searching improved when typing in a normal state dropdown box
+
 ### Version 6.3.0
 #### Fixed:
 - Cell editor right click not working

@@ -273,7 +273,7 @@ def dropdown_search_function(search_for, data):
     # data in search_for in case no match
     match_data_rn = float("inf")
     match_data_st = float("inf")
-    match_data_len_diff = float("inf")
+    match_data_numchars = 0
     for rn, row in enumerate(data):
         dd_val = rf"{row[0]}".lower()
         # checking if search text is in dropdown row
@@ -287,16 +287,17 @@ def dropdown_search_function(search_for, data):
                 match_rn = rn
                 match_st = st
                 match_len_diff = len_diff
-        # in case of no existing match fall back on
-        # checking if dropdown row text is in search text
+        # fall back in case of no existing match
         elif match_rn == float("inf"):
-            st = search_for.find(dd_val)
-            if st > -1:
-                len_diff = len(dd_val) - search_len
-                if st < match_data_st or (st == match_data_st and len_diff < match_data_len_diff):
-                    match_data_rn = rn
-                    match_data_st = st
-                    match_data_len_diff = len_diff
+            for numchars in range(2, search_len - 1):
+                for from_idx in range(search_len - 1):
+                    if from_idx + numchars > search_len:
+                        break
+                    st = dd_val.find(search_for[from_idx:from_idx + numchars])
+                    if st > -1 and st < match_data_st or (st == match_data_st and numchars > match_data_numchars):
+                        match_data_rn = rn
+                        match_data_st = st
+                        match_data_numchars = numchars
     if match_rn != float("inf"):
         return match_rn
     elif match_data_rn != float("inf"):
