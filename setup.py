@@ -9,7 +9,7 @@ setup(
   name = 'tksheet',
   packages = ['tksheet'],
   version = '6.3.2',
-  python_requires = '>=3.6',
+  python_requires = '>=3.7',
   license = 'MIT',
   description = 'Tkinter table / sheet widget',
   long_description = long_description,
