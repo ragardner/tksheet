@@ -2644,12 +2644,6 @@ class Sheet(tk.Frame):
             return True
         return False
 
-    def __bool__(self):
-        return any(self.MT.data)
-
-    def __len__(self):
-        return self.MT.data.__len__()
-
     def __iter__(self):
         return self.MT.data.__iter__()
 

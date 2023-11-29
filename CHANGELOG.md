@@ -1,3 +1,15 @@
+### Version 6.3.2
+#### Changed:
+- tksheet no longer supports Python 3.6, only versions 3.7+
+
+#### Removed:
+Due to errors caused when using Python versions < 3.8 the following functions have been removed:
+- __bool__
+- __len__
+
+#### Fixed:
+- Sheet init error since version `6.3.0` when running Python 3.7
+
 ### Version 6.3.1
 #### Fixed:
 - Two `EditCellEvent`s being emitted, removed the one with `None` as `text` attribute
