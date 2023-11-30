@@ -1988,7 +1988,7 @@ class ColumnHeaders(tk.Canvas):
         elif win_h > win_h2:
             win_h = win_h2
         return win_h, "nw"
-    
+
     def dropdown_text_editor_modified(self, dd_window, event, modified_func):
         if modified_func:
             modified_func(event)

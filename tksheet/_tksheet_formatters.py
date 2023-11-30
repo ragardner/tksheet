@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Union, Dict
+from typing import Any, Dict, Union
 
 from ._tksheet_vars import (
     falsy,

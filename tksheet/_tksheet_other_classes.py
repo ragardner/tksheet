@@ -2,14 +2,15 @@ from __future__ import annotations
 
 import bisect
 import tkinter as tk
+import warnings
 from collections import namedtuple
 from itertools import islice
+
 from ._tksheet_vars import (
     ctrl_key,
     get_font,
     rc_binding,
 )
-import warnings
 
 
 def show_kwargs_warning(kwargs, name):

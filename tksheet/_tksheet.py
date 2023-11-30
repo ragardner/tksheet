@@ -1,11 +1,11 @@
 from __future__ import annotations
 
+import bisect
 import tkinter as tk
 from collections import deque
 from itertools import accumulate, chain, islice
 from tkinter import ttk
-import bisect
-from typing import Union, Callable, List, Set, Tuple
+from typing import Callable, List, Set, Tuple, Union
 
 from ._tksheet_column_headers import ColumnHeaders
 from ._tksheet_main_table import MainTable
