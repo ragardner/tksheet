@@ -60,7 +60,7 @@ Some examples of things that are not possible with tksheet:
 
 Alternatively you can download the source code and (inside the tksheet directory) use the command line `python setup.py develop`
 
-`tksheet` requires a Python version of `3.6` or higher.
+`tksheet` requires a Python version of `3.7` or higher.
 
 ## **Basic Initialization**
 ----
