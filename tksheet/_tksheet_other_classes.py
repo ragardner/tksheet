@@ -39,6 +39,31 @@ DropDownModifiedEvent = namedtuple("DropDownModifiedEvent", "eventname row colum
 DraggedRowColumn = namedtuple("DraggedRowColumn", "dragged to_move")
 
 
+class DotDict(dict):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Recursively turn nested dicts into DotDicts
+        for key, value in self.items():
+            if type(value) is dict:  # noqa: E721
+                self[key] = DotDict(value)
+
+    def __getstate__(self):
+        return self
+
+    def __setstate__(self, state):
+        self.update(state)
+
+    def __setitem__(self, key, item):
+        if type(item) is dict:  # noqa: E721
+            super().__setitem__(key, DotDict(item))
+        else:
+            super().__setitem__(key, item)
+
+    __setattr__ = __setitem__
+    __getattr__ = dict.__getitem__
+    __delattr__ = dict.__delitem__
+
+
 class TextEditor_(tk.Text):
     def __init__(
         self,

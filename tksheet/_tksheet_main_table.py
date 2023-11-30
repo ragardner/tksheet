@@ -637,9 +637,10 @@ class MainTable(tk.Canvas):
         self.refresh()
         for r1, c1, r2, c2 in boxes:
             self.show_ctrl_outline(canvas="table", start_cell=(c1, r1), end_cell=(c2, r2))
-        if changes and self.extra_end_ctrl_x_func is not None:
-            self.extra_end_ctrl_x_func(CtrlKeyEvent("end_ctrl_x", boxes, currently_selected, rows))
-        self.parentframe.emit_event("<<SheetModified>>")
+        if changes:
+            if self.extra_end_ctrl_x_func is not None:
+                self.extra_end_ctrl_x_func(CtrlKeyEvent("end_ctrl_x", boxes, currently_selected, rows))
+            self.parentframe.emit_event("<<SheetModified>>")
 
     def find_last_selected_box_with_current(self, currently_selected):
         if currently_selected.type_ in ("cell", "column"):
@@ -811,9 +812,10 @@ class MainTable(tk.Canvas):
             redraw=False,
         )
         self.refresh()
-        if changes and self.extra_end_ctrl_v_func is not None:
-            self.extra_end_ctrl_v_func(PasteEvent("end_ctrl_v", currently_selected, rows))
-        self.parentframe.emit_event("<<SheetModified>>")
+        if changes:
+            if self.extra_end_ctrl_v_func is not None:
+                self.extra_end_ctrl_v_func(PasteEvent("end_ctrl_v", currently_selected, rows))
+            self.parentframe.emit_event("<<SheetModified>>")
 
     def delete_key(self, event=None):
         if not self.anything_selected():
@@ -845,14 +847,31 @@ class MainTable(tk.Canvas):
                             undo_storage[(datarn, datacn)] = self.get_cell_data(datarn, datacn)
                         self.set_cell_data(datarn, datacn, "")
                         changes += 1
-        if changes and self.extra_end_delete_key_func is not None:
-            self.extra_end_delete_key_func(CtrlKeyEvent("end_delete_key", boxes, currently_selected, undo_storage))
-        if changes and self.undo_enabled:
-            self.undo_storage.append(
-                zlib.compress(pickle.dumps(("edit_cells", undo_storage, boxes, currently_selected)))
-            )
+        if changes:
+            if self.extra_end_delete_key_func is not None:
+                self.extra_end_delete_key_func(
+                    CtrlKeyEvent(
+                        "end_delete_key",
+                        boxes,
+                        currently_selected,
+                        undo_storage,
+                    )
+                )
+            if self.undo_enabled:
+                self.undo_storage.append(
+                    zlib.compress(
+                        pickle.dumps(
+                            (
+                                "edit_cells",
+                                undo_storage,
+                                boxes,
+                                currently_selected,
+                            )
+                        )
+                    )
+                )
+            self.parentframe.emit_event("<<SheetModified>>")
         self.refresh()
-        self.parentframe.emit_event("<<SheetModified>>")
 
     def move_columns_adjust_options_dict(
         self,
@@ -4085,7 +4104,12 @@ class MainTable(tk.Canvas):
         self.refresh()
         if self.extra_end_insert_cols_rc_func is not None:
             self.extra_end_insert_cols_rc_func(
-                InsertEvent("end_insert_columns", data_ins_col, displayed_ins_col, numcols)
+                InsertEvent(
+                    "end_insert_columns",
+                    data_ins_col,
+                    displayed_ins_col,
+                    numcols,
+                )
             )
         self.parentframe.emit_event("<<SheetModified>>")
 
@@ -4194,7 +4218,14 @@ class MainTable(tk.Canvas):
             )
         self.refresh()
         if self.extra_end_insert_rows_rc_func is not None:
-            self.extra_end_insert_rows_rc_func(InsertEvent("end_insert_rows", data_ins_row, displayed_ins_row, numrows))
+            self.extra_end_insert_rows_rc_func(
+                InsertEvent(
+                    "end_insert_rows",
+                    data_ins_row,
+                    displayed_ins_row,
+                    numrows,
+                )
+            )
         self.parentframe.emit_event("<<SheetModified>>")
 
     def del_cols_rc(self, event=None, c=None):

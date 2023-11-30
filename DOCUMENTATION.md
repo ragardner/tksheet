@@ -106,6 +106,7 @@ app.mainloop()
 ```python
 (
 parent,
+name: str = "!sheet",
 show_table: bool = True,
 show_top_left: bool = True,
 show_row_index: bool = True,
@@ -753,6 +754,14 @@ ___
 bind(binding, func, add = None)
 ```
 - `add` will only work for bindings which are not the following: `"<ButtonPress-1>"`, `"<ButtonMotion-1>"`, `"<ButtonRelease-1>"`, `"<Double-Button-1>"`, `"<Motion>"` and lastly whichever is your operating systems right mouse click button
+- `binding` as well as being able to receive the usual tkinter `bind()` arguments such as key presses can also receive `<<SheetModified>>` and `<<SheetRedrawn>>` which are emitted every time there is such an event. Their bound functions must be have at least one parameter and the event object has the following layout:
+
+```python
+{
+    "sheetname": "!sheet",
+}
+```
+
 ___
 
 ```python

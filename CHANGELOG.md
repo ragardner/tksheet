@@ -2,6 +2,9 @@
 #### Improved:
 - Term searching improved when typing in a normal state dropdown box
 
+#### Removed:
+- `bind_event()` function, `bind()` to be used instead
+
 ### Version 6.3.2
 #### Changed:
 - tksheet no longer supports Python 3.6, only versions 3.7+

@@ -5,11 +5,12 @@ import tkinter as tk
 from collections import deque
 from itertools import accumulate, chain, islice
 from tkinter import ttk
-from typing import Callable, List, Set, Tuple, Union
+from typing import List, Set, Tuple, Union
 
 from ._tksheet_column_headers import ColumnHeaders
 from ._tksheet_main_table import MainTable
 from ._tksheet_other_classes import (
+    DotDict,
     GeneratedMouseEvent,
     SelectCellEvent,
     dropdown_search_function,
@@ -39,6 +40,7 @@ class Sheet(tk.Frame):
     def __init__(
         self,
         parent,
+        name: str = "!sheet",
         show_table: bool = True,
         show_top_left: bool = True,
         show_row_index: bool = True,
@@ -171,7 +173,10 @@ class Sheet(tk.Frame):
             highlightcolor=outline_color,
         )
         self.C = parent
+        self.name = name
         self.dropdown_class = Sheet_Dropdown
+        self.last_event_data = DotDict()
+        self.bound_events = DotDict({k: [] for k in emitted_events})
         self.after_redraw_id = None
         self.after_redraw_time_ms = after_redraw_time_ms
         if width is not None or height is not None:
@@ -510,14 +515,14 @@ class Sheet(tk.Frame):
             self.MT.extra_header_rc_menu_funcs = {}
             self.MT.extra_empty_space_rc_menu_funcs = {}
         else:
-            if label in self.MT.extra_table_rc_menu_funcs:
-                del self.MT.extra_table_rc_menu_funcs[label]
-            if label in self.MT.extra_index_rc_menu_funcs:
-                del self.MT.extra_index_rc_menu_funcs[label]
-            if label in self.MT.extra_header_rc_menu_funcs:
-                del self.MT.extra_header_rc_menu_funcs[label]
-            if label in self.MT.extra_empty_space_rc_menu_funcs:
-                del self.MT.extra_empty_space_rc_menu_funcs[label]
+            for func_dict in (
+                self.MT.extra_table_rc_menu_funcs,
+                self.MT.extra_index_rc_menu_funcs,
+                self.MT.extra_header_rc_menu_funcs,
+                self.MT.extra_empty_space_rc_menu_funcs,
+            ):
+                if label in func_dict:
+                    del func_dict[label]
         self.MT.create_rc_menus()
 
     def extra_bindings(self, bindings, func=None):
@@ -536,8 +541,11 @@ class Sheet(tk.Frame):
         for b, f in iterable:
             b = b.lower()
 
-            if func is not None and b in emitted_events:
-                self.bind_event(b, f)
+            if b in emitted_events:
+                if f:
+                    self.bind(b, f)
+                else:
+                    self.unbind(b)
 
             if b in (
                 "all",
@@ -835,24 +843,24 @@ class Sheet(tk.Frame):
                 self.CH.ctrl_selection_binding_func = f
             if b == "deselect":
                 self.MT.deselection_binding_func = f
+                
+    def emit_event(
+        self,
+        event: str,
+        data = None,
+    ):
+        if data is None:
+            data = tuple()
+        dct = DotDict()
+        dct.sheetname = self.name
+        dct.data = data
+        self.last_event_data = dct
+        for func in self.bound_events[event]:
+            func(dct)
 
-    def emit_event(self, event, data={}):
-        self.event_generate(event, data=data)
-
-    def bind_event(self, sequence: str, func: Callable, add: Union[str, None] = None) -> None:
-        widget = self
-
-        def _substitute(*args) -> Tuple[None]:
-            def e() -> None:
-                return None
-
-            e.data = args[0]
-            e.widget = widget
-            return (e,)
-
-        funcid = widget._register(func, _substitute, needcleanup=1)
-        cmd = '{0}if {{"[{1} %d]" == "break"}} break\n'.format("+" if add else "", funcid)
-        widget.tk.call("bind", widget._w, sequence, cmd)
+    @property
+    def event(self):
+        return self.last_event_data
 
     def sync_scroll(self, widget: object) -> Sheet:
         if widget is self:
@@ -875,6 +883,11 @@ class Sheet(tk.Frame):
         return self
 
     def bind(self, binding, func, add=None):
+        if binding in emitted_events:
+            if add:
+                self.bound_events[binding].append(func)
+            else:
+                self.bound_events[binding] = [func]
         if binding == "<ButtonPress-1>":
             self.MT.extra_b1_press_func = func
             self.CH.extra_b1_press_func = func
@@ -912,6 +925,8 @@ class Sheet(tk.Frame):
             self.TL.bind(binding, func, add=add)
 
     def unbind(self, binding):
+        if binding in emitted_events:
+            self.bound_events[binding] = []
         if binding == "<ButtonPress-1>":
             self.MT.extra_b1_press_func = None
             self.CH.extra_b1_press_func = None
