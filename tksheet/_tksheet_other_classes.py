@@ -293,8 +293,10 @@ def dropdown_search_function(search_for, data):
                 for from_idx in range(search_len - 1):
                     if from_idx + numchars > search_len:
                         break
-                    st = dd_val.find(search_for[from_idx:from_idx + numchars])
-                    if st > -1 and st < match_data_st or (st == match_data_st and numchars > match_data_numchars):
+                    st = dd_val.find(search_for[from_idx : from_idx + numchars])
+                    if st > -1 and (
+                        numchars > match_data_numchars or (numchars == match_data_numchars and st < match_data_st)
+                    ):
                         match_data_rn = rn
                         match_data_st = st
                         match_data_numchars = numchars
