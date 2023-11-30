@@ -537,18 +537,6 @@ get_value_for_empty_cell(
 
 `Sheet` objects also have some functions similar to lists. **Note** that these functions do **not** include the header or index.
 
-Check if the table has data:
-```python
-if my_sheet:
-    print ("The sheets main table is not empty!")
-```
-- **Note:** that this function doesn't check if cells are empty or Falsy only if there are any rows or rows with any elements in the data `list`.
-
-Check how many rows the table has:
-```python
-num_rows = len(my_sheet)
-```
-
 Iterate over table rows:
 ```python
 for row in my_sheet:
