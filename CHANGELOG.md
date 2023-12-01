@@ -1,3 +1,7 @@
+### Version 6.3.4
+#### Fixed:
+- [#205](https://github.com/ragardner/tksheet/issues/205)
+
 ### Version 6.3.3
 #### Improved:
 - Term searching improved when typing in a normal state dropdown box
