@@ -5,10 +5,11 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "tksheet"
 description = "Tkinter table / sheet widget"
+readme = "README.md"
 version = "7.0.0"
 authors = [{ name = "ragardner", email = "github@ragardner.simplelogin.com" }]
-requires-python = ">=3.7"
-license = { file = "LICENSE.txt" }
+requires-python = ">=3.8"
+license = {file = "LICENSE.txt"}
 keywords = ["tkinter", "table", "widget", "sheet", "grid", "tk"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -22,6 +23,11 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Typing :: Typed",
 ]
+
+[project.urls]
+"Homepage" = "https://github.com/ragardner/tksheet"
+"Bug Reports" = "https://github.com/ragardner/tksheet/issues"
+"Funding" = "https://github.com/ragardner"
 
 [tool.black]
 line-length = 120
