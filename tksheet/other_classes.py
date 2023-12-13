@@ -507,7 +507,6 @@ class TextEditor(tk.Frame):
         popup_menu_fg="black",
         popup_menu_highlight_bg="blue",
         popup_menu_highlight_fg="white",
-        binding=None,
         align="w",
         r=0,
         c=0,
@@ -547,7 +546,6 @@ class TextEditor(tk.Frame):
         self.grid_propagate(False)
         self.w_ = width
         self.h_ = height
-        self.binding = binding
         self.textedit.focus_set()
 
     def get(self):

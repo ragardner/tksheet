@@ -41,13 +41,19 @@ def tksheet_type_error(kwarg: str, valid_types: list[str], not_type: object) -> 
 def dropdown_search_function(
     search_for: object,
     data: Sequence[object],
-) -> int | None:
+) -> None | int:
     search_len = len(search_for)
+    # search_for in data
     match_rn = float("inf")
     match_st = float("inf")
     match_len_diff = float("inf")
+    # data in search_for in case no match
+    match_data_rn = float("inf")
+    match_data_st = float("inf")
+    match_data_numchars = 0
     for rn, row in enumerate(data):
         dd_val = rf"{row[0]}".lower()
+        # checking if search text is in dropdown row
         st = dd_val.find(search_for)
         if st > -1:
             # priority is start index
@@ -58,8 +64,23 @@ def dropdown_search_function(
                 match_rn = rn
                 match_st = st
                 match_len_diff = len_diff
+        # fall back in case of no existing match
+        elif match_rn == float("inf"):
+            for numchars in range(2, search_len - 1):
+                for from_idx in range(search_len - 1):
+                    if from_idx + numchars > search_len:
+                        break
+                    st = dd_val.find(search_for[from_idx : from_idx + numchars])
+                    if st > -1 and (
+                        numchars > match_data_numchars or (numchars == match_data_numchars and st < match_data_st)
+                    ):
+                        match_data_rn = rn
+                        match_data_st = st
+                        match_data_numchars = numchars
     if match_rn != float("inf"):
         return match_rn
+    elif match_data_rn != float("inf"):
+        return match_data_rn
     return None
 
 
@@ -115,7 +136,11 @@ def event_dict(
         ),
         named_spans=DotDict() if named_spans is None else named_spans,
         options=DotDict(),
-        selection_boxes={} if boxes is None else selection_box_tup_to_dict(boxes) if isinstance(boxes, tuple) else boxes,
+        selection_boxes={}
+        if boxes is None
+        else selection_box_tup_to_dict(boxes)
+        if isinstance(boxes, tuple)
+        else boxes,
         selected=tuple() if selected is None else selected,
         being_selected=tuple() if being_selected is None else being_selected,
         data=[] if data is None else data,

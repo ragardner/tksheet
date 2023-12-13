@@ -640,7 +640,8 @@ class MainTable(tk.Canvas):
         self.refresh()
         for r1, c1, r2, c2 in boxes:
             self.show_ctrl_outline(canvas="table", start_cell=(c1, r1), end_cell=(c2, r2))
-        try_binding(self.extra_end_ctrl_x_func, event_data, "end_ctrl_x")
+        if event_data["cells"]["table"]:
+            try_binding(self.extra_end_ctrl_x_func, event_data, "end_ctrl_x")
         self.sheet_modified(event_data)
 
     def get_box_containing_current(self) -> tuple[int, int, int, int]:
@@ -843,7 +844,8 @@ class MainTable(tk.Canvas):
             redraw=False,
         )
         self.refresh()
-        try_binding(self.extra_end_ctrl_v_func, event_data, "end_ctrl_v")
+        if event_data["cells"]["table"] or event_data["added"]["rows"] or event_data["added"]["columns"]:
+            try_binding(self.extra_end_ctrl_v_func, event_data, "end_ctrl_v")
         self.sheet_modified(event_data)
 
     def delete_key(self, event=None) -> None:
@@ -868,7 +870,7 @@ class MainTable(tk.Canvas):
                     )
         if event_data["cells"]["table"]:
             self.undo_stack.append(ev_stack_dict(event_data))
-        try_binding(self.extra_end_delete_key_func, event_data, "end_delete")
+            try_binding(self.extra_end_delete_key_func, event_data, "end_delete")
         self.refresh()
         self.sheet_modified(event_data)
 
@@ -5541,28 +5543,29 @@ class MainTable(tk.Canvas):
         if start_col > 0:
             start_col -= 1
         end_row -= 1
-        selections = self.get_redraw_selections(start_row, end_row, start_col, end_col)
-        c_2 = (
-            self.table_selected_cells_bg
-            if self.table_selected_cells_bg.startswith("#")
-            else Color_Map[self.table_selected_cells_bg]
-        )
-        c_2_ = (int(c_2[1:3], 16), int(c_2[3:5], 16), int(c_2[5:], 16))
-        c_3 = (
-            self.table_selected_columns_bg
-            if self.table_selected_columns_bg.startswith("#")
-            else Color_Map[self.table_selected_columns_bg]
-        )
-        c_3_ = (int(c_3[1:3], 16), int(c_3[3:5], 16), int(c_3[5:], 16))
-        c_4 = (
-            self.table_selected_rows_bg
-            if self.table_selected_rows_bg.startswith("#")
-            else Color_Map[self.table_selected_rows_bg]
-        )
-        c_4_ = (int(c_4[1:3], 16), int(c_4[3:5], 16), int(c_4[5:], 16))
-        rows_ = tuple(range(start_row, end_row))
-        font = self.table_font
         if redraw_table:
+            selections = self.get_redraw_selections(start_row, end_row, start_col, end_col)
+            c_2 = (
+                self.table_selected_cells_bg
+                if self.table_selected_cells_bg.startswith("#")
+                else Color_Map[self.table_selected_cells_bg]
+            )
+            c_2_ = (int(c_2[1:3], 16), int(c_2[3:5], 16), int(c_2[5:], 16))
+            c_3 = (
+                self.table_selected_columns_bg
+                if self.table_selected_columns_bg.startswith("#")
+                else Color_Map[self.table_selected_columns_bg]
+            )
+            c_3_ = (int(c_3[1:3], 16), int(c_3[3:5], 16), int(c_3[5:], 16))
+            c_4 = (
+                self.table_selected_rows_bg
+                if self.table_selected_rows_bg.startswith("#")
+                else Color_Map[self.table_selected_rows_bg]
+            )
+            c_4_ = (int(c_4[1:3], 16), int(c_4[3:5], 16), int(c_4[5:], 16))
+            rows_ = tuple(range(start_row, end_row))
+            font = self.table_font
+            dd_coords = self.get_existing_dropdown_coords()
             for c in range(start_col, end_col - 1):
                 for r in rows_:
                     rtopgridln = self.row_positions[r]
@@ -5610,7 +5613,7 @@ class MainTable(tk.Canvas):
                                 tag=f"dd_{r}_{c}",
                                 draw_outline=not dd_drawn,
                                 draw_arrow=mw >= 5,
-                                dd_is_open=kwargs["window"] != "no dropdown open",
+                                dd_is_open=dd_coords == (r, c),
                             )
                         else:
                             mw = crightgridln - cleftgridln - 1
@@ -5628,7 +5631,7 @@ class MainTable(tk.Canvas):
                                 tag=f"dd_{r}_{c}",
                                 draw_outline=not dd_drawn,
                                 draw_arrow=mw >= 5,
-                                dd_is_open=kwargs["window"] != "no dropdown open",
+                                dd_is_open=dd_coords == (r, c),
                             )
                         else:
                             mw = crightgridln - cleftgridln - 1
@@ -5648,7 +5651,7 @@ class MainTable(tk.Canvas):
                                 tag=f"dd_{r}_{c}",
                                 draw_outline=not dd_drawn,
                                 draw_arrow=mw >= 5,
-                                dd_is_open=kwargs["window"] != "no dropdown open",
+                                dd_is_open=dd_coords == (r, c),
                             )
                         else:
                             mw = crightgridln - cleftgridln - 1
@@ -6607,21 +6610,18 @@ class MainTable(tk.Canvas):
         c: int = 0,
         text: str | None = None,
         state: str = "normal",
-        see: bool = True,
-        set_data_on_close: bool = True,
-        binding: Callable | None = None,
         dropdown: bool = False,
     ) -> bool:
         text = None
         extra_func_key = "??"
-        datarn = self.datarn(r)
-        datacn = self.datacn(c)
         if event is None or self.event_opens_dropdown_or_checkbox(event):
             if event is not None:
                 if hasattr(event, "keysym") and event.keysym == "Return":
                     extra_func_key = "Return"
                 elif hasattr(event, "keysym") and event.keysym == "F2":
                     extra_func_key = "F2"
+            datarn = r if self.all_rows_displayed else self.displayed_rows[r]
+            datacn = c if self.all_columns_displayed else self.displayed_columns[c]
             if event is not None and (hasattr(event, "keysym") and event.keysym == "BackSpace"):
                 extra_func_key = "BackSpace"
                 text = ""
@@ -6665,10 +6665,8 @@ class MainTable(tk.Canvas):
             return
         if self.text_editor is not None:
             self.destroy_text_editor()
-        if see:
-            has_redrawn = self.see(r=r, c=c, check_cell_visibility=True)
-            if not has_redrawn:
-                self.refresh()
+        if not self.see(r=r, c=c, check_cell_visibility=True):
+            self.refresh()
         self.text_editor_loc = (r, c)
         x = self.col_positions[c]
         y = self.row_positions[r]
@@ -6677,7 +6675,8 @@ class MainTable(tk.Canvas):
         if text is None:
             text = f"""{self.get_cell_data(r if self.all_rows_displayed else self.displayed_rows[r],
                                            c if self.all_columns_displayed else self.displayed_columns[c],
-                                           none_to_empty_str = True)}"""  # noqa: E501
+                                           none_to_empty_str = True)}"""
+        self.hide_current()
         bg, fg = self.table_bg, self.table_fg
         self.text_editor = TextEditor(
             self,
@@ -6686,7 +6685,7 @@ class MainTable(tk.Canvas):
             state=state,
             width=w,
             height=h,
-            border_color=self.get_selected_box_bg_fg(type_="cells")[1],
+            border_color=self.table_selected_cells_border_fg,
             show_border=self.show_selected_cells_border,
             bg=bg,
             fg=fg,
@@ -6695,7 +6694,6 @@ class MainTable(tk.Canvas):
             popup_menu_bg=self.popup_menu_bg,
             popup_menu_highlight_bg=self.popup_menu_highlight_bg,
             popup_menu_highlight_fg=self.popup_menu_highlight_fg,
-            binding=binding,
             align=self.get_cell_align(r, c),
             r=r,
             c=c,
@@ -6706,24 +6704,16 @@ class MainTable(tk.Canvas):
         if not dropdown:
             self.text_editor.textedit.focus_set()
             self.text_editor.scroll_to_bottom()
-        self.text_editor.textedit.bind("<Alt-Return>", lambda x: self.text_editor_newline_binding(r, c))
+        self.text_editor.textedit.bind("<Alt-Return>", lambda _x: self.text_editor_newline_binding(r, c))
         if USER_OS == "darwin":
-            self.text_editor.textedit.bind("<Option-Return>", lambda x: self.text_editor_newline_binding(r, c))
+            self.text_editor.textedit.bind("<Option-Return>", lambda _x: self.text_editor_newline_binding(r, c))
         for key, func in self.text_editor_user_bound_keys.items():
             self.text_editor.textedit.bind(key, func)
-        if binding is not None:
-            self.text_editor.textedit.bind("<Tab>", lambda x: binding((r, c, "Tab")))
-            self.text_editor.textedit.bind("<Return>", lambda x: binding((r, c, "Return")))
-            self.text_editor.textedit.bind("<FocusOut>", lambda x: binding((r, c, "FocusOut")))
-            self.text_editor.textedit.bind("<Escape>", lambda x: binding((r, c, "Escape")))
-        elif binding is None and set_data_on_close:
-            self.text_editor.textedit.bind("<Tab>", lambda x: self.close_text_editor((r, c, "Tab")))
-            self.text_editor.textedit.bind("<Return>", lambda x: self.close_text_editor((r, c, "Return")))
-            if not dropdown:
-                self.text_editor.textedit.bind("<FocusOut>", lambda x: self.close_text_editor((r, c, "FocusOut")))
-            self.text_editor.textedit.bind("<Escape>", lambda x: self.close_text_editor((r, c, "Escape")))
-        else:
-            self.text_editor.textedit.bind("<Escape>", lambda x: self.destroy_text_editor("Escape"))
+        self.text_editor.textedit.bind("<Tab>", lambda _x: self.close_text_editor((r, c, "Tab")))
+        self.text_editor.textedit.bind("<Return>", lambda _x: self.close_text_editor((r, c, "Return")))
+        if not dropdown:
+            self.text_editor.textedit.bind("<FocusOut>", lambda _x: self.close_text_editor((r, c, "FocusOut")))
+        self.text_editor.textedit.bind("<Escape>", lambda _x: self.close_text_editor((r, c, "Escape")))
         return True
 
     # displayed indexes
@@ -6796,7 +6786,7 @@ class MainTable(tk.Canvas):
                 )
                 # self.itemconfig(self.existing_dropdown_canvas_id, anchor=anchor, height=win_h)
 
-    def destroy_text_editor(self, event: object = None) -> None:
+    def destroy_text_editor(self, reason: None | str = None) -> None:
         self.text_editor_loc = None
         try:
             self.delete(self.text_editor_id)
@@ -6808,22 +6798,15 @@ class MainTable(tk.Canvas):
             pass
         self.text_editor = None
         self.text_editor_id = None
-        if event is not None and len(event) >= 3 and "Escape" in event:
+        if reason == "Escape":
             self.focus_set()
 
     # c is displayed col
     def close_text_editor(
         self,
         editor_info: tuple | None = None,
-        r: int | None = None,
-        c: int | None = None,
-        set_data_on_close: bool = True,
-        event: object = None,
-        destroy: bool = True,
-        move_down: bool = True,
-        redraw: bool = True,
-        recreate: bool = True,
-    ) -> str:
+    ) -> str | None:
+        # checking if text editor should be closed or not
         focused = self.focus_get()
         try:
             if focused == self.text_editor.textedit.rc_popup_menu:
@@ -6832,34 +6815,60 @@ class MainTable(tk.Canvas):
             pass
         if focused is None and editor_info:
             return "break"
-        if editor_info is not None and len(editor_info) >= 3 and editor_info[2] == "Escape":
+        if editor_info[2] == "Escape":
             self.destroy_text_editor("Escape")
-            self.close_dropdown_window(r, c)
+            self.close_dropdown_window()
             return
-        if self.text_editor is not None:
-            self.text_editor_value = self.text_editor.get()
-        if destroy:
-            self.destroy_text_editor()
+        # setting cell data with text editor value
+        self.text_editor_value = self.text_editor.get()
+        self.destroy_text_editor()
         currently_selected = self.currently_selected()
-        if set_data_on_close:
-            if r is None and c is None and editor_info:
-                r, c = editor_info[0], editor_info[1]
-            datarn = self.datarn(r)
-            datacn = self.datacn(c)
-            event_data = event_dict(
-                name="end_edit_table",
-                sheet=self.parentframe.name,
-                cells_table={(datarn, datacn): self.text_editor_value},
-                key=editor_info[2] if len(editor_info) >= 3 else "FocusOut",
+        r, c = editor_info[0], editor_info[1]
+        datarn = self.datarn(r)
+        datacn = self.datacn(c)
+        event_data = event_dict(
+            name="end_edit_table",
+            sheet=self.parentframe.name,
+            cells_table={(datarn, datacn): self.text_editor_value},
+            key=editor_info[2],
+            value=self.text_editor_value,
+            loc=(r, c),
+            boxes=self.get_boxes(),
+            selected=currently_selected,
+        )
+        move_down = False
+        if self.extra_end_edit_cell_func is None and self.input_valid_for_cell(
+            datarn, datacn, self.text_editor_value
+        ):
+            move_down = self.set_cell_data_undo(
+                r,
+                c,
+                datarn=datarn,
+                datacn=datacn,
                 value=self.text_editor_value,
-                loc=(r, c),
-                boxes=self.get_boxes(),
-                selected=currently_selected,
+                redraw=False,
+                check_input_valid=False,
             )
-            if self.extra_end_edit_cell_func is None and self.input_valid_for_cell(
-                datarn, datacn, self.text_editor_value
-            ):
-                self.set_cell_data_undo(
+        elif (
+            self.extra_end_edit_cell_func is not None
+            and not self.edit_cell_validation
+            and self.input_valid_for_cell(datarn, datacn, self.text_editor_value)
+        ):
+            move_down = self.set_cell_data_undo(
+                r,
+                c,
+                datarn=datarn,
+                datacn=datacn,
+                value=self.text_editor_value,
+                redraw=False,
+                check_input_valid=False,
+            )
+            self.extra_end_edit_cell_func(event_data)
+        elif self.extra_end_edit_cell_func is not None and self.edit_cell_validation:
+            validation = self.extra_end_edit_cell_func(event_data)
+            self.text_editor_value = validation
+            if validation is not None and self.input_valid_for_cell(datarn, datacn, self.text_editor_value):
+                move_down = self.set_cell_data_undo(
                     r,
                     c,
                     datarn=datarn,
@@ -6868,107 +6877,75 @@ class MainTable(tk.Canvas):
                     redraw=False,
                     check_input_valid=False,
                 )
-            elif (
-                self.extra_end_edit_cell_func is not None
-                and not self.edit_cell_validation
-                and self.input_valid_for_cell(datarn, datacn, self.text_editor_value)
-            ):
-                self.set_cell_data_undo(
-                    r,
-                    c,
-                    datarn=datarn,
-                    datacn=datacn,
-                    value=self.text_editor_value,
-                    redraw=False,
-                    check_input_valid=False,
-                )
-                self.extra_end_edit_cell_func(event_data)
-            elif self.extra_end_edit_cell_func is not None and self.edit_cell_validation:
-                validation = self.extra_end_edit_cell_func(event_data)
-                self.text_editor_value = validation
-                if validation is not None and self.input_valid_for_cell(datarn, datacn, self.text_editor_value):
-                    self.set_cell_data_undo(
-                        r,
+        if (
+            move_down
+            and r is not None
+            and c is not None
+            and currently_selected
+            and r == currently_selected[0]
+            and c == currently_selected[1]
+            and (self.single_selection_enabled or self.toggle_selection_enabled)
+        ):
+            r1, c1, r2, c2 = self.get_box_containing_current()
+            numcols = c2 - c1
+            numrows = r2 - r1
+            if numcols == 1 and numrows == 1:
+                if editor_info[2] == "Return":
+                    self.select_cell(r + 1 if r < len(self.row_positions) - 2 else r, c)
+                    self.see(
+                        r + 1 if r < len(self.row_positions) - 2 else r,
                         c,
-                        datarn=datarn,
-                        datacn=datacn,
-                        value=self.text_editor_value,
-                        redraw=False,
-                        check_input_valid=False,
+                        keep_xscroll=True,
+                        bottom_right_corner=True,
+                        check_cell_visibility=True,
                     )
-        if move_down:
-            if r is None and c is None and editor_info:
-                r, c = editor_info[0], editor_info[1]
-            if (
-                r is not None
-                and c is not None
-                and currently_selected
-                and r == currently_selected[0]
-                and c == currently_selected[1]
-                and (self.single_selection_enabled or self.toggle_selection_enabled)
-            ):
-                r1, c1, r2, c2 = self.get_box_containing_current()
-                numcols = c2 - c1
-                numrows = r2 - r1
-                if numcols == 1 and numrows == 1:
-                    if editor_info is not None and len(editor_info) >= 3 and editor_info[2] == "Return":
-                        self.select_cell(r + 1 if r < len(self.row_positions) - 2 else r, c)
-                        self.see(
-                            r + 1 if r < len(self.row_positions) - 2 else r,
-                            c,
-                            keep_xscroll=True,
-                            bottom_right_corner=True,
-                            check_cell_visibility=True,
-                        )
-                    elif editor_info is not None and len(editor_info) >= 3 and editor_info[2] == "Tab":
-                        self.select_cell(r, c + 1 if c < len(self.col_positions) - 2 else c)
-                        self.see(
-                            r,
-                            c + 1 if c < len(self.col_positions) - 2 else c,
-                            keep_xscroll=True,
-                            bottom_right_corner=True,
-                            check_cell_visibility=True,
-                        )
-                else:
-                    moved = False
-                    new_r = r
-                    new_c = c
-                    if editor_info is not None and len(editor_info) >= 3 and editor_info[2] == "Return":
-                        if r + 1 == r2:
-                            new_r = r1
-                        elif numrows > 1:
-                            new_r = r + 1
-                            moved = True
-                        if not moved:
-                            if c + 1 == c2:
-                                new_c = c1
-                            elif numcols > 1:
-                                new_c = c + 1
-                    elif editor_info is not None and len(editor_info) >= 3 and editor_info[2] == "Tab":
+                elif editor_info[2] == "Tab":
+                    self.select_cell(r, c + 1 if c < len(self.col_positions) - 2 else c)
+                    self.see(
+                        r,
+                        c + 1 if c < len(self.col_positions) - 2 else c,
+                        keep_xscroll=True,
+                        bottom_right_corner=True,
+                        check_cell_visibility=True,
+                    )
+            else:
+                moved = False
+                new_r = r
+                new_c = c
+                if editor_info[2] == "Return":
+                    if r + 1 == r2:
+                        new_r = r1
+                    elif numrows > 1:
+                        new_r = r + 1
+                        moved = True
+                    if not moved:
                         if c + 1 == c2:
                             new_c = c1
                         elif numcols > 1:
                             new_c = c + 1
-                            moved = True
-                        if not moved:
-                            if r + 1 == r2:
-                                new_r = r1
-                            elif numrows > 1:
-                                new_r = r + 1
-                    self.move_currently_selected_within_box(new_r, new_c)
-                    self.see(
-                        new_r,
-                        new_c,
-                        keep_xscroll=False,
-                        bottom_right_corner=True,
-                        check_cell_visibility=True,
-                    )
+                elif editor_info[2] == "Tab":
+                    if c + 1 == c2:
+                        new_c = c1
+                    elif numcols > 1:
+                        new_c = c + 1
+                        moved = True
+                    if not moved:
+                        if r + 1 == r2:
+                            new_r = r1
+                        elif numrows > 1:
+                            new_r = r + 1
+                self.move_currently_selected_within_box(new_r, new_c)
+                self.see(
+                    new_r,
+                    new_c,
+                    keep_xscroll=False,
+                    bottom_right_corner=True,
+                    check_cell_visibility=True,
+                )
         self.close_dropdown_window(r, c)
-        if recreate:
-            self.recreate_all_selection_boxes()
-        if redraw:
-            self.refresh()
-        if editor_info is not None and len(editor_info) >= 3 and editor_info[2] != "FocusOut":
+        self.recreate_all_selection_boxes()
+        self.refresh()
+        if editor_info[2] != "FocusOut":
             self.focus_set()
         return "break"
 
@@ -6984,6 +6961,7 @@ class MainTable(tk.Canvas):
         if numcols == 1 and numrows == 1:
             new_r = r
             new_c = c + 1 if c < len(self.col_positions) - 2 else c
+            self.select_cell(new_r, new_c)
         else:
             moved = False
             new_r = r
@@ -6998,7 +6976,7 @@ class MainTable(tk.Canvas):
                     new_r = r1
                 elif numrows > 1:
                     new_r = r + 1
-        self.move_currently_selected_within_box(new_r, new_c)
+            self.move_currently_selected_within_box(new_r, new_c)
         self.see(
             new_r,
             new_c,
@@ -7060,6 +7038,16 @@ class MainTable(tk.Canvas):
         elif win_h > win_h2:
             win_h = win_h2
         return win_h, anchor
+
+    def dropdown_text_editor_modified(
+        self,
+        dd_window: object,
+        event: dict,
+        modified_func: Callable | None,
+    ) -> None:
+        if modified_func:
+            modified_func(event)
+        dd_window.search_and_see(event)
 
     # c is displayed col
     def open_dropdown_window(

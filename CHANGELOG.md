@@ -48,6 +48,47 @@
 - Rename tksheet files
 - Pressing escape on text editors no longer generates an edit cell/header/index event
 
+### Version 6.3.4
+#### Fixed:
+- [#205](https://github.com/ragardner/tksheet/issues/205)
+
+### Version 6.3.3
+#### Improved:
+- Term searching improved when typing in a normal state dropdown box
+
+#### Removed:
+- `bind_event()` function, `bind()` to be used instead
+
+### Version 6.3.2
+#### Changed:
+- tksheet no longer supports Python 3.6, only versions 3.7+
+
+#### Removed:
+Due to errors caused when using Python versions < 3.8 the following functions have been removed:
+- __bool__
+- __len__
+
+#### Fixed:
+- Sheet init error since version `6.3.0` when running Python 3.7
+
+### Version 6.3.1
+#### Fixed:
+- Two `EditCellEvent`s being emitted, removed the one with `None` as `text` attribute
+- Selection box and currently selected box in different places when tab key pressed with single cell selected
+- Return key not working in dropdown box when mouse pointer is outside of dropdown
+- Visual issue: Dropdown arrow staying up when clicking on same cell with readonly dropdown state
+- Visual issue: Dropdown row/column all arrows in up position when one box is open
+
+#### Removed:
+- Many parameters from internal functions dealing with text editor to simplify code
+
+#### Changed:
+- Cell selection doesn't move on Return key when cell edit using text editor was invalid
+- Events for `extra_bindings()` end cut, delete and paste are no longer emitted if no changes were made
+
+#### Improved:
+- Term searching improved when typing in a normal state dropdown box
+
 ### Version 6.3.0
 #### Fixed:
 - Cell editor right click not working

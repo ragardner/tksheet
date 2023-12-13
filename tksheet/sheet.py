@@ -1822,10 +1822,6 @@ class Sheet(tk.Frame):
         self.set_refresh_timer(redraw)
         return self
 
-    def move_down(self) -> Sheet:
-        self.MT.move_down()
-        return self
-
     def add_cell_selection(
         self,
         row,
@@ -2458,12 +2454,6 @@ class Sheet(tk.Frame):
                 self.RI.set_cell_data(r_, v)
         self.set_refresh_timer(redraw)
         return self
-
-    def __bool__(self) -> bool:
-        return any(self.MT.data)
-
-    def __len__(self) -> int:
-        return self.MT.data.__len__()
 
     def __iter__(self) -> Iterator:
         return self.MT.data.__iter__()
@@ -5367,7 +5357,6 @@ class Dropdown(Sheet):
         outline_thickness=2,
         values=[],
         close_dropdown_window=None,
-        modified_function=None,
         search_function=dropdown_search_function,
         arrowkey_RIGHT=None,
         arrowkey_LEFT=None,
@@ -5407,7 +5396,6 @@ class Dropdown(Sheet):
         )
         self.parent = parent
         self.close_dropdown_window = close_dropdown_window
-        self.modified_function = modified_function
         self.search_function = search_function
         self.arrowkey_RIGHT = arrowkey_RIGHT
         self.arrowkey_LEFT = arrowkey_LEFT
@@ -5447,8 +5435,6 @@ class Dropdown(Sheet):
         self.select_row(self.row)
 
     def search_and_see(self, event=None):
-        if self.modified_function is not None:
-            self.modified_function(event)
         if self.search_function is not None:
             rn = self.search_function(search_for=rf"{event['value']}".lower(), data=self.MT.data)
             if rn is not None:
@@ -5471,7 +5457,7 @@ class Dropdown(Sheet):
     def b1(self, event=None):
         if event is None:
             row = None
-        elif event.keycode == 13:
+        elif event.keysym == "Return":
             row = self.get_selected_rows()
             if not row:
                 row = None
