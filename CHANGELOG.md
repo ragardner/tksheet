@@ -1,3 +1,7 @@
+### Version 6.3.5
+#### Fixed:
+- Error with function `set_currently_selected()`
+
 ### Version 6.3.4
 #### Fixed:
 - [#205](https://github.com/ragardner/tksheet/issues/205)

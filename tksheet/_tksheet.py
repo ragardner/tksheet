@@ -1699,12 +1699,7 @@ class Sheet(tk.Frame):
         return self.MT.currently_selected()
 
     def set_currently_selected(self, row, column, type_="cell", selection_binding=True):
-        self.MT.set_currently_selected(
-            r=row,
-            c=column,
-            type_=type_,
-            inside=True if self.MT.cell_selected(row, column) else False,
-        )
+        self.MT.set_currently_selected(r=row, c=column, type_=type_)
         if selection_binding and self.MT.selection_binding_func is not None:
             self.MT.selection_binding_func(SelectCellEvent("select_cell", row, column))
 
