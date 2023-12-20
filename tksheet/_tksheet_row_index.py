@@ -177,11 +177,6 @@ class RowIndex(tk.Canvas):
         elif binding == "drag_and_drop":
             self.drag_and_drop_enabled = False
 
-    def check_mouse_position_height_resizers(self, x, y):
-        for r, (x1, y1, x2, y2) in self.visible_row_dividers.items():
-            if x >= x1 and y >= y1 and x <= x2 and y <= y2:
-                return r
-
     def rc(self, event):
         self.mouseclick_outside_editor_or_dropdown_all_canvases(inside=True)
         self.focus_set()
@@ -319,6 +314,12 @@ class RowIndex(tk.Canvas):
             if sh:
                 self.itemconfig(t, state="hidden")
                 self.hidd_resize_lines[t] = False
+                
+    def check_mouse_position_height_resizers(self, x, y):
+        for r, (x1, y1, x2, y2) in self.visible_row_dividers.items():
+            if x >= x1 and y >= y1 and x <= x2 and y <= y2:
+                return r
+        return None
 
     def mouse_motion(self, event):
         if not self.currently_resizing_height and not self.currently_resizing_width:
@@ -329,9 +330,10 @@ class RowIndex(tk.Canvas):
             if self.height_resizing_enabled and not mouse_over_resize:
                 r = self.check_mouse_position_height_resizers(x, y)
                 if r is not None:
-                    self.config(cursor="sb_v_double_arrow")
-                    self.rsz_h = r
-                    mouse_over_resize = True
+                    self.rsz_h, mouse_over_resize = r, True
+                    if self.MT.current_cursor != "sb_v_double_arrow":
+                        self.config(cursor="sb_v_double_arrow")
+                        self.MT.current_cursor = "sb_v_double_arrow"
                 else:
                     self.rsz_h = None
             if self.width_resizing_enabled and not mouse_over_resize:
@@ -343,17 +345,20 @@ class RowIndex(tk.Canvas):
                         self.row_width_resize_bbox[3],
                     )
                     if x >= x1 and y >= y1 and x <= x2 and y <= y2:
-                        self.config(cursor="sb_h_double_arrow")
-                        self.rsz_w = True
-                        mouse_over_resize = True
+                        self.rsz_w, mouse_over_resize = True, True
+                        if self.MT.current_cursor != "sb_h_double_arrow":
+                            self.config(cursor="sb_h_double_arrow")
+                            self.MT.current_cursor = "sb_h_double_arrow"
                     else:
                         self.rsz_w = None
                 except Exception:
                     self.rsz_w = None
             if not mouse_over_resize:
                 if self.MT.row_selected(self.MT.identify_row(event, allow_end=False)):
-                    self.config(cursor="hand2")
                     mouse_over_selected = True
+                    if self.MT.current_cursor != "hand2":
+                        self.config(cursor="hand2")
+                        self.MT.current_cursor = "hand2"
             if not mouse_over_resize and not mouse_over_selected:
                 self.MT.reset_mouse_motion_creations()
         if self.extra_motion_func is not None:

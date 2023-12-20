@@ -209,11 +209,6 @@ class ColumnHeaders(tk.Canvas):
         if binding == "hide_columns":
             self.hide_columns_enabled = False
 
-    def check_mouse_position_width_resizers(self, x, y):
-        for c, (x1, y1, x2, y2) in self.visible_col_dividers.items():
-            if x >= x1 and y >= y1 and x <= x2 and y <= y2:
-                return c
-
     def rc(self, event):
         self.mouseclick_outside_editor_or_dropdown_all_canvases(inside=True)
         self.focus_set()
@@ -375,6 +370,12 @@ class ColumnHeaders(tk.Canvas):
             if sh:
                 self.itemconfig(t, state="hidden")
                 self.hidd_resize_lines[t] = False
+                
+    def check_mouse_position_width_resizers(self, x, y):
+        for c, (x1, y1, x2, y2) in self.visible_col_dividers.items():
+            if x >= x1 and y >= y1 and x <= x2 and y <= y2:
+                return c
+        return None
 
     def mouse_motion(self, event):
         if not self.currently_resizing_height and not self.currently_resizing_width:
@@ -386,7 +387,9 @@ class ColumnHeaders(tk.Canvas):
                 c = self.check_mouse_position_width_resizers(x, y)
                 if c is not None:
                     self.rsz_w, mouse_over_resize = c, True
-                    self.config(cursor="sb_h_double_arrow")
+                    if self.MT.current_cursor != "sb_h_double_arrow":
+                        self.config(cursor="sb_h_double_arrow")
+                        self.MT.current_cursor = "sb_h_double_arrow"
                 else:
                     self.rsz_w = None
             if self.height_resizing_enabled and not mouse_over_resize:
@@ -398,17 +401,20 @@ class ColumnHeaders(tk.Canvas):
                         self.col_height_resize_bbox[3],
                     )
                     if x >= x1 and y >= y1 and x <= x2 and y <= y2:
-                        self.config(cursor="sb_v_double_arrow")
-                        self.rsz_h = True
-                        mouse_over_resize = True
+                        self.rsz_h, mouse_over_resize = True, True
+                        if self.MT.current_cursor != "sb_v_double_arrow":
+                            self.config(cursor="sb_v_double_arrow")
+                            self.MT.current_cursor = "sb_v_double_arrow"
                     else:
                         self.rsz_h = None
                 except Exception:
                     self.rsz_h = None
             if not mouse_over_resize:
                 if self.MT.col_selected(self.MT.identify_col(event, allow_end=False)):
-                    self.config(cursor="hand2")
                     mouse_over_selected = True
+                    if self.MT.current_cursor != "hand2":
+                        self.config(cursor="hand2")
+                        self.MT.current_cursor = "hand2"
             if not mouse_over_resize and not mouse_over_selected:
                 self.MT.reset_mouse_motion_creations()
         if self.extra_motion_func is not None:
@@ -1257,24 +1263,9 @@ class ColumnHeaders(tk.Canvas):
             t, sh = self.hidd_grid.popitem()
             self.coords(t, points)
             if sh:
-                self.itemconfig(
-                    t,
-                    fill=fill,
-                    width=width,
-                    tag=tag,
-                    capstyle=tk.BUTT,
-                    joinstyle=tk.ROUND,
-                )
+                self.itemconfig(t, fill=fill, width=width, tag=tag)
             else:
-                self.itemconfig(
-                    t,
-                    fill=fill,
-                    width=width,
-                    tag=tag,
-                    capstyle=tk.BUTT,
-                    joinstyle=tk.ROUND,
-                    state="normal",
-                )
+                self.itemconfig(t, fill=fill, width=width, tag=tag, state="normal")
             self.disp_grid[t] = True
         else:
             self.disp_grid[self.create_line(points, fill=fill, width=width, tag=tag)] = True

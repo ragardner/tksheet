@@ -59,6 +59,7 @@ class MainTable(tk.Canvas):
         self.parentframe = kwargs["parentframe"]
         self.parentframe_width = 0
         self.parentframe_height = 0
+        self.current_cursor = ""
         self.b1_pressed_loc = None
         self.existing_dropdown_canvas_id = None
         self.existing_dropdown_window = None
@@ -211,8 +212,7 @@ class MainTable(tk.Canvas):
         self.show_selected_cells_border = kwargs["show_selected_cells_border"]
         self.new_row_width = 0
         self.new_header_height = 0
-        self.row_width_resize_bbox = tuple()
-        self.header_height_resize_bbox = tuple()
+
         self.CH = kwargs["column_headers_canvas"]
         self.CH.MT = self
         self.CH.RI = kwargs["row_index_canvas"]
@@ -2655,7 +2655,7 @@ class MainTable(tk.Canvas):
         elif binding == "column_height_resize":
             self.CH.enable_bindings("column_height_resize")
             self.TL.rh_state()
-        elif binding == "column_drag_and_drop":
+        elif binding in ("column_drag_and_drop", "move_columns"):
             self.CH.enable_bindings("drag_and_drop")
         elif binding == "double_click_column_resize":
             self.CH.enable_bindings("double_click_column_resize")
@@ -2668,7 +2668,7 @@ class MainTable(tk.Canvas):
             self.TL.rw_state()
         elif binding == "row_select":
             self.RI.enable_bindings("row_select")
-        elif binding == "row_drag_and_drop":
+        elif binding in ("row_drag_and_drop", "move_rows"):
             self.RI.enable_bindings("drag_and_drop")
         elif binding == "arrowkeys":
             self.bind_arrowkeys(self.arrowkey_binding_functions)
@@ -2759,7 +2759,7 @@ class MainTable(tk.Canvas):
         elif binding == "column_height_resize":
             self.CH.disable_bindings("column_height_resize")
             self.TL.rh_state("hidden")
-        elif binding == "column_drag_and_drop":
+        elif binding in ("column_drag_and_drop", "move_columns"):
             self.CH.disable_bindings("drag_and_drop")
         elif binding == "double_click_column_resize":
             self.CH.disable_bindings("double_click_column_resize")
@@ -2772,7 +2772,7 @@ class MainTable(tk.Canvas):
             self.TL.rw_state("hidden")
         elif binding == "row_select":
             self.RI.disable_bindings("row_select")
-        elif binding == "row_drag_and_drop":
+        elif binding in ("row_drag_and_drop", "move_rows"):
             self.RI.disable_bindings("drag_and_drop")
         elif binding == "arrowkeys":
             self.unbind_arrowkeys(self.arrowkey_binding_functions)
@@ -2813,56 +2813,18 @@ class MainTable(tk.Canvas):
         self.create_rc_menus()
 
     def reset_mouse_motion_creations(self, event=None):
-        self.config(cursor="")
-        self.RI.config(cursor="")
-        self.CH.config(cursor="")
+        if self.current_cursor != "":
+            self.config(cursor="")
+            self.RI.config(cursor="")
+            self.CH.config(cursor="")
+            self.current_cursor = ""
         self.RI.rsz_w = None
         self.RI.rsz_h = None
         self.CH.rsz_w = None
         self.CH.rsz_h = None
-
+        
     def mouse_motion(self, event):
-        if (
-            not self.RI.currently_resizing_height
-            and not self.RI.currently_resizing_width
-            and not self.CH.currently_resizing_height
-            and not self.CH.currently_resizing_width
-        ):
-            mouse_over_resize = False
-            x = self.canvasx(event.x)
-            y = self.canvasy(event.y)
-            if self.RI.width_resizing_enabled and self.show_index and not mouse_over_resize:
-                try:
-                    x1, y1, x2, y2 = (
-                        self.row_width_resize_bbox[0],
-                        self.row_width_resize_bbox[1],
-                        self.row_width_resize_bbox[2],
-                        self.row_width_resize_bbox[3],
-                    )
-                    if x >= x1 and y >= y1 and x <= x2 and y <= y2:
-                        self.config(cursor="sb_h_double_arrow")
-                        self.RI.config(cursor="sb_h_double_arrow")
-                        self.RI.rsz_w = True
-                        mouse_over_resize = True
-                except Exception:
-                    pass
-            if self.CH.height_resizing_enabled and self.show_header and not mouse_over_resize:
-                try:
-                    x1, y1, x2, y2 = (
-                        self.header_height_resize_bbox[0],
-                        self.header_height_resize_bbox[1],
-                        self.header_height_resize_bbox[2],
-                        self.header_height_resize_bbox[3],
-                    )
-                    if x >= x1 and y >= y1 and x <= x2 and y <= y2:
-                        self.config(cursor="sb_v_double_arrow")
-                        self.CH.config(cursor="sb_v_double_arrow")
-                        self.CH.rsz_h = True
-                        mouse_over_resize = True
-                except Exception:
-                    pass
-            if not mouse_over_resize:
-                self.reset_mouse_motion_creations()
+        self.reset_mouse_motion_creations()
         if self.extra_motion_func is not None:
             self.extra_motion_func(event)
 
@@ -2942,16 +2904,6 @@ class MainTable(tk.Canvas):
             c = self.identify_col(x=event.x)
             if r < len(self.row_positions) - 1 and c < len(self.col_positions) - 1:
                 self.toggle_select_cell(r, c, redraw=True)
-        elif self.RI.width_resizing_enabled and self.show_index and self.RI.rsz_h is None and self.RI.rsz_w:
-            self.RI.currently_resizing_width = True
-            self.new_row_width = self.RI.current_width + event.x
-            x = self.canvasx(event.x)
-            self.create_resize_line(x, y1, x, y2, width=1, fill=self.RI.resizing_line_fg, tag="rwl")
-        elif self.CH.height_resizing_enabled and self.show_header and self.CH.rsz_w is None and self.CH.rsz_h:
-            self.CH.currently_resizing_height = True
-            self.new_header_height = self.CH.current_height + event.y
-            y = self.canvasy(event.y)
-            self.create_resize_line(x1, y, x2, y, width=1, fill=self.RI.resizing_line_fg, tag="rhl")
         self.b1_pressed_loc = (r, c)
         if self.extra_b1_press_func is not None:
             self.extra_b1_press_func(event)
@@ -3082,7 +3034,6 @@ class MainTable(tk.Canvas):
         return None
 
     def b1_motion(self, event):
-        x1, y1, x2, y2 = self.get_canvas_visible_area()
         if self.drag_selection_enabled and all(
             v is None for v in (self.RI.rsz_h, self.RI.rsz_w, self.CH.rsz_h, self.CH.rsz_w)
         ):
@@ -3111,37 +3062,10 @@ class MainTable(tk.Canvas):
                 need_redraw = True
             if need_redraw:
                 self.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True, redraw_table=True)
-        elif self.RI.width_resizing_enabled and self.RI.rsz_w is not None and self.RI.currently_resizing_width:
-            self.RI.delete_resize_lines()
-            self.delete_resize_lines()
-            if event.x >= 0:
-                x = self.canvasx(event.x)
-                self.new_row_width = self.RI.current_width + event.x
-                self.create_resize_line(x, y1, x, y2, width=1, fill=self.RI.resizing_line_fg, tag="rwl")
-            else:
-                x = self.RI.current_width + event.x
-                if x < self.min_column_width:
-                    x = int(self.min_column_width)
-                self.new_row_width = x
-                self.RI.create_resize_line(x, y1, x, y2, width=1, fill=self.RI.resizing_line_fg, tag="rwl")
-        elif self.CH.height_resizing_enabled and self.CH.rsz_h is not None and self.CH.currently_resizing_height:
-            self.CH.delete_resize_lines()
-            self.delete_resize_lines()
-            if event.y >= 0:
-                y = self.canvasy(event.y)
-                self.new_header_height = self.CH.current_height + event.y
-                self.create_resize_line(x1, y, x2, y, width=1, fill=self.RI.resizing_line_fg, tag="rhl")
-            else:
-                y = self.CH.current_height + event.y
-                if y < self.min_header_height:
-                    y = int(self.min_header_height)
-                self.new_header_height = y
-                self.CH.create_resize_line(x1, y, x2, y, width=1, fill=self.RI.resizing_line_fg, tag="rhl")
         if self.extra_b1_motion_func is not None:
             self.extra_b1_motion_func(event)
 
     def ctrl_b1_motion(self, event):
-        x1, y1, x2, y2 = self.get_canvas_visible_area()
         if (
             self.ctrl_select_enabled
             and self.drag_selection_enabled
@@ -3234,7 +3158,6 @@ class MainTable(tk.Canvas):
     def double_b1(self, event=None):
         self.mouseclick_outside_editor_or_dropdown_all_canvases()
         self.focus_set()
-        x1, y1, x2, y2 = self.get_canvas_visible_area()
         if (
             self.identify_col(x=event.x, allow_end=False) is None
             or self.identify_row(y=event.y, allow_end=False) is None
@@ -5035,18 +4958,6 @@ class MainTable(tk.Canvas):
         start_row = bisect.bisect_left(self.row_positions, scrollpos_top)
         start_col = bisect.bisect_left(self.col_positions, scrollpos_left)
         end_col = bisect.bisect_right(self.col_positions, scrollpos_right)
-        self.row_width_resize_bbox = (
-            scrollpos_left,
-            scrollpos_top,
-            scrollpos_left + 2,
-            scrollpos_bot,
-        )
-        self.header_height_resize_bbox = (
-            scrollpos_left + 6,
-            scrollpos_top,
-            scrollpos_right,
-            scrollpos_top + 2,
-        )
         self.hidd_text.update(self.disp_text)
         self.disp_text = {}
         self.hidd_high.update(self.disp_high)
