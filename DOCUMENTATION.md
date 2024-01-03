@@ -1495,6 +1495,8 @@ readonly_index(rows = [], readonly = True, redraw = True)
 ## **Hiding Columns**
 ----
 
+Note that once you have hidden columns you can use the function `displayed_column_to_data(column)` to retrieve a column data index from a displayed index.
+
 #### **Display only certain columns.**
 ```python
 display_columns(columns = None,
@@ -1529,8 +1531,19 @@ hide_columns(columns = set(),
 ```
 - **NOTE**: `columns` (`int`) uses displayed column indexes, not data indexes. In other words the indexes of the columns displayed on the screen are the ones that are hidden, this is useful when uses in conjunction with `get_selected_columns()`.
 
+___
+
+#### **Displayed column index to data**
+
+Convert a displayed column index to a data index. If the internal `all_columns_displayed` attribute is `True` then it will simply return the provided argument.
+```python
+displayed_column_to_data(c)
+```
+
 ## **Hiding Rows**
 ----
+
+Note that once you have hidden rows you can use the function `displayed_row_to_data(row)` to retrieve a row data index from a displayed index.
 
 #### **Display only certain rows.**
 ```python
@@ -1566,6 +1579,15 @@ hide_rows(rows = set(),
           deselect_all = True)
 ```
 - **NOTE**: `rows` (`int`) uses displayed row indexes, not data indexes. In other words the indexes of the rows displayed on the screen are the ones that are hidden, this is useful when uses in conjunction with `get_selected_rows()`.
+
+___
+
+#### **Displayed row index to data**
+
+Convert a displayed row index to a data index. If the internal `all_rows_displayed` attribute is `True` then it will simply return the provided argument.
+```python
+displayed_row_to_data(r)
+```
 
 ## **Hiding Table Elements**
 ----
