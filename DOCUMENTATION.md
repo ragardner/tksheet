@@ -120,8 +120,106 @@ app.mainloop()
 ---
 # **Basic Use**
 
+This is to demonstrate a bit of tksheets basic functionality.
+
 ```python
-# here
+from tksheet import Sheet
+import tkinter as tk
+
+
+class demo(tk.Tk):
+    def __init__(self):
+        tk.Tk.__init__(self)
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(0, weight=1)
+        self.frame = tk.Frame(self)
+        self.frame.grid_columnconfigure(0, weight=1)
+        self.frame.grid_rowconfigure(0, weight=1)
+
+        # create an instance of Sheet()
+        self.sheet = Sheet(
+            # set the Sheets parent widget
+            self.frame,
+            # optional: set the Sheets data at initialization
+            data=[[f"Row {r}, Column {c}\nnewline1\nnewline2" for c in range(50)] for r in range(500)],
+            theme="light green",
+            height=520,
+            width=1000,
+        )
+        # enable various bindings
+        self.sheet.enable_bindings("all", "edit_index", "edit_header")
+
+        # bind all sheet modification events to a function
+        self.sheet.bind("<<SheetModified>>", self.sheet_modified)
+
+        # add some new commands to the in-built right click menu
+        # setting data
+        self.sheet.popup_menu_add_command("Say Hello", self.say_hello)
+        # getting data
+        self.sheet.popup_menu_add_command("Print some data", self.print_data)
+        # overwrite Sheet data
+        self.sheet.popup_menu_add_command("Reset Sheet data", self.reset)
+        # set the header
+
+        self.frame.grid(row=0, column=0, sticky="nswe")
+        self.sheet.grid(row=0, column=0, sticky="nswe")
+
+    def say_hello(self):
+        current_selection = self.sheet.get_currently_selected()
+        if current_selection:
+            box = (current_selection.row, current_selection.column)
+            # set cell data, end user Undo enabled
+            # more information at:
+            # https://github.com/ragardner/tksheet/wiki/Version-7#setting-sheet-data
+            self.sheet[box].options(undo=True).data = "Hello World!"
+            # highlight the cell for 2 seconds
+            self.highlight_area(box)
+
+    def print_data(self):
+        for box in self.sheet.get_all_selection_boxes():
+            # get user selected area sheet data
+            # more information at:
+            # https://github.com/ragardner/tksheet/wiki/Version-7#getting-sheet-data
+            data = self.sheet[box].data
+            for row in data:
+                print(row)
+
+    def reset(self):
+        # overwrites sheet data, more information at:
+        # https://github.com/ragardner/tksheet/wiki/Version-7#setting-sheet-data
+        self.sheet.set_sheet_data([[f"Row {r}, Column {c}\nnewline1\nnewline2" for c in range(50)] for r in range(500)])
+
+    def sheet_modified(self, event):
+        # uncomment below if you want to take a look at the event object
+        # print ("The sheet was modified! Event object:")
+        # for k, v in event.items():
+        #     print (k, ":", v)
+        # print ("\n")
+
+        # otherwise more information at:
+        # https://github.com/ragardner/tksheet/wiki/Version-7#event-data
+
+        # highlight the modified cells briefly
+        if event.eventname.startswith("move"):
+            for box in self.sheet.get_all_selection_boxes():
+                self.highlight_area(box)
+        else:
+            for box in event.selection_boxes:
+                self.highlight_area(box)
+
+    def highlight_area(self, box, time=800):
+        # highlighting an area of the sheet
+        # more information at:
+        # https://github.com/ragardner/tksheet/wiki/Version-7#highlighting-cells
+        self.sheet[box].bg = "red"
+        self.after(time, lambda: self.clear_highlight(box))
+
+    def clear_highlight(self, box):
+        self.sheet[box].dehighlight()
+
+
+app = demo()
+app.mainloop()
 ```
 
 ---
@@ -1460,14 +1558,24 @@ Returns the span
     - a `type_` as described above.
     - keyword arguments as described above.
 
-Example of creating a named span which will always keep the entire sheet formatted as `int` no matter how many rows/columns are inserted:
+Examples of creating named spans:
 ```python
-span = self.sheet.span(
+# Will highlight rows 3 up to and including 5
+span1 = self.sheet.span(
+    "3:5",
+    type_="highlight",
+    bg="green",
+    fg="black",
+)
+self.sheet.named_span(span1)
+
+#  Will always keep the entire sheet formatted as `int` no matter how many rows/columns are inserted
+span2 = self.sheet.span(
     ":",
     # you don't have to provide a `type_` when using the `formatter_kwargs` argument
     formatter_options=int_formatter(),
 )
-self.sheet.named_span(span)
+self.sheet.named_span(span2)
 ```
 
 #### **Deleting a named span**
@@ -1493,7 +1601,7 @@ self.sheet.del_named_span("my highlight span")
 
 # ValueError is raised if name does not exist
 self.sheet.del_named_span("this name doesnt exist")
-# ValueError: Span 'B' does not exist.
+# ValueError: Span 'this name doesnt exist' does not exist.
 ```
 
 #### **Other named span functions**
@@ -1531,7 +1639,9 @@ You can also use `sheet.span()`:
 span = self.sheet.span("A1")
 ```
 
-The above span represents the cell `A1` - row 0, column 0. A reserved span attribute named `data` can then be used to retrieve the data for cell `A1`, example below:
+The above spans represent the cell `A1` - row 0, column 0.
+
+A reserved span attribute named `data` can then be used to retrieve the data for cell `A1`, example below:
 
 ```python
 span = self.sheet["A1"]
@@ -2437,7 +2547,7 @@ A demonstration of all the built-in and custom formatters can be found [here](ht
 
 #### **Creating a data format rule**
 
-`Span` objects (more information [here](https://github.com/ragardner/tksheet/wiki/Version-7#span-objects)) can be used to format data for cells, rows, columns, the entire sheet, headers and the index.
+`Span` objects (more information [here](https://github.com/ragardner/tksheet/wiki/Version-7#span-objects)) can be used to format data for cells, rows, columns and the entire sheet.
 
 You can use either of the following methods:
 - Using a span method e.g. `span.format()` more information [here](https://github.com/ragardner/tksheet/wiki/Version-7#using-a-span-to-format-data).
@@ -4288,24 +4398,37 @@ app.mainloop()
 # **Example Using and Creating Formatters**
 
 ```python
-from tksheet import *
+from tksheet import (
+    Sheet,
+    formatter,
+    float_formatter,
+    int_formatter,
+    percentage_formatter,
+    bool_formatter,
+    truthy,
+    falsy,
+    num2alpha,
+)
 import tkinter as tk
-from datetime import datetime, date, timedelta, time
+from datetime import datetime, date
 from dateutil import parser, tz
 from math import ceil
 import re
 
-date_replace = re.compile('|'.join(['\(', '\)', '\[', '\]', '\<', '\>']))
+date_replace = re.compile("|".join(["\(", "\)", "\[", "\]", "\<", "\>"]))
+
 
 # Custom formatter methods
 def round_up(x):
-    try: # might not be a number if empty
+    try:  # might not be a number if empty
         return float(ceil(x))
-    except:
+    except Exception:
         return x
 
+
 def only_numeric(s):
-    return ''.join(n for n in f"{s}" if n.isnumeric() or n == '.')
+    return "".join(n for n in f"{s}" if n.isnumeric() or n == ".")
+
 
 def convert_to_local_datetime(dt: str, **kwargs):
     if isinstance(dt, datetime):
@@ -4317,82 +4440,90 @@ def convert_to_local_datetime(dt: str, **kwargs):
             dt = date_replace.sub("", dt)
         try:
             dt = parser.parse(dt)
-        except:
+        except Exception:
             raise ValueError(f"Could not parse {dt} as a datetime")
     if dt.tzinfo is None:
-        dt.replace(tzinfo = tz.tzlocal())
+        dt.replace(tzinfo=tz.tzlocal())
     dt = dt.astimezone(tz.tzlocal())
-    return dt.replace(tzinfo = None)
+    return dt.replace(tzinfo=None)
+
 
 def datetime_to_string(dt: datetime, **kwargs):
-    return dt.strftime('%d %b, %Y, %H:%M:%S')
+    return dt.strftime("%d %b, %Y, %H:%M:%S")
+
 
 # Custom Formatter with additional kwargs
 
+
 def custom_datetime_to_str(dt: datetime, **kwargs):
-    return dt.strftime(kwargs['format'])
+    return dt.strftime(kwargs["format"])
 
 
 class demo(tk.Tk):
     def __init__(self):
         tk.Tk.__init__(self)
-        self.grid_columnconfigure(0, weight = 1)
-        self.grid_rowconfigure(0, weight = 1)
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(0, weight=1)
         self.frame = tk.Frame(self)
-        self.frame.grid_columnconfigure(0, weight = 1)
-        self.frame.grid_rowconfigure(0, weight = 1)
-        self.sheet = Sheet(self.frame,
-                           empty_vertical = 0,
-                           empty_horizontal = 0,
-                           data = [[f"{r}"]*11 for r in range(20)]
-                           )
+        self.frame.grid_columnconfigure(0, weight=1)
+        self.frame.grid_rowconfigure(0, weight=1)
+        self.sheet = Sheet(self.frame, empty_vertical=0, empty_horizontal=0, data=[[f"{r}"] * 11 for r in range(20)])
         self.sheet.enable_bindings()
-        self.frame.grid(row = 0, column = 0, sticky = "nswe")
-        self.sheet.grid(row = 0, column = 0, sticky = "nswe")
-        self.sheet.headers(['Non-Nullable Float Cell\n1 decimals places',
-                            'Float Cell',
-                            'Int Cell',
-                            'Bool Cell',
-                            'Percentage Cell\n0 decimal places',
-                            'Custom Datetime Cell',
-                            'Custom Datetime Cell\nCustom Format String',
-                            'Float Cell that\nrounds up',
-                            'Float cell that\n strips non-numeric',
-                            'Dropdown Over Nullable\nPercentage Cell',
-                            'Percentage Cell\n2 decimal places'])
+        self.frame.grid(row=0, column=0, sticky="nswe")
+        self.sheet.grid(row=0, column=0, sticky="nswe")
+        self.sheet.headers(
+            [
+                "Non-Nullable Float Cell\n1 decimals places",
+                "Float Cell",
+                "Int Cell",
+                "Bool Cell",
+                "Percentage Cell\n0 decimal places",
+                "Custom Datetime Cell",
+                "Custom Datetime Cell\nCustom Format String",
+                "Float Cell that\nrounds up",
+                "Float cell that\n strips non-numeric",
+                "Dropdown Over Nullable\nPercentage Cell",
+                "Percentage Cell\n2 decimal places",
+            ]
+        )
+
+        # num2alpha converts column integer to letter
 
         # Some examples of data formatting
-        self.sheet.format_cell('all', 0, formatter_options = float_formatter(nullable = False))
-        self.sheet.format_cell('all', 1, formatter_options = float_formatter())
-        self.sheet.format_cell('all', 2, formatter_options = int_formatter())
-        self.sheet.format_cell('all', 3, formatter_options = bool_formatter(truthy = truthy | {"nah yeah"}, falsy = falsy | {"yeah nah"}))
-        self.sheet.format_cell('all', 4, formatter_options = percentage_formatter())
-
+        self.sheet[num2alpha(0)].format(float_formatter(nullable=False))
+        self.sheet[num2alpha(1)].format(float_formatter())
+        self.sheet[num2alpha(2)].format(int_formatter())
+        self.sheet[num2alpha(3)].format(bool_formatter(truthy=truthy | {"nah yeah"}, falsy=falsy | {"yeah nah"}))
+        self.sheet[num2alpha(4)].format(percentage_formatter())
 
         # Custom Formatters
         # Custom using generic formatter interface
-        self.sheet.format_cell('all', 5, formatter_options = formatter(datatypes = datetime,
-                                                                       format_function = convert_to_local_datetime,
-                                                                       to_str_function = datetime_to_string,
-                                                                       nullable = False,
-                                                                       invalid_value = 'NaT',
-                                                                       ))
+        self.sheet[num2alpha(5)].format(
+            formatter(
+                datatypes=datetime,
+                format_function=convert_to_local_datetime,
+                to_str_function=datetime_to_string,
+                nullable=False,
+                invalid_value="NaT",
+            )
+        )
+
         # Custom format
-        self.sheet.format_cell('all', 6, datatypes = datetime,
-                                         format_function = convert_to_local_datetime,
-                                         to_str_function = custom_datetime_to_str,
-                                         nullable = True,
-                                         invalid_value = 'NaT',
-                                         format = '(%Y-%m-%d) %H:%M %p'
-                                         )
+        self.sheet[num2alpha(6)].format(
+            datatypes=datetime,
+            format_function=convert_to_local_datetime,
+            to_str_function=custom_datetime_to_str,
+            nullable=True,
+            invalid_value="NaT",
+            format="(%Y-%m-%d) %H:%M %p",
+        )
 
         # Unique cell behaviour using the post_conversion_function
-        self.sheet.format_cell('all', 7, formatter_options = float_formatter(post_format_function = round_up))
-        self.sheet.format_cell('all', 8, formatter_options = float_formatter(), pre_format_function = only_numeric)
-
-        self.sheet.create_dropdown('all', 9, values = ['', '104%', .24, "300%", 'not a number'], set_value = 1)
-        self.sheet.format_cell('all', 9, formatter_options = percentage_formatter(), decimals = 0)
-        self.sheet.format_cell('all', 10, formatter_options = percentage_formatter(decimals = 5))
+        self.sheet[num2alpha(7)].format(float_formatter(post_format_function=round_up))
+        self.sheet[num2alpha(8)].format(float_formatter(), pre_format_function=only_numeric)
+        self.sheet[num2alpha(9)].dropdown(values=["", "104%", 0.24, "300%", "not a number"], set_value=1,)
+        self.sheet[num2alpha(9)].format(percentage_formatter(), decimals=0)
+        self.sheet[num2alpha(10)].format(percentage_formatter(decimals=5))
 
 
 app = demo()
