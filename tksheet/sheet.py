@@ -41,11 +41,6 @@ from .other_classes import (
 )
 from .row_index import RowIndex
 from .top_left_rectangle import TopLeftRectangle
-from .types import (
-    Align,
-    CreateSpanTypes,
-    Font,
-)
 from .vars import (
     emitted_events,
     get_font,
@@ -118,14 +113,14 @@ class Sheet(tk.Frame):
         set_cell_sizes_on_zoom: bool = False,
         row_height: str = "1",  # str or int
         zoom: int = 100,
-        font: Font = get_font(),
-        header_font: Font = get_header_font(),
-        index_font: Font = get_index_font(),  # currently has no effect
-        popup_menu_font: Font = get_font(),
-        align: Align = "w",
-        header_align: Align = "center",
-        row_index_align: Align | None = None,
-        index_align: Align = "center",
+        font: tuple[str, int, str] = get_font(),
+        header_font: tuple[str, int, str] = get_header_font(),
+        index_font: tuple[str, int, str] = get_index_font(),  # currently has no effect
+        popup_menu_font: tuple[str, int, str] = get_font(),
+        align: str = "w",
+        header_align: str = "center",
+        row_index_align: str | None = None,
+        index_align: str = "center",
         displayed_columns: list[int] = [],
         all_columns_displayed: bool = True,
         displayed_rows: list[int] = [],
@@ -2476,7 +2471,13 @@ class Sheet(tk.Frame):
 
     def get_data(
         self,
-        *key: CreateSpanTypes,
+        *key: None
+        | str
+        | int
+        | slice
+        | Sequence[int | None, int | None]
+        | Sequence[Sequence[int | None, int | None], Sequence[int | None, int | None]]
+        | Span,
     ) -> object:
         span = self.span_from_key(*key)
         rows, cols = self.ranges_from_span(span)
@@ -2619,7 +2620,13 @@ class Sheet(tk.Frame):
 
     def set_data(
         self,
-        *key: CreateSpanTypes,
+        *key: None
+        | str
+        | int
+        | slice
+        | Sequence[int | None, int | None]
+        | Sequence[Sequence[int | None, int | None], Sequence[int | None, int | None]]
+        | Span,
         data: object = None,
         undo: bool | None = None,
         redraw: bool = True,
@@ -2936,7 +2943,13 @@ class Sheet(tk.Frame):
 
     def clear(
         self,
-        *key: CreateSpanTypes,
+        *key: None
+        | str
+        | int
+        | slice
+        | Sequence[int | None, int | None]
+        | Sequence[Sequence[int | None, int | None], Sequence[int | None, int | None]]
+        | Span,
         undo: bool | None = None,
         redraw: bool = True,
     ) -> dict:
@@ -2973,7 +2986,13 @@ class Sheet(tk.Frame):
 
     def span_from_key(
         self,
-        *key: CreateSpanTypes,
+        *key: None
+        | str
+        | int
+        | slice
+        | Sequence[int | None, int | None]
+        | Sequence[Sequence[int | None, int | None], Sequence[int | None, int | None]]
+        | Span,
     ) -> None | Span:
         if not key:
             key = (None, None, None, None)
@@ -2991,7 +3010,13 @@ class Sheet(tk.Frame):
 
     def __getitem__(
         self,
-        *key: CreateSpanTypes,
+        *key: None
+        | str
+        | int
+        | slice
+        | Sequence[int | None, int | None]
+        | Sequence[Sequence[int | None, int | None], Sequence[int | None, int | None]]
+        | Span,
     ) -> Span:
         return self.span_from_key(*key)
 
@@ -3528,7 +3553,17 @@ class Sheet(tk.Frame):
 
     def span(
         self,
-        *key: tuple[()] | tuple[CreateSpanTypes | None],
+        *key: tuple[()]
+        | tuple[
+            None
+            | str
+            | int
+            | slice
+            | Sequence[int | None, int | None]
+            | Sequence[Sequence[int | None, int | None], Sequence[int | None, int | None]]
+            | Span
+            | None
+        ],
         type_: str = "",
         name: str = "",
         table: bool = True,
@@ -3558,8 +3593,8 @@ class Sheet(tk.Frame):
             while name in self.MT.named_spans:
                 name = num2alpha(self.named_span_id)
                 self.named_span_id += 1
-        #if not key:
-            #key = (None, None, None, None)
+        # if not key:
+        # key = (None, None, None, None)
         span = self.span_from_key(*key)
         span.name = name
         if expand is not None:
@@ -3652,7 +3687,13 @@ class Sheet(tk.Frame):
 
     def highlight(
         self,
-        *key: CreateSpanTypes,
+        *key: None
+        | str
+        | int
+        | slice
+        | Sequence[int | None, int | None]
+        | Sequence[Sequence[int | None, int | None], Sequence[int | None, int | None]]
+        | Span,
         bg: bool | None | str = False,
         fg: bool | None | str = False,
         end: bool | None = None,
@@ -3691,7 +3732,13 @@ class Sheet(tk.Frame):
 
     def dehighlight(
         self,
-        *key: CreateSpanTypes,
+        *key: None
+        | str
+        | int
+        | slice
+        | Sequence[int | None, int | None]
+        | Sequence[Sequence[int | None, int | None], Sequence[int | None, int | None]]
+        | Span,
         redraw: bool = True,
     ) -> Span:
         span = self.span_from_key(*key)
@@ -3723,7 +3770,13 @@ class Sheet(tk.Frame):
 
     def align(
         self,
-        *key: CreateSpanTypes,
+        *key: None
+        | str
+        | int
+        | slice
+        | Sequence[int | None, int | None]
+        | Sequence[Sequence[int | None, int | None], Sequence[int | None, int | None]]
+        | Span,
         align: str | None = None,
         redraw: bool = True,
     ) -> Span:
@@ -3758,7 +3811,13 @@ class Sheet(tk.Frame):
 
     def del_align(
         self,
-        *key: CreateSpanTypes,
+        *key: None
+        | str
+        | int
+        | slice
+        | Sequence[int | None, int | None]
+        | Sequence[Sequence[int | None, int | None], Sequence[int | None, int | None]]
+        | Span,
         redraw: bool = True,
     ) -> Span:
         span = self.span_from_key(*key)
@@ -3768,7 +3827,13 @@ class Sheet(tk.Frame):
 
     def readonly(
         self,
-        *key: CreateSpanTypes,
+        *key: None
+        | str
+        | int
+        | slice
+        | Sequence[int | None, int | None]
+        | Sequence[Sequence[int | None, int | None], Sequence[int | None, int | None]]
+        | Span,
         readonly: bool = True,
     ) -> Span:
         span = self.span_from_key(*key)
@@ -3819,7 +3884,13 @@ class Sheet(tk.Frame):
 
     def checkbox(
         self,
-        *key: CreateSpanTypes,
+        *key: None
+        | str
+        | int
+        | slice
+        | Sequence[int | None, int | None]
+        | Sequence[Sequence[int | None, int | None], Sequence[int | None, int | None]]
+        | Span,
         **kwargs,
     ) -> Span:
         kwargs = get_checkbox_kwargs(**kwargs)
@@ -3877,7 +3948,13 @@ class Sheet(tk.Frame):
 
     def del_checkbox(
         self,
-        *key: CreateSpanTypes,
+        *key: None
+        | str
+        | int
+        | slice
+        | Sequence[int | None, int | None]
+        | Sequence[Sequence[int | None, int | None], Sequence[int | None, int | None]]
+        | Span,
         redraw: bool = True,
     ) -> Span:
         span = self.span_from_key(*key)
@@ -3887,7 +3964,13 @@ class Sheet(tk.Frame):
 
     def click_checkbox(
         self,
-        *key: CreateSpanTypes,
+        *key: None
+        | str
+        | int
+        | slice
+        | Sequence[int | None, int | None]
+        | Sequence[Sequence[int | None, int | None], Sequence[int | None, int | None]]
+        | Span,
         checked: bool | None = None,
         redraw: bool = True,
     ) -> Span:
@@ -3938,7 +4021,13 @@ class Sheet(tk.Frame):
 
     def dropdown(
         self,
-        *key: CreateSpanTypes,
+        *key: None
+        | str
+        | int
+        | slice
+        | Sequence[int | None, int | None]
+        | Sequence[Sequence[int | None, int | None], Sequence[int | None, int | None]]
+        | Span,
         **kwargs,
     ) -> Span:
         kwargs = get_dropdown_kwargs(**kwargs)
@@ -3984,7 +4073,13 @@ class Sheet(tk.Frame):
 
     def del_dropdown(
         self,
-        *key: CreateSpanTypes,
+        *key: None
+        | str
+        | int
+        | slice
+        | Sequence[int | None, int | None]
+        | Sequence[Sequence[int | None, int | None], Sequence[int | None, int | None]]
+        | Span,
         redraw: bool = True,
     ) -> Span:
         span = self.span_from_key(*key)
@@ -4037,7 +4132,13 @@ class Sheet(tk.Frame):
 
     def format(
         self,
-        *key: CreateSpanTypes,
+        *key: None
+        | str
+        | int
+        | slice
+        | Sequence[int | None, int | None]
+        | Sequence[Sequence[int | None, int | None], Sequence[int | None, int | None]]
+        | Span,
         formatter_options: dict = {},
         formatter_class: object = None,
         redraw: bool = True,
@@ -4086,7 +4187,13 @@ class Sheet(tk.Frame):
 
     def del_format(
         self,
-        *key: CreateSpanTypes,
+        *key: None
+        | str
+        | int
+        | slice
+        | Sequence[int | None, int | None]
+        | Sequence[Sequence[int | None, int | None], Sequence[int | None, int | None]]
+        | Span,
         clear_values: bool = False,
         redraw: bool = True,
     ) -> Span:

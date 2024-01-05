@@ -5382,7 +5382,6 @@ class MainTable(tk.Canvas):
             y_stop = scrollpos_bot
         else:
             y_stop = last_row_line_pos
-        horizontal_grid_iid = None
         if redraw_table and self.show_horizontal_grid and row_pos_exists:
             if self.horizontal_grid_to_end_of_window:
                 x_grid_stop = scrollpos_right + can_width
@@ -5409,13 +5408,12 @@ class MainTable(tk.Canvas):
                 )
             )
             if points:
-                horizontal_grid_iid = self.redraw_gridline(
+                self.redraw_gridline(
                     points=points,
                     fill=self.table_grid_fg,
                     width=1,
                     tag="g",
                 )
-        vertical_grid_iid = None
         if redraw_table and self.show_vertical_grid and col_pos_exists:
             if self.vertical_grid_to_end_of_window:
                 y_grid_stop = scrollpos_bot + can_height
@@ -5442,7 +5440,7 @@ class MainTable(tk.Canvas):
                 )
             )
             if points:
-                vertical_grid_iid = self.redraw_gridline(
+                self.redraw_gridline(
                     points=points,
                     fill=self.table_grid_fg,
                     width=1,
@@ -5685,10 +5683,6 @@ class MainTable(tk.Canvas):
                 self.tag_raise("selected")
                 self.tag_raise("rowsbd")
                 self.tag_raise("columnsbd")
-                if horizontal_grid_iid is not None:
-                    self.tag_raise(horizontal_grid_iid)
-                if vertical_grid_iid is not None:
-                    self.tag_raise(vertical_grid_iid)
         if redraw_header and self.show_header:
             self.CH.redraw_grid_and_text(
                 last_col_line_pos,
@@ -6586,7 +6580,6 @@ class MainTable(tk.Canvas):
             text = f"""{self.get_cell_data(r if self.all_rows_displayed else self.displayed_rows[r],
                                            c if self.all_columns_displayed else self.displayed_columns[c],
                                            none_to_empty_str = True)}"""
-        self.hide_current()
         bg, fg = self.table_bg, self.table_fg
         self.text_editor = TextEditor(
             self,

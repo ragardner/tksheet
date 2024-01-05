@@ -1,13 +1,8 @@
 from __future__ import annotations
 
 from platform import system as get_os
-from typing import TYPE_CHECKING
 from collections import namedtuple
 
-from .types import Font
-
-if TYPE_CHECKING:
-    from tksheet.types import Theme
 
 USER_OS: str = f"{get_os()}".lower()
 ctrl_key: str = "Command" if USER_OS == "darwin" else "Control"
@@ -42,19 +37,19 @@ emitted_events: set[str] = {
 FontTuple = namedtuple("FontTuple", "family size style")
 
 
-def get_font() -> Font:
+def get_font():
     return FontTuple("Calibri", 13 if USER_OS == "darwin" else 11, "normal")
 
 
-def get_index_font() -> Font:
+def get_index_font():
     return FontTuple("Calibri", 13 if USER_OS == "darwin" else 11, "normal")
 
 
-def get_header_font() -> Font:
+def get_header_font():
     return FontTuple("Calibri", 13 if USER_OS == "darwin" else 11, "normal")
 
 
-theme_light_blue: Theme = {
+theme_light_blue = {
     "popup_menu_fg": "#000000",
     "popup_menu_bg": "#FFFFFF",
     "popup_menu_highlight_bg": "#DCDEE0",
@@ -100,7 +95,7 @@ theme_light_blue: Theme = {
     "table_selected_columns_fg": "black",
 }
 
-theme_light_green: Theme = {
+theme_light_green = {
     "popup_menu_fg": "#000000",
     "popup_menu_bg": "#FFFFFF",
     "popup_menu_highlight_bg": "#DCDEE0",
@@ -146,7 +141,7 @@ theme_light_green: Theme = {
     "table_selected_columns_fg": "black",
 }
 
-theme_dark: Theme = {
+theme_dark = {
     "popup_menu_fg": "white",
     "popup_menu_bg": "gray15",
     "popup_menu_highlight_bg": "gray40",
@@ -192,7 +187,7 @@ theme_dark: Theme = {
     "table_selected_columns_fg": "#F7F7F7",
 }
 
-theme_black: Theme = {
+theme_black = {
     "popup_menu_fg": "white",
     "popup_menu_bg": "gray15",
     "popup_menu_highlight_bg": "gray40",
@@ -238,7 +233,7 @@ theme_black: Theme = {
     "table_selected_columns_fg": "#F7F7F7",
 }
 
-theme_dark_blue: Theme = theme_black.copy()
+theme_dark_blue = theme_black.copy()
 theme_dark_blue["header_fg"] = "#6ACAD8"
 theme_dark_blue["header_selected_cells_fg"] = "#6ACAD8"
 theme_dark_blue["index_fg"] = "#6ACAD8"
@@ -253,7 +248,7 @@ theme_dark_blue["index_selected_rows_bg"] = "#6ACAD8"
 theme_dark_blue["table_selected_rows_border_fg"] = "#6ACAD8"
 theme_dark_blue["table_selected_columns_border_fg"] = "#6ACAD8"
 
-theme_dark_green: Theme = theme_black.copy()
+theme_dark_green = theme_black.copy()
 theme_dark_green["header_fg"] = "#66FFBF"
 theme_dark_green["header_selected_cells_fg"] = "#66FFBF"
 theme_dark_green["index_fg"] = "#66FFBF"
