@@ -87,7 +87,6 @@ class Sheet(tk.Frame):
         show_dropdown_borders: bool = False,
         arrow_key_down_right_scroll_page: bool = False,
         enable_edit_cell_auto_resize: bool = True,
-        edit_cell_validation: bool = True,
         data_reference: None | Sequence[Sequence[object]] = None,
         data: None | Sequence[Sequence[object]] = None,
         # either (start row, end row, "rows"), (start column, end column, "rows") or
@@ -264,7 +263,6 @@ class Sheet(tk.Frame):
             show_index=show_row_index,
             show_header=show_header,
             enable_edit_cell_auto_resize=enable_edit_cell_auto_resize,
-            edit_cell_validation=edit_cell_validation,
             page_up_down_select_row=page_up_down_select_row,
             expand_sheet_if_paste_too_big=expand_sheet_if_paste_too_big,
             paste_insert_column_limit=paste_insert_column_limit,
@@ -896,6 +894,9 @@ class Sheet(tk.Frame):
         for func in self.bound_events[event]:
             func(data)
 
+    def edit_validation(self, func: Callable | None = None) -> None:
+        self.MT.edit_validation_func = func
+
     @property
     def event(self) -> DotDict:
         return self.last_event_data
@@ -1183,8 +1184,8 @@ class Sheet(tk.Frame):
 
     def set_cell_size_to_text(
         self,
-        row,
-        column,
+        row: int,
+        column: int,
         only_set_if_too_small: bool = False,
         redraw: bool = True,
     ) -> Sheet:
@@ -1192,12 +1193,35 @@ class Sheet(tk.Frame):
         self.set_refresh_timer(redraw)
         return self
 
-    def set_width_of_index_to_text(self, text=None, *args, **kwargs) -> Sheet:
+    def set_width_of_index_to_text(self, text: None | str = None, *args, **kwargs) -> Sheet:
         self.RI.set_width_of_index_to_text(text=text)
         return self
 
-    def set_height_of_header_to_text(self, text=None) -> Sheet:
+    def set_index_width(self, pixels: int, redraw: bool = True) -> Sheet:
+        if self.RI.auto_resize_width:
+            self.RI.auto_resize_width = False
+        self.RI.set_width(pixels, set_TL=True)
+        self.set_refresh_timer(redraw)
+        return self
+
+    def set_height_of_header_to_text(self, text: None | str = None) -> Sheet:
         self.CH.set_height_of_header_to_text(text=text)
+        return self
+
+    def set_header_height_pixels(self, pixels: int, redraw: bool = True) -> Sheet:
+        self.CH.set_height(pixels, set_TL=True)
+        self.set_refresh_timer(redraw)
+        return self
+
+    def set_header_height_lines(self, nlines: int, redraw: bool = True) -> Sheet:
+        self.CH.set_height(
+            self.MT.get_lines_cell_height(
+                nlines,
+                font=self.MT.header_font,
+            ),
+            set_TL=True,
+        )
+        self.set_refresh_timer(redraw)
         return self
 
     def row_height(
@@ -2196,8 +2220,6 @@ class Sheet(tk.Frame):
             self.MT.from_clipboard_delimiters = kwargs["from_clipboard_delimiters"]
         if "show_dropdown_borders" in kwargs:
             self.MT.show_dropdown_borders = kwargs["show_dropdown_borders"]
-        if "edit_cell_validation" in kwargs:
-            self.MT.edit_cell_validation = kwargs["edit_cell_validation"]
         if "show_default_header_for_empty" in kwargs:
             self.CH.show_default_header_for_empty = kwargs["show_default_header_for_empty"]
         if "show_default_index_for_empty" in kwargs:
@@ -3479,12 +3501,12 @@ class Sheet(tk.Frame):
 
     def headers(
         self,
-        newheaders=None,
-        index=None,
+        newheaders: object = None,
+        index: None | int = None,
         reset_col_positions: bool = False,
         show_headers_if_not_sheet: bool = True,
-        redraw: bool = False,
-    ):
+        redraw: bool = True,
+    ) -> object:
         self.set_refresh_timer(redraw)
         return self.MT.headers(
             newheaders,
@@ -3496,12 +3518,12 @@ class Sheet(tk.Frame):
 
     def row_index(
         self,
-        newindex=None,
-        index=None,
+        newindex: object = None,
+        index: None | int = None,
         reset_row_positions: bool = False,
         show_index_if_not_sheet: bool = True,
-        redraw: bool = False,
-    ):
+        redraw: bool = True,
+    ) -> object:
         self.set_refresh_timer(redraw)
         return self.MT.row_index(
             newindex,

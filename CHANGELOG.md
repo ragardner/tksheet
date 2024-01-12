@@ -1,5 +1,6 @@
 ### Version 7.0.0
 #### Removed:
+- `edit_cell_validation` from `Sheet()` initialization, `set_options()` and everywhere else due to confusion. Use the new function `edit_validation()` instead.
 - Functions (use spans instead for the same purpose):
     - `header_checkbox`
     - `index_checkbox`
@@ -19,6 +20,7 @@
 - Deselect events firing when unnecessary
 
 #### Changed:
+- Using `extra_bindings()` with `"end_edit_cell"`/`"edit_cell"` no longer requires a return value in your bound function to set the cell value to. For end user cell edit validation use the new function `edit_validation()` instead
 - Changed functions:
     - Arguments and behavior:
         - `checkbox` now is used to create checkboxes and utilises spans
@@ -34,10 +36,11 @@
         - `align` -> `table_align`
 
 #### Added:
+- Method `edit_validation(func: Callable | None = None) -> None` to replace `edit_cell_validation`
 - New methods for getting and setting data
 - `bind` now also accepts `"<<SheetModified>>"` and `"<<SheetRedrawn>>"` arguments
 - Redo, which is enabled when undo is enabled, use by pressing ctrl/cmd + shift + z
-- named spans for sheet options such as highlight, format
+- Named spans for sheet options such as highlight, format
 - Ctrl/cmd click deselect
 - Ability to make currently selected box border different color to selection box border
 

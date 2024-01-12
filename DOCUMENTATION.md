@@ -120,10 +120,10 @@ app.mainloop()
 ---
 # **Basic Use**
 
-This is to demonstrate a bit of tksheets basic functionality.
+This is to demonstrate some of tksheets functionality.
 
 ```python
-from tksheet import Sheet
+from tksheet import Sheet, num2alpha
 import tkinter as tk
 
 
@@ -141,7 +141,7 @@ class demo(tk.Tk):
             # set the Sheets parent widget
             self.frame,
             # optional: set the Sheets data at initialization
-            data=[[f"Row {r}, Column {c}\nnewline1\nnewline2" for c in range(50)] for r in range(500)],
+            data=[[f"Row {r}, Column {c}\nnewline1\nnewline2" for c in range(20)] for r in range(100)],
             theme="light green",
             height=520,
             width=1000,
@@ -149,20 +149,51 @@ class demo(tk.Tk):
         # enable various bindings
         self.sheet.enable_bindings("all", "edit_index", "edit_header")
 
+        # set a user edit validation function
+        # more information at:
+        # https://github.com/ragardner/tksheet/wiki/Version-7#validate-user-cell-edits
+        self.sheet.edit_validation(self.validate_edits)
+
         # bind all sheet modification events to a function
         self.sheet.bind("<<SheetModified>>", self.sheet_modified)
 
         # add some new commands to the in-built right click menu
         # setting data
-        self.sheet.popup_menu_add_command("Say Hello", self.say_hello)
+        self.sheet.popup_menu_add_command("Say Hello", self.say_hello, index_menu=False, header_menu=False, empty_space_menu=False,)
         # getting data
-        self.sheet.popup_menu_add_command("Print some data", self.print_data)
+        self.sheet.popup_menu_add_command("Print some data", self.print_data, empty_space_menu=False,)
         # overwrite Sheet data
         self.sheet.popup_menu_add_command("Reset Sheet data", self.reset)
         # set the header
+        self.sheet.popup_menu_add_command(
+            "Set header data",
+            self.set_header,
+            table_menu=False,
+            index_menu=False,
+            empty_space_menu=False,
+        )
+        # set the index
+        self.sheet.popup_menu_add_command(
+            "Set index data",
+            self.set_index,
+            table_menu=False,
+            header_menu=False,
+            empty_space_menu=False,
+        )
 
         self.frame.grid(row=0, column=0, sticky="nswe")
         self.sheet.grid(row=0, column=0, sticky="nswe")
+
+    def validate_edits(self, event):
+        # print (event)
+        if event.evantname.endswith("header"):
+            return event.value + " edited header"
+        elif event.eventname.endswith("index"):
+            return event.value + " edited index"
+        else:
+            if not event.value:
+                return "EMPTY"
+            return event.value[:3]
 
     def say_hello(self):
         current_selection = self.sheet.get_currently_selected()
@@ -187,7 +218,17 @@ class demo(tk.Tk):
     def reset(self):
         # overwrites sheet data, more information at:
         # https://github.com/ragardner/tksheet/wiki/Version-7#setting-sheet-data
-        self.sheet.set_sheet_data([[f"Row {r}, Column {c}\nnewline1\nnewline2" for c in range(50)] for r in range(500)])
+        self.sheet.set_sheet_data([[f"Row {r}, Column {c}\nnewline1\nnewline2" for c in range(20)] for r in range(100)])
+        # reset header and index
+        self.sheet.headers([])
+        self.sheet.index([])
+
+    def set_header(self):
+        self.sheet.headers([f"Header {(letter := num2alpha(i))} - {i + 1}\nHeader {letter} 2nd line!" for i in range(20)])
+
+    def set_index(self):
+        self.sheet.set_index_width()
+        self.sheet.row_index([f"Index {(letter := num2alpha(i))} - {i + 1}\nIndex {letter} 2nd line!" for i in range(100)])
 
     def sheet_modified(self, event):
         # uncomment below if you want to take a look at the event object
@@ -256,7 +297,6 @@ paste_insert_row_limit: int = None,
 show_dropdown_borders: bool = False,
 arrow_key_down_right_scroll_page: bool = False,
 enable_edit_cell_auto_resize: bool = True,
-edit_cell_validation: bool = True,
 data_reference: list = None,
 data: list = None,
 # either (start row, end row, "rows"), (start column, end column, "rows") or
@@ -356,9 +396,6 @@ top_left_fg_highlight: str = theme_light_blue["top_left_fg_highlight"],
 - `startup_select` selects cells, rows or columns at initialization by using a `tuple` e.g. `(0, 0, "cells")` for cell A0 or `(0, 5, "rows")` for rows 0 to 5.
 - `data_reference` and `data` are essentially the same.
 - `row_index` and `index` are the same, `index` takes priority, same as with `headers` and `header`.
-- `edit_cell_validation` (`bool`) is used when `extra_bindings()` have been set for cell edits. If a bound function returns something other than `None` it will be used as the cell value instead of the user input.
-   - `True` makes data edits take place after the binding function is run.
-   - `False` makes data edits take place before the binding function is run.
 
 You can change these settings after initialization using the `set_options()` function.
 
@@ -536,7 +573,9 @@ ___
 
 #### **Bind specific table functionality**
 
-This function allows you to bind very specific table functionality to your own functions. If you want less specificity in event names you can also bind all sheet modifying events to a single function, [see here](https://github.com/ragardner/tksheet/wiki/Version-7#bind-tkinter-events).
+This function allows you to bind very specific table functionality to your own functions.
+- If you want less specificity in event names you can also bind all sheet modifying events to a single function, [see here](https://github.com/ragardner/tksheet/wiki/Version-7#bind-tkinter-events).
+- If you want to validate user cell edits [see here](https://github.com/ragardner/tksheet/wiki/Version-7#validate-user-cell-edits).
 
 ```python
 extra_bindings(bindings, func=None)
@@ -551,9 +590,8 @@ Notes:
     - `bindings` as an `iterable` of `list`s or `tuple`s with length of two, e.g.
         - `extra_bindings([(binding, function), (binding, function), ...])` In this example you could also use `None` in the place of `function` to unbind the binding.
         - In this case the arg `func` is totally ignored.
-- For most of the `"end_..."` events the bound function is run before the value is set.
+- For `"end_..."` events the bound function is run before the value is set.
 - **To unbind** a function either set `func` argument to `None` or leave it as default e.g. `extra_bindings("begin_copy")` to unbind `"begin_copy"`.
-- The bound function for `"end_edit_cell"` is run before the cell data is set in order that a return value can set the cell instead of the user input. Using the event you can assess the user input and if needed override it with a return value which is not `None`. If `None` is the return value then the user input will NOT be overridden. The setting `edit_cell_validation` (see initialization or the function `set_options()`) can be used to turn off this return value checking. The `edit_cell` bindings also run if header/index editing is turned on.
 
 Parameters:
 - `bindings` (`str`) options are:
@@ -603,8 +641,9 @@ Parameters:
 	- `"bind_all"`
 	- `"unbind_all"`
 - `func` argument is the function you want to send the binding event to.
-- Using one of the following `"all_modified_events"`, `"sheetmodified"`, `"sheet_modified"`, `"modified_events"`, `"modified"` will make any insert, delete or cell edit including pastes and undos send an event to your function. Please **note** that this will mean your function will have to return a value to use for cell edits unless the setting `edit_cell_validation` is `False`.
+- Using one of the following `"all_modified_events"`, `"sheetmodified"`, `"sheet_modified"`, `"modified_events"`, `"modified"` will make any insert, delete or cell edit including pastes and undos send an event to your function.
 - For events `"begin_move_columns"`/`"begin_move_rows"` the point where columns/rows will be moved to will be under the `event_data` key `"value"`.
+- For `"begin_edit..."` events the bound function must return a value to open the cell editor with, example [here](https://github.com/ragardner/tksheet/wiki/Version-7#example-custom-right-click-and-text-editor-validation).
 
 **For tksheet versions earlier than `7.0.0`:**
 - Upon an event being triggered the bound function will be sent a [namedtuple](https://docs.python.org/3/library/collections.html#collections.namedtuple) containing variables relevant to that event, use `print()` or similar to see all the variable names in the event. Each event contains different variable names with the exception of `eventname` e.g. `event.eventname`.
@@ -816,6 +855,15 @@ unbind(binding)
 ```
 
 ___
+
+#### **Validate user cell edits**
+
+With this function you can validate all user cell edits. From cut, paste, delete (including column/row clear), dropdown boxes and cell edits.
+```python
+edit_validation(func: Callable | None = None) -> None
+```
+Parameters:
+- `func` (`Callable`, `None`) must either be a function which will receive a tksheet event dict which looks like [this](https://github.com/ragardner/tksheet/wiki/Version-7#event-data) or `None` which unbinds the function.
 
 #### **Add commands to the in-built right click popup menu**
 ```python
@@ -3282,9 +3330,28 @@ set_width_of_index_to_text(text = None)
 ___
 
 ```python
+set_index_width(pixels: int, redraw: bool = True) -> Sheet
+```
+- Note that it disables auto resizing of index. Use `set_options()` to restore auto resizing.
+
+___
+
+```python
 set_height_of_header_to_text(text = None)
 ```
 - `text` (`str`, `None`) provide a `str` to set the height to or use `None` to set it to existing values in the header.
+
+___
+
+```python
+set_header_height_pixels(pixels: int, redraw: bool = True) -> Sheet
+```
+
+___
+
+```python
+set_header_height_lines(nlines: int, redraw: bool = True) -> Sheet
+```
 
 ___
 
@@ -3694,7 +3761,6 @@ to_clipboard_quotechar
 to_clipboard_lineterminator
 from_clipboard_delimiters
 show_dropdown_borders
-edit_cell_validation
 show_default_header_for_empty
 show_default_index_for_empty
 selected_rows_to_end_of_window
@@ -3898,41 +3964,47 @@ import tkinter as tk
 class demo(tk.Tk):
     def __init__(self):
         tk.Tk.__init__(self)
-        self.grid_columnconfigure(0, weight = 1)
-        self.grid_rowconfigure(0, weight = 1)
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(0, weight=1)
         self.frame = tk.Frame(self)
-        self.frame.grid_columnconfigure(0, weight = 1)
-        self.frame.grid_rowconfigure(0, weight = 1)
+        self.frame.grid_columnconfigure(0, weight=1)
+        self.frame.grid_rowconfigure(0, weight=1)
         self.sheet = Sheet(self.frame,
-                           data = [[f"Row {r}, Column {c}\nnewline1\nnewline2" for c in range(50)] for r in range(500)])
-        self.sheet.enable_bindings("single_select",
-                                   "drag_select",
-                                   "edit_cell",
-                                   "select_all",
-                                   "column_select",
-                                   "row_select",
-                                   "column_width_resize",
-                                   "double_click_column_resize",
-                                   "arrowkeys",
-                                   "row_height_resize",
-                                   "double_click_row_resize",
-                                   "right_click_popup_menu",
-                                   "rc_select")
-        self.sheet.extra_bindings([("begin_edit_cell", self.begin_edit_cell),
-                                   ("end_edit_cell", self.end_edit_cell)])
+                           data=[[f"Row {r}, Column {c}\nnewline1\nnewline2" for c in range(50)] for r in range(500)])
+        self.sheet.enable_bindings(
+            "single_select",
+            "drag_select",
+            "edit_cell",
+            "paste",
+            "cut",
+            "copy",
+            "delete",
+            "select_all",
+            "column_select",
+            "row_select",
+            "column_width_resize",
+            "double_click_column_resize",
+            "arrowkeys",
+            "row_height_resize",
+            "double_click_row_resize",
+            "right_click_popup_menu",
+            "rc_select",
+        )
+        self.sheet.extra_bindings("begin_edit_cell", self.begin_edit_cell)
+        self.sheet.edit_validation(self.validate_edits)
         self.sheet.popup_menu_add_command("Say Hello", self.new_right_click_button)
-        self.frame.grid(row = 0, column = 0, sticky = "nswe")
-        self.sheet.grid(row = 0, column = 0, sticky = "nswe")
+        self.frame.grid(row=0, column=0, sticky="nswe")
+        self.sheet.grid(row=0, column=0, sticky="nswe")
 
-    def new_right_click_button(self, event = None):
+    def new_right_click_button(self, event=None):
         print ("Hello World!")
 
-    def begin_edit_cell(self, event = None):
+    def begin_edit_cell(self, event=None):
         return event.value
 
-    def end_edit_cell(self, event = None):
-        # remove spaces from user input
-        if event.value is not None:
+    def validate_edits(self, event):
+        # remove spaces from any cell edits, including paste
+        if isinstance(event.value, str) and event.value:
             return event.value.replace(" ", "")
 
 

@@ -5,6 +5,9 @@ from collections.abc import (
     Callable,
 )
 from collections import defaultdict
+from functools import (
+    partial,
+)
 from itertools import (
     chain,
     cycle,
@@ -1823,36 +1826,21 @@ class RowIndex(tk.Canvas):
             boxes=self.MT.get_boxes(),
             selected=self.MT.currently_selected(),
         )
-        if self.extra_end_edit_cell_func is None and self.input_valid_for_cell(datarn, self.text_editor_value):
-            self.set_cell_data_undo(
-                r,
-                datarn=datarn,
-                value=self.text_editor_value,
-                check_input_valid=False,
-            )
-        elif (
-            self.extra_end_edit_cell_func is not None
-            and not self.MT.edit_cell_validation
-            and self.input_valid_for_cell(datarn, self.text_editor_value)
-        ):
-            self.set_cell_data_undo(
-                r,
-                datarn=datarn,
-                value=self.text_editor_value,
-                check_input_valid=False,
-            )
-            self.extra_end_edit_cell_func(event_data)
-        elif self.extra_end_edit_cell_func is not None and self.MT.edit_cell_validation:
-            validation = self.extra_end_edit_cell_func(event_data)
-            if validation is not None:
-                self.text_editor_value = validation
-                if self.input_valid_for_cell(datarn, self.text_editor_value):
-                    self.set_cell_data_undo(
-                        r,
-                        datarn=datarn,
-                        value=self.text_editor_value,
-                        check_input_valid=False,
-                    )
+        edited = False
+        set_data = partial(
+            self.set_cell_data_undo,
+            r=r,
+            datarn=datarn,
+            check_input_valid=False,
+        )
+        if self.MT.edit_validation_func:
+            self.text_editor_value = self.MT.edit_validation_func(event_data)
+            if self.text_editor_value is not None and self.input_valid_for_cell(datarn, self.text_editor_value):
+                edited = set_data(value=self.text_editor_value)
+        elif self.input_valid_for_cell(datarn, self.text_editor_value):
+            edited = set_data(value=self.text_editor_value)
+        if edited:
+            try_binding(self.extra_end_edit_cell_func, event_data)
         self.close_dropdown_window(r)
         self.MT.recreate_all_selection_boxes()
         self.MT.refresh()
@@ -1970,6 +1958,7 @@ class RowIndex(tk.Canvas):
             datarn = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r]
             kwargs = self.get_cell_kwargs(datarn, key="dropdown")
             pre_edit_value = self.get_cell_data(datarn)
+            edited = False
             event_data = event_dict(
                 name="end_edit_index",
                 sheet=self.parentframe.name,
@@ -1982,16 +1971,14 @@ class RowIndex(tk.Canvas):
             )
             if kwargs["select_function"] is not None:  # user has specified a selection function
                 kwargs["select_function"](event_data)
-            if self.extra_end_edit_cell_func is None:
-                self.set_cell_data_undo(r, datarn=datarn, value=selection, redraw=not redraw)
-            elif self.extra_end_edit_cell_func is not None and self.MT.edit_cell_validation:
-                validation = self.extra_end_edit_cell_func(event_data)
-                if validation is not None:
-                    selection = validation
-                self.set_cell_data_undo(r, datarn=datarn, value=selection, redraw=not redraw)
-            elif self.extra_end_edit_cell_func is not None and not self.MT.edit_cell_validation:
-                self.set_cell_data_undo(r, datarn=datarn, value=selection, redraw=not redraw)
-                self.extra_end_edit_cell_func(event_data)
+            if self.MT.edit_validation_func:
+                selection = self.MT.edit_validation_func(event_data)
+                if selection is not None:
+                    edited = self.set_cell_data_undo(r, datacn=datarn, value=selection, redraw=not redraw)
+            else:
+                edited = self.set_cell_data_undo(r, datacn=datarn, value=selection, redraw=not redraw)
+            if edited:
+                try_binding(self.extra_end_edit_cell_func, event_data)
             self.focus_set()
             self.MT.recreate_all_selection_boxes()
         self.destroy_text_editor("Escape")
@@ -2074,19 +2061,23 @@ class RowIndex(tk.Canvas):
             boxes=self.MT.get_boxes(),
             selected=self.MT.currently_selected(),
         )
+        edited = False
         if isinstance(self.MT._row_index, int):
-            self.MT.set_cell_data_undo(r=r, c=self.MT._row_index, datarn=datarn, value=value, undo=True)
+            edited = self.MT.set_cell_data_undo(r=r, c=self.MT._row_index, datarn=datarn, value=value, undo=True)
         else:
             self.fix_index(datarn)
             if not check_input_valid or self.input_valid_for_cell(datarn, value):
                 if self.MT.undo_enabled and undo:
                     self.MT.undo_stack.append(ev_stack_dict(event_data))
                 self.set_cell_data(datarn=datarn, value=value)
-        if cell_resize and self.MT.cell_auto_resize_enabled:
+                edited = True
+        if edited and cell_resize and self.MT.cell_auto_resize_enabled:
             self.set_row_height_run_binding(r, only_set_if_too_small=False)
         if redraw:
             self.MT.refresh()
-        self.MT.sheet_modified(event_data)
+        if edited:
+            self.MT.sheet_modified(event_data)
+        return edited
 
     def set_cell_data(self, datarn=None, value=""):
         if isinstance(self.MT._row_index, int):

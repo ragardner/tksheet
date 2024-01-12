@@ -18,6 +18,9 @@ from collections.abc import (
     Iterator,
     Sequence,
 )
+from functools import (
+    partial,
+)
 from itertools import (
     accumulate,
     chain,
@@ -59,6 +62,7 @@ from .functions import (
     is_iterable,
     is_type_int,
     len_to_idx,
+    mod_event_val,
     mod_span,
     move_elements_by_mapping,
     pickle_obj,
@@ -165,7 +169,6 @@ class MainTable(tk.Canvas):
         self.auto_resize_rows = kwargs["auto_resize_rows"]
         self.allow_auto_resize_columns = True
         self.allow_auto_resize_rows = True
-        self.edit_cell_validation = kwargs["edit_cell_validation"]
         self.display_selected_fg_over_highlights = kwargs["display_selected_fg_over_highlights"]
         self.show_index = kwargs["show_index"]
         self.show_header = kwargs["show_header"]
@@ -185,6 +188,8 @@ class MainTable(tk.Canvas):
         self.extra_b1_release_func = None
         self.extra_double_b1_func = None
         self.extra_rc_func = None
+
+        self.edit_validation_func = None
 
         self.extra_begin_ctrl_c_func = None
         self.extra_end_ctrl_c_func = None
@@ -615,9 +620,18 @@ class MainTable(tk.Canvas):
                     for c in range(c1, c2):
                         datacn = self.datacn(c)
                         row.append(self.get_cell_clipboard(datarn, datacn))
-                        event_data = self.event_data_set_cell(
-                            datarn, datacn, self.get_value_for_empty_cell(datarn, datacn), event_data
-                        )
+                        val = self.get_value_for_empty_cell(datarn, datacn)
+                        if not self.edit_validation_func or (
+                            self.edit_validation_func
+                            and (val := self.edit_validation_func(mod_event_val(event_data, val, (r1 + rn, c))))
+                            is not None
+                        ):
+                            event_data = self.event_data_set_cell(
+                                datarn,
+                                datacn,
+                                val,
+                                event_data,
+                            )
                 writer.writerow(row)
         else:
             for r1, c1, r2, c2 in boxes:
@@ -627,9 +641,18 @@ class MainTable(tk.Canvas):
                     for c in range(c1, c2):
                         datacn = self.datacn(c)
                         row.append(self.get_cell_clipboard(datarn, datacn))
-                        event_data = self.event_data_set_cell(
-                            datarn, datacn, self.get_value_for_empty_cell(datarn, datacn), event_data
-                        )
+                        val = self.get_value_for_empty_cell(datarn, datacn)
+                        if not self.edit_validation_func or (
+                            self.edit_validation_func
+                            and (val := self.edit_validation_func(mod_event_val(event_data, val, (r1 + rn, c))))
+                            is not None
+                        ):
+                            event_data = self.event_data_set_cell(
+                                datarn,
+                                datacn,
+                                val,
+                                event_data,
+                            )
                     writer.writerow(row)
         if event_data["cells"]["table"]:
             self.undo_stack.append(ev_stack_dict(event_data))
@@ -758,13 +781,19 @@ class MainTable(tk.Canvas):
         # instead of editing table using set cell data, add any new rows then columns with pasted data
         for ndr, r in enumerate(range(selected_r, selected_r_adjusted_new_data_numrows)):
             for ndc, c in enumerate(range(selected_c, selected_c_adjusted_new_data_numcols)):
-                event_data = self.event_data_set_cell(
-                    datarn=self.datarn(r),
-                    datacn=self.datacn(c),
-                    value=data[ndr][ndc],
-                    event_data=event_data,
-                )
+                val = data[ndr][ndc]
+                if not self.edit_validation_func or (
+                    self.edit_validation_func
+                    and (val := self.edit_validation_func(mod_event_val(event_data, val, (r, c)))) is not None
+                ):
+                    event_data = self.event_data_set_cell(
+                        datarn=self.datarn(r),
+                        datacn=self.datacn(c),
+                        value=val,
+                        event_data=event_data,
+                    )
         if added_rows > 0:
+            ctr = 0
             data_ins_row = len(self.data)
             displayed_ins_row = len(self.row_positions) - 1
             if total_data_cols is None:
@@ -787,14 +816,24 @@ class MainTable(tk.Canvas):
                         selected_c_adjusted_new_data_numcols,
                     )
                 ):
-                    rows[r][self.datacn(c)] = data[ndr][ndc]
-            event_data = self.add_rows(
-                rows=rows,
-                index=index,
-                row_heights=row_heights,
-                event_data=event_data,
-            )
+                    val = data[ndr][ndc]
+                    datacn = self.datacn(c)
+                    if not self.edit_validation_func or (
+                        self.edit_validation_func
+                        and (val := self.edit_validation_func(mod_event_val(event_data, val, (r, c)))) is not None
+                        and self.input_valid_for_cell(r, datacn, val)
+                    ):
+                        rows[r][datacn] = val
+                        ctr += 1
+            if ctr:
+                event_data = self.add_rows(
+                    rows=rows,
+                    index=index,
+                    row_heights=row_heights,
+                    event_data=event_data,
+                )
         if added_cols > 0:
+            ctr = 0
             data_ins_col = total_data_cols
             displayed_ins_col = len(self.col_positions) - 1
             columns, headers, column_widths = self.get_args_for_add_columns(
@@ -815,13 +854,22 @@ class MainTable(tk.Canvas):
                     ),
                     reversed(columns),
                 ):
-                    columns[c][self.datarn(r)] = data[ndr][ndc]
-            event_data = self.add_columns(
-                columns=columns,
-                header=headers,
-                column_widths=column_widths,
-                event_data=event_data,
-            )
+                    val = data[ndr][ndc]
+                    datarn = self.datarn(r)
+                    if not self.edit_validation_func or (
+                        self.edit_validation_func
+                        and (val := self.edit_validation_func(mod_event_val(event_data, val, (r, c)))) is not None
+                        and self.input_valid_for_cell(datarn, c, val)
+                    ):
+                        columns[c][datarn] = val
+                        ctr += 1
+            if ctr:
+                event_data = self.add_columns(
+                    columns=columns,
+                    header=headers,
+                    column_widths=column_widths,
+                    event_data=event_data,
+                )
         self.deselect("all", redraw=False)
         if event_data["cells"]["table"] or event_data["added"]["rows"] or event_data["added"]["columns"]:
             self.undo_stack.append(ev_stack_dict(event_data))
@@ -864,9 +912,17 @@ class MainTable(tk.Canvas):
             for r in range(r1, r2):
                 for c in range(c1, c2):
                     datarn, datacn = self.datarn(r), self.datacn(c)
-                    event_data = self.event_data_set_cell(
-                        datarn, datacn, self.get_value_for_empty_cell(datarn, datacn), event_data
-                    )
+                    val = self.get_value_for_empty_cell(datarn, datacn)
+                    if not self.edit_validation_func or (
+                        self.edit_validation_func
+                        and (val := self.edit_validation_func(mod_event_val(event_data, val, (r, c)))) is not None
+                    ):
+                        event_data = self.event_data_set_cell(
+                            datarn,
+                            datacn,
+                            val,
+                            event_data,
+                        )
         if event_data["cells"]["table"]:
             self.undo_stack.append(ev_stack_dict(event_data))
             try_binding(self.extra_end_delete_key_func, event_data, "end_delete")
@@ -1725,7 +1781,7 @@ class MainTable(tk.Canvas):
                 self.set_currently_selected(0, 0, item=item)
             if redraw:
                 self.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
-            if self.select_all_binding_func is not None and run_binding_func:
+            if self.select_all_binding_func and run_binding_func:
                 self.select_all_binding_func(
                     self.get_select_event(being_drawn_item=self.being_drawn_item),
                 )
@@ -1933,7 +1989,7 @@ class MainTable(tk.Canvas):
             self.set_current_to_last()
         if redraw:
             self.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
-        if run_binding and self.deselection_binding_func is not None:
+        if run_binding and self.deselection_binding_func:
             self.deselection_binding_func(
                 self.get_select_event(being_drawn_item=self.being_drawn_item),
                 # event_dict(
@@ -2866,7 +2922,7 @@ class MainTable(tk.Canvas):
 
     def mouse_motion(self, event: object):
         self.reset_mouse_motion_creations()
-        if self.extra_motion_func is not None:
+        if self.extra_motion_func:
             self.extra_motion_func(event)
 
     def not_currently_resizing(self) -> bool:
@@ -2916,7 +2972,7 @@ class MainTable(tk.Canvas):
                         popup_menu = self.rc_popup_menu
             else:
                 popup_menu = self.empty_rc_popup_menu
-        if self.extra_rc_func is not None:
+        if self.extra_rc_func:
             self.extra_rc_func(event)
         if popup_menu is not None:
             popup_menu.tk_popup(event.x_root, event.y_root)
@@ -2940,7 +2996,7 @@ class MainTable(tk.Canvas):
             if r < len(self.row_positions) - 1 and c < len(self.col_positions) - 1:
                 self.toggle_select_cell(r, c, redraw=True)
         self.b1_pressed_loc = (r, c)
-        if self.extra_b1_press_func is not None:
+        if self.extra_b1_press_func:
             self.extra_b1_press_func(event)
 
     def create_resize_line(self, x1, y1, x2, y2, width, fill, tag):
@@ -2979,7 +3035,7 @@ class MainTable(tk.Canvas):
                     self.being_drawn_item = self.add_selection(
                         rowsel, colsel, set_as_current=True, run_binding_func=False
                     )
-                    if self.ctrl_selection_binding_func is not None:
+                    if self.ctrl_selection_binding_func:
                         self.ctrl_selection_binding_func(
                             self.get_select_event(being_drawn_item=self.being_drawn_item),
                         )
@@ -3007,7 +3063,7 @@ class MainTable(tk.Canvas):
                         rowsel, colsel, set_as_current=True, run_binding_func=False
                     )
                 self.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True, redraw_table=True)
-                if self.shift_selection_binding_func is not None:
+                if self.shift_selection_binding_func:
                     self.shift_selection_binding_func(
                         self.get_select_event(being_drawn_item=self.being_drawn_item),
                     )
@@ -3030,7 +3086,7 @@ class MainTable(tk.Canvas):
                 else:
                     self.being_drawn_item = self.select_cell(rowsel, colsel, redraw=False, run_binding_func=False)
                 self.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True, redraw_table=True)
-                if self.shift_selection_binding_func is not None:
+                if self.shift_selection_binding_func:
                     self.shift_selection_binding_func(
                         self.get_select_event(being_drawn_item=self.being_drawn_item),
                     )
@@ -3098,7 +3154,7 @@ class MainTable(tk.Canvas):
                             currently_selected.row, currently_selected.column, run_binding_func=False
                         )
                     need_redraw = True
-                    if self.drag_selection_binding_func is not None:
+                    if self.drag_selection_binding_func:
                         self.drag_selection_binding_func(
                             self.get_select_event(being_drawn_item=self.being_drawn_item),
                         )
@@ -3106,7 +3162,7 @@ class MainTable(tk.Canvas):
                 need_redraw = True
             if need_redraw:
                 self.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True, redraw_table=True)
-        if self.extra_b1_motion_func is not None:
+        if self.extra_b1_motion_func:
             self.extra_b1_motion_func(event)
 
     def ctrl_b1_motion(self, event: object):
@@ -3144,7 +3200,7 @@ class MainTable(tk.Canvas):
                             set_as_current=True,
                         )
                     need_redraw = True
-                    if self.drag_selection_binding_func is not None:
+                    if self.drag_selection_binding_func:
                         self.drag_selection_binding_func(
                             self.get_select_event(being_drawn_item=self.being_drawn_item),
                         )
@@ -3166,7 +3222,7 @@ class MainTable(tk.Canvas):
                 state="hidden" if to_sel[2] - to_sel[0] == 1 and to_sel[3] - to_sel[1] == 1 else "normal",
                 set_current=currently_selected,
             )
-            if self.drag_selection_binding_func is not None:
+            if self.drag_selection_binding_func:
                 self.drag_selection_binding_func(
                     self.get_select_event(being_drawn_item=self.being_drawn_item),
                 )
@@ -3211,7 +3267,7 @@ class MainTable(tk.Canvas):
                 self.mouseclick_outside_editor_or_dropdown_all_canvases()
         self.b1_pressed_loc = None
         self.closed_dropdown = None
-        if self.extra_b1_release_func is not None:
+        if self.extra_b1_release_func:
             self.extra_b1_release_func(event)
 
     def double_b1(self, event=None):
@@ -3236,7 +3292,7 @@ class MainTable(tk.Canvas):
                 self.toggle_select_cell(r, c, redraw=True)
                 if self.edit_cell_enabled:
                     self.open_cell(event)
-        if self.extra_double_b1_func is not None:
+        if self.extra_double_b1_func:
             self.extra_double_b1_func(event)
 
     def identify_row(self, event=None, y=None, allow_end=True):
@@ -3720,7 +3776,7 @@ class MainTable(tk.Canvas):
             ]
             self.col_positions[c + 1] = new_col_pos
             new_width = self.col_positions[c + 1] - self.col_positions[c]
-            if run_binding and self.CH.column_width_resize_func is not None and old_width != new_width:
+            if run_binding and self.CH.column_width_resize_func and old_width != new_width:
                 self.CH.column_width_resize_func(
                     event_dict(
                         name="resize",
@@ -3737,7 +3793,7 @@ class MainTable(tk.Canvas):
             ]
             self.row_positions[r + 1] = new_row_pos
             new_height = self.row_positions[r + 1] - self.row_positions[r]
-            if run_binding and self.RI.row_height_resize_func is not None and old_height != new_height:
+            if run_binding and self.RI.row_height_resize_func and old_height != new_height:
                 self.RI.row_height_resize_func(
                     event_dict(
                         name="resize",
@@ -6137,17 +6193,17 @@ class MainTable(tk.Canvas):
 
     def run_selection_binding(self, type_: str) -> None:
         if type_ == "cells":
-            if self.selection_binding_func is not None:
+            if self.selection_binding_func:
                 self.selection_binding_func(
                     self.get_select_event(being_drawn_item=self.being_drawn_item),
                 )
         elif type_ == "rows":
-            if self.RI.selection_binding_func is not None:
+            if self.RI.selection_binding_func:
                 self.RI.selection_binding_func(
                     self.get_select_event(being_drawn_item=self.RI.being_drawn_item),
                 )
         elif type_ == "columns":
-            if self.CH.selection_binding_func is not None:
+            if self.CH.selection_binding_func:
                 self.CH.selection_binding_func(
                     self.get_select_event(being_drawn_item=self.CH.being_drawn_item),
                 )
@@ -6541,7 +6597,7 @@ class MainTable(tk.Canvas):
         else:
             return False
         self.text_editor_loc = (r, c)
-        if self.extra_begin_edit_cell_func is not None:
+        if self.extra_begin_edit_cell_func:
             try:
                 text = self.extra_begin_edit_cell_func(
                     event_dict(
@@ -6727,8 +6783,7 @@ class MainTable(tk.Canvas):
         self.destroy_text_editor()
         currently_selected = self.currently_selected()
         r, c = editor_info[0], editor_info[1]
-        datarn = self.datarn(r)
-        datacn = self.datacn(c)
+        datarn, datacn = self.datarn(r), self.datacn(c)
         event_data = event_dict(
             name="end_edit_table",
             sheet=self.parentframe.name,
@@ -6740,46 +6795,23 @@ class MainTable(tk.Canvas):
             selected=currently_selected,
         )
         move_down = False
-        if self.extra_end_edit_cell_func is None and self.input_valid_for_cell(
-            datarn, datacn, self.text_editor_value
-        ):
-            move_down = self.set_cell_data_undo(
-                r,
-                c,
-                datarn=datarn,
-                datacn=datacn,
-                value=self.text_editor_value,
-                redraw=False,
-                check_input_valid=False,
-            )
-        elif (
-            self.extra_end_edit_cell_func is not None
-            and not self.edit_cell_validation
-            and self.input_valid_for_cell(datarn, datacn, self.text_editor_value)
-        ):
-            move_down = self.set_cell_data_undo(
-                r,
-                c,
-                datarn=datarn,
-                datacn=datacn,
-                value=self.text_editor_value,
-                redraw=False,
-                check_input_valid=False,
-            )
-            self.extra_end_edit_cell_func(event_data)
-        elif self.extra_end_edit_cell_func is not None and self.edit_cell_validation:
-            validation = self.extra_end_edit_cell_func(event_data)
-            self.text_editor_value = validation
-            if validation is not None and self.input_valid_for_cell(datarn, datacn, self.text_editor_value):
-                move_down = self.set_cell_data_undo(
-                    r,
-                    c,
-                    datarn=datarn,
-                    datacn=datacn,
-                    value=self.text_editor_value,
-                    redraw=False,
-                    check_input_valid=False,
-                )
+        set_data = partial(
+            self.set_cell_data_undo,
+            r=r,
+            c=c,
+            datarn=datarn,
+            datacn=datacn,
+            redraw=False,
+            check_input_valid=False,
+        )
+        if self.edit_validation_func:
+            self.text_editor_value = self.edit_validation_func(event_data)
+            if self.text_editor_value is not None and self.input_valid_for_cell(datarn, datacn, self.text_editor_value):
+                move_down = set_data(value=self.text_editor_value)
+        elif self.input_valid_for_cell(datarn, datacn, self.text_editor_value):
+            move_down = set_data(value=self.text_editor_value)
+        if move_down:
+            try_binding(self.extra_end_edit_cell_func, event_data)
         if (
             move_down
             and r is not None
@@ -7059,16 +7091,14 @@ class MainTable(tk.Canvas):
             )
             if kwargs["select_function"] is not None:
                 kwargs["select_function"](event_data)
-            if self.extra_end_edit_cell_func is None:
-                self.set_cell_data_undo(r, c, value=selection, redraw=not redraw)
-            elif self.extra_end_edit_cell_func is not None and self.edit_cell_validation:
-                validation = self.extra_end_edit_cell_func(event_data)
-                if validation is not None:
-                    selection = validation
-                self.set_cell_data_undo(r, c, value=selection, redraw=not redraw)
-            elif self.extra_end_edit_cell_func is not None and not self.edit_cell_validation:
-                self.set_cell_data_undo(r, c, value=selection, redraw=not redraw)
-                self.extra_end_edit_cell_func(event_data)
+            if self.edit_validation_func:
+                selection, edited = self.edit_validation_func(event_data), False
+                if selection is not None:
+                    edited = self.set_cell_data_undo(r, c, value=selection, redraw=not redraw)
+            else:
+                edited = self.set_cell_data_undo(r, c, value=selection, redraw=not redraw)
+            if edited:
+                try_binding(self.extra_end_edit_cell_func, event_data)
             self.focus_set()
             self.recreate_all_selection_boxes()
         self.destroy_text_editor("Escape")
@@ -7210,11 +7240,11 @@ class MainTable(tk.Canvas):
             if self.undo_enabled and undo:
                 self.undo_stack.append(ev_stack_dict(event_data))
             self.set_cell_data(datarn, datacn, value)
-
-        if cell_resize and self.cell_auto_resize_enabled:
-            self.set_cell_size_to_text(r, c, only_set_if_too_small=True, redraw=redraw, run_binding=True)
-        self.sheet_modified(event_data)
-        return True
+            if cell_resize and self.cell_auto_resize_enabled:
+                self.set_cell_size_to_text(r, c, only_set_if_too_small=True, redraw=redraw, run_binding=True)
+            self.sheet_modified(event_data)
+            return True
+        return False
 
     def set_cell_data(
         self,

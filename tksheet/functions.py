@@ -1211,3 +1211,14 @@ def mod_span(
     to_set_to.upto_r = upto_r
     to_set_to.upto_c = upto_c
     return to_set_to
+
+
+def mod_event_val(
+    event_data: dict,
+    val: object,
+    loc: tuple[int, int] | int,
+) -> DotDict:
+    event_data.value = val
+    event_data.loc = loc
+    return event_data
+
