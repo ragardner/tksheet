@@ -186,6 +186,8 @@ class demo(tk.Tk):
 
     def validate_edits(self, event):
         # print (event)
+        # the below code is just to provide an example of
+        # modifying the cell edit values returned to the Sheet
         if event.evantname.endswith("header"):
             return event.value + " edited header"
         elif event.eventname.endswith("index"):

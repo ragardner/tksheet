@@ -821,7 +821,7 @@ class MainTable(tk.Canvas):
                     if not self.edit_validation_func or (
                         self.edit_validation_func
                         and (val := self.edit_validation_func(mod_event_val(event_data, val, (r, c)))) is not None
-                        and self.input_valid_for_cell(r, datacn, val)
+                        and self.input_valid_for_cell(r, datacn, val, ignore_empty=True)
                     ):
                         rows[r][datacn] = val
                         ctr += 1
@@ -859,7 +859,7 @@ class MainTable(tk.Canvas):
                     if not self.edit_validation_func or (
                         self.edit_validation_func
                         and (val := self.edit_validation_func(mod_event_val(event_data, val, (r, c)))) is not None
-                        and self.input_valid_for_cell(datarn, c, val)
+                        and self.input_valid_for_cell(datarn, c, val, ignore_empty=True)
                     ):
                         columns[c][datarn] = val
                         ctr += 1
@@ -7440,12 +7440,13 @@ class MainTable(tk.Canvas):
         datacn: int,
         value: object,
         check_readonly: bool = True,
+        ignore_empty: bool = False,
     ) -> bool:
         if check_readonly and self.get_cell_kwargs(datarn, datacn, key="readonly"):
             return False
         if self.get_cell_kwargs(datarn, datacn, key="format"):
             return True
-        if self.cell_equal_to(datarn, datacn, value):
+        if self.cell_equal_to(datarn, datacn, value, ignore_empty=ignore_empty):
             return False
         if self.get_cell_kwargs(datarn, datacn, key="checkbox"):
             return is_bool_like(value)
@@ -7454,15 +7455,21 @@ class MainTable(tk.Canvas):
             return False
         return True
 
-    def cell_equal_to(self, datarn: int, datacn: int, value: object, **kwargs) -> bool:
+    def cell_equal_to(self, datarn: int, datacn: int, value: object, ignore_empty: bool = False, **kwargs) -> bool:
         v = self.get_cell_data(datarn, datacn)
         kwargs = self.get_cell_kwargs(datarn, datacn, key="format")
         if kwargs and kwargs["formatter"] is None:
+            if ignore_empty:
+                if not (x := format_data(value=value, **kwargs)) and not v:
+                    return False
+                return v == x
             return v == format_data(value=value, **kwargs)
         # assumed if there is a formatter class in cell then it has a
         # __eq__() function anyway
         # else if there is not a formatter class in cell and cell is not formatted
         # then compare value as is
+        if ignore_empty and not v and not value:
+            return False
         return v == value
 
     def get_cell_clipboard(self, datarn: int, datacn: int) -> str | int | float | bool:
