@@ -20,7 +20,6 @@ named_span_types = (
     "readonly",
     "align",
 )
-
 arrowkey_bindings_helper: dict[str, str] = {
     "tab": "Tab",
     "up": "Up",

@@ -16,6 +16,7 @@ from itertools import islice, repeat
 from .other_classes import (
     Box_nt,
     DotDict,
+    EventDataDict,
     Highlight,
     Span,
 )
@@ -108,7 +109,7 @@ def event_dict(
     named_spans: None | dict = None,
     **kwargs,
 ) -> dict:
-    return DotDict(
+    return EventDataDict(
         eventname="" if name is None else name,
         sheetname="!sheet" if sheet is None else sheet,
         cells=DotDict(
@@ -156,12 +157,12 @@ def event_dict(
     )
 
 
-def change_eventname(event_dict: dict, newname: str) -> dict:
-    return DotDict({**event_dict, **{"eventname": newname}})
+def change_eventname(event_dict: dict, newname: str) -> EventDataDict:
+    return EventDataDict({**event_dict, **{"eventname": newname}})
 
 
-def ev_stack_dict(d) -> DotDict:
-    return DotDict(
+def ev_stack_dict(d) -> EventDataDict:
+    return EventDataDict(
         name=d["eventname"],
         data=pickle_compress(d),
     )
@@ -1214,10 +1215,10 @@ def mod_span(
 
 
 def mod_event_val(
-    event_data: dict,
+    event_data: EventDataDict,
     val: object,
     loc: tuple[int, int] | int,
-) -> DotDict:
+) -> EventDataDict:
     event_data.value = val
     event_data.loc = loc
     return event_data

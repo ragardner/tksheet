@@ -74,6 +74,7 @@ from .other_classes import (
     Box_nt,
     Box_t,
     CurrentlySelectedClass,
+    EventDataDict,
     TextEditor,
 )
 from .vars import (
@@ -263,18 +264,31 @@ class MainTable(tk.Canvas):
         self.all_columns_displayed = True
         self.all_rows_displayed = True
         self.align = kwargs["align"]
-        self.table_font = kwargs["font"]
-        self.table_font_fam = kwargs["font"][0]
-        self.table_font_sze = kwargs["font"][1]
-        self.table_font_wgt = kwargs["font"][2]
-        self.index_font = kwargs["index_font"]
-        self.index_font_fam = kwargs["index_font"][0]
-        self.index_font_sze = kwargs["index_font"][1]
-        self.index_font_wgt = kwargs["index_font"][2]
-        self.header_font = kwargs["header_font"]
-        self.header_font_fam = kwargs["header_font"][0]
-        self.header_font_sze = kwargs["header_font"][1]
-        self.header_font_wgt = kwargs["header_font"][2]
+
+        self.table_font = [
+            kwargs["font"][0],
+            int(kwargs["font"][1] * kwargs["zoom"] / 100),
+            kwargs["font"][2],
+        ]
+
+        self.index_font = [
+            kwargs["index_font"][0],
+            int(kwargs["index_font"][1] * kwargs["zoom"] / 100),
+            kwargs["index_font"][2],
+        ]
+
+        self.header_font = [
+            kwargs["header_font"][0],
+            int(kwargs["header_font"][1] * kwargs["zoom"] / 100),
+            kwargs["header_font"][2],
+        ]
+        for fnt in (self.table_font, self.index_font, self.header_font):
+            if fnt[1] < 1:
+                fnt[1] = 1
+        self.table_font = tuple(self.table_font)
+        self.index_font = tuple(self.index_font)
+        self.header_font = tuple(self.header_font)
+
         self.txt_measure_canvas = tk.Canvas(self)
         self.txt_measure_canvas_text = self.txt_measure_canvas.create_text(0, 0, text="", font=self.table_font)
         self.text_editor = None
@@ -929,7 +943,7 @@ class MainTable(tk.Canvas):
         self.refresh()
         self.sheet_modified(event_data)
 
-    def event_data_set_cell(self, datarn: int, datacn: int, value: object, event_data: dict) -> dict:
+    def event_data_set_cell(self, datarn: int, datacn: int, value: object, event_data: dict) -> EventDataDict:
         if self.input_valid_for_cell(datarn, datacn, value):
             event_data["cells"]["table"][(datarn, datacn)] = self.get_cell_data(datarn, datacn)
             self.set_cell_data(datarn, datacn, value)
@@ -939,9 +953,9 @@ class MainTable(tk.Canvas):
         self,
         move_to: int,
         to_move: list[int],
-        index_type: str = "displayed",
+        data_indexes: bool = False,
     ) -> tuple:
-        if index_type == "displayed" or self.all_columns_displayed:
+        if not data_indexes or self.all_columns_displayed:
             disp_new_idxs = get_new_indexes(
                 seqlen=len(self.col_positions) - 1,
                 move_to=move_to,
@@ -950,9 +964,9 @@ class MainTable(tk.Canvas):
         else:
             disp_new_idxs = {}
         totalcols = self.equalize_data_row_lengths(at_least_cols=move_to + 1)
-        if self.all_columns_displayed or index_type != "displayed":
+        if self.all_columns_displayed or data_indexes:
             data_new_idxs = get_new_indexes(seqlen=totalcols, move_to=move_to, to_move=to_move)
-        elif not self.all_columns_displayed and index_type == "displayed":
+        elif not self.all_columns_displayed and not data_indexes:
             data_new_idxs = get_new_indexes(seqlen=len(self.displayed_columns), move_to=move_to, to_move=to_move)
             data_old_idxs = dict(zip(data_new_idxs.values(), data_new_idxs))
             data_new_idxs = dict(
@@ -971,7 +985,7 @@ class MainTable(tk.Canvas):
         disp_new_idxs: None | dict = None,
         move_data: bool = True,
         create_selections: bool = True,
-        index_type: str = "displayed",
+        data_indexes: bool = False,
         event_data: dict | None = None,
     ):
         if not isinstance(totalcols, int):
@@ -992,7 +1006,7 @@ class MainTable(tk.Canvas):
             }
         event_data["options"] = self.pickle_options()
         event_data["named_spans"] = {k: span.pickle_self() for k, span in self.named_spans.items()}
-        if disp_new_idxs and (index_type == "displayed" or self.all_columns_displayed):
+        if disp_new_idxs and (not data_indexes or self.all_columns_displayed):
             self.deselect("all", run_binding=False, redraw=False)
             self.set_col_positions(
                 itr=move_elements_by_mapping(
@@ -1134,7 +1148,7 @@ class MainTable(tk.Canvas):
                                     del self.cell_options[(r, full_new_idxs[k])][span["type_"]]
                 # finally, change the span coords
                 span["from_c"], span["upto_c"] = newfrom, newupto
-            if index_type != "displayed":
+            if data_indexes:
                 self.displayed_columns = sorted(full_new_idxs[k] for k in self.displayed_columns)
         return data_new_idxs, disp_new_idxs, event_data
 
@@ -1169,9 +1183,9 @@ class MainTable(tk.Canvas):
         self,
         move_to: int,
         to_move: list[int],
-        index_type: str = "displayed",
+        data_indexes: bool = False,
     ) -> tuple:
-        if index_type == "displayed" or self.all_rows_displayed:
+        if not data_indexes or self.all_rows_displayed:
             disp_new_idxs = get_new_indexes(
                 seqlen=len(self.row_positions) - 1,
                 move_to=move_to,
@@ -1180,9 +1194,9 @@ class MainTable(tk.Canvas):
         else:
             disp_new_idxs = {}
         totalrows = self.fix_data_len(move_to)
-        if self.all_rows_displayed or index_type != "displayed":
+        if self.all_rows_displayed or data_indexes:
             data_new_idxs = get_new_indexes(seqlen=totalrows, move_to=move_to, to_move=to_move)
-        elif not self.all_rows_displayed and index_type == "displayed":
+        elif not self.all_rows_displayed and not data_indexes:
             data_new_idxs = get_new_indexes(seqlen=len(self.displayed_rows), move_to=move_to, to_move=to_move)
             data_old_idxs = dict(zip(data_new_idxs.values(), data_new_idxs))
             data_new_idxs = dict(
@@ -1201,7 +1215,7 @@ class MainTable(tk.Canvas):
         disp_new_idxs: None | dict = None,
         move_data: bool = True,
         create_selections: bool = True,
-        index_type: str = "displayed",
+        data_indexes: bool = False,
         event_data: dict | None = None,
     ):
         if not isinstance(totalrows, int):
@@ -1219,7 +1233,7 @@ class MainTable(tk.Canvas):
             }
         event_data["options"] = self.pickle_options()
         event_data["named_spans"] = {k: span.pickle_self() for k, span in self.named_spans.items()}
-        if disp_new_idxs and (index_type == "displayed" or self.all_rows_displayed):
+        if disp_new_idxs and (not data_indexes or self.all_rows_displayed):
             self.deselect("all", run_binding=False, redraw=False)
             self.set_row_positions(
                 itr=move_elements_by_mapping(
@@ -1358,7 +1372,7 @@ class MainTable(tk.Canvas):
                                     del self.cell_options[(full_new_idxs[k], c)][span["type_"]]
                 # finally, change the span coords
                 span["from_r"], span["upto_r"] = newfrom, newupto
-            if index_type != "displayed":
+            if data_indexes:
                 self.displayed_rows = sorted(full_new_idxs[k] for k in self.displayed_rows)
         return data_new_idxs, disp_new_idxs, event_data
 
@@ -1440,7 +1454,7 @@ class MainTable(tk.Canvas):
         if purge_redo:
             self.purge_redo_stack()
 
-    def edit_cells_using_modification(self, modification: dict, event_data: dict) -> dict:
+    def edit_cells_using_modification(self, modification: dict, event_data: dict) -> EventDataDict:
         for datarn, v in modification["cells"]["index"].items():
             self._row_index[datarn] = v
         for datacn, v in modification["cells"]["header"].items():
@@ -1449,7 +1463,7 @@ class MainTable(tk.Canvas):
             self.set_cell_data(datarn, datacn, v)
         return event_data
 
-    def save_cells_using_modification(self, modification: dict, event_data: dict) -> dict:
+    def save_cells_using_modification(self, modification: dict, event_data: dict) -> EventDataDict:
         for datarn, v in modification["cells"]["index"].items():
             event_data["cells"]["index"][datarn] = self.RI.get_cell_data(datarn)
         for datacn, v in modification["cells"]["header"].items():
@@ -1843,7 +1857,7 @@ class MainTable(tk.Canvas):
                 fill_iid = self.select_cell(row, column, redraw=redraw)
         return fill_iid
 
-    def get_select_event(self, being_drawn_item: None | int) -> dict:
+    def get_select_event(self, being_drawn_item: None | int) -> EventDataDict:
         return event_dict(
             name="select",
             sheet=self.parentframe.name,
@@ -3593,9 +3607,6 @@ class MainTable(tk.Canvas):
                     "Argument must be font, size and 'normal', 'bold' or" "'italic' e.g. ('Carlito',12,'normal')"
                 )
             self.table_font = newfont
-            self.table_font_fam = newfont[0]
-            self.table_font_sze = newfont[1]
-            self.table_font_wgt = newfont[2]
             self.set_table_font_help()
             if reset_row_positions:
                 if isinstance(reset_row_positions, bool):
@@ -3636,9 +3647,6 @@ class MainTable(tk.Canvas):
                     "Argument must be font, size and 'normal', 'bold' or" "'italic' e.g. ('Carlito',12,'normal')"
                 )
             self.header_font = newfont
-            self.header_font_fam = newfont[0]
-            self.header_font_sze = newfont[1]
-            self.header_font_wgt = newfont[2]
             self.set_header_font_help()
             self.recreate_all_selection_boxes()
         return self.header_font
@@ -3673,9 +3681,6 @@ class MainTable(tk.Canvas):
                     "Argument must be font, size and 'normal', 'bold' or" "'italic' e.g. ('Carlito',12,'normal')"
                 )
             self.index_font = newfont
-            self.index_font_fam = newfont[0]
-            self.index_font_sze = newfont[1]
-            self.index_font_wgt = newfont[2]
             self.set_index_font_help()
         return self.index_font
 
@@ -4336,7 +4341,7 @@ class MainTable(tk.Canvas):
         create_ops: bool = True,
         create_selections: bool = True,
         add_row_positions: bool = True,
-    ) -> dict:
+    ) -> EventDataDict:
         saved_displayed_columns = list(self.displayed_columns)
         if isinstance(displayed_columns, list):
             self.displayed_columns = displayed_columns
@@ -4515,7 +4520,7 @@ class MainTable(tk.Canvas):
         create_ops: bool = True,
         create_selections: bool = True,
         add_col_positions: bool = True,
-    ) -> dict:
+    ) -> EventDataDict:
         saved_displayed_rows = list(self.displayed_rows)
         if isinstance(displayed_rows, list):
             self.displayed_rows = displayed_rows
@@ -4690,7 +4695,7 @@ class MainTable(tk.Canvas):
             }
         )
 
-    def delete_columns_data(self, cols: list, event_data: dict) -> dict:
+    def delete_columns_data(self, cols: list, event_data: dict) -> EventDataDict:
         self.mouseclick_outside_editor_or_dropdown_all_canvases()
         event_data["deleted"]["displayed_columns"] = (
             list(self.displayed_columns) if not isinstance(self.displayed_columns, int) else int(self.displayed_columns)
@@ -4721,7 +4726,7 @@ class MainTable(tk.Canvas):
                 self.displayed_columns = [dc if c > dc else dc - 1 for dc in self.displayed_columns]
         return event_data
 
-    def delete_columns_displayed(self, cols: list, event_data: dict) -> dict:
+    def delete_columns_displayed(self, cols: list, event_data: dict) -> EventDataDict:
         cols_set = set(cols)
         for c in reversed(cols):
             event_data["deleted"]["column_widths"][c] = self.col_positions[c + 1] - self.col_positions[c]
@@ -4750,7 +4755,7 @@ class MainTable(tk.Canvas):
         try_binding(self.extra_end_del_cols_rc_func, event_data, "end_delete_columns")
         self.sheet_modified(event_data)
 
-    def delete_rows_data(self, rows: list, event_data: dict) -> dict:
+    def delete_rows_data(self, rows: list, event_data: dict) -> EventDataDict:
         self.mouseclick_outside_editor_or_dropdown_all_canvases()
         event_data["deleted"]["displayed_rows"] = (
             list(self.displayed_rows) if not isinstance(self.displayed_rows, int) else int(self.displayed_rows)
@@ -4775,7 +4780,7 @@ class MainTable(tk.Canvas):
                 self.displayed_rows = [dr if r > dr else dr - 1 for dr in self.displayed_rows]
         return event_data
 
-    def delete_rows_displayed(self, rows: list, event_data: dict) -> dict:
+    def delete_rows_displayed(self, rows: list, event_data: dict) -> EventDataDict:
         rows_set = set(rows)
         for r in reversed(rows):
             event_data["deleted"]["row_heights"][r] = self.row_positions[r + 1] - self.row_positions[r]

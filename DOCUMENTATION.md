@@ -159,9 +159,19 @@ class demo(tk.Tk):
 
         # add some new commands to the in-built right click menu
         # setting data
-        self.sheet.popup_menu_add_command("Say Hello", self.say_hello, index_menu=False, header_menu=False, empty_space_menu=False,)
+        self.sheet.popup_menu_add_command(
+            "Say Hello",
+            self.say_hello,
+            index_menu=False,
+            header_menu=False,
+            empty_space_menu=False,
+        )
         # getting data
-        self.sheet.popup_menu_add_command("Print some data", self.print_data, empty_space_menu=False,)
+        self.sheet.popup_menu_add_command(
+            "Print some data",
+            self.print_data,
+            empty_space_menu=False,
+        )
         # overwrite Sheet data
         self.sheet.popup_menu_add_command("Reset Sheet data", self.reset)
         # set the header
@@ -186,9 +196,7 @@ class demo(tk.Tk):
 
     def validate_edits(self, event):
         # print (event)
-        # the below code is just to provide an example of
-        # modifying the cell edit values returned to the Sheet
-        if event.evantname.endswith("header"):
+        if event.eventname.endswith("header"):
             return event.value + " edited header"
         elif event.eventname.endswith("index"):
             return event.value + " edited index"
@@ -226,11 +234,15 @@ class demo(tk.Tk):
         self.sheet.index([])
 
     def set_header(self):
-        self.sheet.headers([f"Header {(letter := num2alpha(i))} - {i + 1}\nHeader {letter} 2nd line!" for i in range(20)])
+        self.sheet.headers(
+            [f"Header {(letter := num2alpha(i))} - {i + 1}\nHeader {letter} 2nd line!" for i in range(20)]
+        )
 
     def set_index(self):
         self.sheet.set_index_width()
-        self.sheet.row_index([f"Index {(letter := num2alpha(i))} - {i + 1}\nIndex {letter} 2nd line!" for i in range(100)])
+        self.sheet.row_index(
+            [f"Index {(letter := num2alpha(i))} - {i + 1}\nIndex {letter} 2nd line!" for i in range(100)]
+        )
 
     def sheet_modified(self, event):
         # uncomment below if you want to take a look at the event object
@@ -254,7 +266,7 @@ class demo(tk.Tk):
         # highlighting an area of the sheet
         # more information at:
         # https://github.com/ragardner/tksheet/wiki/Version-7#highlighting-cells
-        self.sheet[box].bg = "red"
+        self.sheet[box].bg = "indianred1"
         self.after(time, lambda: self.clear_highlight(box))
 
     def clear_highlight(self, box):
@@ -268,129 +280,131 @@ app.mainloop()
 ---
 # **Initialization Options**
 
-This is a full list of all the start up arguments, the only required argument is the sheets parent, everything else has default arguments.
+These are all the initialization parameters, the only required argument is the sheets `parent`, every other parameter has default arguments.
 
 ```python
-(
-parent,
-name: str = "!sheet",
-show_table: bool = True,
-show_top_left: bool = True,
-show_row_index: bool = True,
-show_header: bool = True,
-show_x_scrollbar: bool = True,
-show_y_scrollbar: bool = True,
-width: int = None,
-height: int = None,
-headers: list = None,
-header: list = None,
-default_header: str = "letters",  # letters, numbers or both
-default_row_index: str = "numbers",  # letters, numbers or both
-to_clipboard_delimiter="\t",
-to_clipboard_quotechar='"',
-to_clipboard_lineterminator="\n",
-from_clipboard_delimiters=["\t"],
-show_default_header_for_empty: bool = True,
-show_default_index_for_empty: bool = True,
-page_up_down_select_row: bool = True,
-expand_sheet_if_paste_too_big: bool = False,
-paste_insert_column_limit: int = None,
-paste_insert_row_limit: int = None,
-show_dropdown_borders: bool = False,
-arrow_key_down_right_scroll_page: bool = False,
-enable_edit_cell_auto_resize: bool = True,
-data_reference: list = None,
-data: list = None,
-# either (start row, end row, "rows"), (start column, end column, "rows") or
-# (cells start row, cells start column, cells end row, cells end column, "cells")  # noqa: E501
-startup_select: tuple = None,
-startup_focus: bool = True,
-total_columns: int = None,
-total_rows: int = None,
-column_width: int = 120,
-header_height: str = "1",  # str or int
-max_column_width: str = "inf",  # str or int
-max_row_height: str = "inf",  # str or int
-max_header_height: str = "inf",  # str or int
-max_index_width: str = "inf",  # str or int
-row_index: list = None,
-index: list = None,
-after_redraw_time_ms: int = 20,
-row_index_width: int = None,
-auto_resize_default_row_index: bool = True,
-auto_resize_columns = None,
-auto_resize_rows = None,
-set_all_heights_and_widths: bool = False,
-row_height: str = "1",  # str or int
-font: tuple = get_font(),
-header_font: tuple = get_header_font(),
-index_font: tuple = get_index_font(),  # currently has no effect
-popup_menu_font: tuple = get_font(),
-align: str = "w",
-header_align: str = "center",
-row_index_align = None,
-index_align: str = "center",
-displayed_columns: list = [],
-all_columns_displayed: bool = True,
-displayed_rows: list = [],
-all_rows_displayed: bool = True,
-max_undos: int = 30,
-outline_thickness: int = 0,
-outline_color: str = theme_light_blue["outline_color"],
-column_drag_and_drop_perform: bool = True,
-row_drag_and_drop_perform: bool = True,
-empty_horizontal: int = 50,
-empty_vertical: int = 50,
-selected_rows_to_end_of_window: bool = False,
-horizontal_grid_to_end_of_window: bool = False,
-vertical_grid_to_end_of_window: bool = False,
-show_vertical_grid: bool = True,
-show_horizontal_grid: bool = True,
-display_selected_fg_over_highlights: bool = False,
-show_selected_cells_border: bool = True,
-theme: str = "light blue",
-popup_menu_fg: str = theme_light_blue["popup_menu_fg"],
-popup_menu_bg: str = theme_light_blue["popup_menu_bg"],
-popup_menu_highlight_bg: str = theme_light_blue["popup_menu_highlight_bg"],
-popup_menu_highlight_fg: str = theme_light_blue["popup_menu_highlight_fg"],
-frame_bg: str = theme_light_blue["table_bg"],
-table_grid_fg: str = theme_light_blue["table_grid_fg"],
-table_bg: str = theme_light_blue["table_bg"],
-table_fg: str = theme_light_blue["table_fg"],
-table_selected_box_cells_fg: str = theme_light_blue["table_selected_box_cells_fg"],
-table_selected_box_rows_fg: str = theme_light_blue["table_selected_box_rows_fg"],
-table_selected_box_columns_fg: str = theme_light_blue["table_selected_box_columns_fg"],
-table_selected_cells_border_fg: str = theme_light_blue["table_selected_cells_border_fg"],
-table_selected_cells_bg: str = theme_light_blue["table_selected_cells_bg"],
-table_selected_cells_fg: str = theme_light_blue["table_selected_cells_fg"],
-table_selected_rows_border_fg: str = theme_light_blue["table_selected_rows_border_fg"],
-table_selected_rows_bg: str = theme_light_blue["table_selected_rows_bg"],
-table_selected_rows_fg: str = theme_light_blue["table_selected_rows_fg"],
-table_selected_columns_border_fg: str = theme_light_blue["table_selected_columns_border_fg"],
-table_selected_columns_bg: str = theme_light_blue["table_selected_columns_bg"],
-table_selected_columns_fg: str = theme_light_blue["table_selected_columns_fg"],
-resizing_line_fg: str = theme_light_blue["resizing_line_fg"],
-drag_and_drop_bg: str = theme_light_blue["drag_and_drop_bg"],
-index_bg: str = theme_light_blue["index_bg"],
-index_border_fg: str = theme_light_blue["index_border_fg"],
-index_grid_fg: str = theme_light_blue["index_grid_fg"],
-index_fg: str = theme_light_blue["index_fg"],
-index_selected_cells_bg: str = theme_light_blue["index_selected_cells_bg"],
-index_selected_cells_fg: str = theme_light_blue["index_selected_cells_fg"],
-index_selected_rows_bg: str = theme_light_blue["index_selected_rows_bg"],
-index_selected_rows_fg: str = theme_light_blue["index_selected_rows_fg"],
-header_bg: str = theme_light_blue["header_bg"],
-header_border_fg: str = theme_light_blue["header_border_fg"],
-header_grid_fg: str = theme_light_blue["header_grid_fg"],
-header_fg: str = theme_light_blue["header_fg"],
-header_selected_cells_bg: str = theme_light_blue["header_selected_cells_bg"],
-header_selected_cells_fg: str = theme_light_blue["header_selected_cells_fg"],
-header_selected_columns_bg: str = theme_light_blue["header_selected_columns_bg"],
-header_selected_columns_fg: str = theme_light_blue["header_selected_columns_fg"],
-top_left_bg: str = theme_light_blue["top_left_bg"],
-top_left_fg: str = theme_light_blue["top_left_fg"],
-top_left_fg_highlight: str = theme_light_blue["top_left_fg_highlight"],
-)
+def __init__(
+    parent: tk.Misc,
+    name: str = "!sheet",
+    show_table: bool = True,
+    show_top_left: bool = True,
+    show_row_index: bool = True,
+    show_header: bool = True,
+    show_x_scrollbar: bool = True,
+    show_y_scrollbar: bool = True,
+    width: int = None,
+    height: int = None,
+    headers: list[object] = None,
+    header: list[object] = None,
+    default_header: str = "letters",  # letters, numbers or both
+    default_row_index: str = "numbers",  # letters, numbers or both
+    to_clipboard_delimiter: str = "\t",
+    to_clipboard_quotechar: str ='"',
+    to_clipboard_lineterminator: str ="\n",
+    from_clipboard_delimiters: list[str] = ["\t"],
+    show_default_header_for_empty: bool = True,
+    show_default_index_for_empty: bool = True,
+    page_up_down_select_row: bool = True,
+    expand_sheet_if_paste_too_big: bool = False,
+    paste_insert_column_limit: int = None,
+    paste_insert_row_limit: int = None,
+    show_dropdown_borders: bool = False,
+    arrow_key_down_right_scroll_page: bool = False,
+    enable_edit_cell_auto_resize: bool = True,
+    data_reference: None | Sequence[Sequence[object]] = None,
+    data: None | Sequence[Sequence[object]] = None,
+    startup_select: tuple[int, int, str] | tuple[int, int, int, int, str] = None,
+    startup_focus: bool = True,
+    total_columns: int = None,
+    total_rows: int = None,
+    column_width: int = 120,
+    header_height: str = "1",  # str or int
+    max_column_width: str = "inf",  # str or int
+    max_row_height: str = "inf",  # str or int
+    max_header_height: str = "inf",  # str or int
+    max_index_width: str = "inf",  # str or int
+    row_index: list[object] = None,
+    index: list[object] = None,
+    after_redraw_time_ms: int = 20,
+    row_index_width: int = None,
+    auto_resize_default_row_index: bool = True,
+    auto_resize_columns: int | None = None,
+    auto_resize_rows: int | None = None,
+    set_all_heights_and_widths: bool = False,
+    set_cell_sizes_on_zoom: bool = False,
+    row_height: str = "1",  # str or int
+    zoom: int = 100,
+    font: tuple[str, int, str] = get_font(),
+    header_font: tuple[str, int, str] = get_header_font(),
+    index_font: tuple[str, int, str] = get_index_font(),  # currently has no effect
+    popup_menu_font: tuple[str, int, str] = get_font(),
+    align: str = "w",
+    header_align: str = "center",
+    row_index_align: str | None = None,
+    index_align: str = "center",
+    displayed_columns: list[int] = [],
+    all_columns_displayed: bool = True,
+    displayed_rows: list[int] = [],
+    all_rows_displayed: bool = True,
+    max_undos: int = 30,
+    outline_thickness: int = 0,
+    outline_color: str = theme_light_blue["outline_color"],
+    column_drag_and_drop_perform: bool = True,
+    row_drag_and_drop_perform: bool = True,
+    empty_horizontal: int = 50,
+    empty_vertical: int = 50,
+    selected_rows_to_end_of_window: bool = False,
+    horizontal_grid_to_end_of_window: bool = False,
+    vertical_grid_to_end_of_window: bool = False,
+    show_vertical_grid: bool = True,
+    show_horizontal_grid: bool = True,
+    display_selected_fg_over_highlights: bool = False,
+    show_selected_cells_border: bool = True,
+    theme: str = "light blue",
+    popup_menu_fg: str = theme_light_blue["popup_menu_fg"],
+    popup_menu_bg: str = theme_light_blue["popup_menu_bg"],
+    popup_menu_highlight_bg: str = theme_light_blue["popup_menu_highlight_bg"],
+    popup_menu_highlight_fg: str = theme_light_blue["popup_menu_highlight_fg"],
+    frame_bg: str = theme_light_blue["table_bg"],
+    table_grid_fg: str = theme_light_blue["table_grid_fg"],
+    table_bg: str = theme_light_blue["table_bg"],
+    table_fg: str = theme_light_blue["table_fg"],
+    table_selected_box_cells_fg: str = theme_light_blue["table_selected_box_cells_fg"],
+    table_selected_box_rows_fg: str = theme_light_blue["table_selected_box_rows_fg"],
+    table_selected_box_columns_fg: str = theme_light_blue["table_selected_box_columns_fg"],
+    table_selected_cells_border_fg: str = theme_light_blue["table_selected_cells_border_fg"],
+    table_selected_cells_bg: str = theme_light_blue["table_selected_cells_bg"],
+    table_selected_cells_fg: str = theme_light_blue["table_selected_cells_fg"],
+    table_selected_rows_border_fg: str = theme_light_blue["table_selected_rows_border_fg"],
+    table_selected_rows_bg: str = theme_light_blue["table_selected_rows_bg"],
+    table_selected_rows_fg: str = theme_light_blue["table_selected_rows_fg"],
+    table_selected_columns_border_fg: str = theme_light_blue["table_selected_columns_border_fg"],
+    table_selected_columns_bg: str = theme_light_blue["table_selected_columns_bg"],
+    table_selected_columns_fg: str = theme_light_blue["table_selected_columns_fg"],
+    resizing_line_fg: str = theme_light_blue["resizing_line_fg"],
+    drag_and_drop_bg: str = theme_light_blue["drag_and_drop_bg"],
+    index_bg: str = theme_light_blue["index_bg"],
+    index_border_fg: str = theme_light_blue["index_border_fg"],
+    index_grid_fg: str = theme_light_blue["index_grid_fg"],
+    index_fg: str = theme_light_blue["index_fg"],
+    index_selected_cells_bg: str = theme_light_blue["index_selected_cells_bg"],
+    index_selected_cells_fg: str = theme_light_blue["index_selected_cells_fg"],
+    index_selected_rows_bg: str = theme_light_blue["index_selected_rows_bg"],
+    index_selected_rows_fg: str = theme_light_blue["index_selected_rows_fg"],
+    index_hidden_rows_expander_bg: str = theme_light_blue["index_hidden_rows_expander_bg"],
+    header_bg: str = theme_light_blue["header_bg"],
+    header_border_fg: str = theme_light_blue["header_border_fg"],
+    header_grid_fg: str = theme_light_blue["header_grid_fg"],
+    header_fg: str = theme_light_blue["header_fg"],
+    header_selected_cells_bg: str = theme_light_blue["header_selected_cells_bg"],
+    header_selected_cells_fg: str = theme_light_blue["header_selected_cells_fg"],
+    header_selected_columns_bg: str = theme_light_blue["header_selected_columns_bg"],
+    header_selected_columns_fg: str = theme_light_blue["header_selected_columns_fg"],
+    header_hidden_columns_expander_bg: str = theme_light_blue["header_hidden_columns_expander_bg"],
+    top_left_bg: str = theme_light_blue["top_left_bg"],
+    top_left_fg: str = theme_light_blue["top_left_fg"],
+    top_left_fg_highlight: str = theme_light_blue["top_left_fg_highlight"],
+) -> None
 ```
 - `name` setting a name for the sheet is useful when you have multiple sheets and you need to determine which one an event came from.
 - `auto_resize_columns` (`int`, `None`) if set as an `int` the columns will automatically resize to fit the width of the window, the `int` value being the minimum of each column in pixels.
@@ -398,6 +412,7 @@ top_left_fg_highlight: str = theme_light_blue["top_left_fg_highlight"],
 - `startup_select` selects cells, rows or columns at initialization by using a `tuple` e.g. `(0, 0, "cells")` for cell A0 or `(0, 5, "rows")` for rows 0 to 5.
 - `data_reference` and `data` are essentially the same.
 - `row_index` and `index` are the same, `index` takes priority, same as with `headers` and `header`.
+- `startup_select` either `(start row, end row, "rows")`, `(start column, end column, "rows")` or `(start row, start column, end row, end column, "cells")`. The start/end row/column variables need to be `int`s.
 
 You can change these settings after initialization using the `set_options()` function.
 
@@ -577,10 +592,13 @@ ___
 
 This function allows you to bind very specific table functionality to your own functions.
 - If you want less specificity in event names you can also bind all sheet modifying events to a single function, [see here](https://github.com/ragardner/tksheet/wiki/Version-7#bind-tkinter-events).
-- If you want to validate user cell edits [see here](https://github.com/ragardner/tksheet/wiki/Version-7#validate-user-cell-edits).
+- If you want to validate/modify user cell edits [see here](https://github.com/ragardner/tksheet/wiki/Version-7#validate-user-cell-edits).
 
 ```python
-extra_bindings(bindings, func=None)
+extra_bindings(
+    bindings: str | list | tuple,
+    func: Callable | None = None,
+) -> Sheet
 ```
 
 Notes:
@@ -853,30 +871,40 @@ ___
 
 With this function you can unbind things you have bound using the `bind()` function.
 ```python
-unbind(binding)
+unbind(binding: str) -> Sheet
 ```
 
 ___
 
 #### **Validate user cell edits**
 
-With this function you can validate all user cell edits. From cut, paste, delete (including column/row clear), dropdown boxes and cell edits.
+With this function you can validate (modify) most user sheet edits, includes cut, paste, delete (including column/row clear), dropdown boxes and cell edits.
 ```python
 edit_validation(func: Callable | None = None) -> None
 ```
 Parameters:
 - `func` (`Callable`, `None`) must either be a function which will receive a tksheet event dict which looks like [this](https://github.com/ragardner/tksheet/wiki/Version-7#event-data) or `None` which unbinds the function.
 
+Notes:
+- For examples of this function see [here](https://github.com/ragardner/tksheet/wiki/Version-7#basic-use) and [here](https://github.com/ragardner/tksheet/wiki/Version-7#example-custom-right-click-and-text-editor-validation).
+
 #### **Add commands to the in-built right click popup menu**
 ```python
-popup_menu_add_command(label, func, table_menu = True, index_menu = True, header_menu = True)
+popup_menu_add_command(
+    label: str,
+    func: Callable,
+    table_menu: bool = True,
+    index_menu: bool = True,
+    header_menu: bool = True,
+    empty_space_menu: bool = True,
+) -> Sheet
 ```
 
 ___
 
 #### **Remove commands added using `popup_menu_add_command()` from the in-built right click popup menu**
 ```python
-popup_menu_del_command(label = None)
+popup_menu_del_command(label: str | None = None) -> Sheet
 ```
 - If `label` is `None` then it removes all.
 
@@ -884,32 +912,37 @@ ___
 
 #### **Enable or disable mousewheel, left click etc**
 ```python
-basic_bindings(enable = False)
+basic_bindings(enable: bool = False) -> Sheet
 ```
 
 ___
 
 #### **Enable or disable cell edit functionality, including Undo**
 ```python
-edit_bindings(enable = False)
+edit_bindings(enable: bool = False) -> Sheet
 ```
 
 ___
 
 #### **Enable or disable the ability to edit a specific cell using the inbuilt text editor**
 ```python
-cell_edit_binding(enable = False, keys = [])
+cell_edit_binding(
+    enable: bool = False,
+    keys: list = [],
+) -> Sheet
 ```
 - `keys` can be used to bind more keys to open a cell edit window.
 
 ___
 
+These functions are links to the Sheets own functionality. Functions such as `cut()` rely on whatever is currently selected on the Sheet.
 ```python
-cut(event = None)
-copy(event = None)
-paste(event = None)
-delete(event = None)
-undo(event = None)
+cut(event: object = None) -> Sheet
+copy(event: object = None) -> Sheet
+paste(event: object = None) -> Sheet
+delete(event: object = None) -> Sheet
+undo(event: object = None) -> Sheet
+redo(event: object = None) -> Sheet
 ```
 
 ---
@@ -964,13 +997,13 @@ span(
     expand: None | str = None,
     formatter_options: dict | None = None,
     **kwargs,
-)
+) -> Span
 """
 Create a span / get an existing span by name
 Returns the created span
 """
 ```
-- `key` you do not have to provide an argument for `key`, if no argument is provided then the span will be a full sheet span. Otherwise `key` can be the following types which are type hinted as `CreateSpanTypes`:
+- `key` you do not have to provide an argument for `key`, if no argument is provided then the span will be a full sheet span. Otherwise `key` can be the following types which are type hinted in the documentation as `CreateSpanTypes`:
     - `None`
     - `str` e.g. `sheet.span("A1:F1")`
     - `int` e.g. `sheet.span(0)`
@@ -1217,7 +1250,7 @@ print (len(span.rows))
 
 ### **Span methods**
 
-Spans have the following methods:
+Spans have the following methods, all of which return the span object itself so you can chain the functions e.g. `span.options(undo=True).clear().bg = "indianred1"`
 
 #### **Modify a spans attributes**
 
@@ -1239,7 +1272,7 @@ span.options(
     expand: str | None = None,
     formatter_options: dict | None = None,
     **kwargs,
-)
+) -> Span
 ```
 **Note:** that if `None` is used for any of the following parameters then that `Span`s attribute will be unchanged.
 - `type_` (`str`, `None`) if not `None` then must be either an empty string `""` or one of the following: `"format"`, `"highlight"`, `"dropdown"`, `"checkbox"`, `"readonly"`, `"align"`.
@@ -1268,6 +1301,7 @@ span.options(
     - When using `get_data()` will format the returned data.
     - When using `set_data()` will format the data being set but **NOT** create a new formatting rule on the sheet.
 - `**kwargs` you can provide additional keyword arguments to the function for example those used in `span.highlight()` or `span.dropdown()` which are used when applying a named span to a table.
+- This function returns the span instance itself (`self`).
 
 ```python
 # entire sheet
@@ -1321,11 +1355,11 @@ Formats table data, see the help on [formatting](https://github.com/ragardner/tk
 
 ```python
 span.format(
-    formatter_options={},
-    formatter_class=None,
+    formatter_options: dict = {},
+    formatter_class: object = None,
     redraw: bool = True,
     **kwargs,
-)
+) -> Span
 ```
 
 Example:
@@ -1344,7 +1378,7 @@ These examples show the formatting of the entire sheet (not including header and
 Delete any currently existing format rules for parts of the table that are covered by the span. Should not be used where there are data formatting rules created by named spans, see [Named spans](https://github.com/ragardner/tksheet/wiki/Version-7#named-spans) for more information.
 
 ```python
-span.del_format()
+span.del_format() -> Span
 ```
 
 Example:
@@ -1363,7 +1397,7 @@ span.highlight(
     end: bool | None = None,
     overwrite: bool = False,
     redraw: bool = True,
-)
+) -> Span
 ```
 
 Example:
@@ -1383,7 +1417,7 @@ sheet["A"].fg = "black"
 Delete any currently existing highlights for parts of the sheet that are covered by the span. Should not be used where there are highlights created by named spans, see [Named spans](https://github.com/ragardner/tksheet/wiki/Version-7#named-spans) for more information.
 
 ```python
-span.dehighlight()
+span.dehighlight() -> Span
 ```
 
 Example:
@@ -1407,7 +1441,7 @@ span.dropdown(
     search_function: Callable = dropdown_search_function,
     validate_input: bool = True,
     text: None | str = None,
-)
+) -> Span
 ```
 
 Example:
@@ -1423,7 +1457,7 @@ sheet["D"].dropdown(
 Delete dropdown boxes for parts of the sheet that are covered by the span. Should not be used where there are dropdown box rules created by named spans, see [Named spans](https://github.com/ragardner/tksheet/wiki/Version-7#named-spans) for more information.
 
 ```python
-span.del_dropdown()
+span.del_dropdown() -> Span
 ```
 
 Example:
@@ -1444,7 +1478,7 @@ span.checkbox(
     redraw: bool = True,
     check_function: Callable | None = None,
     text: str = "",
-)
+) -> Span
 ```
 
 Example:
@@ -1460,7 +1494,7 @@ sheet["D"].checkbox(
 Delete check boxes for parts of the sheet that are covered by the span. Should not be used where there are check box rules created by named spans, see [Named spans](https://github.com/ragardner/tksheet/wiki/Version-7#named-spans) for more information.
 
 ```python
-span.del_checkbox()
+span.del_checkbox() -> Span
 ```
 
 Example:
@@ -1475,7 +1509,7 @@ checkbox_span.del_checkbox()
 Create a readonly rule for parts of the table that are covered by the span.
 
 ```python
-span.readonly(readonly: bool = True)
+span.readonly(readonly: bool = True) -> Span
 ```
 - Using `span.readonly(False)` deletes any existing readonly rules for the span. Should not be used where there are readonly rules created by named spans, see [Named spans](https://github.com/ragardner/tksheet/wiki/Version-7#named-spans) for more information.
 
@@ -1487,7 +1521,7 @@ Create a text alignment rule for parts of the sheet that are covered by the span
 span.align(
     align: str | None,
     redraw: bool = True,
-)
+) -> Span
 ```
 - `align` (`str`, `None`) must be either:
     - `None` - clears the alignment rule
@@ -1505,7 +1539,7 @@ sheet["D"].align("right")
 Delete text alignment rules for parts of the sheet that are covered by the span. Should not be used where there are alignment rules created by named spans, see [Named spans](https://github.com/ragardner/tksheet/wiki/Version-7#named-spans) for more information.
 
 ```python
-span.del_align()
+span.del_align() -> Span
 ```
 
 Example:
@@ -1522,7 +1556,7 @@ Clear cell data from all cells that are covered by the span.
 span.clear(
     undo: bool | None = None,
     redraw: bool = True,
-)
+) -> Span
 ```
 - `undo` (`bool`, `None`) When `True` if undo is enabled for the end user they will be able to undo the clear change.
 
@@ -1541,7 +1575,7 @@ The attribute `span.transposed` (`bool`) is used by data getting and setting fun
 You can toggle the transpotition of the span by using:
 
 ```python
-span.transpose()
+span.transpose() -> Span
 ```
 
 If the attribute is already `True` this makes it `False` and vice versa.
@@ -1563,7 +1597,7 @@ print (span.transposed)
 Expand the spans area either all the way to the right (x axis) or all the way down (y axis) or both.
 
 ```python
-span.expand(direction: str = "both")
+span.expand(direction: str = "both") -> Span
 ```
 - `direction` (`None`, `str`) must be either `None` or:
     - `"table"`/`"both"` expand the span both down and right from the span start to the ends of the table.
@@ -1774,13 +1808,15 @@ ___
 This function is useful if you need a lot of sheet data, and can use one row at a time (may save memory use in certain scenarios). It does not use spans.
 
 ```python
-yield_sheet_rows(get_displayed = False,
-                 get_header = False,
-                 get_index = False,
-                 get_index_displayed = True,
-                 get_header_displayed = True,
-                 only_rows = None,
-                 only_columns = None)
+yield_sheet_rows(
+    get_displayed: bool = False,
+    get_header: bool = False,
+    get_index: bool = False,
+    get_index_displayed: bool = True,
+    get_header_displayed: bool = True,
+    only_rows: int | Iterator | None = None,
+    only_columns: int | Iterator | None = None,
+) -> Iterator[list[object]]
 ```
 Note:
 - The following keyword arguments both behave the same way for `yield_sheet_rows()` and `get_sheet_data()`.
@@ -2049,56 +2085,80 @@ self.sheet_span.data = [["",  "A",  "B",  "C"]
 ```
 
 #### **Insert a row into the sheet**
+
 ```python
-insert_row(values = None,
-           idx = "end",
-           height = None,
-           deselect_all = False,
-           add_columns = False,
-           mod_row_positions = True,
-           redraw = True)
+insert_row(
+        row: list[object] | tuple[object] | None = None,
+        idx: str | int = "end",
+        height: int | None = None,
+        row_index: bool = False,
+        undo: bool = False,
+        redraw: bool = True,
+) -> EventDataDict
 ```
-- Leaving `values` as `None` inserts an empty row, e.g. `insert_row()` will append an empty row to the sheet.
+- Leaving `row` as `None` inserts an empty row, e.g. `insert_row()` will append an empty row to the sheet.
 - `height` is the new rows displayed height in pixels, leave as `None` for default.
-- `add_columns` checks the rest of the sheets rows are at least the length as the new row, leave as `False` for better performance.
+- `row_index` when `True` indicates there is a row index value at the start of the row.
+- `undo` when `True` adds the change to the Sheets undo stack.
 
 ___
 
 #### **Insert a column into the sheet**
+
 ```python
-insert_column(values = None,
-              idx = "end",
-              width = None,
-              deselect_all = False,
-              add_rows = True,
-              equalize_data_row_lengths = True,
-              mod_column_positions = True,
-              redraw = False)
+insert_column(
+        column: list[object] | tuple[object] | None = None,
+        idx: str | int = "end",
+        width: int | None = None,
+        header: bool = False,
+        undo: bool = False,
+        redraw: bool = True,
+) -> EventDataDict
 ```
+- Leaving `column` as `None` inserts an empty column, e.g. `insert_column()` will append an empty column to the sheet.
+- `width` is the new columns displayed width in pixels, leave as `None` for default.
+- `header` when `True` indicates there is a header value at the start of the column.
+- `undo` when `True` adds the change to the Sheets undo stack.
 
 ___
 
 #### **Insert multiple columns into the sheet**
+
 ```python
-insert_columns(columns = 1, idx = "end", widths = None, deselect_all = False, add_rows = True, equalize_data_row_lengths = True,
-               mod_column_positions = True,
-               redraw = False)
+insert_columns(
+        columns: list[tuple[object] | list[object]] | tuple[tuple[object] | list[object]] | int = 1,
+        idx: str | int = "end",
+        widths: list[int] | tuple[int] | None = None,
+        headers: bool = False,
+        create_selections: bool = True,
+        undo: bool = False,
+        redraw: bool = True,
+) -> EventDataDict
 ```
-- `columns` can be either `int` or iterable of iterables.
+- `columns` if `int` will insert blank columns.
+- `widths` are the new columns displayed widths in pixels, leave as `None` for default.
+- `headers` when `True` indicates there are headers values at the start of each column.
+- `undo` when `True` adds the change to the Sheets undo stack.
 
 ___
 
 #### **Insert multiple rows into the sheet**
+
 ```python
-insert_rows(rows = 1,
-            idx = "end",
-            heights = None,
-            deselect_all = False,
-            add_columns = True,
-            mod_row_positions = True,
-            redraw = True)
+insert_rows(
+        rows: list[tuple[object] | list[object]] | tuple[tuple[object] | list[object]] | int = 1,
+        idx: str | int = "end",
+        heights: list[int] | tuple[int] | None = None,
+        row_index: bool = False,
+        undo: bool = False,
+        redraw: bool = True,
+) -> EventDataDict
 ```
-- `rows` can be either `int` or iterable of iterables.
+Parameters:
+- `rows` if `int` will insert blank rows.
+- `heights` are the new rows displayed heights in pixels, leave as `None` for default.
+- `row_index` when `True` indicates there are row index values at the start of each row.
+- `undo` when `True` adds the change to the Sheets undo stack.
 
 ___
 
@@ -2109,15 +2169,32 @@ sheet_data_dimensions(total_rows = None, total_columns = None)
 ___
 
 ```python
-delete_row(idx = 0, deselect_all = False, redraw = True)
+del_row(
+    idx: int = 0,
+    data_indexes: bool = False,
+    undo: bool = False,
+    redraw: bool = True,
+) -> EventDataDict
 ```
+Parameters:
+- `idx` is the row to delete.
+- `data_indexes` only applicable when there are hidden rows. When `False` it makes the `idx` represent a displayed row and not the underlying Sheet data row. When `True` the index represent a data index.
+- `undo` when `True` adds the change to the Sheets undo stack.
 
 ___
 
 ```python
-delete_rows(rows: set = set(), deselect_all = False, redraw = True)
+del_rows(
+    rows: int | Iterator,
+    data_indexes: bool = False,
+    undo: bool = False,
+    redraw: bool = True,
+) -> EventDataDict
 ```
-- Does not maintain selections.
+Parameters:
+- `rows` can be either `int` or an iterable of `int`s representing row indexes.
+- `data_indexes` only applicable when there are hidden rows. When `False` it makes the `rows` indexes represent displayed rows and not the underlying Sheet data rows. When `True` the indexes represent data indexes.
+- `undo` when `True` adds the change to the Sheets undo stack.
 
 ___
 
@@ -2140,16 +2217,33 @@ set_sheet_data_and_display_dimensions(total_rows = None, total_columns = None)
 ___
 
 ```python
-move_row(row, moveto)
+move_row(
+    row: int,
+    moveto: int)
+-> tuple[dict, dict, dict]
 ```
+- Note that `row` and `moveto` indexes represent displayed indexes and not data. When there are hidden rows this is an important distinction, otherwise it is not at all important. To specifically use data indexes use the function `move_rows()`.
 
 ___
 
 ```python
-move_rows(moveto: int, to_move_min: int, number_of_rows: int, move_data: bool = True, index_type = "displayed", create_selections: bool = True, redraw = False)
+move_rows(
+    move_to: int | None = None,
+    to_move: list[int] | None = None,
+    move_data: bool = True,
+    data_indexes: bool = False,
+    create_selections: bool = True,
+    undo: bool = False,
+    redraw: bool = True,
+) -> tuple[dict, dict, dict]
 ```
-- `to_move_min` is the first row in the series of rows.
-- `index_type` (`str`) either `"displayed"` or `"data"`
+Parameters:
+- `move_to` is the new start index for the rows to be moved to.
+- `to_move` is a `list` of row indexes to move to that new position, they will appear in the same order provided.
+- `move_data` when `True` moves not just the displayed row positions but the Sheet data as well.
+- `data_indexes` is only applicable when there are hidden rows. When `False` it makes the `move_to` and `to_move` indexes represent displayed rows and not the underlying Sheet data rows. When `True` the indexes represent data indexes.
+- `create_selections` creates new selection boxes based on where the rows have moved.
+- `undo` when `True` adds the change to the Sheets undo stack.
 
 ___
 
@@ -2160,23 +2254,48 @@ delete_column(idx = 0, deselect_all = False, redraw = True)
 ___
 
 ```python
-delete_columns(columns: set = set(), deselect_all = False, redraw = True)
+del_columns(
+    columns: int | Iterator,
+    data_indexes: bool = False,
+    undo: bool = False,
+    redraw: bool = True,
+) -> EventDataDict
 ```
-- Does not maintain selections.
+Parameters:
+- `columns` can be either `int` or an iterable of `int`s representing column indexes.
+- `data_indexes` only applicable when there are hidden columns. When `False` it makes the `columns` indexes represent displayed columns and not the underlying Sheet data columns. When `True` the indexes represent data indexes.
+- `undo` when `True` adds the change to the Sheets undo stack.
 
 ___
 
 ```python
-move_column(column, moveto)
+move_column(
+    column: int,
+    moveto: int)
+-> tuple[dict, dict, dict]
 ```
+- Note that `column` and `moveto` indexes represent displayed indexes and not data. When there are hidden columns this is an important distinction, otherwise it is not at all important. To specifically use data indexes use the function `move_columns()`.
 
 ___
 
 ```python
-move_columns(moveto: int, to_move_min: int, number_of_columns: int, move_data: bool = True, index_type = "displayed", create_selections: bool = True, redraw = False)
+move_columns(
+        move_to: int | None = None,
+        to_move: list[int] | None = None,
+        move_data: bool = True,
+        data_indexes: bool = False,
+        create_selections: bool = True,
+        undo: bool = False,
+        redraw: bool = True,
+) -> tuple[dict, dict, dict]
 ```
-- `to_move_min` is the first column in the series of columns.
-- `index_type` (`str`) either `"displayed"` or `"data"`, e.g. if columns are hidden and you want to supply the function with data indexes not sheet displayed indexes.
+Parameters:
+- `move_to` is the new start index for the columns to be moved to.
+- `to_move` is a `list` of column indexes to move to that new position, they will appear in the same order provided.
+- `move_data` when `True` moves not just the displayed column positions but the Sheet data as well.
+- `data_indexes` is only applicable when there are hidden columns. When `False` it makes the `move_to` and `to_move` indexes represent displayed columns and not the underlying Sheet data columns. When `True` the indexes represent data indexes.
+- `create_selections` creates new selection boxes based on where the columns have moved.
+- `undo` when `True` adds the change to the Sheets undo stack.
 
 ___
 

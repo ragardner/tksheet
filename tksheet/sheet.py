@@ -36,6 +36,7 @@ from .main_table import MainTable
 from .other_classes import (
     CurrentlySelectedClass,  # noqa: F401
     DotDict,
+    EventDataDict,
     GeneratedMouseEvent,
     Span,
 )
@@ -74,10 +75,10 @@ class Sheet(tk.Frame):
         header: list[object] = None,
         default_header: str = "letters",  # letters, numbers or both
         default_row_index: str = "numbers",  # letters, numbers or both
-        to_clipboard_delimiter="\t",
-        to_clipboard_quotechar='"',
-        to_clipboard_lineterminator="\n",
-        from_clipboard_delimiters=["\t"],
+        to_clipboard_delimiter: str = "\t",
+        to_clipboard_quotechar: str = '"',
+        to_clipboard_lineterminator: str = "\n",
+        from_clipboard_delimiters: list[str] = ["\t"],
         show_default_header_for_empty: bool = True,
         show_default_index_for_empty: bool = True,
         page_up_down_select_row: bool = True,
@@ -193,7 +194,7 @@ class Sheet(tk.Frame):
         )
         self.C = parent
         self.name = name
-        self.last_event_data = DotDict()
+        self.last_event_data = EventDataDict()
         self.bound_events = DotDict({k: [] for k in emitted_events})
         self.dropdown_class = Dropdown
         self.after_redraw_id = None
@@ -288,6 +289,7 @@ class Sheet(tk.Frame):
             total_rows=total_rows,
             row_index=row_index,
             index=index,
+            zoom=zoom,
             font=font,
             header_font=header_font,
             index_font=index_font,
@@ -886,9 +888,9 @@ class Sheet(tk.Frame):
         event: str,
         data: None | dict = None,
     ) -> None:
-        # data is a DotDict
+        # data is a EventDataDict
         if data is None:
-            data = DotDict()
+            data = EventDataDict()
         data["sheetname"] = self.name
         self.last_event_data = data
         for func in self.bound_events[event]:
@@ -898,7 +900,7 @@ class Sheet(tk.Frame):
         self.MT.edit_validation_func = func
 
     @property
-    def event(self) -> DotDict:
+    def event(self) -> EventDataDict:
         return self.last_event_data
 
     def sync_scroll(self, widget: object) -> Sheet:
@@ -1037,7 +1039,7 @@ class Sheet(tk.Frame):
         self.MT.bind_cell_edit(enable, keys=keys)
         return self
 
-    def identify_region(self, event) -> str:
+    def identify_region(self, event: object) -> str:
         if event.widget == self.MT:
             return "table"
         elif event.widget == self.RI:
@@ -1342,27 +1344,27 @@ class Sheet(tk.Frame):
                 self.MT.default_column_width = int(width)
         return self.MT.default_column_width
 
-    def cut(self, event=None) -> Sheet:
+    def cut(self, event: object = None) -> Sheet:
         self.MT.ctrl_x(event)
         return self
 
-    def copy(self, event=None) -> Sheet:
+    def copy(self, event: object = None) -> Sheet:
         self.MT.ctrl_c(event)
         return self
 
-    def paste(self, event=None) -> Sheet:
+    def paste(self, event: object = None) -> Sheet:
         self.MT.ctrl_v(event)
         return self
 
-    def delete(self, event=None) -> Sheet:
+    def delete(self, event: object = None) -> Sheet:
         self.MT.delete_key(event)
         return self
 
-    def undo(self, event=None) -> Sheet:
+    def undo(self, event: object = None) -> Sheet:
         self.MT.undo(event)
         return self
 
-    def redo(self, event=None) -> Sheet:
+    def redo(self, event: object = None) -> Sheet:
         self.MT.redo(event)
         return self
 
@@ -1452,13 +1454,13 @@ class Sheet(tk.Frame):
     def del_row(
         self,
         idx: int = 0,
-        index_type: str = "displayed",
-        undo=undo,
+        data_indexes: bool = False,
+        undo: bool = False,
         redraw: bool = True,
-    ) -> dict:
+    ) -> EventDataDict:
         return self.del_rows(
             rows=idx,
-            index_type=index_type,
+            data_indexes=data_indexes,
             undo=undo,
             redraw=redraw,
         )
@@ -1468,10 +1470,10 @@ class Sheet(tk.Frame):
     def del_rows(
         self,
         rows: int | Iterator,
-        index_type: str = "displayed",
+        data_indexes: bool = False,
         undo: bool = False,
         redraw: bool = True,
-    ) -> dict:
+    ) -> EventDataDict:
         rows = [rows] if isinstance(rows, int) else sorted(rows)
         event_data = event_dict(
             name="delete_rows",
@@ -1479,7 +1481,7 @@ class Sheet(tk.Frame):
             boxes=self.MT.get_boxes(),
             selected=self.MT.currently_selected(),
         )
-        if "displayed" in index_type.lower():
+        if not data_indexes:
             event_data = self.MT.delete_rows_displayed(rows, event_data)
             event_data = self.MT.delete_rows_data(
                 rows if self.MT.all_rows_displayed else [self.MT.displayed_rows[r] for r in rows],
@@ -1506,13 +1508,13 @@ class Sheet(tk.Frame):
     def del_column(
         self,
         idx: int = 0,
-        index_type: str = "displayed",
+        data_indexes: bool = False,
         undo: bool = False,
         redraw: bool = True,
-    ) -> dict:
+    ) -> EventDataDict:
         return self.del_columns(
             columns=idx,
-            index_type=index_type,
+            data_indexes=data_indexes,
             undo=undo,
             redraw=redraw,
         )
@@ -1522,10 +1524,10 @@ class Sheet(tk.Frame):
     def del_columns(
         self,
         columns: int | Iterator,
-        index_type: str = "displayed",
+        data_indexes: bool = False,
         undo: bool = False,
         redraw: bool = True,
-    ) -> dict:
+    ) -> EventDataDict:
         columns = [columns] if isinstance(columns, int) else sorted(columns)
         event_data = event_dict(
             name="delete_columns",
@@ -1533,7 +1535,7 @@ class Sheet(tk.Frame):
             boxes=self.MT.get_boxes(),
             selected=self.MT.currently_selected(),
         )
-        if "displayed" in index_type.lower():
+        if not data_indexes:
             event_data = self.MT.delete_columns_displayed(columns, event_data)
             event_data = self.MT.delete_columns_data(
                 columns if self.MT.all_columns_displayed else [self.MT.displayed_columns[c] for c in columns],
@@ -1615,7 +1617,7 @@ class Sheet(tk.Frame):
         disp_new_idxs: None | dict = None,
         move_data: bool = True,
         create_selections: bool = True,
-        index_type: str = "displayed",
+        data_indexes: bool = False,
         undo: bool = False,
         redraw: bool = True,
     ) -> tuple[dict, dict, dict]:
@@ -1626,7 +1628,7 @@ class Sheet(tk.Frame):
             disp_new_idxs=disp_new_idxs,
             move_data=move_data,
             create_selections=create_selections,
-            index_type=index_type,
+            data_indexes=data_indexes,
         )
         if undo:
             self.MT.undo_stack.append(ev_stack_dict(event_data))
@@ -1638,7 +1640,7 @@ class Sheet(tk.Frame):
         move_to: int | None = None,
         to_move: list[int] | None = None,
         move_data: bool = True,
-        index_type: str = "displayed",
+        data_indexes: bool = False,
         create_selections: bool = True,
         undo: bool = False,
         redraw: bool = True,
@@ -1647,11 +1649,11 @@ class Sheet(tk.Frame):
             *self.MT.get_args_for_move_columns(
                 move_to=move_to,
                 to_move=to_move,
-                index_type=index_type,
+                data_indexes=data_indexes,
             ),
             move_data=move_data,
             create_selections=create_selections,
-            index_type=index_type,
+            data_indexes=data_indexes,
         )
         if undo:
             self.MT.undo_stack.append(ev_stack_dict(event_data))
@@ -1667,7 +1669,7 @@ class Sheet(tk.Frame):
         disp_new_idxs: None | dict = None,
         move_data: bool = True,
         create_selections: bool = True,
-        index_type: str = "displayed",
+        data_indexes: bool = False,
         undo: bool = False,
         redraw: bool = True,
     ) -> tuple[dict, dict, dict]:
@@ -1678,7 +1680,7 @@ class Sheet(tk.Frame):
             disp_new_idxs=disp_new_idxs,
             move_data=move_data,
             create_selections=create_selections,
-            index_type=index_type,
+            data_indexes=data_indexes,
         )
         if undo:
             self.MT.undo_stack.append(ev_stack_dict(event_data))
@@ -1690,7 +1692,7 @@ class Sheet(tk.Frame):
         move_to: int | None = None,
         to_move: list[int] | None = None,
         move_data: bool = True,
-        index_type: str = "displayed",
+        data_indexes: bool = False,
         create_selections: bool = True,
         undo: bool = False,
         redraw: bool = True,
@@ -1699,11 +1701,11 @@ class Sheet(tk.Frame):
             *self.MT.get_args_for_move_rows(
                 move_to=move_to,
                 to_move=to_move,
-                index_type=index_type,
+                data_indexes=data_indexes,
             ),
             move_data=move_data,
             create_selections=create_selections,
-            index_type=index_type,
+            data_indexes=data_indexes,
         )
         if undo:
             self.MT.undo_stack.append(ev_stack_dict(event_data))
@@ -2493,12 +2495,14 @@ class Sheet(tk.Frame):
 
     def get_data(
         self,
-        *key: None
+        *key: tuple[()]
+        | None
         | str
         | int
         | slice
-        | Sequence[int | None, int | None]
-        | Sequence[Sequence[int | None, int | None], Sequence[int | None, int | None]]
+        | tuple[int | None, int | None]
+        | tuple[tuple[int | None, int | None], tuple[int | None, int | None]]
+        | tuple[int | None, int | None, int | None, int | None]
         | Span,
     ) -> object:
         span = self.span_from_key(*key)
@@ -2642,12 +2646,14 @@ class Sheet(tk.Frame):
 
     def set_data(
         self,
-        *key: None
+        *key: tuple[()]
+        | None
         | str
         | int
         | slice
-        | Sequence[int | None, int | None]
-        | Sequence[Sequence[int | None, int | None], Sequence[int | None, int | None]]
+        | tuple[int | None, int | None]
+        | tuple[tuple[int | None, int | None], tuple[int | None, int | None]]
+        | tuple[int | None, int | None, int | None, int | None]
         | Span,
         data: object = None,
         undo: bool | None = None,
@@ -2933,7 +2939,7 @@ class Sheet(tk.Frame):
         event_data: dict,
         fmt_kw: dict | None = None,
         check_readonly: bool = False,
-    ) -> dict:
+    ) -> EventDataDict:
         if fmt_kw is not None or self.MT.input_valid_for_cell(datarn, datacn, value, check_readonly=check_readonly):
             event_data["cells"]["table"][(datarn, datacn)] = self.MT.get_cell_data(datarn, datacn)
             self.MT.set_cell_data(datarn, datacn, value, kwargs=fmt_kw)
@@ -2945,7 +2951,7 @@ class Sheet(tk.Frame):
         value: object,
         event_data: dict,
         check_readonly: bool = False,
-    ) -> dict:
+    ) -> EventDataDict:
         if self.RI.input_valid_for_cell(datarn, value, check_readonly=check_readonly):
             event_data["cells"]["index"][datarn] = self.RI.get_cell_data(datarn)
             self.RI.set_cell_data(datarn, value)
@@ -2957,7 +2963,7 @@ class Sheet(tk.Frame):
         value: object,
         event_data: dict,
         check_readonly: bool = False,
-    ) -> dict:
+    ) -> EventDataDict:
         if self.CH.input_valid_for_cell(datacn, value, check_readonly=check_readonly):
             event_data["cells"]["header"][datacn] = self.CH.get_cell_data(datacn)
             self.CH.set_cell_data(datacn, value)
@@ -2965,16 +2971,18 @@ class Sheet(tk.Frame):
 
     def clear(
         self,
-        *key: None
+        *key: tuple[()]
+        | None
         | str
         | int
         | slice
-        | Sequence[int | None, int | None]
-        | Sequence[Sequence[int | None, int | None], Sequence[int | None, int | None]]
+        | tuple[int | None, int | None]
+        | tuple[tuple[int | None, int | None], tuple[int | None, int | None]]
+        | tuple[int | None, int | None, int | None, int | None]
         | Span,
         undo: bool | None = None,
         redraw: bool = True,
-    ) -> dict:
+    ) -> EventDataDict:
         span = self.span_from_key(*key)
         rows, cols = self.ranges_from_span(span)
         clear_t = self.event_data_set_table_cell
@@ -2983,7 +2991,7 @@ class Sheet(tk.Frame):
         quick_tval = self.MT.get_value_for_empty_cell
         quick_ival = self.RI.get_value_for_empty_cell
         quick_hval = self.CH.get_value_for_empty_cell
-        table, index, header = span.index, span.header, span.table
+        table, index, header = span.table, span.index, span.header
         event_data = event_dict(
             name="edit_table",
             sheet=self.name,
@@ -3008,12 +3016,14 @@ class Sheet(tk.Frame):
 
     def span_from_key(
         self,
-        *key: None
+        *key: tuple[()]
+        | None
         | str
         | int
         | slice
-        | Sequence[int | None, int | None]
-        | Sequence[Sequence[int | None, int | None], Sequence[int | None, int | None]]
+        | tuple[int | None, int | None]
+        | tuple[tuple[int | None, int | None], tuple[int | None, int | None]]
+        | tuple[int | None, int | None, int | None, int | None]
         | Span,
     ) -> None | Span:
         if not key:
@@ -3032,12 +3042,14 @@ class Sheet(tk.Frame):
 
     def __getitem__(
         self,
-        *key: None
+        *key: tuple[()]
+        | None
         | str
         | int
         | slice
-        | Sequence[int | None, int | None]
-        | Sequence[Sequence[int | None, int | None], Sequence[int | None, int | None]]
+        | tuple[int | None, int | None]
+        | tuple[tuple[int | None, int | None], tuple[int | None, int | None]]
+        | tuple[int | None, int | None, int | None, int | None]
         | Span,
     ) -> Span:
         return self.span_from_key(*key)
@@ -3220,34 +3232,31 @@ class Sheet(tk.Frame):
 
     def insert_column(
         self,
-        column: list | tuple | None = None,
+        column: list[object] | tuple[object] | None = None,
         idx: str | int = "end",
         width: int | None = None,
-        headers: bool = False,
-        create_selections: bool = True,
+        header: bool = False,
         undo: bool = False,
         redraw: bool = True,
-    ):
-        self.insert_columns(
+    ) -> EventDataDict:
+        return self.insert_columns(
             columns=1 if column is None else [column] if isinstance(column, (list, tuple)) else column,
             idx=idx,
             widths=[width] if isinstance(width, int) else width,
-            headers=headers,
-            create_selections=create_selections,
+            headers=header,
             undo=undo,
             redraw=redraw,
         )
 
     def insert_columns(
         self,
-        columns: list | tuple | int = 1,
+        columns: list[tuple[object] | list[object]] | tuple[tuple[object] | list[object]] | int = 1,
         idx: str | int = "end",
-        widths: list | None = None,
+        widths: list[int] | tuple[int] | None = None,
         headers: bool = False,
-        create_selections: bool = True,
         undo: bool = False,
         redraw: bool = True,
-    ):
+    ) -> EventDataDict:
         old_total = self.MT.equalize_data_row_lengths()
         if isinstance(columns, int):
             if columns < 1:
@@ -3291,34 +3300,31 @@ class Sheet(tk.Frame):
 
     def insert_row(
         self,
-        row: list | tuple | None = None,
+        row: list[object] | tuple[object] | None = None,
         idx: str | int = "end",
         height: int | None = None,
         row_index: bool = False,
-        create_selections: bool = True,
         undo: bool = False,
         redraw: bool = True,
-    ):
-        self.insert_rows(
+    ) -> EventDataDict:
+        return self.insert_rows(
             rows=1 if row is None else [row] if isinstance(row, (list, tuple)) else row,
             idx=idx,
             heights=[height] if isinstance(height, int) else height,
             row_index=row_index,
-            create_selections=create_selections,
             undo=undo,
             redraw=redraw,
         )
 
     def insert_rows(
         self,
-        rows: list | tuple | int = 1,
+        rows: list[tuple[object] | list[object]] | tuple[tuple[object] | list[object]] | int = 1,
         idx: str | int = "end",
-        heights: list | tuple | None = None,
+        heights: list[int] | tuple[int] | None = None,
         row_index: bool = False,
-        create_selections: bool = True,
         undo: bool = False,
         redraw: bool = True,
-    ):
+    ) -> EventDataDict:
         total_cols = None
         idx = len(self.MT.data) if idx == "end" else idx
         if isinstance(rows, int):
@@ -3576,16 +3582,14 @@ class Sheet(tk.Frame):
     def span(
         self,
         *key: tuple[()]
-        | tuple[
-            None
-            | str
-            | int
-            | slice
-            | Sequence[int | None, int | None]
-            | Sequence[Sequence[int | None, int | None], Sequence[int | None, int | None]]
-            | Span
-            | None
-        ],
+        | None
+        | str
+        | int
+        | slice
+        | tuple[int | None, int | None]
+        | tuple[tuple[int | None, int | None], tuple[int | None, int | None]]
+        | tuple[int | None, int | None, int | None, int | None]
+        | Span,
         type_: str = "",
         name: str = "",
         table: bool = True,
@@ -3709,12 +3713,14 @@ class Sheet(tk.Frame):
 
     def highlight(
         self,
-        *key: None
+        *key: tuple[()]
+        | None
         | str
         | int
         | slice
-        | Sequence[int | None, int | None]
-        | Sequence[Sequence[int | None, int | None], Sequence[int | None, int | None]]
+        | tuple[int | None, int | None]
+        | tuple[tuple[int | None, int | None], tuple[int | None, int | None]]
+        | tuple[int | None, int | None, int | None, int | None]
         | Span,
         bg: bool | None | str = False,
         fg: bool | None | str = False,
@@ -3754,12 +3760,14 @@ class Sheet(tk.Frame):
 
     def dehighlight(
         self,
-        *key: None
+        *key: tuple[()]
+        | None
         | str
         | int
         | slice
-        | Sequence[int | None, int | None]
-        | Sequence[Sequence[int | None, int | None], Sequence[int | None, int | None]]
+        | tuple[int | None, int | None]
+        | tuple[tuple[int | None, int | None], tuple[int | None, int | None]]
+        | tuple[int | None, int | None, int | None, int | None]
         | Span,
         redraw: bool = True,
     ) -> Span:
@@ -3792,12 +3800,14 @@ class Sheet(tk.Frame):
 
     def align(
         self,
-        *key: None
+        *key: tuple[()]
+        | None
         | str
         | int
         | slice
-        | Sequence[int | None, int | None]
-        | Sequence[Sequence[int | None, int | None], Sequence[int | None, int | None]]
+        | tuple[int | None, int | None]
+        | tuple[tuple[int | None, int | None], tuple[int | None, int | None]]
+        | tuple[int | None, int | None, int | None, int | None]
         | Span,
         align: str | None = None,
         redraw: bool = True,
@@ -3833,12 +3843,14 @@ class Sheet(tk.Frame):
 
     def del_align(
         self,
-        *key: None
+        *key: tuple[()]
+        | None
         | str
         | int
         | slice
-        | Sequence[int | None, int | None]
-        | Sequence[Sequence[int | None, int | None], Sequence[int | None, int | None]]
+        | tuple[int | None, int | None]
+        | tuple[tuple[int | None, int | None], tuple[int | None, int | None]]
+        | tuple[int | None, int | None, int | None, int | None]
         | Span,
         redraw: bool = True,
     ) -> Span:
@@ -3849,12 +3861,14 @@ class Sheet(tk.Frame):
 
     def readonly(
         self,
-        *key: None
+        *key: tuple[()]
+        | None
         | str
         | int
         | slice
-        | Sequence[int | None, int | None]
-        | Sequence[Sequence[int | None, int | None], Sequence[int | None, int | None]]
+        | tuple[int | None, int | None]
+        | tuple[tuple[int | None, int | None], tuple[int | None, int | None]]
+        | tuple[int | None, int | None, int | None, int | None]
         | Span,
         readonly: bool = True,
     ) -> Span:
@@ -3906,12 +3920,14 @@ class Sheet(tk.Frame):
 
     def checkbox(
         self,
-        *key: None
+        *key: tuple[()]
+        | None
         | str
         | int
         | slice
-        | Sequence[int | None, int | None]
-        | Sequence[Sequence[int | None, int | None], Sequence[int | None, int | None]]
+        | tuple[int | None, int | None]
+        | tuple[tuple[int | None, int | None], tuple[int | None, int | None]]
+        | tuple[int | None, int | None, int | None, int | None]
         | Span,
         **kwargs,
     ) -> Span:
@@ -3970,12 +3986,14 @@ class Sheet(tk.Frame):
 
     def del_checkbox(
         self,
-        *key: None
+        *key: tuple[()]
+        | None
         | str
         | int
         | slice
-        | Sequence[int | None, int | None]
-        | Sequence[Sequence[int | None, int | None], Sequence[int | None, int | None]]
+        | tuple[int | None, int | None]
+        | tuple[tuple[int | None, int | None], tuple[int | None, int | None]]
+        | tuple[int | None, int | None, int | None, int | None]
         | Span,
         redraw: bool = True,
     ) -> Span:
@@ -3986,12 +4004,14 @@ class Sheet(tk.Frame):
 
     def click_checkbox(
         self,
-        *key: None
+        *key: tuple[()]
+        | None
         | str
         | int
         | slice
-        | Sequence[int | None, int | None]
-        | Sequence[Sequence[int | None, int | None], Sequence[int | None, int | None]]
+        | tuple[int | None, int | None]
+        | tuple[tuple[int | None, int | None], tuple[int | None, int | None]]
+        | tuple[int | None, int | None, int | None, int | None]
         | Span,
         checked: bool | None = None,
         redraw: bool = True,
@@ -4043,12 +4063,14 @@ class Sheet(tk.Frame):
 
     def dropdown(
         self,
-        *key: None
+        *key: tuple[()]
+        | None
         | str
         | int
         | slice
-        | Sequence[int | None, int | None]
-        | Sequence[Sequence[int | None, int | None], Sequence[int | None, int | None]]
+        | tuple[int | None, int | None]
+        | tuple[tuple[int | None, int | None], tuple[int | None, int | None]]
+        | tuple[int | None, int | None, int | None, int | None]
         | Span,
         **kwargs,
     ) -> Span:
@@ -4095,12 +4117,14 @@ class Sheet(tk.Frame):
 
     def del_dropdown(
         self,
-        *key: None
+        *key: tuple[()]
+        | None
         | str
         | int
         | slice
-        | Sequence[int | None, int | None]
-        | Sequence[Sequence[int | None, int | None], Sequence[int | None, int | None]]
+        | tuple[int | None, int | None]
+        | tuple[tuple[int | None, int | None], tuple[int | None, int | None]]
+        | tuple[int | None, int | None, int | None, int | None]
         | Span,
         redraw: bool = True,
     ) -> Span:
@@ -4154,12 +4178,14 @@ class Sheet(tk.Frame):
 
     def format(
         self,
-        *key: None
+        *key: tuple[()]
+        | None
         | str
         | int
         | slice
-        | Sequence[int | None, int | None]
-        | Sequence[Sequence[int | None, int | None], Sequence[int | None, int | None]]
+        | tuple[int | None, int | None]
+        | tuple[tuple[int | None, int | None], tuple[int | None, int | None]]
+        | tuple[int | None, int | None, int | None, int | None]
         | Span,
         formatter_options: dict = {},
         formatter_class: object = None,
@@ -4209,12 +4235,14 @@ class Sheet(tk.Frame):
 
     def del_format(
         self,
-        *key: None
+        *key: tuple[()]
+        | None
         | str
         | int
         | slice
-        | Sequence[int | None, int | None]
-        | Sequence[Sequence[int | None, int | None], Sequence[int | None, int | None]]
+        | tuple[int | None, int | None]
+        | tuple[tuple[int | None, int | None], tuple[int | None, int | None]]
+        | tuple[int | None, int | None, int | None, int | None]
         | Span,
         clear_values: bool = False,
         redraw: bool = True,

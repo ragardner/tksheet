@@ -49,12 +49,16 @@ from .functions import (
 from .main_table import MainTable
 from .other_classes import (
     CurrentlySelectedClass,
+    EventDataDict,
+    DotDict,
     DraggedRowColumn,
     DrawnItem,
     GeneratedMouseEvent,
     TextCfg,
     TextEditor,
     TextEditor_,
+    Span,
+    SpanRange,
 )
 from .row_index import RowIndex
 from .sheet import Dropdown, Sheet

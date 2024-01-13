@@ -12,17 +12,14 @@
 - [Suggestions](https://github.com/ragardner/tksheet/wiki/Version-7#enhancements-or-suggestions)
 - This library is maintained with the help of **[others](https://github.com/ragardner/tksheet/graphs/contributors)**. If you would like to contribute please read [this help section](https://github.com/ragardner/tksheet/wiki/Version-7#contributing).
 
-## **Notice:**
+## **Changes for versions >= `7.0.0`:**
 
-### **Changes for versions >= `7.0.0`:**
-
-- **ALL** `extra_bindings()` event objects have changed, [see here](https://github.com/ragardner/tksheet/wiki/Version-7#bind-specific-table-functionality) for more information.
+- **ALL** `extra_bindings()` event objects have changed, information [here](https://github.com/ragardner/tksheet/wiki/Version-7#bind-specific-table-functionality).
+- The bound function for `extra_bindings()` with `"edit_cell"`/`"end_edit_cell"` **no longer** requires a return value and no longer sets the cell to the return value. Use [this](https://github.com/ragardner/tksheet/wiki/Version-7#validate-user-cell-edits) instead.
+- `edit_cell_validation` has been removed and replaced with the function `edit_validation()`, information [here](https://github.com/ragardner/tksheet/wiki/Version-7#validate-user-cell-edits).
 - Only Python versions >= `3.8` are supported.
 - `tksheet` file names have been changed.
-
-### **Changes for versions >= `5.5.0`:**
-
-- If you use `extra_bindings()` with `"edit_cell"`/`"end_edit_cell"` you must provide a return value in your bound function to set the cell value to. To disable this behavior in these versions use option `edit_cell_validation = False` in your `Sheet()` initialisation arguments or use `set_options(edit_cell_validation = False)`. [See here](https://github.com/ragardner/tksheet/issues/170#issuecomment-1522236289) for more information on this issue and if you need to *very* directly set the cell data.
+- Many other smaller changes, see the [changelog](https://github.com/ragardner/tksheet/blob/master/CHANGELOG.md) for more information.
 
 ## **Features**
 

@@ -110,6 +110,13 @@ class DotDict(dict):
     __delattr__ = dict.__delitem__
 
 
+class EventDataDict(DotDict):
+    """
+    A subclass of DotDict with no changes
+    For better clarity in type hinting
+    """
+
+
 class Span(dict):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -146,8 +153,8 @@ class Span(dict):
 
     def format(
         self,
-        formatter_options={},
-        formatter_class=None,
+        formatter_options: dict = {},
+        formatter_class: object = None,
         redraw: bool = True,
         **kwargs,
     ) -> Span:
