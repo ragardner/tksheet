@@ -6,6 +6,7 @@ from collections import deque
 from collections.abc import Callable, Generator, Iterator, Sequence
 from itertools import accumulate, chain, islice, product
 from tkinter import ttk
+from typing import Literal
 
 from .column_headers import ColumnHeaders
 from .functions import (
@@ -49,6 +50,8 @@ from .vars import (
     get_index_font,
     named_span_types,
     rc_binding,
+)
+from .themes import (
     theme_black,
     theme_dark,
     theme_dark_blue,
@@ -1096,12 +1099,12 @@ class Sheet(tk.Frame):
             return list(accumulate(chain([0], (rowpos for c in range(total_rows)))))
         return list(accumulate(chain([0], (rowpos for c in range(len(self.MT.row_positions) - 1)))))
 
-    def get_column_widths(self, canvas_positions: bool = False) -> list[int]:
+    def get_column_widths(self, canvas_positions: bool = False) -> list[float]:
         if canvas_positions:
             return [int(n) for n in self.MT.col_positions]
         return self.MT.get_column_widths()
 
-    def get_row_heights(self, canvas_positions: bool = False) -> list[int]:
+    def get_row_heights(self, canvas_positions: bool = False) -> list[float]:
         if canvas_positions:
             return [int(n) for n in self.MT.row_positions]
         return self.MT.get_row_heights()
@@ -1113,7 +1116,7 @@ class Sheet(tk.Frame):
 
     def set_all_column_widths(
         self,
-        width=None,
+        width: int | None = None,
         only_set_if_too_small: bool = False,
         redraw: bool = True,
         recreate_selection_boxes: bool = True,
@@ -1128,24 +1131,22 @@ class Sheet(tk.Frame):
 
     def column_width(
         self,
-        column=None,
-        width=None,
+        column: int | Literal["all", "displayed"] | None = None,
+        width: int | Literal["default", "text"] | None = None,
         only_set_if_too_small: bool = False,
         redraw: bool = True,
     ) -> Sheet | int:
-        if column == "all":
-            if width == "default":
-                self.MT.reset_col_positions()
-        elif column == "displayed":
-            if width == "text":
-                sc, ec = self.MT.get_visible_columns(self.MT.canvasx(0), self.MT.canvasx(self.winfo_width()))
-                for c in range(sc, ec - 1):
-                    self.CH.set_col_width(c)
-        elif width == "text" and column is not None:
+        if column == "all" and width == "default":
+            self.MT.reset_col_positions()
+        elif column == "displayed" and width == "text":
+            sc, ec = self.MT.get_visible_columns(self.MT.canvasx(0), self.MT.canvasx(self.winfo_width()))
+            for c in range(sc, ec - 1):
+                self.CH.set_col_width(c)
+        elif width == "text" and isinstance(column, int):
             self.CH.set_col_width(col=column, width=None, only_set_if_too_small=only_set_if_too_small)
-        elif width is not None and column is not None:
+        elif isinstance(width, int) and isinstance(column, int):
             self.CH.set_col_width(col=column, width=width, only_set_if_too_small=only_set_if_too_small)
-        elif column is not None:
+        elif isinstance(column, int):
             return int(self.MT.col_positions[column + 1] - self.MT.col_positions[column])
         self.set_refresh_timer(redraw)
         return self
@@ -1156,7 +1157,7 @@ class Sheet(tk.Frame):
         canvas_positions: bool = False,
         reset: bool = False,
         verify: bool = False,
-    ):
+    ) -> None | list[float]:
         cwx = None
         if reset:
             self.MT.reset_col_positions()
@@ -1172,7 +1173,7 @@ class Sheet(tk.Frame):
 
     def set_all_row_heights(
         self,
-        height: None | int = None,
+        height: int | None = None,
         only_set_if_too_small: bool = False,
         redraw: bool = True,
         recreate_selection_boxes: bool = True,
@@ -3504,7 +3505,9 @@ class Sheet(tk.Frame):
 
     def get_selected_min_max(
         self,
-    ) -> tuple[int, int, int, int] | tuple[None, None, None, None]:  # returns (min_y, min_x, max_y, max_x) of any selections including rows/columns
+    ) -> (
+        tuple[int, int, int, int] | tuple[None, None, None, None]
+    ):  # returns (min_y, min_x, max_y, max_x) of any selections including rows/columns
         return self.MT.get_selected_min_max()
 
     def headers(
@@ -5505,29 +5508,29 @@ class Sheet(tk.Frame):
 class Dropdown(Sheet):
     def __init__(
         self,
-        parent,
-        r,
-        c,
-        width=None,
-        height=None,
-        font=None,
-        colors={
+        parent: tk.Misc,
+        r: int,
+        c: int,
+        width: int | None = None,
+        height: int | None = None,
+        font: None | tuple[str, int, str] = None,
+        colors: dict[str, str] = {
             "bg": theme_light_blue["popup_menu_bg"],
             "fg": theme_light_blue["popup_menu_fg"],
             "highlight_bg": theme_light_blue["popup_menu_highlight_bg"],
             "highlight_fg": theme_light_blue["popup_menu_highlight_fg"],
         },
-        outline_color=theme_light_blue["table_fg"],
-        outline_thickness=2,
-        values=[],
-        close_dropdown_window=None,
-        search_function=dropdown_search_function,
-        arrowkey_RIGHT=None,
-        arrowkey_LEFT=None,
-        align="w",
+        outline_color: str = theme_light_blue["table_fg"],
+        outline_thickness: int = 2,
+        values: list[object] = [],
+        close_dropdown_window: Callable | None = None,
+        search_function: Callable = dropdown_search_function,
+        arrowkey_RIGHT: Callable | None = None,
+        arrowkey_LEFT: Callable | None = None,
+        align: str = "w",
         # False for using r, c "r" for r "c" for c
         single_index: str | bool = False,
-    ):
+    ) -> None:
         Sheet.__init__(
             self,
             parent=parent,
@@ -5582,7 +5585,7 @@ class Dropdown(Sheet):
         if values:
             self.values(values)
 
-    def arrowkey_UP(self, event=None):
+    def arrowkey_UP(self, event: object = None) -> None:
         self.deselect("all")
         if self.row > 0:
             self.row -= 1
@@ -5591,14 +5594,14 @@ class Dropdown(Sheet):
         self.see(self.row, 0, redraw=False)
         self.select_row(self.row)
 
-    def arrowkey_DOWN(self, event=None):
+    def arrowkey_DOWN(self, event: object = None) -> None:
         self.deselect("all")
         if len(self.MT.data) - 1 > self.row:
             self.row += 1
         self.see(self.row, 0, redraw=False)
         self.select_row(self.row)
 
-    def search_and_see(self, event=None):
+    def search_and_see(self, event: object = None) -> None:
         if self.search_function is not None:
             rn = self.search_function(search_for=rf"{event['value']}".lower(), data=self.MT.data)
             if rn is not None:
@@ -5606,19 +5609,19 @@ class Dropdown(Sheet):
                 self.see(self.row, 0, redraw=False)
                 self.select_row(self.row)
 
-    def mouse_motion(self, event: object):
+    def mouse_motion(self, event: object) -> None:
         row = self.identify_row(event, exclude_index=True, allow_end=False)
         if row is not None and row != self.row:
             self.row = row
             self.deselect("all", redraw=False)
             self.select_row(self.row)
 
-    def _reselect(self):
+    def _reselect(self) -> None:
         rows = self.get_selected_rows()
         if rows:
             self.select_row(next(iter(rows)))
 
-    def b1(self, event=None):
+    def b1(self, event: object = None) -> None:
         if event is None:
             row = None
         elif event.keysym == "Return":
@@ -5643,7 +5646,7 @@ class Dropdown(Sheet):
             else:
                 self.close_dropdown_window(self.r, self.c, self.get_cell_data(row, 0))
 
-    def values(self, values=[], redraw=True):
+    def values(self, values: list = [], redraw: bool = True) -> None:
         self.set_sheet_data(
             [[v] for v in values],
             reset_col_positions=False,

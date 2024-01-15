@@ -36,6 +36,9 @@ from math import (
 from operator import itemgetter
 from tkinter import TclError
 
+from .colors import (
+    color_map,
+)
 from .formatters import (
     data_to_str,
     format_data,
@@ -78,7 +81,6 @@ from .other_classes import (
 )
 from .vars import (
     USER_OS,
-    Color_Map,
     arrowkey_bindings_helper,
     ctrl_key,
     rc_binding,
@@ -5075,7 +5077,7 @@ class MainTable(tk.Canvas):
         kwargs = self.get_cell_kwargs(datarn, datacn, key="highlight")
         if kwargs:
             if kwargs[0] is not None:
-                c_1 = kwargs[0] if kwargs[0].startswith("#") else Color_Map[kwargs[0]]
+                c_1 = kwargs[0] if kwargs[0].startswith("#") else color_map[kwargs[0]]
             if "cells" in selections and (r, c) in selections["cells"]:
                 tf = (
                     self.table_selected_cells_fg
@@ -5504,19 +5506,19 @@ class MainTable(tk.Canvas):
             c_2 = (
                 self.table_selected_cells_bg
                 if self.table_selected_cells_bg.startswith("#")
-                else Color_Map[self.table_selected_cells_bg]
+                else color_map[self.table_selected_cells_bg]
             )
             c_2_ = (int(c_2[1:3], 16), int(c_2[3:5], 16), int(c_2[5:], 16))
             c_3 = (
                 self.table_selected_columns_bg
                 if self.table_selected_columns_bg.startswith("#")
-                else Color_Map[self.table_selected_columns_bg]
+                else color_map[self.table_selected_columns_bg]
             )
             c_3_ = (int(c_3[1:3], 16), int(c_3[3:5], 16), int(c_3[5:], 16))
             c_4 = (
                 self.table_selected_rows_bg
                 if self.table_selected_rows_bg.startswith("#")
-                else Color_Map[self.table_selected_rows_bg]
+                else color_map[self.table_selected_rows_bg]
             )
             c_4_ = (int(c_4[1:3], 16), int(c_4[3:5], 16), int(c_4[5:], 16))
             rows_ = tuple(range(start_row, end_row))

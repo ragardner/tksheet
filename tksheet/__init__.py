@@ -1,4 +1,7 @@
 # ruff: noqa: F401
+from .colors import (
+    color_map,
+)
 from .column_headers import ColumnHeaders
 from .formatters import (
     Formatter,
@@ -49,23 +52,30 @@ from .functions import (
 from .main_table import MainTable
 from .other_classes import (
     CurrentlySelectedClass,
-    EventDataDict,
     DotDict,
     DraggedRowColumn,
     DrawnItem,
+    EventDataDict,
     GeneratedMouseEvent,
+    Span,
+    SpanRange,
     TextCfg,
     TextEditor,
     TextEditor_,
-    Span,
-    SpanRange,
 )
 from .row_index import RowIndex
 from .sheet import Dropdown, Sheet
+from .themes import (
+    theme_black,
+    theme_dark,
+    theme_dark_blue,
+    theme_dark_green,
+    theme_light_blue,
+    theme_light_green,
+)
 from .top_left_rectangle import TopLeftRectangle
 from .vars import (
     USER_OS,
-    Color_Map,
     arrowkey_bindings_helper,
     ctrl_key,
     emitted_events,
@@ -76,11 +86,5 @@ from .vars import (
     nonelike,
     rc_binding,
     symbols_set,
-    theme_black,
-    theme_dark,
-    theme_dark_blue,
-    theme_dark_green,
-    theme_light_blue,
-    theme_light_green,
     truthy,
 )

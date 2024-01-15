@@ -3543,66 +3543,102 @@ default_row_height(height: int | str | None = None) -> int
 ___
 
 #### **Set default header bar height in pixels or lines**
+
 ```python
-default_header_height(height = None)
+default_header_height(height: int | str | None = None) -> int
 ```
-- `height` (`int`, `str`) use a numerical `str` for number of lines e.g. `"3"` for a height that fits 3 lines or `int` for pixels.
+- `height` (`int`, `str`, `None`) use a numerical `str` for number of lines e.g. `"3"` for a height that fits 3 lines or `int` for pixels.
 
 ___
 
 #### **Set a specific cell size to its text**
+
 ```python
-set_cell_size_to_text(row, column, only_set_if_too_small = False, redraw = True)
+set_cell_size_to_text(
+    row: int,
+    column: int,
+    only_set_if_too_small: bool = False,
+    redraw: bool = True,
+) -> Sheet
 ```
 
 ___
 
 #### **Set all row heights and column widths to cell text sizes**
+
 ```python
-set_all_cell_sizes_to_text(redraw = True)
+set_all_cell_sizes_to_text(redraw: bool = True) -> tuple[list[float], list[float]]
 ```
+- Returns the Sheets row positions and column positions in that order.
 
 ___
 
 #### **Get the sheets column widths**
+
 ```python
-get_column_widths(canvas_positions = False)
+get_column_widths(canvas_positions: bool = False) -> list[float]
 ```
 - `canvas_positions` (`bool`) gets the actual canvas x coordinates of column lines.
 
 ___
 
 #### **Get the sheets row heights**
+
 ```python
-get_row_heights(canvas_positions = False)
+get_row_heights(canvas_positions: bool = False) -> list[float]
 ```
 - `canvas_positions` (`bool`) gets the actual canvas y coordinates of row lines.
 
 ___
 
-#### **Set all column widths to specific `width` in pixels (`int`) or leave `None` to set to cell text sizes for each column**
+#### **Set all column widths to a specific width in pixels**
+
 ```python
-set_all_column_widths(width = None, only_set_if_too_small = False, redraw = True, recreate_selection_boxes = True)
+set_all_column_widths(
+    width: int | None = None,
+    only_set_if_too_small: bool = False,
+    redraw: bool = True,
+    recreate_selection_boxes: bool = True,
+) -> Sheet
 ```
+- `width` (`int`, `None`) leave `None` to set to cell text sizes for each column.
 
 ___
 
-#### **Set all row heights to specific `height` in pixels (`int`) or leave `None` to set to cell text sizes for each row**
+#### **Set all row heights to a specific height in pixels**
+
 ```python
-set_all_row_heights(height = None, only_set_if_too_small = False, redraw = True, recreate_selection_boxes = True)
+set_all_row_heights(
+    height: int | None = None,
+    only_set_if_too_small: bool = False,
+    redraw: bool = True,
+    recreate_selection_boxes: bool = True,
+) -> Sheet
 ```
+- `height` (`int`, `None`) leave `None` to set to cell text sizes for each row.
 
 ___
 
 #### **Set/get a specific column width**
+
 ```python
-column_width(column = None, width = None, only_set_if_too_small = False, redraw = True)
+column_width(
+    column: int | Literal["all", "displayed"] | None = None,
+    width: int | Literal["default", "text"] | None = None,
+    only_set_if_too_small: bool = False,
+    redraw: bool = True,
+) -> Sheet | int
 ```
 
 ___
 
 ```python
-set_column_widths(column_widths = None, canvas_positions = False, reset = False, verify = False)
+set_column_widths(
+    column_widths: Iterator[int, float] | None = None,
+    canvas_positions: bool = False,
+    reset: bool = False,
+    verify: bool = False,
+) -> None | list[float]
 ```
 
 ___

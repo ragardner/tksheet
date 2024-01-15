@@ -15,6 +15,9 @@ from itertools import (
 )
 from math import ceil, floor
 
+from .colors import (
+    color_map,
+)
 from .formatters import is_bool_like, try_to_bool
 from .functions import (
     consecutive_chunks,
@@ -32,7 +35,6 @@ from .other_classes import (
 )
 from .vars import (
     USER_OS,
-    Color_Map,
     rc_binding,
     symbols_set,
 )
@@ -1143,7 +1145,7 @@ class ColumnHeaders(tk.Canvas):
         kwargs = self.get_cell_kwargs(datacn, key="highlight")
         if kwargs:
             if kwargs[0] is not None:
-                c_1 = kwargs[0] if kwargs[0].startswith("#") else Color_Map[kwargs[0]]
+                c_1 = kwargs[0] if kwargs[0].startswith("#") else color_map[kwargs[0]]
             if "columns" in selections and c in selections["columns"]:
                 tf = (
                     self.header_selected_columns_fg
@@ -1377,12 +1379,12 @@ class ColumnHeaders(tk.Canvas):
         c_2 = (
             self.header_selected_cells_bg
             if self.header_selected_cells_bg.startswith("#")
-            else Color_Map[self.header_selected_cells_bg]
+            else color_map[self.header_selected_cells_bg]
         )
         c_3 = (
             self.header_selected_columns_bg
             if self.header_selected_columns_bg.startswith("#")
-            else Color_Map[self.header_selected_columns_bg]
+            else color_map[self.header_selected_columns_bg]
         )
         font = self.MT.header_font
         selections = self.get_redraw_selections(start_col, end_col)

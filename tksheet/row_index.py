@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import tkinter as tk
+from collections import defaultdict
 from collections.abc import (
     Callable,
 )
-from collections import defaultdict
 from functools import (
     partial,
 )
@@ -18,6 +18,9 @@ from math import (
     floor,
 )
 
+from .colors import (
+    color_map,
+)
 from .formatters import (
     is_bool_like,
     try_to_bool,
@@ -39,7 +42,6 @@ from .other_classes import (
 )
 from .vars import (
     USER_OS,
-    Color_Map,
     rc_binding,
     symbols_set,
 )
@@ -1120,7 +1122,7 @@ class RowIndex(tk.Canvas):
         kwargs = self.get_cell_kwargs(datarn, key="highlight")
         if kwargs:
             if kwargs[0] is not None:
-                c_1 = kwargs[0] if kwargs[0].startswith("#") else Color_Map[kwargs[0]]
+                c_1 = kwargs[0] if kwargs[0].startswith("#") else color_map[kwargs[0]]
             if "rows" in selections and r in selections["rows"]:
                 tf = (
                     self.index_selected_rows_fg
@@ -1353,12 +1355,12 @@ class RowIndex(tk.Canvas):
         c_2 = (
             self.index_selected_cells_bg
             if self.index_selected_cells_bg.startswith("#")
-            else Color_Map[self.index_selected_cells_bg]
+            else color_map[self.index_selected_cells_bg]
         )
         c_3 = (
             self.index_selected_rows_bg
             if self.index_selected_rows_bg.startswith("#")
-            else Color_Map[self.index_selected_rows_bg]
+            else color_map[self.index_selected_rows_bg]
         )
         font = self.MT.index_font
         selections = self.get_redraw_selections(start_row, end_row)
