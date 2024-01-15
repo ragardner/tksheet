@@ -896,8 +896,9 @@ class Sheet(tk.Frame):
         for func in self.bound_events[event]:
             func(data)
 
-    def edit_validation(self, func: Callable | None = None) -> None:
+    def edit_validation(self, func: Callable | None = None) -> Sheet:
         self.MT.edit_validation_func = func
+        return self
 
     @property
     def event(self) -> EventDataDict:
@@ -1318,7 +1319,7 @@ class Sheet(tk.Frame):
             z < self.MT.min_column_width or not isinstance(z, int) or isinstance(z, bool) for z in column_widths
         )
 
-    def default_row_height(self, height=None):
+    def default_row_height(self, height: int | str | None = None) -> int:
         if height is not None:
             self.MT.default_row_height = (
                 height if isinstance(height, str) else "pixels",
@@ -1326,7 +1327,7 @@ class Sheet(tk.Frame):
             )
         return self.MT.default_row_height[1]
 
-    def default_header_height(self, height=None):
+    def default_header_height(self, height: int | str | None = None) -> int:
         if height is not None:
             self.MT.default_header_height = (
                 height if isinstance(height, str) else "pixels",
@@ -1336,8 +1337,8 @@ class Sheet(tk.Frame):
             )
         return self.MT.default_header_height[1]
 
-    def default_column_width(self, width=None):
-        if width is not None:
+    def default_column_width(self, width: int | None = None) -> int:
+        if isinstance(width, int):
             if width < self.MT.min_column_width:
                 self.MT.default_column_width = self.MT.min_column_width + 20
             else:
@@ -1382,7 +1383,7 @@ class Sheet(tk.Frame):
 
     def total_rows(
         self,
-        number=None,
+        number: int | None = None,
         mod_positions: bool = True,
         mod_data: bool = True,
     ) -> int | Sheet:
@@ -1405,7 +1406,7 @@ class Sheet(tk.Frame):
 
     def total_columns(
         self,
-        number=None,
+        number: int | None = None,
         mod_positions: bool = True,
         mod_data: bool = True,
     ) -> int | Sheet:
@@ -1444,8 +1445,8 @@ class Sheet(tk.Frame):
 
     def set_sheet_data_and_display_dimensions(
         self,
-        total_rows=None,
-        total_columns=None,
+        total_rows: int | None = None,
+        total_columns: int | None = None,
     ) -> Sheet:
         self.sheet_display_dimensions(total_rows=total_rows, total_columns=total_columns)
         self.MT.data_dimensions(total_rows=total_rows, total_columns=total_columns)
@@ -1810,7 +1811,7 @@ class Sheet(tk.Frame):
         self.set_refresh_timer(redraw)
         return self
 
-    def select_row(self, row, redraw: bool = True, run_binding_func: bool = True) -> Sheet:
+    def select_row(self, row: int, redraw: bool = True, run_binding_func: bool = True) -> Sheet:
         self.RI.select_row(
             int(row) if not isinstance(row, int) else row,
             redraw=False,
@@ -1819,7 +1820,7 @@ class Sheet(tk.Frame):
         self.set_refresh_timer(redraw)
         return self
 
-    def select_column(self, column, redraw: bool = True, run_binding_func: bool = True) -> Sheet:
+    def select_column(self, column: int, redraw: bool = True, run_binding_func: bool = True) -> Sheet:
         self.CH.select_col(
             int(column) if not isinstance(column, int) else column,
             redraw=False,
@@ -1828,7 +1829,7 @@ class Sheet(tk.Frame):
         self.set_refresh_timer(redraw)
         return self
 
-    def select_cell(self, row, column, redraw: bool = True, run_binding_func: bool = True) -> Sheet:
+    def select_cell(self, row: int, column: int, redraw: bool = True, run_binding_func: bool = True) -> Sheet:
         self.MT.select_cell(
             int(row) if not isinstance(row, int) else row,
             int(column) if not isinstance(column, int) else column,
@@ -1845,8 +1846,8 @@ class Sheet(tk.Frame):
 
     def add_cell_selection(
         self,
-        row,
-        column,
+        row: int,
+        column: int,
         redraw: bool = True,
         run_binding_func: bool = True,
         set_as_current: bool = True,
@@ -1863,7 +1864,7 @@ class Sheet(tk.Frame):
 
     def add_row_selection(
         self,
-        row,
+        row: int,
         redraw: bool = True,
         run_binding_func: bool = True,
         set_as_current: bool = True,
@@ -1879,7 +1880,7 @@ class Sheet(tk.Frame):
 
     def add_column_selection(
         self,
-        column,
+        column: int,
         redraw: bool = True,
         run_binding_func: bool = True,
         set_as_current: bool = True,
@@ -1895,8 +1896,8 @@ class Sheet(tk.Frame):
 
     def toggle_select_cell(
         self,
-        row,
-        column,
+        row: int,
+        column: int,
         add_selection: bool = True,
         redraw: bool = True,
         run_binding_func: bool = True,
@@ -1915,7 +1916,7 @@ class Sheet(tk.Frame):
 
     def toggle_select_row(
         self,
-        row,
+        row: int,
         add_selection: bool = True,
         redraw: bool = True,
         run_binding_func: bool = True,
@@ -1933,7 +1934,7 @@ class Sheet(tk.Frame):
 
     def toggle_select_column(
         self,
-        column,
+        column: int,
         add_selection: bool = True,
         redraw: bool = True,
         run_binding_func: bool = True,
@@ -1961,10 +1962,10 @@ class Sheet(tk.Frame):
         return self
 
     # (row, column, type_) e.g. (0, 0, "column") as a named tuple
-    def get_currently_selected(self):
+    def get_currently_selected(self) -> tuple | CurrentlySelectedClass:
         return self.MT.currently_selected()
 
-    def set_currently_selected(self, row=None, column=None, **kwargs) -> Sheet:
+    def set_currently_selected(self, row: int | None = None, column: int | None = None, **kwargs) -> Sheet:
         self.MT.set_currently_selected(
             r=row,
             c=column,
@@ -1977,7 +1978,7 @@ class Sheet(tk.Frame):
         get_cells: bool = False,
         get_cells_as_rows: bool = False,
         return_tuple: bool = False,
-    ):
+    ) -> tuple | set:
         if return_tuple:
             return tuple(self.MT.get_selected_rows(get_cells=get_cells, get_cells_as_rows=get_cells_as_rows))
         return self.MT.get_selected_rows(get_cells=get_cells, get_cells_as_rows=get_cells_as_rows)
@@ -1987,7 +1988,7 @@ class Sheet(tk.Frame):
         get_cells: bool = False,
         get_cells_as_columns: bool = False,
         return_tuple: bool = False,
-    ):
+    ) -> tuple | set:
         if return_tuple:
             return tuple(self.MT.get_selected_cols(get_cells=get_cells, get_cells_as_cols=get_cells_as_columns))
         return self.MT.get_selected_cols(get_cells=get_cells, get_cells_as_cols=get_cells_as_columns)
@@ -1998,7 +1999,7 @@ class Sheet(tk.Frame):
         get_columns: bool = False,
         sort_by_row: bool = False,
         sort_by_column: bool = False,
-    ):
+    ) -> list | set:
         if sort_by_row and sort_by_column:
             sels = sorted(
                 self.MT.get_selected_cells(get_rows=get_rows, get_cols=get_columns),
@@ -2017,38 +2018,39 @@ class Sheet(tk.Frame):
             )
         return self.MT.get_selected_cells(get_rows=get_rows, get_cols=get_columns)
 
-    def get_all_selection_boxes(self):
+    def get_all_selection_boxes(self) -> tuple[tuple[int, int, int, int]]:
         return self.MT.get_all_selection_boxes()
 
-    def get_all_selection_boxes_with_types(self):
+    def get_all_selection_boxes_with_types(self) -> list[tuple[tuple[int, int, int, int], str]]:
         return self.MT.get_all_selection_boxes_with_types()
 
     def create_selection_box(
         self,
-        r1,
-        c1,
-        r2,
-        c2,
-        type_="cells",
-    ):
+        r1: int,
+        c1: int,
+        r2: int,
+        c2: int,
+        type_: str = "cells",
+    ) -> int:
         return self.MT.create_selection_box(r1=r1, c1=c1, r2=r2, c2=c2, type_="columns" if type_ == "cols" else type_)
 
-    def recreate_all_selection_boxes(self):
+    def recreate_all_selection_boxes(self) -> Sheet:
         self.MT.recreate_all_selection_boxes()
+        return self
 
-    def cell_visible(self, r, c):
+    def cell_visible(self, r: int, c: int) -> bool:
         return self.MT.cell_visible(r, c)
 
-    def cell_completely_visible(self, r, c, seperate_axes: bool = False):
+    def cell_completely_visible(self, r: int, c: int, seperate_axes: bool = False) -> bool:
         return self.MT.cell_completely_visible(r, c, seperate_axes)
 
-    def cell_selected(self, r, c):
+    def cell_selected(self, r: int, c: int) -> bool:
         return self.MT.cell_selected(r, c)
 
-    def row_selected(self, r):
+    def row_selected(self, r: int) -> bool:
         return self.MT.row_selected(r)
 
-    def column_selected(self, c):
+    def column_selected(self, c: int) -> bool:
         return self.MT.col_selected(c)
 
     def anything_selected(
@@ -2056,7 +2058,7 @@ class Sheet(tk.Frame):
         exclude_columns: bool = False,
         exclude_rows: bool = False,
         exclude_cells: bool = False,
-    ):
+    ) -> bool:
         if self.MT.anything_selected(
             exclude_columns=exclude_columns,
             exclude_rows=exclude_rows,
@@ -2065,7 +2067,7 @@ class Sheet(tk.Frame):
             return True
         return False
 
-    def all_selected(self):
+    def all_selected(self) -> bool:
         return self.MT.all_selected()
 
     def del_out_of_bounds_options(self) -> Sheet:
@@ -2199,10 +2201,10 @@ class Sheet(tk.Frame):
     ) -> str | Sheet:
         return self.row_index_align(align, redraw)
 
-    def font(self, newfont: tuple | None = None, reset_row_positions: bool = True) -> tuple:
+    def font(self, newfont: tuple | None = None, reset_row_positions: bool = True) -> tuple[str, int, str]:
         return self.MT.set_table_font(newfont, reset_row_positions=reset_row_positions)
 
-    def header_font(self, newfont: tuple | None = None) -> tuple:
+    def header_font(self, newfont: tuple | None = None) -> tuple[str, int, str]:
         return self.MT.set_header_font(newfont)
 
     def set_options(self, redraw: bool = True, **kwargs) -> Sheet:
@@ -2658,7 +2660,7 @@ class Sheet(tk.Frame):
         data: object = None,
         undo: bool | None = None,
         redraw: bool = True,
-    ) -> None:
+    ) -> EventDataDict:
         span = self.span_from_key(*key)
         if data is None:
             data = []
@@ -3497,12 +3499,12 @@ class Sheet(tk.Frame):
         self.MT.show_ctrl_outline(canvas=canvas, start_cell=start_cell, end_cell=end_cell)
         return self
 
-    def get_ctrl_x_c_boxes(self):
+    def get_ctrl_x_c_boxes(self) -> tuple[dict[tuple[int, int, int, int], str], int]:
         return self.MT.get_ctrl_x_c_boxes()
 
     def get_selected_min_max(
         self,
-    ):  # returns (min_y, min_x, max_y, max_x) of any selections including rows/columns
+    ) -> tuple[int, int, int, int] | tuple[None, None, None, None]:  # returns (min_y, min_x, max_y, max_x) of any selections including rows/columns
         return self.MT.get_selected_min_max()
 
     def headers(
@@ -4990,7 +4992,7 @@ class Sheet(tk.Frame):
             for r_ in r:
                 self.del_index_cell_options_checkbox(r_)
 
-    def click_header_checkbox(self, c: int, checked: bool | None = None) -> None:
+    def click_header_checkbox(self, c: int, checked: bool | None = None) -> Sheet:
         kwargs = self.CH.get_cell_kwargs(c, key="checkbox")
         if kwargs:
             if not isinstance(self.MT._headers[c], bool):
@@ -5000,8 +5002,9 @@ class Sheet(tk.Frame):
                     self.MT._headers[c] = bool(checked)
             else:
                 self.MT._headers[c] = not self.MT._headers[c]
+        return self
 
-    def click_index_checkbox(self, r: int, checked: bool | None = None) -> None:
+    def click_index_checkbox(self, r: int, checked: bool | None = None) -> Sheet:
         kwargs = self.RI.get_cell_kwargs(r, key="checkbox")
         if kwargs:
             if not isinstance(self.MT._row_index[r], bool):
@@ -5011,6 +5014,7 @@ class Sheet(tk.Frame):
                     self.MT._row_index[r] = bool(checked)
             else:
                 self.MT._row_index[r] = not self.MT._row_index[r]
+        return self
 
     def get_checkboxes(self) -> dict:
         d = {
@@ -5231,7 +5235,7 @@ class Sheet(tk.Frame):
         set_existing_dropdown: bool = False,
         values: list = [],
         set_value: object = None,
-    ) -> None:
+    ) -> Sheet:
         if set_existing_dropdown:
             if self.MT.existing_dropdown_window is not None:
                 r_ = self.MT.existing_dropdown_window.r
@@ -5253,6 +5257,7 @@ class Sheet(tk.Frame):
                 and self.MT.text_editor is not None
             ):
                 self.MT.text_editor.set_text(set_value)
+        return self
 
     def set_header_dropdown_values(
         self,
@@ -5260,7 +5265,7 @@ class Sheet(tk.Frame):
         set_existing_dropdown: bool = False,
         values: list = [],
         set_value: object = None,
-    ) -> None:
+    ) -> Sheet:
         if set_existing_dropdown:
             if self.CH.existing_dropdown_window is not None:
                 c_ = self.CH.existing_dropdown_window.c
@@ -5275,6 +5280,7 @@ class Sheet(tk.Frame):
                 kwargs["window"].values(values)
             if set_value is not None:
                 self.MT.headers(newheaders=set_value, index=c_)
+        return self
 
     def set_index_dropdown_values(
         self,
@@ -5282,7 +5288,7 @@ class Sheet(tk.Frame):
         set_existing_dropdown: bool = False,
         values: list = [],
         set_value: object = None,
-    ) -> None:
+    ) -> Sheet:
         if set_existing_dropdown:
             if self.RI.existing_dropdown_window is not None:
                 r_ = self.RI.existing_dropdown_window.r
@@ -5297,6 +5303,7 @@ class Sheet(tk.Frame):
                 kwargs["window"].values(values)
             if set_value is not None:
                 self.MT.row_index(newindex=set_value, index=r_)
+        return self
 
     def get_dropdown_values(self, r: int = 0, c: int = 0) -> None | list:
         kwargs = self.MT.get_cell_kwargs(r, c, key="dropdown")

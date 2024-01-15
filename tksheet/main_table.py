@@ -71,7 +71,6 @@ from .functions import (
     unpickle_obj,
 )
 from .other_classes import (
-    Box_nt,
     Box_t,
     CurrentlySelectedClass,
     EventDataDict,
@@ -539,7 +538,7 @@ class MainTable(tk.Canvas):
                 self.itemconfig(t, state="hidden")
                 self.hidd_ctrl_outline[t] = False
 
-    def get_ctrl_x_c_boxes(self) -> tuple[dict, int]:
+    def get_ctrl_x_c_boxes(self) -> tuple[dict[tuple[int, int, int, int], str], int]:
         currently_selected = self.currently_selected()
         boxes = {}
         maxrows = 0
@@ -1868,22 +1867,20 @@ class MainTable(tk.Canvas):
 
     def deselect(
         self,
-        r: int | None = None,
+        r: int | None | str = None,
         c: int | None = None,
         cell: tuple[int, int] | None = None,
         redraw: bool = True,
         run_binding: bool = True,
-    ):
-        deleted_boxes = {}
+    ) -> None:
         if not self.anything_selected():
-            return deleted_boxes
+            return
         # saved_current = self.currently_selected()
         set_curr = False
         current = self.currently_selected().tags
         if r == "all" or (r is None and c is None and cell is None):
             for item in self.get_selection_items(current=False):
                 tags = self.gettags(item)
-                deleted_boxes[coords_tag_to_box_nt(tags[1])] = tags[0]
                 self.delete_item(item)
         elif r in ("allrows", "allcols"):
             for item in self.get_selection_items(
@@ -1891,7 +1888,6 @@ class MainTable(tk.Canvas):
             ):
                 tags = self.gettags(item)
                 r1, c1, r2, c2 = coords_tag_to_int_tuple(tags[1])
-                deleted_boxes[Box_nt(r1, c1, r2, c2)] = tags[0]
                 self.delete_item(item)
                 if current[2] == tags[2]:
                     set_curr = True
@@ -1900,7 +1896,6 @@ class MainTable(tk.Canvas):
                 tags = self.gettags(item)
                 r1, c1, r2, c2 = coords_tag_to_int_tuple(tags[1])
                 if r >= r1 and r < r2:
-                    deleted_boxes[Box_nt(r1, c1, r2, c2)] = tags[0]
                     self.delete_item(item)
                     if current[2] == tags[2]:
                         set_curr = True
@@ -1946,7 +1941,6 @@ class MainTable(tk.Canvas):
                 tags = self.gettags(item)
                 r1, c1, r2, c2 = coords_tag_to_int_tuple(tags[1])
                 if c >= c1 and c < c2:
-                    deleted_boxes[Box_nt(r1, c1, r2, c2)] = tags[0]
                     self.delete_item(item)
                     if current[2] == tags[2]:
                         set_curr = True
@@ -1994,7 +1988,6 @@ class MainTable(tk.Canvas):
                 tags = self.gettags(item)
                 r1, c1, r2, c2 = coords_tag_to_int_tuple(tags[1])
                 if r >= r1 and c >= c1 and r < r2 and c < c2:
-                    deleted_boxes[Box_nt(r1, c1, r2, c2)] = tags[0]
                     self.delete_item(item)
                     if current[2] == tags[2]:
                         set_curr = True
@@ -2003,17 +1996,11 @@ class MainTable(tk.Canvas):
             self.set_current_to_last()
         if redraw:
             self.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
-        if run_binding and self.deselection_binding_func:
-            self.deselection_binding_func(
+        if run_binding:
+            try_binding(
+                self.deselection_binding_func,
                 self.get_select_event(being_drawn_item=self.being_drawn_item),
-                # event_dict(
-                #     name="select",
-                #     sheet=self.parentframe.name,
-                #     selected=saved_current,
-                #     boxes=deleted_boxes,
-                # )
             )
-        return None
 
     def page_UP(self, event=None):
         height = self.winfo_height()
@@ -3596,7 +3583,7 @@ class MainTable(tk.Canvas):
         if isinstance(self.auto_resize_columns, (int, float)) and self.auto_resize_columns < self.min_column_width:
             self.auto_resize_columns = self.min_column_width
 
-    def set_table_font(self, newfont: tuple | None = None, reset_row_positions: bool = False) -> tuple:
+    def set_table_font(self, newfont: tuple | None = None, reset_row_positions: bool = False) -> tuple[str, int, str]:
         if newfont:
             if not isinstance(newfont, tuple):
                 raise ValueError("Argument must be tuple e.g. " "('Carlito', 12, 'normal')")
@@ -3636,7 +3623,7 @@ class MainTable(tk.Canvas):
             )
         self.set_min_column_width()
 
-    def set_header_font(self, newfont: tuple | None = None) -> tuple:
+    def set_header_font(self, newfont: tuple | None = None) -> tuple[str, int, str]:
         if newfont:
             if not isinstance(newfont, tuple):
                 raise ValueError("Argument must be tuple e.g. ('Carlito', 12, 'normal')")
@@ -3670,7 +3657,7 @@ class MainTable(tk.Canvas):
         self.set_min_column_width()
         self.CH.set_height(self.default_header_height[1], set_TL=True)
 
-    def set_index_font(self, newfont: tuple | None = None) -> tuple:
+    def set_index_font(self, newfont: tuple | None = None) -> tuple[str, int, str]:
         if newfont:
             if not isinstance(newfont, tuple):
                 raise ValueError("Argument must be tuple e.g. ('Carlito', 12, 'normal')")
@@ -6262,7 +6249,7 @@ class MainTable(tk.Canvas):
             d2["columns"] = {c for c in range(startc, endc) for r1, c1, r2, c2 in d["columns"] if c1 <= c and c2 > c}
         return d2
 
-    def get_selected_min_max(self) -> tuple[int | None, int | None, int | None, int | None]:
+    def get_selected_min_max(self) -> tuple[int, int, int, int] | tuple[None, None, None, None]:
         min_x = float("inf")
         min_y = float("inf")
         max_x = 0
@@ -6450,7 +6437,7 @@ class MainTable(tk.Canvas):
     def get_all_selection_boxes(self) -> tuple[tuple[int, int, int, int]]:
         return tuple(coords_tag_to_int_tuple(self.gettags(item)[1]) for item in self.get_selection_items(current=False))
 
-    def get_all_selection_boxes_with_types(self) -> dict:
+    def get_all_selection_boxes_with_types(self) -> list[tuple[tuple[int, int, int, int], str]]:
         boxes = []
         for item in self.get_selection_items(current=False):
             tags = self.gettags(item)

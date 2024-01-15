@@ -880,7 +880,7 @@ ___
 
 With this function you can validate (modify) most user sheet edits, includes cut, paste, delete (including column/row clear), dropdown boxes and cell edits.
 ```python
-edit_validation(func: Callable | None = None) -> None
+edit_validation(func: Callable | None = None) -> Sheet
 ```
 Parameters:
 - `func` (`Callable`, `None`) must either be a function which will receive a tksheet event dict which looks like [this](https://github.com/ragardner/tksheet/wiki/Version-7#event-data) or `None` which unbinds the function.
@@ -1880,40 +1880,46 @@ ___
 
 Get a single cell:
 ```python
-get_cell_data(r, c, get_displayed = False)
+get_cell_data(r: int, c: int, get_displayed: bool = False) -> object
 ```
 
 Get a row:
 ```python
-get_row_data(r,
-             get_displayed = False,
-             get_index = False,
-             get_index_displayed = True,
-             only_columns = None)
+get_row_data(
+    r: int,
+    get_displayed: bool = False,
+    get_index: bool = False,
+    get_index_displayed: bool = True,
+    only_columns: int | Iterator | None = None,
+) -> list[object]
 ```
 
 Get a column:
 ```python
-get_column_data(c,
-                get_displayed = False,
-                get_header = False,
-                get_header_displayed = True,
-                only_rows = None)
+get_column_data(
+    c: int,
+    get_displayed: bool = False,
+    get_header: bool = False,
+    get_header_displayed: bool = True,
+    only_rows: int | Iterator | None = None,
+) -> list[object]
 ```
 - The above arguments behave the same way as for `yield_sheet_rows()`.
 
 ___
 
 #### **Get the number of rows in the sheet**
+
 ```python
-get_total_rows(include_index = False)
+get_total_rows(include_index: bool = False) -> int
 ```
 
 ___
 
 #### **Get the number of columns in the sheet**
+
 ```python
-get_total_columns(include_header = False)
+get_total_columns(include_header: bool = False) -> int
 ```
 
 ---
@@ -1926,16 +1932,18 @@ Fundamentally, there are two ways to set table data:
 #### **Overwriting the table**
 
 ```python
-set_sheet_data(data: list | tuple | None = None,
-               reset_col_positions: bool = True,
-               reset_row_positions: bool = True,
-               redraw: bool = True,
-               verify: bool = False,
-               reset_highlights: bool = False,
-               keep_formatting: bool = True,
-               delete_options: bool = False,
-)
+set_sheet_data(
+    data: list | tuple | None = None,
+    reset_col_positions: bool = True,
+    reset_row_positions: bool = True,
+    redraw: bool = True,
+    verify: bool = False,
+    reset_highlights: bool = False,
+    keep_formatting: bool = True,
+    delete_options: bool = False,
+) -> object
 ```
+Parameters:
 - `data` (`list`) has to be a list of lists for full functionality, for display only a list of tuples or a tuple of tuples will work.
 - `reset_col_positions` and `reset_row_positions` (`bool`) when `True` will reset column widths and row heights.
 - `redraw` (`bool`) refreshes the table after setting new data.
@@ -1944,7 +1952,8 @@ set_sheet_data(data: list | tuple | None = None,
 - `keep_formatting` (`bool`) when `True` re-applies any prior formatting rules to the new data, if `False` all prior formatting rules are deleted.
 - `delete_options` (`bool`) when `True` all table options such as dropdowns, check boxes, formatting, highlighting etc. are deleted.
 
-**Note:** this function does not impact the sheet header or index.
+Notes:
+- This function does not impact the sheet header or index.
 
 ___
 
@@ -2064,7 +2073,7 @@ set_data(
     data: object = None,
     undo: bool | None = None,
     redraw: bool = True,
-) -> None
+) -> EventDataDict
 ```
 
 Example:
@@ -2088,14 +2097,15 @@ self.sheet_span.data = [["",  "A",  "B",  "C"]
 
 ```python
 insert_row(
-        row: list[object] | tuple[object] | None = None,
-        idx: str | int = "end",
-        height: int | None = None,
-        row_index: bool = False,
-        undo: bool = False,
-        redraw: bool = True,
+    row: list[object] | tuple[object] | None = None,
+    idx: str | int = "end",
+    height: int | None = None,
+    row_index: bool = False,
+    undo: bool = False,
+    redraw: bool = True,
 ) -> EventDataDict
 ```
+Parameters:
 - Leaving `row` as `None` inserts an empty row, e.g. `insert_row()` will append an empty row to the sheet.
 - `height` is the new rows displayed height in pixels, leave as `None` for default.
 - `row_index` when `True` indicates there is a row index value at the start of the row.
@@ -2107,14 +2117,15 @@ ___
 
 ```python
 insert_column(
-        column: list[object] | tuple[object] | None = None,
-        idx: str | int = "end",
-        width: int | None = None,
-        header: bool = False,
-        undo: bool = False,
-        redraw: bool = True,
+    column: list[object] | tuple[object] | None = None,
+    idx: str | int = "end",
+    width: int | None = None,
+    header: bool = False,
+    undo: bool = False,
+    redraw: bool = True,
 ) -> EventDataDict
 ```
+Parameters:
 - Leaving `column` as `None` inserts an empty column, e.g. `insert_column()` will append an empty column to the sheet.
 - `width` is the new columns displayed width in pixels, leave as `None` for default.
 - `header` when `True` indicates there is a header value at the start of the column.
@@ -2126,15 +2137,16 @@ ___
 
 ```python
 insert_columns(
-        columns: list[tuple[object] | list[object]] | tuple[tuple[object] | list[object]] | int = 1,
-        idx: str | int = "end",
-        widths: list[int] | tuple[int] | None = None,
-        headers: bool = False,
-        create_selections: bool = True,
-        undo: bool = False,
-        redraw: bool = True,
+    columns: list[tuple[object] | list[object]] | tuple[tuple[object] | list[object]] | int = 1,
+    idx: str | int = "end",
+    widths: list[int] | tuple[int] | None = None,
+    headers: bool = False,
+    create_selections: bool = True,
+    undo: bool = False,
+    redraw: bool = True,
 ) -> EventDataDict
 ```
+Parameters:
 - `columns` if `int` will insert blank columns.
 - `widths` are the new columns displayed widths in pixels, leave as `None` for default.
 - `headers` when `True` indicates there are headers values at the start of each column.
@@ -2146,12 +2158,12 @@ ___
 
 ```python
 insert_rows(
-        rows: list[tuple[object] | list[object]] | tuple[tuple[object] | list[object]] | int = 1,
-        idx: str | int = "end",
-        heights: list[int] | tuple[int] | None = None,
-        row_index: bool = False,
-        undo: bool = False,
-        redraw: bool = True,
+    rows: list[tuple[object] | list[object]] | tuple[tuple[object] | list[object]] | int = 1,
+    idx: str | int = "end",
+    heights: list[int] | tuple[int] | None = None,
+    row_index: bool = False,
+    undo: bool = False,
+    redraw: bool = True,
 ) -> EventDataDict
 ```
 Parameters:
@@ -2159,12 +2171,6 @@ Parameters:
 - `heights` are the new rows displayed heights in pixels, leave as `None` for default.
 - `row_index` when `True` indicates there are row index values at the start of each row.
 - `undo` when `True` adds the change to the Sheets undo stack.
-
-___
-
-```python
-sheet_data_dimensions(total_rows = None, total_columns = None)
-```
 
 ___
 
@@ -2199,20 +2205,85 @@ Parameters:
 ___
 
 ```python
-total_rows(number = None, mod_positions = True, mod_data = True)
+del_column(
+    idx: int = 0,
+    data_indexes: bool = False,
+    undo: bool = False,
+    redraw: bool = True,
+) -> EventDataDict
 ```
+Parameters:
+- `idx` is the column to delete.
+- `data_indexes` only applicable when there are hidden columns. When `False` it makes the `idx` represent a displayed column and not the underlying Sheet data column. When `True` the index represent a data index.
+- `undo` when `True` adds the change to the Sheets undo stack.
 
 ___
 
 ```python
-total_columns(number = None, mod_positions = True, mod_data = True)
+del_columns(
+    columns: int | Iterator,
+    data_indexes: bool = False,
+    undo: bool = False,
+    redraw: bool = True,
+) -> EventDataDict
 ```
+Parameters:
+- `columns` can be either `int` or an iterable of `int`s representing column indexes.
+- `data_indexes` only applicable when there are hidden columns. When `False` it makes the `columns` indexes represent displayed columns and not the underlying Sheet data columns. When `True` the indexes represent data indexes.
+- `undo` when `True` adds the change to the Sheets undo stack.
+
+___
+
+Expands or contracts the sheet **data** dimensions.
+```python
+sheet_data_dimensions(
+    total_rows: int | None = None,
+    total_columns: int | None = None,
+) -> Sheet
+```
+Parameters:
+- `total_rows` sets the Sheets number of data rows.
+- `total_columns` sets the Sheets number of data columns.
 
 ___
 
 ```python
-set_sheet_data_and_display_dimensions(total_rows = None, total_columns = None)
+total_rows(
+    number: int | None = None,
+    mod_positions: bool = True,
+    mod_data: bool = True,
+) -> int | Sheet
 ```
+Parameters:
+- `number` sets the Sheets number of data rows. When `None` function will return the Sheets number of data rows including the number of rows in the index.
+- `mod_positions` when `True` also sets the number of displayed rows.
+- `mod_data` when `True` also sets the number of data rows.
+
+___
+
+```python
+total_columns(
+    number: int | None = None,
+    mod_positions: bool = True,
+    mod_data: bool = True,
+) -> int | Sheet
+```
+Parameters:
+- `number` sets the Sheets number of data columns. When `None` function will return the Sheets number of data columns including the number of columns in the header.
+- `mod_positions` when `True` also sets the number of displayed columns.
+- `mod_data` when `True` also sets the number of data columns.
+
+___
+
+```python
+set_sheet_data_and_display_dimensions(
+    total_rows: int | None = None,
+    total_columns: int | None = None,
+) -> Sheet
+```
+Parameters:
+- `total_rows` when `int` will set the number of the Sheets data and display rows by deleting or adding rows.
+- `total_columns` when `int` will set the number of the Sheets data and display columns by deleting or adding columns.
 
 ___
 
@@ -2223,6 +2294,16 @@ move_row(
 -> tuple[dict, dict, dict]
 ```
 - Note that `row` and `moveto` indexes represent displayed indexes and not data. When there are hidden rows this is an important distinction, otherwise it is not at all important. To specifically use data indexes use the function `move_rows()`.
+
+___
+
+```python
+move_column(
+    column: int,
+    moveto: int)
+-> tuple[dict, dict, dict]
+```
+- Note that `column` and `moveto` indexes represent displayed indexes and not data. When there are hidden columns this is an important distinction, otherwise it is not at all important. To specifically use data indexes use the function `move_columns()`.
 
 ___
 
@@ -2248,45 +2329,14 @@ Parameters:
 ___
 
 ```python
-delete_column(idx = 0, deselect_all = False, redraw = True)
-```
-
-___
-
-```python
-del_columns(
-    columns: int | Iterator,
+move_columns(
+    move_to: int | None = None,
+    to_move: list[int] | None = None,
+    move_data: bool = True,
     data_indexes: bool = False,
+    create_selections: bool = True,
     undo: bool = False,
     redraw: bool = True,
-) -> EventDataDict
-```
-Parameters:
-- `columns` can be either `int` or an iterable of `int`s representing column indexes.
-- `data_indexes` only applicable when there are hidden columns. When `False` it makes the `columns` indexes represent displayed columns and not the underlying Sheet data columns. When `True` the indexes represent data indexes.
-- `undo` when `True` adds the change to the Sheets undo stack.
-
-___
-
-```python
-move_column(
-    column: int,
-    moveto: int)
--> tuple[dict, dict, dict]
-```
-- Note that `column` and `moveto` indexes represent displayed indexes and not data. When there are hidden columns this is an important distinction, otherwise it is not at all important. To specifically use data indexes use the function `move_columns()`.
-
-___
-
-```python
-move_columns(
-        move_to: int | None = None,
-        to_move: list[int] | None = None,
-        move_data: bool = True,
-        data_indexes: bool = False,
-        create_selections: bool = True,
-        undo: bool = False,
-        redraw: bool = True,
 ) -> tuple[dict, dict, dict]
 ```
 Parameters:
@@ -2488,15 +2538,15 @@ ___
 #### **Get chosen dropdown boxes values**
 
 ```python
-get_dropdown_values(r = 0, c = 0)
+get_dropdown_values(r: int = 0, c: int = 0) -> None | list
 ```
 
 ```python
-get_header_dropdown_values(c = 0)
+get_header_dropdown_values(c: int = 0) -> None | list
 ```
 
 ```python
-get_index_dropdown_values(r = 0)
+get_index_dropdown_values(r: int = 0) -> None | list
 ```
 
 ___
@@ -2504,34 +2554,64 @@ ___
 #### **Set the values and cell value of a chosen dropdown box**
 
 ```python
-set_dropdown_values(r = 0, c = 0, set_existing_dropdown = False, values = [], set_value = None)
+set_dropdown_values(
+    r: int = 0,
+    c: int = 0,
+    set_existing_dropdown: bool = False,
+    values: list = [],
+    set_value: object = None,
+) -> Sheet
 ```
 
 ```python
-set_header_dropdown_values(c = 0, set_existing_dropdown = False, values = [], set_value = None)
+set_header_dropdown_values(
+    c: int = 0,
+    set_existing_dropdown: bool = False,
+    values: list = [],
+    set_value: object = None,
+) -> Sheet
 ```
 
 ```python
-set_index_dropdown_values(r = 0, set_existing_dropdown = False, values = [], set_value = None)
+set_index_dropdown_values(
+    r: int = 0,
+    set_existing_dropdown: bool = False,
+    values: list = [],
+    set_value: object = None,
+) -> Sheet
 ```
+Parameters:
 - `set_existing_dropdown` if `True` takes priority over `r` and `c` and sets the values of the last popped open dropdown box (if one one is popped open, if not then an `Exception` is raised).
 - `values` (`list`, `tuple`)
 - `set_value` (`str`, `None`) if not `None` will try to set the value of the chosen cell to given argument.
 
 ___
 
-#### **Set and get bound dropdown functions**
+#### **Set or get bound dropdown functions**
 
 ```python
-dropdown_functions(r, c, selection_function = "", modified_function = "")
+dropdown_functions(
+    r: int,
+    c: int,
+    selection_function: str | Callable = "",
+    modified_function: str | Callable = "",
+) -> None | dict
 ```
 
 ```python
-header_dropdown_functions(c, selection_function = "", modified_function = "")
+header_dropdown_functions(
+    c: int,
+    selection_function: str | Callable = "",
+    modified_function: str | Callable = "",
+) -> None | dict
 ```
 
 ```python
-index_dropdown_functions(r, selection_function = "", modified_function = "")
+index_dropdown_functions(
+    r: int,
+    selection_function: str | Callable = "",
+    modified_function: str | Callable = "",
+) -> None | dict
 ```
 
 ___
@@ -2539,7 +2619,7 @@ ___
 #### **Get a dictionary of all dropdown boxes**
 
 ```python
-get_dropdowns()
+get_dropdowns() -> dict
 ```
 Returns:
 ```python
@@ -2553,11 +2633,11 @@ Returns:
 ```
 
 ```python
-get_header_dropdowns()
+get_header_dropdowns() -> dict
 ```
 
 ```python
-get_index_dropdowns()
+get_index_dropdowns() -> dict
 ```
 
 ___
@@ -2565,15 +2645,15 @@ ___
 #### **Open a dropdown box**
 
 ```python
-open_dropdown(r, c)
+open_dropdown(r: int, c: int) -> Sheet
 ```
 
 ```python
-open_header_dropdown(c)
+open_header_dropdown(c: int) -> Sheet
 ```
 
 ```python
-open_index_dropdown(r)
+open_index_dropdown(r: int) -> Sheet
 ```
 
 ___
@@ -2581,16 +2661,17 @@ ___
 #### **Close a dropdown box**
 
 ```python
-close_dropdown(r, c)
+close_dropdown(r: int, c: int) -> Sheet
 ```
 
 ```python
-close_header_dropdown(c)
+close_header_dropdown(c: int) -> Sheet
 ```
 
 ```python
-close_index_dropdown(r)
+close_index_dropdown(r: int) -> Sheet
 ```
+Notes:
 - Also destroys any opened text editor windows.
 
 ---
@@ -2672,31 +2753,37 @@ self.sheet.del_checkbox("D")
 ```
 
 #### **Set or toggle a check box**
+
 ```python
-click_checkbox(r, c, checked = None)
+click_checkbox(
+    *key: CreateSpanTypes,
+    checked: bool | None = None,
+    redraw: bool = True,
+) -> Span
 ```
 
 ```python
-click_header_checkbox(c, checked = None)
+click_header_checkbox(c: int, checked: bool | None = None) -> Sheet
 ```
 
 ```python
-click_index_checkbox(r, checked = None)
+click_index_checkbox(r: int, checked: bool | None = None) -> Sheet
 ```
 
 ___
 
 #### **Get a dictionary of all check box dictionaries**
+
 ```python
-get_checkboxes()
+get_checkboxes() -> dict
 ```
 
 ```python
-get_header_checkboxes()
+get_header_checkboxes() -> dict
 ```
 
 ```python
-get_index_checkboxes()
+get_index_checkboxes() -> dict
 ```
 
 ---
@@ -2771,14 +2858,14 @@ del_format(
 #### **Delete all formatting**
 
 ```python
-del_all_formatting(clear_values: bool = False)
+del_all_formatting(clear_values: bool = False) -> Sheet
 ```
 - `clear_values` (`bool`) if true, all the sheets cell values will be cleared.
 
 #### **Reapply formatting to entire sheet**
 
 ```python
-reapply_formatting()
+reapply_formatting() -> Sheet
 ```
 - Useful if you have manually changed the entire sheets data using `sheet.MT.data = ` and want to reformat the sheet using any existing formatting you have set.
 
@@ -2799,7 +2886,7 @@ formatter(
     post_format_function: Callable | None = None,
     clipboard_function: Callable | None = None,
     **kwargs,
-)
+) -> dict
 ```
 
 This is the generic formatter options interface. You can use this to create your own custom formatters. The following options are available. Note that all these options can also be passed to the `format_cell()` function as keyword arguments and are available as attributes for all formatters. You can provide functions of your own creation for all the below arguments which take functions if you require.
@@ -2825,7 +2912,7 @@ int_formatter(
     to_str_function: Callable = to_str,
     invalid_value: object = "NaN",
     **kwargs,
-)
+) -> dict
 ```
 
 Parameters:
@@ -2849,9 +2936,8 @@ float_formatter(
     invalid_value: object = "NaN",
     decimals: int = 2,
     **kwargs
-)
+) -> dict
 ```
-
 Parameters:
  - `format_function` (`function`) a function that takes a string and returns a `float`. By default, this is set to the in-built `tksheet.to_float`. This function will always convert percentages to their decimal equivalent, for example `"5%"` will be converted to `0.05`.
  - `to_str_function` (`function`) By default, this is set to the in-built `tksheet.float_to_str`, which will display the float to the specified number of decimal places.
@@ -2874,9 +2960,8 @@ percentage_formatter(
     invalid_value: object = "NaN",
     decimals: int = 0,
     **kwargs,
-)
+) -> dict
 ```
-
 Parameters:
  - `format_function` (`function`) a function that takes a string and returns a `float`. By default, this is set to the in-built `tksheet.to_float`. This function will always convert percentages to their decimal equivalent, for example `"5%"` will be converted to `0.05`.
  - `to_str_function` (`function`) By default, this is set to the in-built `tksheet.percentage_to_str`, which will display the float as a percentage to the specified number of decimal places. For example, `0.05` will be displayed as `"5.0%"`.
@@ -2898,9 +2983,8 @@ bool_formatter(
     truthy: set = truthy,
     falsy: set = falsy,
     **kwargs,
-)
+) -> dict
 ```
-
 Parameters:
  - `format_function` (`function`) a function that takes a string and returns a `bool`. By default, this is set to the in-built `tksheet.to_bool`.
  - `to_str_function` (`function`) By default, this is set to the in-built `tksheet.bool_to_str`, which will display the boolean as `"True"` or `"False"`.
@@ -2987,9 +3071,8 @@ Whether cells, rows or columns are readonly depends on the [`kind`](https://gith
 readonly(
     *key: CreateSpanTypes,
     readonly: bool = True,
-)
+) -> Span
 ```
-
  Parameters:
 - `key` (`CreateSpanTypes`) either a span or a type which can create a span. See [here](https://github.com/ragardner/tksheet/wiki/Version-7#creating-a-span) for more information on the types that can create a span.
 - `readonly` (`bool`) `True` to create a rule and `False` to delete one created without the use of named spans.
@@ -3017,7 +3100,6 @@ self.sheet.readonly(
     readonly=False,
 )
 ```
-
  Parameters:
 - `key` (`CreateSpanTypes`) either a span or a type which can create a span. See [here](https://github.com/ragardner/tksheet/wiki/Version-7#creating-a-span) for more information on the types that can create a span.
 - `readonly` (`bool`) `True` to create a rule and `False` to delete one created without the use of named spans.
@@ -3032,12 +3114,12 @@ self.sheet.readonly(
 
 **Set the table and index font:**
 ```python
-font(newfont = None, reset_row_positions = True)
+font(newfont: tuple | None = None, reset_row_positions: bool = True) -> tuple[str, int, str]
 ```
 
 **Set the header font:**
 ```python
-header_font(newfont = None)
+header_font(newfont: tuple | None = None) -> tuple[str, int, str]
 ```
 
 ### **Text Alignment**
@@ -3055,20 +3137,28 @@ Unfortunately vertical alignment is not available.
 
 Set the text alignment for the whole of the table (doesn't include index/header).
 ```python
-table_align(align = None, redraw = True)
+table_align(
+    align: str = None,
+    redraw: bool = True,
+) -> str | Sheet
 ```
 
 Set the text alignment for the whole of the header.
 ```python
-header_align(align = None, redraw = True)
+header_align(
+    align: str = None,
+    redraw: bool = True,
+) -> str | Sheet
 ```
 
 Set the text alignment for the whole of the index.
 ```python
-row_index_align(align = None, redraw = True)
+row_index_align(
+    align: str = None,
+    redraw: bool = True,
+) -> str | Sheet
 
-#same as row_index_align()
-index_align(align = None, redraw = True)
+# can also use index_align() which behaves the same
 ```
 
 #### **Creating a specific cell row or column text alignment rule**
@@ -3090,7 +3180,7 @@ align(
     *key: CreateSpanTypes,
     align: str | None = None,
     redraw: bool = True,
-)
+) -> Span
 ```
 
  Parameters:
@@ -3112,7 +3202,7 @@ Otherwise you can use either of the following methods to delete/remove specific 
 del_align(
     *key: CreateSpanTypes,
     redraw: bool = True,
-)
+) -> Span
 ```
 
  Parameters:
@@ -3122,24 +3212,24 @@ del_align(
 
 Cell text alignments:
 ```python
-get_cell_alignments()
+get_cell_alignments() -> dict
 ```
 
 Row text alignments:
 ```python
-get_row_alignments()
+get_row_alignments() -> dict
 ```
 
 Column text alignments:
 ```python
-get_column_alignments()
+get_column_alignments() -> dict
 ```
 
 ---
 # **Getting Selected Cells**
 
 ```python
-get_currently_selected()
+get_currently_selected() -> tuple | CurrentlySelectedClass
 ```
 - Returns `namedtuple` of `(row, column, type_, tags)` e.g. `(0, 0, "column", (tags))`
    - `type_` can be `"row"`, `"column"` or `"cell"`
@@ -3169,83 +3259,100 @@ if currently_selected:
 ___
 
 ```python
-get_selected_rows(get_cells = False, get_cells_as_rows = False, return_tuple = False)
+get_selected_rows(
+    get_cells: bool = False,
+    get_cells_as_rows: bool = False,
+    return_tuple: bool = False,
+) -> tuple | set
 ```
 
 ___
 
 ```python
-get_selected_columns(get_cells = False, get_cells_as_columns = False, return_tuple = False)
+get_selected_columns(
+    get_cells: bool = False,
+    get_cells_as_columns: bool = False,
+    return_tuple: bool = False,
+) -> tuple | set
 ```
 
 ___
 
 ```python
-get_selected_cells(get_rows = False, get_columns = False, sort_by_row = False, sort_by_column = False)
+get_selected_cells(
+    get_rows: bool = False,
+    get_columns: bool = False,
+    sort_by_row: bool = False,
+    sort_by_column: bool = False,
+) -> list | set
 ```
 
 ___
 
 ```python
-get_all_selection_boxes()
+get_all_selection_boxes() -> tuple[tuple[int, int, int, int]]
 ```
 
 ___
 
 ```python
-get_all_selection_boxes_with_types()
+get_all_selection_boxes_with_types() -> list[tuple[tuple[int, int, int, int], str]]
 ```
 
 ___
 
 #### **Check if cell is selected**
+
 ```python
-cell_selected(r, c)
+cell_selected(r: int, c: int) -> bool
 ```
-- Returns `bool`.
 
 ___
 
 #### **Check if row is selected**
+
 ```python
-row_selected(r)
+row_selected(r: int) -> bool
 ```
-- Returns `bool`.
 
 ___
 
 #### **Check if column is selected**
+
 ```python
-column_selected(c)
+column_selected(c: int) -> bool
 ```
-- Returns `bool`.
 
 ___
 
 #### **Check if any cells, rows or columns are selected, there are options for exclusions**
+
 ```python
-anything_selected(exclude_columns = False, exclude_rows = False, exclude_cells = False)
+anything_selected(
+    exclude_columns: bool = False,
+    exclude_rows: bool = False,
+    exclude_cells: bool = False,
+) -> bool
 ```
-- Returns `bool`.
 
 ___
 
 #### **Check if user has the entire table selected**
-```python
-all_selected()
-```
-- Returns `bool`.
-
-___
 
 ```python
-get_ctrl_x_c_boxes()
+all_selected() -> bool
 ```
 
 ___
 
 ```python
-get_selected_min_max()
+get_ctrl_x_c_boxes() -> tuple[dict[tuple[int, int, int, int], str], int]
+```
+
+___
+
+```python
+get_selected_min_max() -> tuple[int, int, int, int] | tuple[None, None, None, None]
 ```
 - returns `(min_y, min_x, max_y, max_x)` of any selections including rows/columns.
 
@@ -3253,93 +3360,143 @@ get_selected_min_max()
 # **Modifying Selected Cells**
 
 ```python
-set_currently_selected(row, column, type_ = "cell", selection_binding = True)
-```
-- `type_` (`str`) either `"cell"`, `"row"` or `"column"`.
-- `selection_binding` if `True` runs extra bindings selection function if one has been specified using `extra_bindings()`.
-
-___
-
-```python
-select_row(row, redraw = True)
+set_currently_selected(row: int | None = None, column: int | None = None) -> Sheet
 ```
 
 ___
 
 ```python
-select_column(column, redraw = True)
+select_row(row: int, redraw: bool = True, run_binding_func: bool = True) -> Sheet
+```
+- `run_binding_func` is only relevant if you have `extra_bindings()` with `"row_select"` bound.
+
+___
+
+```python
+select_column(column: int, redraw: bool = True, run_binding_func: bool = True) -> Sheet
+```
+- `run_binding_func` is only relevant if you have `extra_bindings()` with `"column_select"` bound.
+
+___
+
+```python
+select_cell(row: int, column: int, redraw: bool = True, run_binding_func: bool = True) -> Sheet
+```
+- `run_binding_func` is only relevant if you have `extra_bindings()` with `"cell_select"` bound.
+
+___
+
+```python
+select_all(redraw: bool = True, run_binding_func: bool = True) -> Sheet
+```
+- `run_binding_func` is only relevant if you have `extra_bindings()` with `"select_all"` bound.
+
+___
+
+```python
+add_cell_selection(
+    row: int,
+    column: int,
+    redraw: bool = True,
+    run_binding_func: bool = True,
+    set_as_current: bool = True,
+) -> Sheet
+```
+- `run_binding_func` is only relevant if you have `extra_bindings()` with `"cell_select"` bound.
+
+___
+
+```python
+add_row_selection(
+    row: int,
+    redraw: bool = True,
+    run_binding_func: bool = True,
+    set_as_current: bool = True,
+) -> Sheet
+```
+- `run_binding_func` is only relevant if you have `extra_bindings()` with `"row_select"` bound.
+
+___
+
+```python
+add_column_selection(
+    column: int,
+    redraw: bool = True,
+    run_binding_func: bool = True,
+    set_as_current: bool = True,
+) -> Sheet
+```
+- `run_binding_func` is only relevant if you have `extra_bindings()` with `"column_select"` bound.
+
+___
+
+```python
+toggle_select_cell(
+    row: int,
+    column: int,
+    add_selection: bool = True,
+    redraw: bool = True,
+    run_binding_func: bool = True,
+    set_as_current: bool = True,
+) -> Sheet
+```
+- `run_binding_func` is only relevant if you have `extra_bindings()` with `"cell_select"` bound.
+
+___
+
+```python
+toggle_select_row(
+    row: int,
+    add_selection: bool = True,
+    redraw: bool = True,
+    run_binding_func: bool = True,
+    set_as_current: bool = True,
+) -> Sheet
+```
+- `run_binding_func` is only relevant if you have `extra_bindings()` with `"row_select"` bound.
+
+___
+
+```python
+toggle_select_column(
+    column: int,
+    add_selection: bool = True,
+    redraw: bool = True,
+    run_binding_func: bool = True,
+    set_as_current: bool = True,
+) -> Sheet
+```
+- `run_binding_func` is only relevant if you have `extra_bindings()` with `"column_select"` bound.
+
+___
+
+```python
+create_selection_box(
+    r1: int,
+    c1: int,
+    r2: int,
+    c2: int,
+    type_: str = "cells",
+) -> int
+```
+- `type_` either `"cells"` or `"rows"` or `"columns"`.
+- Returns the canvas item id for the box.
+
+___
+
+```python
+recreate_all_selection_boxes() -> Sheet
 ```
 
 ___
 
 ```python
-select_cell(row, column, redraw = True)
-```
-
-___
-
-```python
-select_all(redraw = True, run_binding_func = True)
-```
-
-___
-
-```python
-move_down()
-```
-
-___
-
-```python
-add_cell_selection(row, column, redraw = True, run_binding_func = True, set_as_current = True)
-```
-
-___
-
-```python
-add_row_selection(row, redraw = True, run_binding_func = True, set_as_current = True)
-```
-
-___
-
-```python
-add_column_selection(column, redraw = True, run_binding_func = True, set_as_current = True)
-```
-
-___
-
-```python
-toggle_select_cell(row, column, add_selection = True, redraw = True, run_binding_func = True, set_as_current = True)
-```
-
-___
-
-```python
-toggle_select_row(row, add_selection = True, redraw = True, run_binding_func = True, set_as_current = True)
-```
-
-___
-
-```python
-toggle_select_column(column, add_selection = True, redraw = True, run_binding_func = True, set_as_current = True)
-```
-
-___
-
-```python
-create_selection_box(r1, c1, r2, c2, type_ = "cells")
-```
-
-___
-
-```python
-recreate_all_selection_boxes()
-```
-
-___
-
-```python
-deselect(row = None, column = None, cell = None, redraw = True)
+deselect(
+    row: int | None | str = None,
+    column: int | None = None,
+    cell: tuple | None = None,
+    redraw: bool = True,
+) -> Sheet
 ```
 
 ---
@@ -3347,34 +3504,41 @@ deselect(row = None, column = None, cell = None, redraw = True)
 
 #### **Auto resize column widths to fit the window**
 
+To enable auto resizing of columns to the Sheet window use `set_options()` with the keyword argument `auto_resize_columns`. This argument can either be an `int` or `None`. If set as an `int` the columns will automatically resize to fit the width of the window, the `int` value being the minimum of each column in pixels. If `None` it will disable the auto resizing. Example:
+
 ```python
-set_options(auto_resize_columns)
+# auto resize columns, column minimum width set to 150 pixels
+set_options(auto_resize_columns=150)
 ```
-- `auto_resize_columns` (`int`, `None`) if set as an `int` the columns will automatically resize to fit the width of the window, the `int` value being the minimum of each column in pixels.
 
 ___
 
 #### **Auto resize row heights to fit the window**
+
+To enable auto resizing of rows to the Sheet window use `set_options()` with the keyword argument `auto_resize_rows`. This argument can either be an `int` or `None`. If set as an `int` the rows will automatically resize to fit the width of the window, the `int` value being the minimum of each row in pixels. If `None` it will disable the auto resizing. Example:
+
 ```python
-set_options(auto_resize_rows)
+# auto resize rows, row minimum width set to 30 pixels
+set_options(auto_resize_rows=30)
 ```
-- `auto_resize_rows` (`int`, `None`) if set as an `int` the rows will automatically resize to fit the height of the window, the `int` value being the minimum height of each row in pixels.
 
 ___
 
 #### **Set default column width in pixels**
+
 ```python
-default_column_width(width = None)
+default_column_width(width: int | None = None) -> int
 ```
-- `width` (`int`).
+- `width` (`int`, `None`) use an `int` to set the width in pixels, `None` does not set the width.
 
 ___
 
 #### **Set default row height in pixels or lines**
+
 ```python
-default_row_height(height = None)
+default_row_height(height: int | str | None = None) -> int
 ```
-- `height` (`int`, `str`) use a numerical `str` for number of lines e.g. `"3"` for a height that fits 3 lines or `int` for pixels.
+- `height` (`int`, `str`, `None`) use a numerical `str` for number of lines e.g. `"3"` for a height that fits 3 lines OR `int` for pixels.
 
 ___
 
@@ -3653,7 +3817,6 @@ ___
 ```python
 cell_visible(r, c)
 ```
-- Returns `bool`.
 
 ___
 
@@ -3661,7 +3824,6 @@ ___
 ```python
 cell_completely_visible(r, c, seperate_axes = False)
 ```
-- Returns `bool`.
 - `separate_axes` returns tuple of bools e.g. `(cell y axis is visible, cell x axis is visible)`
 
 ___
