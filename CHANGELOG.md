@@ -10,6 +10,7 @@
     - `delete_sheet_dropdown`
     - `checkbox_sheet`
     - `delete_sheet_checkbox`
+- Function `bind_text_editor_set()`
 
 - Old unused and deprecated parameters for:
     - `get_cell_data()`, `get_sheet_data()`, `get_row_data()`, `get_column_data()`, `yield_sheet_rows()`

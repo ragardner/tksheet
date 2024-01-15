@@ -42,6 +42,14 @@ from .other_classes import (
     Span,
 )
 from .row_index import RowIndex
+from .themes import (
+    theme_black,
+    theme_dark,
+    theme_dark_blue,
+    theme_dark_green,
+    theme_light_blue,
+    theme_light_green,
+)
 from .top_left_rectangle import TopLeftRectangle
 from .types import (
     CreateSpanTypes,
@@ -53,14 +61,6 @@ from .vars import (
     get_index_font,
     named_span_types,
     rc_binding,
-)
-from .themes import (
-    theme_black,
-    theme_dark,
-    theme_dark_blue,
-    theme_dark_green,
-    theme_light_blue,
-    theme_light_green,
 )
 
 
@@ -75,12 +75,12 @@ class Sheet(tk.Frame):
         show_header: bool = True,
         show_x_scrollbar: bool = True,
         show_y_scrollbar: bool = True,
-        width: int = None,
-        height: int = None,
-        headers: list[object] = None,
-        header: list[object] = None,
-        default_header: str = "letters",  # letters, numbers or both
-        default_row_index: str = "numbers",  # letters, numbers or both
+        width: int | None = None,
+        height: int | None = None,
+        headers: None | list[object] = None,
+        header: None | list[object] = None,
+        default_header: Literal["letters", "numbers", "both"] = "letters",
+        default_row_index: Literal["letters", "numbers", "both"] = "numbers",
         to_clipboard_delimiter: str = "\t",
         to_clipboard_quotechar: str = '"',
         to_clipboard_lineterminator: str = "\n",
@@ -89,8 +89,8 @@ class Sheet(tk.Frame):
         show_default_index_for_empty: bool = True,
         page_up_down_select_row: bool = True,
         expand_sheet_if_paste_too_big: bool = False,
-        paste_insert_column_limit: int = None,
-        paste_insert_row_limit: int = None,
+        paste_insert_column_limit: int | None = None,
+        paste_insert_row_limit: int | None = None,
         show_dropdown_borders: bool = False,
         arrow_key_down_right_scroll_page: bool = False,
         enable_edit_cell_auto_resize: bool = True,
@@ -100,24 +100,24 @@ class Sheet(tk.Frame):
         # (cells start row, cells start column, cells end row, cells end column, "cells")  # noqa: E501
         startup_select: tuple[int, int, str] | tuple[int, int, int, int, str] = None,
         startup_focus: bool = True,
-        total_columns: int = None,
-        total_rows: int = None,
+        total_columns: int | None = None,
+        total_rows: int | None = None,
         column_width: int = 120,
-        header_height: str = "1",  # str or int
-        max_column_width: str = "inf",  # str or int
-        max_row_height: str = "inf",  # str or int
-        max_header_height: str = "inf",  # str or int
-        max_index_width: str = "inf",  # str or int
-        row_index: list[object] = None,
-        index: list[object] = None,
+        header_height: str | int = "1",
+        max_column_width: Literal["inf"] | float = "inf",
+        max_row_height: Literal["inf"] | float = "inf",
+        max_header_height: Literal["inf"] | float = "inf",
+        max_index_width: Literal["inf"] | float = "inf",
+        row_index: list[object] | None = None,
+        index: list[object] | None = None,
         after_redraw_time_ms: int = 20,
-        row_index_width: int = None,
+        row_index_width: int | None = None,
         auto_resize_default_row_index: bool = True,
         auto_resize_columns: int | None = None,
         auto_resize_rows: int | None = None,
         set_all_heights_and_widths: bool = False,
         set_cell_sizes_on_zoom: bool = False,
-        row_height: str = "1",  # str or int
+        row_height: str | int = "1",
         zoom: int = 100,
         font: tuple[str, int, str] = get_font(),
         header_font: tuple[str, int, str] = get_header_font(),
@@ -422,7 +422,17 @@ class Sheet(tk.Frame):
         self.MT.main_table_redraw_grid_and_text(redraw_header=redraw_header, redraw_row_index=redraw_row_index)
         self.after_redraw_id = None
 
-    def show(self, canvas: str = "all") -> Sheet:
+    def show(
+        self,
+        canvas: Literal[
+            "all",
+            "row_index",
+            "header",
+            "top_left",
+            "x_scrollbar",
+            "y_scrollbar",
+        ] = "all",
+    ) -> Sheet:
         if canvas == "all":
             self.hide()
             self.TL.grid(row=0, column=0)
@@ -462,7 +472,17 @@ class Sheet(tk.Frame):
         self.MT.update_idletasks()
         return self
 
-    def hide(self, canvas: str = "all") -> Sheet:
+    def hide(
+        self,
+        canvas: Literal[
+            "all",
+            "row_index",
+            "header",
+            "top_left",
+            "x_scrollbar",
+            "y_scrollbar",
+        ] = "all",
+    ) -> Sheet:
         if canvas.lower() == "all":
             self.TL.grid_forget()
             self.RI.grid_forget()
@@ -918,7 +938,7 @@ class Sheet(tk.Frame):
             widget.MT.synced_scrolls.add(self)
         return self
 
-    def unsync_scroll(self, widget: None | Sheet = None) -> Sheet:
+    def unsync_scroll(self, widget: object = None) -> Sheet:
         if widget is None:
             for widget in self.MT.synced_scrolls:
                 if isinstance(widget, Sheet):
@@ -1046,7 +1066,7 @@ class Sheet(tk.Frame):
         self.MT.bind_cell_edit(enable, keys=keys)
         return self
 
-    def identify_region(self, event: object) -> str:
+    def identify_region(self, event: object) -> Literal["table", "index", "header", "top left"]:
         if event.widget == self.MT:
             return "table"
         elif event.widget == self.RI:
@@ -1090,15 +1110,15 @@ class Sheet(tk.Frame):
             else:
                 return self.MT.identify_col(x=event.x, allow_end=allow_end)
 
-    def get_example_canvas_column_widths(self, total_cols: int | None = None) -> list:
+    def get_example_canvas_column_widths(self, total_cols: int | None = None) -> list[float]:
         colpos = int(self.MT.default_column_width)
-        if total_cols is not None:
+        if isinstance(total_cols, int):
             return list(accumulate(chain([0], (colpos for c in range(total_cols)))))
         return list(accumulate(chain([0], (colpos for c in range(len(self.MT.col_positions) - 1)))))
 
-    def get_example_canvas_row_heights(self, total_rows=None):
+    def get_example_canvas_row_heights(self, total_rows: int | None = None) -> list[float]:
         rowpos = self.MT.default_row_height[1]
-        if total_rows is not None:
+        if isinstance(total_rows, int):
             return list(accumulate(chain([0], (rowpos for c in range(total_rows)))))
         return list(accumulate(chain([0], (rowpos for c in range(len(self.MT.row_positions) - 1)))))
 
@@ -1129,6 +1149,28 @@ class Sheet(tk.Frame):
             only_set_if_too_small=only_set_if_too_small,
             recreate=recreate_selection_boxes,
         )
+        self.set_refresh_timer(redraw)
+        return self
+
+    def row_height(
+        self,
+        row: int | Literal["all", "displayed"] | None = None,
+        height: int | Literal["default", "text"] | None = None,
+        only_set_if_too_small: bool = False,
+        redraw: bool = True,
+    ) -> Sheet | int:
+        if row == "all" and height == "default":
+            self.MT.reset_row_positions()
+        elif row == "displayed" and height == "text":
+            sr, er = self.MT.get_visible_rows(self.MT.canvasy(0), self.MT.canvasy(self.winfo_width()))
+            for r in range(sr, er - 1):
+                self.RI.set_row_height(r)
+        elif height == "text" and isinstance(row, int):
+            self.RI.set_row_height(row=row, height=None, only_set_if_too_small=only_set_if_too_small)
+        elif isinstance(height, int) and isinstance(row, int):
+            self.RI.set_row_height(row=row, height=height, only_set_if_too_small=only_set_if_too_small)
+        elif isinstance(row, int):
+            return int(self.MT.row_positions[row + 1] - self.MT.row_positions[row])
         self.set_refresh_timer(redraw)
         return self
 
@@ -1173,6 +1215,48 @@ class Sheet(tk.Frame):
             else:
                 self.MT.col_positions = list(accumulate(chain([0], (width for width in column_widths))))
         return cwx
+
+    def set_row_heights(
+        self,
+        row_heights: Iterator[int, float] | None = None,
+        canvas_positions: bool = False,
+        reset: bool = False,
+        verify: bool = False,
+    ) -> Sheet:
+        if reset:
+            self.MT.reset_row_positions()
+            return
+        if is_iterable(row_heights):
+            qmin = self.MT.min_row_height
+            if canvas_positions and isinstance(row_heights, list):
+                if verify:
+                    self.MT.row_positions = list(
+                        accumulate(
+                            chain(
+                                [0],
+                                (
+                                    height if qmin < height else qmin
+                                    for height in [
+                                        x - z
+                                        for z, x in zip(
+                                            islice(row_heights, 0, None),
+                                            islice(row_heights, 1, None),
+                                        )
+                                    ]
+                                ),
+                            )
+                        )
+                    )
+                else:
+                    self.MT.row_positions = row_heights
+            else:
+                if verify:
+                    self.MT.row_positions = [
+                        qmin if z < qmin or not isinstance(z, int) or isinstance(z, bool) else z for z in row_heights
+                    ]
+                else:
+                    self.MT.row_positions = list(accumulate(chain([0], (height for height in row_heights))))
+        return self
 
     def set_all_row_heights(
         self,
@@ -1231,73 +1315,7 @@ class Sheet(tk.Frame):
         self.set_refresh_timer(redraw)
         return self
 
-    def row_height(
-        self,
-        row=None,
-        height=None,
-        only_set_if_too_small: bool = False,
-        redraw: bool = True,
-    ) -> Sheet | int:
-        if row == "all":
-            if height == "default":
-                self.MT.reset_row_positions()
-        elif row == "displayed":
-            if height == "text":
-                sr, er = self.MT.get_visible_rows(self.MT.canvasy(0), self.MT.canvasy(self.winfo_width()))
-                for r in range(sr, er - 1):
-                    self.RI.set_row_height(r)
-        elif height == "text" and row is not None:
-            self.RI.set_row_height(row=row, height=None, only_set_if_too_small=only_set_if_too_small)
-        elif height is not None and row is not None:
-            self.RI.set_row_height(row=row, height=height, only_set_if_too_small=only_set_if_too_small)
-        elif row is not None:
-            return int(self.MT.row_positions[row + 1] - self.MT.row_positions[row])
-        self.set_refresh_timer(redraw)
-        return self
-
-    def set_row_heights(
-        self,
-        row_heights: Iterator[int, float] | None = None,
-        canvas_positions: bool = False,
-        reset: bool = False,
-        verify: bool = False,
-    ) -> Sheet:
-        if reset:
-            self.MT.reset_row_positions()
-            return
-        if is_iterable(row_heights):
-            qmin = self.MT.min_row_height
-            if canvas_positions and isinstance(row_heights, list):
-                if verify:
-                    self.MT.row_positions = list(
-                        accumulate(
-                            chain(
-                                [0],
-                                (
-                                    height if qmin < height else qmin
-                                    for height in [
-                                        x - z
-                                        for z, x in zip(
-                                            islice(row_heights, 0, None),
-                                            islice(row_heights, 1, None),
-                                        )
-                                    ]
-                                ),
-                            )
-                        )
-                    )
-                else:
-                    self.MT.row_positions = row_heights
-            else:
-                if verify:
-                    self.MT.row_positions = [
-                        qmin if z < qmin or not isinstance(z, int) or isinstance(z, bool) else z for z in row_heights
-                    ]
-                else:
-                    self.MT.row_positions = list(accumulate(chain([0], (height for height in row_heights))))
-        return self
-
-    def verify_row_heights(self, row_heights: list, canvas_positions: bool = False):
+    def verify_row_heights(self, row_heights: list[float], canvas_positions: bool = False) -> bool:
         if not isinstance(row_heights, list):
             return False
         if canvas_positions:
@@ -1309,7 +1327,7 @@ class Sheet(tk.Frame):
             )
         return not any(z < self.MT.min_row_height or not isinstance(z, int) or isinstance(z, bool) for z in row_heights)
 
-    def verify_column_widths(self, column_widths: list, canvas_positions: bool = False):
+    def verify_column_widths(self, column_widths: list[float], canvas_positions: bool = False) -> bool:
         if not isinstance(column_widths, list):
             return False
         if canvas_positions:
@@ -1434,15 +1452,15 @@ class Sheet(tk.Frame):
 
     def sheet_display_dimensions(
         self,
-        total_rows=None,
-        total_columns=None,
+        total_rows: int | None = None,
+        total_columns: int | None = None,
     ) -> tuple[int, int] | Sheet:
         if total_rows is None and total_columns is None:
             return len(self.MT.row_positions) - 1, len(self.MT.col_positions) - 1
-        if total_rows is not None:
+        if isinstance(total_rows, int):
             height = self.MT.get_lines_cell_height(int(self.MT.default_row_height[0]))
             self.MT.row_positions = list(accumulate(chain([0], (height for row in range(total_rows)))))
-        if total_columns is not None:
+        if isinstance(total_columns, int):
             width = self.MT.default_column_width
             self.MT.col_positions = list(accumulate(chain([0], (width for column in range(total_columns)))))
         return self
@@ -1566,8 +1584,8 @@ class Sheet(tk.Frame):
 
     def insert_column_position(
         self,
-        idx="end",
-        width=None,
+        idx: Literal["end"] | int = "end",
+        width: int | None = None,
         deselect_all: bool = False,
         redraw: bool = False,
     ) -> Sheet:
@@ -1575,21 +1593,10 @@ class Sheet(tk.Frame):
         self.set_refresh_timer(redraw)
         return self
 
-    def insert_column_positions(
-        self,
-        idx="end",
-        widths=None,
-        deselect_all: bool = False,
-        redraw: bool = False,
-    ) -> Sheet:
-        self.MT.insert_col_positions(idx=idx, widths=widths, deselect_all=deselect_all)
-        self.set_refresh_timer(redraw)
-        return self
-
     def insert_row_position(
         self,
-        idx="end",
-        height=None,
+        idx: Literal["end"] | int = "end",
+        height: int | None = None,
         deselect_all: bool = False,
         redraw: bool = False,
     ) -> Sheet:
@@ -1597,10 +1604,21 @@ class Sheet(tk.Frame):
         self.set_refresh_timer(redraw)
         return self
 
+    def insert_column_positions(
+        self,
+        idx: Literal["end"] | int = "end",
+        widths: Sequence[float] | int | None = None,
+        deselect_all: bool = False,
+        redraw: bool = False,
+    ) -> Sheet:
+        self.MT.insert_col_positions(idx=idx, widths=widths, deselect_all=deselect_all)
+        self.set_refresh_timer(redraw)
+        return self
+
     def insert_row_positions(
         self,
-        idx="end",
-        heights=None,
+        idx: Literal["end"] | int = "end",
+        heights: Sequence[float] | int | None = None,
         deselect_all: bool = False,
         redraw: bool = False,
     ) -> Sheet:
@@ -1733,28 +1751,29 @@ class Sheet(tk.Frame):
         self.RI.open_cell(event=GeneratedMouseEvent(), ignore_existing_editor=ignore_existing_editor)
         return self
 
-    def set_text_editor_value(self, text="", r=None, c=None) -> Sheet:
+    def set_text_editor_value(
+        self,
+        text: str = "",
+        r: int | None = None,
+        c: int | None = None,
+    ) -> Sheet:
         if self.MT.text_editor is not None and r is None and c is None:
             self.MT.text_editor.set_text(text)
         elif self.MT.text_editor is not None and self.MT.text_editor_loc == (r, c):
             self.MT.text_editor.set_text(text)
         return self
 
-    def bind_text_editor_set(self, func, row, column) -> Sheet:
-        self.MT.bind_text_editor_destroy(func, row, column)
-        return self
-
-    def destroy_text_editor(self, event=None) -> Sheet:
+    def destroy_text_editor(self, event: object = None) -> Sheet:
         self.MT.destroy_text_editor(event=event)
         return self
 
-    def get_text_editor_widget(self, event=None) -> Sheet:
+    def get_text_editor_widget(self, event: object = None) -> tk.Text | None:
         try:
             return self.MT.text_editor.textedit
         except Exception:
             return None
 
-    def bind_key_text_editor(self, key: str, function) -> Sheet:
+    def bind_key_text_editor(self, key: str, function: Callable) -> Sheet:
         self.MT.text_editor_user_bound_keys[key] = function
         return self
 
@@ -1775,21 +1794,21 @@ class Sheet(tk.Frame):
                 pass
         return self
 
-    def get_xview(self):
+    def get_xview(self) -> tuple[float, float]:
         return self.MT.xview()
 
-    def get_yview(self):
+    def get_yview(self) -> tuple[float, float]:
         return self.MT.yview()
 
-    def set_xview(self, position, option="moveto") -> Sheet:
+    def set_xview(self, position: float, option: str = "moveto") -> Sheet:
         self.MT.set_xviews(option, position)
         return self
 
-    def set_yview(self, position, option="moveto") -> Sheet:
+    def set_yview(self, position: float, option: str = "moveto") -> Sheet:
         self.MT.set_yviews(option, position)
         return self
 
-    def set_view(self, x_args, y_args) -> Sheet:
+    def set_view(self, x_args: [str, float], y_args: [str, float]) -> Sheet:
         self.MT.set_view(x_args, y_args)
         return self
 
@@ -2104,7 +2123,11 @@ class Sheet(tk.Frame):
         self.MT.row_options = {}
         return self
 
-    def get_cell_options(self, key: None | str = None, canvas: str = "table") -> dict:
+    def get_cell_options(
+        self,
+        key: None | str = None,
+        canvas: Literal["table", "row_index", "header"] = "table",
+    ) -> dict:
         if canvas == "table":
             target = self.MT.cell_options
         elif canvas == "row_index":
@@ -3355,14 +3378,14 @@ class Sheet(tk.Frame):
 
     def display_rows(
         self,
-        rows=None,
-        all_rows_displayed=None,
+        rows: None | Literal["all"] | Iterator = None,
+        all_rows_displayed: None | bool = None,
         reset_row_positions: bool = True,
         refresh: bool = False,
         redraw: bool = False,
         deselect_all: bool = True,
         **kwargs,
-    ):
+    ) -> list[int] | None:
         if "all_displayed" in kwargs:
             all_rows_displayed = kwargs["all_displayed"]
         res = self.MT.display_rows(
@@ -3381,14 +3404,14 @@ class Sheet(tk.Frame):
 
     def display_columns(
         self,
-        columns=None,
-        all_columns_displayed=None,
+        columns: None | Literal["all"] | Iterator = None,
+        all_columns_displayed: None | bool = None,
         reset_col_positions: bool = True,
         refresh: bool = False,
         redraw: bool = False,
         deselect_all: bool = True,
         **kwargs,
-    ):
+    ) -> list[int] | None:
         if "all_displayed" in kwargs:
             all_columns_displayed = kwargs["all_displayed"]
         res = self.MT.display_columns(
@@ -3416,7 +3439,12 @@ class Sheet(tk.Frame):
         return v
 
     # uses displayed indexes
-    def hide_rows(self, rows=set(), redraw: bool = True, deselect_all: bool = True) -> Sheet:
+    def hide_rows(
+        self,
+        rows: int | set | Iterator = set(),
+        redraw: bool = True,
+        deselect_all: bool = True,
+    ) -> Sheet:
         if isinstance(rows, int):
             _rows = {rows}
         elif isinstance(rows, set):
@@ -3438,7 +3466,12 @@ class Sheet(tk.Frame):
         return self
 
     # uses displayed indexes
-    def hide_columns(self, columns=set(), redraw: bool = True, deselect_all: bool = True) -> Sheet:
+    def hide_columns(
+        self,
+        columns: int | set | Iterator = set(),
+        redraw: bool = True,
+        deselect_all: bool = True,
+    ) -> Sheet:
         if isinstance(columns, int):
             _columns = {columns}
         elif isinstance(columns, set):
@@ -3459,7 +3492,12 @@ class Sheet(tk.Frame):
         )
         return self
 
-    def show_ctrl_outline(self, canvas="table", start_cell=(0, 0), end_cell=(1, 1)) -> Sheet:
+    def show_ctrl_outline(
+        self,
+        canvas: Literal["table"] = "table",
+        start_cell: tuple[int, int] = (0, 0),
+        end_cell: tuple[int, int] = (1, 1),
+    ) -> Sheet:
         self.MT.show_ctrl_outline(canvas=canvas, start_cell=start_cell, end_cell=end_cell)
         return self
 

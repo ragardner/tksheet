@@ -35,6 +35,7 @@ from math import (
 )
 from operator import itemgetter
 from tkinter import TclError
+from typing import Literal
 
 from .colors import (
     color_map,
@@ -469,7 +470,7 @@ class MainTable(tk.Canvas):
 
     def show_ctrl_outline(
         self,
-        canvas: str = "table",
+        canvas: Literal["table"] = "table",
         start_cell: tuple[int, int] = (0, 0),
         end_cell: tuple[int, int] = (0, 0),
         dash: tuple[int, int] = (20, 20),
@@ -685,7 +686,7 @@ class MainTable(tk.Canvas):
         item = self.get_selection_items(cells=False, rows=False, columns=False)[-1]
         return coords_tag_to_box_nt(self.gettags(item)[1])
 
-    def ctrl_v(self, event=None) -> None:
+    def ctrl_v(self, event: object = None) -> None:
         if not self.expand_sheet_if_paste_too_big and (len(self.col_positions) == 1 or len(self.row_positions) == 1):
             return
         currently_selected = self.currently_selected()
@@ -910,7 +911,7 @@ class MainTable(tk.Canvas):
             try_binding(self.extra_end_ctrl_v_func, event_data, "end_ctrl_v")
         self.sheet_modified(event_data)
 
-    def delete_key(self, event=None) -> None:
+    def delete_key(self, event: object = None) -> None:
         if not self.anything_selected():
             return
         currently_selected = self.currently_selected()
@@ -955,7 +956,7 @@ class MainTable(tk.Canvas):
         move_to: int,
         to_move: list[int],
         data_indexes: bool = False,
-    ) -> tuple:
+    ) -> tuple[dict[int, int], dict[int, int], int, dict[int, int]]:
         if not data_indexes or self.all_columns_displayed:
             disp_new_idxs = get_new_indexes(
                 seqlen=len(self.col_positions) - 1,
@@ -980,15 +981,15 @@ class MainTable(tk.Canvas):
 
     def move_columns_adjust_options_dict(
         self,
-        data_new_idxs: dict,
-        data_old_idxs: dict,
+        data_new_idxs: dict[int, int],
+        data_old_idxs: dict[int, int],
         totalcols: int | None,
-        disp_new_idxs: None | dict = None,
+        disp_new_idxs: None | dict[int, int] = None,
         move_data: bool = True,
         create_selections: bool = True,
         data_indexes: bool = False,
-        event_data: dict | None = None,
-    ):
+        event_data: EventDataDict | None = None,
+    ) -> tuple[dict[int, int], dict[int, int], EventDataDict]:
         if not isinstance(totalcols, int):
             totalcols = max(data_new_idxs.values(), default=0)
             if totalcols:
@@ -1185,7 +1186,7 @@ class MainTable(tk.Canvas):
         move_to: int,
         to_move: list[int],
         data_indexes: bool = False,
-    ) -> tuple:
+    ) -> tuple[dict[int, int], dict[int, int], int, dict[int, int]]:
         if not data_indexes or self.all_rows_displayed:
             disp_new_idxs = get_new_indexes(
                 seqlen=len(self.row_positions) - 1,
@@ -1210,15 +1211,15 @@ class MainTable(tk.Canvas):
 
     def move_rows_adjust_options_dict(
         self,
-        data_new_idxs: dict,
-        data_old_idxs: dict,
+        data_new_idxs: dict[int, int],
+        data_old_idxs: dict[int, int],
         totalrows: int | None,
-        disp_new_idxs: None | dict = None,
+        disp_new_idxs: None | dict[int, int] = None,
         move_data: bool = True,
         create_selections: bool = True,
         data_indexes: bool = False,
-        event_data: dict | None = None,
-    ):
+        event_data: EventDataDict | None = None,
+    ) -> tuple[dict[int, int], dict[int, int], EventDataDict]:
         if not isinstance(totalrows, int):
             totalrows = self.fix_data_len(max(data_new_idxs.values(), default=0))
         if event_data is None:
@@ -1406,9 +1407,9 @@ class MainTable(tk.Canvas):
     def get_full_new_idxs(
         self,
         max_idx: int,
-        new_idxs: dict,
-        old_idxs: None | dict = None,
-    ) -> dict:
+        new_idxs: dict[int, int],
+        old_idxs: None | dict[int, int] = None,
+    ) -> dict[int, int]:
         # return a dict of all row or column indexes
         # old indexes and new indexes, not just the
         # ones that were moved e.g.
@@ -1424,7 +1425,7 @@ class MainTable(tk.Canvas):
             )
         )
 
-    def undo(self, event=None) -> None:
+    def undo(self, event: object = None) -> None:
         if not self.undo_stack:
             return
         if isinstance(self.undo_stack[-1]["data"], dict):
@@ -1437,7 +1438,7 @@ class MainTable(tk.Canvas):
         self.undo_stack.pop()
         try_binding(self.extra_end_ctrl_z_func, modification, "end_undo")
 
-    def redo(self, event=None) -> None:
+    def redo(self, event: object = None) -> None:
         if not self.redo_stack:
             return
         if isinstance(self.redo_stack[-1]["data"], dict):
@@ -1450,7 +1451,7 @@ class MainTable(tk.Canvas):
         self.redo_stack.pop()
         try_binding(self.extra_end_ctrl_z_func, modification, "end_redo")
 
-    def sheet_modified(self, event_data: dict, purge_redo: bool = True) -> None:
+    def sheet_modified(self, event_data: EventDataDict, purge_redo: bool = True) -> None:
         self.parentframe.emit_event("<<SheetModified>>", event_data)
         if purge_redo:
             self.purge_redo_stack()
@@ -1464,7 +1465,7 @@ class MainTable(tk.Canvas):
             self.set_cell_data(datarn, datacn, v)
         return event_data
 
-    def save_cells_using_modification(self, modification: dict, event_data: dict) -> EventDataDict:
+    def save_cells_using_modification(self, modification: EventDataDict, event_data: EventDataDict) -> EventDataDict:
         for datarn, v in modification["cells"]["index"].items():
             event_data["cells"]["index"][datarn] = self.RI.get_cell_data(datarn)
         for datacn, v in modification["cells"]["header"].items():
@@ -1473,7 +1474,7 @@ class MainTable(tk.Canvas):
             event_data["cells"]["table"][(datarn, datacn)] = self.get_cell_data(datarn, datacn)
         return event_data
 
-    def restore_options_named_spans(self, modification: dict) -> None:
+    def restore_options_named_spans(self, modification: EventDataDict) -> None:
         if not isinstance(modification["options"], dict):
             modification["options"] = unpickle_obj(modification["options"])
         if "cell_options" in modification["options"]:
@@ -1488,7 +1489,7 @@ class MainTable(tk.Canvas):
             self.RI.cell_options = modification["options"]["RI_cell_options"]
         self.named_spans = {k: unpickle_obj(v) for k, v in modification["named_spans"].items()}
 
-    def undo_modification_invert_event(self, modification: dict, name: str = "undo") -> bytes | dict:
+    def undo_modification_invert_event(self, modification: EventDataDict, name: str = "undo") -> bytes | EventDataDict:
         self.deselect("all", redraw=False)
         event_data = event_dict(
             name=modification["eventname"],
@@ -1666,28 +1667,28 @@ class MainTable(tk.Canvas):
         self.refresh()
         return ev_stack_dict(event_data)
 
-    def bind_arrowkeys(self, keys: dict = {}):
+    def bind_arrowkeys(self, keys: dict = {}) -> None:
         for canvas in (self, self.parentframe, self.CH, self.RI, self.TL):
             for k, func in keys.items():
                 canvas.bind(f"<{arrowkey_bindings_helper[k.lower()]}>", func)
 
-    def unbind_arrowkeys(self, keys: dict = {}):
+    def unbind_arrowkeys(self, keys: dict = {}) -> None:
         for canvas in (self, self.parentframe, self.CH, self.RI, self.TL):
             for k, func in keys.items():
                 canvas.unbind(f"<{arrowkey_bindings_helper[k.lower()]}>")
 
     def see(
         self,
-        r=None,
-        c=None,
-        keep_yscroll=False,
-        keep_xscroll=False,
-        bottom_right_corner=False,
-        check_cell_visibility=True,
-        redraw=True,
-        r_pc=0.0,
-        c_pc=0.0,
-    ):
+        r: int | None = None,
+        c: int | None = None,
+        keep_yscroll: bool = False,
+        keep_xscroll: bool = False,
+        bottom_right_corner: bool = False,
+        check_cell_visibility: bool = True,
+        redraw: bool = True,
+        r_pc: float = 0.0,
+        c_pc: float = 0.0,
+    ) -> bool:
         need_redraw = False
         yvis, xvis = False, False
         if check_cell_visibility:
@@ -1747,7 +1748,7 @@ class MainTable(tk.Canvas):
             return True
         return False
 
-    def get_cell_coords(self, r=None, c=None):
+    def get_cell_coords(self, r: int | None = None, c: int | None = None) -> tuple[float, float, float, float]:
         return (
             0 if not c else self.col_positions[c] + 1,
             0 if not r else self.row_positions[r] + 1,
@@ -1755,7 +1756,7 @@ class MainTable(tk.Canvas):
             0 if not r else self.row_positions[r + 1],
         )
 
-    def cell_completely_visible(self, r=0, c=0, separate_axes=False):
+    def cell_completely_visible(self, r: int = 0, c: int = 0, separate_axes: bool = False) -> bool:
         cx1, cy1, cx2, cy2 = self.get_canvas_visible_area()
         x1, y1, x2, y2 = self.get_cell_coords(r, c)
         x_vis = True
@@ -1766,20 +1767,18 @@ class MainTable(tk.Canvas):
             y_vis = False
         if separate_axes:
             return y_vis, x_vis
-        else:
-            if not y_vis or not x_vis:
-                return False
-            else:
-                return True
+        if not y_vis or not x_vis:
+            return False
+        return True
 
-    def cell_visible(self, r=0, c=0):
+    def cell_visible(self, r: int = 0, c: int = 0) -> bool:
         cx1, cy1, cx2, cy2 = self.get_canvas_visible_area()
         x1, y1, x2, y2 = self.get_cell_coords(r, c)
         if x1 <= cx2 or y1 <= cy2 or x2 >= cx1 or y2 >= cy1:
             return True
         return False
 
-    def select_all(self, redraw=True, run_binding_func=True):
+    def select_all(self, redraw: bool = True, run_binding_func: bool = True) -> None:
         currently_selected = self.currently_selected()
         self.deselect("all", redraw=False)
         if len(self.row_positions) > 1 and len(self.col_positions) > 1:
@@ -3322,7 +3321,7 @@ class MainTable(tk.Canvas):
             return None
         return c
 
-    def fix_views(self):
+    def fix_views(self) -> None:
         xcheck = self.xview()
         ycheck = self.yview()
         if xcheck and xcheck[0] <= 0:
@@ -3342,7 +3341,7 @@ class MainTable(tk.Canvas):
             if self.show_index:
                 self.RI.yview("moveto", 1)
 
-    def scroll_if_event_offscreen(self, event: object):
+    def scroll_if_event_offscreen(self, event: object) -> bool:
         need_redraw = False
         if self.data:
             xcheck = self.xview()
@@ -3381,7 +3380,7 @@ class MainTable(tk.Canvas):
             self.y_move_synced_scrolls("moveto", self.yview()[0])
         return need_redraw
 
-    def x_move_synced_scrolls(self, *args, redraw=True):
+    def x_move_synced_scrolls(self, *args, redraw: bool = True):
         for widget in self.synced_scrolls:
             # try:
             if hasattr(widget, "MT"):
@@ -3391,7 +3390,7 @@ class MainTable(tk.Canvas):
             # except Exception:
             #     continue
 
-    def y_move_synced_scrolls(self, *args, redraw=True):
+    def y_move_synced_scrolls(self, *args, redraw: bool = True):
         for widget in self.synced_scrolls:
             # try:
             if hasattr(widget, "MT"):
@@ -3401,7 +3400,7 @@ class MainTable(tk.Canvas):
             # except Exception:
             #     continue
 
-    def set_xviews(self, *args, move_synced=True, redraw=True):
+    def set_xviews(self, *args, move_synced: bool = True, redraw: bool = True) -> None:
         self.xview(*args)
         if self.show_header:
             self.CH.xview(*args)
@@ -3411,7 +3410,7 @@ class MainTable(tk.Canvas):
         if redraw:
             self.main_table_redraw_grid_and_text(redraw_header=True if self.show_header else False)
 
-    def set_yviews(self, *args, move_synced=True, redraw=True):
+    def set_yviews(self, *args, move_synced: bool = True, redraw: bool = True) -> None:
         self.yview(*args)
         if self.show_index:
             self.RI.yview(*args)
@@ -3421,7 +3420,7 @@ class MainTable(tk.Canvas):
         if redraw:
             self.main_table_redraw_grid_and_text(redraw_row_index=True if self.show_index else False)
 
-    def set_view(self, x_args, y_args):
+    def set_view(self, x_args: list[str, float], y_args: list[str, float]) -> None:
         self.xview(*x_args)
         if self.show_header:
             self.CH.xview(*x_args)
@@ -3731,7 +3730,7 @@ class MainTable(tk.Canvas):
             return w + self.table_txt_height, h
         return w, h
 
-    def set_cell_size_to_text(self, r, c, only_set_if_too_small=False, redraw=True, run_binding=False):
+    def set_cell_size_to_text(self, r, c, only_set_if_too_small=False, redraw: bool = True, run_binding=False):
         min_column_width = int(self.min_column_width)
         min_rh = int(self.min_row_height)
         w = min_column_width
@@ -3950,10 +3949,10 @@ class MainTable(tk.Canvas):
 
     def insert_col_position(
         self,
-        idx: str | int = "end",
+        idx: Literal["end"] | int = "end",
         width: int | None = None,
         deselect_all: bool = False,
-    ):
+    ) -> None:
         if deselect_all:
             self.deselect("all", redraw=False)
         if width is None:
@@ -3970,10 +3969,10 @@ class MainTable(tk.Canvas):
 
     def insert_row_position(
         self,
-        idx: str | int = "end",
+        idx: Literal["end"] | int = "end",
         height: int | None = None,
         deselect_all: bool = False,
-    ):
+    ) -> None:
         if deselect_all:
             self.deselect("all", redraw=False)
         if height is None:
@@ -3990,10 +3989,10 @@ class MainTable(tk.Canvas):
 
     def insert_col_positions(
         self,
-        idx: str | int = "end",
-        widths: Sequence[float] | int = None,
+        idx: Literal["end"] | int = "end",
+        widths: Sequence[float] | int | None = None,
         deselect_all: bool = False,
-    ):
+    ) -> None:
         if deselect_all:
             self.deselect("all", redraw=False)
         if widths is None:
@@ -4025,10 +4024,10 @@ class MainTable(tk.Canvas):
 
     def insert_row_positions(
         self,
-        idx: str | int = "end",
-        heights: Sequence[float] | int = None,
+        idx: Literal["end"] | int = "end",
+        heights: Sequence[float] | int | None = None,
         deselect_all: bool = False,
-    ):
+    ) -> None:
         if deselect_all:
             self.deselect("all", redraw=False)
         if heights is None:
@@ -4830,11 +4829,11 @@ class MainTable(tk.Canvas):
 
     def display_rows(
         self,
-        rows: int | list | None = None,
+        rows: int | Iterator | None = None,
         all_rows_displayed: bool | None = None,
         reset_row_positions: bool = True,
         deselect_all: bool = True,
-    ) -> list | None:
+    ) -> list[int] | None:
         if rows is None and all_rows_displayed is None:
             return list(range(self.total_data_rows())) if self.all_rows_displayed else self.displayed_rows
         total_data_rows = None
@@ -4856,11 +4855,11 @@ class MainTable(tk.Canvas):
 
     def display_columns(
         self,
-        columns: int | list | None = None,
+        columns: int | Iterator | None = None,
         all_columns_displayed: bool | None = None,
         reset_col_positions: bool = True,
         deselect_all: bool = True,
-    ) -> list | None:
+    ) -> list[int] | None:
         if columns is None and all_columns_displayed is None:
             return list(range(self.total_data_cols())) if self.all_columns_displayed else self.displayed_columns
         total_data_cols = None
