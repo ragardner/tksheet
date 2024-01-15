@@ -43,6 +43,9 @@ from .other_classes import (
 )
 from .row_index import RowIndex
 from .top_left_rectangle import TopLeftRectangle
+from .types import (
+    CreateSpanTypes,
+)
 from .vars import (
     emitted_events,
     get_font,
@@ -2498,15 +2501,7 @@ class Sheet(tk.Frame):
 
     def get_data(
         self,
-        *key: tuple[()]
-        | None
-        | str
-        | int
-        | slice
-        | tuple[int | None, int | None]
-        | tuple[tuple[int | None, int | None], tuple[int | None, int | None]]
-        | tuple[int | None, int | None, int | None, int | None]
-        | Span,
+        *key: CreateSpanTypes,
     ) -> object:
         span = self.span_from_key(*key)
         rows, cols = self.ranges_from_span(span)
@@ -2649,15 +2644,7 @@ class Sheet(tk.Frame):
 
     def set_data(
         self,
-        *key: tuple[()]
-        | None
-        | str
-        | int
-        | slice
-        | tuple[int | None, int | None]
-        | tuple[tuple[int | None, int | None], tuple[int | None, int | None]]
-        | tuple[int | None, int | None, int | None, int | None]
-        | Span,
+        *key: CreateSpanTypes,
         data: object = None,
         undo: bool | None = None,
         redraw: bool = True,
@@ -2974,15 +2961,7 @@ class Sheet(tk.Frame):
 
     def clear(
         self,
-        *key: tuple[()]
-        | None
-        | str
-        | int
-        | slice
-        | tuple[int | None, int | None]
-        | tuple[tuple[int | None, int | None], tuple[int | None, int | None]]
-        | tuple[int | None, int | None, int | None, int | None]
-        | Span,
+        *key: CreateSpanTypes,
         undo: bool | None = None,
         redraw: bool = True,
     ) -> EventDataDict:
@@ -3019,15 +2998,7 @@ class Sheet(tk.Frame):
 
     def span_from_key(
         self,
-        *key: tuple[()]
-        | None
-        | str
-        | int
-        | slice
-        | tuple[int | None, int | None]
-        | tuple[tuple[int | None, int | None], tuple[int | None, int | None]]
-        | tuple[int | None, int | None, int | None, int | None]
-        | Span,
+        *key: CreateSpanTypes,
     ) -> None | Span:
         if not key:
             key = (None, None, None, None)
@@ -3045,15 +3016,7 @@ class Sheet(tk.Frame):
 
     def __getitem__(
         self,
-        *key: tuple[()]
-        | None
-        | str
-        | int
-        | slice
-        | tuple[int | None, int | None]
-        | tuple[tuple[int | None, int | None], tuple[int | None, int | None]]
-        | tuple[int | None, int | None, int | None, int | None]
-        | Span,
+        *key: CreateSpanTypes,
     ) -> Span:
         return self.span_from_key(*key)
 
@@ -3586,15 +3549,7 @@ class Sheet(tk.Frame):
 
     def span(
         self,
-        *key: tuple[()]
-        | None
-        | str
-        | int
-        | slice
-        | tuple[int | None, int | None]
-        | tuple[tuple[int | None, int | None], tuple[int | None, int | None]]
-        | tuple[int | None, int | None, int | None, int | None]
-        | Span,
+        *key: CreateSpanTypes,
         type_: str = "",
         name: str = "",
         table: bool = True,
@@ -3718,15 +3673,7 @@ class Sheet(tk.Frame):
 
     def highlight(
         self,
-        *key: tuple[()]
-        | None
-        | str
-        | int
-        | slice
-        | tuple[int | None, int | None]
-        | tuple[tuple[int | None, int | None], tuple[int | None, int | None]]
-        | tuple[int | None, int | None, int | None, int | None]
-        | Span,
+        *key: CreateSpanTypes,
         bg: bool | None | str = False,
         fg: bool | None | str = False,
         end: bool | None = None,
@@ -3765,15 +3712,7 @@ class Sheet(tk.Frame):
 
     def dehighlight(
         self,
-        *key: tuple[()]
-        | None
-        | str
-        | int
-        | slice
-        | tuple[int | None, int | None]
-        | tuple[tuple[int | None, int | None], tuple[int | None, int | None]]
-        | tuple[int | None, int | None, int | None, int | None]
-        | Span,
+        *key: CreateSpanTypes,
         redraw: bool = True,
     ) -> Span:
         span = self.span_from_key(*key)
@@ -3805,15 +3744,7 @@ class Sheet(tk.Frame):
 
     def align(
         self,
-        *key: tuple[()]
-        | None
-        | str
-        | int
-        | slice
-        | tuple[int | None, int | None]
-        | tuple[tuple[int | None, int | None], tuple[int | None, int | None]]
-        | tuple[int | None, int | None, int | None, int | None]
-        | Span,
+        *key: CreateSpanTypes,
         align: str | None = None,
         redraw: bool = True,
     ) -> Span:
@@ -3848,15 +3779,7 @@ class Sheet(tk.Frame):
 
     def del_align(
         self,
-        *key: tuple[()]
-        | None
-        | str
-        | int
-        | slice
-        | tuple[int | None, int | None]
-        | tuple[tuple[int | None, int | None], tuple[int | None, int | None]]
-        | tuple[int | None, int | None, int | None, int | None]
-        | Span,
+        *key: CreateSpanTypes,
         redraw: bool = True,
     ) -> Span:
         span = self.span_from_key(*key)
@@ -3866,15 +3789,7 @@ class Sheet(tk.Frame):
 
     def readonly(
         self,
-        *key: tuple[()]
-        | None
-        | str
-        | int
-        | slice
-        | tuple[int | None, int | None]
-        | tuple[tuple[int | None, int | None], tuple[int | None, int | None]]
-        | tuple[int | None, int | None, int | None, int | None]
-        | Span,
+        *key: CreateSpanTypes,
         readonly: bool = True,
     ) -> Span:
         span = self.span_from_key(*key)
@@ -3925,15 +3840,7 @@ class Sheet(tk.Frame):
 
     def checkbox(
         self,
-        *key: tuple[()]
-        | None
-        | str
-        | int
-        | slice
-        | tuple[int | None, int | None]
-        | tuple[tuple[int | None, int | None], tuple[int | None, int | None]]
-        | tuple[int | None, int | None, int | None, int | None]
-        | Span,
+        *key: CreateSpanTypes,
         **kwargs,
     ) -> Span:
         kwargs = get_checkbox_kwargs(**kwargs)
@@ -3991,15 +3898,7 @@ class Sheet(tk.Frame):
 
     def del_checkbox(
         self,
-        *key: tuple[()]
-        | None
-        | str
-        | int
-        | slice
-        | tuple[int | None, int | None]
-        | tuple[tuple[int | None, int | None], tuple[int | None, int | None]]
-        | tuple[int | None, int | None, int | None, int | None]
-        | Span,
+        *key: CreateSpanTypes,
         redraw: bool = True,
     ) -> Span:
         span = self.span_from_key(*key)
@@ -4009,15 +3908,7 @@ class Sheet(tk.Frame):
 
     def click_checkbox(
         self,
-        *key: tuple[()]
-        | None
-        | str
-        | int
-        | slice
-        | tuple[int | None, int | None]
-        | tuple[tuple[int | None, int | None], tuple[int | None, int | None]]
-        | tuple[int | None, int | None, int | None, int | None]
-        | Span,
+        *key: CreateSpanTypes,
         checked: bool | None = None,
         redraw: bool = True,
     ) -> Span:
@@ -4068,15 +3959,7 @@ class Sheet(tk.Frame):
 
     def dropdown(
         self,
-        *key: tuple[()]
-        | None
-        | str
-        | int
-        | slice
-        | tuple[int | None, int | None]
-        | tuple[tuple[int | None, int | None], tuple[int | None, int | None]]
-        | tuple[int | None, int | None, int | None, int | None]
-        | Span,
+        *key: CreateSpanTypes,
         **kwargs,
     ) -> Span:
         kwargs = get_dropdown_kwargs(**kwargs)
@@ -4122,15 +4005,7 @@ class Sheet(tk.Frame):
 
     def del_dropdown(
         self,
-        *key: tuple[()]
-        | None
-        | str
-        | int
-        | slice
-        | tuple[int | None, int | None]
-        | tuple[tuple[int | None, int | None], tuple[int | None, int | None]]
-        | tuple[int | None, int | None, int | None, int | None]
-        | Span,
+        *key: CreateSpanTypes,
         redraw: bool = True,
     ) -> Span:
         span = self.span_from_key(*key)
@@ -4183,15 +4058,7 @@ class Sheet(tk.Frame):
 
     def format(
         self,
-        *key: tuple[()]
-        | None
-        | str
-        | int
-        | slice
-        | tuple[int | None, int | None]
-        | tuple[tuple[int | None, int | None], tuple[int | None, int | None]]
-        | tuple[int | None, int | None, int | None, int | None]
-        | Span,
+        *key: CreateSpanTypes,
         formatter_options: dict = {},
         formatter_class: object = None,
         redraw: bool = True,
@@ -4240,15 +4107,7 @@ class Sheet(tk.Frame):
 
     def del_format(
         self,
-        *key: tuple[()]
-        | None
-        | str
-        | int
-        | slice
-        | tuple[int | None, int | None]
-        | tuple[tuple[int | None, int | None], tuple[int | None, int | None]]
-        | tuple[int | None, int | None, int | None, int | None]
-        | Span,
+        *key: CreateSpanTypes,
         clear_values: bool = False,
         redraw: bool = True,
     ) -> Span:
