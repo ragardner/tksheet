@@ -10,7 +10,9 @@
     - `delete_sheet_dropdown`
     - `checkbox_sheet`
     - `delete_sheet_checkbox`
-- Function `bind_text_editor_set()`
+
+- Parameters:
+    - `verify` from functions `set_column_widths` and `set_row_heights`
 
 - Old unused and deprecated parameters for:
     - `get_cell_data()`, `get_sheet_data()`, `get_row_data()`, `get_column_data()`, `yield_sheet_rows()`
@@ -35,6 +37,7 @@
 
     - Renamed:
         - `align` -> `table_align`
+- Reorganised order of functions in `sheet.py` to match documentation
 
 #### Added:
 - Method `edit_validation(func: Callable | None = None) -> None` to replace `edit_cell_validation`

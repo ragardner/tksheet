@@ -6,7 +6,7 @@
 - [Basic Use](https://github.com/ragardner/tksheet/wiki/Version-7#basic-use)
 - [Initialization Options](https://github.com/ragardner/tksheet/wiki/Version-7#initialization-options)
 ---
-- [Table Colors](https://github.com/ragardner/tksheet/wiki/Version-7#table-colors)
+- [Sheet Colors](https://github.com/ragardner/tksheet/wiki/Version-7#sheet-colors)
 - [Header and Index](https://github.com/ragardner/tksheet/wiki/Version-7#header-and-index)
 - [Bindings and Functionality](https://github.com/ragardner/tksheet/wiki/Version-7#bindings-and-functionality)
 ---
@@ -26,14 +26,15 @@
 - [Modifying Selected Cells](https://github.com/ragardner/tksheet/wiki/Version-7#modifying-selected-cells)
 - [Row Heights and Column Widths](https://github.com/ragardner/tksheet/wiki/Version-7#row-heights-and-column-widths)
 - [Identifying Bound Event Mouse Position](https://github.com/ragardner/tksheet/wiki/Version-7#identifying-bound-event-mouse-position)
-- [Modifying and Getting Scroll Positions](https://github.com/ragardner/tksheet/wiki/Version-7#modifying-and-getting-scroll-positions)
+- [Scroll Positions and Cell Visibility](https://github.com/ragardner/tksheet/wiki/Version-7#scroll-positions-and-cell-visibility)
 ---
 - [Hiding Columns](https://github.com/ragardner/tksheet/wiki/Version-7#hiding-columns)
 - [Hiding Rows](https://github.com/ragardner/tksheet/wiki/Version-7#hiding-rows)
-- [Hiding Table Elements](https://github.com/ragardner/tksheet/wiki/Version-7#hiding-table-elements)
+- [Hiding Sheet Elements](https://github.com/ragardner/tksheet/wiki/Version-7#hiding-sheet-elements)
+- [Sheet Height and Width](https://github.com/ragardner/tksheet/wiki/Version-7#sheet-height-and-width)
 ---
 - [Cell Text Editor](https://github.com/ragardner/tksheet/wiki/Version-7#cell-text-editor)
-- [Table Options and Other Functions](https://github.com/ragardner/tksheet/wiki/Version-7#table-options-and-other-functions)
+- [Sheet Options and Other Functions](https://github.com/ragardner/tksheet/wiki/Version-7#sheet-options-and-other-functions)
 ---
 - [Example Loading Data from Excel](https://github.com/ragardner/tksheet/wiki/Version-7#example-loading-data-from-excel)
 - [Example Custom Right Click and Text Editor Validation](https://github.com/ragardner/tksheet/wiki/Version-7#example-custom-right-click-and-text-editor-validation)
@@ -77,11 +78,10 @@ pip install tksheet
 pip install tksheet --upgrade
 ```
 
-Alternatively you can download the source code and (inside the tksheet directory) use the command line `python setup.py develop`
+Alternatively you can download the source code and inside the tksheet directory where the `pyproject.toml` file is located use the command line `pip install -e .`
 
-`tksheet` versions < `7.0.0` require a Python version of `3.6` or higher.
-
-`tksheet` versions >= `7.0.0` require a Python version of `3.8` or higher.
+- Versions **<** `7.0.0` require a Python version of **`3.7`** or higher.
+- Versions **>=** `7.0.0` require a Python version of **`3.8`** or higher.
 
 ---
 # **Basic Initialization**
@@ -419,11 +419,11 @@ def __init__(
 You can change these settings after initialization using the `set_options()` function.
 
 ---
-# **Table Colors**
+# **Sheet Colors**
 
 To change the colors of individual cells, rows or columns use the functions listed under [highlighting cells](https://github.com/ragardner/tksheet/wiki/Version-7#highlighting-cells).
 
-For the colors of specific parts of the table such as gridlines and backgrounds use the function `set_options()`, keyword arguments specific to table colors are listed below. All the other `set_options()` arguments can be found [here](https://github.com/ragardner/tksheet/wiki/Version-7#table-options-and-other-functions).
+For the colors of specific parts of the table such as gridlines and backgrounds use the function `set_options()`, keyword arguments specific to sheet colors are listed below. All the other `set_options()` arguments can be found [here](https://github.com/ragardner/tksheet/wiki/Version-7#sheet-options-and-other-functions).
 
 Use a tkinter color or a hex string e.g.
 
@@ -487,22 +487,29 @@ popup_menu_highlight_fg
 
 Otherwise you can change the theme using the below function.
 ```python
-change_theme(theme = "light blue", redraw = True)
+change_theme(theme: str = "light blue", redraw: bool = True) -> Sheet
 ```
-- `theme` (`str`) options (themes) are `light blue`, `light green`, `dark`, `dark blue` and `dark green`.
+- `theme` (`str`) options (themes) are currently `light blue`, `light green`, `dark`, `dark blue` and `dark green`.
 
 ---
 # **Header and Index**
 
 #### **Set the header**
+
 ```python
-set_header_data(value, c = None, redraw = True)
+set_header_data(value: object, c: int | None | Iterator = None, redraw: bool = True) -> Sheet
 ```
 - `value` (`iterable`, `int`, `Any`) if `c` is left as `None` then it attempts to set the whole header as the `value` (converting a generator to a list). If `value` is `int` it sets the header to display the row with that position.
 - `c` (`iterable`, `int`, `None`) if both `value` and `c` are iterables it assumes `c` is an iterable of positions and `value` is an iterable of values and attempts to set each value to each position. If `c` is `int` it attempts to set the value at that position.
 
 ```python
-headers(newheaders = None, index = None, reset_col_positions = False, show_headers_if_not_sheet = True, redraw = False)
+headers(
+    newheaders: object = None,
+    index: None | int = None,
+    reset_col_positions: bool = False,
+    show_headers_if_not_sheet: bool = True,
+    redraw: bool = True,
+) -> object
 ```
 - Using an integer `int` for argument `newheaders` makes the sheet use that row as a header e.g. `headers(0)` means the first row will be used as a header (the first row will not be hidden in the sheet though), this is sort of equivalent to freezing the row.
 - Leaving `newheaders` as `None` and using the `index` argument returns the existing header value in that index.
@@ -511,14 +518,21 @@ headers(newheaders = None, index = None, reset_col_positions = False, show_heade
 ___
 
 #### **Set the index**
+
 ```python
-set_index_data(value, r = None, redraw = True)
+set_index_data(value: object, r: int | None | Iterator = None, redraw: bool = True) -> Sheet
 ```
 - `value` (`iterable`, `int`, `Any`) if `r` is left as `None` then it attempts to set the whole index as the `value` (converting a generator to a list). If `value` is `int` it sets the index to display the row with that position.
 - `r` (`iterable`, `int`, `None`) if both `value` and `r` are iterables it assumes `r` is an iterable of positions and `value` is an iterable of values and attempts to set each value to each position. If `r` is `int` it attempts to set the value at that position.
 
 ```python
-row_index(newindex = None, index = None, reset_row_positions = False, show_index_if_not_sheet = True, redraw = False)
+row_index(
+    newindex: object = None,
+    index: None | int = None,
+    reset_row_positions: bool = False,
+    show_index_if_not_sheet: bool = True,
+    redraw: bool = True,
+) -> object
 ```
 - Using an integer `int` for argument `newindex` makes the sheet use that column as an index e.g. `row_index(0)` means the first column will be used as an index (the first column will not be hidden in the sheet though), this is sort of equivalent to freezing the column.
 - Leaving `newindex` as `None` and using the `index` argument returns the existing row index value in that index.
@@ -528,48 +542,49 @@ row_index(newindex = None, index = None, reset_row_positions = False, show_index
 # **Bindings and Functionality**
 
 #### **Enable table functionality and bindings**
+
 ```python
 enable_bindings(*bindings)
 ```
 - `bindings` (`str`) options are (rc stands for right click):
-	- "all"
-	- "single_select"
-	- "toggle_select"
-	- "drag_select"
-       - "select_all"
-	- "column_drag_and_drop" / "move_columns"
-	- "row_drag_and_drop" / "move_rows"
-	- "column_select"
-	- "row_select"
-	- "column_width_resize"
-	- "double_click_column_resize"
-	- "row_width_resize"
-	- "column_height_resize"
-	- "arrowkeys" # all arrowkeys including page up and down
-    - "up"
-    - "down"
-    - "left"
-    - "right"
-    - "prior" # page up
-    - "next" # page down
-	- "row_height_resize"
-	- "double_click_row_resize"
-	- "right_click_popup_menu"
-	- "rc_select"
-	- "rc_insert_column"
-	- "rc_delete_column"
-	- "rc_insert_row"
-	- "rc_delete_row"
-    - "ctrl_click_select"
-    - "ctrl_select"
-	- "copy"
-	- "cut"
-	- "paste"
-	- "delete"
-	- "undo"
-	- "edit_cell"
-    - "edit_header"
-    - "edit_index"
+	- `"all"`
+	- `"single_select"`
+	- `"toggle_select"`
+	- `"drag_select"`
+       - `"select_all"`
+	- `"column_drag_and_drop"` / `"move_columns"`
+	- `"row_drag_and_drop"` / `"move_rows"`
+	- `"column_select"`
+	- `"row_select"`
+	- `"column_width_resize"`
+	- `"double_click_column_resize"`
+	- `"row_width_resize"`
+	- `"column_height_resize"`
+	- `"arrowkeys"` # all arrowkeys including page up and down
+    - `"up"`
+    - `"down"`
+    - `"left"`
+    - `"right"`
+    - `"prior"` # page up
+    - `"next"` # page down
+	- `"row_height_resize"`
+	- `"double_click_row_resize"`
+	- `"right_click_popup_menu"`
+	- `"rc_select"`
+	- `"rc_insert_column"`
+	- `"rc_delete_column"`
+	- `"rc_insert_row"`
+	- `"rc_delete_row"`
+    - `"ctrl_click_select"`
+    - `"ctrl_select"`
+	- `"copy"`
+	- `"cut"`
+	- `"paste"`
+	- `"delete"`
+	- `"undo"`
+	- `"edit_cell"`
+    - `"edit_header"`
+    - `"edit_index"`
 
 Notes:
 - `"edit_header"`, `"edit_index"`, `"ctrl_select"` and `"ctrl_click_select"` are not enabled by `bindings = "all"` and have to be enabled individually, double click or right click (if enabled) on header/index cells to edit.
@@ -583,10 +598,13 @@ Example:
 
 ___
 
-#### **Disable table functionality and bindings, uses the same arguments as `enable_bindings()`**
+#### **Disable table functionality and bindings**
+
 ```python
 disable_bindings(*bindings)
 ```
+Notes:
+- Uses the same arguments as `enable_bindings()`.
 
 ___
 
@@ -892,6 +910,7 @@ Notes:
 - For examples of this function see [here](https://github.com/ragardner/tksheet/wiki/Version-7#basic-use) and [here](https://github.com/ragardner/tksheet/wiki/Version-7#example-custom-right-click-and-text-editor-validation).
 
 #### **Add commands to the in-built right click popup menu**
+
 ```python
 popup_menu_add_command(
     label: str,
@@ -905,7 +924,8 @@ popup_menu_add_command(
 
 ___
 
-#### **Remove commands added using `popup_menu_add_command()` from the in-built right click popup menu**
+#### **Remove commands added using popup_menu_add_command from the in-built right click popup menu**
+
 ```python
 popup_menu_del_command(label: str | None = None) -> Sheet
 ```
@@ -914,6 +934,7 @@ popup_menu_del_command(label: str | None = None) -> Sheet
 ___
 
 #### **Enable or disable mousewheel, left click etc**
+
 ```python
 basic_bindings(enable: bool = False) -> Sheet
 ```
@@ -921,6 +942,7 @@ basic_bindings(enable: bool = False) -> Sheet
 ___
 
 #### **Enable or disable cell edit functionality, including Undo**
+
 ```python
 edit_bindings(enable: bool = False) -> Sheet
 ```
@@ -928,6 +950,7 @@ edit_bindings(enable: bool = False) -> Sheet
 ___
 
 #### **Enable or disable the ability to edit a specific cell using the inbuilt text editor**
+
 ```python
 cell_edit_binding(
     enable: bool = False,
@@ -947,6 +970,34 @@ delete(event: object = None) -> Sheet
 undo(event: object = None) -> Sheet
 redo(event: object = None) -> Sheet
 ```
+
+___
+
+#### **Set focus to the Sheet**
+
+```python
+focus_set(
+    canvas: Literal[
+        "table",
+        "header",
+        "row_index",
+        "index",
+        "topleft",
+        "top_left",
+    ] = "table",
+) -> Sheet
+```
+
+___
+
+#### **Get the last event data dict**
+
+```python
+@property
+def event() -> EventDataDict
+```
+- e.g. `last_event_data = sheet.event`
+- Will be empty `EventDataDict` if there is no last event.
 
 ---
 # **Span Objects**
@@ -1817,21 +1868,18 @@ yield_sheet_rows(
     get_index: bool = False,
     get_index_displayed: bool = True,
     get_header_displayed: bool = True,
-    only_rows: int | Iterator | None = None,
-    only_columns: int | Iterator | None = None,
+    only_rows: int | Iterator[int] | None = None,
+    only_columns: int | Iterator[int] | None = None,
 ) -> Iterator[list[object]]
 ```
-Note:
-- The following keyword arguments both behave the same way for `yield_sheet_rows()` and `get_sheet_data()`.
-
 Parameters:
 - `get_displayed` (`bool`) if `True` it will return cell values as they are displayed on the screen. If `False` it will return any underlying data, for example if the cell is formatted.
 - `get_header` (`bool`) if `True` it will return the header of the sheet even if there is not one.
 - `get_index` (`bool`) if `True` it will return the index of the sheet even if there is not one.
 - `get_index_displayed` (`bool`) if `True` it will return whatever index values are displayed on the screen, for example if there is a dropdown box with `text` set.
 - `get_header_displayed` (`bool`) if `True` it will return whatever header values are displayed on the screen, for example if there is a dropdown box with `text` set.
-- `only_rows` (`None`, `iterable`) with this argument you can supply an iterable of row indexes in any order to be the only rows that are returned.
-- `only_columns` (`None`, `iterable`) with this argument you can supply an iterable of column indexes in any order to be the only columns that are returned.
+- `only_rows` (`None`, `iterable`) with this argument you can supply an iterable of `int` row indexes in any order to be the only rows that are returned.
+- `only_columns` (`None`, `iterable`) with this argument you can supply an iterable of `int` column indexes in any order to be the only columns that are returned.
 
 ___
 
@@ -1879,38 +1927,6 @@ print (search_value in self.sheet)
 
 ___
 
-#### **Other data getting functions**
-
-Get a single cell:
-```python
-get_cell_data(r: int, c: int, get_displayed: bool = False) -> object
-```
-
-Get a row:
-```python
-get_row_data(
-    r: int,
-    get_displayed: bool = False,
-    get_index: bool = False,
-    get_index_displayed: bool = True,
-    only_columns: int | Iterator | None = None,
-) -> list[object]
-```
-
-Get a column:
-```python
-get_column_data(
-    c: int,
-    get_displayed: bool = False,
-    get_header: bool = False,
-    get_header_displayed: bool = True,
-    only_rows: int | Iterator | None = None,
-) -> list[object]
-```
-- The above arguments behave the same way as for `yield_sheet_rows()`.
-
-___
-
 #### **Get the number of rows in the sheet**
 
 ```python
@@ -1924,6 +1940,20 @@ ___
 ```python
 get_total_columns(include_header: bool = False) -> int
 ```
+
+___
+
+#### **Get a value for a particular cell if that cell was empty**
+
+```python
+get_value_for_empty_cell(
+    r: int,
+    c: int,
+    r_ops: bool = True,
+    c_ops: bool = True,
+) -> object
+```
+- `r_ops`/`c_ops` when both are `True` it will take into account whatever cell/row/column options exist. When just `r_ops` is `True` it will take into account row options only and when just `c_ops` is `True` it will take into account column options only.
 
 ---
 # **Setting Sheet Data**
@@ -2066,23 +2096,10 @@ self.sheet["B2"].data = [["B2 new val", "C2 new val"],
 # or instead using sheet.span() cells B2, C2, B3, C3 get new values
 self.sheet.span("B2").data = [["B2 new val", "C2 new val"],
                               ["B3 new val", "C3 new val"]]
-```
 
-You can also use the `Sheet` function `set_data()` using the same methodology as above.
-
-```python
-set_data(
-    *key: CreateSpanTypes,
-    data: object = None,
-    undo: bool | None = None,
-    redraw: bool = True,
-) -> EventDataDict
-```
-
-Example:
-```python
-# create a span which encompasses the entire table, header and index
-# all data values, no displayed values
+"""
+SETTING CELL AREA DATA INCLUDING HEADER AND INDEX
+"""
 self.sheet_span = self.sheet.span(
     header=True,
     index=True,
@@ -2095,6 +2112,38 @@ self.sheet_span.data = [["",  "A",  "B",  "C"]
                         ["1", "A1", "B1", "C1"],
                         ["2", "A2", "B2", "C2"]]
 ```
+
+You can also use the `Sheet` function `set_data()`.
+
+```python
+set_data(
+    *key: CreateSpanTypes,
+    data: object = None,
+    undo: bool | None = None,
+    redraw: bool = True,
+) -> EventDataDict
+```
+
+Example:
+```python
+self.sheet.set_data(
+    "A1",
+    [["",  "A",  "B",  "C"]
+     ["1", "A1", "B1", "C1"],
+     ["2", "A2", "B2", "C2"]],
+)
+```
+
+You can clear cells/rows/columns using a [spans `clear()` function](https://github.com/ragardner/tksheet/wiki/Version-7#using-a-span-to-clear-cells) or the Sheets `clear()` function. Below is the Sheets clear function:
+
+```python
+clear(
+    *key: CreateSpanTypes,
+    undo: bool | None = None,
+    redraw: bool = True,
+) -> EventDataDict
+```
+- `undo` when `True` adds the change to the Sheets undo stack.
 
 #### **Insert a row into the sheet**
 
@@ -2177,6 +2226,8 @@ Parameters:
 
 ___
 
+#### **Delete a row from the sheet**
+
 ```python
 del_row(
     idx: int = 0,
@@ -2191,6 +2242,8 @@ Parameters:
 - `undo` when `True` adds the change to the Sheets undo stack.
 
 ___
+
+#### **Delete multiple rows from the sheet**
 
 ```python
 del_rows(
@@ -2207,6 +2260,8 @@ Parameters:
 
 ___
 
+#### **Delete a column from the sheet**
+
 ```python
 del_column(
     idx: int = 0,
@@ -2221,6 +2276,8 @@ Parameters:
 - `undo` when `True` adds the change to the Sheets undo stack.
 
 ___
+
+#### **Delete multiple columns from the sheet**
 
 ```python
 del_columns(
@@ -2247,6 +2304,18 @@ sheet_data_dimensions(
 Parameters:
 - `total_rows` sets the Sheets number of data rows.
 - `total_columns` sets the Sheets number of data columns.
+
+___
+
+```python
+set_sheet_data_and_display_dimensions(
+    total_rows: int | None = None,
+    total_columns: int | None = None,
+) -> Sheet
+```
+Parameters:
+- `total_rows` when `int` will set the number of the Sheets data and display rows by deleting or adding rows.
+- `total_columns` when `int` will set the number of the Sheets data and display columns by deleting or adding columns.
 
 ___
 
@@ -2278,37 +2347,31 @@ Parameters:
 
 ___
 
-```python
-set_sheet_data_and_display_dimensions(
-    total_rows: int | None = None,
-    total_columns: int | None = None,
-) -> Sheet
-```
-Parameters:
-- `total_rows` when `int` will set the number of the Sheets data and display rows by deleting or adding rows.
-- `total_columns` when `int` will set the number of the Sheets data and display columns by deleting or adding columns.
-
-___
+#### **Move a single row to a new location**
 
 ```python
 move_row(
     row: int,
-    moveto: int)
--> tuple[dict, dict, dict]
+    moveto: int,
+) -> tuple[dict, dict, dict]
 ```
 - Note that `row` and `moveto` indexes represent displayed indexes and not data. When there are hidden rows this is an important distinction, otherwise it is not at all important. To specifically use data indexes use the function `move_rows()`.
 
 ___
 
+#### **Move a single column to a new location**
+
 ```python
 move_column(
     column: int,
-    moveto: int)
--> tuple[dict, dict, dict]
+    moveto: int,
+) -> tuple[dict, dict, dict]
 ```
 - Note that `column` and `moveto` indexes represent displayed indexes and not data. When there are hidden columns this is an important distinction, otherwise it is not at all important. To specifically use data indexes use the function `move_columns()`.
 
 ___
+
+#### **Move any rows to a new location**
 
 ```python
 move_rows(
@@ -2329,7 +2392,12 @@ Parameters:
 - `create_selections` creates new selection boxes based on where the rows have moved.
 - `undo` when `True` adds the change to the Sheets undo stack.
 
+Notes:
+- The rows in `to_move` do **not** have to be contiguous.
+
 ___
+
+#### **Move any columns to a new location**
 
 ```python
 move_columns(
@@ -2350,23 +2418,18 @@ Parameters:
 - `create_selections` creates new selection boxes based on where the columns have moved.
 - `undo` when `True` adds the change to the Sheets undo stack.
 
+Notes:
+- The columns in `to_move` do **not** have to be contiguous.
+
 ___
 
 #### **Make all data rows the same length**
+
 ```python
-equalize_data_row_lengths()
+equalize_data_row_lengths(include_header: bool = False) -> int
 ```
 - Makes every list in the table have the same number of elements, goes by longest list. This will only affect the data variable, not visible columns.
-
-___
-
-Modify widget height and width in pixels
-```python
-height_and_width(height = None, width = None)
-```
-- `height` (`int`) set a height in pixels
-- `width` (`int`) set a width in pixels
-If both arguments are `None` then table will reset to default tkinter canvas dimensions.
+- Returns the new row length for all rows in the Sheet.
 
 ---
 # **Highlighting Cells**
@@ -2872,6 +2935,13 @@ reapply_formatting() -> Sheet
 ```
 - Useful if you have manually changed the entire sheets data using `sheet.MT.data = ` and want to reformat the sheet using any existing formatting you have set.
 
+#### **Check if a cell is formatted**
+
+```python
+formatted(r: int, c: int) -> dict
+```
+- If the cell is formatted function returns a `dict` with all the format keyword arguments. The `dict` will be empty if the cell is not formatted.
+
 ### **Formatters**
 
 `tksheet` provides a number of in-built formatters, in addition to the base `formatter` function. These formatters are designed to provide a range of functionality for different datatypes. The following table lists the available formatters and their options.
@@ -3115,14 +3185,19 @@ self.sheet.readonly(
 - Font arguments require a three tuple e.g. `("Arial", 12, "normal")` or `("Arial", 12, "bold")` or `("Arial", 12, "italic")`
 - The table and index currently share a font, it's not possible to change the index font separate from the table font.
 
-**Set the table and index font:**
+**Set the table and index font**
+
 ```python
-font(newfont: tuple | None = None, reset_row_positions: bool = True) -> tuple[str, int, str]
+font(
+    newfont: tuple[str, int, str] | None = None,
+    reset_row_positions: bool = True,
+) -> tuple[str, int, str]
 ```
 
-**Set the header font:**
+**Set the header font**
+
 ```python
-header_font(newfont: tuple | None = None) -> tuple[str, int, str]
+header_font(newfont: tuple[str, int, str] | None = None) -> tuple[str, int, str]
 ```
 
 ### **Text Alignment**
@@ -3576,24 +3651,6 @@ set_all_cell_sizes_to_text(redraw: bool = True) -> tuple[list[float], list[float
 
 ___
 
-#### **Get the sheets column widths**
-
-```python
-get_column_widths(canvas_positions: bool = False) -> list[float]
-```
-- `canvas_positions` (`bool`) gets the actual canvas x coordinates of column lines.
-
-___
-
-#### **Get the sheets row heights**
-
-```python
-get_row_heights(canvas_positions: bool = False) -> list[float]
-```
-- `canvas_positions` (`bool`) gets the actual canvas y coordinates of row lines.
-
-___
-
 #### **Set all column widths to a specific width in pixels**
 
 ```python
@@ -3622,7 +3679,7 @@ set_all_row_heights(
 
 ___
 
-#### **Set/get a specific column width**
+#### **Set or get a specific column width**
 
 ```python
 column_width(
@@ -3635,7 +3692,7 @@ column_width(
 
 ___
 
-#### **Set/get a specific row height**
+#### **Set or get a specific row height**
 
 ```python
 row_height(
@@ -3648,13 +3705,30 @@ row_height(
 
 ___
 
+#### **Get the sheets column widths**
+
+```python
+get_column_widths(canvas_positions: bool = False) -> list[float]
+```
+- `canvas_positions` (`bool`) gets the actual canvas x coordinates of column lines.
+
+___
+
+#### **Get the sheets row heights**
+
+```python
+get_row_heights(canvas_positions: bool = False) -> list[float]
+```
+- `canvas_positions` (`bool`) gets the actual canvas y coordinates of row lines.
+
+___
+
 ```python
 set_column_widths(
     column_widths: Iterator[int, float] | None = None,
     canvas_positions: bool = False,
     reset: bool = False,
-    verify: bool = False,
-) -> None | list[float]
+) -> Sheet
 ```
 
 ___
@@ -3664,7 +3738,6 @@ set_row_heights(
     row_heights: Iterator[int, float] | None = None,
     canvas_positions: bool = False,
     reset: bool = False,
-    verify: bool = False,
 ) -> Sheet
 ```
 
@@ -3849,7 +3922,7 @@ redo(event: object = None) -> Sheet
 ```
 
 ---
-# **Modifying and Getting Scroll Positions**
+# **Scroll Positions and Cell Visibility**
 
 #### **Sync scroll positions between widgets**
 
@@ -3882,7 +3955,7 @@ unsync_scroll(widget: object = None) -> Sheet
 ```
 - Leaving `widget` as `None` unsyncs all previously synced widgets.
 
-#### **See / scroll to a specific cell on the sheet**
+#### **See or scroll to a specific cell on the sheet**
 
 ```python
 see(
@@ -3946,6 +4019,8 @@ set_view(x_args: [str, float], y_args: [str, float]) -> Sheet
 ---
 # **Hiding Columns**
 
+Note that once you have hidden columns you can use the function `displayed_column_to_data(column)` to retrieve a column data index from a displayed index.
+
 #### **Display only certain columns**
 
 ```python
@@ -3995,8 +4070,28 @@ hide_columns(
 ```
 - **NOTE**: `columns` (`int`) uses displayed column indexes, not data indexes. In other words the indexes of the columns displayed on the screen are the ones that are hidden, this is useful when used in conjunction with `get_selected_columns()`.
 
+___
+
+#### **Displayed column index to data**
+
+Convert a displayed column index to a data index. If the internal `all_columns_displayed` attribute is `True` then it will simply return the provided argument.
+```python
+displayed_column_to_data(c)
+```
+
+___
+
+#### **Get currently displayed columns**
+
+```python
+@property
+displayed_columns() -> list[int]
+```
+
 ---
 # **Hiding Rows**
+
+Note that once you have hidden rows you can use the function `displayed_row_to_data(row)` to retrieve a row data index from a displayed index.
 
 #### **Display only certain rows**
 
@@ -4029,15 +4124,6 @@ self.sheet.display_rows([2, 4, 7], all_displayed = False)
 
 ___
 
-#### **Get all rows displayed boolean**
-
-```python
-all_rows_displayed(a: bool | None = None) -> bool
-```
-- `a` (`bool`, `None`) Either set by using `bool` or get by leaving `None` e.g. `all_rows_displayed()`.
-
-___
-
 #### **Hide specific rows**
 
 ```python
@@ -4049,10 +4135,37 @@ hide_rows(
 ```
 - **NOTE**: `rows` (`int`) uses displayed row indexes, not data indexes. In other words the indexes of the rows displayed on the screen are the ones that are hidden, this is useful when used in conjunction with `get_selected_rows()`.
 
----
-# **Hiding Table Elements**
+___
 
-#### **Hide parts of the table or all of it**
+#### **Get all rows displayed boolean**
+
+```python
+all_rows_displayed(a: bool | None = None) -> bool
+```
+- `a` (`bool`, `None`) Either set by using `bool` or get by leaving `None` e.g. `all_rows_displayed()`.
+
+___
+
+#### **Displayed row index to data**
+
+Convert a displayed row index to a data index. If the internal `all_rows_displayed` attribute is `True` then it will simply return the provided argument.
+```python
+displayed_row_to_data(r)
+```
+
+___
+
+#### **Get currently displayed rows**
+
+```python
+@property
+displayed_rows() -> list[int]
+```
+
+---
+# **Hiding Sheet Elements**
+
+#### **Hide parts of the Sheet or all of it**
 
 ```python
 hide(
@@ -4071,7 +4184,7 @@ hide(
 
 ___
 
-#### **Show parts of the table or all of it**
+#### **Show parts of the Sheet or all of it**
 
 ```python
 show(
@@ -4087,6 +4200,35 @@ show(
 ```
 - `canvas` (`str`) options are `all`, `row_index`, `header`, `top_left`, `x_scrollbar`, `y_scrollbar`
 	- `all` shows the entire table and is the default.
+
+---
+# **Sheet Height and Width**
+
+#### **Modify widget height and width in pixels**
+
+```python
+height_and_width(
+    height: int | None = None,
+    width: int | None = None,
+) -> Sheet
+```
+- `height` (`int`, `None`) set a height in pixels.
+- `width` (`int`, `None`) set a width in pixels.
+If both arguments are `None` then table will reset to default tkinter canvas dimensions.
+
+___
+
+```python
+get_frame_y(y: int) -> int
+```
+- Adds the height of the Sheets header to a y position.
+
+___
+
+```python
+get_frame_x(x: int) -> int
+```
+- Adds the width of the Sheets index to an x position.
 
 ---
 # **Cell Text Editor**
@@ -4151,7 +4293,7 @@ unbind_key_text_editor(key: str) -> Sheet
 ```
 
 ---
-# **Table Options and Other Functions**
+# **Sheet Options and Other Functions**
 
 ```python
 set_options(redraw: bool = True, **kwargs) -> Sheet
@@ -4252,9 +4394,37 @@ popup_menu_highlight_fg
 
 ___
 
-Get internal storage dictionary of highlights, readonly cells, dropdowns etc.
+Get internal storage dictionary of highlights, readonly cells, dropdowns etc. Specifically for cell options.
 ```python
 get_cell_options(key: None | str = None, canvas: Literal["table", "row_index", "header"] = "table",) -> dict
+```
+
+___
+
+Get internal storage dictionary of highlights, readonly rows, dropdowns etc. Specifically for row options.
+```python
+get_row_options(key: None | str = None) -> dict
+```
+
+___
+
+Get internal storage dictionary of highlights, readonly columns, dropdowns etc. Specifically for column options.
+```python
+get_column_options(key: None | str = None) -> dict
+```
+
+___
+
+Get internal storage dictionary of highlights, readonly header cells, dropdowns etc. Specifically for header options.
+```python
+get_header_options(key: None | str = None) -> dict
+```
+
+___
+
+Get internal storage dictionary of highlights, readonly row index cells, dropdowns etc. Specifically for row index options.
+```python
+get_index_options(key: None | str = None) -> dict
 ```
 
 ___
@@ -4269,18 +4439,6 @@ ___
 Delete all alignments, dropdown boxes, check boxes, highlights etc.
 ```python
 reset_all_options() -> Sheet
-```
-
-___
-
-```python
-get_frame_y(y: int) -> int
-```
-
-___
-
-```python
-get_frame_x(x: int) -> int
 ```
 
 ___
@@ -4314,7 +4472,7 @@ ___
 
 Refresh the table.
 ```python
-redraw(redraw_header: bool = True, redraw_row_index: bool = True) -> Sheet
+refresh(redraw_header: bool = True, redraw_row_index: bool = True) -> Sheet
 ```
 
 ___
