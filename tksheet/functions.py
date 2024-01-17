@@ -647,6 +647,8 @@ def key_to_span(
 ) -> Span:
     if isinstance(key, Span):
         return key
+    elif key is None:
+        key = (None, None, None, None)
     elif not isinstance(key, (str, int, slice, list, tuple)):
         return f"Key type must be either str, int, list, tuple or slice, not '{type(key)}'."
     try:
@@ -755,7 +757,7 @@ def key_to_span(
 
         elif isinstance(key, str):
             if not key:
-                return f"Key cannot be an empty string."  # noqa: F541
+                key = ":"
 
             if key.startswith("<") and key.endswith(">"):
                 if (key := key[1:-1]) in spans:
@@ -1222,4 +1224,3 @@ def mod_event_val(
     event_data.value = val
     event_data.loc = loc
     return event_data
-

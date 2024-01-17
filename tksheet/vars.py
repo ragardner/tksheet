@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from platform import system as get_os
 from collections import namedtuple
-
+from platform import system as get_os
 
 USER_OS: str = f"{get_os()}".lower()
 ctrl_key: str = "Command" if USER_OS == "darwin" else "Control"
@@ -46,4 +45,3 @@ def get_index_font() -> FontTuple:
 
 def get_header_font() -> FontTuple:
     return FontTuple("Calibri", 13 if USER_OS == "darwin" else 11, "normal")
-

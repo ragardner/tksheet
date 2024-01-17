@@ -231,8 +231,8 @@ class Span(dict):
         index: bool | None = None,
         header: bool | None = None,
         tdisp: bool | None = None,
-        idisp: bool | None  = None,
-        hdisp: bool | None  = None,
+        idisp: bool | None = None,
+        hdisp: bool | None = None,
         transposed: bool | None = None,
         ndim: int | None = None,
         convert: Callable | None = None,
@@ -254,7 +254,7 @@ class Span(dict):
         if isinstance(name, str):
             if isinstance(name, str) and not name:
                 name = f"{num2alpha(self['widget'].named_span_id)}"
-                self['widget'].named_span_id += 1
+                self["widget"].named_span_id += 1
             self["name"] = name
 
         if isinstance(table, bool):

@@ -37,6 +37,38 @@
 - [Hide rows and/or columns](https://github.com/ragardner/tksheet/wiki/Version-7#example-header-dropdown-boxes-and-row-filtering)
 - Left `"w"`, Center `"center"` or Right `"e"` text alignment for any cell/row/column
 
+## **Syntax**
+
+Versions >= 7 have succinct and easy to read syntax:
+
+```python
+from tksheet import Sheet
+import tkinter as tk
+
+
+class demo(tk.Tk):
+    def __init__(self):
+        tk.Tk.__init__(self)
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(0, weight=1)
+        self.sheet = Sheet(
+            self,
+            height=520,
+            width=1000,
+        )
+        # easy to set data
+        self.sheet["A1"].data = [[f"Row {r}, Column {c}" for c in range(5)] for r in range(7)]
+        # easy to get data
+        print (self.sheet["B"].data)
+
+        self.sheet.grid(row=0, column=0, sticky="nswe")
+        self.sheet.enable_bindings()
+
+
+app = demo()
+app.mainloop()
+```
+
 ### **light blue theme**
 
 ![tksheet light blue theme](https://i.imgur.com/ojU3IQi.jpeg)

@@ -3,7 +3,7 @@
 - [About tksheet](https://github.com/ragardner/tksheet/wiki/Version-7#about-tksheet)
 - [Installation and Requirements](https://github.com/ragardner/tksheet/wiki/Version-7#installation-and-requirements)
 - [Basic Initialization](https://github.com/ragardner/tksheet/wiki/Version-7#basic-initialization)
-- [Basic Use](https://github.com/ragardner/tksheet/wiki/Version-7#basic-use)
+- [Usage Examples](https://github.com/ragardner/tksheet/wiki/Version-7#usage-examples)
 - [Initialization Options](https://github.com/ragardner/tksheet/wiki/Version-7#initialization-options)
 ---
 - [Sheet Colors](https://github.com/ragardner/tksheet/wiki/Version-7#sheet-colors)
@@ -120,9 +120,11 @@ app.mainloop()
 ```
 
 ---
-# **Basic Use**
+# **Usage Examples**
 
 This is to demonstrate some of tksheets functionality.
+- The functions which return the Sheet itself (have `-> Sheet`) can be chained with other Sheet functions.
+- The functions which return a Span (have `-> Span`) can be chained with other Span functions.
 
 ```python
 from tksheet import Sheet, num2alpha
@@ -152,12 +154,11 @@ class demo(tk.Tk):
         self.sheet.enable_bindings("all", "edit_index", "edit_header")
 
         # set a user edit validation function
+        # AND bind all sheet modification events to a function
+        # chained as two functions
         # more information at:
         # https://github.com/ragardner/tksheet/wiki/Version-7#validate-user-cell-edits
-        self.sheet.edit_validation(self.validate_edits)
-
-        # bind all sheet modification events to a function
-        self.sheet.bind("<<SheetModified>>", self.sheet_modified)
+        self.sheet.edit_validation(self.validate_edits).bind("<<SheetModified>>", self.sheet_modified)
 
         # add some new commands to the in-built right click menu
         # setting data
