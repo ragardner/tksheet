@@ -1,6 +1,5 @@
 # tksheet
-test_tksheet.py
-test2.py
+test*.py*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
