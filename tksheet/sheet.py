@@ -4363,7 +4363,7 @@ class Sheet(tk.Frame):
             self.MT.delete_row_format(r, clear_values=False)
         maxidx = len(self.MT.data[r]) - 1
         if not values:
-            self.MT.data[r][:] = self.MT.get_empty_row_seq(r, len(self.MT.data[r]))
+            self.MT.data[r] = self.MT.get_empty_row_seq(r, len(self.MT.data[r]))
         else:
             if add_columns:
                 for c, v in enumerate(values):
