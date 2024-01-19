@@ -725,7 +725,7 @@ class MainTable(tk.Canvas):
         new_data_numrows = len(data)
         for rn, r in enumerate(data):
             if len(r) < new_data_numcols:
-                data[rn].extend(list(repeat("", new_data_numcols - len(r))))
+                data[rn] += list(repeat("", new_data_numcols - len(r)))
         (
             lastbox_r1,
             lastbox_c1,
@@ -5007,12 +5007,11 @@ class MainTable(tk.Canvas):
             else:
                 self.data[total_rows:] = []
         if total_columns is not None:
-            self.data[:] = [
-                r[:total_columns]
-                if (lnr := len(r)) > total_columns
-                else r + self.get_empty_row_seq(rn, end=total_columns, start=lnr)
-                for rn, r in enumerate(self.data)
-            ]
+            for rn, r in enumerate(self.data):
+                if (lnr := len(r)) > total_columns:
+                    r = r[:total_columns]
+                elif lnr < total_columns:
+                    r += self.get_empty_row_seq(rn, end=total_columns, start=lnr)
 
     def equalize_data_row_lengths(
         self,
@@ -5026,10 +5025,9 @@ class MainTable(tk.Canvas):
             total_data_cols = at_least_cols
         if include_header and total_data_cols > len(self._headers):
             self.CH.fix_header(total_data_cols)
-        self.data[:] = [
-            (r + self.get_empty_row_seq(rn, end=total_data_cols, start=lnr)) if total_data_cols > (lnr := len(r)) else r
-            for rn, r in enumerate(self.data)
-        ]
+        for rn, r in enumerate(self.data):
+            if total_data_cols > (lnr := len(r)):
+                r += self.get_empty_row_seq(rn, end=total_data_cols, start=lnr)
         return total_data_cols
 
     def get_canvas_visible_area(self) -> tuple[float, float, float, float]:

@@ -1811,49 +1811,47 @@ class Sheet(tk.Frame):
         redraw: bool = True,
     ) -> EventDataDict:
         total_cols = None
-        ops = None
         if (idx := idx_param_to_int(idx)) is None:
             idx = len(self.MT.data)
         if isinstance(rows, int):
             if rows < 1:
                 raise ValueError(f"rows arg must be greater than 0, not {rows}")
             total_cols = self.MT.total_data_cols()
-            ops = idx >= total_cols
             if row_index:
                 data = [
-                    [self.RI.get_value_for_empty_cell(idx + i, r_ops=ops)]
-                    + self.MT.get_empty_row_seq(idx + i, total_cols, r_ops=ops)
+                    [self.RI.get_value_for_empty_cell(idx + i, r_ops=False)]
+                    + self.MT.get_empty_row_seq(
+                        idx + i,
+                        total_cols,
+                        r_ops=False,
+                        c_ops=False,
+                    )
                     for i in range(rows)
                 ]
             else:
-                data = [self.MT.get_empty_row_seq(idx + i, total_cols, r_ops=ops) for i in range(rows)]
-        elif not isinstance(rows, list):
-            data = list(rows)
+                data = [
+                    self.MT.get_empty_row_seq(
+                        idx + i,
+                        total_cols,
+                        r_ops=False,
+                        c_ops=False,
+                    )
+                    for i in range(rows)
+                ]
         else:
             data = rows
-        if not isinstance(rows, int):
-            try:
-                data = [r if isinstance(r, list) else list(r) for r in data]
-            except Exception as msg:
-                raise ValueError(f"'rows' arg must be int or list of lists. {msg}")
-            if fill:
-                total_cols = self.MT.total_data_cols() if total_cols is None else total_cols
-                ops = idx >= total_cols if ops is None else ops
-                len_check = (total_cols + 1) if row_index else total_cols
-                data[:] = [
-                    (
-                        r
-                        + self.MT.get_empty_row_seq(
-                            rn,
-                            end=total_cols,
-                            start=(lnr - 1) if row_index else lnr,
-                            r_ops=ops,
-                        )
+        if not isinstance(rows, int) and fill:
+            total_cols = self.MT.total_data_cols() if total_cols is None else total_cols
+            len_check = (total_cols + 1) if row_index else total_cols
+            for rn, r in enumerate(data):
+                if len_check > (lnr := len(r)):
+                    r += self.MT.get_empty_row_seq(
+                        rn,
+                        end=total_cols,
+                        start=(lnr - 1) if row_index else lnr,
+                        r_ops=False,
+                        c_ops=False,
                     )
-                    if len_check > (lnr := len(r))
-                    else r
-                    for rn, r in enumerate(data)
-                ]
         numrows = len(data)
         if self.MT.all_rows_displayed:
             displayed_ins_idx = idx
@@ -1894,20 +1892,34 @@ class Sheet(tk.Frame):
         total_rows = self.MT.total_data_rows()
         if (idx := idx_param_to_int(idx)) is None:
             idx = old_total
-        ops = idx >= old_total
         if isinstance(columns, int):
             if columns < 1:
                 raise ValueError(f"columns arg must be greater than 0, not {columns}")
-            # should be a list of lists where each list is a column
             if headers:
                 data = [
-                    [self.CH.get_value_for_empty_cell(datacn, c_ops=ops)]
-                    + [self.MT.get_value_for_empty_cell(datarn, datacn, c_ops=ops) for datarn in range(total_rows)]
+                    [self.CH.get_value_for_empty_cell(datacn, c_ops=False)]
+                    + [
+                        self.MT.get_value_for_empty_cell(
+                            datarn,
+                            datacn,
+                            r_ops=False,
+                            c_ops=False,
+                        )
+                        for datarn in range(total_rows)
+                    ]
                     for datacn in range(idx, idx + columns)
                 ]
             else:
                 data = [
-                    [self.MT.get_value_for_empty_cell(datarn, datacn, c_ops=ops) for datarn in range(total_rows)]
+                    [
+                        self.MT.get_value_for_empty_cell(
+                            datarn,
+                            datacn,
+                            r_ops=False,
+                            c_ops=False,
+                        )
+                        for datarn in range(total_rows)
+                    ]
                     for datacn in range(idx, idx + columns)
                 ]
             numcols = columns
@@ -1916,20 +1928,17 @@ class Sheet(tk.Frame):
             numcols = len(columns)
             if fill:
                 len_check = (total_rows + 1) if headers else total_rows
-                if headers:
-                    for i, column in enumerate(data):
-                        if (col_len := len(column)) < len_check:
-                            column += [
-                                self.MT.get_value_for_empty_cell(r, idx + i, c_ops=ops)
-                                for r in range(col_len - 1, total_rows)
-                            ]
-                else:
-                    for i, column in enumerate(data):
-                        if (col_len := len(column)) < len_check:
-                            column += [
-                                self.MT.get_value_for_empty_cell(r, idx + i, c_ops=ops)
-                                for r in range(col_len, total_rows)
-                            ]
+                for i, column in enumerate(data):
+                    if (col_len := len(column)) < len_check:
+                        column += [
+                            self.MT.get_value_for_empty_cell(
+                                r,
+                                idx + i,
+                                r_ops=False,
+                                c_ops=False,
+                            )
+                            for r in range((col_len - 1) if headers else col_len, total_rows)
+                        ]
         if self.MT.all_columns_displayed:
             displayed_ins_idx = idx
         elif not self.MT.all_columns_displayed:

@@ -460,7 +460,13 @@ def displayed_to_data_idxs(
     return [displayed[e] for e in to_convert]
 
 
-def get_checkbox_points(x1, y1, x2, y2, radius=8):
+def get_checkbox_points(
+    x1: float,
+    y1: float,
+    x2: float,
+    y2: float,
+    radius: int = 8,
+) -> list[float]:
     return [
         x1 + radius,
         y1,
