@@ -283,6 +283,12 @@ def num2alpha(n: int) -> str | None:
         return None
 
 
+def idx_param_to_int(idx: str | int | None) -> int | None:
+    if idx is None or isinstance(idx, int):
+        return idx
+    return alpha2idx(idx)
+
+
 def get_n2a(n: int = 0, _type: str = "numbers") -> str:
     if _type == "letters":
         return num2alpha(n)

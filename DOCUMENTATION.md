@@ -2151,9 +2151,10 @@ clear(
 ```python
 insert_row(
     row: list[object] | tuple[object] | None = None,
-    idx: str | int = "end",
+    idx: str | int | None = None,
     height: int | None = None,
     row_index: bool = False,
+    fill: bool = True,
     undo: bool = False,
     redraw: bool = True,
 ) -> EventDataDict
@@ -2161,7 +2162,8 @@ insert_row(
 Parameters:
 - Leaving `row` as `None` inserts an empty row, e.g. `insert_row()` will append an empty row to the sheet.
 - `height` is the new rows displayed height in pixels, leave as `None` for default.
-- `row_index` when `True` indicates there is a row index value at the start of the row.
+- `row_index` when `True` assumes there is a row index value at the start of the row.
+- `fill` when `True` any provided rows that are shorter than the Sheets longest row will be filled with empty values up to the length of the longest row.
 - `undo` when `True` adds the change to the Sheets undo stack.
 
 ___
@@ -2171,9 +2173,10 @@ ___
 ```python
 insert_column(
     column: list[object] | tuple[object] | None = None,
-    idx: str | int = "end",
+    idx: str | int | None = None,
     width: int | None = None,
     header: bool = False,
+    fill: bool = True,
     undo: bool = False,
     redraw: bool = True,
 ) -> EventDataDict
@@ -2181,7 +2184,8 @@ insert_column(
 Parameters:
 - Leaving `column` as `None` inserts an empty column, e.g. `insert_column()` will append an empty column to the sheet.
 - `width` is the new columns displayed width in pixels, leave as `None` for default.
-- `header` when `True` indicates there is a header value at the start of the column.
+- `header` when `True` assumes there is a header value at the start of the column.
+- `fill` when `True` any provided columns that are shorter than the Sheets longest column will be filled with empty values up to the length of the longest column.
 - `undo` when `True` adds the change to the Sheets undo stack.
 
 ___
@@ -2191,7 +2195,7 @@ ___
 ```python
 insert_columns(
     columns: list[tuple[object] | list[object]] | tuple[tuple[object] | list[object]] | int = 1,
-    idx: str | int = "end",
+    idx: str | int | None = None,
     widths: list[int] | tuple[int] | None = None,
     headers: bool = False,
     create_selections: bool = True,
@@ -2201,8 +2205,10 @@ insert_columns(
 ```
 Parameters:
 - `columns` if `int` will insert blank columns.
+- `idx` (`str`, `int`, `None`) either `str` e.g. `"A"` for `0`, `int` or `None` for end.
 - `widths` are the new columns displayed widths in pixels, leave as `None` for default.
-- `headers` when `True` indicates there are headers values at the start of each column.
+- `headers` when `True` assumes there are headers values at the start of each column.
+- `fill` when `True` any provided columns that are shorter than the Sheets longest column will be filled with empty values up to the length of the longest column.
 - `undo` when `True` adds the change to the Sheets undo stack.
 
 ___
@@ -2212,17 +2218,20 @@ ___
 ```python
 insert_rows(
     rows: list[tuple[object] | list[object]] | tuple[tuple[object] | list[object]] | int = 1,
-    idx: str | int = "end",
+    idx: str | int | None = None,
     heights: list[int] | tuple[int] | None = None,
     row_index: bool = False,
+    fill: bool = True,
     undo: bool = False,
     redraw: bool = True,
 ) -> EventDataDict
 ```
 Parameters:
 - `rows` if `int` will insert blank rows.
+- `idx` (`str`, `int`, `None`) either `str` e.g. `"A"` for `0`, `int` or `None` for end.
 - `heights` are the new rows displayed heights in pixels, leave as `None` for default.
-- `row_index` when `True` indicates there are row index values at the start of each row.
+- `row_index` when `True` assumes there are row index values at the start of each row.
+- `fill` when `True` any provided rows that are shorter than the Sheets longest row will be filled with empty values up to the length of the longest row.
 - `undo` when `True` adds the change to the Sheets undo stack.
 
 ___

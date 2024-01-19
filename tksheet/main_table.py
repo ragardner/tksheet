@@ -4448,56 +4448,6 @@ class MainTable(tk.Canvas):
         try_binding(self.extra_end_insert_cols_rc_func, event_data, "end_add_columns")
         self.sheet_modified(event_data)
 
-    def get_args_for_add_columns(
-        self,
-        data_ins_col: int,
-        displayed_ins_col: int,
-        numcols: int,
-        columns: list | None = None,
-        widths: list | None = None,
-        headers: bool = False,
-    ) -> tuple[dict, dict, dict]:
-        if columns is None:
-            columns = {
-                datacn: {
-                    datarn: self.get_value_for_empty_cell(datarn, datacn, c_ops=False)
-                    for datarn in range(len(self.data))
-                }
-                for datacn in reversed(range(data_ins_col, data_ins_col + numcols))
-            }
-        else:
-            if headers:
-                start = 1
-            else:
-                start = 0
-            columns = {
-                datacn: {datarn: v for datarn, v in enumerate(islice(column, start, None))}
-                for datacn, column in zip(reversed(range(data_ins_col, data_ins_col + numcols)), reversed(columns))
-            }
-        if isinstance(self._headers, list):
-            if headers and columns:
-                headers = {
-                    datacn: column[0]
-                    for datacn, column in zip(reversed(range(data_ins_col, data_ins_col + numcols)), reversed(columns))
-                }
-            else:
-                headers = {
-                    datacn: self.CH.get_value_for_empty_cell(datacn, c_ops=False)
-                    for datacn in reversed(range(data_ins_col, data_ins_col + numcols))
-                }
-        else:
-            headers = {}
-        if widths is None:
-            widths = {
-                c: self.default_column_width for c in reversed(range(displayed_ins_col, displayed_ins_col + numcols))
-            }
-        else:
-            widths = {
-                c: width
-                for c, width in zip(reversed(range(displayed_ins_col, displayed_ins_col + numcols)), reversed(widths))
-            }
-        return columns, headers, widths
-
     def add_rows(
         self,
         rows: dict,
@@ -4622,6 +4572,56 @@ class MainTable(tk.Canvas):
         try_binding(self.extra_end_insert_rows_rc_func, event_data, "end_add_rows")
         self.sheet_modified(event_data)
 
+    def get_args_for_add_columns(
+        self,
+        data_ins_col: int,
+        displayed_ins_col: int,
+        numcols: int,
+        columns: list | None = None,
+        widths: list | None = None,
+        headers: bool = False,
+    ) -> tuple[dict, dict, dict]:
+        if isinstance(self._headers, list):
+            if headers and columns:
+                header_data = {
+                    datacn: column[0]
+                    for datacn, column in zip(reversed(range(data_ins_col, data_ins_col + numcols)), reversed(columns))
+                }
+            else:
+                header_data = {
+                    datacn: self.CH.get_value_for_empty_cell(datacn, c_ops=False)
+                    for datacn in reversed(range(data_ins_col, data_ins_col + numcols))
+                }
+        else:
+            header_data = {}
+        if columns is None:
+            columns = {
+                datacn: {
+                    datarn: self.get_value_for_empty_cell(datarn, datacn, c_ops=False)
+                    for datarn in range(len(self.data))
+                }
+                for datacn in reversed(range(data_ins_col, data_ins_col + numcols))
+            }
+        else:
+            if headers:
+                start = 1
+            else:
+                start = 0
+            columns = {
+                datacn: {datarn: v for datarn, v in enumerate(islice(column, start, None))}
+                for datacn, column in zip(reversed(range(data_ins_col, data_ins_col + numcols)), reversed(columns))
+            }
+        if widths is None:
+            widths = {
+                c: self.default_column_width for c in reversed(range(displayed_ins_col, displayed_ins_col + numcols))
+            }
+        else:
+            widths = {
+                c: width
+                for c, width in zip(reversed(range(displayed_ins_col, displayed_ins_col + numcols)), reversed(widths))
+            }
+        return columns, header_data, widths
+
     def get_args_for_add_rows(
         self,
         data_ins_row: int,
@@ -4632,6 +4632,19 @@ class MainTable(tk.Canvas):
         row_index: bool = False,
         total_data_cols=None,
     ) -> tuple:
+        if isinstance(self._row_index, list):
+            if row_index and rows:
+                index_data = {
+                    datarn: v[0]
+                    for datarn, v in zip(reversed(range(data_ins_row, data_ins_row + numrows)), reversed(rows))
+                }
+            else:
+                index_data = {
+                    datarn: self.RI.get_value_for_empty_cell(datarn, r_ops=False)
+                    for datarn in reversed(range(data_ins_row, data_ins_row + numrows))
+                }
+        else:
+            index_data = {}
         if rows is None:
             if total_data_cols is None:
                 total_data_cols = self.total_data_cols()
@@ -4648,19 +4661,6 @@ class MainTable(tk.Canvas):
                 datarn: v[start:] if start and v else v
                 for datarn, v in zip(reversed(range(data_ins_row, data_ins_row + numrows)), reversed(rows))
             }
-        if isinstance(self._row_index, list):
-            if row_index and rows:
-                row_index = {
-                    datarn: v[0]
-                    for datarn, v in zip(reversed(range(data_ins_row, data_ins_row + numrows)), reversed(rows))
-                }
-            else:
-                row_index = {
-                    datarn: self.RI.get_value_for_empty_cell(datarn, r_ops=False)
-                    for datarn in reversed(range(data_ins_row, data_ins_row + numrows))
-                }
-        else:
-            row_index = {}
         if heights is None:
             heights = {
                 r: self.default_row_height[1] for r in reversed(range(displayed_ins_row, displayed_ins_row + numrows))
@@ -4670,7 +4670,7 @@ class MainTable(tk.Canvas):
                 r: height
                 for r, height in zip(reversed(range(displayed_ins_row, displayed_ins_row + numrows)), reversed(heights))
             }
-        return rows, row_index, heights
+        return rows, index_data, heights
 
     def pickle_options(self) -> bytes:
         return pickle_obj(
@@ -5010,7 +5010,7 @@ class MainTable(tk.Canvas):
             self.data[:] = [
                 r[:total_columns]
                 if (lnr := len(r)) > total_columns
-                else r + self.get_empty_row_seq(rn, end=lnr + total_columns - lnr, start=lnr)
+                else r + self.get_empty_row_seq(rn, end=total_columns, start=lnr)
                 for rn, r in enumerate(self.data)
             ]
 
@@ -5027,9 +5027,7 @@ class MainTable(tk.Canvas):
         if include_header and total_data_cols > len(self._headers):
             self.CH.fix_header(total_data_cols)
         self.data[:] = [
-            (r + self.get_empty_row_seq(rn, end=lnr + total_data_cols - lnr, start=lnr))
-            if total_data_cols > (lnr := len(r))
-            else r
+            (r + self.get_empty_row_seq(rn, end=total_data_cols, start=lnr)) if total_data_cols > (lnr := len(r)) else r
             for rn, r in enumerate(self.data)
         ]
         return total_data_cols
@@ -7292,7 +7290,12 @@ class MainTable(tk.Canvas):
         return ""
 
     def get_empty_row_seq(
-        self, datarn: int, end: int, start: int = 0, r_ops: bool = True, c_ops: bool = True
+        self,
+        datarn: int,
+        end: int,
+        start: int = 0,
+        r_ops: bool = True,
+        c_ops: bool = True,
     ) -> list[object]:
         return [self.get_value_for_empty_cell(datarn, datacn, r_ops=r_ops, c_ops=c_ops) for datacn in range(start, end)]
 

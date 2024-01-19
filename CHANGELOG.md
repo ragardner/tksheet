@@ -25,15 +25,19 @@
 #### Changed:
 - Using `extra_bindings()` with `"end_edit_cell"`/`"edit_cell"` no longer requires a return value in your bound function to set the cell value to. For end user cell edit validation use the new function `edit_validation()` instead
 - Changed functions:
-    - Arguments and behavior:
+    - Parameters and behavior:
         - `checkbox` now is used to create checkboxes and utilises spans
         - `delete_header_dropdown` default argument changed to required argument and can no longer delete a header wide dropdown
         - `delete_index_dropdown` default argument changed to required argument and can no longer delete an index wide dropdown
 
-    - Arguments only:
+    - Parameters only:
         - `move_columns`
         - `move_rows`
         - `click_checkbox`
+        - `insert_row` parameter `idx` default argument changed to `None`
+        - `insert_column` parameter `idx` default argument changed to `None`
+        - `insert_rows` parameter `idx` default argument changed to `None`
+        - `insert_columns` parameter `idx` default argument changed to `None`
 
     - Renamed:
         - `align` -> `table_align`
