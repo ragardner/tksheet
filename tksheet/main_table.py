@@ -1033,7 +1033,7 @@ class MainTable(tk.Canvas):
                         run_binding=True,
                     )
         if move_data:
-            self.data = [
+            self.data[:] = [
                 move_elements_by_mapping(
                     r,
                     data_new_idxs,
@@ -1260,7 +1260,7 @@ class MainTable(tk.Canvas):
                         run_binding=True,
                     )
         if move_data:
-            self.data = move_elements_by_mapping(
+            self.data[:] = move_elements_by_mapping(
                 self.data,
                 data_new_idxs,
                 data_old_idxs,
