@@ -49,11 +49,10 @@
 ---
 # **About tksheet**
 
-`tksheet` is a Python tkinter table widget written in pure python. It is licensed under the [MIT license](https://github.com/ragardner/tksheet/blob/master/LICENSE.txt).
-
-It works by using tkinter canvases and moving lines, text and rectangles around for only the visible portion of the table.
-
-At the present time the type hinting in tksheet is only meant to serve as a guide and not to be used with type checkers.
+- `tksheet` is a Python tkinter table widget written in pure python.
+- It is licensed under the [MIT license](https://github.com/ragardner/tksheet/blob/master/LICENSE.txt).
+- It works by using tkinter canvases and moving lines, text and rectangles around for only the visible portion of the table.
+- If you are using a version of tksheet that is older than `7.0.0` then you will need the documentation [here](https://github.com/ragardner/tksheet/wiki/Version-6) instead.
 
 ### **Limitations**
 
@@ -64,6 +63,7 @@ Some examples of things that are not possible with tksheet:
 - Different fonts for index and table
 - Mouse drag copy cells
 - Cell highlight borders
+- At the present time the type hinting in tksheet is only meant to serve as a guide and not to be used with type checkers.
 
 ---
 # **Installation and Requirements**
@@ -2204,7 +2204,7 @@ insert_columns(
 ) -> EventDataDict
 ```
 Parameters:
-- `columns` if `int` will insert blank columns.
+- `columns` if `int` will insert that number of blank columns.
 - `idx` (`str`, `int`, `None`) either `str` e.g. `"A"` for `0`, `int` or `None` for end.
 - `widths` are the new columns displayed widths in pixels, leave as `None` for default.
 - `headers` when `True` assumes there are headers values at the start of each column.
@@ -2227,7 +2227,7 @@ insert_rows(
 ) -> EventDataDict
 ```
 Parameters:
-- `rows` if `int` will insert blank rows.
+- `rows` if `int` will insert that number of blank rows.
 - `idx` (`str`, `int`, `None`) either `str` e.g. `"A"` for `0`, `int` or `None` for end.
 - `heights` are the new rows displayed heights in pixels, leave as `None` for default.
 - `row_index` when `True` assumes there are row index values at the start of each row.

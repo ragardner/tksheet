@@ -5,7 +5,8 @@
 ## **Help**
 
 - [Installation](https://github.com/ragardner/tksheet/wiki/Version-7#installation-and-requirements)
-- [Documentation](https://github.com/ragardner/tksheet/wiki/Version-7)
+- [Version 7+ Documentation](https://github.com/ragardner/tksheet/wiki/Version-7)
+- [Version 6 Documentation](https://github.com/ragardner/tksheet/wiki/Version-6)
 - [Changelog](https://github.com/ragardner/tksheet/blob/master/CHANGELOG.md)
 - [Questions](https://github.com/ragardner/tksheet/wiki/Version-7#asking-questions)
 - [Issues](https://github.com/ragardner/tksheet/wiki/Version-7#issues)
