@@ -7,6 +7,7 @@ from collections.abc import Callable, Generator, Iterator, Sequence
 from itertools import accumulate, chain, islice, product
 from tkinter import ttk
 from typing import Literal
+from warnings import warn as warning
 
 from .column_headers import ColumnHeaders
 from .functions import (
@@ -199,6 +200,7 @@ class Sheet(tk.Frame):
             highlightbackground=outline_color,
             highlightcolor=outline_color,
         )
+        warning("There have been many changes from tksheet version 6.x.x to version 7.x.x. Please see the changelog for more information.")
         self.C = parent
         self.name = name
         self.last_event_data = EventDataDict()
