@@ -31,9 +31,9 @@
         - `delete_index_dropdown` default argument changed to required argument and can no longer delete an index wide dropdown
 
     - Parameters only:
-        - `move_columns`
-        - `move_rows`
-        - `click_checkbox`
+        - `move_columns` most parameters changed
+        - `move_rows` most parameters changed
+        - `click_checkbox` most parameters changed
         - `insert_row` parameter `idx` default argument changed to `None`
         - `insert_column` parameter `idx` default argument changed to `None`
         - `insert_rows` parameter `idx` default argument changed to `None`

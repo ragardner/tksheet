@@ -5748,7 +5748,7 @@ class MainTable(tk.Canvas):
                 scrollpos_bot,
                 row_pos_exists,
             )
-        event_data = {"header": redraw_header, "row_index": redraw_row_index, "table": redraw_table}
+        event_data = {"sheetname": "", "header": redraw_header, "row_index": redraw_row_index, "table": redraw_table}
         self.parentframe.emit_event("<<SheetRedrawn>>", data=event_data)
         return True
 

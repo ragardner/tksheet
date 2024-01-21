@@ -683,7 +683,7 @@ Parameters:
 	- `"unbind_all"`
 - `func` argument is the function you want to send the binding event to.
 - Using one of the following `"all_modified_events"`, `"sheetmodified"`, `"sheet_modified"`, `"modified_events"`, `"modified"` will make any insert, delete or cell edit including pastes and undos send an event to your function.
-- For events `"begin_move_columns"`/`"begin_move_rows"` the point where columns/rows will be moved to will be under the `event_data` key `"value"`.
+- For events `"begin_move_columns"`/`"begin_move_rows"` the point where columns/rows will be moved to will be accessible by the key named `"value"`.
 - For `"begin_edit..."` events the bound function must return a value to open the cell editor with, example [here](https://github.com/ragardner/tksheet/wiki/Version-7#example-custom-right-click-and-text-editor-validation).
 
 **For tksheet versions earlier than `7.0.0`:**
