@@ -2236,7 +2236,7 @@ ___
 ```python
 del_row(
     idx: int = 0,
-    data_indexes: bool = False,
+    data_indexes: bool = True,
     undo: bool = False,
     redraw: bool = True,
 ) -> EventDataDict
@@ -2252,8 +2252,8 @@ ___
 
 ```python
 del_rows(
-    rows: int | Iterator,
-    data_indexes: bool = False,
+    rows: int | Iterator[int],
+    data_indexes: bool = True,
     undo: bool = False,
     redraw: bool = True,
 ) -> EventDataDict
@@ -2270,7 +2270,7 @@ ___
 ```python
 del_column(
     idx: int = 0,
-    data_indexes: bool = False,
+    data_indexes: bool = True,
     undo: bool = False,
     redraw: bool = True,
 ) -> EventDataDict
@@ -2286,8 +2286,8 @@ ___
 
 ```python
 del_columns(
-    columns: int | Iterator,
-    data_indexes: bool = False,
+    columns: int | Iterator[int],
+    data_indexes: bool = True,
     undo: bool = False,
     redraw: bool = True,
 ) -> EventDataDict

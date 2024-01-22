@@ -1969,7 +1969,7 @@ class Sheet(tk.Frame):
     def del_row(
         self,
         idx: int = 0,
-        data_indexes: bool = False,
+        data_indexes: bool = True,
         undo: bool = False,
         redraw: bool = True,
     ) -> EventDataDict:
@@ -1985,7 +1985,7 @@ class Sheet(tk.Frame):
     def del_column(
         self,
         idx: int = 0,
-        data_indexes: bool = False,
+        data_indexes: bool = True,
         undo: bool = False,
         redraw: bool = True,
     ) -> EventDataDict:
@@ -2000,8 +2000,8 @@ class Sheet(tk.Frame):
 
     def del_rows(
         self,
-        rows: int | Iterator,
-        data_indexes: bool = False,
+        rows: int | Iterator[int],
+        data_indexes: bool = True,
         undo: bool = False,
         redraw: bool = True,
     ) -> EventDataDict:
@@ -2038,8 +2038,8 @@ class Sheet(tk.Frame):
 
     def del_columns(
         self,
-        columns: int | Iterator,
-        data_indexes: bool = False,
+        columns: int | Iterator[int],
+        data_indexes: bool = True,
         undo: bool = False,
         redraw: bool = True,
     ) -> EventDataDict:
