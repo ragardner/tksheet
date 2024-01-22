@@ -1,17 +1,17 @@
 # **tksheet** [![PyPI version shields.io](https://img.shields.io/pypi/v/tksheet.svg)](https://pypi.python.org/pypi/tksheet/) ![python](https://img.shields.io/badge/python-3.8+-blue) [![License: MIT](https://img.shields.io/badge/License-MIT%20-blue.svg)](https://github.com/ragardner/tksheet/blob/master/LICENSE.txt) [![GitHub Release Date](https://img.shields.io/github/release-date-pre/ragardner/tksheet.svg)](https://github.com/ragardner/tksheet/releases) [![Downloads](https://img.shields.io/pypi/dm/tksheet.svg)](https://pypi.org/project/tksheet/)
 
-**A python tkinter table widget**
+### **A python tkinter table widget**
 
-## **Help**
+|    **Help**     |                                                                  |
+|-----------------|------------------------------------------------------------------|
+| Versions 6.x.x  | [Wiki](https://github.com/ragardner/tksheet/wiki/Version-6) | |
+| Versions 7.x.x  | [Wiki](https://github.com/ragardner/tksheet/wiki/Version-7) | |
+| [Changelog](https://github.com/ragardner/tksheet/blob/master/CHANGELOG.md) | |
+| [Questions](https://github.com/ragardner/tksheet/wiki/Version-7#asking-questions) | |
+| [Issues](https://github.com/ragardner/tksheet/wiki/Version-7#issues) | |
+| [Suggestions](https://github.com/ragardner/tksheet/wiki/Version-7#enhancements-or-suggestions) | |
 
-- [Installation](https://github.com/ragardner/tksheet/wiki/Version-7#installation-and-requirements)
-- [Version 7+ Documentation](https://github.com/ragardner/tksheet/wiki/Version-7)
-- [Version 6 Documentation](https://github.com/ragardner/tksheet/wiki/Version-6)
-- [Changelog](https://github.com/ragardner/tksheet/blob/master/CHANGELOG.md)
-- [Questions](https://github.com/ragardner/tksheet/wiki/Version-7#asking-questions)
-- [Issues](https://github.com/ragardner/tksheet/wiki/Version-7#issues)
-- [Suggestions](https://github.com/ragardner/tksheet/wiki/Version-7#enhancements-or-suggestions)
-- This library is maintained with the help of **[others](https://github.com/ragardner/tksheet/graphs/contributors)**. If you would like to contribute please read [this help section](https://github.com/ragardner/tksheet/wiki/Version-7#contributing).
+This library is maintained with the help of **[others](https://github.com/ragardner/tksheet/graphs/contributors)**. If you would like to contribute please read [this help section](https://github.com/ragardner/tksheet/wiki/Version-7#contributing).
 
 ## **Changes for versions >= `7.0.0`:**
 

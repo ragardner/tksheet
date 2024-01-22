@@ -686,11 +686,6 @@ Parameters:
 - For events `"begin_move_columns"`/`"begin_move_rows"` the point where columns/rows will be moved to will be accessible by the key named `"value"`.
 - For `"begin_edit..."` events the bound function must return a value to open the cell editor with, example [here](https://github.com/ragardner/tksheet/wiki/Version-7#example-custom-right-click-and-text-editor-validation).
 
-**For tksheet versions earlier than `7.0.0`:**
-- Upon an event being triggered the bound function will be sent a [namedtuple](https://docs.python.org/3/library/collections.html#collections.namedtuple) containing variables relevant to that event, use `print()` or similar to see all the variable names in the event. Each event contains different variable names with the exception of `eventname` e.g. `event.eventname`.
-
-**For tksheet versions >= `7.0.0`:**
-
 #### **Event Data**
 
 Using `extra_bindings()` the function you bind needs to have at least one argument which will receive a `dict`. The values of which can be accessed by dot notation e.g. `event.eventname` or `event.cells.table`. It has the following layout and keys:
