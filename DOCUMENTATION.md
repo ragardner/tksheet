@@ -4030,7 +4030,7 @@ Note that once you have hidden columns you can use the function `displayed_colum
 
 ```python
 display_columns(
-    columns: None | Literal["all"] | Iterator = None,
+    columns: None | Literal["all"] | Iterator[int] = None,
     all_columns_displayed: None | bool = None,
     reset_col_positions: bool = True,
     refresh: bool = False,
@@ -4068,7 +4068,7 @@ ___
 
 ```python
 hide_columns(
-    columns: int | set | Iterator = set(),
+    columns: int | set | Iterator[int] = set(),
     redraw: bool = True,
     deselect_all: bool = True,
 ) -> Sheet
@@ -4102,7 +4102,7 @@ Note that once you have hidden rows you can use the function `displayed_row_to_d
 
 ```python
 display_rows(
-    rows: None | Literal["all"] | Iterator = None,
+    rows: None | Literal["all"] | Iterator[int] = None,
     all_rows_displayed: None | bool = None,
     reset_row_positions: bool = True,
     refresh: bool = False,
@@ -4133,7 +4133,7 @@ ___
 
 ```python
 hide_rows(
-    rows: int | set | Iterator = set(),
+    rows: int | set | Iterator[int] = set(),
     redraw: bool = True,
     deselect_all: bool = True,
 ) -> Sheet
