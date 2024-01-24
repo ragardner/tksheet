@@ -1692,8 +1692,8 @@ class Sheet(tk.Frame):
             event_data["cells"]["table"]
             or event_data["cells"]["index"]
             or event_data["cells"]["header"]
-            or event_data["added"]["columns"]["column_widths"]
-            or event_data["added"]["rows"]["row_heights"]
+            or event_data["added"]["columns"]
+            or event_data["added"]["rows"]
         ) and (undo is True or (undo is None and span.undo)):
             self.MT.undo_stack.append(ev_stack_dict(event_data))
         self.set_refresh_timer(redraw)
