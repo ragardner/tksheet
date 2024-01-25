@@ -1137,6 +1137,8 @@ span = sheet["A"] # first column
 span = sheet["A:C"] # first three columns
 
 """ SOME CELL AREA EXAMPLES """
+span = sheet[0, 0] # cell A1
+span = sheet[(0, 0)] # cell A1
 span = sheet["A1:C1"] # cells A1, B1, C1
 span = sheet[0, 0, 1, 3] # cells A1, B1, C1
 span = sheet[(0, 0, 1, 3)] # cells A1, B1, C1
@@ -1261,6 +1263,10 @@ print (span.kind)
 
 span = sheet.span("A:C")
 print (span.kind)
+# prints "column"
+
+# after importing num2alpha from tksheet
+print (sheet[num2alpha(0)].kind)
 # prints "column"
 ```
 
