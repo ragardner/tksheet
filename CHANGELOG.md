@@ -1,3 +1,24 @@
+### Version 7.0.1
+#### Fixed:
+- Error with closing a dropdown in the row index
+
+#### Changed:
+- `Sheet()` initialization parameter `column_width` renamed `default_column_width`
+- `set_options()` keyword argument `column_width` renamed `default_column_width`
+- `Sheet()` initialization parameter `header_height` renamed `default_header_height`
+- `set_options()` keyword argument `header_height` renamed `default_header_height`
+- `Sheet()` initialization parameter `row_height` renamed `default_row_height`
+- `set_options()` keyword argument `row_height` renamed `default_row_height`
+- `Sheet()` initialization parameter `auto_resize_default_row_index` renamed `auto_resize_row_index`
+- `set_options()` keyword argument `auto_resize_default_row_index` renamed `auto_resize_row_index`
+- `Sheet()` initialization parameter `enable_edit_cell_auto_resize` renamed `cell_auto_resize_enabled`
+- `set_options()` keyword argument `enable_edit_cell_auto_resize` renamed `cell_auto_resize_enabled`
+- Moved most changable sheet attributes to a dict variable named `ops` with dot notation access to the `Sheet` object
+- The order of parameters has been changed for `Sheet()` initialization
+- `Sheet` attribute `self.C` renamed `self.PAR`
+- Various widget attributes named `self.parentframe` have been renamed `self.PAR`
+- Return key on cell editor will move to the next cell regardless of whether the cell was edited
+
 ### Version 7.0.0
 #### Removed:
 - `edit_cell_validation` from `Sheet()` initialization, `set_options()` and everywhere else due to confusion. Use the new function `edit_validation()` instead.

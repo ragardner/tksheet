@@ -2,10 +2,10 @@
 
 ### **A python tkinter table widget**
 
-|    **Help**     |                                                                  |
-|-----------------|------------------------------------------------------------------|
-| Versions 6.x.x  | [Documentation Wiki](https://github.com/ragardner/tksheet/wiki/Version-6) | |
-| Versions 7.x.x  | [Documentation Wiki](https://github.com/ragardner/tksheet/wiki/Version-7) | |
+|    **Help**       |                                                                  |
+|-------------------|------------------------------------------------------------------|
+| Versions 6.x.x -> | [Documentation Wiki](https://github.com/ragardner/tksheet/wiki/Version-6) | |
+| Versions 7.x.x -> | [Documentation Wiki](https://github.com/ragardner/tksheet/wiki/Version-7) | |
 | [Changelog](https://github.com/ragardner/tksheet/blob/master/CHANGELOG.md) | |
 | [Questions](https://github.com/ragardner/tksheet/wiki/Version-7#asking-questions) | |
 | [Issues](https://github.com/ragardner/tksheet/wiki/Version-7#issues) | |

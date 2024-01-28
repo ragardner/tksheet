@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from collections import namedtuple
 from platform import system as get_os
 
 USER_OS: str = f"{get_os()}".lower()
@@ -32,16 +31,3 @@ emitted_events: set[str] = {
     "<<SheetModified>>",
     "<<SheetRedrawn>>",
 }
-FontTuple = namedtuple("FontTuple", "family size style")
-
-
-def get_font() -> FontTuple:
-    return FontTuple("Calibri", 13 if USER_OS == "darwin" else 11, "normal")
-
-
-def get_index_font() -> FontTuple:
-    return FontTuple("Calibri", 13 if USER_OS == "darwin" else 11, "normal")
-
-
-def get_header_font() -> FontTuple:
-    return FontTuple("Calibri", 13 if USER_OS == "darwin" else 11, "normal")

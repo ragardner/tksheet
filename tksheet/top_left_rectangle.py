@@ -9,14 +9,11 @@ class TopLeftRectangle(tk.Canvas):
     def __init__(self, *args, **kwargs):
         tk.Canvas.__init__(
             self,
-            kwargs["parentframe"],
-            background=kwargs["top_left_bg"],
+            kwargs["parent"],
+            background=kwargs["parent"].ops.top_left_bg,
             highlightthickness=0,
         )
-        self.parentframe = kwargs["parentframe"]
-        self.top_left_bg = kwargs["top_left_bg"]
-        self.top_left_fg = kwargs["top_left_fg"]
-        self.top_left_fg_highlight = kwargs["top_left_fg_highlight"]
+        self.PAR = kwargs["parent"]
         self.MT = kwargs["main_canvas"]
         self.RI = kwargs["row_index_canvas"]
         self.CH = kwargs["header_canvas"]
@@ -43,7 +40,7 @@ class TopLeftRectangle(tk.Canvas):
             h - 5,
             w,
             h,
-            fill=self.top_left_fg,
+            fill=self.PAR.ops.top_left_fg,
             outline="",
             tag="rw",
             state="normal" if self.RI.width_resizing_enabled else "hidden",
@@ -53,7 +50,7 @@ class TopLeftRectangle(tk.Canvas):
             0,
             w,
             h,
-            fill=self.top_left_fg,
+            fill=self.PAR.ops.top_left_fg,
             outline="",
             tag="rh",
             state="normal" if self.CH.height_resizing_enabled else "hidden",
@@ -63,7 +60,7 @@ class TopLeftRectangle(tk.Canvas):
             0,
             w - 5,
             h - 5,
-            fill=self.top_left_bg,
+            fill=self.PAR.ops.top_left_bg,
             outline="",
             tag="sa",
             state="normal" if self.MT.select_all_enabled else "hidden",
@@ -75,7 +72,7 @@ class TopLeftRectangle(tk.Canvas):
             h - 7,
             w - 7 - 10,
             h - 7,
-            fill=self.top_left_fg,
+            fill=self.PAR.ops.top_left_fg,
             outline="",
             tag="sa",
             state="normal" if self.MT.select_all_enabled else "hidden",
@@ -94,11 +91,11 @@ class TopLeftRectangle(tk.Canvas):
         self.bind(rc_binding, self.rc)
 
     def redraw(self):
-        self.itemconfig("rw", fill=self.top_left_fg)
-        self.itemconfig("rh", fill=self.top_left_fg)
+        self.itemconfig("rw", fill=self.PAR.ops.top_left_fg)
+        self.itemconfig("rh", fill=self.PAR.ops.top_left_fg)
         self.itemconfig(
             self.select_all_tri,
-            fill=self.top_left_fg,
+            fill=self.PAR.ops.top_left_fg,
         )
 
     def rw_state(self, state="normal"):
@@ -114,33 +111,33 @@ class TopLeftRectangle(tk.Canvas):
         if self.RI.width_resizing_enabled:
             self.itemconfig(
                 "rw",
-                fill=self.top_left_fg_highlight,
+                fill=self.PAR.ops.top_left_fg_highlight,
             )
 
     def sa_enter(self, event=None):
         if self.MT.select_all_enabled:
             self.itemconfig(
                 self.select_all_tri,
-                fill=self.top_left_fg_highlight,
+                fill=self.PAR.ops.top_left_fg_highlight,
             )
 
     def rh_enter(self, event=None):
         if self.CH.height_resizing_enabled:
             self.itemconfig(
                 "rh",
-                fill=self.top_left_fg_highlight,
+                fill=self.PAR.ops.top_left_fg_highlight,
             )
 
     def rw_leave(self, event=None):
-        self.itemconfig("rw", fill=self.top_left_fg)
+        self.itemconfig("rw", fill=self.PAR.ops.top_left_fg)
 
     def rh_leave(self, event=None):
-        self.itemconfig("rh", fill=self.top_left_fg)
+        self.itemconfig("rh", fill=self.PAR.ops.top_left_fg)
 
     def sa_leave(self, event=None):
         self.itemconfig(
             self.select_all_tri,
-            fill=self.top_left_fg,
+            fill=self.PAR.ops.top_left_fg,
         )
 
     def basic_bindings(self, enable=True):

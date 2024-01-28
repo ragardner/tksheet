@@ -60,11 +60,14 @@ from .other_classes import (
     Span,
     SpanRange,
     TextCfg,
-    TextEditor,
-    TextEditor_,
 )
 from .row_index import RowIndex
 from .sheet import Dropdown, Sheet
+from .sheet_options import new_sheet_options
+from .text_editor import (
+    TextEditor,
+    TextEditor_,
+)
 from .themes import (
     theme_black,
     theme_dark,
@@ -80,9 +83,6 @@ from .vars import (
     ctrl_key,
     emitted_events,
     falsy,
-    get_font,
-    get_header_font,
-    get_index_font,
     nonelike,
     rc_binding,
     symbols_set,
