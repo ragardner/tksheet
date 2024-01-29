@@ -5215,8 +5215,8 @@ class Sheet(tk.Frame):
         self,
         r: int,
         c: int,
-        selection_function: str | Callable = "",
-        modified_function: str | Callable = "",
+        selection_function: Literal[""] | Callable | None = "",
+        modified_function: Literal[""] | Callable | None = "",
     ) -> None | dict:
         kwargs = self.MT.get_cell_kwargs(r, c, key="dropdown")
         if kwargs:
@@ -5229,8 +5229,8 @@ class Sheet(tk.Frame):
     def header_dropdown_functions(
         self,
         c: int,
-        selection_function: str | Callable = "",
-        modified_function: str | Callable = "",
+        selection_function: Literal[""] | Callable | None = "",
+        modified_function: Literal[""] | Callable | None = "",
     ) -> None | dict:
         kwargs = self.CH.get_cell_kwargs(c, key="dropdown")
         if selection_function != "":
@@ -5242,8 +5242,8 @@ class Sheet(tk.Frame):
     def index_dropdown_functions(
         self,
         r: int,
-        selection_function: str | Callable = "",
-        modified_function: str | Callable = "",
+        selection_function: Literal[""] | Callable | None = "",
+        modified_function: Literal[""] | Callable | None = "",
     ) -> None | dict:
         kwargs = self.RI.get_cell_kwargs(r, key="dropdown")
         if selection_function != "":
