@@ -13,6 +13,7 @@ class TextEditor_(tk.Text):
         self,
         parent,
         menu_kwargs,
+        sheet_ops,
         text: None | str = None,
         state="normal",
         bg="white",
@@ -51,32 +52,32 @@ class TextEditor_(tk.Text):
         self.tag_add("align", 1.0, "end")
         self.rc_popup_menu = tk.Menu(self, tearoff=0)
         self.rc_popup_menu.add_command(
-            label="Select all",
-            accelerator="Ctrl+A",
+            label=sheet_ops.select_all_label,
+            accelerator=sheet_ops.select_all_accelerator,
             command=self.select_all,
             **menu_kwargs,
         )
         self.rc_popup_menu.add_command(
-            label="Cut",
-            accelerator="Ctrl+X",
+            label=sheet_ops.cut_label,
+            accelerator=sheet_ops.cut_accelerator,
             command=self.cut,
             **menu_kwargs,
         )
         self.rc_popup_menu.add_command(
-            label="Copy",
-            accelerator="Ctrl+C",
+            label=sheet_ops.copy_label,
+            accelerator=sheet_ops.copy_accelerator,
             command=self.copy,
             **menu_kwargs,
         )
         self.rc_popup_menu.add_command(
-            label="Paste",
-            accelerator="Ctrl+V",
+            label=sheet_ops.paste_label,
+            accelerator=sheet_ops.paste_accelerator,
             command=self.paste,
             **menu_kwargs,
         )
         self.rc_popup_menu.add_command(
-            label="Undo",
-            accelerator="Ctrl+Z",
+            label=sheet_ops.undo_label,
+            accelerator=sheet_ops.undo_accelerator,
             command=self.undo,
             **menu_kwargs,
         )
@@ -143,6 +144,7 @@ class TextEditor(tk.Frame):
         self,
         parent,
         menu_kwargs,
+        sheet_ops,
         border_color,
         text=None,
         state="normal",
@@ -172,6 +174,7 @@ class TextEditor(tk.Frame):
         self.textedit = TextEditor_(
             self,
             menu_kwargs=menu_kwargs,
+            sheet_ops=sheet_ops,
             text=text,
             state=state,
             bg=bg,

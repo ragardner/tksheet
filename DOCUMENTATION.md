@@ -35,6 +35,7 @@
 ---
 - [Cell Text Editor](https://github.com/ragardner/tksheet/wiki/Version-7#cell-text-editor)
 - [Sheet Options and Other Functions](https://github.com/ragardner/tksheet/wiki/Version-7#sheet-options-and-other-functions)
+- [Sheet Languages and Bindings](https://github.com/ragardner/tksheet/wiki/Version-7#sheet-languages-and-bindings)
 ---
 - [Example Loading Data from Excel](https://github.com/ragardner/tksheet/wiki/Version-7#example-loading-data-from-excel)
 - [Example Custom Right Click and Text Editor Validation](https://github.com/ragardner/tksheet/wiki/Version-7#example-custom-right-click-and-text-editor-validation)
@@ -576,8 +577,7 @@ enable_bindings(*bindings)
 	- `"rc_delete_column"`
 	- `"rc_insert_row"`
 	- `"rc_delete_row"`
-    - `"ctrl_click_select"`
-    - `"ctrl_select"`
+    - `"ctrl_click_select"` / `"ctrl_select"`
 	- `"copy"`
 	- `"cut"`
 	- `"paste"`
@@ -588,14 +588,16 @@ enable_bindings(*bindings)
     - `"edit_index"`
 
 Notes:
-- `"edit_header"`, `"edit_index"`, `"ctrl_select"` and `"ctrl_click_select"` are not enabled by `bindings = "all"` and have to be enabled individually, double click or right click (if enabled) on header/index cells to edit.
-- `"ctrl_select"` and `"ctrl_click_select"` are the same and you can use either one.
+- You can change the Sheets key bindings for functionality such as copy, paste, up, down etc. Instructions can be found [here](https://github.com/ragardner/tksheet/wiki/Version-7#changing-key-bindings).
+- Control selection is **NOT** enabled with `"all"` and has to be specifically enabled.
+- Header cell editing is **NOT** enabled with `"all"` and has to be specifically enabled.
+- Index cell editing is **NOT** enabled with `"all"` and has to be specifically enabled.
 - To allow table expansion when pasting data which doesn't fit in the table use either:
    - `expand_sheet_if_paste_too_big = True` in sheet initialization arguments or
    - `sheet.set_options(expand_sheet_if_paste_too_big = True)`
 
 Example:
-- `sheet.enable_bindings("all", "edit_header", "edit_index", "ctrl_select")` to enable absolutely everything.
+- `sheet.enable_bindings()` to enable absolutely everything.
 
 ___
 
@@ -934,26 +936,6 @@ ___
 ```python
 basic_bindings(enable: bool = False) -> Sheet
 ```
-
-___
-
-#### **Enable or disable cell edit functionality, including Undo**
-
-```python
-edit_bindings(enable: bool = False) -> Sheet
-```
-
-___
-
-#### **Enable or disable the ability to edit a specific cell using the inbuilt text editor**
-
-```python
-cell_edit_binding(
-    enable: bool = False,
-    keys: list = [],
-) -> Sheet
-```
-- `keys` can be used to bind more keys to open a cell edit window.
 
 ___
 
@@ -1861,7 +1843,7 @@ ___
 
 #### **Generate sheet rows one at a time**
 
-This function is useful if you need a lot of sheet data, and can use one row at a time (may save memory use in certain scenarios). It does not use spans.
+This function is useful if you need a lot of sheet data, and produces one row at a time (may save memory use in certain scenarios). It does not use spans.
 
 ```python
 yield_sheet_rows(
@@ -4401,6 +4383,48 @@ popup_menu_fg
 popup_menu_bg
 popup_menu_highlight_bg
 popup_menu_highlight_fg
+
+# for changing the in-built right click menus labels
+edit_header_label
+edit_header_accelerator
+edit_index_label
+edit_index_accelerator
+edit_cell_label
+edit_cell_accelerator
+cut_label
+cut_accelerator
+cut_contents_label
+cut_contents_accelerator
+copy_label
+copy_accelerator
+copy_contents_label
+copy_contents_accelerator
+paste_label
+paste_accelerator
+delete_label
+delete_accelerator
+clear_contents_label
+clear_contents_accelerator
+delete_columns_label
+delete_columns_accelerator
+insert_columns_left_label
+insert_columns_left_accelerator
+insert_column_label
+insert_column_accelerator
+insert_columns_right_label
+insert_columns_right_accelerator
+delete_rows_label
+delete_rows_accelerator
+insert_rows_above_label
+insert_rows_above_accelerator
+insert_rows_below_label
+insert_rows_below_accelerator
+insert_row_label
+insert_row_accelerator
+select_all_label
+select_all_accelerator
+undo_label
+undo_accelerator
 ```
 
 ___
@@ -4492,6 +4516,99 @@ Refresh the table.
 ```python
 redraw(redraw_header: bool = True, redraw_row_index: bool = True) -> Sheet
 ```
+
+---
+# **Sheet Languages and Bindings**
+
+Listed in this section are ways to change some of tksheets language:
+- The in-built right click menu.
+- The in-built functionality keybindings, such as copy, paste etc.
+
+Unfortunately these are currently the only modifications to tksheets language that are possible.
+
+#### **Changing right click menu labels**
+
+You can change the labels for tksheets in-built right click popup menu by using the `set_options()` with any of the following keyword arguments:
+
+```python
+edit_header_label
+edit_header_accelerator
+edit_index_label
+edit_index_accelerator
+edit_cell_label
+edit_cell_accelerator
+cut_label
+cut_accelerator
+cut_contents_label
+cut_contents_accelerator
+copy_label
+copy_accelerator
+copy_contents_label
+copy_contents_accelerator
+paste_label
+paste_accelerator
+delete_label
+delete_accelerator
+clear_contents_label
+clear_contents_accelerator
+delete_columns_label
+delete_columns_accelerator
+insert_columns_left_label
+insert_columns_left_accelerator
+insert_column_label
+insert_column_accelerator
+insert_columns_right_label
+insert_columns_right_accelerator
+delete_rows_label
+delete_rows_accelerator
+insert_rows_above_label
+insert_rows_above_accelerator
+insert_rows_below_label
+insert_rows_below_accelerator
+insert_row_label
+insert_row_accelerator
+select_all_label
+select_all_accelerator
+undo_label
+undo_accelerator
+```
+
+Example:
+
+```python
+# changing the copy label to the spanish for Copy
+sheet.set_options(copy_label="Copiar")
+```
+
+#### **Changing key bindings**
+
+You can change the bindings for tksheets in-built functionality such as cut, copy, paste by using the `set_options()` with any the following keyword arguments:
+
+```python
+copy_bindings
+cut_bindings
+paste_bindings
+undo_bindings
+redo_bindings
+delete_bindings
+select_all_bindings
+tab_bindings
+up_bindings
+right_bindings
+down_bindings
+left_bindings
+prior_bindings
+next_bindings
+```
+
+The argument must be a `list` of **tkinter** binding `str`s. In the below example the binding for copy is changed to `"<Control-e>"` and `"<Control-E>"`.
+
+```python
+# changing the binding for copy
+sheet.set_options(copy_bindings=["<Control-e>", "<Control-E>"])
+```
+
+The default values for these bindings can be found in the tksheet file `sheet_options.py`.
 
 ---
 # **Example Loading Data from Excel**
@@ -4824,7 +4941,7 @@ class demo(tk.Tk):
             height=520,
             width=930,
         )
-        self.sheet.enable_bindings("all", "edit_index", "edit header")
+        self.sheet.enable_bindings("all", "edit_index", "edit_header")
         self.sheet.popup_menu_add_command(
             "Hide Rows",
             self.hide_rows,

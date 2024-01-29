@@ -1,6 +1,12 @@
 ### Version 7.0.1
+#### Removed:
+- Function `cell_edit_binding()` use `enable_bindings()` instead
+- Function `edit_bindings()` use `enable_bindings()` instead
+
 #### Fixed:
-- Error with closing a dropdown in the row index
+- Error when closing a dropdown in the row index
+- Menus modified for every binding for one call of enable/disable bindings with more than one binding
+- Editing the index/header cells being allowed when using `enable_bindings("all")`/`enable_bindings()` when it's not supposed to
 
 #### Changed:
 - `Sheet()` initialization parameter `column_width` renamed `default_column_width`
@@ -13,11 +19,18 @@
 - `set_options()` keyword argument `auto_resize_default_row_index` renamed `auto_resize_row_index`
 - `Sheet()` initialization parameter `enable_edit_cell_auto_resize` renamed `cell_auto_resize_enabled`
 - `set_options()` keyword argument `enable_edit_cell_auto_resize` renamed `cell_auto_resize_enabled`
-- Moved most changable sheet attributes to a dict variable named `ops` with dot notation access to the `Sheet` object
+- Moved most changable sheet attributes to a dict variable named `ops` (which has dot notation access) accessible from the `Sheet` object
 - The order of parameters has been changed for `Sheet()` initialization
 - `Sheet` attribute `self.C` renamed `self.PAR`
 - Various widget attributes named `self.parentframe` have been renamed `self.PAR`
 - Return key on cell editor will move to the next cell regardless of whether the cell was edited
+- Parameters for classes `TextEditor`, `TextEditor_`, `Dropdown
+- Bindings for cut, copy, paste, delete, undo, redo no longer use both `Command` and `Control` but either one depending on the users operating system
+- Internal arrow key binding methodology, if you were previously using this to change the arrow key bindings see [here](https://github.com/ragardner/tksheet/wiki/Version-7#changing-key-bindings) for info on adding arrow key bindings
+
+#### Added:
+- A way to change the in-built popup menu labels, info [here](https://github.com/ragardner/tksheet/wiki/Version-7#sheet-languages-and-bindings)
+- A way to change the in-built bindings for cut, copy, paste, delete, undo, redo, select all, all the arrowkey bindings and page up/down, info [here](https://github.com/ragardner/tksheet/wiki/Version-7#changing-key-bindings)
 
 ### Version 7.0.0
 #### Removed:

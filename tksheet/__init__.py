@@ -79,7 +79,6 @@ from .themes import (
 from .top_left_rectangle import TopLeftRectangle
 from .vars import (
     USER_OS,
-    arrowkey_bindings_helper,
     ctrl_key,
     emitted_events,
     falsy,

@@ -10,6 +10,7 @@ from .themes import (
 )
 
 from .vars import (
+    ctrl_key,
     USER_OS,
 )
 
@@ -37,114 +38,95 @@ def new_sheet_options() -> DotDict:
                 13 if USER_OS == "darwin" else 11,
                 "normal",
             ),
-            "edit_header": DotDict(
-                {
-                    "label": "Edit header",
-                    "accelerator": "",
-                }
-            ),
-            "edit_index": DotDict(
-                {
-                    "label": "Edit index",
-                    "accelerator": "",
-                }
-            ),
-            "edit_cell": DotDict(
-                {
-                    "label": "Edit cell",
-                    "accelerator": "",
-                }
-            ),
-            "cut": DotDict(
-                {
-                    "label": "Cut",
-                    "accelerator": "Ctrl+X",
-                }
-            ),
-            "cut_contents": DotDict(
-                {
-                    "label": "Cut contents",
-                    "accelerator": "Ctrl+X",
-                }
-            ),
-            "copy_": DotDict(
-                {
-                    "label": "Copy",
-                    "accelerator": "Ctrl+C",
-                }
-            ),
-            "copy_contents": DotDict(
-                {
-                    "label": "Copy contents",
-                    "accelerator": "Ctrl+C",
-                }
-            ),
-            "paste": DotDict(
-                {
-                    "label": "Paste",
-                    "accelerator": "Ctrl+V",
-                }
-            ),
-            "delete": DotDict(
-                {
-                    "label": "Delete",
-                    "accelerator": "Del",
-                }
-            ),
-            "clear_contents": DotDict(
-                {
-                    "label": "Clear contents",
-                    "accelerator": "Del",
-                }
-            ),
-            "delete_columns": DotDict(
-                {
-                    "label": "Delete columns",
-                    "accelerator": "",
-                }
-            ),
-            "insert_columns_left": DotDict(
-                {
-                    "label": "Insert columns left",
-                    "accelerator": "",
-                }
-            ),
-            "insert_column": DotDict(
-                {
-                    "label": "Insert column",
-                    "accelerator": "",
-                }
-            ),
-            "insert_columns_right": DotDict(
-                {
-                    "label": "Insert columns right",
-                    "accelerator": "",
-                }
-            ),
-            "delete_rows": DotDict(
-                {
-                    "label": "Delete rows",
-                    "accelerator": "",
-                }
-            ),
-            "insert_rows_above": DotDict(
-                {
-                    "label": "Insert rows above",
-                    "accelerator": "",
-                }
-            ),
-            "insert_rows_below": DotDict(
-                {
-                    "label": "Insert rows below",
-                    "accelerator": "",
-                }
-            ),
-            "insert_row": DotDict(
-                {
-                    "label": "Insert row",
-                    "accelerator": "",
-                }
-            ),
+            "edit_header_label": "Edit header",
+            "edit_header_accelerator": "",
+            "edit_index_label": "Edit index",
+            "edit_index_accelerator": "",
+            "edit_cell_label": "Edit cell",
+            "edit_cell_accelerator": "",
+            "cut_label": "Cut",
+            "cut_accelerator": "Ctrl+X",
+            "cut_contents_label": "Cut contents",
+            "cut_contents_accelerator": "Ctrl+X",
+            "copy_label": "Copy",
+            "copy_accelerator": "Ctrl+C",
+            "copy_contents_label": "Copy contents",
+            "copy_contents_accelerator": "Ctrl+C",
+            "paste_label": "Paste",
+            "paste_accelerator": "Ctrl+V",
+            "delete_label": "Delete",
+            "delete_accelerator": "Del",
+            "clear_contents_label": "Clear contents",
+            "clear_contents_accelerator": "Del",
+            "delete_columns_label": "Delete columns",
+            "delete_columns_accelerator": "",
+            "insert_columns_left_label": "Insert columns left",
+            "insert_columns_left_accelerator": "",
+            "insert_column_label": "Insert column",
+            "insert_column_accelerator": "",
+            "insert_columns_right_label": "Insert columns right",
+            "insert_columns_right_accelerator": "",
+            "delete_rows_label": "Delete rows",
+            "delete_rows_accelerator": "",
+            "insert_rows_above_label": "Insert rows above",
+            "insert_rows_above_accelerator": "",
+            "insert_rows_below_label": "Insert rows below",
+            "insert_rows_below_accelerator": "",
+            "insert_row_label": "Insert row",
+            "insert_row_accelerator": "",
+            "select_all_label": "Select all",
+            "select_all_accelerator": "Ctrl+A",
+            "undo_label": "Undo",
+            "undo_accelerator": "Ctrl+Z",
+            "copy_bindings": [
+                f"<{ctrl_key}-c>",
+                f"<{ctrl_key}-C>",
+            ],
+            "cut_bindings": [
+                f"<{ctrl_key}-x>",
+                f"<{ctrl_key}-X>",
+            ],
+            "paste_bindings": [
+                f"<{ctrl_key}-v>",
+                f"<{ctrl_key}-V>",
+            ],
+            "undo_bindings": [
+                f"<{ctrl_key}-z>",
+                f"<{ctrl_key}-Z>",
+            ],
+            "redo_bindings": [
+                f"<{ctrl_key}-Shift-z>",
+                f"<{ctrl_key}-Shift-Z>",
+            ],
+            "delete_bindings": [
+                "<Delete>",
+                "<Delete>",
+            ],
+            "select_all_bindings": [
+                f"<{ctrl_key}-a>",
+                f"<{ctrl_key}-A>",
+            ],
+            "tab_bindings": [
+                "<Tab>",
+            ],
+            "up_bindings": [
+                "<Up>",
+            ],
+            "right_bindings": [
+                "<Right>",
+            ],
+            "down_bindings": [
+                "<Down>",
+            ],
+            "left_bindings": [
+                "<Left>",
+            ],
+            "prior_bindings": [
+                "<Prior>",
+            ],
+            "next_bindings": [
+                "<Next>",
+            ],
             "popup_menu_fg": theme_light_blue["popup_menu_fg"],
             "popup_menu_bg": theme_light_blue["popup_menu_bg"],
             "popup_menu_highlight_bg": theme_light_blue["popup_menu_highlight_bg"],

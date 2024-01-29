@@ -18,15 +18,6 @@ named_span_types = (
     "readonly",
     "align",
 )
-arrowkey_bindings_helper: dict[str, str] = {
-    "tab": "Tab",
-    "up": "Up",
-    "right": "Right",
-    "left": "Left",
-    "down": "Down",
-    "prior": "Prior",
-    "next": "Next",
-}
 emitted_events: set[str] = {
     "<<SheetModified>>",
     "<<SheetRedrawn>>",

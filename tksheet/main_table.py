@@ -85,7 +85,6 @@ from .text_editor import (
 )
 from .vars import (
     USER_OS,
-    arrowkey_bindings_helper,
     ctrl_key,
     rc_binding,
     symbols_set,
@@ -142,15 +141,6 @@ class MainTable(tk.Canvas):
         self.row_options = {}
         self.purge_undo_and_redo_stack()
 
-        self.arrowkey_binding_functions = {
-            "tab": self.tab_key,
-            "up": self.arrowkey_UP,
-            "right": self.arrowkey_RIGHT,
-            "down": self.arrowkey_DOWN,
-            "left": self.arrowkey_LEFT,
-            "prior": self.page_UP,
-            "next": self.page_DOWN,
-        }
         self.extra_table_rc_menu_funcs = {}
         self.extra_index_rc_menu_funcs = {}
         self.extra_header_rc_menu_funcs = {}
@@ -209,6 +199,13 @@ class MainTable(tk.Canvas):
         self.ctrl_selection_binding_func = None
         self.select_all_binding_func = None
 
+        self.tab_enabled = False
+        self.up_enabled = False
+        self.right_enabled = False
+        self.down_enabled = False
+        self.left_enabled = False
+        self.prior_enabled = False
+        self.next_enabled = False
         self.single_selection_enabled = False
         # with this mode every left click adds the cell to selected cells
         self.toggle_selection_enabled = False
@@ -1624,16 +1621,6 @@ class MainTable(tk.Canvas):
         self.refresh()
         return ev_stack_dict(event_data)
 
-    def bind_arrowkeys(self, keys: dict = {}) -> None:
-        for canvas in (self, self.PAR, self.CH, self.RI, self.TL):
-            for k, func in keys.items():
-                canvas.bind(f"<{arrowkey_bindings_helper[k.lower()]}>", func)
-
-    def unbind_arrowkeys(self, keys: dict = {}) -> None:
-        for canvas in (self, self.PAR, self.CH, self.RI, self.TL):
-            for k, func in keys.items():
-                canvas.unbind(f"<{arrowkey_bindings_helper[k.lower()]}>")
-
     def see(
         self,
         r: int | None = None,
@@ -2203,86 +2190,99 @@ class MainTable(tk.Canvas):
                     self.select_cell(r, c - 1)
                     self.see(r, c - 1, keep_yscroll=True, check_cell_visibility=False)
 
-    def edit_bindings(self, enable=True, key=None):
-        if key is None or key == "copy":
-            if enable:
-                for s2 in ("c", "C"):
-                    for widget in (self, self.RI, self.CH, self.TL):
-                        widget.bind(f"<{ctrl_key}-{s2}>", self.ctrl_c)
-                self.copy_enabled = True
-            else:
-                for s1 in ("Control", "Command"):
-                    for s2 in ("c", "C"):
-                        for widget in (self, self.RI, self.CH, self.TL):
-                            widget.unbind(f"<{s1}-{s2}>")
-                self.copy_enabled = False
-        if key is None or key == "cut":
-            if enable:
-                for s2 in ("x", "X"):
-                    for widget in (self, self.RI, self.CH, self.TL):
-                        widget.bind(f"<{ctrl_key}-{s2}>", self.ctrl_x)
-                self.cut_enabled = True
-            else:
-                for s1 in ("Control", "Command"):
-                    for s2 in ("x", "X"):
-                        for widget in (self, self.RI, self.CH, self.TL):
-                            widget.unbind(f"<{s1}-{s2}>")
-                self.cut_enabled = False
-        if key is None or key == "paste":
-            if enable:
-                for s2 in ("v", "V"):
-                    for widget in (self, self.RI, self.CH, self.TL):
-                        widget.bind(f"<{ctrl_key}-{s2}>", self.ctrl_v)
-                self.paste_enabled = True
-            else:
-                for s1 in ("Control", "Command"):
-                    for s2 in ("v", "V"):
-                        for widget in (self, self.RI, self.CH, self.TL):
-                            widget.unbind(f"<{s1}-{s2}>")
-                self.paste_enabled = False
-        if key is None or key == "undo":
-            if enable:
-                for s2 in ("z", "Z"):
-                    for widget in (self, self.RI, self.CH, self.TL):
-                        widget.bind(f"<{ctrl_key}-{s2}>", self.undo)
-                        widget.bind(f"<{ctrl_key}-Shift-{s2}>", self.redo)
-                self.undo_enabled = True
-            else:
-                for s1 in ("Control", "Command"):
-                    for s2 in ("z", "Z"):
-                        for widget in (self, self.RI, self.CH, self.TL):
-                            widget.unbind(f"<{s1}-{s2}>")
-                self.undo_enabled = False
-        if key is None or key == "delete":
-            if enable:
-                for widget in (self, self.RI, self.CH, self.TL):
-                    widget.bind("<Delete>", self.delete_key)
-                self.delete_key_enabled = True
-            else:
-                for widget in (self, self.RI, self.CH, self.TL):
-                    widget.unbind("<Delete>")
-                self.delete_key_enabled = False
-        if key is None or key == "edit_cell":
-            if enable:
-                self.bind_cell_edit(True)
-            else:
-                self.bind_cell_edit(False)
-        # edit header with text editor (dropdowns and checkboxes not included)
-        # this will not by enabled by using enable_bindings() to enable all bindings
-        # must be enabled directly using enable_bindings("edit_header")
-        # the same goes for "edit_index"
-        if key is None or key == "edit_header":
-            if enable:
-                self.CH.bind_cell_edit(True)
-            else:
-                self.CH.bind_cell_edit(False)
-        if key is None or key == "edit_index":
-            if enable:
-                self.RI.bind_cell_edit(True)
-            else:
-                self.RI.bind_cell_edit(False)
+    def key_bindings(self) -> None:
+        for widget in (self, self.RI, self.CH, self.TL):
+            for binding in self.PAR.ops.copy_bindings:
+                if self.copy_enabled:
+                    widget.bind(binding, self.ctrl_c)
+                else:
+                    widget.unbind(binding)
 
-    def menu_add_command(self, menu: tk.Menu, **kwargs):
+            for binding in self.PAR.ops.cut_bindings:
+                if self.cut_enabled:
+                    widget.bind(binding, self.ctrl_x)
+                else:
+                    widget.unbind(binding)
+
+            for binding in self.PAR.ops.paste_bindings:
+                if self.paste_enabled:
+                    widget.bind(binding, self.ctrl_v)
+                else:
+                    widget.unbind(binding)
+
+            if self.undo_enabled:
+                for binding in self.PAR.ops.undo_bindings:
+                    widget.bind(binding, self.undo)
+                for binding in self.PAR.ops.redo_bindings:
+                    widget.bind(binding, self.redo)
+            else:
+                for binding in self.PAR.ops.undo_bindings:
+                    widget.unbind(binding)
+                for binding in self.PAR.ops.redo_bindings:
+                    widget.unbind(binding)
+
+            for binding in self.PAR.ops.delete_bindings:
+                if self.delete_key_enabled:
+                    widget.bind(binding, self.delete_key)
+                else:
+                    widget.unbind(binding)
+
+            for binding in self.PAR.ops.select_all_bindings:
+                if self.select_all_enabled:
+                    widget.bind(binding, self.select_all)
+                else:
+                    widget.unbind(binding)
+
+            for binding in self.PAR.ops.tab_bindings:
+                if self.tab_enabled:
+                    widget.bind(binding, self.tab_key)
+                else:
+                    widget.unbind(binding)
+
+            for binding in self.PAR.ops.up_bindings:
+                if self.up_enabled:
+                    widget.bind(binding, self.arrowkey_UP)
+                else:
+                    widget.unbind(binding)
+
+            for binding in self.PAR.ops.right_bindings:
+                if self.right_enabled:
+                    widget.bind(binding, self.arrowkey_RIGHT)
+                else:
+                    widget.unbind(binding)
+
+            for binding in self.PAR.ops.down_bindings:
+                if self.down_enabled:
+                    widget.bind(binding, self.arrowkey_DOWN)
+                else:
+                    widget.unbind(binding)
+
+            for binding in self.PAR.ops.left_bindings:
+                if self.left_enabled:
+                    widget.bind(binding, self.arrowkey_LEFT)
+                else:
+                    widget.unbind(binding)
+
+            for binding in self.PAR.ops.prior_bindings:
+                if self.prior_enabled:
+                    widget.bind(binding, self.page_UP)
+                else:
+                    widget.unbind(binding)
+
+            for binding in self.PAR.ops.next_bindings:
+                if self.next_enabled:
+                    widget.bind(binding, self.page_DOWN)
+                else:
+                    widget.unbind(binding)
+
+        if self.edit_cell_enabled:
+            for w in (self, self.RI, self.CH):
+                w.bind("<Key>", self.open_cell)
+        else:
+            for w in (self, self.RI, self.CH):
+                w.unbind("<Key>")
+
+    def menu_add_command(self, menu: tk.Menu, **kwargs) -> None:
         if "label" not in kwargs:
             return
         try:
@@ -2292,7 +2292,7 @@ class MainTable(tk.Canvas):
             pass
         menu.add_command(**kwargs)
 
-    def create_rc_menus(self):
+    def create_rc_menus(self) -> None:
         if not self.rc_popup_menu:
             self.rc_popup_menu = tk.Menu(self, tearoff=0, background=self.PAR.ops.popup_menu_bg)
         if not self.CH.ch_rc_popup_menu:
@@ -2318,169 +2318,169 @@ class MainTable(tk.Canvas):
         if self.rc_popup_menus_enabled and self.CH.edit_cell_enabled:
             self.menu_add_command(
                 self.CH.ch_rc_popup_menu,
-                label=self.PAR.ops.edit_header.label,
+                label=self.PAR.ops.edit_header_label,
                 command=lambda: self.CH.open_cell(event="rc"),
                 **mnkwgs,
             )
         if self.rc_popup_menus_enabled and self.RI.edit_cell_enabled:
             self.menu_add_command(
                 self.RI.ri_rc_popup_menu,
-                label=self.PAR.ops.edit_index.label,
+                label=self.PAR.ops.edit_index_label,
                 command=lambda: self.RI.open_cell(event="rc"),
                 **mnkwgs,
             )
         if self.rc_popup_menus_enabled and self.edit_cell_enabled:
             self.menu_add_command(
                 self.rc_popup_menu,
-                label=self.PAR.ops.edit_cell.label,
+                label=self.PAR.ops.edit_cell_label,
                 command=lambda: self.open_cell(event="rc"),
                 **mnkwgs,
             )
         if self.cut_enabled:
             self.menu_add_command(
                 self.rc_popup_menu,
-                label=self.PAR.ops.cut.label,
-                accelerator=self.PAR.ops.cut.accelerator,
+                label=self.PAR.ops.cut_label,
+                accelerator=self.PAR.ops.cut_accelerator,
                 command=self.ctrl_x,
                 **mnkwgs,
             )
             self.menu_add_command(
                 self.CH.ch_rc_popup_menu,
-                label=self.PAR.ops.cut_contents.label,
-                accelerator=self.PAR.ops.cut_contents.accelerator,
+                label=self.PAR.ops.cut_contents_label,
+                accelerator=self.PAR.ops.cut_contents_accelerator,
                 command=self.ctrl_x,
                 **mnkwgs,
             )
             self.menu_add_command(
                 self.RI.ri_rc_popup_menu,
-                label=self.PAR.ops.cut_contents.label,
-                accelerator=self.PAR.ops.cut_contents.accelerator,
+                label=self.PAR.ops.cut_contents_label,
+                accelerator=self.PAR.ops.cut_contents_accelerator,
                 command=self.ctrl_x,
                 **mnkwgs,
             )
         if self.copy_enabled:
             self.menu_add_command(
                 self.rc_popup_menu,
-                label=self.PAR.ops.copy_.label,
-                accelerator=self.PAR.ops.copy_.accelerator,
+                label=self.PAR.ops.copy_label,
+                accelerator=self.PAR.ops.copy_accelerator,
                 command=self.ctrl_c,
                 **mnkwgs,
             )
             self.menu_add_command(
                 self.CH.ch_rc_popup_menu,
-                label=self.PAR.ops.copy_contents.label,
-                accelerator=self.PAR.ops.copy_contents.accelerator,
+                label=self.PAR.ops.copy_contents_label,
+                accelerator=self.PAR.ops.copy_contents_accelerator,
                 command=self.ctrl_c,
                 **mnkwgs,
             )
             self.menu_add_command(
                 self.RI.ri_rc_popup_menu,
-                label=self.PAR.ops.copy_contents.label,
-                accelerator=self.PAR.ops.copy_contents.accelerator,
+                label=self.PAR.ops.copy_contents_label,
+                accelerator=self.PAR.ops.copy_contents_accelerator,
                 command=self.ctrl_c,
                 **mnkwgs,
             )
         if self.paste_enabled:
             self.menu_add_command(
                 self.rc_popup_menu,
-                label=self.PAR.ops.paste.label,
-                accelerator=self.PAR.ops.paste.accelerator,
+                label=self.PAR.ops.paste_label,
+                accelerator=self.PAR.ops.paste_accelerator,
                 command=self.ctrl_v,
                 **mnkwgs,
             )
             self.menu_add_command(
                 self.CH.ch_rc_popup_menu,
-                label=self.PAR.ops.paste.label,
-                accelerator=self.PAR.ops.paste.accelerator,
+                label=self.PAR.ops.paste_label,
+                accelerator=self.PAR.ops.paste_accelerator,
                 command=self.ctrl_v,
                 **mnkwgs,
             )
             self.menu_add_command(
                 self.RI.ri_rc_popup_menu,
-                label=self.PAR.ops.paste.label,
-                accelerator=self.PAR.ops.paste.accelerator,
+                label=self.PAR.ops.paste_label,
+                accelerator=self.PAR.ops.paste_accelerator,
                 command=self.ctrl_v,
                 **mnkwgs,
             )
             if self.PAR.ops.expand_sheet_if_paste_too_big:
                 self.menu_add_command(
                     self.empty_rc_popup_menu,
-                    label=self.PAR.ops.paste.label,
-                    accelerator=self.PAR.ops.paste.accelerator,
+                    label=self.PAR.ops.paste_label,
+                    accelerator=self.PAR.ops.paste_accelerator,
                     command=self.ctrl_v,
                     **mnkwgs,
                 )
         if self.delete_key_enabled:
             self.menu_add_command(
                 self.rc_popup_menu,
-                label=self.PAR.ops.delete.label,
-                accelerator=self.PAR.ops.delete.accelerator,
+                label=self.PAR.ops.delete_label,
+                accelerator=self.PAR.ops.delete_accelerator,
                 command=self.delete_key,
                 **mnkwgs,
             )
             self.menu_add_command(
                 self.CH.ch_rc_popup_menu,
-                label=self.PAR.ops.clear_contents.label,
-                accelerator=self.PAR.ops.clear_contents.accelerator,
+                label=self.PAR.ops.clear_contents_label,
+                accelerator=self.PAR.ops.clear_contents_accelerator,
                 command=self.delete_key,
                 **mnkwgs,
             )
             self.menu_add_command(
                 self.RI.ri_rc_popup_menu,
-                label=self.PAR.ops.clear_contents.label,
-                accelerator=self.PAR.ops.clear_contents.accelerator,
+                label=self.PAR.ops.clear_contents_label,
+                accelerator=self.PAR.ops.clear_contents_accelerator,
                 command=self.delete_key,
                 **mnkwgs,
             )
         if self.rc_delete_column_enabled:
             self.menu_add_command(
                 self.CH.ch_rc_popup_menu,
-                label=self.PAR.ops.delete_columns.label,
+                label=self.PAR.ops.delete_columns_label,
                 command=self.rc_delete_columns,
                 **mnkwgs,
             )
         if self.rc_insert_column_enabled:
             self.menu_add_command(
                 self.CH.ch_rc_popup_menu,
-                label=self.PAR.ops.insert_columns_left.label,
+                label=self.PAR.ops.insert_columns_left_label,
                 command=lambda: self.rc_add_columns("left"),
                 **mnkwgs,
             )
             self.menu_add_command(
                 self.CH.ch_rc_popup_menu,
-                label=self.PAR.ops.insert_columns_right.label,
+                label=self.PAR.ops.insert_columns_right_label,
                 command=lambda: self.rc_add_columns("right"),
                 **mnkwgs,
             )
             self.menu_add_command(
                 self.empty_rc_popup_menu,
-                label=self.PAR.ops.insert_column.label,
+                label=self.PAR.ops.insert_column_label,
                 command=lambda: self.rc_add_columns("left"),
                 **mnkwgs,
             )
         if self.rc_delete_row_enabled:
             self.menu_add_command(
                 self.RI.ri_rc_popup_menu,
-                label=self.PAR.ops.delete_rows.label,
+                label=self.PAR.ops.delete_rows_label,
                 command=self.rc_delete_rows,
                 **mnkwgs,
             )
         if self.rc_insert_row_enabled:
             self.menu_add_command(
                 self.RI.ri_rc_popup_menu,
-                label=self.PAR.ops.insert_rows_above.label,
+                label=self.PAR.ops.insert_rows_above_label,
                 command=lambda: self.rc_add_rows("above"),
                 **mnkwgs,
             )
             self.menu_add_command(
                 self.RI.ri_rc_popup_menu,
-                label=self.PAR.ops.insert_rows_below.label,
+                label=self.PAR.ops.insert_rows_below_label,
                 command=lambda: self.rc_add_rows("below"),
                 **mnkwgs,
             )
             self.menu_add_command(
                 self.empty_rc_popup_menu,
-                label=self.PAR.ops.insert_row.label,
+                label=self.PAR.ops.insert_row_label,
                 command=lambda: self.rc_add_rows("below"),
                 **mnkwgs,
             )
@@ -2513,16 +2513,6 @@ class MainTable(tk.Canvas):
                 **mnkwgs,
             )
 
-    def bind_cell_edit(self, enable=True, keys=[]):
-        if enable:
-            self.edit_cell_enabled = True
-            for w in (self, self.RI, self.CH):
-                w.bind("<Key>", self.open_cell)
-        else:
-            self.edit_cell_enabled = False
-            for w in (self, self.RI, self.CH):
-                w.unbind("<Key>")
-
     def enable_bindings(self, bindings):
         if not bindings:
             self.enable_bindings_internal("all")
@@ -2535,6 +2525,8 @@ class MainTable(tk.Canvas):
                     self.enable_bindings_internal(binding.lower())
         elif isinstance(bindings, str):
             self.enable_bindings_internal(bindings.lower())
+        self.create_rc_menus()
+        self.key_bindings()
 
     def disable_bindings(self, bindings):
         if not bindings:
@@ -2548,220 +2540,189 @@ class MainTable(tk.Canvas):
                     self.disable_bindings_internal(binding.lower())
         elif isinstance(bindings, str):
             self.disable_bindings_internal(bindings)
-
-    def enable_disable_select_all(self, enable=True):
-        self.select_all_enabled = bool(enable)
-        for s in ("A", "a"):
-            binding = f"<{ctrl_key}-{s}>"
-            for widget in (self, self.RI, self.CH, self.TL):
-                if enable:
-                    widget.bind(binding, self.select_all)
-                else:
-                    widget.unbind(binding)
+        self.create_rc_menus()
+        self.key_bindings()
 
     def enable_bindings_internal(self, binding):
-        if binding in ("enable_all", "all"):
-            self.single_selection_enabled = True
-            self.toggle_selection_enabled = False
-            self.drag_selection_enabled = True
-            self.enable_disable_select_all(True)
-            self.CH.enable_bindings("column_width_resize")
-            self.CH.enable_bindings("column_select")
-            self.CH.enable_bindings("column_height_resize")
-            self.CH.enable_bindings("drag_and_drop")
-            self.CH.enable_bindings("double_click_column_resize")
-            self.RI.enable_bindings("row_height_resize")
-            self.RI.enable_bindings("double_click_row_resize")
-            self.RI.enable_bindings("row_width_resize")
-            self.RI.enable_bindings("row_select")
-            self.RI.enable_bindings("drag_and_drop")
-            self.bind_arrowkeys(self.arrowkey_binding_functions)
-            self.edit_bindings(True)
-            self.rc_delete_column_enabled = True
-            self.rc_delete_row_enabled = True
-            self.rc_insert_column_enabled = True
-            self.rc_insert_row_enabled = True
-            self.rc_popup_menus_enabled = True
-            self.rc_select_enabled = True
-            self.TL.rh_state()
-            self.TL.rw_state()
-            self.TL.sa_state()
-        elif binding in ("single", "single_selection_mode", "single_select"):
+        if binding == "enable_all":
+            binding = "all"
+        if binding in ("all", "single", "single_selection_mode", "single_select"):
             self.single_selection_enabled = True
             self.toggle_selection_enabled = False
         elif binding in ("toggle", "toggle_selection_mode", "toggle_select"):
             self.toggle_selection_enabled = True
             self.single_selection_enabled = False
-        elif binding == "drag_select":
+        if binding in ("all", "drag_select"):
             self.drag_selection_enabled = True
-        elif binding == "select_all":
-            self.enable_disable_select_all(True)
+        if binding in ("all", "select_all"):
+            self.select_all_enabled = True
             self.TL.sa_state()
-        elif binding == "column_width_resize":
-            self.CH.enable_bindings("column_width_resize")
-        elif binding == "column_select":
-            self.CH.enable_bindings("column_select")
-        elif binding == "column_height_resize":
-            self.CH.enable_bindings("column_height_resize")
+        if binding in ("all", "column_width_resize"):
+            self.CH.width_resizing_enabled = True
+        if binding in ("all", "column_select"):
+            self.CH.col_selection_enabled = True
+        if binding in ("all", "column_height_resize"):
+            self.CH.height_resizing_enabled = True
             self.TL.rh_state()
-        elif binding in ("column_drag_and_drop", "move_columns"):
-            self.CH.enable_bindings("drag_and_drop")
-        elif binding == "double_click_column_resize":
-            self.CH.enable_bindings("double_click_column_resize")
-        elif binding == "row_height_resize":
-            self.RI.enable_bindings("row_height_resize")
-        elif binding == "double_click_row_resize":
-            self.RI.enable_bindings("double_click_row_resize")
-        elif binding == "row_width_resize":
-            self.RI.enable_bindings("row_width_resize")
+        if binding in ("all", "column_drag_and_drop", "move_columns"):
+            self.CH.drag_and_drop_enabled = True
+        if binding in ("all", "double_click_column_resize"):
+            self.CH.double_click_resizing_enabled = True
+        if binding in ("all", "row_height_resize"):
+            self.RI.height_resizing_enabled = True
+        if binding in ("all", "double_click_row_resize"):
+            self.RI.double_click_resizing_enabled = True
+        if binding in ("all", "row_width_resize"):
+            self.RI.width_resizing_enabled = True
             self.TL.rw_state()
-        elif binding == "row_select":
-            self.RI.enable_bindings("row_select")
-        elif binding in ("row_drag_and_drop", "move_rows"):
-            self.RI.enable_bindings("drag_and_drop")
-        elif binding == "arrowkeys":
-            self.bind_arrowkeys(self.arrowkey_binding_functions)
-        elif binding in ("tab", "up", "right", "down", "left", "prior", "next"):
-            self.bind_arrowkeys(keys={binding: self.arrowkey_binding_functions[binding]})
-        elif binding == "edit_bindings":
-            self.edit_bindings(True)
-        elif binding == "rc_delete_column":
+        if binding in ("all", "row_select"):
+            self.RI.row_selection_enabled = True
+        if binding in ("all", "row_drag_and_drop", "move_rows"):
+            self.RI.drag_and_drop_enabled = True
+        if binding in ("all", "arrowkeys", "tab"):
+            self.tab_enabled = True
+        if binding in ("all", "arrowkeys", "up"):
+            self.up_enabled = True
+        if binding in ("all", "arrowkeys", "right"):
+            self.right_enabled = True
+        if binding in ("all", "arrowkeys", "down"):
+            self.down_enabled = True
+        if binding in ("all", "arrowkeys", "left"):
+            self.left_enabled = True
+        if binding in ("all", "arrowkeys", "prior"):
+            self.prior_enabled = True
+        if binding in ("all", "arrowkeys", "next"):
+            self.next_enabled = True
+        if binding in ("all", "rc_delete_column"):
             self.rc_delete_column_enabled = True
             self.rc_popup_menus_enabled = True
             self.rc_select_enabled = True
-        elif binding == "rc_delete_row":
+        if binding in ("all", "rc_delete_row"):
             self.rc_delete_row_enabled = True
             self.rc_popup_menus_enabled = True
             self.rc_select_enabled = True
-        elif binding == "rc_insert_column":
+        if binding in ("all", "rc_insert_column"):
             self.rc_insert_column_enabled = True
             self.rc_popup_menus_enabled = True
             self.rc_select_enabled = True
-        elif binding == "rc_insert_row":
+        if binding in ("all", "rc_insert_row"):
             self.rc_insert_row_enabled = True
             self.rc_popup_menus_enabled = True
             self.rc_select_enabled = True
-        elif binding == "copy":
-            self.edit_bindings(True, "copy")
-        elif binding == "cut":
-            self.edit_bindings(True, "cut")
-        elif binding == "paste":
-            self.edit_bindings(True, "paste")
-        elif binding == "delete":
-            self.edit_bindings(True, "delete")
-        elif binding in ("right_click_popup_menu", "rc_popup_menu"):
+        if binding in ("all", "copy", "edit_bindings"):
+            self.copy_enabled = True
+        if binding in ("all", "cut", "edit_bindings"):
+            self.cut_enabled = True
+        if binding in ("all", "paste", "edit_bindings"):
+            self.paste_enabled = True
+        if binding in ("all", "delete", "edit_bindings"):
+            self.delete_key_enabled = True
+        if binding in ("all", "right_click_popup_menu", "rc_popup_menu"):
             self.rc_popup_menus_enabled = True
             self.rc_select_enabled = True
-        elif binding in ("right_click_select", "rc_select"):
+        if binding in ("all", "right_click_select", "rc_select"):
             self.rc_select_enabled = True
-        elif binding in ("ctrl_click_select", "ctrl_select"):
+        if binding in ("all", "undo", "edit_bindings"):
+            self.undo_enabled = True
+        if binding in ("all", "edit_cell", "edit_bindings"):
+            self.edit_cell_enabled = True
+        if binding in ("edit_header"):
+            self.CH.edit_cell_enabled = True
+        if binding in ("edit_index"):
+            self.RI.edit_cell_enabled = True
+        # has to be specifically enabled
+        if binding in ("ctrl_click_select", "ctrl_select"):
             self.ctrl_select_enabled = True
-        elif binding == "undo":
-            self.edit_bindings(True, "undo")
-        elif binding == "edit_cell":
-            self.edit_bindings(True, "edit_cell")
-        elif binding == "edit_header":
-            self.edit_bindings(True, "edit_header")
-        elif binding == "edit_index":
-            self.edit_bindings(True, "edit_index")
-        self.create_rc_menus()
 
     def disable_bindings_internal(self, binding):
-        if binding in ("all", "disable_all"):
+        if binding == "disable_all":
+            binding = "all"
+        if binding in ("all", "single", "single_selection_mode", "single_select"):
             self.single_selection_enabled = False
             self.toggle_selection_enabled = False
-            self.drag_selection_enabled = False
-            self.enable_disable_select_all(False)
-            self.CH.disable_bindings("column_width_resize")
-            self.CH.disable_bindings("column_select")
-            self.CH.disable_bindings("column_height_resize")
-            self.CH.disable_bindings("drag_and_drop")
-            self.CH.disable_bindings("double_click_column_resize")
-            self.RI.disable_bindings("row_height_resize")
-            self.RI.disable_bindings("double_click_row_resize")
-            self.RI.disable_bindings("row_width_resize")
-            self.RI.disable_bindings("row_select")
-            self.RI.disable_bindings("drag_and_drop")
-            self.unbind_arrowkeys(self.arrowkey_binding_functions)
-            self.edit_bindings(False)
-            self.rc_delete_column_enabled = False
-            self.rc_delete_row_enabled = False
-            self.rc_insert_column_enabled = False
-            self.rc_insert_row_enabled = False
-            self.rc_popup_menus_enabled = False
-            self.rc_select_enabled = False
-            self.ctrl_select_enabled = False
-            self.TL.rh_state("hidden")
-            self.TL.rw_state("hidden")
-            self.TL.sa_state("hidden")
-        elif binding in ("single", "single_selection_mode", "single_select"):
-            self.single_selection_enabled = False
         elif binding in ("toggle", "toggle_selection_mode", "toggle_select"):
             self.toggle_selection_enabled = False
-        elif binding == "drag_select":
+            self.single_selection_enabled = False
+        if binding in ("all", "drag_select"):
             self.drag_selection_enabled = False
-        elif binding == "select_all":
-            self.enable_disable_select_all(False)
+        if binding in ("all", "select_all"):
+            self.select_all_enabled = False
             self.TL.sa_state("hidden")
-        elif binding == "column_width_resize":
-            self.CH.disable_bindings("column_width_resize")
-        elif binding == "column_select":
-            self.CH.disable_bindings("column_select")
-        elif binding == "column_height_resize":
-            self.CH.disable_bindings("column_height_resize")
+        if binding in ("all", "column_width_resize"):
+            self.CH.width_resizing_enabled = False
+        if binding in ("all", "column_select"):
+            self.CH.col_selection_enabled = False
+        if binding in ("all", "column_height_resize"):
+            self.CH.height_resizing_enabled = False
             self.TL.rh_state("hidden")
-        elif binding in ("column_drag_and_drop", "move_columns"):
-            self.CH.disable_bindings("drag_and_drop")
-        elif binding == "double_click_column_resize":
-            self.CH.disable_bindings("double_click_column_resize")
-        elif binding == "row_height_resize":
-            self.RI.disable_bindings("row_height_resize")
-        elif binding == "double_click_row_resize":
-            self.RI.disable_bindings("double_click_row_resize")
-        elif binding == "row_width_resize":
-            self.RI.disable_bindings("row_width_resize")
+        if binding in ("all", "column_drag_and_drop", "move_columns"):
+            self.CH.drag_and_drop_enabled = False
+        if binding in ("all", "double_click_column_resize"):
+            self.CH.double_click_resizing_enabled = False
+        if binding in ("all", "row_height_resize"):
+            self.RI.height_resizing_enabled = False
+        if binding in ("all", "double_click_row_resize"):
+            self.RI.double_click_resizing_enabled = False
+        if binding in ("all", "row_width_resize"):
+            self.RI.width_resizing_enabled = False
             self.TL.rw_state("hidden")
-        elif binding == "row_select":
-            self.RI.disable_bindings("row_select")
-        elif binding in ("row_drag_and_drop", "move_rows"):
-            self.RI.disable_bindings("drag_and_drop")
-        elif binding == "arrowkeys":
-            self.unbind_arrowkeys(self.arrowkey_binding_functions)
-        elif binding in ("tab", "up", "right", "down", "left", "prior", "next"):
-            self.unbind_arrowkeys(keys={binding: self.arrowkey_binding_functions[binding]})
-        elif binding == "rc_delete_column":
+        if binding in ("all", "row_select"):
+            self.RI.row_selection_enabled = False
+        if binding in ("all", "row_drag_and_drop", "move_rows"):
+            self.RI.drag_and_drop_enabled = False
+        if binding in ("all", "arrowkeys", "tab"):
+            self.tab_enabled = False
+        if binding in ("all", "arrowkeys", "up"):
+            self.up_enabled = False
+        if binding in ("all", "arrowkeys", "right"):
+            self.right_enabled = False
+        if binding in ("all", "arrowkeys", "down"):
+            self.down_enabled = False
+        if binding in ("all", "arrowkeys", "left"):
+            self.left_enabled = False
+        if binding in ("all", "arrowkeys", "prior"):
+            self.prior_enabled = False
+        if binding in ("all", "arrowkeys", "next"):
+            self.next_enabled = False
+        if binding in ("all", "rc_delete_column"):
             self.rc_delete_column_enabled = False
-        elif binding == "rc_delete_row":
-            self.rc_delete_row_enabled = False
-        elif binding == "rc_insert_column":
-            self.rc_insert_column_enabled = False
-        elif binding == "rc_insert_row":
-            self.rc_insert_row_enabled = False
-        elif binding == "edit_bindings":
-            self.edit_bindings(False)
-        elif binding == "copy":
-            self.edit_bindings(False, "copy")
-        elif binding == "cut":
-            self.edit_bindings(False, "cut")
-        elif binding == "paste":
-            self.edit_bindings(False, "paste")
-        elif binding == "delete":
-            self.edit_bindings(False, "delete")
-        elif binding in ("right_click_popup_menu", "rc_popup_menu"):
             self.rc_popup_menus_enabled = False
-        elif binding in ("right_click_select", "rc_select"):
             self.rc_select_enabled = False
-        elif binding in ("ctrl_click_select", "ctrl_select"):
+        if binding in ("all", "rc_delete_row"):
+            self.rc_delete_row_enabled = False
+            self.rc_popup_menus_enabled = False
+            self.rc_select_enabled = False
+        if binding in ("all", "rc_insert_column"):
+            self.rc_insert_column_enabled = False
+            self.rc_popup_menus_enabled = False
+            self.rc_select_enabled = False
+        if binding in ("all", "rc_insert_row"):
+            self.rc_insert_row_enabled = False
+            self.rc_popup_menus_enabled = False
+            self.rc_select_enabled = False
+        if binding in ("all", "copy", "edit_bindings"):
+            self.copy_enabled = False
+        if binding in ("all", "cut", "edit_bindings"):
+            self.cut_enabled = False
+        if binding in ("all", "paste", "edit_bindings"):
+            self.paste_enabled = False
+        if binding in ("all", "delete", "edit_bindings"):
+            self.delete_key_enabled = False
+        if binding in ("all", "right_click_popup_menu", "rc_popup_menu"):
+            self.rc_popup_menus_enabled = False
+            self.rc_select_enabled = False
+        if binding in ("all", "right_click_select", "rc_select"):
+            self.rc_select_enabled = False
+        if binding in ("all", "undo", "edit_bindings"):
+            self.undo_enabled = False
+        if binding in ("all", "edit_cell", "edit_bindings"):
+            self.edit_cell_enabled = False
+        if binding in ("all", "edit_header", "edit_bindings"):
+            self.CH.edit_cell_enabled = False
+        if binding in ("all", "edit_index", "edit_bindings"):
+            self.RI.edit_cell_enabled = False
+        if binding in ("all", "ctrl_click_select", "ctrl_select"):
             self.ctrl_select_enabled = False
-        elif binding == "undo":
-            self.edit_bindings(False, "undo")
-        elif binding == "edit_cell":
-            self.edit_bindings(False, "edit_cell")
-        elif binding == "edit_header":
-            self.edit_bindings(False, "edit_header")
-        elif binding == "edit_index":
-            self.edit_bindings(False, "edit_index")
-        self.create_rc_menus()
 
     def reset_mouse_motion_creations(self) -> None:
         if self.current_cursor != "":
@@ -6499,6 +6460,7 @@ class MainTable(tk.Canvas):
                     "activeforeground": self.PAR.ops.popup_menu_highlight_fg,
                 }
             ),
+            sheet_ops=self.PAR.ops,
             border_color=self.PAR.ops.table_selected_cells_border_fg,
             text=text,
             state=state,

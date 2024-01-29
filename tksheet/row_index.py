@@ -153,30 +153,6 @@ class RowIndex(tk.Canvas):
         if set_TL:
             self.TL.set_dimensions(new_w=new_width)
 
-    def enable_bindings(self, binding):
-        if binding == "row_width_resize":
-            self.width_resizing_enabled = True
-        elif binding == "row_height_resize":
-            self.height_resizing_enabled = True
-        elif binding == "double_click_row_resize":
-            self.double_click_resizing_enabled = True
-        elif binding == "row_select":
-            self.row_selection_enabled = True
-        elif binding == "drag_and_drop":
-            self.drag_and_drop_enabled = True
-
-    def disable_bindings(self, binding):
-        if binding == "row_width_resize":
-            self.width_resizing_enabled = False
-        elif binding == "row_height_resize":
-            self.height_resizing_enabled = False
-        elif binding == "double_click_row_resize":
-            self.double_click_resizing_enabled = False
-        elif binding == "row_select":
-            self.row_selection_enabled = False
-        elif binding == "drag_and_drop":
-            self.drag_and_drop_enabled = False
-
     def rc(self, event: object):
         self.mouseclick_outside_editor_or_dropdown_all_canvases(inside=True)
         self.focus_set()
@@ -922,7 +898,9 @@ class RowIndex(tk.Canvas):
     def get_cell_dimensions(self, datarn):
         txt = self.get_valid_cell_data_as_str(datarn, fix=False)
         if txt:
-            self.MT.txt_measure_canvas.itemconfig(self.MT.txt_measure_canvas_text, text=txt, font=self.PAR.ops.index_font)
+            self.MT.txt_measure_canvas.itemconfig(
+                self.MT.txt_measure_canvas_text, text=txt, font=self.PAR.ops.index_font
+            )
             b = self.MT.txt_measure_canvas.bbox(self.MT.txt_measure_canvas_text)
             w = b[2] - b[0] + 7
             h = b[3] - b[1] + 5
@@ -1654,13 +1632,16 @@ class RowIndex(tk.Canvas):
         bg, fg = self.PAR.ops.index_bg, self.PAR.ops.index_fg
         self.text_editor = TextEditor(
             self,
-            menu_kwargs=DotDict({
-                "font": self.PAR.ops.index_font,
-                "foreground": self.PAR.ops.popup_menu_fg,
-                "background": self.PAR.ops.popup_menu_bg,
-                "activebackground": self.PAR.ops.popup_menu_highlight_bg,
-                "activeforeground": self.PAR.ops.popup_menu_highlight_fg,
-            }),
+            menu_kwargs=DotDict(
+                {
+                    "font": self.PAR.ops.index_font,
+                    "foreground": self.PAR.ops.popup_menu_fg,
+                    "background": self.PAR.ops.popup_menu_bg,
+                    "activebackground": self.PAR.ops.popup_menu_highlight_bg,
+                    "activeforeground": self.PAR.ops.popup_menu_highlight_fg,
+                }
+            ),
+            sheet_ops=self.PAR.ops,
             border_color=self.PAR.ops.table_selected_rows_border_fg,
             text=text,
             state=state,
@@ -1759,12 +1740,6 @@ class RowIndex(tk.Canvas):
                     self.MT.row_positions[r],
                 )
                 # self.itemconfig(self.existing_dropdown_canvas_id, anchor=anchor, height=win_h)
-
-    def bind_cell_edit(self, enable=True):
-        if enable:
-            self.edit_cell_enabled = True
-        else:
-            self.edit_cell_enabled = False
 
     def bind_text_editor_destroy(self, binding, r):
         self.text_editor.textedit.bind("<Return>", lambda _x: binding((r, "Return")))

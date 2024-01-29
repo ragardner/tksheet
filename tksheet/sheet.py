@@ -178,25 +178,25 @@ class Sheet(tk.Frame):
         auto_resize_rows: int | None = None,
         set_cell_sizes_on_zoom: bool = False,
         font: tuple[str, int, str] = FontTuple(
-                "Calibri",
-                13 if USER_OS == "darwin" else 11,
-                "normal",
-            ),
+            "Calibri",
+            13 if USER_OS == "darwin" else 11,
+            "normal",
+        ),
         header_font: tuple[str, int, str] = FontTuple(
-                "Calibri",
-                13 if USER_OS == "darwin" else 11,
-                "normal",
-            ),
+            "Calibri",
+            13 if USER_OS == "darwin" else 11,
+            "normal",
+        ),
         index_font: tuple[str, int, str] = FontTuple(
-                "Calibri",
-                13 if USER_OS == "darwin" else 11,
-                "normal",
-            ),  # currently has no effect
+            "Calibri",
+            13 if USER_OS == "darwin" else 11,
+            "normal",
+        ),  # currently has no effect
         popup_menu_font: tuple[str, int, str] = FontTuple(
-                "Calibri",
-                13 if USER_OS == "darwin" else 11,
-                "normal",
-            ),
+            "Calibri",
+            13 if USER_OS == "darwin" else 11,
+            "normal",
+        ),
         max_undos: int = 30,
         column_drag_and_drop_perform: bool = True,
         row_drag_and_drop_perform: bool = True,
@@ -931,21 +931,6 @@ class Sheet(tk.Frame):
     def basic_bindings(self, enable: bool = False) -> Sheet:
         for canvas in (self.MT, self.CH, self.RI, self.TL):
             canvas.basic_bindings(enable)
-        return self
-
-    def edit_bindings(self, enable: bool = False) -> Sheet:
-        if enable:
-            self.MT.edit_bindings(True)
-        elif not enable:
-            self.MT.edit_bindings(False)
-        return self
-
-    def cell_edit_binding(
-        self,
-        enable: bool = False,
-        keys: list = [],
-    ) -> Sheet:
-        self.MT.bind_cell_edit(enable, keys=keys)
         return self
 
     def cut(self, event: object = None) -> Sheet:
@@ -3795,6 +3780,7 @@ class Sheet(tk.Frame):
                 highlightcolor=kwargs["outline_color"],
             )
         self.MT.create_rc_menus()
+        self.MT.key_bindings()
         self.set_refresh_timer(redraw)
         return self
 
