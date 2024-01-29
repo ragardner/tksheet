@@ -5409,7 +5409,6 @@ class MainTable(tk.Canvas):
                             mw = crightgridln - cleftgridln - 1
                             draw_x = crightgridln - 3
                     elif align == "center":
-                        stop = cleftgridln + 5
                         if kwargs:
                             mw = crightgridln - cleftgridln - self.table_txt_height - 2
                             draw_x = cleftgridln + ceil((crightgridln - cleftgridln - self.table_txt_height) / 2)
@@ -5434,12 +5433,9 @@ class MainTable(tk.Canvas):
                             box_w = self.table_txt_height + 1
                             if align == "w":
                                 draw_x += box_w + 3
-                                mw -= box_w + 3
                             elif align == "center":
                                 draw_x += ceil(box_w / 2) + 1
-                                mw -= box_w + 2
-                            else:
-                                mw -= box_w + 1
+                            mw -= box_w + 3
                             try:
                                 draw_check = self.data[datarn][datacn]
                             except Exception:
@@ -5461,7 +5457,7 @@ class MainTable(tk.Canvas):
                         and not (
                             (align == "w" and draw_x > scrollpos_right)
                             or (align == "e" and cleftgridln + 5 > scrollpos_right)
-                            or (align == "center" and stop > scrollpos_right)
+                            or (align == "center" and cleftgridln + 5 > scrollpos_right)
                         )
                     ):
                         draw_y = rtopgridln + self.table_first_ln_ins

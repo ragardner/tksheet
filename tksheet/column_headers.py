@@ -1408,7 +1408,6 @@ class ColumnHeaders(tk.Canvas):
                     draw_x = crightgridln - 3
 
             elif align == "center":
-                # stop = cleftgridln + 5
                 if kwargs:
                     mw = crightgridln - cleftgridln - self.MT.header_txt_height - 2
                     draw_x = cleftgridln + ceil((crightgridln - cleftgridln - self.MT.header_txt_height) / 2)
@@ -1433,12 +1432,9 @@ class ColumnHeaders(tk.Canvas):
                     box_w = self.MT.header_txt_height + 1
                     if align == "w":
                         draw_x += box_w + 3
-                        mw -= box_w + 3
                     elif align == "center":
                         draw_x += ceil(box_w / 2) + 1
-                        mw -= box_w + 2
-                    else:
-                        mw -= box_w + 1
+                    mw -= box_w + 3
                     try:
                         draw_check = (
                             self.MT._headers[datacn]
@@ -1462,9 +1458,9 @@ class ColumnHeaders(tk.Canvas):
                 continue
             lns = lns.split("\n")
             if mw > self.MT.header_txt_width and not (
-                (align == "w" and (draw_x > x_stop))
-                or (align == "e" and (draw_x > x_stop))
-                or (align == "center" and (cleftgridln + 5 > x_stop))
+                (align == "w" and draw_x > scrollpos_right)
+                or (align == "e" and cleftgridln + 5 > scrollpos_right)
+                or (align == "center" and cleftgridln + 5 > scrollpos_right)
             ):
                 for txt in islice(
                     lns,
