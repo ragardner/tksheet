@@ -1,4 +1,8 @@
-# **tksheet** [![PyPI version shields.io](https://img.shields.io/pypi/v/tksheet.svg)](https://pypi.python.org/pypi/tksheet/) ![python](https://img.shields.io/badge/python-3.8+-blue) [![License: MIT](https://img.shields.io/badge/License-MIT%20-blue.svg)](https://github.com/ragardner/tksheet/blob/master/LICENSE.txt) [![GitHub Release Date](https://img.shields.io/github/release-date-pre/ragardner/tksheet.svg)](https://github.com/ragardner/tksheet/releases) [![Downloads](https://img.shields.io/pypi/dm/tksheet.svg)](https://pypi.org/project/tksheet/)
+# tksheet
+
+[![PyPI version shields.io](https://img.shields.io/pypi/v/tksheet.svg)](https://pypi.python.org/pypi/tksheet/) ![python](https://img.shields.io/badge/python-3.8+-blue) [![License: MIT](https://img.shields.io/badge/License-MIT%20-blue.svg)](https://github.com/ragardner/tksheet/blob/master/LICENSE.txt)
+
+[![GitHub Release Date](https://img.shields.io/github/release-date-pre/ragardner/tksheet.svg)](https://github.com/ragardner/tksheet/releases) [![Downloads](https://img.shields.io/pypi/dm/tksheet.svg)](https://pypi.org/project/tksheet/)
 
 ### **A python tkinter table widget**
 
@@ -6,7 +10,7 @@
 |-------------------|------------------------------------------------------------------|
 | Versions 6.x.x -> | [Documentation Wiki](https://github.com/ragardner/tksheet/wiki/Version-6) | |
 | Versions 7.x.x -> | [Documentation Wiki](https://github.com/ragardner/tksheet/wiki/Version-7) | |
-| [Changelog](https://github.com/ragardner/tksheet/blob/master/CHANGELOG.md) | |
+| [Changelog](https://github.com/ragardner/tksheet/blob/master/docs/CHANGELOG.md) | |
 | [Questions](https://github.com/ragardner/tksheet/wiki/Version-7#asking-questions) | |
 | [Issues](https://github.com/ragardner/tksheet/wiki/Version-7#issues) | |
 | [Suggestions](https://github.com/ragardner/tksheet/wiki/Version-7#enhancements-or-suggestions) | |
@@ -20,7 +24,7 @@ This library is maintained with the help of **[others](https://github.com/ragard
 - `edit_cell_validation` has been removed and replaced with the function `edit_validation()`, information [here](https://github.com/ragardner/tksheet/wiki/Version-7#validate-user-cell-edits).
 - Only Python versions >= `3.8` are supported.
 - `tksheet` file names have been changed.
-- Many other smaller changes, see the [changelog](https://github.com/ragardner/tksheet/blob/master/CHANGELOG.md) for more information.
+- Many other smaller changes, see the [changelog](https://github.com/ragardner/tksheet/blob/master/docs/CHANGELOG.md) for more information.
 
 ## **Features**
 

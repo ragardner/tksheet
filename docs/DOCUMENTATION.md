@@ -54,6 +54,7 @@
 - It is licensed under the [MIT license](https://github.com/ragardner/tksheet/blob/master/LICENSE.txt).
 - It works by using tkinter canvases and moving lines, text and rectangles around for only the visible portion of the table.
 - If you are using a version of tksheet that is older than `7.0.0` then you will need the documentation [here](https://github.com/ragardner/tksheet/wiki/Version-6) instead.
+    - In tksheet versions >= `7.0.2` the current version will be at the top of the file `__init__.py`.
 
 ### **Limitations**
 

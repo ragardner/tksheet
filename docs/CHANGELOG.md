@@ -2,6 +2,8 @@
 #### Changed:
 - `Sheet()` initialization parameter `row_index_width` renamed `default_row_index_width`
 - `set_options()` keyword argument `row_index_width` renamed `default_row_index_width`
+- Move doc files to new docs folder
+- Delete `version.py` file, move `__version__` variable to `__init__.py`
 
 ### Version 7.0.1
 #### Removed:
