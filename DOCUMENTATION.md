@@ -690,7 +690,14 @@ Parameters:
 
 #### **Event Data**
 
-Using `extra_bindings()` the function you bind needs to have at least one argument which will receive a `dict`. The values of which can be accessed by dot notation e.g. `event.eventname` or `event.cells.table`. It has the following layout and keys:
+Using `extra_bindings()` the function you bind needs to have at least one argument which will receive a `dict`. The values of which can be accessed by dot notation e.g. `event.eventname` or `event.cells.table`:
+
+```python
+for (row, column), old_value in event.cells.table.items():
+    print (f"R{row}", f"C{column}", "Old Value:", old_value)
+```
+
+It has the following layout and keys:
 
 ```python
 {
@@ -4292,7 +4299,7 @@ unbind_key_text_editor(key: str) -> Sheet
 set_options(redraw: bool = True, **kwargs) -> Sheet
 ```
 
-The list of key word arguments available for `set_options()` are as follows, [see here](https://github.com/ragardner/tksheet/wiki/Version-7#initialization-options) as a guide for what arguments to use.
+The list of key word arguments available for `set_options()` are as follows, [see here](https://github.com/ragardner/tksheet/wiki/Version-7#initialization-options) as a guide for argument types.
 ```python
 auto_resize_columns
 auto_resize_rows
@@ -4425,13 +4432,44 @@ select_all_label
 select_all_accelerator
 undo_label
 undo_accelerator
+
+copy_bindings
+cut_bindings
+paste_bindings
+undo_bindings
+redo_bindings
+delete_bindings
+select_all_bindings
+tab_bindings
+up_bindings
+right_bindings
+down_bindings
+left_bindings
+prior_bindings
+next_bindings
+```
+Notes:
+- A dictionary can be provided instead of using the keyword arguments:
+
+```python
+kwargs = {
+    "copy_bindings": [
+        "<Control-g>",
+        "<Control-G>",
+    ],
+    "cut_bindings": [
+        "<Control-c>",
+        "<Control-C>",
+    ],
+}
+sheet.set_options(**kwargs)
 ```
 
 ___
 
 Get internal storage dictionary of highlights, readonly cells, dropdowns etc. Specifically for cell options.
 ```python
-get_cell_options(key: None | str = None, canvas: Literal["table", "row_index", "header"] = "table",) -> dict
+get_cell_options(key: None | str = None, canvas: Literal["table", "row_index", "header"] = "table") -> dict
 ```
 
 ___
