@@ -204,7 +204,7 @@ class TopLeftRectangle(tk.Canvas):
         elif rect[0] == self.rw_box:
             if self.RI.width_resizing_enabled:
                 self.RI.set_width(
-                    self.MT.default_index_width,
+                    self.MT.default_row_index_width,
                     set_TL=True,
                 )
         elif rect[0] == self.rh_box:

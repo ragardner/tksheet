@@ -1,3 +1,8 @@
+### Version 7.0.2
+#### Changed:
+- `Sheet()` initialization parameter `row_index_width` renamed `default_row_index_width`
+- `set_options()` keyword argument `row_index_width` renamed `default_row_index_width`
+
 ### Version 7.0.1
 #### Removed:
 - Function `cell_edit_binding()` use `enable_bindings()` instead

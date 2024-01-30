@@ -271,12 +271,12 @@ class MainTable(tk.Canvas):
         self.max_index_width = float(kwargs["max_index_width"])
         self.max_column_width = float(kwargs["max_column_width"])
         self.max_header_height = float(kwargs["max_header_height"])
-        if kwargs["row_index_width"] is None:
+        if kwargs["default_row_index_width"] is None:
             self.RI.set_width(70)
-            self.default_index_width = 70
+            self.default_row_index_width = 70
         else:
-            self.RI.set_width(kwargs["row_index_width"])
-            self.default_index_width = kwargs["row_index_width"]
+            self.RI.set_width(kwargs["default_row_index_width"])
+            self.default_row_index_width = kwargs["default_row_index_width"]
         self.default_header_height = (
             kwargs["default_header_height"] if isinstance(kwargs["default_header_height"], str) else "pixels",
             kwargs["default_header_height"]
@@ -4757,7 +4757,7 @@ class MainTable(tk.Canvas):
     ) -> object:
         if newindex is not None:
             if not self._row_index and not isinstance(self._row_index, int):
-                self.RI.set_width(self.default_index_width, set_TL=True)
+                self.RI.set_width(self.default_row_index_width, set_TL=True)
             if isinstance(newindex, (list, tuple)):
                 self._row_index = list(newindex) if isinstance(newindex, tuple) else newindex
             elif isinstance(newindex, int):

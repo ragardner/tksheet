@@ -905,7 +905,7 @@ class RowIndex(tk.Canvas):
             w = b[2] - b[0] + 7
             h = b[3] - b[1] + 5
         else:
-            w = self.MT.default_index_width
+            w = self.MT.default_row_index_width
             h = self.MT.min_row_height
         if self.get_cell_kwargs(datarn, key="dropdown") or self.get_cell_kwargs(datarn, key="checkbox"):
             return w + self.MT.index_txt_height, h
@@ -1004,7 +1004,7 @@ class RowIndex(tk.Canvas):
                 if w > new_width:
                     new_width = w
             else:
-                w = self.MT.default_index_width
+                w = self.MT.default_row_index_width
         else:
             if self.MT.all_rows_displayed:
                 if isinstance(self.MT._row_index, list):
@@ -1035,7 +1035,7 @@ class RowIndex(tk.Canvas):
                         b = qbbox(qtxtm)
                         w = b[2] - b[0] + 10
                     else:
-                        w = self.MT.default_index_width
+                        w = self.MT.default_row_index_width
                     if w < self.MT.min_column_width:
                         w = int(self.MT.min_column_width)
                     elif w > self.MT.max_index_width:
