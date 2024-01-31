@@ -209,6 +209,11 @@ class Sheet(tk.Frame):
         show_horizontal_grid: bool = True,
         display_selected_fg_over_highlights: bool = False,
         show_selected_cells_border: bool = True,
+        # backwards compatibility
+        column_width: int | None = None,
+        header_height: str | int | None = None,
+        row_height: str | int | None = None,
+        row_index_width: int | None = None,
     ) -> None:
         tk.Frame.__init__(
             self,
@@ -268,10 +273,10 @@ class Sheet(tk.Frame):
             max_header_height=max_header_height,
             max_row_height=max_row_height,
             max_index_width=max_index_width,
-            default_row_index_width=default_row_index_width,
-            default_header_height=default_header_height,
-            default_column_width=default_column_width,
-            default_row_height=default_row_height,
+            default_row_index_width=default_row_index_width if row_index_width is None else row_index_width,
+            default_header_height=default_header_height if header_height is None else header_height,
+            default_column_width=default_column_width if column_width is None else column_width,
+            default_row_height=default_row_height if row_height is None else row_height,
             show_index=show_row_index,
             show_header=show_header,
             column_headers_canvas=self.CH,

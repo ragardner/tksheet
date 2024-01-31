@@ -1,6 +1,12 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 import tkinter as tk
+from typing import Literal
+
+from .other_classes import (
+    DotDict,
+)
 
 from .vars import (
     ctrl_key,
@@ -11,16 +17,16 @@ from .vars import (
 class TextEditor_(tk.Text):
     def __init__(
         self,
-        parent,
-        menu_kwargs,
-        sheet_ops,
+        parent: tk.Misc,
+        menu_kwargs: DotDict,
+        sheet_ops: DotDict,
         text: None | str = None,
-        state="normal",
-        bg="white",
-        fg="black",
-        align="w",
-        newline_binding=None,
-    ):
+        state: str = "normal",
+        bg: str = "white",
+        fg: str = "black",
+        align: str = "w",
+        newline_binding: None | Callable = None,
+    ) -> None:
         tk.Text.__init__(
             self,
             parent,
@@ -89,7 +95,7 @@ class TextEditor_(tk.Text):
         self.tk.call("rename", self._w, self._orig)
         self.tk.createcommand(self._w, self._proxy)
 
-    def _proxy(self, command, *args):
+    def _proxy(self, command: object, *args) -> object:
         cmd = (self._orig, command) + args
         try:
             result = self.tk.call(cmd)
@@ -112,29 +118,29 @@ class TextEditor_(tk.Text):
                     )
         return result
 
-    def rc(self, event):
+    def rc(self, event: object) -> None:
         self.focus_set()
         self.rc_popup_menu.tk_popup(event.x_root, event.y_root)
 
-    def select_all(self, event=None):
+    def select_all(self, event: object = None) -> Literal["break"]:
         self.tag_add(tk.SEL, "1.0", tk.END)
         self.mark_set(tk.INSERT, tk.END)
         # self.see(tk.INSERT)
         return "break"
 
-    def cut(self, event=None):
+    def cut(self, event: object = None) -> Literal["break"]:
         self.event_generate(f"<{ctrl_key}-x>")
         return "break"
 
-    def copy(self, event=None):
+    def copy(self, event: object = None) -> Literal["break"]:
         self.event_generate(f"<{ctrl_key}-c>")
         return "break"
 
-    def paste(self, event=None):
+    def paste(self, event: object = None) -> Literal["break"]:
         self.event_generate(f"<{ctrl_key}-v>")
         return "break"
 
-    def undo(self, event=None):
+    def undo(self, event: object = None) -> Literal["break"]:
         self.event_generate(f"<{ctrl_key}-z>")
         return "break"
 
@@ -142,22 +148,22 @@ class TextEditor_(tk.Text):
 class TextEditor(tk.Frame):
     def __init__(
         self,
-        parent,
-        menu_kwargs,
-        sheet_ops,
-        border_color,
-        text=None,
-        state="normal",
-        width=None,
-        height=None,
-        show_border=True,
-        bg="white",
-        fg="black",
-        align="w",
-        r=0,
-        c=0,
-        newline_binding=None,
-    ):
+        parent: tk.Misc,
+        menu_kwargs: DotDict,
+        sheet_ops: DotDict,
+        border_color: str,
+        text: None | str = None,
+        state: str = "normal",
+        width: None | int = None,
+        height: None | int = None,
+        show_border: bool = True,
+        bg: str = "white",
+        fg: str = "black",
+        align: str = "w",
+        r: int = 0,
+        c: int = 0,
+        newline_binding: None | Callable = None,
+    ) -> None:
         tk.Frame.__init__(
             self,
             parent,
@@ -190,15 +196,15 @@ class TextEditor(tk.Frame):
         self.h_ = height
         self.textedit.focus_set()
 
-    def get(self):
+    def get(self) -> str:
         return self.textedit.get("1.0", "end-1c")
 
-    def get_num_lines(self):
+    def get_num_lines(self) -> int:
         return int(self.textedit.index("end-1c").split(".")[0])
 
-    def set_text(self, text):
+    def set_text(self, text) -> None:
         self.textedit.delete(1.0, "end")
         self.textedit.insert(1.0, text)
 
-    def scroll_to_bottom(self):
+    def scroll_to_bottom(self) -> None:
         self.textedit.yview_moveto(1)

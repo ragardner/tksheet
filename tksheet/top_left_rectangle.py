@@ -6,7 +6,7 @@ from .vars import rc_binding
 
 
 class TopLeftRectangle(tk.Canvas):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         tk.Canvas.__init__(
             self,
             kwargs["parent"],
@@ -90,7 +90,7 @@ class TopLeftRectangle(tk.Canvas):
         self.bind("<Double-Button-1>", self.double_b1)
         self.bind(rc_binding, self.rc)
 
-    def redraw(self):
+    def redraw(self) -> None:
         self.itemconfig("rw", fill=self.PAR.ops.top_left_fg)
         self.itemconfig("rh", fill=self.PAR.ops.top_left_fg)
         self.itemconfig(
@@ -98,49 +98,49 @@ class TopLeftRectangle(tk.Canvas):
             fill=self.PAR.ops.top_left_fg,
         )
 
-    def rw_state(self, state="normal"):
+    def rw_state(self, state: str = "normal") -> None:
         self.itemconfig("rw", state=state)
 
-    def rh_state(self, state="normal"):
+    def rh_state(self, state: str = "normal") -> None:
         self.itemconfig("rh", state=state)
 
-    def sa_state(self, state="normal"):
+    def sa_state(self, state: str = "normal") -> None:
         self.itemconfig("sa", state=state)
 
-    def rw_enter(self, event=None):
+    def rw_enter(self, event: object = None) -> None:
         if self.RI.width_resizing_enabled:
             self.itemconfig(
                 "rw",
                 fill=self.PAR.ops.top_left_fg_highlight,
             )
 
-    def sa_enter(self, event=None):
+    def sa_enter(self, event: object = None) -> None:
         if self.MT.select_all_enabled:
             self.itemconfig(
                 self.select_all_tri,
                 fill=self.PAR.ops.top_left_fg_highlight,
             )
 
-    def rh_enter(self, event=None):
+    def rh_enter(self, event: object = None) -> None:
         if self.CH.height_resizing_enabled:
             self.itemconfig(
                 "rh",
                 fill=self.PAR.ops.top_left_fg_highlight,
             )
 
-    def rw_leave(self, event=None):
+    def rw_leave(self, event: object = None) -> None:
         self.itemconfig("rw", fill=self.PAR.ops.top_left_fg)
 
-    def rh_leave(self, event=None):
+    def rh_leave(self, event: object = None) -> None:
         self.itemconfig("rh", fill=self.PAR.ops.top_left_fg)
 
-    def sa_leave(self, event=None):
+    def sa_leave(self, event: object = None) -> None:
         self.itemconfig(
             self.select_all_tri,
             fill=self.PAR.ops.top_left_fg,
         )
 
-    def basic_bindings(self, enable=True):
+    def basic_bindings(self, enable=True) -> None:
         if enable:
             self.bind("<Motion>", self.mouse_motion)
             self.bind("<ButtonPress-1>", self.b1_press)
@@ -156,7 +156,7 @@ class TopLeftRectangle(tk.Canvas):
             self.unbind("<Double-Button-1>")
             self.unbind(rc_binding)
 
-    def set_dimensions(self, new_w=None, new_h=None):
+    def set_dimensions(self, new_w=None, new_h=None) -> None:
         try:
             if new_h is None:
                 h = self.winfo_height()
@@ -184,12 +184,12 @@ class TopLeftRectangle(tk.Canvas):
         self.coords(self.select_all_box, 0, 0, w - 5, h - 5)
         self.MT.recreate_all_selection_boxes()
 
-    def mouse_motion(self, event=None):
+    def mouse_motion(self, event: object = None) -> None:
         self.MT.reset_mouse_motion_creations()
         if self.extra_motion_func is not None:
             self.extra_motion_func(event)
 
-    def b1_press(self, event=None):
+    def b1_press(self, event: object = None) -> None:
         self.focus_set()
         rect = self.find_overlapping(event.x, event.y, event.x, event.y)
         if not rect or rect[0] in (
@@ -220,22 +220,22 @@ class TopLeftRectangle(tk.Canvas):
         if self.extra_b1_press_func is not None:
             self.extra_b1_press_func(event)
 
-    def b1_motion(self, event=None):
+    def b1_motion(self, event: object = None) -> None:
         self.focus_set()
         if self.extra_b1_motion_func is not None:
             self.extra_b1_motion_func(event)
 
-    def b1_release(self, event=None):
+    def b1_release(self, event: object = None) -> None:
         self.focus_set()
         if self.extra_b1_release_func is not None:
             self.extra_b1_release_func(event)
 
-    def double_b1(self, event=None):
+    def double_b1(self, event: object = None) -> None:
         self.focus_set()
         if self.extra_double_b1_func is not None:
             self.extra_double_b1_func(event)
 
-    def rc(self, event=None):
+    def rc(self, event: object = None) -> None:
         self.focus_set()
         if self.extra_rc_func is not None:
             self.extra_rc_func(event)

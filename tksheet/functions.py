@@ -108,7 +108,7 @@ def event_dict(
     being_selected: None | tuple = None,
     named_spans: None | dict = None,
     **kwargs,
-) -> dict:
+) -> EventDataDict:
     return EventDataDict(
         eventname="" if name is None else name,
         sheetname="!sheet" if sheet is None else sheet,
@@ -157,12 +157,12 @@ def event_dict(
     )
 
 
-def change_eventname(event_dict: dict, newname: str) -> EventDataDict:
+def change_eventname(event_dict: EventDataDict, newname: str) -> EventDataDict:
     return EventDataDict({**event_dict, **{"eventname": newname}})
 
 
-def ev_stack_dict(d) -> EventDataDict:
-    return EventDataDict(
+def ev_stack_dict(d: DotDict) -> DotDict:
+    return DotDict(
         name=d["eventname"],
         data=pickle_compress(d),
     )
@@ -297,7 +297,10 @@ def get_n2a(n: int = 0, _type: str = "numbers") -> str:
     return f"{num2alpha(n)} {n + 1}"
 
 
-def get_index_of_gap_in_sorted_integer_seq_forward(seq, start=0):
+def get_index_of_gap_in_sorted_integer_seq_forward(
+    seq: list[int],
+    start: int = 0,
+) -> int | None:
     prevn = seq[start]
     for idx, n in enumerate(islice(seq, start + 1, None), start + 1):
         if n != prevn + 1:
@@ -306,7 +309,10 @@ def get_index_of_gap_in_sorted_integer_seq_forward(seq, start=0):
     return None
 
 
-def get_index_of_gap_in_sorted_integer_seq_reverse(seq, start=0):
+def get_index_of_gap_in_sorted_integer_seq_reverse(
+    seq: list[int],
+    start: int = 0,
+) -> int | None:
     prevn = seq[start]
     for idx, n in zip(range(start, -1, -1), reversed(seq[:start])):
         if n != prevn - 1:
@@ -315,7 +321,11 @@ def get_index_of_gap_in_sorted_integer_seq_reverse(seq, start=0):
     return None
 
 
-def get_seq_without_gaps_at_index(seq, position, get_st_end=False):
+def get_seq_without_gaps_at_index(
+    seq: list[int],
+    position: int,
+    get_st_end: bool = False,
+) -> tuple[int, int] | list[int]:
     start_idx = bisect.bisect_left(seq, position)
     forward_gap = get_index_of_gap_in_sorted_integer_seq_forward(seq, start_idx)
     reverse_gap = get_index_of_gap_in_sorted_integer_seq_reverse(seq, start_idx)
@@ -328,7 +338,7 @@ def get_seq_without_gaps_at_index(seq, position, get_st_end=False):
     return seq
 
 
-def consecutive_chunks(seq: list) -> list:
+def consecutive_chunks(seq: list[object]) -> list[object]:
     if not seq:
         yield seq
     start = 0
@@ -349,7 +359,7 @@ def is_contiguous(seq: list[int]) -> bool:
     return all(i == (prev := prev + 1) for i in itr)
 
 
-def index_exists(seq: Sequence, index: int) -> bool:
+def index_exists(seq: Sequence[object], index: int) -> bool:
     try:
         seq[index]
         return True

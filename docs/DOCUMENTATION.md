@@ -307,8 +307,6 @@ def __init__(
     default_row_index: Literal["letters", "numbers", "both"] = "numbers",
     data_reference: None | Sequence[Sequence[object]] = None,
     data: None | Sequence[Sequence[object]] = None,
-    # either (start row, end row, "rows"), (start column, end column, "rows") or
-    # (cells start row, cells start column, cells end row, cells end column, "cells")  # noqa: E501
     startup_select: tuple[int, int, str] | tuple[int, int, int, int, str] = None,
     startup_focus: bool = True,
     total_columns: int | None = None,

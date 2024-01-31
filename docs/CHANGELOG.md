@@ -4,6 +4,11 @@
 - `set_options()` keyword argument `row_index_width` renamed `default_row_index_width`
 - Move doc files to new docs folder
 - Delete `version.py` file, move `__version__` variable to `__init__.py`
+- Add backwards compatibility for `Sheet()` initialization parameters:
+    - `column_width`
+    - `header_height`
+    - `row_height`
+    - `row_index_width`
 
 ### Version 7.0.1
 #### Removed:

@@ -128,7 +128,7 @@ class RowIndex(tk.Canvas):
         self.default_index = kwargs["default_row_index"].lower()
         self.basic_bindings()
 
-    def basic_bindings(self, enable=True):
+    def basic_bindings(self, enable: bool = True) -> None:
         if enable:
             self.bind("<Motion>", self.mouse_motion)
             self.bind("<ButtonPress-1>", self.b1_press)
@@ -144,7 +144,7 @@ class RowIndex(tk.Canvas):
             self.unbind("<Double-Button-1>")
             self.unbind(rc_binding)
 
-    def set_width(self, new_width, set_TL=False):
+    def set_width(self, new_width: int, set_TL: bool = False) -> None:
         self.current_width = new_width
         try:
             self.config(width=new_width)
@@ -153,7 +153,7 @@ class RowIndex(tk.Canvas):
         if set_TL:
             self.TL.set_dimensions(new_w=new_width)
 
-    def rc(self, event: object):
+    def rc(self, event: object) -> None:
         self.mouseclick_outside_editor_or_dropdown_all_canvases(inside=True)
         self.focus_set()
         popup_menu = None
@@ -181,7 +181,7 @@ class RowIndex(tk.Canvas):
             self.popup_menu_loc = r
             popup_menu.tk_popup(event.x_root, event.y_root)
 
-    def ctrl_b1_press(self, event: object):
+    def ctrl_b1_press(self, event: object) -> None:
         self.mouseclick_outside_editor_or_dropdown_all_canvases(inside=True)
         if (
             (self.drag_and_drop_enabled or self.row_selection_enabled)
@@ -205,7 +205,7 @@ class RowIndex(tk.Canvas):
         elif not self.MT.ctrl_select_enabled:
             self.b1_press(event)
 
-    def ctrl_shift_b1_press(self, event: object):
+    def ctrl_shift_b1_press(self, event: object) -> None:
         self.mouseclick_outside_editor_or_dropdown_all_canvases(inside=True)
         y = event.y
         r = self.MT.identify_row(y=y)
@@ -239,7 +239,7 @@ class RowIndex(tk.Canvas):
         elif not self.MT.ctrl_select_enabled:
             self.shift_b1_press(event)
 
-    def shift_b1_press(self, event: object):
+    def shift_b1_press(self, event: object) -> None:
         self.mouseclick_outside_editor_or_dropdown_all_canvases(inside=True)
         y = event.y
         r = self.MT.identify_row(y=y)
@@ -266,13 +266,22 @@ class RowIndex(tk.Canvas):
                         to_move=sorted(self.MT.get_selected_rows()),
                     )
 
-    def get_shift_selection_box(self, r, min_r):
+    def get_shift_selection_box(self, r: int, min_r: int) -> tuple[int, int, int, int, str]:
         if r > min_r:
             return (min_r, 0, r + 1, len(self.MT.col_positions) - 1, "rows")
         elif r < min_r:
             return (r, 0, min_r + 1, len(self.MT.col_positions) - 1, "rows")
 
-    def create_resize_line(self, x1, y1, x2, y2, width, fill, tag):
+    def create_resize_line(
+        self,
+        x1: int,
+        y1: int,
+        x2: int,
+        y2: int,
+        width: int,
+        fill: str,
+        tag: str | tuple[str],
+    ) -> None:
         if self.hidd_resize_lines:
             t, sh = self.hidd_resize_lines.popitem()
             self.coords(t, x1, y1, x2, y2)
@@ -285,7 +294,7 @@ class RowIndex(tk.Canvas):
             t = self.create_line(x1, y1, x2, y2, width=width, fill=fill, tag=tag)
         self.disp_resize_lines[t] = True
 
-    def delete_resize_lines(self):
+    def delete_resize_lines(self) -> None:
         self.hidd_resize_lines.update(self.disp_resize_lines)
         self.disp_resize_lines = {}
         for t, sh in self.hidd_resize_lines.items():
@@ -293,12 +302,12 @@ class RowIndex(tk.Canvas):
                 self.itemconfig(t, tags=("",), state="hidden")
                 self.hidd_resize_lines[t] = False
 
-    def check_mouse_position_height_resizers(self, x, y):
+    def check_mouse_position_height_resizers(self, x: int, y: int) -> int | None:
         for r, (x1, y1, x2, y2) in self.visible_row_dividers.items():
             if x >= x1 and y >= y1 and x <= x2 and y <= y2:
                 return r
 
-    def mouse_motion(self, event: object):
+    def mouse_motion(self, event: object) -> None:
         if not self.currently_resizing_height and not self.currently_resizing_width:
             x = self.canvasx(event.x)
             y = self.canvasy(event.y)

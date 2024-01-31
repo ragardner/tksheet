@@ -122,7 +122,7 @@ class ColumnHeaders(tk.Canvas):
         self.align = kwargs["header_align"]
         self.basic_bindings()
 
-    def basic_bindings(self, enable=True):
+    def basic_bindings(self, enable: bool = True):
         if enable:
             self.bind("<Motion>", self.mouse_motion)
             self.bind("<ButtonPress-1>", self.b1_press)
@@ -167,7 +167,7 @@ class ColumnHeaders(tk.Canvas):
             self.lines_start_at -= 1
         self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=False, redraw_table=False)
 
-    def set_height(self, new_height, set_TL=False):
+    def set_height(self, new_height: int, set_TL: bool = False) -> None:
         self.current_height = new_height
         try:
             self.config(height=new_height)
@@ -176,7 +176,7 @@ class ColumnHeaders(tk.Canvas):
         if set_TL and self.TL is not None:
             self.TL.set_dimensions(new_h=new_height)
 
-    def rc(self, event: object):
+    def rc(self, event: object) -> None:
         self.mouseclick_outside_editor_or_dropdown_all_canvases(inside=True)
         self.focus_set()
         popup_menu = None
@@ -204,7 +204,7 @@ class ColumnHeaders(tk.Canvas):
             self.popup_menu_loc = c
             popup_menu.tk_popup(event.x_root, event.y_root)
 
-    def ctrl_b1_press(self, event: object):
+    def ctrl_b1_press(self, event: object) -> None:
         self.mouseclick_outside_editor_or_dropdown_all_canvases(inside=True)
         if (
             (self.drag_and_drop_enabled or self.col_selection_enabled)
@@ -228,7 +228,7 @@ class ColumnHeaders(tk.Canvas):
         elif not self.MT.ctrl_select_enabled:
             self.b1_press(event)
 
-    def ctrl_shift_b1_press(self, event: object):
+    def ctrl_shift_b1_press(self, event: object) -> None:
         self.mouseclick_outside_editor_or_dropdown_all_canvases(inside=True)
         x = event.x
         c = self.MT.identify_col(x=x)
@@ -262,7 +262,7 @@ class ColumnHeaders(tk.Canvas):
         elif not self.MT.ctrl_select_enabled:
             self.shift_b1_press(event)
 
-    def shift_b1_press(self, event: object):
+    def shift_b1_press(self, event: object) -> None:
         self.mouseclick_outside_editor_or_dropdown_all_canvases(inside=True)
         x = event.x
         c = self.MT.identify_col(x=x)
@@ -289,13 +289,22 @@ class ColumnHeaders(tk.Canvas):
                         to_move=sorted(self.MT.get_selected_cols()),
                     )
 
-    def get_shift_select_box(self, c, min_c):
+    def get_shift_select_box(self, c: int, min_c: int) -> tuple[int, int, int, int, str]:
         if c > min_c:
             return (0, min_c, len(self.MT.row_positions) - 1, c + 1, "columns")
         elif c < min_c:
             return (0, c, len(self.MT.row_positions) - 1, min_c + 1, "columns")
 
-    def create_resize_line(self, x1, y1, x2, y2, width, fill, tag):
+    def create_resize_line(
+        self,
+        x1: int,
+        y1: int,
+        x2: int,
+        y2: int,
+        width: int,
+        fill: str,
+        tag: str | tuple[str],
+    ) -> None:
         if self.hidd_resize_lines:
             t, sh = self.hidd_resize_lines.popitem()
             self.coords(t, x1, y1, x2, y2)
@@ -308,7 +317,7 @@ class ColumnHeaders(tk.Canvas):
             t = self.create_line(x1, y1, x2, y2, width=width, fill=fill, tag=tag)
         self.disp_resize_lines[t] = True
 
-    def delete_resize_lines(self):
+    def delete_resize_lines(self) -> None:
         self.hidd_resize_lines.update(self.disp_resize_lines)
         self.disp_resize_lines = {}
         for t, sh in self.hidd_resize_lines.items():
@@ -316,12 +325,12 @@ class ColumnHeaders(tk.Canvas):
                 self.itemconfig(t, tags=("",), state="hidden")
                 self.hidd_resize_lines[t] = False
 
-    def check_mouse_position_width_resizers(self, x, y):
+    def check_mouse_position_width_resizers(self, x: int, y: int) -> int | None:
         for c, (x1, y1, x2, y2) in self.visible_col_dividers.items():
             if x >= x1 and y >= y1 and x <= x2 and y <= y2:
                 return c
 
-    def mouse_motion(self, event: object):
+    def mouse_motion(self, event: object) -> None:
         if not self.currently_resizing_height and not self.currently_resizing_width:
             x = self.canvasx(event.x)
             y = self.canvasy(event.y)
