@@ -1170,7 +1170,7 @@ Parameters:
     - `Sequence[Sequence[int | None, int | None], Sequence[int | None, int | None]]` representing `sheet.span(start row, start column, up to but not including row, up to but not including column)` e.g. `sheet.span(0, 0, 2, 2)`
     - `Span` e.g `sheet.span(another_span)`
 - `type_` (`str`) must be either an empty string `""` or one of the following: `"format"`, `"highlight"`, `"dropdown"`, `"checkbox"`, `"readonly"`, `"align"`.
-- `name` (`str`) used for named spans or for identification. If no name is provided then a name is generated for the span which is based on an internal integer ticker and then converted to a string in the same way column names are, e.g. `0` is `"A"`.
+- `name` (`str`) used for named spans or for identification. If no name is provided then a name is generated for the span which is based on an internal integer ticker and then converted to a string in the same way column names are.
 - `table` (`bool`) when `True` will make all functions used with the span target the main table as well as the header/index if those are `True`.
 - `index` (`bool`) when `True` will make all functions used with the span target the index as well as the table/header if those are `True`.
 - `header` (`bool`) when `True` will make all functions used with the span target the header as well as the table/index if those are `True`.
@@ -1491,7 +1491,7 @@ All of a spans modifiable attributes are listed here:
 - `upto_r` (`int`, `None`) represents which row the span ends at, must be a positive `int` or `None`. `None` means always up to and including the last row.
 - `upto_c` (`int`, `None`) represents which column the span ends at, must be a positive `int` or `None`. `None` means always up to and including the last column.
 - `type_` (`str`) must be either an empty string `""` or one of the following: `"format"`, `"highlight"`, `"dropdown"`, `"checkbox"`, `"readonly"`, `"align"`.
-- `name` (`str`) used for named spans or for identification. If no name is provided then a name is generated for the span which is based on an internal integer ticker and then converted to a string in the same way column names are, e.g. `0` is `"A"`.
+- `name` (`str`) used for named spans or for identification. If no name is provided then a name is generated for the span which is based on an internal integer ticker and then converted to a string in the same way column names are.
 - `table` (`bool`) when `True` will make all functions used with the span target the main table as well as the header/index if those are `True`.
 - `index` (`bool`) when `True` will make all functions used with the span target the index as well as the table/header if those are `True`.
 - `header` (`bool`) when `True` will make all functions used with the span target the header as well as the table/index if those are `True`.
