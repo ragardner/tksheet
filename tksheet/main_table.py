@@ -279,16 +279,20 @@ class MainTable(tk.Canvas):
             self.default_row_index_width = kwargs["default_row_index_width"]
         self.default_header_height = (
             kwargs["default_header_height"] if isinstance(kwargs["default_header_height"], str) else "pixels",
-            kwargs["default_header_height"]
-            if isinstance(kwargs["default_header_height"], int)
-            else self.get_lines_cell_height(int(kwargs["default_header_height"]), font=self.PAR.ops.header_font),
+            (
+                kwargs["default_header_height"]
+                if isinstance(kwargs["default_header_height"], int)
+                else self.get_lines_cell_height(int(kwargs["default_header_height"]), font=self.PAR.ops.header_font)
+            ),
         )
         self.default_column_width = kwargs["default_column_width"]
         self.default_row_height = (
             kwargs["default_row_height"] if isinstance(kwargs["default_row_height"], str) else "pixels",
-            kwargs["default_row_height"]
-            if isinstance(kwargs["default_row_height"], int)
-            else self.get_lines_cell_height(int(kwargs["default_row_height"])),
+            (
+                kwargs["default_row_height"]
+                if isinstance(kwargs["default_row_height"], int)
+                else self.get_lines_cell_height(int(kwargs["default_row_height"]))
+            ),
         )
         self.set_table_font_help()
         self.set_header_font_help()
@@ -3325,13 +3329,15 @@ class MainTable(tk.Canvas):
                     chain(
                         [0],
                         (
-                            self.min_row_height
-                            if h == old_min_row_height
-                            else self.default_row_height[1]
-                            if h == old_default_row_height
-                            else self.min_row_height
-                            if h < self.min_row_height
-                            else h
+                            (
+                                self.min_row_height
+                                if h == old_min_row_height
+                                else (
+                                    self.default_row_height[1]
+                                    if h == old_default_row_height
+                                    else self.min_row_height if h < self.min_row_height else h
+                                )
+                            )
                             for h in self.gen_row_heights()
                         ),
                     )
@@ -3434,9 +3440,11 @@ class MainTable(tk.Canvas):
         if self.default_row_height[0] != "pixels":
             self.default_row_height = (
                 self.default_row_height[0] if self.default_row_height[0] != "pixels" else "pixels",
-                self.get_lines_cell_height(int(self.default_row_height[0]))
-                if self.default_row_height[0] != "pixels"
-                else self.default_row_height[1],
+                (
+                    self.get_lines_cell_height(int(self.default_row_height[0]))
+                    if self.default_row_height[0] != "pixels"
+                    else self.default_row_height[1]
+                ),
             )
         self.set_min_column_width()
 
@@ -3467,9 +3475,11 @@ class MainTable(tk.Canvas):
         if self.default_header_height[0] != "pixels":
             self.default_header_height = (
                 self.default_header_height[0] if self.default_header_height[0] != "pixels" else "pixels",
-                self.get_lines_cell_height(int(self.default_header_height[0]), font=self.PAR.ops.header_font)
-                if self.default_header_height[0] != "pixels"
-                else self.default_header_height[1],
+                (
+                    self.get_lines_cell_height(int(self.default_header_height[0]), font=self.PAR.ops.header_font)
+                    if self.default_header_height[0] != "pixels"
+                    else self.default_header_height[1]
+                ),
             )
         self.set_min_column_width()
         self.CH.set_height(self.default_header_height[1], set_TL=True)
@@ -4939,9 +4949,11 @@ class MainTable(tk.Canvas):
                     sc,
                     sr,
                     fill=fill,
-                    outline=self.PAR.ops.table_fg
-                    if self.get_cell_kwargs(datarn, datacn, key="dropdown") and self.PAR.ops.show_dropdown_borders
-                    else "",
+                    outline=(
+                        self.PAR.ops.table_fg
+                        if self.get_cell_kwargs(datarn, datacn, key="dropdown") and self.PAR.ops.show_dropdown_borders
+                        else ""
+                    ),
                     tag="hi",
                     can_width=can_width if (len(kwargs) > 2 and kwargs[2]) else None,
                 )
@@ -5854,9 +5866,9 @@ class MainTable(tk.Canvas):
             0,
             self.col_positions[c2],
             self.CH.current_height - 1,
-            fill=self.PAR.ops.header_selected_columns_bg
-            if type_ == "columns"
-            else self.PAR.ops.header_selected_cells_bg,
+            fill=(
+                self.PAR.ops.header_selected_columns_bg if type_ == "columns" else self.PAR.ops.header_selected_cells_bg
+            ),
             outline="",
             tags=ch_tags,
         )
@@ -5970,9 +5982,9 @@ class MainTable(tk.Canvas):
         )
         self.CH.itemconfig(
             tag_addon,
-            fill=self.PAR.ops.header_selected_columns_bg
-            if type_ == "columns"
-            else self.PAR.ops.header_selected_cells_bg,
+            fill=(
+                self.PAR.ops.header_selected_columns_bg if type_ == "columns" else self.PAR.ops.header_selected_cells_bg
+            ),
             outline="",
             tags=ch_tags,
         )

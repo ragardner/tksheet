@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-from collections.abc import Callable
 import tkinter as tk
+from collections.abc import Callable
 from typing import Literal
 
 from .other_classes import (
     DotDict,
 )
-
 from .vars import (
     ctrl_key,
     rc_binding,

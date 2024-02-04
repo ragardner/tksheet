@@ -1134,9 +1134,11 @@ class RowIndex(tk.Canvas):
                     self.current_width - 1,
                     sr,
                     fill=fill,
-                    outline=self.PAR.ops.index_fg
-                    if self.get_cell_kwargs(datarn, key="dropdown") and self.PAR.ops.show_dropdown_borders
-                    else "",
+                    outline=(
+                        self.PAR.ops.index_fg
+                        if self.get_cell_kwargs(datarn, key="dropdown") and self.PAR.ops.show_dropdown_borders
+                        else ""
+                    ),
                     tag="s",
                 )
         elif not kwargs:

@@ -1154,9 +1154,11 @@ class ColumnHeaders(tk.Canvas):
                     sc,
                     self.current_height - 1,
                     fill=fill,
-                    outline=self.PAR.ops.header_fg
-                    if self.get_cell_kwargs(datacn, key="dropdown") and self.PAR.ops.show_dropdown_borders
-                    else "",
+                    outline=(
+                        self.PAR.ops.header_fg
+                        if self.get_cell_kwargs(datacn, key="dropdown") and self.PAR.ops.show_dropdown_borders
+                        else ""
+                    ),
                     tag="hi",
                 )
         elif not kwargs:

@@ -61,10 +61,10 @@ from .types import (
     CreateSpanTypes,
 )
 from .vars import (
+    USER_OS,
     emitted_events,
     named_span_types,
     rc_binding,
-    USER_OS,
 )
 
 
@@ -257,9 +257,9 @@ class Sheet(tk.Frame):
         self.grid_rowconfigure(1, weight=1)
         self.RI = RowIndex(
             parent=self,
-            row_index_align=self.convert_align(row_index_align)
-            if row_index_align is not None
-            else self.convert_align(index_align),
+            row_index_align=(
+                self.convert_align(row_index_align) if row_index_align is not None else self.convert_align(index_align)
+            ),
             default_row_index=default_row_index,
         )
         self.CH = ColumnHeaders(
@@ -3042,9 +3042,11 @@ class Sheet(tk.Frame):
         if height is not None:
             self.MT.default_header_height = (
                 height if isinstance(height, str) else "pixels",
-                height
-                if isinstance(height, int)
-                else self.MT.get_lines_cell_height(int(height), font=self.ops.header_font),
+                (
+                    height
+                    if isinstance(height, int)
+                    else self.MT.get_lines_cell_height(int(height), font=self.ops.header_font)
+                ),
             )
         return self.MT.default_header_height[1]
 
@@ -3459,9 +3461,9 @@ class Sheet(tk.Frame):
             all_columns_displayed = kwargs["all_displayed"]
         res = self.MT.display_columns(
             columns=None if isinstance(columns, str) and columns.lower() == "all" else columns,
-            all_columns_displayed=True
-            if isinstance(columns, str) and columns.lower() == "all"
-            else all_columns_displayed,
+            all_columns_displayed=(
+                True if isinstance(columns, str) and columns.lower() == "all" else all_columns_displayed
+            ),
             reset_col_positions=reset_col_positions,
             deselect_all=deselect_all,
         )
@@ -3764,9 +3766,11 @@ class Sheet(tk.Frame):
         if "default_row_height" in kwargs:
             self.MT.default_row_height = (
                 kwargs["default_row_height"] if isinstance(kwargs["default_row_height"], str) else "pixels",
-                kwargs["default_row_height"]
-                if isinstance(kwargs["default_row_height"], int)
-                else self.MT.get_lines_cell_height(int(kwargs["default_row_height"])),
+                (
+                    kwargs["default_row_height"]
+                    if isinstance(kwargs["default_row_height"], int)
+                    else self.MT.get_lines_cell_height(int(kwargs["default_row_height"]))
+                ),
             )
         if "default_column_width" in kwargs:
             self.MT.default_column_width = (
@@ -3777,9 +3781,11 @@ class Sheet(tk.Frame):
         if "default_header_height" in kwargs:
             self.MT.default_header_height = (
                 kwargs["default_header_height"] if isinstance(kwargs["default_header_height"], str) else "pixels",
-                kwargs["default_header_height"]
-                if isinstance(kwargs["default_header_height"], int)
-                else self.MT.get_lines_cell_height(int(kwargs["default_header_height"]), font=self.ops.header_font),
+                (
+                    kwargs["default_header_height"]
+                    if isinstance(kwargs["default_header_height"], int)
+                    else self.MT.get_lines_cell_height(int(kwargs["default_header_height"]), font=self.ops.header_font)
+                ),
             )
         if "default_header" in kwargs:
             self.CH.default_header = kwargs["default_header"].lower()

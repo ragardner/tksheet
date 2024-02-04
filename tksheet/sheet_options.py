@@ -4,14 +4,12 @@ from .other_classes import (
     DotDict,
     FontTuple,
 )
-
 from .themes import (
     theme_light_blue,
 )
-
 from .vars import (
-    ctrl_key,
     USER_OS,
+    ctrl_key,
 )
 
 
