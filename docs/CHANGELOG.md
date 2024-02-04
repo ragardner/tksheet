@@ -1,3 +1,36 @@
+### Version 7.0.3
+#### Fixed:
+- Some classifiers in `pyproject.toml`
+
+#### Added:
+- Parameter `emit_event` to the functions:
+    - `span`
+    - `set_data`
+    - `clear`
+    - `insert_row`
+    - `insert_column`
+    - `insert_rows`
+    - `insert_columns`
+    - `del_row`
+    - `del_column`
+    - `del_rows`
+    - `del_columns`
+    - `move_rows`
+    - `move_columns`
+    - `mapping_move_rows`
+    - `mapping_move_columns`
+
+- Attribute `emit_event` to Span objects, default value is `False`
+- Functions `mapping_move_rows` and `mapping_move_columns` to docs
+
+#### Changed:
+- Functions renamed:
+    - `move_rows_using_mapping` -> `mapping_move_rows`
+    - `move_columns_using_mapping` -> `mapping_move_columns`
+- Order of parameters for functions:
+    - `mapping_move_rows`
+    - `mapping_move_columns`
+
 ### Version 7.0.2
 #### Changed:
 - `Sheet()` initialization parameter `row_index_width` renamed `default_row_index_width`

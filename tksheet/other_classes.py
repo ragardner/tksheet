@@ -140,6 +140,8 @@ class Span(dict):
             self["widget"].highlight(self, bg=item)
         elif key == "fg":
             self["widget"].highlight(self, fg=item)
+        elif key == "align":
+            self["widget"].align(self, align=item)
         elif type(item) is dict:  # noqa: E721
             super().__setitem__(key, DotDict(item))
         else:
@@ -231,6 +233,7 @@ class Span(dict):
         ndim: int | None = None,
         convert: Callable | None = None,
         undo: bool | None = None,
+        emit_event: bool | None = None,
         widget: object = None,
         expand: str | None = None,
         formatter_options: dict | None = None,
@@ -267,6 +270,8 @@ class Span(dict):
             self["hdisp"] = hdisp
         if isinstance(undo, bool):
             self["undo"] = undo
+        if isinstance(emit_event, bool):
+            self["emit_event"] = emit_event
 
         if isinstance(ndim, int) and ndim in (0, 1, 2):
             self["ndim"] = ndim

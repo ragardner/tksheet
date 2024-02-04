@@ -8,10 +8,14 @@
 ---
 - [Sheet Colors](https://github.com/ragardner/tksheet/wiki/Version-7#sheet-colors)
 - [Header and Index](https://github.com/ragardner/tksheet/wiki/Version-7#header-and-index)
+---
 - [Bindings and Functionality](https://github.com/ragardner/tksheet/wiki/Version-7#bindings-and-functionality)
+- [tkinter and tksheet Events](https://github.com/ragardner/tksheet/wiki/Version-7#tkinter-and-tksheet-events)
+- [Sheet Languages and Bindings](https://github.com/ragardner/tksheet/wiki/Version-7#sheet-languages-and-bindings)
 ---
 - [Span Objects](https://github.com/ragardner/tksheet/wiki/Version-7#span-objects)
 - [Named Spans](https://github.com/ragardner/tksheet/wiki/Version-7#named-spans)
+---
 - [Getting Sheet Data](https://github.com/ragardner/tksheet/wiki/Version-7#getting-sheet-data)
 - [Setting Sheet Data](https://github.com/ragardner/tksheet/wiki/Version-7#setting-sheet-data)
 ---
@@ -35,7 +39,6 @@
 ---
 - [Cell Text Editor](https://github.com/ragardner/tksheet/wiki/Version-7#cell-text-editor)
 - [Sheet Options and Other Functions](https://github.com/ragardner/tksheet/wiki/Version-7#sheet-options-and-other-functions)
-- [Sheet Languages and Bindings](https://github.com/ragardner/tksheet/wiki/Version-7#sheet-languages-and-bindings)
 ---
 - [Example Loading Data from Excel](https://github.com/ragardner/tksheet/wiki/Version-7#example-loading-data-from-excel)
 - [Example Custom Right Click and Text Editor Validation](https://github.com/ragardner/tksheet/wiki/Version-7#example-custom-right-click-and-text-editor-validation)
@@ -435,7 +438,7 @@ def __init__(
 - `row_index` and `index` are the same, `index` takes priority, same as with `headers` and `header`.
 - `startup_select` either `(start row, end row, "rows")`, `(start column, end column, "rows")` or `(start row, start column, end row, end column, "cells")`. The start/end row/column variables need to be `int`s.
 
-You can change these settings after initialization using the `set_options()` function.
+You can change these settings after initialization using the [`set_options()` function](https://github.com/ragardner/tksheet/wiki/Version-7#sheet-options-and-other-functions).
 
 ---
 # **Sheet Colors**
@@ -631,7 +634,7 @@ ___
 #### **Bind specific table functionality**
 
 This function allows you to bind very specific table functionality to your own functions.
-- If you want less specificity in event names you can also bind all sheet modifying events to a single function, [see here](https://github.com/ragardner/tksheet/wiki/Version-7#bind-tkinter-events).
+- If you want less specificity in event names you can also bind all sheet modifying events to a single function, [see here](https://github.com/ragardner/tksheet/wiki/Version-7#tkinter-and-tksheet-events).
 - If you want to validate/modify user cell edits [see here](https://github.com/ragardner/tksheet/wiki/Version-7#validate-user-cell-edits).
 
 ```python
@@ -878,47 +881,6 @@ Keys:
 
 ___
 
-#### **Bind tkinter events**
-
-With this function you can bind things in the usual way you would in tkinter and they will bind to all the `tksheet` canvases. There are also two special `tksheet` events you can bind, `"<<SheetModified>>"` and `"<<SheetRedrawn>>"`.
-```python
-bind(
-    event: str,
-    func: Callable,
-    add: str | None = None,
-)
-```
-- `add` may or may not work for various bindings depending on whether they are already in use by `tksheet`.
-- **Note** that while a bound event after a paste/undo/redo might have the event name `"edit_table"` it also might have added/deleted rows/columns, refer to the docs on the event data `dict` for more info.
-- `event` the two emitted events are:
-    - `"<<SheetModified>>"` emitted whenever the sheet was modified by the end user by editing cells or adding or deleting rows/columns. The function you bind to this event must be able to receive a `dict` argument which will be the same as [the event data dict](https://github.com/ragardner/tksheet/wiki/Version-7#event-data) but with less specific event names. The possible event names are listed below:
-        - `"edit_table"` when a user has cut, paste, delete or any cell edits including using dropdown boxes etc. in the table.
-        - `"edit_index"` when a user has edited a index cell.
-        - `"edit_header"` when a user has edited a header cell.
-        - `"add_columns"` when a user has inserted columns.
-        - `"add_rows"` when a user has inserted rows.
-        - `"delete_columns"` when a user has deleted columns.
-        - `"delete_rows"` when a user has deleted rows.
-        - `"move_columns"` when a user has dragged and dropped columns.
-        - `"move_rows"` when a user has dragged and dropped rows.
-    - `"<<SheetRedrawn>>"` emitted whenever the sheet GUI was refreshed (redrawn). The data for this event will be different than the usual event data, it is simply:
-        - `{"sheetname": name of your sheet, "header": bool True if the header was redrawn, "row_index": bool True if the index was redrawn, "table": bool True if the the table was redrawn}`
-
-Example:
-```python
-# self.sheet_was_modified is your function
-self.sheet.bind("<<SheetModified>>", self.sheet_was_modified)
-```
-
-___
-
-With this function you can unbind things you have bound using the `bind()` function.
-```python
-unbind(binding: str) -> Sheet
-```
-
-___
-
 #### **Validate user cell edits**
 
 With this function you can validate (modify) most user sheet edits, includes cut, paste, delete (including column/row clear), dropdown boxes and cell edits.
@@ -930,6 +892,8 @@ Parameters:
 
 Notes:
 - For examples of this function see [here](https://github.com/ragardner/tksheet/wiki/Version-7#basic-use) and [here](https://github.com/ragardner/tksheet/wiki/Version-7#example-custom-right-click-and-text-editor-validation).
+
+___
 
 #### **Add commands to the in-built right click popup menu**
 
@@ -975,6 +939,17 @@ redo(event: object = None) -> Sheet
 
 ___
 
+#### **Get the last event data dict**
+
+```python
+@property
+def event() -> EventDataDict
+```
+- e.g. `last_event_data = sheet.event`
+- Will be empty `EventDataDict` if there is no last event.
+
+___
+
 #### **Set focus to the Sheet**
 
 ```python
@@ -990,16 +965,141 @@ focus_set(
 ) -> Sheet
 ```
 
-___
+---
+# **tkinter and tksheet Events**
 
-#### **Get the last event data dict**
+- With the `Sheet.bind()` function you can bind things in the usual way you would in tkinter and they will bind to all the `tksheet` canvases.
+- There are also two special `tksheet` events you can bind, `"<<SheetModified>>"` and `"<<SheetRedrawn>>"`.
 
 ```python
-@property
-def event() -> EventDataDict
+bind(
+    event: str,
+    func: Callable,
+    add: str | None = None,
+)
 ```
-- e.g. `last_event_data = sheet.event`
-- Will be empty `EventDataDict` if there is no last event.
+Parameters:
+- `add` may or may not work for various bindings depending on whether they are already in use by `tksheet`.
+- **Note** that while a bound event after a paste/undo/redo might have the event name `"edit_table"` it also might have added/deleted rows/columns, refer to the docs on the event data `dict` for more info.
+- `event` the two emitted events are:
+    - `"<<SheetModified>>"` emitted whenever the sheet was modified by the end user by editing cells or adding or deleting rows/columns. The function you bind to this event must be able to receive a `dict` argument which will be the same as [the event data dict](https://github.com/ragardner/tksheet/wiki/Version-7#event-data) but with less specific event names. The possible event names are listed below:
+        - `"edit_table"` when a user has cut, paste, delete or any cell edits including using dropdown boxes etc. in the table.
+        - `"edit_index"` when a user has edited a index cell.
+        - `"edit_header"` when a user has edited a header cell.
+        - `"add_columns"` when a user has inserted columns.
+        - `"add_rows"` when a user has inserted rows.
+        - `"delete_columns"` when a user has deleted columns.
+        - `"delete_rows"` when a user has deleted rows.
+        - `"move_columns"` when a user has dragged and dropped columns.
+        - `"move_rows"` when a user has dragged and dropped rows.
+    - `"<<SheetRedrawn>>"` emitted whenever the sheet GUI was refreshed (redrawn). The data for this event will be different than the usual event data, it is simply:
+        - `{"sheetname": name of your sheet, "header": bool True if the header was redrawn, "row_index": bool True if the index was redrawn, "table": bool True if the the table was redrawn}`
+
+Example:
+```python
+# self.sheet_was_modified is your function
+self.sheet.bind("<<SheetModified>>", self.sheet_was_modified)
+```
+
+___
+
+With this function you can unbind things you have bound using the `bind()` function.
+```python
+unbind(binding: str) -> Sheet
+```
+
+---
+# **Sheet Languages and Bindings**
+
+Listed in this section are ways to change some of tksheets language:
+- The in-built right click menu.
+- The in-built functionality keybindings, such as copy, paste etc.
+
+Unfortunately these are currently the only modifications to tksheets language that are possible.
+
+#### **Changing right click menu labels**
+
+You can change the labels for tksheets in-built right click popup menu by using the [`set_options()` function](https://github.com/ragardner/tksheet/wiki/Version-7#sheet-options-and-other-functions) with any of the following keyword arguments:
+
+```python
+edit_header_label
+edit_header_accelerator
+edit_index_label
+edit_index_accelerator
+edit_cell_label
+edit_cell_accelerator
+cut_label
+cut_accelerator
+cut_contents_label
+cut_contents_accelerator
+copy_label
+copy_accelerator
+copy_contents_label
+copy_contents_accelerator
+paste_label
+paste_accelerator
+delete_label
+delete_accelerator
+clear_contents_label
+clear_contents_accelerator
+delete_columns_label
+delete_columns_accelerator
+insert_columns_left_label
+insert_columns_left_accelerator
+insert_column_label
+insert_column_accelerator
+insert_columns_right_label
+insert_columns_right_accelerator
+delete_rows_label
+delete_rows_accelerator
+insert_rows_above_label
+insert_rows_above_accelerator
+insert_rows_below_label
+insert_rows_below_accelerator
+insert_row_label
+insert_row_accelerator
+select_all_label
+select_all_accelerator
+undo_label
+undo_accelerator
+```
+
+Example:
+
+```python
+# changing the copy label to the spanish for Copy
+sheet.set_options(copy_label="Copiar")
+```
+
+#### **Changing key bindings**
+
+You can change the bindings for tksheets in-built functionality such as cut, copy, paste by using the [`set_options()` function](https://github.com/ragardner/tksheet/wiki/Version-7#sheet-options-and-other-functions) with any the following keyword arguments:
+
+```python
+copy_bindings
+cut_bindings
+paste_bindings
+undo_bindings
+redo_bindings
+delete_bindings
+select_all_bindings
+tab_bindings
+up_bindings
+right_bindings
+down_bindings
+left_bindings
+prior_bindings
+next_bindings
+```
+
+The argument must be a `list` of **tkinter** binding `str`s. In the below example the binding for copy is changed to `"<Control-e>"` and `"<Control-E>"`.
+
+```python
+# changing the binding for copy
+sheet.set_options(copy_bindings=["<Control-e>", "<Control-E>"])
+```
+
+The default values for these bindings can be found in the tksheet file `sheet_options.py`.
 
 ---
 # **Span Objects**
@@ -1049,6 +1149,7 @@ span(
     ndim: int = 0,
     convert: object = None,
     undo: bool = False,
+    emit_event: bool = False,
     widget: object = None,
     expand: None | str = None,
     formatter_options: dict | None = None,
@@ -1059,6 +1160,7 @@ Create a span / get an existing span by name
 Returns the created span
 """
 ```
+Parameters:
 - `key` you do not have to provide an argument for `key`, if no argument is provided then the span will be a full sheet span. Otherwise `key` can be the following types which are type hinted as `CreateSpanTypes`:
     - `None`
     - `str` e.g. `sheet.span("A1:F1")`
@@ -1084,6 +1186,7 @@ Returns the created span
     - `2` will force the return of a list of lists.
 - `convert` (`None`, `Callable`) can be used to modify the data using a function before returning it. The data sent to the `convert` function will be as it was before normally returning (after `ndim` has potentially modified it).
 - `undo` (`bool`) is used by data modifying functions that utilize spans. When `True` and if undo is enabled for the sheet then the end user will be able to undo/redo the modification.
+- `emit_event` when `True` and when using data setting functions that utilize spans causes a `"<<SheetModified>>` event to occur if it has been bound, see [here](https://github.com/ragardner/tksheet/wiki/Version-7#tkinter-and-tksheet-events) for more information on binding this event.
 - `widget` (`object`) is the reference to the original sheet which created the span. This can be changed to a different sheet if required e.g. `my_span.widget = new_sheet`.
 - `expand` (`None`, `str`) must be either `None` or:
     - `"table"`/`"both"` expand the span both down and right from the span start to the ends of the table.
@@ -1094,7 +1197,8 @@ Returns the created span
     - When using `set_data()` will format the data being set but **NOT** create a new formatting rule on the sheet.
 - `**kwargs` you can provide additional keyword arguments to the function for example those used in `span.highlight()` or `span.dropdown()` which are used when applying a named span to a table.
 
-To create a named span see [here](https://github.com/ragardner/tksheet/wiki/Version-7#named-spans).
+Notes:
+- To create a named span see [here](https://github.com/ragardner/tksheet/wiki/Version-7#named-spans).
 
 #### **Span creation syntax**
 
@@ -1330,6 +1434,7 @@ span.options(
     ndim: int | None = None,
     convert: Callable | None = None,
     undo: bool | None = None,
+    emit_event: bool | None = None,
     widget: object = None,
     expand: str | None = None,
     formatter_options: dict | None = None,
@@ -1354,6 +1459,7 @@ span.options(
     - `2` will force the return of a list of lists.
 - `convert` (`Callable`, `None`) can be used to modify the data using a function before returning it. The data sent to the `convert` function will be as it was before normally returning (after `ndim` has potentially modified it).
 - `undo` (`bool`, `None`) is used by data modifying functions that utilize spans. When `True` and if undo is enabled for the sheet then the end user will be able to undo/redo the modification.
+- `emit_event` (`bool`, `None`) is used by data modifying functions that utilize spans. When `True` causes a `"<<SheetModified>>` event to occur if it has been bound, see [here](https://github.com/ragardner/tksheet/wiki/Version-7#tkinter-and-tksheet-events) for more information.
 - `widget` (`object`) is the reference to the original sheet which created the span. This can be changed to a different sheet if required e.g. `my_span.widget = new_sheet`.
 - `expand` (`str`, `None`) must be either `None` or:
     - `"table"`/`"both"` expand the span both down and right from the span start to the ends of the table.
@@ -1401,14 +1507,20 @@ All of a spans modifiable attributes are listed here:
     - `2` will force the return of a list of lists.
 - `convert` (`None`, `Callable`) can be used to modify the data using a function before returning it. The data sent to the `convert` function will be as it was before normally returning (after `ndim` has potentially modified it).
 - `undo` (`bool`) is used by data modifying functions that utilize spans. When `True` and if undo is enabled for the sheet then the end user will be able to undo/redo the modification.
+- `emit_event` (`bool`) is used by data modifying functions that utilize spans. When `True` causes a `"<<SheetModified>>` event to occur if it has been bound, see [here](https://github.com/ragardner/tksheet/wiki/Version-7#tkinter-and-tksheet-events) for more information.
 - `widget` (`object`) is the reference to the original sheet which created the span. This can be changed to a different sheet if required e.g. `my_span.widget = new_sheet`.
 - `kwargs` a `dict` containing keyword arguments relevant for functions such as `span.highlight()` or `span.dropdown()` which are used when applying a named span to a table.
 
 If necessary you can also modify these attributes the same way you would an objects. e.g.
 
 ```python
+# span now takes in all columns, including A
 span = self.sheet("A")
 span.upto_c = None
+
+# span now adds to sheets undo stack when using data modifying functions that use spans
+span = self.sheet("A")
+span.undo = True
 ```
 
 #### **Using a span to format data**
@@ -1462,16 +1574,28 @@ span.highlight(
 ) -> Span
 ```
 
-Example:
+There are two ways to create highlights using a span:
+
+Method 1 example using `.highlight()`:
 ```python
 # highlights column A background red, text color black
 sheet["A"].highlight(bg="red", fg="black")
 
-# or
+# the same but after having saved a span
+my_span = sheet["A"]
+my_span.highlight(bg="red", fg="black")
+```
 
+Method 2 example using `.bg`/`.fg`:
+```python
 # highlights column A background red, text color black
 sheet["A"].bg = "red"
 sheet["A"].fg = "black"
+
+# the same but after having saved a span
+my_span = sheet["A"]
+my_span.bg = "red"
+my_span.fg = "black"
 ```
 
 #### **Using a span to delete highlights**
@@ -1596,6 +1720,28 @@ Example:
 sheet["D"].align("right")
 ```
 
+There are two ways to create alignment rules using a span:
+
+Method 1 example using `.align()`:
+```python
+# column D right text alignment
+sheet["D"].align("right")
+
+# the same but after having saved a span
+my_span = sheet["D"]
+my_span.align("right")
+```
+
+Method 2 example using `.align = `:
+```python
+# column D right text alignment
+sheet["D"].align = "right"
+
+# the same but after having saved a span
+my_span = sheet["D"]
+my_span.align = "right"
+```
+
 #### **Using a span to delete text alignment rules**
 
 Delete text alignment rules for parts of the sheet that are covered by the span. Should not be used where there are alignment rules created by named spans, see [Named spans](https://github.com/ragardner/tksheet/wiki/Version-7#named-spans) for more information.
@@ -1617,10 +1763,13 @@ Clear cell data from all cells that are covered by the span.
 ```python
 span.clear(
     undo: bool | None = None,
+    emit_event: bool | None = None,
     redraw: bool = True,
 ) -> Span
 ```
+Parameters:
 - `undo` (`bool`, `None`) When `True` if undo is enabled for the end user they will be able to undo the clear change.
+- `emit_event` when `True` causes a `"<<SheetModified>>` event to occur if it has been bound, see [here](https://github.com/ragardner/tksheet/wiki/Version-7#tkinter-and-tksheet-events) for more information.
 
 Example:
 ```python
@@ -2002,6 +2151,7 @@ ___
 @data.setter
 data(value: object)
 ```
+Notes:
 - Acts like setting an attribute e.g. `sheet.data = [[1, 2, 3], [4, 5, 6]]`
 - Uses the `set_sheet_data()` function and its default arguments.
 
@@ -2021,7 +2171,7 @@ You can also use `sheet.span()`:
 span = self.sheet.span("A1")
 ```
 
-The above span represents the cell `A1` - row 0, column 0. A reserved span attribute named `data` (you can also use `.value`) can then be used to modify sheet data **starting** from cell `A1`, example below:
+The above span example represents the cell `A1` - row 0, column 0. A reserved span attribute named `data` (you can also use `.value`) can then be used to modify sheet data **starting** from cell `A1`. example below:
 
 ```python
 span = self.sheet["A1"]
@@ -2034,7 +2184,7 @@ self.sheet["A1"].data = "new value for cell A1"
 self.sheet.span("A1").data = "new value for cell A1"
 ```
 
-If you provide a list or tuple it will set more than one cell, starting from the spans start cell. In the example below three cells are set in the first row:
+If you provide a list or tuple it will set more than one cell, starting from the spans start cell. In the example below three cells are set in the first row, **starting from cell B1**:
 
 ```python
 self.sheet["B1"].data = ["row 0, column 1 new value (B1)",
@@ -2121,6 +2271,8 @@ self.sheet_span.data = [["",  "A",  "B",  "C"]
                         ["2", "A2", "B2", "C2"]]
 ```
 
+#### **Sheet set data function**
+
 You can also use the `Sheet` function `set_data()`.
 
 ```python
@@ -2128,9 +2280,13 @@ set_data(
     *key: CreateSpanTypes,
     data: object = None,
     undo: bool | None = None,
+    emit_event: bool | None = None,
     redraw: bool = True,
 ) -> EventDataDict
 ```
+Parameters:
+- `undo` when `True` adds the change to the Sheets undo stack.
+- `emit_event` when `True` causes a `"<<SheetModified>>` event to occur if it has been bound, see [here](https://github.com/ragardner/tksheet/wiki/Version-7#tkinter-and-tksheet-events) for more information.
 
 Example:
 ```python
@@ -2148,10 +2304,12 @@ You can clear cells/rows/columns using a [spans `clear()` function](https://gith
 clear(
     *key: CreateSpanTypes,
     undo: bool | None = None,
+    emit_event: bool | None = None,
     redraw: bool = True,
 ) -> EventDataDict
 ```
 - `undo` when `True` adds the change to the Sheets undo stack.
+- `emit_event` when `True` causes a `"<<SheetModified>>` event to occur if it has been bound, see [here](https://github.com/ragardner/tksheet/wiki/Version-7#tkinter-and-tksheet-events) for more information.
 
 #### **Insert a row into the sheet**
 
@@ -2163,6 +2321,7 @@ insert_row(
     row_index: bool = False,
     fill: bool = True,
     undo: bool = False,
+    emit_event: bool = False,
     redraw: bool = True,
 ) -> EventDataDict
 ```
@@ -2172,6 +2331,7 @@ Parameters:
 - `row_index` when `True` assumes there is a row index value at the start of the row.
 - `fill` when `True` any provided rows that are shorter than the Sheets longest row will be filled with empty values up to the length of the longest row.
 - `undo` when `True` adds the change to the Sheets undo stack.
+- `emit_event` when `True` causes a `"<<SheetModified>>` event to occur if it has been bound, see [here](https://github.com/ragardner/tksheet/wiki/Version-7#tkinter-and-tksheet-events) for more information.
 
 ___
 
@@ -2185,6 +2345,7 @@ insert_column(
     header: bool = False,
     fill: bool = True,
     undo: bool = False,
+    emit_event: bool = False,
     redraw: bool = True,
 ) -> EventDataDict
 ```
@@ -2194,6 +2355,7 @@ Parameters:
 - `header` when `True` assumes there is a header value at the start of the column.
 - `fill` when `True` any provided columns that are shorter than the Sheets longest column will be filled with empty values up to the length of the longest column.
 - `undo` when `True` adds the change to the Sheets undo stack.
+- `emit_event` when `True` causes a `"<<SheetModified>>` event to occur if it has been bound, see [here](https://github.com/ragardner/tksheet/wiki/Version-7#tkinter-and-tksheet-events) for more information.
 
 ___
 
@@ -2207,6 +2369,7 @@ insert_columns(
     headers: bool = False,
     create_selections: bool = True,
     undo: bool = False,
+    emit_event: bool = False,
     redraw: bool = True,
 ) -> EventDataDict
 ```
@@ -2217,6 +2380,7 @@ Parameters:
 - `headers` when `True` assumes there are headers values at the start of each column.
 - `fill` when `True` any provided columns that are shorter than the Sheets longest column will be filled with empty values up to the length of the longest column.
 - `undo` when `True` adds the change to the Sheets undo stack.
+- `emit_event` when `True` causes a `"<<SheetModified>>` event to occur if it has been bound, see [here](https://github.com/ragardner/tksheet/wiki/Version-7#tkinter-and-tksheet-events) for more information.
 
 ___
 
@@ -2230,6 +2394,7 @@ insert_rows(
     row_index: bool = False,
     fill: bool = True,
     undo: bool = False,
+    emit_event: bool = False,
     redraw: bool = True,
 ) -> EventDataDict
 ```
@@ -2240,6 +2405,7 @@ Parameters:
 - `row_index` when `True` assumes there are row index values at the start of each row.
 - `fill` when `True` any provided rows that are shorter than the Sheets longest row will be filled with empty values up to the length of the longest row.
 - `undo` when `True` adds the change to the Sheets undo stack.
+- `emit_event` when `True` causes a `"<<SheetModified>>` event to occur if it has been bound, see [here](https://github.com/ragardner/tksheet/wiki/Version-7#tkinter-and-tksheet-events) for more information.
 
 ___
 
@@ -2250,6 +2416,7 @@ del_row(
     idx: int = 0,
     data_indexes: bool = True,
     undo: bool = False,
+    emit_event: bool = False,
     redraw: bool = True,
 ) -> EventDataDict
 ```
@@ -2257,6 +2424,7 @@ Parameters:
 - `idx` is the row to delete.
 - `data_indexes` only applicable when there are hidden rows. When `False` it makes the `idx` represent a displayed row and not the underlying Sheet data row. When `True` the index represent a data index.
 - `undo` when `True` adds the change to the Sheets undo stack.
+- `emit_event` when `True` causes a `"<<SheetModified>>` event to occur if it has been bound, see [here](https://github.com/ragardner/tksheet/wiki/Version-7#tkinter-and-tksheet-events) for more information.
 
 ___
 
@@ -2267,6 +2435,7 @@ del_rows(
     rows: int | Iterator[int],
     data_indexes: bool = True,
     undo: bool = False,
+    emit_event: bool = False,
     redraw: bool = True,
 ) -> EventDataDict
 ```
@@ -2274,6 +2443,7 @@ Parameters:
 - `rows` can be either `int` or an iterable of `int`s representing row indexes.
 - `data_indexes` only applicable when there are hidden rows. When `False` it makes the `rows` indexes represent displayed rows and not the underlying Sheet data rows. When `True` the indexes represent data indexes.
 - `undo` when `True` adds the change to the Sheets undo stack.
+- `emit_event` when `True` causes a `"<<SheetModified>>` event to occur if it has been bound, see [here](https://github.com/ragardner/tksheet/wiki/Version-7#tkinter-and-tksheet-events) for more information.
 
 ___
 
@@ -2284,6 +2454,7 @@ del_column(
     idx: int = 0,
     data_indexes: bool = True,
     undo: bool = False,
+    emit_event: bool = False,
     redraw: bool = True,
 ) -> EventDataDict
 ```
@@ -2291,6 +2462,7 @@ Parameters:
 - `idx` is the column to delete.
 - `data_indexes` only applicable when there are hidden columns. When `False` it makes the `idx` represent a displayed column and not the underlying Sheet data column. When `True` the index represent a data index.
 - `undo` when `True` adds the change to the Sheets undo stack.
+- `emit_event` when `True` causes a `"<<SheetModified>>` event to occur if it has been bound, see [here](https://github.com/ragardner/tksheet/wiki/Version-7#tkinter-and-tksheet-events) for more information.
 
 ___
 
@@ -2301,6 +2473,7 @@ del_columns(
     columns: int | Iterator[int],
     data_indexes: bool = True,
     undo: bool = False,
+    emit_event: bool = False,
     redraw: bool = True,
 ) -> EventDataDict
 ```
@@ -2308,6 +2481,7 @@ Parameters:
 - `columns` can be either `int` or an iterable of `int`s representing column indexes.
 - `data_indexes` only applicable when there are hidden columns. When `False` it makes the `columns` indexes represent displayed columns and not the underlying Sheet data columns. When `True` the indexes represent data indexes.
 - `undo` when `True` adds the change to the Sheets undo stack.
+- `emit_event` when `True` causes a `"<<SheetModified>>` event to occur if it has been bound, see [here](https://github.com/ragardner/tksheet/wiki/Version-7#tkinter-and-tksheet-events) for more information.
 
 ___
 
@@ -2398,6 +2572,7 @@ move_rows(
     data_indexes: bool = False,
     create_selections: bool = True,
     undo: bool = False,
+    emit_event: bool = False,
     redraw: bool = True,
 ) -> tuple[dict, dict, dict]
 ```
@@ -2408,6 +2583,7 @@ Parameters:
 - `data_indexes` is only applicable when there are hidden rows. When `False` it makes the `move_to` and `to_move` indexes represent displayed rows and not the underlying Sheet data rows. When `True` the indexes represent data indexes.
 - `create_selections` creates new selection boxes based on where the rows have moved.
 - `undo` when `True` adds the change to the Sheets undo stack.
+- `emit_event` when `True` causes a `"<<SheetModified>>` event to occur if it has been bound, see [here](https://github.com/ragardner/tksheet/wiki/Version-7#tkinter-and-tksheet-events) for more information.
 
 Notes:
 - The rows in `to_move` do **not** have to be contiguous.
@@ -2424,6 +2600,7 @@ move_columns(
     data_indexes: bool = False,
     create_selections: bool = True,
     undo: bool = False,
+    emit_event: bool = False,
     redraw: bool = True,
 ) -> tuple[dict, dict, dict]
 ```
@@ -2434,9 +2611,60 @@ Parameters:
 - `data_indexes` is only applicable when there are hidden columns. When `False` it makes the `move_to` and `to_move` indexes represent displayed columns and not the underlying Sheet data columns. When `True` the indexes represent data indexes.
 - `create_selections` creates new selection boxes based on where the columns have moved.
 - `undo` when `True` adds the change to the Sheets undo stack.
+- `emit_event` when `True` causes a `"<<SheetModified>>` event to occur if it has been bound, see [here](https://github.com/ragardner/tksheet/wiki/Version-7#tkinter-and-tksheet-events) for more information.
 
 Notes:
 - The columns in `to_move` do **not** have to be contiguous.
+
+___
+
+#### **Move any columns to new locations**
+
+```python
+mapping_move_columns(
+    data_new_idxs: dict[int, int],
+    disp_new_idxs: None | dict[int, int] = None,
+    move_data: bool = True,
+    create_selections: bool = True,
+    data_indexes: bool = False,
+    undo: bool = False,
+    emit_event: bool = False,
+    redraw: bool = True,
+) -> tuple[dict[int, int], dict[int, int], EventDataDict]
+```
+Parameters:
+- `data_new_idxs` (`dict[int, int]`) must be a `dict` where the keys are the data columns to move as `int`s and the values are their new locations as `int`s.
+- `disp_new_idxs` (`None | dict[int, int]`) either `None` or a `dict` where the keys are the displayed columns (basically the column widths) to move as `int`s and the values are their new locations as `int`s. If `None` then no column widths will be moved.
+- `move_data` when `True` moves not just the displayed column positions but the Sheet data as well.
+- `data_indexes` is only applicable when there are hidden columns. When `False` it makes the `move_to` and `to_move` indexes represent displayed columns and not the underlying Sheet data columns. When `True` the indexes represent data indexes.
+- `create_selections` creates new selection boxes based on where the columns have moved.
+- `undo` when `True` adds the change to the Sheets undo stack.
+- `emit_event` when `True` causes a `"<<SheetModified>>` event to occur if it has been bound, see [here](https://github.com/ragardner/tksheet/wiki/Version-7#tkinter-and-tksheet-events) for more information.
+
+___
+
+#### **Move any rows to new locations**
+
+```python
+mapping_move_rows(
+    data_new_idxs: dict[int, int],
+    disp_new_idxs: None | dict[int, int] = None,
+    move_data: bool = True,
+    data_indexes: bool = False,
+    create_selections: bool = True,
+    undo: bool = False,
+    emit_event: bool = False,
+    redraw: bool = True,
+) -> tuple[dict[int, int], dict[int, int], EventDataDict]
+```
+Parameters:
+- `data_new_idxs` (`dict[int, int]`) must be a `dict` where the keys are the data rows to move as `int`s and the values are their new locations as `int`s.
+- `disp_new_idxs` (`None | dict[int, int]`) either `None` or a `dict` where the keys are the displayed rows (basically the row heights) to move as `int`s and the values are their new locations as `int`s. If `None` then no row heights will be moved.
+- `move_data` when `True` moves not just the displayed row positions but the Sheet data as well.
+- `data_indexes` is only applicable when there are hidden rows. When `False` it makes the `move_to` and `to_move` indexes represent displayed rows and not the underlying Sheet data rows. When `True` the indexes represent data indexes.
+- `create_selections` creates new selection boxes based on where the rows have moved.
+- `undo` when `True` adds the change to the Sheets undo stack.
+- `emit_event` when `True` causes a `"<<SheetModified>>` event to occur if it has been bound, see [here](https://github.com/ragardner/tksheet/wiki/Version-7#tkinter-and-tksheet-events) for more information.
 
 ___
 
@@ -3770,7 +3998,7 @@ ___
 ```python
 set_index_width(pixels: int, redraw: bool = True) -> Sheet
 ```
-- Note that it disables auto resizing of index. Use `set_options()` to restore auto resizing.
+- Note that it disables auto resizing of index. Use [`set_options()`](https://github.com/ragardner/tksheet/wiki/Version-7#sheet-options-and-other-functions) to restore auto resizing.
 
 ___
 
@@ -4410,6 +4638,7 @@ popup_menu_highlight_bg
 popup_menu_highlight_fg
 
 # for changing the in-built right click menus labels
+# use a string as an argument
 edit_header_label
 edit_header_accelerator
 edit_index_label
@@ -4451,6 +4680,8 @@ select_all_accelerator
 undo_label
 undo_accelerator
 
+# for changing the keyboard bindings for copy, paste, etc.
+# use a list of strings as an argument
 copy_bindings
 cut_bindings
 paste_bindings
@@ -4572,99 +4803,6 @@ Refresh the table.
 ```python
 redraw(redraw_header: bool = True, redraw_row_index: bool = True) -> Sheet
 ```
-
----
-# **Sheet Languages and Bindings**
-
-Listed in this section are ways to change some of tksheets language:
-- The in-built right click menu.
-- The in-built functionality keybindings, such as copy, paste etc.
-
-Unfortunately these are currently the only modifications to tksheets language that are possible.
-
-#### **Changing right click menu labels**
-
-You can change the labels for tksheets in-built right click popup menu by using the `set_options()` with any of the following keyword arguments:
-
-```python
-edit_header_label
-edit_header_accelerator
-edit_index_label
-edit_index_accelerator
-edit_cell_label
-edit_cell_accelerator
-cut_label
-cut_accelerator
-cut_contents_label
-cut_contents_accelerator
-copy_label
-copy_accelerator
-copy_contents_label
-copy_contents_accelerator
-paste_label
-paste_accelerator
-delete_label
-delete_accelerator
-clear_contents_label
-clear_contents_accelerator
-delete_columns_label
-delete_columns_accelerator
-insert_columns_left_label
-insert_columns_left_accelerator
-insert_column_label
-insert_column_accelerator
-insert_columns_right_label
-insert_columns_right_accelerator
-delete_rows_label
-delete_rows_accelerator
-insert_rows_above_label
-insert_rows_above_accelerator
-insert_rows_below_label
-insert_rows_below_accelerator
-insert_row_label
-insert_row_accelerator
-select_all_label
-select_all_accelerator
-undo_label
-undo_accelerator
-```
-
-Example:
-
-```python
-# changing the copy label to the spanish for Copy
-sheet.set_options(copy_label="Copiar")
-```
-
-#### **Changing key bindings**
-
-You can change the bindings for tksheets in-built functionality such as cut, copy, paste by using the `set_options()` with any the following keyword arguments:
-
-```python
-copy_bindings
-cut_bindings
-paste_bindings
-undo_bindings
-redo_bindings
-delete_bindings
-select_all_bindings
-tab_bindings
-up_bindings
-right_bindings
-down_bindings
-left_bindings
-prior_bindings
-next_bindings
-```
-
-The argument must be a `list` of **tkinter** binding `str`s. In the below example the binding for copy is changed to `"<Control-e>"` and `"<Control-E>"`.
-
-```python
-# changing the binding for copy
-sheet.set_options(copy_bindings=["<Control-e>", "<Control-E>"])
-```
-
-The default values for these bindings can be found in the tksheet file `sheet_options.py`.
 
 ---
 # **Example Loading Data from Excel**

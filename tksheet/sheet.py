@@ -1004,6 +1004,7 @@ class Sheet(tk.Frame):
         ndim: int = 0,
         convert: object = None,
         undo: bool = False,
+        emit_event: bool = False,
         widget: object = None,
         expand: None | str = None,
         formatter_options: dict | None = None,
@@ -1041,6 +1042,7 @@ class Sheet(tk.Frame):
         span.ndim = ndim
         span.convert = convert
         span.undo = undo
+        span.emit_event = emit_event
         span.widget = self if widget is None else widget
         return span
 
@@ -1365,6 +1367,7 @@ class Sheet(tk.Frame):
         *key: CreateSpanTypes,
         data: object = None,
         undo: bool | None = None,
+        emit_event: bool | None = None,
         redraw: bool = True,
     ) -> EventDataDict:
         span = self.span_from_key(*key)
@@ -1634,8 +1637,11 @@ class Sheet(tk.Frame):
             or event_data["cells"]["header"]
             or event_data["added"]["columns"]
             or event_data["added"]["rows"]
-        ) and (undo is True or (undo is None and span.undo)):
-            self.MT.undo_stack.append(ev_stack_dict(event_data))
+        ):
+            if undo is True or (undo is None and span.undo):
+                self.MT.undo_stack.append(ev_stack_dict(event_data))
+            if emit_event is True or (emit_event is None and span.emit_event):
+                self.emit_event("<<SheetModified>>", event_data)
         self.set_refresh_timer(redraw)
         return event_data
 
@@ -1643,6 +1649,7 @@ class Sheet(tk.Frame):
         self,
         *key: CreateSpanTypes,
         undo: bool | None = None,
+        emit_event: bool | None = None,
         redraw: bool = True,
     ) -> EventDataDict:
         span = self.span_from_key(*key)
@@ -1669,10 +1676,11 @@ class Sheet(tk.Frame):
             for r in rows:
                 for c in cols:
                     event_data = clear_t(r, c, quick_tval(r, c), event_data)
-        if (event_data["cells"]["table"] or event_data["cells"]["header"] or event_data["cells"]["index"]) and (
-            undo is True or (undo is None and span.undo)
-        ):
-            self.MT.undo_stack.append(ev_stack_dict(event_data))
+        if event_data["cells"]["table"] or event_data["cells"]["header"] or event_data["cells"]["index"]:
+            if undo is True or (undo is None and span.undo):
+                self.MT.undo_stack.append(ev_stack_dict(event_data))
+            if emit_event is True or (emit_event is None and span.emit_event):
+                self.emit_event("<<SheetModified>>", event_data)
         self.set_refresh_timer(redraw)
         return event_data
 
@@ -1722,6 +1730,7 @@ class Sheet(tk.Frame):
         row_index: bool = False,
         fill: bool = True,
         undo: bool = False,
+        emit_event: bool = False,
         redraw: bool = True,
     ) -> EventDataDict:
         return self.insert_rows(
@@ -1731,6 +1740,7 @@ class Sheet(tk.Frame):
             row_index=row_index,
             fill=fill,
             undo=undo,
+            emit_event=emit_event,
             redraw=redraw,
         )
 
@@ -1742,6 +1752,7 @@ class Sheet(tk.Frame):
         header: bool = False,
         fill: bool = True,
         undo: bool = False,
+        emit_event: bool = False,
         redraw: bool = True,
     ) -> EventDataDict:
         return self.insert_columns(
@@ -1751,6 +1762,7 @@ class Sheet(tk.Frame):
             headers=header,
             fill=fill,
             undo=undo,
+            emit_event=emit_event,
             redraw=redraw,
         )
 
@@ -1762,6 +1774,7 @@ class Sheet(tk.Frame):
         row_index: bool = False,
         fill: bool = True,
         undo: bool = False,
+        emit_event: bool = False,
         redraw: bool = True,
     ) -> EventDataDict:
         total_cols = None
@@ -1829,6 +1842,8 @@ class Sheet(tk.Frame):
         )
         if undo:
             self.MT.undo_stack.append(ev_stack_dict(event_data))
+        if emit_event:
+            self.emit_event("<<SheetModified>>", event_data)
         self.set_refresh_timer(redraw)
         return event_data
 
@@ -1840,6 +1855,7 @@ class Sheet(tk.Frame):
         headers: bool = False,
         fill: bool = True,
         undo: bool = False,
+        emit_event: bool = False,
         redraw: bool = True,
     ) -> EventDataDict:
         old_total = self.MT.equalize_data_row_lengths()
@@ -1915,6 +1931,8 @@ class Sheet(tk.Frame):
         )
         if undo:
             self.MT.undo_stack.append(ev_stack_dict(event_data))
+        if emit_event:
+            self.emit_event("<<SheetModified>>", event_data)
         self.set_refresh_timer(redraw)
         return event_data
 
@@ -1923,12 +1941,14 @@ class Sheet(tk.Frame):
         idx: int = 0,
         data_indexes: bool = True,
         undo: bool = False,
+        emit_event: bool = False,
         redraw: bool = True,
     ) -> EventDataDict:
         return self.del_rows(
             rows=idx,
             data_indexes=data_indexes,
             undo=undo,
+            emit_event=emit_event,
             redraw=redraw,
         )
 
@@ -1939,12 +1959,14 @@ class Sheet(tk.Frame):
         idx: int = 0,
         data_indexes: bool = True,
         undo: bool = False,
+        emit_event: bool = False,
         redraw: bool = True,
     ) -> EventDataDict:
         return self.del_columns(
             columns=idx,
             data_indexes=data_indexes,
             undo=undo,
+            emit_event=emit_event,
             redraw=redraw,
         )
 
@@ -1955,6 +1977,7 @@ class Sheet(tk.Frame):
         rows: int | Iterator[int],
         data_indexes: bool = True,
         undo: bool = False,
+        emit_event: bool = False,
         redraw: bool = True,
     ) -> EventDataDict:
         rows = [rows] if isinstance(rows, int) else sorted(rows)
@@ -1982,6 +2005,8 @@ class Sheet(tk.Frame):
             )
         if undo:
             self.MT.undo_stack.append(ev_stack_dict(event_data))
+        if emit_event:
+            self.emit_event("<<SheetModified>>", event_data)
         self.MT.deselect("all", redraw=False)
         self.set_refresh_timer(redraw)
         return event_data
@@ -1993,6 +2018,7 @@ class Sheet(tk.Frame):
         columns: int | Iterator[int],
         data_indexes: bool = True,
         undo: bool = False,
+        emit_event: bool = False,
         redraw: bool = True,
     ) -> EventDataDict:
         columns = [columns] if isinstance(columns, int) else sorted(columns)
@@ -2020,6 +2046,8 @@ class Sheet(tk.Frame):
             )
         if undo:
             self.MT.undo_stack.append(ev_stack_dict(event_data))
+        if emit_event:
+            self.emit_event("<<SheetModified>>", event_data)
         self.MT.deselect("all", redraw=False)
         self.set_refresh_timer(redraw)
         return event_data
@@ -2104,6 +2132,7 @@ class Sheet(tk.Frame):
         data_indexes: bool = False,
         create_selections: bool = True,
         undo: bool = False,
+        emit_event: bool = False,
         redraw: bool = True,
     ) -> tuple[dict, dict, dict]:
         data_idxs, disp_idxs, event_data = self.MT.move_rows_adjust_options_dict(
@@ -2118,6 +2147,8 @@ class Sheet(tk.Frame):
         )
         if undo:
             self.MT.undo_stack.append(ev_stack_dict(event_data))
+        if emit_event:
+            self.emit_event("<<SheetModified>>", event_data)
         self.set_refresh_timer(redraw)
         return data_idxs, disp_idxs, event_data
 
@@ -2129,6 +2160,7 @@ class Sheet(tk.Frame):
         data_indexes: bool = False,
         create_selections: bool = True,
         undo: bool = False,
+        emit_event: bool = False,
         redraw: bool = True,
     ) -> tuple[dict, dict, dict]:
         data_idxs, disp_idxs, event_data = self.MT.move_columns_adjust_options_dict(
@@ -2143,19 +2175,22 @@ class Sheet(tk.Frame):
         )
         if undo:
             self.MT.undo_stack.append(ev_stack_dict(event_data))
+        if emit_event:
+            self.emit_event("<<SheetModified>>", event_data)
         self.set_refresh_timer(redraw)
         return data_idxs, disp_idxs, event_data
 
-    def move_columns_using_mapping(
+    def mapping_move_columns(
         self,
-        data_new_idxs: dict,
-        disp_new_idxs: None | dict = None,
+        data_new_idxs: dict[int, int],
+        disp_new_idxs: None | dict[int, int] = None,
         move_data: bool = True,
-        create_selections: bool = True,
         data_indexes: bool = False,
+        create_selections: bool = True,
         undo: bool = False,
+        emit_event: bool = False,
         redraw: bool = True,
-    ) -> tuple[dict, dict, dict]:
+    ) -> tuple[dict[int, int], dict[int, int], EventDataDict]:
         data_idxs, disp_idxs, event_data = self.MT.move_columns_adjust_options_dict(
             data_new_idxs=data_new_idxs,
             data_old_idxs=dict(zip(data_new_idxs.values(), data_new_idxs)),
@@ -2167,19 +2202,22 @@ class Sheet(tk.Frame):
         )
         if undo:
             self.MT.undo_stack.append(ev_stack_dict(event_data))
+        if emit_event:
+            self.emit_event("<<SheetModified>>", event_data)
         self.set_refresh_timer(redraw)
         return data_idxs, disp_idxs, event_data
 
-    def move_rows_using_mapping(
+    def mapping_move_rows(
         self,
-        data_new_idxs: dict,
-        disp_new_idxs: None | dict = None,
+        data_new_idxs: dict[int, int],
+        disp_new_idxs: None | dict[int, int] = None,
         move_data: bool = True,
-        create_selections: bool = True,
         data_indexes: bool = False,
+        create_selections: bool = True,
         undo: bool = False,
+        emit_event: bool = False,
         redraw: bool = True,
-    ) -> tuple[dict, dict, dict]:
+    ) -> tuple[dict[int, int], dict[int, int], EventDataDict]:
         data_idxs, disp_idxs, event_data = self.MT.move_rows_adjust_options_dict(
             data_new_idxs=data_new_idxs,
             data_old_idxs=dict(zip(data_new_idxs.values(), data_new_idxs)),
@@ -2191,6 +2229,8 @@ class Sheet(tk.Frame):
         )
         if undo:
             self.MT.undo_stack.append(ev_stack_dict(event_data))
+        if emit_event:
+            self.emit_event("<<SheetModified>>", event_data)
         self.set_refresh_timer(redraw)
         return data_idxs, disp_idxs, event_data
 
