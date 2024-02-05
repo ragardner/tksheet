@@ -1829,7 +1829,6 @@ class MainTable(tk.Canvas):
         current = self.currently_selected().tags
         if r == "all" or (r is None and c is None and cell is None):
             for item in self.get_selection_items(current=False):
-                tags = self.gettags(item)
                 self.delete_item(item)
         elif r in ("allrows", "allcols"):
             for item in self.get_selection_items(
@@ -4410,19 +4409,18 @@ class MainTable(tk.Canvas):
         widths: list | None = None,
         headers: bool = False,
     ) -> tuple[dict, dict, dict]:
+        header_data = {}
         if isinstance(self._headers, list):
             if headers and columns:
                 header_data = {
                     datacn: column[0]
                     for datacn, column in zip(reversed(range(data_ins_col, data_ins_col + numcols)), reversed(columns))
                 }
-            else:
+            elif columns:
                 header_data = {
                     datacn: self.CH.get_value_for_empty_cell(datacn, c_ops=False)
                     for datacn in reversed(range(data_ins_col, data_ins_col + numcols))
                 }
-        else:
-            header_data = {}
         if columns is None:
             columns = {
                 datacn: {
@@ -4460,20 +4458,19 @@ class MainTable(tk.Canvas):
         heights: list | None = None,
         row_index: bool = False,
         total_data_cols=None,
-    ) -> tuple:
+    ) -> tuple[dict, dict, dict]:
+        index_data = {}
         if isinstance(self._row_index, list):
             if row_index and rows:
                 index_data = {
                     datarn: v[0]
                     for datarn, v in zip(reversed(range(data_ins_row, data_ins_row + numrows)), reversed(rows))
                 }
-            else:
+            elif rows:
                 index_data = {
                     datarn: self.RI.get_value_for_empty_cell(datarn, r_ops=False)
                     for datarn in reversed(range(data_ins_row, data_ins_row + numrows))
                 }
-        else:
-            index_data = {}
         if rows is None:
             if total_data_cols is None:
                 total_data_cols = self.total_data_cols()

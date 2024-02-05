@@ -1,3 +1,11 @@
+### Version 7.0.4
+#### Fixed:
+- Additional header cells being created when using `set_data()` or data setting using spans under certain circumstances
+- Additional index cells being created when using `set_data()` or data setting using spans under certain circumstances
+
+#### Added:
+- `Sheet.reset()` function
+
 ### Version 7.0.3
 #### Fixed:
 - Some classifiers in `pyproject.toml`

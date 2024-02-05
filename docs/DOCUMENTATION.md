@@ -2157,6 +2157,38 @@ Notes:
 
 ___
 
+#### **Reset all or specific sheet elements and attributes**
+
+```python
+reset(
+    table: bool = True,
+    header: bool = True,
+    index: bool = True,
+    row_heights: bool = True,
+    column_widths: bool = True,
+    cell_options: bool = True,
+    undo_stack: bool = True,
+    selections: bool = True,
+    sheet_options: bool = False,
+    redraw: bool = True,
+) -> Sheet
+```
+Parameters:
+- `table` when `True` resets the table to an empty list.
+- `header` when `True` resets the header to an empty list.
+- `index` when `True` resets the row index to an empty list.
+- `row_heights` when `True` deletes all displayed row lines.
+- `column_widths` when `True` deletes all displayed column lines.
+- `cell_options` when `True` deletes all dropdowns, checkboxes, highlights, data formatting, etc.
+- `undo_stack` when `True` resets the sheets undo stack to empty.
+- `selections` when `True` deletes all selection boxes.
+- `sheet_options` when `True` resets all the sheets options such as colors, font, popup menu labels and many more to default, for a full list of what's reset see the file `sheet_options.py`.
+
+Notes:
+- This function could be useful when a whole new sheet needs to be loaded.
+
+___
+
 #### **Modifying sheet data**
 
 A `Span` object (more information [here](https://github.com/ragardner/tksheet/wiki/Version-7#span-objects)) is returned when using square brackets on a `Sheet` like so:
@@ -5337,6 +5369,7 @@ class demo(tk.Tk):
         try:
             with open(normpath(filepath), "r") as filehandle:
                 filedata = filehandle.read()
+            self.sheet.reset()
             self.sheet_span.data = [
                 r
                 for r in csv.reader(

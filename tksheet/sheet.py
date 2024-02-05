@@ -1330,6 +1330,40 @@ class Sheet(tk.Frame):
 
     # Setting Sheet Data
 
+    def reset(
+        self,
+        table: bool = True,
+        header: bool = True,
+        index: bool = True,
+        row_heights: bool = True,
+        column_widths: bool = True,
+        cell_options: bool = True,
+        undo_stack: bool = True,
+        selections: bool = True,
+        sheet_options: bool = False,
+        redraw: bool = True,
+    ) -> Sheet:
+        if table:
+            self.MT.data = []
+        if header:
+            self.MT._headers = []
+        if index:
+            self.MT._row_index = []
+        if row_heights:
+            self.MT.set_row_positions([])
+        if column_widths:
+            self.MT.set_col_positions([])
+        if cell_options:
+            self.reset_all_options()
+        if undo_stack:
+            self.reset_undos()
+        if selections:
+            self.MT.deselect(redraw=False)
+        if sheet_options:
+            self.ops = new_sheet_options()
+        self.set_refresh_timer(redraw)
+        return self
+
     def set_sheet_data(
         self,
         data: list | tuple | None = None,
@@ -1342,7 +1376,7 @@ class Sheet(tk.Frame):
         delete_options: bool = False,
     ) -> object:
         if data is None:
-            data = [[]]
+            data = []
         if verify and (not isinstance(data, list) or not all(isinstance(row, list) for row in data)):
             raise ValueError("Data argument must be a list of lists, sublists being rows")
         if delete_options:
@@ -1601,36 +1635,33 @@ class Sheet(tk.Frame):
                 event_data = set_i(startr, data, event_data)
             if header:
                 event_data = set_h(startc, data, event_data)
-
-        # add rows/cols to sheet if required but user cannot undo added rows/cols, only values
+        # add row/column lines (positions) if required
         if self.MT.all_columns_displayed and maxc >= (ncols := len(self.MT.col_positions) - 1):
             event_data = self.MT.add_columns(
                 *self.MT.get_args_for_add_columns(
                     data_ins_col=len(self.MT.col_positions) - 1,
                     displayed_ins_col=len(self.MT.col_positions) - 1,
                     numcols=maxc + 1 - ncols,
-                    columns={},
+                    columns=[],
                     widths=None,
                     headers=False,
                 ),
                 event_data=event_data,
                 create_selections=False,
             )
-            # self.MT.insert_col_positions(widths=maxc + 1 - ncols)
         if self.MT.all_rows_displayed and maxr >= (nrows := len(self.MT.row_positions) - 1):
             event_data = self.MT.add_rows(
                 *self.MT.get_args_for_add_rows(
                     data_ins_row=len(self.MT.row_positions) - 1,
                     displayed_ins_row=len(self.MT.row_positions) - 1,
                     numrows=maxr + 1 - nrows,
-                    rows={},
+                    rows=[],
                     heights=None,
                     row_index=False,
                 ),
                 event_data=event_data,
                 create_selections=False,
             )
-            # self.MT.insert_row_positions(heights=maxr + 1 - nrows)
         if (
             event_data["cells"]["table"]
             or event_data["cells"]["index"]
