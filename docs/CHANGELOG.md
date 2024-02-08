@@ -1,3 +1,7 @@
+### Version 7.0.5
+#### Fixed:
+- Issue #210
+
 ### Version 7.0.4
 #### Fixed:
 - Additional header cells being created when using `set_data()` or data setting using spans under certain circumstances
