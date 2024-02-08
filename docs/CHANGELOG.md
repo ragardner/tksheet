@@ -1,3 +1,6 @@
+### Version 7.0.6
+####
+
 ### Version 7.0.5
 #### Fixed:
 - Issue #210
