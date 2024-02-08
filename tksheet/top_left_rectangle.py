@@ -210,7 +210,7 @@ class TopLeftRectangle(tk.Canvas):
         elif rect[0] == self.rh_box:
             if self.CH.height_resizing_enabled:
                 self.CH.set_height(
-                    self.MT.default_header_height[1],
+                    self.MT.default_header_height,
                     set_TL=True,
                 )
         self.MT.main_table_redraw_grid_and_text(

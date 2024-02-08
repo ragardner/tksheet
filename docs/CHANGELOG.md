@@ -1,5 +1,11 @@
 ### Version 7.0.6
-####
+#### Changed:
+- The following `MainTable` attributes are now simply `int`s which represent pixels instead of `tuple`s:
+    - `default_header_height`
+    - `default_row_height`
+
+#### Other Changes:
+- Simplify internal use of `default_header_height`, `default_row_height`
 
 ### Version 7.0.5
 #### Fixed:
