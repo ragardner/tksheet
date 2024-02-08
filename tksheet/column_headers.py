@@ -963,6 +963,7 @@ class ColumnHeaders(tk.Canvas):
         qbbox = self.MT.txt_measure_canvas.bbox
         qtxtm = self.MT.txt_measure_canvas_text
         new_height = self.MT.min_header_height
+        default_header_height = self.MT.get_default_header_height()
         self.fix_header()
         if text is not None:
             if text:
@@ -997,7 +998,7 @@ class ColumnHeaders(tk.Canvas):
                         b = qbbox(qtxtm)
                         h = b[3] - b[1] + 5
                     else:
-                        h = self.MT.default_header_height
+                        h = default_header_height
                     if h < self.MT.min_header_height:
                         h = int(self.MT.min_header_height)
                     elif h > self.MT.max_header_height:

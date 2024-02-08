@@ -21,10 +21,6 @@ from .other_classes import (
     Span,
 )
 
-from .vars import (
-    backwards_compatibility_keys,
-)
-
 compress = partial(zlib.compress, level=1)
 pickle_obj = partial(pickle.dumps, protocol=pickle.HIGHEST_PROTOCOL)
 unpickle_obj = pickle.loads
@@ -141,11 +137,9 @@ def event_dict(
         ),
         named_spans=DotDict() if named_spans is None else named_spans,
         options=DotDict(),
-        selection_boxes={}
-        if boxes is None
-        else selection_box_tup_to_dict(boxes)
-        if isinstance(boxes, tuple)
-        else boxes,
+        selection_boxes=(
+            {} if boxes is None else selection_box_tup_to_dict(boxes) if isinstance(boxes, tuple) else boxes
+        ),
         selected=tuple() if selected is None else selected,
         being_selected=tuple() if being_selected is None else being_selected,
         data=[] if data is None else data,
@@ -662,12 +656,14 @@ def coords_to_span(
 
 
 def key_to_span(
-    key: str
-    | int
-    | slice
-    | Sequence[int | None, int | None]
-    | Sequence[int | None, int | None, int | None, int | None]
-    | Sequence[Sequence[int | None, int | None], Sequence[int | None, int | None]],
+    key: (
+        str
+        | int
+        | slice
+        | Sequence[int | None, int | None]
+        | Sequence[int | None, int | None, int | None, int | None]
+        | Sequence[Sequence[int | None, int | None], Sequence[int | None, int | None]]
+    ),
     spans: dict[str, Span],
     widget: object = None,
 ) -> Span:
@@ -1250,11 +1246,3 @@ def mod_event_val(
     event_data.value = val
     event_data.loc = loc
     return event_data
-
-
-def backwards_compatibility_x(
-    key: str,
-) -> str:
-    if key in backwards_compatibility_keys:
-        return backwards_compatibility_keys[key]
-    return key

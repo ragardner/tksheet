@@ -13,7 +13,6 @@ from .column_headers import ColumnHeaders
 from .functions import (
     add_highlight,
     add_to_options,
-    backwards_compatibility_x,
     data_to_displayed_idxs,
     del_from_options,
     del_named_span_options,
@@ -63,6 +62,7 @@ from .types import (
 )
 from .vars import (
     USER_OS,
+    backwards_compatibility_keys,
     emitted_events,
     named_span_types,
     rc_binding,
@@ -98,13 +98,13 @@ class Sheet(tk.Frame):
         total_rows: int | None = None,
         default_column_width: int = 120,
         default_header_height: str | int = "1",
+        default_row_index_width: int = 70,
         default_row_height: str | int = "1",
         max_column_width: Literal["inf"] | float = "inf",
         max_row_height: Literal["inf"] | float = "inf",
         max_header_height: Literal["inf"] | float = "inf",
         max_index_width: Literal["inf"] | float = "inf",
         after_redraw_time_ms: int = 20,
-        default_row_index_width: int | None = None,
         set_all_heights_and_widths: bool = False,
         zoom: int = 100,
         align: str = "w",
@@ -228,8 +228,16 @@ class Sheet(tk.Frame):
             "There have been many changes from tksheet version 6.x.x to version 7.x.x. Please see the changelog for more information."
         )
         self.ops = new_sheet_options()
+        if column_width is not None:
+            default_column_width = column_width
+        if header_height is not None:
+            default_header_height = header_height
+        if row_height is not None:
+            default_row_height = row_height
+        if row_index_width is not None:
+            default_row_index_width = row_index_width
         for k, v in locals().items():
-            xk = backwards_compatibility_x(k)
+            xk = backwards_compatibility_keys.get(k, k)
             if xk in self.ops and v != self.ops[xk]:
                 self.ops[xk] = v
         self.ops.from_clipboard_delimiters = (
@@ -275,10 +283,6 @@ class Sheet(tk.Frame):
             max_header_height=max_header_height,
             max_row_height=max_row_height,
             max_index_width=max_index_width,
-            default_row_index_width=default_row_index_width if row_index_width is None else row_index_width,
-            default_header_height=default_header_height if header_height is None else header_height,
-            default_column_width=default_column_width if column_width is None else column_width,
-            default_row_height=default_row_height if row_height is None else row_height,
             show_index=show_row_index,
             show_header=show_header,
             column_headers_canvas=self.CH,
@@ -2116,7 +2120,7 @@ class Sheet(tk.Frame):
             raise ValueError("number argument must be integer and > 0")
         if number > len(self.MT.data):
             if mod_positions:
-                height = self.MT.default_row_height
+                height = self.MT.get_default_row_height()
                 for r in range(number - len(self.MT.data)):
                     self.MT.insert_row_position("end", height)
         elif number < len(self.MT.data):
@@ -2140,7 +2144,7 @@ class Sheet(tk.Frame):
             raise ValueError("number argument must be integer and > 0")
         if number > total_cols:
             if mod_positions:
-                width = self.MT.default_column_width
+                width = self.ops.default_column_width
                 for c in range(number - total_cols):
                     self.MT.insert_col_position("end", width)
         elif number < total_cols:
@@ -3057,19 +3061,18 @@ class Sheet(tk.Frame):
 
     def default_column_width(self, width: int | None = None) -> int:
         if isinstance(width, int):
-            if width < self.MT.min_column_width:
-                self.MT.default_column_width = self.MT.min_column_width
-            else:
-                self.MT.default_column_width = width
-        return self.MT.default_column_width
+            self.ops.default_column_width = width
+        return self.ops.default_column_width
 
     def default_row_height(self, height: int | str | None = None) -> int:
-        self.MT.set_default_row_height(height)
-        return self.MT.default_row_height
+        if isinstance(height, (int, str)):
+            self.ops.default_row_height = height
+        return self.ops.default_row_height
 
     def default_header_height(self, height: int | str | None = None) -> int:
-        self.MT.set_default_header_height(height)
-        return self.MT.default_header_height
+        if isinstance(height, (int, str)):
+            self.ops.default_header_height = height
+        return self.ops.default_header_height
 
     def set_cell_size_to_text(
         self,
@@ -3296,10 +3299,10 @@ class Sheet(tk.Frame):
         if total_rows is None and total_columns is None:
             return len(self.MT.row_positions) - 1, len(self.MT.col_positions) - 1
         if isinstance(total_rows, int):
-            height = self.MT.default_row_height
+            height = self.MT.get_default_row_height()
             self.MT.row_positions = list(accumulate(chain([0], (height for row in range(total_rows)))))
         if isinstance(total_columns, int):
-            width = self.MT.default_column_width
+            width = self.ops.default_column_width
             self.MT.col_positions = list(accumulate(chain([0], (width for column in range(total_columns)))))
         return self
 
@@ -3312,13 +3315,13 @@ class Sheet(tk.Frame):
         return self
 
     def get_example_canvas_column_widths(self, total_cols: int | None = None) -> list[float]:
-        colpos = int(self.MT.default_column_width)
+        colpos = int(self.ops.default_column_width)
         if isinstance(total_cols, int):
             return list(accumulate(chain([0], (colpos for c in range(total_cols)))))
         return list(accumulate(chain([0], (colpos for c in range(len(self.MT.col_positions) - 1)))))
 
     def get_example_canvas_row_heights(self, total_rows: int | None = None) -> list[float]:
-        rowpos = self.MT.default_row_height
+        rowpos = self.MT.get_default_row_height()
         if isinstance(total_rows, int):
             return list(accumulate(chain([0], (rowpos for c in range(total_rows)))))
         return list(accumulate(chain([0], (rowpos for c in range(len(self.MT.row_positions) - 1)))))
@@ -3786,10 +3789,6 @@ class Sheet(tk.Frame):
             )
         if "default_row_height" in kwargs:
             self.default_row_height(kwargs["default_row_height"])
-        if "default_header_height" in kwargs:
-            self.default_header_height(kwargs["default_header_height"])
-        if "default_column_width" in kwargs:
-            self.default_column_width(kwargs["default_column_width"])
         if "default_header" in kwargs:
             self.CH.default_header = kwargs["default_header"].lower()
         if "default_row_index" in kwargs:
@@ -4270,7 +4269,7 @@ class Sheet(tk.Frame):
         if add_rows:
             maxidx = len(self.MT.data) - 1
             total_cols = None
-            height = self.MT.default_row_height
+            height = self.MT.get_default_row_height()
             for rn, v in enumerate(values):
                 if rn > maxidx:
                     if total_cols is None:

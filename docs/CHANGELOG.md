@@ -1,11 +1,16 @@
 ### Version 7.0.6
 #### Changed:
-- The following `MainTable` attributes are now simply `int`s which represent pixels instead of `tuple`s:
+- The following `MainTable` attributes are now simply `int`s or `str`s which represent either pixels or number of lines, instead of `tuple`s:
     - `default_header_height`
     - `default_row_height`
-
-#### Other Changes:
-- Simplify internal use of `default_header_height`, `default_row_height`
+- `Sheet()` init keyword argument `default_row_index_width` now only accepts `int`s
+- Simplify internal use of `default_header_height`, `default_row_height`, `default_column_width`, `default_row_index_width`
+- Move the following attribute locations from `MainTable` to `Sheet.ops`:
+    - `default_header_height`
+    - `default_row_height`
+    - `default_column_width`
+    - `default_row_index_width`
+- Removed some protections for setting default row heights, default column widths smaller than minimum heights/widths
 
 ### Version 7.0.5
 #### Fixed:
