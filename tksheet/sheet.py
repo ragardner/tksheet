@@ -13,6 +13,7 @@ from .column_headers import ColumnHeaders
 from .functions import (
     add_highlight,
     add_to_options,
+    backwards_compatibility_x,
     data_to_displayed_idxs,
     del_from_options,
     del_named_span_options,
@@ -228,8 +229,9 @@ class Sheet(tk.Frame):
         )
         self.ops = new_sheet_options()
         for k, v in locals().items():
-            if k in self.ops and v != self.ops[k]:
-                self.ops[k] = v
+            xk = backwards_compatibility_x(k)
+            if xk in self.ops and v != self.ops[xk]:
+                self.ops[xk] = v
         self.ops.from_clipboard_delimiters = (
             from_clipboard_delimiters
             if isinstance(from_clipboard_delimiters, str)

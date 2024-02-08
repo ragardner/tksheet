@@ -22,3 +22,6 @@ emitted_events: set[str] = {
     "<<SheetModified>>",
     "<<SheetRedrawn>>",
 }
+backwards_compatibility_keys: dict[str, str] = {
+    "font": "table_font",
+}

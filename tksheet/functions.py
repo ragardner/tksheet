@@ -21,6 +21,10 @@ from .other_classes import (
     Span,
 )
 
+from .vars import (
+    backwards_compatibility_keys,
+)
+
 compress = partial(zlib.compress, level=1)
 pickle_obj = partial(pickle.dumps, protocol=pickle.HIGHEST_PROTOCOL)
 unpickle_obj = pickle.loads
@@ -1246,3 +1250,11 @@ def mod_event_val(
     event_data.value = val
     event_data.loc = loc
     return event_data
+
+
+def backwards_compatibility_x(
+    key: str,
+) -> str:
+    if key in backwards_compatibility_keys:
+        return backwards_compatibility_keys[key]
+    return key
