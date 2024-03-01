@@ -237,8 +237,7 @@ class Sheet(tk.Frame):
         if row_index_width is not None:
             default_row_index_width = row_index_width
         for k, v in locals().items():
-            xk = backwards_compatibility_keys.get(k, k)
-            if xk in self.ops and v != self.ops[xk]:
+            if (xk := backwards_compatibility_keys.get(k, k)) in self.ops and v != self.ops[xk]:
                 self.ops[xk] = v
         self.ops.from_clipboard_delimiters = (
             from_clipboard_delimiters
