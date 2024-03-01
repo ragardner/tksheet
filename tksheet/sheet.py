@@ -3774,6 +3774,16 @@ class Sheet(tk.Frame):
                 pass
         return self
 
+    def get_text_editor_value(self) -> str | None:
+        if self.MT.text_editor:
+            return self.MT.text_editor.get()
+
+    def close_text_editor(self, set_data: bool = True) -> Sheet:
+        if self.MT.text_editor:
+            event = ("ButtonPress-1",) if set_data else ("Escape",)
+            self.MT.close_text_editor(editor_info=self.MT.text_editor_loc + event)
+        return self
+
     # Sheet Options and Other Functions
 
     def set_options(self, redraw: bool = True, **kwargs) -> Sheet:

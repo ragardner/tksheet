@@ -2733,7 +2733,6 @@ highlight(
     redraw: bool = True,
 ) -> Span
 ```
-
 Parameters:
 - `key` (`CreateSpanTypes`) either a span or a type which can create a span. See [here](https://github.com/ragardner/tksheet/wiki/Version-7#creating-a-span) for more information on the types that can create a span.
 - `bg` and `fg` arguments use either a tkinter color or a hex `str` color.
@@ -2773,7 +2772,6 @@ dehighlight(
     redraw: bool = True,
 ) -> Span
 ```
-
 Parameters:
 - `key` (`CreateSpanTypes`) either a span or a type which can create a span. See [here](https://github.com/ragardner/tksheet/wiki/Version-7#creating-a-span) for more information on the types that can create a span.
 
@@ -2819,7 +2817,6 @@ dropdown(
     text: None | str = None,
 ) -> Span
 ```
-
 Notes:
 - `selection_function`/`modified_function` (`Callable`, `None`) parameters require either `None` or a function. The function you use needs at least one argument because tksheet will send information to your function about the triggered dropdown.
 - When a user selects an item from the dropdown box the sheet will set the underlying cells data to the selected item, to bind this event use either the `selection_function` argument or see the function `extra_bindings()` with binding `"end_edit_cell"` [here](https://github.com/ragardner/tksheet/wiki/Version-7#bindings-and-functionality).
@@ -2860,7 +2857,6 @@ del_dropdown(
     redraw: bool = True,
 ) -> Span
 ```
-
 Parameters:
 - `key` (`CreateSpanTypes`) either a span or a type which can create a span. See [here](https://github.com/ragardner/tksheet/wiki/Version-7#creating-a-span) for more information on the types that can create a span.
 
@@ -3042,13 +3038,12 @@ checkbox(
     text: str = "",
 ) -> Span
 ```
-
 Notes:
 - `check_function` (`Callable`, `None`) requires either `None` or a function. The function you use needs at least one argument because when the checkbox is clicked it will send information to your function about the clicked checkbox.
 - Use `highlight_cells()` or rows or columns to change the color of the checkbox.
 - Check boxes are always left aligned despite any align settings.
 
- Parameters:
+Parameters:
 - `key` (`CreateSpanTypes`) either a span or a type which can create a span. See [here](https://github.com/ragardner/tksheet/wiki/Version-7#creating-a-span) for more information on the types that can create a span.
 - `checked` is the initial creation value to set the box to.
 - `text` displays text next to the checkbox in the cell, but will not be used as data, data will either be `True` or `False`.
@@ -3079,7 +3074,6 @@ del_checkbox(
     redraw: bool = True,
 ) -> Span
 ```
-
 Parameters:
 - `key` (`CreateSpanTypes`) either a span or a type which can create a span. See [here](https://github.com/ragardner/tksheet/wiki/Version-7#creating-a-span) for more information on the types that can create a span.
 
@@ -3165,7 +3159,6 @@ format(
     **kwargs,
 ) -> Span
 ```
-
 Notes:
 1. When applying multiple overlapping formats with e.g. a formatted cell which overlaps a formatted row, the priority is as follows:
     - Cell formats first.
@@ -3264,7 +3257,6 @@ int_formatter(
     **kwargs,
 ) -> dict
 ```
-
 Parameters:
  - `format_function` (`function`) a function that takes a string and returns an `int`. By default, this is set to the in-built `tksheet.to_int`. This function will always convert float-likes to its floor, for example `"5.9"` will be converted to `5`.
  - `to_str_function` (`function`) By default, this is set to the in-built `tksheet.to_str`, which is a very basic function that will displace the default string representation of the value.
@@ -3423,7 +3415,7 @@ readonly(
     readonly: bool = True,
 ) -> Span
 ```
- Parameters:
+Parameters:
 - `key` (`CreateSpanTypes`) either a span or a type which can create a span. See [here](https://github.com/ragardner/tksheet/wiki/Version-7#creating-a-span) for more information on the types that can create a span.
 - `readonly` (`bool`) `True` to create a rule and `False` to delete one created without the use of named spans.
 
@@ -3450,7 +3442,7 @@ self.sheet.readonly(
     readonly=False,
 )
 ```
- Parameters:
+Parameters:
 - `key` (`CreateSpanTypes`) either a span or a type which can create a span. See [here](https://github.com/ragardner/tksheet/wiki/Version-7#creating-a-span) for more information on the types that can create a span.
 - `readonly` (`bool`) `True` to create a rule and `False` to delete one created without the use of named spans.
 
@@ -3537,8 +3529,7 @@ align(
     redraw: bool = True,
 ) -> Span
 ```
-
- Parameters:
+Parameters:
 - `key` (`CreateSpanTypes`) either a span or a type which can create a span. See [here](https://github.com/ragardner/tksheet/wiki/Version-7#creating-a-span) for more information on the types that can create a span.
 - `align` (`str`, `None`) must be one of the following:
     - `"w"`, `"west"`, `"left"`
@@ -3559,8 +3550,7 @@ del_align(
     redraw: bool = True,
 ) -> Span
 ```
-
- Parameters:
+Parameters:
 - `key` (`CreateSpanTypes`) either a span or a type which can create a span. See [here](https://github.com/ragardner/tksheet/wiki/Version-7#creating-a-span) for more information on the types that can create a span.
 
 #### **Get existing specific text alignments**
@@ -4544,6 +4534,29 @@ set_text_editor_value(
     c: int | None = None,
 ) -> Sheet
 ```
+
+___
+
+#### **Close any existing text editor**
+
+```python
+close_text_editor(set_data: bool = True) -> Sheet
+```
+Notes:
+- Also closes any existing `"normal"` state dropdown box.
+
+Parameters:
+- `set_data` (`bool`) when `True` sets the cell data to the text editor value (if it is valid). When `False` the text editor is simply destroyed.
+
+___
+
+#### **Get an existing text editors value**
+
+```python
+get_text_editor_value() -> str | None
+```
+Notes:
+- `None` is returned if no text editor exists, a `str` of the text editors value will be returned if it does.
 
 ___
 
