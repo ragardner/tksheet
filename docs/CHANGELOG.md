@@ -12,6 +12,11 @@
     - `default_row_index_width`
 - Removed some protections for setting default row heights, default column widths smaller than minimum heights/widths
 
+#### Added:
+- Functions to address issue [#212](https://github.com/ragardner/tksheet/issues/212):
+    - `get_text_editor_value`
+    - `close_text_editor`
+
 ### Version 7.0.5
 #### Fixed:
 - Issue #210
