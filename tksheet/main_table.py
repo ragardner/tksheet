@@ -6566,8 +6566,6 @@ class MainTable(tk.Canvas):
         self,
         editor_info: tuple | None = None,
     ) -> str | None:
-        if not self.text_editor:
-            return "break"
         # checking if text editor should be closed or not
         focused = self.focus_get()
         try:
