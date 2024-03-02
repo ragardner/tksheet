@@ -3455,7 +3455,7 @@ class Sheet(tk.Frame):
         self.MT.set_yviews(option, position)
         return self
 
-    def set_view(self, x_args: [str, float], y_args: [str, float]) -> Sheet:
+    def set_view(self, x_args: list[str, float], y_args: list[str, float]) -> Sheet:
         self.MT.set_view(x_args, y_args)
         return self
 

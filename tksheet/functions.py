@@ -336,7 +336,7 @@ def get_seq_without_gaps_at_index(
     return seq
 
 
-def consecutive_chunks(seq: list[object]) -> list[object]:
+def consecutive_chunks(seq: list[object]) -> Generator[object]:
     if not seq:
         yield seq
     start = 0
