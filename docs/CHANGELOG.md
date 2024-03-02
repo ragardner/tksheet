@@ -1,3 +1,6 @@
+### Version 7.0.7
+####
+
 ### Version 7.0.6
 #### Changed:
 - The following `MainTable` attributes are now simply `int`s or `str`s which represent either pixels or number of lines, instead of `tuple`s:
