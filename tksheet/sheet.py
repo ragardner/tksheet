@@ -34,6 +34,7 @@ from .functions import (
     span_froms,
     span_ranges,
     tksheet_type_error,
+    unpack,
 )
 from .main_table import MainTable
 from .other_classes import (
@@ -42,6 +43,7 @@ from .other_classes import (
     EventDataDict,
     FontTuple,
     GeneratedMouseEvent,
+    Node,
     Span,
 )
 from .row_index import RowIndex
@@ -210,6 +212,7 @@ class Sheet(tk.Frame):
         show_horizontal_grid: bool = True,
         display_selected_fg_over_highlights: bool = False,
         show_selected_cells_border: bool = True,
+        treeview: bool = False,
         # backwards compatibility
         column_width: int | None = None,
         header_height: str | int | None = None,
@@ -236,6 +239,9 @@ class Sheet(tk.Frame):
             default_row_height = row_height
         if row_index_width is not None:
             default_row_index_width = row_index_width
+        if treeview:
+            auto_resize_row_index = False
+            index_align = "w"
         for k, v in locals().items():
             if (xk := backwards_compatibility_keys.get(k, k)) in self.ops and v != self.ops[xk]:
                 self.ops[xk] = v
@@ -1811,6 +1817,7 @@ class Sheet(tk.Frame):
         fill: bool = True,
         undo: bool = False,
         emit_event: bool = False,
+        create_selections: bool = True,
         redraw: bool = True,
     ) -> EventDataDict:
         total_cols = None
@@ -1875,6 +1882,7 @@ class Sheet(tk.Frame):
                 boxes=self.MT.get_boxes(),
                 selected=self.MT.currently_selected(),
             ),
+            create_selections=create_selections,
         )
         if undo:
             self.MT.undo_stack.append(ev_stack_dict(event_data))
@@ -1892,6 +1900,7 @@ class Sheet(tk.Frame):
         fill: bool = True,
         undo: bool = False,
         emit_event: bool = False,
+        create_selections: bool = True,
         redraw: bool = True,
     ) -> EventDataDict:
         old_total = self.MT.equalize_data_row_lengths()
@@ -1964,6 +1973,7 @@ class Sheet(tk.Frame):
                 boxes=self.MT.get_boxes(),
                 selected=self.MT.currently_selected(),
             ),
+            create_selections=create_selections,
         )
         if undo:
             self.MT.undo_stack.append(ev_stack_dict(event_data))
@@ -2257,7 +2267,7 @@ class Sheet(tk.Frame):
         data_idxs, disp_idxs, event_data = self.MT.move_rows_adjust_options_dict(
             data_new_idxs=data_new_idxs,
             data_old_idxs=dict(zip(data_new_idxs.values(), data_new_idxs)),
-            totalcols=None,
+            totalrows=None,
             disp_new_idxs=disp_new_idxs,
             move_data=move_data,
             create_selections=create_selections,
@@ -3494,12 +3504,12 @@ class Sheet(tk.Frame):
             self.set_refresh_timer(redraw if redraw else refresh)
         return res
 
-    # uses displayed indexes
     def hide_columns(
         self,
         columns: int | set | Iterator[int] = set(),
         redraw: bool = True,
         deselect_all: bool = True,
+        data_indexes: bool = False,
     ) -> Sheet:
         if isinstance(columns, int):
             _columns = {columns}
@@ -3512,13 +3522,17 @@ class Sheet(tk.Frame):
         if self.MT.all_columns_displayed:
             _columns = [c for c in range(self.MT.total_data_cols()) if c not in _columns]
         else:
-            _columns = [e for c, e in enumerate(self.MT.displayed_columns) if c not in _columns]
+            if data_indexes:
+                _columns = [c for c in self.MT.displayed_columns if c not in _columns]
+            else:
+                _columns = [e for c, e in enumerate(self.MT.displayed_columns) if c not in _columns]
         self.display_columns(
             columns=_columns,
             all_columns_displayed=False,
-            redraw=redraw,
+            redraw=False,
             deselect_all=deselect_all,
         )
+        self.set_refresh_timer(redraw)
         return self
 
     def all_columns_displayed(self, a: bool | None = None) -> bool:
@@ -3558,12 +3572,12 @@ class Sheet(tk.Frame):
             self.set_refresh_timer(redraw if redraw else refresh)
         return res
 
-    # uses displayed indexes
     def hide_rows(
         self,
         rows: int | set | Iterator[int] = set(),
         redraw: bool = True,
         deselect_all: bool = True,
+        data_indexes: bool = False,
     ) -> Sheet:
         if isinstance(rows, int):
             _rows = {rows}
@@ -3576,13 +3590,38 @@ class Sheet(tk.Frame):
         if self.MT.all_rows_displayed:
             _rows = [r for r in range(self.MT.total_data_rows()) if r not in _rows]
         else:
-            _rows = [e for r, e in enumerate(self.MT.displayed_rows) if r not in _rows]
+            if data_indexes:
+                _rows = [r for r in self.MT.displayed_rows if r not in _rows]
+            else:
+                _rows = [e for r, e in enumerate(self.MT.displayed_rows) if r not in _rows]
         self.display_rows(
             rows=_rows,
             all_rows_displayed=False,
-            redraw=redraw,
+            redraw=False,
             deselect_all=deselect_all,
         )
+        self.set_refresh_timer(redraw)
+        return self
+
+    def show_rows(
+        self,
+        rows: int | Iterator[int],
+        redraw: bool = True,
+        deselect_all: bool = True,
+    ) -> Sheet:
+        if isinstance(rows, int):
+            rows = [rows]
+        for row in rows:
+            idx = bisect_left(self.MT.displayed_rows, row)
+            if len(self.MT.displayed_rows) == idx or self.MT.displayed_rows[idx] != row:
+                self.MT.displayed_rows.insert(idx, row)
+        self.display_rows(
+            rows=self.MT.displayed_rows,
+            all_rows_displayed=self.MT.all_rows_displayed,
+            redraw=False,
+            deselect_all=deselect_all,
+        )
+        self.set_refresh_timer(redraw)
         return self
 
     def all_rows_displayed(self, a: bool | None = None) -> bool:
@@ -3944,6 +3983,325 @@ class Sheet(tk.Frame):
 
     def refresh(self, redraw_header: bool = True, redraw_row_index: bool = True) -> Sheet:
         self.MT.main_table_redraw_grid_and_text(redraw_header=redraw_header, redraw_row_index=redraw_row_index)
+        return self
+
+    # Tags
+
+    def tag_cell(
+        self,
+        cell: tuple[int, int],
+        *tags,
+    ) -> Sheet:
+        if (
+            not isinstance(cell, tuple)
+            or not len(cell) == 2
+            or not isinstance(cell[0], int)
+            or not isinstance(cell[1], int)
+        ):
+            raise ValueError("'cell' argument must be tuple[int, int].")
+        for tag in unpack(tags):
+            if tag not in self.MT.tagged_cells:
+                self.MT.tagged_cells[tag] = set()
+            self.MT.tagged_cells[tag].add(cell)
+
+    def tag_rows(
+        self,
+        rows: int | Iterator[int],
+        *tags,
+    ) -> Sheet:
+        if isinstance(rows, int):
+            rows = [rows]
+        for tag in unpack(tags):
+            if tag not in self.MT.tagged_rows:
+                self.MT.tagged_rows[tag] = set()
+            self.MT.tagged_rows[tag].update(rows)
+
+    def tag_columns(
+        self,
+        columns: int | Iterator[int],
+        *tags,
+    ) -> Sheet:
+        if isinstance(columns, int):
+            columns = [columns]
+        for tag in unpack(tags):
+            if tag not in self.MT.tagged_columns:
+                self.MT.tagged_columns[tag] = set()
+            self.MT.tagged_columns[tag].update(columns)
+
+    def tag_has(
+        self,
+        tag: str,
+    ) -> tuple[set[tuple[int, int]], set[int], set[int]]:
+        return DotDict(
+            cells=self.MT.tagged_cells[tag] if tag in self.MT.tagged_cells else set(),
+            rows=self.MT.tagged_rows[tag] if tag in self.MT.tagged_rows else set(),
+            columns=self.MT.tagged_columns[tag] if tag in self.MT.tagged_columns else set(),
+        )
+
+    # Treeview Mode
+
+    def insert(
+        self,
+        text: str,
+        iid: None | str = None,
+        parent: str = "",
+        index: None | int = None,
+        values: None | list = None,
+        create_selections: bool = False,
+    ) -> str:
+        if iid is None:
+            i = 0
+            while (iid := f"{i}") in self.RI.tree:
+                i += 1
+        iid, pid = iid.lower(), parent.lower()
+        parent_node = self.RI.tree[pid] if parent else ""
+        if iid in self.RI.tree:
+            raise ValueError(f"iid {iid} already exists.")
+        self.RI.tree[iid] = Node(text, iid, parent_node)
+        if parent_node:
+            if isinstance(index, int):
+                idx = self.RI.tree_rns[pid] + index + 1
+                for count, cid in enumerate(self.get_children(pid)):
+                    if count >= index:
+                        break
+                    idx += sum(1 for _ in self.RI.get_iid_descendants(cid))
+                self.RI.tree[pid].children.insert(index, self.RI.tree[iid])
+            else:
+                idx = self.RI.tree_rns[pid] + sum(1 for _ in self.RI.get_iid_descendants(pid)) + 1
+                self.RI.tree[pid].children.append(self.RI.tree[iid])
+        else:
+            if isinstance(index, int):
+                idx = index
+                if index:
+                    for count, cid in enumerate(self.get_children("")):
+                        if count >= index:
+                            break
+                        idx += sum(1 for _ in self.RI.get_iid_descendants(cid)) + 1
+            else:
+                idx = len(self.MT.data)
+        if values is None:
+            values = []
+        self.insert_rows(
+            idx=idx,
+            rows=[[self.RI.tree[iid]] + values],
+            row_index=True,
+            create_selections=create_selections,
+        )
+        self.RI.tree_rns[iid] = idx
+        if parent_node and pid not in self.RI.tree_open_ids:
+            self.hide_rows(idx, deselect_all=False, data_indexes=True)
+        return iid
+
+    def item(
+        self,
+        item: str,
+        text: str | None = None,
+        values: list | None = None,
+        open_: bool | None = None,
+    ) -> DotDict:
+        if (item := item.lower()) and item not in self.RI.tree:
+            raise ValueError(f"Item '{item}' does not exist.")
+        if isinstance(text, str):
+            self.RI.tree[item].text = text
+        if isinstance(values, list):
+            self.set_data(self.RI.tree_rns[item], values)
+        if isinstance(open_, bool):
+            if not self.RI.tree[item].children or not open_:
+                self.RI.tree_open_ids.discard(item)
+            if open_:
+                self.RI.tree_open_ids.add(item)
+                self.show_rows(
+                    (self.RI.tree_rns[did] for did in self.RI.get_iid_descendants(item, check_open=True)),
+                    deselect_all=False,
+                )
+            elif self.RI.tree[item].children:
+                self.hide_rows(
+                    (self.RI.tree_rns[did] for did in self.RI.get_iid_descendants(item)),
+                    deselect_all=False,
+                    data_indexes=True,
+                )
+        return DotDict(
+            text=self.RI.tree[item].text,
+            values=self[self.RI.tree_rns[item]].options(ndim=1).data,
+            open_=item in self.RI.tree_open_ids,
+        )
+
+    def irow(self, item: str) -> int:
+        return self.RI.tree_rns[item.lower()]
+
+    def get_children(self, item: None | str) -> Generator[str]:
+        if item is None:
+            yield from (n.iid for n in self.RI.tree.values())
+        elif item == "":
+            yield from (n.iid for n in self.RI.tree.values() if n.parent == "")
+        yield from (n.iid for n in self.RI.tree[item].children)
+
+    def del_items(self, *items) -> Sheet:
+        """
+        Also deletes all descendants of items
+        """
+        rows_to_del = []
+        iids_to_del = []
+        for item in unpack(items):
+            item = item.lower()
+            if item not in self.RI.tree:
+                continue
+            rows_to_del.append(self.RI.tree_rns[item])
+            iids_to_del.append(item)
+            for did in self.RI.get_iid_descendants(item):
+                rows_to_del.append(self.RI.tree_rns[did])
+                iids_to_del.append(did)
+        for item in unpack(items):
+            self.RI.remove_node_from_parents_children(self.RI.tree[item])
+        self.del_rows(rows_to_del)
+        for iid in iids_to_del:
+            self.RI.tree_open_ids.discard(iid)
+            if self.RI.tree[iid].parent and len(self.RI.tree[iid].parent.children) == 1:
+                self.RI.tree_open_ids.discard(self.RI.tree[iid].parent.iid)
+            del self.RI.tree[iid]
+        return self
+
+    def set_children(self, item: str, *newchildren) -> Sheet:
+        """
+        Moves everything in '*newchildren' under 'item'
+        """
+        if (item := item.lower()) and item not in self.RI.tree:
+            raise ValueError(f"Item '{item}' does not exist.")
+        mapping = {}
+        if item:
+            new_parent = self.RI.tree[item]
+            if new_parent.children:
+                ctr = self.RI.tree_rns[new_parent.children[-1].iid] + 1
+            else:
+                ctr = self.RI.tree_rns[new_parent.iid] + 1
+            for cid in unpack(newchildren):
+                cid_node = self.RI.tree[cid]
+                mapping[self.RI.tree_rns[cid]] = ctr
+                ctr += 1
+                for did in self.RI.get_iid_descendants(cid):
+                    mapping[self.RI.tree_rns[did]] = ctr
+                    ctr += 1
+                self.RI.remove_node_from_parents_children(cid_node)
+                cid_node.parent = new_parent
+                new_parent.children.append(cid_node)
+        else:
+            to_show = []
+            ctr = (
+                len(self.MT.data)
+                - len(newchildren)
+                - sum(1 for cid in unpack(newchildren) for _ in self.RI.get_iid_descendants(cid))
+            )
+            for cid in unpack(newchildren):
+                cid_node = self.RI.tree[cid]
+                mapping[self.RI.tree_rns[cid]] = ctr
+                to_show.append(ctr)
+                ctr += 1
+                for did in self.RI.get_iid_descendants(cid):
+                    mapping[self.RI.tree_rns[did]] = ctr
+                    ctr += 1
+                self.RI.remove_node_from_parents_children(cid_node)
+                self.RI.tree[cid].parent = ""
+        self.mapping_move_rows(
+            data_new_idxs=mapping,
+            data_indexes=True,
+            create_selections=False,
+            redraw=False,
+        )
+        if item and (item not in self.RI.tree_open_ids or not self.item_is_visible(item)):
+            self.hide_rows(set(mapping.values()), data_indexes=True)
+        if not item:
+            self.show_rows(to_show)
+        self.set_refresh_timer(True)
+        return self
+
+    def parent(self, item: str) -> str:
+        if (item := item.lower()) not in self.RI.tree:
+            raise ValueError(f"Item '{item}' does not exist.")
+        return self.RI.tree[item].parent.iid if self.RI.tree[item].parent else self.RI.tree[item].parent
+
+    def move(self, item: str, parent: str, index: int) -> Sheet:
+
+        return self
+
+    reattach = move
+
+    def exists(self, item: str) -> bool:
+        return item in self.RI.tree
+
+    def index(self, item: str) -> int:
+        if (item := item.lower()) not in self.RI.tree:
+            raise ValueError(f"Item '{item}' does not exist.")
+        if not self.RI.tree[item].parent:
+            return sorted(self.RI.tree_rns[iid] for iid in self.get_children("")).index(self.RI.tree_rns[item])
+        return self.RI.tree[item].parent.children.index(self.RI.tree[item])
+
+    def item_displayed(self, item: str) -> bool:
+        """
+        Check if an item (row) is currently displayed on the sheet
+        """
+        if (item := item.lower()) not in self.RI.tree:
+            raise ValueError(f"Item '{item}' does not exist.")
+        return self.RI.tree_rns[item] in self.MT.displayed_rows
+
+    def display_item(self, item: str) -> Sheet:
+        """
+        Ensure that item is displayed in the tree
+        - Opens all of an item's ancestors
+        - Unlike the ttk treeview 'see' function
+          this function does **NOT** scroll to the item
+        """
+        if (item := item.lower()) not in self.RI.tree:
+            raise ValueError(f"Item '{item}' does not exist.")
+        if self.RI.tree[item].parent:
+            for parent in self.RI.get_node_ancestors(self.RI.tree[item]):
+                self.item(parent.iid, open_=True)
+
+    def scroll_to_item(self, item: str) -> Sheet:
+        if (item := item.lower()) not in self.RI.tree:
+            raise ValueError(f"Item '{item}' does not exist.")
+        self.display_item(item)
+        self.see(row=self.RI.tree_rns[item], keep_xscroll=True)
+
+    def selection(self) -> set[str]:
+        return set(self.MT._row_index[self.displayed_row_to_data(rn)].iid for rn in self.get_selected_rows())
+
+    def selection_set(self, *items) -> Sheet:
+        self.deselect()
+        self.selection_add(*items)
+        return self
+
+    def selection_add(self, *items) -> Sheet:
+        for item in unpack(items):
+            if (item := item.lower()) not in self.RI.tree:
+                raise ValueError(f"Item '{item}' does not exist.")
+            if not self.item_displayed(item):
+                self.display_item(item)
+            self.add_row_selection(bisect_left(self.MT.displayed_rows, self.RI.tree_rns[item]))
+        return self
+
+    def selection_remove(self, *items) -> Sheet:
+        for item in unpack(items):
+            if (item := item.lower()) not in self.RI.tree:
+                raise ValueError(f"Item '{item}' does not exist.")
+            try:
+                self.deselect(bisect_left(self.MT.displayed_rows, self.RI.tree_rns[item]))
+            except Exception:
+                continue
+        return self
+
+    def selection_toggle(self, *items) -> Sheet:
+        selected = self.selection()
+        add = []
+        remove = []
+        for item in unpack(items):
+            if (item := item.lower()) not in self.RI.tree:
+                continue
+            if item in selected:
+                remove.append(item)
+            else:
+                add.append(item)
+        self.selection_remove(*remove)
+        self.selection_add(*add)
         return self
 
     # Functions not in docs

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import bisect
+from collections import deque
 import pickle
 import re
 import zlib
@@ -244,6 +245,14 @@ def is_iterable(o: object) -> bool:
         return False
 
 
+def unpack(t: tuple[object] | tuple[Iterator[object]]) -> tuple[object]:
+    if not len(t):
+        return t
+    if is_iterable(t[0]) and len(t) == 1:
+        return t[0]
+    return t
+
+
 def is_type_int(o: object) -> bool:
     return isinstance(o, int) and not isinstance(o, bool)
 
@@ -355,6 +364,21 @@ def is_contiguous(seq: list[int]) -> bool:
     itr = iter(seq)
     prev = next(itr)
     return all(i == (prev := prev + 1) for i in itr)
+
+
+def get_last(
+    it: Iterator,
+) -> object:
+    if hasattr(it,'__reversed__'):
+        try:
+            return next(reversed(it))
+        except Exception:
+            return None
+    else:
+        try:
+            return deque(it, maxlen=1)[0]
+        except Exception:
+            return None
 
 
 def index_exists(seq: Sequence[object], index: int) -> bool:

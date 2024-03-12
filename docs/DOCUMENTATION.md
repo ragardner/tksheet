@@ -40,6 +40,9 @@
 - [Cell Text Editor](https://github.com/ragardner/tksheet/wiki/Version-7#cell-text-editor)
 - [Sheet Options and Other Functions](https://github.com/ragardner/tksheet/wiki/Version-7#sheet-options-and-other-functions)
 ---
+- [Treeview Mode](https://github.com/ragardner/tksheet/wiki/Version-7#treeview-mode)
+- [Tags](https://github.com/ragardner/tksheet/wiki/Version-7#tags)
+---
 - [Example Loading Data from Excel](https://github.com/ragardner/tksheet/wiki/Version-7#example-loading-data-from-excel)
 - [Example Custom Right Click and Text Editor Validation](https://github.com/ragardner/tksheet/wiki/Version-7#example-custom-right-click-and-text-editor-validation)
 - [Example Displaying Selections](https://github.com/ragardner/tksheet/wiki/Version-7#example-displaying-selections)
@@ -4333,9 +4336,11 @@ hide_columns(
     columns: int | set | Iterator[int] = set(),
     redraw: bool = True,
     deselect_all: bool = True,
+    data_indexes: bool = False,
 ) -> Sheet
 ```
 - **NOTE**: `columns` (`int`) uses displayed column indexes, not data indexes. In other words the indexes of the columns displayed on the screen are the ones that are hidden, this is useful when used in conjunction with `get_selected_columns()`.
+- `data_indexes` is only applicable when there are already columns hidden. When `False` it makes the `columns` parameter indexes represent displayed columns and not the underlying Sheet data columns. When `True` the indexes represent data indexes.
 
 ___
 
@@ -4398,9 +4403,11 @@ hide_rows(
     rows: int | set | Iterator[int] = set(),
     redraw: bool = True,
     deselect_all: bool = True,
+    data_indexes: bool = False,
 ) -> Sheet
 ```
 - **NOTE**: `rows` (`int`) uses displayed row indexes, not data indexes. In other words the indexes of the rows displayed on the screen are the ones that are hidden, this is useful when used in conjunction with `get_selected_rows()`.
+- `data_indexes` is only applicable when there are already rows hidden. When `False` it makes the `rows` parameter indexes represent displayed rows and not the underlying Sheet data rows. When `True` the indexes represent data indexes.
 
 ___
 
@@ -4848,6 +4855,16 @@ Refresh the table.
 ```python
 redraw(redraw_header: bool = True, redraw_row_index: bool = True) -> Sheet
 ```
+
+---
+# **Treeview Mode**
+
+This is a work in progress and not fully functional at this time.
+
+---
+# **Tags**
+
+This is a work in progress and not fully functional at this time.
 
 ---
 # **Example Loading Data from Excel**

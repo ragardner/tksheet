@@ -4,6 +4,7 @@ import pickle
 from collections import namedtuple
 from collections.abc import Callable, Generator, Hashable, Iterator
 from functools import partial
+from typing import Literal
 
 pickle_obj = partial(pickle.dumps, protocol=pickle.HIGHEST_PROTOCOL)
 
@@ -344,3 +345,16 @@ class GeneratedMouseEvent:
     def __init__(self):
         self.keycode = "??"
         self.num = 1
+
+
+class Node:
+    __slots__ = ("text", "iid", "parent", "children")
+
+    def __init__(self, text: str, iid: str, parent: Node | Literal[""]) -> None:
+        self.text = text
+        self.iid = iid
+        self.parent = parent
+        self.children = []
+
+    def __str__(self) -> str:
+        return self.text

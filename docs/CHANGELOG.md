@@ -1,5 +1,14 @@
 ### Version 7.0.7
-####
+#### Added:
+- `data_indexes` `bool` parameters to functions: `hide_rows`, `hide_columns`, default value is `False` meaning there is no behavior change
+- `create_selections` `bool` parameters to functions: `insert_rows`, `insert_columns` default value is `True` meaning there is no behavior change
+- A work in progress treeview mode
+- Work in progress cell, row and column tagging functionality
+
+#### Fixed:
+- `mapping_move_rows()` error
+- Potential issue with using `insert_rows` while also using an `int` as the row index to display a specific column in the index
+- Potential error if a selection box ends up outside of rows/columns
 
 ### Version 7.0.6
 #### Changed:

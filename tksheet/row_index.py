@@ -4,6 +4,7 @@ import tkinter as tk
 from collections import defaultdict
 from collections.abc import (
     Callable,
+    Generator,
 )
 from functools import (
     partial,
@@ -39,6 +40,7 @@ from .functions import (
 from .other_classes import (
     DotDict,
     DraggedRowColumn,
+    Node,
 )
 from .text_editor import (
     TextEditor,
@@ -126,6 +128,12 @@ class RowIndex(tk.Canvas):
 
         self.align = kwargs["row_index_align"]
         self.default_index = kwargs["default_row_index"].lower()
+
+        # treeview mode
+        self.tree = {}
+        self.tree_open_ids = set()
+        self.tree_rns = {}
+
         self.basic_bindings()
 
     def basic_bindings(self, enable: bool = True) -> None:
@@ -388,6 +396,8 @@ class RowIndex(tk.Canvas):
                     or self.edit_cell_enabled
                 ):
                     self.open_cell(event)
+                elif (iid := self.event_over_tree_arrow(r, self.canvasy(event.y), event.x)) is not None:
+                    self.PAR.item(iid, open_=iid not in self.tree_open_ids)
         self.rsz_h = None
         self.mouse_motion(event)
         if self.extra_double_b1_func is not None:
@@ -847,6 +857,8 @@ class RowIndex(tk.Canvas):
                     r, datarn, event, canvasy
                 ):
                     self.open_cell(event)
+                elif (iid := self.event_over_tree_arrow(r, canvasy, event.x)) is not None:
+                    self.PAR.item(iid, open_=iid not in self.tree_open_ids)
             else:
                 self.mouseclick_outside_editor_or_dropdown_all_canvases(inside=True)
             self.b1_pressed_loc = None
@@ -859,6 +871,22 @@ class RowIndex(tk.Canvas):
         self.mouse_motion(event)
         if self.extra_b1_release_func is not None:
             self.extra_b1_release_func(event)
+
+    def event_over_tree_arrow(
+        self,
+        r: int,
+        canvasy: float,
+        eventx: int,
+    ) -> bool:
+        if self.PAR.ops.treeview and (
+            canvasy < self.MT.row_positions[r] + self.MT.index_txt_height
+            and eventx
+            < self.get_treeview_indent((iid := self.MT._row_index[self.MT.datarn(r)].iid))
+            + self.MT.index_txt_height
+            + 1
+        ):
+            return iid
+        return None
 
     def toggle_select_row(
         self,
@@ -1185,10 +1213,11 @@ class RowIndex(tk.Canvas):
         fill,
         outline,
         tag,
-        draw_outline=True,
-        draw_arrow=True,
-        dd_is_open=False,
-    ):
+        draw_outline: bool = True,
+        draw_arrow: bool = True,
+        dd_is_open: bool = False,
+        treeview_indent: None | float = None,
+    ) -> None:
         if draw_outline and self.PAR.ops.show_dropdown_borders:
             self.redraw_highlight(x1 + 1, y1 + 1, x2, y2, fill="", outline=self.PAR.ops.index_fg, tag=tag)
         if draw_arrow:
@@ -1205,9 +1234,14 @@ class RowIndex(tk.Canvas):
                 ty1 = mid_y + topysub + 1 if dd_is_open else mid_y - topysub + 2
                 ty2 = mid_y - topysub + 2 if dd_is_open else mid_y + topysub + 1
                 ty3 = mid_y + topysub + 1 if dd_is_open else mid_y - topysub + 2
-            tx1 = x2 - self.MT.index_txt_height + 1
-            tx2 = x2 - self.MT.index_half_txt_height - 1
-            tx3 = x2 - 3
+            if treeview_indent is not None:
+                tx1 = x1 + 3 + treeview_indent
+                tx2 = x1 + self.MT.index_half_txt_height + 1 + treeview_indent
+                tx3 = x1 + self.MT.index_txt_height - 1 + treeview_indent
+            else:
+                tx1 = x2 - self.MT.index_txt_height + 1
+                tx2 = x2 - self.MT.index_half_txt_height - 1
+                tx3 = x2 - 3
             if tx2 - tx1 > tx3 - tx2:
                 tx1 += (tx2 - tx1) - (tx3 - tx2)
             elif tx2 - tx1 < tx3 - tx2:
@@ -1266,14 +1300,14 @@ class RowIndex(tk.Canvas):
 
     def redraw_grid_and_text(
         self,
-        last_row_line_pos,
-        scrollpos_top,
-        y_stop,
-        start_row,
-        end_row,
-        scrollpos_bot,
-        row_pos_exists,
-    ):
+        last_row_line_pos: int,
+        scrollpos_top: int,
+        y_stop: int,
+        start_row: int,
+        end_row: int,
+        scrollpos_bot: int,
+        row_pos_exists: bool,
+    ) -> None:
         try:
             self.configure(
                 scrollregion=(
@@ -1343,6 +1377,8 @@ class RowIndex(tk.Canvas):
         font = self.PAR.ops.index_font
         selections = self.get_redraw_selections(start_row, end_row)
         dd_coords = self.get_existing_dropdown_coords()
+        treeview = self.PAR.ops.treeview
+
         for r in range(start_row, end_row - 1):
             rtopgridln = self.MT.row_positions[r]
             rbotgridln = self.MT.row_positions[r + 1]
@@ -1443,6 +1479,27 @@ class RowIndex(tk.Canvas):
                     tag="cb",
                     draw_check=draw_check,
                 )
+            if treeview:
+                iid = self.MT._row_index[datarn].iid
+                mw -= self.MT.index_txt_height
+                if align == "w":
+                    draw_x += self.MT.index_txt_height
+                indent = self.get_treeview_indent(iid)
+                draw_x += indent
+                if self.tree[iid].children:
+                    self.redraw_dropdown(
+                        0,
+                        rtopgridln,
+                        self.current_width - 1,
+                        rbotgridln - 1,
+                        fill=fill,
+                        outline=fill,
+                        tag="dd",
+                        draw_outline=False,
+                        draw_arrow=mw >= 5,
+                        dd_is_open=f"{self.MT._row_index[datarn]}" in self.tree_open_ids,
+                        treeview_indent=indent,
+                    )
             lns = self.get_valid_cell_data_as_str(datarn, fix=False)
             if not lns:
                 continue
@@ -1568,6 +1625,37 @@ class RowIndex(tk.Canvas):
         else:
             align = self.align
         return align
+
+    def get_node_level(self, node: Node, level: int = 0) -> Generator[int]:
+        yield level
+        if node.parent:
+            yield from self.get_node_level(node.parent, level + 1)
+
+    def get_node_ancestors(self, node: Node) -> Generator[Node]:
+        if node.parent:
+            yield node.parent
+            yield from self.get_node_ancestors(node.parent)
+
+    def get_iid_descendants(self, iid: str, check_open: bool = False) -> Generator[str]:
+        for cnode in self.tree[iid].children:
+            yield cnode.iid
+            if (check_open and cnode.children and cnode.iid in self.tree_open_ids) or (
+                not check_open and cnode.children
+            ):
+                yield from self.get_iid_descendants(cnode.iid, check_open)
+
+    def get_treeview_indent(self, iid: str) -> int:
+        if isinstance(self.PAR.ops.treeview_indent, str):
+            indent = self.MT.index_txt_height * int(self.PAR.ops.treeview_indent)
+        else:
+            indent = self.PAR.ops.treeview_indent
+        return indent * max(self.get_node_level(self.tree[iid]))
+
+    def remove_node_from_parents_children(self, node: Node) -> None:
+        if node.parent:
+            node.parent.children.remove(node)
+        if not node.parent.children:
+            self.tree_open_ids.discard(node.parent.iid)
 
     # r is displayed row
     def open_text_editor(
@@ -2022,14 +2110,14 @@ class RowIndex(tk.Canvas):
     # internal event use
     def set_cell_data_undo(
         self,
-        r=0,
-        datarn=None,
-        value="",
-        cell_resize=True,
-        undo=True,
-        redraw=True,
-        check_input_valid=True,
-    ):
+        r: int = 0,
+        datarn: None | int = None,
+        value: str = "",
+        cell_resize: bool = True,
+        undo: bool = True,
+        redraw: bool = True,
+        check_input_valid: bool = True,
+    ) -> bool:
         if datarn is None:
             datarn = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r]
         event_data = event_dict(

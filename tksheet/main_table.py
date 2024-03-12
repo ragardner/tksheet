@@ -137,6 +137,9 @@ class MainTable(tk.Canvas):
         self.hidd_checkbox = {}
 
         self.named_spans = {}
+        self.tagged_cells = {}
+        self.tagged_rows = {}
+        self.tagged_columns = {}
         self.cell_options = {}
         self.col_options = {}
         self.row_options = {}
@@ -990,13 +993,15 @@ class MainTable(tk.Canvas):
                 old_idxs=data_old_idxs,
             )
             full_old_idxs = dict(zip(full_new_idxs.values(), full_new_idxs))
+            self.tagged_cells = {v: (k[0], full_new_idxs[k[1]]) for v, k in self.tagged_cells.items()}
             self.cell_options = {(k[0], full_new_idxs[k[1]]): v for k, v in self.cell_options.items()}
             self.col_options = {full_new_idxs[k]: v for k, v in self.col_options.items()}
+            self.tagged_columns = {v: full_new_idxs[k] for v, k in self.tagged_columns.items()}
             self.CH.cell_options = {full_new_idxs[k]: v for k, v in self.CH.cell_options.items()}
             totalrows = self.total_data_rows()
             new_ops = self.PAR.create_options_from_span
             qkspan = self.span()
-            for name, span in self.named_spans.items():
+            for span in self.named_spans.values():
                 # span is neither a cell options nor col options span, continue
                 if not isinstance(span["from_c"], int):
                     continue
@@ -1214,13 +1219,16 @@ class MainTable(tk.Canvas):
                 old_idxs=data_old_idxs,
             )
             full_old_idxs = dict(zip(full_new_idxs.values(), full_new_idxs))
+            self.tagged_cells = {v: (full_new_idxs[k[0]], k[1]) for v, k in self.tagged_cells.items()}
             self.cell_options = {(full_new_idxs[k[0]], k[1]): v for k, v in self.cell_options.items()}
+            self.tagged_rows = {v: full_new_idxs[k] for v, k in self.tagged_rows.items()}
             self.row_options = {full_new_idxs[k]: v for k, v in self.row_options.items()}
             self.RI.cell_options = {full_new_idxs[k]: v for k, v in self.RI.cell_options.items()}
+            self.RI.tree_rns = {v: full_new_idxs[k] for v, k in self.RI.tree_rns.items()}
             totalcols = self.total_data_cols()
             new_ops = self.PAR.create_options_from_span
             qkspan = self.span()
-            for name, span in self.named_spans.items():
+            for span in self.named_spans.values():
                 # span is neither a cell options nor row options span, continue
                 if not isinstance(span["from_r"], int):
                     continue
@@ -3873,9 +3881,14 @@ class MainTable(tk.Canvas):
         cols: list | tuple,
         create_ops: bool = True,
     ) -> None:
-        # self.cell_options = dict(to_add["cell_options"]) here
+        self.tagged_cells = {
+            v: (r, c if not (num := bisect_right(cols, c)) else c + num) for v, (r, c) in self.tagged_cells.items()
+        }
         self.cell_options = {
             (r, c if not (num := bisect_right(cols, c)) else c + num): v for (r, c), v in self.cell_options.items()
+        }
+        self.tagged_columns = {
+            v: c if not (num := bisect_right(cols, c)) else c + num for v, c in self.tagged_columns.items()
         }
         self.col_options = {
             c if not (num := bisect_right(cols, c)) else c + num: v for c, v in self.col_options.items()
@@ -3888,7 +3901,7 @@ class MainTable(tk.Canvas):
         totalrows = None
         new_ops = self.PAR.create_options_from_span
         qkspan = self.span()
-        for name, span in self.named_spans.items():
+        for span in self.named_spans.values():
             if isinstance(span["from_c"], int):
                 for datacn in cols:
                     if span["from_c"] > datacn:
@@ -3935,8 +3948,14 @@ class MainTable(tk.Canvas):
         rows: list | tuple,
         create_ops: bool = True,
     ) -> None:
+        self.tagged_cells = {
+            v: (r if not (num := bisect_right(rows, r)) else r + num, c) for v, (r, c) in self.tagged_cells.items()
+        }
         self.cell_options = {
             (r if not (num := bisect_right(rows, r)) else r + num, c): v for (r, c), v in self.cell_options.items()
+        }
+        self.tagged_rows = {
+            v: r if not (num := bisect_right(rows, r)) else r + num for v, r in self.tagged_rows.items()
         }
         self.row_options = {
             r if not (num := bisect_right(rows, r)) else r + num: v for r, v in self.row_options.items()
@@ -3944,12 +3963,15 @@ class MainTable(tk.Canvas):
         self.RI.cell_options = {
             r if not (num := bisect_right(rows, r)) else r + num: v for r, v in self.RI.cell_options.items()
         }
+        self.RI.tree_rns = {
+            v: r if not (num := bisect_right(rows, r)) else r + num for v, r in self.RI.tree_rns.items()
+        }
         # if there are named spans where rows were added
         # add options to gap which was created by adding rows
         totalcols = None
         new_ops = self.PAR.create_options_from_span
         qkspan = self.span()
-        for name, span in self.named_spans.items():
+        for span in self.named_spans.values():
             if isinstance(span["from_r"], int):
                 for datarn in rows:
                     if span["from_r"] > datarn:
@@ -4001,12 +4023,25 @@ class MainTable(tk.Canvas):
             to_del = set()
         if not to_bis:
             to_bis = sorted(to_del)
+        self.tagged_cells = {
+            v: (
+                r,
+                c if not (num := bisect_left(to_bis, c)) else c - num,
+            )
+            for v, (r, c) in self.tagged_cells.items()
+            if c not in to_del
+        }
         self.cell_options = {
             (
                 r,
                 c if not (num := bisect_left(to_bis, c)) else c - num,
             ): v
             for (r, c), v in self.cell_options.items()
+            if c not in to_del
+        }
+        self.tagged_columns = {
+            v: c if not (num := bisect_left(to_bis, c)) else c - num
+            for v, c in self.tagged_columns.items()
             if c not in to_del
         }
         self.col_options = {
@@ -4036,7 +4071,7 @@ class MainTable(tk.Canvas):
             named_spans = self.get_spans_to_del_from_cols(cols=to_del)
         for name in named_spans:
             del self.named_spans[name]
-        for name, span in self.named_spans.items():
+        for span in self.named_spans.values():
             if isinstance(span["from_c"], int):
                 for c in to_bis:
                     if span["from_c"] > c:
@@ -4066,12 +4101,25 @@ class MainTable(tk.Canvas):
             to_del = set()
         if not to_bis:
             to_bis = sorted(to_del)
+        self.tagged_cells = {
+            v: (
+                r if not (num := bisect_left(to_bis, r)) else r - num,
+                c,
+            )
+            for v, (r, c) in self.tagged_cells.items()
+            if r not in to_del
+        }
         self.cell_options = {
             (
                 r if not (num := bisect_left(to_bis, r)) else r - num,
                 c,
             ): v
             for (r, c), v in self.cell_options.items()
+            if r not in to_del
+        }
+        self.tagged_rows = {
+            v: r if not (num := bisect_left(to_bis, r)) else r - num
+            for v, r in self.tagged_rows.items()
             if r not in to_del
         }
         self.row_options = {
@@ -4082,6 +4130,11 @@ class MainTable(tk.Canvas):
         self.RI.cell_options = {
             r if not (num := bisect_left(to_bis, r)) else r - num: v
             for r, v in self.RI.cell_options.items()
+            if r not in to_del
+        }
+        self.RI.tree_rns = {
+            v: r if not (num := bisect_left(to_bis, r)) else r - num
+            for v, r in self.RI.tree_rns.items()
             if r not in to_del
         }
         self.del_rows_from_named_spans(
@@ -4101,7 +4154,7 @@ class MainTable(tk.Canvas):
             named_spans = self.get_spans_to_del_from_rows(rows=to_del)
         for name in named_spans:
             del self.named_spans[name]
-        for name, span in self.named_spans.items():
+        for span in self.named_spans.values():
             if isinstance(span["from_r"], int):
                 for r in to_bis:
                     if span["from_r"] > r:
@@ -4295,7 +4348,7 @@ class MainTable(tk.Canvas):
             self.data.insert(rn, row)
             if cn > maxcn:
                 maxcn = cn
-        if isinstance(self.row_index, list):
+        if isinstance(self._row_index, list):
             self._row_index = insert_items(self._row_index, index, self.RI.fix_index)
         # if not hiding columns then we can extend col positions if necessary
         if add_col_positions and self.all_columns_displayed and maxcn + 1 > len(self.col_positions) - 1:
@@ -4419,7 +4472,8 @@ class MainTable(tk.Canvas):
             }
         if widths is None:
             widths = {
-                c: self.PAR.ops.default_column_width for c in reversed(range(displayed_ins_col, displayed_ins_col + numcols))
+                c: self.PAR.ops.default_column_width
+                for c in reversed(range(displayed_ins_col, displayed_ins_col + numcols))
             }
         else:
             widths = {
@@ -4468,9 +4522,7 @@ class MainTable(tk.Canvas):
             }
         if heights is None:
             default_row_height = self.get_default_row_height()
-            heights = {
-                r: default_row_height for r in reversed(range(displayed_ins_row, displayed_ins_row + numrows))
-            }
+            heights = {r: default_row_height for r in reversed(range(displayed_ins_row, displayed_ins_row + numrows))}
         else:
             heights = {
                 r: height
@@ -6020,7 +6072,12 @@ class MainTable(tk.Canvas):
             if c2 > len(self.col_positions) - 1:
                 c2 = len(self.col_positions) - 1
             self.recreate_selection_box(r1, c1, r2, c2, item)
-        self.set_currently_selected(tags=curr.tags)
+        r1, c1, r2, c2 = coords_tag_to_int_tuple(curr.tags[1])
+        if r1 >= len(self.row_positions) - 1 or c1 >= len(self.col_positions) - 1:
+            self.delete_item(int(curr.tags[2].split("_")[1]))
+            self.set_current_to_last()
+        else:
+            self.set_currently_selected(tags=curr.tags)
 
     def to_item_int(self, item: int | str | tuple) -> int:
         # item arg is a tuple of tags
