@@ -1270,3 +1270,15 @@ def mod_event_val(
     event_data.value = val
     event_data.loc = loc
     return event_data
+
+
+def pop_positions(
+    itr: Iterator[int],
+    to_pop: dict[int, int], # displayed index: data index
+    save_to: dict[int, int],
+) -> Iterator[int]:
+    for i, pos in enumerate(itr()):
+        if i in to_pop:
+            save_to[to_pop[i]] = pos
+        else:
+            yield pos

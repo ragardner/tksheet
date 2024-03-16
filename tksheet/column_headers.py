@@ -1213,27 +1213,28 @@ class ColumnHeaders(tk.Canvas):
         if draw_outline and self.PAR.ops.show_dropdown_borders:
             self.redraw_highlight(x1 + 1, y1 + 1, x2, y2, fill="", outline=self.PAR.ops.header_fg, tag=tag)
         if draw_arrow:
-            topysub = floor(self.MT.header_half_txt_height / 2)
-            mid_y = y1 + floor(self.MT.min_header_height / 2)
-            if mid_y + topysub + 1 >= y1 + self.MT.header_txt_height - 1:
-                mid_y -= 1
-            if mid_y - topysub + 2 <= y1 + 4 + topysub:
-                mid_y -= 1
-                ty1 = mid_y + topysub + 1 if dd_is_open else mid_y - topysub + 3
-                ty2 = mid_y - topysub + 3 if dd_is_open else mid_y + topysub + 1
-                ty3 = mid_y + topysub + 1 if dd_is_open else mid_y - topysub + 3
+            mod = (self.MT.header_txt_height - 1) if self.MT.header_txt_height % 2 else self.MT.header_txt_height
+            half_mod = mod / 2
+            qtr_mod = mod / 4
+            mid_y = (self.MT.header_first_ln_ins - 1) if self.MT.header_first_ln_ins % 2 else self.MT.header_first_ln_ins
+            if dd_is_open:
+                points = (
+                    x2 - 3 - mod,
+                    y1 + mid_y + qtr_mod,
+                    x2 - 3 - half_mod,
+                    y1 + mid_y - qtr_mod,
+                    x2 - 3,
+                    y1 + mid_y + qtr_mod,
+                )
             else:
-                ty1 = mid_y + topysub + 1 if dd_is_open else mid_y - topysub + 2
-                ty2 = mid_y - topysub + 2 if dd_is_open else mid_y + topysub + 1
-                ty3 = mid_y + topysub + 1 if dd_is_open else mid_y - topysub + 2
-            tx1 = x2 - self.MT.header_txt_height + 1
-            tx2 = x2 - self.MT.header_half_txt_height - 1
-            tx3 = x2 - 3
-            if tx2 - tx1 > tx3 - tx2:
-                tx1 += (tx2 - tx1) - (tx3 - tx2)
-            elif tx2 - tx1 < tx3 - tx2:
-                tx1 -= (tx3 - tx2) - (tx2 - tx1)
-            points = (tx1, ty1, tx2, ty2, tx3, ty3)
+                points = (
+                    x2 - 3 - mod,
+                    y1 + mid_y - qtr_mod,
+                    x2 - 3 - half_mod,
+                    y1 + mid_y + qtr_mod,
+                    x2 - 3,
+                    y1 + mid_y - qtr_mod,
+                )
             if self.hidd_dropdown:
                 t, sh = self.hidd_dropdown.popitem()
                 self.coords(t, points)

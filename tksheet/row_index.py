@@ -129,11 +129,7 @@ class RowIndex(tk.Canvas):
         self.align = kwargs["row_index_align"]
         self.default_index = kwargs["default_row_index"].lower()
 
-        # treeview mode
-        self.tree = {}
-        self.tree_open_ids = set()
-        self.tree_rns = {}
-
+        self.reset_tree()
         self.basic_bindings()
 
     def basic_bindings(self, enable: bool = True) -> None:
@@ -151,6 +147,12 @@ class RowIndex(tk.Canvas):
             self.unbind("<ButtonRelease-1>")
             self.unbind("<Double-Button-1>")
             self.unbind(rc_binding)
+
+    def reset_tree(self) -> None:
+        # treeview mode
+        self.tree = {}
+        self.tree_open_ids = set()
+        self.tree_rns = {}
 
     def set_width(self, new_width: int, set_TL: bool = False) -> None:
         self.current_width = new_width
@@ -733,7 +735,7 @@ class RowIndex(tk.Canvas):
         if len(ycheck) > 1 and ycheck[1] > 1:
             self.MT.set_yviews("moveto", 1)
 
-    def event_over_dropdown(self, r, datarn, event: object, canvasy):
+    def event_over_dropdown(self, r: int, datarn: int, event: object, canvasy: float) -> bool:
         if (
             canvasy < self.MT.row_positions[r] + self.MT.index_txt_height
             and self.get_cell_kwargs(datarn, key="dropdown")
@@ -742,7 +744,7 @@ class RowIndex(tk.Canvas):
             return True
         return False
 
-    def event_over_checkbox(self, r, datarn, event: object, canvasy):
+    def event_over_checkbox(self, r: int, datarn: int, event: object, canvasy: float) -> bool:
         if (
             canvasy < self.MT.row_positions[r] + self.MT.index_txt_height
             and self.get_cell_kwargs(datarn, key="checkbox")
@@ -751,7 +753,7 @@ class RowIndex(tk.Canvas):
             return True
         return False
 
-    def b1_release(self, event: object):
+    def b1_release(self, event: object) -> None:
         if self.being_drawn_item is not None:
             currently_selected = self.MT.currently_selected()
             to_sel = self.MT.get_box_from_item(self.being_drawn_item)
@@ -879,7 +881,7 @@ class RowIndex(tk.Canvas):
         eventx: int,
     ) -> bool:
         if self.PAR.ops.treeview and (
-            canvasy < self.MT.row_positions[r] + self.MT.index_txt_height
+            canvasy < self.MT.row_positions[r] + self.MT.index_txt_height + 3
             and eventx
             < self.get_treeview_indent((iid := self.MT._row_index[self.MT.datarn(r)].iid))
             + self.MT.index_txt_height
@@ -890,12 +892,12 @@ class RowIndex(tk.Canvas):
 
     def toggle_select_row(
         self,
-        row,
-        add_selection=True,
-        redraw=True,
-        run_binding_func=True,
-        set_as_current=True,
-    ):
+        row: int,
+        add_selection: bool = True,
+        redraw: bool = True,
+        run_binding_func: bool = True,
+        set_as_current: bool = True,
+    ) -> int | None:
         if add_selection:
             if self.MT.row_selected(row):
                 fill_iid = self.MT.deselect(r=row, redraw=redraw)
@@ -913,7 +915,7 @@ class RowIndex(tk.Canvas):
                 fill_iid = self.select_row(row, redraw=redraw)
         return fill_iid
 
-    def select_row(self, r, redraw=False, run_binding_func=True):
+    def select_row(self, r: int, redraw: bool = False, run_binding_func: bool = True) -> int:
         self.MT.deselect("all", redraw=False)
         box = (r, 0, r + 1, len(self.MT.col_positions) - 1, "rows")
         fill_iid = self.MT.create_selection_box(*box)
@@ -923,7 +925,13 @@ class RowIndex(tk.Canvas):
             self.MT.run_selection_binding("rows")
         return fill_iid
 
-    def add_selection(self, r, redraw=False, run_binding_func=True, set_as_current=True):
+    def add_selection(
+        self,
+        r: int,
+        redraw: bool = False,
+        run_binding_func: bool = True,
+        set_as_current: bool = True,
+    ) -> int:
         box = (r, 0, r + 1, len(self.MT.col_positions) - 1, "rows")
         fill_iid = self.MT.create_selection_box(*box, set_current=set_as_current)
         if redraw:
@@ -932,7 +940,7 @@ class RowIndex(tk.Canvas):
             self.MT.run_selection_binding("rows")
         return fill_iid
 
-    def get_cell_dimensions(self, datarn):
+    def get_cell_dimensions(self, datarn: int) -> tuple[int, int]:
         txt = self.get_valid_cell_data_as_str(datarn, fix=False)
         if txt:
             self.MT.txt_measure_canvas.itemconfig(
@@ -945,18 +953,26 @@ class RowIndex(tk.Canvas):
             w = self.PAR.ops.default_row_index_width
             h = self.MT.min_row_height
         if self.get_cell_kwargs(datarn, key="dropdown") or self.get_cell_kwargs(datarn, key="checkbox"):
-            return w + self.MT.index_txt_height, h
+            w += self.MT.index_txt_height
+        if self.PAR.ops.treeview:
+            if datarn in self.cell_options and "align" in self.cell_options[datarn]:
+                align = self.cell_options[datarn]["align"]
+            else:
+                align = self.align
+            if align == "w":
+                w += self.MT.index_txt_height
+            w += self.get_treeview_indent(self.MT._row_index[datarn].iid)
         return w, h
 
     def set_row_height(
         self,
-        row,
-        height=None,
-        only_set_if_too_small=False,
-        recreate=True,
-        return_new_height=False,
-        displayed_only=False,
-    ):
+        row: int,
+        height: None | int = None,
+        only_set_if_too_small: bool = False,
+        recreate: bool = True,
+        return_new_height: bool = False,
+        displayed_only: bool = False,
+    ) -> int:
         r_norm = row + 1
         r_extra = row + 2
         min_rh = self.MT.min_row_height
@@ -1019,7 +1035,12 @@ class RowIndex(tk.Canvas):
                 self.MT.recreate_all_selection_boxes()
         return new_height
 
-    def set_width_of_index_to_text(self, text=None):
+    def set_width_of_index_to_text(
+        self,
+        text: None | str = None,
+        only_rows: list = [],
+        set_width: bool = True,
+    ) -> None | int:
         if (
             text is None
             and not self.MT._row_index
@@ -1043,7 +1064,9 @@ class RowIndex(tk.Canvas):
             else:
                 w = self.PAR.ops.default_row_index_width
         else:
-            if self.MT.all_rows_displayed:
+            if only_rows:
+                iterable = only_rows
+            elif self.MT.all_rows_displayed:
                 if isinstance(self.MT._row_index, list):
                     iterable = range(len(self.MT._row_index))
                 else:
@@ -1057,10 +1080,6 @@ class RowIndex(tk.Canvas):
                         w = int(self.MT.min_column_width)
                     elif w > self.MT.max_index_width:
                         w = int(self.MT.max_index_width)
-                    if self.get_cell_kwargs(datarn, key="checkbox"):
-                        w += self.MT.index_txt_height + 6
-                    elif self.get_cell_kwargs(datarn, key="dropdown"):
-                        w += self.MT.index_txt_height + 4
                     if w > new_width:
                         new_width = w
             elif isinstance(self.MT._row_index, int):
@@ -1081,8 +1100,10 @@ class RowIndex(tk.Canvas):
                         new_width = w
         if new_width == self.MT.min_column_width:
             new_width = self.MT.min_column_width + 10
-        self.set_width(new_width, set_TL=True)
-        self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
+        if set_width:
+            self.set_width(new_width, set_TL=True)
+            self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
+        return new_width
 
     def set_height_of_all_rows(self, height=None, only_set_if_too_small=False, recreate=True):
         if height is None:
@@ -1102,23 +1123,21 @@ class RowIndex(tk.Canvas):
         if recreate:
             self.MT.recreate_all_selection_boxes()
 
-    def auto_set_index_width(self, end_row):
-        if not self.MT._row_index and not isinstance(self.MT._row_index, int) and self.PAR.ops.auto_resize_row_index:
+    def auto_set_index_width(self, end_row: int, only_rows: list) -> bool:
+        if not isinstance(self.MT._row_index, int) and not self.MT._row_index:
             if self.default_index == "letters":
                 new_w = self.MT.get_txt_w(f"{num2alpha(end_row)}") + 20
-                if self.current_width - new_w > 15 or new_w - self.current_width > 5:
-                    self.set_width(new_w, set_TL=True)
-                    return True
             elif self.default_index == "numbers":
                 new_w = self.MT.get_txt_w(f"{end_row}") + 20
-                if self.current_width - new_w > 15 or new_w - self.current_width > 5:
-                    self.set_width(new_w, set_TL=True)
-                    return True
             elif self.default_index == "both":
                 new_w = self.MT.get_txt_w(f"{end_row + 1} {num2alpha(end_row)}") + 20
-                if self.current_width - new_w > 15 or new_w - self.current_width > 5:
-                    self.set_width(new_w, set_TL=True)
-                    return True
+        else:
+            new_w = self.set_width_of_index_to_text(only_rows=only_rows, set_width=False)
+        if (sheet_w := floor(self.PAR.winfo_width() * 0.5)) < new_w:
+            new_w = sheet_w
+        if new_w and self.current_width - new_w > 15 or new_w - self.current_width > 5:
+            self.set_width(new_w, set_TL=True)
+            return True
         return False
 
     def redraw_highlight_get_text_fg(self, fr, sr, r, c_2, c_3, selections, datarn):
@@ -1215,38 +1234,57 @@ class RowIndex(tk.Canvas):
         tag,
         draw_outline: bool = True,
         draw_arrow: bool = True,
-        dd_is_open: bool = False,
-        treeview_indent: None | float = None,
+        open_: bool = False,
+        indent: None | float = None,
     ) -> None:
         if draw_outline and self.PAR.ops.show_dropdown_borders:
             self.redraw_highlight(x1 + 1, y1 + 1, x2, y2, fill="", outline=self.PAR.ops.index_fg, tag=tag)
         if draw_arrow:
-            topysub = floor(self.MT.index_half_txt_height / 2)
-            mid_y = y1 + floor(self.MT.min_row_height / 2)
-            if mid_y + topysub + 1 >= y1 + self.MT.index_txt_height - 1:
-                mid_y -= 1
-            if mid_y - topysub + 2 <= y1 + 4 + topysub:
-                mid_y -= 1
-                ty1 = mid_y + topysub + 1 if dd_is_open else mid_y - topysub + 3
-                ty2 = mid_y - topysub + 3 if dd_is_open else mid_y + topysub + 1
-                ty3 = mid_y + topysub + 1 if dd_is_open else mid_y - topysub + 3
+            mod = (self.MT.index_txt_height - 1) if self.MT.index_txt_height % 2 else self.MT.index_txt_height
+            half_mod = mod / 2
+            qtr_mod = mod / 4
+            mid_y = (self.MT.index_first_ln_ins - 1) if self.MT.index_first_ln_ins % 2 else self.MT.index_first_ln_ins
+            # treeview
+            if indent is not None:
+                # up arrow
+                if open_:
+                    points = (
+                        x1 + 2 + indent,
+                        y1 + mid_y + qtr_mod,
+                        x1 + 2 + half_mod + indent,
+                        y1 + mid_y - qtr_mod,
+                        x1 + 2 + mod + indent,
+                        y1 + mid_y + qtr_mod,
+                    )
+                # right pointing arrow
+                else:
+                    points = (
+                        x1 + half_mod + indent,
+                        y1 + mid_y - half_mod + 1,
+                        x1 + mod + indent - 1,
+                        y1 + mid_y,
+                        x1 + half_mod + indent,
+                        y1 + mid_y + half_mod - 1,
+                    )
             else:
-                ty1 = mid_y + topysub + 1 if dd_is_open else mid_y - topysub + 2
-                ty2 = mid_y - topysub + 2 if dd_is_open else mid_y + topysub + 1
-                ty3 = mid_y + topysub + 1 if dd_is_open else mid_y - topysub + 2
-            if treeview_indent is not None:
-                tx1 = x1 + 3 + treeview_indent
-                tx2 = x1 + self.MT.index_half_txt_height + 1 + treeview_indent
-                tx3 = x1 + self.MT.index_txt_height - 1 + treeview_indent
-            else:
-                tx1 = x2 - self.MT.index_txt_height + 1
-                tx2 = x2 - self.MT.index_half_txt_height - 1
-                tx3 = x2 - 3
-            if tx2 - tx1 > tx3 - tx2:
-                tx1 += (tx2 - tx1) - (tx3 - tx2)
-            elif tx2 - tx1 < tx3 - tx2:
-                tx1 -= (tx3 - tx2) - (tx2 - tx1)
-            points = (tx1, ty1, tx2, ty2, tx3, ty3)
+                if open_:
+                    points = (
+                        x2 - 3 - mod,
+                        y1 + mid_y + qtr_mod,
+                        x2 - 3 - half_mod,
+                        y1 + mid_y - qtr_mod,
+                        x2 - 3,
+                        y1 + mid_y + qtr_mod,
+                    )
+                else:
+                    points = (
+                        x2 - 3 - mod,
+                        y1 + mid_y - qtr_mod,
+                        x2 - 3 - half_mod,
+                        y1 + mid_y + qtr_mod,
+                        x2 - 3,
+                        y1 + mid_y - qtr_mod,
+                    )
             if self.hidd_dropdown:
                 t, sh = self.hidd_dropdown.popitem()
                 self.coords(t, points)
@@ -1406,7 +1444,7 @@ class RowIndex(tk.Canvas):
                         tag="dd",
                         draw_outline=not dd_drawn,
                         draw_arrow=mw >= 5,
-                        dd_is_open=dd_coords == r,
+                        open_=dd_coords == r,
                     )
                 else:
                     mw = self.current_width - 2
@@ -1425,7 +1463,7 @@ class RowIndex(tk.Canvas):
                         tag="dd",
                         draw_outline=not dd_drawn,
                         draw_arrow=mw >= 5,
-                        dd_is_open=dd_coords == r,
+                        open_=dd_coords == r,
                     )
                 else:
                     mw = self.current_width - 2
@@ -1445,7 +1483,7 @@ class RowIndex(tk.Canvas):
                         tag="dd",
                         draw_outline=not dd_drawn,
                         draw_arrow=mw >= 5,
-                        dd_is_open=dd_coords == r,
+                        open_=dd_coords == r,
                     )
                 else:
                     mw = self.current_width - 1
@@ -1483,7 +1521,7 @@ class RowIndex(tk.Canvas):
                 iid = self.MT._row_index[datarn].iid
                 mw -= self.MT.index_txt_height
                 if align == "w":
-                    draw_x += self.MT.index_txt_height
+                    draw_x += self.MT.index_txt_height + 1
                 indent = self.get_treeview_indent(iid)
                 draw_x += indent
                 if self.tree[iid].children:
@@ -1496,9 +1534,9 @@ class RowIndex(tk.Canvas):
                         outline=fill,
                         tag="dd",
                         draw_outline=False,
-                        draw_arrow=mw >= 5,
-                        dd_is_open=f"{self.MT._row_index[datarn]}" in self.tree_open_ids,
-                        treeview_indent=indent,
+                        draw_arrow=True,
+                        open_=self.MT._row_index[datarn].iid in self.tree_open_ids,
+                        indent=indent,
                     )
             lns = self.get_valid_cell_data_as_str(datarn, fix=False)
             if not lns:
@@ -1625,37 +1663,6 @@ class RowIndex(tk.Canvas):
         else:
             align = self.align
         return align
-
-    def get_node_level(self, node: Node, level: int = 0) -> Generator[int]:
-        yield level
-        if node.parent:
-            yield from self.get_node_level(node.parent, level + 1)
-
-    def get_node_ancestors(self, node: Node) -> Generator[Node]:
-        if node.parent:
-            yield node.parent
-            yield from self.get_node_ancestors(node.parent)
-
-    def get_iid_descendants(self, iid: str, check_open: bool = False) -> Generator[str]:
-        for cnode in self.tree[iid].children:
-            yield cnode.iid
-            if (check_open and cnode.children and cnode.iid in self.tree_open_ids) or (
-                not check_open and cnode.children
-            ):
-                yield from self.get_iid_descendants(cnode.iid, check_open)
-
-    def get_treeview_indent(self, iid: str) -> int:
-        if isinstance(self.PAR.ops.treeview_indent, str):
-            indent = self.MT.index_txt_height * int(self.PAR.ops.treeview_indent)
-        else:
-            indent = self.PAR.ops.treeview_indent
-        return indent * max(self.get_node_level(self.tree[iid]))
-
-    def remove_node_from_parents_children(self, node: Node) -> None:
-        if node.parent:
-            node.parent.children.remove(node)
-        if not node.parent.children:
-            self.tree_open_ids.discard(node.parent.iid)
 
     # r is displayed row
     def open_text_editor(
@@ -2294,3 +2301,53 @@ class RowIndex(tk.Canvas):
         if cell and datarn in self.cell_options and key in self.cell_options[datarn]:
             return self.cell_options[datarn][key]
         return {}
+
+    # Treeview Mode
+
+    def get_node_level(self, node: Node, level: int = 0) -> Generator[int]:
+        yield level
+        if node.parent:
+            yield from self.get_node_level(node.parent, level + 1)
+
+    def iid_ancestors_all_open(self, iid: str, stop_at: None | str = None) -> bool:
+        for iid in self.get_iid_ancestors(iid):
+            if iid == stop_at:
+                break
+            if iid not in self.tree_open_ids:
+                return False
+        return True
+
+    def get_iid_ancestors(self, iid: str) -> Generator[str]:
+        if self.tree[iid].parent:
+            yield self.tree[iid].parent.iid
+            yield from self.get_iid_ancestors(self.tree[iid].parent.iid)
+
+    def get_iid_descendants(self, iid: str, check_open: bool = False) -> Generator[str]:
+        for cnode in self.tree[iid].children:
+            yield cnode.iid
+            if (check_open and cnode.children and cnode.iid in self.tree_open_ids) or (
+                not check_open and cnode.children
+            ):
+                yield from self.get_iid_descendants(cnode.iid, check_open)
+
+    def get_treeview_indent(self, iid: str) -> int:
+        if isinstance(self.PAR.ops.treeview_indent, str):
+            indent = self.MT.index_txt_height * int(self.PAR.ops.treeview_indent)
+        else:
+            indent = self.PAR.ops.treeview_indent
+        return indent * max(self.get_node_level(self.tree[iid]))
+
+    def remove_node_from_parents_children(self, node: Node) -> None:
+        if node.parent:
+            node.parent.children.remove(node)
+            if not node.parent.children:
+                self.tree_open_ids.discard(node.parent)
+
+    def pid_causes_recursive_loop(self, iid: str, pid: str) -> bool:
+        return any(
+            i == pid
+            for i in chain(
+                self.get_iid_descendants(iid),
+                islice(self.get_iid_ancestors(iid), 1, None),
+            )
+        )

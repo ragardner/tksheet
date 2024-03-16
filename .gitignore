@@ -1,6 +1,9 @@
 # tksheet
 test*.py*
 MOD_VERSION.py
+*.xlsx
+*.csv
+*.tsv
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -350,7 +350,12 @@ class GeneratedMouseEvent:
 class Node:
     __slots__ = ("text", "iid", "parent", "children")
 
-    def __init__(self, text: str, iid: str, parent: Node | Literal[""]) -> None:
+    def __init__(
+        self,
+        text: str,
+        iid: str,
+        parent: Node | Literal[""] | None = None,
+    ) -> None:
         self.text = text
         self.iid = iid
         self.parent = parent

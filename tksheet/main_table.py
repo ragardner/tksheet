@@ -104,6 +104,7 @@ class MainTable(tk.Canvas):
         self.PAR = kwargs["parent"]
         self.PAR_width = 0
         self.PAR_height = 0
+        self.scrollregion = tuple()
         self.current_cursor = ""
         self.b1_pressed_loc = None
         self.existing_dropdown_canvas_id = None
@@ -309,6 +310,8 @@ class MainTable(tk.Canvas):
                 self._row_index = _row_index
             else:
                 self._row_index = []
+        self.saved_row_heights = {}
+        self.saved_column_widths = {}
         self.displayed_columns = []
         self.displayed_rows = []
         self.set_col_positions(itr=[])
@@ -931,6 +934,7 @@ class MainTable(tk.Canvas):
         data_indexes: bool = False,
         event_data: EventDataDict | None = None,
     ) -> tuple[dict[int, int], dict[int, int], EventDataDict]:
+        self.saved_column_widths = {}
         if not isinstance(totalcols, int):
             totalcols = max(data_new_idxs.values(), default=0)
             if totalcols:
@@ -1163,6 +1167,7 @@ class MainTable(tk.Canvas):
         data_indexes: bool = False,
         event_data: EventDataDict | None = None,
     ) -> tuple[dict[int, int], dict[int, int], EventDataDict]:
+        self.saved_row_heights = {}
         if not isinstance(totalrows, int):
             totalrows = self.fix_data_len(max(data_new_idxs.values(), default=0))
         if event_data is None:
@@ -1774,7 +1779,7 @@ class MainTable(tk.Canvas):
         redraw: bool = True,
         run_binding_func: bool = True,
         set_as_current: bool = True,
-    ) -> int:
+    ) -> int | None:
         if add_selection:
             if self.cell_selected(row, column, inc_rows=True, inc_cols=True):
                 fill_iid = self.deselect(r=row, c=column, redraw=redraw)
@@ -3286,6 +3291,8 @@ class MainTable(tk.Canvas):
         )
 
     def zoom_font(self, table_font: tuple, header_font: tuple):
+        self.saved_column_widths = {}
+        self.saved_row_heights = {}
         # should record position prior to change and then see after change
         y = self.canvasy(0)
         x = self.canvasx(0)
@@ -4185,6 +4192,7 @@ class MainTable(tk.Canvas):
         create_selections: bool = True,
         add_row_positions: bool = True,
     ) -> EventDataDict:
+        self.saved_column_widths = {}
         saved_displayed_columns = list(self.displayed_columns)
         if isinstance(displayed_columns, list):
             self.displayed_columns = displayed_columns
@@ -4315,6 +4323,7 @@ class MainTable(tk.Canvas):
         create_selections: bool = True,
         add_col_positions: bool = True,
     ) -> EventDataDict:
+        self.saved_row_heights = {}
         saved_displayed_rows = list(self.displayed_rows)
         if isinstance(displayed_rows, list):
             self.displayed_rows = displayed_rows
@@ -4573,6 +4582,7 @@ class MainTable(tk.Canvas):
         return event_data
 
     def delete_columns_displayed(self, cols: list, event_data: dict) -> EventDataDict:
+        self.saved_column_widths = {}
         cols_set = set(cols)
         for c in reversed(cols):
             event_data["deleted"]["column_widths"][c] = self.col_positions[c + 1] - self.col_positions[c]
@@ -4627,6 +4637,7 @@ class MainTable(tk.Canvas):
         return event_data
 
     def delete_rows_displayed(self, rows: list, event_data: dict) -> EventDataDict:
+        self.saved_row_heights = {}
         rows_set = set(rows)
         for r in reversed(rows):
             event_data["deleted"]["row_heights"][r] = self.row_positions[r + 1] - self.row_positions[r]
@@ -5074,27 +5085,28 @@ class MainTable(tk.Canvas):
         if draw_outline and self.PAR.ops.show_dropdown_borders:
             self.redraw_highlight(x1 + 1, y1 + 1, x2, y2, fill="", outline=self.PAR.ops.table_fg, tag=tag)
         if draw_arrow:
-            topysub = floor(self.table_half_txt_height / 2)
-            mid_y = y1 + floor(self.min_row_height / 2)
-            if mid_y + topysub + 1 >= y1 + self.table_txt_height - 1:
-                mid_y -= 1
-            if mid_y - topysub + 2 <= y1 + 4 + topysub:
-                mid_y -= 1
-                ty1 = mid_y + topysub + 1 if dd_is_open else mid_y - topysub + 3
-                ty2 = mid_y - topysub + 3 if dd_is_open else mid_y + topysub + 1
-                ty3 = mid_y + topysub + 1 if dd_is_open else mid_y - topysub + 3
+            mod = (self.table_txt_height - 1) if self.table_txt_height % 2 else self.table_txt_height
+            half_mod = mod / 2
+            qtr_mod = mod / 4
+            mid_y = (self.table_first_ln_ins - 1) if self.table_first_ln_ins % 2 else self.table_first_ln_ins
+            if dd_is_open:
+                points = (
+                    x2 - 3 - mod,
+                    y1 + mid_y + qtr_mod,
+                    x2 - 3 - half_mod,
+                    y1 + mid_y - qtr_mod,
+                    x2 - 3,
+                    y1 + mid_y + qtr_mod,
+                )
             else:
-                ty1 = mid_y + topysub + 1 if dd_is_open else mid_y - topysub + 2
-                ty2 = mid_y - topysub + 2 if dd_is_open else mid_y + topysub + 1
-                ty3 = mid_y + topysub + 1 if dd_is_open else mid_y - topysub + 2
-            tx1 = x2 - self.table_txt_height + 1
-            tx2 = x2 - self.table_half_txt_height - 1
-            tx3 = x2 - 3
-            if tx2 - tx1 > tx3 - tx2:
-                tx1 += (tx2 - tx1) - (tx3 - tx2)
-            elif tx2 - tx1 < tx3 - tx2:
-                tx1 -= (tx3 - tx2) - (tx2 - tx1)
-            points = (tx1, ty1, tx2, ty2, tx3, ty3)
+                points = (
+                    x2 - 3 - mod,
+                    y1 + mid_y - qtr_mod,
+                    x2 - 3 - half_mod,
+                    y1 + mid_y + qtr_mod,
+                    x2 - 3,
+                    y1 + mid_y - qtr_mod,
+                )
             if self.hidd_dropdown:
                 t, sh = self.hidd_dropdown.popitem()
                 self.coords(t, points)
@@ -5220,8 +5232,6 @@ class MainTable(tk.Canvas):
                         if i not in diffs:
                             heights[i] -= change
                 self.row_positions = list(accumulate(chain([0], heights)))
-        if resized_cols or resized_rows:
-            self.recreate_all_selection_boxes()
         last_col_line_pos = self.col_positions[-1] + 1
         last_row_line_pos = self.row_positions[-1] + 1
         if can_width >= last_col_line_pos + self.PAR.ops.empty_horizontal and self.PAR.xscroll_showing:
@@ -5246,27 +5256,35 @@ class MainTable(tk.Canvas):
         ):
             self.PAR.yscroll.grid(row=0, column=2, rowspan=3, sticky="nswe")
             self.PAR.yscroll_showing = True
-        self.configure(
-            scrollregion=(
-                0,
-                0,
-                last_col_line_pos + self.PAR.ops.empty_horizontal + 2,
-                last_row_line_pos + self.PAR.ops.empty_vertical + 2,
-            )
+        scrollregion = (
+            0,
+            0,
+            last_col_line_pos + self.PAR.ops.empty_horizontal + 2,
+            last_row_line_pos + self.PAR.ops.empty_vertical + 2,
         )
+        if scrollregion != self.scrollregion:
+            self.configure(scrollregion=scrollregion)
+            self.scrollregion = scrollregion
         scrollpos_bot = self.canvasy(can_height)
         end_row = bisect_right(self.row_positions, scrollpos_bot)
         if not scrollpos_bot >= self.row_positions[-1]:
             end_row += 1
-        if redraw_row_index and self.show_index:
-            self.RI.auto_set_index_width(end_row - 1)
-            # return
         scrollpos_left = self.canvasx(0)
         scrollpos_top = self.canvasy(0)
         scrollpos_right = self.canvasx(can_width)
         start_row = bisect_left(self.row_positions, scrollpos_top)
         start_col = bisect_left(self.col_positions, scrollpos_left)
         end_col = bisect_right(self.col_positions, scrollpos_right)
+        changed_w = False
+        if self.PAR.ops.auto_resize_row_index and redraw_row_index and self.show_index:
+            changed_w = self.RI.auto_set_index_width(
+                end_row=end_row - 1,
+                only_rows=[self.datarn(r) for r in range(start_row if not start_row else start_row - 1, end_row - 1)],
+            )
+            if changed_w:
+                return False
+        if resized_cols or resized_rows:
+            self.recreate_all_selection_boxes()
         self.hidd_text.update(self.disp_text)
         self.disp_text = {}
         self.hidd_high.update(self.disp_high)
@@ -7324,11 +7342,11 @@ class MainTable(tk.Canvas):
             return True
         if self.cell_equal_to(datarn, datacn, value, ignore_empty=ignore_empty):
             return False
-        if self.get_cell_kwargs(datarn, datacn, key="checkbox"):
-            return is_bool_like(value)
         kwargs = self.get_cell_kwargs(datarn, datacn, key="dropdown")
         if kwargs and kwargs["validate_input"] and value not in kwargs["values"]:
             return False
+        if self.get_cell_kwargs(datarn, datacn, key="checkbox"):
+            return is_bool_like(value)
         return True
 
     def cell_equal_to(self, datarn: int, datacn: int, value: object, ignore_empty: bool = False, **kwargs) -> bool:

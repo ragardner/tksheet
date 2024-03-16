@@ -10,6 +10,9 @@
 - Potential issue with using `insert_rows` while also using an `int` as the row index to display a specific column in the index
 - Potential error if a selection box ends up outside of rows/columns
 
+#### Changed:
+- `auto_resize_row_index` will now also resize the row index with non default values, can only be disabled after Sheet initialization with `set_options()`
+
 ### Version 7.0.6
 #### Changed:
 - The following `MainTable` attributes are now simply `int`s or `str`s which represent either pixels or number of lines, instead of `tuple`s:
