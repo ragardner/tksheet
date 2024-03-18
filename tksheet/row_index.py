@@ -882,8 +882,10 @@ class RowIndex(tk.Canvas):
     ) -> bool:
         if self.PAR.ops.treeview and (
             canvasy < self.MT.row_positions[r] + self.MT.index_txt_height + 3
+            and isinstance(self.MT._row_index, list)
+            and (datarn := self.MT.datarn(r)) < len(self.MT._row_index)
             and eventx
-            < self.get_treeview_indent((iid := self.MT._row_index[self.MT.datarn(r)].iid))
+            < self.get_treeview_indent((iid := self.MT._row_index[datarn].iid))
             + self.MT.index_txt_height
             + 1
         ):
@@ -1517,7 +1519,7 @@ class RowIndex(tk.Canvas):
                     tag="cb",
                     draw_check=draw_check,
                 )
-            if treeview:
+            if treeview and isinstance(self.MT._row_index, list) and len(self.MT._row_index) > datarn:
                 iid = self.MT._row_index[datarn].iid
                 mw -= self.MT.index_txt_height
                 if align == "w":
@@ -2309,13 +2311,17 @@ class RowIndex(tk.Canvas):
         if node.parent:
             yield from self.get_node_level(node.parent, level + 1)
 
-    def iid_ancestors_all_open(self, iid: str, stop_at: None | str = None) -> bool:
-        for iid in self.get_iid_ancestors(iid):
-            if iid == stop_at:
-                break
-            if iid not in self.tree_open_ids:
-                return False
-        return True
+    def ancestors_all_open(self, iid: str, stop_at: str | Node = "") -> bool:
+        if stop_at:
+            stop_at = stop_at.iid
+            for iid in self.get_iid_ancestors(iid):
+                if iid == stop_at:
+                    return True
+                if iid not in self.tree_open_ids:
+                    return False
+            return True
+        else:
+            return all(iid in self.tree_open_ids for iid in self.get_iid_ancestors(iid))
 
     def get_iid_ancestors(self, iid: str) -> Generator[str]:
         if self.tree[iid].parent:
