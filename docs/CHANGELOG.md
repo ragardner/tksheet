@@ -1,9 +1,11 @@
 ### Version 7.0.7
 #### Added:
 - `data_indexes` `bool` parameters to functions: `hide_rows`, `hide_columns`, default value is `False` meaning there is no behavior change
+- Functions `show_rows()`, `show_columns()` which are designed to work alongside their `hide_rows()`/`hide_columns()` counterparts
 - `create_selections` `bool` parameters to functions: `insert_rows`, `insert_columns` default value is `True` meaning there is no behavior change
-- A work in progress treeview mode
-- Work in progress cell, row and column tagging functionality
+- Treeview mode
+- Cell, row and column tagging functions
+- Ability to change the appearance of both scrollbars
 
 #### Fixed:
 - `mapping_move_rows()` error
@@ -11,7 +13,10 @@
 - Potential error if a selection box ends up outside of rows/columns
 
 #### Changed:
+- Changed order of `Sheet()` init parameters
 - `auto_resize_row_index` will now also resize the row index with non default values, can only be disabled after Sheet initialization with `set_options()`
+- Scrollbar appearance
+- `hide_rows()`/`hide_columns()` functions now endeavour to save the row heights/column widths so that they may be reinserted when using new functions `show_rows()`/`show_columns()`
 
 ### Version 7.0.6
 #### Changed:

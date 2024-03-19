@@ -6,7 +6,7 @@
 - [Usage Examples](https://github.com/ragardner/tksheet/wiki/Version-7#usage-examples)
 - [Initialization Options](https://github.com/ragardner/tksheet/wiki/Version-7#initialization-options)
 ---
-- [Sheet Colors](https://github.com/ragardner/tksheet/wiki/Version-7#sheet-colors)
+- [Sheet Appearance](https://github.com/ragardner/tksheet/wiki/Version-7#sheet-appearance)
 - [Header and Index](https://github.com/ragardner/tksheet/wiki/Version-7#header-and-index)
 ---
 - [Bindings and Functionality](https://github.com/ragardner/tksheet/wiki/Version-7#bindings-and-functionality)
@@ -313,6 +313,8 @@ def __init__(
     default_row_index: Literal["letters", "numbers", "both"] = "numbers",
     data_reference: None | Sequence[Sequence[object]] = None,
     data: None | Sequence[Sequence[object]] = None,
+    # either (start row, end row, "rows"), (start column, end column, "rows") or
+    # (cells start row, cells start column, cells end row, cells end column, "cells")  # noqa: E501
     startup_select: tuple[int, int, str] | tuple[int, int, int, int, str] = None,
     startup_focus: bool = True,
     total_columns: int | None = None,
@@ -336,52 +338,6 @@ def __init__(
     all_columns_displayed: bool = True,
     displayed_rows: list[int] = [],
     all_rows_displayed: bool = True,
-    outline_thickness: int = 0,
-    outline_color: str = theme_light_blue["outline_color"],
-    theme: str = "light blue",
-    frame_bg: str = theme_light_blue["table_bg"],
-    popup_menu_fg: str = theme_light_blue["popup_menu_fg"],
-    popup_menu_bg: str = theme_light_blue["popup_menu_bg"],
-    popup_menu_highlight_bg: str = theme_light_blue["popup_menu_highlight_bg"],
-    popup_menu_highlight_fg: str = theme_light_blue["popup_menu_highlight_fg"],
-    table_grid_fg: str = theme_light_blue["table_grid_fg"],
-    table_bg: str = theme_light_blue["table_bg"],
-    table_fg: str = theme_light_blue["table_fg"],
-    table_selected_box_cells_fg: str = theme_light_blue["table_selected_box_cells_fg"],
-    table_selected_box_rows_fg: str = theme_light_blue["table_selected_box_rows_fg"],
-    table_selected_box_columns_fg: str = theme_light_blue["table_selected_box_columns_fg"],
-    table_selected_cells_border_fg: str = theme_light_blue["table_selected_cells_border_fg"],
-    table_selected_cells_bg: str = theme_light_blue["table_selected_cells_bg"],
-    table_selected_cells_fg: str = theme_light_blue["table_selected_cells_fg"],
-    table_selected_rows_border_fg: str = theme_light_blue["table_selected_rows_border_fg"],
-    table_selected_rows_bg: str = theme_light_blue["table_selected_rows_bg"],
-    table_selected_rows_fg: str = theme_light_blue["table_selected_rows_fg"],
-    table_selected_columns_border_fg: str = theme_light_blue["table_selected_columns_border_fg"],
-    table_selected_columns_bg: str = theme_light_blue["table_selected_columns_bg"],
-    table_selected_columns_fg: str = theme_light_blue["table_selected_columns_fg"],
-    resizing_line_fg: str = theme_light_blue["resizing_line_fg"],
-    drag_and_drop_bg: str = theme_light_blue["drag_and_drop_bg"],
-    index_bg: str = theme_light_blue["index_bg"],
-    index_border_fg: str = theme_light_blue["index_border_fg"],
-    index_grid_fg: str = theme_light_blue["index_grid_fg"],
-    index_fg: str = theme_light_blue["index_fg"],
-    index_selected_cells_bg: str = theme_light_blue["index_selected_cells_bg"],
-    index_selected_cells_fg: str = theme_light_blue["index_selected_cells_fg"],
-    index_selected_rows_bg: str = theme_light_blue["index_selected_rows_bg"],
-    index_selected_rows_fg: str = theme_light_blue["index_selected_rows_fg"],
-    index_hidden_rows_expander_bg: str = theme_light_blue["index_hidden_rows_expander_bg"],
-    header_bg: str = theme_light_blue["header_bg"],
-    header_border_fg: str = theme_light_blue["header_border_fg"],
-    header_grid_fg: str = theme_light_blue["header_grid_fg"],
-    header_fg: str = theme_light_blue["header_fg"],
-    header_selected_cells_bg: str = theme_light_blue["header_selected_cells_bg"],
-    header_selected_cells_fg: str = theme_light_blue["header_selected_cells_fg"],
-    header_selected_columns_bg: str = theme_light_blue["header_selected_columns_bg"],
-    header_selected_columns_fg: str = theme_light_blue["header_selected_columns_fg"],
-    header_hidden_columns_expander_bg: str = theme_light_blue["header_hidden_columns_expander_bg"],
-    top_left_bg: str = theme_light_blue["top_left_bg"],
-    top_left_fg: str = theme_light_blue["top_left_fg"],
-    top_left_fg_highlight: str = theme_light_blue["top_left_fg_highlight"],
     to_clipboard_delimiter: str = "\t",
     to_clipboard_quotechar: str = '"',
     to_clipboard_lineterminator: str = "\n",
@@ -431,6 +387,91 @@ def __init__(
     show_horizontal_grid: bool = True,
     display_selected_fg_over_highlights: bool = False,
     show_selected_cells_border: bool = True,
+    treeview: bool = False,
+    # colors
+    outline_thickness: int = 0,
+    outline_color: str = theme_light_blue["outline_color"],
+    theme: str = "light blue",
+    frame_bg: str = theme_light_blue["table_bg"],
+    popup_menu_fg: str = theme_light_blue["popup_menu_fg"],
+    popup_menu_bg: str = theme_light_blue["popup_menu_bg"],
+    popup_menu_highlight_bg: str = theme_light_blue["popup_menu_highlight_bg"],
+    popup_menu_highlight_fg: str = theme_light_blue["popup_menu_highlight_fg"],
+    table_grid_fg: str = theme_light_blue["table_grid_fg"],
+    table_bg: str = theme_light_blue["table_bg"],
+    table_fg: str = theme_light_blue["table_fg"],
+    table_selected_box_cells_fg: str = theme_light_blue["table_selected_box_cells_fg"],
+    table_selected_box_rows_fg: str = theme_light_blue["table_selected_box_rows_fg"],
+    table_selected_box_columns_fg: str = theme_light_blue["table_selected_box_columns_fg"],
+    table_selected_cells_border_fg: str = theme_light_blue["table_selected_cells_border_fg"],
+    table_selected_cells_bg: str = theme_light_blue["table_selected_cells_bg"],
+    table_selected_cells_fg: str = theme_light_blue["table_selected_cells_fg"],
+    table_selected_rows_border_fg: str = theme_light_blue["table_selected_rows_border_fg"],
+    table_selected_rows_bg: str = theme_light_blue["table_selected_rows_bg"],
+    table_selected_rows_fg: str = theme_light_blue["table_selected_rows_fg"],
+    table_selected_columns_border_fg: str = theme_light_blue["table_selected_columns_border_fg"],
+    table_selected_columns_bg: str = theme_light_blue["table_selected_columns_bg"],
+    table_selected_columns_fg: str = theme_light_blue["table_selected_columns_fg"],
+    resizing_line_fg: str = theme_light_blue["resizing_line_fg"],
+    drag_and_drop_bg: str = theme_light_blue["drag_and_drop_bg"],
+    index_bg: str = theme_light_blue["index_bg"],
+    index_border_fg: str = theme_light_blue["index_border_fg"],
+    index_grid_fg: str = theme_light_blue["index_grid_fg"],
+    index_fg: str = theme_light_blue["index_fg"],
+    index_selected_cells_bg: str = theme_light_blue["index_selected_cells_bg"],
+    index_selected_cells_fg: str = theme_light_blue["index_selected_cells_fg"],
+    index_selected_rows_bg: str = theme_light_blue["index_selected_rows_bg"],
+    index_selected_rows_fg: str = theme_light_blue["index_selected_rows_fg"],
+    index_hidden_rows_expander_bg: str = theme_light_blue["index_hidden_rows_expander_bg"],
+    header_bg: str = theme_light_blue["header_bg"],
+    header_border_fg: str = theme_light_blue["header_border_fg"],
+    header_grid_fg: str = theme_light_blue["header_grid_fg"],
+    header_fg: str = theme_light_blue["header_fg"],
+    header_selected_cells_bg: str = theme_light_blue["header_selected_cells_bg"],
+    header_selected_cells_fg: str = theme_light_blue["header_selected_cells_fg"],
+    header_selected_columns_bg: str = theme_light_blue["header_selected_columns_bg"],
+    header_selected_columns_fg: str = theme_light_blue["header_selected_columns_fg"],
+    header_hidden_columns_expander_bg: str = theme_light_blue["header_hidden_columns_expander_bg"],
+    top_left_bg: str = theme_light_blue["top_left_bg"],
+    top_left_fg: str = theme_light_blue["top_left_fg"],
+    top_left_fg_highlight: str = theme_light_blue["top_left_fg_highlight"],
+    vertical_scroll_background: str = theme_light_blue["vertical_scroll_background"],
+    horizontal_scroll_background: str = theme_light_blue["horizontal_scroll_background"],
+    vertical_scroll_troughcolor: str = theme_light_blue["vertical_scroll_troughcolor"],
+    horizontal_scroll_troughcolor: str = theme_light_blue["horizontal_scroll_troughcolor"],
+    vertical_scroll_lightcolor: str = theme_light_blue["vertical_scroll_lightcolor"],
+    horizontal_scroll_lightcolor: str = theme_light_blue["horizontal_scroll_lightcolor"],
+    vertical_scroll_darkcolor: str = theme_light_blue["vertical_scroll_darkcolor"],
+    horizontal_scroll_darkcolor: str = theme_light_blue["horizontal_scroll_darkcolor"],
+    vertical_scroll_relief: str = theme_light_blue["vertical_scroll_relief"],
+    horizontal_scroll_relief: str = theme_light_blue["horizontal_scroll_relief"],
+    vertical_scroll_troughrelief: str = theme_light_blue["vertical_scroll_troughrelief"],
+    horizontal_scroll_troughrelief: str = theme_light_blue["horizontal_scroll_troughrelief"],
+    vertical_scroll_bordercolor: str = theme_light_blue["vertical_scroll_bordercolor"],
+    horizontal_scroll_bordercolor: str = theme_light_blue["horizontal_scroll_bordercolor"],
+    vertical_scroll_borderwidth: str = 1,
+    horizontal_scroll_borderwidth: str = 1,
+    vertical_scroll_gripcount: str = 0,
+    horizontal_scroll_gripcount: str = 0,
+    vertical_scroll_active_bg: str = theme_light_blue["vertical_scroll_active_bg"],
+    horizontal_scroll_active_bg: str = theme_light_blue["horizontal_scroll_active_bg"],
+    vertical_scroll_not_active_bg: str = theme_light_blue["vertical_scroll_not_active_bg"],
+    horizontal_scroll_not_active_bg: str = theme_light_blue["horizontal_scroll_not_active_bg"],
+    vertical_scroll_pressed_bg: str = theme_light_blue["vertical_scroll_pressed_bg"],
+    horizontal_scroll_pressed_bg: str = theme_light_blue["horizontal_scroll_pressed_bg"],
+    vertical_scroll_active_fg: str = theme_light_blue["vertical_scroll_active_fg"],
+    horizontal_scroll_active_fg: str = theme_light_blue["horizontal_scroll_active_fg"],
+    vertical_scroll_not_active_fg: str = theme_light_blue["vertical_scroll_not_active_fg"],
+    horizontal_scroll_not_active_fg: str = theme_light_blue["horizontal_scroll_not_active_fg"],
+    vertical_scroll_pressed_fg: str = theme_light_blue["vertical_scroll_pressed_fg"],
+    horizontal_scroll_pressed_fg: str = theme_light_blue["horizontal_scroll_pressed_fg"],
+    scrollbar_theme_inheritance: str = "default",
+    scrollbar_show_arrows: bool = True,
+    # changing the arrowsize (width) of the scrollbars
+    # is not working with 'default' theme
+    # use 'clam' theme instead if you want to change the width
+    vertical_scroll_arrowsize: str | int = "",
+    horizontal_scroll_arrowsize: str | int = "",
 ) -> None
 ```
 - `name` setting a name for the sheet is useful when you have multiple sheets and you need to determine which one an event came from.
@@ -441,10 +482,13 @@ def __init__(
 - `row_index` and `index` are the same, `index` takes priority, same as with `headers` and `header`.
 - `startup_select` either `(start row, end row, "rows")`, `(start column, end column, "rows")` or `(start row, start column, end row, end column, "cells")`. The start/end row/column variables need to be `int`s.
 
-You can change these settings after initialization using the [`set_options()` function](https://github.com/ragardner/tksheet/wiki/Version-7#sheet-options-and-other-functions).
+You can change most of these settings after initialization using the [`set_options()` function](https://github.com/ragardner/tksheet/wiki/Version-7#sheet-options-and-other-functions).
+- `scrollbar_theme_inheritance` and `scrollbar_show_arrows` will only work on `Sheet()` initialization, not with `set_options()`
 
 ---
-# **Sheet Colors**
+# **Sheet Appearance**
+
+### **Sheet Colors**
 
 To change the colors of individual cells, rows or columns use the functions listed under [highlighting cells](https://github.com/ragardner/tksheet/wiki/Version-7#highlighting-cells).
 
@@ -455,6 +499,7 @@ Use a tkinter color or a hex string e.g.
 ```python
 my_sheet_widget.set_options(table_bg="black")
 my_sheet_widget.set_options(table_bg="#000000")
+my_sheet_widget.set_options(horizontal_scroll_pressed_bg="red")
 ```
 
 ```python
@@ -507,6 +552,29 @@ popup_menu_fg
 popup_menu_bg
 popup_menu_highlight_bg
 popup_menu_highlight_fg
+
+vertical_scroll_background
+horizontal_scroll_background
+vertical_scroll_troughcolor
+horizontal_scroll_troughcolor
+vertical_scroll_lightcolor
+horizontal_scroll_lightcolor
+vertical_scroll_darkcolor
+horizontal_scroll_darkcolor
+vertical_scroll_bordercolor
+horizontal_scroll_bordercolor
+vertical_scroll_active_bg
+horizontal_scroll_active_bg
+vertical_scroll_not_active_bg
+horizontal_scroll_not_active_bg
+vertical_scroll_pressed_bg
+horizontal_scroll_pressed_bg
+vertical_scroll_active_fg
+horizontal_scroll_active_fg
+vertical_scroll_not_active_fg
+horizontal_scroll_not_active_fg
+vertical_scroll_pressed_fg
+horizontal_scroll_pressed_fg
 )
 ```
 
@@ -514,7 +582,20 @@ Otherwise you can change the theme using the below function.
 ```python
 change_theme(theme: str = "light blue", redraw: bool = True) -> Sheet
 ```
-- `theme` (`str`) options (themes) are currently `light blue`, `light green`, `dark`, `dark blue` and `dark green`.
+- `theme` (`str`) options (themes) are currently `"light blue"`, `"light green"`, `"dark"`, `"black"`, `"dark blue"` and `"dark green"`.
+
+### **Scrollbar Appearance**
+
+**Scrollbar colors:**
+
+- To change the colors of the sheet scrollbars you can use [the above functions](https://github.com/ragardner/tksheet/wiki/Version-7#sheet-colors).
+
+**Scrollbar relief, size, arrows, etc.**
+
+- To
+
+
+
 
 ---
 # **Header and Index**
@@ -4339,8 +4420,47 @@ hide_columns(
     data_indexes: bool = False,
 ) -> Sheet
 ```
+Parameters:
 - **NOTE**: `columns` (`int`) uses displayed column indexes, not data indexes. In other words the indexes of the columns displayed on the screen are the ones that are hidden, this is useful when used in conjunction with `get_selected_columns()`.
 - `data_indexes` is only applicable when there are already columns hidden. When `False` it makes the `columns` parameter indexes represent displayed columns and not the underlying Sheet data columns. When `True` the indexes represent data indexes.
+
+Example:
+```python
+columns_to_hide = set(sheet.data_c(c) for c in sheet.get_selected_columns())
+sheet.hide_columns(
+    columns_to_hide,
+    data_indexes=True,
+)
+```
+
+___
+
+#### **Unhide specific columns**
+
+```python
+show_columns(
+    columns: int | Iterator[int],
+    redraw: bool = True,
+    deselect_all: bool = True,
+) -> Sheet
+```
+Parameters:
+- **NOTE**: `columns` (`int`) uses data column indexes, not displayed indexes. In other words the indexes of the columns which represent the underlying data are shown.
+
+Example:
+```python
+# converting displayed column indexes to data indexes using data_c(c)
+columns = set(sheet.data_c(c) for c in sheet.get_selected_columns())
+
+# hiding columns
+sheet.hide_columns(
+    columns,
+    data_indexes=True,
+)
+
+# showing them again
+sheet.show_columns(columns)
+```
 
 ___
 
@@ -4349,6 +4469,7 @@ ___
 Convert a displayed column index to a data index. If the internal `all_columns_displayed` attribute is `True` then it will simply return the provided argument.
 ```python
 displayed_column_to_data(c)
+data_c(c)
 ```
 
 ___
@@ -4406,8 +4527,47 @@ hide_rows(
     data_indexes: bool = False,
 ) -> Sheet
 ```
+Parameters:
 - **NOTE**: `rows` (`int`) uses displayed row indexes, not data indexes. In other words the indexes of the rows displayed on the screen are the ones that are hidden, this is useful when used in conjunction with `get_selected_rows()`.
 - `data_indexes` is only applicable when there are already rows hidden. When `False` it makes the `rows` parameter indexes represent displayed rows and not the underlying Sheet data rows. When `True` the indexes represent data indexes.
+
+Example:
+```python
+rows_to_hide = set(sheet.data_r(r) for r in sheet.get_selected_rows())
+sheet.hide_rows(
+    rows_to_hide,
+    data_indexes=True,
+)
+```
+
+___
+
+#### **Unhide specific rows**
+
+```python
+show_rows(
+    rows: int | Iterator[int],
+    redraw: bool = True,
+    deselect_all: bool = True,
+) -> Sheet
+```
+Parameters:
+- **NOTE**: `rows` (`int`) uses data row indexes, not displayed indexes. In other words the indexes of the rows which represent the underlying data are shown.
+
+Example:
+```python
+# converting displayed row indexes to data indexes using data_r(r)
+rows = set(sheet.data_r(r) for r in sheet.get_selected_rows())
+
+# hiding rows
+sheet.hide_rows(
+    rows,
+    data_indexes=True,
+)
+
+# showing them again
+sheet.show_rows(rows)
+```
 
 ___
 
@@ -4425,6 +4585,7 @@ ___
 Convert a displayed row index to a data index. If the internal `all_rows_displayed` attribute is `True` then it will simply return the provided argument.
 ```python
 displayed_row_to_data(r)
+data_r(r)
 ```
 
 ___
@@ -4864,7 +5025,74 @@ This is a work in progress and not fully functional at this time.
 ---
 # **Tags**
 
-This is a work in progress and not fully functional at this time.
+Tags can be used to keep track of specific cells, rows and columns wherever they move. Note that:
+- If rows/columns are deleted the the associated tags will be also.
+- There is no equivalent `tag_bind` functionality at this time.
+- Relevant only when there are hidden rows/columns - all tagging functions use data indexes, not the displayed indexes.
+
+#### **Tag a specific cell**
+
+```python
+tag_cell(
+    cell: tuple[int, int],
+    *tags,
+) -> Sheet
+```
+Example:
+```python
+sheet.tag_cell((0, 0), "tag a1", "tag a1 no.2")
+```
+
+___
+
+#### **Tag specific rows**
+
+```python
+tag_rows(
+    rows: int | Iterator[int],
+    *tags,
+) -> Sheet
+```
+
+___
+
+#### **Tag specific columns**
+
+```python
+tag_columns(
+    columns: int | Iterator[int],
+    *tags,
+) -> Sheet
+```
+
+___
+
+#### **Get cells, rows or columns associated with tags**
+
+```python
+tag_has(
+    *tags,
+) -> DotDict
+```
+Notes:
+- Returns all cells, rows and columns associated with **any** of the provided tags in the form of a `dict` with dot notation accessbility which has the following keys:
+    - `"cells"` - with a value of `set[tuple[int, int]]` where the `tuple`s are cell coordinates - `(row, column)`.
+    - `"rows"` - with a value of `set[int]` where the `int`s are rows.
+    - `"columns"` - with a value of `set[int]` where the `int`s are columns.
+- Returns data indexes.
+- This function **updates** the `set`s with any cells/rows/columns associated with each tag, it does **not** return cells/rows/columns that have all the provided tags.
+
+Example:
+```python
+sheet.tag_rows((0, 1), "row tag a", "row tag b")
+sheet.tag_rows(4, "row tag b")
+sheet.tag_rows(5, "row tag c")
+sheet.tag_rows(6, "row tag d")
+with_tags = sheet.tag_has("row tag b", "row tag c")
+
+print (with_tags)
+# prints {0, 1, 4, 5}
+```
 
 ---
 # **Example Loading Data from Excel**

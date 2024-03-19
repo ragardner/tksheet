@@ -69,6 +69,7 @@ from .vars import (
     emitted_events,
     named_span_types,
     rc_binding,
+    scrollbar_options_keys,
 )
 
 
@@ -118,52 +119,6 @@ class Sheet(tk.Frame):
         all_columns_displayed: bool = True,
         displayed_rows: list[int] = [],
         all_rows_displayed: bool = True,
-        outline_thickness: int = 0,
-        outline_color: str = theme_light_blue["outline_color"],
-        theme: str = "light blue",
-        frame_bg: str = theme_light_blue["table_bg"],
-        popup_menu_fg: str = theme_light_blue["popup_menu_fg"],
-        popup_menu_bg: str = theme_light_blue["popup_menu_bg"],
-        popup_menu_highlight_bg: str = theme_light_blue["popup_menu_highlight_bg"],
-        popup_menu_highlight_fg: str = theme_light_blue["popup_menu_highlight_fg"],
-        table_grid_fg: str = theme_light_blue["table_grid_fg"],
-        table_bg: str = theme_light_blue["table_bg"],
-        table_fg: str = theme_light_blue["table_fg"],
-        table_selected_box_cells_fg: str = theme_light_blue["table_selected_box_cells_fg"],
-        table_selected_box_rows_fg: str = theme_light_blue["table_selected_box_rows_fg"],
-        table_selected_box_columns_fg: str = theme_light_blue["table_selected_box_columns_fg"],
-        table_selected_cells_border_fg: str = theme_light_blue["table_selected_cells_border_fg"],
-        table_selected_cells_bg: str = theme_light_blue["table_selected_cells_bg"],
-        table_selected_cells_fg: str = theme_light_blue["table_selected_cells_fg"],
-        table_selected_rows_border_fg: str = theme_light_blue["table_selected_rows_border_fg"],
-        table_selected_rows_bg: str = theme_light_blue["table_selected_rows_bg"],
-        table_selected_rows_fg: str = theme_light_blue["table_selected_rows_fg"],
-        table_selected_columns_border_fg: str = theme_light_blue["table_selected_columns_border_fg"],
-        table_selected_columns_bg: str = theme_light_blue["table_selected_columns_bg"],
-        table_selected_columns_fg: str = theme_light_blue["table_selected_columns_fg"],
-        resizing_line_fg: str = theme_light_blue["resizing_line_fg"],
-        drag_and_drop_bg: str = theme_light_blue["drag_and_drop_bg"],
-        index_bg: str = theme_light_blue["index_bg"],
-        index_border_fg: str = theme_light_blue["index_border_fg"],
-        index_grid_fg: str = theme_light_blue["index_grid_fg"],
-        index_fg: str = theme_light_blue["index_fg"],
-        index_selected_cells_bg: str = theme_light_blue["index_selected_cells_bg"],
-        index_selected_cells_fg: str = theme_light_blue["index_selected_cells_fg"],
-        index_selected_rows_bg: str = theme_light_blue["index_selected_rows_bg"],
-        index_selected_rows_fg: str = theme_light_blue["index_selected_rows_fg"],
-        index_hidden_rows_expander_bg: str = theme_light_blue["index_hidden_rows_expander_bg"],
-        header_bg: str = theme_light_blue["header_bg"],
-        header_border_fg: str = theme_light_blue["header_border_fg"],
-        header_grid_fg: str = theme_light_blue["header_grid_fg"],
-        header_fg: str = theme_light_blue["header_fg"],
-        header_selected_cells_bg: str = theme_light_blue["header_selected_cells_bg"],
-        header_selected_cells_fg: str = theme_light_blue["header_selected_cells_fg"],
-        header_selected_columns_bg: str = theme_light_blue["header_selected_columns_bg"],
-        header_selected_columns_fg: str = theme_light_blue["header_selected_columns_fg"],
-        header_hidden_columns_expander_bg: str = theme_light_blue["header_hidden_columns_expander_bg"],
-        top_left_bg: str = theme_light_blue["top_left_bg"],
-        top_left_fg: str = theme_light_blue["top_left_fg"],
-        top_left_fg_highlight: str = theme_light_blue["top_left_fg_highlight"],
         to_clipboard_delimiter: str = "\t",
         to_clipboard_quotechar: str = '"',
         to_clipboard_lineterminator: str = "\n",
@@ -214,6 +169,90 @@ class Sheet(tk.Frame):
         display_selected_fg_over_highlights: bool = False,
         show_selected_cells_border: bool = True,
         treeview: bool = False,
+        # colors
+        outline_thickness: int = 0,
+        outline_color: str = theme_light_blue["outline_color"],
+        theme: str = "light blue",
+        frame_bg: str = theme_light_blue["table_bg"],
+        popup_menu_fg: str = theme_light_blue["popup_menu_fg"],
+        popup_menu_bg: str = theme_light_blue["popup_menu_bg"],
+        popup_menu_highlight_bg: str = theme_light_blue["popup_menu_highlight_bg"],
+        popup_menu_highlight_fg: str = theme_light_blue["popup_menu_highlight_fg"],
+        table_grid_fg: str = theme_light_blue["table_grid_fg"],
+        table_bg: str = theme_light_blue["table_bg"],
+        table_fg: str = theme_light_blue["table_fg"],
+        table_selected_box_cells_fg: str = theme_light_blue["table_selected_box_cells_fg"],
+        table_selected_box_rows_fg: str = theme_light_blue["table_selected_box_rows_fg"],
+        table_selected_box_columns_fg: str = theme_light_blue["table_selected_box_columns_fg"],
+        table_selected_cells_border_fg: str = theme_light_blue["table_selected_cells_border_fg"],
+        table_selected_cells_bg: str = theme_light_blue["table_selected_cells_bg"],
+        table_selected_cells_fg: str = theme_light_blue["table_selected_cells_fg"],
+        table_selected_rows_border_fg: str = theme_light_blue["table_selected_rows_border_fg"],
+        table_selected_rows_bg: str = theme_light_blue["table_selected_rows_bg"],
+        table_selected_rows_fg: str = theme_light_blue["table_selected_rows_fg"],
+        table_selected_columns_border_fg: str = theme_light_blue["table_selected_columns_border_fg"],
+        table_selected_columns_bg: str = theme_light_blue["table_selected_columns_bg"],
+        table_selected_columns_fg: str = theme_light_blue["table_selected_columns_fg"],
+        resizing_line_fg: str = theme_light_blue["resizing_line_fg"],
+        drag_and_drop_bg: str = theme_light_blue["drag_and_drop_bg"],
+        index_bg: str = theme_light_blue["index_bg"],
+        index_border_fg: str = theme_light_blue["index_border_fg"],
+        index_grid_fg: str = theme_light_blue["index_grid_fg"],
+        index_fg: str = theme_light_blue["index_fg"],
+        index_selected_cells_bg: str = theme_light_blue["index_selected_cells_bg"],
+        index_selected_cells_fg: str = theme_light_blue["index_selected_cells_fg"],
+        index_selected_rows_bg: str = theme_light_blue["index_selected_rows_bg"],
+        index_selected_rows_fg: str = theme_light_blue["index_selected_rows_fg"],
+        index_hidden_rows_expander_bg: str = theme_light_blue["index_hidden_rows_expander_bg"],
+        header_bg: str = theme_light_blue["header_bg"],
+        header_border_fg: str = theme_light_blue["header_border_fg"],
+        header_grid_fg: str = theme_light_blue["header_grid_fg"],
+        header_fg: str = theme_light_blue["header_fg"],
+        header_selected_cells_bg: str = theme_light_blue["header_selected_cells_bg"],
+        header_selected_cells_fg: str = theme_light_blue["header_selected_cells_fg"],
+        header_selected_columns_bg: str = theme_light_blue["header_selected_columns_bg"],
+        header_selected_columns_fg: str = theme_light_blue["header_selected_columns_fg"],
+        header_hidden_columns_expander_bg: str = theme_light_blue["header_hidden_columns_expander_bg"],
+        top_left_bg: str = theme_light_blue["top_left_bg"],
+        top_left_fg: str = theme_light_blue["top_left_fg"],
+        top_left_fg_highlight: str = theme_light_blue["top_left_fg_highlight"],
+        vertical_scroll_background: str = theme_light_blue["vertical_scroll_background"],
+        horizontal_scroll_background: str = theme_light_blue["horizontal_scroll_background"],
+        vertical_scroll_troughcolor: str = theme_light_blue["vertical_scroll_troughcolor"],
+        horizontal_scroll_troughcolor: str = theme_light_blue["horizontal_scroll_troughcolor"],
+        vertical_scroll_lightcolor: str = theme_light_blue["vertical_scroll_lightcolor"],
+        horizontal_scroll_lightcolor: str = theme_light_blue["horizontal_scroll_lightcolor"],
+        vertical_scroll_darkcolor: str = theme_light_blue["vertical_scroll_darkcolor"],
+        horizontal_scroll_darkcolor: str = theme_light_blue["horizontal_scroll_darkcolor"],
+        vertical_scroll_relief: str = theme_light_blue["vertical_scroll_relief"],
+        horizontal_scroll_relief: str = theme_light_blue["horizontal_scroll_relief"],
+        vertical_scroll_troughrelief: str = theme_light_blue["vertical_scroll_troughrelief"],
+        horizontal_scroll_troughrelief: str = theme_light_blue["horizontal_scroll_troughrelief"],
+        vertical_scroll_bordercolor: str = theme_light_blue["vertical_scroll_bordercolor"],
+        horizontal_scroll_bordercolor: str = theme_light_blue["horizontal_scroll_bordercolor"],
+        vertical_scroll_borderwidth: str = 1,
+        horizontal_scroll_borderwidth: str = 1,
+        vertical_scroll_gripcount: str = 0,
+        horizontal_scroll_gripcount: str = 0,
+        vertical_scroll_active_bg: str = theme_light_blue["vertical_scroll_active_bg"],
+        horizontal_scroll_active_bg: str = theme_light_blue["horizontal_scroll_active_bg"],
+        vertical_scroll_not_active_bg: str = theme_light_blue["vertical_scroll_not_active_bg"],
+        horizontal_scroll_not_active_bg: str = theme_light_blue["horizontal_scroll_not_active_bg"],
+        vertical_scroll_pressed_bg: str = theme_light_blue["vertical_scroll_pressed_bg"],
+        horizontal_scroll_pressed_bg: str = theme_light_blue["horizontal_scroll_pressed_bg"],
+        vertical_scroll_active_fg: str = theme_light_blue["vertical_scroll_active_fg"],
+        horizontal_scroll_active_fg: str = theme_light_blue["horizontal_scroll_active_fg"],
+        vertical_scroll_not_active_fg: str = theme_light_blue["vertical_scroll_not_active_fg"],
+        horizontal_scroll_not_active_fg: str = theme_light_blue["horizontal_scroll_not_active_fg"],
+        vertical_scroll_pressed_fg: str = theme_light_blue["vertical_scroll_pressed_fg"],
+        horizontal_scroll_pressed_fg: str = theme_light_blue["horizontal_scroll_pressed_fg"],
+        scrollbar_theme_inheritance: str = "default",
+        scrollbar_show_arrows: bool = True,
+        # changing the arrowsize (width) of the scrollbars
+        # is not working with 'default' theme
+        # use 'clam' theme instead if you want to change the width
+        vertical_scroll_arrowsize: str | int = "",
+        horizontal_scroll_arrowsize: str | int = "",
         # backwards compatibility
         column_width: int | None = None,
         header_height: str | int | None = None,
@@ -312,8 +351,58 @@ class Sheet(tk.Frame):
             row_index_canvas=self.RI,
             header_canvas=self.CH,
         )
-        self.yscroll = ttk.Scrollbar(self, command=self.MT.set_yviews, orient="vertical")
-        self.xscroll = ttk.Scrollbar(self, command=self.MT.set_xviews, orient="horizontal")
+        self.style = ttk.Style()
+        for orientation in ("Vertical", "Horizontal"):
+            self.style.element_create(
+                f"Tksheet.{orientation}.TScrollbar.trough",
+                "from",
+                scrollbar_theme_inheritance,
+            )
+            self.style.element_create(
+                f"Tksheet.{orientation}.TScrollbar.thumb",
+                "from",
+                scrollbar_theme_inheritance,
+            )
+            self.style.element_create(
+                f"Tksheet.{orientation}.TScrollbar.grip",
+                "from",
+                scrollbar_theme_inheritance,
+            )
+            if not scrollbar_show_arrows:
+                self.style.layout(
+                    f"Tksheet.{orientation}.TScrollbar",
+                    [
+                        (
+                            f"Tksheet.{orientation}.TScrollbar.trough",
+                            {
+                                "children": [
+                                    (
+                                        f"Tksheet.{orientation}.TScrollbar.thumb",
+                                        {
+                                            "unit": "1",
+                                            "children": [(f"Tksheet.{orientation}.TScrollbar.grip", {"sticky": ""})],
+                                            "sticky": "nswe",
+                                        },
+                                    )
+                                ],
+                                "sticky": "ns" if orientation == "Vertical" else "ew",
+                            },
+                        )
+                    ],
+                )
+        self.set_scrollbar_options()
+        self.yscroll = ttk.Scrollbar(
+            self,
+            command=self.MT.set_yviews,
+            orient="vertical",
+            style="Tksheet.Vertical.TScrollbar",
+        )
+        self.xscroll = ttk.Scrollbar(
+            self,
+            command=self.MT.set_xviews,
+            orient="horizontal",
+            style="Tksheet.Horizontal.TScrollbar",
+        )
         if show_top_left:
             self.TL.grid(row=0, column=0)
         if show_table:
@@ -3485,6 +3574,8 @@ class Sheet(tk.Frame):
     def displayed_column_to_data(self, c: int) -> int:
         return c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
 
+    data_c = displayed_column_to_data
+
     def display_columns(
         self,
         columns: None | Literal["all"] | Iterator[int] = None,
@@ -3554,6 +3645,7 @@ class Sheet(tk.Frame):
         self.set_refresh_timer(redraw)
         return self
 
+    # uses data indexes
     def show_columns(
         self,
         columns: int | Iterator[int],
@@ -3588,6 +3680,8 @@ class Sheet(tk.Frame):
 
     def displayed_row_to_data(self, r: int) -> int:
         return r if self.MT.all_rows_displayed else self.MT.displayed_rows[r]
+
+    data_r = displayed_row_to_data
 
     def display_rows(
         self,
@@ -3656,6 +3750,7 @@ class Sheet(tk.Frame):
         self.set_refresh_timer(redraw)
         return self
 
+    # uses data indexes
     def show_rows(
         self,
         rows: int | Iterator[int],
@@ -3932,9 +4027,36 @@ class Sheet(tk.Frame):
                 highlightbackground=kwargs["outline_color"],
                 highlightcolor=kwargs["outline_color"],
             )
+        if any(k in kwargs for k in scrollbar_options_keys):
+            self.set_scrollbar_options()
         self.MT.create_rc_menus()
         self.MT.key_bindings()
         self.set_refresh_timer(redraw)
+        return self
+
+    def set_scrollbar_options(self) -> Sheet:
+        for orientation in ("vertical", "horizontal"):
+            self.style.configure(
+                f"Tksheet.{orientation.capitalize()}.TScrollbar",
+                background=self.ops[f"{orientation}_scroll_background"],
+                troughcolor=self.ops[f"{orientation}_scroll_troughcolor"],
+                lightcolor=self.ops[f"{orientation}_scroll_lightcolor"],
+                darkcolor=self.ops[f"{orientation}_scroll_darkcolor"],
+                relief=self.ops[f"{orientation}_scroll_relief"],
+                troughrelief=self.ops[f"{orientation}_scroll_troughrelief"],
+                bordercolor=self.ops[f"{orientation}_scroll_bordercolor"],
+                borderwidth=self.ops[f"{orientation}_scroll_borderwidth"],
+                gripcount=self.ops[f"{orientation}_scroll_gripcount"],
+                arrowsize=self.ops[f"{orientation}_scroll_arrowsize"],
+            )
+            self.style.map(f"Tksheet.{orientation.capitalize()}.TScrollbar",
+                foreground=[('!active', self.ops[f"{orientation}_scroll_not_active_fg"]),
+                             ('pressed', self.ops[f"{orientation}_scroll_pressed_fg"]),
+                             ('active', self.ops[f"{orientation}_scroll_active_fg"])],
+                background=[('!active', self.ops[f"{orientation}_scroll_not_active_bg"]),
+                            ('pressed', self.ops[f"{orientation}_scroll_pressed_bg"]),
+                            ('active', self.ops[f"{orientation}_scroll_active_bg"])],
+            )
         return self
 
     def get_cell_options(
@@ -4082,13 +4204,18 @@ class Sheet(tk.Frame):
 
     def tag_has(
         self,
-        tag: str,
+        *tags,
     ) -> DotDict:
-        return DotDict(
-            cells=self.MT.tagged_cells[tag] if tag in self.MT.tagged_cells else set(),
-            rows=self.MT.tagged_rows[tag] if tag in self.MT.tagged_rows else set(),
-            columns=self.MT.tagged_columns[tag] if tag in self.MT.tagged_columns else set(),
+        res = DotDict(
+            cells=set(),
+            rows=set(),
+            columns=set(),
         )
+        for tag in unpack(tags):
+            res.cells.update(self.MT.tagged_cells[tag] if tag in self.MT.tagged_cells else set())
+            res.rows.update(self.MT.tagged_rows[tag] if tag in self.MT.tagged_rows else set())
+            res.columns.update(self.MT.tagged_columns[tag] if tag in self.MT.tagged_columns else set())
+        return res
 
     # Treeview Mode
 
