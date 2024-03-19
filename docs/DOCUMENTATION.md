@@ -5028,7 +5028,7 @@ This is a work in progress and not fully functional at this time.
 Tags can be used to keep track of specific cells, rows and columns wherever they move. Note that:
 - If rows/columns are deleted the the associated tags will be also.
 - There is no equivalent `tag_bind` functionality at this time.
-- Relevant only when there are hidden rows/columns - all tagging functions use data indexes, not the displayed indexes.
+- All tagging functions use data indexes (not displayed indexes) - this only becomes relevant when there are hidden rows/columns.
 
 #### **Tag a specific cell**
 
@@ -5090,7 +5090,7 @@ sheet.tag_rows(5, "row tag c")
 sheet.tag_rows(6, "row tag d")
 with_tags = sheet.tag_has("row tag b", "row tag c")
 
-print (with_tags)
+print (with_tags.rows)
 # prints {0, 1, 4, 5}
 ```
 

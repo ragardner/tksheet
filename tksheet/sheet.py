@@ -35,6 +35,7 @@ from .functions import (
     span_froms,
     span_ranges,
     tksheet_type_error,
+    unique_element,
     unpack,
 )
 from .main_table import MainTable
@@ -351,36 +352,37 @@ class Sheet(tk.Frame):
             row_index_canvas=self.RI,
             header_canvas=self.CH,
         )
-        self.style = ttk.Style()
+        self.unique_id = unique_element()
+        style = ttk.Style()
         for orientation in ("Vertical", "Horizontal"):
-            self.style.element_create(
-                f"Tksheet.{orientation}.TScrollbar.trough",
+            style.element_create(
+                f"{self.unique_id}.{orientation}.TScrollbar.trough",
                 "from",
                 scrollbar_theme_inheritance,
             )
-            self.style.element_create(
-                f"Tksheet.{orientation}.TScrollbar.thumb",
+            style.element_create(
+                f"{self.unique_id}.{orientation}.TScrollbar.thumb",
                 "from",
                 scrollbar_theme_inheritance,
             )
-            self.style.element_create(
-                f"Tksheet.{orientation}.TScrollbar.grip",
+            style.element_create(
+                f"{self.unique_id}.{orientation}.TScrollbar.grip",
                 "from",
                 scrollbar_theme_inheritance,
             )
             if not scrollbar_show_arrows:
-                self.style.layout(
-                    f"Tksheet.{orientation}.TScrollbar",
+                style.layout(
+                    f"{self.unique_id}.{orientation}.TScrollbar",
                     [
                         (
-                            f"Tksheet.{orientation}.TScrollbar.trough",
+                            f"{self.unique_id}.{orientation}.TScrollbar.trough",
                             {
                                 "children": [
                                     (
-                                        f"Tksheet.{orientation}.TScrollbar.thumb",
+                                        f"{self.unique_id}.{orientation}.TScrollbar.thumb",
                                         {
                                             "unit": "1",
-                                            "children": [(f"Tksheet.{orientation}.TScrollbar.grip", {"sticky": ""})],
+                                            "children": [(f"{self.unique_id}.{orientation}.TScrollbar.grip", {"sticky": ""})],
                                             "sticky": "nswe",
                                         },
                                     )
@@ -395,13 +397,13 @@ class Sheet(tk.Frame):
             self,
             command=self.MT.set_yviews,
             orient="vertical",
-            style="Tksheet.Vertical.TScrollbar",
+            style=f"{self.unique_id}.Vertical.TScrollbar",
         )
         self.xscroll = ttk.Scrollbar(
             self,
             command=self.MT.set_xviews,
             orient="horizontal",
-            style="Tksheet.Horizontal.TScrollbar",
+            style=f"{self.unique_id}.Horizontal.TScrollbar",
         )
         if show_top_left:
             self.TL.grid(row=0, column=0)
@@ -4035,9 +4037,10 @@ class Sheet(tk.Frame):
         return self
 
     def set_scrollbar_options(self) -> Sheet:
+        style = ttk.Style()
         for orientation in ("vertical", "horizontal"):
-            self.style.configure(
-                f"Tksheet.{orientation.capitalize()}.TScrollbar",
+            style.configure(
+                f"{self.unique_id}.{orientation.capitalize()}.TScrollbar",
                 background=self.ops[f"{orientation}_scroll_background"],
                 troughcolor=self.ops[f"{orientation}_scroll_troughcolor"],
                 lightcolor=self.ops[f"{orientation}_scroll_lightcolor"],
@@ -4049,7 +4052,7 @@ class Sheet(tk.Frame):
                 gripcount=self.ops[f"{orientation}_scroll_gripcount"],
                 arrowsize=self.ops[f"{orientation}_scroll_arrowsize"],
             )
-            self.style.map(f"Tksheet.{orientation.capitalize()}.TScrollbar",
+            style.map(f"{self.unique_id}.{orientation.capitalize()}.TScrollbar",
                 foreground=[('!active', self.ops[f"{orientation}_scroll_not_active_fg"]),
                              ('pressed', self.ops[f"{orientation}_scroll_pressed_fg"]),
                              ('active', self.ops[f"{orientation}_scroll_active_fg"])],

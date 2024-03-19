@@ -13,6 +13,8 @@ from collections.abc import (
 )
 from functools import partial
 from itertools import islice, repeat
+from random import choice
+from timeit import default_timer
 
 from .other_classes import (
     Box_nt,
@@ -20,6 +22,9 @@ from .other_classes import (
     EventDataDict,
     Highlight,
     Span,
+)
+from .vars import (
+    allchars,
 )
 
 compress = partial(zlib.compress, level=1)
@@ -33,6 +38,10 @@ def pickle_compress(obj: object) -> bytes:
 
 def decompress_load(b: bytes) -> object:
     return pickle.loads(zlib.decompress(b))
+
+
+def unique_element() -> str:
+    return f"{default_timer()}" + "-" + "".join(choice(allchars) for _ in range(100))
 
 
 def tksheet_type_error(kwarg: str, valid_types: list[str], not_type: object) -> str:
