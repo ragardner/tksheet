@@ -1976,12 +1976,7 @@ class RowIndex(tk.Canvas):
             width=self.current_width,
             height=win_h,
             font=self.PAR.ops.index_font,
-            colors={
-                "bg": self.PAR.ops.popup_menu_bg,
-                "fg": self.PAR.ops.popup_menu_fg,
-                "highlight_bg": self.PAR.ops.popup_menu_highlight_bg,
-                "highlight_fg": self.PAR.ops.popup_menu_highlight_fg,
-            },
+            ops=self.PAR.ops,
             outline_color=self.PAR.ops.popup_menu_fg,
             values=kwargs["values"],
             close_dropdown_window=self.close_dropdown_window,

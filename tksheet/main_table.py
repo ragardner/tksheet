@@ -6882,12 +6882,7 @@ class MainTable(tk.Canvas):
             width=self.col_positions[c + 1] - self.col_positions[c] + 1,
             height=win_h,
             font=self.PAR.ops.table_font,
-            colors={
-                "bg": self.PAR.ops.popup_menu_bg,
-                "fg": self.PAR.ops.popup_menu_fg,
-                "highlight_bg": self.PAR.ops.popup_menu_highlight_bg,
-                "highlight_fg": self.PAR.ops.popup_menu_highlight_fg,
-            },
+            ops=self.PAR.ops,
             outline_color=self.get_selected_box_bg_fg(type_="cells")[1],
             outline_thickness=2,
             values=kwargs["values"],
