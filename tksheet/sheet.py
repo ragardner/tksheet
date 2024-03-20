@@ -35,7 +35,6 @@ from .functions import (
     span_froms,
     span_ranges,
     tksheet_type_error,
-    unique_element,
     unpack,
 )
 from .main_table import MainTable
@@ -352,7 +351,7 @@ class Sheet(tk.Frame):
             row_index_canvas=self.RI,
             header_canvas=self.CH,
         )
-        self.unique_id = unique_element()
+        self.unique_id = self.winfo_id()
         style = ttk.Style()
         for orientation in ("Vertical", "Horizontal"):
             style.element_create(
