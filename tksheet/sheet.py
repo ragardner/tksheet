@@ -5615,20 +5615,20 @@ class Sheet(tk.Frame):
             **{k: v["checkbox"] for k, v in self.MT.row_options.items() if "checkbox" in v},
             **{k: v["checkbox"] for k, v in self.MT.col_options.items() if "checkbox" in v},
         }
-        if "checkbox" in self.MT.options:
-            return {**d, "checkbox": self.MT.options["checkbox"]}
+        if "checkbox" in self.MT.cell_options:
+            return {**d, "checkbox": self.MT.cell_options["checkbox"]}
         return d
 
     def get_header_checkboxes(self) -> dict:
         d = {k: v["checkbox"] for k, v in self.CH.cell_options.items() if "checkbox" in v}
-        if "checkbox" in self.CH.options:
-            return {**d, "checkbox": self.CH.options["checkbox"]}
+        if "checkbox" in self.CH.cell_options:
+            return {**d, "checkbox": self.CH.cell_options["checkbox"]}
         return d
 
     def get_index_checkboxes(self) -> dict:
         d = {k: v["checkbox"] for k, v in self.RI.cell_options.items() if "checkbox" in v}
-        if "checkbox" in self.RI.options:
-            return {**d, "checkbox": self.RI.options["checkbox"]}
+        if "checkbox" in self.RI.cell_options:
+            return {**d, "checkbox": self.RI.cell_options["checkbox"]}
         return d
 
     def create_dropdown(
