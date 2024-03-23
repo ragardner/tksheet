@@ -3658,8 +3658,12 @@ get_column_alignments() -> dict
 ```python
 get_currently_selected() -> tuple | SelectedClass
 ```
-- Returns `namedtuple` of `(row, column, type_)` e.g. `(0, 0, "column")`
-   - `type_` can be `"row"`, `"column"` or `"cell"`
+- Returns `namedtuple` of `(row, column, type_, box, iid, box_iid)` e.g. `(0, 0, "column", (0, 0, 2, 2), 5, 6)`
+    - `type_` can be `"rows"`, `"columns"` or `"cells"`.
+    - `box` `tuple[int, int, int, int]` are the coordinates of the box that the currently selected box is attached to.
+        - `(from row, from column, up to but not including row, up to but not including column)`.
+    - `iid` is the canvas item id of the currently selected box.
+    - `box_iid` is the canvas item id of the box that the currently selected box is attached to.
 
 Example:
 ```python

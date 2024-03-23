@@ -22,6 +22,8 @@
 - Pull request [#214](https://github.com/ragardner/tksheet/pull/214)
 
 #### Changed:
+- `get_currently_selected()` type attribute has been changed:
+    - From either `"cell"`/`"row"`/`"column"` to -> `"cells"`/`"rows"`/`"columns"`
 - Rename class `TextEditor_` to `TextEditorTkText`
 - Rename `TextEditor` attribute `textedit` to `tktext`
 - Rename class `CurrentlySelectedClass` to `CurrentlySelected`
