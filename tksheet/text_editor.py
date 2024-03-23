@@ -105,9 +105,8 @@ class TextEditorTkText(tk.Text):
         self.tag_add("align", 1.0, "end")
 
     def _proxy(self, command: object, *args) -> object:
-        cmd = (self._orig, command) + args
         try:
-            result = self.tk.call(cmd)
+            result = self.tk.call((self._orig, command) + args)
         except Exception:
             return
         if command in (
@@ -117,9 +116,8 @@ class TextEditorTkText(tk.Text):
         ):
             self.tag_add("align", 1.0, "end")
             self.event_generate("<<TextModified>>")
-            if args and len(args) > 1 and args[1] != "\n":
-                out_of_bounds = self.yview()
-                if out_of_bounds != (0.0, 1.0) and self.newline_bindng is not None:
+            if args and len(args) > 1 and args[1] != "\n" and args != ("1.0", "end"):
+                if self.yview() != (0.0, 1.0) and self.newline_bindng is not None:
                     self.newline_bindng(
                         r=self.parent.r,
                         c=self.parent.c,
@@ -163,16 +161,18 @@ class TextEditor(tk.Frame):
         tk.Frame.__init__(
             self,
             parent,
+            width=0,
+            height=0,
             bd=0,
         )
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_propagate(False)
         self.parent = parent
         self.r = 0
         self.c = 0
         self.tktext = TextEditorTkText(self, newline_binding=newline_binding)
         self.tktext.grid(row=0, column=0, sticky="nswe")
-        self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure(0, weight=1)
-        self.grid_propagate(False)
 
     def get(self) -> str:
         return self.tktext.get("1.0", "end-1c")

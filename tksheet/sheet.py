@@ -133,7 +133,7 @@ class Sheet(tk.Frame):
         show_dropdown_borders: bool = False,
         arrow_key_down_right_scroll_page: bool = False,
         cell_auto_resize_enabled: bool = True,
-        auto_resize_row_index: bool = True,
+        auto_resize_row_index: bool | Literal["empty"] = "empty",
         auto_resize_columns: int | None = None,
         auto_resize_rows: int | None = None,
         set_cell_sizes_on_zoom: bool = False,
@@ -282,6 +282,7 @@ class Sheet(tk.Frame):
             default_row_index_width = row_index_width
         if treeview:
             index_align = "w"
+            auto_resize_row_index = True
         for k, v in locals().items():
             if (xk := backwards_compatibility_keys.get(k, k)) in self.ops and v != self.ops[xk]:
                 self.ops[xk] = v

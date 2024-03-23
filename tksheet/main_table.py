@@ -5239,7 +5239,7 @@ class MainTable(tk.Canvas):
         start_col = bisect_left(self.col_positions, scrollpos_left)
         end_col = bisect_right(self.col_positions, scrollpos_right)
         changed_w = False
-        if self.PAR.ops.auto_resize_row_index and redraw_row_index and self.show_index:
+        if redraw_row_index and self.show_index:
             changed_w = self.RI.auto_set_index_width(
                 end_row=end_row - 1,
                 only_rows=[self.datarn(r) for r in range(start_row if not start_row else start_row - 1, end_row - 1)],
