@@ -139,9 +139,7 @@ class MainTable(tk.Canvas):
         self.selection_boxes = {}
         self.selected = tuple()
         self.named_spans = {}
-        self.tagged_cells = {}
-        self.tagged_rows = {}
-        self.tagged_columns = {}
+        self.reset_tags()
         self.cell_options = {}
         self.col_options = {}
         self.row_options = {}
@@ -407,6 +405,11 @@ class MainTable(tk.Canvas):
                 for b in all_canvas_linux_bindings:
                     for canvas in (self, self.RI, self.CH):
                         canvas.unbind(b[0])
+
+    def reset_tags(self) -> None:
+        self.tagged_cells = {}
+        self.tagged_rows = {}
+        self.tagged_columns = {}
 
     def show_ctrl_outline(
         self,
@@ -984,10 +987,14 @@ class MainTable(tk.Canvas):
                 old_idxs=data_old_idxs,
             )
             full_old_idxs = dict(zip(full_new_idxs.values(), full_new_idxs))
-            self.tagged_cells = {v: (k[0], full_new_idxs[k[1]]) for v, k in self.tagged_cells.items()}
+            self.tagged_cells = {
+                tags: {(k[0], full_new_idxs[k[1]]) for k in tagged} for tags, tagged in self.tagged_cells.items()
+            }
             self.cell_options = {(k[0], full_new_idxs[k[1]]): v for k, v in self.cell_options.items()}
             self.col_options = {full_new_idxs[k]: v for k, v in self.col_options.items()}
-            self.tagged_columns = {v: full_new_idxs[k] for v, k in self.tagged_columns.items()}
+            self.tagged_columns = {
+                tags: {full_new_idxs[k] for k in tagged} for tags, tagged in self.tagged_columns.items()
+            }
             self.CH.cell_options = {full_new_idxs[k]: v for k, v in self.CH.cell_options.items()}
             totalrows = self.total_data_rows()
             new_ops = self.PAR.create_options_from_span
@@ -1211,9 +1218,11 @@ class MainTable(tk.Canvas):
                 old_idxs=data_old_idxs,
             )
             full_old_idxs = dict(zip(full_new_idxs.values(), full_new_idxs))
-            self.tagged_cells = {v: (full_new_idxs[k[0]], k[1]) for v, k in self.tagged_cells.items()}
+            self.tagged_cells = {
+                tags: {(full_new_idxs[k[0]], k[1]) for k in tagged} for tags, tagged in self.tagged_cells.items()
+            }
             self.cell_options = {(full_new_idxs[k[0]], k[1]): v for k, v in self.cell_options.items()}
-            self.tagged_rows = {v: full_new_idxs[k] for v, k in self.tagged_rows.items()}
+            self.tagged_rows = {tags: {full_new_idxs[k] for k in tagged} for tags, tagged in self.tagged_rows.items()}
             self.row_options = {full_new_idxs[k]: v for k, v in self.row_options.items()}
             self.RI.cell_options = {full_new_idxs[k]: v for k, v in self.RI.cell_options.items()}
             self.RI.tree_rns = {v: full_new_idxs[k] for v, k in self.RI.tree_rns.items()}
@@ -3856,13 +3865,15 @@ class MainTable(tk.Canvas):
         create_ops: bool = True,
     ) -> None:
         self.tagged_cells = {
-            v: (r, c if not (num := bisect_right(cols, c)) else c + num) for v, (r, c) in self.tagged_cells.items()
+            tags: {(r, c if not (num := bisect_right(cols, c)) else c + num) for (r, c) in tagged}
+            for tags, tagged in self.tagged_cells.items()
         }
         self.cell_options = {
             (r, c if not (num := bisect_right(cols, c)) else c + num): v for (r, c), v in self.cell_options.items()
         }
         self.tagged_columns = {
-            v: c if not (num := bisect_right(cols, c)) else c + num for v, c in self.tagged_columns.items()
+            tags: {c if not (num := bisect_right(cols, c)) else c + num for c in tagged}
+            for tags, tagged in self.tagged_columns.items()
         }
         self.col_options = {
             c if not (num := bisect_right(cols, c)) else c + num: v for c, v in self.col_options.items()
@@ -3923,13 +3934,15 @@ class MainTable(tk.Canvas):
         create_ops: bool = True,
     ) -> None:
         self.tagged_cells = {
-            v: (r if not (num := bisect_right(rows, r)) else r + num, c) for v, (r, c) in self.tagged_cells.items()
+            tags: {(r if not (num := bisect_right(rows, r)) else r + num, c) for (r, c) in tagged}
+            for tags, tagged in self.tagged_cells.items()
         }
         self.cell_options = {
             (r if not (num := bisect_right(rows, r)) else r + num, c): v for (r, c), v in self.cell_options.items()
         }
         self.tagged_rows = {
-            v: r if not (num := bisect_right(rows, r)) else r + num for v, r in self.tagged_rows.items()
+            tags: {r if not (num := bisect_right(rows, r)) else r + num for r in tagged}
+            for tags, tagged in self.tagged_rows.items()
         }
         self.row_options = {
             r if not (num := bisect_right(rows, r)) else r + num: v for r, v in self.row_options.items()
@@ -3998,12 +4011,15 @@ class MainTable(tk.Canvas):
         if not to_bis:
             to_bis = sorted(to_del)
         self.tagged_cells = {
-            v: (
-                r,
-                c if not (num := bisect_left(to_bis, c)) else c - num,
-            )
-            for v, (r, c) in self.tagged_cells.items()
-            if c not in to_del
+            tags: {
+                (
+                    r,
+                    c if not (num := bisect_left(to_bis, c)) else c - num,
+                )
+                for (r, c) in tagged
+                if c not in to_del
+            }
+            for tags, tagged in self.tagged_cells.items()
         }
         self.cell_options = {
             (
@@ -4014,9 +4030,8 @@ class MainTable(tk.Canvas):
             if c not in to_del
         }
         self.tagged_columns = {
-            v: c if not (num := bisect_left(to_bis, c)) else c - num
-            for v, c in self.tagged_columns.items()
-            if c not in to_del
+            tags: {c if not (num := bisect_left(to_bis, c)) else c - num for c in tagged if c not in to_del}
+            for tags, tagged in self.tagged_columns.items()
         }
         self.col_options = {
             c if not (num := bisect_left(to_bis, c)) else c - num: v
@@ -4076,12 +4091,15 @@ class MainTable(tk.Canvas):
         if not to_bis:
             to_bis = sorted(to_del)
         self.tagged_cells = {
-            v: (
-                r if not (num := bisect_left(to_bis, r)) else r - num,
-                c,
-            )
-            for v, (r, c) in self.tagged_cells.items()
-            if r not in to_del
+            tags: {
+                (
+                    r if not (num := bisect_left(to_bis, r)) else r - num,
+                    c,
+                )
+                for (r, c) in tagged
+                if r not in to_del
+            }
+            for tags, tagged in self.tagged_cells.items()
         }
         self.cell_options = {
             (
@@ -4092,9 +4110,8 @@ class MainTable(tk.Canvas):
             if r not in to_del
         }
         self.tagged_rows = {
-            v: r if not (num := bisect_left(to_bis, r)) else r - num
-            for v, r in self.tagged_rows.items()
-            if r not in to_del
+            tags: {r if not (num := bisect_left(to_bis, r)) else r - num for r in tagged if r not in to_del}
+            for tags, tagged in self.tagged_rows.items()
         }
         self.row_options = {
             r if not (num := bisect_left(to_bis, r)) else r - num: v

@@ -1446,6 +1446,7 @@ class Sheet(tk.Frame):
         row_heights: bool = True,
         column_widths: bool = True,
         cell_options: bool = True,
+        tags: bool = True,
         undo_stack: bool = True,
         selections: bool = True,
         sheet_options: bool = False,
@@ -1466,6 +1467,8 @@ class Sheet(tk.Frame):
             self.MT.set_col_positions([])
         if cell_options:
             self.reset_all_options()
+        if tags:
+            self.MT.reset_tags()
         if undo_stack:
             self.reset_undos()
         if selections:
@@ -4190,6 +4193,34 @@ class Sheet(tk.Frame):
 
     # Tags
 
+    def tag(
+        self,
+        *key: CreateSpanTypes,
+        tags: Iterator[str] | str = "",
+    ) -> Sheet:
+        span = self.span_from_key(*key)
+        rows, cols = self.ranges_from_span(span)
+        if isinstance(tags, str):
+            tags = (tags,)
+        if span.kind == "cell":
+            for tag in tags:
+                if tag not in self.MT.tagged_cells:
+                    self.MT.tagged_cells[tag] = set()
+                for r in rows:
+                    for c in cols:
+                        self.MT.tagged_cells[tag].add((r, c))
+        elif span.kind == "row":
+            for tag in tags:
+                if tag not in self.MT.tagged_rows:
+                    self.MT.tagged_rows[tag] = set()
+                self.MT.tagged_rows[tag].update(set(rows))
+        elif span.kind == "column":
+            for tag in tags:
+                if tag not in self.MT.tagged_columns:
+                    self.MT.tagged_columns[tag] = set()
+                self.MT.tagged_columns[tag].update(set(cols))
+        return self
+
     def tag_cell(
         self,
         cell: tuple[int, int],
@@ -4206,6 +4237,7 @@ class Sheet(tk.Frame):
             if tag not in self.MT.tagged_cells:
                 self.MT.tagged_cells[tag] = set()
             self.MT.tagged_cells[tag].add(cell)
+        return self
 
     def tag_rows(
         self,
@@ -4218,6 +4250,7 @@ class Sheet(tk.Frame):
             if tag not in self.MT.tagged_rows:
                 self.MT.tagged_rows[tag] = set()
             self.MT.tagged_rows[tag].update(rows)
+        return self
 
     def tag_columns(
         self,
@@ -4230,6 +4263,46 @@ class Sheet(tk.Frame):
             if tag not in self.MT.tagged_columns:
                 self.MT.tagged_columns[tag] = set()
             self.MT.tagged_columns[tag].update(columns)
+        return self
+
+    def untag(
+        self,
+        cell: tuple[int, int] | None = None,
+        rows: int | Iterator[int] | None = None,
+        columns: int | Iterator[int] | None = None,
+    ) -> Sheet:
+        if isinstance(cell, tuple):
+            for tag, tagged in self.MT.tagged_cells.items():
+                tagged.discard(cell)
+        if isinstance(rows, int):
+            rows = (rows,)
+        if is_iterable(rows):
+            for tag, tagged in self.MT.tagged_rows.items():
+                for row in rows:
+                    tagged.discard(row)
+        if isinstance(columns, int):
+            columns = (columns,)
+        if is_iterable(columns):
+            for tag, tagged in self.MT.tagged_columns.items():
+                for column in columns:
+                    tagged.discard(column)
+        return self
+
+    def tag_del(
+        self,
+        *tags,
+        cells: bool = True,
+        rows: bool = True,
+        columns: bool = True,
+    ) -> Sheet:
+        for tag in unpack(tags):
+            if cells and tag in self.MT.tagged_cells:
+                del self.MT.tagged_cells[tag]
+            if rows and tag in self.MT.tagged_rows:
+                del self.MT.tagged_rows[tag]
+            if columns and tag in self.MT.tagged_columns:
+                del self.MT.tagged_columns[tag]
+        return self
 
     def tag_has(
         self,
@@ -5103,13 +5176,11 @@ class Sheet(tk.Frame):
 
     def dehighlight_rows(
         self,
-        rows: list | str = [],
+        rows: list[int] | Literal["all"] = [],
         redraw: bool = True,
     ) -> None:
         if isinstance(rows, int):
             rows = [rows]
-        else:
-            rows = rows
         if not rows or rows == "all":
             for r in self.MT.row_options:
                 if "highlight" in self.MT.row_options[r]:
@@ -5130,11 +5201,13 @@ class Sheet(tk.Frame):
                     pass
         self.set_refresh_timer(redraw)
 
-    def dehighlight_columns(self, columns: list | str = [], redraw: bool = True) -> None:
+    def dehighlight_columns(
+        self,
+        columns: list[int] | Literal["all"] = [],
+        redraw: bool = True,
+    ) -> None:
         if isinstance(columns, int):
             columns = [columns]
-        else:
-            columns = columns
         if not columns or columns == "all":
             for c in self.MT.col_options:
                 if "highlight" in self.MT.col_options[c]:
@@ -5157,7 +5230,7 @@ class Sheet(tk.Frame):
 
     def highlight_rows(
         self,
-        rows: list = [],
+        rows: Iterator[int] | int,
         bg: None | str = None,
         fg: None | str = None,
         highlight_index: bool = True,
@@ -5175,7 +5248,7 @@ class Sheet(tk.Frame):
 
     def highlight_columns(
         self,
-        columns: list = [],
+        columns: Iterator[int] | int,
         bg: bool | None | str = False,
         fg: bool | None | str = False,
         highlight_header: bool = True,
