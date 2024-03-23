@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import bisect
-from collections import deque
 import pickle
 import re
 import zlib
+from collections import deque
 from collections.abc import (
     Callable,
     Generator,
@@ -369,7 +369,7 @@ def is_contiguous(seq: list[int]) -> bool:
 def get_last(
     it: Iterator,
 ) -> object:
-    if hasattr(it,'__reversed__'):
+    if hasattr(it, "__reversed__"):
         try:
             return next(reversed(it))
         except Exception:
@@ -1104,14 +1104,6 @@ def del_named_span_options_nested(options: dict, itr1: Iterator, itr2: Iterator,
                 del options[k][type_]
 
 
-def coords_tag_to_int_tuple(s: str) -> tuple[int, int, int, int] | tuple[int, int]:
-    return tuple(map(int, filter(None, s.split("_"))))
-
-
-def coords_tag_to_box_nt(s: str) -> Box_nt[int, int, int, int]:
-    return Box_nt(*(map(int, filter(None, s.split("_")))))
-
-
 def add_highlight(
     options: dict,
     key: int | tuple[int, int],
@@ -1274,7 +1266,7 @@ def mod_event_val(
 
 def pop_positions(
     itr: Iterator[int],
-    to_pop: dict[int, int], # displayed index: data index
+    to_pop: dict[int, int],  # displayed index: data index
     save_to: dict[int, int],
 ) -> Iterator[int]:
     for i, pos in enumerate(itr()):

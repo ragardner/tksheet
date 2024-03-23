@@ -592,7 +592,7 @@ change_theme(theme: str = "light blue", redraw: bool = True) -> Sheet
 
 **Scrollbar relief, size, arrows, etc.**
 
-- To
+-
 
 
 
@@ -3047,8 +3047,6 @@ get_dropdowns() -> dict
 Returns:
 ```python
 {(row int, column int): {'values': values,
-                         'window': "no dropdown open", #the actual frame object if one exists
-                         'canvas_id': "no dropdown open", #the canvas id of the frame object if one exists
                          'select_function': selection_function,
                          'modified_function': modified_function,
                          'state': state,
@@ -3658,23 +3656,10 @@ get_column_alignments() -> dict
 # **Getting Selected Cells**
 
 ```python
-get_currently_selected() -> tuple | CurrentlySelectedClass
+get_currently_selected() -> tuple | SelectedClass
 ```
-- Returns `namedtuple` of `(row, column, type_, tags)` e.g. `(0, 0, "column", (tags))`
+- Returns `namedtuple` of `(row, column, type_)` e.g. `(0, 0, "column")`
    - `type_` can be `"row"`, `"column"` or `"cell"`
-   - `tags` resembles the following:
-```python
-"""
-As an example of currently selected tags
-"""
-(
-    "selected",  # name
-    "0_0_1_1",  # dimensions of box it's attached to
-    250,  # canvas item id of currently selected rectangle
-    "0_0",  # coordinates "row_column" of currently selected box
-    "type_cells",  # type of box it's attached to, "type_cells", "type_rows" or "type_columns"
-)
-```
 
 Example:
 ```python
@@ -4695,11 +4680,29 @@ open_index_cell(ignore_existing_editor: bool = True) -> Sheet
 
 ___
 
+#### **Set the cell text editor value if it is open**
+
+**Table:**
+
 ```python
 set_text_editor_value(
     text: str = "",
-    r: int | None = None,
-    c: int | None = None,
+) -> Sheet
+```
+
+**Index:**
+
+```python
+set_index_text_editor_value(
+    text: str = "",
+) -> Sheet
+```
+
+**Header:**
+
+```python
+set_header_text_editor_value(
+    text: str = "",
 ) -> Sheet
 ```
 

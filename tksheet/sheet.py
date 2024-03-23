@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import tkinter as tk
 from bisect import bisect_left
-from collections import deque, defaultdict
+from collections import defaultdict, deque
 from collections.abc import Callable, Generator, Iterator, Sequence
 from itertools import accumulate, chain, islice, product
+from timeit import default_timer
 from tkinter import ttk
 from typing import Literal
 from warnings import warn as WARNING
@@ -39,7 +40,7 @@ from .functions import (
 )
 from .main_table import MainTable
 from .other_classes import (
-    CurrentlySelectedClass,  # noqa: F401
+    CurrentlySelected,
     DotDict,
     EventDataDict,
     FontTuple,
@@ -351,37 +352,42 @@ class Sheet(tk.Frame):
             row_index_canvas=self.RI,
             header_canvas=self.CH,
         )
-        self.unique_id = self.winfo_id()
+        self.unique_id = f"{default_timer()}{self.winfo_id()}".replace(".", "")
         style = ttk.Style()
         for orientation in ("Vertical", "Horizontal"):
             style.element_create(
-                f"{self.unique_id}.{orientation}.TScrollbar.trough",
+                f"Sheet{self.unique_id}.{orientation}.TScrollbar.trough",
                 "from",
                 scrollbar_theme_inheritance,
             )
             style.element_create(
-                f"{self.unique_id}.{orientation}.TScrollbar.thumb",
+                f"Sheet{self.unique_id}.{orientation}.TScrollbar.thumb",
                 "from",
                 scrollbar_theme_inheritance,
             )
             style.element_create(
-                f"{self.unique_id}.{orientation}.TScrollbar.grip",
+                f"Sheet{self.unique_id}.{orientation}.TScrollbar.grip",
                 "from",
                 scrollbar_theme_inheritance,
             )
             if not scrollbar_show_arrows:
                 style.layout(
-                    f"{self.unique_id}.{orientation}.TScrollbar",
+                    f"Sheet{self.unique_id}.{orientation}.TScrollbar",
                     [
                         (
-                            f"{self.unique_id}.{orientation}.TScrollbar.trough",
+                            f"Sheet{self.unique_id}.{orientation}.TScrollbar.trough",
                             {
                                 "children": [
                                     (
-                                        f"{self.unique_id}.{orientation}.TScrollbar.thumb",
+                                        f"Sheet{self.unique_id}.{orientation}.TScrollbar.thumb",
                                         {
                                             "unit": "1",
-                                            "children": [(f"{self.unique_id}.{orientation}.TScrollbar.grip", {"sticky": ""})],
+                                            "children": [
+                                                (
+                                                    f"Sheet{self.unique_id}.{orientation}.TScrollbar.grip",
+                                                    {"sticky": ""},
+                                                )
+                                            ],
                                             "sticky": "nswe",
                                         },
                                     )
@@ -396,13 +402,13 @@ class Sheet(tk.Frame):
             self,
             command=self.MT.set_yviews,
             orient="vertical",
-            style=f"{self.unique_id}.Vertical.TScrollbar",
+            style=f"Sheet{self.unique_id}.Vertical.TScrollbar",
         )
         self.xscroll = ttk.Scrollbar(
             self,
             command=self.MT.set_xviews,
             orient="horizontal",
-            style=f"{self.unique_id}.Horizontal.TScrollbar",
+            style=f"Sheet{self.unique_id}.Horizontal.TScrollbar",
         )
         if show_top_left:
             self.TL.grid(row=0, column=0)
@@ -2506,11 +2512,11 @@ class Sheet(tk.Frame):
     ) -> Span:
         span = self.span_from_key(*key)
         if span.table:
-            self.MT.destroy_opened_dropdown_window()
+            self.MT.hide_dropdown_window()
         if span.index:
-            self.RI.destroy_opened_dropdown_window()
+            self.RI.hide_dropdown_window()
         if span.header:
-            self.CH.destroy_opened_dropdown_window()
+            self.CH.hide_dropdown_window()
         self.del_options_using_span(span, "dropdown")
         self.set_refresh_timer(redraw)
         return span
@@ -2897,8 +2903,17 @@ class Sheet(tk.Frame):
 
     # Getting Selected Cells
 
-    def get_currently_selected(self) -> tuple[()] | CurrentlySelectedClass:
-        return self.MT.currently_selected()
+    def get_currently_selected(self) -> tuple[()] | CurrentlySelected:
+        if not self.MT.selected.iid:
+            return tuple()
+        return CurrentlySelected(
+            self.MT.selected.row,
+            self.MT.selected.column,
+            self.MT.selected.type_,
+            self.MT.selection_boxes[self.MT.selected.fill_iid].coords,
+            self.MT.selected.iid,
+            self.MT.selected.fill_iid,
+        )
 
     def get_selected_rows(
         self,
@@ -3921,22 +3936,34 @@ class Sheet(tk.Frame):
     def set_text_editor_value(
         self,
         text: str = "",
-        r: int | None = None,
-        c: int | None = None,
     ) -> Sheet:
-        if self.MT.text_editor is not None and r is None and c is None:
-            self.MT.text_editor.set_text(text)
-        elif self.MT.text_editor is not None and self.MT.text_editor_loc == (r, c):
-            self.MT.text_editor.set_text(text)
+        if self.MT.text_editor.open:
+            self.MT.text_editor.window.set_text(text)
+        return self
+
+    def set_index_text_editor_value(
+        self,
+        text: str = "",
+    ) -> Sheet:
+        if self.RI.text_editor.open:
+            self.RI.text_editor.window.set_text(text)
+        return self
+
+    def set_header_text_editor_value(
+        self,
+        text: str = "",
+    ) -> Sheet:
+        if self.CH.text_editor.open:
+            self.CH.text_editor.window.set_text(text)
         return self
 
     def destroy_text_editor(self, event: object = None) -> Sheet:
-        self.MT.destroy_text_editor(event=event)
+        self.MT.hide_text_editor(event=event)
         return self
 
     def get_text_editor_widget(self, event: object = None) -> tk.Text | None:
         try:
-            return self.MT.text_editor.textedit
+            return self.MT.text_editor.tktext
         except Exception:
             return None
 
@@ -3948,7 +3975,7 @@ class Sheet(tk.Frame):
         if key == "all":
             for key in self.MT.text_editor_user_bound_keys:
                 try:
-                    self.MT.text_editor.textedit.unbind(key)
+                    self.MT.text_editor.tktext.unbind(key)
                 except Exception:
                     pass
             self.MT.text_editor_user_bound_keys = {}
@@ -3956,19 +3983,18 @@ class Sheet(tk.Frame):
             if key in self.MT.text_editor_user_bound_keys:
                 del self.MT.text_editor_user_bound_keys[key]
             try:
-                self.MT.text_editor.textedit.unbind(key)
+                self.MT.text_editor.tktext.unbind(key)
             except Exception:
                 pass
         return self
 
     def get_text_editor_value(self) -> str | None:
-        if self.MT.text_editor:
-            return self.MT.text_editor.get()
+        return self.MT.text_editor.get()
 
     def close_text_editor(self, set_data: bool = True) -> Sheet:
-        if self.MT.text_editor:
+        if self.MT.text_editor.open:
             event = ("ButtonPress-1",) if set_data else ("Escape",)
-            self.MT.close_text_editor(editor_info=self.MT.text_editor_loc + event)
+            self.MT.close_text_editor(editor_info=self.MT.text_editor.coords + event)
         return self
 
     # Sheet Options and Other Functions
@@ -4039,7 +4065,7 @@ class Sheet(tk.Frame):
         style = ttk.Style()
         for orientation in ("vertical", "horizontal"):
             style.configure(
-                f"{self.unique_id}.{orientation.capitalize()}.TScrollbar",
+                f"Sheet{self.unique_id}.{orientation.capitalize()}.TScrollbar",
                 background=self.ops[f"{orientation}_scroll_background"],
                 troughcolor=self.ops[f"{orientation}_scroll_troughcolor"],
                 lightcolor=self.ops[f"{orientation}_scroll_lightcolor"],
@@ -4051,13 +4077,18 @@ class Sheet(tk.Frame):
                 gripcount=self.ops[f"{orientation}_scroll_gripcount"],
                 arrowsize=self.ops[f"{orientation}_scroll_arrowsize"],
             )
-            style.map(f"{self.unique_id}.{orientation.capitalize()}.TScrollbar",
-                foreground=[('!active', self.ops[f"{orientation}_scroll_not_active_fg"]),
-                             ('pressed', self.ops[f"{orientation}_scroll_pressed_fg"]),
-                             ('active', self.ops[f"{orientation}_scroll_active_fg"])],
-                background=[('!active', self.ops[f"{orientation}_scroll_not_active_bg"]),
-                            ('pressed', self.ops[f"{orientation}_scroll_pressed_bg"]),
-                            ('active', self.ops[f"{orientation}_scroll_active_bg"])],
+            style.map(
+                f"Sheet{self.unique_id}.{orientation.capitalize()}.TScrollbar",
+                foreground=[
+                    ("!active", self.ops[f"{orientation}_scroll_not_active_fg"]),
+                    ("pressed", self.ops[f"{orientation}_scroll_pressed_fg"]),
+                    ("active", self.ops[f"{orientation}_scroll_active_fg"]),
+                ],
+                background=[
+                    ("!active", self.ops[f"{orientation}_scroll_not_active_bg"]),
+                    ("pressed", self.ops[f"{orientation}_scroll_pressed_bg"]),
+                    ("active", self.ops[f"{orientation}_scroll_active_bg"]),
+                ],
             )
         return self
 
@@ -4669,10 +4700,10 @@ class Sheet(tk.Frame):
         table, index, header = span.table, span.index, span.header
         # index header
         if header and span.kind in ("cell", "column"):
-            self.CH.destroy_opened_dropdown_window()
+            self.CH.hide_dropdown_window()
             del_from_options(self.CH.cell_options, key, cols)
         if index and span.kind in ("cell", "row"):
-            self.RI.destroy_opened_dropdown_window()
+            self.RI.hide_dropdown_window()
             del_from_options(self.RI.cell_options, key, rows)
         # table
         if table and span.kind == "cell":
@@ -4687,7 +4718,7 @@ class Sheet(tk.Frame):
     #  ##########       TABLE       ##########
 
     def del_cell_options_dropdown(self, datarn: int, datacn: int) -> None:
-        self.MT.destroy_opened_dropdown_window()
+        self.MT.hide_dropdown_window()
         if (datarn, datacn) in self.MT.cell_options and "dropdown" in self.MT.cell_options[(datarn, datacn)]:
             del self.MT.cell_options[(datarn, datacn)]["dropdown"]
 
@@ -4700,7 +4731,7 @@ class Sheet(tk.Frame):
         self.del_cell_options_checkbox(datarn, datacn)
 
     def del_row_options_dropdown(self, datarn: int) -> None:
-        self.MT.destroy_opened_dropdown_window()
+        self.MT.hide_dropdown_window()
         if datarn in self.MT.row_options and "dropdown" in self.MT.row_options[datarn]:
             del self.MT.row_options[datarn]["dropdown"]
 
@@ -4713,7 +4744,7 @@ class Sheet(tk.Frame):
         self.del_row_options_checkbox(datarn)
 
     def del_column_options_dropdown(self, datacn: int) -> None:
-        self.MT.destroy_opened_dropdown_window()
+        self.MT.hide_dropdown_window()
         if datacn in self.MT.col_options and "dropdown" in self.MT.col_options[datacn]:
             del self.MT.col_options[datacn]["dropdown"]
 
@@ -4728,7 +4759,7 @@ class Sheet(tk.Frame):
     #  ##########       INDEX       ##########
 
     def del_index_cell_options_dropdown(self, datarn: int) -> None:
-        self.RI.destroy_opened_dropdown_window(datarn=datarn)
+        self.RI.hide_dropdown_window()
         if datarn in self.RI.cell_options and "dropdown" in self.RI.cell_options[datarn]:
             del self.RI.cell_options[datarn]["dropdown"]
 
@@ -4743,7 +4774,7 @@ class Sheet(tk.Frame):
     #  ##########       HEADER       ##########
 
     def del_header_cell_options_dropdown(self, datacn: int) -> None:
-        self.CH.destroy_opened_dropdown_window(datacn=datacn)
+        self.CH.hide_dropdown_window()
         if datacn in self.CH.cell_options and "dropdown" in self.CH.cell_options[datacn]:
             del self.CH.cell_options[datacn]["dropdown"]
 
@@ -5610,26 +5641,17 @@ class Sheet(tk.Frame):
         return self
 
     def get_checkboxes(self) -> dict:
-        d = {
+        return {
             **{k: v["checkbox"] for k, v in self.MT.cell_options.items() if "checkbox" in v},
             **{k: v["checkbox"] for k, v in self.MT.row_options.items() if "checkbox" in v},
             **{k: v["checkbox"] for k, v in self.MT.col_options.items() if "checkbox" in v},
         }
-        if "checkbox" in self.MT.cell_options:
-            return {**d, "checkbox": self.MT.cell_options["checkbox"]}
-        return d
 
     def get_header_checkboxes(self) -> dict:
-        d = {k: v["checkbox"] for k, v in self.CH.cell_options.items() if "checkbox" in v}
-        if "checkbox" in self.CH.cell_options:
-            return {**d, "checkbox": self.CH.cell_options["checkbox"]}
-        return d
+        return {k: v["checkbox"] for k, v in self.CH.cell_options.items() if "checkbox" in v}
 
     def get_index_checkboxes(self) -> dict:
-        d = {k: v["checkbox"] for k, v in self.RI.cell_options.items() if "checkbox" in v}
-        if "checkbox" in self.RI.cell_options:
-            return {**d, "checkbox": self.RI.cell_options["checkbox"]}
-        return d
+        return {k: v["checkbox"] for k, v in self.RI.cell_options.items() if "checkbox" in v}
 
     def create_dropdown(
         self,
@@ -5876,9 +5898,8 @@ class Sheet(tk.Frame):
         set_value: object = None,
     ) -> Sheet:
         if set_existing_dropdown:
-            if self.MT.existing_dropdown_window is not None:
-                r_ = self.MT.existing_dropdown_window.r
-                c_ = self.MT.existing_dropdown_window.c
+            if self.MT.dropdown.open:
+                r_, c_ = self.MT.dropdown.get_coords()
             else:
                 raise Exception("No dropdown box is currently open")
         else:
@@ -5886,16 +5907,12 @@ class Sheet(tk.Frame):
             c_ = c
         kwargs = self.MT.get_cell_kwargs(r, c, key="dropdown")
         kwargs["values"] = values
-        if kwargs["window"] != "no dropdown open":
-            kwargs["window"].values(values)
+        if self.MT.dropdown.open:
+            self.MT.dropdown.window.values(values)
         if set_value is not None:
             self.set_cell_data(r_, c_, set_value)
-            if (
-                kwargs["window"] != "no dropdown open"
-                and self.MT.text_editor_loc is not None
-                and self.MT.text_editor is not None
-            ):
-                self.MT.text_editor.set_text(set_value)
+            if self.MT.dropdown.open:
+                self.MT.text_editor.window.set_text(set_value)
         return self
 
     def set_header_dropdown_values(
@@ -5906,8 +5923,8 @@ class Sheet(tk.Frame):
         set_value: object = None,
     ) -> Sheet:
         if set_existing_dropdown:
-            if self.CH.existing_dropdown_window is not None:
-                c_ = self.CH.existing_dropdown_window.c
+            if self.CH.dropdown.open:
+                c_ = self.CH.dropdown.get_coords()
             else:
                 raise Exception("No dropdown box is currently open")
         else:
@@ -5915,10 +5932,11 @@ class Sheet(tk.Frame):
         kwargs = self.CH.get_cell_kwargs(c_, key="dropdown")
         if kwargs:
             kwargs["values"] = values
-            if kwargs["window"] != "no dropdown open":
-                kwargs["window"].values(values)
+            if self.CH.dropdown.open:
+                self.CH.dropdown.window.values(values)
             if set_value is not None:
                 self.MT.headers(newheaders=set_value, index=c_)
+
         return self
 
     def set_index_dropdown_values(
@@ -5929,8 +5947,8 @@ class Sheet(tk.Frame):
         set_value: object = None,
     ) -> Sheet:
         if set_existing_dropdown:
-            if self.RI.existing_dropdown_window is not None:
-                r_ = self.RI.existing_dropdown_window.r
+            if self.RI.current_dropdown_window is not None:
+                r_ = self.RI.current_dropdown_window.r
             else:
                 raise Exception("No dropdown box is currently open")
         else:
@@ -5938,10 +5956,11 @@ class Sheet(tk.Frame):
         kwargs = self.RI.get_cell_kwargs(r_, key="dropdown")
         if kwargs:
             kwargs["values"] = values
-            if kwargs["window"] != "no dropdown open":
-                kwargs["window"].values(values)
+            if self.RI.current_dropdown_window is not None:
+                self.RI.current_dropdown_window.values(values)
             if set_value is not None:
                 self.MT.row_index(newindex=set_value, index=r_)
+                # here
         return self
 
     def get_dropdown_values(self, r: int = 0, c: int = 0) -> None | list:
@@ -6167,7 +6186,9 @@ class Dropdown(Sheet):
         arrowkey_RIGHT: Callable | None = None,
         arrowkey_LEFT: Callable | None = None,
         align: str = "w",
-        # False for using r, c "r" for r "c" for c
+        # False for using r, c
+        # "r" for r
+        # "c" for c
         single_index: str | bool = False,
     ) -> None:
         Sheet.__init__(
@@ -6206,8 +6227,6 @@ class Dropdown(Sheet):
         self.search_function = search_function
         self.arrowkey_RIGHT = arrowkey_RIGHT
         self.arrowkey_LEFT = arrowkey_LEFT
-        self.h_ = height
-        self.w_ = width
         self.r = r
         self.c = c
         self.row = -1
@@ -6285,6 +6304,13 @@ class Dropdown(Sheet):
                 self.close_dropdown_window(self.r, self.c)
             else:
                 self.close_dropdown_window(self.r, self.c, self.get_cell_data(row, 0))
+
+    def get_coords(self) -> int | tuple[int, int]:
+        if self.single_index == "r":
+            return self.r
+        elif self.single_index == "c":
+            return self.c
+        return self.r, self.c
 
     def values(self, values: list = [], redraw: bool = True) -> None:
         self.set_sheet_data(

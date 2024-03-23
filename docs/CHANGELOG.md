@@ -1,22 +1,42 @@
-### Version 7.0.7
+### Version 7.1.0
 #### Added:
-- `data_indexes` `bool` parameters to functions: `hide_rows`, `hide_columns`, default value is `False` meaning there is no behavior change
-- Functions `show_rows()`, `show_columns()` which are designed to work alongside their `hide_rows()`/`hide_columns()` counterparts
-- `create_selections` `bool` parameters to functions: `insert_rows`, `insert_columns` default value is `True` meaning there is no behavior change
-- Treeview mode
-- Cell, row and column tagging functions
-- Ability to change the appearance of both scrollbars
+- **Functions**:
+    - `show_rows()`, `show_columns()` which are designed to work alongside their `hide_rows()`/`hide_columns()` counterparts
+    - `set_index_text_editor_value()` and `set_header_text_editor_value()`
+- **Parameters**:
+    - `data_indexes` `bool` parameters to functions: `hide_rows`, `hide_columns`, default value is `False` meaning there is no behavior change
+    - `create_selections` `bool` parameters to functions: `insert_rows`, `insert_columns` default value is `True` meaning there is no behavior change
+- **New tksheet functionality**:
+    - Treeview mode
+    - Cell, row and column tagging functions
+    - Ability to change the appearance of both scrollbars
+
+#### Removed:
+- **Parameters**:
+    - `set_text_editor_value()` parameters `r` and `c`
 
 #### Fixed:
 - `mapping_move_rows()` error
 - Potential issue with using `insert_rows` while also using an `int` as the row index to display a specific column in the index
 - Potential error if a selection box ends up outside of rows/columns
+- Pull request [#214](https://github.com/ragardner/tksheet/pull/214)
 
 #### Changed:
+- Rename class `TextEditor_` to `TextEditorTkText`
+- Rename `TextEditor` attribute `textedit` to `tktext`
+- Rename class `CurrentlySelectedClass` to `CurrentlySelected`
+- `Sheet.get_currently_selected()` no longer returns tags but other values at the end of the named tuple, see the docs for more info
+- Overhaul how selection boxes are handled internally. `Sheet` functions dealing with selection boxes should behave the same
 - Changed order of `Sheet()` init parameters
 - `auto_resize_row_index` will now also resize the row index with non default values, can only be disabled after Sheet initialization with `set_options()`
 - Scrollbar appearance
 - `hide_rows()`/`hide_columns()` functions now endeavour to save the row heights/column widths so that they may be reinserted when using new functions `show_rows()`/`show_columns()`
+- Internal Dropdown Box information `dict`s no longer have the keys `"window"` and `"canvas_id"`
+
+#### Improved:
+- Ctrl select now allows overlapping boxes which begin from within another box
+- Ctrl click deselection
+- The currently selected cell will no longer change after edits to individual cells in the main table which are not valid with a different value
 
 ### Version 7.0.6
 #### Changed:

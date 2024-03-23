@@ -4,7 +4,7 @@
 tksheet - A Python tkinter table widget
 """
 
-__version__ = "7.0.7"
+__version__ = "7.1.0"
 
 from .colors import (
     color_map,
@@ -58,12 +58,12 @@ from .functions import (
 )
 from .main_table import MainTable
 from .other_classes import (
-    CurrentlySelectedClass,
     DotDict,
     DraggedRowColumn,
     DrawnItem,
     EventDataDict,
     GeneratedMouseEvent,
+    Selected,
     Span,
     SpanRange,
     TextCfg,
@@ -73,7 +73,7 @@ from .sheet import Dropdown, Sheet
 from .sheet_options import new_sheet_options
 from .text_editor import (
     TextEditor,
-    TextEditor_,
+    TextEditorTkText,
 )
 from .themes import (
     theme_black,

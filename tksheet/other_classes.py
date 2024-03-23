@@ -9,10 +9,6 @@ from typing import Literal
 pickle_obj = partial(pickle.dumps, protocol=pickle.HIGHEST_PROTOCOL)
 
 FontTuple = namedtuple("FontTuple", "family size style")
-CurrentlySelectedClass = namedtuple(
-    "CurrentlySelectedClass",
-    "row column type_ tags",
-)
 Box_nt = namedtuple(
     "Box_nt",
     "from_r from_c upto_r upto_c",
@@ -363,3 +359,97 @@ class Node:
 
     def __str__(self) -> str:
         return self.text
+
+
+class DropdownStorage:
+    __slots__ = ("canvas_id", "window", "open")
+
+    def __init__(self) -> None:
+        self.canvas_id = None
+        self.window = None
+        self.open = False
+
+    def get_coords(self) -> int | tuple[int, int] | None:
+        """
+        Returns None if not open or window is None
+        """
+        if self.open and self.window is not None:
+            return self.window.get_coords()
+        return None
+
+
+class TextEditorStorage:
+    __slots__ = ("canvas_id", "window", "open")
+
+    def __init__(self) -> None:
+        self.canvas_id = None
+        self.window = None
+        self.open = False
+
+    def focus(self) -> None:
+        if self.window:
+            self.window.tktext.focus_set()
+
+    def get(self) -> str:
+        if self.window:
+            return self.window.get()
+        return ""
+
+    @property
+    def tktext(self) -> object:
+        if self.window:
+            return self.window.tktext
+        return self.window
+
+    @property
+    def coords(self) -> tuple[int, int]:
+        return self.window.r, self.window.c
+
+    @property
+    def row(self) -> int:
+        return self.window.r
+
+    @property
+    def column(self) -> int:
+        return self.window.c
+
+
+class SelectionBox:
+    __slots__ = ("fill_iid", "bd_iid", "index", "header", "coords", "type_")
+
+    def __init__(
+        self,
+        fill_iid: int | None = None,
+        bd_iid: int | None = None,
+        index: int | None = None,
+        header: int | None = None,
+        coords: tuple[int, int, int, int] = None,
+        type_: Literal["cells", "rows", "columns"] = "cells",
+    ) -> None:
+        self.fill_iid = fill_iid
+        self.bd_iid = bd_iid
+        self.index = index
+        self.header = header
+        self.coords = coords
+        self.type_ = type_
+
+
+class Selected:
+    __slots__ = ("row", "column", "type_", "iid", "fill_iid")
+
+    def __init__(
+        self,
+        row: int | None = None,
+        column: int | None = None,
+        type_: int | None = None,
+        iid: int | None = None,
+        fill_iid: int | None = None,
+    ) -> None:
+        self.row = row
+        self.column = column
+        self.type_ = type_
+        self.iid = iid
+        self.fill_iid = fill_iid
+
+
+CurrentlySelected = namedtuple("CurrentlySelected", "row column type_ box iid box_iid")

@@ -13,24 +13,15 @@ from .vars import (
 )
 
 
-class TextEditor_(tk.Text):
+class TextEditorTkText(tk.Text):
     def __init__(
         self,
         parent: tk.Misc,
-        menu_kwargs: DotDict,
-        sheet_ops: DotDict,
-        text: None | str = None,
-        state: str = "normal",
-        bg: str = "white",
-        fg: str = "black",
-        align: str = "w",
         newline_binding: None | Callable = None,
     ) -> None:
         tk.Text.__init__(
             self,
             parent,
-            font=menu_kwargs.font,
-            state=state,
             spacing1=0,
             spacing2=0,
             spacing3=0,
@@ -38,24 +29,38 @@ class TextEditor_(tk.Text):
             highlightthickness=0,
             undo=True,
             maxundo=30,
-            background=bg,
-            foreground=fg,
-            insertbackground=fg,
         )
         self.parent = parent
         self.newline_bindng = newline_binding
-        if align == "w":
-            self.align = "left"
-        elif align == "center":
-            self.align = "center"
-        elif align == "e":
-            self.align = "right"
-        self.tag_configure("align", justify=self.align)
-        if text:
-            self.insert(1.0, text)
-            self.yview_moveto(1)
-        self.tag_add("align", 1.0, "end")
         self.rc_popup_menu = tk.Menu(self, tearoff=0)
+        self.bind("<1>", lambda event: self.focus_set())
+        self.bind(rc_binding, self.rc)
+        self.bind(f"<{ctrl_key}-a>", self.select_all)
+        self.bind(f"<{ctrl_key}-A>", self.select_all)
+        self._orig = self._w + "_orig"
+        self.tk.call("rename", self._w, self._orig)
+        self.tk.createcommand(self._w, self._proxy)
+
+    def reset(
+        self,
+        menu_kwargs: dict,
+        sheet_ops: dict,
+        align: str,
+        font: tuple,
+        bg: str,
+        fg: str,
+        state: str,
+        text: str = "",
+    ) -> None:
+        self.config(
+            font=font,
+            background=bg,
+            foreground=fg,
+            insertbackground=fg,
+            state=state,
+        )
+        self.align = align
+        self.rc_popup_menu.delete(0, None)
         self.rc_popup_menu.add_command(
             label=sheet_ops.select_all_label,
             accelerator=sheet_ops.select_all_accelerator,
@@ -86,13 +91,18 @@ class TextEditor_(tk.Text):
             command=self.undo,
             **menu_kwargs,
         )
-        self.bind("<1>", lambda event: self.focus_set())
-        self.bind(rc_binding, self.rc)
-        self.bind(f"<{ctrl_key}-a>", self.select_all)
-        self.bind(f"<{ctrl_key}-A>", self.select_all)
-        self._orig = self._w + "_orig"
-        self.tk.call("rename", self._w, self._orig)
-        self.tk.createcommand(self._w, self._proxy)
+        if text:
+            self.delete(1.0, "end")
+            self.insert(1.0, text)
+            self.yview_moveto(1)
+        self.tag_configure("align", justify=self.align)
+        if align == "w":
+            self.align = "left"
+        elif align == "center":
+            self.align = "center"
+        elif align == "e":
+            self.align = "right"
+        self.tag_add("align", 1.0, "end")
 
     def _proxy(self, command: object, *args) -> object:
         cmd = (self._orig, command) + args
@@ -148,62 +158,68 @@ class TextEditor(tk.Frame):
     def __init__(
         self,
         parent: tk.Misc,
-        menu_kwargs: DotDict,
-        sheet_ops: DotDict,
-        border_color: str,
-        text: None | str = None,
-        state: str = "normal",
-        width: None | int = None,
-        height: None | int = None,
-        show_border: bool = True,
-        bg: str = "white",
-        fg: str = "black",
-        align: str = "w",
-        r: int = 0,
-        c: int = 0,
         newline_binding: None | Callable = None,
     ) -> None:
         tk.Frame.__init__(
             self,
             parent,
-            height=height,
-            width=width,
-            highlightbackground=border_color,
-            highlightcolor=border_color,
-            highlightthickness=2 if show_border else 0,
             bd=0,
         )
         self.parent = parent
-        self.r = r
-        self.c = c
-        self.textedit = TextEditor_(
-            self,
-            menu_kwargs=menu_kwargs,
-            sheet_ops=sheet_ops,
-            text=text,
-            state=state,
-            bg=bg,
-            fg=fg,
-            align=align,
-            newline_binding=newline_binding,
-        )
-        self.textedit.grid(row=0, column=0, sticky="nswe")
+        self.r = 0
+        self.c = 0
+        self.tktext = TextEditorTkText(self, newline_binding=newline_binding)
+        self.tktext.grid(row=0, column=0, sticky="nswe")
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
         self.grid_propagate(False)
-        self.w_ = width
-        self.h_ = height
-        self.textedit.focus_set()
 
     def get(self) -> str:
-        return self.textedit.get("1.0", "end-1c")
+        return self.tktext.get("1.0", "end-1c")
 
     def get_num_lines(self) -> int:
-        return int(self.textedit.index("end-1c").split(".")[0])
+        return int(self.tktext.index("end-1c").split(".")[0])
 
-    def set_text(self, text) -> None:
-        self.textedit.delete(1.0, "end")
-        self.textedit.insert(1.0, text)
+    def set_text(self, text: str = "") -> None:
+        self.tktext.delete(1.0, "end")
+        self.tktext.insert(1.0, text)
 
     def scroll_to_bottom(self) -> None:
-        self.textedit.yview_moveto(1)
+        self.tktext.yview_moveto(1)
+
+    def reset(
+        self,
+        width: int,
+        height: int,
+        border_color: str,
+        show_border: bool,
+        menu_kwargs: DotDict,
+        sheet_ops: DotDict,
+        bg: str,
+        fg: str,
+        align: str,
+        state: str,
+        r: int = 0,
+        c: int = 0,
+        text: str = "",
+    ) -> None:
+        self.r = r
+        self.c = c
+        self.tktext.reset(
+            menu_kwargs=menu_kwargs,
+            sheet_ops=sheet_ops,
+            align=align,
+            font=menu_kwargs.font,
+            bg=bg,
+            fg=fg,
+            state=state,
+            text=text,
+        )
+        self.config(
+            width=width,
+            height=height,
+            background=bg,
+            highlightbackground=border_color,
+            highlightcolor=border_color,
+            highlightthickness=2 if show_border else 0,
+        )
