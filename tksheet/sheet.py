@@ -4439,17 +4439,24 @@ class Sheet(tk.Frame):
     def item(
         self,
         item: str,
+        iid: str | None = None,
         text: str | None = None,
         values: list | None = None,
         open_: bool | None = None,
     ) -> DotDict:
-        """
-        Issue with opening/closing ids
-        - display_rows resets all row positions
-        - we ideally want to
-        """
-        if (item := item.lower()) and item not in self.RI.tree:
+        if not (item := item.lower()) or item not in self.RI.tree:
             raise ValueError(f"Item '{item}' does not exist.")
+        if isinstance(iid, str):
+            if not (iid := iid.lower()):
+                raise ValueError(f"iid '{iid}' does not exist.")
+            if iid in self.RI.tree:
+                raise ValueError(f"Cannot rename '{iid}', it already exists.")
+            iid = iid.lower()
+            self.RI.tree[item].iid = iid
+            self.RI.tree[iid] = self.RI.tree.pop(item)
+            self.RI.tree_rns[iid] = self.RI.tree_rns.pop(item)
+            if iid in self.RI.tree_open_ids:
+                self.RI.tree_open_ids[iid] = self.RI.tree_open_ids.pop(item)
         if isinstance(text, str):
             self.RI.tree[item].text = text
         if isinstance(values, list):
