@@ -1716,10 +1716,12 @@ class MainTable(tk.Canvas):
                 self.set_currently_selected(0, 0, item=item)
             if redraw:
                 self.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
-            if self.select_all_binding_func and run_binding_func:
-                self.select_all_binding_func(
-                    self.get_select_event(being_drawn_item=self.being_drawn_item),
-                )
+            if run_binding_func:
+                if self.select_all_binding_func:
+                    self.select_all_binding_func(
+                        self.get_select_event(being_drawn_item=self.being_drawn_item),
+                    )
+                self.PAR.emit_event("<<SheetSelect>>", data=self.get_select_event(self.being_drawn_item))
 
     def select_cell(
         self,
@@ -1778,7 +1780,7 @@ class MainTable(tk.Canvas):
                 fill_iid = self.select_cell(row, column, redraw=redraw)
         return fill_iid
 
-    def get_select_event(self, being_drawn_item: None | int) -> EventDataDict:
+    def get_select_event(self, being_drawn_item: None | int = None) -> EventDataDict:
         return event_dict(
             name="select",
             sheet=self.PAR.name,
@@ -1905,11 +1907,10 @@ class MainTable(tk.Canvas):
                     break
         if redraw:
             self.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
+        sel_event = self.get_select_event(being_drawn_item=self.being_drawn_item)
         if run_binding:
-            try_binding(
-                self.deselection_binding_func,
-                self.get_select_event(being_drawn_item=self.being_drawn_item),
-            )
+            try_binding(self.deselection_binding_func, sel_event)
+        self.PAR.emit_event("<<SheetSelect>>", data=sel_event)
 
     def page_UP(self, event=None):
         height = self.winfo_height()
@@ -2803,12 +2804,11 @@ class MainTable(tk.Canvas):
             if rowsel < len(self.row_positions) - 1 and colsel < len(self.col_positions) - 1:
                 self.being_drawn_item = True
                 self.being_drawn_item = self.add_selection(rowsel, colsel, set_as_current=True, run_binding_func=False)
+                sel_event = self.get_select_event(being_drawn_item=self.being_drawn_item)
                 if self.ctrl_selection_binding_func:
-                    self.ctrl_selection_binding_func(
-                        self.get_select_event(being_drawn_item=self.being_drawn_item),
-                    )
+                    self.ctrl_selection_binding_func(sel_event)
                 self.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True, redraw_table=True)
-
+                self.PAR.emit_event("<<SheetSelect>>", data=sel_event)
         elif not self.ctrl_select_enabled:
             self.b1_press(event)
 
@@ -2833,8 +2833,10 @@ class MainTable(tk.Canvas):
                         run_binding_func=False,
                     )
                 self.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True, redraw_table=True)
+                sel_event = self.get_select_event(being_drawn_item=self.being_drawn_item)
                 if self.shift_selection_binding_func:
-                    self.shift_selection_binding_func(self.get_select_event(being_drawn_item=self.being_drawn_item))
+                    self.shift_selection_binding_func(sel_event)
+                self.PAR.emit_event("<<SheetSelect>>", data=sel_event)
         elif not self.ctrl_select_enabled:
             self.shift_b1_press(event)
 
@@ -2861,10 +2863,10 @@ class MainTable(tk.Canvas):
                         run_binding_func=False,
                     )
                 self.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True, redraw_table=True)
+                sel_event = self.get_select_event(being_drawn_item=self.being_drawn_item)
                 if self.shift_selection_binding_func:
-                    self.shift_selection_binding_func(
-                        self.get_select_event(being_drawn_item=self.being_drawn_item),
-                    )
+                    self.shift_selection_binding_func(sel_event)
+                self.PAR.emit_event("<<SheetSelect>>", data=sel_event)
 
     def get_shift_select_box(self, min_r: int, rowsel: int, min_c: int, colsel: int):
         if rowsel >= min_r and colsel >= min_c:
@@ -2929,10 +2931,10 @@ class MainTable(tk.Canvas):
                             run_binding_func=False,
                         )
                     need_redraw = True
+                    sel_event = self.get_select_event(being_drawn_item=self.being_drawn_item)
                     if self.drag_selection_binding_func:
-                        self.drag_selection_binding_func(
-                            self.get_select_event(being_drawn_item=self.being_drawn_item),
-                        )
+                        self.drag_selection_binding_func(sel_event)
+                    self.PAR.emit_event("<<SheetSelect>>", data=sel_event)
             if self.scroll_if_event_offscreen(event):
                 need_redraw = True
             if need_redraw:
@@ -2975,10 +2977,10 @@ class MainTable(tk.Canvas):
                             set_as_current=True,
                         )
                     need_redraw = True
+                    sel_event = self.get_select_event(being_drawn_item=self.being_drawn_item)
                     if self.drag_selection_binding_func:
-                        self.drag_selection_binding_func(
-                            self.get_select_event(being_drawn_item=self.being_drawn_item),
-                        )
+                        self.drag_selection_binding_func(sel_event)
+                    self.PAR.emit_event("<<SheetSelect>>", data=sel_event)
             if self.scroll_if_event_offscreen(event):
                 need_redraw = True
             if need_redraw:
@@ -3001,10 +3003,10 @@ class MainTable(tk.Canvas):
                     set_current=False,
                 ),
             )
+            sel_event = self.get_select_event(being_drawn_item=self.being_drawn_item)
             if self.drag_selection_binding_func:
-                self.drag_selection_binding_func(
-                    self.get_select_event(being_drawn_item=self.being_drawn_item),
-                )
+                self.drag_selection_binding_func(sel_event)
+            self.PAR.emit_event("<<SheetSelect>>", data=sel_event)
         if self.RI.width_resizing_enabled and self.RI.rsz_w is not None and self.RI.currently_resizing_width:
             self.delete_resize_lines()
             self.RI.delete_resize_lines()
@@ -5721,7 +5723,14 @@ class MainTable(tk.Canvas):
             tags="selected",
             width=2,
         )
-        self.selected = Selected(r, c, type_, iid, fill_iid)
+        self.selected = Selected(
+            row=r,
+            column=c,
+            type_=type_,
+            box=self.selection_boxes[fill_iid].coords,
+            iid=iid,
+            fill_iid=fill_iid,
+        )
         if self.PAR.ops.show_selected_cells_border:
             self.tag_raise(iid)
         else:
@@ -5842,14 +5851,6 @@ class MainTable(tk.Canvas):
             state="normal",
             tags="cells" if type_ == "rows" else type_,
         )
-        if set_current:
-            if set_current is True:
-                curr_r = r1
-                curr_c = c1
-            elif isinstance(set_current, tuple):
-                curr_r = set_current[0]
-                curr_c = set_current[1]
-            self.create_currently_selected_box(curr_r, curr_c, type_, fill_iid)
         bd_iid = None
         if self.PAR.ops.show_selected_cells_border and (
             (self.being_drawn_item is None and self.RI.being_drawn_item is None and self.CH.being_drawn_item is None)
@@ -5875,6 +5876,14 @@ class MainTable(tk.Canvas):
             coords=Box_nt(r1, c1, r2, c2),
             type_=type_,
         )
+        if set_current:
+            if set_current is True:
+                curr_r = r1
+                curr_c = c1
+            elif isinstance(set_current, tuple):
+                curr_r = set_current[0]
+                curr_c = set_current[1]
+            self.create_currently_selected_box(curr_r, curr_c, type_, fill_iid)
         self.lower_selection_boxes()
         if run_binding:
             self.run_selection_binding(type_)
@@ -5899,7 +5908,7 @@ class MainTable(tk.Canvas):
         run_binding: bool = False,
     ) -> int:
         type_ = self.selection_boxes[fill_iid].type_
-        self.selection_boxes[fill_iid].coords = (r1, c1, r2, c2)
+        self.selection_boxes[fill_iid].coords = Box_nt(r1, c1, r2, c2)
         if type_ == "cells":
             mt_bg = self.PAR.ops.table_selected_cells_bg
             mt_border_col = self.PAR.ops.table_selected_cells_border_fg
@@ -5911,6 +5920,8 @@ class MainTable(tk.Canvas):
             mt_border_col = self.PAR.ops.table_selected_columns_border_fg
         if not state:
             state = "normal" if (r2 - r1 > 1 or c2 - c1 > 1) else "hidden"
+        if self.selected.fill_iid == fill_iid:
+            self.selected = self.selected._replace(box=Box_nt(r1, c1, r2, c2))
         self.coords(
             fill_iid,
             self.col_positions[c1],
@@ -5978,20 +5989,18 @@ class MainTable(tk.Canvas):
 
     def run_selection_binding(self, type_: str) -> None:
         if type_ == "cells":
+            sel_event = self.get_select_event(being_drawn_item=self.being_drawn_item)
             if self.selection_binding_func:
-                self.selection_binding_func(
-                    self.get_select_event(being_drawn_item=self.being_drawn_item),
-                )
+                self.selection_binding_func(sel_event)
         elif type_ == "rows":
+            sel_event = self.get_select_event(being_drawn_item=self.RI.being_drawn_item)
             if self.RI.selection_binding_func:
-                self.RI.selection_binding_func(
-                    self.get_select_event(being_drawn_item=self.RI.being_drawn_item),
-                )
+                self.RI.selection_binding_func(sel_event)
         elif type_ == "columns":
+            sel_event = self.get_select_event(being_drawn_item=self.CH.being_drawn_item)
             if self.CH.selection_binding_func:
-                self.CH.selection_binding_func(
-                    self.get_select_event(being_drawn_item=self.CH.being_drawn_item),
-                )
+                self.CH.selection_binding_func(sel_event)
+        self.PAR.emit_event("<<SheetSelect>>", data=sel_event)
 
     def recreate_all_selection_boxes(self) -> None:
         if not self.selected:

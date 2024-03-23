@@ -434,22 +434,23 @@ class SelectionBox:
         self.type_ = type_
 
 
-class Selected:
-    __slots__ = ("row", "column", "type_", "iid", "fill_iid")
+Selected = namedtuple(
+    "Selected",
+    (
+        "row",
+        "column",
+        "type_",
+        "box",
+        "iid",
+        "fill_iid",
+    ),
+    defaults=(
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+    ),
+)
 
-    def __init__(
-        self,
-        row: int | None = None,
-        column: int | None = None,
-        type_: int | None = None,
-        iid: int | None = None,
-        fill_iid: int | None = None,
-    ) -> None:
-        self.row = row
-        self.column = column
-        self.type_ = type_
-        self.iid = iid
-        self.fill_iid = fill_iid
-
-
-CurrentlySelected = namedtuple("CurrentlySelected", "row column type_ box iid box_iid")

@@ -21,6 +21,7 @@ named_span_types = (
 emitted_events: set[str] = {
     "<<SheetModified>>",
     "<<SheetRedrawn>>",
+    "<<SheetSelect>>",
 }
 backwards_compatibility_keys: dict[str, str] = {
     "font": "table_font",

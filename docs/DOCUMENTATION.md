@@ -934,13 +934,7 @@ Keys:
     - The layout is always: `"selection_boxes": {(start row, start column, up to but not including row, up to but not including column): selection box type}`.
         - The row/column indexes are `int`s and the selection box type is a `str` either `"cells"`, `"rows"` or `"columns"`.
     - The `dict` will be empty if there is nothing selected.
-- Key **`["selected"]`** the value of this when there is something selected on the sheet is a `namedtuple` which contains the values: `(row: int, column: int, type_: str (either "cell", "row" or "column"), tags: tuple)`.
-    - The `tags` in this `namedtuple` are the tags of the rectangle on the canvas. They are the following:
-        - Index `[0]` - `"selected"`.
-        - Index `[1]` - `f"{start row}_{start column}_{up to row}_{up to column}"` - the dimensions of the box it's attached to.
-        - Index `[2]` - `int` - the canvas id of the box it's attached to.
-        - Index `[3]` - `f"{current box row}_{current box column}"` - the displayed position of currently selected box.
-        - Index `[4]` - `f"type_{type_}"` - the type of the box it's attached to (either "cells", "rows" or "columns").
+- Key **`["selected"]`** the value of this when there is something selected on the sheet is a `namedtuple`. The values of which can be found [here](https://github.com/ragardner/tksheet/wiki/Version-7#get-the-currently-selected-cell).
     - When nothing is selected or the event is not relevant to the currently selected box, such as a resize event it will be an empty `tuple`.
 - Key **`["being_selected"]`** if any selection box is in the process of being drawn by holding down mouse button 1 and dragging then this will be a tuple with the following layout:
     - `(start row, start column, up to but not including row, up to but not including column, selection box type)`.
@@ -1053,7 +1047,10 @@ focus_set(
 # **tkinter and tksheet Events**
 
 - With the `Sheet.bind()` function you can bind things in the usual way you would in tkinter and they will bind to all the `tksheet` canvases.
-- There are also two special `tksheet` events you can bind, `"<<SheetModified>>"` and `"<<SheetRedrawn>>"`.
+- There are also the following special `tksheet` events you can bind:
+    - `"<<SheetModified>>"`
+    - `"<<SheetRedrawn>>"`
+    - `"<<SheetSelect>>"`
 
 ```python
 bind(
@@ -1078,6 +1075,7 @@ Parameters:
         - `"move_rows"` when a user has dragged and dropped rows.
     - `"<<SheetRedrawn>>"` emitted whenever the sheet GUI was refreshed (redrawn). The data for this event will be different than the usual event data, it is simply:
         - `{"sheetname": name of your sheet, "header": bool True if the header was redrawn, "row_index": bool True if the index was redrawn, "table": bool True if the the table was redrawn}`
+    - `"<<SheetSelect>>"` encompasses all select events and emits the same event as `"<<SheetModified>>"` but with the event name: `"select"`.
 
 Example:
 ```python
@@ -3655,15 +3653,23 @@ get_column_alignments() -> dict
 ---
 # **Getting Selected Cells**
 
+#### **Get the currently selected cell**
+
+This is always a single cell, the one, for example, in which the cell text editor opens when making single edits.
+
 ```python
-get_currently_selected() -> tuple | SelectedClass
+get_currently_selected() -> tuple | Selected
 ```
-- Returns `namedtuple` of `(row, column, type_, box, iid, box_iid)` e.g. `(0, 0, "column", (0, 0, 2, 2), 5, 6)`
-    - `type_` can be `"rows"`, `"columns"` or `"cells"`.
-    - `box` `tuple[int, int, int, int]` are the coordinates of the box that the currently selected box is attached to.
-        - `(from row, from column, up to but not including row, up to but not including column)`.
-    - `iid` is the canvas item id of the currently selected box.
-    - `box_iid` is the canvas item id of the box that the currently selected box is attached to.
+Notes:
+- Returns either:
+    - `namedtuple` of `(row, column, type_, box, iid, fill_iid)`.
+        - `type_` can be `"rows"`, `"columns"` or `"cells"`.
+        - `box` `tuple[int, int, int, int]` are the coordinates of the box that the currently selected box is attached to.
+            - `(from row, from column, up to but not including row, up to but not including column)`.
+        - `iid` is the canvas item id of the currently selected box.
+        - `fill_iid` is the canvas item id of the box that the currently selected box is attached to.
+    - An empty `tuple` if nothing is selected.
+- Can also use `sheet.selected` as shorter `@property` version of the function.
 
 Example:
 ```python
@@ -3672,6 +3678,9 @@ if currently_selected:
     row = currently_selected.row
     column = currently_selected.column
     type_ = currently_selected.type_
+
+if self.sheet.selected:
+    ...
 ```
 
 ___

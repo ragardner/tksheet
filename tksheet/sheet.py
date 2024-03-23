@@ -40,13 +40,13 @@ from .functions import (
 )
 from .main_table import MainTable
 from .other_classes import (
-    CurrentlySelected,
     DotDict,
     EventDataDict,
     FontTuple,
     GeneratedMouseEvent,
     Node,
     Span,
+    Selected,
 )
 from .row_index import RowIndex
 from .sheet_options import (
@@ -2904,17 +2904,12 @@ class Sheet(tk.Frame):
 
     # Getting Selected Cells
 
-    def get_currently_selected(self) -> tuple[()] | CurrentlySelected:
-        if not self.MT.selected.iid:
-            return tuple()
-        return CurrentlySelected(
-            self.MT.selected.row,
-            self.MT.selected.column,
-            self.MT.selected.type_,
-            self.MT.selection_boxes[self.MT.selected.fill_iid].coords,
-            self.MT.selected.iid,
-            self.MT.selected.fill_iid,
-        )
+    def get_currently_selected(self) -> tuple[()] | Selected:
+        return self.MT.selected
+
+    @property
+    def selected(self) -> tuple[()] | Selected:
+        return self.MT.selected
 
     def get_selected_rows(
         self,
@@ -3300,7 +3295,7 @@ class Sheet(tk.Frame):
         canvas_positions: bool = False,
         reset: bool = False,
     ) -> Sheet:
-        if reset:
+        if reset or column_widths is None:
             self.MT.reset_col_positions()
         elif is_iterable(column_widths):
             if canvas_positions and isinstance(column_widths, list):
@@ -3315,9 +3310,9 @@ class Sheet(tk.Frame):
         canvas_positions: bool = False,
         reset: bool = False,
     ) -> Sheet:
-        if reset:
+        if reset or row_heights is None:
             self.MT.reset_row_positions()
-        if is_iterable(row_heights):
+        elif is_iterable(row_heights):
             if canvas_positions and isinstance(row_heights, list):
                 self.MT.row_positions = row_heights
             else:
@@ -4618,12 +4613,12 @@ class Sheet(tk.Frame):
         self.display_item(item)
         self.see(row=self.RI.tree_rns[item], keep_xscroll=True)
 
-    def selection(self) -> set[str]:
+    def selection(self) -> list[str]:
         """
         Get currently selected item ids
         - Only includes selected rows
         """
-        return set(self.MT._row_index[self.displayed_row_to_data(rn)].iid for rn in self.get_selected_rows())
+        return [self.MT._row_index[self.displayed_row_to_data(rn)].iid for rn in self.get_selected_rows()]
 
     def selection_set(self, *items) -> Sheet:
         self.deselect()
@@ -4650,7 +4645,7 @@ class Sheet(tk.Frame):
         return self
 
     def selection_toggle(self, *items) -> Sheet:
-        selected = self.selection()
+        selected = set(self.MT._row_index[self.displayed_row_to_data(rn)].iid for rn in self.get_selected_rows())
         add = []
         remove = []
         for item in unpack(items):

@@ -10,6 +10,7 @@
     - Treeview mode
     - Cell, row and column tagging functions
     - Ability to change the appearance of both scrollbars
+    - New binding `"<<SheetSelect>>"` which encompasses all select events
 
 #### Removed:
 - **Parameters**:
@@ -26,7 +27,7 @@
     - From either `"cell"`/`"row"`/`"column"` to -> `"cells"`/`"rows"`/`"columns"`
 - Rename class `TextEditor_` to `TextEditorTkText`
 - Rename `TextEditor` attribute `textedit` to `tktext`
-- Rename class `CurrentlySelectedClass` to `CurrentlySelected`
+- Rename `namedtuple` `CurrentlySelectedClass` to `Selected`
 - `Sheet.get_currently_selected()` no longer returns tags but other values at the end of the named tuple, see the docs for more info
 - Overhaul how selection boxes are handled internally. `Sheet` functions dealing with selection boxes should behave the same
 - Changed order of `Sheet()` init parameters
