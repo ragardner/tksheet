@@ -1578,7 +1578,7 @@ class Sheet(tk.Frame):
         event_data = event_dict(
             name="edit_table",
             sheet=self.name,
-            selected=self.MT.currently_selected(),
+            selected=self.MT.selected,
         )
         set_t = self.event_data_set_table_cell
         set_i, set_h = self.event_data_set_index_cell, self.event_data_set_header_cell
@@ -1808,7 +1808,7 @@ class Sheet(tk.Frame):
         event_data = event_dict(
             name="edit_table",
             sheet=self.name,
-            selected=self.MT.currently_selected(),
+            selected=self.MT.selected,
         )
         if index:
             for r in rows:
@@ -1982,7 +1982,7 @@ class Sheet(tk.Frame):
                 name="add_rows",
                 sheet=self.name,
                 boxes=self.MT.get_boxes(),
-                selected=self.MT.currently_selected(),
+                selected=self.MT.selected,
             ),
             create_selections=create_selections,
         )
@@ -2073,7 +2073,7 @@ class Sheet(tk.Frame):
                 name="add_columns",
                 sheet=self.name,
                 boxes=self.MT.get_boxes(),
-                selected=self.MT.currently_selected(),
+                selected=self.MT.selected,
             ),
             create_selections=create_selections,
         )
@@ -2133,7 +2133,7 @@ class Sheet(tk.Frame):
             name="delete_rows",
             sheet=self.name,
             boxes=self.MT.get_boxes(),
-            selected=self.MT.currently_selected(),
+            selected=self.MT.selected,
         )
         if not data_indexes:
             event_data = self.MT.delete_rows_displayed(rows, event_data)
@@ -2174,7 +2174,7 @@ class Sheet(tk.Frame):
             name="delete_columns",
             sheet=self.name,
             boxes=self.MT.get_boxes(),
-            selected=self.MT.currently_selected(),
+            selected=self.MT.selected,
         )
         if not data_indexes:
             event_data = self.MT.delete_columns_displayed(columns, event_data)
