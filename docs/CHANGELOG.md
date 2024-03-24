@@ -1,3 +1,6 @@
+### Version 7.1.1
+####
+
 ### Version 7.1.0
 #### Changed:
 - Event data key `"selected"` and function `get_currently_selected()` values have changed:
