@@ -4366,6 +4366,8 @@ class Sheet(tk.Frame):
                     self.RI.tree[pid] = Node(row[parent_column], pid)
                 self.RI.tree[iid].parent = self.RI.tree[pid]
                 self.RI.tree[pid].children.append(self.RI.tree[iid])
+            else:
+                self.RI.tree[iid].parent = ""
             self.RI.tree_rns[iid] = rn
         for n in self.RI.tree.values():
             if n.parent is None:

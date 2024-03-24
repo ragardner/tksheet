@@ -154,6 +154,7 @@ class RowIndex(tk.Canvas):
         self.tree_open_ids = set()
         self.tree_rns = {}
         if self.MT:
+            self.MT.displayed_rows = []
             self.MT._row_index = []
             self.MT.data = []
             self.MT.row_positions = [0]
