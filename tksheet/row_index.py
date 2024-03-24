@@ -153,6 +153,11 @@ class RowIndex(tk.Canvas):
         self.tree = {}
         self.tree_open_ids = set()
         self.tree_rns = {}
+        if self.MT:
+            self.MT._row_index = []
+            self.MT.data = []
+            self.MT.row_positions = [0]
+            self.MT.saved_row_heights = {}
 
     def set_width(self, new_width: int, set_TL: bool = False) -> None:
         self.current_width = new_width

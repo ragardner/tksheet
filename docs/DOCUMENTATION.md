@@ -4338,14 +4338,19 @@ cell_completely_visible(r: int, c: int, seperate_axes: bool = False) -> bool
 ___
 
 ```python
-set_xview(position: float, option: str = "moveto") -> Sheet
+set_xview(position: None | float = None, option: str = "moveto") -> Sheet | tuple[float, float]
 ```
+Notes:
+- If `position` is `None` then `tuple[float, float]` of main table `xview()` is returned.
+- You can also use `xview` and `xview_moveto` which have the same behaviour.
 
 ___
 
 ```python
-set_yview(position: float, option: str = "moveto") -> Sheet
+set_yview(position: None | float = None, option: str = "moveto") -> Sheet | tuple[float, float]
 ```
+- If `position` is `None` then `tuple[float, float]` of main table `yview()` is returned.
+- You can also use `yview` and `yview_moveto` which have the same behaviour.
 
 ___
 

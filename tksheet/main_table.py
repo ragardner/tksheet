@@ -487,7 +487,7 @@ class MainTable(tk.Canvas):
     def get_ctrl_x_c_boxes(self) -> tuple[dict[tuple[int, int, int, int], str], int]:
         boxes = {}
         maxrows = 0
-        if self.selected.type_ in ("cell", "column"):
+        if self.selected.type_ in ("cells", "columns"):
             curr_box = self.selection_boxes[self.selected.fill_iid].coords
             maxrows = curr_box[2] - curr_box[0]
             for item, box in self.get_selection_items(rows=False):
@@ -522,7 +522,7 @@ class MainTable(tk.Canvas):
         s, writer = self.io_csv_writer()
         if not try_binding(self.extra_begin_ctrl_c_func, event_data):
             return
-        if self.selected.type_ in ("cell", "column"):
+        if self.selected.type_ in ("cells", "columns"):
             for rn in range(maxrows):
                 row = []
                 for r1, c1, r2, c2 in boxes:
@@ -564,7 +564,7 @@ class MainTable(tk.Canvas):
         s, writer = self.io_csv_writer()
         if not try_binding(self.extra_begin_ctrl_x_func, event_data, "begin_ctrl_x"):
             return
-        if self.selected.type_ in ("cell", "column"):
+        if self.selected.type_ in ("cells", "columns"):
             for rn in range(maxrows):
                 row = []
                 for r1, c1, r2, c2 in boxes:
@@ -1983,7 +1983,7 @@ class MainTable(tk.Canvas):
     def arrowkey_UP(self, event=None):
         if not self.selected:
             return
-        if self.selected.type_ == "row":
+        if self.selected.type_ == "rows":
             r = self.selected.row
             if r != 0 and self.RI.row_selection_enabled:
                 if self.cell_completely_visible(r=r - 1, c=0):
@@ -1991,7 +1991,7 @@ class MainTable(tk.Canvas):
                 else:
                     self.RI.select_row(r - 1)
                     self.see(r - 1, 0, keep_xscroll=True, check_cell_visibility=False)
-        elif self.selected.type_ in ("cell", "column"):
+        elif self.selected.type_ in ("cells", "columns"):
             r = self.selected.row
             c = self.selected.column
             if r == 0 and self.CH.col_selection_enabled:
@@ -2007,7 +2007,7 @@ class MainTable(tk.Canvas):
     def arrowkey_RIGHT(self, event=None):
         if not self.selected:
             return
-        if self.selected.type_ == "row":
+        if self.selected.type_ == "rows":
             r = self.selected.row
             if self.single_selection_enabled or self.toggle_selection_enabled:
                 if self.cell_completely_visible(r=r, c=0):
@@ -2021,7 +2021,7 @@ class MainTable(tk.Canvas):
                         bottom_right_corner=True,
                         check_cell_visibility=False,
                     )
-        elif self.selected.type_ == "column":
+        elif self.selected.type_ == "columns":
             c = self.selected.column
             if c < len(self.col_positions) - 2 and self.CH.col_selection_enabled:
                 if self.cell_completely_visible(r=0, c=c + 1):
@@ -2054,7 +2054,7 @@ class MainTable(tk.Canvas):
     def arrowkey_DOWN(self, event=None):
         if not self.selected:
             return
-        if self.selected.type_ == "row":
+        if self.selected.type_ == "rows":
             r = self.selected.row
             if r < len(self.row_positions) - 2 and self.RI.row_selection_enabled:
                 if self.cell_completely_visible(r=min(r + 2, len(self.row_positions) - 2), c=0):
@@ -2083,7 +2083,7 @@ class MainTable(tk.Canvas):
                             bottom_right_corner=False if self.PAR.ops.arrow_key_down_right_scroll_page else True,
                             check_cell_visibility=False,
                         )
-        elif self.selected.type_ == "column":
+        elif self.selected.type_ == "columns":
             c = self.selected.column
             if self.single_selection_enabled or self.toggle_selection_enabled:
                 if self.cell_completely_visible(r=0, c=c):
@@ -2131,7 +2131,7 @@ class MainTable(tk.Canvas):
     def arrowkey_LEFT(self, event=None):
         if not self.selected:
             return
-        if self.selected.type_ == "column":
+        if self.selected.type_ == "columns":
             c = self.selected.column
             if c != 0 and self.CH.col_selection_enabled:
                 if self.cell_completely_visible(r=0, c=c - 1):
@@ -5624,7 +5624,7 @@ class MainTable(tk.Canvas):
         )
 
     def get_boxes(self) -> dict:
-        return {box.coords: box.type_ for item, box in self.get_selection_items()}
+        return {box.coords: box.type_ for box in self.selection_boxes.values()}
 
     def reselect_from_get_boxes(
         self,
