@@ -985,7 +985,7 @@ Parameters:
 - `func` (`Callable`, `None`) must either be a function which will receive a tksheet event dict which looks like [this](https://github.com/ragardner/tksheet/wiki/Version-7#event-data) or `None` which unbinds the function.
 
 Notes:
-- For examples of this function see [here](https://github.com/ragardner/tksheet/wiki/Version-7#basic-use) and [here](https://github.com/ragardner/tksheet/wiki/Version-7#example-custom-right-click-and-text-editor-validation).
+- For examples of this function see [here](https://github.com/ragardner/tksheet/wiki/Version-7#usage-examples) and [here](https://github.com/ragardner/tksheet/wiki/Version-7#example-custom-right-click-and-text-editor-validation).
 
 ___
 
