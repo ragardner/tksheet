@@ -49,6 +49,7 @@ Span objects now have an additional two functions which link to the `Sheet` func
 - Potential issue with using `insert_rows` while also using an `int` as the row index to display a specific column in the index
 - Potential error if a selection box ends up outside of rows/columns
 - Pull request [#214](https://github.com/ragardner/tksheet/pull/214)
+- Issue [215](https://github.com/ragardner/tksheet/issues/215)
 
 #### Improved:
 - Ctrl select now allows overlapping boxes which begin from within another box
