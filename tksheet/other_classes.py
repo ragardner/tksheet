@@ -216,6 +216,21 @@ class Span(dict):
             self["widget"].clear(self, redraw=redraw)
         return self
 
+    def tag(self, *tags) -> Span:
+        self["widget"].tag(self, tags=tags)
+        return self
+
+    def untag(self) -> Span:
+        if self.kind == "cell":
+            for r in self.rows:
+                for c in self.columns:
+                    self["widget"].untag(cell=(r, c))
+        elif self.kind == "row":
+            self["widget"].untag(rows=self.rows)
+        elif self.kind == "column":
+            self["widget"].untag(columns=self.columns)
+        return self
+
     def options(
         self,
         type_: str | None = None,

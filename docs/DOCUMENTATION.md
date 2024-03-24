@@ -449,10 +449,10 @@ def __init__(
     horizontal_scroll_troughrelief: str = theme_light_blue["horizontal_scroll_troughrelief"],
     vertical_scroll_bordercolor: str = theme_light_blue["vertical_scroll_bordercolor"],
     horizontal_scroll_bordercolor: str = theme_light_blue["horizontal_scroll_bordercolor"],
-    vertical_scroll_borderwidth: str = 1,
-    horizontal_scroll_borderwidth: str = 1,
-    vertical_scroll_gripcount: str = 0,
-    horizontal_scroll_gripcount: str = 0,
+    vertical_scroll_borderwidth: int = 1,
+    horizontal_scroll_borderwidth: int = 1,
+    vertical_scroll_gripcount: int = 0,
+    horizontal_scroll_gripcount: int = 0,
     vertical_scroll_active_bg: str = theme_light_blue["vertical_scroll_active_bg"],
     horizontal_scroll_active_bg: str = theme_light_blue["horizontal_scroll_active_bg"],
     vertical_scroll_not_active_bg: str = theme_light_blue["vertical_scroll_not_active_bg"],
@@ -481,6 +481,10 @@ def __init__(
 - `data_reference` and `data` are essentially the same.
 - `row_index` and `index` are the same, `index` takes priority, same as with `headers` and `header`.
 - `startup_select` either `(start row, end row, "rows")`, `(start column, end column, "rows")` or `(start row, start column, end row, end column, "cells")`. The start/end row/column variables need to be `int`s.
+- `auto_resize_row_index` either `True`, `False` or `"empty"`.
+    - `"empty"` it will only automatically resize if the row index is empty.
+    - `True` it will always automatically resize.
+    - `False` it will never automatically resize.
 
 You can change most of these settings after initialization using the [`set_options()` function](https://github.com/ragardner/tksheet/wiki/Version-7#sheet-options-and-other-functions).
 - `scrollbar_theme_inheritance` and `scrollbar_show_arrows` will only work on `Sheet()` initialization, not with `set_options()`
@@ -501,6 +505,8 @@ my_sheet_widget.set_options(table_bg="black")
 my_sheet_widget.set_options(table_bg="#000000")
 my_sheet_widget.set_options(horizontal_scroll_pressed_bg="red")
 ```
+
+#### **Set options**
 
 ```python
 set_options(
@@ -553,6 +559,7 @@ popup_menu_bg
 popup_menu_highlight_bg
 popup_menu_highlight_fg
 
+# scroll bars
 vertical_scroll_background
 horizontal_scroll_background
 vertical_scroll_troughcolor
@@ -588,14 +595,23 @@ change_theme(theme: str = "light blue", redraw: bool = True) -> Sheet
 
 **Scrollbar colors:**
 
-- To change the colors of the sheet scrollbars you can use [the above functions](https://github.com/ragardner/tksheet/wiki/Version-7#sheet-colors).
+The above [function and keyword arguments](https://github.com/ragardner/tksheet/wiki/Version-7#set-options) can be used to change the colors of the scroll bars.
 
 **Scrollbar relief, size, arrows, etc.**
 
--
-
-
-
+Some scroll bar style options can only be changed on `Sheet()` initialization, others can be changed whenever using `set_options()`.
+- Options that can only be set in the `= Sheet(...)` initialization:
+    - `scrollbar_theme_inheritance: str = "default"`
+        - This is which tkinter theme to inherit the new style from, changing the width of the scroll bar might not work with the `"default"` theme. If this is the case try using `"clam"` instead.
+    - `scrollbar_show_arrows: bool`
+        - When `False` the scroll bars arrow buttons on either end will be hidden, this may effect the width of the scroll bar.
+- Options that can be set using `set_options()` also:
+    - `vertical_scroll_borderwidth: int`
+    - `horizontal_scroll_borderwidth: int`
+    - `vertical_scroll_gripcount: int`
+    - `horizontal_scroll_gripcount: int`
+    - `vertical_scroll_arrowsize: str | int`
+    - `horizontal_scroll_arrowsize: str | int`
 
 ---
 # **Header and Index**
@@ -1857,6 +1873,41 @@ Example:
 ```python
 # clears column D
 sheet["D"].clear()
+```
+
+#### **Using a span to tag cells**
+
+Tag cells, rows or columns depending on the spans kind, more information on tags [here](https://github.com/ragardner/tksheet/wiki/Version-7#tags).
+
+```python
+tag(*tags) -> Span
+```
+Notes:
+- If `span.kind` is `"cell"` then cells will be tagged, if it's a row span then rows will be and so for columns.
+
+Example:
+```python
+# tags rows 2, 3, 4 with "hello world"
+sheet[2:5].tag("hello world")
+```
+
+#### **Using a span to untag cells**
+
+Remove **all** tags from cells, rows or columns depending on the spans kind, more information on tags [here](https://github.com/ragardner/tksheet/wiki/Version-7#tags).
+
+```python
+untag() -> Span
+```
+Notes:
+- If `span.kind` is `"cell"` then cells will be untagged, if it's a row span then rows will be and so for columns.
+
+Example:
+```python
+# tags rows 2, 3, 4 with "hello" and "bye"
+sheet[2:5].tag("hello", "bye")
+
+# removes both "hello" and "bye" tags from rows 2, 3, 4
+sheet[2:5].untag()
 ```
 
 #### **Set the spans orientation**
@@ -4342,7 +4393,7 @@ set_xview(position: None | float = None, option: str = "moveto") -> Sheet | tupl
 ```
 Notes:
 - If `position` is `None` then `tuple[float, float]` of main table `xview()` is returned.
-- You can also use `xview` and `xview_moveto` which have the same behaviour.
+- `xview` and `xview_moveto` have the same behaviour.
 
 ___
 
@@ -4350,7 +4401,7 @@ ___
 set_yview(position: None | float = None, option: str = "moveto") -> Sheet | tuple[float, float]
 ```
 - If `position` is `None` then `tuple[float, float]` of main table `yview()` is returned.
-- You can also use `yview` and `yview_moveto` which have the same behaviour.
+- `yview` and `yview_moveto` have the same behaviour.
 
 ___
 
@@ -5041,7 +5092,7 @@ redraw(redraw_header: bool = True, redraw_row_index: bool = True) -> Sheet
 ---
 # **Treeview Mode**
 
-This is a work in progress and not fully functional at this time.
+This is a work in progress and still being tested and changed.
 
 ---
 # **Tags**
@@ -5049,7 +5100,7 @@ This is a work in progress and not fully functional at this time.
 Tags can be used to keep track of specific cells, rows and columns wherever they move. Note that:
 - If rows/columns are deleted the the associated tags will be also.
 - There is no equivalent `tag_bind` functionality at this time.
-- All tagging functions use data indexes (not displayed indexes) - this only becomes relevant when there are hidden rows/columns.
+- All tagging functions use data indexes (not displayed indexes) - this is only relevant when there are hidden rows/columns.
 
 #### **Tag a specific cell**
 
@@ -5085,6 +5136,44 @@ tag_columns(
     *tags,
 ) -> Sheet
 ```
+
+___
+
+#### **Tag using a span**
+
+```python
+tag(
+    *key: CreateSpanTypes,
+    tags: Iterator[str] | str = "",
+) -> Sheet
+```
+
+___
+
+#### **Untag**
+
+```python
+untag(
+    cell: tuple[int, int] | None = None,
+    rows: int | Iterator[int] | None = None,
+    columns: int | Iterator[int] | None = None,
+) -> Sheet
+```
+- This removes all tags from the cell, rows or columns provided.
+
+___
+
+#### **Delete tags**
+
+```python
+tag_del(
+    *tags,
+    cells: bool = True,
+    rows: bool = True,
+    columns: bool = True,
+) -> Sheet
+```
+- This deletes the provided tags from all `cells` if `True`, `rows` if `True` and `columns` if `True`.
 
 ___
 

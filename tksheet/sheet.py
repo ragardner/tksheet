@@ -231,10 +231,10 @@ class Sheet(tk.Frame):
         horizontal_scroll_troughrelief: str = theme_light_blue["horizontal_scroll_troughrelief"],
         vertical_scroll_bordercolor: str = theme_light_blue["vertical_scroll_bordercolor"],
         horizontal_scroll_bordercolor: str = theme_light_blue["horizontal_scroll_bordercolor"],
-        vertical_scroll_borderwidth: str = 1,
-        horizontal_scroll_borderwidth: str = 1,
-        vertical_scroll_gripcount: str = 0,
-        horizontal_scroll_gripcount: str = 0,
+        vertical_scroll_borderwidth: int = 1,
+        horizontal_scroll_borderwidth: int = 1,
+        vertical_scroll_gripcount: int = 0,
+        horizontal_scroll_gripcount: int = 0,
         vertical_scroll_active_bg: str = theme_light_blue["vertical_scroll_active_bg"],
         horizontal_scroll_active_bg: str = theme_light_blue["horizontal_scroll_active_bg"],
         vertical_scroll_not_active_bg: str = theme_light_blue["vertical_scroll_not_active_bg"],
@@ -4284,18 +4284,18 @@ class Sheet(tk.Frame):
         columns: int | Iterator[int] | None = None,
     ) -> Sheet:
         if isinstance(cell, tuple):
-            for tag, tagged in self.MT.tagged_cells.items():
+            for tagged in self.MT.tagged_cells.values():
                 tagged.discard(cell)
         if isinstance(rows, int):
             rows = (rows,)
         if is_iterable(rows):
-            for tag, tagged in self.MT.tagged_rows.items():
+            for tagged in self.MT.tagged_rows.values():
                 for row in rows:
                     tagged.discard(row)
         if isinstance(columns, int):
             columns = (columns,)
         if is_iterable(columns):
-            for tag, tagged in self.MT.tagged_columns.items():
+            for tagged in self.MT.tagged_columns.values():
                 for column in columns:
                     tagged.discard(column)
         return self
