@@ -91,10 +91,9 @@ class TextEditorTkText(tk.Text):
             command=self.undo,
             **menu_kwargs,
         )
-        if text:
-            self.delete(1.0, "end")
-            self.insert(1.0, text)
-            self.yview_moveto(1)
+        self.delete(1.0, "end")
+        self.insert(1.0, text)
+        self.yview_moveto(1)
         self.tag_configure("align", justify=self.align)
         if align == "w":
             self.align = "left"
