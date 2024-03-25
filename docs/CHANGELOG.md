@@ -1,3 +1,6 @@
+### Version 7.1.2
+####
+
 ### Version 7.1.1
 #### Fixed:
 - Select all error
