@@ -1434,6 +1434,12 @@ class MainTable(tk.Canvas):
             self.CH.cell_options = modification["options"]["CH_cell_options"]
         if "RI_cell_options" in modification["options"]:
             self.RI.cell_options = modification["options"]["RI_cell_options"]
+        if "tagged_cells" in modification["options"]:
+            self.tagged_cells = modification["options"]["tagged_cells"]
+        if "tagged_rows" in modification["options"]:
+            self.tagged_rows = modification["options"]["tagged_rows"]
+        if "tagged_columns" in modification["options"]:
+            self.tagged_columns = modification["options"]["tagged_columns"]
         self.named_spans = {k: unpickle_obj(v) for k, v in modification["named_spans"].items()}
 
     def undo_modification_invert_event(self, modification: EventDataDict, name: str = "undo") -> bytes | EventDataDict:
@@ -4531,6 +4537,9 @@ class MainTable(tk.Canvas):
                 "row_options": self.row_options,
                 "CH_cell_options": self.CH.cell_options,
                 "RI_cell_options": self.RI.cell_options,
+                "tagged_cells": self.tagged_cells,
+                "tagged_rows": self.tagged_rows,
+                "tagged_columns": self.tagged_columns,
             }
         )
 
