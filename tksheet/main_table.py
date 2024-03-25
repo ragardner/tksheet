@@ -1718,7 +1718,7 @@ class MainTable(tk.Canvas):
         return False
 
     def select_all(self, redraw: bool = True, run_binding_func: bool = True) -> None:
-        iid, r, c = self.selected.iid, self.selected.row, self.selected.column
+        selected = self.selected
         self.deselect("all", redraw=False)
         if len(self.row_positions) > 1 and len(self.col_positions) > 1:
             item = self.create_selection_box(
@@ -1728,8 +1728,8 @@ class MainTable(tk.Canvas):
                 len(self.col_positions) - 1,
                 set_current=False,
             )
-            if iid:
-                self.set_currently_selected(r, c, item=item)
+            if selected:
+                self.set_currently_selected(selected.row, selected.column, item=item)
             else:
                 self.set_currently_selected(0, 0, item=item)
             if redraw:
@@ -6264,10 +6264,10 @@ class MainTable(tk.Canvas):
         return [(box.coords, box.type) for item, box in self.get_selection_items()]
 
     def all_selected(self) -> bool:
-        for r1, c1, r2, c2 in self.get_all_selection_boxes():
-            if not r1 and not c1 and r2 == len(self.row_positions) - 1 and c2 == len(self.col_positions) - 1:
-                return True
-        return False
+        return any(
+            not r1 and not c1 and r2 == len(self.row_positions) - 1 and c2 == len(self.col_positions) - 1
+            for r1, c1, r2, c2 in self.get_all_selection_boxes()
+        )
 
     def cell_selected(
         self,
@@ -6276,31 +6276,35 @@ class MainTable(tk.Canvas):
         inc_cols: bool = False,
         inc_rows: bool = False,
     ) -> bool:
-        if not isinstance(r, int) or not isinstance(c, int):
-            return False
-        for item, box in self.get_selection_items(rows=inc_rows, columns=inc_cols):
-            r1, c1, r2, c2 = box.coords
-            if r1 <= r and c1 <= c and r2 > r and c2 > c:
-                return True
-        return False
+        return (
+            isinstance(r, int)
+            and isinstance(c, int)
+            and any(
+                box.coords.from_r <= r and box.coords.upto_r > r and box.coords.from_c <= c and box.coords.upto_c > c
+                for item, box in self.get_selection_items(
+                    rows=inc_rows,
+                    columns=inc_cols,
+                )
+            )
+        )
 
     def col_selected(self, c: int) -> bool:
-        if not isinstance(c, int):
-            return False
-        for item, box in self.get_selection_items(cells=False, rows=False):
-            r1, c1, r2, c2 = box.coords
-            if c1 <= c and c2 > c:
-                return True
-        return False
+        return isinstance(c, int) and any(
+            box.coords.from_c <= c and box.coords.upto_c > c
+            for item, box in self.get_selection_items(
+                cells=False,
+                columns=False,
+            )
+        )
 
     def row_selected(self, r: int) -> bool:
-        if not isinstance(r, int):
-            return False
-        for item, box in self.get_selection_items(cells=False, columns=False):
-            r1, c1, r2, c2 = box.coords
-            if r1 <= r and r2 > r:
-                return True
-        return False
+        return isinstance(r, int) and any(
+            box.coords.from_r <= r and box.coords.upto_r > r
+            for item, box in self.get_selection_items(
+                cells=False,
+                columns=False,
+            )
+        )
 
     def anything_selected(
         self,
