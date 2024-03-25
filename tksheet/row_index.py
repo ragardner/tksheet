@@ -129,7 +129,7 @@ class RowIndex(tk.Canvas):
         self.align = kwargs["row_index_align"]
         self.default_index = kwargs["default_row_index"].lower()
 
-        self.reset_tree()
+        self.tree_reset()
         self.basic_bindings()
 
     def basic_bindings(self, enable: bool = True) -> None:
@@ -148,7 +148,7 @@ class RowIndex(tk.Canvas):
             self.unbind("<Double-Button-1>")
             self.unbind(rc_binding)
 
-    def reset_tree(self) -> None:
+    def tree_reset(self) -> None:
         # treeview mode
         self.tree = {}
         self.tree_open_ids = set()

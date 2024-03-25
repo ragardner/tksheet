@@ -1476,7 +1476,7 @@ class Sheet(tk.Frame):
         if sheet_options:
             self.ops = new_sheet_options()
         if tree:
-            self.RI.reset_tree()
+            self.RI.tree_reset()
         self.set_refresh_timer(redraw)
         return self
 
@@ -2998,9 +2998,10 @@ class Sheet(tk.Frame):
 
     def get_selected_min_max(
         self,
-    ) -> (
-        tuple[int, int, int, int] | tuple[None, None, None, None]
-    ):  # returns (min_y, min_x, max_y, max_x) of any selections including rows/columns
+    ) -> tuple[int, int, int, int] | tuple[None, None, None, None]:
+        """
+        Returns (min_y, min_x, max_y, max_x) of all selection boxes
+        """
         return self.MT.get_selected_min_max()
 
     # Modifying Selected Cells
@@ -3286,12 +3287,12 @@ class Sheet(tk.Frame):
 
     def get_column_widths(self, canvas_positions: bool = False) -> list[float]:
         if canvas_positions:
-            return [int(n) for n in self.MT.col_positions]
+            return self.MT.col_positions
         return self.MT.get_column_widths()
 
     def get_row_heights(self, canvas_positions: bool = False) -> list[float]:
         if canvas_positions:
-            return [int(n) for n in self.MT.row_positions]
+            return self.MT.row_positions
         return self.MT.get_row_heights()
 
     def set_column_widths(
@@ -4391,6 +4392,61 @@ class Sheet(tk.Frame):
         )
         return self
 
+    def tree_reset(self) -> Sheet:
+        self.deselect()
+        self.RI.tree_reset()
+        return self
+
+    def tree_get_open(self) -> set[str]:
+        """
+        Returns the set[str] of iids that are open in the treeview
+        """
+        return self.RI.tree_open_ids
+
+    def tree_set_open(self, open_ids: set[str]) -> Sheet:
+        """
+        Accepts set[str] of iids that are open in the treeview
+        Closes everything else
+        """
+        self.RI.tree_open_ids = open_ids
+        self.hide_rows(
+            set(self.MT.displayed_rows),
+            redraw=False,
+            deselect_all=False,
+            data_indexes=True,
+        )
+        self.show_rows(
+            (self.RI.tree_rns[iid] for iid in self.get_children("")),
+            redraw=False,
+            deselect_all=True,
+        )
+        self.tree_open(*open_ids)
+        return self
+
+    def tree_open(self, *items) -> Sheet:
+        """
+        If used without args all items are opened
+        """
+        if items:
+            for item in items:
+                self.item(item, open_=True)
+        else:
+            for item in self.get_children():
+                self.item(item, open_=True)
+        return self
+
+    def tree_close(self, *items) -> Sheet:
+        """
+        If used without args all items are closed
+        """
+        if items:
+            for item in items:
+                self.item(item, open_=False)
+        else:
+            for item in self.get_children():
+                self.item(item, open_=False)
+        return self
+
     def insert(
         self,
         parent: str = "",
@@ -4460,7 +4516,12 @@ class Sheet(tk.Frame):
         text: str | None = None,
         values: list | None = None,
         open_: bool | None = None,
-    ) -> DotDict:
+    ) -> DotDict | Sheet:
+        """
+        Modify options for item
+        If no options are set then returns DotDict of options for item
+        Else returns Sheet
+        """
         if not (item := item.lower()) or item not in self.RI.tree:
             raise ValueError(f"Item '{item}' does not exist.")
         if isinstance(iid, str):
@@ -4479,28 +4540,33 @@ class Sheet(tk.Frame):
         if isinstance(values, list):
             self.set_data(self.RI.tree_rns[item], values)
         if isinstance(open_, bool):
-            if not self.RI.tree[item].children or not open_:
+            if self.RI.tree[item].children:
+                if open_:
+                    self.RI.tree_open_ids.add(item)
+                    self.show_rows(
+                        (self.RI.tree_rns[did] for did in self.RI.get_iid_descendants(item, check_open=True)),
+                        redraw=False,
+                        deselect_all=False,
+                    )
+                else:
+                    self.RI.tree_open_ids.discard(item)
+                    self.hide_rows(
+                        (self.RI.tree_rns[did] for did in self.RI.get_iid_descendants(item)),
+                        redraw=False,
+                        deselect_all=False,
+                        data_indexes=True,
+                    )
+            else:
                 self.RI.tree_open_ids.discard(item)
-            if open_:
-                self.RI.tree_open_ids.add(item)
-                self.show_rows(
-                    (self.RI.tree_rns[did] for did in self.RI.get_iid_descendants(item, check_open=True)),
-                    redraw=False,
-                    deselect_all=False,
-                )
-            elif self.RI.tree[item].children:
-                self.hide_rows(
-                    (self.RI.tree_rns[did] for did in self.RI.get_iid_descendants(item)),
-                    redraw=False,
-                    deselect_all=False,
-                    data_indexes=True,
-                )
-        self.set_refresh_timer(isinstance(text, str) or isinstance(values, list) or isinstance(open_, bool))
-        return DotDict(
-            text=self.RI.tree[item].text,
-            values=self[self.RI.tree_rns[item]].options(ndim=1).data,
-            open_=item in self.RI.tree_open_ids,
-        )
+        get = not (isinstance(iid, str) or isinstance(text, str) or isinstance(values, list) or isinstance(open_, bool))
+        self.set_refresh_timer(redraw=not get)
+        if get:
+            return DotDict(
+                text=self.RI.tree[item].text,
+                values=self[self.RI.tree_rns[item]].options(ndim=1).data,
+                open_=item in self.RI.tree_open_ids,
+            )
+        return self
 
     def itemrow(self, item: str) -> int:
         return self.RI.tree_rns[item.lower()]
@@ -4521,11 +4587,6 @@ class Sheet(tk.Frame):
             yield from (n.iid for n in self.RI.tree.values() if not n.parent)
         else:
             yield from (n.iid for n in self.RI.tree[item].children)
-
-    def reset_tree(self) -> Sheet:
-        self.deselect()
-        self.RI.reset_tree()
-        return self
 
     def del_items(self, *items) -> Sheet:
         """
