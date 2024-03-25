@@ -69,6 +69,7 @@ from .functions import (
     move_elements_by_mapping,
     pickle_obj,
     span_idxs_post_move,
+    mod_span_widget,
     try_binding,
     unpickle_obj,
 )
@@ -1440,7 +1441,9 @@ class MainTable(tk.Canvas):
             self.tagged_rows = modification["options"]["tagged_rows"]
         if "tagged_columns" in modification["options"]:
             self.tagged_columns = modification["options"]["tagged_columns"]
-        self.named_spans = {k: unpickle_obj(v) for k, v in modification["named_spans"].items()}
+        self.named_spans = {
+            k: mod_span_widget(unpickle_obj(v), self.PAR) for k, v in modification["named_spans"].items()
+        }
 
     def undo_modification_invert_event(self, modification: EventDataDict, name: str = "undo") -> bytes | EventDataDict:
         self.deselect("all", redraw=False)

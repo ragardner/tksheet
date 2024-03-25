@@ -1254,6 +1254,11 @@ def mod_span(
     return to_set_to
 
 
+def mod_span_widget(span: Span, widget: object) -> Span:
+    span.widget = widget
+    return span
+
+
 def mod_event_val(
     event_data: EventDataDict,
     val: object,
