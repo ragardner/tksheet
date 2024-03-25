@@ -1,5 +1,8 @@
 ### Version 7.1.1
-####
+#### Fixed:
+- Select all error
+- Span widget attribute lost on delete rows/columns and undo
+- Tagged cells/rows/columns lost on delete rows/columns and undo
 
 ### Version 7.1.0
 #### Changed:
