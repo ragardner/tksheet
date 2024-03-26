@@ -6243,20 +6243,20 @@ class MainTable(tk.Canvas):
             )
         )
 
-    def col_selected(self, c: int) -> bool:
+    def col_selected(self, c: int, cells: bool = False) -> bool:
         return isinstance(c, int) and any(
             box.coords.from_c <= c and box.coords.upto_c > c
             for item, box in self.get_selection_items(
-                cells=False,
+                cells=cells,
                 rows=False,
             )
         )
 
-    def row_selected(self, r: int) -> bool:
+    def row_selected(self, r: int, cells: bool = False) -> bool:
         return isinstance(r, int) and any(
             box.coords.from_r <= r and box.coords.upto_r > r
             for item, box in self.get_selection_items(
-                cells=False,
+                cells=cells,
                 columns=False,
             )
         )

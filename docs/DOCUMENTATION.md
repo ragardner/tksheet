@@ -3782,24 +3782,33 @@ ___
 #### **Check if cell is selected**
 
 ```python
-cell_selected(r: int, c: int) -> bool
+cell_selected(
+    r: int,
+    c: int,
+    rows: bool = False,
+    columns: bool = False,
+) -> bool
 ```
+- `rows` if `True` also checks if provided cell is part of a selected row.
+- `columns` if `True` also checks if provided cell is part of a selected column.
 
 ___
 
 #### **Check if row is selected**
 
 ```python
-row_selected(r: int) -> bool
+row_selected(r: int, cells: bool = False) -> bool
 ```
+- `cells` if `True` also checks if provided row is selected as part of a cell selection box.
 
 ___
 
 #### **Check if column is selected**
 
 ```python
-column_selected(c: int) -> bool
+column_selected(c: int, cells: bool = False) -> bool
 ```
+- `cells` if `True` also checks if provided column is selected as part of a cell selection box.
 
 ___
 

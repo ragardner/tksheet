@@ -2967,14 +2967,20 @@ class Sheet(tk.Frame):
     def get_all_selection_boxes_with_types(self) -> list[tuple[tuple[int, int, int, int], str]]:
         return self.MT.get_all_selection_boxes_with_types()
 
-    def cell_selected(self, r: int, c: int) -> bool:
-        return self.MT.cell_selected(r, c)
+    def cell_selected(
+        self,
+        r: int,
+        c: int,
+        rows: bool = False,
+        columns: bool = False,
+    ) -> bool:
+        return self.MT.cell_selected(r, c, inc_cols=columns, inc_rows=rows)
 
-    def row_selected(self, r: int) -> bool:
-        return self.MT.row_selected(r)
+    def row_selected(self, r: int, cells: bool = False) -> bool:
+        return self.MT.row_selected(r, cells=cells)
 
-    def column_selected(self, c: int) -> bool:
-        return self.MT.col_selected(c)
+    def column_selected(self, c: int, cells: bool = False) -> bool:
+        return self.MT.col_selected(c, cells=cells)
 
     def anything_selected(
         self,
