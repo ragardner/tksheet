@@ -1,3 +1,7 @@
+### Version 7.1.3
+#### Fixed:
+- Error with `get_all_selection_boxes_with_types()`
+
 ### Version 7.1.2
 #### Fixed:
 - Column selected detection bug
