@@ -1,3 +1,7 @@
+### Version 7.1.4
+#### Added:
+- Add new parameters to `cell_selected()`, `row_selected()`, `column_selected()`, no default behaviour change
+
 ### Version 7.1.3
 #### Fixed:
 - Error with `get_all_selection_boxes_with_types()`
