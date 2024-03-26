@@ -4573,7 +4573,9 @@ class Sheet(tk.Frame):
         except Exception:
             raise ValueError(f"item '{item.lower()}' does not exist.")
 
-    def rowitem(self, row: int) -> str | None:
+    def rowitem(self, row: int, data_index: bool = False) -> str | None:
+        if not data_index:
+            row = self.data_r(row)
         if isinstance(row, int) and len(self.MT._row_index) > row:
             return self.MT._row_index[row].iid
         return None

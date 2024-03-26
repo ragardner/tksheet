@@ -2699,42 +2699,22 @@ class MainTable(tk.Canvas):
         self.mouseclick_outside_editor_or_dropdown_all_canvases()
         self.focus_set()
         popup_menu = None
-        if self.single_selection_enabled and self.not_currently_resizing():
+        if (self.single_selection_enabled or self.toggle_selection_enabled) and self.not_currently_resizing():
             r = self.identify_row(y=event.y)
             c = self.identify_col(x=event.x)
             if r < len(self.row_positions) - 1 and c < len(self.col_positions) - 1:
-                if self.col_selected(c):
-                    if self.rc_popup_menus_enabled:
-                        popup_menu = self.CH.ch_rc_popup_menu
-                elif self.row_selected(r):
-                    if self.rc_popup_menus_enabled:
-                        popup_menu = self.RI.ri_rc_popup_menu
-                elif self.cell_selected(r, c):
-                    if self.rc_popup_menus_enabled:
-                        popup_menu = self.rc_popup_menu
+                if self.col_selected(c) and self.rc_popup_menus_enabled:
+                    popup_menu = self.CH.ch_rc_popup_menu
+                elif self.row_selected(r) and self.rc_popup_menus_enabled:
+                    popup_menu = self.RI.ri_rc_popup_menu
+                elif self.cell_selected(r, c) and self.rc_popup_menus_enabled:
+                    popup_menu = self.rc_popup_menu
                 else:
                     if self.rc_select_enabled:
-                        self.select_cell(r, c, redraw=True)
-                    if self.rc_popup_menus_enabled:
-                        popup_menu = self.rc_popup_menu
-            else:
-                popup_menu = self.empty_rc_popup_menu
-        elif self.toggle_selection_enabled and self.not_currently_resizing():
-            r = self.identify_row(y=event.y)
-            c = self.identify_col(x=event.x)
-            if r < len(self.row_positions) - 1 and c < len(self.col_positions) - 1:
-                if self.col_selected(c):
-                    if self.rc_popup_menus_enabled:
-                        popup_menu = self.CH.ch_rc_popup_menu
-                elif self.row_selected(r):
-                    if self.rc_popup_menus_enabled:
-                        popup_menu = self.RI.ri_rc_popup_menu
-                elif self.cell_selected(r, c):
-                    if self.rc_popup_menus_enabled:
-                        popup_menu = self.rc_popup_menu
-                else:
-                    if self.rc_select_enabled:
-                        self.toggle_select_cell(r, c, redraw=True)
+                        if self.single_selection_enabled:
+                            self.select_cell(r, c, redraw=True)
+                        elif self.toggle_selection_enabled:
+                            self.toggle_select_cell(r, c, redraw=True)
                     if self.rc_popup_menus_enabled:
                         popup_menu = self.rc_popup_menu
             else:
