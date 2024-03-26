@@ -4526,8 +4526,6 @@ class Sheet(tk.Frame):
         if not (item := item.lower()) or item not in self.RI.tree:
             raise ValueError(f"Item '{item}' does not exist.")
         if isinstance(iid, str):
-            if not (iid := iid.lower()):
-                raise ValueError(f"iid '{iid}' does not exist.")
             if iid in self.RI.tree:
                 raise ValueError(f"Cannot rename '{iid}', it already exists.")
             iid = iid.lower()
@@ -4539,7 +4537,7 @@ class Sheet(tk.Frame):
         if isinstance(text, str):
             self.RI.tree[item].text = text
         if isinstance(values, list):
-            self.set_data(self.RI.tree_rns[item], values)
+            self.set_data(self.RI.tree_rns[item], data=values)
         if isinstance(open_, bool):
             if self.RI.tree[item].children:
                 if open_:

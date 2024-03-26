@@ -628,6 +628,7 @@ def span_dict(
     ndim: int | None = None,
     convert: Callable | None = None,
     undo: bool = False,
+    emit_event: bool = False,
     widget: object = None,
 ) -> Span:
     d: Span = Span(
@@ -648,6 +649,7 @@ def span_dict(
         ndim=ndim,
         convert=convert,
         undo=undo,
+        emit_event=emit_event,
         widget=widget,
     )
     return d
