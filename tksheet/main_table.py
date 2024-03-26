@@ -6236,7 +6236,7 @@ class MainTable(tk.Canvas):
         return tuple(box.coords for item, box in self.get_selection_items())
 
     def get_all_selection_boxes_with_types(self) -> list[tuple[tuple[int, int, int, int], str]]:
-        return [(box.coords, box.type) for item, box in self.get_selection_items()]
+        return [(box.coords, box.type_) for item, box in self.get_selection_items()]
 
     def all_selected(self) -> bool:
         return any(

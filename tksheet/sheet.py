@@ -4420,7 +4420,8 @@ class Sheet(tk.Frame):
             redraw=False,
             deselect_all=True,
         )
-        self.tree_open(*open_ids)
+        if open_ids:
+            self.tree_open(*open_ids)
         return self
 
     def tree_open(self, *items) -> Sheet:
@@ -4428,7 +4429,7 @@ class Sheet(tk.Frame):
         If used without args all items are opened
         """
         if items:
-            for item in items:
+            for item in unpack(items):
                 self.item(item, open_=True)
         else:
             for item in self.get_children():
@@ -4440,7 +4441,7 @@ class Sheet(tk.Frame):
         If used without args all items are closed
         """
         if items:
-            for item in items:
+            for item in unpack(items):
                 self.item(item, open_=False)
         else:
             for item in self.get_children():
@@ -4569,10 +4570,13 @@ class Sheet(tk.Frame):
         return self
 
     def itemrow(self, item: str) -> int:
-        return self.RI.tree_rns[item.lower()]
+        try:
+            return self.RI.tree_rns[item.lower()]
+        except Exception:
+            raise ValueError(f"item '{item.lower()}' does not exist.")
 
     def rowitem(self, row: int) -> str | None:
-        if len(self.MT._row_index) > row:
+        if isinstance(row, int) and len(self.MT._row_index) > row:
             return self.MT._row_index[row].iid
         return None
 
@@ -4797,7 +4801,7 @@ class Sheet(tk.Frame):
     def selection_add(self, *items) -> Sheet:
         for item in unpack(items):
             if (item := item.lower()) not in self.RI.tree:
-                raise ValueError(f"Item '{item}' does not exist.")
+                continue
             if not self.item_displayed(item):
                 self.display_item(item)
             self.add_row_selection(bisect_left(self.MT.displayed_rows, self.RI.tree_rns[item]))
@@ -4806,7 +4810,7 @@ class Sheet(tk.Frame):
     def selection_remove(self, *items) -> Sheet:
         for item in unpack(items):
             if (item := item.lower()) not in self.RI.tree:
-                raise ValueError(f"Item '{item}' does not exist.")
+                continue
             try:
                 self.deselect(bisect_left(self.MT.displayed_rows, self.RI.tree_rns[item]))
             except Exception:
