@@ -1,5 +1,7 @@
 ### Version 7.1.2
-####
+#### Fixed:
+- Column selected detection bug
+- Tagged cells/rows/columns not taken into account in max index detection, relevant for moving columns/rows
 
 ### Version 7.1.1
 #### Fixed:
