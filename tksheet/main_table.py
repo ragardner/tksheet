@@ -1099,29 +1099,16 @@ class MainTable(tk.Canvas):
     def get_max_column_idx(self, maxidx: int | None = None) -> int:
         if maxidx is None:
             maxidx = len_to_idx(self.total_data_cols())
-        # max column number in cell_options
-        if maxidx < (maxk := max(self.cell_options, key=itemgetter(1), default=(0, 0))[1]):
-            maxidx = maxk
-        # max column number in column_options, index cell options
-        for d in (self.col_options, self.CH.cell_options):
-            if maxidx < (maxk := max(d, default=0)):
-                maxidx = maxk
-        # max column number in named spans
-        if maxidx < (
-            maxk := max(
-                (d["from_c"] for d in self.named_spans.values() if isinstance(d["from_c"], int)),
-                default=0,
-            )
-        ):
-            maxidx = maxk
-        if maxidx < (
-            maxk := max(
-                (d["upto_c"] for d in self.named_spans.values() if isinstance(d["upto_c"], int)),
-                default=0,
-            )
-        ):
-            maxidx = maxk
-        return maxidx
+        maxiget = partial(max, key=itemgetter(1))
+        return max(
+            max(self.cell_options, key=itemgetter(1), default=(0, maxidx))[1],
+            max(self.col_options, default=maxidx),
+            max(self.CH.cell_options, default=maxidx),
+            maxiget(map(maxiget, self.tagged_cells.values()), default=(0, maxidx))[1],
+            max(map(max, self.tagged_columns.values()), default=maxidx),
+            max((d.from_c for d in self.named_spans.values() if isinstance(d.from_c, int)), default=maxidx),
+            max((d.upto_c for d in self.named_spans.values() if isinstance(d.upto_c, int)), default=maxidx),
+        )
 
     def get_args_for_move_rows(
         self,
@@ -1329,28 +1316,16 @@ class MainTable(tk.Canvas):
     def get_max_row_idx(self, maxidx: int | None = None) -> int:
         if maxidx is None:
             maxidx = len_to_idx(self.total_data_rows())
-        if maxidx < (maxk := max(self.cell_options, key=itemgetter(0), default=(0, 0))[0]):
-            maxidx = maxk
-        # max row number in row_options, index cell options
-        for d in (self.row_options, self.RI.cell_options):
-            if maxidx < (maxk := max(d, default=0)):
-                maxidx = maxk
-        # max row number in named spans
-        if maxidx < (
-            maxk := max(
-                (d["from_r"] for d in self.named_spans.values() if isinstance(d["from_r"], int)),
-                default=0,
-            )
-        ):
-            maxidx = maxk
-        if maxidx < (
-            maxk := max(
-                (d["upto_r"] for d in self.named_spans.values() if isinstance(d["upto_r"], int)),
-                default=0,
-            )
-        ):
-            maxidx = maxk
-        return maxidx
+        maxiget = partial(max, key=itemgetter(0))
+        return max(
+            max(self.cell_options, key=itemgetter(0), default=(maxidx, 0))[0],
+            max(self.row_options, default=maxidx),
+            max(self.RI.cell_options, default=maxidx),
+            maxiget(map(maxiget, self.tagged_cells.values()), default=(maxidx, 0))[0],
+            max(map(max, self.tagged_rows.values()), default=maxidx),
+            max((d.from_r for d in self.named_spans.values() if isinstance(d.from_r, int)), default=maxidx),
+            max((d.upto_r for d in self.named_spans.values() if isinstance(d.upto_r, int)), default=maxidx),
+        )
 
     def get_full_new_idxs(
         self,
@@ -3982,7 +3957,7 @@ class MainTable(tk.Canvas):
                         # if to_add then it's an undo/redo and don't
                         # need to create fresh options
                         if create_ops:
-                            # if rows are none it's a row options span
+                            # if cols are none it's a row options span
                             if span["from_c"] is None:
                                 new_ops(
                                     mod_span(
@@ -6293,7 +6268,7 @@ class MainTable(tk.Canvas):
             box.coords.from_c <= c and box.coords.upto_c > c
             for item, box in self.get_selection_items(
                 cells=False,
-                columns=False,
+                rows=False,
             )
         )
 
