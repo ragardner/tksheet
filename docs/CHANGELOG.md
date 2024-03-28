@@ -1,3 +1,6 @@
+### Version 7.1.5
+####
+
 ### Version 7.1.4
 #### Fixed:
 - Fixed shift mouse click select rows/columns selecting cells instead of rows/columns
