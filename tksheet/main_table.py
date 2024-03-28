@@ -75,6 +75,7 @@ from .functions import (
 )
 from .other_classes import (
     Box_nt,
+    Box_st,
     Box_t,
     DotDict,
     DropdownStorage,
@@ -1908,11 +1909,11 @@ class MainTable(tk.Canvas):
     def page_UP(self, event=None):
         height = self.winfo_height()
         top = self.canvasy(0)
-        scrollto = top - height
-        if scrollto < 0:
-            scrollto = 0
+        scrollto_y = top - height
+        if scrollto_y < 0:
+            scrollto_y = 0
         if self.PAR.ops.page_up_down_select_row:
-            r = bisect_left(self.row_positions, scrollto)
+            r = bisect_left(self.row_positions, scrollto_y)
             if self.selected and self.selected.row == r:
                 r -= 1
             if r < 0:
@@ -1925,11 +1926,11 @@ class MainTable(tk.Canvas):
             elif (self.single_selection_enabled or self.toggle_selection_enabled) and self.anything_selected(
                 exclude_columns=True, exclude_rows=True
             ):
-                box = self.get_all_selection_boxes_with_types()[0][0]
-                self.see(r, box[1], keep_xscroll=True, check_cell_visibility=False)
-                self.select_cell(r, box[1])
+                c = next(reversed(self.selection_boxes.values())).coords.from_c
+                self.see(r, c, keep_xscroll=True, check_cell_visibility=False)
+                self.select_cell(r, c)
         else:
-            args = ("moveto", scrollto / (self.row_positions[-1] + 100))
+            args = ("moveto", scrollto_y / (self.row_positions[-1] + 100))
             self.yview(*args)
             self.RI.yview(*args)
             self.main_table_redraw_grid_and_text(redraw_row_index=True)
@@ -1952,9 +1953,9 @@ class MainTable(tk.Canvas):
             elif (self.single_selection_enabled or self.toggle_selection_enabled) and self.anything_selected(
                 exclude_columns=True, exclude_rows=True
             ):
-                box = self.get_all_selection_boxes_with_types()[0][0]
-                self.see(r, box[1], keep_xscroll=True, check_cell_visibility=False)
-                self.select_cell(r, box[1])
+                c = next(reversed(self.selection_boxes.values())).coords.from_c
+                self.see(r, c, keep_xscroll=True, check_cell_visibility=False)
+                self.select_cell(r, c)
         else:
             end = self.row_positions[-1]
             if scrollto > end + 100:
@@ -5583,6 +5584,9 @@ class MainTable(tk.Canvas):
         columns: bool = True,
         reverse: bool = False,
     ) -> Generator[int]:
+        """
+        Most recent selection box should be last
+        """
         itr = reversed(self.selection_boxes.items()) if reverse else self.selection_boxes.items()
         return tuple(
             (iid, box)
@@ -5590,7 +5594,7 @@ class MainTable(tk.Canvas):
             if cells and box.type_ == "cells" or rows and box.type_ == "rows" or columns and box.type_ == "columns"
         )
 
-    def get_boxes(self) -> dict:
+    def get_boxes(self) -> dict[Box_nt, Literal["cells", "rows", "columns"]]:
         return {box.coords: box.type_ for box in self.selection_boxes.values()}
 
     def reselect_from_get_boxes(
@@ -6216,7 +6220,7 @@ class MainTable(tk.Canvas):
         return tuple(box.coords for item, box in self.get_selection_items())
 
     def get_all_selection_boxes_with_types(self) -> list[tuple[tuple[int, int, int, int], str]]:
-        return [(box.coords, box.type_) for item, box in self.get_selection_items()]
+        return [Box_st(box.coords, box.type_) for item, box in self.get_selection_items()]
 
     def all_selected(self) -> bool:
         return any(

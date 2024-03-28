@@ -2967,6 +2967,10 @@ class Sheet(tk.Frame):
     def get_all_selection_boxes_with_types(self) -> list[tuple[tuple[int, int, int, int], str]]:
         return self.MT.get_all_selection_boxes_with_types()
 
+    @property
+    def boxes(self) -> list[tuple[tuple[int, int, int, int], str]]:
+        return self.MT.get_all_selection_boxes_with_types()
+
     def cell_selected(
         self,
         r: int,
@@ -3609,6 +3613,7 @@ class Sheet(tk.Frame):
         return c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
 
     data_c = displayed_column_to_data
+    dcol = displayed_column_to_data
 
     def display_columns(
         self,
@@ -3716,6 +3721,7 @@ class Sheet(tk.Frame):
         return r if self.MT.all_rows_displayed else self.MT.displayed_rows[r]
 
     data_r = displayed_row_to_data
+    drow = displayed_row_to_data
 
     def display_rows(
         self,
@@ -4109,6 +4115,25 @@ class Sheet(tk.Frame):
                 ],
             )
         return self
+
+    def event_widget_is_sheet(
+        self,
+        event: object,
+        table: bool = True,
+        index: bool = True,
+        header: bool = True,
+        top_left: bool = True,
+    ) -> bool:
+        return (
+            table
+            and event.widget == self.MT
+            or index
+            and event.widget == self.RI
+            or header
+            and event.widget == self.CH
+            or top_left
+            and event.widget == self.TL
+        )
 
     def get_cell_options(
         self,
@@ -4792,12 +4817,14 @@ class Sheet(tk.Frame):
         self.display_item(item)
         self.see(row=bisect_left(self.MT.displayed_rows, self.RI.tree_rns[item]), keep_xscroll=True)
 
-    def selection(self) -> list[str]:
+    def selection(self, cells: bool = False) -> list[str]:
         """
         Get currently selected item ids
-        - Only includes selected rows
         """
-        return [self.MT._row_index[self.displayed_row_to_data(rn)].iid for rn in self.get_selected_rows()]
+        return [
+            self.MT._row_index[self.displayed_row_to_data(rn)].iid
+            for rn in self.get_selected_rows(get_cells_as_rows=cells)
+        ]
 
     def selection_set(self, *items) -> Sheet:
         self.deselect()

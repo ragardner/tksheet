@@ -3779,6 +3779,15 @@ get_all_selection_boxes_with_types() -> list[tuple[tuple[int, int, int, int], st
 
 ___
 
+Equivalent to `get_all_selection_boxes_with_types()` but shortened as `@property`.
+
+```python
+@property
+boxes() -> list[tuple[tuple[int, int, int, int], str]]
+```
+
+___
+
 #### **Check if cell is selected**
 
 ```python
@@ -4288,6 +4297,23 @@ verify_column_widths(column_widths: list[float], canvas_positions: bool = False)
 # **Identifying Bound Event Mouse Position**
 
 The below functions require a mouse click event, for example you could bind right click, example [here](https://github.com/ragardner/tksheet/wiki/Version-7#example-custom-right-click-and-text-editor-functionality), and then identify where the user has clicked.
+
+___
+
+Determine if a tk `event.widget` is the `Sheet`.
+
+```python
+event_widget_is_sheet(
+    event: object,
+    table: bool = True,
+    index: bool = True,
+    header: bool = True,
+    top_left: bool = True,
+) -> bool
+```
+Notes:
+- Parameters set to `True` will include events that occurred within that widget.
+    - e.g. If an event occurs in the top left corner of the sheet but the parameter `top_left` is `False` the function will return `False`.
 
 ___
 
@@ -4930,6 +4956,38 @@ popup_menu_fg
 popup_menu_bg
 popup_menu_highlight_bg
 popup_menu_highlight_fg
+
+# scroll bars
+vertical_scroll_background
+horizontal_scroll_background
+vertical_scroll_troughcolor
+horizontal_scroll_troughcolor
+vertical_scroll_lightcolor
+horizontal_scroll_lightcolor
+vertical_scroll_darkcolor
+horizontal_scroll_darkcolor
+vertical_scroll_bordercolor
+horizontal_scroll_bordercolor
+vertical_scroll_active_bg
+horizontal_scroll_active_bg
+vertical_scroll_not_active_bg
+horizontal_scroll_not_active_bg
+vertical_scroll_pressed_bg
+horizontal_scroll_pressed_bg
+vertical_scroll_active_fg
+horizontal_scroll_active_fg
+vertical_scroll_not_active_fg
+horizontal_scroll_not_active_fg
+vertical_scroll_pressed_fg
+horizontal_scroll_pressed_fg
+scrollbar_theme_inheritance
+scrollbar_show_arrows
+vertical_scroll_arrowsize
+horizontal_scroll_arrowsize
+vertical_scroll_borderwidth
+horizontal_scroll_borderwidth
+vertical_scroll_gripcount
+horizontal_scroll_gripcount
 
 # for changing the in-built right click menus labels
 # use a string as an argument

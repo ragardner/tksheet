@@ -1,6 +1,14 @@
 ### Version 7.1.4
+#### Fixed:
+- Fixed shift mouse click select rows/columns selecting cells instead of rows/columns
+- Fixed `"<<SheetSelect>>"` event not being emitted after row/column select events
+
 #### Added:
 - Add new parameters to `cell_selected()`, `row_selected()`, `column_selected()`, no default behaviour change
+- Functions:
+    - `event_widget_is_sheet()`
+    - `@property` function `boxes`, the same as `get_all_selection_boxes()`
+    - `drow()`, `dcol()` functions the same as `displayed_row_to_data()`/`displayed_column_to_data()`
 
 ### Version 7.1.3
 #### Fixed:

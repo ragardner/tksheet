@@ -17,6 +17,10 @@ Box_t = namedtuple(
     "Box_t",
     "from_r from_c upto_r upto_c type_",
 )
+Box_st = namedtuple(
+    "Box_st",
+    "coords type_"
+)
 
 Highlight = namedtuple(
     "Highlight",

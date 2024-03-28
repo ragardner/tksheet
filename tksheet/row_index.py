@@ -191,8 +191,7 @@ class RowIndex(tk.Canvas):
                         self.toggle_select_row(r, redraw=True)
                     if self.MT.rc_popup_menus_enabled:
                         popup_menu = self.ri_rc_popup_menu
-        if self.extra_rc_func is not None:
-            self.extra_rc_func(event)
+        try_binding(self.extra_rc_func, event)
         if popup_menu is not None:
             self.popup_menu_loc = r
             popup_menu.tk_popup(event.x_root, event.y_root)
@@ -212,10 +211,9 @@ class RowIndex(tk.Canvas):
                     self.being_drawn_item = True
                     self.being_drawn_item = self.add_selection(r, set_as_current=True, run_binding_func=False)
                     self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
-                    if self.ctrl_selection_binding_func is not None:
-                        self.ctrl_selection_binding_func(
-                            self.MT.get_select_event(being_drawn_item=self.being_drawn_item),
-                        )
+                    sel_event = self.MT.get_select_event(being_drawn_item=self.being_drawn_item)
+                    try_binding(self.ctrl_selection_binding_func, sel_event)
+                    self.PAR.emit_event("<<SheetSelect>>", data=sel_event)
                 elif r_selected:
                     self.MT.deselect(r=r)
         elif not self.MT.ctrl_select_enabled:
@@ -246,10 +244,9 @@ class RowIndex(tk.Canvas):
                             set_as_current=True,
                         )
                     self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
-                    if self.ctrl_selection_binding_func is not None:
-                        self.ctrl_selection_binding_func(
-                            self.MT.get_select_event(being_drawn_item=self.being_drawn_item),
-                        )
+                    sel_event = self.MT.get_select_event(being_drawn_item=self.being_drawn_item)
+                    try_binding(self.ctrl_selection_binding_func, sel_event)
+                    self.PAR.emit_event("<<SheetSelect>>", data=sel_event)
                 elif r_selected:
                     self.dragged_row = DraggedRowColumn(
                         dragged=r,
@@ -269,15 +266,14 @@ class RowIndex(tk.Canvas):
                     if self.MT.selected and self.MT.selected.type_ == "rows":
                         r_to_sel, c_to_sel = self.MT.selected.row, self.MT.selected.column
                         self.MT.deselect("all", redraw=False)
-                        self.being_drawn_item = self.MT.create_selection_box(*self.get_shift_select_box(r, r_to_sel))
+                        self.being_drawn_item = self.MT.create_selection_box(*self.get_shift_select_box(r, r_to_sel), "rows")
                         self.MT.set_currently_selected(r_to_sel, c_to_sel, self.being_drawn_item)
                     else:
                         self.being_drawn_item = self.select_row(r, run_binding_func=False)
                     self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
-                    if self.shift_selection_binding_func is not None:
-                        self.shift_selection_binding_func(
-                            self.MT.get_select_event(being_drawn_item=self.being_drawn_item),
-                        )
+                    sel_event = self.MT.get_select_event(being_drawn_item=self.being_drawn_item)
+                    try_binding(self.shift_selection_binding_func, sel_event)
+                    self.PAR.emit_event("<<SheetSelect>>", data=sel_event)
                 elif r_selected:
                     self.dragged_row = DraggedRowColumn(
                         dragged=r,
@@ -365,8 +361,7 @@ class RowIndex(tk.Canvas):
                         self.MT.current_cursor = "hand2"
             if not mouse_over_resize and not mouse_over_selected:
                 self.MT.reset_mouse_motion_creations()
-        if self.extra_motion_func is not None:
-            self.extra_motion_func(event)
+        try_binding(self.extra_motion_func, event)
 
     def double_b1(self, event: object):
         self.mouseclick_outside_editor_or_dropdown_all_canvases(inside=True)
@@ -410,8 +405,7 @@ class RowIndex(tk.Canvas):
                     self.PAR.item(iid, open_=iid not in self.tree_open_ids)
         self.rsz_h = None
         self.mouse_motion(event)
-        if self.extra_double_b1_func is not None:
-            self.extra_double_b1_func(event)
+        try_binding(self.extra_double_b1_func, event)
 
     def b1_press(self, event: object):
         self.MT.unbind("<MouseWheel>")
@@ -484,8 +478,7 @@ class RowIndex(tk.Canvas):
                         self.being_drawn_item = self.select_row(r, redraw=True)
                     elif self.MT.toggle_selection_enabled:
                         self.toggle_select_row(r, redraw=True)
-        if self.extra_b1_press_func is not None:
-            self.extra_b1_press_func(event)
+        try_binding(self.extra_b1_press_func, event)
 
     def b1_motion(self, event: object):
         x1, y1, x2, y2 = self.MT.get_canvas_visible_area()
@@ -576,16 +569,14 @@ class RowIndex(tk.Canvas):
                         else:
                             self.being_drawn_item = self.select_row(self.MT.selected.row, run_binding_func=False)
                         need_redraw = True
-                        if self.drag_selection_binding_func is not None:
-                            self.drag_selection_binding_func(
-                                self.MT.get_select_event(being_drawn_item=self.being_drawn_item),
-                            )
+                        sel_event = self.MT.get_select_event(being_drawn_item=self.being_drawn_item)
+                        try_binding(self.drag_selection_binding_func, sel_event)
+                        self.PAR.emit_event("<<SheetSelect>>", data=sel_event)
                 if self.scroll_if_event_offscreen(event):
                     need_redraw = True
             if need_redraw:
                 self.MT.main_table_redraw_grid_and_text(redraw_header=False, redraw_row_index=True)
-        if self.extra_b1_motion_func is not None:
-            self.extra_b1_motion_func(event)
+        try_binding(self.extra_b1_motion_func, event)
 
     def get_b1_motion_box(self, start_row, end_row):
         if end_row >= start_row:
@@ -637,10 +628,9 @@ class RowIndex(tk.Canvas):
                             self.MT.hide_selection_box(self.MT.selected.fill_iid)
                             self.being_drawn_item = self.add_selection(box[0], run_binding_func=False)
                         need_redraw = True
-                        if self.drag_selection_binding_func is not None:
-                            self.drag_selection_binding_func(
-                                self.MT.get_select_event(being_drawn_item=self.being_drawn_item),
-                            )
+                        sel_event = self.MT.get_select_event(being_drawn_item=self.being_drawn_item)
+                        try_binding(self.drag_selection_binding_func, sel_event)
+                        self.PAR.emit_event("<<SheetSelect>>", data=sel_event)
                 if self.scroll_if_event_offscreen(event):
                     need_redraw = True
             if need_redraw:
@@ -775,10 +765,9 @@ class RowIndex(tk.Canvas):
                 c_to_sel,
                 item=self.MT.create_selection_box(*to_sel, set_current=False),
             )
-            if self.drag_selection_binding_func is not None:
-                self.drag_selection_binding_func(
-                    self.MT.get_select_event(being_drawn_item=self.being_drawn_item),
-                )
+            sel_event = self.MT.get_select_event(being_drawn_item=self.being_drawn_item)
+            try_binding(self.drag_selection_binding_func, sel_event)
+            self.PAR.emit_event("<<SheetSelect>>", data=sel_event)
         self.MT.bind("<MouseWheel>", self.MT.mousewheel)
         if self.height_resizing_enabled and self.rsz_h is not None and self.currently_resizing_height:
             self.currently_resizing_height = False
@@ -886,8 +875,7 @@ class RowIndex(tk.Canvas):
         self.rsz_w = None
         self.rsz_h = None
         self.mouse_motion(event)
-        if self.extra_b1_release_func is not None:
-            self.extra_b1_release_func(event)
+        try_binding(self.extra_b1_release_func, event)
 
     def event_over_tree_arrow(
         self,
@@ -1738,7 +1726,7 @@ class RowIndex(tk.Canvas):
             text = event.char
         else:
             return False
-        if self.extra_begin_edit_cell_func is not None:
+        if self.extra_begin_edit_cell_func:
             try:
                 text = self.extra_begin_edit_cell_func(
                     event_dict(
