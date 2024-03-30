@@ -14,6 +14,7 @@ from .column_headers import ColumnHeaders
 from .functions import (
     add_highlight,
     add_to_options,
+    convert_align,
     data_to_displayed_idxs,
     del_from_options,
     del_named_span_options,
@@ -314,14 +315,14 @@ class Sheet(tk.Frame):
         self.RI = RowIndex(
             parent=self,
             row_index_align=(
-                self.convert_align(row_index_align) if row_index_align is not None else self.convert_align(index_align)
+                convert_align(row_index_align) if row_index_align is not None else convert_align(index_align)
             ),
             default_row_index=default_row_index,
         )
         self.CH = ColumnHeaders(
             parent=self,
             default_header=default_header,
-            header_align=self.convert_align(header_align),
+            header_align=convert_align(header_align),
         )
         self.MT = MainTable(
             parent=self,
@@ -341,7 +342,7 @@ class Sheet(tk.Frame):
             row_index=row_index,
             index=index,
             zoom=zoom,
-            align=self.convert_align(align),
+            align=convert_align(align),
             displayed_columns=displayed_columns,
             all_columns_displayed=all_columns_displayed,
             displayed_rows=displayed_rows,
@@ -2796,21 +2797,6 @@ class Sheet(tk.Frame):
     def header_font(self, newfont: tuple[str, int, str] | None = None) -> tuple[str, int, str]:
         return self.MT.set_header_font(newfont)
 
-    def convert_align(self, align: str | None) -> str | None:
-        if isinstance(align, str):
-            a = align.lower()
-            if a == "global":
-                return None
-            elif a in ("c", "center", "centre"):
-                return "center"
-            elif a in ("w", "west", "left"):
-                return "w"
-            elif a in ("e", "east", "right"):
-                return "e"
-        elif align is None:
-            return None
-        raise ValueError("Align must be one of the following values: c, center, w, west, left, e, east, right")
-
     def table_align(
         self,
         align: str = None,
@@ -2818,8 +2804,8 @@ class Sheet(tk.Frame):
     ) -> str | Sheet:
         if align is None:
             return self.MT.align
-        elif self.convert_align(align):
-            self.MT.align = self.convert_align(align)
+        elif convert_align(align):
+            self.MT.align = convert_align(align)
         else:
             raise ValueError("Align must be one of the following values: c, center, w, west, e, east")
         self.set_refresh_timer(redraw)
@@ -2832,8 +2818,8 @@ class Sheet(tk.Frame):
     ) -> str | Sheet:
         if align is None:
             return self.CH.align
-        elif self.convert_align(align):
-            self.CH.align = self.convert_align(align)
+        elif convert_align(align):
+            self.CH.align = convert_align(align)
         else:
             raise ValueError("Align must be one of the following values: c, center, w, west, e, east")
         self.set_refresh_timer(redraw)
@@ -2846,8 +2832,8 @@ class Sheet(tk.Frame):
     ) -> str | Sheet:
         if align is None:
             return self.RI.align
-        elif self.convert_align(align):
-            self.RI.align = self.convert_align(align)
+        elif convert_align(align):
+            self.RI.align = convert_align(align)
         else:
             raise ValueError("Align must be one of the following values: c, center, w, west, e, east")
         self.set_refresh_timer(redraw)
@@ -2869,7 +2855,7 @@ class Sheet(tk.Frame):
         span = self.span_from_key(*key)
         rows, cols = self.ranges_from_span(span)
         table, index, header = span.table, span.index, span.header
-        align = self.convert_align(align)
+        align = convert_align(align)
         if span.kind == "cell":
             if header:
                 for c in cols:
@@ -3169,7 +3155,7 @@ class Sheet(tk.Frame):
         c1: int,
         r2: int,
         c2: int,
-        type_: str = "cells",
+        type_: Literal["cells", "rows", "columns", "cols"] = "cells",
     ) -> int:
         return self.MT.create_selection_box(r1=r1, c1=c1, r2=r2, c2=c2, type_="columns" if type_ == "cols" else type_)
 
@@ -3179,9 +3165,9 @@ class Sheet(tk.Frame):
 
     def deselect(
         self,
-        row: int | None | str = None,
+        row: int | None | Literal["all"] = None,
         column: int | None = None,
-        cell: tuple | None = None,
+        cell: tuple[int, int] | None = None,
         redraw: bool = True,
     ) -> Sheet:
         self.MT.deselect(r=row, c=column, cell=cell, redraw=False)
@@ -3216,8 +3202,12 @@ class Sheet(tk.Frame):
         self.set_refresh_timer(redraw)
         return self
 
-    def set_all_cell_sizes_to_text(self, redraw: bool = True) -> tuple[list[float], list[float]]:
-        self.MT.set_all_cell_sizes_to_text()
+    def set_all_cell_sizes_to_text(
+        self,
+        redraw: bool = True,
+        width: int | None = None,
+    ) -> tuple[list[float], list[float]]:
+        self.MT.set_all_cell_sizes_to_text(w=width)
         self.set_refresh_timer(redraw)
         return self.MT.row_positions, self.MT.col_positions
 
@@ -4580,8 +4570,9 @@ class Sheet(tk.Frame):
                     )
                 else:
                     self.RI.tree_open_ids.discard(item)
+                    rows = {self.RI.tree_rns[did] for did in self.RI.get_iid_descendants(item, check_open=True)}
                     self.hide_rows(
-                        (self.RI.tree_rns[did] for did in self.RI.get_iid_descendants(item)),
+                        rows,
                         redraw=False,
                         deselect_all=False,
                         data_indexes=True,
@@ -5526,13 +5517,13 @@ class Sheet(tk.Frame):
     ) -> None:
         if isinstance(cells, dict):
             for k, v in cells.items():
-                set_align(self.MT.cell_options, k, self.convert_align(v))
+                set_align(self.MT.cell_options, k, convert_align(v))
         elif cells:
-            align = self.convert_align(align)
+            align = convert_align(align)
             for k in cells:
                 set_align(self.MT.cell_options, k, align)
         else:
-            set_align(self.MT.cell_options, (row, column), self.convert_align(align))
+            set_align(self.MT.cell_options, (row, column), convert_align(align))
         self.set_refresh_timer(redraw)
 
     def align_rows(
@@ -5544,18 +5535,18 @@ class Sheet(tk.Frame):
     ) -> None:
         if isinstance(rows, dict):
             for k, v in rows.items():
-                align = self.convert_align(v)
+                align = convert_align(v)
                 set_align(self.MT.row_options, k, align)
                 if align_index:
                     set_align(self.RI.cell_options, k, align)
         elif is_iterable(rows):
-            align = self.convert_align(align)
+            align = convert_align(align)
             for k in rows:
                 set_align(self.MT.row_options, k, align)
                 if align_index:
                     set_align(self.RI.cell_options, k, align)
         elif isinstance(rows, int):
-            set_align(self.MT.row_options, rows, self.convert_align(align))
+            set_align(self.MT.row_options, rows, convert_align(align))
             if align_index:
                 set_align(self.RI.cell_options, rows, align)
         self.set_refresh_timer(redraw)
@@ -5569,18 +5560,18 @@ class Sheet(tk.Frame):
     ) -> None:
         if isinstance(columns, dict):
             for k, v in columns.items():
-                align = self.convert_align(v)
+                align = convert_align(v)
                 set_align(self.MT.col_options, k, align)
                 if align_header:
                     set_align(self.CH.cell_options, k, align)
         elif is_iterable(columns):
-            align = self.convert_align(align)
+            align = convert_align(align)
             for k in columns:
                 set_align(self.MT.col_options, k, align)
                 if align_header:
                     set_align(self.CH.cell_options, k, align)
         elif isinstance(columns, int):
-            set_align(self.MT.col_options, columns, self.convert_align(align))
+            set_align(self.MT.col_options, columns, convert_align(align))
             if align_header:
                 set_align(self.CH.cell_options, columns, align)
         self.set_refresh_timer(redraw)
@@ -5593,13 +5584,13 @@ class Sheet(tk.Frame):
     ) -> None:
         if isinstance(columns, dict):
             for k, v in columns.items():
-                set_align(self.CH.cell_options, k, self.convert_align(v))
+                set_align(self.CH.cell_options, k, convert_align(v))
         elif is_iterable(columns):
-            align = self.convert_align(align)
+            align = convert_align(align)
             for k in columns:
                 set_align(self.CH.cell_options, k, align)
         elif isinstance(columns, int):
-            set_align(self.CH.cell_options, columns, self.convert_align(align))
+            set_align(self.CH.cell_options, columns, convert_align(align))
         self.set_refresh_timer(redraw)
 
     def align_index(
@@ -5610,13 +5601,13 @@ class Sheet(tk.Frame):
     ) -> None:
         if isinstance(rows, dict):
             for k, v in rows.items():
-                set_align(self.RI.cell_options, k, self.convert_align(v))
+                set_align(self.RI.cell_options, k, convert_align(v))
         elif is_iterable(rows):
-            align = self.convert_align(align)
+            align = convert_align(align)
             for k in rows:
                 set_align(self.RI.cell_options, k, align)
         elif isinstance(rows, int):
-            set_align(self.RI.cell_options, rows, self.convert_align(align))
+            set_align(self.RI.cell_options, rows, convert_align(align))
         self.set_refresh_timer(redraw)
 
     def get_cell_alignments(self) -> dict:
@@ -6381,7 +6372,7 @@ class Dropdown(Sheet):
         width: int | None = None,
         height: int | None = None,
         font: None | tuple[str, int, str] = None,
-        outline_thickness: int = 2,
+        outline_thickness: int = 1,
         values: list[object] = [],
         close_dropdown_window: Callable | None = None,
         search_function: Callable = dropdown_search_function,
@@ -6391,47 +6382,29 @@ class Dropdown(Sheet):
         # False for using r, c
         # "r" for r
         # "c" for c
-        single_index: str | bool = False,
+        single_index: Literal["r", "c"] | bool = False,
     ) -> None:
         Sheet.__init__(
             self,
             parent=parent,
             outline_thickness=outline_thickness,
-            outline_color=outline_color,
-            table_grid_fg=ops.popup_menu_fg,
             show_horizontal_grid=True,
             show_vertical_grid=False,
             show_header=False,
             show_row_index=False,
             show_top_left=False,
-            # alignments other than w for dropdown boxes are broken at the moment
-            align="w",
             empty_horizontal=0,
             empty_vertical=0,
             selected_rows_to_end_of_window=True,
             horizontal_grid_to_end_of_window=True,
             set_cell_sizes_on_zoom=True,
             show_selected_cells_border=False,
-            table_selected_cells_border_fg=ops.popup_menu_fg,
-            table_selected_cells_bg=ops.popup_menu_highlight_bg,
-            table_selected_rows_border_fg=ops.popup_menu_fg,
-            table_selected_rows_bg=ops.popup_menu_highlight_bg,
-            table_selected_rows_fg=ops.popup_menu_highlight_fg,
-            width=width,
-            height=height,
-            font=font if font else self.ops.table_font,
-            table_fg=ops.popup_menu_fg,
-            table_bg=ops.popup_menu_bg,
-            **{k: ops[k] for k in scrollbar_options_keys},
         )
         self.parent = parent
         self.close_dropdown_window = close_dropdown_window
         self.search_function = search_function
         self.arrowkey_RIGHT = arrowkey_RIGHT
         self.arrowkey_LEFT = arrowkey_LEFT
-        self.r = r
-        self.c = c
-        self.row = -1
         self.single_index = single_index
         self.bind("<Motion>", self.mouse_motion)
         self.bind("<ButtonPress-1>", self.b1)
@@ -6443,11 +6416,43 @@ class Dropdown(Sheet):
         self.bind("<Prior>", self.arrowkey_UP)
         self.bind("<Next>", self.arrowkey_DOWN)
         self.bind("<Return>", self.b1)
-        if values:
-            self.values(values)
+        self.reset(r, c, width, height, font, ops, outline_color, align, values)
+
+    def reset(
+        self,
+        r: int,
+        c: int,
+        width: int,
+        height: int,
+        font: tuple[str, int, str],
+        ops: DotDict,
+        outline_color: str,
+        align: str,
+        values: list[object] | None = None,
+    ) -> None:
+        self.r = r
+        self.c = c
+        self.row = -1
+        self.height_and_width(height=height, width=width)
+        self.table_align(align)
+        self.set_options(
+            outline_color=outline_color,
+            table_grid_fg=ops.popup_menu_fg,
+            table_selected_cells_border_fg=ops.popup_menu_fg,
+            table_selected_cells_bg=ops.popup_menu_highlight_bg,
+            table_selected_rows_border_fg=ops.popup_menu_fg,
+            table_selected_rows_bg=ops.popup_menu_highlight_bg,
+            table_selected_rows_fg=ops.popup_menu_highlight_fg,
+            table_selected_box_cells_fg=ops.popup_menu_highlight_bg,
+            table_selected_box_rows_fg=ops.popup_menu_highlight_bg,
+            font=font,
+            table_fg=ops.popup_menu_fg,
+            table_bg=ops.popup_menu_bg,
+            **{k: ops[k] for k in scrollbar_options_keys},
+        )
+        self.values(values, width=width - self.yscroll.winfo_width() - 4)
 
     def arrowkey_UP(self, event: object = None) -> None:
-        self.deselect("all")
         if self.row > 0:
             self.row -= 1
         else:
@@ -6456,7 +6461,6 @@ class Dropdown(Sheet):
         self.select_row(self.row)
 
     def arrowkey_DOWN(self, event: object = None) -> None:
-        self.deselect("all")
         if len(self.MT.data) - 1 > self.row:
             self.row += 1
         self.see(self.row, 0, redraw=False)
@@ -6474,7 +6478,6 @@ class Dropdown(Sheet):
         row = self.identify_row(event, exclude_index=True, allow_end=False)
         if row is not None and row != self.row:
             self.row = row
-            self.deselect("all", redraw=False)
             self.select_row(self.row)
 
     def _reselect(self) -> None:
@@ -6514,7 +6517,12 @@ class Dropdown(Sheet):
             return self.c
         return self.r, self.c
 
-    def values(self, values: list = [], redraw: bool = True) -> None:
+    def values(
+        self,
+        values: list = [],
+        redraw: bool = True,
+        width: int | None = None,
+    ) -> None:
         self.set_sheet_data(
             [[v] for v in values],
             reset_col_positions=False,
@@ -6522,4 +6530,4 @@ class Dropdown(Sheet):
             redraw=False,
             verify=False,
         )
-        self.set_all_cell_sizes_to_text(redraw=redraw)
+        self.set_all_cell_sizes_to_text(redraw=redraw, width=width)

@@ -4,6 +4,9 @@ import tkinter as tk
 from collections.abc import Callable
 from typing import Literal
 
+from .functions import (
+    convert_align,
+)
 from .other_classes import (
     DotDict,
 )
@@ -91,16 +94,15 @@ class TextEditorTkText(tk.Text):
             command=self.undo,
             **menu_kwargs,
         )
+        align = convert_align(align)
+        if align == "w":
+            self.align = "left"
+        elif align == "e":
+            self.align = "right"
         self.delete(1.0, "end")
         self.insert(1.0, text)
         self.yview_moveto(1)
         self.tag_configure("align", justify=self.align)
-        if align == "w":
-            self.align = "left"
-        elif align == "center":
-            self.align = "center"
-        elif align == "e":
-            self.align = "right"
         self.tag_add("align", 1.0, "end")
 
     def _proxy(self, command: object, *args) -> object:

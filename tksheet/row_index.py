@@ -266,7 +266,9 @@ class RowIndex(tk.Canvas):
                     if self.MT.selected and self.MT.selected.type_ == "rows":
                         r_to_sel, c_to_sel = self.MT.selected.row, self.MT.selected.column
                         self.MT.deselect("all", redraw=False)
-                        self.being_drawn_item = self.MT.create_selection_box(*self.get_shift_select_box(r, r_to_sel), "rows")
+                        self.being_drawn_item = self.MT.create_selection_box(
+                            *self.get_shift_select_box(r, r_to_sel), "rows"
+                        )
                         self.MT.set_currently_selected(r_to_sel, c_to_sel, self.being_drawn_item)
                     else:
                         self.being_drawn_item = self.select_row(r, run_binding_func=False)
@@ -1981,33 +1983,32 @@ class RowIndex(tk.Canvas):
             if not self.open_text_editor(event=event, r=r, dropdown=True):
                 return
         win_h, anchor = self.get_dropdown_height_anchor(r)
+        win_w = self.current_width
         ypos = self.MT.row_positions[r + 1]
-        if self.dropdown.window is not None:
-            self.dropdown.window.search_function = kwargs["search_function"]
-            self.dropdown.window.r = r
-            self.dropdown.window.row = -1
-            self.dropdown.window.set_options()
-            self.dropdown.window.values(kwargs["values"])
-            if not self.dropdown.open:
-                self.itemconfig(self.dropdown.canvas_id, state="normal")
+        reset_kwargs = {
+            "r": r,
+            "c": 0,
+            "width": win_w,
+            "height": win_h,
+            "font": self.PAR.ops.index_font,
+            "ops": self.PAR.ops,
+            "outline_color": self.PAR.ops.popup_menu_fg,
+            "align": self.get_cell_align(r),
+            "values": kwargs["values"],
+        }
+        if self.dropdown.window:
+            self.dropdown.window.reset(**reset_kwargs)
+            self.itemconfig(self.dropdown.canvas_id, state="normal")
             self.coords(self.dropdown.canvas_id, 0, ypos)
         else:
             self.dropdown.window = self.PAR.dropdown_class(
-                self.MT.winfo_toplevel(),
-                r,
-                0,
-                width=self.current_width,
-                height=win_h,
-                font=self.PAR.ops.index_font,
-                ops=self.PAR.ops,
-                outline_color=self.PAR.ops.popup_menu_fg,
-                values=kwargs["values"],
+                self.winfo_toplevel(),
+                **reset_kwargs,
+                single_index="r",
                 close_dropdown_window=self.close_dropdown_window,
                 search_function=kwargs["search_function"],
                 arrowkey_RIGHT=self.MT.arrowkey_RIGHT,
                 arrowkey_LEFT=self.MT.arrowkey_LEFT,
-                align="w",
-                single_index="r",
             )
             self.dropdown.canvas_id = self.create_window(
                 (0, ypos),

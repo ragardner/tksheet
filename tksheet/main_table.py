@@ -1803,7 +1803,7 @@ class MainTable(tk.Canvas):
                 cells=False,
             ):
                 self.hide_selection_box(item)
-        elif r is not None and c is None and cell is None:
+        elif isinstance(r, int) and c is None and cell is None:
             for item, box in self.get_selection_items(columns=False, cells=False):
                 r1, c1, r2, c2 = box.coords
                 if r >= r1 and r < r2:
@@ -1847,7 +1847,7 @@ class MainTable(tk.Canvas):
                                 set_current=resel and to_sel >= r + 1 and to_sel < r2,
                             )
                     break
-        elif c is not None and r is None and cell is None:
+        elif isinstance(c, int) and r is None and cell is None:
             for item, box in self.get_selection_items(rows=False, cells=False):
                 r1, c1, r2, c2 = box.coords
                 if c >= c1 and c < c2:
@@ -1891,7 +1891,7 @@ class MainTable(tk.Canvas):
                                 set_current=resel and to_sel >= c + 1 and to_sel < c2,
                             )
                     break
-        elif (r is not None and c is not None and cell is None) or cell is not None:
+        elif (isinstance(r, int) and isinstance(c, int) and cell is None) or cell is not None:
             if cell is not None:
                 r, c = cell[0], cell[1]
             for item, box in self.get_selection_items(reverse=True):
@@ -1970,7 +1970,7 @@ class MainTable(tk.Canvas):
             return
         if self.selected.type_ == "rows":
             r = self.selected.row
-            if r != 0 and self.RI.row_selection_enabled:
+            if r and self.RI.row_selection_enabled:
                 if self.cell_completely_visible(r=r - 1, c=0):
                     self.RI.select_row(r - 1, redraw=True)
                 else:
@@ -1979,62 +1979,15 @@ class MainTable(tk.Canvas):
         elif self.selected.type_ in ("cells", "columns"):
             r = self.selected.row
             c = self.selected.column
-            if r == 0 and self.CH.col_selection_enabled:
+            if not r and self.CH.col_selection_enabled:
                 if not self.cell_completely_visible(r=r, c=0):
-                    self.see(r, c, keep_xscroll=True, check_cell_visibility=False)
-            elif r != 0 and (self.single_selection_enabled or self.toggle_selection_enabled):
+                    self.see(r, c, check_cell_visibility=False)
+            elif r and (self.single_selection_enabled or self.toggle_selection_enabled):
                 if self.cell_completely_visible(r=r - 1, c=c):
                     self.select_cell(r - 1, c, redraw=True)
                 else:
                     self.select_cell(r - 1, c)
                     self.see(r - 1, c, keep_xscroll=True, check_cell_visibility=False)
-
-    def arrowkey_RIGHT(self, event=None):
-        if not self.selected:
-            return
-        if self.selected.type_ == "rows":
-            r = self.selected.row
-            if self.single_selection_enabled or self.toggle_selection_enabled:
-                if self.cell_completely_visible(r=r, c=0):
-                    self.select_cell(r, 0, redraw=True)
-                else:
-                    self.select_cell(r, 0)
-                    self.see(
-                        r,
-                        0,
-                        keep_yscroll=True,
-                        bottom_right_corner=True,
-                        check_cell_visibility=False,
-                    )
-        elif self.selected.type_ == "columns":
-            c = self.selected.column
-            if c < len(self.col_positions) - 2 and self.CH.col_selection_enabled:
-                if self.cell_completely_visible(r=0, c=c + 1):
-                    self.CH.select_col(c + 1, redraw=True)
-                else:
-                    self.CH.select_col(c + 1)
-                    self.see(
-                        0,
-                        c + 1,
-                        keep_yscroll=True,
-                        bottom_right_corner=False if self.PAR.ops.arrow_key_down_right_scroll_page else True,
-                        check_cell_visibility=False,
-                    )
-        else:
-            r = self.selected.row
-            c = self.selected.column
-            if c < len(self.col_positions) - 2 and (self.single_selection_enabled or self.toggle_selection_enabled):
-                if self.cell_completely_visible(r=r, c=c + 1):
-                    self.select_cell(r, c + 1, redraw=True)
-                else:
-                    self.select_cell(r, c + 1)
-                    self.see(
-                        r,
-                        c + 1,
-                        keep_yscroll=True,
-                        bottom_right_corner=False if self.PAR.ops.arrow_key_down_right_scroll_page else True,
-                        check_cell_visibility=False,
-                    )
 
     def arrowkey_DOWN(self, event=None):
         if not self.selected:
@@ -2071,15 +2024,17 @@ class MainTable(tk.Canvas):
         elif self.selected.type_ == "columns":
             c = self.selected.column
             if self.single_selection_enabled or self.toggle_selection_enabled:
-                if self.cell_completely_visible(r=0, c=c):
-                    self.select_cell(0, c, redraw=True)
+                if self.selected.row == len(self.row_positions) - 2:
+                    r = self.selected.row
                 else:
-                    self.select_cell(0, c)
+                    r = self.selected.row + 1
+                if self.cell_completely_visible(r=r, c=c):
+                    self.select_cell(r, c, redraw=True)
+                else:
+                    self.select_cell(r, c)
                     self.see(
-                        0,
+                        r,
                         c,
-                        keep_xscroll=True,
-                        bottom_right_corner=True,
                         check_cell_visibility=False,
                     )
         else:
@@ -2118,7 +2073,7 @@ class MainTable(tk.Canvas):
             return
         if self.selected.type_ == "columns":
             c = self.selected.column
-            if c != 0 and self.CH.col_selection_enabled:
+            if c and self.CH.col_selection_enabled:
                 if self.cell_completely_visible(r=0, c=c - 1):
                     self.CH.select_col(c - 1, redraw=True)
                 else:
@@ -2130,18 +2085,69 @@ class MainTable(tk.Canvas):
                         bottom_right_corner=True,
                         check_cell_visibility=False,
                     )
+        elif self.selected.type_ == "rows" and self.selected.column:
+            self.select_cell(self.selected.row, self.selected.column - 1)
+            self.see(self.selected.row, self.selected.column, check_cell_visibility=True)
         elif self.selected.type_ == "cells":
             r = self.selected.row
             c = self.selected.column
-            if c == 0 and self.RI.row_selection_enabled:
-                if not self.cell_completely_visible(r=r, c=0):
-                    self.see(r, c, keep_yscroll=True, check_cell_visibility=False)
-            elif c != 0 and (self.single_selection_enabled or self.toggle_selection_enabled):
+            if not c and not self.cell_completely_visible(r=r, c=0):
+                self.see(r, c, keep_yscroll=True, check_cell_visibility=False)
+            elif c and (self.single_selection_enabled or self.toggle_selection_enabled):
                 if self.cell_completely_visible(r=r, c=c - 1):
                     self.select_cell(r, c - 1, redraw=True)
                 else:
                     self.select_cell(r, c - 1)
                     self.see(r, c - 1, keep_yscroll=True, check_cell_visibility=False)
+
+    def arrowkey_RIGHT(self, event=None):
+        if not self.selected:
+            return
+        if self.selected.type_ == "rows":
+            r = self.selected.row
+            if self.single_selection_enabled or self.toggle_selection_enabled:
+                if self.selected.column == len(self.col_positions) - 2:
+                    c = self.selected.column
+                else:
+                    c = self.selected.column + 1
+                if self.cell_completely_visible(r=r, c=c):
+                    self.select_cell(r, c, redraw=True)
+                else:
+                    self.select_cell(r, c)
+                    self.see(
+                        r,
+                        c,
+                        check_cell_visibility=False,
+                    )
+        elif self.selected.type_ == "columns":
+            c = self.selected.column
+            if c < len(self.col_positions) - 2 and self.CH.col_selection_enabled:
+                if self.cell_completely_visible(r=0, c=c + 1):
+                    self.CH.select_col(c + 1, redraw=True)
+                else:
+                    self.CH.select_col(c + 1)
+                    self.see(
+                        0,
+                        c + 1,
+                        keep_yscroll=True,
+                        bottom_right_corner=False if self.PAR.ops.arrow_key_down_right_scroll_page else True,
+                        check_cell_visibility=False,
+                    )
+        else:
+            r = self.selected.row
+            c = self.selected.column
+            if c < len(self.col_positions) - 2 and (self.single_selection_enabled or self.toggle_selection_enabled):
+                if self.cell_completely_visible(r=r, c=c + 1):
+                    self.select_cell(r, c + 1, redraw=True)
+                else:
+                    self.select_cell(r, c + 1)
+                    self.see(
+                        r,
+                        c + 1,
+                        keep_yscroll=True,
+                        bottom_right_corner=False if self.PAR.ops.arrow_key_down_right_scroll_page else True,
+                        check_cell_visibility=False,
+                    )
 
     def key_bindings(self) -> None:
         for widget in (self, self.RI, self.CH, self.TL):
@@ -3376,7 +3382,7 @@ class MainTable(tk.Canvas):
     def set_table_font_help(self):
         self.table_txt_width, self.table_txt_height = self.get_txt_dimensions("|", self.PAR.ops.table_font)
         self.table_half_txt_height = ceil(self.table_txt_height / 2)
-        if self.table_half_txt_height % 2 == 0:
+        if not self.table_half_txt_height % 2:
             self.table_first_ln_ins = self.table_half_txt_height + 2
         else:
             self.table_first_ln_ins = self.table_half_txt_height + 3
@@ -3404,7 +3410,7 @@ class MainTable(tk.Canvas):
     def set_header_font_help(self):
         self.header_txt_width, self.header_txt_height = self.get_txt_dimensions("|", self.PAR.ops.header_font)
         self.header_half_txt_height = ceil(self.header_txt_height / 2)
-        if self.header_half_txt_height % 2 == 0:
+        if not self.header_half_txt_height % 2:
             self.header_first_ln_ins = self.header_half_txt_height + 2
         else:
             self.header_first_ln_ins = self.header_half_txt_height + 3
@@ -3435,7 +3441,7 @@ class MainTable(tk.Canvas):
     def set_index_font_help(self):
         self.index_txt_width, self.index_txt_height = self.get_txt_dimensions("|", self.PAR.ops.index_font)
         self.index_half_txt_height = ceil(self.index_txt_height / 2)
-        if self.index_half_txt_height % 2 == 0:
+        if not self.index_half_txt_height % 2:
             self.index_first_ln_ins = self.index_half_txt_height + 2
         else:
             self.index_first_ln_ins = self.index_half_txt_height + 3
@@ -3562,19 +3568,22 @@ class MainTable(tk.Canvas):
             else:
                 return False
 
-    def set_all_cell_sizes_to_text(self, include_index: bool = False) -> tuple[list[float], list[float]]:
+    def set_all_cell_sizes_to_text(self, w: int | None = None) -> tuple[list[float], list[float]]:
         min_column_width = int(self.min_column_width)
         min_rh = int(self.min_row_height)
-        w = min_column_width
+        w = min_column_width if w is None else w
         h = min_rh
         rhs = defaultdict(lambda: int(min_rh))
         cws = []
-        itmcon = self.txt_measure_canvas.itemconfig
-        itmbbx = self.txt_measure_canvas.bbox
-        self.txt_measure_canvas.itemconfig(self.txt_measure_canvas_text, font=self.PAR.ops.table_font)
+        qconf = self.txt_measure_canvas.itemconfig
+        qbbox = self.txt_measure_canvas.bbox
+        qtxtm = self.txt_measure_canvas_text
+        qtxth = self.table_txt_height
+        qfont = self.PAR.ops.table_font
         numrows = self.total_data_rows()
+        numcols = self.total_data_cols()
         if self.all_columns_displayed:
-            itercols = range(self.total_data_cols())
+            itercols = range(numcols)
         else:
             itercols = self.displayed_columns
         if self.all_rows_displayed:
@@ -3591,23 +3600,28 @@ class MainTable(tk.Canvas):
                 if h > rhs[datarn]:
                     rhs[datarn] = h
         for datacn in itercols:
-            w, h_ = self.CH.get_cell_dimensions(datacn)
-            if self.all_rows_displayed:
-                iterrows = range(numrows)
+            if (hw := self.CH.get_cell_dimensions(datacn)[0]) > w:
+                w = hw
             for datarn in iterrows:
                 txt = self.get_valid_cell_data_as_str(datarn, datacn, get_displayed=True)
                 if txt:
-                    itmcon(self.txt_measure_canvas_text, text=txt)
-                    b = itmbbx(self.txt_measure_canvas_text)
+                    qconf(qtxtm, text=txt, font=qfont)
+                    b = qbbox(qtxtm)
                     tw = b[2] - b[0] + 7
                     h = b[3] - b[1] + 5
                 else:
                     tw = min_column_width
                     h = min_rh
-                if self.get_cell_kwargs(datarn, datacn, key="dropdown") or self.get_cell_kwargs(
-                    datarn, datacn, key="checkbox"
+                if self.get_cell_kwargs(
+                    datarn,
+                    datacn,
+                    key="dropdown",
+                ) or self.get_cell_kwargs(
+                    datarn,
+                    datacn,
+                    key="checkbox",
                 ):
-                    tw += self.table_txt_height
+                    tw += qtxth
                 if tw > w:
                     w = tw
                 if h < min_rh:
@@ -3622,7 +3636,7 @@ class MainTable(tk.Canvas):
                 w = int(self.max_column_width)
             cws.append(w)
         self.set_row_positions(itr=(height for height in rhs.values()))
-        self.set_col_positions(itr=(width for width in cws))
+        self.set_col_positions(itr=cws)
         self.recreate_all_selection_boxes()
         return self.row_positions, self.col_positions
 
@@ -5689,6 +5703,7 @@ class MainTable(tk.Canvas):
         c: int,
         type_: Literal["cells", "rows", "columns"],
         fill_iid: int,
+        lower_selection_boxes: bool = True,
     ) -> int:
         fill, outline = self.get_selected_box_bg_fg(type_=type_)
         x1 = self.col_positions[c] + 1
@@ -5699,6 +5714,7 @@ class MainTable(tk.Canvas):
         if self.PAR.ops.show_selected_cells_border:
             fill = ""
         else:
+            fill = outline
             outline = ""
         iid = self.display_box(
             x1,
@@ -5719,10 +5735,7 @@ class MainTable(tk.Canvas):
             iid=iid,
             fill_iid=fill_iid,
         )
-        if self.PAR.ops.show_selected_cells_border:
-            self.tag_raise(iid)
-        else:
-            self.tag_lower(iid)
+        if lower_selection_boxes:
             self.lower_selection_boxes()
         return iid
 
@@ -5871,19 +5884,25 @@ class MainTable(tk.Canvas):
             elif isinstance(set_current, tuple):
                 curr_r = set_current[0]
                 curr_c = set_current[1]
-            self.create_currently_selected_box(curr_r, curr_c, type_, fill_iid)
+            self.create_currently_selected_box(curr_r, curr_c, type_, fill_iid, lower_selection_boxes=False)
         self.lower_selection_boxes()
         if run_binding:
             self.run_selection_binding(type_)
         return fill_iid
 
     def lower_selection_boxes(self) -> None:
-        for iid, box in reversed(self.selection_boxes.items()):
-            self.tag_lower(iid)
-            self.RI.tag_lower(box.index)
-            self.CH.tag_lower(box.header)
-        if self.PAR.ops.show_selected_cells_border and self.selected:
-            self.tag_raise(self.selected.iid)
+        if self.selected:
+            if not self.PAR.ops.show_selected_cells_border:
+                self.tag_lower(self.selected.iid)
+            self.tag_lower("rows")
+            self.tag_lower("columns")
+            self.tag_lower("cells")
+            self.RI.tag_lower("rows")
+            self.RI.tag_lower("cells")
+            self.CH.tag_lower("columns")
+            self.CH.tag_lower("cells")
+            if self.PAR.ops.show_selected_cells_border:
+                self.tag_raise(self.selected.iid)
 
     def recreate_selection_box(
         self,
@@ -6418,12 +6437,16 @@ class MainTable(tk.Canvas):
                 }
             ),
             "sheet_ops": self.PAR.ops,
-            "border_color": self.PAR.ops.table_selected_cells_border_fg,
+            "border_color": (
+                self.PAR.ops.table_selected_cells_border_fg
+                if self.PAR.ops.show_selected_cells_border
+                else self.PAR.ops.table_selected_box_cells_fg
+            ),
             "text": text,
             "state": state,
             "width": w,
             "height": h,
-            "show_border": self.PAR.ops.show_selected_cells_border,
+            "show_border": True,
             "bg": bg,
             "fg": fg,
             "align": self.get_cell_align(r, c),
@@ -6761,6 +6784,7 @@ class MainTable(tk.Canvas):
             if not self.open_text_editor(event=event, r=r, c=c, dropdown=True):
                 return
         win_h, anchor = self.get_dropdown_height_anchor(r, c)
+        win_w = self.col_positions[c + 1] - self.col_positions[c] + 1
         if anchor == "nw":
             if kwargs["state"] == "normal":
                 ypos = self.row_positions[r] + self.text_editor.window.winfo_height() - 1
@@ -6768,33 +6792,29 @@ class MainTable(tk.Canvas):
                 ypos = self.row_positions[r + 1]
         else:
             ypos = self.row_positions[r]
-        if self.dropdown.window is not None:
-            self.dropdown.window.search_function = kwargs["search_function"]
-            self.dropdown.window.r = r
-            self.dropdown.window.c = c
-            self.dropdown.window.row = -1
-            self.dropdown.window.set_options()
-            self.dropdown.window.values(kwargs["values"])
-            if not self.dropdown.open:
-                self.itemconfig(self.dropdown.canvas_id, state="normal")
+        reset_kwargs = {
+            "r": r,
+            "c": c,
+            "width": win_w,
+            "height": win_h,
+            "font": self.PAR.ops.table_font,
+            "ops": self.PAR.ops,
+            "outline_color": self.get_selected_box_bg_fg(type_="cells")[1],
+            "align": self.get_cell_align(r, c),
+            "values": kwargs["values"],
+        }
+        if self.dropdown.window:
+            self.dropdown.window.reset(**reset_kwargs)
+            self.itemconfig(self.dropdown.canvas_id, state="normal")
             self.coords(self.dropdown.canvas_id, self.col_positions[c], ypos)
         else:
             self.dropdown.window = self.PAR.dropdown_class(
                 self.winfo_toplevel(),
-                r,
-                c,
-                width=self.col_positions[c + 1] - self.col_positions[c] + 1,
-                height=win_h,
-                font=self.PAR.ops.table_font,
-                ops=self.PAR.ops,
-                outline_color=self.get_selected_box_bg_fg(type_="cells")[1],
-                outline_thickness=2,
-                values=kwargs["values"],
+                **reset_kwargs,
                 close_dropdown_window=self.close_dropdown_window,
                 search_function=kwargs["search_function"],
                 arrowkey_RIGHT=self.arrowkey_RIGHT,
                 arrowkey_LEFT=self.arrowkey_LEFT,
-                align="w",  # self.get_cell_align(r, c)
             )
             self.dropdown.canvas_id = self.create_window(
                 (self.col_positions[c], ypos),

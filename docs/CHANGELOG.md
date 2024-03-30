@@ -1,5 +1,15 @@
 ### Version 7.1.5
-####
+#### Fixed:
+- `set_all_cell_sizes_to_text()` not working correctly if table font is different to index font, resulting in dropdown box values not showing properly
+- Dropdown box colors and options not being updated after sheet color change
+- Text editor alignments not working
+
+#### Improved:
+- Dropdown box alignment now uses cell alignment
+- Minor changes to arrow key cell selection
+
+#### Changed:
+- When using `show_selected_cells_border=False` the colors for `table_selected_box_cells_fg`/`table_selected_box_rows_fg`/`table_selected_box_columns_fg` will be used for the currently selected cells background
 
 ### Version 7.1.4
 #### Fixed:

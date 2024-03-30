@@ -1146,6 +1146,22 @@ def set_readonly(
     return options
 
 
+def convert_align(align: str | None) -> str | None:
+    if isinstance(align, str):
+        a = align.lower()
+        if a == "global":
+            return None
+        elif a in ("c", "center", "centre"):
+            return "center"
+        elif a in ("w", "west", "left"):
+            return "w"
+        elif a in ("e", "east", "right"):
+            return "e"
+    elif align is None:
+        return None
+    raise ValueError("Align must be one of the following values: c, center, w, west, left, e, east, right")
+
+
 def set_align(
     options: dict,
     key: int | tuple[int, int],

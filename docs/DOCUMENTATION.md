@@ -485,6 +485,7 @@ def __init__(
     - `"empty"` it will only automatically resize if the row index is empty.
     - `True` it will always automatically resize.
     - `False` it will never automatically resize.
+- If `show_selected_cells_border` is `False` then the colors for `table_selected_box_cells_fg`/`table_selected_box_rows_fg`/`table_selected_box_columns_fg` will be used for the currently selected cells background.
 
 You can change most of these settings after initialization using the [`set_options()` function](https://github.com/ragardner/tksheet/wiki/Version-7#sheet-options-and-other-functions).
 - `scrollbar_theme_inheritance` and `scrollbar_show_arrows` will only work on `Sheet()` initialization, not with `set_options()`
