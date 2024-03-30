@@ -1758,9 +1758,9 @@ class RowIndex(tk.Canvas):
         if not self.MT.see(r=r, c=0, keep_yscroll=True, check_cell_visibility=True):
             self.MT.refresh()
         x = 0
-        y = self.MT.row_positions[r] + 1
+        y = self.MT.row_positions[r]
         w = self.current_width + 1
-        h = self.MT.row_positions[r + 1] - y
+        h = self.MT.row_positions[r + 1] - y + 1
         datarn = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r]
         if text is None:
             text = self.get_cell_data(datarn, none_to_empty_str=True, redirect_int=True)
@@ -1776,12 +1776,12 @@ class RowIndex(tk.Canvas):
                 }
             ),
             "sheet_ops": self.PAR.ops,
-            "border_color": self.PAR.ops.table_selected_cells_border_fg,
+            "border_color": self.PAR.ops.index_selected_rows_bg,
             "text": text,
             "state": state,
             "width": w,
             "height": h,
-            "show_border": self.PAR.ops.show_selected_cells_border,
+            "show_border": True,
             "bg": bg,
             "fg": fg,
             "align": self.get_cell_align(r),
@@ -1811,42 +1811,45 @@ class RowIndex(tk.Canvas):
         return True
 
     def text_editor_newline_binding(self, r=0, c=0, event: object = None, check_lines=True):
-        if self.height_resizing_enabled:
-            curr_height = self.text_editor.window.winfo_height()
-            if (
-                not check_lines
-                or self.MT.get_lines_cell_height(
-                    self.text_editor.window.get_num_lines() + 1,
-                    font=self.PAR.ops.index_font,
-                )
-                > curr_height
-            ):
-                new_height = curr_height + self.MT.index_xtra_lines_increment
-                space_bot = self.MT.get_space_bot(r)
-                if new_height > space_bot:
-                    new_height = space_bot
-                if new_height != curr_height:
-                    self.set_row_height(r, new_height)
-                    self.MT.refresh()
-                    self.text_editor.window.config(height=new_height)
-                    self.coords(self.text_editor.canvas_id, 0, self.MT.row_positions[r] + 1)
-                    if self.dropdown.open and self.dropdown.get_coords() == r:
-                        text_editor_h = self.text_editor.window.winfo_height()
-                        win_h, anchor = self.get_dropdown_height_anchor(r, text_editor_h)
-                        if anchor == "nw":
-                            self.coords(
-                                self.dropdown.canvas_id,
-                                self.MT.col_positions[c],
-                                self.MT.row_positions[r] + text_editor_h - 1,
-                            )
-                            self.itemconfig(self.dropdown.canvas_id, anchor=anchor, height=win_h)
-                        elif anchor == "sw":
-                            self.coords(
-                                self.dropdown.canvas_id,
-                                self.MT.col_positions[c],
-                                self.MT.row_positions[r],
-                            )
-                            self.itemconfig(self.dropdown.canvas_id, anchor=anchor, height=win_h)
+        if not self.height_resizing_enabled:
+            return
+        curr_height = self.text_editor.window.winfo_height()
+        if curr_height < self.MT.min_row_height:
+            return
+        if (
+            not check_lines
+            or self.MT.get_lines_cell_height(
+                self.text_editor.window.get_num_lines() + 1,
+                font=self.PAR.ops.index_font,
+            )
+            > curr_height
+        ):
+            new_height = curr_height + self.MT.index_xtra_lines_increment
+            space_bot = self.MT.get_space_bot(r)
+            if new_height > space_bot:
+                new_height = space_bot
+            if new_height != curr_height:
+                self.set_row_height(r, new_height)
+                self.MT.refresh()
+                self.text_editor.window.config(height=new_height)
+                self.coords(self.text_editor.canvas_id, 0, self.MT.row_positions[r] + 1)
+                if self.dropdown.open and self.dropdown.get_coords() == r:
+                    text_editor_h = self.text_editor.window.winfo_height()
+                    win_h, anchor = self.get_dropdown_height_anchor(r, text_editor_h)
+                    if anchor == "nw":
+                        self.coords(
+                            self.dropdown.canvas_id,
+                            self.MT.col_positions[c],
+                            self.MT.row_positions[r] + text_editor_h - 1,
+                        )
+                        self.itemconfig(self.dropdown.canvas_id, anchor=anchor, height=win_h)
+                    elif anchor == "sw":
+                        self.coords(
+                            self.dropdown.canvas_id,
+                            self.MT.col_positions[c],
+                            self.MT.row_positions[r],
+                        )
+                        self.itemconfig(self.dropdown.canvas_id, anchor=anchor, height=win_h)
 
     def refresh_open_window_positions(self):
         if self.text_editor.open:

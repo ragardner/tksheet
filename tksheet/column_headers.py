@@ -856,8 +856,16 @@ class ColumnHeaders(tk.Canvas):
             ):
                 datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
                 canvasx = self.canvasx(event.x)
-                if self.event_over_dropdown(c, datacn, event, canvasx) or self.event_over_checkbox(
-                    c, datacn, event, canvasx
+                if self.event_over_dropdown(
+                    c,
+                    datacn,
+                    event,
+                    canvasx,
+                ) or self.event_over_checkbox(
+                    c,
+                    datacn,
+                    event,
+                    canvasx,
                 ):
                     self.open_cell(event)
             else:
@@ -972,15 +980,15 @@ class ColumnHeaders(tk.Canvas):
         qconf = self.MT.txt_measure_canvas.itemconfig
         qbbox = self.MT.txt_measure_canvas.bbox
         qtxtm = self.MT.txt_measure_canvas_text
+        qfont = self.PAR.ops.header_font
         new_height = self.MT.min_header_height
         default_header_height = self.MT.get_default_header_height()
         self.fix_header()
         if text is not None:
             if text:
-                qconf(qtxtm, text=text)
+                qconf(qtxtm, text=text, font=qfont)
                 b = qbbox(qtxtm)
-                h = b[3] - b[1] + 5
-                if h > new_height:
+                if (h := b[3] - b[1] + 5) > new_height:
                     new_height = h
         else:
             if self.MT.all_columns_displayed:
@@ -1004,7 +1012,7 @@ class ColumnHeaders(tk.Canvas):
                 for datacn in iterable:
                     txt = self.MT.get_valid_cell_data_as_str(datarn, datacn, get_displayed=True)
                     if txt:
-                        qconf(qtxtm, text=txt)
+                        qconf(qtxtm, text=txt, font=qfont)
                         b = qbbox(qtxtm)
                         h = b[3] - b[1] + 5
                     else:
@@ -1016,7 +1024,7 @@ class ColumnHeaders(tk.Canvas):
                     if h > new_height:
                         new_height = h
         space_bot = self.MT.get_space_bot(0)
-        if new_height > space_bot:
+        if new_height > space_bot and space_bot > self.MT.min_header_height:
             new_height = space_bot
         if not only_increase or (only_increase and new_height > self.current_height):
             self.set_height(new_height, set_TL=True)
@@ -1686,12 +1694,12 @@ class ColumnHeaders(tk.Canvas):
                 }
             ),
             "sheet_ops": self.PAR.ops,
-            "border_color": self.PAR.ops.table_selected_cells_border_fg,
+            "border_color": self.PAR.ops.header_selected_columns_bg,
             "text": text,
             "state": state,
             "width": w,
             "height": h,
-            "show_border": self.PAR.ops.show_selected_cells_border,
+            "show_border": True,
             "bg": bg,
             "fg": fg,
             "align": self.get_cell_align(c),
@@ -1737,31 +1745,34 @@ class ColumnHeaders(tk.Canvas):
 
     # displayed indexes
     def text_editor_newline_binding(self, r=0, c=0, event: object = None, check_lines=True):
-        if self.height_resizing_enabled:
-            curr_height = self.text_editor.window.winfo_height()
-            if (
-                not check_lines
-                or self.MT.get_lines_cell_height(
-                    self.text_editor.window.get_num_lines() + 1,
-                    font=self.PAR.ops.header_font,
-                )
-                > curr_height
-            ):
-                new_height = curr_height + self.MT.header_xtra_lines_increment
-                space_bot = self.MT.get_space_bot(0)
-                if new_height > space_bot:
-                    new_height = space_bot
-                if new_height != curr_height:
-                    self.text_editor.window.config(height=new_height)
-                    self.set_height(new_height, set_TL=True)
-                    if self.dropdown.open and self.dropdown.get_coords() == c:
-                        win_h, anchor = self.get_dropdown_height_anchor(c, new_height)
-                        self.coords(
-                            self.dropdown.canvas_id,
-                            self.MT.col_positions[c],
-                            new_height - 1,
-                        )
-                        self.itemconfig(self.dropdown.canvas_id, anchor=anchor, height=win_h)
+        if not self.height_resizing_enabled:
+            return
+        curr_height = self.text_editor.window.winfo_height()
+        if curr_height < self.MT.min_header_height:
+            return
+        if (
+            not check_lines
+            or self.MT.get_lines_cell_height(
+                self.text_editor.window.get_num_lines() + 1,
+                font=self.PAR.ops.header_font,
+            )
+            > curr_height
+        ):
+            new_height = curr_height + self.MT.header_xtra_lines_increment
+            space_bot = self.MT.get_space_bot(0)
+            if new_height > space_bot:
+                new_height = space_bot
+            if new_height != curr_height:
+                self.text_editor.window.config(height=new_height)
+                self.set_height(new_height, set_TL=True)
+                if self.dropdown.open and self.dropdown.get_coords() == c:
+                    win_h, anchor = self.get_dropdown_height_anchor(c, new_height)
+                    self.coords(
+                        self.dropdown.canvas_id,
+                        self.MT.col_positions[c],
+                        new_height - 1,
+                    )
+                    self.itemconfig(self.dropdown.canvas_id, anchor=anchor, height=win_h)
 
     def refresh_open_window_positions(self):
         if self.text_editor.open:

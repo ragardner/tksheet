@@ -3635,7 +3635,7 @@ class MainTable(tk.Canvas):
             elif w > self.max_column_width:
                 w = int(self.max_column_width)
             cws.append(w)
-        self.set_row_positions(itr=(height for height in rhs.values()))
+        self.set_row_positions(itr=rhs.values())
         self.set_col_positions(itr=cws)
         self.recreate_all_selection_boxes()
         return self.row_positions, self.col_positions
@@ -6437,11 +6437,7 @@ class MainTable(tk.Canvas):
                 }
             ),
             "sheet_ops": self.PAR.ops,
-            "border_color": (
-                self.PAR.ops.table_selected_cells_border_fg
-                if self.PAR.ops.show_selected_cells_border
-                else self.PAR.ops.table_selected_box_cells_fg
-            ),
+            "border_color": self.PAR.ops.table_selected_box_cells_fg,
             "text": text,
             "state": state,
             "width": w,
@@ -6485,6 +6481,8 @@ class MainTable(tk.Canvas):
         check_lines: bool = True,
     ) -> None:
         curr_height = self.text_editor.window.winfo_height()
+        if curr_height < self.min_row_height:
+            return
         if not check_lines or self.get_lines_cell_height(self.text_editor.window.get_num_lines() + 1) > curr_height:
             new_height = curr_height + self.table_xtra_lines_increment
             space_bot = self.get_space_bot(r)
