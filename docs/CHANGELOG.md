@@ -1,3 +1,6 @@
+### Version 7.1.6
+####
+
 ### Version 7.1.5
 #### Fixed:
 - `set_all_cell_sizes_to_text()` not working correctly if table font is different to index font, resulting in dropdown box values not showing properly
