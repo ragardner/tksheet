@@ -18,6 +18,7 @@ from math import (
     ceil,
     floor,
 )
+from typing import Literal
 
 from .colors import (
     color_map,
@@ -1014,11 +1015,10 @@ class RowIndex(tk.Canvas):
                     x1, y1, x2, y2 = self.MT.get_canvas_visible_area()
                     start_col, end_col = self.MT.get_visible_columns(x1, x2)
                 else:
-                    start_col, end_col = (
-                        0,
-                        len(self.MT.data[row]) if self.MT.data else 0,
-                    )
-                iterable = range(start_col, end_col)
+                    if not self.MT.data or datarn >= len(self.MT.data):
+                        iterable = range(0, 0)
+                    else:
+                        iterable = range(0, len(self.MT.data[datarn]))
             else:
                 if displayed_only:
                     x1, y1, x2, y2 = self.MT.get_canvas_visible_area()
@@ -1712,8 +1712,7 @@ class RowIndex(tk.Canvas):
                     extra_func_key = "Return"
                 elif hasattr(event, "keysym") and event.keysym == "F2":
                     extra_func_key = "F2"
-            datarn = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r]
-            text = self.get_cell_data(datarn, none_to_empty_str=True, redirect_int=True)
+            text = self.get_cell_data(self.MT.datarn(r), none_to_empty_str=True, redirect_int=True)
         elif event is not None and (
             (hasattr(event, "keysym") and event.keysym == "BackSpace") or event.keycode in (8, 855638143)
         ):
@@ -1761,9 +1760,8 @@ class RowIndex(tk.Canvas):
         y = self.MT.row_positions[r]
         w = self.current_width + 1
         h = self.MT.row_positions[r + 1] - y + 1
-        datarn = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r]
         if text is None:
-            text = self.get_cell_data(datarn, none_to_empty_str=True, redirect_int=True)
+            text = self.get_cell_data(self.MT.datarn(r), none_to_empty_str=True, redirect_int=True)
         bg, fg = self.PAR.ops.index_bg, self.PAR.ops.index_fg
         kwargs = {
             "menu_kwargs": DotDict(
@@ -1820,7 +1818,7 @@ class RowIndex(tk.Canvas):
             not check_lines
             or self.MT.get_lines_cell_height(
                 self.text_editor.window.get_num_lines() + 1,
-                font=self.PAR.ops.index_font,
+                font=self.text_editor.tktext.cget("font"),
             )
             > curr_height
         ):
@@ -1851,24 +1849,30 @@ class RowIndex(tk.Canvas):
                         )
                         self.itemconfig(self.dropdown.canvas_id, anchor=anchor, height=win_h)
 
-    def refresh_open_window_positions(self):
+    def refresh_open_window_positions(self, zoom: Literal["in", "out"]):
         if self.text_editor.open:
             r = self.text_editor.row
             self.text_editor.window.config(height=self.MT.row_positions[r + 1] - self.MT.row_positions[r])
+            self.text_editor.tktext.config(font=self.PAR.ops.index_font)
             self.coords(
                 self.text_editor.canvas_id,
                 0,
                 self.MT.row_positions[r],
             )
         if self.dropdown.open:
+            if zoom == "in":
+                self.dropdown.window.zoom_in()
+            elif zoom == "out":
+                self.dropdown.window.zoom_out()
             r = self.dropdown.get_coords()
             if self.text_editor.open:
                 text_editor_h = self.text_editor.window.winfo_height()
                 win_h, anchor = self.get_dropdown_height_anchor(r, text_editor_h)
             else:
-                text_editor_h = self.MT.row_positions[r + 1] - self.MT.row_positions[r]
+                text_editor_h = self.MT.row_positions[r + 1] - self.MT.row_positions[r] + 1
                 anchor = self.itemcget(self.dropdown.canvas_id, "anchor")
                 # win_h = 0
+            self.dropdown.window.config(width=self.current_width + 1)
             if anchor == "nw":
                 self.coords(
                     self.dropdown.canvas_id,
@@ -1956,15 +1960,22 @@ class RowIndex(tk.Canvas):
                 break
         if win_h > 500:
             win_h = 500
-        space_bot = self.MT.get_space_bot(0, text_editor_h)
+        space_bot = self.MT.get_space_bot(r, text_editor_h)
+        space_top = int(self.MT.row_positions[r])
+        anchor = "nw"
         win_h2 = int(win_h)
         if win_h > space_bot:
-            win_h = space_bot - 1
+            if space_bot >= space_top:
+                anchor = "nw"
+                win_h = space_bot - 1
+            elif space_top > space_bot:
+                anchor = "sw"
+                win_h = space_top - 1
         if win_h < self.MT.index_txt_height + 5:
             win_h = self.MT.index_txt_height + 5
         elif win_h > win_h2:
             win_h = win_h2
-        return win_h, "nw"
+        return win_h, anchor
 
     def dropdown_text_editor_modified(
         self,
@@ -1977,17 +1988,21 @@ class RowIndex(tk.Canvas):
         dd_window.search_and_see(event)
 
     # r is displayed row
-    def open_dropdown_window(self, r, datarn=None, event: object = None):
+    def open_dropdown_window(self, r, event: object = None):
         self.hide_text_editor("Escape")
-        if datarn is None:
-            datarn = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r]
-        kwargs = self.get_cell_kwargs(datarn, key="dropdown")
+        kwargs = self.get_cell_kwargs(self.MT.datarn(r), key="dropdown")
         if kwargs["state"] == "normal":
             if not self.open_text_editor(event=event, r=r, dropdown=True):
                 return
         win_h, anchor = self.get_dropdown_height_anchor(r)
-        win_w = self.current_width
-        ypos = self.MT.row_positions[r + 1]
+        win_w = self.current_width + 1
+        if anchor == "nw":
+            if kwargs["state"] == "normal":
+                ypos = self.MT.row_positions[r] + self.text_editor.window.winfo_height() - 1
+            else:
+                ypos = self.MT.row_positions[r + 1]
+        else:
+            ypos = self.MT.row_positions[r]
         reset_kwargs = {
             "r": r,
             "c": 0,
@@ -2001,7 +2016,7 @@ class RowIndex(tk.Canvas):
         }
         if self.dropdown.window:
             self.dropdown.window.reset(**reset_kwargs)
-            self.itemconfig(self.dropdown.canvas_id, state="normal")
+            self.itemconfig(self.dropdown.canvas_id, state="normal", anchor=anchor)
             self.coords(self.dropdown.canvas_id, 0, ypos)
         else:
             self.dropdown.window = self.PAR.dropdown_class(

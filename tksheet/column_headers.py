@@ -13,6 +13,7 @@ from itertools import (
     islice,
 )
 from math import ceil, floor
+from typing import Literal
 
 from .colors import (
     color_map,
@@ -1622,14 +1623,13 @@ class ColumnHeaders(tk.Canvas):
     ) -> bool:
         text = None
         extra_func_key = "??"
-        datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
         if event is None or self.MT.event_opens_dropdown_or_checkbox(event):
             if event is not None:
                 if hasattr(event, "keysym") and event.keysym == "Return":
                     extra_func_key = "Return"
                 elif hasattr(event, "keysym") and event.keysym == "F2":
                     extra_func_key = "F2"
-            text = self.get_cell_data(datacn, none_to_empty_str=True, redirect_int=True)
+            text = self.get_cell_data(self.MT.datacn(c), none_to_empty_str=True, redirect_int=True)
         elif event is not None and (
             (hasattr(event, "keysym") and event.keysym == "BackSpace") or event.keycode in (8, 855638143)
         ):
@@ -1679,9 +1679,8 @@ class ColumnHeaders(tk.Canvas):
         y = 0
         w = self.MT.col_positions[c + 1] - x
         h = self.current_height + 1
-        datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
         if text is None:
-            text = self.get_cell_data(datacn, none_to_empty_str=True, redirect_int=True)
+            text = self.get_cell_data(self.MT.datacn(c), none_to_empty_str=True, redirect_int=True)
         bg, fg = self.PAR.ops.header_bg, self.PAR.ops.header_fg
         kwargs = {
             "menu_kwargs": DotDict(
@@ -1754,7 +1753,7 @@ class ColumnHeaders(tk.Canvas):
             not check_lines
             or self.MT.get_lines_cell_height(
                 self.text_editor.window.get_num_lines() + 1,
-                font=self.PAR.ops.header_font,
+                font=self.text_editor.tktext.cget("font"),
             )
             > curr_height
         ):
@@ -1774,36 +1773,45 @@ class ColumnHeaders(tk.Canvas):
                     )
                     self.itemconfig(self.dropdown.canvas_id, anchor=anchor, height=win_h)
 
-    def refresh_open_window_positions(self):
+    def refresh_open_window_positions(self, zoom: Literal["in", "out"]):
         if self.text_editor.open:
             c = self.text_editor.column
-            self.text_editor.window.config(height=self.MT.col_positions[c + 1] - self.MT.col_positions[c])
+            self.text_editor.window.config(
+                height=self.current_height,
+                width=self.MT.col_positions[c + 1] - self.MT.col_positions[c] + 1,
+            )
+            self.text_editor.tktext.config(font=self.PAR.ops.header_font)
             self.coords(
                 self.text_editor.canvas_id,
-                0,
                 self.MT.col_positions[c],
+                0,
             )
         if self.dropdown.open:
+            if zoom == "in":
+                self.dropdown.window.zoom_in()
+            elif zoom == "out":
+                self.dropdown.window.zoom_out()
             c = self.dropdown.get_coords()
             if self.text_editor.open:
                 text_editor_h = self.text_editor.window.winfo_height()
                 win_h, anchor = self.get_dropdown_height_anchor(c, text_editor_h)
             else:
-                text_editor_h = self.MT.col_positions[c + 1] - self.MT.col_positions[c]
+                text_editor_h = self.current_height
                 anchor = self.itemcget(self.dropdown.canvas_id, "anchor")
                 # win_h = 0
+            self.dropdown.window.config(width=self.MT.col_positions[c + 1] - self.MT.col_positions[c] + 1)
             if anchor == "nw":
                 self.coords(
                     self.dropdown.canvas_id,
-                    0,
-                    self.MT.col_positions[c] + text_editor_h - 1,
+                    self.MT.col_positions[c],
+                    text_editor_h - 1,
                 )
                 # self.itemconfig(self.dropdown.canvas_id, anchor=anchor, height=win_h)
             elif anchor == "sw":
                 self.coords(
                     self.dropdown.canvas_id,
-                    0,
                     self.MT.col_positions[c],
+                    0,
                 )
                 # self.itemconfig(self.dropdown.canvas_id, anchor=anchor, height=win_h)
 
@@ -1901,11 +1909,9 @@ class ColumnHeaders(tk.Canvas):
             modified_func(event)
         dd_window.search_and_see(event)
 
-    def open_dropdown_window(self, c, datacn=None, event: object = None):
+    def open_dropdown_window(self, c, event: object = None):
         self.hide_text_editor("Escape")
-        if datacn is None:
-            datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
-        kwargs = self.get_cell_kwargs(datacn, key="dropdown")
+        kwargs = self.get_cell_kwargs(self.MT.datacn(c), key="dropdown")
         if kwargs["state"] == "normal":
             if not self.open_text_editor(event=event, c=c, dropdown=True):
                 return

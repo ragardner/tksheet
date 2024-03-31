@@ -3222,8 +3222,6 @@ class MainTable(tk.Canvas):
 
     def ctrl_mousewheel(self, event):
         if event.delta < 0 or event.num == 5:
-            if self.PAR.ops.table_font[1] < 2 or self.PAR.ops.index_font[1] < 2 or self.PAR.ops.header_font[1] < 2:
-                return
             self.zoom_out()
         elif event.delta >= 0 or event.num == 4:
             self.zoom_in()
@@ -3231,16 +3229,22 @@ class MainTable(tk.Canvas):
     def zoom_in(self, event=None):
         self.zoom_font(
             (self.PAR.ops.table_font[0], self.PAR.ops.table_font[1] + 1, self.PAR.ops.table_font[2]),
+            (self.PAR.ops.index_font[0], self.PAR.ops.index_font[1] + 1, self.PAR.ops.index_font[2]),
             (self.PAR.ops.header_font[0], self.PAR.ops.header_font[1] + 1, self.PAR.ops.header_font[2]),
+            "in",
         )
 
     def zoom_out(self, event=None):
+        if self.PAR.ops.table_font[1] < 2 or self.PAR.ops.index_font[1] < 2 or self.PAR.ops.header_font[1] < 2:
+            return
         self.zoom_font(
             (self.PAR.ops.table_font[0], self.PAR.ops.table_font[1] - 1, self.PAR.ops.table_font[2]),
+            (self.PAR.ops.index_font[0], self.PAR.ops.index_font[1] - 1, self.PAR.ops.index_font[2]),
             (self.PAR.ops.header_font[0], self.PAR.ops.header_font[1] - 1, self.PAR.ops.header_font[2]),
+            "out",
         )
 
-    def zoom_font(self, table_font: tuple, header_font: tuple):
+    def zoom_font(self, table_font: tuple, index_font: tuple, header_font: tuple, zoom: Literal["in", "out"]) -> None:
         self.saved_column_widths = {}
         self.saved_row_heights = {}
         # should record position prior to change and then see after change
@@ -3262,7 +3266,7 @@ class MainTable(tk.Canvas):
             table_font,
             reset_row_positions=False,
         )
-        self.set_index_font(table_font)
+        self.set_index_font(index_font)
         self.set_header_font(header_font)
         if self.PAR.ops.set_cell_sizes_on_zoom:
             self.set_all_cell_sizes_to_text()
@@ -3290,18 +3294,18 @@ class MainTable(tk.Canvas):
             )
             self.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
             self.recreate_all_selection_boxes()
-        self.refresh_open_window_positions()
-        self.RI.refresh_open_window_positions()
-        self.CH.refresh_open_window_positions()
+        self.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
+        self.refresh_open_window_positions(zoom=zoom)
+        self.RI.refresh_open_window_positions(zoom=zoom)
+        self.CH.refresh_open_window_positions(zoom=zoom)
         self.see(
             r,
             c,
             check_cell_visibility=False,
-            redraw=False,
+            redraw=True,
             r_pc=r_pc,
             c_pc=c_pc,
         )
-        self.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
 
     def get_txt_w(self, txt, font=None):
         self.txt_measure_canvas.itemconfig(
@@ -6372,13 +6376,11 @@ class MainTable(tk.Canvas):
                     extra_func_key = "Return"
                 elif hasattr(event, "keysym") and event.keysym == "F2":
                     extra_func_key = "F2"
-            datarn = r if self.all_rows_displayed else self.displayed_rows[r]
-            datacn = c if self.all_columns_displayed else self.displayed_columns[c]
             if event is not None and (hasattr(event, "keysym") and event.keysym == "BackSpace"):
                 extra_func_key = "BackSpace"
                 text = ""
             else:
-                text = f"{self.get_cell_data(datarn, datacn, none_to_empty_str = True)}"
+                text = f"{self.get_cell_data(self.datarn(r), self.datacn(c), none_to_empty_str = True)}"
         elif event is not None and (
             (hasattr(event, "char") and event.char.isalpha())
             or (hasattr(event, "char") and event.char.isdigit())
@@ -6422,9 +6424,7 @@ class MainTable(tk.Canvas):
         w = self.col_positions[c + 1] - x + 1
         h = self.row_positions[r + 1] - y + 1
         if text is None:
-            text = f"""{self.get_cell_data(r if self.all_rows_displayed else self.displayed_rows[r],
-                                           c if self.all_columns_displayed else self.displayed_columns[c],
-                                           none_to_empty_str = True)}"""
+            text = f"{self.get_cell_data(self.datarn(r), self.datacn(c), none_to_empty_str = True)}"
         bg, fg = self.PAR.ops.table_bg, self.PAR.ops.table_fg
         kwargs = {
             "menu_kwargs": DotDict(
@@ -6483,7 +6483,14 @@ class MainTable(tk.Canvas):
         curr_height = self.text_editor.window.winfo_height()
         if curr_height < self.min_row_height:
             return
-        if not check_lines or self.get_lines_cell_height(self.text_editor.window.get_num_lines() + 1) > curr_height:
+        if (
+            not check_lines
+            or self.get_lines_cell_height(
+                self.text_editor.window.get_num_lines() + 1,
+                font=self.text_editor.tktext.cget("font"),
+            )
+            > curr_height
+        ):
             new_height = curr_height + self.table_xtra_lines_increment
             space_bot = self.get_space_bot(r)
             if new_height > space_bot:
@@ -6508,24 +6515,30 @@ class MainTable(tk.Canvas):
                         )
                         self.itemconfig(self.dropdown.canvas_id, anchor=anchor, height=win_h)
 
-    def refresh_open_window_positions(self):
+    def refresh_open_window_positions(self, zoom: Literal["in", "out"]):
         if self.text_editor.open:
             r, c = self.text_editor.coords
             self.text_editor.window.config(height=self.row_positions[r + 1] - self.row_positions[r])
+            self.text_editor.tktext.config(font=self.PAR.ops.table_font)
             self.coords(
                 self.text_editor.canvas_id,
                 self.col_positions[c],
                 self.row_positions[r],
             )
         if self.dropdown.open:
+            if zoom == "in":
+                self.dropdown.window.zoom_in()
+            elif zoom == "out":
+                self.dropdown.window.zoom_out()
             r, c = self.dropdown.get_coords()
             if self.text_editor.open:
                 text_editor_h = self.text_editor.window.winfo_height()
                 win_h, anchor = self.get_dropdown_height_anchor(r, c, text_editor_h)
             else:
-                text_editor_h = self.row_positions[r + 1] - self.row_positions[r]
+                text_editor_h = self.row_positions[r + 1] - self.row_positions[r] + 1
                 anchor = self.itemcget(self.dropdown.canvas_id, "anchor")
                 # win_h = 0
+            self.dropdown.window.config(width=self.col_positions[c + 1] - self.col_positions[c] + 1)
             if anchor == "nw":
                 self.coords(
                     self.dropdown.canvas_id,
@@ -6548,7 +6561,6 @@ class MainTable(tk.Canvas):
         if reason == "Escape":
             self.focus_set()
 
-    # c is displayed col
     def close_text_editor(
         self,
         editor_info: tuple | None = None,
@@ -6671,8 +6683,7 @@ class MainTable(tk.Canvas):
     def tab_key(self, event: object = None) -> str:
         if not self.selected:
             return
-        r = self.selected.row
-        c = self.selected.column
+        r, c = self.selected.row, self.selected.column
         r1, c1, r2, c2 = self.selection_boxes[self.selected.fill_iid].coords
         numcols = c2 - c1
         numrows = r2 - r1
@@ -6803,7 +6814,7 @@ class MainTable(tk.Canvas):
         }
         if self.dropdown.window:
             self.dropdown.window.reset(**reset_kwargs)
-            self.itemconfig(self.dropdown.canvas_id, state="normal")
+            self.itemconfig(self.dropdown.canvas_id, state="normal", anchor=anchor)
             self.coords(self.dropdown.canvas_id, self.col_positions[c], ypos)
         else:
             self.dropdown.window = self.PAR.dropdown_class(
@@ -7100,7 +7111,12 @@ class MainTable(tk.Canvas):
         self.delete_row_format("all", clear_values=clear_values)
         self.delete_column_format("all", clear_values=clear_values)
 
-    def delete_cell_format(self, datarn: str | int = "all", datacn: int = 0, clear_values: bool = False) -> None:
+    def delete_cell_format(
+        self,
+        datarn: Literal["all"] | int = "all",
+        datacn: int = 0,
+        clear_values: bool = False,
+    ) -> None:
         if isinstance(datarn, str) and datarn.lower() == "all":
             itr = gen_formatted(self.cell_options)
         else:
@@ -7114,7 +7130,7 @@ class MainTable(tk.Canvas):
             if clear_values:
                 self.set_cell_data(*key, get_val(*key), expand_sheet=False)
 
-    def delete_row_format(self, datarn: str | int = "all", clear_values: bool = False) -> None:
+    def delete_row_format(self, datarn: Literal["all"] | int = "all", clear_values: bool = False) -> None:
         if isinstance(datarn, str) and datarn.lower() == "all":
             itr = gen_formatted(self.row_options)
         else:
@@ -7129,7 +7145,7 @@ class MainTable(tk.Canvas):
                 for datacn in range(len(self.data[datarn])):
                     self.set_cell_data(datarn, datacn, get_val(datarn, datacn), expand_sheet=False)
 
-    def delete_column_format(self, datacn: str | int = "all", clear_values: bool = False) -> None:
+    def delete_column_format(self, datacn: Literal["all"] | int = "all", clear_values: bool = False) -> None:
         if isinstance(datacn, str) and datacn.lower() == "all":
             itr = gen_formatted(self.col_options)
         else:

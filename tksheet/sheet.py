@@ -1092,6 +1092,14 @@ class Sheet(tk.Frame):
             self.TL.focus_set()
         return self
 
+    def zoom_in(self) -> Sheet:
+        self.MT.zoom_in()
+        return self
+
+    def zoom_out(self) -> Sheet:
+        self.MT.zoom_out()
+        return self
+
     @property
     def event(self) -> EventDataDict:
         return self.last_event_data
