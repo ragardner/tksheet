@@ -245,6 +245,12 @@ def is_iterable(o: object) -> bool:
         return False
 
 
+def int_x_iter(i: Iterator[int] | int) -> Iterator[int]:
+    if isinstance(i, int):
+        return (i,)
+    return i
+
+
 def unpack(t: tuple[object] | tuple[Iterator[object]]) -> tuple[object]:
     if not len(t):
         return t
@@ -345,19 +351,25 @@ def get_seq_without_gaps_at_index(
     return seq
 
 
-def consecutive_chunks(seq: list[object]) -> Generator[object]:
-    if not seq:
-        yield seq
+def consecutive_chunks(seq: list[int]) -> Generator[list[int]]:
     start = 0
-    end = 0
-    for index, value in enumerate(seq):
-        if index < len(seq) - 1:
-            if seq[index + 1] > value + 1:
-                end = index + 1
-                yield seq[start:end]
-                start = end
-        else:
+    for index, value in enumerate(seq, 1):
+        try:
+            if seq[index] > value + 1:
+                yield seq[start:(start := index)]
+        except Exception:
             yield seq[start : len(seq)]
+
+
+def consecutive_ranges(seq: Sequence[int]) -> Generator[tuple[int, int]]:
+    start = 0
+    for index, value in enumerate(seq, 1):
+        try:
+            if seq[index] > value + 1:
+                yield seq[start], seq[index - 1] + 1
+                start = index
+        except Exception:
+            yield seq[start], seq[-1] + 1
 
 
 def is_contiguous(seq: list[int]) -> bool:

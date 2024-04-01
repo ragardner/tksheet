@@ -1030,6 +1030,8 @@ paste(event: object = None) -> Sheet
 delete(event: object = None) -> Sheet
 undo(event: object = None) -> Sheet
 redo(event: object = None) -> Sheet
+zoom_in() -> Sheet
+zoom_out() -> Sheet
 ```
 
 ___
@@ -3987,11 +3989,25 @@ recreate_all_selection_boxes() -> Sheet
 
 ___
 
+Deselect a specific cell, row or column.
+
 ```python
 deselect(
     row: int | None | str = None,
     column: int | None = None,
     cell: tuple | None = None,
+    redraw: bool = True,
+) -> Sheet
+```
+
+___
+
+Deselect any cell, row or column selection box conflicting with `rows` and/or `columns`.
+
+```python
+deselect_any(
+    rows: Iterator[int] | int | None,
+    columns: Iterator[int] | int | None,
     redraw: bool = True,
 ) -> Sheet
 ```

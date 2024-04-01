@@ -49,7 +49,7 @@ from .formatters import (
     try_to_bool,
 )
 from .functions import (
-    consecutive_chunks,
+    consecutive_ranges,
     decompress_load,
     diff_gen,
     diff_list,
@@ -61,6 +61,7 @@ from .functions import (
     get_seq_without_gaps_at_index,
     index_exists,
     insert_items,
+    int_x_iter,
     is_iterable,
     is_type_int,
     len_to_idx,
@@ -960,12 +961,12 @@ class MainTable(tk.Canvas):
                 )
             )
             if create_selections:
-                for chunk in consecutive_chunks(sorted(disp_new_idxs.values())):
+                for boxst, boxend in consecutive_ranges(sorted(disp_new_idxs.values())):
                     self.create_selection_box(
                         0,
-                        chunk[0],
+                        boxst,
                         len(self.row_positions) - 1,
-                        chunk[-1] + 1,
+                        boxend,
                         "columns",
                         run_binding=True,
                     )
@@ -1181,11 +1182,11 @@ class MainTable(tk.Canvas):
                 )
             )
             if create_selections:
-                for chunk in consecutive_chunks(sorted(disp_new_idxs.values())):
+                for boxst, boxend in consecutive_ranges(sorted(disp_new_idxs.values())):
                     self.create_selection_box(
-                        chunk[0],
+                        boxst,
                         0,
-                        chunk[-1] + 1,
+                        boxend,
                         len(self.col_positions) - 1,
                         "rows",
                         run_binding=True,
@@ -1846,7 +1847,6 @@ class MainTable(tk.Canvas):
                                 "rows",
                                 set_current=resel and to_sel >= r + 1 and to_sel < r2,
                             )
-                    break
         elif isinstance(c, int) and r is None and cell is None:
             for item, box in self.get_selection_items(rows=False, cells=False):
                 r1, c1, r2, c2 = box.coords
@@ -1890,7 +1890,6 @@ class MainTable(tk.Canvas):
                                 "columns",
                                 set_current=resel and to_sel >= c + 1 and to_sel < c2,
                             )
-                    break
         elif (isinstance(r, int) and isinstance(c, int) and cell is None) or cell is not None:
             if cell is not None:
                 r, c = cell[0], cell[1]
@@ -1898,7 +1897,6 @@ class MainTable(tk.Canvas):
                 r1, c1, r2, c2 = box.coords
                 if r >= r1 and c >= c1 and r < r2 and c < c2:
                     self.hide_selection_box(item)
-                    break
         if redraw:
             self.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
         sel_event = self.get_select_event(being_drawn_item=self.being_drawn_item)
@@ -1906,7 +1904,51 @@ class MainTable(tk.Canvas):
             try_binding(self.deselection_binding_func, sel_event)
         self.PAR.emit_event("<<SheetSelect>>", data=sel_event)
 
-    def page_UP(self, event=None):
+    def deselect_any(
+        self,
+        rows: Iterator[int] | int | None = None,
+        columns: Iterator[int] | int | None = None,
+        redraw: bool = True,
+    ) -> None:
+        rows = int_x_iter(rows)
+        columns = int_x_iter(columns)
+        if is_iterable(rows) and is_iterable(columns):
+            rows = tuple(consecutive_ranges(sorted(rows)))
+            columns = tuple(consecutive_ranges(sorted(columns)))
+            for item, box in self.get_selection_items(reverse=True):
+                r1, c1, r2, c2 = box.coords
+                hidden = False
+                for rows_st, rows_end in rows:
+                    if hidden:
+                        break
+                    for cols_st, cols_end in columns:
+                        if ((rows_end >= r1 and rows_end <= r2) or (rows_st >= r1 and rows_st < r2)) and (
+                            (cols_end >= c1 and cols_end <= c2) or (cols_st >= c1 and cols_st < c2)
+                        ):
+                            hidden = self.hide_selection_box(item)
+                            break
+        elif is_iterable(rows):
+            rows = tuple(consecutive_ranges(sorted(rows)))
+            for item, box in self.get_selection_items(reverse=True):
+                r1, c1, r2, c2 = box.coords
+                for rows_st, rows_end in rows:
+                    if (rows_end >= r1 and rows_end <= r2) or (rows_st >= r1 and rows_st < r2):
+                        self.hide_selection_box(item)
+                        break
+        elif is_iterable(columns):
+            columns = tuple(consecutive_ranges(sorted(columns)))
+            for item, box in self.get_selection_items(reverse=True):
+                r1, c1, r2, c2 = box.coords
+                for cols_st, cols_end in columns:
+                    if (cols_end >= c1 and cols_end <= c2) or (cols_st >= c1 and cols_st < c2):
+                        self.hide_selection_box(item)
+                        break
+        else:
+            self.deselect()
+        if redraw:
+            self.refresh()
+
+    def page_UP(self, event: object = None) -> None:
         height = self.winfo_height()
         top = self.canvasy(0)
         scrollto_y = top - height
@@ -1935,7 +1977,7 @@ class MainTable(tk.Canvas):
             self.RI.yview(*args)
             self.main_table_redraw_grid_and_text(redraw_row_index=True)
 
-    def page_DOWN(self, event=None):
+    def page_DOWN(self, event: object = None) -> None:
         height = self.winfo_height()
         top = self.canvasy(0)
         scrollto = top + height
@@ -1965,7 +2007,7 @@ class MainTable(tk.Canvas):
             self.RI.yview(*args)
             self.main_table_redraw_grid_and_text(redraw_row_index=True)
 
-    def arrowkey_UP(self, event=None):
+    def arrowkey_UP(self, event: object = None) -> None:
         if not self.selected:
             return
         if self.selected.type_ == "rows":
@@ -1989,7 +2031,7 @@ class MainTable(tk.Canvas):
                     self.select_cell(r - 1, c)
                     self.see(r - 1, c, keep_xscroll=True, check_cell_visibility=False)
 
-    def arrowkey_DOWN(self, event=None):
+    def arrowkey_DOWN(self, event: object = None) -> None:
         if not self.selected:
             return
         if self.selected.type_ == "rows":
@@ -2068,7 +2110,7 @@ class MainTable(tk.Canvas):
                             check_cell_visibility=False,
                         )
 
-    def arrowkey_LEFT(self, event=None):
+    def arrowkey_LEFT(self, event: object = None) -> None:
         if not self.selected:
             return
         if self.selected.type_ == "columns":
@@ -2100,7 +2142,7 @@ class MainTable(tk.Canvas):
                     self.select_cell(r, c - 1)
                     self.see(r, c - 1, keep_yscroll=True, check_cell_visibility=False)
 
-    def arrowkey_RIGHT(self, event=None):
+    def arrowkey_RIGHT(self, event: object = None) -> None:
         if not self.selected:
             return
         if self.selected.type_ == "rows":
@@ -4211,12 +4253,12 @@ class MainTable(tk.Canvas):
         )
         if create_selections:
             self.deselect("all")
-            for chunk in consecutive_chunks(tuple(reversed(column_widths))):
+            for boxst, boxend in consecutive_ranges(tuple(reversed(column_widths))):
                 self.create_selection_box(
                     0,
-                    chunk[0],
+                    boxst,
                     len(self.row_positions) - 1,
-                    chunk[-1] + 1,
+                    boxend,
                     "columns",
                     run_binding=True,
                 )
@@ -4340,11 +4382,11 @@ class MainTable(tk.Canvas):
         )
         if create_selections:
             self.deselect("all")
-            for chunk in consecutive_chunks(tuple(reversed(row_heights))):
+            for boxst, boxend in consecutive_ranges(tuple(reversed(row_heights))):
                 self.create_selection_box(
-                    chunk[0],
+                    boxst,
                     0,
-                    chunk[-1] + 1,
+                    boxend,
                     len(self.col_positions) - 1,
                     "rows",
                     run_binding=True,
@@ -5624,7 +5666,7 @@ class MainTable(tk.Canvas):
             if r2 < len(self.row_positions) and c2 < len(self.col_positions):
                 self.create_selection_box(r1, c1, r2, c2, v, run_binding=True)
         if selected:
-            self.set_currently_selected(selected.row, selected.column, box=selected.coords)
+            self.set_currently_selected(selected.row, selected.column, box=selected.box)
 
     def set_currently_selected(
         self,
@@ -5780,7 +5822,7 @@ class MainTable(tk.Canvas):
             self.hidd_boxes.add(item)
             self.itemconfig(item, state="hidden")
 
-    def hide_selection_box(self, item: int | None, set_current: bool = True) -> None:
+    def hide_selection_box(self, item: int | None, set_current: bool = True) -> bool:
         if item is None:
             return
         box = self.selection_boxes.pop(item)
@@ -5791,6 +5833,7 @@ class MainTable(tk.Canvas):
         if self.selected.fill_iid == item:
             self.hide_selected()
             self.set_current_to_last()
+        return True
 
     def hide_selected(self) -> None:
         if self.selected:

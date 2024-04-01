@@ -867,6 +867,8 @@ class RowIndex(tk.Canvas):
                 ):
                     self.open_cell(event)
                 elif (iid := self.event_over_tree_arrow(r, canvasy, event.x)) is not None:
+                    if self.MT.selection_boxes:
+                        self.select_row(r, redraw=False)
                     self.PAR.item(iid, open_=iid not in self.tree_open_ids)
             else:
                 self.mouseclick_outside_editor_or_dropdown_all_canvases(inside=True)

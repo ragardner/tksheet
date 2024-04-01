@@ -20,7 +20,7 @@ from .colors import (
 )
 from .formatters import is_bool_like, try_to_bool
 from .functions import (
-    consecutive_chunks,
+    consecutive_ranges,
     ev_stack_dict,
     event_dict,
     get_checkbox_points,
@@ -688,10 +688,10 @@ class ColumnHeaders(tk.Canvas):
             tag="move_columns",
         )
         self.MT.create_resize_line(xpos, y1, xpos, y2, width=3, fill=self.PAR.ops.drag_and_drop_bg, tag="move_columns")
-        for chunk in consecutive_chunks(cols):
+        for boxst, boxend in consecutive_ranges(cols):
             self.MT.show_ctrl_outline(
-                start_cell=(chunk[0], 0),
-                end_cell=(chunk[-1] + 1, len(self.MT.row_positions) - 1),
+                start_cell=(boxst, 0),
+                end_cell=(boxend, len(self.MT.row_positions) - 1),
                 dash=(),
                 outline=self.PAR.ops.drag_and_drop_bg,
                 delete_on_timer=False,

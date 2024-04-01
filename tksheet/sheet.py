@@ -3182,6 +3182,16 @@ class Sheet(tk.Frame):
         self.set_refresh_timer(redraw)
         return self
 
+    def deselect_any(
+        self,
+        rows: Iterator[int] | int | None,
+        columns: Iterator[int] | int | None,
+        redraw: bool = True,
+    ) -> Sheet:
+        self.MT.deselect_any(rows=rows, columns=columns, redraw=False)
+        self.set_refresh_timer(redraw)
+        return self
+
     # Row Heights and Column Widths
 
     def default_column_width(self, width: int | None = None) -> int:
@@ -3785,6 +3795,8 @@ class Sheet(tk.Frame):
         )
         if deselect_all:
             self.MT.deselect(redraw=False)
+        else:
+            self.MT.deselect_any(rows=rows, redraw=False)
         self.set_refresh_timer(redraw)
         return self
 

@@ -1,5 +1,9 @@
 ### Version 7.1.6
-####
+#### Fixed:
+- Undo error
+
+#### Added:
+- Function `deselect_any()` for non specific selection box type deselections
 
 ### Version 7.1.5
 #### Fixed:
