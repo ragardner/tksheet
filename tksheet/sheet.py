@@ -3795,8 +3795,6 @@ class Sheet(tk.Frame):
         )
         if deselect_all:
             self.MT.deselect(redraw=False)
-        else:
-            self.MT.deselect_any(rows=rows, redraw=False)
         self.set_refresh_timer(redraw)
         return self
 
@@ -4616,10 +4614,11 @@ class Sheet(tk.Frame):
             raise ValueError(f"item '{item.lower()}' does not exist.")
 
     def rowitem(self, row: int, data_index: bool = False) -> str | None:
-        if not data_index:
-            row = self.data_r(row)
-        if isinstance(row, int) and len(self.MT._row_index) > row:
-            return self.MT._row_index[row].iid
+        if isinstance(row, int):
+            if not data_index:
+                row = self.data_r(row)
+            if len(self.MT._row_index) > row:
+                return self.MT._row_index[row].iid
         return None
 
     def get_children(self, item: None | str = None) -> Generator[str]:
@@ -4737,9 +4736,16 @@ class Sheet(tk.Frame):
                 raise ValueError(f"iid '{item}' causes a recursive loop with parent '{parent}'.")
             parent_node = self.RI.tree[parent]
             if parent_node.children:
-                if len(parent_node.children) < index:
-                    index = len(parent_node.children)
-                ctr = self.RI.tree_rns[parent_node.children[index].iid]
+                if index >= len(parent_node.children):
+                    index = len(parent_node.children) - 1
+                item_rn = self.RI.tree_rns[item]
+                new_rn = self.RI.tree_rns[parent_node.children[index].iid]
+                if item_rn >= new_rn:
+                    ctr = new_rn
+                else:
+                    par_desc = sum(1 for _ in self.RI.get_iid_descendants(parent_node.children[index].iid))
+                    item_desc = sum(1 for _ in self.RI.get_iid_descendants(item))
+                    ctr = self.RI.tree_rns[parent_node.children[index].iid] + par_desc - item_desc
             else:
                 ctr = self.RI.tree_rns[parent_node.iid] + 1
             mapping[self.RI.tree_rns[item]] = ctr
@@ -4755,9 +4761,20 @@ class Sheet(tk.Frame):
             item_node.parent = parent_node
             parent_node.children.append(item_node)
         else:
-            if len(self.MT._row_index) < index:
-                index = len(self.MT._row_index)
-            ctr = index
+            wo_par = - 1
+            for rn, n in enumerate(self.MT._row_index):
+                if not n.parent:
+                    wo_par += 1
+                    if wo_par == index:
+                        new_rn = rn
+                        break
+            item_rn = self.RI.tree_rns[item]
+            if item_rn >= new_rn:
+                ctr = new_rn
+            else:
+                par_desc = sum(1 for _ in self.RI.get_iid_descendants(self.rowitem(new_rn, data_index=True)))
+                item_desc = sum(1 for _ in self.RI.get_iid_descendants(item))
+                ctr = new_rn + par_desc - item_desc
             mapping[self.RI.tree_rns[item]] = ctr
             to_show.append(ctr)
             ctr += 1
