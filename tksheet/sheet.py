@@ -4557,6 +4557,7 @@ class Sheet(tk.Frame):
         text: str | None = None,
         values: list | None = None,
         open_: bool | None = None,
+        redraw: bool = True,
     ) -> DotDict | Sheet:
         """
         Modify options for item
@@ -4599,7 +4600,7 @@ class Sheet(tk.Frame):
             else:
                 self.RI.tree_open_ids.discard(item)
         get = not (isinstance(iid, str) or isinstance(text, str) or isinstance(values, list) or isinstance(open_, bool))
-        self.set_refresh_timer(redraw=not get)
+        self.set_refresh_timer(redraw=not get or redraw)
         if get:
             return DotDict(
                 text=self.RI.tree[item].text,

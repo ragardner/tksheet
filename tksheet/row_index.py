@@ -405,7 +405,7 @@ class RowIndex(tk.Canvas):
                 ):
                     self.open_cell(event)
                 elif (iid := self.event_over_tree_arrow(r, self.canvasy(event.y), event.x)) is not None:
-                    self.PAR.item(iid, open_=iid not in self.tree_open_ids)
+                    self.PAR.item(iid, open_=iid not in self.tree_open_ids, redraw=False)
         self.rsz_h = None
         self.mouse_motion(event)
         try_binding(self.extra_double_b1_func, event)
@@ -869,7 +869,7 @@ class RowIndex(tk.Canvas):
                 elif (iid := self.event_over_tree_arrow(r, canvasy, event.x)) is not None:
                     if self.MT.selection_boxes:
                         self.select_row(r, redraw=False)
-                    self.PAR.item(iid, open_=iid not in self.tree_open_ids)
+                    self.PAR.item(iid, open_=iid not in self.tree_open_ids, redraw=False)
             else:
                 self.mouseclick_outside_editor_or_dropdown_all_canvases(inside=True)
             self.b1_pressed_loc = None

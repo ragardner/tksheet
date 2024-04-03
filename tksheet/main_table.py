@@ -5872,6 +5872,8 @@ class MainTable(tk.Canvas):
         elif type_ == "columns":
             mt_bg = self.PAR.ops.table_selected_columns_bg
             mt_border_col = self.PAR.ops.table_selected_columns_border_fg
+        if self.selection_boxes:
+            self.itemconfig(next(reversed(self.selection_boxes)), state="normal")
         fill_iid = self.display_box(
             self.col_positions[c1],
             self.row_positions[r1],
@@ -5879,7 +5881,7 @@ class MainTable(tk.Canvas):
             self.row_positions[r2],
             fill=mt_bg,
             outline="",
-            state=state,
+            state=state if self.PAR.ops.show_selected_cells_border else "normal",
             tags=type_,
             width=1,
         )
@@ -5979,7 +5981,12 @@ class MainTable(tk.Canvas):
             mt_bg = self.PAR.ops.table_selected_columns_bg
             mt_border_col = self.PAR.ops.table_selected_columns_border_fg
         if not state:
-            state = "normal" if (r2 - r1 > 1 or c2 - c1 > 1) else "hidden"
+            if r2 - r1 > 1 or c2 - c1 > 1:
+                state = "normal"
+            elif next(reversed(self.selection_boxes)) == fill_iid:
+                state = "hidden"
+            else:
+                state = "normal"
         if self.selected.fill_iid == fill_iid:
             self.selected = self.selected._replace(box=Box_nt(r1, c1, r2, c2))
         self.coords(
