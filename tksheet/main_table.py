@@ -999,101 +999,104 @@ class MainTable(tk.Canvas):
                 tags: {full_new_idxs[k] for k in tagged} for tags, tagged in self.tagged_columns.items()
             }
             self.CH.cell_options = {full_new_idxs[k]: v for k, v in self.CH.cell_options.items()}
-            totalrows = self.total_data_rows()
-            new_ops = self.PAR.create_options_from_span
-            qkspan = self.span()
-            for span in self.named_spans.values():
-                # span is neither a cell options nor col options span, continue
-                if not isinstance(span["from_c"], int):
-                    continue
-                oldupto_colrange, newupto_colrange, newfrom, newupto = span_idxs_post_move(
-                    data_new_idxs,
-                    full_new_idxs,
-                    totalcols,
-                    span,
-                    "c",
-                )
-                # add cell/col kwargs for columns that are new to the span
-                old_span_idxs = set(full_new_idxs[k] for k in range(span["from_c"], oldupto_colrange))
-                for k in range(newfrom, newupto_colrange):
-                    if k not in old_span_idxs:
-                        oldidx = full_old_idxs[k]
-                        # event_data is used to preserve old cell value
-                        # in case cells are modified by
-                        # formatting, checkboxes, dropdown boxes
-                        if (
-                            span["type_"] in val_modifying_options
-                            and span["header"]
-                            and oldidx not in event_data["cells"]["header"]
-                        ):
-                            event_data["cells"]["header"][oldidx] = self.CH.get_cell_data(k)
-                        # the span targets columns
-                        if span["from_r"] is None:
-                            if span["type_"] in val_modifying_options:
-                                for datarn in range(len(self.data)):
-                                    if (datarn, oldidx) not in event_data["cells"]["table"]:
-                                        event_data["cells"]["table"][(datarn, oldidx)] = self.get_cell_data(datarn, k)
-                            # create new col options
-                            new_ops(
-                                mod_span(
-                                    qkspan,
-                                    span,
-                                    from_c=k,
-                                    upto_c=k + 1,
-                                )
-                            )
-                        # the span targets cells
-                        else:
-                            rng_upto_r = totalrows if span["upto_r"] is None else span["upto_r"]
-                            for datarn in range(span["from_r"], rng_upto_r):
-                                if (
-                                    span["type_"] in val_modifying_options
-                                    and (datarn, oldidx) not in event_data["cells"]["table"]
-                                ):
-                                    event_data["cells"]["table"][(datarn, oldidx)] = self.get_cell_data(datarn, k)
-                                # create new cell options
+            if self.named_spans:
+                totalrows = self.total_data_rows()
+                new_ops = self.PAR.create_options_from_span
+                qkspan = self.span()
+                for span in self.named_spans.values():
+                    # span is neither a cell options nor col options span, continue
+                    if not isinstance(span["from_c"], int):
+                        continue
+                    oldupto_colrange, newupto_colrange, newfrom, newupto = span_idxs_post_move(
+                        data_new_idxs,
+                        full_new_idxs,
+                        totalcols,
+                        span,
+                        "c",
+                    )
+                    # add cell/col kwargs for columns that are new to the span
+                    old_span_idxs = set(full_new_idxs[k] for k in range(span["from_c"], oldupto_colrange))
+                    for k in range(newfrom, newupto_colrange):
+                        if k not in old_span_idxs:
+                            oldidx = full_old_idxs[k]
+                            # event_data is used to preserve old cell value
+                            # in case cells are modified by
+                            # formatting, checkboxes, dropdown boxes
+                            if (
+                                span["type_"] in val_modifying_options
+                                and span["header"]
+                                and oldidx not in event_data["cells"]["header"]
+                            ):
+                                event_data["cells"]["header"][oldidx] = self.CH.get_cell_data(k)
+                            # the span targets columns
+                            if span["from_r"] is None:
+                                if span["type_"] in val_modifying_options:
+                                    for datarn in range(len(self.data)):
+                                        if (datarn, oldidx) not in event_data["cells"]["table"]:
+                                            event_data["cells"]["table"][(datarn, oldidx)] = self.get_cell_data(
+                                                datarn, k
+                                            )
+                                # create new col options
                                 new_ops(
                                     mod_span(
                                         qkspan,
                                         span,
-                                        from_r=datarn,
-                                        upto_r=datarn + 1,
                                         from_c=k,
                                         upto_c=k + 1,
                                     )
                                 )
-                # remove span specific kwargs from cells/columns
-                # that are no longer in the span,
-                # cell options/col options keys are new idxs
-                for k in range(span["from_c"], oldupto_colrange):
-                    # has it moved outside of new span coords
-                    if (isinstance(newupto, int) and (full_new_idxs[k] < newfrom or full_new_idxs[k] >= newupto)) or (
-                        newupto is None and full_new_idxs[k] < newfrom
-                    ):
-                        # span includes header
+                            # the span targets cells
+                            else:
+                                rng_upto_r = totalrows if span["upto_r"] is None else span["upto_r"]
+                                for datarn in range(span["from_r"], rng_upto_r):
+                                    if (
+                                        span["type_"] in val_modifying_options
+                                        and (datarn, oldidx) not in event_data["cells"]["table"]
+                                    ):
+                                        event_data["cells"]["table"][(datarn, oldidx)] = self.get_cell_data(datarn, k)
+                                    # create new cell options
+                                    new_ops(
+                                        mod_span(
+                                            qkspan,
+                                            span,
+                                            from_r=datarn,
+                                            upto_r=datarn + 1,
+                                            from_c=k,
+                                            upto_c=k + 1,
+                                        )
+                                    )
+                    # remove span specific kwargs from cells/columns
+                    # that are no longer in the span,
+                    # cell options/col options keys are new idxs
+                    for k in range(span["from_c"], oldupto_colrange):
+                        # has it moved outside of new span coords
                         if (
-                            span["header"]
-                            and full_new_idxs[k] in self.CH.cell_options
-                            and span["type_"] in self.CH.cell_options[full_new_idxs[k]]
-                        ):
-                            del self.CH.cell_options[full_new_idxs[k]][span["type_"]]
-                        # span is for col options
-                        if span["from_r"] is None:
+                            isinstance(newupto, int) and (full_new_idxs[k] < newfrom or full_new_idxs[k] >= newupto)
+                        ) or (newupto is None and full_new_idxs[k] < newfrom):
+                            # span includes header
                             if (
-                                full_new_idxs[k] in self.col_options
-                                and span["type_"] in self.col_options[full_new_idxs[k]]
+                                span["header"]
+                                and full_new_idxs[k] in self.CH.cell_options
+                                and span["type_"] in self.CH.cell_options[full_new_idxs[k]]
                             ):
-                                del self.col_options[full_new_idxs[k]][span["type_"]]
-                        # span is for cell options
-                        else:
-                            rng_upto_r = totalrows if span["upto_r"] is None else span["upto_r"]
-                            for r in range(span["from_r"], rng_upto_r):
-                                if (r, full_new_idxs[k]) in self.cell_options and span["type_"] in self.cell_options[
-                                    (r, full_new_idxs[k])
-                                ]:
-                                    del self.cell_options[(r, full_new_idxs[k])][span["type_"]]
-                # finally, change the span coords
-                span["from_c"], span["upto_c"] = newfrom, newupto
+                                del self.CH.cell_options[full_new_idxs[k]][span["type_"]]
+                            # span is for col options
+                            if span["from_r"] is None:
+                                if (
+                                    full_new_idxs[k] in self.col_options
+                                    and span["type_"] in self.col_options[full_new_idxs[k]]
+                                ):
+                                    del self.col_options[full_new_idxs[k]][span["type_"]]
+                            # span is for cell options
+                            else:
+                                rng_upto_r = totalrows if span["upto_r"] is None else span["upto_r"]
+                                for r in range(span["from_r"], rng_upto_r):
+                                    if (r, full_new_idxs[k]) in self.cell_options and span[
+                                        "type_"
+                                    ] in self.cell_options[(r, full_new_idxs[k])]:
+                                        del self.cell_options[(r, full_new_idxs[k])][span["type_"]]
+                    # finally, change the span coords
+                    span["from_c"], span["upto_c"] = newfrom, newupto
             if data_indexes:
                 self.displayed_columns = sorted(full_new_idxs[k] for k in self.displayed_columns)
         return data_new_idxs, disp_new_idxs, event_data
@@ -1216,101 +1219,104 @@ class MainTable(tk.Canvas):
             self.row_options = {full_new_idxs[k]: v for k, v in self.row_options.items()}
             self.RI.cell_options = {full_new_idxs[k]: v for k, v in self.RI.cell_options.items()}
             self.RI.tree_rns = {v: full_new_idxs[k] for v, k in self.RI.tree_rns.items()}
-            totalcols = self.total_data_cols()
-            new_ops = self.PAR.create_options_from_span
-            qkspan = self.span()
-            for span in self.named_spans.values():
-                # span is neither a cell options nor row options span, continue
-                if not isinstance(span["from_r"], int):
-                    continue
-                oldupto_rowrange, newupto_rowrange, newfrom, newupto = span_idxs_post_move(
-                    data_new_idxs,
-                    full_new_idxs,
-                    totalrows,
-                    span,
-                    "r",
-                )
-                # add cell/row kwargs for rows that are new to the span
-                old_span_idxs = set(full_new_idxs[k] for k in range(span["from_r"], oldupto_rowrange))
-                for k in range(newfrom, newupto_rowrange):
-                    if k not in old_span_idxs:
-                        oldidx = full_old_idxs[k]
-                        # event_data is used to preserve old cell value
-                        # in case cells are modified by
-                        # formatting, checkboxes, dropdown boxes
-                        if (
-                            span["type_"] in val_modifying_options
-                            and span["index"]
-                            and oldidx not in event_data["cells"]["index"]
-                        ):
-                            event_data["cells"]["index"][oldidx] = self.RI.get_cell_data(k)
-                        # the span targets rows
-                        if span["from_c"] is None:
-                            if span["type_"] in val_modifying_options:
-                                for datacn in range(len(self.data[k])):
-                                    if (oldidx, datacn) not in event_data["cells"]["table"]:
-                                        event_data["cells"]["table"][(oldidx, datacn)] = self.get_cell_data(k, datacn)
-                            # create new row options
-                            new_ops(
-                                mod_span(
-                                    qkspan,
-                                    span,
-                                    from_r=k,
-                                    upto_r=k + 1,
-                                )
-                            )
-                        # the span targets cells
-                        else:
-                            rng_upto_c = totalcols if span["upto_c"] is None else span["upto_c"]
-                            for datacn in range(span["from_c"], rng_upto_c):
-                                if (
-                                    span["type_"] in val_modifying_options
-                                    and (oldidx, datacn) not in event_data["cells"]["table"]
-                                ):
-                                    event_data["cells"]["table"][(oldidx, datacn)] = self.get_cell_data(k, datacn)
-                                # create new cell options
+            if self.named_spans:
+                totalcols = self.total_data_cols()
+                new_ops = self.PAR.create_options_from_span
+                qkspan = self.span()
+                for span in self.named_spans.values():
+                    # span is neither a cell options nor row options span, continue
+                    if not isinstance(span["from_r"], int):
+                        continue
+                    oldupto_rowrange, newupto_rowrange, newfrom, newupto = span_idxs_post_move(
+                        data_new_idxs,
+                        full_new_idxs,
+                        totalrows,
+                        span,
+                        "r",
+                    )
+                    # add cell/row kwargs for rows that are new to the span
+                    old_span_idxs = set(full_new_idxs[k] for k in range(span["from_r"], oldupto_rowrange))
+                    for k in range(newfrom, newupto_rowrange):
+                        if k not in old_span_idxs:
+                            oldidx = full_old_idxs[k]
+                            # event_data is used to preserve old cell value
+                            # in case cells are modified by
+                            # formatting, checkboxes, dropdown boxes
+                            if (
+                                span["type_"] in val_modifying_options
+                                and span["index"]
+                                and oldidx not in event_data["cells"]["index"]
+                            ):
+                                event_data["cells"]["index"][oldidx] = self.RI.get_cell_data(k)
+                            # the span targets rows
+                            if span["from_c"] is None:
+                                if span["type_"] in val_modifying_options:
+                                    for datacn in range(len(self.data[k])):
+                                        if (oldidx, datacn) not in event_data["cells"]["table"]:
+                                            event_data["cells"]["table"][(oldidx, datacn)] = self.get_cell_data(
+                                                k, datacn
+                                            )
+                                # create new row options
                                 new_ops(
                                     mod_span(
                                         qkspan,
                                         span,
                                         from_r=k,
                                         upto_r=k + 1,
-                                        from_c=datacn,
-                                        upto_c=datacn + 1,
                                     )
                                 )
-                # remove span specific kwargs from cells/rows
-                # that are no longer in the span,
-                # cell options/row options keys are new idxs
-                for k in range(span["from_r"], oldupto_rowrange):
-                    # has it moved outside of new span coords
-                    if (isinstance(newupto, int) and (full_new_idxs[k] < newfrom or full_new_idxs[k] >= newupto)) or (
-                        newupto is None and full_new_idxs[k] < newfrom
-                    ):
-                        # span includes index
+                            # the span targets cells
+                            else:
+                                rng_upto_c = totalcols if span["upto_c"] is None else span["upto_c"]
+                                for datacn in range(span["from_c"], rng_upto_c):
+                                    if (
+                                        span["type_"] in val_modifying_options
+                                        and (oldidx, datacn) not in event_data["cells"]["table"]
+                                    ):
+                                        event_data["cells"]["table"][(oldidx, datacn)] = self.get_cell_data(k, datacn)
+                                    # create new cell options
+                                    new_ops(
+                                        mod_span(
+                                            qkspan,
+                                            span,
+                                            from_r=k,
+                                            upto_r=k + 1,
+                                            from_c=datacn,
+                                            upto_c=datacn + 1,
+                                        )
+                                    )
+                    # remove span specific kwargs from cells/rows
+                    # that are no longer in the span,
+                    # cell options/row options keys are new idxs
+                    for k in range(span["from_r"], oldupto_rowrange):
+                        # has it moved outside of new span coords
                         if (
-                            span["index"]
-                            and full_new_idxs[k] in self.RI.cell_options
-                            and span["type_"] in self.RI.cell_options[full_new_idxs[k]]
-                        ):
-                            del self.RI.cell_options[full_new_idxs[k]][span["type_"]]
-                        # span is for row options
-                        if span["from_c"] is None:
+                            isinstance(newupto, int) and (full_new_idxs[k] < newfrom or full_new_idxs[k] >= newupto)
+                        ) or (newupto is None and full_new_idxs[k] < newfrom):
+                            # span includes index
                             if (
-                                full_new_idxs[k] in self.row_options
-                                and span["type_"] in self.row_options[full_new_idxs[k]]
+                                span["index"]
+                                and full_new_idxs[k] in self.RI.cell_options
+                                and span["type_"] in self.RI.cell_options[full_new_idxs[k]]
                             ):
-                                del self.row_options[full_new_idxs[k]][span["type_"]]
-                        # span is for cell options
-                        else:
-                            rng_upto_c = totalcols if span["upto_c"] is None else span["upto_c"]
-                            for c in range(span["from_c"], rng_upto_c):
-                                if (full_new_idxs[k], c) in self.cell_options and span["type_"] in self.cell_options[
-                                    (full_new_idxs[k], c)
-                                ]:
-                                    del self.cell_options[(full_new_idxs[k], c)][span["type_"]]
-                # finally, change the span coords
-                span["from_r"], span["upto_r"] = newfrom, newupto
+                                del self.RI.cell_options[full_new_idxs[k]][span["type_"]]
+                            # span is for row options
+                            if span["from_c"] is None:
+                                if (
+                                    full_new_idxs[k] in self.row_options
+                                    and span["type_"] in self.row_options[full_new_idxs[k]]
+                                ):
+                                    del self.row_options[full_new_idxs[k]][span["type_"]]
+                            # span is for cell options
+                            else:
+                                rng_upto_c = totalcols if span["upto_c"] is None else span["upto_c"]
+                                for c in range(span["from_c"], rng_upto_c):
+                                    if (full_new_idxs[k], c) in self.cell_options and span[
+                                        "type_"
+                                    ] in self.cell_options[(full_new_idxs[k], c)]:
+                                        del self.cell_options[(full_new_idxs[k], c)][span["type_"]]
+                    # finally, change the span coords
+                    span["from_r"], span["upto_r"] = newfrom, newupto
             if data_indexes:
                 self.displayed_rows = sorted(full_new_idxs[k] for k in self.displayed_rows)
         return data_new_idxs, disp_new_idxs, event_data

@@ -171,6 +171,7 @@ class Sheet(tk.Frame):
         display_selected_fg_over_highlights: bool = False,
         show_selected_cells_border: bool = True,
         treeview: bool = False,
+        treeview_indent: str | int = "3",
         # colors
         outline_thickness: int = 0,
         outline_color: str = theme_light_blue["outline_color"],
@@ -4663,65 +4664,8 @@ class Sheet(tk.Frame):
         """
         Moves everything in '*newchildren' under 'parent'
         """
-        if (parent := parent.lower()) and parent not in self.RI.tree:
-            raise ValueError(f"Parent '{parent}' does not exist.")
-        mapping = {}
-        to_show = []
-        if parent:
-            parent_node = self.RI.tree[parent]
-            par_desc = sum(1 for _ in self.RI.get_iid_descendants(parent_node.children[-1].iid))
-            new_rn = self.RI.tree_rns[parent_node.children[-1].iid] + 1
-            ctr = new_rn
-            for item in unpack(newchildren):
-                item = item.lower()
-                if self.RI.pid_causes_recursive_loop(item, parent):
-                    raise ValueError(f"iid '{item}' causes a recursive loop with parent '{parent}'.")
-                item_node = self.RI.tree[item]
-                if parent_node.children and self.RI.tree_rns[item] < new_rn:
-                    item_desc = sum(1 for _ in self.RI.get_iid_descendants(item))
-                    ctr = ctr + par_desc - item_desc
-                mapping[self.RI.tree_rns[item]] = ctr
-                if parent in self.RI.tree_open_ids and self.item_displayed(parent):
-                    to_show.append(ctr)
-                ctr += 1
-                for did in self.RI.get_iid_descendants(item):
-                    mapping[self.RI.tree_rns[did]] = ctr
-                    if to_show and self.RI.ancestors_all_open(did, item_node.parent):
-                        to_show.append(ctr)
-                    ctr += 1
-                self.RI.remove_node_from_parents_children(item_node)
-                item_node.parent = parent_node
-                parent_node.children.append(item_node)
-        else:
-            new_rn = self.find_rn_at_top_index(sum(1 for _ in self.get_children("")) - 1)
-            ctr = new_rn
-            par_desc = sum(1 for _ in self.RI.get_iid_descendants(self.rowitem(new_rn, data_index=True)))
-            for item in unpack(newchildren):
-                item = item.lower()
-                item_node = self.RI.tree[item]
-                if self.RI.tree_rns[item] < new_rn:
-                    item_desc = sum(1 for _ in self.RI.get_iid_descendants(item))
-                    ctr = ctr + par_desc - item_desc
-                mapping[self.RI.tree_rns[item]] = ctr
-                to_show.append(ctr)
-                ctr += 1
-                for did in self.RI.get_iid_descendants(item):
-                    mapping[self.RI.tree_rns[did]] = ctr
-                    if to_show and self.RI.ancestors_all_open(did, item_node.parent):
-                        to_show.append(ctr)
-                    ctr += 1
-                self.RI.remove_node_from_parents_children(item_node)
-                self.RI.tree[item].parent = ""
-        self.mapping_move_rows(
-            data_new_idxs=mapping,
-            data_indexes=True,
-            create_selections=False,
-            redraw=False,
-        )
-        if item and (item not in self.RI.tree_open_ids or not self.item_displayed(item)):
-            self.hide_rows(set(mapping.values()), data_indexes=True)
-        self.show_rows(to_show)
-        self.set_refresh_timer(True)
+        for iid in unpack(newchildren):
+            self.move(iid, parent)
         return self
 
     def find_rn_at_top_index(self, index: int) -> int:
@@ -4732,7 +4676,7 @@ class Sheet(tk.Frame):
                     return rn
                 wo_par += 1
 
-    def move(self, item: str, parent: str, index: int = 0) -> Sheet:
+    def move(self, item: str, parent: str, index: int | None = None) -> Sheet:
         """
         Moves item to be under parent as child at index
         'parent' can be empty string which will make item a top node
@@ -4749,47 +4693,49 @@ class Sheet(tk.Frame):
                 raise ValueError(f"iid '{item}' causes a recursive loop with parent '{parent}'.")
             parent_node = self.RI.tree[parent]
             if parent_node.children:
-                if index >= len(parent_node.children):
+                if index is None or index >= len(parent_node.children):
                     index = len(parent_node.children) - 1
-                item_rn = self.RI.tree_rns[item]
-                new_rn = self.RI.tree_rns[parent_node.children[index].iid]
-                if item_rn >= new_rn:
-                    ctr = new_rn
+                item_r = self.RI.tree_rns[item]
+                new_r = self.RI.tree_rns[parent_node.children[index].iid]
+                if item_node not in parent_node.children:
+                    new_r += 1
+                new_r_desc = sum(1 for _ in self.RI.get_iid_descendants(parent_node.children[index].iid))
+                item_desc = sum(1 for _ in self.RI.get_iid_descendants(item))
+                if item_r < new_r:
+                    r_ctr = new_r + new_r_desc - item_desc
                 else:
-                    par_desc = sum(1 for _ in self.RI.get_iid_descendants(parent_node.children[index].iid))
-                    item_desc = sum(1 for _ in self.RI.get_iid_descendants(item))
-                    ctr = self.RI.tree_rns[parent_node.children[index].iid] + par_desc - item_desc
+                    r_ctr = new_r
             else:
-                ctr = self.RI.tree_rns[parent_node.iid] + 1
-            mapping[self.RI.tree_rns[item]] = ctr
+                r_ctr = self.RI.tree_rns[parent_node.iid] + 1
+            mapping[item_r] = r_ctr
             if parent in self.RI.tree_open_ids and self.item_displayed(parent):
-                to_show.append(ctr)
-            ctr += 1
+                to_show.append(r_ctr)
+            r_ctr += 1
             for did in self.RI.get_iid_descendants(item):
-                mapping[self.RI.tree_rns[did]] = ctr
+                mapping[self.RI.tree_rns[did]] = r_ctr
                 if to_show and self.RI.ancestors_all_open(did, item_node.parent):
-                    to_show.append(ctr)
-                ctr += 1
+                    to_show.append(r_ctr)
+                r_ctr += 1
             self.RI.remove_node_from_parents_children(item_node)
             item_node.parent = parent_node
             parent_node.children.append(item_node)
         else:
-            new_rn = self.find_rn_at_top_index(index)
-            item_rn = self.RI.tree_rns[item]
-            if item_rn >= new_rn:
-                ctr = new_rn
-            else:
-                par_desc = sum(1 for _ in self.RI.get_iid_descendants(self.rowitem(new_rn, data_index=True)))
+            new_r = self.find_rn_at_top_index((sum(1 for _ in self.get_children("")) - 1) if index is None else index)
+            item_r = self.RI.tree_rns[item]
+            if item_r < new_r:
+                par_desc = sum(1 for _ in self.RI.get_iid_descendants(self.rowitem(new_r, data_index=True)))
                 item_desc = sum(1 for _ in self.RI.get_iid_descendants(item))
-                ctr = new_rn + par_desc - item_desc
-            mapping[self.RI.tree_rns[item]] = ctr
-            to_show.append(ctr)
-            ctr += 1
+                r_ctr = new_r + par_desc - item_desc
+            else:
+                r_ctr = new_r
+            mapping[item_r] = r_ctr
+            to_show.append(r_ctr)
+            r_ctr += 1
             for did in self.RI.get_iid_descendants(item):
-                mapping[self.RI.tree_rns[did]] = ctr
+                mapping[self.RI.tree_rns[did]] = r_ctr
                 if to_show and self.RI.ancestors_all_open(did, item_node.parent):
-                    to_show.append(ctr)
-                ctr += 1
+                    to_show.append(r_ctr)
+                r_ctr += 1
             self.RI.remove_node_from_parents_children(item_node)
             self.RI.tree[item].parent = ""
         self.mapping_move_rows(
