@@ -8,6 +8,7 @@
 
 #### Added:
 - `rounded_boxes` Sheet option
+- WIP `ListBox` class
 
 ### Version 7.1.6
 #### Fixed:
