@@ -1662,16 +1662,14 @@ class RowIndex(tk.Canvas):
                     dct[iid] = False
         return True
 
-    def get_redraw_selections(self, startr, endr):
-        d = defaultdict(list)
+    def get_redraw_selections(self, startr: int, endr: int) -> dict[str, set[int]]:
+        d = defaultdict(set)
         for item, box in self.MT.get_selection_items(columns=False):
-            d[box.type_].append(box.coords)
-        d2 = {}
-        if "cells" in d:
-            d2["cells"] = {r for r in range(startr, endr) for r1, c1, r2, c2 in d["cells"] if r1 <= r and r2 > r}
-        if "rows" in d:
-            d2["rows"] = {r for r in range(startr, endr) for r1, c1, r2, c2 in d["rows"] if r1 <= r and r2 > r}
-        return d2
+            r1, c1, r2, c2 = box.coords
+            for r in range(startr, endr):
+                if r1 <= r and r2 > r:
+                    d[box.type_].add(r)
+        return d
 
     def open_cell(self, event: object = None, ignore_existing_editor=False):
         if not self.MT.anything_selected() or (not ignore_existing_editor and self.text_editor.open):

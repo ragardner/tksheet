@@ -1574,16 +1574,14 @@ class ColumnHeaders(tk.Canvas):
                     dct[iid] = False
         return True
 
-    def get_redraw_selections(self, startc, endc):
-        d = defaultdict(list)
+    def get_redraw_selections(self, startc: int, endc: int) -> dict[str, set[int]]:
+        d = defaultdict(set)
         for item, box in self.MT.get_selection_items(rows=False):
-            d[box.type_].append(box.coords)
-        d2 = {}
-        if "cells" in d:
-            d2["cells"] = {c for c in range(startc, endc) for r1, c1, r2, c2 in d["cells"] if c1 <= c and c2 > c}
-        if "columns" in d:
-            d2["columns"] = {c for c in range(startc, endc) for r1, c1, r2, c2 in d["columns"] if c1 <= c and c2 > c}
-        return d2
+            r1, c1, r2, c2 = box.coords
+            for c in range(startc, endc):
+                if c1 <= c and c2 > c:
+                    d[box.type_].add(c)
+        return d
 
     def open_cell(self, event: object = None, ignore_existing_editor=False):
         if not self.MT.anything_selected() or (not ignore_existing_editor and self.text_editor.open):

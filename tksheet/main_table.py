@@ -6129,23 +6129,23 @@ class MainTable(tk.Canvas):
                 self.set_currently_selected(box.coords.from_r, box.coords.from_c, item=box.fill_iid)
 
     def get_redraw_selections(self, startr: int, endr: int, startc: int, endc: int) -> dict:
-        d = defaultdict(list)
+        d = defaultdict(set)
         for item, box in self.get_selection_items():
-            d[box.type_].append(box.coords)
-        d2 = {}
-        if "cells" in d:
-            d2["cells"] = {
-                (r, c)
-                for r in range(startr, endr)
-                for c in range(startc, endc)
-                for r1, c1, r2, c2 in d["cells"]
-                if r1 <= r and c1 <= c and r2 > r and c2 > c
-            }
-        if "rows" in d:
-            d2["rows"] = {r for r in range(startr, endr) for r1, c1, r2, c2 in d["rows"] if r1 <= r and r2 > r}
-        if "columns" in d:
-            d2["columns"] = {c for c in range(startc, endc) for r1, c1, r2, c2 in d["columns"] if c1 <= c and c2 > c}
-        return d2
+            r1, c1, r2, c2 = box.coords
+            if box.type_ == "cells":
+                for r in range(startr, endr):
+                    for c in range(startc, endc):
+                        if r1 <= r and c1 <= c and r2 > r and c2 > c:
+                            d["cells"].add((r, c))
+            elif box.type_ == "rows":
+                for r in range(startr, endr):
+                    if r1 <= r and r2 > r:
+                        d["rows"].add(r)
+            elif box.type_ == "columns":
+                for c in range(startc, endc):
+                    if c1 <= c and c2 > c:
+                        d["columns"].add(c)
+        return d
 
     def get_selected_min_max(self) -> tuple[int, int, int, int] | tuple[None, None, None, None]:
         min_x = float("inf")
