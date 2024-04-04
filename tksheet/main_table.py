@@ -56,7 +56,7 @@ from .functions import (
     ev_stack_dict,
     event_dict,
     gen_formatted,
-    get_checkbox_points,
+    rounded_box_coords,
     get_new_indexes,
     get_seq_without_gaps_at_index,
     index_exists,
@@ -5153,7 +5153,7 @@ class MainTable(tk.Canvas):
         tag: str | tuple,
         draw_check: bool = False,
     ) -> None:
-        points = get_checkbox_points(x1, y1, x2, y2)
+        points = rounded_box_coords(x1, y1, x2, y2)
         if self.hidd_checkbox:
             t, sh = self.hidd_checkbox.popitem()
             self.coords(t, points)
@@ -5170,7 +5170,7 @@ class MainTable(tk.Canvas):
             y1 = y1 + 4
             x2 = x2 - 3
             y2 = y2 - 3
-            points = get_checkbox_points(x1, y1, x2, y2, radius=4)
+            points = rounded_box_coords(x1, y1, x2, y2, radius=4)
             if self.hidd_checkbox:
                 t, sh = self.hidd_checkbox.popitem()
                 self.coords(t, points)
@@ -5803,21 +5803,37 @@ class MainTable(tk.Canvas):
         tags: str | tuple[str],
         width: int,
     ) -> int:
+        if self.PAR.ops.thin_boxes:
+            y1 += 2
+            y2 -= 2
         if self.hidd_boxes:
             iid = self.hidd_boxes.pop()
             self.itemconfig(iid, fill=fill, outline=outline, state=state, tags=tags, width=width)
-            self.coords(iid, x1, y1, x2, y2)
+            self.coords(
+                iid,
+                rounded_box_coords(
+                    x1,
+                    y1,
+                    x2,
+                    y2,
+                    radius=10 if self.PAR.ops.rounded_boxes else 0,
+                ),
+            )
         else:
-            iid = self.create_rectangle(
-                x1,
-                y1,
-                x2,
-                y2,
+            iid = self.create_polygon(
+                rounded_box_coords(
+                    x1,
+                    y1,
+                    x2,
+                    y2,
+                    radius=10 if self.PAR.ops.rounded_boxes else 0,
+                ),
                 fill=fill,
                 outline=outline,
                 state=state,
                 tags=tags,
                 width=width,
+                smooth=True,
             )
         self.disp_boxes.add(iid)
         return iid
@@ -5989,12 +6005,25 @@ class MainTable(tk.Canvas):
                 state = "normal"
         if self.selected.fill_iid == fill_iid:
             self.selected = self.selected._replace(box=Box_nt(r1, c1, r2, c2))
+        if self.PAR.ops.thin_boxes:
+            y1 = self.row_positions[r1] + 2
+            y2 = self.row_positions[r2] - 2
+        else:
+            y1 = self.row_positions[r1]
+            y2 = self.row_positions[r2]
         self.coords(
             fill_iid,
-            self.col_positions[c1],
-            self.row_positions[r1],
-            self.canvasx(self.winfo_width()) if self.PAR.ops.selected_rows_to_end_of_window else self.col_positions[c2],
-            self.row_positions[r2],
+            rounded_box_coords(
+                self.col_positions[c1],
+                y1,
+                (
+                    self.canvasx(self.winfo_width())
+                    if self.PAR.ops.selected_rows_to_end_of_window
+                    else self.col_positions[c2]
+                ),
+                y2,
+                radius=10 if self.PAR.ops.rounded_boxes else 0,
+            ),
         )
         self.itemconfig(
             fill_iid,
@@ -6006,9 +6035,9 @@ class MainTable(tk.Canvas):
         self.RI.coords(
             self.selection_boxes[fill_iid].index,
             0,
-            self.row_positions[r1],
+            y1,
             self.RI.current_width - 1,
-            self.row_positions[r2],
+            y2,
         )
         self.RI.itemconfig(
             self.selection_boxes[fill_iid].index,
@@ -6035,10 +6064,13 @@ class MainTable(tk.Canvas):
             if self.PAR.ops.show_selected_cells_border:
                 self.coords(
                     bd_iid,
-                    self.col_positions[c1],
-                    self.row_positions[r1],
-                    self.col_positions[c2],
-                    self.row_positions[r2],
+                    rounded_box_coords(
+                        self.col_positions[c1],
+                        y1,
+                        self.col_positions[c2],
+                        y2,
+                        radius=10 if self.PAR.ops.rounded_boxes else 0,
+                    ),
                 )
                 self.itemconfig(
                     bd_iid,
@@ -6612,6 +6644,8 @@ class MainTable(tk.Canvas):
 
     def hide_text_editor(self, reason: None | str = None) -> None:
         if self.text_editor.open:
+            for b in ("<Alt-Return>", "<Option-Return>", "<Tab>", "<Return>", "<FocusOut>", "<Escape>"):
+                self.text_editor.tktext.unbind(b)
             self.itemconfig(self.text_editor.canvas_id, state="hidden")
             self.text_editor.open = False
         if reason == "Escape":
@@ -6634,15 +6668,15 @@ class MainTable(tk.Canvas):
             self.hide_text_editor_and_dropdown()
             return
         # setting cell data with text editor value
-        self.text_editor_value = self.text_editor.get()
+        text_editor_value = self.text_editor.get()
         r, c = editor_info[0], editor_info[1]
         datarn, datacn = self.datarn(r), self.datacn(c)
         event_data = event_dict(
             name="end_edit_table",
             sheet=self.PAR.name,
-            cells_table={(datarn, datacn): self.text_editor_value},
+            cells_table={(datarn, datacn): text_editor_value},
             key=editor_info[2],
-            value=self.text_editor_value,
+            value=text_editor_value,
             loc=(r, c),
             boxes=self.get_boxes(),
             selected=self.selected,
@@ -6658,11 +6692,11 @@ class MainTable(tk.Canvas):
             check_input_valid=False,
         )
         if self.edit_validation_func:
-            self.text_editor_value = self.edit_validation_func(event_data)
-            if self.text_editor_value is not None and self.input_valid_for_cell(datarn, datacn, self.text_editor_value):
-                edited = set_data(value=self.text_editor_value)
-        elif self.input_valid_for_cell(datarn, datacn, self.text_editor_value):
-            edited = set_data(value=self.text_editor_value)
+            text_editor_value = self.edit_validation_func(event_data)
+            if text_editor_value is not None and self.input_valid_for_cell(datarn, datacn, text_editor_value):
+                edited = set_data(value=text_editor_value)
+        elif self.input_valid_for_cell(datarn, datacn, text_editor_value):
+            edited = set_data(value=text_editor_value)
         if edited:
             try_binding(self.extra_end_edit_cell_func, event_data)
         if (
@@ -6672,7 +6706,7 @@ class MainTable(tk.Canvas):
             and r == self.selected.row
             and c == self.selected.column
             and (self.single_selection_enabled or self.toggle_selection_enabled)
-            and (edited or self.cell_equal_to(datarn, datacn, self.text_editor_value))
+            and (edited or self.cell_equal_to(datarn, datacn, text_editor_value))
         ):
             r1, c1, r2, c2 = self.selection_boxes[self.selected.fill_iid].coords
             numcols = c2 - c1
@@ -6990,6 +7024,7 @@ class MainTable(tk.Canvas):
 
     def hide_dropdown_window(self) -> None:
         if self.dropdown.open:
+            self.dropdown.window.unbind("<FocusOut>")
             self.itemconfig(self.dropdown.canvas_id, state="hidden")
             self.dropdown.open = False
 
@@ -7041,12 +7076,14 @@ class MainTable(tk.Canvas):
         c: int = 0,
         datarn: int | None = None,
         datacn: int | None = None,
-        value: str = "",
+        value: str | None = None,
         undo: bool = True,
         cell_resize: bool = True,
         redraw: bool = True,
         check_input_valid: bool = True,
     ) -> bool:
+        if value is None:
+            value = ""
         if datacn is None:
             datacn = self.datacn(c)
         if datarn is None:

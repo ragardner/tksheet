@@ -23,7 +23,7 @@ from .functions import (
     consecutive_ranges,
     ev_stack_dict,
     event_dict,
-    get_checkbox_points,
+    rounded_box_coords,
     get_n2a,
     is_contiguous,
     try_binding,
@@ -1276,7 +1276,7 @@ class ColumnHeaders(tk.Canvas):
             self.disp_dropdown[t] = True
 
     def redraw_checkbox(self, x1, y1, x2, y2, fill, outline, tag, draw_check=False):
-        points = get_checkbox_points(x1, y1, x2, y2)
+        points = rounded_box_coords(x1, y1, x2, y2)
         if self.hidd_checkbox:
             t, sh = self.hidd_checkbox.popitem()
             self.coords(t, points)
@@ -1294,7 +1294,7 @@ class ColumnHeaders(tk.Canvas):
             y1 = y1 + 4
             x2 = x2 - 3
             y2 = y2 - 3
-            points = get_checkbox_points(x1, y1, x2, y2, radius=4)
+            points = rounded_box_coords(x1, y1, x2, y2, radius=4)
             if self.hidd_checkbox:
                 t, sh = self.hidd_checkbox.popitem()
                 self.coords(t, points)
@@ -1817,6 +1817,8 @@ class ColumnHeaders(tk.Canvas):
 
     def hide_text_editor(self, reason: None | str = None) -> None:
         if self.text_editor.open:
+            for b in ("<Alt-Return>", "<Option-Return>", "<Tab>", "<Return>", "<FocusOut>", "<Escape>"):
+                self.text_editor.tktext.unbind(b)
             self.itemconfig(self.text_editor.canvas_id, state="hidden")
             self.text_editor.open = False
         if reason == "Escape":
@@ -1840,7 +1842,7 @@ class ColumnHeaders(tk.Canvas):
             self.hide_text_editor_and_dropdown()
             return
         # setting cell data with text editor value
-        self.text_editor_value = self.text_editor.get()
+        text_editor_value = self.text_editor.get()
         c = editor_info[0]
         datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
         event_data = event_dict(
@@ -1848,7 +1850,7 @@ class ColumnHeaders(tk.Canvas):
             sheet=self.PAR.name,
             cells_header={datacn: self.get_cell_data(datacn)},
             key=editor_info[1] if len(editor_info) >= 2 else "FocusOut",
-            value=self.text_editor_value,
+            value=text_editor_value,
             loc=c,
             boxes=self.MT.get_boxes(),
             selected=self.MT.selected,
@@ -1861,11 +1863,11 @@ class ColumnHeaders(tk.Canvas):
             check_input_valid=False,
         )
         if self.MT.edit_validation_func:
-            self.text_editor_value = self.MT.edit_validation_func(event_data)
-            if self.text_editor_value is not None and self.input_valid_for_cell(datacn, self.text_editor_value):
-                edited = set_data(value=self.text_editor_value)
-        elif self.input_valid_for_cell(datacn, self.text_editor_value):
-            edited = set_data(value=self.text_editor_value)
+            text_editor_value = self.MT.edit_validation_func(event_data)
+            if text_editor_value is not None and self.input_valid_for_cell(datacn, text_editor_value):
+                edited = set_data(value=text_editor_value)
+        elif self.input_valid_for_cell(datacn, text_editor_value):
+            edited = set_data(value=text_editor_value)
         if edited:
             try_binding(self.extra_end_edit_cell_func, event_data)
         self.MT.recreate_all_selection_boxes()
@@ -2037,6 +2039,7 @@ class ColumnHeaders(tk.Canvas):
 
     def hide_dropdown_window(self) -> None:
         if self.dropdown.open:
+            self.dropdown.window.unbind("<FocusOut>")
             self.itemconfig(self.dropdown.canvas_id, state="hidden")
             self.dropdown.open = False
 

@@ -356,7 +356,7 @@ def consecutive_chunks(seq: list[int]) -> Generator[list[int]]:
     for index, value in enumerate(seq, 1):
         try:
             if seq[index] > value + 1:
-                yield seq[start:(start := index)]
+                yield seq[start : (start := index)]
         except Exception:
             yield seq[start : len(seq)]
 
@@ -504,14 +504,14 @@ def displayed_to_data_idxs(
     return [displayed[e] for e in to_convert]
 
 
-def get_checkbox_points(
+def rounded_box_coords(
     x1: float,
     y1: float,
     x2: float,
     y2: float,
     radius: int = 8,
-) -> list[float]:
-    return [
+) -> tuple[float]:
+    return (
         x1 + radius,
         y1,
         x1 + radius,
@@ -552,7 +552,7 @@ def get_checkbox_points(
         y1 + radius,
         x1,
         y1,
-    ]
+    )
 
 
 def diff_list(seq: list[float]) -> list[int]:

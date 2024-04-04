@@ -31,7 +31,7 @@ from .functions import (
     consecutive_chunks,
     ev_stack_dict,
     event_dict,
-    get_checkbox_points,
+    rounded_box_coords,
     get_n2a,
     is_contiguous,
     num2alpha,
@@ -959,6 +959,9 @@ class RowIndex(tk.Canvas):
         state: str,
         tags: str | tuple[str],
     ) -> int:
+        if self.PAR.ops.thin_boxes:
+            y1 += 2
+            y2 -= 2
         if self.hidd_boxes:
             iid = self.hidd_boxes.pop()
             self.coords(iid, x1, y1, x2, y2)
@@ -1341,7 +1344,7 @@ class RowIndex(tk.Canvas):
             self.disp_dropdown[t] = True
 
     def redraw_checkbox(self, x1, y1, x2, y2, fill, outline, tag, draw_check=False):
-        points = get_checkbox_points(x1, y1, x2, y2)
+        points = rounded_box_coords(x1, y1, x2, y2)
         if self.hidd_checkbox:
             t, sh = self.hidd_checkbox.popitem()
             self.coords(t, points)
@@ -1359,7 +1362,7 @@ class RowIndex(tk.Canvas):
             y1 = y1 + 4
             x2 = x2 - 3
             y2 = y2 - 3
-            points = get_checkbox_points(x1, y1, x2, y2, radius=4)
+            points = rounded_box_coords(x1, y1, x2, y2, radius=4)
             if self.hidd_checkbox:
                 t, sh = self.hidd_checkbox.popitem()
                 self.coords(t, points)
@@ -1892,6 +1895,8 @@ class RowIndex(tk.Canvas):
 
     def hide_text_editor(self, reason: None | str = None) -> None:
         if self.text_editor.open:
+            for b in ("<Alt-Return>", "<Option-Return>", "<Tab>", "<Return>", "<FocusOut>", "<Escape>"):
+                self.text_editor.tktext.unbind(b)
             self.itemconfig(self.text_editor.canvas_id, state="hidden")
             self.text_editor.open = False
         if reason == "Escape":
@@ -1913,7 +1918,7 @@ class RowIndex(tk.Canvas):
         if editor_info is not None and len(editor_info) >= 2 and editor_info[1] == "Escape":
             self.hide_text_editor_and_dropdown()
             return
-        self.text_editor_value = self.text_editor.get()
+        text_editor_value = self.text_editor.get()
         r = editor_info[0]
         datarn = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r]
         event_data = event_dict(
@@ -1921,7 +1926,7 @@ class RowIndex(tk.Canvas):
             sheet=self.PAR.name,
             cells_index={datarn: self.get_cell_data(datarn)},
             key=editor_info[1] if len(editor_info) >= 2 else "FocusOut",
-            value=self.text_editor_value,
+            value=text_editor_value,
             loc=r,
             boxes=self.MT.get_boxes(),
             selected=self.MT.selected,
@@ -1934,11 +1939,11 @@ class RowIndex(tk.Canvas):
             check_input_valid=False,
         )
         if self.MT.edit_validation_func:
-            self.text_editor_value = self.MT.edit_validation_func(event_data)
-            if self.text_editor_value is not None and self.input_valid_for_cell(datarn, self.text_editor_value):
-                edited = set_data(value=self.text_editor_value)
-        elif self.input_valid_for_cell(datarn, self.text_editor_value):
-            edited = set_data(value=self.text_editor_value)
+            text_editor_value = self.MT.edit_validation_func(event_data)
+            if text_editor_value is not None and self.input_valid_for_cell(datarn, text_editor_value):
+                edited = set_data(value=text_editor_value)
+        elif self.input_valid_for_cell(datarn, text_editor_value):
+            edited = set_data(value=text_editor_value)
         if edited:
             try_binding(self.extra_end_edit_cell_func, event_data)
         self.MT.recreate_all_selection_boxes()
@@ -2125,6 +2130,7 @@ class RowIndex(tk.Canvas):
 
     def hide_dropdown_window(self) -> None:
         if self.dropdown.open:
+            self.dropdown.window.unbind("<FocusOut>")
             self.itemconfig(self.dropdown.canvas_id, state="hidden")
             self.dropdown.open = False
 

@@ -172,6 +172,9 @@ class Sheet(tk.Frame):
         show_selected_cells_border: bool = True,
         treeview: bool = False,
         treeview_indent: str | int = "3",
+        rounded_boxes: bool = True,
+        thin_boxes: bool = False,
+        alternate_color: str = "",
         # colors
         outline_thickness: int = 0,
         outline_color: str = theme_light_blue["outline_color"],

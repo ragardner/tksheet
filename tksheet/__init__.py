@@ -41,7 +41,7 @@ from .functions import (
     event_dict,
     get_checkbox_dict,
     get_checkbox_kwargs,
-    get_checkbox_points,
+    rounded_box_coords,
     get_dropdown_dict,
     get_dropdown_kwargs,
     get_index_of_gap_in_sorted_integer_seq_forward,
@@ -55,6 +55,9 @@ from .functions import (
     num2alpha,
     span_dict,
     tksheet_type_error,
+)
+from .listbox import (
+    ListBox,
 )
 from .main_table import MainTable
 from .other_classes import (

@@ -1,4 +1,13 @@
 ### Version 7.1.7
+#### Fixed:
+- Using a cell text editor followed by setting a dropdown box with a text editor would set the previously open cell to the dropdown value
+
+#### Changed:
+- Selection boxes now have rounded corners
+- Function `get_checkbox_points` renamed `rounded_box_coords`
+
+#### Added:
+- `rounded_boxes`, `thin_boxes` Sheet options both `bool`
 
 ### Version 7.1.6
 #### Fixed:
