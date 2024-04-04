@@ -935,14 +935,26 @@ class ColumnHeaders(tk.Canvas):
         outline: str,
         state: str,
         tags: str | tuple[str],
+        iid: None | int = None,
     ) -> int:
-        if self.hidd_boxes:
-            iid = self.hidd_boxes.pop()
-            self.coords(iid, x1, y1, x2, y2)
+        coords = rounded_box_coords(
+            x1,
+            y1,
+            x2,
+            y2,
+            radius=9 if self.PAR.ops.rounded_boxes else 0,
+        )
+        if isinstance(iid, int):
+            self.coords(iid, coords)
             self.itemconfig(iid, fill=fill, outline=outline, state=state, tags=tags)
         else:
-            iid = self.create_rectangle(x1, y1, x2, y2, fill=fill, outline=outline, state=state, tags=tags)
-        self.disp_boxes.add(iid)
+            if self.hidd_boxes:
+                iid = self.hidd_boxes.pop()
+                self.coords(iid, coords)
+                self.itemconfig(iid, fill=fill, outline=outline, state=state, tags=tags)
+            else:
+                iid = self.create_polygon(coords, fill=fill, outline=outline, state=state, tags=tags, smooth=True)
+            self.disp_boxes.add(iid)
         return iid
 
     def hide_box(self, item: int) -> None:

@@ -390,7 +390,6 @@ def __init__(
     treeview: bool = False,
     treeview_indent: str | int = "3",
     rounded_boxes: bool = True,
-    thin_boxes: bool = False,
     # colors
     outline_thickness: int = 0,
     outline_color: str = theme_light_blue["outline_color"],

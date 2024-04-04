@@ -7,7 +7,7 @@
 - Function `get_checkbox_points` renamed `rounded_box_coords`
 
 #### Added:
-- `rounded_boxes`, `thin_boxes` Sheet options both `bool`
+- `rounded_boxes` Sheet option
 
 ### Version 7.1.6
 #### Fixed:

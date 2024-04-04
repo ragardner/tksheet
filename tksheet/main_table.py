@@ -5807,40 +5807,34 @@ class MainTable(tk.Canvas):
         state: str,
         tags: str | tuple[str],
         width: int,
+        iid: None | int = None,
     ) -> int:
-        if self.PAR.ops.thin_boxes:
-            y1 += 2
-            y2 -= 2
-        if self.hidd_boxes:
-            iid = self.hidd_boxes.pop()
+        coords = rounded_box_coords(
+            x1,
+            y1,
+            x2,
+            y2,
+            radius=9 if self.PAR.ops.rounded_boxes else 0,
+        )
+        if isinstance(iid, int):
             self.itemconfig(iid, fill=fill, outline=outline, state=state, tags=tags, width=width)
-            self.coords(
-                iid,
-                rounded_box_coords(
-                    x1,
-                    y1,
-                    x2,
-                    y2,
-                    radius=10 if self.PAR.ops.rounded_boxes else 0,
-                ),
-            )
+            self.coords(iid, coords)
         else:
-            iid = self.create_polygon(
-                rounded_box_coords(
-                    x1,
-                    y1,
-                    x2,
-                    y2,
-                    radius=10 if self.PAR.ops.rounded_boxes else 0,
-                ),
-                fill=fill,
-                outline=outline,
-                state=state,
-                tags=tags,
-                width=width,
-                smooth=True,
-            )
-        self.disp_boxes.add(iid)
+            if self.hidd_boxes:
+                iid = self.hidd_boxes.pop()
+                self.itemconfig(iid, fill=fill, outline=outline, state=state, tags=tags, width=width)
+                self.coords(iid, coords)
+            else:
+                iid = self.create_polygon(
+                    coords,
+                    fill=fill,
+                    outline=outline,
+                    state=state,
+                    tags=tags,
+                    width=width,
+                    smooth=True,
+                )
+            self.disp_boxes.add(iid)
         return iid
 
     def hide_box(self, item: int | None) -> None:
@@ -5895,11 +5889,12 @@ class MainTable(tk.Canvas):
             mt_border_col = self.PAR.ops.table_selected_columns_border_fg
         if self.selection_boxes:
             self.itemconfig(next(reversed(self.selection_boxes)), state="normal")
+        x1, y1, x2, y2 = self.box_sheet_coords_x_canvas_coords(r1, c1, r2, c2, type_)
         fill_iid = self.display_box(
-            self.col_positions[c1],
-            self.row_positions[r1],
-            self.canvasx(self.winfo_width()) if self.PAR.ops.selected_rows_to_end_of_window else self.col_positions[c2],
-            self.row_positions[r2],
+            x1,
+            y1,
+            x2,
+            y2,
             fill=mt_bg,
             outline="",
             state=state if self.PAR.ops.show_selected_cells_border else "normal",
@@ -5907,17 +5902,17 @@ class MainTable(tk.Canvas):
             width=1,
         )
         index_iid = self.RI.display_box(
-            0,
-            self.row_positions[r1],
+            1,
+            y1,
             self.RI.current_width - 1,
-            self.row_positions[r2],
+            y2,
             fill=self.PAR.ops.index_selected_rows_bg if type_ == "rows" else self.PAR.ops.index_selected_cells_bg,
             outline="",
             state="normal",
             tags="cells" if type_ == "columns" else type_,
         )
         header_iid = self.CH.display_box(
-            self.col_positions[c1],
+            x1,
             0,
             self.col_positions[c2],
             self.CH.current_height - 1,
@@ -5934,10 +5929,10 @@ class MainTable(tk.Canvas):
             or self.selection_boxes
         ):
             bd_iid = self.display_box(
-                self.col_positions[c1],
-                self.row_positions[r1],
-                self.col_positions[c2],
-                self.row_positions[r2],
+                x1,
+                y1,
+                x2,
+                y2,
                 fill="",
                 outline=mt_border_col,
                 state="normal",
@@ -5980,6 +5975,23 @@ class MainTable(tk.Canvas):
             if self.PAR.ops.show_selected_cells_border:
                 self.tag_raise(self.selected.iid)
 
+    def box_sheet_coords_x_canvas_coords(
+        self,
+        r1: int,
+        c1: int,
+        r2: int,
+        c2: int,
+        type_: Literal["cells", "rows", "columns"],
+    ) -> tuple[float, float, float, float]:
+        x1 = self.col_positions[c1]
+        y1 = self.row_positions[r1]
+        y2 = self.row_positions[r2]
+        if type_ == "rows" and self.PAR.ops.selected_rows_to_end_of_window:
+            x2 = self.canvasx(self.winfo_width())
+        else:
+            x2 = self.col_positions[c2]
+        return x1, y1, x2, y2
+
     def recreate_selection_box(
         self,
         r1: int,
@@ -6010,79 +6022,45 @@ class MainTable(tk.Canvas):
                 state = "normal"
         if self.selected.fill_iid == fill_iid:
             self.selected = self.selected._replace(box=Box_nt(r1, c1, r2, c2))
-        if self.PAR.ops.thin_boxes:
-            y1 = self.row_positions[r1] + 2
-            y2 = self.row_positions[r2] - 2
-        else:
-            y1 = self.row_positions[r1]
-            y2 = self.row_positions[r2]
-        self.coords(
-            fill_iid,
-            rounded_box_coords(
-                self.col_positions[c1],
-                y1,
-                (
-                    self.canvasx(self.winfo_width())
-                    if self.PAR.ops.selected_rows_to_end_of_window
-                    else self.col_positions[c2]
-                ),
-                y2,
-                radius=10 if self.PAR.ops.rounded_boxes else 0,
-            ),
-        )
-        self.itemconfig(
-            fill_iid,
-            fill=mt_bg,
-            outline="",
-            tags=type_,
-            state=state,
-        )
-        self.RI.coords(
-            self.selection_boxes[fill_iid].index,
-            0,
+        x1, y1, x2, y2 = self.box_sheet_coords_x_canvas_coords(r1, c1, r2, c2, type_)
+        self.display_box(x1, y1, x2, y2, fill=mt_bg, outline="", state=state, tags=type_, width=1, iid=fill_iid)
+        self.RI.display_box(
+            1,
             y1,
             self.RI.current_width - 1,
             y2,
-        )
-        self.RI.itemconfig(
-            self.selection_boxes[fill_iid].index,
             fill=self.PAR.ops.index_selected_rows_bg if type_ == "rows" else self.PAR.ops.index_selected_cells_bg,
             outline="",
+            state="normal",
             tags="cells" if type_ == "columns" else type_,
+            iid=self.selection_boxes[fill_iid].index,
         )
-        self.CH.coords(
-            self.selection_boxes[fill_iid].header,
-            self.col_positions[c1],
+        self.CH.display_box(
+            x1,
             0,
             self.col_positions[c2],
             self.CH.current_height - 1,
-        )
-        self.CH.itemconfig(
-            self.selection_boxes[fill_iid].header,
             fill=(
                 self.PAR.ops.header_selected_columns_bg if type_ == "columns" else self.PAR.ops.header_selected_cells_bg
             ),
             outline="",
+            state="normal",
             tags="cells" if type_ == "rows" else type_,
+            iid=self.selection_boxes[fill_iid].header,
         )
-        if bd_iid := self.selection_boxes[fill_iid].bd_iid:
+        if (bd_iid := self.selection_boxes[fill_iid].bd_iid):
             if self.PAR.ops.show_selected_cells_border:
-                self.coords(
-                    bd_iid,
-                    rounded_box_coords(
-                        self.col_positions[c1],
-                        y1,
-                        self.col_positions[c2],
-                        y2,
-                        radius=10 if self.PAR.ops.rounded_boxes else 0,
-                    ),
-                )
-                self.itemconfig(
-                    bd_iid,
+                self.display_box(
+                    x1,
+                    y1,
+                    x2,
+                    y2,
                     fill="",
                     outline=mt_border_col,
-                    tags=f"{type_}bd",
                     state="normal",
+                    tags=f"{type_}bd",
+                    width=1,
+                    iid=bd_iid,
                 )
                 self.tag_raise(bd_iid)
             else:

@@ -173,7 +173,6 @@ class Sheet(tk.Frame):
         treeview: bool = False,
         treeview_indent: str | int = "3",
         rounded_boxes: bool = True,
-        thin_boxes: bool = False,
         alternate_color: str = "",
         # colors
         outline_thickness: int = 0,

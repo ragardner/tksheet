@@ -236,7 +236,6 @@ def new_sheet_options() -> DotDict:
             "treeview": False,
             "treeview_indent": "3",
             "rounded_boxes": True,
-            "thin_boxes": False,
             "alternate_color": "",
         }
     )
