@@ -2791,6 +2791,7 @@ class MainTable(tk.Canvas):
         c = self.identify_col(x=event.x)
         if self.single_selection_enabled and self.not_currently_resizing():
             if r < len(self.row_positions) - 1 and c < len(self.col_positions) - 1:
+                self.being_drawn_item = True
                 self.being_drawn_item = self.select_cell(r, c, redraw=True)
         elif self.toggle_selection_enabled and self.not_currently_resizing():
             r = self.identify_row(y=event.y)
@@ -3027,7 +3028,11 @@ class MainTable(tk.Canvas):
                 c_to_sel,
                 item=self.create_selection_box(
                     *to_sel,
-                    state="hidden" if (to_sel[2] - to_sel[0] == 1 and to_sel[3] - to_sel[1] == 1) else "normal",
+                    state=(
+                        "hidden"
+                        if (to_sel.upto_r - to_sel.from_r == 1 and to_sel.upto_c - to_sel.from_c == 1)
+                        else "normal"
+                    ),
                     set_current=False,
                 ),
             )
