@@ -1663,6 +1663,7 @@ class ColumnHeaders(tk.Canvas):
                         key=extra_func_key,
                         value=text,
                         loc=c,
+                        column=c,
                         boxes=self.MT.get_boxes(),
                         selected=self.MT.selected,
                     )
@@ -1862,6 +1863,7 @@ class ColumnHeaders(tk.Canvas):
             key=editor_info[1] if len(editor_info) >= 2 else "FocusOut",
             value=text_editor_value,
             loc=c,
+            column=c,
             boxes=self.MT.get_boxes(),
             selected=self.MT.selected,
         )
@@ -1970,6 +1972,7 @@ class ColumnHeaders(tk.Canvas):
                         sheet=self.PAR.name,
                         value=self.text_editor.get(),
                         loc=c,
+                        column=c,
                         boxes=self.MT.get_boxes(),
                         selected=self.MT.selected,
                     ),
@@ -2005,6 +2008,7 @@ class ColumnHeaders(tk.Canvas):
                 key="??",
                 value=selection,
                 loc=c,
+                column=c,
                 boxes=self.MT.get_boxes(),
                 selected=self.MT.selected,
             )
@@ -2230,6 +2234,7 @@ class ColumnHeaders(tk.Canvas):
                 key="??",
                 value=value,
                 loc=c,
+                column=c,
                 boxes=self.MT.get_boxes(),
                 selected=self.MT.selected,
             )

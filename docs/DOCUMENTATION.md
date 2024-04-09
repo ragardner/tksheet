@@ -858,6 +858,8 @@ It has the following layout and keys:
     "key": "",
     "value": None,
     "loc": tuple(),
+    "row": None,
+    "column": None,
     "resized": {
         "rows": {},
         "columns": {},
@@ -969,6 +971,8 @@ Keys:
 - Key **`["loc"]`** is for cell editing events to show the displayed (not data) coordinates of the event. It will be **either:**
     - A tuple of `(int displayed row index, int displayed column index)` in the case of editing table cells.
     - A single `int` in the case of editing index/header cells.
+- Key **`["row"]`** is for cell editing events to show the displayed (not data) row number `int` of the event. If the event was not a cell editing event or a header cell was edited the value will be `None`.
+- Key **`["column"]`** is for cell editing events to show the displayed (not data) column number `int` of the event. If the event was not a cell editing event or an index cell was edited the value will be `None`.
 - Key **`["resized"]["rows"]`** is for row height resizing events, it will be a `dict` with the following layout:
     - `{int displayed row index: {"old_size": old_height, "new_size": new_height}}`.
     - If no rows have been resized then the value for `["resized"]["rows"]` will be an empty `dict`.

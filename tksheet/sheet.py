@@ -2922,7 +2922,6 @@ class Sheet(tk.Frame):
                 item=selected.iid,
                 box=selected.box,
             )
-
         else:
             self.MT.deselect()
         return self

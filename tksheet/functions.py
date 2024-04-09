@@ -102,6 +102,8 @@ def event_dict(
     key: None | str = None,
     value: object = None,
     loc: None | int | tuple[int] = None,
+    row: None | int = None,
+    column: None | int = None,
     resized_rows: None | dict = None,
     resized_columns: None | dict = None,
     # resized_index: None, dict] = None,
@@ -147,6 +149,8 @@ def event_dict(
         key="" if key is None else key,
         value=None if value is None else value,
         loc=tuple() if loc is None else loc,
+        row=row,
+        column=column,
         resized=DotDict(
             rows=DotDict() if resized_rows is None else resized_rows,
             columns=DotDict() if resized_columns is None else resized_columns,

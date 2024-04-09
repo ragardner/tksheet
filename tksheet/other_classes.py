@@ -21,6 +21,10 @@ Box_st = namedtuple(
     "Box_st",
     "coords type_"
 )
+Loc = namedtuple(
+    "Loc",
+    "row column"
+)
 
 Highlight = namedtuple(
     "Highlight",

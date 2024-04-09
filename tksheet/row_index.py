@@ -1755,6 +1755,7 @@ class RowIndex(tk.Canvas):
                         key=extra_func_key,
                         value=text,
                         loc=r,
+                        row=r,
                         boxes=self.MT.get_boxes(),
                         selected=self.MT.selected,
                     )
@@ -1942,6 +1943,7 @@ class RowIndex(tk.Canvas):
             key=editor_info[1] if len(editor_info) >= 2 else "FocusOut",
             value=text_editor_value,
             loc=r,
+            row=r,
             boxes=self.MT.get_boxes(),
             selected=self.MT.selected,
         )
@@ -2064,6 +2066,7 @@ class RowIndex(tk.Canvas):
                         sheet=self.PAR.name,
                         value=self.text_editor.get(),
                         loc=r,
+                        row=r,
                         boxes=self.MT.get_boxes(),
                         selected=self.MT.selected,
                     ),
@@ -2100,6 +2103,7 @@ class RowIndex(tk.Canvas):
                 key="??",
                 value=selection,
                 loc=r,
+                row=r,
                 boxes=self.MT.get_boxes(),
                 selected=self.MT.selected,
             )
@@ -2322,6 +2326,7 @@ class RowIndex(tk.Canvas):
                 key="??",
                 value=value,
                 loc=r,
+                row=r,
                 boxes=self.MT.get_boxes(),
                 selected=self.MT.selected,
             )
