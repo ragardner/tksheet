@@ -56,9 +56,6 @@ from .functions import (
     span_dict,
     tksheet_type_error,
 )
-from .listbox import (
-    ListBox,
-)
 from .main_table import MainTable
 from .other_classes import (
     DotDict,
