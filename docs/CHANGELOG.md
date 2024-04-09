@@ -1,3 +1,6 @@
+### Version 7.1.8
+####
+
 ### Version 7.1.7
 #### Fixed:
 - Using a cell text editor followed by setting a dropdown box with a text editor would set the previously open cell to the dropdown value
