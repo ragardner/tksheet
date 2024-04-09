@@ -2913,6 +2913,20 @@ class Sheet(tk.Frame):
     def selected(self) -> tuple[()] | Selected:
         return self.MT.selected
 
+    @selected.setter
+    def selected(self, selected: tuple[()] | Selected) -> Sheet:
+        if selected:
+            self.MT.set_currently_selected(
+                r=selected.row,
+                c=selected.column,
+                item=selected.iid,
+                box=selected.box,
+            )
+
+        else:
+            self.MT.deselect()
+        return self
+
     def get_selected_rows(
         self,
         get_cells: bool = False,
@@ -2967,6 +2981,12 @@ class Sheet(tk.Frame):
     @property
     def boxes(self) -> list[tuple[tuple[int, int, int, int], str]]:
         return self.MT.get_all_selection_boxes_with_types()
+
+    @boxes.setter
+    def boxes(self, boxes: Sequence[tuple[tuple[int, int, int, int], str]]) -> Sheet:
+        self.MT.deselect()
+        self.MT.reselect_from_get_boxes(boxes={box[0]: box[1] for box in boxes})
+        return self
 
     def cell_selected(
         self,
