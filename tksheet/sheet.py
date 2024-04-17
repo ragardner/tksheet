@@ -8,7 +8,6 @@ from itertools import accumulate, chain, islice, product
 from timeit import default_timer
 from tkinter import ttk
 from typing import Literal
-from warnings import warn as WARNING
 
 from .column_headers import ColumnHeaders
 from .functions import (
@@ -46,8 +45,8 @@ from .other_classes import (
     FontTuple,
     GeneratedMouseEvent,
     Node,
-    Span,
     Selected,
+    Span,
 )
 from .row_index import RowIndex
 from .sheet_options import (
@@ -271,9 +270,6 @@ class Sheet(tk.Frame):
             highlightthickness=outline_thickness,
             highlightbackground=outline_color,
             highlightcolor=outline_color,
-        )
-        WARNING(
-            "There have been many changes from tksheet version 6.x.x to version 7.x.x. Please see the changelog for more information."
         )
         self.ops = new_sheet_options()
         if column_width is not None:
@@ -614,7 +610,7 @@ class Sheet(tk.Frame):
         for b, f in iterable:
             b = b.lower()
 
-            if func is not None and b in emitted_events:
+            if f is not None and b in emitted_events:
                 self.bind(b, f)
 
             if b in (
@@ -1357,16 +1353,14 @@ class Sheet(tk.Frame):
             if header:
                 if table:
                     res.extend(
-                        [
-                            [quick_hdata(c, get_displayed=hdisp)]
-                            + [quick_tdata(r, c, get_displayed=tdisp, fmt_kw=fmt_kw) for r in rows]
-                            for c in cols
-                        ]
+                        [quick_hdata(c, get_displayed=hdisp)]
+                        + [quick_tdata(r, c, get_displayed=tdisp, fmt_kw=fmt_kw) for r in rows]
+                        for c in cols
                     )
                 else:
-                    res.extend([[quick_hdata(c, get_displayed=hdisp)] for c in cols])
+                    res.extend([quick_hdata(c, get_displayed=hdisp)] for c in cols)
             elif table:
-                res.extend([[quick_tdata(r, c, get_displayed=tdisp, fmt_kw=fmt_kw) for r in rows] for c in cols])
+                res.extend([quick_tdata(r, c, get_displayed=tdisp, fmt_kw=fmt_kw) for r in rows] for c in cols)
         elif not span.transposed:
             if header:
                 if header and index:
@@ -1379,16 +1373,14 @@ class Sheet(tk.Frame):
             if index:
                 if table:
                     res.extend(
-                        [
-                            [quick_idata(r, get_displayed=idisp)]
-                            + [quick_tdata(r, c, get_displayed=tdisp, fmt_kw=fmt_kw) for c in cols]
-                            for r in rows
-                        ]
+                        [quick_idata(r, get_displayed=idisp)]
+                        + [quick_tdata(r, c, get_displayed=tdisp, fmt_kw=fmt_kw) for c in cols]
+                        for r in rows
                     )
                 else:
-                    res.extend([[quick_idata(r, get_displayed=idisp)] for r in rows])
+                    res.extend([quick_idata(r, get_displayed=idisp)] for r in rows)
             elif table:
-                res.extend([[quick_tdata(r, c, get_displayed=tdisp, fmt_kw=fmt_kw) for c in cols] for r in rows])
+                res.extend([quick_tdata(r, c, get_displayed=tdisp, fmt_kw=fmt_kw) for c in cols] for r in rows)
         if not span.ndim:
             # it's a cell
             if len(res) == 1 and len(res[0]) == 1:
@@ -1521,7 +1513,7 @@ class Sheet(tk.Frame):
         )
 
     @data.setter
-    def data(self, value):
+    def data(self, value: list[list[object]]) -> None:
         self.data_reference(value)
 
     def set_data(
@@ -2850,12 +2842,7 @@ class Sheet(tk.Frame):
         self.set_refresh_timer(redraw)
         return self
 
-    def index_align(
-        self,
-        align: str = None,
-        redraw: bool = True,
-    ) -> str | Sheet:
-        return self.row_index_align(align, redraw)
+    index_align = row_index_align
 
     def align(
         self,
@@ -2917,10 +2904,10 @@ class Sheet(tk.Frame):
     def selected(self, selected: tuple[()] | Selected) -> Sheet:
         if selected:
             self.MT.set_currently_selected(
-                r=selected.row,
-                c=selected.column,
-                item=selected.iid,
-                box=selected.box,
+                r=selected[0],
+                c=selected[1],
+                item=selected[4],
+                box=selected[3],
             )
         else:
             self.MT.deselect()
@@ -2984,7 +2971,9 @@ class Sheet(tk.Frame):
     @boxes.setter
     def boxes(self, boxes: Sequence[tuple[tuple[int, int, int, int], str]]) -> Sheet:
         self.MT.deselect()
-        self.MT.reselect_from_get_boxes(boxes={box[0]: box[1] for box in boxes})
+        self.MT.reselect_from_get_boxes(
+            boxes={box[0] if isinstance(box[0], tuple) else tuple(box[0]): box[1] for box in boxes}
+        )
         return self
 
     def cell_selected(
@@ -3042,7 +3031,7 @@ class Sheet(tk.Frame):
 
     def select_row(self, row: int, redraw: bool = True, run_binding_func: bool = True) -> Sheet:
         self.RI.select_row(
-            int(row) if not isinstance(row, int) else row,
+            row if isinstance(row, int) else int(row),
             redraw=False,
             run_binding_func=run_binding_func,
         )
@@ -3051,7 +3040,7 @@ class Sheet(tk.Frame):
 
     def select_column(self, column: int, redraw: bool = True, run_binding_func: bool = True) -> Sheet:
         self.CH.select_col(
-            int(column) if not isinstance(column, int) else column,
+            column if isinstance(column, int) else int(column),
             redraw=False,
             run_binding_func=run_binding_func,
         )
@@ -3060,8 +3049,8 @@ class Sheet(tk.Frame):
 
     def select_cell(self, row: int, column: int, redraw: bool = True, run_binding_func: bool = True) -> Sheet:
         self.MT.select_cell(
-            int(row) if not isinstance(row, int) else row,
-            int(column) if not isinstance(column, int) else column,
+            row if isinstance(row, int) else int(row),
+            column if isinstance(column, int) else int(column),
             redraw=False,
             run_binding_func=run_binding_func,
         )
@@ -3742,8 +3731,22 @@ class Sheet(tk.Frame):
         return v
 
     @property
+    def all_columns(self) -> bool:
+        return self.MT.all_columns_displayed
+
+    @all_columns.setter
+    def all_columns(self, a: bool) -> Sheet:
+        self.MT.all_columns_displayed = a
+        return self
+
+    @property
     def displayed_columns(self) -> list[int]:
         return self.MT.displayed_columns
+
+    @displayed_columns.setter
+    def displayed_columns(self, columns: list[int]) -> Sheet:
+        self.display_columns(columns=columns, reset_col_positions=False, redraw=True)
+        return self
 
     # Hiding Rows
 
@@ -3848,8 +3851,22 @@ class Sheet(tk.Frame):
         return v
 
     @property
+    def all_rows(self) -> bool:
+        return self.MT.all_rows_displayed
+
+    @all_rows.setter
+    def all_rows(self, a: bool) -> Sheet:
+        self.MT.all_rows_displayed = a
+        return self
+
+    @property
     def displayed_rows(self) -> list[int]:
         return self.MT.displayed_rows
+
+    @displayed_rows.setter
+    def displayed_rows(self, rows: list[int]) -> Sheet:
+        self.display_rows(rows=rows, reset_row_positions=False, redraw=True)
+        return self
 
     # Hiding Sheet Elements
 
@@ -4261,9 +4278,7 @@ class Sheet(tk.Frame):
         self.MT.main_table_redraw_grid_and_text(redraw_header=redraw_header, redraw_row_index=redraw_row_index)
         return self
 
-    def refresh(self, redraw_header: bool = True, redraw_row_index: bool = True) -> Sheet:
-        self.MT.main_table_redraw_grid_and_text(redraw_header=redraw_header, redraw_row_index=redraw_row_index)
-        return self
+    refresh = redraw
 
     # Tags
 
@@ -4469,7 +4484,7 @@ class Sheet(tk.Frame):
         Accepts set[str] of iids that are open in the treeview
         Closes everything else
         """
-        self.RI.tree_open_ids = open_ids
+        self.RI.tree_open_ids = open_ids if isinstance(open_ids, set) else set(open_ids)
         self.hide_rows(
             set(self.MT.displayed_rows),
             redraw=False,
@@ -4830,8 +4845,9 @@ class Sheet(tk.Frame):
         ]
 
     def selection_set(self, *items) -> Sheet:
-        self.deselect()
-        self.selection_add(*items)
+        if any(item.lower() in self.RI.tree for item in unpack(items)):
+            self.deselect()
+            self.selection_add(*items)
         return self
 
     def selection_add(self, *items) -> Sheet:
@@ -4887,12 +4903,8 @@ class Sheet(tk.Frame):
         if redraw and self.after_redraw_id is None:
             self.after_redraw_id = self.after(self.after_redraw_time_ms, self.after_redraw)
 
-    def after_redraw(
-        self,
-        redraw_header: bool = True,
-        redraw_row_index: bool = True,
-    ) -> None:
-        self.MT.main_table_redraw_grid_and_text(redraw_header=redraw_header, redraw_row_index=redraw_row_index)
+    def after_redraw(self) -> None:
+        self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
         self.after_redraw_id = None
 
     def del_options_using_span(

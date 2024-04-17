@@ -1,5 +1,24 @@
 ### Version 7.1.8
-####
+#### Fixed:
+- Issue with setting sheet xview/yview immediately after initialization
+- Visual selection box issue with boxes with 0 length or width
+
+#### Added:
+- Functions:
+    - `boxes` setter for use with `Sheet.get_all_selection_boxes_with_types()` or `Sheet.boxes` property
+    - `selected` setter
+    - `all_rows` property to get `all_rows_displayed` `bool`
+    - `all_columns` property to get `all_columns_displayed` `bool`
+    - `all_rows` setter to set `all_rows_displayed` `bool`
+    - `all_columns` setter to set `all_columns_displayed` `bool`
+    - `displayed_rows` setter uses function `Sheet.display_rows()`
+    - `displayed_columns` setter uses function `Sheet.display_columns()`
+
+#### Changed:
+- Parameters removed from function `Sheet.after_redraw()`
+
+#### Removed:
+- Warnings about version changes from `Sheet()` initialization
 
 ### Version 7.1.7
 #### Fixed:

@@ -56,7 +56,6 @@ from .functions import (
     ev_stack_dict,
     event_dict,
     gen_formatted,
-    rounded_box_coords,
     get_new_indexes,
     get_seq_without_gaps_at_index,
     index_exists,
@@ -67,10 +66,11 @@ from .functions import (
     len_to_idx,
     mod_event_val,
     mod_span,
+    mod_span_widget,
     move_elements_by_mapping,
     pickle_obj,
+    rounded_box_coords,
     span_idxs_post_move,
-    mod_span_widget,
     try_binding,
     unpickle_obj,
 )
@@ -676,7 +676,7 @@ class MainTable(tk.Canvas):
         if lastbox_numrows > new_data_numrows and not lastbox_numrows % new_data_numrows:
             nd = []
             for _ in range(int(lastbox_numrows / new_data_numrows)):
-                nd.extend([r.copy() for r in data])
+                nd.extend(r.copy() for r in data)
             data.extend(nd)
             new_data_numrows *= int(lastbox_numrows / new_data_numrows)
 
@@ -972,14 +972,14 @@ class MainTable(tk.Canvas):
                         run_binding=True,
                     )
         if move_data:
-            self.data[:] = [
-                move_elements_by_mapping(
-                    r,
-                    data_new_idxs,
-                    data_old_idxs,
-                )
-                for r in self.data
-            ]
+            self.data = list(
+                map(
+                    move_elements_by_mapping,
+                    self.data,
+                    repeat(data_new_idxs),
+                    repeat(data_old_idxs),
+                ),
+            )
             maxidx = len_to_idx(totalcols)
             self.CH.fix_header(maxidx)
             if isinstance(self._headers, list) and self._headers:
@@ -1196,7 +1196,7 @@ class MainTable(tk.Canvas):
                         run_binding=True,
                     )
         if move_data:
-            self.data[:] = move_elements_by_mapping(
+            self.data = move_elements_by_mapping(
                 self.data,
                 data_new_idxs,
                 data_old_idxs,
@@ -3214,39 +3214,30 @@ class MainTable(tk.Canvas):
             #     continue
 
     def set_xviews(self, *args, move_synced: bool = True, redraw: bool = True) -> None:
+        self.main_table_redraw_grid_and_text(setting_views=True)
+        self.update_idletasks()
         self.xview(*args)
         if self.show_header:
             self.CH.xview(*args)
         if move_synced:
             self.x_move_synced_scrolls(*args)
         self.fix_views()
-        if redraw:
-            self.main_table_redraw_grid_and_text(redraw_header=True if self.show_header else False)
+        self.PAR.set_refresh_timer(redraw)
 
     def set_yviews(self, *args, move_synced: bool = True, redraw: bool = True) -> None:
+        self.main_table_redraw_grid_and_text(setting_views=True)
+        self.update_idletasks()
         self.yview(*args)
         if self.show_index:
             self.RI.yview(*args)
         if move_synced:
             self.y_move_synced_scrolls(*args)
         self.fix_views()
-        if redraw:
-            self.main_table_redraw_grid_and_text(redraw_row_index=True if self.show_index else False)
+        self.PAR.set_refresh_timer(redraw)
 
     def set_view(self, x_args: list[str, float], y_args: list[str, float]) -> None:
-        self.xview(*x_args)
-        if self.show_header:
-            self.CH.xview(*x_args)
-        self.yview(*y_args)
-        if self.show_index:
-            self.RI.yview(*y_args)
-        self.x_move_synced_scrolls(*x_args)
-        self.y_move_synced_scrolls(*y_args)
-        self.fix_views()
-        self.main_table_redraw_grid_and_text(
-            redraw_row_index=True if self.show_index else False,
-            redraw_header=True if self.show_header else False,
-        )
+        self.set_xviews(*x_args)
+        self.set_yviews(*y_args)
 
     def mousewheel(self, event: object) -> None:
         if event.delta < 0 or event.num == 5:
@@ -4894,7 +4885,7 @@ class MainTable(tk.Canvas):
         if total_rows is not None:
             if len(self.data) < total_rows:
                 ncols = self.total_data_cols() if total_columns is None else total_columns
-                self.data.extend([self.get_empty_row_seq(r, ncols) for r in range(total_rows - len(self.data))])
+                self.data.extend(self.get_empty_row_seq(r, ncols) for r in range(total_rows - len(self.data)))
             else:
                 self.data[total_rows:] = []
         if total_columns is not None:
@@ -5194,6 +5185,7 @@ class MainTable(tk.Canvas):
         redraw_header: bool = False,
         redraw_row_index: bool = False,
         redraw_table: bool = True,
+        setting_views: bool = False,
     ) -> bool:
         try:
             can_width = self.winfo_width()
@@ -5287,6 +5279,8 @@ class MainTable(tk.Canvas):
         if scrollregion != self.scrollregion:
             self.configure(scrollregion=scrollregion)
             self.scrollregion = scrollregion
+        if setting_views:
+            return False
         scrollpos_bot = self.canvasy(can_height)
         end_row = bisect_right(self.row_positions, scrollpos_bot)
         if not scrollpos_bot >= self.row_positions[-1]:
@@ -5766,8 +5760,8 @@ class MainTable(tk.Canvas):
         fill, outline = self.get_selected_box_bg_fg(type_=type_)
         x1 = self.col_positions[c] + 1
         y1 = self.row_positions[r] + 1
-        x2 = self.col_positions[c + 1] if index_exists(self.col_positions, c + 1) else self.col_positions[c]
-        y2 = self.row_positions[r + 1] if index_exists(self.row_positions, r + 1) else self.row_positions[r]
+        x2 = self.col_positions[c + 1] if index_exists(self.col_positions, c + 1) else self.col_positions[c] + 1
+        y2 = self.row_positions[r + 1] if index_exists(self.row_positions, r + 1) else self.row_positions[r] + 1
         self.hide_selected()
         if self.PAR.ops.show_selected_cells_border:
             fill = ""
@@ -5810,12 +5804,16 @@ class MainTable(tk.Canvas):
         width: int,
         iid: None | int = None,
     ) -> int:
+        if not self.PAR.ops.rounded_boxes or not x2 - x1 or not y2 - y1:
+            radius = 0
+        else:
+            radius = 8
         coords = rounded_box_coords(
             x1,
             y1,
             x2,
             y2,
-            radius=9 if self.PAR.ops.rounded_boxes else 0,
+            radius=radius,
         )
         if isinstance(iid, int):
             self.itemconfig(iid, fill=fill, outline=outline, state=state, tags=tags, width=width)
@@ -5845,7 +5843,7 @@ class MainTable(tk.Canvas):
             self.itemconfig(item, state="hidden")
 
     def hide_selection_box(self, item: int | None, set_current: bool = True) -> bool:
-        if item is None:
+        if item is None or item is True:
             return
         box = self.selection_boxes.pop(item)
         self.hide_box(box.fill_iid)
@@ -6049,7 +6047,7 @@ class MainTable(tk.Canvas):
             tags="cells" if type_ == "rows" else type_,
             iid=self.selection_boxes[fill_iid].header,
         )
-        if (bd_iid := self.selection_boxes[fill_iid].bd_iid):
+        if bd_iid := self.selection_boxes[fill_iid].bd_iid:
             if self.PAR.ops.show_selected_cells_border:
                 self.display_box(
                     x1,
@@ -7172,7 +7170,7 @@ class MainTable(tk.Canvas):
 
     def fix_data_len(self, datarn: int, datacn: int | None = None) -> int:
         ncols = self.total_data_cols() if datacn is None else datacn + 1
-        self.data.extend([self.get_empty_row_seq(rn, end=ncols, start=0) for rn in range(len(self.data), datarn + 1)])
+        self.data.extend(self.get_empty_row_seq(rn, end=ncols, start=0) for rn in range(len(self.data), datarn + 1))
         return len(self.data)
 
     def reapply_formatting(self) -> None:

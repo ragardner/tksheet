@@ -3990,6 +3990,24 @@ create_selection_box(
 ___
 
 ```python
+@boxes.setter
+boxes(boxes: Sequence[tuple[tuple[int, int, int, int], str]])
+```
+- Can be used to set the Sheets selection boxes, deselects everything before setting.
+
+Example:
+```python
+sheet.boxes = [
+    ((0, 0, 3, 3), "cells"),
+    ((4, 0, 5, 10), "rows"),
+]
+```
+- The above would select a cells box from cell `A1` up to and including cell `C3` and row `4` (in python index, `5` as excel index) where the sheet has 10 columns.
+- The `str` in the type hint should be either `"cells"` or `"rows"` or `"columns"`.
+
+___
+
+```python
 recreate_all_selection_boxes() -> Sheet
 ```
 
@@ -4515,6 +4533,20 @@ ___
 
 #### **Get all columns displayed boolean**
 
+**Get the bool**
+```python
+@property
+all_columns()
+```
+- e.g. `get_all_columns_displayed = sheet.all_columns`.
+
+**Set the bool**
+```python
+@all_columns.setter
+all_columns(a: bool)
+```
+e.g. `sheet.all_columns = True`.
+
 ```python
 all_columns_displayed(a: bool | None = None) -> bool
 ```
@@ -4684,6 +4716,20 @@ sheet.show_rows(rows)
 ___
 
 #### **Get all rows displayed boolean**
+
+**Get the bool**
+```python
+@property
+all_rows()
+```
+- e.g. `get_all_rows_displayed = sheet.all_rows`.
+
+**Set the bool**
+```python
+@all_rows.setter
+all_rows(a: bool)
+```
+e.g. `sheet.all_rows = True`.
 
 ```python
 all_rows_displayed(a: bool | None = None) -> bool

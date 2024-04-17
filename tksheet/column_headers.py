@@ -23,9 +23,9 @@ from .functions import (
     consecutive_ranges,
     ev_stack_dict,
     event_dict,
-    rounded_box_coords,
     get_n2a,
     is_contiguous,
+    rounded_box_coords,
     try_binding,
 )
 from .other_classes import (
@@ -942,7 +942,7 @@ class ColumnHeaders(tk.Canvas):
             y1,
             x2,
             y2,
-            radius=9 if self.PAR.ops.rounded_boxes else 0,
+            radius=8 if self.PAR.ops.rounded_boxes else 0,
         )
         if isinstance(iid, int):
             self.coords(iid, coords)

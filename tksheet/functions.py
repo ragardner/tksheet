@@ -407,8 +407,8 @@ def index_exists(seq: Sequence[object], index: int) -> bool:
 
 def move_elements_by_mapping(
     seq: list[object],
-    new_idxs: dict,
-    old_idxs: dict,
+    new_idxs: dict[int, int],
+    old_idxs: dict[int, int],
 ) -> list[object]:
     # move elements of a list around, displacing
     # other elements based on mapping
@@ -476,8 +476,7 @@ def get_new_indexes(
 
 
 def insert_items(seq: list | tuple, to_insert: dict, seq_len_func: Callable | None = None) -> list:
-    # faster method of inserting many items into a list
-    # using a dict of reverse sorted order of
+    # inserts many items into a list using a dict of reverse sorted order of
     # {index: value, index: value, ...}
     res = []
     extended = 0
