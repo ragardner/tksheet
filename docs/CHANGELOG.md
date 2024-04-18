@@ -17,11 +17,10 @@
     - `displayed_rows` setter uses function `Sheet.display_rows()`
     - `displayed_columns` setter uses function `Sheet.display_columns()`
 
-#### Changed:
-- Parameters removed from function `Sheet.after_redraw()`
-
 #### Removed:
+- All parameters from function `Sheet.after_redraw()`
 - Warnings about version changes from `Sheet()` initialization
+- `within_range` parameters from internal `get_selected_cells`/`get_selected_rows`/`get_selected_columns` functions
 
 ### Version 7.1.7
 #### Fixed:
