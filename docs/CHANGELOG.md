@@ -1,3 +1,6 @@
+### Version 7.1.9
+####
+
 ### Version 7.1.8
 #### Fixed:
 - Issue with setting sheet xview/yview immediately after initialization
