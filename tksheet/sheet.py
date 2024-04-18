@@ -4415,7 +4415,10 @@ class Sheet(tk.Frame):
         data: list[list[object]],
         iid_column: int,
         parent_column: int,
+        text_column: None | int = None,
     ) -> Sheet:
+        if text_column is None:
+            text_column = iid_column
         tally_of_ids = defaultdict(lambda: -1)
         ncols = max(map(len, data), default=0)
         for rn, row in enumerate(data):
@@ -4434,13 +4437,13 @@ class Sheet(tk.Frame):
                 tally_of_ids[iid] += 1
                 row[iid_column] = new
             if iid not in self.RI.tree:
-                self.RI.tree[iid] = Node(row[iid_column], iid, "")
+                self.RI.tree[iid] = Node(row[text_column], iid, "")
             if iid == pid or self.RI.pid_causes_recursive_loop(iid, pid):
                 row[parent_column] = ""
                 pid = ""
             if pid:
                 if pid not in self.RI.tree:
-                    self.RI.tree[pid] = Node(row[parent_column], pid)
+                    self.RI.tree[pid] = Node(row[text_column], pid)
                 self.RI.tree[iid].parent = self.RI.tree[pid]
                 self.RI.tree[pid].children.append(self.RI.tree[iid])
             else:
@@ -4450,7 +4453,7 @@ class Sheet(tk.Frame):
             if n.parent is None:
                 n.parent = ""
                 newrow = self.MT.get_empty_row_seq(len(data), ncols)
-                newrow[iid_column] = n.text
+                newrow[iid_column] = n.iid
                 self.RI.tree_rns[n.iid] = len(data)
                 data.append(newrow)
         self.insert_rows(
