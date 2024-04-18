@@ -26,7 +26,6 @@ from itertools import (
     chain,
     cycle,
     islice,
-    product,
     repeat,
 )
 from math import (
@@ -6146,168 +6145,62 @@ class MainTable(tk.Canvas):
     def get_selected_rows(
         self,
         get_cells: bool = False,
-        within_range: tuple | None = None,
         get_cells_as_rows: bool = False,
     ) -> set[int] | set[tuple[int, int]]:
-        s = set()
-        if within_range is not None:
-            within_r1 = within_range[0]
-            within_r2 = within_range[1]
         if get_cells:
-            if within_range is None:
-                for item, box in self.get_selection_items(cells=False, columns=False):
-                    r1, c1, r2, c2 = box.coords
-                    s.update(set(product(range(r1, r2), range(0, len(self.col_positions) - 1))))
-                if get_cells_as_rows:
-                    s.update(self.get_selected_cells())
-            else:
-                for item, box in self.get_selection_items(cells=False, columns=False):
-                    r1, c1, r2, c2 = box.coords
-                    if r1 >= within_r1 or r2 <= within_r2:
-                        s.update(
-                            set(
-                                product(
-                                    range(r1 if r1 > within_r1 else within_r1, r2 if r2 < within_r2 else within_r2),
-                                    range(0, len(self.col_positions) - 1),
-                                )
-                            )
-                        )
-                if get_cells_as_rows:
-                    s.update(
-                        self.get_selected_cells(
-                            within_range=(
-                                within_r1,
-                                0,
-                                within_r2,
-                                len(self.col_positions) - 1,
-                            )
-                        )
-                    )
+            s = {
+                (r, c)
+                for item, box in self.get_selection_items(cells=False, columns=False)
+                for r in range(box.coords.from_r, box.coords.upto_r)
+                for c in range(0, len(self.col_positions) - 1)
+            }
+            if get_cells_as_rows:
+                return s | self.get_selected_cells()
         else:
-            if within_range is None:
-                for item, box in self.get_selection_items(cells=False, columns=False):
-                    r1, c1, r2, c2 = box.coords
-                    s.update(set(range(r1, r2)))
-                if get_cells_as_rows:
-                    s.update(set(tup[0] for tup in self.get_selected_cells()))
-            else:
-                for item, box in self.get_selection_items(cells=False, columns=False):
-                    r1, c1, r2, c2 = box.coords
-                    if r1 >= within_r1 or r2 <= within_r2:
-                        s.update(set(range(r1 if r1 > within_r1 else within_r1, r2 if r2 < within_r2 else within_r2)))
-                if get_cells_as_rows:
-                    s.update(
-                        set(
-                            tup[0]
-                            for tup in self.get_selected_cells(
-                                within_range=(
-                                    within_r1,
-                                    0,
-                                    within_r2,
-                                    len(self.col_positions) - 1,
-                                )
-                            )
-                        )
-                    )
+            s = {
+                r
+                for item, box in self.get_selection_items(cells=False, columns=False)
+                for r in range(box.coords.from_r, box.coords.upto_r)
+            }
+            if get_cells_as_rows:
+                return s | set(tup[0] for tup in self.get_selected_cells())
         return s
 
     def get_selected_cols(
         self,
         get_cells: bool = False,
-        within_range: tuple | None = None,
         get_cells_as_cols: bool = False,
     ) -> set[int] | set[tuple[int, int]]:
-        s = set()
-        if within_range is not None:
-            within_c1 = within_range[0]
-            within_c2 = within_range[1]
         if get_cells:
-            if within_range is None:
-                for item, box in self.get_selection_items(cells=False, rows=False):
-                    r1, c1, r2, c2 = box.coords
-                    s.update(set(product(range(c1, c2), range(0, len(self.row_positions) - 1))))
-                if get_cells_as_cols:
-                    s.update(self.get_selected_cells())
-            else:
-                for item, box in self.get_selection_items(cells=False, rows=False):
-                    r1, c1, r2, c2 = box.coords
-                    if c1 >= within_c1 or c2 <= within_c2:
-                        s.update(
-                            set(
-                                product(
-                                    range(c1 if c1 > within_c1 else within_c1, c2 if c2 < within_c2 else within_c2),
-                                    range(0, len(self.row_positions) - 1),
-                                )
-                            )
-                        )
-                if get_cells_as_cols:
-                    s.update(
-                        self.get_selected_cells(
-                            within_range=(
-                                0,
-                                within_c1,
-                                len(self.row_positions) - 1,
-                                within_c2,
-                            )
-                        )
-                    )
+            s = {
+                (r, c)
+                for item, box in self.get_selection_items(cells=False, rows=False)
+                for r in range(0, len(self.row_positions) - 1)
+                for c in range(box.coords.from_c, box.coords.upto_c)
+            }
+            if get_cells_as_cols:
+                return s | self.get_selected_cells()
         else:
-            if within_range is None:
-                for item, box in self.get_selection_items(cells=False, rows=False):
-                    r1, c1, r2, c2 = box.coords
-                    s.update(set(range(c1, c2)))
-                if get_cells_as_cols:
-                    s.update(set(tup[1] for tup in self.get_selected_cells()))
-            else:
-                for item in self.get_selection_items(cells=False, rows=False):
-                    r1, c1, r2, c2 = box.coords
-                    if c1 >= within_c1 or c2 <= within_c2:
-                        s.update(set(range(c1 if c1 > within_c1 else within_c1, c2 if c2 < within_c2 else within_c2)))
-                if get_cells_as_cols:
-                    s.update(
-                        set(
-                            tup[0]
-                            for tup in self.get_selected_cells(
-                                within_range=(
-                                    0,
-                                    within_c1,
-                                    len(self.row_positions) - 1,
-                                    within_c2,
-                                )
-                            )
-                        )
-                    )
+            s = {
+                c
+                for item, box in self.get_selection_items(cells=False, rows=False)
+                for c in range(box.coords.from_c, box.coords.upto_c)
+            }
+            if get_cells_as_cols:
+                return s | set(tup[1] for tup in self.get_selected_cells())
         return s
 
     def get_selected_cells(
         self,
         get_rows: bool = False,
         get_cols: bool = False,
-        within_range: bool = None,
     ) -> set[tuple[int, int]]:
-        s = set()
-        if within_range is not None:
-            within_r1 = within_range[0]
-            within_c1 = within_range[1]
-            within_r2 = within_range[2]
-            within_c2 = within_range[3]
-        if within_range is None:
-            for item, box in self.get_selection_items(rows=get_rows, columns=get_cols):
-                r1, c1, r2, c2 = box.coords
-                s.update(set(product(range(r1, r2), range(c1, c2))))
-        else:
-            for item in self.get_selection_items(rows=get_rows, columns=get_cols):
-                r1, c1, r2, c2 = box.coords
-                if r1 >= within_r1 or c1 >= within_c1 or r2 <= within_r2 or c2 <= within_c2:
-                    s.update(
-                        set(
-                            product(
-                                range(r1 if r1 > within_r1 else within_r1, r2 if r2 < within_r2 else within_r2),
-                                range(c1 if c1 > within_c1 else within_c1, c2 if c2 < within_c2 else within_c2),
-                            )
-                        )
-                    )
-        return s
+        return {
+            (r, c)
+            for item, box in self.get_selection_items(rows=get_rows, columns=get_cols)
+            for r in range(box.coords.from_r, box.coords.upto_r)
+            for c in range(box.coords.from_c, box.coords.upto_c)
+        }
 
     def get_all_selection_boxes(self) -> tuple[tuple[int, int, int, int]]:
         return tuple(box.coords for item, box in self.get_selection_items())
