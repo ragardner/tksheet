@@ -3,6 +3,9 @@
 - Issue with setting sheet xview/yview immediately after initialization
 - Visual selection box issue with boxes with 0 length or width
 
+#### Addressed:
+- Issue [220](https://github.com/ragardner/tksheet/issues/220)
+
 #### Added:
 - Functions:
     - `boxes` setter for use with `Sheet.get_all_selection_boxes_with_types()` or `Sheet.boxes` property

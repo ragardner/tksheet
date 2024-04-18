@@ -41,6 +41,7 @@ from .vars import (
     USER_OS,
     rc_binding,
     symbols_set,
+    text_editor_to_unbind,
 )
 
 
@@ -1727,12 +1728,14 @@ class ColumnHeaders(tk.Canvas):
             self.text_editor.tktext.focus_set()
             self.text_editor.window.scroll_to_bottom()
         self.text_editor.tktext.bind("<Alt-Return>", lambda _x: self.text_editor_newline_binding(c=c))
+        self.text_editor.tktext.bind("<Alt-KP_Enter>", lambda _x: self.text_editor_newline_binding(c=c))
         if USER_OS == "darwin":
             self.text_editor.tktext.bind("<Option-Return>", lambda _x: self.text_editor_newline_binding(c=c))
         for key, func in self.MT.text_editor_user_bound_keys.items():
             self.text_editor.tktext.bind(key, func)
         self.text_editor.tktext.bind("<Tab>", lambda _x: self.close_text_editor((c, "Tab")))
         self.text_editor.tktext.bind("<Return>", lambda _x: self.close_text_editor((c, "Return")))
+        self.text_editor.tktext.bind("<KP_Enter>", lambda _x: self.close_text_editor((c, "Return")))
         if not dropdown:
             self.text_editor.tktext.bind("<FocusOut>", lambda _x: self.close_text_editor((c, "FocusOut")))
         self.text_editor.tktext.bind("<Escape>", lambda _x: self.close_text_editor((c, "Escape")))
@@ -1828,8 +1831,8 @@ class ColumnHeaders(tk.Canvas):
 
     def hide_text_editor(self, reason: None | str = None) -> None:
         if self.text_editor.open:
-            for b in ("<Alt-Return>", "<Option-Return>", "<Tab>", "<Return>", "<FocusOut>", "<Escape>"):
-                self.text_editor.tktext.unbind(b)
+            for binding in text_editor_to_unbind:
+                self.text_editor.tktext.unbind(binding)
             self.itemconfig(self.text_editor.canvas_id, state="hidden")
             self.text_editor.open = False
         if reason == "Escape":

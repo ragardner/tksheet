@@ -26,6 +26,16 @@ emitted_events: set[str] = {
 backwards_compatibility_keys: dict[str, str] = {
     "font": "table_font",
 }
+text_editor_to_unbind: tuple[str] = (
+    "<Alt-Return>",
+    "<Alt-KP_Enter>",
+    "<Option-Return>",
+    "<Tab>",
+    "<Return>",
+    "<KP_Enter>",
+    "<FocusOut>",
+    "<Escape>",
+)
 scrollbar_options_keys: set[str] = {
     "vertical_scroll_background",
     "horizontal_scroll_background",
