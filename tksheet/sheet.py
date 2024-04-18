@@ -2918,7 +2918,7 @@ class Sheet(tk.Frame):
         get_cells: bool = False,
         get_cells_as_rows: bool = False,
         return_tuple: bool = False,
-    ) -> tuple | set:
+    ) -> tuple[int] | tuple[tuple[int, int]] | set[int] | set[tuple[int, int]]:
         if return_tuple:
             return tuple(self.MT.get_selected_rows(get_cells=get_cells, get_cells_as_rows=get_cells_as_rows))
         return self.MT.get_selected_rows(get_cells=get_cells, get_cells_as_rows=get_cells_as_rows)
@@ -2928,7 +2928,7 @@ class Sheet(tk.Frame):
         get_cells: bool = False,
         get_cells_as_columns: bool = False,
         return_tuple: bool = False,
-    ) -> tuple | set:
+    ) -> tuple[int] | tuple[tuple[int, int]] | set[int] | set[tuple[int, int]]:
         if return_tuple:
             return tuple(self.MT.get_selected_cols(get_cells=get_cells, get_cells_as_cols=get_cells_as_columns))
         return self.MT.get_selected_cols(get_cells=get_cells, get_cells_as_cols=get_cells_as_columns)
@@ -2939,7 +2939,7 @@ class Sheet(tk.Frame):
         get_columns: bool = False,
         sort_by_row: bool = False,
         sort_by_column: bool = False,
-    ) -> list | set:
+    ) -> list[tuple[int, int]] | set[tuple[int, int]]:
         if sort_by_row and sort_by_column:
             sels = sorted(
                 self.MT.get_selected_cells(get_rows=get_rows, get_cols=get_columns),
