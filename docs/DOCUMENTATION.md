@@ -2817,6 +2817,15 @@ Parameters:
 
 ___
 
+Get a mapping (`dict`) of all `old: new` column indexes.
+
+```python
+full_move_columns_idxs(data_idxs: dict[int, int]) -> dict[int, int]
+```
+- e.g. converts `{0: 1}` to `{0: 1, 1: 0}` if the maximum Sheet column number is `1`.
+
+___
+
 #### **Move any rows to new locations**
 
 ```python
@@ -2842,10 +2851,19 @@ Parameters:
 
 ___
 
+Get a mapping (`dict`) of all `old: new` row indexes.
+
+```python
+full_move_rows_idxs(data_idxs: dict[int, int]) -> dict[int, int]
+```
+- e.g. converts `{0: 1}` to `{0: 1, 1: 0}` if the maximum Sheet row number is `1`.
+
+___
+
 #### **Make all data rows the same length**
 
 ```python
-equalize_data_row_lengths(include_header: bool = False) -> int
+equalize_data_row_lengths(include_header: bool = True) -> int
 ```
 - Makes every list in the table have the same number of elements, goes by longest list. This will only affect the data variable, not visible columns.
 - Returns the new row length for all rows in the Sheet.
@@ -3851,7 +3869,14 @@ all_selected() -> bool
 ___
 
 ```python
-get_ctrl_x_c_boxes() -> tuple[dict[tuple[int, int, int, int], str], int]
+get_ctrl_x_c_boxes(nrows: bool = True) -> tuple[dict[tuple[int, int, int, int], str], int]
+```
+
+___
+
+```python
+@property
+ctrl_boxes() -> dict[tuple[int, int, int, int], str]
 ```
 
 ___
@@ -4355,6 +4380,15 @@ event_widget_is_sheet(
 Notes:
 - Parameters set to `True` will include events that occurred within that widget.
     - e.g. If an event occurs in the top left corner of the sheet but the parameter `top_left` is `False` the function will return `False`.
+
+___
+
+Check if any Sheet widgets have focus.
+
+```python
+has_focus() -> bool:
+```
+- Includes child widgets such as scroll bars.
 
 ___
 

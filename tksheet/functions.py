@@ -614,7 +614,7 @@ def try_binding(
     event: dict,
     new_name: None | str = None,
 ) -> bool:
-    if binding is not None:
+    if binding:
         try:
             if new_name is None:
                 binding(event)

@@ -1,5 +1,21 @@
 ### Version 7.1.9
-####
+#### Fixed:
+- Potential error caused by moving rows/columns where:
+    - There exists a header but data is empty
+    - Data and index/header are all empty but displayed row/column lines exist
+
+#### Changed:
+- Function `equalize_data_row_lengths` parameter `include_header` now `True` by default
+- Right clicking with right click select enabled in empty space in the table will now deselect all
+- Right clicking on a selected area in the main table will no longer select the cell under the pointer if popup menus are not enabled. Use mouse button 1 to select a cell within a selected area
+
+#### Added:
+- Functions:
+    - `has_focus()`
+    - `ctrl_boxes`
+    - `canvas_boxes`
+    - `full_move_columns_idxs()`
+    - `full_move_rows_idxs()`
 
 ### Version 7.1.8
 #### Fixed:

@@ -1130,7 +1130,11 @@ class MainTable(tk.Canvas):
             )
         else:
             disp_new_idxs = {}
-        totalrows = self.fix_data_len(move_to)
+        self.fix_data_len(move_to)
+        totalrows = max(
+            self.total_data_rows(),
+            len(self.row_positions) - 1,
+        )
         if self.all_rows_displayed or data_indexes:
             data_new_idxs = get_new_indexes(seqlen=totalrows, move_to=move_to, to_move=to_move)
         elif not self.all_rows_displayed and not data_indexes:
@@ -1157,7 +1161,12 @@ class MainTable(tk.Canvas):
     ) -> tuple[dict[int, int], dict[int, int], EventDataDict]:
         self.saved_row_heights = {}
         if not isinstance(totalrows, int):
-            totalrows = self.fix_data_len(max(data_new_idxs.values(), default=0))
+            totalrows = max(
+                self.total_data_rows(),
+                len(self.row_positions) - 1,
+                max(data_new_idxs.values(), default=0),
+            )
+            totalrows = self.fix_data_len(totalrows)
         if event_data is None:
             event_data = event_dict(
                 name="move_rows",
@@ -1444,9 +1453,7 @@ class MainTable(tk.Canvas):
             saved_cells = True
 
         if modification["moved"]["columns"]:
-            totalcols = self.equalize_data_row_lengths()
-            if totalcols < (mx_k := max(modification["moved"]["columns"]["data"].values())):
-                totalcols = mx_k
+            totalcols = max(self.equalize_data_row_lengths(), max(modification["moved"]["columns"]["data"].values()))
             data_new_idxs, disp_new_idxs, event_data = self.move_columns_adjust_options_dict(
                 data_new_idxs=dict(
                     zip(
@@ -1471,9 +1478,7 @@ class MainTable(tk.Canvas):
             self.restore_options_named_spans(modification)
 
         if modification["moved"]["rows"]:
-            totalrows = self.total_data_rows()
-            if totalrows < (mx_k := max(modification["moved"]["rows"]["data"].values())):
-                totalrows = mx_k
+            totalrows = max(self.total_data_rows(), max(modification["moved"]["rows"]["data"].values()))
             data_new_idxs, disp_new_idxs, event_data = self.move_rows_adjust_options_dict(
                 data_new_idxs=dict(
                     zip(
@@ -2745,8 +2750,7 @@ class MainTable(tk.Canvas):
 
     def mouse_motion(self, event: object):
         self.reset_mouse_motion_creations()
-        if self.extra_motion_func:
-            self.extra_motion_func(event)
+        try_binding(self.extra_motion_func, event)
 
     def not_currently_resizing(self) -> bool:
         return all(v is None for v in (self.RI.rsz_h, self.RI.rsz_w, self.CH.rsz_h, self.CH.rsz_w))
@@ -2759,12 +2763,15 @@ class MainTable(tk.Canvas):
             r = self.identify_row(y=event.y)
             c = self.identify_col(x=event.x)
             if r < len(self.row_positions) - 1 and c < len(self.col_positions) - 1:
-                if self.col_selected(c) and self.rc_popup_menus_enabled:
-                    popup_menu = self.CH.ch_rc_popup_menu
-                elif self.row_selected(r) and self.rc_popup_menus_enabled:
-                    popup_menu = self.RI.ri_rc_popup_menu
-                elif self.cell_selected(r, c) and self.rc_popup_menus_enabled:
-                    popup_menu = self.rc_popup_menu
+                if self.col_selected(c):
+                    if self.rc_popup_menus_enabled:
+                        popup_menu = self.CH.ch_rc_popup_menu
+                elif self.row_selected(r):
+                    if self.rc_popup_menus_enabled:
+                        popup_menu = self.RI.ri_rc_popup_menu
+                elif self.cell_selected(r, c):
+                    if self.rc_popup_menus_enabled:
+                        popup_menu = self.rc_popup_menu
                 else:
                     if self.rc_select_enabled:
                         if self.single_selection_enabled:
@@ -2774,9 +2781,9 @@ class MainTable(tk.Canvas):
                     if self.rc_popup_menus_enabled:
                         popup_menu = self.rc_popup_menu
             else:
+                self.deselect("all")
                 popup_menu = self.empty_rc_popup_menu
-        if self.extra_rc_func:
-            self.extra_rc_func(event)
+        try_binding(self.extra_rc_func, event)
         if popup_menu is not None:
             popup_menu.tk_popup(event.x_root, event.y_root)
 
@@ -2800,8 +2807,7 @@ class MainTable(tk.Canvas):
             if r < len(self.row_positions) - 1 and c < len(self.col_positions) - 1:
                 self.toggle_select_cell(r, c, redraw=True)
         self.b1_pressed_loc = (r, c)
-        if self.extra_b1_press_func:
-            self.extra_b1_press_func(event)
+        try_binding(self.extra_b1_press_func, event)
 
     def create_resize_line(self, x1, y1, x2, y2, width, fill, tag):
         if self.hidd_resize_lines:
@@ -2969,8 +2975,7 @@ class MainTable(tk.Canvas):
                 need_redraw = True
             if need_redraw:
                 self.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True, redraw_table=True)
-        if self.extra_b1_motion_func:
-            self.extra_b1_motion_func(event)
+        try_binding(self.extra_b1_motion_func, event)
 
     def ctrl_b1_motion(self, event: object):
         if self.ctrl_select_enabled and self.drag_selection_enabled and self.not_currently_resizing():
@@ -3082,8 +3087,7 @@ class MainTable(tk.Canvas):
                 self.mouseclick_outside_editor_or_dropdown_all_canvases()
         self.b1_pressed_loc = None
         self.closed_dropdown = None
-        if self.extra_b1_release_func:
-            self.extra_b1_release_func(event)
+        try_binding(self.extra_b1_release_func, event)
 
     def double_b1(self, event=None):
         self.mouseclick_outside_editor_or_dropdown_all_canvases()
@@ -3107,8 +3111,7 @@ class MainTable(tk.Canvas):
                 self.toggle_select_cell(r, c, redraw=True)
                 if self.edit_cell_enabled:
                     self.open_cell(event)
-        if self.extra_double_b1_func:
-            self.extra_double_b1_func(event)
+        try_binding(self.extra_double_b1_func, event)
 
     def identify_row(self, event=None, y=None, allow_end=True):
         if event is None:
@@ -3329,7 +3332,9 @@ class MainTable(tk.Canvas):
                                 else (
                                     default_row_height
                                     if h == old_default_row_height
-                                    else self.min_row_height if h < self.min_row_height else h
+                                    else self.min_row_height
+                                    if h < self.min_row_height
+                                    else h
                                 )
                             )
                             for h in self.gen_row_heights()
@@ -4274,7 +4279,7 @@ class MainTable(tk.Canvas):
         return event_data
 
     def rc_add_columns(self, event: object = None):
-        rowlen = self.equalize_data_row_lengths(include_header=False)
+        rowlen = self.equalize_data_row_lengths()
         selcols = sorted(self.get_selected_cols())
         if (
             selcols
@@ -4860,24 +4865,15 @@ class MainTable(tk.Canvas):
                 return self._row_index
 
     def total_data_cols(self, include_header: bool = True) -> int:
-        h_total = 0
-        d_total = 0
-        if include_header:
-            if isinstance(self._headers, (list, tuple)):
-                h_total = len(self._headers)
-        # map() for some reason is 15% faster than max(key=len)
-        # using python 3.11 windows 11
+        h_total = len(self._headers) if include_header and isinstance(self._headers, (list, tuple)) else 0
+        # map() for some reason is 15% faster than max(key=len) using python 3.11 windows 11
         d_total = max(map(len, self.data), default=0)
-        return h_total if h_total > d_total else d_total
+        return max(h_total, d_total)
 
     def total_data_rows(self, include_index: bool = True) -> int:
-        i_total = 0
-        d_total = 0
-        if include_index:
-            if isinstance(self._row_index, (list, tuple)):
-                i_total = len(self._row_index)
+        i_total = len(self._row_index) if include_index and isinstance(self._row_index, (list, tuple)) else 0
         d_total = len(self.data)
-        return i_total if i_total > d_total else d_total
+        return max(i_total, d_total)
 
     def data_dimensions(self, total_rows: int | None = None, total_columns: int | None = None):
         if total_rows is None and total_columns is None:
@@ -4897,7 +4893,7 @@ class MainTable(tk.Canvas):
 
     def equalize_data_row_lengths(
         self,
-        include_header: bool = False,
+        include_header: bool = True,
         total_data_cols: int | None = None,
         at_least_cols: int | None = None,
     ) -> int:
@@ -4905,6 +4901,7 @@ class MainTable(tk.Canvas):
             total_data_cols = self.total_data_cols(include_header=include_header)
         if isinstance(at_least_cols, int) and at_least_cols > total_data_cols:
             total_data_cols = at_least_cols
+        total_data_cols = max(total_data_cols, len(self.col_positions) - 1)
         if include_header and total_data_cols > len(self._headers):
             self.CH.fix_header(total_data_cols)
         for rn, r in enumerate(self.data):

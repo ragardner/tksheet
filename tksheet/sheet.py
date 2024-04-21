@@ -46,6 +46,7 @@ from .other_classes import (
     GeneratedMouseEvent,
     Node,
     Selected,
+    SelectionBox,
     Span,
 )
 from .row_index import RowIndex
@@ -1070,6 +1071,17 @@ class Sheet(tk.Frame):
         self.MT.redo(event)
         return self
 
+    def has_focus(
+        self,
+    ) -> bool:
+        """
+        Check if any Sheet widgets have focus
+        Includes child widgets such as scroll bars
+        Returns bool
+        """
+        widget = self.focus_get()
+        return widget == self or any(widget == c for c in self.children.values())
+
     def focus_set(
         self,
         canvas: Literal[
@@ -1391,11 +1403,7 @@ class Sheet(tk.Frame):
             # retrieving a list of index cells or
             elif (index and not span.transposed and not table and not header) or (
                 # it's a column that's spread across sublists
-                table
-                and res
-                and not span.transposed
-                and len(res[0]) == 1
-                and len(res[-1]) == 1
+                table and res and not span.transposed and len(res[0]) == 1 and len(res[-1]) == 1
             ):
                 res = list(chain.from_iterable(res))
         elif span.ndim == 1:
@@ -2389,8 +2397,31 @@ class Sheet(tk.Frame):
         self.set_refresh_timer(redraw)
         return data_idxs, disp_idxs, event_data
 
-    def equalize_data_row_lengths(self, include_header: bool = False) -> int:
-        return self.MT.equalize_data_row_lengths(include_header=include_header)
+    def equalize_data_row_lengths(
+        self,
+        include_header: bool = True,
+    ) -> int:
+        return self.MT.equalize_data_row_lengths(
+            include_header=include_header,
+        )
+
+    def full_move_rows_idxs(self, data_idxs: dict[int, int]) -> dict[int, int]:
+        """
+        Converts the dict provided by moving rows event data
+        Under the keys ['moved']['rows']['data']
+        Into a dict of {old index: new index} for every row
+        Includes row numbers in cell options, spans, etc.
+        """
+        return self.MT.get_full_new_idxs(self.MT.get_max_row_idx(), data_idxs)
+
+    def full_move_columns_idxs(self, data_idxs: dict[int, int]) -> dict[int, int]:
+        """
+        Converts the dict provided by moving columns event data
+        Under the keys ['moved']['columns']['data']
+        Into a dict of {old index: new index} for every column
+        Includes column numbers in cell options, spans, etc.
+        """
+        return self.MT.get_full_new_idxs(self.MT.get_max_column_idx(), data_idxs)
 
     # Highlighting Cells
 
@@ -2976,6 +3007,10 @@ class Sheet(tk.Frame):
         )
         return self
 
+    @property
+    def canvas_boxes(self) -> dict[int, SelectionBox]:
+        return self.MT.selection_boxes
+
     def cell_selected(
         self,
         r: int,
@@ -3008,8 +3043,17 @@ class Sheet(tk.Frame):
     def all_selected(self) -> bool:
         return self.MT.all_selected()
 
-    def get_ctrl_x_c_boxes(self) -> tuple[dict[tuple[int, int, int, int], str], int]:
-        return self.MT.get_ctrl_x_c_boxes()
+    def get_ctrl_x_c_boxes(
+        self,
+        nrows: bool = True,
+    ) -> tuple[dict[tuple[int, int, int, int], str], int] | dict[tuple[int, int, int, int], str]:
+        if nrows:
+            return self.MT.get_ctrl_x_c_boxes()
+        return self.MT.get_ctrl_x_c_boxes()[0]
+
+    @property
+    def ctrl_boxes(self) -> dict[tuple[int, int, int, int], str]:
+        return self.MT.get_ctrl_x_c_boxes()[0]
 
     def get_selected_min_max(
         self,
@@ -4466,7 +4510,7 @@ class Sheet(tk.Frame):
         self.RI.tree_rns = {n.iid: i for i, n in enumerate(self.MT._row_index)}
         self.hide_rows(
             set(self.RI.tree_rns[iid] for iid in self.get_children() if self.RI.tree[iid].parent),
-            deselect_all=True,
+            deselect_all=False,
             data_indexes=True,
         )
         return self
@@ -4793,7 +4837,7 @@ class Sheet(tk.Frame):
     reattach = move
 
     def exists(self, item: str) -> bool:
-        return item in self.RI.tree
+        return item.lower() in self.RI.tree
 
     def parent(self, item: str) -> str:
         if (item := item.lower()) not in self.RI.tree:
@@ -5419,7 +5463,7 @@ class Sheet(tk.Frame):
         row: int = 0,
         column: int = 0,
         cells: list = [],
-        canvas: str = "table",
+        canvas: Literal["table", "index", "header"] = "table",
         bg: bool | None | str = False,
         fg: bool | None | str = False,
         redraw: bool = True,
