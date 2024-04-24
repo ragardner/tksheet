@@ -593,9 +593,12 @@ class Sheet(tk.Frame):
 
     def extra_bindings(
         self,
-        bindings: str | list | tuple,
+        bindings: str | list | tuple | None = None,
         func: Callable | None = None,
     ) -> Sheet:
+        # bindings is None, unbind all
+        if bindings is None:
+            bindings = "all"
         # bindings is str, func arg is None or Callable
         if isinstance(bindings, str):
             iterable = [(bindings, func)]
@@ -4117,7 +4120,11 @@ class Sheet(tk.Frame):
     def set_options(self, redraw: bool = True, **kwargs) -> Sheet:
         for k, v in kwargs.items():
             if k in self.ops and v != self.ops[k]:
+                if k.endswith("bindings"):
+                    self.MT._disable_binding(k.split("_")[0])
                 self.ops[k] = v
+                if k.endswith("bindings"):
+                    self.MT._enable_binding(k.split("_")[0])
         if "from_clipboard_delimiters" in kwargs:
             self.ops.from_clipboard_delimiters = (
                 self.ops.from_clipboard_delimiters
@@ -4172,7 +4179,6 @@ class Sheet(tk.Frame):
         if any(k in kwargs for k in scrollbar_options_keys):
             self.set_scrollbar_options()
         self.MT.create_rc_menus()
-        self.MT.key_bindings()
         self.set_refresh_timer(redraw)
         return self
 
@@ -4480,7 +4486,9 @@ class Sheet(tk.Frame):
                     x += 1
                 tally_of_ids[iid] += 1
                 row[iid_column] = new
-            if iid not in self.RI.tree:
+            if iid in self.RI.tree:
+                self.RI.tree[iid].text = row[text_column]
+            else:
                 self.RI.tree[iid] = Node(row[text_column], iid, "")
             if iid == pid or self.RI.pid_causes_recursive_loop(iid, pid):
                 row[parent_column] = ""
@@ -4531,7 +4539,6 @@ class Sheet(tk.Frame):
         Accepts set[str] of iids that are open in the treeview
         Closes everything else
         """
-        self.RI.tree_open_ids = open_ids if isinstance(open_ids, set) else set(open_ids)
         self.hide_rows(
             set(self.MT.displayed_rows),
             redraw=False,
@@ -4543,16 +4550,18 @@ class Sheet(tk.Frame):
             redraw=False,
             deselect_all=True,
         )
+        open_ids = set(filter(self.exists, map(str.lower, open_ids)))
+        self.RI.tree_open_ids = open_ids
         if open_ids:
-            self.tree_open(*open_ids)
+            self.tree_open(open_ids)
         return self
 
     def tree_open(self, *items) -> Sheet:
         """
         If used without args all items are opened
         """
-        if items:
-            for item in unpack(items):
+        if items := set(unpack(items)):
+            for item in filter(items.__contains__, self.get_children()):
                 self.item(item, open_=True)
         else:
             for item in self.get_children():
@@ -4597,9 +4606,6 @@ class Sheet(tk.Frame):
             text = iid
         parent_node = self.RI.tree[pid] if parent else ""
         self.RI.tree[iid] = Node(text, iid, parent_node)
-        if self.RI.pid_causes_recursive_loop(iid, pid):
-            del self.RI.tree[iid]
-            raise ValueError(f"iid '{iid}' causes a recursive loop with parent '{parent}'.")
         if parent_node:
             if isinstance(index, int):
                 idx = self.RI.tree_rns[pid] + index + 1
@@ -4666,20 +4672,21 @@ class Sheet(tk.Frame):
             if self.RI.tree[item].children:
                 if open_:
                     self.RI.tree_open_ids.add(item)
-                    self.show_rows(
-                        (self.RI.tree_rns[did] for did in self.RI.get_iid_descendants(item, check_open=True)),
-                        redraw=False,
-                        deselect_all=False,
-                    )
+                    if self.item_displayed(item):
+                        self.show_rows(
+                            rows=(self.RI.tree_rns[did] for did in self.RI.get_iid_descendants(item, check_open=True)),
+                            redraw=False,
+                            deselect_all=False,
+                        )
                 else:
                     self.RI.tree_open_ids.discard(item)
-                    rows = {self.RI.tree_rns[did] for did in self.RI.get_iid_descendants(item, check_open=True)}
-                    self.hide_rows(
-                        rows,
-                        redraw=False,
-                        deselect_all=False,
-                        data_indexes=True,
-                    )
+                    if self.item_displayed(item):
+                        self.hide_rows(
+                            rows={self.RI.tree_rns[did] for did in self.RI.get_iid_descendants(item, check_open=True)},
+                            redraw=False,
+                            deselect_all=False,
+                            data_indexes=True,
+                        )
             else:
                 self.RI.tree_open_ids.discard(item)
         get = not (isinstance(iid, str) or isinstance(text, str) or isinstance(values, list) or isinstance(open_, bool))

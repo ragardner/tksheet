@@ -2203,98 +2203,6 @@ class MainTable(tk.Canvas):
                         check_cell_visibility=False,
                     )
 
-    def key_bindings(self) -> None:
-        for widget in (self, self.RI, self.CH, self.TL):
-            for binding in self.PAR.ops.copy_bindings:
-                if self.copy_enabled:
-                    widget.bind(binding, self.ctrl_c)
-                else:
-                    widget.unbind(binding)
-
-            for binding in self.PAR.ops.cut_bindings:
-                if self.cut_enabled:
-                    widget.bind(binding, self.ctrl_x)
-                else:
-                    widget.unbind(binding)
-
-            for binding in self.PAR.ops.paste_bindings:
-                if self.paste_enabled:
-                    widget.bind(binding, self.ctrl_v)
-                else:
-                    widget.unbind(binding)
-
-            if self.undo_enabled:
-                for binding in self.PAR.ops.undo_bindings:
-                    widget.bind(binding, self.undo)
-                for binding in self.PAR.ops.redo_bindings:
-                    widget.bind(binding, self.redo)
-            else:
-                for binding in self.PAR.ops.undo_bindings:
-                    widget.unbind(binding)
-                for binding in self.PAR.ops.redo_bindings:
-                    widget.unbind(binding)
-
-            for binding in self.PAR.ops.delete_bindings:
-                if self.delete_key_enabled:
-                    widget.bind(binding, self.delete_key)
-                else:
-                    widget.unbind(binding)
-
-            for binding in self.PAR.ops.select_all_bindings:
-                if self.select_all_enabled:
-                    widget.bind(binding, self.select_all)
-                else:
-                    widget.unbind(binding)
-
-            for binding in self.PAR.ops.tab_bindings:
-                if self.tab_enabled:
-                    widget.bind(binding, self.tab_key)
-                else:
-                    widget.unbind(binding)
-
-            for binding in self.PAR.ops.up_bindings:
-                if self.up_enabled:
-                    widget.bind(binding, self.arrowkey_UP)
-                else:
-                    widget.unbind(binding)
-
-            for binding in self.PAR.ops.right_bindings:
-                if self.right_enabled:
-                    widget.bind(binding, self.arrowkey_RIGHT)
-                else:
-                    widget.unbind(binding)
-
-            for binding in self.PAR.ops.down_bindings:
-                if self.down_enabled:
-                    widget.bind(binding, self.arrowkey_DOWN)
-                else:
-                    widget.unbind(binding)
-
-            for binding in self.PAR.ops.left_bindings:
-                if self.left_enabled:
-                    widget.bind(binding, self.arrowkey_LEFT)
-                else:
-                    widget.unbind(binding)
-
-            for binding in self.PAR.ops.prior_bindings:
-                if self.prior_enabled:
-                    widget.bind(binding, self.page_UP)
-                else:
-                    widget.unbind(binding)
-
-            for binding in self.PAR.ops.next_bindings:
-                if self.next_enabled:
-                    widget.bind(binding, self.page_DOWN)
-                else:
-                    widget.unbind(binding)
-
-        if self.edit_cell_enabled:
-            for w in (self, self.RI, self.CH):
-                w.bind("<Key>", self.open_cell)
-        else:
-            for w in (self, self.RI, self.CH):
-                w.unbind("<Key>")
-
     def menu_add_command(self, menu: tk.Menu, **kwargs) -> None:
         if "label" not in kwargs:
             return
@@ -2528,35 +2436,33 @@ class MainTable(tk.Canvas):
 
     def enable_bindings(self, bindings):
         if not bindings:
-            self.enable_bindings_internal("all")
+            self._enable_binding("all")
         elif isinstance(bindings, (list, tuple)):
             for binding in bindings:
                 if isinstance(binding, (list, tuple)):
                     for bind in binding:
-                        self.enable_bindings_internal(bind.lower())
+                        self._enable_binding(bind.lower())
                 elif isinstance(binding, str):
-                    self.enable_bindings_internal(binding.lower())
+                    self._enable_binding(binding.lower())
         elif isinstance(bindings, str):
-            self.enable_bindings_internal(bindings.lower())
+            self._enable_binding(bindings.lower())
         self.create_rc_menus()
-        self.key_bindings()
 
     def disable_bindings(self, bindings):
         if not bindings:
-            self.disable_bindings_internal("all")
+            self._disable_binding("all")
         elif isinstance(bindings, (list, tuple)):
             for binding in bindings:
                 if isinstance(binding, (list, tuple)):
                     for bind in binding:
-                        self.disable_bindings_internal(bind.lower())
+                        self._disable_binding(bind.lower())
                 elif isinstance(binding, str):
-                    self.disable_bindings_internal(binding.lower())
+                    self._disable_binding(binding.lower())
         elif isinstance(bindings, str):
-            self.disable_bindings_internal(bindings)
+            self._disable_binding(bindings)
         self.create_rc_menus()
-        self.key_bindings()
 
-    def enable_bindings_internal(self, binding):
+    def _enable_binding(self, binding):
         if binding == "enable_all":
             binding = "all"
         if binding in ("all", "single", "single_selection_mode", "single_select"):
@@ -2567,9 +2473,6 @@ class MainTable(tk.Canvas):
             self.single_selection_enabled = False
         if binding in ("all", "drag_select"):
             self.drag_selection_enabled = True
-        if binding in ("all", "select_all"):
-            self.select_all_enabled = True
-            self.TL.sa_state()
         if binding in ("all", "column_width_resize"):
             self.CH.width_resizing_enabled = True
         if binding in ("all", "column_select"):
@@ -2592,20 +2495,47 @@ class MainTable(tk.Canvas):
             self.RI.row_selection_enabled = True
         if binding in ("all", "row_drag_and_drop", "move_rows"):
             self.RI.drag_and_drop_enabled = True
+        if binding in ("all", "select_all"):
+            self.select_all_enabled = True
+            self.TL.sa_state()
+            self._tksheet_bind("select_all_bindings", self.select_all)
         if binding in ("all", "arrowkeys", "tab"):
             self.tab_enabled = True
+            self._tksheet_bind("tab_bindings", self.tab_key)
         if binding in ("all", "arrowkeys", "up"):
             self.up_enabled = True
+            self._tksheet_bind("up_bindings", self.arrowkey_UP)
         if binding in ("all", "arrowkeys", "right"):
             self.right_enabled = True
+            self._tksheet_bind("right_bindings", self.arrowkey_RIGHT)
         if binding in ("all", "arrowkeys", "down"):
             self.down_enabled = True
+            self._tksheet_bind("down_bindings", self.arrowkey_DOWN)
         if binding in ("all", "arrowkeys", "left"):
             self.left_enabled = True
+            self._tksheet_bind("left_bindings", self.arrowkey_LEFT)
         if binding in ("all", "arrowkeys", "prior"):
             self.prior_enabled = True
+            self._tksheet_bind("prior_bindings", self.page_UP)
         if binding in ("all", "arrowkeys", "next"):
             self.next_enabled = True
+            self._tksheet_bind("next_bindings", self.page_DOWN)
+        if binding in ("all", "copy", "edit_bindings", "edit"):
+            self.copy_enabled = True
+            self._tksheet_bind("copy_bindings", self.ctrl_c)
+        if binding in ("all", "cut", "edit_bindings", "edit"):
+            self.cut_enabled = True
+            self._tksheet_bind("cut_bindings", self.ctrl_x)
+        if binding in ("all", "paste", "edit_bindings", "edit"):
+            self.paste_enabled = True
+            self._tksheet_bind("paste_bindings", self.ctrl_v)
+        if binding in ("all", "delete", "edit_bindings", "edit"):
+            self.delete_key_enabled = True
+            self._tksheet_bind("delete_bindings", self.delete_key)
+        if binding in ("all", "undo", "redo", "edit_bindings", "edit"):
+            self.undo_enabled = True
+            self._tksheet_bind("undo_bindings", self.undo)
+            self._tksheet_bind("redo_bindings", self.redo)
         if binding in ("all", "rc_delete_column"):
             self.rc_delete_column_enabled = True
             self.rc_popup_menus_enabled = True
@@ -2622,23 +2552,15 @@ class MainTable(tk.Canvas):
             self.rc_insert_row_enabled = True
             self.rc_popup_menus_enabled = True
             self.rc_select_enabled = True
-        if binding in ("all", "copy", "edit_bindings"):
-            self.copy_enabled = True
-        if binding in ("all", "cut", "edit_bindings"):
-            self.cut_enabled = True
-        if binding in ("all", "paste", "edit_bindings"):
-            self.paste_enabled = True
-        if binding in ("all", "delete", "edit_bindings"):
-            self.delete_key_enabled = True
         if binding in ("all", "right_click_popup_menu", "rc_popup_menu"):
             self.rc_popup_menus_enabled = True
             self.rc_select_enabled = True
         if binding in ("all", "right_click_select", "rc_select"):
             self.rc_select_enabled = True
-        if binding in ("all", "undo", "edit_bindings"):
-            self.undo_enabled = True
-        if binding in ("all", "edit_cell", "edit_bindings"):
+        if binding in ("all", "edit_cell", "edit_bindings", "edit"):
             self.edit_cell_enabled = True
+            for w in (self, self.RI, self.CH):
+                w.bind("<Key>", self.open_cell)
         if binding in ("edit_header"):
             self.CH.edit_cell_enabled = True
         if binding in ("edit_index"):
@@ -2647,7 +2569,12 @@ class MainTable(tk.Canvas):
         if binding in ("ctrl_click_select", "ctrl_select"):
             self.ctrl_select_enabled = True
 
-    def disable_bindings_internal(self, binding):
+    def _tksheet_bind(self, bindings_key: str, func: Callable) -> None:
+        for widget in (self, self.RI, self.CH, self.TL):
+            for binding in self.PAR.ops[bindings_key]:
+                widget.bind(binding, func)
+
+    def _disable_binding(self, binding):
         if binding == "disable_all":
             binding = "all"
         if binding in ("all", "single", "single_selection_mode", "single_select"):
@@ -2658,9 +2585,6 @@ class MainTable(tk.Canvas):
             self.single_selection_enabled = False
         if binding in ("all", "drag_select"):
             self.drag_selection_enabled = False
-        if binding in ("all", "select_all"):
-            self.select_all_enabled = False
-            self.TL.sa_state("hidden")
         if binding in ("all", "column_width_resize"):
             self.CH.width_resizing_enabled = False
         if binding in ("all", "column_select"):
@@ -2683,20 +2607,6 @@ class MainTable(tk.Canvas):
             self.RI.row_selection_enabled = False
         if binding in ("all", "row_drag_and_drop", "move_rows"):
             self.RI.drag_and_drop_enabled = False
-        if binding in ("all", "arrowkeys", "tab"):
-            self.tab_enabled = False
-        if binding in ("all", "arrowkeys", "up"):
-            self.up_enabled = False
-        if binding in ("all", "arrowkeys", "right"):
-            self.right_enabled = False
-        if binding in ("all", "arrowkeys", "down"):
-            self.down_enabled = False
-        if binding in ("all", "arrowkeys", "left"):
-            self.left_enabled = False
-        if binding in ("all", "arrowkeys", "prior"):
-            self.prior_enabled = False
-        if binding in ("all", "arrowkeys", "next"):
-            self.next_enabled = False
         if binding in ("all", "rc_delete_column"):
             self.rc_delete_column_enabled = False
             self.rc_popup_menus_enabled = False
@@ -2713,29 +2623,67 @@ class MainTable(tk.Canvas):
             self.rc_insert_row_enabled = False
             self.rc_popup_menus_enabled = False
             self.rc_select_enabled = False
-        if binding in ("all", "copy", "edit_bindings"):
-            self.copy_enabled = False
-        if binding in ("all", "cut", "edit_bindings"):
-            self.cut_enabled = False
-        if binding in ("all", "paste", "edit_bindings"):
-            self.paste_enabled = False
-        if binding in ("all", "delete", "edit_bindings"):
-            self.delete_key_enabled = False
         if binding in ("all", "right_click_popup_menu", "rc_popup_menu"):
             self.rc_popup_menus_enabled = False
             self.rc_select_enabled = False
         if binding in ("all", "right_click_select", "rc_select"):
             self.rc_select_enabled = False
-        if binding in ("all", "undo", "edit_bindings"):
-            self.undo_enabled = False
-        if binding in ("all", "edit_cell", "edit_bindings"):
+        if binding in ("all", "edit_cell", "edit_bindings", "edit"):
             self.edit_cell_enabled = False
-        if binding in ("all", "edit_header", "edit_bindings"):
+            for w in (self, self.RI, self.CH):
+                w.unbind("<Key>")
+        if binding in ("all", "edit_header", "edit_bindings", "edit"):
             self.CH.edit_cell_enabled = False
-        if binding in ("all", "edit_index", "edit_bindings"):
+        if binding in ("all", "edit_index", "edit_bindings", "edit"):
             self.RI.edit_cell_enabled = False
         if binding in ("all", "ctrl_click_select", "ctrl_select"):
             self.ctrl_select_enabled = False
+        if binding in ("all", "select_all"):
+            self.select_all_enabled = False
+            self.TL.sa_state("hidden")
+            self._tksheet_unbind("select_all_bindings")
+        if binding in ("all", "copy", "edit_bindings", "edit"):
+            self.copy_enabled = False
+            self._tksheet_unbind("copy_bindings")
+        if binding in ("all", "cut", "edit_bindings", "edit"):
+            self.cut_enabled = False
+            self._tksheet_unbind("cut_bindings")
+        if binding in ("all", "paste", "edit_bindings", "edit"):
+            self.paste_enabled = False
+            self._tksheet_unbind("paste_bindings")
+        if binding in ("all", "delete", "edit_bindings", "edit"):
+            self.delete_key_enabled = False
+            self._tksheet_unbind("delete_bindings")
+        if binding in ("all", "arrowkeys", "tab"):
+            self.tab_enabled = False
+            self._tksheet_unbind("tab_bindings")
+        if binding in ("all", "arrowkeys", "up"):
+            self.up_enabled = False
+            self._tksheet_unbind("up_bindings")
+        if binding in ("all", "arrowkeys", "right"):
+            self.right_enabled = False
+            self._tksheet_unbind("right_bindings")
+        if binding in ("all", "arrowkeys", "down"):
+            self.down_enabled = False
+            self._tksheet_unbind("down_bindings")
+        if binding in ("all", "arrowkeys", "left"):
+            self.left_enabled = False
+            self._tksheet_unbind("left_bindings")
+        if binding in ("all", "arrowkeys", "prior"):
+            self.prior_enabled = False
+            self._tksheet_unbind("prior_bindings")
+        if binding in ("all", "arrowkeys", "next"):
+            self.next_enabled = False
+            self._tksheet_unbind("next_bindings")
+        if binding in ("all", "undo", "redo", "edit_bindings", "edit"):
+            self.undo_enabled = False
+            self._tksheet_unbind("undo_bindings", "redo_bindings")
+
+    def _tksheet_unbind(self, *keys) -> None:
+        for widget in (self, self.RI, self.CH, self.TL):
+            for bindings_key in keys:
+                for binding in self.PAR.ops[bindings_key]:
+                    widget.unbind(binding)
 
     def reset_mouse_motion_creations(self) -> None:
         if self.current_cursor != "":
