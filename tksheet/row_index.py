@@ -1392,16 +1392,7 @@ class RowIndex(tk.Canvas):
                 t = self.create_polygon(points, fill=fill, outline=outline, tag=tag, smooth=True)
             self.disp_checkbox[t] = True
 
-    def redraw_grid_and_text(
-        self,
-        last_row_line_pos: int,
-        scrollpos_top: int,
-        y_stop: int,
-        start_row: int,
-        end_row: int,
-        scrollpos_bot: int,
-        row_pos_exists: bool,
-    ) -> None:
+    def configure_scrollregion(self, last_row_line_pos: float) -> None:
         try:
             self.configure(
                 scrollregion=(
@@ -1413,6 +1404,18 @@ class RowIndex(tk.Canvas):
             )
         except Exception:
             return
+
+    def redraw_grid_and_text(
+        self,
+        last_row_line_pos: float,
+        scrollpos_top: int,
+        y_stop: int,
+        start_row: int,
+        end_row: int,
+        scrollpos_bot: int,
+        row_pos_exists: bool,
+    ) -> None:
+        self.configure_scrollregion(last_row_line_pos=last_row_line_pos)
         self.hidd_text.update(self.disp_text)
         self.disp_text = {}
         self.hidd_high.update(self.disp_high)

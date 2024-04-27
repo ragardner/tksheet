@@ -1320,16 +1320,7 @@ class ColumnHeaders(tk.Canvas):
                 t = self.create_polygon(points, fill=fill, outline=outline, tag=tag, smooth=True)
             self.disp_checkbox[t] = True
 
-    def redraw_grid_and_text(
-        self,
-        last_col_line_pos,
-        scrollpos_left,
-        x_stop,
-        start_col,
-        end_col,
-        scrollpos_right,
-        col_pos_exists,
-    ):
+    def configure_scrollregion(self, last_col_line_pos: float) -> None:
         try:
             self.configure(
                 scrollregion=(
@@ -1341,6 +1332,18 @@ class ColumnHeaders(tk.Canvas):
             )
         except Exception:
             return
+
+    def redraw_grid_and_text(
+        self,
+        last_col_line_pos,
+        scrollpos_left,
+        x_stop,
+        start_col,
+        end_col,
+        scrollpos_right,
+        col_pos_exists,
+    ):
+        self.configure_scrollregion(last_col_line_pos=last_col_line_pos)
         self.hidd_text.update(self.disp_text)
         self.disp_text = {}
         self.hidd_high.update(self.disp_high)

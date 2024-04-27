@@ -3169,6 +3169,7 @@ class MainTable(tk.Canvas):
         self.update_idletasks()
         self.xview(*args)
         if self.show_header:
+            self.CH.update_idletasks()
             self.CH.xview(*args)
         if move_synced:
             self.x_move_synced_scrolls(*args)
@@ -3180,6 +3181,7 @@ class MainTable(tk.Canvas):
         self.update_idletasks()
         self.yview(*args)
         if self.show_index:
+            self.RI.update_idletasks()
             self.RI.yview(*args)
         if move_synced:
             self.y_move_synced_scrolls(*args)
@@ -5221,9 +5223,11 @@ class MainTable(tk.Canvas):
             last_col_line_pos + self.PAR.ops.empty_horizontal + 2,
             last_row_line_pos + self.PAR.ops.empty_vertical + 2,
         )
-        if scrollregion != self.scrollregion:
+        if setting_views or scrollregion != self.scrollregion:
             self.configure(scrollregion=scrollregion)
             self.scrollregion = scrollregion
+            self.CH.configure_scrollregion(last_col_line_pos)
+            self.RI.configure_scrollregion(last_row_line_pos)
         if setting_views:
             return False
         scrollpos_bot = self.canvasy(can_height)
