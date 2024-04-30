@@ -1,3 +1,6 @@
+### Version 7.1.11
+####
+
 ### Version 7.1.10
 #### Fixed:
 - Flickering when scrolling by using mouse to drag scroll bars

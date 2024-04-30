@@ -4,7 +4,7 @@
 tksheet - A Python tkinter table widget
 """
 
-__version__ = "7.1.10"
+__version__ = "7.1.11"
 
 from .colors import (
     color_map,
