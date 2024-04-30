@@ -1,5 +1,8 @@
 ### Version 7.1.10
-####
+#### Fixed:
+- Flickering when scrolling by using mouse to drag scroll bars
+- Custom bindings overwritten when using `enable_bindings()`
+- Rare situation where header/index is temporarily out of sync with table after setting xview/yview
 
 ### Version 7.1.9
 #### Fixed:
