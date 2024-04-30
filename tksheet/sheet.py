@@ -402,13 +402,13 @@ class Sheet(tk.Frame):
         self.set_scrollbar_options()
         self.yscroll = ttk.Scrollbar(
             self,
-            command=self.MT.set_yviews,
+            command=self.MT._yscrollbar,
             orient="vertical",
             style=f"Sheet{self.unique_id}.Vertical.TScrollbar",
         )
         self.xscroll = ttk.Scrollbar(
             self,
-            command=self.MT.set_xviews,
+            command=self.MT._xscrollbar,
             orient="horizontal",
             style=f"Sheet{self.unique_id}.Horizontal.TScrollbar",
         )
@@ -1938,6 +1938,7 @@ class Sheet(tk.Frame):
         undo: bool = False,
         emit_event: bool = False,
         create_selections: bool = True,
+        add_column_widths: bool = True,
         redraw: bool = True,
     ) -> EventDataDict:
         total_cols = None
@@ -1996,6 +1997,7 @@ class Sheet(tk.Frame):
                 heights=heights,
                 row_index=row_index,
             ),
+            add_col_positions=add_column_widths,
             event_data=event_dict(
                 name="add_rows",
                 sheet=self.name,
@@ -2021,6 +2023,7 @@ class Sheet(tk.Frame):
         undo: bool = False,
         emit_event: bool = False,
         create_selections: bool = True,
+        add_row_heights: bool = True,
         redraw: bool = True,
     ) -> EventDataDict:
         old_total = self.MT.equalize_data_row_lengths()
@@ -2087,6 +2090,7 @@ class Sheet(tk.Frame):
                 widths=widths,
                 headers=headers,
             ),
+            add_row_positions=add_row_heights,
             event_data=event_dict(
                 name="add_columns",
                 sheet=self.name,
@@ -4690,7 +4694,7 @@ class Sheet(tk.Frame):
             else:
                 self.RI.tree_open_ids.discard(item)
         get = not (isinstance(iid, str) or isinstance(text, str) or isinstance(values, list) or isinstance(open_, bool))
-        self.set_refresh_timer(redraw=not get or redraw)
+        self.set_refresh_timer(redraw=not get and redraw)
         if get:
             return DotDict(
                 text=self.RI.tree[item].text,

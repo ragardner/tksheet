@@ -1321,17 +1321,14 @@ class ColumnHeaders(tk.Canvas):
             self.disp_checkbox[t] = True
 
     def configure_scrollregion(self, last_col_line_pos: float) -> None:
-        try:
-            self.configure(
-                scrollregion=(
-                    0,
-                    0,
-                    last_col_line_pos + self.PAR.ops.empty_horizontal + 2,
-                    self.current_height,
-                )
+        self.configure(
+            scrollregion=(
+                0,
+                0,
+                last_col_line_pos + self.PAR.ops.empty_horizontal + 2,
+                self.current_height,
             )
-        except Exception:
-            return
+        )
 
     def redraw_grid_and_text(
         self,
@@ -1343,7 +1340,10 @@ class ColumnHeaders(tk.Canvas):
         scrollpos_right,
         col_pos_exists,
     ):
-        self.configure_scrollregion(last_col_line_pos=last_col_line_pos)
+        try:
+            self.configure_scrollregion(last_col_line_pos=last_col_line_pos)
+        except Exception:
+            return
         self.hidd_text.update(self.disp_text)
         self.disp_text = {}
         self.hidd_high.update(self.disp_high)

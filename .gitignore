@@ -4,6 +4,7 @@ MOD_VERSION.py
 *.xlsx
 *.csv
 *.tsv
+*.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

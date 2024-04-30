@@ -3164,6 +3164,13 @@ class MainTable(tk.Canvas):
             # except Exception:
             #     continue
 
+    def _xscrollbar(self, *args):
+        self.xview(*args)
+        if self.show_header:
+            self.CH.xview(*args)
+        self.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=False)
+        self.x_move_synced_scrolls(*args)
+
     def set_xviews(self, *args, move_synced: bool = True, redraw: bool = True) -> None:
         self.main_table_redraw_grid_and_text(setting_views=True)
         self.update_idletasks()
@@ -3175,6 +3182,13 @@ class MainTable(tk.Canvas):
             self.x_move_synced_scrolls(*args)
         self.fix_views()
         self.PAR.set_refresh_timer(redraw)
+
+    def _yscrollbar(self, *args):
+        self.yview(*args)
+        if self.show_index:
+            self.RI.yview(*args)
+        self.main_table_redraw_grid_and_text(redraw_header=False, redraw_row_index=True)
+        self.y_move_synced_scrolls(*args)
 
     def set_yviews(self, *args, move_synced: bool = True, redraw: bool = True) -> None:
         self.main_table_redraw_grid_and_text(setting_views=True)
@@ -5144,8 +5158,7 @@ class MainTable(tk.Canvas):
         resized_cols = False
         resized_rows = False
         if self.PAR.ops.auto_resize_columns and self.allow_auto_resize_columns and col_pos_exists:
-            max_w = int(can_width)
-            max_w -= self.PAR.ops.empty_horizontal
+            max_w = can_width - self.PAR.ops.empty_horizontal
             if self.PAR.ops.auto_resize_columns < self.min_column_width:
                 min_column_width = self.column_width
             else:
@@ -5169,8 +5182,7 @@ class MainTable(tk.Canvas):
                             widths[i] -= change
                 self.set_col_positions(itr=widths)
         if self.PAR.ops.auto_resize_rows and self.allow_auto_resize_rows and row_pos_exists:
-            max_h = int(can_height)
-            max_h -= self.PAR.ops.empty_vertical
+            max_h = can_height - self.PAR.ops.empty_vertical
             if self.PAR.ops.auto_resize_rows < self.min_row_height:
                 min_row_height = self.min_row_height
             else:
@@ -5228,8 +5240,8 @@ class MainTable(tk.Canvas):
             self.scrollregion = scrollregion
             self.CH.configure_scrollregion(last_col_line_pos)
             self.RI.configure_scrollregion(last_row_line_pos)
-        if setting_views:
-            return False
+            if setting_views:
+                return False
         scrollpos_bot = self.canvasy(can_height)
         end_row = bisect_right(self.row_positions, scrollpos_bot)
         if not scrollpos_bot >= self.row_positions[-1]:

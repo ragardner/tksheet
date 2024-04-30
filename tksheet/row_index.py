@@ -391,13 +391,15 @@ class RowIndex(tk.Canvas):
                 )
         elif self.width_resizing_enabled and self.rsz_h is None and self.rsz_w is True:
             self.set_width_of_index_to_text()
-        elif self.row_selection_enabled and self.rsz_h is None and self.rsz_w is None:
+        elif (self.row_selection_enabled or self.PAR.ops.treeview) and self.rsz_h is None and self.rsz_w is None:
             r = self.MT.identify_row(y=event.y)
             if r < len(self.MT.row_positions) - 1:
-                if self.MT.single_selection_enabled:
-                    self.select_row(r, redraw=True)
-                elif self.MT.toggle_selection_enabled:
-                    self.toggle_select_row(r, redraw=True)
+                iid = self.event_over_tree_arrow(r, self.canvasy(event.y), event.x)
+                if self.row_selection_enabled:
+                    if self.MT.single_selection_enabled:
+                        self.select_row(r, redraw=iid is None)
+                    elif self.MT.toggle_selection_enabled:
+                        self.toggle_select_row(r, redraw=iid is None)
                 datarn = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r]
                 if (
                     self.get_cell_kwargs(datarn, key="dropdown")
@@ -405,8 +407,8 @@ class RowIndex(tk.Canvas):
                     or self.edit_cell_enabled
                 ):
                     self.open_cell(event)
-                elif (iid := self.event_over_tree_arrow(r, self.canvasy(event.y), event.x)) is not None:
-                    self.PAR.item(iid, open_=iid not in self.tree_open_ids, redraw=False)
+                elif iid is not None:
+                    self.PAR.item(iid, open_=iid not in self.tree_open_ids)
         self.rsz_h = None
         self.mouse_motion(event)
         try_binding(self.extra_double_b1_func, event)
@@ -870,7 +872,7 @@ class RowIndex(tk.Canvas):
                 elif (iid := self.event_over_tree_arrow(r, canvasy, event.x)) is not None:
                     if self.MT.selection_boxes:
                         self.select_row(r, redraw=False)
-                    self.PAR.item(iid, open_=iid not in self.tree_open_ids, redraw=False)
+                    self.PAR.item(iid, open_=iid not in self.tree_open_ids)
             else:
                 self.mouseclick_outside_editor_or_dropdown_all_canvases(inside=True)
             self.b1_pressed_loc = None
@@ -1189,8 +1191,8 @@ class RowIndex(tk.Canvas):
                 new_w = self.set_width_of_index_to_text(only_rows=only_rows, set_width=False)
             else:
                 new_w = None
-            if new_w is not None and (sheet_w := floor(self.PAR.winfo_width() * 0.5)) < new_w:
-                new_w = sheet_w
+            if new_w is not None and (sheet_w_x := floor(self.PAR.winfo_width() * 0.8)) < new_w:
+                new_w = sheet_w_x
             if new_w and (self.current_width - new_w > 15 or new_w - self.current_width > 5):
                 self.set_width(new_w, set_TL=True)
                 return True
@@ -1393,17 +1395,14 @@ class RowIndex(tk.Canvas):
             self.disp_checkbox[t] = True
 
     def configure_scrollregion(self, last_row_line_pos: float) -> None:
-        try:
-            self.configure(
-                scrollregion=(
-                    0,
-                    0,
-                    self.current_width,
-                    last_row_line_pos + self.PAR.ops.empty_vertical + 2,
-                )
+        self.configure(
+            scrollregion=(
+                0,
+                0,
+                self.current_width,
+                last_row_line_pos + self.PAR.ops.empty_vertical + 2,
             )
-        except Exception:
-            return
+        )
 
     def redraw_grid_and_text(
         self,
@@ -1415,7 +1414,10 @@ class RowIndex(tk.Canvas):
         scrollpos_bot: int,
         row_pos_exists: bool,
     ) -> None:
-        self.configure_scrollregion(last_row_line_pos=last_row_line_pos)
+        try:
+            self.configure_scrollregion(last_row_line_pos=last_row_line_pos)
+        except Exception:
+            return
         self.hidd_text.update(self.disp_text)
         self.disp_text = {}
         self.hidd_high.update(self.disp_high)
