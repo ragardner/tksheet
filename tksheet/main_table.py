@@ -3144,32 +3144,47 @@ class MainTable(tk.Canvas):
             self.y_move_synced_scrolls("moveto", self.yview()[0])
         return need_redraw
 
-    def x_move_synced_scrolls(self, *args, redraw: bool = True):
+    def x_move_synced_scrolls(self, *args, redraw: bool = True, use_scrollbar: bool = False):
         for widget in self.synced_scrolls:
             # try:
             if hasattr(widget, "MT"):
-                widget.MT.set_xviews(*args, move_synced=False, redraw=redraw)
+                if use_scrollbar:
+                    widget.MT._xscrollbar(*args, move_synced=False)
+                else:
+                    widget.MT.set_xviews(*args, move_synced=False, redraw=redraw)
             else:
                 widget.xview(*args)
             # except Exception:
             #     continue
 
-    def y_move_synced_scrolls(self, *args, redraw: bool = True):
+    def y_move_synced_scrolls(self, *args, redraw: bool = True, use_scrollbar: bool = False):
         for widget in self.synced_scrolls:
             # try:
             if hasattr(widget, "MT"):
-                widget.MT.set_yviews(*args, move_synced=False, redraw=redraw)
+                if use_scrollbar:
+                    widget.MT._yscrollbar(*args, move_synced=False)
+                else:
+                    widget.MT.set_yviews(*args, move_synced=False, redraw=redraw)
             else:
                 widget.yview(*args)
             # except Exception:
             #     continue
 
-    def _xscrollbar(self, *args):
+    def _xscrollbar(self, *args, move_synced: bool = True):
         self.xview(*args)
         if self.show_header:
             self.CH.xview(*args)
         self.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=False)
-        self.x_move_synced_scrolls(*args)
+        if move_synced:
+            self.x_move_synced_scrolls(*args, use_scrollbar=True)
+
+    def _yscrollbar(self, *args, move_synced: bool = True):
+        self.yview(*args)
+        if self.show_index:
+            self.RI.yview(*args)
+        self.main_table_redraw_grid_and_text(redraw_header=False, redraw_row_index=True)
+        if move_synced:
+            self.y_move_synced_scrolls(*args, use_scrollbar=True)
 
     def set_xviews(self, *args, move_synced: bool = True, redraw: bool = True) -> None:
         self.main_table_redraw_grid_and_text(setting_views=True)
@@ -3178,17 +3193,10 @@ class MainTable(tk.Canvas):
         if self.show_header:
             self.CH.update_idletasks()
             self.CH.xview(*args)
+        self.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=False)
         if move_synced:
             self.x_move_synced_scrolls(*args)
         self.fix_views()
-        self.PAR.set_refresh_timer(redraw)
-
-    def _yscrollbar(self, *args):
-        self.yview(*args)
-        if self.show_index:
-            self.RI.yview(*args)
-        self.main_table_redraw_grid_and_text(redraw_header=False, redraw_row_index=True)
-        self.y_move_synced_scrolls(*args)
 
     def set_yviews(self, *args, move_synced: bool = True, redraw: bool = True) -> None:
         self.main_table_redraw_grid_and_text(setting_views=True)
@@ -3197,10 +3205,10 @@ class MainTable(tk.Canvas):
         if self.show_index:
             self.RI.update_idletasks()
             self.RI.yview(*args)
+        self.main_table_redraw_grid_and_text(redraw_header=False, redraw_row_index=True)
         if move_synced:
             self.y_move_synced_scrolls(*args)
         self.fix_views()
-        self.PAR.set_refresh_timer(redraw)
 
     def set_view(self, x_args: list[str, float], y_args: list[str, float]) -> None:
         self.set_xviews(*x_args)
