@@ -5657,7 +5657,7 @@ class MainTable(tk.Canvas):
                 r = r1
             if c is None:
                 c = c1
-            if r1 <= r and c1 <= c and r2 > r and c2 > c:
+            if r1 <= r and c1 <= c and r2 >= r and c2 >= c:
                 self.create_currently_selected_box(
                     r,
                     c,
@@ -5673,7 +5673,7 @@ class MainTable(tk.Canvas):
                 c = box[1]
             for item, selection_box in self.get_selection_items(reverse=True):
                 r1, c1, r2, c2 = selection_box.coords
-                if box == (r1, c1, r2, c2) and r1 <= r and c1 <= c and r2 > r and c2 > c:
+                if box == (r1, c1, r2, c2) and r1 <= r and c1 <= c and r2 >= r and c2 >= c:
                     self.create_currently_selected_box(
                         r,
                         c,
@@ -5686,7 +5686,7 @@ class MainTable(tk.Canvas):
         if r is not None and c is not None:
             for item, selection_box in self.get_selection_items(reverse=True):
                 r1, c1, r2, c2 = selection_box.coords
-                if r1 <= r and c1 <= c and r2 > r and c2 > c:
+                if r1 <= r and c1 <= c and r2 >= r and c2 >= c:
                     self.create_currently_selected_box(
                         r,
                         c,
@@ -6057,9 +6057,16 @@ class MainTable(tk.Canvas):
             return
         for item, box in self.get_selection_items():
             r1, c1, r2, c2 = box.coords
-            if r1 >= len(self.row_positions) - 1 or c1 >= len(self.col_positions) - 1:
-                self.hide_selection_box(item)
-                continue
+            if r1 >= len(self.row_positions) - 1:
+                if len(self.row_positions) > 1:
+                    r1 = len(self.row_positions) - 2
+                else:
+                    r1 = len(self.row_positions) - 1
+            if c1 >= len(self.col_positions) - 1:
+                if len(self.col_positions) > 1:
+                    c1 = len(self.col_positions) - 2
+                else:
+                    c1 = len(self.col_positions) - 1
             if r2 > len(self.row_positions) - 1:
                 r2 = len(self.row_positions) - 1
             if c2 > len(self.col_positions) - 1:

@@ -4,6 +4,7 @@ import tkinter as tk
 from collections import defaultdict
 from collections.abc import (
     Callable,
+    Sequence,
 )
 from functools import (
     partial,
@@ -673,11 +674,11 @@ class ColumnHeaders(tk.Canvas):
 
     def show_drag_and_drop_indicators(
         self,
-        xpos,
-        y1,
-        y2,
-        cols,
-    ):
+        xpos: float,
+        y1: float,
+        y2: float,
+        cols: Sequence[int],
+    ) -> None:
         self.hide_resize_and_ctrl_lines()
         self.create_resize_line(
             xpos,
@@ -698,13 +699,13 @@ class ColumnHeaders(tk.Canvas):
                 delete_on_timer=False,
             )
 
-    def hide_resize_and_ctrl_lines(self, ctrl_lines=True):
+    def hide_resize_and_ctrl_lines(self, ctrl_lines: bool = True) -> None:
         self.delete_resize_lines()
         self.MT.delete_resize_lines()
         if ctrl_lines:
             self.MT.delete_ctrl_outlines()
 
-    def scroll_if_event_offscreen(self, event: object):
+    def scroll_if_event_offscreen(self, event: object) -> bool:
         xcheck = self.xview()
         need_redraw = False
         if event.x > self.winfo_width() and len(xcheck) > 1 and xcheck[1] < 1:
@@ -727,14 +728,14 @@ class ColumnHeaders(tk.Canvas):
             need_redraw = True
         return need_redraw
 
-    def fix_xview(self):
+    def fix_xview(self) -> None:
         xcheck = self.xview()
         if xcheck and xcheck[0] < 0:
             self.MT.set_xviews("moveto", 0)
         elif len(xcheck) > 1 and xcheck[1] > 1:
             self.MT.set_xviews("moveto", 1)
 
-    def event_over_dropdown(self, c, datacn, event: object, canvasx):
+    def event_over_dropdown(self, c: int, datacn: int, event: object, canvasx: float) -> bool:
         if (
             event.y < self.MT.header_txt_height + 5
             and self.get_cell_kwargs(datacn, key="dropdown")
@@ -744,7 +745,7 @@ class ColumnHeaders(tk.Canvas):
             return True
         return False
 
-    def event_over_checkbox(self, c, datacn, event: object, canvasx):
+    def event_over_checkbox(self, c: int, datacn: int, event: object, canvasx: float) -> bool:
         if (
             event.y < self.MT.header_txt_height + 5
             and self.get_cell_kwargs(datacn, key="checkbox")
@@ -753,7 +754,7 @@ class ColumnHeaders(tk.Canvas):
             return True
         return False
 
-    def b1_release(self, event: object):
+    def b1_release(self, event: object) -> None:
         if self.being_drawn_item is not None:
             to_sel = self.MT.coords_and_type(self.being_drawn_item)
             r_to_sel, c_to_sel = self.MT.selected.row, self.MT.selected.column
@@ -909,8 +910,7 @@ class ColumnHeaders(tk.Canvas):
 
     def select_col(self, c, redraw=False, run_binding_func=True):
         self.MT.deselect("all", redraw=False)
-        box = (0, c, len(self.MT.row_positions) - 1, c + 1, "columns")
-        fill_iid = self.MT.create_selection_box(*box)
+        fill_iid = self.MT.create_selection_box(0, c, len(self.MT.row_positions) - 1, c + 1, "columns")
         if redraw:
             self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
         if run_binding_func:

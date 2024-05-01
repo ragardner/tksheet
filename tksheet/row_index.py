@@ -928,8 +928,7 @@ class RowIndex(tk.Canvas):
 
     def select_row(self, r: int, redraw: bool = False, run_binding_func: bool = True) -> int:
         self.MT.deselect("all", redraw=False)
-        box = (r, 0, r + 1, len(self.MT.col_positions) - 1, "rows")
-        fill_iid = self.MT.create_selection_box(*box)
+        fill_iid = self.MT.create_selection_box(r, 0, r + 1, len(self.MT.col_positions) - 1, "rows")
         if redraw:
             self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
         if run_binding_func:
