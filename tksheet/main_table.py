@@ -551,7 +551,10 @@ class MainTable(tk.Canvas):
         for r1, c1, r2, c2 in boxes:
             self.show_ctrl_outline(canvas="table", start_cell=(c1, r1), end_cell=(c2, r2))
         self.clipboard_clear()
-        self.clipboard_append(s.getvalue())
+        if len(event_data["cells"]["table"]) == 1:
+            self.clipboard_append(next(iter(event_data["cells"]["table"].values())))
+        else:
+            self.clipboard_append(s.getvalue())
         self.update_idletasks()
         try_binding(self.extra_end_ctrl_c_func, event_data, "end_ctrl_c")
 
@@ -615,7 +618,10 @@ class MainTable(tk.Canvas):
         if event_data["cells"]["table"]:
             self.undo_stack.append(ev_stack_dict(event_data))
         self.clipboard_clear()
-        self.clipboard_append(s.getvalue())
+        if len(event_data["cells"]["table"]) == 1:
+            self.clipboard_append(next(iter(event_data["cells"]["table"].values())))
+        else:
+            self.clipboard_append(s.getvalue())
         self.update_idletasks()
         self.refresh()
         for r1, c1, r2, c2 in boxes:
@@ -657,9 +663,11 @@ class MainTable(tk.Canvas):
             dialect = csv.Sniffer().sniff(data, delimiters=self.PAR.ops.from_clipboard_delimiters)
         except Exception:
             dialect = csv.excel_tab
-        data = list(csv.reader(io.StringIO(data), dialect=dialect, skipinitialspace=True))
-        if not data:
-            return
+        if dialect.delimiter in data:
+            if not (data := list(csv.reader(io.StringIO(data), dialect=dialect, skipinitialspace=True))):
+                return
+        else:
+            data = [[data]]
         new_data_numcols = max(map(len, data))
         new_data_numrows = len(data)
         for rn, r in enumerate(data):
