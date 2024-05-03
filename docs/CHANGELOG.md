@@ -1,3 +1,6 @@
+### Version 7.1.12
+####
+
 ### Version 7.1.11
 #### Fixed:
 - Rare error when selecting header cell with an empty table and `auto_resize_columns` enabled
