@@ -1,5 +1,9 @@
 ### Version 7.1.11
-####
+#### Fixed:
+- Rare error when selecting header cell with an empty table and `auto_resize_columns` enabled
+
+#### Addressed:
+- Issue [221](https://github.com/ragardner/tksheet/issues/221)
 
 ### Version 7.1.10
 #### Fixed:
