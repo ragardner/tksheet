@@ -1939,6 +1939,7 @@ class Sheet(tk.Frame):
         emit_event: bool = False,
         create_selections: bool = True,
         add_column_widths: bool = True,
+        push_ops: bool = True,
         redraw: bool = True,
     ) -> EventDataDict:
         total_cols = None
@@ -2005,6 +2006,7 @@ class Sheet(tk.Frame):
                 selected=self.MT.selected,
             ),
             create_selections=create_selections,
+            push_ops=push_ops,
         )
         if undo:
             self.MT.undo_stack.append(ev_stack_dict(event_data))
@@ -2024,6 +2026,7 @@ class Sheet(tk.Frame):
         emit_event: bool = False,
         create_selections: bool = True,
         add_row_heights: bool = True,
+        push_ops: bool = True,
         redraw: bool = True,
     ) -> EventDataDict:
         old_total = self.MT.equalize_data_row_lengths()
@@ -2098,6 +2101,7 @@ class Sheet(tk.Frame):
                 selected=self.MT.selected,
             ),
             create_selections=create_selections,
+            push_ops=push_ops,
         )
         if undo:
             self.MT.undo_stack.append(ev_stack_dict(event_data))
@@ -2571,7 +2575,7 @@ class Sheet(tk.Frame):
         self.MT.open_dropdown_window(r, c)
         return self
 
-    def close_dropdown(self, r: int, c: int) -> Sheet:
+    def close_dropdown(self, r: int | None = None, c: int | None = None) -> Sheet:
         self.MT.close_dropdown_window(r, c)
         return self
 
@@ -2579,7 +2583,7 @@ class Sheet(tk.Frame):
         self.CH.open_dropdown_window(c)
         return self
 
-    def close_header_dropdown(self, c: int) -> Sheet:
+    def close_header_dropdown(self, c: int | None = None) -> Sheet:
         self.CH.close_dropdown_window(c)
         return self
 
@@ -2587,7 +2591,7 @@ class Sheet(tk.Frame):
         self.RI.open_dropdown_window(r)
         return self
 
-    def close_index_dropdown(self, r: int) -> Sheet:
+    def close_index_dropdown(self, r: int | None = None) -> Sheet:
         self.RI.close_dropdown_window(r)
         return self
 
@@ -4470,6 +4474,7 @@ class Sheet(tk.Frame):
         iid_column: int,
         parent_column: int,
         text_column: None | int = None,
+        push_ops: bool = False,
     ) -> Sheet:
         if text_column is None:
             text_column = iid_column
@@ -4518,6 +4523,7 @@ class Sheet(tk.Frame):
             row_index=True,
             create_selections=False,
             fill=False,
+            push_ops=push_ops,
         )
         self.RI.tree_rns = {n.iid: i for i, n in enumerate(self.MT._row_index)}
         self.hide_rows(
@@ -6231,8 +6237,8 @@ class Sheet(tk.Frame):
         kwargs = self.RI.get_cell_kwargs(r_, key="dropdown")
         if kwargs:
             kwargs["values"] = values
-            if self.RI.current_dropdown_window is not None:
-                self.RI.current_dropdown_window.values(values)
+            if self.RI.dropdown.open:
+                self.RI.dropdown.window.values(values)
             if set_value is not None:
                 self.MT.row_index(newindex=set_value, index=r_)
                 # here
@@ -6454,7 +6460,7 @@ class Dropdown(Sheet):
         width: int | None = None,
         height: int | None = None,
         font: None | tuple[str, int, str] = None,
-        outline_thickness: int = 1,
+        outline_thickness: int = 2,
         values: list[object] = [],
         close_dropdown_window: Callable | None = None,
         search_function: Callable = dropdown_search_function,
@@ -6512,6 +6518,7 @@ class Dropdown(Sheet):
         align: str,
         values: list[object] | None = None,
     ) -> None:
+        self.deselect(redraw=False)
         self.r = r
         self.c = c
         self.row = -1

@@ -91,6 +91,10 @@ from .text_editor import (
 )
 from .vars import (
     USER_OS,
+    bind_add_columns,
+    bind_add_rows,
+    bind_del_columns,
+    bind_del_rows,
     ctrl_key,
     rc_binding,
     symbols_set,
@@ -2544,19 +2548,19 @@ class MainTable(tk.Canvas):
             self.undo_enabled = True
             self._tksheet_bind("undo_bindings", self.undo)
             self._tksheet_bind("redo_bindings", self.redo)
-        if binding in ("all", "rc_delete_column"):
+        if binding in bind_del_columns:
             self.rc_delete_column_enabled = True
             self.rc_popup_menus_enabled = True
             self.rc_select_enabled = True
-        if binding in ("all", "rc_delete_row"):
+        if binding in bind_del_rows:
             self.rc_delete_row_enabled = True
             self.rc_popup_menus_enabled = True
             self.rc_select_enabled = True
-        if binding in ("all", "rc_insert_column"):
+        if binding in bind_add_columns:
             self.rc_insert_column_enabled = True
             self.rc_popup_menus_enabled = True
             self.rc_select_enabled = True
-        if binding in ("all", "rc_insert_row"):
+        if binding in bind_add_rows:
             self.rc_insert_row_enabled = True
             self.rc_popup_menus_enabled = True
             self.rc_select_enabled = True
@@ -2615,25 +2619,16 @@ class MainTable(tk.Canvas):
             self.RI.row_selection_enabled = False
         if binding in ("all", "row_drag_and_drop", "move_rows"):
             self.RI.drag_and_drop_enabled = False
-        if binding in ("all", "rc_delete_column"):
+        if binding in bind_del_columns:
             self.rc_delete_column_enabled = False
-            self.rc_popup_menus_enabled = False
-            self.rc_select_enabled = False
-        if binding in ("all", "rc_delete_row"):
+        if binding in bind_del_rows:
             self.rc_delete_row_enabled = False
-            self.rc_popup_menus_enabled = False
-            self.rc_select_enabled = False
-        if binding in ("all", "rc_insert_column"):
+        if binding in bind_add_columns:
             self.rc_insert_column_enabled = False
-            self.rc_popup_menus_enabled = False
-            self.rc_select_enabled = False
-        if binding in ("all", "rc_insert_row"):
+        if binding in bind_add_rows:
             self.rc_insert_row_enabled = False
-            self.rc_popup_menus_enabled = False
-            self.rc_select_enabled = False
         if binding in ("all", "right_click_popup_menu", "rc_popup_menu"):
             self.rc_popup_menus_enabled = False
-            self.rc_select_enabled = False
         if binding in ("all", "right_click_select", "rc_select"):
             self.rc_select_enabled = False
         if binding in ("all", "edit_cell", "edit_bindings", "edit"):
@@ -4188,6 +4183,7 @@ class MainTable(tk.Canvas):
         create_ops: bool = True,
         create_selections: bool = True,
         add_row_positions: bool = True,
+        push_ops: bool = True,
     ) -> EventDataDict:
         self.saved_column_widths = {}
         saved_displayed_columns = list(self.displayed_columns)
@@ -4235,10 +4231,11 @@ class MainTable(tk.Canvas):
             )
         if isinstance(self._headers, list):
             self._headers = insert_items(self._headers, header, self.CH.fix_header)
-        self.adjust_options_post_add_columns(
-            cols=tuple(reversed(columns)),
-            create_ops=create_ops,
-        )
+        if push_ops:
+            self.adjust_options_post_add_columns(
+                cols=tuple(reversed(columns)),
+                create_ops=create_ops,
+            )
         if create_selections:
             self.deselect("all")
             for boxst, boxend in consecutive_ranges(tuple(reversed(column_widths))):
@@ -4319,6 +4316,7 @@ class MainTable(tk.Canvas):
         create_ops: bool = True,
         create_selections: bool = True,
         add_col_positions: bool = True,
+        push_ops: bool = True,
     ) -> EventDataDict:
         self.saved_row_heights = {}
         saved_displayed_rows = list(self.displayed_rows)
@@ -4364,10 +4362,11 @@ class MainTable(tk.Canvas):
                     (self.PAR.ops.default_column_width for i in range(len(self.col_positions) - 1, maxcn + 1)),
                 )
             )
-        self.adjust_options_post_add_rows(
-            rows=tuple(reversed(rows)),
-            create_ops=create_ops,
-        )
+        if push_ops:
+            self.adjust_options_post_add_rows(
+                rows=tuple(reversed(rows)),
+                create_ops=create_ops,
+            )
         if create_selections:
             self.deselect("all")
             for boxst, boxend in consecutive_ranges(tuple(reversed(row_heights))):
@@ -6752,6 +6751,7 @@ class MainTable(tk.Canvas):
         win_w = self.col_positions[c + 1] - self.col_positions[c] + 1
         if anchor == "nw":
             if kwargs["state"] == "normal":
+                self.text_editor.window.update_idletasks()
                 ypos = self.row_positions[r] + self.text_editor.window.winfo_height() - 1
             else:
                 ypos = self.row_positions[r + 1]
@@ -6770,8 +6770,9 @@ class MainTable(tk.Canvas):
         }
         if self.dropdown.window:
             self.dropdown.window.reset(**reset_kwargs)
-            self.itemconfig(self.dropdown.canvas_id, state="normal", anchor=anchor)
             self.coords(self.dropdown.canvas_id, self.col_positions[c], ypos)
+            self.itemconfig(self.dropdown.canvas_id, state="normal", anchor=anchor)
+            self.dropdown.window.tkraise()
         else:
             self.dropdown.window = self.PAR.dropdown_class(
                 self.winfo_toplevel(),

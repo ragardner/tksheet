@@ -2541,9 +2541,12 @@ insert_columns(
     idx: str | int | None = None,
     widths: list[int] | tuple[int] | None = None,
     headers: bool = False,
-    create_selections: bool = True,
+    fill: bool = True,
     undo: bool = False,
     emit_event: bool = False,
+    create_selections: bool = True,
+    add_row_heights: bool = True,
+    push_ops: bool = True,
     redraw: bool = True,
 ) -> EventDataDict
 ```
@@ -2555,6 +2558,9 @@ Parameters:
 - `fill` when `True` any provided columns that are shorter than the Sheets longest column will be filled with empty values up to the length of the longest column.
 - `undo` when `True` adds the change to the Sheets undo stack.
 - `emit_event` when `True` causes a `"<<SheetModified>>` event to occur if it has been bound, see [here](https://github.com/ragardner/tksheet/wiki/Version-7#tkinter-and-tksheet-events) for more information.
+- `create_selections` when `True` creates a selection box for the newly inserted columns.
+- `add_row_heights` when `True` creates rows if there are no pre-existing rows.
+- `push_ops` when `True` increases the indexes of all cell/column options such as dropdown boxes, highlights and data formatting.
 
 ___
 
@@ -2569,6 +2575,9 @@ insert_rows(
     fill: bool = True,
     undo: bool = False,
     emit_event: bool = False,
+    create_selections: bool = True,
+    add_column_widths: bool = True,
+    push_ops: bool = True,
     redraw: bool = True,
 ) -> EventDataDict
 ```
@@ -2580,6 +2589,9 @@ Parameters:
 - `fill` when `True` any provided rows that are shorter than the Sheets longest row will be filled with empty values up to the length of the longest row.
 - `undo` when `True` adds the change to the Sheets undo stack.
 - `emit_event` when `True` causes a `"<<SheetModified>>` event to occur if it has been bound, see [here](https://github.com/ragardner/tksheet/wiki/Version-7#tkinter-and-tksheet-events) for more information.
+- `create_selections` when `True` creates a selection box for the newly inserted rows.
+- `add_column_widths` when `True` creates columns if there are no pre-existing columns.
+- `push_ops` when `True` increases the indexes of all cell/row options such as dropdown boxes, highlights and data formatting.
 
 ___
 
@@ -3158,15 +3170,15 @@ ___
 #### **Close a dropdown box**
 
 ```python
-close_dropdown(r: int, c: int) -> Sheet
+close_dropdown(r: int | None = None, c: int | None = None) -> Sheet
 ```
 
 ```python
-close_header_dropdown(c: int) -> Sheet
+close_header_dropdown(c: int | None = None) -> Sheet
 ```
 
 ```python
-close_index_dropdown(r: int) -> Sheet
+close_index_dropdown(r: int | None = None) -> Sheet
 ```
 Notes:
 - Also destroys any opened text editor windows.

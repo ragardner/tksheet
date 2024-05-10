@@ -1,5 +1,13 @@
 ### Version 7.1.12
-####
+#### Fixed:
+- Incorrect dropdown box opening coordinates following the opening of dropdown boxes on different sized rows
+- Calling `grid_forget()` on a parent widget after opening a dropdown box would cause opened dropdown boxes to be hidden
+- `disable_bindings()` with right click menu options such as insert_columns would disable the whole right click menu
+- Removed old deprecated dropdown box `dict` values
+
+#### Changed:
+- To disable the whole right click menu using `disable_bindings()` it must be called with the specific string `"right_click_popup_menu"`
+- themes `dict`s now `DotDict`s
 
 ### Version 7.1.11
 #### Fixed:

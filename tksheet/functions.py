@@ -204,8 +204,6 @@ def get_dropdown_kwargs(
 def get_dropdown_dict(**kwargs) -> dict:
     return {
         "values": kwargs["values"],
-        "window": "no dropdown open",
-        "canvas_id": "no dropdown open",
         "select_function": kwargs["selection_function"],
         "modified_function": kwargs["modified_function"],
         "search_function": kwargs["search_function"],

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-theme_light_blue: dict[str, str] = {
+from .other_classes import DotDict
+
+theme_light_blue: dict[str, str] = DotDict({
     "popup_menu_fg": "#000000",
     "popup_menu_bg": "#FFFFFF",
     "popup_menu_highlight_bg": "#DCDEE0",
@@ -70,9 +72,9 @@ theme_light_blue: dict[str, str] = {
     "horizontal_scroll_not_active_fg": "#DADCE0",
     "vertical_scroll_pressed_fg": "#bdc1c6",
     "horizontal_scroll_pressed_fg": "#bdc1c6",
-}
+})
 
-theme_light_green: dict[str, str] = {
+theme_light_green: dict[str, str] = DotDict({
     "popup_menu_fg": "#000000",
     "popup_menu_bg": "#FFFFFF",
     "popup_menu_highlight_bg": "#DCDEE0",
@@ -142,9 +144,9 @@ theme_light_green: dict[str, str] = {
     "horizontal_scroll_not_active_fg": "#c1c1c1",
     "vertical_scroll_pressed_fg": "#707070",
     "horizontal_scroll_pressed_fg": "#707070",
-}
+})
 
-theme_dark: dict[str, str] = {
+theme_dark: dict[str, str] = DotDict({
     "popup_menu_fg": "white",
     "popup_menu_bg": "gray15",
     "popup_menu_highlight_bg": "gray40",
@@ -214,9 +216,9 @@ theme_dark: dict[str, str] = {
     "horizontal_scroll_not_active_fg": "#3b3b3d",
     "vertical_scroll_pressed_fg": "#a0a0a0",
     "horizontal_scroll_pressed_fg": "#a0a0a0",
-}
+})
 
-theme_black: dict[str, str] = {
+theme_black: dict[str, str] = DotDict({
     "popup_menu_fg": "white",
     "popup_menu_bg": "gray15",
     "popup_menu_highlight_bg": "gray40",
@@ -286,9 +288,9 @@ theme_black: dict[str, str] = {
     "horizontal_scroll_not_active_fg": "#3b3a39",
     "vertical_scroll_pressed_fg": "#a0a0a0",
     "horizontal_scroll_pressed_fg": "#a0a0a0",
-}
+})
 
-theme_dark_blue: dict[str, str] = theme_black.copy()
+theme_dark_blue: dict[str, str] = DotDict(theme_black.copy())
 theme_dark_blue["header_fg"] = "#6ACAD8"
 theme_dark_blue["header_selected_cells_fg"] = "#6ACAD8"
 theme_dark_blue["index_fg"] = "#6ACAD8"
@@ -303,7 +305,7 @@ theme_dark_blue["index_selected_rows_bg"] = "#6ACAD8"
 theme_dark_blue["table_selected_rows_border_fg"] = "#6ACAD8"
 theme_dark_blue["table_selected_columns_border_fg"] = "#6ACAD8"
 
-theme_dark_green: dict[str, str] = theme_black.copy()
+theme_dark_green: dict[str, str] = DotDict(theme_black.copy())
 theme_dark_green["header_fg"] = "#66FFBF"
 theme_dark_green["header_selected_cells_fg"] = "#66FFBF"
 theme_dark_green["index_fg"] = "#66FFBF"

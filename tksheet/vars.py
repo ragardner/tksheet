@@ -9,23 +9,28 @@ symbols_set: set[str] = set("""!#$%&'()*+,-./:;"@[]^_`{|}~>?= \\""")
 nonelike: set[object] = {None, "none", ""}
 truthy: set[object] = {True, "true", "t", "yes", "y", "on", "1", 1, 1.0}
 falsy: set[object] = {False, "false", "f", "no", "n", "off", "0", 0, 0.0}
+
 val_modifying_options: set[str, str, str] = {"checkbox", "format", "dropdown"}
-named_span_types = (
+
+named_span_types: set[str] = {
     "format",
     "highlight",
     "dropdown",
     "checkbox",
     "readonly",
     "align",
-)
+}
+
 emitted_events: set[str] = {
     "<<SheetModified>>",
     "<<SheetRedrawn>>",
     "<<SheetSelect>>",
 }
+
 backwards_compatibility_keys: dict[str, str] = {
     "font": "table_font",
 }
+
 text_editor_to_unbind: tuple[str] = (
     "<Alt-Return>",
     "<Alt-KP_Enter>",
@@ -36,6 +41,7 @@ text_editor_to_unbind: tuple[str] = (
     "<FocusOut>",
     "<Escape>",
 )
+
 scrollbar_options_keys: set[str] = {
     "vertical_scroll_background",
     "horizontal_scroll_background",
@@ -69,4 +75,48 @@ scrollbar_options_keys: set[str] = {
     "horizontal_scroll_not_active_fg",
     "vertical_scroll_pressed_fg",
     "horizontal_scroll_pressed_fg",
+}
+
+bind_add_columns: set[str] = {
+    "all",
+    "rc_insert_column",
+    "insert_column",
+    "add_column",
+    "insert_columns",
+    "add_columns",
+    "insert column",
+    "add column",
+}
+
+bind_del_columns: set[str] = {
+    "all",
+    "rc_delete_column",
+    "delete_column",
+    "del_column",
+    "delete_columns",
+    "del_columns",
+    "delete columns",
+    "del columns",
+}
+
+bind_add_rows: set[str] = {
+    "all",
+    "rc_insert_row",
+    "insert_row",
+    "add_row",
+    "insert_rows",
+    "add_rows",
+    "insert row",
+    "add row",
+}
+
+bind_del_rows: set[str] = {
+    "all",
+    "rc_delete_row",
+    "delete_row",
+    "del_row",
+    "delete_rows",
+    "del_rows",
+    "delete rows",
+    "del rows",
 }

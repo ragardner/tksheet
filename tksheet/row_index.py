@@ -2029,6 +2029,7 @@ class RowIndex(tk.Canvas):
         win_w = self.current_width + 1
         if anchor == "nw":
             if kwargs["state"] == "normal":
+                self.text_editor.window.update_idletasks()
                 ypos = self.MT.row_positions[r] + self.text_editor.window.winfo_height() - 1
             else:
                 ypos = self.MT.row_positions[r + 1]
@@ -2049,6 +2050,7 @@ class RowIndex(tk.Canvas):
             self.dropdown.window.reset(**reset_kwargs)
             self.itemconfig(self.dropdown.canvas_id, state="normal", anchor=anchor)
             self.coords(self.dropdown.canvas_id, 0, ypos)
+            self.dropdown.window.tkraise()
         else:
             self.dropdown.window = self.PAR.dropdown_class(
                 self.winfo_toplevel(),
