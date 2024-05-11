@@ -1,3 +1,7 @@
+### Version 7.1.2
+#### Fixed:
+- External right click popup menu being overwritten by internal when right clicking in empty table space
+
 ### Version 7.1.12
 #### Fixed:
 - Incorrect dropdown box opening coordinates following the opening of dropdown boxes on different sized rows

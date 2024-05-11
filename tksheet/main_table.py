@@ -2733,9 +2733,10 @@ class MainTable(tk.Canvas):
                         popup_menu = self.rc_popup_menu
             else:
                 self.deselect("all")
-                popup_menu = self.empty_rc_popup_menu
+                if self.rc_popup_menus_enabled:
+                    popup_menu = self.empty_rc_popup_menu
         try_binding(self.extra_rc_func, event)
-        if popup_menu is not None:
+        if popup_menu:
             popup_menu.tk_popup(event.x_root, event.y_root)
 
     def b1_press(self, event=None):
