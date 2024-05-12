@@ -145,8 +145,8 @@ class ColumnHeaders(tk.Canvas):
             self.unbind(rc_binding)
             self.unbind("<MouseWheel>")
             if USER_OS == "linux":
-                self.unbind("<Button-4>", self.mousewheel)
-                self.unbind("<Button-5>", self.mousewheel)
+                self.unbind("<Button-4>")
+                self.unbind("<Button-5>")
 
     def mousewheel(self, event: object):
         maxlines = 0
