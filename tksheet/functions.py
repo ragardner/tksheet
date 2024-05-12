@@ -406,12 +406,11 @@ def index_exists(seq: Sequence[object], index: int) -> bool:
 def move_elements_by_mapping(
     seq: list[object],
     new_idxs: dict[int, int],
-    old_idxs: dict[int, int] | None,
+    old_idxs: dict[int, int] | None = None,
 ) -> list[object]:
     # move elements of a list around, displacing
     # other elements based on mapping
     # of {old index: new index, ...}
-
     if old_idxs is None:
         old_idxs = dict(zip(new_idxs.values(), new_idxs))
 

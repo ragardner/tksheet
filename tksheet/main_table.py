@@ -1370,11 +1370,10 @@ class MainTable(tk.Canvas):
         # all the way from 0 to max_idx
         if old_idxs is None:
             old_idxs = dict(zip(new_idxs.values(), new_idxs))
-        seq = tuple(range(max_idx + 1))
         return dict(
             zip(
-                move_elements_by_mapping(seq, new_idxs, old_idxs),
-                seq,
+                move_elements_by_mapping(tuple(range(max_idx + 1)), new_idxs, old_idxs),
+                range(max_idx + 1),
             )
         )
 

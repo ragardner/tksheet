@@ -4253,27 +4253,27 @@ class Sheet(tk.Frame):
             target = self.CH.cell_options
         if key is None:
             return target
-        return {k: v for k, v in target.items() if key in v}
+        return {k: v[key] for k, v in target.items() if key in v}
 
     def get_row_options(self, key: None | str = None) -> dict:
         if key is None:
             return self.MT.row_options
-        return {k: v for k, v in self.MT.row_options.items() if key in v}
+        return {k: v[key] for k, v in self.MT.row_options.items() if key in v}
 
     def get_column_options(self, key: None | str = None) -> dict:
         if key is None:
             return self.MT.col_options
-        return {k: v for k, v in self.MT.col_options.items() if key in v}
+        return {k: v[key] for k, v in self.MT.col_options.items() if key in v}
 
     def get_index_options(self, key: None | str = None) -> dict:
         if key is None:
             return self.RI.cell_options
-        return {k: v for k, v in self.RI.cell_options.items() if key in v}
+        return {k: v[key] for k, v in self.RI.cell_options.items() if key in v}
 
     def get_header_options(self, key: None | str = None) -> dict:
         if key is None:
             return self.CH.cell_options
-        return {k: v for k, v in self.CH.cell_options.items() if key in v}
+        return {k: v[key] for k, v in self.CH.cell_options.items() if key in v}
 
     def del_out_of_bounds_options(self) -> Sheet:
         maxc = self.total_columns()
