@@ -133,6 +133,9 @@ class ColumnHeaders(tk.Canvas):
             self.bind("<Double-Button-1>", self.double_b1)
             self.bind(rc_binding, self.rc)
             self.bind("<MouseWheel>", self.mousewheel)
+            if USER_OS == "linux":
+                self.bind("<Button-4>", self.mousewheel)
+                self.bind("<Button-5>", self.mousewheel)
         else:
             self.unbind("<Motion>")
             self.unbind("<ButtonPress-1>")
@@ -141,6 +144,9 @@ class ColumnHeaders(tk.Canvas):
             self.unbind("<Double-Button-1>")
             self.unbind(rc_binding)
             self.unbind("<MouseWheel>")
+            if USER_OS == "linux":
+                self.unbind("<Button-4>", self.mousewheel)
+                self.unbind("<Button-5>", self.mousewheel)
 
     def mousewheel(self, event: object):
         maxlines = 0

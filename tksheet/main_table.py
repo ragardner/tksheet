@@ -363,10 +363,10 @@ class MainTable(tk.Canvas):
             ("<ButtonRelease-1>", self, self.b1_release),
             ("<Double-Button-1>", self, self.double_b1),
             ("<MouseWheel>", self, self.mousewheel),
+            ("<MouseWheel>", self.RI, self.mousewheel),
             ("<Shift-ButtonPress-1>", self, self.shift_b1_press),
             ("<Shift-ButtonPress-1>", self.CH, self.CH.shift_b1_press),
             ("<Shift-ButtonPress-1>", self.RI, self.RI.shift_b1_press),
-            ("<MouseWheel>", self.RI, self.mousewheel),
             (rc_binding, self, self.rc),
             (f"<{ctrl_key}-ButtonPress-1>", self, self.ctrl_b1_press),
             (f"<{ctrl_key}-ButtonPress-1>", self.CH, self.CH.ctrl_b1_press),
@@ -385,9 +385,11 @@ class MainTable(tk.Canvas):
             ("<Control-equal>", self.zoom_in),
             ("<Control-minus>", self.zoom_out),
         )
-        all_canvas_linux_bindings = {
+        mt_ri_canvas_linux_bindings = {
             ("<Button-4>", self.mousewheel),
             ("<Button-5>", self.mousewheel),
+        }
+        all_canvas_linux_bindings = {
             ("<Shift-Button-4>", self.shift_mousewheel),
             ("<Shift-Button-5>", self.shift_mousewheel),
             ("<Control-Button-4>", self.ctrl_mousewheel),
@@ -400,6 +402,9 @@ class MainTable(tk.Canvas):
                 for canvas in (self, self.RI, self.CH):
                     canvas.bind(b[0], b[1])
             if USER_OS == "linux":
+                for b in mt_ri_canvas_linux_bindings:
+                    for canvas in (self, self.RI):
+                        canvas.bind(b[0], b[1])
                 for b in all_canvas_linux_bindings:
                     for canvas in (self, self.RI, self.CH):
                         canvas.bind(b[0], b[1])
@@ -410,6 +415,9 @@ class MainTable(tk.Canvas):
                 for canvas in (self, self.RI, self.CH):
                     canvas.unbind(b[0])
             if USER_OS == "linux":
+                for b in mt_ri_canvas_linux_bindings:
+                    for canvas in (self, self.RI):
+                        canvas.unbind(b[0])
                 for b in all_canvas_linux_bindings:
                     for canvas in (self, self.RI, self.CH):
                         canvas.unbind(b[0])
