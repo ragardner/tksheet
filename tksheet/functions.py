@@ -19,6 +19,7 @@ from .other_classes import (
     DotDict,
     EventDataDict,
     Highlight,
+    Loc,
     Span,
 )
 
@@ -1292,10 +1293,12 @@ def mod_span_widget(span: Span, widget: object) -> Span:
 def mod_event_val(
     event_data: EventDataDict,
     val: object,
-    loc: tuple[int, int] | int,
+    loc: Loc | int,
 ) -> EventDataDict:
     event_data.value = val
-    event_data.loc = loc
+    event_data.loc = Loc(*loc)
+    event_data.row = loc[0]
+    event_data.column = loc[1]
     return event_data
 
 

@@ -573,7 +573,7 @@ class MainTable(tk.Canvas):
         try_binding(self.extra_end_ctrl_c_func, event_data, "end_ctrl_c")
         return event_data
 
-    def ctrl_x(self, event=None) -> None | EventDataDict:
+    def ctrl_x(self, event=None, validation: bool = True) -> None | EventDataDict:
         if not self.selected:
             return
         event_data = event_dict(
@@ -597,10 +597,14 @@ class MainTable(tk.Canvas):
                         datacn = self.datacn(c)
                         row.append(self.get_cell_clipboard(datarn, datacn))
                         val = self.get_value_for_empty_cell(datarn, datacn)
-                        if not self.edit_validation_func or (
-                            self.edit_validation_func
-                            and (val := self.edit_validation_func(mod_event_val(event_data, val, (r1 + rn, c))))
-                            is not None
+                        if (
+                            not self.edit_validation_func
+                            or not validation
+                            or (
+                                self.edit_validation_func
+                                and (val := self.edit_validation_func(mod_event_val(event_data, val, (r1 + rn, c))))
+                                is not None
+                            )
                         ):
                             event_data = self.event_data_set_cell(
                                 datarn,
@@ -618,10 +622,14 @@ class MainTable(tk.Canvas):
                         datacn = self.datacn(c)
                         row.append(self.get_cell_clipboard(datarn, datacn))
                         val = self.get_value_for_empty_cell(datarn, datacn)
-                        if not self.edit_validation_func or (
-                            self.edit_validation_func
-                            and (val := self.edit_validation_func(mod_event_val(event_data, val, (r1 + rn, c))))
-                            is not None
+                        if (
+                            not self.edit_validation_func
+                            or not validation
+                            or (
+                                self.edit_validation_func
+                                and (val := self.edit_validation_func(mod_event_val(event_data, val, (r1 + rn, c))))
+                                is not None
+                            )
                         ):
                             event_data = self.event_data_set_cell(
                                 datarn,
@@ -646,7 +654,7 @@ class MainTable(tk.Canvas):
         self.sheet_modified(event_data)
         return event_data
 
-    def ctrl_v(self, event: object = None) -> None | EventDataDict:
+    def ctrl_v(self, event: object = None, validation: bool = True) -> None | EventDataDict:
         if not self.PAR.ops.expand_sheet_if_paste_too_big and (
             len(self.col_positions) == 1 or len(self.row_positions) == 1
         ):
@@ -679,7 +687,7 @@ class MainTable(tk.Canvas):
             dialect = csv.Sniffer().sniff(data, delimiters=self.PAR.ops.from_clipboard_delimiters)
         except Exception:
             dialect = csv.excel_tab
-        if dialect.delimiter in data:
+        if dialect.delimiter in data or self.PAR.ops.to_clipboard_lineterminator in data:
             if not (data := list(csv.reader(io.StringIO(data), dialect=dialect, skipinitialspace=True))):
                 return
         else:
@@ -761,9 +769,13 @@ class MainTable(tk.Canvas):
         for ndr, r in enumerate(range(selected_r, selected_r_adjusted_new_data_numrows)):
             for ndc, c in enumerate(range(selected_c, selected_c_adjusted_new_data_numcols)):
                 val = data[ndr][ndc]
-                if not self.edit_validation_func or (
-                    self.edit_validation_func
-                    and (val := self.edit_validation_func(mod_event_val(event_data, val, (r, c)))) is not None
+                if (
+                    not self.edit_validation_func
+                    or not validation
+                    or (
+                        self.edit_validation_func
+                        and (val := self.edit_validation_func(mod_event_val(event_data, val, (r, c)))) is not None
+                    )
                 ):
                     event_data = self.event_data_set_cell(
                         datarn=self.datarn(r),
@@ -797,10 +809,14 @@ class MainTable(tk.Canvas):
                 ):
                     val = data[ndr][ndc]
                     datacn = self.datacn(c)
-                    if not self.edit_validation_func or (
-                        self.edit_validation_func
-                        and (val := self.edit_validation_func(mod_event_val(event_data, val, (r, c)))) is not None
-                        and self.input_valid_for_cell(r, datacn, val, ignore_empty=True)
+                    if (
+                        not self.edit_validation_func
+                        or not validation
+                        or (
+                            self.edit_validation_func
+                            and (val := self.edit_validation_func(mod_event_val(event_data, val, (r, c)))) is not None
+                            and self.input_valid_for_cell(r, datacn, val, ignore_empty=True)
+                        )
                     ):
                         rows[r][datacn] = val
                         ctr += 1
@@ -835,10 +851,14 @@ class MainTable(tk.Canvas):
                 ):
                     val = data[ndr][ndc]
                     datarn = self.datarn(r)
-                    if not self.edit_validation_func or (
-                        self.edit_validation_func
-                        and (val := self.edit_validation_func(mod_event_val(event_data, val, (r, c)))) is not None
-                        and self.input_valid_for_cell(datarn, c, val, ignore_empty=True)
+                    if (
+                        not self.edit_validation_func
+                        or not validation
+                        or (
+                            self.edit_validation_func
+                            and (val := self.edit_validation_func(mod_event_val(event_data, val, (r, c)))) is not None
+                            and self.input_valid_for_cell(datarn, c, val, ignore_empty=True)
+                        )
                     ):
                         columns[c][datarn] = val
                         ctr += 1
@@ -875,7 +895,7 @@ class MainTable(tk.Canvas):
         self.sheet_modified(event_data)
         return event_data
 
-    def delete_key(self, event: object = None) -> None | EventDataDict:
+    def delete_key(self, event: object = None, validation: bool = True) -> None | EventDataDict:
         if not self.selected:
             return
         event_data = event_dict(
@@ -892,9 +912,13 @@ class MainTable(tk.Canvas):
                 for c in range(c1, c2):
                     datarn, datacn = self.datarn(r), self.datacn(c)
                     val = self.get_value_for_empty_cell(datarn, datacn)
-                    if not self.edit_validation_func or (
-                        self.edit_validation_func
-                        and (val := self.edit_validation_func(mod_event_val(event_data, val, (r, c)))) is not None
+                    if (
+                        not self.edit_validation_func
+                        or not validation
+                        or (
+                            self.edit_validation_func
+                            and (val := self.edit_validation_func(mod_event_val(event_data, val, (r, c)))) is not None
+                        )
                     ):
                         event_data = self.event_data_set_cell(
                             datarn,
@@ -3726,7 +3750,7 @@ class MainTable(tk.Canvas):
             idx += 1
             del self.row_positions[idx]
             self.row_positions[idx:] = [e - w for e in islice(self.row_positions, idx, len(self.row_positions))]
-            
+
     def del_col_positions(self, idxs: Iterator[int] | None = None):
         if idxs is None:
             del self.col_positions[-1]

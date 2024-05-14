@@ -1050,17 +1050,17 @@ class Sheet(tk.Frame):
             canvas.basic_bindings(enable)
         return self
 
-    def cut(self, event: object = None) -> None | EventDataDict:
-        return self.MT.ctrl_x(event)
+    def cut(self, event: object = None, validation: bool = True) -> None | EventDataDict:
+        return self.MT.ctrl_x(event, validation)
 
     def copy(self, event: object = None) -> None | EventDataDict:
         return self.MT.ctrl_c(event)
 
-    def paste(self, event: object = None) -> None | EventDataDict:
-        return self.MT.ctrl_v(event)
+    def paste(self, event: object = None, validation: bool = True) -> None | EventDataDict:
+        return self.MT.ctrl_v(event, validation)
 
-    def delete(self, event: object = None) -> None | EventDataDict:
-        return self.MT.delete_key(event)
+    def delete(self, event: object = None, validation: bool = True) -> None | EventDataDict:
+        return self.MT.delete_key(event, validation)
 
     def undo(self, event: object = None) -> None | EventDataDict:
         return self.MT.undo(event)
