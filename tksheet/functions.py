@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 import bisect
+import csv
+import io
 import pickle
 import re
+import tkinter as tk
 import zlib
 from collections import deque
 from collections.abc import (
@@ -26,6 +29,21 @@ from .other_classes import (
 compress = partial(zlib.compress, level=1)
 pickle_obj = partial(pickle.dumps, protocol=pickle.HIGHEST_PROTOCOL)
 unpickle_obj = pickle.loads
+
+
+def get_data_from_clipboard(
+    widget: tk.Misc,
+    delimiters: str,
+    lineterminator: str = "\n",
+) -> list[list[str]]:
+    data = widget.clipboard_get()
+    try:
+        dialect = csv.Sniffer().sniff(data, delimiters=delimiters)
+    except Exception:
+        dialect = csv.excel_tab
+    if dialect.delimiter in data or lineterminator in data:
+        return list(csv.reader(io.StringIO(data), dialect=dialect, skipinitialspace=True))
+    return [[data]]
 
 
 def pickle_compress(obj: object) -> bytes:

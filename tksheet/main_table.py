@@ -54,6 +54,7 @@ from .functions import (
     diff_list,
     event_dict,
     gen_formatted,
+    get_data_from_clipboard,
     get_new_indexes,
     get_seq_without_gaps_at_index,
     index_exists,
@@ -565,7 +566,9 @@ class MainTable(tk.Canvas):
         for r1, c1, r2, c2 in boxes:
             self.show_ctrl_outline(canvas="table", start_cell=(c1, r1), end_cell=(c2, r2))
         self.clipboard_clear()
-        if len(event_data["cells"]["table"]) == 1:
+        if len(event_data["cells"]["table"]) == 1 and self.PAR.ops.to_clipboard_lineterminator not in next(
+            iter(event_data["cells"]["table"].values())
+        ):
             self.clipboard_append(next(iter(event_data["cells"]["table"].values())))
         else:
             self.clipboard_append(s.getvalue())
@@ -641,7 +644,9 @@ class MainTable(tk.Canvas):
         if event_data["cells"]["table"]:
             self.undo_stack.append(pickled_event_dict(event_data))
         self.clipboard_clear()
-        if len(event_data["cells"]["table"]) == 1:
+        if len(event_data["cells"]["table"]) == 1 and self.PAR.ops.to_clipboard_lineterminator not in next(
+            iter(event_data["cells"]["table"].values())
+        ):
             self.clipboard_append(next(iter(event_data["cells"]["table"].values())))
         else:
             self.clipboard_append(s.getvalue())
@@ -680,18 +685,13 @@ class MainTable(tk.Canvas):
                 elif len(self.row_positions) > 1 and len(self.col_positions) > 1:
                     selected_c, selected_r = 0, len(self.row_positions) - 1
         try:
-            data = self.clipboard_get()
+            data = get_data_from_clipboard(
+                widget=self,
+                delimiters=self.PAR.ops.from_clipboard_delimiters,
+                lineterminator=self.PAR.ops.to_clipboard_lineterminator,
+            )
         except Exception:
             return
-        try:
-            dialect = csv.Sniffer().sniff(data, delimiters=self.PAR.ops.from_clipboard_delimiters)
-        except Exception:
-            dialect = csv.excel_tab
-        if dialect.delimiter in data or self.PAR.ops.to_clipboard_lineterminator in data:
-            if not (data := list(csv.reader(io.StringIO(data), dialect=dialect, skipinitialspace=True))):
-                return
-        else:
-            data = [[data]]
         new_data_numcols = max(map(len, data))
         new_data_numrows = len(data)
         for rn, r in enumerate(data):

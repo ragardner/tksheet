@@ -205,7 +205,7 @@ def new_sheet_options() -> DotDict:
             "auto_resize_rows": None,
             "to_clipboard_delimiter": "\t",
             "to_clipboard_quotechar": '"',
-            "to_clipboard_lineterminator": "\r\n",
+            "to_clipboard_lineterminator": "\n",
             "from_clipboard_delimiters": ["\t"],
             "show_dropdown_borders": False,
             "show_default_header_for_empty": True,

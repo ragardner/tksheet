@@ -42,6 +42,7 @@ from .functions import (
     event_dict,
     get_checkbox_dict,
     get_checkbox_kwargs,
+    get_data_from_clipboard,
     get_dropdown_dict,
     get_dropdown_kwargs,
     get_index_of_gap_in_sorted_integer_seq_forward,
