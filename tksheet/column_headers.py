@@ -22,10 +22,10 @@ from .colors import (
 from .formatters import is_bool_like, try_to_bool
 from .functions import (
     consecutive_ranges,
-    ev_stack_dict,
     event_dict,
     get_n2a,
     is_contiguous,
+    pickled_event_dict,
     rounded_box_coords,
     try_binding,
 )
@@ -851,7 +851,7 @@ class ColumnHeaders(tk.Canvas):
                         "displayed": disp_new_idxs,
                     }
                     if self.MT.undo_enabled:
-                        self.MT.undo_stack.append(ev_stack_dict(event_data))
+                        self.MT.undo_stack.append(pickled_event_dict(event_data))
                     self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
                     try_binding(self.ch_extra_end_drag_drop_func, event_data, "end_move_columns")
                     self.MT.sheet_modified(event_data)
@@ -2097,7 +2097,7 @@ class ColumnHeaders(tk.Canvas):
             self.fix_header(datacn)
             if not check_input_valid or self.input_valid_for_cell(datacn, value):
                 if self.MT.undo_enabled and undo:
-                    self.MT.undo_stack.append(ev_stack_dict(event_data))
+                    self.MT.undo_stack.append(pickled_event_dict(event_data))
                 self.set_cell_data(datacn=datacn, value=value)
                 edited = True
         if edited and cell_resize and self.PAR.ops.cell_auto_resize_enabled:

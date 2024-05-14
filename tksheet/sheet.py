@@ -19,7 +19,6 @@ from .functions import (
     del_named_span_options,
     del_named_span_options_nested,
     dropdown_search_function,
-    ev_stack_dict,
     event_dict,
     fix_format_kwargs,
     get_checkbox_dict,
@@ -30,6 +29,7 @@ from .functions import (
     is_iterable,
     key_to_span,
     num2alpha,
+    pickled_event_dict,
     pop_positions,
     set_align,
     set_readonly,
@@ -1050,29 +1050,23 @@ class Sheet(tk.Frame):
             canvas.basic_bindings(enable)
         return self
 
-    def cut(self, event: object = None) -> Sheet:
-        self.MT.ctrl_x(event)
-        return self
+    def cut(self, event: object = None) -> None | EventDataDict:
+        return self.MT.ctrl_x(event)
 
-    def copy(self, event: object = None) -> Sheet:
-        self.MT.ctrl_c(event)
-        return self
+    def copy(self, event: object = None) -> None | EventDataDict:
+        return self.MT.ctrl_c(event)
 
-    def paste(self, event: object = None) -> Sheet:
-        self.MT.ctrl_v(event)
-        return self
+    def paste(self, event: object = None) -> None | EventDataDict:
+        return self.MT.ctrl_v(event)
 
-    def delete(self, event: object = None) -> Sheet:
-        self.MT.delete_key(event)
-        return self
+    def delete(self, event: object = None) -> None | EventDataDict:
+        return self.MT.delete_key(event)
 
-    def undo(self, event: object = None) -> Sheet:
-        self.MT.undo(event)
-        return self
+    def undo(self, event: object = None) -> None | EventDataDict:
+        return self.MT.undo(event)
 
-    def redo(self, event: object = None) -> Sheet:
-        self.MT.redo(event)
-        return self
+    def redo(self, event: object = None) -> None | EventDataDict:
+        return self.MT.redo(event)
 
     def has_focus(
         self,
@@ -1801,7 +1795,7 @@ class Sheet(tk.Frame):
             or event_data["added"]["rows"]
         ):
             if undo is True or (undo is None and span.undo):
-                self.MT.undo_stack.append(ev_stack_dict(event_data))
+                self.MT.undo_stack.append(pickled_event_dict(event_data))
             if emit_event is True or (emit_event is None and span.emit_event):
                 self.emit_event("<<SheetModified>>", event_data)
         self.set_refresh_timer(redraw)
@@ -1840,7 +1834,7 @@ class Sheet(tk.Frame):
                     event_data = clear_t(r, c, quick_tval(r, c), event_data)
         if event_data["cells"]["table"] or event_data["cells"]["header"] or event_data["cells"]["index"]:
             if undo is True or (undo is None and span.undo):
-                self.MT.undo_stack.append(ev_stack_dict(event_data))
+                self.MT.undo_stack.append(pickled_event_dict(event_data))
             if emit_event is True or (emit_event is None and span.emit_event):
                 self.emit_event("<<SheetModified>>", event_data)
         self.set_refresh_timer(redraw)
@@ -2009,7 +2003,7 @@ class Sheet(tk.Frame):
             push_ops=push_ops,
         )
         if undo:
-            self.MT.undo_stack.append(ev_stack_dict(event_data))
+            self.MT.undo_stack.append(pickled_event_dict(event_data))
         if emit_event:
             self.emit_event("<<SheetModified>>", event_data)
         self.set_refresh_timer(redraw)
@@ -2104,7 +2098,7 @@ class Sheet(tk.Frame):
             push_ops=push_ops,
         )
         if undo:
-            self.MT.undo_stack.append(ev_stack_dict(event_data))
+            self.MT.undo_stack.append(pickled_event_dict(event_data))
         if emit_event:
             self.emit_event("<<SheetModified>>", event_data)
         self.set_refresh_timer(redraw)
@@ -2178,7 +2172,7 @@ class Sheet(tk.Frame):
                 event_data,
             )
         if undo:
-            self.MT.undo_stack.append(ev_stack_dict(event_data))
+            self.MT.undo_stack.append(pickled_event_dict(event_data))
         if emit_event:
             self.emit_event("<<SheetModified>>", event_data)
         self.MT.deselect("all", redraw=False)
@@ -2219,7 +2213,7 @@ class Sheet(tk.Frame):
                 event_data,
             )
         if undo:
-            self.MT.undo_stack.append(ev_stack_dict(event_data))
+            self.MT.undo_stack.append(pickled_event_dict(event_data))
         if emit_event:
             self.emit_event("<<SheetModified>>", event_data)
         self.MT.deselect("all", redraw=False)
@@ -2320,7 +2314,7 @@ class Sheet(tk.Frame):
             data_indexes=data_indexes,
         )
         if undo:
-            self.MT.undo_stack.append(ev_stack_dict(event_data))
+            self.MT.undo_stack.append(pickled_event_dict(event_data))
         if emit_event:
             self.emit_event("<<SheetModified>>", event_data)
         self.set_refresh_timer(redraw)
@@ -2348,7 +2342,7 @@ class Sheet(tk.Frame):
             data_indexes=data_indexes,
         )
         if undo:
-            self.MT.undo_stack.append(ev_stack_dict(event_data))
+            self.MT.undo_stack.append(pickled_event_dict(event_data))
         if emit_event:
             self.emit_event("<<SheetModified>>", event_data)
         self.set_refresh_timer(redraw)
@@ -2375,7 +2369,7 @@ class Sheet(tk.Frame):
             data_indexes=data_indexes,
         )
         if undo:
-            self.MT.undo_stack.append(ev_stack_dict(event_data))
+            self.MT.undo_stack.append(pickled_event_dict(event_data))
         if emit_event:
             self.emit_event("<<SheetModified>>", event_data)
         self.set_refresh_timer(redraw)
@@ -2402,7 +2396,7 @@ class Sheet(tk.Frame):
             data_indexes=data_indexes,
         )
         if undo:
-            self.MT.undo_stack.append(ev_stack_dict(event_data))
+            self.MT.undo_stack.append(pickled_event_dict(event_data))
         if emit_event:
             self.emit_event("<<SheetModified>>", event_data)
         self.set_refresh_timer(redraw)
@@ -3446,11 +3440,21 @@ class Sheet(tk.Frame):
 
     delete_row_position = del_row_position
 
+    def del_row_positions(self, idxs: Iterator[int] | None = None) -> Sheet:
+        self.MT.del_row_positions(idxs=idxs)
+        self.set_refresh_timer()
+        return self
+
     def del_column_position(self, idx: int, deselect_all: bool = False) -> Sheet:
         self.MT.del_col_position(idx, deselect_all=deselect_all)
         return self
 
     delete_column_position = del_column_position
+
+    def del_column_positions(self, idxs: Iterator[int] | None = None) -> Sheet:
+        self.MT.del_col_positions(idxs=idxs)
+        self.set_refresh_timer()
+        return self
 
     def insert_column_position(
         self,

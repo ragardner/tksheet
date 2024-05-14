@@ -164,11 +164,8 @@ def change_eventname(event_dict: EventDataDict, newname: str) -> EventDataDict:
     return EventDataDict({**event_dict, **{"eventname": newname}})
 
 
-def ev_stack_dict(d: DotDict) -> DotDict:
-    return DotDict(
-        name=d["eventname"],
-        data=pickle_compress(d),
-    )
+def pickled_event_dict(d: DotDict) -> DotDict:
+    return DotDict(name=d["eventname"], data=pickle_compress(d))
 
 
 def len_to_idx(n: int) -> int:
