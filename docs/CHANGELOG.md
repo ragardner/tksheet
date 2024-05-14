@@ -1,4 +1,4 @@
-### Version 7.1.2
+### Version 7.1.20
 #### Fixed:
 - External right click popup menu being overwritten by internal when right clicking in empty table space
 - Copying and pasting values from a single column not working correctly
