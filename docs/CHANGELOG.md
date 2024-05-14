@@ -1,6 +1,19 @@
 ### Version 7.1.2
 #### Fixed:
 - External right click popup menu being overwritten by internal when right clicking in empty table space
+- Copying and pasting values from a single column not working correctly
+- Mousewheel in header not working on `Linux`
+- `get_cell_options()`/`get_row_options()`/`get_column_options()`/`get_index_options()`/`get_header_options()` values not being requested option. These functions now return a `dict` where the values are the requested option, e.g. for `"highlight"` the values will be `namedtuple`s
+
+#### Changed:
+- Functions `cut()`/`copy()`/`paste()`/`delete()`/`undo()`/`redo()` now return `EventDataDict` and not `self`/`Sheet`
+- `get_cell_options()`/`get_row_options()`/`get_column_options()`/`get_index_options()`/`get_header_options()`, see above fix
+- Clipboard operations where there's a single cell which contains newlines will now be clipboarded surrounded by quotechars
+
+#### Added:
+- Functions `del_row_positions()`/`del_column_positions()`
+- `validation` parameter to `cut()`/`paste()`/`delete()`, `False` disables any bound `edit_validation()` function from running
+- `row` and `column` keys to `cut()`/`paste()`/`delete()` events bound with `edit_validation()`
 
 ### Version 7.1.12
 #### Fixed:

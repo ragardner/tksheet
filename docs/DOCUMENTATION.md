@@ -4219,6 +4219,8 @@ get_row_heights(canvas_positions: bool = False) -> list[float]
 
 ___
 
+#### **Set or reset displayed column widths/lines**
+
 ```python
 set_column_widths(
     column_widths: Iterator[int, float] | None = None,
@@ -4228,6 +4230,8 @@ set_column_widths(
 ```
 
 ___
+
+#### **Set or reset displayed row heights/lines**
 
 ```python
 set_row_heights(
@@ -4239,12 +4243,16 @@ set_row_heights(
 
 ___
 
+#### **Set the width of the index to a str or existing values**
+
 ```python
 set_width_of_index_to_text(text: None | str = None, *args, **kwargs) -> Sheet
 ```
 - `text` (`str`, `None`) provide a `str` to set the width to or use `None` to set it to existing values in the index.
 
 ___
+
+#### **Set the width of the index to a value in pixels**
 
 ```python
 set_index_width(pixels: int, redraw: bool = True) -> Sheet
@@ -4253,6 +4261,8 @@ set_index_width(pixels: int, redraw: bool = True) -> Sheet
 
 ___
 
+#### **Set the height of the header to a str or existing values**
+
 ```python
 set_height_of_header_to_text(text: None | str = None) -> Sheet
 ```
@@ -4260,11 +4270,15 @@ set_height_of_header_to_text(text: None | str = None) -> Sheet
 
 ___
 
+#### **Set the height of the header to a value in pixels**
+
 ```python
 set_header_height_pixels(pixels: int, redraw: bool = True) -> Sheet
 ```
 
 ___
+
+#### **Set the height of the header to accomodate a number of lines**
 
 ```python
 set_header_height_lines(nlines: int, redraw: bool = True) -> Sheet
@@ -4272,17 +4286,25 @@ set_header_height_lines(nlines: int, redraw: bool = True) -> Sheet
 
 ___
 
+#### **Delete displayed column lines**
+
 ```python
 del_column_position(idx: int, deselect_all: bool = False) -> Sheet
+del_column_positions(idxs: Iterator[int] | None = None) -> Sheet
 ```
 
 ___
+
+#### **Delete displayed row lines**
 
 ```python
 del_row_position(idx: int, deselect_all: bool = False) -> Sheet
+del_row_positions(idxs: Iterator[int] | None = None) -> Sheet
 ```
 
 ___
+
+#### **Insert a displayed row line**
 
 ```python
 insert_row_position(
@@ -4295,6 +4317,8 @@ insert_row_position(
 
 ___
 
+#### **Insert a displayed column line**
+
 ```python
 insert_column_position(
     idx: Literal["end"] | int = "end",
@@ -4305,6 +4329,8 @@ insert_column_position(
 ```
 
 ___
+
+#### **Insert multiple displayed row lines**
 
 ```python
 insert_row_positions(
@@ -4317,6 +4343,8 @@ insert_row_positions(
 
 ___
 
+#### **Insert multiple displayed column lines**
+
 ```python
 insert_column_positions(
     idx: Literal["end"] | int = "end",
@@ -4328,6 +4356,8 @@ insert_column_positions(
 
 ___
 
+#### **Set the number of displayed row lines and column lines**
+
 ```python
 sheet_display_dimensions(
     total_rows: int | None =None,
@@ -4337,11 +4367,15 @@ sheet_display_dimensions(
 
 ___
 
+#### **Move a displayed row line**
+
 ```python
 move_row_position(row: int, moveto: int) -> Sheet
 ```
 
 ___
+
+#### **Move a displayed column line**
 
 ```python
 move_column_position(column: int, moveto: int) -> Sheet
@@ -4349,11 +4383,15 @@ move_column_position(column: int, moveto: int) -> Sheet
 
 ___
 
+#### **Get a list of default column width values**
+
 ```python
 get_example_canvas_column_widths(total_cols: int | None = None) -> list[float]
 ```
 
 ___
+
+#### **Get a list of default row height values**
 
 ```python
 get_example_canvas_row_heights(total_rows: int | None = None) -> list[float]
@@ -4361,11 +4399,15 @@ get_example_canvas_row_heights(total_rows: int | None = None) -> list[float]
 
 ___
 
+#### **Verify a list of row heights or canvas y coordinates**
+
 ```python
 verify_row_heights(row_heights: list[float], canvas_positions: bool = False) -> bool
 ```
 
 ___
+
+#### **Verify a list of column widths or canvas x coordinates**
 
 ```python
 verify_column_widths(column_widths: list[float], canvas_positions: bool = False) -> bool
@@ -4430,18 +4472,19 @@ identify_column(
 
 ___
 
-#### **Sheet control actions for binding your own keys to**
+#### **Sheet control actions**
 
 For example: `sheet.bind("<Control-B>", sheet.paste)`
 
 ```python
-cut(event: object = None) -> Sheet
-copy(event: object = None) -> Sheet
-paste(event: object = None) -> Sheet
-delete(event: object = None) -> Sheet
-undo(event: object = None) -> Sheet
-redo(event: object = None) -> Sheet
+cut(event: object = None, validation: bool = True) -> None | EventDataDict
+paste(event: object = None, validation: bool = True) -> None | EventDataDict
+delete(event: object = None, validation: bool = True) -> None | EventDataDict
+copy(event: object = None) -> None | EventDataDict
+undo(event: object = None) -> None | EventDataDict
+redo(event: object = None) -> None | EventDataDict
 ```
+- `validation` (`bool`) when `False` disables any bound `edit_validation()` function from running.
 
 ---
 # **Scroll Positions and Cell Visibility**
