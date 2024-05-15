@@ -117,6 +117,7 @@ class RowIndex(tk.Canvas):
         self.disp_resize_lines = {}
         self.disp_dropdown = {}
         self.disp_checkbox = {}
+        self.disp_tree_arrow = {}
         self.disp_boxes = set()
         self.hidd_text = {}
         self.hidd_high = {}
@@ -126,6 +127,7 @@ class RowIndex(tk.Canvas):
         self.hidd_resize_lines = {}
         self.hidd_dropdown = {}
         self.hidd_checkbox = {}
+        self.hidd_tree_arrow = {}
         self.hidd_boxes = set()
 
         self.align = kwargs["row_index_align"]
@@ -1017,7 +1019,7 @@ class RowIndex(tk.Canvas):
                 align = self.align
             if align == "w":
                 w += self.MT.index_txt_height
-            w += self.get_treeview_indent(self.MT._row_index[datarn].iid)
+            w += self.get_treeview_indent(self.MT._row_index[datarn].iid) + 4
         return w, h
 
     def set_row_height(
@@ -1205,7 +1207,7 @@ class RowIndex(tk.Canvas):
             if kwargs[0] is not None:
                 c_1 = kwargs[0] if kwargs[0].startswith("#") else color_map[kwargs[0]]
             if "rows" in selections and r in selections["rows"]:
-                tf = (
+                txtfg = (
                     self.PAR.ops.index_selected_rows_fg
                     if kwargs[1] is None or self.PAR.ops.display_selected_fg_over_highlights
                     else kwargs[1]
@@ -1217,7 +1219,7 @@ class RowIndex(tk.Canvas):
                         + f"{int((int(c_1[5:], 16) + int(c_3[5:], 16)) / 2):02X}"
                     )
             elif "cells" in selections and r in selections["cells"]:
-                tf = (
+                txtfg = (
                     self.PAR.ops.index_selected_cells_fg
                     if kwargs[1] is None or self.PAR.ops.display_selected_fg_over_highlights
                     else kwargs[1]
@@ -1229,7 +1231,7 @@ class RowIndex(tk.Canvas):
                         + f"{int((int(c_1[5:], 16) + int(c_2[5:], 16)) / 2):02X}"
                     )
             else:
-                tf = self.PAR.ops.index_fg if kwargs[1] is None else kwargs[1]
+                txtfg = self.PAR.ops.index_fg if kwargs[1] is None else kwargs[1]
                 if kwargs[0] is not None:
                     fill = kwargs[0]
             if kwargs[0] is not None:
@@ -1246,14 +1248,18 @@ class RowIndex(tk.Canvas):
                     ),
                     tag="s",
                 )
+            tree_arrow_fg = txtfg
         elif not kwargs:
             if "rows" in selections and r in selections["rows"]:
-                tf = self.PAR.ops.index_selected_rows_fg
+                txtfg = self.PAR.ops.index_selected_rows_fg
+                tree_arrow_fg = self.PAR.ops.selected_rows_tree_arrow_fg
             elif "cells" in selections and r in selections["cells"]:
-                tf = self.PAR.ops.index_selected_cells_fg
+                txtfg = self.PAR.ops.index_selected_cells_fg
+                tree_arrow_fg = self.PAR.ops.selected_cells_tree_arrow_fg
             else:
-                tf = self.PAR.ops.index_fg
-        return tf, redrawn
+                txtfg = self.PAR.ops.index_fg
+                tree_arrow_fg = self.PAR.ops.tree_arrow_fg
+        return txtfg, tree_arrow_fg, redrawn
 
     def redraw_highlight(self, x1, y1, x2, y2, fill, outline, tag):
         coords = (x1, y1, x2, y2)
@@ -1281,6 +1287,56 @@ class RowIndex(tk.Canvas):
         else:
             self.disp_grid[self.create_line(points, fill=fill, width=width, tag=tag)] = True
 
+    def redraw_tree_arrow(
+        self,
+        x1,
+        y1,
+        r,
+        fill,
+        tag,
+        indent: float,
+        open_: bool = False,
+    ) -> None:
+        mod = (self.MT.index_txt_height - 1) if self.MT.index_txt_height % 2 else self.MT.index_txt_height
+        half_mod = mod / 2
+        qtr_mod = mod / 4
+        mid_y = (self.MT.index_first_ln_ins - 1) if self.MT.index_first_ln_ins % 2 else self.MT.index_first_ln_ins
+        # up arrow
+        if open_:
+            points = (
+                x1 + 2 + indent,
+                y1 + mid_y + qtr_mod,
+                x1 + 2 + half_mod + indent,
+                y1 + mid_y - qtr_mod,
+                x1 + 2 + mod + indent,
+                y1 + mid_y + qtr_mod,
+            )
+        # right pointing arrow
+        else:
+            points = (
+                x1 + half_mod + indent,
+                y1 + mid_y - half_mod + 1,
+                x1 + mod + indent - 1,
+                y1 + mid_y,
+                x1 + half_mod + indent,
+                y1 + mid_y + half_mod - 1,
+            )
+        if self.hidd_tree_arrow:
+            t, sh = self.hidd_tree_arrow.popitem()
+            self.coords(t, points)
+            if sh:
+                self.itemconfig(t, fill=fill)
+            else:
+                self.itemconfig(t, fill=fill, tag=tag, state="normal")
+            self.lift(t)
+        else:
+            t = self.create_polygon(
+                points,
+                fill=fill,
+                tag=tag,
+            )
+        self.disp_tree_arrow[t] = True
+
     def redraw_dropdown(
         self,
         x1,
@@ -1293,7 +1349,6 @@ class RowIndex(tk.Canvas):
         draw_outline: bool = True,
         draw_arrow: bool = True,
         open_: bool = False,
-        indent: None | float = None,
     ) -> None:
         if draw_outline and self.PAR.ops.show_dropdown_borders:
             self.redraw_highlight(x1 + 1, y1 + 1, x2, y2, fill="", outline=self.PAR.ops.index_fg, tag=tag)
@@ -1302,47 +1357,24 @@ class RowIndex(tk.Canvas):
             half_mod = mod / 2
             qtr_mod = mod / 4
             mid_y = (self.MT.index_first_ln_ins - 1) if self.MT.index_first_ln_ins % 2 else self.MT.index_first_ln_ins
-            # treeview
-            if indent is not None:
-                # up arrow
-                if open_:
-                    points = (
-                        x1 + 2 + indent,
-                        y1 + mid_y + qtr_mod,
-                        x1 + 2 + half_mod + indent,
-                        y1 + mid_y - qtr_mod,
-                        x1 + 2 + mod + indent,
-                        y1 + mid_y + qtr_mod,
-                    )
-                # right pointing arrow
-                else:
-                    points = (
-                        x1 + half_mod + indent,
-                        y1 + mid_y - half_mod + 1,
-                        x1 + mod + indent - 1,
-                        y1 + mid_y,
-                        x1 + half_mod + indent,
-                        y1 + mid_y + half_mod - 1,
-                    )
+            if open_:
+                points = (
+                    x2 - 3 - mod,
+                    y1 + mid_y + qtr_mod,
+                    x2 - 3 - half_mod,
+                    y1 + mid_y - qtr_mod,
+                    x2 - 3,
+                    y1 + mid_y + qtr_mod,
+                )
             else:
-                if open_:
-                    points = (
-                        x2 - 3 - mod,
-                        y1 + mid_y + qtr_mod,
-                        x2 - 3 - half_mod,
-                        y1 + mid_y - qtr_mod,
-                        x2 - 3,
-                        y1 + mid_y + qtr_mod,
-                    )
-                else:
-                    points = (
-                        x2 - 3 - mod,
-                        y1 + mid_y - qtr_mod,
-                        x2 - 3 - half_mod,
-                        y1 + mid_y + qtr_mod,
-                        x2 - 3,
-                        y1 + mid_y - qtr_mod,
-                    )
+                points = (
+                    x2 - 3 - mod,
+                    y1 + mid_y - qtr_mod,
+                    x2 - 3 - half_mod,
+                    y1 + mid_y + qtr_mod,
+                    x2 - 3,
+                    y1 + mid_y - qtr_mod,
+                )
             if self.hidd_dropdown:
                 t, sh = self.hidd_dropdown.popitem()
                 self.coords(t, points)
@@ -1352,12 +1384,9 @@ class RowIndex(tk.Canvas):
                     self.itemconfig(t, fill=fill, tag=tag, state="normal")
                 self.lift(t)
             else:
-                t = self.create_line(
+                t = self.create_polygon(
                     points,
                     fill=fill,
-                    width=2,
-                    capstyle=tk.ROUND,
-                    joinstyle=tk.ROUND,
                     tag=tag,
                 )
             self.disp_dropdown[t] = True
@@ -1428,6 +1457,8 @@ class RowIndex(tk.Canvas):
         self.disp_dropdown = {}
         self.hidd_checkbox.update(self.disp_checkbox)
         self.disp_checkbox = {}
+        self.hidd_tree_arrow.update(self.disp_tree_arrow)
+        self.disp_tree_arrow = {}
         self.visible_row_dividers = {}
         draw_y = self.MT.row_positions[start_row]
         xend = self.current_width - 6
@@ -1484,7 +1515,15 @@ class RowIndex(tk.Canvas):
             if rbotgridln - rtopgridln < self.MT.index_txt_height:
                 continue
             datarn = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r]
-            fill, dd_drawn = self.redraw_highlight_get_text_fg(rtopgridln, rbotgridln, r, c_2, c_3, selections, datarn)
+            fill, tree_arrow_fg, dd_drawn = self.redraw_highlight_get_text_fg(
+                rtopgridln,
+                rbotgridln,
+                r,
+                c_2,
+                c_3,
+                selections,
+                datarn,
+            )
 
             if datarn in self.cell_options and "align" in self.cell_options[datarn]:
                 align = self.cell_options[datarn]["align"]
@@ -1584,20 +1623,16 @@ class RowIndex(tk.Canvas):
                 if align == "w":
                     draw_x += self.MT.index_txt_height + 1
                 indent = self.get_treeview_indent(iid)
-                draw_x += indent
+                draw_x += indent + 4
                 if self.tree[iid].children:
-                    self.redraw_dropdown(
+                    self.redraw_tree_arrow(
                         0,
                         rtopgridln,
-                        self.current_width - 1,
-                        rbotgridln - 1,
-                        fill=fill,
-                        outline=fill,
-                        tag="dd",
-                        draw_outline=False,
-                        draw_arrow=True,
-                        open_=self.MT._row_index[datarn].iid in self.tree_open_ids,
+                        r=r,
+                        fill=tree_arrow_fg,
+                        tag="ta",
                         indent=indent,
+                        open_=self.MT._row_index[datarn].iid in self.tree_open_ids,
                     )
             lns = self.get_valid_cell_data_as_str(datarn, fix=False)
             if not lns:
@@ -1677,7 +1712,14 @@ class RowIndex(tk.Canvas):
                         draw_y += self.MT.index_xtra_lines_increment
                         if draw_y + self.MT.index_half_txt_height - 1 > rbotgridln:
                             break
-        for dct in (self.hidd_text, self.hidd_high, self.hidd_grid, self.hidd_dropdown, self.hidd_checkbox):
+        for dct in (
+            self.hidd_text,
+            self.hidd_high,
+            self.hidd_grid,
+            self.hidd_dropdown,
+            self.hidd_checkbox,
+            self.hidd_tree_arrow,
+        ):
             for iid, showing in dct.items():
                 if showing:
                     self.itemconfig(iid, state="hidden")

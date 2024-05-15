@@ -5137,12 +5137,9 @@ class MainTable(tk.Canvas):
                     self.itemconfig(t, fill=fill, tag=tag, state="normal")
                 self.lift(t)
             else:
-                t = self.create_line(
+                t = self.create_polygon(
                     points,
                     fill=fill,
-                    width=2,
-                    capstyle=tk.ROUND,
-                    joinstyle=tk.ROUND,
                     tag=tag,
                 )
             self.disp_dropdown[t] = True
