@@ -5756,7 +5756,7 @@ class demo(tk.Tk):
                 "",
                 "",
             ],
-            theme="black",
+            theme="dark",
             height=520,
             width=930,
         )
@@ -5813,21 +5813,23 @@ class demo(tk.Tk):
             "#fa6441",
             "#f85037",
         )
-        # self.sheet.align_columns(columns=2, align="c")
-        # self.sheet.align_columns(columns=3, align="e")
-        # self.sheet.create_dropdown(r="all", c=0, values=["Dropdown"] + [f"{i}" for i in range(15)])
-        # self.sheet.create_checkbox(r="all", c=1, checked=True, text="Checkbox")
-        # self.sheet.create_header_dropdown(c=0, values=["Header Dropdown"] + [f"{i}" for i in range(15)])
-        # self.sheet.create_header_checkbox(c=1, checked=True, text="Header Checkbox")
-        # self.sheet.align_cells(5, 0, align="c")
-        # self.sheet.highlight_cells(5, 0, bg="gray50", fg="blue")
-        # self.sheet.highlight_cells(17, canvas="index", bg="yellow", fg="black")
-        # self.sheet.highlight_cells(12, 1, bg="gray90", fg="purple")
-        # for r in range(len(colors)):
-        #     self.sheet.highlight_cells(row=r, column=3, fg=colors[r])
-        #     self.sheet.highlight_cells(row=r, column=4, bg=colors[r], fg="black")
-        #     self.sheet.highlight_cells(row=r, column=5, bg=colors[r], fg="purple")
-        # self.sheet.highlight_cells(column=5, canvas="header", bg="white", fg="purple")
+        self.sheet.align_columns(columns=2, align="c")
+        self.sheet.align_columns(columns=3, align="e")
+        self.sheet.create_index_dropdown(r=0, values=["Dropdown"] + [f"{i}" for i in range(15)])
+        self.sheet.create_index_checkbox(r=3, checked=True, text="Checkbox")
+        self.sheet.create_dropdown(r="all", c=0, values=["Dropdown"] + [f"{i}" for i in range(15)])
+        self.sheet.create_checkbox(r="all", c=1, checked=True, text="Checkbox")
+        self.sheet.create_header_dropdown(c=0, values=["Header Dropdown"] + [f"{i}" for i in range(15)])
+        self.sheet.create_header_checkbox(c=1, checked=True, text="Header Checkbox")
+        self.sheet.align_cells(5, 0, align="c")
+        self.sheet.highlight_cells(5, 0, bg="gray50", fg="blue")
+        self.sheet.highlight_cells(17, canvas="index", bg="yellow", fg="black")
+        self.sheet.highlight_cells(12, 1, bg="gray90", fg="purple")
+        for r in range(len(colors)):
+            self.sheet.highlight_cells(row=r, column=3, fg=colors[r])
+            self.sheet.highlight_cells(row=r, column=4, bg=colors[r], fg="black")
+            self.sheet.highlight_cells(row=r, column=5, bg=colors[r], fg="purple")
+        self.sheet.highlight_cells(column=5, canvas="header", bg="white", fg="purple")
         self.sheet.align(n2a(2), align="c")
         self.sheet.align(n2a(3), align="e")
         self.sheet.dropdown(

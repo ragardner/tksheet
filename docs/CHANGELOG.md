@@ -1,3 +1,6 @@
+### Version 7.1.22
+####
+
 ### Version 7.1.21
 #### Fixed:
 - Error with `equalize_data_row_lengths()` while displaying a row as the header
