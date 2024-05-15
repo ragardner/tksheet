@@ -1,3 +1,7 @@
+### Version 7.1.21
+#### Fixed:
+- Error with `equalize_data_row_lengths()` while displaying a row as the header
+
 ### Version 7.1.20
 #### Fixed:
 - External right click popup menu being overwritten by internal when right clicking in empty table space

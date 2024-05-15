@@ -4913,7 +4913,7 @@ class MainTable(tk.Canvas):
         if isinstance(at_least_cols, int) and at_least_cols > total_data_cols:
             total_data_cols = at_least_cols
         total_data_cols = max(total_data_cols, len(self.col_positions) - 1)
-        if include_header and total_data_cols > len(self._headers):
+        if not isinstance(self._headers, int) and include_header and total_data_cols > len(self._headers):
             self.CH.fix_header(total_data_cols)
         for rn, r in enumerate(self.data):
             if total_data_cols > (lnr := len(r)):
