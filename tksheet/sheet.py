@@ -171,7 +171,7 @@ class Sheet(tk.Frame):
         display_selected_fg_over_highlights: bool = False,
         show_selected_cells_border: bool = True,
         treeview: bool = False,
-        treeview_indent: str | int = "3",
+        treeview_indent: str | int = "6",
         rounded_boxes: bool = True,
         alternate_color: str = "",
         # colors

@@ -237,7 +237,7 @@ def new_sheet_options() -> DotDict:
             "display_selected_fg_over_highlights": False,
             "show_selected_cells_border": True,
             "treeview": False,
-            "treeview_indent": "3",
+            "treeview_indent": "6",
             "rounded_boxes": True,
             "alternate_color": "",
         }

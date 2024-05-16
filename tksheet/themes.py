@@ -34,7 +34,7 @@ theme_light_blue: dict[str, str] = DotDict({
     "table_selected_cells_bg": "#E6EFFD",
     "table_selected_cells_fg": "black",
     "resizing_line_fg": "black",
-    "drag_and_drop_bg": "black",
+    "drag_and_drop_bg": "#0B57D0",
     "outline_color": "gray2",
     "header_selected_columns_bg": "#0B57D0",
     "header_selected_columns_fg": "#FFFFFF",
@@ -95,35 +95,35 @@ theme_light_green: dict[str, str] = DotDict({
     "index_grid_fg": "#ababab",
     "index_fg": "black",
     "index_selected_cells_bg": "#d6d4d2",
-    "index_selected_cells_fg": "#217346",
+    "index_selected_cells_fg": "#107C41",
     "top_left_bg": "#ECECEC",
     "top_left_fg": "#b7b7b7",
     "top_left_fg_highlight": "#5f6368",
     "table_bg": "#FFFFFF",
     "table_grid_fg": "#bfbfbf",
     "table_fg": "black",
-    "table_selected_box_cells_fg": "#217346",
-    "table_selected_box_rows_fg": "#217346",
-    "table_selected_box_columns_fg": "#217346",
-    "table_selected_cells_border_fg": "#217346",
+    "table_selected_box_cells_fg": "#107C41",
+    "table_selected_box_rows_fg": "#107C41",
+    "table_selected_box_columns_fg": "#107C41",
+    "table_selected_cells_border_fg": "#107C41",
     "table_selected_cells_bg": "#E3E3E3",
     "table_selected_cells_fg": "black",
     "resizing_line_fg": "black",
-    "drag_and_drop_bg": "black",
+    "drag_and_drop_bg": "#107C41",
     "outline_color": "gray2",
-    "header_selected_columns_bg": "#d3f0e0",
-    "header_selected_columns_fg": "#217346",
-    "index_selected_rows_bg": "#d3f0e0",
-    "index_selected_rows_fg": "#217346",
-    "table_selected_rows_border_fg": "#217346",
+    "header_selected_columns_bg": "#107C41",
+    "header_selected_columns_fg": "#FFFFFF",
+    "index_selected_rows_bg": "#107C41",
+    "index_selected_rows_fg": "#FFFFFF",
+    "table_selected_rows_border_fg": "#107C41",
     "table_selected_rows_bg": "#E3E3E3",
     "table_selected_rows_fg": "black",
-    "table_selected_columns_border_fg": "#217346",
+    "table_selected_columns_border_fg": "#107C41",
     "table_selected_columns_bg": "#E3E3E3",
     "table_selected_columns_fg": "black",
     "tree_arrow_fg": "#ababab",
-    "selected_cells_tree_arrow_fg": "#217346",
-    "selected_rows_tree_arrow_fg": "#217346",
+    "selected_cells_tree_arrow_fg": "#107C41",
+    "selected_rows_tree_arrow_fg": "#FFFFFF",
     "vertical_scroll_background": "#FFFFFF",
     "horizontal_scroll_background": "#FFFFFF",
     "vertical_scroll_troughcolor": "#f1f1f1",
@@ -302,32 +302,41 @@ theme_black: dict[str, str] = DotDict({
     "horizontal_scroll_pressed_fg": "#a0a0a0",
 })
 
-theme_dark_blue: dict[str, str] = DotDict(theme_black.copy())
-theme_dark_blue["header_fg"] = "#6ACAD8"
-theme_dark_blue["header_selected_cells_fg"] = "#6ACAD8"
-theme_dark_blue["index_fg"] = "#6ACAD8"
-theme_dark_blue["index_selected_cells_fg"] = "#6ACAD8"
-theme_dark_blue["top_left_fg_highlight"] = "#6ACAD8"
-theme_dark_blue["table_selected_box_cells_fg"] = "#6ACAD8"
-theme_dark_blue["table_selected_box_rows_fg"] = "#6ACAD8"
-theme_dark_blue["table_selected_box_columns_fg"] = "#6ACAD8"
-theme_dark_blue["table_selected_cells_border_fg"] = "#6ACAD8"
-theme_dark_blue["header_selected_columns_bg"] = "#6ACAD8"
-theme_dark_blue["index_selected_rows_bg"] = "#6ACAD8"
-theme_dark_blue["table_selected_rows_border_fg"] = "#6ACAD8"
-theme_dark_blue["table_selected_columns_border_fg"] = "#6ACAD8"
+theme_dark_blue: dict[str, str] = DotDict(theme_dark.copy())
+theme_dark_blue["top_left_fg_highlight"] = "#94EBEB"
+theme_dark_blue["table_selected_box_cells_fg"] = "#94EBEB"
+theme_dark_blue["table_selected_box_rows_fg"] = "#94EBEB"
+theme_dark_blue["table_selected_box_columns_fg"] = "#94EBEB"
+theme_dark_blue["table_selected_cells_border_fg"] = "#94EBEB"
+theme_dark_blue["table_selected_rows_border_fg"] = "#94EBEB"
+theme_dark_blue["table_selected_columns_border_fg"] = "#94EBEB"
+theme_dark_blue["header_fg"] = "#94EBEB"
+theme_dark_blue["header_selected_cells_fg"] = "#94EBEB"
+theme_dark_blue["header_selected_columns_fg"] = "#000000"
+theme_dark_blue["header_selected_columns_bg"] = "#94EBEB"
+theme_dark_blue["index_fg"] = "#94EBEB"
+theme_dark_blue["index_selected_rows_bg"] = "#94EBEB"
+theme_dark_blue["index_selected_rows_fg"] = "#000000"
+theme_dark_blue["index_selected_cells_fg"] = "#94EBEB"
+theme_dark_blue["selected_rows_tree_arrow_fg"] = "#000000"
+theme_dark_blue["selected_cells_tree_arrow_fg"] = "#94EBEB"
 
-theme_dark_green: dict[str, str] = DotDict(theme_black.copy())
+
+theme_dark_green: dict[str, str] = DotDict(theme_dark.copy())
 theme_dark_green["header_fg"] = "#66FFBF"
 theme_dark_green["header_selected_cells_fg"] = "#66FFBF"
 theme_dark_green["index_fg"] = "#66FFBF"
 theme_dark_green["index_selected_cells_fg"] = "#66FFBF"
 theme_dark_green["top_left_fg_highlight"] = "#66FFBF"
 theme_dark_green["table_selected_box_cells_fg"] = "#66FFBF"
-theme_dark_blue["table_selected_box_rows_fg"] = "#66FFBF"
-theme_dark_blue["table_selected_box_columns_fg"] = "#66FFBF"
+theme_dark_green["table_selected_box_rows_fg"] = "#66FFBF"
+theme_dark_green["table_selected_box_columns_fg"] = "#66FFBF"
 theme_dark_green["table_selected_cells_border_fg"] = "#66FFBF"
 theme_dark_green["header_selected_columns_bg"] = "#66FFBF"
+theme_dark_green["header_selected_columns_fg"] = "#000000"
 theme_dark_green["index_selected_rows_bg"] = "#66FFBF"
+theme_dark_green["index_selected_rows_fg"] = "#000000"
 theme_dark_green["table_selected_rows_border_fg"] = "#66FFBF"
 theme_dark_green["table_selected_columns_border_fg"] = "#66FFBF"
+theme_dark_green["selected_rows_tree_arrow_fg"] = "#000000"
+theme_dark_green["selected_cells_tree_arrow_fg"] = "#000000"

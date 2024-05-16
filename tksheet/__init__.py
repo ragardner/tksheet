@@ -42,6 +42,7 @@ from .functions import (
     event_dict,
     get_checkbox_dict,
     get_checkbox_kwargs,
+    get_csv_str_dialect,
     get_data_from_clipboard,
     get_dropdown_dict,
     get_dropdown_kwargs,

@@ -2427,7 +2427,7 @@ class RowIndex(tk.Canvas):
 
     def get_treeview_indent(self, iid: str) -> int:
         if isinstance(self.PAR.ops.treeview_indent, str):
-            indent = self.MT.index_txt_height * int(self.PAR.ops.treeview_indent)
+            indent = self.MT.index_txt_width * int(self.PAR.ops.treeview_indent)
         else:
             indent = self.PAR.ops.treeview_indent
         return indent * max(self.get_node_level(self.tree[iid]))

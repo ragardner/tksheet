@@ -31,16 +31,20 @@ pickle_obj = partial(pickle.dumps, protocol=pickle.HIGHEST_PROTOCOL)
 unpickle_obj = pickle.loads
 
 
+def get_csv_str_dialect(s: str, delimiters: str) -> csv.Dialect:
+    try:
+        return csv.Sniffer().sniff(s[:5000] if len(s) > 5000 else s, delimiters=delimiters)
+    except Exception:
+        return csv.excel_tab
+
+
 def get_data_from_clipboard(
     widget: tk.Misc,
     delimiters: str,
     lineterminator: str = "\n",
 ) -> list[list[str]]:
     data = widget.clipboard_get()
-    try:
-        dialect = csv.Sniffer().sniff(data, delimiters=delimiters)
-    except Exception:
-        dialect = csv.excel_tab
+    dialect = get_csv_str_dialect(data, delimiters=delimiters)
     if dialect.delimiter in data or lineterminator in data:
         return list(csv.reader(io.StringIO(data), dialect=dialect, skipinitialspace=True))
     return [[data]]
