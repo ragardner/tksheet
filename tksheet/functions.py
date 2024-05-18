@@ -17,6 +17,9 @@ from collections.abc import (
 from functools import partial
 from itertools import islice, repeat
 
+from .formatters import (
+    to_bool,
+)
 from .other_classes import (
     Box_nt,
     DotDict,
@@ -61,6 +64,12 @@ def decompress_load(b: bytes) -> object:
 def tksheet_type_error(kwarg: str, valid_types: list[str], not_type: object) -> str:
     valid_types = ", ".join(f"{type_}" for type_ in valid_types)
     return f"Argument '{kwarg}' must be one of the following types: {valid_types}, " f"not {type(not_type)}."
+
+
+def new_tk_event(keysym: str) -> tk.Event:
+    event = tk.Event()
+    event.keysym = keysym
+    return event
 
 
 def dropdown_search_function(
@@ -116,6 +125,7 @@ def selection_box_tup_to_dict(box: tuple) -> dict:
 def event_dict(
     name: str = None,
     sheet: object = None,
+    widget: tk.Canvas | None = None,
     boxes: None | dict | tuple = None,
     cells_table: None | dict = None,
     cells_header: None | dict = None,
@@ -180,6 +190,7 @@ def event_dict(
             # "header": DotDict() if resized_header is None else resized_header,
             # "index": DotDict() if resized_index is None else resized_index,
         ),
+        widget=widget,
     )
 
 
@@ -188,7 +199,7 @@ def change_eventname(event_dict: EventDataDict, newname: str) -> EventDataDict:
 
 
 def pickled_event_dict(d: DotDict) -> DotDict:
-    return DotDict(name=d["eventname"], data=pickle_compress(d))
+    return DotDict(name=d["eventname"], data=pickle_compress(DotDict({k: v for k, v in d.items() if k != "widget"})))
 
 
 def len_to_idx(n: int) -> int:
@@ -283,6 +294,13 @@ def unpack(t: tuple[object] | tuple[Iterator[object]]) -> tuple[object]:
 
 def is_type_int(o: object) -> bool:
     return isinstance(o, int) and not isinstance(o, bool)
+
+
+def force_bool(o: object) -> bool:
+    try:
+        return to_bool(o)
+    except Exception:
+        return False
 
 
 def str_to_coords(s: str) -> None | tuple[int]:

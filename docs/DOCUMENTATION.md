@@ -864,6 +864,7 @@ It has the following layout and keys:
         "rows": {},
         "columns": {},
     },
+    "widget": None,
 }
 ```
 
@@ -979,12 +980,13 @@ Keys:
 - Key **`["resized"]["columns"]`** is for column width resizing events, it will be a `dict` with the following layout:
     - `{int displayed column index: {"old_size": old_width, "new_size": new_width}}`.
     - If no columns have been resized then the value for `["resized"]["columns"]` will be an empty `dict`.
+- Key **`["widget"]`** will contain the widget which emitted the event, either the `MainTable()`, `ColumnHeaders()` or `RowIndex()` which are all `tk.Canvas` widgets.
 
 ___
 
 #### **Validate user cell edits**
 
-With this function you can validate (modify) most user sheet edits, includes cut, paste, delete (including column/row clear), dropdown boxes and cell edits.
+With this function you can validate or modify most user sheet edits, includes cut, paste, delete (including column/row clear), dropdown boxes and cell edits.
 ```python
 edit_validation(func: Callable | None = None) -> Sheet
 ```
@@ -992,6 +994,7 @@ Parameters:
 - `func` (`Callable`, `None`) must either be a function which will receive a tksheet event dict which looks like [this](https://github.com/ragardner/tksheet/wiki/Version-7#event-data) or `None` which unbinds the function.
 
 Notes:
+- If your bound function returns `None` then that specific cell edit will not be performed.
 - For examples of this function see [here](https://github.com/ragardner/tksheet/wiki/Version-7#usage-examples) and [here](https://github.com/ragardner/tksheet/wiki/Version-7#example-custom-right-click-and-text-editor-validation).
 
 ___
@@ -1071,11 +1074,23 @@ focus_set(
 ---
 # **tkinter and tksheet Events**
 
+### **Sheet bind**
+
 - With the `Sheet.bind()` function you can bind things in the usual way you would in tkinter and they will bind to all the `tksheet` canvases.
 - There are also the following special `tksheet` events you can bind:
-    - `"<<SheetModified>>"`
-    - `"<<SheetRedrawn>>"`
-    - `"<<SheetSelect>>"`
+
+| Binding                | Usable with `Sheet.event_generate()` |
+| --------               | -------                              |
+| `"<<SheetModified>>"`  | -                                    |
+| `"<<SheetRedrawn>>"`   | -                                    |
+| `"<<SheetSelect>>"`    | -                                    |
+| `"<<Copy>>"`           | X                                    |
+| `"<<Cut>>"`            | X                                    |
+| `"<<Paste>>"`          | X                                    |
+| `"<<Delete>>"`         | X                                    |
+| `"<<Undo>>"`           | X                                    |
+| `"<<Redo>>"`           | X                                    |
+| `"<<SelectAll>>"`      | X                                    |
 
 ```python
 bind(
@@ -1086,8 +1101,8 @@ bind(
 ```
 Parameters:
 - `add` may or may not work for various bindings depending on whether they are already in use by `tksheet`.
-- **Note** that while a bound event after a paste/undo/redo might have the event name `"edit_table"` it also might have added/deleted rows/columns, refer to the docs on the event data `dict` for more info.
-- `event` the two emitted events are:
+- **Note** that while a bound event after a paste/undo/redo might have the event name `"edit_table"` it also might have added/deleted rows/columns, refer to the docs on the event data `dict` for more information.
+- `event` the emitted events are:
     - `"<<SheetModified>>"` emitted whenever the sheet was modified by the end user by editing cells or adding or deleting rows/columns. The function you bind to this event must be able to receive a `dict` argument which will be the same as [the event data dict](https://github.com/ragardner/tksheet/wiki/Version-7#event-data) but with less specific event names. The possible event names are listed below:
         - `"edit_table"` when a user has cut, paste, delete or any cell edits including using dropdown boxes etc. in the table.
         - `"edit_index"` when a user has edited a index cell.
@@ -1101,6 +1116,13 @@ Parameters:
     - `"<<SheetRedrawn>>"` emitted whenever the sheet GUI was refreshed (redrawn). The data for this event will be different than the usual event data, it is simply:
         - `{"sheetname": name of your sheet, "header": bool True if the header was redrawn, "row_index": bool True if the index was redrawn, "table": bool True if the the table was redrawn}`
     - `"<<SheetSelect>>"` encompasses all select events and emits the same event as `"<<SheetModified>>"` but with the event name: `"select"`.
+    - `"<<Copy>>"` emitted when a Sheet copy e.g. `<Control-c>` was performed and will have the `eventname` `"copy"`.
+    - `"<<Cut>>"`
+    - `"<<Paste>>"`
+    - `"<<Delete>>"` emitted when a Sheet delete key function was performed.
+    - `"<<SelectAll>>"`
+    - `"<<Undo>>"`
+    - `"<<Redo>>"`
 
 Example:
 ```python
@@ -1108,7 +1130,15 @@ Example:
 self.sheet.bind("<<SheetModified>>", self.sheet_was_modified)
 ```
 
+Example for `event_generate()`:
+```python
+self.sheet.event_generate("<<Copy>>")
+```
+- Tells the sheet to run its copy function.
+
 ___
+
+### **Sheet unbind**
 
 With this function you can unbind things you have bound using the `bind()` function.
 ```python
@@ -1118,11 +1148,9 @@ unbind(binding: str) -> Sheet
 ---
 # **Sheet Languages and Bindings**
 
-Listed in this section are ways to change some of tksheets language:
+In this section are instructions to change some of tksheets in-built language and bindings:
 - The in-built right click menu.
 - The in-built functionality keybindings, such as copy, paste etc.
-
-Unfortunately these are currently the only modifications to tksheets language that are possible.
 
 #### **Changing right click menu labels**
 
@@ -1207,6 +1235,59 @@ sheet.set_options(copy_bindings=["<Control-e>", "<Control-E>"])
 ```
 
 The default values for these bindings can be found in the tksheet file `sheet_options.py`.
+
+#### **Key bindings for other languages**
+
+There is limited support in tkinter for keybindings in languages other than english, for example tkinters `.bind()` function doesn't cooperate with cyrillic characters.
+
+There are ways around this however, see below for a limited example of how this might be achieved:
+
+```python
+from __future__ import annotations
+
+import tkinter as tk
+
+from tksheet import Sheet
+
+
+class demo(tk.Tk):
+    def __init__(self) -> None:
+        tk.Tk.__init__(self)
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(0, weight=1)
+        self.sheet = Sheet(
+            parent=self,
+            data=[[f"{r} {c}" for c in range(5)] for r in range(5)],
+        )
+        self.sheet.enable_bindings()
+        self.sheet.grid(row=0, column=0, sticky="nswe")
+        self.bind_all("<Key>", self.any_key)
+
+    def any_key(self, event: tk.Event) -> None:
+        """
+        Establish that the Control key is held down
+        """
+        ctrl = (event.state & 4 > 0)
+        if not ctrl:
+            return
+        """
+        From here you can use event.keycode and event.keysym to determine
+        which key has been pressed along with Control
+        """
+        print(event.keycode)
+        print(event.keysym)
+        """
+        If the keys are the ones you want to have bound to Sheet functionality
+        You can then call the Sheets functionality using event_generate()
+        For example:
+        """
+        # if the key is correct then:
+        self.sheet.event_generate("<<Copy>>")
+
+
+app = demo()
+app.mainloop()
+```
 
 ---
 # **Span Objects**
@@ -1766,13 +1847,20 @@ Create check boxes for parts of the sheet that are covered by the span.
 
 ```python
 span.checkbox(
-    checked: bool = False,
+    edit_data: bool = True,
+    checked: bool | None = None,
     state: str = "normal",
     redraw: bool = True,
     check_function: Callable | None = None,
     text: str = "",
 ) -> Span
 ```
+Parameters:
+- `edit_data` when `True` edits the underlying cell data to either `checked` if `checked` is a `bool` or tries to convert the existing cell data to a `bool`.
+- `checked` is the initial creation value to set the box to, if `None` then and `edit_data` is `True` then it will try to convert the underlying cell data to a `bool`.
+- `state` can be `"normal"` or `"disabled"`. If `"disabled"` then color will be same as table grid lines, else it will be the cells text color.
+- `check_function` can be used to trigger a function when the user clicks a checkbox.
+- `text` displays text next to the checkbox in the cell, but will not be used as data, data will either be `True` or `False`.
 
 Example:
 ```python
@@ -2759,6 +2847,7 @@ move_rows(
     create_selections: bool = True,
     undo: bool = False,
     emit_event: bool = False,
+    move_heights: bool = True,
     redraw: bool = True,
 ) -> tuple[dict, dict, dict]
 ```
@@ -2770,6 +2859,7 @@ Parameters:
 - `create_selections` creates new selection boxes based on where the rows have moved.
 - `undo` when `True` adds the change to the Sheets undo stack.
 - `emit_event` when `True` causes a `"<<SheetModified>>` event to occur if it has been bound, see [here](https://github.com/ragardner/tksheet/wiki/Version-7#tkinter-and-tksheet-events) for more information.
+- `move_heights` when `True` also moves the displayed row lines.
 
 Notes:
 - The rows in `to_move` do **not** have to be contiguous.
@@ -2787,6 +2877,7 @@ move_columns(
     create_selections: bool = True,
     undo: bool = False,
     emit_event: bool = False,
+    move_widths: bool = True,
     redraw: bool = True,
 ) -> tuple[dict, dict, dict]
 ```
@@ -2798,6 +2889,7 @@ Parameters:
 - `create_selections` creates new selection boxes based on where the columns have moved.
 - `undo` when `True` adds the change to the Sheets undo stack.
 - `emit_event` when `True` causes a `"<<SheetModified>>` event to occur if it has been bound, see [here](https://github.com/ragardner/tksheet/wiki/Version-7#tkinter-and-tksheet-events) for more information.
+- `move_widths` when `True` also moves the displayed column lines.
 
 Notes:
 - The columns in `to_move` do **not** have to be contiguous.
@@ -2883,7 +2975,9 @@ equalize_data_row_lengths(include_header: bool = True) -> int
 ---
 # **Highlighting Cells**
 
-#### **Creating highlights**
+### **Creating highlights**
+
+#### **Using spans to create highlights**
 
 `Span` objects (more information [here](https://github.com/ragardner/tksheet/wiki/Version-7#span-objects)) can be used to highlight cells, rows, columns, the entire sheet, headers and the index.
 
@@ -2928,9 +3022,55 @@ sheet[3, 5].bg = "red"
 sheet[3, 5].fg = "black"
 ```
 
+#### **Other ways to create highlights**
+
+**Cells**
+
+```python
+highlight_cells(
+    row: int | Literal["all"] = 0,
+    column: int | Literal["all"] = 0,
+    cells: list[tuple[int, int]] = [],
+    canvas: Literal["table", "index", "header"] = "table",
+    bg: bool | None | str = False,
+    fg: bool | None | str = False,
+    redraw: bool = True,
+    overwrite: bool = True,
+) -> Sheet
+```
+
+**Rows**
+
+```python
+highlight_rows(
+    rows: Iterator[int] | int,
+    bg: None | str = None,
+    fg: None | str = None,
+    highlight_index: bool = True,
+    redraw: bool = True,
+    end_of_screen: bool = False,
+    overwrite: bool = True,
+) -> Sheet
+```
+
+**Columns**
+
+```python
+highlight_columns(
+    columns: Iterator[int] | int,
+    bg: bool | None | str = False,
+    fg: bool | None | str = False,
+    highlight_header: bool = True,
+    redraw: bool = True,
+    overwrite: bool = True,
+) -> Sheet
+```
+
 ___
 
-#### **Deleting highlights**
+### **Deleting highlights**
+
+#### **Using spans to delete highlights**
 
 If the highlights were created by a named span then the named span must be deleted, more information [here](https://github.com/ragardner/tksheet/wiki/Version-7#deleting-a-named-span).
 
@@ -2960,10 +3100,56 @@ self.sheet.highlight(
 self.sheet.dehighlight("B")
 ```
 
+#### **Other ways to delete highlights**
+
+**Cells**
+
+```python
+dehighlight_cells(
+    row: int | Literal["all"] = 0,
+    column: int = 0,
+    cells: list[tuple[int, int]] = [],
+    canvas: Literal["table", "row_index", "header"] = "table",
+    all_: bool = False,
+    redraw: bool = True,
+) -> Sheet
+```
+
+**Rows**
+
+```python
+dehighlight_rows(
+    rows: list[int] | Literal["all"] = [],
+    redraw: bool = True,
+) -> Sheet
+```
+
+**Columns**
+
+```python
+dehighlight_columns(
+    columns: list[int] | Literal["all"] = [],
+    redraw: bool = True,
+) -> Sheet
+```
+
+**All**
+
+```python
+dehighlight_all(
+    cells: bool = True,
+    rows: bool = True,
+    columns: bool = True,
+    header: bool = True,
+    index: bool = True,
+    redraw: bool = True,
+) -> Sheet
+```
+
 ---
 # **Dropdown Boxes**
 
-#### **Creating dropdown boxes**
+### **Creating dropdown boxes**
 
 `Span` objects (more information [here](https://github.com/ragardner/tksheet/wiki/Version-7#span-objects)) can be used to create dropdown boxes for cells, rows, columns, the entire sheet, headers and the index.
 
@@ -2979,6 +3165,8 @@ Whether dropdown boxes are created for cells, rows or columns depends on the [`k
 dropdown(
     *key: CreateSpanTypes,
     values: list = [],
+    edit_data: bool = True,
+    set_values: dict[tuple[int, int] | int, object] | None = None,
     set_value: object = None,
     state: str = "normal",
     redraw: bool = True,
@@ -2996,6 +3184,11 @@ Notes:
 Parameters:
 - `key` (`CreateSpanTypes`) either a span or a type which can create a span. See [here](https://github.com/ragardner/tksheet/wiki/Version-7#creating-a-span) for more information on the types that can create a span.
 - `values` are the values to appear in a list view type interface when the dropdown box is open.
+- `edit_data` when `True` makes edits in the table, header or index (depending on the span) based on `set_values`/`set_value`.
+- `set_values` when combined with `edit_data=True` allows a `dict` to be provided of data coordinates (`tuple[int, int]` for a cell span or `int` for a row/column span) as `key`s and values to set the cell at that coordinate to.
+    - e.g. `set_values={(0, 0): "new value for A1"}`.
+    - The idea behind this parameter is that an entire column or row can have individual cell values and is not set to `set_value` alone.
+- `set_value` when combined with `edit_data=True` sets every cell in the span to the value provided. If left as `None` and if `set_values` is also `None` then the topmost value from `values` will be used or if not `values` then `""`.
 - `state` determines whether or not there is also an editable text window at the top of the dropdown box when it is open.
 - `redraw` refreshes the sheet so the newly created box is visible.
 - `selection_function` can be used to trigger a specific function when an item from the dropdown box is selected, if you are using the above `extra_bindings()` as well it will also be triggered but after this function. e.g. `selection_function = my_function_name`
@@ -3201,7 +3394,8 @@ Whether check boxes are created for cells, rows or columns depends on the [`kind
 ```python
 checkbox(
     *key: CreateSpanTypes,
-    checked: bool = False,
+    edit_data: bool = True,
+    checked: bool | None = None,
     state: str = "normal",
     redraw: bool = True,
     check_function: Callable | None = None,
@@ -3215,10 +3409,11 @@ Notes:
 
 Parameters:
 - `key` (`CreateSpanTypes`) either a span or a type which can create a span. See [here](https://github.com/ragardner/tksheet/wiki/Version-7#creating-a-span) for more information on the types that can create a span.
-- `checked` is the initial creation value to set the box to.
-- `text` displays text next to the checkbox in the cell, but will not be used as data, data will either be `True` or `False`.
-- `check_function` can be used to trigger a function when the user clicks a checkbox.
+- `edit_data` when `True` edits the underlying cell data to either `checked` if `checked` is a `bool` or tries to convert the existing cell data to a `bool`.
+- `checked` is the initial creation value to set the box to, if `None` then and `edit_data` is `True` then it will try to convert the underlying cell data to a `bool`.
 - `state` can be `"normal"` or `"disabled"`. If `"disabled"` then color will be same as table grid lines, else it will be the cells text color.
+- `check_function` can be used to trigger a function when the user clicks a checkbox.
+- `text` displays text next to the checkbox in the cell, but will not be used as data, data will either be `True` or `False`.
 
 Example:
 ```python
@@ -4141,9 +4336,15 @@ ___
 #### **Set all row heights and column widths to cell text sizes**
 
 ```python
-set_all_cell_sizes_to_text(redraw: bool = True) -> tuple[list[float], list[float]]
+set_all_cell_sizes_to_text(
+    redraw: bool = True,
+    width: int | None = None,
+    slim: bool = False,
+) -> tuple[list[float], list[float]]
 ```
 - Returns the Sheets row positions and column positions in that order.
+- `width` a minimum width for all column widths set using this function.
+- `slim` column widths will be set precisely to text width and not add any extra space.
 
 ___
 
@@ -4976,10 +5177,11 @@ ___
 close_text_editor(set_data: bool = True) -> Sheet
 ```
 Notes:
+- Closes any open text editors, including header and index.
 - Also closes any existing `"normal"` state dropdown box.
 
 Parameters:
-- `set_data` (`bool`) when `True` sets the cell data to the text editor value (if it is valid). When `False` the text editor is simply destroyed.
+- `set_data` (`bool`) when `True` sets the cell data to the text editor value (if it is valid). When `False` the text editor is closed without setting data.
 
 ___
 
@@ -4993,11 +5195,15 @@ Notes:
 
 ___
 
+#### **Hide all text editors**
+
 ```python
 destroy_text_editor(event: object = None) -> Sheet
 ```
 
 ___
+
+#### **Get the table tk Text widget which acts as the text editor**
 
 ```python
 get_text_editor_widget(event: object = None) -> tk.Text | None
@@ -5005,11 +5211,15 @@ get_text_editor_widget(event: object = None) -> tk.Text | None
 
 ___
 
+#### **Bind additional keys to the text editor window**
+
 ```python
 bind_key_text_editor(key: str, function: Callable) -> Sheet
 ```
 
 ___
+
+#### **Unbind additional text editors bindings set using the above function**
 
 ```python
 unbind_key_text_editor(key: str) -> Sheet

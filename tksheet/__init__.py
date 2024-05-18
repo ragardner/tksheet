@@ -32,6 +32,7 @@ from .formatters import (
     try_to_bool,
 )
 from .functions import (
+    add_highlight,
     alpha2idx,
     alpha2num,
     consecutive_chunks,
@@ -55,6 +56,7 @@ from .functions import (
     is_iterable,
     move_elements_by_mapping,
     move_elements_to,
+    new_tk_event,
     num2alpha,
     rounded_box_coords,
     span_dict,
@@ -67,6 +69,7 @@ from .other_classes import (
     DrawnItem,
     EventDataDict,
     GeneratedMouseEvent,
+    Highlight,
     Selected,
     Span,
     SpanRange,

@@ -119,11 +119,7 @@ class TextEditorTkText(tk.Text):
             self.event_generate("<<TextModified>>")
             if args and len(args) > 1 and args[1] != "\n" and args != ("1.0", "end"):
                 if self.yview() != (0.0, 1.0) and self.newline_bindng is not None:
-                    self.newline_bindng(
-                        r=self.parent.r,
-                        c=self.parent.c,
-                        check_lines=False,
-                    )
+                    self.newline_bindng(check_lines=False)
         return result
 
     def rc(self, event: object) -> None:

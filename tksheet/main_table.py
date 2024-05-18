@@ -67,6 +67,7 @@ from .functions import (
     mod_span,
     mod_span_widget,
     move_elements_by_mapping,
+    new_tk_event,
     pickle_obj,
     pickled_event_dict,
     rounded_box_coords,
@@ -99,6 +100,8 @@ from .vars import (
     ctrl_key,
     rc_binding,
     symbols_set,
+    text_editor_close_bindings,
+    text_editor_newline_bindings,
     text_editor_to_unbind,
     val_modifying_options,
 )
@@ -127,6 +130,15 @@ class MainTable(tk.Canvas):
         self.synced_scrolls = set()
         self.dropdown = DropdownStorage()
         self.text_editor = TextEditorStorage()
+        self.event_linker = {
+            "<<Copy>>": self.ctrl_c,
+            "<<Cut>>": self.ctrl_x,
+            "<<Paste>>": self.ctrl_v,
+            "<<Delete>>": self.delete_key,
+            "<<Undo>>": self.undo,
+            "<<Redo>>": self.redo,
+            "<<SelectAll>>": self.select_all,
+        }
 
         self.disp_ctrl_outline = {}
         self.disp_text = {}
@@ -341,6 +353,13 @@ class MainTable(tk.Canvas):
         self.basic_bindings()
         self.create_rc_menus()
 
+    def event_generate(self, *args, **kwargs) -> None:
+        for arg in args:
+            if arg in self.event_linker:
+                self.event_linker[arg]()
+            else:
+                super().event_generate(*args, **kwargs)
+
     def refresh(self, event: object = None) -> None:
         self.main_table_redraw_grid_and_text(True, True)
 
@@ -532,10 +551,11 @@ class MainTable(tk.Canvas):
         if not self.selected:
             return
         event_data = event_dict(
+            name="begin_ctrl_c",
             sheet=self.PAR.name,
+            widget=self,
             selected=self.selected,
         )
-        event_data["eventname"] = "begin_ctrl_c"
         boxes, maxrows = self.get_ctrl_x_c_boxes()
         event_data["selection_boxes"] = boxes
         s, writer = self.io_csv_writer()
@@ -573,7 +593,8 @@ class MainTable(tk.Canvas):
         else:
             self.clipboard_append(s.getvalue())
         self.update_idletasks()
-        try_binding(self.extra_end_ctrl_c_func, event_data, "end_ctrl_c")
+        try_binding(self.extra_end_ctrl_c_func, event_data, new_name="end_ctrl_c")
+        self.PAR.emit_event("<<Copy>>", EventDataDict({**event_data, **{"eventname": "copy"}}))
         return event_data
 
     def ctrl_x(self, event=None, validation: bool = True) -> None | EventDataDict:
@@ -582,6 +603,7 @@ class MainTable(tk.Canvas):
         event_data = event_dict(
             name="edit_table",
             sheet=self.PAR.name,
+            widget=self,
             selected=self.selected,
         )
         boxes, maxrows = self.get_ctrl_x_c_boxes()
@@ -657,6 +679,7 @@ class MainTable(tk.Canvas):
         if event_data["cells"]["table"]:
             try_binding(self.extra_end_ctrl_x_func, event_data, "end_ctrl_x")
         self.sheet_modified(event_data)
+        self.PAR.emit_event("<<Cut>>", event_data)
         return event_data
 
     def ctrl_v(self, event: object = None, validation: bool = True) -> None | EventDataDict:
@@ -667,6 +690,7 @@ class MainTable(tk.Canvas):
         event_data = event_dict(
             name="edit_table",
             sheet=self.PAR.name,
+            widget=self,
             selected=self.selected,
         )
         if self.selected:
@@ -893,6 +917,7 @@ class MainTable(tk.Canvas):
         if event_data["cells"]["table"] or event_data["added"]["rows"] or event_data["added"]["columns"]:
             try_binding(self.extra_end_ctrl_v_func, event_data, "end_ctrl_v")
         self.sheet_modified(event_data)
+        self.PAR.emit_event("<<Paste>>", event_data)
         return event_data
 
     def delete_key(self, event: object = None, validation: bool = True) -> None | EventDataDict:
@@ -901,6 +926,7 @@ class MainTable(tk.Canvas):
         event_data = event_dict(
             name="edit_table",
             sheet=self.PAR.name,
+            widget=self,
             selected=self.selected,
         )
         boxes = self.get_boxes()
@@ -931,6 +957,7 @@ class MainTable(tk.Canvas):
             try_binding(self.extra_end_delete_key_func, event_data, "end_delete")
         self.refresh()
         self.sheet_modified(event_data)
+        self.PAR.emit_event("<<Delete>>", event_data)
         return event_data
 
     def event_data_set_cell(self, datarn: int, datacn: int, value: object, event_data: dict) -> EventDataDict:
@@ -958,11 +985,18 @@ class MainTable(tk.Canvas):
             data_new_idxs = get_new_indexes(seqlen=totalcols, move_to=move_to, to_move=to_move)
         elif not self.all_columns_displayed and not data_indexes:
             data_new_idxs = get_new_indexes(seqlen=len(self.displayed_columns), move_to=move_to, to_move=to_move)
-            data_old_idxs = dict(zip(data_new_idxs.values(), data_new_idxs))
+            moved = {self.displayed_columns[i] for i in to_move}
             data_new_idxs = dict(
-                zip(
-                    move_elements_by_mapping(self.displayed_columns, data_new_idxs, data_old_idxs),
-                    self.displayed_columns,
+                filter(
+                    lambda tup: tup[0] in moved,
+                    zip(
+                        move_elements_by_mapping(
+                            self.displayed_columns,
+                            data_new_idxs,
+                            dict(zip(data_new_idxs.values(), data_new_idxs)),
+                        ),
+                        self.displayed_columns,
+                    ),
                 )
             )
         return data_new_idxs, dict(zip(data_new_idxs.values(), data_new_idxs)), totalcols, disp_new_idxs
@@ -974,6 +1008,7 @@ class MainTable(tk.Canvas):
         totalcols: int | None,
         disp_new_idxs: None | dict[int, int] = None,
         move_data: bool = True,
+        move_widths: bool = True,
         create_selections: bool = True,
         data_indexes: bool = False,
         event_data: EventDataDict | None = None,
@@ -988,6 +1023,7 @@ class MainTable(tk.Canvas):
             event_data = event_dict(
                 name="move_columns",
                 sheet=self.PAR.name,
+                widget=self,
                 boxes=self.get_boxes(),
                 selected=self.selected,
             )
@@ -997,7 +1033,7 @@ class MainTable(tk.Canvas):
             }
         event_data["options"] = self.pickle_options()
         event_data["named_spans"] = {k: span.pickle_self() for k, span in self.named_spans.items()}
-        if disp_new_idxs and (not data_indexes or self.all_columns_displayed):
+        if move_widths and disp_new_idxs and (not data_indexes or self.all_columns_displayed):
             self.deselect("all", run_binding=False, redraw=False)
             self.set_col_positions(
                 itr=move_elements_by_mapping(
@@ -1189,11 +1225,18 @@ class MainTable(tk.Canvas):
             data_new_idxs = get_new_indexes(seqlen=totalrows, move_to=move_to, to_move=to_move)
         elif not self.all_rows_displayed and not data_indexes:
             data_new_idxs = get_new_indexes(seqlen=len(self.displayed_rows), move_to=move_to, to_move=to_move)
-            data_old_idxs = dict(zip(data_new_idxs.values(), data_new_idxs))
+            moved = {self.displayed_rows[i] for i in to_move}
             data_new_idxs = dict(
-                zip(
-                    move_elements_by_mapping(self.displayed_rows, data_new_idxs, data_old_idxs),
-                    self.displayed_rows,
+                filter(
+                    lambda tup: tup[0] in moved,
+                    zip(
+                        move_elements_by_mapping(
+                            self.displayed_rows,
+                            data_new_idxs,
+                            dict(zip(data_new_idxs.values(), data_new_idxs)),
+                        ),
+                        self.displayed_rows,
+                    ),
                 )
             )
         return data_new_idxs, dict(zip(data_new_idxs.values(), data_new_idxs)), totalrows, disp_new_idxs
@@ -1205,6 +1248,7 @@ class MainTable(tk.Canvas):
         totalrows: int | None,
         disp_new_idxs: None | dict[int, int] = None,
         move_data: bool = True,
+        move_heights: bool = True,
         create_selections: bool = True,
         data_indexes: bool = False,
         event_data: EventDataDict | None = None,
@@ -1221,6 +1265,7 @@ class MainTable(tk.Canvas):
             event_data = event_dict(
                 name="move_rows",
                 sheet=self.PAR.name,
+                widget=self,
                 boxes=self.get_boxes(),
                 selected=self.selected,
             )
@@ -1230,7 +1275,7 @@ class MainTable(tk.Canvas):
             }
         event_data["options"] = self.pickle_options()
         event_data["named_spans"] = {k: span.pickle_self() for k, span in self.named_spans.items()}
-        if disp_new_idxs and (not data_indexes or self.all_rows_displayed):
+        if move_heights and disp_new_idxs and (not data_indexes or self.all_rows_displayed):
             self.deselect("all", run_binding=False, redraw=False)
             self.set_row_positions(
                 itr=move_elements_by_mapping(
@@ -1424,7 +1469,9 @@ class MainTable(tk.Canvas):
         event_data = self.undo_modification_invert_event(modification)
         self.redo_stack.append(pickled_event_dict(event_data))
         self.undo_stack.pop()
+        self.sheet_modified(event_data, purge_redo=False)
         try_binding(self.extra_end_ctrl_z_func, event_data, "end_undo")
+        self.PAR.emit_event("<<Undo>>", event_data)
         return event_data
 
     def redo(self, event: object = None) -> None | EventDataDict:
@@ -1436,7 +1483,9 @@ class MainTable(tk.Canvas):
         event_data = self.undo_modification_invert_event(modification, name="redo")
         self.undo_stack.append(pickled_event_dict(event_data))
         self.redo_stack.pop()
+        self.sheet_modified(event_data, purge_redo=False)
         try_binding(self.extra_end_ctrl_z_func, event_data, "end_redo")
+        self.PAR.emit_event("<<Redo>>", event_data)
         return event_data
 
     def sheet_modified(self, event_data: EventDataDict, purge_redo: bool = True) -> None:
@@ -1490,6 +1539,7 @@ class MainTable(tk.Canvas):
         event_data = event_dict(
             name=modification["eventname"],
             sheet=self.PAR.name,
+            widget=self,
         )
         event_data["selection_boxes"] = modification["selection_boxes"]
         event_data["selected"] = modification["selected"]
@@ -1648,7 +1698,6 @@ class MainTable(tk.Canvas):
                 redraw=False,
             )
 
-        self.sheet_modified(event_data, purge_redo=False)
         self.refresh()
         return event_data
 
@@ -1775,7 +1824,9 @@ class MainTable(tk.Canvas):
                     self.select_all_binding_func(
                         self.get_select_event(being_drawn_item=self.being_drawn_item),
                     )
-                self.PAR.emit_event("<<SheetSelect>>", data=self.get_select_event(self.being_drawn_item))
+                event_data = self.get_select_event(self.being_drawn_item)
+                self.PAR.emit_event("<<SheetSelect>>", data=event_data)
+                self.PAR.emit_event("<<SelectAll>>", data=event_data)
 
     def select_cell(
         self,
@@ -3530,6 +3581,7 @@ class MainTable(tk.Canvas):
         keep_formatting: bool = True,
     ) -> object:
         if isinstance(newdataref, (list, tuple)):
+            self.hide_dropdown_editor_all_canvases()
             self.data = newdataref
             if keep_formatting:
                 self.reapply_formatting()
@@ -3633,7 +3685,7 @@ class MainTable(tk.Canvas):
             else:
                 return False
 
-    def set_all_cell_sizes_to_text(self, w: int | None = None) -> tuple[list[float], list[float]]:
+    def set_all_cell_sizes_to_text(self, w: int | None = None, slim: bool = False) -> tuple[list[float], list[float]]:
         min_column_width = int(self.min_column_width)
         min_rh = int(self.min_row_height)
         w = min_column_width if w is None else w
@@ -3664,6 +3716,7 @@ class MainTable(tk.Canvas):
                     h = int(self.max_row_height)
                 if h > rhs[datarn]:
                     rhs[datarn] = h
+        added_w_space = 1 if slim else 7
         for datacn in itercols:
             if (hw := self.CH.get_cell_dimensions(datacn)[0]) > w:
                 w = hw
@@ -3672,7 +3725,7 @@ class MainTable(tk.Canvas):
                 if txt:
                     qconf(qtxtm, text=txt, font=qfont)
                     b = qbbox(qtxtm)
-                    tw = b[2] - b[0] + 7
+                    tw = b[2] - b[0] + added_w_space
                     h = b[3] - b[1] + 5
                 else:
                     tw = min_column_width
@@ -4323,6 +4376,7 @@ class MainTable(tk.Canvas):
         event_data = event_dict(
             name="add_columns",
             sheet=self.PAR.name,
+            widget=self,
             boxes=self.get_boxes(),
             selected=self.selected,
         )
@@ -4454,6 +4508,7 @@ class MainTable(tk.Canvas):
         event_data = event_dict(
             name="add_rows",
             sheet=self.PAR.name,
+            widget=self,
             boxes=self.get_boxes(),
             selected=self.selected,
         )
@@ -4627,6 +4682,7 @@ class MainTable(tk.Canvas):
         event_data = event_dict(
             name="delete_columns",
             sheet=self.PAR.name,
+            widget=self,
             boxes=self.get_boxes(),
             selected=self.selected,
         )
@@ -4681,6 +4737,7 @@ class MainTable(tk.Canvas):
         event_data = event_dict(
             name="delete_rows",
             sheet=self.PAR.name,
+            widget=self,
             boxes=self.get_boxes(),
             selected=self.selected,
         )
@@ -5249,30 +5306,30 @@ class MainTable(tk.Canvas):
                         if i not in diffs:
                             heights[i] -= change
                 self.row_positions = list(accumulate(chain([0], heights)))
-        last_col_line_pos = self.col_positions[-1] + 1
-        last_row_line_pos = self.row_positions[-1] + 1
-        if can_width >= last_col_line_pos + self.PAR.ops.empty_horizontal and self.PAR.xscroll_showing:
+        if can_width >= self.col_positions[-1] + self.PAR.ops.empty_horizontal and self.PAR.xscroll_showing:
             self.PAR.xscroll.grid_forget()
             self.PAR.xscroll_showing = False
         elif (
-            can_width < last_col_line_pos + self.PAR.ops.empty_horizontal
+            can_width < self.col_positions[-1] + self.PAR.ops.empty_horizontal
             and not self.PAR.xscroll_showing
             and not self.PAR.xscroll_disabled
             and can_height > 40
         ):
             self.PAR.xscroll.grid(row=2, column=0, columnspan=2, sticky="nswe")
             self.PAR.xscroll_showing = True
-        if can_height >= last_row_line_pos + self.PAR.ops.empty_vertical and self.PAR.yscroll_showing:
+        if can_height >= self.row_positions[-1] + self.PAR.ops.empty_vertical and self.PAR.yscroll_showing:
             self.PAR.yscroll.grid_forget()
             self.PAR.yscroll_showing = False
         elif (
-            can_height < last_row_line_pos + self.PAR.ops.empty_vertical
+            can_height < self.row_positions[-1] + self.PAR.ops.empty_vertical
             and not self.PAR.yscroll_showing
             and not self.PAR.yscroll_disabled
             and can_width > 40
         ):
             self.PAR.yscroll.grid(row=0, column=2, rowspan=3, sticky="nswe")
             self.PAR.yscroll_showing = True
+        last_col_line_pos = self.col_positions[-1] + 1
+        last_row_line_pos = self.row_positions[-1] + 1
         scrollregion = (
             0,
             0,
@@ -5302,10 +5359,10 @@ class MainTable(tk.Canvas):
                 end_row=end_row - 1,
                 only_rows=[self.datarn(r) for r in range(start_row if not start_row else start_row - 1, end_row - 1)],
             )
+        if resized_cols or resized_rows or changed_w:
+            self.recreate_all_selection_boxes()
             if changed_w:
                 return False
-        if resized_cols or resized_rows:
-            self.recreate_all_selection_boxes()
         self.hidd_text.update(self.disp_text)
         self.disp_text = {}
         self.hidd_high.update(self.disp_high)
@@ -6435,31 +6492,25 @@ class MainTable(tk.Canvas):
             self.itemconfig(self.text_editor.canvas_id, state="normal")
             self.text_editor.open = True
         self.coords(self.text_editor.canvas_id, x, y)
+        for b in text_editor_newline_bindings:
+            self.text_editor.tktext.bind(b, self.text_editor_newline_binding)
+        for b in text_editor_close_bindings:
+            self.text_editor.tktext.bind(b, self.close_text_editor)
         if not dropdown:
             self.text_editor.tktext.focus_set()
             self.text_editor.window.scroll_to_bottom()
-        self.text_editor.tktext.bind("<Alt-Return>", lambda _x: self.text_editor_newline_binding(r, c))
-        self.text_editor.tktext.bind("<Alt-KP_Enter>", lambda _x: self.text_editor_newline_binding(r, c))
-        if USER_OS == "darwin":
-            self.text_editor.tktext.bind("<Option-Return>", lambda _x: self.text_editor_newline_binding(r, c))
+            self.text_editor.tktext.bind("<FocusOut>", self.close_text_editor)
         for key, func in self.text_editor_user_bound_keys.items():
             self.text_editor.tktext.bind(key, func)
-        self.text_editor.tktext.bind("<Tab>", lambda _x: self.close_text_editor((r, c, "Tab")))
-        self.text_editor.tktext.bind("<Return>", lambda _x: self.close_text_editor((r, c, "Return")))
-        self.text_editor.tktext.bind("<KP_Enter>", lambda _x: self.close_text_editor((r, c, "Return")))
-        if not dropdown:
-            self.text_editor.tktext.bind("<FocusOut>", lambda _x: self.close_text_editor((r, c, "FocusOut")))
-        self.text_editor.tktext.bind("<Escape>", lambda _x: self.close_text_editor((r, c, "Escape")))
         return True
 
     # displayed indexes
     def text_editor_newline_binding(
         self,
-        r: int = 0,
-        c: int = 0,
         event: object = None,
         check_lines: bool = True,
     ) -> None:
+        r, c = self.text_editor.coords
         curr_height = self.text_editor.window.winfo_height()
         if curr_height < self.min_row_height:
             return
@@ -6543,31 +6594,33 @@ class MainTable(tk.Canvas):
         if reason == "Escape":
             self.focus_set()
 
-    def close_text_editor(
-        self,
-        editor_info: tuple | None = None,
-    ) -> str | None:
+    def close_text_editor(self, event: tk.Event) -> Literal["break"] | None:
         # checking if text editor should be closed or not
-        focused = self.focus_get()
+        # errors if __tk_filedialog is open
+        try:
+            focused = self.focus_get()
+        except Exception:
+            focused = None
         try:
             if focused == self.text_editor.tktext.rc_popup_menu:
                 return "break"
         except Exception:
             pass
-        if focused is None and editor_info:
+        if focused is None:
             return "break"
-        if editor_info[2] == "Escape":
+        if event.keysym == "Escape":
             self.hide_text_editor_and_dropdown()
             return
         # setting cell data with text editor value
         text_editor_value = self.text_editor.get()
-        r, c = editor_info[0], editor_info[1]
+        r, c = self.text_editor.coords
         datarn, datacn = self.datarn(r), self.datacn(c)
         event_data = event_dict(
             name="end_edit_table",
             sheet=self.PAR.name,
+            widget=self,
             cells_table={(datarn, datacn): text_editor_value},
-            key=editor_info[2],
+            key=event.keysym,
             value=text_editor_value,
             loc=Loc(r, c),
             row=r,
@@ -6606,7 +6659,7 @@ class MainTable(tk.Canvas):
             numcols = c2 - c1
             numrows = r2 - r1
             if numcols == 1 and numrows == 1:
-                if editor_info[2] == "Return":
+                if event.keysym == "Return":
                     self.select_cell(r + 1 if r < len(self.row_positions) - 2 else r, c)
                     self.see(
                         r + 1 if r < len(self.row_positions) - 2 else r,
@@ -6615,7 +6668,7 @@ class MainTable(tk.Canvas):
                         bottom_right_corner=True,
                         check_cell_visibility=True,
                     )
-                elif editor_info[2] == "Tab":
+                elif event.keysym == "Tab":
                     self.select_cell(r, c + 1 if c < len(self.col_positions) - 2 else c)
                     self.see(
                         r,
@@ -6628,7 +6681,7 @@ class MainTable(tk.Canvas):
                 moved = False
                 new_r = r
                 new_c = c
-                if editor_info[2] == "Return":
+                if event.keysym == "Return":
                     if r + 1 == r2:
                         new_r = r1
                     elif numrows > 1:
@@ -6639,7 +6692,7 @@ class MainTable(tk.Canvas):
                             new_c = c1
                         elif numcols > 1:
                             new_c = c + 1
-                elif editor_info[2] == "Tab":
+                elif event.keysym == "Tab":
                     if c + 1 == c2:
                         new_c = c1
                     elif numcols > 1:
@@ -6660,7 +6713,7 @@ class MainTable(tk.Canvas):
                 )
         self.recreate_all_selection_boxes()
         self.hide_text_editor_and_dropdown()
-        if editor_info[2] != "FocusOut":
+        if event.keysym != "FocusOut":
             self.focus_set()
         return "break"
 
@@ -6819,7 +6872,7 @@ class MainTable(tk.Canvas):
         if kwargs["state"] == "normal":
             self.text_editor.tktext.bind(
                 "<<TextModified>>",
-                lambda x: self.dropdown.window.search_and_see(
+                lambda _: self.dropdown.window.search_and_see(
                     event_dict(
                         name="table_dropdown_modified",
                         sheet=self.PAR.name,
@@ -6843,7 +6896,7 @@ class MainTable(tk.Canvas):
             redraw = False
         else:
             self.update_idletasks()
-            self.dropdown.window.bind("<FocusOut>", lambda x: self.close_dropdown_window(r, c))
+            self.dropdown.window.bind("<FocusOut>", lambda _: self.close_dropdown_window(r, c))
             self.dropdown.window.focus()
             redraw = True
         self.dropdown.open = True
@@ -6866,6 +6919,7 @@ class MainTable(tk.Canvas):
             event_data = event_dict(
                 name="end_edit_table",
                 sheet=self.PAR.name,
+                widget=self,
                 cells_table={(datarn, datacn): pre_edit_value},
                 key="??",
                 value=selection,
@@ -6912,7 +6966,7 @@ class MainTable(tk.Canvas):
     def mouseclick_outside_editor_or_dropdown(self) -> tuple[int, int] | None:
         closed_dd_coords = self.dropdown.get_coords()
         if self.text_editor.open:
-            self.close_text_editor(editor_info=self.text_editor.coords + ("ButtonPress-1",))
+            self.close_text_editor(new_tk_event("ButtonPress-1"))
         self.hide_dropdown_window()
         self.focus_set()
         return closed_dd_coords
@@ -6921,6 +6975,11 @@ class MainTable(tk.Canvas):
         self.CH.mouseclick_outside_editor_or_dropdown()
         self.RI.mouseclick_outside_editor_or_dropdown()
         return self.mouseclick_outside_editor_or_dropdown()
+
+    def hide_dropdown_editor_all_canvases(self):
+        self.hide_text_editor_and_dropdown()
+        self.RI.hide_text_editor_and_dropdown()
+        self.CH.hide_text_editor_and_dropdown()
 
     def hide_dropdown_window(self) -> None:
         if self.dropdown.open:
@@ -6956,6 +7015,7 @@ class MainTable(tk.Canvas):
             event_data = event_dict(
                 name="end_edit_table",
                 sheet=self.PAR.name,
+                widget=self,
                 cells_table={(datarn, datacn): pre_edit_value},
                 key="??",
                 value=value,
@@ -6993,6 +7053,7 @@ class MainTable(tk.Canvas):
         event_data = event_dict(
             name="edit_table",
             sheet=self.PAR.name,
+            widget=self,
             cells_table={(datarn, datacn): self.get_cell_data(datarn, datacn)},
             boxes=self.get_boxes(),
             selected=self.selected,

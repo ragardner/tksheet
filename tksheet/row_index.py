@@ -32,6 +32,7 @@ from .functions import (
     event_dict,
     get_n2a,
     is_contiguous,
+    new_tk_event,
     num2alpha,
     pickled_event_dict,
     rounded_box_coords,
@@ -48,9 +49,10 @@ from .text_editor import (
     TextEditor,
 )
 from .vars import (
-    USER_OS,
     rc_binding,
     symbols_set,
+    text_editor_close_bindings,
+    text_editor_newline_bindings,
     text_editor_to_unbind,
 )
 
@@ -135,6 +137,13 @@ class RowIndex(tk.Canvas):
 
         self.tree_reset()
         self.basic_bindings()
+
+    def event_generate(self, *args, **kwargs) -> None:
+        for arg in args:
+            if self.MT and arg in self.MT.event_linker:
+                self.MT.event_linker[arg]()
+            else:
+                super().event_generate(*args, **kwargs)
 
     def basic_bindings(self, enable: bool = True) -> None:
         if enable:
@@ -835,6 +844,7 @@ class RowIndex(tk.Canvas):
                 event_data = event_dict(
                     name="move_rows",
                     sheet=self.PAR.name,
+                    widget=self,
                     boxes=self.MT.get_boxes(),
                     selected=self.MT.selected,
                     value=r,
@@ -846,6 +856,7 @@ class RowIndex(tk.Canvas):
                             to_move=self.dragged_row.to_move,
                         ),
                         move_data=self.PAR.ops.row_drag_and_drop_perform,
+                        move_heights=self.PAR.ops.row_drag_and_drop_perform,
                         event_data=event_data,
                     )
                     event_data["moved"]["rows"] = {
@@ -1011,7 +1022,7 @@ class RowIndex(tk.Canvas):
             w = self.PAR.ops.default_row_index_width
             h = self.MT.min_row_height
         if self.get_cell_kwargs(datarn, key="dropdown") or self.get_cell_kwargs(datarn, key="checkbox"):
-            w += self.MT.index_txt_height
+            w += self.MT.index_txt_height + 2
         if self.PAR.ops.treeview:
             if datarn in self.cell_options and "align" in self.cell_options[datarn]:
                 align = self.cell_options[datarn]["align"]
@@ -1193,9 +1204,9 @@ class RowIndex(tk.Canvas):
                 new_w = self.set_width_of_index_to_text(only_rows=only_rows, set_width=False)
             else:
                 new_w = None
-            if new_w is not None and (sheet_w_x := floor(self.PAR.winfo_width() * 0.8)) < new_w:
+            if new_w is not None and (sheet_w_x := floor(self.PAR.winfo_width() * 0.7)) < new_w:
                 new_w = sheet_w_x
-            if new_w and (self.current_width - new_w > 15 or new_w - self.current_width > 5):
+            if new_w and (self.current_width - new_w > 15 or new_w - self.current_width > 3):
                 self.set_width(new_w, set_TL=True)
                 return True
         return False
@@ -1861,24 +1872,19 @@ class RowIndex(tk.Canvas):
             self.itemconfig(self.text_editor.canvas_id, state="normal")
             self.text_editor.open = True
         self.coords(self.text_editor.canvas_id, x, y)
+        for b in text_editor_newline_bindings:
+            self.text_editor.tktext.bind(b, self.text_editor_newline_binding)
+        for b in text_editor_close_bindings:
+            self.text_editor.tktext.bind(b, self.close_text_editor)
         if not dropdown:
             self.text_editor.tktext.focus_set()
             self.text_editor.window.scroll_to_bottom()
-        self.text_editor.tktext.bind("<Alt-Return>", lambda _x: self.text_editor_newline_binding(r=r))
-        self.text_editor.tktext.bind("<Alt-KP_Enter>", lambda _x: self.text_editor_newline_binding(r=r))
-        if USER_OS == "darwin":
-            self.text_editor.tktext.bind("<Option-Return>", lambda _x: self.text_editor_newline_binding(r=r))
+            self.text_editor.tktext.bind("<FocusOut>", self.close_text_editor)
         for key, func in self.MT.text_editor_user_bound_keys.items():
             self.text_editor.tktext.bind(key, func)
-        self.text_editor.tktext.bind("<Tab>", lambda _x: self.close_text_editor((r, "Tab")))
-        self.text_editor.tktext.bind("<Return>", lambda _x: self.close_text_editor((r, "Return")))
-        self.text_editor.tktext.bind("<KP_Enter>", lambda _x: self.close_text_editor((r, "Return")))
-        if not dropdown:
-            self.text_editor.tktext.bind("<FocusOut>", lambda _x: self.close_text_editor((r, "FocusOut")))
-        self.text_editor.tktext.bind("<Escape>", lambda _x: self.close_text_editor((r, "Escape")))
         return True
 
-    def text_editor_newline_binding(self, r=0, c=0, event: object = None, check_lines=True):
+    def text_editor_newline_binding(self, event: object = None, check_lines=True):
         if not self.height_resizing_enabled:
             return
         curr_height = self.text_editor.window.winfo_height()
@@ -1892,6 +1898,7 @@ class RowIndex(tk.Canvas):
             )
             > curr_height
         ):
+            r = self.text_editor.row
             new_height = curr_height + self.MT.index_xtra_lines_increment
             space_bot = self.MT.get_space_bot(r)
             if new_height > space_bot:
@@ -1907,14 +1914,14 @@ class RowIndex(tk.Canvas):
                     if anchor == "nw":
                         self.coords(
                             self.dropdown.canvas_id,
-                            self.MT.col_positions[c],
+                            0,
                             self.MT.row_positions[r] + text_editor_h - 1,
                         )
                         self.itemconfig(self.dropdown.canvas_id, anchor=anchor, height=win_h)
                     elif anchor == "sw":
                         self.coords(
                             self.dropdown.canvas_id,
-                            self.MT.col_positions[c],
+                            0,
                             self.MT.row_positions[r],
                         )
                         self.itemconfig(self.dropdown.canvas_id, anchor=anchor, height=win_h)
@@ -1968,29 +1975,32 @@ class RowIndex(tk.Canvas):
             self.focus_set()
 
     # r is displayed row
-    def close_text_editor(
-        self,
-        editor_info: tuple | None = None,
-    ) -> str | None:
-        focused = self.focus_get()
+    def close_text_editor(self, event: tk.Event) -> Literal["break"] | None:
+        # checking if text editor should be closed or not
+        # errors if __tk_filedialog is open
+        try:
+            focused = self.focus_get()
+        except Exception:
+            focused = None
         try:
             if focused == self.text_editor.tktext.rc_popup_menu:
                 return "break"
         except Exception:
             pass
-        if focused is None and editor_info:
+        if focused is None:
             return "break"
-        if editor_info is not None and len(editor_info) >= 2 and editor_info[1] == "Escape":
+        if event.keysym == "Escape":
             self.hide_text_editor_and_dropdown()
             return
         text_editor_value = self.text_editor.get()
-        r = editor_info[0]
+        r = self.text_editor.row
         datarn = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r]
         event_data = event_dict(
             name="end_edit_index",
             sheet=self.PAR.name,
+            widget=self,
             cells_index={datarn: self.get_cell_data(datarn)},
-            key=editor_info[1] if len(editor_info) >= 2 else "FocusOut",
+            key=event.keysym,
             value=text_editor_value,
             loc=r,
             row=r,
@@ -2014,7 +2024,7 @@ class RowIndex(tk.Canvas):
             try_binding(self.extra_end_edit_cell_func, event_data)
         self.MT.recreate_all_selection_boxes()
         self.hide_text_editor_and_dropdown()
-        if editor_info[1] != "FocusOut":
+        if event.keysym != "FocusOut":
             self.focus_set()
         return "break"
 
@@ -2151,6 +2161,7 @@ class RowIndex(tk.Canvas):
             event_data = event_dict(
                 name="end_edit_index",
                 sheet=self.PAR.name,
+                widget=self,
                 cells_header={datarn: pre_edit_value},
                 key="??",
                 value=selection,
@@ -2182,7 +2193,7 @@ class RowIndex(tk.Canvas):
     def mouseclick_outside_editor_or_dropdown(self, inside: bool = False):
         closed_dd_coords = self.dropdown.get_coords()
         if self.text_editor.open:
-            self.close_text_editor((self.text_editor.row, "ButtonPress-1"))
+            self.close_text_editor(new_tk_event("ButtonPress-1"))
         if closed_dd_coords is not None:
             self.hide_dropdown_window()
             if inside:
@@ -2220,6 +2231,7 @@ class RowIndex(tk.Canvas):
         event_data = event_dict(
             name="edit_index",
             sheet=self.PAR.name,
+            widget=self,
             cells_index={datarn: self.get_cell_data(datarn)},
             boxes=self.MT.get_boxes(),
             selected=self.MT.selected,
@@ -2374,6 +2386,7 @@ class RowIndex(tk.Canvas):
             event_data = event_dict(
                 name="end_edit_index",
                 sheet=self.PAR.name,
+                widget=self,
                 cells_index={datarn: pre_edit_value},
                 key="??",
                 value=value,

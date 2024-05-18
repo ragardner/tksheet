@@ -25,6 +25,7 @@ from .functions import (
     event_dict,
     get_n2a,
     is_contiguous,
+    new_tk_event,
     pickled_event_dict,
     rounded_box_coords,
     try_binding,
@@ -42,6 +43,8 @@ from .vars import (
     USER_OS,
     rc_binding,
     symbols_set,
+    text_editor_close_bindings,
+    text_editor_newline_bindings,
     text_editor_to_unbind,
 )
 
@@ -123,6 +126,13 @@ class ColumnHeaders(tk.Canvas):
         self.default_header = kwargs["default_header"].lower()
         self.align = kwargs["header_align"]
         self.basic_bindings()
+
+    def event_generate(self, *args, **kwargs) -> None:
+        for arg in args:
+            if self.MT and arg in self.MT.event_linker:
+                self.MT.event_linker[arg]()
+            else:
+                super().event_generate(*args, **kwargs)
 
     def basic_bindings(self, enable: bool = True):
         if enable:
@@ -833,6 +843,7 @@ class ColumnHeaders(tk.Canvas):
                 event_data = event_dict(
                     name="move_columns",
                     sheet=self.PAR.name,
+                    widget=self,
                     boxes=self.MT.get_boxes(),
                     selected=self.MT.selected,
                     value=c,
@@ -844,6 +855,7 @@ class ColumnHeaders(tk.Canvas):
                             to_move=self.dragged_col.to_move,
                         ),
                         move_data=self.PAR.ops.column_drag_and_drop_perform,
+                        move_widths=self.PAR.ops.column_drag_and_drop_perform,
                         event_data=event_data,
                     )
                     event_data["moved"]["columns"] = {
@@ -1730,21 +1742,16 @@ class ColumnHeaders(tk.Canvas):
             self.itemconfig(self.text_editor.canvas_id, state="normal")
             self.text_editor.open = True
         self.coords(self.text_editor.canvas_id, x, y)
+        for b in text_editor_newline_bindings:
+            self.text_editor.tktext.bind(b, self.text_editor_newline_binding)
+        for b in text_editor_close_bindings:
+            self.text_editor.tktext.bind(b, self.close_text_editor)
         if not dropdown:
             self.text_editor.tktext.focus_set()
             self.text_editor.window.scroll_to_bottom()
-        self.text_editor.tktext.bind("<Alt-Return>", lambda _x: self.text_editor_newline_binding(c=c))
-        self.text_editor.tktext.bind("<Alt-KP_Enter>", lambda _x: self.text_editor_newline_binding(c=c))
-        if USER_OS == "darwin":
-            self.text_editor.tktext.bind("<Option-Return>", lambda _x: self.text_editor_newline_binding(c=c))
+            self.text_editor.tktext.bind("<FocusOut>", self.close_text_editor)
         for key, func in self.MT.text_editor_user_bound_keys.items():
             self.text_editor.tktext.bind(key, func)
-        self.text_editor.tktext.bind("<Tab>", lambda _x: self.close_text_editor((c, "Tab")))
-        self.text_editor.tktext.bind("<Return>", lambda _x: self.close_text_editor((c, "Return")))
-        self.text_editor.tktext.bind("<KP_Enter>", lambda _x: self.close_text_editor((c, "Return")))
-        if not dropdown:
-            self.text_editor.tktext.bind("<FocusOut>", lambda _x: self.close_text_editor((c, "FocusOut")))
-        self.text_editor.tktext.bind("<Escape>", lambda _x: self.close_text_editor((c, "Escape")))
         return True
 
     # displayed indexes                         #just here to receive text editor arg
@@ -1763,7 +1770,7 @@ class ColumnHeaders(tk.Canvas):
                 self.coords(self.text_editor.canvas_id, self.MT.col_positions[c] + 1, 0)
 
     # displayed indexes
-    def text_editor_newline_binding(self, r=0, c=0, event: object = None, check_lines=True):
+    def text_editor_newline_binding(self, event: object = None, check_lines=True):
         if not self.height_resizing_enabled:
             return
         curr_height = self.text_editor.window.winfo_height()
@@ -1777,6 +1784,7 @@ class ColumnHeaders(tk.Canvas):
             )
             > curr_height
         ):
+            c = self.text_editor.column
             new_height = curr_height + self.MT.header_xtra_lines_increment
             space_bot = self.MT.get_space_bot(0)
             if new_height > space_bot:
@@ -1845,31 +1853,33 @@ class ColumnHeaders(tk.Canvas):
             self.focus_set()
 
     # c is displayed col
-    def close_text_editor(
-        self,
-        editor_info: tuple,
-    ):
+    def close_text_editor(self, event: tk.Event) -> Literal["break"] | None:
         # checking if text editor should be closed or not
-        focused = self.focus_get()
+        # errors if __tk_filedialog is open
+        try:
+            focused = self.focus_get()
+        except Exception:
+            focused = None
         try:
             if focused == self.text_editor.tktext.rc_popup_menu:
                 return "break"
         except Exception:
             pass
-        if focused is None and editor_info:
+        if focused is None:
             return "break"
-        if editor_info[1] == "Escape":
+        if event.keysym == "Escape":
             self.hide_text_editor_and_dropdown()
             return
         # setting cell data with text editor value
         text_editor_value = self.text_editor.get()
-        c = editor_info[0]
+        c = self.text_editor.column
         datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
         event_data = event_dict(
             name="end_edit_header",
             sheet=self.PAR.name,
+            widget=self,
             cells_header={datacn: self.get_cell_data(datacn)},
-            key=editor_info[1] if len(editor_info) >= 2 else "FocusOut",
+            key=event.keysym,
             value=text_editor_value,
             loc=c,
             column=c,
@@ -1893,7 +1903,7 @@ class ColumnHeaders(tk.Canvas):
             try_binding(self.extra_end_edit_cell_func, event_data)
         self.MT.recreate_all_selection_boxes()
         self.hide_text_editor_and_dropdown()
-        if editor_info[1] != "FocusOut":
+        if event.keysym != "FocusOut":
             self.focus_set()
         return "break"
 
@@ -2014,6 +2024,7 @@ class ColumnHeaders(tk.Canvas):
             event_data = event_dict(
                 name="end_edit_header",
                 sheet=self.PAR.name,
+                widget=self,
                 cells_header={datacn: pre_edit_value},
                 key="??",
                 value=selection,
@@ -2045,7 +2056,7 @@ class ColumnHeaders(tk.Canvas):
     def mouseclick_outside_editor_or_dropdown(self, inside: bool = False):
         closed_dd_coords = self.dropdown.get_coords()
         if self.text_editor.open:
-            self.close_text_editor((self.text_editor.column, "ButtonPress-1"))
+            self.close_text_editor(new_tk_event("ButtonPress-1"))
         if closed_dd_coords is not None:
             self.hide_dropdown_window()
             if inside:
@@ -2083,6 +2094,7 @@ class ColumnHeaders(tk.Canvas):
         event_data = event_dict(
             name="edit_header",
             sheet=self.PAR.name,
+            widget=self,
             cells_header={datacn: self.get_cell_data(datacn)},
             boxes=self.MT.get_boxes(),
             selected=self.MT.selected,
@@ -2240,6 +2252,7 @@ class ColumnHeaders(tk.Canvas):
             event_data = event_dict(
                 name="end_edit_header",
                 sheet=self.PAR.name,
+                widget=self,
                 cells_header={datacn: pre_edit_value},
                 key="??",
                 value=value,

@@ -10,7 +10,7 @@ nonelike: set[object] = {None, "none", ""}
 truthy: set[object] = {True, "true", "t", "yes", "y", "on", "1", 1, 1.0}
 falsy: set[object] = {False, "false", "f", "no", "n", "off", "0", 0, 0.0}
 
-val_modifying_options: set[str, str, str] = {"checkbox", "format", "dropdown"}
+val_modifying_options: set[str] = {"checkbox", "format", "dropdown"}
 
 named_span_types: set[str] = {
     "format",
@@ -25,22 +25,35 @@ emitted_events: set[str] = {
     "<<SheetModified>>",
     "<<SheetRedrawn>>",
     "<<SheetSelect>>",
+    "<<Copy>>",
+    "<<Cut>>",
+    "<<Paste>>",
+    "<<Delete>>",
+    "<<Undo>>",
+    "<<Redo>>",
+    "<<SelectAll>>",
 }
 
 backwards_compatibility_keys: dict[str, str] = {
     "font": "table_font",
 }
 
-text_editor_to_unbind: tuple[str] = (
+text_editor_newline_bindings: set[str] = {
     "<Alt-Return>",
     "<Alt-KP_Enter>",
-    "<Option-Return>",
-    "<Tab>",
-    "<Return>",
-    "<KP_Enter>",
-    "<FocusOut>",
-    "<Escape>",
-)
+    "<Shift-Return>",
+}
+if USER_OS == "darwin":
+    text_editor_newline_bindings.add("<Option-Return>")
+
+text_editor_close_bindings: dict[str, str] = {
+    "<Tab>": "Tab",
+    "<Return>": "Return",
+    "<KP_Enter>": "Return",
+    "<Escape>": "Escape",
+}
+
+text_editor_to_unbind: set[str] = text_editor_newline_bindings | set(text_editor_close_bindings) | {"<FocusOut>"}
 
 scrollbar_options_keys: set[str] = {
     "vertical_scroll_background",

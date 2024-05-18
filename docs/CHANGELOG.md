@@ -1,5 +1,39 @@
 ### Version 7.1.22
-####
+#### Addressed:
+- Issue [222](https://github.com/ragardner/tksheet/issues/222)
+- Issue [223](https://github.com/ragardner/tksheet/issues/223)
+
+#### Fixed:
+- Massive lag when pasting large amounts of data, caused by using Python `csv.Sniffer().sniff()` without setting sample size, now only samples 5000 characters max
+
+#### Changed:
+- Added `widget` key to emitted event `dict`s which can be either the header, index or table canvas. If you're using `pickle` on tksheet event `dict`s then you may need to delete the `widget` key beforehand
+- Added `Highlight`, `add_highlight`, `new_tk_event` and `get_csv_str_dialect` to tksheet namespace
+- Some old functions which used to return `None` now return `self` (`Sheet`)
+- Re-add old highlighting functions to docs
+- Event data from moving rows/columns while rows/columns are hidden no longer returns all displayed row/column indexes in the `dict` keys `["moved"]["rows"]["data"]`/`["moved"]["columns"]["data"]` but instead returns only the rows/columns which were originally moved.
+- Add `Shift-Return` to text editor newline bindings
+- Internal `close_text_editor()` function parameters
+- Function `close_text_editor()` now closes all text editors that are open
+
+#### Added:
+- New parameters to `dropdown()`:
+    - `edit_data` to disable editing of data when creating the dropdowns
+    - `set_values` so a `dict` of cell/column/row coordinates and values can be provided instead of using `set_value` for every cell in the span
+- New emitted events - issue [223](https://github.com/ragardner/tksheet/issues/223):
+    - `"<<Copy>>"`
+    - `"<<Cut>>"`
+    - `"<<Paste>>"`
+    - `"<<Delete>>"`
+    - `"<<Undo>>"`
+    - `"<<Redo>>"`
+    - `"<<SelectAll>>"`
+
+#### Improved:
+- Dropdown box scrollbars will only display when necessary
+- Some themes colors
+- Old function `highlight_cells()` slight performance boost when calling it thousands of times
+- Added parameters back to the functions `dropdown()`/`checkbox()` for help when writing code
 
 ### Version 7.1.21
 #### Fixed:
