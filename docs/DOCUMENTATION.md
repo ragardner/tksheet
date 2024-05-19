@@ -3149,7 +3149,7 @@ dehighlight_all(
 ---
 # **Dropdown Boxes**
 
-### **Creating dropdown boxes**
+#### **Creating dropdown boxes**
 
 `Span` objects (more information [here](https://github.com/ragardner/tksheet/wiki/Version-7#span-objects)) can be used to create dropdown boxes for cells, rows, columns, the entire sheet, headers and the index.
 

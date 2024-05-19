@@ -1192,23 +1192,22 @@ class RowIndex(tk.Canvas):
             self.MT.recreate_all_selection_boxes()
 
     def auto_set_index_width(self, end_row: int, only_rows: list) -> bool:
-        if self.PAR.ops.auto_resize_row_index:
-            if not isinstance(self.MT._row_index, int) and not self.MT._row_index:
-                if self.default_index == "letters":
-                    new_w = self.MT.get_txt_w(f"{num2alpha(end_row)}") + 20
-                elif self.default_index == "numbers":
-                    new_w = self.MT.get_txt_w(f"{end_row}") + 20
-                elif self.default_index == "both":
-                    new_w = self.MT.get_txt_w(f"{end_row + 1} {num2alpha(end_row)}") + 20
-            elif self.PAR.ops.auto_resize_row_index is True:
-                new_w = self.set_width_of_index_to_text(only_rows=only_rows, set_width=False)
-            else:
-                new_w = None
-            if new_w is not None and (sheet_w_x := floor(self.PAR.winfo_width() * 0.7)) < new_w:
-                new_w = sheet_w_x
-            if new_w and (self.current_width - new_w > 15 or new_w - self.current_width > 3):
-                self.set_width(new_w, set_TL=True)
-                return True
+        if not isinstance(self.MT._row_index, int) and not self.MT._row_index:
+            if self.default_index == "letters":
+                new_w = self.MT.get_txt_w(f"{num2alpha(end_row)}") + 20
+            elif self.default_index == "numbers":
+                new_w = self.MT.get_txt_w(f"{end_row}") + 20
+            elif self.default_index == "both":
+                new_w = self.MT.get_txt_w(f"{end_row + 1} {num2alpha(end_row)}") + 20
+        elif self.PAR.ops.auto_resize_row_index is True:
+            new_w = self.set_width_of_index_to_text(only_rows=only_rows, set_width=False)
+        else:
+            new_w = None
+        if new_w is not None and (sheet_w_x := floor(self.PAR.winfo_width() * 0.7)) < new_w:
+            new_w = sheet_w_x
+        if new_w and (self.current_width - new_w > 15 or new_w - self.current_width > 3):
+            self.set_width(new_w, set_TL=True)
+            return True
         return False
 
     def redraw_highlight_get_text_fg(self, fr, sr, r, c_2, c_3, selections, datarn):

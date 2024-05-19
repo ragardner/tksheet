@@ -4561,7 +4561,7 @@ class Sheet(tk.Frame):
             self.tree_set_open(open_ids=open_ids)
         else:
             self.hide_rows(
-                set(self.RI.tree_rns[iid] for iid in self.get_children() if self.RI.tree[iid].parent),
+                {self.RI.tree_rns[iid] for iid in self.get_children() if self.RI.tree[iid].parent},
                 deselect_all=False,
                 data_indexes=True,
                 row_heights=False if row_heights is False else True,
@@ -4585,46 +4585,76 @@ class Sheet(tk.Frame):
         Closes everything else
         """
         self.hide_rows(
-            # set(self.MT.displayed_rows),
             set(rn for rn in self.MT.displayed_rows if self.MT._row_index[rn].parent),
             redraw=False,
             deselect_all=False,
             data_indexes=True,
         )
-        # self.show_rows(
-        #     (self.RI.tree_rns[iid] for iid in self.get_children("")),
-        #     redraw=False,
-        #     deselect_all=True,
-        # )
         open_ids = set(filter(self.exists, map(str.lower, open_ids)))
         self.RI.tree_open_ids = set()
         if open_ids:
-            self.tree_open(open_ids)
-        return self
+            to_open = self._tree_open(open_ids)
+            self.show_rows(
+                rows=to_open,
+                redraw=False,
+                deselect_all=False,
+            )
+        return self.set_refresh_timer(True)
+    
+    def _tree_open(self, items: set[str]) -> list[int]:
+        """
+        Only meant for internal use
+        """
+        to_open = []
+        for item in filter(items.__contains__, self.get_children()):
+            if self.RI.tree[item].children:
+                self.RI.tree_open_ids.add(item)
+                to_open.extend(self.RI.tree_rns[did] for did in self.RI.get_iid_descendants(item, check_open=True))
+        return to_open
 
-    def tree_open(self, *items) -> Sheet:
+    def tree_open(self, *items, redraw: bool = True) -> Sheet:
         """
         If used without args all items are opened
         """
         if items := set(unpack(items)):
-            for item in filter(items.__contains__, self.get_children()):
-                self.item(item, open_=True)
+            to_open = self._tree_open(items)
         else:
+            to_open = []
             for item in self.get_children():
-                self.item(item, open_=True)
-        return self
+                if self.RI.tree[item].children:
+                    self.RI.tree_open_ids.add(item)
+                    to_open.extend(self.RI.tree_rns[did] for did in self.RI.get_iid_descendants(item, check_open=True))
+        return self.show_rows(
+            rows=to_open,
+            redraw=redraw,
+            deselect_all=False,
+        )
 
-    def tree_close(self, *items) -> Sheet:
+    def tree_close(self, *items, redraw: bool = True) -> Sheet:
         """
         If used without args all items are closed
         """
+        to_close = set()
         if items:
             for item in unpack(items):
-                self.item(item, open_=False)
+                if self.RI.tree[item].children:
+                    self.RI.tree_open_ids.discard(item)
+                    if self.RI.tree_rns[item] in self.MT.displayed_rows:
+                        for did in self.RI.get_iid_descendants(item, check_open=True):
+                            to_close.add(self.RI.tree_rns[did])
         else:
             for item in self.get_children():
-                self.item(item, open_=False)
-        return self
+                if self.RI.tree[item].children:
+                    self.RI.tree_open_ids.discard(item)
+                    if self.RI.tree_rns[item] in self.MT.displayed_rows:
+                        for did in self.RI.get_iid_descendants(item, check_open=True):
+                            to_close.add(self.RI.tree_rns[did])
+        return self.hide_rows(
+            rows=to_close,
+            redraw=redraw,
+            deselect_all=False,
+            data_indexes=True,
+        )
 
     def insert(
         self,

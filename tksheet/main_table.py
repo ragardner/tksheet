@@ -5281,7 +5281,7 @@ class MainTable(tk.Canvas):
                     for i, w in enumerate(widths):
                         if i not in diffs:
                             widths[i] -= change
-                self.set_col_positions(itr=widths)
+                self.col_positions = list(accumulate(chain([0], widths)))
         if self.PAR.ops.auto_resize_rows and self.allow_auto_resize_rows and row_pos_exists:
             max_h = can_height - self.PAR.ops.empty_vertical
             if self.PAR.ops.auto_resize_rows < self.min_row_height:
@@ -5306,17 +5306,18 @@ class MainTable(tk.Canvas):
                         if i not in diffs:
                             heights[i] -= change
                 self.row_positions = list(accumulate(chain([0], heights)))
-        if can_width >= self.col_positions[-1] + self.PAR.ops.empty_horizontal and self.PAR.xscroll_showing:
-            self.PAR.xscroll.grid_forget()
-            self.PAR.xscroll_showing = False
-        elif (
-            can_width < self.col_positions[-1] + self.PAR.ops.empty_horizontal
-            and not self.PAR.xscroll_showing
-            and not self.PAR.xscroll_disabled
-            and can_height > 40
-        ):
-            self.PAR.xscroll.grid(row=2, column=0, columnspan=2, sticky="nswe")
-            self.PAR.xscroll_showing = True
+        if self.PAR.ops.auto_resize_row_index is not True:
+            if can_width >= self.col_positions[-1] + self.PAR.ops.empty_horizontal and self.PAR.xscroll_showing:
+                self.PAR.xscroll.grid_forget()
+                self.PAR.xscroll_showing = False
+            elif (
+                can_width < self.col_positions[-1] + self.PAR.ops.empty_horizontal
+                and not self.PAR.xscroll_showing
+                and not self.PAR.xscroll_disabled
+                and can_height > 40
+            ):
+                self.PAR.xscroll.grid(row=2, column=0, columnspan=2, sticky="nswe")
+                self.PAR.xscroll_showing = True
         if can_height >= self.row_positions[-1] + self.PAR.ops.empty_vertical and self.PAR.yscroll_showing:
             self.PAR.yscroll.grid_forget()
             self.PAR.yscroll_showing = False
@@ -5354,7 +5355,7 @@ class MainTable(tk.Canvas):
         start_col = bisect_left(self.col_positions, scrollpos_left)
         end_col = bisect_right(self.col_positions, scrollpos_right)
         changed_w = False
-        if redraw_row_index and self.show_index:
+        if self.PAR.ops.auto_resize_row_index and redraw_row_index and self.show_index:
             changed_w = self.RI.auto_set_index_width(
                 end_row=end_row - 1,
                 only_rows=[self.datarn(r) for r in range(start_row if not start_row else start_row - 1, end_row - 1)],

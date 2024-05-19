@@ -1,3 +1,10 @@
+### Version 7.1.23
+#### Fixed:
+- Redrawing loop with `auto_resize_row_index=True` [224](https://github.com/ragardner/tksheet/issues/224)
+
+#### Changed:
+- Unfortunately in order to fix [224](https://github.com/ragardner/tksheet/issues/224) while using `auto_resize_row_index=True` the x scroll bar will no longer be hidden if it is not needed
+
 ### Version 7.1.22
 #### Addressed:
 - Issue [222](https://github.com/ragardner/tksheet/issues/222)
