@@ -1,3 +1,21 @@
+### Version 7.1.24
+#### Fixed:
+- Error on paste into empty sheet with `expand_sheet_if_paste_too_big`
+- Data shape not being correct upon inserting a single column or row into an empty sheet
+- Potential for `insert_columns()` to cause issues if provided columns are longer than current number of sheet rows
+- [225](https://github.com/ragardner/tksheet/issues/225) Insert columns and insert rows not inserting blank cells into header/row index, issue seen with either:
+    - Right clicking and using the in-built insert functionality
+    - Using the `Sheet()` functions with an `int` for first parameter
+- Wrong sheet dimensions caused by a paste which expands the sheet
+- Wrong new selection box dimensions after paste which expands the sheet
+- `set_options()` with `table_font=` not working
+
+#### Changed:
+- `expand_sheet_if_paste_too_big` replaced by `paste_can_expand_x` and `paste_can_expand_y`. To avoid compatibility issues using `expand_sheet_if_paste_too_big` will set both new options
+
+#### Improved:
+- Additional protection against issue [224](https://github.com/ragardner/tksheet/issues/224) but with `auto_resize_row_index="empty"` which is the default setting
+
 ### Version 7.1.23
 #### Fixed:
 - Redrawing loop with `auto_resize_row_index=True` [224](https://github.com/ragardner/tksheet/issues/224)

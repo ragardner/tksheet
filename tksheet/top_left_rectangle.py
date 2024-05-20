@@ -156,7 +156,7 @@ class TopLeftRectangle(tk.Canvas):
             self.unbind("<Double-Button-1>")
             self.unbind(rc_binding)
 
-    def set_dimensions(self, new_w=None, new_h=None) -> None:
+    def set_dimensions(self, new_w=None, new_h=None, recreate_selection_boxes: bool = True) -> None:
         try:
             if new_h is None:
                 h = self.winfo_height()
@@ -182,7 +182,8 @@ class TopLeftRectangle(tk.Canvas):
             h - 7,
         )
         self.coords(self.select_all_box, 0, 0, w - 5, h - 5)
-        self.MT.recreate_all_selection_boxes()
+        if recreate_selection_boxes:
+            self.MT.recreate_all_selection_boxes()
 
     def mouse_motion(self, event: object = None) -> None:
         self.MT.reset_mouse_motion_creations()

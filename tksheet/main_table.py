@@ -683,9 +683,9 @@ class MainTable(tk.Canvas):
         return event_data
 
     def ctrl_v(self, event: object = None, validation: bool = True) -> None | EventDataDict:
-        if not self.PAR.ops.expand_sheet_if_paste_too_big and (
-            len(self.col_positions) == 1 or len(self.row_positions) == 1
-        ):
+        if not self.PAR.ops.paste_can_expand_x and len(self.col_positions) == 1:
+            return
+        if not self.PAR.ops.paste_can_expand_y and len(self.row_positions) == 1:
             return
         event_data = event_dict(
             name="edit_table",
@@ -696,7 +696,7 @@ class MainTable(tk.Canvas):
         if self.selected:
             selected_r = self.selected.row
             selected_c = self.selected.column
-        elif not self.selected and not self.PAR.ops.expand_sheet_if_paste_too_big:
+        elif not self.selected and not self.PAR.ops.paste_can_expand_x and not self.PAR.ops.paste_can_expand_y:
             return
         else:
             if not self.data:
@@ -721,32 +721,31 @@ class MainTable(tk.Canvas):
         for rn, r in enumerate(data):
             if len(r) < new_data_numcols:
                 data[rn] += list(repeat("", new_data_numcols - len(r)))
-        (
-            lastbox_r1,
-            lastbox_c1,
-            lastbox_r2,
-            lastbox_c2,
-        ) = self.selection_boxes[self.selected.fill_iid].coords
-        lastbox_numrows = lastbox_r2 - lastbox_r1
-        lastbox_numcols = lastbox_c2 - lastbox_c1
-        if lastbox_numrows > new_data_numrows and not lastbox_numrows % new_data_numrows:
-            nd = []
-            for _ in range(int(lastbox_numrows / new_data_numrows)):
-                nd.extend(r.copy() for r in data)
-            data.extend(nd)
-            new_data_numrows *= int(lastbox_numrows / new_data_numrows)
-
-        if lastbox_numcols > new_data_numcols and not lastbox_numcols % new_data_numcols:
-            for rn, r in enumerate(data):
-                for _ in range(int(lastbox_numcols / new_data_numcols)):
-                    data[rn].extend(r.copy())
-            new_data_numcols *= int(lastbox_numcols / new_data_numcols)
+        if self.selected:
+            (
+                lastbox_r1,
+                lastbox_c1,
+                lastbox_r2,
+                lastbox_c2,
+            ) = self.selection_boxes[self.selected.fill_iid].coords
+            lastbox_numrows = lastbox_r2 - lastbox_r1
+            lastbox_numcols = lastbox_c2 - lastbox_c1
+            if lastbox_numrows > new_data_numrows and not lastbox_numrows % new_data_numrows:
+                nd = []
+                for _ in range(int(lastbox_numrows / new_data_numrows)):
+                    nd.extend(r.copy() for r in data)
+                data.extend(nd)
+                new_data_numrows *= int(lastbox_numrows / new_data_numrows)
+            if lastbox_numcols > new_data_numcols and not lastbox_numcols % new_data_numcols:
+                for rn, r in enumerate(data):
+                    for _ in range(int(lastbox_numcols / new_data_numcols)):
+                        data[rn].extend(r.copy())
+                new_data_numcols *= int(lastbox_numcols / new_data_numcols)
         event_data["data"] = data
         added_rows = 0
         added_cols = 0
         total_data_cols = None
-        if self.PAR.ops.expand_sheet_if_paste_too_big:
-            # determine number of columns and/or rows to add to sheet
+        if self.PAR.ops.paste_can_expand_x:
             if selected_c + new_data_numcols > len(self.col_positions) - 1:
                 total_data_cols = self.equalize_data_row_lengths()
                 added_cols = selected_c + new_data_numcols - len(self.col_positions) + 1
@@ -755,6 +754,7 @@ class MainTable(tk.Canvas):
                     and self.PAR.ops.paste_insert_column_limit < len(self.col_positions) - 1 + added_cols
                 ):
                     added_cols = self.PAR.ops.paste_insert_column_limit - len(self.col_positions) - 1
+        if self.PAR.ops.paste_can_expand_y:
             if selected_r + new_data_numrows > len(self.row_positions) - 1:
                 added_rows = selected_r + new_data_numrows - len(self.row_positions) + 1
                 if (
@@ -772,6 +772,7 @@ class MainTable(tk.Canvas):
             adjusted_new_data_numrows = new_data_numrows
         selected_r_adjusted_new_data_numrows = selected_r + adjusted_new_data_numrows
         selected_c_adjusted_new_data_numcols = selected_c + adjusted_new_data_numcols
+        endrow = selected_r_adjusted_new_data_numrows
         boxes = {
             (
                 selected_r,
@@ -807,7 +808,7 @@ class MainTable(tk.Canvas):
                         value=val,
                         event_data=event_data,
                     )
-        if added_rows > 0:
+        if added_rows:
             ctr = 0
             data_ins_row = len(self.data)
             displayed_ins_row = len(self.row_positions) - 1
@@ -817,6 +818,7 @@ class MainTable(tk.Canvas):
                 data_ins_row=data_ins_row,
                 displayed_ins_row=displayed_ins_row,
                 numrows=added_rows,
+                total_data_cols=total_data_cols,
             )
             for ndr, r in zip(
                 range(
@@ -851,8 +853,10 @@ class MainTable(tk.Canvas):
                     row_heights=row_heights,
                     event_data=event_data,
                 )
-        if added_cols > 0:
+        if added_cols:
             ctr = 0
+            if total_data_cols is None:
+                total_data_cols = self.total_data_cols()
             data_ins_col = total_data_cols
             displayed_ins_col = len(self.col_positions) - 1
             columns, headers, column_widths = self.get_args_for_add_columns(
@@ -860,10 +864,15 @@ class MainTable(tk.Canvas):
                 displayed_ins_col=displayed_ins_col,
                 numcols=added_cols,
             )
+            # only add the extra rows if expand_y is allowed
+            if self.PAR.ops.paste_can_expand_x and self.PAR.ops.paste_can_expand_y:
+                endrow = selected_r + new_data_numrows
+            else:
+                endrow = selected_r + adjusted_new_data_numrows
             for ndr, r in enumerate(
                 range(
                     selected_r,
-                    selected_r + new_data_numrows,
+                    endrow,
                 )
             ):
                 for ndc, c in zip(
@@ -896,11 +905,19 @@ class MainTable(tk.Canvas):
         self.deselect("all", redraw=False)
         if event_data["cells"]["table"] or event_data["added"]["rows"] or event_data["added"]["columns"]:
             self.undo_stack.append(pickled_event_dict(event_data))
+        if added_rows:
+            selboxr = selected_r + new_data_numrows
+        else:
+            selboxr = selected_r_adjusted_new_data_numrows
+        if added_cols:
+            selboxc = selected_c + new_data_numcols
+        else:
+            selboxc = selected_c_adjusted_new_data_numcols
         self.create_selection_box(
             selected_r,
             selected_c,
-            selected_r_adjusted_new_data_numrows,
-            selected_c_adjusted_new_data_numcols,
+            selboxr,
+            selboxc,
             "cells",
             run_binding=True,
         )
@@ -1260,7 +1277,7 @@ class MainTable(tk.Canvas):
                 len(self.row_positions) - 1,
                 max(data_new_idxs.values(), default=0),
             )
-            totalrows = self.fix_data_len(totalrows)
+            self.fix_data_len(totalrows)
         if event_data is None:
             event_data = event_dict(
                 name="move_rows",
@@ -2421,7 +2438,7 @@ class MainTable(tk.Canvas):
                 command=self.ctrl_v,
                 **mnkwgs,
             )
-            if self.PAR.ops.expand_sheet_if_paste_too_big:
+            if self.PAR.ops.paste_can_expand_x or self.PAR.ops.paste_can_expand_y:
                 self.menu_add_command(
                     self.empty_rc_popup_menu,
                     label=self.PAR.ops.paste_label,
@@ -4295,13 +4312,12 @@ class MainTable(tk.Canvas):
                 column_widths,
             )
         )
-        # we're inserting so we can use indexes == len for
-        # fix functions, the values will go on the end
+        # rn needed for indexing but cn insert
         maxrn = 0
         for cn, rowdict in reversed(columns.items()):
             for rn, v in rowdict.items():
-                if rn > len(self.data):
-                    self.fix_data_len(rn - 1, cn - 1)
+                if rn >= len(self.data):
+                    self.fix_data_len(rn, cn - 1)
                 if rn > maxrn:
                     maxrn = rn
                 self.data[rn].insert(cn, v)
@@ -4314,7 +4330,7 @@ class MainTable(tk.Canvas):
                     (default_row_height for i in range(len(self.row_positions) - 1, maxrn + 1)),
                 )
             )
-        if isinstance(self._headers, list):
+        if isinstance(self._headers, list) and header:
             self._headers = insert_items(self._headers, header, self.CH.fix_header)
         if push_ops:
             self.adjust_options_post_add_columns(
@@ -4431,6 +4447,7 @@ class MainTable(tk.Canvas):
             )
         )
         maxcn = 0
+        # rn needed for insert but cn indexing
         for rn, row in reversed(rows.items()):
             cn = len(row) - 1
             if rn > len(self.data):
@@ -4438,7 +4455,7 @@ class MainTable(tk.Canvas):
             self.data.insert(rn, row)
             if cn > maxcn:
                 maxcn = cn
-        if isinstance(self._row_index, list):
+        if isinstance(self._row_index, list) and index:
             self._row_index = insert_items(self._row_index, index, self.RI.fix_index)
         # if not hiding columns then we can extend col positions if necessary
         if add_col_positions and self.all_columns_displayed and maxcn + 1 > len(self.col_positions) - 1:
@@ -4540,16 +4557,16 @@ class MainTable(tk.Canvas):
                     datacn: column[0]
                     for datacn, column in zip(reversed(range(data_ins_col, data_ins_col + numcols)), reversed(columns))
                 }
-            elif columns:
+            else:
                 header_data = {
                     datacn: self.CH.get_value_for_empty_cell(datacn, c_ops=False)
                     for datacn in reversed(range(data_ins_col, data_ins_col + numcols))
                 }
         if columns is None:
+            rowrange = len(self.data) if self.data else 1
             columns = {
                 datacn: {
-                    datarn: self.get_value_for_empty_cell(datarn, datacn, c_ops=False)
-                    for datarn in range(len(self.data))
+                    datarn: self.get_value_for_empty_cell(datarn, datacn, c_ops=False) for datarn in range(rowrange)
                 }
                 for datacn in reversed(range(data_ins_col, data_ins_col + numcols))
             }
@@ -4591,7 +4608,7 @@ class MainTable(tk.Canvas):
                     datarn: v[0]
                     for datarn, v in zip(reversed(range(data_ins_row, data_ins_row + numrows)), reversed(rows))
                 }
-            elif rows:
+            else:
                 index_data = {
                     datarn: self.RI.get_value_for_empty_cell(datarn, r_ops=False)
                     for datarn in reversed(range(data_ins_row, data_ins_row + numrows))
@@ -4599,8 +4616,9 @@ class MainTable(tk.Canvas):
         if rows is None:
             if total_data_cols is None:
                 total_data_cols = self.total_data_cols()
+            colrange = total_data_cols if total_data_cols else 1
             rows = {
-                datarn: [self.get_value_for_empty_cell(datarn, c, c_ops=False) for c in range(total_data_cols)]
+                datarn: [self.get_value_for_empty_cell(datarn, c, c_ops=False) for c in range(colrange)]
                 for datarn in reversed(range(data_ins_row, data_ins_row + numrows))
             }
         else:
@@ -4971,7 +4989,7 @@ class MainTable(tk.Canvas):
             total_data_cols = at_least_cols
         total_data_cols = max(total_data_cols, len(self.col_positions) - 1)
         if not isinstance(self._headers, int) and include_header and total_data_cols > len(self._headers):
-            self.CH.fix_header(total_data_cols)
+            self.CH.fix_header(total_data_cols - 1)
         for rn, r in enumerate(self.data):
             if total_data_cols > (lnr := len(r)):
                 r += self.get_empty_row_seq(rn, end=total_data_cols, start=lnr)

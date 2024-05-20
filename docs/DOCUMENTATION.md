@@ -345,7 +345,8 @@ def __init__(
     show_default_header_for_empty: bool = True,
     show_default_index_for_empty: bool = True,
     page_up_down_select_row: bool = True,
-    expand_sheet_if_paste_too_big: bool = False,
+    paste_can_expand_x: bool = False,
+    paste_can_expand_y: bool = False,
     paste_insert_column_limit: int | None = None,
     paste_insert_row_limit: int | None = None,
     show_dropdown_borders: bool = False,
@@ -716,8 +717,7 @@ Notes:
 - Header cell editing is **NOT** enabled with `"all"` and has to be specifically enabled.
 - Index cell editing is **NOT** enabled with `"all"` and has to be specifically enabled.
 - To allow table expansion when pasting data which doesn't fit in the table use either:
-   - `expand_sheet_if_paste_too_big = True` in sheet initialization arguments or
-   - `sheet.set_options(expand_sheet_if_paste_too_big = True)`
+   - `paste_can_expand_x=True`, `paste_can_expand_y=True` in sheet initialization arguments or the same keyword arguments with the function `set_options()`.
 
 Example:
 - `sheet.enable_bindings()` to enable absolutely everything.
@@ -5248,7 +5248,8 @@ horizontal_grid_to_end_of_window
 vertical_grid_to_end_of_window
 paste_insert_column_limit
 paste_insert_row_limit
-expand_sheet_if_paste_too_big
+paste_can_expand_x
+paste_can_expand_y
 arrow_key_down_right_scroll_page
 enable_edit_cell_auto_resize
 page_up_down_select_row
@@ -5952,9 +5953,10 @@ class demo(tk.Tk):
         self.frame.grid_rowconfigure(0, weight=1)
         self.sheet = Sheet(
             self.frame,
-            expand_sheet_if_paste_too_big=True,
             empty_horizontal=0,
             empty_vertical=0,
+            paste_can_expand_x=True,
+            paste_can_expand_y=True,
             align="w",
             header_align="c",
             data=[[f"Row {r}, Column {c}\nnewline 1\nnewline 2" for c in range(6)] for r in range(21)],

@@ -21,7 +21,6 @@ from .functions import (
     dropdown_search_function,
     event_dict,
     fix_format_kwargs,
-    new_tk_event,
     force_bool,
     get_checkbox_dict,
     get_checkbox_kwargs,
@@ -30,6 +29,7 @@ from .functions import (
     idx_param_to_int,
     is_iterable,
     key_to_span,
+    new_tk_event,
     num2alpha,
     pickled_event_dict,
     pop_positions,
@@ -130,7 +130,8 @@ class Sheet(tk.Frame):
         show_default_header_for_empty: bool = True,
         show_default_index_for_empty: bool = True,
         page_up_down_select_row: bool = True,
-        expand_sheet_if_paste_too_big: bool = False,
+        paste_can_expand_x: bool = False,
+        paste_can_expand_y: bool = False,
         paste_insert_column_limit: int | None = None,
         paste_insert_row_limit: int | None = None,
         show_dropdown_borders: bool = False,
@@ -265,6 +266,7 @@ class Sheet(tk.Frame):
         header_height: str | int | None = None,
         row_height: str | int | None = None,
         row_index_width: int | None = None,
+        expand_sheet_if_paste_too_big: bool | None = None,
     ) -> None:
         tk.Frame.__init__(
             self,
@@ -283,6 +285,9 @@ class Sheet(tk.Frame):
             default_row_height = row_height
         if row_index_width is not None:
             default_row_index_width = row_index_width
+        if expand_sheet_if_paste_too_big is not None:
+            paste_can_expand_x = expand_sheet_if_paste_too_big
+            paste_can_expand_y = expand_sheet_if_paste_too_big
         if treeview:
             index_align = "w"
             auto_resize_row_index = True
@@ -4178,10 +4183,13 @@ class Sheet(tk.Frame):
             self.MT.max_header_height = float(kwargs["max_header_height"])
         if "max_index_width" in kwargs:
             self.MT.max_index_width = float(kwargs["max_index_width"])
+        if "expand_sheet_if_paste_too_big" in kwargs:
+            self.ops.paste_can_expand_x = kwargs["expand_sheet_if_paste_too_big"]
+            self.ops.paste_can_expand_y = kwargs["expand_sheet_if_paste_too_big"]
         if "font" in kwargs:
             self.MT.set_table_font(kwargs["font"])
         elif "table_font" in kwargs:
-            self.MT.set_table_font(kwargs["font"])
+            self.MT.set_table_font(kwargs["table_font"])
         if "header_font" in kwargs:
             self.MT.set_header_font(kwargs["header_font"])
         if "index_font" in kwargs:
@@ -4600,7 +4608,7 @@ class Sheet(tk.Frame):
                 deselect_all=False,
             )
         return self.set_refresh_timer(True)
-    
+
     def _tree_open(self, items: set[str]) -> list[int]:
         """
         Only meant for internal use

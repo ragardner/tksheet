@@ -173,14 +173,14 @@ class RowIndex(tk.Canvas):
             self.MT.row_positions = [0]
             self.MT.saved_row_heights = {}
 
-    def set_width(self, new_width: int, set_TL: bool = False) -> None:
+    def set_width(self, new_width: int, set_TL: bool = False, recreate_selection_boxes: bool = True) -> None:
         self.current_width = new_width
         try:
             self.config(width=new_width)
         except Exception:
             return
         if set_TL:
-            self.TL.set_dimensions(new_w=new_width)
+            self.TL.set_dimensions(new_w=new_width, recreate_selection_boxes=recreate_selection_boxes)
 
     def rc(self, event: object) -> None:
         self.mouseclick_outside_editor_or_dropdown_all_canvases(inside=True)
@@ -1205,8 +1205,8 @@ class RowIndex(tk.Canvas):
             new_w = None
         if new_w is not None and (sheet_w_x := floor(self.PAR.winfo_width() * 0.7)) < new_w:
             new_w = sheet_w_x
-        if new_w and (self.current_width - new_w > 15 or new_w - self.current_width > 3):
-            self.set_width(new_w, set_TL=True)
+        if new_w and (self.current_width - new_w > 20 or new_w - self.current_width > 3):
+            self.set_width(new_w, set_TL=True, recreate_selection_boxes=False)
             return True
         return False
 
