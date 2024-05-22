@@ -771,11 +771,9 @@ class ColumnHeaders(tk.Canvas):
         return False
 
     def b1_release(self, event: object) -> None:
-        if self.being_drawn_item is not None:
-            to_sel = self.MT.coords_and_type(self.being_drawn_item)
+        if self.being_drawn_item is not None and (to_sel := self.MT.coords_and_type(self.being_drawn_item)):
             r_to_sel, c_to_sel = self.MT.selected.row, self.MT.selected.column
             self.MT.hide_selection_box(self.being_drawn_item)
-            self.being_drawn_item = None
             self.MT.set_currently_selected(
                 r_to_sel,
                 c_to_sel,
@@ -784,6 +782,8 @@ class ColumnHeaders(tk.Canvas):
             sel_event = self.MT.get_select_event(being_drawn_item=self.being_drawn_item)
             try_binding(self.drag_selection_binding_func, sel_event)
             self.PAR.emit_event("<<SheetSelect>>", data=sel_event)
+        else:
+            self.being_drawn_item = None
         self.MT.bind("<MouseWheel>", self.MT.mousewheel)
         if self.width_resizing_enabled and self.rsz_w is not None and self.currently_resizing_width:
             self.currently_resizing_width = False

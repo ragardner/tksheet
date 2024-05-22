@@ -1,6 +1,7 @@
 ### Version 7.2.0
 #### Fixed:
 - Cells in index/header not having correct colors when columns/rows were selected
+- [226](https://github.com/ragardner/tksheet/issues/226)
 
 #### Changed:
 - A somewhat major change which warranted a significant version bump - **the minimum row height has increased slightly** to better accodomate the pipe character `|`

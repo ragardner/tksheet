@@ -3079,11 +3079,9 @@ class MainTable(tk.Canvas):
             self.b1_motion(event)
 
     def b1_release(self, event=None):
-        if self.being_drawn_item is not None:
-            to_sel = self.coords_and_type(self.being_drawn_item)
+        if self.being_drawn_item is not None and (to_sel := self.coords_and_type(self.being_drawn_item)):
             r_to_sel, c_to_sel = self.selected.row, self.selected.column
             self.hide_selection_box(self.being_drawn_item)
-            self.being_drawn_item = None
             self.set_currently_selected(
                 r_to_sel,
                 c_to_sel,
@@ -3101,6 +3099,8 @@ class MainTable(tk.Canvas):
             if self.drag_selection_binding_func:
                 self.drag_selection_binding_func(sel_event)
             self.PAR.emit_event("<<SheetSelect>>", data=sel_event)
+        else:
+            self.being_drawn_item = None
         if self.RI.width_resizing_enabled and self.RI.rsz_w is not None and self.RI.currently_resizing_width:
             self.delete_resize_lines()
             self.RI.delete_resize_lines()
@@ -3495,7 +3495,9 @@ class MainTable(tk.Canvas):
             if int(self.PAR.ops.default_header_height) == 1:
                 return self.min_header_height
             else:
-                return self.min_header_height + self.get_lines_cell_height(int(self.PAR.ops.default_header_height) - 1, font=self.PAR.ops.header_font)
+                return self.min_header_height + self.get_lines_cell_height(
+                    int(self.PAR.ops.default_header_height) - 1, font=self.PAR.ops.header_font
+                )
         return self.PAR.ops.default_header_height
 
     def set_table_font(self, newfont: tuple | None = None, reset_row_positions: bool = False) -> tuple[str, int, str]:
@@ -4572,8 +4574,7 @@ class MainTable(tk.Canvas):
             rowrange = len(self.data) if self.data else 1
             columns = {
                 datacn: {
-                    datarn: self.get_value_for_empty_cell(datarn, datacn, c_ops=False)
-                    for datarn in range(rowrange)
+                    datarn: self.get_value_for_empty_cell(datarn, datacn, c_ops=False) for datarn in range(rowrange)
                 }
                 for datacn in reversed(range(data_ins_col, data_ins_col + numcols))
             }
@@ -5453,7 +5454,6 @@ class MainTable(tk.Canvas):
                     y_grid_stop = y_stop + 1
                 else:
                     y_grid_stop = y_stop - 1
-            
             points = list(
                 chain.from_iterable(
                     [
@@ -5946,6 +5946,8 @@ class MainTable(tk.Canvas):
         if self.selected.fill_iid == item:
             self.hide_selected()
             self.set_current_to_last()
+        if item == self.being_drawn_item:
+            self.being_drawn_item = None
         return True
 
     def hide_selected(self) -> None:
