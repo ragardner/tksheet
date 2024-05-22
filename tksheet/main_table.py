@@ -1851,9 +1851,10 @@ class MainTable(tk.Canvas):
         c: int,
         redraw: bool = False,
         run_binding_func: bool = True,
+        ext: bool = False,
     ) -> int:
         self.deselect("all", redraw=False)
-        fill_iid = self.create_selection_box(r, c, r + 1, c + 1, state="hidden")
+        fill_iid = self.create_selection_box(r, c, r + 1, c + 1, state="hidden", ext=ext)
         if redraw:
             self.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
         if run_binding_func:
@@ -1867,8 +1868,9 @@ class MainTable(tk.Canvas):
         redraw: bool = False,
         run_binding_func: bool = True,
         set_as_current: bool = False,
+        ext: bool = False,
     ) -> int:
-        fill_iid = self.create_selection_box(r, c, r + 1, c + 1, state="hidden", set_current=set_as_current)
+        fill_iid = self.create_selection_box(r, c, r + 1, c + 1, state="hidden", set_current=set_as_current, ext=ext)
         if redraw:
             self.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
         if run_binding_func:
@@ -1883,6 +1885,7 @@ class MainTable(tk.Canvas):
         redraw: bool = True,
         run_binding_func: bool = True,
         set_as_current: bool = True,
+        ext: bool = False,
     ) -> int | None:
         if add_selection:
             if self.cell_selected(row, column, inc_rows=True, inc_cols=True):
@@ -1894,12 +1897,13 @@ class MainTable(tk.Canvas):
                     redraw=redraw,
                     run_binding_func=run_binding_func,
                     set_as_current=set_as_current,
+                    ext=ext,
                 )
         else:
             if self.cell_selected(row, column, inc_rows=True, inc_cols=True):
                 fill_iid = self.deselect(r=row, c=column, redraw=redraw)
             else:
-                fill_iid = self.select_cell(row, column, redraw=redraw)
+                fill_iid = self.select_cell(row, column, redraw=redraw, ext=ext)
         return fill_iid
 
     def get_select_event(self, being_drawn_item: None | int = None) -> EventDataDict:
@@ -3527,7 +3531,7 @@ class MainTable(tk.Canvas):
             self.table_first_ln_ins = self.table_half_txt_height + 2
         else:
             self.table_first_ln_ins = self.table_half_txt_height + 3
-        self.min_row_height = int(self.table_first_ln_ins * 2.25)
+        self.min_row_height = int(self.table_first_ln_ins * 2.22)
         self.table_xtra_lines_increment = int(self.table_txt_height)
         if self.min_row_height < 12:
             self.min_row_height = 12
@@ -3556,7 +3560,7 @@ class MainTable(tk.Canvas):
         else:
             self.header_first_ln_ins = self.header_half_txt_height + 3
         self.header_xtra_lines_increment = self.header_txt_height
-        self.min_header_height = int(self.header_first_ln_ins * 2.25)
+        self.min_header_height = int(self.header_first_ln_ins * 2.22)
         if (
             isinstance(self.PAR.ops.default_header_height, int)
             and self.PAR.ops.default_header_height < self.min_header_height
@@ -5935,7 +5939,7 @@ class MainTable(tk.Canvas):
             self.hidd_boxes.add(item)
             self.itemconfig(item, state="hidden")
 
-    def hide_selection_box(self, item: int | None, set_current: bool = True) -> bool:
+    def hide_selection_box(self, item: int | None) -> bool:
         if item is None or item is True:
             return
         box = self.selection_boxes.pop(item)
@@ -5948,6 +5952,10 @@ class MainTable(tk.Canvas):
             self.set_current_to_last()
         if item == self.being_drawn_item:
             self.being_drawn_item = None
+        elif item == self.RI.being_drawn_item:
+            self.RI.being_drawn_item = None
+        elif item == self.CH.being_drawn_item:
+            self.CH.being_drawn_item = None
         return True
 
     def hide_selected(self) -> None:
@@ -5965,6 +5973,7 @@ class MainTable(tk.Canvas):
         state: str = "normal",
         set_current: bool | tuple[int, int] = True,
         run_binding: bool = False,
+        ext: bool = False,
     ) -> int:
         if self.col_positions == [0]:
             c1 = 0
@@ -6019,7 +6028,8 @@ class MainTable(tk.Canvas):
         )
         bd_iid = None
         if self.PAR.ops.show_selected_cells_border and (
-            (self.being_drawn_item is None and self.RI.being_drawn_item is None and self.CH.being_drawn_item is None)
+            ext
+            or (self.being_drawn_item is None and self.RI.being_drawn_item is None and self.CH.being_drawn_item is None)
             or self.selection_boxes
         ):
             bd_iid = self.display_box(

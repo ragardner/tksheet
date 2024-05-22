@@ -21,7 +21,6 @@ from .functions import (
     dropdown_search_function,
     event_dict,
     fix_format_kwargs,
-    new_tk_event,
     force_bool,
     get_checkbox_dict,
     get_checkbox_kwargs,
@@ -30,6 +29,7 @@ from .functions import (
     idx_param_to_int,
     is_iterable,
     key_to_span,
+    new_tk_event,
     num2alpha,
     pickled_event_dict,
     pop_positions,
@@ -3137,6 +3137,7 @@ class Sheet(tk.Frame):
             row if isinstance(row, int) else int(row),
             redraw=False,
             run_binding_func=run_binding_func,
+            ext=True,
         )
         return self.set_refresh_timer(redraw)
 
@@ -3145,6 +3146,7 @@ class Sheet(tk.Frame):
             column if isinstance(column, int) else int(column),
             redraw=False,
             run_binding_func=run_binding_func,
+            ext=True,
         )
         return self.set_refresh_timer(redraw)
 
@@ -3154,6 +3156,7 @@ class Sheet(tk.Frame):
             column if isinstance(column, int) else int(column),
             redraw=False,
             run_binding_func=run_binding_func,
+            ext=True,
         )
         return self.set_refresh_timer(redraw)
 
@@ -3175,6 +3178,7 @@ class Sheet(tk.Frame):
             redraw=False,
             run_binding_func=run_binding_func,
             set_as_current=set_as_current,
+            ext=True,
         )
         return self.set_refresh_timer(redraw)
 
@@ -3190,6 +3194,7 @@ class Sheet(tk.Frame):
             redraw=False,
             run_binding_func=run_binding_func,
             set_as_current=set_as_current,
+            ext=True,
         )
         return self.set_refresh_timer(redraw)
 
@@ -3205,6 +3210,7 @@ class Sheet(tk.Frame):
             redraw=False,
             run_binding_func=run_binding_func,
             set_as_current=set_as_current,
+            ext=True,
         )
         return self.set_refresh_timer(redraw)
 
@@ -3224,6 +3230,7 @@ class Sheet(tk.Frame):
             redraw=False,
             run_binding_func=run_binding_func,
             set_as_current=set_as_current,
+            ext=True,
         )
         return self.set_refresh_timer(redraw)
 
@@ -3241,6 +3248,7 @@ class Sheet(tk.Frame):
             redraw=False,
             run_binding_func=run_binding_func,
             set_as_current=set_as_current,
+            ext=True,
         )
         return self.set_refresh_timer(redraw)
 
@@ -3258,6 +3266,7 @@ class Sheet(tk.Frame):
             redraw=False,
             run_binding_func=run_binding_func,
             set_as_current=set_as_current,
+            ext=True,
         )
         return self.set_refresh_timer(redraw)
 
@@ -3269,7 +3278,14 @@ class Sheet(tk.Frame):
         c2: int,
         type_: Literal["cells", "rows", "columns", "cols"] = "cells",
     ) -> int:
-        return self.MT.create_selection_box(r1=r1, c1=c1, r2=r2, c2=c2, type_="columns" if type_ == "cols" else type_)
+        return self.MT.create_selection_box(
+            r1=r1,
+            c1=c1,
+            r2=r2,
+            c2=c2,
+            type_="columns" if type_ == "cols" else type_,
+            ext=True,
+        )
 
     def recreate_all_selection_boxes(self) -> Sheet:
         self.MT.recreate_all_selection_boxes()

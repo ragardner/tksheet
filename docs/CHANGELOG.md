@@ -1,3 +1,10 @@
+### Version 7.2.1
+#### Fixed:
+- Regression since `7.2.0`: selection box borders not showing for rows/columns
+
+#### Changed:
+- Slightly reduced minimum row height since `7.2.0` change
+
 ### Version 7.2.0
 #### Fixed:
 - Cells in index/header not having correct colors when columns/rows were selected
