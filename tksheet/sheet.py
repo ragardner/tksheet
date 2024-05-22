@@ -3592,14 +3592,14 @@ class Sheet(tk.Frame):
             z < self.MT.min_column_width or not isinstance(z, int) or isinstance(z, bool) for z in column_widths
         )
 
-    def check_height(self, height: int) -> int:
+    def valid_row_height(self, height: int) -> int:
         if height < self.MT.min_row_height:
             return self.MT.min_row_height
         elif height > self.MT.max_row_height:
             return self.MT.max_row_height
         return height
 
-    def check_width(self, width: int) -> int:
+    def valid_column_width(self, width: int) -> int:
         if width < self.MT.min_column_width:
             return self.MT.min_column_width
         elif width > self.MT.max_column_width:
@@ -4665,7 +4665,7 @@ class Sheet(tk.Frame):
             redraw=redraw,
             deselect_all=False,
         )
-        
+
     def _tree_close(self, items: Iterator[str]) -> list[int]:
         """
         Only meant for internal use

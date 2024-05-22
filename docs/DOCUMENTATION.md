@@ -4614,6 +4614,22 @@ ___
 verify_column_widths(column_widths: list[float], canvas_positions: bool = False) -> bool
 ```
 
+___
+
+#### **Make a row height valid**
+
+```python
+valid_row_height(height: int) -> int
+```
+
+___
+
+#### **Make a column width valid**
+
+```python
+valid_column_width(width: int) -> int
+```
+
 ---
 # **Identifying Bound Event Mouse Position**
 
