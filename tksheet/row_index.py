@@ -1030,7 +1030,7 @@ class RowIndex(tk.Canvas):
                 align = self.align
             if align == "w":
                 w += self.MT.index_txt_height
-            w += self.get_treeview_indent(self.MT._row_index[datarn].iid) + 4
+            w += self.get_treeview_indent(self.MT._row_index[datarn].iid) + 5
         return w, h
 
     def set_row_height(
@@ -1310,7 +1310,8 @@ class RowIndex(tk.Canvas):
         mod = (self.MT.index_txt_height - 1) if self.MT.index_txt_height % 2 else self.MT.index_txt_height
         half_mod = mod / 2
         qtr_mod = mod / 4
-        mid_y = (self.MT.index_first_ln_ins - 1) if self.MT.index_first_ln_ins % 2 else self.MT.index_first_ln_ins
+        small_mod = int(half_mod / 4) - 1
+        mid_y = int(self.MT.min_row_height / 2)
         # up arrow
         if open_:
             points = (
@@ -1325,11 +1326,11 @@ class RowIndex(tk.Canvas):
         else:
             points = (
                 x1 + half_mod + indent,
-                y1 + mid_y - half_mod + 1,
-                x1 + mod + indent - 1,
+                y1 + mid_y - half_mod + small_mod,
+                x1 + mod + indent - small_mod,
                 y1 + mid_y,
                 x1 + half_mod + indent,
-                y1 + mid_y + half_mod - 1,
+                y1 + mid_y + half_mod - small_mod,
             )
         if self.hidd_tree_arrow:
             t, sh = self.hidd_tree_arrow.popitem()
@@ -1340,10 +1341,13 @@ class RowIndex(tk.Canvas):
                 self.itemconfig(t, fill=fill, tag=tag, state="normal")
             self.lift(t)
         else:
-            t = self.create_polygon(
+            t = self.create_line(
                 points,
                 fill=fill,
                 tag=tag,
+                width=2,
+                capstyle=tk.ROUND,
+                joinstyle=tk.BEVEL,
             )
         self.disp_tree_arrow[t] = True
 
@@ -1633,7 +1637,7 @@ class RowIndex(tk.Canvas):
                 if align == "w":
                     draw_x += self.MT.index_txt_height + 1
                 indent = self.get_treeview_indent(iid)
-                draw_x += indent + 4
+                draw_x += indent + 5
                 if self.tree[iid].children:
                     self.redraw_tree_arrow(
                         0,
@@ -1738,11 +1742,11 @@ class RowIndex(tk.Canvas):
 
     def get_redraw_selections(self, startr: int, endr: int) -> dict[str, set[int]]:
         d = defaultdict(set)
-        for item, box in self.MT.get_selection_items(columns=False):
+        for item, box in self.MT.get_selection_items():
             r1, c1, r2, c2 = box.coords
             for r in range(startr, endr):
                 if r1 <= r and r2 > r:
-                    d[box.type_].add(r)
+                    d[box.type_ if box.type_ != "columns" else "cells"].add(r)
         return d
 
     def open_cell(self, event: object = None, ignore_existing_editor=False):

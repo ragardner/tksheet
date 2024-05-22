@@ -1607,11 +1607,11 @@ class ColumnHeaders(tk.Canvas):
 
     def get_redraw_selections(self, startc: int, endc: int) -> dict[str, set[int]]:
         d = defaultdict(set)
-        for item, box in self.MT.get_selection_items(rows=False):
+        for item, box in self.MT.get_selection_items():
             r1, c1, r2, c2 = box.coords
             for c in range(startc, endc):
                 if c1 <= c and c2 > c:
-                    d[box.type_].add(c)
+                    d[box.type_ if box.type_ != "rows" else "cells"].add(c)
         return d
 
     def open_cell(self, event: object = None, ignore_existing_editor=False):

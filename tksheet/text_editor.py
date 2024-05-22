@@ -26,7 +26,7 @@ class TextEditorTkText(tk.Text):
             self,
             parent,
             spacing1=0,
-            spacing2=0,
+            spacing2=1,
             spacing3=0,
             bd=0,
             highlightthickness=0,

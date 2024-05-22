@@ -3466,7 +3466,7 @@ class MainTable(tk.Canvas):
     def get_lines_cell_height(self, n, font=None):
         return (
             self.get_txt_h(
-                txt="\n".join("|" for lines in range(n)) if n > 1 else "|",
+                txt="\n".join("|" for _ in range(n)) if n > 1 else "|",
                 font=self.PAR.ops.table_font if font is None else font,
             )
             + 5
@@ -3484,12 +3484,18 @@ class MainTable(tk.Canvas):
 
     def get_default_row_height(self) -> int:
         if isinstance(self.PAR.ops.default_row_height, str):
-            return self.get_lines_cell_height(int(self.PAR.ops.default_row_height))
+            if int(self.PAR.ops.default_row_height) == 1:
+                return self.min_row_height
+            else:
+                return self.min_row_height + self.get_lines_cell_height(int(self.PAR.ops.default_row_height) - 1)
         return self.PAR.ops.default_row_height
 
     def get_default_header_height(self) -> int:
         if isinstance(self.PAR.ops.default_header_height, str):
-            return self.get_lines_cell_height(int(self.PAR.ops.default_header_height), font=self.PAR.ops.header_font)
+            if int(self.PAR.ops.default_header_height) == 1:
+                return self.min_header_height
+            else:
+                return self.min_header_height + self.get_lines_cell_height(int(self.PAR.ops.default_header_height) - 1, font=self.PAR.ops.header_font)
         return self.PAR.ops.default_header_height
 
     def set_table_font(self, newfont: tuple | None = None, reset_row_positions: bool = False) -> tuple[str, int, str]:
@@ -3519,8 +3525,8 @@ class MainTable(tk.Canvas):
             self.table_first_ln_ins = self.table_half_txt_height + 2
         else:
             self.table_first_ln_ins = self.table_half_txt_height + 3
+        self.min_row_height = int(self.table_first_ln_ins * 2.25)
         self.table_xtra_lines_increment = int(self.table_txt_height)
-        self.min_row_height = self.table_txt_height + 5
         if self.min_row_height < 12:
             self.min_row_height = 12
         self.set_min_column_width()
@@ -3548,7 +3554,7 @@ class MainTable(tk.Canvas):
         else:
             self.header_first_ln_ins = self.header_half_txt_height + 3
         self.header_xtra_lines_increment = self.header_txt_height
-        self.min_header_height = self.header_txt_height + 5
+        self.min_header_height = int(self.header_first_ln_ins * 2.25)
         if (
             isinstance(self.PAR.ops.default_header_height, int)
             and self.PAR.ops.default_header_height < self.min_header_height
@@ -4566,7 +4572,8 @@ class MainTable(tk.Canvas):
             rowrange = len(self.data) if self.data else 1
             columns = {
                 datacn: {
-                    datarn: self.get_value_for_empty_cell(datarn, datacn, c_ops=False) for datarn in range(rowrange)
+                    datarn: self.get_value_for_empty_cell(datarn, datacn, c_ops=False)
+                    for datarn in range(rowrange)
                 }
                 for datacn in reversed(range(data_ins_col, data_ins_col + numcols))
             }
@@ -5381,6 +5388,10 @@ class MainTable(tk.Canvas):
         if resized_cols or resized_rows or changed_w:
             self.recreate_all_selection_boxes()
             if changed_w:
+                self.update_idletasks()
+                self.RI.update_idletasks()
+                self.CH.update_idletasks()
+                self.TL.update_idletasks()
                 return False
         self.hidd_text.update(self.disp_text)
         self.disp_text = {}
@@ -5442,6 +5453,7 @@ class MainTable(tk.Canvas):
                     y_grid_stop = y_stop + 1
                 else:
                     y_grid_stop = y_stop - 1
+            
             points = list(
                 chain.from_iterable(
                     [
@@ -6996,9 +7008,9 @@ class MainTable(tk.Canvas):
         return self.mouseclick_outside_editor_or_dropdown()
 
     def hide_dropdown_editor_all_canvases(self):
-        self.hide_text_editor_and_dropdown()
-        self.RI.hide_text_editor_and_dropdown()
-        self.CH.hide_text_editor_and_dropdown()
+        self.hide_text_editor_and_dropdown(redraw=False)
+        self.RI.hide_text_editor_and_dropdown(redraw=False)
+        self.CH.hide_text_editor_and_dropdown(redraw=False)
 
     def hide_dropdown_window(self) -> None:
         if self.dropdown.open:

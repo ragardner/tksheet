@@ -21,6 +21,7 @@ from .functions import (
     dropdown_search_function,
     event_dict,
     fix_format_kwargs,
+    new_tk_event,
     force_bool,
     get_checkbox_dict,
     get_checkbox_kwargs,
@@ -29,7 +30,6 @@ from .functions import (
     idx_param_to_int,
     is_iterable,
     key_to_span,
-    new_tk_event,
     num2alpha,
     pickled_event_dict,
     pop_positions,
@@ -1464,6 +1464,8 @@ class Sheet(tk.Frame):
         undo_stack: bool = True,
         selections: bool = True,
         sheet_options: bool = False,
+        displayed_rows: bool = True,
+        displayed_columns: bool = True,
         tree: bool = True,
         redraw: bool = True,
     ) -> Sheet:
@@ -1476,6 +1478,12 @@ class Sheet(tk.Frame):
         if index:
             self.RI.hide_text_editor_and_dropdown(redraw=False)
             self.MT._row_index = []
+        if displayed_columns:
+            self.MT.displayed_columns = []
+            self.MT.all_columns_displayed = True
+        if displayed_rows:
+            self.MT.displayed_rows = []
+            self.MT.all_rows_displayed = True
         if row_heights:
             self.MT.saved_row_heights = {}
             self.MT.set_row_positions([])
@@ -3584,6 +3592,20 @@ class Sheet(tk.Frame):
             z < self.MT.min_column_width or not isinstance(z, int) or isinstance(z, bool) for z in column_widths
         )
 
+    def check_height(self, height: int) -> int:
+        if height < self.MT.min_row_height:
+            return self.MT.min_row_height
+        elif height > self.MT.max_row_height:
+            return self.MT.max_row_height
+        return height
+
+    def check_width(self, width: int) -> int:
+        if width < self.MT.min_column_width:
+            return self.MT.min_column_width
+        elif width > self.MT.max_column_width:
+            return self.MT.max_column_width
+        return width
+
     # Identifying Bound Event Mouse Position
 
     def identify_region(self, event: object) -> Literal["table", "index", "header", "top left"]:
@@ -4512,6 +4534,7 @@ class Sheet(tk.Frame):
         safety: bool = True,
         ncols: int | None = None,
     ) -> Sheet:
+        self.reset(cell_options=False, column_widths=False, header=False, redraw=False)
         if text_column is None:
             text_column = iid_column
         tally_of_ids = defaultdict(lambda: -1)
@@ -4564,6 +4587,8 @@ class Sheet(tk.Frame):
             fill=False,
             push_ops=push_ops,
         )
+        self.MT.all_rows_displayed = False
+        self.MT.displayed_rows = list(range(len(self.MT._row_index)))
         self.RI.tree_rns = {n.iid: i for i, n in enumerate(self.MT._row_index)}
         if open_ids:
             self.tree_set_open(open_ids=open_ids)
@@ -4614,10 +4639,17 @@ class Sheet(tk.Frame):
         Only meant for internal use
         """
         to_open = []
+        disp_set = set(self.MT.displayed_rows)
+        quick_rns = self.RI.tree_rns
+        quick_open_ids = self.RI.tree_open_ids
         for item in filter(items.__contains__, self.get_children()):
             if self.RI.tree[item].children:
-                self.RI.tree_open_ids.add(item)
-                to_open.extend(self.RI.tree_rns[did] for did in self.RI.get_iid_descendants(item, check_open=True))
+                quick_open_ids.add(item)
+                if quick_rns[item] in disp_set:
+                    to_disp = [quick_rns[did] for did in self.RI.get_iid_descendants(item, check_open=True)]
+                    for i in to_disp:
+                        disp_set.add(i)
+                    to_open.extend(to_disp)
         return to_open
 
     def tree_open(self, *items, redraw: bool = True) -> Sheet:
@@ -4627,36 +4659,37 @@ class Sheet(tk.Frame):
         if items := set(unpack(items)):
             to_open = self._tree_open(items)
         else:
-            to_open = []
-            for item in self.get_children():
-                if self.RI.tree[item].children:
-                    self.RI.tree_open_ids.add(item)
-                    to_open.extend(self.RI.tree_rns[did] for did in self.RI.get_iid_descendants(item, check_open=True))
+            to_open = self._tree_open(set(self.get_children()))
         return self.show_rows(
             rows=to_open,
             redraw=redraw,
             deselect_all=False,
         )
+        
+    def _tree_close(self, items: Iterator[str]) -> list[int]:
+        """
+        Only meant for internal use
+        """
+        to_close = set()
+        disp_set = set(self.MT.displayed_rows)
+        quick_rns = self.RI.tree_rns
+        quick_open_ids = self.RI.tree_open_ids
+        for item in items:
+            if self.RI.tree[item].children:
+                quick_open_ids.discard(item)
+                if quick_rns[item] in disp_set:
+                    for did in self.RI.get_iid_descendants(item, check_open=True):
+                        to_close.add(quick_rns[did])
+        return to_close
 
     def tree_close(self, *items, redraw: bool = True) -> Sheet:
         """
         If used without args all items are closed
         """
-        to_close = set()
         if items:
-            for item in unpack(items):
-                if self.RI.tree[item].children:
-                    self.RI.tree_open_ids.discard(item)
-                    if self.RI.tree_rns[item] in self.MT.displayed_rows:
-                        for did in self.RI.get_iid_descendants(item, check_open=True):
-                            to_close.add(self.RI.tree_rns[did])
+            to_close = self._tree_close(unpack(items))
         else:
-            for item in self.get_children():
-                if self.RI.tree[item].children:
-                    self.RI.tree_open_ids.discard(item)
-                    if self.RI.tree_rns[item] in self.MT.displayed_rows:
-                        for did in self.RI.get_iid_descendants(item, check_open=True):
-                            to_close.add(self.RI.tree_rns[did])
+            to_close = self._tree_close(self.get_children())
         return self.hide_rows(
             rows=to_close,
             redraw=redraw,

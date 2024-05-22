@@ -1,3 +1,10 @@
+### Version 7.2.0
+#### Fixed:
+- Cells in index/header not having correct colors when columns/rows were selected
+
+#### Changed:
+- A somewhat major change which warranted a significant version bump - **the minimum row height has increased slightly** to better accodomate the pipe character `|`
+
 ### Version 7.1.24
 #### Fixed:
 - Error on paste into empty sheet with `expand_sheet_if_paste_too_big`
