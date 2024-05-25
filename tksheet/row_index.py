@@ -2348,7 +2348,7 @@ class RowIndex(tk.Canvas):
     def get_empty_index_seq(self, end, start=0, r_ops=True):
         return [self.get_value_for_empty_cell(datarn, r_ops=r_ops) for datarn in range(start, end)]
 
-    def fix_index(self, datarn=None, fix_values=tuple()):
+    def fix_index(self, datarn=None):
         if isinstance(self.MT._row_index, int):
             return
         if isinstance(self.MT._row_index, float):
@@ -2361,10 +2361,6 @@ class RowIndex(tk.Canvas):
                 self.MT._row_index = []
         if isinstance(datarn, int) and datarn >= len(self.MT._row_index):
             self.MT._row_index.extend(self.get_empty_index_seq(end=datarn + 1, start=len(self.MT._row_index)))
-        if fix_values:
-            for rn, v in enumerate(islice(self.MT._row_index, fix_values[0], fix_values[1])):
-                if not self.input_valid_for_cell(rn, v):
-                    self.MT._row_index[rn] = self.get_value_for_empty_cell(rn)
 
     def set_row_height_run_binding(self, r, only_if_too_small=True):
         old_height = self.MT.row_positions[r + 1] - self.MT.row_positions[r]
