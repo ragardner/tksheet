@@ -1078,98 +1078,94 @@ class ColumnHeaders(tk.Canvas):
             self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
         return new_height
 
-    def set_col_width(
+    def get_col_text_width(
         self,
-        col,
-        width=None,
-        only_set_if_too_small=False,
-        displayed_only=False,
-        recreate=True,
-        return_new_width=False,
-    ):
-        if col < 0:
-            return
-        qconf = self.MT.txt_measure_canvas.itemconfig
-        qbbox = self.MT.txt_measure_canvas.bbox
-        qtxtm = self.MT.txt_measure_canvas_text
-        qtxth = self.MT.table_txt_height
-        qfont = self.PAR.ops.table_font
+        col: int,
+        visible_only: bool = False,
+        only_if_too_small: bool = False,
+    ) -> int:
         self.fix_header()
-        if width is None:
-            w = self.MT.min_column_width
-            hw = self.MT.min_column_width
+        w = self.MT.min_column_width
+        datacn = col if self.MT.all_columns_displayed else self.MT.displayed_columns[col]
+        # header
+        hw, hh_ = self.get_cell_dimensions(datacn)
+        # table
+        if self.MT.data:
             if self.MT.all_rows_displayed:
-                if displayed_only:
+                if visible_only:
                     x1, y1, x2, y2 = self.MT.get_canvas_visible_area()
                     start_row, end_row = self.MT.get_visible_rows(y1, y2)
                 else:
                     start_row, end_row = 0, len(self.MT.data)
                 iterable = range(start_row, end_row)
             else:
-                if displayed_only:
+                if visible_only:
                     x1, y1, x2, y2 = self.MT.get_canvas_visible_area()
                     start_row, end_row = self.MT.get_visible_rows(y1, y2)
                 else:
                     start_row, end_row = 0, len(self.MT.displayed_rows)
                 iterable = self.MT.displayed_rows[start_row:end_row]
-            datacn = col if self.MT.all_columns_displayed else self.MT.displayed_columns[col]
-            # header
-            hw, hh_ = self.get_cell_dimensions(datacn)
-            # table
-            if self.MT.data:
-                for datarn in iterable:
-                    txt = self.MT.get_valid_cell_data_as_str(datarn, datacn, get_displayed=True)
-                    if txt:
-                        qconf(qtxtm, text=txt, font=qfont)
-                        b = qbbox(qtxtm)
-                        if self.MT.get_cell_kwargs(datarn, datacn, key="dropdown") or self.MT.get_cell_kwargs(
-                            datarn, datacn, key="checkbox"
-                        ):
-                            tw = b[2] - b[0] + qtxth + 7
-                        else:
-                            tw = b[2] - b[0] + 7
-                        if tw > w:
-                            w = tw
-            if w > hw:
-                new_width = w
-            else:
-                new_width = hw
-        else:
-            new_width = int(width)
-        if new_width <= self.MT.min_column_width:
-            new_width = int(self.MT.min_column_width)
-        elif new_width > self.MT.max_column_width:
-            new_width = int(self.MT.max_column_width)
-        if only_set_if_too_small:
-            if new_width <= self.MT.col_positions[col + 1] - self.MT.col_positions[col]:
-                return self.MT.col_positions[col + 1] - self.MT.col_positions[col]
-        if not return_new_width:
-            new_col_pos = self.MT.col_positions[col] + new_width
-            increment = new_col_pos - self.MT.col_positions[col + 1]
-            self.MT.col_positions[col + 2 :] = [
-                e + increment for e in islice(self.MT.col_positions, col + 2, len(self.MT.col_positions))
-            ]
-            self.MT.col_positions[col + 1] = new_col_pos
-            if recreate:
-                self.MT.recreate_all_selection_boxes()
-        return new_width
+            qconf = self.MT.txt_measure_canvas.itemconfig
+            qbbox = self.MT.txt_measure_canvas.bbox
+            qtxtm = self.MT.txt_measure_canvas_text
+            qtxth = self.MT.table_txt_height
+            qfont = self.PAR.ops.table_font
+            for datarn in iterable:
+                if txt := self.MT.get_valid_cell_data_as_str(datarn, datacn, get_displayed=True):
+                    qconf(qtxtm, text=txt, font=qfont)
+                    b = qbbox(qtxtm)
+                    if self.MT.get_cell_kwargs(datarn, datacn, key="dropdown") or self.MT.get_cell_kwargs(
+                        datarn, datacn, key="checkbox"
+                    ):
+                        tw = b[2] - b[0] + qtxth + 7
+                    else:
+                        tw = b[2] - b[0] + 7
+                    if tw > w:
+                        w = tw
+        if hw > w:
+            w = hw
+        if only_if_too_small and w < self.MT.col_positions[col + 1] - self.MT.col_positions[col]:
+            w = self.MT.col_positions[col + 1] - self.MT.col_positions[col]
+        if w <= self.MT.min_column_width:
+            w = int(self.MT.min_column_width)
+        elif w > self.MT.max_column_width:
+            w = int(self.MT.max_column_width)
+        return w
 
-    def set_width_of_all_cols(self, width=None, only_set_if_too_small=False, recreate=True):
+    def set_col_width(
+        self,
+        col: int,
+        width: None | int = None,
+        only_if_too_small: bool = False,
+        visible_only: bool = False,
+        recreate: bool = True,
+    ) -> int:
+        if width is None:
+            width = self.get_col_text_width(col=col, visible_only=visible_only)
+        if width <= self.MT.min_column_width:
+            width = int(self.MT.min_column_width)
+        elif width > self.MT.max_column_width:
+            width = int(self.MT.max_column_width)
+        if only_if_too_small and width <= self.MT.col_positions[col + 1] - self.MT.col_positions[col]:
+            return self.MT.col_positions[col + 1] - self.MT.col_positions[col]
+        new_col_pos = self.MT.col_positions[col] + width
+        increment = new_col_pos - self.MT.col_positions[col + 1]
+        self.MT.col_positions[col + 2 :] = [
+            e + increment for e in islice(self.MT.col_positions, col + 2, len(self.MT.col_positions))
+        ]
+        self.MT.col_positions[col + 1] = new_col_pos
+        if recreate:
+            self.MT.recreate_all_selection_boxes()
+        return width
+
+    def set_width_of_all_cols(self, width=None, only_if_too_small=False, recreate=True):
         if width is None:
             if self.MT.all_columns_displayed:
                 iterable = range(self.MT.total_data_cols())
             else:
                 iterable = range(len(self.MT.displayed_columns))
             self.MT.set_col_positions(
-                itr=(
-                    self.set_col_width(
-                        cn,
-                        only_set_if_too_small=only_set_if_too_small,
-                        recreate=False,
-                        return_new_width=True,
-                    )
-                    for cn in iterable
-                )
+                itr=(self.get_col_text_width(cn, only_if_too_small=only_if_too_small) for cn in iterable)
             )
         elif width is not None:
             if self.MT.all_columns_displayed:
@@ -1776,7 +1772,7 @@ class ColumnHeaders(tk.Canvas):
             new_width = curr_width + (self.MT.header_txt_height * 2)
             if new_width != curr_width:
                 self.text_editor.window.config(width=new_width)
-                self.set_col_width_run_binding(c, width=new_width, only_set_if_too_small=False)
+                self.set_col_width_run_binding(c, width=new_width, only_if_too_small=False)
                 if self.dropdown.open and self.dropdown.get_coords() == c:
                     self.itemconfig(self.dropdown.canvas_id, width=new_width)
                     self.dropdown.window.update_idletasks()
@@ -2234,9 +2230,9 @@ class ColumnHeaders(tk.Canvas):
                     self.MT._headers[cn] = self.get_value_for_empty_cell(cn)
 
     # displayed indexes
-    def set_col_width_run_binding(self, c, width=None, only_set_if_too_small=True):
+    def set_col_width_run_binding(self, c, width=None, only_if_too_small=True):
         old_width = self.MT.col_positions[c + 1] - self.MT.col_positions[c]
-        new_width = self.set_col_width(c, width=width, only_set_if_too_small=only_set_if_too_small)
+        new_width = self.set_col_width(c, width=width, only_if_too_small=only_if_too_small)
         if self.column_width_resize_func is not None and old_width != new_width:
             self.column_width_resize_func(
                 event_dict(

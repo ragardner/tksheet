@@ -1,3 +1,8 @@
+### Version 7.2.2
+#### Changed:
+- Internal parameter names:
+    - `only_set_if_too_small` -> ` only_if_too_small`
+
 ### Version 7.2.1
 #### Fixed:
 - Regression since `7.2.0`: selection box borders not showing for rows/columns

@@ -3334,7 +3334,7 @@ class Sheet(tk.Frame):
         only_set_if_too_small: bool = False,
         redraw: bool = True,
     ) -> Sheet:
-        self.MT.set_cell_size_to_text(r=row, c=column, only_set_if_too_small=only_set_if_too_small)
+        self.MT.set_cell_size_to_text(r=row, c=column, only_if_too_small=only_set_if_too_small)
         return self.set_refresh_timer(redraw)
 
     def set_all_cell_sizes_to_text(
@@ -3356,7 +3356,7 @@ class Sheet(tk.Frame):
     ) -> Sheet:
         self.CH.set_width_of_all_cols(
             width=width,
-            only_set_if_too_small=only_set_if_too_small,
+            only_if_too_small=only_set_if_too_small,
             recreate=recreate_selection_boxes,
         )
         return self.set_refresh_timer(redraw)
@@ -3370,7 +3370,7 @@ class Sheet(tk.Frame):
     ) -> Sheet:
         self.RI.set_height_of_all_rows(
             height=height,
-            only_set_if_too_small=only_set_if_too_small,
+            only_if_too_small=only_set_if_too_small,
             recreate=recreate_selection_boxes,
         )
         return self.set_refresh_timer(redraw)
@@ -3389,9 +3389,9 @@ class Sheet(tk.Frame):
             for c in range(sc, ec - 1):
                 self.CH.set_col_width(c)
         elif width == "text" and isinstance(column, int):
-            self.CH.set_col_width(col=column, width=None, only_set_if_too_small=only_set_if_too_small)
+            self.CH.set_col_width(col=column, width=None, only_if_too_small=only_set_if_too_small)
         elif isinstance(width, int) and isinstance(column, int):
-            self.CH.set_col_width(col=column, width=width, only_set_if_too_small=only_set_if_too_small)
+            self.CH.set_col_width(col=column, width=width, only_if_too_small=only_set_if_too_small)
         elif isinstance(column, int):
             return int(self.MT.col_positions[column + 1] - self.MT.col_positions[column])
         return self.set_refresh_timer(redraw)
@@ -3410,9 +3410,9 @@ class Sheet(tk.Frame):
             for r in range(sr, er - 1):
                 self.RI.set_row_height(r)
         elif height == "text" and isinstance(row, int):
-            self.RI.set_row_height(row=row, height=None, only_set_if_too_small=only_set_if_too_small)
+            self.RI.set_row_height(row=row, height=None, only_if_too_small=only_set_if_too_small)
         elif isinstance(height, int) and isinstance(row, int):
-            self.RI.set_row_height(row=row, height=height, only_set_if_too_small=only_set_if_too_small)
+            self.RI.set_row_height(row=row, height=height, only_if_too_small=only_set_if_too_small)
         elif isinstance(row, int):
             return int(self.MT.row_positions[row + 1] - self.MT.row_positions[row])
         return self.set_refresh_timer(redraw)
@@ -3429,7 +3429,7 @@ class Sheet(tk.Frame):
 
     def set_column_widths(
         self,
-        column_widths: Iterator[int, float] | None = None,
+        column_widths: Iterator[float] | None = None,
         canvas_positions: bool = False,
         reset: bool = False,
     ) -> Sheet:
@@ -3444,7 +3444,7 @@ class Sheet(tk.Frame):
 
     def set_row_heights(
         self,
-        row_heights: Iterator[int, float] | None = None,
+        row_heights: Iterator[float] | None = None,
         canvas_positions: bool = False,
         reset: bool = False,
     ) -> Sheet:

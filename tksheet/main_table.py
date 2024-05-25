@@ -3642,7 +3642,7 @@ class MainTable(tk.Canvas):
             return w + self.table_txt_height, h
         return w, h
 
-    def set_cell_size_to_text(self, r, c, only_set_if_too_small=False, redraw: bool = True, run_binding=False):
+    def set_cell_size_to_text(self, r, c, only_if_too_small=False, redraw: bool = True, run_binding=False):
         min_column_width = int(self.min_column_width)
         min_rh = int(self.min_row_height)
         w = min_column_width
@@ -3662,7 +3662,7 @@ class MainTable(tk.Canvas):
             w = int(self.max_column_width)
         cell_needs_resize_w = False
         cell_needs_resize_h = False
-        if only_set_if_too_small:
+        if only_if_too_small:
             if w > self.col_positions[c + 1] - self.col_positions[c]:
                 cell_needs_resize_w = True
             if h > self.row_positions[r + 1] - self.row_positions[r]:
@@ -6489,7 +6489,7 @@ class MainTable(tk.Canvas):
                 text = text if isinstance(text, str) else f"{text}"
         text = "" if text is None else text
         if self.PAR.ops.cell_auto_resize_enabled:
-            self.set_cell_size_to_text(r, c, only_set_if_too_small=True, redraw=True, run_binding=True)
+            self.set_cell_size_to_text(r, c, only_if_too_small=True, redraw=True, run_binding=True)
         if self.text_editor.open and (r, c) == self.text_editor.coords:
             self.text_editor.window.set_text(self.text_editor.get() + "" if not isinstance(text, str) else text)
             return
@@ -7106,7 +7106,7 @@ class MainTable(tk.Canvas):
                 self.undo_stack.append(pickled_event_dict(event_data))
             self.set_cell_data(datarn, datacn, value)
             if cell_resize and self.PAR.ops.cell_auto_resize_enabled:
-                self.set_cell_size_to_text(r, c, only_set_if_too_small=True, redraw=redraw, run_binding=True)
+                self.set_cell_size_to_text(r, c, only_if_too_small=True, redraw=redraw, run_binding=True)
             self.sheet_modified(event_data)
             return True
         return False
