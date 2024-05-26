@@ -4,7 +4,7 @@ import tkinter as tk
 from bisect import bisect_left
 from collections import defaultdict, deque
 from collections.abc import Callable, Generator, Iterator, Sequence
-from itertools import accumulate, chain, islice, product
+from itertools import accumulate, chain, islice, product, repeat
 from timeit import default_timer
 from tkinter import ttk
 from typing import Literal
@@ -3466,7 +3466,7 @@ class Sheet(tk.Frame):
             if canvas_positions and isinstance(column_widths, list):
                 self.MT.col_positions = column_widths
             else:
-                self.MT.col_positions = list(accumulate(chain([0], (width for width in column_widths))))
+                self.MT.col_positions = list(accumulate(chain([0], column_widths)))
         return self
 
     def set_row_heights(
@@ -3481,7 +3481,7 @@ class Sheet(tk.Frame):
             if canvas_positions and isinstance(row_heights, list):
                 self.MT.row_positions = row_heights
             else:
-                self.MT.row_positions = list(accumulate(chain([0], (height for height in row_heights))))
+                self.MT.row_positions = list(accumulate(chain([0], row_heights)))
         return self
 
     def set_width_of_index_to_text(self, text: None | str = None, *args, **kwargs) -> Sheet:
@@ -3583,10 +3583,10 @@ class Sheet(tk.Frame):
             return len(self.MT.row_positions) - 1, len(self.MT.col_positions) - 1
         if isinstance(total_rows, int):
             height = self.MT.get_default_row_height()
-            self.MT.row_positions = list(accumulate(chain([0], (height for row in range(total_rows)))))
+            self.MT.row_positions = list(accumulate(chain([0], repeat(height, total_rows))))
         if isinstance(total_columns, int):
             width = self.ops.default_column_width
-            self.MT.col_positions = list(accumulate(chain([0], (width for column in range(total_columns)))))
+            self.MT.col_positions = list(accumulate(chain([0], repeat(width, total_columns))))
         return self
 
     def move_row_position(self, row: int, moveto: int) -> Sheet:
@@ -3600,14 +3600,14 @@ class Sheet(tk.Frame):
     def get_example_canvas_column_widths(self, total_cols: int | None = None) -> list[float]:
         colpos = int(self.ops.default_column_width)
         if isinstance(total_cols, int):
-            return list(accumulate(chain([0], (colpos for c in range(total_cols)))))
-        return list(accumulate(chain([0], (colpos for c in range(len(self.MT.col_positions) - 1)))))
+            return list(accumulate(chain([0], repeat(colpos, total_cols))))
+        return list(accumulate(chain([0], repeat(colpos, len(self.MT.col_positions) - 1))))
 
     def get_example_canvas_row_heights(self, total_rows: int | None = None) -> list[float]:
         rowpos = self.MT.get_default_row_height()
         if isinstance(total_rows, int):
-            return list(accumulate(chain([0], (rowpos for c in range(total_rows)))))
-        return list(accumulate(chain([0], (rowpos for c in range(len(self.MT.row_positions) - 1)))))
+            return list(accumulate(chain([0], repeat(rowpos, total_rows))))
+        return list(accumulate(chain([0], repeat(rowpos, len(self.MT.row_positions) - 1))))
 
     def verify_row_heights(self, row_heights: list[float], canvas_positions: bool = False) -> bool:
         if not isinstance(row_heights, list):
@@ -3617,7 +3617,7 @@ class Sheet(tk.Frame):
                 return False
             return not any(
                 x - z < self.MT.min_row_height or not isinstance(x, int) or isinstance(x, bool)
-                for z, x in zip(islice(row_heights, 0, None), islice(row_heights, 1, None))
+                for z, x in zip(row_heights, islice(row_heights, 1, None))
             )
         return not any(z < self.MT.min_row_height or not isinstance(z, int) or isinstance(z, bool) for z in row_heights)
 
@@ -3629,7 +3629,7 @@ class Sheet(tk.Frame):
                 return False
             return not any(
                 x - z < self.MT.min_column_width or not isinstance(x, int) or isinstance(x, bool)
-                for z, x in zip(islice(column_widths, 0, None), islice(column_widths, 1, None))
+                for z, x in zip(column_widths, islice(column_widths, 1, None))
             )
         return not any(
             z < self.MT.min_column_width or not isinstance(z, int) or isinstance(z, bool) for z in column_widths
