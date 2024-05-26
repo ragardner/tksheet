@@ -3792,24 +3792,26 @@ class MainTable(tk.Canvas):
 
     def reset_col_positions(self, ncols: int | None = None):
         colpos = self.PAR.ops.default_column_width
-        if self.all_columns_displayed:
-            self.set_col_positions(itr=(colpos for c in range(ncols if ncols is not None else self.total_data_cols())))
+        if isinstance(ncols, int):
+            self.set_col_positions(itr=repeat(colpos, ncols))
         else:
-            self.set_col_positions(
-                itr=(colpos for c in range(ncols if ncols is not None else len(self.displayed_columns)))
-            )
+            if self.all_columns_displayed:
+                self.set_col_positions(itr=repeat(colpos, self.total_data_cols()))
+            else:
+                self.set_col_positions(itr=repeat(colpos, len(self.displayed_columns)))
 
     def set_row_positions(self, itr: Iterator[float]) -> None:
         self.row_positions = list(accumulate(chain([0], itr)))
 
     def reset_row_positions(self, nrows: int | None = None):
         rowpos = self.get_default_row_height()
-        if self.all_rows_displayed:
-            self.set_row_positions(itr=(rowpos for r in range(nrows if nrows is not None else self.total_data_rows())))
+        if isinstance(nrows, int):
+            self.set_row_positions(itr=repeat(rowpos, nrows))
         else:
-            self.set_row_positions(
-                itr=(rowpos for r in range(nrows if nrows is not None else len(self.displayed_rows)))
-            )
+            if self.all_rows_displayed:
+                self.set_row_positions(itr=repeat(rowpos, self.total_data_rows()))
+            else:
+                self.set_row_positions(itr=repeat(rowpos, len(self.displayed_rows)))
 
     def del_col_position(self, idx: int, deselect_all: bool = False):
         if deselect_all:
@@ -4339,7 +4341,7 @@ class MainTable(tk.Canvas):
             self.set_row_positions(
                 itr=chain(
                     self.gen_row_heights(),
-                    (default_row_height for i in range(len(self.row_positions) - 1, maxrn + 1)),
+                    repeat(default_row_height, len(self.row_positions) - 1, maxrn + 1),
                 )
             )
         if isinstance(self._headers, list) and header:
@@ -4474,7 +4476,7 @@ class MainTable(tk.Canvas):
             self.set_col_positions(
                 itr=chain(
                     self.gen_column_widths(),
-                    (self.PAR.ops.default_column_width for i in range(len(self.col_positions) - 1, maxcn + 1)),
+                    repeat(self.PAR.ops.default_column_width, len(self.col_positions) - 1, maxcn + 1),
                 )
             )
         if push_ops:

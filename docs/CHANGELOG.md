@@ -1,7 +1,17 @@
 ### Version 7.2.2
+#### Added:
+- Add functions to address [227](https://github.com/ragardner/tksheet/issues/227):
+    - `get_column_text_width`
+    - `get_row_text_height`
+    - `visible_columns` - `@property`
+    - `visible_rows` - `@property`
+
 #### Changed:
 - Internal parameter names:
     - `only_set_if_too_small` -> ` only_if_too_small`
+- Internal function parameters:
+    - `set_col_width`
+    - `set_row_height`
 
 ### Version 7.2.1
 #### Fixed:

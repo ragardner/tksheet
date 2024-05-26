@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import tkinter as tk
-from bisect import bisect_left
+from bisect import bisect_left, bisect_right
 from collections import defaultdict, deque
 from collections.abc import Callable, Generator, Iterator, Sequence
 from itertools import accumulate, chain, islice, product, repeat
@@ -3649,21 +3649,27 @@ class Sheet(tk.Frame):
             return self.MT.max_column_width
         return width
 
-    def get_visible_rows(self, ystart: float, yend: float) -> tuple[int, int]:
+    @property
+    def visible_rows(self) -> tuple[int, int]:
         """
-        ystart: Start y axis point on table canvas
-        yend: End y axis point on table canvas
         returns: tuple[visible start row int, visible end row int]
         """
-        return self.MT.get_visible_rows(y1=ystart, y2=yend)
+        start = self.MT.canvasy(0)
+        end = self.MT.canvasy(self.MT.winfo_height())
+        if end < self.MT.row_positions[-1]:
+            return bisect_left(self.MT.row_positions, start), bisect_right(self.MT.row_positions, end) + 1
+        return bisect_left(self.MT.row_positions, start), bisect_right(self.MT.row_positions, end)
 
-    def get_visible_columns(self, xstart: float, xend: float) -> tuple[int, int]:
+    @property
+    def visible_columns(self) -> tuple[int, int]:
         """
-        xstart: Start x axis point on table canvas
-        xend: End x axis point on table canvas
         returns: tuple[visible start column int, visible end column int]
         """
-        return self.MT.get_visible_columns(x1=xstart, x2=xend)
+        start = self.MT.canvasx(0)
+        end = self.MT.canvasx(self.MT.winfo_width())
+        if end < self.MT.col_positions[-1]:
+            return bisect_left(self.MT.col_positions, start), bisect_right(self.MT.col_positions, end) + 1
+        return bisect_left(self.MT.col_positions, start), bisect_right(self.MT.col_positions, end)
 
     # Identifying Bound Event Mouse Position
 

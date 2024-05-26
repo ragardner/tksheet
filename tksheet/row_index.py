@@ -16,6 +16,7 @@ from itertools import (
     chain,
     cycle,
     islice,
+    repeat,
 )
 from math import (
     ceil,
@@ -1122,7 +1123,7 @@ class RowIndex(tk.Canvas):
         only_rows: Iterator[int] | None = None,
     ) -> int:
         self.fix_index()
-        w = self.MT.min_column_width + 10
+        w = self.PAR.ops.default_row_index_width
         if (not self.MT._row_index and isinstance(self.MT._row_index, list)) or (
             isinstance(self.MT._row_index, int) and self.MT._row_index >= len(self.MT.data)
         ):
@@ -1150,11 +1151,8 @@ class RowIndex(tk.Canvas):
                 if txt := self.MT.get_valid_cell_data_as_str(datarn, datacn, get_displayed=True):
                     qconf(qtxtm, text=txt)
                     b = qbbox(qtxtm)
-                    tw = b[2] - b[0] + 10
-                else:
-                    tw = self.PAR.ops.default_row_index_width
-                if tw > w:
-                    w = tw
+                    if (tw := b[2] - b[0] + 10) > w:
+                        w = tw
         if w > self.MT.max_index_width:
             w = int(self.MT.max_index_width)
         return w
@@ -1165,21 +1163,17 @@ class RowIndex(tk.Canvas):
         only_rows: list = [],
     ) -> int:
         self.fix_index()
-        w = self.MT.min_column_width + 10
+        w = self.PAR.ops.default_row_index_width
         if (text is None and isinstance(self.MT._row_index, list) and not self.MT._row_index) or (
             isinstance(self.MT._row_index, int) and self.MT._row_index >= len(self.MT.data)
         ):
             return w
-        if text is not None:
-            if text:
-                self.MT.txt_measure_canvas.itemconfig(self.MT.txt_measure_canvas_text, text=text)
-                b = self.MT.txt_measure_canvas.bbox(self.MT.txt_measure_canvas_text)
-                tw = b[2] - b[0] + 10
-                if tw > w:
-                    w = tw
-            else:
-                w = self.PAR.ops.default_row_index_width
-        else:
+        if text is not None and text:
+            self.MT.txt_measure_canvas.itemconfig(self.MT.txt_measure_canvas_text, text=text)
+            b = self.MT.txt_measure_canvas.bbox(self.MT.txt_measure_canvas_text)
+            if (tw := b[2] - b[0] + 10) > w:
+                w = tw
+        elif text is None:
             w = self.get_index_text_width(only_rows=only_rows)
         if w > self.MT.max_index_width:
             w = int(self.MT.max_index_width)
@@ -1188,20 +1182,24 @@ class RowIndex(tk.Canvas):
         return w
 
     def set_height_of_all_rows(
-        self, height: int | None = None, only_if_too_small: bool = False, recreate: bool = True
+        self,
+        height: int | None = None,
+        only_if_too_small: bool = False,
+        recreate: bool = True,
     ) -> None:
         if height is None:
+            if self.MT.all_columns_displayed:
+                iterable = range(self.MT.total_data_rows())
+            else:
+                iterable = range(len(self.MT.displayed_rows))
             self.MT.set_row_positions(
-                itr=(
-                    self.get_row_text_height(
-                        rn,
-                        only_if_too_small=only_if_too_small,
-                    )
-                    for rn in range(len(self.MT.data))
-                )
+                itr=(self.get_row_text_height(rn, only_if_too_small=only_if_too_small) for rn in iterable)
             )
-        else:
-            self.MT.set_row_positions(itr=(height for r in range(len(self.MT.data))))
+        elif height is not None:
+            if self.MT.all_rows_displayed:
+                self.MT.set_row_positions(itr=repeat(height, len(self.MT.data)))
+            else:
+                self.MT.set_row_positions(itr=repeat(height, len(self.MT.displayed_rows)))
         if recreate:
             self.MT.recreate_all_selection_boxes()
 

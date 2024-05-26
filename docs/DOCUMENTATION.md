@@ -4665,18 +4665,22 @@ ___
 #### **Get visible rows**
 
 ```python
-get_visible_rows(ystart: float, yend: float) -> tuple[int, int]
+@property
+visible_rows() -> tuple[int, int]
 ```
 - Returns start row, end row
+- e.g. `start_row, end_row = sheet.visible_rows`
 
 ___
 
 #### **Get visible columns**
 
 ```python
-get_visible_columns(xstart: float, xend: float) -> tuple[int, int]
+@property
+visible_columns() -> tuple[int, int]
 ```
 - Returns start column, end column
+- e.g. `start_column, end_column = sheet.visible_columns`
 
 ---
 # **Identifying Bound Event Mouse Position**

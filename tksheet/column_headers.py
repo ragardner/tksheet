@@ -13,6 +13,7 @@ from functools import (
 from itertools import (
     cycle,
     islice,
+    repeat,
 )
 from math import ceil, floor
 from operator import (
@@ -1112,13 +1113,12 @@ class ColumnHeaders(tk.Canvas):
                 if txt := self.MT.get_valid_cell_data_as_str(datarn, datacn, get_displayed=True):
                     qconf(qtxtm, text=txt, font=qfont)
                     b = qbbox(qtxtm)
-                    if self.MT.get_cell_kwargs(datarn, datacn, key="dropdown") or self.MT.get_cell_kwargs(
-                        datarn, datacn, key="checkbox"
-                    ):
-                        tw = b[2] - b[0] + qtxth + 7
-                    else:
-                        tw = b[2] - b[0] + 7
-                    if tw > w:
+                    if (
+                        self.MT.get_cell_kwargs(datarn, datacn, key="dropdown")
+                        or self.MT.get_cell_kwargs(datarn, datacn, key="checkbox")
+                    ) and (tw := b[2] - b[0] + qtxth + 7) > w:
+                        w = tw
+                    elif (tw := b[2] - b[0] + 7) > w:
                         w = tw
         if hw > w:
             w = hw
@@ -1172,9 +1172,9 @@ class ColumnHeaders(tk.Canvas):
             )
         elif width is not None:
             if self.MT.all_columns_displayed:
-                self.MT.set_col_positions(itr=(width for cn in range(self.MT.total_data_cols())))
+                self.MT.set_col_positions(itr=repeat(width, self.MT.total_data_cols()))
             else:
-                self.MT.set_col_positions(itr=(width for cn in range(len(self.MT.displayed_columns))))
+                self.MT.set_col_positions(itr=repeat(width, len(self.MT.displayed_columns)))
         if recreate:
             self.MT.recreate_all_selection_boxes()
 
