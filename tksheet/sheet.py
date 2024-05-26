@@ -3430,6 +3430,30 @@ class Sheet(tk.Frame):
             return self.MT.row_positions
         return self.MT.get_row_heights()
 
+    def get_row_text_height(
+        self,
+        row: int,
+        visible_only: bool = False,
+        only_if_too_small: bool = False,
+    ) -> int:
+        return self.RI.get_row_text_height(
+            row=row,
+            visible_only=visible_only,
+            only_if_too_small=only_if_too_small,
+        )
+
+    def get_column_text_width(
+        self,
+        column: int,
+        visible_only: bool = False,
+        only_if_too_small: bool = False,
+    ) -> int:
+        return self.CH.get_col_text_width(
+            col=column,
+            visible_only=visible_only,
+            only_if_too_small=only_if_too_small,
+        )
+
     def set_column_widths(
         self,
         column_widths: Iterator[float] | None = None,

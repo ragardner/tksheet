@@ -4420,6 +4420,36 @@ get_row_heights(canvas_positions: bool = False) -> list[float]
 
 ___
 
+#### **Get a rows text height**
+
+```python
+get_row_text_height(
+    row: int,
+    visible_only: bool = False,
+    only_if_too_small: bool = False,
+) -> int
+```
+- Returns a height in pixels which will fit all text in the specified row.
+- `visible_only` if `True` only measures rows visible on the Sheet.
+- `only_if_too_small` if `True` will only return a new height if the current row height is too short to accomodate its text.
+
+___
+
+#### **Get a columns text width**
+
+```python
+get_column_text_width(
+    column: int,
+    visible_only: bool = False,
+    only_if_too_small: bool = False,
+) -> int
+```
+- Returns a width in pixels which will fit all text in the specified column.
+- `visible_only` if `True` only measures columns visible on the Sheet.
+- `only_if_too_small` if `True` will only return a new width if the current column width is too thin to accomodate its text.
+
+___
+
 #### **Set or reset displayed column widths/lines**
 
 ```python
