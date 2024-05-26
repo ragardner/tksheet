@@ -140,7 +140,7 @@ class TopLeftRectangle(tk.Canvas):
             fill=self.PAR.ops.top_left_fg,
         )
 
-    def basic_bindings(self, enable=True) -> None:
+    def basic_bindings(self, enable: bool = True) -> None:
         if enable:
             self.bind("<Motion>", self.mouse_motion)
             self.bind("<ButtonPress-1>", self.b1_press)
@@ -156,7 +156,12 @@ class TopLeftRectangle(tk.Canvas):
             self.unbind("<Double-Button-1>")
             self.unbind(rc_binding)
 
-    def set_dimensions(self, new_w=None, new_h=None, recreate_selection_boxes: bool = True) -> None:
+    def set_dimensions(
+        self,
+        new_w: None | int = None,
+        new_h: None | int = None,
+        recreate_selection_boxes: bool = True,
+    ) -> None:
         try:
             if new_h is None:
                 h = self.winfo_height()
