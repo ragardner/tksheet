@@ -592,7 +592,7 @@ class Sheet(tk.Frame):
         self.MT.enable_bindings(bindings)
         return self
 
-    def disable_bindings(self, *bindings) -> Sheet:
+    def disable_bindings(self, *bindings: str) -> Sheet:
         self.MT.disable_bindings(bindings)
         return self
 
@@ -1081,8 +1081,11 @@ class Sheet(tk.Frame):
         Includes child widgets such as scroll bars
         Returns bool
         """
-        widget = self.focus_get()
-        return widget == self or any(widget == c for c in self.children.values())
+        try:
+            widget = self.focus_get()
+            return widget == self or any(widget == c for c in self.children.values())
+        except Exception:
+            return False
 
     def focus_set(
         self,
