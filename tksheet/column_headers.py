@@ -4,6 +4,7 @@ import tkinter as tk
 from collections import defaultdict
 from collections.abc import (
     Callable,
+    Hashable,
     Sequence,
 )
 from functools import (
@@ -2276,7 +2277,7 @@ class ColumnHeaders(tk.Canvas):
             self.MT._headers.extend(self.get_empty_header_seq(end=datacn + 1, start=len(self.MT._headers)))
 
     # displayed indexes
-    def set_col_width_run_binding(self, c, width=None, only_if_too_small=True):
+    def set_col_width_run_binding(self, c: int, width: int | None = None, only_if_too_small: bool = True) -> None:
         old_width = self.MT.col_positions[c + 1] - self.MT.col_positions[c]
         new_width = self.set_col_width(c, width=width, only_if_too_small=only_if_too_small)
         if self.column_width_resize_func is not None and old_width != new_width:
@@ -2289,7 +2290,7 @@ class ColumnHeaders(tk.Canvas):
             )
 
     # internal event use
-    def click_checkbox(self, c, datacn=None, undo=True, redraw=True):
+    def click_checkbox(self, c: int, datacn: int | None = None, undo: bool = True, redraw: bool = True) -> None:
         if datacn is None:
             datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
         kwargs = self.get_cell_kwargs(datacn, key="checkbox")
@@ -2324,7 +2325,7 @@ class ColumnHeaders(tk.Canvas):
         if redraw:
             self.MT.refresh()
 
-    def get_cell_kwargs(self, datacn, key="dropdown", cell=True):
+    def get_cell_kwargs(self, datacn: int, key: Hashable = "dropdown", cell: bool = True) -> dict:
         if cell and datacn in self.cell_options and key in self.cell_options[datacn]:
             return self.cell_options[datacn][key]
         return {}
