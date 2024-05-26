@@ -4630,6 +4630,24 @@ ___
 valid_column_width(width: int) -> int
 ```
 
+___
+
+#### **Get visible rows**
+
+```python
+get_visible_rows(ystart: float, yend: float) -> tuple[int, int]
+```
+- Returns start row, end row
+
+___
+
+#### **Get visible columns**
+
+```python
+get_visible_columns(xstart: float, xend: float) -> tuple[int, int]
+```
+- Returns start column, end column
+
 ---
 # **Identifying Bound Event Mouse Position**
 

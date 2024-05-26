@@ -5015,19 +5015,15 @@ class MainTable(tk.Canvas):
             self.canvasy(self.winfo_height()),
         )
 
-    def get_visible_rows(self, y1: int | float, y2: int | float) -> tuple[int, int]:
-        start_row = bisect_left(self.row_positions, y1)
-        end_row = bisect_right(self.row_positions, y2)
-        if not y2 >= self.row_positions[-1]:
-            end_row += 1
-        return start_row, end_row
+    def get_visible_rows(self, y1: float, y2: float) -> tuple[int, int]:
+        if y2 < self.row_positions[-1]:
+            return bisect_left(self.row_positions, y1), bisect_right(self.row_positions, y2) + 1
+        return bisect_left(self.row_positions, y1), bisect_right(self.row_positions, y2)
 
-    def get_visible_columns(self, x1: int | float, x2: int | float) -> tuple[int, int]:
-        start_col = bisect_left(self.col_positions, x1)
-        end_col = bisect_right(self.col_positions, x2)
-        if not x2 >= self.col_positions[-1]:
-            end_col += 1
-        return start_col, end_col
+    def get_visible_columns(self, x1: float, x2: float) -> tuple[int, int]:
+        if x2 < self.col_positions[-1]:
+            return bisect_left(self.col_positions, x1), bisect_right(self.col_positions, x2) + 1
+        return bisect_left(self.col_positions, x1), bisect_right(self.col_positions, x2)
 
     def redraw_highlight_get_text_fg(
         self,

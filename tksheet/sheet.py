@@ -3625,6 +3625,22 @@ class Sheet(tk.Frame):
             return self.MT.max_column_width
         return width
 
+    def get_visible_rows(self, ystart: float, yend: float) -> tuple[int, int]:
+        """
+        ystart: Start y axis point on table canvas
+        yend: End y axis point on table canvas
+        returns: tuple[visible start row int, visible end row int]
+        """
+        return self.MT.get_visible_rows(y1=ystart, y2=yend)
+
+    def get_visible_columns(self, xstart: float, xend: float) -> tuple[int, int]:
+        """
+        xstart: Start x axis point on table canvas
+        xend: End x axis point on table canvas
+        returns: tuple[visible start column int, visible end column int]
+        """
+        return self.MT.get_visible_columns(x1=xstart, x2=xend)
+
     # Identifying Bound Event Mouse Position
 
     def identify_region(self, event: object) -> Literal["table", "index", "header", "top left"]:
