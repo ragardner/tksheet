@@ -5372,21 +5372,26 @@ class MainTable(tk.Canvas):
             self.RI.configure_scrollregion(last_row_line_pos)
             if setting_views:
                 return False
-        scrollpos_bot = self.canvasy(can_height)
-        end_row = bisect_right(self.row_positions, scrollpos_bot)
-        if not scrollpos_bot >= self.row_positions[-1]:
-            end_row += 1
-        scrollpos_left = self.canvasx(0)
         scrollpos_top = self.canvasy(0)
+        scrollpos_bot = self.canvasy(can_height)
+        scrollpos_left = self.canvasx(0)
         scrollpos_right = self.canvasx(can_width)
-        start_row = bisect_left(self.row_positions, scrollpos_top)
-        start_col = bisect_left(self.col_positions, scrollpos_left)
-        end_col = bisect_right(self.col_positions, scrollpos_right)
+
+        grid_start_row = bisect_left(self.row_positions, scrollpos_top)
+        grid_end_row = bisect_right(self.row_positions, scrollpos_bot)
+        grid_start_col = bisect_left(self.col_positions, scrollpos_left)
+        grid_end_col = bisect_right(self.col_positions, scrollpos_right)
+
+        text_start_row = grid_start_row - 1 if grid_start_row else grid_start_row
+        text_end_row = grid_end_row - 1 if grid_end_row == len(self.row_positions) else grid_end_row
+        text_start_col = grid_start_col - 1 if grid_start_col else grid_start_col
+        text_end_col = grid_end_col - 1 if grid_end_col == len(self.col_positions) else grid_end_col
+
         changed_w = False
         if self.PAR.ops.auto_resize_row_index and redraw_row_index and self.show_index:
             changed_w = self.RI.auto_set_index_width(
-                end_row=end_row - 1,
-                only_rows=[self.datarn(r) for r in range(start_row if not start_row else start_row - 1, end_row - 1)],
+                end_row=grid_end_row,
+                only_rows=[self.datarn(r) for r in range(text_start_row, text_end_row)],
             )
         if resized_cols or resized_rows or changed_w:
             self.recreate_all_selection_boxes()
@@ -5406,8 +5411,6 @@ class MainTable(tk.Canvas):
         self.disp_dropdown = {}
         self.hidd_checkbox.update(self.disp_checkbox)
         self.disp_checkbox = {}
-        if not scrollpos_right >= self.col_positions[-1]:
-            end_col += 1
         if last_col_line_pos > scrollpos_right:
             x_stop = scrollpos_right
         else:
@@ -5437,7 +5440,7 @@ class MainTable(tk.Canvas):
                             self.canvasx(0) - 1,
                             self.row_positions[r + 1] if len(self.row_positions) - 1 > r else self.row_positions[r],
                         )
-                        for r in range(start_row - 1, end_row)
+                        for r in range(grid_start_row, grid_end_row)
                     ]
                 )
             )
@@ -5469,7 +5472,7 @@ class MainTable(tk.Canvas):
                             self.col_positions[c + 1] if len(self.col_positions) - 1 > c else self.col_positions[c],
                             scrollpos_top - 1,
                         )
-                        for c in range(start_col - 1, end_col)
+                        for c in range(grid_start_col, grid_end_col)
                     ]
                 )
             )
@@ -5480,13 +5483,8 @@ class MainTable(tk.Canvas):
                     width=1,
                     tag="g",
                 )
-        if start_row > 0:
-            start_row -= 1
-        if start_col > 0:
-            start_col -= 1
-        end_row -= 1
         if redraw_table:
-            selections = self.get_redraw_selections(start_row, end_row, start_col, end_col)
+            selections = self.get_redraw_selections(text_start_row, grid_end_row, text_start_col, grid_end_col)
             c_2 = (
                 self.PAR.ops.table_selected_cells_bg
                 if self.PAR.ops.table_selected_cells_bg.startswith("#")
@@ -5505,10 +5503,10 @@ class MainTable(tk.Canvas):
                 else color_map[self.PAR.ops.table_selected_rows_bg]
             )
             c_4_ = (int(c_4[1:3], 16), int(c_4[3:5], 16), int(c_4[5:], 16))
-            rows_ = tuple(range(start_row, end_row))
+            rows_ = tuple(range(text_start_row, text_end_row))
             font = self.PAR.ops.table_font
             dd_coords = self.dropdown.get_coords()
-            for c in range(start_col, end_col - 1):
+            for c in range(text_start_col, text_end_col):
                 for r in rows_:
                     rtopgridln = self.row_positions[r]
                     rbotgridln = self.row_positions[r + 1]
@@ -5716,23 +5714,27 @@ class MainTable(tk.Canvas):
                     self.tag_raise(self.selected.iid)
         if redraw_header and self.show_header:
             self.CH.redraw_grid_and_text(
-                last_col_line_pos,
-                scrollpos_left,
-                x_stop,
-                start_col,
-                end_col,
-                scrollpos_right,
-                col_pos_exists,
+                last_col_line_pos=last_col_line_pos,
+                scrollpos_left=scrollpos_left,
+                x_stop=x_stop,
+                grid_start_col=grid_start_col,
+                grid_end_col=grid_end_col,
+                text_start_col=text_start_col,
+                text_end_col=text_end_col,
+                scrollpos_right=scrollpos_right,
+                col_pos_exists=col_pos_exists,
             )
         if redraw_row_index and self.show_index:
             self.RI.redraw_grid_and_text(
-                last_row_line_pos,
-                scrollpos_top,
-                y_stop,
-                start_row,
-                end_row + 1,
-                scrollpos_bot,
-                row_pos_exists,
+                last_row_line_pos=last_row_line_pos,
+                scrollpos_top=scrollpos_top,
+                y_stop=y_stop,
+                grid_start_row=grid_start_row,
+                grid_end_row=grid_end_row,
+                text_start_row=text_start_row,
+                text_end_row=text_end_row,
+                scrollpos_bot=scrollpos_bot,
+                row_pos_exists=row_pos_exists,
             )
         event_data = {"sheetname": "", "header": redraw_header, "row_index": redraw_row_index, "table": redraw_table}
         self.PAR.emit_event("<<SheetRedrawn>>", data=event_data)

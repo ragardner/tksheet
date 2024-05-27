@@ -164,21 +164,25 @@ class ColumnHeaders(tk.Canvas):
                 self.unbind("<Button-5>")
 
     def mousewheel(self, event: object) -> None:
-        maxlines = 0
         if isinstance(self.MT._headers, int):
-            if len(self.MT.data) > self.MT._headers:
-                maxlines = max(
+            maxlines = max(
+                (
                     len(
                         self.MT.get_valid_cell_data_as_str(self.MT._headers, datacn, get_displayed=True)
                         .rstrip()
                         .split("\n")
                     )
                     for datacn in range(len(self.MT.data[self.MT._headers]))
-                )
+                ),
+                default=0,
+            )
         elif isinstance(self.MT._headers, (list, tuple)):
             maxlines = max(
-                len(e.rstrip().split("\n")) if isinstance(e, str) else len(f"{e}".rstrip().split("\n"))
-                for e in self.MT._headers
+                (
+                    len(e.rstrip().split("\n")) if isinstance(e, str) else len(f"{e}".rstrip().split("\n"))
+                    for e in self.MT._headers
+                ),
+                default=0,
             )
         if maxlines == 1:
             maxlines = 0
@@ -1398,8 +1402,10 @@ class ColumnHeaders(tk.Canvas):
         last_col_line_pos: float,
         scrollpos_left: float,
         x_stop: float,
-        start_col: int,
-        end_col: int,
+        grid_start_col: int,
+        grid_end_col: int,
+        text_start_col: int,
+        text_end_col: int,
         scrollpos_right: float,
         col_pos_exists: bool,
     ) -> bool:
@@ -1424,7 +1430,7 @@ class ColumnHeaders(tk.Canvas):
             x_stop,
             self.current_height,
         )
-        draw_x = self.MT.col_positions[start_col]
+        draw_x = self.MT.col_positions[grid_start_col]
         yend = self.current_height - 5
         if (self.PAR.ops.show_vertical_grid or self.width_resizing_enabled) and col_pos_exists:
             points = [
@@ -1435,7 +1441,7 @@ class ColumnHeaders(tk.Canvas):
                 scrollpos_left - 1,
                 -1,
             ]
-            for c in range(start_col + 1, end_col):
+            for c in range(grid_start_col, grid_end_col):
                 draw_x = self.MT.col_positions[c]
                 if self.width_resizing_enabled:
                     self.visible_col_dividers[c] = (draw_x - 2, 1, draw_x + 2, yend)
@@ -1464,9 +1470,9 @@ class ColumnHeaders(tk.Canvas):
             else color_map[self.PAR.ops.header_selected_columns_bg]
         )
         font = self.PAR.ops.header_font
-        selections = self.get_redraw_selections(start_col, end_col)
+        selections = self.get_redraw_selections(text_start_col, grid_end_col)
         dd_coords = self.dropdown.get_coords()
-        for c in range(start_col, end_col - 1):
+        for c in range(text_start_col, text_end_col):
             draw_y = self.MT.header_first_ln_ins
             cleftgridln = self.MT.col_positions[c]
             crightgridln = self.MT.col_positions[c + 1]

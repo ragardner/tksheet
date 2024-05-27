@@ -1498,8 +1498,10 @@ class RowIndex(tk.Canvas):
         last_row_line_pos: float,
         scrollpos_top: int,
         y_stop: int,
-        start_row: int,
-        end_row: int,
+        grid_start_row: int,
+        grid_end_row: int,
+        text_start_row: int,
+        text_end_row: int,
         scrollpos_bot: int,
         row_pos_exists: bool,
     ) -> None:
@@ -1520,7 +1522,7 @@ class RowIndex(tk.Canvas):
         self.hidd_tree_arrow.update(self.disp_tree_arrow)
         self.disp_tree_arrow = {}
         self.visible_row_dividers = {}
-        draw_y = self.MT.row_positions[start_row]
+        draw_y = self.MT.row_positions[grid_start_row]
         xend = self.current_width - 6
         self.row_width_resize_bbox = (
             self.current_width - 2,
@@ -1537,7 +1539,7 @@ class RowIndex(tk.Canvas):
                 -1,
                 scrollpos_top - 1,
             ]
-            for r in range(start_row + 1, end_row):
+            for r in range(grid_start_row, grid_end_row):
                 draw_y = self.MT.row_positions[r]
                 if self.height_resizing_enabled:
                     self.visible_row_dividers[r] = (1, draw_y - 2, xend, draw_y + 2)
@@ -1565,11 +1567,11 @@ class RowIndex(tk.Canvas):
             else color_map[self.PAR.ops.index_selected_rows_bg]
         )
         font = self.PAR.ops.index_font
-        selections = self.get_redraw_selections(start_row, end_row)
+        selections = self.get_redraw_selections(text_start_row, grid_end_row)
         dd_coords = self.dropdown.get_coords()
         treeview = self.PAR.ops.treeview
 
-        for r in range(start_row, end_row - 1):
+        for r in range(text_start_row, text_end_row):
             rtopgridln = self.MT.row_positions[r]
             rbotgridln = self.MT.row_positions[r + 1]
             if rbotgridln - rtopgridln < self.MT.index_txt_height:
