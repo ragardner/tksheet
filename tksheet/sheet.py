@@ -1292,8 +1292,6 @@ class Sheet(tk.Frame):
         self,
         *key: CreateSpanTypes,
     ) -> object:
-        span = self.span_from_key(*key)
-        rows, cols = self.ranges_from_span(span)
         """
         e.g. retrieves entire table as pandas dataframe
         sheet["A1"].expand().options(pandas.DataFrame).data
@@ -1353,6 +1351,8 @@ class Sheet(tk.Frame):
           convert(data) - sends the data to an optional convert function
 
         """
+        span = self.span_from_key(*key)
+        rows, cols = self.ranges_from_span(span)
         tdisp, idisp, hdisp = span.tdisp, span.idisp, span.hdisp
         table, index, header = span.table, span.index, span.header
         fmt_kw = span.kwargs if span.type_ == "format" and span.kwargs else None
@@ -1549,16 +1549,12 @@ class Sheet(tk.Frame):
         emit_event: bool | None = None,
         redraw: bool = True,
     ) -> EventDataDict:
-        span = self.span_from_key(*key)
-        if data is None:
-            data = []
         """
         e.g.
         df = pandas.DataFrame([[1, 2, 3], [4, 5, 6]])
         sheet["A1"] = df.values.tolist()
 
-        can't use slices or expand
-        just uses the from_r, from_c values
+        just uses the spans from_r, from_c values
 
         'data' parameter could be:
         - list of lists
@@ -1602,6 +1598,9 @@ class Sheet(tk.Frame):
         - h stands for header
 
         """
+        span = self.span_from_key(*key)
+        if data is None:
+            data = []
         startr, startc = span_froms(span)
         table, index, header = span.table, span.index, span.header
         fmt_kw = span.kwargs if span.type_ == "format" and span.kwargs else None
