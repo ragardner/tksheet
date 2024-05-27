@@ -3749,9 +3749,10 @@ class MainTable(tk.Canvas):
         for datacn in itercols:
             if (hw := self.CH.get_cell_dimensions(datacn)[0]) > w:
                 w = hw
+            else:
+                w = min_column_width
             for datarn in iterrows:
-                txt = self.get_valid_cell_data_as_str(datarn, datacn, get_displayed=True)
-                if txt:
+                if txt := self.get_valid_cell_data_as_str(datarn, datacn, get_displayed=True):
                     qconf(qtxtm, text=txt, font=qfont)
                     b = qbbox(qtxtm)
                     tw = b[2] - b[0] + added_w_space
