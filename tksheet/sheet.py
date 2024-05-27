@@ -2269,16 +2269,14 @@ class Sheet(tk.Frame):
         mod_positions: bool = True,
         mod_data: bool = True,
     ) -> int | Sheet:
+        total_rows = self.MT.total_data_rows()
         if number is None:
-            return self.MT.total_data_rows()
+            return total_rows
         if not isinstance(number, int) or number < 0:
             raise ValueError("number argument must be integer and > 0")
-        if number > len(self.MT.data):
-            if mod_positions:
-                height = self.MT.get_default_row_height()
-                for r in range(number - len(self.MT.data)):
-                    self.MT.insert_row_position("end", height)
-        elif number < len(self.MT.data):
+        if number > total_rows and mod_positions:
+            self.MT.insert_row_positions(heights=number - total_rows)
+        elif number < total_rows:
             if not self.MT.all_rows_displayed:
                 self.MT.display_rows(enable=False, reset_row_positions=False, deselect_all=True)
             self.MT.row_positions[number + 1 :] = []
@@ -2297,11 +2295,8 @@ class Sheet(tk.Frame):
             return total_cols
         if not isinstance(number, int) or number < 0:
             raise ValueError("number argument must be integer and > 0")
-        if number > total_cols:
-            if mod_positions:
-                width = self.ops.default_column_width
-                for c in range(number - total_cols):
-                    self.MT.insert_col_position("end", width)
+        if number > total_cols and mod_positions:
+            self.MT.insert_col_positions(widths=number - total_cols)
         elif number < total_cols:
             if not self.MT.all_columns_displayed:
                 self.MT.display_columns(enable=False, reset_col_positions=False, deselect_all=True)
