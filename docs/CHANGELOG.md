@@ -9,6 +9,8 @@
 #### Changed:
 - Internal parameter names:
     - `only_set_if_too_small` -> ` only_if_too_small`
+- Internal functions:
+    - `get_visible_rows`, `get_visible_columns` -> `visible_text_rows`, `visible_text_columns`, also changed to properties `@property`
 - Internal function parameters:
     - `set_col_width`
     - `set_row_height`
