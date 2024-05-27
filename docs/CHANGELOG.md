@@ -1,3 +1,6 @@
+### Version 7.2.3
+####
+
 ### Version 7.2.2
 #### Added:
 - Add functions to address [227](https://github.com/ragardner/tksheet/issues/227):
