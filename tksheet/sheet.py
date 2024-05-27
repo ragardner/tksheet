@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import tkinter as tk
-from bisect import bisect_left, bisect_right
+from bisect import bisect_left
 from collections import defaultdict, deque
 from collections.abc import Callable, Generator, Iterator, Sequence
 from itertools import accumulate, chain, islice, product, repeat
@@ -3382,8 +3382,7 @@ class Sheet(tk.Frame):
         if column == "all" and width == "default":
             self.MT.reset_col_positions()
         elif column == "displayed" and width == "text":
-            sc, ec = self.MT.get_visible_columns(self.MT.canvasx(0), self.MT.canvasx(self.winfo_width()))
-            for c in range(sc, ec - 1):
+            for c in range(*self.MT.visible_text_columns):
                 self.CH.set_col_width(c)
         elif width == "text" and isinstance(column, int):
             self.CH.set_col_width(col=column, width=None, only_if_too_small=only_set_if_too_small)
@@ -3403,8 +3402,7 @@ class Sheet(tk.Frame):
         if row == "all" and height == "default":
             self.MT.reset_row_positions()
         elif row == "displayed" and height == "text":
-            sr, er = self.MT.get_visible_rows(self.MT.canvasy(0), self.MT.canvasy(self.winfo_width()))
-            for r in range(sr, er - 1):
+            for r in range(*self.MT.visible_text_rows):
                 self.RI.set_row_height(r)
         elif height == "text" and isinstance(row, int):
             self.RI.set_row_height(row=row, height=None, only_if_too_small=only_set_if_too_small)
@@ -3648,18 +3646,14 @@ class Sheet(tk.Frame):
         """
         returns: tuple[visible start row int, visible end row int]
         """
-        return bisect_left(self.MT.row_positions, self.MT.canvasy(0)), bisect_right(
-            self.MT.row_positions, self.MT.canvasy(self.MT.winfo_height())
-        )
+        return self.MT.visible_text_rows
 
     @property
     def visible_columns(self) -> tuple[int, int]:
         """
         returns: tuple[visible start column int, visible end column int]
         """
-        return bisect_left(self.MT.col_positions, self.MT.canvasx(0)), bisect_right(
-            self.MT.col_positions, self.MT.canvasx(self.MT.winfo_width())
-        )
+        return self.MT.visible_text_columns
 
     # Identifying Bound Event Mouse Position
 

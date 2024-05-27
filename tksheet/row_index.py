@@ -1063,8 +1063,7 @@ class RowIndex(tk.Canvas):
         if self.MT.data:
             if self.MT.all_columns_displayed:
                 if visible_only:
-                    x1, y1, x2, y2 = self.MT.get_canvas_visible_area()
-                    start_col, end_col = self.MT.get_visible_columns(x1, x2)
+                    iterable = range(*self.MT.visible_text_columns)
                 else:
                     if not self.MT.data or datarn >= len(self.MT.data):
                         iterable = range(0, 0)
@@ -1072,8 +1071,7 @@ class RowIndex(tk.Canvas):
                         iterable = range(0, len(self.MT.data[datarn]))
             else:
                 if visible_only:
-                    x1, y1, x2, y2 = self.MT.get_canvas_visible_area()
-                    start_col, end_col = self.MT.get_visible_columns(x1, x2)
+                    start_col, end_col = self.MT.visible_text_columns
                 else:
                     start_col, end_col = 0, len(self.MT.displayed_columns)
                 iterable = self.MT.displayed_columns[start_col:end_col]

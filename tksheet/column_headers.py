@@ -1096,15 +1096,12 @@ class ColumnHeaders(tk.Canvas):
         if self.MT.data:
             if self.MT.all_rows_displayed:
                 if visible_only:
-                    x1, y1, x2, y2 = self.MT.get_canvas_visible_area()
-                    start_row, end_row = self.MT.get_visible_rows(y1, y2)
+                    iterable = range(*self.MT.visible_text_rows)
                 else:
-                    start_row, end_row = 0, len(self.MT.data)
-                iterable = range(start_row, end_row)
+                    iterable = range(0, len(self.MT.data))
             else:
                 if visible_only:
-                    x1, y1, x2, y2 = self.MT.get_canvas_visible_area()
-                    start_row, end_row = self.MT.get_visible_rows(y1, y2)
+                    start_row, end_row = self.MT.visible_text_rows
                 else:
                     start_row, end_row = 0, len(self.MT.displayed_rows)
                 iterable = self.MT.displayed_rows[start_row:end_row]
