@@ -3654,22 +3654,18 @@ class Sheet(tk.Frame):
         """
         returns: tuple[visible start row int, visible end row int]
         """
-        start = self.MT.canvasy(0)
-        end = self.MT.canvasy(self.MT.winfo_height())
-        if end < self.MT.row_positions[-1]:
-            return bisect_left(self.MT.row_positions, start), bisect_right(self.MT.row_positions, end) + 1
-        return bisect_left(self.MT.row_positions, start), bisect_right(self.MT.row_positions, end)
+        return bisect_left(self.MT.row_positions, self.MT.canvasy(0)), bisect_right(
+            self.MT.row_positions, self.MT.canvasy(self.MT.winfo_height())
+        )
 
     @property
     def visible_columns(self) -> tuple[int, int]:
         """
         returns: tuple[visible start column int, visible end column int]
         """
-        start = self.MT.canvasx(0)
-        end = self.MT.canvasx(self.MT.winfo_width())
-        if end < self.MT.col_positions[-1]:
-            return bisect_left(self.MT.col_positions, start), bisect_right(self.MT.col_positions, end) + 1
-        return bisect_left(self.MT.col_positions, start), bisect_right(self.MT.col_positions, end)
+        return bisect_left(self.MT.col_positions, self.MT.canvasx(0)), bisect_right(
+            self.MT.col_positions, self.MT.canvasx(self.MT.winfo_width())
+        )
 
     # Identifying Bound Event Mouse Position
 
