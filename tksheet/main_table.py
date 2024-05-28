@@ -1675,11 +1675,13 @@ class MainTable(tk.Canvas):
 
         elif modification["eventname"].startswith("delete"):
             event_data["eventname"] = modification["eventname"].replace("delete", "add")
+
         if len(self.row_positions) > 1 or len(self.col_positions) > 1:
             self.reselect_from_get_boxes(
                 modification["selection_boxes"],
                 modification["selected"],
             )
+
         if self.selected:
             self.see(
                 r=self.selected.row,

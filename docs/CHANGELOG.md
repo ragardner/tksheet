@@ -1,5 +1,7 @@
 ### Version 7.2.3
 #### Fixed:
+- Fix add columns/add rows not inserting at correct index when index is larger than row or data len
+- Fix add columns/add rows not undoing/redoing added heights/widths respectively
 - Fix add columns/add rows regression
 
 ### Version 7.2.2
