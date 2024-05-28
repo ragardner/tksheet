@@ -852,6 +852,7 @@ class MainTable(tk.Canvas):
                     index=index,
                     row_heights=row_heights,
                     event_data=event_data,
+                    mod_event_boxes=False,
                 )
         if added_cols:
             ctr = 0
@@ -901,10 +902,8 @@ class MainTable(tk.Canvas):
                     header=headers,
                     column_widths=column_widths,
                     event_data=event_data,
+                    mod_event_boxes=False,
                 )
-        self.deselect("all", redraw=False)
-        if event_data["cells"]["table"] or event_data["added"]["rows"] or event_data["added"]["columns"]:
-            self.undo_stack.append(pickled_event_dict(event_data))
         if added_rows:
             selboxr = selected_r + new_data_numrows
         else:
@@ -913,6 +912,7 @@ class MainTable(tk.Canvas):
             selboxc = selected_c + new_data_numcols
         else:
             selboxc = selected_c_adjusted_new_data_numcols
+        self.deselect("all", redraw=False)
         self.create_selection_box(
             selected_r,
             selected_c,
@@ -921,6 +921,10 @@ class MainTable(tk.Canvas):
             "cells",
             run_binding=True,
         )
+        event_data["selection_boxes"] = self.get_boxes()
+        event_data["selected"] = self.selected
+        if event_data["cells"]["table"] or event_data["added"]["rows"] or event_data["added"]["columns"]:
+            self.undo_stack.append(pickled_event_dict(event_data))
         self.see(
             r=selected_r,
             c=selected_c,
@@ -4282,6 +4286,7 @@ class MainTable(tk.Canvas):
         create_selections: bool = True,
         add_row_positions: bool = True,
         push_ops: bool = True,
+        mod_event_boxes: bool = True,
     ) -> EventDataDict:
         self.saved_column_widths = {}
         saved_displayed_columns = list(self.displayed_columns)
@@ -4352,8 +4357,9 @@ class MainTable(tk.Canvas):
                     "columns",
                     run_binding=True,
                 )
-            event_data["selection_boxes"] = self.get_boxes()
-            event_data["selected"] = self.selected
+            if mod_event_boxes:
+                event_data["selection_boxes"] = self.get_boxes()
+                event_data["selected"] = self.selected
         event_data["added"]["columns"] = {
             "table": columns,
             "header": header,
@@ -4425,6 +4431,7 @@ class MainTable(tk.Canvas):
         create_selections: bool = True,
         add_col_positions: bool = True,
         push_ops: bool = True,
+        mod_event_boxes: bool = True,
     ) -> EventDataDict:
         self.saved_row_heights = {}
         saved_displayed_rows = list(self.displayed_rows)
@@ -4494,8 +4501,9 @@ class MainTable(tk.Canvas):
                     "rows",
                     run_binding=True,
                 )
-            event_data["selection_boxes"] = self.get_boxes()
-            event_data["selected"] = self.selected
+            if mod_event_boxes:
+                event_data["selection_boxes"] = self.get_boxes()
+                event_data["selected"] = self.selected
         event_data["added"]["rows"] = {
             "table": rows,
             "index": index,
