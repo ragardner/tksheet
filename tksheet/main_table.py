@@ -4331,18 +4331,20 @@ class MainTable(tk.Canvas):
         maxrn = 0
         for cn, rowdict in reversed(columns.items()):
             for rn, v in rowdict.items():
-                if rn >= len(self.data):
+                if rn < len(self.data) and cn > len(self.data[rn]):
+                    self.fix_row_len(rn, cn - 1)
+                elif rn >= len(self.data):
                     self.fix_data_len(rn, cn - 1)
                 if rn > maxrn:
                     maxrn = rn
                 self.data[rn].insert(cn, v)
         # if not hiding rows then we can extend row positions if necessary
-        if add_row_positions and self.all_rows_displayed and maxrn + 1 > len(self.row_positions) - 1:
+        if add_row_positions and self.all_rows_displayed and maxrn >= len(self.row_positions) - 1:
             default_row_height = self.get_default_row_height()
             self.set_row_positions(
                 itr=chain(
                     self.gen_row_heights(),
-                    repeat(default_row_height, len(self.row_positions) - 1, maxrn + 1),
+                    repeat(default_row_height, maxrn + 1 - (len(self.row_positions) - 1)),
                 )
             )
         if isinstance(self._headers, list) and header:
@@ -4473,11 +4475,11 @@ class MainTable(tk.Canvas):
         if isinstance(self._row_index, list) and index:
             self._row_index = insert_items(self._row_index, index, self.RI.fix_index)
         # if not hiding columns then we can extend col positions if necessary
-        if add_col_positions and self.all_columns_displayed and maxcn + 1 > len(self.col_positions) - 1:
+        if add_col_positions and self.all_columns_displayed and maxcn >= len(self.col_positions) - 1:
             self.set_col_positions(
                 itr=chain(
                     self.gen_column_widths(),
-                    repeat(self.PAR.ops.default_column_width, len(self.col_positions) - 1, maxcn + 1),
+                    repeat(self.PAR.ops.default_column_width, maxcn + 1 - (len(self.col_positions) - 1)),
                 )
             )
         if push_ops:
