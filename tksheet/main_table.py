@@ -1676,7 +1676,8 @@ class MainTable(tk.Canvas):
         elif modification["eventname"].startswith("delete"):
             event_data["eventname"] = modification["eventname"].replace("delete", "add")
 
-        if len(self.row_positions) > 1 or len(self.col_positions) > 1:
+        if not modification["eventname"].startswith("move") and (len(self.row_positions) > 1 or len(self.col_positions) > 1):
+            self.deselect("all", redraw=False)
             self.reselect_from_get_boxes(
                 modification["selection_boxes"],
                 modification["selected"],
@@ -5827,7 +5828,8 @@ class MainTable(tk.Canvas):
                     )
                     return
             # wasn't provided an item and couldn't find a box at coords so select cell
-            self.select_cell(r, c, redraw=True)
+            if r < len(self.row_positions) - 1 and c < len(self.col_positions) - 1:
+                self.select_cell(r, c, redraw=True)
 
     def set_current_to_last(self) -> None:
         if self.selection_boxes:
