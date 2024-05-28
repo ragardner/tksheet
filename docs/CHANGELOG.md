@@ -1,5 +1,6 @@
 ### Version 7.2.3
-####
+#### Fixed:
+- Fix add columns/add rows regression
 
 ### Version 7.2.2
 #### Added:
