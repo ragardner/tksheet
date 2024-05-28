@@ -4793,9 +4793,11 @@ class Sheet(tk.Frame):
                         idx += sum(1 for _ in self.RI.get_iid_descendants(cid)) + 1
             else:
                 idx = len(self.MT._row_index)
+        if values is None:
+            values = []
         self.insert_rows(
             idx=idx,
-            rows=[[self.RI.tree[iid]] + [] if values is None else values],
+            rows=[[self.RI.tree[iid]] + values],
             row_index=True,
             create_selections=create_selections,
             fill=False,
