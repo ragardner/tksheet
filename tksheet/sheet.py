@@ -4292,6 +4292,9 @@ class Sheet(tk.Frame):
         if any(k in kwargs for k in scrollbar_options_keys):
             self.set_scrollbar_options()
         self.MT.create_rc_menus()
+        if "treeview" in kwargs:
+            self.set_options(auto_resize_row_index=True, redraw=False)
+            self.index_align("w", redraw=False)
         return self.set_refresh_timer(redraw)
 
     def set_scrollbar_options(self) -> Sheet:

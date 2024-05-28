@@ -1676,7 +1676,9 @@ class MainTable(tk.Canvas):
         elif modification["eventname"].startswith("delete"):
             event_data["eventname"] = modification["eventname"].replace("delete", "add")
 
-        if not modification["eventname"].startswith("move") and (len(self.row_positions) > 1 or len(self.col_positions) > 1):
+        if not modification["eventname"].startswith("move") and (
+            len(self.row_positions) > 1 or len(self.col_positions) > 1
+        ):
             self.deselect("all", redraw=False)
             self.reselect_from_get_boxes(
                 modification["selection_boxes"],
@@ -5339,18 +5341,21 @@ class MainTable(tk.Canvas):
                         if i not in diffs:
                             heights[i] -= change
                 self.row_positions = list(accumulate(chain([0], heights)))
-        if self.PAR.ops.auto_resize_row_index is not True:
-            if can_width >= self.col_positions[-1] + self.PAR.ops.empty_horizontal and self.PAR.xscroll_showing:
-                self.PAR.xscroll.grid_forget()
-                self.PAR.xscroll_showing = False
-            elif (
-                can_width < self.col_positions[-1] + self.PAR.ops.empty_horizontal
-                and not self.PAR.xscroll_showing
-                and not self.PAR.xscroll_disabled
-                and can_height > 40
-            ):
-                self.PAR.xscroll.grid(row=2, column=0, columnspan=2, sticky="nswe")
-                self.PAR.xscroll_showing = True
+        if (
+            self.PAR.ops.auto_resize_row_index is not True
+            and can_width >= self.col_positions[-1] + self.PAR.ops.empty_horizontal
+            and self.PAR.xscroll_showing
+        ):
+            self.PAR.xscroll.grid_forget()
+            self.PAR.xscroll_showing = False
+        elif (
+            can_width < self.col_positions[-1] + self.PAR.ops.empty_horizontal
+            and not self.PAR.xscroll_showing
+            and not self.PAR.xscroll_disabled
+            and can_height > 40
+        ):
+            self.PAR.xscroll.grid(row=2, column=0, columnspan=2, sticky="nswe")
+            self.PAR.xscroll_showing = True
         if can_height >= self.row_positions[-1] + self.PAR.ops.empty_vertical and self.PAR.yscroll_showing:
             self.PAR.yscroll.grid_forget()
             self.PAR.yscroll_showing = False
