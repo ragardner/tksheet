@@ -1503,6 +1503,7 @@ class Sheet(tk.Frame):
             self.MT.deselect(redraw=False)
         if sheet_options:
             self.ops = new_sheet_options()
+            self.change_theme(redraw=False)
         if tree:
             self.RI.tree_reset()
         if tree or row_heights or column_widths:
