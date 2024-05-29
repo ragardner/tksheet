@@ -2,6 +2,9 @@
 #### Added:
 - Progress bars
 
+#### Fixed:
+- Fix resizing cursor appearing at start of header/index and causing issues if clicked
+
 ### Version 7.2.3
 #### Fixed:
 - Fix add columns/add rows not inserting at correct index when index is larger than row or data len
