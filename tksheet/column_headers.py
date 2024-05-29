@@ -1440,7 +1440,7 @@ class ColumnHeaders(tk.Canvas):
             ]
             for c in range(grid_start_col, grid_end_col):
                 draw_x = self.MT.col_positions[c]
-                if self.width_resizing_enabled:
+                if c and self.width_resizing_enabled:
                     self.visible_col_dividers[c] = (draw_x - 2, 1, draw_x + 2, yend)
                 points.extend(
                     (

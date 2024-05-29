@@ -1539,7 +1539,7 @@ class RowIndex(tk.Canvas):
             ]
             for r in range(grid_start_row, grid_end_row):
                 draw_y = self.MT.row_positions[r]
-                if self.height_resizing_enabled:
+                if r and self.height_resizing_enabled:
                     self.visible_row_dividers[r] = (1, draw_y - 2, xend, draw_y + 2)
                 points.extend(
                     (
