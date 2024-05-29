@@ -1,3 +1,6 @@
+### Version 7.2.5
+####
+
 ### Version 7.2.4
 #### Added:
 - Progress bars
