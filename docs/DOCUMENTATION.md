@@ -41,6 +41,7 @@
 - [Sheet Options and Other Functions](https://github.com/ragardner/tksheet/wiki/Version-7#sheet-options-and-other-functions)
 ---
 - [Treeview Mode](https://github.com/ragardner/tksheet/wiki/Version-7#treeview-mode)
+- [Progress Bars](https://github.com/ragardner/tksheet/wiki/Version-7#progress-bars)
 - [Tags](https://github.com/ragardner/tksheet/wiki/Version-7#tags)
 ---
 - [Example Loading Data from Excel](https://github.com/ragardner/tksheet/wiki/Version-7#example-loading-data-from-excel)
@@ -5597,6 +5598,77 @@ redraw(redraw_header: bool = True, redraw_row_index: bool = True) -> Sheet
 # **Treeview Mode**
 
 This is a work in progress and still being tested and changed.
+
+---
+# **Progress Bars**
+
+Progress bars can be created for individual cells. They will only update when tkinter updates.
+
+#### **Create a progress bar**
+
+```python
+create_progress_bar(
+    row: int,
+    column: int,
+    bg: str,
+    fg: str,
+    name: Hashable,
+    percent: int = 0,
+    del_when_done: bool = False,
+) -> Sheet
+```
+- `row` the row coordinate to create the bar at.
+- `column` the column coordinate to create the bar at.
+- `bg` the background color for the bar.
+- `fg` the text color for the bar.
+- `name` a name is required for easy referral to the bar later on.
+    - Names can be re-used for multiple bars.
+- `percent` the starting progress of the bar as an `int` either `0`, `100` or a number in between.
+- `del_when_done` if `True` the `Sheet` will automatically delete the progress bar once it is modified with a percent of `100` or more.
+
+___
+
+#### **Modify progress bars**
+
+```python
+progress_bar(
+    name: Hashable | None = None,
+    cell: tuple[int, int] | None = None,
+    percent: int | None = None,
+    bg: str | None = None,
+    fg: str | None = None,
+) -> Sheet
+```
+Either `name` or `cell` can be used to refer to existing progress bars:
+- `name` the name given to a progress bar, or multiple progress bars.
+    - If this parameter is used then `cell` will not be used.
+    - Will modify all progress bars with the given name.
+- `cell` (`tuple[int, int]`) a tuple of two `int`s representing the progress bars location, `(row, column)`.
+    - Can only refer to one progress bar.
+
+Values that can be modified:
+- `bg` the background color for the bar, leave as `None` for no change.
+- `fg` the text color for the bar, leave as `None` for no change.
+- `percent` the progress of the bar as an `int` either `0`, `100` or a number in between, leave as `None` for no change.
+
+___
+
+#### **Delete progress bars**
+
+Note that this will delete the progress bars data from the Sheet as well.
+
+```python
+del_progress_bar(
+    name: Hashable | None = None,
+    cell: tuple[int, int] | None = None,
+) -> Sheet
+```
+Either `name` or `cell` can be used to refer to existing progress bars:
+- `name` the name given to a progress bar, or multiple progress bars.
+    - Will delete all progress bars with the given name.
+    - If this parameter is used then `cell` will not be used.
+- `cell` (`tuple[int, int]`) a tuple of two `int`s representing the progress bars location, `(row, column)`.
+    - Can only refer to one progress bar.
 
 ---
 # **Tags**

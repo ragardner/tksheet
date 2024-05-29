@@ -36,7 +36,6 @@ Highlight = namedtuple(
 DrawnItem = namedtuple("DrawnItem", "iid showing")
 TextCfg = namedtuple("TextCfg", "txt tf font align")
 DraggedRowColumn = namedtuple("DraggedRowColumn", "dragged to_move")
-ProgressBar = namedtuple("ProgressBar", "bg fg pc name")
 
 
 def num2alpha(n: int) -> str | None:
@@ -470,3 +469,31 @@ Selected = namedtuple(
         None,
     ),
 )
+
+
+class ProgressBar:
+    __slots__ = ("bg", "fg", "name", "percent", "del_when_done")
+
+    def __init__(self, bg: str, fg: str, name: Hashable, percent: int, del_when_done: bool) -> None:
+        self.bg = bg
+        self.fg = fg
+        self.name = name
+        self.percent = percent
+        self.del_when_done = del_when_done
+
+    def __len__(self):
+        return 2
+
+    def __getitem__(self, key: Hashable) -> object:
+        if key == 0:
+            return self.bg
+        elif key == 1:
+            return self.fg
+        elif key == 2:
+            return self.name
+        elif key == 3:
+            return self.percent
+        elif key == 4:
+            return self.del_when_done
+        else:
+            return self.__getattribute__(key)

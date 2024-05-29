@@ -1,5 +1,5 @@
 <p align="center" width="100%">
-    <img width="33%" src="https://github.com/ragardner/tksheet/assets/26602401/4124c3ce-cf62-4925-9158-c5bdf712765b"> 
+    <img width="33%" src="https://github.com/ragardner/tksheet/assets/26602401/4124c3ce-cf62-4925-9158-c5bdf712765b">
 </p>
 
 # <div align="center">tksheet - python tkinter table widget</div>
@@ -40,7 +40,7 @@ This library is maintained with the help of **[others](https://github.com/ragard
 - Expand row heights and column widths
 - Change fonts and font size (not for individual cells)
 - Change any colors in the sheet
-- Create an unlimited number of high performance dropdown and check boxes
+- Dropdowns, check boxes, progress bars
 - [Hide rows and/or columns](https://github.com/ragardner/tksheet/wiki/Version-7#example-header-dropdown-boxes-and-row-filtering)
 - Left `"w"`, Center `"center"` or Right `"e"` text alignment for any cell/row/column
 

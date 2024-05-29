@@ -3,7 +3,13 @@ from __future__ import annotations
 import tkinter as tk
 from bisect import bisect_left
 from collections import defaultdict, deque
-from collections.abc import Callable, Generator, Iterator, Sequence
+from collections.abc import (
+    Callable,
+    Generator,
+    Hashable,
+    Iterator,
+    Sequence,
+)
 from itertools import accumulate, chain, islice, product, repeat
 from timeit import default_timer
 from tkinter import ttk
@@ -47,6 +53,7 @@ from .other_classes import (
     FontTuple,
     GeneratedMouseEvent,
     Node,
+    ProgressBar,
     Selected,
     SelectionBox,
     Span,
@@ -4445,6 +4452,60 @@ class Sheet(tk.Frame):
 
     refresh = redraw
 
+    # Progress Bars
+
+    def create_progress_bar(
+        self,
+        row: int,
+        column: int,
+        bg: str,
+        fg: str,
+        name: Hashable,
+        percent: int = 0,
+        del_when_done: bool = False,
+    ) -> Sheet:
+        self.MT.progress_bars[(row, column)] = ProgressBar(
+            bg=bg,
+            fg=fg,
+            name=name,
+            percent=percent,
+            del_when_done=del_when_done,
+        )
+        return self.set_refresh_timer()
+
+    def progress_bar(
+        self,
+        name: Hashable | None = None,
+        cell: tuple[int, int] | None = None,
+        percent: int | None = None,
+        bg: str | None = None,
+        fg: str | None = None,
+    ) -> Sheet:
+        if name is not None:
+            bars = (bar for bar in self.MT.progress_bars.values() if bar.name == name)
+        elif cell is not None:
+            bars = (self.MT.progress_bars[cell],)
+        for bar in bars:
+            if isinstance(percent, int):
+                bar.percent = percent
+            if isinstance(bg, str):
+                bar.bg = bg
+            if isinstance(fg, str):
+                bar.fg = fg
+        return self.set_refresh_timer()
+
+    def del_progress_bar(
+        self,
+        name: Hashable | None = None,
+        cell: tuple[int, int] | None = None,
+    ) -> Sheet:
+        if name is not None:
+            for cell in tuple(cell for cell, bar in self.MT.progress_bars.items() if bar.name == name):
+                del self.MT.progress_bars[cell]
+        elif cell is not None:
+            del self.MT.progress_bars[cell]
+        return self.set_refresh_timer()
+
     # Tags
 
     def tag(
@@ -4685,7 +4746,7 @@ class Sheet(tk.Frame):
                 redraw=False,
                 deselect_all=False,
             )
-        return self.set_refresh_timer(True)
+        return self.set_refresh_timer()
 
     def _tree_open(self, items: set[str]) -> list[int]:
         """
@@ -4920,8 +4981,7 @@ class Sheet(tk.Frame):
             if self.RI.tree[iid].parent and len(self.RI.tree[iid].parent.children) == 1:
                 self.RI.tree_open_ids.discard(self.RI.tree[iid].parent.iid)
             del self.RI.tree[iid]
-        self.set_refresh_timer(True)
-        return self
+        return self.set_refresh_timer()
 
     def set_children(self, parent: str, *newchildren) -> Sheet:
         """
@@ -5010,8 +5070,7 @@ class Sheet(tk.Frame):
         if parent and (parent not in self.RI.tree_open_ids or not self.item_displayed(parent)):
             self.hide_rows(set(mapping.values()), data_indexes=True)
         self.show_rows(to_show)
-        self.set_refresh_timer(True)
-        return self
+        return self.set_refresh_timer()
 
     reattach = move
 

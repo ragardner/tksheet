@@ -84,6 +84,7 @@ from .other_classes import (
     EventDataDict,
     FontTuple,
     Loc,
+    ProgressBar,
     Selected,
     SelectionBox,
     TextEditorStorage,
@@ -165,6 +166,7 @@ class MainTable(tk.Canvas):
         self.col_options = {}
         self.row_options = {}
         self.purge_undo_and_redo_stack()
+        self.progress_bars = {}
 
         self.extra_table_rc_menu_funcs = {}
         self.extra_index_rc_menu_funcs = {}
@@ -1102,6 +1104,7 @@ class MainTable(tk.Canvas):
                 tags: {(k[0], full_new_idxs[k[1]]) for k in tagged} for tags, tagged in self.tagged_cells.items()
             }
             self.cell_options = {(k[0], full_new_idxs[k[1]]): v for k, v in self.cell_options.items()}
+            self.progress_bars = {(k[0], full_new_idxs[k[1]]): v for k, v in self.progress_bars.items()}
             self.col_options = {full_new_idxs[k]: v for k, v in self.col_options.items()}
             self.tagged_columns = {
                 tags: {full_new_idxs[k] for k in tagged} for tags, tagged in self.tagged_columns.items()
@@ -1341,6 +1344,7 @@ class MainTable(tk.Canvas):
                 tags: {(full_new_idxs[k[0]], k[1]) for k in tagged} for tags, tagged in self.tagged_cells.items()
             }
             self.cell_options = {(full_new_idxs[k[0]], k[1]): v for k, v in self.cell_options.items()}
+            self.progress_bars = {(full_new_idxs[k[0]], k[1]): v for k, v in self.progress_bars.items()}
             self.tagged_rows = {tags: {full_new_idxs[k] for k in tagged} for tags, tagged in self.tagged_rows.items()}
             self.row_options = {full_new_idxs[k]: v for k, v in self.row_options.items()}
             self.RI.cell_options = {full_new_idxs[k]: v for k, v in self.RI.cell_options.items()}
@@ -3981,6 +3985,9 @@ class MainTable(tk.Canvas):
         self.cell_options = {
             (r, c if not (num := bisect_right(cols, c)) else c + num): v for (r, c), v in self.cell_options.items()
         }
+        self.progress_bars = {
+            (r, c if not (num := bisect_right(cols, c)) else c + num): v for (r, c), v in self.progress_bars.items()
+        }
         self.tagged_columns = {
             tags: {c if not (num := bisect_right(cols, c)) else c + num for c in tagged}
             for tags, tagged in self.tagged_columns.items()
@@ -4049,6 +4056,9 @@ class MainTable(tk.Canvas):
         }
         self.cell_options = {
             (r if not (num := bisect_right(rows, r)) else r + num, c): v for (r, c), v in self.cell_options.items()
+        }
+        self.progress_bars = {
+            (r if not (num := bisect_right(rows, r)) else r + num, c): v for (r, c), v in self.progress_bars.items()
         }
         self.tagged_rows = {
             tags: {r if not (num := bisect_right(rows, r)) else r + num for r in tagged}
@@ -4139,6 +4149,14 @@ class MainTable(tk.Canvas):
             for (r, c), v in self.cell_options.items()
             if c not in to_del
         }
+        self.progress_bars = {
+            (
+                r,
+                c if not (num := bisect_left(to_bis, c)) else c - num,
+            ): v
+            for (r, c), v in self.progress_bars.items()
+            if c not in to_del
+        }
         self.tagged_columns = {
             tags: {c if not (num := bisect_left(to_bis, c)) else c - num for c in tagged if c not in to_del}
             for tags, tagged in self.tagged_columns.items()
@@ -4217,6 +4235,14 @@ class MainTable(tk.Canvas):
                 c,
             ): v
             for (r, c), v in self.cell_options.items()
+            if r not in to_del
+        }
+        self.progress_bars = {
+            (
+                r if not (num := bisect_left(to_bis, r)) else r - num,
+                c,
+            ): v
+            for (r, c), v in self.progress_bars.items()
             if r not in to_del
         }
         self.tagged_rows = {
@@ -5059,7 +5085,10 @@ class MainTable(tk.Canvas):
         can_width: int | None,
     ) -> str:
         redrawn = False
-        kwargs = self.get_cell_kwargs(datarn, datacn, key="highlight")
+        if (datarn, datacn) in self.progress_bars:
+            kwargs = self.progress_bars[(datarn, datacn)]
+        else:
+            kwargs = self.get_cell_kwargs(datarn, datacn, key="highlight")
         if kwargs:
             if kwargs[0] is not None:
                 c_1 = kwargs[0] if kwargs[0].startswith("#") else color_map[kwargs[0]]
@@ -5104,11 +5133,12 @@ class MainTable(tk.Canvas):
                 if kwargs[0] is not None:
                     fill = kwargs[0]
             if kwargs[0] is not None:
-                redrawn = self.redraw_highlight(
-                    fc + 1,
-                    fr + 1,
-                    sc,
-                    sr,
+                highlight_fn = partial(
+                    self.redraw_highlight,
+                    x1=fc + 1,
+                    y1=fr + 1,
+                    x2=sc,
+                    y2=sr,
                     fill=fill,
                     outline=(
                         self.PAR.ops.table_fg
@@ -5116,8 +5146,20 @@ class MainTable(tk.Canvas):
                         else ""
                     ),
                     tag="hi",
-                    can_width=can_width if (len(kwargs) > 2 and kwargs[2]) else None,
                 )
+                if isinstance(kwargs, ProgressBar):
+                    if kwargs.del_when_done and kwargs.percent >= 100:
+                        del self.progress_bars[(datarn, datacn)]
+                    else:
+                        redrawn = highlight_fn(
+                            can_width=None,
+                            pc=kwargs.percent,
+                        )
+                else:
+                    redrawn = highlight_fn(
+                        can_width=can_width if (len(kwargs) > 2 and kwargs[2]) else None,
+                        pc=None,
+                    )
         elif not kwargs:
             if "cells" in selections and (r, c) in selections["cells"]:
                 tf = self.PAR.ops.table_selected_cells_fg
@@ -5130,13 +5172,15 @@ class MainTable(tk.Canvas):
         return tf, redrawn
 
     def redraw_highlight(self, x1, y1, x2, y2, fill, outline, tag, can_width=None, pc=None):
-        if not is_type_int(pc) or pc >= 100 or pc <= 0:
+        if not is_type_int(pc) or pc >= 100:
             coords = (
                 x1 - 1 if outline else x1,
                 y1 - 1 if outline else y1,
                 x2 if can_width is None else x2 + can_width,
                 y2,
             )
+        elif pc <= 0:
+            coords = (x1, y1, x1, y2)
         else:
             coords = (x1, y1, (x2 - x1) * (pc / 100), y2)
         if self.hidd_high:
