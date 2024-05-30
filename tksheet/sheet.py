@@ -3052,6 +3052,13 @@ class Sheet(tk.Frame):
                 key=lambda t: t[1],
             )
         return self.MT.get_selected_cells(get_rows=get_rows, get_cols=get_columns)
+    
+    def gen_selected_cells(
+        self,
+        get_rows: bool = False,
+        get_columns: bool = False,
+    ) -> Generator[tuple[int, int]]:
+        yield from self.MT.gen_selected_cells(get_rows=get_rows, get_cols=get_columns)
 
     def get_all_selection_boxes(self) -> tuple[tuple[int, int, int, int]]:
         return self.MT.get_all_selection_boxes()

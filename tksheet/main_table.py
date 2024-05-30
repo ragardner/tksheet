@@ -6377,6 +6377,18 @@ class MainTable(tk.Canvas):
             for r in range(box.coords.from_r, box.coords.upto_r)
             for c in range(box.coords.from_c, box.coords.upto_c)
         }
+        
+    def gen_selected_cells(
+        self,
+        get_rows: bool = False,
+        get_cols: bool = False,
+    ) -> Generator[tuple[int, int]]:
+        yield from (
+            (r, c)
+            for item, box in self.get_selection_items(rows=get_rows, columns=get_cols)
+            for r in range(box.coords.from_r, box.coords.upto_r)
+            for c in range(box.coords.from_c, box.coords.upto_c)
+        )
 
     def get_all_selection_boxes(self) -> tuple[tuple[int, int, int, int]]:
         return tuple(box.coords for item, box in self.get_selection_items())
