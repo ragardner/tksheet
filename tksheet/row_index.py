@@ -2488,6 +2488,11 @@ class RowIndex(tk.Canvas):
             ):
                 yield from self.get_iid_descendants(cnode.iid, check_open)
 
+    def items_parent(self, iid: str) -> str:
+        if self.tree[iid].parent:
+            return self.tree[iid].parent.iid
+        return ""
+
     def gen_top_nodes(self) -> Generator[Node]:
         yield from (node for node in self.MT._row_index if node.parent == "")
 
