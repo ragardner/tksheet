@@ -2,6 +2,9 @@
 #### Fixed:
 - `StopIteration` on drag and drop
 
+#### Added:
+- `gen_selected_cells()` function
+
 ### Version 7.2.4
 #### Added:
 - Progress bars

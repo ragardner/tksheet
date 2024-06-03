@@ -3971,6 +3971,8 @@ if self.sheet.selected:
 
 ___
 
+#### **Get selected rows**
+
 ```python
 get_selected_rows(
     get_cells: bool = False,
@@ -3981,6 +3983,8 @@ get_selected_rows(
 
 ___
 
+#### **Get selected columns**
+
 ```python
 get_selected_columns(
     get_cells: bool = False,
@@ -3990,6 +3994,8 @@ get_selected_columns(
 ```
 
 ___
+
+#### **Get selected cells**
 
 ```python
 get_selected_cells(
@@ -4002,17 +4008,30 @@ get_selected_cells(
 
 ___
 
+#### **Generate selected cells**
+
+```python
+gen_selected_cells(
+    get_rows: bool = False,
+    get_columns: bool = False,
+) -> Generator[tuple[int, int]]
+```
+
+___
+
+#### **Get all selection boxes**
+
 ```python
 get_all_selection_boxes() -> tuple[tuple[int, int, int, int]]
 ```
 
 ___
 
+#### **Get all selection boxes and their types**
+
 ```python
 get_all_selection_boxes_with_types() -> list[tuple[tuple[int, int, int, int], str]]
 ```
-
-___
 
 Equivalent to `get_all_selection_boxes_with_types()` but shortened as `@property`.
 
