@@ -1,5 +1,6 @@
 ### Version 7.2.5
-####
+#### Fixed:
+- `StopIteration` on drag and drop
 
 ### Version 7.2.4
 #### Added:
