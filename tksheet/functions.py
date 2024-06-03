@@ -412,8 +412,8 @@ def consecutive_ranges(seq: Sequence[int]) -> Generator[tuple[int, int]]:
             yield seq[start], seq[-1] + 1
 
 
-def is_contiguous(seq: list[int]) -> bool:
-    itr = iter(seq)
+def is_contiguous(iterable: Iterator[int]) -> bool:
+    itr = iter(iterable)
     prev = next(itr)
     return all(i == (prev := prev + 1) for i in itr)
 
@@ -485,7 +485,6 @@ def move_elements_to(
     return move_elements_by_mapping(
         seq,
         *get_new_indexes(
-            len(seq),
             move_to,
             to_move,
             get_inverse=True,
@@ -494,19 +493,15 @@ def move_elements_to(
 
 
 def get_new_indexes(
-    seqlen: int,
     move_to: int,
     to_move: list[int],
-    keep_len: bool = True,
     get_inverse: bool = False,
 ) -> tuple[dict]:
-    # returns
-    # {old idx: new idx, ...}
-    offset = len(to_move) - 1
-    if move_to <= to_move[0]:
-        new_idxs = range(move_to, move_to + len(to_move))
-    else:
-        new_idxs = range(move_to - offset, move_to - offset + len(to_move))
+    """
+    returns {old idx: new idx, ...}
+    """
+    offset = sum(1 for i in to_move if i < move_to)
+    new_idxs = range(move_to - offset, move_to - offset + len(to_move))
     new_idxs = {old: new for old, new in zip(to_move, new_idxs)}
     if get_inverse:
         return new_idxs, dict(zip(new_idxs.values(), new_idxs))

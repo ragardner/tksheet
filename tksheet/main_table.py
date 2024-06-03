@@ -996,18 +996,15 @@ class MainTable(tk.Canvas):
         data_indexes: bool = False,
     ) -> tuple[dict[int, int], dict[int, int], int, dict[int, int]]:
         if not data_indexes or self.all_columns_displayed:
-            disp_new_idxs = get_new_indexes(
-                seqlen=len(self.col_positions) - 1,
-                move_to=move_to,
-                to_move=to_move,
-            )
+            disp_new_idxs = get_new_indexes(move_to=move_to, to_move=to_move)
         else:
             disp_new_idxs = {}
-        totalcols = self.equalize_data_row_lengths(at_least_cols=move_to + 1)
-        if self.all_columns_displayed or data_indexes:
-            data_new_idxs = get_new_indexes(seqlen=totalcols, move_to=move_to, to_move=to_move)
-        elif not self.all_columns_displayed and not data_indexes:
-            data_new_idxs = get_new_indexes(seqlen=len(self.displayed_columns), move_to=move_to, to_move=to_move)
+        if not self.all_columns_displayed and not data_indexes:
+            totalcols = self.equalize_data_row_lengths(at_least_cols=self.datacn(move_to) + 1)
+        else:
+            totalcols = self.equalize_data_row_lengths(at_least_cols=move_to + 1)
+        data_new_idxs = get_new_indexes(move_to=move_to, to_move=to_move)
+        if not self.all_columns_displayed and not data_indexes:
             moved = {self.displayed_columns[i] for i in to_move}
             data_new_idxs = dict(
                 filter(
@@ -1233,22 +1230,13 @@ class MainTable(tk.Canvas):
         data_indexes: bool = False,
     ) -> tuple[dict[int, int], dict[int, int], int, dict[int, int]]:
         if not data_indexes or self.all_rows_displayed:
-            disp_new_idxs = get_new_indexes(
-                seqlen=len(self.row_positions) - 1,
-                move_to=move_to,
-                to_move=to_move,
-            )
+            disp_new_idxs = get_new_indexes(move_to=move_to, to_move=to_move)
         else:
             disp_new_idxs = {}
-        self.fix_data_len(move_to)
-        totalrows = max(
-            self.total_data_rows(),
-            len(self.row_positions) - 1,
-        )
-        if self.all_rows_displayed or data_indexes:
-            data_new_idxs = get_new_indexes(seqlen=totalrows, move_to=move_to, to_move=to_move)
-        elif not self.all_rows_displayed and not data_indexes:
-            data_new_idxs = get_new_indexes(seqlen=len(self.displayed_rows), move_to=move_to, to_move=to_move)
+        self.fix_data_len(self.datarn(move_to) if not self.all_rows_displayed and not data_indexes else move_to)
+        totalrows = max(self.total_data_rows(), len(self.row_positions) - 1)
+        data_new_idxs = get_new_indexes(move_to=move_to, to_move=to_move)
+        if not self.all_rows_displayed and not data_indexes:
             moved = {self.displayed_rows[i] for i in to_move}
             data_new_idxs = dict(
                 filter(
@@ -1284,7 +1272,7 @@ class MainTable(tk.Canvas):
                 len(self.row_positions) - 1,
                 max(data_new_idxs.values(), default=0),
             )
-            self.fix_data_len(totalrows)
+            self.fix_data_len(totalrows - 1)
         if event_data is None:
             event_data = event_dict(
                 name="move_rows",
@@ -4373,7 +4361,7 @@ class MainTable(tk.Canvas):
                 create_ops=create_ops,
             )
         if create_selections:
-            self.deselect("all")
+            self.deselect("all", redraw=False)
             for boxst, boxend in consecutive_ranges(tuple(reversed(column_widths))):
                 self.create_selection_box(
                     0,
@@ -4517,7 +4505,7 @@ class MainTable(tk.Canvas):
                 create_ops=create_ops,
             )
         if create_selections:
-            self.deselect("all")
+            self.deselect("all", redraw=False)
             for boxst, boxend in consecutive_ranges(tuple(reversed(row_heights))):
                 self.create_selection_box(
                     boxst,
@@ -6377,7 +6365,7 @@ class MainTable(tk.Canvas):
             for r in range(box.coords.from_r, box.coords.upto_r)
             for c in range(box.coords.from_c, box.coords.upto_c)
         }
-        
+
     def gen_selected_cells(
         self,
         get_rows: bool = False,

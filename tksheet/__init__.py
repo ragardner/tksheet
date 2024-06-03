@@ -53,6 +53,7 @@ from .functions import (
     get_new_indexes,
     get_seq_without_gaps_at_index,
     insert_items,
+    is_contiguous,
     is_iterable,
     move_elements_by_mapping,
     move_elements_to,

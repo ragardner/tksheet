@@ -2488,6 +2488,9 @@ class RowIndex(tk.Canvas):
             ):
                 yield from self.get_iid_descendants(cnode.iid, check_open)
 
+    def gen_top_nodes(self) -> Generator[Node]:
+        yield from (node for node in self.MT._row_index if node.parent == "")
+
     def get_treeview_indent(self, iid: str) -> int:
         if isinstance(self.PAR.ops.treeview_indent, str):
             indent = self.MT.index_txt_width * int(self.PAR.ops.treeview_indent)
