@@ -4,6 +4,7 @@
 
 #### Added:
 - `gen_selected_cells()` function
+- `is_contiguous` to `tksheet` namespace
 
 ### Version 7.2.4
 #### Added:
