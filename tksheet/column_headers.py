@@ -847,8 +847,10 @@ class ColumnHeaders(tk.Canvas):
                     and is_contiguous(self.dragged_col.to_move)
                 )
             ):
-                if c >= len(self.MT.col_positions) - 1:
-                    c -= 1
+                if c > self.dragged_col.to_move[-1]:
+                    c += 1
+                if c > len(self.MT.col_positions) - 1:
+                    c = len(self.MT.col_positions) - 1
                 event_data = event_dict(
                     name="move_columns",
                     sheet=self.PAR.name,
@@ -1010,7 +1012,9 @@ class ColumnHeaders(tk.Canvas):
         txt = self.get_valid_cell_data_as_str(datacn, fix=False)
         if txt:
             self.MT.txt_measure_canvas.itemconfig(
-                self.MT.txt_measure_canvas_text, text=txt, font=self.PAR.ops.header_font
+                self.MT.txt_measure_canvas_text,
+                text=txt,
+                font=self.PAR.ops.header_font,
             )
             b = self.MT.txt_measure_canvas.bbox(self.MT.txt_measure_canvas_text)
             w = b[2] - b[0] + 7

@@ -846,8 +846,10 @@ class RowIndex(tk.Canvas):
                     and is_contiguous(self.dragged_row.to_move)
                 )
             ):
-                if r >= len(self.MT.row_positions) - 1:
-                    r -= 1
+                if r > self.dragged_row.to_move[-1]:
+                    r += 1
+                if r > len(self.MT.row_positions) - 1:
+                    r = len(self.MT.row_positions) - 1
                 event_data = event_dict(
                     name="move_rows",
                     sheet=self.PAR.name,

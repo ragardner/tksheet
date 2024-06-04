@@ -3362,7 +3362,7 @@ class Sheet(tk.Frame):
         width: int | None = None,
         slim: bool = False,
     ) -> tuple[list[float], list[float]]:
-        self.MT.set_all_cell_sizes_to_text(w=width, slim=slim)
+        self.MT.set_all_cell_sizes_to_text(width=width, slim=slim)
         self.set_refresh_timer(redraw)
         return self.MT.row_positions, self.MT.col_positions
 

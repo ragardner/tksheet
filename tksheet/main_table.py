@@ -999,10 +999,11 @@ class MainTable(tk.Canvas):
             disp_new_idxs = get_new_indexes(move_to=move_to, to_move=to_move)
         else:
             disp_new_idxs = {}
+        # at_least_cols should not be len in this case as move_to can be len
         if not self.all_columns_displayed and not data_indexes:
-            totalcols = self.equalize_data_row_lengths(at_least_cols=self.datacn(move_to) + 1)
+            totalcols = self.equalize_data_row_lengths(at_least_cols=self.datacn(move_to))
         else:
-            totalcols = self.equalize_data_row_lengths(at_least_cols=move_to + 1)
+            totalcols = self.equalize_data_row_lengths(at_least_cols=move_to)
         data_new_idxs = get_new_indexes(move_to=move_to, to_move=to_move)
         if not self.all_columns_displayed and not data_indexes:
             moved = {self.displayed_columns[i] for i in to_move}
@@ -1233,7 +1234,12 @@ class MainTable(tk.Canvas):
             disp_new_idxs = get_new_indexes(move_to=move_to, to_move=to_move)
         else:
             disp_new_idxs = {}
-        self.fix_data_len(self.datarn(move_to) if not self.all_rows_displayed and not data_indexes else move_to)
+        # move_to can be len and fix_data_len() takes index so - 1
+        if not self.all_rows_displayed and not data_indexes:
+            fix_len = self.datarn(move_to) - 1
+        else:
+            fix_len = move_to - 1
+        self.fix_data_len(fix_len)
         totalrows = max(self.total_data_rows(), len(self.row_positions) - 1)
         data_new_idxs = get_new_indexes(move_to=move_to, to_move=to_move)
         if not self.all_rows_displayed and not data_indexes:
@@ -3691,10 +3697,9 @@ class MainTable(tk.Canvas):
             else:
                 return False
 
-    def set_all_cell_sizes_to_text(self, w: int | None = None, slim: bool = False) -> tuple[list[float], list[float]]:
+    def set_all_cell_sizes_to_text(self, width: int | None = None, slim: bool = False) -> tuple[list[float], list[float]]:
         min_column_width = int(self.min_column_width)
         min_rh = int(self.min_row_height)
-        w = min_column_width if w is None else w
         h = min_rh
         rhs = defaultdict(lambda: int(min_rh))
         cws = []
@@ -3724,6 +3729,7 @@ class MainTable(tk.Canvas):
                     rhs[datarn] = h
         added_w_space = 1 if slim else 7
         for datacn in itercols:
+            w = min_column_width if width is None else width
             if (hw := self.CH.get_cell_dimensions(datacn)[0]) > w:
                 w = hw
             else:

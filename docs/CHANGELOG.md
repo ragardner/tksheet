@@ -1,3 +1,11 @@
+### Version 7.2.6
+#### Fixed:
+- Drag and drop incorrect drop index
+- `set_all_cell_sizes_to_text()` incorrect widths
+
+#### Changed:
+- Functions that move rows/columns such as `move_rows()`/`move_columns()` have had their move to indexes changed slightly, you may need to check yours still work as intended if using these functions
+
 ### Version 7.2.5
 #### Fixed:
 - `StopIteration` on drag and drop
