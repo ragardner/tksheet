@@ -1217,6 +1217,7 @@ class MainTable(tk.Canvas):
             max(map(max, self.tagged_columns.values()), default=maxidx),
             max((d.from_c for d in self.named_spans.values() if isinstance(d.from_c, int)), default=maxidx),
             max((d.upto_c for d in self.named_spans.values() if isinstance(d.upto_c, int)), default=maxidx),
+            self.displayed_columns[-1] if self.displayed_columns else maxidx,
         )
 
     def get_args_for_move_rows(
@@ -1446,6 +1447,7 @@ class MainTable(tk.Canvas):
             max(map(max, self.tagged_rows.values()), default=maxidx),
             max((d.from_r for d in self.named_spans.values() if isinstance(d.from_r, int)), default=maxidx),
             max((d.upto_r for d in self.named_spans.values() if isinstance(d.upto_r, int)), default=maxidx),
+            self.displayed_rows[-1] if self.displayed_rows else maxidx,
         )
 
     def get_full_new_idxs(
