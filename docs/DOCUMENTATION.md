@@ -911,12 +911,14 @@ Keys:
         - `"data"` will be a `dict` where the keys are the old data indexes of the rows and the values are the data indexes they have moved to.
         - `"displayed"` will be a `dict` where the keys are the old displayed indexes of the rows and the values are the displayed indexes they have moved to.
         - If no rows have been moved the `dict` under `["moved"]["rows"]` will be empty.
+        - Note that if there are hidden rows the values for `"data"` will include all currently displayed row indexes and their new locations. If required and available, the values under `"displayed"` include only the directly moved rows, convert to data indexes using `Sheet.data_r()`.
     - For events `"begin_move_rows"` the point where rows will be moved to will be under the `event_data` key `"value"`.
 - Key **`["moved"]["columns"]`** if any columns have been moved by dragging and dropping or undoing/redoing of dragging and dropping columns this will be a `dict` with the following keys:
     - `{"data": {old data index: new data index, ...}, "displayed": {old displayed index: new displayed index, ...}}`
         - `"data"` will be a `dict` where the keys are the old data indexes of the columns and the values are the data indexes they have moved to.
         - `"displayed"` will be a `dict` where the keys are the old displayed indexes of the columns and the values are the displayed indexes they have moved to.
         - If no columns have been moved the `dict` under `["moved"]["columns"]` will be empty.
+        - Note that if there are hidden columns the values for `"data"` will include all currently displayed column indexes and their new locations. If required and available, the values under `"displayed"` include only the directly moved columns, convert to data indexes using `Sheet.data_c()`.
     - For events `"begin_move_columns"` the point where columns will be moved to will be under the `event_data` key `"value"`.
 - Key **`["added"]["rows"]`** if any rows have been added by the inbuilt popup menu insert rows or by a paste which expands the sheet then this will be a `dict` with the following keys:
     - `{"data_index": int, "displayed_index": int, "num": int, "displayed": []}`
