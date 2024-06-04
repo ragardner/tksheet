@@ -1,3 +1,6 @@
+### Version 7.2.7
+####
+
 ### Version 7.2.6
 #### Fixed:
 - Drag and drop incorrect drop index
