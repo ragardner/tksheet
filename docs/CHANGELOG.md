@@ -1,5 +1,11 @@
 ### Version 7.2.7
-####
+#### Fixed:
+- [230](https://github.com/ragardner/tksheet/issues/230)
+- Incorrect rows/columns after move with hidden rows/columns
+
+#### Changed:
+- Event data for moving rows/columns with hidden rows/columns e.g. under `event.moved.rows.data` now returns not just the moved rows/columns but all new row/column indexes for the displayed rows/columns. e.g. Use `event.moved.rows.displayed` with `Sheet.data_r()`/`Sheet.data_c()` to find only the originally moved rows/columns
+- Moving rows/columns with hidden rows/columns will only modify these indexes if `move_data` parameter is `True`, default is `True`
 
 ### Version 7.2.6
 #### Fixed:

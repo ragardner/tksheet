@@ -1000,25 +1000,21 @@ class MainTable(tk.Canvas):
         else:
             disp_new_idxs = {}
         # at_least_cols should not be len in this case as move_to can be len
+        fix_len = (move_to - 1) if move_to else move_to
         if not self.all_columns_displayed and not data_indexes:
-            totalcols = self.equalize_data_row_lengths(at_least_cols=self.datacn(move_to))
-        else:
-            totalcols = self.equalize_data_row_lengths(at_least_cols=move_to)
+            fix_len = self.datacn(fix_len)
+        totalcols = self.equalize_data_row_lengths(at_least_cols=fix_len)
         data_new_idxs = get_new_indexes(move_to=move_to, to_move=to_move)
         if not self.all_columns_displayed and not data_indexes:
-            moved = {self.displayed_columns[i] for i in to_move}
             data_new_idxs = dict(
-                filter(
-                    lambda tup: tup[0] in moved,
-                    zip(
-                        move_elements_by_mapping(
-                            self.displayed_columns,
-                            data_new_idxs,
-                            dict(zip(data_new_idxs.values(), data_new_idxs)),
-                        ),
+                zip(
+                    move_elements_by_mapping(
                         self.displayed_columns,
+                        data_new_idxs,
+                        dict(zip(data_new_idxs.values(), data_new_idxs)),
                     ),
-                )
+                    self.displayed_columns,
+                ),
             )
         return data_new_idxs, dict(zip(data_new_idxs.values(), data_new_idxs)), totalcols, disp_new_idxs
 
@@ -1108,6 +1104,7 @@ class MainTable(tk.Canvas):
                 tags: {full_new_idxs[k] for k in tagged} for tags, tagged in self.tagged_columns.items()
             }
             self.CH.cell_options = {full_new_idxs[k]: v for k, v in self.CH.cell_options.items()}
+            self.displayed_columns = sorted(full_new_idxs[k] for k in self.displayed_columns)
             if self.named_spans:
                 totalrows = self.total_data_rows()
                 new_ops = self.PAR.create_options_from_span
@@ -1206,8 +1203,6 @@ class MainTable(tk.Canvas):
                                         del self.cell_options[(r, full_new_idxs[k])][span["type_"]]
                     # finally, change the span coords
                     span["from_c"], span["upto_c"] = newfrom, newupto
-            if data_indexes:
-                self.displayed_columns = sorted(full_new_idxs[k] for k in self.displayed_columns)
         return data_new_idxs, disp_new_idxs, event_data
 
     def get_max_column_idx(self, maxidx: int | None = None) -> int:
@@ -1235,27 +1230,22 @@ class MainTable(tk.Canvas):
         else:
             disp_new_idxs = {}
         # move_to can be len and fix_data_len() takes index so - 1
+        fix_len = (move_to - 1) if move_to else move_to
         if not self.all_rows_displayed and not data_indexes:
-            fix_len = self.datarn(move_to) - 1
-        else:
-            fix_len = move_to - 1
+            fix_len = self.datarn(fix_len)
         self.fix_data_len(fix_len)
         totalrows = max(self.total_data_rows(), len(self.row_positions) - 1)
         data_new_idxs = get_new_indexes(move_to=move_to, to_move=to_move)
         if not self.all_rows_displayed and not data_indexes:
-            moved = {self.displayed_rows[i] for i in to_move}
             data_new_idxs = dict(
-                filter(
-                    lambda tup: tup[0] in moved,
-                    zip(
-                        move_elements_by_mapping(
-                            self.displayed_rows,
-                            data_new_idxs,
-                            dict(zip(data_new_idxs.values(), data_new_idxs)),
-                        ),
+                zip(
+                    move_elements_by_mapping(
                         self.displayed_rows,
+                        data_new_idxs,
+                        dict(zip(data_new_idxs.values(), data_new_idxs)),
                     ),
-                )
+                    self.displayed_rows,
+                ),
             )
         return data_new_idxs, dict(zip(data_new_idxs.values(), data_new_idxs)), totalrows, disp_new_idxs
 
@@ -1343,6 +1333,7 @@ class MainTable(tk.Canvas):
             self.row_options = {full_new_idxs[k]: v for k, v in self.row_options.items()}
             self.RI.cell_options = {full_new_idxs[k]: v for k, v in self.RI.cell_options.items()}
             self.RI.tree_rns = {v: full_new_idxs[k] for v, k in self.RI.tree_rns.items()}
+            self.displayed_rows = sorted(full_new_idxs[k] for k in self.displayed_rows)
             if self.named_spans:
                 totalcols = self.total_data_cols()
                 new_ops = self.PAR.create_options_from_span
@@ -1441,8 +1432,6 @@ class MainTable(tk.Canvas):
                                         del self.cell_options[(full_new_idxs[k], c)][span["type_"]]
                     # finally, change the span coords
                     span["from_r"], span["upto_r"] = newfrom, newupto
-            if data_indexes:
-                self.displayed_rows = sorted(full_new_idxs[k] for k in self.displayed_rows)
         return data_new_idxs, disp_new_idxs, event_data
 
     def get_max_row_idx(self, maxidx: int | None = None) -> int:
@@ -3697,7 +3686,11 @@ class MainTable(tk.Canvas):
             else:
                 return False
 
-    def set_all_cell_sizes_to_text(self, width: int | None = None, slim: bool = False) -> tuple[list[float], list[float]]:
+    def set_all_cell_sizes_to_text(
+        self,
+        width: int | None = None,
+        slim: bool = False,
+    ) -> tuple[list[float], list[float]]:
         min_column_width = int(self.min_column_width)
         min_rh = int(self.min_row_height)
         h = min_rh
