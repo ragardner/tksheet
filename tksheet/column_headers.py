@@ -946,8 +946,10 @@ class ColumnHeaders(tk.Canvas):
         run_binding_func: bool = True,
         ext: bool = False,
     ) -> int:
-        self.MT.deselect("all", redraw=False)
+        boxes_to_hide = tuple(iid for iid in self.MT.selection_boxes)
         fill_iid = self.MT.create_selection_box(0, c, len(self.MT.row_positions) - 1, c + 1, "columns", ext=ext)
+        for iid in boxes_to_hide:
+            self.MT.hide_selection_box(iid)
         if redraw:
             self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
         if run_binding_func:
@@ -1301,35 +1303,35 @@ class ColumnHeaders(tk.Canvas):
         tag: str | tuple[str],
         draw_outline: bool = True,
         draw_arrow: bool = True,
-        dd_is_open: bool = False,
+        open_: bool = False,
     ) -> None:
         if draw_outline and self.PAR.ops.show_dropdown_borders:
             self.redraw_highlight(x1 + 1, y1 + 1, x2, y2, fill="", outline=self.PAR.ops.header_fg, tag=tag)
         if draw_arrow:
             mod = (self.MT.header_txt_height - 1) if self.MT.header_txt_height % 2 else self.MT.header_txt_height
-            half_mod = mod / 2
-            qtr_mod = mod / 4
-            mid_y = (
-                (self.MT.header_first_ln_ins - 1) if self.MT.header_first_ln_ins % 2 else self.MT.header_first_ln_ins
-            )
-            if dd_is_open:
+            small_mod = int(mod / 5)
+            mid_y = floor(self.MT.min_header_height / 2)
+            if open_:
+                # up arrow
                 points = (
-                    x2 - 3 - mod,
-                    y1 + mid_y + qtr_mod,
-                    x2 - 3 - half_mod,
-                    y1 + mid_y - qtr_mod,
+                    x2 - 3 - small_mod - small_mod - small_mod - small_mod,
+                    y1 + mid_y + small_mod,
+                    x2 - 3 - small_mod - small_mod,
+                    y1 + mid_y - small_mod,
                     x2 - 3,
-                    y1 + mid_y + qtr_mod,
+                    y1 + mid_y + small_mod,
                 )
             else:
+                # down arrow
                 points = (
-                    x2 - 3 - mod,
-                    y1 + mid_y - qtr_mod,
-                    x2 - 3 - half_mod,
-                    y1 + mid_y + qtr_mod,
+                    x2 - 3 - small_mod - small_mod - small_mod - small_mod,
+                    y1 + mid_y - small_mod,
+                    x2 - 3 - small_mod - small_mod,
+                    y1 + mid_y + small_mod,
                     x2 - 3,
-                    y1 + mid_y - qtr_mod,
+                    y1 + mid_y - small_mod,
                 )
+            
             if self.hidd_dropdown:
                 t, sh = self.hidd_dropdown.popitem()
                 self.coords(t, points)
@@ -1502,7 +1504,7 @@ class ColumnHeaders(tk.Canvas):
                         tag="dd",
                         draw_outline=not dd_drawn,
                         draw_arrow=mw >= 5,
-                        dd_is_open=dd_coords == c,
+                        open_=dd_coords == c,
                     )
                 else:
                     mw = crightgridln - cleftgridln - 1
@@ -1521,7 +1523,7 @@ class ColumnHeaders(tk.Canvas):
                         tag="dd",
                         draw_outline=not dd_drawn,
                         draw_arrow=mw >= 5,
-                        dd_is_open=dd_coords == c,
+                        open_=dd_coords == c,
                     )
                 else:
                     mw = crightgridln - cleftgridln - 1
@@ -1541,7 +1543,7 @@ class ColumnHeaders(tk.Canvas):
                         tag="dd",
                         draw_outline=not dd_drawn,
                         draw_arrow=mw >= 5,
-                        dd_is_open=dd_coords == c,
+                        open_=dd_coords == c,
                     )
                 else:
                     mw = crightgridln - cleftgridln - 1
@@ -2022,7 +2024,7 @@ class ColumnHeaders(tk.Canvas):
             "height": win_h,
             "font": self.PAR.ops.header_font,
             "ops": self.PAR.ops,
-            "outline_color": self.PAR.ops.popup_menu_fg,
+            "outline_color": self.PAR.ops.header_selected_columns_bg,
             "align": self.get_cell_align(c),
             "values": kwargs["values"],
         }

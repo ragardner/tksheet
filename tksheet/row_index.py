@@ -893,7 +893,7 @@ class RowIndex(tk.Canvas):
                     self.open_cell(event)
                 elif (iid := self.event_over_tree_arrow(r, canvasy, event.x)) is not None:
                     if self.MT.selection_boxes:
-                        self.select_row(r, redraw=False)
+                        self.select_row(r, ext=True, redraw=False)
                     self.PAR.item(iid, open_=iid not in self.tree_open_ids)
             else:
                 self.mouseclick_outside_editor_or_dropdown_all_canvases(inside=True)
@@ -957,9 +957,10 @@ class RowIndex(tk.Canvas):
         run_binding_func: bool = True,
         ext: bool = False,
     ) -> int:
-        self.MT.deselect("all", redraw=False)
-        box = (r, 0, r + 1, len(self.MT.col_positions) - 1, "rows")
-        fill_iid = self.MT.create_selection_box(*box, ext=ext)
+        boxes_to_hide = tuple(iid for iid in self.MT.selection_boxes)
+        fill_iid = self.MT.create_selection_box(r, 0, r + 1, len(self.MT.col_positions) - 1, "rows", ext=ext)
+        for iid in boxes_to_hide:
+            self.MT.hide_selection_box(iid)
         if redraw:
             self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
         if run_binding_func:
@@ -1344,29 +1345,37 @@ class RowIndex(tk.Canvas):
         open_: bool = False,
     ) -> None:
         mod = (self.MT.index_txt_height - 1) if self.MT.index_txt_height % 2 else self.MT.index_txt_height
-        half_mod = mod / 2
-        qtr_mod = mod / 4
-        small_mod = int(half_mod / 4) - 1
-        mid_y = int(self.MT.min_row_height / 2)
+        small_mod = int(mod / 5)
+        mid_y = floor(self.MT.min_row_height / 2)
         # up arrow
         if open_:
             points = (
-                x1 + 2 + indent,
-                y1 + mid_y + qtr_mod,
-                x1 + 2 + half_mod + indent,
-                y1 + mid_y - qtr_mod,
-                x1 + 2 + mod + indent,
-                y1 + mid_y + qtr_mod,
+                # the left hand downward point
+                x1 + 5 + indent,
+                y1 + mid_y + small_mod,
+                
+                # the middle upward point
+                x1 + 5 + indent + small_mod + small_mod,
+                y1 + mid_y - small_mod,
+                
+                # the right hand downward point
+                x1 + 5 + indent + small_mod + small_mod + small_mod + small_mod,
+                y1 + mid_y + small_mod,
             )
         # right pointing arrow
         else:
             points = (
-                x1 + half_mod + indent,
-                y1 + mid_y - half_mod + small_mod,
-                x1 + mod + indent - small_mod,
+                # the upper point
+                x1 + 5 + indent + small_mod + small_mod,
+                y1 + mid_y - small_mod - small_mod,
+                
+                # the middle point
+                x1 + 5 + indent + small_mod + small_mod + small_mod + small_mod,
                 y1 + mid_y,
-                x1 + half_mod + indent,
-                y1 + mid_y + half_mod - small_mod,
+                
+                # the bottom point
+                x1 + 5 + indent + small_mod + small_mod,
+                y1 + mid_y + small_mod + small_mod,
             )
         if self.hidd_tree_arrow:
             t, sh = self.hidd_tree_arrow.popitem()
@@ -1404,26 +1413,27 @@ class RowIndex(tk.Canvas):
             self.redraw_highlight(x1 + 1, y1 + 1, x2, y2, fill="", outline=self.PAR.ops.index_fg, tag=tag)
         if draw_arrow:
             mod = (self.MT.index_txt_height - 1) if self.MT.index_txt_height % 2 else self.MT.index_txt_height
-            half_mod = mod / 2
-            qtr_mod = mod / 4
-            mid_y = (self.MT.index_first_ln_ins - 1) if self.MT.index_first_ln_ins % 2 else self.MT.index_first_ln_ins
+            small_mod = int(mod / 5)
+            mid_y = floor(self.MT.min_row_height / 2)
             if open_:
+                # up arrow
                 points = (
-                    x2 - 3 - mod,
-                    y1 + mid_y + qtr_mod,
-                    x2 - 3 - half_mod,
-                    y1 + mid_y - qtr_mod,
+                    x2 - 3 - small_mod - small_mod - small_mod - small_mod,
+                    y1 + mid_y + small_mod,
+                    x2 - 3 - small_mod - small_mod,
+                    y1 + mid_y - small_mod,
                     x2 - 3,
-                    y1 + mid_y + qtr_mod,
+                    y1 + mid_y + small_mod,
                 )
             else:
+                # down arrow
                 points = (
-                    x2 - 3 - mod,
-                    y1 + mid_y - qtr_mod,
-                    x2 - 3 - half_mod,
-                    y1 + mid_y + qtr_mod,
+                    x2 - 3 - small_mod - small_mod - small_mod - small_mod,
+                    y1 + mid_y - small_mod,
+                    x2 - 3 - small_mod - small_mod,
+                    y1 + mid_y + small_mod,
                     x2 - 3,
-                    y1 + mid_y - qtr_mod,
+                    y1 + mid_y - small_mod,
                 )
             if self.hidd_dropdown:
                 t, sh = self.hidd_dropdown.popitem()
@@ -1683,12 +1693,12 @@ class RowIndex(tk.Canvas):
                 iid = self.MT._row_index[datarn].iid
                 mw -= self.MT.index_txt_height
                 if align == "w":
-                    draw_x += self.MT.index_txt_height + 1
+                    draw_x += self.MT.index_txt_height + 3
                 indent = self.get_treeview_indent(iid)
                 draw_x += indent + 5
                 if self.tree[iid].children:
                     self.redraw_tree_arrow(
-                        0,
+                        2,
                         rtopgridln,
                         r=r,
                         fill=tree_arrow_fg,
@@ -2145,7 +2155,7 @@ class RowIndex(tk.Canvas):
             "height": win_h,
             "font": self.PAR.ops.index_font,
             "ops": self.PAR.ops,
-            "outline_color": self.PAR.ops.popup_menu_fg,
+            "outline_color": self.PAR.ops.index_selected_rows_bg,
             "align": self.get_cell_align(r),
             "values": kwargs["values"],
         }

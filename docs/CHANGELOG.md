@@ -1,3 +1,15 @@
+### Version 7.2.8
+#### Fixed:
+- Minor flicker when selecting a row or column
+- Top left rectangle sometimes not updating properly on change of dimensions
+
+#### Improved:
+- Dropdown triangle visuals
+
+#### Changed:
+- Top left rectangle colors
+- Dropdown box outline in index/header
+
 ### Version 7.2.7
 #### Fixed:
 - [230](https://github.com/ragardner/tksheet/issues/230)
