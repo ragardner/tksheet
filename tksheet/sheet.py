@@ -3932,8 +3932,8 @@ class Sheet(tk.Frame):
 
     @displayed_columns.setter
     def displayed_columns(self, columns: list[int]) -> Sheet:
-        self.display_columns(columns=columns, reset_col_positions=False, redraw=True)
-        return self
+        self.display_columns(columns=columns, reset_col_positions=True, redraw=False)
+        return self.set_refresh_timer()
 
     # Hiding Rows
 
@@ -4060,8 +4060,8 @@ class Sheet(tk.Frame):
 
     @displayed_rows.setter
     def displayed_rows(self, rows: list[int]) -> Sheet:
-        self.display_rows(rows=rows, reset_row_positions=False, redraw=True)
-        return self
+        self.display_rows(rows=rows, reset_row_positions=True, redraw=False)
+        return self.set_refresh_timer()
 
     # Hiding Sheet Elements
 

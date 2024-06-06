@@ -5007,6 +5007,7 @@ ___
 @property
 displayed_columns() -> list[int]
 ```
+- e.g. `columns = sheet.displayed_columns`
 
 ---
 # **Hiding Rows**
@@ -5140,6 +5141,7 @@ ___
 @property
 displayed_rows() -> list[int]
 ```
+- e.g. `rows = sheet.displayed_rows`
 
 ---
 # **Hiding Sheet Elements**

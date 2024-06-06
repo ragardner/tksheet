@@ -545,7 +545,7 @@ def rounded_box_coords(
     y1: float,
     x2: float,
     y2: float,
-    radius: int = 8,
+    radius: int = 5,
 ) -> tuple[float]:
     return (
         x1 + radius,

@@ -8,6 +8,7 @@
 #### Changed:
 - Dropdown box arrows changed back to lines as polygon triangles had issues with outlines
 - Possible slight changes to logic of `display_rows()`/`display_columns()`
+- `displayed_rows.setter`/`displayed_columns.setter` now reset row/column positions
 
 ### Version 7.2.8
 #### Fixed:

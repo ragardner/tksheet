@@ -989,7 +989,7 @@ class ColumnHeaders(tk.Canvas):
             y1,
             x2,
             y2,
-            radius=8 if self.PAR.ops.rounded_boxes else 0,
+            radius=5 if self.PAR.ops.rounded_boxes else 0,
         )
         if isinstance(iid, int):
             self.coords(iid, coords)

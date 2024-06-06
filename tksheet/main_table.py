@@ -699,6 +699,7 @@ class MainTable(tk.Canvas):
         if self.selected:
             selected_r = self.selected.box.from_r
             selected_c = self.selected.box.from_c
+            curr_coords = (self.selected.row, self.selected.column)
         elif not self.selected and not self.PAR.ops.paste_can_expand_x and not self.PAR.ops.paste_can_expand_y:
             return
         else:
@@ -711,6 +712,7 @@ class MainTable(tk.Canvas):
                     selected_c, selected_r = len(self.col_positions) - 1, 0
                 elif len(self.row_positions) > 1 and len(self.col_positions) > 1:
                     selected_c, selected_r = 0, len(self.row_positions) - 1
+                curr_coords = (selected_r, selected_c)
         try:
             data = get_data_from_clipboard(
                 widget=self,
@@ -916,13 +918,17 @@ class MainTable(tk.Canvas):
         else:
             selboxc = selected_c_adjusted_new_data_numcols
         self.deselect("all", redraw=False)
-        self.create_selection_box(
-            selected_r,
-            selected_c,
-            selboxr,
-            selboxc,
-            "cells",
-            run_binding=True,
+        self.set_currently_selected(
+            *curr_coords,
+            item=self.create_selection_box(
+                selected_r,
+                selected_c,
+                selboxr,
+                selboxc,
+                type_="cells",
+                set_current=False,
+                run_binding=True,
+            ),
         )
         event_data["selection_boxes"] = self.get_boxes()
         event_data["selected"] = self.selected
@@ -5965,7 +5971,7 @@ class MainTable(tk.Canvas):
         if not self.PAR.ops.rounded_boxes or not x2 - x1 or not y2 - y1:
             radius = 0
         else:
-            radius = 8
+            radius = 5
         coords = rounded_box_coords(
             x1,
             y1,
