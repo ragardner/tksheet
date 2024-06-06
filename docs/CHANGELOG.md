@@ -1,3 +1,14 @@
+### Version 7.2.9
+#### Fixed:
+- [232](https://github.com/ragardner/tksheet/issues/232)
+
+#### Addressed:
+- [231](https://github.com/ragardner/tksheet/issues/231)
+
+#### Changed:
+- Dropdown box arrows changed back to lines as polygon triangles had issues with outlines
+- Possible slight changes to logic of `display_rows()`/`display_columns()`
+
 ### Version 7.2.8
 #### Fixed:
 - Minor flicker when selecting a row or column

@@ -4945,8 +4945,8 @@ hide_columns(
 ) -> Sheet
 ```
 Parameters:
-- **NOTE**: `columns` (`int`) uses displayed column indexes, not data indexes. In other words the indexes of the columns displayed on the screen are the ones that are hidden, this is useful when used in conjunction with `get_selected_columns()`.
-- `data_indexes` is only applicable when there are already columns hidden. When `False` it makes the `columns` parameter indexes represent displayed columns and not the underlying Sheet data columns. When `True` the indexes represent data indexes.
+- **NOTE**: `columns` (`int`) by default uses displayed column indexes, not data indexes. In other words the indexes of the columns displayed on the screen are the ones that are hidden, this is useful when used in conjunction with `get_selected_columns()`.
+- `data_indexes` when `False` it makes the `columns` parameter indexes represent displayed columns and not the underlying Sheet data columns. When `True` the indexes represent data indexes.
 
 Example:
 ```python
@@ -4970,6 +4970,9 @@ show_columns(
 ```
 Parameters:
 - **NOTE**: `columns` (`int`) uses data column indexes, not displayed indexes. In other words the indexes of the columns which represent the underlying data are shown.
+
+Notes:
+- Will return if all columns are currently displayed (`Sheet.all_columns`).
 
 Example:
 ```python
@@ -5052,8 +5055,8 @@ hide_rows(
 ) -> Sheet
 ```
 Parameters:
-- **NOTE**: `rows` (`int`) uses displayed row indexes, not data indexes. In other words the indexes of the rows displayed on the screen are the ones that are hidden, this is useful when used in conjunction with `get_selected_rows()`.
-- `data_indexes` is only applicable when there are already rows hidden. When `False` it makes the `rows` parameter indexes represent displayed rows and not the underlying Sheet data rows. When `True` the indexes represent data indexes.
+- **NOTE**: `rows` (`int`) by default uses displayed row indexes, not data indexes. In other words the indexes of the rows displayed on the screen are the ones that are hidden, this is useful when used in conjunction with `get_selected_rows()`.
+- `data_indexes` when `False` it makes the `rows` parameter indexes represent displayed rows and not the underlying Sheet data rows. When `True` the indexes represent data indexes.
 
 Example:
 ```python
@@ -5078,6 +5081,9 @@ show_rows(
 Parameters:
 - **NOTE**: `rows` (`int`) uses data row indexes, not displayed indexes. In other words the indexes of the rows which represent the underlying data are shown.
 
+Notes:
+- Will return if all rows are currently displayed (`Sheet.all_rows`).
+
 Example:
 ```python
 # converting displayed row indexes to data indexes using data_r(r)
@@ -5095,7 +5101,7 @@ sheet.show_rows(rows)
 
 ___
 
-#### **Get all rows displayed boolean**
+#### **Get or set the all rows displayed boolean**
 
 **Get the bool**
 ```python

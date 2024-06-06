@@ -946,7 +946,7 @@ class ColumnHeaders(tk.Canvas):
         run_binding_func: bool = True,
         ext: bool = False,
     ) -> int:
-        boxes_to_hide = tuple(iid for iid in self.MT.selection_boxes)
+        boxes_to_hide = tuple(self.MT.selection_boxes)
         fill_iid = self.MT.create_selection_box(0, c, len(self.MT.row_positions) - 1, c + 1, "columns", ext=ext)
         for iid in boxes_to_hide:
             self.MT.hide_selection_box(iid)
@@ -1314,24 +1314,23 @@ class ColumnHeaders(tk.Canvas):
             if open_:
                 # up arrow
                 points = (
-                    x2 - 3 - small_mod - small_mod - small_mod - small_mod,
+                    x2 - 4 - small_mod - small_mod - small_mod - small_mod,
                     y1 + mid_y + small_mod,
-                    x2 - 3 - small_mod - small_mod,
+                    x2 - 4 - small_mod - small_mod,
                     y1 + mid_y - small_mod,
-                    x2 - 3,
+                    x2 - 4,
                     y1 + mid_y + small_mod,
                 )
             else:
                 # down arrow
                 points = (
-                    x2 - 3 - small_mod - small_mod - small_mod - small_mod,
+                    x2 - 4 - small_mod - small_mod - small_mod - small_mod,
                     y1 + mid_y - small_mod,
-                    x2 - 3 - small_mod - small_mod,
+                    x2 - 4 - small_mod - small_mod,
                     y1 + mid_y + small_mod,
-                    x2 - 3,
+                    x2 - 4,
                     y1 + mid_y - small_mod,
                 )
-            
             if self.hidd_dropdown:
                 t, sh = self.hidd_dropdown.popitem()
                 self.coords(t, points)
@@ -1341,10 +1340,13 @@ class ColumnHeaders(tk.Canvas):
                     self.itemconfig(t, fill=fill, tag=tag, state="normal")
                 self.lift(t)
             else:
-                t = self.create_polygon(
+                t = self.create_line(
                     points,
                     fill=fill,
                     tag=tag,
+                    width=2,
+                    capstyle=tk.ROUND,
+                    joinstyle=tk.BEVEL,
                 )
             self.disp_dropdown[t] = True
 

@@ -10,7 +10,14 @@ from collections.abc import (
     Iterator,
     Sequence,
 )
-from itertools import accumulate, chain, islice, product, repeat
+from itertools import (
+    accumulate,
+    chain,
+    filterfalse,
+    islice,
+    product,
+    repeat,
+)
 from timeit import default_timer
 from tkinter import ttk
 from typing import Literal
@@ -3813,7 +3820,6 @@ class Sheet(tk.Frame):
         columns: None | Literal["all"] | Iterator[int] = None,
         all_columns_displayed: None | bool = None,
         reset_col_positions: bool = True,
-        refresh: bool = False,
         redraw: bool = False,
         deselect_all: bool = True,
         **kwargs,
@@ -3828,8 +3834,9 @@ class Sheet(tk.Frame):
             reset_col_positions=reset_col_positions,
             deselect_all=deselect_all,
         )
-        if refresh or redraw:
-            self.set_refresh_timer(redraw if redraw else refresh)
+        if "refresh" in kwargs:
+            redraw = kwargs["refresh"]
+        self.set_refresh_timer(redraw)
         return res
 
     def hide_columns(
@@ -3846,7 +3853,7 @@ class Sheet(tk.Frame):
             if not columns:
                 return
         if self.MT.all_columns_displayed:
-            self.MT.displayed_columns = [c for c in range(self.MT.total_data_cols()) if c not in columns]
+            self.MT.displayed_columns = list(filterfalse(columns.__contains__, range(self.MT.total_data_cols())))
             to_pop = {c: c for c in columns}
         else:
             to_pop = {}
@@ -3876,13 +3883,18 @@ class Sheet(tk.Frame):
             self.MT.deselect(redraw=False)
         return self.set_refresh_timer(redraw)
 
-    # uses data indexes
     def show_columns(
         self,
         columns: int | Iterator[int],
         redraw: bool = True,
         deselect_all: bool = True,
     ) -> Sheet:
+        """
+        'columns' argument must be data indexes
+        Function will return without action if Sheet.all_columns
+        """
+        if self.MT.all_columns_displayed:
+            return
         if isinstance(columns, int):
             columns = [columns]
         cws = self.MT.get_column_widths()
@@ -3908,7 +3920,10 @@ class Sheet(tk.Frame):
 
     @all_columns.setter
     def all_columns(self, a: bool) -> Sheet:
-        self.MT.all_columns_displayed = a
+        self.MT.display_columns(
+            columns=None,
+            all_columns_displayed=a,
+        )
         return self
 
     @property
@@ -3933,7 +3948,6 @@ class Sheet(tk.Frame):
         rows: None | Literal["all"] | Iterator[int] = None,
         all_rows_displayed: None | bool = None,
         reset_row_positions: bool = True,
-        refresh: bool = False,
         redraw: bool = False,
         deselect_all: bool = True,
         **kwargs,
@@ -3946,8 +3960,9 @@ class Sheet(tk.Frame):
             reset_row_positions=reset_row_positions,
             deselect_all=deselect_all,
         )
-        if refresh or redraw:
-            self.set_refresh_timer(redraw if redraw else refresh)
+        if "refresh" in kwargs:
+            redraw = kwargs["refresh"]
+        self.set_refresh_timer(redraw)
         return res
 
     def hide_rows(
@@ -3965,7 +3980,7 @@ class Sheet(tk.Frame):
             if not rows:
                 return
         if self.MT.all_rows_displayed:
-            self.MT.displayed_rows = [r for r in range(self.MT.total_data_rows()) if r not in rows]
+            self.MT.displayed_rows = list(filterfalse(rows.__contains__, range(self.MT.total_data_rows())))
             to_pop = {r: r for r in rows}
         else:
             to_pop = {}
@@ -3996,13 +4011,18 @@ class Sheet(tk.Frame):
             self.MT.deselect(redraw=False)
         return self.set_refresh_timer(redraw)
 
-    # uses data indexes
     def show_rows(
         self,
         rows: int | Iterator[int],
         redraw: bool = True,
         deselect_all: bool = True,
     ) -> Sheet:
+        """
+        'rows' argument must be data indexes
+        Function will return without action if Sheet.all_rows
+        """
+        if self.MT.all_rows_displayed:
+            return
         if isinstance(rows, int):
             rows = [rows]
         rhs = self.MT.get_row_heights()
@@ -4028,7 +4048,10 @@ class Sheet(tk.Frame):
 
     @all_rows.setter
     def all_rows(self, a: bool) -> Sheet:
-        self.MT.all_rows_displayed = a
+        self.MT.display_rows(
+            rows=None,
+            all_rows_displayed=a,
+        )
         return self
 
     @property
@@ -4747,7 +4770,7 @@ class Sheet(tk.Frame):
         Closes everything else
         """
         self.hide_rows(
-            set(rn for rn in self.MT.displayed_rows if self.MT._row_index[rn].parent),
+            rows={rn for rn in self.MT.displayed_rows if self.MT._row_index[rn].parent},
             redraw=False,
             deselect_all=False,
             data_indexes=True,
@@ -4768,13 +4791,15 @@ class Sheet(tk.Frame):
         """
         to_open = []
         disp_set = set(self.MT.displayed_rows)
-        quick_rns = self.RI.tree_rns
-        quick_open_ids = self.RI.tree_open_ids
+        tree = self.RI.tree
+        rns = self.RI.tree_rns
+        open_ids = self.RI.tree_open_ids
+        descendants = self.RI.get_iid_descendants
         for item in filter(items.__contains__, self.get_children()):
-            if self.RI.tree[item].children:
-                quick_open_ids.add(item)
-                if quick_rns[item] in disp_set:
-                    to_disp = [quick_rns[did] for did in self.RI.get_iid_descendants(item, check_open=True)]
+            if tree[item].children:
+                open_ids.add(item)
+                if rns[item] in disp_set:
+                    to_disp = [rns[did] for did in descendants(item, check_open=True)]
                     for i in to_disp:
                         disp_set.add(i)
                     to_open.extend(to_disp)
@@ -4921,7 +4946,7 @@ class Sheet(tk.Frame):
                     self.RI.tree_open_ids.add(item)
                     if self.item_displayed(item):
                         self.show_rows(
-                            rows=(self.RI.tree_rns[did] for did in self.RI.get_iid_descendants(item, check_open=True)),
+                            rows=map(self.RI.tree_rns.__getitem__, self.RI.get_iid_descendants(item, check_open=True)),
                             redraw=False,
                             deselect_all=False,
                         )
@@ -4929,7 +4954,9 @@ class Sheet(tk.Frame):
                     self.RI.tree_open_ids.discard(item)
                     if self.item_displayed(item):
                         self.hide_rows(
-                            rows={self.RI.tree_rns[did] for did in self.RI.get_iid_descendants(item, check_open=True)},
+                            rows=set(
+                                map(self.RI.tree_rns.__getitem__, self.RI.get_iid_descendants(item, check_open=True))
+                            ),
                             redraw=False,
                             deselect_all=False,
                             data_indexes=True,
@@ -5106,7 +5133,8 @@ class Sheet(tk.Frame):
         if (item := item.lower()) not in self.RI.tree:
             raise ValueError(f"Item '{item}' does not exist.")
         if not self.RI.tree[item].parent:
-            return next(index for index, node in enumerate(self.RI.gen_top_nodes()) if node == self.RI.tree[item])
+            find_node = self.RI.tree[item]
+            return next(index for index, node in enumerate(self.RI.gen_top_nodes()) if node == find_node)
         return self.RI.tree[item].parent.children.index(self.RI.tree[item])
 
     def item_displayed(self, item: str) -> bool:
@@ -5128,8 +5156,11 @@ class Sheet(tk.Frame):
         if (item := item.lower()) not in self.RI.tree:
             raise ValueError(f"Item '{item}' does not exist.")
         if self.RI.tree[item].parent:
-            for iid in self.RI.get_iid_ancestors(item):
-                self.item(iid, open_=True, redraw=False)
+            self.show_rows(
+                rows=self._tree_open(list(self.RI.get_iid_ancestors(item))),
+                redraw=False,
+                deselect_all=False,
+            )
         return self.set_refresh_timer(redraw)
 
     def scroll_to_item(self, item: str, redraw=False) -> Sheet:
@@ -5151,14 +5182,15 @@ class Sheet(tk.Frame):
         Get currently selected item ids
         """
         return [
-            self.MT._row_index[self.displayed_row_to_data(rn)].iid
-            for rn in self.get_selected_rows(get_cells_as_rows=cells)
+            self.MT._row_index[self.MT.displayed_rows[rn]].iid for rn in self.get_selected_rows(get_cells_as_rows=cells)
         ]
 
     def selection_set(self, *items, redraw: bool = True) -> Sheet:
         if any(item.lower() in self.RI.tree for item in unpack(items)):
-            self.deselect(redraw=False)
+            boxes_to_hide = tuple(self.MT.selection_boxes)
             self.selection_add(*items, redraw=False)
+            for iid in boxes_to_hide:
+                self.MT.hide_selection_box(iid)
         return self.set_refresh_timer(redraw)
 
     def selection_add(self, *items, redraw: bool = True) -> Sheet:
@@ -5220,7 +5252,7 @@ class Sheet(tk.Frame):
 
     # Functions not in docs
 
-    def event_generate(self, *args, **kwargs):
+    def event_generate(self, *args, **kwargs) -> None:
         self.MT.event_generate(*args, **kwargs)
 
     def emit_event(
