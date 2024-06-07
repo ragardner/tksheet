@@ -163,17 +163,16 @@ class TopLeftRectangle(tk.Canvas):
         recreate_selection_boxes: bool = True,
     ) -> None:
         try:
-            self.update_idletasks()
-            if new_h is None:
-                h = self.winfo_height()
-            if new_w is None:
-                w = self.winfo_width()
-            if new_w:
-                self.config(width=new_w)
-                w = new_w
-            if new_h:
-                self.config(height=new_h)
+            if isinstance(new_h, int):
                 h = new_h
+                self.config(height=h)
+            else:
+                h = self.CH.current_height
+            if isinstance(new_w, int):
+                w = new_w
+                self.config(width=w)
+            else:
+                w = self.RI.current_width
         except Exception:
             return
         self.coords(self.rw_box, 0, h - 5, w, h)

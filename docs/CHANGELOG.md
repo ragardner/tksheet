@@ -1,3 +1,7 @@
+### Version 7.2.10
+#### Fixed:
+- Fix index width resizing regression
+
 ### Version 7.2.9
 #### Fixed:
 - [232](https://github.com/ragardner/tksheet/issues/232)

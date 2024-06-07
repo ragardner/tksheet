@@ -761,22 +761,18 @@ class RowIndex(tk.Canvas):
             self.MT.set_yviews("moveto", 1)
 
     def event_over_dropdown(self, r: int, datarn: int, event: object, canvasy: float) -> bool:
-        if (
+        return (
             canvasy < self.MT.row_positions[r] + self.MT.index_txt_height
             and self.get_cell_kwargs(datarn, key="dropdown")
             and event.x > self.current_width - self.MT.index_txt_height - 4
-        ):
-            return True
-        return False
+        )
 
     def event_over_checkbox(self, r: int, datarn: int, event: object, canvasy: float) -> bool:
-        if (
+        return (
             canvasy < self.MT.row_positions[r] + self.MT.index_txt_height
             and self.get_cell_kwargs(datarn, key="checkbox")
             and event.x < self.MT.index_txt_height + 4
-        ):
-            return True
-        return False
+        )
 
     def b1_release(self, event: object) -> None:
         if self.being_drawn_item is not None and (to_sel := self.MT.coords_and_type(self.being_drawn_item)):

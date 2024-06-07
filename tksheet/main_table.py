@@ -1796,9 +1796,7 @@ class MainTable(tk.Canvas):
     def cell_visible(self, r: int = 0, c: int = 0) -> bool:
         cx1, cy1, cx2, cy2 = self.get_canvas_visible_area()
         x1, y1, x2, y2 = self.get_cell_coords(r, c)
-        if x1 <= cx2 or y1 <= cy2 or x2 >= cx1 or y2 >= cy1:
-            return True
-        return False
+        return x1 <= cx2 or y1 <= cy2 or x2 >= cx1 or y2 >= cy1
 
     def select_all(self, redraw: bool = True, run_binding_func: bool = True) -> None:
         selected = self.selected
@@ -5457,7 +5455,7 @@ class MainTable(tk.Canvas):
         if self.PAR.ops.auto_resize_row_index and redraw_row_index and self.show_index:
             changed_w = self.RI.auto_set_index_width(
                 end_row=grid_end_row,
-                only_rows=[self.datarn(r) for r in range(text_start_row, text_end_row)],
+                only_rows=map(self.datarn, range(text_start_row, text_end_row)),
             )
         if resized_cols or resized_rows or changed_w:
             self.recreate_all_selection_boxes()
