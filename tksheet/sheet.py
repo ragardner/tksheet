@@ -5077,11 +5077,14 @@ class Sheet(tk.Frame):
                     # index is not end
                     # item row is less than move to row
                     if item_r < new_r:
-                        r_ctr = (
-                            new_r
-                            - sum(1 for _ in self.RI.get_iid_descendants(item))
-                            - 1
-                        )
+                        if self.RI.items_parent(item) == parent:
+                            r_ctr = (
+                                new_r
+                                + sum(1 for _ in self.RI.get_iid_descendants(parent_node.children[index].iid))
+                                - sum(1 for _ in self.RI.get_iid_descendants(item))
+                            )
+                        else:
+                            r_ctr = new_r - sum(1 for _ in self.RI.get_iid_descendants(item)) - 1
 
                     # new parent has children
                     # index is not end
