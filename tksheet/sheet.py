@@ -4711,7 +4711,7 @@ class Sheet(tk.Frame):
                 self.RI.tree[iid].text = row[text_column]
             else:
                 self.RI.tree[iid] = Node(row[text_column], iid, "")
-            if safety and (iid == pid or self.RI.pid_causes_recursive_loop(iid, pid)):
+            if safety and (iid == pid or self.RI.build_pid_causes_recursive_loop(iid, pid)):
                 row[parent_column] = ""
                 pid = ""
             if pid:
@@ -5041,7 +5041,8 @@ class Sheet(tk.Frame):
     def move(self, item: str, parent: str, index: int | None = None) -> Sheet:
         """
         Moves item to be under parent as child at index
-        'parent' can be empty string which will make item a top node
+        'parent' can be an empty str which will put the item at top level
+        Performance is not great
         """
         if (item := item.lower()) and item not in self.RI.tree:
             raise ValueError(f"Item '{item}' does not exist.")
@@ -5050,25 +5051,58 @@ class Sheet(tk.Frame):
         mapping = {}
         to_show = []
         item_node = self.RI.tree[item]
+        item_r = self.RI.tree_rns[item]
         if parent:
-            if self.RI.pid_causes_recursive_loop(item, parent):
+            if self.RI.move_pid_causes_recursive_loop(item, parent):
                 raise ValueError(f"iid '{item}' causes a recursive loop with parent '{parent}'.")
             parent_node = self.RI.tree[parent]
             if parent_node.children:
                 if index is None or index >= len(parent_node.children):
-                    index = len(parent_node.children) - 1
-                item_r = self.RI.tree_rns[item]
-                new_r = self.RI.tree_rns[parent_node.children[index].iid]
-                new_r_desc = sum(1 for _ in self.RI.get_iid_descendants(parent_node.children[index].iid))
-                item_desc = sum(1 for _ in self.RI.get_iid_descendants(item))
-                if item_r < new_r:
-                    r_ctr = new_r + new_r_desc - item_desc
+                    index = len(parent_node.children)
+                    new_r = self.RI.tree_rns[parent] + sum(1 for _ in self.RI.get_iid_descendants(parent))
+                    # new parent has children
+                    # index is on end
+                    # item row is less than move to row
+                    if item_r < new_r:
+                        r_ctr = new_r - sum(1 for _ in self.RI.get_iid_descendants(item))
+
+                    # new parent has children
+                    # index is on end
+                    # item row is greater than move to row
+                    else:
+                        r_ctr = new_r + 1
                 else:
-                    r_ctr = new_r
+                    new_r = self.RI.tree_rns[parent_node.children[index].iid]
+                    # new parent has children
+                    # index is not end
+                    # item row is less than move to row
+                    if item_r < new_r:
+                        r_ctr = (
+                            new_r
+                            + sum(1 for _ in self.RI.get_iid_descendants(parent_node.children[index].iid))
+                            - sum(1 for _ in self.RI.get_iid_descendants(item))
+                        )
+
+                    # new parent has children
+                    # index is not end
+                    # item row is greater than move to row
+                    else:
+                        r_ctr = new_r
             else:
-                if index is None:
-                    index = 0
-                r_ctr = self.RI.tree_rns[parent_node.iid] + 1
+                index = 0
+                new_r = self.RI.tree_rns[parent_node.iid]
+
+                # new parent doesn't have children
+                # index always start
+                # item row is less than move to row
+                if item_r < new_r:
+                    r_ctr = new_r - sum(1 for _ in self.RI.get_iid_descendants(item))
+
+                # new parent doesn't have children
+                # index always start
+                # item row is greater than move to row
+                else:
+                    r_ctr = new_r + 1
             mapping[item_r] = r_ctr
             if parent in self.RI.tree_open_ids and self.item_displayed(parent):
                 to_show.append(r_ctr)
@@ -5091,11 +5125,12 @@ class Sheet(tk.Frame):
             else:
                 if (new_r := self.top_index_row(index)) is None:
                     new_r = self.top_index_row((sum(1 for _ in self.RI.gen_top_nodes()) - 1))
-            item_r = self.RI.tree_rns[item]
             if item_r < new_r:
-                par_desc = sum(1 for _ in self.RI.get_iid_descendants(self.rowitem(new_r, data_index=True)))
-                item_desc = sum(1 for _ in self.RI.get_iid_descendants(item))
-                r_ctr = new_r + par_desc - item_desc
+                r_ctr = (
+                    new_r
+                    + sum(1 for _ in self.RI.get_iid_descendants(self.rowitem(new_r, data_index=True)))
+                    - sum(1 for _ in self.RI.get_iid_descendants(item))
+                )
             else:
                 r_ctr = new_r
             mapping[item_r] = r_ctr

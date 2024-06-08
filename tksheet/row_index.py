@@ -2516,7 +2516,7 @@ class RowIndex(tk.Canvas):
             if not node.parent.children:
                 self.tree_open_ids.discard(node.parent)
 
-    def pid_causes_recursive_loop(self, iid: str, pid: str) -> bool:
+    def build_pid_causes_recursive_loop(self, iid: str, pid: str) -> bool:
         return any(
             i == pid
             for i in chain(
@@ -2524,3 +2524,8 @@ class RowIndex(tk.Canvas):
                 islice(self.get_iid_ancestors(iid), 1, None),
             )
         )
+
+    def move_pid_causes_recursive_loop(self, to_move_iid: str, move_to_parent: str) -> bool:
+        # if the parent the item is being moved under is one of the item's descendants
+        # then it is a recursive loop
+        return any(move_to_parent == diid for diid in self.get_iid_descendants(to_move_iid))
