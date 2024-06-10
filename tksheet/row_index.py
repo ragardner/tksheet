@@ -358,7 +358,16 @@ class RowIndex(tk.Canvas):
                         self.MT.current_cursor = "sb_v_double_arrow"
                 else:
                     self.rsz_h = None
-            if self.width_resizing_enabled and not mouse_over_resize:
+            if (
+                self.width_resizing_enabled
+                and not mouse_over_resize
+                and self.PAR.ops.auto_resize_row_index is not True
+                and not (
+                    self.PAR.ops.auto_resize_row_index == "empty"
+                    and not isinstance(self.MT._row_index, int)
+                    and not self.MT._row_index
+                )
+            ):
                 try:
                     x1, y1, x2, y2 = (
                         self.row_width_resize_bbox[0],
@@ -1887,8 +1896,7 @@ class RowIndex(tk.Canvas):
         if self.text_editor.open and r == self.text_editor.row:
             self.text_editor.set_text(self.text_editor.get() + "" if not isinstance(text, str) else text)
             return
-        if self.text_editor.open:
-            self.hide_text_editor()
+        self.hide_text_editor()
         if not self.MT.see(r=r, c=0, keep_yscroll=True, check_cell_visibility=True):
             self.MT.refresh()
         x = 0
@@ -2021,14 +2029,12 @@ class RowIndex(tk.Canvas):
                 )
                 # self.itemconfig(self.dropdown.canvas_id, anchor=anchor, height=win_h)
 
-    def hide_text_editor(self, reason: None | str = None) -> None:
+    def hide_text_editor(self) -> None:
         if self.text_editor.open:
             for binding in text_editor_to_unbind:
                 self.text_editor.tktext.unbind(binding)
             self.itemconfig(self.text_editor.canvas_id, state="hidden")
             self.text_editor.open = False
-        if reason == "Escape":
-            self.focus_set()
 
     # r is displayed row
     def close_text_editor(self, event: tk.Event) -> Literal["break"] | None:
@@ -2047,6 +2053,7 @@ class RowIndex(tk.Canvas):
             return "break"
         if event.keysym == "Escape":
             self.hide_text_editor_and_dropdown()
+            self.focus_set()
             return
         text_editor_value = self.text_editor.get()
         r = self.text_editor.row
@@ -2128,7 +2135,7 @@ class RowIndex(tk.Canvas):
 
     # r is displayed row
     def open_dropdown_window(self, r: int, event: object = None) -> None:
-        self.hide_text_editor("Escape")
+        self.hide_text_editor()
         kwargs = self.get_cell_kwargs(self.MT.datarn(r), key="dropdown")
         if kwargs["state"] == "normal":
             if not self.open_text_editor(event=event, r=r, dropdown=True):
@@ -2199,8 +2206,9 @@ class RowIndex(tk.Canvas):
                 return
             redraw = False
         else:
-            self.dropdown.window.bind("<FocusOut>", lambda _x: self.close_dropdown_window(r))
             self.update_idletasks()
+            self.dropdown.window.bind("<FocusOut>", lambda _x: self.close_dropdown_window(r))
+            self.dropdown.window.bind("<Escape>", self.close_dropdown_window)
             self.dropdown.window.focus_set()
             redraw = True
         self.dropdown.open = True
@@ -2241,12 +2249,12 @@ class RowIndex(tk.Canvas):
                 edited = self.set_cell_data_undo(r, datarn=datarn, value=selection, redraw=not redraw)
             if edited:
                 try_binding(self.extra_end_edit_cell_func, event_data)
-            self.focus_set()
             self.MT.recreate_all_selection_boxes()
+        self.focus_set()
         self.hide_text_editor_and_dropdown(redraw=redraw)
 
     def hide_text_editor_and_dropdown(self, redraw: bool = True) -> None:
-        self.hide_text_editor("Escape")
+        self.hide_text_editor()
         self.hide_dropdown_window()
         if redraw:
             self.MT.refresh()

@@ -6570,8 +6570,7 @@ class MainTable(tk.Canvas):
         if self.text_editor.open and (r, c) == self.text_editor.coords:
             self.text_editor.window.set_text(self.text_editor.get() + "" if not isinstance(text, str) else text)
             return
-        if self.text_editor.open:
-            self.hide_text_editor()
+        self.hide_text_editor()
         if not self.see(r=r, c=c, check_cell_visibility=True):
             self.refresh()
         x = self.col_positions[c]
@@ -6705,14 +6704,12 @@ class MainTable(tk.Canvas):
                 )
                 # self.itemconfig(self.dropdown.canvas_id, anchor=anchor, height=win_h)
 
-    def hide_text_editor(self, reason: None | str = None) -> None:
+    def hide_text_editor(self) -> None:
         if self.text_editor.open:
             for binding in text_editor_to_unbind:
                 self.text_editor.tktext.unbind(binding)
             self.itemconfig(self.text_editor.canvas_id, state="hidden")
             self.text_editor.open = False
-        if reason == "Escape":
-            self.focus_set()
 
     def close_text_editor(self, event: tk.Event) -> Literal["break"] | None:
         # checking if text editor should be closed or not
@@ -6730,6 +6727,7 @@ class MainTable(tk.Canvas):
             return "break"
         if event.keysym == "Escape":
             self.hide_text_editor_and_dropdown()
+            self.focus_set()
             return
         # setting cell data with text editor value
         text_editor_value = self.text_editor.get()
@@ -6942,7 +6940,7 @@ class MainTable(tk.Canvas):
         c: int,
         event: object = None,
     ) -> None:
-        self.hide_text_editor("Escape")
+        self.hide_text_editor()
         datarn = self.datarn(r)
         datacn = self.datacn(c)
         kwargs = self.get_cell_kwargs(datarn, datacn, key="dropdown")
@@ -7017,7 +7015,8 @@ class MainTable(tk.Canvas):
         else:
             self.update_idletasks()
             self.dropdown.window.bind("<FocusOut>", lambda _: self.close_dropdown_window(r, c))
-            self.dropdown.window.focus()
+            self.dropdown.window.bind("<Escape>", self.close_dropdown_window)
+            self.dropdown.window.focus_set()
             redraw = True
         self.dropdown.open = True
         if redraw:
@@ -7073,12 +7072,12 @@ class MainTable(tk.Canvas):
                 )
             if edited:
                 try_binding(self.extra_end_edit_cell_func, event_data)
-            self.focus_set()
             self.recreate_all_selection_boxes()
+        self.focus_set()
         self.hide_text_editor_and_dropdown(redraw=redraw)
 
     def hide_text_editor_and_dropdown(self, redraw: bool = True) -> None:
-        self.hide_text_editor("Escape")
+        self.hide_text_editor()
         self.hide_dropdown_window()
         if redraw:
             self.refresh()

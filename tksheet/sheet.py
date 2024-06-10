@@ -6296,13 +6296,7 @@ class Sheet(tk.Frame):
     ) -> Sheet:
         kwargs = get_dropdown_kwargs(*args, **kwargs)
         d = get_dropdown_dict(**kwargs)
-        if kwargs["set_value"] is None:
-            if kwargs["values"] and (v := self.MT.get_cell_data(r, c)) not in kwargs["values"]:
-                v = kwargs["values"][0]
-            else:
-                v == ""
-        else:
-            v = kwargs["set_value"]
+        v = kwargs["set_value"] if kwargs["set_value"] is not None else kwargs["values"][0] if kwargs["values"] else ""
         if isinstance(r, str) and r.lower() == "all" and isinstance(c, int):
             for r_ in range(self.MT.total_data_rows()):
                 self._create_dropdown(r_, c, v, d)

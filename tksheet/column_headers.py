@@ -1760,8 +1760,7 @@ class ColumnHeaders(tk.Canvas):
         if self.text_editor.open and c == self.text_editor.column:
             self.text_editor.set_text(self.text_editor.get() + "" if not isinstance(text, str) else text)
             return
-        if self.text_editor.open:
-            self.hide_text_editor()
+        self.hide_text_editor()
         if not self.MT.see(r=0, c=c, keep_yscroll=True, check_cell_visibility=True):
             self.MT.refresh()
         x = self.MT.col_positions[c] + 1
@@ -1907,14 +1906,12 @@ class ColumnHeaders(tk.Canvas):
                 )
                 # self.itemconfig(self.dropdown.canvas_id, anchor=anchor, height=win_h)
 
-    def hide_text_editor(self, reason: None | str = None) -> None:
+    def hide_text_editor(self) -> None:
         if self.text_editor.open:
             for binding in text_editor_to_unbind:
                 self.text_editor.tktext.unbind(binding)
             self.itemconfig(self.text_editor.canvas_id, state="hidden")
             self.text_editor.open = False
-        if reason == "Escape":
-            self.focus_set()
 
     # c is displayed col
     def close_text_editor(self, event: tk.Event) -> Literal["break"] | None:
@@ -1933,6 +1930,7 @@ class ColumnHeaders(tk.Canvas):
             return "break"
         if event.keysym == "Escape":
             self.hide_text_editor_and_dropdown()
+            self.focus_set()
             return
         # setting cell data with text editor value
         text_editor_value = self.text_editor.get()
@@ -2011,7 +2009,7 @@ class ColumnHeaders(tk.Canvas):
         dd_window.search_and_see(event)
 
     def open_dropdown_window(self, c: int, event: object = None) -> None:
-        self.hide_text_editor("Escape")
+        self.hide_text_editor()
         kwargs = self.get_cell_kwargs(self.MT.datacn(c), key="dropdown")
         if kwargs["state"] == "normal":
             if not self.open_text_editor(event=event, c=c, dropdown=True):
@@ -2075,8 +2073,9 @@ class ColumnHeaders(tk.Canvas):
                 return
             redraw = False
         else:
-            self.dropdown.window.bind("<FocusOut>", lambda _x: self.close_dropdown_window(c))
             self.update_idletasks()
+            self.dropdown.window.bind("<FocusOut>", lambda _x: self.close_dropdown_window(c))
+            self.dropdown.window.bind("<Escape>", self.close_dropdown_window)
             self.dropdown.window.focus_set()
             redraw = True
         self.dropdown.open = True
@@ -2116,12 +2115,12 @@ class ColumnHeaders(tk.Canvas):
                 edited = self.set_cell_data_undo(c, datacn=datacn, value=selection, redraw=not redraw)
             if edited:
                 try_binding(self.extra_end_edit_cell_func, event_data)
-            self.focus_set()
             self.MT.recreate_all_selection_boxes()
+        self.focus_set()
         self.hide_text_editor_and_dropdown(redraw=redraw)
 
     def hide_text_editor_and_dropdown(self, redraw: bool = True) -> None:
-        self.hide_text_editor("Escape")
+        self.hide_text_editor()
         self.hide_dropdown_window()
         if redraw:
             self.MT.refresh()
