@@ -1,6 +1,10 @@
 ### Version 7.2.10
 #### Fixed:
 - Fix index width resizing regression
+- Sheet no longer steals focus when using `set_sheet_data()` and similar functions, issue [233](https://github.com/ragardner/tksheet/issues/233)
+
+#### Improved:
+- Don't show row index resize cursor when unnecessary
 
 ### Version 7.2.9
 #### Fixed:
