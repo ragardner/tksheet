@@ -1,3 +1,6 @@
+### Version 7.2.11
+####
+
 ### Version 7.2.10
 #### Fixed:
 - Fix index width resizing regression
