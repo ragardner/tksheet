@@ -1832,8 +1832,10 @@ class MainTable(tk.Canvas):
         run_binding_func: bool = True,
         ext: bool = False,
     ) -> int:
-        self.deselect("all", redraw=False)
+        boxes_to_hide = tuple(self.selection_boxes)
         fill_iid = self.create_selection_box(r, c, r + 1, c + 1, state="hidden", ext=ext)
+        for iid in boxes_to_hide:
+            self.hide_selection_box(iid)
         if redraw:
             self.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
         if run_binding_func:

@@ -549,6 +549,7 @@ class RowIndex(tk.Canvas):
                     fill=self.PAR.ops.resizing_line_fg,
                     tag="rhl2",
                 )
+                self.drag_height_resize()
         elif self.width_resizing_enabled and self.rsz_w is not None and self.currently_resizing_width:
             evx = event.x
             self.hide_resize_and_ctrl_lines(ctrl_lines=False)
@@ -783,6 +784,32 @@ class RowIndex(tk.Canvas):
             and event.x < self.MT.index_txt_height + 4
         )
 
+    def drag_height_resize(self) -> None:
+        new_row_pos = int(self.coords("rhl")[1])
+        old_height = self.MT.row_positions[self.rsz_h] - self.MT.row_positions[self.rsz_h - 1]
+        size = new_row_pos - self.MT.row_positions[self.rsz_h - 1]
+        if size < self.MT.min_row_height:
+            new_row_pos = ceil(self.MT.row_positions[self.rsz_h - 1] + self.MT.min_row_height)
+        elif size > self.MT.max_row_height:
+            new_row_pos = floor(self.MT.row_positions[self.rsz_h - 1] + self.MT.max_row_height)
+        increment = new_row_pos - self.MT.row_positions[self.rsz_h]
+        self.MT.row_positions[self.rsz_h + 1 :] = [
+            e + increment for e in islice(self.MT.row_positions, self.rsz_h + 1, None)
+        ]
+        self.MT.row_positions[self.rsz_h] = new_row_pos
+        new_height = self.MT.row_positions[self.rsz_h] - self.MT.row_positions[self.rsz_h - 1]
+        self.MT.allow_auto_resize_rows = False
+        self.MT.recreate_all_selection_boxes()
+        self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
+        if self.row_height_resize_func is not None and old_height != new_height:
+            self.row_height_resize_func(
+                event_dict(
+                    name="resize",
+                    sheet=self.PAR.name,
+                    resized_rows={self.rsz_h - 1: {"old_size": old_height, "new_size": new_height}},
+                )
+            )
+
     def b1_release(self, event: object) -> None:
         if self.being_drawn_item is not None and (to_sel := self.MT.coords_and_type(self.being_drawn_item)):
             r_to_sel, c_to_sel = self.MT.selected.row, self.MT.selected.column
@@ -799,32 +826,9 @@ class RowIndex(tk.Canvas):
             self.being_drawn_item = None
         self.MT.bind("<MouseWheel>", self.MT.mousewheel)
         if self.height_resizing_enabled and self.rsz_h is not None and self.currently_resizing_height:
+            self.drag_height_resize()
             self.currently_resizing_height = False
-            new_row_pos = int(self.coords("rhl")[1])
             self.hide_resize_and_ctrl_lines(ctrl_lines=False)
-            old_height = self.MT.row_positions[self.rsz_h] - self.MT.row_positions[self.rsz_h - 1]
-            size = new_row_pos - self.MT.row_positions[self.rsz_h - 1]
-            if size < self.MT.min_row_height:
-                new_row_pos = ceil(self.MT.row_positions[self.rsz_h - 1] + self.MT.min_row_height)
-            elif size > self.MT.max_row_height:
-                new_row_pos = floor(self.MT.row_positions[self.rsz_h - 1] + self.MT.max_row_height)
-            increment = new_row_pos - self.MT.row_positions[self.rsz_h]
-            self.MT.row_positions[self.rsz_h + 1 :] = [
-                e + increment for e in islice(self.MT.row_positions, self.rsz_h + 1, len(self.MT.row_positions))
-            ]
-            self.MT.row_positions[self.rsz_h] = new_row_pos
-            new_height = self.MT.row_positions[self.rsz_h] - self.MT.row_positions[self.rsz_h - 1]
-            self.MT.allow_auto_resize_rows = False
-            self.MT.recreate_all_selection_boxes()
-            self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
-            if self.row_height_resize_func is not None and old_height != new_height:
-                self.row_height_resize_func(
-                    event_dict(
-                        name="resize",
-                        sheet=self.PAR.name,
-                        resized_rows={self.rsz_h - 1: {"old_size": old_height, "new_size": new_height}},
-                    )
-                )
         elif self.width_resizing_enabled and self.rsz_w is not None and self.currently_resizing_width:
             self.currently_resizing_width = False
             self.hide_resize_and_ctrl_lines(ctrl_lines=False)

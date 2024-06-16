@@ -6,6 +6,7 @@ from collections.abc import Callable, Generator, Hashable, Iterator
 from functools import partial
 from typing import Literal
 
+
 pickle_obj = partial(pickle.dumps, protocol=pickle.HIGHEST_PROTOCOL)
 
 FontTuple = namedtuple("FontTuple", "family size style")
@@ -152,18 +153,16 @@ class Span(dict):
         redraw: bool = True,
         **kwargs,
     ) -> Span:
-        self["widget"].format(
+        return self["widget"].format(
             self,
             formatter_options={"formatter": formatter_class, **formatter_options, **kwargs},
             formatter_class=formatter_class,
             redraw=redraw,
             **kwargs,
         )
-        return self
 
     def del_format(self) -> Span:
-        self["widget"].del_format(self)
-        return self
+        return self["widget"].del_format(self)
 
     def highlight(
         self,
@@ -173,7 +172,7 @@ class Span(dict):
         overwrite: bool = False,
         redraw: bool = True,
     ) -> Span:
-        self["widget"].highlight(
+        return self["widget"].highlight(
             self,
             bg=bg,
             fg=fg,
@@ -181,34 +180,74 @@ class Span(dict):
             overwrite=overwrite,
             redraw=redraw,
         )
-        return self
 
     def dehighlight(self, redraw: bool = True) -> Span:
-        self["widget"].dehighlight(self, redraw=redraw)
+        return self["widget"].dehighlight(self, redraw=redraw)
 
     del_highlight = dehighlight
 
     def readonly(self, readonly: bool = True) -> Span:
-        self["widget"].readonly(self, readonly=readonly)
-        return self
+        return self["widget"].readonly(self, readonly=readonly)
 
-    def dropdown(self, *args, **kwargs) -> Span:
-        self["widget"].dropdown(self, *args, **kwargs)
+    def dropdown(
+        self,
+        values: list = [],
+        edit_data: bool = True,
+        set_values: dict[tuple[int, int], object] = {},
+        set_value: object = None,
+        state: str = "normal",
+        redraw: bool = True,
+        selection_function: Callable | None = None,
+        modified_function: Callable | None = None,
+        search_function: Callable | None = None,
+        validate_input: bool = True,
+        text: None | str = None,
+    ) -> Span:
+        return self["widget"].dropdown(
+            self,
+            values=values,
+            edit_data=edit_data,
+            set_values=set_values,
+            set_value=set_value,
+            state=state,
+            redraw=redraw,
+            selection_function=selection_function,
+            modified_function=modified_function,
+            search_function=search_function,
+            validate_input=validate_input,
+            text=text,
+        )
 
     def del_dropdown(self) -> Span:
-        self["widget"].del_dropdown(self)
+        return self["widget"].del_dropdown(self)
 
-    def checkbox(self, *args, **kwargs) -> Span:
-        self["widget"].dropdown(self, *args, **kwargs)
+    def checkbox(
+        self,
+        edit_data: bool = True,
+        checked: bool | None = None,
+        state: str = "normal",
+        redraw: bool = True,
+        check_function: Callable | None = None,
+        text: str = "",
+    ) -> Span:
+        return self["widget"].checkbox(
+            self,
+            edit_data=edit_data,
+            checked=checked,
+            state=state,
+            redraw=redraw,
+            check_function=check_function,
+            text=text,
+        )
 
     def del_checkbox(self) -> Span:
-        self["widget"].del_checkbox(self)
+        return self["widget"].del_checkbox(self)
 
     def align(self, align: str | None, redraw: bool = True) -> Span:
-        self["widget"].align(self, align=align, redraw=redraw)
+        return self["widget"].align(self, align=align, redraw=redraw)
 
     def del_align(self, redraw: bool = True) -> Span:
-        self["widget"].del_align(self, redraw=redraw)
+        return self["widget"].del_align(self, redraw=redraw)
 
     def clear(self, undo: bool | None = None, redraw: bool = True) -> Span:
         if undo is not None:
@@ -304,7 +343,7 @@ class Span(dict):
         self["transposed"] = not self["transposed"]
         return self
 
-    def expand(self, direction: str = "both") -> Span:
+    def expand(self, direction: Literal["both", "table", "down", "right"] = "both") -> Span:
         if direction == "both" or direction == "table":
             self["upto_r"], self["upto_c"] = None, None
         elif direction == "down":
