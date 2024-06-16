@@ -2986,12 +2986,10 @@ class MainTable(tk.Canvas):
                 and self.selected.type_ == "cells"
             ):
                 box = self.get_b1_motion_box(
-                    *(
-                        self.selected.row,
-                        self.selected.column,
-                        end_row,
-                        end_col,
-                    )
+                    self.selected.row,
+                    self.selected.column,
+                    end_row,
+                    end_col,
                 )
                 if (
                     box is not None
@@ -3029,12 +3027,10 @@ class MainTable(tk.Canvas):
                 and self.selected.type_ == "cells"
             ):
                 box = self.get_b1_motion_box(
-                    *(
-                        self.selected.row,
-                        self.selected.column,
-                        end_row,
-                        end_col,
-                    )
+                    self.selected.row,
+                    self.selected.column,
+                    end_row,
+                    end_col,
                 )
                 if (
                     box is not None
