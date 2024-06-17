@@ -2446,7 +2446,7 @@ class RowIndex(tk.Canvas):
             elif isinstance(self.MT._row_index, int):
                 value = (
                     not self.MT.data[datarn][self.MT._row_index]
-                    if type(self.MT.data[datarn][self.MT._row_index], bool)
+                    if isinstance(self.MT.data[datarn][self.MT._row_index], bool)
                     else False
                 )
             else:
