@@ -1,3 +1,6 @@
+### Version 7.2.12
+####
+
 ### Version 7.2.11
 #### Fixed:
 - [235](https://github.com/ragardner/tksheet/issues/235)
