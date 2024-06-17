@@ -1158,11 +1158,9 @@ class RowIndex(tk.Canvas):
         elif isinstance(self.MT._row_index, int):
             datacn = self.MT._row_index
             for datarn in iterable:
-                if txt := self.MT.get_valid_cell_data_as_str(datarn, datacn, get_displayed=True):
-                    qconf(qtxtm, text=txt)
-                    b = qbbox(qtxtm)
-                    if (tw := b[2] - b[0] + 10) > w:
-                        w = tw
+                width, height = self.get_cell_dimensions(datarn)
+                if width > w:
+                    w = width
         if w > self.MT.max_index_width:
             w = int(self.MT.max_index_width)
         return w
