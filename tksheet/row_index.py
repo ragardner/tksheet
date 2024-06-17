@@ -489,7 +489,6 @@ class RowIndex(tk.Canvas):
             if x < self.MT.min_column_width:
                 x = int(self.MT.min_column_width)
             self.new_row_width = x
-            self.create_resize_line(x, y1, x, y2, width=1, fill=self.PAR.ops.resizing_line_fg, tag="rwl")
         elif self.MT.identify_row(y=event.y, allow_end=False) is None:
             self.MT.deselect("all")
         elif self.row_selection_enabled and self.rsz_h is None and self.rsz_w is None:
@@ -552,20 +551,18 @@ class RowIndex(tk.Canvas):
                 self.drag_height_resize()
         elif self.width_resizing_enabled and self.rsz_w is not None and self.currently_resizing_width:
             evx = event.x
-            self.hide_resize_and_ctrl_lines(ctrl_lines=False)
             if evx > self.current_width:
                 x = self.MT.canvasx(evx - self.current_width)
                 if evx > self.MT.max_index_width:
                     evx = int(self.MT.max_index_width)
                     x = self.MT.canvasx(evx - self.current_width)
                 self.new_row_width = evx
-                self.MT.create_resize_line(x, y1, x, y2, width=1, fill=self.PAR.ops.resizing_line_fg, tag="rwl")
             else:
                 x = evx
                 if x < self.MT.min_column_width:
                     x = int(self.MT.min_column_width)
                 self.new_row_width = x
-                self.create_resize_line(x, y1, x, y2, width=1, fill=self.PAR.ops.resizing_line_fg, tag="rwl")
+            self.drag_width_resize()
         if (
             self.drag_and_drop_enabled
             and self.row_selection_enabled
@@ -783,6 +780,10 @@ class RowIndex(tk.Canvas):
             and self.get_cell_kwargs(datarn, key="checkbox")
             and event.x < self.MT.index_txt_height + 4
         )
+        
+    def drag_width_resize(self) -> None:
+        self.set_width(self.new_row_width, set_TL=True)
+        self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
 
     def drag_height_resize(self) -> None:
         new_row_pos = int(self.coords("rhl")[1])
@@ -831,9 +832,7 @@ class RowIndex(tk.Canvas):
             self.hide_resize_and_ctrl_lines(ctrl_lines=False)
         elif self.width_resizing_enabled and self.rsz_w is not None and self.currently_resizing_width:
             self.currently_resizing_width = False
-            self.hide_resize_and_ctrl_lines(ctrl_lines=False)
-            self.set_width(self.new_row_width, set_TL=True)
-            self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
+            self.drag_width_resize()
         if (
             self.drag_and_drop_enabled
             and self.MT.anything_selected(exclude_cells=True, exclude_columns=True)
@@ -1058,7 +1057,7 @@ class RowIndex(tk.Canvas):
                 align = self.align
             if align == "w":
                 w += self.MT.index_txt_height
-            w += self.get_treeview_indent(self.MT._row_index[datarn].iid) + 5
+            w += self.get_treeview_indent(self.MT._row_index[datarn].iid) + 10
         return w, h
 
     def get_row_text_height(
@@ -1138,9 +1137,6 @@ class RowIndex(tk.Canvas):
             isinstance(self.MT._row_index, int) and self.MT._row_index >= len(self.MT.data)
         ):
             return w
-        qconf = self.MT.txt_measure_canvas.itemconfig
-        qbbox = self.MT.txt_measure_canvas.bbox
-        qtxtm = self.MT.txt_measure_canvas_text
         if only_rows:
             iterable = only_rows
         elif self.MT.all_rows_displayed:
@@ -1150,17 +1146,8 @@ class RowIndex(tk.Canvas):
                 iterable = range(len(self.MT.data))
         else:
             iterable = self.MT.displayed_rows
-        if (
-            isinstance(self.MT._row_index, list)
-            and (tw := max(map(itemgetter(0), map(self.get_cell_dimensions, iterable)), default=w)) > w
-        ):
-            w = tw
-        elif isinstance(self.MT._row_index, int):
-            datacn = self.MT._row_index
-            for datarn in iterable:
-                width, height = self.get_cell_dimensions(datarn)
-                if width > w:
-                    w = width
+        if (new_w := max(map(itemgetter(0), map(self.get_cell_dimensions, iterable)), default=w)) > w:
+            w = new_w
         if w > self.MT.max_index_width:
             w = int(self.MT.max_index_width)
         return w
@@ -1715,7 +1702,6 @@ class RowIndex(tk.Canvas):
             lns = self.get_valid_cell_data_as_str(datarn, fix=False)
             if not lns:
                 continue
-            lns = lns.split("\n")
             draw_y = rtopgridln + self.MT.index_first_ln_ins
             if mw > 5:
                 draw_y = rtopgridln + self.MT.index_first_ln_ins
@@ -1723,6 +1709,7 @@ class RowIndex(tk.Canvas):
                 if start_ln < 0:
                     start_ln = 0
                 draw_y += start_ln * self.MT.index_xtra_lines_increment
+                lns = lns.split("\n")
                 if draw_y + self.MT.index_half_txt_height - 1 <= rbotgridln and len(lns) > start_ln:
                     for txt in islice(lns, start_ln, None):
                         if self.hidd_text:

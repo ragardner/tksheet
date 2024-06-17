@@ -481,7 +481,6 @@ class ColumnHeaders(tk.Canvas):
             if y < self.MT.min_header_height:
                 y = int(self.MT.min_header_height)
             self.new_col_height = y
-            self.create_resize_line(x1, y, x2, y, width=1, fill=self.PAR.ops.resizing_line_fg, tag="rhl")
         elif self.MT.identify_col(x=event.x, allow_end=False) is None:
             self.MT.deselect("all")
         elif self.col_selection_enabled and self.rsz_w is None and self.rsz_h is None:
@@ -543,20 +542,18 @@ class ColumnHeaders(tk.Canvas):
                 self.drag_width_resize()
         elif self.height_resizing_enabled and self.rsz_h is not None and self.currently_resizing_height:
             evy = event.y
-            self.hide_resize_and_ctrl_lines(ctrl_lines=False)
             if evy > self.current_height:
                 y = self.MT.canvasy(evy - self.current_height)
                 if evy > self.MT.max_header_height:
                     evy = int(self.MT.max_header_height)
                     y = self.MT.canvasy(evy - self.current_height)
                 self.new_col_height = evy
-                self.MT.create_resize_line(x1, y, x2, y, width=1, fill=self.PAR.ops.resizing_line_fg, tag="rhl")
             else:
                 y = evy
                 if y < self.MT.min_header_height:
                     y = int(self.MT.min_header_height)
                 self.new_col_height = y
-                self.create_resize_line(x1, y, x2, y, width=1, fill=self.PAR.ops.resizing_line_fg, tag="rhl")
+            self.drag_height_resize()
         elif (
             self.drag_and_drop_enabled
             and self.col_selection_enabled
@@ -602,6 +599,10 @@ class ColumnHeaders(tk.Canvas):
             if need_redraw:
                 self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=False)
         try_binding(self.extra_b1_motion_func, event)
+        
+    def drag_height_resize(self) -> None:
+        self.set_height(self.new_col_height, set_TL=True)
+        self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
 
     def get_b1_motion_box(self, start_col: int, end_col: int) -> tuple[int, int, int, int, Literal["columns"]]:
         if end_col >= start_col:
@@ -827,9 +828,7 @@ class ColumnHeaders(tk.Canvas):
             self.hide_resize_and_ctrl_lines(ctrl_lines=False)
         elif self.height_resizing_enabled and self.rsz_h is not None and self.currently_resizing_height:
             self.currently_resizing_height = False
-            self.hide_resize_and_ctrl_lines(ctrl_lines=False)
-            self.set_height(self.new_col_height, set_TL=True)
-            self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
+            self.drag_height_resize()
         elif (
             self.drag_and_drop_enabled
             and self.col_selection_enabled

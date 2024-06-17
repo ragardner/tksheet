@@ -1778,7 +1778,12 @@ class MainTable(tk.Canvas):
             0 if not r else self.row_positions[r + 1],
         )
 
-    def cell_completely_visible(self, r: int = 0, c: int = 0, separate_axes: bool = False) -> bool:
+    def cell_completely_visible(
+        self,
+        r: int | None = 0,
+        c: int | None = 0,
+        separate_axes: bool = False,
+    ) -> bool:
         cx1, cy1, cx2, cy2 = self.get_canvas_visible_area()
         x1, y1, x2, y2 = self.get_cell_coords(r, c)
         x_vis = True

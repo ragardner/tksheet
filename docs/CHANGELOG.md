@@ -1,6 +1,10 @@
 ### Version 7.2.11
 #### Fixed:
 - [235](https://github.com/ragardner/tksheet/issues/235)
+- Error with `show_columns()`
+
+#### Pull Requests:
+- [236](https://github.com/ragardner/tksheet/pull/236)
 
 #### Changed:
 - Resizing rows/columns with mouse button motion now does so during the motion also
