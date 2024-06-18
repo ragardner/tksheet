@@ -1,5 +1,6 @@
 ### Version 7.2.12
-####
+#### Pull Requests:
+- [237](https://github.com/ragardner/tksheet/pull/237)
 
 ### Version 7.2.11
 #### Fixed:
