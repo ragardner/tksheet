@@ -7465,5 +7465,17 @@ class MainTable(tk.Canvas):
     def dispcn(self, datacn: int) -> int:
         return datacn if self.all_columns_displayed else b_index(self.displayed_columns, datacn)
 
+    def try_dispcn(self, datacn: int) -> int | None:
+        try:
+            return self.dispcn(datacn)
+        except Exception:
+            return None
+
     def disprn(self, datarn: int) -> int:
         return datarn if self.all_rows_displayed else b_index(self.displayed_rows, datarn)
+
+    def try_disprn(self, datarn: int) -> int | None:
+        try:
+            return self.disprn(datarn)
+        except Exception:
+            return None

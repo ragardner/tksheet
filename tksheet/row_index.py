@@ -2296,13 +2296,15 @@ class RowIndex(tk.Canvas):
         )
         edited = False
         if isinstance(self.MT._row_index, int):
+            dispcn = self.MT.try_dispcn(self.MT._row_index)
             edited = self.MT.set_cell_data_undo(
                 r=r,
-                c=self.MT.dispcn(self.MT._row_index),
+                c=dispcn if isinstance(dispcn, int) else 0,
                 datarn=datarn,
                 datacn=self.MT._row_index,
                 value=value,
                 undo=True,
+                cell_resize=isinstance(dispcn, int),
             )
         else:
             self.fix_index(datarn)
@@ -2483,8 +2485,7 @@ class RowIndex(tk.Canvas):
                 if iid not in self.tree_open_ids:
                     return False
             return True
-        else:
-            return all(iid in self.tree_open_ids for iid in self.get_iid_ancestors(iid))
+        return all(iid in self.tree_open_ids for iid in self.get_iid_ancestors(iid))
 
     def get_iid_ancestors(self, iid: str) -> Generator[str]:
         if self.tree[iid].parent:

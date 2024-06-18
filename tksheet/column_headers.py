@@ -2176,13 +2176,15 @@ class ColumnHeaders(tk.Canvas):
         )
         edited = False
         if isinstance(self.MT._headers, int):
+            disprn = self.MT.try_disprn(self.MT._headers)
             edited = self.MT.set_cell_data_undo(
-                r=self.MT.disprn(self.MT._headers),
+                r=disprn if isinstance(disprn, int) else 0,
                 c=c,
                 datarn=self.MT._headers,
                 datacn=datacn,
                 value=value,
                 undo=True,
+                cell_resize=isinstance(disprn, int),
             )
         else:
             self.fix_header(datacn)
