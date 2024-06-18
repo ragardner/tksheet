@@ -599,7 +599,7 @@ class ColumnHeaders(tk.Canvas):
             if need_redraw:
                 self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=False)
         try_binding(self.extra_b1_motion_func, event)
-        
+
     def drag_height_resize(self) -> None:
         self.set_height(self.new_col_height, set_TL=True)
         self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
@@ -2176,7 +2176,14 @@ class ColumnHeaders(tk.Canvas):
         )
         edited = False
         if isinstance(self.MT._headers, int):
-            edited = self.MT.set_cell_data_undo(r=self.MT._headers, c=c, datacn=datacn, value=value, undo=True)
+            edited = self.MT.set_cell_data_undo(
+                r=self.MT.disprn(self.MT._headers),
+                c=c,
+                datarn=self.MT._headers,
+                datacn=datacn,
+                value=value,
+                undo=True,
+            )
         else:
             self.fix_header(datacn)
             if not check_input_valid or self.input_valid_for_cell(datacn, value):

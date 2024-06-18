@@ -49,6 +49,7 @@ from .formatters import (
     try_to_bool,
 )
 from .functions import (
+    b_index,
     consecutive_ranges,
     decompress_load,
     diff_gen,
@@ -7460,3 +7461,9 @@ class MainTable(tk.Canvas):
 
     def datarn(self, r: int) -> int:
         return r if self.all_rows_displayed else self.displayed_rows[r]
+
+    def dispcn(self, datacn: int) -> int:
+        return datacn if self.all_columns_displayed else b_index(self.displayed_columns, datacn)
+
+    def disprn(self, datarn: int) -> int:
+        return datarn if self.all_rows_displayed else b_index(self.displayed_rows, datarn)

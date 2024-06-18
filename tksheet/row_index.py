@@ -780,7 +780,7 @@ class RowIndex(tk.Canvas):
             and self.get_cell_kwargs(datarn, key="checkbox")
             and event.x < self.MT.index_txt_height + 4
         )
-        
+
     def drag_width_resize(self) -> None:
         self.set_width(self.new_row_width, set_TL=True)
         self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
@@ -2296,7 +2296,14 @@ class RowIndex(tk.Canvas):
         )
         edited = False
         if isinstance(self.MT._row_index, int):
-            edited = self.MT.set_cell_data_undo(r=r, c=self.MT._row_index, datarn=datarn, datacn=self.MT._row_index, value=value, undo=True)
+            edited = self.MT.set_cell_data_undo(
+                r=r,
+                c=self.MT.dispcn(self.MT._row_index),
+                datarn=datarn,
+                datacn=self.MT._row_index,
+                value=value,
+                undo=True,
+            )
         else:
             self.fix_index(datarn)
             if not check_input_valid or self.input_valid_for_cell(datarn, value):
