@@ -2485,7 +2485,7 @@ class RowIndex(tk.Canvas):
                 if iid not in self.tree_open_ids:
                     return False
             return True
-        return all(iid in self.tree_open_ids for iid in self.get_iid_ancestors(iid))
+        return all(map(self.tree_open_ids.__contains__, self.get_iid_ancestors(iid)))
 
     def get_iid_ancestors(self, iid: str) -> Generator[str]:
         if self.tree[iid].parent:
