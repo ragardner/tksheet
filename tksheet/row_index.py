@@ -2296,7 +2296,7 @@ class RowIndex(tk.Canvas):
         )
         edited = False
         if isinstance(self.MT._row_index, int):
-            edited = self.MT.set_cell_data_undo(r=r, c=self.MT._row_index, datarn=datarn, value=value, undo=True)
+            edited = self.MT.set_cell_data_undo(r=r, c=self.MT._row_index, datarn=datarn, datacn=self.MT._row_index, value=value, undo=True)
         else:
             self.fix_index(datarn)
             if not check_input_valid or self.input_valid_for_cell(datarn, value):
@@ -2431,7 +2431,7 @@ class RowIndex(tk.Canvas):
             elif isinstance(self.MT._row_index, int):
                 value = (
                     not self.MT.data[datarn][self.MT._row_index]
-                    if type(self.MT.data[datarn][self.MT._row_index], bool)
+                    if isinstance(self.MT.data[datarn][self.MT._row_index], bool)
                     else False
                 )
             else:
