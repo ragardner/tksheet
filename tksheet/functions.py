@@ -37,8 +37,17 @@ unpickle_obj = pickle.loads
 
 
 def get_csv_str_dialect(s: str, delimiters: str) -> csv.Dialect:
+    if len(s) > 6000:
+        try:
+            _upto = next(
+                match.start() + 1 for i, match in enumerate(re.finditer("\n", s), 1) if i == 300 or match.start() > 6000
+            )
+        except Exception:
+            _upto = len(s)
+    else:
+        _upto = len(s)
     try:
-        return csv.Sniffer().sniff(s[:5000] if len(s) > 5000 else s, delimiters=delimiters)
+        return csv.Sniffer().sniff(s[:_upto] if len(s) > 6000 else s, delimiters=delimiters)
     except Exception:
         return csv.excel_tab
 

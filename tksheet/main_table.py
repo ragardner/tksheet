@@ -6345,7 +6345,7 @@ class MainTable(tk.Canvas):
                 for r in range(box.coords.from_r, box.coords.upto_r)
             }
             if get_cells_as_rows:
-                return s | set(tup[0] for tup in self.get_selected_cells())
+                return s | set(map(itemgetter(0), self.gen_selected_cells()))
         return s
 
     def get_selected_cols(
@@ -6369,7 +6369,7 @@ class MainTable(tk.Canvas):
                 for c in range(box.coords.from_c, box.coords.upto_c)
             }
             if get_cells_as_cols:
-                return s | set(tup[1] for tup in self.get_selected_cells())
+                return s | set(map(itemgetter(1), self.gen_selected_cells()))
         return s
 
     def get_selected_cells(

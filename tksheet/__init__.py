@@ -37,6 +37,7 @@ from .functions import (
     alpha2num,
     consecutive_chunks,
     consecutive_ranges,
+    convert_align,
     data_to_displayed_idxs,
     displayed_to_data_idxs,
     dropdown_search_function,

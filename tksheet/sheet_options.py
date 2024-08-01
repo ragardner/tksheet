@@ -217,6 +217,8 @@ def new_sheet_options() -> DotDict:
             "default_row_height": "1",
             "default_column_width": 120,
             "default_row_index_width": 70,
+            "default_row_index": "numbers",
+            "default_header": "letters",
             "page_up_down_select_row": True,
             "paste_can_expand_x": False,
             "paste_can_expand_y": False,

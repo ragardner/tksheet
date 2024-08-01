@@ -339,11 +339,9 @@ class Sheet(tk.Frame):
             row_index_align=(
                 convert_align(row_index_align) if row_index_align is not None else convert_align(index_align)
             ),
-            default_row_index=default_row_index,
         )
         self.CH = ColumnHeaders(
             parent=self,
-            default_header=default_header,
             header_align=convert_align(header_align),
         )
         self.MT = MainTable(
@@ -1502,6 +1500,8 @@ class Sheet(tk.Frame):
         if displayed_rows:
             self.MT.displayed_rows = []
             self.MT.all_rows_displayed = True
+        if selections:
+            self.MT.deselect(redraw=False)
         if row_heights:
             self.MT.saved_row_heights = {}
             self.MT.set_row_positions([])
@@ -1514,8 +1514,6 @@ class Sheet(tk.Frame):
             self.MT.reset_tags()
         if undo_stack:
             self.reset_undos()
-        if selections:
-            self.MT.deselect(redraw=False)
         if sheet_options:
             self.ops = new_sheet_options()
             self.change_theme(redraw=False)
@@ -2924,7 +2922,7 @@ class Sheet(tk.Frame):
 
     def table_align(
         self,
-        align: str = None,
+        align: str | None = None,
         redraw: bool = True,
     ) -> str | Sheet:
         if align is None:
@@ -2937,7 +2935,7 @@ class Sheet(tk.Frame):
 
     def header_align(
         self,
-        align: str = None,
+        align: str | None = None,
         redraw: bool = True,
     ) -> str | Sheet:
         if align is None:
@@ -2950,7 +2948,7 @@ class Sheet(tk.Frame):
 
     def row_index_align(
         self,
-        align: str = None,
+        align: str | None = None,
         redraw: bool = True,
     ) -> str | Sheet:
         if align is None:
@@ -3461,6 +3459,17 @@ class Sheet(tk.Frame):
             return self.MT.row_positions
         return self.MT.get_row_heights()
 
+    def get_safe_row_heights(self) -> list[int]:
+        default_h = self.MT.get_default_row_height()
+        return [0 if e == default_h else e for e in self.MT.gen_row_heights()]
+
+    def set_safe_row_heights(self, heights: list[int]) -> Sheet:
+        default_h = self.MT.get_default_row_height()
+        self.MT.row_positions = list(
+            accumulate(chain([0], (self.valid_row_height(e) if e else default_h for e in heights)))
+        )
+        return self
+
     def get_row_text_height(
         self,
         row: int,
@@ -3823,7 +3832,13 @@ class Sheet(tk.Frame):
         return c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
 
     data_c = displayed_column_to_data
+    datacn = displayed_column_to_data
     dcol = displayed_column_to_data
+
+    def data_column_to_displayed(self, c: int) -> int:
+        return self.MT.dispcn(c)
+
+    dispcn = data_column_to_displayed
 
     def display_columns(
         self,
@@ -3951,7 +3966,13 @@ class Sheet(tk.Frame):
         return r if self.MT.all_rows_displayed else self.MT.displayed_rows[r]
 
     data_r = displayed_row_to_data
+    datarn = displayed_row_to_data
     drow = displayed_row_to_data
+
+    def data_row_to_displayed(self, r: int) -> int:
+        return self.MT.disprn(r)
+
+    disprn = data_row_to_displayed
 
     def display_rows(
         self,
@@ -4297,10 +4318,6 @@ class Sheet(tk.Frame):
             )
         if "default_row_height" in kwargs:
             self.default_row_height(kwargs["default_row_height"])
-        if "default_header" in kwargs:
-            self.CH.default_header = kwargs["default_header"].lower()
-        if "default_row_index" in kwargs:
-            self.RI.default_index = kwargs["default_row_index"].lower()
         if "max_column_width" in kwargs:
             self.MT.max_column_width = float(kwargs["max_column_width"])
         if "max_row_height" in kwargs:
@@ -6674,9 +6691,6 @@ class Sheet(tk.Frame):
     def get_index_dropdown_value(self, r: int = 0) -> object:
         if self.RI.get_cell_kwargs(r, key="dropdown"):
             return self.MT._row_index[r]
-
-    def delete_all_formatting(self, clear_values: bool = False) -> None:
-        self.MT.delete_all_formatting(clear_values=clear_values)
 
     def format_cell(
         self,

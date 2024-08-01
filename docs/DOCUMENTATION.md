@@ -3941,9 +3941,15 @@ get_column_alignments() -> dict
 ---
 # **Getting Selected Cells**
 
+All selected cell/box getting functions return or generate **displayed** cell coordinates.
+- Displayed cell coordinates ignore hidden rows/columns when indexing cells.
+- Data cell coordinates include hidden rows/columns in indexing cells.
+
 #### **Get the currently selected cell**
 
-This is always a single cell, the one, for example, in which the cell text editor opens when making single edits.
+This is always a single cell of displayed indices. If you have hidden rows or columns you can change the integers to data indices using the following functions:
+- [Change a row](https://github.com/ragardner/tksheet/wiki/Version-7#displayed-row-index-to-data)
+- [Change a column](https://github.com/ragardner/tksheet/wiki/Version-7#displayed-column-index-to-data)
 
 ```python
 get_currently_selected() -> tuple | Selected
@@ -3982,6 +3988,7 @@ get_selected_rows(
     return_tuple: bool = False,
 ) -> tuple[int] | tuple[tuple[int, int]] | set[int] | set[tuple[int, int]]
 ```
+- Returns displayed indexes.
 
 ___
 
@@ -3994,6 +4001,7 @@ get_selected_columns(
     return_tuple: bool = False,
 ) -> tuple[int] | tuple[tuple[int, int]] | set[int] | set[tuple[int, int]]
 ```
+- Returns displayed indexes.
 
 ___
 
@@ -4007,6 +4015,7 @@ get_selected_cells(
     sort_by_column: bool = False,
 ) -> list[tuple[int, int]] | set[tuple[int, int]]
 ```
+- Returns displayed coordinates.
 
 ___
 
@@ -4018,6 +4027,7 @@ gen_selected_cells(
     get_columns: bool = False,
 ) -> Generator[tuple[int, int]]
 ```
+- Generates displayed coordinates.
 
 ___
 
@@ -4026,6 +4036,7 @@ ___
 ```python
 get_all_selection_boxes() -> tuple[tuple[int, int, int, int]]
 ```
+- Returns displayed coordinates.
 
 ___
 
@@ -4117,6 +4128,10 @@ get_selected_min_max() -> tuple[int, int, int, int] | tuple[None, None, None, No
 
 ---
 # **Modifying Selected Cells**
+
+All selected cell/box setting functions use **displayed** cell coordinates.
+- Displayed cell coordinates ignore hidden rows/columns when indexing cells.
+- Data cell coordinates include hidden rows/columns in indexing cells.
 
 ```python
 set_currently_selected(row: int | None = None, column: int | None = None) -> Sheet

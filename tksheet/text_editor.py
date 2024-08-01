@@ -63,7 +63,7 @@ class TextEditorTkText(tk.Text):
             state=state,
         )
         self.align = align
-        self.rc_popup_menu.delete(0, None)
+        self.rc_popup_menu.delete(0, "end")
         self.rc_popup_menu.add_command(
             label=sheet_ops.select_all_label,
             accelerator=sheet_ops.select_all_accelerator,

@@ -1,3 +1,14 @@
+### Version 7.2.13
+#### Fixed:
+- [245](https://github.com/ragardner/tksheet/issues/245)
+
+#### Changed:
+- Moved variable `default_index` to sheet options as `default_row_index`
+- Moved variable `default_header` to sheet options
+
+#### Improved:
+- Documentation
+
 ### Version 7.2.12
 #### Pull Requests:
 - [237](https://github.com/ragardner/tksheet/pull/237)

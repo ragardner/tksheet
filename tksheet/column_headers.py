@@ -128,7 +128,6 @@ class ColumnHeaders(tk.Canvas):
         self.hidd_checkbox = {}
         self.hidd_boxes = set()
 
-        self.default_header = kwargs["default_header"].lower()
         self.align = kwargs["header_align"]
         self.basic_bindings()
 
@@ -2270,7 +2269,7 @@ class ColumnHeaders(tk.Canvas):
         except Exception:
             value = ""
         if not value and self.PAR.ops.show_default_header_for_empty:
-            value = get_n2a(datacn, self.default_header)
+            value = get_n2a(datacn, self.PAR.ops.default_header)
         return value
 
     def get_value_for_empty_cell(self, datacn: int, c_ops: bool = True) -> object:
