@@ -61,10 +61,10 @@ sheet.insert_columns(columns=2, idx=4, undo=True)
 sheet.delete_columns(columns=[0, 3], undo=True)
 ```
 
-### **light green theme**
+### **light blue theme**
 
-![tksheet light green theme](https://github.com/ragardner/tksheet/assets/26602401/790ee9bd-b4de-48df-8c44-33f303061d84)
+![tksheet light blue theme](https://github.com/user-attachments/assets/f40317d7-8b7f-43c5-9217-a77168b068ed)
 
 ### **dark theme**
 
-![tksheet dark theme](https://github.com/ragardner/tksheet/assets/26602401/fc8a0407-1486-46cf-b852-9bcff23160e5)
+![tksheet dark theme](https://github.com/user-attachments/assets/288453d6-5ac1-4d45-827f-45b24a3d05ed)
