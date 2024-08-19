@@ -439,6 +439,58 @@ def is_contiguous(iterable: Iterator[int]) -> bool:
     return all(i == (prev := prev + 1) for i in itr)
 
 
+def down_cell_within_box(
+    r: int,
+    c: int,
+    r1: int,
+    c1: int,
+    r2: int,
+    c2: int,
+    numrows: int,
+    numcols: int,
+) -> tuple[int, int]:
+    moved = False
+    new_r = r
+    new_c = c
+    if r + 1 == r2:
+        new_r = r1
+    elif numrows > 1:
+        new_r = r + 1
+        moved = True
+    if not moved:
+        if c + 1 == c2:
+            new_c = c1
+        elif numcols > 1:
+            new_c = c + 1
+    return new_r, new_c
+
+
+def cell_right_within_box(
+    r: int,
+    c: int,
+    r1: int,
+    c1: int,
+    r2: int,
+    c2: int,
+    numrows: int,
+    numcols: int,
+) -> tuple[int, int]:
+    moved = False
+    new_r = r
+    new_c = c
+    if c + 1 == c2:
+        new_c = c1
+    elif numcols > 1:
+        new_c = c + 1
+        moved = True
+    if not moved:
+        if r + 1 == r2:
+            new_r = r1
+        elif numrows > 1:
+            new_r = r + 1
+    return new_r, new_c
+
+
 def get_last(
     it: Iterator,
 ) -> object:

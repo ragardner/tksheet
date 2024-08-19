@@ -1535,7 +1535,6 @@ class RowIndex(tk.Canvas):
         self.hidd_tree_arrow.update(self.disp_tree_arrow)
         self.disp_tree_arrow = {}
         self.visible_row_dividers = {}
-        draw_y = self.MT.row_positions[grid_start_row]
         xend = self.current_width - 6
         self.row_width_resize_bbox = (
             self.current_width - 2,

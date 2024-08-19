@@ -1437,7 +1437,6 @@ class ColumnHeaders(tk.Canvas):
             x_stop,
             self.current_height,
         )
-        draw_x = self.MT.col_positions[grid_start_col]
         yend = self.current_height - 5
         if (self.PAR.ops.show_vertical_grid or self.width_resizing_enabled) and col_pos_exists:
             points = [

@@ -54,6 +54,7 @@ from .functions import (
     decompress_load,
     diff_gen,
     diff_list,
+    down_cell_within_box,
     event_dict,
     gen_formatted,
     get_data_from_clipboard,
@@ -72,6 +73,7 @@ from .functions import (
     new_tk_event,
     pickle_obj,
     pickled_event_dict,
+    cell_right_within_box,
     rounded_box_coords,
     span_idxs_post_move,
     try_binding,
@@ -6782,62 +6784,62 @@ class MainTable(tk.Canvas):
             numrows = r2 - r1
             if numcols == 1 and numrows == 1:
                 if event.keysym == "Return":
-                    self.select_cell(r + 1 if r < len(self.row_positions) - 2 else r, c)
-                    self.see(
-                        r + 1 if r < len(self.row_positions) - 2 else r,
-                        c,
-                        keep_xscroll=True,
-                        bottom_right_corner=True,
-                        check_cell_visibility=True,
-                    )
+                    if self.PAR.ops.edit_cell_return == "right":
+                        self.select_right(r, c)
+                    if self.PAR.ops.edit_cell_return == "down":
+                        self.select_down(r, c)
                 elif event.keysym == "Tab":
-                    self.select_cell(r, c + 1 if c < len(self.col_positions) - 2 else c)
-                    self.see(
-                        r,
-                        c + 1 if c < len(self.col_positions) - 2 else c,
-                        keep_xscroll=True,
-                        bottom_right_corner=True,
-                        check_cell_visibility=True,
-                    )
+                    if self.PAR.ops.edit_cell_tab == "right":
+                        self.select_right(r, c)
+                    if self.PAR.ops.edit_cell_tab == "down":
+                        self.select_down(r, c)
             else:
-                moved = False
-                new_r = r
-                new_c = c
                 if event.keysym == "Return":
-                    if r + 1 == r2:
-                        new_r = r1
-                    elif numrows > 1:
-                        new_r = r + 1
-                        moved = True
-                    if not moved:
-                        if c + 1 == c2:
-                            new_c = c1
-                        elif numcols > 1:
-                            new_c = c + 1
+                    if self.PAR.ops.edit_cell_return == "right":
+                        new_r, new_c = cell_right_within_box(r, c, r1, c1, r2, c2, numrows, numcols)
+                    elif self.PAR.ops.edit_cell_return == "down":
+                        new_r, new_c = down_cell_within_box(r, c, r1, c1, r2, c2, numrows, numcols)
+                    else:
+                        new_r, new_c = None, None
                 elif event.keysym == "Tab":
-                    if c + 1 == c2:
-                        new_c = c1
-                    elif numcols > 1:
-                        new_c = c + 1
-                        moved = True
-                    if not moved:
-                        if r + 1 == r2:
-                            new_r = r1
-                        elif numrows > 1:
-                            new_r = r + 1
-                self.set_currently_selected(new_r, new_c, item=self.selected.fill_iid)
-                self.see(
-                    new_r,
-                    new_c,
-                    keep_xscroll=False,
-                    bottom_right_corner=True,
-                    check_cell_visibility=True,
-                )
+                    if self.PAR.ops.edit_cell_tab == "right":
+                        new_r, new_c = cell_right_within_box(r, c, r1, c1, r2, c2, numrows, numcols)
+                    elif self.PAR.ops.edit_cell_tab == "down":
+                        new_r, new_c = down_cell_within_box(r, c, r1, c1, r2, c2, numrows, numcols)
+                    else:
+                        new_r, new_c = None, None
+                if isinstance(new_r, int):
+                    self.set_currently_selected(new_r, new_c, item=self.selected.fill_iid)
+                    self.see(
+                        new_r,
+                        new_c,
+                        keep_xscroll=False,
+                        bottom_right_corner=True,
+                        check_cell_visibility=True,
+                    )
         self.recreate_all_selection_boxes()
         self.hide_text_editor_and_dropdown()
         if event.keysym != "FocusOut":
             self.focus_set()
         return "break"
+
+    def select_right(self, r: int, c: int) -> None:
+        self.select_cell(r, c + 1 if c < len(self.col_positions) - 2 else c)
+        self.see(
+            r,
+            c + 1 if c < len(self.col_positions) - 2 else c,
+            bottom_right_corner=True,
+            check_cell_visibility=True,
+        )
+
+    def select_down(self, r: int, c: int) -> None:
+        self.select_cell(r + 1 if r < len(self.row_positions) - 2 else r, c)
+        self.see(
+            r + 1 if r < len(self.row_positions) - 2 else r,
+            c,
+            bottom_right_corner=True,
+            check_cell_visibility=True,
+        )
 
     def tab_key(self, event: object = None) -> str:
         if not self.selected:
@@ -6851,19 +6853,7 @@ class MainTable(tk.Canvas):
             new_c = c + 1 if c < len(self.col_positions) - 2 else c
             self.select_cell(new_r, new_c)
         else:
-            moved = False
-            new_r = r
-            new_c = c
-            if c + 1 == c2:
-                new_c = c1
-            elif numcols > 1:
-                new_c = c + 1
-                moved = True
-            if not moved:
-                if r + 1 == r2:
-                    new_r = r1
-                elif numrows > 1:
-                    new_r = r + 1
+            new_r, new_c = cell_right_within_box(r, c, r1, c1, r2, c2, numrows, numcols)
             self.set_currently_selected(new_r, new_c, item=self.selected.fill_iid)
         self.see(
             new_r,

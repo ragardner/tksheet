@@ -389,6 +389,8 @@ def __init__(
     show_horizontal_grid: bool = True,
     display_selected_fg_over_highlights: bool = False,
     show_selected_cells_border: bool = True,
+    edit_cell_tab: Literal["right", "down", ""] = "right",
+    edit_cell_return: Literal["right", "down", ""] = "down",
     treeview: bool = False,
     treeview_indent: str | int = "3",
     rounded_boxes: bool = True,
@@ -5347,6 +5349,8 @@ set_options(redraw: bool = True, **kwargs) -> Sheet
 
 The list of key word arguments available for `set_options()` are as follows, [see here](https://github.com/ragardner/tksheet/wiki/Version-7#initialization-options) as a guide for argument types.
 ```python
+edit_cell_tab
+edit_cell_return
 auto_resize_columns
 auto_resize_rows
 to_clipboard_delimiter

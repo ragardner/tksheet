@@ -1,5 +1,10 @@
 ### Version 7.2.14
-####
+#### Added:
+- New options to address [246](https://github.com/ragardner/tksheet/issues/246)
+
+#### Fixed:
+- Redundant code causing potential redraw error
+- Wrong version number in `__init__.py`
 
 ### Version 7.2.13
 #### Fixed:

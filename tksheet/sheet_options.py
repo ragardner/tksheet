@@ -239,6 +239,8 @@ def new_sheet_options() -> DotDict:
             "show_horizontal_grid": True,
             "display_selected_fg_over_highlights": False,
             "show_selected_cells_border": True,
+            "edit_cell_tab": "right",
+            "edit_cell_return": "down",
             "treeview": False,
             "treeview_indent": "6",
             "rounded_boxes": True,

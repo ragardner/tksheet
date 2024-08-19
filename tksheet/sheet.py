@@ -188,6 +188,8 @@ class Sheet(tk.Frame):
         show_horizontal_grid: bool = True,
         display_selected_fg_over_highlights: bool = False,
         show_selected_cells_border: bool = True,
+        edit_cell_tab: Literal["right", "down", ""] = "right",
+        edit_cell_return: Literal["right", "down", ""] = "down",
         treeview: bool = False,
         treeview_indent: str | int = "6",
         rounded_boxes: bool = True,
