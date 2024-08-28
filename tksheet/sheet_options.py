@@ -98,7 +98,6 @@ def new_sheet_options() -> DotDict:
             ],
             "delete_bindings": [
                 "<Delete>",
-                "<Delete>",
             ],
             "select_all_bindings": [
                 f"<{ctrl_key}-a>",
@@ -241,6 +240,7 @@ def new_sheet_options() -> DotDict:
             "show_selected_cells_border": True,
             "edit_cell_tab": "right",
             "edit_cell_return": "down",
+            "editor_del_key": "forward",
             "treeview": False,
             "treeview_indent": "6",
             "rounded_boxes": True,

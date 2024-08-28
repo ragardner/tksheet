@@ -1,3 +1,7 @@
+### Version 7.2.15
+#### Added:
+- New option to address [247](https://github.com/ragardner/tksheet/issues/247)
+
 ### Version 7.2.14
 #### Added:
 - New options to address [246](https://github.com/ragardner/tksheet/issues/246)

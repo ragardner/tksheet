@@ -40,6 +40,7 @@ class TextEditorTkText(tk.Text):
         self.bind(rc_binding, self.rc)
         self.bind(f"<{ctrl_key}-a>", self.select_all)
         self.bind(f"<{ctrl_key}-A>", self.select_all)
+        self.bind("<Delete>", self.delete_key)
         self._orig = self._w + "_orig"
         self.tk.call("rename", self._w, self._orig)
         self.tk.createcommand(self._w, self._proxy)
@@ -62,6 +63,7 @@ class TextEditorTkText(tk.Text):
             insertbackground=fg,
             state=state,
         )
+        self.editor_del_key = sheet_ops.editor_del_key
         self.align = align
         self.rc_popup_menu.delete(0, "end")
         self.rc_popup_menu.add_command(
@@ -125,6 +127,19 @@ class TextEditorTkText(tk.Text):
     def rc(self, event: object) -> None:
         self.focus_set()
         self.rc_popup_menu.tk_popup(event.x_root, event.y_root)
+
+    def delete_key(self, event: object = None) -> None:
+        if self.editor_del_key == "forward":
+            return
+        elif not self.editor_del_key:
+            return "break"
+        elif self.editor_del_key == "backward":
+            if self.tag_ranges("sel"):
+                return
+            if self.index("insert") == "1.0":
+                return "break"
+            self.delete("insert-1c")
+            return "break"
 
     def select_all(self, event: object = None) -> Literal["break"]:
         self.tag_add(tk.SEL, "1.0", tk.END)

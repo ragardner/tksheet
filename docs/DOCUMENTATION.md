@@ -391,8 +391,9 @@ def __init__(
     show_selected_cells_border: bool = True,
     edit_cell_tab: Literal["right", "down", ""] = "right",
     edit_cell_return: Literal["right", "down", ""] = "down",
+    editor_del_key: Literal["forward", "backward", ""] = "forward",
     treeview: bool = False,
-    treeview_indent: str | int = "3",
+    treeview_indent: str | int = "6",
     rounded_boxes: bool = True,
     # colors
     outline_thickness: int = 0,
@@ -5351,6 +5352,7 @@ The list of key word arguments available for `set_options()` are as follows, [se
 ```python
 edit_cell_tab
 edit_cell_return
+editor_del_key
 auto_resize_columns
 auto_resize_rows
 to_clipboard_delimiter
