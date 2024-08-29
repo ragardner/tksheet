@@ -921,11 +921,12 @@ class RowIndex(tk.Canvas):
         eventx: int,
     ) -> bool:
         if self.PAR.ops.treeview and (
-            canvasy < self.MT.row_positions[r] + self.MT.index_txt_height + 3
+            canvasy < self.MT.row_positions[r] + self.MT.index_txt_height + 5
             and isinstance(self.MT._row_index, list)
             and (datarn := self.MT.datarn(r)) < len(self.MT._row_index)
             and eventx
-            < self.get_treeview_indent((iid := self.MT._row_index[datarn].iid)) + self.MT.index_txt_height + 1
+            < (indent := self.get_treeview_indent((iid := self.MT._row_index[datarn].iid))) + self.MT.index_txt_height + 4
+            and eventx >= indent + 1
         ):
             return iid
         return None
