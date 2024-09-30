@@ -242,7 +242,7 @@ def new_sheet_options() -> DotDict:
             "edit_cell_return": "down",
             "editor_del_key": "forward",
             "treeview": False,
-            "treeview_indent": "6",
+            "treeview_indent": "5",
             "rounded_boxes": True,
             "alternate_color": "",
         }

@@ -41,6 +41,7 @@ This library is maintained with the help of **[others](https://github.com/ragard
 - Change fonts and font size (not for individual cells)
 - Change any colors in the sheet
 - Dropdowns, check boxes, progress bars
+- Treeview mode
 - [Hide rows and/or columns](https://github.com/ragardner/tksheet/wiki/Version-7#example-header-dropdown-boxes-and-row-filtering)
 - Left `"w"`, Center `"center"` or Right `"e"` text alignment for any cell/row/column
 
@@ -68,3 +69,7 @@ sheet.delete_columns(columns=[0, 3], undo=True)
 ### **dark theme**
 
 ![tksheet dark theme](https://github.com/user-attachments/assets/288453d6-5ac1-4d45-827f-45b24a3d05ed)
+
+### **treeview mode**
+
+![tksheet treeview](https://github.com/user-attachments/assets/201f2d9d-7ffb-43e2-81ba-91da806aaab0)

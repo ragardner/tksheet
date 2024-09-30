@@ -1,5 +1,6 @@
 ### Version 7.2.16
-####
+#### Added:
+- Treeview mode documentation
 
 ### Version 7.2.15
 #### Added:

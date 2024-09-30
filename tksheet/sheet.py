@@ -10,6 +10,7 @@ from collections.abc import (
     Iterator,
     Sequence,
 )
+from functools import partial
 from itertools import (
     accumulate,
     chain,
@@ -4714,6 +4715,8 @@ class Sheet(tk.Frame):
         open_ids: Iterator[str] | None = None,
         safety: bool = True,
         ncols: int | None = None,
+        include_iid_column: bool = True,
+        include_parent_column: bool = True,
     ) -> Sheet:
         self.reset(cell_options=False, column_widths=False, header=False, redraw=False)
         if text_column is None:
@@ -4759,8 +4762,9 @@ class Sheet(tk.Frame):
                 newrow[iid_column] = n.iid
                 self.RI.tree_rns[n.iid] = len(data)
                 data.append(newrow)
-        self.insert_rows(
-            rows=[[self.RI.tree[iid]] + data[self.RI.tree_rns[iid]] for iid in self.get_children()],
+
+        insert_rows = partial(
+            self.insert_rows,
             idx=0,
             heights={} if row_heights is False else row_heights,
             row_index=True,
@@ -4769,6 +4773,37 @@ class Sheet(tk.Frame):
             push_ops=push_ops,
             redraw=False,
         )
+
+        if include_iid_column and include_parent_column:
+            insert_rows(rows=[[self.RI.tree[iid]] + data[self.RI.tree_rns[iid]] for iid in self.get_children()])
+
+        elif include_iid_column and not include_parent_column:
+            exclude = {parent_column}
+            insert_rows(
+                rows=[
+                    [self.RI.tree[iid]] + [e for i, e in enumerate(data[self.RI.tree_rns[iid]]) if i not in exclude]
+                    for iid in self.get_children()
+                ]
+            )
+
+        elif include_parent_column and not include_iid_column:
+            exclude = {iid_column}
+            insert_rows(
+                rows=[
+                    [self.RI.tree[iid]] + [e for i, e in enumerate(data[self.RI.tree_rns[iid]]) if i not in exclude]
+                    for iid in self.get_children()
+                ]
+            )
+
+        elif not include_iid_column and not include_parent_column:
+            exclude = {iid_column, parent_column}
+            insert_rows(
+                rows=[
+                    [self.RI.tree[iid]] + [e for i, e in enumerate(data[self.RI.tree_rns[iid]]) if i not in exclude]
+                    for iid in self.get_children()
+                ]
+            )
+
         self.MT.all_rows_displayed = False
         self.MT.displayed_rows = list(range(len(self.MT._row_index)))
         self.RI.tree_rns = {n.iid: i for i, n in enumerate(self.MT._row_index)}
@@ -4886,12 +4921,12 @@ class Sheet(tk.Frame):
         index: None | int | Literal["end"] = None,
         iid: None | str = None,
         text: None | str = None,
-        values: None | list = None,
+        values: None | list[object] = None,
         create_selections: bool = False,
     ) -> str:
         if iid is None:
             i = 0
-            while (iid := f"{i}") in self.RI.tree:
+            while (iid := f"{num2alpha(i)}") in self.RI.tree:
                 i += 1
         iid, pid = iid.lower(), parent.lower()
         if not iid:
@@ -5214,7 +5249,7 @@ class Sheet(tk.Frame):
             raise ValueError(f"Item '{item}' does not exist.")
         return self.RI.tree_rns[item] in self.MT.displayed_rows
 
-    def display_item(self, item: str, redraw=False) -> Sheet:
+    def display_item(self, item: str, redraw: bool = False) -> Sheet:
         """
         Ensure that item is displayed in the tree
         - Opens all of an item's ancestors
@@ -5231,7 +5266,7 @@ class Sheet(tk.Frame):
             )
         return self.set_refresh_timer(redraw)
 
-    def scroll_to_item(self, item: str, redraw=False) -> Sheet:
+    def scroll_to_item(self, item: str, redraw: bool = False) -> Sheet:
         """
         Scrolls to an item and ensures that it is displayed
         """

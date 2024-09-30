@@ -393,7 +393,7 @@ def __init__(
     edit_cell_return: Literal["right", "down", ""] = "down",
     editor_del_key: Literal["forward", "backward", ""] = "forward",
     treeview: bool = False,
-    treeview_indent: str | int = "6",
+    treeview_indent: str | int = "5",
     rounded_boxes: bool = True,
     # colors
     outline_thickness: int = 0,
@@ -5647,7 +5647,367 @@ redraw(redraw_header: bool = True, redraw_row_index: bool = True) -> Sheet
 ---
 # **Treeview Mode**
 
-This is a work in progress and still being tested and changed.
+tksheet has a treeview mode which behaves similarly to the ttk treeview widget, it is not a drop in replacement for it though.
+
+## **Treeview limitations and warnings**
+
+There are some key limitations to the treeview mode, most have been listed under separate headings below but the list is not exhaustive.
+
+There may be other conflicts between the treeview mode and some of tksheets non-treeview functions.
+
+### **Treeview usable bindings**
+
+The only bindings (using `enable_bindings()`) which **will not** cause issues are:
+- `"single_select"`
+- `"drag_select"`
+    - `"select_all"`
+- `"column_select"`
+- `"row_select"`
+- `"column_width_resize"`
+- `"double_click_column_resize"`
+- `"row_width_resize"`
+- `"column_height_resize"`
+- `"arrowkeys"` # all arrowkeys including page up and down
+- `"up"`
+- `"down"`
+- `"left"`
+- `"right"`
+- `"prior"` # page up
+- `"next"` # page down
+- `"row_height_resize"`
+- `"double_click_row_resize"`
+- `"right_click_popup_menu"`
+- `"rc_select"`
+- `"rc_insert_column"`
+- `"rc_delete_column"`
+- `"ctrl_click_select"` / `"ctrl_select"`
+- `"copy"`
+- `"cut"`
+- `"paste"`
+- `"delete"`
+- `"edit_cell"`
+
+### **Treeview function limitations**
+
+Many functions designed for normal tksheet usage will cause issues with its treeview mode. The following relates to non-treeview mode functions.
+
+**Okay:**
+- Modifying headers or columns.
+- Modifying table or header cell contents.
+- Modifying any highlights, table data formatting, table/header dropdown boxes/checkboxes, etc.
+
+**Not okay:**
+- Modifying the row index.
+- Modifying rows, e.g. moving or deleting rows.
+- Using undo.
+
+### **Treeview other limitations**
+
+**Text alignment**
+
+The index text alignment must be `"w"` aka west or left.
+
+## **Creating a treeview mode sheet**
+
+You can make a treeview mode sheet by using the initialization parameter `treeview`:
+
+```python
+sheet = Sheet(parent, treeview=True)
+```
+
+See the other sections on sheet initialization and examples for the other usual `Sheet()` parameters.
+
+## **Treeview mode functions**
+
+Functions designed for use with treeview mode.
+
+#### **Insert an item**
+
+```python
+insert(
+    parent: str = "",
+    index: None | int | Literal["end"] = None,
+    iid: None | str = None,
+    text: None | str = None,
+    values: None | list[object] = None,
+    create_selections: bool = False,
+) -> str
+```
+Parameters:
+- `parent` is the `iid` of the parent item (if any). If left as `""` then the item will not have a parent.
+- `index` is the row number for the item to be placed at, leave as `None` for the end.
+- `iid` is a new and unique item id. It will be generated automatically if left as `None`.
+- `text` is the displayed text in the row index for the item.
+- `values` is a list of values which will become the items row in the sheet.
+- `create_selections` when `True` selects the row that has just been created.
+
+Notes:
+- Returns the `iid`.
+
+Example:
+```python
+sheet.insert(
+    iid="top level",
+    text="Top level",
+    values=["cell A1", "cell B1"],
+)
+sheet.insert(
+    parent="top level",
+    iid="mid level",
+    text="Mid level",
+    values=["cell A2", "cell B2"],
+)
+```
+
+#### **Build a tree from data**
+
+This takes a list of lists where sublists are rows and a few arguments to bulk insert items into the treeview. **Note that**:
+- **It resets the sheet** so cannot be used to bulk add to an already existing treeview.
+
+```python
+tree_build(
+    data: list[list[object]],
+    iid_column: int,
+    parent_column: int,
+    text_column: None | int = None,
+    push_ops: bool = False,
+    row_heights: Sequence[int] | None | False = None,
+    open_ids: Iterator[str] | None = None,
+    safety: bool = True,
+    ncols: int | None = None,
+    include_iid_column: bool = True,
+    include_parent_column: bool = True,
+) -> Sheet
+```
+Parameters:
+- `data` a list of lists, one column must be an iid column, another must be a parent iid column.
+- `text_column` if an `int` is used then the values in that column will populate the row index.
+- `push_ops` when `True` the newly inserted rows will push all existing sheet options such as highlights downwards.
+- `row_heights` a `list` of `int`s can be used to provide the displayed row heights in pixels (does not include hidden items). Only use if you know what you're doing here.
+- `open_ids` a list of iids which will be opened.
+- `safety` when `True` checks for infinite loops, empty iid cells and duplicate iids. No error or warning will be generated.
+    - In the case of infinite loops the parent iid cell will be cleared.
+    - In the case of empty iid cells the row will be ignored.
+    - In the case of duplicate iids they will be renamed and `"DUPLICATED_<number>"` will be attached to the end.
+- `ncols` is like maximum columns, an `int` which limits the number of columns that are included in the loaded data.
+- `include_iid_column` when `False` excludes the iid column from the inserted rows.
+- `include_parent_column` when `False` excludes the parent column from the inserted rows.
+
+Notes:
+- Returns the `Sheet` object.
+
+Example:
+```python
+data = [
+    ["id1", "", "id1 val"],
+    ["id2", "id1", "id2 val"],
+]
+sheet.tree_build(
+    data=data,
+    iid_column=0,
+    parent_column=1,
+    include_iid_column=False,
+    include_parent_column=False,
+)
+```
+
+#### **Reset the treeview**
+
+```python
+tree_reset() -> Sheet
+```
+
+#### **Get treeview iids that are open**
+
+```python
+tree_get_open() -> set[str]
+```
+
+#### **Set the open treeview iids**
+
+```python
+tree_set_open(open_ids: Iterator[str]) -> Sheet
+```
+- Any other iids are closed as a result.
+
+#### **Open treeview iids**
+
+```python
+tree_open(*items, redraw: bool = True) -> Sheet
+```
+- Opens all given iids.
+
+#### **Close treeview iids**
+
+```python
+tree_close(*items, redraw: bool = True) -> Sheet
+```
+- Closes all given iids.
+
+#### **Set or get an iids attributes**
+
+```python
+item(
+    item: str,
+    iid: str | None = None,
+    text: str | None = None,
+    values: list | None = None,
+    open_: bool | None = None,
+    redraw: bool = True,
+) -> DotDict | Sheet
+```
+Parameters:
+- `item` iid, required argument.
+- `iid` use a `str` to rename the iid.
+- `text` use a `str` to get the iid new display text in the row index.
+- `values` use a `list` of values to give the item a new row of values (does not include row index).
+- `open_` use a `bool` to set the item as open or closed. `False` is closed.
+
+Notes:
+- If no arguments are given a `DotDict` is returned with the item attributes.
+
+```python
+{
+    "text": ...,
+    "values": ...,
+    "open_": ...,
+}
+```
+
+#### **Get an iids row number**
+
+```python
+itemrow(item: str) -> int
+```
+- Includes hidden rows in counting row numbers.
+
+#### **Get a row numbers item**
+
+```python
+rowitem(row: int, data_index: bool = False) -> str | None
+```
+- Includes hidden rows in counting row numbers. See [here](https://github.com/ragardner/tksheet/wiki/Version-7#hiding-rows) for more information.
+
+#### **Get treeview children**
+
+```python
+get_children(item: None | str = None) -> Generator[str]
+```
+- `item`:
+    - When left as `None` will return all iids currently in treeview, including hidden rows.
+    - Use an empty `str` (`""`) to get all top level iids in the treeview.
+    - Use an iid to get the children for that particular iid. Does not include all descendants.
+
+#### **Delete treeview items**
+
+```python
+del_items(*items) -> Sheet
+```
+- `*items` the iids of items to delete.
+- Also deletes all item descendants.
+
+#### **Move items to a new parent**
+
+```python
+set_children(parent: str, *newchildren) -> Sheet
+```
+- `parent` the new parent for the items.
+- `*newchildren` the items to move.
+
+#### **Move an item to a new parent**
+
+```python
+move(item: str, parent: str, index: int | None = None) -> Sheet
+```
+- `item` is the iid to move.
+- `parent` is the new parent for the item.
+    - Use an empty `str` (`""`) to move the item to the top.
+- `index`:
+    - Leave as `None` to move to item to the end of the top/children.
+    - Use an `int` to move the item to an index within its parents children (or within top level items if moving to the top).
+- `reattach()` is exactly the same as `move()`.
+
+#### **Check an item exists**
+
+```python
+exists(item: str) -> bool
+```
+- `item` - a treeview iid.
+
+#### **Get an items parent**
+
+```python
+parent(item: str) -> str
+```
+- `item` - a treeview iid.
+
+#### **Get an items index**
+
+```python
+index(item: str) -> int
+```
+- `item` - a treeview iid.
+
+#### **Check if an item is currently displayed**
+
+```python
+item_displayed(item: str) -> bool
+```
+- `item` - a treeview iid.
+
+#### **Display an item**
+
+Make sure an items parents are all open, does **not** scroll to the item.
+
+```python
+display_item(item: str, redraw: bool = False) -> Sheet
+```
+- `item` - a treeview iid.
+
+#### **Scroll to an item**
+
+- Make sure an items parents are all open and scrolls to the item.
+
+```python
+scroll_to_item(item: str, redraw: bool = False) -> Sheet
+```
+- `item` - a treeview iid.
+
+#### **Get currently selected items**
+
+```python
+selection(cells: bool = False) -> list[str]
+```
+Notes:
+- Returns a list of selected iids (selected rows but as iids).
+
+Parameters:
+- `cells` when `True` any selected cells will also qualify as selected items.
+
+#### **Set selected items**
+
+```python
+selection_set(*items, redraw: bool = True) -> Sheet
+```
+- Sets selected rows (items).
+
+#### **Add selected items**
+
+```python
+selection_add(*items, redraw: bool = True) -> Sheet
+```
+
+#### **Remove selections**
+
+```python
+selection_remove(*items, redraw: bool = True) -> Sheet
+```
+
+#### **Toggle selections**
+
+```python
+selection_toggle(*items, redraw: bool = True) -> Sheet
+```
 
 ---
 # **Progress Bars**
