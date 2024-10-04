@@ -41,7 +41,7 @@ This library is maintained with the help of **[others](https://github.com/ragard
 - Change fonts and font size (not for individual cells)
 - Change any colors in the sheet
 - Dropdowns, check boxes, progress bars
-- Treeview mode
+- [Treeview mode](https://github.com/ragardner/tksheet/wiki/Version-7#treeview-mode)
 - [Hide rows and/or columns](https://github.com/ragardner/tksheet/wiki/Version-7#example-header-dropdown-boxes-and-row-filtering)
 - Left `"w"`, Center `"center"` or Right `"e"` text alignment for any cell/row/column
 

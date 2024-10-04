@@ -193,7 +193,7 @@ class Sheet(tk.Frame):
         edit_cell_return: Literal["right", "down", ""] = "down",
         editor_del_key: Literal["forward", "backward", ""] = "forward",
         treeview: bool = False,
-        treeview_indent: str | int = "6",
+        treeview_indent: str | int = "5",
         rounded_boxes: bool = True,
         alternate_color: str = "",
         # colors
@@ -4709,7 +4709,7 @@ class Sheet(tk.Frame):
         data: list[list[object]],
         iid_column: int,
         parent_column: int,
-        text_column: None | int = None,
+        text_column: None | int | list[str] = None,
         push_ops: bool = False,
         row_heights: Sequence[int] | None | False = None,
         open_ids: Iterator[str] | None = None,
@@ -4741,15 +4741,15 @@ class Sheet(tk.Frame):
                     tally_of_ids[iid] += 1
                     row[iid_column] = new
             if iid in self.RI.tree:
-                self.RI.tree[iid].text = row[text_column]
+                self.RI.tree[iid].text = row[text_column] if isinstance(text_column, int) else text_column[rn]
             else:
-                self.RI.tree[iid] = Node(row[text_column], iid, "")
+                self.RI.tree[iid] = Node(row[text_column] if isinstance(text_column, int) else text_column[rn], iid, "")
             if safety and (iid == pid or self.RI.build_pid_causes_recursive_loop(iid, pid)):
                 row[parent_column] = ""
                 pid = ""
             if pid:
                 if pid not in self.RI.tree:
-                    self.RI.tree[pid] = Node(row[text_column], pid)
+                    self.RI.tree[pid] = Node(row[text_column] if isinstance(text_column, int) else text_column[rn], pid)
                 self.RI.tree[iid].parent = self.RI.tree[pid]
                 self.RI.tree[pid].children.append(self.RI.tree[iid])
             else:
