@@ -6942,3 +6942,10 @@ If you have an idea for a new feature, improvement or change, please follow thes
 - Include a clear and concise description of your idea, including any relevant details, screenshots, or mock-ups that can help contributors understand your suggestion better.
 - You're also welcome to become a contributor yourself and help implement your idea!
 
+### **Contributors and Special Thanks**
+
+A special thank you to:
+- @CalJaDav for the very helpful ideas/pull requests, guidance in implementing them and helping me become a better developer.
+- @demberto for providing pull requests and guidance to modernize and improve the project.
+- All [contributors](https://github.com/ragardner/tksheet/graphs/contributors).
+- Everyone who has reported an issue and helped me fix it.
