@@ -1,5 +1,6 @@
 ### Version 7.2.17
-####
+#### Changed:
+- Treeview mode slight appearance change
 
 ### Version 7.2.16
 #### Added:
