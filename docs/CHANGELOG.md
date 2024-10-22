@@ -1,3 +1,6 @@
+### Version 7.2.19
+####
+
 ### Version 7.2.18
 #### Fixed:
 - Inserting rows/columns with hidden rows/columns sometimes resulted in incorrect rows/columns being displayed
