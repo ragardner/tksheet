@@ -6,7 +6,6 @@ from collections.abc import Callable, Generator, Hashable, Iterator
 from functools import partial
 from typing import Literal
 
-
 pickle_obj = partial(pickle.dumps, protocol=pickle.HIGHEST_PROTOCOL)
 
 FontTuple = namedtuple("FontTuple", "family size style")

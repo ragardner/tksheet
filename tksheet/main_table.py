@@ -49,7 +49,9 @@ from .formatters import (
     try_to_bool,
 )
 from .functions import (
+    add_to_displayed,
     b_index,
+    cell_right_within_box,
     consecutive_ranges,
     decompress_load,
     diff_gen,
@@ -73,7 +75,6 @@ from .functions import (
     new_tk_event,
     pickle_obj,
     pickled_event_dict,
-    cell_right_within_box,
     rounded_box_coords,
     span_idxs_post_move,
     try_binding,
@@ -4317,16 +4318,7 @@ class MainTable(tk.Canvas):
         if isinstance(displayed_columns, list):
             self.displayed_columns = displayed_columns
         elif not self.all_columns_displayed:
-            # push displayed indexes by one for every inserted column
-            self.displayed_columns.sort()
-            # highest index is first in columns
-            up_to = len(self.displayed_columns)
-            for cn in columns:
-                self.displayed_columns.insert((last_ins := bisect_left(self.displayed_columns, cn)), cn)
-                self.displayed_columns[last_ins + 1 : up_to] = [
-                    i + 1 for i in islice(self.displayed_columns, last_ins + 1, up_to)
-                ]
-                up_to = last_ins
+            self.displayed_columns = add_to_displayed(self.displayed_columns, columns)
         cws = self.get_column_widths()
         if column_widths and next(reversed(column_widths)) > len(cws):
             for i in reversed(range(len(cws), len(cws) + next(reversed(column_widths)) - len(cws))):
@@ -4417,7 +4409,7 @@ class MainTable(tk.Canvas):
         else:
             numcols = 1
             displayed_ins_col = len(self.col_positions) - 1
-            data_ins_col = int(displayed_ins_col)
+            data_ins_col = self.total_data_cols()
         if (
             isinstance(self.PAR.ops.paste_insert_column_limit, int)
             and self.PAR.ops.paste_insert_column_limit < displayed_ins_col + numcols
@@ -4462,16 +4454,7 @@ class MainTable(tk.Canvas):
         if isinstance(displayed_rows, list):
             self.displayed_rows = displayed_rows
         elif not self.all_rows_displayed:
-            # push displayed indexes by one for every inserted row
-            self.displayed_rows.sort()
-            # highest index is first in rows
-            up_to = len(self.displayed_rows)
-            for rn in rows:
-                self.displayed_rows.insert((last_ins := bisect_left(self.displayed_rows, rn)), rn)
-                self.displayed_rows[last_ins + 1 : up_to] = [
-                    i + 1 for i in islice(self.displayed_rows, last_ins + 1, up_to)
-                ]
-                up_to = last_ins
+            self.displayed_rows = add_to_displayed(self.displayed_rows, rows)
         rhs = self.get_row_heights()
         if row_heights and next(reversed(row_heights)) > len(rhs):
             default_row_height = self.get_default_row_height()
@@ -4561,7 +4544,7 @@ class MainTable(tk.Canvas):
         else:
             numrows = 1
             displayed_ins_row = len(self.row_positions) - 1
-            data_ins_row = int(displayed_ins_row)
+            data_ins_row = self.total_data_rows()
         if (
             isinstance(self.PAR.ops.paste_insert_row_limit, int)
             and self.PAR.ops.paste_insert_row_limit < displayed_ins_row + numrows
@@ -5847,6 +5830,7 @@ class MainTable(tk.Canvas):
         c: int | None = None,
         item: int | None = None,
         box: tuple[int, int, int, int] | None = None,
+        run_binding: bool = True,
     ) -> None:
         if isinstance(item, int) and item in self.selection_boxes:
             selection_box = self.selection_boxes[item]
@@ -5862,6 +5846,8 @@ class MainTable(tk.Canvas):
                     selection_box.type_,
                     selection_box.fill_iid,
                 )
+                if run_binding:
+                    self.run_selection_binding(selection_box.type_)
                 return
         # currently selected is pointed at any selection box with "box" coordinates
         if isinstance(box, tuple):
@@ -5878,6 +5864,8 @@ class MainTable(tk.Canvas):
                         selection_box.type_,
                         selection_box.fill_iid,
                     )
+                    if run_binding:
+                        self.run_selection_binding(selection_box.type_)
                     return
         # currently selected is just pointed at a coordinate
         # find the top most box there, requires r and c
@@ -5891,6 +5879,8 @@ class MainTable(tk.Canvas):
                         selection_box.type_,
                         selection_box.fill_iid,
                     )
+                    if run_binding:
+                        self.run_selection_binding(selection_box.type_)
                     return
             # wasn't provided an item and couldn't find a box at coords so select cell
             if r < len(self.row_positions) - 1 and c < len(self.col_positions) - 1:

@@ -1,5 +1,23 @@
 ### Version 7.2.18
-####
+#### Fixed:
+- Inserting rows/columns with hidden rows/columns sometimes resulted in incorrect rows/columns being displayed
+- Treeview function `insert()` when using parameter `index` sometimes resulted in treeview items being displayed in the wrong locations
+
+#### Changed:
+- Using function `set_currently_selected()` or any function/setter which does the same internally will now trigger a select event like creating selection boxes does
+- iids in Treeview mode are now case sensitive
+- Treeview function `tree_build()` when parameter `safety` is `False` will no longer check for missing ids in the iid column
+- Treeview function `get_children()` now gets item ids from the row index which provides them in the same order as in the treeview
+- Add parameter `run_binding` to treeview functions `selection_add()`, `selection_set()`
+- Slight color change for top left rectangle bars
+
+#### Added:
+- Initialization parameters `default_header` and `default_row_index` can now optionally be set to `None` to not display anything in empty header cells / row index cells
+- Parameters `lower` and `include_text_column` to treeview function `tree_build()`
+- Treeview function `bulk_insert()`
+- Treeview function `get_nodes()` behaves exactly the same as `get_children()` except it retrieves item ids from the tree nodes `dict` not the row index.
+- Treeview function `descendants()` which returns a generator
+- Treeview property `tree_selected`
 
 ### Version 7.2.17
 #### Changed:

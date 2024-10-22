@@ -310,8 +310,8 @@ def __init__(
     header: None | list[object] = None,
     row_index: None | list[object] = None,
     index: None | list[object] = None,
-    default_header: Literal["letters", "numbers", "both"] = "letters",
-    default_row_index: Literal["letters", "numbers", "both"] = "numbers",
+    default_header: Literal["letters", "numbers", "both"] | None = "letters",
+    default_row_index: Literal["letters", "numbers", "both"] | None = "numbers",
     data_reference: None | Sequence[Sequence[object]] = None,
     data: None | Sequence[Sequence[object]] = None,
     # either (start row, end row, "rows"), (start column, end column, "rows") or
@@ -5760,6 +5760,54 @@ sheet.insert(
 )
 ```
 
+___
+
+#### **Insert multiple items**
+
+```python
+bulk_insert(
+    data: list[list[object]],
+    parent: str = "",
+    index: None | int | Literal["end"] = None,
+    iid_column: int | None = None,
+    text_column: int | None | str = None,
+    create_selections: bool = False,
+    include_iid_column: bool = True,
+    include_text_column: bool = True,
+) -> dict[str, int]
+```
+Parameters:
+- `parent` is the `iid` of the parent item (if any). If left as `""` then the items will not have a parent.
+- `index` is the row number for the items to be placed at, leave as `None` for the end.
+- `iid_column` if left as `None` iids will be automatically generated for the new items, else you can specify a column in the `data` which contains the iids.
+- `text_column`:
+    - If left as `None` there will be no displayed text next to the items.
+    - A text column can be provided in the data and `text_column` set to an `int` representing its index to provide the displayed text for the items.
+    - Or if a `str` is used all items will have that `str` as their displayed text.
+- `create_selections` when `True` selects the row that has just been created.
+- `include_iid_column` when `False` excludes the iid column from the inserted rows.
+- `include_text_column` when the `text_column` is an `int` setting this to `False` excludes that column from the treeview.
+
+Notes:
+- Returns a `dict[str, int]` of key: new iids, value: their data row number.
+
+Example:
+```python
+sheet.insert(
+    iid="top level",
+    text="Top level",
+    values=["cell A1", "cell B1"],
+)
+sheet.insert(
+    parent="top level",
+    iid="mid level",
+    text="Mid level",
+    values=["cell A2", "cell B2"],
+)
+```
+
+___
+
 #### **Build a tree from data**
 
 This takes a list of lists where sublists are rows and a few arguments to bulk insert items into the treeview. **Note that**:
@@ -5776,8 +5824,10 @@ tree_build(
     open_ids: Iterator[str] | None = None,
     safety: bool = True,
     ncols: int | None = None,
+    lower: bool = False,
     include_iid_column: bool = True,
     include_parent_column: bool = True,
+    include_text_column: bool = True,
 ) -> Sheet
 ```
 Parameters:
@@ -5791,8 +5841,10 @@ Parameters:
     - In the case of empty iid cells the row will be ignored.
     - In the case of duplicate iids they will be renamed and `"DUPLICATED_<number>"` will be attached to the end.
 - `ncols` is like maximum columns, an `int` which limits the number of columns that are included in the loaded data.
+- `lower` makes all item ids - iids lower case.
 - `include_iid_column` when `False` excludes the iid column from the inserted rows.
 - `include_parent_column` when `False` excludes the parent column from the inserted rows.
+- `include_text_column` when the `text_column` is an `int` setting this to `False` excludes that column from the treeview.
 
 Notes:
 - Returns the `Sheet` object.
@@ -5812,17 +5864,23 @@ sheet.tree_build(
 )
 ```
 
+___
+
 #### **Reset the treeview**
 
 ```python
 tree_reset() -> Sheet
 ```
 
+___
+
 #### **Get treeview iids that are open**
 
 ```python
 tree_get_open() -> set[str]
 ```
+
+___
 
 #### **Set the open treeview iids**
 
@@ -5831,6 +5889,8 @@ tree_set_open(open_ids: Iterator[str]) -> Sheet
 ```
 - Any other iids are closed as a result.
 
+___
+
 #### **Open treeview iids**
 
 ```python
@@ -5838,12 +5898,16 @@ tree_open(*items, redraw: bool = True) -> Sheet
 ```
 - Opens all given iids.
 
+___
+
 #### **Close treeview iids**
 
 ```python
 tree_close(*items, redraw: bool = True) -> Sheet
 ```
 - Closes all given iids.
+
+___
 
 #### **Set or get an iids attributes**
 
@@ -5875,6 +5939,8 @@ Notes:
 }
 ```
 
+___
+
 #### **Get an iids row number**
 
 ```python
@@ -5882,12 +5948,16 @@ itemrow(item: str) -> int
 ```
 - Includes hidden rows in counting row numbers.
 
+___
+
 #### **Get a row numbers item**
 
 ```python
 rowitem(row: int, data_index: bool = False) -> str | None
 ```
 - Includes hidden rows in counting row numbers. See [here](https://github.com/ragardner/tksheet/wiki/Version-7#hiding-rows) for more information.
+
+___
 
 #### **Get treeview children**
 
@@ -5899,6 +5969,32 @@ get_children(item: None | str = None) -> Generator[str]
     - Use an empty `str` (`""`) to get all top level iids in the treeview.
     - Use an iid to get the children for that particular iid. Does not include all descendants.
 
+```python
+get_nodes(item: None | str = None) -> Generator[str]:
+```
+- Exactly the same as above but instead of retrieving iids in the order that they appear in the treeview it retrieves iids from the internal `dict` which may not be ordered.
+
+___
+
+#### **Get item descendants**
+
+```python
+descendants(item: str, check_open: bool = False) -> Generator[str]:
+```
+- Returns a generator which yields item ids in the order that they appear in the treeview.
+
+___
+
+#### **Get the currently selected treeview item**
+
+```python
+@property
+tree_selected() -> str | None:
+```
+- Returns the item id of the currently selected box row. If nothing is selected returns `None`.
+
+___
+
 #### **Delete treeview items**
 
 ```python
@@ -5907,6 +6003,8 @@ del_items(*items) -> Sheet
 - `*items` the iids of items to delete.
 - Also deletes all item descendants.
 
+___
+
 #### **Move items to a new parent**
 
 ```python
@@ -5914,6 +6012,8 @@ set_children(parent: str, *newchildren) -> Sheet
 ```
 - `parent` the new parent for the items.
 - `*newchildren` the items to move.
+
+___
 
 #### **Move an item to a new parent**
 
@@ -5928,12 +6028,16 @@ move(item: str, parent: str, index: int | None = None) -> Sheet
     - Use an `int` to move the item to an index within its parents children (or within top level items if moving to the top).
 - `reattach()` is exactly the same as `move()`.
 
+___
+
 #### **Check an item exists**
 
 ```python
 exists(item: str) -> bool
 ```
 - `item` - a treeview iid.
+
+___
 
 #### **Get an items parent**
 
@@ -5942,6 +6046,8 @@ parent(item: str) -> str
 ```
 - `item` - a treeview iid.
 
+___
+
 #### **Get an items index**
 
 ```python
@@ -5949,12 +6055,16 @@ index(item: str) -> int
 ```
 - `item` - a treeview iid.
 
+___
+
 #### **Check if an item is currently displayed**
 
 ```python
 item_displayed(item: str) -> bool
 ```
 - `item` - a treeview iid.
+
+___
 
 #### **Display an item**
 
@@ -5965,6 +6075,8 @@ display_item(item: str, redraw: bool = False) -> Sheet
 ```
 - `item` - a treeview iid.
 
+___
+
 #### **Scroll to an item**
 
 - Make sure an items parents are all open and scrolls to the item.
@@ -5973,6 +6085,8 @@ display_item(item: str, redraw: bool = False) -> Sheet
 scroll_to_item(item: str, redraw: bool = False) -> Sheet
 ```
 - `item` - a treeview iid.
+
+___
 
 #### **Get currently selected items**
 
@@ -5985,24 +6099,32 @@ Notes:
 Parameters:
 - `cells` when `True` any selected cells will also qualify as selected items.
 
+___
+
 #### **Set selected items**
 
 ```python
-selection_set(*items, redraw: bool = True) -> Sheet
+selection_set(*items, run_binding: bool = True, redraw: bool = True) -> Sheet
 ```
 - Sets selected rows (items).
+
+___
 
 #### **Add selected items**
 
 ```python
-selection_add(*items, redraw: bool = True) -> Sheet
+selection_add(*items, run_binding: bool = True, redraw: bool = True) -> Sheet
 ```
+
+___
 
 #### **Remove selections**
 
 ```python
 selection_remove(*items, redraw: bool = True) -> Sheet
 ```
+
+___
 
 #### **Toggle selections**
 

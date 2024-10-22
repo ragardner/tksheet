@@ -1206,6 +1206,8 @@ class RowIndex(tk.Canvas):
                 new_w = self.MT.get_txt_w(f"{end_row}") + 20
             elif self.PAR.ops.default_row_index == "both":
                 new_w = self.MT.get_txt_w(f"{end_row + 1} {num2alpha(end_row)}") + 20
+            elif self.PAR.ops.default_row_index is None:
+                new_w = 20
         elif self.PAR.ops.auto_resize_row_index is True:
             new_w = self.get_index_text_width(only_rows=only_rows)
         else:
@@ -1380,7 +1382,7 @@ class RowIndex(tk.Canvas):
             #     x1 + 5 + indent + small_mod + small_mod,
             #     y1 + mid_y + small_mod + small_mod,
             # )
-            
+
             # POINTS FOR A LINE THAT STOPS AT ROW LINE
             # points = (
             #     # the upper point
@@ -1390,7 +1392,7 @@ class RowIndex(tk.Canvas):
             #     x1 + 5 + indent + small_mod + small_mod,
             #     y2 - mid_y + small_mod + small_mod,
             # )
-            
+
             # POINTS FOR A HORIZONTAL LINE
             points = (
                 # the left point
@@ -1400,7 +1402,7 @@ class RowIndex(tk.Canvas):
                 x1 + 5 + indent + small_mod + small_mod + small_mod + small_mod,
                 y1 + mid_y,
             )
-            
+
         if self.hidd_tree_arrow:
             t, sh = self.hidd_tree_arrow.popitem()
             self.coords(t, points)

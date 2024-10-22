@@ -19,6 +19,7 @@ from itertools import (
     product,
     repeat,
 )
+from operator import attrgetter
 from timeit import default_timer
 from tkinter import ttk
 from typing import Literal
@@ -110,8 +111,8 @@ class Sheet(tk.Frame):
         header: None | list[object] = None,
         row_index: None | list[object] = None,
         index: None | list[object] = None,
-        default_header: Literal["letters", "numbers", "both"] = "letters",
-        default_row_index: Literal["letters", "numbers", "both"] = "numbers",
+        default_header: Literal["letters", "numbers", "both"] | None = "letters",
+        default_row_index: Literal["letters", "numbers", "both"] | None = "numbers",
         data_reference: None | Sequence[Sequence[object]] = None,
         data: None | Sequence[Sequence[object]] = None,
         # either (start row, end row, "rows"), (start column, end column, "rows") or
@@ -4715,8 +4716,10 @@ class Sheet(tk.Frame):
         open_ids: Iterator[str] | None = None,
         safety: bool = True,
         ncols: int | None = None,
+        lower: bool = False,
         include_iid_column: bool = True,
         include_parent_column: bool = True,
+        include_text_column: bool = True,
     ) -> Sheet:
         self.reset(cell_options=False, column_widths=False, header=False, redraw=False)
         if text_column is None:
@@ -4727,7 +4730,12 @@ class Sheet(tk.Frame):
         for rn, row in enumerate(data):
             if safety and ncols > (lnr := len(row)):
                 row += self.MT.get_empty_row_seq(rn, end=ncols, start=lnr)
-            iid, pid = row[iid_column].lower(), row[parent_column].lower()
+            if lower:
+                iid = row[iid_column].lower()
+                pid = row[parent_column].lower()
+            else:
+                iid = row[iid_column]
+                pid = row[parent_column]
             if safety:
                 if not iid:
                     continue
@@ -4736,7 +4744,7 @@ class Sheet(tk.Frame):
                     x = 1
                     while iid in tally_of_ids:
                         new = f"{row[iid_column]}_DUPLICATED_{x}"
-                        iid = new.lower()
+                        iid = new.lower() if lower else new
                         x += 1
                     tally_of_ids[iid] += 1
                     row[iid_column] = new
@@ -4755,14 +4763,14 @@ class Sheet(tk.Frame):
             else:
                 self.RI.tree[iid].parent = ""
             self.RI.tree_rns[iid] = rn
-        for n in self.RI.tree.values():
-            if n.parent is None:
-                n.parent = ""
-                newrow = self.MT.get_empty_row_seq(len(data), ncols)
-                newrow[iid_column] = n.iid
-                self.RI.tree_rns[n.iid] = len(data)
-                data.append(newrow)
-
+        if safety:
+            for n in self.RI.tree.values():
+                if n.parent is None:
+                    n.parent = ""
+                    newrow = self.MT.get_empty_row_seq(len(data), ncols)
+                    newrow[iid_column] = n.iid
+                    self.RI.tree_rns[n.iid] = len(data)
+                    data.append(newrow)
         insert_rows = partial(
             self.insert_rows,
             idx=0,
@@ -4773,37 +4781,22 @@ class Sheet(tk.Frame):
             push_ops=push_ops,
             redraw=False,
         )
-
-        if include_iid_column and include_parent_column:
-            insert_rows(rows=[[self.RI.tree[iid]] + data[self.RI.tree_rns[iid]] for iid in self.get_children()])
-
-        elif include_iid_column and not include_parent_column:
-            exclude = {parent_column}
+        exclude = set()
+        if not include_iid_column:
+            exclude.add(iid_column)
+        if not include_parent_column:
+            exclude.add(parent_column)
+        if isinstance(text_column, int) and not include_text_column:
+            exclude.add(text_column)
+        if exclude:
             insert_rows(
                 rows=[
                     [self.RI.tree[iid]] + [e for i, e in enumerate(data[self.RI.tree_rns[iid]]) if i not in exclude]
-                    for iid in self.get_children()
+                    for iid in self.get_nodes()
                 ]
             )
-
-        elif include_parent_column and not include_iid_column:
-            exclude = {iid_column}
-            insert_rows(
-                rows=[
-                    [self.RI.tree[iid]] + [e for i, e in enumerate(data[self.RI.tree_rns[iid]]) if i not in exclude]
-                    for iid in self.get_children()
-                ]
-            )
-
-        elif not include_iid_column and not include_parent_column:
-            exclude = {iid_column, parent_column}
-            insert_rows(
-                rows=[
-                    [self.RI.tree[iid]] + [e for i, e in enumerate(data[self.RI.tree_rns[iid]]) if i not in exclude]
-                    for iid in self.get_children()
-                ]
-            )
-
+        else:
+            insert_rows(rows=[[self.RI.tree[iid]] + data[self.RI.tree_rns[iid]] for iid in self.get_nodes()])
         self.MT.all_rows_displayed = False
         self.MT.displayed_rows = list(range(len(self.MT._row_index)))
         self.RI.tree_rns = {n.iid: i for i, n in enumerate(self.MT._row_index)}
@@ -4840,7 +4833,7 @@ class Sheet(tk.Frame):
             deselect_all=False,
             data_indexes=True,
         )
-        open_ids = set(filter(self.exists, map(str.lower, open_ids)))
+        open_ids = set(filter(self.exists, open_ids))
         self.RI.tree_open_ids = set()
         if open_ids:
             self.show_rows(
@@ -4924,57 +4917,128 @@ class Sheet(tk.Frame):
         values: None | list[object] = None,
         create_selections: bool = False,
     ) -> str:
-        if iid is None:
+        """
+        Insert an item into the treeview
+        """
+        if not iid:
             i = 0
             while (iid := f"{num2alpha(i)}") in self.RI.tree:
                 i += 1
-        iid, pid = iid.lower(), parent.lower()
-        if not iid:
-            raise ValueError("iid cannot be empty string.")
         if iid in self.RI.tree:
             raise ValueError(f"iid '{iid}' already exists.")
-        if iid == pid:
-            raise ValueError(f"iid '{iid}' cannot be equal to parent '{pid}'.")
-        if pid and pid not in self.RI.tree:
+        if iid == parent:
+            raise ValueError(f"iid '{iid}' cannot be equal to parent '{parent}'.")
+        if parent and parent not in self.RI.tree:
             raise ValueError(f"parent '{parent}' does not exist.")
         if text is None:
             text = iid
-        parent_node = self.RI.tree[pid] if parent else ""
+        parent_node = self.RI.tree[parent] if parent else ""
         self.RI.tree[iid] = Node(text, iid, parent_node)
         if parent_node:
             if isinstance(index, int):
-                idx = self.RI.tree_rns[pid] + index + 1
-                for count, cid in enumerate(self.get_children(pid)):
-                    if count >= index:
-                        break
-                    idx += sum(1 for _ in self.RI.get_iid_descendants(cid))
-                self.RI.tree[pid].children.insert(index, self.RI.tree[iid])
+                datarn = self.RI.tree_rns[parent] + index + 1
+                datarn += sum(
+                    sum(1 for _ in self.RI.get_iid_descendants(cid)) for cid in islice(self.get_children(parent), index)
+                )
+                self.RI.tree[parent].children.insert(index, self.RI.tree[iid])
             else:
-                idx = self.RI.tree_rns[pid] + sum(1 for _ in self.RI.get_iid_descendants(pid)) + 1
-                self.RI.tree[pid].children.append(self.RI.tree[iid])
+                datarn = self.RI.tree_rns[parent] + sum(1 for _ in self.RI.get_iid_descendants(parent)) + 1
+                self.RI.tree[parent].children.append(self.RI.tree[iid])
         else:
             if isinstance(index, int):
-                idx = index
-                if index:
-                    for count, cid in enumerate(self.get_children("")):
-                        if count >= index:
-                            break
-                        idx += sum(1 for _ in self.RI.get_iid_descendants(cid)) + 1
+                datarn = index
+                if index and (datarn := self.top_index_row(datarn)) is None:
+                    datarn = len(self.MT._row_index)
             else:
-                idx = len(self.MT._row_index)
+                datarn = len(self.MT._row_index)
         if values is None:
             values = []
         self.insert_rows(
-            idx=idx,
             rows=[[self.RI.tree[iid]] + values],
+            idx=datarn,
             row_index=True,
             create_selections=create_selections,
             fill=False,
         )
-        self.RI.tree_rns[iid] = idx
-        if pid and (pid not in self.RI.tree_open_ids or not self.item_displayed(pid)):
-            self.hide_rows(idx, deselect_all=False, data_indexes=True)
+        self.RI.tree_rns[iid] = datarn
+        if parent and (parent not in self.RI.tree_open_ids or not self.item_displayed(parent)):
+            self.hide_rows(datarn, deselect_all=False, data_indexes=True)
         return iid
+
+    def bulk_insert(
+        self,
+        data: list[list[object]],
+        parent: str = "",
+        index: None | int | Literal["end"] = None,
+        iid_column: int | None = None,
+        text_column: int | None | str = None,
+        create_selections: bool = False,
+        include_iid_column: bool = True,
+        include_text_column: bool = True,
+    ) -> dict[str, int]:
+        """
+        Insert multiple items into the treeview at once, under the same parent
+        """
+        to_insert = []
+        pid = parent
+        if pid and pid not in self.RI.tree:
+            raise ValueError(f"parent '{parent}' does not exist.")
+        parent_node = self.RI.tree[pid] if parent else ""
+        if parent_node:
+            if isinstance(index, int):
+                datarn = self.RI.tree_rns[pid] + index + 1
+                datarn += sum(
+                    sum(1 for _ in self.RI.get_iid_descendants(cid)) for cid in islice(self.get_children(pid), index)
+                )
+            else:
+                datarn = self.RI.tree_rns[pid] + sum(1 for _ in self.RI.get_iid_descendants(pid)) + 1
+        else:
+            if isinstance(index, int):
+                datarn = index
+                if index and (datarn := self.top_index_row(datarn)) is None:
+                    datarn = len(self.MT._row_index)
+            else:
+                datarn = len(self.MT._row_index)
+        i = 0
+        rns_to_add = {}
+        for rn, r in enumerate(data, start=datarn):
+            if iid_column is None:
+                while (iid := f"{num2alpha(i)}") in self.RI.tree:
+                    i += 1
+            else:
+                iid = r[iid_column]
+            self.RI.tree[iid] = Node(
+                r[text_column] if isinstance(text_column, int) else text_column if isinstance(text_column, str) else "",
+                iid,
+                parent_node,
+            )
+            if parent_node:
+                if isinstance(index, int):
+                    self.RI.tree[pid].children.insert(index, self.RI.tree[iid])
+                else:
+                    self.RI.tree[pid].children.append(self.RI.tree[iid])
+            exclude = set()
+            if isinstance(iid_column, int) and not include_iid_column:
+                exclude.add(iid_column)
+            if isinstance(text_column, int) and not include_text_column:
+                exclude.add(text_column)
+            if exclude:
+                to_insert.append([self.RI.tree[iid]] + [e for c, e in enumerate(r) if c not in exclude])
+            else:
+                to_insert.append([self.RI.tree[iid]] + r)
+            rns_to_add[iid] = rn
+        self.insert_rows(
+            rows=to_insert,
+            idx=datarn,
+            row_index=True,
+            create_selections=create_selections,
+            fill=False,
+        )
+        for iid, rn in rns_to_add.items():
+            self.RI.tree_rns[iid] = rn
+        if pid and (pid not in self.RI.tree_open_ids or not self.item_displayed(pid)):
+            self.hide_rows(range(datarn, datarn + len(to_insert)), deselect_all=False, data_indexes=True)
+        return rns_to_add
 
     def item(
         self,
@@ -4990,12 +5054,11 @@ class Sheet(tk.Frame):
         If no options are set then returns DotDict of options for item
         Else returns Sheet
         """
-        if not (item := item.lower()) or item not in self.RI.tree:
+        if item not in self.RI.tree:
             raise ValueError(f"Item '{item}' does not exist.")
         if isinstance(iid, str):
             if iid in self.RI.tree:
                 raise ValueError(f"Cannot rename '{iid}', it already exists.")
-            iid = iid.lower()
             self.RI.tree[item].iid = iid
             self.RI.tree[iid] = self.RI.tree.pop(item)
             self.RI.tree_rns[iid] = self.RI.tree_rns.pop(item)
@@ -5040,9 +5103,9 @@ class Sheet(tk.Frame):
 
     def itemrow(self, item: str) -> int:
         try:
-            return self.RI.tree_rns[item.lower()]
+            return self.RI.tree_rns[item]
         except Exception:
-            raise ValueError(f"item '{item.lower()}' does not exist.")
+            raise ValueError(f"item '{item}' does not exist.")
 
     def rowitem(self, row: int, data_index: bool = False) -> str | None:
         try:
@@ -5054,11 +5117,20 @@ class Sheet(tk.Frame):
 
     def get_children(self, item: None | str = None) -> Generator[str]:
         if item is None:
+            for iid in self.get_children(""):
+                yield iid
+                yield from self.RI.get_iid_descendants(iid)
+        elif item == "":
+            yield from map(attrgetter("iid"), self.RI.gen_top_nodes())
+        else:
+            yield from (n.iid for n in self.RI.tree[item].children)
+
+    def get_nodes(self, item: None | str = None) -> Generator[str]:
+        if item is None:
             for n in self.RI.tree.values():
                 if not n.parent:
                     yield n.iid
-                    for iid in self.RI.get_iid_descendants(n.iid):
-                        yield iid
+                    yield from self.RI.get_iid_descendants(n.iid)
         elif item == "":
             yield from (n.iid for n in self.RI.tree.values() if not n.parent)
         else:
@@ -5071,7 +5143,6 @@ class Sheet(tk.Frame):
         rows_to_del = []
         iids_to_del = []
         for item in unpack(items):
-            item = item.lower()
             if item not in self.RI.tree:
                 continue
             rows_to_del.append(self.RI.tree_rns[item])
@@ -5109,9 +5180,9 @@ class Sheet(tk.Frame):
         'parent' can be an empty str which will put the item at top level
         Performance is not great
         """
-        if (item := item.lower()) and item not in self.RI.tree:
+        if item not in self.RI.tree:
             raise ValueError(f"Item '{item}' does not exist.")
-        if (parent := parent.lower()) and parent not in self.RI.tree:
+        if parent and parent not in self.RI.tree:
             raise ValueError(f"Parent '{parent}' does not exist.")
         mapping = {}
         to_show = []
@@ -5188,11 +5259,8 @@ class Sheet(tk.Frame):
                 item_node.parent = parent_node
                 parent_node.children.insert(index, item_node)
         else:
-            if index is None:
-                new_r = self.top_index_row((sum(1 for _ in self.RI.gen_top_nodes()) - 1))
-            else:
-                if (new_r := self.top_index_row(index)) is None:
-                    new_r = self.top_index_row((sum(1 for _ in self.RI.gen_top_nodes()) - 1))
+            if index is None or (new_r := self.top_index_row(index)) is None:
+                new_r = self.top_index_row(sum(1 for _ in self.RI.gen_top_nodes()) - 1)
             if item_r < new_r:
                 r_ctr = (
                     new_r
@@ -5225,15 +5293,15 @@ class Sheet(tk.Frame):
     reattach = move
 
     def exists(self, item: str) -> bool:
-        return item.lower() in self.RI.tree
+        return item in self.RI.tree
 
     def parent(self, item: str) -> str:
-        if (item := item.lower()) not in self.RI.tree:
+        if item not in self.RI.tree:
             raise ValueError(f"Item '{item}' does not exist.")
         return self.RI.tree[item].parent.iid if self.RI.tree[item].parent else self.RI.tree[item].parent
 
     def index(self, item: str) -> int:
-        if (item := item.lower()) not in self.RI.tree:
+        if item not in self.RI.tree:
             raise ValueError(f"Item '{item}' does not exist.")
         if not self.RI.tree[item].parent:
             find_node = self.RI.tree[item]
@@ -5245,7 +5313,7 @@ class Sheet(tk.Frame):
         Check if an item (row) is currently displayed on the sheet
         - Does not check if the item is visible to the user
         """
-        if (item := item.lower()) not in self.RI.tree:
+        if item not in self.RI.tree:
             raise ValueError(f"Item '{item}' does not exist.")
         return self.RI.tree_rns[item] in self.MT.displayed_rows
 
@@ -5256,7 +5324,7 @@ class Sheet(tk.Frame):
         - Unlike the ttk treeview 'see' function
           this function does **NOT** scroll to the item
         """
-        if (item := item.lower()) not in self.RI.tree:
+        if item not in self.RI.tree:
             raise ValueError(f"Item '{item}' does not exist.")
         if self.RI.tree[item].parent:
             self.show_rows(
@@ -5270,7 +5338,7 @@ class Sheet(tk.Frame):
         """
         Scrolls to an item and ensures that it is displayed
         """
-        if (item := item.lower()) not in self.RI.tree:
+        if item not in self.RI.tree:
             raise ValueError(f"Item '{item}' does not exist.")
         self.display_item(item, redraw=False)
         self.see(
@@ -5288,19 +5356,29 @@ class Sheet(tk.Frame):
             self.MT._row_index[self.MT.displayed_rows[rn]].iid for rn in self.get_selected_rows(get_cells_as_rows=cells)
         ]
 
-    def selection_set(self, *items, redraw: bool = True) -> Sheet:
-        if any(item.lower() in self.RI.tree for item in unpack(items)):
-            boxes_to_hide = tuple(self.MT.selection_boxes)
-            self.selection_add(*items, redraw=False)
-            for iid in boxes_to_hide:
-                self.MT.hide_selection_box(iid)
+    @property
+    def tree_selected(self) -> str | None:
+        """
+        Get the iid at the currently selected box
+        """
+        if selected := self.selected:
+            return self.rowitem(selected.row)
+        return None
+
+    def selection_set(self, *items, run_binding: bool = True, redraw: bool = True) -> Sheet:
+        boxes_to_hide = tuple(self.MT.selection_boxes)
+        self.selection_add(*items, run_binding=False, redraw=False)
+        for iid in boxes_to_hide:
+            self.MT.hide_selection_box(iid)
+        if run_binding:
+            self.MT.run_selection_binding("rows")
         return self.set_refresh_timer(redraw)
 
-    def selection_add(self, *items, redraw: bool = True) -> Sheet:
+    def selection_add(self, *items, run_binding: bool = True, redraw: bool = True) -> Sheet:
         to_open = []
         quick_displayed_check = set(self.MT.displayed_rows)
         for item in unpack(items):
-            if self.RI.tree_rns[(item := item.lower())] not in quick_displayed_check and self.RI.tree[item].parent:
+            if self.RI.tree_rns[item] not in quick_displayed_check and self.RI.tree[item].parent:
                 to_open.extend(list(self.RI.get_iid_ancestors(item)))
         if to_open:
             self.show_rows(
@@ -5312,7 +5390,7 @@ class Sheet(tk.Frame):
             sorted(
                 bisect_left(
                     self.MT.displayed_rows,
-                    self.RI.tree_rns[item.lower()],
+                    self.RI.tree_rns[item],
                 )
                 for item in unpack(items)
             )
@@ -5326,12 +5404,13 @@ class Sheet(tk.Frame):
                 set_current=True,
                 ext=True,
             )
-        self.MT.run_selection_binding("rows")
+        if run_binding:
+            self.MT.run_selection_binding("rows")
         return self.set_refresh_timer(redraw)
 
     def selection_remove(self, *items, redraw: bool = True) -> Sheet:
         for item in unpack(items):
-            if (item := item.lower()) not in self.RI.tree:
+            if item not in self.RI.tree:
                 continue
             try:
                 self.deselect(bisect_left(self.MT.displayed_rows, self.RI.tree_rns[item]), redraw=False)
@@ -5344,7 +5423,7 @@ class Sheet(tk.Frame):
         add = []
         remove = []
         for item in unpack(items):
-            if (item := item.lower()) in self.RI.tree:
+            if item in self.RI.tree:
                 if item in selected:
                     remove.append(item)
                 else:
@@ -5352,6 +5431,9 @@ class Sheet(tk.Frame):
         self.selection_remove(*remove, redraw=False)
         self.selection_add(*add, redraw=False)
         return self.set_refresh_timer(redraw)
+
+    def descendants(self, item: str, check_open: bool = False) -> Generator[str]:
+        return self.RI.get_iid_descendants(item, check_open=check_open)
 
     # Functions not in docs
 

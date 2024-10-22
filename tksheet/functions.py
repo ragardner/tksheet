@@ -18,6 +18,7 @@ from collections.abc import (
 )
 from functools import partial
 from itertools import islice, repeat
+from typing import Literal
 
 from .formatters import (
     to_bool,
@@ -363,12 +364,15 @@ def idx_param_to_int(idx: str | int | None) -> int | None:
     return alpha2idx(idx)
 
 
-def get_n2a(n: int = 0, _type: str = "numbers") -> str:
+def get_n2a(n: int = 0, _type: Literal["letters", "numbers", "both"] | None = "numbers") -> str:
     if _type == "letters":
         return num2alpha(n)
     elif _type == "numbers":
         return f"{n + 1}"
-    return f"{num2alpha(n)} {n + 1}"
+    elif _type == "both":
+        return f"{num2alpha(n)} {n + 1}"
+    elif _type is None:
+        return ""
 
 
 def get_index_of_gap_in_sorted_integer_seq_forward(
@@ -512,6 +516,16 @@ def index_exists(seq: Sequence[object], index: int) -> bool:
         return True
     except Exception:
         return False
+
+
+def add_to_displayed(displayed: list[int], to_add: Iterator[int]) -> list[int]:
+    # assumes to_add is sorted in reverse
+    for i in reversed(to_add):
+        ins = bisect_left(displayed, i)
+        displayed[ins:] = [e + 1 for e in islice(displayed, ins, None)]
+    for i in reversed(to_add):
+        displayed.insert(bisect_left(displayed, i), i)
+    return displayed
 
 
 def move_elements_by_mapping(
