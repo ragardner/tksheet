@@ -1,3 +1,6 @@
+### Version 7.2.20
+####
+
 ### Version 7.2.19
 #### Fixed:
 - Error when pasting into empty sheet
