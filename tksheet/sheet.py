@@ -28,6 +28,7 @@ from .column_headers import ColumnHeaders
 from .functions import (
     add_highlight,
     add_to_options,
+    alpha2idx,
     consecutive_ranges,
     convert_align,
     data_to_displayed_idxs,
@@ -2907,10 +2908,16 @@ class Sheet(tk.Frame):
                         set_readonly(self.MT.cell_options, (r, c), readonly)
         elif span.kind == "row":
             for r in rows:
-                set_readonly(self.MT.row_options, r, readonly)
+                if index:
+                    set_readonly(self.RI.cell_options, r, readonly)
+                if table:
+                    set_readonly(self.MT.row_options, r, readonly)
         elif span.kind == "column":
             for c in cols:
-                set_readonly(self.MT.col_options, c, readonly)
+                if header:
+                    set_readonly(self.CH.cell_options, c, readonly)
+                if table:
+                    set_readonly(self.MT.col_options, c, readonly)
         return span
 
     # Text Font and Alignment
@@ -4152,6 +4159,7 @@ class Sheet(tk.Frame):
         canvas: Literal[
             "all",
             "row_index",
+            "index",
             "header",
             "top_left",
             "x_scrollbar",
@@ -4174,7 +4182,7 @@ class Sheet(tk.Frame):
             self.yscroll_showing = True
             self.xscroll_disabled = False
             self.yscroll_disabled = False
-        elif canvas == "row_index":
+        elif canvas in ("row_index", "index"):
             self.RI.grid(row=1, column=0, sticky="nswe")
             self.MT["yscrollcommand"] = self.yscroll.set
             self.RI["yscrollcommand"] = self.yscroll.set
@@ -4423,14 +4431,107 @@ class Sheet(tk.Frame):
             and event.widget == self.TL
         )
 
+    def props(
+        self,
+        row: int,
+        column: int | str,
+        key: None
+        | Literal[
+            "format",
+            "highlight",
+            "dropdown",
+            "checkbox",
+            "readonly",
+            "align",
+        ] = None,
+        cellops: bool = True,
+        rowops: bool = True,
+        columnops: bool = True,
+    ) -> dict:
+        """
+        Retrieve options (properties - props)
+        from a single cell in the main table
+
+        Also retrieves any row or column options
+        impacting that cell
+        """
+        if isinstance(column, str):
+            column = alpha2idx(column)
+        if key is not None:
+            return self.MT.get_cell_kwargs(
+                datarn=row,
+                datacn=column,
+                key=key,
+                cell=cellops,
+                row=rowops,
+                column=columnops,
+            )
+        if cellops and (row, column) in self.MT.cell_options:
+            return self.MT.cell_options[(row, column)]
+        if rowops and row in self.MT.row_options:
+            return self.MT.row_options[row]
+        if columnops and column in self.MT.col_options:
+            return self.MT.col_options[column]
+        return {}
+
+    def index_props(
+        self,
+        row: int,
+        key: None
+        | Literal[
+            "format",
+            "highlight",
+            "dropdown",
+            "checkbox",
+            "readonly",
+            "align",
+        ] = None,
+    ) -> dict:
+        """
+        Retrieve options (properties - props)
+        from a cell in the index
+        """
+        if key is not None:
+            return self.RI.get_cell_kwargs(
+                datarn=row,
+                key=key,
+            )
+        return self.RI.cell_options[row] if row in self.RI.cell_options else {}
+
+    def header_props(
+        self,
+        column: int | str,
+        key: None
+        | Literal[
+            "format",
+            "highlight",
+            "dropdown",
+            "checkbox",
+            "readonly",
+            "align",
+        ] = None,
+    ) -> dict:
+        """
+        Retrieve options (properties - props)
+        from a cell in the header
+        """
+        if isinstance(column, str):
+            column = alpha2idx(column)
+        if key is not None:
+            return self.CH.get_cell_kwargs(
+                datacn=column,
+                key=key,
+            )
+        return self.CH.cell_options[column] if column in self.CH.cell_options else {}
+
     def get_cell_options(
         self,
         key: None | str = None,
-        canvas: Literal["table", "row_index", "header"] = "table",
+        canvas: Literal["table", "row_index", "index", "header"] = "table",
     ) -> dict:
         if canvas == "table":
             target = self.MT.cell_options
-        elif canvas == "row_index":
+        elif canvas in ("row_index", "index"):
             target = self.RI.cell_options
         elif canvas == "header":
             target = self.CH.cell_options
@@ -6024,7 +6125,7 @@ class Sheet(tk.Frame):
         row: int | Literal["all"] = 0,
         column: int = 0,
         cells: list[tuple[int, int]] = [],
-        canvas: Literal["table", "row_index", "header"] = "table",
+        canvas: Literal["table", "row_index", "index", "header"] = "table",
         all_: bool = False,
         redraw: bool = True,
     ) -> Sheet:
@@ -6057,7 +6158,7 @@ class Sheet(tk.Frame):
                 for k in self.MT.cell_options:
                     if "highlight" in self.MT.cell_options[k]:
                         del self.MT.cell_options[k]["highlight"]
-        elif canvas == "row_index":
+        elif canvas in ("row_index", "index"):
             if cells and not all_:
                 for r in cells:
                     try:
@@ -6087,10 +6188,13 @@ class Sheet(tk.Frame):
                         del self.CH.cell_options[c]["highlight"]
         return self.set_refresh_timer(redraw)
 
-    def get_highlighted_cells(self, canvas: str = "table") -> dict | None:
+    def get_highlighted_cells(
+        self,
+        canvas: Literal["table", "row_index", "index", "header"] = "table",
+    ) -> dict | None:
         if canvas == "table":
             return {k: v["highlight"] for k, v in self.MT.cell_options.items() if "highlight" in v}
-        elif canvas == "row_index":
+        elif canvas in ("row_index", "index"):
             return {k: v["highlight"] for k, v in self.RI.cell_options.items() if "highlight" in v}
         elif canvas == "header":
             return {k: v["highlight"] for k, v in self.CH.cell_options.items() if "highlight" in v}

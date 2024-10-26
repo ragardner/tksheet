@@ -1,5 +1,17 @@
 ### Version 7.2.19
-####
+#### Fixed:
+- Error when pasting into empty sheet
+- Potential error if using percentage formatter with more than just `int`, `float` and wrong type hint [250](https://github.com/ragardner/tksheet/issues/250)
+- Only show the selection box outline while the mouse is dragged if the control key is down
+- `index` and `header` `Span` parameters were not working with function `readonly()`
+
+#### Added:
+- Shift + arrowkey bindings for expanding/contracting a selection box
+- Functions for getting cell properties (options) [249](https://github.com/ragardner/tksheet/issues/249)
+- Ability to edit index in treeview mode, if the binding is enabled
+
+#### Improved:
+- Very slight performance boost to treeview insert, inserting rows when rows are hidden
 
 ### Version 7.2.18
 #### Fixed:

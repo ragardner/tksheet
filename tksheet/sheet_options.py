@@ -118,6 +118,18 @@ def new_sheet_options() -> DotDict:
             "left_bindings": [
                 "<Left>",
             ],
+            "shift_up_bindings": [
+                "<Shift-Up>",
+            ],
+            "shift_right_bindings": [
+                "<Shift-Right>",
+            ],
+            "shift_down_bindings": [
+                "<Shift-Down>",
+            ],
+            "shift_left_bindings": [
+                "<Shift-Left>",
+            ],
             "prior_bindings": [
                 "<Prior>",
             ],

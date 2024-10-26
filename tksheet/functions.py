@@ -325,16 +325,11 @@ def force_bool(o: object) -> bool:
         return False
 
 
-def str_to_coords(s: str) -> None | tuple[int]:
-    s = s.split(":")
-
-
 def alpha2idx(a: str) -> int | None:
     try:
-        a = a.upper()
         n = 0
         orda = ord("A")
-        for c in a:
+        for c in a.upper():
             n = n * 26 + ord(c) - orda + 1
         return n - 1
     except Exception:
@@ -522,9 +517,7 @@ def add_to_displayed(displayed: list[int], to_add: Iterator[int]) -> list[int]:
     # assumes to_add is sorted in reverse
     for i in reversed(to_add):
         ins = bisect_left(displayed, i)
-        displayed[ins:] = [e + 1 for e in islice(displayed, ins, None)]
-    for i in reversed(to_add):
-        displayed.insert(bisect_left(displayed, i), i)
+        displayed[ins:] = [i] + [e + 1 for e in islice(displayed, ins, None)]
     return displayed
 
 
@@ -595,7 +588,11 @@ def get_new_indexes(
     return new_idxs
 
 
-def insert_items(seq: list | tuple, to_insert: dict, seq_len_func: Callable | None = None) -> list:
+def insert_items(
+    seq: list[object] | tuple[object],
+    to_insert: dict[int, object],
+    seq_len_func: Callable | None = None,
+) -> list:
     # inserts many items into a list using a dict of reverse sorted order of
     # {index: value, index: value, ...}
     res = []
@@ -1425,7 +1422,7 @@ def mod_event_val(
 
 
 def pop_positions(
-    itr: Iterator[int],
+    itr: Callable,
     to_pop: dict[int, int],  # displayed index: data index
     save_to: dict[int, int],
 ) -> Iterator[int]:

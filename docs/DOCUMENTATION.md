@@ -25,6 +25,7 @@
 - [Data Formatting](https://github.com/ragardner/tksheet/wiki/Version-7#data-formatting)
 - [Readonly Cells](https://github.com/ragardner/tksheet/wiki/Version-7#readonly-cells)
 - [Text Font and Alignment](https://github.com/ragardner/tksheet/wiki/Version-7#text-font-and-alignment)
+- [Getting Cell Properties](https://github.com/ragardner/tksheet/wiki/Version-7#getting-cell-properties)
 ---
 - [Getting Selected Cells](https://github.com/ragardner/tksheet/wiki/Version-7#getting-selected-cells)
 - [Modifying Selected Cells](https://github.com/ragardner/tksheet/wiki/Version-7#modifying-selected-cells)
@@ -1230,6 +1231,10 @@ up_bindings
 right_bindings
 down_bindings
 left_bindings
+shift_up_bindings
+shift_right_bindings
+shift_down_bindings
+shift_left_bindings
 prior_bindings
 next_bindings
 ```
@@ -3943,6 +3948,108 @@ get_column_alignments() -> dict
 ```
 
 ---
+# **Getting Cell Properties**
+
+The below functions can be used to retrieve cell options/properties such as highlights, format, readonly etc.
+
+#### **Get table cell properties**
+
+Retrieve options for a single cell in the main table. Also retrieves any row/column options impacting that cell.
+
+```Python
+props(
+    row: int,
+    column: int | str,
+    key: None
+    | Literal[
+        "format",
+        "highlight",
+        "dropdown",
+        "checkbox",
+        "readonly",
+        "align",
+    ] = None,
+    cellops: bool = True,
+    rowops: bool = True,
+    columnops: bool = True,
+) -> dict
+```
+Parameters:
+- `row` only `int`.
+- `column` `int` or `str` e.g. `"A"` is index `0`.
+- `key`:
+    - If left as `None` then all existing properties for that cell will be returned in a `dict`.
+    - If using a `str` e.g. `"highlight"` it will only look for highlight properties for that cell.
+- `cellops` when `True` will look for cell options for the cell.
+- `rowops` when `True` will look for row options for the cell.
+- `columnops` when `True` will look for column options for the cell.
+
+Example:
+
+```python
+# making column B, including header read only
+sheet.readonly(sheet["B"].options(header=True))
+
+# checking if row 0, column 1 (B) is readonly:
+cell_is_readonly = sheet.props(0, 1, "readonly")
+
+# can also use a string for the column:
+cell_is_readonly = sheet.props(0, "b", "readonly")
+```
+
+___
+
+#### **Get index cell properties**
+
+Retrieve options for a single cell in the index.
+
+```python
+index_props(
+    row: int,
+    key: None
+    | Literal[
+        "format",
+        "highlight",
+        "dropdown",
+        "checkbox",
+        "readonly",
+        "align",
+    ] = None,
+) -> dict
+```
+Parameters:
+- `row` only `int`.
+- `key`:
+    - If left as `None` then all existing properties for that cell will be returned in a `dict`.
+    - If using a `str` e.g. `"highlight"` it will only look for highlight properties for that cell.
+
+___
+
+#### **Get header cell properties**
+
+Retrieve options for a single cell in the header.
+
+```python
+header_props(
+    column: int | str,
+    key: None
+    | Literal[
+        "format",
+        "highlight",
+        "dropdown",
+        "checkbox",
+        "readonly",
+        "align",
+    ] = None,
+) -> dict
+```
+Parameters:
+- `column` only `int`.
+- `key`:
+    - If left as `None` then all existing properties for that cell will be returned in a `dict`.
+    - If using a `str` e.g. `"highlight"` it will only look for highlight properties for that cell.
+
+---
 # **Getting Selected Cells**
 
 All selected cell/box getting functions return or generate **displayed** cell coordinates.
@@ -5535,6 +5642,10 @@ up_bindings
 right_bindings
 down_bindings
 left_bindings
+shift_up_bindings
+shift_right_bindings
+shift_down_bindings
+shift_left_bindings
 prior_bindings
 next_bindings
 ```
@@ -5687,10 +5798,18 @@ The only bindings (using `enable_bindings()`) which **will not** cause issues ar
 - `"paste"`
 - `"delete"`
 - `"edit_cell"`
+- `"edit_header"`
+- `"edit_index"`
+
+**Note on undo:**
+
+Take care if using `"undo"` because, for example, if a cell edit happens then an `.insert()` occurs then it will potentially make the saved cell coordinates in the undo stack relate to the wrong cells. This is because the treeview functions do not add to the undo stack.
 
 ### **Treeview function limitations**
 
-Many functions designed for normal tksheet usage will cause issues with its treeview mode. The following relates to non-treeview mode functions.
+Many functions designed for normal tksheet usage will cause issues when used with treeview mode.
+
+**The following relates to non-treeview mode functions:**
 
 **Okay:**
 - Modifying headers or columns.
@@ -5698,9 +5817,9 @@ Many functions designed for normal tksheet usage will cause issues with its tree
 - Modifying any highlights, table data formatting, table/header dropdown boxes/checkboxes, etc.
 
 **Not okay:**
-- Modifying the row index.
-- Modifying rows, e.g. moving or deleting rows.
-- Using undo.
+- Modifying the row index, unless it's through user input.
+- Modifying rows, e.g. inserting, moving or deleting rows using non-treeview functions.
+- Enabling and using `undo`, probably.
 
 ### **Treeview other limitations**
 

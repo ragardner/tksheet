@@ -126,6 +126,7 @@ class MainTable(tk.Canvas):
         self.PAR_height = 0
         self.scrollregion = tuple()
         self.current_cursor = ""
+        self.ctrl_b1_pressed = False
         self.b1_pressed_loc = None
         self.closed_dropdown = None
         self.centre_alignment_text_mod_indexes = (slice(1, None), slice(None, -1))
@@ -716,7 +717,7 @@ class MainTable(tk.Canvas):
                     selected_c, selected_r = len(self.col_positions) - 1, 0
                 elif len(self.row_positions) > 1 and len(self.col_positions) > 1:
                     selected_c, selected_r = 0, len(self.row_positions) - 1
-                curr_coords = (selected_r, selected_c)
+            curr_coords = (selected_r, selected_c)
         try:
             data = get_data_from_clipboard(
                 widget=self,
@@ -1515,8 +1516,12 @@ class MainTable(tk.Canvas):
             self.purge_redo_stack()
 
     def edit_cells_using_modification(self, modification: dict, event_data: dict) -> EventDataDict:
-        for datarn, v in modification["cells"]["index"].items():
-            self._row_index[datarn] = v
+        if self.PAR.ops.treeview:
+            for datarn, v in modification["cells"]["index"].items():
+                self._row_index[datarn].text = v
+        else:
+            for datarn, v in modification["cells"]["index"].items():
+                self._row_index[datarn] = v
         for datacn, v in modification["cells"]["header"].items():
             self._headers[datacn] = v
         for (datarn, datacn), v in modification["cells"]["table"].items():
@@ -2312,6 +2317,102 @@ class MainTable(tk.Canvas):
                         check_cell_visibility=False,
                     )
 
+    def shift_arrowkey_select_box(
+        self,
+        r1: int,
+        c1: int,
+        r2: int,
+        c2: int,
+        current_r: int,
+        current_c: int,
+        see_r: int,
+        see_c: int,
+        keep_xscroll: bool = False,
+        keep_yscroll: bool = False,
+    ) -> None:
+        box_to_hide = self.selected.fill_iid
+        self.set_currently_selected(
+            current_r,
+            current_c,
+            self.create_selection_box(
+                r1,
+                c1,
+                r2,
+                c2,
+                self.selected.type_,
+                set_current=False,
+                run_binding=True,
+            ),
+            run_binding=False,
+        )
+        self.hide_selection_box(box_to_hide)
+        self.see(see_r, see_c, keep_xscroll=keep_xscroll, keep_yscroll=keep_yscroll, redraw=False)
+        self.refresh()
+
+    def shift_arrowkey_UP(self, event: object = None) -> None:
+        if not self.selected:
+            return
+        r1, c1, r2, c2 = self.selected.box
+        current_r, current_c = self.selected.row, self.selected.column
+        if not r1 and self.selected.row == r2 - 1:
+            return
+        if (r2 - r1 != 1 and self.selected.row != r1 and self.selected.row != r2 - 1) or (
+            r2 - r1 != 1 and self.selected.row == r1
+        ):
+            r2 -= 1
+            see_r = r2 - 1
+        else:
+            r1 -= 1
+            see_r = r1
+        self.shift_arrowkey_select_box(r1, c1, r2, c2, current_r, current_c, see_r, c1, keep_xscroll=True)
+
+    def shift_arrowkey_DOWN(self, event: object = None) -> None:
+        if not self.selected:
+            return
+        r1, c1, r2, c2 = self.selected.box
+        current_r, current_c = self.selected.row, self.selected.column
+        if r2 == len(self.row_positions) - 1 and self.selected.row == r1:
+            return
+        if r2 - r1 == 1 or self.selected.row == r1:
+            r2 += 1
+            see_r = r2 - 1
+        else:
+            r1 += 1
+            see_r = r1
+        self.shift_arrowkey_select_box(r1, c1, r2, c2, current_r, current_c, see_r, c1, keep_xscroll=True)
+
+    def shift_arrowkey_LEFT(self, event: object = None) -> None:
+        if not self.selected:
+            return
+        r1, c1, r2, c2 = self.selected.box
+        current_r, current_c = self.selected.row, self.selected.column
+        if not c1 and self.selected.column == c2 - 1:
+            return
+        if (c2 - c1 != 1 and self.selected.column != c1 and self.selected.column != c2 - 1) or (
+            c2 - c1 != 1 and self.selected.column == c1
+        ):
+            c2 -= 1
+            see_c = c2 - 1
+        else:
+            c1 -= 1
+            see_c = c1
+        self.shift_arrowkey_select_box(r1, c1, r2, c2, current_r, current_c, r1, see_c, keep_yscroll=True)
+
+    def shift_arrowkey_RIGHT(self, event: object = None) -> None:
+        if not self.selected:
+            return
+        r1, c1, r2, c2 = self.selected.box
+        current_r, current_c = self.selected.row, self.selected.column
+        if c2 == len(self.col_positions) - 1 and self.selected.column == c1:
+            return
+        if c2 - c1 == 1 or self.selected.column == c1:
+            c2 += 1
+            see_c = c2 - 1
+        else:
+            c1 += 1
+            see_c = c1
+        self.shift_arrowkey_select_box(r1, c1, r2, c2, current_r, current_c, r1, see_c, keep_yscroll=True)
+
     def menu_add_command(self, menu: tk.Menu, **kwargs) -> None:
         if "label" not in kwargs:
             return
@@ -2614,15 +2715,19 @@ class MainTable(tk.Canvas):
         if binding in ("all", "arrowkeys", "up"):
             self.up_enabled = True
             self._tksheet_bind("up_bindings", self.arrowkey_UP)
+            self._tksheet_bind("shift_up_bindings", self.shift_arrowkey_UP)
         if binding in ("all", "arrowkeys", "right"):
             self.right_enabled = True
             self._tksheet_bind("right_bindings", self.arrowkey_RIGHT)
+            self._tksheet_bind("shift_right_bindings", self.shift_arrowkey_RIGHT)
         if binding in ("all", "arrowkeys", "down"):
             self.down_enabled = True
             self._tksheet_bind("down_bindings", self.arrowkey_DOWN)
+            self._tksheet_bind("shift_down_bindings", self.shift_arrowkey_DOWN)
         if binding in ("all", "arrowkeys", "left"):
             self.left_enabled = True
             self._tksheet_bind("left_bindings", self.arrowkey_LEFT)
+            self._tksheet_bind("shift_left_bindings", self.shift_arrowkey_LEFT)
         if binding in ("all", "arrowkeys", "prior"):
             self.prior_enabled = True
             self._tksheet_bind("prior_bindings", self.page_UP)
@@ -2882,6 +2987,7 @@ class MainTable(tk.Canvas):
     def ctrl_b1_press(self, event=None):
         self.mouseclick_outside_editor_or_dropdown_all_canvases()
         self.focus_set()
+        self.ctrl_b1_pressed = True
         if self.ctrl_select_enabled and self.not_currently_resizing():
             self.b1_pressed_loc = None
             rowsel = int(self.identify_row(y=event.y))
@@ -2900,6 +3006,7 @@ class MainTable(tk.Canvas):
     def ctrl_shift_b1_press(self, event=None):
         self.mouseclick_outside_editor_or_dropdown_all_canvases()
         self.focus_set()
+        self.ctrl_b1_pressed = True
         if self.ctrl_select_enabled and self.drag_selection_enabled and self.not_currently_resizing():
             self.b1_pressed_loc = None
             rowsel = int(self.identify_row(y=event.y))
@@ -3130,6 +3237,7 @@ class MainTable(tk.Canvas):
                         self.open_cell(event)
             else:
                 self.mouseclick_outside_editor_or_dropdown_all_canvases()
+        self.ctrl_b1_pressed = False
         self.b1_pressed_loc = None
         self.closed_dropdown = None
         try_binding(self.extra_b1_release_func, event)
@@ -6090,8 +6198,8 @@ class MainTable(tk.Canvas):
         bd_iid = None
         if self.PAR.ops.show_selected_cells_border and (
             ext
+            or self.ctrl_b1_pressed
             or (self.being_drawn_item is None and self.RI.being_drawn_item is None and self.CH.being_drawn_item is None)
-            or self.selection_boxes
         ):
             bd_iid = self.display_box(
                 x1,

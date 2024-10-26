@@ -276,8 +276,7 @@ class RowIndex(tk.Canvas):
 
     def shift_b1_press(self, event: object) -> None:
         self.mouseclick_outside_editor_or_dropdown_all_canvases(inside=True)
-        y = event.y
-        r = self.MT.identify_row(y=y)
+        r = self.MT.identify_row(y=event.y)
         if (self.drag_and_drop_enabled or self.row_selection_enabled) and self.rsz_h is None and self.rsz_w is None:
             if r < len(self.MT.row_positions) - 1:
                 r_selected = self.MT.row_selected(r)
@@ -302,7 +301,7 @@ class RowIndex(tk.Canvas):
                     )
 
     def get_shift_select_box(self, r: int, min_r: int) -> tuple[int, int, int, int, str]:
-        if r > min_r:
+        if r >= min_r:
             return min_r, 0, r + 1, len(self.MT.col_positions) - 1
         elif r < min_r:
             return r, 0, min_r + 1, len(self.MT.col_positions) - 1
@@ -2364,6 +2363,8 @@ class RowIndex(tk.Canvas):
             self.fix_index(datarn)
             if self.get_cell_kwargs(datarn, key="checkbox"):
                 self.MT._row_index[datarn] = try_to_bool(value)
+            elif self.PAR.ops.treeview:
+                self.MT._row_index[datarn].text = value
             else:
                 self.MT._row_index[datarn] = value
 
@@ -2404,6 +2405,8 @@ class RowIndex(tk.Canvas):
             or (self.MT._row_index[datarn] is None and none_to_empty_str)
         ):
             return ""
+        if self.PAR.ops.treeview:
+            return self.MT._row_index[datarn].text
         return self.MT._row_index[datarn]
 
     def get_valid_cell_data_as_str(self, datarn: int, fix: bool = True) -> str:

@@ -290,8 +290,7 @@ class ColumnHeaders(tk.Canvas):
 
     def shift_b1_press(self, event: object) -> None:
         self.mouseclick_outside_editor_or_dropdown_all_canvases(inside=True)
-        x = event.x
-        c = self.MT.identify_col(x=x)
+        c = self.MT.identify_col(x=event.x)
         if (self.drag_and_drop_enabled or self.col_selection_enabled) and self.rsz_h is None and self.rsz_w is None:
             if c < len(self.MT.col_positions) - 1:
                 c_selected = self.MT.col_selected(c)
@@ -316,7 +315,7 @@ class ColumnHeaders(tk.Canvas):
                     )
 
     def get_shift_select_box(self, c: int, min_c: int) -> tuple[int, int, int, int, str]:
-        if c > min_c:
+        if c >= min_c:
             return 0, min_c, len(self.MT.row_positions) - 1, c + 1
         elif c < min_c:
             return 0, c, len(self.MT.row_positions) - 1, min_c + 1

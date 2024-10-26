@@ -66,7 +66,7 @@ def to_str(o: object, **kwargs: dict) -> str:
     return f"{o}"
 
 
-def float_to_str(v: int | float, **kwargs: dict) -> str:
+def float_to_str(v: object, **kwargs: dict) -> str:
     if isinstance(v, float):
         if v.is_integer():
             return f"{int(v)}"
@@ -77,7 +77,7 @@ def float_to_str(v: int | float, **kwargs: dict) -> str:
     return f"{v}"
 
 
-def percentage_to_str(v: int | float, **kwargs: dict) -> str:
+def percentage_to_str(v: object, **kwargs: dict) -> str:
     if isinstance(v, (int, float)):
         x = v * 100
         if isinstance(x, float):
@@ -87,7 +87,8 @@ def percentage_to_str(v: int | float, **kwargs: dict) -> str:
                 if kwargs["decimals"]:
                     return f"{round(x, kwargs['decimals'])}%"
                 return f"{int(round(x, kwargs['decimals']))}%"
-    return f"{x}%"
+        return f"{x}%"
+    return f"{v}%"
 
 
 def bool_to_str(v: object, **kwargs: dict) -> str:

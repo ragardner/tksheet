@@ -38,6 +38,47 @@ TextCfg = namedtuple("TextCfg", "txt tf font align")
 DraggedRowColumn = namedtuple("DraggedRowColumn", "dragged to_move")
 
 
+class SelectionBox:
+    __slots__ = ("fill_iid", "bd_iid", "index", "header", "coords", "type_")
+
+    def __init__(
+        self,
+        fill_iid: int | None = None,
+        bd_iid: int | None = None,
+        index: int | None = None,
+        header: int | None = None,
+        coords: tuple[int, int, int, int] = None,
+        type_: Literal["cells", "rows", "columns"] = "cells",
+    ) -> None:
+        self.fill_iid = fill_iid
+        self.bd_iid = bd_iid
+        self.index = index
+        self.header = header
+        self.coords = coords
+        self.type_ = type_
+
+
+Selected = namedtuple(
+    "Selected",
+    (
+        "row",
+        "column",
+        "type_",
+        "box",
+        "iid",
+        "fill_iid",
+    ),
+    defaults=(
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+    ),
+)
+
+
 def num2alpha(n: int) -> str | None:
     try:
         s = ""
@@ -466,47 +507,6 @@ class TextEditorStorage:
     @property
     def column(self) -> int:
         return self.window.c
-
-
-class SelectionBox:
-    __slots__ = ("fill_iid", "bd_iid", "index", "header", "coords", "type_")
-
-    def __init__(
-        self,
-        fill_iid: int | None = None,
-        bd_iid: int | None = None,
-        index: int | None = None,
-        header: int | None = None,
-        coords: tuple[int, int, int, int] = None,
-        type_: Literal["cells", "rows", "columns"] = "cells",
-    ) -> None:
-        self.fill_iid = fill_iid
-        self.bd_iid = bd_iid
-        self.index = index
-        self.header = header
-        self.coords = coords
-        self.type_ = type_
-
-
-Selected = namedtuple(
-    "Selected",
-    (
-        "row",
-        "column",
-        "type_",
-        "box",
-        "iid",
-        "fill_iid",
-    ),
-    defaults=(
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-    ),
-)
 
 
 class ProgressBar:
