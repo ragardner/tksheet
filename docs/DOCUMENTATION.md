@@ -3550,6 +3550,8 @@ Parameters:
 - `formatter_class` (`class`) in case you want to use a custom class to store functions and information as opposed to using the built-in methods.
 - `**kwargs` any additional keyword options/arguements to pass to the formatter.
 
+___
+
 #### **Deleting a data format rule**
 
 If the data format rule was created by a named span then the named span must be deleted, more information [here](https://github.com/ragardner/tksheet/wiki/Version-7#deleting-a-named-span).
@@ -3568,12 +3570,16 @@ del_format(
 - `key` (`CreateSpanTypes`) either a span or a type which can create a span. See [here](https://github.com/ragardner/tksheet/wiki/Version-7#creating-a-span) for more information on the types that can create a span.
 - `clear_values` (`bool`) if true, all the cells covered by the span will have their values cleared.
 
+___
+
 #### **Delete all formatting**
 
 ```python
 del_all_formatting(clear_values: bool = False) -> Sheet
 ```
 - `clear_values` (`bool`) if true, all the sheets cell values will be cleared.
+
+___
 
 #### **Reapply formatting to entire sheet**
 
@@ -3582,6 +3588,8 @@ reapply_formatting() -> Sheet
 ```
 - Useful if you have manually changed the entire sheets data using `sheet.MT.data = ` and want to reformat the sheet using any existing formatting you have set.
 
+___
+
 #### **Check if a cell is formatted**
 
 ```python
@@ -3589,37 +3597,77 @@ formatted(r: int, c: int) -> dict
 ```
 - If the cell is formatted function returns a `dict` with all the format keyword arguments. The `dict` will be empty if the cell is not formatted.
 
+___
+
 ### **Formatters**
 
-`tksheet` provides a number of in-built formatters, in addition to the base `formatter` function. These formatters are designed to provide a range of functionality for different datatypes. The following table lists the available formatters and their options.
+In addition to the [generic](https://github.com/ragardner/tksheet/wiki/Version-7#generic-formatter) formatter, `tksheet` provides formatters for many different data types.
 
-**You can use any of the below formatters as an argument for the parameter `formatter_options`.
+A basic example showing how formatting some columns as `float` might be done:
 
 ```python
-formatter(
-    datatypes: tuple[object] | object,
-    format_function: Callable,
-    to_str_function: Callable = to_str,
-    invalid_value: object = "NaN",
-    nullable: bool = True,
-    pre_format_function: Callable | None = None,
-    post_format_function: Callable | None = None,
-    clipboard_function: Callable | None = None,
-    **kwargs,
-) -> dict
+import tkinter as tk
+
+from tksheet import (
+    Sheet,
+    float_formatter,
+)
+from tksheet import (
+    num2alpha,
+)
+
+
+class demo(tk.Tk):
+    def __init__(self):
+        super().__init__()
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(0, weight=1)
+        self.sheet = Sheet(
+            self,
+            data=[[f"{r}", f"{r}"] for r in range(5)],
+            expand_sheet_if_paste_too_big=True,
+            theme="dark blue",
+        )
+        """
+        Format example
+        """
+        # some keyword arguments inside float_formatter()
+        self.sheet.format(
+            num2alpha(0), # column A
+            formatter_options=float_formatter(
+                decimals=1,
+                nullable=True,
+            ),
+        )
+        # some keyword arguments outside
+        # of float_formatter() instead
+        self.sheet.format(
+            "B", # column B
+            formatter_options=float_formatter(),
+            decimals=3,
+            nullable=False,
+        )
+        """
+        Rest of code
+        """
+        self.sheet.grid(row=0, column=0, sticky="nswe")
+        self.sheet.enable_bindings(
+            "all",
+            "ctrl_select",
+            "edit_header",
+            "edit_index",
+        )
+
+
+app = demo()
+app.mainloop()
 ```
 
-This is the generic formatter options interface. You can use this to create your own custom formatters. The following options are available. Note that all these options can also be passed to the `format_cell()` function as keyword arguments and are available as attributes for all formatters. You can provide functions of your own creation for all the below arguments which take functions if you require.
+**You can use any of the following formatters as an argument for the parameter `formatter_options`.**
 
-- `datatypes` (`list`) a list of datatypes that the formatter will accept. For example, `datatypes = [int, float]` will accept integers and floats.
-- `format_function` (`function`) a function that takes a string and returns a value of the desired datatype. For example, `format_function = int` will convert a string to an integer.
-- `to_str_function` (`function`) a function that takes a value of the desired datatype and returns a string. This determines how the formatter displays its data on the table. For example, `to_str_function = str` will convert an integer to a string. Defaults to `tksheet.to_str`.
-- `invalid_value` (`any`) the value to return if the input string is invalid. For example, `invalid_value = "NA"` will return "NA" if the input string is invalid.
-- `nullable` (`bool`) if true, the formatter will accept `None` as a valid input.
-- `pre_format_function` (`function`) a function that takes a input string and returns a string. This function is called before the `format_function` and can be used to modify the input string before it is converted to the desired datatype. This can be useful if you want to strip out unwanted characters or convert a string to a different format before converting it to the desired datatype.
-- `post_format_function` (`function`) a function that takes a value **which might not be of the desired datatype, e.g. `None` if the cell is nullable and empty** and if successful returns a value of the desired datatype or if not successful returns the input value. This function is called after the `format_function` and can be used to modify the output value after it is converted to the desired datatype. This can be useful if you want to round a float for example.
-- `clipboard_function` (`function`) a function that takes a value of the desired datatype and returns a string. This function is called when the cell value is copied to the clipboard. This can be useful if you want to convert a value to a different format before it is copied to the clipboard.
-- `**kwargs` any additional keyword options/arguements to pass to the formatter. These keyword arguments will be passed to the `format_function`, `to_str_function`, and the `clipboard_function`. These can be useful if you want to specifiy any additional formatting options, such as the number of decimal places to round to.
+A full list of keyword arguments available to these formatters is shown [here](https://github.com/ragardner/tksheet/wiki/Version-7#generic-formatter).
+
+___
 
 #### **Int Formatter**
 
@@ -3643,6 +3691,8 @@ Example:
 sheet.format_cell(0, 0, formatter_options = tksheet.int_formatter())
 ```
 
+___
+
 #### **Float Formatter**
 
 The `float_formatter` is the basic configuration for a simple float formatter. It will always round float-likes to the specified number of decimal places, for example `"5.999"` will be converted to `"6.0"` if `decimals = 1`.
@@ -3658,7 +3708,7 @@ float_formatter(
 ) -> dict
 ```
 Parameters:
- - `format_function` (`function`) a function that takes a string and returns a `float`. By default, this is set to the in-built `tksheet.to_float`. This function will always convert percentages to their decimal equivalent, for example `"5%"` will be converted to `0.05`.
+ - `format_function` (`function`) a function that takes a string and returns a `float`. By default, this is set to the in-built `tksheet.to_float`.
  - `to_str_function` (`function`) By default, this is set to the in-built `tksheet.float_to_str`, which will display the float to the specified number of decimal places.
  - `decimals` (`int`, `None`) the number of decimal places to round to. Defaults to `2`.
 
@@ -3667,6 +3717,8 @@ Example:
 sheet.format_cell(0, 0, formatter_options = tksheet.float_formatter(decimals = None)) # A float formatter with maximum float() decimal places
 ```
 
+___
+
 #### **Percentage Formatter**
 
 The `percentage_formatter` is the basic configuration for a simple percentage formatter. It will always round float-likes as a percentage to the specified number of decimal places, for example `"5.999%"` will be converted to `"6.0%"` if `decimals = 1`.
@@ -3674,7 +3726,7 @@ The `percentage_formatter` is the basic configuration for a simple percentage fo
 ```python
 percentage_formatter(
     datatypes: tuple[object] | object = float,
-    format_function: Callable = to_float,
+    format_function: Callable = to_percentage,
     to_str_function: Callable = percentage_to_str,
     invalid_value: object = "NaN",
     decimals: int = 0,
@@ -3682,14 +3734,35 @@ percentage_formatter(
 ) -> dict
 ```
 Parameters:
- - `format_function` (`function`) a function that takes a string and returns a `float`. By default, this is set to the in-built `tksheet.to_float`. This function will always convert percentages to their decimal equivalent, for example `"5%"` will be converted to `0.05`.
+ - `format_function` (`function`) a function that takes a string and returns a `float`. By default, this is set to the in-built `tksheet.to_percentage`. This function will always convert percentages to their decimal equivalent, for example `"5%"` will be converted to `0.05`.
  - `to_str_function` (`function`) By default, this is set to the in-built `tksheet.percentage_to_str`, which will display the float as a percentage to the specified number of decimal places. For example, `0.05` will be displayed as `"5.0%"`.
  - `decimals` (`int`) the number of decimal places to round to. Defaults to `0`.
 
 Example:
 ```python
-sheet.format_cell(0, 0, formatter_options = tksheet.percentage_formatter(decimals = 1)) # A percentage formatter with 1 decimal place
+sheet.format_cell(0, 0, formatter_options=tksheet.percentage_formatter(decimals=1)) # A percentage formatter with 1 decimal place
 ```
+
+**Note:**
+
+By default `percentage_formatter()` converts user entry `21` to `2100%` and `21%` to `21%`. An example where `21` is converted to `21%` instead is shown below:
+
+```python
+# formats column A as percentage
+
+# uses:
+# format_function=alt_to_percentage
+# to_str_function=alt_percentage_to_str
+sheet.format(
+    "A",
+    formatter_options=tksheet.percentage_formatter(
+        format_function=alt_to_percentage,
+        to_str_function=alt_percentage_to_str,
+    )
+)
+```
+
+___
 
 #### **Bool Formatter**
 
@@ -3715,6 +3788,40 @@ Example:
 # A bool formatter with custom truthy and falsy values to account for aussie and kiwi slang
 sheet.format_cell(0, 0, formatter_options = tksheet.bool_formatter(truthy = tksheet.truthy | {"nah yeah"}, falsy = tksheet.falsy | {"yeah nah"}))
 ```
+
+___
+
+#### **Generic Formatter**
+
+```python
+formatter(
+    datatypes: tuple[object] | object,
+    format_function: Callable,
+    to_str_function: Callable = to_str,
+    invalid_value: object = "NaN",
+    nullable: bool = True,
+    pre_format_function: Callable | None = None,
+    post_format_function: Callable | None = None,
+    clipboard_function: Callable | None = None,
+    **kwargs,
+) -> dict
+```
+
+This is the generic formatter options interface. You can use this to create your own custom formatters. The following options are available.
+
+**Note that all these options can also be passed to the `Sheet()` format functions as keyword arguments and are available as attributes for all formatters. You can provide functions of your own creation for all the below arguments which take functions if you require.**
+
+- `datatypes` (`list`) a list of datatypes that the formatter will accept. For example, `datatypes = [int, float]` will accept integers and floats.
+- `format_function` (`function`) a function that takes a string and returns a value of the desired datatype. For example, `format_function = int` will convert a string to an integer.
+- `to_str_function` (`function`) a function that takes a value of the desired datatype and returns a string. This determines how the formatter displays its data on the table. For example, `to_str_function = str` will convert an integer to a string. Defaults to `tksheet.to_str`.
+- `invalid_value` (`any`) the value to return if the input string is invalid. For example, `invalid_value = "NA"` will return "NA" if the input string is invalid.
+- `nullable` (`bool`) if true, the formatter will accept `None` as a valid input.
+- `pre_format_function` (`function`) a function that takes a input string and returns a string. This function is called before the `format_function` and can be used to modify the input string before it is converted to the desired datatype. This can be useful if you want to strip out unwanted characters or convert a string to a different format before converting it to the desired datatype.
+- `post_format_function` (`function`) a function that takes a value **which might not be of the desired datatype, e.g. `None` if the cell is nullable and empty** and if successful returns a value of the desired datatype or if not successful returns the input value. This function is called after the `format_function` and can be used to modify the output value after it is converted to the desired datatype. This can be useful if you want to round a float for example.
+- `clipboard_function` (`function`) a function that takes a value of the desired datatype and returns a string. This function is called when the cell value is copied to the clipboard. This can be useful if you want to convert a value to a different format before it is copied to the clipboard.
+- `**kwargs` any additional keyword options/arguements to pass to the formatter. These keyword arguments will be passed to the `format_function`, `to_str_function`, and the `clipboard_function`. These can be useful if you want to specifiy any additional formatting options, such as the number of decimal places to round to.
+
+___
 
 ### **Datetime Formatters and Designing Your Own Custom Formatters**
 

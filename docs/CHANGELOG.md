@@ -1,5 +1,18 @@
 ### Version 7.2.20
-####
+#### Changed:
+- `float_formatter()` by default will no longer accept inputs that end in `"%"`
+- `percentage_formatter()` default `format_function` renamed: `to_float()` -> `to_percentage()`
+- Events no longer emitted for cut, paste or delete if the sheet has not been edited, for example due to read only cells [249](https://github.com/ragardner/tksheet/issues/249)
+- `__init__()` calls now use `super()`
+
+#### Added:
+- Options for percentage formatter:
+    - `format_function` option `to_percentage()`
+    - `format_function` option `alt_to_percentage()`
+    - `to_str_function` option `alt_percentage_to_str()`
+
+#### Improved:
+- Documentation for data formatting
 
 ### Version 7.2.19
 #### Fixed:

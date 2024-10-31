@@ -22,8 +22,7 @@ class TextEditorTkText(tk.Text):
         parent: tk.Misc,
         newline_binding: None | Callable = None,
     ) -> None:
-        tk.Text.__init__(
-            self,
+        super().__init__(
             parent,
             spacing1=0,
             spacing2=1,
@@ -170,8 +169,7 @@ class TextEditor(tk.Frame):
         parent: tk.Misc,
         newline_binding: None | Callable = None,
     ) -> None:
-        tk.Frame.__init__(
-            self,
+        super().__init__(
             parent,
             width=0,
             height=0,

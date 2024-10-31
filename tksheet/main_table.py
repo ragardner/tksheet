@@ -115,8 +115,7 @@ from .vars import (
 
 class MainTable(tk.Canvas):
     def __init__(self, *args, **kwargs):
-        tk.Canvas.__init__(
-            self,
+        super().__init__(
             kwargs["parent"],
             background=kwargs["parent"].ops.table_bg,
             highlightthickness=0,
@@ -671,8 +670,6 @@ class MainTable(tk.Canvas):
                                 event_data,
                             )
                     writer.writerow(row)
-        if event_data["cells"]["table"]:
-            self.undo_stack.append(pickled_event_dict(event_data))
         self.clipboard_clear()
         if len(event_data["cells"]["table"]) == 1 and self.PAR.ops.to_clipboard_lineterminator not in next(
             iter(event_data["cells"]["table"].values())
@@ -685,9 +682,10 @@ class MainTable(tk.Canvas):
         for r1, c1, r2, c2 in boxes:
             self.show_ctrl_outline(canvas="table", start_cell=(c1, r1), end_cell=(c2, r2))
         if event_data["cells"]["table"]:
+            self.undo_stack.append(pickled_event_dict(event_data))
             try_binding(self.extra_end_ctrl_x_func, event_data, "end_ctrl_x")
-        self.sheet_modified(event_data)
-        self.PAR.emit_event("<<Cut>>", event_data)
+            self.sheet_modified(event_data)
+            self.PAR.emit_event("<<Cut>>", event_data)
         return event_data
 
     def ctrl_v(self, event: object = None, validation: bool = True) -> None | EventDataDict:
@@ -937,8 +935,6 @@ class MainTable(tk.Canvas):
         )
         event_data["selection_boxes"] = self.get_boxes()
         event_data["selected"] = self.selected
-        if event_data["cells"]["table"] or event_data["added"]["rows"] or event_data["added"]["columns"]:
-            self.undo_stack.append(pickled_event_dict(event_data))
         self.see(
             r=selected_r,
             c=selected_c,
@@ -950,9 +946,10 @@ class MainTable(tk.Canvas):
         )
         self.refresh()
         if event_data["cells"]["table"] or event_data["added"]["rows"] or event_data["added"]["columns"]:
+            self.undo_stack.append(pickled_event_dict(event_data))
             try_binding(self.extra_end_ctrl_v_func, event_data, "end_ctrl_v")
-        self.sheet_modified(event_data)
-        self.PAR.emit_event("<<Paste>>", event_data)
+            self.sheet_modified(event_data)
+            self.PAR.emit_event("<<Paste>>", event_data)
         return event_data
 
     def delete_key(self, event: object = None, validation: bool = True) -> None | EventDataDict:
@@ -988,11 +985,11 @@ class MainTable(tk.Canvas):
                             event_data,
                         )
         if event_data["cells"]["table"]:
+            self.refresh()
             self.undo_stack.append(pickled_event_dict(event_data))
             try_binding(self.extra_end_delete_key_func, event_data, "end_delete")
-        self.refresh()
-        self.sheet_modified(event_data)
-        self.PAR.emit_event("<<Delete>>", event_data)
+            self.sheet_modified(event_data)
+            self.PAR.emit_event("<<Delete>>", event_data)
         return event_data
 
     def event_data_set_cell(self, datarn: int, datacn: int, value: object, event_data: dict) -> EventDataDict:

@@ -66,8 +66,7 @@ from .vars import (
 
 class RowIndex(tk.Canvas):
     def __init__(self, *args, **kwargs):
-        tk.Canvas.__init__(
-            self,
+        super().__init__(
             kwargs["parent"],
             background=kwargs["parent"].ops.index_bg,
             highlightthickness=0,

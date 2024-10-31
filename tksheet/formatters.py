@@ -5,19 +5,25 @@ from collections.abc import Callable
 from .vars import falsy, nonelike, truthy
 
 
-def is_none_like(o: object):
+def is_none_like(o: object) -> bool:
     if (isinstance(o, str) and o.lower().replace(" ", "") in nonelike) or o in nonelike:
         return True
     return False
 
 
-def to_int(o: object, **kwargs):
+def to_int(o: object, **kwargs) -> int:
     if isinstance(o, int):
         return o
     return int(float(o))
 
 
-def to_float(o: object, **kwargs):
+def to_float(o: object, **kwargs) -> float:
+    if isinstance(o, float):
+        return o
+    return float(o)
+
+
+def to_percentage(o: object, **kwargs) -> float:
     if isinstance(o, float):
         return o
     if isinstance(o, str) and o.endswith("%"):
@@ -25,7 +31,15 @@ def to_float(o: object, **kwargs):
     return float(o)
 
 
-def to_bool(val: object, **kwargs):
+def alt_to_percentage(o: object, **kwargs) -> float:
+    if isinstance(o, float):
+        return o
+    if isinstance(o, str) and o.endswith("%"):
+        return float(o.replace("%", ""))
+    return float(o)
+
+
+def to_bool(val: object, **kwargs) -> bool:
     if isinstance(val, bool):
         return val
     if isinstance(val, str):
@@ -47,14 +61,14 @@ def to_bool(val: object, **kwargs):
     raise ValueError(f'Cannot map "{val}" to bool.')
 
 
-def try_to_bool(o: object, **kwargs):
+def try_to_bool(o: object, **kwargs) -> object:
     try:
         return to_bool(o)
     except Exception:
         return o
 
 
-def is_bool_like(o: object, **kwargs):
+def is_bool_like(o: object, **kwargs) -> bool:
     try:
         to_bool(o)
         return True
@@ -89,6 +103,10 @@ def percentage_to_str(v: object, **kwargs: dict) -> str:
                 return f"{int(round(x, kwargs['decimals']))}%"
         return f"{x}%"
     return f"{v}%"
+
+
+def alt_percentage_to_str(v: object, **kwargs: dict) -> str:
+    return f"{float_to_str(v)}%"
 
 
 def bool_to_str(v: object, **kwargs: dict) -> str:
@@ -127,7 +145,7 @@ def float_formatter(
 
 def percentage_formatter(
     datatypes: tuple[object] | object = float,
-    format_function: Callable = to_float,
+    format_function: Callable = to_percentage,
     to_str_function: Callable = percentage_to_str,
     decimals: int = 2,
     **kwargs,

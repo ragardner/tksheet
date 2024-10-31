@@ -289,8 +289,7 @@ class Sheet(tk.Frame):
         row_index_width: int | None = None,
         expand_sheet_if_paste_too_big: bool | None = None,
     ) -> None:
-        tk.Frame.__init__(
-            self,
+        super().__init__(
             parent,
             background=frame_bg,
             highlightthickness=outline_thickness,
