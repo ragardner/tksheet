@@ -3809,7 +3809,9 @@ formatter(
 
 This is the generic formatter options interface. You can use this to create your own custom formatters. The following options are available.
 
-**Note that all these options can also be passed to the `Sheet()` format functions as keyword arguments and are available as attributes for all formatters. You can provide functions of your own creation for all the below arguments which take functions if you require.**
+Note that all these options can also be passed to the `Sheet()` format functions as keyword arguments and are available as attributes for all formatters.
+
+You can also provide functions of your own creation for all the below arguments which take functions if you require.
 
 - `datatypes` (`list`) a list of datatypes that the formatter will accept. For example, `datatypes = [int, float]` will accept integers and floats.
 - `format_function` (`function`) a function that takes a string and returns a value of the desired datatype. For example, `format_function = int` will convert a string to an integer.

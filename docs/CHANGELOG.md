@@ -1,3 +1,6 @@
+### Version 7.2.21
+####
+
 ### Version 7.2.20
 #### Changed:
 - `float_formatter()` by default will no longer accept inputs that end in `"%"`
