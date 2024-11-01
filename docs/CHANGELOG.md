@@ -1,5 +1,6 @@
 ### Version 7.2.21
-####
+#### Added:
+- Basic alternate row colors option
 
 ### Version 7.2.20
 #### Changed:
