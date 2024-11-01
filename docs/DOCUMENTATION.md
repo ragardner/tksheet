@@ -7,6 +7,7 @@
 - [Initialization Options](https://github.com/ragardner/tksheet/wiki/Version-7#initialization-options)
 ---
 - [Sheet Appearance](https://github.com/ragardner/tksheet/wiki/Version-7#sheet-appearance)
+- [Alternate Row Colors](https://github.com/ragardner/tksheet/wiki/Version-7#alternate-row-colors)
 - [Header and Index](https://github.com/ragardner/tksheet/wiki/Version-7#header-and-index)
 ---
 - [Bindings and Functionality](https://github.com/ragardner/tksheet/wiki/Version-7#bindings-and-functionality)
@@ -396,6 +397,7 @@ def __init__(
     treeview: bool = False,
     treeview_indent: str | int = "5",
     rounded_boxes: bool = True,
+    alternate_color: str = "",
     # colors
     outline_thickness: int = 0,
     outline_color: str = theme_light_blue["outline_color"],
@@ -624,6 +626,25 @@ Some scroll bar style options can only be changed on `Sheet()` initialization, o
     - `horizontal_scroll_arrowsize: str | int`
 
 ---
+# **Alternate Row Colors**
+
+For basic alternate row colors in the main table either:
+- Use the `Sheet()` initialization keyword argument `alternate_color` (`str`) or
+- Use the `set_options()` function with the keyword argument `alternate_color`
+
+Examples:
+
+```python
+set_options(alternate_color="#E2EAF4")
+```
+
+```python
+my_sheet = Sheet(parent, alternate_color="gray80")
+```
+
+Note that any cell, row or column highlights will display over alternate row colors.
+
+---
 # **Header and Index**
 
 #### **Set the header**
@@ -807,6 +828,9 @@ Parameters:
 	- `"shift_cell_select"`
 	- `"shift_row_select"`
 	- `"shift_column_select"`
+    - `"ctrl_cell_select"`
+    - `"ctrl_row_select"`
+    - `"ctrl_column_select"`
 	- `"deselect"`
 	- `"all_select_events", "select", "selectevents", "select_events"`
     - `"all_modified_events", "sheetmodified", "sheet_modified" "modified_events", "modified"`

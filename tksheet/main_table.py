@@ -88,6 +88,7 @@ from .other_classes import (
     DropdownStorage,
     EventDataDict,
     FontTuple,
+    Highlight,
     Loc,
     ProgressBar,
     Selected,
@@ -2993,8 +2994,7 @@ class MainTable(tk.Canvas):
                 self.being_drawn_item = True
                 self.being_drawn_item = self.add_selection(rowsel, colsel, set_as_current=True, run_binding_func=False)
                 sel_event = self.get_select_event(being_drawn_item=self.being_drawn_item)
-                if self.ctrl_selection_binding_func:
-                    self.ctrl_selection_binding_func(sel_event)
+                try_binding(self.ctrl_selection_binding_func, sel_event)
                 self.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True, redraw_table=True)
                 self.PAR.emit_event("<<SheetSelect>>", data=sel_event)
         elif not self.ctrl_select_enabled:
@@ -3023,8 +3023,7 @@ class MainTable(tk.Canvas):
                     )
                 self.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True, redraw_table=True)
                 sel_event = self.get_select_event(being_drawn_item=self.being_drawn_item)
-                if self.shift_selection_binding_func:
-                    self.shift_selection_binding_func(sel_event)
+                try_binding(self.shift_selection_binding_func, sel_event)
                 self.PAR.emit_event("<<SheetSelect>>", data=sel_event)
         elif not self.ctrl_select_enabled:
             self.shift_b1_press(event)
@@ -3053,8 +3052,7 @@ class MainTable(tk.Canvas):
                     )
                 self.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True, redraw_table=True)
                 sel_event = self.get_select_event(being_drawn_item=self.being_drawn_item)
-                if self.shift_selection_binding_func:
-                    self.shift_selection_binding_func(sel_event)
+                try_binding(self.shift_selection_binding_func, sel_event)
                 self.PAR.emit_event("<<SheetSelect>>", data=sel_event)
 
     def get_shift_select_box(self, min_r: int, rowsel: int, min_c: int, colsel: int):
@@ -3119,8 +3117,7 @@ class MainTable(tk.Canvas):
                         )
                     need_redraw = True
                     sel_event = self.get_select_event(being_drawn_item=self.being_drawn_item)
-                    if self.drag_selection_binding_func:
-                        self.drag_selection_binding_func(sel_event)
+                    try_binding(self.drag_selection_binding_func, sel_event)
                     self.PAR.emit_event("<<SheetSelect>>", data=sel_event)
             if self.scroll_if_event_offscreen(event):
                 need_redraw = True
@@ -3162,8 +3159,7 @@ class MainTable(tk.Canvas):
                         )
                     need_redraw = True
                     sel_event = self.get_select_event(being_drawn_item=self.being_drawn_item)
-                    if self.drag_selection_binding_func:
-                        self.drag_selection_binding_func(sel_event)
+                    try_binding(self.drag_selection_binding_func, sel_event)
                     self.PAR.emit_event("<<SheetSelect>>", data=sel_event)
             if self.scroll_if_event_offscreen(event):
                 need_redraw = True
@@ -3190,8 +3186,7 @@ class MainTable(tk.Canvas):
                 ),
             )
             sel_event = self.get_select_event(being_drawn_item=self.being_drawn_item)
-            if self.drag_selection_binding_func:
-                self.drag_selection_binding_func(sel_event)
+            try_binding(self.drag_selection_binding_func, sel_event)
             self.PAR.emit_event("<<SheetSelect>>", data=sel_event)
         else:
             self.being_drawn_item = None
@@ -5181,6 +5176,12 @@ class MainTable(tk.Canvas):
             kwargs = self.progress_bars[(datarn, datacn)]
         else:
             kwargs = self.get_cell_kwargs(datarn, datacn, key="highlight")
+        if not kwargs and (self.PAR.ops.alternate_color and r % 2):
+            kwargs = Highlight(
+                bg=self.PAR.ops.alternate_color,
+                fg=None,
+                end=False,
+            )
         if kwargs:
             if kwargs[0] is not None:
                 c_1 = kwargs[0] if kwargs[0].startswith("#") else color_map[kwargs[0]]
@@ -5859,7 +5860,13 @@ class MainTable(tk.Canvas):
                                 if draw_y + self.table_half_txt_height - 1 > rbotgridln:
                                     break
         if redraw_table:
-            for dct in (self.hidd_text, self.hidd_high, self.hidd_grid, self.hidd_dropdown, self.hidd_checkbox):
+            for dct in (
+                self.hidd_text,
+                self.hidd_high,
+                self.hidd_grid,
+                self.hidd_dropdown,
+                self.hidd_checkbox,
+            ):
                 for iid, showing in dct.items():
                     if showing:
                         self.itemconfig(iid, state="hidden")
