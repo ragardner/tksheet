@@ -48,7 +48,7 @@ from .functions import (
     key_to_span,
     new_tk_event,
     num2alpha,
-    pickled_event_dict,
+    stored_event_dict,
     pop_positions,
     set_align,
     set_readonly,
@@ -1842,7 +1842,7 @@ class Sheet(tk.Frame):
             or event_data["added"]["rows"]
         ):
             if undo is True or (undo is None and span.undo):
-                self.MT.undo_stack.append(pickled_event_dict(event_data))
+                self.MT.undo_stack.append(stored_event_dict(event_data))
             if emit_event is True or (emit_event is None and span.emit_event):
                 self.emit_event("<<SheetModified>>", event_data)
         self.set_refresh_timer(redraw)
@@ -1882,7 +1882,7 @@ class Sheet(tk.Frame):
                     event_data = clear_t(r, c, quick_tval(r, c), event_data)
         if event_data["cells"]["table"] or event_data["cells"]["header"] or event_data["cells"]["index"]:
             if undo is True or (undo is None and span.undo):
-                self.MT.undo_stack.append(pickled_event_dict(event_data))
+                self.MT.undo_stack.append(stored_event_dict(event_data))
             if emit_event is True or (emit_event is None and span.emit_event):
                 self.emit_event("<<SheetModified>>", event_data)
         self.set_refresh_timer(redraw)
@@ -2051,7 +2051,7 @@ class Sheet(tk.Frame):
             push_ops=push_ops,
         )
         if undo:
-            self.MT.undo_stack.append(pickled_event_dict(event_data))
+            self.MT.undo_stack.append(stored_event_dict(event_data))
         if emit_event:
             self.emit_event("<<SheetModified>>", event_data)
         self.set_refresh_timer(redraw)
@@ -2146,7 +2146,7 @@ class Sheet(tk.Frame):
             push_ops=push_ops,
         )
         if undo:
-            self.MT.undo_stack.append(pickled_event_dict(event_data))
+            self.MT.undo_stack.append(stored_event_dict(event_data))
         if emit_event:
             self.emit_event("<<SheetModified>>", event_data)
         self.set_refresh_timer(redraw)
@@ -2222,7 +2222,7 @@ class Sheet(tk.Frame):
                 event_data,
             )
         if undo:
-            self.MT.undo_stack.append(pickled_event_dict(event_data))
+            self.MT.undo_stack.append(stored_event_dict(event_data))
         if emit_event:
             self.emit_event("<<SheetModified>>", event_data)
         self.set_refresh_timer(redraw)
@@ -2264,7 +2264,7 @@ class Sheet(tk.Frame):
                 event_data,
             )
         if undo:
-            self.MT.undo_stack.append(pickled_event_dict(event_data))
+            self.MT.undo_stack.append(stored_event_dict(event_data))
         if emit_event:
             self.emit_event("<<SheetModified>>", event_data)
         self.set_refresh_timer(redraw)
@@ -2361,7 +2361,7 @@ class Sheet(tk.Frame):
             data_indexes=data_indexes,
         )
         if undo:
-            self.MT.undo_stack.append(pickled_event_dict(event_data))
+            self.MT.undo_stack.append(stored_event_dict(event_data))
         if emit_event:
             self.emit_event("<<SheetModified>>", event_data)
         self.set_refresh_timer(redraw)
@@ -2391,7 +2391,7 @@ class Sheet(tk.Frame):
             data_indexes=data_indexes,
         )
         if undo:
-            self.MT.undo_stack.append(pickled_event_dict(event_data))
+            self.MT.undo_stack.append(stored_event_dict(event_data))
         if emit_event:
             self.emit_event("<<SheetModified>>", event_data)
         self.set_refresh_timer(redraw)
@@ -2418,7 +2418,7 @@ class Sheet(tk.Frame):
             data_indexes=data_indexes,
         )
         if undo:
-            self.MT.undo_stack.append(pickled_event_dict(event_data))
+            self.MT.undo_stack.append(stored_event_dict(event_data))
         if emit_event:
             self.emit_event("<<SheetModified>>", event_data)
         self.set_refresh_timer(redraw)
@@ -2445,7 +2445,7 @@ class Sheet(tk.Frame):
             data_indexes=data_indexes,
         )
         if undo:
-            self.MT.undo_stack.append(pickled_event_dict(event_data))
+            self.MT.undo_stack.append(stored_event_dict(event_data))
         if emit_event:
             self.emit_event("<<SheetModified>>", event_data)
         self.set_refresh_timer(redraw)

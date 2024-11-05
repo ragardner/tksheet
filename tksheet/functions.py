@@ -5,7 +5,6 @@ import io
 import pickle
 import re
 import tkinter as tk
-import zlib
 from bisect import (
     bisect_left,
 )
@@ -16,7 +15,6 @@ from collections.abc import (
     Iterator,
     Sequence,
 )
-from functools import partial
 from itertools import islice, repeat
 from typing import Literal
 
@@ -32,8 +30,6 @@ from .other_classes import (
     Span,
 )
 
-compress = partial(zlib.compress, level=1)
-pickle_obj = partial(pickle.dumps, protocol=pickle.HIGHEST_PROTOCOL)
 unpickle_obj = pickle.loads
 
 
@@ -63,14 +59,6 @@ def get_data_from_clipboard(
     if dialect.delimiter in data or lineterminator in data:
         return list(csv.reader(io.StringIO(data), dialect=dialect, skipinitialspace=True))
     return [[data]]
-
-
-def pickle_compress(obj: object) -> bytes:
-    return compress(pickle_obj(obj))
-
-
-def decompress_load(b: bytes) -> object:
-    return pickle.loads(zlib.decompress(b))
 
 
 def tksheet_type_error(kwarg: str, valid_types: list[str], not_type: object) -> str:
@@ -210,8 +198,8 @@ def change_eventname(event_dict: EventDataDict, newname: str) -> EventDataDict:
     return EventDataDict({**event_dict, **{"eventname": newname}})
 
 
-def pickled_event_dict(d: DotDict) -> DotDict:
-    return DotDict(name=d["eventname"], data=pickle_compress(DotDict({k: v for k, v in d.items() if k != "widget"})))
+def stored_event_dict(d: DotDict) -> DotDict:
+    return DotDict(name=d["eventname"], data=DotDict(kv for kv in d.items() if kv[0] != "widget"))
 
 
 def len_to_idx(n: int) -> int:

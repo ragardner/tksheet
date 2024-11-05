@@ -1,4 +1,7 @@
 ### Version 7.2.21
+#### Fixed:
+- Storing functions in event data using `pickle` causes error [253](https://github.com/ragardner/tksheet/issues/253)
+
 #### Added:
 - Basic alternate row colors option
 

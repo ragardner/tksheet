@@ -53,7 +53,6 @@ from .functions import (
     b_index,
     cell_right_within_box,
     consecutive_ranges,
-    decompress_load,
     diff_gen,
     diff_list,
     down_cell_within_box,
@@ -73,8 +72,7 @@ from .functions import (
     mod_span_widget,
     move_elements_by_mapping,
     new_tk_event,
-    pickle_obj,
-    pickled_event_dict,
+    stored_event_dict,
     rounded_box_coords,
     span_idxs_post_move,
     try_binding,
@@ -683,7 +681,7 @@ class MainTable(tk.Canvas):
         for r1, c1, r2, c2 in boxes:
             self.show_ctrl_outline(canvas="table", start_cell=(c1, r1), end_cell=(c2, r2))
         if event_data["cells"]["table"]:
-            self.undo_stack.append(pickled_event_dict(event_data))
+            self.undo_stack.append(stored_event_dict(event_data))
             try_binding(self.extra_end_ctrl_x_func, event_data, "end_ctrl_x")
             self.sheet_modified(event_data)
             self.PAR.emit_event("<<Cut>>", event_data)
@@ -947,7 +945,7 @@ class MainTable(tk.Canvas):
         )
         self.refresh()
         if event_data["cells"]["table"] or event_data["added"]["rows"] or event_data["added"]["columns"]:
-            self.undo_stack.append(pickled_event_dict(event_data))
+            self.undo_stack.append(stored_event_dict(event_data))
             try_binding(self.extra_end_ctrl_v_func, event_data, "end_ctrl_v")
             self.sheet_modified(event_data)
             self.PAR.emit_event("<<Paste>>", event_data)
@@ -987,7 +985,7 @@ class MainTable(tk.Canvas):
                         )
         if event_data["cells"]["table"]:
             self.refresh()
-            self.undo_stack.append(pickled_event_dict(event_data))
+            self.undo_stack.append(stored_event_dict(event_data))
             try_binding(self.extra_end_delete_key_func, event_data, "end_delete")
             self.sheet_modified(event_data)
             self.PAR.emit_event("<<Delete>>", event_data)
@@ -1058,7 +1056,7 @@ class MainTable(tk.Canvas):
                 "data": data_new_idxs,
                 "displayed": {} if disp_new_idxs is None else disp_new_idxs,
             }
-        event_data["options"] = self.pickle_options()
+        event_data["options"] = self.copy_options()
         event_data["named_spans"] = {k: span.pickle_self() for k, span in self.named_spans.items()}
         if move_widths and disp_new_idxs and (not data_indexes or self.all_columns_displayed):
             self.deselect("all", run_binding=False, redraw=False)
@@ -1292,7 +1290,7 @@ class MainTable(tk.Canvas):
                 "data": data_new_idxs,
                 "displayed": {} if disp_new_idxs is None else disp_new_idxs,
             }
-        event_data["options"] = self.pickle_options()
+        event_data["options"] = self.copy_options()
         event_data["named_spans"] = {k: span.pickle_self() for k, span in self.named_spans.items()}
         if move_heights and disp_new_idxs and (not data_indexes or self.all_rows_displayed):
             self.deselect("all", run_binding=False, redraw=False)
@@ -1483,11 +1481,11 @@ class MainTable(tk.Canvas):
     def undo(self, event: object = None) -> None | EventDataDict:
         if not self.undo_stack:
             return
-        modification = decompress_load(self.undo_stack[-1]["data"])
+        modification = self.undo_stack[-1]["data"]
         if not try_binding(self.extra_begin_ctrl_z_func, modification, "begin_undo"):
             return
         event_data = self.undo_modification_invert_event(modification)
-        self.redo_stack.append(pickled_event_dict(event_data))
+        self.redo_stack.append(stored_event_dict(event_data))
         self.undo_stack.pop()
         self.sheet_modified(event_data, purge_redo=False)
         try_binding(self.extra_end_ctrl_z_func, event_data, "end_undo")
@@ -1497,11 +1495,11 @@ class MainTable(tk.Canvas):
     def redo(self, event: object = None) -> None | EventDataDict:
         if not self.redo_stack:
             return
-        modification = decompress_load(self.redo_stack[-1]["data"])
+        modification = self.redo_stack[-1]["data"]
         if not try_binding(self.extra_begin_ctrl_z_func, modification, "begin_redo"):
             return
         event_data = self.undo_modification_invert_event(modification, name="redo")
-        self.undo_stack.append(pickled_event_dict(event_data))
+        self.undo_stack.append(stored_event_dict(event_data))
         self.redo_stack.pop()
         self.sheet_modified(event_data, purge_redo=False)
         try_binding(self.extra_end_ctrl_z_func, event_data, "end_redo")
@@ -1536,8 +1534,6 @@ class MainTable(tk.Canvas):
         return event_data
 
     def restore_options_named_spans(self, modification: EventDataDict) -> None:
-        if not isinstance(modification["options"], dict):
-            modification["options"] = unpickle_obj(modification["options"])
         if "cell_options" in modification["options"]:
             self.cell_options = modification["options"]["cell_options"]
         if "column_options" in modification["options"]:
@@ -4531,7 +4527,7 @@ class MainTable(tk.Canvas):
             event_data=event_data,
         )
         if self.undo_enabled:
-            self.undo_stack.append(pickled_event_dict(event_data))
+            self.undo_stack.append(stored_event_dict(event_data))
         self.refresh()
         try_binding(self.extra_end_insert_cols_rc_func, event_data, "end_add_columns")
         self.sheet_modified(event_data)
@@ -4666,7 +4662,7 @@ class MainTable(tk.Canvas):
             event_data=event_data,
         )
         if self.undo_enabled:
-            self.undo_stack.append(pickled_event_dict(event_data))
+            self.undo_stack.append(stored_event_dict(event_data))
         self.refresh()
         try_binding(self.extra_end_insert_rows_rc_func, event_data, "end_add_rows")
         self.sheet_modified(event_data)
@@ -4770,26 +4766,24 @@ class MainTable(tk.Canvas):
             }
         return rows, index_data, heights
 
-    def pickle_options(self) -> bytes:
-        return pickle_obj(
-            {
-                "cell_options": self.cell_options,
-                "column_options": self.col_options,
-                "row_options": self.row_options,
-                "CH_cell_options": self.CH.cell_options,
-                "RI_cell_options": self.RI.cell_options,
-                "tagged_cells": self.tagged_cells,
-                "tagged_rows": self.tagged_rows,
-                "tagged_columns": self.tagged_columns,
-            }
-        )
+    def copy_options(self) -> dict:
+        return {
+            "cell_options": dict(self.cell_options),
+            "column_options": dict(self.col_options),
+            "row_options": dict(self.row_options),
+            "CH_cell_options": dict(self.CH.cell_options),
+            "RI_cell_options": dict(self.RI.cell_options),
+            "tagged_cells": {f"{tag}": set(s) for tag, s in self.tagged_cells.items()},
+            "tagged_rows": {f"{tag}": set(s) for tag, s in self.tagged_rows.items()},
+            "tagged_columns": {f"{tag}": set(s) for tag, s in self.tagged_columns.items()},
+        }
 
     def delete_columns_data(self, cols: list, event_data: dict) -> EventDataDict:
         self.mouseclick_outside_editor_or_dropdown_all_canvases()
         event_data["deleted"]["displayed_columns"] = (
             list(self.displayed_columns) if not isinstance(self.displayed_columns, int) else int(self.displayed_columns)
         )
-        event_data["options"] = self.pickle_options()
+        event_data["options"] = self.copy_options()
         event_data["named_spans"] = {k: span.pickle_self() for k, span in self.named_spans.items()}
         for datacn in reversed(cols):
             for rn in range(len(self.data)):
@@ -4841,7 +4835,7 @@ class MainTable(tk.Canvas):
         data_cols = selected if self.all_columns_displayed else [self.displayed_columns[c] for c in selected]
         event_data = self.delete_columns_data(data_cols, event_data)
         if self.undo_enabled:
-            self.undo_stack.append(pickled_event_dict(event_data))
+            self.undo_stack.append(stored_event_dict(event_data))
         self.deselect("all")
         try_binding(self.extra_end_del_cols_rc_func, event_data, "end_delete_columns")
         self.sheet_modified(event_data)
@@ -4851,7 +4845,7 @@ class MainTable(tk.Canvas):
         event_data["deleted"]["displayed_rows"] = (
             list(self.displayed_rows) if not isinstance(self.displayed_rows, int) else int(self.displayed_rows)
         )
-        event_data["options"] = self.pickle_options()
+        event_data["options"] = self.copy_options()
         event_data["named_spans"] = {k: span.pickle_self() for k, span in self.named_spans.items()}
         for datarn in reversed(rows):
             event_data["deleted"]["rows"][datarn] = self.data.pop(datarn)
@@ -4897,7 +4891,7 @@ class MainTable(tk.Canvas):
         data_rows = selected if self.all_rows_displayed else [self.displayed_rows[r] for r in selected]
         event_data = self.delete_rows_data(data_rows, event_data)
         if self.undo_enabled:
-            self.undo_stack.append(pickled_event_dict(event_data))
+            self.undo_stack.append(stored_event_dict(event_data))
         self.deselect("all")
         try_binding(self.extra_end_del_rows_rc_func, event_data, "end_delete_rows")
         self.sheet_modified(event_data)
@@ -7275,7 +7269,7 @@ class MainTable(tk.Canvas):
         )
         if not check_input_valid or self.input_valid_for_cell(datarn, datacn, value):
             if self.undo_enabled and undo:
-                self.undo_stack.append(pickled_event_dict(event_data))
+                self.undo_stack.append(stored_event_dict(event_data))
             self.set_cell_data(datarn, datacn, value)
             if cell_resize and self.PAR.ops.cell_auto_resize_enabled:
                 self.set_cell_size_to_text(r, c, only_if_too_small=True, redraw=redraw, run_binding=True)
