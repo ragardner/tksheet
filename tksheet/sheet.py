@@ -607,6 +607,46 @@ class Sheet(tk.Frame):
     # Bindings and Functionality
 
     def enable_bindings(self, *bindings: str) -> Sheet:
+        """
+        List of available bindings:
+        - "all"
+        - "single_select"
+        - "toggle_select"
+        - "drag_select"
+        - "select_all"
+        - "column_drag_and_drop" / "move_columns"
+        - "row_drag_and_drop" / "move_rows"
+        - "column_select"
+        - "row_select"
+        - "column_width_resize"
+        - "double_click_column_resize"
+        - "row_width_resize"
+        - "column_height_resize"
+        - "arrowkeys" # all arrowkeys including page up and down
+        - "up"
+        - "down"
+        - "left"
+        - "right"
+        - "prior" # page up
+        - "next" # page down
+        - "row_height_resize"
+        - "double_click_row_resize"
+        - "right_click_popup_menu" / "rc_popup_menu" / "rc_menu"
+        - "rc_select"
+        - "rc_insert_column"
+        - "rc_delete_column"
+        - "rc_insert_row"
+        - "rc_delete_row"
+        - "ctrl_click_select" / "ctrl_select"
+        - "copy"
+        - "cut"
+        - "paste"
+        - "delete"
+        - "undo"
+        - "edit_cell"
+        - "edit_header"
+        - "edit_index"
+        """
         self.MT.enable_bindings(bindings)
         return self
 
@@ -619,6 +659,57 @@ class Sheet(tk.Frame):
         bindings: str | list | tuple | None = None,
         func: Callable | None = None,
     ) -> Sheet:
+        """
+        List of available bindings:
+        - "begin_copy", "begin_ctrl_c"
+        - "ctrl_c", "end_copy", "end_ctrl_c", "copy"
+        - "begin_cut", "begin_ctrl_x"
+        - "ctrl_x", "end_cut", "end_ctrl_x", "cut"
+        - "begin_paste", "begin_ctrl_v"
+        - "ctrl_v", "end_paste", "end_ctrl_v", "paste"
+        - "begin_undo", "begin_ctrl_z"
+        - "ctrl_z", "end_undo", "end_ctrl_z", "undo"
+        - "begin_delete_key", "begin_delete"
+        - "delete_key", "end_delete", "end_delete_key", "delete"
+        - "begin_edit_cell", "begin_edit_table"
+        - "end_edit_cell", "edit_cell", "edit_table"
+        - "begin_edit_header"
+        - "end_edit_header", "edit_header"
+        - "begin_edit_index"
+        - "end_edit_index", "edit_index"
+        - "begin_row_index_drag_drop", "begin_move_rows"
+        - "row_index_drag_drop", "move_rows", "end_move_rows", "end_row_index_drag_drop"
+        - "begin_column_header_drag_drop", "begin_move_columns"
+        - "column_header_drag_drop", "move_columns", "end_move_columns", "end_column_header_drag_drop"
+        - "begin_rc_delete_row", "begin_delete_rows"
+        - "rc_delete_row", "end_rc_delete_row", "end_delete_rows", "delete_rows"
+        - "begin_rc_delete_column", "begin_delete_columns"
+        - "rc_delete_column", "end_rc_delete_column","end_delete_columns", "delete_columns"
+        - "begin_rc_insert_column", "begin_insert_column", "begin_insert_columns", "begin_add_column","begin_rc_add_column", "begin_add_columns"
+        - "rc_insert_column", "end_rc_insert_column", "end_insert_column", "end_insert_columns", "rc_add_column", "end_rc_add_column", "end_add_column", "end_add_columns"
+        - "begin_rc_insert_row", "begin_insert_row", "begin_insert_rows", "begin_rc_add_row", "begin_add_row", "begin_add_rows"
+        - "rc_insert_row", "end_rc_insert_row", "end_insert_row", "end_insert_rows", "rc_add_row", "end_rc_add_row", "end_add_row", "end_add_rows"
+        - "row_height_resize"
+        - "column_width_resize"
+        - "cell_select"
+        - "select_all"
+        - "row_select"
+        - "column_select"
+        - "drag_select_cells"
+        - "drag_select_rows"
+        - "drag_select_columns"
+        - "shift_cell_select"
+        - "shift_row_select"
+        - "shift_column_select"
+        - "ctrl_cell_select"
+        - "ctrl_row_select"
+        - "ctrl_column_select"
+        - "deselect"
+        - "all_select_events", "select", "selectevents", "select_events"
+        - "all_modified_events", "sheetmodified", "sheet_modified" "modified_events", "modified"
+        - "bind_all"
+        - "unbind_all"
+        """
         # bindings is None, unbind all
         if bindings is None:
             bindings = "all"
@@ -2564,7 +2655,7 @@ class Sheet(tk.Frame):
         edit_data: bool = True,
         set_values: dict[tuple[int, int], object] = {},
         set_value: object = None,
-        state: str = "normal",
+        state: Literal["normal", "readonly", "disabled"] = "normal",
         redraw: bool = True,
         selection_function: Callable | None = None,
         modified_function: Callable | None = None,
@@ -2675,7 +2766,7 @@ class Sheet(tk.Frame):
         *key: CreateSpanTypes,
         edit_data: bool = True,
         checked: bool | None = None,
-        state: str = "normal",
+        state: Literal["normal", "disabled"] = "normal",
         redraw: bool = True,
         check_function: Callable | None = None,
         text: str = "",
@@ -5477,7 +5568,7 @@ class Sheet(tk.Frame):
     def selection_add(self, *items, run_binding: bool = True, redraw: bool = True) -> Sheet:
         to_open = []
         quick_displayed_check = set(self.MT.displayed_rows)
-        for item in unpack(items):
+        for item in filter(self.RI.tree.__contains__, unpack(items)):
             if self.RI.tree_rns[item] not in quick_displayed_check and self.RI.tree[item].parent:
                 to_open.extend(list(self.RI.get_iid_ancestors(item)))
         if to_open:
@@ -5492,7 +5583,7 @@ class Sheet(tk.Frame):
                     self.MT.displayed_rows,
                     self.RI.tree_rns[item],
                 )
-                for item in unpack(items)
+                for item in filter(self.RI.tree.__contains__, unpack(items))
             )
         ):
             self.MT.create_selection_box(

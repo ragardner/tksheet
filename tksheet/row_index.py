@@ -1222,27 +1222,28 @@ class RowIndex(tk.Canvas):
         fr: float,
         sr: float,
         r: int,
-        c_2: str,
-        c_3: str,
+        sel_cells_bg: str,
+        sel_rows_bg: str,
         selections: dict,
         datarn: int,
     ) -> tuple[str, str, bool]:
         redrawn = False
         kwargs = self.get_cell_kwargs(datarn, key="highlight")
         if kwargs:
-            if kwargs[0] is not None:
-                c_1 = kwargs[0] if kwargs[0].startswith("#") else color_map[kwargs[0]]
+            fill = kwargs[0]
+            if fill and not fill.startswith("#"):
+                fill = color_map[fill]
             if "rows" in selections and r in selections["rows"]:
                 txtfg = (
                     self.PAR.ops.index_selected_rows_fg
                     if kwargs[1] is None or self.PAR.ops.display_selected_fg_over_highlights
                     else kwargs[1]
                 )
-                if kwargs[0] is not None:
+                if fill:
                     fill = (
-                        f"#{int((int(c_1[1:3], 16) + int(c_3[1:3], 16)) / 2):02X}"
-                        + f"{int((int(c_1[3:5], 16) + int(c_3[3:5], 16)) / 2):02X}"
-                        + f"{int((int(c_1[5:], 16) + int(c_3[5:], 16)) / 2):02X}"
+                        f"#{int((int(fill[1:3], 16) + int(sel_rows_bg[1:3], 16)) / 2):02X}"
+                        + f"{int((int(fill[3:5], 16) + int(sel_rows_bg[3:5], 16)) / 2):02X}"
+                        + f"{int((int(fill[5:], 16) + int(sel_rows_bg[5:], 16)) / 2):02X}"
                     )
             elif "cells" in selections and r in selections["cells"]:
                 txtfg = (
@@ -1250,17 +1251,15 @@ class RowIndex(tk.Canvas):
                     if kwargs[1] is None or self.PAR.ops.display_selected_fg_over_highlights
                     else kwargs[1]
                 )
-                if kwargs[0] is not None:
+                if fill:
                     fill = (
-                        f"#{int((int(c_1[1:3], 16) + int(c_2[1:3], 16)) / 2):02X}"
-                        + f"{int((int(c_1[3:5], 16) + int(c_2[3:5], 16)) / 2):02X}"
-                        + f"{int((int(c_1[5:], 16) + int(c_2[5:], 16)) / 2):02X}"
+                        f"#{int((int(fill[1:3], 16) + int(sel_cells_bg[1:3], 16)) / 2):02X}"
+                        + f"{int((int(fill[3:5], 16) + int(sel_cells_bg[3:5], 16)) / 2):02X}"
+                        + f"{int((int(fill[5:], 16) + int(sel_cells_bg[5:], 16)) / 2):02X}"
                     )
             else:
                 txtfg = self.PAR.ops.index_fg if kwargs[1] is None else kwargs[1]
-                if kwargs[0] is not None:
-                    fill = kwargs[0]
-            if kwargs[0] is not None:
+            if fill:
                 redrawn = self.redraw_highlight(
                     0,
                     fr + 1,
@@ -1592,12 +1591,12 @@ class RowIndex(tk.Canvas):
                     )
                 )
             self.redraw_gridline(points=points, fill=self.PAR.ops.index_grid_fg, width=1, tag="h")
-        c_2 = (
+        sel_cells_bg = (
             self.PAR.ops.index_selected_cells_bg
             if self.PAR.ops.index_selected_cells_bg.startswith("#")
             else color_map[self.PAR.ops.index_selected_cells_bg]
         )
-        c_3 = (
+        sel_rows_bg = (
             self.PAR.ops.index_selected_rows_bg
             if self.PAR.ops.index_selected_rows_bg.startswith("#")
             else color_map[self.PAR.ops.index_selected_rows_bg]
@@ -1614,13 +1613,13 @@ class RowIndex(tk.Canvas):
                 continue
             datarn = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r]
             fill, tree_arrow_fg, dd_drawn = self.redraw_highlight_get_text_fg(
-                rtopgridln,
-                rbotgridln,
-                r,
-                c_2,
-                c_3,
-                selections,
-                datarn,
+                fr=rtopgridln,
+                sr=rbotgridln,
+                r=r,
+                sel_cells_bg=sel_cells_bg,
+                sel_rows_bg=sel_rows_bg,
+                selections=selections,
+                datarn=datarn,
             )
 
             if datarn in self.cell_options and "align" in self.cell_options[datarn]:
@@ -1637,7 +1636,7 @@ class RowIndex(tk.Canvas):
                         rtopgridln,
                         self.current_width - 1,
                         rbotgridln - 1,
-                        fill=fill,
+                        fill=fill if dropdown_kwargs["state"] != "disabled" else self.PAR.ops.index_grid_fg,
                         outline=fill,
                         tag="dd",
                         draw_outline=not dd_drawn,
@@ -1656,7 +1655,7 @@ class RowIndex(tk.Canvas):
                         rtopgridln,
                         self.current_width - 1,
                         rbotgridln - 1,
-                        fill=fill,
+                        fill=fill if dropdown_kwargs["state"] != "disabled" else self.PAR.ops.index_grid_fg,
                         outline=fill,
                         tag="dd",
                         draw_outline=not dd_drawn,
@@ -1676,7 +1675,7 @@ class RowIndex(tk.Canvas):
                         rtopgridln,
                         self.current_width - 1,
                         rbotgridln - 1,
-                        fill=fill,
+                        fill=fill if dropdown_kwargs["state"] != "disabled" else self.PAR.ops.index_grid_fg,
                         outline=fill,
                         tag="dd",
                         draw_outline=not dd_drawn,
@@ -2160,9 +2159,10 @@ class RowIndex(tk.Canvas):
     def open_dropdown_window(self, r: int, event: object = None) -> None:
         self.hide_text_editor()
         kwargs = self.get_cell_kwargs(self.MT.datarn(r), key="dropdown")
-        if kwargs["state"] == "normal":
-            if not self.open_text_editor(event=event, r=r, dropdown=True):
-                return
+        if kwargs["state"] == "disabled":
+            return
+        if kwargs["state"] == "normal" and not self.open_text_editor(event=event, r=r, dropdown=True):
+            return
         win_h, anchor = self.get_dropdown_height_anchor(r)
         win_w = self.current_width + 1
         if anchor == "nw":

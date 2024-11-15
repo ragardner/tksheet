@@ -1,3 +1,20 @@
+### Version 7.2.22
+#### Added:
+- Python `3.13` support badge
+- `"disabled"` state for dropdown boxes
+- docstrings for enable/disable bindings and extra bindings functions to help with arguments
+
+#### Fixed:
+- Alternate row colors no longer blend with clear single cell selection box
+- Highlights and alternate row colors not blending with `show_selected_cells_border=False`
+- Tab key with `show_selected_cells_border=False` not updating selected colors when using highlights
+- Treeview `selection_set()`/`selection_add()` now only use iids that are in the tree, will not generate an error if an iid is missing
+- Error on close text editor
+
+#### Improved:
+- Code: minor type hinting
+- Code: variable name clarity
+
 ### Version 7.2.21
 #### Fixed:
 - Storing functions in event data using `pickle` causes error [253](https://github.com/ragardner/tksheet/issues/253)

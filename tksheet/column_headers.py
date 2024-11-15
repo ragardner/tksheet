@@ -1190,45 +1190,44 @@ class ColumnHeaders(tk.Canvas):
         fc: float,
         sc: float,
         c: int,
-        c_2: str,
-        c_3: str,
+        sel_cells_bg: str,
+        sel_cols_bg: str,
         selections: dict,
         datacn: int,
     ) -> tuple[str, bool]:
         redrawn = False
         kwargs = self.get_cell_kwargs(datacn, key="highlight")
         if kwargs:
-            if kwargs[0] is not None:
-                c_1 = kwargs[0] if kwargs[0].startswith("#") else color_map[kwargs[0]]
+            fill = kwargs[0]
+            if fill and not fill.startswith("#"):
+                fill = color_map[fill]
             if "columns" in selections and c in selections["columns"]:
-                tf = (
+                txtfg = (
                     self.PAR.ops.header_selected_columns_fg
                     if kwargs[1] is None or self.PAR.ops.display_selected_fg_over_highlights
                     else kwargs[1]
                 )
-                if kwargs[0] is not None:
+                if fill:
                     fill = (
-                        f"#{int((int(c_1[1:3], 16) + int(c_3[1:3], 16)) / 2):02X}"
-                        + f"{int((int(c_1[3:5], 16) + int(c_3[3:5], 16)) / 2):02X}"
-                        + f"{int((int(c_1[5:], 16) + int(c_3[5:], 16)) / 2):02X}"
+                        f"#{int((int(fill[1:3], 16) + int(sel_cols_bg[1:3], 16)) / 2):02X}"
+                        + f"{int((int(fill[3:5], 16) + int(sel_cols_bg[3:5], 16)) / 2):02X}"
+                        + f"{int((int(fill[5:], 16) + int(sel_cols_bg[5:], 16)) / 2):02X}"
                     )
             elif "cells" in selections and c in selections["cells"]:
-                tf = (
+                txtfg = (
                     self.PAR.ops.header_selected_cells_fg
                     if kwargs[1] is None or self.PAR.ops.display_selected_fg_over_highlights
                     else kwargs[1]
                 )
-                if kwargs[0] is not None:
+                if fill:
                     fill = (
-                        f"#{int((int(c_1[1:3], 16) + int(c_2[1:3], 16)) / 2):02X}"
-                        + f"{int((int(c_1[3:5], 16) + int(c_2[3:5], 16)) / 2):02X}"
-                        + f"{int((int(c_1[5:], 16) + int(c_2[5:], 16)) / 2):02X}"
+                        f"#{int((int(fill[1:3], 16) + int(sel_cells_bg[1:3], 16)) / 2):02X}"
+                        + f"{int((int(fill[3:5], 16) + int(sel_cells_bg[3:5], 16)) / 2):02X}"
+                        + f"{int((int(fill[5:], 16) + int(sel_cells_bg[5:], 16)) / 2):02X}"
                     )
             else:
-                tf = self.PAR.ops.header_fg if kwargs[1] is None else kwargs[1]
-                if kwargs[0] is not None:
-                    fill = kwargs[0]
-            if kwargs[0] is not None:
+                txtfg = self.PAR.ops.header_fg if kwargs[1] is None else kwargs[1]
+            if fill:
                 redrawn = self.redraw_highlight(
                     fc + 1,
                     0,
@@ -1244,12 +1243,12 @@ class ColumnHeaders(tk.Canvas):
                 )
         elif not kwargs:
             if "columns" in selections and c in selections["columns"]:
-                tf = self.PAR.ops.header_selected_columns_fg
+                txtfg = self.PAR.ops.header_selected_columns_fg
             elif "cells" in selections and c in selections["cells"]:
-                tf = self.PAR.ops.header_selected_cells_fg
+                txtfg = self.PAR.ops.header_selected_cells_fg
             else:
-                tf = self.PAR.ops.header_fg
-        return tf, redrawn
+                txtfg = self.PAR.ops.header_fg
+        return txtfg, redrawn
 
     def redraw_highlight(
         self,
@@ -1463,12 +1462,12 @@ class ColumnHeaders(tk.Canvas):
                 )
             self.redraw_gridline(points=points, fill=self.PAR.ops.header_grid_fg, width=1, tag="v")
         top = self.canvasy(0)
-        c_2 = (
+        sel_cols_bg = (
             self.PAR.ops.header_selected_cells_bg
             if self.PAR.ops.header_selected_cells_bg.startswith("#")
             else color_map[self.PAR.ops.header_selected_cells_bg]
         )
-        c_3 = (
+        sel_cells_bg = (
             self.PAR.ops.header_selected_columns_bg
             if self.PAR.ops.header_selected_columns_bg.startswith("#")
             else color_map[self.PAR.ops.header_selected_columns_bg]
@@ -1482,7 +1481,13 @@ class ColumnHeaders(tk.Canvas):
             crightgridln = self.MT.col_positions[c + 1]
             datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
             fill, dd_drawn = self.redraw_highlight_get_text_fg(
-                cleftgridln, crightgridln, c, c_2, c_3, selections, datacn
+                fc=cleftgridln,
+                sc=crightgridln,
+                c=c,
+                sel_cells_bg=sel_cells_bg,
+                sel_cols_bg=sel_cols_bg,
+                selections=selections,
+                datacn=datacn,
             )
 
             if datacn in self.cell_options and "align" in self.cell_options[datacn]:
@@ -1500,7 +1505,7 @@ class ColumnHeaders(tk.Canvas):
                         0,
                         crightgridln,
                         self.current_height - 1,
-                        fill=fill,
+                        fill=fill if kwargs["state"] != "disabled" else self.PAR.ops.header_grid_fg,
                         outline=fill,
                         tag="dd",
                         draw_outline=not dd_drawn,
@@ -1519,7 +1524,7 @@ class ColumnHeaders(tk.Canvas):
                         0,
                         crightgridln,
                         self.current_height - 1,
-                        fill=fill,
+                        fill=fill if kwargs["state"] != "disabled" else self.PAR.ops.header_grid_fg,
                         outline=fill,
                         tag="dd",
                         draw_outline=not dd_drawn,
@@ -1539,7 +1544,7 @@ class ColumnHeaders(tk.Canvas):
                         0,
                         crightgridln,
                         self.current_height - 1,
-                        fill=fill,
+                        fill=fill if kwargs["state"] != "disabled" else self.PAR.ops.header_grid_fg,
                         outline=fill,
                         tag="dd",
                         draw_outline=not dd_drawn,
@@ -2010,9 +2015,10 @@ class ColumnHeaders(tk.Canvas):
     def open_dropdown_window(self, c: int, event: object = None) -> None:
         self.hide_text_editor()
         kwargs = self.get_cell_kwargs(self.MT.datacn(c), key="dropdown")
-        if kwargs["state"] == "normal":
-            if not self.open_text_editor(event=event, c=c, dropdown=True):
-                return
+        if kwargs["state"] == "disabled":
+            return
+        if kwargs["state"] == "normal" and not self.open_text_editor(event=event, c=c, dropdown=True):
+            return
         win_h, anchor = self.get_dropdown_height_anchor(c)
         win_w = self.MT.col_positions[c + 1] - self.MT.col_positions[c] + 1
         ypos = self.current_height - 1

@@ -722,7 +722,7 @@ enable_bindings(*bindings)
     - `"next"` # page down
 	- `"row_height_resize"`
 	- `"double_click_row_resize"`
-	- `"right_click_popup_menu"`
+	- `"right_click_popup_menu"` / `"rc_popup_menu"` / `"rc_menu"`
 	- `"rc_select"`
 	- `"rc_insert_column"`
 	- `"rc_delete_column"`
@@ -1844,7 +1844,7 @@ Creates dropdown boxes for parts of the sheet that are covered by the span. For 
 span.dropdown(
     values: list = [],
     set_value: object = None,
-    state: str = "normal",
+    state: Literal["normal", "readonly", "disabled"] = "normal",
     redraw: bool = True,
     selection_function: Callable | None = None,
     modified_function: Callable | None = None,
@@ -1885,7 +1885,7 @@ Create check boxes for parts of the sheet that are covered by the span.
 span.checkbox(
     edit_data: bool = True,
     checked: bool | None = None,
-    state: str = "normal",
+    state: Literal["normal", "disabled"] = "normal",
     redraw: bool = True,
     check_function: Callable | None = None,
     text: str = "",
@@ -3204,7 +3204,7 @@ dropdown(
     edit_data: bool = True,
     set_values: dict[tuple[int, int] | int, object] | None = None,
     set_value: object = None,
-    state: str = "normal",
+    state: Literal["normal", "readonly", "disabled"] = "normal",
     redraw: bool = True,
     selection_function: Callable | None = None,
     modified_function: Callable | None = None,
@@ -3432,7 +3432,7 @@ checkbox(
     *key: CreateSpanTypes,
     edit_data: bool = True,
     checked: bool | None = None,
-    state: str = "normal",
+    state: Literal["normal", "disabled"] = "normal",
     redraw: bool = True,
     check_function: Callable | None = None,
     text: str = "",

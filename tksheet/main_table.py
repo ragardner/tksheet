@@ -51,6 +51,7 @@ from .formatters import (
 from .functions import (
     add_to_displayed,
     b_index,
+    box_is_single_cell,
     cell_right_within_box,
     consecutive_ranges,
     diff_gen,
@@ -2760,7 +2761,7 @@ class MainTable(tk.Canvas):
             self.rc_insert_row_enabled = True
             self.rc_popup_menus_enabled = True
             self.rc_select_enabled = True
-        if binding in ("all", "right_click_popup_menu", "rc_popup_menu"):
+        if binding in ("all", "right_click_popup_menu", "rc_popup_menu", "rc_menu"):
             self.rc_popup_menus_enabled = True
             self.rc_select_enabled = True
         if binding in ("all", "right_click_select", "rc_select"):
@@ -2823,7 +2824,7 @@ class MainTable(tk.Canvas):
             self.rc_insert_column_enabled = False
         if binding in bind_add_rows:
             self.rc_insert_row_enabled = False
-        if binding in ("all", "right_click_popup_menu", "rc_popup_menu"):
+        if binding in ("all", "right_click_popup_menu", "rc_popup_menu", "rc_menu"):
             self.rc_popup_menus_enabled = False
         if binding in ("all", "right_click_select", "rc_select"):
             self.rc_select_enabled = False
@@ -5157,69 +5158,82 @@ class MainTable(tk.Canvas):
         fr: int | float,
         sc: int | float,
         sr: int | float,
-        c_2_: tuple[int, int, int],
-        c_3_: tuple[int, int, int],
-        c_4_: tuple[int, int, int],
+        sel_cells_bg: tuple[int, int, int],
+        sel_cols_bg: tuple[int, int, int],
+        sel_rows_bg: tuple[int, int, int],
         selections: dict,
         datarn: int,
         datacn: int,
         can_width: int | None,
+        dont_blend: bool,
+        alternate_color: Highlight | None,
     ) -> str:
         redrawn = False
         if (datarn, datacn) in self.progress_bars:
             kwargs = self.progress_bars[(datarn, datacn)]
         else:
             kwargs = self.get_cell_kwargs(datarn, datacn, key="highlight")
-        if not kwargs and (self.PAR.ops.alternate_color and r % 2):
-            kwargs = Highlight(
-                bg=self.PAR.ops.alternate_color,
-                fg=None,
-                end=False,
-            )
+        if alt := bool(not kwargs and alternate_color and r % 2):
+            kwargs = alternate_color
+
         if kwargs:
-            if kwargs[0] is not None:
-                c_1 = kwargs[0] if kwargs[0].startswith("#") else color_map[kwargs[0]]
-            if "cells" in selections and (r, c) in selections["cells"]:
-                tf = (
+            fill = kwargs[0]
+            if fill and not fill.startswith("#"):
+                fill = color_map[fill]
+
+            # cell is a single currently selected cell box
+            #         not highlighted
+            #         on an alternate row color
+            if alt and dont_blend:
+                txtfg = self.PAR.ops.table_fg
+
+            # cell is highlighted and cell selected
+            elif "cells" in selections and (r, c) in selections["cells"]:
+                txtfg = (
                     self.PAR.ops.table_selected_cells_fg
                     if kwargs[1] is None or self.PAR.ops.display_selected_fg_over_highlights
                     else kwargs[1]
                 )
-                if kwargs[0] is not None:
+                if fill:
                     fill = (
-                        f"#{int((int(c_1[1:3], 16) + c_2_[0]) / 2):02X}"
-                        + f"{int((int(c_1[3:5], 16) + c_2_[1]) / 2):02X}"
-                        + f"{int((int(c_1[5:], 16) + c_2_[2]) / 2):02X}"
+                        f"#{int((int(fill[1:3], 16) + sel_cells_bg[0]) / 2):02X}"
+                        + f"{int((int(fill[3:5], 16) + sel_cells_bg[1]) / 2):02X}"
+                        + f"{int((int(fill[5:], 16) + sel_cells_bg[2]) / 2):02X}"
                     )
+
+            # cell is highlighted and row selected
             elif "rows" in selections and r in selections["rows"]:
-                tf = (
+                txtfg = (
                     self.PAR.ops.table_selected_rows_fg
                     if kwargs[1] is None or self.PAR.ops.display_selected_fg_over_highlights
                     else kwargs[1]
                 )
-                if kwargs[0] is not None:
+                if fill:
                     fill = (
-                        f"#{int((int(c_1[1:3], 16) + c_4_[0]) / 2):02X}"
-                        + f"{int((int(c_1[3:5], 16) + c_4_[1]) / 2):02X}"
-                        + f"{int((int(c_1[5:], 16) + c_4_[2]) / 2):02X}"
+                        f"#{int((int(fill[1:3], 16) + sel_rows_bg[0]) / 2):02X}"
+                        + f"{int((int(fill[3:5], 16) + sel_rows_bg[1]) / 2):02X}"
+                        + f"{int((int(fill[5:], 16) + sel_rows_bg[2]) / 2):02X}"
                     )
+
+            # cell is highlighted and column selected
             elif "columns" in selections and c in selections["columns"]:
-                tf = (
+                txtfg = (
                     self.PAR.ops.table_selected_columns_fg
                     if kwargs[1] is None or self.PAR.ops.display_selected_fg_over_highlights
                     else kwargs[1]
                 )
-                if kwargs[0] is not None:
+                if fill:
                     fill = (
-                        f"#{int((int(c_1[1:3], 16) + c_3_[0]) / 2):02X}"
-                        + f"{int((int(c_1[3:5], 16) + c_3_[1]) / 2):02X}"
-                        + f"{int((int(c_1[5:], 16) + c_3_[2]) / 2):02X}"
+                        f"#{int((int(fill[1:3], 16) + sel_cols_bg[0]) / 2):02X}"
+                        + f"{int((int(fill[3:5], 16) + sel_cols_bg[1]) / 2):02X}"
+                        + f"{int((int(fill[5:], 16) + sel_cols_bg[2]) / 2):02X}"
                     )
+
+            # cell is just highlighted
             else:
-                tf = self.PAR.ops.table_fg if kwargs[1] is None else kwargs[1]
-                if kwargs[0] is not None:
-                    fill = kwargs[0]
-            if kwargs[0] is not None:
+                txtfg = self.PAR.ops.table_fg if kwargs[1] is None else kwargs[1]
+
+            if fill:
                 highlight_fn = partial(
                     self.redraw_highlight,
                     x1=fc + 1,
@@ -5249,14 +5263,14 @@ class MainTable(tk.Canvas):
                     )
         elif not kwargs:
             if "cells" in selections and (r, c) in selections["cells"]:
-                tf = self.PAR.ops.table_selected_cells_fg
+                txtfg = self.PAR.ops.table_selected_cells_fg
             elif "rows" in selections and r in selections["rows"]:
-                tf = self.PAR.ops.table_selected_rows_fg
+                txtfg = self.PAR.ops.table_selected_rows_fg
             elif "columns" in selections and c in selections["columns"]:
-                tf = self.PAR.ops.table_selected_columns_fg
+                txtfg = self.PAR.ops.table_selected_columns_fg
             else:
-                tf = self.PAR.ops.table_fg
-        return tf, redrawn
+                txtfg = self.PAR.ops.table_fg
+        return txtfg, redrawn
 
     def redraw_highlight(self, x1, y1, x2, y2, fill, outline, tag, can_width=None, pc=None):
         if not is_type_int(pc) or pc >= 100:
@@ -5638,24 +5652,65 @@ class MainTable(tk.Canvas):
                 )
         if redraw_table:
             selections = self.get_redraw_selections(text_start_row, grid_end_row, text_start_col, grid_end_col)
-            c_2 = (
+            sel_cells_bg = (
                 self.PAR.ops.table_selected_cells_bg
                 if self.PAR.ops.table_selected_cells_bg.startswith("#")
                 else color_map[self.PAR.ops.table_selected_cells_bg]
             )
-            c_2_ = (int(c_2[1:3], 16), int(c_2[3:5], 16), int(c_2[5:], 16))
-            c_3 = (
+            sel_cells_bg = (int(sel_cells_bg[1:3], 16), int(sel_cells_bg[3:5], 16), int(sel_cells_bg[5:], 16))
+            sel_cols_bg = (
                 self.PAR.ops.table_selected_columns_bg
                 if self.PAR.ops.table_selected_columns_bg.startswith("#")
                 else color_map[self.PAR.ops.table_selected_columns_bg]
             )
-            c_3_ = (int(c_3[1:3], 16), int(c_3[3:5], 16), int(c_3[5:], 16))
-            c_4 = (
+            sel_cols_bg = (int(sel_cols_bg[1:3], 16), int(sel_cols_bg[3:5], 16), int(sel_cols_bg[5:], 16))
+            sel_rows_bg = (
                 self.PAR.ops.table_selected_rows_bg
                 if self.PAR.ops.table_selected_rows_bg.startswith("#")
                 else color_map[self.PAR.ops.table_selected_rows_bg]
             )
-            c_4_ = (int(c_4[1:3], 16), int(c_4[3:5], 16), int(c_4[5:], 16))
+            sel_rows_bg = (int(sel_rows_bg[1:3], 16), int(sel_rows_bg[3:5], 16), int(sel_rows_bg[5:], 16))
+            if self.selected:
+                current_loc = (self.selected.row, self.selected.column)
+            else:
+                current_loc = tuple()
+            if self.PAR.ops.alternate_color:
+                alternate_color = Highlight(
+                    bg=self.PAR.ops.alternate_color,
+                    fg=None,
+                    end=False,
+                )
+                if self.selected and box_is_single_cell(*self.selected.box) and self.PAR.ops.show_selected_cells_border:
+                    dont_blend = current_loc
+                else:
+                    dont_blend = tuple()
+            else:
+                alternate_color = None
+                dont_blend = tuple()
+
+            if not self.PAR.ops.show_selected_cells_border:
+                current_cell_blend = (
+                    self.PAR.ops.table_selected_cells_fg
+                    if self.PAR.ops.table_selected_cells_fg.startswith("#")
+                    else color_map[self.PAR.ops.table_selected_cells_fg]
+                )
+                current_cell_blend = (int(current_cell_blend[1:3], 16), int(current_cell_blend[3:5], 16), int(current_cell_blend[5:], 16))
+                current_col_blend = (
+                    self.PAR.ops.table_selected_columns_fg
+                    if self.PAR.ops.table_selected_columns_fg.startswith("#")
+                    else color_map[self.PAR.ops.table_selected_columns_fg]
+                )
+                current_col_blend = (int(current_col_blend[1:3], 16), int(current_col_blend[3:5], 16), int(current_col_blend[5:], 16))
+                current_row_blend = (
+                    self.PAR.ops.table_selected_rows_fg
+                    if self.PAR.ops.table_selected_rows_fg.startswith("#")
+                    else color_map[self.PAR.ops.table_selected_rows_fg]
+                )
+                current_row_blend = (int(current_row_blend[1:3], 16), int(current_row_blend[3:5], 16), int(current_row_blend[5:], 16))
+                override = (current_cell_blend, current_col_blend, current_row_blend)
+            else:
+                override = tuple()
+
             rows_ = tuple(range(text_start_row, text_end_row))
             font = self.PAR.ops.table_font
             dd_coords = self.dropdown.get_coords()
@@ -5672,19 +5727,21 @@ class MainTable(tk.Canvas):
                     datacn = self.datacn(c)
 
                     fill, dd_drawn = self.redraw_highlight_get_text_fg(
-                        r,
-                        c,
-                        cleftgridln,
-                        rtopgridln,
-                        crightgridln,
-                        rbotgridln,
-                        c_2_,
-                        c_3_,
-                        c_4_,
-                        selections,
-                        datarn,
-                        datacn,
-                        can_width,
+                        r=r,
+                        c=c,
+                        fc=cleftgridln,
+                        fr=rtopgridln,
+                        sc=crightgridln,
+                        sr=rbotgridln,
+                        sel_cells_bg=override[0] if override and (r, c) == current_loc else sel_cells_bg,
+                        sel_cols_bg=override[1] if override and (r, c) == current_loc else sel_cols_bg,
+                        sel_rows_bg=override[2] if override and (r, c) == current_loc else sel_rows_bg,
+                        selections=selections,
+                        datarn=datarn,
+                        datacn=datacn,
+                        can_width=can_width,
+                        dont_blend=(r, c) == dont_blend,
+                        alternate_color=alternate_color,
                     )
                     align = self.get_cell_kwargs(datarn, datacn, key="align")
                     if align:
@@ -5701,7 +5758,7 @@ class MainTable(tk.Canvas):
                                 rtopgridln,
                                 crightgridln,
                                 self.row_positions[r + 1],
-                                fill=fill,
+                                fill=fill if kwargs["state"] != "disabled" else self.PAR.ops.table_grid_fg,
                                 outline=fill,
                                 tag=f"dd_{r}_{c}",
                                 draw_outline=not dd_drawn,
@@ -5719,7 +5776,7 @@ class MainTable(tk.Canvas):
                                 rtopgridln,
                                 crightgridln,
                                 self.row_positions[r + 1],
-                                fill=fill,
+                                fill=fill if kwargs["state"] != "disabled" else self.PAR.ops.table_grid_fg,
                                 outline=fill,
                                 tag=f"dd_{r}_{c}",
                                 draw_outline=not dd_drawn,
@@ -5738,7 +5795,7 @@ class MainTable(tk.Canvas):
                                 rtopgridln,
                                 crightgridln,
                                 self.row_positions[r + 1],
-                                fill=fill,
+                                fill=fill if kwargs["state"] != "disabled" else self.PAR.ops.table_grid_fg,
                                 outline=fill,
                                 tag=f"dd_{r}_{c}",
                                 draw_outline=not dd_drawn,
@@ -6904,6 +6961,8 @@ class MainTable(tk.Canvas):
                         new_r, new_c = down_cell_within_box(r, c, r1, c1, r2, c2, numrows, numcols)
                     else:
                         new_r, new_c = None, None
+                else:
+                    new_r, new_c = None, None
                 if isinstance(new_r, int):
                     self.set_currently_selected(new_r, new_c, item=self.selected.fill_iid)
                     self.see(
@@ -6958,6 +7017,8 @@ class MainTable(tk.Canvas):
             bottom_right_corner=True,
             check_cell_visibility=True,
         )
+        if not self.PAR.ops.show_selected_cells_border:
+            self.refresh()
         return "break"
 
     def get_space_bot(self, r: int, text_editor_h: int | None = None) -> int:
@@ -7034,9 +7095,10 @@ class MainTable(tk.Canvas):
         datarn = self.datarn(r)
         datacn = self.datacn(c)
         kwargs = self.get_cell_kwargs(datarn, datacn, key="dropdown")
-        if kwargs["state"] == "normal":
-            if not self.open_text_editor(event=event, r=r, c=c, dropdown=True):
-                return
+        if kwargs["state"] == "disabled":
+            return
+        if kwargs["state"] == "normal" and not self.open_text_editor(event=event, r=r, c=c, dropdown=True):
+            return
         win_h, anchor = self.get_dropdown_height_anchor(r, c)
         win_w = self.col_positions[c + 1] - self.col_positions[c] + 1
         if anchor == "nw":

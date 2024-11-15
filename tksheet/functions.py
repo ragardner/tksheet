@@ -426,6 +426,15 @@ def is_contiguous(iterable: Iterator[int]) -> bool:
     return all(i == (prev := prev + 1) for i in itr)
 
 
+def box_is_single_cell(
+    r1: int,
+    c1: int,
+    r2: int,
+    c2: int,
+) -> bool:
+    return r2 - r1 == 1 and c2 - c1 == 1
+
+
 def down_cell_within_box(
     r: int,
     c: int,
