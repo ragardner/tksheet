@@ -1,3 +1,6 @@
+### Version 7.2.23
+####
+
 ### Version 7.2.22
 #### Added:
 - Autocomplete for `"normal"` state dropdown boxes
