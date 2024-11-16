@@ -53,6 +53,7 @@ from .functions import (
     b_index,
     box_is_single_cell,
     cell_right_within_box,
+    color_tup,
     consecutive_ranges,
     diff_gen,
     diff_list,
@@ -73,9 +74,9 @@ from .functions import (
     mod_span_widget,
     move_elements_by_mapping,
     new_tk_event,
-    stored_event_dict,
     rounded_box_coords,
     span_idxs_post_move,
+    stored_event_dict,
     try_binding,
     unpickle_obj,
 )
@@ -5652,24 +5653,9 @@ class MainTable(tk.Canvas):
                 )
         if redraw_table:
             selections = self.get_redraw_selections(text_start_row, grid_end_row, text_start_col, grid_end_col)
-            sel_cells_bg = (
-                self.PAR.ops.table_selected_cells_bg
-                if self.PAR.ops.table_selected_cells_bg.startswith("#")
-                else color_map[self.PAR.ops.table_selected_cells_bg]
-            )
-            sel_cells_bg = (int(sel_cells_bg[1:3], 16), int(sel_cells_bg[3:5], 16), int(sel_cells_bg[5:], 16))
-            sel_cols_bg = (
-                self.PAR.ops.table_selected_columns_bg
-                if self.PAR.ops.table_selected_columns_bg.startswith("#")
-                else color_map[self.PAR.ops.table_selected_columns_bg]
-            )
-            sel_cols_bg = (int(sel_cols_bg[1:3], 16), int(sel_cols_bg[3:5], 16), int(sel_cols_bg[5:], 16))
-            sel_rows_bg = (
-                self.PAR.ops.table_selected_rows_bg
-                if self.PAR.ops.table_selected_rows_bg.startswith("#")
-                else color_map[self.PAR.ops.table_selected_rows_bg]
-            )
-            sel_rows_bg = (int(sel_rows_bg[1:3], 16), int(sel_rows_bg[3:5], 16), int(sel_rows_bg[5:], 16))
+            sel_cells_bg = color_tup(self.PAR.ops.table_selected_cells_bg)
+            sel_cols_bg = color_tup(self.PAR.ops.table_selected_columns_bg)
+            sel_rows_bg = color_tup(self.PAR.ops.table_selected_rows_bg)
             if self.selected:
                 current_loc = (self.selected.row, self.selected.column)
             else:
@@ -5689,25 +5675,11 @@ class MainTable(tk.Canvas):
                 dont_blend = tuple()
 
             if not self.PAR.ops.show_selected_cells_border:
-                current_cell_blend = (
-                    self.PAR.ops.table_selected_cells_fg
-                    if self.PAR.ops.table_selected_cells_fg.startswith("#")
-                    else color_map[self.PAR.ops.table_selected_cells_fg]
-                )
-                current_cell_blend = (int(current_cell_blend[1:3], 16), int(current_cell_blend[3:5], 16), int(current_cell_blend[5:], 16))
-                current_col_blend = (
-                    self.PAR.ops.table_selected_columns_fg
-                    if self.PAR.ops.table_selected_columns_fg.startswith("#")
-                    else color_map[self.PAR.ops.table_selected_columns_fg]
-                )
-                current_col_blend = (int(current_col_blend[1:3], 16), int(current_col_blend[3:5], 16), int(current_col_blend[5:], 16))
-                current_row_blend = (
-                    self.PAR.ops.table_selected_rows_fg
-                    if self.PAR.ops.table_selected_rows_fg.startswith("#")
-                    else color_map[self.PAR.ops.table_selected_rows_fg]
-                )
-                current_row_blend = (int(current_row_blend[1:3], 16), int(current_row_blend[3:5], 16), int(current_row_blend[5:], 16))
-                override = (current_cell_blend, current_col_blend, current_row_blend)
+                override = (
+                    color_tup(self.PAR.ops.table_selected_cells_fg),
+                    color_tup(self.PAR.ops.table_selected_columns_fg),
+                    color_tup(self.PAR.ops.table_selected_rows_fg),
+                    )
             else:
                 override = tuple()
 
@@ -7076,13 +7048,34 @@ class MainTable(tk.Canvas):
 
     def dropdown_text_editor_modified(
         self,
-        dd_window: object,
-        event: dict,
-        modified_func: Callable | None,
+        event: tk.Misc,
     ) -> None:
-        if modified_func:
-            modified_func(event)
-        dd_window.search_and_see(event)
+        r, c = self.dropdown.get_coords()
+        event_data = event_dict(
+            name="table_dropdown_modified",
+            sheet=self.PAR.name,
+            value=self.text_editor.get(),
+            loc=Loc(r, c),
+            row=r,
+            column=c,
+            boxes=self.get_boxes(),
+            selected=self.selected,
+        )
+        try_binding(self.dropdown.window.modified_function, event_data)
+        val = self.dropdown.window.search_and_see(event_data)
+        # return to tk.Text action if control/command is held down
+        # or keysym was not a character
+        if (hasattr(event, "state") and event.state & (0x0004 | 0x00000010)) or (
+            hasattr(event, "keysym") and len(event.keysym) > 2
+        ):
+            return
+        self.text_editor.tktext.unbind("<KeyRelease>")
+        self.text_editor.autocomplete(val)
+        self.text_editor.tktext.bind(
+            "<KeyRelease>",
+            self.dropdown_text_editor_modified,
+        )
+        return "break"
 
     # c is displayed col
     def open_dropdown_window(
@@ -7119,6 +7112,8 @@ class MainTable(tk.Canvas):
             "outline_color": self.get_selected_box_bg_fg(type_="cells")[1],
             "align": self.get_cell_align(r, c),
             "values": kwargs["values"],
+            "search_function": kwargs["search_function"],
+            "modified_function": kwargs["modified_function"],
         }
         if self.dropdown.window:
             self.dropdown.window.reset(**reset_kwargs)
@@ -7130,7 +7125,6 @@ class MainTable(tk.Canvas):
                 self.winfo_toplevel(),
                 **reset_kwargs,
                 close_dropdown_window=self.close_dropdown_window,
-                search_function=kwargs["search_function"],
                 arrowkey_RIGHT=self.arrowkey_RIGHT,
                 arrowkey_LEFT=self.arrowkey_LEFT,
             )
@@ -7141,22 +7135,9 @@ class MainTable(tk.Canvas):
             )
         if kwargs["state"] == "normal":
             self.text_editor.tktext.bind(
-                "<<TextModified>>",
-                lambda _: self.dropdown.window.search_and_see(
-                    event_dict(
-                        name="table_dropdown_modified",
-                        sheet=self.PAR.name,
-                        value=self.text_editor.get(),
-                        loc=Loc(r, c),
-                        row=r,
-                        column=c,
-                        boxes=self.get_boxes(),
-                        selected=self.selected,
-                    )
-                ),
+                "<KeyRelease>",
+                self.dropdown_text_editor_modified,
             )
-            if kwargs["modified_function"] is not None:
-                self.dropdown.window.modified_function = kwargs["modified_function"]
             self.update_idletasks()
             try:
                 self.after(1, lambda: self.text_editor.tktext.focus())

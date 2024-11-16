@@ -1,5 +1,6 @@
 ### Version 7.2.22
 #### Added:
+- Autocomplete for `"normal"` state dropdown boxes
 - Python `3.13` support badge
 - `"disabled"` state for dropdown boxes
 - docstrings for enable/disable bindings and extra bindings functions to help with arguments

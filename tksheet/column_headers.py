@@ -3,7 +3,6 @@ from __future__ import annotations
 import tkinter as tk
 from collections import defaultdict
 from collections.abc import (
-    Callable,
     Hashable,
     Sequence,
 )
@@ -2004,13 +2003,34 @@ class ColumnHeaders(tk.Canvas):
 
     def dropdown_text_editor_modified(
         self,
-        dd_window: object,
-        event: dict,
-        modified_func: Callable | None,
+        event: tk.Misc,
     ) -> None:
-        if modified_func:
-            modified_func(event)
-        dd_window.search_and_see(event)
+        c = self.dropdown.get_coords()
+        event_data = event_dict(
+            name="table_dropdown_modified",
+            sheet=self.PAR.name,
+            value=self.text_editor.get(),
+            loc=c,
+            row=0,
+            column=c,
+            boxes=self.MT.get_boxes(),
+            selected=self.MT.selected,
+        )
+        try_binding(self.dropdown.window.modified_function, event_data)
+        val = self.dropdown.window.search_and_see(event_data)
+        # return to tk.Text action if control/command is held down
+        # or keysym was not a character
+        if (hasattr(event, "state") and event.state & (0x0004 | 0x00000010)) or (
+            hasattr(event, "keysym") and len(event.keysym) > 2
+        ):
+            return
+        self.text_editor.tktext.unbind("<KeyRelease>")
+        self.text_editor.autocomplete(val)
+        self.text_editor.tktext.bind(
+            "<KeyRelease>",
+            self.dropdown_text_editor_modified,
+        )
+        return "break"
 
     def open_dropdown_window(self, c: int, event: object = None) -> None:
         self.hide_text_editor()
@@ -2032,6 +2052,8 @@ class ColumnHeaders(tk.Canvas):
             "outline_color": self.PAR.ops.header_selected_columns_bg,
             "align": self.get_cell_align(c),
             "values": kwargs["values"],
+            "search_function": kwargs["search_function"],
+            "modified_function": kwargs["modified_function"],
         }
         if self.dropdown.window:
             self.dropdown.window.reset(**reset_kwargs)
@@ -2044,7 +2066,6 @@ class ColumnHeaders(tk.Canvas):
                 **reset_kwargs,
                 single_index="c",
                 close_dropdown_window=self.close_dropdown_window,
-                search_function=kwargs["search_function"],
                 arrowkey_RIGHT=self.MT.arrowkey_RIGHT,
                 arrowkey_LEFT=self.MT.arrowkey_LEFT,
             )
@@ -2055,20 +2076,8 @@ class ColumnHeaders(tk.Canvas):
             )
         if kwargs["state"] == "normal":
             self.text_editor.tktext.bind(
-                "<<TextModified>>",
-                lambda _x: self.dropdown_text_editor_modified(
-                    self.dropdown.window,
-                    event_dict(
-                        name="header_dropdown_modified",
-                        sheet=self.PAR.name,
-                        value=self.text_editor.get(),
-                        loc=c,
-                        column=c,
-                        boxes=self.MT.get_boxes(),
-                        selected=self.MT.selected,
-                    ),
-                    kwargs["modified_function"],
-                ),
+                "<KeyRelease>",
+                self.dropdown_text_editor_modified,
             )
             self.update_idletasks()
             try:

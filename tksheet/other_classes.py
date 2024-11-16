@@ -489,6 +489,25 @@ class TextEditorStorage:
         if self.window:
             return self.window.get()
         return ""
+    
+    def set(self, value: str) -> None:
+        if not self.window:
+            return
+        self.window.set_text(value)
+        
+    def highlight_from(self, r: int | str, c: int | str) -> None:
+        index = self.window.tktext.index(f"{r}.{c}")
+        self.window.tktext.tag_add('sel', index, 'end')
+        self.window.tktext.mark_set('insert', f"{r}.{c}")
+        
+    def autocomplete(self, value: str | None) -> None:
+        current_val = self.get()
+        if not value or len(current_val) >= len(value) or current_val != value[:len(current_val)]:
+            return
+        cursor_pos = self.tktext.index('insert')
+        line, column = cursor_pos.split('.')
+        self.window.set_text(value)
+        self.highlight_from(line, column)
 
     @property
     def tktext(self) -> object:

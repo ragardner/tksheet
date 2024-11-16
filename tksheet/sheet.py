@@ -7158,6 +7158,7 @@ class Dropdown(Sheet):
         values: list[object] = [],
         close_dropdown_window: Callable | None = None,
         search_function: Callable = dropdown_search_function,
+        modified_function: None | Callable = None,
         arrowkey_RIGHT: Callable | None = None,
         arrowkey_LEFT: Callable | None = None,
         align: str = "w",
@@ -7187,6 +7188,7 @@ class Dropdown(Sheet):
         self.parent = parent
         self.close_dropdown_window = close_dropdown_window
         self.search_function = search_function
+        self.modified_function = modified_function
         self.arrowkey_RIGHT = arrowkey_RIGHT
         self.arrowkey_LEFT = arrowkey_LEFT
         self.single_index = single_index
@@ -7213,11 +7215,15 @@ class Dropdown(Sheet):
         outline_color: str,
         align: str,
         values: list[object] | None = None,
+        search_function: Callable = dropdown_search_function,
+        modified_function: None | Callable = None,
     ) -> None:
         self.deselect(redraw=False)
         self.r = r
         self.c = c
         self.row = -1
+        self.search_function = search_function
+        self.modified_function = modified_function
         self.height_and_width(height=height, width=width)
         self.table_align(align)
         self.set_options(
@@ -7251,13 +7257,14 @@ class Dropdown(Sheet):
         self.see(self.row, 0, redraw=False)
         self.select_row(self.row)
 
-    def search_and_see(self, event: object = None) -> None:
+    def search_and_see(self, event: object = None) -> str:
         if self.search_function is not None:
             rn = self.search_function(search_for=rf"{event['value']}".lower(), data=self.MT.data)
-            if rn is not None:
+            if isinstance(rn, int):
                 self.row = rn
                 self.see(self.row, 0, redraw=False)
                 self.select_row(self.row)
+                return self.MT.data[rn][0]
 
     def mouse_motion(self, event: object) -> None:
         row = self.identify_row(event, exclude_index=True, allow_end=False)

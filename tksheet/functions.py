@@ -18,6 +18,7 @@ from collections.abc import (
 from itertools import islice, repeat
 from typing import Literal
 
+from .colors import color_map
 from .formatters import (
     to_bool,
 )
@@ -433,6 +434,11 @@ def box_is_single_cell(
     c2: int,
 ) -> bool:
     return r2 - r1 == 1 and c2 - c1 == 1
+
+
+def color_tup(color: str) -> tuple[int, int, int]:
+    res = color if color.startswith("#") else color_map[color]
+    return int(res[1:3], 16), int(res[3:5], 16), int(res[5:], 16)
 
 
 def down_cell_within_box(
