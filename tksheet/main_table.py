@@ -3167,9 +3167,10 @@ class MainTable(tk.Canvas):
             self.b1_motion(event)
 
     def b1_release(self, event=None):
+        to_hide = self.being_drawn_item
         if self.being_drawn_item is not None and (to_sel := self.coords_and_type(self.being_drawn_item)):
             r_to_sel, c_to_sel = self.selected.row, self.selected.column
-            self.hide_selection_box(self.being_drawn_item)
+            self.being_drawn_item = None
             self.set_currently_selected(
                 r_to_sel,
                 c_to_sel,
@@ -3182,12 +3183,9 @@ class MainTable(tk.Canvas):
                     ),
                     set_current=False,
                 ),
+                run_binding=False,
             )
-            sel_event = self.get_select_event(being_drawn_item=self.being_drawn_item)
-            try_binding(self.drag_selection_binding_func, sel_event)
-            self.PAR.emit_event("<<SheetSelect>>", data=sel_event)
-        else:
-            self.being_drawn_item = None
+        self.hide_selection_box(to_hide)
         if self.RI.width_resizing_enabled and self.RI.rsz_w is not None and self.RI.currently_resizing_width:
             self.delete_resize_lines()
             self.RI.delete_resize_lines()
@@ -5679,7 +5677,7 @@ class MainTable(tk.Canvas):
                     color_tup(self.PAR.ops.table_selected_cells_fg),
                     color_tup(self.PAR.ops.table_selected_columns_fg),
                     color_tup(self.PAR.ops.table_selected_rows_fg),
-                    )
+                )
             else:
                 override = tuple()
 
@@ -6136,7 +6134,7 @@ class MainTable(tk.Canvas):
             self.itemconfig(item, state="hidden")
 
     def hide_selection_box(self, item: int | None) -> bool:
-        if item is None or item is True:
+        if item is None or item is True or item not in self.selection_boxes:
             return
         box = self.selection_boxes.pop(item)
         self.hide_box(box.fill_iid)
