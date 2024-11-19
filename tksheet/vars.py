@@ -42,6 +42,7 @@ text_editor_newline_bindings: set[str] = {
     "<Alt-Return>",
     "<Alt-KP_Enter>",
     "<Shift-Return>",
+    f"<{ctrl_key}-Return>",
 }
 if USER_OS == "darwin":
     text_editor_newline_bindings.add("<Option-Return>")
