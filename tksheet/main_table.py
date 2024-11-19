@@ -1514,25 +1514,49 @@ class MainTable(tk.Canvas):
             self.purge_redo_stack()
 
     def edit_cells_using_modification(self, modification: dict, event_data: dict) -> EventDataDict:
+        # row index
         if self.PAR.ops.treeview:
             for datarn, v in modification["cells"]["index"].items():
-                self._row_index[datarn].text = v
+                if not self.edit_validation_func or (
+                    self.edit_validation_func
+                    and (v := self.edit_validation_func(mod_event_val(event_data, v, row=datarn))) is not None
+                ):
+                    self._row_index[datarn].text = v
         else:
             for datarn, v in modification["cells"]["index"].items():
-                self._row_index[datarn] = v
+                if not self.edit_validation_func or (
+                    self.edit_validation_func
+                    and (v := self.edit_validation_func(mod_event_val(event_data, v, row=datarn))) is not None
+                ):
+                    self._row_index[datarn] = v
+
+        # header
         for datacn, v in modification["cells"]["header"].items():
-            self._headers[datacn] = v
-        for (datarn, datacn), v in modification["cells"]["table"].items():
-            self.set_cell_data(datarn, datacn, v)
+            if not self.edit_validation_func or (
+                self.edit_validation_func
+                and (v := self.edit_validation_func(mod_event_val(event_data, v, column=datacn))) is not None
+            ):
+                self._headers[datacn] = v
+
+        # table
+        for k, v in modification["cells"]["table"].items():
+            if not self.edit_validation_func or (
+                self.edit_validation_func
+                and (v := self.edit_validation_func(mod_event_val(event_data, v, loc=k))) is not None
+            ):
+                self.set_cell_data(k[0], k[1], v)
+
         return event_data
 
     def save_cells_using_modification(self, modification: EventDataDict, event_data: EventDataDict) -> EventDataDict:
-        for datarn, v in modification["cells"]["index"].items():
+        for datarn in modification["cells"]["index"]:
             event_data["cells"]["index"][datarn] = self.RI.get_cell_data(datarn)
-        for datacn, v in modification["cells"]["header"].items():
+
+        for datacn in modification["cells"]["header"]:
             event_data["cells"]["header"][datacn] = self.CH.get_cell_data(datacn)
-        for (datarn, datacn), v in modification["cells"]["table"].items():
-            event_data["cells"]["table"][(datarn, datacn)] = self.get_cell_data(datarn, datacn)
+
+        for k in modification["cells"]["table"]:
+            event_data["cells"]["table"][k] = self.get_cell_data(k[0], k[1])
         return event_data
 
     def restore_options_named_spans(self, modification: EventDataDict) -> None:

@@ -1415,12 +1415,24 @@ def mod_span_widget(span: Span, widget: object) -> Span:
 def mod_event_val(
     event_data: EventDataDict,
     val: object,
-    loc: Loc | int,
+    loc: Loc | None = None,
+    row: int | None = None,
+    column: int | None = None,
 ) -> EventDataDict:
     event_data.value = val
-    event_data.loc = Loc(*loc)
-    event_data.row = loc[0]
-    event_data.column = loc[1]
+    if isinstance(loc, tuple):
+        event_data.loc = Loc(*loc)
+        event_data.row = loc[0]
+        event_data.column = loc[1]
+
+    elif isinstance(row, int):
+        event_data.loc = Loc(row=row)
+        event_data.row = row
+
+    elif isinstance(column, int):
+        event_data.loc = Loc(column=column)
+        event_data.column = column
+
     return event_data
 
 

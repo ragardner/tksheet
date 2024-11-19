@@ -18,7 +18,7 @@ Box_t = namedtuple(
     "from_r from_c upto_r upto_c type_",
 )
 Box_st = namedtuple("Box_st", "coords type_")
-Loc = namedtuple("Loc", "row column")
+Loc = namedtuple("Loc", "row column", defaults=(None, None))
 
 Highlight = namedtuple(
     "Highlight",
