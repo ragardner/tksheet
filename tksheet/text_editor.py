@@ -52,6 +52,8 @@ class TextEditorTkText(tk.Text):
         font: tuple,
         bg: str,
         fg: str,
+        select_bg: str,
+        select_fg: str,
         state: str,
         text: str = "",
     ) -> None:
@@ -61,6 +63,8 @@ class TextEditorTkText(tk.Text):
             foreground=fg,
             insertbackground=fg,
             state=state,
+            selectbackground=select_bg,
+            selectforeground=select_fg,
         )
         self.editor_del_key = sheet_ops.editor_del_key
         self.align = align
@@ -207,6 +211,8 @@ class TextEditor(tk.Frame):
         sheet_ops: DotDict,
         bg: str,
         fg: str,
+        select_bg: str,
+        select_fg: str,
         align: str,
         state: str,
         r: int = 0,
@@ -222,6 +228,8 @@ class TextEditor(tk.Frame):
             font=menu_kwargs.font,
             bg=bg,
             fg=fg,
+            select_bg=select_bg,
+            select_fg=select_fg,
             state=state,
             text=text,
         )

@@ -6732,7 +6732,6 @@ class MainTable(tk.Canvas):
         h = self.row_positions[r + 1] - y + 1
         if text is None:
             text = f"{self.get_cell_data(self.datarn(r), self.datacn(c), none_to_empty_str = True)}"
-        bg, fg = self.PAR.ops.table_bg, self.PAR.ops.table_fg
         kwargs = {
             "menu_kwargs": DotDict(
                 {
@@ -6750,8 +6749,10 @@ class MainTable(tk.Canvas):
             "width": w,
             "height": h,
             "show_border": True,
-            "bg": bg,
-            "fg": fg,
+            "bg": self.PAR.ops.table_editor_bg,
+            "fg": self.PAR.ops.table_editor_fg,
+            "select_bg": self.PAR.ops.table_editor_select_bg,
+            "select_fg": self.PAR.ops.table_editor_select_fg,
             "align": self.get_cell_align(r, c),
             "r": r,
             "c": c,
@@ -7127,6 +7128,10 @@ class MainTable(tk.Canvas):
         reset_kwargs = {
             "r": r,
             "c": c,
+            "bg": self.PAR.ops.table_editor_bg,
+            "fg": self.PAR.ops.table_editor_fg,
+            "select_bg": self.PAR.ops.table_editor_select_bg,
+            "select_fg": self.PAR.ops.table_editor_select_fg,
             "width": win_w,
             "height": win_h,
             "font": self.PAR.ops.table_font,

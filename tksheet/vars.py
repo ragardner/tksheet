@@ -54,7 +54,9 @@ text_editor_close_bindings: dict[str, str] = {
     "<Escape>": "Escape",
 }
 
-text_editor_to_unbind: set[str] = text_editor_newline_bindings | set(text_editor_close_bindings) | {"<FocusOut>"}
+text_editor_to_unbind: set[str] = (
+    text_editor_newline_bindings | set(text_editor_close_bindings) | {"<FocusOut>", "<KeyRelease>"}
+)
 
 scrollbar_options_keys: set[str] = {
     "vertical_scroll_background",

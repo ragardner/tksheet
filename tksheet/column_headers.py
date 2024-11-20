@@ -1770,7 +1770,6 @@ class ColumnHeaders(tk.Canvas):
         h = self.current_height + 1
         if text is None:
             text = self.get_cell_data(self.MT.datacn(c), none_to_empty_str=True, redirect_int=True)
-        bg, fg = self.PAR.ops.header_bg, self.PAR.ops.header_fg
         kwargs = {
             "menu_kwargs": DotDict(
                 {
@@ -1788,8 +1787,10 @@ class ColumnHeaders(tk.Canvas):
             "width": w,
             "height": h,
             "show_border": True,
-            "bg": bg,
-            "fg": fg,
+            "bg": self.PAR.ops.header_editor_bg,
+            "fg": self.PAR.ops.header_editor_fg,
+            "select_bg": self.PAR.ops.header_editor_select_bg,
+            "select_fg": self.PAR.ops.header_editor_select_fg,
             "align": self.get_cell_align(c),
             "c": c,
         }
@@ -2043,6 +2044,10 @@ class ColumnHeaders(tk.Canvas):
         reset_kwargs = {
             "r": 0,
             "c": c,
+            "bg": self.PAR.ops.header_editor_bg,
+            "fg": self.PAR.ops.header_editor_fg,
+            "select_bg": self.PAR.ops.header_editor_select_bg,
+            "select_fg": self.PAR.ops.header_editor_select_fg,
             "width": win_w,
             "height": win_h,
             "font": self.PAR.ops.header_font,

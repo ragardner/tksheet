@@ -200,8 +200,8 @@ class Sheet(tk.Frame):
         alternate_color: str = "",
         # colors
         outline_thickness: int = 0,
-        outline_color: str = theme_light_blue["outline_color"],
         theme: str = "light blue",
+        outline_color: str = theme_light_blue["outline_color"],
         frame_bg: str = theme_light_blue["table_bg"],
         popup_menu_fg: str = theme_light_blue["popup_menu_fg"],
         popup_menu_bg: str = theme_light_blue["popup_menu_bg"],
@@ -210,6 +210,10 @@ class Sheet(tk.Frame):
         table_grid_fg: str = theme_light_blue["table_grid_fg"],
         table_bg: str = theme_light_blue["table_bg"],
         table_fg: str = theme_light_blue["table_fg"],
+        table_editor_bg: str = theme_light_blue["table_editor_bg"],
+        table_editor_fg: str = theme_light_blue["table_editor_fg"],
+        table_editor_select_bg: str = theme_light_blue["table_editor_select_bg"],
+        table_editor_select_fg: str = theme_light_blue["table_editor_select_fg"],
         table_selected_box_cells_fg: str = theme_light_blue["table_selected_box_cells_fg"],
         table_selected_box_rows_fg: str = theme_light_blue["table_selected_box_rows_fg"],
         table_selected_box_columns_fg: str = theme_light_blue["table_selected_box_columns_fg"],
@@ -228,6 +232,10 @@ class Sheet(tk.Frame):
         index_border_fg: str = theme_light_blue["index_border_fg"],
         index_grid_fg: str = theme_light_blue["index_grid_fg"],
         index_fg: str = theme_light_blue["index_fg"],
+        index_editor_bg: str = theme_light_blue["index_editor_bg"],
+        index_editor_fg: str = theme_light_blue["index_editor_fg"],
+        index_editor_select_bg: str = theme_light_blue["index_editor_select_bg"],
+        index_editor_select_fg: str = theme_light_blue["index_editor_select_fg"],
         index_selected_cells_bg: str = theme_light_blue["index_selected_cells_bg"],
         index_selected_cells_fg: str = theme_light_blue["index_selected_cells_fg"],
         index_selected_rows_bg: str = theme_light_blue["index_selected_rows_bg"],
@@ -237,6 +245,10 @@ class Sheet(tk.Frame):
         header_border_fg: str = theme_light_blue["header_border_fg"],
         header_grid_fg: str = theme_light_blue["header_grid_fg"],
         header_fg: str = theme_light_blue["header_fg"],
+        header_editor_bg: str = theme_light_blue["header_editor_bg"],
+        header_editor_fg: str = theme_light_blue["header_editor_fg"],
+        header_editor_select_bg: str = theme_light_blue["header_editor_select_bg"],
+        header_editor_select_fg: str = theme_light_blue["header_editor_select_fg"],
         header_selected_cells_bg: str = theme_light_blue["header_selected_cells_bg"],
         header_selected_cells_fg: str = theme_light_blue["header_selected_cells_fg"],
         header_selected_columns_bg: str = theme_light_blue["header_selected_columns_bg"],
@@ -259,10 +271,6 @@ class Sheet(tk.Frame):
         horizontal_scroll_troughrelief: str = theme_light_blue["horizontal_scroll_troughrelief"],
         vertical_scroll_bordercolor: str = theme_light_blue["vertical_scroll_bordercolor"],
         horizontal_scroll_bordercolor: str = theme_light_blue["horizontal_scroll_bordercolor"],
-        vertical_scroll_borderwidth: int = 1,
-        horizontal_scroll_borderwidth: int = 1,
-        vertical_scroll_gripcount: int = 0,
-        horizontal_scroll_gripcount: int = 0,
         vertical_scroll_active_bg: str = theme_light_blue["vertical_scroll_active_bg"],
         horizontal_scroll_active_bg: str = theme_light_blue["horizontal_scroll_active_bg"],
         vertical_scroll_not_active_bg: str = theme_light_blue["vertical_scroll_not_active_bg"],
@@ -275,6 +283,10 @@ class Sheet(tk.Frame):
         horizontal_scroll_not_active_fg: str = theme_light_blue["horizontal_scroll_not_active_fg"],
         vertical_scroll_pressed_fg: str = theme_light_blue["vertical_scroll_pressed_fg"],
         horizontal_scroll_pressed_fg: str = theme_light_blue["horizontal_scroll_pressed_fg"],
+        vertical_scroll_borderwidth: int = 1,
+        horizontal_scroll_borderwidth: int = 1,
+        vertical_scroll_gripcount: int = 0,
+        horizontal_scroll_gripcount: int = 0,
         scrollbar_theme_inheritance: str = "default",
         scrollbar_show_arrows: bool = True,
         # changing the arrowsize (width) of the scrollbars
@@ -1035,6 +1047,21 @@ class Sheet(tk.Frame):
         func: Callable,
         add: str | None = None,
     ) -> Sheet:
+        """
+        In addition to normal use, the following special tksheet bindings can be used:
+        - "<<SheetModified>>"
+        - "<<SheetRedrawn>>"
+        - "<<SheetSelect>>"
+        - "<<Copy>>"
+        - "<<Cut>>"
+        - "<<Paste>>"
+        - "<<Delete>>"
+        - "<<Undo>>"
+        - "<<Redo>>"
+        - "<<SelectAll>>"
+
+        Use `add` parameter to bind to multiple functions
+        """
         if binding == "<ButtonPress-1>":
             self.MT.extra_b1_press_func = func
             self.CH.extra_b1_press_func = func
@@ -7149,6 +7176,10 @@ class Dropdown(Sheet):
         parent: tk.Misc,
         r: int,
         c: int,
+        bg: str,
+        fg: str,
+        select_bg: str,
+        select_fg: str,
         ops: dict,
         outline_color: str,
         width: int | None = None,
@@ -7202,12 +7233,30 @@ class Dropdown(Sheet):
         self.bind("<Prior>", self.arrowkey_UP)
         self.bind("<Next>", self.arrowkey_DOWN)
         self.bind("<Return>", self.b1)
-        self.reset(r, c, width, height, font, ops, outline_color, align, values)
+        self.reset(
+            r=r,
+            c=c,
+            bg=bg,
+            fg=fg,
+            select_bg=select_bg,
+            select_fg=select_fg,
+            width=width,
+            height=height,
+            font=font,
+            ops=ops,
+            outline_color=outline_color,
+            align=align,
+            values=values,
+        )
 
     def reset(
         self,
         r: int,
         c: int,
+        bg: str,
+        fg: str,
+        select_bg: str,
+        select_fg: str,
         width: int,
         height: int,
         font: tuple[str, int, str],
@@ -7228,17 +7277,17 @@ class Dropdown(Sheet):
         self.table_align(align)
         self.set_options(
             outline_color=outline_color,
-            table_grid_fg=ops.popup_menu_fg,
-            table_selected_cells_border_fg=ops.popup_menu_fg,
-            table_selected_cells_bg=ops.popup_menu_highlight_bg,
-            table_selected_rows_border_fg=ops.popup_menu_fg,
-            table_selected_rows_bg=ops.popup_menu_highlight_bg,
-            table_selected_rows_fg=ops.popup_menu_highlight_fg,
-            table_selected_box_cells_fg=ops.popup_menu_highlight_bg,
-            table_selected_box_rows_fg=ops.popup_menu_highlight_bg,
+            table_grid_fg=fg,
+            table_selected_cells_border_fg=fg,
+            table_selected_cells_bg=select_bg,
+            table_selected_rows_border_fg=fg,
+            table_selected_rows_bg=select_bg,
+            table_selected_rows_fg=select_fg,
+            table_selected_box_cells_fg=select_bg,
+            table_selected_box_rows_fg=select_bg,
             font=font,
-            table_fg=ops.popup_menu_fg,
-            table_bg=ops.popup_menu_bg,
+            table_fg=fg,
+            table_bg=bg,
             **{k: ops[k] for k in scrollbar_options_keys},
         )
         self.values(values, width=width - self.yscroll.winfo_width() - 4)

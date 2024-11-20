@@ -1924,7 +1924,6 @@ class RowIndex(tk.Canvas):
         h = self.MT.row_positions[r + 1] - y + 1
         if text is None:
             text = self.get_cell_data(self.MT.datarn(r), none_to_empty_str=True, redirect_int=True)
-        bg, fg = self.PAR.ops.index_bg, self.PAR.ops.index_fg
         kwargs = {
             "menu_kwargs": DotDict(
                 {
@@ -1942,8 +1941,10 @@ class RowIndex(tk.Canvas):
             "width": w,
             "height": h,
             "show_border": True,
-            "bg": bg,
-            "fg": fg,
+            "bg": self.PAR.ops.index_editor_bg,
+            "fg": self.PAR.ops.index_editor_fg,
+            "select_bg": self.PAR.ops.index_editor_select_bg,
+            "select_fg": self.PAR.ops.index_editor_select_fg,
             "align": self.get_cell_align(r),
             "r": r,
         }
@@ -2194,6 +2195,10 @@ class RowIndex(tk.Canvas):
         reset_kwargs = {
             "r": r,
             "c": 0,
+            "bg": self.PAR.ops.index_editor_bg,
+            "fg": self.PAR.ops.index_editor_fg,
+            "select_bg": self.PAR.ops.index_editor_select_bg,
+            "select_fg": self.PAR.ops.index_editor_select_fg,
             "width": win_w,
             "height": win_h,
             "font": self.PAR.ops.index_font,

@@ -1,5 +1,27 @@
 ### Version 7.2.23
-####
+#### Changed:
+- Edit validation will now also be triggered for undo and redo [256](https://github.com/ragardner/tksheet/issues/256)
+- Cell text editors and dropdowns have their own shared background and foreground colors [255](https://github.com/ragardner/tksheet/issues/255)
+
+#### Fixed:
+- `7.2.22` regression when using cell text editors and normal dropdown boxes
+- Select events will no longer be emitted upon b1 release
+
+#### Added:
+- Options for changing table, index and header cell editor bg, fg [255](https://github.com/ragardner/tksheet/issues/255)
+    - Added `Sheet()` parameters:
+        - `table_editor_bg`
+        - `table_editor_fg`
+        - `table_editor_select_bg`
+        - `table_editor_select_fg`
+        - `index_editor_bg`
+        - `index_editor_fg`
+        - `index_editor_select_bg`
+        - `index_editor_select_fg`
+        - `header_editor_bg`
+        - `header_editor_fg`
+        - `header_editor_select_bg`
+        - `header_editor_select_fg`
 
 ### Version 7.2.22
 #### Added:
