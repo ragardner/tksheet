@@ -7218,8 +7218,6 @@ class Dropdown(Sheet):
         )
         self.parent = parent
         self.close_dropdown_window = close_dropdown_window
-        self.search_function = search_function
-        self.modified_function = modified_function
         self.arrowkey_RIGHT = arrowkey_RIGHT
         self.arrowkey_LEFT = arrowkey_LEFT
         self.single_index = single_index
@@ -7247,6 +7245,8 @@ class Dropdown(Sheet):
             outline_color=outline_color,
             align=align,
             values=values,
+            search_function=search_function,
+            modified_function=modified_function,
         )
 
     def reset(

@@ -7084,17 +7084,16 @@ class MainTable(tk.Canvas):
             boxes=self.get_boxes(),
             selected=self.selected,
         )
-        val = self.dropdown.window.search_and_see(event_data)
+        try_binding(self.dropdown.window.modified_function, event_data)
         # return to tk.Text action if control/command is held down
         # or keysym was not a character
         if (hasattr(event, "state") and event.state & (0x0004 | 0x00000010)) or (
             hasattr(event, "keysym") and len(event.keysym) > 2 and event.keysym != "space"
         ):
             return
-        self.text_editor.autocomplete(val)
+        self.text_editor.autocomplete(self.dropdown.window.search_and_see(event_data))
         return "break"
 
-    # c is displayed col
     def open_dropdown_window(
         self,
         r: int,
@@ -7160,11 +7159,6 @@ class MainTable(tk.Canvas):
                 "<KeyRelease>",
                 self.dropdown_text_editor_modified,
             )
-            if kwargs["modified_function"]:
-                self.text_editor.tktext.bind(
-                    "<<TextModified>>",
-                    kwargs["modified_function"],
-                )
             try:
                 self.after(1, lambda: self.text_editor.tktext.focus())
                 self.after(2, self.text_editor.window.scroll_to_bottom())

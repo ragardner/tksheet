@@ -152,6 +152,7 @@ class TextEditorTkText(tk.Text):
 
     def cut(self, event: object = None) -> Literal["break"]:
         self.event_generate(f"<{ctrl_key}-x>")
+        self.event_generate("<KeyRelease>")
         return "break"
 
     def copy(self, event: object = None) -> Literal["break"]:
@@ -160,10 +161,12 @@ class TextEditorTkText(tk.Text):
 
     def paste(self, event: object = None) -> Literal["break"]:
         self.event_generate(f"<{ctrl_key}-v>")
+        self.event_generate("<KeyRelease>")
         return "break"
 
     def undo(self, event: object = None) -> Literal["break"]:
         self.event_generate(f"<{ctrl_key}-z>")
+        self.event_generate("<KeyRelease>")
         return "break"
 
 
