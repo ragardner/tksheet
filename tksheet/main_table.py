@@ -7084,20 +7084,14 @@ class MainTable(tk.Canvas):
             boxes=self.get_boxes(),
             selected=self.selected,
         )
-        try_binding(self.dropdown.window.modified_function, event_data)
         val = self.dropdown.window.search_and_see(event_data)
         # return to tk.Text action if control/command is held down
         # or keysym was not a character
         if (hasattr(event, "state") and event.state & (0x0004 | 0x00000010)) or (
-            hasattr(event, "keysym") and len(event.keysym) > 2
+            hasattr(event, "keysym") and len(event.keysym) > 2 and event.keysym != "space"
         ):
             return
-        self.text_editor.tktext.unbind("<KeyRelease>")
         self.text_editor.autocomplete(val)
-        self.text_editor.tktext.bind(
-            "<KeyRelease>",
-            self.dropdown_text_editor_modified,
-        )
         return "break"
 
     # c is displayed col
@@ -7160,12 +7154,17 @@ class MainTable(tk.Canvas):
                 window=self.dropdown.window,
                 anchor=anchor,
             )
+        self.update_idletasks()
         if kwargs["state"] == "normal":
             self.text_editor.tktext.bind(
                 "<KeyRelease>",
                 self.dropdown_text_editor_modified,
             )
-            self.update_idletasks()
+            if kwargs["modified_function"]:
+                self.text_editor.tktext.bind(
+                    "<<TextModified>>",
+                    kwargs["modified_function"],
+                )
             try:
                 self.after(1, lambda: self.text_editor.tktext.focus())
                 self.after(2, self.text_editor.window.scroll_to_bottom())
@@ -7173,7 +7172,6 @@ class MainTable(tk.Canvas):
                 return
             redraw = False
         else:
-            self.update_idletasks()
             self.dropdown.window.bind("<FocusOut>", lambda _: self.close_dropdown_window(r, c))
             self.dropdown.window.bind("<Escape>", self.close_dropdown_window)
             self.dropdown.window.focus_set()

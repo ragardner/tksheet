@@ -5,6 +5,7 @@
 
 #### Fixed:
 - `7.2.22` regression when using cell text editors and normal dropdown boxes
+- `7.2.22` regression `"normal"` dropdown box with `modified_function` not being triggered upon non-key release events such as by right clicking in the text editor and pasting
 - Select events will no longer be emitted upon b1 release
 
 #### Added:

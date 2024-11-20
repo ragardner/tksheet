@@ -5,6 +5,7 @@ from collections import namedtuple
 from collections.abc import Callable, Generator, Hashable, Iterator
 from functools import partial
 from typing import Literal
+import tkinter as tk
 
 pickle_obj = partial(pickle.dumps, protocol=pickle.HIGHEST_PROTOCOL)
 
@@ -489,25 +490,25 @@ class TextEditorStorage:
         if self.window:
             return self.window.get()
         return ""
-    
+
     def set(self, value: str) -> None:
         if not self.window:
             return
         self.window.set_text(value)
-        
-    def highlight_from(self, r: int | str, c: int | str) -> None:
-        index = self.window.tktext.index(f"{r}.{c}")
-        self.window.tktext.tag_add('sel', index, 'end')
-        self.window.tktext.mark_set('insert', f"{r}.{c}")
-        
+
+    def highlight_from(self, index: tk.Misc, r: int | str, c: int | str) -> None:
+        self.window.tktext.tag_add("sel", index, "end")
+        self.window.tktext.mark_set("insert", f"{r}.{c}")
+
     def autocomplete(self, value: str | None) -> None:
         current_val = self.get()
-        if not value or len(current_val) >= len(value) or current_val != value[:len(current_val)]:
+        if not value or len(current_val) >= len(value) or current_val != value[: len(current_val)]:
             return
-        cursor_pos = self.tktext.index('insert')
-        line, column = cursor_pos.split('.')
-        self.window.set_text(value)
-        self.highlight_from(line, column)
+        cursor_pos = self.tktext.index("insert")
+        line, column = cursor_pos.split(".")
+        index = self.window.tktext.index(f"{line}.{column}")
+        self.tktext.insert(index, value[len(current_val) :])
+        self.highlight_from(index, line, column)
 
     @property
     def tktext(self) -> object:
