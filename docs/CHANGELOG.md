@@ -1,3 +1,6 @@
+### Version 7.2.24
+####
+
 ### Version 7.2.23
 #### Changed:
 - Edit validation will now also be triggered for undo and redo [256](https://github.com/ragardner/tksheet/issues/256)
