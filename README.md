@@ -1,11 +1,7 @@
-<figure align="center" width="100%">
+<p align="center" width="100%">
     <img width="45%" src="https://github.com/user-attachments/assets/4afc1783-6461-4b98-93cb-b2a2a7f35169" alt="tksheet table">
     <img width="45%"src="https://github.com/user-attachments/assets/08e77e89-00ea-4c52-9222-9bd421284360" alt="tksheet treeview">
-</figure>
-
-<figure class="image-container">
-
-</figure>
+</p>
 
 # <div align="center">tksheet - python tkinter table widget</div>
 
@@ -29,16 +25,16 @@
       <td><a href="https://github.com/ragardner/tksheet/wiki/Version-7">Documentation Wiki</a></td>
     </tr>
     <tr>
-      <td colspan="2"><a href="https://github.com/ragardner/tksheet/blob/master/docs/CHANGELOG.md">Changelog</a></td>
+      <td align="right" colspan="2"><a href="https://github.com/ragardner/tksheet/blob/master/docs/CHANGELOG.md">Changelog</a></td>
     </tr>
     <tr>
-      <td colspan="2"><a href="https://github.com/ragardner/tksheet/wiki/Version-7#asking-questions">Questions</a></td>
+      <td align="right" colspan="2"><a href="https://github.com/ragardner/tksheet/wiki/Version-7#asking-questions">Questions</a></td>
     </tr>
     <tr>
-      <td colspan="2"><a href="https://github.com/ragardner/tksheet/wiki/Version-7#issues">Issues</a></td>
+      <td align="right" colspan="2"><a href="https://github.com/ragardner/tksheet/wiki/Version-7#issues">Issues</a></td>
     </tr>
     <tr>
-      <td colspan="2"><a href="https://github.com/ragardner/tksheet/wiki/Version-7#enhancements-or-suggestions">Suggestions</a></td>
+      <td align="right" colspan="2"><a href="https://github.com/ragardner/tksheet/wiki/Version-7#enhancements-or-suggestions">Suggestions</a></td>
     </tr>
   </tbody>
 </table>
@@ -101,6 +97,5 @@ sheet.delete_columns(columns=[0, 3], undo=True)
 ### **treeview mode**
 
 ![tksheet treeview](https://github.com/user-attachments/assets/159ab987-7612-4db7-98de-1f30c9680247)
-
 
 
