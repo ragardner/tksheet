@@ -1,31 +1,10 @@
-<style>
-    .image-container {
-        text-align: center;
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        align-content: center;
-        gap: 20px;
-        padding: 20px 0;
-    }
-    .image-container img {
-        width: 280px;
-    }
-    .help-th {
-        color: lightgreen;
-        font-size: 18px;
-    }
-    .help-v6 {
-        color: LightCoral;
-    }
-    .help-v7 {
-        color: lightgreen;
-    }
-</style>
+<figure align="center" width="100%">
+    <img width="45%" src="https://github.com/user-attachments/assets/4afc1783-6461-4b98-93cb-b2a2a7f35169" alt="tksheet table">
+    <img width="45%"src="https://github.com/user-attachments/assets/08e77e89-00ea-4c52-9222-9bd421284360" alt="tksheet treeview">
+</figure>
 
 <figure class="image-container">
-    <img src="https://github.com/user-attachments/assets/4afc1783-6461-4b98-93cb-b2a2a7f35169" alt="tksheet table">
-    <img src="https://github.com/user-attachments/assets/08e77e89-00ea-4c52-9222-9bd421284360" alt="tksheet treeview">
+
 </figure>
 
 # <div align="center">tksheet - python tkinter table widget</div>
@@ -37,16 +16,16 @@
 <table>
   <thead>
     <tr>
-      <th class="help-th" colspan=2><strong>Help</strong></th>
+      <th style="color: lightgreen" colspan=2><strong>Help</strong></th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <td class="help-v6">Versions 6.x.x &#8594;</td>
+      <td style="color: LightCoral">Versions 6.x.x &#8594;</td>
       <td><a href="https://github.com/ragardner/tksheet/wiki/Version-6">Documentation Wiki</a></td>
     </tr>
     <tr>
-      <td class="help-v7">Versions 7.x.x &#8594;</td>
+      <td style="color: lightgreen">Versions 7.x.x &#8594;</td>
       <td><a href="https://github.com/ragardner/tksheet/wiki/Version-7">Documentation Wiki</a></td>
     </tr>
     <tr>
