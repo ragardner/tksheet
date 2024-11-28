@@ -1,3 +1,23 @@
+### Version 7.3.0
+#### Changed:
+- `"end_edit_cell"` events for single cell edits e.g. for cell text editor, dropdown box and checkbox edits now have the value **prior** to the edit in the event under keys `cells.table`
+- Variables default values in `Sheet()` init have changed from `"inf"` -> `float("inf")`:
+    - `max_column_width`
+    - `max_row_height`
+    - `max_index_width`
+    - `max_header_height`
+- Moved variables from `Sheet.MT` -> `Sheet.ops`:
+    - `max_column_width`
+    - `max_row_height`
+    - `max_index_width`
+    - `max_header_height`
+
+#### Fixed:
+- Lag on resize index width or header height
+
+#### Added:
+- Ability to set minimum column width: `min_column_width` in `Sheet()` init and `set_options()`
+
 ### Version 7.2.23
 #### Changed:
 - Edit validation will now also be triggered for undo and redo [256](https://github.com/ragardner/tksheet/issues/256)

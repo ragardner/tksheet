@@ -119,6 +119,12 @@ def dropdown_search_function(
     return None
 
 
+def float_to_int(f: int | float) -> int | float:
+    if f == float("inf"):
+        return f
+    return int(f)
+
+
 def selection_box_tup_to_dict(box: tuple) -> dict:
     return {Box_nt(*box[:-1]): box[-1]}
 

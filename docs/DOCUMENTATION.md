@@ -326,10 +326,11 @@ def __init__(
     default_header_height: str | int = "1",
     default_row_index_width: int = 70,
     default_row_height: str | int = "1",
-    max_column_width: Literal["inf"] | float = "inf",
-    max_row_height: Literal["inf"] | float = "inf",
-    max_header_height: Literal["inf"] | float = "inf",
-    max_index_width: Literal["inf"] | float = "inf",
+    min_column_width: int = 1,
+    max_column_width: float = float("inf"),
+    max_row_height: float = float("inf"),
+    max_header_height: float = float("inf"),
+    max_index_width: float = float("inf"),
     after_redraw_time_ms: int = 20,
     set_all_heights_and_widths: bool = False,
     zoom: int = 100,
@@ -5603,6 +5604,8 @@ set_options(redraw: bool = True, **kwargs) -> Sheet
 
 The list of key word arguments available for `set_options()` are as follows, [see here](https://github.com/ragardner/tksheet/wiki/Version-7#initialization-options) as a guide for argument types.
 ```python
+name
+
 edit_cell_tab
 edit_cell_return
 editor_del_key
@@ -5639,6 +5642,7 @@ column_drag_and_drop_perform
 auto_resize_default_row_index
 default_header
 default_row_index
+min_column_width
 max_column_width
 max_row_height
 max_header_height

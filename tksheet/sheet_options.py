@@ -186,5 +186,10 @@ def new_sheet_options() -> DotDict:
             "treeview_indent": "5",
             "rounded_boxes": True,
             "alternate_color": "",
+            "min_column_width": 1,
+            "max_column_width": float("inf"),
+            "max_header_height": float("inf"),
+            "max_row_height": float("inf"),
+            "max_index_width": float("inf"),
         }
     )

@@ -59,6 +59,7 @@ from .functions import (
     diff_list,
     down_cell_within_box,
     event_dict,
+    float_to_int,
     gen_formatted,
     get_data_from_clipboard,
     get_new_indexes,
@@ -257,8 +258,6 @@ class MainTable(tk.Canvas):
         self.rc_insert_row_enabled = False
         self.rc_popup_menus_enabled = False
         self.edit_cell_enabled = False
-        self.new_row_width = 0
-        self.new_header_height = 0
         self.CH = kwargs["column_headers_canvas"]
         self.CH.MT = self
         self.CH.RI = kwargs["row_index_canvas"]
@@ -296,11 +295,6 @@ class MainTable(tk.Canvas):
 
         self.txt_measure_canvas = tk.Canvas(self)
         self.txt_measure_canvas_text = self.txt_measure_canvas.create_text(0, 0, text="", font=self.PAR.ops.table_font)
-
-        self.max_row_height = float(kwargs["max_row_height"])
-        self.max_index_width = float(kwargs["max_index_width"])
-        self.max_column_width = float(kwargs["max_column_width"])
-        self.max_header_height = float(kwargs["max_header_height"])
 
         self.RI.set_width(self.PAR.ops.default_row_index_width)
         self.set_table_font_help()
@@ -3210,20 +3204,6 @@ class MainTable(tk.Canvas):
                 run_binding=False,
             )
         self.hide_selection_box(to_hide)
-        if self.RI.width_resizing_enabled and self.RI.rsz_w is not None and self.RI.currently_resizing_width:
-            self.delete_resize_lines()
-            self.RI.delete_resize_lines()
-            self.RI.currently_resizing_width = False
-            self.RI.set_width(self.new_row_width, set_TL=True)
-            self.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
-            self.b1_pressed_loc = None
-        elif self.CH.height_resizing_enabled and self.CH.rsz_h is not None and self.CH.currently_resizing_height:
-            self.delete_resize_lines()
-            self.CH.delete_resize_lines()
-            self.CH.currently_resizing_height = False
-            self.CH.set_height(self.new_header_height, set_TL=True)
-            self.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
-            self.b1_pressed_loc = None
         self.RI.rsz_w = None
         self.CH.rsz_h = None
         if self.b1_pressed_loc is not None:
@@ -3546,7 +3526,7 @@ class MainTable(tk.Canvas):
             c_pc=c_pc,
         )
 
-    def get_txt_w(self, txt, font=None):
+    def get_txt_w(self, txt: str, font: None | FontTuple = None) -> int:
         self.txt_measure_canvas.itemconfig(
             self.txt_measure_canvas_text,
             text=txt,
@@ -3555,7 +3535,7 @@ class MainTable(tk.Canvas):
         b = self.txt_measure_canvas.bbox(self.txt_measure_canvas_text)
         return b[2] - b[0]
 
-    def get_txt_h(self, txt, font=None):
+    def get_txt_h(self, txt: str, font: None | FontTuple = None) -> int:
         self.txt_measure_canvas.itemconfig(
             self.txt_measure_canvas_text,
             text=txt,
@@ -3564,7 +3544,7 @@ class MainTable(tk.Canvas):
         b = self.txt_measure_canvas.bbox(self.txt_measure_canvas_text)
         return b[3] - b[1]
 
-    def get_txt_dimensions(self, txt, font=None):
+    def get_txt_dimensions(self, txt: str, font: None | FontTuple = None) -> int:
         self.txt_measure_canvas.itemconfig(
             self.txt_measure_canvas_text,
             text=txt,
@@ -3573,7 +3553,7 @@ class MainTable(tk.Canvas):
         b = self.txt_measure_canvas.bbox(self.txt_measure_canvas_text)
         return b[2] - b[0], b[3] - b[1]
 
-    def get_lines_cell_height(self, n, font=None):
+    def get_lines_cell_height(self, n: int, font: None | FontTuple = None) -> int:
         return (
             self.get_txt_h(
                 txt="\n".join("|" for _ in range(n)) if n > 1 else "|",
@@ -3582,15 +3562,17 @@ class MainTable(tk.Canvas):
             + 5
         )
 
-    def set_min_column_width(self):
-        self.min_column_width = 1
-        if self.min_column_width > self.max_column_width:
-            self.max_column_width = self.min_column_width + 20
+    def set_min_column_width(self, width: int) -> None:
+        if width:
+            self.PAR.ops.min_column_width = width
+
+        if self.PAR.ops.min_column_width > self.PAR.ops.max_column_width:
+            self.PAR.ops.max_column_width = self.PAR.ops.min_column_width + 20
         if (
             isinstance(self.PAR.ops.auto_resize_columns, (int, float))
-            and self.PAR.ops.auto_resize_columns < self.min_column_width
+            and self.PAR.ops.auto_resize_columns < self.PAR.ops.min_column_width
         ):
-            self.PAR.ops.auto_resize_columns = self.min_column_width
+            self.PAR.ops.auto_resize_columns = self.PAR.ops.min_column_width
 
     def get_default_row_height(self) -> int:
         if isinstance(self.PAR.ops.default_row_height, str):
@@ -3641,7 +3623,6 @@ class MainTable(tk.Canvas):
         self.table_xtra_lines_increment = int(self.table_txt_height)
         if self.min_row_height < 12:
             self.min_row_height = 12
-        self.set_min_column_width()
 
     def set_header_font(self, newfont: tuple | None = None) -> tuple[str, int, str]:
         if newfont:
@@ -3672,7 +3653,6 @@ class MainTable(tk.Canvas):
             and self.PAR.ops.default_header_height < self.min_header_height
         ):
             self.PAR.ops.default_header_height = int(self.min_header_height)
-        self.set_min_column_width()
         self.CH.set_height(self.get_default_header_height(), set_TL=True)
 
     def set_index_font(self, newfont: tuple | None = None) -> tuple[str, int, str]:
@@ -3742,15 +3722,15 @@ class MainTable(tk.Canvas):
             w = b[2] - b[0] + 7
             h = b[3] - b[1] + 5
         else:
-            w = self.min_column_width
+            w = self.PAR.ops.min_column_width
             h = self.min_row_height
         if self.get_cell_kwargs(datarn, datacn, key="dropdown") or self.get_cell_kwargs(datarn, datacn, key="checkbox"):
             return w + self.table_txt_height, h
         return w, h
 
     def set_cell_size_to_text(self, r, c, only_if_too_small=False, redraw: bool = True, run_binding=False):
-        min_column_width = int(self.min_column_width)
-        min_rh = int(self.min_row_height)
+        min_column_width = self.PAR.ops.min_column_width
+        min_rh = self.min_row_height
         w = min_column_width
         h = min_rh
         datacn = self.datacn(c)
@@ -3760,12 +3740,12 @@ class MainTable(tk.Canvas):
             w = tw
         if h < min_rh:
             h = int(min_rh)
-        elif h > self.max_row_height:
-            h = int(self.max_row_height)
+        elif h > self.PAR.ops.max_row_height:
+            h = int(self.PAR.ops.max_row_height)
         if w < min_column_width:
             w = int(min_column_width)
-        elif w > self.max_column_width:
-            w = int(self.max_column_width)
+        elif w > self.PAR.ops.max_column_width:
+            w = int(self.PAR.ops.max_column_width)
         cell_needs_resize_w = False
         cell_needs_resize_h = False
         if only_if_too_small:
@@ -3825,8 +3805,10 @@ class MainTable(tk.Canvas):
         width: int | None = None,
         slim: bool = False,
     ) -> tuple[list[float], list[float]]:
-        min_column_width = int(self.min_column_width)
-        min_rh = int(self.min_row_height)
+        min_column_width = self.PAR.ops.min_column_width
+        max_column_width = float_to_int(self.PAR.ops.max_column_width)
+        max_row_height = float_to_int(self.PAR.ops.max_row_height)
+        min_rh = self.min_row_height
         h = min_rh
         rhs = defaultdict(lambda: int(min_rh))
         cws = []
@@ -3849,9 +3831,9 @@ class MainTable(tk.Canvas):
             for datarn in iterrows:
                 w_, h = self.RI.get_cell_dimensions(datarn)
                 if h < min_rh:
-                    h = int(min_rh)
-                elif h > self.max_row_height:
-                    h = int(self.max_row_height)
+                    h = min_rh
+                elif h > max_row_height:
+                    h = max_row_height
                 if h > rhs[datarn]:
                     rhs[datarn] = h
         added_w_space = 1 if slim else 7
@@ -3883,15 +3865,15 @@ class MainTable(tk.Canvas):
                 if tw > w:
                     w = tw
                 if h < min_rh:
-                    h = int(min_rh)
-                elif h > self.max_row_height:
-                    h = int(self.max_row_height)
+                    h = min_rh
+                elif h > max_row_height:
+                    h = max_row_height
                 if h > rhs[datarn]:
                     rhs[datarn] = h
             if w < min_column_width:
-                w = int(min_column_width)
-            elif w > self.max_column_width:
-                w = int(self.max_column_width)
+                w = min_column_width
+            elif w > max_column_width:
+                w = max_column_width
             cws.append(w)
         self.set_row_positions(itr=rhs.values())
         self.set_col_positions(itr=cws)
@@ -5475,8 +5457,8 @@ class MainTable(tk.Canvas):
         resized_rows = False
         if self.PAR.ops.auto_resize_columns and self.allow_auto_resize_columns and col_pos_exists:
             max_w = can_width - self.PAR.ops.empty_horizontal
-            if self.PAR.ops.auto_resize_columns < self.min_column_width:
-                min_column_width = self.column_width
+            if self.PAR.ops.auto_resize_columns < self.PAR.ops.min_column_width:
+                min_column_width = self.PAR.ops.min_column_width
             else:
                 min_column_width = self.PAR.ops.auto_resize_columns
             if (len(self.col_positions) - 1) * min_column_width < max_w:
@@ -6891,7 +6873,7 @@ class MainTable(tk.Canvas):
             name="end_edit_table",
             sheet=self.PAR.name,
             widget=self,
-            cells_table={(datarn, datacn): text_editor_value},
+            cells_table={(datarn, datacn): self.get_cell_data(datarn, datacn)},
             key=event.keysym,
             value=text_editor_value,
             loc=Loc(r, c),

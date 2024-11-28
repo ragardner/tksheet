@@ -126,10 +126,11 @@ class Sheet(tk.Frame):
         default_header_height: str | int = "1",
         default_row_index_width: int = 70,
         default_row_height: str | int = "1",
-        max_column_width: Literal["inf"] | float = "inf",
-        max_row_height: Literal["inf"] | float = "inf",
-        max_header_height: Literal["inf"] | float = "inf",
-        max_index_width: Literal["inf"] | float = "inf",
+        min_column_width: int = 1,
+        max_column_width: float = float("inf"),
+        max_row_height: float = float("inf"),
+        max_header_height: float = float("inf"),
+        max_index_width: float = float("inf"),
         after_redraw_time_ms: int = 20,
         set_all_heights_and_widths: bool = False,
         zoom: int = 100,
@@ -363,10 +364,6 @@ class Sheet(tk.Frame):
         )
         self.MT = MainTable(
             parent=self,
-            max_column_width=max_column_width,
-            max_header_height=max_header_height,
-            max_row_height=max_row_height,
-            max_index_width=max_index_width,
             show_index=show_row_index,
             show_header=show_header,
             column_headers_canvas=self.CH,
@@ -3797,25 +3794,25 @@ class Sheet(tk.Frame):
             if column_widths[0] != 0:
                 return False
             return not any(
-                x - z < self.MT.min_column_width or not isinstance(x, int) or isinstance(x, bool)
+                x - z < self.ops.min_column_width or not isinstance(x, int) or isinstance(x, bool)
                 for z, x in zip(column_widths, islice(column_widths, 1, None))
             )
         return not any(
-            z < self.MT.min_column_width or not isinstance(z, int) or isinstance(z, bool) for z in column_widths
+            z < self.ops.min_column_width or not isinstance(z, int) or isinstance(z, bool) for z in column_widths
         )
 
     def valid_row_height(self, height: int) -> int:
         if height < self.MT.min_row_height:
             return self.MT.min_row_height
-        elif height > self.MT.max_row_height:
-            return self.MT.max_row_height
+        elif height > self.ops.max_row_height:
+            return self.ops.max_row_height
         return height
 
     def valid_column_width(self, width: int) -> int:
-        if width < self.MT.min_column_width:
-            return self.MT.min_column_width
-        elif width > self.MT.max_column_width:
-            return self.MT.max_column_width
+        if width < self.ops.min_column_width:
+            return self.ops.min_column_width
+        elif width > self.ops.max_column_width:
+            return self.ops.max_column_width
         return width
 
     @property
@@ -4440,6 +4437,10 @@ class Sheet(tk.Frame):
                 self.ops[k] = v
                 if k.endswith("bindings"):
                     self.MT._enable_binding(k.split("_")[0])
+        if "name" in kwargs:
+            self.name = kwargs["name"]
+        if "min_column_width" in kwargs:
+            self.MT.set_min_column_width(kwargs["min_column_width"])
         if "from_clipboard_delimiters" in kwargs:
             self.ops.from_clipboard_delimiters = (
                 self.ops.from_clipboard_delimiters
@@ -4448,14 +4449,6 @@ class Sheet(tk.Frame):
             )
         if "default_row_height" in kwargs:
             self.default_row_height(kwargs["default_row_height"])
-        if "max_column_width" in kwargs:
-            self.MT.max_column_width = float(kwargs["max_column_width"])
-        if "max_row_height" in kwargs:
-            self.MT.max_row_height = float(kwargs["max_row_height"])
-        if "max_header_height" in kwargs:
-            self.MT.max_header_height = float(kwargs["max_header_height"])
-        if "max_index_width" in kwargs:
-            self.MT.max_index_width = float(kwargs["max_index_width"])
         if "expand_sheet_if_paste_too_big" in kwargs:
             self.ops.paste_can_expand_x = kwargs["expand_sheet_if_paste_too_big"]
             self.ops.paste_can_expand_y = kwargs["expand_sheet_if_paste_too_big"]
@@ -4494,7 +4487,6 @@ class Sheet(tk.Frame):
             self.set_scrollbar_options()
         self.MT.create_rc_menus()
         if "treeview" in kwargs:
-            self.set_options(auto_resize_row_index=True, redraw=False)
             self.index_align("w", redraw=False)
         return self.set_refresh_timer(redraw)
 

@@ -1,6 +1,32 @@
-<p align="center" width="100%">
-    <img width="33%" src="https://github.com/ragardner/tksheet/assets/26602401/4124c3ce-cf62-4925-9158-c5bdf712765b">
-</p>
+<style>
+    .image-container {
+        text-align: center;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-content: center;
+        gap: 20px;
+        padding: 20px 0;
+    }
+    .image-container img {
+        width: 280px;
+    }
+    .help-th {
+        color: lightgreen;
+        font-size: 18px;
+    }
+    .help-v6 {
+        color: LightCoral;
+    }
+    .help-v7 {
+        color: lightgreen;
+    }
+</style>
+
+<figure class="image-container">
+    <img src="https://github.com/user-attachments/assets/4afc1783-6461-4b98-93cb-b2a2a7f35169" alt="tksheet table">
+    <img src="https://github.com/user-attachments/assets/08e77e89-00ea-4c52-9222-9bd421284360" alt="tksheet treeview">
+</figure>
 
 # <div align="center">tksheet - python tkinter table widget</div>
 
@@ -8,14 +34,35 @@
 
 [![GitHub Release Date](https://img.shields.io/github/release-date-pre/ragardner/tksheet.svg)](https://github.com/ragardner/tksheet/releases) [![Downloads](https://img.shields.io/pypi/dm/tksheet.svg)](https://pypi.org/project/tksheet/)
 
-|    **Help**       |                                                                  |
-|-------------------|------------------------------------------------------------------|
-| Versions 6.x.x -> | [Documentation Wiki](https://github.com/ragardner/tksheet/wiki/Version-6) | |
-| Versions 7.x.x -> | [Documentation Wiki](https://github.com/ragardner/tksheet/wiki/Version-7) | |
-| [Changelog](https://github.com/ragardner/tksheet/blob/master/docs/CHANGELOG.md) | |
-| [Questions](https://github.com/ragardner/tksheet/wiki/Version-7#asking-questions) | |
-| [Issues](https://github.com/ragardner/tksheet/wiki/Version-7#issues) | |
-| [Suggestions](https://github.com/ragardner/tksheet/wiki/Version-7#enhancements-or-suggestions) | |
+<table>
+  <thead>
+    <tr>
+      <th class="help-th" colspan=2><strong>Help</strong></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="help-v6">Versions 6.x.x &#8594;</td>
+      <td><a href="https://github.com/ragardner/tksheet/wiki/Version-6">Documentation Wiki</a></td>
+    </tr>
+    <tr>
+      <td class="help-v7">Versions 7.x.x &#8594;</td>
+      <td><a href="https://github.com/ragardner/tksheet/wiki/Version-7">Documentation Wiki</a></td>
+    </tr>
+    <tr>
+      <td colspan="2"><a href="https://github.com/ragardner/tksheet/blob/master/docs/CHANGELOG.md">Changelog</a></td>
+    </tr>
+    <tr>
+      <td colspan="2"><a href="https://github.com/ragardner/tksheet/wiki/Version-7#asking-questions">Questions</a></td>
+    </tr>
+    <tr>
+      <td colspan="2"><a href="https://github.com/ragardner/tksheet/wiki/Version-7#issues">Issues</a></td>
+    </tr>
+    <tr>
+      <td colspan="2"><a href="https://github.com/ragardner/tksheet/wiki/Version-7#enhancements-or-suggestions">Suggestions</a></td>
+    </tr>
+  </tbody>
+</table>
 
 This library is maintained with the help of **[others](https://github.com/ragardner/tksheet/graphs/contributors)**. If you would like to contribute please read this [help section](https://github.com/ragardner/tksheet/wiki/Version-7#contributing).
 
@@ -40,8 +87,10 @@ This library is maintained with the help of **[others](https://github.com/ragard
 - Expand row heights and column widths
 - Change fonts and font size (not for individual cells)
 - Change any colors in the sheet
-- Dropdowns, check boxes, progress bars
 - [Treeview mode](https://github.com/ragardner/tksheet/wiki/Version-7#treeview-mode)
+- [Dropdown boxes](https://github.com/ragardner/tksheet/wiki/Version-7#dropdown-boxes)
+- [Check boxes](https://github.com/ragardner/tksheet/wiki/Version-7#check-boxes)
+- [Progress bars](https://github.com/ragardner/tksheet/wiki/Version-7#progress-bars)
 - [Hide rows and/or columns](https://github.com/ragardner/tksheet/wiki/Version-7#example-header-dropdown-boxes-and-row-filtering)
 - Left `"w"`, Center `"center"` or Right `"e"` text alignment for any cell/row/column
 
