@@ -3739,11 +3739,11 @@ class MainTable(tk.Canvas):
         if tw > w:
             w = tw
         if h < min_rh:
-            h = int(min_rh)
+            h = min_rh
         elif h > self.PAR.ops.max_row_height:
             h = int(self.PAR.ops.max_row_height)
         if w < min_column_width:
-            w = int(min_column_width)
+            w = min_column_width
         elif w > self.PAR.ops.max_column_width:
             w = int(self.PAR.ops.max_column_width)
         cell_needs_resize_w = False
@@ -5938,7 +5938,7 @@ class MainTable(tk.Canvas):
         rows: bool = True,
         columns: bool = True,
         reverse: bool = False,
-    ) -> Generator[int]:
+    ) -> tuple[tuple[int, SelectionBox]]:
         """
         Most recent selection box should be last
         """
@@ -6391,31 +6391,55 @@ class MainTable(tk.Canvas):
     def recreate_all_selection_boxes(self) -> None:
         if not self.selected:
             return
+        modified = False
         for item, box in self.get_selection_items():
             r1, c1, r2, c2 = box.coords
+            if not modified:
+                modified = (
+                    r1 >= len(self.row_positions) - 1
+                    or c1 >= len(self.col_positions) - 1
+                    or r2 > len(self.row_positions) - 1
+                    or c2 > len(self.col_positions) - 1
+                )
             if r1 >= len(self.row_positions) - 1:
                 if len(self.row_positions) > 1:
                     r1 = len(self.row_positions) - 2
                 else:
-                    r1 = len(self.row_positions) - 1
+                    r1 = 0
             if c1 >= len(self.col_positions) - 1:
                 if len(self.col_positions) > 1:
                     c1 = len(self.col_positions) - 2
                 else:
-                    c1 = len(self.col_positions) - 1
+                    c1 = 0
             if r2 > len(self.row_positions) - 1:
                 r2 = len(self.row_positions) - 1
             if c2 > len(self.col_positions) - 1:
                 c2 = len(self.col_positions) - 1
-            self.recreate_selection_box(r1, c1, r2, c2, item)
+            self.recreate_selection_box(r1, c1, r2, c2, item, run_binding=False)
+
         if self.selected:
             r = self.selected.row
             c = self.selected.column
             if r < len(self.row_positions) - 1 and c < len(self.col_positions) - 1:
-                self.set_currently_selected(r, c, item=self.selected.fill_iid)
+                self.set_currently_selected(
+                    r,
+                    c,
+                    item=self.selected.fill_iid,
+                    run_binding=False,
+                )
             else:
                 box = self.selection_boxes[self.selected.fill_iid]
-                self.set_currently_selected(box.coords.from_r, box.coords.from_c, item=box.fill_iid)
+                self.set_currently_selected(
+                    box.coords.from_r,
+                    box.coords.from_c,
+                    item=box.fill_iid,
+                    run_binding=False,
+                )
+        if modified:
+            self.PAR.emit_event(
+                "<<SheetSelect>>",
+                data=self.get_select_event(self.being_drawn_item),
+            )
 
     def get_redraw_selections(self, startr: int, endr: int, startc: int, endc: int) -> dict:
         d = defaultdict(set)

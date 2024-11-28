@@ -160,21 +160,30 @@ class TopLeftRectangle(tk.Canvas):
         self,
         new_w: None | int = None,
         new_h: None | int = None,
-        recreate_selection_boxes: bool = True,
     ) -> None:
         try:
-            if isinstance(new_h, int):
+            if isinstance(new_h, int) and isinstance(new_w, int):
                 h = new_h
-                self.config(height=h)
-            else:
+                w = new_w
+                self.config(width=w, height=h)
+
+            elif isinstance(new_w, int) and new_h is None:
                 h = self.CH.current_height
-            if isinstance(new_w, int):
                 w = new_w
                 self.config(width=w)
-            else:
+
+            elif isinstance(new_h, int) and new_w is None:
+                h = new_h
                 w = self.RI.current_width
+                self.config(height=h)
+
+            else:
+                h = self.CH.current_height
+                w = self.RI.current_width
+
         except Exception:
             return
+
         self.coords(self.rw_box, 0, h - 5, w, h)
         self.coords(self.rh_box, w - 5, 0, w, h)
         self.coords(
@@ -187,8 +196,6 @@ class TopLeftRectangle(tk.Canvas):
             h - 7,
         )
         self.coords(self.select_all_box, 0, 0, w - 5, h - 5)
-        if recreate_selection_boxes:
-            self.MT.recreate_all_selection_boxes()
 
     def mouse_motion(self, event: object = None) -> None:
         self.MT.reset_mouse_motion_creations()

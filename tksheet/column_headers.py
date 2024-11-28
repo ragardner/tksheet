@@ -61,7 +61,7 @@ class ColumnHeaders(tk.Canvas):
             highlightthickness=0,
         )
         self.PAR = kwargs["parent"]
-        self.current_height = None  # is set from within MainTable() __init__ or from Sheet parameters
+        self.current_height = None
         self.MT = None  # is set from within MainTable() __init__
         self.RI = None  # is set from within MainTable() __init__
         self.TL = None  # is set from within TopLeftRectangle() __init__
@@ -190,14 +190,17 @@ class ColumnHeaders(tk.Canvas):
             self.lines_start_at -= 1
         self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=False, redraw_table=False)
 
-    def set_height(self, new_height: int, set_TL: bool = False) -> None:
-        self.current_height = new_height
+    def set_height(self, new_height: int, set_TL: bool = False) -> bool:
         try:
             self.config(height=new_height)
         except Exception:
-            return
+            return False
         if set_TL and self.TL is not None:
             self.TL.set_dimensions(new_h=new_height)
+        if expanded := isinstance(self.current_height, int) and new_height > self.current_height:
+            self.MT.recreate_all_selection_boxes()
+        self.current_height = new_height
+        return expanded
 
     def rc(self, event: object) -> None:
         self.mouseclick_outside_editor_or_dropdown_all_canvases(inside=True)
@@ -587,8 +590,8 @@ class ColumnHeaders(tk.Canvas):
         try_binding(self.extra_b1_motion_func, event)
 
     def drag_height_resize(self, height: int) -> None:
-        self.set_height(height, set_TL=True)
-        self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=False, redraw_table=False)
+        if self.set_height(height, set_TL=True):
+            self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=False, redraw_table=False)
 
     def get_b1_motion_box(self, start_col: int, end_col: int) -> tuple[int, int, int, int, Literal["columns"]]:
         if end_col >= start_col:
@@ -1132,7 +1135,7 @@ class ColumnHeaders(tk.Canvas):
         if width is None:
             width = self.get_col_text_width(col=col, visible_only=visible_only)
         if width <= self.PAR.ops.min_column_width:
-            width = self.MT.min_column_width
+            width = self.PAR.ops.min_column_width
         elif width > self.PAR.ops.max_column_width:
             width = int(self.PAR.ops.max_column_width)
         if only_if_too_small and width <= self.MT.col_positions[col + 1] - self.MT.col_positions[col]:

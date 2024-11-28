@@ -74,6 +74,7 @@ class RowIndex(tk.Canvas):
         self.MT = None  # is set from within MainTable() __init__
         self.CH = None  # is set from within MainTable() __init__
         self.TL = None  # is set from within TopLeftRectangle() __init__
+        self.current_width = None
         self.popup_menu_loc = None
         self.extra_begin_edit_cell_func = None
         self.extra_end_edit_cell_func = None
@@ -177,13 +178,15 @@ class RowIndex(tk.Canvas):
             self.MT.saved_row_heights = {}
 
     def set_width(self, new_width: int, set_TL: bool = False, recreate_selection_boxes: bool = True) -> None:
-        self.current_width = new_width
         try:
             self.config(width=new_width)
         except Exception:
             return
         if set_TL:
-            self.TL.set_dimensions(new_w=new_width, recreate_selection_boxes=recreate_selection_boxes)
+            self.TL.set_dimensions(new_w=new_width)
+        if isinstance(self.current_width, int) and new_width > self.current_width and recreate_selection_boxes:
+            self.MT.recreate_all_selection_boxes()
+        self.current_width = new_width
 
     def rc(self, event: object) -> None:
         self.mouseclick_outside_editor_or_dropdown_all_canvases(inside=True)
