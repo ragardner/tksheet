@@ -5129,6 +5129,9 @@ class Sheet(tk.Frame):
     ) -> str:
         """
         Insert an item into the treeview
+
+        Returns:
+            str: new item iid
         """
         if not iid:
             i = 0
@@ -5187,7 +5190,12 @@ class Sheet(tk.Frame):
         include_text_column: bool = True,
     ) -> dict[str, int]:
         """
-        Insert multiple items into the treeview at once, under the same parent
+        Insert multiple items into the treeview at once, under the same parent.
+
+        Returns:
+            dict:
+            - Keys (str): iid
+            - Values (int): row numbers
         """
         to_insert = []
         pid = parent

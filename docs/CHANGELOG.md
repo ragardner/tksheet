@@ -1,3 +1,8 @@
+### Version 7.3.1
+#### Documentation:
+- `bulk_insert()`: wrong example
+- Docstrings: return values for `insert()`, `bulk_insert()`
+
 ### Version 7.3.0
 #### Changed:
 - `"end_edit_cell"` events for single cell edits e.g. for cell text editor, dropdown box and checkbox edits now have the value **prior** to the edit in the event under keys `cells.table`

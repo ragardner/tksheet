@@ -6061,16 +6061,17 @@ Notes:
 
 Example:
 ```python
-sheet.insert(
-    iid="top level",
-    text="Top level",
-    values=["cell A1", "cell B1"],
-)
-sheet.insert(
-    parent="top level",
-    iid="mid level",
-    text="Mid level",
-    values=["cell A2", "cell B2"],
+sheet.insert(iid="ID-1", text="ID-1", values=["ID 1 Value"])
+sheet.bulk_insert(
+    data=[
+        ["CID-1", "CID 1 Value"],
+        ["CID-2", "CID 2 Value"],
+    ],
+    parent="ID-1",
+    iid_column=0,
+    text_column=0,
+    include_iid_column=False,
+    include_text_column=False,
 )
 ```
 
