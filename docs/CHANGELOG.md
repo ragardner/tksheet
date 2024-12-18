@@ -1,4 +1,7 @@
 ### Version 7.3.1
+#### Changed:
+- `deselect()` also closes text editor / dropdown
+
 #### Documentation:
 - `bulk_insert()`: wrong example
 - Docstrings: return values for `insert()`, `bulk_insert()`

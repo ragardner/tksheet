@@ -4549,6 +4549,7 @@ deselect(
     redraw: bool = True,
 ) -> Sheet
 ```
+- Leave parameters as `None` to deselect everything.
 
 ___
 
@@ -4561,6 +4562,7 @@ deselect_any(
     redraw: bool = True,
 ) -> Sheet
 ```
+- Leave parameters as `None` to deselect everything.
 
 ---
 # **Row Heights and Column Widths**
