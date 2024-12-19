@@ -2160,9 +2160,10 @@ class RowIndex(tk.Canvas):
     def open_dropdown_window(self, r: int, event: object = None) -> None:
         self.hide_text_editor()
         kwargs = self.get_cell_kwargs(self.MT.datarn(r), key="dropdown")
-        if kwargs["state"] == "normal":
-            if not self.open_text_editor(event=event, r=r, dropdown=True):
-                return
+        if kwargs["state"] == "disabled":
+            return
+        if kwargs["state"] == "normal" and not self.open_text_editor(event=event, r=r, dropdown=True):
+            return
         win_h, anchor = self.get_dropdown_height_anchor(r)
         win_w = self.current_width + 1
         if anchor == "nw":

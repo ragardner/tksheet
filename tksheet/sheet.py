@@ -169,11 +169,11 @@ class Sheet(tk.Frame):
             13 if USER_OS == "darwin" else 11,
             "normal",
         ),
-        index_font: tuple[str, int, str] = FontTuple(
+        index_font: tuple[str, int, str] = FontTuple(  # currently has no effect
             "Calibri",
             13 if USER_OS == "darwin" else 11,
             "normal",
-        ),  # currently has no effect
+        ),
         popup_menu_font: tuple[str, int, str] = FontTuple(
             "Calibri",
             13 if USER_OS == "darwin" else 11,
@@ -198,6 +198,7 @@ class Sheet(tk.Frame):
         treeview_indent: str | int = "5",
         rounded_boxes: bool = True,
         alternate_color: str = "",
+        toplevel_dropdowns: bool = False,
         # colors
         outline_thickness: int = 0,
         outline_color: str = theme_light_blue["outline_color"],
@@ -323,7 +324,7 @@ class Sheet(tk.Frame):
         self.name = name
         self.last_event_data = EventDataDict()
         self.bound_events = DotDict({k: [] for k in emitted_events})
-        self.dropdown_class = Dropdown
+        self.dropdown_class = SheetDropdown
         self.after_redraw_id = None
         self.after_redraw_time_ms = after_redraw_time_ms
         self.named_span_id = 0
@@ -607,6 +608,46 @@ class Sheet(tk.Frame):
     # Bindings and Functionality
 
     def enable_bindings(self, *bindings: str) -> Sheet:
+        """
+        List of available bindings:
+        - "all"
+        - "single_select"
+        - "toggle_select"
+        - "drag_select"
+        - "select_all"
+        - "column_drag_and_drop" / "move_columns"
+        - "row_drag_and_drop" / "move_rows"
+        - "column_select"
+        - "row_select"
+        - "column_width_resize"
+        - "double_click_column_resize"
+        - "row_width_resize"
+        - "column_height_resize"
+        - "arrowkeys" # all arrowkeys including page up and down
+        - "up"
+        - "down"
+        - "left"
+        - "right"
+        - "prior" # page up
+        - "next" # page down
+        - "row_height_resize"
+        - "double_click_row_resize"
+        - "right_click_popup_menu"
+        - "rc_select"
+        - "rc_insert_column"
+        - "rc_delete_column"
+        - "rc_insert_row"
+        - "rc_delete_row"
+        - "ctrl_click_select" / "ctrl_select"
+        - "copy"
+        - "cut"
+        - "paste"
+        - "delete"
+        - "undo"
+        - "edit_cell"
+        - "edit_header"
+        - "edit_index"
+        """
         self.MT.enable_bindings(bindings)
         return self
 
@@ -2564,7 +2605,7 @@ class Sheet(tk.Frame):
         edit_data: bool = True,
         set_values: dict[tuple[int, int], object] = {},
         set_value: object = None,
-        state: str = "normal",
+        state: Literal["normal", "readonly", "disabled"] = "normal",
         redraw: bool = True,
         selection_function: Callable | None = None,
         modified_function: Callable | None = None,
@@ -2675,7 +2716,7 @@ class Sheet(tk.Frame):
         *key: CreateSpanTypes,
         edit_data: bool = True,
         checked: bool | None = None,
-        state: str = "normal",
+        state: Literal["normal", "disabled"] = "normal",
         redraw: bool = True,
         check_function: Callable | None = None,
         text: str = "",
@@ -7052,7 +7093,7 @@ class Sheet(tk.Frame):
         return self
 
 
-class Dropdown(Sheet):
+class SheetDropdown(Sheet):
     def __init__(
         self,
         parent: tk.Misc,

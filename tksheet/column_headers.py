@@ -2010,9 +2010,10 @@ class ColumnHeaders(tk.Canvas):
     def open_dropdown_window(self, c: int, event: object = None) -> None:
         self.hide_text_editor()
         kwargs = self.get_cell_kwargs(self.MT.datacn(c), key="dropdown")
-        if kwargs["state"] == "normal":
-            if not self.open_text_editor(event=event, c=c, dropdown=True):
-                return
+        if kwargs["state"] == "disabled":
+            return
+        if kwargs["state"] == "normal" and not self.open_text_editor(event=event, c=c, dropdown=True):
+            return
         win_h, anchor = self.get_dropdown_height_anchor(c)
         win_w = self.MT.col_positions[c + 1] - self.MT.col_positions[c] + 1
         ypos = self.current_height - 1

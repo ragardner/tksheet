@@ -51,6 +51,7 @@ from .formatters import (
 from .functions import (
     add_to_displayed,
     b_index,
+    canvas_to_screen,
     cell_right_within_box,
     consecutive_ranges,
     diff_gen,
@@ -5701,7 +5702,7 @@ class MainTable(tk.Canvas):
                                 rtopgridln,
                                 crightgridln,
                                 self.row_positions[r + 1],
-                                fill=fill,
+                                fill=fill if kwargs["state"] != "disabled" else self.PAR.ops.table_grid_fg,
                                 outline=fill,
                                 tag=f"dd_{r}_{c}",
                                 draw_outline=not dd_drawn,
@@ -5719,7 +5720,7 @@ class MainTable(tk.Canvas):
                                 rtopgridln,
                                 crightgridln,
                                 self.row_positions[r + 1],
-                                fill=fill,
+                                fill=fill if kwargs["state"] != "disabled" else self.PAR.ops.table_grid_fg,
                                 outline=fill,
                                 tag=f"dd_{r}_{c}",
                                 draw_outline=not dd_drawn,
@@ -5738,7 +5739,7 @@ class MainTable(tk.Canvas):
                                 rtopgridln,
                                 crightgridln,
                                 self.row_positions[r + 1],
-                                fill=fill,
+                                fill=fill if kwargs["state"] != "disabled" else self.PAR.ops.table_grid_fg,
                                 outline=fill,
                                 tag=f"dd_{r}_{c}",
                                 draw_outline=not dd_drawn,
@@ -6752,20 +6753,23 @@ class MainTable(tk.Canvas):
                 if self.dropdown.open and self.dropdown.get_coords() == (r, c):
                     text_editor_h = self.text_editor.window.winfo_height()
                     win_h, anchor = self.get_dropdown_height_anchor(r, c, text_editor_h)
-                    if anchor == "nw":
-                        self.coords(
-                            self.dropdown.canvas_id,
-                            self.col_positions[c],
-                            self.row_positions[r] + text_editor_h - 1,
-                        )
-                        self.itemconfig(self.dropdown.canvas_id, anchor=anchor, height=win_h)
-                    elif anchor == "sw":
-                        self.coords(
-                            self.dropdown.canvas_id,
-                            self.col_positions[c],
-                            self.row_positions[r],
-                        )
-                        self.itemconfig(self.dropdown.canvas_id, anchor=anchor, height=win_h)
+                    if self.PAR.ops.toplevel_dropdowns:
+
+                    else:
+                        if anchor == "nw":
+                            self.coords(
+                                self.dropdown.canvas_id,
+                                self.col_positions[c],
+                                self.row_positions[r] + text_editor_h - 1,
+                            )
+                            self.itemconfig(self.dropdown.canvas_id, anchor=anchor, height=win_h)
+                        elif anchor == "sw":
+                            self.coords(
+                                self.dropdown.canvas_id,
+                                self.col_positions[c],
+                                self.row_positions[r],
+                            )
+                            self.itemconfig(self.dropdown.canvas_id, anchor=anchor, height=win_h)
 
     def refresh_open_window_positions(self, zoom: Literal["in", "out"]):
         if self.text_editor.open:
@@ -6996,8 +7000,13 @@ class MainTable(tk.Canvas):
                 break
         if win_h > 500:
             win_h = 500
-        space_bot = self.get_space_bot(r, text_editor_h)
-        space_top = int(self.row_positions[r])
+        if self.PAR.ops.toplevel_dropdowns:
+            _, screen_y = canvas_to_screen(self, 0, self.row_positions[r + 1])
+            space_bot = self.winfo_toplevel().winfo_screenheight() - screen_y
+            _, space_top = canvas_to_screen(self, 0, self.row_positions[r])
+        else:
+            space_bot = self.get_space_bot(r, text_editor_h)
+            space_top = int(self.row_positions[r])
         anchor = "nw"
         win_h2 = int(win_h)
         if win_h > space_bot:
@@ -7034,9 +7043,10 @@ class MainTable(tk.Canvas):
         datarn = self.datarn(r)
         datacn = self.datacn(c)
         kwargs = self.get_cell_kwargs(datarn, datacn, key="dropdown")
-        if kwargs["state"] == "normal":
-            if not self.open_text_editor(event=event, r=r, c=c, dropdown=True):
-                return
+        if kwargs["state"] == "disabled":
+            return
+        if kwargs["state"] == "normal" and not self.open_text_editor(event=event, r=r, c=c, dropdown=True):
+            return
         win_h, anchor = self.get_dropdown_height_anchor(r, c)
         win_w = self.col_positions[c + 1] - self.col_positions[c] + 1
         if anchor == "nw":
@@ -7048,22 +7058,17 @@ class MainTable(tk.Canvas):
         else:
             ypos = self.row_positions[r]
         reset_kwargs = {
-            "r": r,
-            "c": c,
-            "width": win_w,
-            "height": win_h,
-            "font": self.PAR.ops.table_font,
-            "ops": self.PAR.ops,
-            "outline_color": self.get_selected_box_bg_fg(type_="cells")[1],
-            "align": self.get_cell_align(r, c),
-            "values": kwargs["values"],
-        }
-        if self.dropdown.window:
-            self.dropdown.window.reset(**reset_kwargs)
-            self.coords(self.dropdown.canvas_id, self.col_positions[c], ypos)
-            self.itemconfig(self.dropdown.canvas_id, state="normal", anchor=anchor)
-            self.dropdown.window.tkraise()
-        else:
+                "r": r,
+                "c": c,
+                "width": win_w,
+                "height": win_h,
+                "font": self.PAR.ops.table_font,
+                "ops": self.PAR.ops,
+                "outline_color": self.get_selected_box_bg_fg(type_="cells")[1],
+                "align": self.get_cell_align(r, c),
+                "values": kwargs["values"],
+            }
+        if self.PAR.ops.toplevel_dropdowns:
             self.dropdown.window = self.PAR.dropdown_class(
                 self.winfo_toplevel(),
                 **reset_kwargs,
@@ -7077,6 +7082,27 @@ class MainTable(tk.Canvas):
                 window=self.dropdown.window,
                 anchor=anchor,
             )
+        else:
+            if self.dropdown.window:
+                self.dropdown.window.reset(**reset_kwargs)
+                self.coords(self.dropdown.canvas_id, self.col_positions[c], ypos)
+                self.itemconfig(self.dropdown.canvas_id, state="normal", anchor=anchor)
+                self.dropdown.window.tkraise()
+            else:
+                self.dropdown.window = self.PAR.dropdown_class(
+                    self.winfo_toplevel(),
+                    **reset_kwargs,
+                    close_dropdown_window=self.close_dropdown_window,
+                    search_function=kwargs["search_function"],
+                    arrowkey_RIGHT=self.arrowkey_RIGHT,
+                    arrowkey_LEFT=self.arrowkey_LEFT,
+                )
+                self.dropdown.canvas_id = self.create_window(
+                    (self.col_positions[c], ypos),
+                    window=self.dropdown.window,
+                    anchor=anchor,
+                )
+
         if kwargs["state"] == "normal":
             self.text_editor.tktext.bind(
                 "<<TextModified>>",
@@ -7109,6 +7135,7 @@ class MainTable(tk.Canvas):
             self.dropdown.window.focus_set()
             redraw = True
         self.dropdown.open = True
+        self.lift(self.dropdown.canvas_id)
         if redraw:
             self.main_table_redraw_grid_and_text(redraw_header=False, redraw_row_index=False)
 
@@ -7191,7 +7218,9 @@ class MainTable(tk.Canvas):
         self.CH.hide_text_editor_and_dropdown(redraw=False)
 
     def hide_dropdown_window(self) -> None:
-        if self.dropdown.open:
+        if self.PAR.ops.toplevel_dropdowns:
+            self.dropdown.canvas_id.destroy()
+        elif self.dropdown.open:
             self.dropdown.window.unbind("<FocusOut>")
             self.itemconfig(self.dropdown.canvas_id, state="hidden")
             self.dropdown.open = False

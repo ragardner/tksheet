@@ -33,6 +33,22 @@ from .other_classes import (
 unpickle_obj = pickle.loads
 
 
+def canvas_to_screen(canvas, x, y):
+    # Get the position of the Tkinter window on the screen
+    window_x = canvas.winfo_rootx()
+    window_y = canvas.winfo_rooty()
+
+    # Get the position of the canvas within the window
+    canvas_x = canvas.winfo_x()
+    canvas_y = canvas.winfo_y()
+
+    # Calculate the screen coordinates by adding offsets
+    screen_x = window_x + canvas_x + x
+    screen_y = window_y + canvas_y + y
+
+    return screen_x, screen_y
+
+
 def get_csv_str_dialect(s: str, delimiters: str) -> csv.Dialect:
     if len(s) > 6000:
         try:
