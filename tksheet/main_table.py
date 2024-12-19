@@ -1936,7 +1936,7 @@ class MainTable(tk.Canvas):
             return
         curr_box = self.selected.fill_iid
         if r == "all" or (r is None and c is None and cell is None):
-            self.hide_text_editor_and_dropdown(redraw=False)
+            self.hide_dropdown_editor_all_canvases()
             for item, box in self.get_selection_items():
                 self.hide_selection_box(item)
         elif r in ("allrows", "allcols"):
@@ -1947,7 +1947,7 @@ class MainTable(tk.Canvas):
             ):
                 self.hide_selection_box(item)
                 if item == curr_box:
-                    self.hide_text_editor_and_dropdown(redraw=False)
+                    self.hide_dropdown_editor_all_canvases()
         elif isinstance(r, int) and c is None and cell is None:
             for item, box in self.get_selection_items(columns=False, cells=False):
                 r1, c1, r2, c2 = box.coords
@@ -1956,7 +1956,7 @@ class MainTable(tk.Canvas):
                     to_sel = self.selected.row
                     self.hide_selection_box(item)
                     if item == curr_box:
-                        self.hide_text_editor_and_dropdown(redraw=False)
+                        self.hide_dropdown_editor_all_canvases()
                     if r2 - r1 != 1:
                         if r == r1:
                             self.create_selection_box(
@@ -2001,7 +2001,7 @@ class MainTable(tk.Canvas):
                     to_sel = self.selected.column
                     self.hide_selection_box(item)
                     if item == curr_box:
-                        self.hide_text_editor_and_dropdown(redraw=False)
+                        self.hide_dropdown_editor_all_canvases()
                     if c2 - c1 != 1:
                         if c == c1:
                             self.create_selection_box(
@@ -2080,7 +2080,7 @@ class MainTable(tk.Canvas):
                         ):
                             hidden = self.hide_selection_box(item)
                             if item == curr_box:
-                                self.hide_text_editor_and_dropdown(redraw=False)
+                                self.hide_dropdown_editor_all_canvases()
                             break
         elif is_iterable(rows):
             rows = tuple(consecutive_ranges(sorted(rows)))
@@ -2090,7 +2090,7 @@ class MainTable(tk.Canvas):
                     if (rows_end >= r1 and rows_end <= r2) or (rows_st >= r1 and rows_st < r2):
                         self.hide_selection_box(item)
                         if item == curr_box:
-                            self.hide_text_editor_and_dropdown(redraw=False)
+                            self.hide_dropdown_editor_all_canvases()
                         break
         elif is_iterable(columns):
             columns = tuple(consecutive_ranges(sorted(columns)))
@@ -2100,7 +2100,7 @@ class MainTable(tk.Canvas):
                     if (cols_end >= c1 and cols_end <= c2) or (cols_st >= c1 and cols_st < c2):
                         self.hide_selection_box(item)
                         if item == curr_box:
-                            self.hide_text_editor_and_dropdown(redraw=False)
+                            self.hide_dropdown_editor_all_canvases()
                         break
         else:
             self.deselect()
