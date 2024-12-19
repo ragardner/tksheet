@@ -1844,11 +1844,8 @@ class MainTable(tk.Canvas):
             if redraw:
                 self.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
             if run_binding_func:
-                if self.select_all_binding_func:
-                    self.select_all_binding_func(
-                        self.get_select_event(being_drawn_item=self.being_drawn_item),
-                    )
                 event_data = self.get_select_event(self.being_drawn_item)
+                try_binding(self.select_all_binding_func, event_data)
                 self.PAR.emit_event("<<SheetSelect>>", data=event_data)
                 self.PAR.emit_event("<<SelectAll>>", data=event_data)
 
