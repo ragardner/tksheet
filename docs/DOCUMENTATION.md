@@ -4424,6 +4424,35 @@ select_all(redraw: bool = True, run_binding_func: bool = True) -> Sheet
 
 ___
 
+Deselect a specific cell, row or column.
+
+```python
+deselect(
+    row: int | None | Literal["all"] = None,
+    column: int | None = None,
+    cell: tuple | None = None,
+    redraw: bool = True,
+) -> Sheet
+```
+- Leave parameters as `None`, or `row` as `"all"` to deselect everything.
+- Can also close text editors and open dropdowns.
+
+___
+
+Deselect any cell, row or column selection box conflicting with `rows` and/or `columns`.
+
+```python
+deselect_any(
+    rows: Iterator[int] | int | None,
+    columns: Iterator[int] | int | None,
+    redraw: bool = True,
+) -> Sheet
+```
+- Leave parameters as `None` to deselect everything.
+- Can also close text editors and open dropdowns.
+
+___
+
 ```python
 add_cell_selection(
     row: int,
@@ -4536,33 +4565,6 @@ ___
 ```python
 recreate_all_selection_boxes() -> Sheet
 ```
-
-___
-
-Deselect a specific cell, row or column.
-
-```python
-deselect(
-    row: int | None | str = None,
-    column: int | None = None,
-    cell: tuple | None = None,
-    redraw: bool = True,
-) -> Sheet
-```
-- Leave parameters as `None` to deselect everything.
-
-___
-
-Deselect any cell, row or column selection box conflicting with `rows` and/or `columns`.
-
-```python
-deselect_any(
-    rows: Iterator[int] | int | None,
-    columns: Iterator[int] | int | None,
-    redraw: bool = True,
-) -> Sheet
-```
-- Leave parameters as `None` to deselect everything.
 
 ---
 # **Row Heights and Column Widths**
