@@ -4950,7 +4950,7 @@ class Sheet(tk.Frame):
                 if not iid:
                     continue
                 tally_of_ids[iid] += 1
-                if tally_of_ids[iid] > 0:
+                if tally_of_ids[iid]:
                     x = 1
                     while iid in tally_of_ids:
                         new = f"{row[iid_column]}_DUPLICATED_{x}"
