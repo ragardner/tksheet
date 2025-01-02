@@ -103,6 +103,7 @@ def new_sheet_options() -> DotDict:
             "select_all_bindings": [
                 f"<{ctrl_key}-a>",
                 f"<{ctrl_key}-A>",
+                f"<{ctrl_key}-Shift-space>",
             ],
             "tab_bindings": [
                 "<Tab>",
