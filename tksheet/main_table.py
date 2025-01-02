@@ -405,7 +405,9 @@ class MainTable(tk.Canvas):
             ("<Control-MouseWheel>", self.ctrl_mousewheel),
             ("<Control-plus>", self.zoom_in),
             ("<Control-equal>", self.zoom_in),
+            ("<Meta-Command-equal>", self.zoom_in),
             ("<Control-minus>", self.zoom_out),
+            ("<Meta-Command-minus>", self.zoom_out),
         )
         mt_ri_canvas_linux_bindings = {
             ("<Button-4>", self.mousewheel),
