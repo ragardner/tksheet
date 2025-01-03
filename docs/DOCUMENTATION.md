@@ -2293,6 +2293,15 @@ data = self.sheet.get_data(
 )
 ```
 
+#### **Get a single cells data**
+
+This is a higher performance method to get a single cells data which may be useful for example when performing a very large number of data retrievals in a loop.
+
+```python
+get_cell_data(r: int, c: int, get_displayed: bool = False) -> object
+```
+- `get_displayed` (`bool`) when `True` retrieves the value that is displayed to the user in the sheet, not the underlying data.
+
 ___
 
 #### **Generate sheet rows one at a time**
