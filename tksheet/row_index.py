@@ -5,7 +5,6 @@ from collections import defaultdict
 from collections.abc import (
     Generator,
     Hashable,
-    Iterator,
     Sequence,
 )
 from functools import (
@@ -35,13 +34,15 @@ from .formatters import (
 )
 from .functions import (
     consecutive_chunks,
+    consecutive_ranges,
     event_dict,
     get_n2a,
+    int_x_tuple,
     is_contiguous,
     new_tk_event,
     num2alpha,
-    stored_event_dict,
     rounded_box_coords,
+    stored_event_dict,
     try_binding,
 )
 from .other_classes import (
@@ -53,6 +54,9 @@ from .other_classes import (
 )
 from .text_editor import (
     TextEditor,
+)
+from .types import (
+    AnyIter,
 )
 from .vars import (
     rc_binding,
@@ -944,20 +948,31 @@ class RowIndex(tk.Canvas):
 
     def select_row(
         self,
-        r: int,
+        r: int | AnyIter[int],
         redraw: bool = False,
         run_binding_func: bool = True,
         ext: bool = False,
     ) -> int:
         boxes_to_hide = tuple(self.MT.selection_boxes)
-        fill_iid = self.MT.create_selection_box(r, 0, r + 1, len(self.MT.col_positions) - 1, "rows", ext=ext)
+        fill_iids = [
+            self.MT.create_selection_box(
+                start,
+                0,
+                end,
+                len(self.MT.col_positions) - 1,
+                "rows",
+                set_current=True,
+                ext=ext,
+            )
+            for start, end in consecutive_ranges(int_x_tuple(r))
+        ]
         for iid in boxes_to_hide:
             self.MT.hide_selection_box(iid)
         if redraw:
             self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
         if run_binding_func:
             self.MT.run_selection_binding("rows")
-        return fill_iid
+        return fill_iids[0] if len(fill_iids) == 1 else fill_iids
 
     def add_selection(
         self,
@@ -1113,7 +1128,7 @@ class RowIndex(tk.Canvas):
 
     def get_index_text_width(
         self,
-        only_rows: Iterator[int] | None = None,
+        only_rows: AnyIter[int] | None = None,
     ) -> int:
         self.fix_index()
         w = self.PAR.ops.default_row_index_width

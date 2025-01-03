@@ -12,6 +12,8 @@ from collections import deque
 from collections.abc import (
     Callable,
     Generator,
+    Hashable,
+    Iterable,
     Iterator,
     Sequence,
 )
@@ -29,6 +31,9 @@ from .other_classes import (
     Highlight,
     Loc,
     Span,
+)
+from .types import (
+    AnyIter,
 )
 
 unpickle_obj = pickle.loads
@@ -295,13 +300,19 @@ def is_iterable(o: object) -> bool:
         return False
 
 
-def int_x_iter(i: Iterator[int] | int) -> Iterator[int]:
+def int_x_iter(i: AnyIter[int] | int) -> AnyIter[int]:
     if isinstance(i, int):
         return (i,)
     return i
 
 
-def unpack(t: tuple[object] | tuple[Iterator[object]]) -> tuple[object]:
+def int_x_tuple(i: AnyIter[int] | int) -> tuple[int]:
+    if isinstance(i, int):
+        return (i,)
+    return tuple(i)
+
+
+def unpack(t: tuple[object] | tuple[AnyIter[object]]) -> tuple[object]:
     if not len(t):
         return t
     if is_iterable(t[0]) and len(t) == 1:
@@ -427,7 +438,7 @@ def consecutive_ranges(seq: Sequence[int]) -> Generator[tuple[int, int]]:
             yield seq[start], seq[-1] + 1
 
 
-def is_contiguous(iterable: Iterator[int]) -> bool:
+def is_contiguous(iterable: Iterable[int]) -> bool:
     itr = iter(iterable)
     prev = next(itr)
     return all(i == (prev := prev + 1) for i in itr)
@@ -500,7 +511,7 @@ def cell_right_within_box(
 
 
 def get_last(
-    it: Iterator,
+    it: AnyIter[object],
 ) -> object:
     if hasattr(it, "__reversed__"):
         try:
@@ -522,7 +533,7 @@ def index_exists(seq: Sequence[object], index: int) -> bool:
         return False
 
 
-def add_to_displayed(displayed: list[int], to_add: Iterator[int]) -> list[int]:
+def add_to_displayed(displayed: list[int], to_add: Iterable[int]) -> list[int]:
     # assumes to_add is sorted in reverse
     for i in reversed(to_add):
         ins = bisect_left(displayed, i)
@@ -704,7 +715,7 @@ def diff_gen(seq: list[float]) -> Generator[int]:
     )
 
 
-def zip_fill_2nd_value(x: Iterator, o: object) -> Generator[object, object]:
+def zip_fill_2nd_value(x: AnyIter[object], o: object) -> Generator[object, object]:
     return zip(x, repeat(o))
 
 
@@ -1233,13 +1244,13 @@ def span_froms(
     return from_r, from_c
 
 
-def del_named_span_options(options: dict, itr: Iterator, type_: str) -> None:
+def del_named_span_options(options: dict, itr: AnyIter[Hashable], type_: str) -> None:
     for k in itr:
         if k in options and type_ in options[k]:
             del options[k][type_]
 
 
-def del_named_span_options_nested(options: dict, itr1: Iterator, itr2: Iterator, type_: str) -> None:
+def del_named_span_options_nested(options: dict, itr1: AnyIter[Hashable], itr2: AnyIter[Hashable], type_: str) -> None:
     for k1 in itr1:
         for k2 in itr2:
             k = (k1, k2)
@@ -1320,7 +1331,7 @@ def set_align(
 def del_from_options(
     options: dict,
     key: str,
-    coords: int | Iterator | None = None,
+    coords: int | AnyIter[int | tuple[int, int]] | None = None,
 ) -> dict:
     if isinstance(coords, int):
         if coords in options and key in options[coords]:

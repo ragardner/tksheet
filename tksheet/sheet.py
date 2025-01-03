@@ -83,6 +83,7 @@ from .themes import (
 )
 from .top_left_rectangle import TopLeftRectangle
 from .types import (
+    AnyIter,
     CreateSpanTypes,
 )
 from .vars import (
@@ -544,7 +545,7 @@ class Sheet(tk.Frame):
     def set_header_data(
         self,
         value: object,
-        c: int | None | Iterator[int] = None,
+        c: int | None | AnyIter[int] = None,
         redraw: bool = True,
     ) -> Sheet:
         if c is None:
@@ -580,7 +581,7 @@ class Sheet(tk.Frame):
     def set_index_data(
         self,
         value: object,
-        r: int | None | Iterator[int] = None,
+        r: int | None | AnyIter[int] = None,
         redraw: bool = True,
     ) -> Sheet:
         if r is None:
@@ -2305,7 +2306,7 @@ class Sheet(tk.Frame):
 
     def del_rows(
         self,
-        rows: int | Iterator[int],
+        rows: int | AnyIter[int],
         data_indexes: bool = True,
         undo: bool = False,
         emit_event: bool = False,
@@ -2347,7 +2348,7 @@ class Sheet(tk.Frame):
 
     def del_columns(
         self,
-        columns: int | Iterator[int],
+        columns: int | AnyIter[int],
         data_indexes: bool = True,
         undo: bool = False,
         emit_event: bool = False,
@@ -3463,8 +3464,8 @@ class Sheet(tk.Frame):
 
     def deselect_any(
         self,
-        rows: Iterator[int] | int | None,
-        columns: Iterator[int] | int | None,
+        rows: AnyIter[int] | int | None,
+        columns: AnyIter[int] | int | None,
         redraw: bool = True,
     ) -> Sheet:
         self.MT.deselect_any(rows=rows, columns=columns, redraw=False)
@@ -3622,7 +3623,7 @@ class Sheet(tk.Frame):
 
     def set_column_widths(
         self,
-        column_widths: Iterator[float] | None = None,
+        column_widths: AnyIter[float] | None = None,
         canvas_positions: bool = False,
         reset: bool = False,
     ) -> Sheet:
@@ -3637,7 +3638,7 @@ class Sheet(tk.Frame):
 
     def set_row_heights(
         self,
-        row_heights: Iterator[float] | None = None,
+        row_heights: AnyIter[float] | None = None,
         canvas_positions: bool = False,
         reset: bool = False,
     ) -> Sheet:
@@ -3684,7 +3685,7 @@ class Sheet(tk.Frame):
 
     delete_row_position = del_row_position
 
-    def del_row_positions(self, idxs: Iterator[int] | None = None) -> Sheet:
+    def del_row_positions(self, idxs: AnyIter[int] | None = None) -> Sheet:
         self.MT.del_row_positions(idxs=idxs)
         self.set_refresh_timer()
         return self
@@ -3695,7 +3696,7 @@ class Sheet(tk.Frame):
 
     delete_column_position = del_column_position
 
-    def del_column_positions(self, idxs: Iterator[int] | None = None) -> Sheet:
+    def del_column_positions(self, idxs: AnyIter[int] | None = None) -> Sheet:
         self.MT.del_col_positions(idxs=idxs)
         self.set_refresh_timer()
         return self
@@ -3968,7 +3969,7 @@ class Sheet(tk.Frame):
 
     def display_columns(
         self,
-        columns: None | Literal["all"] | Iterator[int] = None,
+        columns: None | Literal["all"] | AnyIter[int] = None,
         all_columns_displayed: None | bool = None,
         reset_col_positions: bool = True,
         redraw: bool = False,
@@ -3992,7 +3993,7 @@ class Sheet(tk.Frame):
 
     def hide_columns(
         self,
-        columns: int | set[int] | Iterator[int],
+        columns: int | set[int] | AnyIter[int],
         redraw: bool = True,
         deselect_all: bool = True,
         data_indexes: bool = False,
@@ -4036,7 +4037,7 @@ class Sheet(tk.Frame):
 
     def show_columns(
         self,
-        columns: int | Iterator[int],
+        columns: int | AnyIter[int],
         redraw: bool = True,
         deselect_all: bool = True,
     ) -> Sheet:
@@ -4102,7 +4103,7 @@ class Sheet(tk.Frame):
 
     def display_rows(
         self,
-        rows: None | Literal["all"] | Iterator[int] = None,
+        rows: None | Literal["all"] | AnyIter[int] = None,
         all_rows_displayed: None | bool = None,
         reset_row_positions: bool = True,
         redraw: bool = False,
@@ -4124,7 +4125,7 @@ class Sheet(tk.Frame):
 
     def hide_rows(
         self,
-        rows: int | set[int] | Iterator[int],
+        rows: int | set[int] | AnyIter[int],
         redraw: bool = True,
         deselect_all: bool = True,
         data_indexes: bool = False,
@@ -4170,7 +4171,7 @@ class Sheet(tk.Frame):
 
     def show_rows(
         self,
-        rows: int | Iterator[int],
+        rows: int | AnyIter[int],
         redraw: bool = True,
         deselect_all: bool = True,
     ) -> Sheet:
@@ -4790,7 +4791,7 @@ class Sheet(tk.Frame):
     def tag(
         self,
         *key: CreateSpanTypes,
-        tags: Iterator[str] | str = "",
+        tags: AnyIter[str] | str = "",
     ) -> Sheet:
         span = self.span_from_key(*key)
         rows, cols = self.ranges_from_span(span)
@@ -4835,7 +4836,7 @@ class Sheet(tk.Frame):
 
     def tag_rows(
         self,
-        rows: int | Iterator[int],
+        rows: int | AnyIter[int],
         *tags,
     ) -> Sheet:
         if isinstance(rows, int):
@@ -4848,7 +4849,7 @@ class Sheet(tk.Frame):
 
     def tag_columns(
         self,
-        columns: int | Iterator[int],
+        columns: int | AnyIter[int],
         *tags,
     ) -> Sheet:
         if isinstance(columns, int):
@@ -4862,8 +4863,8 @@ class Sheet(tk.Frame):
     def untag(
         self,
         cell: tuple[int, int] | None = None,
-        rows: int | Iterator[int] | None = None,
-        columns: int | Iterator[int] | None = None,
+        rows: int | AnyIter[int] | None = None,
+        columns: int | AnyIter[int] | None = None,
     ) -> Sheet:
         if isinstance(cell, tuple):
             for tagged in self.MT.tagged_cells.values():
@@ -4923,7 +4924,7 @@ class Sheet(tk.Frame):
         text_column: None | int | list[str] = None,
         push_ops: bool = False,
         row_heights: Sequence[int] | None | False = None,
-        open_ids: Iterator[str] | None = None,
+        open_ids: AnyIter[str] | None = None,
         safety: bool = True,
         ncols: int | None = None,
         lower: bool = False,
@@ -5032,7 +5033,7 @@ class Sheet(tk.Frame):
         """
         return self.RI.tree_open_ids
 
-    def tree_set_open(self, open_ids: Iterator[str]) -> Sheet:
+    def tree_set_open(self, open_ids: AnyIter[str]) -> Sheet:
         """
         Accepts set[str] of iids that are open in the treeview
         Closes everything else
@@ -5087,7 +5088,7 @@ class Sheet(tk.Frame):
             deselect_all=False,
         )
 
-    def _tree_close(self, items: Iterator[str]) -> list[int]:
+    def _tree_close(self, items: AnyIter[str]) -> list[int]:
         """
         Only meant for internal use
         """
@@ -5786,7 +5787,7 @@ class Sheet(tk.Frame):
         get_displayed: bool = False,
         get_index: bool = False,
         get_index_displayed: bool = True,
-        only_columns: int | Iterator[int] | None = None,
+        only_columns: int | AnyIter[int] | None = None,
     ) -> list[object]:
         if only_columns is not None:
             if isinstance(only_columns, int):
@@ -5812,7 +5813,7 @@ class Sheet(tk.Frame):
         get_displayed: bool = False,
         get_header: bool = False,
         get_header_displayed: bool = True,
-        only_rows: int | Iterator[int] | None = None,
+        only_rows: int | AnyIter[int] | None = None,
     ) -> list[object]:
         if only_rows is not None:
             if isinstance(only_rows, int):
@@ -5831,8 +5832,8 @@ class Sheet(tk.Frame):
         get_index: bool = False,
         get_header_displayed: bool = True,
         get_index_displayed: bool = True,
-        only_rows: Iterator[int] | int | None = None,
-        only_columns: Iterator[int] | int | None = None,
+        only_rows: AnyIter[int] | int | None = None,
+        only_columns: AnyIter[int] | int | None = None,
     ) -> list[object]:
         if only_rows is not None:
             if isinstance(only_rows, int):
@@ -5880,8 +5881,8 @@ class Sheet(tk.Frame):
         get_index: bool = False,
         get_index_displayed: bool = True,
         get_header_displayed: bool = True,
-        only_rows: int | Iterator[int] | None = None,
-        only_columns: int | Iterator[int] | None = None,
+        only_rows: int | AnyIter[int] | None = None,
+        only_columns: int | AnyIter[int] | None = None,
     ) -> Iterator[list[object]]:
         if only_rows is not None:
             if isinstance(only_rows, int):
@@ -6150,7 +6151,7 @@ class Sheet(tk.Frame):
 
     def highlight_rows(
         self,
-        rows: Iterator[int] | int,
+        rows: AnyIter[int] | int,
         bg: None | str = None,
         fg: None | str = None,
         highlight_index: bool = True,
@@ -6168,7 +6169,7 @@ class Sheet(tk.Frame):
 
     def highlight_columns(
         self,
-        columns: Iterator[int] | int,
+        columns: AnyIter[int] | int,
         bg: bool | None | str = False,
         fg: bool | None | str = False,
         highlight_header: bool = True,
@@ -6468,7 +6469,12 @@ class Sheet(tk.Frame):
     ) -> None:
         self.create_checkbox(r=r, c=c, **get_checkbox_kwargs(*args, **kwargs))
 
-    def checkbox_row(self, r: Iterator[int] | int | Literal["all"] = 0, *args, **kwargs) -> None:
+    def checkbox_row(
+        self,
+        r: AnyIter[int] | int | Literal["all"] = 0,
+        *args,
+        **kwargs,
+    ) -> None:
         kwargs = get_checkbox_kwargs(*args, **kwargs)
         d = get_checkbox_dict(**kwargs)
         if isinstance(r, str) and r.lower() == "all":
@@ -6490,7 +6496,7 @@ class Sheet(tk.Frame):
 
     def checkbox_column(
         self,
-        c: Iterator[int] | int | Literal["all"] = 0,
+        c: AnyIter[int] | int | Literal["all"] = 0,
         *args,
         **kwargs,
     ) -> None:
@@ -6513,7 +6519,12 @@ class Sheet(tk.Frame):
         for r in range(self.MT.total_data_rows()):
             self.MT.set_cell_data(r, c, v)
 
-    def create_header_checkbox(self, c: Iterator[int] | int | Literal["all"] = 0, *args, **kwargs) -> None:
+    def create_header_checkbox(
+        self,
+        c: AnyIter[int] | int | Literal["all"] = 0,
+        *args,
+        **kwargs,
+    ) -> None:
         kwargs = get_checkbox_kwargs(*args, **kwargs)
         d = get_checkbox_dict(**kwargs)
         if isinstance(c, str) and c.lower() == "all":
@@ -6531,7 +6542,12 @@ class Sheet(tk.Frame):
         add_to_options(self.CH.cell_options, c, "checkbox", d)
         self.CH.set_cell_data(c, v)
 
-    def create_index_checkbox(self, r: Iterator[int] | int | Literal["all"] = 0, *args, **kwargs) -> None:
+    def create_index_checkbox(
+        self,
+        r: AnyIter[int] | int | Literal["all"] = 0,
+        *args,
+        **kwargs,
+    ) -> None:
         kwargs = get_checkbox_kwargs(*args, **kwargs)
         d = get_checkbox_dict(**kwargs)
         if isinstance(r, str) and r.lower() == "all":
@@ -6576,7 +6592,10 @@ class Sheet(tk.Frame):
     ) -> None:
         self.delete_checkbox(r, c)
 
-    def delete_row_checkbox(self, r: Iterator[int] | int | Literal["all"] = 0) -> None:
+    def delete_row_checkbox(
+        self,
+        r: AnyIter[int] | int | Literal["all"] = 0,
+    ) -> None:
         if isinstance(r, str) and r.lower() == "all":
             for r_ in self.MT.row_options:
                 self.del_table_row_options_checkbox(r_)
@@ -6586,7 +6605,10 @@ class Sheet(tk.Frame):
             for r_ in r:
                 self.del_table_row_options_checkbox(r_)
 
-    def delete_column_checkbox(self, c: Iterator[int] | int | Literal["all"] = 0) -> None:
+    def delete_column_checkbox(
+        self,
+        c: AnyIter[int] | int | Literal["all"] = 0,
+    ) -> None:
         if isinstance(c, str) and c.lower() == "all":
             for c_ in self.MT.col_options:
                 self.del_table_column_options_checkbox(c_)
@@ -6596,7 +6618,10 @@ class Sheet(tk.Frame):
             for c_ in c:
                 self.del_table_column_options_checkbox(c_)
 
-    def delete_header_checkbox(self, c: Iterator[int] | int | Literal["all"] = 0) -> None:
+    def delete_header_checkbox(
+        self,
+        c: AnyIter[int] | int | Literal["all"] = 0,
+    ) -> None:
         if isinstance(c, str) and c.lower() == "all":
             for c_ in self.CH.cell_options:
                 if "checkbox" in self.CH.cell_options[c_]:
@@ -6607,7 +6632,10 @@ class Sheet(tk.Frame):
             for c_ in c:
                 self.del_header_cell_options_checkbox(c_)
 
-    def delete_index_checkbox(self, r: Iterator[int] | int | Literal["all"] = 0) -> None:
+    def delete_index_checkbox(
+        self,
+        r: AnyIter[int] | int | Literal["all"] = 0,
+    ) -> None:
         if isinstance(r, str) and r.lower() == "all":
             for r_ in self.RI.cell_options:
                 if "checkbox" in self.RI.cell_options[r_]:
@@ -6696,7 +6724,7 @@ class Sheet(tk.Frame):
 
     def dropdown_row(
         self,
-        r: Iterator[int] | int | Literal["all"] = 0,
+        r: AnyIter[int] | int | Literal["all"] = 0,
         *args,
         **kwargs,
     ) -> Sheet:
@@ -6721,7 +6749,7 @@ class Sheet(tk.Frame):
 
     def dropdown_column(
         self,
-        c: Iterator[int] | int | Literal["all"] = 0,
+        c: AnyIter[int] | int | Literal["all"] = 0,
         *args,
         **kwargs,
     ) -> Sheet:
@@ -6746,7 +6774,7 @@ class Sheet(tk.Frame):
 
     def create_header_dropdown(
         self,
-        c: Iterator[int] | int | Literal["all"] = 0,
+        c: AnyIter[int] | int | Literal["all"] = 0,
         *args,
         **kwargs,
     ) -> Sheet:
@@ -6770,7 +6798,7 @@ class Sheet(tk.Frame):
 
     def create_index_dropdown(
         self,
-        r: Iterator[int] | int | Literal["all"] = 0,
+        r: AnyIter[int] | int | Literal["all"] = 0,
         *args,
         **kwargs,
     ) -> Sheet:
@@ -6821,7 +6849,7 @@ class Sheet(tk.Frame):
 
     def delete_row_dropdown(
         self,
-        r: Iterator[int] | int | Literal["all"] = "all",
+        r: AnyIter[int] | int | Literal["all"] = "all",
     ) -> None:
         if isinstance(r, str) and r.lower() == "all":
             for r_ in self.MT.row_options:
@@ -6835,7 +6863,7 @@ class Sheet(tk.Frame):
 
     def delete_column_dropdown(
         self,
-        c: Iterator[int] | int | Literal["all"] = "all",
+        c: AnyIter[int] | int | Literal["all"] = "all",
     ) -> None:
         if isinstance(c, str) and c.lower() == "all":
             for c_ in self.MT.col_options:
@@ -6847,7 +6875,7 @@ class Sheet(tk.Frame):
             for c_ in c:
                 self.del_column_options_dropdown(datacn=c_)
 
-    def delete_header_dropdown(self, c: Iterator[int] | int | Literal["all"]) -> None:
+    def delete_header_dropdown(self, c: AnyIter[int] | int | Literal["all"]) -> None:
         if isinstance(c, str) and c.lower() == "all":
             for c_ in self.CH.cell_options:
                 if "dropdown" in self.CH.cell_options[c_]:
@@ -6858,7 +6886,7 @@ class Sheet(tk.Frame):
             for c_ in c:
                 self.del_header_cell_options_dropdown(c_)
 
-    def delete_index_dropdown(self, r: Iterator[int] | int | Literal["all"]) -> None:
+    def delete_index_dropdown(self, r: AnyIter[int] | int | Literal["all"]) -> None:
         if isinstance(r, str) and r.lower() == "all":
             for r_ in self.RI.cell_options:
                 if "dropdown" in self.RI.cell_options[r_]:
@@ -7087,7 +7115,7 @@ class Sheet(tk.Frame):
 
     def format_row(
         self,
-        r: Iterator[int] | int | Literal["all"],
+        r: AnyIter[int] | int | Literal["all"],
         formatter_options: dict = {},
         formatter_class: object = None,
         redraw: bool = True,
@@ -7117,7 +7145,7 @@ class Sheet(tk.Frame):
 
     def delete_row_format(
         self,
-        r: Iterator[int] | int | Literal["all"] = "all",
+        r: AnyIter[int] | int | Literal["all"] = "all",
         clear_values: bool = False,
     ) -> Sheet:
         if is_iterable(r):
@@ -7129,7 +7157,7 @@ class Sheet(tk.Frame):
 
     def format_column(
         self,
-        c: Iterator[int] | int | Literal["all"],
+        c: AnyIter[int] | int | Literal["all"],
         formatter_options: dict = {},
         formatter_class: object = None,
         redraw: bool = True,
@@ -7159,7 +7187,7 @@ class Sheet(tk.Frame):
 
     def delete_column_format(
         self,
-        c: Iterator[int] | int | Literal["all"] = "all",
+        c: AnyIter[int] | int | Literal["all"] = "all",
         clear_values: bool = False,
     ) -> Sheet:
         if is_iterable(c):

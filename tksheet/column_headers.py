@@ -28,10 +28,11 @@ from .functions import (
     consecutive_ranges,
     event_dict,
     get_n2a,
+    int_x_tuple,
     is_contiguous,
     new_tk_event,
-    stored_event_dict,
     rounded_box_coords,
+    stored_event_dict,
     try_binding,
 )
 from .other_classes import (
@@ -42,6 +43,9 @@ from .other_classes import (
 )
 from .text_editor import (
     TextEditor,
+)
+from .types import (
+    AnyIter,
 )
 from .vars import (
     USER_OS,
@@ -928,20 +932,31 @@ class ColumnHeaders(tk.Canvas):
 
     def select_col(
         self,
-        c: int,
+        c: int | AnyIter[int],
         redraw: bool = False,
         run_binding_func: bool = True,
         ext: bool = False,
-    ) -> int:
+    ) -> int | list[int]:
         boxes_to_hide = tuple(self.MT.selection_boxes)
-        fill_iid = self.MT.create_selection_box(0, c, len(self.MT.row_positions) - 1, c + 1, "columns", ext=ext)
+        fill_iids = [
+            self.MT.create_selection_box(
+                0,
+                start,
+                len(self.MT.row_positions) - 1,
+                end,
+                "columns",
+                set_current=True,
+                ext=ext,
+            )
+            for start, end in consecutive_ranges(int_x_tuple(c))
+        ]
         for iid in boxes_to_hide:
             self.MT.hide_selection_box(iid)
         if redraw:
             self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
         if run_binding_func:
             self.MT.run_selection_binding("columns")
-        return fill_iid
+        return fill_iids[0] if len(fill_iids) == 1 else fill_iids
 
     def add_selection(
         self,

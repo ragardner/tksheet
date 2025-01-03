@@ -1263,6 +1263,8 @@ undo_bindings
 redo_bindings
 delete_bindings
 select_all_bindings
+select_columns_bindings
+select_rows_bindings
 tab_bindings
 up_bindings
 right_bindings
@@ -5790,6 +5792,8 @@ undo_bindings
 redo_bindings
 delete_bindings
 select_all_bindings
+select_columns_bindings
+select_rows_bindings
 tab_bindings
 up_bindings
 right_bindings

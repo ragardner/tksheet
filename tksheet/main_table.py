@@ -15,7 +15,6 @@ from collections.abc import (
     Callable,
     Generator,
     Hashable,
-    Iterator,
     Sequence,
 )
 from functools import (
@@ -98,6 +97,9 @@ from .other_classes import (
 )
 from .text_editor import (
     TextEditor,
+)
+from .types import (
+    AnyIter,
 )
 from .vars import (
     USER_OS,
@@ -1851,6 +1853,28 @@ class MainTable(tk.Canvas):
                 self.PAR.emit_event("<<SheetSelect>>", data=event_data)
                 self.PAR.emit_event("<<SelectAll>>", data=event_data)
 
+    def select_columns(self, event: object) -> None:
+        if not self.selected:
+            return
+        r1, c1, r2, c2 = self.selection_boxes[self.selected.fill_iid].coords
+        r, c = self.selected.row, self.selected.column
+        self.set_currently_selected(
+            r=r,
+            c=c,
+            item=self.CH.select_col(range(c1, c2), redraw=True),
+        )
+
+    def select_rows(self, event: object) -> None:
+        if not self.selected:
+            return
+        r1, c1, r2, c2 = self.selection_boxes[self.selected.fill_iid].coords
+        r, c = self.selected.row, self.selected.column
+        self.set_currently_selected(
+            r=r,
+            c=c,
+            item=self.RI.select_row(range(r1, r2), redraw=True),
+        )
+
     def select_cell(
         self,
         r: int,
@@ -2055,8 +2079,8 @@ class MainTable(tk.Canvas):
 
     def deselect_any(
         self,
-        rows: Iterator[int] | int | None = None,
-        columns: Iterator[int] | int | None = None,
+        rows: AnyIter[int] | int | None = None,
+        columns: AnyIter[int] | int | None = None,
         redraw: bool = True,
     ) -> None:
         if not self.selected:
@@ -2690,7 +2714,7 @@ class MainTable(tk.Canvas):
             self._enable_binding(bindings.lower())
         self.create_rc_menus()
 
-    def disable_bindings(self, bindings):
+    def disable_bindings(self, bindings: object) -> None:
         if not bindings:
             self._disable_binding("all")
         elif isinstance(bindings, (list, tuple)):
@@ -2704,7 +2728,7 @@ class MainTable(tk.Canvas):
             self._disable_binding(bindings)
         self.create_rc_menus()
 
-    def _enable_binding(self, binding):
+    def _enable_binding(self, binding: str) -> None:
         if binding == "enable_all":
             binding = "all"
         if binding in ("all", "single", "single_selection_mode", "single_select"):
@@ -2719,6 +2743,7 @@ class MainTable(tk.Canvas):
             self.CH.width_resizing_enabled = True
         if binding in ("all", "column_select"):
             self.CH.col_selection_enabled = True
+            self._tksheet_bind("select_columns_bindings", self.select_columns)
         if binding in ("all", "column_height_resize"):
             self.CH.height_resizing_enabled = True
             self.TL.rh_state()
@@ -2735,6 +2760,7 @@ class MainTable(tk.Canvas):
             self.TL.rw_state()
         if binding in ("all", "row_select"):
             self.RI.row_selection_enabled = True
+            self._tksheet_bind("select_rows_bindings", self.select_rows)
         if binding in ("all", "row_drag_and_drop", "move_rows"):
             self.RI.drag_and_drop_enabled = True
         if binding in ("all", "select_all"):
@@ -2820,7 +2846,7 @@ class MainTable(tk.Canvas):
             for binding in self.PAR.ops[bindings_key]:
                 widget.bind(binding, func)
 
-    def _disable_binding(self, binding):
+    def _disable_binding(self, binding: str) -> None:
         if binding == "disable_all":
             binding = "all"
         if binding in ("all", "single", "single_selection_mode", "single_select"):
@@ -2835,6 +2861,7 @@ class MainTable(tk.Canvas):
             self.CH.width_resizing_enabled = False
         if binding in ("all", "column_select"):
             self.CH.col_selection_enabled = False
+            self._tksheet_unbind("select_columns_bindings")
         if binding in ("all", "column_height_resize"):
             self.CH.height_resizing_enabled = False
             self.TL.rh_state("hidden")
@@ -2851,6 +2878,7 @@ class MainTable(tk.Canvas):
             self.TL.rw_state("hidden")
         if binding in ("all", "row_select"):
             self.RI.row_selection_enabled = False
+            self._tksheet_unbind("select_rows_bindings")
         if binding in ("all", "row_drag_and_drop", "move_rows"):
             self.RI.drag_and_drop_enabled = False
         if binding in bind_del_columns:
@@ -3898,7 +3926,7 @@ class MainTable(tk.Canvas):
         self.recreate_all_selection_boxes()
         return self.row_positions, self.col_positions
 
-    def set_col_positions(self, itr: Iterator[float]) -> None:
+    def set_col_positions(self, itr: AnyIter[float]) -> None:
         self.col_positions = list(accumulate(chain([0], itr)))
 
     def reset_col_positions(self, ncols: int | None = None):
@@ -3910,7 +3938,7 @@ class MainTable(tk.Canvas):
         else:
             self.set_col_positions(itr=repeat(colpos, len(self.displayed_columns)))
 
-    def set_row_positions(self, itr: Iterator[float]) -> None:
+    def set_row_positions(self, itr: AnyIter[float]) -> None:
         self.row_positions = list(accumulate(chain([0], itr)))
 
     def reset_row_positions(self, nrows: int | None = None):
@@ -3944,7 +3972,7 @@ class MainTable(tk.Canvas):
             del self.row_positions[idx]
             self.row_positions[idx:] = [e - w for e in islice(self.row_positions, idx, len(self.row_positions))]
 
-    def del_col_positions(self, idxs: Iterator[int] | None = None):
+    def del_col_positions(self, idxs: AnyIter[int] | None = None):
         if idxs is None:
             del self.col_positions[-1]
         else:
@@ -3952,7 +3980,7 @@ class MainTable(tk.Canvas):
                 idxs = set(idxs)
             self.set_col_positions(itr=(w for i, w in enumerate(self.gen_column_widths()) if i not in idxs))
 
-    def del_row_positions(self, idxs: Iterator[int] | None = None):
+    def del_row_positions(self, idxs: AnyIter[int] | None = None):
         if idxs is None:
             del self.row_positions[-1]
         else:
@@ -4952,7 +4980,7 @@ class MainTable(tk.Canvas):
 
     def display_rows(
         self,
-        rows: int | Iterator | None = None,
+        rows: int | AnyIter | None = None,
         all_rows_displayed: bool | None = None,
         reset_row_positions: bool = True,
         deselect_all: bool = True,
@@ -4981,7 +5009,7 @@ class MainTable(tk.Canvas):
 
     def display_columns(
         self,
-        columns: int | Iterator | None = None,
+        columns: int | AnyIter | None = None,
         all_columns_displayed: bool | None = None,
         reset_col_positions: bool = True,
         deselect_all: bool = True,

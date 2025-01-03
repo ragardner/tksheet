@@ -2,9 +2,16 @@
 #### Changed:
 - `deselect()` also closes text editor / dropdown
 
+#### Added:
+- Mac OS Zoom in/out bindings
+- Control-space, Shift-space bindings for selecting columns/rows if enabled
+
 #### Documentation:
 - `bulk_insert()`: wrong example
 - Docstrings: return values for `insert()`, `bulk_insert()`
+
+#### Fixed:
+- Wrong type hinting for `Iterator`
 
 ### Version 7.3.0
 #### Changed:
