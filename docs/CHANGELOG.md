@@ -5,6 +5,7 @@
 #### Added:
 - Mac OS Zoom in/out bindings
 - Control-space, Shift-space bindings for selecting columns/rows if enabled
+- Home, Control/Command-Home bindings for selecting start of the row and start of the table
 
 #### Documentation:
 - `bulk_insert()`: wrong example

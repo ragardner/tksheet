@@ -1875,6 +1875,16 @@ class MainTable(tk.Canvas):
             item=self.RI.select_row(range(r1, r2), redraw=True),
         )
 
+    def select_row_start(self, event: object) -> None:
+        if self.selected:
+            self.select_cell(self.selected.row, 0)
+            self.see(self.selected.row, 0)
+
+    def select_a1(self, event: object) -> None:
+        if len(self.row_positions) > 1 and len(self.col_positions) > 1:
+            self.select_cell(0, 0)
+            self.see(0, 0)
+
     def select_cell(
         self,
         r: int,
@@ -2731,12 +2741,23 @@ class MainTable(tk.Canvas):
     def _enable_binding(self, binding: str) -> None:
         if binding == "enable_all":
             binding = "all"
-        if binding in ("all", "single", "single_selection_mode", "single_select"):
-            self.single_selection_enabled = True
-            self.toggle_selection_enabled = False
-        elif binding in ("toggle", "toggle_selection_mode", "toggle_select"):
-            self.toggle_selection_enabled = True
-            self.single_selection_enabled = False
+        if binding in (
+            "all",
+            "single",
+            "single_selection_mode",
+            "single_select",
+            "toggle",
+            "toggle_selection_mode",
+            "toggle_select",
+        ):
+            self._tksheet_bind("row_start_bindings", self.select_row_start)
+            self._tksheet_bind("table_start_bindings", self.select_a1)
+            if binding in ("all", "single", "single_selection_mode", "single_select"):
+                self.single_selection_enabled = True
+                self.toggle_selection_enabled = False
+            elif binding in ("toggle", "toggle_selection_mode", "toggle_select"):
+                self.toggle_selection_enabled = True
+                self.single_selection_enabled = False
         if binding in ("all", "drag_select"):
             self.drag_selection_enabled = True
         if binding in ("all", "column_width_resize"):
@@ -2849,12 +2870,23 @@ class MainTable(tk.Canvas):
     def _disable_binding(self, binding: str) -> None:
         if binding == "disable_all":
             binding = "all"
-        if binding in ("all", "single", "single_selection_mode", "single_select"):
-            self.single_selection_enabled = False
-            self.toggle_selection_enabled = False
-        elif binding in ("toggle", "toggle_selection_mode", "toggle_select"):
-            self.toggle_selection_enabled = False
-            self.single_selection_enabled = False
+        if binding in (
+            "all",
+            "single",
+            "single_selection_mode",
+            "single_select",
+            "toggle",
+            "toggle_selection_mode",
+            "toggle_select",
+        ):
+            self._tksheet_unbind("row_start_bindings")
+            self._tksheet_unbind("table_start_bindings")
+            if binding in ("all", "single", "single_selection_mode", "single_select"):
+                self.single_selection_enabled = False
+                self.toggle_selection_enabled = False
+            elif binding in ("toggle", "toggle_selection_mode", "toggle_select"):
+                self.toggle_selection_enabled = False
+                self.single_selection_enabled = False
         if binding in ("all", "drag_select"):
             self.drag_selection_enabled = False
         if binding in ("all", "column_width_resize"):

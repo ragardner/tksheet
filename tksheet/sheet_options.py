@@ -111,6 +111,13 @@ def new_sheet_options() -> DotDict:
             "select_rows_bindings": [
                 "<Shift-space>",
             ],
+            "row_start_bindings": [
+                "<Command-Left>",
+                "<Home>",
+            ],
+            "table_start_bindings": [
+                f"<{ctrl_key}-Home>",
+            ],
             "tab_bindings": [
                 "<Tab>",
             ],

@@ -1265,6 +1265,8 @@ delete_bindings
 select_all_bindings
 select_columns_bindings
 select_rows_bindings
+row_start_bindings
+table_start_bindings
 tab_bindings
 up_bindings
 right_bindings
@@ -5803,6 +5805,8 @@ delete_bindings
 select_all_bindings
 select_columns_bindings
 select_rows_bindings
+row_start_bindings
+table_start_bindings
 tab_bindings
 up_bindings
 right_bindings
