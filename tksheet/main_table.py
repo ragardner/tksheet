@@ -2881,12 +2881,8 @@ class MainTable(tk.Canvas):
         ):
             self._tksheet_unbind("row_start_bindings")
             self._tksheet_unbind("table_start_bindings")
-            if binding in ("all", "single", "single_selection_mode", "single_select"):
-                self.single_selection_enabled = False
-                self.toggle_selection_enabled = False
-            elif binding in ("toggle", "toggle_selection_mode", "toggle_select"):
-                self.toggle_selection_enabled = False
-                self.single_selection_enabled = False
+            self.single_selection_enabled = False
+            self.toggle_selection_enabled = False
         if binding in ("all", "drag_select"):
             self.drag_selection_enabled = False
         if binding in ("all", "column_width_resize"):
