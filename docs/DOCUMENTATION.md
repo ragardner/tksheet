@@ -1915,6 +1915,11 @@ Parameters:
 - `check_function` can be used to trigger a function when the user clicks a checkbox.
 - `text` displays text next to the checkbox in the cell, but will not be used as data, data will either be `True` or `False`.
 
+Notes:
+- To get the current checkbox value simply either:
+    - Get the cell data, more information [here](https://github.com/ragardner/tksheet/wiki/Version-7#getting-sheet-data).
+    - Use the parameter `check_function` with a function of your own creation to be called when the checkbox is set by the user.
+
 Example:
 ```python
 sheet["D"].checkbox(
@@ -3464,11 +3469,6 @@ checkbox(
     text: str = "",
 ) -> Span
 ```
-Notes:
-- `check_function` (`Callable`, `None`) requires either `None` or a function. The function you use needs at least one argument because when the checkbox is clicked it will send information to your function about the clicked checkbox.
-- Use `highlight_cells()` or rows or columns to change the color of the checkbox.
-- Check boxes are always left aligned despite any align settings.
-
 Parameters:
 - `key` (`CreateSpanTypes`) either a span or a type which can create a span. See [here](https://github.com/ragardner/tksheet/wiki/Version-7#creating-a-span) for more information on the types that can create a span.
 - `edit_data` when `True` edits the underlying cell data to either `checked` if `checked` is a `bool` or tries to convert the existing cell data to a `bool`.
@@ -3476,6 +3476,14 @@ Parameters:
 - `state` can be `"normal"` or `"disabled"`. If `"disabled"` then color will be same as table grid lines, else it will be the cells text color.
 - `check_function` can be used to trigger a function when the user clicks a checkbox.
 - `text` displays text next to the checkbox in the cell, but will not be used as data, data will either be `True` or `False`.
+
+Notes:
+- `check_function` (`Callable`, `None`) requires either `None` or a function. The function you use needs at least one argument because when the checkbox is set it will send information to your function about the clicked checkbox.
+- Use `highlight_cells()` or rows or columns to change the color of the checkbox.
+- Check boxes are always left aligned despite any align settings.
+- To get the current checkbox value simply either:
+    - Get the cell data, more information [here](https://github.com/ragardner/tksheet/wiki/Version-7#getting-sheet-data).
+    - Use the parameter `check_function` with a function of your own creation to be called when the checkbox is set by the user.
 
 Example:
 ```python
