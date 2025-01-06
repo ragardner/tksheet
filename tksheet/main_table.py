@@ -6215,7 +6215,7 @@ class MainTable(tk.Canvas):
 
     def hide_selection_box(self, item: int | None) -> bool:
         if item is None or item is True or item not in self.selection_boxes:
-            return
+            return False
         box = self.selection_boxes.pop(item)
         self.hide_box(box.fill_iid)
         self.hide_box(box.bd_iid)
