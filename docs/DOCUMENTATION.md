@@ -966,13 +966,13 @@ Keys:
     - `{"data_index": int, "displayed_index": int, "num": int, "displayed": []}`
         - `"data_index"` is an `int` representing the row where the rows were added in the data.
         - `"displayed_index"` is an `int` representing the displayed table index where the rows were added (which will be different from the data index if there are hidden rows).
-        - `"displayed"` is simply a copied list of the `Sheet()`s displayed rows immediately prior to the change.
+        - `"displayed"` is a copied list of the `Sheet()`s displayed rows immediately prior to the change.
         - If no rows have been added the `dict` will be empty.
 - Key **`["added"]["columns"]`** if any columns have been added by the inbuilt popup menu insert columns or by a paste which expands the sheet then this will be a `dict` with the following keys:
     - `{"data_index": int, "displayed_index": int, "num": int, "displayed": []}`
         - `"data_index"` is an `int` representing the column where the columns were added in the data.
         - `"displayed_index"` is an `int` representing the displayed table index where the columns were added (which will be different from the data index if there are hidden columns).
-        - `"displayed"` is simply a copied list of the `Sheet()`s displayed columns immediately prior to the change.
+        - `"displayed"` is a copied list of the `Sheet()`s displayed columns immediately prior to the change.
         - If no columns have been added the `dict` will be empty.
 - Key **`["deleted"]["columns"]`** if any columns have been deleted by the inbuilt popup menu delete columns or by undoing a paste which added columns then this will be a `dict`. This `dict` will look like the following:
     - `{[column data index]: {[row data index]: cell value, [row data index]: cell value}, [column data index]: {...} ...}`
@@ -1158,7 +1158,7 @@ Parameters:
         - `"delete_rows"` when a user has deleted rows.
         - `"move_columns"` when a user has dragged and dropped columns.
         - `"move_rows"` when a user has dragged and dropped rows.
-    - `"<<SheetRedrawn>>"` emitted whenever the sheet GUI was refreshed (redrawn). The data for this event will be different than the usual event data, it is simply:
+    - `"<<SheetRedrawn>>"` emitted whenever the sheet GUI was refreshed (redrawn). The data for this event will be different than the usual event data, it is:
         - `{"sheetname": name of your sheet, "header": bool True if the header was redrawn, "row_index": bool True if the index was redrawn, "table": bool True if the the table was redrawn}`
     - `"<<SheetSelect>>"` encompasses all select events and emits the same event as `"<<SheetModified>>"` but with the event name: `"select"`.
     - `"<<Copy>>"` emitted when a Sheet copy e.g. `<Control-c>` was performed and will have the `eventname` `"copy"`.
@@ -1916,7 +1916,7 @@ Parameters:
 - `text` displays text next to the checkbox in the cell, but will not be used as data, data will either be `True` or `False`.
 
 Notes:
-- To get the current checkbox value simply either:
+- To get the current checkbox value either:
     - Get the cell data, more information [here](https://github.com/ragardner/tksheet/wiki/Version-7#getting-sheet-data).
     - Use the parameter `check_function` with a function of your own creation to be called when the checkbox is set by the user.
 
@@ -2162,8 +2162,6 @@ self.sheet.named_span(span2)
 ```
 
 #### **Deleting a named span**
-
-To delete a named span you simply have to provide the name.
 
 ```python
 del_named_span(name: str)
@@ -3481,7 +3479,7 @@ Notes:
 - `check_function` (`Callable`, `None`) requires either `None` or a function. The function you use needs at least one argument because when the checkbox is set it will send information to your function about the clicked checkbox.
 - Use `highlight_cells()` or rows or columns to change the color of the checkbox.
 - Check boxes are always left aligned despite any align settings.
-- To get the current checkbox value simply either:
+- To get the current checkbox value either:
     - Get the cell data, more information [here](https://github.com/ragardner/tksheet/wiki/Version-7#getting-sheet-data).
     - Use the parameter `check_function` with a function of your own creation to be called when the checkbox is set by the user.
 
@@ -3600,7 +3598,7 @@ Notes:
     - Row formats second.
     - Column formats third.
 2. Data formatting will effectively override `validate_input = True` on cells with dropdown boxes.
-3. When getting data take careful note of the `get_displayed` options, as these are the difference between getting the actual formatted data and what is simply displayed on the table GUI.
+3. When getting data take careful note of the `get_displayed` options, as these are the difference between getting the actual formatted data and what is displayed on the table GUI.
 
 Parameters:
 - `key` (`CreateSpanTypes`) either a span or a type which can create a span. See [here](https://github.com/ragardner/tksheet/wiki/Version-7#creating-a-span) for more information on the types that can create a span.
@@ -5290,7 +5288,7 @@ ___
 
 #### **Displayed column index to data**
 
-Convert a displayed column index to a data index. If the internal `all_columns_displayed` attribute is `True` then it will simply return the provided argument.
+Convert a displayed column index to a data index. If the internal `all_columns_displayed` attribute is `True` then it will return the provided argument.
 ```python
 displayed_column_to_data(c)
 data_c(c)
@@ -5424,7 +5422,7 @@ ___
 
 #### **Displayed row index to data**
 
-Convert a displayed row index to a data index. If the internal `all_rows_displayed` attribute is `True` then it will simply return the provided argument.
+Convert a displayed row index to a data index. If the internal `all_rows_displayed` attribute is `True` then it will return the provided argument.
 ```python
 displayed_row_to_data(r)
 data_r(r)
