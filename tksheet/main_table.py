@@ -1877,13 +1877,13 @@ class MainTable(tk.Canvas):
 
     def select_row_start(self, event: object) -> None:
         if self.selected:
-            self.select_cell(self.selected.row, 0)
             self.see(self.selected.row, 0)
+            self.select_cell(self.selected.row, 0, redraw=True)
 
     def select_a1(self, event: object) -> None:
         if len(self.row_positions) > 1 and len(self.col_positions) > 1:
-            self.select_cell(0, 0)
             self.see(0, 0)
+            self.select_cell(0, 0, redraw=True)
 
     def select_cell(
         self,
