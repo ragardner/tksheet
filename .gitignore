@@ -1,6 +1,7 @@
 # tksheet
 test*.py*
 MOD_VERSION.py
+_version.py
 *.xlsx
 *.csv
 *.tsv

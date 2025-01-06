@@ -1,3 +1,7 @@
+### Version 7.3.2
+#### Changed:
+- Add `_version.py` to `.gitignore`
+
 ### Version 7.3.1
 #### Changed:
 - `deselect()` also closes text editor / dropdown
