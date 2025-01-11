@@ -1,4 +1,9 @@
 ### Version 7.3.2
+#### Fixed:
+- Not redrawing after Control-space, Shift-space bindings for selecting columns/rows
+- Not redrawing after Home, Control/Command-Home bindings for selecting start of the row and start of the table
+- Dropdown boxes not reseting y scroll
+
 #### Changed:
 - Add `_version.py` to `.gitignore`
 

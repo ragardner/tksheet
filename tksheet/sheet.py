@@ -716,7 +716,7 @@ class Sheet(tk.Frame):
         - "ctrl_column_select"
         - "deselect"
         - "all_select_events", "select", "selectevents", "select_events"
-        - "all_modified_events", "sheetmodified", "sheet_modified" "modified_events", "modified"
+        - "all_modified_events", "sheetmodified", "sheet_modified", "modified_events", "modified"
         - "bind_all"
         - "unbind_all"
         """
@@ -793,7 +793,8 @@ class Sheet(tk.Frame):
                 "unbind_all",
                 "all_modified_events",
                 "sheetmodified",
-                "sheet_modified" "modified_events",
+                "sheet_modified",
+                "modified_events",
                 "modified",
             ):
                 self.MT.extra_end_ctrl_c_func = f
@@ -7295,6 +7296,7 @@ class Dropdown(Sheet):
         search_function: Callable = dropdown_search_function,
         modified_function: None | Callable = None,
     ) -> None:
+        self.set_yview(0.0)
         self.deselect(redraw=False)
         self.r = r
         self.c = c
