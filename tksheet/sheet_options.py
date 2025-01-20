@@ -151,6 +151,21 @@ def new_sheet_options() -> DotDict:
             "next_bindings": [
                 "<Next>",
             ],
+            "find_bindings": [
+                f"<{ctrl_key}-f>",
+                f"<{ctrl_key}-F>",
+            ],
+            "find_next_bindings": [
+                f"<{ctrl_key}-g>",
+                f"<{ctrl_key}-G>",
+            ],
+            "find_previous_bindings": [
+                f"<{ctrl_key}-Shift-g>",
+                f"<{ctrl_key}-Shift-G>",
+            ],
+            "escape_bindings": [
+                "<Escape>",
+            ],
             "vertical_scroll_borderwidth": 1,
             "horizontal_scroll_borderwidth": 1,
             "vertical_scroll_gripcount": 0,

@@ -10,7 +10,7 @@
 - [Alternate Row Colors](https://github.com/ragardner/tksheet/wiki/Version-7#alternate-row-colors)
 - [Header and Index](https://github.com/ragardner/tksheet/wiki/Version-7#header-and-index)
 ---
-- [Bindings and Functionality](https://github.com/ragardner/tksheet/wiki/Version-7#bindings-and-functionality)
+- [Table Functionality and Bindings](https://github.com/ragardner/tksheet/wiki/Version-7#table-functionality-and-bindings)
 - [tkinter and tksheet Events](https://github.com/ragardner/tksheet/wiki/Version-7#tkinter-and-tksheet-events)
 - [Sheet Languages and Bindings](https://github.com/ragardner/tksheet/wiki/Version-7#sheet-languages-and-bindings)
 ---
@@ -705,7 +705,7 @@ row_index(
 - Leaving all arguments as default e.g. `row_index()` returns the existing row index.
 
 ---
-# **Bindings and Functionality**
+# **Table functionality and bindings**
 
 #### **Enable table functionality and bindings**
 
@@ -713,49 +713,54 @@ row_index(
 enable_bindings(*bindings)
 ```
 - `bindings` (`str`) options are (rc stands for right click):
-	- `"all"`
-	- `"single_select"`
-	- `"toggle_select"`
-	- `"drag_select"`
-       - `"select_all"`
-	- `"column_drag_and_drop"` / `"move_columns"`
-	- `"row_drag_and_drop"` / `"move_rows"`
-	- `"column_select"`
-	- `"row_select"`
-	- `"column_width_resize"`
-	- `"double_click_column_resize"`
-	- `"row_width_resize"`
-	- `"column_height_resize"`
+	- `"all"` # enables all bindings with `single_select` mode, except the bindings that have to be specifically enabled by name.
+	- `"single_select"` # normal selection mode
+	- `"toggle_select"` # has issues but to enable a selection mode where cell/row/column selection is toggled
+	- `"drag_select"` # to allow mouse click and drag selection of cells/rows/columns
+       - `"select_all"` # drag_select also enables select_all
+	- `"column_drag_and_drop"` / `"move_columns"` # to allow drag and drop of columns
+	- `"row_drag_and_drop"` / `"move_rows"` # to allow drag and drop of rows
+	- `"column_select"` # to allow column selection
+	- `"row_select"` # to allow row selection
+	- `"column_width_resize"` # for resizing columns
+	- `"double_click_column_resize"` # for resizing columns to row text width
+	- `"row_width_resize"` # to resize the index width
+	- `"column_height_resize"` # to resize the header height
 	- `"arrowkeys"` # all arrowkeys including page up and down
-    - `"up"`
-    - `"down"`
-    - `"left"`
-    - `"right"`
+    - `"up"` # individual arrow key
+    - `"down"` # individual arrow key
+    - `"left"` # individual arrow key
+    - `"right"` # individual arrow key
     - `"prior"` # page up
     - `"next"` # page down
-	- `"row_height_resize"`
-	- `"double_click_row_resize"`
-	- `"right_click_popup_menu"` / `"rc_popup_menu"` / `"rc_menu"`
-	- `"rc_select"`
-	- `"rc_insert_column"`
-	- `"rc_delete_column"`
-	- `"rc_insert_row"`
-	- `"rc_delete_row"`
-    - `"ctrl_click_select"` / `"ctrl_select"`
-	- `"copy"`
-	- `"cut"`
-	- `"paste"`
-	- `"delete"`
-	- `"undo"`
-	- `"edit_cell"`
-    - `"edit_header"`
-    - `"edit_index"`
+	- `"row_height_resize"` # to resize rows
+	- `"double_click_row_resize"` # for resizing rows to row text height
+	- `"right_click_popup_menu"` / `"rc_popup_menu"` / `"rc_menu"` # for the in-built table context menu
+	- `"rc_select"` # for selecting cells using right click
+	- `"rc_insert_column"` # for a menu option to add columns
+	- `"rc_delete_column"` # for a menu option to delete columns
+	- `"rc_insert_row"` # for a menu option to add rows
+	- `"rc_delete_row"` # for a menu option to delete rows
+	- `"copy"` # for copying to clipboard
+	- `"cut"` # for cutting to clipboard
+	- `"paste"` # for pasting into the table
+	- `"delete"` # for clearing cells with the delete key
+	- `"undo"` # for undo and redo
+    - `"edit_cell"` # allow table cell editing
+    - *`"find"` # for a pop-up find window
+    - *`"ctrl_click_select"` / `"ctrl_select"` # for selecting multiple non-adjacent cells/rows/columns
+    - *`"edit_header"` # allow header cell editing
+    - *`"edit_index"` # allow index cell editing
+
+*has to be specifically enabled - See Notes.
 
 Notes:
 - You can change the Sheets key bindings for functionality such as copy, paste, up, down etc. Instructions can be found [here](https://github.com/ragardner/tksheet/wiki/Version-7#changing-key-bindings).
-- Control selection is **NOT** enabled with `"all"` and has to be specifically enabled.
-- Header cell editing is **NOT** enabled with `"all"` and has to be specifically enabled.
-- Index cell editing is **NOT** enabled with `"all"` and has to be specifically enabled.
+- **Note** that the following functionalities are not enabled using `"all"` and have to be specifically enabled:
+    - `"ctrl_click_select"` / `"ctrl_select"`
+    - `"find"`
+    - `"edit_header"`
+    - `"edit_index"`
 - To allow table expansion when pasting data which doesn't fit in the table use either:
    - `paste_can_expand_x=True`, `paste_can_expand_y=True` in sheet initialization arguments or the same keyword arguments with the function `set_options()`.
 
@@ -1278,6 +1283,10 @@ shift_down_bindings
 shift_left_bindings
 prior_bindings
 next_bindings
+find_bindings
+find_next_bindings
+find_previous_bindings
+escape_bindings
 ```
 
 The argument must be a `list` of **tkinter** binding `str`s. In the below example the binding for copy is changed to `"<Control-e>"` and `"<Control-E>"`.
@@ -3244,7 +3253,7 @@ dropdown(
 ```
 Notes:
 - `selection_function`/`modified_function` (`Callable`, `None`) parameters require either `None` or a function. The function you use needs at least one argument because tksheet will send information to your function about the triggered dropdown.
-- When a user selects an item from the dropdown box the sheet will set the underlying cells data to the selected item, to bind this event use either the `selection_function` argument or see the function `extra_bindings()` with binding `"end_edit_cell"` [here](https://github.com/ragardner/tksheet/wiki/Version-7#bindings-and-functionality).
+- When a user selects an item from the dropdown box the sheet will set the underlying cells data to the selected item, to bind this event use either the `selection_function` argument or see the function `extra_bindings()` with binding `"end_edit_cell"` [here](https://github.com/ragardner/tksheet/wiki/Version-7#table-functionality-and-bindings).
 
 Parameters:
 - `key` (`CreateSpanTypes`) either a span or a type which can create a span. See [here](https://github.com/ragardner/tksheet/wiki/Version-7#creating-a-span) for more information on the types that can create a span.
@@ -4289,6 +4298,7 @@ get_selected_cells(
     get_columns: bool = False,
     sort_by_row: bool = False,
     sort_by_column: bool = False,
+    reverse: bool = False,
 ) -> list[tuple[int, int]] | set[tuple[int, int]]
 ```
 - Returns displayed coordinates.

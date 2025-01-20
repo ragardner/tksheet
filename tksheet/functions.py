@@ -69,7 +69,7 @@ def get_data_from_clipboard(
 
 def tksheet_type_error(kwarg: str, valid_types: list[str], not_type: object) -> str:
     valid_types = ", ".join(f"{type_}" for type_ in valid_types)
-    return f"Argument '{kwarg}' must be one of the following types: {valid_types}, " f"not {type(not_type)}."
+    return f"Argument '{kwarg}' must be one of the following types: {valid_types}, not {type(not_type)}."
 
 
 def new_tk_event(keysym: str) -> tk.Event:
@@ -228,6 +228,16 @@ def b_index(sorted_seq: Sequence[int], num_to_index: int) -> int:
     if (idx := bisect_left(sorted_seq, num_to_index)) == len(sorted_seq) or sorted_seq[idx] != num_to_index:
         raise ValueError(f"{num_to_index} is not in Sequence")
     return idx
+
+
+def bisect_in(sorted_seq: Sequence[int], num: int) -> bool:
+    """
+    Faster than 'num in sorted_seq'
+    """
+    try:
+        return sorted_seq[bisect_left(sorted_seq, num)] == num
+    except Exception:
+        return False
 
 
 def get_dropdown_kwargs(

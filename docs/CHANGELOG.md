@@ -1,4 +1,9 @@
 ### Version 7.3.2
+#### Added:
+- Built-in find window, use `enable_bindings("find")` to enable
+- Escape binding which deselects
+- `reverse` parameter to `get_selected_cells()` function
+
 #### Fixed:
 - Not redrawing after Control-space, Shift-space bindings for selecting columns/rows
 - Not redrawing after Home, Control/Command-Home bindings for selecting start of the row and start of the table
@@ -6,6 +11,13 @@
 
 #### Changed:
 - Add `_version.py` to `.gitignore`
+- `enable_bindings()` with `"find"` now enables an in-built find window which uses the following bindings:
+    - Control/Command-f/F
+    - Control/Command-g/G
+    - Control/Command-Shift-g/G
+    - Escape
+    - Return (when the find window has focus)
+- Added Escape binding when cell selection is enabled. Pressing Escape will now close the find window if its open, if its not open it will close any open text editor/dropdown box and deselect all cells.
 
 ### Version 7.3.1
 #### Changed:

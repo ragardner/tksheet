@@ -52,22 +52,21 @@ This library is maintained with the help of **[others](https://github.com/ragard
 
 ## **Features**
 
-- Display and modify tabular data
-- Stores its display data as a Python list of lists, sublists being rows
-- Runs smoothly even with millions of rows/columns
-- Edit cells directly
+- Smoothly display and modify tabular data
+- [Edit cells directly](https://github.com/ragardner/tksheet/wiki/Version-7#table-functionality-and-bindings)
 - Cell values can potentially be [any class](https://github.com/ragardner/tksheet/wiki/Version-7#data-formatting), the default is any class with a `__str__` method
-- Drag and drop columns and rows
+- [Drag and drop columns and rows](https://github.com/ragardner/tksheet/wiki/Version-7#table-functionality-and-bindings)
 - Multiple line header and index cells
-- Expand row heights and column widths
-- Change fonts and font size (not for individual cells)
-- Change any colors in the sheet
+- [Expand row heights and column widths](https://github.com/ragardner/tksheet/wiki/Version-7#table-functionality-and-bindings)
+- [Change fonts and font size (not for individual cells)](https://github.com/ragardner/tksheet/wiki/Version-7#text-font-and-alignment)
+- [Change any colors in the sheet](https://github.com/ragardner/tksheet/wiki/Version-7#sheet-appearance)
 - [Treeview mode](https://github.com/ragardner/tksheet/wiki/Version-7#treeview-mode)
 - [Dropdown boxes](https://github.com/ragardner/tksheet/wiki/Version-7#dropdown-boxes)
 - [Check boxes](https://github.com/ragardner/tksheet/wiki/Version-7#check-boxes)
 - [Progress bars](https://github.com/ragardner/tksheet/wiki/Version-7#progress-bars)
 - [Hide rows and/or columns](https://github.com/ragardner/tksheet/wiki/Version-7#example-header-dropdown-boxes-and-row-filtering)
-- Left `"w"`, Center `"center"` or Right `"e"` text alignment for any cell/row/column
+- [Left `"w"`, Center `"center"` or Right `"e"` text alignment for any cell/row/column](https://github.com/ragardner/tksheet/wiki/Version-7#text-font-and-alignment)
+- [Optional built-in find window](https://github.com/ragardner/tksheet/wiki/Version-7#table-functionality-and-bindings)
 
 ```python
 """

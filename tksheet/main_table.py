@@ -39,6 +39,9 @@ from typing import Literal
 from .colors import (
     color_map,
 )
+from .find_window import (
+    FindWindow,
+)
 from .formatters import (
     data_to_str,
     format_data,
@@ -50,6 +53,7 @@ from .formatters import (
 from .functions import (
     add_to_displayed,
     b_index,
+    bisect_in,
     box_is_single_cell,
     cell_right_within_box,
     color_tup,
@@ -86,6 +90,7 @@ from .other_classes import (
     Box_t,
     DotDict,
     DropdownStorage,
+    EditorStorageBase,
     EventDataDict,
     FontTuple,
     Highlight,
@@ -140,6 +145,7 @@ class MainTable(tk.Canvas):
         self.synced_scrolls = set()
         self.dropdown = DropdownStorage()
         self.text_editor = TextEditorStorage()
+        self.find_window = EditorStorageBase()
         self.event_linker = {
             "<<Copy>>": self.ctrl_c,
             "<<Cut>>": self.ctrl_x,
@@ -248,6 +254,7 @@ class MainTable(tk.Canvas):
         self.drag_selection_enabled = False
         self.select_all_enabled = False
         self.undo_enabled = False
+        self.find_enabled = False
         self.cut_enabled = False
         self.copy_enabled = False
         self.paste_enabled = False
@@ -475,6 +482,282 @@ class MainTable(tk.Canvas):
         )
         if delete_on_timer:
             self.after(1500, self.delete_ctrl_outlines)
+
+    def escape(self, event: tk.Misc | None) -> None:
+        if self.find_window.open:
+            self.close_find_window()
+        else:
+            self.deselect()
+
+    def get_find_window_dimensions_coords(self, w_width: int) -> tuple[int, int, int, int]:
+        width = min(self.get_txt_w("X" * 23), w_width - 7)
+        # w, h, x, y
+        return width, self.min_row_height, self.canvasx(max(0, w_width - width - 7)), self.canvasy(7)
+
+    def open_find_window(
+        self,
+        event: tk.Misc | None = None,
+        focus: bool = True,
+    ) -> Literal["break"]:
+        if self.find_window.open:
+            self.close_find_window()
+            return "break"
+        width, height, x, y = self.get_find_window_dimensions_coords(w_width=self.winfo_width())
+        if not self.find_window.window:
+            self.find_window.window = FindWindow(
+                self,
+                find_prev_func=self.find_previous,
+                find_next_func=self.find_next,
+                close_func=self.close_find_window,
+            )
+            self.find_window.canvas_id = self.create_window((x, y), window=self.find_window.window, anchor="nw")
+            for b in chain(self.PAR.ops.escape_bindings, self.PAR.ops.find_bindings):
+                self.find_window.tktext.bind(b, self.close_find_window)
+            for b in chain(self.PAR.ops.find_next_bindings, ("<Return>", "<KP_Enter>")):
+                self.find_window.tktext.bind(b, self.find_next)
+            for b in self.PAR.ops.find_previous_bindings:
+                self.find_window.tktext.bind(b, self.find_previous)
+        else:
+            self.coords(self.find_window.canvas_id, x, y)
+            if not self.find_window.open:
+                self.itemconfig(self.find_window.canvas_id, state="normal")
+        self.find_window.open = True
+        self.find_window.window.reset(
+            **{
+                "menu_kwargs": DotDict(
+                    {
+                        "font": self.PAR.ops.table_font,
+                        "foreground": self.PAR.ops.popup_menu_fg,
+                        "background": self.PAR.ops.popup_menu_bg,
+                        "activebackground": self.PAR.ops.popup_menu_highlight_bg,
+                        "activeforeground": self.PAR.ops.popup_menu_highlight_fg,
+                    }
+                ),
+                "sheet_ops": self.PAR.ops,
+                "border_color": self.PAR.ops.table_selected_box_cells_fg,
+                "bg": self.PAR.ops.table_editor_bg,
+                "fg": self.PAR.ops.table_editor_fg,
+                "select_bg": self.PAR.ops.table_editor_select_bg,
+                "select_fg": self.PAR.ops.table_editor_select_fg,
+            }
+        )
+        self.itemconfig(self.find_window.canvas_id, width=width, height=height)
+        if focus:
+            self.find_window.tktext.focus_set()
+        return "break"
+
+    def find_see_and_set(self, coords: tuple[int, int] | None, just_see: bool = False) -> tuple[int, int]:
+        if coords:
+            if not self.all_rows_displayed:
+                coords = (self.disprn(coords[0]), coords[1])
+            if not self.all_columns_displayed:
+                coords = (coords[0], self.dispcn(coords[1]))
+            self.see(
+                *coords,
+                keep_yscroll=False,
+                keep_xscroll=False,
+                bottom_right_corner=False,
+                check_cell_visibility=True,
+            )
+            if not just_see:
+                if self.find_window.window.find_in_selection:
+                    self.set_currently_selected(*coords)
+                else:
+                    self.select_cell(*coords, redraw=True)
+        return coords
+
+    def find_gen_all_cells(
+        self,
+        start_row: int,
+        start_col: int,
+        total_cols: int | None = None,
+        reverse: bool = False,
+    ) -> Generator[tuple[int, int]]:
+        if total_cols is None:
+            total_cols = self.total_data_cols(include_header=False)
+        total_rows = self.total_data_rows(include_index=False)
+        if reverse:
+            # yield start cell
+            yield (start_row, start_col)
+            # yield any remaining cells in the starting row before the start column
+            if start_col:
+                for col in reversed(range(start_col)):
+                    yield (start_row, col)
+            # yield any cells above start row
+            for row in reversed(range(start_row)):
+                for col in reversed(range(total_cols)):
+                    yield (row, col)
+            # yield cells from bottom of table upward
+            for row in range(total_rows - 1, start_row, -1):
+                for col in reversed(range(total_cols)):
+                    yield (row, col)
+            # yield any remaining cells in start row
+            for col in range(total_cols - 1, start_col, -1):
+                yield (start_row, col)
+        else:
+            # Yield cells from the start position to the end of the current row
+            for col in range(start_col, total_cols):
+                yield (start_row, col)
+            # yield from the next row to the last row
+            for row in range(start_row + 1, total_rows):
+                for col in range(total_cols):
+                    yield (row, col)
+            # yield from the beginning up to the start
+            for row in range(start_row):
+                for col in range(total_cols):
+                    yield (row, col)
+            # yield any remaining cells in the starting row before the start column
+            for col in range(start_col):
+                yield (start_row, col)
+
+    def find_get_start_coords(
+        self,
+        plus_one: bool = True,
+        within: None | list = None,
+        reverse: bool = False,
+    ) -> tuple[int, int, int]:
+        selected = self.selected
+        if not selected:
+            rst, cst = 0, 0
+        else:
+            rst, cst = selected.row, selected.column
+            if plus_one and within:
+                curridx = next(i for i, t in enumerate(within) if t[0] == rst and t[1] == cst) + 1
+                if curridx == len(within):
+                    curridx = 0
+                return rst, cst, curridx
+            elif plus_one:
+                if reverse:
+                    if not cst:
+                        cst = len(self.col_positions) - 2
+                        if not rst:
+                            rst = len(self.row_positions) - 2
+                        else:
+                            rst -= 1
+                    else:
+                        cst -= 1
+                else:
+                    cst += 1
+                    if cst == len(self.col_positions) - 1:
+                        cst = 0
+                        rst += 1
+                    if rst == len(self.row_positions) - 1:
+                        rst = 0
+        return rst, cst, 0
+
+    def find_next(self, event: tk.Misc | None = None) -> Literal["break"]:
+        if not (find := self.find_window.get().lower()):
+            return "break"
+        if not self.find_window.open:
+            self.open_find_window(focus=False)
+        found_coords = None
+        if self.find_window.window.find_in_selection:
+            sels = self.PAR.get_selected_cells(
+                get_rows=True,
+                get_columns=True,
+                sort_by_row=True,
+                sort_by_column=True,
+            )
+            rst, cst, curridx = self.find_get_start_coords(plus_one=True, within=sels)
+            for r, c in chain(islice(sels, curridx, None), islice(sels, 0, curridx)):
+                if not self.all_rows_displayed:
+                    r = self.datarn(r)
+                if not self.all_columns_displayed:
+                    c = self.datacn(c)
+                if (
+                    find in self.get_valid_cell_data_as_str(r, c, True).lower()
+                    or find in f"{self.get_cell_data(r, c)}".lower()
+                ):
+                    found_coords = (r, c)
+                    break
+        else:
+            rst, cst, _ = self.find_get_start_coords(plus_one=True)
+            rst = self.datarn(rst)
+            cst = self.datacn(cst)
+            for r, c in self.find_gen_all_cells(
+                start_row=rst,
+                start_col=cst,
+                total_cols=self.total_data_cols(include_header=False),
+            ):
+                if (not self.all_rows_displayed and not bisect_in(self.displayed_rows, r)) or (
+                    not self.all_columns_displayed and not bisect_in(self.displayed_columns, c)
+                ):
+                    continue
+                if (
+                    find in self.get_valid_cell_data_as_str(r, c, True).lower()
+                    or find in f"{self.get_cell_data(r, c)}".lower()
+                ):
+                    found_coords = (r, c)
+                    break
+        if found_coords:
+            self.find_see_and_set(found_coords)
+        return "break"
+
+    def find_previous(self, event: tk.Misc | None = None) -> Literal["break"]:
+        if not (find := self.find_window.get().lower()):
+            return "break"
+        if not self.find_window.open:
+            self.open_find_window(focus=False)
+        found_coords = None
+        if self.find_window.window.find_in_selection:
+            sels = self.PAR.get_selected_cells(
+                get_rows=True,
+                get_columns=True,
+                sort_by_row=True,
+                sort_by_column=True,
+                reverse=True,
+            )
+            rst, cst, curridx = self.find_get_start_coords(
+                plus_one=True,
+                within=sels,
+                reverse=True,
+            )
+            for r, c in chain(islice(sels, curridx, None), islice(sels, 0, curridx)):
+                if not self.all_rows_displayed:
+                    r = self.datarn(r)
+                if not self.all_columns_displayed:
+                    c = self.datacn(c)
+                if (
+                    find in self.get_valid_cell_data_as_str(r, c, True).lower()
+                    or find in f"{self.get_cell_data(r, c)}".lower()
+                ):
+                    found_coords = (r, c)
+                    break
+        else:
+            rst, cst, _ = self.find_get_start_coords(
+                plus_one=True,
+                reverse=True,
+            )
+            rst = self.datarn(rst)
+            cst = self.datacn(cst)
+            for r, c in self.find_gen_all_cells(
+                start_row=rst,
+                start_col=cst,
+                total_cols=self.total_data_cols(include_header=False),
+                reverse=True,
+            ):
+                if (not self.all_rows_displayed and not bisect_in(self.displayed_rows, r)) or (
+                    not self.all_columns_displayed and not bisect_in(self.displayed_columns, c)
+                ):
+                    continue
+                if (
+                    find in self.get_valid_cell_data_as_str(r, c, True).lower()
+                    or find in f"{self.get_cell_data(r, c)}".lower()
+                ):
+                    found_coords = (r, c)
+                    break
+        if found_coords:
+            self.find_see_and_set(found_coords)
+        return "break"
+
+    def close_find_window(
+        self,
+        event: tk.Misc | None = None,
+    ) -> None:
+        if self.find_window.open:
+            self.itemconfig(self.find_window.canvas_id, state="hidden")
+            self.find_window.open = False
+            self.focus_set()
 
     def create_ctrl_outline(
         self,
@@ -2710,7 +2993,7 @@ class MainTable(tk.Canvas):
                 **mnkwgs,
             )
 
-    def enable_bindings(self, bindings):
+    def enable_bindings(self, bindings: object) -> None:
         if not bindings:
             self._enable_binding("all")
         elif isinstance(bindings, (list, tuple)):
@@ -2752,6 +3035,7 @@ class MainTable(tk.Canvas):
         ):
             self._tksheet_bind("row_start_bindings", self.select_row_start)
             self._tksheet_bind("table_start_bindings", self.select_a1)
+            self._tksheet_bind("escape_bindings", self.escape)
             if binding in ("all", "single", "single_selection_mode", "single_select"):
                 self.single_selection_enabled = True
                 self.toggle_selection_enabled = False
@@ -2829,6 +3113,11 @@ class MainTable(tk.Canvas):
             self.undo_enabled = True
             self._tksheet_bind("undo_bindings", self.undo)
             self._tksheet_bind("redo_bindings", self.redo)
+        if binding in ("find",):
+            self.find_enabled = True
+            self._tksheet_bind("find_bindings", self.open_find_window)
+            self._tksheet_bind("find_next_bindings", self.find_next)
+            self._tksheet_bind("find_previous_bindings", self.find_previous)
         if binding in bind_del_columns:
             self.rc_delete_column_enabled = True
             self.rc_popup_menus_enabled = True
@@ -2881,6 +3170,7 @@ class MainTable(tk.Canvas):
         ):
             self._tksheet_unbind("row_start_bindings")
             self._tksheet_unbind("table_start_bindings")
+            self._tksheet_unbind("escape_bindings")
             self.single_selection_enabled = False
             self.toggle_selection_enabled = False
         if binding in ("all", "drag_select"):
@@ -2971,6 +3261,12 @@ class MainTable(tk.Canvas):
         if binding in ("all", "undo", "redo", "edit_bindings", "edit"):
             self.undo_enabled = False
             self._tksheet_unbind("undo_bindings", "redo_bindings")
+        if binding in ("all", "find"):
+            self.find_enabled = False
+            self._tksheet_unbind("find_bindings")
+            self._tksheet_unbind("find_next_bindings")
+            self._tksheet_unbind("find_previous_bindings")
+            self.close_find_window()
 
     def _tksheet_unbind(self, *keys) -> None:
         for widget in (self, self.RI, self.CH, self.TL):
@@ -3618,7 +3914,7 @@ class MainTable(tk.Canvas):
         b = self.txt_measure_canvas.bbox(self.txt_measure_canvas_text)
         return b[3] - b[1]
 
-    def get_txt_dimensions(self, txt: str, font: None | FontTuple = None) -> int:
+    def get_txt_dimensions(self, txt: str, font: None | FontTuple = None) -> tuple[int, int]:
         self.txt_measure_canvas.itemconfig(
             self.txt_measure_canvas_text,
             text=txt,
@@ -3639,7 +3935,6 @@ class MainTable(tk.Canvas):
     def set_min_column_width(self, width: int) -> None:
         if width:
             self.PAR.ops.min_column_width = width
-
         if self.PAR.ops.min_column_width > self.PAR.ops.max_column_width:
             self.PAR.ops.max_column_width = self.PAR.ops.min_column_width + 20
         if (
@@ -3669,12 +3964,12 @@ class MainTable(tk.Canvas):
     def set_table_font(self, newfont: tuple | None = None, reset_row_positions: bool = False) -> tuple[str, int, str]:
         if newfont:
             if not isinstance(newfont, tuple):
-                raise ValueError("Argument must be tuple e.g. " "('Carlito', 12, 'normal')")
+                raise ValueError("Argument must be tuple e.g. ('Carlito', 12, 'normal')")
             if len(newfont) != 3:
                 raise ValueError("Argument must be three-tuple")
             if not isinstance(newfont[0], str) or not isinstance(newfont[1], int) or not isinstance(newfont[2], str):
                 raise ValueError(
-                    "Argument must be font, size and 'normal', 'bold' or" "'italic' e.g. ('Carlito',12,'normal')"
+                    "Argument must be font, size and 'normal', 'bold' or'italic' e.g. ('Carlito',12,'normal')"
                 )
             self.PAR.ops.table_font = FontTuple(*newfont)
             self.set_table_font_help()
@@ -3706,7 +4001,7 @@ class MainTable(tk.Canvas):
                 raise ValueError("Argument must be three-tuple")
             if not isinstance(newfont[0], str) or not isinstance(newfont[1], int) or not isinstance(newfont[2], str):
                 raise ValueError(
-                    "Argument must be font, size and 'normal', 'bold' or" "'italic' e.g. ('Carlito',12,'normal')"
+                    "Argument must be font, size and 'normal', 'bold' or'italic' e.g. ('Carlito',12,'normal')"
                 )
             self.PAR.ops.header_font = FontTuple(*newfont)
             self.set_header_font_help()
@@ -3737,7 +4032,7 @@ class MainTable(tk.Canvas):
                 raise ValueError("Argument must be three-tuple")
             if not isinstance(newfont[0], str) or not isinstance(newfont[1], int) or not isinstance(newfont[2], str):
                 raise ValueError(
-                    "Argument must be font, size and 'normal', 'bold' or" "'italic' e.g. ('Carlito',12,'normal')"
+                    "Argument must be font, size and 'normal', 'bold' or'italic' e.g. ('Carlito',12,'normal')"
                 )
             self.PAR.ops.index_font = FontTuple(*newfont)
             self.set_index_font_help()
@@ -5642,11 +5937,18 @@ class MainTable(tk.Canvas):
         if resized_cols or resized_rows or changed_w:
             self.recreate_all_selection_boxes()
             if changed_w:
-                self.update_idletasks()
-                self.RI.update_idletasks()
-                self.CH.update_idletasks()
-                self.TL.update_idletasks()
+                for widget in (self, self.RI, self.CH, self.TL):
+                    widget.update_idletasks()
                 return False
+        if self.find_window.open:
+            w, h, x, y = self.get_find_window_dimensions_coords(w_width=self.winfo_width())
+            self.itemconfig(
+                self.find_window.canvas_id,
+                width=w,
+                height=h,
+                state="normal",
+            )
+            self.coords(self.find_window.canvas_id, x, y)
         self.hidd_text.update(self.disp_text)
         self.disp_text = {}
         self.hidd_high.update(self.disp_high)
@@ -5677,13 +5979,13 @@ class MainTable(tk.Canvas):
                 chain.from_iterable(
                     [
                         (
-                            self.canvasx(0) - 1,
+                            scrollpos_left - 1,
                             self.row_positions[r],
                             x_grid_stop,
                             self.row_positions[r],
-                            self.canvasx(0) - 1,
+                            scrollpos_left - 1,
                             self.row_positions[r],
-                            self.canvasx(0) - 1,
+                            scrollpos_left - 1,
                             self.row_positions[r + 1] if len(self.row_positions) - 1 > r else self.row_positions[r],
                         )
                         for r in range(grid_start_row, grid_end_row)
@@ -6766,7 +7068,7 @@ class MainTable(tk.Canvas):
                 extra_func_key = "BackSpace"
                 text = ""
             else:
-                text = f"{self.get_cell_data(self.datarn(r), self.datacn(c), none_to_empty_str = True)}"
+                text = f"{self.get_cell_data(self.datarn(r), self.datacn(c), none_to_empty_str=True)}"
         elif event is not None and (
             (hasattr(event, "char") and event.char.isalpha())
             or (hasattr(event, "char") and event.char.isdigit())
@@ -6811,7 +7113,7 @@ class MainTable(tk.Canvas):
         w = self.col_positions[c + 1] - x + 1
         h = self.row_positions[r + 1] - y + 1
         if text is None:
-            text = f"{self.get_cell_data(self.datarn(r), self.datacn(c), none_to_empty_str = True)}"
+            text = f"{self.get_cell_data(self.datarn(r), self.datacn(c), none_to_empty_str=True)}"
         kwargs = {
             "menu_kwargs": DotDict(
                 {

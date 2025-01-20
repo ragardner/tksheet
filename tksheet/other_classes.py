@@ -457,7 +457,7 @@ class Node:
         return self.text
 
 
-class DropdownStorage:
+class StorageBase:
     __slots__ = ("canvas_id", "window", "open")
 
     def __init__(self) -> None:
@@ -465,6 +465,8 @@ class DropdownStorage:
         self.window = None
         self.open = False
 
+
+class DropdownStorage(StorageBase):
     def get_coords(self) -> int | tuple[int, int] | None:
         """
         Returns None if not open or window is None
@@ -474,14 +476,7 @@ class DropdownStorage:
         return None
 
 
-class TextEditorStorage:
-    __slots__ = ("canvas_id", "window", "open")
-
-    def __init__(self) -> None:
-        self.canvas_id = None
-        self.window = None
-        self.open = False
-
+class EditorStorageBase(StorageBase):
     def focus(self) -> None:
         if self.window:
             self.window.tktext.focus_set()
@@ -516,6 +511,8 @@ class TextEditorStorage:
             return self.window.tktext
         return self.window
 
+
+class TextEditorStorage(EditorStorageBase):
     @property
     def coords(self) -> tuple[int, int]:
         return self.window.r, self.window.c

@@ -653,6 +653,7 @@ class Sheet(tk.Frame):
         - "paste"
         - "delete"
         - "undo"
+        - "find"
         - "edit_cell"
         - "edit_header"
         - "edit_index"
@@ -661,6 +662,47 @@ class Sheet(tk.Frame):
         return self
 
     def disable_bindings(self, *bindings: str) -> Sheet:
+        """
+        List of available bindings:
+        - "all"
+        - "single_select"
+        - "toggle_select"
+        - "drag_select"
+        - "select_all"
+        - "column_drag_and_drop" / "move_columns"
+        - "row_drag_and_drop" / "move_rows"
+        - "column_select"
+        - "row_select"
+        - "column_width_resize"
+        - "double_click_column_resize"
+        - "row_width_resize"
+        - "column_height_resize"
+        - "arrowkeys" # all arrowkeys including page up and down
+        - "up"
+        - "down"
+        - "left"
+        - "right"
+        - "prior" # page up
+        - "next" # page down
+        - "row_height_resize"
+        - "double_click_row_resize"
+        - "right_click_popup_menu" / "rc_popup_menu" / "rc_menu"
+        - "rc_select"
+        - "rc_insert_column"
+        - "rc_delete_column"
+        - "rc_insert_row"
+        - "rc_delete_row"
+        - "ctrl_click_select" / "ctrl_select"
+        - "copy"
+        - "cut"
+        - "paste"
+        - "delete"
+        - "undo"
+        - "find"
+        - "edit_cell"
+        - "edit_header"
+        - "edit_index"
+        """
         self.MT.disable_bindings(bindings)
         return self
 
@@ -3184,22 +3226,26 @@ class Sheet(tk.Frame):
         get_columns: bool = False,
         sort_by_row: bool = False,
         sort_by_column: bool = False,
+        reverse: bool = False,
     ) -> list[tuple[int, int]] | set[tuple[int, int]]:
         if sort_by_row and sort_by_column:
             sels = sorted(
                 self.MT.get_selected_cells(get_rows=get_rows, get_cols=get_columns),
                 key=lambda t: t[1],
+                reverse=reverse,
             )
-            return sorted(sels, key=lambda t: t[0])
+            return sorted(sels, key=lambda t: t[0], reverse=reverse)
         elif sort_by_row:
             return sorted(
                 self.MT.get_selected_cells(get_rows=get_rows, get_cols=get_columns),
                 key=lambda t: t[0],
+                reverse=reverse,
             )
         elif sort_by_column:
             return sorted(
                 self.MT.get_selected_cells(get_rows=get_rows, get_cols=get_columns),
                 key=lambda t: t[1],
+                reverse=reverse,
             )
         return self.MT.get_selected_cells(get_rows=get_rows, get_cols=get_columns)
 
