@@ -552,18 +552,20 @@ class MainTable(tk.Canvas):
                 coords = (self.disprn(coords[0]), coords[1])
             if not self.all_columns_displayed:
                 coords = (coords[0], self.dispcn(coords[1]))
-            self.see(
+            if not just_see:
+                if self.find_window.window.find_in_selection:
+                    self.set_currently_selected(*coords)
+                else:
+                    self.select_cell(*coords, redraw=False)
+            if not self.see(
                 *coords,
                 keep_yscroll=False,
                 keep_xscroll=False,
                 bottom_right_corner=False,
                 check_cell_visibility=True,
-            )
-            if not just_see:
-                if self.find_window.window.find_in_selection:
-                    self.set_currently_selected(*coords)
-                else:
-                    self.select_cell(*coords, redraw=True)
+                redraw=True,
+            ):
+                self.refresh()
         return coords
 
     def find_gen_all_cells(
@@ -3753,26 +3755,42 @@ class MainTable(tk.Canvas):
         if move_synced:
             self.y_move_synced_scrolls(*args, use_scrollbar=True)
 
-    def set_xviews(self, *args, move_synced: bool = True, redraw: bool = True) -> None:
+    def set_xviews(
+        self,
+        *args,
+        move_synced: bool = True,
+        redraw: bool = True,
+    ) -> None:
         self.main_table_redraw_grid_and_text(setting_views=True)
-        self.update_idletasks()
+        if not self.PAR.finished_startup:
+            self.update_idletasks()
         self.xview(*args)
         if self.show_header:
-            self.CH.update_idletasks()
+            if not self.PAR.finished_startup:
+                self.CH.update_idletasks()
             self.CH.xview(*args)
-        self.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=False)
+        if redraw:
+            self.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=False)
         if move_synced:
             self.x_move_synced_scrolls(*args)
         self.fix_views()
 
-    def set_yviews(self, *args, move_synced: bool = True, redraw: bool = True) -> None:
+    def set_yviews(
+        self,
+        *args,
+        move_synced: bool = True,
+        redraw: bool = True,
+    ) -> None:
         self.main_table_redraw_grid_and_text(setting_views=True)
-        self.update_idletasks()
+        if not self.PAR.finished_startup:
+            self.update_idletasks()
         self.yview(*args)
         if self.show_index:
-            self.RI.update_idletasks()
+            if not self.PAR.finished_startup:
+                self.RI.update_idletasks()
             self.RI.yview(*args)
-        self.main_table_redraw_grid_and_text(redraw_header=False, redraw_row_index=True)
+        if redraw:
+            self.main_table_redraw_grid_and_text(redraw_header=False, redraw_row_index=True)
         if move_synced:
             self.y_move_synced_scrolls(*args)
         self.fix_views()
@@ -5942,13 +5960,13 @@ class MainTable(tk.Canvas):
                 return False
         if self.find_window.open:
             w, h, x, y = self.get_find_window_dimensions_coords(w_width=self.winfo_width())
+            self.coords(self.find_window.canvas_id, x, y)
             self.itemconfig(
                 self.find_window.canvas_id,
                 width=w,
                 height=h,
                 state="normal",
             )
-            self.coords(self.find_window.canvas_id, x, y)
         self.hidd_text.update(self.disp_text)
         self.disp_text = {}
         self.hidd_high.update(self.disp_high)
