@@ -661,6 +661,8 @@ def rounded_box_coords(
     y2: float,
     radius: int = 5,
 ) -> tuple[float]:
+    if y2 - y1 < 2 or x2 - x1 < 2:
+        return x1, y1, x2, y1, x2, y2, x1, y2
     return (
         x1 + radius,
         y1,
