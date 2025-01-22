@@ -310,7 +310,7 @@ class Sheet(tk.Frame):
             highlightbackground=outline_color,
             highlightcolor=outline_color,
         )
-        self.finished_startup = False
+        self._startup_complete = False
         self.ops = new_sheet_options()
         if column_width is not None:
             default_column_width = column_width
@@ -515,8 +515,9 @@ class Sheet(tk.Frame):
             self.MT.focus_set()
         self.after_idle(self.startup_complete)
 
-    def startup_complete(self) -> None:
-        self.finished_startup = True
+    def startup_complete(self, _mod: bool = True) -> bool:
+        self._startup_complete = _mod
+        return self._startup_complete
 
     # Sheet Colors
 

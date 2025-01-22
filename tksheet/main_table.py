@@ -647,9 +647,20 @@ class MainTable(tk.Canvas):
                         rst = 0
         return rst, cst, 0
 
+    def find_match(self, find: str, r: int, c: int) -> bool:
+        return (
+            not find
+            and (not self.get_valid_cell_data_as_str(r, c, True).lower() or not f"{self.get_cell_data(r, c)}".lower())
+        ) or (
+            find
+            and (
+                find in self.get_valid_cell_data_as_str(r, c, True).lower()
+                or find in f"{self.get_cell_data(r, c)}".lower()
+            )
+        )
+
     def find_next(self, event: tk.Misc | None = None) -> Literal["break"]:
-        if not (find := self.find_window.get().lower()):
-            return "break"
+        find = self.find_window.get().lower()
         if not self.find_window.open:
             self.open_find_window(focus=False)
         found_coords = None
@@ -666,10 +677,7 @@ class MainTable(tk.Canvas):
                     r = self.datarn(r)
                 if not self.all_columns_displayed:
                     c = self.datacn(c)
-                if (
-                    find in self.get_valid_cell_data_as_str(r, c, True).lower()
-                    or find in f"{self.get_cell_data(r, c)}".lower()
-                ):
+                if self.find_match(find, r, c):
                     found_coords = (r, c)
                     break
         else:
@@ -685,10 +693,7 @@ class MainTable(tk.Canvas):
                     not self.all_columns_displayed and not bisect_in(self.displayed_columns, c)
                 ):
                     continue
-                if (
-                    find in self.get_valid_cell_data_as_str(r, c, True).lower()
-                    or find in f"{self.get_cell_data(r, c)}".lower()
-                ):
+                if self.find_match(find, r, c):
                     found_coords = (r, c)
                     break
         if found_coords:
@@ -696,8 +701,7 @@ class MainTable(tk.Canvas):
         return "break"
 
     def find_previous(self, event: tk.Misc | None = None) -> Literal["break"]:
-        if not (find := self.find_window.get().lower()):
-            return "break"
+        find = self.find_window.get().lower()
         if not self.find_window.open:
             self.open_find_window(focus=False)
         found_coords = None
@@ -719,10 +723,7 @@ class MainTable(tk.Canvas):
                     r = self.datarn(r)
                 if not self.all_columns_displayed:
                     c = self.datacn(c)
-                if (
-                    find in self.get_valid_cell_data_as_str(r, c, True).lower()
-                    or find in f"{self.get_cell_data(r, c)}".lower()
-                ):
+                if self.find_match(find, r, c):
                     found_coords = (r, c)
                     break
         else:
@@ -742,10 +743,7 @@ class MainTable(tk.Canvas):
                     not self.all_columns_displayed and not bisect_in(self.displayed_columns, c)
                 ):
                     continue
-                if (
-                    find in self.get_valid_cell_data_as_str(r, c, True).lower()
-                    or find in f"{self.get_cell_data(r, c)}".lower()
-                ):
+                if self.find_match(find, r, c):
                     found_coords = (r, c)
                     break
         if found_coords:
@@ -2035,23 +2033,23 @@ class MainTable(tk.Canvas):
                         y = self.row_positions[r]
                     else:
                         y = self.row_positions[r + 1] + 1 - winfo_height
+                    y = y / (self.row_positions[-1] + self.PAR.ops.empty_vertical)
                     args = [
                         "moveto",
-                        y / (self.row_positions[-1] + self.PAR.ops.empty_vertical),
+                        y - 1 if y > 1 else y,
                     ]
-                    if args[1] > 1:
-                        args[1] = args[1] - 1
                     self.set_yviews(*args, redraw=False)
                     need_redraw = True
             else:
                 if r is not None and not keep_yscroll:
-                    y = self.row_positions[r] + ((self.row_positions[r + 1] - self.row_positions[r]) * r_pc)
+                    y = int(self.row_positions[r] + ((self.row_positions[r + 1] - self.row_positions[r]) * r_pc)) - 2
+                    if y < 0:
+                        y = 0
+                    y = y / (self.row_positions[-1] + self.PAR.ops.empty_vertical)
                     args = [
                         "moveto",
-                        y / (self.row_positions[-1] + self.PAR.ops.empty_vertical),
+                        y - 1 if y > 1 else y,
                     ]
-                    if args[1] > 1:
-                        args[1] = args[1] - 1
                     self.set_yviews(*args, redraw=False)
                     need_redraw = True
         if not xvis and len(self.col_positions) > 1:
@@ -2062,18 +2060,22 @@ class MainTable(tk.Canvas):
                         x = self.col_positions[c]
                     else:
                         x = self.col_positions[c + 1] + 1 - winfo_width
+                    x = x / (self.col_positions[-1] + self.PAR.ops.empty_horizontal)
                     args = [
                         "moveto",
-                        x / (self.col_positions[-1] + self.PAR.ops.empty_horizontal),
+                        x - 1 if x > 1 else x,
                     ]
                     self.set_xviews(*args, redraw=False)
                     need_redraw = True
             else:
                 if c is not None and not keep_xscroll:
-                    x = self.col_positions[c] + ((self.col_positions[c + 1] - self.col_positions[c]) * c_pc)
+                    x = int(self.col_positions[c] + ((self.col_positions[c + 1] - self.col_positions[c]) * c_pc)) - 2
+                    if x < 0:
+                        x = 0
+                    x = x / (self.col_positions[-1] + self.PAR.ops.empty_horizontal)
                     args = [
                         "moveto",
-                        x / (self.col_positions[-1] + self.PAR.ops.empty_horizontal),
+                        x - 1 if x > 1 else x,
                     ]
                     self.set_xviews(*args, redraw=False)
                     need_redraw = True
@@ -2514,32 +2516,18 @@ class MainTable(tk.Canvas):
         if self.selected.type_ == "rows":
             r = self.selected.row
             if r < len(self.row_positions) - 2 and self.RI.row_selection_enabled:
-                if self.cell_completely_visible(r=min(r + 2, len(self.row_positions) - 2), c=0):
+                if self.cell_completely_visible(r=r + 1, c=0):
                     self.RI.select_row(r + 1, redraw=True)
                 else:
                     self.RI.select_row(r + 1)
-                    if (
-                        r + 2 < len(self.row_positions) - 2
-                        and (self.row_positions[r + 3] - self.row_positions[r + 2])
-                        + (self.row_positions[r + 2] - self.row_positions[r + 1])
-                        + 5
-                        < self.winfo_height()
-                    ):
-                        self.see(
-                            r + 2,
-                            0,
-                            keep_xscroll=True,
-                            bottom_right_corner=True,
-                            check_cell_visibility=False,
-                        )
-                    elif not self.cell_completely_visible(r=r + 1, c=0):
-                        self.see(
-                            r + 1,
-                            0,
-                            keep_xscroll=True,
-                            bottom_right_corner=False if self.PAR.ops.arrow_key_down_right_scroll_page else True,
-                            check_cell_visibility=False,
-                        )
+                    self.see(
+                        r + 1,
+                        0,
+                        keep_xscroll=True,
+                        bottom_right_corner=False if self.PAR.ops.arrow_key_down_right_scroll_page else True,
+                        check_cell_visibility=False,
+                    )
+
         elif self.selected.type_ == "columns":
             c = self.selected.column
             if self.single_selection_enabled or self.toggle_selection_enabled:
@@ -2560,32 +2548,17 @@ class MainTable(tk.Canvas):
             r = self.selected.row
             c = self.selected.column
             if r < len(self.row_positions) - 2 and (self.single_selection_enabled or self.toggle_selection_enabled):
-                if self.cell_completely_visible(r=min(r + 2, len(self.row_positions) - 2), c=c):
+                if self.cell_completely_visible(r=r + 1, c=c):
                     self.select_cell(r + 1, c, redraw=True)
                 else:
                     self.select_cell(r + 1, c)
-                    if (
-                        r + 2 < len(self.row_positions) - 2
-                        and (self.row_positions[r + 3] - self.row_positions[r + 2])
-                        + (self.row_positions[r + 2] - self.row_positions[r + 1])
-                        + 5
-                        < self.winfo_height()
-                    ):
-                        self.see(
-                            r + 2,
-                            c,
-                            keep_xscroll=True,
-                            bottom_right_corner=True,
-                            check_cell_visibility=False,
-                        )
-                    elif not self.cell_completely_visible(r=r + 1, c=c):
-                        self.see(
-                            r + 1,
-                            c,
-                            keep_xscroll=True,
-                            bottom_right_corner=False if self.PAR.ops.arrow_key_down_right_scroll_page else True,
-                            check_cell_visibility=False,
-                        )
+                    self.see(
+                        r + 1,
+                        c,
+                        keep_xscroll=True,
+                        bottom_right_corner=False if self.PAR.ops.arrow_key_down_right_scroll_page else True,
+                        check_cell_visibility=False,
+                    )
 
     def arrowkey_LEFT(self, event: object = None) -> None:
         if not self.selected:
@@ -3762,11 +3735,11 @@ class MainTable(tk.Canvas):
         redraw: bool = True,
     ) -> None:
         self.main_table_redraw_grid_and_text(setting_views=True)
-        if not self.PAR.finished_startup:
+        if not self.PAR._startup_complete:
             self.update_idletasks()
         self.xview(*args)
         if self.show_header:
-            if not self.PAR.finished_startup:
+            if not self.PAR._startup_complete:
                 self.CH.update_idletasks()
             self.CH.xview(*args)
         if redraw:
@@ -3782,11 +3755,11 @@ class MainTable(tk.Canvas):
         redraw: bool = True,
     ) -> None:
         self.main_table_redraw_grid_and_text(setting_views=True)
-        if not self.PAR.finished_startup:
+        if not self.PAR._startup_complete:
             self.update_idletasks()
         self.yview(*args)
         if self.show_index:
-            if not self.PAR.finished_startup:
+            if not self.PAR._startup_complete:
                 self.RI.update_idletasks()
             self.RI.yview(*args)
         if redraw:
