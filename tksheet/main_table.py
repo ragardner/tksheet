@@ -6999,21 +6999,12 @@ class MainTable(tk.Canvas):
             return False
         elif event == "rc":
             return True
-        elif (
-            (hasattr(event, "keysym") and event.keysym == "Return")
-            or (hasattr(event, "keysym") and event.keysym == "F2")
+        return (
+            (hasattr(event, "keysym") and event.keysym in {"Return", "F2", "BackSpace"})
             or (
-                event is not None
-                and hasattr(event, "keycode")
-                and event.keycode == "??"
-                and hasattr(event, "num")
-                and event.num == 1
+                hasattr(event, "keycode") and event.keycode == "??" and hasattr(event, "num") and event.num == 1
             )  # mouseclick
-            or (hasattr(event, "keysym") and event.keysym == "BackSpace")
-        ):
-            return True
-        else:
-            return False
+        )
 
     # displayed indexes
     def get_cell_align(self, r: int, c: int) -> str:
