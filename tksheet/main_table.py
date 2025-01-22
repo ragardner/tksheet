@@ -660,10 +660,9 @@ class MainTable(tk.Canvas):
         )
 
     def find_next(self, event: tk.Misc | None = None) -> Literal["break"]:
-        find = self.find_window.get().lower()
+        find, found_coords = self.find_window.get().lower(), None
         if not self.find_window.open:
             self.open_find_window(focus=False)
-        found_coords = None
         if self.find_window.window.find_in_selection:
             sels = self.PAR.get_selected_cells(
                 get_rows=True,
@@ -696,15 +695,13 @@ class MainTable(tk.Canvas):
                 if self.find_match(find, r, c):
                     found_coords = (r, c)
                     break
-        if found_coords:
-            self.find_see_and_set(found_coords)
+        self.find_see_and_set(found_coords)
         return "break"
 
     def find_previous(self, event: tk.Misc | None = None) -> Literal["break"]:
-        find = self.find_window.get().lower()
+        find, found_coords = self.find_window.get().lower(), None
         if not self.find_window.open:
             self.open_find_window(focus=False)
-        found_coords = None
         if self.find_window.window.find_in_selection:
             sels = self.PAR.get_selected_cells(
                 get_rows=True,
@@ -746,8 +743,7 @@ class MainTable(tk.Canvas):
                 if self.find_match(find, r, c):
                     found_coords = (r, c)
                     break
-        if found_coords:
-            self.find_see_and_set(found_coords)
+        self.find_see_and_set(found_coords)
         return "break"
 
     def close_find_window(
@@ -2097,20 +2093,12 @@ class MainTable(tk.Canvas):
         r: int | None = 0,
         c: int | None = 0,
         separate_axes: bool = False,
-    ) -> bool:
+    ) -> bool | tuple[bool, bool]:
         cx1, cy1, cx2, cy2 = self.get_canvas_visible_area()
         x1, y1, x2, y2 = self.get_cell_coords(r, c)
-        x_vis = True
-        y_vis = True
-        if cx1 > x1 or cx2 < x2:
-            x_vis = False
-        if cy1 > y1 or cy2 < y2:
-            y_vis = False
-        if separate_axes:
-            return y_vis, x_vis
-        if not y_vis or not x_vis:
-            return False
-        return True
+        x_vis = cx1 <= x1 and cx2 >= x2
+        y_vis = cy1 <= y1 and cy2 >= y2
+        return (y_vis, x_vis) if separate_axes else y_vis and x_vis
 
     def cell_visible(self, r: int = 0, c: int = 0) -> bool:
         cx1, cy1, cx2, cy2 = self.get_canvas_visible_area()
