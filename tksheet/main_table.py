@@ -2500,9 +2500,8 @@ class MainTable(tk.Canvas):
         elif self.selected.type_ in ("cells", "columns"):
             r = self.selected.row
             c = self.selected.column
-            if not r and self.CH.col_selection_enabled:
-                if not self.cell_completely_visible(r=r, c=0):
-                    self.see(r, c, check_cell_visibility=False)
+            if not r and self.CH.col_selection_enabled and not self.cell_completely_visible(r=r, c=c):
+                self.see(r, c, check_cell_visibility=False)
             elif r and (self.single_selection_enabled or self.toggle_selection_enabled):
                 if self.cell_completely_visible(r=r - 1, c=c):
                     self.select_cell(r - 1, c, redraw=True)
@@ -2583,7 +2582,7 @@ class MainTable(tk.Canvas):
         elif self.selected.type_ == "cells":
             r = self.selected.row
             c = self.selected.column
-            if not c and not self.cell_completely_visible(r=r, c=0):
+            if not c and not self.cell_completely_visible(r=r, c=c):
                 self.see(r, c, keep_yscroll=True, check_cell_visibility=False)
             elif c and (self.single_selection_enabled or self.toggle_selection_enabled):
                 if self.cell_completely_visible(r=r, c=c - 1):
