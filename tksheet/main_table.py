@@ -806,19 +806,19 @@ class MainTable(tk.Canvas):
                 self.hidd_ctrl_outline[t] = False
 
     def get_ctrl_x_c_boxes(self) -> tuple[dict[tuple[int, int, int, int], str], int]:
-        boxes = {}
         maxrows = 0
         if not self.selected:
-            return boxes, maxrows
+            return {}, maxrows
         if self.selected.type_ in ("cells", "columns"):
             curr_box = self.selection_boxes[self.selected.fill_iid].coords
             maxrows = curr_box[2] - curr_box[0]
-            for item, box in self.get_selection_items(rows=False):
-                if maxrows >= box.coords[2] - box.coords[0]:
-                    boxes[box.coords] = box.type_
+            boxes = {
+                box.coords: box.type_
+                for _, box in self.get_selection_items(rows=False)
+                if maxrows >= box.coords[2] - box.coords[0]
+            }
         else:
-            for item, box in self.get_selection_items(columns=False, cells=False):
-                boxes[box.coords] = "rows"
+            boxes = {box.coords: "rows" for _, box in self.get_selection_items(columns=False, cells=False)}
         return boxes, maxrows
 
     def io_csv_writer(self) -> tuple[io.StringIO, csv.writer]:
