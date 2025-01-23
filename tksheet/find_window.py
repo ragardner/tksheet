@@ -233,6 +233,8 @@ class FindWindow(tk.Frame):
                 highlightbackground=bg,
                 highlightcolor=fg,
             )
+        if self.find_in_selection:
+            self.enter_label(self.in_selection)
         self.config(
             background=bg,
             highlightbackground=border_color,

@@ -621,32 +621,28 @@ class MainTable(tk.Canvas):
     ) -> tuple[int, int, int]:
         selected = self.selected
         if not selected:
-            rst, cst = 0, 0
-        else:
-            rst, cst = selected.row, selected.column
-            if plus_one and within:
-                curridx = next(i for i, t in enumerate(within) if t[0] == rst and t[1] == cst) + 1
-                if curridx == len(within):
-                    curridx = 0
-                return rst, cst, curridx
-            elif plus_one:
-                if reverse:
-                    if not cst:
-                        cst = len(self.col_positions) - 2
-                        if not rst:
-                            rst = len(self.row_positions) - 2
-                        else:
-                            rst -= 1
-                    else:
-                        cst -= 1
+            return 0, 0, 0
+        max_row = len(self.row_positions) - 2
+        max_col = len(self.col_positions) - 2
+        row, col = selected.row, selected.column
+
+        if plus_one and within:
+            curridx = next((i for i, t in enumerate(within) if t[0] == row and t[1] == col), -1) + 1
+            return row, col, curridx if curridx < len(within) else 0
+
+        if plus_one:
+            if reverse:
+                if col == 0:
+                    col = max_col
+                    row = max_row if row == 0 else row - 1
                 else:
-                    cst += 1
-                    if cst == len(self.col_positions) - 1:
-                        cst = 0
-                        rst += 1
-                    if rst == len(self.row_positions) - 1:
-                        rst = 0
-        return rst, cst, 0
+                    col -= 1
+            else:
+                col = (col + 1) % (max_col + 1)
+                if col == 0:
+                    row = (row + 1) % (max_row + 1)
+
+        return row, col, 0
 
     def find_match(self, find: str, r: int, c: int) -> bool:
         return (
@@ -682,20 +678,7 @@ class MainTable(tk.Canvas):
                     break
         else:
             rst, cst, _ = self.find_get_start_coords(plus_one=True)
-            rst = self.datarn(rst)
-            cst = self.datacn(cst)
-            for r, c in self.find_gen_all_cells(
-                start_row=rst,
-                start_col=cst,
-                total_cols=self.total_data_cols(include_header=False),
-            ):
-                if (not self.all_rows_displayed and not bisect_in(self.displayed_rows, r)) or (
-                    not self.all_columns_displayed and not bisect_in(self.displayed_columns, c)
-                ):
-                    continue
-                if self.find_match(find, r, c):
-                    found_coords = (r, c)
-                    break
+            found_coords = self.find_all_cells(self.datarn(rst), self.datacn(cst), find)
         self.find_see_and_set(found_coords)
         return "break"
 
@@ -729,23 +712,34 @@ class MainTable(tk.Canvas):
                 plus_one=True,
                 reverse=True,
             )
-            rst = self.datarn(rst)
-            cst = self.datacn(cst)
-            for r, c in self.find_gen_all_cells(
-                start_row=rst,
-                start_col=cst,
-                total_cols=self.total_data_cols(include_header=False),
-                reverse=True,
-            ):
-                if (not self.all_rows_displayed and not bisect_in(self.displayed_rows, r)) or (
-                    not self.all_columns_displayed and not bisect_in(self.displayed_columns, c)
-                ):
-                    continue
-                if self.find_match(find, r, c):
-                    found_coords = (r, c)
-                    break
+            found_coords = self.find_all_cells(self.datarn(rst), self.datacn(cst), find, reverse=True)
         self.find_see_and_set(found_coords)
         return "break"
+
+    def find_all_cells(
+        self,
+        row: int,
+        col: int,
+        find: str,
+        reverse: bool = False,
+    ) -> tuple[int, int] | None:
+        return next(
+            (
+                (r, c)
+                for r, c in self.find_gen_all_cells(
+                    start_row=row,
+                    start_col=col,
+                    total_cols=self.total_data_cols(include_header=False),
+                    reverse=reverse,
+                )
+                if (
+                    (self.all_rows_displayed or bisect_in(self.displayed_rows, r))
+                    and (self.all_columns_displayed or bisect_in(self.displayed_columns, c))
+                    and self.find_match(find, r, c)
+                )
+            ),
+            None,
+        )
 
     def close_find_window(
         self,
