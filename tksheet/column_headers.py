@@ -23,10 +23,19 @@ from typing import Literal
 from .colors import (
     color_map,
 )
+from .constants import (
+    USER_OS,
+    rc_binding,
+    text_editor_close_bindings,
+    text_editor_newline_bindings,
+    text_editor_to_unbind,
+)
 from .formatters import is_bool_like, try_to_bool
 from .functions import (
     consecutive_ranges,
     event_dict,
+    event_has_char_key,
+    event_opens_dropdown_or_checkbox,
     get_n2a,
     int_x_tuple,
     is_contiguous,
@@ -46,14 +55,6 @@ from .text_editor import (
 )
 from .types import (
     AnyIter,
-)
-from .vars import (
-    USER_OS,
-    rc_binding,
-    symbols_set,
-    text_editor_close_bindings,
-    text_editor_newline_bindings,
-    text_editor_to_unbind,
 )
 
 
@@ -1689,7 +1690,7 @@ class ColumnHeaders(tk.Canvas):
         if self.get_cell_kwargs(datacn, key="readonly"):
             return
         elif self.get_cell_kwargs(datacn, key="dropdown") or self.get_cell_kwargs(datacn, key="checkbox"):
-            if self.MT.event_opens_dropdown_or_checkbox(event):
+            if event_opens_dropdown_or_checkbox(event):
                 if self.get_cell_kwargs(datacn, key="dropdown"):
                     self.open_dropdown_window(c, event=event)
                 elif self.get_cell_kwargs(datacn, key="checkbox"):
@@ -1715,28 +1716,16 @@ class ColumnHeaders(tk.Canvas):
         state: str = "normal",
         dropdown: bool = False,
     ) -> bool:
-        text = None
+        text = f"{self.get_cell_data(self.MT.datacn(c), none_to_empty_str=True, redirect_int=True)}"
         extra_func_key = "??"
-        if event is None or self.MT.event_opens_dropdown_or_checkbox(event):
-            if event is not None:
-                if hasattr(event, "keysym") and event.keysym == "Return":
-                    extra_func_key = "Return"
-                elif hasattr(event, "keysym") and event.keysym == "F2":
-                    extra_func_key = "F2"
-            text = self.get_cell_data(self.MT.datacn(c), none_to_empty_str=True, redirect_int=True)
-        elif event is not None and (
-            (hasattr(event, "keysym") and event.keysym == "BackSpace") or event.keycode in (8, 855638143)
-        ):
-            extra_func_key = "BackSpace"
-            text = ""
-        elif event is not None and (
-            (hasattr(event, "char") and event.char.isalpha())
-            or (hasattr(event, "char") and event.char.isdigit())
-            or (hasattr(event, "char") and event.char in symbols_set)
-        ):
-            extra_func_key = event.char
-            text = event.char
-        else:
+        if event_opens_dropdown_or_checkbox(event):
+            if hasattr(event, "keysym") and event.keysym in ("Return", "F2", "BackSpace"):
+                extra_func_key = event.keysym
+                if event.keysym == "BackSpace":
+                    text = ""
+        elif event_has_char_key(event):
+            extra_func_key = text = event.char
+        elif event is not None:
             return False
         if self.extra_begin_edit_cell_func:
             try:
@@ -1758,14 +1747,13 @@ class ColumnHeaders(tk.Canvas):
                 return False
             else:
                 text = text if isinstance(text, str) else f"{text}"
-        text = "" if text is None else text
         if self.PAR.ops.cell_auto_resize_enabled:
             if self.height_resizing_enabled:
                 self.set_height_of_header_to_text(text)
             self.set_col_width_run_binding(c)
         if self.text_editor.open and c == self.text_editor.column:
             self.text_editor.set_text(self.text_editor.get() + "" if not isinstance(text, str) else text)
-            return
+            return False
         self.hide_text_editor()
         if not self.MT.see(r=0, c=c, keep_yscroll=True, check_cell_visibility=True):
             self.MT.refresh()
@@ -1773,8 +1761,6 @@ class ColumnHeaders(tk.Canvas):
         y = 0
         w = self.MT.col_positions[c + 1] - x
         h = self.current_height + 1
-        if text is None:
-            text = self.get_cell_data(self.MT.datacn(c), none_to_empty_str=True, redirect_int=True)
         kwargs = {
             "menu_kwargs": DotDict(
                 {

@@ -10,7 +10,7 @@ from .functions import (
 from .other_classes import (
     DotDict,
 )
-from .vars import (
+from .constants import (
     ctrl_key,
     rc_binding,
 )

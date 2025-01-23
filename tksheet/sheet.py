@@ -86,7 +86,7 @@ from .types import (
     AnyIter,
     CreateSpanTypes,
 )
-from .vars import (
+from .constants import (
     USER_OS,
     backwards_compatibility_keys,
     emitted_events,

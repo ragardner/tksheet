@@ -7,7 +7,7 @@ from .other_classes import (
 from .themes import (
     theme_light_blue,
 )
-from .vars import (
+from .constants import (
     USER_OS,
     ctrl_key,
 )

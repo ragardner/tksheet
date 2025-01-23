@@ -28,6 +28,12 @@ from typing import Literal
 from .colors import (
     color_map,
 )
+from .constants import (
+    rc_binding,
+    text_editor_close_bindings,
+    text_editor_newline_bindings,
+    text_editor_to_unbind,
+)
 from .formatters import (
     is_bool_like,
     try_to_bool,
@@ -36,6 +42,8 @@ from .functions import (
     consecutive_chunks,
     consecutive_ranges,
     event_dict,
+    event_has_char_key,
+    event_opens_dropdown_or_checkbox,
     get_n2a,
     int_x_tuple,
     is_contiguous,
@@ -57,13 +65,6 @@ from .text_editor import (
 )
 from .types import (
     AnyIter,
-)
-from .vars import (
-    rc_binding,
-    symbols_set,
-    text_editor_close_bindings,
-    text_editor_newline_bindings,
-    text_editor_to_unbind,
 )
 
 
@@ -1846,7 +1847,7 @@ class RowIndex(tk.Canvas):
         if self.get_cell_kwargs(datarn, key="readonly"):
             return
         elif self.get_cell_kwargs(datarn, key="dropdown") or self.get_cell_kwargs(datarn, key="checkbox"):
-            if self.MT.event_opens_dropdown_or_checkbox(event):
+            if event_opens_dropdown_or_checkbox(event):
                 if self.get_cell_kwargs(datarn, key="dropdown"):
                     self.open_dropdown_window(r, event=event)
                 elif self.get_cell_kwargs(datarn, key="checkbox"):
@@ -1872,28 +1873,16 @@ class RowIndex(tk.Canvas):
         state: str = "normal",
         dropdown: bool = False,
     ) -> bool:
-        text = None
+        text = f"{self.get_cell_data(self.MT.datarn(r), none_to_empty_str=True, redirect_int=True)}"
         extra_func_key = "??"
-        if event is None or self.MT.event_opens_dropdown_or_checkbox(event):
-            if event is not None:
-                if hasattr(event, "keysym") and event.keysym == "Return":
-                    extra_func_key = "Return"
-                elif hasattr(event, "keysym") and event.keysym == "F2":
-                    extra_func_key = "F2"
-            text = self.get_cell_data(self.MT.datarn(r), none_to_empty_str=True, redirect_int=True)
-        elif event is not None and (
-            (hasattr(event, "keysym") and event.keysym == "BackSpace") or event.keycode in (8, 855638143)
-        ):
-            extra_func_key = "BackSpace"
-            text = ""
-        elif event is not None and (
-            (hasattr(event, "char") and event.char.isalpha())
-            or (hasattr(event, "char") and event.char.isdigit())
-            or (hasattr(event, "char") and event.char in symbols_set)
-        ):
-            extra_func_key = event.char
-            text = event.char
-        else:
+        if event_opens_dropdown_or_checkbox(event):
+            if hasattr(event, "keysym") and event.keysym in ("Return", "F2", "BackSpace"):
+                extra_func_key = event.keysym
+                if event.keysym == "BackSpace":
+                    text = ""
+        elif event_has_char_key(event):
+            extra_func_key = text = event.char
+        elif event is not None:
             return False
         if self.extra_begin_edit_cell_func:
             try:
@@ -1915,12 +1904,11 @@ class RowIndex(tk.Canvas):
                 return False
             else:
                 text = text if isinstance(text, str) else f"{text}"
-        text = "" if text is None else text
         if self.PAR.ops.cell_auto_resize_enabled:
             self.set_row_height_run_binding(r)
         if self.text_editor.open and r == self.text_editor.row:
             self.text_editor.set_text(self.text_editor.get() + "" if not isinstance(text, str) else text)
-            return
+            return False
         self.hide_text_editor()
         if not self.MT.see(r=r, c=0, keep_yscroll=True, check_cell_visibility=True):
             self.MT.refresh()
@@ -1928,8 +1916,6 @@ class RowIndex(tk.Canvas):
         y = self.MT.row_positions[r]
         w = self.current_width + 1
         h = self.MT.row_positions[r + 1] - y + 1
-        if text is None:
-            text = self.get_cell_data(self.MT.datarn(r), none_to_empty_str=True, redirect_int=True)
         kwargs = {
             "menu_kwargs": DotDict(
                 {

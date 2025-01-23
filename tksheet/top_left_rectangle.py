@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import tkinter as tk
 
-from .vars import rc_binding
+from .constants import rc_binding
 
 
 class TopLeftRectangle(tk.Canvas):

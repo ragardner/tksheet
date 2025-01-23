@@ -35,6 +35,9 @@ from .other_classes import (
 from .types import (
     AnyIter,
 )
+from .constants import (
+    symbols_set,
+)
 
 unpickle_obj = pickle.loads
 
@@ -76,6 +79,25 @@ def new_tk_event(keysym: str) -> tk.Event:
     event = tk.Event()
     event.keysym = keysym
     return event
+
+
+def event_has_char_key(event: object) -> bool:
+    return (
+        event and hasattr(event, "char") and (event.char.isalpha() or event.char.isdigit() or event.char in symbols_set)
+    )
+
+
+def event_opens_dropdown_or_checkbox(event=None) -> bool:
+    if event is None:
+        return False
+    elif event == "rc":
+        return True
+    return (
+        (hasattr(event, "keysym") and event.keysym in {"Return", "F2", "BackSpace"})
+        or (
+            hasattr(event, "keycode") and event.keycode == "??" and hasattr(event, "num") and event.num == 1
+        )  # mouseclick
+    )
 
 
 def dropdown_search_function(

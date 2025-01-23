@@ -96,7 +96,7 @@ from .themes import (
     theme_light_green,
 )
 from .top_left_rectangle import TopLeftRectangle
-from .vars import (
+from .constants import (
     USER_OS,
     ctrl_key,
     emitted_events,

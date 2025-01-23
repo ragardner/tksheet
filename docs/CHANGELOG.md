@@ -12,6 +12,7 @@
 - Arrow key up wrongly moving scroll at row 0
 
 #### Changed:
+- Renamed `vars.py` -> `constants.py`
 - Add `_version.py` to `.gitignore`
 - `enable_bindings()` with `"find"` now enables an in-built find window which uses the following bindings:
     - Control/Command-f/F

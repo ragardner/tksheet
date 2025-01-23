@@ -39,6 +39,19 @@ from typing import Literal
 from .colors import (
     color_map,
 )
+from .constants import (
+    USER_OS,
+    bind_add_columns,
+    bind_add_rows,
+    bind_del_columns,
+    bind_del_rows,
+    ctrl_key,
+    rc_binding,
+    text_editor_close_bindings,
+    text_editor_newline_bindings,
+    text_editor_to_unbind,
+    val_modifying_options,
+)
 from .find_window import (
     FindWindow,
 )
@@ -62,6 +75,8 @@ from .functions import (
     diff_list,
     down_cell_within_box,
     event_dict,
+    event_has_char_key,
+    event_opens_dropdown_or_checkbox,
     float_to_int,
     gen_formatted,
     get_data_from_clipboard,
@@ -105,20 +120,6 @@ from .text_editor import (
 )
 from .types import (
     AnyIter,
-)
-from .vars import (
-    USER_OS,
-    bind_add_columns,
-    bind_add_rows,
-    bind_del_columns,
-    bind_del_rows,
-    ctrl_key,
-    rc_binding,
-    symbols_set,
-    text_editor_close_bindings,
-    text_editor_newline_bindings,
-    text_editor_to_unbind,
-    val_modifying_options,
 )
 
 
@@ -6986,25 +6987,13 @@ class MainTable(tk.Canvas):
         elif self.get_cell_kwargs(datarn, datacn, key="dropdown") or self.get_cell_kwargs(
             datarn, datacn, key="checkbox"
         ):
-            if self.event_opens_dropdown_or_checkbox(event):
+            if event_opens_dropdown_or_checkbox(event):
                 if self.get_cell_kwargs(datarn, datacn, key="dropdown"):
                     self.open_dropdown_window(r, c, event=event)
                 elif self.get_cell_kwargs(datarn, datacn, key="checkbox"):
                     self.click_checkbox(r=r, c=c, datarn=datarn, datacn=datacn)
         else:
             self.open_text_editor(event=event, r=r, c=c, dropdown=False)
-
-    def event_opens_dropdown_or_checkbox(self, event=None) -> bool:
-        if event is None:
-            return False
-        elif event == "rc":
-            return True
-        return (
-            (hasattr(event, "keysym") and event.keysym in {"Return", "F2", "BackSpace"})
-            or (
-                hasattr(event, "keycode") and event.keycode == "??" and hasattr(event, "num") and event.num == 1
-            )  # mouseclick
-        )
 
     # displayed indexes
     def get_cell_align(self, r: int, c: int) -> str:
@@ -7025,27 +7014,16 @@ class MainTable(tk.Canvas):
         state: str = "normal",
         dropdown: bool = False,
     ) -> bool:
-        text = None
+        text = f"{self.get_cell_data(self.datarn(r), self.datacn(c), none_to_empty_str=True)}"
         extra_func_key = "??"
-        if event is None or self.event_opens_dropdown_or_checkbox(event):
-            if event is not None:
-                if hasattr(event, "keysym") and event.keysym == "Return":
-                    extra_func_key = "Return"
-                elif hasattr(event, "keysym") and event.keysym == "F2":
-                    extra_func_key = "F2"
-            if event is not None and (hasattr(event, "keysym") and event.keysym == "BackSpace"):
-                extra_func_key = "BackSpace"
-                text = ""
-            else:
-                text = f"{self.get_cell_data(self.datarn(r), self.datacn(c), none_to_empty_str=True)}"
-        elif event is not None and (
-            (hasattr(event, "char") and event.char.isalpha())
-            or (hasattr(event, "char") and event.char.isdigit())
-            or (hasattr(event, "char") and event.char in symbols_set)
-        ):
-            extra_func_key = event.char
-            text = event.char
-        else:
+        if event_opens_dropdown_or_checkbox(event):
+            if hasattr(event, "keysym") and event.keysym in ("Return", "F2", "BackSpace"):
+                extra_func_key = event.keysym
+                if event.keysym == "BackSpace":
+                    text = ""
+        elif event_has_char_key(event):
+            extra_func_key = text = event.char
+        elif event is not None:
             return False
         if self.extra_begin_edit_cell_func:
             try:
@@ -7068,12 +7046,11 @@ class MainTable(tk.Canvas):
                 return False
             else:
                 text = text if isinstance(text, str) else f"{text}"
-        text = "" if text is None else text
         if self.PAR.ops.cell_auto_resize_enabled:
             self.set_cell_size_to_text(r, c, only_if_too_small=True, redraw=True, run_binding=True)
         if self.text_editor.open and (r, c) == self.text_editor.coords:
             self.text_editor.window.set_text(self.text_editor.get() + "" if not isinstance(text, str) else text)
-            return
+            return False
         self.hide_text_editor()
         if not self.see(r=r, c=c, check_cell_visibility=True):
             self.refresh()
@@ -7081,8 +7058,6 @@ class MainTable(tk.Canvas):
         y = self.row_positions[r]
         w = self.col_positions[c + 1] - x + 1
         h = self.row_positions[r + 1] - y + 1
-        if text is None:
-            text = f"{self.get_cell_data(self.datarn(r), self.datacn(c), none_to_empty_str=True)}"
         kwargs = {
             "menu_kwargs": DotDict(
                 {

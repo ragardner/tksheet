@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from .vars import falsy, nonelike, truthy
+from .constants import falsy, nonelike, truthy
 
 
 def is_none_like(o: object) -> bool:
