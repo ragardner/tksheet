@@ -6320,56 +6320,35 @@ class MainTable(tk.Canvas):
         box: tuple[int, int, int, int] | None = None,
         run_binding: bool = True,
     ) -> None:
+        def box_created(r: int, c: int, box: SelectionBox) -> bool:
+            r1, c1, r2, c2 = box.coords
+            if r1 <= r and c1 <= c and r2 >= r and c2 >= c:
+                self.create_currently_selected_box(r, c, box.type_, box.fill_iid)
+                if run_binding:
+                    self.run_selection_binding(box.type_)
+                return True
+            return False
+
+        # set current to a particular existing selection box
         if isinstance(item, int) and item in self.selection_boxes:
             selection_box = self.selection_boxes[item]
             r1, c1, r2, c2 = selection_box.coords
-            if r is None:
-                r = r1
-            if c is None:
-                c = c1
-            if r1 <= r and c1 <= c and r2 >= r and c2 >= c:
-                self.create_currently_selected_box(
-                    r,
-                    c,
-                    selection_box.type_,
-                    selection_box.fill_iid,
-                )
-                if run_binding:
-                    self.run_selection_binding(selection_box.type_)
+            if box_created(r1 if r is None else r, c1 if c is None else c, selection_box):
                 return
-        # currently selected is pointed at any selection box with "box" coordinates
+
+        # set current to any existing selection box with coordinates: box
         if isinstance(box, tuple):
-            if r is None:
-                r = box[0]
-            if c is None:
-                c = box[1]
             for item, selection_box in self.get_selection_items(reverse=True):
-                r1, c1, r2, c2 = selection_box.coords
-                if box == (r1, c1, r2, c2) and r1 <= r and c1 <= c and r2 >= r and c2 >= c:
-                    self.create_currently_selected_box(
-                        r,
-                        c,
-                        selection_box.type_,
-                        selection_box.fill_iid,
-                    )
-                    if run_binding:
-                        self.run_selection_binding(selection_box.type_)
-                    return
-        # currently selected is just pointed at a coordinate
-        # find the top most box there, requires r and c
-        if r is not None and c is not None:
+                if box == selection_box.coords:
+                    if box_created(box[0] if r is None else r, box[1] if c is None else c, selection_box):
+                        return
+
+        # set current to a coordinate, find the top most box there
+        if isinstance(r, int) and isinstance(c, int):
             for item, selection_box in self.get_selection_items(reverse=True):
-                r1, c1, r2, c2 = selection_box.coords
-                if r1 <= r and c1 <= c and r2 >= r and c2 >= c:
-                    self.create_currently_selected_box(
-                        r,
-                        c,
-                        selection_box.type_,
-                        selection_box.fill_iid,
-                    )
-                    if run_binding:
-                        self.run_selection_binding(selection_box.type_)
+                if box_created(r, c, selection_box):
                     return
+
             # wasn't provided an item and couldn't find a box at coords so select cell
             if r < len(self.row_positions) - 1 and c < len(self.col_positions) - 1:
                 self.select_cell(r, c, redraw=True)
