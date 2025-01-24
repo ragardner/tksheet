@@ -6769,23 +6769,17 @@ class MainTable(tk.Canvas):
         return d
 
     def get_selected_min_max(self) -> tuple[int, int, int, int] | tuple[None, None, None, None]:
-        min_x = float("inf")
-        min_y = float("inf")
-        max_x = 0
-        max_y = 0
-        for item, box in self.get_selection_items():
+        if not self.get_selection_items():
+            return None, None, None, None
+        min_y, min_x = float("inf"), float("inf")
+        max_y, max_x = 0, 0
+
+        for _, box in self.get_selection_items():
             r1, c1, r2, c2 = box.coords
-            if r1 < min_y:
-                min_y = r1
-            if c1 < min_x:
-                min_x = c1
-            if r2 > max_y:
-                max_y = r2
-            if c2 > max_x:
-                max_x = c2
-        if min_x != float("inf") and min_y != float("inf") and max_x > 0 and max_y > 0:
-            return min_y, min_x, max_y, max_x
-        return None, None, None, None
+            min_y, min_x = min(min_y, r1), min(min_x, c1)
+            max_y, max_x = max(max_y, r2), max(max_x, c2)
+
+        return (min_y, min_x, max_y, max_x) if min_y != float("inf") else (None, None, None, None)
 
     def get_selected_rows(
         self,
