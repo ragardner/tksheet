@@ -1830,8 +1830,8 @@ class RowIndex(tk.Canvas):
 
     def get_redraw_selections(self, startr: int, endr: int) -> dict[str, set[int]]:
         d = defaultdict(set)
-        for item, box in self.MT.get_selection_items():
-            r1, c1, r2, c2 = box.coords
+        for _, box in self.MT.get_selection_items():
+            r1, _, r2, _ = box.coords
             for r in range(startr, endr):
                 if r1 <= r and r2 > r:
                     d[box.type_ if box.type_ != "columns" else "cells"].add(r)
