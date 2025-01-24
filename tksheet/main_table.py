@@ -6719,50 +6719,30 @@ class MainTable(tk.Canvas):
     def recreate_all_selection_boxes(self) -> None:
         if not self.selected:
             return
+
         modified = False
+        row_limit = len(self.row_positions) - 1
+        col_limit = len(self.col_positions) - 1
+
         for item, box in self.get_selection_items():
             r1, c1, r2, c2 = box.coords
-            if not modified:
-                modified = (
-                    r1 >= len(self.row_positions) - 1
-                    or c1 >= len(self.col_positions) - 1
-                    or r2 > len(self.row_positions) - 1
-                    or c2 > len(self.col_positions) - 1
-                )
-            if r1 >= len(self.row_positions) - 1:
-                if len(self.row_positions) > 1:
-                    r1 = len(self.row_positions) - 2
-                else:
-                    r1 = 0
-            if c1 >= len(self.col_positions) - 1:
-                if len(self.col_positions) > 1:
-                    c1 = len(self.col_positions) - 2
-                else:
-                    c1 = 0
-            if r2 > len(self.row_positions) - 1:
-                r2 = len(self.row_positions) - 1
-            if c2 > len(self.col_positions) - 1:
-                c2 = len(self.col_positions) - 1
+            # check coordinates
+            r1 = min(r1, row_limit - (1 if row_limit > 0 else 0))
+            c1 = min(c1, col_limit - (1 if col_limit > 0 else 0))
+            r2 = min(r2, row_limit)
+            c2 = min(c2, col_limit)
+
+            modified = modified or (r1 >= row_limit or c1 >= col_limit or r2 > row_limit or c2 > col_limit)
             self.recreate_selection_box(r1, c1, r2, c2, item, run_binding=False)
 
         if self.selected:
-            r = self.selected.row
-            c = self.selected.column
-            if r < len(self.row_positions) - 1 and c < len(self.col_positions) - 1:
-                self.set_currently_selected(
-                    r,
-                    c,
-                    item=self.selected.fill_iid,
-                    run_binding=False,
-                )
+            r, c = self.selected.row, self.selected.column
+            if r < row_limit and c < col_limit:
+                self.set_currently_selected(r, c, item=self.selected.fill_iid, run_binding=False)
             else:
                 box = self.selection_boxes[self.selected.fill_iid]
-                self.set_currently_selected(
-                    box.coords.from_r,
-                    box.coords.from_c,
-                    item=box.fill_iid,
-                    run_binding=False,
-                )
+                self.set_currently_selected(box.coords[0], box.coords[1], item=box.fill_iid, run_binding=False)
+
         if modified:
             self.PAR.emit_event(
                 "<<SheetSelect>>",
