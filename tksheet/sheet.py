@@ -3303,13 +3303,13 @@ class Sheet(tk.Frame):
         exclude_rows: bool = False,
         exclude_cells: bool = False,
     ) -> bool:
-        if self.MT.anything_selected(
-            exclude_columns=exclude_columns,
-            exclude_rows=exclude_rows,
-            exclude_cells=exclude_cells,
-        ):
-            return True
-        return False
+        return bool(
+            self.MT.anything_selected(
+                exclude_columns=exclude_columns,
+                exclude_rows=exclude_rows,
+                exclude_cells=exclude_cells,
+            )
+        )
 
     def all_selected(self) -> bool:
         return self.MT.all_selected()
