@@ -3234,12 +3234,11 @@ class Sheet(tk.Frame):
         reverse: bool = False,
     ) -> list[tuple[int, int]] | set[tuple[int, int]]:
         if sort_by_row and sort_by_column:
-            sels = sorted(
+            return sorted(
                 self.MT.get_selected_cells(get_rows=get_rows, get_cols=get_columns),
-                key=lambda t: t[1],
+                key=lambda t: t,
                 reverse=reverse,
             )
-            return sorted(sels, key=lambda t: t[0], reverse=reverse)
         elif sort_by_row:
             return sorted(
                 self.MT.get_selected_cells(get_rows=get_rows, get_cols=get_columns),

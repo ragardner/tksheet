@@ -625,11 +625,9 @@ class MainTable(tk.Canvas):
         max_row = len(self.row_positions) - 2
         max_col = len(self.col_positions) - 2
         row, col = selected.row, selected.column
-
         if plus_one and within:
             curridx = next((i for i, t in enumerate(within) if t[0] == row and t[1] == col), -1) + 1
             return row, col, curridx if curridx < len(within) else 0
-
         if plus_one:
             if reverse:
                 if col == 0:
@@ -641,7 +639,6 @@ class MainTable(tk.Canvas):
                 col = (col + 1) % (max_col + 1)
                 if col == 0:
                     row = (row + 1) % (max_row + 1)
-
         return row, col, 0
 
     def find_match(self, find: str, r: int, c: int) -> bool:
@@ -656,73 +653,54 @@ class MainTable(tk.Canvas):
             )
         )
 
+    def find_within_sels(
+        self,
+        find: str,
+        reverse: bool = False,
+    ) -> tuple[int, int] | None:
+        sels = self.PAR.get_selected_cells(
+            get_rows=True,
+            get_columns=True,
+            sort_by_row=True,
+            sort_by_column=True,
+        )
+        _, _, from_idx = self.find_get_start_coords(plus_one=True, within=sels, reverse=reverse)
+        for r, c in chain(islice(sels, from_idx, None), islice(sels, 0, from_idx)):
+            if not self.all_rows_displayed:
+                r = self.datarn(r)
+            if not self.all_columns_displayed:
+                c = self.datacn(c)
+            if self.find_match(find, r, c):
+                return (r, c)
+        return None
+
     def find_next(self, event: tk.Misc | None = None) -> Literal["break"]:
-        find, found_coords = self.find_window.get().lower(), None
+        find = self.find_window.get().lower()
         if not self.find_window.open:
             self.open_find_window(focus=False)
         if self.find_window.window.find_in_selection:
-            sels = self.PAR.get_selected_cells(
-                get_rows=True,
-                get_columns=True,
-                sort_by_row=True,
-                sort_by_column=True,
-            )
-            rst, cst, curridx = self.find_get_start_coords(plus_one=True, within=sels)
-            for r, c in chain(islice(sels, curridx, None), islice(sels, 0, curridx)):
-                if not self.all_rows_displayed:
-                    r = self.datarn(r)
-                if not self.all_columns_displayed:
-                    c = self.datacn(c)
-                if self.find_match(find, r, c):
-                    found_coords = (r, c)
-                    break
+            self.find_see_and_set(self.find_within_sels(find))
         else:
-            rst, cst, _ = self.find_get_start_coords(plus_one=True)
-            found_coords = self.find_all_cells(self.datarn(rst), self.datacn(cst), find)
-        self.find_see_and_set(found_coords)
+            self.find_see_and_set(self.find_all_cells(find))
         return "break"
 
     def find_previous(self, event: tk.Misc | None = None) -> Literal["break"]:
-        find, found_coords = self.find_window.get().lower(), None
+        find = self.find_window.get().lower()
         if not self.find_window.open:
             self.open_find_window(focus=False)
         if self.find_window.window.find_in_selection:
-            sels = self.PAR.get_selected_cells(
-                get_rows=True,
-                get_columns=True,
-                sort_by_row=True,
-                sort_by_column=True,
-                reverse=True,
-            )
-            rst, cst, curridx = self.find_get_start_coords(
-                plus_one=True,
-                within=sels,
-                reverse=True,
-            )
-            for r, c in chain(islice(sels, curridx, None), islice(sels, 0, curridx)):
-                if not self.all_rows_displayed:
-                    r = self.datarn(r)
-                if not self.all_columns_displayed:
-                    c = self.datacn(c)
-                if self.find_match(find, r, c):
-                    found_coords = (r, c)
-                    break
+            self.find_see_and_set(self.find_within_sels(find, reverse=True))
         else:
-            rst, cst, _ = self.find_get_start_coords(
-                plus_one=True,
-                reverse=True,
-            )
-            found_coords = self.find_all_cells(self.datarn(rst), self.datacn(cst), find, reverse=True)
-        self.find_see_and_set(found_coords)
+            self.find_see_and_set(self.find_all_cells(find, reverse=True))
         return "break"
 
     def find_all_cells(
         self,
-        row: int,
-        col: int,
         find: str,
         reverse: bool = False,
     ) -> tuple[int, int] | None:
+        row, col, _ = self.find_get_start_coords(plus_one=True, reverse=reverse)
+        row, col = self.datarn(row), self.datacn(col)
         return next(
             (
                 (r, c)
