@@ -674,26 +674,6 @@ class MainTable(tk.Canvas):
                 return (r, c)
         return None
 
-    def find_next(self, event: tk.Misc | None = None) -> Literal["break"]:
-        find = self.find_window.get().lower()
-        if not self.find_window.open:
-            self.open_find_window(focus=False)
-        if self.find_window.window.find_in_selection:
-            self.find_see_and_set(self.find_within_sels(find))
-        else:
-            self.find_see_and_set(self.find_all_cells(find))
-        return "break"
-
-    def find_previous(self, event: tk.Misc | None = None) -> Literal["break"]:
-        find = self.find_window.get().lower()
-        if not self.find_window.open:
-            self.open_find_window(focus=False)
-        if self.find_window.window.find_in_selection:
-            self.find_see_and_set(self.find_within_sels(find, reverse=True))
-        else:
-            self.find_see_and_set(self.find_all_cells(find, reverse=True))
-        return "break"
-
     def find_all_cells(
         self,
         find: str,
@@ -718,6 +698,26 @@ class MainTable(tk.Canvas):
             ),
             None,
         )
+
+    def find_next(self, event: tk.Misc | None = None) -> Literal["break"]:
+        find = self.find_window.get().lower()
+        if not self.find_window.open:
+            self.open_find_window(focus=False)
+        if self.find_window.window.find_in_selection:
+            self.find_see_and_set(self.find_within_sels(find))
+        else:
+            self.find_see_and_set(self.find_all_cells(find))
+        return "break"
+
+    def find_previous(self, event: tk.Misc | None = None) -> Literal["break"]:
+        find = self.find_window.get().lower()
+        if not self.find_window.open:
+            self.open_find_window(focus=False)
+        if self.find_window.window.find_in_selection:
+            self.find_see_and_set(self.find_within_sels(find, reverse=True))
+        else:
+            self.find_see_and_set(self.find_all_cells(find, reverse=True))
+        return "break"
 
     def close_find_window(
         self,
