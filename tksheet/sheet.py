@@ -5458,6 +5458,8 @@ class Sheet(tk.Frame):
         to_show = []
         item_node = self.RI.tree[item]
         item_r = self.RI.tree_rns[item]
+        item_descendants = tuple(self.RI.get_iid_descendants(item))
+        num_item_descendants = len(item_descendants)
         if parent:
             if self.RI.move_pid_causes_recursive_loop(item, parent):
                 raise ValueError(f"iid '{item}' causes a recursive loop with parent '{parent}'.")
@@ -5470,7 +5472,7 @@ class Sheet(tk.Frame):
                     # index is on end
                     # item row is less than move to row
                     if item_r < new_r:
-                        r_ctr = new_r - sum(1 for _ in self.RI.get_iid_descendants(item))
+                        r_ctr = new_r - num_item_descendants
 
                     # new parent has children
                     # index is on end
@@ -5487,10 +5489,10 @@ class Sheet(tk.Frame):
                             r_ctr = (
                                 new_r
                                 + sum(1 for _ in self.RI.get_iid_descendants(parent_node.children[index].iid))
-                                - sum(1 for _ in self.RI.get_iid_descendants(item))
+                                - num_item_descendants
                             )
                         else:
-                            r_ctr = new_r - sum(1 for _ in self.RI.get_iid_descendants(item)) - 1
+                            r_ctr = new_r - num_item_descendants - 1
 
                     # new parent has children
                     # index is not end
@@ -5505,7 +5507,7 @@ class Sheet(tk.Frame):
                 # index always start
                 # item row is less than move to row
                 if item_r < new_r:
-                    r_ctr = new_r - sum(1 for _ in self.RI.get_iid_descendants(item))
+                    r_ctr = new_r - num_item_descendants
 
                 # new parent doesn't have children
                 # index always start
@@ -5516,7 +5518,7 @@ class Sheet(tk.Frame):
             if parent in self.RI.tree_open_ids and self.item_displayed(parent):
                 to_show.append(r_ctr)
             r_ctr += 1
-            for did in self.RI.get_iid_descendants(item):
+            for did in item_descendants:
                 mapping[self.RI.tree_rns[did]] = r_ctr
                 if to_show and self.RI.ancestors_all_open(did, item_node.parent):
                     to_show.append(r_ctr)
@@ -5535,14 +5537,14 @@ class Sheet(tk.Frame):
                 r_ctr = (
                     new_r
                     + sum(1 for _ in self.RI.get_iid_descendants(self.rowitem(new_r, data_index=True)))
-                    - sum(1 for _ in self.RI.get_iid_descendants(item))
+                    - num_item_descendants
                 )
             else:
                 r_ctr = new_r
             mapping[item_r] = r_ctr
             to_show.append(r_ctr)
             r_ctr += 1
-            for did in self.RI.get_iid_descendants(item):
+            for did in item_descendants:
                 mapping[self.RI.tree_rns[did]] = r_ctr
                 if to_show and self.RI.ancestors_all_open(did, item_node.parent):
                     to_show.append(r_ctr)
