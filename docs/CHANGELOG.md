@@ -20,6 +20,7 @@
     - Control/Command-Shift-g/G
     - Escape
     - Return (when the find window has focus)
+    - Alt/Option-L to find within selection
 - Added Escape binding when cell selection is enabled. Pressing Escape will now close the find window if its open, if its not open it will close any open text editor/dropdown box and deselect all cells.
 
 ### Version 7.3.1

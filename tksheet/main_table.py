@@ -5254,7 +5254,7 @@ class MainTable(tk.Canvas):
 
     def display_rows(
         self,
-        rows: int | AnyIter | None = None,
+        rows: int | AnyIter[int] | None = None,
         all_rows_displayed: bool | None = None,
         reset_row_positions: bool = True,
         deselect_all: bool = True,
@@ -5283,7 +5283,7 @@ class MainTable(tk.Canvas):
 
     def display_columns(
         self,
-        columns: int | AnyIter | None = None,
+        columns: int | AnyIter[int] | None = None,
         all_columns_displayed: bool | None = None,
         reset_col_positions: bool = True,
         deselect_all: bool = True,

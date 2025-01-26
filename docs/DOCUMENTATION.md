@@ -747,7 +747,7 @@ enable_bindings(*bindings)
 	- `"delete"` # for clearing cells with the delete key
 	- `"undo"` # for undo and redo
     - `"edit_cell"` # allow table cell editing
-    - *`"find"` # for a pop-up find window
+    - *`"find"` # for a pop-up find window (does not find in index or header)
     - *`"ctrl_click_select"` / `"ctrl_select"` # for selecting multiple non-adjacent cells/rows/columns
     - *`"edit_header"` # allow header cell editing
     - *`"edit_index"` # allow index cell editing
