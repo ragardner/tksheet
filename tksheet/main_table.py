@@ -4998,8 +4998,8 @@ class MainTable(tk.Canvas):
         data_ins_col: int,
         displayed_ins_col: int,
         numcols: int,
-        columns: list | None = None,
-        widths: list | None = None,
+        columns: list[list[object]] | None = None,
+        widths: list[int] | tuple[int] | None = None,
         headers: bool = False,
     ) -> tuple[dict, dict, dict]:
         header_data = {}
@@ -5048,10 +5048,10 @@ class MainTable(tk.Canvas):
         data_ins_row: int,
         displayed_ins_row: int,
         numrows: int,
-        rows: list | None = None,
-        heights: list | None = None,
+        rows: list[list[object]] | None = None,
+        heights: list[int] | tuple[int] | None = None,
         row_index: bool = False,
-        total_data_cols=None,
+        total_data_cols: int | None = None,
     ) -> tuple[dict, dict, dict]:
         index_data = {}
         if isinstance(self._row_index, list):
