@@ -644,20 +644,12 @@ def insert_items(
     seq: list[object] | tuple[object],
     to_insert: dict[int, object],
     seq_len_func: Callable | None = None,
-) -> list:
-    # inserts many items into a list using a dict of reverse sorted order of
-    # {index: value, index: value, ...}
-    res = []
-    extended = 0
-    for i, (idx, v) in enumerate(reversed(to_insert.items())):
-        # need to extend seq if it's not long enough
-        if seq_len_func and idx - i > len(seq):
-            seq_len_func(idx - i - 1)
-        res.extend(seq[extended : idx - i])
-        extended += idx - i - extended
-        res.append(v)
-    res.extend(seq[extended:])
-    seq = res
+) -> list[object]:
+    if to_insert:
+        if seq_len_func and next(iter(to_insert)) > len(seq):
+            seq_len_func(seq, next(iter(to_insert)) - len(seq) - len(to_insert))
+        for idx, v in reversed(to_insert.items()):
+            seq[idx:idx] = [v]
     return seq
 
 
