@@ -584,35 +584,27 @@ def move_elements_by_mapping(
     new_idxs: dict[int, int],
     old_idxs: dict[int, int] | None = None,
 ) -> list[object]:
-    # move elements of a list around, displacing
-    # other elements based on mapping
-    # of {old index: new index, ...}
+    # move elements of a list around
+    # displacing other elements based on mapping
+    # new_idxs = {old index: new index, ...}
+    # old_idxs = {new index: old index, ...}
     if old_idxs is None:
         old_idxs = dict(zip(new_idxs.values(), new_idxs))
 
     # create dummy list
     res = [0] * len(seq)
 
-    # create generator of values yet to be put into res
-    remaining = (e for i, e in enumerate(seq) if i not in new_idxs)
+    # assign values to their new indexes
+    for old, new in new_idxs.items():
+        res[new] = seq[old]
 
-    # goes over res twice:
-    # once to put elements being moved in new spots
-    # then to fill remaining spots with remaining elements
+    # fill remaining indexes
+    remaining_values = (e for i, e in enumerate(seq) if i not in new_idxs)
+    for i in range(len(res)):
+        if i not in old_idxs:
+            res[i] = next(remaining_values)
 
-    # fill new indexes in res
-    if len(new_idxs) > int(len(seq) / 2) - 1:
-        # if moving a lot of items better to do comprehension
-        return [
-            next(remaining) if i_ not in old_idxs else e_
-            for i_, e_ in enumerate(seq[old_idxs[i]] if i in old_idxs else e for i, e in enumerate(res))
-        ]
-    else:
-        # if just moving a few items assignments are fine
-        for old, new in new_idxs.items():
-            res[new] = seq[old]
-        # fill remaining indexes
-        return [next(remaining) if i not in old_idxs else e for i, e in enumerate(res)]
+    return res
 
 
 def move_elements_to(
