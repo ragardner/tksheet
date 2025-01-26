@@ -647,7 +647,7 @@ def insert_items(
 ) -> list[object]:
     if to_insert:
         if seq_len_func and next(iter(to_insert)) >= len(seq) + len(to_insert):
-            seq_len_func(seq, next(iter(to_insert)) - len(to_insert))
+            seq_len_func(next(iter(to_insert)) - len(to_insert))
         for idx, v in reversed(to_insert.items()):
             seq[idx:idx] = [v]
     return seq
