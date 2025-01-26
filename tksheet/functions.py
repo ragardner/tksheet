@@ -641,13 +641,13 @@ def get_new_indexes(
 
 
 def insert_items(
-    seq: list[object] | tuple[object],
+    seq: list[object],
     to_insert: dict[int, object],
     seq_len_func: Callable | None = None,
 ) -> list[object]:
     if to_insert:
-        if seq_len_func and next(iter(to_insert)) > len(seq):
-            seq_len_func(seq, next(iter(to_insert)) - len(seq) - len(to_insert))
+        if seq_len_func and next(iter(to_insert)) >= len(seq) + len(to_insert):
+            seq_len_func(seq, next(iter(to_insert)) - len(to_insert))
         for idx, v in reversed(to_insert.items()):
             seq[idx:idx] = [v]
     return seq
