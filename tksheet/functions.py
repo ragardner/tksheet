@@ -70,6 +70,12 @@ def get_data_from_clipboard(
     return [[data]]
 
 
+def recursive_bind(widget: tk.Misc, event: str, callback: Callable) -> None:
+    widget.bind(event, callback)
+    for child in widget.winfo_children():
+        recursive_bind(child, event, callback)
+
+
 def tksheet_type_error(kwarg: str, valid_types: list[str], not_type: object) -> str:
     valid_types = ", ".join(f"{type_}" for type_ in valid_types)
     return f"Argument '{kwarg}' must be one of the following types: {valid_types}, not {type(not_type)}."

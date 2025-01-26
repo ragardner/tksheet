@@ -13,6 +13,9 @@ from .constants import (
     ctrl_key,
     rc_binding,
 )
+from .functions import (
+    recursive_bind,
+)
 
 
 class FindWindowTkText(tk.Text):
@@ -176,6 +179,10 @@ class FindWindow(tk.Frame):
             widget.bind("<Enter>", lambda w, widget=widget: self.enter_label(widget=widget))
             widget.bind("<Leave>", lambda w, widget=widget: self.leave_label(widget=widget))
 
+        for b in ("Option", "Alt"):
+            for c in ("l", "L"):
+                recursive_bind(self, f"<{b}-{c}>", self.toggle_in_selection)
+
     def enter_label(self, widget: tk.Misc) -> None:
         widget.config(
             highlightbackground=self.fg,
@@ -193,6 +200,7 @@ class FindWindow(tk.Frame):
     def toggle_in_selection(self, event: tk.Misc) -> None:
         self.find_in_selection = not self.find_in_selection
         self.enter_label(self.in_selection)
+        self.leave_label(self.in_selection)
 
     def get(self) -> str:
         return self.tktext.get("1.0", "end-1c")
