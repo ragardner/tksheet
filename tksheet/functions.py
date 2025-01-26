@@ -651,8 +651,7 @@ def data_to_displayed_idxs(
     to_convert: list[int],
     displayed: list[int],
 ) -> list[int]:
-    data_indexes = set(to_convert)
-    return [i for i, e in enumerate(displayed) if e in data_indexes]
+    return [i for i, e in enumerate(displayed) if bisect_in(to_convert, e)]
 
 
 def displayed_to_data_idxs(
