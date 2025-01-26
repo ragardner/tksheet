@@ -626,8 +626,8 @@ class MainTable(tk.Canvas):
         max_col = len(self.col_positions) - 2
         row, col = selected.row, selected.column
         if plus_one and within:
-            curridx = next((i for i, t in enumerate(within) if t[0] == row and t[1] == col), -1) + 1
-            return row, col, curridx if curridx < len(within) else 0
+            curridx = bisect_left(within, (row, col)) + (1 if not reverse else -1)
+            return row, col, curridx % len(within)
         if plus_one:
             if reverse:
                 if col == 0:
