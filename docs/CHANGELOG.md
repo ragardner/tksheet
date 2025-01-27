@@ -1,5 +1,7 @@
 ### Version 7.3.3
-####
+#### Improved:
+- Find within selection performance + memory
+- Moving rows/columns performance
 
 ### Version 7.3.2
 #### Added:
