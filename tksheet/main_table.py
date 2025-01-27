@@ -67,6 +67,7 @@ from .functions import (
     add_to_displayed,
     b_index,
     bisect_in,
+    box_gen_coords,
     box_is_single_cell,
     cell_right_within_box,
     color_tup,
@@ -578,50 +579,6 @@ class MainTable(tk.Canvas):
                 self.refresh()
         return coords
 
-    def find_gen_all_cells(
-        self,
-        start_row: int,
-        start_col: int,
-        total_cols: int | None = None,
-        reverse: bool = False,
-    ) -> Generator[tuple[int, int]]:
-        if total_cols is None:
-            total_cols = self.total_data_cols(include_header=False)
-        total_rows = self.total_data_rows(include_index=False)
-        if reverse:
-            # yield start cell
-            yield (start_row, start_col)
-            # yield any remaining cells in the starting row before the start column
-            if start_col:
-                for col in reversed(range(start_col)):
-                    yield (start_row, col)
-            # yield any cells above start row
-            for row in reversed(range(start_row)):
-                for col in reversed(range(total_cols)):
-                    yield (row, col)
-            # yield cells from bottom of table upward
-            for row in range(total_rows - 1, start_row, -1):
-                for col in reversed(range(total_cols)):
-                    yield (row, col)
-            # yield any remaining cells in start row
-            for col in range(total_cols - 1, start_col, -1):
-                yield (start_row, col)
-        else:
-            # Yield cells from the start position to the end of the current row
-            for col in range(start_col, total_cols):
-                yield (start_row, col)
-            # yield from the next row to the last row
-            for row in range(start_row + 1, total_rows):
-                for col in range(total_cols):
-                    yield (row, col)
-            # yield from the beginning up to the start
-            for row in range(start_row):
-                for col in range(total_cols):
-                    yield (row, col)
-            # yield any remaining cells in the starting row before the start column
-            for col in range(start_col):
-                yield (start_row, col)
-
     def find_match(self, find: str, r: int, c: int) -> bool:
         return (
             not find
@@ -641,37 +598,50 @@ class MainTable(tk.Canvas):
             c = self.datacn(c)
         return self.find_match(find, r, c)
 
-    def find_within_current_box(self, current_box: SelectionBox, find: str, reverse: bool) -> None | tuple[int, int]:
-        next_cell_r, next_cell_c = next_cell(
+    def find_within_current_box(
+        self,
+        current_box: SelectionBox,
+        find: str,
+        reverse: bool,
+    ) -> None | tuple[int, int]:
+        start_row, start_col = next_cell(
             *current_box.coords,
             self.selected.row,
             self.selected.column,
-            direction=-1 if reverse else 1,
+            reverse=reverse,
         )
-        r1, c1, r2, c2 = current_box.coords
-        if reverse:
-            for r, c in chain(
-                gen_coords(r1, c1, next_cell_r + 1, next_cell_c + 1, reverse=True),
-                gen_coords(next_cell_r, next_cell_c, r2, c2, reverse=True),
-            ):
-                if self.find_within_match(find, r, c):
-                    return (r, c, current_box.fill_iid)
-        else:
-            for r, c in chain(
-                gen_coords(next_cell_r, next_cell_c, r2, c2),
-                gen_coords(r1, c1, next_cell_r, next_cell_c),
-            ):
-                if self.find_within_match(find, r, c):
-                    return (r, c, current_box.fill_iid)
+        _, _, r2, c2 = current_box.coords
+        for r, c in box_gen_coords(start_row, start_col, c2, r2, reverse=reverse):
+            if self.find_within_match(find, r, c):
+                return (r, c, current_box.fill_iid)
         return None
 
-    def find_within_non_current_boxes(self, current_id: int, find: str, reverse: bool) -> None | tuple[int, int]:
-        for item, box in self.get_selection_items(reverse=True):
-            if item == current_id:
-                continue
-            for r, c in gen_coords(*box.coords, reverse=reverse):
-                if self.find_within_match(find, r, c):
-                    return (r, c, item)
+    def find_within_non_current_boxes(
+        self,
+        current_id: int,
+        find: str,
+        reverse: bool,
+    ) -> None | tuple[int, int]:
+        if reverse:
+            # iterate backwards through selection boxes from the box before current
+            idx = next(i for i, k in enumerate(reversed(self.selection_boxes)) if k == current_id)
+            for item, box in chain(
+                islice(reversed(self.selection_boxes.items()), idx + 1, None),
+                islice(reversed(self.selection_boxes.items()), 0, idx),
+            ):
+                for r, c in gen_coords(*box.coords, reverse=reverse):
+                    if self.find_within_match(find, r, c):
+                        return (r, c, item)
+        else:
+            # iterate forwards through selection boxes from the box after current
+            idx = next(i for i, k in enumerate(self.selection_boxes) if k == current_id)
+            for item, box in chain(
+                islice(self.selection_boxes.items(), idx + 1, None),
+                islice(self.selection_boxes.items(), 0, idx),
+            ):
+                for r, c in gen_coords(*box.coords, reverse=reverse):
+                    if self.find_within_match(find, r, c):
+                        return (r, c, item)
         return None
 
     def find_within(
@@ -706,7 +676,7 @@ class MainTable(tk.Canvas):
                 len(self.col_positions) - 1,
                 self.selected.row,
                 self.selected.column,
-                direction=-1 if reverse else 1,
+                reverse=reverse,
             )
         else:
             row, col = 0, 0
@@ -714,10 +684,11 @@ class MainTable(tk.Canvas):
         result = next(
             (
                 (r, c)
-                for r, c in self.find_gen_all_cells(
+                for r, c in box_gen_coords(
                     start_row=row,
                     start_col=col,
                     total_cols=self.total_data_cols(include_header=False),
+                    total_rows=self.total_data_rows(include_index=False),
                     reverse=reverse,
                 )
                 if (

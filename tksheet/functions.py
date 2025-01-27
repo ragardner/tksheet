@@ -742,6 +742,48 @@ def gen_coords(
                 yield (r, c)
 
 
+def box_gen_coords(
+    start_row: int,
+    start_col: int,
+    total_cols: int,
+    total_rows: int,
+    reverse: bool = False,
+) -> Generator[tuple[int, int]]:
+    if reverse:
+        # yield start cell
+        yield (start_row, start_col)
+        # yield any remaining cells in the starting row before the start column
+        if start_col:
+            for col in reversed(range(start_col)):
+                yield (start_row, col)
+        # yield any cells above start row
+        for row in reversed(range(start_row)):
+            for col in reversed(range(total_cols)):
+                yield (row, col)
+        # yield cells from bottom of table upward
+        for row in range(total_rows - 1, start_row, -1):
+            for col in reversed(range(total_cols)):
+                yield (row, col)
+        # yield any remaining cells in start row
+        for col in range(total_cols - 1, start_col, -1):
+            yield (start_row, col)
+    else:
+        # Yield cells from the start position to the end of the current row
+        for col in range(start_col, total_cols):
+            yield (start_row, col)
+        # yield from the next row to the last row
+        for row in range(start_row + 1, total_rows):
+            for col in range(total_cols):
+                yield (row, col)
+        # yield from the beginning up to the start
+        for row in range(start_row):
+            for col in range(total_cols):
+                yield (row, col)
+        # yield any remaining cells in the starting row before the start column
+        for col in range(start_col):
+            yield (start_row, col)
+
+
 def next_cell(
     start_row: int,
     start_col: int,
@@ -749,25 +791,23 @@ def next_cell(
     end_col: int,
     row: int,
     col: int,
-    direction: int = 1,
+    reverse: bool = False,
 ) -> tuple[int, int]:
-    # Calculate new column position
-    col_range = end_col - start_col
-    new_col = (col - start_col + direction) % col_range + start_col
-
-    # If we've moved past the last column or before the first column, adjust the row
-    if new_col == start_col and direction > 0:
-        # Moving forward wraps to next row
-        row_range = end_row - start_row
-        new_row = (row - start_row + 1) % row_range + start_row
-    elif new_col == end_col - 1 and direction < 0:
-        # Moving backward wraps to previous row
-        row_range = end_row - start_row
-        new_row = (row - start_row - 1) % row_range + start_row
+    if reverse:
+        col -= 1
+        if col < start_col:
+            col = end_col - 1
+            row -= 1
+            if row < start_row:
+                row = end_row - 1
     else:
-        new_row = row
-
-    return (new_row, new_col)
+        col += 1
+        if col == end_col:
+            col = start_col
+            row += 1
+            if row == end_row:
+                row = start_row
+    return row, col
 
 
 def is_last_cell(
