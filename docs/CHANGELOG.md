@@ -1,3 +1,6 @@
+### Version 7.3.3
+####
+
 ### Version 7.3.2
 #### Added:
 - Built-in find window, use `enable_bindings("find")` to enable
