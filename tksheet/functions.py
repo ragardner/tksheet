@@ -590,17 +590,8 @@ def move_elements_by_mapping(
     # old_idxs = {new index: old index, ...}
     if old_idxs is None:
         old_idxs = dict(zip(new_idxs.values(), new_idxs))
-
-    res = [0] * len(seq)
-
     remaining_values = (e for i, e in enumerate(seq) if i not in new_idxs)
-    for i in range(len(res)):
-        if i in old_idxs:
-            res[i] = seq[old_idxs[i]]
-        else:
-            res[i] = next(remaining_values)
-
-    return res
+    return [seq[old_idxs[i]] if i in old_idxs else next(remaining_values) for i in range(len(seq))]
 
 
 def move_elements_to(
