@@ -21,6 +21,9 @@ from itertools import islice, repeat
 from typing import Literal
 
 from .colors import color_map
+from .constants import (
+    symbols_set,
+)
 from .formatters import (
     to_bool,
 )
@@ -34,9 +37,6 @@ from .other_classes import (
 )
 from .types import (
     AnyIter,
-)
-from .constants import (
-    symbols_set,
 )
 
 unpickle_obj = pickle.loads
@@ -723,6 +723,65 @@ def diff_gen(seq: list[float]) -> Generator[int]:
             islice(seq, 1, None),
         )
     )
+
+
+def gen_coords(
+    start_row: int,
+    start_col: int,
+    end_row: int,
+    end_col: int,
+    reverse: bool = False,
+) -> Generator[tuple[int, int]]:
+    if reverse:
+        for r in reversed(range(start_row, end_row)):
+            for c in reversed(range(start_col, end_col)):
+                yield (r, c)
+    else:
+        for r in range(start_row, end_row):
+            for c in range(start_col, end_col):
+                yield (r, c)
+
+
+def next_cell(
+    start_row: int,
+    start_col: int,
+    end_row: int,
+    end_col: int,
+    row: int,
+    col: int,
+    direction: int = 1,
+) -> tuple[int, int]:
+    # Calculate new column position
+    col_range = end_col - start_col
+    new_col = (col - start_col + direction) % col_range + start_col
+
+    # If we've moved past the last column or before the first column, adjust the row
+    if new_col == start_col and direction > 0:
+        # Moving forward wraps to next row
+        row_range = end_row - start_row
+        new_row = (row - start_row + 1) % row_range + start_row
+    elif new_col == end_col - 1 and direction < 0:
+        # Moving backward wraps to previous row
+        row_range = end_row - start_row
+        new_row = (row - start_row - 1) % row_range + start_row
+    else:
+        new_row = row
+
+    return (new_row, new_col)
+
+
+def is_last_cell(
+    start_row: int,
+    start_col: int,
+    end_row: int,
+    end_col: int,
+    row: int,
+    col: int,
+    reverse: bool = False,
+) -> bool:
+    if reverse:
+        return row == start_row and col == start_col
+    return row == end_row - 1 and col == end_col - 1
 
 
 def zip_fill_2nd_value(x: AnyIter[object], o: object) -> Generator[object, object]:
