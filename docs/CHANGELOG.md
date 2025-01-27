@@ -1,3 +1,6 @@
+### Version 7.3.4
+####
+
 ### Version 7.3.3
 #### Improved:
 - Find within selection performance + memory
