@@ -1249,25 +1249,24 @@ class MainTable(tk.Canvas):
         event_data["selection_boxes"] = boxes
         if not try_binding(self.extra_begin_delete_key_func, event_data, "begin_delete"):
             return
-        for r1, c1, r2, c2 in boxes:
-            for r in range(r1, r2):
-                for c in range(c1, c2):
-                    datarn, datacn = self.datarn(r), self.datacn(c)
-                    val = self.get_value_for_empty_cell(datarn, datacn)
-                    if (
-                        not self.edit_validation_func
-                        or not validation
-                        or (
-                            self.edit_validation_func
-                            and (val := self.edit_validation_func(mod_event_val(event_data, val, (r, c)))) is not None
-                        )
-                    ):
-                        event_data = self.event_data_set_cell(
-                            datarn,
-                            datacn,
-                            val,
-                            event_data,
-                        )
+        for box in boxes:
+            for r, c in gen_coords(*box):
+                datarn, datacn = self.datarn(r), self.datacn(c)
+                val = self.get_value_for_empty_cell(datarn, datacn)
+                if (
+                    not self.edit_validation_func
+                    or not validation
+                    or (
+                        self.edit_validation_func
+                        and (val := self.edit_validation_func(mod_event_val(event_data, val, (r, c)))) is not None
+                    )
+                ):
+                    event_data = self.event_data_set_cell(
+                        datarn,
+                        datacn,
+                        val,
+                        event_data,
+                    )
         if event_data["cells"]["table"]:
             self.refresh()
             self.undo_stack.append(stored_event_dict(event_data))
