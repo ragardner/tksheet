@@ -1,5 +1,6 @@
 ### Version 7.3.4
-####
+#### Fixed:
+- Error on find within selection without a selection
 
 ### Version 7.3.3
 #### Improved:

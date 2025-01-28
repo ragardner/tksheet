@@ -649,6 +649,8 @@ class MainTable(tk.Canvas):
         find: str,
         reverse: bool = False,
     ) -> tuple[int, int, int] | None:
+        if not self.selected:
+            return None
         current_box = self.selection_boxes[self.selected.fill_iid]
         current_id = self.selected.fill_iid
         if is_last_cell(*current_box.coords, self.selected.row, self.selected.column, reverse=reverse):
