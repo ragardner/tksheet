@@ -29,8 +29,5 @@ classifiers = [
 "Bug Reports" = "https://github.com/ragardner/tksheet/issues"
 "Funding" = "https://github.com/ragardner"
 
-[tool.black]
-line-length = 120
-
 [tool.ruff]
 line-length = 120
