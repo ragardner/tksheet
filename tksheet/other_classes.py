@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import pickle
+import tkinter as tk
 from collections import namedtuple
 from collections.abc import Callable, Generator, Hashable, Iterator
 from functools import partial
 from typing import Literal
-import tkinter as tk
 
 pickle_obj = partial(pickle.dumps, protocol=pickle.HIGHEST_PROTOCOL)
 

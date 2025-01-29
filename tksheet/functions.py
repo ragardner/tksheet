@@ -5,39 +5,17 @@ import io
 import pickle
 import re
 import tkinter as tk
-from bisect import (
-    bisect_left,
-)
+from bisect import bisect_left
 from collections import deque
-from collections.abc import (
-    Callable,
-    Generator,
-    Hashable,
-    Iterable,
-    Iterator,
-    Sequence,
-)
+from collections.abc import Callable, Generator, Hashable, Iterable, Iterator, Sequence
 from itertools import islice, repeat
 from typing import Literal
 
 from .colors import color_map
-from .constants import (
-    symbols_set,
-)
-from .formatters import (
-    to_bool,
-)
-from .other_classes import (
-    Box_nt,
-    DotDict,
-    EventDataDict,
-    Highlight,
-    Loc,
-    Span,
-)
-from .types import (
-    AnyIter,
-)
+from .constants import symbols_set
+from .formatters import to_bool
+from .other_classes import Box_nt, DotDict, EventDataDict, Highlight, Loc, Span
+from .types import AnyIter
 
 unpickle_obj = pickle.loads
 

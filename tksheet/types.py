@@ -1,14 +1,9 @@
 from __future__ import annotations
 
-from collections.abc import (
-    Iterable,
-    Iterator,
-)
+from collections.abc import Iterable, Iterator
 from typing import Tuple, Union
 
-from .other_classes import (
-    Span,
-)
+from .other_classes import Span
 
 CreateSpanTypes = Union[
     Tuple[()],

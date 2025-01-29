@@ -1,21 +1,12 @@
 from __future__ import annotations
 
 import tkinter as tk
-from collections.abc import (
-    Callable,
-)
+from collections.abc import Callable
 from typing import Literal
 
-from .other_classes import (
-    DotDict,
-)
-from .constants import (
-    ctrl_key,
-    rc_binding,
-)
-from .functions import (
-    recursive_bind,
-)
+from .constants import ctrl_key, rc_binding
+from .functions import recursive_bind
+from .other_classes import DotDict
 
 
 class FindWindowTkText(tk.Text):

@@ -3,42 +3,17 @@ from __future__ import annotations
 import csv as csv
 import io
 import tkinter as tk
-from bisect import (
-    bisect_left,
-    bisect_right,
-)
-from collections import (
-    defaultdict,
-    deque,
-)
-from collections.abc import (
-    Callable,
-    Generator,
-    Hashable,
-    Sequence,
-)
-from functools import (
-    partial,
-)
-from itertools import (
-    accumulate,
-    chain,
-    cycle,
-    filterfalse,
-    islice,
-    repeat,
-)
-from math import (
-    ceil,
-    floor,
-)
+from bisect import bisect_left, bisect_right
+from collections import defaultdict, deque
+from collections.abc import Callable, Generator, Hashable, Sequence
+from functools import partial
+from itertools import accumulate, chain, cycle, filterfalse, islice, repeat
+from math import ceil, floor
 from operator import itemgetter
 from tkinter import TclError
 from typing import Literal
 
-from .colors import (
-    color_map,
-)
+from .colors import color_map
 from .constants import (
     USER_OS,
     bind_add_columns,
@@ -52,9 +27,7 @@ from .constants import (
     text_editor_to_unbind,
     val_modifying_options,
 )
-from .find_window import (
-    FindWindow,
-)
+from .find_window import FindWindow
 from .formatters import (
     data_to_str,
     format_data,
@@ -119,12 +92,8 @@ from .other_classes import (
     SelectionBox,
     TextEditorStorage,
 )
-from .text_editor import (
-    TextEditor,
-)
-from .types import (
-    AnyIter,
-)
+from .text_editor import TextEditor
+from .types import AnyIter
 
 
 class MainTable(tk.Canvas):

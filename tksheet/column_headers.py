@@ -2,27 +2,14 @@ from __future__ import annotations
 
 import tkinter as tk
 from collections import defaultdict
-from collections.abc import (
-    Hashable,
-    Sequence,
-)
-from functools import (
-    partial,
-)
-from itertools import (
-    cycle,
-    islice,
-    repeat,
-)
+from collections.abc import Hashable, Sequence
+from functools import partial
+from itertools import cycle, islice, repeat
 from math import ceil, floor
-from operator import (
-    itemgetter,
-)
+from operator import itemgetter
 from typing import Literal
 
-from .colors import (
-    color_map,
-)
+from .colors import color_map
 from .constants import (
     USER_OS,
     rc_binding,
@@ -44,18 +31,9 @@ from .functions import (
     stored_event_dict,
     try_binding,
 )
-from .other_classes import (
-    DotDict,
-    DraggedRowColumn,
-    DropdownStorage,
-    TextEditorStorage,
-)
-from .text_editor import (
-    TextEditor,
-)
-from .types import (
-    AnyIter,
-)
+from .other_classes import DotDict, DraggedRowColumn, DropdownStorage, TextEditorStorage
+from .text_editor import TextEditor
+from .types import AnyIter
 
 
 class ColumnHeaders(tk.Canvas):

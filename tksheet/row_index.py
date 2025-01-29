@@ -2,42 +2,16 @@ from __future__ import annotations
 
 import tkinter as tk
 from collections import defaultdict
-from collections.abc import (
-    Generator,
-    Hashable,
-    Sequence,
-)
-from functools import (
-    partial,
-)
-from itertools import (
-    chain,
-    cycle,
-    islice,
-    repeat,
-)
-from math import (
-    ceil,
-    floor,
-)
-from operator import (
-    itemgetter,
-)
+from collections.abc import Generator, Hashable, Sequence
+from functools import partial
+from itertools import chain, cycle, islice, repeat
+from math import ceil, floor
+from operator import itemgetter
 from typing import Literal
 
-from .colors import (
-    color_map,
-)
-from .constants import (
-    rc_binding,
-    text_editor_close_bindings,
-    text_editor_newline_bindings,
-    text_editor_to_unbind,
-)
-from .formatters import (
-    is_bool_like,
-    try_to_bool,
-)
+from .colors import color_map
+from .constants import rc_binding, text_editor_close_bindings, text_editor_newline_bindings, text_editor_to_unbind
+from .formatters import is_bool_like, try_to_bool
 from .functions import (
     consecutive_chunks,
     consecutive_ranges,
@@ -53,19 +27,9 @@ from .functions import (
     stored_event_dict,
     try_binding,
 )
-from .other_classes import (
-    DotDict,
-    DraggedRowColumn,
-    DropdownStorage,
-    Node,
-    TextEditorStorage,
-)
-from .text_editor import (
-    TextEditor,
-)
-from .types import (
-    AnyIter,
-)
+from .other_classes import DotDict, DraggedRowColumn, DropdownStorage, Node, TextEditorStorage
+from .text_editor import TextEditor
+from .types import AnyIter
 
 
 class RowIndex(tk.Canvas):

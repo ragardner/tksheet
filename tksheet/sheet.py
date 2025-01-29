@@ -3,28 +3,23 @@ from __future__ import annotations
 import tkinter as tk
 from bisect import bisect_left
 from collections import defaultdict, deque
-from collections.abc import (
-    Callable,
-    Generator,
-    Hashable,
-    Iterator,
-    Sequence,
-)
+from collections.abc import Callable, Generator, Hashable, Iterator, Sequence
 from functools import partial
-from itertools import (
-    accumulate,
-    chain,
-    filterfalse,
-    islice,
-    product,
-    repeat,
-)
+from itertools import accumulate, chain, filterfalse, islice, product, repeat
 from operator import attrgetter
 from timeit import default_timer
 from tkinter import ttk
 from typing import Literal
 
 from .column_headers import ColumnHeaders
+from .constants import (
+    USER_OS,
+    backwards_compatibility_keys,
+    emitted_events,
+    named_span_types,
+    rc_binding,
+    scrollbar_options_keys,
+)
 from .functions import (
     add_highlight,
     add_to_options,
@@ -48,12 +43,12 @@ from .functions import (
     key_to_span,
     new_tk_event,
     num2alpha,
-    stored_event_dict,
     pop_positions,
     set_align,
     set_readonly,
     span_froms,
     span_ranges,
+    stored_event_dict,
     tksheet_type_error,
     unpack,
 )
@@ -70,30 +65,10 @@ from .other_classes import (
     Span,
 )
 from .row_index import RowIndex
-from .sheet_options import (
-    new_sheet_options,
-)
-from .themes import (
-    theme_black,
-    theme_dark,
-    theme_dark_blue,
-    theme_dark_green,
-    theme_light_blue,
-    theme_light_green,
-)
+from .sheet_options import new_sheet_options
+from .themes import theme_black, theme_dark, theme_dark_blue, theme_dark_green, theme_light_blue, theme_light_green
 from .top_left_rectangle import TopLeftRectangle
-from .types import (
-    AnyIter,
-    CreateSpanTypes,
-)
-from .constants import (
-    USER_OS,
-    backwards_compatibility_keys,
-    emitted_events,
-    named_span_types,
-    rc_binding,
-    scrollbar_options_keys,
-)
+from .types import AnyIter, CreateSpanTypes
 
 
 class Sheet(tk.Frame):

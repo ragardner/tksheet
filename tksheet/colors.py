@@ -10,7 +10,7 @@ color_map: dict[str, str] = {
     "ANTIQUE WHITE": "#FAEBD7",
     "AntiqueWhite": "#FAEBD7",
     "antiquewhite": "#FAEBD7",
-    "#" "ANTIQUEWHITE": "#FAEBD7",
+    "#ANTIQUEWHITE": "#FAEBD7",
     "AntiqueWhite1": "#FFEFDB",
     "antiquewhite1": "#FFEFDB",
     "ANTIQUEWHITE1": "#FFEFDB",

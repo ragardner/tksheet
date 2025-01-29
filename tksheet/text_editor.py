@@ -4,16 +4,9 @@ import tkinter as tk
 from collections.abc import Callable
 from typing import Literal
 
-from .functions import (
-    convert_align,
-)
-from .other_classes import (
-    DotDict,
-)
-from .constants import (
-    ctrl_key,
-    rc_binding,
-)
+from .constants import ctrl_key, rc_binding
+from .functions import convert_align
+from .other_classes import DotDict
 
 
 class TextEditorTkText(tk.Text):

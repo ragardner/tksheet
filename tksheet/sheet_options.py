@@ -1,16 +1,8 @@
 from __future__ import annotations
 
-from .other_classes import (
-    DotDict,
-    FontTuple,
-)
-from .themes import (
-    theme_light_blue,
-)
-from .constants import (
-    USER_OS,
-    ctrl_key,
-)
+from .constants import USER_OS, ctrl_key
+from .other_classes import DotDict, FontTuple
+from .themes import theme_light_blue
 
 
 def new_sheet_options() -> DotDict:
