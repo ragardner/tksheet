@@ -5462,7 +5462,7 @@ class MainTable(tk.Canvas):
         can_width: int | None,
         dont_blend: bool,
         alternate_color: Highlight | None,
-    ) -> str:
+    ) -> tuple[str, bool]:
         redrawn = False
         if (datarn, datacn) in self.progress_bars:
             kwargs = self.progress_bars[(datarn, datacn)]
