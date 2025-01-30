@@ -5628,6 +5628,7 @@ class MainTable(tk.Canvas):
                     joinstyle=tk.ROUND,
                     state="normal",
                 )
+            self.tag_raise(iid)
         else:
             iid = self.create_line(
                 points,
@@ -5902,72 +5903,6 @@ class MainTable(tk.Canvas):
         self.disp_checkbox = {}
         x_stop = min(last_col_line_pos, scrollpos_right)
         y_stop = min(last_row_line_pos, scrollpos_bot)
-        # manage horizontal grid lines
-        if redraw_table and self.PAR.ops.show_horizontal_grid and row_pos_exists:
-            if self.PAR.ops.horizontal_grid_to_end_of_window:
-                x_grid_stop = scrollpos_right + can_width
-            else:
-                if last_col_line_pos > scrollpos_right:
-                    x_grid_stop = x_stop + 1
-                else:
-                    x_grid_stop = x_stop - 1
-            points = tuple(
-                chain.from_iterable(
-                    [
-                        (
-                            scrollpos_left - 1,
-                            self.row_positions[r],
-                            x_grid_stop,
-                            self.row_positions[r],
-                            scrollpos_left - 1,
-                            self.row_positions[r],
-                            scrollpos_left - 1,
-                            self.row_positions[r + 1] if len(self.row_positions) - 1 > r else self.row_positions[r],
-                        )
-                        for r in range(grid_start_row, grid_end_row)
-                    ]
-                )
-            )
-            if points:
-                self.redraw_gridline(
-                    points=points,
-                    fill=self.PAR.ops.table_grid_fg,
-                    width=1,
-                    tag="g",
-                )
-        # manage vertical grid lines
-        if redraw_table and self.PAR.ops.show_vertical_grid and col_pos_exists:
-            if self.PAR.ops.vertical_grid_to_end_of_window:
-                y_grid_stop = scrollpos_bot + can_height
-            else:
-                if last_row_line_pos > scrollpos_bot:
-                    y_grid_stop = y_stop + 1
-                else:
-                    y_grid_stop = y_stop - 1
-            points = tuple(
-                chain.from_iterable(
-                    [
-                        (
-                            self.col_positions[c],
-                            scrollpos_top - 1,
-                            self.col_positions[c],
-                            y_grid_stop,
-                            self.col_positions[c],
-                            scrollpos_top - 1,
-                            self.col_positions[c + 1] if len(self.col_positions) - 1 > c else self.col_positions[c],
-                            scrollpos_top - 1,
-                        )
-                        for c in range(grid_start_col, grid_end_col)
-                    ]
-                )
-            )
-            if points:
-                self.redraw_gridline(
-                    points=points,
-                    fill=self.PAR.ops.table_grid_fg,
-                    width=1,
-                    tag="g",
-                )
         if redraw_table:
             font = self.PAR.ops.table_font
             dd_coords = self.dropdown.get_coords()
@@ -6162,7 +6097,72 @@ class MainTable(tk.Canvas):
                             draw_y += self.table_xtra_lines_increment
                             if draw_y + self.table_half_txt_height - 1 > rbotgridln:
                                 break
-            self.tag_raise("g")
+            # manage horizontal grid lines
+            if self.PAR.ops.show_horizontal_grid and row_pos_exists:
+                if self.PAR.ops.horizontal_grid_to_end_of_window:
+                    x_grid_stop = scrollpos_right + can_width
+                else:
+                    if last_col_line_pos > scrollpos_right:
+                        x_grid_stop = x_stop + 1
+                    else:
+                        x_grid_stop = x_stop - 1
+                points = tuple(
+                    chain.from_iterable(
+                        [
+                            (
+                                scrollpos_left - 1,
+                                self.row_positions[r],
+                                x_grid_stop,
+                                self.row_positions[r],
+                                scrollpos_left - 1,
+                                self.row_positions[r],
+                                scrollpos_left - 1,
+                                self.row_positions[r + 1] if len(self.row_positions) - 1 > r else self.row_positions[r],
+                            )
+                            for r in range(grid_start_row, grid_end_row)
+                        ]
+                    )
+                )
+                if points:
+                    self.redraw_gridline(
+                        points=points,
+                        fill=self.PAR.ops.table_grid_fg,
+                        width=1,
+                        tag="g",
+                    )
+            # manage vertical grid lines
+            if self.PAR.ops.show_vertical_grid and col_pos_exists:
+                if self.PAR.ops.vertical_grid_to_end_of_window:
+                    y_grid_stop = scrollpos_bot + can_height
+                else:
+                    if last_row_line_pos > scrollpos_bot:
+                        y_grid_stop = y_stop + 1
+                    else:
+                        y_grid_stop = y_stop - 1
+                points = tuple(
+                    chain.from_iterable(
+                        [
+                            (
+                                self.col_positions[c],
+                                scrollpos_top - 1,
+                                self.col_positions[c],
+                                y_grid_stop,
+                                self.col_positions[c],
+                                scrollpos_top - 1,
+                                self.col_positions[c + 1] if len(self.col_positions) - 1 > c else self.col_positions[c],
+                                scrollpos_top - 1,
+                            )
+                            for c in range(grid_start_col, grid_end_col)
+                        ]
+                    )
+                )
+                if points:
+                    self.redraw_gridline(
+                        points=points,
+                        fill=self.PAR.ops.table_grid_fg,
+                        width=1,
+                        tag="g",
+                    )
             for dct in (
                 self.hidd_text,
                 self.hidd_high,
@@ -6180,6 +6180,10 @@ class MainTable(tk.Canvas):
                         self.tag_raise(box.bd_iid)
                 if self.selected:
                     self.tag_raise(self.selected.iid)
+            if self.RI.disp_resize_lines:
+                self.tag_raise("rh")
+            if self.CH.disp_resize_lines:
+                self.tag_raise("rw")
         if redraw_header and self.show_header:
             self.CH.redraw_grid_and_text(
                 last_col_line_pos=last_col_line_pos,

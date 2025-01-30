@@ -442,9 +442,9 @@ class ColumnHeaders(tk.Canvas):
                 self.current_height,
                 width=1,
                 fill=self.PAR.ops.resizing_line_fg,
-                tag="rwl",
+                tag=("rw", "rwl"),
             )
-            self.MT.create_resize_line(x, y1, x, y2, width=1, fill=self.PAR.ops.resizing_line_fg, tag="rwl")
+            self.MT.create_resize_line(x, y1, x, y2, width=1, fill=self.PAR.ops.resizing_line_fg, tag=("rw", "rwl"))
             self.create_resize_line(
                 line2x,
                 0,
@@ -452,9 +452,11 @@ class ColumnHeaders(tk.Canvas):
                 self.current_height,
                 width=1,
                 fill=self.PAR.ops.resizing_line_fg,
-                tag="rwl2",
+                tag=("rw", "rwl2"),
             )
-            self.MT.create_resize_line(line2x, y1, line2x, y2, width=1, fill=self.PAR.ops.resizing_line_fg, tag="rwl2")
+            self.MT.create_resize_line(
+                line2x, y1, line2x, y2, width=1, fill=self.PAR.ops.resizing_line_fg, tag=("rw", "rwl2")
+            )
         elif self.height_resizing_enabled and self.rsz_w is None and self.rsz_h is not None:
             self.currently_resizing_height = True
         elif self.MT.identify_col(x=event.x, allow_end=False) is None:
@@ -494,9 +496,9 @@ class ColumnHeaders(tk.Canvas):
                     self.current_height,
                     width=1,
                     fill=self.PAR.ops.resizing_line_fg,
-                    tag="rwl",
+                    tag=("rw", "rwl"),
                 )
-                self.MT.create_resize_line(x, y1, x, y2, width=1, fill=self.PAR.ops.resizing_line_fg, tag="rwl")
+                self.MT.create_resize_line(x, y1, x, y2, width=1, fill=self.PAR.ops.resizing_line_fg, tag=("rw", "rwl"))
                 self.create_resize_line(
                     line2x,
                     0,
@@ -504,7 +506,7 @@ class ColumnHeaders(tk.Canvas):
                     self.current_height,
                     width=1,
                     fill=self.PAR.ops.resizing_line_fg,
-                    tag="rwl2",
+                    tag=("rw", "rwl2"),
                 )
                 self.MT.create_resize_line(
                     line2x,
@@ -513,7 +515,7 @@ class ColumnHeaders(tk.Canvas):
                     y2,
                     width=1,
                     fill=self.PAR.ops.resizing_line_fg,
-                    tag="rwl2",
+                    tag=("rw", "rwl2"),
                 )
                 self.drag_width_resize()
         elif self.height_resizing_enabled and self.rsz_h is not None and self.currently_resizing_height:
@@ -1270,6 +1272,7 @@ class ColumnHeaders(tk.Canvas):
             else:
                 self.itemconfig(t, fill=fill, width=width, tag=tag, state="normal")
             self.disp_grid[t] = True
+            self.tag_raise(t)
         else:
             self.disp_grid[self.create_line(points, fill=fill, width=width, tag=tag)] = True
 
@@ -1416,33 +1419,6 @@ class ColumnHeaders(tk.Canvas):
             x_stop,
             self.current_height,
         )
-        yend = self.current_height - 5
-        if (self.PAR.ops.show_vertical_grid or self.width_resizing_enabled) and col_pos_exists:
-            points = [
-                x_stop - 1,
-                self.current_height - 1,
-                scrollpos_left - 1,
-                self.current_height - 1,
-                scrollpos_left - 1,
-                -1,
-            ]
-            for c in range(grid_start_col, grid_end_col):
-                draw_x = self.MT.col_positions[c]
-                if c and self.width_resizing_enabled:
-                    self.visible_col_dividers[c] = (draw_x - 2, 1, draw_x + 2, yend)
-                points.extend(
-                    (
-                        draw_x,
-                        -1,
-                        draw_x,
-                        self.current_height,
-                        draw_x,
-                        -1,
-                        self.MT.col_positions[c + 1] if len(self.MT.col_positions) - 1 > c else draw_x,
-                        -1,
-                    )
-                )
-            self.redraw_gridline(points=points, fill=self.PAR.ops.header_grid_fg, width=1, tag="v")
         top = self.canvasy(0)
         sel_cols_bg = (
             self.PAR.ops.header_selected_cells_bg
@@ -1613,11 +1589,40 @@ class ColumnHeaders(tk.Canvas):
                 draw_y += self.MT.header_xtra_lines_increment
                 if draw_y - 1 > self.current_height:
                     break
+        yend = self.current_height - 5
+        if (self.PAR.ops.show_vertical_grid or self.width_resizing_enabled) and col_pos_exists:
+            points = [
+                x_stop - 1,
+                self.current_height - 1,
+                scrollpos_left - 1,
+                self.current_height - 1,
+                scrollpos_left - 1,
+                -1,
+            ]
+            for c in range(grid_start_col, grid_end_col):
+                draw_x = self.MT.col_positions[c]
+                if c and self.width_resizing_enabled:
+                    self.visible_col_dividers[c] = (draw_x - 2, 1, draw_x + 2, yend)
+                points.extend(
+                    (
+                        draw_x,
+                        -1,
+                        draw_x,
+                        self.current_height,
+                        draw_x,
+                        -1,
+                        self.MT.col_positions[c + 1] if len(self.MT.col_positions) - 1 > c else draw_x,
+                        -1,
+                    )
+                )
+            self.redraw_gridline(points=points, fill=self.PAR.ops.header_grid_fg, width=1, tag="v")
         for dct in (self.hidd_text, self.hidd_high, self.hidd_grid, self.hidd_dropdown, self.hidd_checkbox):
             for iid, showing in dct.items():
                 if showing:
                     self.itemconfig(iid, state="hidden")
                     dct[iid] = False
+        if self.disp_resize_lines:
+            self.tag_raise("rw")
         return True
 
     def get_redraw_selections(self, startc: int, endc: int) -> dict[str, set[int]]:

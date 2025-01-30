@@ -436,9 +436,9 @@ class RowIndex(tk.Canvas):
                 y,
                 width=1,
                 fill=self.PAR.ops.resizing_line_fg,
-                tag="rhl",
+                tag=("rh", "rhl"),
             )
-            self.MT.create_resize_line(x1, y, x2, y, width=1, fill=self.PAR.ops.resizing_line_fg, tag="rhl")
+            self.MT.create_resize_line(x1, y, x2, y, width=1, fill=self.PAR.ops.resizing_line_fg, tag=("rh", "rhl"))
             self.create_resize_line(
                 0,
                 line2y,
@@ -446,9 +446,11 @@ class RowIndex(tk.Canvas):
                 line2y,
                 width=1,
                 fill=self.PAR.ops.resizing_line_fg,
-                tag="rhl2",
+                tag=("rh", "rhl2"),
             )
-            self.MT.create_resize_line(x1, line2y, x2, line2y, width=1, fill=self.PAR.ops.resizing_line_fg, tag="rhl2")
+            self.MT.create_resize_line(
+                x1, line2y, x2, line2y, width=1, fill=self.PAR.ops.resizing_line_fg, tag=("rh", "rhl2")
+            )
         elif self.width_resizing_enabled and self.rsz_h is None and self.rsz_w is True:
             self.currently_resizing_width = True
         elif self.MT.identify_row(y=event.y, allow_end=False) is None:
@@ -489,9 +491,9 @@ class RowIndex(tk.Canvas):
                     y,
                     width=1,
                     fill=self.PAR.ops.resizing_line_fg,
-                    tag="rhl",
+                    tag=("rh", "rhl"),
                 )
-                self.MT.create_resize_line(x1, y, x2, y, width=1, fill=self.PAR.ops.resizing_line_fg, tag="rhl")
+                self.MT.create_resize_line(x1, y, x2, y, width=1, fill=self.PAR.ops.resizing_line_fg, tag=("rh", "rhl"))
                 self.create_resize_line(
                     0,
                     line2y,
@@ -499,7 +501,7 @@ class RowIndex(tk.Canvas):
                     line2y,
                     width=1,
                     fill=self.PAR.ops.resizing_line_fg,
-                    tag="rhl2",
+                    tag=("rh", "rhl2"),
                 )
                 self.MT.create_resize_line(
                     x1,
@@ -508,7 +510,7 @@ class RowIndex(tk.Canvas):
                     line2y,
                     width=1,
                     fill=self.PAR.ops.resizing_line_fg,
-                    tag="rhl2",
+                    tag=("rh", "rhl2"),
                 )
                 self.drag_height_resize()
         elif self.width_resizing_enabled and self.rsz_w is not None and self.currently_resizing_width:
@@ -1527,39 +1529,12 @@ class RowIndex(tk.Canvas):
         self.hidd_tree_arrow.update(self.disp_tree_arrow)
         self.disp_tree_arrow = {}
         self.visible_row_dividers = {}
-        xend = self.current_width - 6
         self.row_width_resize_bbox = (
             self.current_width - 2,
             scrollpos_top,
             self.current_width,
             scrollpos_bot,
         )
-        if (self.PAR.ops.show_horizontal_grid or self.height_resizing_enabled) and row_pos_exists:
-            points = [
-                self.current_width - 1,
-                y_stop - 1,
-                self.current_width - 1,
-                scrollpos_top - 1,
-                -1,
-                scrollpos_top - 1,
-            ]
-            for r in range(grid_start_row, grid_end_row):
-                draw_y = self.MT.row_positions[r]
-                if r and self.height_resizing_enabled:
-                    self.visible_row_dividers[r] = (1, draw_y - 2, xend, draw_y + 2)
-                points.extend(
-                    (
-                        -1,
-                        draw_y,
-                        self.current_width,
-                        draw_y,
-                        -1,
-                        draw_y,
-                        -1,
-                        self.MT.row_positions[r + 1] if len(self.MT.row_positions) - 1 > r else draw_y,
-                    )
-                )
-            self.redraw_gridline(points=points, fill=self.PAR.ops.index_grid_fg, width=1, tag="h")
         sel_cells_bg = (
             self.PAR.ops.index_selected_cells_bg
             if self.PAR.ops.index_selected_cells_bg.startswith("#")
@@ -1753,6 +1728,33 @@ class RowIndex(tk.Canvas):
                 draw_y += self.MT.index_xtra_lines_increment
                 if draw_y + self.MT.index_half_txt_height - 1 > rbotgridln:
                     break
+        xend = self.current_width - 6
+        if (self.PAR.ops.show_horizontal_grid or self.height_resizing_enabled) and row_pos_exists:
+            points = [
+                self.current_width - 1,
+                y_stop - 1,
+                self.current_width - 1,
+                scrollpos_top - 1,
+                -1,
+                scrollpos_top - 1,
+            ]
+            for r in range(grid_start_row, grid_end_row):
+                draw_y = self.MT.row_positions[r]
+                if r and self.height_resizing_enabled:
+                    self.visible_row_dividers[r] = (1, draw_y - 2, xend, draw_y + 2)
+                points.extend(
+                    (
+                        -1,
+                        draw_y,
+                        self.current_width,
+                        draw_y,
+                        -1,
+                        draw_y,
+                        -1,
+                        self.MT.row_positions[r + 1] if len(self.MT.row_positions) - 1 > r else draw_y,
+                    )
+                )
+            self.redraw_gridline(points=points, fill=self.PAR.ops.index_grid_fg, width=1, tag="h")
         for dct in (
             self.hidd_text,
             self.hidd_high,
@@ -1765,6 +1767,8 @@ class RowIndex(tk.Canvas):
                 if showing:
                     self.itemconfig(iid, state="hidden")
                     dct[iid] = False
+        if self.disp_resize_lines:
+            self.tag_raise("rh")
         return True
 
     def get_redraw_selections(self, startr: int, endr: int) -> dict[str, set[int]]:
