@@ -5900,14 +5900,8 @@ class MainTable(tk.Canvas):
         self.disp_dropdown = {}
         self.hidd_checkbox.update(self.disp_checkbox)
         self.disp_checkbox = {}
-        if last_col_line_pos > scrollpos_right:
-            x_stop = scrollpos_right
-        else:
-            x_stop = last_col_line_pos
-        if last_row_line_pos > scrollpos_bot:
-            y_stop = scrollpos_bot
-        else:
-            y_stop = last_row_line_pos
+        x_stop = min(last_col_line_pos, scrollpos_right)
+        y_stop = min(last_row_line_pos, scrollpos_bot)
         # manage horizontal grid lines
         if redraw_table and self.PAR.ops.show_horizontal_grid and row_pos_exists:
             if self.PAR.ops.horizontal_grid_to_end_of_window:

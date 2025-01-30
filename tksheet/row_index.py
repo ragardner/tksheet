@@ -1272,6 +1272,7 @@ class RowIndex(tk.Canvas):
                 self.itemconfig(iid, fill=fill, outline=outline)
             else:
                 self.itemconfig(iid, fill=fill, outline=outline, tag=tag, state="normal")
+            self.tag_raise(iid)
         else:
             iid = self.create_rectangle(coords, fill=fill, outline=outline, tag=tag)
         self.disp_high[iid] = True
