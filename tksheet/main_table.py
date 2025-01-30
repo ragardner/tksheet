@@ -5595,6 +5595,7 @@ class MainTable(tk.Canvas):
                 self.itemconfig(iid, fill=fill, outline=outline)
             else:
                 self.itemconfig(iid, fill=fill, outline=outline, state="normal")
+            self.tag_raise(iid)
         else:
             iid = self.create_rectangle(coords, fill=fill, outline=outline)
         self.disp_high[iid] = True
