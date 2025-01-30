@@ -7366,7 +7366,7 @@ class MainTable(tk.Canvas):
             self.itemconfig(self.dropdown.canvas_id, state="normal", anchor=anchor)
             self.dropdown.window.tkraise()
         else:
-            self.dropdown.window = self.PAR.dropdown_class(
+            self.dropdown.window = self.PAR._dropdown_cls(
                 self.winfo_toplevel(),
                 **reset_kwargs,
                 close_dropdown_window=self.close_dropdown_window,

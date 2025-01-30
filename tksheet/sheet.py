@@ -313,7 +313,7 @@ class Sheet(tk.Frame):
         self.name = name
         self.last_event_data = EventDataDict()
         self.bound_events = DotDict({k: [] for k in emitted_events})
-        self.dropdown_class = Dropdown
+        self._dropdown_cls = Dropdown
         self.after_redraw_id = None
         self.after_redraw_time_ms = after_redraw_time_ms
         self.named_span_id = 0

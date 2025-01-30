@@ -2027,7 +2027,7 @@ class ColumnHeaders(tk.Canvas):
             self.coords(self.dropdown.canvas_id, self.MT.col_positions[c], ypos)
             self.dropdown.window.tkraise()
         else:
-            self.dropdown.window = self.PAR.dropdown_class(
+            self.dropdown.window = self.PAR._dropdown_cls(
                 self.winfo_toplevel(),
                 **reset_kwargs,
                 single_index="c",
