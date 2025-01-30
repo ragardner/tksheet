@@ -2164,7 +2164,7 @@ class RowIndex(tk.Canvas):
             self.coords(self.dropdown.canvas_id, 0, ypos)
             self.dropdown.window.tkraise()
         else:
-            self.dropdown.window = self.PAR.dropdown_class(
+            self.dropdown.window = self.PAR._dropdown_cls(
                 self.winfo_toplevel(),
                 **reset_kwargs,
                 single_index="r",
