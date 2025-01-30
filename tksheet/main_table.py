@@ -5911,7 +5911,7 @@ class MainTable(tk.Canvas):
                     x_grid_stop = x_stop + 1
                 else:
                     x_grid_stop = x_stop - 1
-            points = list(
+            points = tuple(
                 chain.from_iterable(
                     [
                         (
@@ -5944,7 +5944,7 @@ class MainTable(tk.Canvas):
                     y_grid_stop = y_stop + 1
                 else:
                     y_grid_stop = y_stop - 1
-            points = list(
+            points = tuple(
                 chain.from_iterable(
                     [
                         (
@@ -6162,7 +6162,7 @@ class MainTable(tk.Canvas):
                             draw_y += self.table_xtra_lines_increment
                             if draw_y + self.table_half_txt_height - 1 > rbotgridln:
                                 break
-        if redraw_table:
+            self.tag_raise("g")
             for dct in (
                 self.hidd_text,
                 self.hidd_high,
