@@ -5545,7 +5545,6 @@ class MainTable(tk.Canvas):
                         if self.get_cell_kwargs(datarn, datacn, key="dropdown") and self.PAR.ops.show_dropdown_borders
                         else ""
                     ),
-                    tag="hi",
                 )
                 if isinstance(kwargs, ProgressBar):
                     if kwargs.del_when_done and kwargs.percent >= 100:
@@ -5571,7 +5570,17 @@ class MainTable(tk.Canvas):
                 txtfg = self.PAR.ops.table_fg
         return txtfg, redrawn
 
-    def redraw_highlight(self, x1, y1, x2, y2, fill, outline, tag, can_width=None, pc=None):
+    def redraw_highlight(
+        self,
+        x1: int | float,
+        y1: int | float,
+        x2: int | float,
+        y2: int | float,
+        fill: str,
+        outline: str,
+        can_width: None | float = None,
+        pc: None | float = None,
+    ) -> bool:
         if not is_type_int(pc) or pc >= 100:
             coords = (
                 x1 - 1 if outline else x1,
@@ -5589,19 +5598,19 @@ class MainTable(tk.Canvas):
             if showing:
                 self.itemconfig(iid, fill=fill, outline=outline)
             else:
-                self.itemconfig(iid, fill=fill, outline=outline, tag=tag, state="normal")
+                self.itemconfig(iid, fill=fill, outline=outline, state="normal")
         else:
-            iid = self.create_rectangle(coords, fill=fill, outline=outline, tag=tag)
+            iid = self.create_rectangle(coords, fill=fill, outline=outline)
         self.disp_high[iid] = True
         return True
 
     def redraw_gridline(
         self,
-        points,
-        fill,
-        width,
-        tag,
-    ):
+        points: list[float],
+        fill: str,
+        width: int,
+        tag: str | tuple[str],
+    ) -> int:
         if self.hidd_grid:
             iid, sh = self.hidd_grid.popitem()
             self.coords(iid, points)
@@ -5636,19 +5645,18 @@ class MainTable(tk.Canvas):
 
     def redraw_dropdown(
         self,
-        x1,
-        y1,
-        x2,
-        y2,
-        fill,
-        outline,
-        tag,
-        draw_outline=True,
-        draw_arrow=True,
-        open_=False,
-    ):
+        x1: int | float,
+        y1: int | float,
+        x2: int | float,
+        y2: int | float,
+        fill: str,
+        outline: str,
+        draw_outline: bool = True,
+        draw_arrow: bool = True,
+        open_: bool = False,
+    ) -> None:
         if draw_outline and self.PAR.ops.show_dropdown_borders:
-            self.redraw_highlight(x1 + 1, y1 + 1, x2, y2, fill="", outline=self.PAR.ops.table_fg, tag=tag)
+            self.redraw_highlight(x1 + 1, y1 + 1, x2, y2, fill="", outline=self.PAR.ops.table_fg)
         if draw_arrow:
             mod = (self.table_txt_height - 1) if self.table_txt_height % 2 else self.table_txt_height
             small_mod = int(mod / 5)
@@ -5679,13 +5687,12 @@ class MainTable(tk.Canvas):
                 if sh:
                     self.itemconfig(t, fill=fill)
                 else:
-                    self.itemconfig(t, fill=fill, tag=tag, state="normal")
+                    self.itemconfig(t, fill=fill, state="normal")
                 self.lift(t)
             else:
                 t = self.create_line(
                     points,
                     fill=fill,
-                    tag=tag,
                     width=2,
                     capstyle=tk.ROUND,
                     joinstyle=tk.BEVEL,
@@ -5700,7 +5707,6 @@ class MainTable(tk.Canvas):
         y2: int | float,
         fill: str,
         outline: str,
-        tag: str | tuple,
         draw_check: bool = False,
     ) -> None:
         points = rounded_box_coords(x1, y1, x2, y2)
@@ -5710,10 +5716,10 @@ class MainTable(tk.Canvas):
             if sh:
                 self.itemconfig(t, fill=outline, outline=fill)
             else:
-                self.itemconfig(t, fill=outline, outline=fill, tag=tag, state="normal")
+                self.itemconfig(t, fill=outline, outline=fill, state="normal")
             self.lift(t)
         else:
-            t = self.create_polygon(points, fill=outline, outline=fill, tag=tag, smooth=True)
+            t = self.create_polygon(points, fill=outline, outline=fill, smooth=True)
         self.disp_checkbox[t] = True
         if draw_check:
             x1 = x1 + 4
@@ -5727,10 +5733,10 @@ class MainTable(tk.Canvas):
                 if sh:
                     self.itemconfig(t, fill=fill, outline=outline)
                 else:
-                    self.itemconfig(t, fill=fill, outline=outline, tag=tag, state="normal")
+                    self.itemconfig(t, fill=fill, outline=outline, state="normal")
                 self.lift(t)
             else:
-                t = self.create_polygon(points, fill=fill, outline=outline, tag=tag, smooth=True)
+                t = self.create_polygon(points, fill=fill, outline=outline, smooth=True)
             self.disp_checkbox[t] = True
 
     def main_table_redraw_grid_and_text(
@@ -5957,6 +5963,9 @@ class MainTable(tk.Canvas):
                     tag="g",
                 )
         if redraw_table:
+            font = self.PAR.ops.table_font
+            dd_coords = self.dropdown.get_coords()
+
             selections = self.get_redraw_selections(text_start_row, grid_end_row, text_start_col, grid_end_col)
             sel_cells_bg = color_tup(self.PAR.ops.table_selected_cells_bg)
             sel_cols_bg = color_tup(self.PAR.ops.table_selected_columns_bg)
@@ -5988,19 +5997,16 @@ class MainTable(tk.Canvas):
             else:
                 override = tuple()
 
-            rows_ = tuple(range(text_start_row, text_end_row))
-            font = self.PAR.ops.table_font
-            dd_coords = self.dropdown.get_coords()
-            for c in range(text_start_col, text_end_col):
-                for r in rows_:
-                    rtopgridln = self.row_positions[r]
-                    rbotgridln = self.row_positions[r + 1]
-                    if rbotgridln - rtopgridln < self.table_txt_height:
-                        continue
+            for r in range(text_start_row, text_end_row):
+                rtopgridln = self.row_positions[r]
+                rbotgridln = self.row_positions[r + 1]
+                if rbotgridln - rtopgridln < self.table_txt_height:
+                    continue
+                datarn = self.datarn(r)
+
+                for c in range(text_start_col, text_end_col):
                     cleftgridln = self.col_positions[c]
                     crightgridln = self.col_positions[c + 1]
-
-                    datarn = self.datarn(r)
                     datacn = self.datacn(c)
 
                     fill, dd_drawn = self.redraw_highlight_get_text_fg(
@@ -6037,7 +6043,6 @@ class MainTable(tk.Canvas):
                                 self.row_positions[r + 1],
                                 fill=fill if kwargs["state"] != "disabled" else self.PAR.ops.table_grid_fg,
                                 outline=fill,
-                                tag=f"dd_{r}_{c}",
                                 draw_outline=not dd_drawn,
                                 draw_arrow=mw >= 5,
                                 open_=dd_coords == (r, c),
@@ -6055,7 +6060,6 @@ class MainTable(tk.Canvas):
                                 self.row_positions[r + 1],
                                 fill=fill if kwargs["state"] != "disabled" else self.PAR.ops.table_grid_fg,
                                 outline=fill,
-                                tag=f"dd_{r}_{c}",
                                 draw_outline=not dd_drawn,
                                 draw_arrow=mw >= 5,
                                 open_=dd_coords == (r, c),
@@ -6074,7 +6078,6 @@ class MainTable(tk.Canvas):
                                 self.row_positions[r + 1],
                                 fill=fill if kwargs["state"] != "disabled" else self.PAR.ops.table_grid_fg,
                                 outline=fill,
-                                tag=f"dd_{r}_{c}",
                                 draw_outline=not dd_drawn,
                                 draw_arrow=mw >= 5,
                                 open_=dd_coords == (r, c),
@@ -6102,7 +6105,6 @@ class MainTable(tk.Canvas):
                                 rtopgridln + self.table_txt_height + 3,
                                 fill=fill if kwargs["state"] == "normal" else self.PAR.ops.table_grid_fg,
                                 outline="",
-                                tag="cb",
                                 draw_check=draw_check,
                             )
                     lns = self.get_valid_cell_data_as_str(datarn, datacn, get_displayed=True).split("\n")
