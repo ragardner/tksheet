@@ -7233,10 +7233,8 @@ class MainTable(tk.Canvas):
                 sheet_h = int(
                     self.row_positions[-1] + 1 + self.PAR.ops.empty_vertical - (self.row_positions[r] + text_editor_h)
                 )
-        if win_h > 0:
-            win_h -= 1
-        if sheet_h > 0:
-            sheet_h -= 1
+        win_h = max(0, win_h - 1)
+        sheet_h = max(0, sheet_h - 1)
         return win_h if win_h >= sheet_h else sheet_h
 
     def get_dropdown_height_anchor(self, r: int, c: int, text_editor_h: int | None = None) -> tuple:
