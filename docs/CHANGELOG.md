@@ -1,6 +1,13 @@
 ### Version 7.3.4
 #### Fixed:
 - Error on find within selection without a selection
+- Some canvas z fighting issues
+
+#### Improved:
+- Refactored redrawing code
+
+#### Changed:
+- rename Sheet() attr: dropdown_class -> _dropdown_cls
 
 ### Version 7.3.3
 #### Improved:
