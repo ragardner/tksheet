@@ -1985,9 +1985,9 @@ class MainTable(tk.Canvas):
                     need_redraw = True
             else:
                 if r is not None and not keep_yscroll:
-                    y = int(self.row_positions[r] + ((self.row_positions[r + 1] - self.row_positions[r]) * r_pc)) - 2
-                    if y < 0:
-                        y = 0
+                    y = max(
+                        0, int(self.row_positions[r] + ((self.row_positions[r + 1] - self.row_positions[r]) * r_pc)) - 2
+                    )
                     y = y / (self.row_positions[-1] + self.PAR.ops.empty_vertical)
                     args = [
                         "moveto",
@@ -2012,9 +2012,9 @@ class MainTable(tk.Canvas):
                     need_redraw = True
             else:
                 if c is not None and not keep_xscroll:
-                    x = int(self.col_positions[c] + ((self.col_positions[c + 1] - self.col_positions[c]) * c_pc)) - 2
-                    if x < 0:
-                        x = 0
+                    x = max(
+                        0, int(self.col_positions[c] + ((self.col_positions[c + 1] - self.col_positions[c]) * c_pc)) - 2
+                    )
                     x = x / (self.col_positions[-1] + self.PAR.ops.empty_horizontal)
                     args = [
                         "moveto",
@@ -2365,15 +2365,11 @@ class MainTable(tk.Canvas):
     def page_UP(self, event: object = None) -> None:
         height = self.winfo_height()
         top = self.canvasy(0)
-        scrollto_y = top - height
-        if scrollto_y < 0:
-            scrollto_y = 0
+        scrollto_y = max(0, top - height)
         if self.PAR.ops.page_up_down_select_row:
             r = bisect_left(self.row_positions, scrollto_y)
             if self.selected and self.selected.row == r:
-                r -= 1
-            if r < 0:
-                r = 0
+                r = max(0, r - 1)
             if self.RI.row_selection_enabled and (
                 self.anything_selected(exclude_columns=True, exclude_cells=True) or not self.anything_selected()
             ):
@@ -5739,22 +5735,7 @@ class MainTable(tk.Canvas):
                 t = self.create_polygon(points, fill=fill, outline=outline, smooth=True)
             self.disp_checkbox[t] = True
 
-    def main_table_redraw_grid_and_text(
-        self,
-        redraw_header: bool = False,
-        redraw_row_index: bool = False,
-        redraw_table: bool = True,
-        setting_views: bool = False,
-    ) -> bool:
-        try:
-            can_width = self.winfo_width()
-            can_height = self.winfo_height()
-        except Exception:
-            return False
-        row_pos_exists = self.row_positions != [0] and self.row_positions
-        col_pos_exists = self.col_positions != [0] and self.col_positions
-        resized_cols = False
-        resized_rows = False
+    def _auto_resize_columns(self, can_width: float, col_pos_exists: bool) -> bool:
         if self.PAR.ops.auto_resize_columns and self.allow_auto_resize_columns and col_pos_exists:
             max_w = can_width - self.PAR.ops.empty_horizontal
             if self.PAR.ops.auto_resize_columns < self.PAR.ops.min_column_width:
@@ -5762,7 +5743,6 @@ class MainTable(tk.Canvas):
             else:
                 min_column_width = self.PAR.ops.auto_resize_columns
             if (len(self.col_positions) - 1) * min_column_width < max_w:
-                resized_cols = True
                 change = int((max_w - self.col_positions[-1]) / (len(self.col_positions) - 1))
                 widths = [
                     int(b - a) + change - 1
@@ -5779,6 +5759,10 @@ class MainTable(tk.Canvas):
                         if i not in diffs:
                             widths[i] -= change
                 self.col_positions = list(accumulate(chain([0], widths)))
+                return True
+        return False
+
+    def _auto_resize_rows(self, can_height: float, row_pos_exists: bool) -> bool:
         if self.PAR.ops.auto_resize_rows and self.allow_auto_resize_rows and row_pos_exists:
             max_h = can_height - self.PAR.ops.empty_vertical
             if self.PAR.ops.auto_resize_rows < self.min_row_height:
@@ -5786,7 +5770,6 @@ class MainTable(tk.Canvas):
             else:
                 min_row_height = self.PAR.ops.auto_resize_rows
             if (len(self.row_positions) - 1) * min_row_height < max_h:
-                resized_rows = True
                 change = int((max_h - self.row_positions[-1]) / (len(self.row_positions) - 1))
                 heights = [
                     int(b - a) + change - 1
@@ -5803,6 +5786,10 @@ class MainTable(tk.Canvas):
                         if i not in diffs:
                             heights[i] -= change
                 self.row_positions = list(accumulate(chain([0], heights)))
+                return True
+        return False
+
+    def _manage_scroll_bars(self, can_height: float, can_width: float) -> None:
         if (
             self.PAR.ops.auto_resize_row_index is not True
             and can_width >= self.col_positions[-1] + self.PAR.ops.empty_horizontal
@@ -5829,6 +5816,26 @@ class MainTable(tk.Canvas):
         ):
             self.PAR.yscroll.grid(row=0, column=2, rowspan=3, sticky="nswe")
             self.PAR.yscroll_showing = True
+
+    def main_table_redraw_grid_and_text(
+        self,
+        redraw_header: bool = False,
+        redraw_row_index: bool = False,
+        redraw_table: bool = True,
+        setting_views: bool = False,
+    ) -> bool:
+        try:
+            can_width = self.winfo_width()
+            can_height = self.winfo_height()
+        except Exception:
+            return False
+        row_pos_exists = self.row_positions != [0] and self.row_positions
+        col_pos_exists = self.col_positions != [0] and self.col_positions
+
+        resized_cols = self._auto_resize_columns(can_width=can_width, col_pos_exists=col_pos_exists)
+        resized_rows = self._auto_resize_rows(can_height=can_height, row_pos_exists=row_pos_exists)
+        self._manage_scroll_bars(can_height=can_height, can_width=can_width)
+
         last_col_line_pos = self.col_positions[-1] + 1
         last_row_line_pos = self.row_positions[-1] + 1
         scrollregion = (
@@ -5844,6 +5851,7 @@ class MainTable(tk.Canvas):
             self.RI.configure_scrollregion(last_row_line_pos)
             if setting_views:
                 return False
+
         scrollpos_top = self.canvasy(0)
         scrollpos_bot = self.canvasy(can_height)
         scrollpos_left = self.canvasx(0)
@@ -5871,6 +5879,7 @@ class MainTable(tk.Canvas):
                 for widget in (self, self.RI, self.CH, self.TL):
                     widget.update_idletasks()
                 return False
+
         if self.find_window.open:
             w, h, x, y = self.get_find_window_dimensions_coords(w_width=self.winfo_width())
             self.coords(self.find_window.canvas_id, x, y)
@@ -5898,6 +5907,7 @@ class MainTable(tk.Canvas):
             y_stop = scrollpos_bot
         else:
             y_stop = last_row_line_pos
+        # manage horizontal grid lines
         if redraw_table and self.PAR.ops.show_horizontal_grid and row_pos_exists:
             if self.PAR.ops.horizontal_grid_to_end_of_window:
                 x_grid_stop = scrollpos_right + can_width
@@ -5930,6 +5940,7 @@ class MainTable(tk.Canvas):
                     width=1,
                     tag="g",
                 )
+        # manage vertical grid lines
         if redraw_table and self.PAR.ops.show_vertical_grid and col_pos_exists:
             if self.PAR.ops.vertical_grid_to_end_of_window:
                 y_grid_stop = scrollpos_bot + can_height
@@ -5965,7 +5976,6 @@ class MainTable(tk.Canvas):
         if redraw_table:
             font = self.PAR.ops.table_font
             dd_coords = self.dropdown.get_coords()
-
             selections = self.get_redraw_selections(text_start_row, grid_end_row, text_start_col, grid_end_col)
             sel_cells_bg = color_tup(self.PAR.ops.table_selected_cells_bg)
             sel_cols_bg = color_tup(self.PAR.ops.table_selected_columns_bg)
@@ -5987,7 +5997,6 @@ class MainTable(tk.Canvas):
             else:
                 alternate_color = None
                 dont_blend = tuple()
-
             if not self.PAR.ops.show_selected_cells_border:
                 override = (
                     color_tup(self.PAR.ops.table_selected_cells_fg),
@@ -5996,7 +6005,6 @@ class MainTable(tk.Canvas):
                 )
             else:
                 override = tuple()
-
             for r in range(text_start_row, text_end_row):
                 rtopgridln = self.row_positions[r]
                 rbotgridln = self.row_positions[r + 1]
@@ -6008,7 +6016,6 @@ class MainTable(tk.Canvas):
                     cleftgridln = self.col_positions[c]
                     crightgridln = self.col_positions[c + 1]
                     datacn = self.datacn(c)
-
                     fill, dd_drawn = self.redraw_highlight_get_text_fg(
                         r=r,
                         c=c,
@@ -6026,66 +6033,39 @@ class MainTable(tk.Canvas):
                         dont_blend=(r, c) == dont_blend,
                         alternate_color=alternate_color,
                     )
-                    align = self.get_cell_kwargs(datarn, datacn, key="align")
-                    if align:
-                        align = align
-                    else:
+                    if not (align := self.get_cell_kwargs(datarn, datacn, key="align")):
                         align = self.align
-                    kwargs = self.get_cell_kwargs(datarn, datacn, key="dropdown")
-                    if align == "w":
-                        draw_x = cleftgridln + 3
-                        if kwargs:
+                    if kwargs := self.get_cell_kwargs(datarn, datacn, key="dropdown"):
+                        if align == "w":
+                            draw_x = cleftgridln + 3
                             mw = crightgridln - cleftgridln - self.table_txt_height - 2
-                            self.redraw_dropdown(
-                                cleftgridln,
-                                rtopgridln,
-                                crightgridln,
-                                self.row_positions[r + 1],
-                                fill=fill if kwargs["state"] != "disabled" else self.PAR.ops.table_grid_fg,
-                                outline=fill,
-                                draw_outline=not dd_drawn,
-                                draw_arrow=mw >= 5,
-                                open_=dd_coords == (r, c),
-                            )
-                        else:
-                            mw = crightgridln - cleftgridln - 1
-                    elif align == "e":
-                        if kwargs:
+                        elif align == "e":
                             mw = crightgridln - cleftgridln - self.table_txt_height - 2
                             draw_x = crightgridln - 5 - self.table_txt_height
-                            self.redraw_dropdown(
-                                cleftgridln,
-                                rtopgridln,
-                                crightgridln,
-                                self.row_positions[r + 1],
-                                fill=fill if kwargs["state"] != "disabled" else self.PAR.ops.table_grid_fg,
-                                outline=fill,
-                                draw_outline=not dd_drawn,
-                                draw_arrow=mw >= 5,
-                                open_=dd_coords == (r, c),
-                            )
-                        else:
-                            mw = crightgridln - cleftgridln - 1
-                            draw_x = crightgridln - 3
-                    elif align == "center":
-                        if kwargs:
+                        elif align == "center":
                             mw = crightgridln - cleftgridln - self.table_txt_height - 2
                             draw_x = cleftgridln + ceil((crightgridln - cleftgridln - self.table_txt_height) / 2)
-                            self.redraw_dropdown(
-                                cleftgridln,
-                                rtopgridln,
-                                crightgridln,
-                                self.row_positions[r + 1],
-                                fill=fill if kwargs["state"] != "disabled" else self.PAR.ops.table_grid_fg,
-                                outline=fill,
-                                draw_outline=not dd_drawn,
-                                draw_arrow=mw >= 5,
-                                open_=dd_coords == (r, c),
-                            )
-                        else:
+                        self.redraw_dropdown(
+                            cleftgridln,
+                            rtopgridln,
+                            crightgridln,
+                            self.row_positions[r + 1],
+                            fill=fill if kwargs["state"] != "disabled" else self.PAR.ops.table_grid_fg,
+                            outline=fill,
+                            draw_outline=not dd_drawn,
+                            draw_arrow=mw >= 5,
+                            open_=dd_coords == (r, c),
+                        )
+                    else:
+                        if align == "w":
+                            draw_x = cleftgridln + 3
+                            mw = crightgridln - cleftgridln - 1
+                        elif align == "e":
+                            mw = crightgridln - cleftgridln - 1
+                            draw_x = crightgridln - 3
+                        elif align == "center":
                             mw = crightgridln - cleftgridln - 1
                             draw_x = cleftgridln + floor((crightgridln - cleftgridln) / 2)
-                    if not kwargs:
                         kwargs = self.get_cell_kwargs(datarn, datacn, key="checkbox")
                         if kwargs and mw > self.table_txt_height + 1:
                             box_w = self.table_txt_height + 1
@@ -6095,7 +6075,7 @@ class MainTable(tk.Canvas):
                                 draw_x += ceil(box_w / 2) + 1
                             mw -= box_w + 3
                             try:
-                                draw_check = self.data[datarn][datacn]
+                                draw_check = bool(self.data[datarn][datacn])
                             except Exception:
                                 draw_check = False
                             self.redraw_checkbox(
@@ -6107,88 +6087,86 @@ class MainTable(tk.Canvas):
                                 outline="",
                                 draw_check=draw_check,
                             )
-                    lns = self.get_valid_cell_data_as_str(datarn, datacn, get_displayed=True).split("\n")
+                    lines = self.get_valid_cell_data_as_str(datarn, datacn, get_displayed=True)
                     if (
-                        lns != [""]
-                        and mw > self.table_txt_width
-                        and not (
-                            (align == "w" and draw_x > scrollpos_right)
-                            or (align == "e" and cleftgridln + 5 > scrollpos_right)
-                            or (align == "center" and cleftgridln + 5 > scrollpos_right)
-                        )
+                        not lines
+                        or mw < self.table_txt_width
+                        or (align == "w" and draw_x > scrollpos_right)
+                        or (align == "e" and cleftgridln + 5 > scrollpos_right)
+                        or (align == "center" and cleftgridln + 5 > scrollpos_right)
                     ):
-                        draw_y = rtopgridln + self.table_first_ln_ins
-                        start_ln = int((scrollpos_top - rtopgridln) / self.table_xtra_lines_increment)
-                        if start_ln < 0:
-                            start_ln = 0
-                        draw_y += start_ln * self.table_xtra_lines_increment
-                        if draw_y + self.table_half_txt_height - 1 <= rbotgridln and len(lns) > start_ln:
-                            for txt in islice(lns, start_ln, None):
-                                if self.hidd_text:
-                                    iid, showing = self.hidd_text.popitem()
-                                    self.coords(iid, draw_x, draw_y)
-                                    if showing:
-                                        self.itemconfig(
-                                            iid,
-                                            text=txt,
-                                            fill=fill,
-                                            font=font,
-                                            anchor=align,
-                                        )
-                                    else:
-                                        self.itemconfig(
-                                            iid,
-                                            text=txt,
-                                            fill=fill,
-                                            font=font,
-                                            anchor=align,
-                                            state="normal",
-                                        )
-                                    self.tag_raise(iid)
-                                else:
-                                    iid = self.create_text(
-                                        draw_x,
-                                        draw_y,
+                        continue
+                    lines = lines.split("\n")
+                    draw_y = rtopgridln + self.table_first_ln_ins
+                    start_ln = max(0, int((scrollpos_top - rtopgridln) / self.table_xtra_lines_increment))
+                    draw_y += start_ln * self.table_xtra_lines_increment
+                    if draw_y + self.table_half_txt_height - 1 <= rbotgridln and len(lines) > start_ln:
+                        for txt in islice(lines, start_ln, None):
+                            if self.hidd_text:
+                                iid, showing = self.hidd_text.popitem()
+                                self.coords(iid, draw_x, draw_y)
+                                if showing:
+                                    self.itemconfig(
+                                        iid,
                                         text=txt,
                                         fill=fill,
                                         font=font,
                                         anchor=align,
-                                        tag="t",
                                     )
-                                self.disp_text[iid] = True
-                                wd = self.bbox(iid)
-                                wd = wd[2] - wd[0]
-                                if wd > mw:
-                                    if align == "w":
-                                        txt = txt[: int(len(txt) * (mw / wd))]
+                                else:
+                                    self.itemconfig(
+                                        iid,
+                                        text=txt,
+                                        fill=fill,
+                                        font=font,
+                                        anchor=align,
+                                        state="normal",
+                                    )
+                                self.tag_raise(iid)
+                            else:
+                                iid = self.create_text(
+                                    draw_x,
+                                    draw_y,
+                                    text=txt,
+                                    fill=fill,
+                                    font=font,
+                                    anchor=align,
+                                    tag="t",
+                                )
+                            self.disp_text[iid] = True
+                            wd = self.bbox(iid)
+                            wd = wd[2] - wd[0]
+                            if wd > mw:
+                                if align == "w":
+                                    txt = txt[: int(len(txt) * (mw / wd))]
+                                    self.itemconfig(iid, text=txt)
+                                    wd = self.bbox(iid)
+                                    while wd[2] - wd[0] > mw:
+                                        txt = txt[:-1]
                                         self.itemconfig(iid, text=txt)
                                         wd = self.bbox(iid)
-                                        while wd[2] - wd[0] > mw:
-                                            txt = txt[:-1]
-                                            self.itemconfig(iid, text=txt)
-                                            wd = self.bbox(iid)
-                                    elif align == "e":
-                                        txt = txt[len(txt) - int(len(txt) * (mw / wd)) :]
+                                elif align == "e":
+                                    txt = txt[len(txt) - int(len(txt) * (mw / wd)) :]
+                                    self.itemconfig(iid, text=txt)
+                                    wd = self.bbox(iid)
+                                    while wd[2] - wd[0] > mw:
+                                        txt = txt[1:]
                                         self.itemconfig(iid, text=txt)
                                         wd = self.bbox(iid)
-                                        while wd[2] - wd[0] > mw:
-                                            txt = txt[1:]
-                                            self.itemconfig(iid, text=txt)
-                                            wd = self.bbox(iid)
-                                    elif align == "center":
-                                        self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
-                                        tmod = ceil((len(txt) - int(len(txt) * (mw / wd))) / 2)
-                                        txt = txt[tmod - 1 : -tmod]
+                                elif align == "center":
+                                    self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
+                                    tmod = ceil((len(txt) - int(len(txt) * (mw / wd))) / 2)
+                                    txt = txt[tmod - 1 : -tmod]
+                                    self.itemconfig(iid, text=txt)
+                                    wd = self.bbox(iid)
+                                    while wd[2] - wd[0] > mw:
+                                        txt = txt[next(self.c_align_cyc)]
                                         self.itemconfig(iid, text=txt)
                                         wd = self.bbox(iid)
-                                        while wd[2] - wd[0] > mw:
-                                            txt = txt[next(self.c_align_cyc)]
-                                            self.itemconfig(iid, text=txt)
-                                            wd = self.bbox(iid)
-                                        self.coords(iid, draw_x, draw_y)
-                                draw_y += self.table_xtra_lines_increment
-                                if draw_y + self.table_half_txt_height - 1 > rbotgridln:
-                                    break
+                                    self.coords(iid, draw_x, draw_y)
+                            draw_y += self.table_xtra_lines_increment
+                            if draw_y + self.table_half_txt_height - 1 > rbotgridln:
+                                break
         if redraw_table:
             for dct in (
                 self.hidd_text,

@@ -1579,6 +1579,7 @@ class RowIndex(tk.Canvas):
             rbotgridln = self.MT.row_positions[r + 1]
             if rbotgridln - rtopgridln < self.MT.index_txt_height:
                 continue
+            checkbox_kwargs = {}
             datarn = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r]
             fill, tree_arrow_fg, dd_drawn = self.redraw_highlight_get_text_fg(
                 fr=rtopgridln,
@@ -1589,99 +1590,74 @@ class RowIndex(tk.Canvas):
                 selections=selections,
                 datarn=datarn,
             )
-
             if datarn in self.cell_options and "align" in self.cell_options[datarn]:
                 align = self.cell_options[datarn]["align"]
             else:
                 align = self.align
-            dropdown_kwargs = self.get_cell_kwargs(datarn, key="dropdown")
-            if align == "w":
-                draw_x = 3
-                if dropdown_kwargs:
+            if dropdown_kwargs := self.get_cell_kwargs(datarn, key="dropdown"):
+                if align == "w":
+                    draw_x = 3
                     mw = self.current_width - self.MT.index_txt_height - 2
-                    self.redraw_dropdown(
-                        0,
-                        rtopgridln,
-                        self.current_width - 1,
-                        rbotgridln - 1,
-                        fill=fill if dropdown_kwargs["state"] != "disabled" else self.PAR.ops.index_grid_fg,
-                        outline=fill,
-                        tag="dd",
-                        draw_outline=not dd_drawn,
-                        draw_arrow=True,
-                        open_=dd_coords == r,
-                    )
-                else:
-                    mw = self.current_width - 2
-
-            elif align == "e":
-                if dropdown_kwargs:
+                elif align == "e":
                     mw = self.current_width - self.MT.index_txt_height - 2
                     draw_x = self.current_width - 5 - self.MT.index_txt_height
-                    self.redraw_dropdown(
-                        0,
-                        rtopgridln,
-                        self.current_width - 1,
-                        rbotgridln - 1,
-                        fill=fill if dropdown_kwargs["state"] != "disabled" else self.PAR.ops.index_grid_fg,
-                        outline=fill,
-                        tag="dd",
-                        draw_outline=not dd_drawn,
-                        draw_arrow=True,
-                        open_=dd_coords == r,
-                    )
-                else:
-                    mw = self.current_width - 2
-                    draw_x = self.current_width - 3
-
-            elif align == "center":
-                if dropdown_kwargs:
+                elif align == "center":
                     mw = self.current_width - self.MT.index_txt_height - 2
                     draw_x = ceil((self.current_width - self.MT.index_txt_height) / 2)
-                    self.redraw_dropdown(
-                        0,
-                        rtopgridln,
-                        self.current_width - 1,
-                        rbotgridln - 1,
-                        fill=fill if dropdown_kwargs["state"] != "disabled" else self.PAR.ops.index_grid_fg,
-                        outline=fill,
-                        tag="dd",
-                        draw_outline=not dd_drawn,
-                        draw_arrow=True,
-                        open_=dd_coords == r,
-                    )
-                else:
+                self.redraw_dropdown(
+                    0,
+                    rtopgridln,
+                    self.current_width - 1,
+                    rbotgridln - 1,
+                    fill=fill if dropdown_kwargs["state"] != "disabled" else self.PAR.ops.index_grid_fg,
+                    outline=fill,
+                    tag="dd",
+                    draw_outline=not dd_drawn,
+                    draw_arrow=True,
+                    open_=dd_coords == r,
+                )
+            else:
+                if align == "w":
+                    draw_x = 3
+                    mw = self.current_width - 2
+                elif align == "e":
+                    mw = self.current_width - 2
+                    draw_x = self.current_width - 3
+                elif align == "center":
                     mw = self.current_width - 1
                     draw_x = floor(self.current_width / 2)
-            checkbox_kwargs = self.get_cell_kwargs(datarn, key="checkbox")
-            if checkbox_kwargs and not dropdown_kwargs and mw > self.MT.index_txt_height + 1:
-                box_w = self.MT.index_txt_height + 1
-                if align == "w":
-                    draw_x += box_w + 3
-                    mw -= box_w + 3
-                elif align == "center":
-                    draw_x += ceil(box_w / 2) + 1
-                    mw -= box_w + 2
-                else:
-                    mw -= box_w + 1
-                try:
-                    draw_check = (
-                        self.MT._row_index[datarn]
-                        if isinstance(self.MT._row_index, (list, tuple))
-                        else self.MT.data[datarn][self.MT._row_index]
+                if (
+                    (checkbox_kwargs := self.get_cell_kwargs(datarn, key="checkbox"))
+                    and not dropdown_kwargs
+                    and mw > self.MT.index_txt_height + 1
+                ):
+                    box_w = self.MT.index_txt_height + 1
+                    if align == "w":
+                        draw_x += box_w + 3
+                        mw -= box_w + 3
+                    elif align == "center":
+                        draw_x += ceil(box_w / 2) + 1
+                        mw -= box_w + 2
+                    else:
+                        mw -= box_w + 1
+                    try:
+                        draw_check = (
+                            self.MT._row_index[datarn]
+                            if isinstance(self.MT._row_index, (list, tuple))
+                            else self.MT.data[datarn][self.MT._row_index]
+                        )
+                    except Exception:
+                        draw_check = False
+                    self.redraw_checkbox(
+                        2,
+                        rtopgridln + 2,
+                        self.MT.index_txt_height + 3,
+                        rtopgridln + self.MT.index_txt_height + 3,
+                        fill=fill if checkbox_kwargs["state"] == "normal" else self.PAR.ops.index_grid_fg,
+                        outline="",
+                        tag="cb",
+                        draw_check=draw_check,
                     )
-                except Exception:
-                    draw_check = False
-                self.redraw_checkbox(
-                    2,
-                    rtopgridln + 2,
-                    self.MT.index_txt_height + 3,
-                    rtopgridln + self.MT.index_txt_height + 3,
-                    fill=fill if checkbox_kwargs["state"] == "normal" else self.PAR.ops.index_grid_fg,
-                    outline="",
-                    tag="cb",
-                    draw_check=draw_check,
-                )
             if treeview and isinstance(self.MT._row_index, list) and len(self.MT._row_index) > datarn:
                 iid = self.MT._row_index[datarn].iid
                 mw -= self.MT.index_txt_height
@@ -1700,84 +1676,82 @@ class RowIndex(tk.Canvas):
                     open_=self.MT._row_index[datarn].iid in self.tree_open_ids,
                     level=level,
                 )
-            lns = self.get_valid_cell_data_as_str(datarn, fix=False)
-            if not lns:
+            if mw < 5:
                 continue
-            draw_y = rtopgridln + self.MT.index_first_ln_ins
-            if mw > 5:
-                draw_y = rtopgridln + self.MT.index_first_ln_ins
-                start_ln = int((scrollpos_top - rtopgridln) / self.MT.index_xtra_lines_increment)
-                if start_ln < 0:
-                    start_ln = 0
-                draw_y += start_ln * self.MT.index_xtra_lines_increment
-                lns = lns.split("\n")
-                if draw_y + self.MT.index_half_txt_height - 1 <= rbotgridln and len(lns) > start_ln:
-                    for txt in islice(lns, start_ln, None):
-                        if self.hidd_text:
-                            iid, showing = self.hidd_text.popitem()
-                            self.coords(iid, draw_x, draw_y)
-                            if showing:
-                                self.itemconfig(
-                                    iid,
-                                    text=txt,
-                                    fill=fill,
-                                    font=font,
-                                    anchor=align,
-                                )
-                            else:
-                                self.itemconfig(
-                                    iid,
-                                    text=txt,
-                                    fill=fill,
-                                    font=font,
-                                    anchor=align,
-                                    state="normal",
-                                )
-                            self.tag_raise(iid)
-                        else:
-                            iid = self.create_text(
-                                draw_x,
-                                draw_y,
-                                text=txt,
-                                fill=fill,
-                                font=font,
-                                anchor=align,
-                                tag="t",
-                            )
-                        self.disp_text[iid] = True
+            lines = self.get_valid_cell_data_as_str(datarn, fix=False)
+            if not lines:
+                continue
+            start_ln = max(0, int((scrollpos_top - rtopgridln) / self.MT.index_xtra_lines_increment))
+            draw_y = rtopgridln + self.MT.index_first_ln_ins + (start_ln * self.MT.index_xtra_lines_increment)
+            lines = lines.split("\n")
+            if len(lines) <= start_ln or draw_y + self.MT.index_half_txt_height - 1 > rbotgridln:
+                continue
+            for txt in islice(lines, start_ln, None):
+                if self.hidd_text:
+                    iid, showing = self.hidd_text.popitem()
+                    self.coords(iid, draw_x, draw_y)
+                    if showing:
+                        self.itemconfig(
+                            iid,
+                            text=txt,
+                            fill=fill,
+                            font=font,
+                            anchor=align,
+                        )
+                    else:
+                        self.itemconfig(
+                            iid,
+                            text=txt,
+                            fill=fill,
+                            font=font,
+                            anchor=align,
+                            state="normal",
+                        )
+                    self.tag_raise(iid)
+                else:
+                    iid = self.create_text(
+                        draw_x,
+                        draw_y,
+                        text=txt,
+                        fill=fill,
+                        font=font,
+                        anchor=align,
+                        tag="t",
+                    )
+                self.disp_text[iid] = True
+                wd = self.bbox(iid)
+                wd = wd[2] - wd[0]
+                if wd > mw:
+                    if align == "w" and dropdown_kwargs:
+                        txt = txt[: int(len(txt) * (mw / wd))]
+                        self.itemconfig(iid, text=txt)
                         wd = self.bbox(iid)
-                        wd = wd[2] - wd[0]
-                        if wd > mw:
-                            if align == "w" and dropdown_kwargs:
-                                txt = txt[: int(len(txt) * (mw / wd))]
-                                self.itemconfig(iid, text=txt)
-                                wd = self.bbox(iid)
-                                while wd[2] - wd[0] > mw:
-                                    txt = txt[:-1]
-                                    self.itemconfig(iid, text=txt)
-                                    wd = self.bbox(iid)
-                            elif align == "e" and checkbox_kwargs:
-                                txt = txt[len(txt) - int(len(txt) * (mw / wd)) :]
-                                self.itemconfig(iid, text=txt)
-                                wd = self.bbox(iid)
-                                while wd[2] - wd[0] > mw:
-                                    txt = txt[1:]
-                                    self.itemconfig(iid, text=txt)
-                                    wd = self.bbox(iid)
-                            elif align == "center" and (dropdown_kwargs or checkbox_kwargs):
-                                tmod = ceil((len(txt) - int(len(txt) * (mw / wd))) / 2)
-                                txt = txt[tmod - 1 : -tmod]
-                                self.itemconfig(iid, text=txt)
-                                wd = self.bbox(iid)
-                                self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
-                                while wd[2] - wd[0] > mw:
-                                    txt = txt[next(self.c_align_cyc)]
-                                    self.itemconfig(iid, text=txt)
-                                    wd = self.bbox(iid)
-                                self.coords(iid, draw_x, draw_y)
-                        draw_y += self.MT.index_xtra_lines_increment
-                        if draw_y + self.MT.index_half_txt_height - 1 > rbotgridln:
-                            break
+                        while wd[2] - wd[0] > mw:
+                            txt = txt[:-1]
+                            self.itemconfig(iid, text=txt)
+                            wd = self.bbox(iid)
+                    elif align == "e" and checkbox_kwargs:
+                        txt = txt[len(txt) - int(len(txt) * (mw / wd)) :]
+                        self.itemconfig(iid, text=txt)
+                        wd = self.bbox(iid)
+                        while wd[2] - wd[0] > mw:
+                            txt = txt[1:]
+                            self.itemconfig(iid, text=txt)
+                            wd = self.bbox(iid)
+                    elif align == "center" and (dropdown_kwargs or checkbox_kwargs):
+                        tmod = ceil((len(txt) - int(len(txt) * (mw / wd))) / 2)
+                        txt = txt[tmod - 1 : -tmod]
+                        self.itemconfig(iid, text=txt)
+                        wd = self.bbox(iid)
+                        self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
+                        while wd[2] - wd[0] > mw:
+                            txt = txt[next(self.c_align_cyc)]
+                            self.itemconfig(iid, text=txt)
+                            wd = self.bbox(iid)
+                        self.coords(iid, draw_x, draw_y)
+                draw_y += self.MT.index_xtra_lines_increment
+                if draw_y + self.MT.index_half_txt_height - 1 > rbotgridln:
+                    break
         for dct in (
             self.hidd_text,
             self.hidd_high,

@@ -1470,74 +1470,43 @@ class ColumnHeaders(tk.Canvas):
                 selections=selections,
                 datacn=datacn,
             )
-
             if datacn in self.cell_options and "align" in self.cell_options[datacn]:
                 align = self.cell_options[datacn]["align"]
             else:
                 align = self.align
-
-            kwargs = self.get_cell_kwargs(datacn, key="dropdown")
-            if align == "w":
-                draw_x = cleftgridln + 3
-                if kwargs:
+            if kwargs := self.get_cell_kwargs(datacn, key="dropdown"):
+                if align == "w":
+                    draw_x = cleftgridln + 3
                     mw = crightgridln - cleftgridln - self.MT.header_txt_height - 2
-                    self.redraw_dropdown(
-                        cleftgridln,
-                        0,
-                        crightgridln,
-                        self.current_height - 1,
-                        fill=fill if kwargs["state"] != "disabled" else self.PAR.ops.header_grid_fg,
-                        outline=fill,
-                        tag="dd",
-                        draw_outline=not dd_drawn,
-                        draw_arrow=mw >= 5,
-                        open_=dd_coords == c,
-                    )
-                else:
-                    mw = crightgridln - cleftgridln - 1
-
-            elif align == "e":
-                if kwargs:
+                elif align == "e":
                     mw = crightgridln - cleftgridln - self.MT.header_txt_height - 2
                     draw_x = crightgridln - 5 - self.MT.header_txt_height
-                    self.redraw_dropdown(
-                        cleftgridln,
-                        0,
-                        crightgridln,
-                        self.current_height - 1,
-                        fill=fill if kwargs["state"] != "disabled" else self.PAR.ops.header_grid_fg,
-                        outline=fill,
-                        tag="dd",
-                        draw_outline=not dd_drawn,
-                        draw_arrow=mw >= 5,
-                        open_=dd_coords == c,
-                    )
-                else:
-                    mw = crightgridln - cleftgridln - 1
-                    draw_x = crightgridln - 3
-
-            elif align == "center":
-                if kwargs:
+                elif align == "center":
                     mw = crightgridln - cleftgridln - self.MT.header_txt_height - 2
                     draw_x = cleftgridln + ceil((crightgridln - cleftgridln - self.MT.header_txt_height) / 2)
-                    self.redraw_dropdown(
-                        cleftgridln,
-                        0,
-                        crightgridln,
-                        self.current_height - 1,
-                        fill=fill if kwargs["state"] != "disabled" else self.PAR.ops.header_grid_fg,
-                        outline=fill,
-                        tag="dd",
-                        draw_outline=not dd_drawn,
-                        draw_arrow=mw >= 5,
-                        open_=dd_coords == c,
-                    )
-                else:
+                self.redraw_dropdown(
+                    cleftgridln,
+                    0,
+                    crightgridln,
+                    self.current_height - 1,
+                    fill=fill if kwargs["state"] != "disabled" else self.PAR.ops.header_grid_fg,
+                    outline=fill,
+                    tag="dd",
+                    draw_outline=not dd_drawn,
+                    draw_arrow=mw >= 5,
+                    open_=dd_coords == c,
+                )
+            else:
+                if align == "w":
+                    draw_x = cleftgridln + 3
+                    mw = crightgridln - cleftgridln - 1
+                elif align == "e":
+                    mw = crightgridln - cleftgridln - 1
+                    draw_x = crightgridln - 3
+                elif align == "center":
                     mw = crightgridln - cleftgridln - 1
                     draw_x = cleftgridln + floor((crightgridln - cleftgridln) / 2)
-            if not kwargs:
-                kwargs = self.get_cell_kwargs(datacn, key="checkbox")
-                if kwargs and mw > self.MT.header_txt_height + 1:
+                if (kwargs := self.get_cell_kwargs(datacn, key="checkbox")) and mw > self.MT.header_txt_height + 1:
                     box_w = self.MT.header_txt_height + 1
                     if align == "w":
                         draw_x += box_w + 3
@@ -1562,86 +1531,87 @@ class ColumnHeaders(tk.Canvas):
                         tag="cb",
                         draw_check=draw_check,
                     )
-            lns = self.get_valid_cell_data_as_str(datacn, fix=False)
-            if not lns:
-                continue
-            lns = lns.split("\n")
-            if mw > self.MT.header_txt_width and not (
-                (align == "w" and draw_x > scrollpos_right)
+            if (
+                mw < self.MT.header_txt_width
+                or (align == "w" and draw_x > scrollpos_right)
                 or (align == "e" and cleftgridln + 5 > scrollpos_right)
                 or (align == "center" and cleftgridln + 5 > scrollpos_right)
             ):
-                for txt in islice(
-                    lns,
-                    self.lines_start_at if self.lines_start_at < len(lns) else len(lns) - 1,
-                    None,
-                ):
-                    if draw_y > top:
-                        if self.hidd_text:
-                            iid, showing = self.hidd_text.popitem()
-                            self.coords(iid, draw_x, draw_y)
-                            if showing:
-                                self.itemconfig(
-                                    iid,
-                                    text=txt,
-                                    fill=fill,
-                                    font=font,
-                                    anchor=align,
-                                )
-                            else:
-                                self.itemconfig(
-                                    iid,
-                                    text=txt,
-                                    fill=fill,
-                                    font=font,
-                                    anchor=align,
-                                    state="normal",
-                                )
-                            self.tag_raise(iid)
-                        else:
-                            iid = self.create_text(
-                                draw_x,
-                                draw_y,
+                continue
+            if not (lines := self.get_valid_cell_data_as_str(datacn, fix=False)):
+                continue
+            lines = lines.split("\n")
+            for txt in islice(
+                lines,
+                self.lines_start_at if self.lines_start_at < len(lines) else len(lines) - 1,
+                None,
+            ):
+                if draw_y > top:
+                    if self.hidd_text:
+                        iid, showing = self.hidd_text.popitem()
+                        self.coords(iid, draw_x, draw_y)
+                        if showing:
+                            self.itemconfig(
+                                iid,
                                 text=txt,
                                 fill=fill,
                                 font=font,
                                 anchor=align,
-                                tag="t",
                             )
-                        self.disp_text[iid] = True
-                        wd = self.bbox(iid)
-                        wd = wd[2] - wd[0]
-                        if wd > mw:
-                            if align == "w":
-                                txt = txt[: int(len(txt) * (mw / wd))]
+                        else:
+                            self.itemconfig(
+                                iid,
+                                text=txt,
+                                fill=fill,
+                                font=font,
+                                anchor=align,
+                                state="normal",
+                            )
+                        self.tag_raise(iid)
+                    else:
+                        iid = self.create_text(
+                            draw_x,
+                            draw_y,
+                            text=txt,
+                            fill=fill,
+                            font=font,
+                            anchor=align,
+                            tag="t",
+                        )
+                    self.disp_text[iid] = True
+                    wd = self.bbox(iid)
+                    wd = wd[2] - wd[0]
+                    if wd > mw:
+                        if align == "w":
+                            txt = txt[: int(len(txt) * (mw / wd))]
+                            self.itemconfig(iid, text=txt)
+                            wd = self.bbox(iid)
+                            while wd[2] - wd[0] > mw:
+                                txt = txt[:-1]
                                 self.itemconfig(iid, text=txt)
                                 wd = self.bbox(iid)
-                                while wd[2] - wd[0] > mw:
-                                    txt = txt[:-1]
-                                    self.itemconfig(iid, text=txt)
-                                    wd = self.bbox(iid)
-                            elif align == "e":
-                                txt = txt[len(txt) - int(len(txt) * (mw / wd)) :]
+                        elif align == "e":
+                            txt = txt[len(txt) - int(len(txt) * (mw / wd)) :]
+                            self.itemconfig(iid, text=txt)
+                            wd = self.bbox(iid)
+                            while wd[2] - wd[0] > mw:
+                                txt = txt[1:]
                                 self.itemconfig(iid, text=txt)
                                 wd = self.bbox(iid)
-                                while wd[2] - wd[0] > mw:
-                                    txt = txt[1:]
-                                    self.itemconfig(iid, text=txt)
-                                    wd = self.bbox(iid)
-                            elif align == "center":
-                                self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
-                                tmod = ceil((len(txt) - int(len(txt) * (mw / wd))) / 2)
-                                txt = txt[tmod - 1 : -tmod]
+                        elif align == "center":
+                            self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
+                            tmod = ceil((len(txt) - int(len(txt) * (mw / wd))) / 2)
+                            txt = txt[tmod - 1 : -tmod]
+                            self.itemconfig(iid, text=txt)
+                            wd = self.bbox(iid)
+                            while wd[2] - wd[0] > mw:
+                                txt = txt[next(self.c_align_cyc)]
                                 self.itemconfig(iid, text=txt)
                                 wd = self.bbox(iid)
-                                while wd[2] - wd[0] > mw:
-                                    txt = txt[next(self.c_align_cyc)]
-                                    self.itemconfig(iid, text=txt)
-                                    wd = self.bbox(iid)
-                                self.coords(iid, draw_x, draw_y)
-                    draw_y += self.MT.header_xtra_lines_increment
-                    if draw_y - 1 > self.current_height:
-                        break
+                            self.coords(iid, draw_x, draw_y)
+                draw_y += self.MT.header_xtra_lines_increment
+                if draw_y - 1 > self.current_height:
+                    break
         for dct in (self.hidd_text, self.hidd_high, self.hidd_grid, self.hidd_dropdown, self.hidd_checkbox):
             for iid, showing in dct.items():
                 if showing:
