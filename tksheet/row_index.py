@@ -2054,8 +2054,7 @@ class RowIndex(tk.Canvas):
                 win_h += self.MT.min_row_height
             if i == 5:
                 break
-        if win_h > 500:
-            win_h = 500
+        win_h = min(win_h, 500)
         space_bot = self.MT.get_space_bot(r, text_editor_h)
         space_top = int(self.MT.row_positions[r])
         anchor = "nw"

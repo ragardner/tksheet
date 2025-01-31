@@ -1928,8 +1928,7 @@ class ColumnHeaders(tk.Canvas):
                 win_h += self.MT.min_header_height
             if i == 5:
                 break
-        if win_h > 500:
-            win_h = 500
+        win_h = min(win_h, 500)
         space_bot = self.MT.get_space_bot(0, text_editor_h)
         win_h2 = int(win_h)
         if win_h > space_bot:

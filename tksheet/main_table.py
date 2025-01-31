@@ -7223,8 +7223,7 @@ class MainTable(tk.Canvas):
                 win_h += self.min_row_height
             if i == 5:
                 break
-        if win_h > 500:
-            win_h = 500
+        win_h = min(win_h, 500)
         space_bot = self.get_space_bot(r, text_editor_h)
         space_top = int(self.row_positions[r])
         anchor = "nw"
