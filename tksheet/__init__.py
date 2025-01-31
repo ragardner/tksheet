@@ -4,12 +4,22 @@
 tksheet - A Python tkinter table widget
 """
 
-__version__ = "7.3.4"
+__version__ = "7.3.5"
 
 from .colors import (
     color_map,
 )
 from .column_headers import ColumnHeaders
+from .constants import (
+    USER_OS,
+    ctrl_key,
+    emitted_events,
+    falsy,
+    nonelike,
+    rc_binding,
+    symbols_set,
+    truthy,
+)
 from .formatters import (
     Formatter,
     alt_percentage_to_str,
@@ -96,13 +106,3 @@ from .themes import (
     theme_light_green,
 )
 from .top_left_rectangle import TopLeftRectangle
-from .constants import (
-    USER_OS,
-    ctrl_key,
-    emitted_events,
-    falsy,
-    nonelike,
-    rc_binding,
-    symbols_set,
-    truthy,
-)

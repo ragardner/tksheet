@@ -1,3 +1,6 @@
+### Version 7.3.5
+####
+
 ### Version 7.3.4
 #### Fixed:
 - Error on find within selection without a selection
