@@ -7372,8 +7372,7 @@ class MainTable(tk.Canvas):
                 boxes=self.get_boxes(),
                 selected=self.selected,
             )
-            if kwargs["select_function"] is not None:
-                kwargs["select_function"](event_data)
+            try_binding(kwargs["select_function"], event_data)
             selection = selection if not self.edit_validation_func else self.edit_validation_func(event_data)
             if selection is not None:
                 edited = self.set_cell_data_undo(r, c, datarn=datarn, datacn=datacn, value=selection, redraw=not redraw)

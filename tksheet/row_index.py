@@ -2194,8 +2194,7 @@ class RowIndex(tk.Canvas):
                 boxes=self.MT.get_boxes(),
                 selected=self.MT.selected,
             )
-            if kwargs["select_function"] is not None:
-                kwargs["select_function"](event_data)
+            try_binding(kwargs["select_function"], event_data)
             selection = selection if not self.MT.edit_validation_func else self.MT.edit_validation_func(event_data)
             if selection is not None:
                 edited = self.set_cell_data_undo(r, datarn=datarn, value=selection, redraw=not redraw)
