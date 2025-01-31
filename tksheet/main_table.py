@@ -6693,7 +6693,7 @@ class MainTable(tk.Canvas):
         if get_cells:
             s = {
                 (r, c)
-                for item, box in self.get_selection_items(cells=False, columns=False)
+                for _, box in self.get_selection_items(cells=False, columns=False)
                 for r in range(box.coords.from_r, box.coords.upto_r)
                 for c in range(0, len(self.col_positions) - 1)
             }
@@ -6702,7 +6702,7 @@ class MainTable(tk.Canvas):
         else:
             s = {
                 r
-                for item, box in self.get_selection_items(cells=False, columns=False)
+                for _, box in self.get_selection_items(cells=False, columns=False)
                 for r in range(box.coords.from_r, box.coords.upto_r)
             }
             if get_cells_as_rows:
@@ -6717,7 +6717,7 @@ class MainTable(tk.Canvas):
         if get_cells:
             s = {
                 (r, c)
-                for item, box in self.get_selection_items(cells=False, rows=False)
+                for _, box in self.get_selection_items(cells=False, rows=False)
                 for r in range(0, len(self.row_positions) - 1)
                 for c in range(box.coords.from_c, box.coords.upto_c)
             }
@@ -6726,7 +6726,7 @@ class MainTable(tk.Canvas):
         else:
             s = {
                 c
-                for item, box in self.get_selection_items(cells=False, rows=False)
+                for _, box in self.get_selection_items(cells=False, rows=False)
                 for c in range(box.coords.from_c, box.coords.upto_c)
             }
             if get_cells_as_cols:
@@ -6740,7 +6740,7 @@ class MainTable(tk.Canvas):
     ) -> set[tuple[int, int]]:
         return {
             (r, c)
-            for item, box in self.get_selection_items(rows=get_rows, columns=get_cols)
+            for _, box in self.get_selection_items(rows=get_rows, columns=get_cols)
             for r in range(box.coords.from_r, box.coords.upto_r)
             for c in range(box.coords.from_c, box.coords.upto_c)
         }
@@ -6752,16 +6752,16 @@ class MainTable(tk.Canvas):
     ) -> Generator[tuple[int, int]]:
         yield from (
             (r, c)
-            for item, box in self.get_selection_items(rows=get_rows, columns=get_cols)
+            for _, box in self.get_selection_items(rows=get_rows, columns=get_cols)
             for r in range(box.coords.from_r, box.coords.upto_r)
             for c in range(box.coords.from_c, box.coords.upto_c)
         )
 
     def get_all_selection_boxes(self) -> tuple[tuple[int, int, int, int]]:
-        return tuple(box.coords for item, box in self.get_selection_items())
+        return tuple(box.coords for _, box in self.get_selection_items())
 
     def get_all_selection_boxes_with_types(self) -> list[tuple[tuple[int, int, int, int], str]]:
-        return [Box_st(box.coords, box.type_) for item, box in self.get_selection_items()]
+        return [Box_st(box.coords, box.type_) for _, box in self.get_selection_items()]
 
     def all_selected(self) -> bool:
         return any(
@@ -6781,7 +6781,7 @@ class MainTable(tk.Canvas):
             and isinstance(c, int)
             and any(
                 box.coords.from_r <= r and box.coords.upto_r > r and box.coords.from_c <= c and box.coords.upto_c > c
-                for item, box in self.get_selection_items(
+                for _, box in self.get_selection_items(
                     rows=inc_rows,
                     columns=inc_cols,
                 )
@@ -6791,7 +6791,7 @@ class MainTable(tk.Canvas):
     def col_selected(self, c: int, cells: bool = False) -> bool:
         return isinstance(c, int) and any(
             box.coords.from_c <= c and box.coords.upto_c > c
-            for item, box in self.get_selection_items(
+            for _, box in self.get_selection_items(
                 cells=cells,
                 rows=False,
             )
@@ -6800,7 +6800,7 @@ class MainTable(tk.Canvas):
     def row_selected(self, r: int, cells: bool = False) -> bool:
         return isinstance(r, int) and any(
             box.coords.from_r <= r and box.coords.upto_r > r
-            for item, box in self.get_selection_items(
+            for _, box in self.get_selection_items(
                 cells=cells,
                 columns=False,
             )
@@ -6814,7 +6814,7 @@ class MainTable(tk.Canvas):
     ) -> list[int]:
         return [
             item
-            for item, box in self.get_selection_items(
+            for item, _ in self.get_selection_items(
                 columns=not exclude_columns,
                 rows=not exclude_rows,
                 cells=not exclude_cells,
