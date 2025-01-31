@@ -6234,7 +6234,7 @@ class MainTable(tk.Canvas):
         # set current to a particular existing selection box
         if isinstance(item, int) and item in self.selection_boxes:
             selection_box = self.selection_boxes[item]
-            r1, c1, r2, c2 = selection_box.coords
+            r1, c1, _, _ = selection_box.coords
             if box_created(r1 if r is None else r, c1 if c is None else c, selection_box):
                 return
 
