@@ -2041,13 +2041,11 @@ class ColumnHeaders(tk.Canvas):
         if c is not None and selection is not None:
             datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
             kwargs = self.get_cell_kwargs(datacn, key="dropdown")
-            pre_edit_value = self.get_cell_data(datacn)
-            edited = False
             event_data = event_dict(
                 name="end_edit_header",
                 sheet=self.PAR.name,
                 widget=self,
-                cells_header={datacn: pre_edit_value},
+                cells_header={datacn: self.get_cell_data(datacn)},
                 key="??",
                 value=selection,
                 loc=c,
@@ -2057,14 +2055,11 @@ class ColumnHeaders(tk.Canvas):
             )
             if kwargs["select_function"] is not None:
                 kwargs["select_function"](event_data)
-            if self.MT.edit_validation_func:
-                selection = self.MT.edit_validation_func(event_data)
-                if selection is not None:
-                    edited = self.set_cell_data_undo(c, datacn=datacn, value=selection, redraw=not redraw)
-            else:
+            selection = selection if not self.MT.edit_validation_func else self.MT.edit_validation_func(event_data)
+            if selection is not None:
                 edited = self.set_cell_data_undo(c, datacn=datacn, value=selection, redraw=not redraw)
-            if edited:
-                try_binding(self.extra_end_edit_cell_func, event_data)
+                if edited:
+                    try_binding(self.extra_end_edit_cell_func, event_data)
             self.MT.recreate_all_selection_boxes()
         self.focus_set()
         self.hide_text_editor_and_dropdown(redraw=redraw)

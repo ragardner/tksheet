@@ -2182,13 +2182,11 @@ class RowIndex(tk.Canvas):
         if r is not None and selection is not None:
             datarn = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r]
             kwargs = self.get_cell_kwargs(datarn, key="dropdown")
-            pre_edit_value = self.get_cell_data(datarn)
-            edited = False
             event_data = event_dict(
                 name="end_edit_index",
                 sheet=self.PAR.name,
                 widget=self,
-                cells_header={datarn: pre_edit_value},
+                cells_header={datarn: self.get_cell_data(datarn)},
                 key="??",
                 value=selection,
                 loc=r,
@@ -2198,14 +2196,11 @@ class RowIndex(tk.Canvas):
             )
             if kwargs["select_function"] is not None:
                 kwargs["select_function"](event_data)
-            if self.MT.edit_validation_func:
-                selection = self.MT.edit_validation_func(event_data)
-                if selection is not None:
-                    edited = self.set_cell_data_undo(r, datarn=datarn, value=selection, redraw=not redraw)
-            else:
+            selection = selection if not self.MT.edit_validation_func else self.MT.edit_validation_func(event_data)
+            if selection is not None:
                 edited = self.set_cell_data_undo(r, datarn=datarn, value=selection, redraw=not redraw)
-            if edited:
-                try_binding(self.extra_end_edit_cell_func, event_data)
+                if edited:
+                    try_binding(self.extra_end_edit_cell_func, event_data)
             self.MT.recreate_all_selection_boxes()
         self.focus_set()
         self.hide_text_editor_and_dropdown(redraw=redraw)

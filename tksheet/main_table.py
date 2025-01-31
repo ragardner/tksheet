@@ -331,10 +331,8 @@ class MainTable(tk.Canvas):
             reset_col_positions=False,
             deselect_all=False,
         )
+        self.rc_popup_menu, self.empty_rc_popup_menu = None, None
         self.reset_col_positions()
-
-        self.rc_popup_menu = None
-        self.empty_rc_popup_menu = None
         self.basic_bindings()
         self.create_rc_menus()
 
@@ -7361,12 +7359,11 @@ class MainTable(tk.Canvas):
             datacn = self.datacn(c)
             datarn = self.datarn(r)
             kwargs = self.get_cell_kwargs(datarn, datacn, key="dropdown")
-            pre_edit_value = self.get_cell_data(datarn, datacn)
             event_data = event_dict(
                 name="end_edit_table",
                 sheet=self.PAR.name,
                 widget=self,
-                cells_table={(datarn, datacn): pre_edit_value},
+                cells_table={(datarn, datacn): self.get_cell_data(datarn, datacn)},
                 key="??",
                 value=selection,
                 loc=Loc(r, c),
@@ -7377,28 +7374,11 @@ class MainTable(tk.Canvas):
             )
             if kwargs["select_function"] is not None:
                 kwargs["select_function"](event_data)
-            if self.edit_validation_func:
-                selection, edited = self.edit_validation_func(event_data), False
-                if selection is not None:
-                    edited = self.set_cell_data_undo(
-                        r,
-                        c,
-                        datarn=datarn,
-                        datacn=datacn,
-                        value=selection,
-                        redraw=not redraw,
-                    )
-            else:
-                edited = self.set_cell_data_undo(
-                    r,
-                    c,
-                    datarn=datarn,
-                    datacn=datacn,
-                    value=selection,
-                    redraw=not redraw,
-                )
-            if edited:
-                try_binding(self.extra_end_edit_cell_func, event_data)
+            selection = selection if not self.edit_validation_func else self.edit_validation_func(event_data)
+            if selection is not None:
+                edited = self.set_cell_data_undo(r, c, datarn=datarn, datacn=datacn, value=selection, redraw=not redraw)
+                if edited:
+                    try_binding(self.extra_end_edit_cell_func, event_data)
             self.recreate_all_selection_boxes()
         self.focus_set()
         self.hide_text_editor_and_dropdown(redraw=redraw)
