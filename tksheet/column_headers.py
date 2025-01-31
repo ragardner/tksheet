@@ -1452,14 +1452,12 @@ class ColumnHeaders(tk.Canvas):
             else:
                 align = self.align
             if kwargs := self.get_cell_kwargs(datacn, key="dropdown"):
+                mw = crightgridln - cleftgridln - self.MT.header_txt_height - 2
                 if align == "w":
                     draw_x = cleftgridln + 3
-                    mw = crightgridln - cleftgridln - self.MT.header_txt_height - 2
                 elif align == "e":
-                    mw = crightgridln - cleftgridln - self.MT.header_txt_height - 2
                     draw_x = crightgridln - 5 - self.MT.header_txt_height
                 elif align == "center":
-                    mw = crightgridln - cleftgridln - self.MT.header_txt_height - 2
                     draw_x = cleftgridln + ceil((crightgridln - cleftgridln - self.MT.header_txt_height) / 2)
                 self.redraw_dropdown(
                     cleftgridln,
@@ -1474,14 +1472,12 @@ class ColumnHeaders(tk.Canvas):
                     open_=dd_coords == c,
                 )
             else:
+                mw = crightgridln - cleftgridln - 1
                 if align == "w":
                     draw_x = cleftgridln + 3
-                    mw = crightgridln - cleftgridln - 1
                 elif align == "e":
-                    mw = crightgridln - cleftgridln - 1
                     draw_x = crightgridln - 3
                 elif align == "center":
-                    mw = crightgridln - cleftgridln - 1
                     draw_x = cleftgridln + floor((crightgridln - cleftgridln) / 2)
                 if (kwargs := self.get_cell_kwargs(datacn, key="checkbox")) and mw > self.MT.header_txt_height + 1:
                     box_w = self.MT.header_txt_height + 1
@@ -1557,8 +1553,7 @@ class ColumnHeaders(tk.Canvas):
                         )
                     self.disp_text[iid] = True
                     wd = self.bbox(iid)
-                    wd = wd[2] - wd[0]
-                    if wd > mw:
+                    if (wd := wd[2] - wd[0]) > mw:
                         if align == "w":
                             txt = txt[: int(len(txt) * (mw / wd))]
                             self.itemconfig(iid, text=txt)

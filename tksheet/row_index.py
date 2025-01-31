@@ -1571,14 +1571,12 @@ class RowIndex(tk.Canvas):
             else:
                 align = self.align
             if dropdown_kwargs := self.get_cell_kwargs(datarn, key="dropdown"):
+                mw = self.current_width - self.MT.index_txt_height - 2
                 if align == "w":
                     draw_x = 3
-                    mw = self.current_width - self.MT.index_txt_height - 2
                 elif align == "e":
-                    mw = self.current_width - self.MT.index_txt_height - 2
                     draw_x = self.current_width - 5 - self.MT.index_txt_height
                 elif align == "center":
-                    mw = self.current_width - self.MT.index_txt_height - 2
                     draw_x = ceil((self.current_width - self.MT.index_txt_height) / 2)
                 self.redraw_dropdown(
                     0,
@@ -1593,14 +1591,12 @@ class RowIndex(tk.Canvas):
                     open_=dd_coords == r,
                 )
             else:
+                mw = self.current_width - 2
                 if align == "w":
                     draw_x = 3
-                    mw = self.current_width - 2
                 elif align == "e":
-                    mw = self.current_width - 2
                     draw_x = self.current_width - 3
                 elif align == "center":
-                    mw = self.current_width - 1
                     draw_x = floor(self.current_width / 2)
                 if (
                     (checkbox_kwargs := self.get_cell_kwargs(datarn, key="checkbox"))
@@ -1696,8 +1692,7 @@ class RowIndex(tk.Canvas):
                     )
                 self.disp_text[iid] = True
                 wd = self.bbox(iid)
-                wd = wd[2] - wd[0]
-                if wd > mw:
+                if (wd := wd[2] - wd[0]) > mw:
                     if align == "w" and dropdown_kwargs:
                         txt = txt[: int(len(txt) * (mw / wd))]
                         self.itemconfig(iid, text=txt)

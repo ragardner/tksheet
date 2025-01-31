@@ -5601,45 +5601,39 @@ class MainTable(tk.Canvas):
         self.disp_high[iid] = True
         return True
 
-    def redraw_gridline(
-        self,
-        points: list[float],
-        fill: str,
-        width: int,
-        tag: str | tuple[str],
-    ) -> int:
-        if self.hidd_grid:
-            iid, sh = self.hidd_grid.popitem()
-            self.coords(iid, points)
-            if sh:
-                self.itemconfig(
-                    iid,
-                    fill=fill,
-                    width=width,
-                    capstyle=tk.BUTT,
-                    joinstyle=tk.ROUND,
-                )
+    def redraw_gridline(self, points: list[float]) -> None:
+        if points:
+            if self.hidd_grid:
+                iid, sh = self.hidd_grid.popitem()
+                self.coords(iid, points)
+                if sh:
+                    self.itemconfig(
+                        iid,
+                        fill=self.PAR.ops.table_grid_fg,
+                        width=1,
+                        capstyle=tk.BUTT,
+                        joinstyle=tk.ROUND,
+                    )
+                else:
+                    self.itemconfig(
+                        iid,
+                        fill=self.PAR.ops.table_grid_fg,
+                        width=1,
+                        capstyle=tk.BUTT,
+                        joinstyle=tk.ROUND,
+                        state="normal",
+                    )
+                self.tag_raise(iid)
             else:
-                self.itemconfig(
-                    iid,
-                    fill=fill,
-                    width=width,
+                iid = self.create_line(
+                    points,
+                    fill=self.PAR.ops.table_grid_fg,
+                    width=1,
                     capstyle=tk.BUTT,
                     joinstyle=tk.ROUND,
-                    state="normal",
+                    tag="g",
                 )
-            self.tag_raise(iid)
-        else:
-            iid = self.create_line(
-                points,
-                fill=fill,
-                width=width,
-                capstyle=tk.BUTT,
-                joinstyle=tk.ROUND,
-                tag=tag,
-            )
-        self.disp_grid[iid] = True
-        return iid
+            self.disp_grid[iid] = True
 
     def redraw_dropdown(
         self,
@@ -5966,14 +5960,12 @@ class MainTable(tk.Canvas):
                     if not (align := self.get_cell_kwargs(datarn, datacn, key="align")):
                         align = self.align
                     if kwargs := self.get_cell_kwargs(datarn, datacn, key="dropdown"):
+                        mw = crightgridln - cleftgridln - self.table_txt_height - 2
                         if align == "w":
                             draw_x = cleftgridln + 3
-                            mw = crightgridln - cleftgridln - self.table_txt_height - 2
                         elif align == "e":
-                            mw = crightgridln - cleftgridln - self.table_txt_height - 2
                             draw_x = crightgridln - 5 - self.table_txt_height
                         elif align == "center":
-                            mw = crightgridln - cleftgridln - self.table_txt_height - 2
                             draw_x = cleftgridln + ceil((crightgridln - cleftgridln - self.table_txt_height) / 2)
                         self.redraw_dropdown(
                             cleftgridln,
@@ -5987,14 +5979,12 @@ class MainTable(tk.Canvas):
                             open_=dd_coords == (r, c),
                         )
                     else:
+                        mw = crightgridln - cleftgridln - 1
                         if align == "w":
                             draw_x = cleftgridln + 3
-                            mw = crightgridln - cleftgridln - 1
                         elif align == "e":
-                            mw = crightgridln - cleftgridln - 1
                             draw_x = crightgridln - 3
                         elif align == "center":
-                            mw = crightgridln - cleftgridln - 1
                             draw_x = cleftgridln + floor((crightgridln - cleftgridln) / 2)
                         kwargs = self.get_cell_kwargs(datarn, datacn, key="checkbox")
                         if kwargs and mw > self.table_txt_height + 1:
@@ -6027,10 +6017,9 @@ class MainTable(tk.Canvas):
                     ):
                         continue
                     lines = lines.split("\n")
-                    draw_y = rtopgridln + self.table_first_ln_ins
                     start_ln = max(0, int((scrollpos_top - rtopgridln) / self.table_xtra_lines_increment))
-                    draw_y += start_ln * self.table_xtra_lines_increment
-                    if draw_y + self.table_half_txt_height - 1 <= rbotgridln and len(lines) > start_ln:
+                    draw_y = rtopgridln + self.table_first_ln_ins + start_ln * self.table_xtra_lines_increment
+                    if draw_y + self.table_half_txt_height - 1 <= rbotgridln and len(lines) >= start_ln:
                         for txt in islice(lines, start_ln, None):
                             if self.hidd_text:
                                 iid, showing = self.hidd_text.popitem()
@@ -6065,8 +6054,7 @@ class MainTable(tk.Canvas):
                                 )
                             self.disp_text[iid] = True
                             wd = self.bbox(iid)
-                            wd = wd[2] - wd[0]
-                            if wd > mw:
+                            if (wd := wd[2] - wd[0]) > mw:
                                 if align == "w":
                                     txt = txt[: int(len(txt) * (mw / wd))]
                                     self.itemconfig(iid, text=txt)
@@ -6084,7 +6072,6 @@ class MainTable(tk.Canvas):
                                         self.itemconfig(iid, text=txt)
                                         wd = self.bbox(iid)
                                 elif align == "center":
-                                    self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
                                     tmod = ceil((len(txt) - int(len(txt) * (mw / wd))) / 2)
                                     txt = txt[tmod - 1 : -tmod]
                                     self.itemconfig(iid, text=txt)
@@ -6106,9 +6093,9 @@ class MainTable(tk.Canvas):
                         x_grid_stop = x_stop + 1
                     else:
                         x_grid_stop = x_stop - 1
-                points = tuple(
-                    chain.from_iterable(
-                        [
+                self.redraw_gridline(
+                    points=tuple(
+                        chain.from_iterable(
                             (
                                 scrollpos_left - 1,
                                 self.row_positions[r],
@@ -6120,16 +6107,9 @@ class MainTable(tk.Canvas):
                                 self.row_positions[r + 1] if len(self.row_positions) - 1 > r else self.row_positions[r],
                             )
                             for r in range(grid_start_row, grid_end_row)
-                        ]
+                        )
                     )
                 )
-                if points:
-                    self.redraw_gridline(
-                        points=points,
-                        fill=self.PAR.ops.table_grid_fg,
-                        width=1,
-                        tag="g",
-                    )
             # manage vertical grid lines
             if self.PAR.ops.show_vertical_grid and col_pos_exists:
                 if self.PAR.ops.vertical_grid_to_end_of_window:
@@ -6139,9 +6119,9 @@ class MainTable(tk.Canvas):
                         y_grid_stop = y_stop + 1
                     else:
                         y_grid_stop = y_stop - 1
-                points = tuple(
-                    chain.from_iterable(
-                        [
+                self.redraw_gridline(
+                    points=tuple(
+                        chain.from_iterable(
                             (
                                 self.col_positions[c],
                                 scrollpos_top - 1,
@@ -6153,16 +6133,9 @@ class MainTable(tk.Canvas):
                                 scrollpos_top - 1,
                             )
                             for c in range(grid_start_col, grid_end_col)
-                        ]
-                    )
+                        )
+                    ),
                 )
-                if points:
-                    self.redraw_gridline(
-                        points=points,
-                        fill=self.PAR.ops.table_grid_fg,
-                        width=1,
-                        tag="g",
-                    )
             for dct in (
                 self.hidd_text,
                 self.hidd_high,
@@ -6999,10 +6972,10 @@ class MainTable(tk.Canvas):
             )
             > curr_height
         ):
-            new_height = curr_height + self.table_xtra_lines_increment
-            space_bot = self.get_space_bot(r)
-            if new_height > space_bot:
-                new_height = space_bot
+            new_height = min(
+                curr_height + self.table_xtra_lines_increment,
+                self.scrollregion[3] - self.scrollregion[1] - self.row_positions[r],
+            )
             if new_height != curr_height:
                 self.text_editor.window.config(height=new_height)
                 if self.dropdown.open and self.dropdown.get_coords() == (r, c):
