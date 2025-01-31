@@ -6653,7 +6653,7 @@ class MainTable(tk.Canvas):
 
     def get_redraw_selections(self, startr: int, endr: int, startc: int, endc: int) -> dict:
         d = defaultdict(set)
-        for item, box in self.get_selection_items():
+        for _, box in self.get_selection_items():
             r1, c1, r2, c2 = box.coords
             if box.type_ == "cells":
                 for r in range(startr, endr):
