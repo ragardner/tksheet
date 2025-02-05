@@ -12,12 +12,149 @@ from itertools import islice, repeat
 from typing import Literal
 
 from .colors import color_map
-from .constants import symbols_set
+from .constants import align_value_error, symbols_set
 from .formatters import to_bool
 from .other_classes import Box_nt, DotDict, EventDataDict, Highlight, Loc, Span
 from .types import AnyIter
 
 unpickle_obj = pickle.loads
+lines_re = re.compile(r"[^\n]+")
+
+
+def wrap_text(
+    text: str,
+    max_width: int,
+    max_lines: int,
+    char_width_fn: Callable,
+    widths: dict[str, int],
+    wrap: Literal["", "c", "w"] = "",
+    start_line: int = 0,
+) -> Generator[str]:
+    lines = (match.group() for match in lines_re.finditer(text))
+    current_line = []
+    total_lines = 0
+    line_width = 0
+
+    if not wrap:
+        for line in lines:
+            line_width = 0
+            current_line = []
+            for char in line:
+                char_width = widths.get(char, char_width_fn(char))
+                line_width += char_width
+                if line_width >= max_width:
+                    break
+                current_line.append(char)
+
+            if total_lines >= start_line:
+                yield "".join(current_line)
+
+            # Count the line whether it's empty or not
+            total_lines += 1
+            if total_lines >= max_lines:
+                return
+
+    elif wrap == "c":
+        for line in lines:
+            for char in line:
+                char_width = widths.get(char, char_width_fn(char))
+
+                # adding char to line would result in wrap
+                if line_width + char_width >= max_width:
+                    if total_lines >= start_line:
+                        yield "".join(current_line)
+
+                    total_lines += 1
+                    if total_lines >= max_lines:
+                        return
+
+                    current_line = []  # Start new line
+                    line_width = 0
+                    if char_width <= max_width:
+                        current_line.append(char)
+                        line_width = char_width
+                # adding char to line is okay
+                else:
+                    current_line.append(char)
+                    line_width += char_width
+
+            if total_lines >= start_line:
+                yield "".join(current_line)
+
+            total_lines += 1
+            if total_lines >= max_lines:
+                return
+            current_line = []  # Reset for next line
+            line_width = 0
+
+    elif wrap == "w":
+        space_width = widths.get(" ", char_width_fn(" "))
+
+        for line in lines:
+            words = line.split()
+            for i, word in enumerate(words):
+                # if we're going to next word and
+                # if a space fits on the end of the current line we add one
+                if i and line_width + space_width < max_width:
+                    current_line.append(" ")
+                    line_width += space_width
+
+                # check if word will fit
+                word_width = 0
+                word_char_widths = []
+                for char in word:
+                    word_char_widths.append((w := widths.get(char, char_width_fn(char))))
+                    word_width += w
+
+                # we only wrap by character if the whole word alone wont fit max width
+                # word won't fit at all we resort to char wrapping it
+                if word_width >= max_width:
+                    for char, w in zip(word, word_char_widths):
+                        # adding char to line would result in wrap
+                        if line_width + w >= max_width:
+                            if total_lines >= start_line:
+                                yield "".join(current_line)
+
+                            total_lines += 1
+                            if total_lines >= max_lines:
+                                return
+
+                            current_line = []  # Start new line
+                            line_width = 0
+                            if w <= max_width:
+                                current_line.append(char)
+                                line_width = w
+                        # adding char to line is okay
+                        else:
+                            current_line.append(char)
+                            line_width += w
+
+                # word won't fit on current line but will fit on a newline
+                elif line_width + word_width >= max_width:
+                    if total_lines >= start_line:
+                        yield "".join(current_line)
+
+                    total_lines += 1
+                    if total_lines >= max_lines:
+                        return
+
+                    current_line = [word]  # Start new line
+                    line_width = word_width
+
+                # word will fit we put it on the current line
+                else:
+                    current_line.append(word)
+                    line_width += word_width
+
+            if total_lines >= start_line:
+                yield "".join(current_line)
+
+            total_lines += 1
+            if total_lines >= max_lines:
+                return
+
+            current_line = []  # Reset for next line
+            line_width = 0
 
 
 def get_csv_str_dialect(s: str, delimiters: str) -> csv.Dialect:
@@ -1390,15 +1527,15 @@ def convert_align(align: str | None) -> str | None:
         a = align.lower()
         if a == "global":
             return None
-        elif a in ("c", "center", "centre"):
-            return "center"
-        elif a in ("w", "west", "left"):
-            return "w"
-        elif a in ("e", "east", "right"):
-            return "e"
+        elif a in ("c", "center", "centre", "n"):
+            return "n"
+        elif a in ("w", "west", "left", "nw"):
+            return "nw"
+        elif a in ("e", "east", "right", "ne"):
+            return "ne"
     elif align is None:
         return None
-    raise ValueError("Align must be one of the following values: c, center, w, west, left, e, east, right")
+    raise ValueError(align_value_error)
 
 
 def set_align(

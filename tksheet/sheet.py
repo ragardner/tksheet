@@ -14,6 +14,7 @@ from typing import Literal
 from .column_headers import ColumnHeaders
 from .constants import (
     USER_OS,
+    align_value_error,
     backwards_compatibility_keys,
     emitted_events,
     named_span_types,
@@ -110,10 +111,10 @@ class Sheet(tk.Frame):
         after_redraw_time_ms: int = 20,
         set_all_heights_and_widths: bool = False,
         zoom: int = 100,
-        align: str = "w",
-        header_align: str = "center",
+        align: str = "nw",
+        header_align: str = "n",
         row_index_align: str | None = None,
-        index_align: str = "center",
+        index_align: str = "n",
         displayed_columns: list[int] = [],
         all_columns_displayed: bool = True,
         displayed_rows: list[int] = [],
@@ -175,6 +176,11 @@ class Sheet(tk.Frame):
         treeview_indent: str | int = "5",
         rounded_boxes: bool = True,
         alternate_color: str = "",
+        allow_cell_overflow: bool = False,
+        # "" no wrap, "w" word wrap, "c" char wrap
+        table_wrap: Literal["", "w", "c"] = "c",
+        index_wrap: Literal["", "w", "c"] = "c",
+        header_wrap: Literal["", "w", "c"] = "c",
         # colors
         outline_thickness: int = 0,
         theme: str = "light blue",
@@ -3060,15 +3066,16 @@ class Sheet(tk.Frame):
 
     # Text Font and Alignment
 
-    def font(
-        self,
-        newfont: tuple[str, int, str] | None = None,
-        reset_row_positions: bool = True,
-    ) -> tuple[str, int, str]:
-        return self.MT.set_table_font(newfont, reset_row_positions=reset_row_positions)
+    def font(self, newfont: tuple[str, int, str] | None = None, **_) -> tuple[str, int, str]:
+        return self.MT.set_table_font(newfont)
+
+    table_font = font
 
     def header_font(self, newfont: tuple[str, int, str] | None = None) -> tuple[str, int, str]:
         return self.MT.set_header_font(newfont)
+
+    def index_font(self, newfont: tuple[str, int, str] | None = None) -> tuple[str, int, str]:
+        return self.MT.set_index_font(newfont)
 
     def table_align(
         self,
@@ -3080,7 +3087,7 @@ class Sheet(tk.Frame):
         elif convert_align(align):
             self.MT.align = convert_align(align)
         else:
-            raise ValueError("Align must be one of the following values: c, center, w, west, e, east")
+            raise ValueError()
         return self.set_refresh_timer(redraw)
 
     def header_align(
@@ -3093,7 +3100,7 @@ class Sheet(tk.Frame):
         elif convert_align(align):
             self.CH.align = convert_align(align)
         else:
-            raise ValueError("Align must be one of the following values: c, center, w, west, e, east")
+            raise ValueError(align_value_error)
         return self.set_refresh_timer(redraw)
 
     def row_index_align(
@@ -3106,7 +3113,7 @@ class Sheet(tk.Frame):
         elif convert_align(align):
             self.RI.align = convert_align(align)
         else:
-            raise ValueError("Align must be one of the following values: c, center, w, west, e, east")
+            raise ValueError(align_value_error)
         return self.set_refresh_timer(redraw)
 
     index_align = row_index_align
@@ -3569,18 +3576,41 @@ class Sheet(tk.Frame):
         only_set_if_too_small: bool = False,
         redraw: bool = True,
     ) -> Sheet | int:
-        if column == "all" and width == "default":
-            self.MT.reset_col_positions()
-        elif column == "displayed" and width == "text":
-            for c in range(*self.MT.visible_text_columns):
-                self.CH.set_col_width(c)
-        elif width == "text" and isinstance(column, int):
-            self.CH.set_col_width(col=column, width=None, only_if_too_small=only_set_if_too_small)
-        elif isinstance(width, int) and isinstance(column, int):
-            self.CH.set_col_width(col=column, width=width, only_if_too_small=only_set_if_too_small)
+        if column == "all":
+            if width == "default":
+                self.MT.reset_col_positions()
+            elif width == "text":
+                self.set_all_column_widths(only_set_if_too_small=only_set_if_too_small)
+            elif isinstance(width, int):
+                self.MT.reset_col_positions(width=width)
+
+        elif column == "displayed":
+            if width == "default":
+                for c in range(*self.MT.visible_text_columns):
+                    self.CH.set_col_width(
+                        c, width=self.ops.default_column_width, only_if_too_small=only_set_if_too_small
+                    )
+            elif width == "text":
+                for c in range(*self.MT.visible_text_columns):
+                    self.CH.set_col_width(c, only_if_too_small=only_set_if_too_small)
+            elif isinstance(width, int):
+                for c in range(*self.MT.visible_text_columns):
+                    self.CH.set_col_width(c, width=width, only_if_too_small=only_set_if_too_small)
+
         elif isinstance(column, int):
-            return int(self.MT.col_positions[column + 1] - self.MT.col_positions[column])
-        return self.set_refresh_timer(redraw)
+            if width == "default":
+                self.CH.set_col_width(
+                    col=column, width=self.ops.default_column_width, only_if_too_small=only_set_if_too_small
+                )
+            elif width == "text":
+                self.CH.set_col_width(col=column, only_if_too_small=only_set_if_too_small)
+            elif isinstance(width, int):
+                self.CH.set_col_width(col=column, width=width, only_if_too_small=only_set_if_too_small)
+            elif width is None:
+                return int(self.MT.col_positions[column + 1] - self.MT.col_positions[column])
+
+        else:
+            return self.set_refresh_timer(redraw)
 
     def row_height(
         self,
@@ -3589,18 +3619,39 @@ class Sheet(tk.Frame):
         only_set_if_too_small: bool = False,
         redraw: bool = True,
     ) -> Sheet | int:
-        if row == "all" and height == "default":
-            self.MT.reset_row_positions()
-        elif row == "displayed" and height == "text":
-            for r in range(*self.MT.visible_text_rows):
-                self.RI.set_row_height(r)
-        elif height == "text" and isinstance(row, int):
-            self.RI.set_row_height(row=row, height=None, only_if_too_small=only_set_if_too_small)
-        elif isinstance(height, int) and isinstance(row, int):
-            self.RI.set_row_height(row=row, height=height, only_if_too_small=only_set_if_too_small)
+        if row == "all":
+            if height == "default":
+                self.MT.reset_row_positions()
+            elif height == "text":
+                self.set_all_row_heights()
+            elif isinstance(height, int):
+                self.MT.reset_row_positions(height=height)
+
+        elif row == "displayed":
+            if height == "default":
+                height = self.MT.get_default_row_height()
+                for r in range(*self.MT.visible_text_rows):
+                    self.RI.set_row_height(r, height=height, only_if_too_small=only_set_if_too_small)
+            elif height == "text":
+                for r in range(*self.MT.visible_text_rows):
+                    self.RI.set_row_height(r, only_if_too_small=only_set_if_too_small)
+            elif isinstance(height, int):
+                for r in range(*self.MT.visible_text_rows):
+                    self.RI.set_row_height(r, height=height, only_if_too_small=only_set_if_too_small)
+
         elif isinstance(row, int):
-            return int(self.MT.row_positions[row + 1] - self.MT.row_positions[row])
-        return self.set_refresh_timer(redraw)
+            if height == "default":
+                height = self.MT.get_default_row_height()
+                self.RI.set_row_height(row=row, height=height, only_if_too_small=only_set_if_too_small)
+            elif height == "text":
+                self.RI.set_row_height(row=row, only_if_too_small=only_set_if_too_small)
+            elif isinstance(height, int):
+                self.RI.set_row_height(row=row, height=height, only_if_too_small=only_set_if_too_small)
+            elif height is None:
+                return int(self.MT.row_positions[row + 1] - self.MT.row_positions[row])
+
+        else:
+            return self.set_refresh_timer(redraw)
 
     def get_column_widths(self, canvas_positions: bool = False) -> list[float]:
         if canvas_positions:
@@ -4514,7 +4565,7 @@ class Sheet(tk.Frame):
             self.set_scrollbar_options()
         self.MT.create_rc_menus()
         if "treeview" in kwargs:
-            self.index_align("w", redraw=False)
+            self.index_align("nw", redraw=False)
         return self.set_refresh_timer(redraw)
 
     def set_scrollbar_options(self) -> Sheet:
@@ -7248,7 +7299,7 @@ class Dropdown(Sheet):
         modified_function: None | Callable = None,
         arrowkey_RIGHT: Callable | None = None,
         arrowkey_LEFT: Callable | None = None,
-        align: str = "w",
+        align: str = "nw",
         # False for using r, c
         # "r" for r
         # "c" for c

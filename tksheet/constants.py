@@ -9,6 +9,7 @@ symbols_set: set[str] = set("""!#$%&'()*+,-./:;"@[]^_`{|}~>?= \\""")
 nonelike: set[object] = {None, "none", ""}
 truthy: set[object] = {True, "true", "t", "yes", "y", "on", "1", 1, 1.0}
 falsy: set[object] = {False, "false", "f", "no", "n", "off", "0", 0, 0.0}
+_test_str: str = "aiW_-|"
 
 val_modifying_options: set[str] = {"checkbox", "format", "dropdown"}
 
@@ -33,6 +34,18 @@ emitted_events: set[str] = {
     "<<Redo>>",
     "<<SelectAll>>",
 }
+
+align_helper: dict[str, str] = {
+    "w": "nw",
+    "e": "ne",
+    "center": "n",
+    "n": "center",
+    "nw": "left",
+    "ne": "right",
+}
+
+align_value_error: str = "Align must be one of the following values: c, center, w, nw, west, left, e, ne, east, right"
+font_value_error: str = "Argument must be font, size and 'normal', 'bold' or'italic' e.g. ('Carlito',12,'normal')"
 
 backwards_compatibility_keys: dict[str, str] = {
     "font": "table_font",

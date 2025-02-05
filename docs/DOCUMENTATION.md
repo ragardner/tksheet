@@ -68,12 +68,10 @@
 ### **Limitations**
 
 Some examples of things that are not possible with tksheet:
-- Cell merging
-- Cell text wrap
-- Changing font for individual cells
-- Different fonts for index and table
-- Mouse drag copy cells
-- Cell highlight borders
+- Cell merging.
+- Changing font for individual cells.
+- Mouse drag copy cells.
+- Cell highlight borders.
 - At the present time the type hinting in tksheet is only meant to serve as a guide and not to be used with type checkers.
 
 ---
@@ -399,6 +397,10 @@ def __init__(
     treeview_indent: str | int = "5",
     rounded_boxes: bool = True,
     alternate_color: str = "",
+    allow_cell_overflow: bool = False,
+    table_wrap: Literal["", "w", "c"] = "c",  # "" no wrap, "w" word wrap, "c" char wrap
+    index_wrap: Literal["", "w", "c"] = "c",  # "" no wrap, "w" word wrap, "c" char wrap
+    header_wrap: Literal["", "w", "c"] = "c",  # "" no wrap, "w" word wrap, "c" char wrap
     # colors
     outline_thickness: int = 0,
     outline_color: str = theme_light_blue["outline_color"],

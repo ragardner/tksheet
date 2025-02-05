@@ -1,5 +1,24 @@
 ### Version 7.3.5
-####
+#### Changed:
+- Text now wraps by character by default, can also disable wrapping or wrap by word
+- Significant changes to how text is rendered
+- Removed mousewheel scrolling lines in header, replaced with vertical axis table scroll
+- Resizing row height to text is now based on the existing column width for the cell/cells, includes double click resizing
+
+#### Added:
+- Text wrap for table, header and index
+```python
+# "" no wrap, "w" word wrap, "c" char wrap
+table_wrap: Literal["", "w", "c"] = "c",
+index_wrap: Literal["", "w", "c"] = "c",
+header_wrap: Literal["", "w", "c"] = "c",
+```
+- Cell text overflow `allow_cell_overflow: bool = False` to adjacent cells for left and right alignments, disabled by default
+
+#### Fixed:
+- Index fonts now work correctly
+- Functions `column_width()` and `row_height()` work correctly for any parameters
+- Down sizing rows/columns when scrolled to the end of the axis would result in a rapid movement of row height/column width
 
 ### Version 7.3.4
 #### Fixed:
