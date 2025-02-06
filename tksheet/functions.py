@@ -109,6 +109,17 @@ def wrap_text(
                 # we only wrap by character if the whole word alone wont fit max width
                 # word won't fit at all we resort to char wrapping it
                 if word_width >= max_width:
+                    # yield current line before char wrapping word
+                    if current_line and total_lines >= start_line:
+                        yield "".join(current_line)
+
+                    total_lines += 1
+                    if total_lines >= max_lines:
+                        return
+
+                    current_line = []  # Start new line
+                    line_width = 0
+
                     for char, w in zip(word, word_char_widths):
                         # adding char to line would result in wrap
                         if line_width + w >= max_width:

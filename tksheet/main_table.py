@@ -4090,7 +4090,7 @@ class MainTable(tk.Canvas):
             max_width = col_width - 2
             if (kwargs := self.get_cell_kwargs(datarn, datacn, "dropdown")) and max_width > self.table_txt_height + 1:
                 box_w = self.table_txt_height + 1
-                max_width -= box_w + 3
+                max_width -= box_w + 4
         if self.PAR.ops.allow_cell_overflow and not kwargs:
             if self.cells_cache is None:
                 disprn = self.disprn(datarn)
@@ -6158,7 +6158,7 @@ class MainTable(tk.Canvas):
                                 draw_x += box_w + 3
                             elif align.endswith("n"):
                                 draw_x += ceil(box_w / 2) + 1
-                            max_width -= box_w + 3
+                            max_width -= box_w + 4
                             try:
                                 draw_check = bool(self.data[datarn][datacn])
                             except Exception:

@@ -1480,7 +1480,7 @@ class ColumnHeaders(tk.Canvas):
                         draw_x += box_w + 3
                     elif align.endswith("n"):
                         draw_x += ceil(box_w / 2) + 1
-                    max_width -= box_w + 3
+                    max_width -= box_w + 4
                     try:
                         draw_check = (
                             self.MT._headers[datacn]

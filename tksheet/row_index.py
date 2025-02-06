@@ -1650,12 +1650,9 @@ class RowIndex(tk.Canvas):
                     box_w = self.MT.index_txt_height + 1
                     if align.endswith("w"):
                         draw_x += box_w + 3
-                        max_width -= box_w + 3
                     elif align.endswith("n"):
                         draw_x += ceil(box_w / 2) + 1
-                        max_width -= box_w + 2
-                    else:
-                        max_width -= box_w + 1
+                    max_width -= box_w + 4
                     try:
                         draw_check = (
                             self.MT._row_index[datarn]
