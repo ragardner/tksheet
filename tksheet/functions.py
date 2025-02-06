@@ -67,9 +67,9 @@ def wrap_text(
                     total_lines += 1
                     if total_lines >= max_lines:
                         return
-
-                    current_line = []  # Start new line
+                    current_line = []
                     line_width = 0
+
                     if char_width <= max_width:
                         current_line.append(char)
                         line_width = char_width
