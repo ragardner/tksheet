@@ -5864,9 +5864,9 @@ class MainTable(tk.Canvas):
     ) -> Generator[float]:
         for c_ in rnge:
             if (
-                cells[(datarn, cells[c_])]
-                or (datarn, cells[c_]) in cells["dropdown"]
-                or (datarn, cells[c_]) in cells["checkbox"]
+                cells[(datarn, cells["datacn"][c_])]
+                or (datarn, cells["datacn"][c_]) in cells["dropdown"]
+                or (datarn, cells["datacn"][c_]) in cells["checkbox"]
             ):
                 return
             else:
@@ -5879,14 +5879,16 @@ class MainTable(tk.Canvas):
         text_start_col: int,
         text_end_col: int,
     ) -> dict:
-        cells = {"dropdown": {}, "checkbox": {}}
+        cells = {"datarn": {}, "datacn": {}, "dropdown": {}, "checkbox": {}}
         for r in range(text_start_row, text_end_row):
             datarn = r if self.all_rows_displayed else self.displayed_rows[r]
-            cells[r] = datarn
+            cells["datarn"][r] = datarn
             for c in range(text_start_col, text_end_col):
-                datacn = c if self.all_columns_displayed else self.displayed_columns[c]
-                if c not in cells:
-                    cells[c] = datacn
+                if c in cells["datacn"]:
+                    datacn = cells["datacn"][c]
+                else:
+                    datacn = c if self.all_columns_displayed else self.displayed_columns[c]
+                    cells["datacn"][c] = datacn
                 if kwargs := self.get_cell_kwargs(datarn, datacn, key="dropdown"):
                     cells["dropdown"][(datarn, datacn)] = kwargs
                 elif kwargs := self.get_cell_kwargs(datarn, datacn, key="checkbox"):
@@ -6053,13 +6055,6 @@ class MainTable(tk.Canvas):
                         )
                     ),
                 )
-
-            cells = self._redraw_precache_cells(
-                text_start_row=text_start_row,
-                text_end_row=text_end_row,
-                text_start_col=text_start_col,
-                text_end_col=text_end_col,
-            )
             font = self.PAR.ops.table_font
             dd_coords = self.dropdown.get_coords()
             selections = self.get_redraw_selections(text_start_row, grid_end_row, text_start_col, grid_end_col)
@@ -6093,15 +6088,21 @@ class MainTable(tk.Canvas):
                 override = tuple()
             allow_overflow = self.PAR.ops.allow_cell_overflow
             wrap = self.PAR.ops.table_wrap
+            cells = self._redraw_precache_cells(
+                text_start_row=text_start_row,
+                text_end_row=text_end_row,
+                text_start_col=text_start_col,
+                text_end_col=text_end_col,
+            )
             for r in range(text_start_row, text_end_row):
                 rtopgridln = self.row_positions[r]
                 rbotgridln = self.row_positions[r + 1]
-                datarn = cells[r]
+                datarn = cells["datarn"][r]
 
                 for c in range(text_start_col, text_end_col):
                     cleftgridln = self.col_positions[c]
                     crightgridln = self.col_positions[c + 1]
-                    datacn = cells[c]
+                    datacn = cells["datacn"][c]
                     fill, dd_drawn = self.redraw_highlight_get_text_fg(
                         r=r,
                         c=c,
