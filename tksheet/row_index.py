@@ -2398,7 +2398,11 @@ class RowIndex(tk.Canvas):
         if fix:
             self.fix_index(datarn)
         try:
-            value = "" if self.MT._row_index[datarn] is None else f"{self.MT._row_index[datarn]}"
+            value = self.MT._row_index[datarn]
+            if value is None:
+                value = ""
+            elif not isinstance(value, str):
+                value = f"{value}"
         except Exception:
             value = ""
         if not value and self.ops.show_default_index_for_empty:

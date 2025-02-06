@@ -2171,7 +2171,11 @@ class ColumnHeaders(tk.Canvas):
         if fix:
             self.fix_header(datacn)
         try:
-            value = "" if self.MT._headers[datacn] is None else f"{self.MT._headers[datacn]}"
+            value = self.MT._headers[datacn]
+            if value is None:
+                value = ""
+            elif not isinstance(value, str):
+                value = f"{value}"
         except Exception:
             value = ""
         if not value and self.ops.show_default_header_for_empty:

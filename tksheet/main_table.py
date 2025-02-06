@@ -7807,7 +7807,7 @@ class MainTable(tk.Canvas):
                 else:
                     # assumed given formatter class has get_data_with_valid_check()
                     return f"{value.get_data_with_valid_check()}"
-        return "" if value is None else f"{value}"
+        return "" if value is None else value if isinstance(value, str) else f"{value}"
 
     def get_cell_data(
         self,
