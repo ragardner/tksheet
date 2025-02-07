@@ -95,8 +95,9 @@ from .other_classes import (
     SelectionBox,
     TextEditorStorage,
 )
+from .sorting import sort_selection
 from .text_editor import TextEditor
-from .types import AnyIter
+from .tksheet_types import AnyIter
 
 
 class MainTable(tk.Canvas):
@@ -181,6 +182,9 @@ class MainTable(tk.Canvas):
 
         self.edit_validation_func = None
 
+        self.extra_begin_sort_cells_func = None
+        self.extra_end_sort_cells_func = None
+
         self.extra_begin_ctrl_c_func = None
         self.extra_end_ctrl_c_func = None
 
@@ -244,6 +248,11 @@ class MainTable(tk.Canvas):
         self.rc_insert_column_enabled = False
         self.rc_delete_row_enabled = False
         self.rc_insert_row_enabled = False
+        self.rc_sort_cells_enabled = False
+        self.rc_sort_row_enabled = False
+        self.rc_sort_column_enabled = False
+        self.rc_sort_rows_enabled = False
+        self.rc_sort_columns_enabled = False
         self.rc_popup_menus_enabled = False
         self.edit_cell_enabled = False
         self.CH = kwargs["column_headers_canvas"]
@@ -352,7 +361,7 @@ class MainTable(tk.Canvas):
                 super().event_generate(*args, **kwargs)
 
     def refresh(self, event: object = None) -> None:
-        self.main_table_redraw_grid_and_text(True, True)
+        self.PAR.set_refresh_timer()
 
     def window_configured(self, event: object) -> None:
         w = self.PAR.winfo_width()
@@ -920,6 +929,62 @@ class MainTable(tk.Canvas):
             self.PAR.emit_event("<<Cut>>", event_data)
         return event_data
 
+    def sort_boxes(
+        self,
+        event: tk.Event | None = None,
+        boxes: AnyIter[int, int, int, int] | None = None,
+        reverse: bool = False,
+        validation: bool = True,
+        key: Callable | None = None,
+        undo: bool = True,
+    ) -> EventDataDict:
+        if boxes is None:
+            boxes = self.get_boxes()
+        if not boxes:
+            boxes = [(0, 0, len(self.row_positions) - 1, len(self.col_positions) - 1)]
+        event_data = event_dict(
+            name="edit_table",
+            sheet=self.PAR.name,
+            widget=self,
+            boxes=boxes,
+            selected=self.selected,
+        )
+        try_binding(self.extra_begin_sort_cells_func, event_data)
+        for r1, c1, r2, c2 in boxes:
+            data = sort_selection(
+                [[self.get_cell_data(self.datarn(r), self.datacn(c)) for c in range(c1, c2)] for r in range(r1, r2)],
+                reverse=reverse,
+                key=key,
+            )
+            for ir, r in enumerate(range(r1, r2)):
+                data_r = self.datarn(r)
+                for ic, c in enumerate(range(c1, c2)):
+                    data_c = self.datacn(c)
+                    val = data[ir][ic]
+                    if (
+                        not self.edit_validation_func
+                        or not validation
+                        or (
+                            self.edit_validation_func
+                            and (val := self.edit_validation_func(mod_event_val(event_data, val, (data_r, data_c))))
+                            is not None
+                        )
+                    ):
+                        event_data = self.event_data_set_cell(
+                            datarn=data_r,
+                            datacn=data_c,
+                            value=val,
+                            event_data=event_data,
+                        )
+        if event_data["cells"]["table"]:
+            if undo and self.undo_enabled:
+                self.undo_stack.append(stored_event_dict(event_data))
+            try_binding(self.extra_end_sort_cells_func, event_data, "end_edit_table")
+            self.sheet_modified(event_data)
+            self.PAR.emit_event("<<SheetModified>>", event_data)
+            self.refresh()
+        return event_data
+
     def ctrl_v(self, event: object = None, validation: bool = True) -> None | EventDataDict:
         if not self.PAR.ops.paste_can_expand_x and len(self.col_positions) == 1:
             return
@@ -1290,8 +1355,7 @@ class MainTable(tk.Canvas):
             }
         event_data["options"] = self.copy_options()
         event_data["named_spans"] = {k: span.pickle_self() for k, span in self.named_spans.items()}
-        if move_widths and disp_new_idxs and (not data_indexes or self.all_columns_displayed):
-            self.deselect("all", run_binding=False, redraw=False)
+        if move_widths and disp_new_idxs:
             self.set_col_positions(
                 itr=move_elements_by_mapping(
                     self.get_column_widths(),
@@ -1305,6 +1369,7 @@ class MainTable(tk.Canvas):
                 )
             )
             if create_selections:
+                self.deselect("all", run_binding=False, redraw=False)
                 for boxst, boxend in consecutive_ranges(sorted(disp_new_idxs.values())):
                     self.create_selection_box(
                         0,
@@ -1314,6 +1379,8 @@ class MainTable(tk.Canvas):
                         "columns",
                         run_binding=True,
                     )
+            else:
+                self.recreate_all_selection_boxes()
         if move_data:
             self.data = list(
                 map(
@@ -1524,8 +1591,7 @@ class MainTable(tk.Canvas):
             }
         event_data["options"] = self.copy_options()
         event_data["named_spans"] = {k: span.pickle_self() for k, span in self.named_spans.items()}
-        if move_heights and disp_new_idxs and (not data_indexes or self.all_rows_displayed):
-            self.deselect("all", run_binding=False, redraw=False)
+        if move_heights and disp_new_idxs:
             self.set_row_positions(
                 itr=move_elements_by_mapping(
                     self.get_row_heights(),
@@ -1539,6 +1605,7 @@ class MainTable(tk.Canvas):
                 )
             )
             if create_selections:
+                self.deselect("all", run_binding=False, redraw=False)
                 for boxst, boxend in consecutive_ranges(sorted(disp_new_idxs.values())):
                     self.create_selection_box(
                         boxst,
@@ -1548,6 +1615,8 @@ class MainTable(tk.Canvas):
                         "rows",
                         run_binding=True,
                     )
+            else:
+                self.recreate_all_selection_boxes()
         if move_data:
             self.data = move_elements_by_mapping(
                 self.data,
@@ -2875,6 +2944,85 @@ class MainTable(tk.Canvas):
                 command=lambda: self.rc_add_rows("below"),
                 **mnkwgs,
             )
+        if self.rc_sort_cells_enabled:
+            self.menu_add_command(
+                self.rc_popup_menu,
+                label=self.PAR.ops.sort_cells_label,
+                accelerator=self.PAR.ops.sort_cells_accelerator,
+                command=self.sort_boxes,
+                **mnkwgs,
+            )
+            self.menu_add_command(
+                self.rc_popup_menu,
+                label=self.PAR.ops.sort_cells_reverse_label,
+                accelerator=self.PAR.ops.sort_cells_reverse_accelerator,
+                command=lambda: self.sort_boxes(reverse=True),
+                **mnkwgs,
+            )
+        # row index sort rows cells
+        if self.rc_sort_row_enabled:
+            self.menu_add_command(
+                self.RI.ri_rc_popup_menu,
+                label=self.PAR.ops.sort_row_label,
+                accelerator=self.PAR.ops.sort_row_accelerator,
+                command=self.RI._sort_rows,
+                **mnkwgs,
+            )
+            self.menu_add_command(
+                self.RI.ri_rc_popup_menu,
+                label=self.PAR.ops.sort_row_reverse_label,
+                accelerator=self.PAR.ops.sort_row_reverse_accelerator,
+                command=lambda: self.RI._sort_rows(reverse=True),
+                **mnkwgs,
+            )
+        # header sort columns cells
+        if self.rc_sort_column_enabled:
+            self.menu_add_command(
+                self.CH.ch_rc_popup_menu,
+                label=self.PAR.ops.sort_column_label,
+                accelerator=self.PAR.ops.sort_column_accelerator,
+                command=self.CH._sort_columns,
+                **mnkwgs,
+            )
+            self.menu_add_command(
+                self.CH.ch_rc_popup_menu,
+                label=self.PAR.ops.sort_column_reverse_label,
+                accelerator=self.PAR.ops.sort_column_reverse_accelerator,
+                command=lambda: self.CH._sort_columns(reverse=True),
+                **mnkwgs,
+            )
+        # row index sort columns by row
+        if self.rc_sort_columns_enabled:
+            self.menu_add_command(
+                self.RI.ri_rc_popup_menu,
+                label=self.PAR.ops.sort_columns_label,
+                accelerator=self.PAR.ops.sort_columns_accelerator,
+                command=self.RI._sort_columns_by_row,
+                **mnkwgs,
+            )
+            self.menu_add_command(
+                self.RI.ri_rc_popup_menu,
+                label=self.PAR.ops.sort_columns_reverse_label,
+                accelerator=self.PAR.ops.sort_columns_reverse_accelerator,
+                command=lambda: self.RI._sort_columns_by_row(reverse=True),
+                **mnkwgs,
+            )
+        # header sort rows by column
+        if self.rc_sort_rows_enabled:
+            self.menu_add_command(
+                self.CH.ch_rc_popup_menu,
+                label=self.PAR.ops.sort_rows_label,
+                accelerator=self.PAR.ops.sort_rows_accelerator,
+                command=self.CH._sort_rows_by_column,
+                **mnkwgs,
+            )
+            self.menu_add_command(
+                self.CH.ch_rc_popup_menu,
+                label=self.PAR.ops.sort_rows_reverse_label,
+                accelerator=self.PAR.ops.sort_rows_reverse_accelerator,
+                command=lambda: self.CH._sort_rows_by_column(reverse=True),
+                **mnkwgs,
+            )
         for label, func in self.extra_table_rc_menu_funcs.items():
             self.menu_add_command(
                 self.rc_popup_menu,
@@ -3045,6 +3193,16 @@ class MainTable(tk.Canvas):
             self.rc_insert_row_enabled = True
             self.rc_popup_menus_enabled = True
             self.rc_select_enabled = True
+        if binding in ("all", "sort_cells"):
+            self.rc_sort_cells_enabled = True
+        if binding in ("all", "sort_row"):
+            self.rc_sort_row_enabled = True
+        if binding in ("all", "sort_column", "sort_col"):
+            self.rc_sort_column_enabled = True
+        if binding in ("all", "sort_columns", "sort_cols"):
+            self.rc_sort_columns_enabled = True
+        if binding in ("all", "sort_rows"):
+            self.rc_sort_rows_enabled = True
         if binding in ("all", "right_click_popup_menu", "rc_popup_menu", "rc_menu"):
             self.rc_popup_menus_enabled = True
             self.rc_select_enabled = True
@@ -3118,6 +3276,16 @@ class MainTable(tk.Canvas):
             self.rc_insert_column_enabled = False
         if binding in bind_add_rows:
             self.rc_insert_row_enabled = False
+        if binding in ("all", "sort_cells"):
+            self.rc_sort_cells_enabled = False
+        if binding in ("all", "sort_row"):
+            self.rc_sort_row_enabled = False
+        if binding in ("all", "sort_column", "sort_col"):
+            self.rc_sort_column_enabled = False
+        if binding in ("all", "sort_columns", "sort_cols"):
+            self.rc_sort_columns_enabled = False
+        if binding in ("all", "sort_rows"):
+            self.rc_sort_rows_enabled = False
         if binding in ("all", "right_click_popup_menu", "rc_popup_menu", "rc_menu"):
             self.rc_popup_menus_enabled = False
         if binding in ("all", "right_click_select", "rc_select"):
@@ -4288,46 +4456,6 @@ class MainTable(tk.Canvas):
 
     def gen_row_heights(self) -> Generator[int]:
         return diff_gen(self.row_positions)
-
-    def insert_col_position(
-        self,
-        idx: Literal["end"] | int = "end",
-        width: int | None = None,
-        deselect_all: bool = False,
-    ) -> None:
-        if deselect_all:
-            self.deselect("all", redraw=False)
-        if width is None:
-            w = self.PAR.ops.default_column_width
-        else:
-            w = width
-        if idx == "end" or len(self.col_positions) == idx + 1:
-            self.col_positions.append(self.col_positions[-1] + w)
-        else:
-            idx += 1
-            self.col_positions.insert(idx, self.col_positions[idx - 1] + w)
-            idx += 1
-            self.col_positions[idx:] = [e + w for e in islice(self.col_positions, idx, len(self.col_positions))]
-
-    def insert_row_position(
-        self,
-        idx: Literal["end"] | int = "end",
-        height: int | None = None,
-        deselect_all: bool = False,
-    ) -> None:
-        if deselect_all:
-            self.deselect("all", redraw=False)
-        if height is None:
-            h = self.get_default_row_height()
-        else:
-            h = height
-        if idx == "end" or len(self.row_positions) == idx + 1:
-            self.row_positions.append(self.row_positions[-1] + h)
-        else:
-            idx += 1
-            self.row_positions.insert(idx, self.row_positions[idx - 1] + h)
-            idx += 1
-            self.row_positions[idx:] = [e + h for e in islice(self.row_positions, idx, len(self.row_positions))]
 
     def insert_col_positions(
         self,
@@ -7040,7 +7168,7 @@ class MainTable(tk.Canvas):
             return False
         self.hide_text_editor()
         if not self.see(r=r, c=c, check_cell_visibility=True):
-            self.refresh()
+            self.main_table_redraw_grid_and_text(True, True)
         x = self.col_positions[c]
         y = self.row_positions[r]
         w = self.col_positions[c + 1] - x + 1
@@ -7820,7 +7948,11 @@ class MainTable(tk.Canvas):
     ) -> object:
         if get_displayed:
             return self.get_valid_cell_data_as_str(datarn, datacn, get_displayed=True)
-        value = self.data[datarn][datacn] if len(self.data) > datarn and len(self.data[datarn]) > datacn else ""
+        value = (
+            self.data[datarn][datacn]
+            if len(self.data) > datarn and len(self.data[datarn]) > datacn
+            else self.get_value_for_empty_cell(datarn, datacn)
+        )
         kwargs = self.get_cell_kwargs(datarn, datacn, key="format")
         if kwargs and kwargs["formatter"] is not None:
             value = value.value  # assumed given formatter class has value attribute

@@ -15,7 +15,7 @@ from .colors import color_map
 from .constants import align_value_error, symbols_set
 from .formatters import to_bool
 from .other_classes import Box_nt, DotDict, EventDataDict, Highlight, Loc, Span
-from .types import AnyIter
+from .tksheet_types import AnyIter
 
 unpickle_obj = pickle.loads
 lines_re = re.compile(r"[^\n]+")

@@ -4,6 +4,9 @@ import re
 import unittest
 from collections.abc import Callable
 from datetime import datetime
+from operator import itemgetter
+
+from .tksheet_types import AnyIter
 
 # Possible date formats to try for the entire string
 date_formats = [
@@ -106,31 +109,62 @@ def natural_sort_key(item: object) -> tuple[int, str | float | tuple[int | str, 
             return (6, item)  # If conversion fails, place at the very end
 
 
+def sort_selection(
+    data: list[list[object]],
+    reverse: bool = False,
+    key: Callable | None = None,
+) -> list[list[object]]:
+    if not data or not isinstance(data[0], list):
+        raise ValueError("Data must be a list of lists.")
+
+    if key is None:
+        key = natural_sort_key
+
+    return list(
+        zip(
+            *(
+                sorted(
+                    (row[col] for row in data),
+                    key=key,
+                    reverse=reverse,
+                )
+                for col in range(len(data[0]))
+            )
+        )
+    )
+
+
 def sort_column(
-    data: list[list[object]] | list[object],
+    data: list[list[object]] | list[object] | AnyIter[object],
     column: int = 0,
     reverse: bool = False,
-    key: Callable = natural_sort_key,
+    key: Callable | None = None,
 ) -> list[list[object]] | list[object]:
     if not data:
         return data
 
-    if isinstance(data[0], list):
+    if key is None:
+        key = natural_sort_key
+
+    if isinstance(data, list) and isinstance(data[0], list):
         return sorted(data, key=lambda row: key(row[column]) if len(row) > column else key(None), reverse=reverse)
     else:
         return sorted(data, reverse=reverse, key=key)
 
 
 def sort_row(
-    data: list[list[object]] | list[object],
+    data: list[list[object]] | list[object] | AnyIter[object],
     row: int = 0,
     reverse: bool = False,
-    key: Callable = natural_sort_key,
+    key: Callable | None = None,
 ) -> list[list[object]]:
     if not data:
         return data
 
-    if isinstance(data[0], list):
+    if key is None:
+        key = natural_sort_key
+
+    if isinstance(data, list) and isinstance(data[0], list):
         if 0 <= row < len(data):
             data[row] = sorted(data[row], key=key, reverse=reverse)
             return data
@@ -144,27 +178,37 @@ def sort_rows_by_column(
     data: list[list[object]],
     column: int = 0,
     reverse: bool = False,
-    key: Callable = natural_sort_key,
-) -> list[list[object]]:
+    key: Callable | None = None,
+) -> tuple[list[list[object]], dict[int, int]]:
     if not data:
-        return data
+        return data, {}
 
     # Check if data is a list of lists
     if not isinstance(data[0], list):
         raise ValueError("Data must be a list of lists for row sorting.")
 
-    # Sort the data using the column as the key for sorting
-    return sorted(data, key=lambda row: key(row[column]) if len(row) > column else key(None), reverse=reverse)
+    if key is None:
+        key = natural_sort_key
+
+    # Use a generator expression for sorting to avoid creating an intermediate list
+    sorted_indexed_data = sorted(
+        ((i, row) for i, row in enumerate(data)),
+        key=lambda item: key(item[1][column]) if len(item[1]) > column else key(None),
+        reverse=reverse,
+    )
+
+    # Extract sorted rows and create the mapping dictionary
+    return list(map(itemgetter(1), sorted_indexed_data)), {old: new for new, (old, _) in enumerate(sorted_indexed_data)}
 
 
 def sort_columns_by_row(
     data: list[list[object]],
     row: int = 0,
     reverse: bool = False,
-    key: Callable = natural_sort_key,
-) -> list[list[object]]:
+    key: Callable | None = None,
+) -> tuple[list[list[object]], dict[int, int]]:
     if not data:
-        return data
+        return data, {}
 
     # Check if data is a list of lists
     if not isinstance(data[0], list):
@@ -172,6 +216,9 @@ def sort_columns_by_row(
 
     if row >= len(data) or row < 0:
         raise IndexError(f"Row index {row} out of range for data with {len(data)} rows.")
+
+    if key is None:
+        key = natural_sort_key
 
     # Get sorting indices based on the elements of the specified row
     sort_indices = sorted(range(len(data[row])), key=lambda i: key(data[row][i]), reverse=reverse)
@@ -184,7 +231,7 @@ def sort_columns_by_row(
         unsorted_part = [elem for idx, elem in enumerate(row_data) if idx not in sort_indices_set]
         new_data.append(sorted_part + unsorted_part)
 
-    return new_data
+    return new_data, {old: new for old, new in zip(range(len(data[row])), sort_indices)}
 
 
 class TestNaturalSort(unittest.TestCase):
@@ -242,5 +289,28 @@ class TestNaturalSort(unittest.TestCase):
         self.assertEqual(natural_sort_key(unconvertible)[0], 6)  # Failure case, string conversion fails
 
 
+def test_sort_selection():
+    # Test case 1: Mixed types, no reverse
+    data1 = [[1, "b"], [3, "a"]]
+    sorted_data1 = sort_selection(data1)
+    print(f"Test 1 - No reverse: {data1} -> {sorted_data1}")
+
+    # Test case 2: Mixed types, with reverse
+    data2 = [[1, "b"], [3, "a"]]
+    sorted_data2 = sort_selection(data2, reverse=True)
+    print(f"Test 2 - With reverse: {data2} -> {sorted_data2}")
+
+    # Test case 3: All numbers
+    data3 = [[2, 1], [4, 3]]
+    sorted_data3 = sort_selection(data3)
+    print(f"Test 3 - All numbers: {data3} -> {sorted_data3}")
+
+    # Test case 4: With None values
+    data4 = [[None, "b"], ["a", None]]
+    sorted_data4 = sort_selection(data4)
+    print(f"Test 4 - With None: {data4} -> {sorted_data4}")
+
+
 if __name__ == "__main__":
+    test_sort_selection()
     unittest.main()

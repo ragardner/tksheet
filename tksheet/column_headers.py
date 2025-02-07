@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import tkinter as tk
 from collections import defaultdict
-from collections.abc import Hashable, Sequence
+from collections.abc import Callable, Hashable, Sequence
 from functools import partial
 from itertools import cycle, islice, repeat
 from math import ceil, floor
@@ -27,15 +27,17 @@ from .functions import (
     get_n2a,
     int_x_tuple,
     is_contiguous,
+    mod_event_val,
     new_tk_event,
     rounded_box_coords,
     stored_event_dict,
     try_binding,
     wrap_text,
 )
-from .other_classes import DotDict, DraggedRowColumn, DropdownStorage, TextEditorStorage
+from .other_classes import DotDict, DraggedRowColumn, DropdownStorage, EventDataDict, TextEditorStorage
+from .sorting import sort_column, sort_rows_by_column
 from .text_editor import TextEditor
-from .types import AnyIter
+from .tksheet_types import AnyIter
 
 
 class ColumnHeaders(tk.Canvas):
@@ -66,6 +68,8 @@ class ColumnHeaders(tk.Canvas):
         self.extra_double_b1_func = None
         self.ch_extra_begin_drag_drop_func = None
         self.ch_extra_end_drag_drop_func = None
+        self.ch_extra_begin_sort_rows_func = None
+        self.ch_extra_end_sort_rows_func = None
         self.extra_rc_func = None
         self.selection_binding_func = None
         self.shift_selection_binding_func = None
@@ -858,6 +862,109 @@ class ColumnHeaders(tk.Canvas):
         self.rsz_h = None
         self.mouse_motion(event)
         try_binding(self.extra_b1_release_func, event)
+
+    def _sort_columns(
+        self,
+        event: tk.Event | None = None,
+        columns: AnyIter[int] | None = None,
+        reverse: bool = False,
+        validation: bool = True,
+        key: Callable | None = None,
+        undo: bool = True,
+    ) -> EventDataDict:
+        if columns is None:
+            columns = self.MT.get_selected_cols()
+        if not columns:
+            columns = list(range(0, len(self.MT.col_positions) - 1))
+        event_data = event_dict(
+            name="edit_table",
+            sheet=self.PAR.name,
+            widget=self,
+            boxes=self.MT.get_boxes(),
+            selected=self.MT.selected,
+        )
+        try_binding(self.MT.extra_begin_sort_cells_func, event_data)
+        for c in columns:
+            datacn = self.MT.datacn(c)
+            for r, val in enumerate(
+                sort_column(
+                    (self.MT.get_cell_data(row, datacn) for row in range(len(self.MT.data))),
+                    reverse=reverse,
+                    key=key,
+                )
+            ):
+                if (
+                    not self.MT.edit_validation_func
+                    or not validation
+                    or (
+                        self.MT.edit_validation_func
+                        and (val := self.MT.edit_validation_func(mod_event_val(event_data, val, (r, datacn))))
+                        is not None
+                    )
+                ):
+                    event_data = self.MT.event_data_set_cell(
+                        datarn=r,
+                        datacn=datacn,
+                        value=val,
+                        event_data=event_data,
+                    )
+        if event_data["cells"]["table"]:
+            if undo and self.MT.undo_enabled:
+                self.MT.undo_stack.append(stored_event_dict(event_data))
+            try_binding(self.MT.extra_end_sort_cells_func, event_data, "end_edit_table")
+            self.MT.sheet_modified(event_data)
+            self.PAR.emit_event("<<SheetModified>>", event_data)
+            self.MT.refresh()
+        return event_data
+
+    def _sort_rows_by_column(
+        self,
+        event: tk.Event | None = None,
+        column: int | None = None,
+        reverse: bool = False,
+        key: Callable | None = None,
+        undo: bool = True,
+    ) -> EventDataDict:
+        event_data = event_dict(
+            name="sort_rows",
+            sheet=self.PAR.name,
+            widget=self,
+            boxes=self.MT.get_boxes(),
+            selected=self.MT.selected,
+        )
+        if not self.MT.data:
+            return event_data
+        if column is None:
+            if not self.MT.selected:
+                return event_data
+            column = self.MT.selected.column
+        if try_binding(self.ch_extra_begin_sort_rows_func, event_data, "begin_sort_rows"):
+            _, data_new_idxs = sort_rows_by_column(self.MT.data, column=column, reverse=reverse, key=key)
+            disp_new_idxs = {}
+            for old, new in data_new_idxs.items():
+                if (old_disprn := self.MT.try_disprn(old)) is not None:
+                    disp_new_idxs[old_disprn] = self.MT.disprn(new)
+            data_idxs, disp_idxs, _ = self.PAR.mapping_move_rows(
+                data_new_idxs=data_new_idxs,
+                disp_new_idxs=disp_new_idxs,
+                move_data=True,
+                data_indexes=True,
+                create_selections=False,
+                undo=False,
+                emit_event=False,
+                redraw=True,
+            )
+            event_data["moved"]["rows"] = {
+                "data": data_idxs,
+                "displayed": disp_idxs,
+            }
+            if undo and self.MT.undo_enabled:
+                self.MT.undo_stack.append(stored_event_dict(event_data))
+            try_binding(self.ch_extra_end_sort_rows_func, event_data, "end_sort_rows")
+            self.MT.sheet_modified(event_data)
+            self.PAR.emit_event("<<SheetModified>>", event_data)
+            self.MT.refresh()
+        return event_data
 
     def toggle_select_col(
         self,
@@ -1672,7 +1779,7 @@ class ColumnHeaders(tk.Canvas):
             return False
         self.hide_text_editor()
         if not self.MT.see(r=0, c=c, keep_yscroll=True, check_cell_visibility=True):
-            self.MT.refresh()
+            self.MT.main_table_redraw_grid_and_text(True, True)
         x = self.MT.col_positions[c] + 1
         y = 0
         w = self.MT.col_positions[c + 1] - x

@@ -29,12 +29,14 @@ def new_sheet_options() -> DotDict:
                 13 if USER_OS == "darwin" else 11,
                 "normal",
             ),
+            # cell editing
             "edit_header_label": "Edit header",
             "edit_header_accelerator": "",
             "edit_index_label": "Edit index",
             "edit_index_accelerator": "",
             "edit_cell_label": "Edit cell",
             "edit_cell_accelerator": "",
+            # cut/copy/paste
             "cut_label": "Cut",
             "cut_accelerator": "Ctrl+X",
             "cut_contents_label": "Cut contents",
@@ -45,10 +47,12 @@ def new_sheet_options() -> DotDict:
             "copy_contents_accelerator": "Ctrl+C",
             "paste_label": "Paste",
             "paste_accelerator": "Ctrl+V",
+            # clear/del
             "delete_label": "Delete",
             "delete_accelerator": "Del",
             "clear_contents_label": "Clear contents",
             "clear_contents_accelerator": "Del",
+            # del/insert columns
             "delete_columns_label": "Delete columns",
             "delete_columns_accelerator": "",
             "insert_columns_left_label": "Insert columns left",
@@ -57,6 +61,7 @@ def new_sheet_options() -> DotDict:
             "insert_column_accelerator": "",
             "insert_columns_right_label": "Insert columns right",
             "insert_columns_right_accelerator": "",
+            # del/insert rows
             "delete_rows_label": "Delete rows",
             "delete_rows_accelerator": "",
             "insert_rows_above_label": "Insert rows above",
@@ -65,10 +70,38 @@ def new_sheet_options() -> DotDict:
             "insert_rows_below_accelerator": "",
             "insert_row_label": "Insert row",
             "insert_row_accelerator": "",
+            # sorting
+            # labels
+            "sort_cells_label": "Sort ↓",
+            "sort_row_label": "Sort row →",
+            "sort_column_label": "Sort column ↓",
+            "sort_rows_label": "Sort rows ↓",
+            "sort_columns_label": "Sort columns →",
+            # reverse labels
+            "sort_cells_reverse_label": "Sort ↑",
+            "sort_row_reverse_label": "Sort row ←",
+            "sort_column_reverse_label": "Sort column ↑",
+            "sort_rows_reverse_label": "Sort rows ↑",
+            "sort_columns_reverse_label": "Sort columns ←",
+            # accelerators
+            "sort_cells_accelerator": "",
+            "sort_row_accelerator": "",
+            "sort_column_accelerator": "",
+            "sort_rows_accelerator": "",
+            "sort_columns_accelerator": "",
+            # reverse accelerators
+            "sort_cells_reverse_accelerator": "",
+            "sort_row_reverse_accelerator": "",
+            "sort_column_reverse_accelerator": "",
+            "sort_rows_reverse_accelerator": "",
+            "sort_columns_reverse_accelerator": "",
+            # select all
             "select_all_label": "Select all",
             "select_all_accelerator": "Ctrl+A",
+            # undo
             "undo_label": "Undo",
             "undo_accelerator": "Ctrl+Z",
+            # bindings
             "copy_bindings": [
                 f"<{ctrl_key}-c>",
                 f"<{ctrl_key}-C>",
@@ -158,6 +191,7 @@ def new_sheet_options() -> DotDict:
             "escape_bindings": [
                 "<Escape>",
             ],
+            # other
             "vertical_scroll_borderwidth": 1,
             "horizontal_scroll_borderwidth": 1,
             "vertical_scroll_gripcount": 0,

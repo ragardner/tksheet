@@ -66,6 +66,7 @@ This library is maintained with the help of **[others](https://github.com/ragard
 - [Progress bars](https://github.com/ragardner/tksheet/wiki/Version-7#progress-bars)
 - [Hide rows and/or columns](https://github.com/ragardner/tksheet/wiki/Version-7#example-header-dropdown-boxes-and-row-filtering)
 - [Left `"w"`, Center `"center"` or Right `"e"` text alignment for any cell/row/column](https://github.com/ragardner/tksheet/wiki/Version-7#text-font-and-alignment)
+- [In-built sorting](https://github.com/ragardner/tksheet/wiki/Version-7#sorting-the-table)
 - [Optional built-in find window](https://github.com/ragardner/tksheet/wiki/Version-7#table-functionality-and-bindings)
 
 ```python
@@ -96,5 +97,3 @@ sheet.delete_columns(columns=[0, 3], undo=True)
 ### **treeview mode**
 
 ![tksheet treeview](https://github.com/user-attachments/assets/159ab987-7612-4db7-98de-1f30c9680247)
-
-

@@ -7,6 +7,7 @@
 
 #### Added:
 - Text wrap for table, header and index
+- Natural sorting functionality
 ```python
 # "" no wrap, "w" word wrap, "c" char wrap
 table_wrap: Literal["", "w", "c"] = "c",

@@ -19,6 +19,7 @@
 ---
 - [Getting Sheet Data](https://github.com/ragardner/tksheet/wiki/Version-7#getting-sheet-data)
 - [Setting Sheet Data](https://github.com/ragardner/tksheet/wiki/Version-7#setting-sheet-data)
+- [Sorting the Table](https://github.com/ragardner/tksheet/wiki/Version-7#sorting-the-table)
 ---
 - [Highlighting Cells](https://github.com/ragardner/tksheet/wiki/Version-7#highlighting-cells)
 - [Dropdown Boxes](https://github.com/ragardner/tksheet/wiki/Version-7#dropdown-boxes)
@@ -743,6 +744,11 @@ enable_bindings(*bindings)
 	- `"rc_delete_column"` # for a menu option to delete columns
 	- `"rc_insert_row"` # for a menu option to add rows
 	- `"rc_delete_row"` # for a menu option to delete rows
+    - `"sort_cells"`
+    - `"sort_row"`
+    - `"sort_column"` / `"sort_col"`
+    - `"sort_rows"`
+    - `"sort_columns"` / `"sort_cols"`
 	- `"copy"` # for copying to clipboard
 	- `"cut"` # for cutting to clipboard
 	- `"paste"` # for pasting into the table
@@ -836,6 +842,12 @@ Parameters:
 	- `"rc_insert_column", "end_rc_insert_column", "end_insert_column", "end_insert_columns", "rc_add_column", "end_rc_add_column", "end_add_column", "end_add_columns"`
 	- `"begin_rc_insert_row", "begin_insert_row", "begin_insert_rows", "begin_rc_add_row", "begin_add_row", "begin_add_rows"`
     - `"rc_insert_row", "end_rc_insert_row", "end_insert_row", "end_insert_rows", "rc_add_row", "end_rc_add_row", "end_add_row", "end_add_rows"`
+    - `"begin_sort_cells"`
+    - `"sort_cells", "end_sort_cells"`
+    - `"begin_sort_rows"`
+    - `"sort_rows", "end_sort_rows"`
+    - `"begin_sort_columns"`
+    - `"sort_columns", "end_sort_columns"`
     - `"row_height_resize"`
     - `"column_width_resize"`
 	- `"cell_select"`
@@ -3047,6 +3059,67 @@ equalize_data_row_lengths(include_header: bool = True) -> int
 ```
 - Makes every list in the table have the same number of elements, goes by longest list. This will only affect the data variable, not visible columns.
 - Returns the new row length for all rows in the Sheet.
+
+---
+# **Sorting the Table**
+
+#### **Sorting cells**
+
+```python
+def sort(
+    boxes: AnyIter[Sequence[int, int, int, int]] | None = None,
+    reverse: bool = False,
+    validation: bool = True,
+    key: Callable | None = None,
+    undo: bool = True,
+) -> EventDataDict
+```
+
+#### **Sorting row values**
+
+```python
+def sort_rows(
+    rows: AnyIter[int] | Span | None = None,
+    reverse: bool = False,
+    validation: bool = True,
+    key: Callable | None = None,
+    undo: bool = True,
+) -> EventDataDict
+```
+
+#### **Sorting column values**
+
+```python
+def sort_columns(
+    columns: AnyIter[int] | Span | None = None,
+    reverse: bool = False,
+    validation: bool = True,
+    key: Callable | None = None,
+    undo: bool = True,
+) -> EventDataDict
+```
+
+#### **Sorting the order of all rows using a column**
+
+```python
+def sort_rows_by_column(
+    column: int | None = None,
+    reverse: bool = False,
+    key: Callable | None = None,
+    undo: bool = True,
+) -> EventDataDict
+```
+
+#### **Sorting the order of all columns using a row**
+
+```python
+def sort_columns_by_row(
+    row: int | None = None,
+    reverse: bool = False,
+    key: Callable | None = None,
+    undo: bool = True,
+) -> EventDataDict
+```
 
 ---
 # **Highlighting Cells**

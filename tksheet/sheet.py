@@ -67,9 +67,16 @@ from .other_classes import (
 )
 from .row_index import RowIndex
 from .sheet_options import new_sheet_options
-from .themes import theme_black, theme_dark, theme_dark_blue, theme_dark_green, theme_light_blue, theme_light_green
+from .themes import (
+    theme_black,
+    theme_dark,
+    theme_dark_blue,
+    theme_dark_green,
+    theme_light_blue,
+    theme_light_green,
+)
+from .tksheet_types import AnyIter, CreateSpanTypes
 from .top_left_rectangle import TopLeftRectangle
-from .types import AnyIter, CreateSpanTypes
 
 
 class Sheet(tk.Frame):
@@ -633,6 +640,11 @@ class Sheet(tk.Frame):
         - "rc_delete_column"
         - "rc_insert_row"
         - "rc_delete_row"
+        - "sort_cells"
+        - "sort_row"
+        - "sort_column" / "sort_col"
+        - "sort_rows"
+        - "sort_columns" / "sort_cols"
         - "ctrl_click_select" / "ctrl_select"
         - "copy"
         - "cut"
@@ -699,6 +711,12 @@ class Sheet(tk.Frame):
     ) -> Sheet:
         """
         List of available bindings:
+        - "begin_sort_cells"
+        - "sort_cells", "end_sort_cells"
+        - "begin_sort_rows"
+        - "sort_rows", "end_sort_rows"
+        - "begin_sort_columns"
+        - "sort_columns", "end_sort_columns"
         - "begin_copy", "begin_ctrl_c"
         - "ctrl_c", "end_copy", "end_ctrl_c", "copy"
         - "begin_cut", "begin_ctrl_x"
@@ -774,6 +792,9 @@ class Sheet(tk.Frame):
                 "bind_all",
                 "unbind_all",
             ):
+                self.MT.extra_begin_sort_cells_func = f
+                self.CH.ch_extra_begin_sort_rows_func = f
+                self.RI.ri_extra_begin_sort_cols_func = f
                 self.MT.extra_begin_ctrl_c_func = f
                 self.MT.extra_begin_ctrl_x_func = f
                 self.MT.extra_begin_ctrl_v_func = f
@@ -825,6 +846,9 @@ class Sheet(tk.Frame):
                 "modified_events",
                 "modified",
             ):
+                self.MT.extra_end_sort_cells_func = f
+                self.CH.ch_extra_end_sort_rows_func = f
+                self.RI.ri_extra_end_sort_cols_func = f
                 self.MT.extra_end_ctrl_c_func = f
                 self.MT.extra_end_ctrl_x_func = f
                 self.MT.extra_end_ctrl_v_func = f
@@ -839,6 +863,24 @@ class Sheet(tk.Frame):
                 self.MT.extra_end_edit_cell_func = f
                 self.CH.extra_end_edit_cell_func = f
                 self.RI.extra_end_edit_cell_func = f
+
+            if b in ("begin_sort_cells",):
+                self.MT.extra_begin_sort_cells_func = f
+
+            if b in ("sort_cells", "end_sort_cells"):
+                self.MT.extra_end_sort_cells_func = f
+
+            if b in ("begin_sort_rows",):
+                self.CH.ch_extra_begin_sort_rows_func = f
+
+            if b in ("sort_rows", "end_sort_rows"):
+                self.CH.ch_extra_end_sort_rows_func = f
+
+            if b in ("begin_sort_columns",):
+                self.RI.ri_extra_begin_sort_cols_func = f
+
+            if b in ("sort_columns", "end_sort_columns"):
+                self.RI.ri_extra_end_sort_cols_func = f
 
             if b in (
                 "begin_copy",
@@ -2628,6 +2670,94 @@ class Sheet(tk.Frame):
             data_idxs,
         )
 
+    # Sorting
+
+    def sort(
+        self,
+        boxes: AnyIter[Sequence[int, int, int, int]] | None = None,
+        reverse: bool = False,
+        validation: bool = True,
+        key: Callable | None = None,
+        undo: bool = True,
+    ) -> EventDataDict:
+        """
+        Sort the data within specified box regions in the table.
+
+        This method sorts the data within one or multiple box regions defined by their coordinates. Each box's columns are sorted independently.
+
+        Args:
+            boxes (AnyIter[Sequence[int, int, int, int]] | None): An iterable of box coordinates. Each box is defined by:
+                - From Row (inclusive)
+                - From Column (inclusive)
+                - Up To Row (exclusive)
+                - Up To Column (exclusive)
+                If None, it will sort the currently selected boxes or the entire table.
+
+            reverse (bool): If True, sorts in descending order. Default is False (ascending).
+
+            validation (bool): If True, checks if the new cell values are valid according to any restrictions
+                (e.g., dropdown validations) before applying the sort. Default is True.
+
+            key (Callable | None): A function to extract a comparison key from each element in the columns.
+                If None, a natural sorting key will be used, which can handle most Python objects, including:
+                - None, booleans, numbers (int, float), datetime objects, strings, and unknown types.
+                Note: Performance might be slow with the natural sort for very large datasets.
+
+        Returns:
+            EventDataDict: A dictionary containing information about the sorting event, including changes made to the table.
+
+        Raises:
+            ValueError: If the input boxes are not in the expected format or if the data cannot be sorted.
+
+        Note:
+            - Sorting is performed column-wise within each box.
+            - If validation is enabled, any cell content that fails validation will not be updated.
+            - Any cell options attached to cells will not be moved. Event data can be used to re-locate them.
+        """
+        return self.MT.sort_boxes(boxes=boxes, reverse=reverse, validation=validation, key=key, undo=undo)
+
+    def sort_rows(
+        self,
+        rows: AnyIter[int] | Span | None = None,
+        reverse: bool = False,
+        validation: bool = True,
+        key: Callable | None = None,
+        undo: bool = True,
+    ) -> EventDataDict:
+        if isinstance(rows, Span):
+            rows = rows.rows
+        return self.RI._sort_rows(rows=rows, reverse=reverse, validation=validation, key=key, undo=undo)
+
+    def sort_columns(
+        self,
+        columns: AnyIter[int] | Span | None = None,
+        reverse: bool = False,
+        validation: bool = True,
+        key: Callable | None = None,
+        undo: bool = True,
+    ) -> EventDataDict:
+        if isinstance(columns, Span):
+            columns = columns.columns
+        return self.CH._sort_columns(columns=columns, reverse=reverse, validation=validation, key=key, undo=undo)
+
+    def sort_rows_by_column(
+        self,
+        column: int | None = None,
+        reverse: bool = False,
+        key: Callable | None = None,
+        undo: bool = True,
+    ) -> EventDataDict:
+        return self.CH._sort_rows_by_column(column=column, reverse=reverse, key=key, undo=undo)
+
+    def sort_columns_by_row(
+        self,
+        row: int | None = None,
+        reverse: bool = False,
+        key: Callable | None = None,
+        undo: bool = True,
+    ) -> EventDataDict:
+        return self.RI._sort_columns_by_row(row=row, reverse=reverse, key=key, undo=undo)
+
     # Highlighting Cells
 
     def highlight(
@@ -3785,7 +3915,7 @@ class Sheet(tk.Frame):
         deselect_all: bool = False,
         redraw: bool = False,
     ) -> Sheet:
-        self.MT.insert_col_position(idx=idx, width=width, deselect_all=deselect_all)
+        self.MT.insert_col_positions(idx=idx, widths=width, deselect_all=deselect_all)
         return self.set_refresh_timer(redraw)
 
     def insert_row_position(
@@ -3795,7 +3925,7 @@ class Sheet(tk.Frame):
         deselect_all: bool = False,
         redraw: bool = False,
     ) -> Sheet:
-        self.MT.insert_row_position(idx=idx, height=height, deselect_all=deselect_all)
+        self.MT.insert_row_positions(idx=idx, heights=height, deselect_all=deselect_all)
         return self.set_refresh_timer(redraw)
 
     def insert_column_positions(
@@ -6022,7 +6152,7 @@ class Sheet(tk.Frame):
     def set_row_data(
         self,
         r: int,
-        values=tuple(),
+        values: Sequence[object] = [],
         add_columns: bool = True,
         redraw: bool = True,
         keep_formatting: bool = True,
@@ -6040,7 +6170,7 @@ class Sheet(tk.Frame):
                     if c > maxidx:
                         self.MT.data[r].append(v)
                         if self.MT.all_columns_displayed:
-                            self.MT.insert_col_position("end")
+                            self.MT.insert_col_positions()
                     else:
                         self.set_cell_data(r=r, c=c, value=v, redraw=False, keep_formatting=keep_formatting)
             else:
@@ -6054,7 +6184,7 @@ class Sheet(tk.Frame):
     def set_column_data(
         self,
         c: int,
-        values=tuple(),
+        values: Sequence[object] = [],
         add_rows: bool = True,
         redraw: bool = True,
         keep_formatting: bool = True,
@@ -6071,7 +6201,7 @@ class Sheet(tk.Frame):
                         total_cols = self.MT.total_data_cols()
                     self.MT.fix_data_len(rn, total_cols - 1)
                     if self.MT.all_rows_displayed:
-                        self.MT.insert_row_position("end", height=height)
+                        self.MT.insert_row_positions(heights=height)
                     maxidx += 1
                 if c >= len(self.MT.data[rn]):
                     self.MT.fix_row_len(rn, c)

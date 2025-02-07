@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import tkinter as tk
 from collections import defaultdict
-from collections.abc import Generator, Hashable, Sequence
+from collections.abc import Callable, Generator, Hashable, Sequence
 from functools import partial
 from itertools import chain, cycle, islice, repeat
 from math import ceil, floor
@@ -27,6 +27,7 @@ from .functions import (
     get_n2a,
     int_x_tuple,
     is_contiguous,
+    mod_event_val,
     new_tk_event,
     num2alpha,
     rounded_box_coords,
@@ -34,9 +35,10 @@ from .functions import (
     try_binding,
     wrap_text,
 )
-from .other_classes import DotDict, DraggedRowColumn, DropdownStorage, Node, TextEditorStorage
+from .other_classes import DotDict, DraggedRowColumn, DropdownStorage, EventDataDict, Node, TextEditorStorage
+from .sorting import sort_columns_by_row, sort_row
 from .text_editor import TextEditor
-from .types import AnyIter
+from .tksheet_types import AnyIter
 
 
 class RowIndex(tk.Canvas):
@@ -71,6 +73,8 @@ class RowIndex(tk.Canvas):
         self.drag_selection_binding_func = None
         self.ri_extra_begin_drag_drop_func = None
         self.ri_extra_end_drag_drop_func = None
+        self.ri_extra_begin_sort_cols_func = None
+        self.ri_extra_end_sort_cols_func = None
         self.extra_double_b1_func = None
         self.row_height_resize_func = None
         self.cell_options = {}
@@ -894,6 +898,103 @@ class RowIndex(tk.Canvas):
         ):
             return iid
         return None
+
+    def _sort_rows(
+        self,
+        event: tk.Event | None = None,
+        rows: AnyIter[int] | None = None,
+        reverse: bool = False,
+        validation: bool = True,
+        key: Callable | None = None,
+        undo: bool = True,
+    ) -> EventDataDict:
+        if rows is None:
+            rows = self.MT.get_selected_rows()
+        if not rows:
+            rows = list(range(0, len(self.MT.row_positions) - 1))
+        event_data = event_dict(
+            name="edit_table",
+            sheet=self.PAR.name,
+            widget=self,
+            boxes=self.MT.get_boxes(),
+            selected=self.MT.selected,
+        )
+        try_binding(self.MT.extra_begin_sort_cells_func, event_data)
+        for r in rows:
+            datarn = self.MT.datarn(r)
+            for c, val in enumerate(sort_row(self.MT.data[datarn], reverse=reverse, key=key)):
+                if (
+                    not self.MT.edit_validation_func
+                    or not validation
+                    or (
+                        self.MT.edit_validation_func
+                        and (val := self.MT.edit_validation_func(mod_event_val(event_data, val, (datarn, c))))
+                        is not None
+                    )
+                ):
+                    event_data = self.MT.event_data_set_cell(
+                        datarn=datarn,
+                        datacn=c,
+                        value=val,
+                        event_data=event_data,
+                    )
+        if event_data["cells"]["table"]:
+            if undo and self.MT.undo_enabled:
+                self.MT.undo_stack.append(stored_event_dict(event_data))
+            try_binding(self.MT.extra_end_sort_cells_func, event_data, "end_edit_table")
+            self.MT.sheet_modified(event_data)
+            self.PAR.emit_event("<<SheetModified>>", event_data)
+            self.MT.refresh()
+        return event_data
+
+    def _sort_columns_by_row(
+        self,
+        event: tk.Event | None = None,
+        row: int | None = None,
+        reverse: bool = False,
+        key: Callable | None = None,
+        undo: bool = True,
+    ) -> EventDataDict:
+        event_data = event_dict(
+            name="sort_columns",
+            sheet=self.PAR.name,
+            widget=self,
+            boxes=self.MT.get_boxes(),
+            selected=self.MT.selected,
+        )
+        if not self.MT.data:
+            return event_data
+        if row is None:
+            if not self.MT.selected:
+                return event_data
+            row = self.MT.selected.row
+        if try_binding(self.ri_extra_begin_sort_cols_func, event_data, "begin_sort_columns"):
+            _, data_new_idxs = sort_columns_by_row(self.MT.data, row=row, reverse=reverse, key=key)
+            disp_new_idxs = {}
+            for old, new in data_new_idxs.items():
+                if (old_dispcn := self.MT.try_dispcn(old)) is not None:
+                    disp_new_idxs[old_dispcn] = self.MT.dispcn(new)
+            data_idxs, disp_idxs, _ = self.PAR.mapping_move_columns(
+                data_new_idxs=data_new_idxs,
+                disp_new_idxs=disp_new_idxs,
+                move_data=True,
+                data_indexes=True,
+                create_selections=False,
+                undo=False,
+                emit_event=False,
+                redraw=True,
+            )
+            event_data["moved"]["columns"] = {
+                "data": data_idxs,
+                "displayed": disp_idxs,
+            }
+            if undo and self.MT.undo_enabled:
+                self.MT.undo_stack.append(stored_event_dict(event_data))
+            try_binding(self.ri_extra_end_sort_cols_func, event_data, "end_sort_columns")
+            self.MT.sheet_modified(event_data)
+            self.PAR.emit_event("<<SheetModified>>", event_data)
+            self.MT.refresh()
+        return event_data
 
     def toggle_select_row(
         self,
@@ -1900,7 +2001,7 @@ class RowIndex(tk.Canvas):
             return False
         self.hide_text_editor()
         if not self.MT.see(r=r, c=0, keep_yscroll=True, check_cell_visibility=True):
-            self.MT.refresh()
+            self.MT.main_table_redraw_grid_and_text(True, True)
         x = 0
         y = self.MT.row_positions[r]
         w = self.current_width + 1
@@ -1970,7 +2071,7 @@ class RowIndex(tk.Canvas):
                 new_height = space_bot
             if new_height != curr_height:
                 self.set_row_height(r, new_height)
-                self.MT.refresh()
+                self.MT.main_table_redraw_grid_and_text(True, True)
                 self.text_editor.window.config(height=new_height)
                 self.coords(self.text_editor.canvas_id, 0, self.MT.row_positions[r] + 1)
                 if self.dropdown.open and self.dropdown.get_coords() == r:
