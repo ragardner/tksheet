@@ -1,4 +1,4 @@
-### Version 7.3.5
+### Version 7.4.0
 #### Changed:
 - Text now wraps by character by default, can also disable wrapping or wrap by word
 - Significant changes to how text is rendered
