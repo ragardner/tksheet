@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import re
 import unittest
-from collections.abc import Callable
+from collections.abc import Callable, Generator
 from datetime import datetime
-from operator import itemgetter
 
+from .other_classes import Node
 from .tksheet_types import AnyIter
 
 # Possible date formats to try for the entire string
@@ -35,7 +35,7 @@ date_formats = [
     "%Y-%m-%dT%H:%M:%S",  # With time
     "%Y-%m-%d",  # Without time
     # Regional or less common formats
-    "%Y年%m月%d日",  # Japanese-style date
+    # "%Y年%m月%d日",  # Japanese-style date
     "%Y%m%d",  # YYYYMMDD format, often used in logs or filenames
     "%y%m%d",  # YYMMDD
     "%d%m%Y",  # DDMMYYYY, sometimes used in Europe
@@ -46,7 +46,7 @@ date_formats = [
 ]
 
 
-def natural_sort_key(item: object) -> tuple[int, str | float | tuple[int | str, ...] | object]:
+def natural_sort_key(item: object) -> tuple[int, object]:
     """
     A key function for natural sorting that handles various Python types, including
     date-like strings in multiple formats.
@@ -90,29 +90,24 @@ def natural_sort_key(item: object) -> tuple[int, str | float | tuple[int | str, 
 
         # Check if the whole string is a number
         try:
-            return (4, int(item))
-        except Exception:
-            pass
-        try:
             return (4, float(item))
         except Exception:
-            pass
-
-        # Proceed with natural sorting
-        return (4, [int(text) if text.isdigit() else text.lower() for text in re.split(r"(\d+)", item)])
+            # Proceed with natural sorting
+            return (5, tuple(int(text) if text.isdigit() else text.lower() for text in re.split(r"(\d+)", item)))
 
     else:
         # For unknown types, attempt to convert to string, or place at end
         try:
-            return (5, f"{item}".lower())
+            return (6, f"{item}".lower())
         except Exception:
-            return (6, item)  # If conversion fails, place at the very end
+            return (7, item)  # If conversion fails, place at the very end
 
 
 def sort_selection(
     data: list[list[object]],
     reverse: bool = False,
     key: Callable | None = None,
+    row_wise: bool = False,
 ) -> list[list[object]]:
     if not data or not isinstance(data[0], list):
         raise ValueError("Data must be a list of lists.")
@@ -120,18 +115,21 @@ def sort_selection(
     if key is None:
         key = natural_sort_key
 
-    return list(
-        zip(
-            *(
-                sorted(
-                    (row[col] for row in data),
-                    key=key,
-                    reverse=reverse,
+    if row_wise:
+        return [sorted(row, key=key, reverse=reverse) for row in data]
+    else:
+        return list(
+            zip(
+                *(
+                    sorted(
+                        (row[col] for row in data),
+                        key=key,
+                        reverse=reverse,
+                    )
+                    for col in range(len(data[0]))
                 )
-                for col in range(len(data[0]))
             )
         )
-    )
 
 
 def sort_column(
@@ -179,7 +177,7 @@ def sort_rows_by_column(
     column: int = 0,
     reverse: bool = False,
     key: Callable | None = None,
-) -> tuple[list[list[object]], dict[int, int]]:
+) -> tuple[list[tuple[int, list[object]]], dict[int, int]]:
     if not data:
         return data, {}
 
@@ -197,8 +195,8 @@ def sort_rows_by_column(
         reverse=reverse,
     )
 
-    # Extract sorted rows and create the mapping dictionary
-    return list(map(itemgetter(1), sorted_indexed_data)), {old: new for new, (old, _) in enumerate(sorted_indexed_data)}
+    # Return sorted rows [(old index, row), ...] and create the mapping dictionary
+    return sorted_indexed_data, {old: new for new, (old, _) in enumerate(sorted_indexed_data)}
 
 
 def sort_columns_by_row(
@@ -206,7 +204,7 @@ def sort_columns_by_row(
     row: int = 0,
     reverse: bool = False,
     key: Callable | None = None,
-) -> tuple[list[list[object]], dict[int, int]]:
+) -> tuple[list[int], dict[int, int]]:
     if not data:
         return data, {}
 
@@ -231,7 +229,62 @@ def sort_columns_by_row(
         unsorted_part = [elem for idx, elem in enumerate(row_data) if idx not in sort_indices_set]
         new_data.append(sorted_part + unsorted_part)
 
-    return new_data, {old: new for old, new in zip(range(len(data[row])), sort_indices)}
+    return sort_indices, {old: new for old, new in zip(range(len(data[row])), sort_indices)}
+
+
+def _sort_node_children(
+    node: Node,
+    tree: dict[str, Node],
+    reverse: bool,
+    key: Callable,
+) -> Generator[Node, None, None]:
+    sorted_children = sorted(
+        (tree[child_iid] for child_iid in node.children if child_iid in tree),
+        key=lambda child: key(child.text),
+        reverse=reverse,
+    )
+    for child in sorted_children:
+        yield child
+        if child.children:  # If the child node has children
+            yield from _sort_node_children(child, tree, reverse, key)
+
+
+def sort_tree_view(
+    _row_index: list[Node],
+    tree_rns: dict[str, int],
+    tree: dict[str, Node],
+    key: Callable = natural_sort_key,
+    reverse: bool = False,
+) -> tuple[list[Node], dict[int, int]]:
+    if not _row_index or not tree_rns or not tree:
+        return [], {}
+
+    if key is None:
+        key = natural_sort_key
+
+    # Create the index map and sorted nodes list
+    mapping = {}
+    sorted_nodes = []
+    new_index = 0
+
+    # Sort top-level nodes
+    for node in sorted(
+        (node for node in _row_index if node.parent == ""),
+        key=lambda node: key(node.text),
+        reverse=reverse,
+    ):
+        iid = node.iid
+        mapping[tree_rns[iid]] = new_index
+        sorted_nodes.append(node)
+        new_index += 1
+
+        # Sort children recursively
+        for descendant_node in _sort_node_children(node, tree, reverse, key):
+            mapping[tree_rns[descendant_node.iid]] = new_index
+            sorted_nodes.append(descendant_node)
+            new_index += 1
+
+    return sorted_nodes, mapping
 
 
 class TestNaturalSort(unittest.TestCase):

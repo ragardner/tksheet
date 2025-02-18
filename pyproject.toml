@@ -4,13 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tksheet"
-description = "Tkinter table / sheet widget"
+description = "Tkinter table / sheet and treeview widget"
 readme = "README.md"
 version = "7.4.0"
 authors = [{ name = "ragardner", email = "github@ragardner.simplelogin.com" }]
 requires-python = ">=3.8"
 license = {file = "LICENSE.txt"}
-keywords = ["tkinter", "table", "widget", "sheet", "grid", "tk"]
+keywords = ["tkinter", "table", "widget", "tree", "treeview", "sheet", "grid", "tk"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",

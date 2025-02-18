@@ -4,22 +4,41 @@
 - Significant changes to how text is rendered
 - Removed mousewheel scrolling lines in header, replaced with vertical axis table scroll
 - Resizing row height to text is now based on the existing column width for the cell/cells, includes double click resizing
+- Treeview mode `Node` class now uses `str` for parent and `list[str]` for children attributes
+- Function `get_nodes()` renamed -> `get_iids()`
+- Removed `data_indexes` parameter from `mapping_move...` functions
+- Reduce default treeview indent
+- `move()` function now returns the same as other move rows functions
+- All `Sheet()` functions with an `undo` parameter have been set to `True` by default
+- Using `Sheet.set_data()` or `Span`s to set an individual cell's data as `None` will now do so instead of returning
+- Setting `show_top_left` during Sheet() initialization will now make the top left rectangle always show
 
 #### Added:
+- Natural sorting functionality [#238](https://github.com/ragardner/tksheet/issues/238)
+- Treeview mode now works with all normal tksheet functions, including dragging and dropping rows
+- Cell text overflow `allow_cell_overflow: bool = False` to adjacent cells for left and right alignments, disabled by default
 - Text wrap for table, header and index
-- Natural sorting functionality
 ```python
 # "" no wrap, "w" word wrap, "c" char wrap
 table_wrap: Literal["", "w", "c"] = "c",
 index_wrap: Literal["", "w", "c"] = "c",
 header_wrap: Literal["", "w", "c"] = "c",
 ```
-- Cell text overflow `allow_cell_overflow: bool = False` to adjacent cells for left and right alignments, disabled by default
+
+- `tree` parameter to `insert_rows()` function, used internally
 
 #### Fixed:
 - Index fonts now work correctly
 - Functions `column_width()` and `row_height()` work correctly for any parameters
 - Down sizing rows/columns when scrolled to the end of the axis would result in a rapid movement of row height/column width
+- Address [#269](https://github.com/ragardner/tksheet/issues/269)
+
+#### Improved:
+- Minor performance improvements for:
+    - `item_displayed()`
+    - `show_rows()` / `show_columns()`
+    - `move()`
+    - Row insertion
 
 ### Version 7.3.4
 #### Fixed:

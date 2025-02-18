@@ -60,7 +60,7 @@
 ---
 # **About tksheet**
 
-- `tksheet` is a Python tkinter table widget written in pure python.
+- `tksheet` is a Python tkinter table and treeview widget written in pure python.
 - It is licensed under the [MIT license](https://github.com/ragardner/tksheet/blob/master/LICENSE.txt).
 - It works by using tkinter canvases and moving lines, text and rectangles around for only the visible portion of the table.
 - If you are using a version of tksheet that is older than `7.0.0` then you will need the documentation [here](https://github.com/ragardner/tksheet/wiki/Version-6) instead.
@@ -300,7 +300,7 @@ def __init__(
     parent: tk.Misc,
     name: str = "!sheet",
     show_table: bool = True,
-    show_top_left: bool = True,
+    show_top_left: bool = False,
     show_row_index: bool = True,
     show_header: bool = True,
     show_x_scrollbar: bool = True,
@@ -512,6 +512,7 @@ def __init__(
     - `True` it will always automatically resize.
     - `False` it will never automatically resize.
 - If `show_selected_cells_border` is `False` then the colors for `table_selected_box_cells_fg`/`table_selected_box_rows_fg`/`table_selected_box_columns_fg` will be used for the currently selected cells background.
+- Only set `show_top_left` to `True` if you want to always show the top left rectangle of the sheet.
 - For help with `treeview` mode see [here](https://github.com/ragardner/tksheet/wiki/Version-7#treeview-mode).
 
 You can change most of these settings after initialization using the [`set_options()` function](https://github.com/ragardner/tksheet/wiki/Version-7#sheet-options-and-other-functions).
@@ -931,7 +932,7 @@ It has the following layout and keys:
 ```
 
 Keys:
-- Key **`["eventname"]`** will be one of the following:
+- A function bound using `extra_bindings()` will receive event data with one of the following **`["eventname"]`** keys:
     - `"begin_ctrl_c"`
     - `"end_ctrl_c"`
     - `"begin_ctrl_x"`
@@ -960,8 +961,28 @@ Keys:
     - `"end_move_rows"`
     - `"begin_move_columns"`
     - `"end_move_columns"`
+    - `"begin_sort_rows"`
+    - `"end_sort_rows"`
+    - `"begin_sort_columns"`
+    - `"end_sort_columns"`
     - `"select"`
     - `"resize"`
+
+- `EventDataDict`s will otherwise have one of the following event names:
+    - `"edit_table"` when a user has cut, paste, delete or made any cell edits including using dropdown boxes etc. in the table.
+    - `"edit_index"` when a user has edited a index cell.
+    - `"edit_header"` when a user has edited a header cell.
+    - `"add_columns"` when a user has inserted columns.
+    - `"add_rows"` when a user has inserted rows.
+    - `"delete_columns"` when a user has deleted columns.
+    - `"delete_rows"` when a user has deleted rows.
+    - `"move_columns"` when a user has dragged and dropped columns.
+    - `"move_rows"` when a user has dragged and dropped rows.
+    - `"sort_rows"` when rows have been re-ordered by sorting.
+    - `"sort_columns"` when columns have been re-ordered by sorting.
+    - `"select"`
+    - `"resize"`
+
 - For events `"begin_move_columns"`/`"begin_move_rows"` the point where columns/rows will be moved to will be under the `event_data` key `"value"`.
 - Key **`["sheetname"]`** is the [name given to the sheet widget on initialization](https://github.com/ragardner/tksheet/wiki/Version-7#initialization-options), useful if you have multiple sheets to determine which one emitted the event.
 - Key **`["cells"]["table"]`** if any table cells have been modified by cut, paste, delete, cell editors, dropdown boxes, check boxes, undo or redo this will be a `dict` with `tuple` keys of `(data row index: int, data column index: int)` and the values will be the cell values at that location **prior** to the change. The `dict` will be empty if no such changes have taken place.
@@ -1168,7 +1189,7 @@ Parameters:
 - **Note** that while a bound event after a paste/undo/redo might have the event name `"edit_table"` it also might have added/deleted rows/columns, refer to the docs on the event data `dict` for more information.
 - `event` the emitted events are:
     - `"<<SheetModified>>"` emitted whenever the sheet was modified by the end user by editing cells or adding or deleting rows/columns. The function you bind to this event must be able to receive a `dict` argument which will be the same as [the event data dict](https://github.com/ragardner/tksheet/wiki/Version-7#event-data) but with less specific event names. The possible event names are listed below:
-        - `"edit_table"` when a user has cut, paste, delete or any cell edits including using dropdown boxes etc. in the table.
+        - `"edit_table"` when a user has cut, paste, delete or made any cell edits including using dropdown boxes etc. in the table.
         - `"edit_index"` when a user has edited a index cell.
         - `"edit_header"` when a user has edited a header cell.
         - `"add_columns"` when a user has inserted columns.
@@ -1177,6 +1198,8 @@ Parameters:
         - `"delete_rows"` when a user has deleted rows.
         - `"move_columns"` when a user has dragged and dropped columns.
         - `"move_rows"` when a user has dragged and dropped rows.
+        - `"sort_rows"` when rows have been re-ordered by sorting.
+        - `"sort_columns"` when columns have been re-ordered by sorting.
     - `"<<SheetRedrawn>>"` emitted whenever the sheet GUI was refreshed (redrawn). The data for this event will be different than the usual event data, it is:
         - `{"sheetname": name of your sheet, "header": bool True if the header was redrawn, "row_index": bool True if the index was redrawn, "table": bool True if the the table was redrawn}`
     - `"<<SheetSelect>>"` encompasses all select events and emits the same event as `"<<SheetModified>>"` but with the event name: `"select"`.
@@ -1261,6 +1284,31 @@ select_all_label
 select_all_accelerator
 undo_label
 undo_accelerator
+
+sort_cells_label
+sort_cells_x_label
+sort_row_label
+sort_column_label
+sort_rows_label
+sort_columns_label
+sort_cells_reverse_label
+sort_cells_x_reverse_label
+sort_row_reverse_label
+sort_column_reverse_label
+sort_rows_reverse_label
+sort_columns_reverse_label
+sort_cells_accelerator
+sort_cells_x_accelerator
+sort_row_accelerator
+sort_column_accelerator
+sort_rows_accelerator
+sort_columns_accelerator
+sort_cells_reverse_accelerator
+sort_cells_x_reverse_accelerator
+sort_row_reverse_accelerator
+sort_column_reverse_accelerator
+sort_rows_reverse_accelerator
+sort_columns_reverse_accelerator
 ```
 
 Example:
@@ -1412,7 +1460,7 @@ span(
     transposed: bool = False,
     ndim: int = 0,
     convert: object = None,
-    undo: bool = False,
+    undo: bool = True,
     emit_event: bool = False,
     widget: object = None,
     expand: None | str = None,
@@ -1614,6 +1662,7 @@ Spans have a few `@property` functions:
 - `span.kind`
 - `span.rows`
 - `span.columns`
+- `span.coords`
 
 #### **Get a spans kind**
 
@@ -2670,7 +2719,7 @@ insert_row(
     height: int | None = None,
     row_index: bool = False,
     fill: bool = True,
-    undo: bool = False,
+    undo: bool = True,
     emit_event: bool = False,
     redraw: bool = True,
 ) -> EventDataDict
@@ -2694,7 +2743,7 @@ insert_column(
     width: int | None = None,
     header: bool = False,
     fill: bool = True,
-    undo: bool = False,
+    undo: bool = True,
     emit_event: bool = False,
     redraw: bool = True,
 ) -> EventDataDict
@@ -2718,7 +2767,7 @@ insert_columns(
     widths: list[int] | tuple[int] | None = None,
     headers: bool = False,
     fill: bool = True,
-    undo: bool = False,
+    undo: bool = True,
     emit_event: bool = False,
     create_selections: bool = True,
     add_row_heights: bool = True,
@@ -2749,11 +2798,12 @@ insert_rows(
     heights: list[int] | tuple[int] | None = None,
     row_index: bool = False,
     fill: bool = True,
-    undo: bool = False,
+    undo: bool = True,
     emit_event: bool = False,
     create_selections: bool = True,
     add_column_widths: bool = True,
     push_ops: bool = True,
+    tree: bool = True,
     redraw: bool = True,
 ) -> EventDataDict
 ```
@@ -2768,6 +2818,7 @@ Parameters:
 - `create_selections` when `True` creates a selection box for the newly inserted rows.
 - `add_column_widths` when `True` creates columns if there are no pre-existing columns.
 - `push_ops` when `True` increases the indexes of all cell/row options such as dropdown boxes, highlights and data formatting.
+- `tree` is mainly used internally but when `True` and also when treeview mode is enabled it performs the necessary actions to create new ids and add them to the tree.
 
 ___
 
@@ -2777,7 +2828,7 @@ ___
 del_row(
     idx: int = 0,
     data_indexes: bool = True,
-    undo: bool = False,
+    undo: bool = True,
     emit_event: bool = False,
     redraw: bool = True,
 ) -> EventDataDict
@@ -2796,7 +2847,7 @@ ___
 del_rows(
     rows: int | Iterator[int],
     data_indexes: bool = True,
-    undo: bool = False,
+    undo: bool = True,
     emit_event: bool = False,
     redraw: bool = True,
 ) -> EventDataDict
@@ -2815,7 +2866,7 @@ ___
 del_column(
     idx: int = 0,
     data_indexes: bool = True,
-    undo: bool = False,
+    undo: bool = True,
     emit_event: bool = False,
     redraw: bool = True,
 ) -> EventDataDict
@@ -2834,7 +2885,7 @@ ___
 del_columns(
     columns: int | Iterator[int],
     data_indexes: bool = True,
-    undo: bool = False,
+    undo: bool = True,
     emit_event: bool = False,
     redraw: bool = True,
 ) -> EventDataDict
@@ -2918,7 +2969,7 @@ ___
 move_column(
     column: int,
     moveto: int,
-) -> tuple[dict, dict, dict]
+) -> tuple[dict[int, int], dict[int, int], EventDataDict]:
 ```
 - Note that `column` and `moveto` indexes represent displayed indexes and not data. When there are hidden columns this is an important distinction, otherwise it is not at all important. To specifically use data indexes use the function `move_columns()`.
 
@@ -2933,11 +2984,12 @@ move_rows(
     move_data: bool = True,
     data_indexes: bool = False,
     create_selections: bool = True,
-    undo: bool = False,
+    undo: bool = True,
     emit_event: bool = False,
     move_heights: bool = True,
+    event_data: EventDataDict | None = None,
     redraw: bool = True,
-) -> tuple[dict, dict, dict]
+) -> tuple[dict[int, int], dict[int, int], EventDataDict]:
 ```
 Parameters:
 - `move_to` is the new start index for the rows to be moved to.
@@ -2963,11 +3015,12 @@ move_columns(
     move_data: bool = True,
     data_indexes: bool = False,
     create_selections: bool = True,
-    undo: bool = False,
+    undo: bool = True,
     emit_event: bool = False,
     move_widths: bool = True,
+    event_data: EventDataDict | None = None,
     redraw: bool = True,
-) -> tuple[dict, dict, dict]
+) -> tuple[dict[int, int], dict[int, int], EventDataDict]:
 ```
 Parameters:
 - `move_to` is the new start index for the columns to be moved to.
@@ -2992,8 +3045,7 @@ mapping_move_columns(
     disp_new_idxs: None | dict[int, int] = None,
     move_data: bool = True,
     create_selections: bool = True,
-    data_indexes: bool = False,
-    undo: bool = False,
+    undo: bool = True,
     emit_event: bool = False,
     redraw: bool = True,
 ) -> tuple[dict[int, int], dict[int, int], EventDataDict]
@@ -3002,7 +3054,6 @@ Parameters:
 - `data_new_idxs` (`dict[int, int]`) must be a `dict` where the keys are the data columns to move as `int`s and the values are their new locations as `int`s.
 - `disp_new_idxs` (`None | dict[int, int]`) either `None` or a `dict` where the keys are the displayed columns (basically the column widths) to move as `int`s and the values are their new locations as `int`s. If `None` then no column widths will be moved.
 - `move_data` when `True` moves not just the displayed column positions but the Sheet data as well.
-- `data_indexes` is only applicable when there are hidden columns. When `False` it makes the `move_to` and `to_move` indexes represent displayed columns and not the underlying Sheet data columns. When `True` the indexes represent data indexes.
 - `create_selections` creates new selection boxes based on where the columns have moved.
 - `undo` when `True` adds the change to the Sheets undo stack.
 - `emit_event` when `True` causes a `"<<SheetModified>>` event to occur if it has been bound, see [here](https://github.com/ragardner/tksheet/wiki/Version-7#tkinter-and-tksheet-events) for more information.
@@ -3025,9 +3076,8 @@ mapping_move_rows(
     data_new_idxs: dict[int, int],
     disp_new_idxs: None | dict[int, int] = None,
     move_data: bool = True,
-    data_indexes: bool = False,
     create_selections: bool = True,
-    undo: bool = False,
+    undo: bool = True,
     emit_event: bool = False,
     redraw: bool = True,
 ) -> tuple[dict[int, int], dict[int, int], EventDataDict]
@@ -3036,7 +3086,6 @@ Parameters:
 - `data_new_idxs` (`dict[int, int]`) must be a `dict` where the keys are the data rows to move as `int`s and the values are their new locations as `int`s.
 - `disp_new_idxs` (`None | dict[int, int]`) either `None` or a `dict` where the keys are the displayed rows (basically the row heights) to move as `int`s and the values are their new locations as `int`s. If `None` then no row heights will be moved.
 - `move_data` when `True` moves not just the displayed row positions but the Sheet data as well.
-- `data_indexes` is only applicable when there are hidden rows. When `False` it makes the `move_to` and `to_move` indexes represent displayed rows and not the underlying Sheet data rows. When `True` the indexes represent data indexes.
 - `create_selections` creates new selection boxes based on where the rows have moved.
 - `undo` when `True` adds the change to the Sheets undo stack.
 - `emit_event` when `True` causes a `"<<SheetModified>>` event to occur if it has been bound, see [here](https://github.com/ragardner/tksheet/wiki/Version-7#tkinter-and-tksheet-events) for more information.
@@ -3063,17 +3112,129 @@ equalize_data_row_lengths(include_header: bool = True) -> int
 ---
 # **Sorting the Table**
 
+This is the current in-built natural sorting key, if you want to provide your own then you can define your own function and provide it as an argument to the `key` parameter for the sorting functions below.
+
+```python
+date_formats = [
+    # Common formats
+    "%d/%m/%Y",  # Day/Month/Year
+    "%m/%d/%Y",  # Month/Day/Year (US format)
+    "%Y/%m/%d",  # Year/Month/Day
+    "%d.%m.%Y",  # Day.Month.Year (European format)
+    "%d-%m-%Y",  # Day-Month-Year
+    "%m-%d-%Y",  # Month-Day-Year
+    "%Y-%m-%d",  # Year-Month-Day (ISO format without time)
+    "%d/%m/%y",  # Day/Month/2-digit year
+    "%m/%d/%y",  # Month/Day/2-digit year
+    "%y/%m/%d",  # 2-digit year/Month/Day
+    "%d,%m,%Y",  # Day,Month,Year
+    "%m,%d,%Y",  # Month,Day,Year
+    "%Y,%m,%d",  # Year,Month,Day
+    "%d %m %Y",  # Day Month Year (with space)
+    "%m %d %Y",  # Month Day Year
+    # With month names
+    "%d %b %Y",  # Day Abbreviated Month Year
+    "%b %d, %Y",  # Abbreviated Month Day, Year
+    "%d %B %Y",  # Day Full Month Name Year
+    "%B %d, %Y",  # Full Month Name Day, Year
+    # ISO 8601 with/without time
+    "%Y-%m-%dT%H:%M:%S",  # With time
+    "%Y-%m-%d",  # Without time
+    # Regional or less common formats
+    # "%Y年%m月%d日",  # Japanese-style date
+    "%Y%m%d",  # YYYYMMDD format, often used in logs or filenames
+    "%y%m%d",  # YYMMDD
+    "%d%m%Y",  # DDMMYYYY, sometimes used in Europe
+    # Additional formats
+    "%d/%m/%y %H:%M",  # Day/Month/Year Hour:Minute
+    "%m/%d/%y %H:%M",  # Month/Day/Year Hour:Minute
+    "%Y-%m-%d %H:%M:%S",  # Year-Month-Day Hour:Minute:Second
+]
+
+def natural_sort_key(item: object) -> tuple[int, object]:
+    """
+    A key function for natural sorting that handles various Python types, including
+    date-like strings in multiple formats.
+
+    This function aims to sort elements in a human-readable order:
+    - None values first
+    - Booleans (False before True)
+    - Numbers (integers, floats combined)
+    - Datetime objects
+    - Strings with natural sorting for embedded numbers and dates
+    - Unknown types treated as strings or left at the end
+
+    Args:
+        item: Any Python object to be sorted.
+
+    Returns:
+        A tuple or value that can be used for sorting.
+    """
+    if item is None:
+        return (0, "")
+
+    elif isinstance(item, bool):
+        return (1, item)
+
+    elif isinstance(item, (int, float)):
+        return (2, (item,))  # Tuple to ensure float and int are sorted together
+
+    elif isinstance(item, datetime):
+        return (3, item.timestamp())
+
+    elif isinstance(item, str):
+        # Check if the whole string is a date
+        for date_format in date_formats:
+            try:
+                # Use the same sort order as for datetime objects
+                return (3, datetime.strptime(item, date_format).timestamp())
+            except ValueError:
+                continue
+
+        # Check if the whole string is a number
+        try:
+            return (4, float(item))
+        except Exception:
+            # Proceed with natural sorting
+            return (5, tuple(int(text) if text.isdigit() else text.lower() for text in re.split(r"(\d+)", item)))
+
+    else:
+        # For unknown types, attempt to convert to string, or place at end
+        try:
+            return (6, f"{item}".lower())
+        except Exception:
+            return (7, item)  # If conversion fails, place at the very end
+```
+
 #### **Sorting cells**
 
 ```python
 def sort(
-    boxes: AnyIter[Sequence[int, int, int, int]] | None = None,
+    boxes: AnyIter[Sequence[int, int, int, int]] | Span | None = None,
     reverse: bool = False,
+    row_wise: bool = False,
     validation: bool = True,
     key: Callable | None = None,
     undo: bool = True,
 ) -> EventDataDict
 ```
+Parameters:
+- `boxes` (`AnyIter[Sequence[int, int, int, int]]`, `Span`, `None`) the cell selection boxes to sort. An iterable of box coordinates. Each box is made up of:
+    - From Row (inclusive)
+    - From Column (inclusive)
+    - Up To Row (exclusive)
+    - Up To Column (exclusive)
+    - If None, it will sort the currently selected boxes or the entire table.
+    - e.g. `boxes=[(0, 0, 5, 5), (7, 0, 12, 5)]`
+- `reverse` (`bool`) if `True` sorts in reverse (descending) order.
+- `row-wise` (`bool`) if `True` sorts values row-wise. Default is column-wise.
+- `key` (`Callable`, `None`) if `None` then uses the tksheet in-built natural sorting key.
+- `undo` (`bool`) if `True` then adds the change (if a change was made) to the undo stack.
+
+Notes:
+- The event name in `EventDataDict` for sorting table values is `"edit_table"`.
+- Sorts all boxes columnwise by default.
+- If `boxes` is `None` then it will sort existing table selection boxes, if there are no existing selection boxes then it will sort all table values.
 
 #### **Sorting row values**
 
@@ -3086,6 +3247,15 @@ def sort_rows(
     undo: bool = True,
 ) -> EventDataDict
 ```
+Parameters:
+- `rows` (`AnyIter[int]` , `Span`, `None`) the rows to sort.
+- `reverse` (`bool`) if `True` then sorts in reverse (descending) order.
+- `key` (`Callable`, `None`) if `None` then uses the tksheet in-built natural sorting key.
+- `undo` (`bool`) if `True` then adds the change (if a change was made) to the undo stack.
+
+Notes:
+- Sorts the values of each row independently.
+- The event name in `EventDataDict` for sorting table values is `"edit_table"`.
 
 #### **Sorting column values**
 
@@ -3098,6 +3268,15 @@ def sort_columns(
     undo: bool = True,
 ) -> EventDataDict
 ```
+Parameters:
+- `columns` (`AnyIter[int]` , `Span`, `None`) the columns to sort.
+- `reverse` (`bool`) if `True` then sorts in reverse (descending) order.
+- `key` (`Callable`, `None`) if `None` then uses the tksheet in-built natural sorting key.
+- `undo` (`bool`) if `True` then adds the change (if a change was made) to the undo stack.
+
+Notes:
+- Sorts the values of each column independently.
+- The event name in `EventDataDict` for sorting table values is `"edit_table"`.
 
 #### **Sorting the order of all rows using a column**
 
@@ -3109,6 +3288,14 @@ def sort_rows_by_column(
     undo: bool = True,
 ) -> EventDataDict
 ```
+Parameters:
+- `column` (`int`, `None`) if `None` then it uses the currently selected column to sort.
+- `reverse` (`bool`) if `True` then sorts in reverse (descending) order.
+- `key` (`Callable`, `None`) if `None` then uses the tksheet in-built natural sorting key.
+- `undo` (`bool`) if `True` then adds the change (if a change was made) to the undo stack.
+
+Notes:
+- Sorts the tree if treeview mode is active.
 
 #### **Sorting the order of all columns using a row**
 
@@ -3120,6 +3307,11 @@ def sort_columns_by_row(
     undo: bool = True,
 ) -> EventDataDict
 ```
+Parameters:
+- `row` (`int`, `None`) if `None` then it uses the currently selected row to sort.
+- `reverse` (`bool`) if `True` then sorts in reverse (descending) order.
+- `key` (`Callable`, `None`) if `None` then uses the tksheet in-built natural sorting key.
+- `undo` (`bool`) if `True` then adds the change (if a change was made) to the undo stack.
 
 ---
 # **Highlighting Cells**
@@ -5714,6 +5906,8 @@ The list of key word arguments available for `set_options()` are as follows, [se
 ```python
 name
 
+show_top_left
+
 edit_cell_tab
 edit_cell_return
 editor_del_key
@@ -5844,6 +6038,32 @@ horizontal_scroll_gripcount
 
 # for changing the in-built right click menus labels
 # use a string as an argument
+
+sort_cells_label
+sort_cells_x_label
+sort_row_label
+sort_column_label
+sort_rows_label
+sort_columns_label
+sort_cells_reverse_label
+sort_cells_x_reverse_label
+sort_row_reverse_label
+sort_column_reverse_label
+sort_rows_reverse_label
+sort_columns_reverse_label
+sort_cells_accelerator
+sort_cells_x_accelerator
+sort_row_accelerator
+sort_column_accelerator
+sort_rows_accelerator
+sort_columns_accelerator
+sort_cells_reverse_accelerator
+sort_cells_x_reverse_accelerator
+sort_row_reverse_accelerator
+sort_column_reverse_accelerator
+sort_rows_reverse_accelerator
+sort_columns_reverse_accelerator
+
 edit_header_label
 edit_header_accelerator
 edit_index_label
@@ -6020,69 +6240,11 @@ redraw(redraw_header: bool = True, redraw_row_index: bool = True) -> Sheet
 ---
 # **Treeview Mode**
 
-tksheet has a treeview mode which behaves similarly to the ttk treeview widget, it is not a drop in replacement for it though.
+tksheet has a treeview mode which behaves similarly to the ttk treeview widget, it is not a drop in replacement for it though. All functionality should work as with the non-treeview mode in tksheet versions >= `7.4.0`.
 
-## **Treeview limitations and warnings**
+Always either use a fresh `Sheet()` instance or use [Sheet.reset()](https://github.com/ragardner/tksheet/wiki/Version-7#reset-all-or-specific-sheet-elements-and-attributes) before enabling treeview mode.
 
-There are some key limitations to the treeview mode, most have been listed under separate headings below but the list is not exhaustive.
-
-There may be other conflicts between the treeview mode and some of tksheets non-treeview functions.
-
-### **Treeview usable bindings**
-
-The only bindings (using `enable_bindings()`) which **will not** cause issues are:
-- `"single_select"`
-- `"drag_select"`
-    - `"select_all"`
-- `"column_select"`
-- `"row_select"`
-- `"column_width_resize"`
-- `"double_click_column_resize"`
-- `"row_width_resize"`
-- `"column_height_resize"`
-- `"arrowkeys"` # all arrowkeys including page up and down
-- `"up"`
-- `"down"`
-- `"left"`
-- `"right"`
-- `"prior"` # page up
-- `"next"` # page down
-- `"row_height_resize"`
-- `"double_click_row_resize"`
-- `"right_click_popup_menu"`
-- `"rc_select"`
-- `"rc_insert_column"`
-- `"rc_delete_column"`
-- `"ctrl_click_select"` / `"ctrl_select"`
-- `"copy"`
-- `"cut"`
-- `"paste"`
-- `"delete"`
-- `"edit_cell"`
-- `"edit_header"`
-- `"edit_index"`
-
-**Note on undo:**
-
-Take care if using `"undo"` because, for example, if a cell edit happens then an `.insert()` occurs then it will potentially make the saved cell coordinates in the undo stack relate to the wrong cells. This is because the treeview functions do not add to the undo stack.
-
-### **Treeview function limitations**
-
-Many functions designed for normal tksheet usage will cause issues when used with treeview mode.
-
-**The following relates to non-treeview mode functions:**
-
-**Okay:**
-- Modifying headers or columns.
-- Modifying table or header cell contents.
-- Modifying any highlights, table data formatting, table/header dropdown boxes/checkboxes, etc.
-
-**Not okay:**
-- Modifying the row index, unless it's through user input.
-- Modifying rows, e.g. inserting, moving or deleting rows using non-treeview functions.
-- Enabling and using `undo`, probably.
-
-### **Treeview other limitations**
+### **Treeview limitations**
 
 **Text alignment**
 
@@ -6094,6 +6256,13 @@ You can make a treeview mode sheet by using the initialization parameter `treevi
 
 ```python
 sheet = Sheet(parent, treeview=True)
+```
+
+Or by using [`Sheet.reset()`](https://github.com/ragardner/tksheet/wiki/Version-7#reset-all-or-specific-sheet-elements-and-attributes) and [`Sheet.set_options()`](https://github.com/ragardner/tksheet/wiki/Version-7#sheet-options-and-other-functions).
+
+```python
+my_sheet.reset()
+my_sheet.set_options(treeview=True)
 ```
 
 See the other sections on sheet initialization and examples for the other usual `Sheet()` parameters.
@@ -6112,6 +6281,7 @@ insert(
     text: None | str = None,
     values: None | list[object] = None,
     create_selections: bool = False,
+    undo: bool = True,
 ) -> str
 ```
 Parameters:
@@ -6121,6 +6291,7 @@ Parameters:
 - `text` is the displayed text in the row index for the item.
 - `values` is a list of values which will become the items row in the sheet.
 - `create_selections` when `True` selects the row that has just been created.
+- `undo` when `True` adds the change to the undo stack.
 
 Notes:
 - Returns the `iid`.
@@ -6154,6 +6325,7 @@ bulk_insert(
     create_selections: bool = False,
     include_iid_column: bool = True,
     include_text_column: bool = True,
+    undo: bool = True,
 ) -> dict[str, int]
 ```
 Parameters:
@@ -6167,6 +6339,7 @@ Parameters:
 - `create_selections` when `True` selects the row that has just been created.
 - `include_iid_column` when `False` excludes the iid column from the inserted rows.
 - `include_text_column` when the `text_column` is an `int` setting this to `False` excludes that column from the treeview.
+- `undo` when `True` adds the change to the undo stack.
 
 Notes:
 - Returns a `dict[str, int]` of key: new iids, value: their data row number.
@@ -6351,7 +6524,7 @@ get_children(item: None | str = None) -> Generator[str]
     - Use an iid to get the children for that particular iid. Does not include all descendants.
 
 ```python
-get_nodes(item: None | str = None) -> Generator[str]:
+get_iids(item: None | str = None) -> Generator[str]:
 ```
 - Exactly the same as above but instead of retrieving iids in the order that they appear in the treeview it retrieves iids from the internal `dict` which may not be ordered.
 
@@ -6399,15 +6572,30 @@ ___
 #### **Move an item to a new parent**
 
 ```python
-move(item: str, parent: str, index: int | None = None) -> Sheet
+move(
+    item: str,
+    parent: str,
+    index: int | None = None,
+    select: bool = True,
+    undo: bool = True,
+    emit_event: bool = False,
+) -> tuple[dict[int, int], dict[int, int], EventDataDict]
 ```
+Parameters:
 - `item` is the iid to move.
 - `parent` is the new parent for the item.
     - Use an empty `str` (`""`) to move the item to the top.
 - `index`:
     - Leave as `None` to move to item to the end of the top/children.
     - Use an `int` to move the item to an index within its parents children (or within top level items if moving to the top).
-- `reattach()` is exactly the same as `move()`.
+- `select` when `True` selects the moved rows.
+- `undo` when `True` adds the change to the undo stack.
+- `emit_event` when `True` emits events related to sheet modification.
+
+Notes:
+- Also moves all of the items descendants.
+- The `reattach()` function is exactly the same as `move()`.
+- Returns `dict[int, int]` of `{old index: new index, ...}` for data and displayed rows separately and also an `EventDataDict`.
 
 ___
 

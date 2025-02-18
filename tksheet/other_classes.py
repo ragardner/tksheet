@@ -3,7 +3,7 @@ from __future__ import annotations
 import pickle
 import tkinter as tk
 from collections import namedtuple
-from collections.abc import Callable, Generator, Hashable, Iterator
+from collections.abc import Callable, Hashable, Iterator
 from functools import partial
 from typing import Literal
 
@@ -404,7 +404,7 @@ class Span(dict):
         return "cell"
 
     @property
-    def rows(self) -> Generator[int]:
+    def rows(self) -> SpanRange:
         rng_from_r = 0 if self["from_r"] is None else self["from_r"]
         if self["upto_r"] is None:
             rng_upto_r = self["widget"].total_rows()
@@ -413,13 +413,19 @@ class Span(dict):
         return SpanRange(rng_from_r, rng_upto_r)
 
     @property
-    def columns(self) -> Generator[int]:
+    def columns(self) -> SpanRange:
         rng_from_c = 0 if self["from_c"] is None else self["from_c"]
         if self["upto_c"] is None:
             rng_upto_c = self["widget"].total_columns()
         else:
             rng_upto_c = self["upto_c"]
         return SpanRange(rng_from_c, rng_upto_c)
+
+    @property
+    def coords(self) -> tuple[int, int, int, int]:
+        rows = self.rows
+        cols = self.columns
+        return Box_nt(rows.from_, cols.from_, rows.upto_, cols.upto_)
 
     def pickle_self(self) -> bytes:
         x = self["widget"]
@@ -446,15 +452,13 @@ class Node:
         self,
         text: str,
         iid: str,
-        parent: Node | Literal[""] | None = None,
+        parent: str | None = None,
+        children: list[str] | None = None,
     ) -> None:
         self.text = text
         self.iid = iid
         self.parent = parent
-        self.children = []
-
-    def __str__(self) -> str:
-        return self.text
+        self.children = children if children else []
 
 
 class StorageBase:

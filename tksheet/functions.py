@@ -308,6 +308,8 @@ def event_dict(
     # resized_header: None, dict] = None,
     being_selected: None | tuple = None,
     named_spans: None | dict = None,
+    sheet_state: None | dict = None,
+    treeview: None | dict = None,
     **kwargs,
 ) -> EventDataDict:
     return EventDataDict(
@@ -333,8 +335,6 @@ def event_dict(
             index=DotDict(),
             column_widths=DotDict(),
             row_heights=DotDict(),
-            displayed_rows=None,
-            displayed_columns=None,
         ),
         named_spans=DotDict() if named_spans is None else named_spans,
         options=DotDict(),
@@ -356,6 +356,12 @@ def event_dict(
             # "index": DotDict() if resized_index is None else resized_index,
         ),
         widget=widget,
+        sheet_state=DotDict() if sheet_state is None else sheet_state,
+        treeview=DotDict(
+            nodes={},
+        )
+        if treeview is None
+        else treeview,
     )
 
 
@@ -383,6 +389,12 @@ def b_index(sorted_seq: Sequence[int], num_to_index: int) -> int:
     return idx
 
 
+def try_b_index(sorted_seq: Sequence[int], num_to_index: int) -> int | None:
+    if (idx := bisect_left(sorted_seq, num_to_index)) == len(sorted_seq) or sorted_seq[idx] != num_to_index:
+        return None
+    return idx
+
+
 def bisect_in(sorted_seq: Sequence[int], num: int) -> bool:
     """
     Faster than 'num in sorted_seq'
@@ -391,6 +403,18 @@ def bisect_in(sorted_seq: Sequence[int], num: int) -> bool:
         return sorted_seq[bisect_left(sorted_seq, num)] == num
     except Exception:
         return False
+
+
+def push_n(num: int, sorted_seq: Sequence[int]) -> int:
+    if num < sorted_seq[0]:
+        return num
+    else:
+        for e in sorted_seq:
+            if num >= e:
+                num += 1
+            else:
+                return num
+        return num
 
 
 def get_dropdown_kwargs(
@@ -761,6 +785,18 @@ def insert_items(
         for idx, v in reversed(to_insert.items()):
             seq[idx:idx] = [v]
     return seq
+
+
+def del_placeholder_dict_key(
+    d: dict[Hashable, object],
+    k: Hashable,
+    v: object,
+    p: tuple = tuple(),
+) -> dict[Hashable, object]:
+    if p in d:
+        del d[p]
+    d[k] = v
+    return d
 
 
 def data_to_displayed_idxs(

@@ -31,27 +31,29 @@ from .functions import (
     new_tk_event,
     rounded_box_coords,
     stored_event_dict,
+    try_b_index,
     try_binding,
     wrap_text,
 )
 from .other_classes import DotDict, DraggedRowColumn, DropdownStorage, EventDataDict, TextEditorStorage
-from .sorting import sort_column, sort_rows_by_column
+from .row_index import RowIndex
+from .sorting import sort_column, sort_rows_by_column, sort_tree_view
 from .text_editor import TextEditor
 from .tksheet_types import AnyIter
 
 
 class ColumnHeaders(tk.Canvas):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, parent, **kwargs):
         super().__init__(
-            kwargs["parent"],
-            background=kwargs["parent"].ops.header_bg,
+            parent,
+            background=parent.ops.header_bg,
             highlightthickness=0,
         )
-        self.PAR = kwargs["parent"]
+        self.PAR = parent
         self.ops = self.PAR.ops
         self.current_height = None
         self.MT = None  # is set from within MainTable() __init__
-        self.RI = None  # is set from within MainTable() __init__
+        self.RI: RowIndex | None = None  # is set from within MainTable() __init__
         self.TL = None  # is set from within TopLeftRectangle() __init__
         self.popup_menu_loc = None
         self.extra_begin_edit_cell_func = None
@@ -802,14 +804,8 @@ class ColumnHeaders(tk.Canvas):
                     c += 1
                 if c > len(self.MT.col_positions) - 1:
                     c = len(self.MT.col_positions) - 1
-                event_data = event_dict(
-                    name="move_columns",
-                    sheet=self.PAR.name,
-                    widget=self,
-                    boxes=self.MT.get_boxes(),
-                    selected=self.MT.selected,
-                    value=c,
-                )
+                event_data = self.MT.new_event_dict("move_columns", state=True)
+                event_data["value"] = c
                 if try_binding(self.ch_extra_begin_drag_drop_func, event_data, "begin_move_columns"):
                     data_new_idxs, disp_new_idxs, event_data = self.MT.move_columns_adjust_options_dict(
                         *self.MT.get_args_for_move_columns(
@@ -876,13 +872,7 @@ class ColumnHeaders(tk.Canvas):
             columns = self.MT.get_selected_cols()
         if not columns:
             columns = list(range(0, len(self.MT.col_positions) - 1))
-        event_data = event_dict(
-            name="edit_table",
-            sheet=self.PAR.name,
-            widget=self,
-            boxes=self.MT.get_boxes(),
-            selected=self.MT.selected,
-        )
+        event_data = self.MT.new_event_dict("edit_table")
         try_binding(self.MT.extra_begin_sort_cells_func, event_data)
         for c in columns:
             datacn = self.MT.datacn(c)
@@ -925,13 +915,7 @@ class ColumnHeaders(tk.Canvas):
         key: Callable | None = None,
         undo: bool = True,
     ) -> EventDataDict:
-        event_data = event_dict(
-            name="sort_rows",
-            sheet=self.PAR.name,
-            widget=self,
-            boxes=self.MT.get_boxes(),
-            selected=self.MT.selected,
-        )
+        event_data = self.MT.new_event_dict("sort_rows", state=True)
         if not self.MT.data:
             return event_data
         if column is None:
@@ -939,24 +923,53 @@ class ColumnHeaders(tk.Canvas):
                 return event_data
             column = self.MT.selected.column
         if try_binding(self.ch_extra_begin_sort_rows_func, event_data, "begin_sort_rows"):
-            _, data_new_idxs = sort_rows_by_column(self.MT.data, column=column, reverse=reverse, key=key)
-            disp_new_idxs = {}
-            for old, new in data_new_idxs.items():
-                if (old_disprn := self.MT.try_disprn(old)) is not None:
-                    disp_new_idxs[old_disprn] = self.MT.disprn(new)
-            data_idxs, disp_idxs, _ = self.PAR.mapping_move_rows(
-                data_new_idxs=data_new_idxs,
-                disp_new_idxs=disp_new_idxs,
-                move_data=True,
-                data_indexes=True,
-                create_selections=False,
-                undo=False,
-                emit_event=False,
-                redraw=True,
-            )
+            disp_new_idxs, disp_row_ctr = {}, 0
+            if self.ops.treeview:
+                new_nodes_order, data_new_idxs = sort_tree_view(
+                    _row_index=self.MT._row_index,
+                    tree_rns=self.RI.tree_rns,
+                    tree=self.RI.tree,
+                    key=key,
+                    reverse=reverse,
+                )
+                for node in new_nodes_order:
+                    if (idx := try_b_index(self.MT.displayed_rows, self.RI.tree_rns[node.iid])) is not None:
+                        disp_new_idxs[idx] = disp_row_ctr
+                        disp_row_ctr += 1
+            else:
+                new_rows_order, data_new_idxs = sort_rows_by_column(
+                    self.MT.data, column=column, reverse=reverse, key=key
+                )
+                if self.MT.all_rows_displayed:
+                    disp_new_idxs = data_new_idxs
+                else:
+                    for old_idx, _ in new_rows_order:
+                        if (idx := try_b_index(self.MT.displayed_rows, old_idx)) is not None:
+                            disp_new_idxs[idx] = disp_row_ctr
+                            disp_row_ctr += 1
+            if self.PAR.ops.treeview:
+                data_new_idxs, disp_new_idxs, event_data = self.MT.move_rows_adjust_options_dict(
+                    data_new_idxs=data_new_idxs,
+                    data_old_idxs=dict(zip(data_new_idxs.values(), data_new_idxs)),
+                    totalrows=None,
+                    disp_new_idxs=disp_new_idxs,
+                    move_data=True,
+                    create_selections=False,
+                    event_data=event_data,
+                )
+            else:
+                data_new_idxs, disp_new_idxs, _ = self.PAR.mapping_move_rows(
+                    data_new_idxs=data_new_idxs,
+                    disp_new_idxs=disp_new_idxs,
+                    move_data=True,
+                    create_selections=False,
+                    undo=False,
+                    emit_event=False,
+                    redraw=True,
+                )
             event_data["moved"]["rows"] = {
-                "data": data_idxs,
-                "displayed": disp_idxs,
+                "data": data_new_idxs,
+                "displayed": disp_new_idxs,
             }
             if undo and self.MT.undo_enabled:
                 self.MT.undo_stack.append(stored_event_dict(event_data))

@@ -73,24 +73,28 @@ def new_sheet_options() -> DotDict:
             # sorting
             # labels
             "sort_cells_label": "Sort ↓",
-            "sort_row_label": "Sort row →",
-            "sort_column_label": "Sort column ↓",
+            "sort_cells_x_label": "Sort →",
+            "sort_row_label": "Sort values →",
+            "sort_column_label": "Sort values ↓",
             "sort_rows_label": "Sort rows ↓",
             "sort_columns_label": "Sort columns →",
             # reverse labels
             "sort_cells_reverse_label": "Sort ↑",
-            "sort_row_reverse_label": "Sort row ←",
-            "sort_column_reverse_label": "Sort column ↑",
+            "sort_cells_x_reverse_label": "Sort ←",
+            "sort_row_reverse_label": "Sort values ←",
+            "sort_column_reverse_label": "Sort values ↑",
             "sort_rows_reverse_label": "Sort rows ↑",
             "sort_columns_reverse_label": "Sort columns ←",
             # accelerators
             "sort_cells_accelerator": "",
+            "sort_cells_x_accelerator": "",
             "sort_row_accelerator": "",
             "sort_column_accelerator": "",
             "sort_rows_accelerator": "",
             "sort_columns_accelerator": "",
             # reverse accelerators
             "sort_cells_reverse_accelerator": "",
+            "sort_cells_x_reverse_accelerator": "",
             "sort_row_reverse_accelerator": "",
             "sort_column_reverse_accelerator": "",
             "sort_rows_reverse_accelerator": "",
@@ -238,7 +242,7 @@ def new_sheet_options() -> DotDict:
             "edit_cell_return": "down",
             "editor_del_key": "forward",
             "treeview": False,
-            "treeview_indent": "5",
+            "treeview_indent": "2",
             "rounded_boxes": True,
             "alternate_color": "",
             "allow_cell_overflow": False,
@@ -250,5 +254,6 @@ def new_sheet_options() -> DotDict:
             "max_header_height": float("inf"),
             "max_row_height": float("inf"),
             "max_index_width": float("inf"),
+            "show_top_left": False,
         }
     )
