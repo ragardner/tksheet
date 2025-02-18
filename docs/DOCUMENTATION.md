@@ -9,6 +9,7 @@
 - [Sheet Appearance](https://github.com/ragardner/tksheet/wiki/Version-7#sheet-appearance)
 - [Alternate Row Colors](https://github.com/ragardner/tksheet/wiki/Version-7#alternate-row-colors)
 - [Header and Index](https://github.com/ragardner/tksheet/wiki/Version-7#header-and-index)
+- [Text Wrap and Overflow](https://github.com/ragardner/tksheet/wiki/Version-7#text-wrap-and-overflow)
 ---
 - [Table Functionality and Bindings](https://github.com/ragardner/tksheet/wiki/Version-7#table-functionality-and-bindings)
 - [tkinter and tksheet Events](https://github.com/ragardner/tksheet/wiki/Version-7#tkinter-and-tksheet-events)
@@ -707,6 +708,47 @@ row_index(
 - Using an integer `int` for argument `newindex` makes the sheet use that column as an index e.g. `row_index(0)` means the first column will be used as an index (the first column will not be hidden in the sheet though), this is sort of equivalent to freezing the column.
 - Leaving `newindex` as `None` and using the `index` argument returns the existing row index value in that index.
 - Leaving all arguments as default e.g. `row_index()` returns the existing row index.
+
+---
+# **Text Wrap and Overflow**
+
+#### **Control text wrapping**
+
+You can set table, header and index text wrapping either at `Sheet()` initialization or using `set_options()`.
+
+Make use of the following parameters:
+- `table_wrap`
+- `index_wrap`
+- `header_wrap`
+
+With one of the following arguments:
+- `""` - For no text wrapping.
+- `"c"` - For character wrapping.
+- `"w"` - For word wrapping.
+
+**Examples:**
+```python
+# for word wrap at initialization
+my_sheet = Sheet(parent, table_wrap="w")
+
+# for character wrap using set_options()
+my_sheet.set_options(table_wrap="c")
+```
+
+#### **Control table text overflow**
+
+This setting only works for cells that are not center (north) aligned. Cell text can be set to overflow adjacent empty cells in the table like so:
+
+**Examples:**
+```python
+# for word wrap at initialization
+my_sheet = Sheet(parent, allow_cell_overflow=True)
+
+# for character wrap using set_options()
+my_sheet.set_options(allow_cell_overflow=True)
+```
+- Set it to `False` to disable it.
+- It is only available as a global setting for the table, not on a cell by cell basis.
 
 ---
 # **Table functionality and bindings**

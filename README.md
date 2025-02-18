@@ -52,7 +52,6 @@ This library is maintained with the help of **[others](https://github.com/ragard
 - [Expand row heights and column widths](https://github.com/ragardner/tksheet/wiki/Version-7#table-functionality-and-bindings)
 - [Change fonts and font size (not for individual cells)](https://github.com/ragardner/tksheet/wiki/Version-7#text-font-and-alignment)
 - [Change any colors in the sheet](https://github.com/ragardner/tksheet/wiki/Version-7#sheet-appearance)
-
 - [Dropdown boxes](https://github.com/ragardner/tksheet/wiki/Version-7#dropdown-boxes)
 - [Check boxes](https://github.com/ragardner/tksheet/wiki/Version-7#check-boxes)
 - [Progress bars](https://github.com/ragardner/tksheet/wiki/Version-7#progress-bars)
