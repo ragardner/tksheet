@@ -1,5 +1,6 @@
 ### Version 7.4.3
-####
+#### Changed:
+- Provide `natural_sort_key` as importable from `tksheet.natural_sort_key`
 
 ### Version 7.4.2
 #### Fixed:

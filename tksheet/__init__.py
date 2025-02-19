@@ -93,6 +93,7 @@ from .other_classes import (
 from .row_index import RowIndex
 from .sheet import Dropdown, Sheet
 from .sheet_options import new_sheet_options
+from .sorting import natural_sort_key
 from .text_editor import (
     TextEditor,
     TextEditorTkText,
