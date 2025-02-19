@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-import re
-import unittest
 from collections.abc import Callable, Generator
 from datetime import datetime
+from re import finditer
 
 from .other_classes import Node
 from .tksheet_types import AnyIter
@@ -59,8 +58,6 @@ def natural_sort_key(item: object) -> tuple[int, object]:
     - Strings with natural sorting for embedded numbers and dates
     - Unknown types treated as strings or left at the end
 
-    With love from Grok ❤️
-
     Args:
         item: Any Python object to be sorted.
 
@@ -68,39 +65,42 @@ def natural_sort_key(item: object) -> tuple[int, object]:
         A tuple or value that can be used for sorting.
     """
     if item is None:
-        return (0, "")
+        return (0,)
 
     elif isinstance(item, bool):
         return (1, item)
 
     elif isinstance(item, (int, float)):
-        return (2, (item,))  # Tuple to ensure float and int are sorted together
+        return (2, item)
 
     elif isinstance(item, datetime):
         return (3, item.timestamp())
 
     elif isinstance(item, str):
-        # Check if the whole string is a date
         for date_format in date_formats:
             try:
-                # Use the same sort order as for datetime objects
                 return (3, datetime.strptime(item, date_format).timestamp())
             except ValueError:
                 continue
 
-        # Check if the whole string is a number
         try:
-            return (4, float(item))
+            return (2, float(item))
         except Exception:
-            # Proceed with natural sorting
-            return (5, tuple(int(text) if text.isdigit() else text.lower() for text in re.split(r"(\d+)", item)))
+            n = []
+            s = []
+            for match in finditer(r"\d+|[^\d\s]+", item):
+                if (m := match.group()).isdigit():
+                    n.append(int(m))
+                else:
+                    s.append(m.lower())
+            return (5, s, n)
 
     else:
         # For unknown types, attempt to convert to string, or place at end
         try:
             return (6, f"{item}".lower())
         except Exception:
-            return (7, item)  # If conversion fails, place at the very end
+            return (7, item)
 
 
 def sort_selection(
@@ -285,85 +285,3 @@ def sort_tree_view(
             new_index += 1
 
     return sorted_nodes, mapping
-
-
-class TestNaturalSort(unittest.TestCase):
-    def test_none_first(self):
-        self.assertEqual(natural_sort_key(None), (0, ""))
-
-    def test_booleans_order(self):
-        self.assertLess(natural_sort_key(False), natural_sort_key(True))
-
-    def test_numbers_order(self):
-        self.assertLess(natural_sort_key(5), natural_sort_key(10))
-        self.assertLess(natural_sort_key(5.5), natural_sort_key(6))
-
-    def test_datetime_order(self):
-        dt1 = datetime(2023, 1, 1)
-        dt2 = datetime(2023, 1, 2)
-        self.assertLess(natural_sort_key(dt1), natural_sort_key(dt2))
-
-    def test_string_natural_sort(self):
-        items = ["item2", "item10", "item1"]
-        sorted_items = sorted(items, key=natural_sort_key)
-        self.assertEqual(sorted_items, ["item1", "item2", "item10"])
-
-    def test_date_string_recognition(self):
-        # Test various date formats
-        date_str1 = "01/01/2023"
-        date_str2 = "2023-01-01"
-        date_str3 = "Jan 1, 2023"
-
-        dt = datetime(2023, 1, 1)
-
-        self.assertEqual(natural_sort_key(date_str1)[0], 3)
-        self.assertEqual(natural_sort_key(date_str2)[0], 3)
-        self.assertEqual(natural_sort_key(date_str3)[0], 3)
-        self.assertEqual(natural_sort_key(date_str1)[1], natural_sort_key(dt)[1])  # Timestamps should match
-
-    def test_unknown_types(self):
-        # Here we use a custom class for testing unknown types
-        class Unknown:
-            pass
-
-        unknown = Unknown()
-        self.assertEqual(natural_sort_key(unknown)[0], 5)  # Success case, string conversion works
-
-    def test_unknown_types_failure(self):
-        # Create an object where string conversion fails
-        class Unconvertible:
-            def __str__(self):
-                raise Exception("String conversion fails")
-
-            def __repr__(self):
-                raise Exception("String conversion fails")
-
-        unconvertible = Unconvertible()
-        self.assertEqual(natural_sort_key(unconvertible)[0], 6)  # Failure case, string conversion fails
-
-
-def test_sort_selection():
-    # Test case 1: Mixed types, no reverse
-    data1 = [[1, "b"], [3, "a"]]
-    sorted_data1 = sort_selection(data1)
-    print(f"Test 1 - No reverse: {data1} -> {sorted_data1}")
-
-    # Test case 2: Mixed types, with reverse
-    data2 = [[1, "b"], [3, "a"]]
-    sorted_data2 = sort_selection(data2, reverse=True)
-    print(f"Test 2 - With reverse: {data2} -> {sorted_data2}")
-
-    # Test case 3: All numbers
-    data3 = [[2, 1], [4, 3]]
-    sorted_data3 = sort_selection(data3)
-    print(f"Test 3 - All numbers: {data3} -> {sorted_data3}")
-
-    # Test case 4: With None values
-    data4 = [[None, "b"], ["a", None]]
-    sorted_data4 = sort_selection(data4)
-    print(f"Test 4 - With None: {data4} -> {sorted_data4}")
-
-
-if __name__ == "__main__":
-    test_sort_selection()
-    unittest.main()

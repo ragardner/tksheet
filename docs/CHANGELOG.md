@@ -1,5 +1,8 @@
 ### Version 7.4.1
-####
+#### Fixed:
+- Issues with `7.4.0` sorting
+- [#270](https://github.com/ragardner/tksheet/issues/270)
+- Only add to index header when user adds rows/columns if index/header is populated
 
 ### Version 7.4.0
 #### Changed:

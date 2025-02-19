@@ -275,31 +275,21 @@ class MainTable(tk.Canvas):
         self.all_columns_displayed = True
         self.all_rows_displayed = True
         self.align = kwargs["align"]
-
-        self.PAR.ops.table_font = [
+        self.PAR.ops.table_font = FontTuple(
             self.PAR.ops.table_font[0],
-            int(self.PAR.ops.table_font[1] * kwargs["zoom"] / 100),
+            max(1, int(self.PAR.ops.table_font[1] * kwargs["zoom"] / 100)),
             self.PAR.ops.table_font[2],
-        ]
-
-        self.PAR.ops.index_font = [
+        )
+        self.PAR.ops.index_font = FontTuple(
             self.PAR.ops.index_font[0],
-            int(self.PAR.ops.index_font[1] * kwargs["zoom"] / 100),
+            max(1, int(self.PAR.ops.index_font[1] * kwargs["zoom"] / 100)),
             self.PAR.ops.index_font[2],
-        ]
-
-        self.PAR.ops.header_font = [
+        )
+        self.PAR.ops.header_font = FontTuple(
             self.PAR.ops.header_font[0],
-            int(self.PAR.ops.header_font[1] * kwargs["zoom"] / 100),
+            max(1, int(self.PAR.ops.header_font[1] * kwargs["zoom"] / 100)),
             self.PAR.ops.header_font[2],
-        ]
-        for fnt in (self.PAR.ops.table_font, self.PAR.ops.index_font, self.PAR.ops.header_font):
-            if fnt[1] < 1:
-                fnt[1] = 1
-        self.PAR.ops.table_font = FontTuple(*self.PAR.ops.table_font)
-        self.PAR.ops.index_font = FontTuple(*self.PAR.ops.index_font)
-        self.PAR.ops.header_font = FontTuple(*self.PAR.ops.header_font)
-
+        )
         self.txt_measure_canvas = tk.Canvas(self)
         self.txt_measure_canvas_text = self.txt_measure_canvas.create_text(0, 0, text="", font=self.PAR.ops.table_font)
 
@@ -1155,7 +1145,7 @@ class MainTable(tk.Canvas):
             if ctr:
                 event_data = self.add_rows(
                     rows=rows,
-                    index=index,
+                    index=index if isinstance(self._row_index, list) and self._row_index else {},
                     row_heights=row_heights,
                     event_data=event_data,
                     mod_event_boxes=False,
@@ -1205,7 +1195,7 @@ class MainTable(tk.Canvas):
             if ctr:
                 event_data = self.add_columns(
                     columns=columns,
-                    header=headers,
+                    header=headers if isinstance(self._headers, list) and self._headers else {},
                     column_widths=column_widths,
                     event_data=event_data,
                     mod_event_boxes=False,
@@ -5009,8 +4999,11 @@ class MainTable(tk.Canvas):
         event_data = self.new_event_dict("add_columns", state=True)
         if not try_binding(self.extra_begin_insert_cols_rc_func, event_data, "begin_add_columns"):
             return
+        columns, headers, widths = self.get_args_for_add_columns(data_ins_col, displayed_ins_col, numcols)
         event_data = self.add_columns(
-            *self.get_args_for_add_columns(data_ins_col, displayed_ins_col, numcols),
+            columns=columns,
+            header=headers if isinstance(self._headers, list) and self._headers else {},
+            column_widths=widths,
             event_data=event_data,
         )
         if self.undo_enabled:
@@ -5138,8 +5131,11 @@ class MainTable(tk.Canvas):
         event_data = self.new_event_dict("add_rows", state=True)
         if not try_binding(self.extra_begin_insert_rows_rc_func, event_data, "begin_add_rows"):
             return
+        rows, index, heights = self.get_args_for_add_rows(data_ins_row, displayed_ins_row, numrows)
         event_data = self.add_rows(
-            *self.get_args_for_add_rows(data_ins_row, displayed_ins_row, numrows),
+            rows=rows,
+            index=index if isinstance(self._row_index, list) and self._row_index else {},
+            row_heights=heights,
             event_data=event_data,
         )
         if self.undo_enabled:
@@ -5346,12 +5342,22 @@ class MainTable(tk.Canvas):
                 return event_data
         if not ext and not try_binding(self.extra_begin_del_cols_rc_func, event_data, "begin_delete_columns"):
             return
+        if self.all_columns_displayed:
+            data_columns = columns
+            disp_columns = columns
+        else:
+            if data_indexes:
+                data_columns = columns
+                disp_columns = data_to_displayed_idxs(data_columns, self.displayed_columns)
+            else:
+                data_columns = [self.displayed_columns[c] for c in columns]
+                disp_columns = columns
         event_data = self.delete_columns_displayed(
-            data_to_displayed_idxs(columns, self.MT.displayed_columns) if data_indexes else columns,
+            disp_columns,
             event_data,
         )
         event_data = self.delete_columns_data(
-            columns if data_indexes or self.all_columns_displayed else [self.displayed_columns[c] for c in columns],
+            data_columns,
             event_data,
         )
         if undo and self.undo_enabled:
@@ -5425,10 +5431,16 @@ class MainTable(tk.Canvas):
                 return
         if not ext and not try_binding(self.extra_begin_del_rows_rc_func, event_data, "begin_delete_rows"):
             return
-        if data_indexes or self.all_rows_displayed:
+        if self.all_rows_displayed:
             data_rows = rows
+            disp_rows = rows
         else:
-            data_rows = [self.displayed_rows[r] for r in rows]
+            if data_indexes:
+                data_rows = rows
+                disp_rows = data_to_displayed_idxs(data_rows, self.displayed_rows)
+            else:
+                data_rows = [self.displayed_rows[r] for r in rows]
+                disp_rows = rows
         if self.PAR.ops.treeview:
             data_rows = sorted(
                 chain(
@@ -5441,7 +5453,7 @@ class MainTable(tk.Canvas):
                 )
             )
         event_data = self.delete_rows_displayed(
-            data_to_displayed_idxs(data_rows, self.displayed_rows) if self.PAR.ops.treeview or data_indexes else rows,
+            disp_rows,
             event_data,
         )
         event_data = self.delete_rows_data(

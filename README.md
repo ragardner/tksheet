@@ -39,8 +39,6 @@
   </tbody>
 </table>
 
-This library is maintained with the help of **[others](https://github.com/ragardner/tksheet/graphs/contributors)**. If you would like to contribute please read this [help section](https://github.com/ragardner/tksheet/wiki/Version-7#contributing).
-
 ## **Features**
 
 - Smoothly display and modify tabular data

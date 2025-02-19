@@ -6282,15 +6282,14 @@ redraw(redraw_header: bool = True, redraw_row_index: bool = True) -> Sheet
 ---
 # **Treeview Mode**
 
-tksheet has a treeview mode which behaves similarly to the ttk treeview widget, it is not a drop in replacement for it though. All functionality should work as with the non-treeview mode in tksheet versions >= `7.4.0`.
+tksheet has a treeview mode which behaves similarly to the ttk treeview widget, it is not a drop in replacement for it though.
 
 Always either use a fresh `Sheet()` instance or use [Sheet.reset()](https://github.com/ragardner/tksheet/wiki/Version-7#reset-all-or-specific-sheet-elements-and-attributes) before enabling treeview mode.
 
-### **Treeview limitations**
-
-**Text alignment**
-
-The index text alignment must be `"w"` aka west or left.
+### **TO NOTE:**
+- When treeview mode is enabled the row index is a `list` of `Node` objects. The row index should not be modified by the usual `row_index()` function.
+- Most other tksheet functions should work as normal.
+- The index text alignment must be `"w"` aka west or left.
 
 ## **Creating a treeview mode sheet**
 
