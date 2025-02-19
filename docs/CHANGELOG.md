@@ -1,6 +1,10 @@
 ### Version 7.4.2
+#### Fixed:
+- Strings that started with numbers not being sorted in the correct order
+
 #### Changed:
-- For better backwards compatibility use the usual "move_rows"/"move_columns" event names for sorting rows/columns events.
+- Add file paths to sort order using pathlib
+- For better backwards compatibility use the usual "move_rows"/"move_columns" event names for sorting rows/columns events
 
 ### Version 7.4.1
 #### Fixed:
