@@ -936,14 +936,14 @@ class RowIndex(tk.Canvas):
         key: Callable | None = None,
         undo: bool = True,
     ) -> EventDataDict:
-        event_data = self.MT.new_event_dict("sort_columns", state=True)
+        event_data = self.MT.new_event_dict("move_columns", state=True)
         if not self.MT.data:
             return event_data
         if row is None:
             if not self.MT.selected:
                 return event_data
             row = self.MT.selected.row
-        if try_binding(self.ri_extra_begin_sort_cols_func, event_data, "begin_sort_columns"):
+        if try_binding(self.ri_extra_begin_sort_cols_func, event_data, "begin_move_columns"):
             sorted_indices, data_new_idxs = sort_columns_by_row(self.MT.data, row=row, reverse=reverse, key=key)
             disp_new_idxs = {}
             if self.MT.all_columns_displayed:
@@ -970,7 +970,7 @@ class RowIndex(tk.Canvas):
             }
             if undo and self.MT.undo_enabled:
                 self.MT.undo_stack.append(stored_event_dict(event_data))
-            try_binding(self.ri_extra_end_sort_cols_func, event_data, "end_sort_columns")
+            try_binding(self.ri_extra_end_sort_cols_func, event_data, "end_move_columns")
             self.MT.sheet_modified(event_data)
             self.PAR.emit_event("<<SheetModified>>", event_data)
             self.MT.refresh()

@@ -34,7 +34,7 @@
       <td align="right" colspan="2"><a href="https://github.com/ragardner/tksheet/wiki/Version-7#issues">Issues</a></td>
     </tr>
     <tr>
-      <td align="right" colspan="2"><a href="https://github.com/ragardner/tksheet/wiki/Version-7#enhancements-or-suggestions">Suggestions</a></td>
+      <td align="right" colspan="2"><a href="https://github.com/ragardner/tksheet/wiki/Version-7#enhancements-or-suggestions">Suggestions and Contributors</a></td>
     </tr>
   </tbody>
 </table>

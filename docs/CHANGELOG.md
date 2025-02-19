@@ -1,3 +1,7 @@
+### Version 7.4.2
+#### Changed:
+- For better backwards compatibility use the usual "move_rows"/"move_columns" event names for sorting rows/columns events.
+
 ### Version 7.4.1
 #### Fixed:
 - Issues with `7.4.0` sorting

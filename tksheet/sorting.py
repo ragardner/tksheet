@@ -45,7 +45,9 @@ date_formats = [
 ]
 
 
-def natural_sort_key(item: object) -> tuple[int, object]:
+def natural_sort_key(
+    item: object,
+) -> tuple[int] | tuple[int, bool | int | float | str | datetime] | tuple[int, list[str], list[int]]:
     """
     A key function for natural sorting that handles various Python types, including
     date-like strings in multiple formats.
@@ -89,11 +91,11 @@ def natural_sort_key(item: object) -> tuple[int, object]:
             n = []
             s = []
             for match in finditer(r"\d+|[^\d\s]+", item):
-                if (m := match.group()).isdigit():
-                    n.append(int(m))
+                if (t := match.group()).isdigit():
+                    n.append(int(t))
                 else:
-                    s.append(m.lower())
-            return (5, s, n)
+                    s.append(t.lower())
+            return (5, "".join(s), n)
 
     else:
         # For unknown types, attempt to convert to string, or place at end

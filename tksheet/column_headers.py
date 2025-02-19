@@ -915,14 +915,14 @@ class ColumnHeaders(tk.Canvas):
         key: Callable | None = None,
         undo: bool = True,
     ) -> EventDataDict:
-        event_data = self.MT.new_event_dict("sort_rows", state=True)
+        event_data = self.MT.new_event_dict("move_rows", state=True)
         if not self.MT.data:
             return event_data
         if column is None:
             if not self.MT.selected:
                 return event_data
             column = self.MT.selected.column
-        if try_binding(self.ch_extra_begin_sort_rows_func, event_data, "begin_sort_rows"):
+        if try_binding(self.ch_extra_begin_sort_rows_func, event_data, "begin_move_rows"):
             disp_new_idxs, disp_row_ctr = {}, 0
             if self.ops.treeview:
                 new_nodes_order, data_new_idxs = sort_tree_view(
@@ -973,7 +973,7 @@ class ColumnHeaders(tk.Canvas):
             }
             if undo and self.MT.undo_enabled:
                 self.MT.undo_stack.append(stored_event_dict(event_data))
-            try_binding(self.ch_extra_end_sort_rows_func, event_data, "end_sort_rows")
+            try_binding(self.ch_extra_end_sort_rows_func, event_data, "end_move_rows")
             self.MT.sheet_modified(event_data)
             self.PAR.emit_event("<<SheetModified>>", event_data)
             self.MT.refresh()

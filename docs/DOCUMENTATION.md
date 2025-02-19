@@ -832,7 +832,7 @@ ___
 
 #### **Bind specific table functionality**
 
-This function allows you to bind very specific table functionality to your own functions.
+This function allows you to bind **very** specific table functionality to your own functions.
 - If you want less specificity in event names you can also bind all sheet modifying events to a single function, [see here](https://github.com/ragardner/tksheet/wiki/Version-7#tkinter-and-tksheet-events).
 - If you want to validate/modify user cell edits [see here](https://github.com/ragardner/tksheet/wiki/Version-7#validate-user-cell-edits).
 
@@ -856,7 +856,8 @@ Notes:
 - **To unbind** a function either set `func` argument to `None` or leave it as default e.g. `extra_bindings("begin_copy")` to unbind `"begin_copy"`.
 
 Parameters:
-- `bindings` (`str`) options are:
+`bindings` (`str`) options:
+- Editing:
 	- `"begin_copy", "begin_ctrl_c"`
 	- `"ctrl_c", "end_copy", "end_ctrl_c", "copy"`
 	- `"begin_cut", "begin_ctrl_x"`
@@ -873,26 +874,31 @@ Parameters:
     - `"end_edit_header", "edit_header"`
     - `"begin_edit_index"`
 	- `"end_edit_index", "edit_index"`
+- Moving:
     - `"begin_row_index_drag_drop", "begin_move_rows"`
 	- `"row_index_drag_drop", "move_rows", "end_move_rows", "end_row_index_drag_drop"`
 	- `"begin_column_header_drag_drop", "begin_move_columns"`
 	- `"column_header_drag_drop", "move_columns", "end_move_columns", "end_column_header_drag_drop"`
-	- `"begin_rc_delete_row", "begin_delete_rows"`
-	- `"rc_delete_row", "end_rc_delete_row", "end_delete_rows", "delete_rows"`
-	- `"begin_rc_delete_column", "begin_delete_columns"`
-	- `"rc_delete_column", "end_rc_delete_column","end_delete_columns", "delete_columns"`
-	- `"begin_rc_insert_column", "begin_insert_column", "begin_insert_columns", "begin_add_column","begin_rc_add_column", "begin_add_columns"`
-	- `"rc_insert_column", "end_rc_insert_column", "end_insert_column", "end_insert_columns", "rc_add_column", "end_rc_add_column", "end_add_column", "end_add_columns"`
-	- `"begin_rc_insert_row", "begin_insert_row", "begin_insert_rows", "begin_rc_add_row", "begin_add_row", "begin_add_rows"`
-    - `"rc_insert_row", "end_rc_insert_row", "end_insert_row", "end_insert_rows", "rc_add_row", "end_rc_add_row", "end_add_row", "end_add_rows"`
     - `"begin_sort_cells"`
     - `"sort_cells", "end_sort_cells"`
     - `"begin_sort_rows"`
     - `"sort_rows", "end_sort_rows"`
     - `"begin_sort_columns"`
     - `"sort_columns", "end_sort_columns"`
+- Deleting:
+	- `"begin_rc_delete_row", "begin_delete_rows"`
+	- `"rc_delete_row", "end_rc_delete_row", "end_delete_rows", "delete_rows"`
+	- `"begin_rc_delete_column", "begin_delete_columns"`
+	- `"rc_delete_column", "end_rc_delete_column","end_delete_columns", "delete_columns"`
+- Adding:
+	- `"begin_rc_insert_column", "begin_insert_column", "begin_insert_columns", "begin_add_column","begin_rc_add_column", "begin_add_columns"`
+	- `"rc_insert_column", "end_rc_insert_column", "end_insert_column", "end_insert_columns", "rc_add_column", "end_rc_add_column", "end_add_column", "end_add_columns"`
+	- `"begin_rc_insert_row", "begin_insert_row", "begin_insert_rows", "begin_rc_add_row", "begin_add_row", "begin_add_rows"`
+    - `"rc_insert_row", "end_rc_insert_row", "end_insert_row", "end_insert_rows", "rc_add_row", "end_rc_add_row", "end_add_row", "end_add_rows"`
+- Resizing rows/columns:
     - `"row_height_resize"`
     - `"column_width_resize"`
+- Selection:
 	- `"cell_select"`
 	- `"select_all"`
 	- `"row_select"`
@@ -907,10 +913,13 @@ Parameters:
     - `"ctrl_row_select"`
     - `"ctrl_column_select"`
 	- `"deselect"`
+- Event collections:
 	- `"all_select_events", "select", "selectevents", "select_events"`
     - `"all_modified_events", "sheetmodified", "sheet_modified" "modified_events", "modified"`
 	- `"bind_all"`
 	- `"unbind_all"`
+
+Further Notes:
 - `func` argument is the function you want to send the binding event to.
 - Using one of the following `"all_modified_events"`, `"sheetmodified"`, `"sheet_modified"`, `"modified_events"`, `"modified"` will make any insert, delete or cell edit including pastes and undos send an event to your function.
 - For events `"begin_move_columns"`/`"begin_move_rows"` the point where columns/rows will be moved to will be accessible by the key named `"value"`.
@@ -999,16 +1008,14 @@ Keys:
     - `"end_edit_index"`
     - `"begin_edit_header"`
     - `"end_edit_header"`
-    - `"begin_move_rows"`
-    - `"end_move_rows"`
-    - `"begin_move_columns"`
-    - `"end_move_columns"`
-    - `"begin_sort_rows"`
-    - `"end_sort_rows"`
-    - `"begin_sort_columns"`
-    - `"end_sort_columns"`
     - `"select"`
     - `"resize"`
+    - *`"begin_move_rows"`
+    - *`"end_move_rows"`
+    - *`"begin_move_columns"`
+    - *`"end_move_columns"`
+
+- *is also used as the event name for sorting rows/columns events.
 
 - `EventDataDict`s will otherwise have one of the following event names:
     - `"edit_table"` when a user has cut, paste, delete or made any cell edits including using dropdown boxes etc. in the table.
@@ -1018,12 +1025,11 @@ Keys:
     - `"add_rows"` when a user has inserted rows.
     - `"delete_columns"` when a user has deleted columns.
     - `"delete_rows"` when a user has deleted rows.
-    - `"move_columns"` when a user has dragged and dropped columns.
-    - `"move_rows"` when a user has dragged and dropped rows.
-    - `"sort_rows"` when rows have been re-ordered by sorting.
-    - `"sort_columns"` when columns have been re-ordered by sorting.
+    - `"move_columns"` when a user has dragged and dropped OR sorted columns.
+    - `"move_rows"` when a user has dragged and dropped OR sorted rows.
     - `"select"`
     - `"resize"`
+- These event names would be used for `"<<SheetModified>>"` bound events for example.
 
 - For events `"begin_move_columns"`/`"begin_move_rows"` the point where columns/rows will be moved to will be under the `event_data` key `"value"`.
 - Key **`["sheetname"]`** is the [name given to the sheet widget on initialization](https://github.com/ragardner/tksheet/wiki/Version-7#initialization-options), useful if you have multiple sheets to determine which one emitted the event.
