@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from collections.abc import Callable, Generator
+from collections.abc import Callable, Generator, Iterable, Iterator
 from datetime import datetime
+from pathlib import Path
 from re import finditer
 
-from .other_classes import Node
-from .tksheet_types import AnyIter
+AnyIter = Iterable | Iterator
 
 # Possible date formats to try for the entire string
 date_formats = [
@@ -47,24 +47,25 @@ date_formats = [
 
 def natural_sort_key(
     item: object,
-) -> tuple[int] | tuple[int, bool | int | float | str | datetime] | tuple[int, list[str], list[int]]:
+) -> tuple[int, ...]:
     """
-    A key function for natural sorting that handles various Python types, including
-    date-like strings in multiple formats.
+    A key for natural sorting of various Python types.
 
-    This function aims to sort elements in a human-readable order:
-    - None values first
-    - Booleans (False before True)
-    - Numbers (integers, floats combined)
-    - Datetime objects
-    - Strings with natural sorting for embedded numbers and dates
-    - Unknown types treated as strings or left at the end
+    This function returns a tuple where the first element is an integer
+    ranking the type, followed by type-specific comparison values.
 
-    Args:
-        item: Any Python object to be sorted.
+    1. None
+    2. bool
+    3. int, float
+    4. datetime
+    5. filepaths
+    6. empty strings
+    7. strings
+    8. unknown objects with __str__ method
+    9. unknown objects
 
-    Returns:
-        A tuple or value that can be used for sorting.
+    :param item: Any Python object to be sorted.
+    :return: A tuple for sorting, with type indicator and comparison values.
     """
     if item is None:
         return (0,)
@@ -78,31 +79,39 @@ def natural_sort_key(
     elif isinstance(item, datetime):
         return (3, item.timestamp())
 
+    elif isinstance(item, Path):
+        return (4, item.as_posix())
+
     elif isinstance(item, str):
-        for date_format in date_formats:
+        if not item:
+            return (5, item)
+
+        else:
+            for date_format in date_formats:
+                try:
+                    return (3, datetime.strptime(item, date_format).timestamp())
+                except ValueError:
+                    continue
+
             try:
-                return (3, datetime.strptime(item, date_format).timestamp())
-            except ValueError:
-                continue
+                return (2, float(item))
+            except Exception:
+                pass
 
-        try:
-            return (2, float(item))
-        except Exception:
-            n = []
-            s = []
-            for match in finditer(r"\d+|[^\d\s]+", item):
-                if (t := match.group()).isdigit():
-                    n.append(int(t))
-                else:
-                    s.append(t.lower())
-            return (5, "".join(s), n)
+            if "/" in item or "\\" in item:
+                try:
+                    return (4, Path(item).as_posix())
+                except Exception:
+                    pass
 
+            return (6, item.lower(), tuple(int(match.group()) for match in finditer(r"\d+", item)))
+
+    # For unknown types, attempt to convert to string, or place at end
     else:
-        # For unknown types, attempt to convert to string, or place at end
         try:
-            return (6, f"{item}".lower())
+            return (7, f"{item}".lower())
         except Exception:
-            return (7, item)
+            return (8, item)
 
 
 def sort_selection(
@@ -235,11 +244,11 @@ def sort_columns_by_row(
 
 
 def _sort_node_children(
-    node: Node,
-    tree: dict[str, Node],
+    node: object,
+    tree: dict[str, object],
     reverse: bool,
     key: Callable,
-) -> Generator[Node, None, None]:
+) -> Generator[object, None, None]:
     sorted_children = sorted(
         (tree[child_iid] for child_iid in node.children if child_iid in tree),
         key=lambda child: key(child.text),
@@ -252,12 +261,12 @@ def _sort_node_children(
 
 
 def sort_tree_view(
-    _row_index: list[Node],
+    _row_index: list[object],
     tree_rns: dict[str, int],
-    tree: dict[str, Node],
+    tree: dict[str, object],
     key: Callable = natural_sort_key,
     reverse: bool = False,
-) -> tuple[list[Node], dict[int, int]]:
+) -> tuple[list[object], dict[int, int]]:
     if not _row_index or not tree_rns or not tree:
         return [], {}
 
@@ -287,3 +296,40 @@ def sort_tree_view(
             new_index += 1
 
     return sorted_nodes, mapping
+
+
+# def test_natural_sort_key():
+#     test_items = [
+#         None,
+#         False,
+#         True,
+#         5,
+#         3.14,
+#         datetime(2023, 1, 1),
+#         "abc123",
+#         "123abc",
+#         "abc123def",
+#         "998zzz",
+#         "10-01-2023",
+#         "01-10-2023",
+#         "fi1le_0.txt",
+#         "file_2.txt",
+#         "file_10.txt",
+#         "file_1.txt",
+#         "path/to/file_2.txt",
+#         "path/to/file_10.txt",
+#         "path/to/file_1.txt",
+#         "/another/path/file_2.log",
+#         "/another/path/file_10.log",
+#         "/another/path/file_1.log",
+#         "C:\\Windows\\System32\\file_2.dll",
+#         "C:\\Windows\\System32\\file_10.dll",
+#         "C:\\Windows\\System32\\file_1.dll",
+#     ]
+#     print("Sort objects:", [natural_sort_key(e) for e in test_items])
+#     sorted_items = sorted(test_items, key=natural_sort_key)
+#     print("\nNatural Sort Order:", sorted_items)
+
+
+# if __name__ == "__main__":
+#     test_natural_sort_key()
