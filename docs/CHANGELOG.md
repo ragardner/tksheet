@@ -1,3 +1,6 @@
+### Version 7.4.3
+####
+
 ### Version 7.4.2
 #### Fixed:
 - Strings that started with numbers not being sorted in the correct order
