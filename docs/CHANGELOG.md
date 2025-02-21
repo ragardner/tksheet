@@ -14,6 +14,7 @@
 - `show_top_left` parameter now defaults to `None` to represent tksheet handling of top left visibility
 - Provide `natural_sort_key` as importable from `tksheet.natural_sort_key`
 - `dropdown_search_function` now uses an iterable of objects rather than an iterable of Sequences of objects
+- Rename internal parameter `restored_state` -> `from_undo`
 
 ### Version 7.4.2
 #### Fixed:

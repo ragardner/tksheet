@@ -1973,7 +1973,7 @@ class MainTable(tk.Canvas):
             event_data = self.delete_rows_displayed(
                 rows=tuple(reversed(modification["added"]["rows"]["row_heights"])),
                 event_data=event_data,
-                restored_state=True,
+                from_undo=True,
             )
 
         if modification["added"]["columns"]:
@@ -1985,7 +1985,7 @@ class MainTable(tk.Canvas):
             event_data = self.delete_columns_displayed(
                 cols=tuple(reversed(modification["added"]["columns"]["column_widths"])),
                 event_data=event_data,
-                restored_state=True,
+                from_undo=True,
             )
 
         if modification["deleted"]["rows"] or modification["deleted"]["row_heights"]:
@@ -1998,7 +1998,7 @@ class MainTable(tk.Canvas):
                 create_ops=False,
                 create_selections=False,
                 add_col_positions=False,
-                restored_state=True,
+                from_undo=True,
             )
 
         if modification["deleted"]["columns"] or modification["deleted"]["column_widths"]:
@@ -2010,7 +2010,7 @@ class MainTable(tk.Canvas):
                 create_ops=False,
                 create_selections=False,
                 add_row_positions=False,
-                restored_state=True,
+                from_undo=True,
             )
 
         if modification["eventname"].startswith(("edit", "move")):
@@ -4893,18 +4893,18 @@ class MainTable(tk.Canvas):
         add_row_positions: bool = True,
         push_ops: bool = True,
         mod_event_boxes: bool = True,
-        restored_state: bool = False,
+        from_undo: bool = False,
     ) -> EventDataDict | None:
-        if not try_binding(self.extra_begin_insert_cols_rc_func, event_data, "begin_add_columns"):
+        if not from_undo and not try_binding(self.extra_begin_insert_cols_rc_func, event_data, "begin_add_columns"):
             return
         self.saved_column_widths = {}
-        if not restored_state and not self.all_columns_displayed:
+        if not from_undo and not self.all_columns_displayed:
             self.displayed_columns = add_to_displayed(self.displayed_columns, columns)
         cws = self.get_column_widths()
         if column_widths and next(reversed(column_widths)) > len(cws):
             for i in reversed(range(len(cws), len(cws) + next(reversed(column_widths)) - len(cws))):
                 column_widths[i] = self.PAR.ops.default_column_width
-        if not restored_state:
+        if not from_undo:
             self.set_col_positions(
                 itr=insert_items(
                     cws,
@@ -4930,7 +4930,7 @@ class MainTable(tk.Canvas):
                 "index": {},
                 "row_heights": {rn: default_height for rn in range(len(self.row_positions) - 1, maxrn + 1)},
             }
-            if not restored_state:
+            if not from_undo:
                 self.set_row_positions(
                     itr=chain(
                         self.gen_row_heights(),
@@ -4963,7 +4963,8 @@ class MainTable(tk.Canvas):
             "header": header,
             "column_widths": column_widths,
         }
-        try_binding(self.extra_end_insert_cols_rc_func, event_data, "end_add_columns")
+        if not from_undo:
+            try_binding(self.extra_end_insert_cols_rc_func, event_data, "end_add_columns")
         return event_data
 
     def rc_add_columns(self, event: object = None) -> None:
@@ -5025,19 +5026,19 @@ class MainTable(tk.Canvas):
         push_ops: bool = True,
         tree: bool = True,
         mod_event_boxes: bool = True,
-        restored_state: bool = False,
+        from_undo: bool = False,
     ) -> EventDataDict | None:
-        if not try_binding(self.extra_begin_insert_rows_rc_func, event_data, "begin_add_rows"):
+        if not from_undo and not try_binding(self.extra_begin_insert_rows_rc_func, event_data, "begin_add_rows"):
             return
         self.saved_row_heights = {}
-        if not restored_state and not self.all_rows_displayed:
+        if not from_undo and not self.all_rows_displayed:
             self.displayed_rows = add_to_displayed(self.displayed_rows, rows)
         rhs = self.get_row_heights()
         if row_heights and next(reversed(row_heights)) > len(rhs):
             default_row_height = self.get_default_row_height()
             for i in reversed(range(len(rhs), len(rhs) + next(reversed(row_heights)) - len(rhs))):
                 row_heights[i] = default_row_height
-        if not restored_state:
+        if not from_undo:
             self.set_row_positions(
                 itr=insert_items(
                     rhs,
@@ -5063,7 +5064,7 @@ class MainTable(tk.Canvas):
                 "header": {},
                 "column_widths": {cn: default_width for cn in range(len(self.col_positions) - 1, maxcn + 1)},
             }
-            if not restored_state:
+            if not from_undo:
                 self.set_col_positions(
                     itr=chain(
                         self.gen_column_widths(),
@@ -5096,7 +5097,8 @@ class MainTable(tk.Canvas):
         }
         if tree and self.PAR.ops.treeview:
             event_data = self.RI.tree_add_rows(event_data=event_data)
-        try_binding(self.extra_end_insert_rows_rc_func, event_data, "end_add_rows")
+        if not from_undo:
+            try_binding(self.extra_end_insert_rows_rc_func, event_data, "end_add_rows")
         return event_data
 
     def rc_add_rows(self, event: object = None) -> None:
@@ -5313,7 +5315,7 @@ class MainTable(tk.Canvas):
         self,
         cols: list[int],
         event_data: EventDataDict | None = None,
-        restored_state: bool = False,
+        from_undo: bool = False,
     ) -> EventDataDict:
         if not event_data:
             event_data = self.new_event_dict("delete_columns", state=True)
@@ -5322,7 +5324,7 @@ class MainTable(tk.Canvas):
             for c in reversed(cols):
                 if len(self.col_positions) > c + 1:
                     event_data["deleted"]["column_widths"][c] = self.col_positions[c + 1] - self.col_positions[c]
-            if not restored_state:
+            if not from_undo:
                 cols_set = set(cols)
                 self.set_col_positions(
                     itr=(width for c, width in enumerate(self.gen_column_widths()) if c not in cols_set)
@@ -5400,7 +5402,7 @@ class MainTable(tk.Canvas):
         self,
         rows: list[int],
         event_data: EventDataDict | None = None,
-        restored_state: bool = False,
+        from_undo: bool = False,
     ) -> EventDataDict:
         if not event_data:
             event_data = self.new_event_dict("delete_rows", state=True)
@@ -5409,7 +5411,7 @@ class MainTable(tk.Canvas):
             for r in reversed(rows):
                 if len(self.row_positions) > r + 1:
                     event_data["deleted"]["row_heights"][r] = self.row_positions[r + 1] - self.row_positions[r]
-            if not restored_state:
+            if not from_undo:
                 rows_set = set(rows)
                 self.set_row_positions(
                     itr=(height for r, height in enumerate(self.gen_row_heights()) if r not in rows_set)

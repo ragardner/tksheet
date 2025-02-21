@@ -855,9 +855,13 @@ Notes:
         - In this case the arg `func` is totally ignored.
 - For `"end_..."` events the bound function is run before the value is set.
 - **To unbind** a function either set `func` argument to `None` or leave it as default e.g. `extra_bindings("begin_copy")` to unbind `"begin_copy"`.
+- Even though undo/redo edits or adds or deletes rows/columns the bound functions for those actions will not be called. Undo/redo must be specifically bound in order for a function to be called.
 
 Parameters:
 `bindings` (`str`) options:
+- Undo/Redo:
+	- `"begin_undo", "begin_ctrl_z"`
+	- `"ctrl_z", "end_undo", "end_ctrl_z", "undo"`
 - Editing:
 	- `"begin_copy", "begin_ctrl_c"`
 	- `"ctrl_c", "end_copy", "end_ctrl_c", "copy"`
@@ -865,8 +869,6 @@ Parameters:
 	- `"ctrl_x", "end_cut", "end_ctrl_x", "cut"`
 	- `"begin_paste", "begin_ctrl_v"`
 	- `"ctrl_v", "end_paste", "end_ctrl_v", "paste"`
-	- `"begin_undo", "begin_ctrl_z"`
-	- `"ctrl_z", "end_undo", "end_ctrl_z", "undo"`
 	- `"begin_delete_key", "begin_delete"`
 	- `"delete_key", "end_delete", "end_delete_key", "delete"`
 	- `"begin_edit_cell", "begin_edit_table"`
