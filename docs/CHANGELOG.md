@@ -1,3 +1,6 @@
+### Version 7.4.4
+####
+
 ### Version 7.4.3
 #### Fixed:
 - Functions bound using `extra_bindings()` were only called when a user performed an action, they're now always called when:
