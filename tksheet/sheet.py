@@ -2332,7 +2332,6 @@ class Sheet(tk.Frame):
             data_indexes=data_indexes,
             undo=undo,
             emit_event=emit_event,
-            ext=True,
         )
         self.set_refresh_timer(redraw)
         return event_data
@@ -2354,7 +2353,6 @@ class Sheet(tk.Frame):
             data_indexes=data_indexes,
             undo=undo,
             emit_event=emit_event,
-            ext=True,
         )
         self.set_refresh_timer(redraw)
         return event_data

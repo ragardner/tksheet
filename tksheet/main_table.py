@@ -4894,7 +4894,9 @@ class MainTable(tk.Canvas):
         push_ops: bool = True,
         mod_event_boxes: bool = True,
         restored_state: bool = False,
-    ) -> EventDataDict:
+    ) -> EventDataDict | None:
+        if not try_binding(self.extra_begin_insert_cols_rc_func, event_data, "begin_add_columns"):
+            return
         self.saved_column_widths = {}
         if not restored_state and not self.all_columns_displayed:
             self.displayed_columns = add_to_displayed(self.displayed_columns, columns)
@@ -4961,9 +4963,10 @@ class MainTable(tk.Canvas):
             "header": header,
             "column_widths": column_widths,
         }
+        try_binding(self.extra_end_insert_cols_rc_func, event_data, "end_add_columns")
         return event_data
 
-    def rc_add_columns(self, event: object = None):
+    def rc_add_columns(self, event: object = None) -> None:
         rowlen = self.equalize_data_row_lengths()
         selcols = sorted(self.get_selected_cols())
         if (
@@ -4997,8 +5000,6 @@ class MainTable(tk.Canvas):
             if numcols < 1:
                 return
         event_data = self.new_event_dict("add_columns", state=True)
-        if not try_binding(self.extra_begin_insert_cols_rc_func, event_data, "begin_add_columns"):
-            return
         columns, headers, widths = self.get_args_for_add_columns(data_ins_col, displayed_ins_col, numcols)
         event_data = self.add_columns(
             columns=columns,
@@ -5006,11 +5007,11 @@ class MainTable(tk.Canvas):
             column_widths=widths,
             event_data=event_data,
         )
-        if self.undo_enabled:
-            self.undo_stack.append(stored_event_dict(event_data))
-        self.refresh()
-        try_binding(self.extra_end_insert_cols_rc_func, event_data, "end_add_columns")
-        self.sheet_modified(event_data)
+        if event_data:
+            if self.undo_enabled:
+                self.undo_stack.append(stored_event_dict(event_data))
+            self.refresh()
+            self.sheet_modified(event_data)
 
     def add_rows(
         self,
@@ -5025,7 +5026,9 @@ class MainTable(tk.Canvas):
         tree: bool = True,
         mod_event_boxes: bool = True,
         restored_state: bool = False,
-    ) -> EventDataDict:
+    ) -> EventDataDict | None:
+        if not try_binding(self.extra_begin_insert_rows_rc_func, event_data, "begin_add_rows"):
+            return
         self.saved_row_heights = {}
         if not restored_state and not self.all_rows_displayed:
             self.displayed_rows = add_to_displayed(self.displayed_rows, rows)
@@ -5093,9 +5096,10 @@ class MainTable(tk.Canvas):
         }
         if tree and self.PAR.ops.treeview:
             event_data = self.RI.tree_add_rows(event_data=event_data)
+        try_binding(self.extra_end_insert_rows_rc_func, event_data, "end_add_rows")
         return event_data
 
-    def rc_add_rows(self, event: object = None):
+    def rc_add_rows(self, event: object = None) -> None:
         total_data_rows = self.total_data_rows()
         selrows = sorted(self.get_selected_rows())
         if (
@@ -5129,8 +5133,6 @@ class MainTable(tk.Canvas):
             if numrows < 1:
                 return
         event_data = self.new_event_dict("add_rows", state=True)
-        if not try_binding(self.extra_begin_insert_rows_rc_func, event_data, "begin_add_rows"):
-            return
         rows, index, heights = self.get_args_for_add_rows(data_ins_row, displayed_ins_row, numrows)
         event_data = self.add_rows(
             rows=rows,
@@ -5138,11 +5140,11 @@ class MainTable(tk.Canvas):
             row_heights=heights,
             event_data=event_data,
         )
-        if self.undo_enabled:
-            self.undo_stack.append(stored_event_dict(event_data))
-        self.refresh()
-        try_binding(self.extra_end_insert_rows_rc_func, event_data, "end_add_rows")
-        self.sheet_modified(event_data)
+        if event_data:
+            if self.undo_enabled:
+                self.undo_stack.append(stored_event_dict(event_data))
+            self.refresh()
+            self.sheet_modified(event_data)
 
     def get_args_for_add_columns(
         self,
@@ -5334,13 +5336,12 @@ class MainTable(tk.Canvas):
         data_indexes: bool = False,
         undo: bool = True,
         emit_event: bool = True,
-        ext: bool = False,
     ) -> EventDataDict:
         event_data = self.new_event_dict("delete_columns", state=True)
         if not columns:
             if not (columns := sorted(self.get_selected_cols())):
                 return event_data
-        if not ext and not try_binding(self.extra_begin_del_cols_rc_func, event_data, "begin_delete_columns"):
+        if not try_binding(self.extra_begin_del_cols_rc_func, event_data, "begin_delete_columns"):
             return
         if self.all_columns_displayed:
             data_columns = columns
@@ -5362,8 +5363,7 @@ class MainTable(tk.Canvas):
         )
         if undo and self.undo_enabled:
             self.undo_stack.append(stored_event_dict(event_data))
-        if not ext:
-            try_binding(self.extra_end_del_cols_rc_func, event_data, "end_delete_columns")
+        try_binding(self.extra_end_del_cols_rc_func, event_data, "end_delete_columns")
         if emit_event:
             self.sheet_modified(event_data)
         self.deselect("all")
@@ -5423,13 +5423,12 @@ class MainTable(tk.Canvas):
         data_indexes: bool = False,
         undo: bool = True,
         emit_event: bool = True,
-        ext: bool = False,
     ) -> EventDataDict:
         event_data = self.new_event_dict("delete_rows", state=True)
         if not rows:
             if not (rows := sorted(self.get_selected_rows())):
                 return
-        if not ext and not try_binding(self.extra_begin_del_rows_rc_func, event_data, "begin_delete_rows"):
+        if not try_binding(self.extra_begin_del_rows_rc_func, event_data, "begin_delete_rows"):
             return
         if self.all_rows_displayed:
             data_rows = rows
@@ -5462,8 +5461,7 @@ class MainTable(tk.Canvas):
         )
         if undo and self.undo_enabled:
             self.undo_stack.append(stored_event_dict(event_data))
-        if not ext:
-            try_binding(self.extra_end_del_rows_rc_func, event_data, "end_delete_rows")
+        try_binding(self.extra_end_del_rows_rc_func, event_data, "end_delete_rows")
         if emit_event:
             self.sheet_modified(event_data)
         self.deselect("all")

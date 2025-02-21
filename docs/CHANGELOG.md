@@ -1,4 +1,9 @@
 ### Version 7.4.3
+#### Fixed:
+- Functions bound using `extra_bindings()` were only called when a user performed an action, they're now always called when:
+    - adding rows/columns
+    - deleting rows/columns
+
 #### Improved:
 - Dropdown search fallback matching, performance
 
