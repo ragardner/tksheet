@@ -5,7 +5,7 @@ import io
 import pickle
 import re
 import tkinter as tk
-from bisect import bisect_left, bisect_right
+from bisect import bisect_left
 from collections import deque
 from collections.abc import Callable, Generator, Hashable, Iterable, Iterator, Sequence
 from difflib import SequenceMatcher
@@ -401,30 +401,26 @@ def bisect_in(sorted_seq: Sequence[int], num: int) -> bool:
         return False
 
 
-# def push_n(num: int, sorted_seq: Sequence[int]) -> int:
-#     if num < sorted_seq[0]:
-#         return num
-#     else:
-#         for e in sorted_seq:
-#             if num >= e:
-#                 num += 1
-#             else:
-#                 return num
-#         return num
-
-
 def push_n(num: int, sorted_seq: Sequence[int]) -> int:
     if num < sorted_seq[0]:
         return num
-    low = num
-    high = num + len(sorted_seq)
-    while low < high:
-        mid = (low + high) // 2
-        if num + bisect_right(sorted_seq, mid) <= mid:
-            high = mid
+    else:
+        if (hi := len(sorted_seq)) < 5:
+            for e in sorted_seq:
+                if num >= e:
+                    num += 1
+                else:
+                    return num
+            return num
         else:
-            low = mid + 1
-    return low
+            lo = 0
+            while lo < hi:
+                mid = (lo + hi) // 2
+                if sorted_seq[mid] < num + mid + 1:
+                    lo = mid + 1
+                else:
+                    hi = mid
+            return num + lo
 
 
 def get_dropdown_kwargs(
