@@ -1,6 +1,14 @@
 ### Version 7.4.3
+#### Improved:
+- Dropdown search fallback matching, performance
+
+#### Addressed
+- [#269](https://github.com/ragardner/tksheet/issues/269)
+
 #### Changed:
+- `show_top_left` parameter now defaults to `None` to represent tksheet handling of top left visibility
 - Provide `natural_sort_key` as importable from `tksheet.natural_sort_key`
+- `dropdown_search_function` now uses an iterable of objects rather than an iterable of Sequences of objects
 
 ### Version 7.4.2
 #### Fixed:

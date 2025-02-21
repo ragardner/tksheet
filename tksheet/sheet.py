@@ -84,7 +84,7 @@ class Sheet(tk.Frame):
         parent: tk.Misc,
         name: str = "!sheet",
         show_table: bool = True,
-        show_top_left: bool = False,
+        show_top_left: bool | None = None,
         show_row_index: bool = True,
         show_header: bool = True,
         show_x_scrollbar: bool = True,
@@ -429,14 +429,18 @@ class Sheet(tk.Frame):
             orient="vertical",
             style=f"Sheet{self.unique_id}.Vertical.TScrollbar",
         )
+        self.MT["yscrollcommand"] = self.yscroll.set
+        self.RI["yscrollcommand"] = self.yscroll.set
         self.xscroll = ttk.Scrollbar(
             self,
             command=self.MT._xscrollbar,
             orient="horizontal",
             style=f"Sheet{self.unique_id}.Horizontal.TScrollbar",
         )
+        self.MT["xscrollcommand"] = self.xscroll.set
+        self.CH["xscrollcommand"] = self.xscroll.set
         self.show()
-        if not show_top_left and not (show_row_index and show_header):
+        if show_top_left is False or (show_top_left is None and (not show_row_index or not show_header)):
             self.hide("top_left")
         if not show_row_index:
             self.hide("row_index")
@@ -4365,19 +4369,13 @@ class Sheet(tk.Frame):
             self.MT.grid(row=1, column=1, sticky="nswe")
         if canvas in ("all", "row_index", "index"):
             self.RI.grid(row=1, column=0, sticky="nswe")
-            self.MT["yscrollcommand"] = self.yscroll.set
-            self.RI["yscrollcommand"] = self.yscroll.set
             self.MT.show_index = True
-            if self.MT.show_header:
-                self.show("top_left")
         if canvas in ("all", "header"):
             self.CH.grid(row=0, column=1, sticky="nswe")
-            self.MT["xscrollcommand"] = self.xscroll.set
-            self.CH["xscrollcommand"] = self.xscroll.set
             self.MT.show_header = True
-            if self.MT.show_index:
-                self.show("top_left")
-        if canvas in ("all", "top_left"):
+        if canvas in ("all", "top_left") or (
+            self.ops.show_top_left is not False and self.MT.show_header and self.MT.show_index
+        ):
             self.TL.grid(row=0, column=0)
         if canvas in ("all", "x_scrollbar"):
             self.xscroll.grid(row=2, column=0, columnspan=2, sticky="nswe")
@@ -4405,17 +4403,13 @@ class Sheet(tk.Frame):
     ) -> Sheet:
         if canvas in ("all", "row_index"):
             self.RI.grid_remove()
-            self.RI["yscrollcommand"] = 0
             self.MT.show_index = False
-            if not self.ops.show_top_left:
-                self.hide("top_left")
         if canvas in ("all", "header"):
             self.CH.grid_remove()
-            self.CH["xscrollcommand"] = 0
             self.MT.show_header = False
-            if not self.ops.show_top_left:
-                self.hide("top_left")
-        if canvas in ("all", "top_left"):
+        if canvas in ("all", "top_left") or (
+            not self.ops.show_top_left and (not self.MT.show_index or not self.MT.show_header)
+        ):
             self.TL.grid_remove()
         if canvas in ("all", "x_scrollbar"):
             self.xscroll.grid_remove()

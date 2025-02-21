@@ -254,6 +254,6 @@ def new_sheet_options() -> DotDict:
             "max_header_height": float("inf"),
             "max_row_height": float("inf"),
             "max_index_width": float("inf"),
-            "show_top_left": False,
+            "show_top_left": None,
         }
     )

@@ -301,7 +301,7 @@ def __init__(
     parent: tk.Misc,
     name: str = "!sheet",
     show_table: bool = True,
-    show_top_left: bool = False,
+    show_top_left: bool | None = None,
     show_row_index: bool = True,
     show_header: bool = True,
     show_x_scrollbar: bool = True,
@@ -513,7 +513,7 @@ def __init__(
     - `True` it will always automatically resize.
     - `False` it will never automatically resize.
 - If `show_selected_cells_border` is `False` then the colors for `table_selected_box_cells_fg`/`table_selected_box_rows_fg`/`table_selected_box_columns_fg` will be used for the currently selected cells background.
-- Only set `show_top_left` to `True` if you want to always show the top left rectangle of the sheet.
+- Only set `show_top_left` to `True` if you want to always show the top left rectangle of the sheet. Leave as `None` to only show it when both the index and header are showing.
 - For help with `treeview` mode see [here](https://github.com/ragardner/tksheet/wiki/Version-7#treeview-mode).
 
 You can change most of these settings after initialization using the [`set_options()` function](https://github.com/ragardner/tksheet/wiki/Version-7#sheet-options-and-other-functions).
