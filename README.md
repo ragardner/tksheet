@@ -58,6 +58,8 @@
 - [In-built natural sorting](https://github.com/ragardner/tksheet/wiki/Version-7#sorting-the-table)
 - [Optional built-in find window](https://github.com/ragardner/tksheet/wiki/Version-7#table-functionality-and-bindings)
 
+Note that due to the limitations of the Tkinter Canvas right-to-left (RTL) languages are not supported.
+
 ```python
 """
 Versions 7+ have succinct and easy to read syntax:

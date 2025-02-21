@@ -70,6 +70,7 @@
 ### **Limitations**
 
 Some examples of things that are not possible with tksheet:
+- Due to the limitations of the Tkinter Canvas right-to-left (RTL) languages are not supported.
 - Cell merging.
 - Changing font for individual cells.
 - Mouse drag copy cells.
@@ -1286,6 +1287,8 @@ unbind(binding: str) -> Sheet
 In this section are instructions to change some of tksheets in-built language and bindings:
 - The in-built right click menu.
 - The in-built functionality keybindings, such as copy, paste etc.
+
+Please note that due to the limitations of the Tkinter Canvas tksheet doesn’t support right-to-left (RTL) languages.
 
 #### **Changing right click menu labels**
 
