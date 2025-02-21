@@ -45,27 +45,18 @@ date_formats = [
 ]
 
 
-def natural_sort_key(
-    item: object,
-) -> tuple[int, ...]:
+def natural_sort_key(item: object) -> tuple[int, ...]:
     """
     A key for natural sorting of various Python types.
 
-    This function returns a tuple where the first element is an integer
-    ranking the type, followed by type-specific comparison values.
-
-    1. None
-    2. bool
-    3. int, float
-    4. datetime
-    5. filepaths
-    6. empty strings
-    7. strings
-    8. unknown objects with __str__ method
-    9. unknown objects
-
-    :param item: Any Python object to be sorted.
-    :return: A tuple for sorting, with type indicator and comparison values.
+    0. None
+    1. bool
+    2. int, float
+    3. datetime
+    4. empty strings
+    5. strings (including paths as POSIX strings)
+    6. unknown objects with __str__
+    7. unknown objects
     """
     if item is None:
         return (0,)
@@ -79,39 +70,31 @@ def natural_sort_key(
     elif isinstance(item, datetime):
         return (3, item.timestamp())
 
-    elif isinstance(item, Path):
-        return (4, item.as_posix())
-
     elif isinstance(item, str):
         if not item:
-            return (5, item)
+            return (4, item)
 
-        else:
-            for date_format in date_formats:
-                try:
-                    return (3, datetime.strptime(item, date_format).timestamp())
-                except ValueError:
-                    continue
-
+        for date_format in date_formats:
             try:
-                return (2, float(item))
-            except Exception:
-                pass
+                return (3, datetime.strptime(item, date_format).timestamp())
+            except ValueError:
+                continue
+        try:
+            return (2, float(item))
+        except Exception:
+            pass
 
-            if "/" in item or "\\" in item:
-                try:
-                    return (4, Path(item).as_posix())
-                except Exception:
-                    pass
+        return (5, item.lower(), tuple(int(match.group()) for match in finditer(r"\d+", item)))
 
-            return (6, item.lower(), tuple(int(match.group()) for match in finditer(r"\d+", item)))
+    elif isinstance(item, Path):
+        posix_str = item.as_posix()
+        return (5, posix_str.lower(), tuple(int(match.group()) for match in finditer(r"\d+", posix_str)))
 
-    # For unknown types, attempt to convert to string, or place at end
     else:
         try:
-            return (7, f"{item}".lower())
+            return (6, f"{item}".lower())
         except Exception:
-            return (8, item)
+            return (7, item)
 
 
 def sort_selection(
