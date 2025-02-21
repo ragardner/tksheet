@@ -8,6 +8,7 @@ import tkinter as tk
 from bisect import bisect_left, bisect_right
 from collections import deque
 from collections.abc import Callable, Generator, Hashable, Iterable, Iterator, Sequence
+from difflib import SequenceMatcher
 from itertools import islice, repeat
 from typing import Literal
 
@@ -231,50 +232,45 @@ def event_opens_dropdown_or_checkbox(event=None) -> bool:
     )
 
 
-def dropdown_search_function(
-    search_for: object,
-    data: Sequence[object],
-) -> None | int:
+def dropdown_search_function(search_for: str, data: Iterable[object]) -> None | int:
+    search_for = search_for.lower()
     search_len = len(search_for)
-    # search_for in data
-    match_rn = float("inf")
+    if not search_len:
+        return next((i for i, v in enumerate(data) if not str(v)), None)
+
+    matcher = SequenceMatcher(None, search_for, "", autojunk=False)
+
+    match_rn = None
     match_st = float("inf")
     match_len_diff = float("inf")
-    # data in search_for in case no match
-    match_data_rn = float("inf")
-    match_data_st = float("inf")
-    match_data_numchars = 0
-    for rn, row in enumerate(data):
-        dd_val = rf"{row[0]}".lower()
-        # checking if search text is in dropdown row
-        st = dd_val.find(search_for)
-        if st > -1:
-            # priority is start index
-            # if there's already a matching start
-            # then compare the len difference
-            len_diff = len(dd_val) - search_len
+
+    fallback_rn = None
+    fallback_match_length = 0
+    fallback_st = float("inf")
+
+    for rn, value in enumerate(data):
+        value = str(value).lower()
+        if not value:
+            continue
+        st = value.find(search_for)
+        if st != -1:
+            len_diff = len(value) - search_len
             if st < match_st or (st == match_st and len_diff < match_len_diff):
                 match_rn = rn
                 match_st = st
                 match_len_diff = len_diff
-        # fall back in case of no existing match
-        elif match_rn == float("inf"):
-            for numchars in range(2, search_len - 1):
-                for from_idx in range(search_len - 1):
-                    if from_idx + numchars > search_len:
-                        break
-                    st = dd_val.find(search_for[from_idx : from_idx + numchars])
-                    if st > -1 and (
-                        numchars > match_data_numchars or (numchars == match_data_numchars and st < match_data_st)
-                    ):
-                        match_data_rn = rn
-                        match_data_st = st
-                        match_data_numchars = numchars
-    if match_rn != float("inf"):
-        return match_rn
-    elif match_data_rn != float("inf"):
-        return match_data_rn
-    return None
+
+        elif match_rn is None:
+            matcher.set_seq2(value)
+            match = matcher.find_longest_match(0, search_len, 0, len(value))
+            match_length = match.size
+            start = match.b if match_length > 0 else -1
+            if match_length > fallback_match_length or (match_length == fallback_match_length and start < fallback_st):
+                fallback_rn = rn
+                fallback_match_length = match_length
+                fallback_st = start
+
+    return match_rn if match_rn is not None else fallback_rn
 
 
 def float_to_int(f: int | float) -> int | float:
@@ -629,14 +625,18 @@ def consecutive_chunks(seq: list[int]) -> Generator[list[int]]:
 
 
 def consecutive_ranges(seq: Sequence[int]) -> Generator[tuple[int, int]]:
-    start = 0
-    for index, value in enumerate(seq, 1):
-        try:
-            if seq[index] > value + 1:
-                yield seq[start], seq[index - 1] + 1
-                start = index
-        except Exception:
-            yield seq[start], seq[-1] + 1
+    seq_iter = iter(seq)
+    try:
+        start = next(seq_iter)
+    except StopIteration:
+        return
+    prev = start
+    for curr in seq_iter:
+        if curr > prev + 1:
+            yield start, prev + 1
+            start = curr
+        prev = curr
+    yield start, prev + 1
 
 
 def is_contiguous(iterable: Iterable[int]) -> bool:

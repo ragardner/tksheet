@@ -19,7 +19,6 @@ from .constants import (
 )
 from .formatters import is_bool_like, try_to_bool
 from .functions import (
-    consecutive_chunks,
     consecutive_ranges,
     del_placeholder_dict_key,
     event_dict,
@@ -686,10 +685,10 @@ class RowIndex(tk.Canvas):
             tag="move_rows",
         )
         self.MT.create_resize_line(x1, ypos, x2, ypos, width=3, fill=self.ops.drag_and_drop_bg, tag="move_rows")
-        for chunk in consecutive_chunks(rows):
+        for boxst, boxend in consecutive_ranges(rows):
             self.MT.show_ctrl_outline(
-                start_cell=(0, chunk[0]),
-                end_cell=(len(self.MT.col_positions) - 1, chunk[-1] + 1),
+                start_cell=(0, boxst),
+                end_cell=(len(self.MT.col_positions) - 1, boxend),
                 dash=(),
                 outline=self.ops.drag_and_drop_bg,
                 delete_on_timer=False,

@@ -7241,7 +7241,7 @@ class Dropdown(Sheet):
 
     def search_and_see(self, event: object = None) -> str:
         if self.search_function is not None:
-            rn = self.search_function(search_for=rf"{event['value']}".lower(), data=self.MT.data)
+            rn = self.search_function(search_for=rf"{event['value']}", data=(r[0] for r in self.MT.data))
             if isinstance(rn, int):
                 self.row = rn
                 self.see(self.row, 0, redraw=False)
