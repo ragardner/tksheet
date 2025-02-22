@@ -7893,26 +7893,20 @@ class MainTable(tk.Canvas):
                     self.data[datarn][datacn] = value
 
     def get_value_for_empty_cell(self, datarn: int, datacn: int, r_ops: bool = True, c_ops: bool = True) -> object:
-        if self.get_cell_kwargs(
-            datarn,
-            datacn,
-            key="checkbox",
-            cell=r_ops and c_ops,
-            row=r_ops,
-            column=c_ops,
-        ):
-            return False
         kwargs = self.get_cell_kwargs(
             datarn,
             datacn,
-            key="dropdown",
+            key=None,
             cell=r_ops and c_ops,
             row=r_ops,
             column=c_ops,
         )
-        if kwargs and kwargs["validate_input"] and kwargs["values"]:
+        if "checkbox" in kwargs:
+            return False
+        elif (kwargs := kwargs.get("dropdown", {})) and kwargs["validate_input"] and kwargs["values"]:
             return kwargs["values"][0]
-        return ""
+        else:
+            return ""
 
     def get_empty_row_seq(
         self,

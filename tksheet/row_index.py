@@ -2495,12 +2495,13 @@ class RowIndex(tk.Canvas):
         if self.ops.treeview:
             iid = self.new_iid()
             return Node(text=iid, iid=iid, parent=self.get_row_parent(datarn))
-        if self.get_cell_kwargs(datarn, key="checkbox", cell=r_ops):
+        kwargs = self.get_cell_kwargs(datarn, key=None, cell=r_ops)
+        if "checkbox" in kwargs:
             return False
-        kwargs = self.get_cell_kwargs(datarn, key="dropdown", cell=r_ops)
-        if kwargs and kwargs["validate_input"] and kwargs["values"]:
+        elif (kwargs := kwargs.get("dropdown", {})) and kwargs["validate_input"] and kwargs["values"]:
             return kwargs["values"][0]
-        return ""
+        else:
+            return ""
 
     def get_empty_index_seq(self, end: int, start: int = 0, r_ops: bool = True) -> list[object]:
         return [self.get_value_for_empty_cell(datarn, r_ops=r_ops) for datarn in range(start, end)]

@@ -2303,12 +2303,13 @@ class ColumnHeaders(tk.Canvas):
         return value
 
     def get_value_for_empty_cell(self, datacn: int, c_ops: bool = True) -> object:
-        if self.get_cell_kwargs(datacn, key="checkbox", cell=c_ops):
+        kwargs = self.get_cell_kwargs(datacn, key=None, cell=c_ops)
+        if "checkbox" in kwargs:
             return False
-        kwargs = self.get_cell_kwargs(datacn, key="dropdown", cell=c_ops)
-        if kwargs and kwargs["validate_input"] and kwargs["values"]:
+        elif (kwargs := kwargs.get("dropdown", {})) and kwargs["validate_input"] and kwargs["values"]:
             return kwargs["values"][0]
-        return ""
+        else:
+            return ""
 
     def get_empty_header_seq(self, end: int, start: int = 0, c_ops: bool = True) -> list[object]:
         return [self.get_value_for_empty_cell(datacn, c_ops=c_ops) for datacn in range(start, end)]
