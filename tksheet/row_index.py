@@ -2424,16 +2424,17 @@ class RowIndex(tk.Canvas):
                 self.MT._row_index[datarn] = value
 
     def input_valid_for_cell(self, datarn: int, value: object, check_readonly: bool = True) -> bool:
-        if check_readonly and self.get_cell_kwargs(datarn, key="readonly"):
+        kwargs = self.get_cell_kwargs(datarn, key=None)
+        if check_readonly and "readonly" in kwargs:
             return False
-        if self.get_cell_kwargs(datarn, key="checkbox"):
+        elif "checkbox" in kwargs:
             return is_bool_like(value)
-        if self.cell_equal_to(datarn, value):
+        elif self.cell_equal_to(datarn, value):
             return False
-        kwargs = self.get_cell_kwargs(datarn, key="dropdown")
-        if kwargs and kwargs["validate_input"] and value not in kwargs["values"]:
+        elif (kwargs := kwargs.get("dropdown", {})) and kwargs["validate_input"] and value not in kwargs["values"]:
             return False
-        return True
+        else:
+            return True
 
     def cell_equal_to(self, datarn: int, value: object) -> bool:
         self.fix_index(datarn)
