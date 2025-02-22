@@ -2376,7 +2376,8 @@ class ColumnHeaders(tk.Canvas):
         if redraw:
             self.MT.refresh()
 
-    def get_cell_kwargs(self, datacn: int, key: Hashable = "dropdown", cell: bool = True) -> dict:
-        if cell and datacn in self.cell_options and key in self.cell_options[datacn]:
-            return self.cell_options[datacn][key]
-        return {}
+    def get_cell_kwargs(self, datacn: int, key: Hashable | None = "dropdown", cell: bool = True) -> dict:
+        if cell and datacn in self.cell_options:
+            return self.cell_options[datacn] if key is None else self.cell_options[datacn].get(key, {})
+        else:
+            return {}

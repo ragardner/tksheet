@@ -8072,18 +8072,21 @@ class MainTable(tk.Canvas):
         check_readonly: bool = True,
         ignore_empty: bool = False,
     ) -> bool:
-        if check_readonly and self.get_cell_kwargs(datarn, datacn, key="readonly"):
+        kwargs = self.get_cell_kwargs(datarn, datacn, key=None)
+        if check_readonly and "readonly" in kwargs:
             return False
-        if self.get_cell_kwargs(datarn, datacn, key="format"):
+        elif "format" in kwargs:
             return True
-        if self.cell_equal_to(datarn, datacn, value, ignore_empty=ignore_empty):
+        elif self.cell_equal_to(datarn, datacn, value, ignore_empty=ignore_empty):
             return False
-        kwargs = self.get_cell_kwargs(datarn, datacn, key="dropdown")
-        if kwargs and kwargs["validate_input"] and value not in kwargs["values"]:
+        elif (
+            (dropdown := kwargs.get("dropdown", {})) and dropdown["validate_input"] and value not in dropdown["values"]
+        ):
             return False
-        if self.get_cell_kwargs(datarn, datacn, key="checkbox"):
+        elif "checkbox" in kwargs:
             return is_bool_like(value)
-        return True
+        else:
+            return True
 
     def cell_equal_to(self, datarn: int, datacn: int, value: object, ignore_empty: bool = False, **kwargs) -> bool:
         v = self.get_cell_data(datarn, datacn)
@@ -8118,18 +8121,21 @@ class MainTable(tk.Canvas):
         self,
         datarn: int,
         datacn: int,
-        key: Hashable = "format",
+        key: Hashable | None = "format",
         cell: bool = True,
         row: bool = True,
         column: bool = True,
     ) -> dict:
-        if cell and (datarn, datacn) in self.cell_options and key in self.cell_options[(datarn, datacn)]:
-            return self.cell_options[(datarn, datacn)][key]
-        if row and datarn in self.row_options and key in self.row_options[datarn]:
-            return self.row_options[datarn][key]
-        if column and datacn in self.col_options and key in self.col_options[datacn]:
-            return self.col_options[datacn][key]
-        return {}
+        if cell and (datarn, datacn) in self.cell_options:
+            return (
+                self.cell_options[(datarn, datacn)] if key is None else self.cell_options[(datarn, datacn)].get(key, {})
+            )
+        elif row and datarn in self.row_options:
+            return self.row_options[datarn] if key is None else self.row_options[datarn].get(key, {})
+        elif column and datacn in self.col_options:
+            return self.col_options[datacn] if key is None else self.col_options[datacn].get(key, {})
+        else:
+            return {}
 
     def datacn(self, c: int) -> int:
         return c if self.all_columns_displayed else self.displayed_columns[c]

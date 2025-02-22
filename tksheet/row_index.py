@@ -2567,10 +2567,11 @@ class RowIndex(tk.Canvas):
         if redraw:
             self.MT.refresh()
 
-    def get_cell_kwargs(self, datarn: int, key: Hashable = "dropdown", cell: bool = True) -> dict:
-        if cell and datarn in self.cell_options and key in self.cell_options[datarn]:
-            return self.cell_options[datarn][key]
-        return {}
+    def get_cell_kwargs(self, datarn: int, key: Hashable | None = "dropdown", cell: bool = True) -> dict:
+        if cell and datarn in self.cell_options:
+            return self.cell_options[datarn] if key is None else self.cell_options[datarn].get(key, {})
+        else:
+            return {}
 
     # Treeview Mode
 

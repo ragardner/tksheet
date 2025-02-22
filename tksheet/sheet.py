@@ -4662,24 +4662,14 @@ class Sheet(tk.Frame):
         Also retrieves any row or column options
         impacting that cell
         """
-        if isinstance(column, str):
-            column = alpha2idx(column)
-        if key is not None:
-            return self.MT.get_cell_kwargs(
-                datarn=row,
-                datacn=column,
-                key=key,
-                cell=cellops,
-                row=rowops,
-                column=columnops,
-            )
-        if cellops and (row, column) in self.MT.cell_options:
-            return self.MT.cell_options[(row, column)]
-        if rowops and row in self.MT.row_options:
-            return self.MT.row_options[row]
-        if columnops and column in self.MT.col_options:
-            return self.MT.col_options[column]
-        return {}
+        return self.MT.get_cell_kwargs(
+            datarn=row,
+            datacn=alpha2idx(column) if isinstance(column, str) else column,
+            key=key,
+            cell=cellops,
+            row=rowops,
+            column=columnops,
+        )
 
     def index_props(
         self,
@@ -4690,12 +4680,10 @@ class Sheet(tk.Frame):
         Retrieve options (properties - props)
         from a cell in the index
         """
-        if key is not None:
-            return self.RI.get_cell_kwargs(
-                datarn=row,
-                key=key,
-            )
-        return self.RI.cell_options[row] if row in self.RI.cell_options else {}
+        return self.RI.get_cell_kwargs(
+            datarn=row,
+            key=key,
+        )
 
     def header_props(
         self,
@@ -4706,14 +4694,10 @@ class Sheet(tk.Frame):
         Retrieve options (properties - props)
         from a cell in the header
         """
-        if isinstance(column, str):
-            column = alpha2idx(column)
-        if key is not None:
-            return self.CH.get_cell_kwargs(
-                datacn=column,
-                key=key,
-            )
-        return self.CH.cell_options[column] if column in self.CH.cell_options else {}
+        return self.CH.get_cell_kwargs(
+            datacn=alpha2idx(column) if isinstance(column, str) else column,
+            key=key,
+        )
 
     def get_cell_options(
         self,
