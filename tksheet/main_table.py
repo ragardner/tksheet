@@ -50,7 +50,6 @@ from .functions import (
     consecutive_ranges,
     data_to_displayed_idxs,
     diff_gen,
-    diff_list,
     down_cell_within_box,
     event_dict,
     event_has_char_key,
@@ -4489,10 +4488,10 @@ class MainTable(tk.Canvas):
             self.set_row_positions(itr=(h for i, h in enumerate(self.gen_row_heights()) if i not in idxs))
 
     def get_column_widths(self) -> list[int]:
-        return diff_list(self.col_positions)
+        return list(diff_gen(self.col_positions))
 
     def get_row_heights(self) -> list[int]:
-        return diff_list(self.row_positions)
+        return list(diff_gen(self.row_positions))
 
     def gen_column_widths(self) -> Generator[int]:
         return diff_gen(self.col_positions)

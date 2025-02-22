@@ -876,24 +876,12 @@ def rounded_box_coords(
     )
 
 
-def diff_list(seq: list[float]) -> list[int]:
-    return [
-        int(b - a)
-        for a, b in zip(
-            seq,
-            islice(seq, 1, None),
-        )
-    ]
-
-
 def diff_gen(seq: list[float]) -> Generator[int]:
-    return (
-        int(b - a)
-        for a, b in zip(
-            seq,
-            islice(seq, 1, None),
-        )
-    )
+    it = iter(seq)
+    a = next(it)
+    for b in it:
+        yield int(b - a)
+        a = b
 
 
 def gen_coords(
