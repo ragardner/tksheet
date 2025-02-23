@@ -753,6 +753,17 @@ def move_elements_by_mapping(
     return [seq[old_idxs[i]] if i in old_idxs else next(remaining_values) for i in range(len(seq))]
 
 
+def move_elements_by_mapping_gen(
+    seq: list[object],
+    new_idxs: dict[int, int],
+    old_idxs: dict[int, int] | None = None,
+) -> Generator[object]:
+    if old_idxs is None:
+        old_idxs = dict(zip(new_idxs.values(), new_idxs))
+    remaining_values = (e for i, e in enumerate(seq) if i not in new_idxs)
+    return (seq[old_idxs[i]] if i in old_idxs else next(remaining_values) for i in range(len(seq)))
+
+
 def move_elements_to(
     seq: list[object],
     move_to: int,

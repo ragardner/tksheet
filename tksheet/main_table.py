@@ -71,6 +71,7 @@ from .functions import (
     mod_span,
     mod_span_widget,
     move_elements_by_mapping,
+    move_elements_by_mapping_gen,
     new_tk_event,
     next_cell,
     push_n,
@@ -1298,7 +1299,7 @@ class MainTable(tk.Canvas):
         if not self.all_columns_displayed and not data_indexes:
             data_new_idxs = dict(
                 zip(
-                    move_elements_by_mapping(
+                    move_elements_by_mapping_gen(
                         self.displayed_columns,
                         data_new_idxs,
                         dict(zip(data_new_idxs.values(), data_new_idxs)),
@@ -1536,7 +1537,7 @@ class MainTable(tk.Canvas):
             data_new_idxs = {
                 k: v
                 for k, v in zip(
-                    move_elements_by_mapping(
+                    move_elements_by_mapping_gen(
                         self.displayed_rows,
                         data_new_idxs,
                         dict(zip(data_new_idxs.values(), data_new_idxs)),
@@ -1787,7 +1788,7 @@ class MainTable(tk.Canvas):
             old_idxs = dict(zip(new_idxs.values(), new_idxs))
         return dict(
             zip(
-                move_elements_by_mapping(tuple(range(max_idx + 1)), new_idxs, old_idxs),
+                move_elements_by_mapping_gen(tuple(range(max_idx + 1)), new_idxs, old_idxs),
                 range(max_idx + 1),
             )
         )
