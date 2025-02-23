@@ -774,9 +774,11 @@ def get_new_indexes(
     get_inverse: bool = False,
 ) -> tuple[dict]:
     """
+    move_to: A positive int, could possibly be the same as an element of to_move
+    to_move: A sorted list[int], ints always positive and unique, list never empty.
     returns {old idx: new idx, ...}
     """
-    offset = sum(1 for i in to_move if i < move_to)
+    offset = bisect_left(to_move, move_to)
     new_idxs = range(move_to - offset, move_to - offset + len(to_move))
     new_idxs = {old: new for old, new in zip(to_move, new_idxs)}
     if get_inverse:
@@ -789,6 +791,11 @@ def insert_items(
     to_insert: dict[int, object],
     seq_len_func: Callable | None = None,
 ) -> list[object]:
+    """
+    seq: list[object]
+    to_insert: keys are ints sorted in reverse, representing list indexes to insert items.
+               Values are any object, e.g. {1: 200, 0: 200}
+    """
     if to_insert:
         if seq_len_func and next(iter(to_insert)) >= len(seq) + len(to_insert):
             seq_len_func(next(iter(to_insert)) - len(to_insert))
