@@ -1338,7 +1338,7 @@ class MainTable(tk.Canvas):
 
         if move_widths and disp_new_idxs:
             self.set_col_positions(
-                itr=move_elements_by_mapping(
+                itr=move_elements_by_mapping_gen(
                     self.get_column_widths(),
                     disp_new_idxs,
                     dict(
@@ -1732,7 +1732,7 @@ class MainTable(tk.Canvas):
 
         if move_heights and disp_new_idxs:
             self.set_row_positions(
-                itr=move_elements_by_mapping(
+                itr=move_elements_by_mapping_gen(
                     self.get_row_heights(),
                     disp_new_idxs,
                     dict(
