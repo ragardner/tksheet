@@ -7,6 +7,7 @@
 #### Fixed:
 - Sorting algorithm wasn't sorting some items correctly
 - Boxes in event data not being correct when `sort()` was used
+- Addressed some issues with treeview mode `move()`
 
 #### Added:
 - New in-built sort keys and default `sort_key` initialization and `set_options()` parameter
