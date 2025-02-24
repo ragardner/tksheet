@@ -775,7 +775,7 @@ def move_elements_to(
 
 def get_new_indexes(
     move_to: int,
-    to_move: list[int],
+    to_move: AnyIter[int],
     get_inverse: bool = False,
 ) -> tuple[dict]:
     """
@@ -783,7 +783,7 @@ def get_new_indexes(
     to_move: A sorted list[int], ints always positive and unique, list never empty.
     returns {old idx: new idx, ...}
     """
-    offset = bisect_left(to_move, move_to)
+    offset = sum(1 for i in to_move if i < move_to)
     new_idxs = range(move_to - offset, move_to - offset + len(to_move))
     new_idxs = {old: new for old, new in zip(to_move, new_idxs)}
     if get_inverse:
