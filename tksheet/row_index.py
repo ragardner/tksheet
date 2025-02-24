@@ -900,6 +900,8 @@ class RowIndex(tk.Canvas):
             rows = list(range(0, len(self.MT.row_positions) - 1))
         event_data = self.MT.new_event_dict("edit_table")
         try_binding(self.MT.extra_begin_sort_cells_func, event_data)
+        if key is None:
+            key = self.PAR.ops.sort_key
         for r in rows:
             datarn = self.MT.datarn(r)
             for c, val in enumerate(sort_row(self.MT.data[datarn], reverse=reverse, key=key)):
@@ -943,6 +945,8 @@ class RowIndex(tk.Canvas):
                 return event_data
             row = self.MT.selected.row
         if try_binding(self.ri_extra_begin_sort_cols_func, event_data, "begin_move_columns"):
+            if key is None:
+                key = self.PAR.ops.sort_key
             sorted_indices, data_new_idxs = sort_columns_by_row(self.MT.data, row=row, reverse=reverse, key=key)
             disp_new_idxs = {}
             if self.MT.all_columns_displayed:

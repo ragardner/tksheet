@@ -3,12 +3,12 @@ from __future__ import annotations
 from collections.abc import Callable, Generator, Iterable, Iterator
 from datetime import datetime
 from pathlib import Path
-from re import finditer
+from re import split
 
 AnyIter = Iterable | Iterator
 
 # Possible date formats to try for the entire string
-date_formats = [
+date_formats = (
     # Common formats
     "%d/%m/%Y",  # Day/Month/Year
     "%m/%d/%Y",  # Month/Day/Year (US format)
@@ -24,7 +24,8 @@ date_formats = [
     "%m,%d,%Y",  # Month,Day,Year
     "%Y,%m,%d",  # Year,Month,Day
     "%d %m %Y",  # Day Month Year (with space)
-    "%m %d %Y",  # Month Day Year
+    "%m %d %Y",  # Month Day Year (with space)
+    "%Y %d %m",  # Year Month Day (with space)
     # With month names
     "%d %b %Y",  # Day Abbreviated Month Year
     "%b %d, %Y",  # Abbreviated Month Day, Year
@@ -42,59 +43,228 @@ date_formats = [
     "%d/%m/%y %H:%M",  # Day/Month/Year Hour:Minute
     "%m/%d/%y %H:%M",  # Month/Day/Year Hour:Minute
     "%Y-%m-%d %H:%M:%S",  # Year-Month-Day Hour:Minute:Second
-]
+)
+
+
+def _string_fallback(item: str) -> tuple[int, ...]:
+    """
+    In order to have reasonable file path sorting:
+    - Split by path separators
+    - Determine depth, more separators more depth
+    - Deal with every dir by splitting by digits
+    - Deal with file name by splitting by digits
+    """
+    components = split(r"[/\\]", item)
+    if components[-1]:
+        return (
+            5,
+            len(components),
+            tuple(int(e) if e.isdigit() else e.lower() for comp in components[:-1] for e in split(r"(\d+)", comp) if e),
+            tuple(int(e) if e.isdigit() else e.lower() for e in split(r"(\d+)", components[-1])),
+        )
+    else:
+        return (
+            5,
+            len(components),
+            tuple(int(e) if e.isdigit() else e.lower() for comp in components[:-1] for e in split(r"(\d+)", comp) if e),
+            tuple(),
+        )
+
+
+def version_sort_key(item: object) -> tuple[int, ...]:
+    """
+    A key for natural sorting of various Python types.
+
+    - Won't convert strings to floats
+    - Will sort string version numbers
+
+    0. None
+    1. Empty strings
+    2. bool
+    3. int, float
+    4. datetime (inc. strings that are dates)
+    5. strings (including string file paths and paths as POSIX strings) & unknown objects with __str__
+    6. unknown objects
+    """
+    if isinstance(item, str):
+        if item:
+            for date_format in date_formats:
+                try:
+                    return (4, datetime.strptime(item, date_format).timestamp())
+                except ValueError:
+                    continue
+            # the same as _string_fallback
+            components = split(r"[/\\]", item)
+            if components[-1]:
+                return (
+                    5,
+                    len(components),
+                    tuple(
+                        int(e) if e.isdigit() else e.lower()
+                        for comp in components[:-1]
+                        for e in split(r"(\d+)", comp)
+                        if e
+                    ),
+                    tuple(int(e) if e.isdigit() else e.lower() for e in split(r"(\d+)", components[-1])),
+                )
+            else:
+                return (
+                    5,
+                    len(components),
+                    tuple(
+                        int(e) if e.isdigit() else e.lower()
+                        for comp in components[:-1]
+                        for e in split(r"(\d+)", comp)
+                        if e
+                    ),
+                    tuple(),
+                )
+        else:
+            return (1, item)
+
+    elif item is None:
+        return (0,)
+
+    elif isinstance(item, bool):
+        return (2, item)
+
+    elif isinstance(item, (int, float)):
+        return (3, item)
+
+    elif isinstance(item, datetime):
+        return (4, item.timestamp())
+
+    elif isinstance(item, Path):
+        return _string_fallback(item.as_posix())
+
+    else:
+        try:
+            return _string_fallback(f"{item}")
+        except Exception:
+            return (6, item)
 
 
 def natural_sort_key(item: object) -> tuple[int, ...]:
     """
     A key for natural sorting of various Python types.
 
+    - Won't sort string version numbers
+    - Will convert strings to floats
+    - Will sort strings that are file paths
+
     0. None
-    1. bool
-    2. int, float
-    3. datetime
-    4. empty strings
-    5. strings (including paths as POSIX strings)
-    6. unknown objects with __str__
-    7. unknown objects
+    1. Empty strings
+    2. bool
+    3. int, float (inc. strings that are numbers)
+    4. datetime (inc. strings that are dates)
+    5. strings (including string file paths and paths as POSIX strings) & unknown objects with __str__
+    6. unknown objects
     """
-    if item is None:
+    if isinstance(item, str):
+        if item:
+            for date_format in date_formats:
+                try:
+                    return (4, datetime.strptime(item, date_format).timestamp())
+                except ValueError:
+                    continue
+
+            try:
+                return (3, float(item))
+            except ValueError:
+                # the same as _string_fallback
+                components = split(r"[/\\]", item)
+                if components[-1]:
+                    return (
+                        5,
+                        len(components),
+                        tuple(
+                            int(e) if e.isdigit() else e.lower()
+                            for comp in components[:-1]
+                            for e in split(r"(\d+)", comp)
+                            if e
+                        ),
+                        tuple(int(e) if e.isdigit() else e.lower() for e in split(r"(\d+)", components[-1])),
+                    )
+                else:
+                    return (
+                        5,
+                        len(components),
+                        tuple(
+                            int(e) if e.isdigit() else e.lower()
+                            for comp in components[:-1]
+                            for e in split(r"(\d+)", comp)
+                            if e
+                        ),
+                        tuple(),
+                    )
+        else:
+            return (1, item)
+
+    elif item is None:
         return (0,)
 
     elif isinstance(item, bool):
-        return (1, item)
-
-    elif isinstance(item, (int, float)):
         return (2, item)
 
+    elif isinstance(item, (int, float)):
+        return (3, item)
+
     elif isinstance(item, datetime):
-        return (3, item.timestamp())
-
-    elif isinstance(item, str):
-        if not item:
-            return (4, item)
-
-        for date_format in date_formats:
-            try:
-                return (3, datetime.strptime(item, date_format).timestamp())
-            except ValueError:
-                continue
-        try:
-            return (2, float(item))
-        except Exception:
-            pass
-
-        return (5, item.lower(), tuple(int(match.group()) for match in finditer(r"\d+", item)))
+        return (4, item.timestamp())
 
     elif isinstance(item, Path):
-        posix_str = item.as_posix()
-        return (5, posix_str.lower(), tuple(int(match.group()) for match in finditer(r"\d+", posix_str)))
+        return _string_fallback(item.as_posix())
 
     else:
         try:
-            return (6, f"{item}".lower())
+            return _string_fallback(f"{item}")
         except Exception:
-            return (7, item)
+            return (6, item)
+
+
+def fast_sort_key(item: object) -> tuple[int, ...]:
+    """
+    A faster key for natural sorting of various Python types.
+
+    - Won't sort strings that are dates very well
+    - Won't convert strings to floats
+    - Won't sort string file paths very well
+    - Will do ok with string version numbers
+
+    0. None
+    1. Empty strings
+    2. bool
+    3. int, float
+    4. datetime
+    5. strings (including paths as POSIX strings) & unknown objects with __str__
+    6. unknown objects
+    """
+    if isinstance(item, str):
+        if item:
+            return (5, tuple(int(e) if e.isdigit() else e.lower() for e in split(r"(\d+)", item)))
+        else:
+            return (1, item)
+
+    elif item is None:
+        return (0,)
+
+    elif isinstance(item, bool):
+        return (2, item)
+
+    elif isinstance(item, (int, float)):
+        return (3, item)
+
+    elif isinstance(item, datetime):
+        return (4, item.timestamp())
+
+    elif isinstance(item, Path):
+        return _string_fallback(item.as_posix())
+
+    else:
+        try:
+            return _string_fallback(f"{item}")
+        except Exception:
+            return (6, item)
 
 
 def sort_selection(
@@ -247,14 +417,15 @@ def sort_tree_view(
     _row_index: list[object],
     tree_rns: dict[str, int],
     tree: dict[str, object],
-    key: Callable = natural_sort_key,
+    key: Callable | None = None,
     reverse: bool = False,
 ) -> tuple[list[object], dict[int, int]]:
     if not _row_index or not tree_rns or not tree:
         return [], {}
 
     if key is None:
-        key = natural_sort_key
+        # prefer version_sort_key for iid names
+        key = version_sort_key
 
     # Create the index map and sorted nodes list
     mapping = {}
@@ -281,38 +452,80 @@ def sort_tree_view(
     return sorted_nodes, mapping
 
 
-# def test_natural_sort_key():
-#     test_items = [
-#         None,
-#         False,
-#         True,
-#         5,
-#         3.14,
-#         datetime(2023, 1, 1),
-#         "abc123",
-#         "123abc",
-#         "abc123def",
-#         "998zzz",
-#         "10-01-2023",
-#         "01-10-2023",
-#         "fi1le_0.txt",
-#         "file_2.txt",
-#         "file_10.txt",
-#         "file_1.txt",
-#         "path/to/file_2.txt",
-#         "path/to/file_10.txt",
-#         "path/to/file_1.txt",
-#         "/another/path/file_2.log",
-#         "/another/path/file_10.log",
-#         "/another/path/file_1.log",
-#         "C:\\Windows\\System32\\file_2.dll",
-#         "C:\\Windows\\System32\\file_10.dll",
-#         "C:\\Windows\\System32\\file_1.dll",
-#     ]
-#     print("Sort objects:", [natural_sort_key(e) for e in test_items])
-#     sorted_items = sorted(test_items, key=natural_sort_key)
-#     print("\nNatural Sort Order:", sorted_items)
-
-
 # if __name__ == "__main__":
-#     test_natural_sort_key()
+#     test_cases = {
+#         "Filenames": ["file10.txt", "file2.txt", "file1.txt"],
+#         "Versions": ["1.10", "1.2", "1.9", "1.21"],
+#         "Mixed": ["z1.doc", "z10.doc", "z2.doc", "z100.doc"],
+#         "Paths": [
+#             "/folder/file.txt",
+#             "/folder/file (1).txt",
+#             "/folder (1)/file.txt",
+#             "/folder (10)/file.txt",
+#             "/dir/subdir/file1.txt",
+#             "/dir/subdir/file10.txt",
+#             "/dir/subdir/file2.txt",
+#             "/dir/file.txt",
+#             "/dir/sub/file123.txt",
+#             "/dir/sub/file12.txt",
+#             # New challenging cases
+#             "/a/file.txt",
+#             "/a/file1.txt",
+#             "/a/b/file.txt",
+#             "/a/b/file1.txt",
+#             "/x/file-v1.2.txt",
+#             "/x/file-v1.10.txt",
+#             # My own new challenging cases
+#             "/a/zzzzz.txt",
+#             "/a/b/a.txt",
+#         ],
+#         "Case": ["Apple", "banana", "Corn", "apple", "Banana", "corn"],
+#         "Leading Zeros": ["001", "010", "009", "100"],
+#         "Complex": ["x-1-y-10", "x-1-y-2", "x-2-y-1", "x-10-y-1"],
+#         "Lengths": ["2 ft 9 in", "2 ft 10 in", "10 ft 1 in", "10 ft 2 in"],
+#         "Floats": [
+#             "1.5",
+#             "1.25",
+#             "1.025",
+#             "10.5",
+#             "-10.2",
+#             "-2.5",
+#             "5.7",
+#             "-1.25",
+#             "0.0",
+#             "1.5e3",
+#             "2.5e2",
+#             "1.23e4",
+#             "1e-2",
+#             "file1.2.txt",
+#             "file1.5.txt",
+#             "file1.10.txt",
+#         ],
+#         "Strings": [
+#             "123abc",
+#             "abc123",
+#             "123abc456",
+#             "abc123def",
+#         ],
+#     }
+
+#     print("FAST SORT KEY:")
+
+#     for name, data in test_cases.items():
+#         sorted1 = sorted(data, key=fast_sort_key)
+#         print(f"\n{name}:")
+#         print(sorted1)
+
+#     print("\nNATURAL SORT KEY:")
+
+#     for name, data in test_cases.items():
+#         sorted1 = sorted(data, key=natural_sort_key)
+#         print(f"\n{name}:")
+#         print(sorted1)
+
+#     print("\nVERSION SORT KEY:")
+
+#     for name, data in test_cases.items():
+#         sorted1 = sorted(data, key=version_sort_key)
+#         print(f"\n{name}:")
+#         print(sorted1)

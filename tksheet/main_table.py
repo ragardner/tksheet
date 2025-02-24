@@ -932,19 +932,21 @@ class MainTable(tk.Canvas):
     def sort_boxes(
         self,
         event: tk.Event | None = None,
-        boxes: AnyIter[int, int, int, int] | None = None,
+        boxes: dict[tuple[int, int, int, int], Literal["cells", "rows", "columns"]] | None = None,
         reverse: bool = False,
         row_wise: bool = False,
         validation: bool = True,
         key: Callable | None = None,
         undo: bool = True,
     ) -> EventDataDict:
-        if boxes is None:
+        if not boxes:
             boxes = self.get_boxes()
         if not boxes:
-            boxes = [(0, 0, len(self.row_positions) - 1, len(self.col_positions) - 1)]
+            boxes = {Box_nt(0, 0, len(self.row_positions) - 1, len(self.col_positions) - 1): "cells"}
         event_data = self.new_event_dict("edit_table", boxes=boxes)
         try_binding(self.extra_begin_sort_cells_func, event_data)
+        if key is None:
+            key = self.PAR.ops.sort_key
         for r1, c1, r2, c2 in boxes:
             data = sort_selection(
                 [[self.get_cell_data(self.datarn(r), self.datacn(c)) for c in range(c1, c2)] for r in range(r1, r2)],
@@ -1287,26 +1289,36 @@ class MainTable(tk.Canvas):
         data_indexes: bool = False,
     ) -> tuple[dict[int, int], dict[int, int], int, dict[int, int]]:
         if not data_indexes or self.all_columns_displayed:
-            disp_new_idxs = get_new_indexes(move_to=move_to, to_move=to_move)
+            disp_new_idxs = get_new_indexes(
+                move_to=move_to,
+                to_move=to_move,
+            )
+            data_new_idxs = dict(disp_new_idxs)
         else:
             disp_new_idxs = {}
+            data_new_idxs = get_new_indexes(
+                move_to=move_to,
+                to_move=to_move,
+            )
         # at_least_cols should not be len in this case as move_to can be len
         fix_len = (move_to - 1) if move_to else move_to
         if not self.all_columns_displayed and not data_indexes:
             fix_len = self.datacn(fix_len)
         totalcols = self.equalize_data_row_lengths(at_least_cols=fix_len)
-        data_new_idxs = get_new_indexes(move_to=move_to, to_move=to_move)
         if not self.all_columns_displayed and not data_indexes:
-            data_new_idxs = dict(
-                zip(
+            keep = set(map(self.datacn, to_move))
+            data_new_idxs = {
+                k: v
+                for k, v in zip(
                     move_elements_by_mapping_gen(
                         self.displayed_columns,
                         data_new_idxs,
                         dict(zip(data_new_idxs.values(), data_new_idxs)),
                     ),
                     self.displayed_columns,
-                ),
-            )
+                )
+                if k in keep
+            }
         return data_new_idxs, dict(zip(data_new_idxs.values(), data_new_idxs)), totalcols, disp_new_idxs
 
     def move_columns_adjust_options_dict(

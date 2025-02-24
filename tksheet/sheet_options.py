@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from .constants import USER_OS, ctrl_key
 from .other_classes import DotDict, FontTuple
+from .sorting import fast_sort_key, natural_sort_key, version_sort_key  # noqa: F401
 from .themes import theme_light_blue
 
 
@@ -255,5 +256,6 @@ def new_sheet_options() -> DotDict:
             "max_row_height": float("inf"),
             "max_index_width": float("inf"),
             "show_top_left": None,
+            "sort_key": natural_sort_key,
         }
     )

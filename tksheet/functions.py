@@ -15,7 +15,7 @@ from typing import Literal
 from .colors import color_map
 from .constants import align_value_error, symbols_set
 from .formatters import to_bool
-from .other_classes import Box_nt, DotDict, EventDataDict, Highlight, Loc, Span
+from .other_classes import DotDict, EventDataDict, Highlight, Loc, Span
 from .tksheet_types import AnyIter
 
 unpickle_obj = pickle.loads
@@ -279,10 +279,6 @@ def float_to_int(f: int | float) -> int | float:
     return int(f)
 
 
-def selection_box_tup_to_dict(box: tuple) -> dict:
-    return {Box_nt(*box[:-1]): box[-1]}
-
-
 def event_dict(
     name: str = None,
     sheet: object = None,
@@ -334,9 +330,7 @@ def event_dict(
         ),
         named_spans=DotDict() if named_spans is None else named_spans,
         options=DotDict(),
-        selection_boxes=(
-            {} if boxes is None else selection_box_tup_to_dict(boxes) if isinstance(boxes, tuple) else boxes
-        ),
+        selection_boxes={} if boxes is None else boxes,
         selected=tuple() if selected is None else selected,
         being_selected=tuple() if being_selected is None else being_selected,
         data=[] if data is None else data,

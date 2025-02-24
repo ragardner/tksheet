@@ -54,6 +54,7 @@ from .functions import (
 )
 from .main_table import MainTable
 from .other_classes import (
+    Box_nt,
     DotDict,
     EventDataDict,
     FontTuple,
@@ -66,6 +67,7 @@ from .other_classes import (
 )
 from .row_index import RowIndex
 from .sheet_options import new_sheet_options
+from .sorting import fast_sort_key, natural_sort_key, version_sort_key  # noqa: F401
 from .themes import (
     theme_black,
     theme_dark,
@@ -187,6 +189,7 @@ class Sheet(tk.Frame):
         table_wrap: Literal["", "w", "c"] = "c",
         index_wrap: Literal["", "w", "c"] = "c",
         header_wrap: Literal["", "w", "c"] = "c",
+        sort_key: Callable = natural_sort_key,
         # colors
         outline_thickness: int = 0,
         theme: str = "light blue",
@@ -2586,7 +2589,7 @@ class Sheet(tk.Frame):
 
     def sort(
         self,
-        boxes: AnyIter[Sequence[int, int, int, int]] | Span | None = None,
+        *box: CreateSpanTypes,
         reverse: bool = False,
         row_wise: bool = False,
         validation: bool = True,
@@ -2599,17 +2602,11 @@ class Sheet(tk.Frame):
         This method sorts the data within one or multiple box regions defined by their coordinates. Each box's columns are sorted independently.
 
         Args:
-            boxes (AnyIter[Sequence[int, int, int, int]] | Span | None): An iterable of box coordinates. Each box is defined by:
-                - From Row (inclusive)
-                - From Column (inclusive)
-                - Up To Row (exclusive)
-                - Up To Column (exclusive)
-                If None, it will sort the currently selected boxes or the entire table.
-                If Span, it will use the span coordinates.
+            boxes (CreateSpanTypes): A type that can create a Span.
 
             reverse (bool): If True, sorts in descending order. Default is False (ascending).
 
-            row_wise (bool): if True sorts cells row-wise. Default is column-wise
+            row_wise (bool): if True sorts cells row-wise. Default is column-wise.
 
             validation (bool): If True, checks if the new cell values are valid according to any restrictions
                 (e.g., dropdown validations) before applying the sort. Default is True.
@@ -2626,19 +2623,21 @@ class Sheet(tk.Frame):
             ValueError: If the input boxes are not in the expected format or if the data cannot be sorted.
 
         Note:
-            - Sorting is performed column-wise within each box.
             - If validation is enabled, any cell content that fails validation will not be updated.
             - Any cell options attached to cells will not be moved. Event data can be used to re-locate them.
         """
-        if isinstance(boxes, Span):
-            boxes = [boxes.coords]
         return self.MT.sort_boxes(
-            boxes=boxes, reverse=reverse, row_wise=row_wise, validation=validation, key=key, undo=undo
+            boxes={Box_nt(*self.span_from_key(*box).coords): "cells"},
+            reverse=reverse,
+            row_wise=row_wise,
+            validation=validation,
+            key=key,
+            undo=undo,
         )
 
     def sort_rows(
         self,
-        rows: AnyIter[int] | Span | None = None,
+        rows: AnyIter[int] | Span | int | None = None,
         reverse: bool = False,
         validation: bool = True,
         key: Callable | None = None,
@@ -2646,11 +2645,13 @@ class Sheet(tk.Frame):
     ) -> EventDataDict:
         if isinstance(rows, Span):
             rows = rows.rows
+        elif isinstance(rows, int):
+            rows = (rows,)
         return self.RI._sort_rows(rows=rows, reverse=reverse, validation=validation, key=key, undo=undo)
 
     def sort_columns(
         self,
-        columns: AnyIter[int] | Span | None = None,
+        columns: AnyIter[int] | Span | int | None = None,
         reverse: bool = False,
         validation: bool = True,
         key: Callable | None = None,
@@ -2658,6 +2659,8 @@ class Sheet(tk.Frame):
     ) -> EventDataDict:
         if isinstance(columns, Span):
             columns = columns.columns
+        elif isinstance(columns, int):
+            columns = (columns,)
         return self.CH._sort_columns(columns=columns, reverse=reverse, validation=validation, key=key, undo=undo)
 
     def sort_rows_by_column(

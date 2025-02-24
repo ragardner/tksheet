@@ -1,5 +1,21 @@
 ### Version 7.4.4
-####
+#### Changed:
+- **!:** Parameter for function `sort()`:
+    - `boxes` is now `*box: CreateSpanTypes`
+    - [More information](https://github.com/ragardner/tksheet/wiki/Version-7#sorting-cells)
+
+#### Fixed:
+- Sorting algorithm wasn't sorting some items correctly
+- Boxes in event data not being correct when `sort()` was used
+
+#### Added:
+- New in-built sort keys and default `sort_key` initialization and `set_options()` parameter
+    - `natural_sort_key`
+    - `version_sort_key`
+    - `fast_sort_key`
+
+#### Improved:
+- Various minor performance improvements
 
 ### Version 7.4.3
 #### Fixed:

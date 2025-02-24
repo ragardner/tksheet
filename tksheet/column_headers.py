@@ -874,6 +874,8 @@ class ColumnHeaders(tk.Canvas):
             columns = list(range(0, len(self.MT.col_positions) - 1))
         event_data = self.MT.new_event_dict("edit_table")
         try_binding(self.MT.extra_begin_sort_cells_func, event_data)
+        if key is None:
+            key = self.PAR.ops.sort_key
         for c in columns:
             datacn = self.MT.datacn(c)
             for r, val in enumerate(
@@ -923,6 +925,8 @@ class ColumnHeaders(tk.Canvas):
                 return event_data
             column = self.MT.selected.column
         if try_binding(self.ch_extra_begin_sort_rows_func, event_data, "begin_move_rows"):
+            if key is None:
+                key = self.PAR.ops.sort_key
             disp_new_idxs, disp_row_ctr = {}, 0
             if self.ops.treeview:
                 new_nodes_order, data_new_idxs = sort_tree_view(

@@ -404,6 +404,7 @@ def __init__(
     table_wrap: Literal["", "w", "c"] = "c",  # "" no wrap, "w" word wrap, "c" char wrap
     index_wrap: Literal["", "w", "c"] = "c",  # "" no wrap, "w" word wrap, "c" char wrap
     header_wrap: Literal["", "w", "c"] = "c",  # "" no wrap, "w" word wrap, "c" char wrap
+    sort_key: Callable = natural_sort_key,
     # colors
     outline_thickness: int = 0,
     outline_color: str = theme_light_blue["outline_color"],
@@ -3165,105 +3166,84 @@ equalize_data_row_lengths(include_header: bool = True) -> int
 ---
 # **Sorting the Table**
 
-This is the current in-built natural sorting key, if you want to provide your own then you can define your own function and provide it as an argument to the `key` parameter for the sorting functions below.
+There are three built-in sorting keys to choose from but you can always create your own and use that instead. See [here](https://github.com/ragardner/tksheet/wiki/Version-7#setting-the-default-sorting-key) for more information on how to set the default sorting key.
 
+#### **natural_sort_key**
+
+This is the **default** sorting key for natural sorting of various Python types:
+- Won't sort string version numbers.
+- Will convert strings to floats.
+- Will sort strings that are file paths.
+
+Order:
+0. None
+1. Empty strings
+2. bool
+3. int, float (inc. strings that are numbers)
+4. datetime (inc. strings that are dates)
+5. strings (including string file paths and paths as POSIX strings) & unknown objects with __str__
+6. unknown objects
+
+#### **version_sort_key**
+
+An alternative sorting key that respects and sorts most version numbers:
+- Won't convert strings to floats.
+- Will sort string version numbers.
+- Will sort strings that are file paths.
+
+0. None
+1. Empty strings
+2. bool
+3. int, float
+4. datetime (inc. strings that are dates)
+5. strings (including string file paths and paths as POSIX strings) & unknown objects with __str__
+6. unknown objects
+
+#### **fast_sort_key**
+
+A faster key for natural sorting of various Python types. This key should probably be used if you intend on sorting sheets with over a million cells:
+- Won't sort strings that are dates very well.
+- Won't convert strings to floats.
+- Won't sort string file paths very well.
+- Will do ok with string version numbers.
+
+0. None
+1. Empty strings
+2. bool
+3. int, float
+4. datetime
+5. strings (including paths as POSIX strings) & unknown objects with __str__
+6. unknown objects
+
+#### **Setting the default sorting key**
+
+Setting the sorting key at initialization:
 ```python
-date_formats = [
-    # Common formats
-    "%d/%m/%Y",  # Day/Month/Year
-    "%m/%d/%Y",  # Month/Day/Year (US format)
-    "%Y/%m/%d",  # Year/Month/Day
-    "%d.%m.%Y",  # Day.Month.Year (European format)
-    "%d-%m-%Y",  # Day-Month-Year
-    "%m-%d-%Y",  # Month-Day-Year
-    "%Y-%m-%d",  # Year-Month-Day (ISO format without time)
-    "%d/%m/%y",  # Day/Month/2-digit year
-    "%m/%d/%y",  # Month/Day/2-digit year
-    "%y/%m/%d",  # 2-digit year/Month/Day
-    "%d,%m,%Y",  # Day,Month,Year
-    "%m,%d,%Y",  # Month,Day,Year
-    "%Y,%m,%d",  # Year,Month,Day
-    "%d %m %Y",  # Day Month Year (with space)
-    "%m %d %Y",  # Month Day Year
-    # With month names
-    "%d %b %Y",  # Day Abbreviated Month Year
-    "%b %d, %Y",  # Abbreviated Month Day, Year
-    "%d %B %Y",  # Day Full Month Name Year
-    "%B %d, %Y",  # Full Month Name Day, Year
-    # ISO 8601 with/without time
-    "%Y-%m-%dT%H:%M:%S",  # With time
-    "%Y-%m-%d",  # Without time
-    # Regional or less common formats
-    # "%Y年%m月%d日",  # Japanese-style date
-    "%Y%m%d",  # YYYYMMDD format, often used in logs or filenames
-    "%y%m%d",  # YYMMDD
-    "%d%m%Y",  # DDMMYYYY, sometimes used in Europe
-    # Additional formats
-    "%d/%m/%y %H:%M",  # Day/Month/Year Hour:Minute
-    "%m/%d/%y %H:%M",  # Month/Day/Year Hour:Minute
-    "%Y-%m-%d %H:%M:%S",  # Year-Month-Day Hour:Minute:Second
-]
+from tksheet import Sheet, natural_sort_key
 
-def natural_sort_key(item: object) -> tuple[int, object]:
-    """
-    A key function for natural sorting that handles various Python types, including
-    date-like strings in multiple formats.
-
-    This function aims to sort elements in a human-readable order:
-    - None values first
-    - Booleans (False before True)
-    - Numbers (integers, floats combined)
-    - Datetime objects
-    - Strings with natural sorting for embedded numbers and dates
-    - Unknown types treated as strings or left at the end
-
-    Args:
-        item: Any Python object to be sorted.
-
-    Returns:
-        A tuple or value that can be used for sorting.
-    """
-    if item is None:
-        return (0, "")
-
-    elif isinstance(item, bool):
-        return (1, item)
-
-    elif isinstance(item, (int, float)):
-        return (2, (item,))  # Tuple to ensure float and int are sorted together
-
-    elif isinstance(item, datetime):
-        return (3, item.timestamp())
-
-    elif isinstance(item, str):
-        # Check if the whole string is a date
-        for date_format in date_formats:
-            try:
-                # Use the same sort order as for datetime objects
-                return (3, datetime.strptime(item, date_format).timestamp())
-            except ValueError:
-                continue
-
-        # Check if the whole string is a number
-        try:
-            return (4, float(item))
-        except Exception:
-            # Proceed with natural sorting
-            return (5, tuple(int(text) if text.isdigit() else text.lower() for text in re.split(r"(\d+)", item)))
-
-    else:
-        # For unknown types, attempt to convert to string, or place at end
-        try:
-            return (6, f"{item}".lower())
-        except Exception:
-            return (7, item)  # If conversion fails, place at the very end
+my_sheet = Sheet(parent=parent, sort_key=natural_sort_key)
 ```
+
+Setting the sorting key after initialization:
+```python
+from tksheet import Sheet, natural_sort_key
+
+my_sheet.set_options(sort_key=natural_sort_key)
+```
+
+Using a sorting key with a tksheet sort function call:
+```python
+from tksheet import Sheet, natural_sort_key
+
+my_sheet.sort_columns(0, key=natural_sort_key)
+```
+- Setting the key like this will, for this call, override whatever key was set at initialization or using `set_options()`.
 
 #### **Sorting cells**
 
 ```python
-def sort(
-    boxes: AnyIter[Sequence[int, int, int, int]] | Span | None = None,
+sort(
+    *box: CreateSpanTypes,
     reverse: bool = False,
     row_wise: bool = False,
     validation: bool = True,
@@ -3272,28 +3252,32 @@ def sort(
 ) -> EventDataDict
 ```
 Parameters:
-- `boxes` (`AnyIter[Sequence[int, int, int, int]]`, `Span`, `None`) the cell selection boxes to sort. An iterable of box coordinates. Each box is made up of:
-    - From Row (inclusive)
-    - From Column (inclusive)
-    - Up To Row (exclusive)
-    - Up To Column (exclusive)
-    - If None, it will sort the currently selected boxes or the entire table.
-    - e.g. `boxes=[(0, 0, 5, 5), (7, 0, 12, 5)]`
+- `boxes` (`CreateSpanTypes`).
 - `reverse` (`bool`) if `True` sorts in reverse (descending) order.
 - `row-wise` (`bool`) if `True` sorts values row-wise. Default is column-wise.
-- `key` (`Callable`, `None`) if `None` then uses the tksheet in-built natural sorting key.
+- `key` (`Callable`, `None`) if `None` then uses the default sorting key.
 - `undo` (`bool`) if `True` then adds the change (if a change was made) to the undo stack.
 
 Notes:
+- Sort the values of the box columns, or the values of the box rows if `row_wise` is `True`.
+- **Will not shift cell options (properties) around, only cell values.**
 - The event name in `EventDataDict` for sorting table values is `"edit_table"`.
-- Sorts all boxes columnwise by default.
-- If `boxes` is `None` then it will sort existing table selection boxes, if there are no existing selection boxes then it will sort all table values.
+
+Example:
+```python
+# a box of cells row-wise
+# start at row 0 & col 0, up to but not including row 10 & col 10
+my_sheet.sort(0, 0, 10, 10, row_wise=True)
+
+# sort the whole table
+my_sheet.sort(None)
+```
 
 #### **Sorting row values**
 
 ```python
 def sort_rows(
-    rows: AnyIter[int] | Span | None = None,
+    rows: AnyIter[int] | Span | int | None = None,
     reverse: bool = False,
     validation: bool = True,
     key: Callable | None = None,
@@ -3301,20 +3285,21 @@ def sort_rows(
 ) -> EventDataDict
 ```
 Parameters:
-- `rows` (`AnyIter[int]` , `Span`, `None`) the rows to sort.
+- `rows` (`AnyIter[int]` , `Span`, `int`, `None`) the rows to sort.
 - `reverse` (`bool`) if `True` then sorts in reverse (descending) order.
-- `key` (`Callable`, `None`) if `None` then uses the tksheet in-built natural sorting key.
+- `key` (`Callable`, `None`) if `None` then uses the default sorting key.
 - `undo` (`bool`) if `True` then adds the change (if a change was made) to the undo stack.
 
 Notes:
 - Sorts the values of each row independently.
+- **Will not shift cell options (properties) around, only cell values.**
 - The event name in `EventDataDict` for sorting table values is `"edit_table"`.
 
 #### **Sorting column values**
 
 ```python
 def sort_columns(
-    columns: AnyIter[int] | Span | None = None,
+    columns: AnyIter[int] | Span | int | None = None,
     reverse: bool = False,
     validation: bool = True,
     key: Callable | None = None,
@@ -3322,13 +3307,14 @@ def sort_columns(
 ) -> EventDataDict
 ```
 Parameters:
-- `columns` (`AnyIter[int]` , `Span`, `None`) the columns to sort.
+- `columns` (`AnyIter[int]` , `Span`, `int`, `None`) the columns to sort.
 - `reverse` (`bool`) if `True` then sorts in reverse (descending) order.
-- `key` (`Callable`, `None`) if `None` then uses the tksheet in-built natural sorting key.
+- `key` (`Callable`, `None`) if `None` then uses the default sorting key.
 - `undo` (`bool`) if `True` then adds the change (if a change was made) to the undo stack.
 
 Notes:
 - Sorts the values of each column independently.
+- **Will not shift cell options (properties) around, only cell values.**
 - The event name in `EventDataDict` for sorting table values is `"edit_table"`.
 
 #### **Sorting the order of all rows using a column**
@@ -3344,7 +3330,7 @@ def sort_rows_by_column(
 Parameters:
 - `column` (`int`, `None`) if `None` then it uses the currently selected column to sort.
 - `reverse` (`bool`) if `True` then sorts in reverse (descending) order.
-- `key` (`Callable`, `None`) if `None` then uses the tksheet in-built natural sorting key.
+- `key` (`Callable`, `None`) if `None` then uses the default sorting key.
 - `undo` (`bool`) if `True` then adds the change (if a change was made) to the undo stack.
 
 Notes:
@@ -3363,7 +3349,7 @@ def sort_columns_by_row(
 Parameters:
 - `row` (`int`, `None`) if `None` then it uses the currently selected row to sort.
 - `reverse` (`bool`) if `True` then sorts in reverse (descending) order.
-- `key` (`Callable`, `None`) if `None` then uses the tksheet in-built natural sorting key.
+- `key` (`Callable`, `None`) if `None` then uses the default sorting key.
 - `undo` (`bool`) if `True` then adds the change (if a change was made) to the undo stack.
 
 ---
@@ -5961,6 +5947,7 @@ name
 
 show_top_left
 
+sort_key
 edit_cell_tab
 edit_cell_return
 editor_del_key
