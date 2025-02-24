@@ -1,3 +1,6 @@
+### Version 7.4.5
+####
+
 ### Version 7.4.4
 #### Changed:
 - **!:** Parameter for function `sort()`:
