@@ -2678,25 +2678,33 @@ class RowIndex(tk.Canvas):
                     new_parent = node_change[1]
                     move_to_index = node_change[2]
                     if new_parent:
-                        move_to_index = (
-                            move_to_index if isinstance(move_to_index, int) else len(self.tree[new_parent].children)
-                        )
-                        move_to_row = self.tree_rns[new_parent] + max(
-                            0, min(move_to_index, len(self.tree[new_parent].children))
-                        )
+                        if isinstance(move_to_index, int):
+                            move_to_index = min(move_to_index, len(self.tree[new_parent].children))
+                        else:
+                            move_to_index = len(self.tree[new_parent].children)
+                        move_to_row = self.tree_rns[new_parent]
+                        if new_parent == self.tree[item].parent:
+                            move_to_index += 1
+                        for i, ciid in enumerate(self.tree[new_parent].children):
+                            if i == move_to_index:
+                                break
+                            move_to_row += sum(1 for _ in self.get_iid_descendants(ciid)) + 1
+                        insert_row = move_to_row + 1
                     else:
                         num_top_nodes = sum(1 for _ in self.gen_top_nodes())
                         if move_to_index is None:
                             move_to_row = self.PAR.top_index_row(num_top_nodes - 1)
                             move_to_index = num_top_nodes
+                            insert_row = move_to_row
                         else:
                             move_to_row = self.PAR.top_index_row(move_to_index)
+                            insert_row = move_to_row
                             if move_to_row is None:
                                 move_to_row = self.PAR.top_index_row(num_top_nodes - 1)
                                 move_to_index = num_top_nodes
+                                insert_row = move_to_row + 1
 
                     move_to_iid = self.MT._row_index[move_to_row].iid
-                    insert_row = move_to_row + 1
                     disp_insert_row = None
 
                 else:
@@ -2740,10 +2748,10 @@ class RowIndex(tk.Canvas):
                 event_data["moved"]["rows"]["displayed"] = {}
                 if new_loc_is_displayed:
                     if disp_insert_row is None:
-                        if new_parent == self.tree[item].parent:
+                        if new_parent or insert_row > move_to_row:
                             disp_insert_row = self.MT.disprn(self.tree_rns[move_to_iid]) + 1
                         else:
-                            disp_insert_row = self.MT.disprn(self.tree_rns[move_to_iid]) + 1
+                            disp_insert_row = self.MT.disprn(self.tree_rns[move_to_iid])
                     if (disp_from_row := self.MT.try_disprn(self.tree_rns[item])) is not None:
                         event_data["moved"]["rows"]["displayed"] = {disp_from_row: disp_insert_row}
                     else:
@@ -2763,7 +2771,6 @@ class RowIndex(tk.Canvas):
                             index=move_to_index,
                         )
                         move_to_index += 1
-
                     event_data["moved"]["rows"]["data"] = get_new_indexes(
                         insert_row,
                         event_data["moved"]["rows"]["data"],
@@ -2789,7 +2796,6 @@ class RowIndex(tk.Canvas):
         if not undo_modification and data_new_idxs:
             if new_parent and (not self.PAR.item_displayed(new_parent) or new_parent not in self.tree_open_ids):
                 self.PAR.hide_rows(set(data_new_idxs.values()), data_indexes=True)
-
             if new_loc_is_displayed:
                 self.PAR.show_rows(
                     (r for r in data_new_idxs.values() if self.ancestors_all_open(self.MT._row_index[r].iid))
@@ -2966,9 +2972,7 @@ class RowIndex(tk.Canvas):
     def move_pid_causes_recursive_loop(self, to_move_iid: str, move_to_parent: str) -> bool:
         # if the parent the item is being moved under is one of the item's descendants
         # then it is a recursive loop
-        return to_move_iid == move_to_parent or any(
-            move_to_parent == diid for diid in self.get_iid_descendants(to_move_iid)
-        )
+        return any(move_to_parent == diid for diid in self.get_iid_descendants(to_move_iid))
 
     def tree_build(
         self,
