@@ -2566,10 +2566,11 @@ class MainTable(tk.Canvas):
         if self.selected.row == len(self.row_positions) - 2:
             self.see(r, c)
         else:
+            brc = False if self.PAR.ops.arrow_key_down_right_scroll_page else None
             self.see(
                 r + 1,
                 c,
-                bottom_right_corner=False if self.PAR.ops.arrow_key_down_right_scroll_page else True,
+                bottom_right_corner=brc,
                 redraw=False,
             )
             if self.selected.type_ == "rows":
@@ -2586,10 +2587,11 @@ class MainTable(tk.Canvas):
         if self.selected.column == len(self.col_positions) - 2:
             self.see(r, c)
         else:
+            brc = False if self.PAR.ops.arrow_key_down_right_scroll_page else None
             self.see(
                 r,
                 c + 1,
-                bottom_right_corner=False if self.PAR.ops.arrow_key_down_right_scroll_page else True,
+                bottom_right_corner=brc,
                 redraw=False,
             )
             if self.selected.type_ == "columns":
