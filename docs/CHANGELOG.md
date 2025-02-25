@@ -1,6 +1,12 @@
 ### Version 7.4.5
+#### Changed:
+- Functions which had mutable default arguments have been changed to either have:
+    - no default argument where appropriate OR
+    - `None` as the default and create an empty mutable if `None`
+
 #### Fixed:
 - [#267](https://github.com/ragardner/tksheet/issues/267)
+- Treeview mode: changed recursive functions to `while` functions to avoid recursion depth limit during tree traversal
 
 #### Improved:
 - Code for `see()` and arrow key functions
