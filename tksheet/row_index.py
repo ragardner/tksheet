@@ -2923,14 +2923,15 @@ class RowIndex(tk.Canvas):
             current_iid = parent_iid
 
     def get_iid_descendants(self, iid: str, check_open: bool = False) -> Generator[str]:
-        stack = [iter(self.tree[iid].children)]
+        tree = self.tree
+        stack = [iter(tree[iid].children)]
         while stack:
             top_iterator = stack[-1]
             try:
                 ciid = next(top_iterator)
                 yield ciid
-                if self.tree[ciid].children and (not check_open or ciid in self.tree_open_ids):
-                    stack.append(iter(self.tree[ciid].children))
+                if tree[ciid].children and (not check_open or ciid in self.tree_open_ids):
+                    stack.append(iter(tree[ciid].children))
             except StopIteration:
                 stack.pop()
 
