@@ -2915,35 +2915,24 @@ class RowIndex(tk.Canvas):
             return True
         return all(map(self.tree_open_ids.__contains__, self.get_iid_ancestors(iid)))
 
-    # def get_iid_ancestors(self, iid: str) -> Generator[str]:
-    #     current_iid = iid
-    #     while self.tree[current_iid].parent:
-    #         parent_iid = self.tree[current_iid].parent
-    #         yield parent_iid
-    #         current_iid = parent_iid
-
     def get_iid_ancestors(self, iid: str) -> Generator[str]:
-        if self.tree[iid].parent:
-            yield self.tree[iid].parent
-            yield from self.get_iid_ancestors(self.tree[iid].parent)
-
-    # def get_iid_descendants(self, iid: str, check_open: bool = False) -> Generator[str]:
-    #     stack = [iter(self.tree[iid].children)]
-    #     while stack:
-    #         top_iterator = stack[-1]
-    #         try:
-    #             ciid = next(top_iterator)
-    #             yield ciid
-    #             if self.tree[ciid].children and (not check_open or ciid in self.tree_open_ids):
-    #                 stack.append(iter(self.tree[ciid].children))
-    #         except StopIteration:
-    #             stack.pop()
+        current_iid = iid
+        while self.tree[current_iid].parent:
+            parent_iid = self.tree[current_iid].parent
+            yield parent_iid
+            current_iid = parent_iid
 
     def get_iid_descendants(self, iid: str, check_open: bool = False) -> Generator[str]:
-        for ciid in self.tree[iid].children:
-            yield ciid
-            if self.tree[ciid].children and (not check_open or ciid in self.tree_open_ids):
-                yield from self.get_iid_descendants(ciid, check_open)
+        stack = [iter(self.tree[iid].children)]
+        while stack:
+            top_iterator = stack[-1]
+            try:
+                ciid = next(top_iterator)
+                yield ciid
+                if self.tree[ciid].children and (not check_open or ciid in self.tree_open_ids):
+                    stack.append(iter(self.tree[ciid].children))
+            except StopIteration:
+                stack.pop()
 
     def items_parent(self, iid: str) -> str:
         if self.tree[iid].parent:
