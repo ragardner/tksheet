@@ -2542,7 +2542,7 @@ class MainTable(tk.Canvas):
         if not c:
             self.see(r, c)
         else:
-            self.see(r, c - 1)
+            self.see(r, c - 1, redraw=False)
             if self.selected.type_ == "columns":
                 self.CH.select_col(c - 1, redraw=True)
 
