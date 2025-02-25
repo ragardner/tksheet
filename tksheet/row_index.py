@@ -2692,6 +2692,8 @@ class RowIndex(tk.Canvas):
                             if i == move_to_index:
                                 break
                             move_to_row += sum(1 for _ in self.get_iid_descendants(ciid)) + 1
+                        if new_parent == self.tree[item].parent:
+                            move_to_index -= 1
                         insert_row = move_to_row + 1
                     else:
                         num_top_nodes = sum(1 for _ in self.gen_top_nodes())
