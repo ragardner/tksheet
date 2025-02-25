@@ -189,11 +189,13 @@ class Span(dict):
 
     def format(
         self,
-        formatter_options: dict = {},
+        formatter_options: dict | None = None,
         formatter_class: object = None,
         redraw: bool = True,
         **kwargs,
     ) -> Span:
+        if formatter_options is None:
+            formatter_options = {}
         return self["widget"].format(
             self,
             formatter_options={"formatter": formatter_class, **formatter_options, **kwargs},
@@ -232,9 +234,9 @@ class Span(dict):
 
     def dropdown(
         self,
-        values: list = [],
+        values: list[object] | None = None,
         edit_data: bool = True,
-        set_values: dict[tuple[int, int], object] = {},
+        set_values: dict[tuple[int, int], object] | None = None,
         set_value: object = None,
         state: str = "normal",
         redraw: bool = True,
@@ -246,9 +248,9 @@ class Span(dict):
     ) -> Span:
         return self["widget"].dropdown(
             self,
-            values=values,
+            values=[] if values is None else values,
             edit_data=edit_data,
-            set_values=set_values,
+            set_values={} if set_values is None else set_values,
             set_value=set_value,
             state=state,
             redraw=redraw,

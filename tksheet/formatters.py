@@ -191,16 +191,16 @@ def formatter(
     **kwargs,
 ) -> dict:
     return {
-        **dict(
-            datatypes=datatypes,
-            format_function=format_function,
-            to_str_function=to_str_function,
-            invalid_value=invalid_value,
-            nullable=nullable,
-            pre_format_function=pre_format_function,
-            post_format_function=post_format_function,
-            clipboard_function=clipboard_function,
-        ),
+        **{
+            "datatypes": datatypes,
+            "format_function": format_function,
+            "to_str_function": to_str_function,
+            "invalid_value": invalid_value,
+            "nullable": nullable,
+            "pre_format_function": pre_format_function,
+            "post_format_function": post_format_function,
+            "clipboard_function": clipboard_function,
+        },
         **kwargs,
     }
 
@@ -243,7 +243,7 @@ def data_to_str(
     return to_str_function(value, **kwargs)
 
 
-def get_data_with_valid_check(value="", datatypes: tuple[()] | tuple[object] | object = tuple(), invalid_value="NA"):
+def get_data_with_valid_check(value="", datatypes: tuple[()] | tuple[object] | object = (), invalid_value="NA"):
     if isinstance(value, datatypes):
         return value
     return invalid_value
@@ -274,7 +274,7 @@ class Formatter:
     ) -> None:
         if nullable:
             if isinstance(datatypes, (list, tuple)):
-                datatypes = tuple({type_ for type_ in datatypes} | {type(None)})
+                datatypes = tuple(set(datatypes) | {type(None)})
             else:
                 datatypes = (datatypes, type(None))
         elif isinstance(datatypes, (list, tuple)) and type(None) in datatypes:

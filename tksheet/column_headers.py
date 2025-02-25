@@ -89,7 +89,7 @@ class ColumnHeaders(tk.Canvas):
         self.edit_cell_enabled = False
         self.dragged_col = None
         self.visible_col_dividers = {}
-        self.col_height_resize_bbox = tuple()
+        self.col_height_resize_bbox = ()
         self.cell_options = {}
         self.rsz_w = None
         self.rsz_h = None
@@ -1634,7 +1634,7 @@ class ColumnHeaders(tk.Canvas):
             if not text:
                 continue
             max_lines = int((self.current_height - top - 2) / txt_h)
-            for text in wrap_text(
+            for wrapped in wrap_text(
                 text=text,
                 max_width=max_width,
                 max_lines=max_lines,
@@ -1648,7 +1648,7 @@ class ColumnHeaders(tk.Canvas):
                     if showing:
                         self.itemconfig(
                             iid,
-                            text=text,
+                            text=wrapped,
                             fill=fill,
                             font=font,
                             anchor=align,
@@ -1656,7 +1656,7 @@ class ColumnHeaders(tk.Canvas):
                     else:
                         self.itemconfig(
                             iid,
-                            text=text,
+                            text=wrapped,
                             fill=fill,
                             font=font,
                             anchor=align,
@@ -1667,7 +1667,7 @@ class ColumnHeaders(tk.Canvas):
                     iid = self.create_text(
                         draw_x,
                         draw_y,
-                        text=text,
+                        text=wrapped,
                         fill=fill,
                         font=font,
                         anchor=align,

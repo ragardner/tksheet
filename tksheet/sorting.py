@@ -67,7 +67,7 @@ def _string_fallback(item: str) -> tuple[int, ...]:
             5,
             len(components),
             tuple(int(e) if e.isdigit() else e.lower() for comp in components[:-1] for e in split(r"(\d+)", comp) if e),
-            tuple(),
+            (),
         )
 
 
@@ -117,7 +117,7 @@ def version_sort_key(item: object) -> tuple[int, ...]:
                         for e in split(r"(\d+)", comp)
                         if e
                     ),
-                    tuple(),
+                    (),
                 )
         else:
             return (1, item)
@@ -195,7 +195,7 @@ def natural_sort_key(item: object) -> tuple[int, ...]:
                             for e in split(r"(\d+)", comp)
                             if e
                         ),
-                        tuple(),
+                        (),
                     )
         else:
             return (1, item)
@@ -393,7 +393,7 @@ def sort_columns_by_row(
         unsorted_part = [elem for idx, elem in enumerate(row_data) if idx not in sort_indices_set]
         new_data.append(sorted_part + unsorted_part)
 
-    return sort_indices, {old: new for old, new in zip(range(len(data[row])), sort_indices)}
+    return sort_indices, dict(zip(range(len(data[row])), sort_indices))
 
 
 def _sort_node_children(

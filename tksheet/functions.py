@@ -331,12 +331,12 @@ def event_dict(
         named_spans=DotDict() if named_spans is None else named_spans,
         options=DotDict(),
         selection_boxes={} if boxes is None else boxes,
-        selected=tuple() if selected is None else selected,
-        being_selected=tuple() if being_selected is None else being_selected,
+        selected=() if selected is None else selected,
+        being_selected=() if being_selected is None else being_selected,
         data=[] if data is None else data,
         key="" if key is None else key,
         value=None if value is None else value,
-        loc=tuple() if loc is None else loc,
+        loc=() if loc is None else loc,
         row=row,
         column=column,
         resized=DotDict(
@@ -418,7 +418,7 @@ def push_n(num: int, sorted_seq: Sequence[int]) -> int:
 
 
 def get_dropdown_kwargs(
-    values: list = [],
+    values: list[object] | None = None,
     set_value: object = None,
     state: str = "normal",
     redraw: bool = True,
@@ -429,7 +429,7 @@ def get_dropdown_kwargs(
     text: None | str = None,
 ) -> dict:
     return {
-        "values": values,
+        "values": [] if values is None else values,
         "set_value": set_value,
         "state": state,
         "redraw": redraw,
@@ -784,8 +784,7 @@ def get_new_indexes(
     returns {old idx: new idx, ...}
     """
     offset = sum(1 for i in to_move if i < move_to)
-    new_idxs = range(move_to - offset, move_to - offset + len(to_move))
-    new_idxs = {old: new for old, new in zip(to_move, new_idxs)}
+    new_idxs = dict(zip(to_move, range(move_to - offset, move_to - offset + len(to_move))))
     if get_inverse:
         return new_idxs, dict(zip(new_idxs.values(), new_idxs))
     return new_idxs
@@ -813,7 +812,7 @@ def del_placeholder_dict_key(
     d: dict[Hashable, object],
     k: Hashable,
     v: object,
-    p: tuple = tuple(),
+    p: tuple = (),
 ) -> dict[Hashable, object]:
     if p in d:
         del d[p]

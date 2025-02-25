@@ -33,3 +33,5 @@ Funding = "https://github.com/ragardner"
 
 [tool.ruff]
 line-length = 120
+extend-select = ["I", "F", "C4", "E", "B"]
+fix = true

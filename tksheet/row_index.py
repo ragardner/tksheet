@@ -91,7 +91,7 @@ class RowIndex(tk.Canvas):
         self.rc_delete_row_enabled = False
         self.edit_cell_enabled = False
         self.visible_row_dividers = {}
-        self.row_width_resize_bbox = tuple()
+        self.row_width_resize_bbox = ()
         self.rsz_w = None
         self.rsz_h = None
         self.currently_resizing_width = False
@@ -1231,7 +1231,7 @@ class RowIndex(tk.Canvas):
     def set_width_of_index_to_text(
         self,
         text: None | str = None,
-        only_rows: list = [],
+        only_rows: list[int] | None = None,
     ) -> int:
         self.fix_index()
         w = self.ops.default_row_index_width
@@ -1245,7 +1245,7 @@ class RowIndex(tk.Canvas):
             if (tw := b[2] - b[0] + 10) > w:
                 w = tw
         elif text is None:
-            w = self.get_index_text_width(only_rows=only_rows)
+            w = self.get_index_text_width(only_rows=[] if only_rows is None else only_rows)
         if w > self.ops.max_index_width:
             w = int(self.ops.max_index_width)
         self.set_width(w, set_TL=True)
@@ -2708,7 +2708,7 @@ class RowIndex(tk.Canvas):
                     disp_insert_row = None
 
                 else:
-                    iids = set(self.MT._row_index[r].iid for r in event_data["moved"]["rows"]["data"])
+                    iids = {self.MT._row_index[r].iid for r in event_data["moved"]["rows"]["data"]}
                     iids_descendants = {iid: set(self.get_iid_descendants(iid)) for iid in iids}
 
                     # remove descendants in iids to move
@@ -2755,7 +2755,7 @@ class RowIndex(tk.Canvas):
                     if (disp_from_row := self.MT.try_disprn(self.tree_rns[item])) is not None:
                         event_data["moved"]["rows"]["displayed"] = {disp_from_row: disp_insert_row}
                     else:
-                        event_data["moved"]["rows"]["displayed"] = {tuple(): disp_insert_row}
+                        event_data["moved"]["rows"]["displayed"] = {(): disp_insert_row}
 
                 if any(self.move_pid_causes_recursive_loop(self.MT._row_index[r].iid, new_parent) for r in moved_rows):
                     event_data["moved"]["rows"] = {}
@@ -2778,8 +2778,8 @@ class RowIndex(tk.Canvas):
                     data_new_idxs = event_data["moved"]["rows"]["data"]
                     data_old_idxs = dict(zip(data_new_idxs.values(), data_new_idxs))
 
-                    if tuple() in event_data["moved"]["rows"]["displayed"]:
-                        del event_data["moved"]["rows"]["displayed"][tuple()]
+                    if () in event_data["moved"]["rows"]["displayed"]:
+                        del event_data["moved"]["rows"]["displayed"][()]
 
                     if event_data["moved"]["rows"]["displayed"]:
                         event_data["moved"]["rows"]["displayed"] = get_new_indexes(
@@ -2848,7 +2848,7 @@ class RowIndex(tk.Canvas):
         row_ctr = next(reversed(mapping.values())) + 1
 
         if disp_mapping := event_data["moved"]["rows"]["displayed"]:
-            if tuple() in disp_mapping:
+            if () in disp_mapping:
                 disp_row_ctr = next(reversed(disp_mapping.values()))
             else:
                 disp_row_ctr = next(reversed(disp_mapping.values())) + 1
@@ -2907,10 +2907,10 @@ class RowIndex(tk.Canvas):
 
     def ancestors_all_open(self, iid: str, stop_at: str = "") -> bool:
         if stop_at:
-            for iid in self.get_iid_ancestors(iid):
-                if iid == stop_at:
+            for i in self.get_iid_ancestors(iid):
+                if i == stop_at:
                     return True
-                elif iid not in self.tree_open_ids:
+                elif i not in self.tree_open_ids:
                     return False
             return True
         return all(map(self.tree_open_ids.__contains__, self.get_iid_ancestors(iid)))

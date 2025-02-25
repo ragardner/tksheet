@@ -123,14 +123,14 @@ class Sheet(tk.Frame):
         header_align: str = "n",
         row_index_align: str | None = None,
         index_align: str = "n",
-        displayed_columns: list[int] = [],
+        displayed_columns: list[int] | None = None,
         all_columns_displayed: bool = True,
-        displayed_rows: list[int] = [],
+        displayed_rows: list[int] | None = None,
         all_rows_displayed: bool = True,
         to_clipboard_delimiter: str = "\t",
         to_clipboard_quotechar: str = '"',
         to_clipboard_lineterminator: str = "\n",
-        from_clipboard_delimiters: list[str] | str = ["\t"],
+        from_clipboard_delimiters: list[str] | str = "\t",
         show_default_header_for_empty: bool = True,
         show_default_index_for_empty: bool = True,
         page_up_down_select_row: bool = True,
@@ -734,10 +734,14 @@ class Sheet(tk.Frame):
         - "rc_delete_row", "end_rc_delete_row", "end_delete_rows", "delete_rows"
         - "begin_rc_delete_column", "begin_delete_columns"
         - "rc_delete_column", "end_rc_delete_column","end_delete_columns", "delete_columns"
-        - "begin_rc_insert_column", "begin_insert_column", "begin_insert_columns", "begin_add_column","begin_rc_add_column", "begin_add_columns"
-        - "rc_insert_column", "end_rc_insert_column", "end_insert_column", "end_insert_columns", "rc_add_column", "end_rc_add_column", "end_add_column", "end_add_columns", "add_columns"
-        - "begin_rc_insert_row", "begin_insert_row", "begin_insert_rows", "begin_rc_add_row", "begin_add_row", "begin_add_rows"
-        - "rc_insert_row", "end_rc_insert_row", "end_insert_row", "end_insert_rows", "rc_add_row", "end_rc_add_row", "end_add_row", "end_add_rows", "add_rows"
+        - "begin_rc_insert_column", "begin_insert_column", "begin_insert_columns", "begin_add_column",
+          "begin_rc_add_column", "begin_add_columns"
+        - "rc_insert_column", "end_rc_insert_column", "end_insert_column", "end_insert_columns", "rc_add_column",
+          "end_rc_add_column", "end_add_column", "end_add_columns", "add_columns"
+        - "begin_rc_insert_row", "begin_insert_row", "begin_insert_rows", "begin_rc_add_row", "begin_add_row",
+          "begin_add_rows"
+        - "rc_insert_row", "end_rc_insert_row", "end_insert_row", "end_insert_rows", "rc_add_row", "end_rc_add_row",
+          "end_add_row", "end_add_rows", "add_rows"
         - "row_height_resize"
         - "column_width_resize"
         - "cell_select"
@@ -2599,7 +2603,8 @@ class Sheet(tk.Frame):
         """
         Sort the data within specified box regions in the table.
 
-        This method sorts the data within one or multiple box regions defined by their coordinates. Each box's columns are sorted independently.
+        This method sorts the data within one or multiple box regions defined by their coordinates.
+        Each box's columns are sorted independently.
 
         Args:
             boxes (CreateSpanTypes): A type that can create a Span.
@@ -2617,7 +2622,8 @@ class Sheet(tk.Frame):
                 Note: Performance might be slow with the natural sort for very large datasets.
 
         Returns:
-            EventDataDict: A dictionary containing information about the sorting event, including changes made to the table.
+            EventDataDict: A dictionary containing information about the sorting event,
+            including changes made to the table.
 
         Raises:
             ValueError: If the input boxes are not in the expected format or if the data cannot be sorted.
@@ -2758,9 +2764,9 @@ class Sheet(tk.Frame):
     def dropdown(
         self,
         *key: CreateSpanTypes,
-        values: list = [],
+        values: list[object] | None = None,
         edit_data: bool = True,
-        set_values: dict[tuple[int, int], object] = {},
+        set_values: dict[tuple[int, int], object] | None = None,
         set_value: object = None,
         state: Literal["normal", "readonly", "disabled"] = "normal",
         redraw: bool = True,
@@ -2770,6 +2776,10 @@ class Sheet(tk.Frame):
         validate_input: bool = True,
         text: None | str = None,
     ) -> Span:
+        if values is None:
+            values = []
+        if set_values is None:
+            set_values = {}
         if not search_function:
             search_function = dropdown_search_function
         v = set_value if set_value is not None else values[0] if values else ""
@@ -3002,11 +3012,13 @@ class Sheet(tk.Frame):
     def format(
         self,
         *key: CreateSpanTypes,
-        formatter_options: dict = {},
+        formatter_options: dict | None = None,
         formatter_class: object = None,
         redraw: bool = True,
         **kwargs,
     ) -> Span:
+        if formatter_options is None:
+            formatter_options = {}
         span = self.span_from_key(*key)
         rows, cols = self.ranges_from_span(span)
         kwargs = fix_format_kwargs({"formatter": formatter_class, **formatter_options, **kwargs})
@@ -5306,8 +5318,8 @@ class Sheet(tk.Frame):
     def itemrow(self, item: str) -> int:
         try:
             return self.RI.tree_rns[item]
-        except Exception:
-            raise ValueError(f"item '{item}' does not exist.")
+        except ValueError as error:
+            raise ValueError(f"item '{item}' does not exist.") from error
 
     def rowitem(self, row: int, data_index: bool = False) -> str | None:
         try:
@@ -5528,7 +5540,7 @@ class Sheet(tk.Frame):
         return self.set_refresh_timer(redraw)
 
     def selection_toggle(self, *items, redraw: bool = True) -> Sheet:
-        selected = set(self.MT._row_index[self.displayed_row_to_data(rn)].iid for rn in self.get_selected_rows())
+        selected = {self.MT._row_index[self.displayed_row_to_data(rn)].iid for rn in self.get_selected_rows()}
         add = []
         remove = []
         for item in unpack(items):
@@ -5896,14 +5908,12 @@ class Sheet(tk.Frame):
 
     def readonly_rows(
         self,
-        rows: list | int = [],
+        rows: list[int] | int,
         readonly: bool = True,
         redraw: bool = False,
     ) -> Sheet:
         if isinstance(rows, int):
             rows = [rows]
-        else:
-            rows = rows
         if not readonly:
             for r in rows:
                 if r in self.MT.row_options and "readonly" in self.MT.row_options[r]:
@@ -5917,14 +5927,12 @@ class Sheet(tk.Frame):
 
     def readonly_columns(
         self,
-        columns: list | int = [],
+        columns: list[int] | int,
         readonly: bool = True,
         redraw: bool = False,
     ) -> Sheet:
         if isinstance(columns, int):
             columns = [columns]
-        else:
-            columns = columns
         if not readonly:
             for c in columns:
                 if c in self.MT.col_options and "readonly" in self.MT.col_options[c]:
@@ -5940,7 +5948,7 @@ class Sheet(tk.Frame):
         self,
         row: int = 0,
         column: int = 0,
-        cells: list = [],
+        cells: list[tuple[int, int]] | None = None,
         readonly: bool = True,
         redraw: bool = False,
     ) -> Sheet:
@@ -5969,7 +5977,7 @@ class Sheet(tk.Frame):
 
     def readonly_header(
         self,
-        columns: list = [],
+        columns: list[int],
         readonly: bool = True,
         redraw: bool = False,
     ) -> Sheet:
@@ -5978,7 +5986,7 @@ class Sheet(tk.Frame):
 
     def readonly_index(
         self,
-        rows: list = [],
+        rows: list[int],
         readonly: bool = True,
         redraw: bool = False,
     ) -> Sheet:
@@ -5987,7 +5995,7 @@ class Sheet(tk.Frame):
 
     def dehighlight_rows(
         self,
-        rows: list[int] | Literal["all"] = [],
+        rows: list[int] | Literal["all"],
         redraw: bool = True,
     ) -> Sheet:
         if isinstance(rows, int):
@@ -6014,7 +6022,7 @@ class Sheet(tk.Frame):
 
     def dehighlight_columns(
         self,
-        columns: list[int] | Literal["all"] = [],
+        columns: list[int] | Literal["all"],
         redraw: bool = True,
     ) -> Sheet:
         if isinstance(columns, int):
@@ -6078,7 +6086,7 @@ class Sheet(tk.Frame):
         self,
         row: int | Literal["all"] = 0,
         column: int | Literal["all"] = 0,
-        cells: list[tuple[int, int]] = [],
+        cells: list[tuple[int, int]] | None = None,
         canvas: Literal["table", "index", "header"] = "table",
         bg: bool | None | str = False,
         fg: bool | None | str = False,
@@ -6132,7 +6140,7 @@ class Sheet(tk.Frame):
         self,
         row: int | Literal["all"] = 0,
         column: int = 0,
-        cells: list[tuple[int, int]] = [],
+        cells: list[tuple[int, int]] | None = None,
         canvas: Literal["table", "row_index", "index", "header"] = "table",
         all_: bool = False,
         redraw: bool = True,
@@ -6211,7 +6219,7 @@ class Sheet(tk.Frame):
         self,
         row: int = 0,
         column: int = 0,
-        cells: list = [],
+        cells: list[tuple[int, int]] | dict[tuple[int, int], str] | None = None,
         align: str | None = "global",
         redraw: bool = True,
     ) -> Sheet:
@@ -6228,7 +6236,7 @@ class Sheet(tk.Frame):
 
     def align_rows(
         self,
-        rows: list | dict | int = [],
+        rows: list[int] | dict[int, str] | int,
         align: str | None = "global",
         align_index: bool = False,
         redraw: bool = True,
@@ -6253,7 +6261,7 @@ class Sheet(tk.Frame):
 
     def align_columns(
         self,
-        columns: list | dict | int = [],
+        columns: list[int] | dict[int, str] | int,
         align: str | None = "global",
         align_header: bool = False,
         redraw: bool = True,
@@ -6278,7 +6286,7 @@ class Sheet(tk.Frame):
 
     def align_header(
         self,
-        columns: list | dict | int = [],
+        columns: list[int] | dict[int, str] | int,
         align: str | None = "global",
         redraw: bool = True,
     ) -> Sheet:
@@ -6295,7 +6303,7 @@ class Sheet(tk.Frame):
 
     def align_index(
         self,
-        rows: list | dict | int = [],
+        rows: list[int] | dict[int, str] | int,
         align: str | None = "global",
         redraw: bool = True,
     ) -> Sheet:
@@ -6461,11 +6469,11 @@ class Sheet(tk.Frame):
         c: int | Literal["all"] = 0,
     ) -> None:
         if isinstance(r, str) and r.lower() == "all" and isinstance(c, int):
-            for r_, c_ in self.MT.cell_options:
+            for r_, _ in self.MT.cell_options:
                 if "checkbox" in self.MT.cell_options[(r_, c)]:
                     self.del_cell_options_checkbox(r_, c)
         elif isinstance(c, str) and c.lower() == "all" and isinstance(r, int):
-            for r_, c_ in self.MT.cell_options:
+            for _, c_ in self.MT.cell_options:
                 if "checkbox" in self.MT.cell_options[(r, c_)]:
                     self.del_cell_options_checkbox(r, c_)
         elif isinstance(r, str) and r.lower() == "all" and isinstance(c, str) and c.lower() == "all":
@@ -6716,11 +6724,11 @@ class Sheet(tk.Frame):
         c: int | Literal["all"] = 0,
     ) -> None:
         if isinstance(r, str) and r.lower() == "all" and isinstance(c, int):
-            for r_, c_ in self.MT.cell_options:
+            for r_, _ in self.MT.cell_options:
                 if "dropdown" in self.MT.cell_options[(r_, c)]:
                     self.del_cell_options_dropdown(r_, c)
         elif isinstance(c, str) and c.lower() == "all" and isinstance(r, int):
-            for r_, c_ in self.MT.cell_options:
+            for _, c_ in self.MT.cell_options:
                 if "dropdown" in self.MT.cell_options[(r, c_)]:
                     self.del_cell_options_dropdown(r, c_)
         elif isinstance(r, str) and r.lower() == "all" and isinstance(c, str) and c.lower() == "all":
@@ -6814,9 +6822,11 @@ class Sheet(tk.Frame):
         r: int = 0,
         c: int = 0,
         set_existing_dropdown: bool = False,
-        values: list[object] = [],
+        values: list[object] | None = None,
         set_value: object = None,
     ) -> Sheet:
+        if values is None:
+            values = []
         if set_existing_dropdown:
             if self.MT.dropdown.open:
                 r_, c_ = self.MT.dropdown.get_coords()
@@ -6839,9 +6849,11 @@ class Sheet(tk.Frame):
         self,
         c: int = 0,
         set_existing_dropdown: bool = False,
-        values: list[object] = [],
+        values: list[object] | None = None,
         set_value: object = None,
     ) -> Sheet:
+        if values is None:
+            values = []
         if set_existing_dropdown:
             if self.CH.dropdown.open:
                 c_ = self.CH.dropdown.get_coords()
@@ -6863,9 +6875,11 @@ class Sheet(tk.Frame):
         self,
         r: int = 0,
         set_existing_dropdown: bool = False,
-        values: list[object] = [],
+        values: list[object] | None = None,
         set_value: object = None,
     ) -> Sheet:
+        if values is None:
+            values = []
         if set_existing_dropdown:
             if self.RI.current_dropdown_window is not None:
                 r_ = self.RI.current_dropdown_window.r
@@ -6954,11 +6968,13 @@ class Sheet(tk.Frame):
         self,
         r: int | Literal["all"],
         c: int | Literal["all"],
-        formatter_options: dict = {},
+        formatter_options: dict | None = None,
         formatter_class: object = None,
         redraw: bool = True,
         **kwargs,
     ) -> Sheet:
+        if formatter_options is None:
+            formatter_options = {}
         kwargs = fix_format_kwargs({"formatter": formatter_class, **formatter_options, **kwargs})
         if isinstance(r, str) and r.lower() == "all" and isinstance(c, int):
             for r_ in range(self.MT.total_data_rows()):
@@ -6987,11 +7003,11 @@ class Sheet(tk.Frame):
         clear_values: bool = False,
     ) -> Sheet:
         if isinstance(r, str) and r.lower() == "all" and isinstance(c, int):
-            for r_, c_ in self.MT.cell_options:
+            for r_, _ in self.MT.cell_options:
                 if "format" in self.MT.cell_options[(r_, c)]:
                     self.MT.delete_cell_format(r_, c, clear_values=clear_values)
         elif isinstance(c, str) and c.lower() == "all" and isinstance(r, int):
-            for r_, c_ in self.MT.cell_options:
+            for _, c_ in self.MT.cell_options:
                 if "format" in self.MT.cell_options[(r, c_)]:
                     self.MT.delete_cell_format(r, c_, clear_values=clear_values)
         elif isinstance(r, str) and r.lower() == "all" and isinstance(c, str) and c.lower() == "all":
@@ -7005,11 +7021,13 @@ class Sheet(tk.Frame):
     def format_row(
         self,
         r: AnyIter[int] | int | Literal["all"],
-        formatter_options: dict = {},
+        formatter_options: dict | None = None,
         formatter_class: object = None,
         redraw: bool = True,
         **kwargs,
     ) -> Sheet:
+        if formatter_options is None:
+            formatter_options = {}
         kwargs = fix_format_kwargs({"formatter": formatter_class, **formatter_options, **kwargs})
         if isinstance(r, str) and r.lower() == "all":
             for r_ in range(len(self.MT.data)):
@@ -7047,11 +7065,13 @@ class Sheet(tk.Frame):
     def format_column(
         self,
         c: AnyIter[int] | int | Literal["all"],
-        formatter_options: dict = {},
+        formatter_options: dict | None = None,
         formatter_class: object = None,
         redraw: bool = True,
         **kwargs,
     ) -> Sheet:
+        if formatter_options is None:
+            formatter_options = {}
         kwargs = fix_format_kwargs({"formatter": formatter_class, **formatter_options, **kwargs})
         if isinstance(c, str) and c.lower() == "all":
             for c_ in range(self.MT.total_data_cols()):
@@ -7103,7 +7123,7 @@ class Dropdown(Sheet):
         height: int | None = None,
         font: None | tuple[str, int, str] = None,
         outline_thickness: int = 2,
-        values: list[object] = [],
+        values: list[object] | None = None,
         close_dropdown_window: Callable | None = None,
         search_function: Callable = dropdown_search_function,
         modified_function: None | Callable = None,
@@ -7161,7 +7181,7 @@ class Dropdown(Sheet):
             ops=ops,
             outline_color=outline_color,
             align=align,
-            values=values,
+            values=[] if values is None else values,
             search_function=search_function,
             modified_function=modified_function,
         )
@@ -7278,10 +7298,12 @@ class Dropdown(Sheet):
 
     def values(
         self,
-        values: list = [],
+        values: list[object] | None = None,
         redraw: bool = True,
         width: int | None = None,
     ) -> None:
+        if values is None:
+            values = []
         self.set_sheet_data(
             [[v] for v in values],
             reset_col_positions=False,
