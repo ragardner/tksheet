@@ -255,28 +255,32 @@ class ColumnHeaders(tk.Canvas):
     def shift_b1_press(self, event: object) -> None:
         self.mouseclick_outside_editor_or_dropdown_all_canvases(inside=True)
         c = self.MT.identify_col(x=event.x)
-        if (self.drag_and_drop_enabled or self.col_selection_enabled) and self.rsz_h is None and self.rsz_w is None:
-            if c < len(self.MT.col_positions) - 1:
-                c_selected = self.MT.col_selected(c)
-                if not c_selected and self.col_selection_enabled:
-                    if self.MT.selected and self.MT.selected.type_ == "columns":
-                        r_to_sel, c_to_sel = self.MT.selected.row, self.MT.selected.column
-                        self.MT.deselect("all", redraw=False)
-                        self.being_drawn_item = self.MT.create_selection_box(
-                            *self.get_shift_select_box(c, c_to_sel), "columns"
-                        )
-                        self.MT.set_currently_selected(r_to_sel, c_to_sel, self.being_drawn_item)
-                    else:
-                        self.being_drawn_item = self.select_col(c, run_binding_func=False)
-                    self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
-                    sel_event = self.MT.get_select_event(being_drawn_item=self.being_drawn_item)
-                    try_binding(self.shift_selection_binding_func, sel_event)
-                    self.PAR.emit_event("<<SheetSelect>>", data=sel_event)
-                elif c_selected:
-                    self.dragged_col = DraggedRowColumn(
-                        dragged=c,
-                        to_move=sorted(self.MT.get_selected_cols()),
+        if (
+            (self.drag_and_drop_enabled or self.col_selection_enabled)
+            and self.rsz_h is None
+            and self.rsz_w is None
+            and c < len(self.MT.col_positions) - 1
+        ):
+            c_selected = self.MT.col_selected(c)
+            if not c_selected and self.col_selection_enabled:
+                if self.MT.selected and self.MT.selected.type_ == "columns":
+                    r_to_sel, c_to_sel = self.MT.selected.row, self.MT.selected.column
+                    self.MT.deselect("all", redraw=False)
+                    self.being_drawn_item = self.MT.create_selection_box(
+                        *self.get_shift_select_box(c, c_to_sel), "columns"
                     )
+                    self.MT.set_currently_selected(r_to_sel, c_to_sel, self.being_drawn_item)
+                else:
+                    self.being_drawn_item = self.select_col(c, run_binding_func=False)
+                self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
+                sel_event = self.MT.get_select_event(being_drawn_item=self.being_drawn_item)
+                try_binding(self.shift_selection_binding_func, sel_event)
+                self.PAR.emit_event("<<SheetSelect>>", data=sel_event)
+            elif c_selected:
+                self.dragged_col = DraggedRowColumn(
+                    dragged=c,
+                    to_move=sorted(self.MT.get_selected_cols()),
+                )
 
     def get_shift_select_box(self, c: int, min_c: int) -> tuple[int, int, int, int, str]:
         if c >= min_c:
@@ -351,12 +355,11 @@ class ColumnHeaders(tk.Canvas):
                         self.rsz_h = None
                 except Exception:
                     self.rsz_h = None
-            if not mouse_over_resize:
-                if self.MT.col_selected(self.MT.identify_col(event, allow_end=False)):
-                    mouse_over_selected = True
-                    if self.MT.current_cursor != "hand2":
-                        self.config(cursor="hand2")
-                        self.MT.current_cursor = "hand2"
+            if not mouse_over_resize and self.MT.col_selected(self.MT.identify_col(event, allow_end=False)):
+                mouse_over_selected = True
+                if self.MT.current_cursor != "hand2":
+                    self.config(cursor="hand2")
+                    self.MT.current_cursor = "hand2"
             if not mouse_over_resize and not mouse_over_selected:
                 self.MT.reset_mouse_motion_creations()
         try_binding(self.extra_motion_func, event)
@@ -718,23 +721,19 @@ class ColumnHeaders(tk.Canvas):
             self.MT.set_xviews("moveto", 1)
 
     def event_over_dropdown(self, c: int, datacn: int, event: object, canvasx: float) -> bool:
-        if (
+        return (
             event.y < self.MT.header_txt_height + 5
             and self.get_cell_kwargs(datacn, key="dropdown")
             and canvasx < self.MT.col_positions[c + 1]
             and canvasx > self.MT.col_positions[c + 1] - self.MT.header_txt_height - 4
-        ):
-            return True
-        return False
+        )
 
     def event_over_checkbox(self, c: int, datacn: int, event: object, canvasx: float) -> bool:
-        if (
+        return (
             event.y < self.MT.header_txt_height + 5
             and self.get_cell_kwargs(datacn, key="checkbox")
             and canvasx < self.MT.col_positions[c] + self.MT.header_txt_height + 4
-        ):
-            return True
-        return False
+        )
 
     def drag_width_resize(self) -> None:
         new_col_pos = int(self.coords("rwl")[0])
@@ -1183,10 +1182,7 @@ class ColumnHeaders(tk.Canvas):
         # table
         if self.MT.data:
             if self.MT.all_rows_displayed:
-                if visible_only:
-                    iterable = range(*self.MT.visible_text_rows)
-                else:
-                    iterable = range(0, len(self.MT.data))
+                iterable = range(*self.MT.visible_text_rows) if visible_only else range(0, len(self.MT.data))
             else:
                 if visible_only:
                     start_row, end_row = self.MT.visible_text_rows
@@ -1203,11 +1199,13 @@ class ColumnHeaders(tk.Canvas):
                     qconf(qtxtm, text=txt, font=qfont)
                     b = qbbox(qtxtm)
                     if (
-                        self.MT.get_cell_kwargs(datarn, datacn, key="dropdown")
-                        or self.MT.get_cell_kwargs(datarn, datacn, key="checkbox")
-                    ) and (tw := b[2] - b[0] + qtxth + 7) > w:
-                        w = tw
-                    elif (tw := b[2] - b[0] + 7) > w:
+                        (
+                            self.MT.get_cell_kwargs(datarn, datacn, key="dropdown")
+                            or self.MT.get_cell_kwargs(datarn, datacn, key="checkbox")
+                        )
+                        and (tw := b[2] - b[0] + qtxth + 7) > w
+                        or (tw := b[2] - b[0] + 7) > w
+                    ):
                         w = tw
         if hw > w:
             w = hw
@@ -1516,9 +1514,8 @@ class ColumnHeaders(tk.Canvas):
         col_pos_exists: bool,
         set_scrollregion: bool,
     ) -> bool:
-        if set_scrollregion:
-            if not self.configure_scrollregion(last_col_line_pos=last_col_line_pos):
-                return False
+        if set_scrollregion and not self.configure_scrollregion(last_col_line_pos=last_col_line_pos):
+            return False
         self.hidd_text.update(self.disp_text)
         self.disp_text = {}
         self.hidd_high.update(self.disp_high)
@@ -2248,12 +2245,13 @@ class ColumnHeaders(tk.Canvas):
             return False
         elif "checkbox" in kwargs:
             return is_bool_like(value)
-        elif self.cell_equal_to(datacn, value):
-            return False
-        elif (kwargs := kwargs.get("dropdown", {})) and kwargs["validate_input"] and value not in kwargs["values"]:
-            return False
         else:
-            return True
+            return not (
+                self.cell_equal_to(datacn, value)
+                or (kwargs := kwargs.get("dropdown", {}))
+                and kwargs["validate_input"]
+                and value not in kwargs["values"]
+            )
 
     def cell_equal_to(self, datacn: int, value: object) -> bool:
         self.fix_header(datacn)

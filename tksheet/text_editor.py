@@ -111,9 +111,15 @@ class TextEditorTkText(tk.Text):
         ):
             self.tag_add("align", 1.0, "end")
             self.event_generate("<<TextModified>>")
-            if args and len(args) > 1 and args[1] != "\n" and args != ("1.0", "end"):
-                if self.yview() != (0.0, 1.0) and self.newline_bindng is not None:
-                    self.newline_bindng(check_lines=False)
+            if (
+                args
+                and len(args) > 1
+                and args[1] != "\n"
+                and args != ("1.0", "end")
+                and self.yview() != (0.0, 1.0)
+                and self.newline_bindng is not None
+            ):
+                self.newline_bindng(check_lines=False)
         return result
 
     def rc(self, event: object) -> None:

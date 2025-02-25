@@ -249,28 +249,32 @@ class RowIndex(tk.Canvas):
     def shift_b1_press(self, event: object) -> None:
         self.mouseclick_outside_editor_or_dropdown_all_canvases(inside=True)
         r = self.MT.identify_row(y=event.y)
-        if (self.drag_and_drop_enabled or self.row_selection_enabled) and self.rsz_h is None and self.rsz_w is None:
-            if r < len(self.MT.row_positions) - 1:
-                r_selected = self.MT.row_selected(r)
-                if not r_selected and self.row_selection_enabled:
-                    if self.MT.selected and self.MT.selected.type_ == "rows":
-                        r_to_sel, c_to_sel = self.MT.selected.row, self.MT.selected.column
-                        self.MT.deselect("all", redraw=False)
-                        self.being_drawn_item = self.MT.create_selection_box(
-                            *self.get_shift_select_box(r, r_to_sel), "rows"
-                        )
-                        self.MT.set_currently_selected(r_to_sel, c_to_sel, self.being_drawn_item)
-                    else:
-                        self.being_drawn_item = self.select_row(r, run_binding_func=False)
-                    self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
-                    sel_event = self.MT.get_select_event(being_drawn_item=self.being_drawn_item)
-                    try_binding(self.shift_selection_binding_func, sel_event)
-                    self.PAR.emit_event("<<SheetSelect>>", data=sel_event)
-                elif r_selected:
-                    self.dragged_row = DraggedRowColumn(
-                        dragged=r,
-                        to_move=sorted(self.MT.get_selected_rows()),
+        if (
+            (self.drag_and_drop_enabled or self.row_selection_enabled)
+            and self.rsz_h is None
+            and self.rsz_w is None
+            and r < len(self.MT.row_positions) - 1
+        ):
+            r_selected = self.MT.row_selected(r)
+            if not r_selected and self.row_selection_enabled:
+                if self.MT.selected and self.MT.selected.type_ == "rows":
+                    r_to_sel, c_to_sel = self.MT.selected.row, self.MT.selected.column
+                    self.MT.deselect("all", redraw=False)
+                    self.being_drawn_item = self.MT.create_selection_box(
+                        *self.get_shift_select_box(r, r_to_sel), "rows"
                     )
+                    self.MT.set_currently_selected(r_to_sel, c_to_sel, self.being_drawn_item)
+                else:
+                    self.being_drawn_item = self.select_row(r, run_binding_func=False)
+                self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
+                sel_event = self.MT.get_select_event(being_drawn_item=self.being_drawn_item)
+                try_binding(self.shift_selection_binding_func, sel_event)
+                self.PAR.emit_event("<<SheetSelect>>", data=sel_event)
+            elif r_selected:
+                self.dragged_row = DraggedRowColumn(
+                    dragged=r,
+                    to_move=sorted(self.MT.get_selected_rows()),
+                )
 
     def get_shift_select_box(self, r: int, min_r: int) -> tuple[int, int, int, int, str]:
         if r >= min_r:
@@ -354,12 +358,11 @@ class RowIndex(tk.Canvas):
                         self.rsz_w = None
                 except Exception:
                     self.rsz_w = None
-            if not mouse_over_resize:
-                if self.MT.row_selected(self.MT.identify_row(event, allow_end=False)):
-                    mouse_over_selected = True
-                    if self.MT.current_cursor != "hand2":
-                        self.config(cursor="hand2")
-                        self.MT.current_cursor = "hand2"
+            if not mouse_over_resize and self.MT.row_selected(self.MT.identify_row(event, allow_end=False)):
+                mouse_over_selected = True
+                if self.MT.current_cursor != "hand2":
+                    self.config(cursor="hand2")
+                    self.MT.current_cursor = "hand2"
             if not mouse_over_resize and not mouse_over_selected:
                 self.MT.reset_mouse_motion_creations()
         try_binding(self.extra_motion_func, event)
@@ -1641,9 +1644,8 @@ class RowIndex(tk.Canvas):
         row_pos_exists: bool,
         set_scrollregion: bool,
     ) -> bool:
-        if set_scrollregion:
-            if not self.configure_scrollregion(last_row_line_pos=last_row_line_pos):
-                return False
+        if set_scrollregion and not self.configure_scrollregion(last_row_line_pos=last_row_line_pos):
+            return False
         self.hidd_text.update(self.disp_text)
         self.disp_text = {}
         self.hidd_high.update(self.disp_high)
@@ -2433,12 +2435,13 @@ class RowIndex(tk.Canvas):
             return False
         elif "checkbox" in kwargs:
             return is_bool_like(value)
-        elif self.cell_equal_to(datarn, value):
-            return False
-        elif (kwargs := kwargs.get("dropdown", {})) and kwargs["validate_input"] and value not in kwargs["values"]:
-            return False
         else:
-            return True
+            return not (
+                self.cell_equal_to(datarn, value)
+                or (kwargs := kwargs.get("dropdown", {}))
+                and kwargs["validate_input"]
+                and value not in kwargs["values"]
+            )
 
     def cell_equal_to(self, datarn: int, value: object) -> bool:
         self.fix_index(datarn)
@@ -2730,10 +2733,7 @@ class RowIndex(tk.Canvas):
                         # max_from = max(event_data.moved.rows)
                         min_to = min(event_data["moved"]["rows"]["data"].values())
                         max_to = max(event_data["moved"]["rows"]["data"].values())
-                        if min_from <= min_to:
-                            insert_row = max_to
-                        else:
-                            insert_row = min_to
+                        insert_row = max_to if min_from <= min_to else min_to
                         move_to_iid = self.MT._row_index[insert_row].iid
 
                     move_to_index = self.PAR.index(move_to_iid)
@@ -3095,5 +3095,5 @@ class RowIndex(tk.Canvas):
                 {self.tree_rns[iid] for iid in self.PAR.get_children() if self.tree[iid].parent},
                 deselect_all=False,
                 data_indexes=True,
-                row_heights=False if row_heights is False else True,
+                row_heights=row_heights is not False,
             )

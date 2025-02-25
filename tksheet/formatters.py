@@ -1,14 +1,13 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from contextlib import suppress
 
 from .constants import falsy, nonelike, truthy
 
 
 def is_none_like(o: object) -> bool:
-    if (isinstance(o, str) and o.lower().replace(" ", "") in nonelike) or o in nonelike:
-        return True
-    return False
+    return (isinstance(o, str) and o.lower().replace(" ", "") in nonelike) or o in nonelike
 
 
 def to_int(o: object, **kwargs) -> int:
@@ -42,18 +41,9 @@ def alt_to_percentage(o: object, **kwargs) -> float:
 def to_bool(val: object, **kwargs) -> bool:
     if isinstance(val, bool):
         return val
-    if isinstance(val, str):
-        v = val.lower()
-    else:
-        v = val
-    if "truthy" in kwargs:
-        _truthy = kwargs["truthy"]
-    else:
-        _truthy = truthy
-    if "falsy" in kwargs:
-        _falsy = kwargs["falsy"]
-    else:
-        _falsy = falsy
+    v = val.lower() if isinstance(val, str) else val
+    _truthy = kwargs.get("truthy", truthy)
+    _falsy = kwargs.get("falsy", falsy)
     if v in _truthy:
         return True
     elif v in _falsy:
@@ -219,10 +209,8 @@ def format_data(
     if nullable and is_none_like(value):
         value = None
     else:
-        try:
+        with suppress(Exception):
             value = format_function(value, **kwargs)
-        except Exception:
-            pass
     if post_format_function and isinstance(value, datatypes):
         value = post_format_function(value)
     return value
@@ -277,9 +265,7 @@ class Formatter:
                 datatypes = tuple(set(datatypes) | {type(None)})
             else:
                 datatypes = (datatypes, type(None))
-        elif isinstance(datatypes, (list, tuple)) and type(None) in datatypes:
-            raise TypeError("Non-nullable cells cannot have NoneType as a datatype.")
-        elif datatypes is type(None):
+        elif isinstance(datatypes, (list, tuple)) and type(None) in datatypes or datatypes is type(None):
             raise TypeError("Non-nullable cells cannot have NoneType as a datatype.")
         self.kwargs = kwargs
         self.valid_datatypes = datatypes
@@ -305,9 +291,7 @@ class Formatter:
     def valid(self, value: object = None) -> bool:
         if value is None:
             value = self.value
-        if isinstance(value, self.valid_datatypes):
-            return True
-        return False
+        return isinstance(value, self.valid_datatypes)
 
     def format_data(self, value: object) -> object:
         if self.pre_format_function:

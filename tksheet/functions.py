@@ -1504,14 +1504,8 @@ def span_ranges(
 ) -> tuple[Generator[int], Generator[int]]:
     rng_from_r = 0 if span.from_r is None else span.from_r
     rng_from_c = 0 if span.from_c is None else span.from_c
-    if span.upto_r is None:
-        rng_upto_r = totalrows() if isinstance(totalrows, Callable) else totalrows
-    else:
-        rng_upto_r = span.upto_r
-    if span.upto_c is None:
-        rng_upto_c = totalcols() if isinstance(totalcols, Callable) else totalcols
-    else:
-        rng_upto_c = span.upto_c
+    rng_upto_r = (totalrows() if isinstance(totalrows, Callable) else totalrows) if span.upto_r is None else span.upto_r
+    rng_upto_c = (totalcols() if isinstance(totalcols, Callable) else totalcols) if span.upto_c is None else span.upto_c
     return range(rng_from_r, rng_upto_r), range(rng_from_c, rng_upto_c)
 
 
@@ -1673,10 +1667,7 @@ def span_idxs_post_move(
         newupto_colrange = newupto
     else:
         oldfrom = int(span[f"from_{axis}"])
-        if not oldfrom:
-            newfrom = 0
-        else:
-            newfrom = full_new_idxs[oldfrom]
+        newfrom = 0 if not oldfrom else full_new_idxs[oldfrom]
         newupto = None
         oldupto_colrange = total
         newupto_colrange = oldupto_colrange

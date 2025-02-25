@@ -105,9 +105,7 @@ class SpanRange:
         return reversed(range(self.from_, self.upto_))
 
     def __contains__(self, n: int) -> bool:
-        if n >= self.from_ and n < self.upto_:
-            return True
-        return False
+        return n >= self.from_ and n < self.upto_
 
     def __eq__(self, v: SpanRange) -> bool:
         return self.from_ == v.from_ and self.upto_ == v.upto_
@@ -408,19 +406,13 @@ class Span(dict):
     @property
     def rows(self) -> SpanRange:
         rng_from_r = 0 if self["from_r"] is None else self["from_r"]
-        if self["upto_r"] is None:
-            rng_upto_r = self["widget"].total_rows()
-        else:
-            rng_upto_r = self["upto_r"]
+        rng_upto_r = self["widget"].total_rows() if self["upto_r"] is None else self["upto_r"]
         return SpanRange(rng_from_r, rng_upto_r)
 
     @property
     def columns(self) -> SpanRange:
         rng_from_c = 0 if self["from_c"] is None else self["from_c"]
-        if self["upto_c"] is None:
-            rng_upto_c = self["widget"].total_columns()
-        else:
-            rng_upto_c = self["upto_c"]
+        rng_upto_c = self["widget"].total_columns() if self["upto_c"] is None else self["upto_c"]
         return SpanRange(rng_from_c, rng_upto_c)
 
     @property

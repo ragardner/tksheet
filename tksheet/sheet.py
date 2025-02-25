@@ -4,6 +4,7 @@ import tkinter as tk
 from bisect import bisect_left
 from collections import deque
 from collections.abc import Callable, Generator, Hashable, Iterator, Sequence
+from contextlib import suppress
 from itertools import accumulate, chain, filterfalse, islice, product, repeat
 from operator import attrgetter
 from timeit import default_timer
@@ -1617,10 +1618,7 @@ class Sheet(tk.Frame):
                 res = list(chain.from_iterable(res))
         elif span.ndim == 1:
             # flatten sublists
-            if len(res) == 1 and len(res[0]) == 1:
-                res = res[0]
-            else:
-                res = list(chain.from_iterable(res))
+            res = res[0] if len(res) == 1 and len(res[0]) == 1 else list(chain.from_iterable(res))
         # if span.ndim == 2 res keeps its current
         # dimensions as a list of lists
         if span.convert is not None:
@@ -2212,10 +2210,7 @@ class Sheet(tk.Frame):
                         c_ops=False,
                     )
         numrows = len(data)
-        if self.MT.all_rows_displayed:
-            displayed_ins_idx = idx
-        else:
-            displayed_ins_idx = bisect_left(self.MT.displayed_rows, idx)
+        displayed_ins_idx = idx if self.MT.all_rows_displayed else bisect_left(self.MT.displayed_rows, idx)
         event_data = self.MT.add_rows(
             *self.MT.get_args_for_add_rows(
                 data_ins_row=idx,
@@ -2804,13 +2799,13 @@ class Sheet(tk.Frame):
                 self.del_index_cell_options_dropdown_and_checkbox(r)
                 add_to_options(self.RI.cell_options, r, "dropdown", d)
                 if edit_data:
-                    set_idata(r, value=set_values[r] if r in set_values else v)
+                    set_idata(r, value=set_values.get(r, v))
         if header:
             for c in cols:
                 self.del_header_cell_options_dropdown_and_checkbox(c)
                 add_to_options(self.CH.cell_options, c, "dropdown", d)
                 if edit_data:
-                    set_hdata(c, value=set_values[c] if c in set_values else v)
+                    set_hdata(c, value=set_values.get(c, v))
         if table:
             if span.kind == "cell":
                 for r in rows:
@@ -2818,21 +2813,21 @@ class Sheet(tk.Frame):
                         self.del_cell_options_dropdown_and_checkbox(r, c)
                         add_to_options(self.MT.cell_options, (r, c), "dropdown", d)
                         if edit_data:
-                            set_tdata(r, c, value=set_values[(r, c)] if (r, c) in set_values else v)
+                            set_tdata(r, c, value=set_values.get((r, c), v))
             elif span.kind == "row":
                 for r in rows:
                     self.del_row_options_dropdown_and_checkbox(r)
                     add_to_options(self.MT.row_options, r, "dropdown", d)
                     if edit_data:
                         for c in cols:
-                            set_tdata(r, c, value=set_values[(r, c)] if (r, c) in set_values else v)
+                            set_tdata(r, c, value=set_values.get((r, c), v))
             elif span.kind == "column":
                 for c in cols:
                     self.del_column_options_dropdown_and_checkbox(c)
                     add_to_options(self.MT.col_options, c, "dropdown", d)
                     if edit_data:
                         for r in rows:
-                            set_tdata(r, c, value=set_values[(r, c)] if (r, c) in set_values else v)
+                            set_tdata(r, c, value=set_values.get((r, c), v))
         self.set_refresh_timer(redraw)
         return span
 
@@ -4523,18 +4518,14 @@ class Sheet(tk.Frame):
     def unbind_key_text_editor(self, key: str) -> Sheet:
         if key == "all":
             for key in self.MT.text_editor_user_bound_keys:
-                try:
+                with suppress(Exception):
                     self.MT.text_editor.tktext.unbind(key)
-                except Exception:
-                    pass
             self.MT.text_editor_user_bound_keys = {}
         else:
             if key in self.MT.text_editor_user_bound_keys:
                 del self.MT.text_editor_user_bound_keys[key]
-            try:
+            with suppress(Exception):
                 self.MT.text_editor.tktext.unbind(key)
-            except Exception:
-                pass
         return self
 
     def get_text_editor_value(self) -> str | None:
@@ -4993,9 +4984,9 @@ class Sheet(tk.Frame):
             columns=set(),
         )
         for tag in unpack(tags):
-            res.cells.update(self.MT.tagged_cells[tag] if tag in self.MT.tagged_cells else set())
-            res.rows.update(self.MT.tagged_rows[tag] if tag in self.MT.tagged_rows else set())
-            res.columns.update(self.MT.tagged_columns[tag] if tag in self.MT.tagged_columns else set())
+            res.cells.update(self.MT.tagged_cells.get(tag, set()))
+            res.rows.update(self.MT.tagged_rows.get(tag, set()))
+            res.columns.update(self.MT.tagged_columns.get(tag, set()))
         return res
 
     # Treeview Mode
@@ -5089,10 +5080,7 @@ class Sheet(tk.Frame):
         """
         If used without args all items are opened
         """
-        if items := set(unpack(items)):
-            to_open = self._tree_open(items)
-        else:
-            to_open = self._tree_open(set(self.get_children()))
+        to_open = self._tree_open(items) if (items := set(unpack(items))) else self._tree_open(set(self.get_children()))
         return self.show_rows(
             rows=to_open,
             redraw=redraw,
@@ -5119,10 +5107,7 @@ class Sheet(tk.Frame):
         """
         If used without args all items are closed
         """
-        if items:
-            to_close = self._tree_close(unpack(items))
-        else:
-            to_close = self._tree_close(self.get_children())
+        to_close = self._tree_close(unpack(items)) if items else self._tree_close(self.get_children())
         return self.hide_rows(
             rows=to_close,
             redraw=redraw,
@@ -5222,10 +5207,7 @@ class Sheet(tk.Frame):
         datarn = self._get_id_insert_row(index=index, parent=parent)
         rns_to_add = {}
         for rn, r in enumerate(data, start=datarn):
-            if iid_column is None:
-                iid = self.RI.new_iid()
-            else:
-                iid = r[iid_column]
+            iid = self.RI.new_iid() if iid_column is None else r[iid_column]
             new_node = Node(
                 r[text_column] if isinstance(text_column, int) else text_column if isinstance(text_column, str) else "",
                 iid,
@@ -6010,14 +5992,10 @@ class Sheet(tk.Frame):
                     del self.RI.cell_options[r]["highlight"]
         else:
             for r in rows:
-                try:
+                with suppress(Exception):
                     del self.MT.row_options[r]["highlight"]
-                except Exception:
-                    pass
-                try:
+                with suppress(Exception):
                     del self.RI.cell_options[r]["highlight"]
-                except Exception:
-                    pass
         return self.set_refresh_timer(redraw)
 
     def dehighlight_columns(
@@ -6037,14 +6015,10 @@ class Sheet(tk.Frame):
                     del self.CH.cell_options[c]["highlight"]
         else:
             for c in columns:
-                try:
+                with suppress(Exception):
                     del self.MT.col_options[c]["highlight"]
-                except Exception:
-                    pass
-                try:
+                with suppress(Exception):
                     del self.CH.cell_options[c]["highlight"]
-                except Exception:
-                    pass
         return self.set_refresh_timer(redraw)
 
     def highlight_rows(
@@ -7269,10 +7243,7 @@ class Dropdown(Sheet):
             row = None
         elif event.keysym == "Return":
             row = self.get_selected_rows()
-            if not row:
-                row = None
-            else:
-                row = next(iter(row))
+            row = None if not row else next(iter(row))
         else:
             row = self.identify_row(event, exclude_index=True, allow_end=False)
         if self.single_index:
