@@ -2686,14 +2686,10 @@ class RowIndex(tk.Canvas):
                         else:
                             move_to_index = len(self.tree[new_parent].children)
                         move_to_row = self.tree_rns[new_parent]
-                        if new_parent == self.tree[item].parent:
-                            move_to_index += 1
-                        for i, ciid in enumerate(self.tree[new_parent].children):
-                            if i == move_to_index:
-                                break
-                            move_to_row += sum(1 for _ in self.get_iid_descendants(ciid)) + 1
-                        if new_parent == self.tree[item].parent:
-                            move_to_index -= 1
+                        _find = move_to_index + 1 if new_parent == self.tree[item].parent else move_to_index
+                        move_to_row += _find + sum(
+                            self.num_descendants(cid) for cid in islice(self.tree[new_parent].children, _find)
+                        )
                         insert_row = move_to_row + 1
                     else:
                         num_top_nodes = sum(1 for _ in self.gen_top_nodes())
@@ -2936,6 +2932,21 @@ class RowIndex(tk.Canvas):
                     stack.append(iter(tree[ciid].children))
             except StopIteration:
                 stack.pop()
+
+    def num_descendants(self, iid: str) -> int:
+        tree = self.tree
+        stack = [iter(tree[iid].children)]
+        num = 0
+        while stack:
+            top_iterator = stack[-1]
+            try:
+                ciid = next(top_iterator)
+                num += 1
+                if tree[ciid].children:
+                    stack.append(iter(tree[ciid].children))
+            except StopIteration:
+                stack.pop()
+        return num
 
     def items_parent(self, iid: str) -> str:
         if self.tree[iid].parent:

@@ -5165,13 +5165,10 @@ class Sheet(tk.Frame):
                     self.RI.tree_rns[parent]
                     + index
                     + 1
-                    + sum(
-                        sum(1 for _ in self.RI.get_iid_descendants(cid))
-                        for cid in islice(self.get_children(parent), index)
-                    )
+                    + sum(self.RI.num_descendants(cid) for cid in islice(self.get_children(parent), index))
                 )
             else:
-                datarn = self.RI.tree_rns[parent] + sum(1 for _ in self.RI.get_iid_descendants(parent)) + 1
+                datarn = self.RI.tree_rns[parent] + self.RI.num_descendants(parent) + 1
         else:
             if isinstance(index, int):
                 datarn = index
