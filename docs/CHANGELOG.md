@@ -7,6 +7,7 @@
 #### Fixed:
 - [#267](https://github.com/ragardner/tksheet/issues/267)
 - Treeview mode: changed recursive functions to `while` functions to avoid recursion depth limit during tree traversal
+- Additional treeview function `move()` fixes
 
 #### Improved:
 - Code for `see()` and arrow key functions
