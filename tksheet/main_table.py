@@ -1726,7 +1726,7 @@ class MainTable(tk.Canvas):
                     # finally, change the span coords
                     span["from_r"], span["upto_r"] = newfrom, newupto
 
-        if move_heights and disp_new_idxs:
+        if not undo_modification and (move_heights and disp_new_idxs):
             self.set_row_positions(
                 itr=move_elements_by_mapping_gen(
                     self.get_row_heights(),
