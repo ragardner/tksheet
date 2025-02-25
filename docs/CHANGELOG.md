@@ -1,5 +1,9 @@
 ### Version 7.4.5
-####
+#### Fixed:
+- [#267](https://github.com/ragardner/tksheet/issues/267)
+
+#### Improved:
+- Code for `see()` and arrow key functions
 
 ### Version 7.4.4
 #### Changed:

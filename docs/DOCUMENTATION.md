@@ -5430,7 +5430,7 @@ see(
     column: int = 0,
     keep_yscroll: bool = False,
     keep_xscroll: bool = False,
-    bottom_right_corner: bool = False,
+    bottom_right_corner: bool | None = None,
     check_cell_visibility: bool = True,
     redraw: bool = True,
 ) -> Sheet

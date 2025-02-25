@@ -551,15 +551,7 @@ class MainTable(tk.Canvas):
                     self.set_currently_selected(row, column, item=item)
                 else:
                     self.select_cell(row, column, redraw=False)
-            if not self.see(
-                row,
-                column,
-                keep_yscroll=False,
-                keep_xscroll=False,
-                bottom_right_corner=False,
-                check_cell_visibility=True,
-                redraw=True,
-            ):
+            if not self.see(row, column):
                 self.refresh()
         return coords
 
@@ -1225,15 +1217,7 @@ class MainTable(tk.Canvas):
         )
         event_data["selection_boxes"] = self.get_boxes()
         event_data["selected"] = self.selected
-        self.see(
-            r=selected_r,
-            c=selected_c,
-            keep_yscroll=False,
-            keep_xscroll=False,
-            bottom_right_corner=False,
-            check_cell_visibility=True,
-            redraw=False,
-        )
+        self.see(selected_r, selected_c, redraw=False)
         self.refresh()
         if event_data["cells"]["table"] or event_data["added"]["rows"] or event_data["added"]["columns"]:
             self.undo_stack.append(stored_event_dict(event_data))
@@ -2048,15 +2032,7 @@ class MainTable(tk.Canvas):
             )
 
         if self.selected:
-            self.see(
-                r=self.selected.row,
-                c=self.selected.column,
-                keep_yscroll=False,
-                keep_xscroll=False,
-                bottom_right_corner=False,
-                check_cell_visibility=True,
-                redraw=False,
-            )
+            self.see(self.selected.row, self.selected.column, redraw=False)
 
         self.refresh()
         return event_data
@@ -2067,18 +2043,27 @@ class MainTable(tk.Canvas):
         c: int | None = None,
         keep_yscroll: bool = False,
         keep_xscroll: bool = False,
-        bottom_right_corner: bool = False,
+        bottom_right_corner: bool | None = None,
         check_cell_visibility: bool = True,
         redraw: bool = True,
         r_pc: float = 0.0,
         c_pc: float = 0.0,
     ) -> bool:
         need_redraw = False
-        yvis, xvis = False, False
-        if check_cell_visibility:
-            yvis, xvis = self.cell_completely_visible(r=r, c=c, separate_axes=True)
-        if not yvis and len(self.row_positions) > 1:
-            if bottom_right_corner:
+        vis_info = self.cell_visibility_info(r, c)
+        yvis, xvis = vis_info["yvis"], vis_info["xvis"]
+        top_left_x, top_left_y, bottom_right_x, bottom_right_y = vis_info["visible_region"]
+        x1, y1, x2, y2 = vis_info["cell_coords"]
+        # y scroll
+        if not check_cell_visibility or (check_cell_visibility and not yvis) and len(self.row_positions) > 1:
+            if bottom_right_corner is None:
+                both_above = y1 < top_left_y and y2 < top_left_y
+                y1_above_y2_below = y1 < top_left_y and y2 > bottom_right_y
+                y1_above_y2_visible = y1 < top_left_y and top_left_y <= y2 <= bottom_right_y
+                brc = not (both_above or y1_above_y2_below or y1_above_y2_visible)
+            else:
+                brc = bottom_right_corner
+            if brc:
                 if r is not None and not keep_yscroll:
                     winfo_height = self.winfo_height()
                     if self.row_positions[r + 1] - self.row_positions[r] > winfo_height:
@@ -2104,8 +2089,16 @@ class MainTable(tk.Canvas):
                     ]
                     self.set_yviews(*args, redraw=False)
                     need_redraw = True
-        if not xvis and len(self.col_positions) > 1:
-            if bottom_right_corner:
+        # x scroll
+        if not check_cell_visibility or (check_cell_visibility and not xvis) and len(self.col_positions) > 1:
+            if bottom_right_corner is None:
+                both_left = x1 < top_left_x and x2 < top_left_x
+                x1_left_x2_right = x1 < top_left_x and x2 > bottom_right_x
+                x1_left_x2_visible = x1 < top_left_x and top_left_x <= x2 <= bottom_right_x
+                brc = not (both_left or x1_left_x2_right or x1_left_x2_visible)
+            else:
+                brc = bottom_right_corner
+            if brc:
                 if c is not None and not keep_xscroll:
                     winfo_width = self.winfo_width()
                     if self.col_positions[c + 1] - self.col_positions[c] > winfo_width:
@@ -2144,17 +2137,24 @@ class MainTable(tk.Canvas):
             0 if not r else self.row_positions[r + 1],
         )
 
-    def cell_completely_visible(
-        self,
-        r: int | None = 0,
-        c: int | None = 0,
-        separate_axes: bool = False,
-    ) -> bool | tuple[bool, bool]:
+    def cell_completely_visible(self, r: int | None = 0, c: int | None = 0) -> bool:
         cx1, cy1, cx2, cy2 = self.get_canvas_visible_area()
         x1, y1, x2, y2 = self.get_cell_coords(r, c)
-        x_vis = cx1 <= x1 and cx2 >= x2
-        y_vis = cy1 <= y1 and cy2 >= y2
-        return (y_vis, x_vis) if separate_axes else y_vis and x_vis
+        return cy1 <= y1 and cy2 >= y2 and cx1 <= x1 and cx2 >= x2
+
+    def cell_visibility_info(
+        self,
+        r: int,
+        c: int,
+    ) -> dict[Literal["yvis", "xvis", "visible_region", "cell_coords"], bool | tuple[int, int, int, int]]:
+        cx1, cy1, cx2, cy2 = self.get_canvas_visible_area()
+        x1, y1, x2, y2 = self.get_cell_coords(r, c)
+        return {
+            "yvis": cy1 <= y1 and cy2 >= y2,
+            "xvis": cx1 <= x1 and cx2 >= x2,
+            "visible_region": (cx1, cy1, cx2, cy2),
+            "cell_coords": (x1, y1, x2, y2),
+        }
 
     def cell_visible(self, r: int = 0, c: int = 0) -> bool:
         cx1, cy1, cx2, cy2 = self.get_canvas_visible_area()
@@ -2529,156 +2529,74 @@ class MainTable(tk.Canvas):
     def arrowkey_UP(self, event: object = None) -> None:
         if not self.selected:
             return
-        if self.selected.type_ == "rows":
-            r = self.selected.row
-            if r and self.RI.row_selection_enabled:
-                if self.cell_completely_visible(r=r - 1, c=0):
-                    self.RI.select_row(r - 1, redraw=True)
-                else:
-                    self.RI.select_row(r - 1)
-                    self.see(r - 1, 0, keep_xscroll=True, check_cell_visibility=False)
-        elif self.selected.type_ in ("cells", "columns"):
-            r = self.selected.row
-            c = self.selected.column
-            if not r and self.CH.col_selection_enabled and not self.cell_completely_visible(r=r, c=c):
-                self.see(r, c, check_cell_visibility=False)
-            elif r and (self.single_selection_enabled or self.toggle_selection_enabled):
-                if self.cell_completely_visible(r=r - 1, c=c):
-                    self.select_cell(r - 1, c, redraw=True)
-                else:
-                    self.select_cell(r - 1, c)
-                    self.see(r - 1, c, keep_xscroll=True, check_cell_visibility=False)
-
-    def arrowkey_DOWN(self, event: object = None) -> None:
-        if not self.selected:
-            return
-        if self.selected.type_ == "rows":
-            r = self.selected.row
-            if r < len(self.row_positions) - 2 and self.RI.row_selection_enabled:
-                if self.cell_completely_visible(r=r + 1, c=0):
-                    self.RI.select_row(r + 1, redraw=True)
-                else:
-                    self.RI.select_row(r + 1)
-                    self.see(
-                        r + 1,
-                        0,
-                        keep_xscroll=True,
-                        bottom_right_corner=False if self.PAR.ops.arrow_key_down_right_scroll_page else True,
-                        check_cell_visibility=False,
-                    )
-
-        elif self.selected.type_ == "columns":
-            c = self.selected.column
-            if self.single_selection_enabled or self.toggle_selection_enabled:
-                if self.selected.row == len(self.row_positions) - 2:
-                    r = self.selected.row
-                else:
-                    r = self.selected.row + 1
-                if self.cell_completely_visible(r=r, c=c):
-                    self.select_cell(r, c, redraw=True)
-                else:
-                    self.select_cell(r, c)
-                    self.see(
-                        r,
-                        c,
-                        check_cell_visibility=False,
-                    )
+        r = self.selected.row
+        c = self.selected.column
+        if not r:
+            self.see(r, c)
         else:
-            r = self.selected.row
-            c = self.selected.column
-            if r < len(self.row_positions) - 2 and (self.single_selection_enabled or self.toggle_selection_enabled):
-                if self.cell_completely_visible(r=r + 1, c=c):
-                    self.select_cell(r + 1, c, redraw=True)
-                else:
-                    self.select_cell(r + 1, c)
-                    self.see(
-                        r + 1,
-                        c,
-                        keep_xscroll=True,
-                        bottom_right_corner=False if self.PAR.ops.arrow_key_down_right_scroll_page else True,
-                        check_cell_visibility=False,
-                    )
+            self.see(r - 1, c, redraw=False)
+            if self.selected.type_ == "rows" and self.RI.row_selection_enabled:
+                self.RI.select_row(r - 1, redraw=True)
+
+            elif self.selected.type_ in ("cells", "columns") and (
+                self.single_selection_enabled or self.toggle_selection_enabled
+            ):
+                self.select_cell(r - 1, c, redraw=True)
 
     def arrowkey_LEFT(self, event: object = None) -> None:
         if not self.selected:
             return
-        if self.selected.type_ == "columns":
-            c = self.selected.column
-            if c and self.CH.col_selection_enabled:
-                if self.cell_completely_visible(r=0, c=c - 1):
-                    self.CH.select_col(c - 1, redraw=True)
-                else:
-                    self.CH.select_col(c - 1)
-                    self.see(
-                        0,
-                        c - 1,
-                        keep_yscroll=True,
-                        bottom_right_corner=True,
-                        check_cell_visibility=False,
-                    )
-        elif self.selected.type_ == "rows" and self.selected.column:
-            self.select_cell(self.selected.row, self.selected.column - 1)
-            self.see(self.selected.row, self.selected.column, check_cell_visibility=True)
-        elif self.selected.type_ == "cells":
-            r = self.selected.row
-            c = self.selected.column
-            if not c and not self.cell_completely_visible(r=r, c=c):
-                self.see(r, c, keep_yscroll=True, check_cell_visibility=False)
-            elif c and (self.single_selection_enabled or self.toggle_selection_enabled):
-                if self.cell_completely_visible(r=r, c=c - 1):
-                    self.select_cell(r, c - 1, redraw=True)
-                else:
-                    self.select_cell(r, c - 1)
-                    self.see(r, c - 1, keep_yscroll=True, check_cell_visibility=False)
+        r = self.selected.row
+        c = self.selected.column
+        if not c:
+            self.see(r, c)
+        else:
+            self.see(r, c - 1)
+            if self.selected.type_ == "columns":
+                self.CH.select_col(c - 1, redraw=True)
+
+            elif self.selected.type_ in ("cells", "rows"):
+                self.select_cell(r, c - 1, redraw=True)
+
+    def arrowkey_DOWN(self, event: object = None) -> None:
+        if not self.selected:
+            return
+        r = self.selected.row
+        c = self.selected.column
+        if self.selected.row == len(self.row_positions) - 2:
+            self.see(r, c)
+        else:
+            self.see(
+                r + 1,
+                c,
+                bottom_right_corner=False if self.PAR.ops.arrow_key_down_right_scroll_page else True,
+                redraw=False,
+            )
+            if self.selected.type_ == "rows":
+                self.RI.select_row(r + 1, redraw=True)
+
+            elif self.selected.type_ in ("cells", "columns"):
+                self.select_cell(r + 1, c, redraw=True)
 
     def arrowkey_RIGHT(self, event: object = None) -> None:
         if not self.selected:
             return
-        if self.selected.type_ == "rows":
-            r = self.selected.row
-            if self.single_selection_enabled or self.toggle_selection_enabled:
-                if self.selected.column == len(self.col_positions) - 2:
-                    c = self.selected.column
-                else:
-                    c = self.selected.column + 1
-                if self.cell_completely_visible(r=r, c=c):
-                    self.select_cell(r, c, redraw=True)
-                else:
-                    self.select_cell(r, c)
-                    self.see(
-                        r,
-                        c,
-                        check_cell_visibility=False,
-                    )
-        elif self.selected.type_ == "columns":
-            c = self.selected.column
-            if c < len(self.col_positions) - 2 and self.CH.col_selection_enabled:
-                if self.cell_completely_visible(r=0, c=c + 1):
-                    self.CH.select_col(c + 1, redraw=True)
-                else:
-                    self.CH.select_col(c + 1)
-                    self.see(
-                        0,
-                        c + 1,
-                        keep_yscroll=True,
-                        bottom_right_corner=False if self.PAR.ops.arrow_key_down_right_scroll_page else True,
-                        check_cell_visibility=False,
-                    )
+        r = self.selected.row
+        c = self.selected.column
+        if self.selected.column == len(self.col_positions) - 2:
+            self.see(r, c)
         else:
-            r = self.selected.row
-            c = self.selected.column
-            if c < len(self.col_positions) - 2 and (self.single_selection_enabled or self.toggle_selection_enabled):
-                if self.cell_completely_visible(r=r, c=c + 1):
-                    self.select_cell(r, c + 1, redraw=True)
-                else:
-                    self.select_cell(r, c + 1)
-                    self.see(
-                        r,
-                        c + 1,
-                        keep_yscroll=True,
-                        bottom_right_corner=False if self.PAR.ops.arrow_key_down_right_scroll_page else True,
-                        check_cell_visibility=False,
-                    )
+            self.see(
+                r,
+                c + 1,
+                bottom_right_corner=False if self.PAR.ops.arrow_key_down_right_scroll_page else True,
+                redraw=False,
+            )
+            if self.selected.type_ == "columns":
+                self.CH.select_col(c + 1, redraw=True)
+
+            elif self.selected.type_ in ("cells", "rows"):
+                self.select_cell(r, c + 1, redraw=True)
 
     def shift_arrowkey_select_box(
         self,
@@ -7283,7 +7201,7 @@ class MainTable(tk.Canvas):
             self.text_editor.window.set_text(self.text_editor.get() + "" if not isinstance(text, str) else text)
             return False
         self.hide_text_editor()
-        if not self.see(r=r, c=c, check_cell_visibility=True):
+        if not self.see(r, c):
             self.main_table_redraw_grid_and_text(True, True)
         x = self.col_positions[c]
         y = self.row_positions[r]
@@ -7517,13 +7435,7 @@ class MainTable(tk.Canvas):
                     new_r, new_c = None, None
                 if isinstance(new_r, int):
                     self.set_currently_selected(new_r, new_c, item=self.selected.fill_iid)
-                    self.see(
-                        new_r,
-                        new_c,
-                        keep_xscroll=False,
-                        bottom_right_corner=True,
-                        check_cell_visibility=True,
-                    )
+                    self.see(new_r, new_c)
         self.recreate_all_selection_boxes()
         self.hide_text_editor_and_dropdown()
         if event.keysym != "FocusOut":
@@ -7536,17 +7448,11 @@ class MainTable(tk.Canvas):
             r,
             c + 1 if c < len(self.col_positions) - 2 else c,
             bottom_right_corner=True,
-            check_cell_visibility=True,
         )
 
     def select_down(self, r: int, c: int) -> None:
         self.select_cell(r + 1 if r < len(self.row_positions) - 2 else r, c)
-        self.see(
-            r + 1 if r < len(self.row_positions) - 2 else r,
-            c,
-            bottom_right_corner=True,
-            check_cell_visibility=True,
-        )
+        self.see(r + 1 if r < len(self.row_positions) - 2 else r, c)
 
     def tab_key(self, event: object = None) -> str:
         if not self.selected:
@@ -7562,13 +7468,7 @@ class MainTable(tk.Canvas):
         else:
             new_r, new_c = cell_right_within_box(r, c, r1, c1, r2, c2, numrows, numcols)
             self.set_currently_selected(new_r, new_c, item=self.selected.fill_iid)
-        self.see(
-            new_r,
-            new_c,
-            keep_xscroll=False,
-            bottom_right_corner=True,
-            check_cell_visibility=True,
-        )
+        self.see(new_r, new_c, bottom_right_corner=True)
         if not self.PAR.ops.show_selected_cells_border:
             self.refresh()
         return "break"

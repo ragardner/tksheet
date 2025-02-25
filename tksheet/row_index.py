@@ -1983,7 +1983,7 @@ class RowIndex(tk.Canvas):
             self.text_editor.set_text(self.text_editor.get() + "" if not isinstance(text, str) else text)
             return False
         self.hide_text_editor()
-        if not self.MT.see(r=r, c=0, keep_yscroll=True, check_cell_visibility=True):
+        if not self.MT.see(r, 0, keep_yscroll=True):
             self.MT.main_table_redraw_grid_and_text(True, True)
         x = 0
         y = self.MT.row_positions[r]
@@ -2915,10 +2915,29 @@ class RowIndex(tk.Canvas):
             return True
         return all(map(self.tree_open_ids.__contains__, self.get_iid_ancestors(iid)))
 
+    # def get_iid_ancestors(self, iid: str) -> Generator[str]:
+    #     current_iid = iid
+    #     while self.tree[current_iid].parent:
+    #         parent_iid = self.tree[current_iid].parent
+    #         yield parent_iid
+    #         current_iid = parent_iid
+
     def get_iid_ancestors(self, iid: str) -> Generator[str]:
         if self.tree[iid].parent:
             yield self.tree[iid].parent
             yield from self.get_iid_ancestors(self.tree[iid].parent)
+
+    # def get_iid_descendants(self, iid: str, check_open: bool = False) -> Generator[str]:
+    #     stack = [iter(self.tree[iid].children)]
+    #     while stack:
+    #         top_iterator = stack[-1]
+    #         try:
+    #             ciid = next(top_iterator)
+    #             yield ciid
+    #             if self.tree[ciid].children and (not check_open or ciid in self.tree_open_ids):
+    #                 stack.append(iter(self.tree[ciid].children))
+    #         except StopIteration:
+    #             stack.pop()
 
     def get_iid_descendants(self, iid: str, check_open: bool = False) -> Generator[str]:
         for ciid in self.tree[iid].children:

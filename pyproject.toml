@@ -25,9 +25,11 @@ classifiers = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/ragardner/tksheet"
-"Bug Reports" = "https://github.com/ragardner/tksheet/issues"
-"Funding" = "https://github.com/ragardner"
+Homepage = "https://github.com/ragardner/tksheet"
+Documentation = "https://github.com/ragardner/tksheet/wiki/Version-7"
+Changelog = "https://github.com/ragardner/tksheet/blob/master/docs/CHANGELOG.md"
+Issues = "https://github.com/ragardner/tksheet/issues"
+Funding = "https://github.com/ragardner"
 
 [tool.ruff]
 line-length = 120

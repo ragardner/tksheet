@@ -4034,7 +4034,7 @@ class Sheet(tk.Frame):
         column: int = 0,
         keep_yscroll: bool = False,
         keep_xscroll: bool = False,
-        bottom_right_corner: bool = False,
+        bottom_right_corner: bool | None = None,
         check_cell_visibility: bool = True,
         redraw: bool = True,
     ) -> Sheet:
@@ -4053,7 +4053,11 @@ class Sheet(tk.Frame):
         return self.MT.cell_visible(r, c)
 
     def cell_completely_visible(self, r: int, c: int, seperate_axes: bool = False) -> bool:
-        return self.MT.cell_completely_visible(r, c, seperate_axes)
+        if seperate_axes:
+            d = self.MT.cell_visibility_info(r, c)
+            return d["yvis"], d["xvis"]
+        else:
+            return self.MT.cell_completely_visible(r, c)
 
     def set_xview(self, position: None | float = None, option: str = "moveto") -> Sheet | tuple[float, float]:
         if position is not None:

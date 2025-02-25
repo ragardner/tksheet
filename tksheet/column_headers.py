@@ -1795,7 +1795,7 @@ class ColumnHeaders(tk.Canvas):
             self.text_editor.set_text(self.text_editor.get() + "" if not isinstance(text, str) else text)
             return False
         self.hide_text_editor()
-        if not self.MT.see(r=0, c=c, keep_yscroll=True, check_cell_visibility=True):
+        if not self.MT.see(0, c, keep_yscroll=True):
             self.MT.main_table_redraw_grid_and_text(True, True)
         x = self.MT.col_positions[c] + 1
         y = 0

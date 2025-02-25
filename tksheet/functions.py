@@ -775,12 +775,12 @@ def move_elements_to(
 
 def get_new_indexes(
     move_to: int,
-    to_move: AnyIter[int],
+    to_move: Iterable[int],
     get_inverse: bool = False,
-) -> tuple[dict]:
+) -> tuple[dict[int, int]] | dict[int, int]:
     """
     move_to: A positive int, could possibly be the same as an element of to_move
-    to_move: A sorted list[int], ints always positive and unique, list never empty.
+    to_move: An iterable of ints, could be a dict, could be in any order
     returns {old idx: new idx, ...}
     """
     offset = sum(1 for i in to_move if i < move_to)
