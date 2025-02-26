@@ -1,5 +1,6 @@
 ### Version 7.4.6
-####
+#### Changed:
+- Remove unused parameter `object` from `Formatter` class
 
 ### Version 7.4.5
 #### Changed:

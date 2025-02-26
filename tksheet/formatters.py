@@ -251,7 +251,6 @@ class Formatter:
         self,
         value: Any,
         datatypes: tuple[Any],
-        object=int,
         format_function: Callable = to_int,
         to_str_function: Callable = to_str,
         nullable: bool = True,
