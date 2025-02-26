@@ -77,7 +77,7 @@ from .themes import (
     theme_light_blue,
     theme_light_green,
 )
-from .tksheet_types import AnyIter, CellPropertyKey, CreateSpanTypes
+from .tksheet_types import AnyIter, Binding, CellPropertyKey, CreateSpanTypes, ExtraBinding
 from .top_left_rectangle import TopLeftRectangle
 
 
@@ -603,7 +603,7 @@ class Sheet(tk.Frame):
 
     # Bindings and Functionality
 
-    def enable_bindings(self, *bindings: str) -> Sheet:
+    def enable_bindings(self, *bindings: Binding) -> Sheet:
         """
         List of available bindings:
         - "all"
@@ -653,7 +653,7 @@ class Sheet(tk.Frame):
         self.MT.enable_bindings(bindings)
         return self
 
-    def disable_bindings(self, *bindings: str) -> Sheet:
+    def disable_bindings(self, *bindings: Binding) -> Sheet:
         """
         List of available bindings:
         - "all"
@@ -700,7 +700,7 @@ class Sheet(tk.Frame):
 
     def extra_bindings(
         self,
-        bindings: str | list | tuple | None = None,
+        bindings: ExtraBinding | Sequence[ExtraBinding] | None = None,
         func: Callable | None = None,
     ) -> Sheet:
         """
@@ -1278,9 +1278,7 @@ class Sheet(tk.Frame):
     def redo(self, event: Any = None) -> None | EventDataDict:
         return self.MT.redo(event)
 
-    def has_focus(
-        self,
-    ) -> bool:
+    def has_focus(self) -> bool:
         """
         Check if any Sheet widgets have focus
         Includes child widgets such as scroll bars
@@ -1386,10 +1384,7 @@ class Sheet(tk.Frame):
 
     # Named Spans
 
-    def named_span(
-        self,
-        span: Span,
-    ) -> Span:
+    def named_span(self, span: Span) -> Span:
         if span.name in self.MT.named_spans:
             raise ValueError(f"Span '{span.name}' already exists.")
         if not span.name:
@@ -1453,7 +1448,7 @@ class Sheet(tk.Frame):
         del self.MT.named_spans[name]
         return self
 
-    def set_named_spans(self, named_spans: None | dict = None) -> Sheet:
+    def set_named_spans(self, named_spans: None | dict[str, Span] = None) -> Sheet:
         if named_spans is None:
             for name in self.MT.named_spans:
                 self.del_named_span(name)
@@ -1461,10 +1456,10 @@ class Sheet(tk.Frame):
         self.MT.named_spans = named_spans
         return self
 
-    def get_named_span(self, name: str) -> dict:
+    def get_named_span(self, name: str) -> dict[str, Span]:
         return self.MT.named_spans[name]
 
-    def get_named_spans(self) -> dict:
+    def get_named_spans(self) -> dict[str, Span]:
         return self.MT.named_spans
 
     # Getting Sheet Data
@@ -1475,10 +1470,7 @@ class Sheet(tk.Frame):
     ) -> Span:
         return self.span_from_key(*key)
 
-    def span_from_key(
-        self,
-        *key: CreateSpanTypes,
-    ) -> None | Span:
+    def span_from_key(self, *key: CreateSpanTypes) -> None | Span:
         if not key:
             key = (None, None, None, None)
         span = key_to_span(key if len(key) != 1 else key[0], self.MT.named_spans, self)
@@ -1493,10 +1485,7 @@ class Sheet(tk.Frame):
             totalcols=self.MT.total_data_cols,
         )
 
-    def get_data(
-        self,
-        *key: CreateSpanTypes,
-    ) -> Any:
+    def get_data(self, *key: CreateSpanTypes) -> Any:
         """
         e.g. retrieves entire table as pandas dataframe
         sheet["A1"].expand().options(pandas.DataFrame).data
@@ -1641,7 +1630,7 @@ class Sheet(tk.Frame):
         return self.MT.get_value_for_empty_cell(r, c, r_ops, c_ops)
 
     @property
-    def data(self):
+    def data(self) -> Sequence[Sequence[Any]]:
         return self.MT.data
 
     def __iter__(self) -> Iterator[list[Any] | tuple[Any]]:
@@ -2075,7 +2064,7 @@ class Sheet(tk.Frame):
         datarn: int,
         datacn: int,
         value: Any,
-        event_data: dict,
+        event_data: EventDataDict,
         fmt_kw: dict | None = None,
         check_readonly: bool = False,
     ) -> EventDataDict:
@@ -2088,7 +2077,7 @@ class Sheet(tk.Frame):
         self,
         datarn: int,
         value: Any,
-        event_data: dict,
+        event_data: EventDataDict,
         check_readonly: bool = False,
     ) -> EventDataDict:
         if self.RI.input_valid_for_cell(datarn, value, check_readonly=check_readonly):
@@ -2100,7 +2089,7 @@ class Sheet(tk.Frame):
         self,
         datacn: int,
         value: Any,
-        event_data: dict,
+        event_data: EventDataDict,
         check_readonly: bool = False,
     ) -> EventDataDict:
         if self.CH.input_valid_for_cell(datacn, value, check_readonly=check_readonly):

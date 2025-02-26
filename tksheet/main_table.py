@@ -101,7 +101,7 @@ from .other_classes import (
 from .row_index import RowIndex
 from .sorting import sort_selection
 from .text_editor import TextEditor
-from .tksheet_types import AnyIter
+from .tksheet_types import AnyIter, Binding
 
 
 class MainTable(tk.Canvas):
@@ -3045,7 +3045,7 @@ class MainTable(tk.Canvas):
             self._disable_binding(bindings)
         self.create_rc_menus()
 
-    def _enable_binding(self, binding: str) -> None:
+    def _enable_binding(self, binding: Binding) -> None:
         if binding == "enable_all":
             binding = "all"
         if binding in (
@@ -3190,7 +3190,7 @@ class MainTable(tk.Canvas):
             for binding in self.PAR.ops[bindings_key]:
                 widget.bind(binding, func)
 
-    def _disable_binding(self, binding: str) -> None:
+    def _disable_binding(self, binding: Binding) -> None:
         if binding == "disable_all":
             binding = "all"
         if binding in (
@@ -3329,14 +3329,14 @@ class MainTable(tk.Canvas):
         self.CH.rsz_w = None
         self.CH.rsz_h = None
 
-    def mouse_motion(self, event: Any):
+    def mouse_motion(self, event: Any) -> None:
         self.reset_mouse_motion_creations()
         try_binding(self.extra_motion_func, event)
 
     def not_currently_resizing(self) -> bool:
         return all(v is None for v in (self.RI.rsz_h, self.RI.rsz_w, self.CH.rsz_h, self.CH.rsz_w))
 
-    def rc(self, event=None):
+    def rc(self, event: Any = None) -> None:
         self.mouseclick_outside_editor_or_dropdown_all_canvases()
         self.focus_set()
         popup_menu = None
@@ -3369,7 +3369,7 @@ class MainTable(tk.Canvas):
         if popup_menu:
             popup_menu.tk_popup(event.x_root, event.y_root)
 
-    def b1_press(self, event=None):
+    def b1_press(self, event: Any = None) -> None:
         self.closed_dropdown = self.mouseclick_outside_editor_or_dropdown_all_canvases()
         self.focus_set()
         if (
@@ -3391,7 +3391,9 @@ class MainTable(tk.Canvas):
         self.b1_pressed_loc = (r, c)
         try_binding(self.extra_b1_press_func, event)
 
-    def create_resize_line(self, x1, y1, x2, y2, width, fill, tag):
+    def create_resize_line(
+        self, x1: int, y1: int, x2: int, y2: int, width: int, fill: str, tag: str | tuple[str]
+    ) -> None:
         if self.hidd_resize_lines:
             t, sh = self.hidd_resize_lines.popitem()
             self.coords(t, x1, y1, x2, y2)
@@ -3404,7 +3406,7 @@ class MainTable(tk.Canvas):
             t = self.create_line(x1, y1, x2, y2, width=width, fill=fill, tags=tag)
         self.disp_resize_lines[t] = True
 
-    def delete_resize_lines(self):
+    def delete_resize_lines(self) -> None:
         self.hidd_resize_lines.update(self.disp_resize_lines)
         self.disp_resize_lines = {}
         for t, sh in self.hidd_resize_lines.items():
@@ -3654,7 +3656,7 @@ class MainTable(tk.Canvas):
         self.closed_dropdown = None
         try_binding(self.extra_b1_release_func, event)
 
-    def double_b1(self, event=None):
+    def double_b1(self, event: Any = None) -> None:
         self.mouseclick_outside_editor_or_dropdown_all_canvases()
         self.focus_set()
         if (
@@ -3678,7 +3680,7 @@ class MainTable(tk.Canvas):
                     self.open_cell(event)
         try_binding(self.extra_double_b1_func, event)
 
-    def identify_row(self, event=None, y=None, allow_end=True):
+    def identify_row(self, event: Any = None, y: int | None = None, allow_end: bool = True) -> int | None:
         if event is None:
             y2 = self.canvasy(y)
         elif y is None:
@@ -3690,7 +3692,7 @@ class MainTable(tk.Canvas):
             return None
         return r
 
-    def identify_col(self, event=None, x=None, allow_end=True):
+    def identify_col(self, event: Any = None, x: int | None = None, allow_end: bool = True) -> int | None:
         if event is None:
             x2 = self.canvasx(x)
         elif x is None:
@@ -3761,7 +3763,7 @@ class MainTable(tk.Canvas):
             self.y_move_synced_scrolls("moveto", self.yview()[0])
         return need_redraw
 
-    def x_move_synced_scrolls(self, *args, redraw: bool = True, use_scrollbar: bool = False):
+    def x_move_synced_scrolls(self, *args: Any, redraw: bool = True, use_scrollbar: bool = False) -> None:
         for widget in self.synced_scrolls:
             # try:
             if hasattr(widget, "MT"):
@@ -3774,7 +3776,7 @@ class MainTable(tk.Canvas):
             # except Exception:
             #     continue
 
-    def y_move_synced_scrolls(self, *args, redraw: bool = True, use_scrollbar: bool = False):
+    def y_move_synced_scrolls(self, *args: Any, redraw: bool = True, use_scrollbar: bool = False) -> None:
         for widget in self.synced_scrolls:
             # try:
             if hasattr(widget, "MT"):
@@ -3787,7 +3789,7 @@ class MainTable(tk.Canvas):
             # except Exception:
             #     continue
 
-    def _xscrollbar(self, *args, move_synced: bool = True):
+    def _xscrollbar(self, *args: Any, move_synced: bool = True) -> None:
         self.xview(*args)
         if self.show_header:
             self.CH.xview(*args)
@@ -3795,7 +3797,7 @@ class MainTable(tk.Canvas):
         if move_synced:
             self.x_move_synced_scrolls(*args, use_scrollbar=True)
 
-    def _yscrollbar(self, *args, move_synced: bool = True):
+    def _yscrollbar(self, *args: Any, move_synced: bool = True) -> None:
         self.yview(*args)
         if self.show_index:
             self.RI.yview(*args)
@@ -3805,7 +3807,7 @@ class MainTable(tk.Canvas):
 
     def set_xviews(
         self,
-        *args,
+        *args: Any,
         move_synced: bool = True,
         redraw: bool = True,
     ) -> None:
@@ -3825,7 +3827,7 @@ class MainTable(tk.Canvas):
 
     def set_yviews(
         self,
-        *args,
+        *args: Any,
         move_synced: bool = True,
         redraw: bool = True,
     ) -> None:
@@ -3873,13 +3875,13 @@ class MainTable(tk.Canvas):
             self.x_move_synced_scrolls("moveto", self.xview()[0])
         self.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
 
-    def ctrl_mousewheel(self, event):
+    def ctrl_mousewheel(self, event: Any) -> None:
         if event.delta < 0 or event.num == 5:
             self.zoom_out()
         elif event.delta >= 0 or event.num == 4:
             self.zoom_in()
 
-    def zoom_in(self, event=None):
+    def zoom_in(self, event: Any = None) -> None:
         self.zoom_font(
             (self.PAR.ops.table_font[0], self.PAR.ops.table_font[1] + 1, self.PAR.ops.table_font[2]),
             (self.PAR.ops.index_font[0], self.PAR.ops.index_font[1] + 1, self.PAR.ops.index_font[2]),
@@ -3887,7 +3889,7 @@ class MainTable(tk.Canvas):
             "in",
         )
 
-    def zoom_out(self, event=None):
+    def zoom_out(self, event: Any = None) -> None:
         if self.PAR.ops.table_font[1] < 2 or self.PAR.ops.index_font[1] < 2 or self.PAR.ops.header_font[1] < 2:
             return
         self.zoom_font(
@@ -3897,7 +3899,13 @@ class MainTable(tk.Canvas):
             "out",
         )
 
-    def zoom_font(self, table_font: tuple, index_font: tuple, header_font: tuple, zoom: Literal["in", "out"]) -> None:
+    def zoom_font(
+        self,
+        table_font: FontTuple,
+        index_font: FontTuple,
+        header_font: FontTuple,
+        zoom: Literal["in", "out"],
+    ) -> None:
         self.saved_column_widths = {}
         self.saved_row_heights = {}
         # should record position prior to change and then see after change
@@ -4052,7 +4060,7 @@ class MainTable(tk.Canvas):
                 self.recreate_all_selection_boxes()
         return self.PAR.ops.index_font
 
-    def set_index_font_help(self):
+    def set_index_font_help(self) -> None:
         self.RI.index_font = self.PAR.ops.index_font
         if self.PAR.ops.index_font not in self.char_widths:
             self.char_widths[self.PAR.ops.index_font] = {}
@@ -4092,7 +4100,7 @@ class MainTable(tk.Canvas):
             self.recreate_all_selection_boxes()
         return self.PAR.ops.header_font
 
-    def set_header_font_help(self):
+    def set_header_font_help(self) -> None:
         self.CH.header_font = self.PAR.ops.header_font
         if self.PAR.ops.header_font not in self.char_widths:
             self.char_widths[self.PAR.ops.header_font] = {}
@@ -4106,11 +4114,11 @@ class MainTable(tk.Canvas):
             self.PAR.ops.default_header_height = int(self.min_header_height)
         self.CH.set_height(self.get_default_header_height(), set_TL=True)
 
-    def purge_undo_and_redo_stack(self):
+    def purge_undo_and_redo_stack(self) -> None:
         self.undo_stack = deque(maxlen=self.PAR.ops.max_undos)
         self.redo_stack = deque(maxlen=self.PAR.ops.max_undos)
 
-    def purge_redo_stack(self):
+    def purge_redo_stack(self) -> None:
         self.redo_stack = deque(maxlen=self.PAR.ops.max_undos)
 
     def data_reference(
@@ -4141,7 +4149,7 @@ class MainTable(tk.Canvas):
         else:
             return self.data
 
-    def get_cell_dimensions(self, datarn, datacn):
+    def get_cell_dimensions(self, datarn: int, datacn: int) -> tuple[int, int]:
         txt = self.get_valid_cell_data_as_str(datarn, datacn, get_displayed=True)
         if txt:
             self.txt_measure_canvas.itemconfig(self.txt_measure_canvas_text, text=txt, font=self.PAR.ops.table_font)
@@ -4155,7 +4163,9 @@ class MainTable(tk.Canvas):
             return w + self.table_txt_height, h
         return w, h
 
-    def set_cell_size_to_text(self, r, c, only_if_too_small=False, redraw: bool = True, run_binding=False):
+    def set_cell_size_to_text(
+        self, r: int, c: int, only_if_too_small: bool = False, redraw: bool = True, run_binding: bool = False
+    ) -> bool:
         min_column_width = self.PAR.ops.min_column_width
         min_rh = self.min_row_height
         w = min_column_width
@@ -4226,6 +4236,7 @@ class MainTable(tk.Canvas):
                 return True
             else:
                 return False
+        return False
 
     def get_cell_max_width(self, datarn: int, dispcn: int) -> int:
         datacn = self.datacn(dispcn)
@@ -4376,7 +4387,7 @@ class MainTable(tk.Canvas):
         else:
             self.set_row_positions(itr=repeat(height, len(self.displayed_rows)))
 
-    def del_col_position(self, idx: int, deselect_all: bool = False):
+    def del_col_position(self, idx: int, deselect_all: bool = False) -> None:
         if deselect_all:
             self.deselect("all", redraw=False)
         if idx == "end" or len(self.col_positions) <= idx + 1:
@@ -4387,7 +4398,7 @@ class MainTable(tk.Canvas):
             del self.col_positions[idx]
             self.col_positions[idx:] = [e - w for e in islice(self.col_positions, idx, len(self.col_positions))]
 
-    def del_row_position(self, idx: int, deselect_all: bool = False):
+    def del_row_position(self, idx: int, deselect_all: bool = False) -> None:
         if deselect_all:
             self.deselect("all", redraw=False)
         if idx == "end" or len(self.row_positions) <= idx + 1:
@@ -4398,7 +4409,7 @@ class MainTable(tk.Canvas):
             del self.row_positions[idx]
             self.row_positions[idx:] = [e - w for e in islice(self.row_positions, idx, len(self.row_positions))]
 
-    def del_col_positions(self, idxs: AnyIter[int] | None = None):
+    def del_col_positions(self, idxs: AnyIter[int] | None = None) -> None:
         if idxs is None:
             del self.col_positions[-1]
         else:
@@ -4406,7 +4417,7 @@ class MainTable(tk.Canvas):
                 idxs = set(idxs)
             self.set_col_positions(itr=(w for i, w in enumerate(self.gen_column_widths()) if i not in idxs))
 
-    def del_row_positions(self, idxs: AnyIter[int] | None = None):
+    def del_row_positions(self, idxs: AnyIter[int] | None = None) -> None:
         if idxs is None:
             del self.row_positions[-1]
         else:
@@ -4629,9 +4640,9 @@ class MainTable(tk.Canvas):
 
     def adjust_options_post_delete_columns(
         self,
-        to_del: None | set = None,
-        to_bis: None | list = None,
-        named_spans: None | set = None,
+        to_del: None | set[int] = None,
+        to_bis: None | list[int] = None,
+        named_spans: None | set[str] = None,
     ) -> list[int]:
         if to_del is None:
             to_del = set()
@@ -4687,7 +4698,7 @@ class MainTable(tk.Canvas):
 
     def del_columns_from_named_spans(
         self,
-        to_del: set,
+        to_del: set[int],
         to_bis: list,
         named_spans: None | set = None,
     ) -> None:
@@ -4703,10 +4714,7 @@ class MainTable(tk.Canvas):
                     if isinstance(span["upto_c"], int) and span["upto_c"] > c:
                         span["upto_c"] -= 1
 
-    def get_spans_to_del_from_cols(
-        self,
-        cols: set,
-    ) -> set:
+    def get_spans_to_del_from_cols(self, cols: set[int]) -> set[str]:
         total = self.total_data_cols()
         return {
             nm
@@ -4717,9 +4725,9 @@ class MainTable(tk.Canvas):
 
     def adjust_options_post_delete_rows(
         self,
-        to_del: None | set = None,
-        to_bis: None | list = None,
-        named_spans: None | set = None,
+        to_del: None | set[int] = None,
+        to_bis: None | list[int] = None,
+        named_spans: None | set[str] = None,
     ) -> list[int]:
         if to_del is None:
             to_del = set()
@@ -4782,7 +4790,7 @@ class MainTable(tk.Canvas):
         self,
         to_del: set,
         to_bis: list,
-        named_spans: None | set = None,
+        named_spans: None | set[str] = None,
     ) -> None:
         if named_spans is None:
             named_spans = self.get_spans_to_del_from_rows(rows=to_del)
@@ -4796,10 +4804,7 @@ class MainTable(tk.Canvas):
                     if isinstance(span["upto_r"], int) and span["upto_r"] > r:
                         span["upto_r"] -= 1
 
-    def get_spans_to_del_from_rows(
-        self,
-        rows: set,
-    ) -> set:
+    def get_spans_to_del_from_rows(self, rows: set[int]) -> set[str]:
         total = self.total_data_rows()
         return {
             nm
