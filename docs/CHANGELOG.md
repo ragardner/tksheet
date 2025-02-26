@@ -1,4 +1,7 @@
 ### Version 7.4.6
+#### Fixed:
+- Issues since version `7.4.4` with `get_cell_kwargs()` leading to cell options such as dropdowns sometimes not displaying
+
 #### Changed:
 - Remove unused parameter `object` from `Formatter` class
 
