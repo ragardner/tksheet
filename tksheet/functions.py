@@ -366,7 +366,8 @@ def stored_event_dict(d: DotDict) -> DotDict:
 def len_to_idx(n: int) -> int:
     if n < 1:
         return 0
-    return n - 1
+    else:
+        return n - 1
 
 
 def b_index(sorted_seq: Sequence[int], num_to_index: int) -> int:
@@ -376,13 +377,15 @@ def b_index(sorted_seq: Sequence[int], num_to_index: int) -> int:
     """
     if (idx := bisect_left(sorted_seq, num_to_index)) == len(sorted_seq) or sorted_seq[idx] != num_to_index:
         raise ValueError(f"{num_to_index} is not in Sequence")
-    return idx
+    else:
+        return idx
 
 
 def try_b_index(sorted_seq: Sequence[int], num_to_index: int) -> int | None:
     if (idx := bisect_left(sorted_seq, num_to_index)) == len(sorted_seq) or sorted_seq[idx] != num_to_index:
         return None
-    return idx
+    else:
+        return idx
 
 
 def bisect_in(sorted_seq: Sequence[int], num: int) -> bool:
@@ -399,22 +402,15 @@ def push_n(num: int, sorted_seq: Sequence[int]) -> int:
     if num < sorted_seq[0]:
         return num
     else:
-        if (hi := len(sorted_seq)) < 5:
-            for e in sorted_seq:
-                if num >= e:
-                    num += 1
-                else:
-                    return num
-            return num
-        else:
-            lo = 0
-            while lo < hi:
-                mid = (lo + hi) // 2
-                if sorted_seq[mid] < num + mid + 1:
-                    lo = mid + 1
-                else:
-                    hi = mid
-            return num + lo
+        hi = len(sorted_seq)
+        lo = 0
+        while lo < hi:
+            mid = (lo + hi) // 2
+            if sorted_seq[mid] < num + mid + 1:
+                lo = mid + 1
+            else:
+                hi = mid
+        return num + lo
 
 
 def get_dropdown_kwargs(
