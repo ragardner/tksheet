@@ -2543,10 +2543,12 @@ class MainTable(tk.Canvas):
             self.see(r, c)
         else:
             self.see(r, c - 1, redraw=False)
-            if self.selected.type_ == "columns":
+            if self.selected.type_ == "columns" and self.CH.col_selection_enabled:
                 self.CH.select_col(c - 1, redraw=True)
 
-            elif self.selected.type_ in ("cells", "rows"):
+            elif self.selected.type_ in ("cells", "rows") and (
+                self.single_selection_enabled or self.toggle_selection_enabled
+            ):
                 self.select_cell(r, c - 1, redraw=True)
 
     def arrowkey_DOWN(self, event: object = None) -> None:
@@ -2564,10 +2566,12 @@ class MainTable(tk.Canvas):
                 bottom_right_corner=brc,
                 redraw=False,
             )
-            if self.selected.type_ == "rows":
+            if self.selected.type_ == "rows" and self.RI.row_selection_enabled:
                 self.RI.select_row(r + 1, redraw=True)
 
-            elif self.selected.type_ in ("cells", "columns"):
+            elif self.selected.type_ in ("cells", "columns") and (
+                self.single_selection_enabled or self.toggle_selection_enabled
+            ):
                 self.select_cell(r + 1, c, redraw=True)
 
     def arrowkey_RIGHT(self, event: object = None) -> None:
@@ -2585,10 +2589,12 @@ class MainTable(tk.Canvas):
                 bottom_right_corner=brc,
                 redraw=False,
             )
-            if self.selected.type_ == "columns":
+            if self.selected.type_ == "columns" and self.CH.col_selection_enabled:
                 self.CH.select_col(c + 1, redraw=True)
 
-            elif self.selected.type_ in ("cells", "rows"):
+            elif self.selected.type_ in ("cells", "rows") and (
+                self.single_selection_enabled or self.toggle_selection_enabled
+            ):
                 self.select_cell(r, c + 1, redraw=True)
 
     def shift_arrowkey_select_box(
