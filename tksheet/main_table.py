@@ -8000,16 +8000,30 @@ class MainTable(tk.Canvas):
         row: bool = True,
         column: bool = True,
     ) -> dict:
-        if cell and (datarn, datacn) in self.cell_options:
-            return (
-                self.cell_options[(datarn, datacn)] if key is None else self.cell_options[(datarn, datacn)].get(key, {})
-            )
-        elif row and datarn in self.row_options:
-            return self.row_options[datarn] if key is None else self.row_options[datarn].get(key, {})
-        elif column and datacn in self.col_options:
-            return self.col_options[datacn] if key is None else self.col_options[datacn].get(key, {})
+        if key is None:
+            if cell and (datarn, datacn) in self.cell_options:
+                return self.cell_options[(datarn, datacn)]
+
+            elif row and datarn in self.row_options:
+                return self.row_options[datarn]
+
+            elif column and datacn in self.col_options:
+                return self.col_options[datacn]
+
+            else:
+                return {}
         else:
-            return {}
+            if cell and (datarn, datacn) in self.cell_options and key in self.cell_options[(datarn, datacn)]:
+                return self.cell_options[(datarn, datacn)][key]
+
+            elif row and datarn in self.row_options and key in self.row_options[datarn]:
+                return self.row_options[datarn][key]
+
+            elif column and datacn in self.col_options and key in self.col_options[datacn]:
+                return self.col_options[datacn][key]
+
+            else:
+                return {}
 
     def datacn(self, c: int) -> int:
         return c if self.all_columns_displayed else self.displayed_columns[c]
