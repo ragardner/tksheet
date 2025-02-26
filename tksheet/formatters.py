@@ -2,27 +2,28 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from contextlib import suppress
+from typing import Any
 
 from .constants import falsy, nonelike, truthy
 
 
-def is_none_like(o: object) -> bool:
+def is_none_like(o: Any) -> bool:
     return (isinstance(o, str) and o.lower().replace(" ", "") in nonelike) or o in nonelike
 
 
-def to_int(o: object, **kwargs) -> int:
+def to_int(o: Any, **kwargs) -> int:
     if isinstance(o, int):
         return o
     return int(float(o))
 
 
-def to_float(o: object, **kwargs) -> float:
+def to_float(o: Any, **kwargs) -> float:
     if isinstance(o, float):
         return o
     return float(o)
 
 
-def to_percentage(o: object, **kwargs) -> float:
+def to_percentage(o: Any, **kwargs) -> float:
     if isinstance(o, float):
         return o
     if isinstance(o, str) and o.endswith("%"):
@@ -30,7 +31,7 @@ def to_percentage(o: object, **kwargs) -> float:
     return float(o)
 
 
-def alt_to_percentage(o: object, **kwargs) -> float:
+def alt_to_percentage(o: Any, **kwargs) -> float:
     if isinstance(o, float):
         return o
     if isinstance(o, str) and o.endswith("%"):
@@ -38,7 +39,7 @@ def alt_to_percentage(o: object, **kwargs) -> float:
     return float(o)
 
 
-def to_bool(val: object, **kwargs) -> bool:
+def to_bool(val: Any, **kwargs) -> bool:
     if isinstance(val, bool):
         return val
     v = val.lower() if isinstance(val, str) else val
@@ -51,14 +52,14 @@ def to_bool(val: object, **kwargs) -> bool:
     raise ValueError(f'Cannot map "{val}" to bool.')
 
 
-def try_to_bool(o: object, **kwargs) -> object:
+def try_to_bool(o: Any, **kwargs) -> Any:
     try:
         return to_bool(o)
     except Exception:
         return o
 
 
-def is_bool_like(o: object, **kwargs) -> bool:
+def is_bool_like(o: Any, **kwargs) -> bool:
     try:
         to_bool(o)
         return True
@@ -66,11 +67,11 @@ def is_bool_like(o: object, **kwargs) -> bool:
         return False
 
 
-def to_str(o: object, **kwargs: dict) -> str:
+def to_str(o: Any, **kwargs: dict) -> str:
     return f"{o}"
 
 
-def float_to_str(v: object, **kwargs: dict) -> str:
+def float_to_str(v: Any, **kwargs: dict) -> str:
     if isinstance(v, float):
         if v.is_integer():
             return f"{int(v)}"
@@ -81,7 +82,7 @@ def float_to_str(v: object, **kwargs: dict) -> str:
     return f"{v}"
 
 
-def percentage_to_str(v: object, **kwargs: dict) -> str:
+def percentage_to_str(v: Any, **kwargs: dict) -> str:
     if isinstance(v, (int, float)):
         x = v * 100
         if isinstance(x, float):
@@ -95,16 +96,16 @@ def percentage_to_str(v: object, **kwargs: dict) -> str:
     return f"{v}%"
 
 
-def alt_percentage_to_str(v: object, **kwargs: dict) -> str:
+def alt_percentage_to_str(v: Any, **kwargs: dict) -> str:
     return f"{float_to_str(v)}%"
 
 
-def bool_to_str(v: object, **kwargs: dict) -> str:
+def bool_to_str(v: Any, **kwargs: dict) -> str:
     return f"{v}"
 
 
 def int_formatter(
-    datatypes: tuple[object] | object = int,
+    datatypes: tuple[Any] | Any = int,
     format_function: Callable = to_int,
     to_str_function: Callable = to_str,
     **kwargs,
@@ -118,7 +119,7 @@ def int_formatter(
 
 
 def float_formatter(
-    datatypes: tuple[object] | object = float,
+    datatypes: tuple[Any] | Any = float,
     format_function: Callable = to_float,
     to_str_function: Callable = float_to_str,
     decimals: int = 2,
@@ -134,7 +135,7 @@ def float_formatter(
 
 
 def percentage_formatter(
-    datatypes: tuple[object] | object = float,
+    datatypes: tuple[Any] | Any = float,
     format_function: Callable = to_percentage,
     to_str_function: Callable = percentage_to_str,
     decimals: int = 2,
@@ -150,12 +151,12 @@ def percentage_formatter(
 
 
 def bool_formatter(
-    datatypes: tuple[object] | object = bool,
+    datatypes: tuple[Any] | Any = bool,
     format_function: Callable = to_bool,
     to_str_function: Callable = bool_to_str,
-    invalid_value: object = "NA",
-    truthy_values: set[object] = truthy,
-    falsy_values: set[object] = falsy,
+    invalid_value: Any = "NA",
+    truthy_values: set[Any] = truthy,
+    falsy_values: set[Any] = falsy,
     **kwargs,
 ) -> dict:
     return formatter(
@@ -170,10 +171,10 @@ def bool_formatter(
 
 
 def formatter(
-    datatypes: tuple[object] | object,
+    datatypes: tuple[Any] | Any,
     format_function: Callable,
     to_str_function: Callable = to_str,
-    invalid_value: object = "NaN",
+    invalid_value: Any = "NaN",
     nullable: bool = True,
     pre_format_function: Callable | None = None,
     post_format_function: Callable | None = None,
@@ -196,14 +197,14 @@ def formatter(
 
 
 def format_data(
-    value: object = "",
-    datatypes: tuple[object] | object = int,
+    value: Any = "",
+    datatypes: tuple[Any] | Any = int,
     nullable: bool = True,
     pre_format_function: Callable | None = None,
     format_function: Callable | None = to_int,
     post_format_function: Callable | None = None,
     **kwargs,
-) -> object:
+) -> Any:
     if pre_format_function:
         value = pre_format_function(value)
     if nullable and is_none_like(value):
@@ -217,10 +218,10 @@ def format_data(
 
 
 def data_to_str(
-    value: object = "",
-    datatypes: tuple[object] | object = int,
+    value: Any = "",
+    datatypes: tuple[Any] | Any = int,
     nullable: bool = True,
-    invalid_value: object = "NaN",
+    invalid_value: Any = "NaN",
     to_str_function: Callable | None = None,
     **kwargs,
 ) -> str:
@@ -231,13 +232,13 @@ def data_to_str(
     return to_str_function(value, **kwargs)
 
 
-def get_data_with_valid_check(value="", datatypes: tuple[()] | tuple[object] | object = (), invalid_value="NA"):
+def get_data_with_valid_check(value="", datatypes: tuple[()] | tuple[Any] | Any = (), invalid_value="NA"):
     if isinstance(value, datatypes):
         return value
     return invalid_value
 
 
-def get_clipboard_data(value: object = "", clipboard_function: Callable | None = None, **kwargs: dict) -> object:
+def get_clipboard_data(value: Any = "", clipboard_function: Callable | None = None, **kwargs: dict) -> Any:
     if clipboard_function is not None:
         return clipboard_function(value, **kwargs)
     if isinstance(value, (str, int, float, bool)):
@@ -248,8 +249,8 @@ def get_clipboard_data(value: object = "", clipboard_function: Callable | None =
 class Formatter:
     def __init__(
         self,
-        value: object,
-        datatypes: tuple[object],
+        value: Any,
+        datatypes: tuple[Any],
         object=int,
         format_function: Callable = to_int,
         to_str_function: Callable = to_str,
@@ -281,19 +282,19 @@ class Formatter:
         except Exception:
             self.value = f"{value}"
 
-    def __str__(self) -> object:
+    def __str__(self) -> Any:
         if not self.valid():
             return self.invalid_value
         if self.value is None and self.nullable:
             return ""
         return self.to_str_function(self.value, **self.kwargs)
 
-    def valid(self, value: object = None) -> bool:
+    def valid(self, value: Any = None) -> bool:
         if value is None:
             value = self.value
         return isinstance(value, self.valid_datatypes)
 
-    def format_data(self, value: object) -> object:
+    def format_data(self, value: Any) -> Any:
         if self.pre_format_function:
             value = self.pre_format_function(value)
         value = None if (self.nullable and is_none_like(value)) else self.format_function(value, **self.kwargs)
@@ -301,19 +302,19 @@ class Formatter:
             value = self.post_format_function(value)
         return value
 
-    def get_data_with_valid_check(self) -> object:
+    def get_data_with_valid_check(self) -> Any:
         if self.valid():
             return self.value
         return self.invalid_value
 
-    def get_clipboard_data(self) -> object:
+    def get_clipboard_data(self) -> Any:
         if self.clipboard_function is not None:
             return self.clipboard_function(self.value, **self.kwargs)
         if isinstance(self.value, (int, float, bool)):
             return self.value
         return self.__str__()
 
-    def __eq__(self, __value: object) -> bool:
+    def __eq__(self, __value: Any) -> bool:
         # in case of custom formatter class
         # compare the values
         try:

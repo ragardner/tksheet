@@ -4,6 +4,7 @@ from collections.abc import Callable, Generator, Iterable, Iterator
 from datetime import datetime
 from pathlib import Path
 from re import split
+from typing import Any
 
 AnyIter = Iterable | Iterator
 
@@ -71,7 +72,7 @@ def _string_fallback(item: str) -> tuple[int, ...]:
         )
 
 
-def version_sort_key(item: object) -> tuple[int, ...]:
+def version_sort_key(item: Any) -> tuple[int, ...]:
     """
     A key for natural sorting of various Python types.
 
@@ -144,7 +145,7 @@ def version_sort_key(item: object) -> tuple[int, ...]:
             return (6, item)
 
 
-def natural_sort_key(item: object) -> tuple[int, ...]:
+def natural_sort_key(item: Any) -> tuple[int, ...]:
     """
     A key for natural sorting of various Python types.
 
@@ -222,7 +223,7 @@ def natural_sort_key(item: object) -> tuple[int, ...]:
             return (6, item)
 
 
-def fast_sort_key(item: object) -> tuple[int, ...]:
+def fast_sort_key(item: Any) -> tuple[int, ...]:
     """
     A faster key for natural sorting of various Python types.
 
@@ -268,11 +269,11 @@ def fast_sort_key(item: object) -> tuple[int, ...]:
 
 
 def sort_selection(
-    data: list[list[object]],
+    data: list[list[Any]],
     reverse: bool = False,
     key: Callable | None = None,
     row_wise: bool = False,
-) -> list[list[object]]:
+) -> list[list[Any]]:
     if not data or not isinstance(data[0], list):
         raise ValueError("Data must be a list of lists.")
 
@@ -297,11 +298,11 @@ def sort_selection(
 
 
 def sort_column(
-    data: list[list[object]] | list[object] | AnyIter[object],
+    data: list[list[Any]] | list[Any] | AnyIter[Any],
     column: int = 0,
     reverse: bool = False,
     key: Callable | None = None,
-) -> list[list[object]] | list[object]:
+) -> list[list[Any]] | list[Any]:
     if not data:
         return data
 
@@ -315,11 +316,11 @@ def sort_column(
 
 
 def sort_row(
-    data: list[list[object]] | list[object] | AnyIter[object],
+    data: list[list[Any]] | list[Any] | AnyIter[Any],
     row: int = 0,
     reverse: bool = False,
     key: Callable | None = None,
-) -> list[list[object]]:
+) -> list[list[Any]]:
     if not data:
         return data
 
@@ -337,11 +338,11 @@ def sort_row(
 
 
 def sort_rows_by_column(
-    data: list[list[object]],
+    data: list[list[Any]],
     column: int = 0,
     reverse: bool = False,
     key: Callable | None = None,
-) -> tuple[list[tuple[int, list[object]]], dict[int, int]]:
+) -> tuple[list[tuple[int, list[Any]]], dict[int, int]]:
     if not data:
         return data, {}
 
@@ -364,7 +365,7 @@ def sort_rows_by_column(
 
 
 def sort_columns_by_row(
-    data: list[list[object]],
+    data: list[list[Any]],
     row: int = 0,
     reverse: bool = False,
     key: Callable | None = None,
@@ -397,11 +398,11 @@ def sort_columns_by_row(
 
 
 def _sort_node_children(
-    node: object,
-    tree: dict[str, object],
+    node: Any,
+    tree: dict[str, Any],
     reverse: bool,
     key: Callable,
-) -> Generator[object, None, None]:
+) -> Generator[Any, None, None]:
     sorted_children = sorted(
         (tree[child_iid] for child_iid in node.children if child_iid in tree),
         key=lambda child: key(child.text),
@@ -414,12 +415,12 @@ def _sort_node_children(
 
 
 def sort_tree_view(
-    _row_index: list[object],
+    _row_index: list[Any],
     tree_rns: dict[str, int],
-    tree: dict[str, object],
+    tree: dict[str, Any],
     key: Callable | None = None,
     reverse: bool = False,
-) -> tuple[list[object], dict[int, int]]:
+) -> tuple[list[Any], dict[int, int]]:
     if not _row_index or not tree_rns or not tree:
         return [], {}
 

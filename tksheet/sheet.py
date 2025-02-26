@@ -9,7 +9,7 @@ from itertools import accumulate, chain, filterfalse, islice, product, repeat
 from operator import attrgetter
 from timeit import default_timer
 from tkinter import ttk
-from typing import Literal
+from typing import Any, Literal
 
 from .column_headers import ColumnHeaders
 from .constants import (
@@ -94,14 +94,14 @@ class Sheet(tk.Frame):
         show_y_scrollbar: bool = True,
         width: int | None = None,
         height: int | None = None,
-        headers: None | list[object] = None,
-        header: None | list[object] = None,
-        row_index: None | list[object] = None,
-        index: None | list[object] = None,
+        headers: None | list[Any] = None,
+        header: None | list[Any] = None,
+        row_index: None | list[Any] = None,
+        index: None | list[Any] = None,
         default_header: Literal["letters", "numbers", "both"] | None = "letters",
         default_row_index: Literal["letters", "numbers", "both"] | None = "numbers",
-        data_reference: None | Sequence[Sequence[object]] = None,
-        data: None | Sequence[Sequence[object]] = None,
+        data_reference: None | Sequence[Sequence[Any]] = None,
+        data: None | Sequence[Sequence[Any]] = None,
         # either (start row, end row, "rows"), (start column, end column, "rows") or
         # (cells start row, cells start column, cells end row, cells end column, "cells")  # noqa: E501
         startup_select: tuple[int, int, str] | tuple[int, int, int, int, str] = None,
@@ -531,7 +531,7 @@ class Sheet(tk.Frame):
 
     def set_header_data(
         self,
-        value: object,
+        value: Any,
         c: int | None | AnyIter[int] = None,
         redraw: bool = True,
     ) -> Sheet:
@@ -550,12 +550,12 @@ class Sheet(tk.Frame):
 
     def headers(
         self,
-        newheaders: object = None,
+        newheaders: Any = None,
         index: None | int = None,
         reset_col_positions: bool = False,
         show_headers_if_not_sheet: bool = True,
         redraw: bool = True,
-    ) -> object:
+    ) -> Any:
         self.set_refresh_timer(redraw)
         return self.MT.headers(
             newheaders,
@@ -567,7 +567,7 @@ class Sheet(tk.Frame):
 
     def set_index_data(
         self,
-        value: object,
+        value: Any,
         r: int | None | AnyIter[int] = None,
         redraw: bool = True,
     ) -> Sheet:
@@ -586,12 +586,12 @@ class Sheet(tk.Frame):
 
     def row_index(
         self,
-        newindex: object = None,
+        newindex: Any = None,
         index: None | int = None,
         reset_row_positions: bool = False,
         show_index_if_not_sheet: bool = True,
         redraw: bool = True,
-    ) -> object:
+    ) -> Any:
         self.set_refresh_timer(redraw)
         return self.MT.row_index(
             newindex,
@@ -1260,22 +1260,22 @@ class Sheet(tk.Frame):
             canvas.basic_bindings(enable)
         return self
 
-    def cut(self, event: object = None, validation: bool = True) -> None | EventDataDict:
+    def cut(self, event: Any = None, validation: bool = True) -> None | EventDataDict:
         return self.MT.ctrl_x(event, validation)
 
-    def copy(self, event: object = None) -> None | EventDataDict:
+    def copy(self, event: Any = None) -> None | EventDataDict:
         return self.MT.ctrl_c(event)
 
-    def paste(self, event: object = None, validation: bool = True) -> None | EventDataDict:
+    def paste(self, event: Any = None, validation: bool = True) -> None | EventDataDict:
         return self.MT.ctrl_v(event, validation)
 
-    def delete(self, event: object = None, validation: bool = True) -> None | EventDataDict:
+    def delete(self, event: Any = None, validation: bool = True) -> None | EventDataDict:
         return self.MT.delete_key(event, validation)
 
-    def undo(self, event: object = None) -> None | EventDataDict:
+    def undo(self, event: Any = None) -> None | EventDataDict:
         return self.MT.undo(event)
 
-    def redo(self, event: object = None) -> None | EventDataDict:
+    def redo(self, event: Any = None) -> None | EventDataDict:
         return self.MT.redo(event)
 
     def has_focus(
@@ -1340,10 +1340,10 @@ class Sheet(tk.Frame):
         hdisp: bool = True,
         transposed: bool = False,
         ndim: int = 0,
-        convert: object = None,
+        convert: Any = None,
         undo: bool = True,
         emit_event: bool = False,
-        widget: object = None,
+        widget: Any = None,
         expand: None | str = None,
         formatter_options: dict | None = None,
         **kwargs,
@@ -1496,7 +1496,7 @@ class Sheet(tk.Frame):
     def get_data(
         self,
         *key: CreateSpanTypes,
-    ) -> object:
+    ) -> Any:
         """
         e.g. retrieves entire table as pandas dataframe
         sheet["A1"].expand().options(pandas.DataFrame).data
@@ -1637,20 +1637,20 @@ class Sheet(tk.Frame):
         c: int,
         r_ops: bool = True,
         c_ops: bool = True,
-    ) -> object:
+    ) -> Any:
         return self.MT.get_value_for_empty_cell(r, c, r_ops, c_ops)
 
     @property
     def data(self):
         return self.MT.data
 
-    def __iter__(self) -> Iterator[list[object] | tuple[object]]:
+    def __iter__(self) -> Iterator[list[Any] | tuple[Any]]:
         return self.MT.data.__iter__()
 
-    def __reversed__(self) -> Iterator[list[object] | tuple[object]]:
+    def __reversed__(self) -> Iterator[list[Any] | tuple[Any]]:
         return reversed(self.MT.data)
 
-    def __contains__(self, key: object) -> bool:
+    def __contains__(self, key: Any) -> bool:
         if isinstance(key, (list, tuple)):
             return key in self.MT.data
         return any(key in row for row in self.MT.data)
@@ -1722,7 +1722,7 @@ class Sheet(tk.Frame):
         reset_highlights: bool = False,
         keep_formatting: bool = True,
         delete_options: bool = False,
-    ) -> object:
+    ) -> Any:
         if data is None:
             data = []
         if verify and (not isinstance(data, list) or not all(isinstance(row, list) for row in data)):
@@ -1741,7 +1741,7 @@ class Sheet(tk.Frame):
         )
 
     @data.setter
-    def data(self, value: list[list[object]]) -> None:
+    def data(self, value: list[list[Any]]) -> None:
         self.data_reference(value)
 
     def new_tksheet_event(self) -> EventDataDict:
@@ -1755,7 +1755,7 @@ class Sheet(tk.Frame):
     def set_data(
         self,
         *key: CreateSpanTypes,
-        data: object = None,
+        data: Any = None,
         undo: bool | None = None,
         emit_event: bool | None = None,
         redraw: bool = True,
@@ -2074,7 +2074,7 @@ class Sheet(tk.Frame):
         self,
         datarn: int,
         datacn: int,
-        value: object,
+        value: Any,
         event_data: dict,
         fmt_kw: dict | None = None,
         check_readonly: bool = False,
@@ -2087,7 +2087,7 @@ class Sheet(tk.Frame):
     def event_data_set_index_cell(
         self,
         datarn: int,
-        value: object,
+        value: Any,
         event_data: dict,
         check_readonly: bool = False,
     ) -> EventDataDict:
@@ -2099,7 +2099,7 @@ class Sheet(tk.Frame):
     def event_data_set_header_cell(
         self,
         datacn: int,
-        value: object,
+        value: Any,
         event_data: dict,
         check_readonly: bool = False,
     ) -> EventDataDict:
@@ -2110,7 +2110,7 @@ class Sheet(tk.Frame):
 
     def insert_row(
         self,
-        row: list[object] | tuple[object] | None = None,
+        row: list[Any] | tuple[Any] | None = None,
         idx: str | int | None = None,
         height: int | None = None,
         row_index: bool = False,
@@ -2132,7 +2132,7 @@ class Sheet(tk.Frame):
 
     def insert_column(
         self,
-        column: list[object] | tuple[object] | None = None,
+        column: list[Any] | tuple[Any] | None = None,
         idx: str | int | None = None,
         width: int | None = None,
         header: bool = False,
@@ -2154,7 +2154,7 @@ class Sheet(tk.Frame):
 
     def insert_rows(
         self,
-        rows: list[tuple[object] | list[object]] | tuple[tuple[object] | list[object]] | int = 1,
+        rows: list[tuple[Any] | list[Any]] | tuple[tuple[Any] | list[Any]] | int = 1,
         idx: str | int | None = None,
         heights: list[int] | tuple[int] | None = None,
         row_index: bool = False,
@@ -2235,7 +2235,7 @@ class Sheet(tk.Frame):
 
     def insert_columns(
         self,
-        columns: list[tuple[object] | list[object]] | tuple[tuple[object] | list[object]] | int = 1,
+        columns: list[tuple[Any] | list[Any]] | tuple[tuple[Any] | list[Any]] | int = 1,
         idx: str | int | None = None,
         widths: list[int] | tuple[int] | None = None,
         headers: bool = False,
@@ -2759,10 +2759,10 @@ class Sheet(tk.Frame):
     def dropdown(
         self,
         *key: CreateSpanTypes,
-        values: list[object] | None = None,
+        values: list[Any] | None = None,
         edit_data: bool = True,
-        set_values: dict[tuple[int, int], object] | None = None,
-        set_value: object = None,
+        set_values: dict[tuple[int, int], Any] | None = None,
+        set_value: Any = None,
         state: Literal["normal", "readonly", "disabled"] = "normal",
         redraw: bool = True,
         selection_function: Callable | None = None,
@@ -3008,7 +3008,7 @@ class Sheet(tk.Frame):
         self,
         *key: CreateSpanTypes,
         formatter_options: dict | None = None,
-        formatter_class: object = None,
+        formatter_class: Any = None,
         redraw: bool = True,
         **kwargs,
     ) -> Span:
@@ -3969,7 +3969,7 @@ class Sheet(tk.Frame):
 
     # Identifying Bound Event Mouse Position
 
-    def identify_region(self, event: object) -> Literal["table", "index", "header", "top left"]:
+    def identify_region(self, event: Any) -> Literal["table", "index", "header", "top left"]:
         if event.widget == self.MT:
             return "table"
         elif event.widget == self.RI:
@@ -3981,7 +3981,7 @@ class Sheet(tk.Frame):
 
     def identify_row(
         self,
-        event: object,
+        event: Any,
         exclude_index: bool = False,
         allow_end: bool = True,
     ) -> int | None:
@@ -3998,7 +3998,7 @@ class Sheet(tk.Frame):
 
     def identify_column(
         self,
-        event: object,
+        event: Any,
         exclude_header: bool = False,
         allow_end: bool = True,
     ) -> int | None:
@@ -4015,7 +4015,7 @@ class Sheet(tk.Frame):
 
     # Scroll Positions and Cell Visibility
 
-    def sync_scroll(self, widget: object) -> Sheet:
+    def sync_scroll(self, widget: Any) -> Sheet:
         if widget is self:
             return self
         self.MT.synced_scrolls.add(widget)
@@ -4023,7 +4023,7 @@ class Sheet(tk.Frame):
             widget.MT.synced_scrolls.add(self)
         return self
 
-    def unsync_scroll(self, widget: object = None) -> Sheet:
+    def unsync_scroll(self, widget: Any = None) -> Sheet:
         if widget is None:
             for widget in self.MT.synced_scrolls:
                 if isinstance(widget, Sheet):
@@ -4499,13 +4499,13 @@ class Sheet(tk.Frame):
             self.CH.text_editor.window.set_text(text)
         return self
 
-    def destroy_text_editor(self, event: object = None) -> Sheet:
+    def destroy_text_editor(self, event: Any = None) -> Sheet:
         self.MT.hide_text_editor(reason=event)
         self.RI.hide_text_editor(reason=event)
         self.CH.hide_text_editor(reason=event)
         return self
 
-    def get_text_editor_widget(self, event: object = None) -> tk.Text | None:
+    def get_text_editor_widget(self, event: Any = None) -> tk.Text | None:
         try:
             return self.MT.text_editor.tktext
         except Exception:
@@ -4639,7 +4639,7 @@ class Sheet(tk.Frame):
 
     def event_widget_is_sheet(
         self,
-        event: object,
+        event: Any,
         table: bool = True,
         index: bool = True,
         header: bool = True,
@@ -4993,7 +4993,7 @@ class Sheet(tk.Frame):
 
     def tree_build(
         self,
-        data: list[list[object]],
+        data: list[list[Any]],
         iid_column: int,
         parent_column: int,
         text_column: None | int | list[str] = None,
@@ -5121,7 +5121,7 @@ class Sheet(tk.Frame):
         index: None | int | Literal["end"] = None,
         iid: None | str = None,
         text: None | str = None,
-        values: None | list[object] = None,
+        values: None | list[Any] = None,
         create_selections: bool = False,
         undo: bool = True,
     ) -> str:
@@ -5180,7 +5180,7 @@ class Sheet(tk.Frame):
 
     def bulk_insert(
         self,
-        data: list[list[object]],
+        data: list[list[Any]],
         parent: str = "",
         index: None | int | Literal["end"] = None,
         iid_column: int | None = None,
@@ -5659,7 +5659,7 @@ class Sheet(tk.Frame):
 
     # ##########       OLD FUNCTIONS       ##########
 
-    def get_cell_data(self, r: int, c: int, get_displayed: bool = False) -> object:
+    def get_cell_data(self, r: int, c: int, get_displayed: bool = False) -> Any:
         return self.MT.get_cell_data(r, c, get_displayed)
 
     def get_row_data(
@@ -5669,7 +5669,7 @@ class Sheet(tk.Frame):
         get_index: bool = False,
         get_index_displayed: bool = True,
         only_columns: int | AnyIter[int] | None = None,
-    ) -> list[object]:
+    ) -> list[Any]:
         if only_columns is not None:
             if isinstance(only_columns, int):
                 only_columns = (only_columns,)
@@ -5695,7 +5695,7 @@ class Sheet(tk.Frame):
         get_header: bool = False,
         get_header_displayed: bool = True,
         only_rows: int | AnyIter[int] | None = None,
-    ) -> list[object]:
+    ) -> list[Any]:
         if only_rows is not None:
             if isinstance(only_rows, int):
                 only_rows = (only_rows,)
@@ -5715,7 +5715,7 @@ class Sheet(tk.Frame):
         get_index_displayed: bool = True,
         only_rows: AnyIter[int] | int | None = None,
         only_columns: AnyIter[int] | int | None = None,
-    ) -> list[object]:
+    ) -> list[Any]:
         if only_rows is not None:
             if isinstance(only_rows, int):
                 only_rows = (only_rows,)
@@ -5764,7 +5764,7 @@ class Sheet(tk.Frame):
         get_header_displayed: bool = True,
         only_rows: int | AnyIter[int] | None = None,
         only_columns: int | AnyIter[int] | None = None,
-    ) -> Iterator[list[object]]:
+    ) -> Iterator[list[Any]]:
         if only_rows is not None:
             if isinstance(only_rows, int):
                 only_rows = (only_rows,)
@@ -5804,7 +5804,7 @@ class Sheet(tk.Frame):
         reset_col_positions: bool = True,
         reset_row_positions: bool = True,
         redraw: bool = True,
-    ) -> object:
+    ) -> Any:
         self.set_refresh_timer(redraw)
         return self.MT.data_reference(newdataref, reset_col_positions, reset_row_positions)
 
@@ -5812,7 +5812,7 @@ class Sheet(tk.Frame):
         self,
         r: int,
         c: int,
-        value: object = "",
+        value: Any = "",
         redraw: bool = True,
         keep_formatting: bool = True,
     ) -> Sheet:
@@ -5824,7 +5824,7 @@ class Sheet(tk.Frame):
     def set_row_data(
         self,
         r: int,
-        values: Sequence[object] = [],
+        values: Sequence[Any] = [],
         add_columns: bool = True,
         redraw: bool = True,
         keep_formatting: bool = True,
@@ -5856,7 +5856,7 @@ class Sheet(tk.Frame):
     def set_column_data(
         self,
         c: int,
-        values: Sequence[object] = [],
+        values: Sequence[Any] = [],
         add_rows: bool = True,
         redraw: bool = True,
         keep_formatting: bool = True,
@@ -6577,7 +6577,7 @@ class Sheet(tk.Frame):
             self._create_dropdown(r, c, v, d)
         return self.set_refresh_timer(kwargs["redraw"])
 
-    def _create_dropdown(self, r: int, c: int, v: object, d: dict) -> None:
+    def _create_dropdown(self, r: int, c: int, v: Any, d: dict) -> None:
         self.del_cell_options_dropdown_and_checkbox(r, c)
         add_to_options(self.MT.cell_options, (r, c), "dropdown", d)
         self.MT.set_cell_data(r, c, v)
@@ -6610,7 +6610,7 @@ class Sheet(tk.Frame):
                 self._dropdown_row(r_, v, d)
         return self.set_refresh_timer(kwargs["redraw"])
 
-    def _dropdown_row(self, r: int, v: object, d: dict) -> None:
+    def _dropdown_row(self, r: int, v: Any, d: dict) -> None:
         self.del_row_options_dropdown_and_checkbox(r)
         add_to_options(self.MT.row_options, r, "dropdown", d)
         for c in range(self.MT.total_data_cols()):
@@ -6635,7 +6635,7 @@ class Sheet(tk.Frame):
                 self._dropdown_column(c_, v, d)
         return self.set_refresh_timer(kwargs["redraw"])
 
-    def _dropdown_column(self, c: int, v: object, d: dict) -> None:
+    def _dropdown_column(self, c: int, v: Any, d: dict) -> None:
         self.del_column_options_dropdown_and_checkbox(c)
         add_to_options(self.MT.col_options, c, "dropdown", d)
         for r in range(self.MT.total_data_rows()):
@@ -6660,7 +6660,7 @@ class Sheet(tk.Frame):
                 self._create_header_dropdown(c_, v, d)
         return self.set_refresh_timer(kwargs["redraw"])
 
-    def _create_header_dropdown(self, c: int, v: object, d: dict) -> None:
+    def _create_header_dropdown(self, c: int, v: Any, d: dict) -> None:
         self.del_header_cell_options_dropdown_and_checkbox(c)
         add_to_options(self.CH.cell_options, c, "dropdown", d)
         self.CH.set_cell_data(c, v)
@@ -6684,7 +6684,7 @@ class Sheet(tk.Frame):
                 self._create_index_dropdown(r_, v, d)
         return self.set_refresh_timer(kwargs["redraw"])
 
-    def _create_index_dropdown(self, r: int, v: object, d: dict) -> None:
+    def _create_index_dropdown(self, r: int, v: Any, d: dict) -> None:
         self.del_index_cell_options_dropdown_and_checkbox(r)
         add_to_options(self.RI.cell_options, r, "dropdown", d)
         self.RI.set_cell_data(r, v)
@@ -6793,8 +6793,8 @@ class Sheet(tk.Frame):
         r: int = 0,
         c: int = 0,
         set_existing_dropdown: bool = False,
-        values: list[object] | None = None,
-        set_value: object = None,
+        values: list[Any] | None = None,
+        set_value: Any = None,
     ) -> Sheet:
         if values is None:
             values = []
@@ -6820,8 +6820,8 @@ class Sheet(tk.Frame):
         self,
         c: int = 0,
         set_existing_dropdown: bool = False,
-        values: list[object] | None = None,
-        set_value: object = None,
+        values: list[Any] | None = None,
+        set_value: Any = None,
     ) -> Sheet:
         if values is None:
             values = []
@@ -6846,8 +6846,8 @@ class Sheet(tk.Frame):
         self,
         r: int = 0,
         set_existing_dropdown: bool = False,
-        values: list[object] | None = None,
-        set_value: object = None,
+        values: list[Any] | None = None,
+        set_value: Any = None,
     ) -> Sheet:
         if values is None:
             values = []
@@ -6923,15 +6923,15 @@ class Sheet(tk.Frame):
             kwargs["modified_function"] = modified_function
         return kwargs
 
-    def get_dropdown_value(self, r: int = 0, c: int = 0) -> object:
+    def get_dropdown_value(self, r: int = 0, c: int = 0) -> Any:
         if self.MT.get_cell_kwargs(r, c, key="dropdown"):
             return self.get_cell_data(r, c)
 
-    def get_header_dropdown_value(self, c: int = 0) -> object:
+    def get_header_dropdown_value(self, c: int = 0) -> Any:
         if self.CH.get_cell_kwargs(c, key="dropdown"):
             return self.MT._headers[c]
 
-    def get_index_dropdown_value(self, r: int = 0) -> object:
+    def get_index_dropdown_value(self, r: int = 0) -> Any:
         if self.RI.get_cell_kwargs(r, key="dropdown"):
             return self.MT._row_index[r]
 
@@ -6940,7 +6940,7 @@ class Sheet(tk.Frame):
         r: int | Literal["all"],
         c: int | Literal["all"],
         formatter_options: dict | None = None,
-        formatter_class: object = None,
+        formatter_class: Any = None,
         redraw: bool = True,
         **kwargs,
     ) -> Sheet:
@@ -6993,7 +6993,7 @@ class Sheet(tk.Frame):
         self,
         r: AnyIter[int] | int | Literal["all"],
         formatter_options: dict | None = None,
-        formatter_class: object = None,
+        formatter_class: Any = None,
         redraw: bool = True,
         **kwargs,
     ) -> Sheet:
@@ -7037,7 +7037,7 @@ class Sheet(tk.Frame):
         self,
         c: AnyIter[int] | int | Literal["all"],
         formatter_options: dict | None = None,
-        formatter_class: object = None,
+        formatter_class: Any = None,
         redraw: bool = True,
         **kwargs,
     ) -> Sheet:
@@ -7094,7 +7094,7 @@ class Dropdown(Sheet):
         height: int | None = None,
         font: None | tuple[str, int, str] = None,
         outline_thickness: int = 2,
-        values: list[object] | None = None,
+        values: list[Any] | None = None,
         close_dropdown_window: Callable | None = None,
         search_function: Callable = dropdown_search_function,
         modified_function: None | Callable = None,
@@ -7171,7 +7171,7 @@ class Dropdown(Sheet):
         ops: DotDict,
         outline_color: str,
         align: str,
-        values: list[object] | None = None,
+        values: list[Any] | None = None,
         search_function: Callable = dropdown_search_function,
         modified_function: None | Callable = None,
     ) -> None:
@@ -7201,7 +7201,7 @@ class Dropdown(Sheet):
         )
         self.values(values, width=width - self.yscroll.winfo_width() - 4)
 
-    def arrowkey_UP(self, event: object = None) -> None:
+    def arrowkey_UP(self, event: Any = None) -> None:
         if self.row > 0:
             self.row -= 1
         else:
@@ -7209,13 +7209,13 @@ class Dropdown(Sheet):
         self.see(self.row, 0, redraw=False)
         self.select_row(self.row)
 
-    def arrowkey_DOWN(self, event: object = None) -> None:
+    def arrowkey_DOWN(self, event: Any = None) -> None:
         if len(self.MT.data) - 1 > self.row:
             self.row += 1
         self.see(self.row, 0, redraw=False)
         self.select_row(self.row)
 
-    def search_and_see(self, event: object = None) -> str:
+    def search_and_see(self, event: Any = None) -> str:
         if self.search_function is not None:
             rn = self.search_function(search_for=rf"{event['value']}", data=(r[0] for r in self.MT.data))
             if isinstance(rn, int):
@@ -7224,7 +7224,7 @@ class Dropdown(Sheet):
                 self.select_row(self.row)
                 return self.MT.data[rn][0]
 
-    def mouse_motion(self, event: object) -> None:
+    def mouse_motion(self, event: Any) -> None:
         row = self.identify_row(event, exclude_index=True, allow_end=False)
         if row is not None and row != self.row:
             self.row = row
@@ -7235,7 +7235,7 @@ class Dropdown(Sheet):
         if rows:
             self.select_row(next(iter(rows)))
 
-    def b1(self, event: object = None) -> None:
+    def b1(self, event: Any = None) -> None:
         if event is None:
             row = None
         elif event.keysym == "Return":
@@ -7266,7 +7266,7 @@ class Dropdown(Sheet):
 
     def values(
         self,
-        values: list[object] | None = None,
+        values: list[Any] | None = None,
         redraw: bool = True,
         width: int | None = None,
     ) -> None:

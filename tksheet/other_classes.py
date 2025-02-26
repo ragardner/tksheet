@@ -5,7 +5,7 @@ import tkinter as tk
 from collections import namedtuple
 from collections.abc import Callable, Hashable, Iterator
 from functools import partial
-from typing import Literal
+from typing import Any, Literal
 
 pickle_obj = partial(pickle.dumps, protocol=pickle.HIGHEST_PROTOCOL)
 
@@ -131,7 +131,7 @@ class DotDict(dict):
     def __setstate__(self, state: DotDict) -> None:
         self.update(state)
 
-    def __setitem__(self, key: Hashable, item: object) -> None:
+    def __setitem__(self, key: Hashable, item: Any) -> None:
         if type(item) is dict:  # noqa: E721
             super().__setitem__(key, DotDict(item))
         else:
@@ -165,13 +165,13 @@ class Span(dict):
     def __setstate__(self, state: Span) -> None:
         self.update(state)
 
-    def __getitem__(self, key: Hashable) -> object:
+    def __getitem__(self, key: Hashable) -> Any:
         if key == "data" or key == "value":
             return self["widget"].get_data(self)
         else:
             return super().__getitem__(key)
 
-    def __setitem__(self, key: Hashable, item: object) -> None:
+    def __setitem__(self, key: Hashable, item: Any) -> None:
         if key == "data" or key == "value":
             self["widget"].set_data(self, data=item)
         elif key == "bg":
@@ -188,7 +188,7 @@ class Span(dict):
     def format(
         self,
         formatter_options: dict | None = None,
-        formatter_class: object = None,
+        formatter_class: Any = None,
         redraw: bool = True,
         **kwargs,
     ) -> Span:
@@ -232,10 +232,10 @@ class Span(dict):
 
     def dropdown(
         self,
-        values: list[object] | None = None,
+        values: list[Any] | None = None,
         edit_data: bool = True,
-        set_values: dict[tuple[int, int], object] | None = None,
-        set_value: object = None,
+        set_values: dict[tuple[int, int], Any] | None = None,
+        set_value: Any = None,
         state: str = "normal",
         redraw: bool = True,
         selection_function: Callable | None = None,
@@ -327,7 +327,7 @@ class Span(dict):
         convert: Callable | None = None,
         undo: bool | None = None,
         emit_event: bool | None = None,
-        widget: object = None,
+        widget: Any = None,
         expand: str | None = None,
         formatter_options: dict | None = None,
         **kwargs,
@@ -504,7 +504,7 @@ class EditorStorageBase(StorageBase):
         self.highlight_from(index, line, column)
 
     @property
-    def tktext(self) -> object:
+    def tktext(self) -> Any:
         if self.window:
             return self.window.tktext
         return self.window
@@ -537,7 +537,7 @@ class ProgressBar:
     def __len__(self):
         return 2
 
-    def __getitem__(self, key: Hashable) -> object:
+    def __getitem__(self, key: Hashable) -> Any:
         if key == 0:
             return self.bg
         elif key == 1:

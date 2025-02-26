@@ -1,14 +1,15 @@
 from __future__ import annotations
 
 from platform import system as get_os
+from typing import Hashable
 
 USER_OS: str = f"{get_os()}".lower()
 ctrl_key: str = "Command" if USER_OS == "darwin" else "Control"
 rc_binding: str = "<2>" if USER_OS == "darwin" else "<3>"
 symbols_set: set[str] = set("""!#$%&'()*+,-./:;"@[]^_`{|}~>?= \\""")
-nonelike: set[object] = {None, "none", ""}
-truthy: set[object] = {True, "true", "t", "yes", "y", "on", "1"}
-falsy: set[object] = {False, "false", "f", "no", "n", "off", "0"}
+nonelike: set[Hashable] = {None, "none", ""}
+truthy: set[Hashable] = {True, "true", "t", "yes", "y", "on", "1"}
+falsy: set[Hashable] = {False, "false", "f", "no", "n", "off", "0"}
 _test_str: str = "aiW_-|"
 
 val_modifying_options: set[str] = {"checkbox", "format", "dropdown"}

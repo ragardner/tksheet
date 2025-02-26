@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import tkinter as tk
 from collections.abc import Callable
-from typing import Literal
+from typing import Any, Literal
 
 from .constants import align_helper, ctrl_key, rc_binding
 from .functions import convert_align
@@ -99,7 +99,7 @@ class TextEditorTkText(tk.Text):
         self.tag_configure("align", justify=self.align)
         self.tag_add("align", 1.0, "end")
 
-    def _proxy(self, command: object, *args) -> object:
+    def _proxy(self, command: Any, *args) -> Any:
         try:
             result = self.tk.call((self._orig, command) + args)
         except Exception:
@@ -122,11 +122,11 @@ class TextEditorTkText(tk.Text):
                 self.newline_bindng(check_lines=False)
         return result
 
-    def rc(self, event: object) -> None:
+    def rc(self, event: Any) -> None:
         self.focus_set()
         self.rc_popup_menu.tk_popup(event.x_root, event.y_root)
 
-    def delete_key(self, event: object = None) -> None:
+    def delete_key(self, event: Any = None) -> None:
         if self.editor_del_key == "forward":
             return
         elif not self.editor_del_key:
@@ -139,27 +139,27 @@ class TextEditorTkText(tk.Text):
             self.delete("insert-1c")
             return "break"
 
-    def select_all(self, event: object = None) -> Literal["break"]:
+    def select_all(self, event: Any = None) -> Literal["break"]:
         self.tag_add(tk.SEL, "1.0", tk.END)
         self.mark_set(tk.INSERT, tk.END)
         # self.see(tk.INSERT)
         return "break"
 
-    def cut(self, event: object = None) -> Literal["break"]:
+    def cut(self, event: Any = None) -> Literal["break"]:
         self.event_generate(f"<{ctrl_key}-x>")
         self.event_generate("<KeyRelease>")
         return "break"
 
-    def copy(self, event: object = None) -> Literal["break"]:
+    def copy(self, event: Any = None) -> Literal["break"]:
         self.event_generate(f"<{ctrl_key}-c>")
         return "break"
 
-    def paste(self, event: object = None) -> Literal["break"]:
+    def paste(self, event: Any = None) -> Literal["break"]:
         self.event_generate(f"<{ctrl_key}-v>")
         self.event_generate("<KeyRelease>")
         return "break"
 
-    def undo(self, event: object = None) -> Literal["break"]:
+    def undo(self, event: Any = None) -> Literal["break"]:
         self.event_generate(f"<{ctrl_key}-z>")
         self.event_generate("<KeyRelease>")
         return "break"

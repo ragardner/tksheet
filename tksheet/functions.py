@@ -10,7 +10,7 @@ from collections import deque
 from collections.abc import Callable, Generator, Hashable, Iterable, Iterator, Sequence
 from difflib import SequenceMatcher
 from itertools import islice, repeat
-from typing import Literal
+from typing import Any, Literal
 
 from .colors import color_map
 from .constants import align_value_error, symbols_set
@@ -202,7 +202,7 @@ def recursive_bind(widget: tk.Misc, event: str, callback: Callable) -> None:
         recursive_bind(child, event, callback)
 
 
-def tksheet_type_error(kwarg: str, valid_types: list[str], not_type: object) -> str:
+def tksheet_type_error(kwarg: str, valid_types: list[str], not_type: Any) -> str:
     valid_types = ", ".join(f"{type_}" for type_ in valid_types)
     return f"Argument '{kwarg}' must be one of the following types: {valid_types}, not {type(not_type)}."
 
@@ -213,7 +213,7 @@ def new_tk_event(keysym: str) -> tk.Event:
     return event
 
 
-def event_has_char_key(event: object) -> bool:
+def event_has_char_key(event: Any) -> bool:
     return (
         event and hasattr(event, "char") and (event.char.isalpha() or event.char.isdigit() or event.char in symbols_set)
     )
@@ -232,7 +232,7 @@ def event_opens_dropdown_or_checkbox(event=None) -> bool:
     )
 
 
-def dropdown_search_function(search_for: str, data: Iterable[object]) -> None | int:
+def dropdown_search_function(search_for: str, data: Iterable[Any]) -> None | int:
     search_for = search_for.lower()
     search_len = len(search_for)
     if not search_len:
@@ -281,16 +281,16 @@ def float_to_int(f: int | float) -> int | float:
 
 def event_dict(
     name: str = None,
-    sheet: object = None,
+    sheet: Any = None,
     widget: tk.Canvas | None = None,
     boxes: None | dict | tuple = None,
     cells_table: None | dict = None,
     cells_header: None | dict = None,
     cells_index: None | dict = None,
     selected: None | tuple = None,
-    data: object = None,
+    data: Any = None,
     key: None | str = None,
-    value: object = None,
+    value: Any = None,
     loc: None | int | tuple[int] = None,
     row: None | int = None,
     column: None | int = None,
@@ -418,8 +418,8 @@ def push_n(num: int, sorted_seq: Sequence[int]) -> int:
 
 
 def get_dropdown_kwargs(
-    values: list[object] | None = None,
-    set_value: object = None,
+    values: list[Any] | None = None,
+    set_value: Any = None,
     state: str = "normal",
     redraw: bool = True,
     selection_function: Callable | None = None,
@@ -477,7 +477,7 @@ def get_checkbox_dict(**kwargs) -> dict:
     }
 
 
-def is_iterable(o: object) -> bool:
+def is_iterable(o: Any) -> bool:
     if isinstance(o, str):
         return False
     try:
@@ -499,7 +499,7 @@ def int_x_tuple(i: AnyIter[int] | int) -> tuple[int]:
     return tuple(i)
 
 
-def unpack(t: tuple[object] | tuple[AnyIter[object]]) -> tuple[object]:
+def unpack(t: tuple[Any] | tuple[AnyIter[Any]]) -> tuple[Any]:
     if not len(t):
         return t
     if is_iterable(t[0]) and len(t) == 1:
@@ -507,11 +507,11 @@ def unpack(t: tuple[object] | tuple[AnyIter[object]]) -> tuple[object]:
     return t
 
 
-def is_type_int(o: object) -> bool:
+def is_type_int(o: Any) -> bool:
     return isinstance(o, int) and not isinstance(o, bool)
 
 
-def force_bool(o: object) -> bool:
+def force_bool(o: Any) -> bool:
     try:
         return to_bool(o)
     except Exception:
@@ -702,8 +702,8 @@ def cell_right_within_box(
 
 
 def get_last(
-    it: AnyIter[object],
-) -> object:
+    it: AnyIter[Any],
+) -> Any:
     if hasattr(it, "__reversed__"):
         try:
             return next(reversed(it))
@@ -716,7 +716,7 @@ def get_last(
             return None
 
 
-def index_exists(seq: Sequence[object], index: int) -> bool:
+def index_exists(seq: Sequence[Any], index: int) -> bool:
     try:
         seq[index]
         return True
@@ -733,10 +733,10 @@ def add_to_displayed(displayed: list[int], to_add: Iterable[int]) -> list[int]:
 
 
 def move_elements_by_mapping(
-    seq: list[object],
+    seq: list[Any],
     new_idxs: dict[int, int],
     old_idxs: dict[int, int] | None = None,
-) -> list[object]:
+) -> list[Any]:
     # move elements of a list around
     # displacing other elements based on mapping
     # new_idxs = {old index: new index, ...}
@@ -748,10 +748,10 @@ def move_elements_by_mapping(
 
 
 def move_elements_by_mapping_gen(
-    seq: list[object],
+    seq: list[Any],
     new_idxs: dict[int, int],
     old_idxs: dict[int, int] | None = None,
-) -> Generator[object]:
+) -> Generator[Any]:
     if old_idxs is None:
         old_idxs = dict(zip(new_idxs.values(), new_idxs))
     remaining_values = (e for i, e in enumerate(seq) if i not in new_idxs)
@@ -759,10 +759,10 @@ def move_elements_by_mapping_gen(
 
 
 def move_elements_to(
-    seq: list[object],
+    seq: list[Any],
     move_to: int,
     to_move: list[int],
-) -> list[object]:
+) -> list[Any]:
     return move_elements_by_mapping(
         seq,
         *get_new_indexes(
@@ -791,14 +791,14 @@ def get_new_indexes(
 
 
 def insert_items(
-    seq: list[object],
-    to_insert: dict[int, object],
+    seq: list[Any],
+    to_insert: dict[int, Any],
     seq_len_func: Callable | None = None,
-) -> list[object]:
+) -> list[Any]:
     """
-    seq: list[object]
+    seq: list[Any]
     to_insert: keys are ints sorted in reverse, representing list indexes to insert items.
-               Values are any object, e.g. {1: 200, 0: 200}
+               Values are any, e.g. {1: 200, 0: 200}
     """
     if to_insert:
         if seq_len_func and next(iter(to_insert)) >= len(seq) + len(to_insert):
@@ -809,11 +809,11 @@ def insert_items(
 
 
 def del_placeholder_dict_key(
-    d: dict[Hashable, object],
+    d: dict[Hashable, Any],
     k: Hashable,
-    v: object,
+    v: Any,
     p: tuple = (),
-) -> dict[Hashable, object]:
+) -> dict[Hashable, Any]:
     if p in d:
         del d[p]
     d[k] = v
@@ -994,7 +994,7 @@ def is_last_cell(
     return row == end_row - 1 and col == end_col - 1
 
 
-def zip_fill_2nd_value(x: AnyIter[object], o: object) -> Generator[object, object]:
+def zip_fill_2nd_value(x: AnyIter[Any], o: Any) -> Generator[Any, Any]:
     return zip(x, repeat(o))
 
 
@@ -1011,7 +1011,7 @@ def str_to_int(s: str) -> int | None:
 
 def gen_formatted(
     options: dict,
-    formatter: object = None,
+    formatter: Any = None,
 ) -> Generator[tuple[int, int]] | Generator[int]:
     if formatter is None:
         return (k for k, dct in options.items() if "format" in dct)
@@ -1060,7 +1060,7 @@ def span_dict(
     convert: Callable | None = None,
     undo: bool = False,
     emit_event: bool = False,
-    widget: object = None,
+    widget: Any = None,
 ) -> Span:
     d: Span = Span(
         from_r=from_r,
@@ -1087,7 +1087,7 @@ def span_dict(
 
 
 def coords_to_span(
-    widget: object,
+    widget: Any,
     from_r: int | None = None,
     from_c: int | None = None,
     upto_r: int | None = None,
@@ -1122,7 +1122,7 @@ def key_to_span(
         | Sequence[Sequence[int | None, int | None], Sequence[int | None, int | None]]
     ),
     spans: dict[str, Span],
-    widget: object = None,
+    widget: Any = None,
 ) -> Span:
     if isinstance(key, Span):
         return key
@@ -1623,7 +1623,7 @@ def add_to_options(
     options: dict,
     coords: int | tuple[int, int],
     key: str,
-    value: object,
+    value: Any,
 ) -> dict:
     if coords not in options:
         options[coords] = {}
@@ -1694,14 +1694,14 @@ def mod_span(
     return to_set_to
 
 
-def mod_span_widget(span: Span, widget: object) -> Span:
+def mod_span_widget(span: Span, widget: Any) -> Span:
     span.widget = widget
     return span
 
 
 def mod_event_val(
     event_data: EventDataDict,
-    val: object,
+    val: Any,
     loc: Loc | None = None,
     row: int | None = None,
     column: int | None = None,

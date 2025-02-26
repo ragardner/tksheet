@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import tkinter as tk
+from typing import Any
 
 from .constants import rc_binding
 
@@ -107,34 +108,34 @@ class TopLeftRectangle(tk.Canvas):
     def sa_state(self, state: str = "normal") -> None:
         self.itemconfig("sa", state=state)
 
-    def rw_enter(self, event: object = None) -> None:
+    def rw_enter(self, event: Any = None) -> None:
         if self.RI.width_resizing_enabled:
             self.itemconfig(
                 "rw",
                 fill=self.PAR.ops.top_left_fg_highlight,
             )
 
-    def sa_enter(self, event: object = None) -> None:
+    def sa_enter(self, event: Any = None) -> None:
         if self.MT.select_all_enabled:
             self.itemconfig(
                 self.select_all_tri,
                 fill=self.PAR.ops.top_left_fg_highlight,
             )
 
-    def rh_enter(self, event: object = None) -> None:
+    def rh_enter(self, event: Any = None) -> None:
         if self.CH.height_resizing_enabled:
             self.itemconfig(
                 "rh",
                 fill=self.PAR.ops.top_left_fg_highlight,
             )
 
-    def rw_leave(self, event: object = None) -> None:
+    def rw_leave(self, event: Any = None) -> None:
         self.itemconfig("rw", fill=self.PAR.ops.top_left_fg)
 
-    def rh_leave(self, event: object = None) -> None:
+    def rh_leave(self, event: Any = None) -> None:
         self.itemconfig("rh", fill=self.PAR.ops.top_left_fg)
 
-    def sa_leave(self, event: object = None) -> None:
+    def sa_leave(self, event: Any = None) -> None:
         self.itemconfig(
             self.select_all_tri,
             fill=self.PAR.ops.top_left_fg,
@@ -197,12 +198,12 @@ class TopLeftRectangle(tk.Canvas):
         )
         self.coords(self.select_all_box, 0, 0, w - 5, h - 5)
 
-    def mouse_motion(self, event: object = None) -> None:
+    def mouse_motion(self, event: Any = None) -> None:
         self.MT.reset_mouse_motion_creations()
         if self.extra_motion_func is not None:
             self.extra_motion_func(event)
 
-    def b1_press(self, event: object = None) -> None:
+    def b1_press(self, event: Any = None) -> None:
         self.focus_set()
         rect = self.find_overlapping(event.x, event.y, event.x, event.y)
         if not rect or rect[0] in (
@@ -232,22 +233,22 @@ class TopLeftRectangle(tk.Canvas):
         if self.extra_b1_press_func is not None:
             self.extra_b1_press_func(event)
 
-    def b1_motion(self, event: object = None) -> None:
+    def b1_motion(self, event: Any = None) -> None:
         self.focus_set()
         if self.extra_b1_motion_func is not None:
             self.extra_b1_motion_func(event)
 
-    def b1_release(self, event: object = None) -> None:
+    def b1_release(self, event: Any = None) -> None:
         self.focus_set()
         if self.extra_b1_release_func is not None:
             self.extra_b1_release_func(event)
 
-    def double_b1(self, event: object = None) -> None:
+    def double_b1(self, event: Any = None) -> None:
         self.focus_set()
         if self.extra_double_b1_func is not None:
             self.extra_double_b1_func(event)
 
-    def rc(self, event: object = None) -> None:
+    def rc(self, event: Any = None) -> None:
         self.focus_set()
         if self.extra_rc_func is not None:
             self.extra_rc_func(event)
