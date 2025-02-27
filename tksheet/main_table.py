@@ -555,16 +555,31 @@ class MainTable(tk.Canvas):
         return coords
 
     def find_match(self, find: str, r: int, c: int) -> bool:
-        return (
-            not find
-            and (not self.get_valid_cell_data_as_str(r, c, True).lower() or not f"{self.get_cell_data(r, c)}".lower())
-        ) or (
-            find
-            and (
-                find in self.get_valid_cell_data_as_str(r, c, True).lower()
-                or find in f"{self.get_cell_data(r, c)}".lower()
-            )
-        )
+        try:
+            value = self.data[r][c]
+        except Exception:
+            value = ""
+        kwargs = self.get_cell_kwargs(r, c, key=None)
+        if kwargs:
+            if "dropdown" in kwargs:
+                kwargs = kwargs["dropdown"]
+                if kwargs["text"] is not None and find in str(kwargs["text"]).lower():
+                    return True
+            elif "checkbox" in kwargs:
+                kwargs = kwargs["checkbox"]
+                if find in str(kwargs["text"]).lower() or (not find and find in "False"):
+                    return True
+            elif "format" in kwargs:
+                if kwargs["formatter"] is None:
+                    if find in data_to_str(value, **kwargs).lower():
+                        return True
+                # assumed given formatter class has __str__() or value attribute
+                elif find in str(value).lower() or find in str(value.value).lower():
+                    return True
+        if value is None:
+            return find == ""
+        else:
+            return find in str(value).lower()
 
     def find_within_match(self, find: str, r: int, c: int) -> bool:
         if not self.all_rows_displayed:
@@ -669,9 +684,9 @@ class MainTable(tk.Canvas):
                     reverse=reverse,
                 )
                 if (
-                    (self.all_rows_displayed or bisect_in(self.displayed_rows, r))
+                    self.find_match(find, r, c)
+                    and (self.all_rows_displayed or bisect_in(self.displayed_rows, r))
                     and (self.all_columns_displayed or bisect_in(self.displayed_columns, c))
-                    and self.find_match(find, r, c)
                 )
             ),
             None,
