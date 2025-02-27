@@ -1,5 +1,9 @@
 ### Version 7.4.7
-####
+#### Fixed:
+- `see()` function scrolls to wrong position if the row index auto-resized after scrolling
+
+#### Improved:
+- In-built find window performance
 
 ### Version 7.4.6
 #### Fixed:
