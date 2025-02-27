@@ -2054,8 +2054,10 @@ class MainTable(tk.Canvas):
         redraw: bool = True,
         r_pc: float = 0.0,
         c_pc: float = 0.0,
+        index: bool = True,
     ) -> bool:
-        need_redraw = False
+        need_y_redraw = False
+        need_x_redraw = False
         vis_info = self.cell_visibility_info(r, c)
         yvis, xvis = vis_info["yvis"], vis_info["xvis"]
         top_left_x, top_left_y, bottom_right_x, bottom_right_y = vis_info["visible_region"]
@@ -2082,7 +2084,7 @@ class MainTable(tk.Canvas):
                         y - 1 if y > 1 else y,
                     ]
                     self.set_yviews(*args, redraw=False)
-                    need_redraw = True
+                    need_y_redraw = True
             else:
                 if r is not None and not keep_yscroll:
                     y = max(
@@ -2094,7 +2096,7 @@ class MainTable(tk.Canvas):
                         y - 1 if y > 1 else y,
                     ]
                     self.set_yviews(*args, redraw=False)
-                    need_redraw = True
+                    need_y_redraw = True
         # x scroll
         if not check_cell_visibility or (check_cell_visibility and not xvis) and len(self.col_positions) > 1:
             if bottom_right_corner is None:
@@ -2117,7 +2119,7 @@ class MainTable(tk.Canvas):
                         x - 1 if x > 1 else x,
                     ]
                     self.set_xviews(*args, redraw=False)
-                    need_redraw = True
+                    need_x_redraw = True
             else:
                 if c is not None and not keep_xscroll:
                     x = max(
@@ -2129,8 +2131,22 @@ class MainTable(tk.Canvas):
                         x - 1 if x > 1 else x,
                     ]
                     self.set_xviews(*args, redraw=False)
-                    need_redraw = True
-        if redraw and need_redraw:
+                    need_x_redraw = True
+            # the index may have resized after scrolling making x calculation wrong
+            if need_x_redraw and index and self.PAR.ops.auto_resize_row_index and self.show_index:
+                self.main_table_redraw_grid_and_text(redraw_header=False, redraw_row_index=False, redraw_table=False)
+                self.see(
+                    r=r,
+                    c=c,
+                    keep_yscroll=keep_yscroll,
+                    keep_xscroll=keep_xscroll,
+                    check_cell_visibility=check_cell_visibility,
+                    redraw=redraw,
+                    r_pc=r_pc,
+                    c_pc=c_pc,
+                    index=False,
+                )
+        if redraw and (need_y_redraw or need_x_redraw):
             self.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
             return True
         return False
@@ -6130,7 +6146,7 @@ class MainTable(tk.Canvas):
 
         # check if auto resizing row index
         changed_w = False
-        if self.PAR.ops.auto_resize_row_index and redraw_row_index and self.show_index:
+        if self.PAR.ops.auto_resize_row_index and self.show_index:
             changed_w = self.RI.auto_set_index_width(
                 end_row=grid_end_row,
                 only_rows=map(self.datarn, range(text_start_row, text_end_row)),
