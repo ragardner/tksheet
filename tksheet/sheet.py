@@ -5238,14 +5238,6 @@ class Sheet(tk.Frame):
         """
         if item not in self.RI.tree:
             raise ValueError(f"Item '{item}' does not exist.")
-        if isinstance(iid, str):
-            if iid in self.RI.tree:
-                raise ValueError(f"Cannot rename '{iid}', it already exists.")
-            self.RI.tree[item].iid = iid
-            self.RI.tree[iid] = self.RI.tree.pop(item)
-            self.RI.tree_rns[iid] = self.RI.tree_rns.pop(item)
-            if iid in self.RI.tree_open_ids:
-                self.RI.tree_open_ids[iid] = self.RI.tree_open_ids.pop(item)
         if isinstance(text, str):
             self.RI.tree[item].text = text
         if isinstance(values, list):
@@ -5273,6 +5265,21 @@ class Sheet(tk.Frame):
                         )
             else:
                 self.RI.tree_open_ids.discard(item)
+        if isinstance(iid, str):
+            if iid in self.RI.tree:
+                raise ValueError(f"Cannot rename '{iid}', it already exists.")
+            for ciid in self.RI.tree[item].children:
+                self.RI.tree[ciid].parent = iid
+            if self.RI.tree[item].parent:
+                parent_node = self.RI.parent_node(item)
+                item_index = parent_node.children.index(item)
+                parent_node.children[item_index] = iid
+            self.RI.tree[item].iid = iid
+            self.RI.tree[iid] = self.RI.tree.pop(item)
+            self.RI.tree_rns[iid] = self.RI.tree_rns.pop(item)
+            if item in self.RI.tree_open_ids:
+                self.RI.tree_open_ids.discard(item)
+                self.RI.tree_open_ids.add(iid)
         get = not (isinstance(iid, str) or isinstance(text, str) or isinstance(values, list) or isinstance(open_, bool))
         self.set_refresh_timer(redraw=not get and redraw)
         if get:

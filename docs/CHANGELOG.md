@@ -6,6 +6,7 @@
 - [#267](https://github.com/ragardner/tksheet/issues/267) as it was not fixed in version `7.4.5`
 
 #### Fixed:
+- Bugs with treeview mode `item()` `iid` parameter, used for changing item ids
 - `see()` function scrolls to wrong position if the row index auto-resized after scrolling
 
 #### Improved:
