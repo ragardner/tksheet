@@ -5604,8 +5604,7 @@ class MainTable(tk.Canvas):
 
     def total_data_cols(self, include_header: bool = True) -> int:
         h_total = len(self._headers) if include_header and isinstance(self._headers, (list, tuple)) else 0
-        # map() for some reason is 15% faster than max(key=len) using python 3.11 windows 11
-        d_total = max(map(len, self.data), default=0)
+        d_total = max(map(len, self.data), default=0)  # max(map(len, )) is faster
         return max(h_total, d_total)
 
     def total_data_rows(self, include_index: bool = True) -> int:

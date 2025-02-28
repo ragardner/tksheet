@@ -20,6 +20,7 @@ from .tksheet_types import AnyIter
 
 unpickle_obj = pickle.loads
 lines_re = re.compile(r"[^\n]+")
+ORD_A = ord("A")
 
 
 def wrap_text(
@@ -517,9 +518,8 @@ def force_bool(o: Any) -> bool:
 def alpha2idx(a: str) -> int | None:
     try:
         n = 0
-        orda = ord("A")
         for c in a.upper():
-            n = n * 26 + ord(c) - orda + 1
+            n = n * 26 + ord(c) - ORD_A + 1
         return n - 1
     except Exception:
         return None
@@ -1108,6 +1108,37 @@ def coords_to_span(
     )
 
 
+PATTERN_ROW = re.compile(r"^(\d+)$")  # "1"
+PATTERN_COL = re.compile(r"^([A-Z]+)$")  # "A"
+PATTERN_CELL = re.compile(r"^([A-Z]+)(\d+)$")  # "A1"
+PATTERN_RANGE = re.compile(r"^([A-Z]+)(\d+):([A-Z]+)(\d+)$")  # "A1:B2"
+PATTERN_ROW_RANGE = re.compile(r"^(\d+):(\d+)$")  # "1:2"
+PATTERN_ROW_START = re.compile(r"^(\d+):$")  # "2:"
+PATTERN_ROW_END = re.compile(r"^:(\d+)$")  # ":2"
+PATTERN_COL_RANGE = re.compile(r"^([A-Z]+):([A-Z]+)$")  # "A:B"
+PATTERN_COL_START = re.compile(r"^([A-Z]+):$")  # "A:"
+PATTERN_COL_END = re.compile(r"^:([A-Z]+)$")  # ":B"
+PATTERN_CELL_START = re.compile(r"^([A-Z]+)(\d+):$")  # "A1:"
+PATTERN_CELL_END = re.compile(r"^:([A-Z]+)(\d+)$")  # ":B1"
+PATTERN_CELL_COL = re.compile(r"^([A-Z]+)(\d+):([A-Z]+)$")  # "A1:B"
+PATTERN_CELL_ROW = re.compile(r"^([A-Z]+)(\d+):(\d+)$")  # "A1:2"
+PATTERN_ALL = re.compile(r"^:$")  # ":"
+
+
+def span_a2i(a: str) -> int | None:
+    n = 0
+    for c in a:
+        n = n * 26 + ord(c) - ORD_A + 1
+    return n - 1
+
+
+def span_a2n(a: str) -> int | None:
+    n = 0
+    for c in a:
+        n = n * 26 + ord(c) - ORD_A + 1
+    return n
+
+
 def key_to_span(
     key: (
         str
@@ -1120,76 +1151,32 @@ def key_to_span(
     spans: dict[str, Span],
     widget: Any = None,
 ) -> Span:
+    """
+    Convert various input types to a Span object representing a 2D range.
+
+    Args:
+        key: The input to convert (str, int, slice, sequence, or None).
+        spans: A dictionary of named spans (e.g., {"<name>": Span(...)}).
+        widget: Optional widget context for span creation.
+
+    Returns:
+        A Span object or an error message string if the key is invalid.
+    """
+    # Handle Span object directly
     if isinstance(key, Span):
         return key
+
+    # Handle None as full span
     elif key is None:
-        key = (None, None, None, None)
+        return coords_to_span(widget=widget, from_r=None, from_c=None, upto_r=None, upto_c=None)
+
+    # Validate input type
     elif not isinstance(key, (str, int, slice, list, tuple)):
-        return f"Key type must be either str, int, list, tuple or slice, not '{type(key)}'."
+        return f"Key type must be either str, int, list, tuple or slice, not '{type(key).__name__}'."
+
     try:
-        if isinstance(key, (list, tuple)):
-            if isinstance(key[0], int) or key[0] is None:
-                if len(key) == 2:
-                    """
-                    (int | None, int | None) -
-                    (0, 0) - row 0, column 0 - the first cell
-                    (0, None) - row 0, all columns
-                    (None, 0) - column 0, all rows
-                    """
-                    return span_dict(
-                        from_r=key[0] if isinstance(key[0], int) else 0,
-                        from_c=key[1] if isinstance(key[1], int) else 0,
-                        upto_r=(key[0] + 1) if isinstance(key[0], int) else None,
-                        upto_c=(key[1] + 1) if isinstance(key[1], int) else None,
-                        widget=widget,
-                    )
-
-                elif len(key) == 4:
-                    """
-                    (int | None, int | None, int | None, int | None) -
-                    (from row,  from column, up to row, up to column)
-                    """
-                    return coords_to_span(
-                        widget=widget,
-                        from_r=key[0],
-                        from_c=key[1],
-                        upto_r=key[2],
-                        upto_c=key[3],
-                    )
-                    # return span_dict(
-                    #     from_r=key[0] if isinstance(key[0], int) else 0,
-                    #     from_c=key[1] if isinstance(key[1], int) else 0,
-                    #     upto_r=key[2] if isinstance(key[2], int) else None,
-                    #     upto_c=key[3] if isinstance(key[3], int) else None,
-                    #     widget=widget,
-                    # )
-
-            elif isinstance(key[0], (list, tuple)):
-                """
-                ((int | None, int | None), (int | None, int | None))
-
-                First Sequence is start row and column
-                Second Sequence is up to but not including row and column
-                """
-                return coords_to_span(
-                    widget=widget,
-                    from_r=key[0][0],
-                    from_c=key[0][1],
-                    upto_r=key[1][0],
-                    upto_c=key[1][1],
-                )
-                # return span_dict(
-                #     from_r=key[0][0] if isinstance(key[0][0], int) else 0,
-                #     from_c=key[0][1] if isinstance(key[0][1], int) else 0,
-                #     upto_r=key[1][0],
-                #     upto_c=key[1][1],
-                #     widget=widget,
-                # )
-
-        elif isinstance(key, int):
-            """
-            [int] - Whole row at that index
-            """
+        # Integer key: whole row
+        if isinstance(key, int):
             return span_dict(
                 from_r=key,
                 from_c=None,
@@ -1198,29 +1185,8 @@ def key_to_span(
                 widget=widget,
             )
 
+        # Slice key: row range
         elif isinstance(key, slice):
-            """
-            [slice]
-            """
-            """
-            [:] - All rows
-            """
-            if key.start is None and key.stop is None:
-                """
-                [:]
-                """
-                return span_dict(
-                    from_r=0,
-                    from_c=None,
-                    upto_r=None,
-                    upto_c=None,
-                    widget=widget,
-                )
-            """
-            [1:3] - Rows 1, 2
-            [:2] - Rows up to but not including 2
-            [2:] - Rows starting from and including 2
-            """
             start = 0 if key.start is None else key.start
             return span_dict(
                 from_r=start,
@@ -1230,251 +1196,187 @@ def key_to_span(
                 widget=widget,
             )
 
+        # Sequence key: various span formats
+        elif isinstance(key, (list, tuple)):
+            if (
+                len(key) == 2
+                and (isinstance(key[0], int) or key[0] is None)
+                and (isinstance(key[1], int) or key[1] is None)
+            ):
+                # Single cell or partial span: (row, col)
+                r_int = isinstance(key[0], int)
+                c_int = isinstance(key[1], int)
+                return span_dict(
+                    from_r=key[0] if r_int else 0,
+                    from_c=key[1] if c_int else 0,
+                    upto_r=key[0] + 1 if r_int else None,
+                    upto_c=key[1] + 1 if c_int else None,
+                    widget=widget,
+                )
+            elif len(key) == 4:
+                # Full span coordinates: (from_r, from_c, upto_r, upto_c)
+                return coords_to_span(
+                    widget=widget,
+                    from_r=key[0],
+                    from_c=key[1],
+                    upto_r=key[2],
+                    upto_c=key[3],
+                )
+            elif len(key) == 2 and all(isinstance(k, (list, tuple)) for k in key):
+                # Start and end points: ((from_r, from_c), (upto_r, upto_c))
+                return coords_to_span(
+                    widget=widget,
+                    from_r=key[0][0],
+                    from_c=key[0][1],
+                    upto_r=key[1][0],
+                    upto_c=key[1][1],
+                )
+
+        # String key: parse various span formats
         elif isinstance(key, str):
             if not key:
-                key = ":"
-
-            if key.startswith("<") and key.endswith(">"):
-                if (key := key[1:-1]) in spans:
-                    """
-                    ["<name>"] - Surrounded by "<" ">" cells from a named range
-                    """
-                    return spans[key]
-                return f"'{key}' not in named spans."
-
-            key = key.upper()
-
-            if key.isdigit():
-                """
-                ["1"] - Row 0
-                """
+                # Empty string treated as full span
                 return span_dict(
-                    from_r=int(key) - 1,
+                    from_r=0,
                     from_c=None,
-                    upto_r=int(key),
+                    upto_r=None,
                     upto_c=None,
                     widget=widget,
                 )
+            elif key.startswith("<") and key.endswith(">"):
+                name = key[1:-1]
+                return spans.get(name, f"'{name}' not in named spans.")
 
-            if key.isalpha():
-                """
-                ["A"] - Column 0
-                """
+            key = key.upper()  # Case-insensitive parsing
+
+            # Match string against precompiled patterns
+            if m := PATTERN_ROW.match(key):
                 return span_dict(
-                    from_r=None,
-                    from_c=alpha2idx(key),
-                    upto_r=None,
-                    upto_c=alpha2idx(key) + 1,
+                    from_r=int(m[1]) - 1,
+                    from_c=None,
+                    upto_r=int(m[1]),
+                    upto_c=None,
                     widget=widget,
                 )
-
-            splitk = key.split(":")
-            if len(splitk) > 2:
+            elif m := PATTERN_COL.match(key):
+                return span_dict(
+                    from_r=None,
+                    from_c=span_a2i(m[1]),
+                    upto_r=None,
+                    upto_c=span_a2n(m[1]),
+                    widget=widget,
+                )
+            elif m := PATTERN_CELL.match(key):
+                c = span_a2i(m[1])
+                r = int(m[2]) - 1
+                return span_dict(
+                    from_r=r,
+                    from_c=c,
+                    upto_r=r + 1,
+                    upto_c=c + 1,
+                    widget=widget,
+                )
+            elif m := PATTERN_RANGE.match(key):
+                return span_dict(
+                    from_r=int(m[2]) - 1,
+                    from_c=span_a2i(m[1]),
+                    upto_r=int(m[4]),
+                    upto_c=span_a2n(m[3]),
+                    widget=widget,
+                )
+            elif m := PATTERN_ROW_RANGE.match(key):
+                return span_dict(
+                    from_r=int(m[1]) - 1,
+                    from_c=None,
+                    upto_r=int(m[2]),
+                    upto_c=None,
+                    widget=widget,
+                )
+            elif m := PATTERN_ROW_START.match(key):
+                return span_dict(
+                    from_r=int(m[1]) - 1,
+                    from_c=None,
+                    upto_r=None,
+                    upto_c=None,
+                    widget=widget,
+                )
+            elif m := PATTERN_ROW_END.match(key):
+                return span_dict(
+                    from_r=0,
+                    from_c=None,
+                    upto_r=int(m[1]),
+                    upto_c=None,
+                    widget=widget,
+                )
+            elif m := PATTERN_COL_RANGE.match(key):
+                return span_dict(
+                    from_r=None,
+                    from_c=span_a2i(m[1]),
+                    upto_r=None,
+                    upto_c=span_a2n(m[2]),
+                    widget=widget,
+                )
+            elif m := PATTERN_COL_START.match(key):
+                return span_dict(
+                    from_r=None,
+                    from_c=span_a2i(m[1]),
+                    upto_r=None,
+                    upto_c=None,
+                    widget=widget,
+                )
+            elif m := PATTERN_COL_END.match(key):
+                return span_dict(
+                    from_r=None,
+                    from_c=0,
+                    upto_r=None,
+                    upto_c=span_a2n(m[1]),
+                    widget=widget,
+                )
+            elif m := PATTERN_CELL_START.match(key):
+                return span_dict(
+                    from_r=int(m[2]) - 1,
+                    from_c=span_a2i(m[1]),
+                    upto_r=None,
+                    upto_c=None,
+                    widget=widget,
+                )
+            elif m := PATTERN_CELL_END.match(key):
+                return span_dict(
+                    from_r=0,
+                    from_c=0,
+                    upto_r=int(m[2]),
+                    upto_c=span_a2n(m[1]),
+                    widget=widget,
+                )
+            elif m := PATTERN_CELL_COL.match(key):
+                return span_dict(
+                    from_r=int(m[2]) - 1,
+                    from_c=span_a2i(m[1]),
+                    upto_r=None,
+                    upto_c=span_a2n(m[3]),
+                    widget=widget,
+                )
+            elif m := PATTERN_CELL_ROW.match(key):
+                return span_dict(
+                    from_r=int(m[2]) - 1,
+                    from_c=span_a2i(m[1]),
+                    upto_r=int(m[3]),
+                    upto_c=None,
+                    widget=widget,
+                )
+            elif PATTERN_ALL.match(key):
+                return span_dict(
+                    from_r=0,
+                    from_c=None,
+                    upto_r=None,
+                    upto_c=None,
+                    widget=widget,
+                )
+            else:
                 return f"'{key}' could not be converted to span."
-
-            if len(splitk) == 1 and not splitk[0].isdigit() and not splitk[0].isalpha() and not splitk[0][0].isdigit():
-                """
-                ["A1"] - Cell (0, 0)
-                """
-                keys_digits = re.search(r"\d", splitk[0])
-                if keys_digits:
-                    digits_start = keys_digits.start()
-                    if not digits_start:
-                        return f"'{key}' could not be converted to span."
-                    if digits_start:
-                        key_row = splitk[0][digits_start:]
-                        key_column = splitk[0][:digits_start]
-                        return span_dict(
-                            from_r=int(key_row) - 1,
-                            from_c=alpha2idx(key_column),
-                            upto_r=int(key_row),
-                            upto_c=alpha2idx(key_column) + 1,
-                            widget=widget,
-                        )
-
-            if not splitk[0] and not splitk[1]:
-                """
-                [":"] - All rows
-                """
-                return span_dict(
-                    from_r=0,
-                    from_c=None,
-                    upto_r=None,
-                    upto_c=None,
-                    widget=widget,
-                )
-
-            if splitk[0].isdigit() and not splitk[1]:
-                """
-                ["2:"] - Rows starting from and including 1
-                """
-                return span_dict(
-                    from_r=int(splitk[0]) - 1,
-                    from_c=None,
-                    upto_r=None,
-                    upto_c=None,
-                    widget=widget,
-                )
-
-            if splitk[1].isdigit() and not splitk[0]:
-                """
-                [":2"] - Rows up to and including 1
-                """
-                return span_dict(
-                    from_r=0,
-                    from_c=None,
-                    upto_r=int(splitk[1]),
-                    upto_c=None,
-                    widget=widget,
-                )
-
-            if splitk[0].isdigit() and splitk[1].isdigit():
-                """
-                ["1:2"] - Rows 0, 1
-                """
-                return span_dict(
-                    from_r=int(splitk[0]) - 1,
-                    from_c=None,
-                    upto_r=int(splitk[1]),
-                    upto_c=None,
-                    widget=widget,
-                )
-
-            if splitk[0].isalpha() and not splitk[1]:
-                """
-                ["B:"] - Columns starting from and including 2
-                """
-                return span_dict(
-                    from_r=None,
-                    from_c=alpha2idx(splitk[0]),
-                    upto_r=None,
-                    upto_c=None,
-                    widget=widget,
-                )
-
-            if splitk[1].isalpha() and not splitk[0]:
-                """
-                [":B"] - Columns up to and including 2
-                """
-                return span_dict(
-                    from_r=None,
-                    from_c=0,
-                    upto_r=None,
-                    upto_c=alpha2idx(splitk[1]) + 1,
-                    widget=widget,
-                )
-
-            if splitk[0].isalpha() and splitk[1].isalpha():
-                """
-                ["A:B"] - Columns 0, 1
-                """
-                return span_dict(
-                    from_r=None,
-                    from_c=alpha2idx(splitk[0]),
-                    upto_r=None,
-                    upto_c=alpha2idx(splitk[1]) + 1,
-                    widget=widget,
-                )
-
-            m1 = re.search(r"\d", splitk[0])
-            m2 = re.search(r"\d", splitk[1])
-            m1start = m1.start() if m1 else None
-            m2start = m2.start() if m2 else None
-            if m1start and m2start:
-                """
-                ["A1:B1"] - Cells (0, 0), (0, 1)
-                """
-                c1 = splitk[0][:m1start]
-                r1 = splitk[0][m1start:]
-                c2 = splitk[1][:m2start]
-                r2 = splitk[1][m2start:]
-                return span_dict(
-                    from_r=int(r1) - 1,
-                    from_c=alpha2idx(c1),
-                    upto_r=int(r2),
-                    upto_c=alpha2idx(c2) + 1,
-                    widget=widget,
-                )
-
-            if not splitk[0] and m2start:
-                """
-                [":B1"] - Cells (0, 0), (0, 1)
-                """
-                c2 = splitk[1][:m2start]
-                r2 = splitk[1][m2start:]
-                return span_dict(
-                    from_r=0,
-                    from_c=0,
-                    upto_r=int(r2),
-                    upto_c=alpha2idx(c2) + 1,
-                    widget=widget,
-                )
-
-            if not splitk[1] and m1start:
-                """
-                ["A1:"] - Cells starting from and including (0, 0)
-                """
-                c1 = splitk[0][:m1start]
-                r1 = splitk[0][m1start:]
-                return span_dict(
-                    from_r=int(r1) - 1,
-                    from_c=alpha2idx(c1),
-                    upto_r=None,
-                    upto_c=None,
-                    widget=widget,
-                )
-
-            if m1start and splitk[1].isalpha():
-                """
-                ["A1:B"] - All the cells starting from (0, 0)
-                        expanding out to include column 1
-                        but not including cells beyond column
-                        1 and expanding down to include all rows
-                    A   B   C   D
-                1   x   x
-                2   x   x
-                3   x   x
-                4   x   x
-                ...
-                """
-                c1 = splitk[0][:m1start]
-                r1 = splitk[0][m1start:]
-                return span_dict(
-                    from_r=int(r1) - 1,
-                    from_c=alpha2idx(c1),
-                    upto_r=None,
-                    upto_c=alpha2idx(splitk[1]) + 1,
-                    widget=widget,
-                )
-
-            if m1start and splitk[1].isdigit():
-                """
-                ["A1:2"] - All the cells starting from (0, 0)
-                        expanding down to include row 1
-                        but not including cells beyond row
-                        1 and expanding out to include all
-                        columns
-                    A   B   C   D
-                1   x   x   x   x
-                2   x   x   x   x
-                3
-                4
-                ...
-                """
-                c1 = splitk[0][:m1start]
-                r1 = splitk[0][m1start:]
-                return span_dict(
-                    from_r=int(r1) - 1,
-                    from_c=alpha2idx(c1),
-                    upto_r=int(splitk[1]),
-                    upto_c=None,
-                    widget=widget,
-                )
 
     except ValueError as error:
         return f"Error, '{key}' could not be converted to span: {error}"
-    else:
-        return f"'{key}' could not be converted to span."
 
 
 def span_is_cell(span: Span) -> bool:
