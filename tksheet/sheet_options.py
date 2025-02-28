@@ -144,7 +144,9 @@ def new_sheet_options() -> DotDict:
             "row_start_bindings": [
                 "<Command-Left>",
                 "<Home>",
-            ],
+            ]
+            if USER_OS == "darwin"
+            else ["<Home>"],
             "table_start_bindings": [
                 f"<{ctrl_key}-Home>",
             ],

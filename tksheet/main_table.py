@@ -2565,7 +2565,7 @@ class MainTable(tk.Canvas):
             ):
                 self.select_cell(r - 1, c, redraw=True)
 
-    def arrowkey_LEFT(self, event: Any = None) -> None:
+    def arrowkey_LEFT(self, event: Any = None) -> Literal["break"]:
         if not self.selected:
             return
         r = self.selected.row
@@ -2581,6 +2581,7 @@ class MainTable(tk.Canvas):
                 self.single_selection_enabled or self.toggle_selection_enabled
             ):
                 self.select_cell(r, c - 1, redraw=True)
+        return "break"
 
     def arrowkey_DOWN(self, event: Any = None) -> None:
         if not self.selected:
@@ -7684,12 +7685,12 @@ class MainTable(tk.Canvas):
         self.focus_set()
         return closed_dd_coords
 
-    def mouseclick_outside_editor_or_dropdown_all_canvases(self):
+    def mouseclick_outside_editor_or_dropdown_all_canvases(self) -> tuple[int, int] | None:
         self.CH.mouseclick_outside_editor_or_dropdown()
         self.RI.mouseclick_outside_editor_or_dropdown()
         return self.mouseclick_outside_editor_or_dropdown()
 
-    def hide_dropdown_editor_all_canvases(self):
+    def hide_dropdown_editor_all_canvases(self) -> None:
         self.hide_text_editor_and_dropdown(redraw=False)
         self.RI.hide_text_editor_and_dropdown(redraw=False)
         self.CH.hide_text_editor_and_dropdown(redraw=False)
