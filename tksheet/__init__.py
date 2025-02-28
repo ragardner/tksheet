@@ -73,6 +73,7 @@ from .functions import (
     move_elements_to,
     new_tk_event,
     num2alpha,
+    push_n,
     rounded_box_coords,
     span_dict,
     tksheet_type_error,
