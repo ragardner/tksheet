@@ -76,12 +76,14 @@ Binding = Literal[
     "delete",
     "undo",
     "find",
+    "replace",
     "edit_cell",
     "edit_header",
     "edit_index",
 ]
 
 ExtraBinding = Literal[
+    "replace_all",
     "begin_sort_cells",
     "sort_cells",
     "end_sort_cells",
@@ -190,6 +192,7 @@ ExtraBinding = Literal[
     "column_width_resize",
     "cell_select",
     "select_all",
+    "all_select",
     "row_select",
     "column_select",
     "drag_select_cells",

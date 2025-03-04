@@ -10,6 +10,7 @@ from functools import partial
 from itertools import accumulate, chain, cycle, filterfalse, islice, repeat
 from math import ceil, floor
 from operator import itemgetter
+from re import IGNORECASE, escape, sub
 from tkinter import TclError
 from typing import Any, Literal
 
@@ -30,7 +31,7 @@ from .constants import (
     text_editor_to_unbind,
     val_modifying_options,
 )
-from .find_window import FindWindow
+from .find_window import FindWindow, replacer
 from .formatters import (
     data_to_str,
     format_data,
@@ -45,19 +46,21 @@ from .functions import (
     bisect_in,
     box_gen_coords,
     box_is_single_cell,
+    cell_down_within_box,
     cell_right_within_box,
     color_tup,
     consecutive_ranges,
     data_to_displayed_idxs,
     diff_gen,
-    down_cell_within_box,
     event_dict,
     event_has_char_key,
     event_opens_dropdown_or_checkbox,
     float_to_int,
     gen_coords,
     gen_formatted,
+    get_bg_fg,
     get_data_from_clipboard,
+    get_menu_kwargs,
     get_new_indexes,
     get_seq_without_gaps_at_index,
     index_exists,
@@ -86,7 +89,6 @@ from .other_classes import (
     Box_nt,
     Box_st,
     Box_t,
-    DotDict,
     DropdownStorage,
     EditorStorageBase,
     EventDataDict,
@@ -136,6 +138,7 @@ class MainTable(tk.Canvas):
         self.dropdown = DropdownStorage()
         self.text_editor = TextEditorStorage()
         self.find_window = EditorStorageBase()
+        self.find_window_left_x_pc = 1
         self.event_linker = {
             "<<Copy>>": self.ctrl_c,
             "<<Cut>>": self.ctrl_x,
@@ -145,6 +148,7 @@ class MainTable(tk.Canvas):
             "<<Redo>>": self.redo,
             "<<SelectAll>>": self.select_all,
         }
+        self.enabled_bindings = set()
 
         self.disp_ctrl_outline = {}
         self.disp_text = {}
@@ -190,7 +194,10 @@ class MainTable(tk.Canvas):
         self.extra_double_b1_func = None
         self.extra_rc_func = None
 
+        self.extra_end_replace_all_func = None
+
         self.edit_validation_func = None
+        self.bulk_table_edit_validation_func = None
 
         self.extra_begin_sort_cells_func = None
         self.extra_end_sort_cells_func = None
@@ -477,10 +484,45 @@ class MainTable(tk.Canvas):
         else:
             self.deselect()
 
-    def get_find_window_dimensions_coords(self, w_width: int) -> tuple[int, int, int, int]:
+    def get_find_window_dimensions_coords(self, w_width: int | None) -> tuple[int, int, int, int]:
+        if w_width is None:
+            w_width = self.winfo_width()
         width = min(self.get_txt_w("X" * 23), w_width - 7)
-        # w, h, x, y
-        return width, self.min_row_height, self.canvasx(max(0, w_width - width - 7)), self.canvasy(7)
+        height = self.min_row_height
+        if self.find_window.window and self.find_window.window.replace_visible:
+            height *= 2
+        # Position from left based on percentage
+        xpos = w_width * self.find_window_left_x_pc
+        # Clamp to stay within canvas bounds
+        xpos = min(xpos, w_width - width - 7)  # Don’t exceed right edge
+        xpos = max(0, xpos)  # Don’t go left of 0
+        return width, height, self.canvasx(xpos), self.canvasy(7)
+
+    def reposition_find_window(self, w_width: int | None = None) -> None:
+        if w_width is None:
+            w_width = self.winfo_width()
+        w, h, x, y = self.get_find_window_dimensions_coords(w_width=w_width)
+        self.coords(self.find_window.canvas_id, x, y)
+        self.itemconfig(
+            self.find_window.canvas_id,
+            width=w,
+            height=h,
+            state="normal",
+        )
+
+    def drag_find_window(self, event: tk.Event) -> None:
+        """Receives a tkinter b1-motion event, is bound to a label on the find window"""
+        # Convert screen coordinates to canvas window coordinates
+        window_x = event.x_root - self.winfo_rootx()
+        # Get the visible canvas width
+        visible_width = self.winfo_width()
+        if visible_width > 0:
+            # Calculate the new percentage using widget-relative coordinates
+            new_pc = window_x / visible_width
+            # Clamp the percentage between 0 and 1
+            self.find_window_left_x_pc = min(max(new_pc, 0), 1)
+        # Reposition the find window based on the updated percentage
+        self.reposition_find_window()
 
     def open_find_window(
         self,
@@ -488,7 +530,7 @@ class MainTable(tk.Canvas):
         focus: bool = True,
     ) -> Literal["break"]:
         if self.find_window.open:
-            self.close_find_window()
+            self.find_window.window.tktext.focus_set()
             return "break"
         width, height, x, y = self.get_find_window_dimensions_coords(w_width=self.winfo_width())
         if not self.find_window.window:
@@ -497,14 +539,12 @@ class MainTable(tk.Canvas):
                 find_prev_func=self.find_previous,
                 find_next_func=self.find_next,
                 close_func=self.close_find_window,
+                replace_func=self.replace_next,
+                replace_all_func=self.replace_all,
+                toggle_replace_func=self.reposition_find_window,
+                drag_func=self.drag_find_window,
             )
             self.find_window.canvas_id = self.create_window((x, y), window=self.find_window.window, anchor="nw")
-            for b in chain(self.PAR.ops.escape_bindings, self.PAR.ops.find_bindings):
-                self.find_window.tktext.bind(b, self.close_find_window)
-            for b in chain(self.PAR.ops.find_next_bindings, ("<Return>", "<KP_Enter>")):
-                self.find_window.tktext.bind(b, self.find_next)
-            for b in self.PAR.ops.find_previous_bindings:
-                self.find_window.tktext.bind(b, self.find_previous)
         else:
             self.coords(self.find_window.canvas_id, x, y)
             if not self.find_window.open:
@@ -512,21 +552,12 @@ class MainTable(tk.Canvas):
         self.find_window.open = True
         self.find_window.window.reset(
             **{
-                "menu_kwargs": DotDict(
-                    {
-                        "font": self.PAR.ops.table_font,
-                        "foreground": self.PAR.ops.popup_menu_fg,
-                        "background": self.PAR.ops.popup_menu_bg,
-                        "activebackground": self.PAR.ops.popup_menu_highlight_bg,
-                        "activeforeground": self.PAR.ops.popup_menu_highlight_fg,
-                    }
-                ),
+                "menu_kwargs": get_menu_kwargs(self.PAR.ops),
                 "sheet_ops": self.PAR.ops,
                 "border_color": self.PAR.ops.table_selected_box_cells_fg,
-                "bg": self.PAR.ops.table_editor_bg,
-                "fg": self.PAR.ops.table_editor_fg,
-                "select_bg": self.PAR.ops.table_editor_select_bg,
-                "select_fg": self.PAR.ops.table_editor_select_fg,
+                "grid_color": self.PAR.ops.table_grid_fg,
+                **get_bg_fg(self.PAR.ops),
+                "replace_enabled": "replace" in self.enabled_bindings or "all" in self.enabled_bindings,
             }
         )
         self.itemconfig(self.find_window.canvas_id, width=width, height=height)
@@ -534,23 +565,123 @@ class MainTable(tk.Canvas):
             self.find_window.tktext.focus_set()
         return "break"
 
+    def replace_next(self, event: tk.Misc | None = None) -> None:
+        find = self.find_window.get().lower()
+        replace = self.find_window.window.get_replace()
+        sel = self.selected
+        if sel:
+            datarn, datacn = self.datarn(sel.row), self.datacn(sel.column)
+            m = self.find_match(find, datarn, datacn)
+            if m:
+                current = f"{self.get_cell_data(datarn, datacn, True)}"
+                new = sub(escape(find), replacer(find, replace, current), current, flags=IGNORECASE)
+                event_data = event_dict(
+                    name="end_edit_table",
+                    sheet=self.PAR.name,
+                    widget=self,
+                    cells_table={(datarn, datacn): self.get_cell_data(datarn, datacn)},
+                    key="replace_next",
+                    value=new,
+                    loc=Loc(sel.row, sel.column),
+                    row=sel.row,
+                    column=sel.column,
+                    boxes=self.get_boxes(),
+                    selected=self.selected,
+                    data={(datarn, datacn): new},
+                )
+                value, event_data = self.single_edit_run_validation(datarn, datacn, event_data)
+                if value is not None and (
+                    self.set_cell_data_undo(
+                        r=datarn,
+                        c=datacn,
+                        datarn=datarn,
+                        datacn=datacn,
+                        value=value,
+                        redraw=False,
+                    )
+                ):
+                    try_binding(self.extra_end_edit_cell_func, event_data)
+        if self.find_window.window.find_in_selection:
+            found_next = self.find_see_and_set(self.find_within(find))
+        else:
+            found_next = self.find_see_and_set(self.find_all_cells(find))
+        if not found_next and not self.find_window.window.find_in_selection:
+            self.deselect()
+
+    def replace_all(self, event: tk.Misc | None = None) -> None:
+        find = self.find_window.get().lower()
+        replace = self.find_window.window.get_replace()
+        tree = self.PAR.ops.treeview
+        event_data = self.new_event_dict("edit_table")
+        boxes = self.get_boxes()
+        event_data["selection_boxes"] = boxes
+        if self.find_window.window.find_in_selection:
+            iterable = chain.from_iterable(
+                (
+                    box_gen_coords(
+                        *box.coords,
+                        start_r=box.coords.from_r,
+                        start_c=box.coords.from_c,
+                        reverse=False,
+                        all_rows_displayed=self.all_rows_displayed,
+                        all_cols_displayed=self.all_columns_displayed,
+                        displayed_rows=self.displayed_rows,
+                        displayed_cols=self.displayed_columns,
+                    )
+                    for box in self.selection_boxes.values()
+                )
+            )
+        else:
+            iterable = box_gen_coords(
+                from_r=0,
+                from_c=0,
+                upto_r=self.total_data_rows(include_index=False),
+                upto_c=self.total_data_cols(include_header=False),
+                start_r=0,
+                start_c=0,
+                reverse=False,
+            )
+        for r, c in iterable:
+            m = self.find_match(find, r, c)
+            if m and (
+                (tree or self.all_rows_displayed or bisect_in(self.displayed_rows, r))
+                and (self.all_columns_displayed or bisect_in(self.displayed_columns, c))
+            ):
+                current = f"{self.get_cell_data(r, c, True)}"
+                new = sub(escape(find), replacer(find, replace, current), current, flags=IGNORECASE)
+                if not self.edit_validation_func or (
+                    self.edit_validation_func
+                    and (new := self.edit_validation_func(mod_event_val(event_data, new, (r, c)))) is not None
+                ):
+                    event_data = self.event_data_set_cell(
+                        r,
+                        c,
+                        new,
+                        event_data,
+                    )
+        event_data = self.bulk_edit_validation(event_data)
+        if event_data["cells"]["table"]:
+            self.refresh()
+            if self.undo_enabled:
+                self.undo_stack.append(stored_event_dict(event_data))
+            try_binding(self.extra_end_replace_all_func, event_data, "end_edit_table")
+            self.sheet_modified(event_data)
+            self.PAR.emit_event("<<SheetModified>>", event_data)
+
     def find_see_and_set(
-        self,
-        coords: tuple[int, int, int | None] | None,
-        just_see: bool = False,
+        self, coords: tuple[int, int, int | None] | None, within: bool | None = None
     ) -> tuple[int, int]:
         if coords:
             row, column, item = coords
-            if not self.all_rows_displayed:
-                row = self.disprn(row)
-            if not self.all_columns_displayed:
-                column = self.dispcn(column)
-            if not just_see:
-                if self.find_window.window.find_in_selection:
-                    self.set_currently_selected(row, column, item=item)
-                else:
-                    self.select_cell(row, column, redraw=False)
-            if not self.see(row, column):
+            if self.PAR.ops.treeview:
+                self.PAR.scroll_to_item(self.PAR.rowitem(row, data_index=True))
+            disp_row = self.disprn(row) if not self.all_rows_displayed else row
+            disp_col = self.dispcn(column) if not self.all_columns_displayed else column
+            if within or (self.find_window.window and self.find_window.window.find_in_selection):
+                self.set_currently_selected(disp_row, disp_col, item=item)
+            else:
+                self.select_cell(disp_row, disp_col, redraw=False)
+            if not self.see(disp_row, disp_col):
                 self.refresh()
         return coords
 
@@ -559,86 +690,98 @@ class MainTable(tk.Canvas):
             value = self.data[r][c]
         except Exception:
             value = ""
-        kwargs = self.get_cell_kwargs(r, c, key=None)
+        kwargs = self.get_cell_kwargs(r, c, key="format")
         if kwargs:
-            if "dropdown" in kwargs:
-                kwargs = kwargs["dropdown"]
-                if kwargs["text"] is not None and find in str(kwargs["text"]).lower():
-                    return True
-            elif "checkbox" in kwargs:
-                kwargs = kwargs["checkbox"]
-                if find in str(kwargs["text"]).lower() or (not find and find in "False"):
-                    return True
-            elif "format" in kwargs:
-                if kwargs["formatter"] is None:
-                    if find in data_to_str(value, **kwargs).lower():
-                        return True
-                # assumed given formatter class has __str__() or value attribute
-                elif find in str(value).lower() or find in str(value.value).lower():
-                    return True
+            # assumed given formatter class has __str__() or value attribute
+            value = data_to_str(value, **kwargs) if kwargs["formatter"] is None else str(value)
         if value is None:
             return find == ""
+        elif not find:
+            return str(value) == ""
         else:
             return find in str(value).lower()
 
-    def find_within_match(self, find: str, r: int, c: int) -> bool:
-        if not self.all_rows_displayed:
-            r = self.datarn(r)
-        if not self.all_columns_displayed:
-            c = self.datacn(c)
-        return self.find_match(find, r, c)
-
     def find_within_current_box(
-        self,
-        current_box: SelectionBox,
-        find: str,
-        reverse: bool,
-    ) -> None | tuple[int, int]:
-        start_row, start_col = next_cell(
+        self, current_box: SelectionBox, find: str, reverse: bool
+    ) -> None | tuple[int, int, int]:
+        start_r, start_c = next_cell(
             *current_box.coords,
             self.selected.row,
             self.selected.column,
             reverse=reverse,
         )
-        _, _, r2, c2 = current_box.coords
-        for r, c in box_gen_coords(start_row, start_col, c2, r2, reverse=reverse):
-            if self.find_within_match(find, r, c):
-                return (r, c, current_box.fill_iid)
-        return None
+        return next(
+            (
+                (r, c, current_box.fill_iid)
+                for r, c in box_gen_coords(
+                    *current_box.coords,
+                    start_r,
+                    start_c,
+                    reverse=reverse,
+                    all_rows_displayed=self.all_rows_displayed,
+                    all_cols_displayed=self.all_columns_displayed,
+                    displayed_rows=self.displayed_rows,
+                    displayed_cols=self.displayed_columns,
+                    no_wrap=True,
+                )
+                if (
+                    self.find_match(find, r, c)  # will not show hidden rows
+                    and (self.all_rows_displayed or bisect_in(self.displayed_rows, r))
+                    and (self.all_columns_displayed or bisect_in(self.displayed_columns, c))
+                )
+            ),
+            None,
+        )
 
-    def find_within_non_current_boxes(
-        self,
-        current_id: int,
-        find: str,
-        reverse: bool,
-    ) -> None | tuple[int, int]:
+    def find_within_non_current_boxes(self, current_id: int, find: str, reverse: bool) -> None | tuple[int, int, int]:
+        fn = partial(
+            box_gen_coords,
+            reverse=reverse,
+            all_rows_displayed=self.all_rows_displayed,
+            all_cols_displayed=self.all_columns_displayed,
+            displayed_rows=self.displayed_rows,
+            displayed_cols=self.displayed_columns,
+        )
         if reverse:
             # iterate backwards through selection boxes from the box before current
             idx = next(i for i, k in enumerate(reversed(self.selection_boxes)) if k == current_id)
-            for item, box in chain(
-                islice(reversed(self.selection_boxes.items()), idx + 1, None),
-                islice(reversed(self.selection_boxes.items()), 0, idx),
-            ):
-                for r, c in gen_coords(*box.coords, reverse=reverse):
-                    if self.find_within_match(find, r, c):
-                        return (r, c, item)
+            return next(
+                (
+                    (r, c, item)
+                    for item, box in chain(
+                        islice(reversed(self.selection_boxes.items()), idx + 1, None),
+                        islice(reversed(self.selection_boxes.items()), 0, idx),
+                    )
+                    for r, c in fn(*box.coords, box.coords.upto_r - 1, box.coords.upto_c - 1)
+                    if (
+                        self.find_match(find, r, c)  # will not show hidden rows
+                        and (self.all_rows_displayed or bisect_in(self.displayed_rows, r))
+                        and (self.all_columns_displayed or bisect_in(self.displayed_columns, c))
+                    )
+                ),
+                None,
+            )
         else:
             # iterate forwards through selection boxes from the box after current
             idx = next(i for i, k in enumerate(self.selection_boxes) if k == current_id)
-            for item, box in chain(
-                islice(self.selection_boxes.items(), idx + 1, None),
-                islice(self.selection_boxes.items(), 0, idx),
-            ):
-                for r, c in gen_coords(*box.coords, reverse=reverse):
-                    if self.find_within_match(find, r, c):
-                        return (r, c, item)
-        return None
+            return next(
+                (
+                    (r, c, item)
+                    for item, box in chain(
+                        islice(self.selection_boxes.items(), idx + 1, None),
+                        islice(self.selection_boxes.items(), 0, idx),
+                    )
+                    for r, c in fn(*box.coords, box.coords.from_r, box.coords.from_c)
+                    if (
+                        self.find_match(find, r, c)
+                        and (self.all_rows_displayed or bisect_in(self.displayed_rows, r))
+                        and (self.all_columns_displayed or bisect_in(self.displayed_columns, c))
+                    )
+                ),
+                None,
+            )
 
-    def find_within(
-        self,
-        find: str,
-        reverse: bool = False,
-    ) -> tuple[int, int, int] | None:
+    def find_within(self, find: str, reverse: bool = False) -> tuple[int, int, int] | None:
         if not self.selected:
             return None
         current_box = self.selection_boxes[self.selected.fill_iid]
@@ -655,70 +798,73 @@ class MainTable(tk.Canvas):
                 return coord
         return None
 
-    def find_all_cells(
-        self,
-        find: str,
-        reverse: bool = False,
-    ) -> tuple[int, int, None] | None:
+    def find_all_cells(self, find: str, reverse: bool = False) -> tuple[int, int, None] | None:
+        tree = self.PAR.ops.treeview
+        totalrows = self.total_data_rows(include_index=False)
+        totalcols = self.total_data_cols(include_header=False)
         if self.selected:
-            row, col = next_cell(
+            start_r, start_c = next_cell(
                 0,
                 0,
-                len(self.row_positions) - 1,
-                len(self.col_positions) - 1,
-                self.selected.row,
-                self.selected.column,
+                totalrows,
+                totalcols,
+                self.datarn(self.selected.row),
+                self.datacn(self.selected.column),
                 reverse=reverse,
             )
         else:
-            row, col = 0, 0
-        row, col = self.datarn(row), self.datacn(col)
-        result = next(
+            start_r, start_c = 0, 0
+        return next(
             (
-                (r, c)
+                (r, c, None)
                 for r, c in box_gen_coords(
-                    start_row=row,
-                    start_col=col,
-                    total_cols=self.total_data_cols(include_header=False),
-                    total_rows=self.total_data_rows(include_index=False),
+                    from_r=0,
+                    from_c=0,
+                    upto_r=totalrows,
+                    upto_c=totalcols,
+                    start_r=start_r,
+                    start_c=start_c,
                     reverse=reverse,
                 )
                 if (
                     self.find_match(find, r, c)
-                    and (self.all_rows_displayed or bisect_in(self.displayed_rows, r))
+                    and (tree or self.all_rows_displayed or bisect_in(self.displayed_rows, r))
                     and (self.all_columns_displayed or bisect_in(self.displayed_columns, c))
                 )
             ),
             None,
         )
-        if result:
-            return result + (None,)
-        return None
 
-    def find_next(self, event: tk.Misc | None = None) -> Literal["break"]:
-        find = self.find_window.get().lower()
+    def replace_toggle(self, event: tk.Event | None) -> None:
         if not self.find_window.open:
             self.open_find_window(focus=False)
-        if self.find_window.window.find_in_selection:
-            self.find_see_and_set(self.find_within(find))
-        else:
-            self.find_see_and_set(self.find_all_cells(find))
-        return "break"
+        if not self.find_window.window.replace_visible:
+            self.find_window.window.toggle_replace_window()
+        self.find_window.window.replace_tktext.focus_set()
 
-    def find_previous(self, event: tk.Misc | None = None) -> Literal["break"]:
-        find = self.find_window.get().lower()
-        if not self.find_window.open:
-            self.open_find_window(focus=False)
-        if self.find_window.window.find_in_selection:
-            self.find_see_and_set(self.find_within(find, reverse=True))
-        else:
-            self.find_see_and_set(self.find_all_cells(find, reverse=True))
-        return "break"
-
-    def close_find_window(
+    def find_next(
         self,
         event: tk.Misc | None = None,
-    ) -> None:
+        within: bool | None = None,
+        find: str | None = None,
+        reverse: bool = False,
+    ) -> Literal["break"]:
+        if find is None:
+            find = self.find_window.get().lower()
+        if find is None and not self.find_window.open:
+            self.open_find_window(focus=False)
+        if within or (self.find_window.window and self.find_window.window.find_in_selection):
+            self.find_see_and_set(self.find_within(find, reverse=reverse), within=within)
+        else:
+            self.find_see_and_set(self.find_all_cells(find, reverse=reverse), within=within)
+        return "break"
+
+    def find_previous(
+        self, event: tk.Misc | None = None, within: bool | None = None, find: str | None = None
+    ) -> Literal["break"]:
+        return self.find_next(find=find, within=within, reverse=True)
+
+    def close_find_window(self, event: tk.Misc | None = None) -> None:
         if self.find_window.open:
             self.itemconfig(self.find_window.canvas_id, state="hidden")
             self.find_window.open = False
@@ -925,11 +1071,13 @@ class MainTable(tk.Canvas):
         else:
             self.clipboard_append(s.getvalue())
         self.update_idletasks()
-        self.refresh()
-        for r1, c1, r2, c2 in boxes:
-            self.show_ctrl_outline(canvas="table", start_cell=(c1, r1), end_cell=(c2, r2))
+        event_data = self.bulk_edit_validation(event_data)
         if event_data["cells"]["table"]:
-            self.undo_stack.append(stored_event_dict(event_data))
+            self.refresh()
+            for r1, c1, r2, c2 in boxes:
+                self.show_ctrl_outline(canvas="table", start_cell=(c1, r1), end_cell=(c2, r2))
+            if self.undo_enabled:
+                self.undo_stack.append(stored_event_dict(event_data))
             try_binding(self.extra_end_ctrl_x_func, event_data, "end_ctrl_x")
             self.sheet_modified(event_data)
             self.PAR.emit_event("<<Cut>>", event_data)
@@ -980,6 +1128,7 @@ class MainTable(tk.Canvas):
                             value=val,
                             event_data=event_data,
                         )
+        event_data = self.bulk_edit_validation(event_data)
         if event_data["cells"]["table"]:
             if undo and self.undo_enabled:
                 self.undo_stack.append(stored_event_dict(event_data))
@@ -1045,7 +1194,6 @@ class MainTable(tk.Canvas):
                     for _ in range(int(lastbox_numcols / new_data_numcols)):
                         data[rn].extend(r.copy())
                 new_data_numcols *= int(lastbox_numcols / new_data_numcols)
-        event_data["data"] = data
         added_rows = 0
         added_cols = 0
         total_data_cols = None
@@ -1084,6 +1232,11 @@ class MainTable(tk.Canvas):
             ): "cells"
         }
         event_data["selection_boxes"] = boxes
+        for ndr, r in enumerate(range(selected_r, selected_r_adjusted_new_data_numrows)):
+            datarn = self.datarn(r)
+            for ndc, c in enumerate(range(selected_c, selected_c_adjusted_new_data_numcols)):
+                event_data["data"][(datarn, self.datacn(c))] = data[ndr][ndc]
+
         if not try_binding(self.extra_begin_ctrl_v_func, event_data, "begin_ctrl_v"):
             return
         # the order of actions here is important:
@@ -1225,8 +1378,10 @@ class MainTable(tk.Canvas):
         event_data["selected"] = self.selected
         self.see(selected_r, selected_c, redraw=False)
         self.refresh()
+        event_data = self.bulk_edit_validation(event_data)
         if event_data["cells"]["table"] or event_data["added"]["rows"] or event_data["added"]["columns"]:
-            self.undo_stack.append(stored_event_dict(event_data))
+            if self.undo_enabled:
+                self.undo_stack.append(stored_event_dict(event_data))
             try_binding(self.extra_end_ctrl_v_func, event_data, "end_ctrl_v")
             self.sheet_modified(event_data)
             self.PAR.emit_event("<<Paste>>", event_data)
@@ -1258,18 +1413,33 @@ class MainTable(tk.Canvas):
                         val,
                         event_data,
                     )
+        event_data = self.bulk_edit_validation(event_data)
         if event_data["cells"]["table"]:
             self.refresh()
-            self.undo_stack.append(stored_event_dict(event_data))
+            if self.undo_enabled:
+                self.undo_stack.append(stored_event_dict(event_data))
             try_binding(self.extra_end_delete_key_func, event_data, "end_delete")
             self.sheet_modified(event_data)
             self.PAR.emit_event("<<Delete>>", event_data)
         return event_data
 
-    def event_data_set_cell(self, datarn: int, datacn: int, value: Any, event_data: dict) -> EventDataDict:
+    def event_data_set_cell(self, datarn: int, datacn: int, value: Any, event_data: EventDataDict) -> EventDataDict:
+        """If bulk_table_edit_validation_func -> only updates event_data.data"""
         if self.input_valid_for_cell(datarn, datacn, value):
-            event_data["cells"]["table"][(datarn, datacn)] = self.get_cell_data(datarn, datacn)
-            self.set_cell_data(datarn, datacn, value)
+            if self.bulk_table_edit_validation_func:
+                event_data["data"][(datarn, datacn)] = value
+            else:
+                event_data["cells"]["table"][(datarn, datacn)] = self.get_cell_data(datarn, datacn)
+                self.set_cell_data(datarn, datacn, value)
+        return event_data
+
+    def bulk_edit_validation(self, event_data: EventDataDict) -> EventDataDict:
+        if self.bulk_table_edit_validation_func:
+            self.bulk_table_edit_validation_func(event_data)
+            for (datarn, datacn), value in event_data["data"].items():
+                if self.input_valid_for_cell(datarn, datacn, value):
+                    event_data["cells"]["table"][(datarn, datacn)] = self.get_cell_data(datarn, datacn)
+                    self.set_cell_data(datarn, datacn, value)
         return event_data
 
     def get_args_for_move_columns(
@@ -1577,6 +1747,7 @@ class MainTable(tk.Canvas):
         event_data: EventDataDict | None = None,
         undo_modification: EventDataDict | None = None,
         node_change: None | tuple[str, str, int] = None,
+        manage_tree: bool = True,
     ) -> tuple[dict[int, int], dict[int, int], EventDataDict]:
         self.saved_row_heights = {}
         if not isinstance(totalrows, int):
@@ -1598,7 +1769,7 @@ class MainTable(tk.Canvas):
 
         if move_data:
             maxidx = len_to_idx(totalrows)
-            if self.PAR.ops.treeview:
+            if manage_tree and self.PAR.ops.treeview:
                 two_step_move = self.RI.move_rows_mod_nodes(
                     data_new_idxs=data_new_idxs,
                     data_old_idxs=data_old_idxs,
@@ -1630,7 +1801,7 @@ class MainTable(tk.Canvas):
             self.RI.cell_options = {full_new_idxs[k]: v for k, v in self.RI.cell_options.items()}
             self.RI.tree_rns = {v: full_new_idxs[k] for v, k in self.RI.tree_rns.items()}
             self.displayed_rows = sorted(full_new_idxs[k] for k in self.displayed_rows)
-            if self.PAR.ops.treeview:
+            if manage_tree and self.PAR.ops.treeview:
                 next(two_step_move)
 
             if self.named_spans:
@@ -1829,38 +2000,28 @@ class MainTable(tk.Canvas):
             self.purge_redo_stack()
 
     def edit_cells_using_modification(self, modification: dict, event_data: dict) -> EventDataDict:
-        # row index
-        if self.PAR.ops.treeview:
-            for datarn, v in modification["cells"]["index"].items():
-                if not self.edit_validation_func or (
-                    self.edit_validation_func
-                    and (v := self.edit_validation_func(mod_event_val(event_data, v, row=datarn))) is not None
-                ):
+        treeview = self.PAR.ops.treeview
+        for datarn, v in modification["cells"]["index"].items():
+            if not self.edit_validation_func or (
+                self.edit_validation_func
+                and (v := self.edit_validation_func(mod_event_val(event_data, v, row=datarn))) is not None
+            ):
+                if treeview:
                     self._row_index[datarn].text = v
-        else:
-            for datarn, v in modification["cells"]["index"].items():
-                if not self.edit_validation_func or (
-                    self.edit_validation_func
-                    and (v := self.edit_validation_func(mod_event_val(event_data, v, row=datarn))) is not None
-                ):
+                else:
                     self._row_index[datarn] = v
-
-        # header
         for datacn, v in modification["cells"]["header"].items():
             if not self.edit_validation_func or (
                 self.edit_validation_func
                 and (v := self.edit_validation_func(mod_event_val(event_data, v, column=datacn))) is not None
             ):
                 self._headers[datacn] = v
-
-        # table
         for k, v in modification["cells"]["table"].items():
             if not self.edit_validation_func or (
                 self.edit_validation_func
                 and (v := self.edit_validation_func(mod_event_val(event_data, v, loc=k))) is not None
             ):
-                self.set_cell_data(k[0], k[1], v)
-
+                event_data = self.event_data_set_cell(k[0], k[1], v, event_data)
         return event_data
 
     def save_cells_using_modification(self, modification: EventDataDict, event_data: EventDataDict) -> EventDataDict:
@@ -2019,6 +2180,7 @@ class MainTable(tk.Canvas):
             if not saved_cells:
                 event_data = self.save_cells_using_modification(modification, event_data)
             event_data = self.edit_cells_using_modification(modification, event_data)
+            event_data = self.bulk_edit_validation(event_data)
 
         elif modification["eventname"].startswith("add"):
             event_data["eventname"] = modification["eventname"].replace("add", "delete")
@@ -2146,6 +2308,8 @@ class MainTable(tk.Canvas):
                     c_pc=c_pc,
                     index=False,
                 )
+        if (need_y_redraw or need_x_redraw) and self.find_window.open:
+            self.reposition_find_window()  # prevent it from appearing to move around
         if redraw and (need_y_redraw or need_x_redraw):
             self.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
             return True
@@ -2751,13 +2915,7 @@ class MainTable(tk.Canvas):
             self.empty_rc_popup_menu,
         ):
             menu.delete(0, "end")
-        mnkwgs = {
-            "font": self.PAR.ops.table_font,
-            "foreground": self.PAR.ops.popup_menu_fg,
-            "background": self.PAR.ops.popup_menu_bg,
-            "activebackground": self.PAR.ops.popup_menu_highlight_bg,
-            "activeforeground": self.PAR.ops.popup_menu_highlight_fg,
-        }
+        mnkwgs = get_menu_kwargs(self.PAR.ops)
         if self.rc_popup_menus_enabled and self.CH.edit_cell_enabled:
             self.menu_add_command(
                 self.CH.ch_rc_popup_menu,
@@ -3169,11 +3327,13 @@ class MainTable(tk.Canvas):
             self.undo_enabled = True
             self._tksheet_bind("undo_bindings", self.undo)
             self._tksheet_bind("redo_bindings", self.redo)
-        if binding in ("find",):
+        if binding in ("all", "find"):
             self.find_enabled = True
             self._tksheet_bind("find_bindings", self.open_find_window)
             self._tksheet_bind("find_next_bindings", self.find_next)
             self._tksheet_bind("find_previous_bindings", self.find_previous)
+        if binding in ("all", "replace"):
+            self._tksheet_bind("toggle_replace_bindings", self.replace_toggle)
         if binding in bind_del_columns:
             self.rc_delete_column_enabled = True
             self.rc_popup_menus_enabled = True
@@ -3216,6 +3376,7 @@ class MainTable(tk.Canvas):
         # has to be specifically enabled
         if binding in ("ctrl_click_select", "ctrl_select"):
             self.ctrl_select_enabled = True
+        self.enabled_bindings.add(binding)
 
     def _tksheet_bind(self, bindings_key: str, func: Callable) -> None:
         for widget in (self, self.RI, self.CH, self.TL):
@@ -3225,6 +3386,10 @@ class MainTable(tk.Canvas):
     def _disable_binding(self, binding: Binding) -> None:
         if binding == "disable_all":
             binding = "all"
+        if binding == "all":
+            self.enabled_bindings = set()
+        else:
+            self.enabled_bindings.discard(binding)
         if binding in (
             "all",
             "single",
@@ -3343,6 +3508,8 @@ class MainTable(tk.Canvas):
             self._tksheet_unbind("find_next_bindings")
             self._tksheet_unbind("find_previous_bindings")
             self.close_find_window()
+        if binding in ("all", "replace"):
+            self._tksheet_unbind("toggle_replace_bindings")
 
     def _tksheet_unbind(self, *keys) -> None:
         for widget in (self, self.RI, self.CH, self.TL):
@@ -6143,7 +6310,9 @@ class MainTable(tk.Canvas):
         text_end_row = grid_end_row - 1 if grid_end_row == len(self.row_positions) else grid_end_row
         text_start_col = grid_start_col - 1 if grid_start_col else grid_start_col
         text_end_col = grid_end_col - 1 if grid_end_col == len(self.col_positions) else grid_end_col
-
+        # manage find window
+        if self.find_window.open:
+            self.reposition_find_window()
         # check if auto resizing row index
         changed_w = False
         if self.PAR.ops.auto_resize_row_index and self.show_index:
@@ -6160,16 +6329,6 @@ class MainTable(tk.Canvas):
         # important vars
         x_stop = min(last_col_line_pos, scrollpos_right)
         y_stop = min(last_row_line_pos, scrollpos_bot)
-        # manage find window
-        if self.find_window.open:
-            w, h, x, y = self.get_find_window_dimensions_coords(w_width=self.winfo_width())
-            self.coords(self.find_window.canvas_id, x, y)
-            self.itemconfig(
-                self.find_window.canvas_id,
-                width=w,
-                height=h,
-                state="normal",
-            )
         # redraw table
         if redraw_table:
             # reset canvas item storage
@@ -7215,15 +7374,7 @@ class MainTable(tk.Canvas):
         w = self.col_positions[c + 1] - x + 1
         h = self.row_positions[r + 1] - y + 1
         kwargs = {
-            "menu_kwargs": DotDict(
-                {
-                    "font": self.PAR.ops.table_font,
-                    "foreground": self.PAR.ops.popup_menu_fg,
-                    "background": self.PAR.ops.popup_menu_bg,
-                    "activebackground": self.PAR.ops.popup_menu_highlight_bg,
-                    "activeforeground": self.PAR.ops.popup_menu_highlight_fg,
-                }
-            ),
+            "menu_kwargs": get_menu_kwargs(self.PAR.ops),
             "sheet_ops": self.PAR.ops,
             "border_color": self.PAR.ops.table_selected_box_cells_fg,
             "text": text,
@@ -7231,10 +7382,7 @@ class MainTable(tk.Canvas):
             "width": w,
             "height": h,
             "show_border": True,
-            "bg": self.PAR.ops.table_editor_bg,
-            "fg": self.PAR.ops.table_editor_fg,
-            "select_bg": self.PAR.ops.table_editor_select_bg,
-            "select_fg": self.PAR.ops.table_editor_select_fg,
+            **get_bg_fg(self.PAR.ops),
             "align": self.get_cell_align(r, c),
             "r": r,
             "c": c,
@@ -7366,7 +7514,7 @@ class MainTable(tk.Canvas):
             self.focus_set()
             return
         # setting cell data with text editor value
-        text_editor_value = self.text_editor.get()
+        value = self.text_editor.get()
         r, c = self.text_editor.coords
         datarn, datacn = self.datarn(r), self.datacn(c)
         event_data = event_dict(
@@ -7375,30 +7523,26 @@ class MainTable(tk.Canvas):
             widget=self,
             cells_table={(datarn, datacn): self.get_cell_data(datarn, datacn)},
             key=event.keysym,
-            value=text_editor_value,
+            value=value,
             loc=Loc(r, c),
             row=r,
             column=c,
             boxes=self.get_boxes(),
             selected=self.selected,
+            data={(datarn, datacn): value},
         )
+        value, event_data = self.single_edit_run_validation(datarn, datacn, event_data)
         edited = False
-        set_data = partial(
-            self.set_cell_data_undo,
-            r=r,
-            c=c,
-            datarn=datarn,
-            datacn=datacn,
-            redraw=False,
-            check_input_valid=False,
-        )
-        if self.edit_validation_func:
-            text_editor_value = self.edit_validation_func(event_data)
-            if text_editor_value is not None and self.input_valid_for_cell(datarn, datacn, text_editor_value):
-                edited = set_data(value=text_editor_value)
-        elif self.input_valid_for_cell(datarn, datacn, text_editor_value):
-            edited = set_data(value=text_editor_value)
-        if edited:
+        if value is not None and (
+            edited := self.set_cell_data_undo(
+                r=r,
+                c=c,
+                datarn=datarn,
+                datacn=datacn,
+                value=value,
+                redraw=False,
+            )
+        ):
             try_binding(self.extra_end_edit_cell_func, event_data)
         if (
             r is not None
@@ -7407,47 +7551,54 @@ class MainTable(tk.Canvas):
             and r == self.selected.row
             and c == self.selected.column
             and (self.single_selection_enabled or self.toggle_selection_enabled)
-            and (edited or self.cell_equal_to(datarn, datacn, text_editor_value))
+            and (edited or self.cell_equal_to(datarn, datacn, value))
         ):
-            r1, c1, r2, c2 = self.selection_boxes[self.selected.fill_iid].coords
-            numcols = c2 - c1
-            numrows = r2 - r1
-            if numcols == 1 and numrows == 1:
-                if event.keysym == "Return":
-                    if self.PAR.ops.edit_cell_return == "right":
-                        self.select_right(r, c)
-                    if self.PAR.ops.edit_cell_return == "down":
-                        self.select_down(r, c)
-                elif event.keysym == "Tab":
-                    if self.PAR.ops.edit_cell_tab == "right":
-                        self.select_right(r, c)
-                    if self.PAR.ops.edit_cell_tab == "down":
-                        self.select_down(r, c)
-            else:
-                if event.keysym == "Return":
-                    if self.PAR.ops.edit_cell_return == "right":
-                        new_r, new_c = cell_right_within_box(r, c, r1, c1, r2, c2, numrows, numcols)
-                    elif self.PAR.ops.edit_cell_return == "down":
-                        new_r, new_c = down_cell_within_box(r, c, r1, c1, r2, c2, numrows, numcols)
-                    else:
-                        new_r, new_c = None, None
-                elif event.keysym == "Tab":
-                    if self.PAR.ops.edit_cell_tab == "right":
-                        new_r, new_c = cell_right_within_box(r, c, r1, c1, r2, c2, numrows, numcols)
-                    elif self.PAR.ops.edit_cell_tab == "down":
-                        new_r, new_c = down_cell_within_box(r, c, r1, c1, r2, c2, numrows, numcols)
-                    else:
-                        new_r, new_c = None, None
-                else:
-                    new_r, new_c = None, None
-                if isinstance(new_r, int):
-                    self.set_currently_selected(new_r, new_c, item=self.selected.fill_iid)
-                    self.see(new_r, new_c)
+            self.go_to_next_cell(r, c, event.keysym)
         self.recreate_all_selection_boxes()
         self.hide_text_editor_and_dropdown()
         if event.keysym != "FocusOut":
             self.focus_set()
         return "break"
+
+    def go_to_next_cell(self, r: int, c: int, key: Any = "Return") -> None:
+        r1, c1, r2, c2 = self.selection_boxes[self.selected.fill_iid].coords
+        numrows, numcols = r2 - r1, c2 - c1
+        if key == "Return":
+            direction = self.PAR.ops.edit_cell_return
+        elif key == "Tab":
+            direction = self.PAR.ops.edit_cell_tab
+        else:
+            return
+        if numcols == 1 and numrows == 1:
+            if direction == "right":
+                self.select_right(r, c)
+            elif direction == "down":
+                self.select_down(r, c)
+        else:
+            if direction == "right":
+                new_r, new_c = cell_right_within_box(r, c, r1, c1, r2, c2, numrows, numcols)
+            elif direction == "down":
+                new_r, new_c = cell_down_within_box(r, c, r1, c1, r2, c2, numrows, numcols)
+            if direction in ("right", "down"):
+                self.set_currently_selected(new_r, new_c, item=self.selected.fill_iid)
+                self.see(new_r, new_c)
+
+    def single_edit_run_validation(
+        self, datarn: int, datacn: int, event_data: EventDataDict
+    ) -> tuple[Any, EventDataDict]:
+        value = event_data.value
+        if self.edit_validation_func and (new_value := self.edit_validation_func(event_data)) is not None:
+            value = new_value
+            event_data["data"][(datarn, datacn)] = value
+            event_data["value"] = value
+        if self.bulk_table_edit_validation_func:
+            self.bulk_table_edit_validation_func(event_data)
+            if (datarn, datacn) in event_data["data"]:
+                if event_data["data"][(datarn, datacn)] is not None:
+                    value = event_data["data"][(datarn, datacn)]
+            else:
+                value = None
+        return value, event_data
 
     def select_right(self, r: int, c: int) -> None:
         self.select_cell(r, c + 1 if c < len(self.col_positions) - 2 else c)
@@ -7659,13 +7810,19 @@ class MainTable(tk.Canvas):
                 column=c,
                 boxes=self.get_boxes(),
                 selected=self.selected,
+                data={(datarn, datacn): selection},
             )
             try_binding(kwargs["select_function"], event_data)
-            selection = selection if not self.edit_validation_func else self.edit_validation_func(event_data)
-            if selection is not None:
-                edited = self.set_cell_data_undo(r, c, datarn=datarn, datacn=datacn, value=selection, redraw=not redraw)
-                if edited:
-                    try_binding(self.extra_end_edit_cell_func, event_data)
+            selection, event_data = self.single_edit_run_validation(datarn, datacn, event_data)
+            if selection is not None and self.set_cell_data_undo(
+                r,
+                c,
+                datarn=datarn,
+                datacn=datacn,
+                value=selection,
+                redraw=not redraw,
+            ):
+                try_binding(self.extra_end_edit_cell_func, event_data)
             self.recreate_all_selection_boxes()
         self.focus_set()
         self.hide_text_editor_and_dropdown(redraw=redraw)
@@ -7737,6 +7894,7 @@ class MainTable(tk.Canvas):
                 column=c,
                 boxes=self.get_boxes(),
                 selected=self.selected,
+                data={(datarn, datacn): value},
             )
             if kwargs["check_function"] is not None:
                 kwargs["check_function"](event_data)
@@ -7931,7 +8089,10 @@ class MainTable(tk.Canvas):
                 kwargs = self.get_cell_kwargs(datarn, datacn, key="checkbox")
                 if kwargs:
                     return f"{kwargs['text']}"
-        value = self.data[datarn][datacn] if len(self.data) > datarn and len(self.data[datarn]) > datacn else ""
+        try:
+            value = self.data[datarn][datacn]
+        except Exception:
+            value = ""
         kwargs = self.get_cell_kwargs(datarn, datacn, key="format")
         if kwargs:
             if kwargs["formatter"] is None:
@@ -7946,28 +8107,24 @@ class MainTable(tk.Canvas):
                 else:
                     # assumed given formatter class has get_data_with_valid_check()
                     return f"{value.get_data_with_valid_check()}"
-        return "" if value is None else value if isinstance(value, str) else f"{value}"
+        else:
+            return "" if value is None else value if isinstance(value, str) else f"{value}"
 
     def get_cell_data(
         self,
         datarn: int,
         datacn: int,
-        get_displayed: bool = False,
         none_to_empty_str: bool = False,
         fmt_kw: dict | None = None,
-        **kwargs,
     ) -> Any:
-        if get_displayed:
-            return self.get_valid_cell_data_as_str(datarn, datacn, get_displayed=True)
-        value = (
-            self.data[datarn][datacn]
-            if len(self.data) > datarn and len(self.data[datarn]) > datacn
-            else self.get_value_for_empty_cell(datarn, datacn)
-        )
+        try:  # when successful try is more than twice as fast as len check
+            value = self.data[datarn][datacn]
+        except Exception:
+            value = self.get_value_for_empty_cell(datarn, datacn)
         kwargs = self.get_cell_kwargs(datarn, datacn, key="format")
         if kwargs and kwargs["formatter"] is not None:
             value = value.value  # assumed given formatter class has value attribute
-        if isinstance(fmt_kw, dict):
+        if fmt_kw:
             value = format_data(value=value, **fmt_kw)
         return "" if (value is None and none_to_empty_str) else value
 
@@ -7984,7 +8141,7 @@ class MainTable(tk.Canvas):
             return False
         elif "format" in kwargs:
             return True
-        elif self.cell_equal_to(datarn, datacn, value, ignore_empty=ignore_empty) or (
+        elif self.cell_equal_to(datarn, datacn, value, ignore_empty=ignore_empty, check_fmt=False) or (
             (dropdown := kwargs.get("dropdown", {})) and dropdown["validate_input"] and value not in dropdown["values"]
         ):
             return False
@@ -7993,22 +8150,20 @@ class MainTable(tk.Canvas):
         else:
             return True
 
-    def cell_equal_to(self, datarn: int, datacn: int, value: Any, ignore_empty: bool = False, **kwargs) -> bool:
-        v = self.get_cell_data(datarn, datacn)
-        kwargs = self.get_cell_kwargs(datarn, datacn, key="format")
-        if kwargs and kwargs["formatter"] is None:
-            if ignore_empty:
-                if not (x := format_data(value=value, **kwargs)) and not v:
-                    return False
-                return v == x
-            return v == format_data(value=value, **kwargs)
-        # assumed if there is a formatter class in cell then it has a
-        # __eq__() function anyway
-        # else if there is not a formatter class in cell and cell is not formatted
-        # then compare value as is
-        if ignore_empty and not v and not value:
-            return False
-        return v == value
+    def cell_equal_to(
+        self,
+        datarn: int,
+        datacn: int,
+        new: Any,
+        ignore_empty: bool = False,
+        check_fmt: bool = True,
+    ) -> bool:
+        current = self.get_cell_data(datarn, datacn)
+        if check_fmt:
+            kws = self.get_cell_kwargs(datarn, datacn, key="format")
+            if kws and kws["formatter"] is None:
+                new = format_data(value=new, **kws)
+        return current == new and not (ignore_empty and not current and not new)
 
     def get_cell_clipboard(self, datarn: int, datacn: int) -> str | int | float | bool:
         value = self.data[datarn][datacn] if len(self.data) > datarn and len(self.data[datarn]) > datacn else ""

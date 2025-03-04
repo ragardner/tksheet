@@ -203,6 +203,12 @@ def recursive_bind(widget: tk.Misc, event: str, callback: Callable) -> None:
         recursive_bind(child, event, callback)
 
 
+def recursive_unbind(widget: tk.Misc, event: str) -> None:
+    widget.unbind(event)
+    for child in widget.winfo_children():
+        recursive_unbind(child, event)
+
+
 def tksheet_type_error(kwarg: str, valid_types: list[str], not_type: Any) -> str:
     valid_types = ", ".join(f"{type_}" for type_ in valid_types)
     return f"Argument '{kwarg}' must be one of the following types: {valid_types}, not {type(not_type)}."
@@ -334,7 +340,7 @@ def event_dict(
         selection_boxes={} if boxes is None else boxes,
         selected=() if selected is None else selected,
         being_selected=() if being_selected is None else being_selected,
-        data=[] if data is None else data,
+        data={} if data is None else data,
         key="" if key is None else key,
         value=None if value is None else value,
         loc=() if loc is None else loc,
@@ -412,6 +418,27 @@ def push_n(num: int, sorted_seq: Sequence[int]) -> int:
             else:
                 hi = mid
         return num + lo
+
+
+def get_menu_kwargs(ops: DotDict[str, Any]) -> DotDict[str, Any]:
+    return DotDict(
+        {
+            "font": ops.table_font,
+            "foreground": ops.popup_menu_fg,
+            "background": ops.popup_menu_bg,
+            "activebackground": ops.popup_menu_highlight_bg,
+            "activeforeground": ops.popup_menu_highlight_fg,
+        }
+    )
+
+
+def get_bg_fg(ops: DotDict[str, Any]) -> dict[str, str]:
+    return {
+        "bg": ops.table_editor_bg,
+        "fg": ops.table_editor_fg,
+        "select_bg": ops.table_editor_select_bg,
+        "select_fg": ops.table_editor_select_fg,
+    }
 
 
 def get_dropdown_kwargs(
@@ -645,7 +672,7 @@ def color_tup(color: str) -> tuple[int, int, int]:
     return int(res[1:3], 16), int(res[3:5], 16), int(res[5:], 16)
 
 
-def down_cell_within_box(
+def cell_down_within_box(
     r: int,
     c: int,
     r1: int,
@@ -909,45 +936,68 @@ def gen_coords(
 
 
 def box_gen_coords(
-    start_row: int,
-    start_col: int,
-    total_cols: int,
-    total_rows: int,
-    reverse: bool = False,
+    from_r: int,
+    from_c: int,
+    upto_r: int,
+    upto_c: int,
+    start_r: int,
+    start_c: int,
+    reverse: bool,
+    all_rows_displayed: bool = True,
+    all_cols_displayed: bool = True,
+    displayed_cols: list[int] | None = None,
+    displayed_rows: list[int] | None = None,
+    no_wrap: bool = False,
 ) -> Generator[tuple[int, int]]:
-    if reverse:
-        # yield start cell
-        yield (start_row, start_col)
-        # yield any remaining cells in the starting row before the start column
-        if start_col:
-            for col in reversed(range(start_col)):
-                yield (start_row, col)
-        # yield any cells above start row
-        for row in reversed(range(start_row)):
-            for col in reversed(range(total_cols)):
-                yield (row, col)
-        # yield cells from bottom of table upward
-        for row in range(total_rows - 1, start_row, -1):
-            for col in reversed(range(total_cols)):
-                yield (row, col)
-        # yield any remaining cells in start row
-        for col in range(total_cols - 1, start_col, -1):
-            yield (start_row, col)
+    # Initialize empty lists if None
+    if displayed_rows is None:
+        displayed_rows = []
+    if displayed_cols is None:
+        displayed_cols = []
+
+    # Adjust row indices based on displayed_rows
+    if not all_rows_displayed:
+        from_r = displayed_rows[from_r]
+        upto_r = displayed_rows[upto_r - 1] + 1
+        start_r = displayed_rows[start_r]
+    # Adjust column indices based on displayed_cols (fixing original bug)
+    if not all_cols_displayed:
+        from_c = displayed_cols[from_c]
+        upto_c = displayed_cols[upto_c - 1] + 1
+        start_c = displayed_cols[start_c]
+
+    if not reverse:
+        # Forward direction
+        # Part 1: From (start_r, start_c) to the end of the box
+        for c in range(start_c, upto_c):
+            yield (start_r, c)
+        for r in range(start_r + 1, upto_r):
+            for c in range(from_c, upto_c):
+                yield (r, c)
+        if not no_wrap:
+            # Part 2: Wrap around from beginning to just before (start_r, start_c)
+            for r in range(from_r, start_r):
+                for c in range(from_c, upto_c):
+                    yield (r, c)
+            if start_c > from_c:  # Only if there are columns before start_c
+                for c in range(from_c, start_c):
+                    yield (start_r, c)
     else:
-        # Yield cells from the start position to the end of the current row
-        for col in range(start_col, total_cols):
-            yield (start_row, col)
-        # yield from the next row to the last row
-        for row in range(start_row + 1, total_rows):
-            for col in range(total_cols):
-                yield (row, col)
-        # yield from the beginning up to the start
-        for row in range(start_row):
-            for col in range(total_cols):
-                yield (row, col)
-        # yield any remaining cells in the starting row before the start column
-        for col in range(start_col):
-            yield (start_row, col)
+        # Reverse direction
+        # Part 1: From (start_r, start_c) backwards to the start of the box
+        for c in range(start_c, from_c - 1, -1):
+            yield (start_r, c)
+        for r in range(start_r - 1, from_r - 1, -1):
+            for c in range(upto_c - 1, from_c - 1, -1):
+                yield (r, c)
+        if not no_wrap:
+            # Part 2: Wrap around from end to just after (start_r, start_c)
+            for r in range(upto_r - 1, start_r, -1):
+                for c in range(upto_c - 1, from_c - 1, -1):
+                    yield (r, c)
+            if start_c < upto_c - 1:  # Only if there are columns after start_c
+                for c in range(upto_c - 1, start_c, -1):
+                    yield (start_r, c)
 
 
 def next_cell(

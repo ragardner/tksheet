@@ -21,6 +21,7 @@
 - [Getting Sheet Data](https://github.com/ragardner/tksheet/wiki/Version-7#getting-sheet-data)
 - [Setting Sheet Data](https://github.com/ragardner/tksheet/wiki/Version-7#setting-sheet-data)
 - [Sorting the Table](https://github.com/ragardner/tksheet/wiki/Version-7#sorting-the-table)
+- [Find and Replace](https://github.com/ragardner/tksheet/wiki/Version-7#find-and-replace)
 ---
 - [Highlighting Cells](https://github.com/ragardner/tksheet/wiki/Version-7#highlighting-cells)
 - [Dropdown Boxes](https://github.com/ragardner/tksheet/wiki/Version-7#dropdown-boxes)
@@ -800,7 +801,8 @@ enable_bindings(*bindings)
 	- `"delete"` # for clearing cells with the delete key
 	- `"undo"` # for undo and redo
     - `"edit_cell"` # allow table cell editing
-    - *`"find"` # for a pop-up find window (does not find in index or header)
+    - `"find"` # for a pop-up find window (does not find in index or header)
+    - `"replace"` # additional functionality for the find window, replace and replace all
     - *`"ctrl_click_select"` / `"ctrl_select"` # for selecting multiple non-adjacent cells/rows/columns
     - *`"edit_header"` # allow header cell editing
     - *`"edit_index"` # allow index cell editing
@@ -811,14 +813,13 @@ Notes:
 - You can change the Sheets key bindings for functionality such as copy, paste, up, down etc. Instructions can be found [here](https://github.com/ragardner/tksheet/wiki/Version-7#changing-key-bindings).
 - **Note** that the following functionalities are not enabled using `"all"` and have to be specifically enabled:
     - `"ctrl_click_select"` / `"ctrl_select"`
-    - `"find"`
     - `"edit_header"`
     - `"edit_index"`
 - To allow table expansion when pasting data which doesn't fit in the table use either:
    - `paste_can_expand_x=True`, `paste_can_expand_y=True` in sheet initialization arguments or the same keyword arguments with the function `set_options()`.
 
 Example:
-- `sheet.enable_bindings()` to enable absolutely everything.
+- `sheet.enable_bindings()` to enable everything except `"ctrl_select"`, `"edit_index"`, `"edit_header"`.
 
 ___
 
@@ -878,6 +879,7 @@ Parameters:
     - `"end_edit_header", "edit_header"`
     - `"begin_edit_index"`
 	- `"end_edit_index", "edit_index"`
+    - `"replace_all"`
 - Moving:
     - `"begin_row_index_drag_drop", "begin_move_rows"`
 	- `"row_index_drag_drop", "move_rows", "end_move_rows", "end_row_index_drag_drop"`
@@ -904,7 +906,7 @@ Parameters:
     - `"column_width_resize"`
 - Selection:
 	- `"cell_select"`
-	- `"select_all"`
+	- `"all_select"`
 	- `"row_select"`
 	- `"column_select"`
 	- `"drag_select_cells"`
@@ -1100,7 +1102,7 @@ Keys:
         - The selection box type is a `str` either `"cells"`, `"rows"` or `"columns"`.
     - If no box is in the process of being created then this will be a an empty `tuple`.
     - [See here](https://github.com/ragardner/tksheet/wiki/Version-7#example-displaying-selections) for an example.
-- Key **`["data"]`** is primarily used for `paste` and it will contain the pasted data if any.
+- Key **`["data"]`** - `dict[tuple[int, int], Any]` - changed from only being used by paste, now stores a `dict` of cell coordinates and values that make up a table edit event of more than one cell.
 - Key **`["key"]`** - `str` - is primarily used for cell edit events where a key press has occurred. For `"begin_edit..."` events the value is the actual key which was pressed (or `"??"` for using the mouse to open a cell). It also might be one of the following for end edit events:
     - `"Return"` - enter key.
     - `"FocusOut"` - the editor or box lost focus, perhaps by mouse clicking elsewhere.
@@ -1123,7 +1125,12 @@ ___
 
 #### **Validate user cell edits**
 
-With this function you can validate or modify most user sheet edits, includes cut, paste, delete (including column/row clear), dropdown boxes and cell edits.
+With these functions you can validate or modify most user sheet edits, includes cut, paste, delete (including column/row clear), dropdown boxes and cell edits.
+
+**Edit validation**
+
+This function will be called for every cell edit in an action.
+
 ```python
 edit_validation(func: Callable | None = None) -> Sheet
 ```
@@ -1133,6 +1140,67 @@ Parameters:
 Notes:
 - If your bound function returns `None` then that specific cell edit will not be performed.
 - For examples of this function see [here](https://github.com/ragardner/tksheet/wiki/Version-7#usage-examples) and [here](https://github.com/ragardner/tksheet/wiki/Version-7#example-custom-right-click-and-text-editor-validation).
+
+**Bulk edit validation**
+
+This function will be called at the end of an action and delay any edits until after validation.
+
+```python
+bulk_table_edit_validation(func: Callable | None = None) -> Sheet
+```
+Parameters:
+- `func` (`Callable`, `None`) must either be a function which will receive a tksheet event dict which looks like [this](https://github.com/ragardner/tksheet/wiki/Version-7#event-data) or `None` which unbinds the function.
+
+Notes:
+- See the below example for more information on usage.
+
+Example:
+
+```python
+from tksheet import Sheet
+import tkinter as tk
+
+from typing import Any
+
+
+class demo(tk.Tk):
+    def __init__(self):
+        tk.Tk.__init__(self)
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(0, weight=1)
+        self.frame = tk.Frame(self)
+        self.frame.grid_columnconfigure(0, weight=1)
+        self.frame.grid_rowconfigure(0, weight=1)
+        self.sheet = Sheet(
+            self.frame,
+            data=[[f"Row {r}, Column {c}" for c in range(3)] for r in range(3)],
+        )
+        self.sheet.enable_bindings()
+        self.sheet.bulk_table_edit_validation(self.validate)
+        self.frame.grid(row=0, column=0, sticky="nswe")
+        self.sheet.grid(row=0, column=0, sticky="nswe")
+
+    def validate(self, event: dict) -> Any:
+        """
+        Whatever keys and values are left in event["data"]
+        when the function returns are the edits that will be made
+
+        An example below shows preventing edits if the proposed edit
+        contains a space
+
+        But you can also modify the values, or add more key, value
+        pairs to event["data"]
+        """
+        not_valid = set()
+        for (r, c), value in event.data.items():
+            if " " in value:
+                not_valid.add((r, c))
+        event.data = {k: v for k, v in event.data.items() if k not in not_valid}
+
+
+app = demo()
+app.mainloop()
+```
 
 ___
 
@@ -1403,6 +1471,7 @@ find_bindings
 find_next_bindings
 find_previous_bindings
 escape_bindings
+toggle_replace_bindings
 ```
 
 The argument must be a `list` of **tkinter** binding `str`s. In the below example the binding for copy is changed to `"<Control-e>"` and `"<Control-E>"`.
@@ -3239,6 +3308,10 @@ my_sheet.sort_columns(0, key=natural_sort_key)
 ```
 - Setting the key like this will, for this call, override whatever key was set at initialization or using `set_options()`.
 
+#### **Notes about sorting**
+
+- The readonly functions can be used to disallow sorting of particular cells/rows/columns values.
+
 #### **Sorting cells**
 
 ```python
@@ -3262,6 +3335,7 @@ Notes:
 - Sort the values of the box columns, or the values of the box rows if `row_wise` is `True`.
 - **Will not shift cell options (properties) around, only cell values.**
 - The event name in `EventDataDict` for sorting table values is `"edit_table"`.
+- The readonly functions can be used to disallow sorting of particular cells values.
 
 Example:
 ```python
@@ -3294,6 +3368,7 @@ Notes:
 - Sorts the values of each row independently.
 - **Will not shift cell options (properties) around, only cell values.**
 - The event name in `EventDataDict` for sorting table values is `"edit_table"`.
+- The readonly functions can be used to disallow sorting of particular rows values.
 
 #### **Sorting column values**
 
@@ -3316,6 +3391,7 @@ Notes:
 - Sorts the values of each column independently.
 - **Will not shift cell options (properties) around, only cell values.**
 - The event name in `EventDataDict` for sorting table values is `"edit_table"`.
+- The readonly functions can be used to disallow sorting of particular columns values.
 
 #### **Sorting the order of all rows using a column**
 
@@ -3351,6 +3427,69 @@ Parameters:
 - `reverse` (`bool`) if `True` then sorts in reverse (descending) order.
 - `key` (`Callable`, `None`) if `None` then uses the default sorting key.
 - `undo` (`bool`) if `True` then adds the change (if a change was made) to the undo stack.
+
+---
+# **Find and Replace**
+
+An in-built find and replace window can be enabled using `enable_bindings()`, e.g:
+
+```python
+my_sheet.enable_bindings("find", "replace")
+
+# all bindings, including find and replace
+my_sheet.enable_bindings()
+```
+
+See [enable_bindings](https://github.com/ragardner/tksheet/wiki/Version-7#enable-table-functionality-and-bindings) for more information.
+
+There are also some `Sheet()` functions that can be utilized, shown below.
+
+#### **Check if the find window is open**
+
+```python
+@property
+find_open() -> bool
+```
+e.g. `find_is_open = sheet.find_open`
+
+#### **Open or close the find window**
+
+```python
+open_find(focus: bool = False) -> Sheet
+```
+
+```python
+close_find() -> Sheet
+```
+
+#### **Find and select**
+
+```python
+next_match(within: bool | None = None, find: str | None = None) -> Sheet
+```
+
+```python
+prev_match(within: bool | None = None, find: str | None = None) -> Sheet
+```
+Parameters:
+- `within` (`bool`, `None`) if `bool` then will override the find windows within selection setting. If `None` then it will use the find windows setting.
+- `find` (`str`, `None`) if `str` then will override the find windows search value. If `None` then it will use the find windows search value.
+
+Notes:
+- If looking within selection then hidden rows and columns will be skipped.
+
+#### **Replace all using mapping**
+
+```python
+replace_all(mapping: dict[str, str], within: bool = False) -> EventDataDict
+```
+Parameters:
+- `mapping` (`dict[str, str]`) a `dict` of keys to search for and values to replace them with.
+- `within` (`bool`) when `True` will only do replaces inside existing selection boxes.
+
+Notes:
+- Will do partial cell data replaces also.
+- If looking within selection then hidden rows and columns will be skipped.
 
 ---
 # **Highlighting Cells**

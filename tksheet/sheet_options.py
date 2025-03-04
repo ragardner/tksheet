@@ -195,6 +195,10 @@ def new_sheet_options() -> DotDict:
                 f"<{ctrl_key}-Shift-g>",
                 f"<{ctrl_key}-Shift-G>",
             ],
+            "toggle_replace_bindings": [
+                f"<{ctrl_key}-h>",
+                f"<{ctrl_key}-H>",
+            ],
             "escape_bindings": [
                 "<Escape>",
             ],

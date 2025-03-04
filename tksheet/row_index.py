@@ -923,6 +923,7 @@ class RowIndex(tk.Canvas):
                         value=val,
                         event_data=event_data,
                     )
+        event_data = self.MT.bulk_edit_validation(event_data)
         if event_data["cells"]["table"]:
             if undo and self.MT.undo_enabled:
                 self.MT.undo_stack.append(stored_event_dict(event_data))
@@ -1163,16 +1164,14 @@ class RowIndex(tk.Canvas):
                 else:
                     start_col, end_col = 0, len(self.MT.displayed_columns)
                 iterable = self.MT.displayed_columns[start_col:end_col]
-            h = max(
-                h,
-                max(
-                    self.MT.get_wrapped_cell_height(
-                        datarn,
-                        datacn,
-                    )
-                    for datacn in iterable
-                ),
+            cell_heights = (
+                self.MT.get_wrapped_cell_height(
+                    datarn,
+                    datacn,
+                )
+                for datacn in iterable
             )
+            h = max(h, max(cell_heights, default=h))
             self.MT.cells_cache = None
         h = max(h, ih)
         if only_if_too_small and h < self.MT.row_positions[row + 1] - self.MT.row_positions[row]:
@@ -2732,6 +2731,7 @@ class RowIndex(tk.Canvas):
                         min_to = min(event_data["moved"]["rows"]["data"].values())
                         max_to = max(event_data["moved"]["rows"]["data"].values())
                         insert_row = max_to if min_from <= min_to else min_to
+                        move_to_row = insert_row
                         move_to_iid = self.MT._row_index[insert_row].iid
 
                     move_to_index = self.PAR.index(move_to_iid)

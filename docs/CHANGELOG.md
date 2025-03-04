@@ -1,5 +1,27 @@
 ### Version 7.4.8
-####
+#### Fixed:
+- Numerous fixes and improvements for using the find window with hidden rows/columns.
+- Error on trying to resize row height when the row is empty.
+- Rare minor issues with setting bindings using `set_options()`.
+- Some events were adding to the undo stack even if undo was disabled.
+- Error on trying to sort rows by column when using the treeview.
+- Error on using certain non-treeview row moving functionality while using the treeview.
+
+#### Changed:
+- `enable_bindings()` with `"all"` or no args will now also enable the find and replace window.
+- If you use `enable_bindings()` with `"all"` or no args and your software has its own Ctrl/Cmd g/G/h/H binding you may need to make changes such as using `set_options()` to remove tksheets find window bindings.
+- The find window will no longer match displayed text in the table from checkboxes and dropdown boxes, only underlying cell data values. This is because the text values are not typically editable from the user end.
+
+#### Added:
+- Replace and replace all functionality in the find window.
+- Using the find window without find within selection in treeview mode will show hidden rows if there's a cell match.
+- The find window is now draggable horizontally.
+- Ctrl/Cmd h/H binding for toggle replace.
+- `**kwargs` to `Sheet()` initialization so that other settings can be changed such as bindings.
+
+#### Improved:
+- Refactored `extra_bindings()` code, behavior should be unchanged.
+- Find window icons have been improved.
 
 ### Version 7.4.7
 #### Changed:
