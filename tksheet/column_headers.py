@@ -1094,7 +1094,7 @@ class ColumnHeaders(tk.Canvas):
             self.itemconfig(item, state="hidden")
 
     def get_cell_dimensions(self, datacn: int) -> tuple[int, int]:
-        txt = self.get_valid_cell_data_as_str(datacn, fix=False)
+        txt = self.cell_str(datacn, fix=False)
         if txt:
             self.MT.txt_measure_canvas.itemconfig(
                 self.MT.txt_measure_canvas_text,
@@ -1150,7 +1150,7 @@ class ColumnHeaders(tk.Canvas):
             elif isinstance(self.MT._headers, int):
                 datarn = self.MT._headers
                 for datacn in iterable:
-                    if txt := self.MT.get_valid_cell_data_as_str(datarn, datacn, get_displayed=True):
+                    if txt := self.MT.cell_str(datarn, datacn, get_displayed=True):
                         qconf(qtxtm, text=txt, font=qfont)
                         b = qbbox(qtxtm)
                         th = b[3] - b[1] + 5
@@ -1197,7 +1197,7 @@ class ColumnHeaders(tk.Canvas):
             qtxth = self.MT.table_txt_height
             qfont = self.ops.table_font
             for datarn in iterable:
-                if txt := self.MT.get_valid_cell_data_as_str(datarn, datacn, get_displayed=True):
+                if txt := self.MT.cell_str(datarn, datacn, get_displayed=True):
                     qconf(qtxtm, text=txt, font=qfont)
                     b = qbbox(qtxtm)
                     if (
@@ -1629,7 +1629,7 @@ class ColumnHeaders(tk.Canvas):
                 or (align.endswith("n") and cleftgridln + 5 > scrollpos_right)
             ):
                 continue
-            text = self.get_valid_cell_data_as_str(datacn, fix=False)
+            text = self.cell_str(datacn, fix=False)
             if not text:
                 continue
             max_lines = int((self.current_height - top - 2) / txt_h)
@@ -2223,7 +2223,7 @@ class ColumnHeaders(tk.Canvas):
                 edited = True
         if edited and cell_resize and self.ops.cell_auto_resize_enabled:
             if self.height_resizing_enabled:
-                self.set_height_of_header_to_text(self.get_valid_cell_data_as_str(datacn, fix=False))
+                self.set_height_of_header_to_text(self.cell_str(datacn, fix=False))
             self.set_col_width_run_binding(c)
         if redraw:
             self.MT.refresh()
@@ -2270,7 +2270,7 @@ class ColumnHeaders(tk.Canvas):
         redirect_int: bool = False,
     ) -> Any:
         if get_displayed:
-            return self.get_valid_cell_data_as_str(datacn, fix=False)
+            return self.cell_str(datacn, fix=False)
         if redirect_int and isinstance(self.MT._headers, int):  # internal use
             return self.MT.get_cell_data(self.MT._headers, datacn, none_to_empty_str=True)
         if (
@@ -2282,7 +2282,7 @@ class ColumnHeaders(tk.Canvas):
             return ""
         return self.MT._headers[datacn]
 
-    def get_valid_cell_data_as_str(self, datacn: int, fix: bool = True) -> str:
+    def cell_str(self, datacn: int, fix: bool = True) -> str:
         kwargs = self.get_cell_kwargs(datacn, key="dropdown")
         if kwargs:
             if kwargs["text"] is not None:
@@ -2292,7 +2292,7 @@ class ColumnHeaders(tk.Canvas):
             if kwargs:
                 return f"{kwargs['text']}"
         if isinstance(self.MT._headers, int):
-            return self.MT.get_valid_cell_data_as_str(self.MT._headers, datacn, get_displayed=True)
+            return self.MT.cell_str(self.MT._headers, datacn, get_displayed=True)
         if fix:
             self.fix_header(datacn)
         try:

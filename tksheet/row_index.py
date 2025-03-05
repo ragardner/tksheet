@@ -1100,7 +1100,7 @@ class RowIndex(tk.Canvas):
             self.itemconfig(item, state="hidden")
 
     def get_cell_dimensions(self, datarn: int) -> tuple[int, int]:
-        txt = self.get_valid_cell_data_as_str(datarn, fix=False)
+        txt = self.cell_str(datarn, fix=False)
         if txt:
             self.MT.txt_measure_canvas.itemconfig(self.MT.txt_measure_canvas_text, text=txt, font=self.ops.index_font)
             b = self.MT.txt_measure_canvas.bbox(self.MT.txt_measure_canvas_text)
@@ -1127,7 +1127,7 @@ class RowIndex(tk.Canvas):
             sum(
                 1
                 for _ in wrap_text(
-                    text=self.get_valid_cell_data_as_str(datarn, fix=False),
+                    text=self.cell_str(datarn, fix=False),
                     max_width=self.current_width,
                     max_lines=float("inf"),
                     char_width_fn=self.wrap_get_char_w,
@@ -1776,7 +1776,7 @@ class RowIndex(tk.Canvas):
                 )
             if max_width <= 1:
                 continue
-            text = self.get_valid_cell_data_as_str(datarn, fix=False)
+            text = self.cell_str(datarn, fix=False)
             if not text:
                 continue
             start_line = max(0, int((scrollpos_top - rtopgridln) / self.MT.index_txt_height))
@@ -2457,7 +2457,7 @@ class RowIndex(tk.Canvas):
         redirect_int: bool = False,
     ) -> Any:
         if get_displayed:
-            return self.get_valid_cell_data_as_str(datarn, fix=False)
+            return self.cell_str(datarn, fix=False)
         if redirect_int and isinstance(self.MT._row_index, int):  # internal use
             return self.MT.get_cell_data(datarn, self.MT._row_index, none_to_empty_str=True)
         if (
@@ -2471,7 +2471,7 @@ class RowIndex(tk.Canvas):
             return self.MT._row_index[datarn].text
         return self.MT._row_index[datarn]
 
-    def get_valid_cell_data_as_str(self, datarn: int, fix: bool = True) -> str:
+    def cell_str(self, datarn: int, fix: bool = True) -> str:
         kwargs = self.get_cell_kwargs(datarn, key="dropdown")
         if kwargs:
             if kwargs["text"] is not None:
@@ -2481,7 +2481,7 @@ class RowIndex(tk.Canvas):
             if kwargs:
                 return f"{kwargs['text']}"
         if isinstance(self.MT._row_index, int):
-            return self.MT.get_valid_cell_data_as_str(datarn, self.MT._row_index, get_displayed=True)
+            return self.MT.cell_str(datarn, self.MT._row_index, get_displayed=True)
         if fix:
             self.fix_index(datarn)
         try:

@@ -1,5 +1,12 @@
 ### Version 7.4.9
-####
+#### Fixed:
+- [#274](https://github.com/ragardner/tksheet/issues/274).
+- Getting data using spans or `get_data()` with `tdisp=True` and a `"format"` type `Span` would not result in formatted data.
+- Incorrect docstring in `get_data()`.
+
+#### Improved:
+- Span data getting performance.
+- Old data getting functions performance.
 
 ### Version 7.4.8
 #### Fixed:

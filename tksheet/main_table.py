@@ -4349,7 +4349,7 @@ class MainTable(tk.Canvas):
             return self.data
 
     def get_cell_dimensions(self, datarn: int, datacn: int) -> tuple[int, int]:
-        txt = self.get_valid_cell_data_as_str(datarn, datacn, get_displayed=True)
+        txt = self.cell_str(datarn, datacn, get_displayed=True)
         if txt:
             self.txt_measure_canvas.itemconfig(self.txt_measure_canvas_text, text=txt, font=self.PAR.ops.table_font)
             b = self.txt_measure_canvas.bbox(self.txt_measure_canvas_text)
@@ -4478,7 +4478,7 @@ class MainTable(tk.Canvas):
             sum(
                 1
                 for _ in wrap_text(
-                    text=self.get_valid_cell_data_as_str(datarn, datacn, get_displayed=True),
+                    text=self.cell_str(datarn, datacn, get_displayed=True),
                     max_width=self.get_cell_max_width(datarn, dispcn),
                     max_lines=float("inf"),
                     char_width_fn=self.wrap_get_char_w,
@@ -4524,7 +4524,7 @@ class MainTable(tk.Canvas):
             w = min_column_width if width is None else width
             w = hw if (hw := self.CH.get_cell_dimensions(datacn)[0]) > w else min_column_width
             for datarn in iterrows:
-                if txt := self.get_valid_cell_data_as_str(datarn, datacn, get_displayed=True):
+                if txt := self.cell_str(datarn, datacn, get_displayed=True):
                     qconf(qtxtm, text=txt, font=qfont)
                     b = qbbox(qtxtm)
                     tw = b[2] - b[0] + added_w_space
@@ -6240,7 +6240,7 @@ class MainTable(tk.Canvas):
                     cells["dropdown"][(datarn, datacn)] = kwargs
                 elif kwargs := self.get_cell_kwargs(datarn, datacn, key="checkbox"):
                     cells["checkbox"][(datarn, datacn)] = kwargs
-                cells[(datarn, datacn)] = self.get_valid_cell_data_as_str(datarn, datacn, get_displayed=True)
+                cells[(datarn, datacn)] = self.cell_str(datarn, datacn, get_displayed=True)
         return cells
 
     def wrap_get_char_w(self, c: str) -> int:
@@ -8075,31 +8075,30 @@ class MainTable(tk.Canvas):
                 for datarn in range(len(self.data)):
                     self.set_cell_data(datarn, datacn, get_val(datarn, datacn), expand_sheet=False)
 
-    # deals with possibility of formatter class being in self.data cell
-    # if cell is formatted - possibly returns invalid_value kwarg if
-    # cell value is not in datatypes kwarg
-    # if get displayed is true then Nones are replaced by ""
-    def get_valid_cell_data_as_str(self, datarn: int, datacn: int, get_displayed: bool = False, **kwargs) -> str:
+    def cell_str(self, datarn: int, datacn: int, get_displayed: bool = False, **kwargs) -> str:
+        """
+        deals with possibility of formatter class being in self.data cell
+        if cell is formatted - possibly returns invalid_value kwarg if
+        cell value is not in datatypes kwarg
+        if get displayed is true then Nones are replaced by
+        """
+        kwargs = self.get_cell_kwargs(datarn, datacn, key=None)
         if get_displayed:
-            kwargs = self.get_cell_kwargs(datarn, datacn, key="dropdown")
-            if kwargs:
-                if kwargs["text"] is not None:
-                    return f"{kwargs['text']}"
-            else:
-                kwargs = self.get_cell_kwargs(datarn, datacn, key="checkbox")
-                if kwargs:
-                    return f"{kwargs['text']}"
+            if kwargs and "dropdown" in kwargs:
+                if kwargs["dropdown"]["text"] is not None:
+                    return f"{kwargs['dropdown']['text']}"
+            elif kwargs and "checkbox" in kwargs:
+                return f"{kwargs['checkbox']['text']}"
         try:
             value = self.data[datarn][datacn]
         except Exception:
             value = ""
-        kwargs = self.get_cell_kwargs(datarn, datacn, key="format")
-        if kwargs:
-            if kwargs["formatter"] is None:
+        if "format" in kwargs:
+            if kwargs["format"]["formatter"] is None:
                 if get_displayed:
-                    return data_to_str(value, **kwargs)
+                    return data_to_str(value, **kwargs["format"])
                 else:
-                    return f"{get_data_with_valid_check(value, **kwargs)}"
+                    return f"{get_data_with_valid_check(value, **kwargs['format'])}"
             else:
                 if get_displayed:
                     # assumed given formatter class has __str__()
@@ -8114,9 +8113,15 @@ class MainTable(tk.Canvas):
         self,
         datarn: int,
         datacn: int,
+        get_displayed: bool = False,
         none_to_empty_str: bool = False,
         fmt_kw: dict | None = None,
     ) -> Any:
+        if get_displayed:
+            if fmt_kw:
+                return format_data(value=self.cell_str(datarn, datacn, get_displayed=True), **fmt_kw)
+            else:
+                return self.cell_str(datarn, datacn, get_displayed=True)
         try:  # when successful try is more than twice as fast as len check
             value = self.data[datarn][datacn]
         except Exception:

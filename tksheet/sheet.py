@@ -1048,7 +1048,7 @@ class Sheet(tk.Frame):
     def get_data(self, *key: CreateSpanTypes) -> Any:
         """
         e.g. retrieves entire table as pandas dataframe
-        sheet["A1"].expand().options(pandas.DataFrame).data
+        sheet["A1"].expand().options(convert=pandas.DataFrame).data
 
         must deal with
         - format
@@ -1107,56 +1107,48 @@ class Sheet(tk.Frame):
         """
         span = self.span_from_key(*key)
         rows, cols = self.ranges_from_span(span)
-        tdisp, idisp, hdisp = span.tdisp, span.idisp, span.hdisp
         table, index, header = span.table, span.index, span.header
         fmt_kw = span.kwargs if span.type_ == "format" and span.kwargs else None
-        quick_tdata, quick_idata, quick_hdata = self.MT.get_cell_data, self.RI.get_cell_data, self.CH.get_cell_data
+        t_data = partial(self.MT.get_cell_data, get_displayed=True) if span.tdisp else self.MT.get_cell_data
+        i_data = self.RI.cell_str if span.idisp else self.RI.get_cell_data
+        h_data = self.CH.cell_str if span.hdisp else self.CH.get_cell_data
         res = []
         if span.transposed:
+            # Index row (first row when transposed)
             if index:
-                if index and header:
-                    if table:
-                        res.append([""] + [quick_idata(r, get_displayed=idisp) for r in rows])
-                    else:
-                        res.append([quick_idata(r, get_displayed=idisp) for r in rows])
-                else:
-                    res.append([quick_idata(r, get_displayed=idisp) for r in rows])
+                index_row = [""] if header and table else []
+                index_row.extend(i_data(r) for r in rows)
+                res.append(index_row)
+            # Header and/or table data as columns
             if header:
-                if table:
-                    res.extend(
-                        [quick_hdata(c, get_displayed=hdisp)]
-                        + [quick_tdata(r, c, get_displayed=tdisp, fmt_kw=fmt_kw) for r in rows]
-                        for c in cols
-                    )
-                else:
-                    res.extend([quick_hdata(c, get_displayed=hdisp)] for c in cols)
+                for c in cols:
+                    col = [h_data(c)]
+                    if table:
+                        col.extend(t_data(r, c, fmt_kw=fmt_kw) for r in rows)
+                    res.append(col)
             elif table:
-                res.extend([quick_tdata(r, c, get_displayed=tdisp, fmt_kw=fmt_kw) for r in rows] for c in cols)
-        elif not span.transposed:
+                res.extend([t_data(r, c, fmt_kw=fmt_kw) for r in rows] for c in cols)
+        else:
+            # Header row
             if header:
-                if header and index:
-                    if table:
-                        res.append([""] + [quick_hdata(c, get_displayed=hdisp) for c in cols])
-                    else:
-                        res.append([quick_hdata(c, get_displayed=hdisp) for c in cols])
-                else:
-                    res.append([quick_hdata(c, get_displayed=hdisp) for c in cols])
+                header_row = [""] if index and table else []
+                header_row.extend(h_data(c) for c in cols)
+                res.append(header_row)
+            # Index and/or table data as rows
             if index:
-                if table:
-                    res.extend(
-                        [quick_idata(r, get_displayed=idisp)]
-                        + [quick_tdata(r, c, get_displayed=tdisp, fmt_kw=fmt_kw) for c in cols]
-                        for r in rows
-                    )
-                else:
-                    res.extend([quick_idata(r, get_displayed=idisp)] for r in rows)
+                for r in rows:
+                    row = [i_data(r)]
+                    if table:
+                        row.extend(t_data(r, c, fmt_kw=fmt_kw) for c in cols)
+                    res.append(row)
             elif table:
-                res.extend([quick_tdata(r, c, get_displayed=tdisp, fmt_kw=fmt_kw) for c in cols] for r in rows)
+                res.extend([t_data(r, c, fmt_kw=fmt_kw) for c in cols] for r in rows)
+
         if not span.ndim:
             # it's a cell
             if len(res) == 1 and len(res[0]) == 1:
                 res = res[0][0]
-            # it's a single list
+            # it's a single sublist
             elif len(res) == 1:
                 res = res[0]
             # retrieving a list of index cells or
@@ -1168,11 +1160,12 @@ class Sheet(tk.Frame):
         elif span.ndim == 1:
             # flatten sublists
             res = res[0] if len(res) == 1 and len(res[0]) == 1 else list(chain.from_iterable(res))
-        # if span.ndim == 2 res keeps its current
-        # dimensions as a list of lists
-        if span.convert is not None:
+        # if span.ndim == 2 res keeps its current dimensions as a list of lists
+
+        if span.convert is None:
+            return res
+        else:
             return span.convert(res)
-        return res
 
     def get_total_rows(self, include_index: bool = False) -> int:
         return self.MT.total_data_rows(include_index=include_index)
@@ -2533,13 +2526,13 @@ class Sheet(tk.Frame):
                 self.del_index_cell_options_dropdown_and_checkbox(r)
                 add_to_options(self.RI.cell_options, r, "checkbox", d)
                 if edit_data:
-                    set_idata(r, checked if isinstance(checked, bool) else force_bool(self.get_index_data(r)))
+                    set_idata(r, checked if isinstance(checked, bool) else force_bool(self.RI.get_cell_data(r)))
         if header:
             for c in cols:
                 self.del_header_cell_options_dropdown_and_checkbox(c)
                 add_to_options(self.CH.cell_options, c, "checkbox", d)
                 if edit_data:
-                    set_hdata(c, checked if isinstance(checked, bool) else force_bool(self.get_header_data(c)))
+                    set_hdata(c, checked if isinstance(checked, bool) else force_bool(self.CH.get_cell_data(c)))
         if table:
             if span.kind == "cell":
                 for r in rows:
@@ -5304,7 +5297,7 @@ class Sheet(tk.Frame):
 
     def get_cell_data(self, r: int, c: int, get_displayed: bool = False) -> Any:
         if get_displayed:
-            return self.MT.get_valid_cell_data_as_str(r, c, get_displayed=True)
+            return self.MT.cell_str(r, c, get_displayed=True)
         else:
             return self.MT.get_cell_data(r, c)
 
@@ -5323,15 +5316,16 @@ class Sheet(tk.Frame):
                 raise ValueError(tksheet_type_error("only_columns", ["int", "iterable", "None"], only_columns))
         if r >= self.MT.total_data_rows():
             raise IndexError(f"Row #{r} is out of range.")
+
         if r >= len(self.MT.data):
             total_data_cols = self.MT.total_data_cols()
             self.MT.fix_data_len(r, total_data_cols - 1)
+
         iterable = only_columns if only_columns is not None else range(len(self.MT.data[r]))
-        f = partial(self.MT.get_valid_cell_data_as_str, get_displayed=True) if get_displayed else self.MT.get_cell_data
-        if get_index:
-            return [self.get_index_data(r, get_displayed=get_index_displayed)] + [f(r, c) for c in iterable]
-        else:
-            return [f(r, c) for c in iterable]
+        f = partial(self.MT.cell_str, get_displayed=True) if get_displayed else self.MT.get_cell_data
+        row = [self.RI.get_cell_data(r, get_displayed=get_index_displayed)] if get_index else []
+        row.extend(f(r, c) for c in iterable)
+        return row
 
     def get_column_data(
         self,
@@ -5347,10 +5341,10 @@ class Sheet(tk.Frame):
             elif not is_iterable(only_rows):
                 raise ValueError(tksheet_type_error("only_rows", ["int", "iterable", "None"], only_rows))
         iterable = only_rows if only_rows is not None else range(len(self.MT.data))
-        f = partial(self.MT.get_valid_cell_data_as_str, get_displayed=True) if get_displayed else self.MT.get_cell_data
-        return ([self.get_header_data(c, get_displayed=get_header_displayed)] if get_header else []) + [
-            f(r, c) for r in iterable
-        ]
+        f = partial(self.MT.cell_str, get_displayed=True) if get_displayed else self.MT.get_cell_data
+        col = [self.CH.get_cell_data(c, get_displayed=get_header_displayed)] if get_header else []
+        col.extend(f(r, c) for r in iterable)
+        return col
 
     def get_sheet_data(
         self,
@@ -5361,7 +5355,7 @@ class Sheet(tk.Frame):
         get_index_displayed: bool = True,
         only_rows: AnyIter[int] | int | None = None,
         only_columns: AnyIter[int] | int | None = None,
-    ) -> list[Any]:
+    ) -> list[list[Any]]:
         if only_rows is not None:
             if isinstance(only_rows, int):
                 only_rows = (only_rows,)
@@ -5372,6 +5366,7 @@ class Sheet(tk.Frame):
                 only_columns = (only_columns,)
             elif not is_iterable(only_columns):
                 raise ValueError(tksheet_type_error("only_columns", ["int", "iterable", "None"], only_columns))
+
         if get_header:
             maxlen = len(self.MT._headers) if isinstance(self.MT._headers, (list, tuple)) else 0
             data = []
@@ -5380,15 +5375,19 @@ class Sheet(tk.Frame):
                 if len(r) > maxlen:
                     maxlen = len(r)
                 if get_index:
-                    data.append([self.get_index_data(rn, get_displayed=get_index_displayed)] + r)
+                    row = [self.RI.get_cell_data(rn, get_displayed=get_index_displayed)]
+                    row.extend(r)
+                    data.append(row)
                 else:
                     data.append(r)
             iterable = only_columns if only_columns is not None else range(maxlen)
-            if get_index:
-                return [[""] + [self.get_header_data(cn, get_displayed=get_header_displayed) for cn in iterable]] + data
-            else:
-                return [[self.get_header_data(cn, get_displayed=get_header_displayed) for cn in iterable]] + data
-        elif not get_header:
+            header_row = [""] if get_index else []
+            header_row.extend(self.CH.get_cell_data(cn, get_displayed=get_header_displayed) for cn in iterable)
+            result = [header_row]
+            result.extend(data)
+            return result
+
+        else:
             iterable = only_rows if only_rows is not None else range(len(self.MT.data))
             return [
                 self.get_row_data(
@@ -5410,7 +5409,7 @@ class Sheet(tk.Frame):
         get_header_displayed: bool = True,
         only_rows: int | AnyIter[int] | None = None,
         only_columns: int | AnyIter[int] | None = None,
-    ) -> Iterator[list[Any]]:
+    ) -> Generator[list[Any]]:
         if only_rows is not None:
             if isinstance(only_rows, int):
                 only_rows = (only_rows,)
@@ -5421,11 +5420,13 @@ class Sheet(tk.Frame):
                 only_columns = (only_columns,)
             elif not is_iterable(only_columns):
                 raise ValueError(tksheet_type_error("only_columns", ["int", "iterable", "None"], only_columns))
+
         if get_header:
             iterable = only_columns if only_columns is not None else range(self.MT.total_data_cols())
-            yield ([""] if get_index else []) + [
-                self.get_header_data(c, get_displayed=get_header_displayed) for c in iterable
-            ]
+            header_row = [""] if get_index else []
+            header_row.extend(self.CH.get_cell_data(c, get_displayed=get_header_displayed) for c in iterable)
+            yield header_row
+
         iterable = only_rows if only_rows is not None else range(len(self.MT.data))
         yield from (
             self.get_row_data(
