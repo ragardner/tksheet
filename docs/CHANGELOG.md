@@ -1,3 +1,6 @@
+### Version 7.4.10
+####
+
 ### Version 7.4.9
 #### Fixed:
 - [#274](https://github.com/ragardner/tksheet/issues/274).
