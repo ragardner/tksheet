@@ -1,3 +1,6 @@
+### Version 7.4.9
+####
+
 ### Version 7.4.8
 #### Fixed:
 - Numerous fixes and improvements for using the find window with hidden rows/columns.
