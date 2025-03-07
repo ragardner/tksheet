@@ -16,7 +16,6 @@ from .colors import color_map
 from .constants import align_value_error, symbols_set
 from .formatters import to_bool
 from .other_classes import DotDict, EventDataDict, Highlight, Loc, Span
-from .tksheet_types import AnyIter
 
 unpickle_obj = pickle.loads
 lines_re = re.compile(r"[^\n]+")
@@ -356,6 +355,8 @@ def event_dict(
         sheet_state=DotDict() if sheet_state is None else sheet_state,
         treeview=DotDict(
             nodes={},
+            renamed={},
+            text={},
         )
         if treeview is None
         else treeview,
@@ -511,19 +512,19 @@ def is_iterable(o: Any) -> bool:
         return False
 
 
-def int_x_iter(i: AnyIter[int] | int) -> AnyIter[int]:
+def int_x_iter(i: Iterator[int] | int) -> Iterator[int]:
     if isinstance(i, int):
         return (i,)
     return i
 
 
-def int_x_tuple(i: AnyIter[int] | int) -> tuple[int]:
+def int_x_tuple(i: Iterator[int] | int) -> tuple[int]:
     if isinstance(i, int):
         return (i,)
     return tuple(i)
 
 
-def unpack(t: tuple[Any] | tuple[AnyIter[Any]]) -> tuple[Any]:
+def unpack(t: tuple[Any] | tuple[Iterator[Any]]) -> tuple[Any]:
     if not len(t):
         return t
     if is_iterable(t[0]) and len(t) == 1:
@@ -725,7 +726,7 @@ def cell_right_within_box(
 
 
 def get_last(
-    it: AnyIter[Any],
+    it: Iterator[Any],
 ) -> Any:
     if hasattr(it, "__reversed__"):
         try:
@@ -748,8 +749,8 @@ def index_exists(seq: Sequence[Any], index: int) -> bool:
 
 
 def add_to_displayed(displayed: list[int], to_add: Iterable[int]) -> list[int]:
-    # assumes to_add is sorted in reverse
-    for i in reversed(to_add):
+    # assumes to_add is sorted
+    for i in to_add:
         ins = bisect_left(displayed, i)
         displayed[ins:] = [i] + [e + 1 for e in islice(displayed, ins, None)]
     return displayed
@@ -820,13 +821,13 @@ def insert_items(
 ) -> list[Any]:
     """
     seq: list[Any]
-    to_insert: keys are ints sorted in reverse, representing list indexes to insert items.
+    to_insert: keys are ints sorted, representing list indexes to insert items.
                Values are any, e.g. {1: 200, 0: 200}
     """
     if to_insert:
-        if seq_len_func and next(iter(to_insert)) >= len(seq) + len(to_insert):
-            seq_len_func(next(iter(to_insert)) - len(to_insert))
-        for idx, v in reversed(to_insert.items()):
+        if seq_len_func and next(reversed(to_insert)) >= len(seq) + len(to_insert):
+            seq_len_func(next(reversed(to_insert)) - len(to_insert))
+        for idx, v in to_insert.items():
             seq[idx:idx] = [v]
     return seq
 
@@ -1040,7 +1041,7 @@ def is_last_cell(
     return row == end_row - 1 and col == end_col - 1
 
 
-def zip_fill_2nd_value(x: AnyIter[Any], o: Any) -> Generator[Any, Any]:
+def zip_fill_2nd_value(x: Iterator[Any], o: Any) -> Generator[Any, Any]:
     return zip(x, repeat(o))
 
 
@@ -1465,13 +1466,15 @@ def span_froms(
     return from_r, from_c
 
 
-def del_named_span_options(options: dict, itr: AnyIter[Hashable], type_: str) -> None:
+def del_named_span_options(options: dict, itr: Iterator[Hashable], type_: str) -> None:
     for k in itr:
         if k in options and type_ in options[k]:
             del options[k][type_]
 
 
-def del_named_span_options_nested(options: dict, itr1: AnyIter[Hashable], itr2: AnyIter[Hashable], type_: str) -> None:
+def del_named_span_options_nested(
+    options: dict, itr1: Iterator[Hashable], itr2: Iterator[Hashable], type_: str
+) -> None:
     for k1 in itr1:
         for k2 in itr2:
             k = (k1, k2)
@@ -1552,7 +1555,7 @@ def set_align(
 def del_from_options(
     options: dict,
     key: str,
-    coords: int | AnyIter[int | tuple[int, int]] | None = None,
+    coords: int | Iterator[int | tuple[int, int]] | None = None,
 ) -> dict:
     if isinstance(coords, int):
         if coords in options and key in options[coords]:

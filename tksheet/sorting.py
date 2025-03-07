@@ -1,12 +1,10 @@
 from __future__ import annotations
 
-from collections.abc import Callable, Generator, Iterable, Iterator
+from collections.abc import Callable, Iterator
 from datetime import datetime
 from pathlib import Path
 from re import split
 from typing import Any
-
-AnyIter = Iterable | Iterator
 
 # Possible date formats to try for the entire string
 date_formats = (
@@ -298,7 +296,7 @@ def sort_selection(
 
 
 def sort_column(
-    data: list[list[Any]] | list[Any] | AnyIter[Any],
+    data: list[list[Any]] | list[Any] | Iterator[Any],
     column: int = 0,
     reverse: bool = False,
     key: Callable | None = None,
@@ -316,7 +314,7 @@ def sort_column(
 
 
 def sort_row(
-    data: list[list[Any]] | list[Any] | AnyIter[Any],
+    data: list[list[Any]] | list[Any] | Iterator[Any],
     row: int = 0,
     reverse: bool = False,
     key: Callable | None = None,
@@ -397,58 +395,71 @@ def sort_columns_by_row(
     return sort_indices, dict(zip(range(len(data[row])), sort_indices))
 
 
-def _sort_node_children(
-    node: Any,
-    tree: dict[str, Any],
-    reverse: bool,
-    key: Callable,
-) -> Generator[Any, None, None]:
-    sorted_children = sorted(
-        (tree[child_iid] for child_iid in node.children if child_iid in tree),
-        key=lambda child: key(child.text),
-        reverse=reverse,
-    )
-    for child in sorted_children:
-        yield child
-        if child.children:  # If the child node has children
-            yield from _sort_node_children(child, tree, reverse, key)
-
-
-def sort_tree_view(
-    _row_index: list[Any],
-    tree_rns: dict[str, int],
-    tree: dict[str, Any],
-    key: Callable | None = None,
+def sort_tree_rows_by_column(
+    data: list[list[Any]],
+    column: int,
+    index: list[Any],
+    rns: dict[str, int],
     reverse: bool = False,
+    key: Callable | None = None,
 ) -> tuple[list[Any], dict[int, int]]:
-    if not _row_index or not tree_rns or not tree:
+    """
+    Sorts tree rows by a specified column in depth-first order, returning sorted nodes and a row mapping.
+
+    Args:
+        data: List of rows, where each row is a list of column values.
+        column: Index of the column to sort by.
+        index: List of nodes, where each node has 'iid', 'parent', and 'children' attributes.
+        rns: Dictionary mapping item IDs (iid) to original row numbers in data.
+        reverse: If True, sort in descending order; otherwise, ascending.
+        key: Optional function to compute sort keys; defaults to natural_sort_key if None.
+
+    Returns:
+        Tuple containing:
+        - List of nodes in sorted order.
+        - Dictionary mapping original row numbers to new row numbers.
+    """
+    if not index or not rns:
         return [], {}
 
     if key is None:
-        # prefer version_sort_key for iid names
-        key = version_sort_key
+        key = natural_sort_key  # Assuming natural_sort_key is defined elsewhere
 
-    # Create the index map and sorted nodes list
-    mapping = {}
+    # Define the sort_reverse parameter to avoid unnecessary reversals
+    sort_reverse = not reverse
+
+    # Helper function to compute the sorting key for a node
+    def get_key(node):
+        row = data[rns[node.iid]]
+        return key(row[column] if len(row) > column else None)
+
+    # Initialize stack with sorted top-level nodes for efficiency
+    stack = sorted(
+        (node for node in index if node.parent == ""),
+        key=get_key,
+        reverse=sort_reverse,
+    )
+
+    # Initialize output structures
     sorted_nodes = []
-    new_index = 0
+    mapping = {}
+    new_rn = 0
 
-    # Sort top-level nodes
-    for node in sorted(
-        (node for node in _row_index if node.parent == ""),
-        key=lambda node: key(node.text),
-        reverse=reverse,
-    ):
-        iid = node.iid
-        mapping[tree_rns[iid]] = new_index
-        sorted_nodes.append(node)
-        new_index += 1
-
-        # Sort children recursively
-        for descendant_node in _sort_node_children(node, tree, reverse, key):
-            mapping[tree_rns[descendant_node.iid]] = new_index
-            sorted_nodes.append(descendant_node)
-            new_index += 1
+    # Process nodes iteratively in depth-first order
+    while stack:
+        current = stack.pop()  # Pop from the right end
+        sorted_nodes.append(current)
+        mapping[rns[current.iid]] = new_rn
+        new_rn += 1
+        if current.children:
+            # Sort children
+            sorted_children = sorted(
+                (index[rns[ciid]] for ciid in current.children if ciid in rns),
+                key=get_key,
+                reverse=sort_reverse,
+            )
+            # Extend stack with sorted children
+            stack.extend(sorted_children)  # Adds to the right end
 
     return sorted_nodes, mapping
 

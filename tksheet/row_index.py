@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import tkinter as tk
 from collections import defaultdict
-from collections.abc import Callable, Generator, Hashable, Sequence
+from collections.abc import Callable, Generator, Hashable, Iterator, Sequence
 from functools import partial
 from itertools import chain, cycle, islice, repeat
 from math import ceil, floor
@@ -19,6 +19,7 @@ from .constants import (
 )
 from .formatters import is_bool_like, try_to_bool
 from .functions import (
+    add_to_displayed,
     consecutive_ranges,
     del_placeholder_dict_key,
     event_dict,
@@ -40,7 +41,6 @@ from .functions import (
 from .other_classes import DotDict, DraggedRowColumn, DropdownStorage, EventDataDict, Node, TextEditorStorage
 from .sorting import sort_columns_by_row, sort_row
 from .text_editor import TextEditor
-from .tksheet_types import AnyIter
 
 
 class RowIndex(tk.Canvas):
@@ -891,7 +891,7 @@ class RowIndex(tk.Canvas):
     def _sort_rows(
         self,
         event: tk.Event | None = None,
-        rows: AnyIter[int] | None = None,
+        rows: Iterator[int] | None = None,
         reverse: bool = False,
         validation: bool = True,
         key: Callable | None = None,
@@ -947,7 +947,7 @@ class RowIndex(tk.Canvas):
         if row is None:
             if not self.MT.selected:
                 return event_data
-            row = self.MT.selected.row
+            row = self.MT.datarn(self.MT.selected.row)
         if try_binding(self.ri_extra_begin_sort_cols_func, event_data, "begin_move_columns"):
             if key is None:
                 key = self.PAR.ops.sort_key
@@ -1012,7 +1012,7 @@ class RowIndex(tk.Canvas):
 
     def select_row(
         self,
-        r: int | AnyIter[int],
+        r: int | Iterator[int],
         redraw: bool = False,
         run_binding_func: bool = True,
         ext: bool = False,
@@ -1207,7 +1207,7 @@ class RowIndex(tk.Canvas):
 
     def get_index_text_width(
         self,
-        only_rows: AnyIter[int] | None = None,
+        only_rows: Iterator[int] | None = None,
     ) -> int:
         self.fix_index()
         w = self.ops.default_row_index_width
@@ -1770,7 +1770,7 @@ class RowIndex(tk.Canvas):
                     fill=tree_arrow_fg,
                     tag="ta",
                     indent=indent,
-                    has_children=bool(self.tree[iid].children),
+                    has_children=bool(self.MT._row_index[datarn].children),
                     open_=self.MT._row_index[datarn].iid in self.tree_open_ids,
                     level=level,
                 )
@@ -2584,9 +2584,8 @@ class RowIndex(tk.Canvas):
     # Treeview Mode
 
     def tree_reset(self) -> None:
-        self.tree: dict[str, Node] = {}
         self.tree_open_ids = set()
-        self.tree_rns = {}
+        self.rns = {}
         if self.MT:
             self.MT.displayed_rows = []
             self.MT._row_index = []
@@ -2596,7 +2595,7 @@ class RowIndex(tk.Canvas):
 
     def new_iid(self) -> str:
         self.new_iid_ctr += 1
-        while (iid := f"{num2alpha(self.new_iid_ctr)}") in self.tree:
+        while (iid := f"{num2alpha(self.new_iid_ctr)}") in self.rns:
             self.new_iid_ctr += 1
         return iid
 
@@ -2608,7 +2607,7 @@ class RowIndex(tk.Canvas):
 
     def tree_del_rows(self, event_data: EventDataDict) -> EventDataDict:
         event_data["treeview"]["nodes"] = {}
-        for node in reversed(event_data["deleted"]["index"].values()):
+        for node in event_data["deleted"]["index"].values():
             iid = node.iid
             if parent_node := self.parent_node(iid):
                 if parent_node.iid not in event_data["treeview"]["nodes"]:
@@ -2619,38 +2618,52 @@ class RowIndex(tk.Canvas):
                         children=parent_node.children.copy(),
                     )
                 self.remove_iid_from_parents_children(iid)
-        for node in reversed(event_data["deleted"]["index"].values()):
+        for node in event_data["deleted"]["index"].values():
             iid = node.iid
             for did in self.get_iid_descendants(iid):
                 self.tree_open_ids.discard(did)
-                del self.tree[did]
             self.tree_open_ids.discard(iid)
-            del self.tree[iid]
+
+        for datarn in reversed(event_data["deleted"]["index"]):
+            del self.MT._row_index[datarn]
+
         return event_data
 
     def tree_add_rows(self, event_data: EventDataDict) -> EventDataDict:
         for rn, node in event_data["added"]["rows"]["index"].items():
-            self.tree[node.iid] = node
-            self.tree_rns[node.iid] = rn
+            self.rns[node.iid] = rn
+
         if event_data["treeview"]["nodes"]:
             self.restore_nodes(event_data=event_data)
         else:
-            row, a_node = next(reversed(event_data["added"]["rows"]["index"].items()))
+            row, a_node = next(iter(event_data["added"]["rows"]["index"].items()))
             if parent := a_node.parent:
-                if self.tree[parent].children:
+                if self.iid_children(parent):
                     index = next(
-                        (i for i, cid in enumerate(self.tree[parent].children) if self.tree_rns[cid] >= row),
-                        len(self.tree[parent].children),
+                        (i for i, cid in enumerate(self.iid_children(parent)) if self.rns[cid] >= row),
+                        len(self.iid_children(parent)),
                     )
-                    self.tree[parent].children[index:index] = [
-                        n.iid for n in reversed(event_data["added"]["rows"]["index"].values())
+                    self.iid_children(parent)[index:index] = [
+                        n.iid for n in event_data["added"]["rows"]["index"].values()
                     ]
                 else:
-                    self.tree[parent].children.extend(
-                        n.iid for n in reversed(event_data["added"]["rows"]["index"].values())
-                    )
-                if not self.PAR.item_displayed(parent) or parent not in self.tree_open_ids:
-                    self.PAR.hide_rows(event_data["added"]["rows"]["index"], data_indexes=True)
+                    self.iid_children(parent).extend(n.iid for n in event_data["added"]["rows"]["index"].values())
+
+            # handle displaying the new rows
+            event_data["added"]["rows"]["row_heights"] = {}
+            if parent and self.PAR.item_displayed(parent) and parent in self.tree_open_ids:
+                self.MT.displayed_rows = add_to_displayed(self.MT.displayed_rows, event_data["added"]["rows"]["index"])
+                disp_idx = self.MT.disprn(self.rns[a_node.iid])  # first node, they're contiguous because not undo
+                h = self.MT.get_default_row_height()
+                for i in range(len(event_data["added"]["rows"]["index"])):
+                    event_data["added"]["rows"]["row_heights"][disp_idx + i] = h
+
+            elif not parent:
+                self.MT.displayed_rows = add_to_displayed(self.MT.displayed_rows, event_data["added"]["rows"]["index"])
+                h = self.MT.get_default_row_height()
+                for datarn in event_data["added"]["rows"]["index"]:
+                    event_data["added"]["rows"]["row_heights"][self.MT.disprn(datarn)] = h
+
         return event_data
 
     def move_rows_mod_nodes(
@@ -2676,18 +2689,18 @@ class RowIndex(tk.Canvas):
             elif event_data["moved"]["rows"]:
                 if node_change:
                     item = node_change[0]
-                    moved_rows = [self.tree_rns[item]]
+                    moved_rows = [self.rns[item]]
                     new_parent = node_change[1]
                     move_to_index = node_change[2]
                     if new_parent:
                         if isinstance(move_to_index, int):
-                            move_to_index = min(move_to_index, len(self.tree[new_parent].children))
+                            move_to_index = min(move_to_index, len(self.iid_children(new_parent)))
                         else:
-                            move_to_index = len(self.tree[new_parent].children)
-                        move_to_row = self.tree_rns[new_parent]
-                        _find = move_to_index + 1 if new_parent == self.tree[item].parent else move_to_index
+                            move_to_index = len(self.iid_children(new_parent))
+                        move_to_row = self.rns[new_parent]
+                        _find = move_to_index + 1 if new_parent == self.iid_parent(item) else move_to_index
                         move_to_row += _find + sum(
-                            self.num_descendants(cid) for cid in islice(self.tree[new_parent].children, _find)
+                            self.num_descendants(cid) for cid in islice(self.iid_children(new_parent), _find)
                         )
                         insert_row = move_to_row + 1
                     else:
@@ -2713,7 +2726,7 @@ class RowIndex(tk.Canvas):
 
                     # remove descendants in iids to move
                     iids -= set.union(*iids_descendants.values()) & iids
-                    moved_rows = sorted(map(self.tree_rns.__getitem__, iids))
+                    moved_rows = sorted(map(self.rns.__getitem__, iids))
                     item = self.MT._row_index[moved_rows[0]].iid
 
                     if isinstance(event_data.value, int):
@@ -2735,7 +2748,7 @@ class RowIndex(tk.Canvas):
                         move_to_iid = self.MT._row_index[insert_row].iid
 
                     move_to_index = self.PAR.index(move_to_iid)
-                    new_parent = self.items_parent(move_to_iid)
+                    new_parent = self.iid_parent(move_to_iid)
 
                 event_data["moved"]["rows"]["data"] = {moved_rows[0]: insert_row}
 
@@ -2747,10 +2760,10 @@ class RowIndex(tk.Canvas):
                 if new_loc_is_displayed:
                     if disp_insert_row is None:
                         if new_parent or insert_row > move_to_row:
-                            disp_insert_row = self.MT.disprn(self.tree_rns[move_to_iid]) + 1
+                            disp_insert_row = self.MT.disprn(self.rns[move_to_iid]) + 1
                         else:
-                            disp_insert_row = self.MT.disprn(self.tree_rns[move_to_iid])
-                    if (disp_from_row := self.MT.try_disprn(self.tree_rns[item])) is not None:
+                            disp_insert_row = self.MT.disprn(self.rns[move_to_iid])
+                    if (disp_from_row := self.MT.try_disprn(self.rns[item])) is not None:
                         event_data["moved"]["rows"]["displayed"] = {disp_from_row: disp_insert_row}
                     else:
                         event_data["moved"]["rows"]["displayed"] = {(): disp_insert_row}
@@ -2810,13 +2823,13 @@ class RowIndex(tk.Canvas):
     ) -> EventDataDict:
         # also backs up nodes
         if parent is None:
-            parent = self.items_parent(item)
+            parent = self.iid_parent(item)
 
-        item_node = self.tree[item]
+        item_node = self.iid_node(item)
 
         # new parent is an item
         if parent:
-            parent_node = self.tree[parent]
+            parent_node = self.iid_node(parent)
             # its the same parent, we're just moving index
             if parent == item_node.parent:
                 event_data = self.copy_nodes((item, parent), event_data)
@@ -2839,7 +2852,7 @@ class RowIndex(tk.Canvas):
             else:
                 event_data = self.copy_nodes((item,), event_data)
             self.remove_iid_from_parents_children(item)
-            self.tree[item].parent = ""
+            self.MT._row_index[self.rns[item]].parent = ""
 
         # last row in mapping is where to start from +1
         mapping = event_data["moved"]["rows"]["data"]
@@ -2851,7 +2864,7 @@ class RowIndex(tk.Canvas):
             else:
                 disp_row_ctr = next(reversed(disp_mapping.values())) + 1
 
-        rn = self.tree_rns[item]
+        rn = self.rns[item]
         if rn not in mapping:
             mapping[rn] = row_ctr
             row_ctr += 1
@@ -2860,9 +2873,9 @@ class RowIndex(tk.Canvas):
                 disp_row_ctr += 1
 
         for did in self.get_iid_descendants(item):
-            mapping[self.tree_rns[did]] = row_ctr
+            mapping[self.rns[did]] = row_ctr
             row_ctr += 1
-            if disp_mapping and (disp_from := self.MT.try_disprn(self.tree_rns[did])) is not None:
+            if disp_mapping and (disp_from := self.MT.try_disprn(self.rns[did])) is not None:
                 disp_mapping = del_placeholder_dict_key(disp_mapping, disp_from, disp_row_ctr)
                 disp_row_ctr += 1
 
@@ -2873,11 +2886,10 @@ class RowIndex(tk.Canvas):
 
     def restore_nodes(self, event_data: EventDataDict) -> None:
         for iid, node in event_data["treeview"]["nodes"].items():
-            self.MT._row_index[self.tree_rns[iid]] = node
-            self.tree[iid] = node
+            self.MT._row_index[self.rns[iid]] = node
 
     def copy_node(self, item: str) -> Node:
-        n = self.tree[item]
+        n = self.iid_node(item)
         return Node(
             text=n.text,
             iid=n.iid,
@@ -2885,11 +2897,11 @@ class RowIndex(tk.Canvas):
             children=n.children.copy(),
         )
 
-    def copy_nodes(self, items: AnyIter[str], event_data: EventDataDict) -> EventDataDict:
+    def copy_nodes(self, items: Iterator[str], event_data: EventDataDict) -> EventDataDict:
         nodes = event_data["treeview"]["nodes"]
         for iid in items:
             if iid not in nodes:
-                n = self.tree[iid]
+                n = self.iid_node(iid)
                 nodes[iid] = Node(
                     text=n.text,
                     iid=n.iid,
@@ -2898,10 +2910,12 @@ class RowIndex(tk.Canvas):
                 )
         return event_data
 
-    def get_node_level(self, node: Node, level: int = 0) -> Generator[int]:
-        yield level
-        if node.parent:
-            yield from self.get_node_level(self.tree[node.parent], level + 1)
+    def get_node_level(self, node: Node) -> int:
+        level = 0
+        while node.parent:
+            level += 1
+            node = self.MT._row_index[self.rns[node.parent]]
+        return level
 
     def ancestors_all_open(self, iid: str, stop_at: str = "") -> bool:
         if stop_at:
@@ -2915,48 +2929,68 @@ class RowIndex(tk.Canvas):
 
     def get_iid_ancestors(self, iid: str) -> Generator[str]:
         current_iid = iid
-        while self.tree[current_iid].parent:
-            parent_iid = self.tree[current_iid].parent
+        while self.MT._row_index[self.rns[current_iid]].parent:
+            parent_iid = self.MT._row_index[self.rns[current_iid]].parent
             yield parent_iid
             current_iid = parent_iid
 
     def get_iid_descendants(self, iid: str, check_open: bool = False) -> Generator[str]:
-        tree = self.tree
-        stack = [iter(tree[iid].children)]
+        index = self.MT._row_index
+        stack = [iter(index[self.rns[iid]].children)]
         while stack:
             top_iterator = stack[-1]
             try:
                 ciid = next(top_iterator)
                 yield ciid
-                if tree[ciid].children and (not check_open or ciid in self.tree_open_ids):
-                    stack.append(iter(tree[ciid].children))
+                if index[self.rns[ciid]].children and (not check_open or ciid in self.tree_open_ids):
+                    stack.append(iter(index[self.rns[ciid]].children))
             except StopIteration:
                 stack.pop()
 
     def num_descendants(self, iid: str) -> int:
-        tree = self.tree
-        stack = [iter(tree[iid].children)]
+        index = self.MT._row_index
+        stack = [iter(index[self.rns[iid]].children)]
         num = 0
         while stack:
             top_iterator = stack[-1]
             try:
                 ciid = next(top_iterator)
                 num += 1
-                if tree[ciid].children:
-                    stack.append(iter(tree[ciid].children))
+                if index[self.rns[ciid]].children:
+                    stack.append(iter(index[self.rns[ciid]].children))
             except StopIteration:
                 stack.pop()
         return num
 
-    def items_parent(self, iid: str) -> str:
-        if self.tree[iid].parent:
-            return self.tree[iid].parent
-        return ""
+    def iid_node(self, iid: str) -> Node:
+        return self.MT._row_index[self.rns[iid]]
 
-    def parent_node(self, iid: str) -> Node:
-        if self.tree[iid].parent:
-            return self.tree[self.tree[iid].parent]
-        return ""
+    def iid_parent(self, iid: str) -> str:
+        return self.MT._row_index[self.rns[iid]].parent
+
+    def iid_children(self, iid: str) -> list[str]:
+        return self.MT._row_index[self.rns[iid]].children
+
+    def parent_node(self, iid: str) -> Node | Literal[""]:
+        if self.MT._row_index[self.rns[iid]].parent:
+            return self.MT._row_index[self.rns[self.MT._row_index[self.rns[iid]].parent]]
+        else:
+            return ""
+
+    def rename_iid(self, old: str, new: str, event_data: EventDataDict) -> EventDataDict:
+        event_data.treeview.renamed[old] = new
+        for ciid in self.iid_children(old):
+            self.MT._row_index[self.rns[ciid]].parent = new
+        if self.iid_parent(old):
+            parent_node = self.parent_node(old)
+            item_index = parent_node.children.index(old)
+            parent_node.children[item_index] = new
+        self.MT._row_index[self.rns[old]].iid = new
+        self.rns[new] = self.rns.pop(old)
+        if old in self.tree_open_ids:
+            self.tree_open_ids.discard(old)
+            self.tree_open_ids.add(new)
+        return event_data
 
     def gen_top_nodes(self) -> Generator[Node]:
         yield from (node for node in self.MT._row_index if node.parent == "")
@@ -2966,14 +3000,14 @@ class RowIndex(tk.Canvas):
             indent = self.MT.index_txt_width * int(self.ops.treeview_indent)
         else:
             indent = self.ops.treeview_indent
-        return indent * max(self.get_node_level(self.tree[iid]))
+        return indent * self.get_node_level(self.iid_node(iid))
 
     def get_iid_level_indent(self, iid: str) -> tuple[int, int]:
         if isinstance(self.ops.treeview_indent, str):
             indent = self.MT.index_txt_width * int(self.ops.treeview_indent)
         else:
             indent = self.ops.treeview_indent
-        level = max(self.get_node_level(self.tree[iid]))
+        level = self.get_node_level(self.iid_node(iid))
         return level, indent * level
 
     def remove_iid_from_parents_children(self, iid: str) -> None:
@@ -3004,80 +3038,53 @@ class RowIndex(tk.Canvas):
         text_column: None | int | list[str] = None,
         push_ops: bool = False,
         row_heights: Sequence[int] | None | False = None,
-        open_ids: AnyIter[str] | None = None,
-        safety: bool = True,
+        open_ids: Iterator[str] | None = None,
         ncols: int | None = None,
         lower: bool = False,
         include_iid_column: bool = True,
         include_parent_column: bool = True,
         include_text_column: bool = True,
     ) -> None:
-        self.PAR.reset(cell_options=False, column_widths=False, header=False, redraw=False)
+        index = self.MT._row_index
+        data_rns = {}
         if text_column is None:
             text_column = iid_column
-        tally_of_ids = defaultdict(lambda: -1)
         if not isinstance(ncols, int):
             ncols = max(map(len, data), default=0)
         for rn, row in enumerate(data):
-            if safety and ncols > (lnr := len(row)):
-                row += self.MT.get_empty_row_seq(rn, end=ncols, start=lnr)
             if lower:
                 iid = row[iid_column].lower()
                 pid = row[parent_column].lower()
             else:
                 iid = row[iid_column]
                 pid = row[parent_column]
-            if safety:
-                if not iid:
-                    continue
-                tally_of_ids[iid] += 1
-                if tally_of_ids[iid]:
-                    x = 1
-                    while iid in tally_of_ids:
-                        new = f"{row[iid_column]}_DUPLICATED_{x}"
-                        iid = new.lower() if lower else new
-                        x += 1
-                    tally_of_ids[iid] += 1
-                    row[iid_column] = new
-            if iid in self.tree:
-                self.tree[iid].text = row[text_column] if isinstance(text_column, int) else text_column[rn]
+            if iid in self.rns:
+                index[self.rns[iid]].text = row[text_column] if isinstance(text_column, int) else text_column[rn]
             else:
-                self.tree[iid] = Node(row[text_column] if isinstance(text_column, int) else text_column[rn], iid, "")
-            if safety and (iid == pid or self.build_pid_causes_recursive_loop(iid, pid)):
-                row[parent_column] = ""
-                pid = ""
-            if pid:
-                if pid in self.tree:
-                    self.tree[pid].children.append(iid)
-                else:
-                    self.tree[pid] = Node(
+                index.append(
+                    Node(
                         text=row[text_column] if isinstance(text_column, int) else text_column[rn],
-                        iid=pid,
-                        children=[iid],
+                        iid=iid,
+                        parent="",
                     )
-                self.tree[iid].parent = pid
+                )
+                self.rns[iid] = len(index) - 1
+            data_rns[iid] = rn
+            if pid:
+                if pid in self.rns:
+                    index[self.rns[pid]].children.append(iid)
+                else:
+                    index.append(
+                        Node(
+                            text=pid,
+                            iid=pid,
+                            children=[iid],
+                        )
+                    )
+                    self.rns[pid] = len(index) - 1
+                index[self.rns[iid]].parent = pid
             else:
-                self.tree[iid].parent = ""
-            self.tree_rns[iid] = rn
-        if safety:
-            for n in self.tree.values():
-                if n.parent is None:
-                    n.parent = ""
-                    newrow = self.MT.get_empty_row_seq(len(data), ncols)
-                    newrow[iid_column] = n.iid
-                    self.tree_rns[n.iid] = len(data)
-                    data.append(newrow)
-        insert_rows = partial(
-            self.PAR.insert_rows,
-            idx=0,
-            heights={} if row_heights is False else row_heights,
-            row_index=True,
-            create_selections=False,
-            fill=False,
-            undo=False,
-            push_ops=push_ops,
-            redraw=False,
-        )
+                index[self.rns[iid]].parent = ""
         exclude = set()
         if not include_iid_column:
             exclude.add(iid_column)
@@ -3085,27 +3092,175 @@ class RowIndex(tk.Canvas):
             exclude.add(parent_column)
         if isinstance(text_column, int) and not include_text_column:
             exclude.add(text_column)
+        rows = []
         if exclude:
-            insert_rows(
-                rows=[
-                    [self.tree[iid]] + [e for i, e in enumerate(data[self.tree_rns[iid]]) if i not in exclude]
-                    for iid in self.PAR.get_iids()
-                ],
-                tree=False,
-            )
+            for iid in self.PAR.tree_traverse():
+                row = [index[self.rns[iid]]]
+                row.extend(e for i, e in enumerate(data[data_rns[iid]]) if i not in exclude)
+                rows.append(row)
         else:
-            insert_rows(
-                rows=[[self.tree[iid]] + data[self.tree_rns[iid]] for iid in self.PAR.get_iids()],
-                tree=False,
-            )
+            for iid in self.PAR.tree_traverse():
+                row = [index[self.rns[iid]]]
+                row.extend(data[data_rns[iid]])
+                rows.append(row)
+        self.MT._row_index = []
+        self.rns = {}
+        self.PAR.insert_rows(
+            rows=rows,
+            idx=0,
+            heights=[] if row_heights is False else row_heights,
+            row_index=True,
+            create_selections=False,
+            fill=False,
+            undo=False,
+            push_ops=push_ops,
+            redraw=False,
+            tree=False,
+        )
         self.MT.all_rows_displayed = False
         self.MT.displayed_rows = list(range(len(self.MT._row_index)))
-        self.tree_rns = {n.iid: i for i, n in enumerate(self.MT._row_index)}
+        self.rns = {n.iid: i for i, n in enumerate(self.MT._row_index)}
         if open_ids:
             self.PAR.tree_set_open(open_ids=open_ids)
         else:
+            index = self.MT._row_index
             self.PAR.hide_rows(
-                {self.tree_rns[iid] for iid in self.PAR.get_children() if self.tree[iid].parent},
+                {self.rns[iid] for iid in self.PAR.get_children() if index[self.rns[iid]].parent},
+                deselect_all=False,
+                data_indexes=True,
+                row_heights=row_heights is not False,
+            )
+
+    def safe_tree_build(
+        self,
+        data: list[list[Any]],
+        iid_column: int,
+        parent_column: int,
+        text_column: None | int | list[str] = None,
+        push_ops: bool = False,
+        row_heights: Sequence[int] | None | False = None,
+        open_ids: Iterator[str] | None = None,
+        ncols: int | None = None,
+        lower: bool = False,
+        include_iid_column: bool = True,
+        include_parent_column: bool = True,
+        include_text_column: bool = True,
+    ) -> None:
+        index = self.MT._row_index
+        data_rns = {}
+        iids_missing_rows = set()
+        if text_column is None:
+            text_column = iid_column
+        tally_of_ids = defaultdict(lambda: -1)
+        if not isinstance(ncols, int):
+            ncols = max(map(len, data), default=0)
+        for rn, row in enumerate(data):
+            if ncols > (lnr := len(row)):
+                row += self.MT.get_empty_row_seq(rn, end=ncols, start=lnr)
+            if lower:
+                iid = row[iid_column].lower()
+                pid = row[parent_column].lower()
+            else:
+                iid = row[iid_column]
+                pid = row[parent_column]
+            if not iid:
+                continue
+            tally_of_ids[iid] += 1
+            if tally_of_ids[iid]:
+                x = 1
+                while iid in tally_of_ids:
+                    new = f"{row[iid_column]}_DUPLICATED_{x}"
+                    iid = new.lower() if lower else new
+                    x += 1
+                tally_of_ids[iid] += 1
+                row[iid_column] = new
+            if iid in self.rns:
+                index[self.rns[iid]].text = row[text_column] if isinstance(text_column, int) else text_column[rn]
+            else:
+                index.append(
+                    Node(
+                        text=row[text_column] if isinstance(text_column, int) else text_column[rn],
+                        iid=iid,
+                        parent="",
+                    )
+                )
+                self.rns[iid] = len(index) - 1
+            if iid in iids_missing_rows:
+                iids_missing_rows.discard(iid)
+            data_rns[iid] = rn
+            if iid == pid or self.build_pid_causes_recursive_loop(iid, pid):
+                row[parent_column] = ""
+                pid = ""
+            if pid:
+                if pid in self.rns:
+                    index[self.rns[pid]].children.append(iid)
+                else:
+                    index.append(
+                        Node(
+                            text=pid,
+                            iid=pid,
+                            children=[iid],
+                        )
+                    )
+                    iids_missing_rows.add(pid)
+                    self.rns[pid] = len(index) - 1
+                index[self.rns[iid]].parent = pid
+            else:
+                index[self.rns[iid]].parent = ""
+        empty_rows = {}
+        for iid in iids_missing_rows:
+            node = index[self.rns[iid]]
+            node.parent = ""
+            newrow = self.MT.get_empty_row_seq(len(data), ncols)
+            newrow[iid_column] = node.iid
+            empty_rows[node.iid] = newrow
+        exclude = set()
+        if not include_iid_column:
+            exclude.add(iid_column)
+        if not include_parent_column:
+            exclude.add(parent_column)
+        if isinstance(text_column, int) and not include_text_column:
+            exclude.add(text_column)
+        rows = []
+        if exclude:
+            for iid in self.PAR.tree_traverse():
+                row = [index[self.rns[iid]]]
+                if iid in empty_rows:
+                    row.extend(e for i, e in enumerate(empty_rows[iid]) if i not in exclude)
+                else:
+                    row.extend(e for i, e in enumerate(data[data_rns[iid]]) if i not in exclude)
+                rows.append(row)
+        else:
+            for iid in self.PAR.tree_traverse():
+                row = [index[self.rns[iid]]]
+                if iid in empty_rows:
+                    row.extend(empty_rows[iid])
+                else:
+                    row.extend(data[data_rns[iid]])
+                rows.append(row)
+        self.MT._row_index = []
+        self.rns = {}
+        self.PAR.insert_rows(
+            rows=rows,
+            idx=0,
+            heights=[] if row_heights is False else row_heights,
+            row_index=True,
+            create_selections=False,
+            fill=False,
+            undo=False,
+            push_ops=push_ops,
+            redraw=False,
+            tree=False,
+        )
+        self.MT.all_rows_displayed = False
+        self.MT.displayed_rows = list(range(len(self.MT._row_index)))
+        self.rns = {n.iid: i for i, n in enumerate(self.MT._row_index)}
+        if open_ids:
+            self.PAR.tree_set_open(open_ids=open_ids)
+        else:
+            index = self.MT._row_index
+            self.PAR.hide_rows(
+                {self.rns[iid] for iid in self.PAR.get_children() if index[self.rns[iid]].parent},
                 deselect_all=False,
                 data_indexes=True,
                 row_heights=row_heights is not False,

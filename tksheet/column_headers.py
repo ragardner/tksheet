@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import tkinter as tk
 from collections import defaultdict
-from collections.abc import Callable, Hashable, Sequence
+from collections.abc import Callable, Hashable, Iterator, Sequence
 from functools import partial
 from itertools import cycle, islice, repeat
 from math import ceil, floor
@@ -37,9 +37,8 @@ from .functions import (
 )
 from .other_classes import DotDict, DraggedRowColumn, DropdownStorage, EventDataDict, TextEditorStorage
 from .row_index import RowIndex
-from .sorting import sort_column, sort_rows_by_column, sort_tree_view
+from .sorting import sort_column, sort_rows_by_column, sort_tree_rows_by_column
 from .text_editor import TextEditor
-from .tksheet_types import AnyIter
 
 
 class ColumnHeaders(tk.Canvas):
@@ -861,7 +860,7 @@ class ColumnHeaders(tk.Canvas):
     def _sort_columns(
         self,
         event: tk.Event | None = None,
-        columns: AnyIter[int] | None = None,
+        columns: Iterator[int] | None = None,
         reverse: bool = False,
         validation: bool = True,
         key: Callable | None = None,
@@ -923,26 +922,30 @@ class ColumnHeaders(tk.Canvas):
         if column is None:
             if not self.MT.selected:
                 return event_data
-            column = self.MT.selected.column
+            column = self.MT.datacn(self.MT.selected.column)
         if try_binding(self.ch_extra_begin_sort_rows_func, event_data, "begin_move_rows"):
             if key is None:
                 key = self.PAR.ops.sort_key
             disp_new_idxs, disp_row_ctr = {}, 0
             if self.ops.treeview:
-                new_nodes_order, data_new_idxs = sort_tree_view(
-                    _row_index=self.MT._row_index,
-                    tree_rns=self.RI.tree_rns,
-                    tree=self.RI.tree,
-                    key=key,
+                new_nodes_order, data_new_idxs = sort_tree_rows_by_column(
+                    data=self.MT.data,
+                    column=column,
+                    index=self.MT._row_index,
+                    rns=self.RI.rns,
                     reverse=reverse,
+                    key=key,
                 )
                 for node in new_nodes_order:
-                    if (idx := try_b_index(self.MT.displayed_rows, self.RI.tree_rns[node.iid])) is not None:
+                    if (idx := try_b_index(self.MT.displayed_rows, self.RI.rns[node.iid])) is not None:
                         disp_new_idxs[idx] = disp_row_ctr
                         disp_row_ctr += 1
             else:
                 new_rows_order, data_new_idxs = sort_rows_by_column(
-                    self.MT.data, column=column, reverse=reverse, key=key
+                    self.MT.data,
+                    column=column,
+                    reverse=reverse,
+                    key=key,
                 )
                 if self.MT.all_rows_displayed:
                     disp_new_idxs = data_new_idxs
@@ -1013,7 +1016,7 @@ class ColumnHeaders(tk.Canvas):
 
     def select_col(
         self,
-        c: int | AnyIter[int],
+        c: int | Iterator[int],
         redraw: bool = False,
         run_binding_func: bool = True,
         ext: bool = False,

@@ -1,5 +1,17 @@
 ### Version 7.4.10
-####
+#### Fixed:
+- Fixes and improvements to treeview mode.
+
+#### Improved:
+- Refactored adding/deleting rows/columns code, behavior should be unchanged.
+
+#### Changed:
+- Removed redundant `self.tree` attribute from treeview mode.
+- Added `event_data: EventDataDict | None = None` parameter to `set_data()` as the last parameter.
+- Added `undo` and `emit_event` parameters to `item()`.
+
+#### Added:
+- Treeview function `tree_traverse()`.
 
 ### Version 7.4.9
 #### Fixed:

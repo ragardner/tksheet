@@ -87,7 +87,7 @@ from .themes import (
     theme_light_blue,
     theme_light_green,
 )
-from .tksheet_types import AnyIter, Binding, CellPropertyKey, CreateSpanTypes, ExtraBinding
+from .tksheet_types import Binding, CellPropertyKey, CreateSpanTypes, ExtraBinding
 from .top_left_rectangle import TopLeftRectangle
 
 
@@ -543,7 +543,7 @@ class Sheet(tk.Frame):
     def set_header_data(
         self,
         value: Any,
-        c: int | None | AnyIter[int] = None,
+        c: int | None | Iterator[int] = None,
         redraw: bool = True,
     ) -> Sheet:
         if c is None:
@@ -579,7 +579,7 @@ class Sheet(tk.Frame):
     def set_index_data(
         self,
         value: Any,
-        r: int | None | AnyIter[int] = None,
+        r: int | None | Iterator[int] = None,
         redraw: bool = True,
     ) -> Sheet:
         if r is None:
@@ -1301,6 +1301,7 @@ class Sheet(tk.Frame):
         undo: bool | None = None,
         emit_event: bool | None = None,
         redraw: bool = True,
+        event_data: EventDataDict | None = None,
     ) -> EventDataDict:
         """
         e.g.
@@ -1357,12 +1358,13 @@ class Sheet(tk.Frame):
         fmt_kw = span.kwargs if span.type_ == "format" and span.kwargs else None
         transposed = span.transposed
         maxr, maxc = startr, startc
-        event_data = event_dict(
-            name="edit_table",
-            sheet=self.name,
-            widget=self,
-            selected=self.MT.selected,
-        )
+        if event_data is None:
+            event_data = event_dict(
+                name="edit_table",
+                sheet=self.name,
+                widget=self,
+                selected=self.MT.selected,
+            )
         set_t = self.event_data_set_table_cell
         set_i, set_h = self.event_data_set_index_cell, self.event_data_set_header_cell
         istart = 1 if index else 0
@@ -1533,28 +1535,32 @@ class Sheet(tk.Frame):
                 event_data = set_h(startc, data, event_data)
         # add row/column lines (positions) if required
         if self.MT.all_columns_displayed and maxc >= (ncols := len(self.MT.col_positions) - 1):
+            _, _, widths = self.MT.get_args_for_add_columns(
+                data_ins_col=len(self.MT.col_positions) - 1,
+                displayed_ins_col=len(self.MT.col_positions) - 1,
+                columns=maxc + 1 - ncols,
+                widths=None,
+                headers=False,
+            )
             event_data = self.MT.add_columns(
-                *self.MT.get_args_for_add_columns(
-                    data_ins_col=len(self.MT.col_positions) - 1,
-                    displayed_ins_col=len(self.MT.col_positions) - 1,
-                    numcols=maxc + 1 - ncols,
-                    columns=[],
-                    widths=None,
-                    headers=False,
-                ),
+                columns={},
+                header={},
+                column_widths=widths,
                 event_data=event_data,
                 create_selections=False,
             )
         if self.MT.all_rows_displayed and maxr >= (nrows := len(self.MT.row_positions) - 1):
+            _, _, heights = self.MT.get_args_for_add_rows(
+                data_ins_row=len(self.MT.row_positions) - 1,
+                displayed_ins_row=len(self.MT.row_positions) - 1,
+                rows=maxr + 1 - nrows,
+                heights=None,
+                row_index=False,
+            )
             event_data = self.MT.add_rows(
-                *self.MT.get_args_for_add_rows(
-                    data_ins_row=len(self.MT.row_positions) - 1,
-                    displayed_ins_row=len(self.MT.row_positions) - 1,
-                    numrows=maxr + 1 - nrows,
-                    rows=[],
-                    heights=None,
-                    row_index=False,
-                ),
+                rows={},
+                index={},
+                row_heights=heights,
                 event_data=event_data,
                 create_selections=False,
             )
@@ -1696,7 +1702,7 @@ class Sheet(tk.Frame):
 
     def insert_rows(
         self,
-        rows: list[tuple[Any] | list[Any]] | tuple[tuple[Any] | list[Any]] | int = 1,
+        rows: Iterator[list[Any]] | int = 1,
         idx: str | int | None = None,
         heights: list[int] | tuple[int] | None = None,
         row_index: bool = False,
@@ -1715,34 +1721,10 @@ class Sheet(tk.Frame):
         if isinstance(rows, int):
             if rows < 1:
                 raise ValueError(f"rows arg must be greater than 0, not {rows}")
-            total_cols = self.MT.total_data_cols()
-            if row_index:
-                data = [
-                    [self.RI.get_value_for_empty_cell(idx + i, r_ops=False)]
-                    + self.MT.get_empty_row_seq(
-                        idx + i,
-                        total_cols,
-                        r_ops=False,
-                        c_ops=False,
-                    )
-                    for i in range(rows)
-                ]
-            else:
-                data = [
-                    self.MT.get_empty_row_seq(
-                        idx + i,
-                        total_cols,
-                        r_ops=False,
-                        c_ops=False,
-                    )
-                    for i in range(rows)
-                ]
-        else:
-            data = rows
-        if not isinstance(rows, int) and fill:
+        elif fill:
             total_cols = self.MT.total_data_cols() if total_cols is None else total_cols
             len_check = (total_cols + 1) if row_index else total_cols
-            for rn, r in enumerate(data):
+            for rn, r in enumerate(rows):
                 if len_check > (lnr := len(r)):
                     r += self.MT.get_empty_row_seq(
                         rn,
@@ -1751,14 +1733,11 @@ class Sheet(tk.Frame):
                         r_ops=False,
                         c_ops=False,
                     )
-        numrows = len(data)
-        displayed_ins_idx = idx if self.MT.all_rows_displayed else bisect_left(self.MT.displayed_rows, idx)
         event_data = self.MT.add_rows(
             *self.MT.get_args_for_add_rows(
                 data_ins_row=idx,
-                displayed_ins_row=displayed_ins_idx,
-                numrows=numrows,
-                rows=data,
+                displayed_ins_row=idx if self.MT.all_rows_displayed else bisect_left(self.MT.displayed_rows, idx),
+                rows=rows,
                 heights=heights,
                 row_index=row_index,
             ),
@@ -1777,7 +1756,7 @@ class Sheet(tk.Frame):
 
     def insert_columns(
         self,
-        columns: list[tuple[Any] | list[Any]] | tuple[tuple[Any] | list[Any]] | int = 1,
+        columns: Iterator[list[Any]] | int = 1,
         idx: str | int | None = None,
         widths: list[int] | tuple[int] | None = None,
         headers: bool = False,
@@ -1796,60 +1775,24 @@ class Sheet(tk.Frame):
         if isinstance(columns, int):
             if columns < 1:
                 raise ValueError(f"columns arg must be greater than 0, not {columns}")
-            if headers:
-                data = [
-                    [self.CH.get_value_for_empty_cell(datacn, c_ops=False)]
-                    + [
+        elif fill:
+            len_check = (total_rows + 1) if headers else total_rows
+            for i, column in enumerate(columns):
+                if (col_len := len(column)) < len_check:
+                    column += [
                         self.MT.get_value_for_empty_cell(
-                            datarn,
-                            datacn,
+                            r,
+                            idx + i,
                             r_ops=False,
                             c_ops=False,
                         )
-                        for datarn in range(total_rows)
+                        for r in range((col_len - 1) if headers else col_len, total_rows)
                     ]
-                    for datacn in range(idx, idx + columns)
-                ]
-            else:
-                data = [
-                    [
-                        self.MT.get_value_for_empty_cell(
-                            datarn,
-                            datacn,
-                            r_ops=False,
-                            c_ops=False,
-                        )
-                        for datarn in range(total_rows)
-                    ]
-                    for datacn in range(idx, idx + columns)
-                ]
-            numcols = columns
-        else:
-            data = columns
-            numcols = len(columns)
-            if fill:
-                len_check = (total_rows + 1) if headers else total_rows
-                for i, column in enumerate(data):
-                    if (col_len := len(column)) < len_check:
-                        column += [
-                            self.MT.get_value_for_empty_cell(
-                                r,
-                                idx + i,
-                                r_ops=False,
-                                c_ops=False,
-                            )
-                            for r in range((col_len - 1) if headers else col_len, total_rows)
-                        ]
-        if self.MT.all_columns_displayed:
-            displayed_ins_idx = idx
-        elif not self.MT.all_columns_displayed:
-            displayed_ins_idx = bisect_left(self.MT.displayed_columns, idx)
         event_data = self.MT.add_columns(
             *self.MT.get_args_for_add_columns(
                 data_ins_col=idx,
-                displayed_ins_col=displayed_ins_idx,
-                numcols=numcols,
-                columns=data,
+                displayed_ins_col=idx if self.MT.all_columns_displayed else bisect_left(self.MT.displayed_columns, idx),
+                columns=columns,
                 widths=widths,
                 headers=headers,
             ),
@@ -1867,7 +1810,7 @@ class Sheet(tk.Frame):
 
     def del_rows(
         self,
-        rows: int | AnyIter[int],
+        rows: int | Iterator[int],
         data_indexes: bool = True,
         undo: bool = True,
         emit_event: bool = False,
@@ -1888,7 +1831,7 @@ class Sheet(tk.Frame):
 
     def del_columns(
         self,
-        columns: int | AnyIter[int],
+        columns: int | Iterator[int],
         data_indexes: bool = True,
         undo: bool = True,
         emit_event: bool = False,
@@ -2180,7 +2123,7 @@ class Sheet(tk.Frame):
 
     def sort_rows(
         self,
-        rows: AnyIter[int] | Span | int | None = None,
+        rows: Iterator[int] | Span | int | None = None,
         reverse: bool = False,
         validation: bool = True,
         key: Callable | None = None,
@@ -2194,7 +2137,7 @@ class Sheet(tk.Frame):
 
     def sort_columns(
         self,
-        columns: AnyIter[int] | Span | int | None = None,
+        columns: Iterator[int] | Span | int | None = None,
         reverse: bool = False,
         validation: bool = True,
         key: Callable | None = None,
@@ -3183,8 +3126,8 @@ class Sheet(tk.Frame):
 
     def deselect_any(
         self,
-        rows: AnyIter[int] | int | None,
-        columns: AnyIter[int] | int | None,
+        rows: Iterator[int] | int | None,
+        columns: Iterator[int] | int | None,
         redraw: bool = True,
     ) -> Sheet:
         self.MT.deselect_any(rows=rows, columns=columns, redraw=False)
@@ -3386,7 +3329,7 @@ class Sheet(tk.Frame):
 
     def set_column_widths(
         self,
-        column_widths: AnyIter[float] | None = None,
+        column_widths: Iterator[float] | None = None,
         canvas_positions: bool = False,
         reset: bool = False,
     ) -> Sheet:
@@ -3401,7 +3344,7 @@ class Sheet(tk.Frame):
 
     def set_row_heights(
         self,
-        row_heights: AnyIter[float] | None = None,
+        row_heights: Iterator[float] | None = None,
         canvas_positions: bool = False,
         reset: bool = False,
     ) -> Sheet:
@@ -3448,7 +3391,7 @@ class Sheet(tk.Frame):
 
     delete_row_position = del_row_position
 
-    def del_row_positions(self, idxs: AnyIter[int] | None = None) -> Sheet:
+    def del_row_positions(self, idxs: Iterator[int] | None = None) -> Sheet:
         self.MT.del_row_positions(idxs=idxs)
         self.set_refresh_timer()
         return self
@@ -3459,7 +3402,7 @@ class Sheet(tk.Frame):
 
     delete_column_position = del_column_position
 
-    def del_column_positions(self, idxs: AnyIter[int] | None = None) -> Sheet:
+    def del_column_positions(self, idxs: Iterator[int] | None = None) -> Sheet:
         self.MT.del_col_positions(idxs=idxs)
         self.set_refresh_timer()
         return self
@@ -3736,7 +3679,7 @@ class Sheet(tk.Frame):
 
     def display_columns(
         self,
-        columns: None | Literal["all"] | AnyIter[int] = None,
+        columns: None | Literal["all"] | Iterator[int] = None,
         all_columns_displayed: None | bool = None,
         reset_col_positions: bool = True,
         redraw: bool = False,
@@ -3760,7 +3703,7 @@ class Sheet(tk.Frame):
 
     def hide_columns(
         self,
-        columns: int | set[int] | AnyIter[int],
+        columns: int | set[int] | Iterator[int],
         redraw: bool = True,
         deselect_all: bool = True,
         data_indexes: bool = False,
@@ -3804,7 +3747,7 @@ class Sheet(tk.Frame):
 
     def show_columns(
         self,
-        columns: int | AnyIter[int],
+        columns: int | Iterator[int],
         redraw: bool = True,
         deselect_all: bool = True,
     ) -> Sheet:
@@ -3871,7 +3814,7 @@ class Sheet(tk.Frame):
 
     def display_rows(
         self,
-        rows: None | Literal["all"] | AnyIter[int] = None,
+        rows: None | Literal["all"] | Iterator[int] = None,
         all_rows_displayed: None | bool = None,
         reset_row_positions: bool = True,
         redraw: bool = False,
@@ -3893,7 +3836,7 @@ class Sheet(tk.Frame):
 
     def hide_rows(
         self,
-        rows: int | set[int] | AnyIter[int],
+        rows: int | set[int] | Iterator[int],
         redraw: bool = True,
         deselect_all: bool = True,
         data_indexes: bool = False,
@@ -3939,7 +3882,7 @@ class Sheet(tk.Frame):
 
     def show_rows(
         self,
-        rows: int | AnyIter[int],
+        rows: int | Iterator[int],
         redraw: bool = True,
         deselect_all: bool = True,
     ) -> Sheet:
@@ -4499,7 +4442,7 @@ class Sheet(tk.Frame):
     def tag(
         self,
         *key: CreateSpanTypes,
-        tags: AnyIter[str] | str = "",
+        tags: Iterator[str] | str = "",
     ) -> Sheet:
         span = self.span_from_key(*key)
         rows, cols = self.ranges_from_span(span)
@@ -4544,7 +4487,7 @@ class Sheet(tk.Frame):
 
     def tag_rows(
         self,
-        rows: int | AnyIter[int],
+        rows: int | Iterator[int],
         *tags,
     ) -> Sheet:
         if isinstance(rows, int):
@@ -4557,7 +4500,7 @@ class Sheet(tk.Frame):
 
     def tag_columns(
         self,
-        columns: int | AnyIter[int],
+        columns: int | Iterator[int],
         *tags,
     ) -> Sheet:
         if isinstance(columns, int):
@@ -4571,8 +4514,8 @@ class Sheet(tk.Frame):
     def untag(
         self,
         cell: tuple[int, int] | None = None,
-        rows: int | AnyIter[int] | None = None,
-        columns: int | AnyIter[int] | None = None,
+        rows: int | Iterator[int] | None = None,
+        columns: int | Iterator[int] | None = None,
     ) -> Sheet:
         if isinstance(cell, tuple):
             for tagged in self.MT.tagged_cells.values():
@@ -4632,7 +4575,7 @@ class Sheet(tk.Frame):
         text_column: None | int | list[str] = None,
         push_ops: bool = False,
         row_heights: Sequence[int] | None | False = None,
-        open_ids: AnyIter[str] | None = None,
+        open_ids: Iterator[str] | None = None,
         safety: bool = True,
         ncols: int | None = None,
         lower: bool = False,
@@ -4640,7 +4583,9 @@ class Sheet(tk.Frame):
         include_parent_column: bool = True,
         include_text_column: bool = True,
     ) -> Sheet:
-        self.RI.tree_build(
+        build = self.RI.safe_tree_build if safety else self.RI.tree_build
+        self.reset(cell_options=False, column_widths=False, header=False, redraw=False)
+        build(
             data=data,
             iid_column=iid_column,
             parent_column=parent_column,
@@ -4648,7 +4593,6 @@ class Sheet(tk.Frame):
             push_ops=push_ops,
             row_heights=row_heights,
             open_ids=open_ids,
-            safety=safety,
             ncols=ncols,
             lower=lower,
             include_iid_column=include_iid_column,
@@ -4668,7 +4612,7 @@ class Sheet(tk.Frame):
         """
         return self.RI.tree_open_ids
 
-    def tree_set_open(self, open_ids: AnyIter[str]) -> Sheet:
+    def tree_set_open(self, open_ids: Iterator[str]) -> Sheet:
         """
         Accepts set[str] of iids that are open in the treeview
         Closes everything else
@@ -4695,12 +4639,12 @@ class Sheet(tk.Frame):
         """
         to_open = []
         disp_set = set(self.MT.displayed_rows)
-        tree = self.RI.tree
-        rns = self.RI.tree_rns
+        index = self.MT._row_index
+        rns = self.RI.rns
         open_ids = self.RI.tree_open_ids
         descendants = self.RI.get_iid_descendants
         for item in filter(items.__contains__, self.get_children()):
-            if tree[item].children:
+            if index[rns[item]].children:
                 open_ids.add(item)
                 if rns[item] in disp_set:
                     to_disp = [rns[did] for did in descendants(item, check_open=True)]
@@ -4720,20 +4664,22 @@ class Sheet(tk.Frame):
             deselect_all=False,
         )
 
-    def _tree_close(self, items: AnyIter[str]) -> list[int]:
+    def _tree_close(self, items: Iterator[str]) -> list[int]:
         """
         Only meant for internal use
         """
         to_close = set()
         disp_set = set(self.MT.displayed_rows)
-        quick_rns = self.RI.tree_rns
-        quick_open_ids = self.RI.tree_open_ids
+        index = self.MT._row_index
+        rns = self.RI.rns
+        open_ids = self.RI.tree_open_ids
+        descendants = self.RI.get_iid_descendants
         for item in items:
-            if self.RI.tree[item].children:
-                quick_open_ids.discard(item)
-                if quick_rns[item] in disp_set:
-                    for did in self.RI.get_iid_descendants(item, check_open=True):
-                        to_close.add(quick_rns[did])
+            if index[rns[item]].children:
+                open_ids.discard(item)
+                if rns[item] in disp_set:
+                    for did in descendants(item, check_open=True):
+                        to_close.add(rns[did])
         return to_close
 
     def tree_close(self, *items, redraw: bool = True) -> Sheet:
@@ -4766,11 +4712,11 @@ class Sheet(tk.Frame):
         """
         if not iid:
             iid = self.RI.new_iid()
-        if iid in self.RI.tree:
+        if iid in self.RI.rns:
             raise ValueError(f"iid '{iid}' already exists.")
         if iid == parent:
             raise ValueError(f"iid '{iid}' cannot be equal to parent '{parent}'.")
-        if parent and parent not in self.RI.tree:
+        if parent and parent not in self.RI.rns:
             raise ValueError(f"parent '{parent}' does not exist.")
         if text is None:
             text = iid
@@ -4779,6 +4725,7 @@ class Sheet(tk.Frame):
         self.insert_rows(
             rows=[[new_node] + ([] if values is None else values)],
             idx=datarn,
+            heights=[],
             row_index=True,
             create_selections=create_selections,
             fill=False,
@@ -4793,15 +4740,15 @@ class Sheet(tk.Frame):
     def _get_id_insert_row(self, index: int, parent: str) -> int:
         if parent:
             if isinstance(index, int):
-                index = min(index, len(self.RI.tree[parent].children))
+                index = min(index, len(self.RI.iid_children(parent)))
                 datarn = (
-                    self.RI.tree_rns[parent]
+                    self.RI.rns[parent]
                     + index
                     + 1
                     + sum(self.RI.num_descendants(cid) for cid in islice(self.get_children(parent), index))
                 )
             else:
-                datarn = self.RI.tree_rns[parent] + self.RI.num_descendants(parent) + 1
+                datarn = self.RI.rns[parent] + self.RI.num_descendants(parent) + 1
         else:
             if isinstance(index, int):
                 datarn = index
@@ -4832,7 +4779,7 @@ class Sheet(tk.Frame):
             - Values (int): row numbers
         """
         to_insert = []
-        if parent and parent not in self.RI.tree:
+        if parent and parent not in self.RI.rns:
             raise ValueError(f"parent '{parent}' does not exist.")
         datarn = self._get_id_insert_row(index=index, parent=parent)
         rns_to_add = {}
@@ -4856,6 +4803,7 @@ class Sheet(tk.Frame):
         self.insert_rows(
             rows=to_insert,
             idx=datarn,
+            heights=[],
             row_index=True,
             create_selections=create_selections,
             fill=False,
@@ -4873,6 +4821,8 @@ class Sheet(tk.Frame):
         text: str | None = None,
         values: list | None = None,
         open_: bool | None = None,
+        undo: bool = True,
+        emit_event: bool = True,
         redraw: bool = True,
     ) -> DotDict | Sheet:
         """
@@ -4880,19 +4830,17 @@ class Sheet(tk.Frame):
         If no options are set then returns DotDict of options for item
         Else returns Sheet
         """
-        if item not in self.RI.tree:
+        if item not in self.RI.rns:
             raise ValueError(f"Item '{item}' does not exist.")
-        if isinstance(text, str):
-            self.RI.tree[item].text = text
-        if isinstance(values, list):
-            self.set_data(self.RI.tree_rns[item], data=values)
+        get_only = all(param is None for param in (iid, text, values, open_))
+
         if isinstance(open_, bool):
-            if self.RI.tree[item].children:
+            if self.RI.iid_children(item):
                 if open_:
                     self.RI.tree_open_ids.add(item)
                     if self.item_displayed(item):
                         self.show_rows(
-                            rows=map(self.RI.tree_rns.__getitem__, self.RI.get_iid_descendants(item, check_open=True)),
+                            rows=map(self.RI.rns.__getitem__, self.RI.get_iid_descendants(item, check_open=True)),
                             redraw=False,
                             deselect_all=False,
                         )
@@ -4900,43 +4848,47 @@ class Sheet(tk.Frame):
                     self.RI.tree_open_ids.discard(item)
                     if self.item_displayed(item):
                         self.hide_rows(
-                            rows=set(
-                                map(self.RI.tree_rns.__getitem__, self.RI.get_iid_descendants(item, check_open=True))
-                            ),
+                            rows=set(map(self.RI.rns.__getitem__, self.RI.get_iid_descendants(item, check_open=True))),
                             redraw=False,
                             deselect_all=False,
                             data_indexes=True,
                         )
             else:
                 self.RI.tree_open_ids.discard(item)
+
+        event_data = None if get_only else self.MT.new_event_dict("edit_table", state=True)
+
+        if isinstance(text, str):
+            event_data.cells.index = {self.RI.rns[item]: self.MT._row_index[self.RI.rns[item]].text}
+            self.MT._row_index[self.RI.rns[item]].text = text
+
+        if isinstance(values, list):
+            span = self.span(self.RI.rns[item], undo=False, emit_event=False)
+            event_data = self.set_data(span, data=values, event_data=event_data)
+
         if isinstance(iid, str):
-            if iid in self.RI.tree:
+            if iid in self.RI.rns:
                 raise ValueError(f"Cannot rename '{iid}', it already exists.")
-            for ciid in self.RI.tree[item].children:
-                self.RI.tree[ciid].parent = iid
-            if self.RI.tree[item].parent:
-                parent_node = self.RI.parent_node(item)
-                item_index = parent_node.children.index(item)
-                parent_node.children[item_index] = iid
-            self.RI.tree[item].iid = iid
-            self.RI.tree[iid] = self.RI.tree.pop(item)
-            self.RI.tree_rns[iid] = self.RI.tree_rns.pop(item)
-            if item in self.RI.tree_open_ids:
-                self.RI.tree_open_ids.discard(item)
-                self.RI.tree_open_ids.add(iid)
-        get = not (isinstance(iid, str) or isinstance(text, str) or isinstance(values, list) or isinstance(open_, bool))
-        self.set_refresh_timer(redraw=not get and redraw)
-        if get:
+            event_data = self.RI.rename_iid(old=item, new=iid, event_data=event_data)
+
+        if event_data:
+            if undo and self.MT.undo_enabled:
+                self.MT.undo_stack.append(stored_event_dict(event_data))
+            if emit_event:
+                self.emit_event("<<SheetModified>>", event_data)
+
+        self.set_refresh_timer(redraw=not get_only and redraw)
+        if get_only:
             return DotDict(
-                text=self.RI.tree[item].text,
-                values=self[self.RI.tree_rns[item]].options(ndim=1).data,
+                text=self.MT._row_index[self.RI.rns[item]].text,
+                values=self[self.RI.rns[item]].options(ndim=1).data,
                 open_=item in self.RI.tree_open_ids,
             )
         return self
 
     def itemrow(self, item: str) -> int:
         try:
-            return self.RI.tree_rns[item]
+            return self.RI.rns[item]
         except ValueError as error:
             raise ValueError(f"item '{item}' does not exist.") from error
 
@@ -4950,30 +4902,29 @@ class Sheet(tk.Frame):
 
     def get_children(self, item: None | str = None) -> Generator[str]:
         if item is None:
-            for iid in self.get_children(""):
-                yield iid
-                yield from self.RI.get_iid_descendants(iid)
+            yield from map(attrgetter("iid"), self.MT._row_index)
         elif item == "":
             yield from map(attrgetter("iid"), self.RI.gen_top_nodes())
         else:
-            yield from self.RI.tree[item].children
+            yield from self.RI.iid_children(item)
 
-    def get_iids(self, item: None | str = None) -> Generator[str]:
+    def tree_traverse(self, item: None | str = None) -> Generator[str]:
         if item is None:
-            for n in self.RI.tree.values():
-                if not n.parent:
-                    yield n.iid
-                    yield from self.RI.get_iid_descendants(n.iid)
+            for tiid in map(attrgetter("iid"), self.RI.gen_top_nodes()):
+                yield tiid
+                yield from self.RI.get_iid_descendants(tiid)
         elif item == "":
-            yield from (n.iid for n in self.RI.tree.values() if not n.parent)
+            yield from map(attrgetter("iid"), self.RI.gen_top_nodes())
         else:
-            yield from self.RI.tree[item].children
+            yield from self.RI.iid_children(item)
+
+    get_iids = tree_traverse
 
     def del_items(self, *items, undo: bool = True) -> Sheet:
         """
         Also deletes all descendants of items
         """
-        rows = list(map(self.RI.tree_rns.get, filter(self.exists, unpack(items))))
+        rows = list(map(self.RI.rns.get, filter(self.exists, unpack(items))))
         if rows:
             self.del_rows(rows, data_indexes=True, undo=undo)
         return self.set_refresh_timer(rows)
@@ -4988,7 +4939,7 @@ class Sheet(tk.Frame):
 
     def top_index_row(self, index: int) -> int:
         try:
-            return next(self.RI.tree_rns[n.iid] for i, n in enumerate(self.RI.gen_top_nodes()) if i == index)
+            return next(self.RI.rns[n.iid] for i, n in enumerate(self.RI.gen_top_nodes()) if i == index)
         except Exception:
             return None
 
@@ -5005,9 +4956,9 @@ class Sheet(tk.Frame):
         Moves item to be under parent as child at index
         'parent' can be an empty str which will put the item at top level
         """
-        if item not in self.RI.tree:
+        if item not in self.RI.rns:
             raise ValueError(f"Item '{item}' does not exist.")
-        if parent and parent not in self.RI.tree:
+        if parent and parent not in self.RI.rns:
             raise ValueError(f"Parent '{parent}' does not exist.")
         if self.RI.move_pid_causes_recursive_loop(item, parent):
             raise ValueError(f"Item '{item}' causes recursive loop with parent '{parent}.")
@@ -5032,30 +4983,29 @@ class Sheet(tk.Frame):
     reattach = move
 
     def exists(self, item: str) -> bool:
-        return item in self.RI.tree
+        return item in self.RI.rns
 
     def parent(self, item: str) -> str:
-        if item not in self.RI.tree:
+        if item not in self.RI.rns:
             raise ValueError(f"Item '{item}' does not exist.")
-        return self.RI.tree[item].parent
+        return self.RI.iid_parent(item)
 
     def index(self, item: str) -> int:
-        if item not in self.RI.tree:
+        if item not in self.RI.rns:
             raise ValueError(f"Item '{item}' does not exist.")
-        elif self.RI.tree[item].parent:
+        elif self.RI.iid_parent(item):
             return self.RI.parent_node(item).children.index(item)
         else:
-            find_node = self.RI.tree[item]
-            return next(index for index, node in enumerate(self.RI.gen_top_nodes()) if node == find_node)
+            return next(index for index, iid in enumerate(self.get_children("")) if iid == item)
 
     def item_displayed(self, item: str) -> bool:
         """
         Check if an item (row) is currently displayed on the sheet
         - Does not check if the item is visible to the user
         """
-        if item not in self.RI.tree:
+        if item not in self.RI.rns:
             raise ValueError(f"Item '{item}' does not exist.")
-        return bisect_in(self.MT.displayed_rows, self.RI.tree_rns[item])
+        return bisect_in(self.MT.displayed_rows, self.RI.rns[item])
 
     def display_item(self, item: str, redraw: bool = False) -> Sheet:
         """
@@ -5064,7 +5014,7 @@ class Sheet(tk.Frame):
         - Unlike the ttk treeview 'see' function
           this function does **NOT** scroll to the item
         """
-        if not self.item_displayed(item) and self.RI.tree[item].parent:
+        if not self.item_displayed(item) and self.RI.iid_parent(item):
             self.show_rows(
                 rows=self._tree_open(list(self.RI.get_iid_ancestors(item))),
                 redraw=False,
@@ -5078,7 +5028,7 @@ class Sheet(tk.Frame):
         """
         self.display_item(item, redraw=False)
         self.see(
-            row=bisect_left(self.MT.displayed_rows, self.RI.tree_rns[item]),
+            row=bisect_left(self.MT.displayed_rows, self.RI.rns[item]),
             keep_xscroll=True,
             redraw=False,
         )
@@ -5113,8 +5063,8 @@ class Sheet(tk.Frame):
     def selection_add(self, *items, run_binding: bool = True, redraw: bool = True) -> Sheet:
         to_open = []
         quick_displayed_check = set(self.MT.displayed_rows)
-        for item in filter(self.RI.tree.__contains__, unpack(items)):
-            if self.RI.tree_rns[item] not in quick_displayed_check and self.RI.tree[item].parent:
+        for item in filter(self.RI.rns.__contains__, unpack(items)):
+            if self.RI.rns[item] not in quick_displayed_check and self.RI.iid_parent(item):
                 to_open.extend(list(self.RI.get_iid_ancestors(item)))
         if to_open:
             self.show_rows(
@@ -5126,9 +5076,9 @@ class Sheet(tk.Frame):
             sorted(
                 bisect_left(
                     self.MT.displayed_rows,
-                    self.RI.tree_rns[item],
+                    self.RI.rns[item],
                 )
-                for item in filter(self.RI.tree.__contains__, unpack(items))
+                for item in filter(self.RI.rns.__contains__, unpack(items))
             )
         ):
             self.MT.create_selection_box(
@@ -5146,10 +5096,10 @@ class Sheet(tk.Frame):
 
     def selection_remove(self, *items, redraw: bool = True) -> Sheet:
         for item in unpack(items):
-            if item not in self.RI.tree:
+            if item not in self.RI.rns:
                 continue
             try:
-                self.deselect(bisect_left(self.MT.displayed_rows, self.RI.tree_rns[item]), redraw=False)
+                self.deselect(bisect_left(self.MT.displayed_rows, self.RI.rns[item]), redraw=False)
             except Exception:
                 continue
         return self.set_refresh_timer(redraw)
@@ -5159,7 +5109,7 @@ class Sheet(tk.Frame):
         add = []
         remove = []
         for item in unpack(items):
-            if item in self.RI.tree:
+            if item in self.RI.rns:
                 if item in selected:
                     remove.append(item)
                 else:
@@ -5307,7 +5257,7 @@ class Sheet(tk.Frame):
         get_displayed: bool = False,
         get_index: bool = False,
         get_index_displayed: bool = True,
-        only_columns: int | AnyIter[int] | None = None,
+        only_columns: int | Iterator[int] | None = None,
     ) -> list[Any]:
         if only_columns is not None:
             if isinstance(only_columns, int):
@@ -5333,7 +5283,7 @@ class Sheet(tk.Frame):
         get_displayed: bool = False,
         get_header: bool = False,
         get_header_displayed: bool = True,
-        only_rows: int | AnyIter[int] | None = None,
+        only_rows: int | Iterator[int] | None = None,
     ) -> list[Any]:
         if only_rows is not None:
             if isinstance(only_rows, int):
@@ -5353,8 +5303,8 @@ class Sheet(tk.Frame):
         get_index: bool = False,
         get_header_displayed: bool = True,
         get_index_displayed: bool = True,
-        only_rows: AnyIter[int] | int | None = None,
-        only_columns: AnyIter[int] | int | None = None,
+        only_rows: Iterator[int] | int | None = None,
+        only_columns: Iterator[int] | int | None = None,
     ) -> list[list[Any]]:
         if only_rows is not None:
             if isinstance(only_rows, int):
@@ -5407,8 +5357,8 @@ class Sheet(tk.Frame):
         get_index: bool = False,
         get_index_displayed: bool = True,
         get_header_displayed: bool = True,
-        only_rows: int | AnyIter[int] | None = None,
-        only_columns: int | AnyIter[int] | None = None,
+        only_rows: int | Iterator[int] | None = None,
+        only_columns: int | Iterator[int] | None = None,
     ) -> Generator[list[Any]]:
         if only_rows is not None:
             if isinstance(only_rows, int):
@@ -5667,7 +5617,7 @@ class Sheet(tk.Frame):
 
     def highlight_rows(
         self,
-        rows: AnyIter[int] | int,
+        rows: Iterator[int] | int,
         bg: None | str = None,
         fg: None | str = None,
         highlight_index: bool = True,
@@ -5685,7 +5635,7 @@ class Sheet(tk.Frame):
 
     def highlight_columns(
         self,
-        columns: AnyIter[int] | int,
+        columns: Iterator[int] | int,
         bg: bool | None | str = False,
         fg: bool | None | str = False,
         highlight_header: bool = True,
@@ -5987,7 +5937,7 @@ class Sheet(tk.Frame):
 
     def checkbox_row(
         self,
-        r: AnyIter[int] | int | Literal["all"] = 0,
+        r: Iterator[int] | int | Literal["all"] = 0,
         *args,
         **kwargs,
     ) -> None:
@@ -6012,7 +5962,7 @@ class Sheet(tk.Frame):
 
     def checkbox_column(
         self,
-        c: AnyIter[int] | int | Literal["all"] = 0,
+        c: Iterator[int] | int | Literal["all"] = 0,
         *args,
         **kwargs,
     ) -> None:
@@ -6037,7 +5987,7 @@ class Sheet(tk.Frame):
 
     def create_header_checkbox(
         self,
-        c: AnyIter[int] | int | Literal["all"] = 0,
+        c: Iterator[int] | int | Literal["all"] = 0,
         *args,
         **kwargs,
     ) -> None:
@@ -6060,7 +6010,7 @@ class Sheet(tk.Frame):
 
     def create_index_checkbox(
         self,
-        r: AnyIter[int] | int | Literal["all"] = 0,
+        r: Iterator[int] | int | Literal["all"] = 0,
         *args,
         **kwargs,
     ) -> None:
@@ -6110,7 +6060,7 @@ class Sheet(tk.Frame):
 
     def delete_row_checkbox(
         self,
-        r: AnyIter[int] | int | Literal["all"] = 0,
+        r: Iterator[int] | int | Literal["all"] = 0,
     ) -> None:
         if isinstance(r, str) and r.lower() == "all":
             for r_ in self.MT.row_options:
@@ -6123,7 +6073,7 @@ class Sheet(tk.Frame):
 
     def delete_column_checkbox(
         self,
-        c: AnyIter[int] | int | Literal["all"] = 0,
+        c: Iterator[int] | int | Literal["all"] = 0,
     ) -> None:
         if isinstance(c, str) and c.lower() == "all":
             for c_ in self.MT.col_options:
@@ -6136,7 +6086,7 @@ class Sheet(tk.Frame):
 
     def delete_header_checkbox(
         self,
-        c: AnyIter[int] | int | Literal["all"] = 0,
+        c: Iterator[int] | int | Literal["all"] = 0,
     ) -> None:
         if isinstance(c, str) and c.lower() == "all":
             for c_ in self.CH.cell_options:
@@ -6150,7 +6100,7 @@ class Sheet(tk.Frame):
 
     def delete_index_checkbox(
         self,
-        r: AnyIter[int] | int | Literal["all"] = 0,
+        r: Iterator[int] | int | Literal["all"] = 0,
     ) -> None:
         if isinstance(r, str) and r.lower() == "all":
             for r_ in self.RI.cell_options:
@@ -6240,7 +6190,7 @@ class Sheet(tk.Frame):
 
     def dropdown_row(
         self,
-        r: AnyIter[int] | int | Literal["all"] = 0,
+        r: Iterator[int] | int | Literal["all"] = 0,
         *args,
         **kwargs,
     ) -> Sheet:
@@ -6265,7 +6215,7 @@ class Sheet(tk.Frame):
 
     def dropdown_column(
         self,
-        c: AnyIter[int] | int | Literal["all"] = 0,
+        c: Iterator[int] | int | Literal["all"] = 0,
         *args,
         **kwargs,
     ) -> Sheet:
@@ -6290,7 +6240,7 @@ class Sheet(tk.Frame):
 
     def create_header_dropdown(
         self,
-        c: AnyIter[int] | int | Literal["all"] = 0,
+        c: Iterator[int] | int | Literal["all"] = 0,
         *args,
         **kwargs,
     ) -> Sheet:
@@ -6314,7 +6264,7 @@ class Sheet(tk.Frame):
 
     def create_index_dropdown(
         self,
-        r: AnyIter[int] | int | Literal["all"] = 0,
+        r: Iterator[int] | int | Literal["all"] = 0,
         *args,
         **kwargs,
     ) -> Sheet:
@@ -6365,7 +6315,7 @@ class Sheet(tk.Frame):
 
     def delete_row_dropdown(
         self,
-        r: AnyIter[int] | int | Literal["all"] = "all",
+        r: Iterator[int] | int | Literal["all"] = "all",
     ) -> None:
         if isinstance(r, str) and r.lower() == "all":
             for r_ in self.MT.row_options:
@@ -6379,7 +6329,7 @@ class Sheet(tk.Frame):
 
     def delete_column_dropdown(
         self,
-        c: AnyIter[int] | int | Literal["all"] = "all",
+        c: Iterator[int] | int | Literal["all"] = "all",
     ) -> None:
         if isinstance(c, str) and c.lower() == "all":
             for c_ in self.MT.col_options:
@@ -6391,7 +6341,7 @@ class Sheet(tk.Frame):
             for c_ in c:
                 self.del_column_options_dropdown(datacn=c_)
 
-    def delete_header_dropdown(self, c: AnyIter[int] | int | Literal["all"]) -> None:
+    def delete_header_dropdown(self, c: Iterator[int] | int | Literal["all"]) -> None:
         if isinstance(c, str) and c.lower() == "all":
             for c_ in self.CH.cell_options:
                 if "dropdown" in self.CH.cell_options[c_]:
@@ -6402,7 +6352,7 @@ class Sheet(tk.Frame):
             for c_ in c:
                 self.del_header_cell_options_dropdown(c_)
 
-    def delete_index_dropdown(self, r: AnyIter[int] | int | Literal["all"]) -> None:
+    def delete_index_dropdown(self, r: Iterator[int] | int | Literal["all"]) -> None:
         if isinstance(r, str) and r.lower() == "all":
             for r_ in self.RI.cell_options:
                 if "dropdown" in self.RI.cell_options[r_]:
@@ -6638,7 +6588,7 @@ class Sheet(tk.Frame):
 
     def format_row(
         self,
-        r: AnyIter[int] | int | Literal["all"],
+        r: Iterator[int] | int | Literal["all"],
         formatter_options: dict | None = None,
         formatter_class: Any = None,
         redraw: bool = True,
@@ -6670,7 +6620,7 @@ class Sheet(tk.Frame):
 
     def delete_row_format(
         self,
-        r: AnyIter[int] | int | Literal["all"] = "all",
+        r: Iterator[int] | int | Literal["all"] = "all",
         clear_values: bool = False,
     ) -> Sheet:
         if is_iterable(r):
@@ -6682,7 +6632,7 @@ class Sheet(tk.Frame):
 
     def format_column(
         self,
-        c: AnyIter[int] | int | Literal["all"],
+        c: Iterator[int] | int | Literal["all"],
         formatter_options: dict | None = None,
         formatter_class: Any = None,
         redraw: bool = True,
@@ -6714,7 +6664,7 @@ class Sheet(tk.Frame):
 
     def delete_column_format(
         self,
-        c: AnyIter[int] | int | Literal["all"] = "all",
+        c: Iterator[int] | int | Literal["all"] = "all",
         clear_values: bool = False,
     ) -> Sheet:
         if is_iterable(c):

@@ -2804,6 +2804,7 @@ set_data(
     undo: bool | None = None,
     emit_event: bool | None = None,
     redraw: bool = True,
+    event_data: EventDataDict | None = None,
 ) -> EventDataDict
 ```
 Parameters:
@@ -6650,6 +6651,8 @@ item(
     text: str | None = None,
     values: list | None = None,
     open_: bool | None = None,
+    undo: bool = True,
+    emit_event: bool = True,
     redraw: bool = True,
 ) -> DotDict | Sheet
 ```
@@ -6659,6 +6662,8 @@ Parameters:
 - `text` use a `str` to get the iid new display text in the row index.
 - `values` use a `list` of values to give the item a new row of values (does not include row index).
 - `open_` use a `bool` to set the item as open or closed. `False` is closed.
+- `undo` adds any changes to the undo stack.
+- `emit_event` emits a `<<SheetModified>>` event if changes were made.
 
 Notes:
 - If no arguments are given a `DotDict` is returned with the item attributes.
@@ -6702,9 +6707,9 @@ get_children(item: None | str = None) -> Generator[str]
     - Use an iid to get the children for that particular iid. Does not include all descendants.
 
 ```python
-get_iids(item: None | str = None) -> Generator[str]:
+tree_traverse(item: None | str = None) -> Generator[str]:
 ```
-- Exactly the same as above but instead of retrieving iids in the order that they appear in the treeview it retrieves iids from the internal `dict` which may not be ordered.
+- Exactly the same as above but instead of retrieving iids from the index list it gets top iids and uses traversal to iterate through descendants.
 
 ___
 
@@ -6713,7 +6718,7 @@ ___
 ```python
 descendants(item: str, check_open: bool = False) -> Generator[str]:
 ```
-- Returns a generator which yields item ids in the order that they appear in the treeview.
+- Returns a generator which yields item ids in depth first order.
 
 ___
 
