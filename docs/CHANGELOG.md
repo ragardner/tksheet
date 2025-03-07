@@ -1,3 +1,6 @@
+### Version 7.4.11
+####
+
 ### Version 7.4.10
 #### Fixed:
 - Fixes and improvements to treeview mode.
