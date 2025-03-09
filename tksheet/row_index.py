@@ -2760,7 +2760,7 @@ class RowIndex(tk.Canvas):
                 if new_loc_is_displayed:
                     if disp_insert_row is None:
                         if new_parent or insert_row > move_to_row:
-                            disp_insert_row = self.MT.disprn(self.rns[move_to_iid]) + 1
+                            disp_insert_row = self.MT.disprn(self.rns[move_to_iid]) + 1  # TODO: maybe issues here
                         else:
                             disp_insert_row = self.MT.disprn(self.rns[move_to_iid])
                     if (disp_from_row := self.MT.try_disprn(self.rns[item])) is not None:
