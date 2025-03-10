@@ -2666,54 +2666,48 @@ class MainTable(tk.Canvas):
     def page_UP(self, event: Any = None) -> None:
         height = self.winfo_height()
         top = self.canvasy(0)
-        scrollto_y = max(0, top - height)
+        scrollto = max(0, top - height)
         if self.PAR.ops.page_up_down_select_row:
-            r = bisect_left(self.row_positions, scrollto_y)
-            if self.selected and self.selected.row == r:
-                r = max(0, r - 1)
+            r = max(0, bisect_left(self.row_positions, scrollto) - 1)
             if self.RI.row_selection_enabled and (
-                self.anything_selected(exclude_columns=True, exclude_cells=True) or not self.anything_selected()
+                self.selected and self.selected.type_ == "rows" or not self.anything_selected()
             ):
-                self.RI.select_row(r)
-                self.see(r, 0, keep_xscroll=True, check_cell_visibility=False)
+                self.see(r, keep_xscroll=True)
+                self.RI.select_row(r, redraw=True)
+
             elif (self.single_selection_enabled or self.toggle_selection_enabled) and self.anything_selected(
                 exclude_columns=True, exclude_rows=True
             ):
-                c = next(reversed(self.selection_boxes.values())).coords.from_c
-                self.see(r, c, keep_xscroll=True, check_cell_visibility=False)
-                self.select_cell(r, c)
+                self.see(r, keep_xscroll=True)
+                self.select_cell(r, self.selected.column, redraw=True)
         else:
-            args = ("moveto", scrollto_y / (self.row_positions[-1] + 100))
+            args = ("moveto", scrollto / (self.row_positions[-1] + self.PAR.ops.empty_vertical))
             self.yview(*args)
             self.RI.yview(*args)
             self.main_table_redraw_grid_and_text(redraw_row_index=True)
 
     def page_DOWN(self, event: Any = None) -> None:
         height = self.winfo_height()
-        top = self.canvasy(0)
-        scrollto = top + height
-        if self.PAR.ops.page_up_down_select_row and self.RI.row_selection_enabled:
-            r = bisect_left(self.row_positions, scrollto) - 1
-            if self.selected and self.selected.row == r:
-                r += 1
-            if r > len(self.row_positions) - 2:
-                r = len(self.row_positions) - 2
+        bot = self.canvasy(height)
+        scrollto = bot + height
+        if self.PAR.ops.page_up_down_select_row:
+            r = min(len(self.row_positions) - 2, bisect_left(self.row_positions, scrollto) - 2)
             if self.RI.row_selection_enabled and (
-                self.anything_selected(exclude_columns=True, exclude_cells=True) or not self.anything_selected()
+                self.selected and self.selected.type_ == "rows" or not self.anything_selected()
             ):
-                self.RI.select_row(r)
-                self.see(r, 0, keep_xscroll=True, check_cell_visibility=False)
+                self.see(r, keep_xscroll=True)
+                self.RI.select_row(r, redraw=True)
+
             elif (self.single_selection_enabled or self.toggle_selection_enabled) and self.anything_selected(
                 exclude_columns=True, exclude_rows=True
             ):
-                c = next(reversed(self.selection_boxes.values())).coords.from_c
-                self.see(r, c, keep_xscroll=True, check_cell_visibility=False)
-                self.select_cell(r, c)
+                self.see(r, keep_xscroll=True)
+                self.select_cell(r, self.selected.column, redraw=True)
         else:
             end = self.row_positions[-1]
-            if scrollto > end + 100:
+            if scrollto > end + self.PAR.ops.empty_vertical:
                 scrollto = end
-            args = ("moveto", scrollto / (end + 100))
+            args = ("moveto", scrollto / (end + self.PAR.ops.empty_vertical))
             self.yview(*args)
             self.RI.yview(*args)
             self.main_table_redraw_grid_and_text(redraw_row_index=True)
@@ -5877,12 +5871,20 @@ class MainTable(tk.Canvas):
         can_width: int | None,
         dont_blend: bool,
         alternate_color: Highlight | None,
+        has_dd: bool = False,
     ) -> tuple[str, bool]:
         redrawn = False
         if (datarn, datacn) in self.progress_bars:
             kwargs = self.progress_bars[(datarn, datacn)]
         else:
-            kwargs = self.get_cell_kwargs(datarn, datacn, key="highlight")
+            if (datarn, datacn) in self.cell_options and "highlight" in self.cell_options[(datarn, datacn)]:
+                kwargs = self.cell_options[(datarn, datacn)]["highlight"]
+            elif datarn in self.row_options and "highlight" in self.row_options[datarn]:
+                kwargs = self.row_options[datarn]["highlight"]
+            elif datacn in self.col_options and "highlight" in self.col_options[datacn]:
+                kwargs = self.col_options[datacn]["highlight"]
+            else:
+                kwargs = {}
         if alt := bool(not kwargs and alternate_color and r % 2):
             kwargs = alternate_color
 
@@ -5944,7 +5946,18 @@ class MainTable(tk.Canvas):
                 txtfg = self.PAR.ops.table_fg if kwargs[1] is None else kwargs[1]
 
             if fill:
-                if isinstance(kwargs, ProgressBar):
+                if not isinstance(kwargs, ProgressBar):
+                    redrawn = self.redraw_highlight(
+                        x1=fc + 1,
+                        y1=fr + 1,
+                        x2=sc,
+                        y2=sr,
+                        fill=fill,
+                        outline=self.PAR.ops.table_fg if has_dd and self.PAR.ops.show_dropdown_borders else "",
+                        can_width=can_width if (len(kwargs) > 2 and kwargs[2]) else None,
+                        pc=None,
+                    )
+                else:
                     if kwargs.del_when_done and kwargs.percent >= 100:
                         del self.progress_bars[(datarn, datacn)]
                     else:
@@ -5954,31 +5967,10 @@ class MainTable(tk.Canvas):
                             x2=sc,
                             y2=sr,
                             fill=fill,
-                            outline=(
-                                self.PAR.ops.table_fg
-                                if self.get_cell_kwargs(datarn, datacn, key="dropdown")
-                                and self.PAR.ops.show_dropdown_borders
-                                else ""
-                            ),
+                            outline=self.PAR.ops.table_fg if has_dd and self.PAR.ops.show_dropdown_borders else "",
                             can_width=None,
                             pc=kwargs.percent,
                         )
-                else:
-                    redrawn = self.redraw_highlight(
-                        x1=fc + 1,
-                        y1=fr + 1,
-                        x2=sc,
-                        y2=sr,
-                        fill=fill,
-                        outline=(
-                            self.PAR.ops.table_fg
-                            if self.get_cell_kwargs(datarn, datacn, key="dropdown")
-                            and self.PAR.ops.show_dropdown_borders
-                            else ""
-                        ),
-                        can_width=can_width if (len(kwargs) > 2 and kwargs[2]) else None,
-                        pc=None,
-                    )
         elif not kwargs:
             if "cells" in selections and (r, c) in selections["cells"]:
                 txtfg = self.PAR.ops.table_selected_cells_fg
@@ -6268,11 +6260,24 @@ class MainTable(tk.Canvas):
                 else:
                     datacn = c if self.all_columns_displayed else self.displayed_columns[c]
                     cells["datacn"][c] = datacn
-                if kwargs := self.get_cell_kwargs(datarn, datacn, key="dropdown"):
-                    cells["dropdown"][(datarn, datacn)] = kwargs
-                elif kwargs := self.get_cell_kwargs(datarn, datacn, key="checkbox"):
-                    cells["checkbox"][(datarn, datacn)] = kwargs
-                cells[(datarn, datacn)] = self.cell_str(datarn, datacn, get_displayed=True)
+                t = (datarn, datacn)
+
+                # self.get_cell_kwargs not used here to boost performance
+                if t in self.cell_options and "dropdown" in self.cell_options[t]:
+                    cells["dropdown"][t] = self.cell_options[t]["dropdown"]
+                elif datarn in self.row_options and "dropdown" in self.row_options[datarn]:
+                    cells["dropdown"][t] = self.row_options[datarn]["dropdown"]
+                elif datacn in self.col_options and "dropdown" in self.col_options[datacn]:
+                    cells["dropdown"][t] = self.col_options[datacn]["dropdown"]
+                else:
+                    if t in self.cell_options and "checkbox" in self.cell_options[t]:
+                        cells["checkbox"][t] = self.cell_options[t]["checkbox"]
+                    elif datarn in self.row_options and "checkbox" in self.row_options[datarn]:
+                        cells["checkbox"][t] = self.row_options[datarn]["checkbox"]
+                    elif datacn in self.col_options and "checkbox" in self.col_options[datacn]:
+                        cells["checkbox"][t] = self.col_options[datacn]["checkbox"]
+
+                cells[t] = self.cell_str(datarn, datacn, get_displayed=True)
         return cells
 
     def wrap_get_char_w(self, c: str) -> int:
@@ -6357,7 +6362,6 @@ class MainTable(tk.Canvas):
             if changed_w:
                 for widget in (self, self.RI, self.CH, self.TL):
                     widget.update_idletasks()
-                return False
         # important vars
         x_stop = min(last_col_line_pos, scrollpos_right)
         y_stop = min(last_row_line_pos, scrollpos_bot)
@@ -6409,6 +6413,7 @@ class MainTable(tk.Canvas):
                 )
             if points:
                 self.redraw_gridline(points)
+
             font = self.PAR.ops.table_font
             dd_coords = self.dropdown.get_coords()
             selections = self.get_redraw_selections(text_start_row, grid_end_row, text_start_col, grid_end_col)
@@ -6454,6 +6459,8 @@ class MainTable(tk.Canvas):
                     cleftgridln = self.col_positions[c]
                     crightgridln = self.col_positions[c + 1]
                     datacn = cells["datacn"][c]
+                    t = (datarn, datacn)
+
                     fill, dd_drawn = self.redraw_highlight_get_text_fg(
                         r=r,
                         c=c,
@@ -6470,11 +6477,19 @@ class MainTable(tk.Canvas):
                         can_width=can_width,
                         dont_blend=(r, c) == dont_blend,
                         alternate_color=alternate_color,
+                        has_dd=t in cells["dropdown"],
                     )
-                    if not (align := self.get_cell_kwargs(datarn, datacn, key="align")):
+                    if t in self.cell_options and "align" in self.cell_options[(datarn, datacn)]:
+                        align = self.cell_options[(datarn, datacn)]["align"]
+                    elif datarn in self.row_options and "align" in self.row_options[datarn]:
+                        align = self.row_options[datarn]["align"]
+                    elif datacn in self.col_options and "align" in self.col_options[datacn]:
+                        align = self.col_options[datacn]["align"]
+                    else:
                         align = self.align
 
-                    if kwargs := cells["dropdown"].get((datarn, datacn), None):
+                    kws = cells["dropdown"][t] if t in cells["dropdown"] else None  # noqa: SIM401
+                    if kws:
                         max_width = crightgridln - cleftgridln - self.table_txt_height - 5
                         if align.endswith("w"):
                             draw_x = cleftgridln + 2
@@ -6487,7 +6502,7 @@ class MainTable(tk.Canvas):
                             rtopgridln,
                             crightgridln,
                             self.row_positions[r + 1],
-                            fill=fill if kwargs["state"] != "disabled" else self.PAR.ops.table_grid_fg,
+                            fill=fill if kws["state"] != "disabled" else self.PAR.ops.table_grid_fg,
                             outline=fill,
                             draw_outline=not dd_drawn,
                             draw_arrow=max_width >= 5,
@@ -6502,9 +6517,8 @@ class MainTable(tk.Canvas):
                         elif align.endswith("n"):
                             draw_x = cleftgridln + floor((crightgridln - cleftgridln) / 2)
 
-                        if (
-                            kwargs := cells["checkbox"].get((datarn, datacn), None)
-                        ) and max_width > self.table_txt_height + 1:
+                        kws = cells["checkbox"][t] if t in cells["checkbox"] else None  # noqa: SIM401
+                        if kws and max_width > self.table_txt_height + 1:
                             box_w = self.table_txt_height + 1
                             if align.endswith("w"):
                                 draw_x += box_w + 3
@@ -6520,11 +6534,11 @@ class MainTable(tk.Canvas):
                                 rtopgridln + 2,
                                 cleftgridln + self.table_txt_height + 3,
                                 rtopgridln + self.table_txt_height + 3,
-                                fill=fill if kwargs["state"] == "normal" else self.PAR.ops.table_grid_fg,
+                                fill=fill if kws["state"] == "normal" else self.PAR.ops.table_grid_fg,
                                 outline="",
                                 draw_check=draw_check,
                             )
-                    text = cells[(datarn, datacn)]
+                    text = cells[t]
                     if (
                         not text
                         or (align.endswith("w") and draw_x > scrollpos_right)
@@ -6532,7 +6546,7 @@ class MainTable(tk.Canvas):
                         or (align.endswith("n") and cleftgridln + 5 > scrollpos_right)
                     ):
                         continue
-                    if allow_overflow and not kwargs:
+                    if allow_overflow and not kws:
                         if align.endswith("w"):
                             max_width += sum(self._overflow(cells, range(c + 1, text_end_col), datarn))
                         elif align.endswith("e"):
@@ -6619,7 +6633,6 @@ class MainTable(tk.Canvas):
                                 )
                             self.disp_text[iid] = True
                             draw_y += self.table_txt_height
-            self.tag_raise("t")
             for dct in (
                 self.hidd_text,
                 self.hidd_high,
@@ -6637,6 +6650,7 @@ class MainTable(tk.Canvas):
                         self.tag_raise(box.bd_iid)
                 if self.selected:
                     self.tag_raise(self.selected.iid)
+            self.tag_raise("t")
             if self.RI.disp_resize_lines:
                 self.tag_raise("rh")
             if self.CH.disp_resize_lines:
@@ -8000,7 +8014,7 @@ class MainTable(tk.Canvas):
         )
         if "checkbox" in kwargs:
             return False
-        elif (kwargs := kwargs.get("dropdown", {})) and kwargs["validate_input"] and kwargs["values"]:
+        elif "dropdown" in kwargs and kwargs["dropdown"]["validate_input"] and kwargs["dropdown"]["values"]:
             return kwargs["values"][0]
         else:
             return ""
@@ -8167,7 +8181,7 @@ class MainTable(tk.Canvas):
         elif "format" in kwargs:
             return True
         elif self.cell_equal_to(datarn, datacn, value, ignore_empty=ignore_empty, check_fmt=False) or (
-            (dropdown := kwargs.get("dropdown", {})) and dropdown["validate_input"] and value not in dropdown["values"]
+            "dropdown" in kwargs and kwargs["dropdown"]["validate_input"] and value not in kwargs["dropdown"]["values"]
         ):
             return False
         elif "checkbox" in kwargs:

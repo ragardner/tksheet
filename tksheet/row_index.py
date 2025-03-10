@@ -1308,6 +1308,7 @@ class RowIndex(tk.Canvas):
         sel_rows_bg: str,
         selections: dict,
         datarn: int,
+        has_dd: bool,
     ) -> tuple[str, str, bool]:
         redrawn = False
         kwargs = self.get_cell_kwargs(datarn, key="highlight")
@@ -1348,11 +1349,7 @@ class RowIndex(tk.Canvas):
                     self.current_width - 1,
                     sr,
                     fill=fill,
-                    outline=(
-                        self.ops.index_fg
-                        if self.get_cell_kwargs(datarn, key="dropdown") and self.ops.show_dropdown_borders
-                        else ""
-                    ),
+                    outline=self.ops.index_fg if has_dd and self.ops.show_dropdown_borders else "",
                     tag="s",
                 )
             tree_arrow_fg = txtfg
@@ -1686,6 +1683,7 @@ class RowIndex(tk.Canvas):
                 continue
             checkbox_kwargs = {}
             datarn = r if self.MT.all_rows_displayed else self.MT.displayed_rows[r]
+            dropdown_kwargs = self.get_cell_kwargs(datarn, key="dropdown")
             fill, tree_arrow_fg, dd_drawn = self.redraw_highlight_get_text_fg(
                 fr=rtopgridln,
                 sr=rbotgridln,
@@ -1694,12 +1692,14 @@ class RowIndex(tk.Canvas):
                 sel_rows_bg=sel_rows_bg,
                 selections=selections,
                 datarn=datarn,
+                has_dd=bool(dropdown_kwargs),
             )
+
             if datarn in self.cell_options and "align" in self.cell_options[datarn]:
                 align = self.cell_options[datarn]["align"]
             else:
                 align = self.align
-            if dropdown_kwargs := self.get_cell_kwargs(datarn, key="dropdown"):
+            if dropdown_kwargs:
                 max_width = self.current_width - self.MT.index_txt_height - 2
                 if align.endswith("w"):
                     draw_x = 3
@@ -1811,7 +1811,6 @@ class RowIndex(tk.Canvas):
                             anchor=align,
                             state="normal",
                         )
-                    self.tag_raise(iid)
                 else:
                     iid = self.create_text(
                         draw_x,
@@ -1845,7 +1844,6 @@ class RowIndex(tk.Canvas):
                                 anchor=align,
                                 state="normal",
                             )
-                        self.tag_raise(iid)
                     else:
                         iid = self.create_text(
                             draw_x,
@@ -1898,6 +1896,7 @@ class RowIndex(tk.Canvas):
                 if showing:
                     self.itemconfig(iid, state="hidden")
                     dct[iid] = False
+        self.tag_raise("t")
         if self.disp_resize_lines:
             self.tag_raise("rh")
         return True

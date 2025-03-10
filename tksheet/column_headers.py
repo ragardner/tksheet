@@ -1279,6 +1279,7 @@ class ColumnHeaders(tk.Canvas):
         sel_cols_bg: str,
         selections: dict,
         datacn: int,
+        has_dd: bool,
     ) -> tuple[str, bool]:
         redrawn = False
         kwargs = self.get_cell_kwargs(datacn, key="highlight")
@@ -1319,11 +1320,7 @@ class ColumnHeaders(tk.Canvas):
                     sc,
                     self.current_height - 1,
                     fill=fill,
-                    outline=(
-                        self.ops.header_fg
-                        if self.get_cell_kwargs(datacn, key="dropdown") and self.ops.show_dropdown_borders
-                        else ""
-                    ),
+                    outline=self.ops.header_fg if has_dd and self.ops.show_dropdown_borders else "",
                     tag="hi",
                 )
         elif not kwargs:
@@ -1559,6 +1556,7 @@ class ColumnHeaders(tk.Canvas):
             cleftgridln = self.MT.col_positions[c]
             crightgridln = self.MT.col_positions[c + 1]
             datacn = c if self.MT.all_columns_displayed else self.MT.displayed_columns[c]
+            kwargs = self.get_cell_kwargs(datacn, key="dropdown")
             fill, dd_drawn = self.redraw_highlight_get_text_fg(
                 fc=cleftgridln,
                 sc=crightgridln,
@@ -1567,12 +1565,13 @@ class ColumnHeaders(tk.Canvas):
                 sel_cols_bg=sel_cols_bg,
                 selections=selections,
                 datacn=datacn,
+                has_dd=bool(kwargs),
             )
             if datacn in self.cell_options and "align" in self.cell_options[datacn]:
                 align = self.cell_options[datacn]["align"]
             else:
                 align = self.align
-            if kwargs := self.get_cell_kwargs(datacn, key="dropdown"):
+            if kwargs:
                 max_width = crightgridln - cleftgridln - txt_h - 2
                 if align.endswith("w"):
                     draw_x = cleftgridln + 2
@@ -1664,7 +1663,6 @@ class ColumnHeaders(tk.Canvas):
                             anchor=align,
                             state="normal",
                         )
-                    self.tag_raise(iid)
                 else:
                     iid = self.create_text(
                         draw_x,
@@ -1709,6 +1707,7 @@ class ColumnHeaders(tk.Canvas):
                 if showing:
                     self.itemconfig(iid, state="hidden")
                     dct[iid] = False
+        self.tag_raise("t")
         if self.disp_resize_lines:
             self.tag_raise("rw")
         return True

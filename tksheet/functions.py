@@ -33,29 +33,7 @@ def wrap_text(
 ) -> Generator[str]:
     total_lines = 0
     line_width = 0
-    if not wrap:
-        for match in lines_re.finditer(text):
-            line_width = 0
-            current_line = []
-            for char in match.group():
-                try:
-                    char_width = widths[char]
-                except KeyError:
-                    char_width = char_width_fn(char)
-                line_width += char_width
-                if line_width >= max_width:
-                    break
-                current_line.append(char)
-
-            if total_lines >= start_line:
-                yield "".join(current_line)
-
-            # Count the line whether it's empty or not
-            total_lines += 1
-            if total_lines >= max_lines:
-                return
-
-    elif wrap == "c":
+    if wrap == "c":
         current_line = []
         for match in lines_re.finditer(text):
             for char in match.group():
@@ -177,6 +155,28 @@ def wrap_text(
 
             current_line = []  # Reset for next line
             line_width = 0
+
+    else:
+        for match in lines_re.finditer(text):
+            line_width = 0
+            current_line = []
+            for char in match.group():
+                try:
+                    char_width = widths[char]
+                except KeyError:
+                    char_width = char_width_fn(char)
+                line_width += char_width
+                if line_width >= max_width:
+                    break
+                current_line.append(char)
+
+            if total_lines >= start_line:
+                yield "".join(current_line)
+
+            # Count the line whether it's empty or not
+            total_lines += 1
+            if total_lines >= max_lines:
+                return
 
 
 def get_csv_str_dialect(s: str, delimiters: str) -> csv.Dialect:
