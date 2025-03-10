@@ -6,23 +6,25 @@
     <title>Document</title>
     <style>
         body {
-            display: flex;
             margin: 0;
-            height: 100vh; /* Ensure the body takes full viewport height */
-            font-family: Arial, sans-serif; /* Optional: Consistent font */
+            height: 100vh; /* Full viewport height */
+            font-family: Arial, sans-serif; /* Consistent font */
         }
 
         .side-panel {
-            flex: 0 0 20%; /* Narrower side panel */
-            overflow-y: auto;
-            height: 100%;
+            position: fixed; /* Fixed position to follow scroll */
+            left: 0;
+            top: 0;
+            width: 20%; /* 20% of total width when visible */
+            height: 100%; /* Full height of viewport */
+            overflow-y: auto; /* Scrollbar for side panel if content overflows */
             padding: 10px;
             box-sizing: border-box;
-            display: none; /* Hidden by default */
             background-color: #fff; /* Light theme background */
             border-right: 1px solid #ccc; /* Slim border */
-            font-size: 18px; /* Base font size increase */
+            font-size: 18px; /* Base font size */
             scrollbar-color: #ccc #fff; /* Firefox: Light theme scrollbar */
+            display: none; /* Hidden by default */
         }
 
         #toggle-toc:checked ~ .side-panel {
@@ -32,42 +34,52 @@
         /* Increase font size on mobile screens */
         @media (max-width: 768px) {
             .side-panel {
-                font-size: 20px; /* Slightly larger for mobile */
+                font-size: 20px; /* Larger for mobile */
             }
         }
 
         /* Style for TOC links and list items in the side panel */
         .side-panel a {
-            line-height: 1.5; /* Increase line height for better spacing */
+            line-height: 1.5; /* Better spacing */
         }
 
         .side-panel li {
-            margin-bottom: 8px; /* Add space below each list item */
+            margin-bottom: 8px; /* Space below list items */
         }
 
         /* WebKit/Blink scrollbar styles for side panel (light theme) */
         .side-panel::-webkit-scrollbar-track {
-            background: #fff; /* Matches light theme background */
+            background: #fff;
         }
 
         .side-panel::-webkit-scrollbar-thumb {
-            background: #ccc; /* Light grey thumb */
+            background: #ccc;
             border-radius: 4px;
         }
 
         .main-content {
-            flex: 1;
+            margin-left: 0; /* Default when side panel is hidden */
+            height: 100vh; /* Full viewport height */
             display: flex;
             flex-direction: column;
             background-color: #fff; /* Light theme background */
         }
 
+        #toggle-toc:checked ~ .main-content {
+            margin-left: 20%; /* Shift right when side panel is visible */
+        }
+
         .buttons-container {
             position: fixed;
             top: 10px;
+            left: 10px; /* Default position */
             display: flex;
             gap: 10px; /* Space between buttons */
-            z-index: 1; /* Ensure buttons stay above content */
+            z-index: 1; /* Above content */
+        }
+
+        #toggle-toc:checked ~ .main-content .buttons-container {
+            left: calc(20% + 10px); /* Position right of side panel */
         }
 
         .toggle-button, .theme-button {
@@ -75,76 +87,92 @@
             padding: 5px 10px;
             cursor: pointer;
             border: 1px solid #ccc;
-            border-radius: 5px; /* Rounded corners */
-        }
-
-        #toggle-toc:checked ~ .main-content .buttons-container {
-            left: calc(20% + 10px); /* Position right of side panel when visible */
-        }
-
-        #toggle-toc:not(:checked) ~ .main-content .buttons-container {
-            left: 10px; /* Position at left edge when side panel is hidden */
+            border-radius: 5px;
         }
 
         .content {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px; /* Added padding to the main view for breathing room */
-            padding-top: 70px; /* Adjusted to account for buttons + extra space */
+            flex: 1; /* Take remaining height */
+            overflow-y: auto; /* Scrollbar for main content */
+            padding: 20px;
+            padding-top: 70px; /* Space for buttons */
             scrollbar-color: #ccc #fff; /* Firefox: Light theme scrollbar */
         }
 
         /* WebKit/Blink scrollbar styles for main content (light theme) */
         .content::-webkit-scrollbar-track {
-            background: #fff; /* Matches light theme background */
+            background: #fff;
         }
 
         .content::-webkit-scrollbar-thumb {
-            background: #ccc; /* Light grey thumb */
+            background: #ccc;
             border-radius: 4px;
+        }
+
+        /* Table styles */
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            border: 1px solid #ccc;
+        }
+
+        td, th {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
         }
 
         /* Dark theme styles */
         #toggle-theme:checked ~ .side-panel,
         #toggle-theme:checked ~ .main-content {
-            background-color: #000; /* Black background for battery savings on OLED */
-            color: #ccc; /* Light grey text */
+            background-color: #000;
+            color: #ccc;
         }
 
-        /* Dark theme scrollbar styles */
+        #toggle-theme:checked ~ .side-panel table,
+        #toggle-theme:checked ~ .main-content table {
+            border-color: #555;
+        }
+
+        #toggle-theme:checked ~ .side-panel td,
+        #toggle-theme:checked ~ .side-panel th,
+        #toggle-theme:checked ~ .main-content td,
+        #toggle-theme:checked ~ .main-content th {
+            border-color: #555;
+        }
+
         #toggle-theme:checked ~ .side-panel {
-            scrollbar-color: #888 #000; /* Firefox: Dark theme scrollbar (lighter thumb) */
+            scrollbar-color: #888 #000;
         }
 
         #toggle-theme:checked ~ .side-panel::-webkit-scrollbar-track {
-            background: #000; /* Matches dark theme background */
+            background: #000;
         }
 
         #toggle-theme:checked ~ .side-panel::-webkit-scrollbar-thumb {
-            background: #888; /* Lighter grey thumb for dark theme */
+            background: #888;
         }
 
         #toggle-theme:checked ~ .main-content .content {
-            scrollbar-color: #888 #000; /* Firefox: Dark theme scrollbar (lighter thumb) */
+            scrollbar-color: #888 #000;
         }
 
         #toggle-theme:checked ~ .main-content .content::-webkit-scrollbar-track {
-            background: #000; /* Matches dark theme background */
+            background: #000;
         }
 
         #toggle-theme:checked ~ .main-content .content::-webkit-scrollbar-thumb {
-            background: #888; /* Lighter grey thumb for dark theme */
+            background: #888;
         }
 
         #toggle-theme:checked ~ .main-content .buttons-container .toggle-button,
         #toggle-theme:checked ~ .main-content .buttons-container .theme-button {
-            background-color: #333; /* Darker button background, lighter than black */
-            color: #fff; /* White text on buttons */
+            background-color: #333;
+            color: #fff;
         }
 
         #toggle-theme:checked ~ .side-panel a,
         #toggle-theme:checked ~ .main-content .content a {
-            color: #90caf9; /* Light blue for links in dark mode */
+            color: #90caf9;
         }
     </style>
 </head>
@@ -152,7 +180,7 @@
     <input type="checkbox" id="toggle-toc" checked style="display: none;">
     <input type="checkbox" id="toggle-theme" checked style="display: none;">
     <div class="side-panel">
-        <div class="toc">
+<div class="toc">
 <ul>
 <li><a href="#table-of-contents">Table of Contents</a></li>
 <li><a href="#about-tksheet">About tksheet</a><ul>
@@ -557,8 +585,7 @@
 </li>
 </ul>
 </div>
-
-    </div>
+</div>
     <div class="main-content">
         <div class="buttons-container">
             <label for="toggle-toc" class="toggle-button">Toggle Index</label>
@@ -7125,8 +7152,7 @@ app.mainloop()
 - @CalJaDav for the very helpful ideas/pull requests, guidance in implementing them and helping me become a better developer.
 - @demberto for providing pull requests and guidance to modernize and improve the project.
 - All <a href="https://github.com/ragardner/tksheet/graphs/contributors">contributors</a>.
-- Everyone who has reported an issue and helped me fix it.</p>
-        </div>
+- Everyone who has reported an issue and helped me fix it.</p></div>
     </div>
 </body>
 </html>
