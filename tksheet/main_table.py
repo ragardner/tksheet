@@ -60,9 +60,11 @@ from .functions import (
     gen_formatted,
     get_bg_fg,
     get_data_from_clipboard,
+    get_horizontal_gridline_points,
     get_menu_kwargs,
     get_new_indexes,
     get_seq_without_gaps_at_index,
+    get_vertical_gridline_points,
     index_exists,
     insert_items,
     int_x_iter,
@@ -5942,29 +5944,38 @@ class MainTable(tk.Canvas):
                 txtfg = self.PAR.ops.table_fg if kwargs[1] is None else kwargs[1]
 
             if fill:
-                highlight_fn = partial(
-                    self.redraw_highlight,
-                    x1=fc + 1,
-                    y1=fr + 1,
-                    x2=sc,
-                    y2=sr,
-                    fill=fill,
-                    outline=(
-                        self.PAR.ops.table_fg
-                        if self.get_cell_kwargs(datarn, datacn, key="dropdown") and self.PAR.ops.show_dropdown_borders
-                        else ""
-                    ),
-                )
                 if isinstance(kwargs, ProgressBar):
                     if kwargs.del_when_done and kwargs.percent >= 100:
                         del self.progress_bars[(datarn, datacn)]
                     else:
-                        redrawn = highlight_fn(
+                        redrawn = self.redraw_highlight(
+                            x1=fc + 1,
+                            y1=fr + 1,
+                            x2=sc,
+                            y2=sr,
+                            fill=fill,
+                            outline=(
+                                self.PAR.ops.table_fg
+                                if self.get_cell_kwargs(datarn, datacn, key="dropdown")
+                                and self.PAR.ops.show_dropdown_borders
+                                else ""
+                            ),
                             can_width=None,
                             pc=kwargs.percent,
                         )
                 else:
-                    redrawn = highlight_fn(
+                    redrawn = self.redraw_highlight(
+                        x1=fc + 1,
+                        y1=fr + 1,
+                        x2=sc,
+                        y2=sr,
+                        fill=fill,
+                        outline=(
+                            self.PAR.ops.table_fg
+                            if self.get_cell_kwargs(datarn, datacn, key="dropdown")
+                            and self.PAR.ops.show_dropdown_borders
+                            else ""
+                        ),
                         can_width=can_width if (len(kwargs) > 2 and kwargs[2]) else None,
                         pc=None,
                     )
@@ -6363,27 +6374,20 @@ class MainTable(tk.Canvas):
             self.disp_dropdown = {}
             self.hidd_checkbox.update(self.disp_checkbox)
             self.disp_checkbox = {}
+            points = []
             # manage horizontal grid lines
             if self.PAR.ops.show_horizontal_grid and row_pos_exists:
                 if self.PAR.ops.horizontal_grid_to_end_of_window:
                     x_grid_stop = scrollpos_right + can_width
                 else:
                     x_grid_stop = x_stop + 1 if last_col_line_pos > scrollpos_right else x_stop - 1
-                self.redraw_gridline(
-                    points=tuple(
-                        chain.from_iterable(
-                            (
-                                scrollpos_left - 1,
-                                self.row_positions[r],
-                                x_grid_stop,
-                                self.row_positions[r],
-                                scrollpos_left - 1,
-                                self.row_positions[r],
-                                scrollpos_left - 1,
-                                self.row_positions[r + 1] if len(self.row_positions) - 1 > r else self.row_positions[r],
-                            )
-                            for r in range(grid_start_row, grid_end_row)
-                        )
+                points.extend(
+                    get_horizontal_gridline_points(
+                        left=scrollpos_left,
+                        stop=x_grid_stop,
+                        positions=self.row_positions,
+                        start=grid_start_row,
+                        end=grid_end_row,
                     )
                 )
             # manage vertical grid lines
@@ -6392,23 +6396,19 @@ class MainTable(tk.Canvas):
                     y_grid_stop = scrollpos_bot + can_height
                 else:
                     y_grid_stop = y_stop + 1 if last_row_line_pos > scrollpos_bot else y_stop - 1
-                self.redraw_gridline(
-                    points=tuple(
-                        chain.from_iterable(
-                            (
-                                self.col_positions[c],
-                                scrollpos_top - 1,
-                                self.col_positions[c],
-                                y_grid_stop,
-                                self.col_positions[c],
-                                scrollpos_top - 1,
-                                self.col_positions[c + 1] if len(self.col_positions) - 1 > c else self.col_positions[c],
-                                scrollpos_top - 1,
-                            )
-                            for c in range(grid_start_col, grid_end_col)
-                        )
-                    ),
+                if self.PAR.ops.show_horizontal_grid:
+                    points.extend([scrollpos_left - 2, grid_end_row, grid_start_col - 2, scrollpos_top - 2])
+                points.extend(
+                    get_vertical_gridline_points(
+                        top=scrollpos_top,
+                        stop=y_grid_stop,
+                        positions=self.col_positions,
+                        start=grid_start_col,
+                        end=grid_end_col,
+                    )
                 )
+            if points:
+                self.redraw_gridline(points)
             font = self.PAR.ops.table_font
             dd_coords = self.dropdown.get_coords()
             selections = self.get_redraw_selections(text_start_row, grid_end_row, text_start_col, grid_end_col)
@@ -6573,7 +6573,6 @@ class MainTable(tk.Canvas):
                                     anchor=align,
                                     state="normal",
                                 )
-                            self.tag_raise(iid)
                         else:
                             iid = self.create_text(
                                 draw_x,
@@ -6608,7 +6607,6 @@ class MainTable(tk.Canvas):
                                         anchor=align,
                                         state="normal",
                                     )
-                                self.tag_raise(iid)
                             else:
                                 iid = self.create_text(
                                     draw_x,
@@ -6621,6 +6619,7 @@ class MainTable(tk.Canvas):
                                 )
                             self.disp_text[iid] = True
                             draw_y += self.table_txt_height
+            self.tag_raise("t")
             for dct in (
                 self.hidd_text,
                 self.hidd_high,

@@ -9,7 +9,7 @@ from bisect import bisect_left
 from collections import deque
 from collections.abc import Callable, Generator, Hashable, Iterable, Iterator, Sequence
 from difflib import SequenceMatcher
-from itertools import islice, repeat
+from itertools import chain, islice, repeat
 from typing import Any, Literal
 
 from .colors import color_map
@@ -31,17 +31,17 @@ def wrap_text(
     wrap: Literal["", "c", "w"] = "",
     start_line: int = 0,
 ) -> Generator[str]:
-    lines = (match.group() for match in lines_re.finditer(text))
-    current_line = []
     total_lines = 0
     line_width = 0
-
     if not wrap:
-        for line in lines:
+        for match in lines_re.finditer(text):
             line_width = 0
             current_line = []
-            for char in line:
-                char_width = widths.get(char, char_width_fn(char))
+            for char in match.group():
+                try:
+                    char_width = widths[char]
+                except KeyError:
+                    char_width = char_width_fn(char)
                 line_width += char_width
                 if line_width >= max_width:
                     break
@@ -56,9 +56,13 @@ def wrap_text(
                 return
 
     elif wrap == "c":
-        for line in lines:
-            for char in line:
-                char_width = widths.get(char, char_width_fn(char))
+        current_line = []
+        for match in lines_re.finditer(text):
+            for char in match.group():
+                try:
+                    char_width = widths[char]
+                except KeyError:
+                    char_width = char_width_fn(char)
 
                 # adding char to line would result in wrap
                 if line_width + char_width >= max_width:
@@ -89,11 +93,14 @@ def wrap_text(
             line_width = 0
 
     elif wrap == "w":
-        space_width = widths.get(" ", char_width_fn(" "))
+        try:
+            space_width = widths[" "]
+        except KeyError:
+            space_width = char_width_fn(" ")
+        current_line = []
 
-        for line in lines:
-            words = line.split()
-            for i, word in enumerate(words):
+        for match in lines_re.finditer(text):
+            for i, word in enumerate(match.group().split()):
                 # if we're going to next word and
                 # if a space fits on the end of the current line we add one
                 if i and line_width + space_width < max_width:
@@ -104,8 +111,12 @@ def wrap_text(
                 word_width = 0
                 word_char_widths = []
                 for char in word:
-                    word_char_widths.append((w := widths.get(char, char_width_fn(char))))
-                    word_width += w
+                    try:
+                        char_width = widths[char]
+                    except KeyError:
+                        char_width = char_width_fn(char)
+                    word_char_widths.append(char_width)
+                    word_width += char_width
 
                 # we only wrap by character if the whole word alone wont fit max width
                 # word won't fit at all we resort to char wrapping it
@@ -1684,3 +1695,51 @@ def pop_positions(
             save_to[to_pop[i]] = pos
         else:
             yield pos
+
+
+def get_horizontal_gridline_points(
+    left: float,
+    stop: float,
+    positions: list[float],
+    start: int,
+    end: int,
+) -> list[int | float]:
+    return list(
+        chain.from_iterable(
+            (
+                left - 1,
+                positions[r],
+                stop,
+                positions[r],
+                left - 1,
+                positions[r],
+                left - 1,
+                positions[r + 1] if len(positions) - 1 > r else positions[r],
+            )
+            for r in range(start, end)
+        )
+    )
+
+
+def get_vertical_gridline_points(
+    top: float,
+    stop: float,
+    positions: list[float],
+    start: int,
+    end: int,
+) -> list[float]:
+    return list(
+        chain.from_iterable(
+            (
+                positions[c],
+                top - 1,
+                positions[c],
+                stop,
+                positions[c],
+                top - 1,
+                positions[c + 1] if len(positions) - 1 > c else positions[c],
+                top - 1,
+            )
+            for c in range(start, end)
+        )
+    )
