@@ -6959,7 +6959,25 @@ class MainTable(tk.Canvas):
         x1, y1, x2, y2 = self.box_coords_x_canvas_coords(r1, c1, r2, c2, type_)
         fill_iid = self.get_selection_fill()
         bd_iid = None
-        if self.PAR.ops.show_selected_cells_border and (
+        # fill might not display if canvas is wider than 32k pixels
+        if self.PAR.ops.selected_rows_to_end_of_window and type_ == "rows":
+            bd_iid = self.display_box(
+                x1,
+                y1,
+                x2,
+                y2,
+                fill=self.PAR.ops.table_selected_rows_bg,
+                outline=""
+                if self.PAR.name == "!SheetDropdown"
+                else mt_border_col
+                if self.PAR.ops.show_selected_cells_border
+                else "",
+                state="normal",
+                tags=f"{type_}bd",
+                width=1,
+            )
+            self.tag_lower(bd_iid)
+        elif self.PAR.ops.show_selected_cells_border and (
             ext
             or self.ctrl_b1_pressed
             or (self.being_drawn_item is None and self.RI.being_drawn_item is None and self.CH.being_drawn_item is None)
