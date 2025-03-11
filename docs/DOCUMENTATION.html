@@ -71,14 +71,10 @@
         .buttons-container {
             position: fixed;
             top: 10px;
-            left: 10px;
+            right: 40px; /* Adjusted to prevent overlap with scrollbar */
             display: flex;
             gap: 10px;
             z-index: 1;
-        }
-
-        #toggle-toc:checked ~ .main-content .buttons-container {
-            left: calc(20% + 10px);
         }
 
         .toggle-button, .theme-button, .back-to-top {
