@@ -2293,8 +2293,8 @@ class ColumnHeaders(tk.Canvas):
         kwargs = self.get_cell_kwargs(datacn, key=None, cell=c_ops)
         if "checkbox" in kwargs:
             return False
-        elif (kwargs := kwargs.get("dropdown", {})) and kwargs["validate_input"] and kwargs["values"]:
-            return kwargs["values"][0]
+        elif "dropdown" in kwargs and kwargs["dropdown"]["validate_input"] and kwargs["dropdown"]["values"]:
+            return kwargs["dropdown"]["values"][0]
         else:
             return ""
 

@@ -2667,52 +2667,37 @@ class MainTable(tk.Canvas):
             self.refresh()
 
     def page_UP(self, event: Any = None) -> None:
-        height = self.winfo_height()
-        top = self.canvasy(0)
-        scrollto = max(0, top - height)
+        r, end = self.visible_text_rows
+        if r == end - 1:
+            r = max(0, r - 1)
         if self.PAR.ops.page_up_down_select_row:
-            r = max(0, bisect_left(self.row_positions, scrollto) - 1)
             if self.RI.row_selection_enabled and (
                 self.selected and self.selected.type_ == "rows" or not self.anything_selected()
             ):
-                self.see(r, keep_xscroll=True)
-                self.RI.select_row(r, redraw=True)
-
+                self.RI.select_row(r, redraw=False)
             elif (self.single_selection_enabled or self.toggle_selection_enabled) and self.anything_selected(
                 exclude_columns=True, exclude_rows=True
             ):
-                self.see(r, keep_xscroll=True)
-                self.select_cell(r, self.selected.column, redraw=True)
-        else:
-            args = ("moveto", scrollto / (self.row_positions[-1] + self.PAR.ops.empty_vertical))
-            self.yview(*args)
-            self.RI.yview(*args)
+                self.select_cell(r, self.selected.column, redraw=False)
+        if not self.see(r, keep_xscroll=True, bottom_right_corner=True):
             self.main_table_redraw_grid_and_text(redraw_row_index=True)
 
     def page_DOWN(self, event: Any = None) -> None:
-        height = self.winfo_height()
-        bot = self.canvasy(height)
-        scrollto = bot + height
+        st, r = self.visible_text_rows
+        r -= 1
+        if st == r:
+            r = min(len(self.row_positions) - 2, r + 1)
         if self.PAR.ops.page_up_down_select_row:
-            r = min(len(self.row_positions) - 2, bisect_left(self.row_positions, scrollto) - 2)
             if self.RI.row_selection_enabled and (
                 self.selected and self.selected.type_ == "rows" or not self.anything_selected()
             ):
-                self.see(r, keep_xscroll=True)
-                self.RI.select_row(r, redraw=True)
+                self.RI.select_row(r, redraw=False)
 
             elif (self.single_selection_enabled or self.toggle_selection_enabled) and self.anything_selected(
                 exclude_columns=True, exclude_rows=True
             ):
-                self.see(r, keep_xscroll=True)
-                self.select_cell(r, self.selected.column, redraw=True)
-        else:
-            end = self.row_positions[-1]
-            if scrollto > end + self.PAR.ops.empty_vertical:
-                scrollto = end
-            args = ("moveto", scrollto / (end + self.PAR.ops.empty_vertical))
-            self.yview(*args)
-            self.RI.yview(*args)
+                self.select_cell(r, self.selected.column, redraw=False)
+        if not self.see(r, keep_xscroll=True, bottom_right_corner=False):
             self.main_table_redraw_grid_and_text(redraw_row_index=True)
 
     def arrowkey_UP(self, event: Any = None) -> None:
@@ -7995,7 +7980,7 @@ class MainTable(tk.Canvas):
         if "checkbox" in kwargs:
             return False
         elif "dropdown" in kwargs and kwargs["dropdown"]["validate_input"] and kwargs["dropdown"]["values"]:
-            return kwargs["values"][0]
+            return kwargs["dropdown"]["values"][0]
         else:
             return ""
 
