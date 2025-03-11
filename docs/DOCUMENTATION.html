@@ -7,47 +7,44 @@
     <style>
         body {
             margin: 0;
-            height: 100vh; /* Full viewport height */
-            font-family: Arial, sans-serif; /* Consistent font */
+            height: 100vh;
+            font-family: Arial, sans-serif;
         }
 
         .side-panel {
-            position: fixed; /* Fixed position to follow scroll */
+            position: fixed;
             left: 0;
             top: 0;
-            width: 20%; /* 20% of total width when visible */
-            height: 100%; /* Full height of viewport */
-            overflow-y: auto; /* Scrollbar for side panel if content overflows */
+            width: 20%;
+            height: 100%;
+            overflow-y: auto;
             padding: 10px;
             box-sizing: border-box;
-            background-color: #fff; /* Light theme background */
-            border-right: 1px solid #ccc; /* Slim border */
-            font-size: 18px; /* Base font size */
-            scrollbar-color: #ccc #fff; /* Firefox: Light theme scrollbar */
-            display: none; /* Hidden by default */
+            background-color: #fff;
+            border-right: 1px solid #ccc;
+            font-size: 18px;
+            scrollbar-color: #ccc #fff;
+            display: none;
         }
 
         #toggle-toc:checked ~ .side-panel {
-            display: block; /* Show side panel when checkbox is checked */
+            display: block;
         }
 
-        /* Increase font size on mobile screens */
         @media (max-width: 768px) {
             .side-panel {
-                font-size: 20px; /* Larger for mobile */
+                font-size: 20px;
             }
         }
 
-        /* Style for TOC links and list items in the side panel */
         .side-panel a {
-            line-height: 1.5; /* Better spacing */
+            line-height: 1.5;
         }
 
         .side-panel li {
-            margin-bottom: 8px; /* Space below list items */
+            margin-bottom: 8px;
         }
 
-        /* WebKit/Blink scrollbar styles for side panel (light theme) */
         .side-panel::-webkit-scrollbar-track {
             background: #fff;
         }
@@ -58,28 +55,28 @@
         }
 
         .main-content {
-            margin-left: 0; /* Default when side panel is hidden */
-            height: 100vh; /* Full viewport height */
+            margin-left: 0;
+            height: 100vh;
             display: flex;
             flex-direction: column;
-            background-color: #fff; /* Light theme background */
+            background-color: #fff;
         }
 
         #toggle-toc:checked ~ .main-content {
-            margin-left: 20%; /* Shift right when side panel is visible */
+            margin-left: 20%;
         }
 
         .buttons-container {
             position: fixed;
             top: 10px;
-            left: 10px; /* Default position */
+            left: 10px;
             display: flex;
-            gap: 10px; /* Space between buttons */
-            z-index: 1; /* Above content */
+            gap: 10px;
+            z-index: 1;
         }
 
         #toggle-toc:checked ~ .main-content .buttons-container {
-            left: calc(20% + 10px); /* Position right of side panel */
+            left: calc(20% + 10px);
         }
 
         .toggle-button, .theme-button {
@@ -91,14 +88,13 @@
         }
 
         .content {
-            flex: 1; /* Take remaining height */
-            overflow-y: auto; /* Scrollbar for main content */
+            flex: 1;
+            overflow-y: auto;
             padding: 20px;
-            padding-top: 70px; /* Space for buttons */
-            scrollbar-color: #ccc #fff; /* Firefox: Light theme scrollbar */
+            padding-top: 70px;
+            scrollbar-color: #ccc #fff;
         }
 
-        /* WebKit/Blink scrollbar styles for main content (light theme) */
         .content::-webkit-scrollbar-track {
             background: #fff;
         }
@@ -108,7 +104,6 @@
             border-radius: 4px;
         }
 
-        /* Table styles */
         table {
             border-collapse: collapse;
             width: 100%;
@@ -121,7 +116,6 @@
             text-align: left;
         }
 
-        /* Dark theme styles */
         #toggle-theme:checked ~ .side-panel,
         #toggle-theme:checked ~ .main-content {
             background-color: #000;
@@ -173,6 +167,23 @@
         #toggle-theme:checked ~ .side-panel a,
         #toggle-theme:checked ~ .main-content .content a {
             color: #90caf9;
+        }
+
+        /* Styles for code blocks */
+        .main-content .content pre {
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 10px;
+            background-color: #f5f5f5;
+            color: #333;
+            font-family: monospace;
+            overflow-x: auto;
+        }
+
+        #toggle-theme:checked ~ .main-content .content pre {
+            border-color: #555;
+            background-color: #222;
+            color: #ddd;
         }
     </style>
 </head>
