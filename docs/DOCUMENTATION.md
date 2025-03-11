@@ -455,7 +455,7 @@ def __init__(
     - `"empty"` it will only automatically resize if the row index is empty.
     - `True` it will always automatically resize.
     - `False` it will never automatically resize.
-- If `show_selected_cells_border` is `False` then the colors for `table_selected_box_cells_fg`/`table_selected_box_rows_fg`/`table_selected_box_columns_fg` will be used for the currently selected cells background.
+- If `show_selected_cells_border` is `False` then the colors for `table_selected_box_cells_fg` / `table_selected_box_rows_fg` / `table_selected_box_columns_fg` will be used for the currently selected cells background.
 - Only set `show_top_left` to `True` if you want to always show the top left rectangle of the sheet. Leave as `None` to only show it when both the index and header are showing.
 - For help with `treeview` mode see [here](https://github.com/ragardner/tksheet/wiki/Version-7#treeview-mode).
 
@@ -794,87 +794,101 @@ extra_bindings(
 ) -> Sheet
 ```
 
-Notes:
+**There are several ways to use this function:**
 
-- There are several ways to use this function:
-    - `bindings` as a `str` and `func` as either `None` or a function. Using `None` as an argument for `func` will effectively unbind the function.
-        - `extra_bindings("edit_cell", func=my_function)`
-    - `bindings` as an `iterable` of `str`s and `func` as either `None` or a function. Using `None` as an argument for `func` will effectively unbind the function.
-        - `extra_bindings(["all_select_events", "copy", "cut"], func=my_function)`
-    - `bindings` as an `iterable` of `list`s or `tuple`s with length of two, e.g.
-        - `extra_bindings([(binding, function), (binding, function), ...])` In this example you could also use `None` in the place of `function` to unbind the binding.
-        - In this case the arg `func` is totally ignored.
+- `bindings` as a `str` and `func` as either `None` or a function. Using `None` as an argument for `func` will effectively unbind the function.
+    - `extra_bindings("edit_cell", func=my_function)`
+- `bindings` as an `iterable` of `str`s and `func` as either `None` or a function. Using `None` as an argument for `func` will effectively unbind the function.
+    - `extra_bindings(["all_select_events", "copy", "cut"], func=my_function)`
+- `bindings` as an `iterable` of `list`s or `tuple`s with length of two, e.g.
+    - `extra_bindings([(binding, function), (binding, function), ...])` In this example you could also use `None` in the place of `function` to unbind the binding.
+    - In this case the arg `func` is totally ignored.
 - For `"end_..."` events the bound function is run before the value is set.
 - **To unbind** a function either set `func` argument to `None` or leave it as default e.g. `extra_bindings("begin_copy")` to unbind `"begin_copy"`.
 - Even though undo/redo edits or adds or deletes rows/columns the bound functions for those actions will not be called. Undo/redo must be specifically bound in order for a function to be called.
 
-`bindings` (`str`) options:
+**`bindings` (`str`) options:**
 
-- Undo/Redo:
-	- `"begin_undo", "begin_ctrl_z"`
-	- `"ctrl_z", "end_undo", "end_ctrl_z", "undo"`
-- Editing:
-	- `"begin_copy", "begin_ctrl_c"`
-	- `"ctrl_c", "end_copy", "end_ctrl_c", "copy"`
-	- `"begin_cut", "begin_ctrl_x"`
-	- `"ctrl_x", "end_cut", "end_ctrl_x", "cut"`
-	- `"begin_paste", "begin_ctrl_v"`
-	- `"ctrl_v", "end_paste", "end_ctrl_v", "paste"`
-	- `"begin_delete_key", "begin_delete"`
-	- `"delete_key", "end_delete", "end_delete_key", "delete"`
-	- `"begin_edit_cell", "begin_edit_table"`
-	- `"end_edit_cell", "edit_cell", "edit_table"`
-	- `"begin_edit_header"`
-    - `"end_edit_header", "edit_header"`
-    - `"begin_edit_index"`
-	- `"end_edit_index", "edit_index"`
-    - `"replace_all"`
-- Moving:
-    - `"begin_row_index_drag_drop", "begin_move_rows"`
-	- `"row_index_drag_drop", "move_rows", "end_move_rows", "end_row_index_drag_drop"`
-	- `"begin_column_header_drag_drop", "begin_move_columns"`
-	- `"column_header_drag_drop", "move_columns", "end_move_columns", "end_column_header_drag_drop"`
-    - `"begin_sort_cells"`
-    - `"sort_cells", "end_sort_cells"`
-    - `"begin_sort_rows"`
-    - `"sort_rows", "end_sort_rows"`
-    - `"begin_sort_columns"`
-    - `"sort_columns", "end_sort_columns"`
-- Deleting:
-	- `"begin_rc_delete_row", "begin_delete_rows"`
-	- `"rc_delete_row", "end_rc_delete_row", "end_delete_rows", "delete_rows"`
-	- `"begin_rc_delete_column", "begin_delete_columns"`
-	- `"rc_delete_column", "end_rc_delete_column","end_delete_columns", "delete_columns"`
-- Adding:
-	- `"begin_rc_insert_column", "begin_insert_column", "begin_insert_columns", "begin_add_column","begin_rc_add_column", "begin_add_columns"`
-	- `"rc_insert_column", "end_rc_insert_column", "end_insert_column", "end_insert_columns", "rc_add_column", "end_rc_add_column", "end_add_column", "end_add_columns", "add_columns"`
-	- `"begin_rc_insert_row", "begin_insert_row", "begin_insert_rows", "begin_rc_add_row", "begin_add_row", "begin_add_rows"`
-    - `"rc_insert_row", "end_rc_insert_row", "end_insert_row", "end_insert_rows", "rc_add_row", "end_rc_add_row", "end_add_row", "end_add_rows", "add_rows"`
-- Resizing rows/columns:
-    - `"row_height_resize"`
-    - `"column_width_resize"`
-- Selection:
-	- `"cell_select"`
-	- `"all_select"`
-	- `"row_select"`
-	- `"column_select"`
-	- `"drag_select_cells"`
-	- `"drag_select_rows"`
-	- `"drag_select_columns"`
-	- `"shift_cell_select"`
-	- `"shift_row_select"`
-	- `"shift_column_select"`
-    - `"ctrl_cell_select"`
-    - `"ctrl_row_select"`
-    - `"ctrl_column_select"`
-	- `"deselect"`
-- Event collections:
-	- `"all_select_events", "select", "selectevents", "select_events"`
-    - `"all_modified_events", "sheetmodified", "sheet_modified" "modified_events", "modified"`
-	- `"bind_all"`
-	- `"unbind_all"`
+Undo/Redo:
 
-Further Notes:
+- `"begin_undo", "begin_ctrl_z"`
+- `"ctrl_z", "end_undo", "end_ctrl_z", "undo"`
+
+Editing:
+
+- `"begin_copy", "begin_ctrl_c"`
+- `"ctrl_c", "end_copy", "end_ctrl_c", "copy"`
+- `"begin_cut", "begin_ctrl_x"`
+- `"ctrl_x", "end_cut", "end_ctrl_x", "cut"`
+- `"begin_paste", "begin_ctrl_v"`
+- `"ctrl_v", "end_paste", "end_ctrl_v", "paste"`
+- `"begin_delete_key", "begin_delete"`
+- `"delete_key", "end_delete", "end_delete_key", "delete"`
+- `"begin_edit_cell", "begin_edit_table"`
+- `"end_edit_cell", "edit_cell", "edit_table"`
+- `"begin_edit_header"`
+- `"end_edit_header", "edit_header"`
+- `"begin_edit_index"`
+- `"end_edit_index", "edit_index"`
+- `"replace_all"`
+
+Moving:
+
+- `"begin_row_index_drag_drop", "begin_move_rows"`
+- `"row_index_drag_drop", "move_rows", "end_move_rows", "end_row_index_drag_drop"`
+- `"begin_column_header_drag_drop", "begin_move_columns"`
+- `"column_header_drag_drop", "move_columns", "end_move_columns", "end_column_header_drag_drop"`
+- `"begin_sort_cells"`
+- `"sort_cells", "end_sort_cells"`
+- `"begin_sort_rows"`
+- `"sort_rows", "end_sort_rows"`
+- `"begin_sort_columns"`
+- `"sort_columns", "end_sort_columns"`
+
+Deleting:
+
+- `"begin_rc_delete_row", "begin_delete_rows"`
+- `"rc_delete_row", "end_rc_delete_row", "end_delete_rows", "delete_rows"`
+- `"begin_rc_delete_column", "begin_delete_columns"`
+- `"rc_delete_column", "end_rc_delete_column", "end_delete_columns", "delete_columns"`
+
+Adding:
+
+- `"begin_rc_insert_column", "begin_insert_column", "begin_insert_columns", "begin_add_column", "begin_rc_add_column", "begin_add_columns"`
+- `"rc_insert_column", "end_rc_insert_column", "end_insert_column", "end_insert_columns", "rc_add_column", "end_rc_add_column", "end_add_column", "end_add_columns", "add_columns"`
+- `"begin_rc_insert_row", "begin_insert_row", "begin_insert_rows", "begin_rc_add_row", "begin_add_row", "begin_add_rows"`
+- `"rc_insert_row", "end_rc_insert_row", "end_insert_row", "end_insert_rows", "rc_add_row", "end_rc_add_row", "end_add_row", "end_add_rows", "add_rows"`
+
+Resizing rows/columns:
+
+- `"row_height_resize"`
+- `"column_width_resize"`
+
+Selection:
+
+- `"cell_select"`
+- `"all_select"`
+- `"row_select"`
+- `"column_select"`
+- `"drag_select_cells"`
+- `"drag_select_rows"`
+- `"drag_select_columns"`
+- `"shift_cell_select"`
+- `"shift_row_select"`
+- `"shift_column_select"`
+- `"ctrl_cell_select"`
+- `"ctrl_row_select"`
+- `"ctrl_column_select"`
+- `"deselect"`
+
+Event collections:
+
+- `"all_select_events", "select", "selectevents", "select_events"`
+- `"all_modified_events", "sheetmodified", "sheet_modified" "modified_events", "modified"`
+- `"bind_all"`
+- `"unbind_all"`
+
+**Further Notes:**
 
 - `func` argument is the function you want to send the binding event to.
 - Using one of the following `"all_modified_events"`, `"sheetmodified"`, `"sheet_modified"`, `"modified_events"`, `"modified"` will make any insert, delete or cell edit including pastes and undos send an event to your function.
@@ -1239,18 +1253,18 @@ focus_set(
 - With the `Sheet.bind()` function you can bind things in the usual way you would in tkinter and they will bind to all the `tksheet` canvases.
 - There are also the following special `tksheet` events you can bind:
 
-| Binding                | Usable with `Sheet.event_generate()` |
-| --------               | -------                              |
-| `"<<SheetModified>>"`  | -                                    |
-| `"<<SheetRedrawn>>"`   | -                                    |
-| `"<<SheetSelect>>"`    | -                                    |
-| `"<<Copy>>"`           | X                                    |
-| `"<<Cut>>"`            | X                                    |
-| `"<<Paste>>"`          | X                                    |
-| `"<<Delete>>"`         | X                                    |
-| `"<<Undo>>"`           | X                                    |
-| `"<<Redo>>"`           | X                                    |
-| `"<<SelectAll>>"`      | X                                    |
+| Binding                | Usable with `event_generate()` |
+| --------               | -------                        |
+| `"<<SheetModified>>"`  | -                              |
+| `"<<SheetRedrawn>>"`   | -                              |
+| `"<<SheetSelect>>"`    | -                              |
+| `"<<Copy>>"`           | X                              |
+| `"<<Cut>>"`            | X                              |
+| `"<<Paste>>"`          | X                              |
+| `"<<Delete>>"`         | X                              |
+| `"<<Undo>>"`           | X                              |
+| `"<<Redo>>"`           | X                              |
+| `"<<SelectAll>>"`      | X                              |
 
 ```python
 bind(
@@ -3720,7 +3734,7 @@ dropdown(
 ```
 Notes:
 
-- `selection_function`/`modified_function` (`Callable`, `None`) parameters require either `None` or a function. The function you use needs at least one argument because tksheet will send information to your function about the triggered dropdown.
+- `selection_function` / `modified_function` (`Callable`, `None`) parameters require either `None` or a function. The function you use needs at least one argument because tksheet will send information to your function about the triggered dropdown.
 - When a user selects an item from the dropdown box the sheet will set the underlying cells data to the selected item, to bind this event use either the `selection_function` argument or see the function `extra_bindings()` with binding `"end_edit_cell"` [here](https://github.com/ragardner/tksheet/wiki/Version-7#table-functionality-and-bindings).
 
 Parameters:

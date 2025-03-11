@@ -8,7 +8,8 @@
         body {
             margin: 0;
             height: 100vh;
-            font-family: Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+            background-color: #f5f5f5;
         }
 
         .side-panel {
@@ -20,25 +21,26 @@
             overflow-y: auto;
             padding: 10px;
             box-sizing: border-box;
-            background-color: #fff;
+            background-color: #f5f5f5;
             border-right: 1px solid #ccc;
             font-size: 18px;
-            scrollbar-color: #ccc #fff;
+            scrollbar-color: #ccc #f5f5f5;
             display: none;
+        }
+
+        .side-panel, .main-content, .content, .toggle-button, .theme-button, .back-to-top, pre, table, td, th {
+            transition: background-color 0.8s ease, color 0.8s ease, border-color 0.8s ease;
         }
 
         #toggle-toc:checked ~ .side-panel {
             display: block;
         }
 
-        @media (max-width: 768px) {
-            .side-panel {
-                font-size: 20px;
-            }
-        }
-
         .side-panel a {
             line-height: 1.5;
+        }
+        .side-panel a:hover {
+            text-decoration: underline;
         }
 
         .side-panel li {
@@ -46,12 +48,12 @@
         }
 
         .side-panel::-webkit-scrollbar-track {
-            background: #fff;
+            background: #f5f5f5;
         }
 
         .side-panel::-webkit-scrollbar-thumb {
             background: #ccc;
-            border-radius: 4px;
+            border-radius: 5px;
         }
 
         .main-content {
@@ -59,7 +61,7 @@
             height: 100vh;
             display: flex;
             flex-direction: column;
-            background-color: #fff;
+            background-color: #f5f5f5;
         }
 
         #toggle-toc:checked ~ .main-content {
@@ -79,7 +81,7 @@
             left: calc(20% + 10px);
         }
 
-        .toggle-button, .theme-button {
+        .toggle-button, .theme-button, .back-to-top {
             background-color: #f0f0f0;
             padding: 5px 10px;
             cursor: pointer;
@@ -87,21 +89,33 @@
             border-radius: 5px;
         }
 
+        .back-to-top {
+            text-decoration: none;
+            color: #000;
+        }
+
+        .theme-button::after {
+            content: '🌙';
+            margin-left: 5px;
+        }
+
         .content {
             flex: 1;
             overflow-y: auto;
             padding: 20px;
             padding-top: 70px;
-            scrollbar-color: #ccc #fff;
+            scrollbar-color: #ccc #f5f5f5;
+            line-height: 1.6;
+            font-size: 17px;
         }
 
         .content::-webkit-scrollbar-track {
-            background: #fff;
+            background: #f5f5f5;
         }
 
         .content::-webkit-scrollbar-thumb {
             background: #ccc;
-            border-radius: 4px;
+            border-radius: 5px;
         }
 
         table {
@@ -159,9 +173,15 @@
         }
 
         #toggle-theme:checked ~ .main-content .buttons-container .toggle-button,
-        #toggle-theme:checked ~ .main-content .buttons-container .theme-button {
+        #toggle-theme:checked ~ .main-content .buttons-container .theme-button,
+        #toggle-theme:checked ~ .main-content .buttons-container .back-to-top {
             background-color: #333;
             color: #fff;
+            border-color: #555;
+        }
+
+        #toggle-theme:checked ~ .main-content .buttons-container .theme-button::after {
+            content: '☀️';
         }
 
         #toggle-theme:checked ~ .side-panel a,
@@ -169,12 +189,11 @@
             color: #90caf9;
         }
 
-        /* Styles for code blocks */
         .main-content .content pre {
             border: 1px solid #ccc;
             border-radius: 5px;
             padding: 10px;
-            background-color: #f5f5f5;
+            background-color: #dcdcdc;
             color: #333;
             font-family: monospace;
             overflow-x: auto;
@@ -185,12 +204,67 @@
             background-color: #222;
             color: #ddd;
         }
+
+        .content code {
+            background-color: #dcdcdc;
+            color: #333;
+            padding: 2px 2px;
+            border-radius: 5px;
+            font-family: monospace;
+        }
+
+        .content pre code {
+            background-color: transparent;
+            padding: 0;
+            border-radius: 5;
+        }
+
+        #toggle-theme:checked ~ .main-content .content code {
+            background-color: #222;
+            color: #ddd;
+        }
+
+        .visually-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            margin: -1px;
+            padding: 0;
+            overflow: hidden;
+            clip: rect(0,0,0,0);
+            border: 0;
+        }
+
+        .content {
+            scroll-behavior: smooth;
+        }
+
+        .content img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        @media print {
+            .side-panel, .buttons-container, .back-to-top {
+                display: none;
+            }
+            .main-content {
+                margin-left: 0;
+            }
+            .content {
+                padding: 0;
+            }
+            pre {
+                white-space: pre-wrap; /* Ensures code wraps on paper */
+            }
+        }
+
     </style>
 </head>
 <body>
     <input type="checkbox" id="toggle-toc" checked style="display: none;">
     <input type="checkbox" id="toggle-theme" checked style="display: none;">
-    <div class="side-panel">
+    <div class="side-panel" role="navigation" aria-label="Table of Contents">
 <div class="toc">
 <ul>
 <li><a href="#about-tksheet">About tksheet</a><ul>
@@ -598,10 +672,12 @@
 </div>
     <div class="main-content">
         <div class="buttons-container">
-            <label for="toggle-toc" class="toggle-button">Toggle Index</label>
-            <label for="toggle-theme" class="theme-button">🌙</label>
+            <label for="toggle-toc" class="toggle-button" role="button">Toggle Table of Contents</label>
+            <label for="toggle-theme" class="theme-button" role="button"><span class="visually-hidden">Toggle theme</span></label>
+            <a href="#top" class="back-to-top">Back to Top</a>
         </div>
-        <div class="content">
+        <div class="content" role="main">
+            <a id="top"></a>
             <h1 id="about-tksheet"><strong>About tksheet</strong></h1>
 <ul>
 <li><code>tksheet</code> is a Python tkinter table and treeview widget written in pure python.</li>
@@ -1049,7 +1125,7 @@ app.mainloop()
 <li><code>False</code> it will never automatically resize.</li>
 </ul>
 </li>
-<li>If <code>show_selected_cells_border</code> is <code>False</code> then the colors for <code>table_selected_box_cells_fg</code>/<code>table_selected_box_rows_fg</code>/<code>table_selected_box_columns_fg</code> will be used for the currently selected cells background.</li>
+<li>If <code>show_selected_cells_border</code> is <code>False</code> then the colors for <code>table_selected_box_cells_fg</code> / <code>table_selected_box_rows_fg</code> / <code>table_selected_box_columns_fg</code> will be used for the currently selected cells background.</li>
 <li>Only set <code>show_top_left</code> to <code>True</code> if you want to always show the top left rectangle of the sheet. Leave as <code>None</code> to only show it when both the index and header are showing.</li>
 <li>For help with <code>treeview</code> mode see <a href="https://github.com/ragardner/tksheet/wiki/Version-7#treeview-mode">here</a>.</li>
 </ul>
@@ -1357,9 +1433,8 @@ my_sheet.set_options(allow_cell_overflow=True)
     func: Callable | None = None,
 ) -&gt; Sheet
 </code></pre>
-<p>Notes:</p>
+<p><strong>There are several ways to use this function:</strong></p>
 <ul>
-<li>There are several ways to use this function:<ul>
 <li><code>bindings</code> as a <code>str</code> and <code>func</code> as either <code>None</code> or a function. Using <code>None</code> as an argument for <code>func</code> will effectively unbind the function.<ul>
 <li><code>extra_bindings("edit_cell", func=my_function)</code></li>
 </ul>
@@ -1373,20 +1448,18 @@ my_sheet.set_options(allow_cell_overflow=True)
 <li>In this case the arg <code>func</code> is totally ignored.</li>
 </ul>
 </li>
-</ul>
-</li>
 <li>For <code>"end_..."</code> events the bound function is run before the value is set.</li>
 <li><strong>To unbind</strong> a function either set <code>func</code> argument to <code>None</code> or leave it as default e.g. <code>extra_bindings("begin_copy")</code> to unbind <code>"begin_copy"</code>.</li>
 <li>Even though undo/redo edits or adds or deletes rows/columns the bound functions for those actions will not be called. Undo/redo must be specifically bound in order for a function to be called.</li>
 </ul>
-<p><code>bindings</code> (<code>str</code>) options:</p>
+<p><strong><code>bindings</code> (<code>str</code>) options:</strong></p>
+<p>Undo/Redo:</p>
 <ul>
-<li>Undo/Redo:<ul>
 <li><code>"begin_undo", "begin_ctrl_z"</code></li>
 <li><code>"ctrl_z", "end_undo", "end_ctrl_z", "undo"</code></li>
 </ul>
-</li>
-<li>Editing:<ul>
+<p>Editing:</p>
+<ul>
 <li><code>"begin_copy", "begin_ctrl_c"</code></li>
 <li><code>"ctrl_c", "end_copy", "end_ctrl_c", "copy"</code></li>
 <li><code>"begin_cut", "begin_ctrl_x"</code></li>
@@ -1403,8 +1476,8 @@ my_sheet.set_options(allow_cell_overflow=True)
 <li><code>"end_edit_index", "edit_index"</code></li>
 <li><code>"replace_all"</code></li>
 </ul>
-</li>
-<li>Moving:<ul>
+<p>Moving:</p>
+<ul>
 <li><code>"begin_row_index_drag_drop", "begin_move_rows"</code></li>
 <li><code>"row_index_drag_drop", "move_rows", "end_move_rows", "end_row_index_drag_drop"</code></li>
 <li><code>"begin_column_header_drag_drop", "begin_move_columns"</code></li>
@@ -1416,27 +1489,27 @@ my_sheet.set_options(allow_cell_overflow=True)
 <li><code>"begin_sort_columns"</code></li>
 <li><code>"sort_columns", "end_sort_columns"</code></li>
 </ul>
-</li>
-<li>Deleting:<ul>
+<p>Deleting:</p>
+<ul>
 <li><code>"begin_rc_delete_row", "begin_delete_rows"</code></li>
 <li><code>"rc_delete_row", "end_rc_delete_row", "end_delete_rows", "delete_rows"</code></li>
 <li><code>"begin_rc_delete_column", "begin_delete_columns"</code></li>
-<li><code>"rc_delete_column", "end_rc_delete_column","end_delete_columns", "delete_columns"</code></li>
+<li><code>"rc_delete_column", "end_rc_delete_column", "end_delete_columns", "delete_columns"</code></li>
 </ul>
-</li>
-<li>Adding:<ul>
-<li><code>"begin_rc_insert_column", "begin_insert_column", "begin_insert_columns", "begin_add_column","begin_rc_add_column", "begin_add_columns"</code></li>
+<p>Adding:</p>
+<ul>
+<li><code>"begin_rc_insert_column", "begin_insert_column", "begin_insert_columns", "begin_add_column", "begin_rc_add_column", "begin_add_columns"</code></li>
 <li><code>"rc_insert_column", "end_rc_insert_column", "end_insert_column", "end_insert_columns", "rc_add_column", "end_rc_add_column", "end_add_column", "end_add_columns", "add_columns"</code></li>
 <li><code>"begin_rc_insert_row", "begin_insert_row", "begin_insert_rows", "begin_rc_add_row", "begin_add_row", "begin_add_rows"</code></li>
 <li><code>"rc_insert_row", "end_rc_insert_row", "end_insert_row", "end_insert_rows", "rc_add_row", "end_rc_add_row", "end_add_row", "end_add_rows", "add_rows"</code></li>
 </ul>
-</li>
-<li>Resizing rows/columns:<ul>
+<p>Resizing rows/columns:</p>
+<ul>
 <li><code>"row_height_resize"</code></li>
 <li><code>"column_width_resize"</code></li>
 </ul>
-</li>
-<li>Selection:<ul>
+<p>Selection:</p>
+<ul>
 <li><code>"cell_select"</code></li>
 <li><code>"all_select"</code></li>
 <li><code>"row_select"</code></li>
@@ -1452,16 +1525,14 @@ my_sheet.set_options(allow_cell_overflow=True)
 <li><code>"ctrl_column_select"</code></li>
 <li><code>"deselect"</code></li>
 </ul>
-</li>
-<li>Event collections:<ul>
+<p>Event collections:</p>
+<ul>
 <li><code>"all_select_events", "select", "selectevents", "select_events"</code></li>
 <li><code>"all_modified_events", "sheetmodified", "sheet_modified" "modified_events", "modified"</code></li>
 <li><code>"bind_all"</code></li>
 <li><code>"unbind_all"</code></li>
 </ul>
-</li>
-</ul>
-<p>Further Notes:</p>
+<p><strong>Further Notes:</strong></p>
 <ul>
 <li><code>func</code> argument is the function you want to send the binding event to.</li>
 <li>Using one of the following <code>"all_modified_events"</code>, <code>"sheetmodified"</code>, <code>"sheet_modified"</code>, <code>"modified_events"</code>, <code>"modified"</code> will make any insert, delete or cell edit including pastes and undos send an event to your function.</li>
@@ -1848,7 +1919,7 @@ def event() -&gt; EventDataDict
 <thead>
 <tr>
 <th>Binding</th>
-<th>Usable with <code>Sheet.event_generate()</code></th>
+<th>Usable with <code>event_generate()</code></th>
 </tr>
 </thead>
 <tbody>
@@ -4009,7 +4080,7 @@ self.sheet.dehighlight(&quot;B&quot;)
 </code></pre>
 <p>Notes:</p>
 <ul>
-<li><code>selection_function</code>/<code>modified_function</code> (<code>Callable</code>, <code>None</code>) parameters require either <code>None</code> or a function. The function you use needs at least one argument because tksheet will send information to your function about the triggered dropdown.</li>
+<li><code>selection_function</code> / <code>modified_function</code> (<code>Callable</code>, <code>None</code>) parameters require either <code>None</code> or a function. The function you use needs at least one argument because tksheet will send information to your function about the triggered dropdown.</li>
 <li>When a user selects an item from the dropdown box the sheet will set the underlying cells data to the selected item, to bind this event use either the <code>selection_function</code> argument or see the function <code>extra_bindings()</code> with binding <code>"end_edit_cell"</code> <a href="https://github.com/ragardner/tksheet/wiki/Version-7#table-functionality-and-bindings">here</a>.</li>
 </ul>
 <p>Parameters:</p>
