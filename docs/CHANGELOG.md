@@ -1,5 +1,11 @@
 ### Version 7.4.12
-####
+#### Addressed:
+- [#276](https://github.com/ragardner/tksheet/issues/276).
+- [#277](https://github.com/ragardner/tksheet/issues/277).
+- Page up / down issues.
+
+#### Added:
+- html documentation.
 
 ### Version 7.4.11
 #### Fixed:

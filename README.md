@@ -18,11 +18,11 @@
   <tbody>
     <tr>
       <td style="color: LightCoral">Versions 6.x.x &#8594;</td>
-      <td><a href="https://github.com/ragardner/tksheet/wiki/Version-6">Documentation Wiki</a></td>
+      <td><a href="https://github.com/ragardner/tksheet/wiki/Version-6">Documentation</a></td>
     </tr>
     <tr>
       <td style="color: lightgreen">Versions 7.x.x &#8594;</td>
-      <td><a href="https://github.com/ragardner/tksheet/wiki/Version-7">Documentation Wiki</a></td>
+      <td><a href="https://ragardner.github.io/tksheet/DOCUMENTATION.html">Documentation</a></td>
     </tr>
     <tr>
       <td align="right" colspan="2"><a href="https://github.com/ragardner/tksheet/blob/master/docs/CHANGELOG.md">Changelog</a></td>
