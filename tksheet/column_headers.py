@@ -1058,44 +1058,6 @@ class ColumnHeaders(tk.Canvas):
             self.MT.run_selection_binding("columns")
         return fill_iid
 
-    def display_box(
-        self,
-        x1: int,
-        y1: int,
-        x2: int,
-        y2: int,
-        fill: str,
-        outline: str,
-        state: str,
-        tags: str | tuple[str],
-        iid: None | int = None,
-    ) -> int:
-        coords = rounded_box_coords(
-            x1,
-            y1,
-            x2,
-            y2,
-            radius=5 if self.ops.rounded_boxes else 0,
-        )
-        if isinstance(iid, int):
-            self.coords(iid, coords)
-            self.itemconfig(iid, fill=fill, outline=outline, state=state, tags=tags)
-        else:
-            if self.hidd_boxes:
-                iid = self.hidd_boxes.pop()
-                self.coords(iid, coords)
-                self.itemconfig(iid, fill=fill, outline=outline, state=state, tags=tags)
-            else:
-                iid = self.create_polygon(coords, fill=fill, outline=outline, state=state, tags=tags, smooth=True)
-            self.disp_boxes.add(iid)
-        return iid
-
-    def hide_box(self, item: int) -> None:
-        if isinstance(item, int):
-            self.disp_boxes.discard(item)
-            self.hidd_boxes.add(item)
-            self.itemconfig(item, state="hidden")
-
     def get_cell_dimensions(self, datacn: int) -> tuple[int, int]:
         txt = self.cell_str(datacn, fix=False)
         if txt:
@@ -1326,8 +1288,26 @@ class ColumnHeaders(tk.Canvas):
         elif not kwargs:
             if "columns" in selections and c in selections["columns"]:
                 txtfg = self.ops.header_selected_columns_fg
+                redrawn = self.redraw_highlight(
+                    fc + 1,
+                    0,
+                    sc,
+                    self.current_height - 1,
+                    fill=self.ops.header_selected_columns_bg,
+                    outline=self.ops.header_fg if has_dd and self.ops.show_dropdown_borders else "",
+                    tag="hi",
+                )
             elif "cells" in selections and c in selections["cells"]:
                 txtfg = self.ops.header_selected_cells_fg
+                redrawn = self.redraw_highlight(
+                    fc + 1,
+                    0,
+                    sc,
+                    self.current_height - 1,
+                    fill=self.ops.header_selected_cells_bg,
+                    outline=self.ops.header_fg if has_dd and self.ops.show_dropdown_borders else "",
+                    tag="hi",
+                )
             else:
                 txtfg = self.ops.header_fg
         return txtfg, redrawn

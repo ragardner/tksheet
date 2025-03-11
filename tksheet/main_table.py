@@ -151,6 +151,9 @@ class MainTable(tk.Canvas):
             "<<SelectAll>>": self.select_all,
         }
         self.enabled_bindings = set()
+        self.selection_box_ctr = 0
+        self.disp_selection_fills = set()
+        self.hidd_selection_fills = set()
 
         self.disp_ctrl_outline = {}
         self.disp_text = {}
@@ -5974,10 +5977,40 @@ class MainTable(tk.Canvas):
         elif not kwargs:
             if "cells" in selections and (r, c) in selections["cells"]:
                 txtfg = self.PAR.ops.table_selected_cells_fg
+                redrawn = self.redraw_highlight(
+                    x1=fc + 1,
+                    y1=fr + 1,
+                    x2=sc,
+                    y2=sr,
+                    fill=self.PAR.ops.table_selected_cells_bg,
+                    outline=self.PAR.ops.table_fg if has_dd and self.PAR.ops.show_dropdown_borders else "",
+                    can_width=None,
+                    pc=None,
+                )
             elif "rows" in selections and r in selections["rows"]:
                 txtfg = self.PAR.ops.table_selected_rows_fg
+                redrawn = self.redraw_highlight(
+                    x1=fc + 1,
+                    y1=fr + 1,
+                    x2=sc,
+                    y2=sr,
+                    fill=self.PAR.ops.table_selected_rows_bg,
+                    outline=self.PAR.ops.table_fg if has_dd and self.PAR.ops.show_dropdown_borders else "",
+                    can_width=None,
+                    pc=None,
+                )
             elif "columns" in selections and c in selections["columns"]:
                 txtfg = self.PAR.ops.table_selected_columns_fg
+                redrawn = self.redraw_highlight(
+                    x1=fc + 1,
+                    y1=fr + 1,
+                    x2=sc,
+                    y2=sr,
+                    fill=self.PAR.ops.table_selected_columns_bg,
+                    outline=self.PAR.ops.table_fg if has_dd and self.PAR.ops.show_dropdown_borders else "",
+                    can_width=None,
+                    pc=None,
+                )
             else:
                 txtfg = self.PAR.ops.table_fg
         return txtfg, redrawn
@@ -6785,26 +6818,20 @@ class MainTable(tk.Canvas):
         c: int,
         type_: Literal["cells", "rows", "columns"],
         fill_iid: int,
-        lower_selection_boxes: bool = True,
     ) -> int:
-        fill, outline = self.get_selected_box_bg_fg(type_=type_)
+        _, outline = self.get_selected_box_bg_fg(type_=type_)
         x1 = self.col_positions[c] + 1
         y1 = self.row_positions[r] + 1
         x2 = self.col_positions[c + 1] if index_exists(self.col_positions, c + 1) else self.col_positions[c] + 1
         y2 = self.row_positions[r + 1] if index_exists(self.row_positions, r + 1) else self.row_positions[r] + 1
         self.hide_selected()
-        if self.PAR.ops.show_selected_cells_border:
-            fill = ""
-        else:
-            fill = outline
-            outline = ""
         iid = self.display_box(
             x1,
             y1,
             x2,
             y2,
-            fill=fill,
-            outline=outline,
+            fill="",
+            outline=outline if self.PAR.ops.show_selected_cells_border else "",
             state="normal",
             tags="selected",
             width=2,
@@ -6817,8 +6844,6 @@ class MainTable(tk.Canvas):
             iid=iid,
             fill_iid=fill_iid,
         )
-        if lower_selection_boxes:
-            self.lower_selection_boxes()
         return iid
 
     def display_box(
@@ -6869,14 +6894,17 @@ class MainTable(tk.Canvas):
             self.hidd_boxes.add(item)
             self.itemconfig(item, state="hidden")
 
+    def hide_box_fill(self, item: int | None) -> None:
+        if isinstance(item, int):
+            self.disp_selection_fills.discard(item)
+            self.hidd_selection_fills.add(item)
+
     def hide_selection_box(self, item: int | None) -> bool:
         if item is None or item is True or item not in self.selection_boxes:
             return False
         box = self.selection_boxes.pop(item)
-        self.hide_box(box.fill_iid)
+        self.hide_box_fill(box.fill_iid)
         self.hide_box(box.bd_iid)
-        self.RI.hide_box(box.index)
-        self.CH.hide_box(box.header)
         if self.selected.fill_iid == item:
             self.hide_selected()
             self.set_current_to_last()
@@ -6892,6 +6920,15 @@ class MainTable(tk.Canvas):
         if self.selected:
             self.hide_box(self.selected.iid)
             self.selected = ()
+
+    def get_selection_fill(self) -> int:
+        if self.hidd_selection_fills:
+            iid = self.hidd_selection_fills.pop()
+        else:
+            self.selection_box_ctr += 1
+            iid = self.selection_box_ctr
+        self.disp_selection_fills.add(iid)
+        return iid
 
     def create_selection_box(
         self,
@@ -6912,50 +6949,15 @@ class MainTable(tk.Canvas):
             r1 = 0
             r2 = 0
         if type_ == "cells":
-            mt_bg = self.PAR.ops.table_selected_cells_bg
             mt_border_col = self.PAR.ops.table_selected_cells_border_fg
         elif type_ == "rows":
-            mt_bg = self.PAR.ops.table_selected_rows_bg
             mt_border_col = self.PAR.ops.table_selected_rows_border_fg
         elif type_ == "columns":
-            mt_bg = self.PAR.ops.table_selected_columns_bg
             mt_border_col = self.PAR.ops.table_selected_columns_border_fg
         if self.selection_boxes:
-            self.itemconfig(next(reversed(self.selection_boxes)), state="normal")
+            next(reversed(self.selection_boxes.values())).state = "normal"
         x1, y1, x2, y2 = self.box_coords_x_canvas_coords(r1, c1, r2, c2, type_)
-        fill_iid = self.display_box(
-            x1,
-            y1,
-            x2,
-            y2,
-            fill=mt_bg,
-            outline="",
-            state=state if self.PAR.ops.show_selected_cells_border else "normal",
-            tags=type_,
-            width=1,
-        )
-        index_iid = self.RI.display_box(
-            0,
-            y1,
-            self.RI.current_width - 1,
-            y2,
-            fill=self.PAR.ops.index_selected_rows_bg if type_ == "rows" else self.PAR.ops.index_selected_cells_bg,
-            outline="",
-            state="normal",
-            tags="cells" if type_ == "columns" else type_,
-        )
-        header_iid = self.CH.display_box(
-            x1,
-            0,
-            self.col_positions[c2],
-            self.CH.current_height - 1,
-            fill=(
-                self.PAR.ops.header_selected_columns_bg if type_ == "columns" else self.PAR.ops.header_selected_cells_bg
-            ),
-            outline="",
-            state="normal",
-            tags="cells" if type_ == "rows" else type_,
-        )
+        fill_iid = self.get_selection_fill()
         bd_iid = None
         if self.PAR.ops.show_selected_cells_border and (
             ext
@@ -6977,10 +6979,11 @@ class MainTable(tk.Canvas):
         self.selection_boxes[fill_iid] = SelectionBox(
             fill_iid=fill_iid,
             bd_iid=bd_iid,
-            index=index_iid,
-            header=header_iid,
+            index=fill_iid,
+            header=fill_iid,
             coords=Box_nt(r1, c1, r2, c2),
             type_=type_,
+            state=state,
         )
         if set_current:
             if set_current is True:
@@ -6989,25 +6992,10 @@ class MainTable(tk.Canvas):
             elif isinstance(set_current, tuple):
                 curr_r = set_current[0]
                 curr_c = set_current[1]
-            self.create_currently_selected_box(curr_r, curr_c, type_, fill_iid, lower_selection_boxes=False)
-        self.lower_selection_boxes()
+            self.create_currently_selected_box(curr_r, curr_c, type_, fill_iid)
         if run_binding:
             self.run_selection_binding(type_)
         return fill_iid
-
-    def lower_selection_boxes(self) -> None:
-        if self.selected:
-            if not self.PAR.ops.show_selected_cells_border:
-                self.tag_lower(self.selected.iid)
-            self.tag_lower("rows")
-            self.tag_lower("columns")
-            self.tag_lower("cells")
-            self.RI.tag_lower("rows")
-            self.RI.tag_lower("cells")
-            self.CH.tag_lower("columns")
-            self.CH.tag_lower("cells")
-            if self.PAR.ops.show_selected_cells_border:
-                self.tag_raise(self.selected.iid)
 
     def box_coords_x_canvas_coords(
         self,
@@ -7039,13 +7027,10 @@ class MainTable(tk.Canvas):
         type_ = self.selection_boxes[fill_iid].type_
         self.selection_boxes[fill_iid].coords = Box_nt(r1, c1, r2, c2)
         if type_ == "cells":
-            mt_bg = self.PAR.ops.table_selected_cells_bg
             mt_border_col = self.PAR.ops.table_selected_cells_border_fg
         elif type_ == "rows":
-            mt_bg = self.PAR.ops.table_selected_rows_bg
             mt_border_col = self.PAR.ops.table_selected_rows_border_fg
         elif type_ == "columns":
-            mt_bg = self.PAR.ops.table_selected_columns_bg
             mt_border_col = self.PAR.ops.table_selected_columns_border_fg
         if not state:
             if r2 - r1 > 1 or c2 - c1 > 1:
@@ -7057,31 +7042,7 @@ class MainTable(tk.Canvas):
         if self.selected.fill_iid == fill_iid:
             self.selected = self.selected._replace(box=Box_nt(r1, c1, r2, c2))
         x1, y1, x2, y2 = self.box_coords_x_canvas_coords(r1, c1, r2, c2, type_)
-        self.display_box(x1, y1, x2, y2, fill=mt_bg, outline="", state=state, tags=type_, width=1, iid=fill_iid)
-        self.RI.display_box(
-            0,
-            y1,
-            self.RI.current_width - 1,
-            y2,
-            fill=self.PAR.ops.index_selected_rows_bg if type_ == "rows" else self.PAR.ops.index_selected_cells_bg,
-            outline="",
-            state="normal",
-            tags="cells" if type_ == "columns" else type_,
-            iid=self.selection_boxes[fill_iid].index,
-        )
-        self.CH.display_box(
-            x1,
-            0,
-            self.col_positions[c2],
-            self.CH.current_height - 1,
-            fill=(
-                self.PAR.ops.header_selected_columns_bg if type_ == "columns" else self.PAR.ops.header_selected_cells_bg
-            ),
-            outline="",
-            state="normal",
-            tags="cells" if type_ == "rows" else type_,
-            iid=self.selection_boxes[fill_iid].header,
-        )
+        self.selection_boxes[fill_iid].state = state
         if bd_iid := self.selection_boxes[fill_iid].bd_iid:
             if self.PAR.ops.show_selected_cells_border:
                 self.display_box(
@@ -7155,19 +7116,20 @@ class MainTable(tk.Canvas):
         d = defaultdict(set)
         for _, box in self.get_selection_items():
             r1, c1, r2, c2 = box.coords
-            if box.type_ == "cells":
-                for r in range(startr, endr):
+            if box.state == "normal":
+                if box.type_ == "cells":
+                    for r in range(startr, endr):
+                        for c in range(startc, endc):
+                            if r1 <= r and c1 <= c and r2 > r and c2 > c:
+                                d["cells"].add((r, c))
+                elif box.type_ == "rows":
+                    for r in range(startr, endr):
+                        if r1 <= r and r2 > r:
+                            d["rows"].add(r)
+                elif box.type_ == "columns":
                     for c in range(startc, endc):
-                        if r1 <= r and c1 <= c and r2 > r and c2 > c:
-                            d["cells"].add((r, c))
-            elif box.type_ == "rows":
-                for r in range(startr, endr):
-                    if r1 <= r and r2 > r:
-                        d["rows"].add(r)
-            elif box.type_ == "columns":
-                for c in range(startc, endc):
-                    if c1 <= c and c2 > c:
-                        d["columns"].add(c)
+                        if c1 <= c and c2 > c:
+                            d["columns"].add(c)
         return d
 
     def get_selected_min_max(self) -> tuple[int, int, int, int] | tuple[None, None, None, None]:

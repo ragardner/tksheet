@@ -40,7 +40,7 @@ DraggedRowColumn = namedtuple("DraggedRowColumn", "dragged to_move")
 
 
 class SelectionBox:
-    __slots__ = ("fill_iid", "bd_iid", "index", "header", "coords", "type_")
+    __slots__ = ("fill_iid", "bd_iid", "index", "header", "coords", "type_", "state")
 
     def __init__(
         self,
@@ -50,6 +50,7 @@ class SelectionBox:
         header: int | None = None,
         coords: tuple[int, int, int, int] = None,
         type_: Literal["cells", "rows", "columns"] = "cells",
+        state: Literal["normal", "hidden"] = "normal",
     ) -> None:
         self.fill_iid = fill_iid
         self.bd_iid = bd_iid
@@ -57,6 +58,7 @@ class SelectionBox:
         self.header = header
         self.coords = coords
         self.type_ = type_
+        self.state = state
 
 
 Selected = namedtuple(
