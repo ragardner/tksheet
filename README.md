@@ -17,24 +17,24 @@
   </thead>
   <tbody>
     <tr>
-      <td style="color: LightCoral">Versions 6.x.x &#8594;</td>
-      <td><a href="https://github.com/ragardner/tksheet/wiki/Version-6">Documentation</a></td>
+      <td style="color: LightCoral">Versions 6.x.x →</td>
+      <td><a href="https://github.com/ragardner/tksheet/wiki/Version-6" target="_blank" rel="noopener noreferrer">Documentation</a></td>
     </tr>
     <tr>
-      <td style="color: lightgreen">Versions 7.x.x &#8594;</td>
-      <td><a href="https://ragardner.github.io/tksheet/DOCUMENTATION.html">Documentation</a></td>
+      <td style="color: lightgreen">Versions 7.x.x →</td>
+      <td><a href="https://ragardner.github.io/tksheet/DOCUMENTATION.html" target="_blank" rel="noopener noreferrer">Documentation</a></td>
     </tr>
     <tr>
-      <td align="right" colspan="2"><a href="https://github.com/ragardner/tksheet/blob/master/docs/CHANGELOG.md">Changelog</a></td>
+      <td align="right" colspan="2"><a href="https://github.com/ragardner/tksheet/blob/master/docs/CHANGELOG.md" target="_blank" rel="noopener noreferrer">Changelog</a></td>
     </tr>
     <tr>
-      <td align="right" colspan="2"><a href="https://github.com/ragardner/tksheet/wiki/Version-7#asking-questions">Questions</a></td>
+      <td align="right" colspan="2"><a href="https://github.com/ragardner/tksheet/wiki/Version-7#asking-questions" target="_blank" rel="noopener noreferrer">Questions</a></td>
     </tr>
     <tr>
-      <td align="right" colspan="2"><a href="https://github.com/ragardner/tksheet/wiki/Version-7#issues">Issues</a></td>
+      <td align="right" colspan="2"><a href="https://github.com/ragardner/tksheet/wiki/Version-7#issues" target="_blank" rel="noopener noreferrer">Issues</a></td>
     </tr>
     <tr>
-      <td align="right" colspan="2"><a href="https://github.com/ragardner/tksheet/wiki/Version-7#enhancements-or-suggestions">Suggestions and Contributors</a></td>
+      <td align="right" colspan="2"><a href="https://github.com/ragardner/tksheet/wiki/Version-7#enhancements-or-suggestions" target="_blank" rel="noopener noreferrer">Suggestions and Contributors</a></td>
     </tr>
   </tbody>
 </table>
