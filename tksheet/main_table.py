@@ -6668,11 +6668,11 @@ class MainTable(tk.Canvas):
                         self.tag_raise(box.bd_iid)
                 if self.selected:
                     self.tag_raise(self.selected.iid)
-            self.tag_raise("t")
             if self.RI.disp_resize_lines:
                 self.tag_raise("rh")
             if self.CH.disp_resize_lines:
                 self.tag_raise("rw")
+            self.tag_raise("t")
         if redraw_header and self.show_header:
             self.CH.redraw_grid_and_text(
                 last_col_line_pos=last_col_line_pos,
@@ -6781,7 +6781,7 @@ class MainTable(tk.Canvas):
             box = next(iter(reversed(self.selection_boxes.values())))
             r1, c1, r2, c2 = box.coords
             if r2 - r1 == 1 and c2 - c1 == 1:
-                self.itemconfig(box.fill_iid, state="hidden")
+                box.state = "hidden"
             self.set_currently_selected(item=box.fill_iid)
 
     def coords_and_type(self, item: int) -> tuple:
@@ -7117,9 +7117,10 @@ class MainTable(tk.Canvas):
 
     def get_redraw_selections(self, startr: int, endr: int, startc: int, endc: int) -> dict:
         d = defaultdict(set)
+        ignore_hidd_current = not self.PAR.ops.show_selected_cells_border
         for _, box in self.get_selection_items():
             r1, c1, r2, c2 = box.coords
-            if box.state == "normal":
+            if box.state == "normal" or ignore_hidd_current:
                 if box.type_ == "cells":
                     for r in range(startr, endr):
                         for c in range(startc, endc):
