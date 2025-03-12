@@ -127,7 +127,7 @@ class Sheet(tk.Frame):
         max_row_height: float = float("inf"),
         max_header_height: float = float("inf"),
         max_index_width: float = float("inf"),
-        after_redraw_time_ms: int = 20,
+        after_redraw_time_ms: int = 16,
         set_all_heights_and_widths: bool = False,
         zoom: int = 100,
         align: str = "nw",
@@ -5138,13 +5138,20 @@ class Sheet(tk.Frame):
         for func in self.bound_events[event]:
             func(data)
 
-    def set_refresh_timer(self, redraw: bool = True) -> Sheet:
+    def set_refresh_timer(
+        self,
+        redraw: bool = True,
+        index: bool = True,
+        header: bool = True,
+    ) -> Sheet:
         if redraw and self.after_redraw_id is None:
-            self.after_redraw_id = self.after(self.after_redraw_time_ms, self.after_redraw)
+            self.after_redraw_id = self.after(
+                self.after_redraw_time_ms, lambda: self.after_redraw(index=index, header=header)
+            )
         return self
 
-    def after_redraw(self) -> None:
-        self.MT.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
+    def after_redraw(self, index: bool = True, header: bool = True) -> None:
+        self.MT.main_table_redraw_grid_and_text(redraw_header=header, redraw_row_index=index)
         self.after_redraw_id = None
 
     def del_options_using_span(

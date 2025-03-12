@@ -8,7 +8,6 @@ from collections import defaultdict, deque
 from collections.abc import Callable, Generator, Hashable, Iterator, Sequence
 from functools import partial
 from itertools import accumulate, chain, cycle, filterfalse, islice, repeat
-from math import ceil, floor
 from operator import itemgetter
 from re import IGNORECASE, escape, sub
 from tkinter import TclError
@@ -4047,7 +4046,7 @@ class MainTable(tk.Canvas):
             self.yview_scroll(-1, "units")
             self.RI.yview_scroll(-1, "units")
             self.y_move_synced_scrolls("moveto", self.yview()[0])
-        self.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
+        self.main_table_redraw_grid_and_text(redraw_header=False, redraw_row_index=True)
 
     def shift_mousewheel(self, event: Any) -> None:
         if event.delta < 0 or event.num == 5:
@@ -4060,7 +4059,7 @@ class MainTable(tk.Canvas):
             self.xview_scroll(-1, "units")
             self.CH.xview_scroll(-1, "units")
             self.x_move_synced_scrolls("moveto", self.xview()[0])
-        self.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=True)
+        self.main_table_redraw_grid_and_text(redraw_header=True, redraw_row_index=False)
 
     def ctrl_mousewheel(self, event: Any) -> None:
         if event.delta < 0 or event.num == 5:
@@ -4441,7 +4440,7 @@ class MainTable(tk.Canvas):
                 self.cells_cache = self._redraw_precache_cells(disprn, disprn + 1, 0, len(self.col_positions) - 1)
             if not (align := self.get_cell_kwargs(datarn, datacn, key="align")):
                 align = self.align
-            if align.endswith("w"):
+            if align[-1] == "w":
                 max_width += sum(
                     self._overflow(
                         self.cells_cache,
@@ -4449,7 +4448,7 @@ class MainTable(tk.Canvas):
                         datarn,
                     )
                 )
-            elif align.endswith("e"):
+            elif align[-1] == "e":
                 max_width += sum(
                     self._overflow(
                         self.cells_cache,
@@ -6084,7 +6083,7 @@ class MainTable(tk.Canvas):
         if draw_arrow:
             mod = (self.table_txt_height - 1) if self.table_txt_height % 2 else self.table_txt_height
             small_mod = int(mod / 5)
-            mid_y = floor(self.min_row_height / 2)
+            mid_y = int(self.min_row_height / 2)
             if open_:
                 # up arrow
                 points = (
@@ -6283,19 +6282,25 @@ class MainTable(tk.Canvas):
                 # self.get_cell_kwargs not used here to boost performance
                 if t in self.cell_options and "dropdown" in self.cell_options[t]:
                     cells["dropdown"][t] = self.cell_options[t]["dropdown"]
+
                 elif datarn in self.row_options and "dropdown" in self.row_options[datarn]:
                     cells["dropdown"][t] = self.row_options[datarn]["dropdown"]
+
                 elif datacn in self.col_options and "dropdown" in self.col_options[datacn]:
                     cells["dropdown"][t] = self.col_options[datacn]["dropdown"]
+
                 else:
                     if t in self.cell_options and "checkbox" in self.cell_options[t]:
                         cells["checkbox"][t] = self.cell_options[t]["checkbox"]
+
                     elif datarn in self.row_options and "checkbox" in self.row_options[datarn]:
                         cells["checkbox"][t] = self.row_options[datarn]["checkbox"]
+
                     elif datacn in self.col_options and "checkbox" in self.col_options[datacn]:
                         cells["checkbox"][t] = self.col_options[datacn]["checkbox"]
 
                 cells[t] = self.cell_str(datarn, datacn, get_displayed=True)
+
         return cells
 
     def wrap_get_char_w(self, c: str) -> int:
@@ -6380,6 +6385,7 @@ class MainTable(tk.Canvas):
             if changed_w:
                 for widget in (self, self.RI, self.CH, self.TL):
                     widget.update_idletasks()
+                return
         # important vars
         x_stop = min(last_col_line_pos, scrollpos_right)
         y_stop = min(last_row_line_pos, scrollpos_bot)
@@ -6452,14 +6458,14 @@ class MainTable(tk.Canvas):
             else:
                 alternate_color = None
                 dont_blend = ()
-            if not self.PAR.ops.show_selected_cells_border:
+            if self.PAR.ops.show_selected_cells_border:
+                override = ()
+            else:
                 override = (
                     color_tup(self.PAR.ops.table_selected_cells_fg),
                     color_tup(self.PAR.ops.table_selected_columns_fg),
                     color_tup(self.PAR.ops.table_selected_rows_fg),
                 )
-            else:
-                override = ()
             allow_overflow = self.PAR.ops.allow_cell_overflow
             wrap = self.PAR.ops.table_wrap
             cells = self._redraw_precache_cells(
@@ -6509,12 +6515,12 @@ class MainTable(tk.Canvas):
                     kws = cells["dropdown"][t] if t in cells["dropdown"] else None  # noqa: SIM401
                     if kws:
                         max_width = crightgridln - cleftgridln - self.table_txt_height - 5
-                        if align.endswith("w"):
+                        if align[-1] == "w":
                             draw_x = cleftgridln + 2
-                        elif align.endswith("e"):
+                        elif align[-1] == "e":
                             draw_x = crightgridln - 5 - self.table_txt_height
-                        elif align.endswith("n"):
-                            draw_x = cleftgridln + ceil((crightgridln - cleftgridln - self.table_txt_height) / 2)
+                        elif align[-1] == "n":
+                            draw_x = cleftgridln + (crightgridln - cleftgridln - self.table_txt_height) / 2
                         self.redraw_dropdown(
                             cleftgridln,
                             rtopgridln,
@@ -6528,49 +6534,43 @@ class MainTable(tk.Canvas):
                         )
                     else:
                         max_width = crightgridln - cleftgridln - 2
-                        if align.endswith("w"):
+                        if align[-1] == "w":
                             draw_x = cleftgridln + 2
-                        elif align.endswith("e"):
+                        elif align[-1] == "e":
                             draw_x = crightgridln - 2
-                        elif align.endswith("n"):
-                            draw_x = cleftgridln + floor((crightgridln - cleftgridln) / 2)
+                        elif align[-1] == "n":
+                            draw_x = cleftgridln + (crightgridln - cleftgridln) / 2
 
-                        kws = cells["checkbox"][t] if t in cells["checkbox"] else None  # noqa: SIM401
-                        if kws and max_width > self.table_txt_height + 1:
-                            box_w = self.table_txt_height + 1
-                            if align.endswith("w"):
-                                draw_x += box_w + 3
-                            elif align.endswith("n"):
-                                draw_x += ceil(box_w / 2) + 1
-                            max_width -= box_w + 4
-                            try:
-                                draw_check = bool(self.data[datarn][datacn])
-                            except Exception:
-                                draw_check = False
-                            self.redraw_checkbox(
-                                cleftgridln + 2,
-                                rtopgridln + 2,
-                                cleftgridln + self.table_txt_height + 3,
-                                rtopgridln + self.table_txt_height + 3,
-                                fill=fill if kws["state"] == "normal" else self.PAR.ops.table_grid_fg,
-                                outline="",
-                                draw_check=draw_check,
-                            )
+                        if t in cells["checkbox"]:
+                            kws = cells["checkbox"][t]
+                            if max_width > self.table_txt_height + 1:
+                                box_w = self.table_txt_height + 1
+                                if align[-1] == "w":
+                                    draw_x += box_w + 3
+                                elif align[-1] == "n":
+                                    draw_x += box_w / 2 + 1
+                                max_width -= box_w + 4
+                                try:
+                                    draw_check = bool(self.data[datarn][datacn])
+                                except Exception:
+                                    draw_check = False
+                                self.redraw_checkbox(
+                                    cleftgridln + 2,
+                                    rtopgridln + 2,
+                                    cleftgridln + self.table_txt_height + 3,
+                                    rtopgridln + self.table_txt_height + 3,
+                                    fill=fill if kws["state"] == "normal" else self.PAR.ops.table_grid_fg,
+                                    outline="",
+                                    draw_check=draw_check,
+                                )
                     text = cells[t]
-                    if (
-                        not text
-                        or (align.endswith("w") and draw_x > scrollpos_right)
-                        or (align.endswith("e") and cleftgridln + 5 > scrollpos_right)
-                        or (align.endswith("n") and cleftgridln + 5 > scrollpos_right)
-                    ):
+                    if not text or (align[-1] == "w" and draw_x > scrollpos_right) or cleftgridln + 5 > scrollpos_right:
                         continue
                     if allow_overflow and not kws:
-                        if align.endswith("w"):
+                        if align[-1] == "w":
                             max_width += sum(self._overflow(cells, range(c + 1, text_end_col), datarn))
-                        elif align.endswith("e"):
+                        elif align[-1] == "e":
                             max_width += sum(self._overflow(cells, reversed(range(text_start_col, c)), datarn))
-                        elif align.endswith("n"):
-                            ...
                     if max_width <= 1:
                         continue
                     start_line = max(0, int((scrollpos_top - rtopgridln) / self.table_txt_height))
@@ -6584,7 +6584,7 @@ class MainTable(tk.Canvas):
                         wrap=wrap,
                         start_line=start_line,
                     )
-                    if align.endswith(("w", "e")):
+                    if align[-1] == "w" or align[-1] == "e":
                         if self.hidd_text:
                             iid, showing = self.hidd_text.popitem()
                             self.coords(iid, draw_x, draw_y)
@@ -6617,15 +6617,15 @@ class MainTable(tk.Canvas):
                             )
                         self.disp_text[iid] = True
 
-                    elif align.endswith("n"):
-                        for text in gen_lines:
+                    elif align[-1] == "n":
+                        for t in gen_lines:
                             if self.hidd_text:
                                 iid, showing = self.hidd_text.popitem()
                                 self.coords(iid, draw_x, draw_y)
                                 if showing:
                                     self.itemconfig(
                                         iid,
-                                        text=text,
+                                        text=t,
                                         fill=fill,
                                         font=font,
                                         anchor=align,
@@ -6633,7 +6633,7 @@ class MainTable(tk.Canvas):
                                 else:
                                     self.itemconfig(
                                         iid,
-                                        text=text,
+                                        text=t,
                                         fill=fill,
                                         font=font,
                                         anchor=align,
@@ -6643,7 +6643,7 @@ class MainTable(tk.Canvas):
                                 iid = self.create_text(
                                     draw_x,
                                     draw_y,
-                                    text=text,
+                                    text=t,
                                     fill=fill,
                                     font=font,
                                     anchor=align,
@@ -8081,23 +8081,49 @@ class MainTable(tk.Canvas):
         cell value is not in datatypes kwarg
         if get displayed is true then Nones are replaced by
         """
-        kwargs = self.get_cell_kwargs(datarn, datacn, key=None)
         if get_displayed:
-            if kwargs and "dropdown" in kwargs:
-                if kwargs["dropdown"]["text"] is not None:
-                    return f"{kwargs['dropdown']['text']}"
-            elif kwargs and "checkbox" in kwargs:
-                return f"{kwargs['checkbox']['text']}"
+            # check for dropdown
+            if (datarn, datacn) in self.cell_options and "dropdown" in self.cell_options[(datarn, datacn)]:
+                kws = self.cell_options[(datarn, datacn)]["dropdown"]
+            elif datarn in self.row_options and "dropdown" in self.row_options[datarn]:
+                kws = self.row_options[datarn]["dropdown"]
+            elif datacn in self.col_options and "dropdown" in self.col_options[datacn]:
+                kws = self.col_options[datacn]["dropdown"]
+            else:
+                kws = None
+            if kws and kws["text"] is not None:
+                return f"{kws['text']}"
+
+            # check for checkbox
+            if (datarn, datacn) in self.cell_options and "checkbox" in self.cell_options[(datarn, datacn)]:
+                kws = self.cell_options[(datarn, datacn)]["checkbox"]
+            elif datarn in self.row_options and "checkbox" in self.row_options[datarn]:
+                kws = self.row_options[datarn]["checkbox"]
+            elif datacn in self.col_options and "checkbox" in self.col_options[datacn]:
+                kws = self.col_options[datacn]["checkbox"]
+            else:
+                kws = None
+            if kws:
+                return f"{kws['text']}"
         try:
             value = self.data[datarn][datacn]
         except Exception:
             value = ""
-        if "format" in kwargs:
-            if kwargs["format"]["formatter"] is None:
+        # check for format
+        if (datarn, datacn) in self.cell_options and "format" in self.cell_options[(datarn, datacn)]:
+            kws = self.cell_options[(datarn, datacn)]["format"]
+        elif datarn in self.row_options and "format" in self.row_options[datarn]:
+            kws = self.row_options[datarn]["format"]
+        elif datacn in self.col_options and "format" in self.col_options[datacn]:
+            kws = self.col_options[datacn]["format"]
+        else:
+            kws = None
+        if kws:
+            if kws["formatter"] is None:
                 if get_displayed:
-                    return data_to_str(value, **kwargs["format"])
+                    return data_to_str(value, **kws)
                 else:
-                    return f"{get_data_with_valid_check(value, **kwargs['format'])}"
+                    return f"{get_data_with_valid_check(value, **kws)}"
             else:
                 if get_displayed:
                     # assumed given formatter class has __str__()
@@ -8106,7 +8132,7 @@ class MainTable(tk.Canvas):
                     # assumed given formatter class has get_data_with_valid_check()
                     return f"{value.get_data_with_valid_check()}"
         else:
-            return "" if value is None else value if isinstance(value, str) else f"{value}"
+            return "" if value is None else str(value)
 
     def get_cell_data(
         self,

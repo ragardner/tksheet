@@ -5,7 +5,7 @@ from collections import defaultdict
 from collections.abc import Callable, Generator, Hashable, Iterator, Sequence
 from functools import partial
 from itertools import chain, cycle, islice, repeat
-from math import ceil, floor
+from math import ceil
 from operator import itemgetter
 from typing import Any, Literal
 
@@ -758,7 +758,7 @@ class RowIndex(tk.Canvas):
         if size < self.MT.min_row_height:
             new_row_pos = ceil(self.MT.row_positions[self.rsz_h - 1] + self.MT.min_row_height)
         elif size > self.ops.max_row_height:
-            new_row_pos = floor(self.MT.row_positions[self.rsz_h - 1] + self.ops.max_row_height)
+            new_row_pos = int(self.MT.row_positions[self.rsz_h - 1] + self.ops.max_row_height)
         increment = new_row_pos - self.MT.row_positions[self.rsz_h]
         self.MT.row_positions[self.rsz_h + 1 :] = [
             e + increment for e in islice(self.MT.row_positions, self.rsz_h + 1, None)
@@ -1071,7 +1071,7 @@ class RowIndex(tk.Canvas):
                 align = self.cell_options[datarn]["align"]
             else:
                 align = self.align
-            if align.endswith("w"):
+            if align[-1] == "w":
                 w += self.MT.index_txt_height
             w += self.get_iid_indent(self.MT._row_index[datarn].iid) + 10
         return w, h
@@ -1245,7 +1245,7 @@ class RowIndex(tk.Canvas):
             new_w = self.get_index_text_width(only_rows=only_rows)
         else:
             new_w = None
-        if new_w is not None and (sheet_w_x := floor(self.PAR.winfo_width() * 0.7)) < new_w:
+        if new_w is not None and (sheet_w_x := int(self.PAR.winfo_width() * 0.7)) < new_w:
             new_w = sheet_w_x
         if new_w and (self.current_width - new_w > 20 or new_w - self.current_width > 3):
             if self.MT.find_window.open:
@@ -1394,7 +1394,7 @@ class RowIndex(tk.Canvas):
     ) -> None:
         mod = (self.MT.index_txt_height - 1) if self.MT.index_txt_height % 2 else self.MT.index_txt_height
         small_mod = int(mod / 5)
-        mid_y = floor(self.MT.min_row_height / 2)
+        mid_y = int(self.MT.min_row_height / 2)
         if has_children:
             # up arrow
             if open_:
@@ -1490,7 +1490,7 @@ class RowIndex(tk.Canvas):
         if draw_arrow:
             mod = (self.MT.index_txt_height - 1) if self.MT.index_txt_height % 2 else self.MT.index_txt_height
             small_mod = int(mod / 5)
-            mid_y = floor(self.MT.min_row_height / 2)
+            mid_y = int(self.MT.min_row_height / 2)
             if open_:
                 # up arrow
                 points = (
@@ -1673,13 +1673,13 @@ class RowIndex(tk.Canvas):
             else:
                 align = self.align
             if dropdown_kwargs:
-                max_width = self.current_width - self.MT.index_txt_height - 2
-                if align.endswith("w"):
+                max_width = self.current_width - self.MT.index_txt_height - 5
+                if align[-1] == "w":
                     draw_x = 3
-                elif align.endswith("e"):
+                elif align[-1] == "e":
                     draw_x = self.current_width - 5 - self.MT.index_txt_height
-                elif align.endswith("n"):
-                    draw_x = ceil((self.current_width - self.MT.index_txt_height) / 2)
+                elif align[-1] == "n":
+                    draw_x = (self.current_width - self.MT.index_txt_height) / 2
                 self.redraw_dropdown(
                     0,
                     rtopgridln,
@@ -1694,22 +1694,22 @@ class RowIndex(tk.Canvas):
                 )
             else:
                 max_width = self.current_width - 2
-                if align.endswith("w"):
+                if align[-1] == "w":
                     draw_x = 3
-                elif align.endswith("e"):
+                elif align[-1] == "e":
                     draw_x = self.current_width - 3
-                elif align.endswith("n"):
-                    draw_x = floor(self.current_width / 2)
+                elif align[-1] == "n":
+                    draw_x = self.current_width / 2
                 if (
                     (checkbox_kwargs := self.get_cell_kwargs(datarn, key="checkbox"))
                     and not dropdown_kwargs
                     and max_width > self.MT.index_txt_height + 1
                 ):
                     box_w = self.MT.index_txt_height + 1
-                    if align.endswith("w"):
+                    if align[-1] == "w":
                         draw_x += box_w + 3
-                    elif align.endswith("n"):
-                        draw_x += ceil(box_w / 2) + 1
+                    elif align[-1] == "n":
+                        draw_x += box_w / 2 + 1
                     max_width -= box_w + 4
                     try:
                         draw_check = (
@@ -1732,7 +1732,7 @@ class RowIndex(tk.Canvas):
             if treeview and isinstance(self.MT._row_index, list) and len(self.MT._row_index) > datarn:
                 iid = self.MT._row_index[datarn].iid
                 max_width -= self.MT.index_txt_height
-                if align.endswith("w"):
+                if align[-1] == "w":
                     draw_x += self.MT.index_txt_height + 3
                 level, indent = self.get_iid_level_indent(iid)
                 draw_x += indent + 5

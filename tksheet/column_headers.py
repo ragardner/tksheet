@@ -5,7 +5,7 @@ from collections import defaultdict
 from collections.abc import Callable, Hashable, Iterator, Sequence
 from functools import partial
 from itertools import cycle, islice, repeat
-from math import ceil, floor
+from math import ceil
 from operator import itemgetter
 from typing import Any, Literal
 
@@ -741,7 +741,7 @@ class ColumnHeaders(tk.Canvas):
         if size < self.ops.min_column_width:
             new_col_pos = ceil(self.MT.col_positions[self.rsz_w - 1] + self.ops.min_column_width)
         elif size > self.ops.max_column_width:
-            new_col_pos = floor(self.MT.col_positions[self.rsz_w - 1] + self.ops.max_column_width)
+            new_col_pos = int(self.MT.col_positions[self.rsz_w - 1] + self.ops.max_column_width)
         increment = new_col_pos - self.MT.col_positions[self.rsz_w]
         self.MT.col_positions[self.rsz_w + 1 :] = [
             e + increment for e in islice(self.MT.col_positions, self.rsz_w + 1, None)
@@ -1373,7 +1373,7 @@ class ColumnHeaders(tk.Canvas):
         if draw_arrow:
             mod = (self.MT.header_txt_height - 1) if self.MT.header_txt_height % 2 else self.MT.header_txt_height
             small_mod = int(mod / 5)
-            mid_y = floor(self.MT.min_header_height / 2)
+            mid_y = int(self.MT.min_header_height / 2)
             if open_:
                 # up arrow
                 points = (
@@ -1552,13 +1552,13 @@ class ColumnHeaders(tk.Canvas):
             else:
                 align = self.align
             if kwargs:
-                max_width = crightgridln - cleftgridln - txt_h - 2
-                if align.endswith("w"):
+                max_width = crightgridln - cleftgridln - txt_h - 5
+                if align[-1] == "w":
                     draw_x = cleftgridln + 2
-                elif align.endswith("e"):
+                elif align[-1] == "e":
                     draw_x = crightgridln - 5 - txt_h
-                elif align.endswith("n"):
-                    draw_x = cleftgridln + ceil((crightgridln - cleftgridln - txt_h) / 2)
+                elif align[-1] == "n":
+                    draw_x = cleftgridln + (crightgridln - cleftgridln - txt_h) / 2
                 self.redraw_dropdown(
                     cleftgridln,
                     0,
@@ -1573,18 +1573,18 @@ class ColumnHeaders(tk.Canvas):
                 )
             else:
                 max_width = crightgridln - cleftgridln - 2
-                if align.endswith("w"):
+                if align[-1] == "w":
                     draw_x = cleftgridln + 2
-                elif align.endswith("e"):
+                elif align[-1] == "e":
                     draw_x = crightgridln - 2
-                elif align.endswith("n"):
-                    draw_x = cleftgridln + floor((crightgridln - cleftgridln) / 2)
+                elif align[-1] == "n":
+                    draw_x = cleftgridln + (crightgridln - cleftgridln) / 2
                 if (kwargs := self.get_cell_kwargs(datacn, key="checkbox")) and max_width > txt_h + 1:
                     box_w = txt_h + 1
-                    if align.endswith("w"):
+                    if align[-1] == "w":
                         draw_x += box_w + 3
-                    elif align.endswith("n"):
-                        draw_x += ceil(box_w / 2) + 1
+                    elif align[-1] == "n":
+                        draw_x += box_w / 2 + 1
                     max_width -= box_w + 4
                     try:
                         draw_check = (
@@ -1606,9 +1606,9 @@ class ColumnHeaders(tk.Canvas):
                     )
             if (
                 max_width < self.MT.header_txt_width
-                or (align.endswith("w") and draw_x > scrollpos_right)
-                or (align.endswith("e") and cleftgridln + 5 > scrollpos_right)
-                or (align.endswith("n") and cleftgridln + 5 > scrollpos_right)
+                or (align[-1] == "w" and draw_x > scrollpos_right)
+                or (align[-1] == "e" and cleftgridln + 5 > scrollpos_right)
+                or (align[-1] == "n" and cleftgridln + 5 > scrollpos_right)
             ):
                 continue
             text = self.cell_str(datacn, fix=False)
