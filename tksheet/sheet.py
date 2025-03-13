@@ -4923,7 +4923,7 @@ class Sheet(tk.Frame):
         """
         Also deletes all descendants of items
         """
-        rows = list(map(self.RI.rns.get, filter(self.exists, unpack(items))))
+        rows = list(map(self.RI.rns.__getitem__, filter(self.exists, unpack(items))))
         if rows:
             self.del_rows(rows, data_indexes=True, undo=undo)
         return self.set_refresh_timer(rows)
