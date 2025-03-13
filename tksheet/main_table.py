@@ -4767,6 +4767,7 @@ class MainTable(tk.Canvas):
         self,
         rows: list[int] | tuple[int],
         create_ops: bool = True,
+        tree: bool = True,
     ) -> None:
         self.tagged_cells = {
             tags: {(push_n(r, rows), c) for (r, c) in tagged} for tags, tagged in self.tagged_cells.items()
@@ -4776,7 +4777,8 @@ class MainTable(tk.Canvas):
         self.tagged_rows = {tags: {push_n(r, rows) for r in tagged} for tags, tagged in self.tagged_rows.items()}
         self.row_options = {push_n(r, rows): v for r, v in self.row_options.items()}
         self.RI.cell_options = {push_n(r, rows): v for r, v in self.RI.cell_options.items()}
-        self.RI.rns = {k: push_n(r, rows) for k, r in self.RI.rns.items()}
+        if tree:
+            self.RI.rns = {k: push_n(r, rows) for k, r in self.RI.rns.items()}
         # if there are named spans where rows were added
         # add options to gap which was created by adding rows
         totalcols = None
@@ -5180,6 +5182,7 @@ class MainTable(tk.Canvas):
             self.adjust_options_post_add_rows(
                 rows=tuple(rows),
                 create_ops=create_ops,
+                tree=tree,
             )
         event_data["added"]["rows"] = {
             "table": rows,

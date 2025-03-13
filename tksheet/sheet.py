@@ -4647,10 +4647,9 @@ class Sheet(tk.Frame):
             if index[rns[item]].children:
                 open_ids.add(item)
                 if rns[item] in disp_set:
-                    to_disp = [rns[did] for did in descendants(item, check_open=True)]
-                    for i in to_disp:
-                        disp_set.add(i)
-                    to_open.extend(to_disp)
+                    for did in descendants(item, check_open=True):
+                        disp_set.add(rns[did])
+                        to_open.append(rns[did])
         return to_open
 
     def tree_open(self, *items, redraw: bool = True) -> Sheet:

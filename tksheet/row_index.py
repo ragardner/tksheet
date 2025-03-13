@@ -4,7 +4,7 @@ import tkinter as tk
 from collections import defaultdict
 from collections.abc import Callable, Generator, Hashable, Iterator, Sequence
 from functools import partial
-from itertools import chain, cycle, islice, repeat
+from itertools import cycle, islice, repeat
 from math import ceil
 from operator import itemgetter
 from typing import Any, Literal
@@ -2988,15 +2988,6 @@ class RowIndex(tk.Canvas):
             if not parent_node.children:
                 self.tree_open_ids.discard(parent_node.iid)
 
-    def build_pid_causes_recursive_loop(self, iid: str, pid: str) -> bool:
-        return any(
-            i == pid
-            for i in chain(
-                self.get_iid_descendants(iid),
-                islice(self.get_iid_ancestors(iid), 1, None),
-            )
-        )
-
     def move_pid_causes_recursive_loop(self, to_move_iid: str, move_to_parent: str) -> bool:
         # if the parent the item is being moved under is one of the item's descendants
         # then it is a recursive loop
@@ -3017,8 +3008,8 @@ class RowIndex(tk.Canvas):
         include_parent_column: bool = True,
         include_text_column: bool = True,
     ) -> None:
-        index = self.MT._row_index
         data_rns = {}
+        tree = {}
         if text_column is None:
             text_column = iid_column
         if not isinstance(ncols, int):
@@ -3030,33 +3021,27 @@ class RowIndex(tk.Canvas):
             else:
                 iid = row[iid_column]
                 pid = row[parent_column]
-            if iid in self.rns:
-                index[self.rns[iid]].text = row[text_column] if isinstance(text_column, int) else text_column[rn]
+            if iid in tree:
+                tree[iid].text = row[text_column] if isinstance(text_column, int) else text_column[rn]
             else:
-                index.append(
-                    Node(
-                        text=row[text_column] if isinstance(text_column, int) else text_column[rn],
-                        iid=iid,
-                        parent="",
-                    )
+                tree[iid] = Node(
+                    text=row[text_column] if isinstance(text_column, int) else text_column[rn],
+                    iid=iid,
+                    parent="",
                 )
-                self.rns[iid] = len(index) - 1
             data_rns[iid] = rn
             if pid:
-                if pid in self.rns:
-                    index[self.rns[pid]].children.append(iid)
+                if pid in tree:
+                    tree[pid].children.append(iid)
                 else:
-                    index.append(
-                        Node(
-                            text=pid,
-                            iid=pid,
-                            children=[iid],
-                        )
+                    tree[pid] = Node(
+                        text=pid,
+                        iid=pid,
+                        children=[iid],
                     )
-                    self.rns[pid] = len(index) - 1
-                index[self.rns[iid]].parent = pid
+                tree[iid].parent = pid
             else:
-                index[self.rns[iid]].parent = ""
+                tree[iid].parent = ""
         exclude = set()
         if not include_iid_column:
             exclude.add(iid_column)
@@ -3065,18 +3050,35 @@ class RowIndex(tk.Canvas):
         if isinstance(text_column, int) and not include_text_column:
             exclude.add(text_column)
         rows = []
+        ctr = 0
         if exclude:
-            for iid in self.PAR.tree_traverse():
-                row = [index[self.rns[iid]]]
-                row.extend(e for i, e in enumerate(data[data_rns[iid]]) if i not in exclude)
-                rows.append(row)
+            for iid, node in tree.items():
+                if node.parent == "":
+                    row = [tree[iid]]
+                    row.extend(e for i, e in enumerate(data[data_rns[iid]]) if i not in exclude)
+                    rows.append(row)
+                    self.rns[iid] = ctr
+                    ctr += 1
+                    for diid in self._build_get_descendants(iid, tree):
+                        row = [tree[diid]]
+                        row.extend(e for i, e in enumerate(data[data_rns[diid]]) if i not in exclude)
+                        rows.append(row)
+                        self.rns[diid] = ctr
+                        ctr += 1
         else:
-            for iid in self.PAR.tree_traverse():
-                row = [index[self.rns[iid]]]
-                row.extend(data[data_rns[iid]])
-                rows.append(row)
-        self.MT._row_index = []
-        self.rns = {}
+            for iid, node in tree.items():
+                if node.parent == "":
+                    row = [tree[iid]]
+                    row.extend(data[data_rns[iid]])
+                    rows.append(row)
+                    self.rns[iid] = ctr
+                    ctr += 1
+                    for diid in self._build_get_descendants(iid, tree):
+                        row = [tree[diid]]
+                        row.extend(data[data_rns[diid]])
+                        rows.append(row)
+                        self.rns[diid] = ctr
+                        ctr += 1
         self.PAR.insert_rows(
             rows=rows,
             idx=0,
@@ -3091,7 +3093,6 @@ class RowIndex(tk.Canvas):
         )
         self.MT.all_rows_displayed = False
         self.MT.displayed_rows = list(range(len(self.MT._row_index)))
-        self.rns = {n.iid: i for i, n in enumerate(self.MT._row_index)}
         if open_ids:
             self.PAR.tree_set_open(open_ids=open_ids)
         else:
@@ -3118,8 +3119,8 @@ class RowIndex(tk.Canvas):
         include_parent_column: bool = True,
         include_text_column: bool = True,
     ) -> None:
-        index = self.MT._row_index
         data_rns = {}
+        tree = {}
         iids_missing_rows = set()
         if text_column is None:
             text_column = iid_column
@@ -3146,43 +3147,36 @@ class RowIndex(tk.Canvas):
                     x += 1
                 tally_of_ids[iid] += 1
                 row[iid_column] = new
-            if iid in self.rns:
-                index[self.rns[iid]].text = row[text_column] if isinstance(text_column, int) else text_column[rn]
+            if iid in tree:
+                tree[iid].text = row[text_column] if isinstance(text_column, int) else text_column[rn]
             else:
-                index.append(
-                    Node(
-                        text=row[text_column] if isinstance(text_column, int) else text_column[rn],
-                        iid=iid,
-                        parent="",
-                    )
+                tree[iid] = Node(
+                    text=row[text_column] if isinstance(text_column, int) else text_column[rn],
+                    iid=iid,
+                    parent="",
                 )
-                self.rns[iid] = len(index) - 1
             if iid in iids_missing_rows:
                 iids_missing_rows.discard(iid)
             data_rns[iid] = rn
-            if iid == pid or self.build_pid_causes_recursive_loop(iid, pid):
+            if iid == pid or self.build_pid_causes_recursive_loop(iid, pid, tree):
                 row[parent_column] = ""
                 pid = ""
             if pid:
-                if pid in self.rns:
-                    index[self.rns[pid]].children.append(iid)
+                if pid in tree:
+                    tree[pid].children.append(iid)
                 else:
-                    index.append(
-                        Node(
-                            text=pid,
-                            iid=pid,
-                            children=[iid],
-                        )
+                    tree[pid] = Node(
+                        text=pid,
+                        iid=pid,
+                        children=[iid],
                     )
                     iids_missing_rows.add(pid)
-                    self.rns[pid] = len(index) - 1
-                index[self.rns[iid]].parent = pid
+                tree[iid].parent = pid
             else:
-                index[self.rns[iid]].parent = ""
+                tree[iid].parent = ""
         empty_rows = {}
         for iid in iids_missing_rows:
-            node = index[self.rns[iid]]
-            node.parent = ""
+            node = tree[iid]
             newrow = self.MT.get_empty_row_seq(len(data), ncols)
             newrow[iid_column] = node.iid
             empty_rows[node.iid] = newrow
@@ -3194,24 +3188,41 @@ class RowIndex(tk.Canvas):
         if isinstance(text_column, int) and not include_text_column:
             exclude.add(text_column)
         rows = []
+        ctr = 0
         if exclude:
-            for iid in self.PAR.tree_traverse():
-                row = [index[self.rns[iid]]]
-                if iid in empty_rows:
-                    row.extend(e for i, e in enumerate(empty_rows[iid]) if i not in exclude)
-                else:
-                    row.extend(e for i, e in enumerate(data[data_rns[iid]]) if i not in exclude)
-                rows.append(row)
+            for iid, node in tree.items():
+                if node.parent == "":
+                    row = [tree[iid]]
+                    if iid in empty_rows:
+                        row.extend(e for i, e in enumerate(empty_rows[iid]) if i not in exclude)
+                    else:
+                        row.extend(e for i, e in enumerate(data[data_rns[iid]]) if i not in exclude)
+                    rows.append(row)
+                    self.rns[iid] = ctr
+                    ctr += 1
+                    for diid in self._build_get_descendants(iid, tree):
+                        row = [tree[diid]]
+                        row.extend(e for i, e in enumerate(data[data_rns[diid]]) if i not in exclude)
+                        rows.append(row)
+                        self.rns[diid] = ctr
+                        ctr += 1
         else:
-            for iid in self.PAR.tree_traverse():
-                row = [index[self.rns[iid]]]
-                if iid in empty_rows:
-                    row.extend(empty_rows[iid])
-                else:
-                    row.extend(data[data_rns[iid]])
-                rows.append(row)
-        self.MT._row_index = []
-        self.rns = {}
+            for iid, node in tree.items():
+                if node.parent == "":
+                    row = [tree[iid]]
+                    if iid in empty_rows:
+                        row.extend(empty_rows[iid])
+                    else:
+                        row.extend(data[data_rns[iid]])
+                    rows.append(row)
+                    self.rns[iid] = ctr
+                    ctr += 1
+                    for diid in self._build_get_descendants(iid, tree):
+                        row = [tree[diid]]
+                        row.extend(data[data_rns[diid]])
+                        rows.append(row)
+                        self.rns[diid] = ctr
+                        ctr += 1
         self.PAR.insert_rows(
             rows=rows,
             idx=0,
@@ -3226,7 +3237,6 @@ class RowIndex(tk.Canvas):
         )
         self.MT.all_rows_displayed = False
         self.MT.displayed_rows = list(range(len(self.MT._row_index)))
-        self.rns = {n.iid: i for i, n in enumerate(self.MT._row_index)}
         if open_ids:
             self.PAR.tree_set_open(open_ids=open_ids)
         else:
@@ -3237,3 +3247,29 @@ class RowIndex(tk.Canvas):
                 data_indexes=True,
                 row_heights=row_heights is not False,
             )
+
+    def _build_get_descendants(self, iid: str, tree: dict[str, Node]) -> Generator[str]:
+        stack = [iter(tree[iid].children)]
+        while stack:
+            top_iterator = stack[-1]
+            try:
+                ciid = next(top_iterator)
+                yield ciid
+                if tree[ciid].children:
+                    stack.append(iter(tree[ciid].children))
+            except StopIteration:
+                stack.pop()
+
+    def build_pid_causes_recursive_loop(self, iid: str, pid: str, tree: dict[str, Node]) -> bool:
+        # check descendants
+        for diid in self._build_get_descendants(iid, tree):
+            if diid == pid:
+                return True
+        # check ancestors
+        current_iid = iid
+        while tree[current_iid].parent:
+            parent_iid = tree[current_iid].parent
+            if parent_iid == pid:
+                return True
+            current_iid = parent_iid
+        return False

@@ -448,7 +448,7 @@ class Node:
         self,
         text: str,
         iid: str,
-        parent: str | None = None,
+        parent: str = "",
         children: list[str] | None = None,
     ) -> None:
         self.text = text
