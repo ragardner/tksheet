@@ -1,5 +1,11 @@
 ### Version 7.4.13
-####
+#### Fixed:
+- 7.4.12 deselection display regression.
+- Header and index dropdown boxes with center aligned text made text spill out of the cell a little.
+
+#### Improved:
+- Further minor redrawing performance improvements.
+- Minor tree build performance improvement.
 
 ### Version 7.4.12
 #### Addressed:
