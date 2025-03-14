@@ -833,7 +833,7 @@ def insert_items(
     """
     seq: list[Any]
     to_insert: keys are ints sorted, representing list indexes to insert items.
-               Values are any, e.g. {1: 200, 0: 200}
+               Values are any, e.g. {0: 200, 1: 200}
     """
     if to_insert:
         if seq_len_func and next(reversed(to_insert)) >= len(seq) + len(to_insert):
