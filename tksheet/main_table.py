@@ -74,8 +74,8 @@ from .functions import (
     mod_event_val,
     mod_span,
     mod_span_widget,
-    move_elements_by_mapping,
     move_elements_by_mapping_gen,
+    move_fast,
     new_tk_event,
     next_cell,
     push_n,
@@ -1497,11 +1497,6 @@ class MainTable(tk.Canvas):
         event_data: EventDataDict | None = None,
     ) -> tuple[dict[int, int], dict[int, int], EventDataDict]:
         self.saved_column_widths = {}
-        if not isinstance(totalcols, int):
-            totalcols = max(data_new_idxs.values(), default=0)
-            if totalcols:
-                totalcols += 1
-            totalcols = self.equalize_data_row_lengths(at_least_cols=totalcols)
         if not event_data:
             event_data = self.new_event_dict("move_columns", state=True)
         if not event_data["moved"]["columns"]:
@@ -1538,19 +1533,26 @@ class MainTable(tk.Canvas):
                     )
             else:
                 self.recreate_all_selection_boxes()
+
         if move_data:
-            self.data = [move_elements_by_mapping(k, data_new_idxs, data_old_idxs) for k in self.data]
+            if not isinstance(totalcols, int):
+                totalcols = max(data_new_idxs.values(), default=0)
+                if totalcols:
+                    totalcols += 1
+                totalcols = self.equalize_data_row_lengths(at_least_cols=totalcols)
+
+            self.data = [move_fast(k, data_new_idxs, data_old_idxs) for k in self.data]
             maxidx = len_to_idx(totalcols)
             self.CH.fix_header(maxidx)
             if isinstance(self._headers, list) and self._headers:
-                self._headers = move_elements_by_mapping(self._headers, data_new_idxs, data_old_idxs)
+                self._headers = move_fast(self._headers, data_new_idxs, data_old_idxs)
             maxidx = self.get_max_column_idx(maxidx)
-            full_new_idxs = self.get_full_new_idxs(
+            full_new_idxs, full_old_idxs = self.get_full_new_idxs(
                 max_idx=maxidx,
                 new_idxs=data_new_idxs,
                 old_idxs=data_old_idxs,
+                get_inverse=True,
             )
-            full_old_idxs = dict(zip(full_new_idxs.values(), full_new_idxs))
             self.tagged_cells = {
                 tags: {(k[0], full_new_idxs[k[1]]) for k in tagged} for tags, tagged in self.tagged_cells.items()
             }
@@ -1723,14 +1725,14 @@ class MainTable(tk.Canvas):
         data_old_idxs: dict[int, int],
         maxidx: int,
     ) -> None:
-        self.data = move_elements_by_mapping(
+        self.data = move_fast(
             self.data,
             data_new_idxs,
             data_old_idxs,
         )
         self.RI.fix_index(maxidx)
         if isinstance(self._row_index, list) and self._row_index:
-            self._row_index = move_elements_by_mapping(self._row_index, data_new_idxs, data_old_idxs)
+            self._row_index = move_fast(self._row_index, data_new_idxs, data_old_idxs)
 
     def move_rows_adjust_options_dict(
         self,
@@ -1782,12 +1784,12 @@ class MainTable(tk.Canvas):
             else:
                 self.move_rows_data(data_new_idxs, data_old_idxs, maxidx)
             maxidx = self.get_max_row_idx(maxidx)
-            full_new_idxs = self.get_full_new_idxs(
+            full_new_idxs, full_old_idxs = self.get_full_new_idxs(
                 max_idx=maxidx,
                 new_idxs=data_new_idxs,
                 old_idxs=data_old_idxs,
+                get_inverse=True,
             )
-            full_old_idxs = dict(zip(full_new_idxs.values(), full_new_idxs))
             self.tagged_cells = {
                 tags: {(full_new_idxs[k[0]], k[1]) for k in tagged} for tags, tagged in self.tagged_cells.items()
             }
@@ -1948,6 +1950,7 @@ class MainTable(tk.Canvas):
         max_idx: int,
         new_idxs: dict[int, int],
         old_idxs: None | dict[int, int] = None,
+        get_inverse: bool = False,
     ) -> dict[int, int]:
         # return a dict of all row or column indexes
         # old indexes and new indexes, not just the
@@ -1955,13 +1958,18 @@ class MainTable(tk.Canvas):
         # {old index: new index, ...}
         # all the way from 0 to max_idx
         if old_idxs is None:
-            old_idxs = dict(zip(new_idxs.values(), new_idxs))
-        return dict(
-            zip(
-                move_elements_by_mapping_gen(tuple(range(max_idx + 1)), new_idxs, old_idxs),
-                range(max_idx + 1),
-            )
-        )
+            old_idxs = {v: k for k, v in new_idxs.items()}
+        if get_inverse:
+            d = {}
+            d_in = {}
+            for v, k in enumerate(move_elements_by_mapping_gen(tuple(range(max_idx + 1)), new_idxs, old_idxs)):
+                d[k] = v
+                d_in[v] = k
+            return d, d_in
+        else:
+            return {
+                k: v for v, k in enumerate(move_elements_by_mapping_gen(tuple(range(max_idx + 1)), new_idxs, old_idxs))
+            }
 
     def undo(self, event: Any = None) -> None | EventDataDict:
         if not self.undo_stack:

@@ -793,6 +793,11 @@ def move_elements_by_mapping_gen(
     return (seq[old_idxs[i]] if i in old_idxs else next(remaining_values) for i in range(len(seq)))
 
 
+def move_fast(seq: list[Any], new_idxs: dict[int, int], old_idxs: dict[int, int]) -> list[Any]:
+    remaining_values = (e for i, e in enumerate(seq) if i not in new_idxs)
+    return [seq[old_idxs[i]] if i in old_idxs else next(remaining_values) for i in range(len(seq))]
+
+
 def move_elements_to(
     seq: list[Any],
     move_to: int,
@@ -819,10 +824,17 @@ def get_new_indexes(
     returns {old idx: new idx, ...}
     """
     offset = sum(1 for i in to_move if i < move_to)
-    new_idxs = dict(zip(to_move, range(move_to - offset, move_to - offset + len(to_move))))
-    if get_inverse:
-        return new_idxs, dict(zip(new_idxs.values(), new_idxs))
-    return new_idxs
+    correct_move_to = move_to - offset
+    if not get_inverse:
+        return {elem: correct_move_to + i for i, elem in enumerate(to_move)}
+    else:
+        new_idxs = {}
+        old_idxs = {}
+        for i, elem in enumerate(to_move):
+            value = correct_move_to + i
+            new_idxs[elem] = value
+            old_idxs[value] = elem
+        return new_idxs, old_idxs
 
 
 def insert_items(

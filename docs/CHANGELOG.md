@@ -6,6 +6,7 @@
 #### Improved:
 - Further minor redrawing performance improvements.
 - Minor tree build performance improvement.
+- Minor performance improvement for moving rows/columns.
 
 ### Version 7.4.12
 #### Addressed:
