@@ -6579,10 +6579,6 @@ class MainTable(tk.Canvas):
                     self.tag_raise(box.bd_iid)
             if self.selected:
                 self.tag_raise(self.selected.iid)
-        if self.RI.disp_resize_lines:
-            self.tag_raise("rh")
-        if self.CH.disp_resize_lines:
-            self.tag_raise("rw")
         self.lift("lift")
         self.tag_raise("t")
 
