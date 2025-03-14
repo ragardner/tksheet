@@ -8,6 +8,9 @@
 - Minor tree build performance improvement.
 - Minor performance improvement for moving rows/columns.
 
+#### Addressed:
+- Edge case error with moving rows while using treeview mode.
+
 ### Version 7.4.12
 #### Addressed:
 - [#276](https://github.com/ragardner/tksheet/issues/276).
