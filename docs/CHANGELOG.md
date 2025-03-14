@@ -1,3 +1,6 @@
+### Version 7.4.14
+####
+
 ### Version 7.4.13
 #### Fixed:
 - 7.4.12 deselection display regression.
