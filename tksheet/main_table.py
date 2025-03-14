@@ -491,7 +491,7 @@ class MainTable(tk.Canvas):
     def get_find_window_dimensions_coords(self, w_width: int | None) -> tuple[int, int, int, int]:
         if w_width is None:
             w_width = self.winfo_width()
-        width = min(self.get_txt_w("X" * 23), w_width - 7)
+        width = min(self.wrap_get_char_w("X") * 23, w_width - 7)
         height = self.min_row_height
         if self.find_window.window and self.find_window.window.replace_visible:
             height *= 2
