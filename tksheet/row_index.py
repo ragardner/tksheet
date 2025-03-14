@@ -2761,7 +2761,7 @@ class RowIndex(tk.Canvas):
                         event_data["moved"]["rows"]["data"],
                     )
                     data_new_idxs = event_data["moved"]["rows"]["data"]
-                    data_old_idxs = dict(zip(data_new_idxs.values(), data_new_idxs))
+                    data_old_idxs = {v: k for k, v in data_new_idxs.items()}
 
                     if () in event_data["moved"]["rows"]["displayed"]:
                         del event_data["moved"]["rows"]["displayed"][()]
