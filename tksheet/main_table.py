@@ -322,7 +322,7 @@ class MainTable(tk.Canvas):
             and kwargs["total_rows"] > 0
             and kwargs["total_cols"] > 0
         ):
-            self.data = [list(repeat("", kwargs["total_cols"])) for i in range(kwargs["total_rows"])]
+            self.data = [list(repeat("", kwargs["total_cols"])) for _ in range(kwargs["total_rows"])]
         _header = kwargs["header"] if kwargs["header"] is not None else kwargs["headers"]
         if isinstance(_header, int):
             self._headers = _header
@@ -1539,14 +1539,7 @@ class MainTable(tk.Canvas):
             else:
                 self.recreate_all_selection_boxes()
         if move_data:
-            self.data = list(
-                map(
-                    move_elements_by_mapping,
-                    self.data,
-                    repeat(data_new_idxs),
-                    repeat(data_old_idxs),
-                ),
-            )
+            self.data = [move_elements_by_mapping(k, data_new_idxs, data_old_idxs) for k in self.data]
             maxidx = len_to_idx(totalcols)
             self.CH.fix_header(maxidx)
             if isinstance(self._headers, list) and self._headers:
@@ -5045,7 +5038,7 @@ class MainTable(tk.Canvas):
             event_data["added"]["rows"] = {
                 "table": {},
                 "index": {},
-                "row_heights": {rn: default_height for rn in range(len(self.row_positions) - 1, maxrn + 1)},
+                "row_heights": dict.fromkeys(range(len(self.row_positions) - 1, maxrn + 1), default_height),
             }
             if not from_undo:
                 self.set_row_positions(
@@ -5169,7 +5162,7 @@ class MainTable(tk.Canvas):
             event_data["added"]["columns"] = {
                 "table": {},
                 "header": {},
-                "column_widths": {cn: default_width for cn in range(len(self.col_positions) - 1, maxcn + 1)},
+                "column_widths": dict.fromkeys(range(len(self.col_positions) - 1, maxcn + 1), default_width),
             }
             if not from_undo:
                 self.set_col_positions(
