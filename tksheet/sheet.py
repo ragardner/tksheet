@@ -1726,12 +1726,14 @@ class Sheet(tk.Frame):
             len_check = (total_cols + 1) if row_index else total_cols
             for rn, r in enumerate(rows):
                 if len_check > (lnr := len(r)):
-                    r += self.MT.get_empty_row_seq(
-                        rn,
-                        end=total_cols,
-                        start=(lnr - 1) if row_index else lnr,
-                        r_ops=False,
-                        c_ops=False,
+                    r.extend(
+                        self.MT.gen_empty_row_seq(
+                            rn,
+                            end=total_cols,
+                            start=(lnr - 1) if row_index else lnr,
+                            r_ops=False,
+                            c_ops=False,
+                        )
                     )
         event_data = self.MT.add_rows(
             *self.MT.get_args_for_add_rows(

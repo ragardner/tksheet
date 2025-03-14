@@ -4520,14 +4520,21 @@ class MainTable(tk.Canvas):
                 else:
                     tw = min_column_width
                     h = min_rh
-                if self.get_cell_kwargs(
-                    datarn,
-                    datacn,
-                    key="dropdown",
-                ) or self.get_cell_kwargs(
-                    datarn,
-                    datacn,
-                    key="checkbox",
+                # self.get_cell_kwargs not used here to boost performance
+                if (
+                    (datarn, datacn) in self.cell_options
+                    and "dropdown" in self.cell_options[(datarn, datacn)]
+                    or datarn in self.row_options
+                    and "dropdown" in self.row_options[datarn]
+                    or datacn in self.col_options
+                    and "dropdown" in self.col_options[datacn]
+                ) or (
+                    (datarn, datacn) in self.cell_options
+                    and "checkbox" in self.cell_options[(datarn, datacn)]
+                    or datarn in self.row_options
+                    and "checkbox" in self.row_options[datarn]
+                    or datacn in self.col_options
+                    and "checkbox" in self.col_options[datacn]
                 ):
                     tw += qtxth
                 if tw > w:
@@ -5801,7 +5808,7 @@ class MainTable(tk.Canvas):
                 if (lnr := len(r)) > total_columns:
                     r = r[:total_columns]
                 elif lnr < total_columns:
-                    r += self.get_empty_row_seq(rn, end=total_columns, start=lnr)
+                    r.extend(self.gen_empty_row_seq(rn, end=total_columns, start=lnr))
 
     def equalize_data_row_lengths(
         self,
@@ -5816,9 +5823,10 @@ class MainTable(tk.Canvas):
         total_data_cols = max(total_data_cols, len(self.col_positions) - 1)
         if not isinstance(self._headers, int) and include_header and total_data_cols > len(self._headers):
             self.CH.fix_header(total_data_cols - 1)
+        empty_v = self.get_value_for_empty_cell
         for rn, r in enumerate(self.data):
             if total_data_cols > (lnr := len(r)):
-                r += self.get_empty_row_seq(rn, end=total_data_cols, start=lnr)
+                r.extend(empty_v(rn, c, r_ops=True, c_ops=True) for c in range(lnr, total_data_cols))
         return total_data_cols
 
     def get_canvas_visible_area(self) -> tuple[float, float, float, float]:
@@ -7990,14 +7998,14 @@ class MainTable(tk.Canvas):
             return ""
 
     def get_empty_row_seq(
-        self,
-        datarn: int,
-        end: int,
-        start: int = 0,
-        r_ops: bool = True,
-        c_ops: bool = True,
+        self, datarn: int, end: int, start: int = 0, r_ops: bool = True, c_ops: bool = True
     ) -> list[Any]:
         return [self.get_value_for_empty_cell(datarn, datacn, r_ops=r_ops, c_ops=c_ops) for datacn in range(start, end)]
+
+    def gen_empty_row_seq(
+        self, datarn: int, end: int, start: int = 0, r_ops: bool = True, c_ops: bool = True
+    ) -> Generator[Any]:
+        yield from (self.get_value_for_empty_cell(datarn, c, r_ops=r_ops, c_ops=c_ops) for c in range(start, end))
 
     def fix_row_len(self, datarn: int, datacn: int) -> None:
         self.data[datarn].extend(self.get_empty_row_seq(datarn, end=datacn + 1, start=len(self.data[datarn])))
