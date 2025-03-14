@@ -1470,15 +1470,15 @@ class ColumnHeaders(tk.Canvas):
             return False
 
     def wrap_get_char_w(self, c: str) -> int:
-        self.MT.txt_measure_canvas.itemconfig(
-            self.MT.txt_measure_canvas_text,
-            text=_test_str + c,
-            font=self.header_font,
-        )
-        b = self.MT.txt_measure_canvas.bbox(self.MT.txt_measure_canvas_text)
         if c in self.MT.char_widths[self.header_font]:
             return self.MT.char_widths[self.header_font][c]
         else:
+            self.MT.txt_measure_canvas.itemconfig(
+                self.MT.txt_measure_canvas_text,
+                text=_test_str + c,
+                font=self.header_font,
+            )
+            b = self.MT.txt_measure_canvas.bbox(self.MT.txt_measure_canvas_text)
             wd = b[2] - b[0] - self.header_test_str_w
             self.MT.char_widths[self.header_font][c] = wd
             return wd

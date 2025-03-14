@@ -7,7 +7,7 @@ from contextlib import suppress
 from functools import partial
 from itertools import cycle, islice, repeat
 from math import ceil
-from operator import itemgetter
+from re import findall
 from typing import Any, Literal
 
 from .colors import color_map
@@ -1058,14 +1058,16 @@ class RowIndex(tk.Canvas):
     def get_cell_dimensions(self, datarn: int) -> tuple[int, int]:
         txt = self.cell_str(datarn, fix=False)
         if txt:
-            self.MT.txt_measure_canvas.itemconfig(self.MT.txt_measure_canvas_text, text=txt, font=self.ops.index_font)
-            b = self.MT.txt_measure_canvas.bbox(self.MT.txt_measure_canvas_text)
-            w = b[2] - b[0] + 7
-            h = b[3] - b[1] + 5
+            lines = findall(r"[^\n]+", txt)
+            h = self.MT.index_txt_height * len(lines) + 5
+            w = max(sum(self.wrap_get_char_w(c) for c in line) for line in lines) + 8
         else:
             w = self.ops.default_row_index_width
             h = self.MT.min_row_height
-        if self.get_cell_kwargs(datarn, key="dropdown") or self.get_cell_kwargs(datarn, key="checkbox"):
+        # self.get_cell_kwargs not used here to boost performance
+        if (datarn in self.cell_options and "dropdown" in self.cell_options[datarn]) or (
+            datarn in self.cell_options and "checkbox" in self.cell_options[datarn]
+        ):
             w += self.MT.index_txt_height + 2
         if self.ops.treeview:
             if datarn in self.cell_options and "align" in self.cell_options[datarn]:
@@ -1076,6 +1078,27 @@ class RowIndex(tk.Canvas):
                 w += self.MT.index_txt_height
             w += self.get_iid_indent(self.MT._row_index[datarn].iid) + 10
         return w, h
+
+    def get_cell_width(self, datarn: int) -> int:
+        txt = self.cell_str(datarn, fix=False)
+        if txt:
+            w = max(sum(self.wrap_get_char_w(c) for c in line) for line in findall(r"[^\n]+", txt)) + 8
+        else:
+            w = self.ops.default_row_index_width
+        # self.get_cell_kwargs not used here to boost performance
+        if (datarn in self.cell_options and "dropdown" in self.cell_options[datarn]) or (
+            datarn in self.cell_options and "checkbox" in self.cell_options[datarn]
+        ):
+            w += self.MT.index_txt_height + 2
+        if self.ops.treeview:
+            if datarn in self.cell_options and "align" in self.cell_options[datarn]:
+                align = self.cell_options[datarn]["align"]
+            else:
+                align = self.align
+            if align[-1] == "w":
+                w += self.MT.index_txt_height
+            w += self.get_iid_indent(self.MT._row_index[datarn].iid) + 10
+        return w
 
     def get_wrapped_cell_height(self, datarn: int) -> int:
         n_lines = max(
@@ -1161,10 +1184,7 @@ class RowIndex(tk.Canvas):
             self.MT.recreate_all_selection_boxes()
         return height
 
-    def get_index_text_width(
-        self,
-        only_rows: Iterator[int] | None = None,
-    ) -> int:
+    def get_index_text_width(self, only_rows: Iterator[int] | None = None) -> int:
         self.fix_index()
         w = self.ops.default_row_index_width
         if (not self.MT._row_index and isinstance(self.MT._row_index, list)) or (
@@ -1180,7 +1200,7 @@ class RowIndex(tk.Canvas):
                 iterable = range(len(self.MT.data))
         else:
             iterable = self.MT.displayed_rows
-        if (new_w := max(map(itemgetter(0), map(self.get_cell_dimensions, iterable)), default=w)) > w:
+        if (new_w := max(map(self.get_cell_width, iterable), default=w)) > w:
             w = new_w
         if w > self.ops.max_index_width:
             w = int(self.ops.max_index_width)
@@ -1235,11 +1255,11 @@ class RowIndex(tk.Canvas):
     def auto_set_index_width(self, end_row: int, only_rows: list) -> bool:
         if not isinstance(self.MT._row_index, int) and not self.MT._row_index:
             if self.ops.default_row_index == "letters":
-                new_w = self.MT.get_txt_w(f"{num2alpha(end_row)}", self.index_font) + 20
+                new_w = sum(self.wrap_get_char_w(c) for c in num2alpha(end_row)) + 20
             elif self.ops.default_row_index == "numbers":
-                new_w = self.MT.get_txt_w(f"{end_row}", self.index_font) + 20
+                new_w = sum(self.wrap_get_char_w(c) for c in str(end_row)) + 20
             elif self.ops.default_row_index == "both":
-                new_w = self.MT.get_txt_w(f"{end_row + 1} {num2alpha(end_row)}", self.index_font) + 20
+                new_w = sum(self.wrap_get_char_w(c) for c in f"{end_row + 1} {num2alpha(end_row)}") + 20
             elif self.ops.default_row_index is None:
                 new_w = 20
         elif self.ops.auto_resize_row_index is True:
@@ -1588,15 +1608,15 @@ class RowIndex(tk.Canvas):
             return False
 
     def wrap_get_char_w(self, c: str) -> int:
-        self.MT.txt_measure_canvas.itemconfig(
-            self.MT.txt_measure_canvas_text,
-            text=_test_str + c,
-            font=self.index_font,
-        )
-        b = self.MT.txt_measure_canvas.bbox(self.MT.txt_measure_canvas_text)
         if c in self.MT.char_widths[self.index_font]:
             return self.MT.char_widths[self.index_font][c]
         else:
+            self.MT.txt_measure_canvas.itemconfig(
+                self.MT.txt_measure_canvas_text,
+                text=_test_str + c,
+                font=self.index_font,
+            )
+            b = self.MT.txt_measure_canvas.bbox(self.MT.txt_measure_canvas_text)
             wd = b[2] - b[0] - self.index_test_str_w
             self.MT.char_widths[self.index_font][c] = wd
             return wd
