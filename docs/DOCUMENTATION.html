@@ -28,12 +28,16 @@
             display: none;
         }
 
-        .side-panel, .main-content, .content, .toggle-button, .theme-button, .back-to-top, pre, table, td, th {
+        .side-panel, .main-content, .content, .toggle-button, .theme-button, .back-to-top, pre, table, td, th, h1 {
             transition: background-color 0.8s ease, color 0.8s ease, border-color 0.8s ease;
         }
 
         #toggle-toc:checked ~ .side-panel {
             display: block;
+        }
+
+        .content h1 {
+            color: #007bff;
         }
 
         .side-panel a {
@@ -71,7 +75,7 @@
         .buttons-container {
             position: fixed;
             top: 10px;
-            right: 40px; /* Adjusted to prevent overlap with scrollbar */
+            right: 40px;
             display: flex;
             gap: 10px;
             z-index: 1;
@@ -130,6 +134,10 @@
         #toggle-theme:checked ~ .main-content {
             background-color: #000;
             color: #ccc;
+        }
+
+        #toggle-theme:checked ~ .main-content .content h1 {
+            color: #80deea;
         }
 
         #toggle-theme:checked ~ .side-panel table,
@@ -251,10 +259,9 @@
                 padding: 0;
             }
             pre {
-                white-space: pre-wrap; /* Ensures code wraps on paper */
+                white-space: pre-wrap;
             }
         }
-
     </style>
 </head>
 <body>
