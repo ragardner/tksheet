@@ -3,6 +3,7 @@ from __future__ import annotations
 import tkinter as tk
 from collections import defaultdict
 from collections.abc import Callable, Generator, Hashable, Iterator, Sequence
+from contextlib import suppress
 from functools import partial
 from itertools import cycle, islice, repeat
 from math import ceil
@@ -2729,16 +2730,17 @@ class RowIndex(tk.Canvas):
                 )
                 # deal with displayed mapping
                 event_data["moved"]["rows"]["displayed"] = {}
-                if new_loc_is_displayed:
-                    if disp_insert_row is None:
-                        if new_parent or insert_row > move_to_row:
-                            disp_insert_row = self.MT.disprn(self.rns[move_to_iid]) + 1  # TODO: maybe issues here
+                with suppress(Exception):
+                    if new_loc_is_displayed:
+                        if disp_insert_row is None:
+                            if new_parent or insert_row > move_to_row:
+                                disp_insert_row = self.MT.disprn(self.rns[move_to_iid]) + 1
+                            else:
+                                disp_insert_row = self.MT.disprn(self.rns[move_to_iid])
+                        if (disp_from_row := self.MT.try_disprn(self.rns[item])) is not None:
+                            event_data["moved"]["rows"]["displayed"] = {disp_from_row: disp_insert_row}
                         else:
-                            disp_insert_row = self.MT.disprn(self.rns[move_to_iid])
-                    if (disp_from_row := self.MT.try_disprn(self.rns[item])) is not None:
-                        event_data["moved"]["rows"]["displayed"] = {disp_from_row: disp_insert_row}
-                    else:
-                        event_data["moved"]["rows"]["displayed"] = {(): disp_insert_row}
+                            event_data["moved"]["rows"]["displayed"] = {(): disp_insert_row}
 
                 if any(self.move_pid_causes_recursive_loop(self.MT._row_index[r].iid, new_parent) for r in moved_rows):
                     event_data["moved"]["rows"] = {}
