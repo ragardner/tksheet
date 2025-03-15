@@ -1,3 +1,6 @@
+### Version 7.4.15
+####
+
 ### Version 7.4.14
 #### Fixed:
 - Find in selection would sometimes fail.
