@@ -706,36 +706,55 @@ class MainTable(tk.Canvas):
             return find in str(value).lower()
 
     def find_within_current_box(
-        self, current_box: SelectionBox, find: str, reverse: bool
+        self,
+        current_box: SelectionBox,
+        find: str,
+        reverse: bool,
+        stop: None | tuple[int, int] = None,
     ) -> None | tuple[int, int, int]:
-        start_r, start_c = next_cell(
+        if stop:
+            start_r, start_c = current_box.coords[0], current_box.coords[1]
+        else:
+            start_r, start_c = next_cell(
+                *current_box.coords,
+                self.selected.row,
+                self.selected.column,
+                reverse=reverse,
+            )
+        iterable = box_gen_coords(
             *current_box.coords,
-            self.selected.row,
-            self.selected.column,
+            start_r,
+            start_c,
             reverse=reverse,
+            all_rows_displayed=self.all_rows_displayed,
+            all_cols_displayed=self.all_columns_displayed,
+            displayed_rows=self.displayed_rows,
+            displayed_cols=self.displayed_columns,
+            no_wrap=True,
         )
-        return next(
-            (
-                (r, c, current_box.fill_iid)
-                for r, c in box_gen_coords(
-                    *current_box.coords,
-                    start_r,
-                    start_c,
-                    reverse=reverse,
-                    all_rows_displayed=self.all_rows_displayed,
-                    all_cols_displayed=self.all_columns_displayed,
-                    displayed_rows=self.displayed_rows,
-                    displayed_cols=self.displayed_columns,
-                    no_wrap=True,
-                )
-                if (
+        if stop:
+            for r, c in iterable:
+                if (r, c) == stop:
+                    return None
+                elif (
                     self.find_match(find, r, c)  # will not show hidden rows
                     and (self.all_rows_displayed or bisect_in(self.displayed_rows, r))
                     and (self.all_columns_displayed or bisect_in(self.displayed_columns, c))
-                )
-            ),
-            None,
-        )
+                ):
+                    return (r, c, current_box.fill_iid)
+        else:
+            return next(
+                (
+                    (r, c, current_box.fill_iid)
+                    for r, c in iterable
+                    if (
+                        self.find_match(find, r, c)  # will not show hidden rows
+                        and (self.all_rows_displayed or bisect_in(self.displayed_rows, r))
+                        and (self.all_columns_displayed or bisect_in(self.displayed_columns, c))
+                    )
+                ),
+                None,
+            )
 
     def find_within_non_current_boxes(self, current_id: int, find: str, reverse: bool) -> None | tuple[int, int, int]:
         fn = partial(
@@ -791,15 +810,21 @@ class MainTable(tk.Canvas):
         current_box = self.selection_boxes[self.selected.fill_iid]
         current_id = self.selected.fill_iid
         if is_last_cell(*current_box.coords, self.selected.row, self.selected.column, reverse=reverse):
-            if coord := self.find_within_non_current_boxes(current_id=current_id, find=find, reverse=reverse):
-                return coord
-            if coord := self.find_within_current_box(current_box=current_box, find=find, reverse=reverse):
+            if (coord := self.find_within_non_current_boxes(current_id=current_id, find=find, reverse=reverse)) or (
+                coord := self.find_within_current_box(current_box=current_box, find=find, reverse=reverse)
+            ):
                 return coord
         else:
-            if coord := self.find_within_current_box(current_box=current_box, find=find, reverse=reverse):
+            if (coord := self.find_within_current_box(current_box=current_box, find=find, reverse=reverse)) or (
+                coord := self.find_within_non_current_boxes(current_id=current_id, find=find, reverse=reverse)
+            ):
                 return coord
-            if coord := self.find_within_non_current_boxes(current_id=current_id, find=find, reverse=reverse):
-                return coord
+            elif self.selected.row != current_box.coords[0] or self.selected.column != current_box.coords[1]:
+                coord = self.find_within_current_box(
+                    current_box=current_box, find=find, reverse=reverse, stop=(self.selected.row, self.selected.column)
+                )
+                if coord:
+                    return coord
         return None
 
     def find_all_cells(self, find: str, reverse: bool = False) -> tuple[int, int, None] | None:
@@ -4235,6 +4260,27 @@ class MainTable(tk.Canvas):
         self.table_txt_width, self.table_txt_height = self.get_txt_dimensions("|", self.PAR.ops.table_font)
         self.min_row_height = max(6, self.table_txt_height, self.index_txt_height) + 6
 
+        # dropdown stuff
+        mod = (self.table_txt_height - 1) if self.table_txt_height % 2 else self.table_txt_height
+        small_mod = int(mod / 5)
+        mid_y = int(self.min_row_height / 2)
+        self.dd_up_arrow = (
+            4 + 4 * small_mod,
+            mid_y + small_mod,
+            4 + 2 * small_mod,
+            mid_y - small_mod,
+            4,
+            mid_y + small_mod,
+        )
+        self.dd_down_arrow = (
+            4 + 4 * small_mod,
+            mid_y - small_mod,
+            4 + 2 * small_mod,
+            mid_y + small_mod,
+            4,
+            mid_y - small_mod,
+        )
+
     def set_index_font(self, newfont: tuple | None = None, row_heights: bool = True) -> tuple[str, int, str]:
         if newfont:
             self.check_font(newfont)
@@ -6041,7 +6087,7 @@ class MainTable(tk.Canvas):
             else:
                 self.itemconfig(iid, fill=fill, outline=outline, state="normal")
         else:
-            iid = self.create_rectangle(coords, fill=fill, outline=outline, tags="hi")
+            iid = self.create_rectangle(coords, fill=fill, outline=outline)
         self.disp_high[iid] = True
         return True
 
@@ -6051,30 +6097,19 @@ class MainTable(tk.Canvas):
                 iid, sh = self.hidd_grid.popitem()
                 self.coords(iid, points)
                 if sh:
-                    self.itemconfig(
-                        iid,
-                        fill=self.PAR.ops.table_grid_fg,
-                        width=1,
-                        capstyle=tk.BUTT,
-                        joinstyle=tk.ROUND,
-                    )
+                    self.itemconfig(iid, fill=self.PAR.ops.table_grid_fg, width=1, capstyle="butt", joinstyle="round")
                 else:
                     self.itemconfig(
                         iid,
                         fill=self.PAR.ops.table_grid_fg,
                         width=1,
-                        capstyle=tk.BUTT,
-                        joinstyle=tk.ROUND,
+                        capstyle="butt",
+                        joinstyle="round",
                         state="normal",
                     )
             else:
                 iid = self.create_line(
-                    points,
-                    fill=self.PAR.ops.table_grid_fg,
-                    width=1,
-                    capstyle=tk.BUTT,
-                    joinstyle=tk.ROUND,
-                    tag="g",
+                    points, fill=self.PAR.ops.table_grid_fg, width=1, capstyle="butt", joinstyle="round"
                 )
             self.disp_grid[iid] = True
 
@@ -6352,6 +6387,7 @@ class MainTable(tk.Canvas):
                 cleftgridln = self.col_positions[c]
                 crightgridln = self.col_positions[c + 1]
                 datacn = cells["datacn"][c]
+                disp_loc = (r, c)
                 loc = (datarn, datacn)
 
                 fill, dd_drawn = self.redraw_highlight_get_text_fg(
@@ -6361,14 +6397,14 @@ class MainTable(tk.Canvas):
                     fr=rtopgridln,
                     sc=crightgridln,
                     sr=rbotgridln,
-                    sel_cells_bg=override[0] if override and (r, c) == current_loc else sel_cells_bg,
-                    sel_cols_bg=override[1] if override and (r, c) == current_loc else sel_cols_bg,
-                    sel_rows_bg=override[2] if override and (r, c) == current_loc else sel_rows_bg,
+                    sel_cells_bg=override[0] if override and disp_loc == current_loc else sel_cells_bg,
+                    sel_cols_bg=override[1] if override and disp_loc == current_loc else sel_cols_bg,
+                    sel_rows_bg=override[2] if override and disp_loc == current_loc else sel_rows_bg,
                     selections=selections,
                     datarn=datarn,
                     datacn=datacn,
                     can_width=can_width,
-                    dont_blend=(r, c) == dont_blend,
+                    dont_blend=disp_loc == dont_blend,
                     alternate_color=alternate_color,
                     has_dd=loc in cells["dropdown"],
                 )
@@ -6398,37 +6434,27 @@ class MainTable(tk.Canvas):
                     x2 = crightgridln
                     y2 = self.row_positions[r + 1]
                     if not dd_drawn and self.PAR.ops.show_dropdown_borders:
-                        self.redraw_highlight(
-                            x1 + 1,
-                            y1 + 1,
-                            x2,
-                            y2,
-                            fill="",
-                            outline=self.PAR.ops.table_fg,
-                        )
+                        self.redraw_highlight(x1 + 1, y1 + 1, x2, y2, fill="", outline=self.PAR.ops.table_fg)
                     if max_width >= 5:
-                        mod = (self.table_txt_height - 1) if self.table_txt_height % 2 else self.table_txt_height
-                        small_mod = int(mod / 5)
-                        mid_y = int(self.min_row_height / 2)
-                        if dd_coords == (r, c):
+                        if dd_coords == disp_loc:
                             # up arrow
                             points = (
-                                x2 - 4 - small_mod - small_mod - small_mod - small_mod,
-                                y1 + mid_y + small_mod,
-                                x2 - 4 - small_mod - small_mod,
-                                y1 + mid_y - small_mod,
-                                x2 - 4,
-                                y1 + mid_y + small_mod,
+                                x2 - self.dd_up_arrow[0],
+                                y1 + self.dd_up_arrow[1],
+                                x2 - self.dd_up_arrow[2],
+                                y1 + self.dd_up_arrow[3],
+                                x2 - self.dd_up_arrow[4],
+                                y1 + self.dd_up_arrow[5],
                             )
                         else:
                             # down arrow
                             points = (
-                                x2 - 4 - small_mod - small_mod - small_mod - small_mod,
-                                y1 + mid_y - small_mod,
-                                x2 - 4 - small_mod - small_mod,
-                                y1 + mid_y + small_mod,
-                                x2 - 4,
-                                y1 + mid_y - small_mod,
+                                x2 - self.dd_down_arrow[0],
+                                y1 + self.dd_down_arrow[1],
+                                x2 - self.dd_down_arrow[2],
+                                y1 + self.dd_down_arrow[3],
+                                x2 - self.dd_down_arrow[4],
+                                y1 + self.dd_down_arrow[5],
                             )
                         _fill = fill if kws["state"] != "disabled" else self.PAR.ops.table_grid_fg
                         if self.hidd_dropdown:
@@ -6440,12 +6466,7 @@ class MainTable(tk.Canvas):
                                 self.itemconfig(cid, fill=_fill, state="normal")
                         else:
                             cid = self.create_line(
-                                points,
-                                fill=_fill,
-                                width=2,
-                                capstyle=tk.ROUND,
-                                joinstyle=tk.BEVEL,
-                                tags="lift",
+                                points, fill=_fill, width=2, capstyle="round", joinstyle="bevel", tag="lift"
                             )
                         self.disp_dropdown[cid] = True
 
@@ -6489,14 +6510,10 @@ class MainTable(tk.Canvas):
                             else:
                                 self.itemconfig(cid, fill="", outline=_fill, state="normal")
                         else:
-                            cid = self.create_polygon(points, fill="", outline=_fill, smooth=True, tags="lift")
+                            cid = self.create_polygon(points, fill="", outline=_fill, smooth=True, tag="lift")
                         self.disp_checkbox[cid] = True
                         if draw_check:
-                            x1 = x1 + 4
-                            y1 = y1 + 4
-                            x2 = x2 - 3
-                            y2 = y2 - 3
-                            points = rounded_box_coords(x1, y1, x2, y2, radius=4)
+                            points = rounded_box_coords(x1 + 4, y1 + 4, x2 - 3, y2 - 3, radius=4)
                             if self.hidd_checkbox:
                                 cid, sh = self.hidd_checkbox.popitem()
                                 self.coords(cid, points)
@@ -6505,7 +6522,7 @@ class MainTable(tk.Canvas):
                                 else:
                                     self.itemconfig(cid, fill=_fill, outline="", state="normal")
                             else:
-                                cid = self.create_polygon(points, fill=_fill, outline="", smooth=True, tags="lift")
+                                cid = self.create_polygon(points, fill=_fill, outline="", smooth=True, tag="lift")
                             self.disp_checkbox[cid] = True
 
                 else:
@@ -6552,7 +6569,7 @@ class MainTable(tk.Canvas):
                             )
                     else:
                         iid = self.create_text(
-                            draw_x, draw_y, text="\n".join(gen_lines), fill=fill, font=font, anchor=align, tags="lift"
+                            draw_x, draw_y, text="\n".join(gen_lines), fill=fill, font=font, anchor=align, tag="lift"
                         )
                     self.disp_text[iid] = True
 
@@ -6567,7 +6584,7 @@ class MainTable(tk.Canvas):
                                 self.itemconfig(iid, text=t, fill=fill, font=font, anchor=align, state="normal")
                         else:
                             iid = self.create_text(
-                                draw_x, draw_y, text=t, fill=fill, font=font, anchor=align, tags="lift"
+                                draw_x, draw_y, text=t, fill=fill, font=font, anchor=align, tag="lift"
                             )
                         self.disp_text[iid] = True
                         draw_y += self.table_txt_height
@@ -6654,10 +6671,6 @@ class MainTable(tk.Canvas):
             )
         if resized_cols or resized_rows or changed_w:
             self.recreate_all_selection_boxes()
-            if changed_w:
-                for widget in (self, self.RI, self.CH, self.TL):
-                    widget.update_idletasks()
-                return
         x_stop = min(last_col_line_pos, scrollpos_right)
         y_stop = min(last_row_line_pos, scrollpos_bot)
         if redraw_header and self.show_header:

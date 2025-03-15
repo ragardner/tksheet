@@ -1327,7 +1327,7 @@ class ColumnHeaders(tk.Canvas):
             else:
                 self.itemconfig(iid, fill=fill, outline=outline, state="normal")
         else:
-            iid = self.create_rectangle(coords, fill=fill, outline=outline, tag="hi")
+            iid = self.create_rectangle(coords, fill=fill, outline=outline)
         self.disp_high[iid] = True
         return True
 

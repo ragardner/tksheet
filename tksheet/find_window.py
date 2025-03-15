@@ -317,6 +317,8 @@ class FindWindow(tk.Frame):
         return "break"
 
     def focus_replace(self, event: tk.Misc = None) -> Literal["break"]:
+        if self.replace_enabled and not self.replace_visible:
+            self.toggle_replace_window()
         widget = self.focus_get()
         if widget == self.replace_tktext:
             self.replace_tktext.select_all()
