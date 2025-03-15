@@ -1283,7 +1283,6 @@ class ColumnHeaders(tk.Canvas):
                     self.current_height - 1,
                     fill=fill,
                     outline=self.ops.header_fg if has_dd and self.ops.show_dropdown_borders else "",
-                    tag="hi",
                 )
         elif not kwargs:
             if "columns" in selections and c in selections["columns"]:
@@ -1295,7 +1294,6 @@ class ColumnHeaders(tk.Canvas):
                     self.current_height - 1,
                     fill=self.ops.header_selected_columns_bg,
                     outline=self.ops.header_fg if has_dd and self.ops.show_dropdown_borders else "",
-                    tag="hi",
                 )
             elif "cells" in selections and c in selections["cells"]:
                 txtfg = self.ops.header_selected_cells_fg
@@ -1306,7 +1304,6 @@ class ColumnHeaders(tk.Canvas):
                     self.current_height - 1,
                     fill=self.ops.header_selected_cells_bg,
                     outline=self.ops.header_fg if has_dd and self.ops.show_dropdown_borders else "",
-                    tag="hi",
                 )
             else:
                 txtfg = self.ops.header_fg
@@ -1320,7 +1317,6 @@ class ColumnHeaders(tk.Canvas):
         y2: float,
         fill: str,
         outline: str,
-        tag: str | tuple[str],
     ) -> bool:
         coords = (x1, y1, x2, y2)
         if self.hidd_high:
@@ -1329,10 +1325,9 @@ class ColumnHeaders(tk.Canvas):
             if showing:
                 self.itemconfig(iid, fill=fill, outline=outline)
             else:
-                self.itemconfig(iid, fill=fill, outline=outline, tag=tag, state="normal")
-            self.tag_raise(iid)
+                self.itemconfig(iid, fill=fill, outline=outline, state="normal")
         else:
-            iid = self.create_rectangle(coords, fill=fill, outline=outline, tag=tag)
+            iid = self.create_rectangle(coords, fill=fill, outline=outline, tag="hi")
         self.disp_high[iid] = True
         return True
 
@@ -1341,19 +1336,17 @@ class ColumnHeaders(tk.Canvas):
         points: Sequence[float],
         fill: str,
         width: int,
-        tag: str | tuple[str],
     ) -> None:
         if self.hidd_grid:
             t, sh = self.hidd_grid.popitem()
             self.coords(t, points)
             if sh:
-                self.itemconfig(t, fill=fill, width=width, tag=tag)
+                self.itemconfig(t, fill=fill, width=width)
             else:
-                self.itemconfig(t, fill=fill, width=width, tag=tag, state="normal")
+                self.itemconfig(t, fill=fill, width=width, state="normal")
             self.disp_grid[t] = True
-            self.tag_raise(t)
         else:
-            self.disp_grid[self.create_line(points, fill=fill, width=width, tag=tag)] = True
+            self.disp_grid[self.create_line(points, fill=fill, width=width)] = True
 
     def redraw_dropdown(
         self,
@@ -1363,13 +1356,12 @@ class ColumnHeaders(tk.Canvas):
         y2: float,
         fill: str,
         outline: str,
-        tag: str | tuple[str],
         draw_outline: bool = True,
         draw_arrow: bool = True,
         open_: bool = False,
     ) -> None:
         if draw_outline and self.ops.show_dropdown_borders:
-            self.redraw_highlight(x1 + 1, y1 + 1, x2, y2, fill="", outline=self.ops.header_fg, tag=tag)
+            self.redraw_highlight(x1 + 1, y1 + 1, x2, y2, fill="", outline=self.ops.header_fg)
         if draw_arrow:
             mod = (self.MT.header_txt_height - 1) if self.MT.header_txt_height % 2 else self.MT.header_txt_height
             small_mod = int(mod / 5)
@@ -1400,17 +1392,9 @@ class ColumnHeaders(tk.Canvas):
                 if sh:
                     self.itemconfig(t, fill=fill)
                 else:
-                    self.itemconfig(t, fill=fill, tag=tag, state="normal")
-                self.lift(t)
+                    self.itemconfig(t, fill=fill, state="normal")
             else:
-                t = self.create_line(
-                    points,
-                    fill=fill,
-                    tag=tag,
-                    width=2,
-                    capstyle=tk.ROUND,
-                    joinstyle=tk.BEVEL,
-                )
+                t = self.create_line(points, fill=fill, width=2, capstyle=tk.ROUND, joinstyle=tk.BEVEL, tag="lift")
             self.disp_dropdown[t] = True
 
     def redraw_checkbox(
@@ -1421,7 +1405,6 @@ class ColumnHeaders(tk.Canvas):
         y2: float,
         fill: str,
         outline: str,
-        tag: str | tuple[str],
         draw_check: bool = False,
     ) -> None:
         points = rounded_box_coords(x1, y1, x2, y2)
@@ -1431,10 +1414,9 @@ class ColumnHeaders(tk.Canvas):
             if sh:
                 self.itemconfig(t, fill=outline, outline=fill)
             else:
-                self.itemconfig(t, fill=outline, outline=fill, tag=tag, state="normal")
-            self.lift(t)
+                self.itemconfig(t, fill=outline, outline=fill, state="normal")
         else:
-            t = self.create_polygon(points, fill=outline, outline=fill, tag=tag, smooth=True)
+            t = self.create_polygon(points, fill=outline, outline=fill, smooth=True, tag="lift")
         self.disp_checkbox[t] = True
         if draw_check:
             # draw filled box
@@ -1449,10 +1431,9 @@ class ColumnHeaders(tk.Canvas):
                 if sh:
                     self.itemconfig(t, fill=fill, outline=outline)
                 else:
-                    self.itemconfig(t, fill=fill, outline=outline, tag=tag, state="normal")
-                self.lift(t)
+                    self.itemconfig(t, fill=fill, outline=outline, state="normal")
             else:
-                t = self.create_polygon(points, fill=fill, outline=outline, tag=tag, smooth=True)
+                t = self.create_polygon(points, fill=fill, outline=outline, smooth=True, tag="lift")
             self.disp_checkbox[t] = True
 
     def configure_scrollregion(self, last_col_line_pos: float) -> bool:
@@ -1516,6 +1497,35 @@ class ColumnHeaders(tk.Canvas):
             self.current_height,
         )
         top = self.canvasy(0)
+
+        if (self.ops.show_vertical_grid or self.width_resizing_enabled) and col_pos_exists:
+            yend = self.current_height - 5
+            points = [
+                x_stop - 1,
+                self.current_height - 1,
+                scrollpos_left - 1,
+                self.current_height - 1,
+                scrollpos_left - 1,
+                -1,
+            ]
+            for c in range(grid_start_col, grid_end_col):
+                draw_x = self.MT.col_positions[c]
+                if c and self.width_resizing_enabled:
+                    self.visible_col_dividers[c] = (draw_x - 2, 1, draw_x + 2, yend)
+                points.extend(
+                    (
+                        draw_x,
+                        -1,
+                        draw_x,
+                        self.current_height,
+                        draw_x,
+                        -1,
+                        self.MT.col_positions[c + 1] if len(self.MT.col_positions) - 1 > c else draw_x,
+                        -1,
+                    )
+                )
+            self.redraw_gridline(points=points, fill=self.ops.header_grid_fg, width=1)
+
         sel_cols_bg = (
             self.ops.header_selected_cells_bg
             if self.ops.header_selected_cells_bg.startswith("#")
@@ -1566,7 +1576,6 @@ class ColumnHeaders(tk.Canvas):
                     self.current_height - 1,
                     fill=fill if kwargs["state"] != "disabled" else self.ops.header_grid_fg,
                     outline=fill,
-                    tag="dd",
                     draw_outline=not dd_drawn,
                     draw_arrow=max_width >= 5,
                     open_=dd_coords == c,
@@ -1601,7 +1610,6 @@ class ColumnHeaders(tk.Canvas):
                         txt_h + 3,
                         fill=fill if kwargs["state"] == "normal" else self.ops.header_grid_fg,
                         outline="",
-                        tag="cb",
                         draw_check=draw_check,
                     )
             if (
@@ -1614,22 +1622,22 @@ class ColumnHeaders(tk.Canvas):
             text = self.cell_str(datacn, fix=False)
             if not text:
                 continue
-            max_lines = int((self.current_height - top - 2) / txt_h)
-            for wrapped in wrap_text(
+            gen_lines = wrap_text(
                 text=text,
                 max_width=max_width,
-                max_lines=max_lines,
+                max_lines=int((self.current_height - top - 2) / txt_h),
                 char_width_fn=self.wrap_get_char_w,
                 widths=self.MT.char_widths[font],
                 wrap=wrap,
-            ):
+            )
+            if align[-1] == "w" or align[-1] == "e":
                 if self.hidd_text:
                     iid, showing = self.hidd_text.popitem()
                     self.coords(iid, draw_x, draw_y)
                     if showing:
                         self.itemconfig(
                             iid,
-                            text=wrapped,
+                            text="\n".join(gen_lines),
                             fill=fill,
                             font=font,
                             anchor=align,
@@ -1637,7 +1645,7 @@ class ColumnHeaders(tk.Canvas):
                     else:
                         self.itemconfig(
                             iid,
-                            text=wrapped,
+                            text="\n".join(gen_lines),
                             fill=fill,
                             font=font,
                             anchor=align,
@@ -1647,47 +1655,54 @@ class ColumnHeaders(tk.Canvas):
                     iid = self.create_text(
                         draw_x,
                         draw_y,
-                        text=wrapped,
+                        text="\n".join(gen_lines),
                         fill=fill,
                         font=font,
                         anchor=align,
-                        tags="t",
+                        tag="lift",
                     )
                 self.disp_text[iid] = True
-                draw_y += self.MT.header_txt_height
-        yend = self.current_height - 5
-        if (self.ops.show_vertical_grid or self.width_resizing_enabled) and col_pos_exists:
-            points = [
-                x_stop - 1,
-                self.current_height - 1,
-                scrollpos_left - 1,
-                self.current_height - 1,
-                scrollpos_left - 1,
-                -1,
-            ]
-            for c in range(grid_start_col, grid_end_col):
-                draw_x = self.MT.col_positions[c]
-                if c and self.width_resizing_enabled:
-                    self.visible_col_dividers[c] = (draw_x - 2, 1, draw_x + 2, yend)
-                points.extend(
-                    (
-                        draw_x,
-                        -1,
-                        draw_x,
-                        self.current_height,
-                        draw_x,
-                        -1,
-                        self.MT.col_positions[c + 1] if len(self.MT.col_positions) - 1 > c else draw_x,
-                        -1,
-                    )
-                )
-            self.redraw_gridline(points=points, fill=self.ops.header_grid_fg, width=1, tag="v")
+            else:
+                for line in gen_lines:
+                    if self.hidd_text:
+                        iid, showing = self.hidd_text.popitem()
+                        self.coords(iid, draw_x, draw_y)
+                        if showing:
+                            self.itemconfig(
+                                iid,
+                                text=line,
+                                fill=fill,
+                                font=font,
+                                anchor=align,
+                            )
+                        else:
+                            self.itemconfig(
+                                iid,
+                                text=line,
+                                fill=fill,
+                                font=font,
+                                anchor=align,
+                                state="normal",
+                            )
+                    else:
+                        iid = self.create_text(
+                            draw_x,
+                            draw_y,
+                            text=line,
+                            fill=fill,
+                            font=font,
+                            anchor=align,
+                            tag="lift",
+                        )
+                    self.disp_text[iid] = True
+                    draw_y += self.MT.header_txt_height
+
         for dct in (self.hidd_text, self.hidd_high, self.hidd_grid, self.hidd_dropdown, self.hidd_checkbox):
             for iid, showing in dct.items():
                 if showing:
                     self.itemconfig(iid, state="hidden")
                     dct[iid] = False
-        self.tag_raise("t")
+        self.tag_raise("lift")
         if self.disp_resize_lines:
             self.tag_raise("rw")
         return True

@@ -6041,7 +6041,7 @@ class MainTable(tk.Canvas):
             else:
                 self.itemconfig(iid, fill=fill, outline=outline, state="normal")
         else:
-            iid = self.create_rectangle(coords, fill=fill, outline=outline, tags="h")
+            iid = self.create_rectangle(coords, fill=fill, outline=outline, tags="hi")
         self.disp_high[iid] = True
         return True
 
@@ -6398,7 +6398,14 @@ class MainTable(tk.Canvas):
                     x2 = crightgridln
                     y2 = self.row_positions[r + 1]
                     if not dd_drawn and self.PAR.ops.show_dropdown_borders:
-                        self.redraw_highlight(x1 + 1, y1 + 1, x2, y2, fill="", outline=self.PAR.ops.table_fg)
+                        self.redraw_highlight(
+                            x1 + 1,
+                            y1 + 1,
+                            x2,
+                            y2,
+                            fill="",
+                            outline=self.PAR.ops.table_fg,
+                        )
                     if max_width >= 5:
                         mod = (self.table_txt_height - 1) if self.table_txt_height % 2 else self.table_txt_height
                         small_mod = int(mod / 5)
@@ -6545,7 +6552,7 @@ class MainTable(tk.Canvas):
                             )
                     else:
                         iid = self.create_text(
-                            draw_x, draw_y, text="\n".join(gen_lines), fill=fill, font=font, anchor=align, tags="t"
+                            draw_x, draw_y, text="\n".join(gen_lines), fill=fill, font=font, anchor=align, tags="lift"
                         )
                     self.disp_text[iid] = True
 
@@ -6559,7 +6566,9 @@ class MainTable(tk.Canvas):
                             else:
                                 self.itemconfig(iid, text=t, fill=fill, font=font, anchor=align, state="normal")
                         else:
-                            iid = self.create_text(draw_x, draw_y, text=t, fill=fill, font=font, anchor=align, tags="t")
+                            iid = self.create_text(
+                                draw_x, draw_y, text=t, fill=fill, font=font, anchor=align, tags="lift"
+                            )
                         self.disp_text[iid] = True
                         draw_y += self.table_txt_height
         for dct in (
@@ -6580,7 +6589,6 @@ class MainTable(tk.Canvas):
             if self.selected:
                 self.tag_raise(self.selected.iid)
         self.lift("lift")
-        self.tag_raise("t")
 
     def main_table_redraw_grid_and_text(
         self,
@@ -6652,29 +6660,6 @@ class MainTable(tk.Canvas):
                 return
         x_stop = min(last_col_line_pos, scrollpos_right)
         y_stop = min(last_row_line_pos, scrollpos_bot)
-        if redraw_table:
-            self.redraw_grid_and_text(
-                last_row_line_pos=last_row_line_pos,
-                last_col_line_pos=last_col_line_pos,
-                scrollpos_top=scrollpos_top,
-                scrollpos_bot=scrollpos_bot,
-                scrollpos_left=scrollpos_left,
-                scrollpos_right=scrollpos_right,
-                x_stop=x_stop,
-                y_stop=y_stop,
-                col_pos_exists=col_pos_exists,
-                row_pos_exists=row_pos_exists,
-                can_width=can_width,
-                can_height=can_height,
-                grid_start_row=grid_start_row,
-                grid_end_row=grid_end_row,
-                grid_start_col=grid_start_col,
-                grid_end_col=grid_end_col,
-                text_start_row=text_start_row,
-                text_end_row=text_end_row,
-                text_start_col=text_start_col,
-                text_end_col=text_end_col,
-            )
         if redraw_header and self.show_header:
             self.CH.redraw_grid_and_text(
                 last_col_line_pos=last_col_line_pos,
@@ -6700,6 +6685,29 @@ class MainTable(tk.Canvas):
                 scrollpos_bot=scrollpos_bot,
                 row_pos_exists=row_pos_exists,
                 set_scrollregion=set_scrollregion,
+            )
+        if redraw_table:
+            self.redraw_grid_and_text(
+                last_row_line_pos=last_row_line_pos,
+                last_col_line_pos=last_col_line_pos,
+                scrollpos_top=scrollpos_top,
+                scrollpos_bot=scrollpos_bot,
+                scrollpos_left=scrollpos_left,
+                scrollpos_right=scrollpos_right,
+                x_stop=x_stop,
+                y_stop=y_stop,
+                col_pos_exists=col_pos_exists,
+                row_pos_exists=row_pos_exists,
+                can_width=can_width,
+                can_height=can_height,
+                grid_start_row=grid_start_row,
+                grid_end_row=grid_end_row,
+                grid_start_col=grid_start_col,
+                grid_end_col=grid_end_col,
+                text_start_row=text_start_row,
+                text_end_row=text_end_row,
+                text_start_col=text_start_col,
+                text_end_col=text_end_col,
             )
         event_data = {"sheetname": "", "header": redraw_header, "row_index": redraw_row_index, "table": redraw_table}
         self.PAR.emit_event("<<SheetRedrawn>>", data=event_data)
