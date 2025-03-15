@@ -820,9 +820,8 @@ class MainTable(tk.Canvas):
             ):
                 return coord
             elif self.selected.row != current_box.coords[0] or self.selected.column != current_box.coords[1]:
-                coord = self.find_within_current_box(
-                    current_box=current_box, find=find, reverse=reverse, stop=(self.selected.row, self.selected.column)
-                )
+                stop = (self.datarn(self.selected.row), self.datacn(self.selected.column))
+                coord = self.find_within_current_box(current_box=current_box, find=find, reverse=reverse, stop=stop)
                 if coord:
                     return coord
         return None
