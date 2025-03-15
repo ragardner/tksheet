@@ -1,5 +1,9 @@
 ### Version 7.4.14
-####
+#### Fixed:
+- Find in selection would sometimes fail.
+
+#### Improved:
+- Redraw optimizations.
 
 ### Version 7.4.13
 #### Fixed:
