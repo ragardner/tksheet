@@ -12,6 +12,7 @@ from operator import itemgetter
 from re import IGNORECASE, escape, sub
 from tkinter import TclError
 from typing import Any, Literal
+import copy
 
 from .colors import color_map
 from .column_headers import ColumnHeaders
@@ -1218,7 +1219,8 @@ class MainTable(tk.Canvas):
                 data.extend(nd)
                 new_data_numrows *= int(lastbox_numrows / new_data_numrows)
             if lastbox_numcols > new_data_numcols and not lastbox_numcols % new_data_numcols:
-                for rn, r in enumerate(data):
+                data_copy = copy.deepcopy(data)
+                for rn, r in enumerate(data_copy):
                     for _ in range(int(lastbox_numcols / new_data_numcols)):
                         data[rn].extend(r.copy())
                 new_data_numcols *= int(lastbox_numcols / new_data_numcols)
