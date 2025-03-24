@@ -12,7 +12,6 @@ from operator import itemgetter
 from re import IGNORECASE, escape, sub
 from tkinter import TclError
 from typing import Any, Literal
-import copy
 
 from .colors import color_map
 from .column_headers import ColumnHeaders
@@ -1213,17 +1212,16 @@ class MainTable(tk.Canvas):
             lastbox_numrows = lastbox_r2 - lastbox_r1
             lastbox_numcols = lastbox_c2 - lastbox_c1
             if lastbox_numrows > new_data_numrows and not lastbox_numrows % new_data_numrows:
-                nd = []
-                for _ in range(int(lastbox_numrows / new_data_numrows)):
-                    nd.extend(r.copy() for r in data)
-                data.extend(nd)
-                new_data_numrows *= int(lastbox_numrows / new_data_numrows)
+                repeat_num = int(lastbox_numrows / new_data_numrows)
+                data.extend(chain.from_iterable([r.copy() for r in data] for _ in range(repeat_num - 1)))
+                new_data_numrows *= repeat_num
+
             if lastbox_numcols > new_data_numcols and not lastbox_numcols % new_data_numcols:
-                data_copy = copy.deepcopy(data)
-                for rn, r in enumerate(data_copy):
-                    for _ in range(int(lastbox_numcols / new_data_numcols)):
-                        data[rn].extend(r.copy())
-                new_data_numcols *= int(lastbox_numcols / new_data_numcols)
+                repeat_num = int(lastbox_numcols / new_data_numcols)
+                for rn, row in enumerate(data):
+                    copies = [row.copy() for _ in range(repeat_num - 1)]
+                    data[rn].extend(chain.from_iterable(copies))
+                new_data_numcols *= repeat_num
         added_rows = 0
         added_cols = 0
         total_data_cols = None
