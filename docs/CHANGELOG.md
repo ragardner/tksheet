@@ -1,5 +1,6 @@
 ### Version 7.4.15
-####
+#### Fixed:
+- [#280](https://github.com/ragardner/tksheet/pull/280).
 
 ### Version 7.4.14
 #### Fixed:
