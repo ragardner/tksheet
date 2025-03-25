@@ -5072,15 +5072,12 @@ class MainTable(tk.Canvas):
             self.displayed_columns = add_to_displayed(self.displayed_columns, columns)
         cws = self.get_column_widths()
         if column_widths and next(iter(column_widths)) > len(cws):
-            for i in range(len(cws), next(iter(column_widths))):
-                column_widths[i] = self.PAR.ops.default_column_width
+            default_width = self.PAR.ops.default_column_width
+            to_add = dict.fromkeys(range(len(cws), next(iter(column_widths))), default_width)
+            to_add.update(column_widths)
+            column_widths = to_add
         if not from_undo:
-            self.set_col_positions(
-                itr=insert_items(
-                    cws,
-                    column_widths,
-                )
-            )
+            self.set_col_positions(insert_items(cws, column_widths))
         # rn needed for indexing but cn insert
         maxrn = 0
         for cn, rowdict in columns.items():
@@ -5102,10 +5099,7 @@ class MainTable(tk.Canvas):
             }
             if not from_undo:
                 self.set_row_positions(
-                    itr=chain(
-                        self.gen_row_heights(),
-                        repeat(default_height, maxrn + 1 - (len(self.row_positions) - 1)),
-                    )
+                    chain(self.gen_row_heights(), repeat(default_height, maxrn + 1 - (len(self.row_positions) - 1)))
                 )
         if isinstance(self._headers, list) and header:
             self._headers = insert_items(self._headers, header, self.CH.fix_header)
@@ -5249,16 +5243,12 @@ class MainTable(tk.Canvas):
         row_heights = event_data["added"]["rows"]["row_heights"]
         rhs = self.get_row_heights()
         if row_heights and next(iter(row_heights)) > len(rhs):
-            default_row_height = self.get_default_row_height()
-            for i in range(len(rhs), next(row_heights)):
-                row_heights[i] = default_row_height
+            default_height = self.get_default_row_height()
+            to_add = dict.fromkeys(range(len(rhs), next(iter(row_heights))), default_height)
+            to_add.update(row_heights)
+            row_heights = to_add
         if not from_undo:
-            self.set_row_positions(
-                itr=insert_items(
-                    rhs,
-                    row_heights,
-                )
-            )
+            self.set_row_positions(insert_items(rhs, row_heights))
         if create_selections:
             self.deselect("all", redraw=False)
             for boxst, boxend in consecutive_ranges(tuple(row_heights)):
