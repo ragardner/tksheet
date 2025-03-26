@@ -7599,8 +7599,7 @@ class MainTable(tk.Canvas):
         self, datarn: int, datacn: int, event_data: EventDataDict
     ) -> tuple[Any, EventDataDict]:
         value = event_data.value
-        if self.edit_validation_func and (new_value := self.edit_validation_func(event_data)) is not None:
-            value = new_value
+        if self.edit_validation_func and (value := self.edit_validation_func(event_data)) is not None:
             event_data["data"][(datarn, datacn)] = value
             event_data["value"] = value
         if self.bulk_table_edit_validation_func:
