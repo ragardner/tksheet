@@ -1348,8 +1348,9 @@ my_sheet.set_options(allow_cell_overflow=True)
 <hr />
 <h1 id="table-functionality-and-bindings"><strong>Table functionality and bindings</strong></h1>
 <h4 id="enable-table-functionality-and-bindings"><strong>Enable table functionality and bindings</strong></h4>
-<pre><code class="language-python">enable_bindings(*bindings)
+<pre><code class="language-python">enable_bindings(*bindings: Binding, menu: bool = True)
 </code></pre>
+<p>Parameters:</p>
 <ul>
 <li><code>bindings</code> (<code>str</code>) options are (rc stands for right click):<ul>
 <li><code>"all"</code> # enables all bindings with <code>single_select</code> mode, except the bindings that have to be specifically enabled by name.</li>
@@ -1396,10 +1397,11 @@ my_sheet.set_options(allow_cell_overflow=True)
 <li>*<code>"ctrl_click_select"</code> / <code>"ctrl_select"</code> # for selecting multiple non-adjacent cells/rows/columns</li>
 <li>*<code>"edit_header"</code> # allow header cell editing</li>
 <li>*<code>"edit_index"</code> # allow index cell editing</li>
+<li><strong>*has to be specifically enabled - See Notes.</strong></li>
 </ul>
 </li>
+<li><code>menu</code>(<code>bool</code>) when <code>True</code> adds the related functionality to the in-built popup menu. Only applicable for edit bindings such as Cut, Copy, Paste and Delete which have both a keyboard binding and a menu entry.</li>
 </ul>
-<p>*has to be specifically enabled - See Notes.</p>
 <p>Notes:</p>
 <ul>
 <li>You can change the Sheets key bindings for functionality such as copy, paste, up, down etc. Instructions can be found <a href="#changing-key-bindings">here</a>.</li>
@@ -1418,7 +1420,7 @@ my_sheet.set_options(allow_cell_overflow=True)
 </ul>
 <hr />
 <h4 id="disable-table-functionality-and-bindings"><strong>Disable table functionality and bindings</strong></h4>
-<pre><code class="language-python">disable_bindings(*bindings)
+<pre><code class="language-python">disable_bindings(*bindings: Binding)
 </code></pre>
 <p>Notes:</p>
 <ul>

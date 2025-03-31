@@ -703,8 +703,11 @@ my_sheet.set_options(allow_cell_overflow=True)
 #### **Enable table functionality and bindings**
 
 ```python
-enable_bindings(*bindings)
+enable_bindings(*bindings: Binding, menu: bool = True)
 ```
+
+Parameters:
+
 - `bindings` (`str`) options are (rc stands for right click):
 	- `"all"` # enables all bindings with `single_select` mode, except the bindings that have to be specifically enabled by name.
 	- `"single_select"` # normal selection mode
@@ -750,8 +753,8 @@ enable_bindings(*bindings)
     - *`"ctrl_click_select"` / `"ctrl_select"` # for selecting multiple non-adjacent cells/rows/columns
     - *`"edit_header"` # allow header cell editing
     - *`"edit_index"` # allow index cell editing
-
-*has to be specifically enabled - See Notes.
+    - ***has to be specifically enabled - See Notes.**
+- `menu`(`bool`) when `True` adds the related functionality to the in-built popup menu. Only applicable for edit bindings such as Cut, Copy, Paste and Delete which have both a keyboard binding and a menu entry.
 
 Notes:
 
@@ -772,7 +775,7 @@ ___
 #### **Disable table functionality and bindings**
 
 ```python
-disable_bindings(*bindings)
+disable_bindings(*bindings: Binding)
 ```
 Notes:
 

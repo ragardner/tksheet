@@ -614,8 +614,8 @@ class Sheet(tk.Frame):
 
     # Bindings and Functionality
 
-    def enable_bindings(self, *bindings: Binding) -> Sheet:
-        self.MT.enable_bindings(bindings)
+    def enable_bindings(self, *bindings: Binding, menu: bool = True) -> Sheet:
+        self.MT.enable_bindings(bindings, menu=menu)
         return self
 
     def disable_bindings(self, *bindings: Binding) -> Sheet:

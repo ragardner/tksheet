@@ -150,6 +150,7 @@ class MainTable(tk.Canvas):
             "<<SelectAll>>": self.select_all,
         }
         self.enabled_bindings = set()
+        self.enabled_bindings_menu_entries = set()
         self.selection_box_ctr = 0
         self.disp_selection_fills = set()
         self.hidd_selection_fills = set()
@@ -2928,28 +2929,42 @@ class MainTable(tk.Canvas):
         ):
             menu.delete(0, "end")
         mnkwgs = get_menu_kwargs(self.PAR.ops)
-        if self.rc_popup_menus_enabled and self.CH.edit_cell_enabled:
+        if (
+            self.rc_popup_menus_enabled
+            and self.CH.edit_cell_enabled
+            and "edit_header" in self.enabled_bindings_menu_entries
+        ):
             self.menu_add_command(
                 self.CH.ch_rc_popup_menu,
                 label=self.PAR.ops.edit_header_label,
                 command=lambda: self.CH.open_cell(event="rc"),
                 **mnkwgs,
             )
-        if self.rc_popup_menus_enabled and self.RI.edit_cell_enabled:
+        if (
+            self.rc_popup_menus_enabled
+            and self.RI.edit_cell_enabled
+            and "edit_index" in self.enabled_bindings_menu_entries
+        ):
             self.menu_add_command(
                 self.RI.ri_rc_popup_menu,
                 label=self.PAR.ops.edit_index_label,
                 command=lambda: self.RI.open_cell(event="rc"),
                 **mnkwgs,
             )
-        if self.rc_popup_menus_enabled and self.edit_cell_enabled:
+        if (
+            self.rc_popup_menus_enabled
+            and self.edit_cell_enabled
+            and any(x in self.enabled_bindings_menu_entries for x in ("all", "edit_cell", "edit_bindings", "edit"))
+        ):
             self.menu_add_command(
                 self.rc_popup_menu,
                 label=self.PAR.ops.edit_cell_label,
                 command=lambda: self.open_cell(event="rc"),
                 **mnkwgs,
             )
-        if self.cut_enabled:
+        if self.cut_enabled and any(
+            x in self.enabled_bindings_menu_entries for x in ("all", "cut", "edit_bindings", "edit")
+        ):
             self.menu_add_command(
                 self.rc_popup_menu,
                 label=self.PAR.ops.cut_label,
@@ -2971,7 +2986,9 @@ class MainTable(tk.Canvas):
                 command=self.ctrl_x,
                 **mnkwgs,
             )
-        if self.copy_enabled:
+        if self.copy_enabled and any(
+            x in self.enabled_bindings_menu_entries for x in ("all", "copy", "edit_bindings", "edit")
+        ):
             self.menu_add_command(
                 self.rc_popup_menu,
                 label=self.PAR.ops.copy_label,
@@ -2993,7 +3010,9 @@ class MainTable(tk.Canvas):
                 command=self.ctrl_c,
                 **mnkwgs,
             )
-        if self.paste_enabled:
+        if self.paste_enabled and any(
+            x in self.enabled_bindings_menu_entries for x in ("all", "paste", "edit_bindings", "edit")
+        ):
             self.menu_add_command(
                 self.rc_popup_menu,
                 label=self.PAR.ops.paste_label,
@@ -3023,7 +3042,9 @@ class MainTable(tk.Canvas):
                     command=self.ctrl_v,
                     **mnkwgs,
                 )
-        if self.delete_key_enabled:
+        if self.delete_key_enabled and any(
+            x in self.enabled_bindings_menu_entries for x in ("all", "paste", "edit_bindings", "edit")
+        ):
             self.menu_add_command(
                 self.rc_popup_menu,
                 label=self.PAR.ops.delete_label,
@@ -3219,18 +3240,18 @@ class MainTable(tk.Canvas):
                 **mnkwgs,
             )
 
-    def enable_bindings(self, bindings: Any) -> None:
+    def enable_bindings(self, bindings: Any, menu: bool = True) -> None:
         if not bindings:
-            self._enable_binding("all")
+            self._enable_binding("all", menu)
         elif isinstance(bindings, (list, tuple)):
             for binding in bindings:
                 if isinstance(binding, (list, tuple)):
                     for bind in binding:
-                        self._enable_binding(bind.lower())
+                        self._enable_binding(bind.lower(), menu)
                 elif isinstance(binding, str):
-                    self._enable_binding(binding.lower())
+                    self._enable_binding(binding.lower(), menu)
         elif isinstance(bindings, str):
-            self._enable_binding(bindings.lower())
+            self._enable_binding(bindings.lower(), menu)
         self.create_rc_menus()
 
     def disable_bindings(self, bindings: Any) -> None:
@@ -3247,7 +3268,7 @@ class MainTable(tk.Canvas):
             self._disable_binding(bindings)
         self.create_rc_menus()
 
-    def _enable_binding(self, binding: Binding) -> None:
+    def _enable_binding(self, binding: Binding, menu: bool = True) -> None:
         if binding == "enable_all":
             binding = "all"
         if binding in (
@@ -3389,6 +3410,8 @@ class MainTable(tk.Canvas):
         if binding in ("ctrl_click_select", "ctrl_select"):
             self.ctrl_select_enabled = True
         self.enabled_bindings.add(binding)
+        if menu:
+            self.enabled_bindings_menu_entries.add(binding)
 
     def _tksheet_bind(self, bindings_key: str, func: Callable) -> None:
         for widget in (self, self.RI, self.CH, self.TL):
@@ -3400,8 +3423,10 @@ class MainTable(tk.Canvas):
             binding = "all"
         if binding == "all":
             self.enabled_bindings = set()
+            self.enabled_bindings_menu_entries = set()
         else:
             self.enabled_bindings.discard(binding)
+            self.enabled_bindings_menu_entries.discard(binding)
         if binding in (
             "all",
             "single",
