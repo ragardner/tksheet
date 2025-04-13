@@ -7,7 +7,7 @@ from bisect import bisect_left, bisect_right
 from collections import defaultdict, deque
 from collections.abc import Callable, Generator, Hashable, Iterator, Sequence
 from functools import partial
-from itertools import accumulate, chain, cycle, filterfalse, islice, repeat
+from itertools import accumulate, chain, filterfalse, islice, repeat
 from operator import itemgetter
 from re import IGNORECASE, escape, sub
 from tkinter import TclError
@@ -130,8 +130,6 @@ class MainTable(tk.Canvas):
         self.ctrl_b1_pressed = False
         self.b1_pressed_loc = None
         self.closed_dropdown = None
-        self.centre_alignment_text_mod_indexes = (slice(1, None), slice(None, -1))
-        self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
         self.allow_auto_resize_columns = True
         self.allow_auto_resize_rows = True
         self.span = self.PAR.span
@@ -3554,19 +3552,17 @@ class MainTable(tk.Canvas):
                 for binding in self.PAR.ops[bindings_key]:
                     widget.unbind(binding)
 
-    def reset_mouse_motion_creations(self) -> None:
-        if self.current_cursor != "":
-            self.config(cursor="")
-            self.RI.config(cursor="")
-            self.CH.config(cursor="")
-            self.current_cursor = ""
+    def reset_resize_vars(self) -> None:
         self.RI.rsz_w = None
         self.RI.rsz_h = None
         self.CH.rsz_w = None
         self.CH.rsz_h = None
 
     def mouse_motion(self, event: Any) -> None:
-        self.reset_mouse_motion_creations()
+        if self.current_cursor != "":
+            self.config(cursor="")
+            self.current_cursor = ""
+        self.reset_resize_vars()
         try_binding(self.extra_motion_func, event)
 
     def not_currently_resizing(self) -> bool:

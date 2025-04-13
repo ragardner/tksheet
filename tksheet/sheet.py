@@ -328,6 +328,7 @@ class Sheet(tk.Frame):
         if treeview:
             index_align = "w"
             auto_resize_row_index = True
+            paste_can_expand_y = False
         for k, v in locals().items():
             if (xk := backwards_compatibility_keys.get(k, k)) in self.ops and v != self.ops[xk]:
                 self.ops[xk] = v
@@ -4182,6 +4183,7 @@ class Sheet(tk.Frame):
         self.MT.create_rc_menus()
         if "treeview" in kwargs:
             self.index_align("nw", redraw=False)
+            self.ops.paste_can_expand_y = False
         return self.set_refresh_timer(redraw)
 
     def set_scrollbar_options(self) -> Sheet:

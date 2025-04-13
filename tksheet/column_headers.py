@@ -4,7 +4,7 @@ import tkinter as tk
 from collections import defaultdict
 from collections.abc import Callable, Hashable, Iterator, Sequence
 from functools import partial
-from itertools import cycle, islice, repeat
+from itertools import islice, repeat
 from math import ceil
 from operator import itemgetter
 from typing import Any, Literal
@@ -54,11 +54,10 @@ class ColumnHeaders(tk.Canvas):
         self.MT = None  # is set from within MainTable() __init__
         self.RI: RowIndex | None = None  # is set from within MainTable() __init__
         self.TL = None  # is set from within TopLeftRectangle() __init__
+        self.current_cursor = ""
         self.popup_menu_loc = None
         self.extra_begin_edit_cell_func = None
         self.extra_end_edit_cell_func = None
-        self.centre_alignment_text_mod_indexes = (slice(1, None), slice(None, -1))
-        self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
         self.b1_pressed_loc = None
         self.closed_dropdown = None
         self.being_drawn_item = None
@@ -332,9 +331,9 @@ class ColumnHeaders(tk.Canvas):
                 c = self.check_mouse_position_width_resizers(x, y)
                 if c is not None:
                     self.rsz_w, mouse_over_resize = c, True
-                    if self.MT.current_cursor != "sb_h_double_arrow":
+                    if self.current_cursor != "sb_h_double_arrow":
                         self.config(cursor="sb_h_double_arrow")
-                        self.MT.current_cursor = "sb_h_double_arrow"
+                        self.current_cursor = "sb_h_double_arrow"
                 else:
                     self.rsz_w = None
             if self.height_resizing_enabled and not mouse_over_resize:
@@ -347,20 +346,23 @@ class ColumnHeaders(tk.Canvas):
                     )
                     if x >= x1 and y >= y1 and x <= x2 and y <= y2:
                         self.rsz_h, mouse_over_resize = True, True
-                        if self.MT.current_cursor != "sb_v_double_arrow":
+                        if self.current_cursor != "sb_v_double_arrow":
                             self.config(cursor="sb_v_double_arrow")
-                            self.MT.current_cursor = "sb_v_double_arrow"
+                            self.current_cursor = "sb_v_double_arrow"
                     else:
                         self.rsz_h = None
                 except Exception:
                     self.rsz_h = None
             if not mouse_over_resize and self.MT.col_selected(self.MT.identify_col(event, allow_end=False)):
                 mouse_over_selected = True
-                if self.MT.current_cursor != "hand2":
+                if self.current_cursor != "hand2":
                     self.config(cursor="hand2")
-                    self.MT.current_cursor = "hand2"
+                    self.current_cursor = "hand2"
             if not mouse_over_resize and not mouse_over_selected:
-                self.MT.reset_mouse_motion_creations()
+                if self.current_cursor != "":
+                    self.config(cursor="")
+                    self.current_cursor = ""
+                self.MT.reset_resize_vars()
         try_binding(self.extra_motion_func, event)
 
     def double_b1(self, event: Any) -> None:

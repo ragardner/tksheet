@@ -5,7 +5,7 @@ from collections import defaultdict
 from collections.abc import Callable, Generator, Hashable, Iterator, Sequence
 from contextlib import suppress
 from functools import partial
-from itertools import cycle, islice, repeat
+from itertools import islice, repeat
 from math import ceil
 from re import findall
 from typing import Any, Literal
@@ -56,6 +56,7 @@ class RowIndex(tk.Canvas):
         self.MT = None  # is set from within MainTable() __init__
         self.CH = None  # is set from within MainTable() __init__
         self.TL = None  # is set from within TopLeftRectangle() __init__
+        self.current_cursor = ""
         self.new_iid_ctr = -1
         self.current_width = None
         self.popup_menu_loc = None
@@ -63,8 +64,6 @@ class RowIndex(tk.Canvas):
         self.extra_end_edit_cell_func = None
         self.b1_pressed_loc = None
         self.closed_dropdown = None
-        self.centre_alignment_text_mod_indexes = (slice(1, None), slice(None, -1))
-        self.c_align_cyc = cycle(self.centre_alignment_text_mod_indexes)
         self.being_drawn_item = None
         self.extra_motion_func = None
         self.extra_b1_press_func = None
@@ -328,9 +327,9 @@ class RowIndex(tk.Canvas):
                 r = self.check_mouse_position_height_resizers(x, y)
                 if r is not None:
                     self.rsz_h, mouse_over_resize = r, True
-                    if self.MT.current_cursor != "sb_v_double_arrow":
+                    if self.current_cursor != "sb_v_double_arrow":
                         self.config(cursor="sb_v_double_arrow")
-                        self.MT.current_cursor = "sb_v_double_arrow"
+                        self.current_cursor = "sb_v_double_arrow"
                 else:
                     self.rsz_h = None
             if (
@@ -352,20 +351,23 @@ class RowIndex(tk.Canvas):
                     )
                     if x >= x1 and y >= y1 and x <= x2 and y <= y2:
                         self.rsz_w, mouse_over_resize = True, True
-                        if self.MT.current_cursor != "sb_h_double_arrow":
+                        if self.current_cursor != "sb_h_double_arrow":
                             self.config(cursor="sb_h_double_arrow")
-                            self.MT.current_cursor = "sb_h_double_arrow"
+                            self.current_cursor = "sb_h_double_arrow"
                     else:
                         self.rsz_w = None
                 except Exception:
                     self.rsz_w = None
             if not mouse_over_resize and self.MT.row_selected(self.MT.identify_row(event, allow_end=False)):
                 mouse_over_selected = True
-                if self.MT.current_cursor != "hand2":
+                if self.current_cursor != "hand2":
                     self.config(cursor="hand2")
-                    self.MT.current_cursor = "hand2"
+                    self.current_cursor = "hand2"
             if not mouse_over_resize and not mouse_over_selected:
-                self.MT.reset_mouse_motion_creations()
+                if self.current_cursor != "":
+                    self.config(cursor="")
+                    self.current_cursor = ""
+                self.MT.reset_resize_vars()
         try_binding(self.extra_motion_func, event)
 
     def double_b1(self, event: Any):
