@@ -1388,25 +1388,25 @@ class MainTable(tk.Canvas):
                 )
         selboxr = selected_r + new_data_numrows if added_rows else selected_r_adjusted_new_data_numrows
         selboxc = selected_c + new_data_numcols if added_cols else selected_c_adjusted_new_data_numcols
-        self.deselect("all", redraw=False)
-        self.set_currently_selected(
-            *curr_coords,
-            item=self.create_selection_box(
-                selected_r,
-                selected_c,
-                selboxr,
-                selboxc,
-                type_="cells",
-                set_current=False,
-                run_binding=True,
-            ),
-        )
-        event_data["selection_boxes"] = self.get_boxes()
-        event_data["selected"] = self.selected
-        self.see(selected_r, selected_c, redraw=False)
-        self.refresh()
         event_data = self.bulk_edit_validation(event_data)
         if event_data["cells"]["table"] or event_data["added"]["rows"] or event_data["added"]["columns"]:
+            self.deselect("all", redraw=False)
+            self.set_currently_selected(
+                *curr_coords,
+                item=self.create_selection_box(
+                    selected_r,
+                    selected_c,
+                    selboxr,
+                    selboxc,
+                    type_="cells",
+                    set_current=False,
+                    run_binding=True,
+                ),
+            )
+            event_data["selection_boxes"] = self.get_boxes()
+            event_data["selected"] = self.selected
+            self.see(selected_r, selected_c, redraw=False)
+            self.refresh()
             if self.undo_enabled:
                 self.undo_stack.append(stored_event_dict(event_data))
             try_binding(self.extra_end_ctrl_v_func, event_data, "end_ctrl_v")
