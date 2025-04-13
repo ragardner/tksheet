@@ -1,3 +1,6 @@
+### Version 7.4.20
+####
+
 ### Version 7.4.19
 #### Addressed:
 - [#288](https://github.com/ragardner/tksheet/issues/288).
