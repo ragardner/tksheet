@@ -446,7 +446,6 @@ class Sheet(tk.Frame):
             style=f"Sheet{self.unique_id}.Vertical.TScrollbar",
         )
         self.MT["yscrollcommand"] = self.yscroll.set
-        self.RI["yscrollcommand"] = self.yscroll.set
         self.xscroll = ttk.Scrollbar(
             self,
             command=self.MT._xscrollbar,
@@ -454,7 +453,6 @@ class Sheet(tk.Frame):
             style=f"Sheet{self.unique_id}.Horizontal.TScrollbar",
         )
         self.MT["xscrollcommand"] = self.xscroll.set
-        self.CH["xscrollcommand"] = self.xscroll.set
         self.show()
         if show_top_left is False or (show_top_left is None and (not show_row_index or not show_header)):
             self.hide("top_left")

@@ -326,7 +326,6 @@ class ColumnHeaders(tk.Canvas):
             x = self.canvasx(event.x)
             y = self.canvasy(event.y)
             mouse_over_resize = False
-            mouse_over_selected = False
             if self.width_resizing_enabled:
                 c = self.check_mouse_position_width_resizers(x, y)
                 if c is not None:
@@ -353,16 +352,16 @@ class ColumnHeaders(tk.Canvas):
                         self.rsz_h = None
                 except Exception:
                     self.rsz_h = None
-            if not mouse_over_resize and self.MT.col_selected(self.MT.identify_col(event, allow_end=False)):
-                mouse_over_selected = True
-                if self.current_cursor != "hand2":
-                    self.config(cursor="hand2")
-                    self.current_cursor = "hand2"
-            if not mouse_over_resize and not mouse_over_selected:
-                if self.current_cursor != "":
-                    self.config(cursor="")
-                    self.current_cursor = ""
-                self.MT.reset_resize_vars()
+            if not mouse_over_resize:
+                if self.MT.col_selected(self.MT.identify_col(event, allow_end=False)):
+                    if self.current_cursor != "hand2":
+                        self.config(cursor="hand2")
+                        self.current_cursor = "hand2"
+                else:
+                    if self.current_cursor != "":
+                        self.config(cursor="")
+                        self.current_cursor = ""
+                    self.MT.reset_resize_vars()
         try_binding(self.extra_motion_func, event)
 
     def double_b1(self, event: Any) -> None:

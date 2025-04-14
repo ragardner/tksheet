@@ -385,8 +385,8 @@ class MainTable(tk.Canvas):
 
     def basic_bindings(self, enable: bool = True) -> None:
         bindings = (
+            ("<Enter>", self, self.mouse_motion),
             ("<Configure>", self, self.window_configured),
-            ("<Motion>", self, self.mouse_motion),
             ("<ButtonPress-1>", self, self.b1_press),
             ("<B1-Motion>", self, self.b1_motion),
             ("<ButtonRelease-1>", self, self.b1_release),
@@ -3559,9 +3559,8 @@ class MainTable(tk.Canvas):
         self.CH.rsz_h = None
 
     def mouse_motion(self, event: Any) -> None:
-        if self.current_cursor != "":
-            self.config(cursor="")
-            self.current_cursor = ""
+        self.config(cursor="")
+        self.current_cursor = ""
         self.reset_resize_vars()
         try_binding(self.extra_motion_func, event)
 
@@ -6183,7 +6182,7 @@ class MainTable(tk.Canvas):
             and can_width >= self.col_positions[-1] + self.PAR.ops.empty_horizontal
             and self.PAR.xscroll_showing
         ):
-            self.PAR.xscroll.grid_forget()
+            self.PAR.xscroll.grid_remove()
             self.PAR.xscroll_showing = False
         elif (
             can_width < self.col_positions[-1] + self.PAR.ops.empty_horizontal
@@ -6191,10 +6190,10 @@ class MainTable(tk.Canvas):
             and not self.PAR.xscroll_disabled
             and can_height > 40
         ):
-            self.PAR.xscroll.grid(row=2, column=0, columnspan=2, sticky="nswe")
+            self.PAR.xscroll.grid()
             self.PAR.xscroll_showing = True
         if can_height >= self.row_positions[-1] + self.PAR.ops.empty_vertical and self.PAR.yscroll_showing:
-            self.PAR.yscroll.grid_forget()
+            self.PAR.yscroll.grid_remove()
             self.PAR.yscroll_showing = False
         elif (
             can_height < self.row_positions[-1] + self.PAR.ops.empty_vertical
@@ -6202,7 +6201,7 @@ class MainTable(tk.Canvas):
             and not self.PAR.yscroll_disabled
             and can_width > 40
         ):
-            self.PAR.yscroll.grid(row=0, column=2, rowspan=3, sticky="nswe")
+            self.PAR.yscroll.grid()
             self.PAR.yscroll_showing = True
 
     def _overflow(
