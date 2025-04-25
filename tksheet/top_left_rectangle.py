@@ -4,6 +4,7 @@ import tkinter as tk
 from typing import Any
 
 from .constants import rc_binding
+from .functions import try_binding
 
 
 class TopLeftRectangle(tk.Canvas):
@@ -198,10 +199,8 @@ class TopLeftRectangle(tk.Canvas):
         )
         self.coords(self.select_all_box, 0, 0, w - 5, h - 5)
 
-    def mouse_motion(self, event: Any = None) -> None:
-        self.MT.reset_mouse_motion_creations()
-        if self.extra_motion_func is not None:
-            self.extra_motion_func(event)
+    def mouse_motion(self, event: Any) -> None:
+        try_binding(self.extra_motion_func, event)
 
     def b1_press(self, event: Any = None) -> None:
         self.focus_set()

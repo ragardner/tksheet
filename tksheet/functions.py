@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import csv
 import io
-import pickle
 import re
 import tkinter as tk
 from bisect import bisect_left
@@ -17,7 +16,6 @@ from .constants import align_value_error, symbols_set
 from .formatters import to_bool
 from .other_classes import DotDict, EventDataDict, Highlight, Loc, Span
 
-unpickle_obj = pickle.loads
 lines_re = re.compile(r"[^\n]+")
 ORD_A = ord("A")
 

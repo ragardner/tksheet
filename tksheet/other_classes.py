@@ -1,13 +1,10 @@
 from __future__ import annotations
 
-import pickle
+import copy
 import tkinter as tk
 from collections import namedtuple
 from collections.abc import Callable, Hashable, Iterator
-from functools import partial
 from typing import Any, Literal
-
-pickle_obj = partial(pickle.dumps, protocol=pickle.HIGHEST_PROTOCOL)
 
 FontTuple = namedtuple("FontTuple", "family size style")
 Box_nt = namedtuple(
@@ -423,12 +420,45 @@ class Span(dict):
         cols = self.columns
         return Box_nt(rows.from_, cols.from_, rows.upto_, cols.upto_)
 
-    def pickle_self(self) -> bytes:
-        x = self["widget"]
-        self["widget"] = None
-        p = pickle_obj(self)
-        self["widget"] = x
-        return p
+    def copy_self(self) -> "Span":
+        # Create a new Span instance
+        span = Span()
+
+        # Iterate over all dictionary items to capture all attributes
+        for key, value in self.items():
+            if key == "widget":
+                # Tkinter widget: retain reference (do not copy)
+                span[key] = value
+            elif key == "kwargs":
+                # Handle kwargs, which may contain functions or lambdas
+                span[key] = {}
+                for k, v in value.items():
+                    if callable(v):
+                        # Functions/lambdas: shallow copy (immutable, but check for safety)
+                        span[key][k] = v
+                    else:
+                        try:
+                            # Deep copy non-callable items in kwargs
+                            span[key][k] = copy.deepcopy(v)
+                        except (TypeError, AttributeError):
+                            # Handle non-copyable objects (e.g., complex closures or objects)
+                            span[key][k] = v  # Fallback to shallow copy
+            elif key == "convert" and callable(value):
+                # Convert is a callable: shallow copy (immutable)
+                span[key] = value
+            else:
+                # Deep copy other values to handle nested objects like DotDict
+                try:
+                    span[key] = copy.deepcopy(value)
+                except (TypeError, AttributeError):
+                    # Fallback for non-copyable objects
+                    span[key] = value  # Shallow copy as fallback
+
+        # Ensure widget is set if not already present (edge case)
+        if "widget" not in span and hasattr(self, "widget"):
+            span["widget"] = self["widget"]
+
+        return span
 
     __setattr__ = __setitem__
     __getattr__ = __getitem__

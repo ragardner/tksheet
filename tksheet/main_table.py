@@ -73,7 +73,6 @@ from .functions import (
     len_to_idx,
     mod_event_val,
     mod_span,
-    mod_span_widget,
     move_elements_by_mapping_gen,
     move_fast,
     new_tk_event,
@@ -83,7 +82,6 @@ from .functions import (
     span_idxs_post_move,
     stored_event_dict,
     try_binding,
-    unpickle_obj,
     wrap_text,
 )
 from .other_classes import (
@@ -1528,7 +1526,7 @@ class MainTable(tk.Canvas):
                 "displayed": {} if disp_new_idxs is None else disp_new_idxs,
             }
         event_data["options"] = self.copy_options()
-        event_data["named_spans"] = {k: span.pickle_self() for k, span in self.named_spans.items()}
+        event_data["named_spans"] = {k: span.copy_self() for k, span in self.named_spans.items()}
 
         if move_widths and disp_new_idxs:
             self.set_col_positions(
@@ -1787,7 +1785,7 @@ class MainTable(tk.Canvas):
                 "displayed": {} if disp_new_idxs is None else disp_new_idxs,
             }
         event_data["options"] = self.copy_options()
-        event_data["named_spans"] = {k: span.pickle_self() for k, span in self.named_spans.items()}
+        event_data["named_spans"] = {k: span.copy_self() for k, span in self.named_spans.items()}
 
         if move_data:
             maxidx = len_to_idx(totalrows)
@@ -2081,9 +2079,7 @@ class MainTable(tk.Canvas):
         if "tagged_columns" in modification["options"]:
             self.tagged_columns = modification["options"]["tagged_columns"]
         if modification["named_spans"]:
-            self.named_spans = {
-                k: mod_span_widget(unpickle_obj(v), self.PAR) for k, v in modification["named_spans"].items()
-            }
+            self.named_spans = modification["named_spans"]
         if modification["sheet_state"]:
             self.RI.tree_open_ids = modification["sheet_state"]["tree_open_ids"]
             self.row_positions = modification["sheet_state"]["row_positions"]
@@ -5467,7 +5463,7 @@ class MainTable(tk.Canvas):
         if not event_data:
             event_data = self.new_event_dict("delete_columns", state=True)
         event_data["options"] = self.copy_options()
-        event_data["named_spans"] = {k: span.pickle_self() for k, span in self.named_spans.items()}
+        event_data["named_spans"] = {k: span.copy_self() for k, span in self.named_spans.items()}
         for i, datacn in enumerate(cols):
             for rn in range(len(self.data)):
                 if datacn not in event_data["deleted"]["columns"]:
@@ -5557,7 +5553,7 @@ class MainTable(tk.Canvas):
         if not event_data:
             event_data = self.new_event_dict("delete_rows", state=True)
         event_data["options"] = self.copy_options()
-        event_data["named_spans"] = {k: span.pickle_self() for k, span in self.named_spans.items()}
+        event_data["named_spans"] = {k: span.copy_self() for k, span in self.named_spans.items()}
 
         for i, datarn in enumerate(rows):
             event_data["deleted"]["rows"][datarn] = self.data.pop(datarn - i)
