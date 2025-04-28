@@ -954,8 +954,11 @@ class Sheet(tk.Frame):
         self.create_options_from_span(span)
         return span
 
-    def create_options_from_span(self, span: Span) -> Sheet:
-        getattr(self, span.type_)(span, **span.kwargs)
+    def create_options_from_span(self, span: Span, set_data: bool = True) -> Sheet:
+        if span.type_ == "format":
+            self.format(span, set_data=set_data, **span.kwargs)
+        else:
+            getattr(self, span.type_)(span, **span.kwargs)
         return self
 
     def del_named_span(self, name: str) -> Sheet:
@@ -1534,32 +1537,22 @@ class Sheet(tk.Frame):
                 event_data = set_h(startc, data, event_data)
         # add row/column lines (positions) if required
         if self.MT.all_columns_displayed and maxc >= (ncols := len(self.MT.col_positions) - 1):
-            _, _, widths = self.MT.get_args_for_add_columns(
-                data_ins_col=len(self.MT.col_positions) - 1,
-                displayed_ins_col=len(self.MT.col_positions) - 1,
-                columns=maxc + 1 - ncols,
-                widths=None,
-                headers=False,
-            )
+            disp_ins_col, widths_n_cols = len(self.MT.col_positions) - 1, maxc + 1 - ncols
+            w = self.ops.default_column_width
             event_data = self.MT.add_columns(
                 columns={},
                 header={},
-                column_widths=widths,
+                column_widths=dict(zip(range(disp_ins_col, disp_ins_col + widths_n_cols), repeat(w))),
                 event_data=event_data,
                 create_selections=False,
             )
         if self.MT.all_rows_displayed and maxr >= (nrows := len(self.MT.row_positions) - 1):
-            _, _, heights = self.MT.get_args_for_add_rows(
-                data_ins_row=len(self.MT.row_positions) - 1,
-                displayed_ins_row=len(self.MT.row_positions) - 1,
-                rows=maxr + 1 - nrows,
-                heights=None,
-                row_index=False,
-            )
+            disp_ins_row, heights_n_rows = len(self.MT.row_positions) - 1, maxr + 1 - nrows
+            h = self.MT.get_default_row_height()
             event_data = self.MT.add_rows(
                 rows={},
                 index={},
-                row_heights=heights,
+                row_heights=dict(zip(range(disp_ins_row, disp_ins_row + heights_n_rows), repeat(h))),
                 event_data=event_data,
                 create_selections=False,
             )
@@ -2580,6 +2573,7 @@ class Sheet(tk.Frame):
         formatter_options: dict | None = None,
         formatter_class: Any = None,
         redraw: bool = True,
+        set_data: bool = True,
         **kwargs,
     ) -> Span:
         if formatter_options is None:
@@ -2592,36 +2586,39 @@ class Sheet(tk.Frame):
                 for c in cols:
                     self.del_cell_options_checkbox(r, c)
                     add_to_options(self.MT.cell_options, (r, c), "format", kwargs)
-                    self.MT.set_cell_data(
-                        r,
-                        c,
-                        value=kwargs["value"] if "value" in kwargs else self.MT.get_cell_data(r, c),
-                        kwargs=kwargs,
-                    )
+                    if set_data:
+                        self.MT.set_cell_data(
+                            r,
+                            c,
+                            value=kwargs["value"] if "value" in kwargs else self.MT.get_cell_data(r, c),
+                            kwargs=kwargs,
+                        )
         elif span.kind == "row":
             for r in rows:
                 self.del_row_options_checkbox(r)
                 kwargs = fix_format_kwargs(kwargs)
                 add_to_options(self.MT.row_options, r, "format", kwargs)
-                for c in cols:
-                    self.MT.set_cell_data(
-                        r,
-                        c,
-                        value=kwargs["value"] if "value" in kwargs else self.MT.get_cell_data(r, c),
-                        kwargs=kwargs,
-                    )
+                if set_data:
+                    for c in cols:
+                        self.MT.set_cell_data(
+                            r,
+                            c,
+                            value=kwargs["value"] if "value" in kwargs else self.MT.get_cell_data(r, c),
+                            kwargs=kwargs,
+                        )
         elif span.kind == "column":
             for c in cols:
                 self.del_column_options_checkbox(c)
                 kwargs = fix_format_kwargs(kwargs)
                 add_to_options(self.MT.col_options, c, "format", kwargs)
-                for r in rows:
-                    self.MT.set_cell_data(
-                        r,
-                        c,
-                        value=kwargs["value"] if "value" in kwargs else self.MT.get_cell_data(r, c),
-                        kwargs=kwargs,
-                    )
+                if set_data:
+                    for r in rows:
+                        self.MT.set_cell_data(
+                            r,
+                            c,
+                            value=kwargs["value"] if "value" in kwargs else self.MT.get_cell_data(r, c),
+                            kwargs=kwargs,
+                        )
         self.set_refresh_timer(redraw)
         return span
 

@@ -1324,7 +1324,7 @@ class MainTable(tk.Canvas):
                             and self.input_valid_for_cell(r, datacn, val, ignore_empty=True)
                         )
                     ):
-                        rows[r][datacn] = val
+                        rows[r][datacn] = self.format_value(datarn, datacn, val)
                         ctr += 1
             if ctr:
                 event_data = self.add_rows(
@@ -1374,7 +1374,7 @@ class MainTable(tk.Canvas):
                             and self.input_valid_for_cell(datarn, c, val, ignore_empty=True)
                         )
                     ):
-                        columns[c][datarn] = val
+                        columns[c][datarn] = self.format_value(datarn, datacn, val)
                         ctr += 1
             if ctr:
                 event_data = self.add_columns(
@@ -4788,7 +4788,7 @@ class MainTable(tk.Canvas):
         # if there are named spans where columns were added
         # add options to gap which was created by adding columns
         totalrows = None
-        new_ops = self.PAR.create_options_from_span
+        new_ops = partial(self.PAR.create_options_from_span, set_data=False)
         qkspan = self.span()
         for span in self.named_spans.values():
             if isinstance(span["from_c"], int):
@@ -4851,7 +4851,7 @@ class MainTable(tk.Canvas):
         # if there are named spans where rows were added
         # add options to gap which was created by adding rows
         totalcols = None
-        new_ops = self.PAR.create_options_from_span
+        new_ops = partial(self.PAR.create_options_from_span, set_data=False)
         qkspan = self.span()
         for span in self.named_spans.values():
             if isinstance(span["from_r"], int):
@@ -5119,7 +5119,7 @@ class MainTable(tk.Canvas):
                 )
         if isinstance(self._headers, list) and header:
             self._headers = insert_items(self._headers, header, self.CH.fix_header)
-        if push_ops:
+        if push_ops and columns:
             self.adjust_options_post_add_columns(
                 cols=tuple(columns),
                 create_ops=create_ops,
@@ -5241,7 +5241,7 @@ class MainTable(tk.Canvas):
                         repeat(default_width, maxcn + 1 - (len(self.col_positions) - 1)),
                     )
                 )
-        if push_ops:
+        if push_ops and rows:
             self.adjust_options_post_add_rows(
                 rows=tuple(rows),
                 create_ops=create_ops,
@@ -5370,11 +5370,16 @@ class MainTable(tk.Canvas):
                 for datacn, column in enumerate(columns, data_ins_col):
                     if column:
                         header_dict[datacn] = column[0]
-                        columns_dict[datacn] = dict(enumerate(islice(column, 1, None)))
+                        columns_dict[datacn] = {
+                            datarn: self.format_value(datarn, datacn, v)
+                            for datarn, v in enumerate(islice(column, 1, None))
+                        }
             else:
                 for datacn, column in enumerate(columns, data_ins_col):
                     if column:
-                        columns_dict[datacn] = dict(enumerate(column))
+                        columns_dict[datacn] = {
+                            datarn: self.format_value(datarn, datacn, v) for datarn, v in enumerate(column)
+                        }
 
         rng = range(displayed_ins_col, displayed_ins_col + len(columns_dict))
         if widths is None:
@@ -5414,12 +5419,12 @@ class MainTable(tk.Canvas):
                     if row:
                         index_dict[datarn] = row[0]
                     if len(row) > 1:
-                        rows_dict[datarn] = row[1:]
+                        rows_dict[datarn] = [self.format_value(datarn, datacn, v) for datacn, v in enumerate(row[1:])]
                     else:
                         rows_dict[datarn] = []
             else:
                 for datarn, row in enumerate(rows, data_ins_row):
-                    rows_dict[datarn] = row
+                    rows_dict[datarn] = [self.format_value(datarn, datacn, v) for datacn, v in enumerate(row)]
 
         rng = range(displayed_ins_row, displayed_ins_row + len(rows_dict))
         if heights is None:
@@ -7995,6 +8000,17 @@ class MainTable(tk.Canvas):
                 else:
                     self.data[datarn][datacn] = value
 
+    def format_value(self, datarn: int, datacn: int, value: Any) -> Any:
+        if (datarn, datacn) in self.cell_options and "checkbox" in self.cell_options[(datarn, datacn)]:
+            return try_to_bool(value)
+        elif kwargs := self.get_cell_kwargs(datarn, datacn, key="format"):
+            if kwargs["formatter"] is None:
+                return format_data(value=value, **kwargs)
+            else:
+                return kwargs["formatter"](value, **kwargs)
+        else:
+            return value
+
     def get_value_for_empty_cell(self, datarn: int, datacn: int, r_ops: bool = True, c_ops: bool = True) -> Any:
         kwargs = self.get_cell_kwargs(
             datarn,
@@ -8009,7 +8025,7 @@ class MainTable(tk.Canvas):
         elif "dropdown" in kwargs and kwargs["dropdown"]["validate_input"] and kwargs["dropdown"]["values"]:
             return kwargs["dropdown"]["values"][0]
         else:
-            return ""
+            return self.format_value(datarn, datacn, "")
 
     def get_empty_row_seq(
         self, datarn: int, end: int, start: int = 0, r_ops: bool = True, c_ops: bool = True

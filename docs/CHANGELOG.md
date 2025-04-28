@@ -1,5 +1,9 @@
 ### Version 7.4.22
-####
+#### Addressed:
+- [#289](https://github.com/ragardner/tksheet/issues/289).
+
+#### Changed:
+- When inserting rows and columns any data formatting rules are now pre-applied.
 
 ### Version 7.4.21
 #### Addressed:

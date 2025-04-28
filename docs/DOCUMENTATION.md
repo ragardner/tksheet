@@ -6,6 +6,14 @@
 - If you are using a version of tksheet that is older than `7.0.0` then you will need the documentation [here](https://github.com/ragardner/tksheet/wiki/Version-6) instead.
     - In tksheet versions >= `7.0.2` the current version will be at the top of the file `__init__.py`.
 
+### **Known Issues**
+
+1. When using `edit_validation()` to validate cell edits and pasting into the sheet:
+    - If the sheets rows are expanded then the row numbers under the key `row` and `loc` are data indexes whereas the column numbers are displayed indexes.
+    - If the sheets columns are expanded then the column numbers under the key `column` and `loc` are data indexes whereas the row numbers are displayed indexes.
+    - This is only relevant when there are hidden rows or columns and you're using `edit_validation()` and you're using the event data keys `row`, `column` or `loc` in your bound `edit_validation()` function and you're using paste and the sheet can be expanded by paste.
+2. There may be some issues with toggle select mode and deselection.
+
 ### **Limitations**
 
 Some examples of things that are not possible with tksheet:

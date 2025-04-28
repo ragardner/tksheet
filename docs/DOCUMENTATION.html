@@ -271,6 +271,7 @@
 <div class="toc">
 <ul>
 <li><a href="#about-tksheet">About tksheet</a><ul>
+<li><a href="#known-issues">Known Issues</a></li>
 <li><a href="#limitations">Limitations</a></li>
 </ul>
 </li>
@@ -691,6 +692,16 @@
 </ul>
 </li>
 </ul>
+<h3 id="known-issues"><strong>Known Issues</strong></h3>
+<ol>
+<li>When using <code>edit_validation()</code> to validate cell edits and pasting into the sheet:<ul>
+<li>If the sheets rows are expanded then the row numbers under the key <code>row</code> and <code>loc</code> are data indexes whereas the column numbers are displayed indexes.</li>
+<li>If the sheets columns are expanded then the column numbers under the key <code>column</code> and <code>loc</code> are data indexes whereas the row numbers are displayed indexes.</li>
+<li>This is only relevant when there are hidden rows or columns and you're using <code>edit_validation()</code> and you're using the event data keys <code>row</code>, <code>column</code> or <code>loc</code> in your bound <code>edit_validation()</code> function and you're using paste and the sheet can be expanded by paste.</li>
+</ul>
+</li>
+<li>There may be some issues with toggle select mode and deselection.</li>
+</ol>
 <h3 id="limitations"><strong>Limitations</strong></h3>
 <p>Some examples of things that are not possible with tksheet:</p>
 <ul>
