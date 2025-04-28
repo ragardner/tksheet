@@ -5561,7 +5561,6 @@ class MainTable(tk.Canvas):
         if self.PAR.ops.treeview:
             event_data["deleted"]["index"] = {datarn: self._row_index[datarn] for datarn in rows}
             event_data = self.RI.tree_del_rows(event_data=event_data)
-
         elif isinstance(self._row_index, list):
             for i, datarn in enumerate(rows):
                 r = datarn - i

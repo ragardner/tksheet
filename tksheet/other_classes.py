@@ -440,7 +440,7 @@ class Span(dict):
                         try:
                             # Deep copy non-callable items in kwargs
                             span[key][k] = copy.deepcopy(v)
-                        except (TypeError, AttributeError):
+                        except Exception:
                             # Handle non-copyable objects (e.g., complex closures or objects)
                             span[key][k] = v  # Fallback to shallow copy
             elif key == "convert" and callable(value):
@@ -450,7 +450,7 @@ class Span(dict):
                 # Deep copy other values to handle nested objects like DotDict
                 try:
                     span[key] = copy.deepcopy(value)
-                except (TypeError, AttributeError):
+                except Exception:
                     # Fallback for non-copyable objects
                     span[key] = value  # Shallow copy as fallback
 
