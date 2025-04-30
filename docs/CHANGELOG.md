@@ -1,5 +1,6 @@
 ### Version 7.4.23
-####
+#### Fixed:
+- Paste with nothing selected regression. [#289](https://github.com/ragardner/tksheet/issues/289).
 
 ### Version 7.4.22
 #### Addressed:

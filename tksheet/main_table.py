@@ -1324,7 +1324,7 @@ class MainTable(tk.Canvas):
                             and self.input_valid_for_cell(r, datacn, val, ignore_empty=True)
                         )
                     ):
-                        rows[r][datacn] = self.format_value(datarn, datacn, val)
+                        rows[r][datacn] = self.format_value(r, datacn, val)
                         ctr += 1
             if ctr:
                 event_data = self.add_rows(
@@ -1374,7 +1374,7 @@ class MainTable(tk.Canvas):
                             and self.input_valid_for_cell(datarn, c, val, ignore_empty=True)
                         )
                     ):
-                        columns[c][datarn] = self.format_value(datarn, datacn, val)
+                        columns[c][datarn] = self.format_value(datarn, c, val)
                         ctr += 1
             if ctr:
                 event_data = self.add_columns(
