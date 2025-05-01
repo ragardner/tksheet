@@ -7657,12 +7657,22 @@ class MainTable(tk.Canvas):
         return value, event_data
 
     def tab_key(self, event: Any = None) -> str:
-        if not self.selected:
-            return
-        r, c = self.selected.row, self.selected.column
-        r1, c1, r2, c2 = self.selection_boxes[self.selected.fill_iid].coords
-        numcols = c2 - c1
-        numrows = r2 - r1
+        if self.selected:
+            r, c = self.selected.row, self.selected.column
+            r1, c1, r2, c2 = self.selection_boxes[self.selected.fill_iid].coords
+            numcols = c2 - c1
+            numrows = r2 - r1
+        else:
+            if (
+                self.row_positions == [0]
+                or self.col_positions == [0]
+                or not self.row_positions
+                or not self.col_positions
+            ):
+                return
+            r, c = len(self.row_positions) - 2, len(self.col_positions) - 2
+            r1, c1, r2, c2 = 0, 0, len(self.row_positions) - 1, len(self.col_positions) - 1
+            numcols, numrows = 1, 1
         if numcols == 1 and numrows == 1:
             new_r, new_c = cell_right_within_box(
                 r,
