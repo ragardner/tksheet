@@ -1,3 +1,6 @@
+### Version 7.4.25
+####
+
 ### Version 7.4.24
 #### Fixed:
 - Redo stack was not being purged upon making a sheet modification using many Sheet() methods. [#291](https://github.com/ragardner/tksheet/issues/291).
