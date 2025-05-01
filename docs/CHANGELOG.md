@@ -1,9 +1,10 @@
 ### Version 7.4.24
 #### Fixed:
-- Redo stack was not being purged upon making a sheet modification using many Sheet() methods. [#291](https://github.com/ragardner/tksheet/issues/290).
+- Redo stack was not being purged upon making a sheet modification using many Sheet() methods. [#291](https://github.com/ragardner/tksheet/issues/291).
 
 #### Changed:
 - Tab and Return keys to change cell selection no longer stop at the end of the row/column. [#290](https://github.com/ragardner/tksheet/issues/290).
+- If nothing is selected in the table and tab key is pressed, select the first cell.
 
 ### Version 7.4.23
 #### Fixed:
