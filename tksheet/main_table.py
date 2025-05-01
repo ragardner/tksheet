@@ -1796,6 +1796,9 @@ class MainTable(tk.Canvas):
                     disp_new_idxs=disp_new_idxs,
                     maxidx=maxidx,
                     event_data=event_data,
+                    # undo_modification is the old saved stuff
+                    # event_data is the new event
+                    # node change only comes from Sheet.move()
                     undo_modification=undo_modification,
                     node_change=node_change,
                 )
@@ -2020,8 +2023,9 @@ class MainTable(tk.Canvas):
         self.PAR.emit_event("<<Redo>>", event_data)
         return event_data
 
-    def sheet_modified(self, event_data: EventDataDict, purge_redo: bool = True) -> None:
-        self.PAR.emit_event("<<SheetModified>>", event_data)
+    def sheet_modified(self, event_data: EventDataDict, purge_redo: bool = True, emit_event: bool = True) -> None:
+        if emit_event:
+            self.PAR.emit_event("<<SheetModified>>", event_data)
         if purge_redo:
             self.purge_redo_stack()
 
@@ -7603,9 +7607,30 @@ class MainTable(tk.Canvas):
             return
         if numcols == 1 and numrows == 1:
             if direction == "right":
-                self.select_right(r, c)
+                new_r, new_c = cell_right_within_box(
+                    r,
+                    c,
+                    0,
+                    0,
+                    len(self.row_positions) - 1,
+                    len(self.col_positions) - 1,
+                    len(self.row_positions) - 1,
+                    len(self.col_positions) - 1,
+                )
             elif direction == "down":
-                self.select_down(r, c)
+                new_r, new_c = cell_down_within_box(
+                    r,
+                    c,
+                    0,
+                    0,
+                    len(self.row_positions) - 1,
+                    len(self.col_positions) - 1,
+                    len(self.row_positions) - 1,
+                    len(self.col_positions) - 1,
+                )
+            if direction in ("right", "down"):
+                self.select_cell(new_r, new_c)
+                self.see(new_r, new_c)
         else:
             if direction == "right":
                 new_r, new_c = cell_right_within_box(r, c, r1, c1, r2, c2, numrows, numcols)
@@ -7631,18 +7656,6 @@ class MainTable(tk.Canvas):
                 value = None
         return value, event_data
 
-    def select_right(self, r: int, c: int) -> None:
-        self.select_cell(r, c + 1 if c < len(self.col_positions) - 2 else c)
-        self.see(
-            r,
-            c + 1 if c < len(self.col_positions) - 2 else c,
-            bottom_right_corner=True,
-        )
-
-    def select_down(self, r: int, c: int) -> None:
-        self.select_cell(r + 1 if r < len(self.row_positions) - 2 else r, c)
-        self.see(r + 1 if r < len(self.row_positions) - 2 else r, c)
-
     def tab_key(self, event: Any = None) -> str:
         if not self.selected:
             return
@@ -7651,8 +7664,16 @@ class MainTable(tk.Canvas):
         numcols = c2 - c1
         numrows = r2 - r1
         if numcols == 1 and numrows == 1:
-            new_r = r
-            new_c = c + 1 if c < len(self.col_positions) - 2 else c
+            new_r, new_c = cell_right_within_box(
+                r,
+                c,
+                0,
+                0,
+                len(self.row_positions) - 1,
+                len(self.col_positions) - 1,
+                len(self.row_positions) - 1,
+                len(self.col_positions) - 1,
+            )
             self.select_cell(new_r, new_c)
         else:
             new_r, new_c = cell_right_within_box(r, c, r1, c1, r2, c2, numrows, numcols)
