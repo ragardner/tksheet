@@ -3291,6 +3291,33 @@ class MainTable(tk.Canvas):
                 compound=self.PAR.ops.sort_rows_reverse_compound,
                 **mnkwgs,
             )
+        if self.undo_enabled and any(
+            x in self.enabled_bindings_menu_entries for x in ("all", "undo", "redo", "edit_bindings", "edit")
+        ):
+            for menu in (
+                self.rc_popup_menu,
+                self.RI.ri_rc_popup_menu,
+                self.CH.ch_rc_popup_menu,
+                self.empty_rc_popup_menu,
+            ):
+                self.menu_add_command(
+                    menu,
+                    label=self.PAR.ops.undo_label,
+                    accelerator=self.PAR.ops.undo_accelerator,
+                    command=self.undo,
+                    image=self.PAR.ops.undo_image,
+                    compound=self.PAR.ops.undo_compound,
+                    **mnkwgs,
+                )
+                self.menu_add_command(
+                    menu,
+                    label=self.PAR.ops.redo_label,
+                    accelerator=self.PAR.ops.redo_accelerator,
+                    command=self.redo,
+                    image=self.PAR.ops.redo_image,
+                    compound=self.PAR.ops.redo_compound,
+                    **mnkwgs,
+                )
         # Added popup menu commands
         for label, kws in self.extra_table_rc_menu_funcs.items():
             self.menu_add_command(self.rc_popup_menu, label=label, **{**mnkwgs, **kws})
@@ -3646,9 +3673,9 @@ class MainTable(tk.Canvas):
         ):
             datarn, datacn = self.datarn(self.selected.row), self.datacn(self.selected.column)
             if self.is_readonly(datarn, datacn):
-                popup_menu.entryconfig(self.PAR.ops.edit_cell_label, state="disabled")
+                popup_menu.entryconfig(self.PAR.ops.edit_cell_label, image="", state="disabled")
             else:
-                popup_menu.entryconfig(self.PAR.ops.edit_cell_label, state="normal")
+                popup_menu.entryconfig(self.PAR.ops.edit_cell_label, image=self.PAR.ops.edit_cell_image, state="normal")
         # index
         if (
             self.selected
@@ -3657,9 +3684,11 @@ class MainTable(tk.Canvas):
         ):
             datarn = self.datarn(self.selected.row)
             if self.RI.is_readonly(datarn):
-                popup_menu.entryconfig(self.PAR.ops.edit_index_label, state="disabled")
+                popup_menu.entryconfig(self.PAR.ops.edit_index_label, image="", state="disabled")
             else:
-                popup_menu.entryconfig(self.PAR.ops.edit_index_label, state="normal")
+                popup_menu.entryconfig(
+                    self.PAR.ops.edit_index_label, image=self.PAR.ops.edit_index_image, state="normal"
+                )
         # header
         if (
             self.selected
@@ -3668,9 +3697,24 @@ class MainTable(tk.Canvas):
         ):
             datacn = self.datacn(self.selected.column)
             if self.CH.is_readonly(datacn):
-                popup_menu.entryconfig(self.PAR.ops.edit_header_label, state="disabled")
+                popup_menu.entryconfig(self.PAR.ops.edit_header_label, image="", state="disabled")
             else:
-                popup_menu.entryconfig(self.PAR.ops.edit_header_label, state="normal")
+                popup_menu.entryconfig(
+                    self.PAR.ops.edit_header_label, image=self.PAR.ops.edit_header_image, state="normal"
+                )
+
+    def popup_menu_disable_undo_redo(self, popup_menu: tk.Menu) -> None:
+        if not self.undo_enabled:
+            return
+        if menu_item_exists(popup_menu, self.PAR.ops.undo_label):
+            if not self.undo_stack:
+                popup_menu.entryconfig(self.PAR.ops.undo_label, image="", state="disabled")
+            else:
+                popup_menu.entryconfig(self.PAR.ops.undo_label, image=self.PAR.ops.undo_image, state="normal")
+            if not self.redo_stack:
+                popup_menu.entryconfig(self.PAR.ops.redo_label, image="", state="disabled")
+            else:
+                popup_menu.entryconfig(self.PAR.ops.redo_label, image=self.PAR.ops.redo_image, state="normal")
 
     def rc(self, event: Any = None) -> None:
         self.mouseclick_outside_editor_or_dropdown_all_canvases()
@@ -3704,6 +3748,7 @@ class MainTable(tk.Canvas):
         try_binding(self.extra_rc_func, event)
         if popup_menu:
             self.popup_menu_disable_edit_if_readonly(popup_menu)
+            self.popup_menu_disable_undo_redo(popup_menu)
             popup_menu.tk_popup(event.x_root, event.y_root)
 
     def b1_press(self, event: Any = None) -> None:

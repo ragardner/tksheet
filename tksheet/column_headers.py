@@ -193,6 +193,7 @@ class ColumnHeaders(tk.Canvas):
         if popup_menu is not None:
             self.popup_menu_loc = c
             self.MT.popup_menu_disable_edit_if_readonly(popup_menu)
+            self.MT.popup_menu_disable_undo_redo(popup_menu)
             popup_menu.tk_popup(event.x_root, event.y_root)
 
     def ctrl_b1_press(self, event: Any) -> None:
