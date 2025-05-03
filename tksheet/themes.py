@@ -183,8 +183,8 @@ theme_light_green: dict[str, str] = DotDict(
 theme_dark: dict[str, str] = DotDict(
     {
         "popup_menu_fg": "white",
-        "popup_menu_bg": "gray15",
-        "popup_menu_highlight_bg": "gray40",
+        "popup_menu_bg": "gray5",
+        "popup_menu_highlight_bg": "gray20",
         "popup_menu_highlight_fg": "white",
         "index_hidden_rows_expander_bg": "gray30",
         "header_hidden_columns_expander_bg": "gray30",
@@ -272,8 +272,8 @@ theme_dark: dict[str, str] = DotDict(
 theme_black: dict[str, str] = DotDict(
     {
         "popup_menu_fg": "white",
-        "popup_menu_bg": "gray15",
-        "popup_menu_highlight_bg": "gray40",
+        "popup_menu_bg": "gray5",
+        "popup_menu_highlight_bg": "gray20",
         "popup_menu_highlight_fg": "white",
         "index_hidden_rows_expander_bg": "gray30",
         "header_hidden_columns_expander_bg": "gray30",

@@ -59,30 +59,40 @@ class FindWindowTkText(tk.Text):
         self.rc_popup_menu.add_command(
             label=sheet_ops.select_all_label,
             accelerator=sheet_ops.select_all_accelerator,
+            image=sheet_ops.select_all_image,
+            compound=sheet_ops.select_all_compound,
             command=self.select_all,
             **menu_kwargs,
         )
         self.rc_popup_menu.add_command(
             label=sheet_ops.cut_label,
             accelerator=sheet_ops.cut_accelerator,
+            image=sheet_ops.cut_image,
+            compound=sheet_ops.cut_compound,
             command=self.cut,
             **menu_kwargs,
         )
         self.rc_popup_menu.add_command(
             label=sheet_ops.copy_label,
             accelerator=sheet_ops.copy_accelerator,
+            image=sheet_ops.copy_image,
+            compound=sheet_ops.copy_compound,
             command=self.copy,
             **menu_kwargs,
         )
         self.rc_popup_menu.add_command(
             label=sheet_ops.paste_label,
             accelerator=sheet_ops.paste_accelerator,
+            image=sheet_ops.paste_image,
+            compound=sheet_ops.paste_compound,
             command=self.paste,
             **menu_kwargs,
         )
         self.rc_popup_menu.add_command(
             label=sheet_ops.undo_label,
             accelerator=sheet_ops.undo_accelerator,
+            image=sheet_ops.undo_image,
+            compound=sheet_ops.undo_compound,
             command=self.undo,
             **menu_kwargs,
         )
