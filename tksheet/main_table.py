@@ -2936,6 +2936,8 @@ class MainTable(tk.Canvas):
                 self.CH.ch_rc_popup_menu,
                 label=self.PAR.ops.edit_header_label,
                 command=lambda: self.CH.open_cell(event="rc"),
+                image=self.PAR.ops.edit_header_image,
+                compound=self.PAR.ops.edit_header_compound,
                 **mnkwgs,
             )
         if (
@@ -2947,6 +2949,8 @@ class MainTable(tk.Canvas):
                 self.RI.ri_rc_popup_menu,
                 label=self.PAR.ops.edit_index_label,
                 command=lambda: self.RI.open_cell(event="rc"),
+                image=self.PAR.ops.edit_index_image,
+                compound=self.PAR.ops.edit_index_compound,
                 **mnkwgs,
             )
         if (
@@ -2958,6 +2962,8 @@ class MainTable(tk.Canvas):
                 self.rc_popup_menu,
                 label=self.PAR.ops.edit_cell_label,
                 command=lambda: self.open_cell(event="rc"),
+                image=self.PAR.ops.edit_cell_image,
+                compound=self.PAR.ops.edit_cell_compound,
                 **mnkwgs,
             )
         if self.cut_enabled and any(
@@ -2968,6 +2974,8 @@ class MainTable(tk.Canvas):
                 label=self.PAR.ops.cut_label,
                 accelerator=self.PAR.ops.cut_accelerator,
                 command=self.ctrl_x,
+                image=self.PAR.ops.cut_image,
+                compound=self.PAR.ops.cut_compound,
                 **mnkwgs,
             )
             self.menu_add_command(
@@ -2975,6 +2983,8 @@ class MainTable(tk.Canvas):
                 label=self.PAR.ops.cut_contents_label,
                 accelerator=self.PAR.ops.cut_contents_accelerator,
                 command=self.ctrl_x,
+                image=self.PAR.ops.cut_contents_image,
+                compound=self.PAR.ops.cut_contents_compound,
                 **mnkwgs,
             )
             self.menu_add_command(
@@ -2982,6 +2992,8 @@ class MainTable(tk.Canvas):
                 label=self.PAR.ops.cut_contents_label,
                 accelerator=self.PAR.ops.cut_contents_accelerator,
                 command=self.ctrl_x,
+                image=self.PAR.ops.cut_contents_image,
+                compound=self.PAR.ops.cut_contents_compound,
                 **mnkwgs,
             )
         if self.copy_enabled and any(
@@ -2992,6 +3004,8 @@ class MainTable(tk.Canvas):
                 label=self.PAR.ops.copy_label,
                 accelerator=self.PAR.ops.copy_accelerator,
                 command=self.ctrl_c,
+                image=self.PAR.ops.copy_image,
+                compound=self.PAR.ops.copy_compound,
                 **mnkwgs,
             )
             self.menu_add_command(
@@ -2999,6 +3013,8 @@ class MainTable(tk.Canvas):
                 label=self.PAR.ops.copy_contents_label,
                 accelerator=self.PAR.ops.copy_contents_accelerator,
                 command=self.ctrl_c,
+                image=self.PAR.ops.copy_contents_image,
+                compound=self.PAR.ops.copy_contents_compound,
                 **mnkwgs,
             )
             self.menu_add_command(
@@ -3006,6 +3022,8 @@ class MainTable(tk.Canvas):
                 label=self.PAR.ops.copy_contents_label,
                 accelerator=self.PAR.ops.copy_contents_accelerator,
                 command=self.ctrl_c,
+                image=self.PAR.ops.copy_contents_image,
+                compound=self.PAR.ops.copy_contents_compound,
                 **mnkwgs,
             )
         if self.paste_enabled and any(
@@ -3016,6 +3034,8 @@ class MainTable(tk.Canvas):
                 label=self.PAR.ops.paste_label,
                 accelerator=self.PAR.ops.paste_accelerator,
                 command=self.ctrl_v,
+                image=self.PAR.ops.paste_image,
+                compound=self.PAR.ops.paste_compound,
                 **mnkwgs,
             )
             self.menu_add_command(
@@ -3023,6 +3043,8 @@ class MainTable(tk.Canvas):
                 label=self.PAR.ops.paste_label,
                 accelerator=self.PAR.ops.paste_accelerator,
                 command=self.ctrl_v,
+                image=self.PAR.ops.paste_image,
+                compound=self.PAR.ops.paste_compound,
                 **mnkwgs,
             )
             self.menu_add_command(
@@ -3030,6 +3052,8 @@ class MainTable(tk.Canvas):
                 label=self.PAR.ops.paste_label,
                 accelerator=self.PAR.ops.paste_accelerator,
                 command=self.ctrl_v,
+                image=self.PAR.ops.paste_image,
+                compound=self.PAR.ops.paste_compound,
                 **mnkwgs,
             )
             if self.PAR.ops.paste_can_expand_x or self.PAR.ops.paste_can_expand_y:
@@ -3038,6 +3062,8 @@ class MainTable(tk.Canvas):
                     label=self.PAR.ops.paste_label,
                     accelerator=self.PAR.ops.paste_accelerator,
                     command=self.ctrl_v,
+                    image=self.PAR.ops.paste_image,
+                    compound=self.PAR.ops.paste_compound,
                     **mnkwgs,
                 )
         if self.delete_key_enabled and any(
@@ -3048,6 +3074,8 @@ class MainTable(tk.Canvas):
                 label=self.PAR.ops.delete_label,
                 accelerator=self.PAR.ops.delete_accelerator,
                 command=self.delete_key,
+                image=self.PAR.ops.delete_image,
+                compound=self.PAR.ops.delete_compound,
                 **mnkwgs,
             )
             self.menu_add_command(
@@ -3055,6 +3083,8 @@ class MainTable(tk.Canvas):
                 label=self.PAR.ops.clear_contents_label,
                 accelerator=self.PAR.ops.clear_contents_accelerator,
                 command=self.delete_key,
+                image=self.PAR.ops.clear_contents_image,
+                compound=self.PAR.ops.clear_contents_compound,
                 **mnkwgs,
             )
             self.menu_add_command(
@@ -3062,6 +3092,8 @@ class MainTable(tk.Canvas):
                 label=self.PAR.ops.clear_contents_label,
                 accelerator=self.PAR.ops.clear_contents_accelerator,
                 command=self.delete_key,
+                image=self.PAR.ops.clear_contents_image,
+                compound=self.PAR.ops.clear_contents_compound,
                 **mnkwgs,
             )
         if self.rc_delete_column_enabled:
@@ -3069,6 +3101,8 @@ class MainTable(tk.Canvas):
                 self.CH.ch_rc_popup_menu,
                 label=self.PAR.ops.delete_columns_label,
                 command=self.delete_columns,
+                image=self.PAR.ops.delete_columns_image,
+                compound=self.PAR.ops.delete_columns_compound,
                 **mnkwgs,
             )
         if self.rc_insert_column_enabled:
@@ -3076,18 +3110,24 @@ class MainTable(tk.Canvas):
                 self.CH.ch_rc_popup_menu,
                 label=self.PAR.ops.insert_columns_left_label,
                 command=lambda: self.rc_add_columns("left"),
+                image=self.PAR.ops.insert_columns_left_image,
+                compound=self.PAR.ops.insert_columns_left_compound,
                 **mnkwgs,
             )
             self.menu_add_command(
                 self.CH.ch_rc_popup_menu,
                 label=self.PAR.ops.insert_columns_right_label,
                 command=lambda: self.rc_add_columns("right"),
+                image=self.PAR.ops.insert_columns_right_image,
+                compound=self.PAR.ops.insert_columns_right_compound,
                 **mnkwgs,
             )
             self.menu_add_command(
                 self.empty_rc_popup_menu,
                 label=self.PAR.ops.insert_column_label,
                 command=lambda: self.rc_add_columns("left"),
+                image=self.PAR.ops.insert_column_image,
+                compound=self.PAR.ops.insert_column_compound,
                 **mnkwgs,
             )
         if self.rc_delete_row_enabled:
@@ -3095,6 +3135,8 @@ class MainTable(tk.Canvas):
                 self.RI.ri_rc_popup_menu,
                 label=self.PAR.ops.delete_rows_label,
                 command=self.delete_rows,
+                image=self.PAR.ops.delete_rows_image,
+                compound=self.PAR.ops.delete_rows_compound,
                 **mnkwgs,
             )
         if self.rc_insert_row_enabled:
@@ -3102,18 +3144,24 @@ class MainTable(tk.Canvas):
                 self.RI.ri_rc_popup_menu,
                 label=self.PAR.ops.insert_rows_above_label,
                 command=lambda: self.rc_add_rows("above"),
+                image=self.PAR.ops.insert_rows_above_image,
+                compound=self.PAR.ops.insert_rows_above_compound,
                 **mnkwgs,
             )
             self.menu_add_command(
                 self.RI.ri_rc_popup_menu,
                 label=self.PAR.ops.insert_rows_below_label,
                 command=lambda: self.rc_add_rows("below"),
+                image=self.PAR.ops.insert_rows_below_image,
+                compound=self.PAR.ops.insert_rows_below_compound,
                 **mnkwgs,
             )
             self.menu_add_command(
                 self.empty_rc_popup_menu,
                 label=self.PAR.ops.insert_row_label,
                 command=lambda: self.rc_add_rows("below"),
+                image=self.PAR.ops.insert_row_image,
+                compound=self.PAR.ops.insert_row_compound,
                 **mnkwgs,
             )
         if self.rc_sort_cells_enabled:
@@ -3122,6 +3170,8 @@ class MainTable(tk.Canvas):
                 label=self.PAR.ops.sort_cells_label,
                 accelerator=self.PAR.ops.sort_cells_accelerator,
                 command=self.sort_boxes,
+                image=self.PAR.ops.sort_cells_image,
+                compound=self.PAR.ops.sort_cells_compound,
                 **mnkwgs,
             )
             self.menu_add_command(
@@ -3129,6 +3179,8 @@ class MainTable(tk.Canvas):
                 label=self.PAR.ops.sort_cells_reverse_label,
                 accelerator=self.PAR.ops.sort_cells_reverse_accelerator,
                 command=lambda: self.sort_boxes(reverse=True),
+                image=self.PAR.ops.sort_cells_reverse_image,
+                compound=self.PAR.ops.sort_cells_reverse_compound,
                 **mnkwgs,
             )
             self.menu_add_command(
@@ -3136,6 +3188,8 @@ class MainTable(tk.Canvas):
                 label=self.PAR.ops.sort_cells_x_label,
                 accelerator=self.PAR.ops.sort_cells_x_accelerator,
                 command=lambda: self.sort_boxes(row_wise=True),
+                image=self.PAR.ops.sort_cells_x_image,
+                compound=self.PAR.ops.sort_cells_x_compound,
                 **mnkwgs,
             )
             self.menu_add_command(
@@ -3143,6 +3197,8 @@ class MainTable(tk.Canvas):
                 label=self.PAR.ops.sort_cells_x_reverse_label,
                 accelerator=self.PAR.ops.sort_cells_x_reverse_accelerator,
                 command=lambda: self.sort_boxes(reverse=True, row_wise=True),
+                image=self.PAR.ops.sort_cells_x_reverse_image,
+                compound=self.PAR.ops.sort_cells_x_reverse_compound,
                 **mnkwgs,
             )
         # row index sort rows cells
@@ -3152,6 +3208,8 @@ class MainTable(tk.Canvas):
                 label=self.PAR.ops.sort_row_label,
                 accelerator=self.PAR.ops.sort_row_accelerator,
                 command=self.RI._sort_rows,
+                image=self.PAR.ops.sort_row_image,
+                compound=self.PAR.ops.sort_row_compound,
                 **mnkwgs,
             )
             self.menu_add_command(
@@ -3159,6 +3217,8 @@ class MainTable(tk.Canvas):
                 label=self.PAR.ops.sort_row_reverse_label,
                 accelerator=self.PAR.ops.sort_row_reverse_accelerator,
                 command=lambda: self.RI._sort_rows(reverse=True),
+                image=self.PAR.ops.sort_row_reverse_image,
+                compound=self.PAR.ops.sort_row_reverse_compound,
                 **mnkwgs,
             )
         # header sort columns cells
@@ -3168,6 +3228,8 @@ class MainTable(tk.Canvas):
                 label=self.PAR.ops.sort_column_label,
                 accelerator=self.PAR.ops.sort_column_accelerator,
                 command=self.CH._sort_columns,
+                image=self.PAR.ops.sort_column_image,
+                compound=self.PAR.ops.sort_column_compound,
                 **mnkwgs,
             )
             self.menu_add_command(
@@ -3175,6 +3237,8 @@ class MainTable(tk.Canvas):
                 label=self.PAR.ops.sort_column_reverse_label,
                 accelerator=self.PAR.ops.sort_column_reverse_accelerator,
                 command=lambda: self.CH._sort_columns(reverse=True),
+                image=self.PAR.ops.sort_column_reverse_image,
+                compound=self.PAR.ops.sort_column_reverse_compound,
                 **mnkwgs,
             )
         # row index sort columns by row
@@ -3184,6 +3248,8 @@ class MainTable(tk.Canvas):
                 label=self.PAR.ops.sort_columns_label,
                 accelerator=self.PAR.ops.sort_columns_accelerator,
                 command=self.RI._sort_columns_by_row,
+                image=self.PAR.ops.sort_columns_image,
+                compound=self.PAR.ops.sort_columns_compound,
                 **mnkwgs,
             )
             self.menu_add_command(
@@ -3191,6 +3257,8 @@ class MainTable(tk.Canvas):
                 label=self.PAR.ops.sort_columns_reverse_label,
                 accelerator=self.PAR.ops.sort_columns_reverse_accelerator,
                 command=lambda: self.RI._sort_columns_by_row(reverse=True),
+                image=self.PAR.ops.sort_columns_reverse_image,
+                compound=self.PAR.ops.sort_columns_reverse_compound,
                 **mnkwgs,
             )
         # header sort rows by column
@@ -3200,6 +3268,8 @@ class MainTable(tk.Canvas):
                 label=self.PAR.ops.sort_rows_label,
                 accelerator=self.PAR.ops.sort_rows_accelerator,
                 command=self.CH._sort_rows_by_column,
+                image=self.PAR.ops.sort_rows_image,
+                compound=self.PAR.ops.sort_rows_compound,
                 **mnkwgs,
             )
             self.menu_add_command(
@@ -3207,36 +3277,19 @@ class MainTable(tk.Canvas):
                 label=self.PAR.ops.sort_rows_reverse_label,
                 accelerator=self.PAR.ops.sort_rows_reverse_accelerator,
                 command=lambda: self.CH._sort_rows_by_column(reverse=True),
+                image=self.PAR.ops.sort_rows_reverse_image,
+                compound=self.PAR.ops.sort_rows_reverse_compound,
                 **mnkwgs,
             )
-        for label, func in self.extra_table_rc_menu_funcs.items():
-            self.menu_add_command(
-                self.rc_popup_menu,
-                label=label,
-                command=func,
-                **mnkwgs,
-            )
-        for label, func in self.extra_index_rc_menu_funcs.items():
-            self.menu_add_command(
-                self.RI.ri_rc_popup_menu,
-                label=label,
-                command=func,
-                **mnkwgs,
-            )
-        for label, func in self.extra_header_rc_menu_funcs.items():
-            self.menu_add_command(
-                self.CH.ch_rc_popup_menu,
-                label=label,
-                command=func,
-                **mnkwgs,
-            )
-        for label, func in self.extra_empty_space_rc_menu_funcs.items():
-            self.menu_add_command(
-                self.empty_rc_popup_menu,
-                label=label,
-                command=func,
-                **mnkwgs,
-            )
+        # Added popup menu commands
+        for label, kws in self.extra_table_rc_menu_funcs.items():
+            self.menu_add_command(self.rc_popup_menu, label=label, **{**mnkwgs, **kws})
+        for label, kws in self.extra_index_rc_menu_funcs.items():
+            self.menu_add_command(self.RI.ri_rc_popup_menu, label=label, **{**mnkwgs, **kws})
+        for label, kws in self.extra_header_rc_menu_funcs.items():
+            self.menu_add_command(self.CH.ch_rc_popup_menu, label=label, **{**mnkwgs, **kws})
+        for label, kws in self.extra_empty_space_rc_menu_funcs.items():
+            self.menu_add_command(self.empty_rc_popup_menu, label=label, **{**mnkwgs, **kws})
 
     def enable_bindings(self, bindings: Any, menu: bool = True) -> None:
         if not bindings:

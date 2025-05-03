@@ -1194,7 +1194,25 @@ popup_menu_add_command(
     index_menu: bool = True,
     header_menu: bool = True,
     empty_space_menu: bool = True,
+    image: tk.PhotoImage | None = None,
+    compound: Literal["top", "bottom", "left", "right", "none"] | None = None,
+    accelerator: str | None = None,
 ) -> Sheet
+```
+
+Notes:
+
+- Either creates or overwrites an existing menu command.
+
+Example:
+
+```python
+self.sheet.popup_menu_add_command(
+    label="Test insert rows",
+    func=self.my_fn,
+    image=tk.PhotoImage(file="filepath_to_img.png"),
+    compound="left",
+)
 ```
 
 ___
@@ -1349,78 +1367,170 @@ Please note that due to the limitations of the Tkinter Canvas tksheet doesn’t 
 You can change the labels for tksheets in-built right click popup menu by using the [`set_options()` function](#sheet-options-and-other-functions) with any of the following keyword arguments:
 
 ```python
-edit_header_label
-edit_header_accelerator
-edit_index_label
-edit_index_accelerator
-edit_cell_label
-edit_cell_accelerator
-cut_label
-cut_accelerator
-cut_contents_label
-cut_contents_accelerator
-copy_label
-copy_accelerator
-copy_contents_label
-copy_contents_accelerator
-paste_label
-paste_accelerator
-delete_label
-delete_accelerator
-clear_contents_label
-clear_contents_accelerator
-delete_columns_label
-delete_columns_accelerator
-insert_columns_left_label
-insert_columns_left_accelerator
-insert_column_label
-insert_column_accelerator
-insert_columns_right_label
-insert_columns_right_accelerator
-delete_rows_label
-delete_rows_accelerator
-insert_rows_above_label
-insert_rows_above_accelerator
-insert_rows_below_label
-insert_rows_below_accelerator
-insert_row_label
-insert_row_accelerator
-select_all_label
-select_all_accelerator
-undo_label
-undo_accelerator
-
-sort_cells_label
-sort_cells_x_label
-sort_row_label
-sort_column_label
-sort_rows_label
-sort_columns_label
-sort_cells_reverse_label
-sort_cells_x_reverse_label
-sort_row_reverse_label
-sort_column_reverse_label
-sort_rows_reverse_label
-sort_columns_reverse_label
-sort_cells_accelerator
-sort_cells_x_accelerator
-sort_row_accelerator
-sort_column_accelerator
-sort_rows_accelerator
-sort_columns_accelerator
-sort_cells_reverse_accelerator
-sort_cells_x_reverse_accelerator
-sort_row_reverse_accelerator
-sort_column_reverse_accelerator
-sort_rows_reverse_accelerator
-sort_columns_reverse_accelerator
+# edit header
+"edit_header_label": "Edit header",
+"edit_header_accelerator": "",
+"edit_header_image": None,
+"edit_header_compound": None,
+# edit index
+"edit_index_label": "Edit index",
+"edit_index_accelerator": "",
+"edit_index_image": None,
+"edit_index_compound": None,
+# edit cell
+"edit_cell_label": "Edit cell",
+"edit_cell_accelerator": "",
+"edit_cell_image": None,
+"edit_cell_compound": None,
+# cut
+"cut_label": "Cut",
+"cut_accelerator": "Ctrl+X",
+"cut_image": None,
+"cut_compound": None,
+# cut contents
+"cut_contents_label": "Cut contents",
+"cut_contents_accelerator": "Ctrl+X",
+"cut_contents_image": None,
+"cut_contents_compound": None,
+# copy
+"copy_label": "Copy",
+"copy_accelerator": "Ctrl+C",
+"copy_image": None,
+"copy_compound": None,
+# copy contents
+"copy_contents_label": "Copy contents",
+"copy_contents_accelerator": "Ctrl+C",
+"copy_contents_image": None,
+"copy_contents_compound": None,
+# paste
+"paste_label": "Paste",
+"paste_accelerator": "Ctrl+V",
+"paste_image": None,
+"paste_compound": None,
+# delete
+"delete_label": "Delete",
+"delete_accelerator": "Del",
+"delete_image": None,
+"delete_compound": None,
+# clear contents
+"clear_contents_label": "Clear contents",
+"clear_contents_accelerator": "Del",
+"clear_contents_image": None,
+"clear_contents_compound": None,
+# del columns
+"delete_columns_label": "Delete columns",
+"delete_columns_accelerator": "",
+"delete_columns_image": None,
+"delete_columns_compound": None,
+# insert columns left
+"insert_columns_left_label": "Insert columns left",
+"insert_columns_left_accelerator": "",
+"insert_columns_left_image": None,
+"insert_columns_left_compound": None,
+# insert columns right
+"insert_columns_right_label": "Insert columns right",
+"insert_columns_right_accelerator": "",
+"insert_columns_right_image": None,
+"insert_columns_right_compound": None,
+# insert single column
+"insert_column_label": "Insert column",
+"insert_column_accelerator": "",
+"insert_column_image": None,
+"insert_column_compound": None,
+# del rows
+"delete_rows_label": "Delete rows",
+"delete_rows_accelerator": "",
+"delete_rows_image": None,
+"delete_rows_compound": None,
+# insert rows above
+"insert_rows_above_label": "Insert rows above",
+"insert_rows_above_accelerator": "",
+"insert_rows_above_image": None,
+"insert_rows_above_compound": None,
+# insert rows below
+"insert_rows_below_label": "Insert rows below",
+"insert_rows_below_accelerator": "",
+"insert_rows_below_image": None,
+"insert_rows_below_compound": None,
+# insert single row
+"insert_row_label": "Insert row",
+"insert_row_accelerator": "",
+"insert_row_image": None,
+"insert_row_compound": None,
+# sorting
+# labels
+"sort_cells_label": "Sort ↓",
+"sort_cells_x_label": "Sort →",
+"sort_row_label": "Sort values →",
+"sort_column_label": "Sort values ↓",
+"sort_rows_label": "Sort rows ↓",
+"sort_columns_label": "Sort columns →",
+# reverse labels
+"sort_cells_reverse_label": "Sort ↑",
+"sort_cells_x_reverse_label": "Sort ←",
+"sort_row_reverse_label": "Sort values ←",
+"sort_column_reverse_label": "Sort values ↑",
+"sort_rows_reverse_label": "Sort rows ↑",
+"sort_columns_reverse_label": "Sort columns ←",
+# accelerators
+"sort_cells_accelerator": "",
+"sort_cells_x_accelerator": "",
+"sort_row_accelerator": "",
+"sort_column_accelerator": "",
+"sort_rows_accelerator": "",
+"sort_columns_accelerator": "",
+# reverse accelerators
+"sort_cells_reverse_accelerator": "",
+"sort_cells_x_reverse_accelerator": "",
+"sort_row_reverse_accelerator": "",
+"sort_column_reverse_accelerator": "",
+"sort_rows_reverse_accelerator": "",
+"sort_columns_reverse_accelerator": "",
+# images
+"sort_cells_image": None,
+"sort_cells_x_image": None,
+"sort_row_image": None,
+"sort_column_image": None,
+"sort_rows_image": None,
+"sort_columns_image": None,
+# compounds
+"sort_cells_compound": None,
+"sort_cells_x_compound": None,
+"sort_row_compound": None,
+"sort_column_compound": None,
+"sort_rows_compound": None,
+"sort_columns_compound": None,
+# reverse images
+"sort_cells_reverse_image": None,
+"sort_cells_x_reverse_image": None,
+"sort_row_reverse_image": None,
+"sort_column_reverse_image": None,
+"sort_rows_reverse_image": None,
+"sort_columns_reverse_image": None,
+# reverse compounds
+"sort_cells_reverse_compound": None,
+"sort_cells_x_reverse_compound": None,
+"sort_row_reverse_compound": None,
+"sort_column_reverse_compound": None,
+"sort_rows_reverse_compound": None,
+"sort_columns_reverse_compound": None,
+# select all
+"select_all_label": "Select all",
+"select_all_accelerator": "Ctrl+A",
+"select_all_image": None,
+"select_all_compound": None,
+# undo
+"undo_label": "Undo",
+"undo_accelerator": "Ctrl+Z",
+"undo_image": None,
+"undo_compound": None,
 ```
 
 Example:
 
 ```python
 # changing the copy label to the spanish for Copy
-sheet.set_options(copy_label="Copiar")
+sheet.set_options(copy_label="Copiar", copy_image=tk.PhotoImage(file="filepath_to_img.png"), copy_compound="left")
 ```
 
 #### **Changing key bindings**
@@ -6171,238 +6281,434 @@ unbind_key_text_editor(key: str) -> Sheet
 set_options(redraw: bool = True, **kwargs) -> Sheet
 ```
 
-The list of key word arguments available for `set_options()` are as follows, [see here](#initialization-options) as a guide for argument types.
+The list of key word arguments available for `set_options()` are as follows, [see here](#initialization-options) as a guide for argument types, the below values are either defaults or place holders.
+
 ```python
-name
-
-show_top_left
-
-sort_key
-edit_cell_tab
-edit_cell_return
-editor_del_key
-auto_resize_columns
-auto_resize_rows
-to_clipboard_delimiter
-to_clipboard_quotechar
-to_clipboard_lineterminator
-from_clipboard_delimiters
-show_dropdown_borders
-show_default_header_for_empty
-show_default_index_for_empty
-selected_rows_to_end_of_window
-horizontal_grid_to_end_of_window
-vertical_grid_to_end_of_window
-paste_insert_column_limit
-paste_insert_row_limit
-paste_can_expand_x
-paste_can_expand_y
-arrow_key_down_right_scroll_page
-enable_edit_cell_auto_resize
-page_up_down_select_row
-display_selected_fg_over_highlights
-show_horizontal_grid
-show_vertical_grid
-empty_horizontal
-empty_vertical
-default_row_height
-default_column_width
-default_header_height
-default_row_index_width
-row_drag_and_drop_perform
-column_drag_and_drop_perform
-auto_resize_default_row_index
-default_header
-default_row_index
-min_column_width
-max_column_width
-max_row_height
-max_header_height
-max_index_width
-font
-header_font
-index_font
-
-show_selected_cells_border
-theme
-top_left_bg
-top_left_fg
-top_left_fg_highlight
-
-table_bg
-table_grid_fg
-table_fg
-table_selected_box_cells_fg
-table_selected_box_rows_fg
-table_selected_box_columns_fg
-table_selected_cells_border_fg
-table_selected_cells_bg
-table_selected_cells_fg
-table_selected_rows_border_fg
-table_selected_rows_bg
-table_selected_rows_fg
-table_selected_columns_border_fg
-table_selected_columns_bg
-table_selected_columns_fg
-
-header_bg
-header_border_fg
-header_grid_fg
-header_fg
-header_selected_cells_bg
-header_selected_cells_fg
-header_selected_columns_bg
-header_selected_columns_fg
-
-index_bg
-index_border_fg
-index_grid_fg
-index_fg
-index_selected_cells_bg
-index_selected_cells_fg
-index_selected_rows_bg
-index_selected_rows_fg
-
-resizing_line_fg
-drag_and_drop_bg
-outline_thickness
-outline_color
-frame_bg
-popup_menu_font
-popup_menu_fg
-popup_menu_bg
-popup_menu_highlight_bg
-popup_menu_highlight_fg
-
-# scroll bars
-vertical_scroll_background
-horizontal_scroll_background
-vertical_scroll_troughcolor
-horizontal_scroll_troughcolor
-vertical_scroll_lightcolor
-horizontal_scroll_lightcolor
-vertical_scroll_darkcolor
-horizontal_scroll_darkcolor
-vertical_scroll_bordercolor
-horizontal_scroll_bordercolor
-vertical_scroll_active_bg
-horizontal_scroll_active_bg
-vertical_scroll_not_active_bg
-horizontal_scroll_not_active_bg
-vertical_scroll_pressed_bg
-horizontal_scroll_pressed_bg
-vertical_scroll_active_fg
-horizontal_scroll_active_fg
-vertical_scroll_not_active_fg
-horizontal_scroll_not_active_fg
-vertical_scroll_pressed_fg
-horizontal_scroll_pressed_fg
-scrollbar_theme_inheritance
-scrollbar_show_arrows
-vertical_scroll_arrowsize
-horizontal_scroll_arrowsize
-vertical_scroll_borderwidth
-horizontal_scroll_borderwidth
-vertical_scroll_gripcount
-horizontal_scroll_gripcount
-
-# for changing the in-built right click menus labels
-# use a string as an argument
-
-sort_cells_label
-sort_cells_x_label
-sort_row_label
-sort_column_label
-sort_rows_label
-sort_columns_label
-sort_cells_reverse_label
-sort_cells_x_reverse_label
-sort_row_reverse_label
-sort_column_reverse_label
-sort_rows_reverse_label
-sort_columns_reverse_label
-sort_cells_accelerator
-sort_cells_x_accelerator
-sort_row_accelerator
-sort_column_accelerator
-sort_rows_accelerator
-sort_columns_accelerator
-sort_cells_reverse_accelerator
-sort_cells_x_reverse_accelerator
-sort_row_reverse_accelerator
-sort_column_reverse_accelerator
-sort_rows_reverse_accelerator
-sort_columns_reverse_accelerator
-
-edit_header_label
-edit_header_accelerator
-edit_index_label
-edit_index_accelerator
-edit_cell_label
-edit_cell_accelerator
-cut_label
-cut_accelerator
-cut_contents_label
-cut_contents_accelerator
-copy_label
-copy_accelerator
-copy_contents_label
-copy_contents_accelerator
-paste_label
-paste_accelerator
-delete_label
-delete_accelerator
-clear_contents_label
-clear_contents_accelerator
-delete_columns_label
-delete_columns_accelerator
-insert_columns_left_label
-insert_columns_left_accelerator
-insert_column_label
-insert_column_accelerator
-insert_columns_right_label
-insert_columns_right_accelerator
-delete_rows_label
-delete_rows_accelerator
-insert_rows_above_label
-insert_rows_above_accelerator
-insert_rows_below_label
-insert_rows_below_accelerator
-insert_row_label
-insert_row_accelerator
-select_all_label
-select_all_accelerator
-undo_label
-undo_accelerator
-
-# for changing the keyboard bindings for copy, paste, etc.
-# use a list of strings as an argument
-copy_bindings
-cut_bindings
-paste_bindings
-undo_bindings
-redo_bindings
-delete_bindings
-select_all_bindings
-select_columns_bindings
-select_rows_bindings
-row_start_bindings
-table_start_bindings
-tab_bindings
-up_bindings
-right_bindings
-down_bindings
-left_bindings
-shift_up_bindings
-shift_right_bindings
-shift_down_bindings
-shift_left_bindings
-prior_bindings
-next_bindings
+"popup_menu_fg": "#000000",
+"popup_menu_bg": "#FFFFFF",
+"popup_menu_highlight_bg": "#DCDEE0",
+"popup_menu_highlight_fg": "#000000",
+"index_hidden_rows_expander_bg": "#747775",
+"header_hidden_columns_expander_bg": "#747775",
+"header_bg": "#FFFFFF",
+"header_border_fg": "#C4C7C5",
+"header_grid_fg": "#C4C7C5",
+"header_fg": "#444746",
+"header_editor_bg": "#FFFFFF",
+"header_editor_fg": "#444746",
+"header_editor_select_bg": "#cfd1d1",
+"header_editor_select_fg": "#000000",
+"header_selected_cells_bg": "#D3E3FD",
+"header_selected_cells_fg": "black",
+"index_bg": "#FFFFFF",
+"index_border_fg": "#C4C7C5",
+"index_grid_fg": "#C4C7C5",
+"index_fg": "black",
+"index_editor_bg": "#FFFFFF",
+"index_editor_fg": "black",
+"index_editor_select_bg": "#cfd1d1",
+"index_editor_select_fg": "#000000",
+"index_selected_cells_bg": "#D3E3FD",
+"index_selected_cells_fg": "black",
+"top_left_bg": "#F9FBFD",
+"top_left_fg": "#d9d9d9",
+"top_left_fg_highlight": "#747775",
+"table_bg": "#FFFFFF",
+"table_grid_fg": "#E1E1E1",
+"table_fg": "black",
+"table_editor_bg": "#FFFFFF",
+"table_editor_fg": "black",
+"table_editor_select_bg": "#cfd1d1",
+"table_editor_select_fg": "#000000",
+"table_selected_box_cells_fg": "#0B57D0",
+"table_selected_box_rows_fg": "#0B57D0",
+"table_selected_box_columns_fg": "#0B57D0",
+"table_selected_cells_border_fg": "#0B57D0",
+"table_selected_cells_bg": "#E6EFFD",
+"table_selected_cells_fg": "black",
+"resizing_line_fg": "black",
+"drag_and_drop_bg": "#0B57D0",
+"outline_color": "gray2",
+"header_selected_columns_bg": "#0B57D0",
+"header_selected_columns_fg": "#FFFFFF",
+"index_selected_rows_bg": "#0B57D0",
+"index_selected_rows_fg": "#FFFFFF",
+"table_selected_rows_border_fg": "#0B57D0",
+"table_selected_rows_bg": "#E6EFFD",
+"table_selected_rows_fg": "black",
+"table_selected_columns_border_fg": "#0B57D0",
+"table_selected_columns_bg": "#E6EFFD",
+"table_selected_columns_fg": "black",
+"tree_arrow_fg": "black",
+"selected_cells_tree_arrow_fg": "black",
+"selected_rows_tree_arrow_fg": "#FFFFFF",
+"vertical_scroll_background": "#FFFFFF",
+"horizontal_scroll_background": "#FFFFFF",
+"vertical_scroll_troughcolor": "#f9fbfd",
+"horizontal_scroll_troughcolor": "#f9fbfd",
+"vertical_scroll_lightcolor": "#FFFFFF",
+"horizontal_scroll_lightcolor": "#FFFFFF",
+"vertical_scroll_darkcolor": "gray50",
+"horizontal_scroll_darkcolor": "gray50",
+"vertical_scroll_relief": "flat",
+"horizontal_scroll_relief": "flat",
+"vertical_scroll_troughrelief": "flat",
+"horizontal_scroll_troughrelief": "flat",
+"vertical_scroll_bordercolor": "#f9fbfd",
+"horizontal_scroll_bordercolor": "#f9fbfd",
+"vertical_scroll_active_bg": "#bdc1c6",
+"horizontal_scroll_active_bg": "#bdc1c6",
+"vertical_scroll_not_active_bg": "#DADCE0",
+"horizontal_scroll_not_active_bg": "#DADCE0",
+"vertical_scroll_pressed_bg": "#bdc1c6",
+"horizontal_scroll_pressed_bg": "#bdc1c6",
+"vertical_scroll_active_fg": "#bdc1c6",
+"horizontal_scroll_active_fg": "#bdc1c6",
+"vertical_scroll_not_active_fg": "#DADCE0",
+"horizontal_scroll_not_active_fg": "#DADCE0",
+"vertical_scroll_pressed_fg": "#bdc1c6",
+"horizontal_scroll_pressed_fg": "#bdc1c6",
+"popup_menu_font": FontTuple(
+    "Calibri",
+    13 if USER_OS == "darwin" else 11,
+    "normal",
+),
+"table_font": FontTuple(
+    "Calibri",
+    13 if USER_OS == "darwin" else 11,
+    "normal",
+),
+"header_font": FontTuple(
+    "Calibri",
+    13 if USER_OS == "darwin" else 11,
+    "normal",
+),
+"index_font": FontTuple(
+    "Calibri",
+    13 if USER_OS == "darwin" else 11,
+    "normal",
+),
+# edit header
+"edit_header_label": "Edit header",
+"edit_header_accelerator": "",
+"edit_header_image": None,
+"edit_header_compound": None,
+# edit index
+"edit_index_label": "Edit index",
+"edit_index_accelerator": "",
+"edit_index_image": None,
+"edit_index_compound": None,
+# edit cell
+"edit_cell_label": "Edit cell",
+"edit_cell_accelerator": "",
+"edit_cell_image": None,
+"edit_cell_compound": None,
+# cut
+"cut_label": "Cut",
+"cut_accelerator": "Ctrl+X",
+"cut_image": None,
+"cut_compound": None,
+# cut contents
+"cut_contents_label": "Cut contents",
+"cut_contents_accelerator": "Ctrl+X",
+"cut_contents_image": None,
+"cut_contents_compound": None,
+# copy
+"copy_label": "Copy",
+"copy_accelerator": "Ctrl+C",
+"copy_image": None,
+"copy_compound": None,
+# copy contents
+"copy_contents_label": "Copy contents",
+"copy_contents_accelerator": "Ctrl+C",
+"copy_contents_image": None,
+"copy_contents_compound": None,
+# paste
+"paste_label": "Paste",
+"paste_accelerator": "Ctrl+V",
+"paste_image": None,
+"paste_compound": None,
+# delete
+"delete_label": "Delete",
+"delete_accelerator": "Del",
+"delete_image": None,
+"delete_compound": None,
+# clear contents
+"clear_contents_label": "Clear contents",
+"clear_contents_accelerator": "Del",
+"clear_contents_image": None,
+"clear_contents_compound": None,
+# del columns
+"delete_columns_label": "Delete columns",
+"delete_columns_accelerator": "",
+"delete_columns_image": None,
+"delete_columns_compound": None,
+# insert columns left
+"insert_columns_left_label": "Insert columns left",
+"insert_columns_left_accelerator": "",
+"insert_columns_left_image": None,
+"insert_columns_left_compound": None,
+# insert columns right
+"insert_columns_right_label": "Insert columns right",
+"insert_columns_right_accelerator": "",
+"insert_columns_right_image": None,
+"insert_columns_right_compound": None,
+# insert single column
+"insert_column_label": "Insert column",
+"insert_column_accelerator": "",
+"insert_column_image": None,
+"insert_column_compound": None,
+# del rows
+"delete_rows_label": "Delete rows",
+"delete_rows_accelerator": "",
+"delete_rows_image": None,
+"delete_rows_compound": None,
+# insert rows above
+"insert_rows_above_label": "Insert rows above",
+"insert_rows_above_accelerator": "",
+"insert_rows_above_image": None,
+"insert_rows_above_compound": None,
+# insert rows below
+"insert_rows_below_label": "Insert rows below",
+"insert_rows_below_accelerator": "",
+"insert_rows_below_image": None,
+"insert_rows_below_compound": None,
+# insert single row
+"insert_row_label": "Insert row",
+"insert_row_accelerator": "",
+"insert_row_image": None,
+"insert_row_compound": None,
+# sorting
+# labels
+"sort_cells_label": "Sort ↓",
+"sort_cells_x_label": "Sort →",
+"sort_row_label": "Sort values →",
+"sort_column_label": "Sort values ↓",
+"sort_rows_label": "Sort rows ↓",
+"sort_columns_label": "Sort columns →",
+# reverse labels
+"sort_cells_reverse_label": "Sort ↑",
+"sort_cells_x_reverse_label": "Sort ←",
+"sort_row_reverse_label": "Sort values ←",
+"sort_column_reverse_label": "Sort values ↑",
+"sort_rows_reverse_label": "Sort rows ↑",
+"sort_columns_reverse_label": "Sort columns ←",
+# accelerators
+"sort_cells_accelerator": "",
+"sort_cells_x_accelerator": "",
+"sort_row_accelerator": "",
+"sort_column_accelerator": "",
+"sort_rows_accelerator": "",
+"sort_columns_accelerator": "",
+# reverse accelerators
+"sort_cells_reverse_accelerator": "",
+"sort_cells_x_reverse_accelerator": "",
+"sort_row_reverse_accelerator": "",
+"sort_column_reverse_accelerator": "",
+"sort_rows_reverse_accelerator": "",
+"sort_columns_reverse_accelerator": "",
+# images
+"sort_cells_image": None,
+"sort_cells_x_image": None,
+"sort_row_image": None,
+"sort_column_image": None,
+"sort_rows_image": None,
+"sort_columns_image": None,
+# compounds
+"sort_cells_compound": None,
+"sort_cells_x_compound": None,
+"sort_row_compound": None,
+"sort_column_compound": None,
+"sort_rows_compound": None,
+"sort_columns_compound": None,
+# reverse images
+"sort_cells_reverse_image": None,
+"sort_cells_x_reverse_image": None,
+"sort_row_reverse_image": None,
+"sort_column_reverse_image": None,
+"sort_rows_reverse_image": None,
+"sort_columns_reverse_image": None,
+# reverse compounds
+"sort_cells_reverse_compound": None,
+"sort_cells_x_reverse_compound": None,
+"sort_row_reverse_compound": None,
+"sort_column_reverse_compound": None,
+"sort_rows_reverse_compound": None,
+"sort_columns_reverse_compound": None,
+# select all
+"select_all_label": "Select all",
+"select_all_accelerator": "Ctrl+A",
+"select_all_image": None,
+"select_all_compound": None,
+# undo
+"undo_label": "Undo",
+"undo_accelerator": "Ctrl+Z",
+"undo_image": None,
+"undo_compound": None,
+# bindings
+"copy_bindings": [
+    f"<{ctrl_key}-c>",
+    f"<{ctrl_key}-C>",
+],
+"cut_bindings": [
+    f"<{ctrl_key}-x>",
+    f"<{ctrl_key}-X>",
+],
+"paste_bindings": [
+    f"<{ctrl_key}-v>",
+    f"<{ctrl_key}-V>",
+],
+"undo_bindings": [
+    f"<{ctrl_key}-z>",
+    f"<{ctrl_key}-Z>",
+],
+"redo_bindings": [
+    f"<{ctrl_key}-Shift-z>",
+    f"<{ctrl_key}-Shift-Z>",
+],
+"delete_bindings": [
+    "<Delete>",
+],
+"select_all_bindings": [
+    f"<{ctrl_key}-a>",
+    f"<{ctrl_key}-A>",
+    f"<{ctrl_key}-Shift-space>",
+],
+"select_columns_bindings": [
+    "<Control-space>",
+],
+"select_rows_bindings": [
+    "<Shift-space>",
+],
+"row_start_bindings": [
+    "<Command-Left>",
+    "<Home>",
+]
+if USER_OS == "darwin"
+else ["<Home>"],
+"table_start_bindings": [
+    f"<{ctrl_key}-Home>",
+],
+"tab_bindings": [
+    "<Tab>",
+],
+"up_bindings": [
+    "<Up>",
+],
+"right_bindings": [
+    "<Right>",
+],
+"down_bindings": [
+    "<Down>",
+],
+"left_bindings": [
+    "<Left>",
+],
+"shift_up_bindings": [
+    "<Shift-Up>",
+],
+"shift_right_bindings": [
+    "<Shift-Right>",
+],
+"shift_down_bindings": [
+    "<Shift-Down>",
+],
+"shift_left_bindings": [
+    "<Shift-Left>",
+],
+"prior_bindings": [
+    "<Prior>",
+],
+"next_bindings": [
+    "<Next>",
+],
+"find_bindings": [
+    f"<{ctrl_key}-f>",
+    f"<{ctrl_key}-F>",
+],
+"find_next_bindings": [
+    f"<{ctrl_key}-g>",
+    f"<{ctrl_key}-G>",
+],
+"find_previous_bindings": [
+    f"<{ctrl_key}-Shift-g>",
+    f"<{ctrl_key}-Shift-G>",
+],
+"toggle_replace_bindings": [
+    f"<{ctrl_key}-h>",
+    f"<{ctrl_key}-H>",
+],
+"escape_bindings": [
+    "<Escape>",
+],
+# other
+"vertical_scroll_borderwidth": 1,
+"horizontal_scroll_borderwidth": 1,
+"vertical_scroll_gripcount": 0,
+"horizontal_scroll_gripcount": 0,
+"vertical_scroll_arrowsize": "",
+"horizontal_scroll_arrowsize": "",
+"set_cell_sizes_on_zoom": False,
+"auto_resize_columns": None,
+"auto_resize_rows": None,
+"to_clipboard_delimiter": "\t",
+"to_clipboard_quotechar": '"',
+"to_clipboard_lineterminator": "\n",
+"from_clipboard_delimiters": ["\t"],
+"show_dropdown_borders": False,
+"show_default_header_for_empty": True,
+"show_default_index_for_empty": True,
+"default_header_height": "1",
+"default_row_height": "1",
+"default_column_width": 120,
+"default_row_index_width": 70,
+"default_row_index": "numbers",
+"default_header": "letters",
+"page_up_down_select_row": True,
+"paste_can_expand_x": False,
+"paste_can_expand_y": False,
+"paste_insert_column_limit": None,
+"paste_insert_row_limit": None,
+"arrow_key_down_right_scroll_page": False,
+"cell_auto_resize_enabled": True,
+"auto_resize_row_index": True,
+"max_undos": 30,
+"column_drag_and_drop_perform": True,
+"row_drag_and_drop_perform": True,
+"empty_horizontal": 50,
+"empty_vertical": 50,
+"selected_rows_to_end_of_window": False,
+"horizontal_grid_to_end_of_window": False,
+"vertical_grid_to_end_of_window": False,
+"show_vertical_grid": True,
+"show_horizontal_grid": True,
+"display_selected_fg_over_highlights": False,
+"show_selected_cells_border": True,
+"edit_cell_tab": "right",
+"edit_cell_return": "down",
+"editor_del_key": "forward",
+"treeview": False,
+"treeview_indent": "2",
+"rounded_boxes": True,
+"alternate_color": "",
+"allow_cell_overflow": False,
+"table_wrap": "c",
+"header_wrap": "c",
+"index_wrap": "c",
+"min_column_width": 1,
+"max_column_width": float("inf"),
+"max_header_height": float("inf"),
+"max_row_height": float("inf"),
+"max_index_width": float("inf"),
+"show_top_left": None,
+"sort_key": natural_sort_key,
 ```
 Notes:
 
-- A dictionary can be provided instead of using the keyword arguments:
+- The parameters ending in `_image` take `tk.PhotoImage` or `None` as types.
+- The parameters ending in `_compound` take one of the following: `"left", "right", "bottom", "top", "none", None`.
+- `sort_key` is `Callable` - a function.
+- A dictionary can be provided to `set_options()` instead of using the keyword arguments:
 
 ```python
 kwargs = {

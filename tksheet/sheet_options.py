@@ -30,47 +30,96 @@ def new_sheet_options() -> DotDict:
                 13 if USER_OS == "darwin" else 11,
                 "normal",
             ),
-            # cell editing
+            # edit header
             "edit_header_label": "Edit header",
             "edit_header_accelerator": "",
+            "edit_header_image": None,
+            "edit_header_compound": None,
+            # edit index
             "edit_index_label": "Edit index",
             "edit_index_accelerator": "",
+            "edit_index_image": None,
+            "edit_index_compound": None,
+            # edit cell
             "edit_cell_label": "Edit cell",
             "edit_cell_accelerator": "",
-            # cut/copy/paste
+            "edit_cell_image": None,
+            "edit_cell_compound": None,
+            # cut
             "cut_label": "Cut",
             "cut_accelerator": "Ctrl+X",
+            "cut_image": None,
+            "cut_compound": None,
+            # cut contents
             "cut_contents_label": "Cut contents",
             "cut_contents_accelerator": "Ctrl+X",
+            "cut_contents_image": None,
+            "cut_contents_compound": None,
+            # copy
             "copy_label": "Copy",
             "copy_accelerator": "Ctrl+C",
+            "copy_image": None,
+            "copy_compound": None,
+            # copy contents
             "copy_contents_label": "Copy contents",
             "copy_contents_accelerator": "Ctrl+C",
+            "copy_contents_image": None,
+            "copy_contents_compound": None,
+            # paste
             "paste_label": "Paste",
             "paste_accelerator": "Ctrl+V",
-            # clear/del
+            "paste_image": None,
+            "paste_compound": None,
+            # delete
             "delete_label": "Delete",
             "delete_accelerator": "Del",
+            "delete_image": None,
+            "delete_compound": None,
+            # clear contents
             "clear_contents_label": "Clear contents",
             "clear_contents_accelerator": "Del",
-            # del/insert columns
+            "clear_contents_image": None,
+            "clear_contents_compound": None,
+            # del columns
             "delete_columns_label": "Delete columns",
             "delete_columns_accelerator": "",
+            "delete_columns_image": None,
+            "delete_columns_compound": None,
+            # insert columns left
             "insert_columns_left_label": "Insert columns left",
             "insert_columns_left_accelerator": "",
-            "insert_column_label": "Insert column",
-            "insert_column_accelerator": "",
+            "insert_columns_left_image": None,
+            "insert_columns_left_compound": None,
+            # insert columns right
             "insert_columns_right_label": "Insert columns right",
             "insert_columns_right_accelerator": "",
-            # del/insert rows
+            "insert_columns_right_image": None,
+            "insert_columns_right_compound": None,
+            # insert single column
+            "insert_column_label": "Insert column",
+            "insert_column_accelerator": "",
+            "insert_column_image": None,
+            "insert_column_compound": None,
+            # del rows
             "delete_rows_label": "Delete rows",
             "delete_rows_accelerator": "",
+            "delete_rows_image": None,
+            "delete_rows_compound": None,
+            # insert rows above
             "insert_rows_above_label": "Insert rows above",
             "insert_rows_above_accelerator": "",
+            "insert_rows_above_image": None,
+            "insert_rows_above_compound": None,
+            # insert rows below
             "insert_rows_below_label": "Insert rows below",
             "insert_rows_below_accelerator": "",
+            "insert_rows_below_image": None,
+            "insert_rows_below_compound": None,
+            # insert single row
             "insert_row_label": "Insert row",
             "insert_row_accelerator": "",
+            "insert_row_image": None,
+            "insert_row_compound": None,
             # sorting
             # labels
             "sort_cells_label": "Sort ↓",
@@ -100,12 +149,44 @@ def new_sheet_options() -> DotDict:
             "sort_column_reverse_accelerator": "",
             "sort_rows_reverse_accelerator": "",
             "sort_columns_reverse_accelerator": "",
+            # images
+            "sort_cells_image": None,
+            "sort_cells_x_image": None,
+            "sort_row_image": None,
+            "sort_column_image": None,
+            "sort_rows_image": None,
+            "sort_columns_image": None,
+            # compounds
+            "sort_cells_compound": None,
+            "sort_cells_x_compound": None,
+            "sort_row_compound": None,
+            "sort_column_compound": None,
+            "sort_rows_compound": None,
+            "sort_columns_compound": None,
+            # reverse images
+            "sort_cells_reverse_image": None,
+            "sort_cells_x_reverse_image": None,
+            "sort_row_reverse_image": None,
+            "sort_column_reverse_image": None,
+            "sort_rows_reverse_image": None,
+            "sort_columns_reverse_image": None,
+            # reverse compounds
+            "sort_cells_reverse_compound": None,
+            "sort_cells_x_reverse_compound": None,
+            "sort_row_reverse_compound": None,
+            "sort_column_reverse_compound": None,
+            "sort_rows_reverse_compound": None,
+            "sort_columns_reverse_compound": None,
             # select all
             "select_all_label": "Select all",
             "select_all_accelerator": "Ctrl+A",
+            "select_all_image": None,
+            "select_all_compound": None,
             # undo
             "undo_label": "Undo",
             "undo_accelerator": "Ctrl+Z",
+            "undo_image": None,
+            "undo_compound": None,
             # bindings
             "copy_bindings": [
                 f"<{ctrl_key}-c>",

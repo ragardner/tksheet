@@ -329,7 +329,7 @@ class Sheet(tk.Frame):
             index_align = "w"
             auto_resize_row_index = True
             paste_can_expand_y = False
-        for k, v in locals().items():
+        for k, v in chain(locals().items(), kwargs.items()):
             if (xk := backwards_compatibility_keys.get(k, k)) in self.ops and v != self.ops[xk]:
                 self.ops[xk] = v
         self.ops.from_clipboard_delimiters = (
@@ -784,15 +784,19 @@ class Sheet(tk.Frame):
         index_menu: bool = True,
         header_menu: bool = True,
         empty_space_menu: bool = True,
+        image: tk.PhotoImage | None = None,
+        compound: Literal["top", "bottom", "left", "right", "none"] | None = None,
+        accelerator: str | None = None,
     ) -> Sheet:
+        dct = {"command": func, "image": image, "accelerator": accelerator, "compound": compound}
         if table_menu:
-            self.MT.extra_table_rc_menu_funcs[label] = func
+            self.MT.extra_table_rc_menu_funcs[label] = dct
         if index_menu:
-            self.MT.extra_index_rc_menu_funcs[label] = func
+            self.MT.extra_index_rc_menu_funcs[label] = dct
         if header_menu:
-            self.MT.extra_header_rc_menu_funcs[label] = func
+            self.MT.extra_header_rc_menu_funcs[label] = dct
         if empty_space_menu:
-            self.MT.extra_empty_space_rc_menu_funcs[label] = func
+            self.MT.extra_empty_space_rc_menu_funcs[label] = dct
         self.MT.create_rc_menus()
         return self
 
