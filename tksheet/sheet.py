@@ -785,13 +785,13 @@ class Sheet(tk.Frame):
         header_menu: bool = True,
         empty_space_menu: bool = True,
     ) -> Sheet:
-        if label not in self.MT.extra_table_rc_menu_funcs and table_menu:
+        if table_menu:
             self.MT.extra_table_rc_menu_funcs[label] = func
-        if label not in self.MT.extra_index_rc_menu_funcs and index_menu:
+        if index_menu:
             self.MT.extra_index_rc_menu_funcs[label] = func
-        if label not in self.MT.extra_header_rc_menu_funcs and header_menu:
+        if header_menu:
             self.MT.extra_header_rc_menu_funcs[label] = func
-        if label not in self.MT.extra_empty_space_rc_menu_funcs and empty_space_menu:
+        if empty_space_menu:
             self.MT.extra_empty_space_rc_menu_funcs[label] = func
         self.MT.create_rc_menus()
         return self
