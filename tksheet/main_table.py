@@ -71,6 +71,7 @@ from .functions import (
     is_last_cell,
     is_type_int,
     len_to_idx,
+    menu_item_exists,
     mod_event_val,
     mod_span,
     move_elements_by_mapping_gen,
@@ -2910,6 +2911,27 @@ class MainTable(tk.Canvas):
             pass
         menu.add_command(**kwargs)
 
+    def table_edit_cell_enabled(self) -> bool:
+        return (
+            self.rc_popup_menus_enabled
+            and self.edit_cell_enabled
+            and any(x in self.enabled_bindings_menu_entries for x in ("all", "edit_cell", "edit_bindings", "edit"))
+        )
+
+    def index_edit_cell_enabled(self) -> bool:
+        return (
+            self.rc_popup_menus_enabled
+            and self.RI.edit_cell_enabled
+            and "edit_index" in self.enabled_bindings_menu_entries
+        )
+
+    def header_edit_cell_enabled(self) -> bool:
+        return (
+            self.rc_popup_menus_enabled
+            and self.CH.edit_cell_enabled
+            and "edit_header" in self.enabled_bindings_menu_entries
+        )
+
     def create_rc_menus(self) -> None:
         if not self.rc_popup_menu:
             self.rc_popup_menu = tk.Menu(self, tearoff=0, background=self.PAR.ops.popup_menu_bg)
@@ -2927,11 +2949,7 @@ class MainTable(tk.Canvas):
         ):
             menu.delete(0, "end")
         mnkwgs = get_menu_kwargs(self.PAR.ops)
-        if (
-            self.rc_popup_menus_enabled
-            and self.CH.edit_cell_enabled
-            and "edit_header" in self.enabled_bindings_menu_entries
-        ):
+        if self.header_edit_cell_enabled():
             self.menu_add_command(
                 self.CH.ch_rc_popup_menu,
                 label=self.PAR.ops.edit_header_label,
@@ -2940,11 +2958,7 @@ class MainTable(tk.Canvas):
                 compound=self.PAR.ops.edit_header_compound,
                 **mnkwgs,
             )
-        if (
-            self.rc_popup_menus_enabled
-            and self.RI.edit_cell_enabled
-            and "edit_index" in self.enabled_bindings_menu_entries
-        ):
+        if self.index_edit_cell_enabled():
             self.menu_add_command(
                 self.RI.ri_rc_popup_menu,
                 label=self.PAR.ops.edit_index_label,
@@ -2953,11 +2967,7 @@ class MainTable(tk.Canvas):
                 compound=self.PAR.ops.edit_index_compound,
                 **mnkwgs,
             )
-        if (
-            self.rc_popup_menus_enabled
-            and self.edit_cell_enabled
-            and any(x in self.enabled_bindings_menu_entries for x in ("all", "edit_cell", "edit_bindings", "edit"))
-        ):
+        if self.table_edit_cell_enabled():
             self.menu_add_command(
                 self.rc_popup_menu,
                 label=self.PAR.ops.edit_cell_label,
@@ -3620,6 +3630,48 @@ class MainTable(tk.Canvas):
     def not_currently_resizing(self) -> bool:
         return all(v is None for v in (self.RI.rsz_h, self.RI.rsz_w, self.CH.rsz_h, self.CH.rsz_w))
 
+    def is_readonly(self, datarn: int, datacn: int) -> bool:
+        return (
+            ((datarn, datacn) in self.cell_options and "readonly" in self.cell_options[(datarn, datacn)])
+            or (datarn in self.row_options and "readonly" in self.row_options[datarn])
+            or (datacn in self.col_options and "readonly" in self.col_options[datacn])
+        )
+
+    def popup_menu_disable_edit_if_readonly(self, popup_menu: tk.Menu) -> None:
+        # table
+        if (
+            self.selected
+            and self.index_edit_cell_enabled()
+            and menu_item_exists(popup_menu, self.PAR.ops.edit_cell_label)
+        ):
+            datarn, datacn = self.datarn(self.selected.row), self.datacn(self.selected.column)
+            if self.is_readonly(datarn, datacn):
+                popup_menu.entryconfig(self.PAR.ops.edit_cell_label, state="disabled")
+            else:
+                popup_menu.entryconfig(self.PAR.ops.edit_cell_label, state="normal")
+        # index
+        if (
+            self.selected
+            and self.index_edit_cell_enabled()
+            and menu_item_exists(popup_menu, self.PAR.ops.edit_index_label)
+        ):
+            datarn = self.datarn(self.selected.row)
+            if self.RI.is_readonly(datarn):
+                popup_menu.entryconfig(self.PAR.ops.edit_index_label, state="disabled")
+            else:
+                popup_menu.entryconfig(self.PAR.ops.edit_index_label, state="normal")
+        # header
+        if (
+            self.selected
+            and self.header_edit_cell_enabled()
+            and menu_item_exists(popup_menu, self.PAR.ops.edit_header_label)
+        ):
+            datacn = self.datacn(self.selected.column)
+            if self.CH.is_readonly(datacn):
+                popup_menu.entryconfig(self.PAR.ops.edit_header_label, state="disabled")
+            else:
+                popup_menu.entryconfig(self.PAR.ops.edit_header_label, state="normal")
+
     def rc(self, event: Any = None) -> None:
         self.mouseclick_outside_editor_or_dropdown_all_canvases()
         self.focus_set()
@@ -3651,6 +3703,7 @@ class MainTable(tk.Canvas):
                     popup_menu = self.empty_rc_popup_menu
         try_binding(self.extra_rc_func, event)
         if popup_menu:
+            self.popup_menu_disable_edit_if_readonly(popup_menu)
             popup_menu.tk_popup(event.x_root, event.y_root)
 
     def b1_press(self, event: Any = None) -> None:

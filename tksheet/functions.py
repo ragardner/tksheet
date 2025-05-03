@@ -1109,6 +1109,14 @@ def try_binding(
     return True
 
 
+def menu_item_exists(menu: tk.Menu, label: str) -> bool:
+    try:
+        menu.index(label)
+        return True
+    except Exception:
+        return False
+
+
 def span_dict(
     from_r: int | None = None,
     from_c: int | None = None,

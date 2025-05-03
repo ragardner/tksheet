@@ -164,6 +164,9 @@ class ColumnHeaders(tk.Canvas):
         self.current_height = new_height
         return expanded
 
+    def is_readonly(self, datacn: int) -> bool:
+        return datacn in self.cell_options and "readonly" in self.cell_options[datacn]
+
     def rc(self, event: Any) -> None:
         self.mouseclick_outside_editor_or_dropdown_all_canvases(inside=True)
         self.focus_set()
@@ -189,6 +192,7 @@ class ColumnHeaders(tk.Canvas):
         try_binding(self.extra_rc_func, event)
         if popup_menu is not None:
             self.popup_menu_loc = c
+            self.MT.popup_menu_disable_edit_if_readonly(popup_menu)
             popup_menu.tk_popup(event.x_root, event.y_root)
 
     def ctrl_b1_press(self, event: Any) -> None:

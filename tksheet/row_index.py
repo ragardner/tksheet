@@ -160,6 +160,9 @@ class RowIndex(tk.Canvas):
             self.MT.recreate_all_selection_boxes()
         self.current_width = new_width
 
+    def is_readonly(self, datarn: int) -> bool:
+        return datarn in self.cell_options and "readonly" in self.cell_options[datarn]
+
     def rc(self, event: Any) -> None:
         self.mouseclick_outside_editor_or_dropdown_all_canvases(inside=True)
         self.focus_set()
@@ -185,6 +188,7 @@ class RowIndex(tk.Canvas):
         try_binding(self.extra_rc_func, event)
         if popup_menu is not None:
             self.popup_menu_loc = r
+            self.MT.popup_menu_disable_edit_if_readonly(popup_menu)
             popup_menu.tk_popup(event.x_root, event.y_root)
 
     def ctrl_b1_press(self, event: Any) -> None:
