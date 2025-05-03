@@ -11,6 +11,18 @@ from .colors import (
 )
 from .column_headers import ColumnHeaders
 from .constants import (
+    ICON_ADD,
+    ICON_CLEAR,
+    ICON_COPY,
+    ICON_CUT,
+    ICON_DEL,
+    ICON_DOWN,
+    ICON_EDIT,
+    ICON_PASTE,
+    ICON_REDO,
+    ICON_SELECT_ALL,
+    ICON_UNDO,
+    ICON_UP,
     USER_OS,
     ctrl_key,
     emitted_events,
