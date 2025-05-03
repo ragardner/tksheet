@@ -1,9 +1,13 @@
 ### Version 7.4.25
 #### Added:
 - Capability to add images to built in menu commands and also commands added using `popup_menu_add_command`.
+- Image icons to built in menu commands.
+- Undo & redo to built in menu.
 
 #### Changed:
 - `popup_menu_add_command` will now overwrite existing menu commands with the same label. Previously they were ignored.
+- Edit cell menu commands are now disabled when currently selected cell is read only.
+- LICENSE file to accomodate open source icons.
 
 ### Version 7.4.24
 #### Fixed:
