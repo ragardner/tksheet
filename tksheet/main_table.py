@@ -457,25 +457,81 @@ class MainTable(tk.Canvas):
         self.tagged_rows = {}
         self.tagged_columns = {}
 
+    def create_ctrl_outline(
+        self,
+        x1: int,
+        y1: int,
+        x2: int,
+        y2: int,
+        fill: str,
+        dash: tuple[int, int],
+        width: int,
+        outline: str,
+        tags: str | tuple[str, ...],
+    ) -> int:
+        if self.hidd_ctrl_outline:
+            t, sh = self.hidd_ctrl_outline.popitem()
+            self.coords(t, x1, y1, x2, y2)
+            if sh:
+                self.itemconfig(t, fill=fill, dash=dash, width=width, outline=outline, tags=tags)
+            else:
+                self.itemconfig(
+                    t,
+                    fill=fill,
+                    dash=dash,
+                    width=width,
+                    outline=outline,
+                    tags=tags,
+                    state="normal",
+                )
+        else:
+            t = self.create_rectangle(
+                x1,
+                y1,
+                x2,
+                y2,
+                fill=fill,
+                dash=dash,
+                width=width,
+                outline=outline,
+                tags=tags,
+            )
+        self.lift(t)
+        self.disp_ctrl_outline[t] = True
+        return t
+
+    def delete_ctrl_outlines(self, iid: int | None = None) -> None:
+        if isinstance(iid, int) and iid in self.disp_ctrl_outline:
+            self.hidd_ctrl_outline[iid] = self.disp_ctrl_outline.pop(iid)
+            self.itemconfig(iid, state="hidden")
+            self.hidd_ctrl_outline[iid] = False
+        else:
+            self.hidd_ctrl_outline.update(self.disp_ctrl_outline)
+            self.disp_ctrl_outline = {}
+            for t, sh in self.hidd_ctrl_outline.items():
+                if sh:
+                    self.itemconfig(t, state="hidden")
+                    self.hidd_ctrl_outline[t] = False
+
     def show_ctrl_outline(
         self,
         canvas: Literal["table"] = "table",
         start_cell: tuple[int, int] = (0, 0),
         end_cell: tuple[int, int] = (0, 0),
-        dash: tuple[int, int] = (20, 20),
+        dash: tuple[int, int] = (15, 15),
         outline: str | None = None,
         delete_on_timer: bool = True,
     ) -> None:
         iid = self.create_ctrl_outline(
             self.col_positions[start_cell[0]] + 1,
             self.row_positions[start_cell[1]] + 1,
-            self.col_positions[end_cell[0]] - 1,
-            self.row_positions[end_cell[1]] - 1,
+            self.col_positions[end_cell[0]],
+            self.row_positions[end_cell[1]],
             fill="",
             dash=dash,
             width=2,
             outline=self.PAR.ops.resizing_line_fg if outline is None else outline,
-            tags="ctrl",
+            tags="lift",
         )
         if delete_on_timer:
             self.after(1500, lambda: self.delete_ctrl_outlines(iid))
@@ -895,62 +951,6 @@ class MainTable(tk.Canvas):
             self.itemconfig(self.find_window.canvas_id, state="hidden")
             self.find_window.open = False
             self.focus_set()
-
-    def create_ctrl_outline(
-        self,
-        x1: int,
-        y1: int,
-        x2: int,
-        y2: int,
-        fill: str,
-        dash: tuple[int, int],
-        width: int,
-        outline: str,
-        tags: str | tuple[str, ...],
-    ) -> int:
-        if self.hidd_ctrl_outline:
-            t, sh = self.hidd_ctrl_outline.popitem()
-            self.coords(t, x1, y1, x2, y2)
-            if sh:
-                self.itemconfig(t, fill=fill, dash=dash, width=width, outline=outline, tags=tags)
-            else:
-                self.itemconfig(
-                    t,
-                    fill=fill,
-                    dash=dash,
-                    width=width,
-                    outline=outline,
-                    tags=tags,
-                    state="normal",
-                )
-            self.lift(t)
-        else:
-            t = self.create_rectangle(
-                x1,
-                y1,
-                x2,
-                y2,
-                fill=fill,
-                dash=dash,
-                width=width,
-                outline=outline,
-                tags=tags,
-            )
-        self.disp_ctrl_outline[t] = True
-        return t
-
-    def delete_ctrl_outlines(self, iid: int | None = None) -> None:
-        if isinstance(iid, int) and iid in self.disp_ctrl_outline:
-            self.hidd_ctrl_outline[iid] = self.disp_ctrl_outline.pop(iid)
-            self.itemconfig(iid, state="hidden")
-            self.hidd_ctrl_outline[iid] = False
-        else:
-            self.hidd_ctrl_outline.update(self.disp_ctrl_outline)
-            self.disp_ctrl_outline = {}
-            for t, sh in self.hidd_ctrl_outline.items():
-                if sh:
-                    self.itemconfig(t, state="hidden")
-                    self.hidd_ctrl_outline[t] = False
 
     def get_ctrl_x_c_boxes(self) -> tuple[dict[tuple[int, int, int, int], str], int]:
         maxrows = 0
@@ -1417,6 +1417,7 @@ class MainTable(tk.Canvas):
             try_binding(self.extra_end_ctrl_v_func, event_data, "end_ctrl_v")
             self.sheet_modified(event_data)
             self.PAR.emit_event("<<Paste>>", event_data)
+            self.show_ctrl_outline("table", (selected_c, selected_r), (selboxc, selboxr))
         return event_data
 
     def delete_key(self, event: Any = None, validation: bool = True) -> None | EventDataDict:
@@ -1453,6 +1454,8 @@ class MainTable(tk.Canvas):
             try_binding(self.extra_end_delete_key_func, event_data, "end_delete")
             self.sheet_modified(event_data)
             self.PAR.emit_event("<<Delete>>", event_data)
+            for r1, c1, r2, c2 in boxes:
+                self.show_ctrl_outline(canvas="table", start_cell=(c1, r1), end_cell=(c2, r2))
         return event_data
 
     def event_data_set_cell(self, datarn: int, datacn: int, value: Any, event_data: EventDataDict) -> EventDataDict:
