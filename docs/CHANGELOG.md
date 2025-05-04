@@ -1,3 +1,6 @@
+### Version 7.5.1
+####
+
 ### Version 7.5.0
 #### Fixed:
 - Select all in text editor and find window adding a newline.
