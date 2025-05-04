@@ -466,19 +466,19 @@ class MainTable(tk.Canvas):
         outline: str | None = None,
         delete_on_timer: bool = True,
     ) -> None:
-        self.create_ctrl_outline(
+        iid = self.create_ctrl_outline(
             self.col_positions[start_cell[0]] + 1,
             self.row_positions[start_cell[1]] + 1,
             self.col_positions[end_cell[0]] - 1,
             self.row_positions[end_cell[1]] - 1,
             fill="",
             dash=dash,
-            width=3,
+            width=2,
             outline=self.PAR.ops.resizing_line_fg if outline is None else outline,
             tags="ctrl",
         )
         if delete_on_timer:
-            self.after(1500, self.delete_ctrl_outlines)
+            self.after(1500, lambda: self.delete_ctrl_outlines(iid))
 
     def escape(self, event: tk.Misc | None) -> None:
         if self.find_window.open:
@@ -907,7 +907,7 @@ class MainTable(tk.Canvas):
         width: int,
         outline: str,
         tags: str | tuple[str, ...],
-    ) -> None:
+    ) -> int:
         if self.hidd_ctrl_outline:
             t, sh = self.hidd_ctrl_outline.popitem()
             self.coords(t, x1, y1, x2, y2)
@@ -937,14 +937,20 @@ class MainTable(tk.Canvas):
                 tags=tags,
             )
         self.disp_ctrl_outline[t] = True
+        return t
 
-    def delete_ctrl_outlines(self) -> None:
-        self.hidd_ctrl_outline.update(self.disp_ctrl_outline)
-        self.disp_ctrl_outline = {}
-        for t, sh in self.hidd_ctrl_outline.items():
-            if sh:
-                self.itemconfig(t, state="hidden")
-                self.hidd_ctrl_outline[t] = False
+    def delete_ctrl_outlines(self, iid: int | None = None) -> None:
+        if isinstance(iid, int) and iid in self.disp_ctrl_outline:
+            self.hidd_ctrl_outline[iid] = self.disp_ctrl_outline.pop(iid)
+            self.itemconfig(iid, state="hidden")
+            self.hidd_ctrl_outline[iid] = False
+        else:
+            self.hidd_ctrl_outline.update(self.disp_ctrl_outline)
+            self.disp_ctrl_outline = {}
+            for t, sh in self.hidd_ctrl_outline.items():
+                if sh:
+                    self.itemconfig(t, state="hidden")
+                    self.hidd_ctrl_outline[t] = False
 
     def get_ctrl_x_c_boxes(self) -> tuple[dict[tuple[int, int, int, int], str], int]:
         maxrows = 0
