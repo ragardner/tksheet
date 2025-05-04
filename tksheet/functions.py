@@ -433,7 +433,7 @@ def push_n(num: int, sorted_seq: Sequence[int]) -> int:
 def get_menu_kwargs(ops: DotDict[str, Any]) -> DotDict[str, Any]:
     return DotDict(
         {
-            "font": ops.table_font,
+            "font": ops.popup_menu_font,
             "foreground": ops.popup_menu_fg,
             "background": ops.popup_menu_bg,
             "activebackground": ops.popup_menu_highlight_bg,

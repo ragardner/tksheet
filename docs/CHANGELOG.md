@@ -1,6 +1,7 @@
 ### Version 7.5.0
 #### Fixed:
 - Select all in text editor and find window adding a newline.
+- Popup menu font wrongly using table font.
 
 #### Added:
 - Capability to add images to built in menu commands and also commands added using `popup_menu_add_command`.

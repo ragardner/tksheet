@@ -1674,7 +1674,7 @@ popup_menu_add_command(
     index_menu: bool = True,
     header_menu: bool = True,
     empty_space_menu: bool = True,
-    image: tk.PhotoImage | None = None,
+    image: tk.PhotoImage | Literal[""] = "",
     compound: Literal["top", "bottom", "left", "right", "none"] | None = None,
     accelerator: str | None = None,
 ) -> Sheet

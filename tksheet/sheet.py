@@ -784,7 +784,7 @@ class Sheet(tk.Frame):
         index_menu: bool = True,
         header_menu: bool = True,
         empty_space_menu: bool = True,
-        image: tk.PhotoImage | None = None,
+        image: tk.PhotoImage | Literal[""] = "",
         compound: Literal["top", "bottom", "left", "right", "none"] | None = None,
         accelerator: str | None = None,
     ) -> Sheet:
@@ -4141,6 +4141,8 @@ class Sheet(tk.Frame):
             self.ops.paste_can_expand_y = kwargs["expand_sheet_if_paste_too_big"]
         if "show_top_left" in kwargs:
             self.show("top_left")
+        if "popup_menu_font" in kwargs:
+            self.ops.popup_menu_font = FontTuple(*self.ops.popup_menu_font)
         if "font" in kwargs:
             self.MT.set_table_font(kwargs["font"])
         elif "table_font" in kwargs:
