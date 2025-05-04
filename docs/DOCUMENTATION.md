@@ -467,7 +467,7 @@ def __init__(
 - Only set `show_top_left` to `True` if you want to always show the top left rectangle of the sheet. Leave as `None` to only show it when both the index and header are showing.
 - For help with `treeview` mode see [here](#treeview-mode).
 
-You can change most of these settings after initialization using the [`set_options()` function](#sheet-options-and-other-functions).
+You can change most of these settings after initialization using the [`set_options()` function](#sheet-options).
 - `scrollbar_theme_inheritance` and `scrollbar_show_arrows` will only work on `Sheet()` initialization, not with `set_options()`
 
 ---
@@ -477,7 +477,7 @@ You can change most of these settings after initialization using the [`set_optio
 
 To change the colors of individual cells, rows or columns use the functions listed under [highlighting cells](#highlighting-cells).
 
-For the colors of specific parts of the table such as gridlines and backgrounds use the function `set_options()`, keyword arguments specific to sheet colors are listed below. All the other `set_options()` arguments can be found [here](#sheet-options-and-other-functions).
+For the colors of specific parts of the table such as gridlines and backgrounds use the function `set_options()`, keyword arguments specific to sheet colors are listed below. All the other `set_options()` arguments can be found [here](#sheet-options).
 
 Use a tkinter color or a hex string e.g.
 
@@ -595,8 +595,7 @@ Some scroll bar style options can only be changed on `Sheet()` initialization, o
     - `vertical_scroll_arrowsize: str | int`
     - `horizontal_scroll_arrowsize: str | int`
 
----
-# **Alternate Row Colors**
+### **Alternate Row Colors**
 
 For basic alternate row colors in the main table either:
 
@@ -614,6 +613,462 @@ my_sheet = Sheet(parent, alternate_color="gray80")
 ```
 
 Note that any cell, row or column highlights will display over alternate row colors.
+
+---
+# **Sheet Options**
+
+```python
+set_options(redraw: bool = True, **kwargs) -> Sheet
+```
+
+Key word arguments available for `set_options()` (values are defaults):
+
+```python
+"popup_menu_fg": "#000000",
+"popup_menu_bg": "#FFFFFF",
+"popup_menu_highlight_bg": "#DCDEE0",
+"popup_menu_highlight_fg": "#000000",
+"index_hidden_rows_expander_bg": "#747775",
+"header_hidden_columns_expander_bg": "#747775",
+"header_bg": "#FFFFFF",
+"header_border_fg": "#C4C7C5",
+"header_grid_fg": "#C4C7C5",
+"header_fg": "#444746",
+"header_editor_bg": "#FFFFFF",
+"header_editor_fg": "#444746",
+"header_editor_select_bg": "#cfd1d1",
+"header_editor_select_fg": "#000000",
+"header_selected_cells_bg": "#D3E3FD",
+"header_selected_cells_fg": "black",
+"index_bg": "#FFFFFF",
+"index_border_fg": "#C4C7C5",
+"index_grid_fg": "#C4C7C5",
+"index_fg": "black",
+"index_editor_bg": "#FFFFFF",
+"index_editor_fg": "black",
+"index_editor_select_bg": "#cfd1d1",
+"index_editor_select_fg": "#000000",
+"index_selected_cells_bg": "#D3E3FD",
+"index_selected_cells_fg": "black",
+"top_left_bg": "#F9FBFD",
+"top_left_fg": "#d9d9d9",
+"top_left_fg_highlight": "#747775",
+"table_bg": "#FFFFFF",
+"table_grid_fg": "#E1E1E1",
+"table_fg": "black",
+"table_editor_bg": "#FFFFFF",
+"table_editor_fg": "black",
+"table_editor_select_bg": "#cfd1d1",
+"table_editor_select_fg": "#000000",
+"table_selected_box_cells_fg": "#0B57D0",
+"table_selected_box_rows_fg": "#0B57D0",
+"table_selected_box_columns_fg": "#0B57D0",
+"table_selected_cells_border_fg": "#0B57D0",
+"table_selected_cells_bg": "#E6EFFD",
+"table_selected_cells_fg": "black",
+"resizing_line_fg": "black",
+"drag_and_drop_bg": "#0B57D0",
+"outline_color": "gray2",
+"header_selected_columns_bg": "#0B57D0",
+"header_selected_columns_fg": "#FFFFFF",
+"index_selected_rows_bg": "#0B57D0",
+"index_selected_rows_fg": "#FFFFFF",
+"table_selected_rows_border_fg": "#0B57D0",
+"table_selected_rows_bg": "#E6EFFD",
+"table_selected_rows_fg": "black",
+"table_selected_columns_border_fg": "#0B57D0",
+"table_selected_columns_bg": "#E6EFFD",
+"table_selected_columns_fg": "black",
+"tree_arrow_fg": "black",
+"selected_cells_tree_arrow_fg": "black",
+"selected_rows_tree_arrow_fg": "#FFFFFF",
+"vertical_scroll_background": "#FFFFFF",
+"horizontal_scroll_background": "#FFFFFF",
+"vertical_scroll_troughcolor": "#f9fbfd",
+"horizontal_scroll_troughcolor": "#f9fbfd",
+"vertical_scroll_lightcolor": "#FFFFFF",
+"horizontal_scroll_lightcolor": "#FFFFFF",
+"vertical_scroll_darkcolor": "gray50",
+"horizontal_scroll_darkcolor": "gray50",
+"vertical_scroll_relief": "flat",
+"horizontal_scroll_relief": "flat",
+"vertical_scroll_troughrelief": "flat",
+"horizontal_scroll_troughrelief": "flat",
+"vertical_scroll_bordercolor": "#f9fbfd",
+"horizontal_scroll_bordercolor": "#f9fbfd",
+"vertical_scroll_active_bg": "#bdc1c6",
+"horizontal_scroll_active_bg": "#bdc1c6",
+"vertical_scroll_not_active_bg": "#DADCE0",
+"horizontal_scroll_not_active_bg": "#DADCE0",
+"vertical_scroll_pressed_bg": "#bdc1c6",
+"horizontal_scroll_pressed_bg": "#bdc1c6",
+"vertical_scroll_active_fg": "#bdc1c6",
+"horizontal_scroll_active_fg": "#bdc1c6",
+"vertical_scroll_not_active_fg": "#DADCE0",
+"horizontal_scroll_not_active_fg": "#DADCE0",
+"vertical_scroll_pressed_fg": "#bdc1c6",
+"horizontal_scroll_pressed_fg": "#bdc1c6",
+"popup_menu_font": FontTuple(
+    "Calibri",
+    13 if USER_OS == "darwin" else 11,
+    "normal",
+),
+"table_font": FontTuple(
+    "Calibri",
+    13 if USER_OS == "darwin" else 11,
+    "normal",
+),
+"header_font": FontTuple(
+    "Calibri",
+    13 if USER_OS == "darwin" else 11,
+    "normal",
+),
+"index_font": FontTuple(
+    "Calibri",
+    13 if USER_OS == "darwin" else 11,
+    "normal",
+),
+# edit header
+"edit_header_label": "Edit header",
+"edit_header_accelerator": "",
+"edit_header_image": tk.PhotoImage(data=ICON_EDIT),
+"edit_header_compound": "left",
+# edit index
+"edit_index_label": "Edit index",
+"edit_index_accelerator": "",
+"edit_index_image": tk.PhotoImage(data=ICON_EDIT),
+"edit_index_compound": "left",
+# edit cell
+"edit_cell_label": "Edit cell",
+"edit_cell_accelerator": "",
+"edit_cell_image": tk.PhotoImage(data=ICON_EDIT),
+"edit_cell_compound": "left",
+# cut
+"cut_label": "Cut",
+"cut_accelerator": "Ctrl+X",
+"cut_image": tk.PhotoImage(data=ICON_CUT),
+"cut_compound": "left",
+# cut contents
+"cut_contents_label": "Cut contents",
+"cut_contents_accelerator": "Ctrl+X",
+"cut_contents_image": tk.PhotoImage(data=ICON_CUT),
+"cut_contents_compound": "left",
+# copy
+"copy_label": "Copy",
+"copy_accelerator": "Ctrl+C",
+"copy_image": tk.PhotoImage(data=ICON_COPY),
+"copy_compound": "left",
+# copy contents
+"copy_contents_label": "Copy contents",
+"copy_contents_accelerator": "Ctrl+C",
+"copy_contents_image": tk.PhotoImage(data=ICON_COPY),
+"copy_contents_compound": "left",
+# paste
+"paste_label": "Paste",
+"paste_accelerator": "Ctrl+V",
+"paste_image": tk.PhotoImage(data=ICON_PASTE),
+"paste_compound": "left",
+# delete
+"delete_label": "Delete",
+"delete_accelerator": "Del",
+"delete_image": tk.PhotoImage(data=ICON_CLEAR),
+"delete_compound": "left",
+# clear contents
+"clear_contents_label": "Clear contents",
+"clear_contents_accelerator": "Del",
+"clear_contents_image": tk.PhotoImage(data=ICON_CLEAR),
+"clear_contents_compound": "left",
+# del columns
+"delete_columns_label": "Delete columns",
+"delete_columns_accelerator": "",
+"delete_columns_image": tk.PhotoImage(data=ICON_DEL),
+"delete_columns_compound": "left",
+# insert columns left
+"insert_columns_left_label": "Insert columns left",
+"insert_columns_left_accelerator": "",
+"insert_columns_left_image": tk.PhotoImage(data=ICON_ADD),
+"insert_columns_left_compound": "left",
+# insert columns right
+"insert_columns_right_label": "Insert columns right",
+"insert_columns_right_accelerator": "",
+"insert_columns_right_image": tk.PhotoImage(data=ICON_ADD),
+"insert_columns_right_compound": "left",
+# insert single column
+"insert_column_label": "Insert column",
+"insert_column_accelerator": "",
+"insert_column_image": tk.PhotoImage(data=ICON_ADD),
+"insert_column_compound": "left",
+# del rows
+"delete_rows_label": "Delete rows",
+"delete_rows_accelerator": "",
+"delete_rows_image": tk.PhotoImage(data=ICON_DEL),
+"delete_rows_compound": "left",
+# insert rows above
+"insert_rows_above_label": "Insert rows above",
+"insert_rows_above_accelerator": "",
+"insert_rows_above_image": tk.PhotoImage(data=ICON_ADD),
+"insert_rows_above_compound": "left",
+# insert rows below
+"insert_rows_below_label": "Insert rows below",
+"insert_rows_below_accelerator": "",
+"insert_rows_below_image": tk.PhotoImage(data=ICON_ADD),
+"insert_rows_below_compound": "left",
+# insert single row
+"insert_row_label": "Insert row",
+"insert_row_accelerator": "",
+"insert_row_image": tk.PhotoImage(data=ICON_ADD),
+"insert_row_compound": "left",
+# sorting
+# labels
+"sort_cells_label": "Sort Asc.",
+"sort_cells_x_label": "Sort row-wise Asc.",
+"sort_row_label": "Sort values Asc.",
+"sort_column_label": "Sort values Asc.",
+"sort_rows_label": "Sort rows Asc.",
+"sort_columns_label": "Sort columns Asc.",
+# reverse labels
+"sort_cells_reverse_label": "Sort Desc.",
+"sort_cells_x_reverse_label": "Sort row-wise Desc.",
+"sort_row_reverse_label": "Sort values Desc.",
+"sort_column_reverse_label": "Sort values Desc.",
+"sort_rows_reverse_label": "Sort rows Desc.",
+"sort_columns_reverse_label": "Sort columns Desc.",
+# accelerators
+"sort_cells_accelerator": "",
+"sort_cells_x_accelerator": "",
+"sort_row_accelerator": "",
+"sort_column_accelerator": "",
+"sort_rows_accelerator": "",
+"sort_columns_accelerator": "",
+# reverse accelerators
+"sort_cells_reverse_accelerator": "",
+"sort_cells_x_reverse_accelerator": "",
+"sort_row_reverse_accelerator": "",
+"sort_column_reverse_accelerator": "",
+"sort_rows_reverse_accelerator": "",
+"sort_columns_reverse_accelerator": "",
+# images
+"sort_cells_image": tk.PhotoImage(data=ICON_DOWN),
+"sort_cells_x_image": tk.PhotoImage(data=ICON_DOWN),
+"sort_row_image": tk.PhotoImage(data=ICON_DOWN),
+"sort_column_image": tk.PhotoImage(data=ICON_DOWN),
+"sort_rows_image": tk.PhotoImage(data=ICON_DOWN),
+"sort_columns_image": tk.PhotoImage(data=ICON_DOWN),
+# compounds
+"sort_cells_compound": "left",
+"sort_cells_x_compound": "left",
+"sort_row_compound": "left",
+"sort_column_compound": "left",
+"sort_rows_compound": "left",
+"sort_columns_compound": "left",
+# reverse images
+"sort_cells_reverse_image": tk.PhotoImage(data=ICON_UP),
+"sort_cells_x_reverse_image": tk.PhotoImage(data=ICON_UP),
+"sort_row_reverse_image": tk.PhotoImage(data=ICON_UP),
+"sort_column_reverse_image": tk.PhotoImage(data=ICON_UP),
+"sort_rows_reverse_image": tk.PhotoImage(data=ICON_UP),
+"sort_columns_reverse_image": tk.PhotoImage(data=ICON_UP),
+# reverse compounds
+"sort_cells_reverse_compound": "left",
+"sort_cells_x_reverse_compound": "left",
+"sort_row_reverse_compound": "left",
+"sort_column_reverse_compound": "left",
+"sort_rows_reverse_compound": "left",
+"sort_columns_reverse_compound": "left",
+# select all
+"select_all_label": "Select all",
+"select_all_accelerator": "Ctrl+A",
+"select_all_image": tk.PhotoImage(data=ICON_SELECT_ALL),
+"select_all_compound": "left",
+# undo
+"undo_label": "Undo",
+"undo_accelerator": "Ctrl+Z",
+"undo_image": tk.PhotoImage(data=ICON_UNDO),
+"undo_compound": "left",
+# redo
+"redo_label": "Redo",
+"redo_accelerator": "Ctrl+Shift+Z",
+"redo_image": tk.PhotoImage(data=ICON_REDO),
+"redo_compound": "left",
+# bindings
+"copy_bindings": [
+    f"<{ctrl_key}-c>",
+    f"<{ctrl_key}-C>",
+],
+"cut_bindings": [
+    f"<{ctrl_key}-x>",
+    f"<{ctrl_key}-X>",
+],
+"paste_bindings": [
+    f"<{ctrl_key}-v>",
+    f"<{ctrl_key}-V>",
+],
+"undo_bindings": [
+    f"<{ctrl_key}-z>",
+    f"<{ctrl_key}-Z>",
+],
+"redo_bindings": [
+    f"<{ctrl_key}-Shift-z>",
+    f"<{ctrl_key}-Shift-Z>",
+],
+"delete_bindings": [
+    "<Delete>",
+],
+"select_all_bindings": [
+    f"<{ctrl_key}-a>",
+    f"<{ctrl_key}-A>",
+    f"<{ctrl_key}-Shift-space>",
+],
+"select_columns_bindings": [
+    "<Control-space>",
+],
+"select_rows_bindings": [
+    "<Shift-space>",
+],
+"row_start_bindings": [
+    "<Command-Left>",
+    "<Home>",
+]
+if USER_OS == "darwin"
+else ["<Home>"],
+"table_start_bindings": [
+    f"<{ctrl_key}-Home>",
+],
+"tab_bindings": [
+    "<Tab>",
+],
+"up_bindings": [
+    "<Up>",
+],
+"right_bindings": [
+    "<Right>",
+],
+"down_bindings": [
+    "<Down>",
+],
+"left_bindings": [
+    "<Left>",
+],
+"shift_up_bindings": [
+    "<Shift-Up>",
+],
+"shift_right_bindings": [
+    "<Shift-Right>",
+],
+"shift_down_bindings": [
+    "<Shift-Down>",
+],
+"shift_left_bindings": [
+    "<Shift-Left>",
+],
+"prior_bindings": [
+    "<Prior>",
+],
+"next_bindings": [
+    "<Next>",
+],
+"find_bindings": [
+    f"<{ctrl_key}-f>",
+    f"<{ctrl_key}-F>",
+],
+"find_next_bindings": [
+    f"<{ctrl_key}-g>",
+    f"<{ctrl_key}-G>",
+],
+"find_previous_bindings": [
+    f"<{ctrl_key}-Shift-g>",
+    f"<{ctrl_key}-Shift-G>",
+],
+"toggle_replace_bindings": [
+    f"<{ctrl_key}-h>",
+    f"<{ctrl_key}-H>",
+],
+"escape_bindings": [
+    "<Escape>",
+],
+# other
+"vertical_scroll_borderwidth": 1,
+"horizontal_scroll_borderwidth": 1,
+"vertical_scroll_gripcount": 0,
+"horizontal_scroll_gripcount": 0,
+"vertical_scroll_arrowsize": "",
+"horizontal_scroll_arrowsize": "",
+"set_cell_sizes_on_zoom": False,
+"auto_resize_columns": None,
+"auto_resize_rows": None,
+"to_clipboard_delimiter": "\t",
+"to_clipboard_quotechar": '"',
+"to_clipboard_lineterminator": "\n",
+"from_clipboard_delimiters": ["\t"],
+"show_dropdown_borders": False,
+"show_default_header_for_empty": True,
+"show_default_index_for_empty": True,
+"default_header_height": "1",
+"default_row_height": "1",
+"default_column_width": 120,
+"default_row_index_width": 70,
+"default_row_index": "numbers",
+"default_header": "letters",
+"page_up_down_select_row": True,
+"paste_can_expand_x": False,
+"paste_can_expand_y": False,
+"paste_insert_column_limit": None,
+"paste_insert_row_limit": None,
+"arrow_key_down_right_scroll_page": False,
+"cell_auto_resize_enabled": True,
+"auto_resize_row_index": True,
+"max_undos": 30,
+"column_drag_and_drop_perform": True,
+"row_drag_and_drop_perform": True,
+"empty_horizontal": 50,
+"empty_vertical": 50,
+"selected_rows_to_end_of_window": False,
+"horizontal_grid_to_end_of_window": False,
+"vertical_grid_to_end_of_window": False,
+"show_vertical_grid": True,
+"show_horizontal_grid": True,
+"display_selected_fg_over_highlights": False,
+"show_selected_cells_border": True,
+"edit_cell_tab": "right",
+"edit_cell_return": "down",
+"editor_del_key": "forward",
+"treeview": False,
+"treeview_indent": "2",
+"rounded_boxes": True,
+"alternate_color": "",
+"allow_cell_overflow": False,
+"table_wrap": "c",
+"header_wrap": "c",
+"index_wrap": "c",
+"min_column_width": 1,
+"max_column_width": float("inf"),
+"max_header_height": float("inf"),
+"max_row_height": float("inf"),
+"max_index_width": float("inf"),
+"show_top_left": None,
+"sort_key": natural_sort_key,
+```
+
+Notes:
+
+- The parameters ending in `_image` take `tk.PhotoImage` or an empty string `""` as types.
+- The parameters ending in `_compound` take one of the following: `"left", "right", "bottom", "top", "none", None`.
+- `sort_key` is `Callable` - a function.
+- A dictionary can be provided to `set_options()` instead of using the keyword arguments, e.g.:
+
+```python
+kwargs = {
+    "copy_bindings": [
+        "<Control-g>",
+        "<Control-G>",
+    ],
+    "cut_bindings": [
+        "<Control-c>",
+        "<Control-C>",
+    ],
+}
+sheet.set_options(**kwargs)
+```
 
 ---
 # **Header and Index**
@@ -1364,7 +1819,7 @@ Please note that due to the limitations of the Tkinter Canvas tksheet doesn’t 
 
 #### **Changing right click menu labels**
 
-You can change the labels for tksheets in-built right click popup menu by using the [`set_options()` function](#sheet-options-and-other-functions) with any of the following keyword arguments:
+You can change the labels for tksheets in-built right click popup menu by using the [`set_options()` function](#sheet-options) with any of the following keyword arguments:
 
 ```python
 # edit header
@@ -1540,7 +1995,7 @@ sheet.set_options(copy_label="Copiar", copy_image=tk.PhotoImage(file="filepath_t
 
 #### **Changing key bindings**
 
-You can change the bindings for tksheets in-built functionality such as cut, copy, paste by using the [`set_options()` function](#sheet-options-and-other-functions) with any the following keyword arguments:
+You can change the bindings for tksheets in-built functionality such as cut, copy, paste by using the [`set_options()` function](#sheet-options) with any the following keyword arguments:
 
 ```python
 copy_bindings
@@ -4857,6 +5312,57 @@ Parameters:
     - If left as `None` then all existing properties for that cell will be returned in a `dict`.
     - If using a `str` e.g. `"highlight"` it will only look for highlight properties for that cell.
 
+___
+
+#### **Other properties functions**
+
+Get internal storage dictionary of highlights, readonly cells, dropdowns etc. Specifically for cell options.
+```python
+get_cell_options(key: None | str = None, canvas: Literal["table", "row_index", "header"] = "table") -> dict
+```
+
+___
+
+Get internal storage dictionary of highlights, readonly rows, dropdowns etc. Specifically for row options.
+```python
+get_row_options(key: None | str = None) -> dict
+```
+
+___
+
+Get internal storage dictionary of highlights, readonly columns, dropdowns etc. Specifically for column options.
+```python
+get_column_options(key: None | str = None) -> dict
+```
+
+___
+
+Get internal storage dictionary of highlights, readonly header cells, dropdowns etc. Specifically for header options.
+```python
+get_header_options(key: None | str = None) -> dict
+```
+
+___
+
+Get internal storage dictionary of highlights, readonly row index cells, dropdowns etc. Specifically for row index options.
+```python
+get_index_options(key: None | str = None) -> dict
+```
+
+___
+
+Delete any formats, alignments, dropdown boxes, check boxes, highlights etc. that are larger than the sheets currently held data, includes row index and header in measurement of dimensions.
+```python
+del_out_of_bounds_options() -> Sheet
+```
+
+___
+
+Delete all alignments, dropdown boxes, check boxes, highlights etc.
+```python
+reset_all_options() -> Sheet
+```
+
 ---
 # **Getting Selected Cells**
 
@@ -5453,7 +5959,7 @@ ___
 ```python
 set_index_width(pixels: int, redraw: bool = True) -> Sheet
 ```
-- Note that it disables auto resizing of index. Use [`set_options()`](#sheet-options-and-other-functions) to restore auto resizing.
+- Note that it disables auto resizing of index. Use [`set_options()`](#sheet-options) to restore auto resizing.
 
 ___
 
@@ -6280,551 +6786,6 @@ unbind_key_text_editor(key: str) -> Sheet
 ```
 
 ---
-# **Sheet Options and Other Functions**
-
-```python
-set_options(redraw: bool = True, **kwargs) -> Sheet
-```
-
-The list of key word arguments available for `set_options()` are as follows, [see here](#initialization-options) as a guide for argument types, the below values are either defaults or place holders.
-
-```python
-"popup_menu_fg": "#000000",
-"popup_menu_bg": "#FFFFFF",
-"popup_menu_highlight_bg": "#DCDEE0",
-"popup_menu_highlight_fg": "#000000",
-"index_hidden_rows_expander_bg": "#747775",
-"header_hidden_columns_expander_bg": "#747775",
-"header_bg": "#FFFFFF",
-"header_border_fg": "#C4C7C5",
-"header_grid_fg": "#C4C7C5",
-"header_fg": "#444746",
-"header_editor_bg": "#FFFFFF",
-"header_editor_fg": "#444746",
-"header_editor_select_bg": "#cfd1d1",
-"header_editor_select_fg": "#000000",
-"header_selected_cells_bg": "#D3E3FD",
-"header_selected_cells_fg": "black",
-"index_bg": "#FFFFFF",
-"index_border_fg": "#C4C7C5",
-"index_grid_fg": "#C4C7C5",
-"index_fg": "black",
-"index_editor_bg": "#FFFFFF",
-"index_editor_fg": "black",
-"index_editor_select_bg": "#cfd1d1",
-"index_editor_select_fg": "#000000",
-"index_selected_cells_bg": "#D3E3FD",
-"index_selected_cells_fg": "black",
-"top_left_bg": "#F9FBFD",
-"top_left_fg": "#d9d9d9",
-"top_left_fg_highlight": "#747775",
-"table_bg": "#FFFFFF",
-"table_grid_fg": "#E1E1E1",
-"table_fg": "black",
-"table_editor_bg": "#FFFFFF",
-"table_editor_fg": "black",
-"table_editor_select_bg": "#cfd1d1",
-"table_editor_select_fg": "#000000",
-"table_selected_box_cells_fg": "#0B57D0",
-"table_selected_box_rows_fg": "#0B57D0",
-"table_selected_box_columns_fg": "#0B57D0",
-"table_selected_cells_border_fg": "#0B57D0",
-"table_selected_cells_bg": "#E6EFFD",
-"table_selected_cells_fg": "black",
-"resizing_line_fg": "black",
-"drag_and_drop_bg": "#0B57D0",
-"outline_color": "gray2",
-"header_selected_columns_bg": "#0B57D0",
-"header_selected_columns_fg": "#FFFFFF",
-"index_selected_rows_bg": "#0B57D0",
-"index_selected_rows_fg": "#FFFFFF",
-"table_selected_rows_border_fg": "#0B57D0",
-"table_selected_rows_bg": "#E6EFFD",
-"table_selected_rows_fg": "black",
-"table_selected_columns_border_fg": "#0B57D0",
-"table_selected_columns_bg": "#E6EFFD",
-"table_selected_columns_fg": "black",
-"tree_arrow_fg": "black",
-"selected_cells_tree_arrow_fg": "black",
-"selected_rows_tree_arrow_fg": "#FFFFFF",
-"vertical_scroll_background": "#FFFFFF",
-"horizontal_scroll_background": "#FFFFFF",
-"vertical_scroll_troughcolor": "#f9fbfd",
-"horizontal_scroll_troughcolor": "#f9fbfd",
-"vertical_scroll_lightcolor": "#FFFFFF",
-"horizontal_scroll_lightcolor": "#FFFFFF",
-"vertical_scroll_darkcolor": "gray50",
-"horizontal_scroll_darkcolor": "gray50",
-"vertical_scroll_relief": "flat",
-"horizontal_scroll_relief": "flat",
-"vertical_scroll_troughrelief": "flat",
-"horizontal_scroll_troughrelief": "flat",
-"vertical_scroll_bordercolor": "#f9fbfd",
-"horizontal_scroll_bordercolor": "#f9fbfd",
-"vertical_scroll_active_bg": "#bdc1c6",
-"horizontal_scroll_active_bg": "#bdc1c6",
-"vertical_scroll_not_active_bg": "#DADCE0",
-"horizontal_scroll_not_active_bg": "#DADCE0",
-"vertical_scroll_pressed_bg": "#bdc1c6",
-"horizontal_scroll_pressed_bg": "#bdc1c6",
-"vertical_scroll_active_fg": "#bdc1c6",
-"horizontal_scroll_active_fg": "#bdc1c6",
-"vertical_scroll_not_active_fg": "#DADCE0",
-"horizontal_scroll_not_active_fg": "#DADCE0",
-"vertical_scroll_pressed_fg": "#bdc1c6",
-"horizontal_scroll_pressed_fg": "#bdc1c6",
-"popup_menu_font": FontTuple(
-    "Calibri",
-    13 if USER_OS == "darwin" else 11,
-    "normal",
-),
-"table_font": FontTuple(
-    "Calibri",
-    13 if USER_OS == "darwin" else 11,
-    "normal",
-),
-"header_font": FontTuple(
-    "Calibri",
-    13 if USER_OS == "darwin" else 11,
-    "normal",
-),
-"index_font": FontTuple(
-    "Calibri",
-    13 if USER_OS == "darwin" else 11,
-    "normal",
-),
-# edit header
-"edit_header_label": "Edit header",
-"edit_header_accelerator": "",
-"edit_header_image": tk.PhotoImage(data=ICON_EDIT),
-"edit_header_compound": "left",
-# edit index
-"edit_index_label": "Edit index",
-"edit_index_accelerator": "",
-"edit_index_image": tk.PhotoImage(data=ICON_EDIT),
-"edit_index_compound": "left",
-# edit cell
-"edit_cell_label": "Edit cell",
-"edit_cell_accelerator": "",
-"edit_cell_image": tk.PhotoImage(data=ICON_EDIT),
-"edit_cell_compound": "left",
-# cut
-"cut_label": "Cut",
-"cut_accelerator": "Ctrl+X",
-"cut_image": tk.PhotoImage(data=ICON_CUT),
-"cut_compound": "left",
-# cut contents
-"cut_contents_label": "Cut contents",
-"cut_contents_accelerator": "Ctrl+X",
-"cut_contents_image": tk.PhotoImage(data=ICON_CUT),
-"cut_contents_compound": "left",
-# copy
-"copy_label": "Copy",
-"copy_accelerator": "Ctrl+C",
-"copy_image": tk.PhotoImage(data=ICON_COPY),
-"copy_compound": "left",
-# copy contents
-"copy_contents_label": "Copy contents",
-"copy_contents_accelerator": "Ctrl+C",
-"copy_contents_image": tk.PhotoImage(data=ICON_COPY),
-"copy_contents_compound": "left",
-# paste
-"paste_label": "Paste",
-"paste_accelerator": "Ctrl+V",
-"paste_image": tk.PhotoImage(data=ICON_PASTE),
-"paste_compound": "left",
-# delete
-"delete_label": "Delete",
-"delete_accelerator": "Del",
-"delete_image": tk.PhotoImage(data=ICON_CLEAR),
-"delete_compound": "left",
-# clear contents
-"clear_contents_label": "Clear contents",
-"clear_contents_accelerator": "Del",
-"clear_contents_image": tk.PhotoImage(data=ICON_CLEAR),
-"clear_contents_compound": "left",
-# del columns
-"delete_columns_label": "Delete columns",
-"delete_columns_accelerator": "",
-"delete_columns_image": tk.PhotoImage(data=ICON_DEL),
-"delete_columns_compound": "left",
-# insert columns left
-"insert_columns_left_label": "Insert columns left",
-"insert_columns_left_accelerator": "",
-"insert_columns_left_image": tk.PhotoImage(data=ICON_ADD),
-"insert_columns_left_compound": "left",
-# insert columns right
-"insert_columns_right_label": "Insert columns right",
-"insert_columns_right_accelerator": "",
-"insert_columns_right_image": tk.PhotoImage(data=ICON_ADD),
-"insert_columns_right_compound": "left",
-# insert single column
-"insert_column_label": "Insert column",
-"insert_column_accelerator": "",
-"insert_column_image": tk.PhotoImage(data=ICON_ADD),
-"insert_column_compound": "left",
-# del rows
-"delete_rows_label": "Delete rows",
-"delete_rows_accelerator": "",
-"delete_rows_image": tk.PhotoImage(data=ICON_DEL),
-"delete_rows_compound": "left",
-# insert rows above
-"insert_rows_above_label": "Insert rows above",
-"insert_rows_above_accelerator": "",
-"insert_rows_above_image": tk.PhotoImage(data=ICON_ADD),
-"insert_rows_above_compound": "left",
-# insert rows below
-"insert_rows_below_label": "Insert rows below",
-"insert_rows_below_accelerator": "",
-"insert_rows_below_image": tk.PhotoImage(data=ICON_ADD),
-"insert_rows_below_compound": "left",
-# insert single row
-"insert_row_label": "Insert row",
-"insert_row_accelerator": "",
-"insert_row_image": tk.PhotoImage(data=ICON_ADD),
-"insert_row_compound": "left",
-# sorting
-# labels
-"sort_cells_label": "Sort Asc.",
-"sort_cells_x_label": "Sort row-wise Asc.",
-"sort_row_label": "Sort values Asc.",
-"sort_column_label": "Sort values Asc.",
-"sort_rows_label": "Sort rows Asc.",
-"sort_columns_label": "Sort columns Asc.",
-# reverse labels
-"sort_cells_reverse_label": "Sort Desc.",
-"sort_cells_x_reverse_label": "Sort row-wise Desc.",
-"sort_row_reverse_label": "Sort values Desc.",
-"sort_column_reverse_label": "Sort values Desc.",
-"sort_rows_reverse_label": "Sort rows Desc.",
-"sort_columns_reverse_label": "Sort columns Desc.",
-# accelerators
-"sort_cells_accelerator": "",
-"sort_cells_x_accelerator": "",
-"sort_row_accelerator": "",
-"sort_column_accelerator": "",
-"sort_rows_accelerator": "",
-"sort_columns_accelerator": "",
-# reverse accelerators
-"sort_cells_reverse_accelerator": "",
-"sort_cells_x_reverse_accelerator": "",
-"sort_row_reverse_accelerator": "",
-"sort_column_reverse_accelerator": "",
-"sort_rows_reverse_accelerator": "",
-"sort_columns_reverse_accelerator": "",
-# images
-"sort_cells_image": tk.PhotoImage(data=ICON_DOWN),
-"sort_cells_x_image": tk.PhotoImage(data=ICON_DOWN),
-"sort_row_image": tk.PhotoImage(data=ICON_DOWN),
-"sort_column_image": tk.PhotoImage(data=ICON_DOWN),
-"sort_rows_image": tk.PhotoImage(data=ICON_DOWN),
-"sort_columns_image": tk.PhotoImage(data=ICON_DOWN),
-# compounds
-"sort_cells_compound": "left",
-"sort_cells_x_compound": "left",
-"sort_row_compound": "left",
-"sort_column_compound": "left",
-"sort_rows_compound": "left",
-"sort_columns_compound": "left",
-# reverse images
-"sort_cells_reverse_image": tk.PhotoImage(data=ICON_UP),
-"sort_cells_x_reverse_image": tk.PhotoImage(data=ICON_UP),
-"sort_row_reverse_image": tk.PhotoImage(data=ICON_UP),
-"sort_column_reverse_image": tk.PhotoImage(data=ICON_UP),
-"sort_rows_reverse_image": tk.PhotoImage(data=ICON_UP),
-"sort_columns_reverse_image": tk.PhotoImage(data=ICON_UP),
-# reverse compounds
-"sort_cells_reverse_compound": "left",
-"sort_cells_x_reverse_compound": "left",
-"sort_row_reverse_compound": "left",
-"sort_column_reverse_compound": "left",
-"sort_rows_reverse_compound": "left",
-"sort_columns_reverse_compound": "left",
-# select all
-"select_all_label": "Select all",
-"select_all_accelerator": "Ctrl+A",
-"select_all_image": tk.PhotoImage(data=ICON_SELECT_ALL),
-"select_all_compound": "left",
-# undo
-"undo_label": "Undo",
-"undo_accelerator": "Ctrl+Z",
-"undo_image": tk.PhotoImage(data=ICON_UNDO),
-"undo_compound": "left",
-# redo
-"redo_label": "Redo",
-"redo_accelerator": "Ctrl+Shift+Z",
-"redo_image": tk.PhotoImage(data=ICON_REDO),
-"redo_compound": "left",
-# bindings
-"copy_bindings": [
-    f"<{ctrl_key}-c>",
-    f"<{ctrl_key}-C>",
-],
-"cut_bindings": [
-    f"<{ctrl_key}-x>",
-    f"<{ctrl_key}-X>",
-],
-"paste_bindings": [
-    f"<{ctrl_key}-v>",
-    f"<{ctrl_key}-V>",
-],
-"undo_bindings": [
-    f"<{ctrl_key}-z>",
-    f"<{ctrl_key}-Z>",
-],
-"redo_bindings": [
-    f"<{ctrl_key}-Shift-z>",
-    f"<{ctrl_key}-Shift-Z>",
-],
-"delete_bindings": [
-    "<Delete>",
-],
-"select_all_bindings": [
-    f"<{ctrl_key}-a>",
-    f"<{ctrl_key}-A>",
-    f"<{ctrl_key}-Shift-space>",
-],
-"select_columns_bindings": [
-    "<Control-space>",
-],
-"select_rows_bindings": [
-    "<Shift-space>",
-],
-"row_start_bindings": [
-    "<Command-Left>",
-    "<Home>",
-]
-if USER_OS == "darwin"
-else ["<Home>"],
-"table_start_bindings": [
-    f"<{ctrl_key}-Home>",
-],
-"tab_bindings": [
-    "<Tab>",
-],
-"up_bindings": [
-    "<Up>",
-],
-"right_bindings": [
-    "<Right>",
-],
-"down_bindings": [
-    "<Down>",
-],
-"left_bindings": [
-    "<Left>",
-],
-"shift_up_bindings": [
-    "<Shift-Up>",
-],
-"shift_right_bindings": [
-    "<Shift-Right>",
-],
-"shift_down_bindings": [
-    "<Shift-Down>",
-],
-"shift_left_bindings": [
-    "<Shift-Left>",
-],
-"prior_bindings": [
-    "<Prior>",
-],
-"next_bindings": [
-    "<Next>",
-],
-"find_bindings": [
-    f"<{ctrl_key}-f>",
-    f"<{ctrl_key}-F>",
-],
-"find_next_bindings": [
-    f"<{ctrl_key}-g>",
-    f"<{ctrl_key}-G>",
-],
-"find_previous_bindings": [
-    f"<{ctrl_key}-Shift-g>",
-    f"<{ctrl_key}-Shift-G>",
-],
-"toggle_replace_bindings": [
-    f"<{ctrl_key}-h>",
-    f"<{ctrl_key}-H>",
-],
-"escape_bindings": [
-    "<Escape>",
-],
-# other
-"vertical_scroll_borderwidth": 1,
-"horizontal_scroll_borderwidth": 1,
-"vertical_scroll_gripcount": 0,
-"horizontal_scroll_gripcount": 0,
-"vertical_scroll_arrowsize": "",
-"horizontal_scroll_arrowsize": "",
-"set_cell_sizes_on_zoom": False,
-"auto_resize_columns": None,
-"auto_resize_rows": None,
-"to_clipboard_delimiter": "\t",
-"to_clipboard_quotechar": '"',
-"to_clipboard_lineterminator": "\n",
-"from_clipboard_delimiters": ["\t"],
-"show_dropdown_borders": False,
-"show_default_header_for_empty": True,
-"show_default_index_for_empty": True,
-"default_header_height": "1",
-"default_row_height": "1",
-"default_column_width": 120,
-"default_row_index_width": 70,
-"default_row_index": "numbers",
-"default_header": "letters",
-"page_up_down_select_row": True,
-"paste_can_expand_x": False,
-"paste_can_expand_y": False,
-"paste_insert_column_limit": None,
-"paste_insert_row_limit": None,
-"arrow_key_down_right_scroll_page": False,
-"cell_auto_resize_enabled": True,
-"auto_resize_row_index": True,
-"max_undos": 30,
-"column_drag_and_drop_perform": True,
-"row_drag_and_drop_perform": True,
-"empty_horizontal": 50,
-"empty_vertical": 50,
-"selected_rows_to_end_of_window": False,
-"horizontal_grid_to_end_of_window": False,
-"vertical_grid_to_end_of_window": False,
-"show_vertical_grid": True,
-"show_horizontal_grid": True,
-"display_selected_fg_over_highlights": False,
-"show_selected_cells_border": True,
-"edit_cell_tab": "right",
-"edit_cell_return": "down",
-"editor_del_key": "forward",
-"treeview": False,
-"treeview_indent": "2",
-"rounded_boxes": True,
-"alternate_color": "",
-"allow_cell_overflow": False,
-"table_wrap": "c",
-"header_wrap": "c",
-"index_wrap": "c",
-"min_column_width": 1,
-"max_column_width": float("inf"),
-"max_header_height": float("inf"),
-"max_row_height": float("inf"),
-"max_index_width": float("inf"),
-"show_top_left": None,
-"sort_key": natural_sort_key,
-```
-Notes:
-
-- The parameters ending in `_image` take `tk.PhotoImage` or `None` as types.
-- The parameters ending in `_compound` take one of the following: `"left", "right", "bottom", "top", "none", None`.
-- `sort_key` is `Callable` - a function.
-- A dictionary can be provided to `set_options()` instead of using the keyword arguments:
-
-```python
-kwargs = {
-    "copy_bindings": [
-        "<Control-g>",
-        "<Control-G>",
-    ],
-    "cut_bindings": [
-        "<Control-c>",
-        "<Control-C>",
-    ],
-}
-sheet.set_options(**kwargs)
-```
-
-___
-
-Get internal storage dictionary of highlights, readonly cells, dropdowns etc. Specifically for cell options.
-```python
-get_cell_options(key: None | str = None, canvas: Literal["table", "row_index", "header"] = "table") -> dict
-```
-
-___
-
-Get internal storage dictionary of highlights, readonly rows, dropdowns etc. Specifically for row options.
-```python
-get_row_options(key: None | str = None) -> dict
-```
-
-___
-
-Get internal storage dictionary of highlights, readonly columns, dropdowns etc. Specifically for column options.
-```python
-get_column_options(key: None | str = None) -> dict
-```
-
-___
-
-Get internal storage dictionary of highlights, readonly header cells, dropdowns etc. Specifically for header options.
-```python
-get_header_options(key: None | str = None) -> dict
-```
-
-___
-
-Get internal storage dictionary of highlights, readonly row index cells, dropdowns etc. Specifically for row index options.
-```python
-get_index_options(key: None | str = None) -> dict
-```
-
-___
-
-Delete any formats, alignments, dropdown boxes, check boxes, highlights etc. that are larger than the sheets currently held data, includes row index and header in measurement of dimensions.
-```python
-del_out_of_bounds_options() -> Sheet
-```
-
-___
-
-Delete all alignments, dropdown boxes, check boxes, highlights etc.
-```python
-reset_all_options() -> Sheet
-```
-
-___
-
-Flash a dashed box of chosen dimensions.
-```python
-show_ctrl_outline(
-    canvas: Literal["table"] = "table",
-    start_cell: tuple[int, int] = (0, 0),
-    end_cell: tuple[int, int] = (1, 1),
-) -> Sheet
-```
-
-___
-
-Various functions related to the Sheets internal undo and redo stacks.
-```python
-# clears both undos and redos
-reset_undos() -> Sheet
-
-# get the Sheets modifiable deque variables which store changes for undo and redo
-get_undo_stack() -> deque
-get_redo_stack() -> deque
-
-# set the Sheets undo and redo stacks, returns Sheet widget
-set_undo_stack(stack: deque) -> Sheet
-set_redo_stack(stack: deque) -> Sheet
-```
-
-___
-
-Refresh the table.
-```python
-refresh(redraw_header: bool = True, redraw_row_index: bool = True) -> Sheet
-```
-
-___
-
-Refresh the table.
-```python
-redraw(redraw_header: bool = True, redraw_row_index: bool = True) -> Sheet
-```
-
----
 # **Treeview Mode**
 
 tksheet has a treeview mode which behaves similarly to the ttk treeview widget, it is not a drop in replacement for it though.
@@ -6845,7 +6806,7 @@ You can make a treeview mode sheet by using the initialization parameter `treevi
 sheet = Sheet(parent, treeview=True)
 ```
 
-Or by using [`Sheet.reset()`](#reset-all-or-specific-sheet-elements-and-attributes) and [`Sheet.set_options()`](#sheet-options-and-other-functions).
+Or by using [`Sheet.reset()`](#reset-all-or-specific-sheet-elements-and-attributes) and [`Sheet.set_options()`](#sheet-options).
 
 ```python
 my_sheet.reset()
@@ -7486,6 +7447,37 @@ with_tags = sheet.tag_has("row tag b", "row tag c")
 
 print (with_tags.rows)
 # prints {0, 1, 4, 5}
+```
+
+---
+# **Other Sheet Functions**
+
+Various functions related to the Sheets internal undo and redo stacks.
+```python
+# clears both undos and redos
+reset_undos() -> Sheet
+
+# get the Sheets modifiable deque variables which store changes for undo and redo
+get_undo_stack() -> deque
+get_redo_stack() -> deque
+
+# set the Sheets undo and redo stacks, returns Sheet widget
+set_undo_stack(stack: deque) -> Sheet
+set_redo_stack(stack: deque) -> Sheet
+```
+
+___
+
+Refresh the table.
+```python
+refresh(redraw_header: bool = True, redraw_row_index: bool = True) -> Sheet
+```
+
+___
+
+Refresh the table.
+```python
+redraw(redraw_header: bool = True, redraw_row_index: bool = True) -> Sheet
 ```
 
 ---
