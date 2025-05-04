@@ -159,8 +159,8 @@ class TextEditorTkText(tk.Text):
             return "break"
 
     def select_all(self, event: Any = None) -> Literal["break"]:
-        self.tag_add(tk.SEL, "1.0", tk.END)
-        self.mark_set(tk.INSERT, tk.END)
+        self.tag_add(tk.SEL, "1.0", "end-1c")
+        self.mark_set(tk.INSERT, "end-1c")
         # self.see(tk.INSERT)
         return "break"
 

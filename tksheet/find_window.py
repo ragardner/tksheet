@@ -126,8 +126,8 @@ class FindWindowTkText(tk.Text):
 
     def select_all(self, event: Any = None) -> Literal["break"]:
         """Select all text in the widget."""
-        self.tag_add(tk.SEL, "1.0", tk.END)
-        self.mark_set(tk.INSERT, tk.END)
+        self.tag_add(tk.SEL, "1.0", "end-1c")
+        self.mark_set(tk.INSERT, "end-1c")
         return "break"
 
     def cut(self, event: Any = None) -> Literal["break"]:
