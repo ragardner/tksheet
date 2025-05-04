@@ -1,4 +1,4 @@
-### Version 7.4.25
+### Version 7.5.0
 #### Added:
 - Capability to add images to built in menu commands and also commands added using `popup_menu_add_command`.
 - Image icons to built in menu commands.
