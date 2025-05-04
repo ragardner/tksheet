@@ -96,6 +96,14 @@ class FindWindowTkText(tk.Text):
             command=self.undo,
             **menu_kwargs,
         )
+        self.rc_popup_menu.add_command(
+            label=sheet_ops.redo_label,
+            accelerator=sheet_ops.redo_accelerator,
+            image=sheet_ops.redo_image,
+            compound=sheet_ops.redo_compound,
+            command=self.redo,
+            **menu_kwargs,
+        )
 
     def rc(self, event: Any) -> None:
         """Show the right-click popup menu."""
@@ -142,6 +150,11 @@ class FindWindowTkText(tk.Text):
     def undo(self, event: Any = None) -> Literal["break"]:
         """Undo the last action."""
         self.event_generate(f"<{ctrl_key}-z>")
+        self.event_generate("<KeyRelease>")
+        return "break"
+
+    def redo(self, event: Any = None) -> Literal["break"]:
+        self.event_generate(f"<{ctrl_key}-Shift-z>")
         self.event_generate("<KeyRelease>")
         return "break"
 
