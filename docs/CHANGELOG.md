@@ -1,5 +1,6 @@
 ### Version 7.5.1
-####
+#### Fixed:
+- Delete icon using clear icon.
 
 ### Version 7.5.0
 #### Fixed:
