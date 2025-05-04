@@ -614,6 +614,31 @@ my_sheet = Sheet(parent, alternate_color="gray80")
 
 Note that any cell, row or column highlights will display over alternate row colors.
 
+### **Refreshing the sheet**
+
+Refresh the table.
+```python
+refresh(redraw_header: bool = True, redraw_row_index: bool = True) -> Sheet
+```
+
+___
+
+Refresh the table.
+```python
+redraw(redraw_header: bool = True, redraw_row_index: bool = True) -> Sheet
+```
+
+___
+
+Refresh after idle (prevents multiple redraws).
+```python
+set_refresh_timer(
+    redraw: bool = True,
+    index: bool = True,
+    header: bool = True,
+) -> Sheet
+```
+
 ---
 # **Sheet Options**
 
@@ -3369,6 +3394,25 @@ self.sheet_span.data = [["",  "A",  "B",  "C"]
                         ["1", "A1", "B1", "C1"],
                         ["2", "A2", "B2", "C2"]]
 ```
+
+___
+
+#### **Managing the undo and redo stacks**
+
+```python
+# clears both undos and redos
+reset_undos() -> Sheet
+
+# get the Sheets modifiable deque variables which store changes for undo and redo
+get_undo_stack() -> deque
+get_redo_stack() -> deque
+
+# set the Sheets undo and redo stacks, returns Sheet widget
+set_undo_stack(stack: deque) -> Sheet
+set_redo_stack(stack: deque) -> Sheet
+```
+
+___
 
 #### **Sheet set data function**
 
@@ -7447,37 +7491,6 @@ with_tags = sheet.tag_has("row tag b", "row tag c")
 
 print (with_tags.rows)
 # prints {0, 1, 4, 5}
-```
-
----
-# **Other Sheet Functions**
-
-Various functions related to the Sheets internal undo and redo stacks.
-```python
-# clears both undos and redos
-reset_undos() -> Sheet
-
-# get the Sheets modifiable deque variables which store changes for undo and redo
-get_undo_stack() -> deque
-get_redo_stack() -> deque
-
-# set the Sheets undo and redo stacks, returns Sheet widget
-set_undo_stack(stack: deque) -> Sheet
-set_redo_stack(stack: deque) -> Sheet
-```
-
-___
-
-Refresh the table.
-```python
-refresh(redraw_header: bool = True, redraw_row_index: bool = True) -> Sheet
-```
-
-___
-
-Refresh the table.
-```python
-redraw(redraw_header: bool = True, redraw_row_index: bool = True) -> Sheet
 ```
 
 ---
