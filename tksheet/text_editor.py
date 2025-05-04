@@ -116,6 +116,7 @@ class TextEditorTkText(tk.Text):
         self.yview_moveto(1)
         self.tag_configure("align", justify=self.align)
         self.tag_add("align", 1.0, "end")
+        self.edit_reset()
 
     def _proxy(self, command: Any, *args) -> Any:
         try:
