@@ -1417,7 +1417,7 @@ class MainTable(tk.Canvas):
             try_binding(self.extra_end_ctrl_v_func, event_data, "end_ctrl_v")
             self.sheet_modified(event_data)
             self.PAR.emit_event("<<Paste>>", event_data)
-            self.show_ctrl_outline("table", (selected_c, selected_r), (selboxc, selboxr))
+            self.show_ctrl_outline("table", (selected_c, selected_r), (selboxc, selboxr), dash=())
         return event_data
 
     def delete_key(self, event: Any = None, validation: bool = True) -> None | EventDataDict:
